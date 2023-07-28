@@ -17,7 +17,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_confui",
     srcs: [
         "packet_types.cpp",
@@ -25,15 +25,14 @@ cc_library_static {
         "protocol_types.cpp",
         "protocol.cpp",
     ],
-    static: {
-        static_libs: [
-            "libbase",
-            "libcuttlefish_fs",
-	    "libteeui",
-        ],
-        shared_libs: [
-          "libcrypto", // libcrypto_static is not accessible from all targets
-        ],
-    },
+    static_libs: [
+        "libteeui",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcrypto", // libcrypto_static is not accessible from all targets
+        "libcuttlefish_fs",
+        "liblog",
+    ],
     defaults: ["cuttlefish_host"],
 }
