@@ -168,34 +168,6 @@ Result<std::string> GetFullMethodName(const std::string& server_address,
   return full_service_name + "/" + method_name;
 }
 
-Result<std::string> GetFullTypeName(const std::string& server_address,
-                                    const std::string& service_name,
-                                    const std::string& method_name,
-                                    const std::string& type_name) {
-  // Run grpc_cli ls -l for given method to extract full type name.
-  // Example output:
-  //   rpc OpenwrtIpaddr(google.protobuf.Empty) returns
-  //   (openwrtcontrolserver.OpenwrtIpaddrReply) {}
-  const auto& full_method_name =
-      CF_EXPECT(GetFullMethodName(server_address, service_name, method_name));
-  std::vector<std::string> arguments{"grpc_cli", "ls", server_address,
-                                     full_method_name};
-  std::vector<std::string> options{"-l"};
-  auto grpc_result = CF_EXPECT(RunGrpcCommand(arguments, options));
-
-  std::vector<std::string> candidates;
-  for (auto& full_type_name : Split(grpc_result, "()")) {
-    if (EndsWith(full_type_name, type_name)) {
-      candidates.emplace_back(full_type_name);
-    }
-  }
-
-  CF_EXPECT(candidates.size() > 0, service_name + " is not found.");
-  CF_EXPECT(candidates.size() < 2, service_name + " is ambiguous.");
-
-  return candidates[0];
-}
-
 Result<std::string> HandleLsCmd(
     const std::vector<std::string>& server_address_list,
     const std::vector<std::string>& args) {
@@ -261,8 +233,8 @@ Result<std::string> HandleLsCmd(
           Split(Trim(command_output), "()");
       CF_EXPECT(parsed_output.size() == 5, "Unexpected parsing result");
       Json::Value json;
-      json["request_type"] = Split(parsed_output[1], ".").back();
-      json["response_type"] = Split(parsed_output[3], ".").back();
+      json["request_type"] = parsed_output[1];
+      json["response_type"] = parsed_output[3];
       Json::StreamWriterBuilder builder;
       return Json::writeString(builder, json) + "\n";
     }
@@ -274,36 +246,29 @@ Result<std::string> HandleLsCmd(
 Result<std::string> HandleTypeCmd(
     const std::vector<std::string>& server_address_list,
     const std::vector<std::string>& args) {
-  CF_EXPECT(args.size() > 2,
-            "need to specify a service name, a method name, and type_name");
-  CF_EXPECT(args.size() < 4, "too many arguments");
-  std::string command_output;
+  CF_EXPECT(args.size() > 1,
+            "need to specify the service name and the type_name");
+  CF_EXPECT(args.size() < 3, "too many arguments");
 
   std::vector<std::string> grpc_arguments{"grpc_cli", "type"};
   const auto& service_name = args[0];
-  const auto& method_name = args[1];
-  const auto& type_name = args[2];
+  const auto& type_name = args[1];
 
   const auto& server_address =
       CF_EXPECT(GetServerAddress(server_address_list, service_name));
   grpc_arguments.push_back(server_address);
-  const auto& full_type_name = CF_EXPECT(
-      GetFullTypeName(server_address, service_name, method_name, type_name));
-  grpc_arguments.push_back(full_type_name);
+  grpc_arguments.push_back(type_name);
 
-  command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments));
-
-  return command_output;
+  return RunGrpcCommand(grpc_arguments);
 }
 
 Result<std::string> HandleCallCmd(
     const std::vector<std::string>& server_address_list,
     const std::vector<std::string>& args) {
   CF_EXPECT(args.size() > 2,
-            "need to specify a service name, a method name, and json-formatted "
-            "proto");
+            "need to specify the service name, the method name, and the "
+            "json-formatted proto");
   CF_EXPECT(args.size() < 4, "too many arguments");
-  std::string command_output;
 
   std::vector<std::string> grpc_arguments{"grpc_cli", "call"};
   // TODO(b/265384449): support calling streaming method.
@@ -319,9 +284,7 @@ Result<std::string> HandleCallCmd(
   grpc_arguments.push_back(full_method_name);
   grpc_arguments.push_back(json_format_proto);
 
-  command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments));
-
-  return command_output;
+  return RunGrpcCommand(grpc_arguments);
 }
 
 }  // namespace
