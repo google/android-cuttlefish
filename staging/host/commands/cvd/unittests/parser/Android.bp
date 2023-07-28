@@ -37,6 +37,7 @@ cc_test_host {
         "libjsoncpp",
     ],
     srcs: [
+        "cf_configs_common_tests.cpp",
         "configs_inheritance_test.cc",
         "fetch_cvd_parser_tests.cpp",
         "flags_parser_test.cc",

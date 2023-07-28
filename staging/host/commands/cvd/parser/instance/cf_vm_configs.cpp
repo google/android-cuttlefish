@@ -21,6 +21,7 @@
 #include <android-base/strings.h>
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
@@ -28,44 +29,46 @@
 
 namespace cuttlefish {
 
-void InitVmManagerConfig(Json::Value& instances) {
-  // Allocate and initialize with default values
-  int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    if (instances[i].isMember("vm")) {
-      if (instances[i]["vm"].isMember("crosvm")) {
-        instances[i]["vm"]["vm_manager"] = "crosvm";
-      } else if (instances[i]["vm"].isMember("qemu")) {
-        instances[i]["vm"]["vm_manager"] = "qemu_cli";
-      } else if (instances[i]["vm"].isMember("gem5")) {
-        instances[i]["vm"]["vm_manager"] = "gem5";
-      } else {
-        // Set vm manager to default value (crosvm)
-        instances[i]["vm"]["vm_manager"] = "crosvm";
-      }
+void InitVmManagerConfig(Json::Value& instance) {
+  if (instance.isMember("vm")) {
+    if (instance["vm"].isMember("crosvm")) {
+      instance["vm"]["vm_manager"] = "crosvm";
+    } else if (instance["vm"].isMember("qemu")) {
+      instance["vm"]["vm_manager"] = "qemu_cli";
+    } else if (instance["vm"].isMember("gem5")) {
+      instance["vm"]["vm_manager"] = "gem5";
     } else {
-      // vm object doesn't exist , set the default vm manager to crosvm
-      instances[i]["vm"]["vm_manager"] = "crosvm";
+      // Set vm manager to default value (crosvm)
+      instance["vm"]["vm_manager"] = "crosvm";
     }
+  } else {
+    // vm object doesn't exist, set the default vm manager to crosvm
+    instance["vm"]["vm_manager"] = "crosvm";
   }
 }
 
-void InitVmConfigs(Json::Value& instances) {
-  InitIntConfig(instances, "vm", "cpus", CF_DEFAULTS_CPUS);
-  InitIntConfig(instances, "vm", "memory_mb", UI_DEFAULTS_MEMORY_MB);
-  InitBoolConfig(instances, "vm", "use_sdcard", CF_DEFAULTS_USE_SDCARD);
-  InitStringConfig(instances, "vm", "setupwizard_mode",
-                   CF_DEFAULTS_SETUPWIZARD_MODE);
-  InitStringConfig(instances, "vm", "uuid", CF_DEFAULTS_UUID);
-  InitVmManagerConfig(instances);
-  InitBoolConfigSubGroup(instances, "vm", "crosvm", "enable_sandbox",
-                         CF_DEFAULTS_ENABLE_SANDBOX);
+Result<void> InitVmConfigs(Json::Value& instances) {
+  const int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_CPUS, {"vm", "cpus"}));
+    CF_EXPECT(
+        InitConfig(instances[i], UI_DEFAULTS_MEMORY_MB, {"vm", "memory_mb"}));
+    CF_EXPECT(
+        InitConfig(instances[i], CF_DEFAULTS_USE_SDCARD, {"vm", "use_sdcard"}));
+    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_SETUPWIZARD_MODE,
+                         {"vm", "setupwizard_mode"}));
+    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_UUID, {"vm", "uuid"}));
+    InitVmManagerConfig(instances[i]);
+    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_ENABLE_SANDBOX,
+                         {"vm", "crosvm", "enable_sandbox"}));
+  }
+  return {};
 }
 
 std::vector<std::string> GenerateCustomConfigsFlags(
     const Json::Value& instances) {
   std::vector<std::string> result;
-  int size = instances.size();
+  const int size = instances.size();
   for (int i = 0; i < size; i++) {
     if (instances[i].isMember("vm") &&
         instances[i]["vm"].isMember("custom_actions")) {
@@ -88,21 +91,24 @@ std::vector<std::string> GenerateCustomConfigsFlags(
   return result;
 }
 
-std::vector<std::string> GenerateVmFlags(const Json::Value& instances) {
+Result<std::vector<std::string>> GenerateVmFlags(const Json::Value& instances) {
   std::vector<std::string> result;
-  result.emplace_back(GenerateGflag(instances, "cpus", "vm", "cpus"));
-  result.emplace_back(GenerateGflag(instances, "memory_mb", "vm", "memory_mb"));
   result.emplace_back(
-      GenerateGflag(instances, "use_sdcard", "vm", "use_sdcard"));
+      CF_EXPECT(GenerateGflag(instances, "cpus", {"vm", "cpus"})));
   result.emplace_back(
-      GenerateGflag(instances, "vm_manager", "vm", "vm_manager"));
+      CF_EXPECT(GenerateGflag(instances, "memory_mb", {"vm", "memory_mb"})));
   result.emplace_back(
-      GenerateGflag(instances, "setupwizard_mode", "vm", "setupwizard_mode"));
+      CF_EXPECT(GenerateGflag(instances, "use_sdcard", {"vm", "use_sdcard"})));
+  result.emplace_back(
+      CF_EXPECT(GenerateGflag(instances, "vm_manager", {"vm", "vm_manager"})));
+  result.emplace_back(CF_EXPECT(GenerateGflag(instances, "setupwizard_mode",
+                                              {"vm", "setupwizard_mode"})));
   if (!GENERATE_MVP_FLAGS_ONLY) {
-    result.emplace_back(GenerateGflag(instances, "uuid", "vm", "uuid"));
+    result.emplace_back(
+        CF_EXPECT(GenerateGflag(instances, "uuid", {"vm", "uuid"})));
   }
-  result.emplace_back(GenerateGflagSubGroup(instances, "enable_sandbox", "vm",
-                                            "crosvm", "enable_sandbox"));
+  result.emplace_back(CF_EXPECT(GenerateGflag(
+      instances, "enable_sandbox", {"vm", "crosvm", "enable_sandbox"})));
 
   result = MergeResults(result, GenerateCustomConfigsFlags(instances));
 
