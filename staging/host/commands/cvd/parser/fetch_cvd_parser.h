@@ -22,6 +22,8 @@
 
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
 struct FetchCvdInstanceConfig {
@@ -45,6 +47,6 @@ struct FetchCvdConfig {
   std::vector<FetchCvdInstanceConfig> instances;
 };
 
-FetchCvdConfig ParseFetchCvdConfigs(Json::Value& root);
+Result<FetchCvdConfig> ParseFetchCvdConfigs(Json::Value& root);
 
 };  // namespace cuttlefish
