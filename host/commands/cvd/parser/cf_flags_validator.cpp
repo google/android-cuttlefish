@@ -214,10 +214,10 @@ Result<void> ValidateInstancesConfigs(const Json::Value& instances) {
       CF_EXPECT(ValidateGraphicsConfigs(instances[i]["graphics"]),
                 "ValidateGraphicsConfigs fail");
     }
+    CF_EXPECT(ValidateConfig<std::string>(instances[i], ValidateSetupWizardMode,
+                                          {"vm", "setupwizard_mode"}),
+              "Invalid value for setupwizard_mode flag");
   }
-  CF_EXPECT(ValidateStringConfig(instances, "vm", "setupwizard_mode",
-                                 ValidateSetupWizardMode),
-            "Invalid value for setupwizard_mode flag");
 
   return {};
 }
