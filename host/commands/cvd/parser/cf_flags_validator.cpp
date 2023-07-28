@@ -100,6 +100,7 @@ static std::map<std::string, Json::ValueType> kDisplayKeyMap = {
 // supported import values for security category
 static std::map<std::string, Json::ValueType> kSecurityKeyMap = {
     {"serial_number", Json::ValueType::stringValue},
+    {"use_random_serial", Json::ValueType::stringValue},
     {"guest_enforce_security", Json::ValueType::booleanValue},
 };
 
