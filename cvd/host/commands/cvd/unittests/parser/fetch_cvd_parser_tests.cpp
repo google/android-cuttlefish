@@ -22,6 +22,7 @@
 #include <json/json.h>
 
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/result_matchers.h"
 #include "host/commands/cvd/parser/cf_flags_validator.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
@@ -67,7 +68,7 @@ TEST(FetchCvdParserTests, SingleFetch) {
 
   auto result_config = FetchCvdParserTestHelper(json_config);
 
-  EXPECT_TRUE(result_config.ok())
+  EXPECT_THAT(result_config, IsOk())
       << "Parsing config failed:  " << result_config.error().Trace();
 }
 
@@ -108,7 +109,7 @@ TEST(FetchCvdParserTests, MultiFetch) {
 
   auto result_config = FetchCvdParserTestHelper(json_config);
 
-  EXPECT_TRUE(result_config.ok())
+  EXPECT_THAT(result_config, IsOk())
       << "Parsing config failed:  " << result_config.error().Trace();
 }
 
