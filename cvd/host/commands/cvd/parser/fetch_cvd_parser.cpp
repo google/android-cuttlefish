@@ -36,6 +36,14 @@ Result<void> InitFetchInstanceConfigs(Json::Value& instance) {
                        {"disk", "super", "system"}));
   CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
                        {"boot", "kernel", "build"}));
+  CF_EXPECT(
+      InitConfig(instance, Json::Value::nullSingleton(), {"boot", "build"}));
+  CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
+                       {"boot", "bootloader", "build"}));
+  CF_EXPECT(
+      InitConfig(instance, Json::Value::nullSingleton(), {"disk", "otatools"}));
+  CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
+                       {"disk", "host_package"}));
   CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
                        {"disk", "download_img_zip"}));
   CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
@@ -81,11 +89,17 @@ FetchCvdInstanceConfig ParseFetchInstanceConfigs(const Json::Value& instance) {
       .default_build = OptString(instance["disk"]["default_build"]),
       .system_build = OptString(instance["disk"]["super"]["system"]),
       .kernel_build = OptString(instance["boot"]["kernel"]["build"]),
+      .boot_build = OptString(instance["boot"]["build"]),
+      .bootloader_build = OptString(instance["boot"]["bootloader"]["build"]),
+      .otatools_build = OptString(instance["disk"]["otatools"]),
+      .host_package_build = OptString(instance["disk"]["host_package"]),
       .download_img_zip = OptString(instance["disk"]["download_img_zip"]),
       .download_target_files_zip =
           OptString(instance["disk"]["download_target_files_zip"])};
   result.should_fetch = ShouldFetch(
-      {result.default_build, result.system_build, result.kernel_build});
+      {result.default_build, result.system_build, result.kernel_build,
+       result.boot_build, result.bootloader_build, result.otatools_build,
+       result.host_package_build});
   return result;
 }
 

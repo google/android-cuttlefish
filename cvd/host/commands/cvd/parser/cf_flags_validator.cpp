@@ -86,9 +86,16 @@ static std::map<std::string, Json::ValueType> kBootKeyMap = {
     {"extra_bootconfig_args", Json::ValueType::stringValue},
     {"kernel", Json::ValueType::objectValue},
     {"enable_bootanimation", Json::ValueType::booleanValue},
+    {"build", Json::ValueType::stringValue},
+    {"bootloader", Json::ValueType::objectValue},
 };
+
 static std::map<std::string, Json::ValueType> kKernelKeyMap = {
     {"extra_kernel_cmdline", Json::ValueType::stringValue},
+    {"build", Json::ValueType::stringValue},
+};
+
+static std::map<std::string, Json::ValueType> kBootloaderKeyMap = {
     {"build", Json::ValueType::stringValue},
 };
 
@@ -117,6 +124,8 @@ static std::map<std::string, Json::ValueType> kDiskKeyMap = {
     {"download_img_zip", Json::ValueType::booleanValue},
     {"download_target_zip_files", Json::ValueType::booleanValue},
     {"blank_data_image_mb", Json::ValueType::uintValue},
+    {"otatools", Json::ValueType::stringValue},
+    {"host_package", Json::ValueType::stringValue},
 };
 
 static std::map<std::string, Json::ValueType> kSuperKeyMap = {
@@ -172,23 +181,28 @@ Result<void> ValidateVmConfigs(const Json::Value& root) {
   return {};
 }
 
-// Validate the kernel json parameters
 Result<void> ValidateKernelConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kKernelKeyMap),
             "ValidateKernelConfigs ValidateTypo fail");
   return {};
 }
 
-// Validate the boot json parameters
+Result<void> ValidateBootloaderConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kBootloaderKeyMap),
+            "ValidateBootloaderConfigs ValidateTypo fail");
+  return {};
+}
+
 Result<void> ValidateBootConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kBootKeyMap),
             "ValidateBootConfigs ValidateTypo fail");
 
   if (root.isMember("kernel")) {
-    CF_EXPECT(ValidateKernelConfigs(root["kernel"]),
-              "ValidateKernelConfigs fail");
+    CF_EXPECT(ValidateKernelConfigs(root["kernel"]));
   }
-
+  if (root.isMember("bootloader")) {
+    CF_EXPECT(ValidateBootloaderConfigs(root["bootloader"]));
+  }
   return {};
 }
 
