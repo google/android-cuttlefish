@@ -19,8 +19,10 @@
 #include <algorithm>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
+#include <android-base/strings.h>
 #include <json/json.h>
 
 #include "common/libs/utils/result.h"
@@ -28,6 +30,8 @@
 
 namespace cuttlefish {
 namespace {
+
+constexpr std::string_view kFetchPrefix = "@ab/";
 
 Result<void> InitFetchInstanceConfigs(Json::Value& instance) {
   CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
@@ -70,11 +74,23 @@ Result<void> InitFetchCvdConfigs(Json::Value& root) {
   return {};
 }
 
-std::optional<std::string> OptString(const Json::Value& value) {
+std::optional<std::string> GetOptString(const Json::Value& value) {
   if (value.isNull()) {
     return std::nullopt;
   }
   return value.asString();
+}
+
+std::optional<std::string> GetRemoteBuildString(const Json::Value& value) {
+  if (value.isNull()) {
+    return std::nullopt;
+  }
+  std::string strVal = value.asString();
+  std::string_view result = strVal;
+  if (!android::base::ConsumePrefix(&result, kFetchPrefix)) {
+    return std::nullopt;
+  }
+  return std::string(result);
 }
 
 bool ShouldFetch(const std::vector<std::optional<std::string>>& values) {
@@ -86,16 +102,18 @@ bool ShouldFetch(const std::vector<std::optional<std::string>>& values) {
 
 FetchCvdInstanceConfig ParseFetchInstanceConfigs(const Json::Value& instance) {
   auto result = FetchCvdInstanceConfig{
-      .default_build = OptString(instance["disk"]["default_build"]),
-      .system_build = OptString(instance["disk"]["super"]["system"]),
-      .kernel_build = OptString(instance["boot"]["kernel"]["build"]),
-      .boot_build = OptString(instance["boot"]["build"]),
-      .bootloader_build = OptString(instance["boot"]["bootloader"]["build"]),
-      .otatools_build = OptString(instance["disk"]["otatools"]),
-      .host_package_build = OptString(instance["disk"]["host_package"]),
-      .download_img_zip = OptString(instance["disk"]["download_img_zip"]),
+      .default_build = GetRemoteBuildString(instance["disk"]["default_build"]),
+      .system_build = GetRemoteBuildString(instance["disk"]["super"]["system"]),
+      .kernel_build = GetRemoteBuildString(instance["boot"]["kernel"]["build"]),
+      .boot_build = GetRemoteBuildString(instance["boot"]["build"]),
+      .bootloader_build =
+          GetRemoteBuildString(instance["boot"]["bootloader"]["build"]),
+      .otatools_build = GetRemoteBuildString(instance["disk"]["otatools"]),
+      .host_package_build =
+          GetRemoteBuildString(instance["disk"]["host_package"]),
+      .download_img_zip = GetOptString(instance["disk"]["download_img_zip"]),
       .download_target_files_zip =
-          OptString(instance["disk"]["download_target_files_zip"])};
+          GetOptString(instance["disk"]["download_target_files_zip"])};
   result.should_fetch = ShouldFetch(
       {result.default_build, result.system_build, result.kernel_build,
        result.boot_build, result.bootloader_build, result.otatools_build,
@@ -105,13 +123,13 @@ FetchCvdInstanceConfig ParseFetchInstanceConfigs(const Json::Value& instance) {
 
 FetchCvdConfig ParseFetchConfigs(const Json::Value& root) {
   auto result = FetchCvdConfig{
-      .api_key = OptString(root["fetch"]["api_key"]),
-      .credential_source = OptString(root["fetch"]["credential_source"]),
-      .wait_retry_period = OptString(root["fetch"]["wait_retry_period"]),
+      .api_key = GetOptString(root["fetch"]["api_key"]),
+      .credential_source = GetOptString(root["fetch"]["credential_source"]),
+      .wait_retry_period = GetOptString(root["fetch"]["wait_retry_period"]),
       .external_dns_resolver =
-          OptString(root["fetch"]["external_dns_resolver"]),
+          GetOptString(root["fetch"]["external_dns_resolver"]),
       .keep_downloaded_archives =
-          OptString(root["fetch"]["keep_downloaded_archives"])};
+          GetOptString(root["fetch"]["keep_downloaded_archives"])};
 
   const int num_instances = root["instances"].size();
   for (unsigned int i = 0; i < num_instances; i++) {
