@@ -16,35 +16,15 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 #include <vector>
 
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
-struct FetchCvdInstanceConfig {
-  bool should_fetch = false;
-  // this subdirectory is relative to FetchCvdConfig::target_directory
-  std::string target_subdirectory;
-  std::optional<std::string> default_build;
-  std::optional<std::string> system_build;
-  std::optional<std::string> kernel_build;
-  std::optional<std::string> download_img_zip;
-  std::optional<std::string> download_target_files_zip;
-};
-
-struct FetchCvdConfig {
-  std::string target_directory;
-  std::optional<std::string> api_key;
-  std::optional<std::string> credential_source;
-  std::optional<std::string> wait_retry_period;
-  std::optional<std::string> external_dns_resolver;
-  std::optional<std::string> keep_downloaded_archives;
-  std::vector<FetchCvdInstanceConfig> instances;
-};
-
-FetchCvdConfig ParseFetchCvdConfigs(Json::Value& root);
+Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root);
 
 };  // namespace cuttlefish
