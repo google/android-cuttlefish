@@ -19,6 +19,7 @@
 #include <android-base/logging.h>
 #include <iostream>
 
+#include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/instance/cf_boot_configs.h"
 #include "host/commands/cvd/parser/instance/cf_disk_configs.h"
@@ -29,21 +30,23 @@
 
 namespace cuttlefish {
 
-void InitInstancesConfigs(Json::Value& root) {
-  InitVmConfigs(root);
-  InitDiskConfigs(root);
-  InitBootConfigs(root);
-  InitSecurityConfigs(root);
+Result<void> InitInstancesConfigs(Json::Value& root) {
+  CF_EXPECT(InitVmConfigs(root));
+  CF_EXPECT(InitDiskConfigs(root));
+  CF_EXPECT(InitBootConfigs(root));
+  CF_EXPECT(InitSecurityConfigs(root));
   InitGraphicsConfigs(root);
+  return {};
 }
 
-std::vector<std::string> GenerateInstancesFlags(const Json::Value& root) {
-  std::vector<std::string> result = GenerateVmFlags(root);
-  result = MergeResults(result, GenerateDiskFlags(root));
+Result<std::vector<std::string>> GenerateInstancesFlags(
+    const Json::Value& root) {
+  std::vector<std::string> result = CF_EXPECT(GenerateVmFlags(root));
+  result = MergeResults(result, CF_EXPECT(GenerateDiskFlags(root)));
   if (!GENERATE_MVP_FLAGS_ONLY) {
-    result = MergeResults(result, GenerateBootFlags(root));
+    result = MergeResults(result, CF_EXPECT(GenerateBootFlags(root)));
   }
-  result = MergeResults(result, GenerateSecurityFlags(root));
+  result = MergeResults(result, CF_EXPECT(GenerateSecurityFlags(root)));
   result = MergeResults(result, GenerateGraphicsFlags(root));
   result = MergeResults(result, GenerateMetricsFlags(root));
 
