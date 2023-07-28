@@ -37,14 +37,16 @@ mkdir -p $temp_dir
 ssh $server -t "mkdir -p ~/.cvd_artifact; mkdir -p ~/cvd_home"
 rsync -aSvch --recursive $ANDROID_PRODUCT_OUT --files-from=$ANDROID_PRODUCT_OUT/required_images $server:~/cvd_home --info=progress2
 
-if [ -d $ANDROID_HOST_OUT/../linux_bionic-arm64/cvd-host_package ]; then
+# copy the cvd host package
+cvd_host_tool_dir=$ANDROID_HOST_OUT/../linux_musl-arm64
+if [ -d $cvd_host_tool_dir/cvd-host_package ]; then
   echo "Use contents in cvd-host_package dir"
-  rsync -avch $ANDROID_HOST_OUT/../linux_bionic-arm64/cvd-host_package/* $server:~/cvd_home --info=progress2
-elif [ -f $ANDROID_HOST_OUT/../linux_bionic-arm64/cvd-host_package.tar.gz ]; then
+  rsync -avch $cvd_host_tool_dir/cvd-host_package/* $server:~/cvd_home --info=progress2
+elif [ -f $cvd_host_tool_dir/cvd-host_package.tar.gz ]; then
   echo "Use contents in cvd-host_package.tar.gz"
   # re-compress with rsyncable option
   # TODO(b/275312073): remove this if toxbox supports rsyncable
-  cd $ANDROID_HOST_OUT/../linux_bionic-arm64; pigz -d -c cvd-host_package.tar.gz | pigz -R > $temp_dir/cvd-host_package.tar.gz
+  cd $cvd_host_tool_dir; pigz -d -c cvd-host_package.tar.gz | pigz -R > $temp_dir/cvd-host_package.tar.gz
   rsync -avh $temp_dir/* $server:.cvd_artifact --info=progress2
   ssh $server -t "cd .cvd_artifact; tar -zxvf cvd-host_package.tar.gz -C ~/cvd_home/"
 else
