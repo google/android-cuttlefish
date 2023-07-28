@@ -23,6 +23,7 @@ service ControlEnvProxyService {
   rpc ListServices (google.protobuf.Empty) returns (ListServicesReply) {}
   rpc ListMethods (ListMethodsRequest) returns (ListMethodsReply) {}
   rpc ListReqResType (ListReqResTypeRequest) returns (ListReqResTypeReply) {}
+  rpc TypeInformation (TypeInformationRequest) returns (TypeInformationReply) {}
 }
 
 message CallUnaryMethodRequest {
@@ -55,4 +56,13 @@ message ListReqResTypeRequest {
 message ListReqResTypeReply {
   string request_type_name = 1;
   string response_type_name = 2;
+}
+
+message TypeInformationRequest {
+  string service_name = 1;
+  string type_name = 2;
+}
+
+message TypeInformationReply {
+  string text_formatted_type_info = 1;
 }
