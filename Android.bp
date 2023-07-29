@@ -68,6 +68,9 @@ cc_defaults {
         host: {
             cflags: ["-DCUTTLEFISH_HOST"],
             compile_multilib: "64",
+            strip: {
+                keep_symbols_and_debug_frame: true,
+            },
         },
         linux: {
             host_ldlibs: ["-lrt"],
