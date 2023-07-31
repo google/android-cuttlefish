@@ -51,6 +51,7 @@
             <button id='mic_btn' title='Microphone' disabled='true' class='material-icons'>mic</button>
             <button id='location-modal-button' title='location console' class='material-icons'>location_on</button>
             <button id='device-details-button' title='Device Details' class='material-icons'>info</button>
+            <button id='rotation-modal-button' title='Rotation sensors' class='material-icons'>more_vert</button>
           </div>
           <div id='control-panel-custom-buttons' class='control-panel-column'></div>
           <!-- tabindex="-1" allows this element to capture keyboard events -->
@@ -199,11 +200,51 @@
           </div>
 
   </div>
-
+  <div id='rotation-modal' class='modal'>
+    <div id='rotation-modal-header' class='modal-header'>
+        <h2>Rotation sensors</h2>
+        <button id='rotation-modal-close' title='Close' class='material-icons modal-close'>close</button>
+    </div>
+    <hr>
+    <h3>Rotate the device</h3>
+    <span id='rotation-bar'>
+      <div class='roation-slider'>
+        X
+        <input class='rotation-slider-range' type='range' value='0' min='-180' max='180' step='0.1'>
+        <span class='rotation-slider-value'>0</span>
+      </div>
+      <br>
+      <div class='rotation-slider'>
+        Y
+        <input class='rotation-slider-range' type='range' value='0' min='-180' max='180' step='0.1'>
+        <span class='rotation-slider-value'>0</span>
+      </div>
+      <br>
+      <div class='rotation-slider'>
+        Z
+        <input class='rotation-slider-range' type='range' value='0' min='-180' max='180' step='0.1'>
+        <span class='rotation-slider-value'>0</span>
+      </div>
+      <br>
+    </span>
+    <div class='sensors'>
+      <div id='accelerometer'>
+        Accelerometer:
+        <span id='accelerometer-value'>0.00 9.81 0.00</span>
+      </div>
+      <div id='magnetometer'>Magnetometer:
+        <span id='magnetometer-value'>0 5.9 -48.4</span>
+      </div>
+      <div id='gyroscope'>Gyroscope:
+        <span id='gyroscope-value'>0.00 0.00 0.00</span>
+      </div>
+    </div>
+  </div>
        <script src="js/adb.js"></script>
        <script src="js/location.js"></script>
        <script src="js/rootcanal.js"></script>
        <script src="js/cf_webrtc.js" type="module"></script>
+       <script src="js/sensors.js"></script>
        <script src="js/controls.js"></script>
        <script src="js/app.js"></script>
        <template id="display-template">
