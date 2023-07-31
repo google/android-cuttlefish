@@ -131,21 +131,25 @@ func newCreateCVDHandler(c Config, om OperationManager, uadr UserArtifactsManage
 }
 
 func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
-	req := apiv1.CreateCVDRequest{}
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req := &apiv1.CreateCVDRequest{}
+	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
+	cvdDwnl := NewAndroidCICVDDownloader(NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
+	buildAPIOpts := AndroidCIBuildAPIOpts{
+		Creds: &CreateCVDRequestCredsProvider{Request: req},
+	}
+	buildAPI := NewAndroidCIBuildAPIWithOpts(http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	opts := CreateCVDActionOpts{
-		Request:          &req,
-		HostValidator:    &HostValidator{ExecContext: exec.CommandContext},
-		Paths:            h.Config.Paths,
-		OperationManager: h.OM,
-		ExecContext:      exec.CommandContext,
-		CVDToolsVersion:  h.Config.CVDToolsVersion,
-		BuildAPIFactory: func(credentials string) BuildAPI {
-			return NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL, credentials)
-		},
+		Request:                  req,
+		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
+		Paths:                    h.Config.Paths,
+		OperationManager:         h.OM,
+		ExecContext:              exec.CommandContext,
+		CVDToolsVersion:          h.Config.CVDToolsVersion,
+		CVDDownloader:            cvdDwnl,
+		BuildAPI:                 buildAPI,
 		UUIDGen:                  func() string { return uuid.New().String() },
 		CVDStartTimeout:          3 * time.Minute,
 		CVDUser:                  h.Config.CVDUser,
@@ -159,14 +163,13 @@ type listCVDsHandler struct {
 }
 
 func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
+	cvdDwnl := NewAndroidCICVDDownloader(NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
 	opts := ListCVDsActionOpts{
 		Paths:           h.Config.Paths,
 		ExecContext:     exec.CommandContext,
 		CVDToolsVersion: h.Config.CVDToolsVersion,
-		BuildAPIFactory: func(credentials string) BuildAPI {
-			return NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL, credentials)
-		},
-		CVDUser: h.Config.CVDUser,
+		CVDDownloader:   cvdDwnl,
+		CVDUser:         h.Config.CVDUser,
 	}
 	return NewListCVDsAction(opts).Run()
 }

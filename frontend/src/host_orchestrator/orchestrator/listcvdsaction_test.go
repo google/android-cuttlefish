@@ -66,7 +66,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 		Paths:           paths,
 		ExecContext:     execContext,
 		CVDToolsVersion: cvdBinAB,
-		BuildAPIFactory: func(_ string) BuildAPI { return &fakeBuildAPI{} },
+		CVDDownloader:   &fakeCVDDownloader{},
 		CVDUser:         fakeCVDUser,
 	}
 	action := NewListCVDsAction(opts)
