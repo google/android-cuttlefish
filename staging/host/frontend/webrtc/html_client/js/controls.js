@@ -71,6 +71,28 @@ function createButtonListener(button_id_class, func,
   }
 }
 
+// Bind the update of slider value to slider input,
+// and trigger a function to be called on input change  and slider stop.
+function createSliderListener(slider_class, listener) {
+  const sliders = document.getElementsByClassName(slider_class + '-range');
+  const values = document.getElementsByClassName(slider_class + '-value');
+
+  for (let i = 0; i < sliders.length; i++) {
+    let slider = sliders[i];
+    let value = values[i];
+    // Trigger value update when the slider value changes while sliding.
+    slider.addEventListener('input', () => {
+      value.textContent = slider.value;
+      listener();
+    });
+    // Trigger value update when the slider stops sliding.
+    slider.addEventListener('change', () => {
+      listener();
+    });
+
+  }
+}
+
 function createInputListener(input_id, func, listener) {
   input = document.getElementById(input_id);
   if (func != null) {
