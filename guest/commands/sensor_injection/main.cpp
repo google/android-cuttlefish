@@ -20,9 +20,9 @@
 #include <android-base/chrono_utils.h>
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
+#include <android-base/parsedouble.h>
 #include <android-base/parseint.h>
 #include <utils/SystemClock.h>
-
 #include <aidl/android/hardware/sensors/BnSensors.h>
 
 using aidl::android::hardware::sensors::Event;
@@ -106,6 +106,66 @@ void InjectOrientation(int rotationDeg) {
   endSensorInjection(sensors);
 }
 
+// Inject accelerometer event based on rotation in device position.
+void InjectAccelerometer(double x, double y, double z) {
+  auto sensors = startSensorInjection();
+  int handle = getSensorHandle(SensorType::ACCELEROMETER, sensors);
+  Event event;
+  event.sensorHandle = handle;
+  event.sensorType = SensorType::ACCELEROMETER;
+
+  Event::EventPayload::Vec3 vec3;
+  vec3.x = x;
+  vec3.y = y;
+  vec3.z = z;
+  vec3.status = SensorStatus::ACCURACY_HIGH;
+  event.payload.set<Event::EventPayload::Tag::vec3>(vec3);
+  event.timestamp = android::elapsedRealtimeNano();
+  auto result = sensors->injectSensorData(event);
+  CHECK(result.isOk()) << "Unable to inject ISensors accelerometer event: "
+                       << result.getDescription();
+}
+
+// Inject Magnetometer event based on rotation in device position.
+void InjectMagnetometer(double x, double y, double z) {
+  auto sensors = startSensorInjection();
+  int handle = getSensorHandle(SensorType::MAGNETIC_FIELD, sensors);
+  Event event;
+  event.sensorHandle = handle;
+  event.sensorType = SensorType::MAGNETIC_FIELD;
+
+  Event::EventPayload::Vec3 vec3;
+  vec3.x = x;
+  vec3.y = y;
+  vec3.z = z;
+  vec3.status = SensorStatus::ACCURACY_HIGH;
+  event.payload.set<Event::EventPayload::Tag::vec3>(vec3);
+  event.timestamp = android::elapsedRealtimeNano();
+  auto result = sensors->injectSensorData(event);
+  CHECK(result.isOk()) << "Unable to inject ISensors magnetometer event: "
+                       << result.getDescription();
+}
+
+// Inject Gyroscope event based on rotation in device position.
+void InjectGyroscope(double x, double y, double z){
+  auto sensors = startSensorInjection();
+  int handle = getSensorHandle(SensorType::GYROSCOPE, sensors);
+  Event event;
+  event.sensorHandle = handle;
+  event.sensorType = SensorType::GYROSCOPE;
+
+  Event::EventPayload::Vec3 vec3;
+  vec3.x = x;
+  vec3.y = y;
+  vec3.z = z;
+  vec3.status = SensorStatus::ACCURACY_HIGH;
+  event.payload.set<Event::EventPayload::Tag::vec3>(vec3);
+  event.timestamp = android::elapsedRealtimeNano();
+  auto result = sensors->injectSensorData(event);
+  CHECK(result.isOk()) << "Unable to inject ISensors gyroscope event: "
+                       << result.getDescription();
+}
+
 // Inject a single HINGE_ANGLE event at the given angle.
 void InjectHingeAngle(int angle) {
   auto sensors = startSensorInjection();
@@ -126,11 +186,11 @@ void InjectHingeAngle(int angle) {
 }
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::LogdLogger(android::base::SYSTEM));
-
-  CHECK(argc == 3)
-      << "Expected command line args 'rotate <angle>' or 'hinge_angle <value>'";
-
+  ::android::base::InitLogging(
+      argv, android::base::LogdLogger(android::base::SYSTEM));
+  CHECK(argc == 3 || argc == 11)
+      << "Expected command line args 'rotate <angle>', 'hinge_angle <value>', or 'motion " <<
+          "<acc_x> <acc_y> <acc_z> <mgn_x> <mgn_y> <mgn_z> <gyro_x> <gyro_y> <gyro_z>'";
   if (!strcmp(argv[1], "rotate")) {
     int rotationDeg;
     CHECK(android::base::ParseInt(argv[2], &rotationDeg))
@@ -142,6 +202,20 @@ int main(int argc, char** argv) {
         << "Hinge angle must be an integer";
     CHECK(angle >= 0 && angle <= 360) << "Bad hinge_angle value: " << argv[2];
     InjectHingeAngle(angle);
+  } else if (!strcmp(argv[1], "motion")) {
+    double acc_x, acc_y, acc_z, mgn_x, mgn_y, mgn_z, gyro_x, gyro_y, gyro_z;
+    CHECK(android::base::ParseDouble(argv[2], &acc_x)) << "Accelerometer x value must be a double";
+    CHECK(android::base::ParseDouble(argv[3], &acc_y)) << "Accelerometer x value must be a double";
+    CHECK(android::base::ParseDouble(argv[4], &acc_z)) << "Accelerometer x value must be a double";
+    CHECK(android::base::ParseDouble(argv[5], &mgn_x)) << "Magnetometer x value must be a double";
+    CHECK(android::base::ParseDouble(argv[6], &mgn_y)) << "Magnetometer y value must be a double";
+    CHECK(android::base::ParseDouble(argv[7], &mgn_z)) << "Magnetometer z value must be a double";
+    CHECK(android::base::ParseDouble(argv[8], &gyro_x)) << "Gyroscope x value must be a double";
+    CHECK(android::base::ParseDouble(argv[9], &gyro_y)) << "Gyroscope y value must be a double";
+    CHECK(android::base::ParseDouble(argv[10], &gyro_z)) << "Gyroscope z value must be a double";
+    InjectAccelerometer(acc_x, acc_y, acc_z);
+    InjectMagnetometer(mgn_x, mgn_y, mgn_z);
+    InjectGyroscope(gyro_x, gyro_y, gyro_z);
   } else {
     LOG(FATAL) << "Unknown arg: " << argv[1];
   }
