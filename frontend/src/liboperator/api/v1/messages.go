@@ -62,6 +62,26 @@ type IceServer struct {
 	URLs []string `json:"urls"`
 }
 
+type FetchArtifactsRequest struct {
+	AndroidCIBundle *AndroidCIBundle `json:"android_ci_bundle"`
+}
+
+type ArtifactsBundleType int64
+
+const (
+	MainBundleType ArtifactsBundleType = iota
+	KernelBundleType
+	BootloaderBundleType
+	SystemImageBundleType
+)
+
+type AndroidCIBundle struct {
+	// If omitted, defaults to branch "aosp-main" and target `aosp_cf_x86_64_phone-userdebug`.
+	Build *AndroidCIBuild `json:"build,omitempty"`
+	// If omitted, it defaults to the `main` bundle type.
+	Type ArtifactsBundleType `json:"type"`
+}
+
 type CreateCVDRequest struct {
 	// REQUIRED.
 	CVD *CVD `json:"cvd"`
