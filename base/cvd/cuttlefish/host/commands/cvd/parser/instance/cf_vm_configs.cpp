@@ -28,24 +28,24 @@
 #define UI_DEFAULTS_MEMORY_MB 2048
 
 namespace cuttlefish {
+namespace {
 
-void InitVmManagerConfig(Json::Value& instance) {
-  if (instance.isMember("vm")) {
-    if (instance["vm"].isMember("crosvm")) {
-      instance["vm"]["vm_manager"] = "crosvm";
-    } else if (instance["vm"].isMember("qemu")) {
-      instance["vm"]["vm_manager"] = "qemu_cli";
-    } else if (instance["vm"].isMember("gem5")) {
-      instance["vm"]["vm_manager"] = "gem5";
-    } else {
-      // Set vm manager to default value (crosvm)
-      instance["vm"]["vm_manager"] = "crosvm";
-    }
+std::string GetVmManagerDefault(Json::Value& instance_vm) {
+  if (instance_vm.isNull()) {
+    return "crosvm";
+  }
+  if (instance_vm.isMember("crosvm")) {
+    return "crosvm";
+  } else if (instance_vm.isMember("qemu")) {
+    return "qemu_cli";
+  } else if (instance_vm.isMember("gem5")) {
+    return "gem5";
   } else {
-    // vm object doesn't exist, set the default vm manager to crosvm
-    instance["vm"]["vm_manager"] = "crosvm";
+    return "crosvm";
   }
 }
+
+}  // namespace
 
 Result<void> InitVmConfigs(Json::Value& instances) {
   const int size = instances.size();
@@ -58,7 +58,8 @@ Result<void> InitVmConfigs(Json::Value& instances) {
     CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_SETUPWIZARD_MODE,
                          {"vm", "setupwizard_mode"}));
     CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_UUID, {"vm", "uuid"}));
-    InitVmManagerConfig(instances[i]);
+    CF_EXPECT(InitConfig(instances[i], GetVmManagerDefault(instances[i]["vm"]),
+                         {"vm", "vm_manager"}));
     CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_ENABLE_SANDBOX,
                          {"vm", "crosvm", "enable_sandbox"}));
   }
@@ -103,10 +104,8 @@ Result<std::vector<std::string>> GenerateVmFlags(const Json::Value& instances) {
       CF_EXPECT(GenerateGflag(instances, "vm_manager", {"vm", "vm_manager"})));
   result.emplace_back(CF_EXPECT(GenerateGflag(instances, "setupwizard_mode",
                                               {"vm", "setupwizard_mode"})));
-  if (!GENERATE_MVP_FLAGS_ONLY) {
-    result.emplace_back(
-        CF_EXPECT(GenerateGflag(instances, "uuid", {"vm", "uuid"})));
-  }
+  result.emplace_back(
+      CF_EXPECT(GenerateGflag(instances, "uuid", {"vm", "uuid"})));
   result.emplace_back(CF_EXPECT(GenerateGflag(
       instances, "enable_sandbox", {"vm", "crosvm", "enable_sandbox"})));
 
