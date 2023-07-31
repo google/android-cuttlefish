@@ -423,8 +423,7 @@ DEFINE_vec(crosvm_use_rng, "true",
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
 
-DEFINE_bool(enable_wifi, true,
-            "Enables the guest WIFI. Disable this only for Minidroid.");
+DEFINE_bool(enable_wifi, true, "Enables the guest WIFI. Mainly for Minidroid");
 
 DEFINE_vec(device_external_network, CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK,
            "The mechanism to connect to the public internet.");
