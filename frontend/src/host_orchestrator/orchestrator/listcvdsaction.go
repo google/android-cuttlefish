@@ -29,17 +29,17 @@ type ListCVDsActionOpts struct {
 }
 
 type ListCVDsAction struct {
-	paths              IMPaths
-	downloadCVDHandler *downloadCVDHandler
-	execContext        cvd.CVDExecContext
+	paths           IMPaths
+	cvdToolsVersion AndroidBuild
+	cvdDownloader   CVDDownloader
+	execContext     cvd.CVDExecContext
 }
 
 func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {
 	return &ListCVDsAction{
-		paths: opts.Paths,
-		downloadCVDHandler: newDownloadCVDHandler(
-			opts.CVDToolsVersion,
-			&opts.Paths,
+		paths:           opts.Paths,
+		cvdToolsVersion: opts.CVDToolsVersion,
+		cvdDownloader: NewAndroidCICVDDownloader(
 			opts.BuildAPIFactory(""), // cvd can be downloaded without credentials
 		),
 		execContext: newCVDExecContext(opts.ExecContext, opts.CVDUser),
@@ -47,7 +47,7 @@ func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {
 }
 
 func (a *ListCVDsAction) Run() (*apiv1.ListCVDsResponse, error) {
-	if err := a.downloadCVDHandler.Download(); err != nil {
+	if err := a.cvdDownloader.Download(a.cvdToolsVersion, a.paths.CVDBin(), a.paths.FetchCVDBin()); err != nil {
 		return nil, err
 	}
 	fleet, err := cvdFleet(a.execContext, a.paths.CVDBin())

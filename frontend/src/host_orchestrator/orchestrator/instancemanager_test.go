@@ -18,12 +18,15 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path"
-	"strings"
+	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
+	orchtesting "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/testing"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 
 	"github.com/google/go-cmp/cmp"
@@ -36,6 +39,7 @@ func (AlwaysSucceedsValidator) Validate() error {
 }
 
 const fakeLatesGreenBuildID = "9551522"
+
 const fakeCVDUser = "fakecvduser"
 
 type fakeBuildAPI struct{}
@@ -52,6 +56,67 @@ const fakeProductName = "aosp_foo_x86_64"
 
 func (fakeBuildAPI) ProductName(buildID, target string) (string, error) {
 	return fakeProductName, nil
+}
+
+func TestAndroidCICVDDownloaderSucceeds(t *testing.T) {
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
+	outCVD := filepath.Join(dir, "cvd")
+	outFetchCVD := filepath.Join(dir, "fetch_cvd")
+	d := NewAndroidCICVDDownloader(&fakeBuildAPI{})
+
+	err := d.Download(AndroidBuild{}, outCVD, outFetchCVD)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{outCVD, outFetchCVD} {
+		exist, err := fileExist(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if exist != true {
+			t.Errorf("expected true")
+		}
+		info, err := os.Stat(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff("-rwxr-x---", info.Mode().String()); diff != "" {
+			t.Errorf("file mode mismatch (-want +got):\n%s", diff)
+		}
+	}
+}
+
+func TestAndroidCICVDDownloaderDownloadMultipleTimesSucceeds(t *testing.T) {
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
+	outCVD := filepath.Join(dir, "cvd")
+	outFetchCVD := filepath.Join(dir, "fetch_cvd")
+	d := NewAndroidCICVDDownloader(&fakeBuildAPI{})
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			err := d.Download(AndroidBuild{}, outCVD, outFetchCVD)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, name := range []string{outCVD, outFetchCVD} {
+				exists, err := fileExist(name)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if exists != true {
+					t.Errorf("expected true")
+				}
+			}
+		}()
+	}
+	wg.Wait()
 }
 
 const fakeUUID = "123e4567-"
@@ -81,19 +146,6 @@ func TestSliceItoa(t *testing.T) {
 		}
 	}
 
-}
-
-type FakeArtifactDownloader struct {
-	t       *testing.T
-	content string
-}
-
-func (d *FakeArtifactDownloader) Download(dst io.Writer, _ AndroidBuild, name string) error {
-	r := strings.NewReader(d.content)
-	if _, err := io.Copy(dst, r); err != nil {
-		d.t.Fatal(err)
-	}
-	return nil
 }
 
 func execCtxAlwaysSucceeds(ctx context.Context, name string, args ...string) *exec.Cmd {
