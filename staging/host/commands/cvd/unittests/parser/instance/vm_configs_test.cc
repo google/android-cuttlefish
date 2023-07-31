@@ -554,7 +554,6 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagFullJson) {
       << "setupwizard_mode flag is missing or wrongly formatted";
 }
 
-#ifndef GENERATE_MVP_FLAGS_ONLY
 TEST(VmFlagsParserTest, ParseTwoInstancesUuidFlagEmptyJson) {
   const char* test_string = R""""(
 {
@@ -659,7 +658,6 @@ TEST(VmFlagsParserTest, ParseTwoInstancesUuidFlagFullJson) {
       R"(--uuid=870acfc4-c8c4-11e7-99ac-5065f31dc250,870acfc4-c8c4-11e7-99ac-5065f31dc251)"))
       << "uuid flag is missing or wrongly formatted";
 }
-#endif
 
 TEST(VmFlagsParserTest, ParseTwoInstancesSandboxFlagEmptyJson) {
   const char* test_string = R""""(
