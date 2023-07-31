@@ -20,6 +20,116 @@
 
 namespace cuttlefish {
 
+TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--extra_bootconfig_args=,)"))
+      << "extra_bootconfig_args flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "boot": {
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "boot": {
+                "extra_bootconfig_args": "androidboot.X=Y"
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         R"(--extra_bootconfig_args=,androidboot.X=Y)"))
+      << "extra_bootconfig_args flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "boot": {
+                "extra_bootconfig_args": "androidboot.X=Y"
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "boot": {
+                "extra_bootconfig_args": "androidboot.X=Z"
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(
+      FindConfig(*serialized_data,
+                 R"(--extra_bootconfig_args=androidboot.X=Y,androidboot.X=Z)"))
+      << "extra_bootconfig_args flag is missing or wrongly formatted";
+}
+
 TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagEmptyJson) {
   const char* test_string = R""""(
 {
@@ -238,6 +348,115 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
   EXPECT_TRUE(FindConfig(
       *serialized_data, R"(--serial_number=CUTTLEFISHCVD101,CUTTLEFISHCVD102)"))
       << "serial_number flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesRandomSerialFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--use_random_serial=false,false)"))
+      << "use_random_serial flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesRandomSerialFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "security": {
+                "serial_number": "CUTTLEFISHCVD101"
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "security": {
+                "serial_number": "@random"
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--use_random_serial=false,true)"))
+      << "use_random_serial flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesRandomSerialFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "security": {
+                "serial_number": "@random"
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "security": {
+                "serial_number": "@random"
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--use_random_serial=true,true)"))
+      << "use_random_serial flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesEnforceSecurityFlagEmptyJson) {
