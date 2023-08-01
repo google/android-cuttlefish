@@ -123,43 +123,69 @@ void AddFetchCommandArgs(
 
   command.add_args(
       "--target_subdirectory=" +
-      JoinBySelector(fetch_instances,
-                     [](const FetchCvdInstanceConfig& instance_config) {
-                       return instance_config.target_subdirectory;
-                     }));
-  std::optional<std::string> default_build_params = JoinBySelectorOptional(
-      fetch_instances, [](const FetchCvdInstanceConfig& instance_config) {
+      JoinBySelector(fetch_instances, [](const auto& instance_config) {
+        return instance_config.target_subdirectory;
+      }));
+  std::optional<std::string> default_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
         return instance_config.default_build.value_or("");
       });
   if (default_build_params) {
     command.add_args("--default_build=" + *default_build_params);
   }
-  std::optional<std::string> system_build_params = JoinBySelectorOptional(
-      fetch_instances, [](const FetchCvdInstanceConfig& instance_config) {
+  std::optional<std::string> system_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
         return instance_config.system_build.value_or("");
       });
   if (system_build_params) {
     command.add_args("--system_build=" + *system_build_params);
   }
-  std::optional<std::string> kernel_build_params = JoinBySelectorOptional(
-      fetch_instances, [](const FetchCvdInstanceConfig& instance_config) {
+  std::optional<std::string> kernel_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
         return instance_config.kernel_build.value_or("");
       });
   if (kernel_build_params) {
     command.add_args("--kernel_build=" + *kernel_build_params);
   }
-  std::optional<std::string> download_img_zip_params = JoinBySelectorOptional(
-      fetch_instances, [](const FetchCvdInstanceConfig& instance_config) {
+  std::optional<std::string> boot_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.boot_build.value_or("");
+      });
+  if (boot_build_params) {
+    command.add_args("--boot_build=" + *boot_build_params);
+  }
+  std::optional<std::string> bootloader_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.bootloader_build.value_or("");
+      });
+  if (bootloader_build_params) {
+    command.add_args("--bootloader_build=" + *bootloader_build_params);
+  }
+  std::optional<std::string> otatools_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.otatools_build.value_or("");
+      });
+  if (otatools_build_params) {
+    command.add_args("--otatools_build=" + *otatools_build_params);
+  }
+  std::optional<std::string> host_package_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.host_package_build.value_or("");
+      });
+  if (host_package_build_params) {
+    command.add_args("--host_package_build=" + *host_package_build_params);
+  }
+  std::optional<std::string> download_img_zip_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
         return instance_config.download_img_zip.value_or("");
       });
   if (download_img_zip_params) {
     command.add_args("--download_img_zip=" + *download_img_zip_params);
   }
   std::optional<std::string> download_target_files_zip_params =
-      JoinBySelectorOptional(
-          fetch_instances, [](const FetchCvdInstanceConfig& instance_config) {
-            return instance_config.download_target_files_zip.value_or("");
-          });
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.download_target_files_zip.value_or("");
+      });
   if (download_target_files_zip_params) {
     command.add_args("--download_target_files_zip=" +
                      *download_target_files_zip_params);
