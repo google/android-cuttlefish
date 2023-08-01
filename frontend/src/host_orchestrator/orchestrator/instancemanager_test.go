@@ -108,10 +108,10 @@ func TestAndroidCICVDDownloaderDownloadMultipleTimesSucceeds(t *testing.T) {
 			for _, name := range []string{outCVD, outFetchCVD} {
 				exists, err := fileExist(name)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
 				}
 				if exists != true {
-					t.Errorf("expected true")
+					t.Error("expected true")
 				}
 			}
 		}()
