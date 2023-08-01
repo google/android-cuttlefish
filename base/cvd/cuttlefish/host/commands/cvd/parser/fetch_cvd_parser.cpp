@@ -19,8 +19,10 @@
 #include <algorithm>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
+#include <android-base/strings.h>
 #include <json/json.h>
 
 #include "common/libs/utils/result.h"
@@ -29,13 +31,23 @@
 namespace cuttlefish {
 namespace {
 
+constexpr std::string_view kFetchPrefix = "@ab/";
+
 Result<void> InitFetchInstanceConfigs(Json::Value& instance) {
   CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
                        {"disk", "default_build"}));
   CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
-                       {"disk", "system_build"}));
+                       {"disk", "super", "system"}));
   CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
-                       {"disk", "kernel_build"}));
+                       {"boot", "kernel", "build"}));
+  CF_EXPECT(
+      InitConfig(instance, Json::Value::nullSingleton(), {"boot", "build"}));
+  CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
+                       {"boot", "bootloader", "build"}));
+  CF_EXPECT(
+      InitConfig(instance, Json::Value::nullSingleton(), {"disk", "otatools"}));
+  CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
+                       {"disk", "host_package"}));
   CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
                        {"disk", "download_img_zip"}));
   CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
@@ -44,15 +56,16 @@ Result<void> InitFetchInstanceConfigs(Json::Value& instance) {
 }
 
 Result<void> InitFetchCvdConfigs(Json::Value& root) {
-  CF_EXPECT(InitConfig(root, Json::Value::nullSingleton(), {"api_key"}));
   CF_EXPECT(
-      InitConfig(root, Json::Value::nullSingleton(), {"credential_source"}));
-  CF_EXPECT(
-      InitConfig(root, Json::Value::nullSingleton(), {"wait_retry_period"}));
+      InitConfig(root, Json::Value::nullSingleton(), {"fetch", "api_key"}));
   CF_EXPECT(InitConfig(root, Json::Value::nullSingleton(),
-                       {"external_dns_resolver"}));
+                       {"fetch", "credential_source"}));
   CF_EXPECT(InitConfig(root, Json::Value::nullSingleton(),
-                       {"keep_downloaded_archives"}));
+                       {"fetch", "wait_retry_period"}));
+  CF_EXPECT(InitConfig(root, Json::Value::nullSingleton(),
+                       {"fetch", "external_dns_resolver"}));
+  CF_EXPECT(InitConfig(root, Json::Value::nullSingleton(),
+                       {"fetch", "keep_downloaded_archives"}));
   Json::Value& instances = root["instances"];
   const int size = instances.size();
   for (int i = 0; i < size; i++) {
@@ -61,11 +74,23 @@ Result<void> InitFetchCvdConfigs(Json::Value& root) {
   return {};
 }
 
-std::optional<std::string> OptString(const Json::Value& value) {
+std::optional<std::string> GetOptString(const Json::Value& value) {
   if (value.isNull()) {
     return std::nullopt;
   }
   return value.asString();
+}
+
+std::optional<std::string> GetRemoteBuildString(const Json::Value& value) {
+  if (value.isNull()) {
+    return std::nullopt;
+  }
+  std::string strVal = value.asString();
+  std::string_view result = strVal;
+  if (!android::base::ConsumePrefix(&result, kFetchPrefix)) {
+    return std::nullopt;
+  }
+  return std::string(result);
 }
 
 bool ShouldFetch(const std::vector<std::optional<std::string>>& values) {
@@ -77,24 +102,34 @@ bool ShouldFetch(const std::vector<std::optional<std::string>>& values) {
 
 FetchCvdInstanceConfig ParseFetchInstanceConfigs(const Json::Value& instance) {
   auto result = FetchCvdInstanceConfig{
-      .default_build = OptString(instance["disk"]["default_build"]),
-      .system_build = OptString(instance["disk"]["system_build"]),
-      .kernel_build = OptString(instance["disk"]["kernel_build"]),
-      .download_img_zip = OptString(instance["disk"]["download_img_zip"]),
+      .default_build = GetRemoteBuildString(instance["disk"]["default_build"]),
+      .system_build = GetRemoteBuildString(instance["disk"]["super"]["system"]),
+      .kernel_build = GetRemoteBuildString(instance["boot"]["kernel"]["build"]),
+      .boot_build = GetRemoteBuildString(instance["boot"]["build"]),
+      .bootloader_build =
+          GetRemoteBuildString(instance["boot"]["bootloader"]["build"]),
+      .otatools_build = GetRemoteBuildString(instance["disk"]["otatools"]),
+      .host_package_build =
+          GetRemoteBuildString(instance["disk"]["host_package"]),
+      .download_img_zip = GetOptString(instance["disk"]["download_img_zip"]),
       .download_target_files_zip =
-          OptString(instance["disk"]["download_target_files_zip"])};
+          GetOptString(instance["disk"]["download_target_files_zip"])};
   result.should_fetch = ShouldFetch(
-      {result.default_build, result.system_build, result.kernel_build});
+      {result.default_build, result.system_build, result.kernel_build,
+       result.boot_build, result.bootloader_build, result.otatools_build,
+       result.host_package_build});
   return result;
 }
 
-FetchCvdConfig GenerateFetchCvdFlags(const Json::Value& root) {
+FetchCvdConfig ParseFetchConfigs(const Json::Value& root) {
   auto result = FetchCvdConfig{
-      .api_key = OptString(root["api_key"]),
-      .credential_source = OptString(root["credential_source"]),
-      .wait_retry_period = OptString(root["wait_retry_period"]),
-      .external_dns_resolver = OptString(root["external_dns_resolver"]),
-      .keep_downloaded_archives = OptString(root["keep_downloaded_archives"])};
+      .api_key = GetOptString(root["fetch"]["api_key"]),
+      .credential_source = GetOptString(root["fetch"]["credential_source"]),
+      .wait_retry_period = GetOptString(root["fetch"]["wait_retry_period"]),
+      .external_dns_resolver =
+          GetOptString(root["fetch"]["external_dns_resolver"]),
+      .keep_downloaded_archives =
+          GetOptString(root["fetch"]["keep_downloaded_archives"])};
 
   const int num_instances = root["instances"].size();
   for (unsigned int i = 0; i < num_instances; i++) {
@@ -108,7 +143,7 @@ FetchCvdConfig GenerateFetchCvdFlags(const Json::Value& root) {
 
 Result<FetchCvdConfig> ParseFetchCvdConfigs(Json::Value& root) {
   CF_EXPECT(InitFetchCvdConfigs(root));
-  return {GenerateFetchCvdFlags(root)};
+  return {ParseFetchConfigs(root)};
 }
 
 }  // namespace cuttlefish
