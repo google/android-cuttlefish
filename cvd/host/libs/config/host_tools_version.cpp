@@ -30,6 +30,7 @@ using std::uint32_t;
 namespace cuttlefish {
 
 uint32_t FileCrc(const std::string& path) {
+  /*
   uint32_t crc = crc32(0, (unsigned char*) path.c_str(), path.size());
   std::ifstream file_stream(path, std::ifstream::binary);
   std::vector<char> data(1024, 0);
@@ -38,6 +39,8 @@ uint32_t FileCrc(const std::string& path) {
     crc = crc32(crc, (unsigned char*) data.data(), file_stream.gcount());
   }
   return crc;
+  */
+  return path.size();
 }
 
 static std::map<std::string, uint32_t> DirectoryCrc(const std::string& path) {

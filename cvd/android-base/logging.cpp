@@ -304,7 +304,8 @@ void DefaultAborter(const char* abort_message) {
   abort();
 }
 
-static void LogdLogChunk(LogId id, LogSeverity severity, const char* tag, const char* message) {
+static void LogdLogChunk(LogId, LogSeverity, const char*, const char*) {
+  /*
   int32_t lg_id = LogIdTolog_id_t(id);
   int32_t priority = LogSeverityToPriority(severity);
 
@@ -315,6 +316,7 @@ static void LogdLogChunk(LogId id, LogSeverity severity, const char* tag, const 
   } else {
     __android_log_buf_print(lg_id, priority, tag, "%s", message);
   }
+  */
 }
 
 LogdLogger::LogdLogger(LogId default_log_id) : default_log_id_(default_log_id) {}

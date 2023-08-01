@@ -16,6 +16,8 @@
 
 #pragma once
 
+#define __builtin_available(v1, v2) false
+
 //
 // Google-style C++ logging.
 //

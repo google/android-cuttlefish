@@ -20,6 +20,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <fmt/ostream.h>
 #include <json/json.h>
 
 #include "common/libs/utils/files.h"
@@ -27,6 +28,7 @@
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
+template <> struct fmt::formatter<cuttlefish::ExternalNetworkMode> : ostream_formatter {};
 namespace cuttlefish {
 namespace {
 
@@ -38,21 +40,21 @@ std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
 
 }  // namespace
 
-std::ostream& operator<<(std::ostream& out, ExternalNetworkMode net) {
+std::ostream& operator<<(std::ostream& out, cuttlefish::ExternalNetworkMode net) {
   switch (net) {
-    case ExternalNetworkMode::kUnknown:
+    case cuttlefish::ExternalNetworkMode::kUnknown:
       return out << "unknown";
-    case ExternalNetworkMode::kTap:
+    case cuttlefish::ExternalNetworkMode::kTap:
       return out << "tap";
-    case ExternalNetworkMode::kSlirp:
+    case cuttlefish::ExternalNetworkMode::kSlirp:
       return out << "slirp";
   }
 }
-Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
+cuttlefish::Result<cuttlefish::ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
   if (android::base::EqualsIgnoreCase(str, "tap")) {
-    return ExternalNetworkMode::kTap;
+    return cuttlefish::ExternalNetworkMode::kTap;
   } else if (android::base::EqualsIgnoreCase(str, "slirp")) {
-    return ExternalNetworkMode::kSlirp;
+    return cuttlefish::ExternalNetworkMode::kSlirp;
   } else {
     return CF_ERRF(
         "\"{}\" is not a valid ExternalNetworkMode. Valid values are \"tap\" "
