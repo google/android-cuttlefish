@@ -35,7 +35,7 @@ Result<void> InitInstancesConfigs(Json::Value& root) {
   CF_EXPECT(InitDiskConfigs(root));
   CF_EXPECT(InitBootConfigs(root));
   CF_EXPECT(InitSecurityConfigs(root));
-  InitGraphicsConfigs(root);
+  CF_EXPECT(InitGraphicsConfigs(root));
   return {};
 }
 
@@ -45,7 +45,7 @@ Result<std::vector<std::string>> GenerateInstancesFlags(
   result = MergeResults(result, CF_EXPECT(GenerateDiskFlags(root)));
   result = MergeResults(result, CF_EXPECT(GenerateBootFlags(root)));
   result = MergeResults(result, CF_EXPECT(GenerateSecurityFlags(root)));
-  result = MergeResults(result, GenerateGraphicsFlags(root));
+  result = MergeResults(result, CF_EXPECT(GenerateGraphicsFlags(root)));
   result = MergeResults(result, GenerateMetricsFlags(root));
 
   return result;
