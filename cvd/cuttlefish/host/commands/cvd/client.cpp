@@ -442,7 +442,6 @@ Result<void> CvdClient::HandleCvdCommand(
   if (was_client_command) {
     return {};
   }
-  CF_EXPECT(ValidateServerVersion(), "Unable to ensure cvd_server is running.");
 
   auto version_command_handle_report =
       CF_EXPECT(HandleVersionCommand(*this, new_all_args));
