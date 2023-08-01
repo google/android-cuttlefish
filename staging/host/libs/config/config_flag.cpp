@@ -123,7 +123,10 @@ class ConfigFlagImpl : public ConfigFlag {
         "device/google/cuttlefish/shared/config/config_*.json for possible "
         "values.";
     auto getter = [this]() { return config_; };
-    auto setter = [this](const FlagMatch& m) { return ChooseConfig(m.value); };
+    auto setter = [this](const FlagMatch& m) -> Result<void> {
+      CF_EXPECT(ChooseConfig(m.value));
+      return {};
+    };
     flag_ = GflagsCompatFlag("config").Help(help).Getter(getter).Setter(setter);
   }
 
@@ -163,15 +166,13 @@ class ConfigFlagImpl : public ConfigFlag {
   }
 
  private:
-  bool ChooseConfig(const std::string& name) {
-    if (!config_reader_.HasConfig(name)) {
-      LOG(ERROR) << "Invalid --config option '" << name << "'. Valid options: "
-                 << android::base::Join(config_reader_.AvailableConfigs(), ",");
-      return false;
-    }
+  Result<void> ChooseConfig(const std::string& name) {
+    CF_EXPECTF(config_reader_.HasConfig(name),
+               "Invalid --config option '{}'. Valid options: [{}]", name,
+               fmt::join(config_reader_.AvailableConfigs(), ","));
     config_ = name;
     is_default_ = false;
-    return true;
+    return {};
   }
   std::optional<std::string> FindAndroidInfoConfig() const {
     auto info_path = system_image_dir_flag_.Path() + "/android-info.txt";

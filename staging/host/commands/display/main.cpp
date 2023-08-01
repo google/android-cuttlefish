@@ -189,9 +189,9 @@ Result<int> DoRemove(std::vector<std::string>& args) {
   const std::vector<Flag> remove_displays_flags = {
       GflagsCompatFlag(kDisplayFlag)
           .Help("Display id of a display to remove.")
-          .Setter([&](const FlagMatch& match) {
+          .Setter([&](const FlagMatch& match) -> Result<void> {
             displays.push_back(match.value);
-            return true;
+            return {};
           }),
   };
   auto parse_res = ParseFlags(remove_displays_flags, args);
