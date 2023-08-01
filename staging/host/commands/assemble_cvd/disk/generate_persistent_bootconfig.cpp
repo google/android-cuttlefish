@@ -26,7 +26,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/size_utils.h"
-#include "host/libs/config/bootconfig_args.h"
+#include "host/commands/assemble_cvd/bootconfig_args.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/feature.h"
