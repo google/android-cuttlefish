@@ -100,7 +100,7 @@ FlagCollection::FilterFlags(cvd_common::Args& args) const {
       continue;
     }
     output.emplace(name,
-                   FlagValuePair{.flag = flag_proxy, .value = *value_opt});
+                   FlagValuePair{.value = *value_opt, .flag = flag_proxy});
   }
   return output;
 }
@@ -120,20 +120,20 @@ FlagCollection::CalculateFlags(cvd_common::Args& args) const {
       case CvdFlagProxy::FlagType::kBool:
         output.emplace(
             name,
-            FlagValuePair{.flag = flag_proxy,
-                          .value = CF_EXPECT(flag_proxy.DefaultValue<bool>())});
+            FlagValuePair{.value = CF_EXPECT(flag_proxy.DefaultValue<bool>()),
+                          .flag = flag_proxy});
         break;
       case CvdFlagProxy::FlagType::kInt32:
         output.emplace(
-            name, FlagValuePair{.flag = flag_proxy,
-                                .value = CF_EXPECT(
-                                    flag_proxy.DefaultValue<std::int32_t>())});
+            name, FlagValuePair{.value = CF_EXPECT(
+                                    flag_proxy.DefaultValue<std::int32_t>()),
+                                .flag = flag_proxy,});
         break;
       case CvdFlagProxy::FlagType::kString:
         output.emplace(
-            name, FlagValuePair{.flag = flag_proxy,
-                                .value = CF_EXPECT(
-                                    flag_proxy.DefaultValue<std::string>())});
+            name, FlagValuePair{.value = CF_EXPECT(
+                                    flag_proxy.DefaultValue<std::string>()),
+                                .flag = flag_proxy,});
         break;
       default:
         return CF_ERR("Unsupported FlagType in "

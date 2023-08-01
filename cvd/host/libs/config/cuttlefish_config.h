@@ -87,7 +87,8 @@ enum class ExternalNetworkMode {
   kSlirp,
 };
 
-std::ostream& operator<<(std::ostream&, ExternalNetworkMode);
+std::ostream& operator<<(std::ostream&, cuttlefish::ExternalNetworkMode);
+
 Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view);
 
 // Holds the configuration of the cuttlefish instances.
@@ -984,3 +985,5 @@ extern const char* const kHwComposerDrm;
 extern const char* const kHwComposerRanchu;
 extern const char* const kHwComposerNone;
 }  // namespace cuttlefish
+
+using cuttlefish::operator<<;
