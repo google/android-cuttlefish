@@ -48,9 +48,10 @@ type CreateCVDAction struct {
 	paths                    IMPaths
 	om                       OperationManager
 	execContext              cvd.CVDExecContext
+	cvdToolsVersion          AndroidBuild
 	buildAPIFactory          BuildAPIFactory
 	userArtifactsDirResolver UserArtifactsDirResolver
-	downloadCVDHandler       *downloadCVDHandler
+	cvdDownloader            CVDDownloader
 	buildArtifactsFetcher    ArtifactsFetcherFactory
 	artifactsMngr            *ArtifactsManager
 	startCVDHandler          *startCVDHandler
@@ -65,12 +66,11 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		hostValidator:            opts.HostValidator,
 		paths:                    opts.Paths,
 		om:                       opts.OperationManager,
+		cvdToolsVersion:          opts.CVDToolsVersion,
 		buildAPIFactory:          opts.BuildAPIFactory,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
 
-		downloadCVDHandler: newDownloadCVDHandler(
-			opts.CVDToolsVersion,
-			&opts.Paths,
+		cvdDownloader: NewAndroidCICVDDownloader(
 			opts.BuildAPIFactory(""), // cvd can be downloaded without credentials
 		),
 		buildArtifactsFetcher: newArtifactsFetcherFactory(
@@ -104,7 +104,7 @@ func (a *CreateCVDAction) Run() (apiv1.Operation, error) {
 	if err := createRuntimesRootDir(a.paths.RuntimesRootDir); err != nil {
 		return apiv1.Operation{}, fmt.Errorf("failed creating cuttlefish runtime directory: %w", err)
 	}
-	if err := a.downloadCVDHandler.Download(); err != nil {
+	if err := a.cvdDownloader.Download(a.cvdToolsVersion, a.paths.CVDBin(), a.paths.FetchCVDBin()); err != nil {
 		return apiv1.Operation{}, err
 	}
 	op := a.om.New()

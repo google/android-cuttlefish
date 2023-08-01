@@ -25,7 +25,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
@@ -187,65 +186,59 @@ func untarCVDHostPackage(dir string) error {
 	return nil
 }
 
-// Makes sure `cvd` gets downloaded once.
-type downloadCVDHandler struct {
-	Build            AndroidBuild
-	cvdFilename      string
-	fetchCVDFilename string
-	BuildAPI         BuildAPI
-
-	mutex sync.Mutex
+type CVDDownloader interface {
+	// Downloads the `cvd` and `fetch_cvd` binaries into the given filenames.
+	Download(build AndroidBuild, outCVD, outFetchCVD string) error
 }
 
-func newDownloadCVDHandler(build AndroidBuild, paths *IMPaths, buildAPI BuildAPI) *downloadCVDHandler {
-	return &downloadCVDHandler{
-		Build:            build,
-		cvdFilename:      paths.CVDBin(),
-		fetchCVDFilename: paths.FetchCVDBin(),
-		BuildAPI:         buildAPI,
+type AndroidCICVDDownloader struct {
+	buildAPI BuildAPI
+}
+
+func NewAndroidCICVDDownloader(buildAPI BuildAPI) *AndroidCICVDDownloader {
+	return &AndroidCICVDDownloader{
+		buildAPI: buildAPI,
 	}
 }
 
-func (h *downloadCVDHandler) Download() error {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-	if err := h.download(h.cvdFilename); err != nil {
+func (h *AndroidCICVDDownloader) Download(build AndroidBuild, outCVD, outFetchCVD string) error {
+	if err := h.download(build, outCVD); err != nil {
 		return fmt.Errorf("failed downloading cvd file: %w", err)
 	}
-	if err := h.download(h.fetchCVDFilename); err != nil {
+	if err := h.download(build, outFetchCVD); err != nil {
 		return fmt.Errorf("failed downloading fetch_cvd file: %w", err)
 	}
 	return nil
 }
 
-func (h *downloadCVDHandler) download(filename string) error {
-	exist, err := fileExist(filename)
+func (h *AndroidCICVDDownloader) download(build AndroidBuild, out string) error {
+	exist, err := fileExist(out)
 	if err != nil {
-		return fmt.Errorf("failed to test if the `%s` file %q does exist: %w", filepath.Base(filename), filename, err)
+		return fmt.Errorf("failed to test if the `%s` file %q does exist: %w", filepath.Base(out), out, err)
 	}
 	if exist {
 		return nil
 	}
-	f, err := os.Create(filename)
+	f, err := os.Create(out)
 	if err != nil {
-		return fmt.Errorf("failed to create the `%s` file %q: %w", filepath.Base(filename), filename, err)
+		return fmt.Errorf("failed to create the `%s` file %q: %w", filepath.Base(out), out, err)
 	}
 	var downloadErr error
 	defer func() {
 		if err := f.Close(); err != nil {
-			log.Printf("failed closing `%s` file %q file, error: %v", filepath.Base(filename), filename, err)
+			log.Printf("failed closing `%s` file %q file, error: %v", filepath.Base(out), out, err)
 		}
 		if downloadErr != nil {
-			if err := os.Remove(filename); err != nil {
-				log.Printf("failed removing  `%s` file %q: %v", filepath.Base(filename), filename, err)
+			if err := os.Remove(out); err != nil {
+				log.Printf("failed removing  `%s` file %q: %v", filepath.Base(out), out, err)
 			}
 		}
 
 	}()
-	if err := h.BuildAPI.DownloadArtifact(filepath.Base(filename), h.Build.ID, h.Build.Target, f); err != nil {
+	if err := h.buildAPI.DownloadArtifact(filepath.Base(out), build.ID, build.Target, f); err != nil {
 		return err
 	}
-	return os.Chmod(filename, 0750)
+	return os.Chmod(out, 0750)
 }
 
 // Fetches artifacts using the build api or the fetch_cvd tool as necessary.
