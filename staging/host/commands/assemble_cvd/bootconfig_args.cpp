@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/config/bootconfig_args.h"
+#include "host/commands/assemble_cvd/bootconfig_args.h"
 
 #include <array>
 #include <sstream>
@@ -60,7 +60,7 @@ Result<std::unordered_map<std::string, std::string>> VmManagerBootconfig(
     // need to mux, and would prefer to retain the kernel dmesg logging, so we
     // must work around init falling back to the check for /dev/console (which
     // we'll always have).
-    //bootconfig_args["androidboot.console"] = "invalid";
+    // bootconfig_args["androidboot.console"] = "invalid";
     // The bug above has been fixed in Android 14 and later so we can just
     // specify androidboot.serialconsole=0 instead.
     bootconfig_args["androidboot.serialconsole"] = "0";
