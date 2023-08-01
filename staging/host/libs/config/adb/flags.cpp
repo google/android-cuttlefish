@@ -36,13 +36,14 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
       }
       return modes.str().substr(1);  // First comma
     });
-    mode_flag_.Setter([this](const FlagMatch& match) {
+    mode_flag_.Setter([this](const FlagMatch& match) -> Result<void> {
       // TODO(schuffelen): Error on unknown types?
       std::set<AdbMode> modes;
       for (auto& mode : android::base::Split(match.value, ",")) {
         modes.insert(StringToAdbMode(mode));
       }
-      return config_.SetModes(modes);
+      CF_EXPECT(config_.SetModes(modes));
+      return {};
     });
   }
 
