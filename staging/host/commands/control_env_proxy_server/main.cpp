@@ -53,15 +53,10 @@ class ControlEnvProxyServiceImpl final
     std::vector<std::string> args{request->service_name(),
                                   request->method_name(),
                                   request->json_formatted_proto()};
-    std::vector<std::string> options;
-
-    auto result =
-        cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "call", args, options);
-
+    auto result = cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "call", args);
     if (!TypeIsSuccess(result)) {
       return Status(StatusCode::FAILED_PRECONDITION, "Call gRPC method failed");
     }
-
     reply->set_json_formatted_proto(*result);
 
     return Status::OK;
