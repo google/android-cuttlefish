@@ -31,7 +31,7 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/libs/config/bootconfig_args.h"
+#include "host/commands/assemble_cvd/bootconfig_args.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/kernel_args.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
