@@ -66,10 +66,8 @@ Result<void> InitFetchCvdConfigs(Json::Value& root) {
                        {"fetch", "external_dns_resolver"}));
   CF_EXPECT(InitConfig(root, Json::Value::nullSingleton(),
                        {"fetch", "keep_downloaded_archives"}));
-  Json::Value& instances = root["instances"];
-  const int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    CF_EXPECT(InitFetchInstanceConfigs(instances[i]));
+  for (auto& instance : root["instances"]) {
+    CF_EXPECT(InitFetchInstanceConfigs(instance));
   }
   return {};
 }
@@ -131,10 +129,8 @@ FetchCvdConfig ParseFetchConfigs(const Json::Value& root) {
       .keep_downloaded_archives =
           GetOptString(root["fetch"]["keep_downloaded_archives"])};
 
-  const int num_instances = root["instances"].size();
-  for (unsigned int i = 0; i < num_instances; i++) {
-    result.instances.emplace_back(
-        ParseFetchInstanceConfigs(root["instances"][i]));
+  for (const auto& instance : root["instances"]) {
+    result.instances.emplace_back(ParseFetchInstanceConfigs(instance));
   }
   return result;
 }
