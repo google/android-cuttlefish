@@ -56,3 +56,7 @@ $(call inherit-product, device/google/cuttlefish/vsoc_x86_64_only/auto/aosp_cf.m
 
 PRODUCT_NAME := aosp_cf_x86_64_auto_md
 PRODUCT_MODEL := Cuttlefish x86_64 auto 64-bit only multi-displays
+
+ifeq ($(words ${_include_stack}),1)  # Show warning only when this is the final target product.
+$(warning ${PRODUCT_NAME} is for development purposes only.)
+endif
