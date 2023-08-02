@@ -45,12 +45,15 @@ type ExtraCVDOptions struct {
 	SystemImgTarget  string
 }
 
-type ArtifactsFetcher interface {
-	// Fetches all artifacts necessary to launch a CVD. It support downloading a system
+type CVDArtifactsFetcher interface {
+	// Fetches all the necessary artifacts to launch a Cuttlefish device. It support downloading a system
 	// image from a different build if the extraOptions is provided.
-	FetchCVD(outDir, buildID, target string, extraOptions *ExtraCVDOptions) error
-	// Fetches specific artifacts from the build API.
-	FetchArtifacts(outDir, buildID, target string, artifacts ...string) error
+	Fetch(outDir, buildID, target string, extraOptions *ExtraCVDOptions) error
+}
+
+type ArtifactsFetcher interface {
+	// Fetches specific artifacts.
+	Fetch(outDir, buildID, target string, artifacts ...string) error
 }
 
 type downloadArtifactsResult struct {
@@ -63,7 +66,8 @@ type downloadArtifactsMapEntry struct {
 	result *downloadArtifactsResult
 }
 
-func (h *ArtifactsManager) GetCVDBundle(buildID, target string, extraOptions *ExtraCVDOptions, fetcher ArtifactsFetcher) (string, error) {
+func (h *ArtifactsManager) GetCVDBundle(
+	buildID, target string, extraOptions *ExtraCVDOptions, fetcher CVDArtifactsFetcher) (string, error) {
 	outDir := fmt.Sprintf("%s/%s_%s__cvd", h.rootDir, buildID, target)
 	f := func() (string, error) {
 		if extraOptions != nil {
@@ -71,7 +75,7 @@ func (h *ArtifactsManager) GetCVDBundle(buildID, target string, extraOptions *Ex
 			// if the same arguments are used.
 			outDir = fmt.Sprintf("%s/%s__custom_cvd", h.rootDir, h.uuidGen())
 		}
-		if err := fetcher.FetchCVD(outDir, buildID, target, extraOptions); err != nil {
+		if err := fetcher.Fetch(outDir, buildID, target, extraOptions); err != nil {
 			return "", err
 		}
 		return outDir, nil
@@ -85,10 +89,10 @@ func (h *ArtifactsManager) GetKernelBundle(buildID, target string, fetcher Artif
 		if err := createDir(outDir); err != nil {
 			return "", err
 		}
-		if err := fetcher.FetchArtifacts(outDir, buildID, target, "bzImage"); err != nil {
+		if err := fetcher.Fetch(outDir, buildID, target, "bzImage"); err != nil {
 			return "", err
 		}
-		if err := fetcher.FetchArtifacts(outDir, buildID, target, "initramfs.img"); err != nil {
+		if err := fetcher.Fetch(outDir, buildID, target, "initramfs.img"); err != nil {
 			// Certain kernel builds do not have corresponding ramdisks.
 			if apiErr, ok := err.(*BuildAPIError); ok && apiErr.Code != http.StatusNotFound {
 				return "", err
@@ -105,7 +109,7 @@ func (h *ArtifactsManager) GetBootloaderBundle(buildID, target string, fetcher A
 		if err := createDir(outDir); err != nil {
 			return "", err
 		}
-		if err := fetcher.FetchArtifacts(outDir, buildID, target, "u-boot.rom"); err != nil {
+		if err := fetcher.Fetch(outDir, buildID, target, "u-boot.rom"); err != nil {
 			return "", err
 		}
 		return outDir, nil

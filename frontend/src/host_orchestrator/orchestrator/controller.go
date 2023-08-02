@@ -140,8 +140,9 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	credsProvider := &CreateCVDRequestCredsProvider{Request: req}
 	buildAPIOpts := AndroidCIBuildAPIOpts{Creds: credsProvider}
 	buildAPI := NewAndroidCIBuildAPIWithOpts(http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
-	artifactsFetcher := newCombinedArtifactFetcher(
-		exec.CommandContext, h.Config.Paths.FetchCVDBin(), buildAPI, credsProvider.Get())
+	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
+	cvdArtifactsFetcher := newFetchCVDCommandArtifactsFetcher(
+		exec.CommandContext, h.Config.Paths.FetchCVDBin(), credsProvider.Get())
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
@@ -152,6 +153,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDDownloader:            cvdDwnl,
 		BuildAPI:                 buildAPI,
 		ArtifactsFetcher:         artifactsFetcher,
+		CVDArtifactsFetcher:      cvdArtifactsFetcher,
 		UUIDGen:                  func() string { return uuid.New().String() },
 		CVDStartTimeout:          3 * time.Minute,
 		CVDUser:                  h.Config.CVDUser,

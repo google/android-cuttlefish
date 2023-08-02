@@ -38,6 +38,7 @@ type CreateCVDActionOpts struct {
 	CVDToolsVersion          AndroidBuild
 	BuildAPI                 BuildAPI
 	ArtifactsFetcher         ArtifactsFetcher
+	CVDArtifactsFetcher      CVDArtifactsFetcher
 	UUIDGen                  func() string
 	CVDUser                  string
 	CVDStartTimeout          time.Duration
@@ -54,6 +55,7 @@ type CreateCVDAction struct {
 	cvdDownloader            CVDDownloader
 	buildAPI                 BuildAPI
 	artifactsFetcher         ArtifactsFetcher
+	cvdArtifactsFetcher      CVDArtifactsFetcher
 	userArtifactsDirResolver UserArtifactsDirResolver
 	artifactsMngr            *ArtifactsManager
 	startCVDHandler          *startCVDHandler
@@ -72,6 +74,7 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		cvdDownloader:            opts.CVDDownloader,
 		buildAPI:                 opts.BuildAPI,
 		artifactsFetcher:         opts.ArtifactsFetcher,
+		cvdArtifactsFetcher:      opts.CVDArtifactsFetcher,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
 
 		artifactsMngr: NewArtifactsManager(
@@ -205,7 +208,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 			}
 		}
 		mainBuildDir, mainBuildErr = a.artifactsMngr.GetCVDBundle(
-			mainBuild.BuildID, mainBuild.Target, extraCVDOptions, a.artifactsFetcher)
+			mainBuild.BuildID, mainBuild.Target, extraCVDOptions, a.cvdArtifactsFetcher)
 	}()
 	if kernelBuild != nil {
 		wg.Add(1)
