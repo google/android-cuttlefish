@@ -51,6 +51,7 @@ cc_binary_host {
         "libcuttlefish_utils",
         "libprotobuf-cpp-full",
         "libgrpc++",
+        "libjsoncpp",
     ],
     static_libs: [
         "grpc_cli_libs",
