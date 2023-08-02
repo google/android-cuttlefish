@@ -18,12 +18,16 @@
 #include <unordered_map>
 
 #include <android-base/strings.h>
+#include <json/json.h>
 #include <test/cpp/util/grpc_tool.h>
 #include <test/cpp/util/test_config.h>
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 
+using android::base::EndsWith;
+using android::base::Split;
+using android::base::Trim;
 using grpc::InsecureChannelCredentials;
 
 namespace cuttlefish {
@@ -32,6 +36,9 @@ namespace {
 constexpr char kDefaultOptionL[] = "-l=false";
 constexpr char kDefaultOptionJsonInput[] = "--json_input=true";
 constexpr char kDefaultOptionJsonOutput[] = "--json_output=true";
+constexpr char kServiceServerReflection[] =
+    "grpc.reflection.v1alpha.ServerReflection";
+constexpr char kServiceHealth[] = "grpc.health.v1.Health";
 
 bool PrintStream(std::stringstream* ss, const grpc::string& output) {
   (*ss) << output;
@@ -107,7 +114,8 @@ Result<std::vector<std::string>> GetServiceList(
 
   std::string service_name;
   while (std::getline(output_stream, service_name)) {
-    if (service_name.compare("grpc.reflection.v1alpha.ServerReflection") == 0) {
+    if (service_name.compare(kServiceServerReflection) == 0 ||
+        service_name.compare(kServiceHealth) == 0) {
       continue;
     }
     service_list.emplace_back(service_name);
@@ -123,7 +131,7 @@ Result<std::string> GetServerAddress(
   for (const auto& server_address : server_address_list) {
     auto service_names = CF_EXPECT(GetServiceList(server_address));
     for (auto& full_service_name : service_names) {
-      if (android::base::EndsWith(full_service_name, service_name)) {
+      if (EndsWith(full_service_name, service_name)) {
         candidates.emplace_back(server_address);
         break;
       }
@@ -141,7 +149,7 @@ Result<std::string> GetFullServiceName(const std::string& server_address,
   std::vector<std::string> candidates;
   auto service_names = CF_EXPECT(GetServiceList(server_address));
   for (auto& full_service_name : service_names) {
-    if (android::base::EndsWith(full_service_name, service_name)) {
+    if (EndsWith(full_service_name, service_name)) {
       candidates.emplace_back(full_service_name);
     }
   }
@@ -176,8 +184,8 @@ Result<std::string> GetFullTypeName(const std::string& server_address,
   auto grpc_result = CF_EXPECT(RunGrpcCommand(arguments, options));
 
   std::vector<std::string> candidates;
-  for (auto& full_type_name : android::base::Split(grpc_result, "()")) {
-    if (android::base::EndsWith(full_type_name, type_name)) {
+  for (auto& full_type_name : Split(grpc_result, "()")) {
+    if (EndsWith(full_type_name, type_name)) {
       candidates.emplace_back(full_type_name);
     }
   }
@@ -200,7 +208,18 @@ Result<std::string> HandleLsCmd(
                                                 server_address};
         command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments));
       }
-      return command_output;
+
+      Json::Value json;
+      json["services"] = Json::Value(Json::arrayValue);
+      for (auto& full_service_name : Split(Trim(command_output), "\n")) {
+        if (full_service_name.compare(kServiceServerReflection) == 0 ||
+            full_service_name.compare(kServiceHealth) == 0) {
+          continue;
+        }
+        json["services"].append(Split(full_service_name, ".").back());
+      }
+      Json::StreamWriterBuilder builder;
+      return Json::writeString(builder, json) + "\n";
     }
     case 1: {
       // ls subcommand with 1 argument; service_name
@@ -211,7 +230,15 @@ Result<std::string> HandleLsCmd(
           CF_EXPECT(GetFullServiceName(server_address, service_name));
       std::vector<std::string> grpc_arguments{"grpc_cli", "ls", server_address,
                                               full_service_name};
-      return CF_EXPECT(RunGrpcCommand(grpc_arguments));
+      std::string command_output = CF_EXPECT(RunGrpcCommand(grpc_arguments));
+
+      Json::Value json;
+      json["methods"] = Json::Value(Json::arrayValue);
+      for (auto& method_name : Split(Trim(command_output), "\n")) {
+        json["methods"].append(method_name);
+      }
+      Json::StreamWriterBuilder builder;
+      return Json::writeString(builder, json) + "\n";
     }
     case 2: {
       // ls subcommand with 2 arguments; service_name and method_name
@@ -224,7 +251,20 @@ Result<std::string> HandleLsCmd(
       std::vector<std::string> grpc_arguments{"grpc_cli", "ls", server_address,
                                               full_method_name};
       std::vector<std::string> options{"-l"};
-      return CF_EXPECT(RunGrpcCommand(grpc_arguments, options));
+      std::string command_output =
+          CF_EXPECT(RunGrpcCommand(grpc_arguments, options));
+
+      // Example command_output:
+      //   rpc SetTxpower(wmediumdserver.SetTxpowerRequest) returns
+      // (google.protobuf.Empty) {}
+      std::vector<std::string> parsed_output =
+          Split(Trim(command_output), "()");
+      CF_EXPECT(parsed_output.size() == 5, "Unexpected parsing result");
+      Json::Value json;
+      json["request_type"] = Split(parsed_output[1], ".").back();
+      json["response_type"] = Split(parsed_output[3], ".").back();
+      Json::StreamWriterBuilder builder;
+      return Json::writeString(builder, json) + "\n";
     }
     default:
       return CF_ERR("too many arguments");
