@@ -26,6 +26,7 @@ cc_library_static {
         "libbase",
         "libcuttlefish_utils",
         "libgrpc++",
+        "libjsoncpp",
     ],
     static_libs: [
         "grpc_cli_libs",
