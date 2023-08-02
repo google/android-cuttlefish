@@ -91,6 +91,11 @@ Result<std::string> RunGrpcCommand(const std::vector<std::string>& arguments,
   return output_stream.str();
 }
 
+Result<std::string> RunGrpcCommand(const std::vector<std::string>& arguments) {
+  std::vector<std::string> options;
+  return RunGrpcCommand(arguments, options);
+}
+
 Result<std::vector<std::string>> GetServiceList(
     const std::string& server_address) {
   std::vector<std::string> service_list;
@@ -185,46 +190,50 @@ Result<std::string> GetFullTypeName(const std::string& server_address,
 
 Result<std::string> HandleLsCmd(
     const std::vector<std::string>& server_address_list,
-    const std::vector<std::string>& args,
-    const std::vector<std::string>& options) {
-  CF_EXPECT(args.size() < 3, "too many arguments");
-  std::string command_output;
-
-  if (args.size() > 0) {
-    std::vector<std::string> grpc_arguments{"grpc_cli", "ls"};
-
-    const auto& service_name = args[0];
-    const auto& server_address =
-        CF_EXPECT(GetServerAddress(server_address_list, service_name));
-    grpc_arguments.push_back(server_address);
-    if (args.size() > 1) {
+    const std::vector<std::string>& args) {
+  switch (args.size()) {
+    case 0: {
+      // ls subcommand with no arguments
+      std::string command_output;
+      for (const auto& server_address : server_address_list) {
+        std::vector<std::string> grpc_arguments{"grpc_cli", "ls",
+                                                server_address};
+        command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments));
+      }
+      return command_output;
+    }
+    case 1: {
+      // ls subcommand with 1 argument; service_name
+      const auto& service_name = args[0];
+      const auto& server_address =
+          CF_EXPECT(GetServerAddress(server_address_list, service_name));
+      const auto& full_service_name =
+          CF_EXPECT(GetFullServiceName(server_address, service_name));
+      std::vector<std::string> grpc_arguments{"grpc_cli", "ls", server_address,
+                                              full_service_name};
+      return CF_EXPECT(RunGrpcCommand(grpc_arguments));
+    }
+    case 2: {
       // ls subcommand with 2 arguments; service_name and method_name
+      const auto& service_name = args[0];
+      const auto& server_address =
+          CF_EXPECT(GetServerAddress(server_address_list, service_name));
       const auto& method_name = args[1];
       const auto& full_method_name = CF_EXPECT(
           GetFullMethodName(server_address, service_name, method_name));
-      grpc_arguments.push_back(full_method_name);
-    } else {
-      // ls subcommand with 1 argument; service_name
-      const auto& full_service_name =
-          CF_EXPECT(GetFullServiceName(server_address, service_name));
-      grpc_arguments.push_back(full_service_name);
+      std::vector<std::string> grpc_arguments{"grpc_cli", "ls", server_address,
+                                              full_method_name};
+      std::vector<std::string> options{"-l"};
+      return CF_EXPECT(RunGrpcCommand(grpc_arguments, options));
     }
-    command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments, options));
-  } else {
-    // ls subcommand with no arguments
-    for (const auto& server_address : server_address_list) {
-      std::vector<std::string> grpc_arguments{"grpc_cli", "ls", server_address};
-      command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments, options));
-    }
+    default:
+      return CF_ERR("too many arguments");
   }
-
-  return command_output;
 }
 
 Result<std::string> HandleTypeCmd(
     const std::vector<std::string>& server_address_list,
-    const std::vector<std::string>& args,
-    const std::vector<std::string>& options) {
+    const std::vector<std::string>& args) {
   CF_EXPECT(args.size() > 2,
             "need to specify a service name, a method name, and type_name");
   CF_EXPECT(args.size() < 4, "too many arguments");
@@ -242,15 +251,14 @@ Result<std::string> HandleTypeCmd(
       GetFullTypeName(server_address, service_name, method_name, type_name));
   grpc_arguments.push_back(full_type_name);
 
-  command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments, options));
+  command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments));
 
   return command_output;
 }
 
 Result<std::string> HandleCallCmd(
     const std::vector<std::string>& server_address_list,
-    const std::vector<std::string>& args,
-    const std::vector<std::string>& options) {
+    const std::vector<std::string>& args) {
   CF_EXPECT(args.size() > 2,
             "need to specify a service name, a method name, and json-formatted "
             "proto");
@@ -271,7 +279,7 @@ Result<std::string> HandleCallCmd(
   grpc_arguments.push_back(full_method_name);
   grpc_arguments.push_back(json_format_proto);
 
-  command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments, options));
+  command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments));
 
   return command_output;
 }
@@ -280,8 +288,7 @@ Result<std::string> HandleCallCmd(
 
 Result<std::string> HandleCmds(const std::string& grpc_socket_path,
                                const std::string& cmd,
-                               const std::vector<std::string>& args,
-                               const std::vector<std::string>& options) {
+                               const std::vector<std::string>& args) {
   std::vector<std::string> server_address_list;
   for (const auto& entry :
        std::filesystem::directory_iterator(grpc_socket_path)) {
@@ -292,7 +299,6 @@ Result<std::string> HandleCmds(const std::string& grpc_socket_path,
   auto command_map =
       std::unordered_map<std::string, std::function<Result<std::string>(
                                           const std::vector<std::string>&,
-                                          const std::vector<std::string>&,
                                           const std::vector<std::string>&)>>{{
           {"call", HandleCallCmd},
           {"ls", HandleLsCmd},
@@ -300,8 +306,7 @@ Result<std::string> HandleCmds(const std::string& grpc_socket_path,
       }};
   CF_EXPECT(Contains(command_map, cmd), cmd << " isn't supported");
 
-  auto command_output =
-      CF_EXPECT(command_map[cmd](server_address_list, args, options));
+  auto command_output = CF_EXPECT(command_map[cmd](server_address_list, args));
   return command_output;
 }
 
