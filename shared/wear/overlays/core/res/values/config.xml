@@ -93,8 +93,6 @@
   <integer name="config_triplePressOnStemPrimaryBehavior">1</integer>
   <integer name="config_doublePressOnPowerBehavior">3</integer>
   <integer name="config_veryLongPressTimeout">3000</integer>
-  <integer name="config_mashPressOnPowerBehavior">1</integer>
-  <integer name="config_mashPressVibrateTimeOnPowerButton">500</integer>
   <item name="config_wallpaperMinScale" format="float" type="dimen">0</item>
   <item name="config_wallpaperMaxScale" format="float" type="dimen">1</item>
   <bool name="config_alwaysScaleWallpaper">true</bool>
