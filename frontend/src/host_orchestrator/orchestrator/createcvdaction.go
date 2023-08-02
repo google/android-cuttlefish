@@ -37,6 +37,7 @@ type CreateCVDActionOpts struct {
 	CVDDownloader            CVDDownloader
 	CVDToolsVersion          AndroidBuild
 	BuildAPI                 BuildAPI
+	ArtifactsFetcher         ArtifactsFetcher
 	UUIDGen                  func() string
 	CVDUser                  string
 	CVDStartTimeout          time.Duration
@@ -52,8 +53,8 @@ type CreateCVDAction struct {
 	cvdToolsVersion          AndroidBuild
 	cvdDownloader            CVDDownloader
 	buildAPI                 BuildAPI
+	artifactsFetcher         ArtifactsFetcher
 	userArtifactsDirResolver UserArtifactsDirResolver
-	buildArtifactsFetcher    ArtifactsFetcherFactory
 	artifactsMngr            *ArtifactsManager
 	startCVDHandler          *startCVDHandler
 
@@ -70,13 +71,9 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		cvdToolsVersion:          opts.CVDToolsVersion,
 		cvdDownloader:            opts.CVDDownloader,
 		buildAPI:                 opts.BuildAPI,
+		artifactsFetcher:         opts.ArtifactsFetcher,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
 
-		buildArtifactsFetcher: newArtifactsFetcherFactory(
-			opts.ExecContext,
-			opts.Paths.FetchCVDBin(),
-			opts.BuildAPI,
-		),
 		artifactsMngr: NewArtifactsManager(
 			opts.Paths.ArtifactsRootDir,
 			opts.UUIDGen,
@@ -190,7 +187,6 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 		systemImgBuild = &apiv1.AndroidCIBuild{}
 		*systemImgBuild = *buildSource.SystemImageBuild
 	}
-	credentials := buildSource.Credentials
 	if err := updateBuildsWithLatestGreenBuildID(a.buildAPI,
 		[]*apiv1.AndroidCIBuild{mainBuild, kernelBuild, bootloaderBuild, systemImgBuild}); err != nil {
 		return nil, err
@@ -199,7 +195,6 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 	var mainBuildErr, kernelBuildErr, bootloaderBuildErr error
 	var wg sync.WaitGroup
 	wg.Add(1)
-	fetcher := a.buildArtifactsFetcher(credentials)
 	go func() {
 		defer wg.Done()
 		var extraCVDOptions *ExtraCVDOptions = nil
@@ -210,14 +205,14 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 			}
 		}
 		mainBuildDir, mainBuildErr = a.artifactsMngr.GetCVDBundle(
-			mainBuild.BuildID, mainBuild.Target, extraCVDOptions, fetcher)
+			mainBuild.BuildID, mainBuild.Target, extraCVDOptions, a.artifactsFetcher)
 	}()
 	if kernelBuild != nil {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			kernelBuildDir, kernelBuildErr = a.artifactsMngr.GetKernelBundle(
-				kernelBuild.BuildID, kernelBuild.Target, fetcher)
+				kernelBuild.BuildID, kernelBuild.Target, a.artifactsFetcher)
 		}()
 	}
 	if bootloaderBuild != nil {
@@ -225,7 +220,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 		go func() {
 			defer wg.Done()
 			bootloaderBuildDir, bootloaderBuildErr = a.artifactsMngr.GetBootloaderBundle(
-				bootloaderBuild.BuildID, bootloaderBuild.Target, fetcher)
+				bootloaderBuild.BuildID, bootloaderBuild.Target, a.artifactsFetcher)
 		}()
 	}
 	wg.Wait()

@@ -66,8 +66,6 @@ func (p *IMPaths) FetchCVDBin() string {
 	return filepath.Join(p.CVDToolsDir, "fetch_cvd")
 }
 
-type ArtifactsFetcherFactory func(string) ArtifactsFetcher
-
 // Creates a CVD execution context from a regular execution context.
 // If a non-empty user name is provided the returned execution context executes commands as that user.
 func newCVDExecContext(execContext ExecContext, user string) cvd.CVDExecContext {
@@ -247,14 +245,12 @@ type combinedArtifactFetcher struct {
 	credentials string
 }
 
-func newArtifactsFetcherFactory(execContext ExecContext, fetchCVDBin string, buildAPI BuildAPI) ArtifactsFetcherFactory {
-	return func(credentials string) ArtifactsFetcher {
-		return &combinedArtifactFetcher{
-			execContext: execContext,
-			fetchCVDBin: fetchCVDBin,
-			buildAPI:    buildAPI,
-			credentials: credentials,
-		}
+func newCombinedArtifactFetcher(execContext ExecContext, fetchCVDBin string, buildAPI BuildAPI, credentials string) *combinedArtifactFetcher {
+	return &combinedArtifactFetcher{
+		execContext: execContext,
+		fetchCVDBin: fetchCVDBin,
+		buildAPI:    buildAPI,
+		credentials: credentials,
 	}
 }
 
