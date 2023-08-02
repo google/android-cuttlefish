@@ -42,7 +42,7 @@ static bool IsCvdStart(const std::string& cmd) {
   if (cmd.empty()) {
     return false;
   }
-  return cmd == "start";
+  return cmd == "start" || cmd == "launch_cvd";
 }
 
 Result<GroupCreationInfo> CreationAnalyzer::Analyze(
