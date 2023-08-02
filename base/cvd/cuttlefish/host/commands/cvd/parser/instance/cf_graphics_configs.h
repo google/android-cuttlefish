@@ -20,6 +20,6 @@
 #include <vector>
 
 namespace cuttlefish {
-void InitGraphicsConfigs(Json::Value& root);
-std::vector<std::string> GenerateGraphicsFlags(const Json::Value& root);
+Result<void> InitGraphicsConfigs(Json::Value& root);
+Result<std::vector<std::string>> GenerateGraphicsFlags(const Json::Value& root);
 };  // namespace cuttlefish

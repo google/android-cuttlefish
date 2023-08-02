@@ -102,6 +102,7 @@ static std::map<std::string, Json::ValueType> kBootloaderKeyMap = {
 // supported import values for graphics category and displays subcategory
 static std::map<std::string, Json::ValueType> kGraphicsKeyMap = {
     {"displays", Json::ValueType::arrayValue},
+    {"record_screen", Json::ValueType::booleanValue},
 };
 static std::map<std::string, Json::ValueType> kDisplayKeyMap = {
     {"width", Json::ValueType::uintValue},
