@@ -30,7 +30,6 @@
 namespace cuttlefish {
 namespace {
 
-// json main parameters definitions
 static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
     {"netsim_bt", Json::ValueType::booleanValue},
     {"instances", Json::ValueType::arrayValue},
@@ -45,7 +44,6 @@ static std::map<std::string, Json::ValueType> kFetchKeyMap = {
     {"keep_downloaded_archives", Json::ValueType::booleanValue},
 };
 
-// instance object parameters definitions
 static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
     {"@import", Json::ValueType::stringValue},
     {"vm", Json::ValueType::objectValue},
@@ -61,11 +59,9 @@ static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
     {"vehicle", Json::ValueType::objectValue},
     {"location", Json::ValueType::objectValue}};
 
-// supported import values for @import key
 static std::unordered_set<std::string> kSupportedImportValues = {
     "phone", "tablet", "tv", "wearable", "auto", "slim", "go", "foldable"};
 
-// supported import values for vm category and crosvm subcategory
 static std::map<std::string, Json::ValueType> kVmKeyMap = {
     {"cpus", Json::ValueType::uintValue},
     {"memory_mb", Json::ValueType::uintValue},
@@ -81,7 +77,6 @@ static std::map<std::string, Json::ValueType> kCrosvmKeyMap = {
     {"enable_sandbox", Json::ValueType::booleanValue},
 };
 
-// supported import values for boot category and kernel subcategory
 static std::map<std::string, Json::ValueType> kBootKeyMap = {
     {"extra_bootconfig_args", Json::ValueType::stringValue},
     {"kernel", Json::ValueType::objectValue},
@@ -99,7 +94,6 @@ static std::map<std::string, Json::ValueType> kBootloaderKeyMap = {
     {"build", Json::ValueType::stringValue},
 };
 
-// supported import values for graphics category and displays subcategory
 static std::map<std::string, Json::ValueType> kGraphicsKeyMap = {
     {"displays", Json::ValueType::arrayValue},
     {"record_screen", Json::ValueType::booleanValue},
@@ -111,14 +105,12 @@ static std::map<std::string, Json::ValueType> kDisplayKeyMap = {
     {"refresh_rate_hertz", Json::ValueType::uintValue},
 };
 
-// supported import values for security category
 static std::map<std::string, Json::ValueType> kSecurityKeyMap = {
     {"serial_number", Json::ValueType::stringValue},
     {"use_random_serial", Json::ValueType::stringValue},
     {"guest_enforce_security", Json::ValueType::booleanValue},
 };
 
-// supported import values for disk category
 static std::map<std::string, Json::ValueType> kDiskKeyMap = {
     {"default_build", Json::ValueType::stringValue},
     {"super", Json::ValueType::objectValue},
@@ -148,30 +140,25 @@ Result<void> ValidateDiskConfigs(const Json::Value& root) {
   return {};
 }
 
-// Validate the displays json parameters
 Result<void> ValidateDisplaysConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kDisplayKeyMap),
             "ValidateDisplaysConfigs ValidateTypo fail");
   return {};
 }
 
-// Validate the graphics json parameters
 Result<void> ValidateGraphicsConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kGraphicsKeyMap),
             "ValidateGraphicsConfigs ValidateTypo fail");
 
   if (root.isMember("displays") && root["displays"].size() != 0) {
-    int num_displays = root["displays"].size();
-    for (int i = 0; i < num_displays; i++) {
-      CF_EXPECT(ValidateDisplaysConfigs(root["displays"][i]),
-                "ValidateDisplaysConfigs fail");
+    for (const auto& display : root["displays"]) {
+      CF_EXPECT(ValidateDisplaysConfigs(display));
     }
   }
 
   return {};
 }
 
-// Validate the vm json parameters
 Result<void> ValidateVmConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kVmKeyMap),
             "ValidateVmConfigs ValidateTypo fail");
@@ -207,42 +194,34 @@ Result<void> ValidateBootConfigs(const Json::Value& root) {
   return {};
 }
 
-// Validate the instances json parameters
 Result<void> ValidateInstancesConfigs(const Json::Value& instances) {
-  int num_instances = instances.size();
-  for (unsigned int i = 0; i < num_instances; i++) {
-    CF_EXPECT(ValidateTypo(instances[i], kInstanceKeyMap),
-              "vm ValidateTypo fail");
+  for (const auto& instance : instances) {
+    CF_EXPECT(ValidateTypo(instance, kInstanceKeyMap),
+              "instance ValidateTypo fail");
 
-    if (instances[i].isMember("vm")) {
-      CF_EXPECT(ValidateVmConfigs(instances[i]["vm"]),
-                "ValidateVmConfigs fail");
+    if (instance.isMember("vm")) {
+      CF_EXPECT(ValidateVmConfigs(instance["vm"]));
     }
 
-    // Validate @import flag values are supported or not
-    if (instances[i].isMember("@import")) {
+    if (instance.isMember("@import")) {
       CF_EXPECT(
-          kSupportedImportValues.count(instances[i]["@import"].asString()) > 0,
+          kSupportedImportValues.count(instance["@import"].asString()) > 0,
           "@Import flag values are not supported");
     }
 
-    if (instances[i].isMember("boot")) {
-      CF_EXPECT(ValidateBootConfigs(instances[i]["boot"]),
-                "ValidateBootConfigs fail");
+    if (instance.isMember("boot")) {
+      CF_EXPECT(ValidateBootConfigs(instance["boot"]));
     }
-    if (instances[i].isMember("security")) {
-      CF_EXPECT(ValidateSecurityConfigs(instances[i]["security"]),
-                "ValidateSecurityConfigs fail");
+    if (instance.isMember("security")) {
+      CF_EXPECT(ValidateSecurityConfigs(instance["security"]));
     }
-    if (instances[i].isMember("disk")) {
-      CF_EXPECT(ValidateDiskConfigs(instances[i]["disk"]),
-                "ValidateDiskConfigs fail");
+    if (instance.isMember("disk")) {
+      CF_EXPECT(ValidateDiskConfigs(instance["disk"]));
     }
-    if (instances[i].isMember("graphics")) {
-      CF_EXPECT(ValidateGraphicsConfigs(instances[i]["graphics"]),
-                "ValidateGraphicsConfigs fail");
+    if (instance.isMember("graphics")) {
+      CF_EXPECT(ValidateGraphicsConfigs(instance["graphics"]));
     }
-    CF_EXPECT(ValidateConfig<std::string>(instances[i], ValidateSetupWizardMode,
+    CF_EXPECT(ValidateConfig<std::string>(instance, ValidateSetupWizardMode,
                                           {"vm", "setupwizard_mode"}),
               "Invalid value for setupwizard_mode flag");
   }
@@ -252,7 +231,6 @@ Result<void> ValidateInstancesConfigs(const Json::Value& instances) {
 
 }  // namespace
 
-// Validate cuttlefish config json parameters
 Result<void> ValidateCfConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kConfigsKeyMap),
             "Typo in config main parameters");
