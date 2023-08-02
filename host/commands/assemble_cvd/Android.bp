@@ -22,6 +22,7 @@ cc_binary {
     srcs: [
         "alloc.cc",
         "assemble_cvd.cc",
+        "bootconfig_args.cpp",
         "boot_config.cc",
         "boot_image_utils.cc",
         "clean.cc",
