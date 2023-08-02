@@ -16,8 +16,12 @@
 
 #include "host/commands/cvd/parser/cf_configs_instances.h"
 
-#include <android-base/logging.h>
 #include <iostream>
+#include <string>
+#include <vector>
+
+#include <android-base/logging.h>
+#include <json/json.h>
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
@@ -30,23 +34,23 @@
 
 namespace cuttlefish {
 
-Result<void> InitInstancesConfigs(Json::Value& root) {
-  CF_EXPECT(InitVmConfigs(root));
-  CF_EXPECT(InitDiskConfigs(root));
-  CF_EXPECT(InitBootConfigs(root));
-  CF_EXPECT(InitSecurityConfigs(root));
-  CF_EXPECT(InitGraphicsConfigs(root));
+Result<void> InitInstancesConfigs(Json::Value& instances) {
+  CF_EXPECT(InitBootConfigs(instances));
+  CF_EXPECT(InitDiskConfigs(instances));
+  CF_EXPECT(InitGraphicsConfigs(instances));
+  CF_EXPECT(InitSecurityConfigs(instances));
+  CF_EXPECT(InitVmConfigs(instances));
   return {};
 }
 
 Result<std::vector<std::string>> GenerateInstancesFlags(
-    const Json::Value& root) {
-  std::vector<std::string> result = CF_EXPECT(GenerateVmFlags(root));
-  result = MergeResults(result, CF_EXPECT(GenerateDiskFlags(root)));
-  result = MergeResults(result, CF_EXPECT(GenerateBootFlags(root)));
-  result = MergeResults(result, CF_EXPECT(GenerateSecurityFlags(root)));
-  result = MergeResults(result, CF_EXPECT(GenerateGraphicsFlags(root)));
-  result = MergeResults(result, GenerateMetricsFlags(root));
+    const Json::Value& instances) {
+  std::vector<std::string> result = CF_EXPECT(GenerateBootFlags(instances));
+  result = MergeResults(result, CF_EXPECT(GenerateDiskFlags(instances)));
+  result = MergeResults(result, CF_EXPECT(GenerateGraphicsFlags(instances)));
+  result = MergeResults(result, GenerateMetricsFlags(instances));
+  result = MergeResults(result, CF_EXPECT(GenerateSecurityFlags(instances)));
+  result = MergeResults(result, CF_EXPECT(GenerateVmFlags(instances)));
 
   return result;
 }
