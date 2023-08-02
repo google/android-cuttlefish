@@ -48,19 +48,17 @@ std::string GetVmManagerDefault(Json::Value& instance_vm) {
 }  // namespace
 
 Result<void> InitVmConfigs(Json::Value& instances) {
-  const int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_CPUS, {"vm", "cpus"}));
+  for (auto& instance : instances) {
+    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_CPUS, {"vm", "cpus"}));
+    CF_EXPECT(InitConfig(instance, UI_DEFAULTS_MEMORY_MB, {"vm", "memory_mb"}));
     CF_EXPECT(
-        InitConfig(instances[i], UI_DEFAULTS_MEMORY_MB, {"vm", "memory_mb"}));
-    CF_EXPECT(
-        InitConfig(instances[i], CF_DEFAULTS_USE_SDCARD, {"vm", "use_sdcard"}));
-    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_SETUPWIZARD_MODE,
+        InitConfig(instance, CF_DEFAULTS_USE_SDCARD, {"vm", "use_sdcard"}));
+    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_SETUPWIZARD_MODE,
                          {"vm", "setupwizard_mode"}));
-    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_UUID, {"vm", "uuid"}));
-    CF_EXPECT(InitConfig(instances[i], GetVmManagerDefault(instances[i]["vm"]),
+    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_UUID, {"vm", "uuid"}));
+    CF_EXPECT(InitConfig(instance, GetVmManagerDefault(instance["vm"]),
                          {"vm", "vm_manager"}));
-    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_ENABLE_SANDBOX,
+    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_ENABLE_SANDBOX,
                          {"vm", "crosvm", "enable_sandbox"}));
   }
   return {};
@@ -69,13 +67,11 @@ Result<void> InitVmConfigs(Json::Value& instances) {
 std::vector<std::string> GenerateCustomConfigsFlags(
     const Json::Value& instances) {
   std::vector<std::string> result;
-  const int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    if (instances[i].isMember("vm") &&
-        instances[i]["vm"].isMember("custom_actions")) {
+  for (auto& instance : instances) {
+    if (instance.isMember("vm") && instance["vm"].isMember("custom_actions")) {
       Json::StreamWriterBuilder factory;
       std::string mapped_text =
-          Json::writeString(factory, instances[i]["vm"]["custom_actions"]);
+          Json::writeString(factory, instance["vm"]["custom_actions"]);
       // format json string string to match aosp/2374890 input format
       mapped_text = android::base::StringReplace(mapped_text, "\n", "", true);
       mapped_text = android::base::StringReplace(mapped_text, "\r", "", true);

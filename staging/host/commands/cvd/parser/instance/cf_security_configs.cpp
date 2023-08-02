@@ -27,13 +27,12 @@
 namespace cuttlefish {
 
 Result<void> InitSecurityConfigs(Json::Value& instances) {
-  const int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_SERIAL_NUMBER,
+  for (auto& instance : instances) {
+    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_SERIAL_NUMBER,
                          {"security", "serial_number"}));
-    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_USE_RANDOM_SERIAL,
+    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_USE_RANDOM_SERIAL,
                          {"security", "use_random_serial"}));
-    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_GUEST_ENFORCE_SECURITY,
+    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_GUEST_ENFORCE_SECURITY,
                          {"security", "guest_enforce_security"}));
   }
   return {};
