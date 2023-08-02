@@ -28,9 +28,8 @@
 namespace cuttlefish {
 
 Result<void> InitDiskConfigs(Json::Value& instances) {
-  const int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    CF_EXPECT(InitConfig(instances[i], DEFAULT_BLANK_DATA_IMAGE_SIZE,
+  for (auto& instance : instances) {
+    CF_EXPECT(InitConfig(instance, DEFAULT_BLANK_DATA_IMAGE_SIZE,
                          {"disk", "blank_data_image_mb"}));
   }
   return {};

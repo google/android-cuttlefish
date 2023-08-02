@@ -27,13 +27,12 @@
 namespace cuttlefish {
 
 Result<void> InitBootConfigs(Json::Value& instances) {
-  const int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
+  for (auto& instance : instances) {
+    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
                          {"boot", "extra_bootconfig_args"}));
-    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_ENABLE_BOOTANIMATION,
+    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_ENABLE_BOOTANIMATION,
                          {"boot", "enable_bootanimation"}));
-    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_EXTRA_KERNEL_CMDLINE,
+    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_EXTRA_KERNEL_CMDLINE,
                          {"boot", "kernel", "extra_kernel_cmdline"}));
   }
   return {};
