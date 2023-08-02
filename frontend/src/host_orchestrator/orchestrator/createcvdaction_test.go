@@ -67,8 +67,7 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 		req := validRequest()
 		test.corruptRequest(req)
 		opts := CreateCVDActionOpts{
-			Request:         req,
-			BuildAPIFactory: func(_ string) BuildAPI { return &fakeBuildAPI{} },
+			Request: req,
 		}
 		action := NewCreateCVDAction(opts)
 		_, err := action.Run()
@@ -107,7 +106,8 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 		OperationManager: om,
 		ExecContext:      execContext,
 		CVDToolsVersion:  cvdBinAB,
-		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
+		CVDDownloader:    &fakeCVDDownloader{},
+		BuildAPI:         &fakeBuildAPI{},
 		CVDUser:          fakeCVDUser,
 	}
 	action := NewCreateCVDAction(opts)
@@ -143,7 +143,8 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 		OperationManager: om,
 		ExecContext:      execContext,
 		CVDToolsVersion:  cvdBinAB,
-		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
+		CVDDownloader:    &fakeCVDDownloader{},
+		BuildAPI:         &fakeBuildAPI{},
 		CVDUser:          fakeCVDUser,
 	}
 	action := NewCreateCVDAction(opts)
@@ -287,7 +288,8 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 				OperationManager: om,
 				ExecContext:      execContext,
 				CVDToolsVersion:  AndroidBuild{ID: "1", Target: "xyzzy"},
-				BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
+				CVDDownloader:    &fakeCVDDownloader{},
+				BuildAPI:         &fakeBuildAPI{},
 				UUIDGen:          fakeUUIDGen,
 				CVDUser:          fakeCVDUser,
 			}
@@ -352,8 +354,9 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 		OperationManager:         om,
 		ExecContext:              execContext,
 		CVDToolsVersion:          AndroidBuild{ID: "1", Target: "xyzzy"},
+		CVDDownloader:            &fakeCVDDownloader{},
+		BuildAPI:                 &fakeBuildAPI{},
 		UserArtifactsDirResolver: &fakeUADirRes{dir},
-		BuildAPIFactory:          func(_ string) BuildAPI { return &fakeBuildAPI{} },
 		UUIDGen:                  fakeUUIDGen,
 		CVDUser:                  fakeCVDUser,
 	}
@@ -392,7 +395,8 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 		OperationManager: om,
 		ExecContext:      execContext,
 		CVDToolsVersion:  cvdBinAB,
-		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
+		CVDDownloader:    &fakeCVDDownloader{},
+		BuildAPI:         &fakeBuildAPI{},
 		CVDUser:          fakeCVDUser,
 	}
 	action := NewCreateCVDAction(opts)
@@ -423,7 +427,8 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 		OperationManager: om,
 		ExecContext:      execContext,
 		CVDToolsVersion:  cvdBinAB,
-		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
+		CVDDownloader:    &fakeCVDDownloader{},
+		BuildAPI:         &fakeBuildAPI{},
 		CVDStartTimeout:  testFakeBinaryDelayMs - (50 * time.Millisecond),
 		CVDUser:          fakeCVDUser,
 	}
@@ -461,7 +466,6 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 		OperationManager: om,
 		ExecContext:      execContext,
 		CVDToolsVersion:  cvdBinAB,
-		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
 		CVDUser:          fakeCVDUser,
 	}
 	action := NewCreateCVDAction(opts)
@@ -470,5 +474,51 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 
 	if err == nil {
 		t.Error("expected error")
+	}
+}
+
+func TestCreateCVDRequestCredsProvider(t *testing.T) {
+	var tests = []struct {
+		req *apiv1.CreateCVDRequest
+		exp string
+	}{
+		{
+			req: nil,
+			exp: "",
+		},
+		{
+			req: &apiv1.CreateCVDRequest{},
+			exp: "",
+		},
+		{
+			req: &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{}},
+			exp: "",
+		},
+		{
+			req: &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: &apiv1.BuildSource{}}},
+			exp: "",
+		},
+		{
+			req: &apiv1.CreateCVDRequest{
+				CVD: &apiv1.CVD{
+					BuildSource: &apiv1.BuildSource{
+						AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
+							Credentials: "foo",
+						},
+					},
+				},
+			},
+			exp: "foo",
+		},
+	}
+
+	for _, test := range tests {
+		p := CreateCVDRequestCredsProvider{Request: test.req}
+
+		creds := p.Get()
+
+		if diff := cmp.Diff(test.exp, creds); diff != "" {
+			t.Errorf("cred mismatch (-want +got):\n%s", diff)
+		}
 	}
 }

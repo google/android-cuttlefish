@@ -60,7 +60,7 @@ func TestDownloadArtifact(t *testing.T) {
 		}
 		return res, nil
 	})
-	srv := NewAndroidCIBuildAPI(mockClient, url, "")
+	srv := NewAndroidCIBuildAPI(mockClient, url)
 
 	var b bytes.Buffer
 	srv.DownloadArtifact("foo", "1", "xyzzy", io.Writer(&b))
@@ -85,7 +85,7 @@ func TestDownloadArtifactWithErrorResponse(t *testing.T) {
 			Body:       newResponseBody(errJSON),
 		}, nil
 	})
-	srv := NewAndroidCIBuildAPI(mockClient, url, "")
+	srv := NewAndroidCIBuildAPI(mockClient, url)
 
 	var b bytes.Buffer
 	err := srv.DownloadArtifact("foo", "1", "xyzzy", io.Writer(&b))
@@ -119,6 +119,14 @@ func TestBuildDownloadArtifactSignedURL(t *testing.T) {
 	})
 }
 
+type fakeCredsProvider struct {
+	V string
+}
+
+func (p *fakeCredsProvider) Get() string {
+	return p.V
+}
+
 func TestCredentialsAddedToRequest(t *testing.T) {
 	credentials := "random string"
 	mockClient := newMockClient(func(r *http.Request) (*http.Response, error) {
@@ -132,8 +140,11 @@ func TestCredentialsAddedToRequest(t *testing.T) {
 	})
 	downloadRequestURI := "/android-build/builds/X/Y/Z"
 	url := "https://someurl.fake"
-	srv := NewAndroidCIBuildAPI(mockClient, url, credentials)
+	opts := AndroidCIBuildAPIOpts{Creds: &fakeCredsProvider{V: credentials}}
+	srv := NewAndroidCIBuildAPIWithOpts(mockClient, url, opts)
+
 	_, err := srv.doGETCommon(downloadRequestURI)
+
 	if err != nil {
 		t.Errorf("GET failed: %v", err)
 	}
@@ -152,8 +163,11 @@ func TestEmptyCredentialsIgnored(t *testing.T) {
 	})
 	downloadRequestURI := "/android-build/builds/X/Y/Z"
 	url := "https://someurl.fake"
-	srv := NewAndroidCIBuildAPI(mockClient, url, credentials)
+	opts := AndroidCIBuildAPIOpts{Creds: &fakeCredsProvider{V: credentials}}
+	srv := NewAndroidCIBuildAPIWithOpts(mockClient, url, opts)
+
 	_, err := srv.doGETCommon(downloadRequestURI)
+
 	if err != nil {
 		t.Errorf("GET failed: %v", err)
 	}

@@ -34,8 +34,9 @@ type CreateCVDActionOpts struct {
 	Paths                    IMPaths
 	OperationManager         OperationManager
 	ExecContext              ExecContext
+	CVDDownloader            CVDDownloader
 	CVDToolsVersion          AndroidBuild
-	BuildAPIFactory          BuildAPIFactory
+	BuildAPI                 BuildAPI
 	UUIDGen                  func() string
 	CVDUser                  string
 	CVDStartTimeout          time.Duration
@@ -49,9 +50,9 @@ type CreateCVDAction struct {
 	om                       OperationManager
 	execContext              cvd.CVDExecContext
 	cvdToolsVersion          AndroidBuild
-	buildAPIFactory          BuildAPIFactory
-	userArtifactsDirResolver UserArtifactsDirResolver
 	cvdDownloader            CVDDownloader
+	buildAPI                 BuildAPI
+	userArtifactsDirResolver UserArtifactsDirResolver
 	buildArtifactsFetcher    ArtifactsFetcherFactory
 	artifactsMngr            *ArtifactsManager
 	startCVDHandler          *startCVDHandler
@@ -67,16 +68,14 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		paths:                    opts.Paths,
 		om:                       opts.OperationManager,
 		cvdToolsVersion:          opts.CVDToolsVersion,
-		buildAPIFactory:          opts.BuildAPIFactory,
+		cvdDownloader:            opts.CVDDownloader,
+		buildAPI:                 opts.BuildAPI,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
 
-		cvdDownloader: NewAndroidCICVDDownloader(
-			opts.BuildAPIFactory(""), // cvd can be downloaded without credentials
-		),
 		buildArtifactsFetcher: newArtifactsFetcherFactory(
 			opts.ExecContext,
 			opts.Paths.FetchCVDBin(),
-			opts.BuildAPIFactory,
+			opts.BuildAPI,
 		),
 		artifactsMngr: NewArtifactsManager(
 			opts.Paths.ArtifactsRootDir,
@@ -192,8 +191,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 		*systemImgBuild = *buildSource.SystemImageBuild
 	}
 	credentials := buildSource.Credentials
-	buildAPI := a.buildAPIFactory(credentials)
-	if err := updateBuildsWithLatestGreenBuildID(buildAPI,
+	if err := updateBuildsWithLatestGreenBuildID(a.buildAPI,
 		[]*apiv1.AndroidCIBuild{mainBuild, kernelBuild, bootloaderBuild, systemImgBuild}); err != nil {
 		return nil, err
 	}
@@ -303,4 +301,18 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 		}
 	}
 	return nil
+}
+
+type CreateCVDRequestCredsProvider struct {
+	Request *apiv1.CreateCVDRequest
+}
+
+func (p *CreateCVDRequestCredsProvider) Get() string {
+	if p.Request == nil ||
+		p.Request.CVD == nil ||
+		p.Request.CVD.BuildSource == nil ||
+		p.Request.CVD.BuildSource.AndroidCIBuildSource == nil {
+		return ""
+	}
+	return p.Request.CVD.BuildSource.AndroidCIBuildSource.Credentials
 }

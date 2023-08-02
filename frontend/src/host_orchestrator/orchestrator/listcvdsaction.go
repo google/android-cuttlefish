@@ -24,7 +24,7 @@ type ListCVDsActionOpts struct {
 	Paths           IMPaths
 	ExecContext     ExecContext
 	CVDToolsVersion AndroidBuild
-	BuildAPIFactory BuildAPIFactory
+	CVDDownloader   CVDDownloader
 	CVDUser         string
 }
 
@@ -39,10 +39,8 @@ func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {
 	return &ListCVDsAction{
 		paths:           opts.Paths,
 		cvdToolsVersion: opts.CVDToolsVersion,
-		cvdDownloader: NewAndroidCICVDDownloader(
-			opts.BuildAPIFactory(""), // cvd can be downloaded without credentials
-		),
-		execContext: newCVDExecContext(opts.ExecContext, opts.CVDUser),
+		cvdDownloader:   opts.CVDDownloader,
+		execContext:     newCVDExecContext(opts.ExecContext, opts.CVDUser),
 	}
 }
 

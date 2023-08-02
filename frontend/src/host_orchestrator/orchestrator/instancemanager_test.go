@@ -123,6 +123,12 @@ const fakeUUID = "123e4567-"
 
 var fakeUUIDGen = func() string { return fakeUUID }
 
+type fakeCVDDownloader struct{}
+
+func (fakeCVDDownloader) Download(AndroidBuild, string, string) error {
+	return nil
+}
+
 func TestSliceItoa(t *testing.T) {
 	tests := []struct {
 		in  []uint32
