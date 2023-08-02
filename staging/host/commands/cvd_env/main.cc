@@ -46,6 +46,7 @@ constexpr char kCvdEnvHelpMessage[] =
     "      request           : Protobuffer with json format\n\n"
     "* \"cvd [selector_options] env\" can be replaced with:\n"
     "    \"cvd_internal_env [internal device name]\"\n";
+constexpr char kServiceControlEnvProxy[] = "ControlEnvProxyService";
 
 bool ContainHelpOption(int argc, char** argv) {
   for (int i = 0; i < argc; i++) {
@@ -74,6 +75,10 @@ Result<void> CvdEnvMain(int argc, char** argv) {
       args.push_back(argv[i]);
     }
   }
+  if (args.size() > 0) {
+    CF_EXPECT(args[0].compare(kServiceControlEnvProxy) != 0,
+              "Prohibited service name");
+  }
 
   const auto* config = CuttlefishConfig::Get();
   CF_EXPECT(config != nullptr, "Unable to find the config");
@@ -87,8 +92,6 @@ Result<void> CvdEnvMain(int argc, char** argv) {
             "there is no instance of which name is "
                 << receiver << ". please check instance name by cvd fleet");
 
-  // TODO(265747873): Check if argument contains ControlEnvProxyService, not to
-  // use this service by cvd env CLI.
   auto command_output =
       CF_EXPECT(HandleCmds(receiver_instance->grpc_socket_path(), cmd, args));
 

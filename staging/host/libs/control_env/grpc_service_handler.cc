@@ -39,6 +39,9 @@ constexpr char kDefaultOptionJsonOutput[] = "--json_output=true";
 constexpr char kServiceServerReflection[] =
     "grpc.reflection.v1alpha.ServerReflection";
 constexpr char kServiceHealth[] = "grpc.health.v1.Health";
+constexpr char kServiceControlEnvProxy[] = "ControlEnvProxyService";
+constexpr char kServiceControlEnvProxyFull[] =
+    "controlenvproxyserver.ControlEnvProxyService";
 
 bool PrintStream(std::stringstream* ss, const grpc::string& output) {
   (*ss) << output;
@@ -185,7 +188,8 @@ Result<std::string> HandleLsCmd(
       json["services"] = Json::Value(Json::arrayValue);
       for (auto& full_service_name : Split(Trim(command_output), "\n")) {
         if (full_service_name.compare(kServiceServerReflection) == 0 ||
-            full_service_name.compare(kServiceHealth) == 0) {
+            full_service_name.compare(kServiceHealth) == 0 ||
+            full_service_name.compare(kServiceControlEnvProxyFull) == 0) {
           continue;
         }
         json["services"].append(Split(full_service_name, ".").back());
@@ -196,6 +200,8 @@ Result<std::string> HandleLsCmd(
     case 1: {
       // ls subcommand with 1 argument; service_name
       const auto& service_name = args[0];
+      CF_EXPECT(service_name.compare(kServiceControlEnvProxy) != 0,
+                "Prohibited service name");
       const auto& server_address =
           CF_EXPECT(GetServerAddress(server_address_list, service_name));
       const auto& full_service_name =
@@ -215,6 +221,8 @@ Result<std::string> HandleLsCmd(
     case 2: {
       // ls subcommand with 2 arguments; service_name and method_name
       const auto& service_name = args[0];
+      CF_EXPECT(service_name.compare(kServiceControlEnvProxy) != 0,
+                "Prohibited service name");
       const auto& server_address =
           CF_EXPECT(GetServerAddress(server_address_list, service_name));
       const auto& method_name = args[1];
@@ -252,6 +260,8 @@ Result<std::string> HandleTypeCmd(
 
   std::vector<std::string> grpc_arguments{"grpc_cli", "type"};
   const auto& service_name = args[0];
+  CF_EXPECT(service_name.compare(kServiceControlEnvProxy) != 0,
+            "Prohibited service name");
   const auto& type_name = args[1];
 
   const auto& server_address =
