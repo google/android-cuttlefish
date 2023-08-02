@@ -28,7 +28,7 @@
 
 namespace cuttlefish {
 
-void InitGraphicsConfigs(Json::Value& instances) {
+Result<void> InitGraphicsConfigs(Json::Value& instances) {
   InitIntConfigSubGroupVector(instances, "graphics", "displays", "width",
                               CF_DEFAULTS_DISPLAY_WIDTH);
   InitIntConfigSubGroupVector(instances, "graphics", "displays", "height",
@@ -38,6 +38,12 @@ void InitGraphicsConfigs(Json::Value& instances) {
   InitIntConfigSubGroupVector(instances, "graphics", "displays",
                               "refresh_rate_hertz",
                               CF_DEFAULTS_DISPLAY_REFRESH_RATE);
+  const int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_RECORD_SCREEN,
+                         {"graphics", "record_screen"}));
+  }
+  return {};
 }
 
 std::string GenerateDisplayFlag(const Json::Value& instances_json) {
@@ -74,9 +80,12 @@ std::string GenerateDisplayFlag(const Json::Value& instances_json) {
   return "--displays_binproto=" + base64_output;
 }
 
-std::vector<std::string> GenerateGraphicsFlags(const Json::Value& instances) {
+Result<std::vector<std::string>> GenerateGraphicsFlags(
+    const Json::Value& instances) {
   std::vector<std::string> result;
   result.emplace_back(GenerateDisplayFlag(instances));
+  result.emplace_back(CF_EXPECT(GenerateGflag(instances, "record_screen",
+                                              {"graphics", "record_screen"})));
   return result;
 }
 
