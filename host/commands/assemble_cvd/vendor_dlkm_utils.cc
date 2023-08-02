@@ -513,6 +513,17 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
             << vendor_dlkm_modules.size() << " vendor_dlkm modules, "
             << system_dlkm_modules.size() << " system_dlkm modules.";
 
+  // transfer blocklist in whole to the vendor dlkm partition. It currently
+  // only contains one module that is loaded during second stage init.
+  // We can split the blocklist at a later date IF it contains modules in
+  // different partitions.
+  const auto initramfs_blocklist_path = module_base_dir + "/modules.blocklist";
+  if (FileExists(initramfs_blocklist_path)) {
+    const auto vendor_dlkm_blocklist_path =
+        fmt::format("{}/{}", vendor_modules_dir, "modules.blocklist");
+    RenameFile(initramfs_blocklist_path, vendor_dlkm_blocklist_path);
+  }
+
   // Write updated modules.dep and modules.load files
   CHECK(WriteDepsToFile(FilterDependencies(deps, ramdisk_modules),
                         module_base_dir + "/modules.dep"));
