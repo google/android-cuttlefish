@@ -38,9 +38,8 @@ Result<void> InitGraphicsConfigs(Json::Value& instances) {
   InitIntConfigSubGroupVector(instances, "graphics", "displays",
                               "refresh_rate_hertz",
                               CF_DEFAULTS_DISPLAY_REFRESH_RATE);
-  const int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_RECORD_SCREEN,
+  for (auto& instance : instances) {
+    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_RECORD_SCREEN,
                          {"graphics", "record_screen"}));
   }
   return {};
@@ -50,12 +49,9 @@ std::string GenerateDisplayFlag(const Json::Value& instances_json) {
   using google::protobuf::TextFormat;
   cuttlefish::InstancesDisplays all_instances_displays;
 
-  int num_instances = instances_json.size();
-  for (int i = 0; i < num_instances; i++) {
+  for (const auto& instance_json : instances_json) {
     auto* instance = all_instances_displays.add_instances();
-    int num_displays = instances_json[i]["graphics"]["displays"].size();
-    for (int j = 0; j < num_displays; j++) {
-      Json::Value display_json = instances_json[i]["graphics"]["displays"][j];
+    for (const auto& display_json : instance_json["graphics"]["displays"]) {
       auto* display = instance->add_displays();
       display->set_width(display_json["width"].asInt());
       display->set_height(display_json["height"].asInt());
