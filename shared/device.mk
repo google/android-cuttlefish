@@ -37,7 +37,6 @@ PRODUCT_VENDOR_PROPERTIES += \
 
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish # for audio and wifi
 
-PRODUCT_SHIPPING_API_LEVEL := 35
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 DISABLE_RILD_OEM_HOOK := true
 
@@ -182,7 +181,13 @@ endif
 #
 # Common manifest for all targets
 #
+ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
+PRODUCT_SHIPPING_API_LEVEL := 35
 LOCAL_DEVICE_FCM_MANIFEST_FILE ?= device/google/cuttlefish/shared/config/manifest.xml
+else
+PRODUCT_SHIPPING_API_LEVEL := 34
+LOCAL_DEVICE_FCM_MANIFEST_FILE ?= device/google/cuttlefish/shared/config/previous_manifest.xml
+endif
 DEVICE_MANIFEST_FILE += $(LOCAL_DEVICE_FCM_MANIFEST_FILE)
 
 #
