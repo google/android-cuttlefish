@@ -77,6 +77,13 @@ func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string
 // GET  /devices?groupId={groupId}
 // GET  /devices/{deviceId}
 // GET  /devices/{deviceId}/files/{path}
+// GET  /devices/{deviceId}/services
+// GET  /devices/{deviceId}/services/{serviceName}
+// GET  /devices/{deviceId}/services/{serviceName}/{methodName}
+// POST /devices/{deviceId}/services/{serviceName}/{methodName}
+// GET  /devices/{deviceId}/services/{serviceName}/{typeName}/type
+// GET  /devices/{deviceId}/openwrt{path:/.*}
+// POST /devices/{deviceId}/openwrt{path:/.*}
 // GET  /polled_connections
 // GET  /polled_connections/{connId}/messages
 // POST /polled_connections/{connId}/:forward
@@ -114,6 +121,9 @@ func CreateHttpHandlers(
 	router.HandleFunc("/devices/{deviceId}/services/{serviceName}/{methodName}", func(w http.ResponseWriter, r *http.Request) {
 		grpcCallUnaryMethod(w, r, pool)
 	}).Methods("POST")
+	router.HandleFunc("/devices/{deviceId}/services/{serviceName}/{typeName}/type", func(w http.ResponseWriter, r *http.Request) {
+		grpcTypeInformation(w, r, pool)
+	}).Methods("GET")
 	router.HandleFunc("/devices/{deviceId}/openwrt{path:/.*}", func(w http.ResponseWriter, r *http.Request) {
 		openwrt(w, r, pool)
 	}).Methods("GET", "POST")
@@ -348,6 +358,46 @@ func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePoo
 	}
 
 	ReplyJSONOK(w, reply.JsonFormattedProto)
+}
+
+func grpcTypeInformation(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	devId := vars["deviceId"]
+	dev := pool.GetDevice(devId)
+	if dev == nil {
+		http.Error(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	request := gopb.TypeInformationRequest{
+		ServiceName: vars["serviceName"],
+		TypeName: vars["typeName"],
+	}
+
+	devInfo := dev.info.(map[string]interface{})
+	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
+	if !ok {
+		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
+		return
+	}
+
+    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
+    if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+    }
+    defer conn.Close()
+
+    client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	reply, err := client.TypeInformation(context.Background(), &request)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(reply.TextFormattedTypeInfo))
 }
 
 func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {

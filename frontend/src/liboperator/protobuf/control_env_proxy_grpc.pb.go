@@ -27,6 +27,7 @@ type ControlEnvProxyServiceClient interface {
 	ListServices(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListServicesReply, error)
 	ListMethods(ctx context.Context, in *ListMethodsRequest, opts ...grpc.CallOption) (*ListMethodsReply, error)
 	ListReqResType(ctx context.Context, in *ListReqResTypeRequest, opts ...grpc.CallOption) (*ListReqResTypeReply, error)
+	TypeInformation(ctx context.Context, in *TypeInformationRequest, opts ...grpc.CallOption) (*TypeInformationReply, error)
 }
 
 type controlEnvProxyServiceClient struct {
@@ -73,6 +74,15 @@ func (c *controlEnvProxyServiceClient) ListReqResType(ctx context.Context, in *L
 	return out, nil
 }
 
+func (c *controlEnvProxyServiceClient) TypeInformation(ctx context.Context, in *TypeInformationRequest, opts ...grpc.CallOption) (*TypeInformationReply, error) {
+	out := new(TypeInformationReply)
+	err := c.cc.Invoke(ctx, "/controlenvproxyserver.ControlEnvProxyService/TypeInformation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ControlEnvProxyServiceServer is the server API for ControlEnvProxyService service.
 // All implementations must embed UnimplementedControlEnvProxyServiceServer
 // for forward compatibility
@@ -81,6 +91,7 @@ type ControlEnvProxyServiceServer interface {
 	ListServices(context.Context, *emptypb.Empty) (*ListServicesReply, error)
 	ListMethods(context.Context, *ListMethodsRequest) (*ListMethodsReply, error)
 	ListReqResType(context.Context, *ListReqResTypeRequest) (*ListReqResTypeReply, error)
+	TypeInformation(context.Context, *TypeInformationRequest) (*TypeInformationReply, error)
 	mustEmbedUnimplementedControlEnvProxyServiceServer()
 }
 
@@ -99,6 +110,9 @@ func (UnimplementedControlEnvProxyServiceServer) ListMethods(context.Context, *L
 }
 func (UnimplementedControlEnvProxyServiceServer) ListReqResType(context.Context, *ListReqResTypeRequest) (*ListReqResTypeReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListReqResType not implemented")
+}
+func (UnimplementedControlEnvProxyServiceServer) TypeInformation(context.Context, *TypeInformationRequest) (*TypeInformationReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TypeInformation not implemented")
 }
 func (UnimplementedControlEnvProxyServiceServer) mustEmbedUnimplementedControlEnvProxyServiceServer() {
 }
@@ -186,6 +200,24 @@ func _ControlEnvProxyService_ListReqResType_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ControlEnvProxyService_TypeInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TypeInformationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControlEnvProxyServiceServer).TypeInformation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/controlenvproxyserver.ControlEnvProxyService/TypeInformation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControlEnvProxyServiceServer).TypeInformation(ctx, req.(*TypeInformationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ControlEnvProxyService_ServiceDesc is the grpc.ServiceDesc for ControlEnvProxyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -208,6 +240,10 @@ var ControlEnvProxyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListReqResType",
 			Handler:    _ControlEnvProxyService_ListReqResType_Handler,
+		},
+		{
+			MethodName: "TypeInformation",
+			Handler:    _ControlEnvProxyService_TypeInformation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
