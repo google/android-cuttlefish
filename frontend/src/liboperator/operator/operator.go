@@ -30,6 +30,7 @@ import (
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/gorilla/mux"
 
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	gopb "github.com/google/android-cuttlefish/frontend/src/liboperator/protobuf"
 	grpcpb "github.com/google/android-cuttlefish/frontend/src/liboperator/protobuf"
 	"google.golang.org/grpc"
@@ -100,6 +101,15 @@ func CreateHttpHandlers(
 	}).Methods("GET")
 	router.HandleFunc("/devices/{deviceId}", func(w http.ResponseWriter, r *http.Request) {
 		deviceInfo(w, r, pool)
+	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/services", func(w http.ResponseWriter, r *http.Request) {
+		grpcListServices(w, r, pool)
+	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/services/{serviceName}", func(w http.ResponseWriter, r *http.Request) {
+		grpcListMethods(w, r, pool)
+	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/services/{serviceName}/{methodName}", func(w http.ResponseWriter, r *http.Request) {
+		grpcListReqResType(w, r, pool)
 	}).Methods("GET")
 	router.HandleFunc("/devices/{deviceId}/services/{serviceName}/{methodName}", func(w http.ResponseWriter, r *http.Request) {
 		grpcCallUnaryMethod(w, r, pool)
@@ -185,6 +195,114 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 			ReplyError(c, fmt.Sprintln("Client disconnected: ", clientId))
 		}
 	}
+}
+
+func grpcListServices(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	devId := vars["deviceId"]
+	dev := pool.GetDevice(devId)
+	if dev == nil {
+		http.Error(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	devInfo := dev.info.(map[string]interface{})
+	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
+	if !ok {
+		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
+		return
+	}
+
+    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
+    if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+    }
+    defer conn.Close()
+
+    client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	reply, err := client.ListServices(context.Background(), &emptypb.Empty{})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ReplyJSONOK(w, reply)
+}
+
+func grpcListMethods(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	devId := vars["deviceId"]
+	dev := pool.GetDevice(devId)
+	if dev == nil {
+		http.Error(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	request := gopb.ListMethodsRequest{
+		ServiceName: vars["serviceName"],
+	}
+
+	devInfo := dev.info.(map[string]interface{})
+	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
+	if !ok {
+		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
+		return
+	}
+
+    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
+    if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+    }
+    defer conn.Close()
+
+    client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	reply, err := client.ListMethods(context.Background(), &request)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ReplyJSONOK(w, reply)
+}
+
+func grpcListReqResType(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	devId := vars["deviceId"]
+	dev := pool.GetDevice(devId)
+	if dev == nil {
+		http.Error(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	request := gopb.ListReqResTypeRequest{
+		ServiceName: vars["serviceName"],
+		MethodName: vars["methodName"],
+	}
+
+	devInfo := dev.info.(map[string]interface{})
+	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
+	if !ok {
+		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
+		return
+	}
+
+    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
+    if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+    }
+    defer conn.Close()
+
+    client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	reply, err := client.ListReqResType(context.Background(), &request)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ReplyJSONOK(w, reply)
 }
 
 func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
