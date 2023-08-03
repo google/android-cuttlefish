@@ -17,15 +17,6 @@
 */
 -->
 <manifest version="1.0" type="device" target-level="9">
-    <hal format="hidl">
-        <name>android.hardware.authsecret</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IAuthSecret</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
 
     <!-- DO NOT ADD MORE - use vintf_fragments -->
 
