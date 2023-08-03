@@ -29,15 +29,14 @@ import (
 type Manager struct {
 	rootDir  string
 	uuidGen  func() string
-	map_     map[string]*downloadArtifactsMapEntry
-	mapMutex sync.Mutex
+	registry *registry
 }
 
 func NewManager(rootDir string, uuidGen func() string) *Manager {
 	return &Manager{
-		rootDir: rootDir,
-		uuidGen: uuidGen,
-		map_:    make(map[string]*downloadArtifactsMapEntry),
+		rootDir:  rootDir,
+		uuidGen:  uuidGen,
+		registry: defaultRegistry,
 	}
 }
 
@@ -57,89 +56,121 @@ type Fetcher interface {
 	Fetch(outDir, buildID, target string, artifacts ...string) error
 }
 
-type downloadArtifactsResult struct {
-	OutDir string
-	Error  error
-}
-
-type downloadArtifactsMapEntry struct {
-	mutex  sync.Mutex
-	result *downloadArtifactsResult
-}
-
 func (h *Manager) GetCVDBundle(
 	buildID, target string, extraOptions *ExtraCVDOptions, fetcher CVDBundleFetcher) (string, error) {
 	outDir := fmt.Sprintf("%s/%s_%s__cvd", h.rootDir, buildID, target)
-	f := func() (string, error) {
-		if extraOptions != nil {
-			// A custom cvd bundle puts artifacts from different builds into the final directory so it can only be reused
-			// if the same arguments are used.
-			outDir = fmt.Sprintf("%s/%s__custom_cvd", h.rootDir, h.uuidGen())
-		}
-		if err := fetcher.Fetch(outDir, buildID, target, extraOptions); err != nil {
-			return "", err
-		}
-		return outDir, nil
+	if extraOptions != nil {
+		// A custom cvd bundle puts artifacts from different builds into the final directory so it can only be reused
+		// if the same arguments are used.
+		outDir = fmt.Sprintf("%s/%s__custom_cvd", h.rootDir, h.uuidGen())
 	}
-	return h.syncDownload(outDir, f)
+	f := func(dir string) error {
+		if err := fetcher.Fetch(dir, buildID, target, extraOptions); err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := h.registry.GetOrDownload(outDir, f); err != nil {
+		return "", err
+	}
+	return outDir, nil
 }
 
 func (h *Manager) GetKernelBundle(buildID, target string, fetcher Fetcher) (string, error) {
-	f := func() (string, error) {
-		outDir := fmt.Sprintf("%s/%s_%s__kernel", h.rootDir, buildID, target)
+	outDir := fmt.Sprintf("%s/%s_%s__kernel", h.rootDir, buildID, target)
+	f := func(dir string) error {
 		if err := createDir(outDir); err != nil {
-			return "", err
+			return err
 		}
 		if err := fetcher.Fetch(outDir, buildID, target, "bzImage"); err != nil {
-			return "", err
+			return err
 		}
 		if err := fetcher.Fetch(outDir, buildID, target, "initramfs.img"); err != nil {
 			// Certain kernel builds do not have corresponding ramdisks.
 			if apiErr, ok := err.(*BuildAPIError); ok && apiErr.Code != http.StatusNotFound {
-				return "", err
+				return err
 			}
 		}
-		return outDir, nil
+		return nil
 	}
-	return h.syncDownload(buildID+target+"kernel", f)
+	if err := h.registry.GetOrDownload(outDir, f); err != nil {
+		return "", err
+	}
+	return outDir, nil
 }
 
 func (h *Manager) GetBootloaderBundle(buildID, target string, fetcher Fetcher) (string, error) {
-	f := func() (string, error) {
-		outDir := fmt.Sprintf("%s/%s_%s__bootloader", h.rootDir, buildID, target)
+	outDir := fmt.Sprintf("%s/%s_%s__bootloader", h.rootDir, buildID, target)
+	f := func(dir string) error {
 		if err := createDir(outDir); err != nil {
-			return "", err
+			return err
 		}
 		if err := fetcher.Fetch(outDir, buildID, target, "u-boot.rom"); err != nil {
-			return "", err
+			return err
 		}
-		return outDir, nil
+		return nil
 	}
-	return h.syncDownload(buildID+target+"bootloader", f)
+	if err := h.registry.GetOrDownload(outDir, f); err != nil {
+		return "", err
+	}
+	return outDir, nil
 }
 
-// Synchronizes downloads to avoid downloading same bundle more than once.
-func (h *Manager) syncDownload(key string, downloadFunc func() (string, error)) (string, error) {
-	entry := h.getMapEntry(key)
-	entry.mutex.Lock()
-	defer entry.mutex.Unlock()
-	if entry.result != nil {
-		return entry.result.OutDir, entry.result.Error
-	}
-	entry.result = &downloadArtifactsResult{}
-	entry.result.OutDir, entry.result.Error = downloadFunc()
-	return entry.result.OutDir, entry.result.Error
+type downloadResult struct {
+	OutDir string
+	Error  error
 }
 
-func (h *Manager) getMapEntry(key string) *downloadArtifactsMapEntry {
-	h.mapMutex.Lock()
-	defer h.mapMutex.Unlock()
-	entry := h.map_[key]
-	if entry == nil {
-		entry = &downloadArtifactsMapEntry{}
-		h.map_[key] = entry
+var defaultRegistry = newRegistry()
+
+type registry struct {
+	ctxs  map[string]*downloadContext
+	mutex sync.Mutex
+}
+
+func newRegistry() *registry {
+	return &registry{
+		ctxs: make(map[string]*downloadContext),
 	}
-	return entry
+}
+
+type downloadFunc func(dir string) error
+
+// The download function `f` will be executed on the first call only for the given directory. Subsequent calls will
+// get the same results as the first call.
+func (r *registry) GetOrDownload(dir string, f downloadFunc) error {
+	ctx := r.getDownloadCtx(dir)
+	return ctx.Run(f)
+}
+
+func (r *registry) getDownloadCtx(dir string) *downloadContext {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	ctx := r.ctxs[dir]
+	if ctx == nil {
+		ctx = &downloadContext{Dir: dir}
+		r.ctxs[dir] = ctx
+	}
+	return ctx
+}
+
+type downloadContext struct {
+	Dir string
+
+	mutex sync.Mutex
+	done  bool
+	err   error
+}
+
+func (c *downloadContext) Run(f downloadFunc) error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if c.done {
+		return c.err
+	}
+	c.err = f(c.Dir)
+	c.done = true
+	return c.err
 }
 
 // Fails if the directory already exists.
