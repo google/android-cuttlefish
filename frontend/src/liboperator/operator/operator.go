@@ -30,10 +30,9 @@ import (
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/gorilla/mux"
 
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	gopb "github.com/google/android-cuttlefish/frontend/src/liboperator/protobuf"
 	grpcpb "github.com/google/android-cuttlefish/frontend/src/liboperator/protobuf"
-	"google.golang.org/grpc"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Sets up a unix socket for devices to connect to and returns a function that listens on the
@@ -215,22 +214,14 @@ func grpcListServices(w http.ResponseWriter, r *http.Request, pool *DevicePool) 
 		http.Error(w, "Device not found", http.StatusNotFound)
 		return
 	}
-
-	devInfo := dev.info.(map[string]interface{})
-	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
-	if !ok {
-		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
+	conn, err := dev.ConnectControlEnvProxyServer()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
+	defer conn.Close()
 
-    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
-    if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-    }
-    defer conn.Close()
-
-    client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	client := grpcpb.NewControlEnvProxyServiceClient(conn)
 	reply, err := client.ListServices(context.Background(), &emptypb.Empty{})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -248,26 +239,17 @@ func grpcListMethods(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		http.Error(w, "Device not found", http.StatusNotFound)
 		return
 	}
+	conn, err := dev.ConnectControlEnvProxyServer()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	defer conn.Close()
 
 	request := gopb.ListMethodsRequest{
 		ServiceName: vars["serviceName"],
 	}
-
-	devInfo := dev.info.(map[string]interface{})
-	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
-	if !ok {
-		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
-		return
-	}
-
-    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
-    if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-    }
-    defer conn.Close()
-
-    client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	client := grpcpb.NewControlEnvProxyServiceClient(conn)
 	reply, err := client.ListMethods(context.Background(), &request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -285,27 +267,18 @@ func grpcListReqResType(w http.ResponseWriter, r *http.Request, pool *DevicePool
 		http.Error(w, "Device not found", http.StatusNotFound)
 		return
 	}
+	conn, err := dev.ConnectControlEnvProxyServer()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	defer conn.Close()
 
 	request := gopb.ListReqResTypeRequest{
 		ServiceName: vars["serviceName"],
-		MethodName: vars["methodName"],
+		MethodName:  vars["methodName"],
 	}
-
-	devInfo := dev.info.(map[string]interface{})
-	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
-	if !ok {
-		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
-		return
-	}
-
-    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
-    if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-    }
-    defer conn.Close()
-
-    client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	client := grpcpb.NewControlEnvProxyServiceClient(conn)
 	reply, err := client.ListReqResType(context.Background(), &request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -323,34 +296,24 @@ func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePoo
 		http.Error(w, "Device not found", http.StatusNotFound)
 		return
 	}
+	conn, err := dev.ConnectControlEnvProxyServer()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	defer conn.Close()
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	request := gopb.CallUnaryMethodRequest{
-		ServiceName: vars["serviceName"],
-		MethodName: vars["methodName"],
+		ServiceName:        vars["serviceName"],
+		MethodName:         vars["methodName"],
 		JsonFormattedProto: string(body),
 	}
-
-	devInfo := dev.info.(map[string]interface{})
-	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
-	if !ok {
-		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
-		return
-	}
-
-    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
-    if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-    }
-    defer conn.Close()
-
-    client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	client := grpcpb.NewControlEnvProxyServiceClient(conn)
 	reply, err := client.CallUnaryMethod(context.Background(), &request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -368,27 +331,18 @@ func grpcTypeInformation(w http.ResponseWriter, r *http.Request, pool *DevicePoo
 		http.Error(w, "Device not found", http.StatusNotFound)
 		return
 	}
+	conn, err := dev.ConnectControlEnvProxyServer()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	defer conn.Close()
 
 	request := gopb.TypeInformationRequest{
 		ServiceName: vars["serviceName"],
-		TypeName: vars["typeName"],
+		TypeName:    vars["typeName"],
 	}
-
-	devInfo := dev.info.(map[string]interface{})
-	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
-	if !ok {
-		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
-		return
-	}
-
-    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
-    if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-    }
-    defer conn.Close()
-
-    client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	client := grpcpb.NewControlEnvProxyServiceClient(conn)
 	reply, err := client.TypeInformation(context.Background(), &request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
