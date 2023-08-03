@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -129,15 +130,16 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
-	cvdDwnl := NewAndroidCICVDDownloader(NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
-	cvdArtifactsFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, h.Config.Paths.FetchCVDBin(), "")
+	buildAPI := artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL)
+	cvdDwnl := NewAndroidCICVDDownloader(buildAPI)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, h.Config.Paths.FetchCVDBin(), "")
 	opts := FetchArtifactsActionOpts{
-		Request:             &req,
-		Paths:               h.Config.Paths,
-		CVDToolsVersion:     h.Config.CVDToolsVersion,
-		CVDDownloader:       cvdDwnl,
-		OperationManager:    h.OM,
-		CVDArtifactsFetcher: cvdArtifactsFetcher,
+		Request:          &req,
+		Paths:            h.Config.Paths,
+		CVDToolsVersion:  h.Config.CVDToolsVersion,
+		CVDDownloader:    cvdDwnl,
+		OperationManager: h.OM,
+		CVDBundleFetcher: cvdBundleFetcher,
 	}
 	return NewFetchArtifactsAction(opts).Run()
 }
@@ -162,12 +164,14 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
-	cvdDwnl := NewAndroidCICVDDownloader(NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
+	cvdDwnl := NewAndroidCICVDDownloader(
+		artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
 	credsProvider := &CreateCVDRequestCredsProvider{Request: req}
-	buildAPIOpts := AndroidCIBuildAPIOpts{Creds: credsProvider}
-	buildAPI := NewAndroidCIBuildAPIWithOpts(http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
+	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Creds: credsProvider}
+	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
+		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdArtifactsFetcher := newFetchCVDCommandArtifactsFetcher(
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(
 		exec.CommandContext, h.Config.Paths.FetchCVDBin(), credsProvider.Get())
 	opts := CreateCVDActionOpts{
 		Request:                  req,
@@ -179,7 +183,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDDownloader:            cvdDwnl,
 		BuildAPI:                 buildAPI,
 		ArtifactsFetcher:         artifactsFetcher,
-		CVDArtifactsFetcher:      cvdArtifactsFetcher,
+		CVDBundleFetcher:         cvdBundleFetcher,
 		UUIDGen:                  func() string { return uuid.New().String() },
 		CVDStartTimeout:          3 * time.Minute,
 		CVDUser:                  h.Config.CVDUser,
@@ -193,7 +197,8 @@ type listCVDsHandler struct {
 }
 
 func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
-	cvdDwnl := NewAndroidCICVDDownloader(NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
+	buildAPI := artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL)
+	cvdDwnl := NewAndroidCICVDDownloader(buildAPI)
 	opts := ListCVDsActionOpts{
 		Paths:           h.Config.Paths,
 		ExecContext:     exec.CommandContext,
