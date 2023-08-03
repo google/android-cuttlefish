@@ -255,13 +255,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.weaver-service.example
 
-
-#
-# Authsecret HAL
-#
-PRODUCT_PACKAGES += \
-    android.hardware.authsecret@1.0-service
-
 #
 # Authsecret AIDL HAL
 #
