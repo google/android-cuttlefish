@@ -125,19 +125,6 @@ std::optional<unsigned> TryFromCuttlefishInstance(
   return parsed.ok() ? std::optional(*parsed) : std::nullopt;
 }
 
-std::optional<unsigned> TryFromUser(const cvd_common::Envs& envs) {
-  if (!Contains(envs, "USER")) {
-    return std::nullopt;
-  }
-  std::string_view user{envs.at("USER")};
-  if (user.empty() || !android::base::ConsumePrefix(&user, kVsocUserPrefix)) {
-    return std::nullopt;
-  }
-  const auto& vsoc_num = user;
-  auto vsoc_id = ParseNaturalNumber(vsoc_num.data());
-  return vsoc_id.ok() ? std::optional(*vsoc_id) : std::nullopt;
-}
-
 }  // namespace
 
 std::optional<std::vector<unsigned>>
@@ -441,8 +428,7 @@ Result<void> StartSelectorParser::ParseOptions() {
       .num_instances = std::move(num_instances),
       .instance_nums = std::move(instance_nums),
       .base_instance_num = std::move(base_instance_num),
-      .cuttlefish_instance_env = TryFromCuttlefishInstance(envs_),
-      .vsoc_suffix = TryFromUser(envs_)};
+      .cuttlefish_instance_env = TryFromCuttlefishInstance(envs_)};
   auto parsed_ids = CF_EXPECT(HandleInstanceIds(instance_nums_param));
   requested_num_instances_ = parsed_ids.GetNumOfInstances();
   instance_ids_ = std::move(parsed_ids.GetInstanceIds());
