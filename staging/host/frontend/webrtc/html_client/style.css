@@ -273,6 +273,12 @@ body {
   top: 0;
   text-align: right;
 }
+.fixed-orientation{
+  position: sticky;
+  right: 0;
+  top: 0;
+  text-align: right;
+}
 .control-panel-column {
   width: 50px;
   /* Items inside this use a column Flexbox.*/
