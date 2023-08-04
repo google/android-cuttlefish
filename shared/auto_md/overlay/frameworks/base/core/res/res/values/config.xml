@@ -58,6 +58,7 @@
 
     <!-- Whether the device allows users to start in background visible on displays.
          Should be false for most devices, except automotive vehicle with passenger displays. -->
+    <!-- The config is enabled for the development purpose only. -->
     <bool name="config_multiuserVisibleBackgroundUsers">true</bool>
 
     <!-- Enable multi-user IME sessions -->
