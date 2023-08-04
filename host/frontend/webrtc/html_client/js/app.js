@@ -280,6 +280,18 @@ class DeviceControlApp {
     createButtonListener('location-set-confirm', null, this.#deviceConnection,
       evt => this.#onSendLocation(this.#deviceConnection, evt));
 
+    createButtonListener('left-position-button', null, this.#deviceConnection,
+      () => this.#setOrientation(-90));
+
+    createButtonListener('upright-position-button', null, this.#deviceConnection,
+      () => this.#setOrientation(0));
+
+    createButtonListener('right-position-button', null, this.#deviceConnection,
+      () => this.#setOrientation(90));
+
+    createButtonListener('upside-position-button', null, this.#deviceConnection,
+      () => this.#setOrientation(-180));
+
     createSliderListener('rotation-slider', () => this.#onMotionChanged());
 
     if (this.#deviceConnection.description.custom_control_panel_buttons.length >
@@ -457,6 +469,39 @@ class DeviceControlApp {
     acc_val.textContent = `${acc_xyz[0]} ${acc_xyz[1]} ${acc_xyz[2]}`;
     mgn_val.textContent = `${mgn_xyz[0]} ${mgn_xyz[1]} ${mgn_xyz[2]}`;
     gyro_val.textContent = `${gyro_xyz[0]} ${gyro_xyz[1]} ${gyro_xyz[2]}`;
+  }
+
+  // Gradually rotate to a fixed orientation.
+  #setOrientation(z) {
+    const sliders = document.getElementsByClassName('rotation-slider-range');
+    const values = document.getElementsByClassName('rotation-slider-value');
+    if (sliders.length != values.length && sliders.length != 3) {
+      return;
+    }
+    // Set XY axes to 0 (upright position).
+    sliders[0].value = '0';
+    values[0].textContent = '0';
+    sliders[1].value = '0';
+    values[1].textContent = '0';
+
+    // Gradually transition z axis to target angle.
+    let current_z = parseFloat(sliders[2].value);
+    const step = ((z > current_z) ? 0.5 : -0.5);
+    let move = setInterval(() => {
+      if (Math.abs(z - current_z) >= 0.5) {
+        current_z += step;
+      }
+      else {
+        current_z = z;
+      }
+      sliders[2].value = current_z;
+      values[2].textContent = `${current_z}`;
+      this.#onMotionChanged();
+      if (current_z == z) {
+        this.#onMotionChanged();
+        clearInterval(move);
+      }
+    }, 5);
   }
 
   #onImportLocationsFile(deviceConnection, evt) {
