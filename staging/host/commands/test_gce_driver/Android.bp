@@ -67,7 +67,7 @@ cc_binary {
     defaults: ["cuttlefish_host"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_test_gce_proto_cpp",
     proto: {
         export_proto_headers: true,
