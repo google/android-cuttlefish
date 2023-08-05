@@ -17,13 +17,14 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_command_util",
     srcs: [
         "launcher_message.cc",
         "util.cc",
     ],
     shared_libs: [
+        "liblog",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libjsoncpp",

@@ -29,13 +29,15 @@ cc_library_headers {
     defaults: ["cuttlefish_host"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_graphics_configuration",
     srcs: [
         "graphics_configuration.cpp",
     ],
     shared_libs: [
         "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "libjsoncpp",
         "liblog",
     ],
@@ -45,7 +47,7 @@ cc_library_static {
     defaults: ["cuttlefish_host"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_graphics_detector",
     srcs: [
         "egl.cpp",
