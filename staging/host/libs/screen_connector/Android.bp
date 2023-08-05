@@ -17,7 +17,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_screen_connector",
     srcs: [
         "wayland_screen_connector.cpp",
@@ -38,9 +38,14 @@ cc_library_static {
         "libcuttlefish_confui",
         "libcuttlefish_wayland_server",
         "libcuttlefish_confui_host",
+        "libffi",
         "libft2.nodep",
         "libteeui",
         "libteeui_localization",
+        "libwayland_crosvm_gpu_display_extension_server_protocols",
+        "libwayland_extension_server_protocols",
+        "libwayland_server",
+
     ],
     defaults: ["cuttlefish_buildhost_only"],
 }

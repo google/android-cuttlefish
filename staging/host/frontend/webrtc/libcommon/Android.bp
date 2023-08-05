@@ -17,7 +17,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_webrtc_common",
     srcs: [
         "audio_device.cpp",
@@ -38,11 +38,18 @@ cc_library_static {
         "libwebrtc_absl_headers",
     ],
     static_libs: [
+        "libevent",
+        "libopus",
+        "libsrtp2",
+        "libvpx",
         "libwebrtc",
+        "libyuv",
     ],
     shared_libs: [
         "libbase",
+        "libcrypto",
         "libjsoncpp",
+        "libssl",
     ],
     defaults: ["cuttlefish_buildhost_only"],
 }

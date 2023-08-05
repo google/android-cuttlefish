@@ -104,7 +104,7 @@ common_libsecure_srcs = [
 // 1. Missing transport implementation
 // 2. Missing file utils
 // 3. Base64 isn't supported (need for software oemlock implementation)
-cc_library_host_static {
+cc_library {
     name: "libsecure_env_not_windows",
     srcs: common_libsecure_srcs + [
         "confui_sign_server.cpp",

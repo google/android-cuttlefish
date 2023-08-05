@@ -17,7 +17,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_static {
+cc_library {
     name: "liblocation",
     srcs: [
         "StringParse.cpp",
@@ -31,6 +31,7 @@ cc_library_static {
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libjsoncpp",
+        "liblog",
         "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
         "libxml2",
