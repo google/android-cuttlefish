@@ -2,7 +2,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_static {
+cc_library {
     name: "libvsock_utils_wrapper",
     srcs: [
         "wrapper.cpp",
@@ -14,9 +14,9 @@ cc_library_static {
       "libbase_headers",
     ],
     shared_libs: [
+        "libcuttlefish_fs",
+        "libjsoncpp", // needed since libjsoncpp_headers isn't available from the vendor partition
         "libvsock_utils",
-        // needed since libjsoncpp_headers isn't available from the vendor partition
-        "libjsoncpp",
     ],
     defaults: ["cuttlefish_guest_only"],
 }

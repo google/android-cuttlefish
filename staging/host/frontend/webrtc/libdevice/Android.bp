@@ -17,7 +17,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_webrtc_device",
     srcs: [
         "audio_track_source_impl.cpp",
@@ -49,6 +49,7 @@ cc_library_static {
         "libcuttlefish_webrtc_common",
         "libgflags",
         "libdrm",
+        "libevent",
         "libffi",
         "libwayland_crosvm_gpu_display_extension_server_protocols",
         "libwayland_extension_server_protocols",
@@ -59,10 +60,14 @@ cc_library_static {
         "libwebrtc",
         "libcvd_gnss_grpc_proxy",
         "liblocation",
+        "libopus",
+        "libvpx",
+        "libyuv",
     ],
     shared_libs: [
         "libbase",
         "libcn-cbor",
+        "libcrypto",
         "libcuttlefish_fs",
         "libfruit",
         "libjsoncpp",

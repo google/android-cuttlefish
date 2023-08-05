@@ -29,7 +29,7 @@ cc_library_headers {
     ],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_confui_host",
     srcs: [
         "cbor.cc",

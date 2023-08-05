@@ -69,7 +69,7 @@ cc_library {
     defaults: ["cuttlefish_host"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_utils_product",
     srcs: [
         "inotify.cpp",
