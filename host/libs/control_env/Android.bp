@@ -17,7 +17,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_control_env",
     srcs: [
         "grpc_service_handler.cc",
@@ -25,12 +25,14 @@ cc_library_static {
     shared_libs: [
         "libbase",
         "libcuttlefish_utils",
+        "libprotobuf-cpp-full",
         "libgrpc++",
         "libjsoncpp",
     ],
     static_libs: [
         "grpc_cli_libs",
         "libc++fs",
+        "libgflags",
     ],
     cflags: [
         "-Wno-unused-parameter",
