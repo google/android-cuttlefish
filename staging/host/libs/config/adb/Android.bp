@@ -17,7 +17,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_host_config_adb",
     srcs: [
         "config.cpp",
@@ -27,9 +27,10 @@ cc_library_static {
         "strings.cpp",
     ],
     shared_libs: [
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
         "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_host_config",
+        "libcuttlefish_utils",
         "libfruit",
         "libgflags",
         "libjsoncpp",

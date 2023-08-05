@@ -18,7 +18,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_static {
+cc_library {
     name: "libcuttlefish_launch_cvd_proto",
     host_supported: true,
     proto: {
