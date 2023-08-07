@@ -19,7 +19,7 @@ package {
 
 cc_binary {
     name: "mkenvimage_slim",
-    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host"],
     srcs: [
         "mkenvimage_slim.cc",
     ],
