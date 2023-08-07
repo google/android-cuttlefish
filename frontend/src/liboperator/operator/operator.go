@@ -208,13 +208,7 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 
 func grpcListServices(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	vars := mux.Vars(r)
-	devId := vars["deviceId"]
-	dev := pool.GetDevice(devId)
-	if dev == nil {
-		http.Error(w, "Device not found", http.StatusNotFound)
-		return
-	}
-	conn, err := dev.ConnectControlEnvProxyServer()
+	conn, err := ConnectControlEnvProxyServer(vars["deviceId"], pool)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -233,13 +227,7 @@ func grpcListServices(w http.ResponseWriter, r *http.Request, pool *DevicePool) 
 
 func grpcListMethods(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	vars := mux.Vars(r)
-	devId := vars["deviceId"]
-	dev := pool.GetDevice(devId)
-	if dev == nil {
-		http.Error(w, "Device not found", http.StatusNotFound)
-		return
-	}
-	conn, err := dev.ConnectControlEnvProxyServer()
+	conn, err := ConnectControlEnvProxyServer(vars["deviceId"], pool)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -261,13 +249,7 @@ func grpcListMethods(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 
 func grpcListReqResType(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	vars := mux.Vars(r)
-	devId := vars["deviceId"]
-	dev := pool.GetDevice(devId)
-	if dev == nil {
-		http.Error(w, "Device not found", http.StatusNotFound)
-		return
-	}
-	conn, err := dev.ConnectControlEnvProxyServer()
+	conn, err := ConnectControlEnvProxyServer(vars["deviceId"], pool)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -290,13 +272,7 @@ func grpcListReqResType(w http.ResponseWriter, r *http.Request, pool *DevicePool
 
 func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	vars := mux.Vars(r)
-	devId := vars["deviceId"]
-	dev := pool.GetDevice(devId)
-	if dev == nil {
-		http.Error(w, "Device not found", http.StatusNotFound)
-		return
-	}
-	conn, err := dev.ConnectControlEnvProxyServer()
+	conn, err := ConnectControlEnvProxyServer(vars["deviceId"], pool)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -325,13 +301,7 @@ func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePoo
 
 func grpcTypeInformation(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	vars := mux.Vars(r)
-	devId := vars["deviceId"]
-	dev := pool.GetDevice(devId)
-	if dev == nil {
-		http.Error(w, "Device not found", http.StatusNotFound)
-		return
-	}
-	conn, err := dev.ConnectControlEnvProxyServer()
+	conn, err := ConnectControlEnvProxyServer(vars["deviceId"], pool)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
