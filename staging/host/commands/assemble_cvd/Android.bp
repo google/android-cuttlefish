@@ -104,5 +104,5 @@ cc_binary {
             ],
         },
     },
-    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host"],
 }
