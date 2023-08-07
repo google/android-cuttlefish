@@ -37,6 +37,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.software.app_widgets.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.app_widgets.xml \
 
+PRODUCT_ENFORCE_MAC80211_HWSIM := false
+
 #
 # All components inherited here go to system_ext image
 #
