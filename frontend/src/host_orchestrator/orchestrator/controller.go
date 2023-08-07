@@ -137,10 +137,11 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
 	cvdDwnl := NewAndroidCICVDDownloader(NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
-	buildAPIOpts := AndroidCIBuildAPIOpts{
-		Creds: &CreateCVDRequestCredsProvider{Request: req},
-	}
+	credsProvider := &CreateCVDRequestCredsProvider{Request: req}
+	buildAPIOpts := AndroidCIBuildAPIOpts{Creds: credsProvider}
 	buildAPI := NewAndroidCIBuildAPIWithOpts(http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
+	artifactsFetcher := newCombinedArtifactFetcher(
+		exec.CommandContext, h.Config.Paths.FetchCVDBin(), buildAPI, credsProvider.Get())
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
@@ -150,6 +151,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDToolsVersion:          h.Config.CVDToolsVersion,
 		CVDDownloader:            cvdDwnl,
 		BuildAPI:                 buildAPI,
+		ArtifactsFetcher:         artifactsFetcher,
 		UUIDGen:                  func() string { return uuid.New().String() },
 		CVDStartTimeout:          3 * time.Minute,
 		CVDUser:                  h.Config.CVDUser,
