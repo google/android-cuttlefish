@@ -21,7 +21,7 @@ package {
 cc_binary {
     name: "android.hardware.health.storage-service.cuttlefish",
     vendor: true,
-    defaults: ["hidl_defaults", "cuttlefish_health_storage"],
+    defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     init_rc: ["android.hardware.health.storage-service.cuttlefish.rc"],
     vintf_fragments: [
