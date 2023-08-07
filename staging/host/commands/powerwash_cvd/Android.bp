@@ -33,5 +33,5 @@ cc_binary {
         "libcuttlefish_host_config",
         "libgflags",
     ],
-    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host"],
 }
