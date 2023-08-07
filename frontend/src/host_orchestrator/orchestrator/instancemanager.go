@@ -237,26 +237,26 @@ func (h *AndroidCICVDDownloader) download(build AndroidBuild, out string) error 
 	return os.Chmod(out, 0750)
 }
 
-// Fetches artifacts using the build api or the fetch_cvd tool as necessary.
-type combinedArtifactFetcher struct {
+type fetchCVDCommandArtifactsFetcher struct {
 	execContext ExecContext
 	fetchCVDBin string
-	buildAPI    BuildAPI
 	credentials string
 }
 
-func newCombinedArtifactFetcher(execContext ExecContext, fetchCVDBin string, buildAPI BuildAPI, credentials string) *combinedArtifactFetcher {
-	return &combinedArtifactFetcher{
+func newFetchCVDCommandArtifactsFetcher(
+	execContext ExecContext,
+	fetchCVDBin string,
+	credentials string) *fetchCVDCommandArtifactsFetcher {
+	return &fetchCVDCommandArtifactsFetcher{
 		execContext: execContext,
 		fetchCVDBin: fetchCVDBin,
-		buildAPI:    buildAPI,
 		credentials: credentials,
 	}
 }
 
 // The artifacts directory gets created during the execution of `fetch_cvd` granting access to the cvdnetwork group
 // which translated to granting the necessary permissions to the cvd executor user.
-func (f *combinedArtifactFetcher) FetchCVD(outDir, buildID, target string, extraOptions *ExtraCVDOptions) error {
+func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, extraOptions *ExtraCVDOptions) error {
 	args := []string{
 		fmt.Sprintf("--directory=%s", outDir),
 		fmt.Sprintf("--default_build=%s/%s", buildID, target),
@@ -294,7 +294,32 @@ func (f *combinedArtifactFetcher) FetchCVD(outDir, buildID, target string, extra
 	return nil
 }
 
-func (f *combinedArtifactFetcher) FetchArtifacts(outDir, buildID, target string, artifactNames ...string) error {
+func createCredentialsFile(content string) (*os.File, error) {
+	p1, p2, err := os.Pipe()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create pipe for credentials: %w", err)
+	}
+	go func(f *os.File) {
+		defer f.Close()
+		if _, err := f.Write([]byte(content)); err != nil {
+			log.Printf("Failed to write credentials to file: %v\n", err)
+			// Can't return this error without risking a deadlock when the pipe buffer fills up.
+		}
+	}(p2)
+	return p1, nil
+}
+
+type buildAPIArtifacstFetcher struct {
+	buildAPI BuildAPI
+}
+
+func newBuildAPIArtifactsFetcher(buildAPI BuildAPI) *buildAPIArtifacstFetcher {
+	return &buildAPIArtifacstFetcher{
+		buildAPI: buildAPI,
+	}
+}
+
+func (f *buildAPIArtifacstFetcher) Fetch(outDir, buildID, target string, artifactNames ...string) error {
 	var chans []chan error
 	for _, name := range artifactNames {
 		ch := make(chan error)
@@ -314,21 +339,6 @@ func (f *combinedArtifactFetcher) FetchArtifacts(outDir, buildID, target string,
 		}
 	}
 	return merr
-}
-
-func createCredentialsFile(content string) (*os.File, error) {
-	p1, p2, err := os.Pipe()
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create pipe for credentials: %w", err)
-	}
-	go func(f *os.File) {
-		defer f.Close()
-		if _, err := f.Write([]byte(content)); err != nil {
-			log.Printf("Failed to write credentials to file: %v\n", err)
-			// Can't return this error without risking a deadlock when the pipe buffer fills up.
-		}
-	}(p2)
-	return p1, nil
 }
 
 const (
