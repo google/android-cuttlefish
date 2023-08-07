@@ -323,9 +323,15 @@ func asWebRTCICEServers(in []apiv1.IceServer) []webrtc.ICEServer {
 	return out
 }
 
+const headerNameCOInjectBuildAPICreds = "X-Cutf-Cloud-Orchestrator-Inject-BuildAPI-Creds"
+
 func (c *serviceImpl) CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CreateCVDResponse, error) {
+	reqOpts := requestOpts{
+		// Cloud Orchestrator only checks for the existence of the header, hence an empty string value is ok.
+		Header: http.Header{headerNameCOInjectBuildAPICreds: []string{""}},
+	}
 	var op hoapi.Operation
-	if err := c.doRequest("POST", "/hosts/"+host+"/cvds", req, &op); err != nil {
+	if err := c.doRequestWithOpts("POST", "/hosts/"+host+"/cvds", req, &op, reqOpts); err != nil {
 		return nil, err
 	}
 	path := "/hosts/" + host + "/operations/" + op.Name + "/:wait"
@@ -386,10 +392,18 @@ func (c *serviceImpl) UploadFiles(host, uploadDir string, filenames []string) er
 	return uploader.Upload()
 }
 
+type requestOpts struct {
+	Header http.Header
+}
+
+func (c *serviceImpl) doRequest(method, path string, reqpl, respl any) error {
+	return c.doRequestWithOpts(method, path, reqpl, respl, requestOpts{})
+}
+
 // It either populates the passed response payload reference and returns nil
 // error or returns an error. For responses with non-2xx status code an error
 // will be returned.
-func (c *serviceImpl) doRequest(method, path string, reqpl, respl any) error {
+func (c *serviceImpl) doRequestWithOpts(method, path string, reqpl, respl any, opts requestOpts) error {
 	var body io.Reader
 	if reqpl != nil {
 		json, err := json.Marshal(reqpl)
@@ -402,6 +416,13 @@ func (c *serviceImpl) doRequest(method, path string, reqpl, respl any) error {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return fmt.Errorf("Error creating request: %w", err)
+	}
+	if opts.Header != nil {
+		for name, values := range opts.Header {
+			for _, v := range values {
+				req.Header.Add(name, v)
+			}
+		}
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if err := dumpRequest(req, c.DumpOut); err != nil {
