@@ -50,6 +50,8 @@ type Controller struct {
 }
 
 func (c *Controller) AddRoutes(router *mux.Router) {
+	router.Handle("/artifacts",
+		httpHandler(&fetchArtifactsHandler{Config: c.Config, OM: c.OperationManager})).Methods("POST")
 	router.Handle("/cvds",
 		httpHandler(newCreateCVDHandler(c.Config, c.OperationManager, c.UserArtifactsManager))).Methods("POST")
 	router.Handle("/cvds", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
@@ -114,6 +116,30 @@ func replyJSON(w http.ResponseWriter, obj interface{}, statusCode int) error {
 	w.WriteHeader(statusCode)
 	encoder := json.NewEncoder(w)
 	return encoder.Encode(obj)
+}
+
+type fetchArtifactsHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
+	req := apiv1.FetchArtifactsRequest{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
+	}
+	cvdDwnl := NewAndroidCICVDDownloader(NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
+	cvdArtifactsFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, h.Config.Paths.FetchCVDBin(), "")
+	opts := FetchArtifactsActionOpts{
+		Request:             &req,
+		Paths:               h.Config.Paths,
+		CVDToolsVersion:     h.Config.CVDToolsVersion,
+		CVDDownloader:       cvdDwnl,
+		OperationManager:    h.OM,
+		CVDArtifactsFetcher: cvdArtifactsFetcher,
+	}
+	return NewFetchArtifactsAction(opts).Run()
 }
 
 type createCVDHandler struct {
