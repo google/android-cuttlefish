@@ -20,6 +20,8 @@ import (
 	"log"
 	"net/http"
 
+	"google.golang.org/grpc"
+
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 )
 
@@ -57,4 +59,20 @@ func ReplyJSON(w http.ResponseWriter, obj interface{}, statusCode int) error {
 	w.WriteHeader(statusCode)
 	encoder := json.NewEncoder(w)
 	return encoder.Encode(obj)
+}
+
+
+// Connect ControlEnvProxyServer
+func ConnectControlEnvProxyServer(devId string, pool *DevicePool) (*grpc.ClientConn, error) {
+	dev := pool.GetDevice(devId)
+	if dev == nil {
+		return nil, errors.New("Device not found")
+	}
+
+	devInfo := dev.info.(map[string]interface{})
+	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
+	if !ok {
+		return nil, errors.New("ControlEnvProxyServer path not found")
+	}
+	return grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
 }

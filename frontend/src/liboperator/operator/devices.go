@@ -21,8 +21,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"sync"
-
-	"google.golang.org/grpc"
 )
 
 type Device struct {
@@ -103,16 +101,6 @@ func (d *Device) ToClient(id int, msg interface{}) error {
 		return errors.New(fmt.Sprint("Unknown client: ", id))
 	}
 	return client.Send(msg)
-}
-
-// Connect ControlEnvProxyServer
-func (d *Device) ConnectControlEnvProxyServer() (*grpc.ClientConn, error) {
-	devInfo := d.info.(map[string]interface{})
-	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
-	if !ok {
-		return nil, errors.New("ControlEnvProxyServer path not found")
-	}
-	return grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
 }
 
 // Keeps track of the registered devices.
