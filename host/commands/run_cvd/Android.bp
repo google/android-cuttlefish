@@ -99,7 +99,6 @@ cc_binary {
     },
     defaults: [
         "cuttlefish_host",
-        "cuttlefish_libicuuc",
         "cvd_cc_defaults",
     ],
     use_version_lib: true,
