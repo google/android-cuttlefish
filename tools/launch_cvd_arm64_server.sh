@@ -35,7 +35,11 @@ mkdir -p $temp_dir
 
 # copy and compress the artifacts to the temp directory
 ssh $server -t "mkdir -p ~/.cvd_artifact; mkdir -p ~/cvd_home"
-rsync -aSvch --recursive $ANDROID_PRODUCT_OUT --files-from=$ANDROID_PRODUCT_OUT/required_images $server:~/cvd_home --info=progress2
+if [ -f $ANDROID_PRODUCT_OUT/required_images ]; then
+  rsync -aSvch --recursive $ANDROID_PRODUCT_OUT --files-from=$ANDROID_PRODUCT_OUT/required_images $server:~/cvd_home --info=progress2
+else
+  rsync -aSvch --recursive $ANDROID_PRODUCT_OUT/bootloader $ANDROID_PRODUCT_OUT/*.img $server:~/cvd_home --info=progress2
+fi
 
 # copy the cvd host package
 cvd_host_tool_dir=$ANDROID_HOST_OUT/../linux_musl-arm64
