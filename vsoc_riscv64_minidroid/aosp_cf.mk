@@ -24,6 +24,8 @@ PRODUCT_DEVICE := vsoc_riscv64_minidroid
 PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish riscv64 minidroid
 
+PRODUCT_ENFORCE_MAC80211_HWSIM := false
+
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
     ro.soc.model=$(PRODUCT_DEVICE)

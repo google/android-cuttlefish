@@ -39,6 +39,8 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 LOCAL_PREFER_VENDOR_APEX := true
 $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 
+PRODUCT_ENFORCE_MAC80211_HWSIM := false
+
 # TODO: Nested virtualization support
 # $(call inherit-product, packages/modules/Virtualization/apex/product_packages.mk)
 
