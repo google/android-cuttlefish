@@ -125,7 +125,7 @@ partx -v --update \${1}
 dd if="\${SCRIPT_DIR}"/esp.img of=\${1}\${partition}1 bs=16M
 mkfs.ext4 -L ROOT -U \$(cat \${SCRIPT_DIR}/rootfs_uuid) \${1}\${partition}2
 mount \${1}\${partition}2 /media
-tar -C /media -Spxf \${SCRIPT_DIR}/rootfs.tar.lz4
+tar -C /media -Spxf \${SCRIPT_DIR}/rootfs.tar.xz
 umount /media
 EOF
 chmod a+x "${workdir}"/install.sh
@@ -194,13 +194,13 @@ rootfs_uuid=$(/sbin/blkid --probe -s UUID -o value -O ${root_partition_offset} "
 sudo mount -o loop,offset=${root_partition_offset} "${input}" "${mount}"
 trap unmount EXIT
 sudo rm -f "${mount}"/root/esp.img "${mount}"/root/gpt.img
-sudo rm -f "${mount}"/root/rootfs.tar.lz4
+sudo rm -f "${mount}"/root/rootfs.tar.xz
 sudo rm -f "${mount}"/root/rootfs_uuid
 sudo rm -f "${mount}"/boot/grub/eltorito.img
 sudo rm -f "${mount}"/boot/grub/${grub_arch}/grub.cfg
 sudo rm -rf "${mount}"/tmp/*
 sudo rm -rf "${mount}"/var/tmp/*
-( cd "${mount}" && sudo tar -Szcpf "${workdir}"/rootfs.tar.lz4 * )
+( cd "${mount}" && sudo tar -SJcpf "${workdir}"/rootfs.tar.xz * )
 
 # Prepare a new ESP for the ISO's El Torito image
 mkdir -p "${workdir}/EFI/Boot"
@@ -214,7 +214,7 @@ mcopy -o -i "${workdir}"/eltorito.img -s "${workdir}/EFI" ::
 
 # Build ISO from rootfs
 sudo cp "${workdir}"/esp.img "${workdir}"/gpt.img "${mount}"/root
-sudo cp "${workdir}"/rootfs.tar.lz4 "${workdir}"/install.sh "${mount}"/root
+sudo cp "${workdir}"/rootfs.tar.xz "${workdir}"/install.sh "${mount}"/root
 echo -n "${rootfs_uuid}" | sudo tee "${mount}"/root/rootfs_uuid >/dev/null
 sudo cp "${workdir}"/eltorito.img "${mount}"/boot/grub
 sudo cp "${workdir}"/grub.cfg "${mount}"/boot/grub/${grub_arch}/grub.cfg
