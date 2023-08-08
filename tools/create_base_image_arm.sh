@@ -118,7 +118,7 @@ run_scr=load mmc ${devnum}:${distro_bootpart} ${scriptaddr} /boot/boot.scr; sour
 fastboot_raw_partition_raw1=0x0 0x2000000
 EOF
 echo "Sha=`${script_dir}/gen_sha.sh --uboot ${UBOOT_DIST} --kernel ${KERNEL_DIST}`" >> ${bootenv_src}
-${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_tools/mkenvimage -s 32768 -o ${bootenv} - < ${bootenv_src}
+mkenvimage -s 32768 -o ${bootenv} - < ${bootenv_src}
 rm -f ${bootenv_src}
 
 IMAGE=`mktemp`
