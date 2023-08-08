@@ -30,12 +30,16 @@ cc_binary {
         "libcuttlefish_utils",
         "libfruit",
         "libjsoncpp",
-        "libnl",
     ],
     static_libs: [
         "libgflags",
         "libcuttlefish_host_config",
         "libcuttlefish_vm_manager",
     ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
     defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
 }
