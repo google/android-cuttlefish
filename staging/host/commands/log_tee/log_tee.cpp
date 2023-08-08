@@ -14,7 +14,9 @@
 // limitations under the License.
 
 #include <signal.h>
+#ifdef __linux__
 #include <sys/signalfd.h>
+#endif
 
 #include <regex>
 
@@ -84,10 +86,12 @@ int main(int argc, char** argv) {
   sigaddset(&mask, SIGINT);
   CHECK(sigprocmask(SIG_BLOCK, &mask, NULL) == 0)
       << "sigprocmask failed: " << strerror(errno);
+#ifdef __linux__
   int sfd = signalfd(-1, &mask, 0);
   CHECK(sfd >= 0) << "signalfd failed: " << strerror(errno);
   auto int_fd = cuttlefish::SharedFD::Dup(sfd);
   close(sfd);
+#endif
 
   auto poll_fds = std::vector<cuttlefish::PollSharedFd>{
       cuttlefish::PollSharedFd{
@@ -95,11 +99,13 @@ int main(int argc, char** argv) {
           .events = POLL_IN,
           .revents = 0,
       },
+#ifdef __linux__
       cuttlefish::PollSharedFd{
           .fd = int_fd,
           .events = POLL_IN,
           .revents = 0,
       },
+#endif
   };
 
   LOG(DEBUG) << "Starting to read from process " << FLAGS_process_name;
@@ -168,6 +174,7 @@ int main(int argc, char** argv) {
       // handle any signals yet.
       continue;
     }
+#ifdef __linux__
     if (poll_fds[1].revents) {
       struct signalfd_siginfo siginfo;
       int s = int_fd->Read(&siginfo, sizeof(siginfo));
@@ -177,6 +184,7 @@ int main(int argc, char** argv) {
           << "unexpected signal: " << siginfo.ssi_signo;
       break;
     }
+#endif
   }
 
   LOG(DEBUG) << "Finished reading from process " << FLAGS_process_name;
