@@ -22,9 +22,11 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
+
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -36,9 +38,9 @@ type CreateCVDActionOpts struct {
 	ExecContext              ExecContext
 	CVDDownloader            CVDDownloader
 	CVDToolsVersion          AndroidBuild
-	BuildAPI                 BuildAPI
-	ArtifactsFetcher         ArtifactsFetcher
-	CVDArtifactsFetcher      CVDArtifactsFetcher
+	BuildAPI                 artifacts.BuildAPI
+	ArtifactsFetcher         artifacts.Fetcher
+	CVDBundleFetcher         artifacts.CVDBundleFetcher
 	UUIDGen                  func() string
 	CVDUser                  string
 	CVDStartTimeout          time.Duration
@@ -53,11 +55,11 @@ type CreateCVDAction struct {
 	execContext              cvd.CVDExecContext
 	cvdToolsVersion          AndroidBuild
 	cvdDownloader            CVDDownloader
-	buildAPI                 BuildAPI
-	artifactsFetcher         ArtifactsFetcher
-	cvdArtifactsFetcher      CVDArtifactsFetcher
+	buildAPI                 artifacts.BuildAPI
+	artifactsFetcher         artifacts.Fetcher
+	cvdBundleFetcher         artifacts.CVDBundleFetcher
 	userArtifactsDirResolver UserArtifactsDirResolver
-	artifactsMngr            *ArtifactsManager
+	artifactsMngr            *artifacts.Manager
 	startCVDHandler          *startCVDHandler
 
 	instanceCounter uint32
@@ -74,10 +76,10 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		cvdDownloader:            opts.CVDDownloader,
 		buildAPI:                 opts.BuildAPI,
 		artifactsFetcher:         opts.ArtifactsFetcher,
-		cvdArtifactsFetcher:      opts.CVDArtifactsFetcher,
+		cvdBundleFetcher:         opts.CVDBundleFetcher,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
 
-		artifactsMngr: NewArtifactsManager(
+		artifactsMngr: artifacts.NewManager(
 			opts.Paths.ArtifactsRootDir,
 			opts.UUIDGen,
 		),
@@ -200,15 +202,15 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		var extraCVDOptions *ExtraCVDOptions = nil
+		var extraCVDOptions *artifacts.ExtraCVDOptions = nil
 		if systemImgBuild != nil {
-			extraCVDOptions = &ExtraCVDOptions{
+			extraCVDOptions = &artifacts.ExtraCVDOptions{
 				SystemImgBuildID: systemImgBuild.BuildID,
 				SystemImgTarget:  systemImgBuild.Target,
 			}
 		}
 		mainBuildDir, mainBuildErr = a.artifactsMngr.GetCVDBundle(
-			mainBuild.BuildID, mainBuild.Target, extraCVDOptions, a.cvdArtifactsFetcher)
+			mainBuild.BuildID, mainBuild.Target, extraCVDOptions, a.cvdBundleFetcher)
 	}()
 	if kernelBuild != nil {
 		wg.Add(1)

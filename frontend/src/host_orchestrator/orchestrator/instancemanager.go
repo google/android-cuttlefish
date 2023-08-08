@@ -27,10 +27,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
-
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
+
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -188,10 +189,10 @@ type CVDDownloader interface {
 }
 
 type AndroidCICVDDownloader struct {
-	buildAPI BuildAPI
+	buildAPI artifacts.BuildAPI
 }
 
-func NewAndroidCICVDDownloader(buildAPI BuildAPI) *AndroidCICVDDownloader {
+func NewAndroidCICVDDownloader(buildAPI artifacts.BuildAPI) *AndroidCICVDDownloader {
 	return &AndroidCICVDDownloader{
 		buildAPI: buildAPI,
 	}
@@ -256,7 +257,7 @@ func newFetchCVDCommandArtifactsFetcher(
 
 // The artifacts directory gets created during the execution of `fetch_cvd` granting access to the cvdnetwork group
 // which translated to granting the necessary permissions to the cvd executor user.
-func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, extraOptions *ExtraCVDOptions) error {
+func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, extraOptions *artifacts.ExtraCVDOptions) error {
 	args := []string{
 		fmt.Sprintf("--directory=%s", outDir),
 		fmt.Sprintf("--default_build=%s/%s", buildID, target),
@@ -310,10 +311,10 @@ func createCredentialsFile(content string) (*os.File, error) {
 }
 
 type buildAPIArtifacstFetcher struct {
-	buildAPI BuildAPI
+	buildAPI artifacts.BuildAPI
 }
 
-func newBuildAPIArtifactsFetcher(buildAPI BuildAPI) *buildAPIArtifacstFetcher {
+func newBuildAPIArtifactsFetcher(buildAPI artifacts.BuildAPI) *buildAPIArtifacstFetcher {
 	return &buildAPIArtifacstFetcher{
 		buildAPI: buildAPI,
 	}
@@ -440,7 +441,7 @@ func (v *HostValidator) Validate() error {
 }
 
 // Helper to update the passed builds with latest green BuildID if build is not nil and BuildId is empty.
-func updateBuildsWithLatestGreenBuildID(buildAPI BuildAPI, builds []*apiv1.AndroidCIBuild) error {
+func updateBuildsWithLatestGreenBuildID(buildAPI artifacts.BuildAPI, builds []*apiv1.AndroidCIBuild) error {
 	var chans []chan error
 	for _, build := range builds {
 		ch := make(chan error)
@@ -464,7 +465,7 @@ func updateBuildsWithLatestGreenBuildID(buildAPI BuildAPI, builds []*apiv1.Andro
 }
 
 // Helper to update the passed `build` with latest green BuildID.
-func updateBuildWithLatestGreenBuildID(buildAPI BuildAPI, build *apiv1.AndroidCIBuild) error {
+func updateBuildWithLatestGreenBuildID(buildAPI artifacts.BuildAPI, build *apiv1.AndroidCIBuild) error {
 	buildID, err := buildAPI.GetLatestGreenBuildID(build.Branch, build.Target)
 	if err != nil {
 		return err
@@ -474,7 +475,7 @@ func updateBuildWithLatestGreenBuildID(buildAPI BuildAPI, build *apiv1.AndroidCI
 }
 
 // Download artifacts helper. Fails if file already exists.
-func downloadArtifactToFile(buildAPI BuildAPI, filename, artifactName, buildID, target string) error {
+func downloadArtifactToFile(buildAPI artifacts.BuildAPI, filename, artifactName, buildID, target string) error {
 	exist, err := fileExist(target)
 	if err != nil {
 		return fmt.Errorf("download artifact %q failed: %w", filename, err)

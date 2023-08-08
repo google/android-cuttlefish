@@ -17,43 +17,41 @@ package orchestrator
 import (
 	"log"
 
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 type FetchArtifactsActionOpts struct {
-	Request             *apiv1.FetchArtifactsRequest
-	Paths               IMPaths
-	CVDToolsVersion     AndroidBuild
-	CVDDownloader       CVDDownloader
-	OperationManager    OperationManager
-	CVDArtifactsFetcher CVDArtifactsFetcher
-	UUIDGen             func() string
+	Request          *apiv1.FetchArtifactsRequest
+	Paths            IMPaths
+	CVDToolsVersion  AndroidBuild
+	CVDDownloader    CVDDownloader
+	OperationManager OperationManager
+	CVDBundleFetcher artifacts.CVDBundleFetcher
+	UUIDGen          func() string
 }
 
 type FetchArtifactsAction struct {
-	req                 *apiv1.FetchArtifactsRequest
-	paths               IMPaths
-	cvdToolsVersion     AndroidBuild
-	cvdDownloader       CVDDownloader
-	om                  OperationManager
-	cvdArtifactsFetcher CVDArtifactsFetcher
-	artifactsMngr       *ArtifactsManager
+	req              *apiv1.FetchArtifactsRequest
+	paths            IMPaths
+	cvdToolsVersion  AndroidBuild
+	cvdDownloader    CVDDownloader
+	om               OperationManager
+	cvdBundleFetcher artifacts.CVDBundleFetcher
+	artifactsMngr    *artifacts.Manager
 }
 
 func NewFetchArtifactsAction(opts FetchArtifactsActionOpts) *FetchArtifactsAction {
 	return &FetchArtifactsAction{
-		req:                 opts.Request,
-		paths:               opts.Paths,
-		cvdToolsVersion:     opts.CVDToolsVersion,
-		cvdDownloader:       opts.CVDDownloader,
-		om:                  opts.OperationManager,
-		cvdArtifactsFetcher: opts.CVDArtifactsFetcher,
+		req:              opts.Request,
+		paths:            opts.Paths,
+		cvdToolsVersion:  opts.CVDToolsVersion,
+		cvdDownloader:    opts.CVDDownloader,
+		om:               opts.OperationManager,
+		cvdBundleFetcher: opts.CVDBundleFetcher,
 
-		artifactsMngr: NewArtifactsManager(
-			opts.Paths.ArtifactsRootDir,
-			opts.UUIDGen,
-		),
+		artifactsMngr: artifacts.NewManager(opts.Paths.ArtifactsRootDir, opts.UUIDGen),
 	}
 }
 
@@ -84,7 +82,7 @@ func (a *FetchArtifactsAction) startDownload(op apiv1.Operation) OperationResult
 	if a.req.AndroidCIBundle.Build != nil {
 		build = a.req.AndroidCIBundle.Build
 	}
-	_, err := a.artifactsMngr.GetCVDBundle(build.BuildID, build.Target, nil, a.cvdArtifactsFetcher)
+	_, err := a.artifactsMngr.GetCVDBundle(build.BuildID, build.Target, nil, a.cvdBundleFetcher)
 	if err != nil {
 		return OperationResult{Error: operator.NewInternalError(errMsgFailedFetchingArtifacts, err)}
 	}
