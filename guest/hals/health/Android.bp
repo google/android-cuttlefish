@@ -47,8 +47,6 @@ cc_defaults {
         "libutils",
         "android.hardware.health-V2-ndk",
     ],
-
-    defaults: ["enabled_on_p_and_later"],
 }
 
 cc_binary {
@@ -101,6 +99,4 @@ cc_library_shared {
         "android.hardware.health@2.0",
         "android.hardware.health@2.1",
     ],
-
-    defaults: ["enabled_on_p_and_later"],
 }

@@ -150,21 +150,6 @@ cc_defaults {
 }
 
 cc_defaults {
-  name: "enabled_on_p_and_later",
-  enabled: true
-}
-
-cc_defaults {
-  name: "enabled_on_q_and_later",
-  enabled: true
-}
-
-cc_defaults {
-  name: "enabled_on_q_internal_and_later",
-  enabled: true
-}
-
-cc_defaults {
     name: "cuttlefish_libicuuc",
     target: {
         host: {
@@ -173,11 +158,6 @@ cc_defaults {
             ],
         },
     },
-}
-
-cc_defaults {
-    name: "cuttlefish_health_storage",
-    defaults: ["enabled_on_q_and_later"],
 }
 
 java_test_host {
