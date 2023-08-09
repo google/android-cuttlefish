@@ -40,5 +40,5 @@ cc_binary {
             enabled: true,
         },
     },
-    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host"],
 }

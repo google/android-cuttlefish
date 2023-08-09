@@ -149,17 +149,6 @@ cc_defaults {
   recovery_available : true
 }
 
-cc_defaults {
-    name: "cuttlefish_libicuuc",
-    target: {
-        host: {
-            shared_libs: [
-                "libicuuc",
-            ],
-        },
-    },
-}
-
 java_test_host {
     name: "tombstone_transmit_tests",
 
