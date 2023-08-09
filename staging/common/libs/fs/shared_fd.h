@@ -33,6 +33,7 @@
 #include <sys/uio.h>
 #include <sys/un.h>
 
+#include <chrono>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -156,9 +157,10 @@ class SharedFD {
   static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
                                     int in_type, int timeout_seconds);
   static SharedFD SocketLocalClient(int port, int type);
-  static SharedFD SocketClient(const std::string& host, int port, int type);
-  static SharedFD Socket6Client(const std::string& host, const std::string& interface,
-                                int port, int type);
+  static SharedFD SocketClient(const std::string& host, int port,
+                               int type, std::chrono::seconds timeout = std::chrono::seconds(0));
+  static SharedFD Socket6Client(const std::string& host, const std::string& interface, int port,
+                                int type, std::chrono::seconds timeout = std::chrono::seconds(0));
   static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);
