@@ -32,6 +32,11 @@ cc_test {
         "libutils",
         "packagemanager_aidl-cpp",
     ],
+    product_variables: {
+        release_aidl_use_unfrozen: {
+            cflags: ["-DAIDL_USE_UNFROZEN"],
+        },
+    },
     cflags: [
         "-Wall",
         "-Werror",
