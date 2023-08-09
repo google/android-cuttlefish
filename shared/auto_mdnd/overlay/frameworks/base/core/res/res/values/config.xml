@@ -21,5 +21,6 @@
     <!-- Whether the device allows users to start in background visible on the default display.
          Should be false for most devices, except passenger-only automotive build (i.e., when
          Android runs in a separate system in the back seat to manage the passenger displays) -->
+    <!-- The config is enabled for the development purpose only. -->
     <bool name="config_multiuserVisibleBackgroundUsersOnDefaultDisplay">true</bool>
 </resources>
