@@ -32,21 +32,22 @@ static Flag LocalInstanceFlag(bool& local_instance_set,
   auto local_instance_flag = Flag();
   local_instance_flag.Alias(
       {FlagAliasMode::kFlagConsumesArbitrary, "--local-instance"});
-  local_instance_flag.Setter([&local_instance_set, &local_instance](
-                                 const FlagMatch& m) -> Result<void> {
-    local_instance_set = true;
-    if (m.value != "" && local_instance) {
-      return CF_ERRF(
-          "Instance number already set, was \"{}\", now set to \"{}\"",
-          *local_instance, m.value);
-    } else if (m.value != "" && !local_instance) {
-      int value = -1;
-      CF_EXPECTF(android::base::ParseInt(m.value, &value),
-                 "Failed to parse \"{}\"", m.value);
-      local_instance = value;
-    }
-    return {};
-  });
+  local_instance_flag.Setter(
+      [&local_instance_set, &local_instance](const FlagMatch& m) {
+        local_instance_set = true;
+        if (m.value != "" && local_instance) {
+          LOG(ERROR) << "Instance number already set, was \"" << *local_instance
+                     << "\", now set to \"" << m.value << "\"";
+          return false;
+        } else if (m.value != "" && !local_instance) {
+          int value = -1;
+          if (!android::base::ParseInt(m.value, &value)) {
+            return false;
+          }
+          local_instance = value;
+        }
+        return true;
+      });
   return local_instance_flag;
 }
 
@@ -55,9 +56,9 @@ static Flag VerboseFlag(bool& verbose) {
                           .Alias({FlagAliasMode::kFlagExact, "-v"})
                           .Alias({FlagAliasMode::kFlagExact, "-vv"})
                           .Alias({FlagAliasMode::kFlagExact, "--verbose"})
-                          .Setter([&verbose](const FlagMatch&) -> Result<void> {
+                          .Setter([&verbose](const FlagMatch&) {
                             verbose = true;
-                            return {};
+                            return true;
                           });
   return verbose_flag;
 }
@@ -66,13 +67,12 @@ static Flag LocalImageFlag(bool& local_image_given,
                            std::optional<std::string>& local_image_path) {
   return Flag()
       .Alias({FlagAliasMode::kFlagConsumesArbitrary, "--local-image"})
-      .Setter([&local_image_given,
-               &local_image_path](const FlagMatch& m) -> Result<void> {
+      .Setter([&local_image_given, &local_image_path](const FlagMatch& m) {
         local_image_given = true;
         if (m.value != "") {
           local_image_path = m.value;
         }
-        return {};
+        return true;
       });
 }
 
