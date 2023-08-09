@@ -16,10 +16,12 @@
 
 #include "host/commands/cvd/acloud/create_converter_parser.h"
 
+#include <array>
 #include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
+#include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/flag_parser.h"
@@ -40,6 +42,21 @@ constexpr char kFlagBootloaderBranch[] = "bootloader_branch";
 constexpr char kFlagImageDownloadDir[] = "image-download-dir";
 constexpr char kFlagLocalImage[] = "local-image";
 constexpr char kFlagLocalInstance[] = "local-instance";
+
+constexpr char kAcloudCmdCreate[] = "create";
+constexpr char kAcloudCmdList[] = "list";
+constexpr char kAcloudCmdDelete[] = "delete";
+constexpr char kAcloudCmdReconnect[] = "reconnect";
+constexpr char kAcloudCmdPowerdash[] = "reconnect";
+constexpr char kAcloudCmdPull[] = "pull";
+constexpr char kAcloudCmdRestart[] = "restart";
+constexpr char kAcloudCmdHostCleanup[] = "hostcleanup";
+
+constexpr std::array kAcloudCommands = {
+    kAcloudCmdCreate,    kAcloudCmdList,        kAcloudCmdDelete,
+    kAcloudCmdReconnect, kAcloudCmdPowerdash,   kAcloudCmdPull,
+    kAcloudCmdRestart,   kAcloudCmdHostCleanup,
+};
 
 struct VerboseParser {
   std::optional<bool> token;
@@ -150,6 +167,34 @@ Result<Tokens> ParseForCvdCreate(cvd_common::Args& arguments) {
   return result;
 }
 
+Result<Tokens> ParseForCvdrCreate(cvd_common::Args& arguments) {
+  std::vector<StringParser> string_parsers = {
+      StringParser(kFlagBranch),
+      StringParser(kFlagBuildId, "build-id"),
+      StringParser(kFlagBuildTarget, "build-target"),
+      StringParser(kFlagBootloaderBuildId, "bootloader-build-id"),
+      StringParser(kFlagBootloaderBuildTarget, "bootloader-build-target"),
+      StringParser(kFlagBootloaderBranch, "bootloader-branch"),
+      StringParser(kFlagLocalImage, true),
+  };
+
+  std::vector<Flag> parsers;
+
+  for (auto& p : string_parsers) {
+    parsers.emplace_back(p.Parser());
+  }
+
+  CF_EXPECT(ParseFlags(parsers, arguments));
+
+  auto result = Tokens{};
+  for (auto& p : string_parsers) {
+    if (p.token.has_value()) {
+      result.strings[p.orig] = p.token.value();
+    }
+  }
+  return result;
+}
+
 }  // namespace
 namespace acloud_impl {
 
@@ -194,6 +239,26 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
               .branch = tokens.StringVal(kFlagBootloaderBranch),
           },
   };
+}
+
+Result<cvd_common::Args> CompileFromAcloudToCvdr(cvd_common::Args& arguments) {
+  std::vector<std::string> result;
+  CF_EXPECT(arguments.size() > 0);
+  CF_EXPECT(Contains(kAcloudCommands, arguments[0]));
+  result.emplace_back(arguments[0]);
+  arguments.erase(arguments.begin());
+  // Only `acloud create` works with extra arguments/flags.
+  CF_EXPECT(result[0] == kAcloudCmdCreate || arguments.empty());
+  if (result[0] == kAcloudCmdCreate) {
+    auto tokens = CF_EXPECT(ParseForCvdrCreate(arguments));
+    CF_EXPECTF(arguments.empty(), "Unrecognized arguments: '{}'",
+               fmt::join(arguments, "', '"));
+    for (const auto& t : tokens.strings) {
+      result.emplace_back("--" + t.first);
+      result.emplace_back(t.second);
+    }
+  }
+  return result;
 }
 
 }  // namespace acloud_impl
