@@ -32,7 +32,7 @@ import (
 
 	gopb "github.com/google/android-cuttlefish/frontend/src/liboperator/protobuf"
 	grpcpb "github.com/google/android-cuttlefish/frontend/src/liboperator/protobuf"
-	"google.golang.org/grpc"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Sets up a unix socket for devices to connect to and returns a function that listens on the
@@ -76,6 +76,13 @@ func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string
 // GET  /devices?groupId={groupId}
 // GET  /devices/{deviceId}
 // GET  /devices/{deviceId}/files/{path}
+// GET  /devices/{deviceId}/services
+// GET  /devices/{deviceId}/services/{serviceName}
+// GET  /devices/{deviceId}/services/{serviceName}/{methodName}
+// POST /devices/{deviceId}/services/{serviceName}/{methodName}
+// GET  /devices/{deviceId}/services/{serviceName}/{typeName}/type
+// GET  /devices/{deviceId}/openwrt{path:/.*}
+// POST /devices/{deviceId}/openwrt{path:/.*}
 // GET  /polled_connections
 // GET  /polled_connections/{connId}/messages
 // POST /polled_connections/{connId}/:forward
@@ -101,9 +108,21 @@ func CreateHttpHandlers(
 	router.HandleFunc("/devices/{deviceId}", func(w http.ResponseWriter, r *http.Request) {
 		deviceInfo(w, r, pool)
 	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/services", func(w http.ResponseWriter, r *http.Request) {
+		grpcListServices(w, r, pool)
+	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/services/{serviceName}", func(w http.ResponseWriter, r *http.Request) {
+		grpcListMethods(w, r, pool)
+	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/services/{serviceName}/{methodName}", func(w http.ResponseWriter, r *http.Request) {
+		grpcListReqResType(w, r, pool)
+	}).Methods("GET")
 	router.HandleFunc("/devices/{deviceId}/services/{serviceName}/{methodName}", func(w http.ResponseWriter, r *http.Request) {
 		grpcCallUnaryMethod(w, r, pool)
 	}).Methods("POST")
+	router.HandleFunc("/devices/{deviceId}/services/{serviceName}/{typeName}/type", func(w http.ResponseWriter, r *http.Request) {
+		grpcTypeInformation(w, r, pool)
+	}).Methods("GET")
 	router.HandleFunc("/devices/{deviceId}/openwrt{path:/.*}", func(w http.ResponseWriter, r *http.Request) {
 		openwrt(w, r, pool)
 	}).Methods("GET", "POST")
@@ -187,42 +206,90 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 	}
 }
 
-func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+func grpcListServices(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	vars := mux.Vars(r)
-	devId := vars["deviceId"]
-	dev := pool.GetDevice(devId)
-	if dev == nil {
-		http.Error(w, "Device not found", http.StatusNotFound)
+	conn, err := ConnectControlEnvProxyServer(vars["deviceId"], pool)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
+	defer conn.Close()
+
+	client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	reply, err := client.ListServices(context.Background(), &emptypb.Empty{})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ReplyJSONOK(w, reply)
+}
+
+func grpcListMethods(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	conn, err := ConnectControlEnvProxyServer(vars["deviceId"], pool)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	defer conn.Close()
+
+	request := gopb.ListMethodsRequest{
+		ServiceName: vars["serviceName"],
+	}
+	client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	reply, err := client.ListMethods(context.Background(), &request)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ReplyJSONOK(w, reply)
+}
+
+func grpcListReqResType(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	conn, err := ConnectControlEnvProxyServer(vars["deviceId"], pool)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	defer conn.Close()
+
+	request := gopb.ListReqResTypeRequest{
+		ServiceName: vars["serviceName"],
+		MethodName:  vars["methodName"],
+	}
+	client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	reply, err := client.ListReqResType(context.Background(), &request)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ReplyJSONOK(w, reply)
+}
+
+func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	conn, err := ConnectControlEnvProxyServer(vars["deviceId"], pool)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	defer conn.Close()
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	request := gopb.CallUnaryMethodRequest{
-		ServiceName: vars["serviceName"],
-		MethodName: vars["methodName"],
+		ServiceName:        vars["serviceName"],
+		MethodName:         vars["methodName"],
 		JsonFormattedProto: string(body),
 	}
-
-	devInfo := dev.info.(map[string]interface{})
-	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
-	if !ok {
-		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
-		return
-	}
-
-    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
-    if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-    }
-    defer conn.Close()
-
-    client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	client := grpcpb.NewControlEnvProxyServiceClient(conn)
 	reply, err := client.CallUnaryMethod(context.Background(), &request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -230,6 +297,31 @@ func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePoo
 	}
 
 	ReplyJSONOK(w, reply.JsonFormattedProto)
+}
+
+func grpcTypeInformation(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	conn, err := ConnectControlEnvProxyServer(vars["deviceId"], pool)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	defer conn.Close()
+
+	request := gopb.TypeInformationRequest{
+		ServiceName: vars["serviceName"],
+		TypeName:    vars["typeName"],
+	}
+	client := grpcpb.NewControlEnvProxyServiceClient(conn)
+	reply, err := client.TypeInformation(context.Background(), &request)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(reply.TextFormattedTypeInfo))
 }
 
 func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {

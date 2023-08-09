@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package orchestrator
+package artifacts
 
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"sync"
 )
 
@@ -25,15 +26,15 @@ import (
 // Artifacts will be organized the following way:
 //  1. $ROOT_DIR/<BUILD_ID>_<TARGET>__cvd will store a full download.
 //  2. $ROOT_DIR/<BUILD_ID>_<TARGET>__kernel will store kernel artifacts only.
-type ArtifactsManager struct {
+type Manager struct {
 	rootDir  string
 	uuidGen  func() string
 	map_     map[string]*downloadArtifactsMapEntry
 	mapMutex sync.Mutex
 }
 
-func NewArtifactsManager(rootDir string, uuidGen func() string) *ArtifactsManager {
-	return &ArtifactsManager{
+func NewManager(rootDir string, uuidGen func() string) *Manager {
+	return &Manager{
 		rootDir: rootDir,
 		uuidGen: uuidGen,
 		map_:    make(map[string]*downloadArtifactsMapEntry),
@@ -45,12 +46,15 @@ type ExtraCVDOptions struct {
 	SystemImgTarget  string
 }
 
-type ArtifactsFetcher interface {
-	// Fetches all artifacts necessary to launch a CVD. It support downloading a system
+type CVDBundleFetcher interface {
+	// Fetches all the necessary artifacts to launch a Cuttlefish device. It support downloading a system
 	// image from a different build if the extraOptions is provided.
-	FetchCVD(outDir, buildID, target string, extraOptions *ExtraCVDOptions) error
-	// Fetches specific artifacts from the build API.
-	FetchArtifacts(outDir, buildID, target string, artifacts ...string) error
+	Fetch(outDir, buildID, target string, extraOptions *ExtraCVDOptions) error
+}
+
+type Fetcher interface {
+	// Fetches specific artifacts.
+	Fetch(outDir, buildID, target string, artifacts ...string) error
 }
 
 type downloadArtifactsResult struct {
@@ -63,7 +67,8 @@ type downloadArtifactsMapEntry struct {
 	result *downloadArtifactsResult
 }
 
-func (h *ArtifactsManager) GetCVDBundle(buildID, target string, extraOptions *ExtraCVDOptions, fetcher ArtifactsFetcher) (string, error) {
+func (h *Manager) GetCVDBundle(
+	buildID, target string, extraOptions *ExtraCVDOptions, fetcher CVDBundleFetcher) (string, error) {
 	outDir := fmt.Sprintf("%s/%s_%s__cvd", h.rootDir, buildID, target)
 	f := func() (string, error) {
 		if extraOptions != nil {
@@ -71,7 +76,7 @@ func (h *ArtifactsManager) GetCVDBundle(buildID, target string, extraOptions *Ex
 			// if the same arguments are used.
 			outDir = fmt.Sprintf("%s/%s__custom_cvd", h.rootDir, h.uuidGen())
 		}
-		if err := fetcher.FetchCVD(outDir, buildID, target, extraOptions); err != nil {
+		if err := fetcher.Fetch(outDir, buildID, target, extraOptions); err != nil {
 			return "", err
 		}
 		return outDir, nil
@@ -79,16 +84,16 @@ func (h *ArtifactsManager) GetCVDBundle(buildID, target string, extraOptions *Ex
 	return h.syncDownload(outDir, f)
 }
 
-func (h *ArtifactsManager) GetKernelBundle(buildID, target string, fetcher ArtifactsFetcher) (string, error) {
+func (h *Manager) GetKernelBundle(buildID, target string, fetcher Fetcher) (string, error) {
 	f := func() (string, error) {
 		outDir := fmt.Sprintf("%s/%s_%s__kernel", h.rootDir, buildID, target)
 		if err := createDir(outDir); err != nil {
 			return "", err
 		}
-		if err := fetcher.FetchArtifacts(outDir, buildID, target, "bzImage"); err != nil {
+		if err := fetcher.Fetch(outDir, buildID, target, "bzImage"); err != nil {
 			return "", err
 		}
-		if err := fetcher.FetchArtifacts(outDir, buildID, target, "initramfs.img"); err != nil {
+		if err := fetcher.Fetch(outDir, buildID, target, "initramfs.img"); err != nil {
 			// Certain kernel builds do not have corresponding ramdisks.
 			if apiErr, ok := err.(*BuildAPIError); ok && apiErr.Code != http.StatusNotFound {
 				return "", err
@@ -99,13 +104,13 @@ func (h *ArtifactsManager) GetKernelBundle(buildID, target string, fetcher Artif
 	return h.syncDownload(buildID+target+"kernel", f)
 }
 
-func (h *ArtifactsManager) GetBootloaderBundle(buildID, target string, fetcher ArtifactsFetcher) (string, error) {
+func (h *Manager) GetBootloaderBundle(buildID, target string, fetcher Fetcher) (string, error) {
 	f := func() (string, error) {
 		outDir := fmt.Sprintf("%s/%s_%s__bootloader", h.rootDir, buildID, target)
 		if err := createDir(outDir); err != nil {
 			return "", err
 		}
-		if err := fetcher.FetchArtifacts(outDir, buildID, target, "u-boot.rom"); err != nil {
+		if err := fetcher.Fetch(outDir, buildID, target, "u-boot.rom"); err != nil {
 			return "", err
 		}
 		return outDir, nil
@@ -114,7 +119,7 @@ func (h *ArtifactsManager) GetBootloaderBundle(buildID, target string, fetcher A
 }
 
 // Synchronizes downloads to avoid downloading same bundle more than once.
-func (h *ArtifactsManager) syncDownload(key string, downloadFunc func() (string, error)) (string, error) {
+func (h *Manager) syncDownload(key string, downloadFunc func() (string, error)) (string, error) {
 	entry := h.getMapEntry(key)
 	entry.mutex.Lock()
 	defer entry.mutex.Unlock()
@@ -126,7 +131,7 @@ func (h *ArtifactsManager) syncDownload(key string, downloadFunc func() (string,
 	return entry.result.OutDir, entry.result.Error
 }
 
-func (h *ArtifactsManager) getMapEntry(key string) *downloadArtifactsMapEntry {
+func (h *Manager) getMapEntry(key string) *downloadArtifactsMapEntry {
 	h.mapMutex.Lock()
 	defer h.mapMutex.Unlock()
 	entry := h.map_[key]
@@ -135,4 +140,22 @@ func (h *ArtifactsManager) getMapEntry(key string) *downloadArtifactsMapEntry {
 		h.map_[key] = entry
 	}
 	return entry
+}
+
+// Fails if the directory already exists.
+func createNewDir(dir string) error {
+	err := os.Mkdir(dir, 0774)
+	if err != nil {
+		return err
+	}
+	// Sets dir permission regardless of umask.
+	return os.Chmod(dir, 0774)
+}
+
+func createDir(dir string) error {
+	if err := createNewDir(dir); os.IsExist(err) {
+		return nil
+	} else {
+		return err
+	}
 }

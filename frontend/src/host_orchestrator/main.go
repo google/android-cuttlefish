@@ -21,7 +21,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sync"
 	"time"
@@ -131,27 +130,13 @@ func main() {
 		NameFactory: func() string { return uuid.New().String() },
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
-	opts := orchestrator.CVDToolInstanceManagerOpts{
-		ExecContext: exec.CommandContext,
-		CVDToolsVersion: orchestrator.AndroidBuild{
-			ID:     cvdBinAndroidBuildID,
-			Target: cvdBinAndroidBuildTarget,
-		},
-		Paths:                    imPaths,
-		OperationManager:         om,
-		UserArtifactsDirResolver: uam,
-		CVDStartTimeout:          3 * time.Minute,
-		HostValidator:            &orchestrator.HostValidator{ExecContext: exec.CommandContext},
-		BuildAPIFactory: func(credentials string) orchestrator.BuildAPI {
-			return orchestrator.NewAndroidCIBuildAPI(http.DefaultClient, abURL, credentials)
-		},
-		UUIDGen: func() string { return uuid.New().String() },
-		CVDUser: cvdUser,
+	cvdToolsVersion := orchestrator.AndroidBuild{
+		ID:     cvdBinAndroidBuildID,
+		Target: cvdBinAndroidBuildTarget,
 	}
-	im := orchestrator.NewCVDToolInstanceManager(&opts)
 	debugStaticVars := debug.StaticVariables{
-		InitialCVDBinAndroidBuildID:     opts.CVDToolsVersion.ID,
-		InitialCVDBinAndroidBuildTarget: opts.CVDToolsVersion.Target,
+		InitialCVDBinAndroidBuildID:     cvdToolsVersion.ID,
+		InitialCVDBinAndroidBuildTarget: cvdToolsVersion.Target,
 	}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
 	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
@@ -161,7 +146,12 @@ func main() {
 	}()
 	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
 	imController := orchestrator.Controller{
-		InstanceManager:       im,
+		Config: orchestrator.Config{
+			Paths:                  imPaths,
+			CVDToolsVersion:        cvdToolsVersion,
+			AndroidBuildServiceURL: abURL,
+			CVDUser:                cvdUser,
+		},
 		OperationManager:      om,
 		WaitOperationDuration: 2 * time.Minute,
 		UserArtifactsManager:  uam,
@@ -185,7 +175,7 @@ func main() {
 		func() error { return startHttpServer(httpPort) },
 	}
 	if httpsPort != "" {
-		starters = append(starters, func() error {return startHttpsServer(httpsPort, certPath, keyPath)})
+		starters = append(starters, func() error { return startHttpsServer(httpsPort, certPath, keyPath) })
 	}
 	start(starters)
 }

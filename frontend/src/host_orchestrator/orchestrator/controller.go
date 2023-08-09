@@ -21,18 +21,29 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strconv"
 	"time"
 
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
+type Config struct {
+	Paths                  IMPaths
+	CVDToolsVersion        AndroidBuild
+	AndroidBuildServiceURL string
+	CVDUser                string
+}
+
 type Controller struct {
-	InstanceManager       InstanceManager
+	Config                Config
 	OperationManager      OperationManager
 	WaitOperationDuration time.Duration
 	UserArtifactsManager  UserArtifactsManager
@@ -40,9 +51,12 @@ type Controller struct {
 }
 
 func (c *Controller) AddRoutes(router *mux.Router) {
-	router.Handle("/cvds", httpHandler(&createCVDHandler{im: c.InstanceManager})).Methods("POST")
-	router.Handle("/cvds", httpHandler(&listCVDsHandler{im: c.InstanceManager})).Methods("GET")
-	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{im: c.InstanceManager}).Methods("GET")
+	router.Handle("/artifacts",
+		httpHandler(&fetchArtifactsHandler{Config: c.Config, OM: c.OperationManager})).Methods("POST")
+	router.Handle("/cvds",
+		httpHandler(newCreateCVDHandler(c.Config, c.OperationManager, c.UserArtifactsManager))).Methods("POST")
+	router.Handle("/cvds", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
+	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
 	router.Handle("/operations/{name}", httpHandler(&getOperationHandler{om: c.OperationManager})).Methods("GET")
 	// The expected response of the operation in case of success.  If the original method returns no data on
 	// success, such as `Delete`, response will be empty. If the original method is standard
@@ -60,7 +74,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/userartifacts/{name}",
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
-	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{im: c.InstanceManager}).Methods("POST")
+	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{Config: c.Config}).Methods("POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -105,36 +119,106 @@ func replyJSON(w http.ResponseWriter, obj interface{}, statusCode int) error {
 	return encoder.Encode(obj)
 }
 
-type createCVDHandler struct {
-	im InstanceManager
+type fetchArtifactsHandler struct {
+	Config Config
+	OM     OperationManager
 }
 
-func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
-	var msg apiv1.CreateCVDRequest
-	err := json.NewDecoder(r.Body).Decode(&msg)
+func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
+	req := apiv1.FetchArtifactsRequest{}
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
-	return h.im.CreateCVD(msg)
+	buildAPI := artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL)
+	cvdDwnl := NewAndroidCICVDDownloader(buildAPI)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, h.Config.Paths.FetchCVDBin(), "")
+	opts := FetchArtifactsActionOpts{
+		Request:          &req,
+		Paths:            h.Config.Paths,
+		CVDToolsVersion:  h.Config.CVDToolsVersion,
+		CVDDownloader:    cvdDwnl,
+		OperationManager: h.OM,
+		CVDBundleFetcher: cvdBundleFetcher,
+	}
+	return NewFetchArtifactsAction(opts).Run()
+}
+
+type createCVDHandler struct {
+	Config        Config
+	OM            OperationManager
+	UADirResolver UserArtifactsDirResolver
+}
+
+func newCreateCVDHandler(c Config, om OperationManager, uadr UserArtifactsManager) *createCVDHandler {
+	return &createCVDHandler{
+		Config:        c,
+		OM:            om,
+		UADirResolver: uadr,
+	}
+}
+
+func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
+	req := &apiv1.CreateCVDRequest{}
+	err := json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
+	}
+	cvdDwnl := NewAndroidCICVDDownloader(
+		artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
+	credsProvider := &CreateCVDRequestCredsProvider{Request: req}
+	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Creds: credsProvider}
+	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
+		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
+	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(
+		exec.CommandContext, h.Config.Paths.FetchCVDBin(), credsProvider.Get())
+	opts := CreateCVDActionOpts{
+		Request:                  req,
+		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
+		Paths:                    h.Config.Paths,
+		OperationManager:         h.OM,
+		ExecContext:              exec.CommandContext,
+		CVDToolsVersion:          h.Config.CVDToolsVersion,
+		CVDDownloader:            cvdDwnl,
+		BuildAPI:                 buildAPI,
+		ArtifactsFetcher:         artifactsFetcher,
+		CVDBundleFetcher:         cvdBundleFetcher,
+		UUIDGen:                  func() string { return uuid.New().String() },
+		CVDStartTimeout:          3 * time.Minute,
+		CVDUser:                  h.Config.CVDUser,
+		UserArtifactsDirResolver: h.UADirResolver,
+	}
+	return NewCreateCVDAction(opts).Run()
 }
 
 type listCVDsHandler struct {
-	im InstanceManager
+	Config Config
 }
 
 func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
-	return h.im.ListCVDs()
+	buildAPI := artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL)
+	cvdDwnl := NewAndroidCICVDDownloader(buildAPI)
+	opts := ListCVDsActionOpts{
+		Paths:           h.Config.Paths,
+		ExecContext:     exec.CommandContext,
+		CVDToolsVersion: h.Config.CVDToolsVersion,
+		CVDDownloader:   cvdDwnl,
+		CVDUser:         h.Config.CVDUser,
+	}
+	return NewListCVDsAction(opts).Run()
 }
 
 type getCVDLogsHandler struct {
-	im InstanceManager
+	Config Config
 }
 
 func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 	pathPrefix := "/cvds/" + name + "/logs"
-	logsDir, err := h.im.GetLogsDir(name)
+	ctx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
+	logsDir, err := CVDLogsDir(ctx, h.Config.Paths.CVDBin(), name)
 	if err != nil {
 		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
 		appErr, ok := err.(*operator.AppError)
@@ -286,20 +370,21 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 }
 
 type pullRuntimeArtifactsHandler struct {
-	im InstanceManager
+	Config Config
 }
 
 func (h *pullRuntimeArtifactsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	filename, err := h.im.HostBugReport()
-	if err != nil {
+	filename := filepath.Join("/tmp/", "hostbugreport"+uuid.New().String())
+	defer func() {
+		if err := os.Remove(filename); err != nil {
+			log.Printf("error removing host bug report file %q: %v\n", filename, err)
+		}
+	}()
+	ctx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
+	if err := HostBugReport(ctx, h.Config.Paths, filename); err != nil {
 		replyJSONErr(w, err)
 		return
 	}
-	defer func() {
-		if err := os.Remove(filename); err != nil {
-			log.Printf("error removing file %q: %v\n", filename, err)
-		}
-	}()
 	http.ServeFile(w, r, filename)
 }
 
