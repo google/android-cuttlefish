@@ -213,19 +213,19 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
         "empty then the custom action config will be empty as well.");
     custom_action_config_flag_.Getter(
         [this]() { return custom_action_config_[0]; });
-    custom_action_config_flag_.Setter(
-        [this](const FlagMatch& match) -> Result<void> {
-          if (!match.value.empty() &&
-              (match.value == "unset" || match.value == "\"unset\"")) {
-            custom_action_config_.push_back(DefaultCustomActionConfig());
-          } else if (!match.value.empty() && !FileExists(match.value)) {
-            return CF_ERRF("custom_action_config file \"{}\" does not exist.",
-                           match.value);
-          } else {
-            custom_action_config_.push_back(match.value);
-          }
-          return {};
-        });
+    custom_action_config_flag_.Setter([this](const FlagMatch& match) {
+      if (!match.value.empty() &&
+          (match.value == "unset" || match.value == "\"unset\"")) {
+        custom_action_config_.push_back(DefaultCustomActionConfig());
+      } else if (!match.value.empty() && !FileExists(match.value)) {
+        LOG(ERROR) << "custom_action_config file \"" << match.value << "\" "
+                   << "does not exist.";
+        return false;
+      } else {
+        custom_action_config_.push_back(match.value);
+      }
+      return true;
+    });
     // TODO(schuffelen): Access ConfigFlag directly for these values.
     custom_actions_flag_ = GflagsCompatFlag("custom_actions");
     custom_actions_flag_.Help(
@@ -234,16 +234,23 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
         "preset config files; prefer --custom_action_config to specify a "
         "custom config file on the command line. Actions in this flag are "
         "combined with actions in --custom_action_config.");
-    custom_actions_flag_.Setter([this](const FlagMatch& match) -> Result<void> {
+    custom_actions_flag_.Setter([this](const FlagMatch& match) {
       // Load the custom action from the --config preset file.
       if (match.value == "unset" || match.value == "\"unset\"") {
         AddEmptyJsonCustomActionConfigs();
-        return {};
+        return true;
       }
-      auto custom_action_array = CF_EXPECT(
-          ParseJson(match.value), "Could not read custom actions config flag");
-      CF_EXPECT(AddJsonCustomActionConfigs(custom_action_array));
-      return {};
+      Json::CharReaderBuilder builder;
+      std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+      std::string errorMessage;
+      Json::Value custom_action_array(Json::arrayValue);
+      if (!reader->parse(&*match.value.begin(), &*match.value.end(),
+                         &custom_action_array, &errorMessage)) {
+        LOG(ERROR) << "Could not read custom actions config flag: "
+                   << errorMessage;
+        return false;
+      }
+      return AddJsonCustomActionConfigs(custom_action_array);
     });
   }
 
