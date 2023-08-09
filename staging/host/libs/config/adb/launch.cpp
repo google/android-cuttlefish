@@ -147,11 +147,13 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
        */
       adb_tunnel.AddParameter("--events_fd=", kernel_log_pipe_);
       adb_tunnel.AddParameter("--start_event_id=", monitor::Event::AdbdStarted);
+      adb_tunnel.AddParameter("--stop_event_id=", monitor::Event::FastbootStarted);
       adb_tunnel.AddParameter("--server_type=tcp");
-      adb_tunnel.AddParameter("--server_fd=", tcp_server_);
+      adb_tunnel.AddParameter("--server_tcp_port=", instance_.adb_host_port());
       adb_tunnel.AddParameter("--client_type=vsock");
       adb_tunnel.AddParameter("--client_vsock_port=6520");
       adb_tunnel.AddParameter("--client_vsock_id=", instance_.vsock_guest_cid());
+      adb_tunnel.AddParameter("--label=", "adb");
       commands.emplace_back(std::move(adb_tunnel));
     }
     if (helper_.VsockHalfTunnelEnabled()) {
@@ -168,8 +170,9 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
        */
       adb_tunnel.AddParameter("--events_fd=", kernel_log_pipe_);
       adb_tunnel.AddParameter("--start_event_id=", monitor::Event::AdbdStarted);
+      adb_tunnel.AddParameter("--stop_event_id=", monitor::Event::FastbootStarted);
       adb_tunnel.AddParameter("--server_type=tcp");
-      adb_tunnel.AddParameter("--server_fd=", tcp_server_);
+      adb_tunnel.AddParameter("--server_tcp_port=", instance_.adb_host_port());
       adb_tunnel.AddParameter("--client_type=vsock");
       adb_tunnel.AddParameter("--client_vsock_port=", 5555);
       adb_tunnel.AddParameter("--client_vsock_id=", instance_.vsock_guest_cid());
@@ -189,11 +192,8 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
   std::unordered_set<SetupFeature*> Dependencies() const override {
     return {static_cast<SetupFeature*>(&log_pipe_provider_)};
   }
+
   Result<void> ResultSetup() override {
-    tcp_server_ =
-        SharedFD::SocketLocalServer(instance_.adb_host_port(), SOCK_STREAM);
-    CF_EXPECT(tcp_server_->IsOpen(),
-              "Unable to create socket_vsock_proxy server socket: ");
     kernel_log_pipe_ = log_pipe_provider_.KernelLogPipe();
     return {};
   }
@@ -202,7 +202,6 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
   const CuttlefishConfig::InstanceSpecific& instance_;
   KernelLogPipeProvider& log_pipe_provider_;
   SharedFD kernel_log_pipe_;
-  SharedFD tcp_server_;
 };
 
 }  // namespace
