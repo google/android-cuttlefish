@@ -59,6 +59,8 @@ constexpr char kAdbdStartedMessage[] =
     "init: starting service 'adbd'...";
 constexpr char kFastbootdStartedMessage[] =
     "init: starting service 'fastbootd'...";
+constexpr char kFastbootStartedMessage[] =
+    "Listening for fastboot command on tcp";
 constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
 constexpr char kDisplayPowerModeChangedMessage[] =
     "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";
