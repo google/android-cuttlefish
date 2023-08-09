@@ -26,11 +26,11 @@ bool IsIpv6(const std::string& address) {
   return address.find(':') != std::string::npos;
 }
 
-SharedFD StartIpv4(const std::string& host, int port) {
-  return SharedFD::SocketClient(host, port, SOCK_STREAM);
+SharedFD StartIpv4(const std::string& host, int port, std::chrono::seconds timeout) {
+  return SharedFD::SocketClient(host, port, SOCK_STREAM, timeout);
 }
 
-SharedFD StartIpv6(const std::string& host, int port) {
+SharedFD StartIpv6(const std::string& host, int port, std::chrono::seconds timeout) {
   const auto host_parsed = android::base::Tokenize(host, "%");
   const auto host_interface_tokens_count = host_parsed.size();
 
@@ -46,20 +46,23 @@ SharedFD StartIpv6(const std::string& host, int port) {
     host_name = host;
   }
 
-  return SharedFD::Socket6Client(host_name, interface_name, port, SOCK_STREAM);
+  return SharedFD::Socket6Client(host_name, interface_name, port, SOCK_STREAM, timeout);
 }
 
 }
 
-TcpClient::TcpClient(std::string host, int port) : host_(std::move(host)), port_(port) {}
+TcpClient::TcpClient(std::string host, int port, std::chrono::seconds timeout)
+    : host_(std::move(host)),
+      port_(port),
+      timeout_(timeout) {}
 
 SharedFD TcpClient::Start() {
   SharedFD client;
 
   if (IsIpv6(host_)) {
-    client = StartIpv6(host_, port_);
+    client = StartIpv6(host_, port_, timeout_);
   } else {
-    client = StartIpv4(host_, port_);
+    client = StartIpv4(host_, port_, timeout_);
   }
 
   if (client->IsOpen()) {

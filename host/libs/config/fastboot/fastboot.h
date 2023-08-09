@@ -42,7 +42,8 @@ fruit::Component<fruit::Required<FastbootConfig, ConfigFlag>, FastbootConfigFlag
 FastbootConfigFlagComponent();
 fruit::Component<fruit::Required<FastbootConfig>, FastbootConfigFragment>
 FastbootConfigFragmentComponent();
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
+fruit::Component<fruit::Required<KernelLogPipeProvider,
+                                 const CuttlefishConfig::InstanceSpecific,
                                  const FastbootConfig>>
 LaunchFastbootComponent();
 

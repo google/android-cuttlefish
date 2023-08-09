@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <chrono>
 #include <set>
+#include <thread>
 
 #include "common/frontend/socket_vsock_proxy/server.h"
 #include "common/libs/utils/contains.h"
@@ -23,7 +25,7 @@ namespace socket_proxy {
 namespace {
 
 bool socketErrorIsRecoverable(int error) {
-  std::set<int> unrecoverable{EACCES, EAFNOSUPPORT, EINVAL, EPROTONOSUPPORT};
+  std::set<int> unrecoverable{EACCES, EAFNOSUPPORT, EINVAL, EPROTONOSUPPORT, EADDRINUSE};
   return !Contains(unrecoverable, error);
 }
 
@@ -35,15 +37,31 @@ bool socketErrorIsRecoverable(int error) {
 
 }
 
-TcpServer::TcpServer(int port) : port_(port) {}
+TcpServer::TcpServer(int port, int retries_count, std::chrono::milliseconds retries_delay)
+    : port_(port),
+      retries_count_(retries_count),
+      retries_delay_(retries_delay) {};
 
-SharedFD TcpServer::Start() {
+Result<SharedFD> TcpServer::Start() {
   SharedFD server;
+  int last_error = 0;
 
-  server = SharedFD::SocketLocalServer(port_, SOCK_STREAM);
-  CHECK(server->IsOpen()) << "Could not start server on " << port_;
+  for (int i = 0; i < retries_count_; i++) {
+    server = SharedFD::SocketLocalServer(port_, SOCK_STREAM);
+    if (server->IsOpen()) {
+      return server;
+    }
+    last_error = server->GetErrno();
 
-  return server;
+    LOG(INFO) << "Failed to start TCP server on port: " << port_
+              << " after " << i + 1 << "th attempt (going to have "
+              << retries_count_ << " total attempts" << "). Error: " << last_error;
+
+    std::this_thread::sleep_for(retries_delay_);
+  }
+
+  return CF_ERR("Could not start TCP server on port: " << port_
+                << "after " << retries_count_ << " attempts. Last error: " << last_error);
 }
 
 std::string TcpServer::Describe() const {
@@ -53,7 +71,7 @@ std::string TcpServer::Describe() const {
 VsockServer::VsockServer(int port) : port_(port) {}
 
 // Intended to run in the guest
-SharedFD VsockServer::Start() {
+Result<SharedFD> VsockServer::Start() {
   SharedFD server;
 
   do {
@@ -78,8 +96,8 @@ DupServer::DupServer(int fd) : fd_(fd), sfd_(SharedFD::Dup(fd_)) {
   close(fd);
 }
 
-SharedFD DupServer::Start() {
-  CHECK(sfd_->IsOpen()) << "Could not start duplicate server for passed fd";
+Result<SharedFD> DupServer::Start() {
+  CF_EXPECT(sfd_->IsOpen(), "Could not start duplicate server for passed fd");
   return sfd_;
 }
 
