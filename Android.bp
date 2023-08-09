@@ -144,11 +144,6 @@ cc_defaults {
     defaults: ["cuttlefish_base"],
 }
 
-cc_defaults {
-  name: "cuttlefish_recovery_available",
-  recovery_available : true
-}
-
 java_test_host {
     name: "tombstone_transmit_tests",
 
@@ -159,9 +154,4 @@ java_test_host {
     test_config: "tests/tombstone-transmit-tests.xml",
 
     test_suites: ["general-tests"],
-}
-
-filegroup {
-    name: "cf_dtb",
-    srcs: ["dtb.img"],
 }
