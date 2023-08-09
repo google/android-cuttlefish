@@ -182,36 +182,36 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot-build-id"})
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot_build_id"})
-          .Setter([&boot_build_id](const FlagMatch& m) -> Result<void> {
+          .Setter([&boot_build_id](const FlagMatch& m) {
             boot_build_id = m.value;
-            return {};
+            return true;
           }));
   std::optional<std::string> boot_build_target;
   flags.emplace_back(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot-build-target"})
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot_build_target"})
-          .Setter([&boot_build_target](const FlagMatch& m) -> Result<void> {
+          .Setter([&boot_build_target](const FlagMatch& m) {
             boot_build_target = m.value;
-            return {};
+            return true;
           }));
   std::optional<std::string> boot_branch;
   flags.emplace_back(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot-branch"})
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot_branch"})
-          .Setter([&boot_branch](const FlagMatch& m) -> Result<void> {
+          .Setter([&boot_branch](const FlagMatch& m) {
             boot_branch = m.value;
-            return {};
+            return true;
           }));
   std::optional<std::string> boot_artifact;
   flags.emplace_back(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot-artifact"})
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot_artifact"})
-          .Setter([&boot_artifact](const FlagMatch& m) -> Result<void> {
+          .Setter([&boot_artifact](const FlagMatch& m) {
             boot_artifact = m.value;
-            return {};
+            return true;
           }));
 
   std::optional<std::string> ota_build_id;
@@ -219,92 +219,90 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--ota-build-id"})
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--ota_build_id"})
-          .Setter([&ota_build_id](const FlagMatch& m) -> Result<void> {
+          .Setter([&ota_build_id](const FlagMatch& m) {
             ota_build_id = m.value;
-            return {};
+            return true;
           }));
   std::optional<std::string> ota_build_target;
   flags.emplace_back(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--ota-build-target"})
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--ota_build_target"})
-          .Setter([&ota_build_target](const FlagMatch& m) -> Result<void> {
+          .Setter([&ota_build_target](const FlagMatch& m) {
             ota_build_target = m.value;
-            return {};
+            return true;
           }));
   std::optional<std::string> ota_branch;
   flags.emplace_back(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--ota-branch"})
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--ota_branch"})
-          .Setter([&ota_branch](const FlagMatch& m) -> Result<void> {
+          .Setter([&ota_branch](const FlagMatch& m) {
             ota_branch = m.value;
-            return {};
+            return true;
           }));
 
   std::optional<std::string> launch_args;
   flags.emplace_back(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--launch-args"})
-          .Setter([&launch_args](const FlagMatch& m) -> Result<void> {
+          .Setter([&launch_args](const FlagMatch& m) {
             launch_args = m.value;
-            return {};
+            return true;
           }));
 
   std::optional<std::string> system_branch;
   flags.emplace_back(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--system-branch"})
-          .Setter([&system_branch](const FlagMatch& m) -> Result<void> {
+          .Setter([&system_branch](const FlagMatch& m) {
             system_branch = m.value;
-            return {};
+            return true;
           }));
 
   std::optional<std::string> system_build_target;
-  flags.emplace_back(
-      Flag()
-          .Alias(
-              {FlagAliasMode::kFlagConsumesFollowing, "--system-build-target"})
-          .Setter([&system_build_target](const FlagMatch& m) -> Result<void> {
-            system_build_target = m.value;
-            return {};
-          }));
+  flags.emplace_back(Flag()
+                         .Alias({FlagAliasMode::kFlagConsumesFollowing,
+                                 "--system-build-target"})
+                         .Setter([&system_build_target](const FlagMatch& m) {
+                           system_build_target = m.value;
+                           return true;
+                         }));
 
   std::optional<std::string> system_build_id;
   flags.emplace_back(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--system-build-id"})
-          .Setter([&system_build_id](const FlagMatch& m) -> Result<void> {
+          .Setter([&system_build_id](const FlagMatch& m) {
             system_build_id = m.value;
-            return {};
+            return true;
           }));
 
   std::optional<std::string> kernel_branch;
   flags.emplace_back(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--kernel-branch"})
-          .Setter([&kernel_branch](const FlagMatch& m) -> Result<void> {
+          .Setter([&kernel_branch](const FlagMatch& m) {
             kernel_branch = m.value;
-            return {};
+            return true;
           }));
 
   std::optional<std::string> kernel_build_target;
-  flags.emplace_back(
-      Flag()
-          .Alias(
-              {FlagAliasMode::kFlagConsumesFollowing, "--kernel-build-target"})
-          .Setter([&kernel_build_target](const FlagMatch& m) -> Result<void> {
-            kernel_build_target = m.value;
-            return {};
-          }));
+  flags.emplace_back(Flag()
+                         .Alias({FlagAliasMode::kFlagConsumesFollowing,
+                                 "--kernel-build-target"})
+                         .Setter([&kernel_build_target](const FlagMatch& m) {
+                           kernel_build_target = m.value;
+                           return true;
+                         }));
 
   std::optional<std::string> kernel_build_id;
   flags.emplace_back(
       Flag()
           .Alias({FlagAliasMode::kFlagConsumesFollowing, "--kernel-build-id"})
-          .Setter([&kernel_build_id](const FlagMatch& m) -> Result<void> {
+          .Setter([&kernel_build_id](const FlagMatch& m) {
             kernel_build_id = m.value;
-            return {};
+            return true;
           }));
   bool use_16k = false;
   flags.emplace_back(Flag()
@@ -312,9 +310,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
                          .Alias({FlagAliasMode::kFlagExact, "--16K"})
                          .Alias({FlagAliasMode::kFlagExact, "--use-16k"})
                          .Alias({FlagAliasMode::kFlagExact, "--use-16K"})
-                         .Setter([&use_16k](const FlagMatch&) -> Result<void> {
+                         .Setter([&use_16k](const FlagMatch&) {
                            use_16k = true;
-                           return {};
+                           return true;
                          }));
 
   std::optional<std::string> pet_name;
@@ -322,9 +320,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   flags.emplace_back(
       GflagsCompatFlag("pet-name")
           .Getter([&pet_name]() { return (pet_name ? *pet_name : ""); })
-          .Setter([&pet_name](const FlagMatch& match) -> Result<void> {
+          .Setter([&pet_name](const FlagMatch& match) {
             pet_name = match.value;
-            return {};
+            return true;
           }));
 
   CF_EXPECT(ParseFlags(flags, arguments));

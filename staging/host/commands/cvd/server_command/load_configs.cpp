@@ -347,10 +347,10 @@ class LoadConfigsCommand : public CvdServerHandler {
     flags.emplace_back(GflagsCompatFlag("help", help));
     std::vector<std::string> overrides;
     FlagAlias alias = {FlagAliasMode::kFlagPrefix, "--override="};
-    flags.emplace_back(Flag().Alias(alias).Setter(
-        [&overrides](const FlagMatch& m) -> Result<void> {
+    flags.emplace_back(
+        Flag().Alias(alias).Setter([&overrides](const FlagMatch& m) {
           overrides.push_back(m.value);
-          return {};
+          return true;
         }));
     auto args = ParseInvocation(request.Message()).arguments;
     CF_EXPECT(ParseFlags(flags, args));
