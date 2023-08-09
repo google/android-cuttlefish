@@ -23,7 +23,6 @@ cc_defaults {
         "libbase",
         "libcuttlefish_fs",
         "liblog",
-        "libicuuc",
         "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
     ],

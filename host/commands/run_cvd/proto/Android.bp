@@ -31,7 +31,6 @@ cc_library {
     },
     defaults: [
         "cuttlefish_host",
-        "cuttlefish_libicuuc",
         "cvd_cc_defaults",
     ],
 }

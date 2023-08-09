@@ -42,10 +42,7 @@ cc_library {
     static_libs: [
         "libcuttlefish_host_config",
     ],
-    defaults: [
-        "cuttlefish_host",
-        "cuttlefish_libicuuc"
-    ],
+    defaults: ["cuttlefish_host"],
     target: {
         darwin: {
             enabled: true,
