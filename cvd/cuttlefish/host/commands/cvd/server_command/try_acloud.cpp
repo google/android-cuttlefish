@@ -22,6 +22,7 @@
 
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
+#include "host/commands/cvd/acloud/config.h"
 #include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
@@ -44,41 +45,21 @@ class TryAcloudCommand : public CvdServerHandler {
 
   cvd_common::Args CmdList() const override { return {"try-acloud"}; }
 
+  /**
+   * The `try-acloud` command verifies whether an original `acloud CLI` command
+   * could be satisfied using either:
+   *
+   * - `cvd` for local instance management, determined by flag
+   * `--local-instance`.
+   *
+   * - Or `cvdr` for remote instance management.
+   *
+   */
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    bool lock_released = false;
-    CF_EXPECT(!interrupted_, "Interrupted");
-    CF_EXPECT(CanHandle(request));
-    CF_EXPECT(IsSubOperationSupported(request));
-    auto cb_unlock = [&lock_released, &interrupt_lock](void) -> Result<void> {
-      if (!lock_released) {
-        interrupt_lock.unlock();
-        lock_released = true;
-      }
-      return {};
-    };
-    auto cb_lock = [&lock_released, &interrupt_lock](void) -> Result<void> {
-      if (lock_released) {
-        interrupt_lock.lock();
-        lock_released = true;
-      }
-      return {};
-    };
-    // ConvertAcloudCreate converts acloud to cvd commands.
-    // The input parameters waiter_, cb_unlock, cb_lock are.used to
-    // support interrupt which have locking and unlocking functions
-    auto converted = CF_EXPECT(
-        acloud_impl::ConvertAcloudCreate(request, waiter_, cb_unlock, cb_lock));
-    if (lock_released) {
-      interrupt_lock.lock();
-    }
-    // currently, optout/optin feature only works in local instance
-    // remote instance still uses legacy python acloud
-    CF_EXPECT(!optout_);
-    cvd::Response response;
-    response.mutable_command_response();
-    return response;
+    auto remote_mgmt = VerifyRemoteMgmt(request);
+    return remote_mgmt.ok() ? remote_mgmt : VerifyLocalMgmt(request);
   }
+
   Result<void> Interrupt() override {
     std::lock_guard interrupt_lock(interrupt_mutex_);
     interrupted_ = true;
@@ -87,11 +68,65 @@ class TryAcloudCommand : public CvdServerHandler {
   }
 
  private:
+  Result<cvd::Response> VerifyLocalMgmt(const RequestWithStdio& request);
+  Result<cvd::Response> VerifyRemoteMgmt(const RequestWithStdio& request);
+
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
   SubprocessWaiter waiter_;
   const std::atomic<bool>& optout_;
 };
+
+Result<cvd::Response> TryAcloudCommand::VerifyLocalMgmt(
+    const RequestWithStdio& request) {
+  std::unique_lock interrupt_lock(interrupt_mutex_);
+  bool lock_released = false;
+  CF_EXPECT(!interrupted_, "Interrupted");
+  CF_EXPECT(CanHandle(request));
+  CF_EXPECT(IsSubOperationSupported(request));
+  auto cb_unlock = [&lock_released, &interrupt_lock](void) -> Result<void> {
+    if (!lock_released) {
+      interrupt_lock.unlock();
+      lock_released = true;
+    }
+    return {};
+  };
+  auto cb_lock = [&lock_released, &interrupt_lock](void) -> Result<void> {
+    if (lock_released) {
+      interrupt_lock.lock();
+      lock_released = true;
+    }
+    return {};
+  };
+  // ConvertAcloudCreate converts acloud to cvd commands.
+  // The input parameters waiter_, cb_unlock, cb_lock are.used to
+  // support interrupt which have locking and unlocking functions
+  auto converted = CF_EXPECT(
+      acloud_impl::ConvertAcloudCreate(request, waiter_, cb_unlock, cb_lock));
+  if (lock_released) {
+    interrupt_lock.lock();
+  }
+  // currently, optout/optin feature only works in local instance
+  // remote instance would continue to be done either through `python acloud` or
+  // `cvdr` (if enabled).
+  CF_EXPECT(!optout_);
+  cvd::Response response;
+  response.mutable_command_response();
+  return response;
+}
+
+Result<cvd::Response> TryAcloudCommand::VerifyRemoteMgmt(
+    const RequestWithStdio& request) {
+  const uid_t uid = request.Credentials()->uid;
+  auto filename = CF_EXPECT(GetDefaultConfigFile(uid));
+  auto config = CF_EXPECT(LoadAcloudConfig(filename, uid));
+  // If client didn't enable using `cvdr` the request should fail so it can
+  // be handled by the legacy python acloud CLI.
+  CF_EXPECT(config.use_cvdr == true);
+  cvd::Response response;
+  response.mutable_command_response();
+  return response;
+}
 
 fruit::Component<fruit::Required<
     fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
