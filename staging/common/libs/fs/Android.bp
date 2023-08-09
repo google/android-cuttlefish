@@ -24,50 +24,42 @@ cc_library {
         "shared_fd.cpp",
         "shared_fd_stream.cpp",
     ],
-    shared: {
-        shared_libs: [
-            "libbase",
-            "liblog",
-        ],
-    },
-    static: {
-        static_libs: [
-            "libbase",
-            "liblog",
-        ],
-    },
+    shared_libs: [
+        "libbase",
+        "liblog",
+    ],
     target: {
+        android: {
+            shared_libs: [
+                "libbase",
+                "liblog",
+            ],
+        },
         darwin: {
             enabled: true,
+        },
+        host: {
+            shared: {
+                shared_libs: [
+                    "libbase",
+                    "liblog",
+                ],
+            },
+            static: {
+                static_libs: [
+                    "libbase",
+                    "liblog",
+                ],
+            },
         },
         linux: {
             srcs: [
                 "epoll.cpp",
             ],
         },
-        vendor: {
-            // Liblog does not have a vendor-static variant.
-            shared_libs: ["liblog"],
-            exclude_static_libs: ["liblog"],
-        },
     },
     defaults: ["cuttlefish_host"],
-}
-
-cc_library {
-    name: "libcuttlefish_fs_product",
-    srcs: [
-        "epoll.cpp",
-        "shared_buf.cc",
-        "shared_fd.cpp",
-        "shared_fd_stream.cpp",
-    ],
-    shared_libs: [
-        "libbase",
-        "liblog",
-    ],
-    stl: "libc++_static",
-    defaults: ["cuttlefish_guest_product_only"],
+    product_available: true,
 }
 
 cc_test {

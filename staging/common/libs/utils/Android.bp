@@ -67,19 +67,7 @@ cc_library {
         }
     },
     defaults: ["cuttlefish_host"],
-}
-
-cc_library {
-    name: "libcuttlefish_utils_product",
-    srcs: [
-        "inotify.cpp",
-    ],
-    shared_libs: [
-        "libbase",
-        "liblog",
-    ],
-    stl: "libc++_static",
-    defaults: ["cuttlefish_guest_product_only"],
+    product_available: true,
 }
 
 cc_test_host {
