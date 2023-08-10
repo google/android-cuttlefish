@@ -37,42 +37,40 @@ class Value;
 }
 
 namespace cuttlefish {
+constexpr char kLogcatSerialMode[] = "serial";
+constexpr char kLogcatVsockMode[] = "vsock";
 
-inline constexpr char kLogcatSerialMode[] = "serial";
-inline constexpr char kLogcatVsockMode[] = "vsock";
-
-inline constexpr char kDefaultUuidPrefix[] =
-    "699acfc4-c8c4-11e7-882b-5065f31dc1";
-inline constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
-inline constexpr char kCuttlefishInstanceEnvVarName[] = "CUTTLEFISH_INSTANCE";
-inline constexpr char kVsocUserPrefix[] = "vsoc-";
-inline constexpr char kCvdNamePrefix[] = "cvd-";
-inline constexpr char kBootStartedMessage[] = "VIRTUAL_DEVICE_BOOT_STARTED";
-inline constexpr char kBootCompletedMessage[] = "VIRTUAL_DEVICE_BOOT_COMPLETED";
-inline constexpr char kBootFailedMessage[] = "VIRTUAL_DEVICE_BOOT_FAILED";
-inline constexpr char kMobileNetworkConnectedMessage[] =
+constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
+constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
+constexpr char kCuttlefishInstanceEnvVarName[] = "CUTTLEFISH_INSTANCE";
+constexpr char kVsocUserPrefix[] = "vsoc-";
+constexpr char kCvdNamePrefix[] = "cvd-";
+constexpr char kBootStartedMessage[] ="VIRTUAL_DEVICE_BOOT_STARTED";
+constexpr char kBootCompletedMessage[] = "VIRTUAL_DEVICE_BOOT_COMPLETED";
+constexpr char kBootFailedMessage[] = "VIRTUAL_DEVICE_BOOT_FAILED";
+constexpr char kMobileNetworkConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED";
-inline constexpr char kWifiConnectedMessage[] =
+constexpr char kWifiConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
-inline constexpr char kEthernetConnectedMessage[] =
+constexpr char kEthernetConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_ETHERNET_CONNECTED";
 // TODO(b/131864854): Replace this with a string less likely to change
-inline constexpr char kAdbdStartedMessage[] =
+constexpr char kAdbdStartedMessage[] =
     "init: starting service 'adbd'...";
-inline constexpr char kFastbootdStartedMessage[] =
+constexpr char kFastbootdStartedMessage[] =
     "init: starting service 'fastbootd'...";
-inline constexpr char kFastbootStartedMessage[] =
+constexpr char kFastbootStartedMessage[] =
     "Listening for fastboot command on tcp";
-inline constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
-inline constexpr char kDisplayPowerModeChangedMessage[] =
+constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
+constexpr char kDisplayPowerModeChangedMessage[] =
     "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";
-inline constexpr char kInternalDirName[] = "internal";
-inline constexpr char kGrpcSocketDirName[] = "grpc_socket";
-inline constexpr char kSharedDirName[] = "shared";
-inline constexpr char kLogDirName[] = "logs";
-inline constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
-inline constexpr char kKernelLoadedMessage[] = "] Linux version";
-inline constexpr char kBootloaderLoadedMessage[] = "U-Boot 20";
+constexpr char kInternalDirName[] = "internal";
+constexpr char kGrpcSocketDirName[] = "grpc_socket";
+constexpr char kSharedDirName[] = "shared";
+constexpr char kLogDirName[] = "logs";
+constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
+constexpr char kKernelLoadedMessage[] = "] Linux version";
+constexpr char kBootloaderLoadedMessage[] = "U-Boot 20";
 
 enum class SecureHal {
   Unknown,
@@ -469,6 +467,14 @@ class CuttlefishConfig {
     bool crosvm_use_balloon() const;
     bool crosvm_use_rng() const;
     bool use_pmem() const;
+    /* fmayle@ found out that when cuttlefish starts from the saved snapshot
+     * that was saved after ADBD start event, the socket_vsock_proxy must not
+     * wait for the AdbdStarted event.
+     *
+     * This instance-specific configuration tells the host sock_vsock_proxy
+     * not to wait for the adbd start event.
+     */
+    bool sock_vsock_proxy_wait_adbd_start() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -672,6 +678,7 @@ class CuttlefishConfig {
     void set_crosvm_use_balloon(const bool use_balloon);
     void set_crosvm_use_rng(const bool use_rng);
     void set_use_pmem(const bool use_pmem);
+    void set_sock_vsock_proxy_wait_adbd_start(const bool);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
