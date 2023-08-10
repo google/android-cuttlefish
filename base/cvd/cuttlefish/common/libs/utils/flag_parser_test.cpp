@@ -117,9 +117,9 @@ TEST(FlagParser, RepeatedStringFlag) {
 TEST(FlagParser, RepeatedListFlag) {
   std::vector<std::string> elems;
   auto flag = GflagsCompatFlag("myflag");
-  flag.Setter([&elems](const FlagMatch& match) -> Result<void> {
+  flag.Setter([&elems](const FlagMatch& match) {
     elems.push_back(match.value);
-    return {};
+    return true;
   });
   ASSERT_THAT(flag.Parse({"-myflag=a", "--myflag", "b"}), IsOk());
   ASSERT_EQ(elems, (std::vector<std::string>{"a", "b"}));
@@ -391,9 +391,9 @@ class FlagConsumesArbitraryTest : public ::testing::Test {
     elems_.clear();
     flag_ = Flag()
                 .Alias({FlagAliasMode::kFlagConsumesArbitrary, "--flag"})
-                .Setter([this](const FlagMatch& match) -> Result<void> {
+                .Setter([this](const FlagMatch& match) {
                   elems_.push_back(match.value);
-                  return {};
+                  return true;
                 });
   }
   Flag flag_;
