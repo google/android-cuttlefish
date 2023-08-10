@@ -182,7 +182,8 @@ Gem5Manager::ConfigureGraphics(
 }
 
 Result<std::unordered_map<std::string, std::string>>
-Gem5Manager::ConfigureBootDevices(int /*num_disks*/, bool /*have_gpu*/) {
+Gem5Manager::ConfigureBootDevices(
+    const CuttlefishConfig::InstanceSpecific& /*instance*/) {
   switch (arch_) {
     case Arch::Arm:
     case Arch::Arm64:

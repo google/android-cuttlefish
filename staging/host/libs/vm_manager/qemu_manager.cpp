@@ -199,7 +199,10 @@ QemuManager::ConfigureGraphics(
 }
 
 Result<std::unordered_map<std::string, std::string>>
-QemuManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
+QemuManager::ConfigureBootDevices(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  const int num_disks = instance.virtual_disk_paths().size();
+  const int num_gpu = instance.hwcomposer() != kHwComposerNone;
   switch (arch_) {
     case Arch::Arm:
       return {{{"androidboot.boot_devices", "3f000000.pcie"}}};
@@ -215,8 +218,8 @@ QemuManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
     case Arch::X86_64: {
       // QEMU has additional PCI devices for an ISA bridge and PIIX4
       // virtio_gpu precedes the first console or disk
-      return ConfigureMultipleBootDevices("pci0000:00/0000:00:",
-                                          2 + (have_gpu ? 1 : 0), num_disks);
+      return ConfigureMultipleBootDevices("pci0000:00/0000:00:", 2 + num_gpu,
+                                          num_disks);
     }
   }
 }
