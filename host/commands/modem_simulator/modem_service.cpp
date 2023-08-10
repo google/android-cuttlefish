@@ -15,38 +15,13 @@
 
 #include "host/commands/modem_simulator/modem_service.h"
 
-#include <android-base/logging.h>
-
 #include <cstring>
+
+#include <android-base/logging.h>
 
 #include "host/commands/modem_simulator/device_config.h"
 
 namespace cuttlefish {
-
-const std::string ModemService::kCmeErrorOperationNotAllowed      = "+CME ERROR: 3";
-const std::string ModemService::kCmeErrorOperationNotSupported    = "+CME ERROR: 4";
-const std::string ModemService::kCmeErrorSimNotInserted           = "+CME ERROR: 10";
-const std::string ModemService::kCmeErrorSimPinRequired           = "+CME ERROR: 11";
-const std::string ModemService::kCmeErrorSimPukRequired           = "+CME ERROR: 12";
-const std::string ModemService::kCmeErrorSimBusy                  = "+CME ERROR: 14";
-const std::string ModemService::kCmeErrorIncorrectPassword        = "+CME ERROR: 16";
-const std::string ModemService::kCmeErrorMemoryFull               = "+CME ERROR: 20";
-const std::string ModemService::kCmeErrorInvalidIndex             = "+CME ERROR: 21";
-const std::string ModemService::kCmeErrorNotFound                 = "+CME ERROR: 22";
-const std::string ModemService::kCmeErrorInvalidCharactersInTextString = "+CME ERROR: 27";
-const std::string ModemService::kCmeErrorNoNetworkService         = "+CME ERROR: 30";
-const std::string ModemService::kCmeErrorNetworkNotAllowedEmergencyCallsOnly = "+CME ERROR: 32";
-const std::string ModemService::kCmeErrorInCorrectParameters      = "+CME ERROR: 50";
-const std::string ModemService::kCmeErrorNetworkNotAttachedDueToMTFunctionalRestrictions = "+CME ERROR: 53";
-const std::string ModemService::kCmeErrorFixedDialNumberOnlyAllowed = "+CME ERROR: 56";
-
-const std::string ModemService::kCmsErrorOperationNotAllowed      = "+CMS ERROR: 302";
-const std::string ModemService::kCmsErrorOperationNotSupported    = "+CMS ERROR: 303";
-const std::string ModemService::kCmsErrorInvalidPDUModeParam      = "+CMS ERROR: 304";
-const std::string ModemService::kCmsErrorSCAddressUnknown         = "+CMS ERROR: 304";
-
-const std::pair<int, int> ModemService::kRemotePortRange =
-    std::make_pair(6520, 6527);
 
 CommandHandler::CommandHandler(const std::string& command, f_func handler)
     : command_prefix(command),

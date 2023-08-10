@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "gflags/gflags.h"
 
-#include "android-base/logging.h"
+#include <android-base/logging.h>
+#include <gflags/gflags.h>
+
 #include "common/libs/fs/shared_fd.h"
 #include "host/commands/cvd_send_sms/sms_sender.h"
 
-const std::string kUsage = R"(
+constexpr char kUsage[] = R"(
 NAME
     cvd_send_sms - send SMSs to cvds.
 
