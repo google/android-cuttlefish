@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <iostream>
+#include <string_view>
 
 #include <android-base/logging.h>
 #include <android-base/parsebool.h>
@@ -59,7 +60,7 @@ DECLARE_bool(use_overlay);
 namespace cuttlefish {
 namespace {
 
-std::string kFetcherConfigFile = "fetcher_config.json";
+static constexpr std::string_view kFetcherConfigFile = "fetcher_config.json";
 
 FetcherConfig FindFetcherConfig(const std::vector<std::string>& files) {
   FetcherConfig fetcher_config;
