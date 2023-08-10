@@ -17,8 +17,6 @@
 // https://github.com/u-boot/u-boot/blob/master/tools/mkenvimage.c The bare
 // minimum amount of functionality for our application is replicated.
 
-#include <iostream>
-
 #include <zlib.h>
 
 #include <android-base/logging.h>
@@ -40,19 +38,18 @@ DEFINE_uint32(env_size, 4096, "file size of resulting env");
 DEFINE_string(output_path, "", "output file path");
 DEFINE_string(input_path, "", "input file path");
 namespace cuttlefish {
-namespace {
-std::string USAGE_MESSAGE =
+
+static constexpr char kUsageMessage[] =
     "<flags>\n"
     "\n"
     "env_size - length in bytes of the resulting env image. Defaults to 4kb.\n"
     "input_path - path to input key value mapping as a text file\n"
     "output_path - path to write resulting environment image including CRC "
     "to\n";
-}  // namespace
 
 Result<int> MkenvimageSlimMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  gflags::SetUsageMessage(USAGE_MESSAGE);
+  gflags::SetUsageMessage(kUsageMessage);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   CF_EXPECT(FLAGS_output_path != "", "Output env path isn't defined.");
   CF_EXPECT(FLAGS_env_size != 0, "env size can't be 0.");
