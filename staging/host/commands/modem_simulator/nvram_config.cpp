@@ -20,26 +20,23 @@
 
 #include <fstream>
 #include <mutex>
-#include <sstream>
 
 #include "common/libs/utils/files.h"
 #include "host/commands/modem_simulator/device_config.h"
 
 namespace cuttlefish {
 
-const char* kInstances            = "instances";
-const char* kNetworkSelectionMode = "network_selection_mode";
-const char* kOperatorNumeric      = "operator_numeric";
-const char* kModemTechnoloy       = "modem_technoloy";
-const char* kPreferredNetworkMode = "preferred_network_mode";
-const char* kEmergencyMode        = "emergency_mode";
-const char* kSimType              = "sim_type";
+static constexpr char kInstances[] = "instances";
+static constexpr char kNetworkSelectionMode[] = "network_selection_mode";
+static constexpr char kOperatorNumeric[] = "operator_numeric";
+static constexpr char kModemTechnoloy[] = "modem_technoloy";
+static constexpr char kPreferredNetworkMode[] = "preferred_network_mode";
+static constexpr char kEmergencyMode[] = "emergency_mode";
 
-const int   kDefaultNetworkSelectionMode  = 0;     // AUTOMATIC
-const std::string kDefaultOperatorNumeric = "";
-const int   kDefaultModemTechnoloy        = 0x10;  // LTE
-const int   kDefaultPreferredNetworkMode  = 0x13;  // LTE | WCDMA | GSM
-const bool  kDefaultEmergencyMode         = false;
+static constexpr int kDefaultNetworkSelectionMode = 0;     // AUTOMATIC
+static constexpr int kDefaultModemTechnoloy = 0x10;        // LTE
+static constexpr int kDefaultPreferredNetworkMode = 0x13;  // LTE | WCDMA | GSM
+static constexpr bool kDefaultEmergencyMode = false;
 
 /**
  * Creates the (initially empty) config object and populates it with values from
