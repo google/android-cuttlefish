@@ -37,9 +37,8 @@ class VsockConnection {
   std::future<bool> ConnectAsync(unsigned int port, unsigned int cid);
   void SetDisconnectCallback(std::function<void()> callback);
 
-  bool IsConnected() const;
-  bool DataAvailable() const;
-
+  bool IsConnected();
+  bool DataAvailable();
   int32_t Read();
   bool Read(std::vector<char>& data);
   std::vector<char> Read(size_t size);
