@@ -84,7 +84,7 @@ class VmManager {
   ConfigureGraphics(const CuttlefishConfig::InstanceSpecific& instance) = 0;
 
   virtual Result<std::unordered_map<std::string, std::string>>
-  ConfigureBootDevices(int num_disks, bool have_gpu) = 0;
+  ConfigureBootDevices(const CuttlefishConfig::InstanceSpecific& instance) = 0;
 
   // Starts the VMM. It will usually build a command and pass it to the
   // command_starter function, although it may start more than one. The

@@ -81,9 +81,7 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   auto vmm =
       vm_manager::GetVmManager(config.vm_manager(), instance.target_arch());
   AppendMapWithReplacement(&bootconfig_args,
-                           CF_EXPECT(vmm->ConfigureBootDevices(
-                               instance.virtual_disk_paths().size(),
-                               instance.hwcomposer() != kHwComposerNone)));
+                           CF_EXPECT(vmm->ConfigureBootDevices(instance)));
 
   AppendMapWithReplacement(&bootconfig_args,
                            CF_EXPECT(vmm->ConfigureGraphics(instance)));
