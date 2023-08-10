@@ -78,7 +78,6 @@ static std::map<std::string, Json::ValueType> kCrosvmKeyMap = {
 };
 
 static std::map<std::string, Json::ValueType> kBootKeyMap = {
-    {"extra_bootconfig_args", Json::ValueType::stringValue},
     {"kernel", Json::ValueType::objectValue},
     {"enable_bootanimation", Json::ValueType::booleanValue},
     {"build", Json::ValueType::stringValue},
