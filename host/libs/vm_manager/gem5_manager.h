@@ -42,7 +42,7 @@ class Gem5Manager : public VmManager {
       const CuttlefishConfig::InstanceSpecific& instance) override;
 
   Result<std::unordered_map<std::string, std::string>> ConfigureBootDevices(
-      int num_disks, bool have_gpu) override;
+      const CuttlefishConfig::InstanceSpecific& instance) override;
 
   Result<std::vector<MonitorCommand>> StartCommands(
       const CuttlefishConfig& config,
