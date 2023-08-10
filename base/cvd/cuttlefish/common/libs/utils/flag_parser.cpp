@@ -123,6 +123,27 @@ Flag Flag::Getter(std::function<std::string()> fn) && {
   return *this;
 }
 
+Flag& Flag::Setter(std::function<bool(const FlagMatch&)> fn) & {
+  setter_ = [fn = std::move(fn)](const FlagMatch& match) -> Result<void> {
+    if (fn(match)) {
+      return {};
+    } else {
+      return CF_ERR("Flag setter failed");
+    }
+  };
+  return *this;
+}
+Flag Flag::Setter(std::function<bool(const FlagMatch&)> fn) && {
+  setter_ = [fn = std::move(fn)](const FlagMatch& match) -> Result<void> {
+    if (fn(match)) {
+      return {};
+    } else {
+      return CF_ERR("Flag setter failed");
+    }
+  };
+  return *this;
+}
+
 Flag& Flag::Setter(std::function<Result<void>(const FlagMatch&)> setter) & {
   setter_ = std::move(setter);
   return *this;
@@ -419,14 +440,14 @@ Flag VerbosityFlag(android::base::LogSeverity& value) {
 }
 
 Flag HelpFlag(const std::vector<Flag>& flags, const std::string& text) {
-  auto setter = [&](FlagMatch) -> Result<void> {
+  auto setter = [&](FlagMatch) {
     if (text.size() > 0) {
       LOG(INFO) << text;
     }
     for (const auto& flag : flags) {
       LOG(INFO) << flag;
     }
-    return CF_ERR("user requested early exit");
+    return false;
   };
   return Flag()
       .Alias({FlagAliasMode::kFlagExact, "-help"})
@@ -497,8 +518,9 @@ Flag InvalidFlagGuard() {
       .Help(
           "This executable only supports the flags in `-help`. Positional "
           "arguments may be supported.")
-      .Setter([](const FlagMatch& match) -> Result<void> {
-        return CF_ERRF("Unknown flag \"{}\"", match.value);
+      .Setter([](const FlagMatch& match) {
+        LOG(ERROR) << "Unknown flag " << match.value;
+        return false;
       });
 }
 
@@ -508,8 +530,9 @@ Flag UnexpectedArgumentGuard() {
       .Help(
           "This executable only supports the flags in `-help`. Positional "
           "arguments are not supported.")
-      .Setter([](const FlagMatch& match) -> Result<void> {
-        return CF_ERRF("Unexpected argument \"{}\"", match.value);
+      .Setter([](const FlagMatch& match) {
+        LOG(ERROR) << "Unexpected argument \"" << match.value << "\"";
+        return false;
       });
 }
 
@@ -524,9 +547,9 @@ Flag GflagsCompatFlag(const std::string& name) {
 Flag GflagsCompatFlag(const std::string& name, std::string& value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return value; })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
+      .Setter([&value](const FlagMatch& match) {
         value = match.value;
-        return {};
+        return true;
       });
 }
 
