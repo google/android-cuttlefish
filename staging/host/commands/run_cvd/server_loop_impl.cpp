@@ -104,7 +104,7 @@ Result<void> ServerLoopImpl::Run() {
         HandleActionWithNoData(launcher_action.action, client, process_monitor);
         continue;
       }
-      auto result = HandleExtended(launcher_action, client);
+      auto result = HandleExtended(launcher_action, client, process_monitor);
       if (!result.ok()) {
         LOG(ERROR) << "Failed to handle extended action request.";
         LOG(DEBUG) << result.error().Trace();
@@ -126,17 +126,20 @@ Result<void> ServerLoopImpl::ResultSetup() {
 }
 
 Result<void> ServerLoopImpl::HandleExtended(
-    const LauncherActionInfo& action_info, const SharedFD& client) {
+    const LauncherActionInfo& action_info, const SharedFD& client,
+    ProcessMonitor& process_monitor) {
   CF_EXPECT(action_info.action == LauncherAction::kExtended);
   switch (action_info.type) {
     case ExtendedActionType::kSuspend: {
       LOG(DEBUG) << "Run_cvd received suspend request.";
-      CF_EXPECT(HandleSuspend(action_info.serialized_data, client));
+      CF_EXPECT(
+          HandleSuspend(action_info.serialized_data, client, process_monitor));
       return {};
     }
     case ExtendedActionType::kResume: {
       LOG(DEBUG) << "Run_cvd received resume request.";
-      CF_EXPECT(HandleResume(action_info.serialized_data, client));
+      CF_EXPECT(
+          HandleResume(action_info.serialized_data, client, process_monitor));
       return {};
     }
     case ExtendedActionType::kStartScreenRecording: {
