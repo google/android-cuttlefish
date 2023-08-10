@@ -70,29 +70,34 @@ class ModemService {
 
   bool HandleModemCommand(const Client& client, std::string command);
 
-  static const std::string kCmeErrorOperationNotAllowed;
-  static const std::string kCmeErrorOperationNotSupported;
-  static const std::string kCmeErrorSimNotInserted;
-  static const std::string kCmeErrorSimPinRequired;
-  static const std::string kCmeErrorSimPukRequired;
-  static const std::string kCmeErrorSimBusy;
-  static const std::string kCmeErrorIncorrectPassword;
-  static const std::string kCmeErrorMemoryFull;
-  static const std::string kCmeErrorInvalidIndex;
-  static const std::string kCmeErrorNotFound;
-  static const std::string kCmeErrorInvalidCharactersInTextString;
-  static const std::string kCmeErrorNoNetworkService;
-  static const std::string kCmeErrorNetworkNotAllowedEmergencyCallsOnly;
-  static const std::string kCmeErrorInCorrectParameters;
-  static const std::string kCmeErrorNetworkNotAttachedDueToMTFunctionalRestrictions;
-  static const std::string kCmeErrorFixedDialNumberOnlyAllowed;
+  static constexpr char kCmeErrorOperationNotAllowed[] = "+CME ERROR: 3";
+  static constexpr char kCmeErrorOperationNotSupported[] = "+CME ERROR: 4";
+  static constexpr char kCmeErrorSimNotInserted[] = "+CME ERROR: 10";
+  static constexpr char kCmeErrorSimPinRequired[] = "+CME ERROR: 11";
+  static constexpr char kCmeErrorSimPukRequired[] = "+CME ERROR: 12";
+  static constexpr char kCmeErrorSimBusy[] = "+CME ERROR: 14";
+  static constexpr char kCmeErrorIncorrectPassword[] = "+CME ERROR: 16";
+  static constexpr char kCmeErrorMemoryFull[] = "+CME ERROR: 20";
+  static constexpr char kCmeErrorInvalidIndex[] = "+CME ERROR: 21";
+  static constexpr char kCmeErrorNotFound[] = "+CME ERROR: 22";
+  static constexpr char kCmeErrorInvalidCharactersInTextString[] =
+      "+CME ERROR: 27";
+  static constexpr char kCmeErrorNoNetworkService[] = "+CME ERROR: 30";
+  static constexpr char kCmeErrorNetworkNotAllowedEmergencyCallsOnly[] =
+      "+CME ERROR: 32";
+  static constexpr char kCmeErrorInCorrectParameters[] = "+CME ERROR: 50";
+  static constexpr char
+      kCmeErrorNetworkNotAttachedDueToMTFunctionalRestrictions[] =
+          "+CME ERROR: 53";
+  static constexpr char kCmeErrorFixedDialNumberOnlyAllowed[] =
+      "+CME ERROR: 56";
 
-  static const std::string kCmsErrorOperationNotAllowed;
-  static const std::string kCmsErrorOperationNotSupported;
-  static const std::string kCmsErrorInvalidPDUModeParam;
-  static const std::string kCmsErrorSCAddressUnknown;
+  static constexpr char kCmsErrorOperationNotAllowed[] = "+CMS ERROR: 302";
+  static constexpr char kCmsErrorOperationNotSupported[] = "+CMS ERROR: 303";
+  static constexpr char kCmsErrorInvalidPDUModeParam[] = "+CMS ERROR: 304";
+  static constexpr char kCmsErrorSCAddressUnknown[] = "+CMS ERROR: 304";
 
-  static const std::pair<int, int> kRemotePortRange;
+  static constexpr std::pair<int, int> kRemotePortRange{6520, 6527};
 
  protected:
   ModemService(int32_t service_id, std::vector<CommandHandler> command_handlers,

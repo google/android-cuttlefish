@@ -22,7 +22,6 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
-#include "common/libs/utils/network.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/esp.h"
@@ -33,10 +32,10 @@
 namespace cuttlefish {
 
 namespace {
-const std::string kDataPolicyUseExisting = "use_existing";
-const std::string kDataPolicyCreateIfMissing = "create_if_missing";
-const std::string kDataPolicyAlwaysCreate = "always_create";
-const std::string kDataPolicyResizeUpTo= "resize_up_to";
+
+static constexpr std::string_view kDataPolicyUseExisting = "use_existing";
+static constexpr std::string_view kDataPolicyAlwaysCreate = "always_create";
+static constexpr std::string_view kDataPolicyResizeUpTo = "resize_up_to";
 
 const int FSCK_ERROR_CORRECTED = 1;
 const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
