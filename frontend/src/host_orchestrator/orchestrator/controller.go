@@ -131,6 +131,7 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
 	buildAPI := artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL)
+	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
 	cvdDwnl := NewAndroidCICVDDownloader(buildAPI)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, h.Config.Paths.FetchCVDBin(), "")
 	opts := FetchArtifactsActionOpts{
@@ -140,6 +141,7 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDDownloader:    cvdDwnl,
 		OperationManager: h.OM,
 		CVDBundleFetcher: cvdBundleFetcher,
+		ArtifactsFetcher: artifactsFetcher,
 	}
 	return NewFetchArtifactsAction(opts).Run()
 }

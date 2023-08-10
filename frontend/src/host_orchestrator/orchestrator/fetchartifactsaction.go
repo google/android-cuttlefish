@@ -15,6 +15,7 @@
 package orchestrator
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
@@ -29,6 +30,7 @@ type FetchArtifactsActionOpts struct {
 	CVDDownloader    CVDDownloader
 	OperationManager OperationManager
 	CVDBundleFetcher artifacts.CVDBundleFetcher
+	ArtifactsFetcher artifacts.Fetcher
 	UUIDGen          func() string
 }
 
@@ -39,6 +41,7 @@ type FetchArtifactsAction struct {
 	cvdDownloader    CVDDownloader
 	om               OperationManager
 	cvdBundleFetcher artifacts.CVDBundleFetcher
+	artifactsFetcher artifacts.Fetcher
 	artifactsMngr    *artifacts.Manager
 }
 
@@ -50,6 +53,7 @@ func NewFetchArtifactsAction(opts FetchArtifactsActionOpts) *FetchArtifactsActio
 		cvdDownloader:    opts.CVDDownloader,
 		om:               opts.OperationManager,
 		cvdBundleFetcher: opts.CVDBundleFetcher,
+		artifactsFetcher: opts.ArtifactsFetcher,
 
 		artifactsMngr: artifacts.NewManager(opts.Paths.ArtifactsRootDir, opts.UUIDGen),
 	}
@@ -82,7 +86,15 @@ func (a *FetchArtifactsAction) startDownload(op apiv1.Operation) OperationResult
 	if a.req.AndroidCIBundle.Build != nil {
 		build = a.req.AndroidCIBundle.Build
 	}
-	_, err := a.artifactsMngr.GetCVDBundle(build.BuildID, build.Target, nil, a.cvdBundleFetcher)
+	var err error
+	switch t := a.req.AndroidCIBundle.Type; t {
+	case apiv1.MainBundleType:
+		_, err = a.artifactsMngr.GetCVDBundle(build.BuildID, build.Target, nil, a.cvdBundleFetcher)
+	case apiv1.KernelBundleType:
+		_, err = a.artifactsMngr.GetKernelBundle(build.BuildID, build.Target, a.artifactsFetcher)
+	default:
+		err = operator.NewBadRequestError(fmt.Sprintf("Unsupported artifact bundle type: %d", t), nil)
+	}
 	if err != nil {
 		return OperationResult{Error: operator.NewInternalError(errMsgFailedFetchingArtifacts, err)}
 	}
