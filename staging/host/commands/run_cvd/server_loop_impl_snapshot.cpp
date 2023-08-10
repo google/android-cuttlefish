@@ -103,36 +103,44 @@ Result<void> ServerLoopImpl::ResumeGuest() {
 }
 
 Result<void> ServerLoopImpl::HandleSuspend(const std::string& serialized_data,
-                                           const SharedFD& client) {
+                                           const SharedFD& client,
+                                           ProcessMonitor& process_monitor) {
   run_cvd::ExtendedLauncherAction extended_action;
   CF_EXPECT(extended_action.ParseFromString(serialized_data),
             "Failed to load ExtendedLauncherAction proto.");
   CF_EXPECT_EQ(extended_action.actions_case(),
                run_cvd::ExtendedLauncherAction::ActionsCase::kSuspend);
-  LOG(INFO) << "Suspending the guest..";
+  // right order: guest -> host
+  LOG(DEBUG) << "Suspending the guest..";
   CF_EXPECT(SuspendGuest());
-  LOG(INFO) << "The guest is suspended.";
-  LOG(INFO) << "Suspend host is not yet implemented.";
+  LOG(DEBUG) << "The guest is suspended.";
+  CF_EXPECT(process_monitor.SuspendMonitoredProcesses(),
+            "Failed to suspend host processes.");
+  LOG(DEBUG) << "The host processes are suspended.";
   auto response = LauncherResponse::kSuccess;
   CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),
-               "Failed to wrote the suspend response.");
+               "Failed to write the suspend response.");
   return {};
 }
 
 Result<void> ServerLoopImpl::HandleResume(const std::string& serialized_data,
-                                          const SharedFD& client) {
+                                          const SharedFD& client,
+                                          ProcessMonitor& process_monitor) {
   run_cvd::ExtendedLauncherAction extended_action;
   CF_EXPECT(extended_action.ParseFromString(serialized_data),
             "Failed to load ExtendedLauncherAction proto.");
   CF_EXPECT_EQ(extended_action.actions_case(),
                run_cvd::ExtendedLauncherAction::ActionsCase::kResume);
-  LOG(INFO) << "Resuming the guest..";
+  // right order: host -> guest
+  CF_EXPECT(process_monitor.ResumeMonitoredProcesses(),
+            "Failed to resume host processes.");
+  LOG(DEBUG) << "The host processes are resumed.";
+  LOG(DEBUG) << "Resuming the guest..";
   CF_EXPECT(ResumeGuest());
-  LOG(INFO) << "The guest resumed.";
-  LOG(INFO) << "Resuming host is not yet implemented.";
+  LOG(DEBUG) << "The guest resumed.";
   auto response = LauncherResponse::kSuccess;
   CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),
-               "Failed to wrote the suspend response.");
+               "Failed to write the resume response.");
   return {};
 }
 

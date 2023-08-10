@@ -31,12 +31,12 @@
 #include <algorithm>
 #include <atomic>
 #include <cstdint>
-#include <functional>
 #include <future>
 #include <memory>
 #include <string>
 #include <thread>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -92,6 +92,7 @@ Result<void> StartSubprocesses(std::vector<MonitorEntry>& entries) {
 }
 
 Result<void> MonitorLoop(const std::atomic_bool& running,
+                         std::mutex& properties_mutex,
                          const bool restart_subprocesses,
                          std::vector<MonitorEntry>& monitored) {
   while (running.load()) {
@@ -108,6 +109,7 @@ Result<void> MonitorLoop(const std::atomic_bool& running,
       break;
     }
     auto matches = [pid](const auto& it) { return it.proc->pid() == pid; };
+    std::unique_lock lock(properties_mutex);
     auto it = std::find_if(monitored.begin(), monitored.end(), matches);
     if (it == monitored.end()) {
       LogSubprocessExit("(unknown)", pid, wstatus);
@@ -115,6 +117,7 @@ Result<void> MonitorLoop(const std::atomic_bool& running,
       LogSubprocessExit(it->cmd->GetShortName(), it->proc->pid(), wstatus);
       if (restart_subprocesses) {
         auto options = SubprocessOptions().InGroup(true);
+        // in the future, cmd->Start might not run exec()
         it->proc.reset(new Subprocess(it->cmd->Start(options)));
       } else {
         bool is_critical = it->is_critical;
@@ -159,20 +162,86 @@ Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
 
 }  // namespace
 
-Result<void> ProcessMonitor::ReadMonitorSocketLoopForStop(
-    std::atomic_bool& running) {
+Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
   LOG(DEBUG) << "Waiting for a `stop` message from the parent";
   while (running.load()) {
     using process_monitor_impl::ParentToChildMessage;
-    auto message = CF_EXPECT(ParentToChildMessage::Read(monitor_socket_));
+    auto message = CF_EXPECT(ParentToChildMessage::Read(child_monitor_socket_));
     if (message.Stop()) {
       running.store(false);
       // Wake up the wait() loop by giving it an exited child process
       if (fork() == 0) {
         std::exit(0);
       }
+      // will break the for-loop as running is now false
+      continue;
+    }
+    using process_monitor_impl::ParentToChildMessageType;
+    if (message.Type() == ParentToChildMessageType::kHostSuspend) {
+      CF_EXPECT(SuspendHostProcessesImpl());
+      continue;
+    }
+    if (message.Type() == ParentToChildMessageType::kHostResume) {
+      CF_EXPECT(ResumeHostProcessesImpl());
+      continue;
     }
   }
+  return {};
+}
+
+Result<void> ProcessMonitor::SuspendHostProcessesImpl() {
+  std::lock_guard lock(properties_mutex_);
+  auto& monitor_entries = properties_.entries_;
+  for (const auto& entry : monitor_entries) {
+    if (!entry.cmd) {
+      LOG(ERROR) << "Monitor Entry has a nullptr for cmd.";
+      continue;
+    }
+    if (!entry.proc) {
+      LOG(ERROR) << "Monitor Entry has a nullptr for proc.";
+      continue;
+    }
+    auto prog_name = android::base::Basename(entry.cmd->Executable());
+    auto process_restart_bin =
+        android::base::Basename(ProcessRestarterBinary());
+    if (process_restart_bin == prog_name) {
+      CF_EXPECT(entry.proc->SendSignal(SIGTSTP));
+    } else {
+      CF_EXPECT(entry.proc->SendSignalToGroup(SIGTSTP));
+    }
+  }
+  using process_monitor_impl::ChildToParentResponse;
+  using process_monitor_impl::ChildToParentResponseType;
+  ChildToParentResponse response(ChildToParentResponseType::kSuccess);
+  CF_EXPECT(response.Write(child_monitor_socket_));
+  return {};
+}
+
+Result<void> ProcessMonitor::ResumeHostProcessesImpl() {
+  std::lock_guard lock(properties_mutex_);
+  auto& monitor_entries = properties_.entries_;
+  for (const auto& entry : monitor_entries) {
+    if (!entry.cmd) {
+      LOG(ERROR) << "Monitor Entry has a nullptr for cmd.";
+      continue;
+    }
+    if (!entry.proc) {
+      LOG(ERROR) << "Monitor Entry has a nullptr for proc.";
+      continue;
+    }
+    auto prog_name = android::base::Basename(entry.cmd->Executable());
+    auto process_restart_bin =
+        android::base::Basename(ProcessRestarterBinary());
+    if (process_restart_bin == prog_name) {
+      CF_EXPECT(entry.proc->SendSignal(SIGCONT));
+    } else {
+      CF_EXPECT(entry.proc->SendSignalToGroup(SIGCONT));
+    }
+  }
+  using process_monitor_impl::ChildToParentResponse;
+  using process_monitor_impl::ChildToParentResponseType;
+  ChildToParentResponse response(ChildToParentResponseType::kSuccess);
+  CF_EXPECT(response.Write(child_monitor_socket_));
   return {};
 }
 
@@ -203,15 +272,16 @@ ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties)
 
 Result<void> ProcessMonitor::StopMonitoredProcesses() {
   CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
-  CF_EXPECT(monitor_socket_->IsOpen(), "The monitor socket is already closed");
+  CF_EXPECT(parent_monitor_socket_->IsOpen(),
+            "The monitor socket is already closed");
   using process_monitor_impl::ParentToChildMessage;
   using process_monitor_impl::ParentToChildMessageType;
   ParentToChildMessage message(ParentToChildMessageType::kStop);
-  CF_EXPECT(message.Write(monitor_socket_));
+  CF_EXPECT(message.Write(parent_monitor_socket_));
 
   pid_t last_monitor = monitor_;
   monitor_ = -1;
-  monitor_socket_->Close();
+  parent_monitor_socket_->Close();
   int wstatus;
   CF_EXPECT(waitpid(last_monitor, &wstatus, 0) == last_monitor,
             "Failed to wait for monitor process");
@@ -222,17 +292,49 @@ Result<void> ProcessMonitor::StopMonitoredProcesses() {
   return {};
 }
 
+Result<void> ProcessMonitor::SuspendMonitoredProcesses() {
+  CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
+  CF_EXPECT(parent_monitor_socket_->IsOpen(),
+            "The monitor socket is already closed");
+  using process_monitor_impl::ParentToChildMessage;
+  using process_monitor_impl::ParentToChildMessageType;
+  ParentToChildMessage message(ParentToChildMessageType::kHostSuspend);
+  CF_EXPECT(message.Write(parent_monitor_socket_));
+  using process_monitor_impl::ChildToParentResponse;
+  auto response =
+      CF_EXPECT(ChildToParentResponse::Read(parent_monitor_socket_));
+  CF_EXPECT(response.Success(),
+            "On kHostSuspend, the child run_cvd returned kFailure.");
+  return {};
+}
+
+Result<void> ProcessMonitor::ResumeMonitoredProcesses() {
+  CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
+  CF_EXPECT(parent_monitor_socket_->IsOpen(),
+            "The monitor socket is already closed");
+  using process_monitor_impl::ParentToChildMessage;
+  using process_monitor_impl::ParentToChildMessageType;
+  ParentToChildMessage message(ParentToChildMessageType::kHostResume);
+  CF_EXPECT(message.Write(parent_monitor_socket_));
+  using process_monitor_impl::ChildToParentResponse;
+  auto response =
+      CF_EXPECT(ChildToParentResponse::Read(parent_monitor_socket_));
+  CF_EXPECT(response.Success(),
+            "On kHostResume, the child run_cvd returned kFailure.");
+  return {};
+}
+
 Result<void> ProcessMonitor::StartAndMonitorProcesses() {
   CF_EXPECT(monitor_ == -1, "The monitor process was already started");
-  CF_EXPECT(!monitor_socket_->IsOpen(), "Monitor socket was already opened");
-
-  SharedFD client_pipe, host_pipe;
-  CF_EXPECT(SharedFD::Pipe(&client_pipe, &host_pipe),
-            "Could not create the monitor socket.");
+  CF_EXPECT(!parent_monitor_socket_->IsOpen(),
+            "Parent monitor socket was already opened");
+  SharedFD parent_sock;
+  SharedFD child_sock;
+  SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0, &parent_sock, &child_sock);
   monitor_ = fork();
   if (monitor_ == 0) {
-    monitor_socket_ = client_pipe;
-    host_pipe->Close();
+    child_monitor_socket_ = std::move(child_sock);
+    parent_sock->Close();
     auto monitor_result = MonitorRoutine();
     if (!monitor_result.ok()) {
       LOG(ERROR) << "Monitoring processes failed:\n"
@@ -242,8 +344,8 @@ Result<void> ProcessMonitor::StartAndMonitorProcesses() {
     }
     std::exit(monitor_result.ok() ? 0 : 1);
   } else {
-    client_pipe->Close();
-    monitor_socket_ = host_pipe;
+    parent_monitor_socket_ = std::move(parent_sock);
+    child_sock->Close();
     return {};
   }
 }
@@ -260,15 +362,17 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   StartSubprocesses(properties_.entries_);
 
   std::atomic_bool running(true);
+
   auto read_monitor_socket_loop =
       [this](std::atomic_bool& running) -> Result<void> {
-    CF_EXPECT(this->ReadMonitorSocketLoopForStop(running));
+    CF_EXPECT(this->ReadMonitorSocketLoop(running));
     return {};
   };
   auto parent_comms = std::async(std::launch::async, read_monitor_socket_loop,
                                  std::ref(running));
 
-  MonitorLoop(running, properties_.restart_subprocesses_, properties_.entries_);
+  MonitorLoop(running, properties_mutex_, properties_.restart_subprocesses_,
+              properties_.entries_);
   CF_EXPECT(parent_comms.get(), "Should have exited if monitoring stopped");
 
   StopSubprocesses(properties_.entries_);
