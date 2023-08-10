@@ -92,6 +92,8 @@ func (a *FetchArtifactsAction) startDownload(op apiv1.Operation) OperationResult
 		_, err = a.artifactsMngr.GetCVDBundle(build.BuildID, build.Target, nil, a.cvdBundleFetcher)
 	case apiv1.KernelBundleType:
 		_, err = a.artifactsMngr.GetKernelBundle(build.BuildID, build.Target, a.artifactsFetcher)
+	case apiv1.BootloaderBundleType:
+		_, err = a.artifactsMngr.GetBootloaderBundle(build.BuildID, build.Target, a.artifactsFetcher)
 	default:
 		err = operator.NewBadRequestError(fmt.Sprintf("Unsupported artifact bundle type: %d", t), nil)
 	}
