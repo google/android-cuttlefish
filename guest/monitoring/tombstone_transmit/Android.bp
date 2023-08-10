@@ -36,8 +36,8 @@ cc_binary {
         "tombstone_transmit.cpp",
     ],
     static_libs: [
-        "libcuttlefish_fs_product",
-        "libcuttlefish_utils_product",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
     ],
     defaults: [
         "tombstone_transmit_defaults",
