@@ -54,6 +54,11 @@ cc_binary {
         "-D_XOPEN_SOURCE",
     ],
     defaults: ["cvd_import_locations_defaults"],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
 
 cc_test_host {
@@ -78,4 +83,9 @@ cc_test_host {
         "-D_XOPEN_SOURCE",
     ],
     defaults: ["cvd_import_locations_defaults"],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
