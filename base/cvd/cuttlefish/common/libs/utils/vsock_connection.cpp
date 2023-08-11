@@ -16,7 +16,6 @@
 
 #include "common/libs/utils/vsock_connection.h"
 
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
@@ -41,13 +40,10 @@ namespace cuttlefish {
 
 VsockConnection::~VsockConnection() { Disconnect(); }
 
-std::future<bool> VsockConnection::ConnectAsync(
-    unsigned int port, unsigned int cid,
-    std::optional<int> vhost_user_vsock_cid_) {
+std::future<bool> VsockConnection::ConnectAsync(unsigned int port,
+                                                unsigned int cid) {
   return std::async(std::launch::async,
-                    [this, port, cid, vhost_user_vsock_cid_]() {
-                      return Connect(port, cid, vhost_user_vsock_cid_);
-                    });
+                    [this, port, cid]() { return Connect(port, cid); });
 }
 
 void VsockConnection::Disconnect() {
@@ -210,10 +206,8 @@ bool VsockConnection::WriteStrides(const char* data, unsigned int size,
   return true;
 }
 
-bool VsockClientConnection::Connect(unsigned int port, unsigned int cid,
-                                    std::optional<int> vhost_user) {
-  fd_ =
-      SharedFD::VsockClient(cid, port, SOCK_STREAM, vhost_user ? true : false);
+bool VsockClientConnection::Connect(unsigned int port, unsigned int cid) {
+  fd_ = SharedFD::VsockClient(cid, port, SOCK_STREAM);
   if (!fd_->IsOpen()) {
     LOG(ERROR) << "Failed to connect:" << fd_->StrError();
   }
@@ -231,11 +225,9 @@ void VsockServerConnection::ServerShutdown() {
   }
 }
 
-bool VsockServerConnection::Connect(unsigned int port, unsigned int cid,
-                                    std::optional<int> vhost_user_vsock_cid) {
+bool VsockServerConnection::Connect(unsigned int port, unsigned int cid) {
   if (!server_fd_->IsOpen()) {
-    server_fd_ = cuttlefish::SharedFD::VsockServer(port, SOCK_STREAM,
-                                                   vhost_user_vsock_cid, cid);
+    server_fd_ = cuttlefish::SharedFD::VsockServer(port, SOCK_STREAM, cid);
   }
   if (server_fd_->IsOpen()) {
     fd_ = SharedFD::Accept(*server_fd_);

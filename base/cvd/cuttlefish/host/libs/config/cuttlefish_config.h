@@ -308,6 +308,8 @@ class CuttlefishConfig {
     std::string adb_ip_and_port() const;
     // Port number to connect to the camera hal on the guest
     int camera_server_port() const;
+    // Port number to connect to the lights hal on the guest
+    int lights_server_port() const;
 
     std::string adb_device_name() const;
     std::string gnss_file_path() const;
@@ -641,6 +643,7 @@ class CuttlefishConfig {
     void set_gatekeeper_vsock_port(int gatekeeper_vsock_port);
     void set_keymaster_vsock_port(int keymaster_vsock_port);
     void set_audiocontrol_server_port(int audiocontrol_server_port);
+    void set_lights_server_port(int lights_server_port);
     void set_adb_host_port(int adb_host_port);
     void set_modem_simulator_host_id(int modem_simulator_id);
     void set_adb_ip_and_port(const std::string& ip_port);
