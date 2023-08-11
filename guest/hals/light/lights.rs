@@ -15,6 +15,7 @@
  */
 //! This module implements the ILights AIDL interface.
 
+use rustutils::system_properties;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -26,6 +27,9 @@ use android_hardware_light::aidl::android::hardware::light::{
 
 use binder::{ExceptionCode, Interface, Status};
 
+mod lights_vsock_server;
+use lights_vsock_server::VsockServer;
+
 struct Light {
     hw_light: HwLight,
     state: HwLightState,
@@ -36,6 +40,8 @@ const NUM_DEFAULT_LIGHTS: i32 = 3;
 /// Defined so we can implement the ILights AIDL interface.
 pub struct LightsService {
     lights: Mutex<HashMap<i32, Light>>,
+    // TODO(b/295543722): Move to a virtio_console transport instead.
+    vsock_server: VsockServer,
 }
 
 impl Interface for LightsService {}
@@ -48,7 +54,22 @@ impl LightsService {
             lights_map.insert(hw_light.id, Light { hw_light, state: Default::default() });
         }
 
-        Self { lights: Mutex::new(lights_map) }
+        let mut service = Self { lights: Mutex::new(lights_map), vsock_server: VsockServer::new() };
+
+        let lights_server_port: u32 = system_properties::read("ro.boot.vsock_lights_port")
+            .unwrap_or(None)
+            .unwrap_or("0".to_string())
+            .parse()
+            .unwrap();
+        let guest_cid: u32 = system_properties::read("ro.boot.vsock_lights_cid")
+            .unwrap_or(None)
+            .unwrap_or("0".to_string())
+            .parse()
+            .unwrap();
+
+        service.vsock_server.start(lights_server_port, guest_cid);
+
+        service
     }
 }
 
