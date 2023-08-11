@@ -15,10 +15,14 @@
  */
 
 #pragma once
-#include <json/json.h>
+
 #include <string>
 #include <vector>
 
+#include <json/json.h>
+
 namespace cuttlefish {
+
 std::vector<std::string> GenerateMetricsFlags(const Json::Value& root);
+
 };  // namespace cuttlefish
