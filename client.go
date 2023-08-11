@@ -100,6 +100,8 @@ type Service interface {
 
 	ConnectWebRTC(host, device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
 
+	FetchArtifacts(host string, req *hoapi.FetchArtifactsRequest) error
+
 	CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CreateCVDResponse, error)
 
 	ListCVDs(host string) ([]*hoapi.CVD, error)
@@ -324,6 +326,22 @@ func asWebRTCICEServers(in []apiv1.IceServer) []webrtc.ICEServer {
 }
 
 const headerNameCOInjectBuildAPICreds = "X-Cutf-Cloud-Orchestrator-Inject-BuildAPI-Creds"
+
+func (c *serviceImpl) FetchArtifacts(host string, req *hoapi.FetchArtifactsRequest) error {
+	reqOpts := requestOpts{
+		// Cloud Orchestrator only checks for the existence of the header, hence an empty string value is ok.
+		Header: http.Header{headerNameCOInjectBuildAPICreds: []string{""}},
+	}
+	var op hoapi.Operation
+	if err := c.doRequestWithOpts("POST", "/hosts/"+host+"/artifacts", req, &op, reqOpts); err != nil {
+		return err
+	}
+	path := "/hosts/" + host + "/operations/" + op.Name + "/:wait"
+	if err := c.doRequest("POST", path, nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
 
 func (c *serviceImpl) CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CreateCVDResponse, error) {
 	reqOpts := requestOpts{
