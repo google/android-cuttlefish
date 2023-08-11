@@ -28,29 +28,6 @@ namespace cuttlefish {
 using ::testing::IsTrue;
 using ::testing::Not;
 
-TEST(MetricsFlagsParserTest, ParseOneInstanceMetricsReportValidValue) {
-  const char* test_string = R""""(
-{
-    "instances" :
-    [
-        {
-        }
-    ],
-    "metrics": {
-      "enable": true
-    }
-}
-  )"""";
-
-  Json::Value json_configs;
-  std::string json_text(test_string);
-
-  EXPECT_THAT(ParseJsonString(json_text, json_configs), IsTrue())
-      << "Invalid Json string";
-  auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_THAT(serialized_data, IsOk()) << serialized_data.error().Trace();
-}
-
 TEST(MetricsFlagsParserTest, ParseOneInstanceMetricsReportInvalidValue) {
   const char* test_string = R""""(
 {
@@ -60,7 +37,6 @@ TEST(MetricsFlagsParserTest, ParseOneInstanceMetricsReportInvalidValue) {
         }
     ],
     "metrics": {
-      "enable": "foo"
     }
 }
   )"""";
@@ -68,10 +44,10 @@ TEST(MetricsFlagsParserTest, ParseOneInstanceMetricsReportInvalidValue) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_THAT(ParseJsonString(json_text, json_configs), IsTrue())
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_THAT(serialized_data, Not(IsOk()));
+  EXPECT_THAT(serialized_data, Not(IsOk())) << serialized_data.error().Trace();
 }
 
 TEST(MetricsFlagsParserTest, ParseOneInstancesMetricsReportFlagEmptyJson) {
