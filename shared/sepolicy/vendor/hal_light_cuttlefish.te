@@ -1,0 +1,7 @@
+type hal_light_cuttlefish, domain;
+hal_server_domain(hal_light_cuttlefish, hal_light)
+
+type hal_light_cuttlefish_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(hal_light_cuttlefish)
+
+allow hal_light_cuttlefish self:{ socket vsock_socket } { create_socket_perms_no_ioctl listen accept };
