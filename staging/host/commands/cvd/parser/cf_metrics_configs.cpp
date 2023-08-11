@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/parser/instance/cf_metrics_configs.h"
+#include "host/commands/cvd/parser/cf_metrics_configs.h"
+
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include <android-base/logging.h>
+#include <json/json.h>
 
-#include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/commands/cvd/parser/cf_configs_common.h"
-#include "host/libs/config/cuttlefish_config.h"
-
-// Metrics collection will be disabled by default for canonical configs MVP
 #define DEFAULT_ENABLE_REPORTING "n"
 
 namespace cuttlefish {
