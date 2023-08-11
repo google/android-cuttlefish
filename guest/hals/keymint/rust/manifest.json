@@ -1,0 +1,5 @@
+{
+  "name": "com.google.cf.keymint.rust",
+  "version": 1,
+  "vendorBootstrap": true
+}
