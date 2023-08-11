@@ -20,12 +20,6 @@ package {
 rust_binary {
     name: "android.hardware.security.keymint-service.rust",
     relative_install_path: "hw",
-    init_rc: ["android.hardware.security.keymint-service.rust.rc"],
-    vintf_fragments: [
-        "android.hardware.security.keymint-service.rust.xml",
-        "android.hardware.security.secureclock-service.rust.xml",
-        "android.hardware.security.sharedsecret-service.rust.xml",
-    ],
     vendor: true,
     srcs: ["src/keymint_hal_main.rs"],
     rustlibs: [
@@ -37,14 +31,65 @@ rust_binary {
         "liblibc",
         "liblog_rust",
     ],
-    required: [
-        "android.hardware.hardware_keystore.rust-keymint.xml",
-    ],
+    prefer_rlib: true,
 }
 
+// init_rc
+prebuilt_etc {
+    name: "android.hardware.security.keymint-service.rust.rc",
+    vendor: true,
+    src: "android.hardware.security.keymint-service.rust.rc",
+}
+
+// vintf_fragments
+prebuilt_etc {
+    name: "android.hardware.security.keymint-service.rust.xml",
+    sub_dir: "vintf",
+    vendor: true,
+    src: "android.hardware.security.keymint-service.rust.xml",
+}
+
+prebuilt_etc {
+    name: "android.hardware.security.sharedsecret-service.rust.xml",
+    sub_dir: "vintf",
+    vendor: true,
+    src: "android.hardware.security.sharedsecret-service.rust.xml",
+}
+
+prebuilt_etc {
+    name: "android.hardware.security.secureclock-service.rust.xml",
+    sub_dir: "vintf",
+    vendor: true,
+    src: "android.hardware.security.secureclock-service.rust.xml",
+}
+
+// permissions
 prebuilt_etc {
     name: "android.hardware.hardware_keystore.rust-keymint.xml",
     sub_dir: "permissions",
     vendor: true,
     src: "android.hardware.hardware_keystore.rust-keymint.xml",
+}
+
+apex {
+    name: "com.google.cf.keymint.rust",
+    manifest: "manifest.json",
+    file_contexts: "file_contexts",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
+    soc_specific: true,
+    updatable: false,
+    binaries: [
+        "android.hardware.security.keymint-service.rust",
+    ],
+    prebuilts: [
+        // init_rc
+        "android.hardware.security.keymint-service.rust.rc",
+        // vintf_fragments
+        "android.hardware.security.keymint-service.rust.xml",
+        "android.hardware.security.secureclock-service.rust.xml",
+        "android.hardware.security.sharedsecret-service.rust.xml",
+        // permissions
+        "android.hardware.hardware_keystore.rust-keymint.xml",
+    ],
 }
