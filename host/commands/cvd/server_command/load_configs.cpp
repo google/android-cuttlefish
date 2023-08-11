@@ -366,21 +366,17 @@ class LoadConfigsCommand : public CvdServerHandler {
       return {};
     }
 
-    // Extract the config_path from the arguments
     std::string config_path = args.front();
+    if (config_path[0] != '/') {
+      config_path = request.Message().command_request().working_directory() +
+                    "/" + config_path;
+    }
     Json::Value json_configs =
         CF_EXPECT(ParseJsonFile(config_path), "parsing input file failed");
 
-    // remove the config_path from the arguments
-    args.erase(args.begin());
-
-    // Handle the rest of the arguments (Overrides)
     if (overrides.size() > 0) {
-      // Validate all arguments follow specific pattern
       CF_EXPECT(ValidateArgsFormat(overrides),
                 "override parameters are not in the correct format");
-
-      // Convert all arguments to json tree
       auto args_tree = ParseArgsToJson(overrides);
       MergeTwoJsonObjs(json_configs, args_tree);
     }
