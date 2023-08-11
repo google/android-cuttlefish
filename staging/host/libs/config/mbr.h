@@ -15,8 +15,10 @@
  */
 #pragma once
 
-constexpr int SECTOR_SIZE_SHIFT = 9;
-constexpr int SECTOR_SIZE = 1 << SECTOR_SIZE_SHIFT;
+#include <cstdint>
+
+inline constexpr int kSectorSizeShift = 9;
+inline constexpr int kSectorSize = 1 << kSectorSizeShift;
 
 struct __attribute__((packed)) MbrPartitionEntry {
   std::uint8_t status;
@@ -33,4 +35,4 @@ struct __attribute__((packed)) MasterBootRecord {
   std::uint8_t boot_signature[2];
 };
 
-static_assert(sizeof(MasterBootRecord) == SECTOR_SIZE);
+static_assert(sizeof(MasterBootRecord) == kSectorSize);
