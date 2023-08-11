@@ -75,10 +75,13 @@ cc_binary {
     ],
     required: [
         "console_forwarder",
+        "echo_server",
+        "gnss_grpc_proxy",
         "kernel_log_monitor",
         "logcat_receiver",
         "log_tee",
         "secure_env",
+        "tcp_connector",
     ],
     target: {
         darwin: {
