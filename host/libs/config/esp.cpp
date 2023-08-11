@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <array>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -74,7 +76,7 @@ static constexpr char kGrubUbuntuConfigDestPath[] = "/EFI/ubuntu/grub.cfg";
 static constexpr char kGrubConfigDestDirectoryPath[] = "/boot/grub";
 static constexpr char kGrubConfigDestPath[] = "/boot/grub/grub.cfg";
 
-static const std::vector<std::string> kGrubModulesX86 = {
+static constexpr std::array kGrubModulesX86{
     "normal", "configfile", "linux", "linuxefi",   "multiboot", "ls",
     "cat",    "help",       "fat",   "part_msdos", "part_gpt"};
 static constexpr char kGrubModulesPath[] = "/usr/lib/grub/";
@@ -122,10 +124,9 @@ bool CanGenerateEsp(Arch arch) {
     case Arch::X86:
     case Arch::X86_64: {
       const auto x86_modules = std::string(kGrubModulesPath) + std::string(kGrubModulesX86Name);
-      const auto modules_presented = all_of(kGrubModulesX86.begin(), kGrubModulesX86.end(),
-                                            [&](const std::string& m) {
-                                              return FileExists(x86_modules + m);
-                                            });
+      const auto modules_presented = std::all_of(
+          kGrubModulesX86.begin(), kGrubModulesX86.end(),
+          [&](const std::string& m) { return FileExists(x86_modules + m); });
       if (modules_presented) return true;
 
       const auto monolith_presented = FileExists(kBootSrcPathIA32);
@@ -160,10 +161,10 @@ static bool CopyToMsdos(const std::string& image, const std::string& path,
   return true;
 }
 
+template <typename T>
 static bool GrubMakeImage(const std::string& prefix, const std::string& format,
                           const std::string& directory,
-                          const std::string& output,
-                          std::vector<std::string> modules) {
+                          const std::string& output, const T& modules) {
   std::vector<std::string> command = {"grub-mkimage", "--prefix", prefix,
                                       "--format", format, "--directory", directory,
                                       "--output", output};
