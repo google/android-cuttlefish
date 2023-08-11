@@ -42,4 +42,9 @@ cc_binary_host {
     ],
     cpp_std: "c++17",
     defaults: ["cuttlefish_host"],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
