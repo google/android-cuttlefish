@@ -423,6 +423,15 @@ DEFINE_vec(crosvm_use_rng, "true",
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
 
+/* TODO(kwstephenkim): replace this flag with "--start-from-snapshot" or so.
+ *
+ * This flag only makes sense to be "false" if cuttlefish device starts from
+ * the saved snapshot.
+ */
+DEFINE_vec(sock_vsock_proxy_wait_adbd_start, "true",
+           "Make this flag false for sock_vsock_proxy not to wait for adbd"
+           "This is needed when the device is restored from a snapshot.");
+
 DEFINE_bool(enable_wifi, true, "Enables the guest WIFI. Mainly for Minidroid");
 
 DEFINE_vec(device_external_network, CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK,
@@ -1084,7 +1093,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> use_rng_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_rng));
   std::vector<bool> use_pmem_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_pmem));
-
+  std::vector<bool> sock_vsock_proxy_wait_adbd_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(sock_vsock_proxy_wait_adbd_start));
   std::vector<std::string> device_external_network_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(device_external_network));
 
@@ -1146,6 +1156,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_crosvm_use_balloon(use_balloon_vec[instance_index]);
     instance.set_crosvm_use_rng(use_rng_vec[instance_index]);
     instance.set_use_pmem(use_pmem_vec[instance_index]);
+    instance.set_sock_vsock_proxy_wait_adbd_start(
+        sock_vsock_proxy_wait_adbd_vec[instance_index]);
     instance.set_bootconfig_supported(guest_configs[instance_index].bootconfig_supported);
     instance.set_filename_encryption_mode(
       guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
