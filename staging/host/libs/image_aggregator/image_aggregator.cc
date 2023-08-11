@@ -62,12 +62,12 @@ static const std::string QCOW2_MAGIC = "QFI\xfb";
  */
 MasterBootRecord ProtectiveMbr(std::uint64_t size) {
   MasterBootRecord mbr = {
-    .partitions =  {{
-      .partition_type = 0xEE,
-      .first_lba = 1,
-      .num_sectors = (std::uint32_t) size / SECTOR_SIZE,
-    }},
-    .boot_signature = { 0x55, 0xAA },
+      .partitions = {{
+          .partition_type = 0xEE,
+          .first_lba = 1,
+          .num_sectors = (std::uint32_t)size / kSectorSize,
+      }},
+      .boot_signature = {0x55, 0xAA},
   };
   return mbr;
 }
@@ -105,7 +105,7 @@ static_assert(sizeof(GptPartitionEntry) == 128);
 struct __attribute__((packed)) GptBeginning {
   MasterBootRecord protective_mbr;
   GptHeader header;
-  std::uint8_t header_padding[SECTOR_SIZE - sizeof(GptHeader)];
+  std::uint8_t header_padding[kSectorSize - sizeof(GptHeader)];
   GptPartitionEntry entries[GPT_NUM_PARTITIONS];
   std::uint8_t partition_alignment[3072];
 };
@@ -116,10 +116,10 @@ static_assert(AlignToPowerOf2(sizeof(GptBeginning), PARTITION_SIZE_SHIFT) ==
 struct __attribute__((packed)) GptEnd {
   GptPartitionEntry entries[GPT_NUM_PARTITIONS];
   GptHeader footer;
-  std::uint8_t footer_padding[SECTOR_SIZE - sizeof(GptHeader)];
+  std::uint8_t footer_padding[kSectorSize - sizeof(GptHeader)];
 };
 
-static_assert(sizeof(GptEnd) % SECTOR_SIZE == 0);
+static_assert(sizeof(GptEnd) % kSectorSize == 0);
 
 struct PartitionInfo {
   MultipleImagePartition source;
@@ -362,9 +362,9 @@ public:
                 .revision = {0, 0, 1, 0},
                 .header_size = sizeof(GptHeader),
                 .current_lba = 1,
-                .backup_lba = (DiskSize() / SECTOR_SIZE) - 1,
-                .first_usable_lba = sizeof(GptBeginning) / SECTOR_SIZE,
-                .last_usable_lba = (next_disk_offset_ / SECTOR_SIZE) - 1,
+                .backup_lba = (DiskSize() / kSectorSize) - 1,
+                .first_usable_lba = sizeof(GptBeginning) / kSectorSize,
+                .last_usable_lba = (next_disk_offset_ / kSectorSize) - 1,
                 .partition_entries_lba = 2,
                 .num_partition_entries = GPT_NUM_PARTITIONS,
                 .partition_entry_size = sizeof(GptPartitionEntry),
@@ -374,9 +374,9 @@ public:
     for (std::size_t i = 0; i < partitions_.size(); i++) {
       const auto& partition = partitions_[i];
       gpt.entries[i] = GptPartitionEntry{
-          .first_lba = partition.offset / SECTOR_SIZE,
+          .first_lba = partition.offset / kSectorSize,
           .last_lba =
-              (partition.offset + partition.AlignedSize()) / SECTOR_SIZE - 1,
+              (partition.offset + partition.AlignedSize()) / kSectorSize - 1,
       };
       uuid_generate(gpt.entries[i].unique_partition_guid);
       if (uuid_parse(GetPartitionGUID(partition.source),
@@ -405,7 +405,7 @@ public:
     std::memcpy((void*)gpt.entries, (void*)head.entries, sizeof(gpt.entries));
     gpt.footer = head.header;
     gpt.footer.partition_entries_lba =
-        (DiskSize() - sizeof(gpt.entries)) / SECTOR_SIZE - 1;
+        (DiskSize() - sizeof(gpt.entries)) / kSectorSize - 1;
     std::swap(gpt.footer.current_lba, gpt.footer.backup_lba);
     gpt.footer.header_crc32 = 0;
     gpt.footer.header_crc32 =
@@ -424,8 +424,8 @@ bool WriteBeginning(SharedFD out, const GptBeginning& beginning) {
 }
 
 bool WriteEnd(SharedFD out, const GptEnd& end) {
-  auto disk_size = (end.footer.current_lba + 1) * SECTOR_SIZE;
-  auto footer_start = (end.footer.last_usable_lba + 1) * SECTOR_SIZE;
+  auto disk_size = (end.footer.current_lba + 1) * kSectorSize;
+  auto footer_start = (end.footer.last_usable_lba + 1) * kSectorSize;
   auto padding = disk_size - footer_start - sizeof(GptEnd);
   std::string padding_str(padding, '\0');
   if (WriteAll(out, padding_str) != padding_str.size()) {
