@@ -49,6 +49,11 @@ cc_library {
         "external/grpc-grpc/include",
         "external/protobuf/src",
     ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
 
 cc_binary_host {
@@ -75,6 +80,11 @@ cc_binary_host {
         "-D_XOPEN_SOURCE",
     ],
     defaults: ["cuttlefish_host"],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
 
 filegroup {
