@@ -141,8 +141,8 @@ bool CreateBlankImage(
     MasterBootRecord mbr = {
         .partitions = {{
             .partition_type = 0xC,
-            .first_lba = (std::uint32_t) offset_size_bytes / SECTOR_SIZE,
-            .num_sectors = (std::uint32_t) image_size_bytes / SECTOR_SIZE,
+            .first_lba = (std::uint32_t)offset_size_bytes / kSectorSize,
+            .num_sectors = (std::uint32_t)image_size_bytes / kSectorSize,
         }},
         .boot_signature = {0x55, 0xAA},
     };
