@@ -21,8 +21,10 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <json/json.h>
 
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
@@ -63,28 +65,20 @@ void InitIntConfigSubGroupVector(Json::Value& instances,
   }
 }
 
+std::string GenerateGflag(const std::string& gflag_name,
+                          const std::vector<std::string>& values) {
+  std::stringstream buff;
+  buff << "--" << gflag_name << "=";
+  buff << android::base::Join(values, ',');
+  return buff.str();
+}
+
 Result<std::string> GenerateGflag(const Json::Value& instances,
                                   const std::string& gflag_name,
                                   const std::vector<std::string>& selectors) {
-  std::stringstream buff;
-  buff << "--" << gflag_name << "=";
-
-  int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    const Json::Value* traversal = &instances[i];
-    for (const auto& selector : selectors) {
-      CF_EXPECTF(traversal->isMember(selector),
-                 "JSON selector \"{}\" does not exist when trying to create "
-                 "gflag \"{}\"",
-                 selector, gflag_name);
-      traversal = &(*traversal)[selector];
-    }
-    buff << traversal->asString();
-    if (i != size - 1) {
-      buff << ",";
-    }
-  }
-  return buff.str();
+  auto values = CF_EXPECTF(GetArrayValues<std::string>(instances, selectors),
+                           "Unable to get values for gflag \"{}\"", gflag_name);
+  return GenerateGflag(gflag_name, values);
 }
 
 std::vector<std::string> MergeResults(std::vector<std::string> first_list,
