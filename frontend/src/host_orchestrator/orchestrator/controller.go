@@ -168,13 +168,13 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	}
 	cvdDwnl := NewAndroidCICVDDownloader(
 		artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
-	credsProvider := &CreateCVDRequestCredsProvider{Request: req}
-	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Creds: credsProvider}
+	creds := ExtractCredentials(req)
+	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Credentials: creds}
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(
-		exec.CommandContext, h.Config.Paths.FetchCVDBin(), credsProvider.Get())
+		exec.CommandContext, h.Config.Paths.FetchCVDBin(), creds)
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},

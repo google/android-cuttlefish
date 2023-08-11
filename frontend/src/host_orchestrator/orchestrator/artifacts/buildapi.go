@@ -43,19 +43,15 @@ type AndroidCIBuildAPI struct {
 	BaseURL string
 
 	client *http.Client
-	creds  CredentialsProvider
+	creds  string
 }
 
 func NewAndroidCIBuildAPI(client *http.Client, baseURL string) *AndroidCIBuildAPI {
 	return NewAndroidCIBuildAPIWithOpts(client, baseURL, AndroidCIBuildAPIOpts{})
 }
 
-type CredentialsProvider interface {
-	Get() string
-}
-
 type AndroidCIBuildAPIOpts struct {
-	Creds CredentialsProvider
+	Credentials string
 }
 
 func NewAndroidCIBuildAPIWithOpts(client *http.Client, baseURL string, opts AndroidCIBuildAPIOpts) *AndroidCIBuildAPI {
@@ -63,7 +59,7 @@ func NewAndroidCIBuildAPIWithOpts(client *http.Client, baseURL string, opts Andr
 		BaseURL: baseURL,
 
 		client: client,
-		creds:  opts.Creds,
+		creds:  opts.Credentials,
 	}
 }
 
@@ -133,10 +129,8 @@ func (s *AndroidCIBuildAPI) doGETCommon(url string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	if s.creds != nil {
-		if v := s.creds.Get(); v != "" {
-			req.Header["Authorization"] = []string{fmt.Sprintf("Bearer %s", v)}
-		}
+	if s.creds != "" {
+		req.Header["Authorization"] = []string{fmt.Sprintf("Bearer %s", s.creds)}
 	}
 	res, err := s.client.Do(req)
 	if err != nil {

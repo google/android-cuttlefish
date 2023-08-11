@@ -509,7 +509,7 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 	}
 }
 
-func TestCreateCVDRequestCredsProvider(t *testing.T) {
+func TestExtractCredentials(t *testing.T) {
 	var tests = []struct {
 		req *apiv1.CreateCVDRequest
 		exp string
@@ -545,9 +545,7 @@ func TestCreateCVDRequestCredsProvider(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		p := CreateCVDRequestCredsProvider{Request: test.req}
-
-		creds := p.Get()
+		creds := ExtractCredentials(test.req)
 
 		if diff := cmp.Diff(test.exp, creds); diff != "" {
 			t.Errorf("cred mismatch (-want +got):\n%s", diff)
