@@ -52,4 +52,9 @@ cc_library {
         "external/grpc-grpc/include",
         "external/protobuf/src",
     ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
