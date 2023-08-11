@@ -34,6 +34,7 @@ static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
     {"netsim_bt", Json::ValueType::booleanValue},
     {"instances", Json::ValueType::arrayValue},
     {"fetch", Json::ValueType::objectValue},
+    {"metrics", Json::ValueType::objectValue},
 };
 
 static std::map<std::string, Json::ValueType> kFetchKeyMap = {
@@ -231,10 +232,16 @@ Result<void> ValidateInstancesConfigs(const Json::Value& instances) {
 }  // namespace
 
 Result<void> ValidateCfConfigs(const Json::Value& root) {
+  static const auto& kMetricsMap = *new std::map<std::string, Json::ValueType>{
+      {"enable", Json::ValueType::booleanValue},
+  };
+
   CF_EXPECT(ValidateTypo(root, kConfigsKeyMap),
             "Typo in config main parameters");
   CF_EXPECT(ValidateTypo(root["fetch"], kFetchKeyMap),
             "Typo in config fetch parameters");
+  CF_EXPECT(ValidateTypo(root["metrics"], kMetricsMap),
+            "Typo in config metrics parameters");
   CF_EXPECT(root.isMember("instances"), "instances object is missing");
   CF_EXPECT(ValidateInstancesConfigs(root["instances"]),
             "ValidateInstancesConfigs failed");
