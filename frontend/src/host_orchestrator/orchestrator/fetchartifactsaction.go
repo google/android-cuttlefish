@@ -15,6 +15,7 @@
 package orchestrator
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -85,10 +86,17 @@ func (a *FetchArtifactsAction) Run() (apiv1.Operation, error) {
 const errMsgFailedFetchingArtifacts = "failed fetching artifacts"
 
 func (a *FetchArtifactsAction) startDownload(op apiv1.Operation) OperationResult {
-	build := defaultMainBuild()
-	if a.req.AndroidCIBundle.Build != nil {
-		build = a.req.AndroidCIBundle.Build
+	req, err := cloneRequest(a.req)
+	if err != nil {
+		return OperationResult{
+			Error: operator.NewInternalError("error cloning request", err),
+		}
 	}
+
+	if req.AndroidCIBundle.Build == nil {
+		req.AndroidCIBundle.Build = defaultMainBuild()
+	}
+	build := req.AndroidCIBundle.Build
 	if build.BuildID == "" {
 		if err := updateBuildsWithLatestGreenBuildID(a.buildAPI, []*apiv1.AndroidCIBuild{build}); err != nil {
 			return OperationResult{
@@ -96,8 +104,7 @@ func (a *FetchArtifactsAction) startDownload(op apiv1.Operation) OperationResult
 			}
 		}
 	}
-	var err error
-	switch t := a.req.AndroidCIBundle.Type; t {
+	switch t := req.AndroidCIBundle.Type; t {
 	case apiv1.MainBundleType:
 		_, err = a.artifactsMngr.GetCVDBundle(build.BuildID, build.Target, nil, a.cvdBundleFetcher)
 	case apiv1.KernelBundleType:
@@ -110,7 +117,7 @@ func (a *FetchArtifactsAction) startDownload(op apiv1.Operation) OperationResult
 	if err != nil {
 		return OperationResult{Error: operator.NewInternalError(errMsgFailedFetchingArtifacts, err)}
 	}
-	return OperationResult{}
+	return OperationResult{Value: req.AndroidCIBundle}
 }
 
 func validateFetchArtifactsRequest(r *apiv1.FetchArtifactsRequest) error {
@@ -121,4 +128,16 @@ func validateFetchArtifactsRequest(r *apiv1.FetchArtifactsRequest) error {
 		return EmptyFieldError("AndroidCIBundle.Build")
 	}
 	return nil
+}
+
+func cloneRequest(r *apiv1.FetchArtifactsRequest) (*apiv1.FetchArtifactsRequest, error) {
+	data, err := json.Marshal(r)
+	if err != nil {
+		return nil, err
+	}
+	res := &apiv1.FetchArtifactsRequest{}
+	if err := json.Unmarshal(data, res); err != nil {
+		return nil, err
+	}
+	return res, nil
 }

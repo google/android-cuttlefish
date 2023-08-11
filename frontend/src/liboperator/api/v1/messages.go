@@ -66,6 +66,10 @@ type FetchArtifactsRequest struct {
 	AndroidCIBundle *AndroidCIBundle `json:"android_ci_bundle"`
 }
 
+type FetchArtifactsResponse struct {
+	AndroidCIBundle *AndroidCIBundle `json:"android_ci_bundle"`
+}
+
 type ArtifactsBundleType int64
 
 const (
