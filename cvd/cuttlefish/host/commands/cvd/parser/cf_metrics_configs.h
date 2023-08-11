@@ -21,11 +21,8 @@
 
 #include <json/json.h>
 
-#include "common/libs/utils/result.h"
-
 namespace cuttlefish {
 
-Result<void> InitMetricsConfigs(Json::Value& root);
-Result<std::vector<std::string>> GenerateMetricsFlags(const Json::Value& root);
+std::vector<std::string> GenerateMetricsFlags(const Json::Value& root);
 
 };  // namespace cuttlefish
