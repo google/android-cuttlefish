@@ -147,6 +147,7 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDToolsVersion:  h.Config.CVDToolsVersion,
 		CVDDownloader:    cvdDwnl,
 		OperationManager: h.OM,
+		BuildAPI:         buildAPI,
 		CVDBundleFetcher: cvdBundleFetcher,
 		ArtifactsFetcher: artifactsFetcher,
 	}
