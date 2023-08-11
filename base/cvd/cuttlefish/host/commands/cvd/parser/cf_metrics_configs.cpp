@@ -19,34 +19,22 @@
 #include <string>
 #include <vector>
 
+#include <android-base/logging.h>
 #include <json/json.h>
 
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/parser/cf_configs_common.h"
+#define DEFAULT_ENABLE_REPORTING "n"
 
 namespace cuttlefish {
-namespace {
 
-constexpr bool kEnableMetricsDefault = false;
-
-std::string EnabledToReportAnonUsageStats(const bool enabled) {
-  return enabled ? "y" : "n";
+static std::string GenerateReportFlag() {
+  std::stringstream result_flag;
+  result_flag << "--report_anonymous_usage_stats=" << DEFAULT_ENABLE_REPORTING;
+  return result_flag.str();
 }
 
-}  // namespace
-
-Result<void> InitMetricsConfigs(Json::Value& root) {
-  CF_EXPECT(InitConfig(root, kEnableMetricsDefault, {"metrics", "enable"}));
-  return {};
-}
-
-Result<std::vector<std::string>> GenerateMetricsFlags(const Json::Value& root) {
+std::vector<std::string> GenerateMetricsFlags(const Json::Value&) {
   std::vector<std::string> result;
-  auto report_flag_value = EnabledToReportAnonUsageStats(
-      CF_EXPECT(GetValue<bool>(root, {"metrics", "enable"})));
-  result.emplace_back(
-      GenerateGflag("report_anonymous_usage_stats", {report_flag_value}));
+  result.emplace_back(GenerateReportFlag());
   return result;
 }
 

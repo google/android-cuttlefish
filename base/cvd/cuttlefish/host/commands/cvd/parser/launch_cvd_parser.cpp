@@ -27,6 +27,7 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_configs_instances.h"
+#include "host/commands/cvd/parser/cf_metrics_configs.h"
 #include "host/commands/cvd/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/parser/launch_cvd_templates.h"
 
@@ -52,7 +53,7 @@ Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
   std::vector<std::string> result;
   result.emplace_back(GenerateNumInstancesFlag(root));
   result.emplace_back(GenerateCommonGflag(root, "netsim_bt", "netsim_bt"));
-
+  result = MergeResults(result, GenerateMetricsFlags(root["metrics"]));
   result = MergeResults(result,
                         CF_EXPECT(GenerateInstancesFlags(root["instances"])));
   return result;
