@@ -150,6 +150,13 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         std::to_string(instance.vsock_guest_cid());
   }
 
+  if (instance.lights_server_port()) {
+    bootconfig_args["androidboot.vsock_lights_port"] =
+        std::to_string(instance.lights_server_port());
+    bootconfig_args["androidboot.vsock_lights_cid"] =
+        std::to_string(instance.vsock_guest_cid());
+  }
+
   if (instance.enable_modem_simulator() &&
       instance.modem_simulator_ports() != "") {
     bootconfig_args["androidboot.modem_simulator_ports"] =
