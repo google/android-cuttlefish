@@ -53,4 +53,9 @@ cc_binary {
         "-D_XOPEN_SOURCE",
     ],
     defaults: ["cvd_update_location_defaults"],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
