@@ -611,4 +611,4 @@ PRODUCT_PACKAGES += \
     android.hardware.threadnetwork-service.sim \
     ot-cli-ftd
 PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.threadnetwork.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.threadnetwork.xml
+    frameworks/native/data/etc/android.hardware.thread_network.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.thread_network.xml
