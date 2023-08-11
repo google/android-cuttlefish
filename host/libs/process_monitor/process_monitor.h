@@ -74,14 +74,34 @@ class ProcessMonitor {
   Result<void> StartAndMonitorProcesses();
   // Stops all monitored subprocesses.
   Result<void> StopMonitoredProcesses();
+  // Suspend all host subprocesses
+  Result<void> SuspendMonitoredProcesses();
+  // Resume all host subprocesses
+  Result<void> ResumeMonitoredProcesses();
 
  private:
   Result<void> MonitorRoutine();
-  Result<void> ReadMonitorSocketLoopForStop(std::atomic_bool&);
+  Result<void> ReadMonitorSocketLoop(std::atomic_bool&);
+  /*
+   * The child run_cvd process suspends the host processes
+   */
+  Result<void> SuspendHostProcessesImpl();
+  /*
+   * The child run_cvd process resumes the host processes
+   */
+  Result<void> ResumeHostProcessesImpl();
 
   Properties properties_;
   pid_t monitor_;
-  SharedFD monitor_socket_;
+  SharedFD parent_monitor_socket_;
+  SharedFD child_monitor_socket_;
+
+  /*
+   * The lock that should be acquired when multiple threads
+   * access to properties_. Currently, used by the child
+   * run_cvd process that runs MonitorRoutine()
+   */
+  std::mutex properties_mutex_;
 };
 
 }  // namespace cuttlefish
