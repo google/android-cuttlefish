@@ -25,6 +25,7 @@ cc_library {
         "client_handler.cpp",
         "data_channels.cpp",
         "keyboard.cpp",
+        "lights_observer.cpp",
         "local_recorder.cpp",
         "streamer.cpp",
         "video_track_source_impl.cpp",
