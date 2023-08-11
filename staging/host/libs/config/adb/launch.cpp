@@ -21,12 +21,16 @@
 #include <vector>
 
 #include <fruit/fruit.h>
+#include <gflags/gflags.h>
 
 #include "common/libs/utils/result.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
+
+DEFINE_bool(assume_adbd_started, false,
+            "don't wait for adbd start message in kernel log");
 
 namespace cuttlefish {
 namespace {
@@ -142,6 +146,13 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
     adb_tunnel.AddParameter("--start_event_id=", monitor::Event::AdbdStarted);
     adb_tunnel.AddParameter("--stop_event_id=",
                             monitor::Event::FastbootStarted);
+    /* fmayle@ found out that when cuttlefish starts from the saved snapshot
+     * that was saved after ADBD start event, the socket_vsock_proxy must not
+     * wait for the AdbdStarted event.
+     */
+    if (FLAGS_assume_adbd_started) {
+      adb_tunnel.AddParameter("--start_immediately=true");
+    }
     adb_tunnel.AddParameter("--server_type=tcp");
     adb_tunnel.AddParameter("--server_tcp_port=", instance_.adb_host_port());
 
