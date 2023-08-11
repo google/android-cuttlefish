@@ -35,6 +35,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const HeaderBuildAPICreds = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
+
 type Config struct {
 	Paths                  IMPaths
 	CVDToolsVersion        AndroidBuild
@@ -130,10 +132,15 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
-	buildAPI := artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL)
+	cvdDwnl := NewAndroidCICVDDownloader(
+		artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
+	creds := r.Header.Get(HeaderBuildAPICreds)
+	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Credentials: creds}
+	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
+		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdDwnl := NewAndroidCICVDDownloader(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, h.Config.Paths.FetchCVDBin(), "")
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(
+		exec.CommandContext, h.Config.Paths.FetchCVDBin(), creds)
 	opts := FetchArtifactsActionOpts{
 		Request:          &req,
 		Paths:            h.Config.Paths,
