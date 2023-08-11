@@ -29,9 +29,6 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
-DEFINE_bool(assume_adbd_started, false,
-            "don't wait for adbd start message in kernel log");
-
 namespace cuttlefish {
 namespace {
 
@@ -150,7 +147,7 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
      * that was saved after ADBD start event, the socket_vsock_proxy must not
      * wait for the AdbdStarted event.
      */
-    if (FLAGS_assume_adbd_started) {
+    if (!instance_.sock_vsock_proxy_wait_adbd_start()) {
       adb_tunnel.AddParameter("--start_immediately=true");
     }
     adb_tunnel.AddParameter("--server_type=tcp");
