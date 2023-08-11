@@ -1342,6 +1342,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_config_server_port(int confi
   (*Dictionary())[kConfigServerPort] = config_server_port;
 }
 
+static constexpr char kLightsServerPort[] = "lights_server_port";
+int CuttlefishConfig::InstanceSpecific::lights_server_port() const {
+  return (*Dictionary())[kLightsServerPort].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_lights_server_port(int lights_server_port) {
+  (*Dictionary())[kLightsServerPort] = lights_server_port;
+}
+
 static constexpr char kCameraServerPort[] = "camera_server_port";
 int CuttlefishConfig::InstanceSpecific::camera_server_port() const {
   return (*Dictionary())[kCameraServerPort].asInt();

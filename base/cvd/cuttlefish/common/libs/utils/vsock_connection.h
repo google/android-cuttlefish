@@ -32,11 +32,9 @@ namespace cuttlefish {
 class VsockConnection {
  public:
   virtual ~VsockConnection();
-  virtual bool Connect(unsigned int port, unsigned int cid,
-                       std::optional<int> vhost_user_vsock_cid) = 0;
+  virtual bool Connect(unsigned int port, unsigned int cid) = 0;
   virtual void Disconnect();
-  std::future<bool> ConnectAsync(unsigned int port, unsigned int cid,
-                                 std::optional<int> vhost_user_vsock_cid);
+  std::future<bool> ConnectAsync(unsigned int port, unsigned int cid);
   void SetDisconnectCallback(std::function<void()> callback);
 
   bool IsConnected();
@@ -70,18 +68,14 @@ class VsockConnection {
 
 class VsockClientConnection : public VsockConnection {
  public:
-  // the value of vhost_user_vsock_cid isn't actually used, it works like bool,
-  // so any value except nullopt means true
-  bool Connect(unsigned int port, unsigned int cid,
-               std::optional<int> vhost_user) override;
+  bool Connect(unsigned int port, unsigned int cid) override;
 };
 
 class VsockServerConnection : public VsockConnection {
  public:
   virtual ~VsockServerConnection();
   void ServerShutdown();
-  bool Connect(unsigned int port, unsigned int cid,
-               std::optional<int> vhost_user_vsock_cid) override;
+  bool Connect(unsigned int port, unsigned int cid) override;
 
  private:
   SharedFD server_fd_;
