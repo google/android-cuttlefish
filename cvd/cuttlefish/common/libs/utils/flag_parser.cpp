@@ -439,8 +439,8 @@ Flag VerbosityFlag(android::base::LogSeverity& value) {
       .Help("Used to set the verbosity level for logging.");
 }
 
-Flag HelpFlag(const std::vector<Flag>& flags, const std::string& text) {
-  auto setter = [&](FlagMatch) {
+Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
+  auto setter = [&flags, text](FlagMatch) {
     if (text.size() > 0) {
       LOG(INFO) << text;
     }
@@ -491,9 +491,9 @@ static Flag GflagsCompatBoolFlagBase(const std::string& name) {
 }
 
 Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out, bool& value,
-                 const std::string& text) {
+                 std::string text) {
   const std::string name = "helpxml";
-  auto setter = [name, &out, &value, &text,
+  auto setter = [name, &out, &value, text,
                  &flags](const FlagMatch& match) -> Result<void> {
     bool print_xml = false;
     CF_EXPECT(GflagsCompatBoolFlagSetter(name, print_xml, match));
