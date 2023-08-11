@@ -21,6 +21,6 @@
 
 namespace cuttlefish {
 
-std::shared_ptr<VsockServerConnection> create_shared_vsock_server_connection();
+std::unique_ptr<VsockServerConnection> create_vsock_server_connection();
 
 } // namespace cuttlefish

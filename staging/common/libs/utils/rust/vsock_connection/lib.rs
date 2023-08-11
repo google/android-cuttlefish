@@ -14,7 +14,7 @@
 
 //! Rust wrapper for VSockServerConnection.
 
-use cxx::SharedPtr;
+use cxx::UniquePtr;
 
 /// This module exposes the VsockServerConnection C++ class to Rust.
 #[allow(unsafe_op_in_unsafe_fn)]
@@ -24,25 +24,37 @@ mod ffi {
         include!("wrapper.h");
 
         type VsockServerConnection;
-        fn create_shared_vsock_server_connection() -> SharedPtr<VsockServerConnection>;
-        fn IsConnected(self: &VsockServerConnection) -> bool;
+        fn create_vsock_server_connection() -> UniquePtr<VsockServerConnection>;
+        fn IsConnected(self: Pin<&mut VsockServerConnection>) -> bool;
+        fn Connect(self: Pin<&mut VsockServerConnection>, port: u32, cid: u32) -> bool;
+        fn ServerShutdown(self: Pin<&mut VsockServerConnection>);
     }
 }
 
 /// Rust wrapper for a VsockServerConnection.
 pub struct VsockServerConnection {
-    instance: SharedPtr<ffi::VsockServerConnection>,
+    instance: UniquePtr<ffi::VsockServerConnection>,
 }
 
 impl VsockServerConnection {
     /// Creates a VsockServerConnection.
     pub fn new() -> Self {
-        Self { instance: ffi::create_shared_vsock_server_connection() }
+        Self { instance: ffi::create_vsock_server_connection() }
     }
 
     /// Returns if the vsock server has an active connection or not.
-    pub fn is_connected(&self) -> bool {
-        self.instance.IsConnected()
+    pub fn is_connected(&mut self) -> bool {
+        self.instance.pin_mut().IsConnected()
+    }
+
+    /// Start connection using the provided port and cid.
+    pub fn connect(&mut self, port: u32, cid: u32) -> bool {
+        self.instance.pin_mut().Connect(port, cid)
+    }
+
+    /// Shutdown connection.
+    pub fn server_shutdown(&mut self) {
+        self.instance.pin_mut().ServerShutdown();
     }
 }
 
@@ -51,3 +63,6 @@ impl Default for VsockServerConnection {
         Self::new()
     }
 }
+
+unsafe impl Send for VsockServerConnection {}
+unsafe impl Sync for VsockServerConnection {}

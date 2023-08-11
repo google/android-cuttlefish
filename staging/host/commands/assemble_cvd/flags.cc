@@ -1321,6 +1321,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_vehicle_hal_server_port(9300 + num - 1);
     instance.set_audiocontrol_server_port(9410);  /* OK to use the same port number across instances */
     instance.set_config_server_port(calc_vsock_port(6800));
+    instance.set_lights_server_port(calc_vsock_port(6900));
 
     // gpu related settings
     const std::string gpu_mode = CF_EXPECT(InitializeGpuMode(
