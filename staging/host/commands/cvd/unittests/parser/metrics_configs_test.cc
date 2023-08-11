@@ -14,21 +14,30 @@
  * limitations under the License.
  */
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <json/json.h>
+
+#include "common/libs/utils/result.h"
+#include "common/libs/utils/result_matchers.h"
 #include "host/commands/cvd/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
+
+using ::testing::IsTrue;
+using ::testing::Not;
+
 TEST(MetricsFlagsParserTest, ParseOneInstanceMetricsReportInvalidValue) {
   const char* test_string = R""""(
 {
     "instances" :
     [
         {
-            "metrics": {
-            }
         }
-    ]
+    ],
+    "metrics": {
+    }
 }
   )"""";
 
@@ -38,7 +47,7 @@ TEST(MetricsFlagsParserTest, ParseOneInstanceMetricsReportInvalidValue) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_FALSE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_THAT(serialized_data, Not(IsOk())) << serialized_data.error().Trace();
 }
 
 TEST(MetricsFlagsParserTest, ParseOneInstancesMetricsReportFlagEmptyJson) {
@@ -55,12 +64,13 @@ TEST(MetricsFlagsParserTest, ParseOneInstancesMetricsReportFlagEmptyJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+  EXPECT_THAT(ParseJsonString(json_text, json_configs), IsTrue())
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(
-      FindConfig(*serialized_data, R"(--report_anonymous_usage_stats=n)"))
+  EXPECT_THAT(serialized_data, IsOk()) << serialized_data.error().Trace();
+  EXPECT_THAT(
+      FindConfig(*serialized_data, R"(--report_anonymous_usage_stats=n)"),
+      IsTrue())
       << "report_anonymous_usage_stats flag is missing or wrongly formatted";
 }
 
@@ -80,12 +90,13 @@ TEST(MetricsFlagsParserTest, ParseTwoInstancesMetricsReportFlagEmptyJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+  EXPECT_THAT(ParseJsonString(json_text, json_configs), IsTrue())
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(
-      FindConfig(*serialized_data, R"(--report_anonymous_usage_stats=n)"))
+  EXPECT_THAT(serialized_data, IsOk()) << serialized_data.error().Trace();
+  EXPECT_THAT(
+      FindConfig(*serialized_data, R"(--report_anonymous_usage_stats=n)"),
+      IsTrue())
       << "report_anonymous_usage_stats flag is missing or wrongly formatted";
 }
 
