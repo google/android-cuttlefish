@@ -154,11 +154,11 @@ Flag VerbosityFlag(android::base::LogSeverity& value);
  * unexpected arguments). */
 
 /* If a "-help" or "--help" flag is present, prints all the flags and fails. */
-Flag HelpFlag(const std::vector<Flag>& flags, const std::string& text = "");
+Flag HelpFlag(const std::vector<Flag>& flags, std::string text = "");
 
 /* If a "-helpxml" is present, prints all the flags in XML and fails. */
 Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream&, bool& value,
-                 const std::string& text = "");
+                 std::string text = "");
 
 /* Catches unrecognized arguments that begin with `-`, and errors out. This
  * effectively denies unknown flags. */
