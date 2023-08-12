@@ -42,9 +42,9 @@ static Result<Flag> AcloudCompatFlag(
   for (const auto& alias_name : alias_names) {
     new_flag.Alias({FlagAliasMode::kFlagConsumesFollowing, "--" + alias_name});
   }
-  new_flag.Setter([&opt](const FlagMatch& m) {
+  new_flag.Setter([&opt](const FlagMatch& m) -> Result<void> {
     opt = m.value;
-    return true;
+    return {};
   });
   return new_flag;
 }
