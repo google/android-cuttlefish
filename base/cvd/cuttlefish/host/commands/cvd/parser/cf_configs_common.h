@@ -84,6 +84,8 @@ void InitIntConfigSubGroupVector(Json::Value& instances,
                                  const std::string& json_flag,
                                  int default_value);
 
+std::string GenerateGflag(const std::string& gflag_name,
+                          const std::vector<std::string>& values);
 Result<std::string> GenerateGflag(const Json::Value& instances,
                                   const std::string& gflag_name,
                                   const std::vector<std::string>& selectors);

@@ -21,33 +21,11 @@
 
 #include <json/json.h>
 
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
 Result<Json::Value> ParseJson(std::string_view input);
-
-Result<Json::Value> LoadFromFile(SharedFD json_fd);
-Result<Json::Value> LoadFromFile(const std::string& path_to_file);
-
-template <typename T>
-T As(const Json::Value& v);
-
-template <>
-inline int As(const Json::Value& v) {
-  return v.asInt();
-}
-
-template <>
-inline std::string As(const Json::Value& v) {
-  return v.asString();
-}
-
-template <>
-inline bool As(const Json::Value& v) {
-  return v.asBool();
-}
 
 template <typename T>
 Result<T> GetValue(const Json::Value& root,
@@ -58,7 +36,7 @@ Result<T> GetValue(const Json::Value& root,
                "JSON selector \"{}\" does not exist", selector);
     traversal = &(*traversal)[selector];
   }
-  return As<T>(*traversal);
+  return traversal->as<T>();
 }
 
 template <typename T>
@@ -69,18 +47,6 @@ Result<std::vector<T>> GetArrayValues(
     result.emplace_back(CF_EXPECT(GetValue<T>(element, selectors)));
   }
   return result;
-}
-
-inline bool HasValue(const Json::Value& root,
-                     const std::vector<std::string>& selectors) {
-  const Json::Value* traversal = &root;
-  for (const auto& selector : selectors) {
-    if (!traversal->isMember(selector)) {
-      return false;
-    }
-    traversal = &(*traversal)[selector];
-  }
-  return true;
 }
 
 }  // namespace cuttlefish
