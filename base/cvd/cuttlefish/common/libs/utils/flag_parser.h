@@ -81,9 +81,8 @@ class Flag {
   /* Set a loader that displays the current value in help text. Optional. */
   Flag& Getter(std::function<std::string()>) &;
   Flag Getter(std::function<std::string()>) &&;
-  /* Set the callback for matches. The callback be invoked multiple times. */
-  Flag& Setter(std::function<bool(const FlagMatch&)>) &;
-  Flag Setter(std::function<bool(const FlagMatch&)>) &&;
+  /* Set the callback for matches. The callback may be invoked multiple times.
+   */
   Flag& Setter(std::function<Result<void>(const FlagMatch&)>) &;
   Flag Setter(std::function<Result<void>(const FlagMatch&)>) &&;
 
