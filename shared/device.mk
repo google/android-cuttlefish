@@ -424,7 +424,7 @@ PRODUCT_PACKAGES += \
 # KeyMint HAL
 #
 ifeq ($(LOCAL_KEYMINT_PRODUCT_PACKAGE),)
-    LOCAL_KEYMINT_PRODUCT_PACKAGE := android.hardware.security.keymint-service.rust
+    LOCAL_KEYMINT_PRODUCT_PACKAGE := com.google.cf.keymint.rust
 endif
 
 PRODUCT_PACKAGES += \
