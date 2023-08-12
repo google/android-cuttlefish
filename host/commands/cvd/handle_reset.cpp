@@ -58,19 +58,20 @@ static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
   bool is_confirmed_by_flag = false;
   std::string verbosity_flag_value;
 
-  Flag y_flag = Flag()
-                    .Alias({FlagAliasMode::kFlagExact, "-y"})
-                    .Alias({FlagAliasMode::kFlagExact, "--yes"})
-                    .Setter([&is_confirmed_by_flag](const FlagMatch&) {
-                      is_confirmed_by_flag = true;
-                      return true;
-                    });
+  Flag y_flag =
+      Flag()
+          .Alias({FlagAliasMode::kFlagExact, "-y"})
+          .Alias({FlagAliasMode::kFlagExact, "--yes"})
+          .Setter([&is_confirmed_by_flag](const FlagMatch&) -> Result<void> {
+            is_confirmed_by_flag = true;
+            return {};
+          });
   Flag help_flag = Flag()
                        .Alias({FlagAliasMode::kFlagExact, "-h"})
                        .Alias({FlagAliasMode::kFlagExact, "--help"})
-                       .Setter([&is_help](const FlagMatch&) {
+                       .Setter([&is_help](const FlagMatch&) -> Result<void> {
                          is_help = true;
-                         return true;
+                         return {};
                        });
   std::vector<Flag> flags{
       GflagsCompatFlag("device-by-cvd-only", device_by_cvd_only),

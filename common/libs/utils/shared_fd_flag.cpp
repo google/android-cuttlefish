@@ -31,18 +31,16 @@
 
 namespace cuttlefish {
 
-static bool Set(const FlagMatch& match, SharedFD& out) {
+static Result<void> Set(const FlagMatch& match, SharedFD& out) {
   int raw_fd;
-  if (!android::base::ParseInt(match.value.c_str(), &raw_fd)) {
-    LOG(ERROR) << "Failed to parse value \"" << match.value
-               << "\" for fd flag \"" << match.key << "\"";
-    return false;
-  }
+  CF_EXPECTF(android::base::ParseInt(match.value.c_str(), &raw_fd),
+             "Failed to parse value \"{}\" for fd flag \"{}\"", match.value,
+             match.key);
   out = SharedFD::Dup(raw_fd);
   if (out->IsOpen()) {
     close(raw_fd);
   }
-  return true;
+  return {};
 }
 
 Flag SharedFDFlag(SharedFD& out) {
