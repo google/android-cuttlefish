@@ -13,31 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <android-base/file.h>
-#include <android-base/logging.h>
-#include <android-base/stringprintf.h>
-#include <android-base/strings.h>
-
 #include <fcntl.h>
 
-#include <fcntl.h>
 #include <algorithm>
-#include <iterator>
 #include <map>
-#include <queue>
 #include <set>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include <android-base/file.h>
+#include <android-base/logging.h>
+#include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 #include <fmt/format.h>
 
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
-#include "fmt/core.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/kernel_module_parser.h"
-#include "host/commands/assemble_cvd/ramdisk_modules.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -108,15 +103,15 @@ bool WriteFsConfig(const char* output_path, const std::string& fs_root,
 
 std::vector<std::string> GetRamdiskModules(
     const std::vector<std::string>& all_modules) {
-  static const auto ramdisk_modules_allow_list =
-      std::set<std::string>(RAMDISK_MODULES.begin(), RAMDISK_MODULES.end());
+  static constexpr auto kRamdiskModules = {
+      "failover.ko",   "nd_virtio.ko",      "net_failover.ko",
+      "virtio_blk.ko", "virtio_console.ko", "virtio_dma_buf.ko",
+      "virtio-gpu.ko", "virtio_input.ko",   "virtio_net.ko",
+      "virtio_pci.ko", "virtio-rng.ko",     "vmw_vsock_virtio_transport.ko",
+  };
   std::vector<std::string> ramdisk_modules;
   for (const auto& mod_path : all_modules) {
-    if (mod_path.empty()) {
-      continue;
-    }
-    const auto mod_name = cpp_basename(mod_path);
-    if (ramdisk_modules_allow_list.count(mod_name) != 0) {
+    if (Contains(kRamdiskModules, android::base::Basename(mod_path))) {
       ramdisk_modules.emplace_back(mod_path);
     }
   }
