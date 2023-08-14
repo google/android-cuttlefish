@@ -29,6 +29,7 @@ type FetchArtifactsActionOpts struct {
 	CVDToolsVersion  AndroidBuild
 	CVDDownloader    CVDDownloader
 	OperationManager OperationManager
+	BuildAPI         artifacts.BuildAPI
 	CVDBundleFetcher artifacts.CVDBundleFetcher
 	ArtifactsFetcher artifacts.Fetcher
 	UUIDGen          func() string
@@ -40,6 +41,7 @@ type FetchArtifactsAction struct {
 	cvdToolsVersion  AndroidBuild
 	cvdDownloader    CVDDownloader
 	om               OperationManager
+	buildAPI         artifacts.BuildAPI
 	cvdBundleFetcher artifacts.CVDBundleFetcher
 	artifactsFetcher artifacts.Fetcher
 	artifactsMngr    *artifacts.Manager
@@ -52,6 +54,7 @@ func NewFetchArtifactsAction(opts FetchArtifactsActionOpts) *FetchArtifactsActio
 		cvdToolsVersion:  opts.CVDToolsVersion,
 		cvdDownloader:    opts.CVDDownloader,
 		om:               opts.OperationManager,
+		buildAPI:         opts.BuildAPI,
 		cvdBundleFetcher: opts.CVDBundleFetcher,
 		artifactsFetcher: opts.ArtifactsFetcher,
 
@@ -85,6 +88,13 @@ func (a *FetchArtifactsAction) startDownload(op apiv1.Operation) OperationResult
 	build := defaultMainBuild()
 	if a.req.AndroidCIBundle.Build != nil {
 		build = a.req.AndroidCIBundle.Build
+	}
+	if build.BuildID == "" {
+		if err := updateBuildsWithLatestGreenBuildID(a.buildAPI, []*apiv1.AndroidCIBuild{build}); err != nil {
+			return OperationResult{
+				Error: operator.NewInternalError("failed getting latest green build id", err),
+			}
+		}
 	}
 	var err error
 	switch t := a.req.AndroidCIBundle.Type; t {
