@@ -64,5 +64,6 @@ impl Default for VsockServerConnection {
     }
 }
 
+// SAFETY: VsockServerConnection is a pointer to an `ffi::VsockServerConnection`, which in turn only
+// contains a file descriptor and so is safe to pass between threads.
 unsafe impl Send for VsockServerConnection {}
-unsafe impl Sync for VsockServerConnection {}
