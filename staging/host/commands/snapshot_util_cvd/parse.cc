@@ -29,13 +29,16 @@ namespace {
 
 constexpr char snapshot_cmd_help[] =
     "Command to control regarding the snapshot operations: "
-    "suspend/resume/take";
+    "suspend/resume/snapshot_take";
 
 constexpr char instance_num_help[] = "Which instance to suspend.";
 
 constexpr char wait_for_launcher_help[] =
     "How many seconds to wait for the launcher to respond to the status "
     "command. A value of zero means wait indefinitely.";
+
+constexpr char snapshot_path_help[] =
+    "Path to the directory the taken snapshot files are saved";
 
 Flag SnapshotCmdFlag(std::string& value_buf) {
   return GflagsCompatFlag("subcmd", value_buf).Help(snapshot_cmd_help);
@@ -55,6 +58,10 @@ Flag WaitForLauncherFlag(int& wait_for_launcher) {
                       wait_for_launcher_help);
 }
 
+Flag SnapshotPathFlag(std::string& path_buf) {
+  return GflagsCompatFlag("snapshot_path", path_buf).Help(snapshot_path_help);
+}
+
 }  // namespace
 
 Result<Parsed> Parse(int argc, char** argv) {
@@ -65,8 +72,9 @@ Result<Parsed> Parse(int argc, char** argv) {
 
 Result<SnapshotCmd> ConvertToSnapshotCmd(const std::string& input) {
   std::unordered_map<std::string, SnapshotCmd> mapping{
-      {"suspend", SnapshotCmd::kSuspend},   {"resume", SnapshotCmd::kResume},
-      {"take", SnapshotCmd::kSnapshotTake}, {"unset", SnapshotCmd::kUnknown},
+      {"suspend", SnapshotCmd::kSuspend},
+      {"resume", SnapshotCmd::kResume},
+      {"snapshot_take", SnapshotCmd::kSnapshotTake},
       {"unknown", SnapshotCmd::kUnknown},
   };
   CF_EXPECT(Contains(mapping, input));
@@ -81,14 +89,17 @@ Result<Parsed> Parse(std::vector<std::string>& args) {
   std::vector<Flag> flags;
   bool help_xml = false;
   std::string snapshot_op("unknown");
+  std::string snapshot_path;
   flags.push_back(SnapshotCmdFlag(snapshot_op));
   flags.push_back(InstanceNumFlag(parsed.instance_num));
   flags.push_back(WaitForLauncherFlag(parsed.wait_for_launcher));
+  flags.push_back(SnapshotPathFlag(snapshot_path));
   flags.push_back(HelpFlag(flags));
   flags.push_back(HelpXmlFlag(flags, std::cout, help_xml));
   flags.push_back(UnexpectedArgumentGuard());
   CF_EXPECT(ParseFlags(flags, args), "Flag parsing failed");
   parsed.cmd = CF_EXPECT(ConvertToSnapshotCmd(snapshot_op));
+  parsed.snapshot_path = snapshot_path;
   return parsed;
 }
 
@@ -104,7 +115,7 @@ std::ostream& operator<<(std::ostream& out, const SnapshotCmd& cmd) {
       out << "resume";
       break;
     case SnapshotCmd::kSnapshotTake:
-      out << "snapshot take";
+      out << "snapshot_take";
       break;
     default:
       out << "unknown";
