@@ -35,4 +35,8 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path);
 
 Result<CvdFlags> ParseCvdConfigs(Json::Value& root);
 
+Result<Json::Value> GetOverridedJsonConfig(
+    const std::string& config_path,
+    const std::vector<std::string>& override_flags);
+
 };  // namespace cuttlefish
