@@ -16,13 +16,17 @@
 
 #include "host/commands/cvd/parser/load_configs_parser.h"
 
+#include <unistd.h>
+
+#include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <string>
+#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/parseint.h>
-#include <gflags/gflags.h>
+#include <android-base/strings.h>
 #include <json/json.h>
 
 #include "common/libs/utils/files.h"
@@ -174,6 +178,33 @@ Result<Json::Value> GetOverridedJsonConfig(
     MergeTwoJsonObjs(result, args_tree);
   }
 
+  return result;
+}
+
+Result<LoadDirectories> GenerateLoadDirectories(const int num_instances) {
+  CF_EXPECT_GT(num_instances, 0, "No instances in config to load");
+
+  auto parent_directory = "/tmp/cvd/" + std::to_string(getuid()) + "/";
+  auto time = std::chrono::system_clock::now().time_since_epoch().count();
+  auto result = LoadDirectories{
+      .target_directory = parent_directory + std::to_string(time),
+      .launch_home_directory =
+          parent_directory + std::to_string(time) + "_home/"};
+
+  std::vector<std::string> system_image_directories;
+  for (int i = 0; i < num_instances; i++) {
+    LOG(INFO) << "Instance " << i << " directory is " << result.target_directory
+              << "/" << std::to_string(i);
+    auto target_subdirectory = std::to_string(i);
+    result.target_subdirectories.emplace_back(target_subdirectory);
+    system_image_directories.emplace_back(result.target_directory + "/" +
+                                          target_subdirectory);
+  }
+  result.first_instance_directory =
+      result.target_directory + "/" + result.target_subdirectories[0];
+  result.system_image_directory_flag =
+      "--system_image_dir=" +
+      android::base::Join(system_image_directories, ',');
   return result;
 }
 
