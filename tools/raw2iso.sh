@@ -224,12 +224,22 @@ sudo chown root:root \
   "${mount}"/root/esp.img "${mount}"/root/gpt.img \
   "${mount}"/boot/grub/eltorito.img \
   "${mount}"/boot/grub/${grub_arch}/grub.cfg
+sudo mv "${mount}"/usr "${mount}"/usr_o
+sudo mkzftree "${mount}"/usr_o "${mount}"/usr
+sudo rm -rf "${mount}"/usr_o
+sudo mv "${mount}"/root "${mount}"/root_o
+sudo mkzftree "${mount}"/root_o "${mount}"/root
+sudo rm -rf "${mount}"/root_o
+sudo mv "${mount}"/var "${mount}"/var_o
+sudo mkzftree "${mount}"/var_o "${mount}"/var
+sudo rm -rf "${mount}"/var_o
 rm -f "${output}"
 touch "${output}"
 sudo xorriso \
   -as mkisofs -r -checksum_algorithm_iso sha256,sha512 -V install "${mount}" \
   -o "${output}" -e boot/grub/eltorito.img -no-emul-boot \
   -append_partition 2 0xef "${workdir}"/eltorito.img \
+  -z \
   -partition_cyl_align all
 
 echo "Output ISO generated at '${output}'."
