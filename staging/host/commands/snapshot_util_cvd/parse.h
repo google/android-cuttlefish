@@ -40,6 +40,7 @@ struct Parsed {
   SnapshotCmd cmd;
   int instance_num;
   int wait_for_launcher;
+  std::string snapshot_path;
   std::optional<android::base::LogSeverity> verbosity_level;
 };
 Result<Parsed> Parse(int argc, char** argv);
