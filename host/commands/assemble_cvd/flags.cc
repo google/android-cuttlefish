@@ -445,6 +445,7 @@ DEFINE_vec(device_external_network, CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK,
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
+DECLARE_string(snapshot_path);
 
 namespace cuttlefish {
 using vm_manager::QemuManager;
@@ -939,6 +940,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_gem5_debug_flags(FLAGS_gem5_debug_flags);
+
+  // setting snapshot path
+  tmp_config_obj.set_snapshot_path(FLAGS_snapshot_path);
 
   // streaming, webrtc setup
   tmp_config_obj.set_webrtc_certs_dir(FLAGS_webrtc_certs_dir);
