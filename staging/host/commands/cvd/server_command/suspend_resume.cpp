@@ -46,12 +46,13 @@ static constexpr char kSuspendResume[] =
 
 Suspend/resume the cuttlefish device
 
-usage: cvd [selector flags] suspend/resume [--help]
+usage: cvd [selector flags] suspend/resume/snapshot_take [--help]
 
 Common:
   Selector Flags:
     --group_name=<name>       The name of the instance group
     --instance_name=<names>   The comma-separated list of the instance names
+    --snapshot_path=<path>>   Directory that contains saved snapshot files
 
   Args:
     --help                    print this message
@@ -72,7 +73,7 @@ class CvdSuspendResumeCommandHandler : public CvdServerHandler {
       : instance_manager_{instance_manager},
         subprocess_waiter_(subprocess_waiter),
         host_tool_target_manager_(host_tool_target_manager),
-        cvd_suspend_resume_operations_{"suspend", "resume"} {}
+        cvd_suspend_resume_operations_{"suspend", "resume", "snapshot_take"} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
     auto invocation = ParseInvocation(request.Message());
@@ -166,7 +167,8 @@ class CvdSuspendResumeCommandHandler : public CvdServerHandler {
     const auto& android_host_out = instance_group.HostArtifactsPath();
     auto cvd_suspend_resume_bin_path =
         CF_EXPECT(GetBin(android_host_out, subcmd));
-    cvd_common::Args cvd_suspend_resume_args{"--subcmd=" + subcmd};
+    const std::string& snapshot_util_cmd = subcmd;
+    cvd_common::Args cvd_suspend_resume_args{"--subcmd=" + snapshot_util_cmd};
     cvd_suspend_resume_args.insert(cvd_suspend_resume_args.end(),
                                    subcmd_args.begin(), subcmd_args.end());
     cvd_suspend_resume_args.push_back(
