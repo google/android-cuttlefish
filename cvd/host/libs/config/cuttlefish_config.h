@@ -168,6 +168,8 @@ class CuttlefishConfig {
   bool netsim_radio_enabled(NetsimRadio flag) const;
   void set_netsim_instance_num(int netsim_instance_num);
   int netsim_instance_num() const;
+  void set_netsim_args(const std::string& netsim_args);
+  std::vector<std::string> netsim_args() const;
 
   enum Answer {
     kUnknown = 0,
@@ -574,9 +576,6 @@ class CuttlefishConfig {
     std::string gpu_angle_feature_overrides_disabled() const;
     std::string gpu_capture_binary() const;
     bool enable_gpu_udmabuf() const;
-    bool enable_gpu_vhost_user() const;
-    bool enable_gpu_external_blob() const;
-    bool enable_gpu_system_blob() const;
 
     std::string hwcomposer() const;
 
@@ -759,9 +758,6 @@ class CuttlefishConfig {
     void set_gpu_angle_feature_overrides_disabled(const std::string& overrides);
     void set_gpu_capture_binary(const std::string&);
     void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
-    void set_enable_gpu_vhost_user(const bool enable_gpu_vhost_user);
-    void set_enable_gpu_external_blob(const bool enable_gpu_external_blob);
-    void set_enable_gpu_system_blob(const bool enable_gpu_system_blob);
 
     void set_hwcomposer(const std::string&);
 
