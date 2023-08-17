@@ -99,6 +99,11 @@ class NetsimServer : public CommandSource {
     // Netsim instance number.
     netsimd.AddParameter("--instance_num=", config_.netsim_instance_num());
 
+    // Add parameters from passthrough option --netsim-args.
+    for (auto const& arg : config_.netsim_args()) {
+      netsimd.AddParameter(arg);
+    }
+
     // Add command for forwarding the HCI port to a vsock server.
     Command hci_vsock_proxy(SocketVsockProxyBinary());
     hci_vsock_proxy.AddParameter("--server_type=vsock");

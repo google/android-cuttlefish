@@ -177,6 +177,8 @@ DEFINE_bool(netsim, CF_DEFAULTS_NETSIM,
 
 DEFINE_bool(netsim_bt, CF_DEFAULTS_NETSIM_BT,
             "[Experimental] Connect Bluetooth radio to netsim.");
+DEFINE_string(netsim_args, CF_DEFAULTS_NETSIM_ARGS,
+              "Space-separated list of netsim args.");
 
 /**
  * crosvm sandbox feature requires /var/empty and seccomp directory
@@ -1138,6 +1140,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   int netsim_instance_num = *instance_nums.begin() - 1;
   tmp_config_obj.set_netsim_instance_num(netsim_instance_num);
   LOG(DEBUG) << "netsim_instance_num: " << netsim_instance_num;
+  tmp_config_obj.set_netsim_args(FLAGS_netsim_args);
 
   // crosvm should create fifos for UWB
   auto pica_instance_num = *instance_nums.begin() - 1;
