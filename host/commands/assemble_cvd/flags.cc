@@ -141,6 +141,9 @@ DEFINE_vec(gpu_capture_binary, CF_DEFAULTS_GPU_CAPTURE_BINARY,
 DEFINE_vec(enable_gpu_udmabuf,
            fmt::format("{}", CF_DEFAULTS_ENABLE_GPU_UDMABUF),
            "Use the udmabuf driver for zero-copy virtio-gpu");
+DEFINE_vec(enable_gpu_vhost_user,
+           fmt::format("{}", CF_DEFAULTS_ENABLE_GPU_VHOST_USER),
+           "Run the Virtio GPU worker in a separate process.");
 
 DEFINE_vec(use_allocd, CF_DEFAULTS_USE_ALLOCD?"true":"false",
             "Acquire static resources from the resource allocator daemon.");
@@ -840,8 +843,8 @@ Result<std::string> SelectGpuMode(
 #endif
 
 Result<std::string> InitializeGpuMode(
-    const std::string& gpu_mode_arg, const std::string& vm_manager,
-    const GuestConfig& guest_config,
+    const std::string& gpu_mode_arg, const bool gpu_vhost_user_arg,
+    const std::string& vm_manager, const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific* instance) {
 #ifdef __APPLE__
   (void)vm_manager;
@@ -868,8 +871,22 @@ Result<std::string> InitializeGpuMode(
       angle_features.angle_feature_overrides_enabled);
   instance->set_gpu_angle_feature_overrides_disabled(
       angle_features.angle_feature_overrides_disabled);
+
+  if (gpu_vhost_user_arg) {
+    const auto gpu_vhost_user_features =
+        CF_EXPECT(GetNeededVhostUserGpuHostRendererFeatures(
+            CF_EXPECT(GetRenderingMode(gpu_mode)), graphics_availability));
+    instance->set_enable_gpu_external_blob(
+        gpu_vhost_user_features.external_blob);
+    instance->set_enable_gpu_system_blob(gpu_vhost_user_features.system_blob);
+  } else {
+    instance->set_enable_gpu_external_blob(false);
+    instance->set_enable_gpu_system_blob(false);
+  }
+
 #endif
   instance->set_gpu_mode(gpu_mode);
+  instance->set_enable_gpu_vhost_user(gpu_vhost_user_arg);
   return gpu_mode;
 }
 
@@ -1066,6 +1083,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(hwcomposer));
   std::vector<bool> enable_gpu_udmabuf_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_gpu_udmabuf));
+  std::vector<bool> enable_gpu_vhost_user_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_gpu_vhost_user));
   std::vector<bool> smt_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(smt));
   std::vector<std::string> crosvm_binary_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(crosvm_binary));
@@ -1325,8 +1344,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     // gpu related settings
     const std::string gpu_mode = CF_EXPECT(InitializeGpuMode(
-        gpu_mode_vec[instance_index], vm_manager_vec[instance_index],
-        guest_configs[instance_index], &instance));
+        gpu_mode_vec[instance_index], enable_gpu_vhost_user_vec[instance_index],
+        vm_manager_vec[instance_index], guest_configs[instance_index],
+        &instance));
 
     instance.set_restart_subprocesses(restart_subprocesses_vec[instance_index]);
     instance.set_gpu_capture_binary(gpu_capture_binary_vec[instance_index]);
