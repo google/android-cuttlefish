@@ -168,6 +168,8 @@ class CuttlefishConfig {
   bool netsim_radio_enabled(NetsimRadio flag) const;
   void set_netsim_instance_num(int netsim_instance_num);
   int netsim_instance_num() const;
+  void set_netsim_args(const std::string& netsim_args);
+  std::vector<std::string> netsim_args() const;
 
   enum Answer {
     kUnknown = 0,

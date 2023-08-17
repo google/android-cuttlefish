@@ -331,6 +331,22 @@ void CuttlefishConfig::set_netsim_instance_num(int netsim_instance_num) {
   (*dictionary_)[kNetsimInstanceNum] = netsim_instance_num;
 }
 
+static constexpr char kNetsimArgs[] = "netsim_args";
+void CuttlefishConfig::set_netsim_args(const std::string& netsim_args) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : android::base::Tokenize(netsim_args, " ")) {
+    args_json_obj.append(arg);
+  }
+  (*dictionary_)[kNetsimArgs] = args_json_obj;
+}
+std::vector<std::string> CuttlefishConfig::netsim_args() const {
+  std::vector<std::string> netsim_args;
+  for (const Json::Value& arg : (*dictionary_)[kNetsimArgs]) {
+    netsim_args.push_back(arg.asString());
+  }
+  return netsim_args;
+}
+
 static constexpr char kEnableMetrics[] = "enable_metrics";
 void CuttlefishConfig::set_enable_metrics(std::string enable_metrics) {
   (*dictionary_)[kEnableMetrics] = kUnknown;
