@@ -117,7 +117,10 @@ func (a *FetchArtifactsAction) startDownload(op apiv1.Operation) OperationResult
 	if err != nil {
 		return OperationResult{Error: operator.NewInternalError(errMsgFailedFetchingArtifacts, err)}
 	}
-	return OperationResult{Value: req.AndroidCIBundle}
+	res := &apiv1.FetchArtifactsResponse{
+		AndroidCIBundle: req.AndroidCIBundle,
+	}
+	return OperationResult{Value: res}
 }
 
 func validateFetchArtifactsRequest(r *apiv1.FetchArtifactsRequest) error {
