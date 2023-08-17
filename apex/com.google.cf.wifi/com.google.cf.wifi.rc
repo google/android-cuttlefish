@@ -15,7 +15,7 @@ service init_wifi_sh /apex/com.android.wifi.hal/bin/init.wifi
     oneshot
     disabled    # Started on post-fs-data
 
-service wpa_supplicant /apex/com.android.wifi.hal/bin/hw/wpa_supplicant_cf \
+service wpa_supplicant /apex/com.android.wifi.hal/bin/hw/wpa_supplicant \
         -O/data/vendor/wifi/wpa/sockets -puse_p2p_group_interface=1p2p_device=1 \
         -m/apex/com.android.wifi.hal/etc/wifi/p2p_supplicant.conf \
         -g@android:wpa_wlan0 -dd
