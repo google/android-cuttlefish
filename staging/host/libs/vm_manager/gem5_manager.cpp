@@ -139,11 +139,6 @@ if __name__ == "__m5_main__":
   main()
 )CPP_STR_END";
 
-void LogAndSetEnv(const char* key, const std::string& value) {
-  setenv(key, value.c_str(), 1);
-  LOG(INFO) << key << "=" << value;
-}
-
 void GenerateGem5File(const CuttlefishConfig& config,
                       const CuttlefishConfig::InstanceSpecific& instance) {
   // Gem5 specific config, currently users have to change these config locally (without throug launch_cvd input flag) to meet their design
@@ -336,7 +331,7 @@ Result<std::vector<MonitorCommand>> Gem5Manager::StartCommands(
     gem5_cmd.AddParameter("--disk-image=", disk);
   }
 
-  LogAndSetEnv("M5_PATH", config.assembly_dir());
+  gem5_cmd.AddEnvironmentVariable("M5_PATH", config.assembly_dir());
 
   std::vector<MonitorCommand> commands;
   commands.emplace_back(std::move(gem5_cmd), true);
