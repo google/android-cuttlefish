@@ -15,9 +15,6 @@
  */
 #include "host/commands/cvd/server_command/load_configs.h"
 
-#include <unistd.h>
-
-#include <chrono>
 #include <iostream>
 #include <mutex>
 #include <optional>
@@ -44,7 +41,7 @@
 namespace cuttlefish {
 namespace {
 
-std::string JoinBySelector(
+std::optional<std::string> JoinBySelectorOptional(
     const std::vector<FetchCvdInstanceConfig>& collection,
     const std::function<std::string(const FetchCvdInstanceConfig&)>& selector) {
   std::vector<std::string> selected;
@@ -52,13 +49,7 @@ std::string JoinBySelector(
   for (const auto& instance : collection) {
     selected.emplace_back(selector(instance));
   }
-  return android::base::Join(selected, ',');
-}
-
-std::optional<std::string> JoinBySelectorOptional(
-    const std::vector<FetchCvdInstanceConfig>& collection,
-    const std::function<std::string(const FetchCvdInstanceConfig&)>& selector) {
-  std::string result = JoinBySelector(collection, selector);
+  std::string result = android::base::Join(selected, ',');
   // no values, empty or only ',' separators
   if (result.size() == collection.size() - 1) {
     return std::nullopt;
@@ -66,41 +57,13 @@ std::optional<std::string> JoinBySelectorOptional(
   return result;
 }
 
-std::string GenerateSystemImageFlag(const FetchCvdConfig& config) {
-  auto get_full_path = [&target_directory = config.target_directory](
-                           const FetchCvdInstanceConfig& instance_config) {
-    return target_directory + "/" + instance_config.target_subdirectory;
-  };
-  return "--system_image_dir=" +
-         JoinBySelector(config.instances, get_full_path);
-}
-
-std::string GenerateParentDirectory() {
-  const uid_t uid = getuid();
-  // Prefix for the parent directory.
-  constexpr char kParentDirPrefix[] = "/tmp/cvd/";
-  std::stringstream ss;
-
-  // Constructs the full directory path.
-  ss << kParentDirPrefix << uid << "/";
-
-  return ss.str();
-}
-
-std::string GenerateHostArtifactsDirectory(int64_t time) {
-  return GenerateParentDirectory() + std::to_string(time);
-}
-
-std::string GenerateHomeDirectoryName(int64_t time) {
-  return GenerateParentDirectory() + std::to_string(time) + "_home/";
-}
-
 void AddFetchCommandArgs(
     cvd::CommandRequest& command, const FetchCvdConfig& config,
-    const std::vector<FetchCvdInstanceConfig>& fetch_instances) {
+    const std::vector<FetchCvdInstanceConfig>& fetch_instances,
+    const LoadDirectories& load_directories) {
   command.add_args("cvd");
   command.add_args("fetch");
-  command.add_args("--target_directory=" + config.target_directory);
+  command.add_args("--target_directory=" + load_directories.target_directory);
   if (config.api_key) {
     command.add_args("--api_key=" + *config.api_key);
   }
@@ -121,9 +84,7 @@ void AddFetchCommandArgs(
 
   command.add_args(
       "--target_subdirectory=" +
-      JoinBySelector(fetch_instances, [](const auto& instance_config) {
-        return instance_config.target_subdirectory;
-      }));
+      android::base::Join(load_directories.target_subdirectories, ','));
   std::optional<std::string> default_build_params =
       JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
         return instance_config.default_build.value_or("");
@@ -260,26 +221,12 @@ class LoadConfigsCommand : public CvdServerHandler {
     }
     Json::Value json_configs =
         CF_EXPECT(GetOverridedJsonConfig(config_path, overrides));
+    const auto load_directories =
+        CF_EXPECT(GenerateLoadDirectories(json_configs["instances"].size()));
     auto cvd_flags =
         CF_EXPECT(ParseCvdConfigs(json_configs), "parsing json configs failed");
-
-    int num_instances = cvd_flags.fetch_cvd_flags.instances.size();
-    CF_EXPECT_GT(num_instances, 0, "No instances to load");
-
     std::vector<cvd::Request> req_protos;
     const auto& client_env = request.Message().command_request().env();
-
-    auto time = std::chrono::system_clock::now().time_since_epoch().count();
-    cvd_flags.fetch_cvd_flags.target_directory =
-        GenerateHostArtifactsDirectory(time);
-    for (int instance_index = 0; instance_index < num_instances;
-         instance_index++) {
-      LOG(INFO) << "Instance " << instance_index << " directory is "
-                << cvd_flags.fetch_cvd_flags.target_directory << "/"
-                << std::to_string(instance_index);
-      cvd_flags.fetch_cvd_flags.instances[instance_index].target_subdirectory =
-          std::to_string(instance_index);
-    }
 
     std::vector<FetchCvdInstanceConfig> fetch_instances;
     for (const auto& instance : cvd_flags.fetch_cvd_flags.instances) {
@@ -290,32 +237,26 @@ class LoadConfigsCommand : public CvdServerHandler {
     if (fetch_instances.size() > 0) {
       auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
       *fetch_cmd.mutable_env() = client_env;
-      AddFetchCommandArgs(fetch_cmd, cvd_flags.fetch_cvd_flags,
-                          fetch_instances);
+      AddFetchCommandArgs(fetch_cmd, cvd_flags.fetch_cvd_flags, fetch_instances,
+                          load_directories);
     }
 
-    // Create the launch home directory
-    std::string launch_home_dir = GenerateHomeDirectoryName(time);
     auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
     *mkdir_cmd.mutable_env() = client_env;
     mkdir_cmd.add_args("cvd");
     mkdir_cmd.add_args("mkdir");
     mkdir_cmd.add_args("-p");
-    mkdir_cmd.add_args(launch_home_dir);
+    mkdir_cmd.add_args(load_directories.launch_home_directory);
 
-    // Handle the launch command
     auto& launch_cmd = *req_protos.emplace_back().mutable_command_request();
-
-    auto first_instance_dir =
-        cvd_flags.fetch_cvd_flags.target_directory + "/" +
-        cvd_flags.fetch_cvd_flags.instances[0].target_subdirectory;
+    launch_cmd.set_working_directory(load_directories.first_instance_directory);
     *launch_cmd.mutable_env() = client_env;
-    launch_cmd.set_working_directory(first_instance_dir);
-    (*launch_cmd.mutable_env())["HOME"] = launch_home_dir;
-
-    (*launch_cmd.mutable_env())[kAndroidHostOut] = first_instance_dir;
-    (*launch_cmd.mutable_env())[kAndroidSoongHostOut] = first_instance_dir;
-
+    (*launch_cmd.mutable_env())["HOME"] =
+        load_directories.launch_home_directory;
+    (*launch_cmd.mutable_env())[kAndroidHostOut] =
+        load_directories.first_instance_directory;
+    (*launch_cmd.mutable_env())[kAndroidSoongHostOut] =
+        load_directories.first_instance_directory;
     if (Contains(*launch_cmd.mutable_env(), kAndroidProductOut)) {
       (*launch_cmd.mutable_env()).erase(kAndroidProductOut);
     }
@@ -331,7 +272,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       launch_cmd.add_args(parsed_flag);
     }
     // Add system flag for multi-build scenario
-    launch_cmd.add_args(GenerateSystemImageFlag(cvd_flags.fetch_cvd_flags));
+    launch_cmd.add_args(load_directories.system_image_directory_flag);
 
     launch_cmd.mutable_selector_opts()->add_args(
         std::string("--") + selector::SelectorFlags::kDisableDefaultGroup);
