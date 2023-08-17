@@ -21,6 +21,8 @@
 
 #include "common/libs/fs/shared_select.h"
 
+class ModemServiceTest;
+
 namespace cuttlefish {
 
 class ModemSimulator;
@@ -41,17 +43,10 @@ class Client {
  public:
   enum ClientType { RIL, REMOTE };
 
-  ClientType type = RIL;
-  cuttlefish::SharedFD client_fd;
-  std::string incomplete_command;
-  std::mutex write_mutex;
-  bool first_read_command_;  // Only used when ClientType::REMOTE
-  bool is_valid = true;
-
   Client() = default;
   ~Client() = default;
-  Client(cuttlefish::SharedFD fd);
-  Client(cuttlefish::SharedFD fd, ClientType client_type);
+  Client(SharedFD fd);
+  Client(SharedFD fd, ClientType client_type);
   Client(const Client& client) = delete;
   Client(Client&& client) = delete;
 
@@ -61,6 +56,20 @@ class Client {
 
   void SendCommandResponse(std::string response) const;
   void SendCommandResponse(const std::vector<std::string>& responses) const;
+
+  ClientType Type() const { return type; }
+  SharedFD Fd() const { return client_fd; }
+
+ private:
+  friend class ChannelMonitor;
+  friend class ::ModemServiceTest;
+
+  ClientType type = RIL;
+  SharedFD client_fd;
+  std::string incomplete_command;
+  std::mutex write_mutex;
+  bool first_read_command_;  // Only used when ClientType::REMOTE
+  bool is_valid = true;
 };
 
 class ChannelMonitor {
@@ -92,6 +101,8 @@ class ChannelMonitor {
   void ReadCommand(Client& client);
 
   void MonitorLoop();
+  static void removeInvalidClients(
+      std::vector<std::unique_ptr<Client>>& clients);
 };
 
 }  // namespace cuttlefish

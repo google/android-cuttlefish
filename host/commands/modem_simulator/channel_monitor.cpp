@@ -216,7 +216,8 @@ ChannelMonitor::~ChannelMonitor() {
   }
 }
 
-static void removeInvalidClients(std::vector<std::unique_ptr<Client>>& clients) {
+void ChannelMonitor::removeInvalidClients(
+    std::vector<std::unique_ptr<Client>>& clients) {
   auto iter = clients.begin();
   for (; iter != clients.end();) {
     if (iter->get()->is_valid) {
