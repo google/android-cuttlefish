@@ -31,6 +31,28 @@
 namespace cuttlefish {
 namespace {
 
+struct FetchCvdInstanceConfig {
+  bool should_fetch = false;
+  std::optional<std::string> default_build;
+  std::optional<std::string> system_build;
+  std::optional<std::string> kernel_build;
+  std::optional<std::string> boot_build;
+  std::optional<std::string> bootloader_build;
+  std::optional<std::string> otatools_build;
+  std::optional<std::string> host_package_build;
+  std::optional<std::string> download_img_zip;
+  std::optional<std::string> download_target_files_zip;
+};
+
+struct FetchCvdConfig {
+  std::optional<std::string> api_key;
+  std::optional<std::string> credential_source;
+  std::optional<std::string> wait_retry_period;
+  std::optional<std::string> external_dns_resolver;
+  std::optional<std::string> keep_downloaded_archives;
+  std::vector<FetchCvdInstanceConfig> instances;
+};
+
 constexpr std::string_view kFetchPrefix = "@ab/";
 
 Result<void> InitFetchInstanceConfigs(Json::Value& instance) {
@@ -135,11 +157,136 @@ FetchCvdConfig ParseFetchConfigs(const Json::Value& root) {
   return result;
 }
 
+std::optional<std::string> JoinBySelectorOptional(
+    const std::vector<FetchCvdInstanceConfig>& collection,
+    const std::function<std::string(const FetchCvdInstanceConfig&)>& selector) {
+  std::vector<std::string> selected;
+  selected.reserve(collection.size());
+  for (const auto& instance : collection) {
+    selected.emplace_back(selector(instance));
+  }
+  std::string result = android::base::Join(selected, ',');
+  // no values, empty or only ',' separators
+  if (result.size() == collection.size() - 1) {
+    return std::nullopt;
+  }
+  return result;
+}
+
+std::vector<std::string> GenerateFetchFlags(
+    const FetchCvdConfig& config,
+    const std::vector<FetchCvdInstanceConfig>& fetch_instances,
+    const std::string& target_directory,
+    const std::vector<std::string>& target_subdirectories) {
+  std::vector<std::string> result;
+  if (fetch_instances.empty()) {
+    return result;
+  }
+
+  result.emplace_back("--target_directory=" + target_directory);
+  if (config.api_key) {
+    result.emplace_back("--api_key=" + *config.api_key);
+  }
+  if (config.credential_source) {
+    result.emplace_back("--credential_source=" + *config.credential_source);
+  }
+  if (config.wait_retry_period) {
+    result.emplace_back("--wait_retry_period=" + *config.wait_retry_period);
+  }
+  if (config.external_dns_resolver) {
+    result.emplace_back("--external_dns_resolver=" +
+                        *config.external_dns_resolver);
+  }
+  if (config.keep_downloaded_archives) {
+    result.emplace_back("--keep_downloaded_archives=" +
+                        *config.keep_downloaded_archives);
+  }
+
+  result.emplace_back("--target_subdirectory=" +
+                      android::base::Join(target_subdirectories, ','));
+  std::optional<std::string> default_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.default_build.value_or("");
+      });
+  if (default_build_params) {
+    result.emplace_back("--default_build=" + *default_build_params);
+  }
+  std::optional<std::string> system_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.system_build.value_or("");
+      });
+  if (system_build_params) {
+    result.emplace_back("--system_build=" + *system_build_params);
+  }
+  std::optional<std::string> kernel_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.kernel_build.value_or("");
+      });
+  if (kernel_build_params) {
+    result.emplace_back("--kernel_build=" + *kernel_build_params);
+  }
+  std::optional<std::string> boot_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.boot_build.value_or("");
+      });
+  if (boot_build_params) {
+    result.emplace_back("--boot_build=" + *boot_build_params);
+  }
+  std::optional<std::string> bootloader_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.bootloader_build.value_or("");
+      });
+  if (bootloader_build_params) {
+    result.emplace_back("--bootloader_build=" + *bootloader_build_params);
+  }
+  std::optional<std::string> otatools_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.otatools_build.value_or("");
+      });
+  if (otatools_build_params) {
+    result.emplace_back("--otatools_build=" + *otatools_build_params);
+  }
+  std::optional<std::string> host_package_build_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.host_package_build.value_or("");
+      });
+  if (host_package_build_params) {
+    result.emplace_back("--host_package_build=" + *host_package_build_params);
+  }
+  std::optional<std::string> download_img_zip_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.download_img_zip.value_or("");
+      });
+  if (download_img_zip_params) {
+    result.emplace_back("--download_img_zip=" + *download_img_zip_params);
+  }
+  std::optional<std::string> download_target_files_zip_params =
+      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
+        return instance_config.download_target_files_zip.value_or("");
+      });
+  if (download_target_files_zip_params) {
+    result.emplace_back("--download_target_files_zip=" +
+                        *download_target_files_zip_params);
+  }
+  return result;
+}
+
 }  // namespace
 
-Result<FetchCvdConfig> ParseFetchCvdConfigs(Json::Value& root) {
+Result<std::vector<std::string>> ParseFetchCvdConfigs(
+    Json::Value& root, const std::string& target_directory,
+    const std::vector<std::string>& target_subdirectories) {
   CF_EXPECT(InitFetchCvdConfigs(root));
-  return {ParseFetchConfigs(root)};
+  auto fetch_configs = ParseFetchConfigs(root);
+
+  std::vector<FetchCvdInstanceConfig> fetch_instances;
+  for (const auto& instance : fetch_configs.instances) {
+    if (instance.should_fetch) {
+      fetch_instances.emplace_back(instance);
+    }
+  }
+  return GenerateFetchFlags(fetch_configs, fetch_instances, target_directory,
+                            target_subdirectories);
 }
 
 }  // namespace cuttlefish
