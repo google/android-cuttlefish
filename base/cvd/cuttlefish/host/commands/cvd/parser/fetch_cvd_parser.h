@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -25,6 +26,28 @@
 
 namespace cuttlefish {
 
-Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root);
+struct FetchCvdInstanceConfig {
+  bool should_fetch = false;
+  std::optional<std::string> default_build;
+  std::optional<std::string> system_build;
+  std::optional<std::string> kernel_build;
+  std::optional<std::string> boot_build;
+  std::optional<std::string> bootloader_build;
+  std::optional<std::string> otatools_build;
+  std::optional<std::string> host_package_build;
+  std::optional<std::string> download_img_zip;
+  std::optional<std::string> download_target_files_zip;
+};
+
+struct FetchCvdConfig {
+  std::optional<std::string> api_key;
+  std::optional<std::string> credential_source;
+  std::optional<std::string> wait_retry_period;
+  std::optional<std::string> external_dns_resolver;
+  std::optional<std::string> keep_downloaded_archives;
+  std::vector<FetchCvdInstanceConfig> instances;
+};
+
+Result<FetchCvdConfig> ParseFetchCvdConfigs(Json::Value& root);
 
 };  // namespace cuttlefish
