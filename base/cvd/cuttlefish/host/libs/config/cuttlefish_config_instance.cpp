@@ -712,6 +712,33 @@ bool CuttlefishConfig::InstanceSpecific::enable_gpu_udmabuf() const {
   return (*Dictionary())[kEnableGpuUdmabuf].asBool();
 }
 
+static constexpr char kEnableGpuVhostUser[] = "enable_gpu_vhost_user";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_gpu_vhost_user(
+    const bool enable_gpu_vhost_user) {
+  (*Dictionary())[kEnableGpuVhostUser] = enable_gpu_vhost_user;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_gpu_vhost_user() const {
+  return (*Dictionary())[kEnableGpuVhostUser].asBool();
+}
+
+static constexpr char kEnableGpuExternalBlob[] = "enable_gpu_external_blob";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_gpu_external_blob(
+    const bool enable_gpu_external_blob) {
+  (*Dictionary())[kEnableGpuExternalBlob] = enable_gpu_external_blob;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_gpu_external_blob() const {
+  return (*Dictionary())[kEnableGpuExternalBlob].asBool();
+}
+
+static constexpr char kEnableGpuSystemBlob[] = "enable_gpu_system_blob";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_gpu_system_blob(
+    const bool enable_gpu_system_blob) {
+  (*Dictionary())[kEnableGpuSystemBlob] = enable_gpu_system_blob;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_gpu_system_blob() const {
+  return (*Dictionary())[kEnableGpuSystemBlob].asBool();
+}
+
 static constexpr char kEnableAudio[] = "enable_audio";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_audio(bool enable) {
   (*Dictionary())[kEnableAudio] = enable;
