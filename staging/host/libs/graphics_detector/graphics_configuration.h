@@ -39,4 +39,24 @@ struct AngleFeatureOverrides {
 Result<AngleFeatureOverrides> GetNeededAngleFeatures(
     RenderingMode mode, const GraphicsAvailability& availability);
 
+struct VhostUserGpuHostRendererFeatures {
+  // If true, host Virtio GPU blob resources will be allocated with
+  // external memory and exported file descriptors will be shared
+  // with the VMM for mapping resources into the guest address space.
+  bool external_blob = false;
+
+  // If true, host Virtio GPU blob resources will be allocated with
+  // shmem and exported file descriptors will be shared with the VMM
+  // for mapping resources into the guest address space.
+  //
+  // This is an extension of the above external_blob that allows the
+  // VMM to map resources without graphics API support but requires
+  // additional features (VK_EXT_external_memory_host) from the GPU
+  // driver and is potentially less performant.
+  bool system_blob = false;
+};
+Result<VhostUserGpuHostRendererFeatures>
+GetNeededVhostUserGpuHostRendererFeatures(
+    RenderingMode mode, const GraphicsAvailability& availability);
+
 }  // namespace cuttlefish
