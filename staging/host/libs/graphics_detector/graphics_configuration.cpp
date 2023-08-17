@@ -127,4 +127,33 @@ Result<AngleFeatureOverrides> GetNeededAngleFeatures(
   };
 }
 
+Result<VhostUserGpuHostRendererFeatures>
+GetNeededVhostUserGpuHostRendererFeatures(
+    RenderingMode mode, const GraphicsAvailability& availability) {
+  VhostUserGpuHostRendererFeatures features = {};
+  if (mode == RenderingMode::kGfxstream ||
+      mode == RenderingMode::kGfxstreamGuestAngle) {
+    features.external_blob = true;
+
+    const bool has_external_memory_host =
+        availability.discrete_gpu_device_extensions.find(
+            "VK_EXT_external_memory_host") != std::string::npos;
+
+    if (!has_external_memory_host &&
+        mode == RenderingMode::kGfxstreamGuestAngle) {
+      return CF_ERR(
+          "VK_EXT_external_memory_host is required for running with "
+          "--gpu_mode=gfxstream_guest_angle and --enable_gpu_vhost_user=true");
+    }
+
+    features.system_blob = has_external_memory_host;
+
+  } else {
+    return CF_ERR(
+        "vhost-user-gpu is only currently supported with --gpu_mode=gfxstream "
+        "and --gpu_mode=gfxstream_guest_angle");
+  }
+  return features;
+}
+
 }  // namespace cuttlefish
