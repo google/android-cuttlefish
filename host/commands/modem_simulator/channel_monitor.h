@@ -19,7 +19,7 @@
 #include <thread>
 #include <vector>
 
-#include "common/libs/fs/shared_select.h"
+#include "common/libs/fs/shared_fd.h"
 
 class ModemServiceTest;
 
@@ -74,7 +74,7 @@ class Client {
 
 class ChannelMonitor {
  public:
-  ChannelMonitor(ModemSimulator* modem, cuttlefish::SharedFD server);
+  ChannelMonitor(ModemSimulator& modem, cuttlefish::SharedFD server);
   ~ChannelMonitor();
 
   ChannelMonitor(const ChannelMonitor&) = delete;
@@ -88,7 +88,7 @@ class ChannelMonitor {
   void SendUnsolicitedCommand(std::string& response);
 
  private:
-  ModemSimulator* modem_;
+  ModemSimulator& modem_;
   std::thread monitor_thread_;
   cuttlefish::SharedFD server_;
   cuttlefish::SharedFD read_pipe_;

@@ -87,7 +87,7 @@ class ModemServiceTest : public ::testing::Test {
 
     cuttlefish::SharedFD server;
     auto channel_monitor =
-        std::make_unique<ChannelMonitor>(modem_simulator_, server);
+        std::make_unique<ChannelMonitor>(*modem_simulator_, server);
     modem_simulator_->Initialize(std::move(channel_monitor));
   }
 

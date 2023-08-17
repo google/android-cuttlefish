@@ -16,11 +16,12 @@
 
 #include "host/commands/modem_simulator/channel_monitor.h"
 
+#include <algorithm>
+
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include <algorithm>
-
+#include "common/libs/fs/shared_select.h"
 #include "host/commands/modem_simulator/modem_simulator.h"
 
 namespace cuttlefish {
@@ -58,7 +59,7 @@ void Client::SendCommandResponse(
   }
 }
 
-ChannelMonitor::ChannelMonitor(ModemSimulator* modem,
+ChannelMonitor::ChannelMonitor(ModemSimulator& modem,
                                cuttlefish::SharedFD server)
     : modem_(modem), server_(server) {
   if (!cuttlefish::SharedFD::Pipe(&read_pipe_, &write_pipe_)) {
@@ -102,7 +103,7 @@ void ChannelMonitor::AcceptIncomingConnection() {
     clients_.push_back(std::move(client));
     if (clients_.size() == 1) {
       // The first connected client default to be the unsolicited commands channel
-      modem_->OnFirstClientConnected();
+      modem_.OnFirstClientConnected();
     }
   }
 }
@@ -145,7 +146,7 @@ void ChannelMonitor::ReadCommand(Client& client) {
   // Split into commands and dispatch
   size_t pos = 0, r_pos = 0;  // '\r' or '\n'
   while (r_pos != std::string::npos) {
-    if (modem_->IsWaitingSmsPdu()) {
+    if (modem_.IsWaitingSmsPdu()) {
       r_pos = commands.find('\032', pos);  // In sms, find ctrl-z
     } else {
       r_pos = commands.find('\r', pos);
@@ -154,7 +155,7 @@ void ChannelMonitor::ReadCommand(Client& client) {
       auto command = commands.substr(pos, r_pos - pos);
       if (command.size() > 0) {  // "\r\r" ?
         LOG(VERBOSE) << "AT> " << command;
-        modem_->DispatchCommand(client, command);
+        modem_.DispatchCommand(client, command);
       }
       pos = r_pos + 1;  // Skip '\r'
     } else if (pos < commands.length()) {  // Incomplete command
