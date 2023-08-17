@@ -13,9 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma once
+
+#include <chrono>
+
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
+
+inline constexpr char kDefaultApiKey[] = "";
+inline constexpr char kDefaultCredentialSource[] = "";
+inline constexpr std::chrono::seconds kDefaultWaitRetryPeriod =
+    std::chrono::seconds(20);
+inline constexpr bool kDefaultExternalDnsResolver =
+#ifdef __BIONIC__
+    true;
+#else
+    false;
+#endif
+inline constexpr char kDefaultBuildString[] = "";
+inline constexpr bool kDefaultDownloadImgZip = true;
+inline constexpr bool kDefaultDownloadTargetFilesZip = false;
+inline constexpr char kDefaultTargetDirectory[] = "";
+inline constexpr bool kDefaultKeepDownloadedArchives = false;
 
 Result<void> FetchCvdMain(int argc, char** argv);
 }

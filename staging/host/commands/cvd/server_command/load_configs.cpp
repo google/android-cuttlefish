@@ -17,7 +17,6 @@
 
 #include <iostream>
 #include <mutex>
-#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -31,7 +30,6 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/parser/fetch_cvd_parser.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_client.h"
@@ -39,119 +37,6 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
-namespace {
-
-std::optional<std::string> JoinBySelectorOptional(
-    const std::vector<FetchCvdInstanceConfig>& collection,
-    const std::function<std::string(const FetchCvdInstanceConfig&)>& selector) {
-  std::vector<std::string> selected;
-  selected.reserve(collection.size());
-  for (const auto& instance : collection) {
-    selected.emplace_back(selector(instance));
-  }
-  std::string result = android::base::Join(selected, ',');
-  // no values, empty or only ',' separators
-  if (result.size() == collection.size() - 1) {
-    return std::nullopt;
-  }
-  return result;
-}
-
-void AddFetchCommandArgs(
-    cvd::CommandRequest& command, const FetchCvdConfig& config,
-    const std::vector<FetchCvdInstanceConfig>& fetch_instances,
-    const LoadDirectories& load_directories) {
-  command.add_args("cvd");
-  command.add_args("fetch");
-  command.add_args("--target_directory=" + load_directories.target_directory);
-  if (config.api_key) {
-    command.add_args("--api_key=" + *config.api_key);
-  }
-  if (config.credential_source) {
-    command.add_args("--credential_source=" + *config.credential_source);
-  }
-  if (config.wait_retry_period) {
-    command.add_args("--wait_retry_period=" + *config.wait_retry_period);
-  }
-  if (config.external_dns_resolver) {
-    command.add_args("--external_dns_resolver=" +
-                     *config.external_dns_resolver);
-  }
-  if (config.keep_downloaded_archives) {
-    command.add_args("--keep_downloaded_archives=" +
-                     *config.keep_downloaded_archives);
-  }
-
-  command.add_args(
-      "--target_subdirectory=" +
-      android::base::Join(load_directories.target_subdirectories, ','));
-  std::optional<std::string> default_build_params =
-      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
-        return instance_config.default_build.value_or("");
-      });
-  if (default_build_params) {
-    command.add_args("--default_build=" + *default_build_params);
-  }
-  std::optional<std::string> system_build_params =
-      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
-        return instance_config.system_build.value_or("");
-      });
-  if (system_build_params) {
-    command.add_args("--system_build=" + *system_build_params);
-  }
-  std::optional<std::string> kernel_build_params =
-      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
-        return instance_config.kernel_build.value_or("");
-      });
-  if (kernel_build_params) {
-    command.add_args("--kernel_build=" + *kernel_build_params);
-  }
-  std::optional<std::string> boot_build_params =
-      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
-        return instance_config.boot_build.value_or("");
-      });
-  if (boot_build_params) {
-    command.add_args("--boot_build=" + *boot_build_params);
-  }
-  std::optional<std::string> bootloader_build_params =
-      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
-        return instance_config.bootloader_build.value_or("");
-      });
-  if (bootloader_build_params) {
-    command.add_args("--bootloader_build=" + *bootloader_build_params);
-  }
-  std::optional<std::string> otatools_build_params =
-      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
-        return instance_config.otatools_build.value_or("");
-      });
-  if (otatools_build_params) {
-    command.add_args("--otatools_build=" + *otatools_build_params);
-  }
-  std::optional<std::string> host_package_build_params =
-      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
-        return instance_config.host_package_build.value_or("");
-      });
-  if (host_package_build_params) {
-    command.add_args("--host_package_build=" + *host_package_build_params);
-  }
-  std::optional<std::string> download_img_zip_params =
-      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
-        return instance_config.download_img_zip.value_or("");
-      });
-  if (download_img_zip_params) {
-    command.add_args("--download_img_zip=" + *download_img_zip_params);
-  }
-  std::optional<std::string> download_target_files_zip_params =
-      JoinBySelectorOptional(fetch_instances, [](const auto& instance_config) {
-        return instance_config.download_target_files_zip.value_or("");
-      });
-  if (download_target_files_zip_params) {
-    command.add_args("--download_target_files_zip=" +
-                     *download_target_files_zip_params);
-  }
-}
-
-}  // namespace
 
 class LoadConfigsCommand : public CvdServerHandler {
  public:
@@ -223,22 +108,19 @@ class LoadConfigsCommand : public CvdServerHandler {
         CF_EXPECT(GetOverridedJsonConfig(config_path, overrides));
     const auto load_directories =
         CF_EXPECT(GenerateLoadDirectories(json_configs["instances"].size()));
-    auto cvd_flags =
-        CF_EXPECT(ParseCvdConfigs(json_configs), "parsing json configs failed");
+    auto cvd_flags = CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
+                               "parsing json configs failed");
     std::vector<cvd::Request> req_protos;
     const auto& client_env = request.Message().command_request().env();
 
-    std::vector<FetchCvdInstanceConfig> fetch_instances;
-    for (const auto& instance : cvd_flags.fetch_cvd_flags.instances) {
-      if (instance.should_fetch) {
-        fetch_instances.emplace_back(instance);
-      }
-    }
-    if (fetch_instances.size() > 0) {
+    if (!cvd_flags.fetch_cvd_flags.empty()) {
       auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
       *fetch_cmd.mutable_env() = client_env;
-      AddFetchCommandArgs(fetch_cmd, cvd_flags.fetch_cvd_flags, fetch_instances,
-                          load_directories);
+      fetch_cmd.add_args("cvd");
+      fetch_cmd.add_args("fetch");
+      for (const auto& flag : cvd_flags.fetch_cvd_flags) {
+        fetch_cmd.add_args(flag);
+      }
     }
 
     auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
@@ -268,7 +150,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     launch_cmd.add_args("cvd");
     launch_cmd.add_args("start");
     launch_cmd.add_args("--daemon");
-    for (auto& parsed_flag : cvd_flags.launch_cvd_flags) {
+    for (const auto& parsed_flag : cvd_flags.launch_cvd_flags) {
       launch_cmd.add_args(parsed_flag);
     }
     // Add system flag for multi-build scenario
