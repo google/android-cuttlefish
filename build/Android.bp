@@ -133,6 +133,12 @@ cvd_host_tools = [
     "vulkan.pastel",
 ]
 
+cvd_host_tools_aarch64 = [
+    "aarch64_linux_gnu_crosvm",
+    "aarch64_linux_gnu_libgfxstream_backend.so_for_crosvm",
+    "aarch64_linux_gnu_libminijail.so_for_crosvm",
+]
+
 cvd_openwrt_images = [
     "openwrt_kernel_x86_64",
     "openwrt_rootfs_x86_64",
@@ -341,6 +347,7 @@ cvd_host_package_customization {
             },
         },
         arm64: {
+            deps: cvd_host_tools_aarch64,
             multilib: {
                 common: {
                     deps: cvd_host_seccomp_policy_aarch64,
