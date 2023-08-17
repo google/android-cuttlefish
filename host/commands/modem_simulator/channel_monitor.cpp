@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
 #include "host/commands/modem_simulator/modem_simulator.h"
 
@@ -28,9 +29,9 @@ namespace cuttlefish {
 
 constexpr int32_t kMaxCommandLength = 4096;
 
-Client::Client(cuttlefish::SharedFD fd) : client_fd(fd) {}
+Client::Client(SharedFD fd) : client_fd(fd) {}
 
-Client::Client(cuttlefish::SharedFD fd, ClientType client_type)
+Client::Client(SharedFD fd, ClientType client_type)
     : type(client_type), client_fd(fd) {}
 
 bool Client::operator==(const Client& other) const {
@@ -48,8 +49,8 @@ void Client::SendCommandResponse(std::string response) const {
   }
   LOG(VERBOSE) << " AT< " << response;
 
-  std::lock_guard<std::mutex> autolock(const_cast<Client*>(this)->write_mutex);
-  client_fd->Write(response.data(), response.size());
+  std::lock_guard<std::mutex> lock(write_mutex);
+  WriteAll(client_fd, response);
 }
 
 void Client::SendCommandResponse(
@@ -59,18 +60,18 @@ void Client::SendCommandResponse(
   }
 }
 
-ChannelMonitor::ChannelMonitor(ModemSimulator& modem,
-                               cuttlefish::SharedFD server)
-    : modem_(modem), server_(server) {
-  if (!cuttlefish::SharedFD::Pipe(&read_pipe_, &write_pipe_)) {
+ChannelMonitor::ChannelMonitor(ModemSimulator& modem, SharedFD server)
+    : modem_(modem), server_(std::move(server)) {
+  if (!SharedFD::Pipe(&read_pipe_, &write_pipe_)) {
     LOG(ERROR) << "Unable to create pipe, ignore";
   }
 
-  if (server_->IsOpen())
+  if (server_->IsOpen()) {
     monitor_thread_ = std::thread([this]() { MonitorLoop(); });
+  }
 }
 
-void ChannelMonitor::SetRemoteClient(cuttlefish::SharedFD client, bool is_accepted) {
+void ChannelMonitor::SetRemoteClient(SharedFD client, bool is_accepted) {
   auto remote_client = std::make_unique<Client>(client, Client::REMOTE);
 
   if (is_accepted) {
@@ -94,7 +95,7 @@ void ChannelMonitor::SetRemoteClient(cuttlefish::SharedFD client, bool is_accept
 }
 
 void ChannelMonitor::AcceptIncomingConnection() {
-  auto client_fd  = cuttlefish::SharedFD::Accept(*server_);
+  auto client_fd = SharedFD::Accept(*server_);
   if (!client_fd->IsOpen()) {
     LOG(ERROR) << "Error accepting connection on socket: " << client_fd->StrError();
   } else {

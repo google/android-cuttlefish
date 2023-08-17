@@ -67,7 +67,7 @@ class Client {
   ClientType type = RIL;
   SharedFD client_fd;
   std::string incomplete_command;
-  std::mutex write_mutex;
+  mutable std::mutex write_mutex;
   bool first_read_command_;  // Only used when ClientType::REMOTE
   bool is_valid = true;
 };
