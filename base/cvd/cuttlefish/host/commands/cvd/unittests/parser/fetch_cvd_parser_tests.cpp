@@ -16,8 +16,8 @@
 
 #include "host/commands/cvd/parser/fetch_cvd_parser.h"
 
-#include <optional>
 #include <string>
+#include <vector>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -28,11 +28,9 @@
 #include "host/commands/cvd/parser/cf_flags_validator.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
+using ::testing::Contains;
 using ::testing::Eq;
-using ::testing::Ne;
 using ::testing::Not;
-using ::testing::SizeIs;
-using ::testing::StartsWith;
 
 namespace cuttlefish {
 namespace {
@@ -44,9 +42,11 @@ Json::Value GetTestJson(const char* raw_json) {
   return json_config;
 }
 
-Result<FetchCvdConfig> FetchCvdParserTestHelper(Json::Value& root) {
+Result<std::vector<std::string>> FetchCvdParserTestHelper(
+    Json::Value& root, const std::string& target_directory,
+    const std::vector<std::string>& target_subdirectories) {
   CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
-  return ParseFetchCvdConfigs(root);
+  return ParseFetchCvdConfigs(root, target_directory, target_subdirectories);
 }
 
 }  // namespace
@@ -87,29 +87,30 @@ TEST(FetchCvdParserTests, SingleFetch) {
   )"""";
   Json::Value json_config = GetTestJson(raw_json);
 
-  auto result_config = FetchCvdParserTestHelper(json_config);
+  auto result_flags = FetchCvdParserTestHelper(json_config, "/target", {"0"});
+  ASSERT_THAT(result_flags, IsOk())
+      << "Parsing config failed:  " << result_flags.error().Trace();
 
-  ASSERT_THAT(result_config, IsOk())
-      << "Parsing config failed:  " << result_config.error().Trace();
-  const auto top_level_config = result_config.value();
-  EXPECT_THAT(top_level_config.wait_retry_period, Ne(std::nullopt));
-  EXPECT_THAT(top_level_config.keep_downloaded_archives, Ne(std::nullopt));
-
-  ASSERT_THAT(top_level_config.instances, SizeIs(1));
-  const auto instance_config = *top_level_config.instances.cbegin();
-  EXPECT_THAT(instance_config.default_build,
-              AllOf(Ne(std::nullopt), Not(Optional(StartsWith("@ab/")))));
-  EXPECT_THAT(instance_config.download_img_zip, Ne(std::nullopt));
-  EXPECT_THAT(instance_config.otatools_build,
-              AllOf(Ne(std::nullopt), Not(Optional(StartsWith("@ab/")))));
-  EXPECT_THAT(instance_config.host_package_build,
-              AllOf(Ne(std::nullopt), Not(Optional(StartsWith("@ab/")))));
-  EXPECT_THAT(instance_config.boot_build,
-              AllOf(Ne(std::nullopt), Not(Optional(StartsWith("@ab/")))));
-  EXPECT_THAT(instance_config.kernel_build,
-              AllOf(Ne(std::nullopt), Not(Optional(StartsWith("@ab/")))));
-  EXPECT_THAT(instance_config.bootloader_build,
-              AllOf(Ne(std::nullopt), Not(Optional(StartsWith("@ab/")))));
+  const auto flags = result_flags.value();
+  EXPECT_THAT(flags, Contains("--wait_retry_period=20"));
+  EXPECT_THAT(flags, Contains("--keep_downloaded_archives=false"));
+  EXPECT_THAT(flags, Contains("--target_directory=/target"));
+  EXPECT_THAT(flags, Contains("--target_subdirectory=0"));
+  EXPECT_THAT(flags,
+              Contains("--default_build=git_master/cf_x86_64_phone-userdebug"));
+  EXPECT_THAT(flags, Contains("--download_img_zip=true"));
+  EXPECT_THAT(
+      flags, Contains("--otatools_build=git_master/cf_x86_64_phone-userdebug"));
+  EXPECT_THAT(
+      flags,
+      Contains("--host_package_build=git_master/cf_x86_64_phone-userdebug"));
+  EXPECT_THAT(flags,
+              Contains("--boot_build=git_master/cf_x86_64_phone-userdebug"));
+  EXPECT_THAT(flags,
+              Contains("--kernel_build=git_master/cf_x86_64_phone-userdebug"));
+  EXPECT_THAT(
+      flags,
+      Contains("--bootloader_build=git_master/cf_x86_64_phone-userdebug"));
 }
 
 TEST(FetchCvdParserTests, SingleFetchNoPrefix) {
@@ -138,20 +139,9 @@ TEST(FetchCvdParserTests, SingleFetchNoPrefix) {
   )"""";
   Json::Value json_config = GetTestJson(raw_json);
 
-  auto result_config = FetchCvdParserTestHelper(json_config);
-
-  ASSERT_THAT(result_config, IsOk())
-      << "Parsing config failed:  " << result_config.error().Trace();
-  const auto top_level_config = result_config.value();
-
-  ASSERT_THAT(top_level_config.instances, SizeIs(1));
-  const auto instance_config = *top_level_config.instances.cbegin();
-  EXPECT_THAT(instance_config.default_build, Eq(std::nullopt));
-  EXPECT_THAT(instance_config.otatools_build, Eq(std::nullopt));
-  EXPECT_THAT(instance_config.host_package_build, Eq(std::nullopt));
-  EXPECT_THAT(instance_config.boot_build, Eq(std::nullopt));
-  EXPECT_THAT(instance_config.kernel_build, Eq(std::nullopt));
-  EXPECT_THAT(instance_config.bootloader_build, Eq(std::nullopt));
+  auto result_flags = FetchCvdParserTestHelper(json_config, "/target", {"0"});
+  ASSERT_THAT(result_flags, IsOk())
+      << "Parsing config failed:  " << result_flags.error().Trace();
 }
 
 TEST(FetchCvdParserTests, MultiFetch) {
@@ -202,34 +192,34 @@ TEST(FetchCvdParserTests, MultiFetch) {
   )"""";
   Json::Value json_config = GetTestJson(raw_json);
 
-  auto result_config = FetchCvdParserTestHelper(json_config);
+  auto result_flags =
+      FetchCvdParserTestHelper(json_config, "/target", {"0", "1"});
+  ASSERT_THAT(result_flags, IsOk())
+      << "Parsing config failed:  " << result_flags.error().Trace();
 
-  ASSERT_THAT(result_config, IsOk())
-      << "Parsing config failed:  " << result_config.error().Trace();
-  const auto top_level_config = result_config.value();
-  EXPECT_THAT(top_level_config.wait_retry_period, Ne(std::nullopt));
-  EXPECT_THAT(top_level_config.keep_downloaded_archives, Ne(std::nullopt));
-
-  ASSERT_THAT(top_level_config.instances, SizeIs(2));
-  auto config_iterator = top_level_config.instances.cbegin();
-  const auto phone_config = *config_iterator;
-  EXPECT_THAT(phone_config.default_build, Ne(std::nullopt));
-  EXPECT_THAT(phone_config.download_img_zip, Ne(std::nullopt));
-  EXPECT_THAT(phone_config.otatools_build, Ne(std::nullopt));
-  EXPECT_THAT(phone_config.host_package_build, Ne(std::nullopt));
-  EXPECT_THAT(phone_config.boot_build, Ne(std::nullopt));
-  EXPECT_THAT(phone_config.kernel_build, Ne(std::nullopt));
-  EXPECT_THAT(phone_config.bootloader_build, Ne(std::nullopt));
-
-  ++config_iterator;
-  const auto wearable_config = *config_iterator;
-  EXPECT_THAT(wearable_config.default_build, Ne(std::nullopt));
-  EXPECT_THAT(wearable_config.download_img_zip, Ne(std::nullopt));
-  EXPECT_THAT(wearable_config.otatools_build, Eq(std::nullopt));
-  EXPECT_THAT(wearable_config.host_package_build, Eq(std::nullopt));
-  EXPECT_THAT(wearable_config.boot_build, Eq(std::nullopt));
-  EXPECT_THAT(wearable_config.kernel_build, Eq(std::nullopt));
-  EXPECT_THAT(wearable_config.bootloader_build, Eq(std::nullopt));
+  const auto flags = result_flags.value();
+  EXPECT_THAT(flags, Contains("--wait_retry_period=20"));
+  EXPECT_THAT(flags, Contains("--keep_downloaded_archives=false"));
+  EXPECT_THAT(flags, Contains("--target_directory=/target"));
+  EXPECT_THAT(flags, Contains("--target_subdirectory=0,1"));
+  EXPECT_THAT(
+      flags,
+      Contains("--default_build=git_master/"
+               "cf_x86_64_phone-userdebug,git_master/cf_gwear_x86-userdebug"));
+  EXPECT_THAT(flags, Contains("--download_img_zip=true,true"));
+  EXPECT_THAT(
+      flags,
+      Contains("--otatools_build=git_master/cf_x86_64_phone-userdebug,"));
+  EXPECT_THAT(
+      flags,
+      Contains("--host_package_build=git_master/cf_x86_64_phone-userdebug,"));
+  EXPECT_THAT(flags,
+              Contains("--boot_build=git_master/cf_x86_64_phone-userdebug,"));
+  EXPECT_THAT(flags,
+              Contains("--kernel_build=git_master/cf_x86_64_phone-userdebug,"));
+  EXPECT_THAT(
+      flags,
+      Contains("--bootloader_build=git_master/cf_x86_64_phone-userdebug,"));
 }
 
 }  // namespace cuttlefish

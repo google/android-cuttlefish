@@ -208,10 +208,13 @@ Result<LoadDirectories> GenerateLoadDirectories(const int num_instances) {
   return result;
 }
 
-Result<CvdFlags> ParseCvdConfigs(Json::Value& root) {
+Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
+                                 const LoadDirectories& load_directories) {
   CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
   return CvdFlags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(root)),
-                  .fetch_cvd_flags = CF_EXPECT(ParseFetchCvdConfigs(root))};
+                  .fetch_cvd_flags = CF_EXPECT(ParseFetchCvdConfigs(
+                      root, load_directories.target_directory,
+                      load_directories.target_subdirectories))};
 }
 
 }  // namespace cuttlefish
