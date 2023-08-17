@@ -28,7 +28,7 @@ namespace cuttlefish {
 
 typedef struct _CvdFlags {
   std::vector<std::string> launch_cvd_flags;
-  FetchCvdConfig fetch_cvd_flags;
+  std::vector<std::string> fetch_cvd_flags;
 } CvdFlags;
 
 struct LoadDirectories {
@@ -47,6 +47,7 @@ Result<Json::Value> GetOverridedJsonConfig(
 
 Result<LoadDirectories> GenerateLoadDirectories(const int num_instances);
 
-Result<CvdFlags> ParseCvdConfigs(Json::Value& root);
+Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
+                                 const LoadDirectories& load_directories);
 
 };  // namespace cuttlefish

@@ -30,6 +30,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <curl/curl.h>
 #include <gflags/gflags.h>
@@ -57,7 +58,6 @@ const std::string OTA_TOOLS = "otatools.zip";
 const std::string OTA_TOOLS_DIR = "/otatools/";
 const std::string DEFAULT_DIR = "/default";
 const std::string SYSTEM_DIR = "/system";
-const int DEFAULT_RETRY_PERIOD = 20;
 const std::string USAGE_MESSAGE =
     "<flags>\n"
     "\n"
@@ -70,21 +70,13 @@ const std::string USAGE_MESSAGE =
     "\"build_id\" - build \"build_id\" for \"aosp_cf_x86_phone-userdebug\"\n";
 const mode_t RWX_ALL_MODE = S_IRWXU | S_IRWXG | S_IRWXO;
 const bool OVERRIDE_ENTRIES = true;
-const bool DOWNLOAD_IMG_ZIP_DEFAULT = true;
-const bool DOWNLOAD_TARGET_FILES_ZIP_DEFAULT = false;
 const std::string LOG_FILENAME = "fetch.log";
 
 struct BuildApiFlags {
-  std::string api_key = "";
-  std::string credential_source = "";
-  std::chrono::seconds wait_retry_period =
-      std::chrono::seconds(DEFAULT_RETRY_PERIOD);
-  bool external_dns_resolver =
-#ifdef __BIONIC__
-      true;
-#else
-      false;
-#endif
+  std::string api_key = kDefaultApiKey;
+  std::string credential_source = kDefaultCredentialSource;
+  std::chrono::seconds wait_retry_period = kDefaultWaitRetryPeriod;
+  bool external_dns_resolver = kDefaultExternalDnsResolver;
 };
 
 struct VectorFlags {
@@ -117,9 +109,9 @@ struct DownloadFlags {
 };
 
 struct FetchFlags {
-  std::string target_directory = "";
+  std::string target_directory = kDefaultTargetDirectory;
   std::vector<std::string> target_subdirectory;
-  bool keep_downloaded_archives = false;
+  bool keep_downloaded_archives = kDefaultKeepDownloadedArchives;
   android::base::LogSeverity verbosity = android::base::INFO;
   bool helpxml = false;
   BuildApiFlags build_api_flags;
@@ -144,9 +136,22 @@ struct TargetDirectories {
   std::string system_target_files;
 };
 
+Flag GflagsCompatFlagSeconds(const std::string& name,
+                             std::chrono::seconds& value) {
+  return GflagsCompatFlag(name)
+      .Getter([&value]() { return std::to_string(value.count()); })
+      .Setter([&value](const FlagMatch& match) -> Result<void> {
+        int parsed_int;
+        CF_EXPECTF(android::base::ParseInt(match.value, &parsed_int),
+                   "Failed to parse \"{}\" as an integer", match.value);
+        value = std::chrono::seconds(parsed_int);
+        return {};
+      });
+}
+
 std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                                  BuildApiFlags& build_api_flags,
-                                 VectorFlags& vector_flags, int& retry_period,
+                                 VectorFlags& vector_flags,
                                  std::string& directory) {
   std::vector<Flag> flags;
   flags.emplace_back(
@@ -172,7 +177,8 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(
       GflagsCompatFlag("credential_source", build_api_flags.credential_source)
           .Help("Build API credential source"));
-  flags.emplace_back(GflagsCompatFlag("wait_retry_period", retry_period)
+  flags.emplace_back(GflagsCompatFlagSeconds("wait_retry_period",
+                                             build_api_flags.wait_retry_period)
                          .Help("Retry period for pending builds given in "
                                "seconds. Set to 0 to not wait."));
   flags.emplace_back(
@@ -204,12 +210,12 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
           .Help("name of the boot image in boot_build"));
   flags.emplace_back(GflagsCompatFlag("download_img_zip",
                                       vector_flags.download_img_zip,
-                                      DOWNLOAD_IMG_ZIP_DEFAULT)
+                                      kDefaultDownloadImgZip)
                          .Help("Whether to fetch the -img-*.zip file."));
   flags.emplace_back(
       GflagsCompatFlag("download_target_files_zip",
                        vector_flags.download_target_files_zip,
-                       DOWNLOAD_TARGET_FILES_ZIP_DEFAULT)
+                       kDefaultDownloadTargetFilesZip)
           .Help("Whether to fetch the -target_files-*.zip file."));
 
   flags.emplace_back(HelpFlag(flags, USAGE_MESSAGE));
@@ -264,26 +270,28 @@ MapToBuildTargetFlags(const VectorFlags& flags, const int num_builds) {
       num_builds);
   for (int i = 0; i < result.size(); ++i) {
     auto build_source = BuildSourceFlags{
-        .default_build =
-            AccessOrDefault<std::string>(flags.default_build, i, ""),
-        .system_build = AccessOrDefault<std::string>(flags.system_build, i, ""),
-        .kernel_build = AccessOrDefault<std::string>(flags.kernel_build, i, ""),
-        .boot_build = AccessOrDefault<std::string>(flags.boot_build, i, ""),
-        .bootloader_build =
-            AccessOrDefault<std::string>(flags.bootloader_build, i, ""),
-        .otatools_build =
-            AccessOrDefault<std::string>(flags.otatools_build, i, ""),
-        .host_package_build =
-            AccessOrDefault<std::string>(flags.host_package_build, i, ""),
+        .default_build = AccessOrDefault<std::string>(flags.default_build, i,
+                                                      kDefaultBuildString),
+        .system_build = AccessOrDefault<std::string>(flags.system_build, i,
+                                                     kDefaultBuildString),
+        .kernel_build = AccessOrDefault<std::string>(flags.kernel_build, i,
+                                                     kDefaultBuildString),
+        .boot_build = AccessOrDefault<std::string>(flags.boot_build, i,
+                                                   kDefaultBuildString),
+        .bootloader_build = AccessOrDefault<std::string>(
+            flags.bootloader_build, i, kDefaultBuildString),
+        .otatools_build = AccessOrDefault<std::string>(flags.otatools_build, i,
+                                                       kDefaultBuildString),
+        .host_package_build = AccessOrDefault<std::string>(
+            flags.host_package_build, i, kDefaultBuildString),
     };
     auto download = DownloadFlags{
         .boot_artifact =
             AccessOrDefault<std::string>(flags.boot_artifact, i, ""),
         .download_img_zip = AccessOrDefault<bool>(flags.download_img_zip, i,
-                                                  DOWNLOAD_IMG_ZIP_DEFAULT),
-        .download_target_files_zip =
-            AccessOrDefault<bool>(flags.download_target_files_zip, i,
-                                  DOWNLOAD_TARGET_FILES_ZIP_DEFAULT),
+                                                  kDefaultDownloadImgZip),
+        .download_target_files_zip = AccessOrDefault<bool>(
+            flags.download_target_files_zip, i, kDefaultDownloadTargetFilesZip),
     };
     result[i] = {build_source, download, i};
   }
@@ -294,22 +302,20 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   FetchFlags fetch_flags;
   BuildApiFlags build_api_flags;
   VectorFlags vector_flags;
-  int retry_period = DEFAULT_RETRY_PERIOD;
-  std::string directory = "";
+  std::string directory;
 
-  std::vector<Flag> flags = GetFlagsVector(
-      fetch_flags, build_api_flags, vector_flags, retry_period, directory);
+  std::vector<Flag> flags =
+      GetFlagsVector(fetch_flags, build_api_flags, vector_flags, directory);
   std::vector<std::string> args = ArgsToVec(argc - 1, argv + 1);
   CF_EXPECT(ParseFlags(flags, args), "Could not process command line flags.");
 
-  build_api_flags.wait_retry_period = std::chrono::seconds(retry_period);
-  if (directory != "") {
+  if (!directory.empty()) {
     LOG(ERROR) << "Please use --target_directory instead of --directory";
-    if (fetch_flags.target_directory == "") {
+    if (fetch_flags.target_directory.empty()) {
       fetch_flags.target_directory = directory;
     }
   } else {
-    if (fetch_flags.target_directory == "") {
+    if (fetch_flags.target_directory.empty()) {
       fetch_flags.target_directory = CurrentDirectory();
     }
   }
