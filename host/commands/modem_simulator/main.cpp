@@ -33,7 +33,10 @@
 DEFINE_string(server_fds, "", "A comma separated list of file descriptors");
 DEFINE_int32(sim_type, 1, "Sim type: 1 for normal, 2 for CtsCarrierApiTestCases");
 
-std::vector<cuttlefish::SharedFD> ServerFdsFromCmdline() {
+namespace cuttlefish {
+namespace {
+
+std::vector<SharedFD> ServerFdsFromCmdline() {
   // Validate the parameter
   std::string fd_list = FLAGS_server_fds;
   for (auto c: fd_list) {
@@ -44,10 +47,10 @@ std::vector<cuttlefish::SharedFD> ServerFdsFromCmdline() {
   }
 
   auto fds = android::base::Split(fd_list, ",");
-  std::vector<cuttlefish::SharedFD> shared_fds;
+  std::vector<SharedFD> shared_fds;
   for (auto& fd_str: fds) {
     auto fd = std::stoi(fd_str);
-    auto shared_fd = cuttlefish::SharedFD::Dup(fd);
+    auto shared_fd = SharedFD::Dup(fd);
     close(fd);
     shared_fds.push_back(shared_fd);
   }
@@ -55,12 +58,12 @@ std::vector<cuttlefish::SharedFD> ServerFdsFromCmdline() {
   return shared_fds;
 }
 
-int main(int argc, char** argv) {
+int ModemSimulatorMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, false);
 
   // Modem simulator log saved in cuttlefish_runtime
-  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto config = CuttlefishConfig::Get();
   auto instance = config->ForDefaultInstance();
 
   auto modem_log_path = instance.PerInstanceLogPath("modem_simulator.log");
@@ -68,7 +71,7 @@ int main(int argc, char** argv) {
   {
     auto log_path = instance.launcher_log_path();
     std::vector<std::string> log_files{log_path, modem_log_path};
-    android::base::SetLogger(cuttlefish::LogToStderrAndFiles(log_files));
+    android::base::SetLogger(LogToStderrAndFiles(log_files));
   }
 
   LOG(INFO) << "Start modem simulator, server_fds: " << FLAGS_server_fds
@@ -81,28 +84,27 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  cuttlefish::NvramConfig::InitNvramConfigService(server_fds.size(), FLAGS_sim_type);
+  NvramConfig::InitNvramConfigService(server_fds.size(), FLAGS_sim_type);
 
   // Don't get a SIGPIPE from the clients
   if (sigaction(SIGPIPE, nullptr, nullptr) != 0) {
     LOG(ERROR) << "Failed to set SIGPIPE to be ignored: " << strerror(errno);
   }
 
-  auto nvram_config = cuttlefish::NvramConfig::Get();
+  auto nvram_config = NvramConfig::Get();
   auto nvram_config_file = nvram_config->ConfigFileLocation();
 
   // Start channel monitor, wait for RIL to connect
   int32_t modem_id = 0;
-  std::vector<std::unique_ptr<cuttlefish::ModemSimulator>> modem_simulators;
+  std::vector<std::unique_ptr<ModemSimulator>> modem_simulators;
 
   for (auto& fd : server_fds) {
     CHECK(fd->IsOpen()) << "Error creating or inheriting modem simulator server: "
         << fd->StrError();
 
-    auto modem_simulator =
-        std::make_unique<cuttlefish::ModemSimulator>(modem_id);
-    auto channel_monitor = std::make_unique<cuttlefish::ChannelMonitor>(
-        *modem_simulator.get(), fd);
+    auto modem_simulator = std::make_unique<ModemSimulator>(modem_id);
+    auto channel_monitor =
+        std::make_unique<ChannelMonitor>(*modem_simulator.get(), fd);
 
     modem_simulator->Initialize(std::move(channel_monitor));
 
@@ -116,24 +118,24 @@ int main(int argc, char** argv) {
   std::string monitor_socket_name =
       fmt::format("modem_simulator{}", instance.modem_simulator_host_id());
 
-  auto monitor_socket = cuttlefish::SharedFD::SocketLocalServer(
-      monitor_socket_name.c_str(), true, SOCK_STREAM, 0666);
+  auto monitor_socket = SharedFD::SocketLocalServer(monitor_socket_name.c_str(),
+                                                    true, SOCK_STREAM, 0666);
   if (!monitor_socket->IsOpen()) {
     LOG(ERROR) << "Unable to create monitor socket for modem simulator";
-    std::exit(cuttlefish::kServerError);
+    std::exit(kServerError);
   }
 
   // Server loop
   while (true) {
-    cuttlefish::SharedFDSet read_set;
+    SharedFDSet read_set;
     read_set.Set(monitor_socket);
-    int num_fds = cuttlefish::Select(&read_set, nullptr, nullptr, nullptr);
+    int num_fds = Select(&read_set, nullptr, nullptr, nullptr);
     if (num_fds <= 0) {  // Ignore select error
       LOG(ERROR) << "Select call returned error : " << strerror(errno);
     } else if (read_set.IsSet(monitor_socket)) {
-      auto conn = cuttlefish::SharedFD::Accept(*monitor_socket);
+      auto conn = SharedFD::Accept(*monitor_socket);
       std::string buf(4, ' ');
-      auto read = cuttlefish::ReadExact(conn, &buf);
+      auto read = ReadExact(conn, &buf);
       if (read <= 0) {
         conn->Close();
         LOG(WARNING) << "Detected close from the other side";
@@ -145,8 +147,8 @@ int main(int argc, char** argv) {
         for (auto& modem : modem_simulators) {
           modem->SaveModemState();
         }
-        cuttlefish::WriteAll(conn, "OK"); // Ignore the return value. Exit anyway.
-        std::exit(cuttlefish::kSuccess);
+        WriteAll(conn, "OK");  // Ignore the return value. Exit anyway.
+        std::exit(kSuccess);
       } else if (buf.compare(0, 3, "REM") == 0) {  // REMO for modem id 0 ...
         // Remote request from other cuttlefish instance
         int id = std::stoi(buf.substr(3, 1));
@@ -159,4 +161,11 @@ int main(int argc, char** argv) {
     }
   }
   // Until kill or exit
+}
+
+}  // namespace
+}  // namespace cuttlefish
+
+int main(int argc, char** argv) {
+  return cuttlefish::ModemSimulatorMain(argc, argv);
 }
