@@ -130,22 +130,16 @@ umount /media
 EOF
 chmod a+x "${workdir}"/install.sh
 
-cat >"${workdir}"/installer.service <<EOF
-[Unit]
-Description=Installer script starter
-After=getty.target
-Conflicts=serial-getty@ttyAMA0.service
-
+cat >"${workdir}"/override-getty.conf <<EOF
 [Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/bin/bash
-StandardInput=tty-force
-StandardOutput=inherit
-StandardError=inherit
+ExecStart=
+ExecStart=-/sbin/agetty -a root --noclear tty1 \$TERM
+EOF
 
-[Install]
-WantedBy=graphical.target
+cat >"${workdir}"/override-serial-getty.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty -a root --keep-baud 115200,57600,38400,9600 ttyAMA0 \$TERM
 EOF
 
 # Back up the GPT so we can restore it when installing
@@ -218,8 +212,10 @@ sudo cp "${workdir}"/rootfs.tar.xz "${workdir}"/install.sh "${mount}"/root
 echo -n "${rootfs_uuid}" | sudo tee "${mount}"/root/rootfs_uuid >/dev/null
 sudo cp "${workdir}"/eltorito.img "${mount}"/boot/grub
 sudo cp "${workdir}"/grub.cfg "${mount}"/boot/grub/${grub_arch}/grub.cfg
-sudo cp "${workdir}"/installer.service "${mount}"/usr/lib/systemd/system/installer.service
-sudo ln -f -r -s "${mount}"/usr/lib/systemd/system/installer.service "${mount}"/usr/lib/systemd/system/getty.target.wants/installer.service
+sudo mkdir -p "${mount}"/etc/systemd/system/getty@tty1.service.d
+sudo cp "${workdir}"/override-getty.conf "${mount}"/etc/systemd/system/getty@tty1.service.d/override.conf
+sudo mkdir -p "${mount}"/etc/systemd/system/serial-getty@ttyAMA0.service.d
+sudo cp "${workdir}"/override-serial-getty.conf "${mount}"/etc/systemd/system/serial-getty@ttyAMA0.service.d/override.conf
 sudo chown root:root \
   "${mount}"/root/esp.img "${mount}"/root/gpt.img \
   "${mount}"/boot/grub/eltorito.img \
