@@ -264,7 +264,7 @@ PRODUCT_PACKAGES += \
 # Authsecret AIDL HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.authsecret-service.example
+    com.android.hardware.authsecret
 
 #
 # Audio HAL
