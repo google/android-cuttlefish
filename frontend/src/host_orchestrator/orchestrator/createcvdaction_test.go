@@ -176,7 +176,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
 	goldenPrefixFmt := fmt.Sprintf("sudo -u fakecvduser HOME=%[1]s/runtimes "+
-		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
+		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s "+"%[1]s/cvd -group_name %%[2]s -instance_name %%[3]s start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s/artifacts/%%[1]s", dir)
 	tests := []struct {
 		name string
@@ -193,7 +193,10 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 				},
 			},
 			exp: fmt.Sprintf(goldenPrefixFmt,
-				fmt.Sprintf("%s_%s__cvd", fakeLatesGreenBuildID, mainBuildDefaultTarget)),
+				fmt.Sprintf("%s_%s__cvd", fakeLatesGreenBuildID, mainBuildDefaultTarget),
+				"default",
+				"cvd-1",
+			),
 		},
 		{
 			name: "android ci build specific main build",
@@ -209,7 +212,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 					},
 				},
 			},
-			exp: fmt.Sprintf(goldenPrefixFmt, "1_foo__cvd"),
+			exp: fmt.Sprintf(goldenPrefixFmt, "1_foo__cvd", "default", "cvd-1"),
 		},
 		{
 			name: "android ci build specific kernel build",
@@ -229,7 +232,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 					},
 				},
 			},
-			exp: fmt.Sprintf(goldenPrefixFmt, "1_foo__cvd") +
+			exp: fmt.Sprintf(goldenPrefixFmt, "1_foo__cvd", "default", "cvd-1") +
 				" --kernel_path=" + dir + "/artifacts/137_bar__kernel/bzImage" +
 				" --initramfs_path=" + dir + "/artifacts/137_bar__kernel/initramfs.img",
 		},
@@ -251,7 +254,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 					},
 				},
 			},
-			exp: fmt.Sprintf(goldenPrefixFmt, "1_foo__cvd") +
+			exp: fmt.Sprintf(goldenPrefixFmt, "1_foo__cvd", "default", "cvd-1") +
 				" --bootloader=" + dir + "/artifacts/137_bar__bootloader/u-boot.rom",
 		},
 		{
@@ -272,7 +275,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 					},
 				},
 			},
-			exp: fmt.Sprintf(goldenPrefixFmt, fakeUUID+"__custom_cvd"),
+			exp: fmt.Sprintf(goldenPrefixFmt, fakeUUID+"__custom_cvd", "default", "cvd-1"),
 		},
 	}
 	for _, tc := range tests {
@@ -340,7 +343,7 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 	tarContent, _ := ioutil.ReadFile(getTestTarFilename())
 	ioutil.WriteFile(dir+"/"+CVDHostPackageName, tarContent, 0755)
 	expected := fmt.Sprintf("sudo -u fakecvduser HOME=%[1]s/runtimes "+
-		"ANDROID_HOST_OUT=%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
+		"ANDROID_HOST_OUT=%[1]s "+"%[1]s/cvd -group_name default -instance_name cvd-1 start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s", dir)
 	var usedCmdName string
 	var usedCmdArgs []string
