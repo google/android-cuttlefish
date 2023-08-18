@@ -26,6 +26,6 @@ namespace cuttlefish {
 
 fruit::Component<
     fruit::Required<InstanceManager, SubprocessWaiter, HostToolTargetManager>>
-CvdSuspendResumeComponent();
+CvdSnapshotComponent();
 
 }  // namespace cuttlefish
