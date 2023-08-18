@@ -51,7 +51,6 @@ cc_library_host_static {
         "subprocess_waiter.cpp",
 	"try_acloud.cpp",
         "version.cpp",
-        "vm_control.cpp",
     ],
     static_libs: [
         "libcvd_acloud",
