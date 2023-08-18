@@ -87,10 +87,12 @@ type AndroidCIBundle struct {
 }
 
 type CreateCVDRequest struct {
+	GroupName string `json:"group_name,omitempty"`
 	// REQUIRED.
 	CVD *CVD `json:"cvd"`
 	// Use to create multiple homogeneous instances.
-	AdditionalInstancesNum uint32 `json:"additional_instances_num,omitempty"`
+	AdditionalInstancesNum uint32   `json:"additional_instances_num,omitempty"`
+	InstanceNames          []string `json:"instance_names,omitempty"`
 }
 
 type CreateCVDResponse struct {

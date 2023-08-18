@@ -43,8 +43,18 @@ type Validator interface {
 
 type EmptyFieldError string
 
+type InvalidValueError struct {
+	field string
+	value string
+	msg   string
+}
+
 func (s EmptyFieldError) Error() string {
 	return fmt.Sprintf("field %v is empty", string(s))
+}
+
+func (e InvalidValueError) Error() string {
+	return fmt.Sprintf("field %v cannot be value of %v (%v)", string(e.field), string(e.value), e.msg)
 }
 
 type AndroidBuild struct {
@@ -355,7 +365,6 @@ const (
 	daemonArg = "--daemon"
 	// TODO(b/242599859): Add report_anonymous_usage_stats as a parameter to the Create CVD API.
 	reportAnonymousUsageStatsArg = "--report_anonymous_usage_stats=y"
-	groupNameArg                 = "--group_name=cvd"
 )
 
 type startCVDHandler struct {
@@ -365,7 +374,8 @@ type startCVDHandler struct {
 }
 
 type startCVDParams struct {
-	InstanceNumbers  []uint32
+	GroupName        string
+	InstanceNames    []string
 	MainArtifactsDir string
 	RuntimeDir       string
 	// OPTIONAL. If set, kernel relevant artifacts will be pulled from this dir.
@@ -375,17 +385,8 @@ type startCVDParams struct {
 }
 
 func (h *startCVDHandler) Start(p startCVDParams) error {
-	args := []string{groupNameArg, "start", daemonArg, reportAnonymousUsageStatsArg}
-	if len(p.InstanceNumbers) == 1 {
-		// Use legacy `--base_instance_num` when multi-vd is not requested.
-		args = append(args, fmt.Sprintf("--base_instance_num=%d", p.InstanceNumbers[0]))
-	} else {
-		args = append(args, fmt.Sprintf("--num_instances=%s", strings.Join(SliceItoa(p.InstanceNumbers), ",")))
-	}
+	args := []string{"-group_name", p.GroupName, "-instance_name", strings.Join(p.InstanceNames, ","), "start", daemonArg, reportAnonymousUsageStatsArg, "--base_instance_num=1"}
 	args = append(args, fmt.Sprintf("--system_image_dir=%s", p.MainArtifactsDir))
-	if len(p.InstanceNumbers) > 1 {
-		args = append(args, fmt.Sprintf("--num_instances=%d", len(p.InstanceNumbers)))
-	}
 	if p.KernelDir != "" {
 		args = append(args, fmt.Sprintf("--kernel_path=%s/bzImage", p.KernelDir))
 		initramfs := filepath.Join(p.KernelDir, "initramfs.img")
@@ -396,11 +397,14 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 	if p.BootloaderDir != "" {
 		args = append(args, fmt.Sprintf("--bootloader=%s/u-boot.rom", p.BootloaderDir))
 	}
+
 	opts := cvd.CommandOpts{
 		AndroidHostOut: p.MainArtifactsDir,
 		Home:           p.RuntimeDir,
 		Timeout:        h.Timeout,
 	}
+
+	fmt.Println(strings.Join(args, " "))
 	cvdCmd := cvd.NewCommand(h.ExecContext, h.CVDBin, args, opts)
 	err := cvdCmd.Run()
 	if err != nil {
@@ -544,9 +548,14 @@ func SliceItoa(s []uint32) []string {
 	return result
 }
 
-func contains(s []uint32, e uint32) bool {
-	for _, a := range s {
-		if a == e {
+func numberToName(n uint32) string {
+	// instance names follow format "cvd-[NUMBER]".
+	return fmt.Sprintf("cvd-%d", n)
+}
+
+func contains(lst []string, elem string) bool {
+	for _, item := range lst {
+		if item == elem {
 			return true
 		}
 	}

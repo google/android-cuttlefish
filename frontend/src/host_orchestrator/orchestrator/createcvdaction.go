@@ -18,7 +18,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -122,14 +121,13 @@ func (a *CreateCVDAction) launchCVD(op apiv1.Operation) {
 }
 
 func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
-	instancesCount := 1 + a.req.AdditionalInstancesNum
-	var instanceNumbers []uint32
+	var instanceNames []string
 	var err error
 	switch {
 	case a.req.CVD.BuildSource.AndroidCIBuildSource != nil:
-		instanceNumbers, err = a.launchFromAndroidCI(a.req.CVD.BuildSource.AndroidCIBuildSource, instancesCount, op)
+		instanceNames, err = a.launchFromAndroidCI(a.req.CVD.BuildSource.AndroidCIBuildSource, op)
 	case a.req.CVD.BuildSource.UserBuildSource != nil:
-		instanceNumbers, err = a.launchFromUserBuild(a.req.CVD.BuildSource.UserBuildSource, instancesCount, op)
+		instanceNames, err = a.launchFromUserBuild(a.req.CVD.BuildSource.UserBuildSource, op)
 	default:
 		return &OperationResult{
 			Error: operator.NewBadRequestError(
@@ -156,11 +154,10 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 	}
 	relevant := []*cvdInstance{}
 	for _, item := range fleet {
-		n, err := strconv.Atoi(item.InstanceName)
 		if err != nil {
 			return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 		}
-		if contains(instanceNumbers, uint32(n)) {
+		if contains(instanceNames, item.InstanceName) {
 			relevant = append(relevant, item)
 		}
 	}
@@ -170,10 +167,35 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 	return &OperationResult{Value: res}
 }
 
+func (a *CreateCVDAction) getGroupName() string {
+	groupName := a.req.GroupName
+	if groupName == "" {
+		return "default"
+	}
+
+	return groupName
+}
+
+func (a *CreateCVDAction) getInstanceNames() []string {
+	instanceNames := a.req.InstanceNames
+	if instanceNames != nil {
+		return instanceNames
+	}
+
+	instancesCount := 1 + a.req.AdditionalInstancesNum
+	result := []string{}
+	for i := 0; i < int(instancesCount); i++ {
+		num := atomic.AddUint32(&a.instanceCounter, 1)
+		name := numberToName(num)
+		result = append(result, name)
+	}
+	return result
+}
+
 const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 
 func (a *CreateCVDAction) launchFromAndroidCI(
-	buildSource *apiv1.AndroidCIBuildSource, instancesCount uint32, op apiv1.Operation) ([]uint32, error) {
+	buildSource *apiv1.AndroidCIBuildSource, op apiv1.Operation) ([]string, error) {
 	var mainBuild *apiv1.AndroidCIBuild = defaultMainBuild()
 	var kernelBuild *apiv1.AndroidCIBuild
 	var bootloaderBuild *apiv1.AndroidCIBuild
@@ -240,7 +262,8 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 		return nil, merr
 	}
 	startParams := startCVDParams{
-		InstanceNumbers:  a.newInstanceNumbers(instancesCount),
+		GroupName:        a.getGroupName(),
+		InstanceNames:    a.getInstanceNames(),
 		MainArtifactsDir: mainBuildDir,
 		RuntimeDir:       a.paths.RuntimesRootDir,
 		KernelDir:        kernelBuildDir,
@@ -250,20 +273,19 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 		return nil, err
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
-	if contains(startParams.InstanceNumbers, 1) {
-		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, mainBuildDir, a.paths.RuntimesRootDir)
-	}
-	return startParams.InstanceNumbers, nil
+	go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, mainBuildDir, a.paths.RuntimesRootDir)
+	return startParams.InstanceNames, nil
 }
 
 func (a *CreateCVDAction) launchFromUserBuild(
-	buildSource *apiv1.UserBuildSource, instancesCount uint32, op apiv1.Operation) ([]uint32, error) {
+	buildSource *apiv1.UserBuildSource, op apiv1.Operation) ([]string, error) {
 	artifactsDir := a.userArtifactsDirResolver.GetDirPath(buildSource.ArtifactsDir)
 	if err := untarCVDHostPackage(artifactsDir); err != nil {
 		return nil, err
 	}
 	startParams := startCVDParams{
-		InstanceNumbers:  a.newInstanceNumbers(instancesCount),
+		GroupName:        a.getGroupName(),
+		InstanceNames:    a.getInstanceNames(),
 		MainArtifactsDir: artifactsDir,
 		RuntimeDir:       a.paths.RuntimesRootDir,
 	}
@@ -271,19 +293,8 @@ func (a *CreateCVDAction) launchFromUserBuild(
 		return nil, err
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
-	if contains(startParams.InstanceNumbers, 1) {
-		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, artifactsDir, a.paths.RuntimesRootDir)
-	}
-	return startParams.InstanceNumbers, nil
-}
-
-func (a *CreateCVDAction) newInstanceNumbers(n uint32) []uint32 {
-	result := []uint32{}
-	for i := 0; i < int(n); i++ {
-		num := atomic.AddUint32(&a.instanceCounter, 1)
-		result = append(result, num)
-	}
-	return result
+	go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, artifactsDir, a.paths.RuntimesRootDir)
+	return startParams.InstanceNames, nil
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
@@ -301,6 +312,19 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 			return EmptyFieldError("BuildSource.UserBuild.ArtifactsDir")
 		}
 	}
+
+	if r.InstanceNames != nil {
+		if len(r.InstanceNames) == 0 {
+			return InvalidValueError{field: "InstanceNames", value: "empty list"}
+		}
+
+		if r.AdditionalInstancesNum > 0 {
+			return InvalidValueError{field: "AdditionalInstancesNum", value: fmt.Sprintf("%d", r.AdditionalInstancesNum), msg: "while field InstanceNames presents"}
+		}
+
+		// TODO: instanceNames should be distinct list
+	}
+
 	return nil
 }
 
