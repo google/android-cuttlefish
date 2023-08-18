@@ -48,12 +48,16 @@ DEFINE_string(assembly_dir, CF_DEFAULTS_ASSEMBLY_DIR,
 DEFINE_string(instance_dir, CF_DEFAULTS_INSTANCE_DIR,
               "This is a directory that will hold the cuttlefish generated"
               "files, including both instance-specific and common files");
+DEFINE_string(snapshot_path, "",
+              "Path to snapshot. Must not be empty if the device is to be "
+              "restored from a snapshot");
 DEFINE_bool(resume, CF_DEFAULTS_RESUME,
             "Resume using the disk from the last session, if "
             "possible. i.e., if --noresume is passed, the disk "
             "will be reset to the state it was initially launched "
             "in. This flag is ignored if the underlying partition "
-            "images have been updated since the first launch.");
+            "images have been updated since the first launch."
+            "If the device starts from a snapshot, this will be always true.");
 
 DECLARE_bool(use_overlay);
 
@@ -434,7 +438,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   CF_EXPECT(FlagFeature::ProcessFlags(flag_features, args),
             "Failed to parse flags.");
 
-  if (help || help_str != "") {
+  if (help || !help_str.empty()) {
     LOG(WARNING) << "TODO(schuffelen): Implement `--help` for assemble_cvd.";
     LOG(WARNING) << "In the meantime, call `launch_cvd --help`";
     return 1;
@@ -444,6 +448,12 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
     }
     return 1;  // For parity with gflags
   }
+
+  // set --resume=true if --snapshot_path is not empty
+  const std::string snapshot_path(FLAGS_snapshot_path);
+  CF_EXPECT(snapshot_path.empty() || FLAGS_resume,
+            "--resume must be true when restoring from snapshot.");
+
   // TODO(schuffelen): Put in "unknown flag" guards after gflags is removed.
   // gflags either consumes all arguments that start with - or leaves all of
   // them in place, and either errors out on unknown flags or accepts any flags.
