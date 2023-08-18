@@ -33,6 +33,17 @@ enum ModemSimulatorExitCodes : int {
   kServerError = 2,
 };
 
+class ClientId {
+ public:
+  ClientId();
+
+  bool operator==(const ClientId&) const;
+
+ private:
+  static size_t next_id_;
+  size_t id_;
+};
+
 /**
  * Client object managed by ChannelMonitor, contains two types, the RIL client
  * and the remote client of other cuttlefish instance.
@@ -57,13 +68,14 @@ class Client {
   void SendCommandResponse(std::string response) const;
   void SendCommandResponse(const std::vector<std::string>& responses) const;
 
+  ClientId Id() const { return id_; }
   ClientType Type() const { return type; }
-  SharedFD Fd() const { return client_fd; }
 
  private:
   friend class ChannelMonitor;
   friend class ::ModemServiceTest;
 
+  ClientId id_;
   ClientType type = RIL;
   SharedFD client_fd;
   std::string incomplete_command;
@@ -80,9 +92,9 @@ class ChannelMonitor {
   ChannelMonitor(const ChannelMonitor&) = delete;
   ChannelMonitor& operator=(const ChannelMonitor&) = delete;
 
-  void SetRemoteClient(cuttlefish::SharedFD client,  bool is_accepted);
-  void SendRemoteCommand(cuttlefish::SharedFD client, std::string& response);
-  void CloseRemoteConnection(cuttlefish::SharedFD client);
+  ClientId SetRemoteClient(SharedFD client, bool is_accepted);
+  void SendRemoteCommand(ClientId client, std::string& response);
+  void CloseRemoteConnection(ClientId client);
 
   // For modem services to send unsolicited commands
   void SendUnsolicitedCommand(std::string& response);
