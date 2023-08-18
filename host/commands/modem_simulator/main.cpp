@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include <android-base/strings.h>
+#include <fmt/format.h>
 #include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -92,29 +93,28 @@ int main(int argc, char** argv) {
 
   // Start channel monitor, wait for RIL to connect
   int32_t modem_id = 0;
-  std::vector<std::shared_ptr<cuttlefish::ModemSimulator>> modem_simulators;
+  std::vector<std::unique_ptr<cuttlefish::ModemSimulator>> modem_simulators;
 
   for (auto& fd : server_fds) {
     CHECK(fd->IsOpen()) << "Error creating or inheriting modem simulator server: "
         << fd->StrError();
 
-    auto modem_simulator = std::make_shared<cuttlefish::ModemSimulator>(modem_id);
+    auto modem_simulator =
+        std::make_unique<cuttlefish::ModemSimulator>(modem_id);
     auto channel_monitor = std::make_unique<cuttlefish::ChannelMonitor>(
         *modem_simulator.get(), fd);
 
     modem_simulator->Initialize(std::move(channel_monitor));
 
-    modem_simulators.push_back(modem_simulator);
+    modem_simulators.emplace_back(std::move(modem_simulator));
 
     modem_id++;
   }
 
   // Monitor exit request and
   // remote call, remote sms from other cuttlefish instance
-  std::string monitor_socket_name = "modem_simulator";
-  std::stringstream ss;
-  ss << instance.modem_simulator_host_id();
-  monitor_socket_name.append(ss.str());
+  std::string monitor_socket_name =
+      fmt::format("modem_simulator{}", instance.modem_simulator_host_id());
 
   auto monitor_socket = cuttlefish::SharedFD::SocketLocalServer(
       monitor_socket_name.c_str(), true, SOCK_STREAM, 0666);
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
       if (buf == "STOP") {  // Exit request from parent process
         LOG(INFO) << "Exit request from parent process";
         nvram_config->SaveToFile(nvram_config_file);
-        for (auto modem : modem_simulators) {
+        for (auto& modem : modem_simulators) {
           modem->SaveModemState();
         }
         cuttlefish::WriteAll(conn, "OK"); // Ignore the return value. Exit anyway.
