@@ -61,7 +61,6 @@
 #include "host/commands/cvd/server_command/snapshot.h"
 #include "host/commands/cvd/server_command/start.h"
 #include "host/commands/cvd/server_command/subcmd.h"
-#include "host/commands/cvd/server_command/vm_control.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/inject.h"
@@ -132,7 +131,6 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .install(cvdShutdownComponent)
       .install(CvdStartCommandComponent)
       .install(cvdVersionComponent)
-      .install(CvdVmControlComponent)
       .install(DemoMultiVdComponent)
       .install(LoadConfigsComponent);
 }
