@@ -575,9 +575,11 @@ Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::string>& value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return android::base::Join(value, ','); })
-      .Setter([&name, &value](const FlagMatch& match) -> Result<void> {
-        CF_EXPECTF(!match.value.empty(), "No values given for flag \"{}\"",
-                   name);
+      .Setter([&value](const FlagMatch& match) -> Result<void> {
+        if (match.value.empty()) {
+          value.clear();
+          return {};
+        }
         std::vector<std::string> str_vals =
             android::base::Split(match.value, ",");
         value = std::move(str_vals);
@@ -590,8 +592,10 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
   return GflagsCompatFlag(name)
       .Getter([&value]() { return fmt::format("{}", fmt::join(value, ",")); })
       .Setter([&name, &value, def_val](const FlagMatch& match) -> Result<void> {
-        CF_EXPECTF(!match.value.empty(), "No values given for flag \"{}\"",
-                   name);
+        if (match.value.empty()) {
+          value.clear();
+          return {};
+        }
         std::vector<std::string> str_vals =
             android::base::Split(match.value, ",");
         value.clear();
