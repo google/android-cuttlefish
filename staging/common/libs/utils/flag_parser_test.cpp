@@ -238,7 +238,7 @@ TEST(FlagParser, StringVectorFlag) {
   std::vector<std::string> value;
   auto flag = GflagsCompatFlag("myflag", value);
 
-  ASSERT_THAT(flag.Parse({"--myflag="}), IsError());
+  ASSERT_THAT(flag.Parse({"--myflag="}), IsOk());
   ASSERT_TRUE(value.empty());
 
   ASSERT_THAT(flag.Parse({"--myflag=foo"}), IsOk());
@@ -262,7 +262,7 @@ TEST(FlagParser, BoolVectorFlag) {
   bool default_value = true;
   auto flag = GflagsCompatFlag("myflag", value, default_value);
 
-  ASSERT_THAT(flag.Parse({"--myflag="}), IsError());
+  ASSERT_THAT(flag.Parse({"--myflag="}), IsOk());
   ASSERT_TRUE(value.empty());
 
   ASSERT_THAT(flag.Parse({"--myflag=foo"}), IsError());
