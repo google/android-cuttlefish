@@ -48,6 +48,8 @@ const std::string _MISC_INFO_FILE_NAME = "misc_info.txt";
 const std::string _TARGET_FILES_META_DIR_NAME = "META";
 const std::string _TARGET_FILES_IMAGES_DIR_NAME = "IMAGES";
 const std::string _SYSTEM_IMAGE_NAME_PATTERN = "system.img";
+const std::string _SYSTEM_EXT_IMAGE_NAME_PATTERN = "system_ext.img";
+const std::string _PRODUCT_IMAGE_NAME_PATTERN = "product.img";
 
 /*
  * Find misc info in build output dir or extracted target files.
@@ -289,14 +291,20 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     system_image_path = FindImage(local_system_image, {_SYSTEM_IMAGE_NAME_PATTERN});
     CF_EXPECT(system_image_path != "",
               "Cannot find system.img in " << local_system_image);
+    std::string system_ext_image_path =
+        FindImage(local_system_image, {_SYSTEM_EXT_IMAGE_NAME_PATTERN});
+    std::string product_image_path =
+        FindImage(local_system_image, {_PRODUCT_IMAGE_NAME_PATTERN});
 
     return BuildSuperImage(
         super_image, misc_info, callback_unlock,
-        [&image_dir,
-         &system_image_path](const std::string& partition) -> Result<std::string> {
-          return GetImageForPartition(
-              partition, image_dir,
-              {{"system", system_image_path}});
+        [&](const std::string& partition) -> Result<std::string> {
+          return GetImageForPartition(partition, image_dir,
+                                      {
+                                          {"system", system_image_path},
+                                          {"system_ext", system_ext_image_path},
+                                          {"product", product_image_path},
+                                      });
         });
   }
 
