@@ -89,11 +89,15 @@ std::string TargetFilesZip(const FetcherConfig& fetcher_config,
 
 constexpr char kMiscInfoPath[] = "META/misc_info.txt";
 constexpr std::array kDefaultTargetImages = {
-    "IMAGES/boot.img",        "IMAGES/init_boot.img",
-    "IMAGES/odm.img",         "IMAGES/odm_dlkm.img",
-    "IMAGES/recovery.img",    "IMAGES/userdata.img",
-    "IMAGES/vbmeta.img",      "IMAGES/vendor.img",
-    "IMAGES/vendor_dlkm.img", "IMAGES/vbmeta_vendor_dlkm.img",
+    "IMAGES/boot.img",
+    "IMAGES/odm.img",
+    "IMAGES/odm_dlkm.img",
+    "IMAGES/recovery.img",
+    "IMAGES/userdata.img",
+    "IMAGES/vbmeta.img",
+    "IMAGES/vendor.img",
+    "IMAGES/vendor_dlkm.img",
+    "IMAGES/vbmeta_vendor_dlkm.img",
     "IMAGES/system_dlkm.img",
 };
 constexpr std::array kDefaultTargetBuildProp = {
