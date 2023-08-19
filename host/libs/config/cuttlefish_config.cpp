@@ -506,6 +506,14 @@ void CuttlefishConfig::set_rootcanal_test_port(int rootcanal_test_port) {
   (*dictionary_)[kRootcanalTestPort] = rootcanal_test_port;
 }
 
+static constexpr char kSnapshotPath[] = "snapshot_path";
+std::string CuttlefishConfig::snapshot_path() const {
+  return (*dictionary_)[kSnapshotPath].asString();
+}
+void CuttlefishConfig::set_snapshot_path(const std::string& snapshot_path) {
+  (*dictionary_)[kSnapshotPath] = snapshot_path;
+}
+
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
     const std::string& path) {
   auto ret = new CuttlefishConfig();

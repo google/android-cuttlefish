@@ -260,6 +260,10 @@ class CuttlefishConfig {
   std::string ap_image_dev_path() const;
   void set_ap_image_dev_path(const std::string& dev_path);
 
+  // path to the saved snapshot file(s)
+  std::string snapshot_path() const;
+  void set_snapshot_path(const std::string& snapshot_path);
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
