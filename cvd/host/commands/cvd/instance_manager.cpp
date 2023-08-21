@@ -23,7 +23,9 @@
 #include <sstream>
 
 #include <android-base/file.h>
+#include "fmt/format.h"
 #include <fruit/fruit.h>
+#include "json/value.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -286,18 +288,22 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
   const char _GroupDeviceInfoEnd[] = "]\n";
   WriteAll(out, _GroupDeviceInfoStart);
   auto&& instance_groups = instance_db.InstanceGroups();
+  cvd::Status status;
+  status.set_code(cvd::Status::OK);
 
   for (const auto& group : instance_groups) {
     CF_EXPECT(group != nullptr);
+    Json::Value group_json(Json::objectValue);
+    group_json["group_name"] = group->GroupName();
     auto result = IssueStatusCommand(*group, err);
     if (!result.ok()) {
-      WriteAll(err, "      (unknown instance status error)");
-    } else {
-      const auto stdout_json = *result;
-      // TODO(kwstephenkim): build a data structure that also includes
-      // selector-related information, etc.
-      WriteAll(out, stdout_json.toStyledString());
+      WriteAll(err, fmt::format("Group '{}' status error: '{}'",
+                                group->GroupName(), result.error().Message()));
+      status.set_code(cvd::Status::INTERNAL);
+      continue;
     }
+    group_json["instances"] = *result;
+    WriteAll(out, group_json.toStyledString());
     // move on
     if (group == *instance_groups.crbegin()) {
       continue;
@@ -305,8 +311,6 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
     WriteAll(out, _GroupDeviceInfoSeparate);
   }
   WriteAll(out, _GroupDeviceInfoEnd);
-  cvd::Status status;
-  status.set_code(cvd::Status::OK);
   return status;
 }
 
