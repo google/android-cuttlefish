@@ -98,14 +98,15 @@ cuttlefish::SharedFD ModemService::ConnectToRemoteCvd(std::string port) {
   return remote_sock;
 }
 
-void ModemService::SendCommandToRemote(cuttlefish::SharedFD remote_client, std::string response) {
+void ModemService::SendCommandToRemote(ClientId remote_client,
+                                       std::string response) {
   if (channel_monitor_) {
     channel_monitor_->SendRemoteCommand(remote_client, response);
     ;
   }
 }
 
-void ModemService::CloseRemoteConnection(cuttlefish::SharedFD remote_client) {
+void ModemService::CloseRemoteConnection(ClientId remote_client) {
   if (channel_monitor_) {
     channel_monitor_->CloseRemoteConnection(remote_client);
     ;
