@@ -234,38 +234,44 @@ InstanceManager::IssueStatusCommand(const selector::LocalInstanceGroup& group,
       .op = "status",
   }));
   const auto prog_path = host_android_out + "/bin/" + status_bin;
-  Command with_args = GetCommand(prog_path, "--all_instances", "--print");
-  with_args.SetEnvironment({ConcatToString("HOME=", group.HomeDir())});
-  auto command_result = ExecCommand(std::move(with_args));
-  if (command_result.ok()) {
-    StatusCommandOutput output;
-    if (command_result->stdout_buf.empty()) {
-      WriteAll(err, ConcatToString(group.GroupName(), "-*",
-                                   not_supported_version_msg));
-      Json::Reader().parse("{}", output.stdout_json);
-      return output;
-    }
-    output.stdout_json = CF_EXPECT(ParseJson(command_result->stdout_buf));
-    return output;
-  }
+
   StatusCommandOutput output;
-  int index = 0;
   for (const auto& instance_ref : CF_EXPECT(group.FindAllInstances())) {
     const auto id = instance_ref.Get().InstanceId();
-    Command without_args = GetCommand(prog_path);
+    Command status_cmd = GetCommand(prog_path, "-print");
     std::vector<std::string> new_envs{
         ConcatToString("HOME=", group.HomeDir()),
         ConcatToString(kCuttlefishInstanceEnvVarName, "=", std::to_string(id))};
-    without_args.SetEnvironment(new_envs);
-    auto second_command_result =
-        CF_EXPECT(ExecCommand(std::move(without_args)));
-    if (second_command_result.stdout_buf.empty()) {
+    status_cmd.SetEnvironment(new_envs);
+    auto cmd_result = CF_EXPECT(ExecCommand(std::move(status_cmd)));
+    if (cmd_result.stdout_buf.empty()) {
       WriteAll(err,
                instance_ref.Get().DeviceName() + not_supported_version_msg);
-      second_command_result.stdout_buf.append("{}");
+      cmd_result.stdout_buf.append("{}");
     }
-    output.stdout_json[index] =
-        CF_EXPECT(ParseJson(second_command_result.stdout_buf));
+    auto status = CF_EXPECT(ParseJson(cmd_result.stdout_buf));
+    if (status.isArray()) {
+      // cvd_internal_status returns an array even when limited to a single
+      // instance.
+      CF_EXPECT(status.size() == 1,
+                status_bin << " returned unexpected number of instances: "
+                           << status.size());
+      status = status[0];
+    }
+    static constexpr auto kWebrtcProp = "webrtc_device_id";
+    static constexpr auto kNameProp = "instance_name";
+    // Check for isObject first, calling isMember on anything else causes a
+    // runtime error
+    if (status.isObject() && !status.isMember(kWebrtcProp) &&
+        status.isMember(kNameProp)) {
+      // b/296644913 some cuttlefish versions printed the webrtc device id as
+      // the instance name.
+      status[kWebrtcProp] = status[kNameProp];
+    }
+    // The instance doesn't know the name under which it was created on the
+    // server.
+    status[kNameProp] = instance_ref.Get().PerInstanceName();
+    output.stdout_json.append(status);
   }
   return output;
 }
