@@ -113,7 +113,7 @@ void ModemSimulator::DispatchCommand(const Client& client, std::string& command)
     }
   }
 
-  if (!success && client.type != Client::REMOTE) {
+  if (!success && client.Type() != Client::REMOTE) {
     LOG(DEBUG) << "Not supported AT command: " << command;
     client.SendCommandResponse(ModemService::kCmeErrorOperationNotSupported);
   }
