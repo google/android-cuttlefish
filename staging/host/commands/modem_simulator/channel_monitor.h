@@ -19,7 +19,9 @@
 #include <thread>
 #include <vector>
 
-#include "common/libs/fs/shared_select.h"
+#include "common/libs/fs/shared_fd.h"
+
+class ModemServiceTest;
 
 namespace cuttlefish {
 
@@ -41,17 +43,10 @@ class Client {
  public:
   enum ClientType { RIL, REMOTE };
 
-  ClientType type = RIL;
-  cuttlefish::SharedFD client_fd;
-  std::string incomplete_command;
-  std::mutex write_mutex;
-  bool first_read_command_;  // Only used when ClientType::REMOTE
-  bool is_valid = true;
-
   Client() = default;
   ~Client() = default;
-  Client(cuttlefish::SharedFD fd);
-  Client(cuttlefish::SharedFD fd, ClientType client_type);
+  Client(SharedFD fd);
+  Client(SharedFD fd, ClientType client_type);
   Client(const Client& client) = delete;
   Client(Client&& client) = delete;
 
@@ -61,11 +56,25 @@ class Client {
 
   void SendCommandResponse(std::string response) const;
   void SendCommandResponse(const std::vector<std::string>& responses) const;
+
+  ClientType Type() const { return type; }
+  SharedFD Fd() const { return client_fd; }
+
+ private:
+  friend class ChannelMonitor;
+  friend class ::ModemServiceTest;
+
+  ClientType type = RIL;
+  SharedFD client_fd;
+  std::string incomplete_command;
+  mutable std::mutex write_mutex;
+  bool first_read_command_;  // Only used when ClientType::REMOTE
+  bool is_valid = true;
 };
 
 class ChannelMonitor {
  public:
-  ChannelMonitor(ModemSimulator* modem, cuttlefish::SharedFD server);
+  ChannelMonitor(ModemSimulator& modem, cuttlefish::SharedFD server);
   ~ChannelMonitor();
 
   ChannelMonitor(const ChannelMonitor&) = delete;
@@ -79,7 +88,7 @@ class ChannelMonitor {
   void SendUnsolicitedCommand(std::string& response);
 
  private:
-  ModemSimulator* modem_;
+  ModemSimulator& modem_;
   std::thread monitor_thread_;
   cuttlefish::SharedFD server_;
   cuttlefish::SharedFD read_pipe_;
@@ -92,6 +101,8 @@ class ChannelMonitor {
   void ReadCommand(Client& client);
 
   void MonitorLoop();
+  static void removeInvalidClients(
+      std::vector<std::unique_ptr<Client>>& clients);
 };
 
 }  // namespace cuttlefish
