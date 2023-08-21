@@ -135,7 +135,7 @@ class CallService : public ModemService, public std::enable_shared_from_this<Cal
     bool is_voice_mode;
     bool is_multi_party;
     bool is_remote_call;
-    std::optional<cuttlefish::SharedFD> remote_client;
+    std::optional<ClientId> remote_client;
     std::optional<int32_t> timeout_serial;
     std::string number;
     bool can_present_number;

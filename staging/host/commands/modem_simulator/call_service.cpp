@@ -189,6 +189,7 @@ void CallService::HandleDial(const Client& client, const std::string& command) {
     ss << port;
     auto remote_port = ss.str();
     auto remote_client = ConnectToRemoteCvd(remote_port);
+    auto client_id = ClientId();
     if (!remote_client->IsOpen()) {
       client.SendCommandResponse(kCmeErrorNoNetworkService);
       return;
@@ -200,21 +201,21 @@ void CallService::HandleDial(const Client& client, const std::string& command) {
     }
 
     if (channel_monitor_) {
-      channel_monitor_->SetRemoteClient(remote_client, false);
+      client_id = channel_monitor_->SetRemoteClient(remote_client, false);
     }
 
     ss.clear();
     ss.str("");
     ss << "AT+REMOTECALL=4,0,0,\"" << local_host_port << "\",129";
 
-    SendCommandToRemote(remote_client, "REM0");
-    SendCommandToRemote(remote_client, ss.str());
+    SendCommandToRemote(client_id, "REM0");
+    SendCommandToRemote(client_id, ss.str());
 
     CallStatus call_status(remote_port);
     call_status.is_remote_call = true;
     call_status.is_mobile_terminated = false;
     call_status.call_state = CallStatus::CALL_STATE_DIALING;
-    call_status.remote_client = remote_client;
+    call_status.remote_client = client_id;
     auto index = FindFreeCallIndex();
 
     auto call_token = std::make_pair(index, call_status.number);
@@ -693,7 +694,7 @@ void CallService::HandleRemoteCall(const Client& client,
       if (network_service_) {
         if (network_service_->isRadioOff()) {
           LOG(DEBUG) << " radio is off, reject incoming call from: " << number;
-          client.Fd()->Close();
+          network_service_->CloseRemoteConnection(client.Id());
           return;
         }
       }
@@ -703,7 +704,7 @@ void CallService::HandleRemoteCall(const Client& client,
       call_status.is_multi_party = mpty;
       call_status.is_mobile_terminated = true;
       call_status.is_international = (num_type == 145);
-      call_status.remote_client = client.Fd();
+      call_status.remote_client = client.Id();
       call_status.call_state = CallStatus::CALL_STATE_INCOMING;
 
       auto index = FindFreeCallIndex();
