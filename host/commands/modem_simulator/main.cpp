@@ -13,16 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <android-base/strings.h>
-#include <gflags/gflags.h>
 #include <signal.h>
 #include <unistd.h>
 
-#include <limits>
+#include <android-base/strings.h>
+#include <gflags/gflags.h>
 
-#include "common/libs/device_config/device_config.h"
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/modem_simulator/modem_simulator.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -100,8 +99,8 @@ int main(int argc, char** argv) {
         << fd->StrError();
 
     auto modem_simulator = std::make_shared<cuttlefish::ModemSimulator>(modem_id);
-    auto channel_monitor =
-        std::make_unique<cuttlefish::ChannelMonitor>(modem_simulator.get(), fd);
+    auto channel_monitor = std::make_unique<cuttlefish::ChannelMonitor>(
+        *modem_simulator.get(), fd);
 
     modem_simulator->Initialize(std::move(channel_monitor));
 
