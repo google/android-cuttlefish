@@ -1,15 +1,15 @@
 {
-    "instances" :
-    [
+  "instances":
+      [
         {
-            "vm": {
-                "cpus": 4
-            }
+          "vm": {
+            "cpus": 4
+          }
         },
         {
-            "vm": {
-                "cpus": 6
-            }
+          "vm": {
+            "cpus": 6
+          }
         }
-    ]
+      ]
 }

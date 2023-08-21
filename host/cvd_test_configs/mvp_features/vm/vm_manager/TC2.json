@@ -1,17 +1,15 @@
 {
-    "instances" :
-    [
+  "instances":
+      [
         {
-            "vm": {
-                "qemu":{
-                }
-            }
+          "vm": {
+            "qemu": {}
+          }
         },
         {
-            "vm": {
-                "crosvm":{
-                }
-            }
+          "vm": {
+            "crosvm": {}
+          }
         }
-    ]
+      ]
 }

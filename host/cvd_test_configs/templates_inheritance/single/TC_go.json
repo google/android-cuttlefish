@@ -1,8 +1,8 @@
 {
-    "instances" :
-    [
+  "instances":
+      [
         {
-            "@import" : "go"
+          "@import": "go"
         }
-    ]
+      ]
 }

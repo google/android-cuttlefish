@@ -1,15 +1,15 @@
 {
-    "instances" :
-    [
+  "instances":
+      [
         {
-            "vm": {
-                "memory_mb": 4096
-            }
+          "vm": {
+            "memory_mb": 4096
+          }
         },
         {
-            "vm": {
-                "memory_mb": 8192
-            }
+          "vm": {
+            "memory_mb": 8192
+          }
         }
-    ]
+      ]
 }

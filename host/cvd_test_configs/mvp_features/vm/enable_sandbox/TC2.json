@@ -1,19 +1,17 @@
-
 {
-    "instances" :
-    [
+  "instances":
+      [
         {
-            "vm": {
-                "crosvm":{
-                }
-            }
+          "vm": {
+            "crosvm": {}
+          }
         },
         {
-            "vm": {
-                "crosvm":{
-                    "enable_sandbox": true
-                }
+          "vm": {
+            "crosvm": {
+              "enable_sandbox": true
             }
+          }
         }
-    ]
+      ]
 }

@@ -1,13 +1,11 @@
-
-  {
-    "instances" :
-    [
+{
+  "instances":
+      [
         {
-            "vm": {
-                "crosvm":{
-                },
-                "setupwizard_mode": "ENABLED"
-            }
+          "vm": {
+            "crosvm": {},
+            "setupwizard_mode": "ENABLED"
+          }
         }
-    ]
+      ]
 }

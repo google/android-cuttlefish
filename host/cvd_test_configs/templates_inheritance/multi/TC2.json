@@ -1,29 +1,29 @@
 {
-    "instances" :
-    [
+  "instances":
+      [
         {
-            "@import" : "auto"
-        },
-                {
-            "@import" : "foldable"
+          "@import": "auto"
         },
         {
-            "@import" : "go"
+          "@import": "foldable"
         },
         {
-            "@import" : "phone"
+          "@import": "go"
         },
         {
-            "@import" : "slim"
-        },
-                {
-            "@import" : "tablet"
-        },
-                {
-            "@import" : "tv"
+          "@import": "phone"
         },
         {
-            "@import" : "wearable"
+          "@import": "slim"
+        },
+        {
+          "@import": "tablet"
+        },
+        {
+          "@import": "tv"
+        },
+        {
+          "@import": "wearable"
         }
-    ]
+      ]
 }

@@ -1,20 +1,20 @@
 {
-    "instances" :
-    [
+  "instances":
+      [
         {
-            "vm": {
-                "memory_mb": 2048,
-				"use_sdcard" : false
-            },
-            "graphics":{
-                "displays":[
-                    {
-                        "width": 720,
-                        "height": 1280,
-                        "dpi": 320
-                    }
-                ]
-			}
+          "vm": {
+            "memory_mb": 2048,
+            "use_sdcard": false
+          },
+          "graphics": {
+            "displays": [
+              {
+                "width": 720,
+                "height": 1280,
+                "dpi": 320
+              }
+            ]
+          }
         }
-    ]
+      ]
 }

@@ -1,18 +1,15 @@
-
 {
-    "instances" :
-    [
+  "instances":
+      [
         {
-            "vm": {
-                "crosvm":{
-                }
-            }
+          "vm": {
+            "crosvm": {}
+          }
         },
         {
-            "vm": {
-                "crosvm":{
-                }
-            }
+          "vm": {
+            "crosvm": {}
+          }
         }
-    ]
+      ]
 }

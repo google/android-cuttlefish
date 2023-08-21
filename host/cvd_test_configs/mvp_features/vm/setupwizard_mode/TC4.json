@@ -1,19 +1,17 @@
 {
-    "instances" :
-    [
+  "instances":
+      [
         {
-            "vm": {
-                "crosvm":{
-                },
-                "setupwizard_mode": "OPTIONAL"
-            }
+          "vm": {
+            "crosvm": {},
+            "setupwizard_mode": "OPTIONAL"
+          }
         },
         {
-            "vm": {
-                "crosvm":{
-                },
-                "setupwizard_mode": "REQUIRED"
-            }
+          "vm": {
+            "crosvm": {},
+            "setupwizard_mode": "REQUIRED"
+          }
         }
-    ]
+      ]
 }

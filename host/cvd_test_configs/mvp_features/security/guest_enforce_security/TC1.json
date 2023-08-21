@@ -1,17 +1,14 @@
-
 {
-    "instances" :
-    [
+  "instances":
+      [
         {
-            "security": {
-            }
+          "security": {}
         },
         {
-            "vm": {
-            },
-            "security": {
-                "guest_enforce_security": false
-            }
+          "vm": {},
+          "security": {
+            "guest_enforce_security": false
+          }
         }
-    ]
+      ]
 }
