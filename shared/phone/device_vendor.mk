@@ -53,6 +53,8 @@ PRODUCT_COPY_FILES += \
 
 endif
 
+DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/phone/overlay
+
 # Runtime Resource Overlays
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.google.aosp_cf_phone.rros
