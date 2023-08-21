@@ -29,6 +29,17 @@ namespace cuttlefish {
 
 constexpr int32_t kMaxCommandLength = 4096;
 
+size_t ClientId::next_id_ = 0;
+
+ClientId::ClientId() {
+  id_ = next_id_;
+  next_id_++;
+}
+
+bool ClientId::operator==(const ClientId& other) const {
+  return id_ == other.id_;
+}
+
 Client::Client(SharedFD fd) : client_fd(fd) {}
 
 Client::Client(SharedFD fd, ClientType client_type)
@@ -71,8 +82,9 @@ ChannelMonitor::ChannelMonitor(ModemSimulator& modem, SharedFD server)
   }
 }
 
-void ChannelMonitor::SetRemoteClient(SharedFD client, bool is_accepted) {
+ClientId ChannelMonitor::SetRemoteClient(SharedFD client, bool is_accepted) {
   auto remote_client = std::make_unique<Client>(client, Client::REMOTE);
+  auto id = remote_client->Id();
 
   if (is_accepted) {
     // There may be new data from remote client before select.
@@ -92,6 +104,7 @@ void ChannelMonitor::SetRemoteClient(SharedFD client, bool is_accepted) {
   } else {
     LOG(ERROR) << "Pipe created fail, can't trigger monitor loop";
   }
+  return id;
 }
 
 void ChannelMonitor::AcceptIncomingConnection() {
@@ -176,10 +189,10 @@ void ChannelMonitor::SendUnsolicitedCommand(std::string& response) {
   }
 }
 
-void ChannelMonitor::SendRemoteCommand(cuttlefish::SharedFD client, std::string& response) {
+void ChannelMonitor::SendRemoteCommand(ClientId client, std::string& response) {
   auto iter = remote_clients_.begin();
   for (; iter != remote_clients_.end(); ++iter) {
-    if (iter->get()->client_fd == client) {
+    if (iter->get()->Id() == client) {
       iter->get()->SendCommandResponse(response);
       return;
     }
@@ -187,10 +200,10 @@ void ChannelMonitor::SendRemoteCommand(cuttlefish::SharedFD client, std::string&
   LOG(DEBUG) << "Remote client has closed.";
 }
 
-void ChannelMonitor::CloseRemoteConnection(cuttlefish::SharedFD client) {
+void ChannelMonitor::CloseRemoteConnection(ClientId client) {
   auto iter = remote_clients_.begin();
   for (; iter != remote_clients_.end(); ++iter) {
-    if (iter->get()->client_fd == client) {
+    if (iter->get()->Id() == client) {
       iter->get()->client_fd->Close();
       iter->get()->is_valid = false;
 
