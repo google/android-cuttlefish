@@ -1,3 +1,0 @@
-service vendor.uwb_hal /vendor/bin/hw/android.hardware.uwb-service /dev/hvc9
-    class hal
-    user uwb
