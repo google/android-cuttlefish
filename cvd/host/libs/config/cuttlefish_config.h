@@ -154,19 +154,6 @@ class CuttlefishConfig {
   void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
   bool enable_host_bluetooth_connector() const;
 
-  void set_enable_host_nfc(bool enable_host_nfc);
-  bool enable_host_nfc() const;
-
-  void set_enable_host_nfc_connector(bool enable_host_nfc_connector);
-  bool enable_host_nfc_connector() const;
-
-  void set_casimir_args(const std::string& casimir_args);
-  std::vector<std::string> casimir_args() const;
-  void set_casimir_instance_num(int casimir_instance_num);
-  int casimir_instance_num() const;
-  void set_casimir_nci_port(int port);
-  int casimir_nci_port() const;
-
   void set_enable_wifi(const bool enable_wifi);
   bool enable_wifi() const;
 
@@ -424,7 +411,7 @@ class CuttlefishConfig {
 
     std::string ap_esp_image_path() const;
 
-    std::string otheros_esp_image_path() const;
+    std::string esp_image_path() const;
 
     std::string otheros_esp_grub_config() const;
 
@@ -432,11 +419,7 @@ class CuttlefishConfig {
 
     std::string audio_server_path() const;
 
-    enum class BootFlow {
-      Android,
-      Linux,
-      Fuchsia
-    };
+    enum class BootFlow { Android, AndroidEfiLoader, Linux, Fuchsia };
 
     BootFlow boot_flow() const;
 
@@ -463,9 +446,6 @@ class CuttlefishConfig {
 
     // Whether this instance should start a rootcanal instance
     bool start_rootcanal() const;
-
-    // Whether this instance should start a casimir instance
-    bool start_casimir() const;
 
     // Whether this instance should start a pica instance
     bool start_pica() const;
@@ -629,6 +609,9 @@ class CuttlefishConfig {
     // otheros artifacts
     std::string otheros_esp_image() const;
 
+    // android efi loader flow
+    std::string android_efi_loader() const;
+
     // linux artifacts for otheros flow
     std::string linux_kernel_path() const;
     std::string linux_initramfs_path() const;
@@ -702,7 +685,6 @@ class CuttlefishConfig {
     void set_start_webrtc_sig_server_proxy(bool start);
     void set_start_wmediumd(bool start);
     void set_start_rootcanal(bool start);
-    void set_start_casimir(bool start);
     void set_start_pica(bool start);
     void set_start_netsim(bool start);
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
@@ -814,6 +796,7 @@ class CuttlefishConfig {
     void set_default_target_zip(const std::string& default_target_zip);
     void set_system_target_zip(const std::string& system_target_zip);
     void set_otheros_esp_image(const std::string& otheros_esp_image);
+    void set_android_efi_loader(const std::string& android_efi_loader);
     void set_linux_kernel_path(const std::string& linux_kernel_path);
     void set_linux_initramfs_path(const std::string& linux_initramfs_path);
     void set_linux_root_image(const std::string& linux_root_image);
