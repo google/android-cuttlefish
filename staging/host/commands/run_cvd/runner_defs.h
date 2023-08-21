@@ -75,6 +75,7 @@ enum class ExtendedActionType : std::uint32_t {
   kStartScreenRecording = 7,
   kStopScreenRecording = 8,
   // TODO(kwstephenkim): extend the list of operations to cover snapshot
+  kSnapshotTake = 9,
 };
 
 }  // namespace cuttlefish
