@@ -224,7 +224,7 @@ static Result<ExecCommandResult> ExecCommand(Command&& command) {
   return command_result;
 }
 
-Result<InstanceManager::StatusCommandOutput>
+Result<Json::Value>
 InstanceManager::IssueStatusCommand(const selector::LocalInstanceGroup& group,
                                     const SharedFD& err) {
   std::string not_supported_version_msg = " does not comply with cvd fleet.\n";
@@ -235,7 +235,7 @@ InstanceManager::IssueStatusCommand(const selector::LocalInstanceGroup& group,
   }));
   const auto prog_path = host_android_out + "/bin/" + status_bin;
 
-  StatusCommandOutput output;
+  Json::Value output(Json::arrayValue);
   for (const auto& instance_ref : CF_EXPECT(group.FindAllInstances())) {
     const auto id = instance_ref.Get().InstanceId();
     Command status_cmd = GetCommand(prog_path, "-print");
@@ -271,7 +271,7 @@ InstanceManager::IssueStatusCommand(const selector::LocalInstanceGroup& group,
     // The instance doesn't know the name under which it was created on the
     // server.
     status[kNameProp] = instance_ref.Get().PerInstanceName();
-    output.stdout_json.append(status);
+    output.append(status);
   }
   return output;
 }
@@ -293,8 +293,7 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
     if (!result.ok()) {
       WriteAll(err, "      (unknown instance status error)");
     } else {
-      const auto [stderr_msg, stdout_json] = *result;
-      WriteAll(err, stderr_msg);
+      const auto stdout_json = *result;
       // TODO(kwstephenkim): build a data structure that also includes
       // selector-related information, etc.
       WriteAll(out, stdout_json.toStyledString());
