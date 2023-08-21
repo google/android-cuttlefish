@@ -99,6 +99,8 @@ class ModemService {
 
   static constexpr std::pair<int, int> kRemotePortRange{6520, 6527};
 
+  void CloseRemoteConnection(ClientId remote_client);
+
  protected:
   ModemService(int32_t service_id, std::vector<CommandHandler> command_handlers,
                ChannelMonitor* channel_monitor, ThreadLooper* thread_looper);
@@ -106,9 +108,7 @@ class ModemService {
   void SendUnsolicitedCommand(std::string unsol_command);
 
   cuttlefish::SharedFD ConnectToRemoteCvd(std::string port);
-  void SendCommandToRemote(cuttlefish::SharedFD remote_client,
-                           std::string response);
-  void CloseRemoteConnection(cuttlefish::SharedFD remote_client);
+  void SendCommandToRemote(ClientId remote_client, std::string response);
   static std::string GetHostId();
 
   int32_t service_id_;
