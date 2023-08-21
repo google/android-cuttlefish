@@ -24,6 +24,7 @@ message ExtendedLauncherAction {
     Resume resume = 6;
     StartScreenRecording start_screen_recording = 7;
     StopScreenRecording stop_screen_recording = 8;
+    SnapshotTake snapshot_take = 9;
   }
   string verbosity = 20;
 }
@@ -31,3 +32,6 @@ message Suspend {}
 message Resume {}
 message StartScreenRecording {}
 message StopScreenRecording {}
+message SnapshotTake {
+  repeated string snapshot_path = 1;
+}
