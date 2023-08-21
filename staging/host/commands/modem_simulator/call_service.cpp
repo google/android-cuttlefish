@@ -693,7 +693,7 @@ void CallService::HandleRemoteCall(const Client& client,
       if (network_service_) {
         if (network_service_->isRadioOff()) {
           LOG(DEBUG) << " radio is off, reject incoming call from: " << number;
-          client.client_fd->Close();
+          client.Fd()->Close();
           return;
         }
       }
@@ -703,7 +703,7 @@ void CallService::HandleRemoteCall(const Client& client,
       call_status.is_multi_party = mpty;
       call_status.is_mobile_terminated = true;
       call_status.is_international = (num_type == 145);
-      call_status.remote_client = client.client_fd;
+      call_status.remote_client = client.Fd();
       call_status.call_state = CallStatus::CALL_STATE_INCOMING;
 
       auto index = FindFreeCallIndex();
