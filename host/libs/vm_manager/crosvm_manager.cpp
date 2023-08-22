@@ -143,9 +143,10 @@ CrosvmManager::ConfigureBootDevices(
   // TODO There is no way to control this assignment with crosvm (yet)
   if (HostArch() == Arch::X86_64) {
     int num_gpu_pcis = has_gpu ? 1 : 0;
-    if (!instance.enable_gpu_vhost_user()) {
+    if (instance.gpu_mode() != kGpuModeNone &&
+        !instance.enable_gpu_vhost_user()) {
       // crosvm has an additional PCI device for an ISA bridge when running
-      // without vhost user gpu.
+      // with a gpu and without vhost user gpu.
       num_gpu_pcis += 1;
     }
     // virtio_gpu and virtio_wl precedes the first console or disk
