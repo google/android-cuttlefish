@@ -53,7 +53,6 @@ class LauncherActionMessage {
                         std::string serialized_data);
   // returns true if the action does not need extended field
   static bool IsShortAction(const LauncherAction action);
-  static bool IsSupportedType(const ExtendedActionType type);
 
   const LauncherAction action_;
   const ExtendedActionType type_;
