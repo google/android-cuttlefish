@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& out, const SnapshotCmd& cmd);
 
 struct Parsed {
   SnapshotCmd cmd;
-  int instance_num;
+  std::vector<int> instance_nums;
   int wait_for_launcher;
   std::string snapshot_path;
   std::optional<android::base::LogSeverity> verbosity_level;
