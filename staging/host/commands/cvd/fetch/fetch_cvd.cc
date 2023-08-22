@@ -719,17 +719,8 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
   return {};
 }
 
-}  // namespace
-
-Result<void> FetchCvdMain(int argc, char** argv) {
-  android::base::InitLogging(argv, android::base::StderrLogger);
-  const FetchFlags flags = CF_EXPECT(GetFlagValues(argc, argv));
-  const std::string fetch_root_directory = AbsolutePath(flags.target_directory);
-  CF_EXPECT(EnsureDirectoryExists(fetch_root_directory, RWX_ALL_MODE));
-  android::base::SetLogger(
-      LogToStderrAndFiles({fetch_root_directory + "/" + LOG_FILENAME}));
-  android::base::SetMinimumLogSeverity(flags.verbosity);
-
+Result<void> InnerMain(const FetchFlags& flags,
+                       const std::string& fetch_root_directory) {
 #ifdef __BIONIC__
   // TODO(schuffelen): Find a better way to deal with tzdata
   setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
@@ -767,6 +758,24 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   }
   curl_global_cleanup();
   return {};
+}
+
+}  // namespace
+
+Result<void> FetchCvdMain(int argc, char** argv) {
+  android::base::InitLogging(argv, android::base::StderrLogger);
+  const FetchFlags flags = CF_EXPECT(GetFlagValues(argc, argv));
+  const std::string fetch_root_directory = AbsolutePath(flags.target_directory);
+  CF_EXPECT(EnsureDirectoryExists(fetch_root_directory, RWX_ALL_MODE));
+  android::base::SetLogger(
+      LogToStderrAndFiles({fetch_root_directory + "/" + LOG_FILENAME}));
+  android::base::SetMinimumLogSeverity(flags.verbosity);
+
+  auto result = InnerMain(flags, fetch_root_directory);
+  if (!result.ok()) {
+    LOG(ERROR) << result.error().Trace();
+  }
+  return result;
 }
 
 }  // namespace cuttlefish
