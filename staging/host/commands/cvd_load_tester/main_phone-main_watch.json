@@ -1,0 +1,26 @@
+{
+  "instances": [
+    {
+      "@import": "phone",
+      "vm": {
+        "memory_mb": 8192,
+        "setupwizard_mode": "OPTIONAL",
+        "cpus": 4
+      },
+      "disk": {
+        "default_build": "@ab/git_main/cf_x86_64_phone-trunk_staging-userdebug"
+      }
+    },
+    {
+      "@import": "wearable",
+      "vm": {
+        "memory_mb": 8192,
+        "setupwizard_mode": "REQUIRED",
+        "cpus": 4
+      },
+      "disk": {
+        "default_build": "@ab/git_main/cf_gwear_x86-trunk_staging-userdebug"
+      }
+    }
+  ]
+}
