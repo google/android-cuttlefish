@@ -144,5 +144,27 @@ Result<void> ServerLoopImpl::HandleResume(const std::string& serialized_data,
   return {};
 }
 
+Result<void> ServerLoopImpl::HandleSnapshotTake(
+    const std::string& serialized_data, const SharedFD& client) {
+  run_cvd::ExtendedLauncherAction extended_action;
+  CF_EXPECT(extended_action.ParseFromString(serialized_data),
+            "Failed to load ExtendedLauncherAction proto.");
+  CF_EXPECT_EQ(extended_action.actions_case(),
+               run_cvd::ExtendedLauncherAction::ActionsCase::kSnapshotTake);
+  // implement snapshot take
+  std::vector<std::string> path_to_snapshots;
+  for (const auto& path : extended_action.snapshot_take().snapshot_path()) {
+    path_to_snapshots.push_back(path);
+  }
+  CF_EXPECT_EQ(path_to_snapshots.size(), 1);
+  const auto& path_to_snapshot = path_to_snapshots.front();
+  LOG(DEBUG) << "run_cvd server loop will take snapshot to "
+             << path_to_snapshot;
+  auto response = LauncherResponse::kSuccess;
+  CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),
+               "Failed to write the resume response.");
+  return {};
+}
+
 }  // namespace run_cvd_impl
 }  // namespace cuttlefish
