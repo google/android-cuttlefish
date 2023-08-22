@@ -1,0 +1,26 @@
+{
+  "instances":
+      [
+        {
+          "@import": "auto"
+        },
+        {
+          "@import": "go"
+        },
+        {
+          "@import": "phone"
+        },
+        {
+          "@import": "slim"
+        },
+        {
+          "@import": "tablet"
+        },
+        {
+          "@import": "tv"
+        },
+        {
+          "@import": "wearable"
+        }
+      ]
+}
