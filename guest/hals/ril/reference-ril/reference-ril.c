@@ -845,8 +845,8 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
          p_cur = p_cur->p_next)
         n++;
 
-    RIL_Data_Call_Response_v11 *responses =
-        alloca(n * sizeof(RIL_Data_Call_Response_v11));
+    RIL_Data_Call_Response_v11 *responses = (n == 0) ? NULL :
+                   alloca(n * sizeof(RIL_Data_Call_Response_v11));
 
     int i;
     for (i = 0; i < n; i++) {
@@ -996,7 +996,7 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
     // If cid = -1, return the data call list without processing CGCONTRDP (setupDataCall)
     if (cid == -1) {
         if (t != NULL)
-            RIL_onRequestComplete(*t, RIL_E_SUCCESS, &responses[0],
+            RIL_onRequestComplete(*t, RIL_E_SUCCESS, responses,
                                   sizeof(RIL_Data_Call_Response_v11));
         else
             RIL_onUnsolicitedResponse(RIL_UNSOL_DATA_CALL_LIST_CHANGED, responses,
