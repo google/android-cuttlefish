@@ -50,11 +50,23 @@ Result<std::string> SerializeResumeRequest() {
   return serialized;
 }
 
+Result<std::string> SerializeSnapshotTakeRequest(
+    const std::string& snapshot_path) {
+  run_cvd::ExtendedLauncherAction action_proto;
+  auto* snapshot_take_request = action_proto.mutable_snapshot_take();
+  snapshot_take_request->add_snapshot_path(snapshot_path);
+  std::string serialized;
+  CF_EXPECT(action_proto.SerializeToString(&serialized),
+            "Failed to serialize Resume Request protobuf.");
+  return serialized;
+}
+
 struct RequestInfo {
   std::string serialized_data;
   ExtendedActionType extended_action_type;
 };
-Result<RequestInfo> SerializeRequest(const SnapshotCmd subcmd) {
+Result<RequestInfo> SerializeRequest(const SnapshotCmd subcmd,
+                                     const std::string& snapshot_path) {
   switch (subcmd) {
     case SnapshotCmd::kSuspend: {
       return RequestInfo{
@@ -67,6 +79,16 @@ Result<RequestInfo> SerializeRequest(const SnapshotCmd subcmd) {
       return RequestInfo{
           .serialized_data = CF_EXPECT(SerializeResumeRequest()),
           .extended_action_type = ExtendedActionType::kResume,
+      };
+      break;
+    }
+    case SnapshotCmd::kSnapshotTake: {
+      CF_EXPECT(!snapshot_path.empty(),
+                "Snapshot operation requires snapshot_path");
+      return RequestInfo{
+          .serialized_data =
+              CF_EXPECT(SerializeSnapshotTakeRequest(snapshot_path)),
+          .extended_action_type = ExtendedActionType::kSnapshotTake,
       };
       break;
     }
@@ -88,7 +110,7 @@ Result<void> SuspendCvdMain(std::vector<std::string> args) {
 
   LOG(INFO) << "Requesting " << parsed.cmd;
   auto [serialized_data, extended_type] =
-      CF_EXPECT(SerializeRequest(parsed.cmd));
+      CF_EXPECT(SerializeRequest(parsed.cmd, parsed.snapshot_path));
   CF_EXPECT(
       WriteLauncherActionWithData(monitor_socket, LauncherAction::kExtended,
                                   extended_type, std::move(serialized_data)));
