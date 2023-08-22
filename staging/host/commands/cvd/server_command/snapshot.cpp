@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command/suspend_resume.h"
+#include "host/commands/cvd/server_command/snapshot.h"
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
@@ -41,10 +41,10 @@
 
 namespace cuttlefish {
 
-static constexpr char kSuspendResume[] =
+static constexpr char kSnapshot[] =
     R"(Cuttlefish Virtual Device (CVD) CLI.
 
-Suspend/resume the cuttlefish device
+Suspend/resume the cuttlefish device, or take snapshot of the device
 
 usage: cvd [selector flags] suspend/resume/snapshot_take [--help]
 
@@ -65,19 +65,19 @@ QEMU:
 
 )";
 
-class CvdSuspendResumeCommandHandler : public CvdServerHandler {
+class CvdSnapshotCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdSuspendResumeCommandHandler(
+  INJECT(CvdSnapshotCommandHandler(
       InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
       HostToolTargetManager& host_tool_target_manager))
       : instance_manager_{instance_manager},
         subprocess_waiter_(subprocess_waiter),
         host_tool_target_manager_(host_tool_target_manager),
-        cvd_suspend_resume_operations_{"suspend", "resume", "snapshot_take"} {}
+        cvd_snapshot_operations_{"suspend", "resume", "snapshot_take"} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
     auto invocation = ParseInvocation(request.Message());
-    return Contains(cvd_suspend_resume_operations_, invocation.command);
+    return Contains(cvd_snapshot_operations_, invocation.command);
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
@@ -126,13 +126,13 @@ class CvdSuspendResumeCommandHandler : public CvdServerHandler {
   }
 
   cvd_common::Args CmdList() const override {
-    return cvd_common::Args(cvd_suspend_resume_operations_.begin(),
-                            cvd_suspend_resume_operations_.end());
+    return cvd_common::Args(cvd_snapshot_operations_.begin(),
+                            cvd_snapshot_operations_.end());
   }
 
  private:
   Result<cvd::Response> HandleHelp(const SharedFD& client_stderr) {
-    std::string help_message(kSuspendResume);
+    std::string help_message(kSnapshot);
     help_message.append("\n");
     CF_EXPECT(WriteAll(client_stderr, help_message) == help_message.size(),
               "Failed to write the help message");
@@ -165,13 +165,12 @@ class CvdSuspendResumeCommandHandler : public CvdServerHandler {
     const auto& home = instance_group.HomeDir();
 
     const auto& android_host_out = instance_group.HostArtifactsPath();
-    auto cvd_suspend_resume_bin_path =
-        CF_EXPECT(GetBin(android_host_out, subcmd));
+    auto cvd_snapshot_bin_path = CF_EXPECT(GetBin(android_host_out, subcmd));
     const std::string& snapshot_util_cmd = subcmd;
-    cvd_common::Args cvd_suspend_resume_args{"--subcmd=" + snapshot_util_cmd};
-    cvd_suspend_resume_args.insert(cvd_suspend_resume_args.end(),
-                                   subcmd_args.begin(), subcmd_args.end());
-    cvd_suspend_resume_args.push_back(
+    cvd_common::Args cvd_snapshot_args{"--subcmd=" + snapshot_util_cmd};
+    cvd_snapshot_args.insert(cvd_snapshot_args.end(), subcmd_args.begin(),
+                             subcmd_args.end());
+    cvd_snapshot_args.push_back(
         ConcatToString("--instance_num=", instance.InstanceId()));
     envs["HOME"] = home;
     envs[kAndroidHostOut] = android_host_out;
@@ -180,20 +179,19 @@ class CvdSuspendResumeCommandHandler : public CvdServerHandler {
     std::stringstream command_to_issue;
     command_to_issue << "HOME=" << home << " " << kAndroidHostOut << "="
                      << android_host_out << " " << kAndroidSoongHostOut << "="
-                     << android_host_out << " " << cvd_suspend_resume_bin_path
-                     << " ";
-    for (const auto& arg : cvd_suspend_resume_args) {
+                     << android_host_out << " " << cvd_snapshot_bin_path << " ";
+    for (const auto& arg : cvd_snapshot_args) {
       command_to_issue << arg << " ";
     }
     WriteAll(request.Err(), command_to_issue.str());
 
     ConstructCommandParam construct_cmd_param{
-        .bin_path = cvd_suspend_resume_bin_path,
+        .bin_path = cvd_snapshot_bin_path,
         .home = home,
-        .args = cvd_suspend_resume_args,
+        .args = cvd_snapshot_args,
         .envs = envs,
         .working_dir = request.Message().command_request().working_directory(),
-        .command_name = android::base::Basename(cvd_suspend_resume_bin_path),
+        .command_name = android::base::Basename(cvd_snapshot_bin_path),
         .in = request.In(),
         .out = request.Out(),
         .err = request.Err()};
@@ -210,11 +208,11 @@ class CvdSuspendResumeCommandHandler : public CvdServerHandler {
 
   Result<std::string> GetBin(const std::string& host_artifacts_path,
                              const std::string& op) const {
-    auto suspend_resume_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
+    auto snapshot_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
         .artifacts_path = host_artifacts_path,
         .op = op,
     }));
-    return suspend_resume_bin;
+    return snapshot_bin;
   }
 
   InstanceManager& instance_manager_;
@@ -222,14 +220,14 @@ class CvdSuspendResumeCommandHandler : public CvdServerHandler {
   HostToolTargetManager& host_tool_target_manager_;
   std::mutex interruptible_;
   bool interrupted_ = false;
-  std::vector<std::string> cvd_suspend_resume_operations_;
+  std::vector<std::string> cvd_snapshot_operations_;
 };
 
 fruit::Component<
     fruit::Required<InstanceManager, SubprocessWaiter, HostToolTargetManager>>
-CvdSuspendResumeComponent() {
+CvdSnapshotComponent() {
   return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdSuspendResumeCommandHandler>();
+      .addMultibinding<CvdServerHandler, CvdSnapshotCommandHandler>();
 }
 
 }  // namespace cuttlefish
