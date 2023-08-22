@@ -57,20 +57,14 @@ class ServerLoopImpl : public ServerLoop,
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override;
   Result<void> HandleExtended(const LauncherActionInfo& action_info,
-                              const SharedFD& client,
                               ProcessMonitor& process_monitor);
   Result<void> HandleSuspend(const std::string& serialized_data,
-                             const SharedFD& client,
                              ProcessMonitor& process_monitor);
   Result<void> HandleResume(const std::string& serialized_data,
-                            const SharedFD& client,
                             ProcessMonitor& process_monitor);
-  Result<void> HandleSnapshotTake(const std::string& serialized_data,
-                                  const SharedFD& client);
-  Result<void> HandleStartScreenRecording(const std::string& serialized_data,
-                                          const SharedFD& client);
-  Result<void> HandleStopScreenRecording(const std::string& serialized_data,
-                                         const SharedFD& client);
+  Result<void> HandleSnapshotTake(const std::string& serialized_data);
+  Result<void> HandleStartScreenRecording(const std::string& serialized_data);
+  Result<void> HandleStopScreenRecording(const std::string& serialized_data);
 
   void HandleActionWithNoData(const LauncherAction action,
                               const SharedFD& client,
