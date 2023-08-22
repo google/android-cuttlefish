@@ -1,0 +1,16 @@
+{
+  "instances":
+      [
+        {
+          "vm": {
+            "crosvm": {}
+          }
+        },
+        {
+          "vm": {
+            "crosvm": {},
+            "setupwizard_mode": "REQUIRED"
+          }
+        }
+      ]
+}
