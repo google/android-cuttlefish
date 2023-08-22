@@ -103,7 +103,6 @@ Result<void> ServerLoopImpl::ResumeGuest() {
 }
 
 Result<void> ServerLoopImpl::HandleSuspend(const std::string& serialized_data,
-                                           const SharedFD& client,
                                            ProcessMonitor& process_monitor) {
   run_cvd::ExtendedLauncherAction extended_action;
   CF_EXPECT(extended_action.ParseFromString(serialized_data),
@@ -117,14 +116,10 @@ Result<void> ServerLoopImpl::HandleSuspend(const std::string& serialized_data,
   CF_EXPECT(process_monitor.SuspendMonitoredProcesses(),
             "Failed to suspend host processes.");
   LOG(DEBUG) << "The host processes are suspended.";
-  auto response = LauncherResponse::kSuccess;
-  CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),
-               "Failed to write the suspend response.");
   return {};
 }
 
 Result<void> ServerLoopImpl::HandleResume(const std::string& serialized_data,
-                                          const SharedFD& client,
                                           ProcessMonitor& process_monitor) {
   run_cvd::ExtendedLauncherAction extended_action;
   CF_EXPECT(extended_action.ParseFromString(serialized_data),
@@ -138,14 +133,11 @@ Result<void> ServerLoopImpl::HandleResume(const std::string& serialized_data,
   LOG(DEBUG) << "Resuming the guest..";
   CF_EXPECT(ResumeGuest());
   LOG(DEBUG) << "The guest resumed.";
-  auto response = LauncherResponse::kSuccess;
-  CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),
-               "Failed to write the resume response.");
   return {};
 }
 
 Result<void> ServerLoopImpl::HandleSnapshotTake(
-    const std::string& serialized_data, const SharedFD& client) {
+    const std::string& serialized_data) {
   run_cvd::ExtendedLauncherAction extended_action;
   CF_EXPECT(extended_action.ParseFromString(serialized_data),
             "Failed to load ExtendedLauncherAction proto.");
@@ -160,9 +152,6 @@ Result<void> ServerLoopImpl::HandleSnapshotTake(
   const auto& path_to_snapshot = path_to_snapshots.front();
   LOG(DEBUG) << "run_cvd server loop will take snapshot to "
              << path_to_snapshot;
-  auto response = LauncherResponse::kSuccess;
-  CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),
-               "Failed to write the resume response.");
   return {};
 }
 
