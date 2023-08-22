@@ -51,7 +51,6 @@ usage: cvd [selector flags] suspend/resume/snapshot_take [--help]
 Common:
   Selector Flags:
     --group_name=<name>       The name of the instance group
-    --instance_name=<names>   The comma-separated list of the instance names
     --snapshot_path=<path>>   Directory that contains saved snapshot files
 
   Args:
@@ -146,32 +145,23 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
                                  const uid_t uid, const std::string& subcmd,
                                  cvd_common::Args& subcmd_args,
                                  cvd_common::Envs envs) {
-    // test if there is --instance_num flag
-    CvdFlag<std::int32_t> instance_num_flag("instance_num");
-    auto instance_num_opt =
-        CF_EXPECT(instance_num_flag.FilterFlag(subcmd_args));
-    selector::Queries extra_queries;
-    if (instance_num_opt) {
-      extra_queries.emplace_back(selector::kInstanceIdField, *instance_num_opt);
-    }
-
     const auto& selector_opts =
         request.Message().command_request().selector_opts();
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
 
-    auto instance = CF_EXPECT(instance_manager_.SelectInstance(
-        selector_args, extra_queries, envs, uid));
-    const auto& instance_group = instance.ParentGroup();
-    const auto& home = instance_group.HomeDir();
+    // create a string that is comma-separated instance IDs
+    auto instance_group =
+        CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs, uid));
 
+    const auto& home = instance_group.HomeDir();
     const auto& android_host_out = instance_group.HostArtifactsPath();
     auto cvd_snapshot_bin_path = CF_EXPECT(GetBin(android_host_out, subcmd));
     const std::string& snapshot_util_cmd = subcmd;
     cvd_common::Args cvd_snapshot_args{"--subcmd=" + snapshot_util_cmd};
     cvd_snapshot_args.insert(cvd_snapshot_args.end(), subcmd_args.begin(),
                              subcmd_args.end());
-    cvd_snapshot_args.push_back(
-        ConcatToString("--instance_num=", instance.InstanceId()));
+    // This helps snapshot_util find CuttlefishConfig and figure out
+    // the instance ids
     envs["HOME"] = home;
     envs[kAndroidHostOut] = android_host_out;
     envs[kAndroidSoongHostOut] = android_host_out;
