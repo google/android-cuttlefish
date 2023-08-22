@@ -1,0 +1,18 @@
+{
+  "instances":
+      [
+        {
+          "@import": "phone",
+          "vm": {
+            "memory_mb": 4096
+          }
+        },
+        {
+          "@import": "tablet",
+          "vm": {
+            "memory_mb": 8192,
+            "cpus": 4
+          }
+        }
+      ]
+}
