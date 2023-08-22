@@ -56,13 +56,6 @@ Result<LauncherActionMessage> LauncherActionMessage::Create(
     }
   }
   LauncherActionMessage new_message(action, type, std::move(serialized_data));
-  /* To avoid -Wunused-private-field compilation error
-   *
-   * will be moved above when type_ is actually used.
-   */
-  CF_EXPECTF(IsSupportedType(new_message.type_),
-             "ExtendedActionType {} is not supported.",
-             static_cast<std::uint32_t>(new_message.type_));
   return new_message;
 }
 
@@ -81,17 +74,6 @@ bool LauncherActionMessage::IsShortAction(const LauncherAction action) {
       LauncherAction::kStop,
   };
   return Contains(supported_actions, action);
-}
-
-bool LauncherActionMessage::IsSupportedType(const ExtendedActionType type) {
-  std::set<ExtendedActionType> supported_action_types{
-      ExtendedActionType::kUnused,
-      ExtendedActionType::kSuspend,
-      ExtendedActionType::kResume,
-      ExtendedActionType::kStartScreenRecording,
-      ExtendedActionType::kStopScreenRecording,
-  };
-  return Contains(supported_action_types, type);
 }
 
 static Result<void> WriteBuffer(const SharedFD& fd, const std::string& buf,
