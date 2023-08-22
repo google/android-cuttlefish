@@ -17,6 +17,7 @@ rust_binary {
         "librustutils",
         "libserde_json",
         "libanyhow",
+        "libserde",
     ],
     srcs: [ "main.rs" ],
 }

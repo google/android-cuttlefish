@@ -17,6 +17,7 @@
 
 use anyhow::Context;
 use log::{error, info};
+use serde::Serialize;
 use serde_json::json;
 use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -24,6 +25,21 @@ use std::sync::mpsc;
 use std::sync::Arc;
 use std::thread;
 use vsock::{VsockListener, VsockStream};
+
+/// Serializable Light information.
+#[derive(Serialize)]
+pub struct SerializableLight {
+    id: u32,
+    color: u32,
+    light_type: u8,
+    // Should be expanded as needed by improvements to the client.
+}
+
+impl SerializableLight {
+    pub fn new(id: u32, color: u32, light_type: u8) -> Self {
+        Self { id, color, light_type }
+    }
+}
 
 /// Vsock server helper.
 pub struct VsockServer {
@@ -129,6 +145,20 @@ impl VsockServer {
                 let thread_context = handle.join().expect("Could not join thread");
                 info!("Connection thread exited with {:?}", thread_context);
             }
+        }
+    }
+
+    pub fn send_lights_state(&self, lights: Vec<SerializableLight>) {
+        if self.connection_thread_sender.is_some() {
+            let update_message = json!({
+                "event": "VIRTUAL_DEVICE_LIGHTS_UPDATE",
+                "lights": lights,
+            });
+            self.connection_thread_sender
+                .as_ref()
+                .unwrap()
+                .send(serde_json::to_vec(&update_message).unwrap())
+                .expect("Unable to send update on channel");
         }
     }
 }

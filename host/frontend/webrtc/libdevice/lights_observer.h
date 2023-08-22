@@ -20,10 +20,30 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 namespace cuttlefish {
 namespace webrtc_streaming {
+
+struct Light {
+  enum class Type {
+    BACKLIGHT = 0,
+    KEYBOARD,
+    BUTTONS,
+    BATTERY,
+    NOTIFICATIONS,
+    ATTENTION,
+    BLUETOOTH,
+    WIFI,
+    MICROPHONE,
+    CAMERA,
+  };
+
+  unsigned int id;
+  unsigned int color;
+  Type light_type;
+};
 
 class LightsObserver {
  public:
@@ -45,6 +65,7 @@ class LightsObserver {
   std::thread connection_thread_;
   std::atomic<bool> is_running_;
   std::atomic<bool> session_active_;
+  std::unordered_map<unsigned int, Light> lights_state_;
 };
 
 }  // namespace webrtc_streaming
