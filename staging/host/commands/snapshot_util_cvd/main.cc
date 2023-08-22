@@ -22,6 +22,7 @@
 #include <fmt/core.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/snapshot_util_cvd/parse.h"
@@ -97,31 +98,44 @@ Result<RequestInfo> SerializeRequest(const SnapshotCmd subcmd,
   }
 }
 
-Result<void> SuspendCvdMain(std::vector<std::string> args) {
+Result<void> SnapshotCvdMain(std::vector<std::string> args) {
   CF_EXPECT(!args.empty(), "No arguments was given");
   const auto prog_path = args.front();
   args.erase(args.begin());
   auto parsed = CF_EXPECT(Parse(args));
 
+  // make sure the snapshot directory exists
+  if (parsed.cmd == SnapshotCmd::kSnapshotTake) {
+    CF_EXPECT(!parsed.snapshot_path.empty(),
+              "Snapshot operation requires snapshot path.");
+    CF_EXPECTF(EnsureDirectoryExists(parsed.snapshot_path),
+               "Failed to ensure that snapshot directory {} exists",
+               parsed.snapshot_path);
+  }
+
   const CuttlefishConfig* config =
       CF_EXPECT(CuttlefishConfig::Get(), "Failed to obtain config object");
-  SharedFD monitor_socket = CF_EXPECT(GetLauncherMonitor(
-      *config, parsed.instance_num, parsed.wait_for_launcher));
+  // TODO(kwstephenkim): copy host files that are shared by the instance group
+  for (const auto instance_num : parsed.instance_nums) {
+    SharedFD monitor_socket = CF_EXPECT(
+        GetLauncherMonitor(*config, instance_num, parsed.wait_for_launcher));
 
-  LOG(INFO) << "Requesting " << parsed.cmd;
-  auto [serialized_data, extended_type] =
-      CF_EXPECT(SerializeRequest(parsed.cmd, parsed.snapshot_path));
-  CF_EXPECT(
-      WriteLauncherActionWithData(monitor_socket, LauncherAction::kExtended,
-                                  extended_type, std::move(serialized_data)));
-  LOG(INFO) << "Wrote the extended serialized data and reading response";
-  LauncherResponse response = CF_EXPECT(ReadLauncherResponse(monitor_socket));
-  LOG(INFO) << "Read the response:  " << (int)LauncherResponse::kSuccess;
-  CF_EXPECTF(response == LauncherResponse::kSuccess,
-             "Received \"{}\" response from launcher monitor for \""
-             "{}\" request.",
-             static_cast<char>(response), static_cast<int>(parsed.cmd));
-  LOG(INFO) << parsed.cmd << " was successful.";
+    LOG(INFO) << "Requesting " << parsed.cmd << " for instance #"
+              << instance_num;
+    auto [serialized_data, extended_type] =
+        CF_EXPECT(SerializeRequest(parsed.cmd, parsed.snapshot_path));
+    CF_EXPECT(
+        WriteLauncherActionWithData(monitor_socket, LauncherAction::kExtended,
+                                    extended_type, std::move(serialized_data)));
+    LOG(INFO) << "Wrote the extended serialized data and reading response";
+    LauncherResponse response = CF_EXPECT(ReadLauncherResponse(monitor_socket));
+    LOG(INFO) << "Read the response:  " << (int)LauncherResponse::kSuccess;
+    CF_EXPECTF(response == LauncherResponse::kSuccess,
+               "Received \"{}\" response from launcher monitor for \""
+               "{}\" request.",
+               static_cast<char>(response), static_cast<int>(parsed.cmd));
+    LOG(INFO) << parsed.cmd << " was successful for instance #" << instance_num;
+  }
   return {};
 }
 
@@ -131,7 +145,7 @@ Result<void> SuspendCvdMain(std::vector<std::string> args) {
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   std::vector<std::string> all_args = cuttlefish::ArgsToVec(argc, argv);
-  auto result = cuttlefish::SuspendCvdMain(std::move(all_args));
+  auto result = cuttlefish::SnapshotCvdMain(std::move(all_args));
   if (!result.ok()) {
     LOG(ERROR) << result.error().Trace();
     return EXIT_FAILURE;
