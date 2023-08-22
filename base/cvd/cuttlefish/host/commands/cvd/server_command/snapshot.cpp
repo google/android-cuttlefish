@@ -51,15 +51,14 @@ usage: cvd [selector flags] suspend/resume/snapshot_take [--help]
 Common:
   Selector Flags:
     --group_name=<name>       The name of the instance group
+    --instance_name=<names>   The comma-separated list of the instance names
     --snapshot_path=<path>>   Directory that contains saved snapshot files
 
   Args:
     --help                    print this message
 
 Crosvm:
-  --snapshot_compat           Tells the device to be snapshot-compatible
-                              The device to be created is checked if it is
-                              compatible with snapshot operations
+  No crosvm-specific arguments at the moment
 
 QEMU:
   No QEMU-specific arguments at the moment
@@ -68,9 +67,9 @@ QEMU:
 
 class CvdSnapshotCommandHandler : public CvdServerHandler {
  public:
-  CvdSnapshotCommandHandler(InstanceManager& instance_manager,
-                            SubprocessWaiter& subprocess_waiter,
-                            HostToolTargetManager& host_tool_target_manager)
+  INJECT(CvdSnapshotCommandHandler(
+      InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+      HostToolTargetManager& host_tool_target_manager))
       : instance_manager_{instance_manager},
         subprocess_waiter_(subprocess_waiter),
         host_tool_target_manager_(host_tool_target_manager),
@@ -111,7 +110,8 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
     // may modify subcmd_args by consuming in parsing
     Command command =
         CF_EXPECT(NonHelpCommand(request, uid, subcmd, subcmd_args, envs));
-    CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
+    SubprocessOptions options;
+    CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
     interrupt_lock.unlock();
 
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());
@@ -146,24 +146,32 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
                                  const uid_t uid, const std::string& subcmd,
                                  cvd_common::Args& subcmd_args,
                                  cvd_common::Envs envs) {
+    // test if there is --instance_num flag
+    CvdFlag<std::int32_t> instance_num_flag("instance_num");
+    auto instance_num_opt =
+        CF_EXPECT(instance_num_flag.FilterFlag(subcmd_args));
+    selector::Queries extra_queries;
+    if (instance_num_opt) {
+      extra_queries.emplace_back(selector::kInstanceIdField, *instance_num_opt);
+    }
+
     const auto& selector_opts =
         request.Message().command_request().selector_opts();
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
 
-    // create a string that is comma-separated instance IDs
-    auto instance_group =
-        CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs, uid));
-
+    auto instance = CF_EXPECT(instance_manager_.SelectInstance(
+        selector_args, extra_queries, envs, uid));
+    const auto& instance_group = instance.ParentGroup();
     const auto& home = instance_group.HomeDir();
+
     const auto& android_host_out = instance_group.HostArtifactsPath();
-    auto cvd_snapshot_bin_path = android_host_out + "/bin/" +
-                                 CF_EXPECT(GetBin(android_host_out, subcmd));
+    auto cvd_snapshot_bin_path = CF_EXPECT(GetBin(android_host_out, subcmd));
     const std::string& snapshot_util_cmd = subcmd;
     cvd_common::Args cvd_snapshot_args{"--subcmd=" + snapshot_util_cmd};
     cvd_snapshot_args.insert(cvd_snapshot_args.end(), subcmd_args.begin(),
                              subcmd_args.end());
-    // This helps snapshot_util find CuttlefishConfig and figure out
-    // the instance ids
+    cvd_snapshot_args.push_back(
+        ConcatToString("--instance_num=", instance.InstanceId()));
     envs["HOME"] = home;
     envs[kAndroidHostOut] = android_host_out;
     envs[kAndroidSoongHostOut] = android_host_out;
@@ -191,6 +199,13 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
     return command;
   }
 
+  bool IsHelp(const cvd_common::Args& cmd_args) const {
+    if (IsHelpSubcmd(cmd_args)) {
+      return true;
+    }
+    return (cmd_args.front() == "help");
+  }
+
   Result<std::string> GetBin(const std::string& host_artifacts_path,
                              const std::string& op) const {
     auto snapshot_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
@@ -208,11 +223,11 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
   std::vector<std::string> cvd_snapshot_operations_;
 };
 
-std::unique_ptr<CvdServerHandler> NewCvdSnapshotCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
-    HostToolTargetManager& host_tool_target_manager) {
-  return std::unique_ptr<CvdServerHandler>(new CvdSnapshotCommandHandler(
-      instance_manager, subprocess_waiter, host_tool_target_manager));
+fruit::Component<
+    fruit::Required<InstanceManager, SubprocessWaiter, HostToolTargetManager>>
+CvdSnapshotComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CvdServerHandler, CvdSnapshotCommandHandler>();
 }
 
 }  // namespace cuttlefish
