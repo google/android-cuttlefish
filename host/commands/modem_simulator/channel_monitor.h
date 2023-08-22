@@ -57,7 +57,9 @@ class Client {
   Client() = default;
   ~Client() = default;
   Client(SharedFD fd);
+  Client(SharedFD read, SharedFD write);
   Client(SharedFD fd, ClientType client_type);
+  Client(SharedFD read, SharedFD write, ClientType client_type);
   Client(const Client& client) = delete;
   Client(Client&& client) = delete;
 
@@ -77,7 +79,8 @@ class Client {
 
   ClientId id_;
   ClientType type = RIL;
-  SharedFD client_fd;
+  SharedFD client_read_fd_;
+  SharedFD client_write_fd_;
   std::string incomplete_command;
   mutable std::mutex write_mutex;
   bool first_read_command_;  // Only used when ClientType::REMOTE
