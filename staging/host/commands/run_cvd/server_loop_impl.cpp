@@ -142,6 +142,11 @@ Result<void> ServerLoopImpl::HandleExtended(
           HandleResume(action_info.serialized_data, client, process_monitor));
       return {};
     }
+    case ExtendedActionType::kSnapshotTake: {
+      LOG(DEBUG) << "Run_cvd received resume request.";
+      CF_EXPECT(HandleSnapshotTake(action_info.serialized_data, client));
+      return {};
+    }
     case ExtendedActionType::kStartScreenRecording: {
       LOG(DEBUG) << "Run_cvd received start screen recording request.";
       CF_EXPECT(
