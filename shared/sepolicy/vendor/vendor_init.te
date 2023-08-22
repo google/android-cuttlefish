@@ -10,5 +10,6 @@ get_prop(vendor_init, vendor_graphics_config_prop)
 
 vendor_internal_prop(vendor_wifi_impl)
 set_prop(vendor_init, vendor_wifi_impl)
+set_prop(vendor_init, vendor_uwb_prop)
 
 set_prop(vendor_init, vendor_boot_security_patch_level_prop)
