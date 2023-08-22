@@ -563,8 +563,7 @@ PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=virt_wifi
 endif
 
 # UWB HAL
-PRODUCT_PACKAGES += \
-    android.hardware.uwb-service
+PRODUCT_PACKAGES += com.android.hardware.uwb
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.uwb.dev=/dev/hvc9
 
 # Host packages to install
