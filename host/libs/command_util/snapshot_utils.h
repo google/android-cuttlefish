@@ -34,11 +34,14 @@ Result<void> CopyDirectoryRecursively(const std::string& src_dir_path,
 Result<Json::Value> CreateMetaInfo(const CuttlefishConfig& config,
                                    const std::string& snapshot_path);
 
+Result<std::string> InstanceGuestSnapshotPath(const Json::Value& meta_json,
+                                              const std::string& instance_id);
 std::string SnapshotMetaJsonPath(const std::string& snapshot_path);
 
 inline constexpr const char kMetaInfoJsonFileName[] = "snapshot_meta_info.json";
 inline constexpr const char kGuestSnapshotField[] = "guest_snapshot";
 inline constexpr const char kSnapshotPathField[] = "snapshot_path";
 inline constexpr const char kCfHomeField[] = "HOME";
+inline constexpr const char kGuestSnapshotBase[] = "guest_vm";
 
 }  // namespace cuttlefish

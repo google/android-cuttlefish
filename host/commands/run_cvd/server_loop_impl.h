@@ -24,6 +24,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/server_loop.h"
@@ -81,6 +82,9 @@ class ServerLoopImpl : public ServerLoop,
 
   static std::unordered_map<std::string, std::string>
   InitializeVmToControlSockPath(const CuttlefishConfig::InstanceSpecific&);
+  Result<std::string> VmControlSocket() const;
+  Result<void> TakeGuestSnapshot(const std::string&, const std::string&);
+  Result<void> TakeCrosvmGuestSnapshot(const Json::Value&);
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;

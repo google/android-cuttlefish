@@ -149,7 +149,7 @@ Result<void> ServerLoopImpl::HandleExtended(
       return {};
     }
     case ExtendedActionType::kSnapshotTake: {
-      LOG(DEBUG) << "Run_cvd received resume request.";
+      LOG(DEBUG) << "Run_cvd received snapshot request.";
       CF_EXPECT(HandleSnapshotTake(action_info.serialized_data));
       return {};
     }
@@ -369,6 +369,12 @@ void ServerLoopImpl::RestartRunCvd(int notification_fd) {
   execv("/proc/self/exe", argv.get());
   // execve should not return, so something went wrong.
   PLOG(ERROR) << "execv returned: ";
+}
+
+Result<std::string> ServerLoopImpl::VmControlSocket() const {
+  CF_EXPECT_EQ(config_.vm_manager(), "crosvm",
+               "Other VMs but crosvm is not yet supported.");
+  return instance_.PerInstanceInternalUdsPath("crosvm_control.sock");
 }
 
 }  // namespace run_cvd_impl

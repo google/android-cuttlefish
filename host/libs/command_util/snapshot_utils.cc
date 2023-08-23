@@ -166,6 +166,23 @@ Result<void> CopyDirectoryRecursively(const std::string& src_dir_path,
   return {};
 }
 
+Result<std::string> InstanceGuestSnapshotPath(const Json::Value& meta_json,
+                                              const std::string& instance_id) {
+  CF_EXPECTF(meta_json.isMember(kSnapshotPathField),
+             "The given json is missing : {}", kSnapshotPathField);
+  const std::string snapshot_path = meta_json[kSnapshotPathField].asString();
+
+  const std::vector<std::string> guest_snapshot_path_selectors{
+      kGuestSnapshotField, instance_id};
+  const auto guest_snapshot_dir = CF_EXPECTF(
+      GetValue<std::string>(meta_json, guest_snapshot_path_selectors),
+      "root[\"{}\"][\"{}\"] is missing in \"{}\"", kGuestSnapshotField,
+      instance_id, kMetaInfoJsonFileName);
+  auto snapshot_path_direct_parent = snapshot_path + "/" + guest_snapshot_dir;
+  LOG(DEBUG) << "Returning snapshot path : " << snapshot_path_direct_parent;
+  return snapshot_path_direct_parent;
+}
+
 Result<Json::Value> CreateMetaInfo(const CuttlefishConfig& cuttlefish_config,
                                    const std::string& snapshot_path) {
   Json::Value meta_info;
