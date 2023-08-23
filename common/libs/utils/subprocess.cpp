@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -193,8 +194,9 @@ int Subprocess::Wait() {
     }
   } else if (WIFSIGNALED(wstatus)) {
     pid_ = -1;
-    LOG(ERROR) << "Subprocess " << pid
-               << " was interrupted by a signal: " << WTERMSIG(wstatus);
+    int sig_num = WTERMSIG(wstatus);
+    LOG(ERROR) << "Subprocess " << pid << " was interrupted by a signal '"
+               << strsignal(sig_num) << "' (" << sig_num << ")";
     retval = -1;
   }
   return retval;
