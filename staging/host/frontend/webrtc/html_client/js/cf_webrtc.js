@@ -93,6 +93,7 @@ class DeviceConnection {
   #adbChannel;
   #bluetoothChannel;
   #locationChannel;
+  #sensorsChannel;
   #kmlLocationsChannel;
   #gpxLocationsChannel;
 
@@ -107,6 +108,7 @@ class DeviceConnection {
   #onAdbMessage;
   #onControlMessage;
   #onBluetoothMessage;
+  #onSensorsMessage
   #onLocationMessage;
   #onKmlLocationsMessage;
   #onGpxLocationsMessage;
@@ -127,6 +129,13 @@ class DeviceConnection {
       }
     };
     this.#inputChannel = createDataChannel(pc, 'input-channel');
+    this.#sensorsChannel = createDataChannel(pc, 'sensors-channel', (msg) => {
+      if (!this.#onSensorsMessage) {
+        console.error('Received unexpected Sensors message');
+        return;
+      }
+      this.#onSensorsMessage(msg);
+    });
     this.#adbChannel = createDataChannel(pc, 'adb-channel', (msg) => {
       if (!this.#onAdbMessage) {
         console.error('Received unexpected ADB message');
@@ -423,6 +432,14 @@ class DeviceConnection {
 
   sendLocationMessage(msg) {
     this.#locationChannel.send(msg);
+  }
+
+  sendSensorsMessage(msg) {
+    this.#sensorsChannel.send(msg);
+  }
+
+  onSensorsMessage(cb) {
+    this.#onSensorsMessage = cb;
   }
 
   onLocationMessage(cb) {
