@@ -81,32 +81,6 @@ std::string ConcatToString(Args&&... args) {
 // all directories from /a through /a/b/c/d/e exist
 Result<void> EnsureDirectoryExistsAllTheWay(const std::string& dir);
 
-struct InputPathForm {
-  /** If nullopt, uses the process' current working dir
-   *  But if there is no preceding .. or ., this field is not used.
-   */
-  std::optional<std::string> current_working_dir;
-  /** If nullopt, use SystemWideUserHome()
-   *  But, if there's no preceding ~, this field is not used.
-   */
-  std::optional<std::string> home_dir;
-  std::string path_to_convert;
-  bool follow_symlink;
-};
-
-/**
- * Returns emulated absolute path with a different process'/thread's
- * context.
- *
- * This is useful when daemon(0, 0)-started server process wants to
- * figure out a relative path that came from its client.
- *
- * The call mostly succeeds. It fails only if:
- *  home_dir isn't given so supposed to relies on the local SystemWideUserHome()
- *  but SystemWideUserHome() call fails.
- */
-Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info);
-
 constexpr android::base::LogSeverity kCvdDefaultVerbosity = android::base::INFO;
 
 Result<android::base::LogSeverity> EncodeVerbosity(
