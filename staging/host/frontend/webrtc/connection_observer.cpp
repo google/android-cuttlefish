@@ -28,6 +28,7 @@
 #include <json/json.h>
 
 #include <android-base/logging.h>
+#include <android-base/parsedouble.h>
 #include <gflags/gflags.h>
 
 #include "common/libs/confui/confui.h"
@@ -55,12 +56,14 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
       KernelLogEventsHandler *kernel_log_events_handler,
       std::map<std::string, SharedFD> commands_to_custom_action_servers,
       std::weak_ptr<DisplayHandler> display_handler,
-      CameraController *camera_controller)
+      CameraController *camera_controller,
+      std::shared_ptr<webrtc_streaming::SensorsHandler> sensors_handler)
       : input_connector_(input_connector),
         kernel_log_events_handler_(kernel_log_events_handler),
         commands_to_custom_action_servers_(commands_to_custom_action_servers),
         weak_display_handler_(display_handler),
-        camera_controller_(camera_controller) {}
+        camera_controller_(camera_controller),
+        sensors_handler_(sensors_handler) {}
   virtual ~ConnectionObserverImpl() {
     auto display_handler = weak_display_handler_.lock();
     if (kernel_log_subscription_id_ != -1) {
@@ -196,6 +199,33 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   void OnBluetoothMessage(const uint8_t *msg, size_t size) override {
     bluetooth_handler_->handleMessage(msg, size);
   }
+
+  void OnSensorsChannelOpen(std::function<bool(const uint8_t *, size_t)>
+                                sensors_message_sender) override {
+    sensors_handler_->InitializeHandler(sensors_message_sender);
+    LOG(VERBOSE) << "Sensors channel open";
+    sensors_handler_->SendInitialState();
+  }
+
+  void OnSensorsMessage(const uint8_t *msg, size_t size) override {
+    std::string msgstr(msg, msg + size);
+    std::vector<std::string> xyz = android::base::Split(msgstr, " ");
+
+    if (xyz.size() != 3) {
+      LOG(WARNING) << "Invalid rotation angles: Expected 3, received " << xyz.size();
+      return;
+    }
+
+    double x, y, z;
+    CHECK(android::base::ParseDouble(xyz.at(0), &x))
+        << "X rotation value must be a double";
+    CHECK(android::base::ParseDouble(xyz.at(1), &y))
+        << "Y rotation value must be a double";
+    CHECK(android::base::ParseDouble(xyz.at(2), &z))
+        << "Z rotation value must be a double";
+    sensors_handler_->HandleMessage(x, y, z);
+  }
+
   void OnLocationChannelOpen(std::function<bool(const uint8_t *, size_t)>
                                  location_message_sender) override {
     LOG(VERBOSE) << "Location channel open";
@@ -274,6 +304,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   std::map<std::string, SharedFD> commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
   CameraController *camera_controller_;
+  std::shared_ptr<webrtc_streaming::SensorsHandler> sensors_handler_;
 };
 
 CfConnectionObserverFactory::CfConnectionObserverFactory(
@@ -287,7 +318,8 @@ CfConnectionObserverFactory::CreateObserver() {
   return std::shared_ptr<webrtc_streaming::ConnectionObserver>(
       new ConnectionObserverImpl(input_connector_, kernel_log_events_handler_,
                                  commands_to_custom_action_servers_,
-                                 weak_display_handler_, camera_controller_));
+                                 weak_display_handler_, camera_controller_,
+                                 shared_sensors_handler_));
 }
 
 void CfConnectionObserverFactory::AddCustomActionServer(
