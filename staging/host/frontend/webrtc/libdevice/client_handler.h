@@ -42,6 +42,7 @@ class AdbChannelHandler;
 class ControlChannelHandler;
 class BluetoothChannelHandler;
 class CameraChannelHandler;
+class SensorsChannelHandler;
 class LocationChannelHandler;
 class KmlLocationsChannelHandler;
 class GpxLocationsChannelHandler;

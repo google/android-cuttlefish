@@ -143,10 +143,6 @@ class DeviceControlApp {
   #deviceCount = 0;
   #micActive = false;
   #adbConnected = false;
-  #motion = {
-    orientation: [0, 0, 0],
-    time: window.performance.now(),
-  };
 
   constructor(deviceConnection, parentController) {
     this.#deviceConnection = deviceConnection;
@@ -156,6 +152,7 @@ class DeviceControlApp {
   start() {
     console.debug('Device description: ', this.#deviceConnection.description);
     this.#deviceConnection.onControlMessage(msg => this.#onControlMessage(msg));
+    this.#deviceConnection.onSensorsMessage(msg => this.#onSensorsMessage(msg));
     createToggleControl(
         document.getElementById('camera_off_btn'),
         enabled => this.#onCameraCaptureToggle(enabled));
@@ -282,7 +279,6 @@ class DeviceControlApp {
 
     createButtonListener('left-position-button', null, this.#deviceConnection,
       () => this.#setOrientation(-90));
-
     createButtonListener('upright-position-button', null, this.#deviceConnection,
       () => this.#setOrientation(0));
 
@@ -292,7 +288,7 @@ class DeviceControlApp {
     createButtonListener('upside-position-button', null, this.#deviceConnection,
       () => this.#setOrientation(-180));
 
-    createSliderListener('rotation-slider', () => this.#onMotionChanged());
+    createSliderListener('rotation-slider', () => this.#onMotionChanged(this.#deviceConnection));
 
     if (this.#deviceConnection.description.custom_control_panel_buttons.length >
         0) {
@@ -443,32 +439,47 @@ class DeviceControlApp {
     deviceConnection.sendLocationMessage(location_msg);
   }
 
-  // Inject sensors' events on each change.
-  #onMotionChanged() {
+  #onSensorsMessage(message) {
+    var decoder = new TextDecoder("utf-8");
+    message = decoder.decode(message.data);
+
+    // Get sensor values from message.
+    var sensor_vals = message.split(" ");
+    sensor_vals = sensor_vals.map((val) => parseFloat(val).toFixed(3));
+
     const acc_val = document.getElementById('accelerometer-value');
-    const mgn_val  = document.getElementById('magnetometer-value');
+    const mgn_val = document.getElementById('magnetometer-value');
     const gyro_val = document.getElementById('gyroscope-value');
+    const xyz_val = document.getElementsByClassName('rotation-slider-value');
+    const xyz_range = document.getElementsByClassName('rotation-slider-range');
+
+    // TODO: move to webrtc backend.
+    // Inject sensors with new values.
+    this.#initializeAdb();
+    adbShell(`/vendor/bin/cuttlefish_sensor_injection motion ${sensor_vals[3]} ${sensor_vals[4]} ${sensor_vals[5]} ${sensor_vals[6]} ${sensor_vals[7]} ${sensor_vals[8]} ${sensor_vals[9]} ${sensor_vals[10]} ${sensor_vals[11]}`);
+
+    // Display new sensor values after injection.
+    acc_val.textContent = `${sensor_vals[3]} ${sensor_vals[4]} ${sensor_vals[5]}`;
+    mgn_val.textContent = `${sensor_vals[6]} ${sensor_vals[7]} ${sensor_vals[8]}`;
+    gyro_val.textContent = `${sensor_vals[9]} ${sensor_vals[10]} ${sensor_vals[11]}`;
+
+    // Update xyz sliders with backend values.
+    // This is needed for preserving device's state when display is turned on
+    // and off, and for having the same state for multiple clients.
+    for(let i = 0; i < 3; i++) {
+      xyz_val[i].textContent = sensor_vals[i];
+      xyz_range[i].value = sensor_vals[i];
+    }
+  }
+
+  // Send new rotation angles for sensor values' processing.
+  #onMotionChanged(deviceConnection) {
     let values = document.getElementsByClassName('rotation-slider-value');
-    let current_time = window.performance.now();
     let xyz = [];
     for (var i = 0; i < values.length; i++) {
       xyz[i] = values[i].innerHTML;
     }
-
-    // Calculate sensor values.
-    let acc_xyz = calculateAcceleration(xyz);
-    let mgn_xyz = calculateMagnetometer(xyz);
-    let time_dif = (current_time - this.#motion.time) * 1e-3;
-    let gyro_xyz = calculateGyroscope(this.#motion.orientation, xyz, time_dif);
-    this.#motion.time = current_time;
-    this.#motion.orientation = xyz;
-    // Inject sensors with new values.
-    adbShell(`/vendor/bin/cuttlefish_sensor_injection motion ${acc_xyz[0]} ${acc_xyz[1]} ${acc_xyz[2]} ${mgn_xyz[0]} ${mgn_xyz[1]} ${mgn_xyz[2]} ${gyro_xyz[0]} ${gyro_xyz[1]} ${gyro_xyz[2]}`);
-
-    // Display new sensor values after injection.
-    acc_val.textContent = `${acc_xyz[0]} ${acc_xyz[1]} ${acc_xyz[2]}`;
-    mgn_val.textContent = `${mgn_xyz[0]} ${mgn_xyz[1]} ${mgn_xyz[2]}`;
-    gyro_val.textContent = `${gyro_xyz[0]} ${gyro_xyz[1]} ${gyro_xyz[2]}`;
+    deviceConnection.sendSensorsMessage(`${xyz[0]} ${xyz[1]} ${xyz[2]}`);
   }
 
   // Gradually rotate to a fixed orientation.
@@ -496,9 +507,9 @@ class DeviceControlApp {
       }
       sliders[2].value = current_z;
       values[2].textContent = `${current_z}`;
-      this.#onMotionChanged();
+      this.#onMotionChanged(this.#deviceConnection);
       if (current_z == z) {
-        this.#onMotionChanged();
+        this.#onMotionChanged(this.#deviceConnection);
         clearInterval(move);
       }
     }, 5);
