@@ -73,31 +73,31 @@ Result<StatusFlags> GetFlagValues(int argc, char** argv) {
 
 struct WebAccessUrlParam {
   std::string sig_server_addr;
-  std::string device_name;
+  std::string webrtc_device_id;
 };
 std::string CalcWebAccessUrl(const WebAccessUrlParam& web_access_url_param) {
   if (!FileIsSocket(web_access_url_param.sig_server_addr)) {
     return "";
   }
   return std::string("https://") + "localhost" + ":" + "1443" + "/devices/" +
-         web_access_url_param.device_name + "/files" + "/client.html";
+         web_access_url_param.webrtc_device_id + "/files" + "/client.html";
 }
 
 Json::Value PopulateDevicesInfoFromInstance(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance_config) {
   Json::Value device_info;
-  std::string device_name = instance_config.webrtc_device_id();
-  if (device_name.empty()) {
-    device_name = instance_config.instance_name();
+  std::string webrtc_device_id = instance_config.webrtc_device_id();
+  if (webrtc_device_id.empty()) {
+    webrtc_device_id = instance_config.instance_name();
   }
   device_info["assembly_dir"] = config.assembly_dir();
-  device_info["instance_name"] = device_name;
+  device_info["webrtc_device_id"] = webrtc_device_id;
   device_info["instance_dir"] = instance_config.instance_dir();
   // 1443 is the port of the global webrtc "operator" service
   device_info["web_access"] =
       CalcWebAccessUrl({.sig_server_addr = config.sig_server_address(),
-                        .device_name = device_name});
+                        .webrtc_device_id = webrtc_device_id});
   device_info["adb_serial"] = instance_config.adb_ip_and_port();
   device_info["webrtc_port"] = std::to_string(config.sig_server_port());
   for (int i = 0; i < instance_config.display_configs().size(); i++) {
