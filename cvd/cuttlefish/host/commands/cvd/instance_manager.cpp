@@ -283,14 +283,11 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
                                                   const SharedFD& err) {
   std::lock_guard assemblies_lock(instance_db_mutex_);
   auto& instance_db = GetInstanceDB(uid);
-  const char _GroupDeviceInfoStart[] = "[\n";
-  const char _GroupDeviceInfoSeparate[] = ",\n";
-  const char _GroupDeviceInfoEnd[] = "]\n";
-  WriteAll(out, _GroupDeviceInfoStart);
   auto&& instance_groups = instance_db.InstanceGroups();
   cvd::Status status;
   status.set_code(cvd::Status::OK);
 
+  Json::Value groups_json(Json::arrayValue);
   for (const auto& group : instance_groups) {
     CF_EXPECT(group != nullptr);
     Json::Value group_json(Json::objectValue);
@@ -303,14 +300,17 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
       continue;
     }
     group_json["instances"] = *result;
-    WriteAll(out, group_json.toStyledString());
-    // move on
-    if (group == *instance_groups.crbegin()) {
-      continue;
-    }
-    WriteAll(out, _GroupDeviceInfoSeparate);
+    groups_json.append(group_json);
   }
-  WriteAll(out, _GroupDeviceInfoEnd);
+  Json::Value output(Json::objectValue);
+  output["groups"] = groups_json;
+  // Calling toStyledString here puts the string representation of all instance
+  // groups into a single string in memory. That sounds large, but the host's
+  // RAM should be able to handle it if it can handle that many instances
+  // running simultaneously.
+  // The alternative is probably to create an std::ostream from
+  // cuttlefish::SharedFD and use Json::Value's operator<< to print it.
+  WriteAll(out, output.toStyledString());
   return status;
 }
 
