@@ -23,6 +23,8 @@ cc_binary_host {
         "adb_handler.cpp",
         "audio_handler.cpp",
         "bluetooth_handler.cpp",
+        "sensors_handler.cpp",
+        "sensors_simulator.cpp",
         "location_handler.cpp",
         "gpx_locations_handler.cpp",
         "kml_locations_handler.cpp",
@@ -44,6 +46,7 @@ cc_binary_host {
         "webrtc_signaling_headers",
         "libwebrtc_absl_headers",
         "libcuttlefish_confui_host_headers",
+        "libeigen",
     ],
     static_libs: [
         "libaom",
