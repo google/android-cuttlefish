@@ -57,8 +57,10 @@ void LogSubprocessExit(const std::string& name, pid_t pid, int wstatus) {
     LOG(INFO) << "Subprocess " << name << " (" << pid
               << ") has exited with exit code " << WEXITSTATUS(wstatus);
   } else if (WIFSIGNALED(wstatus)) {
+    int sig_num = WTERMSIG(wstatus);
     LOG(ERROR) << "Subprocess " << name << " (" << pid
-               << ") was interrupted by a signal: " << WTERMSIG(wstatus);
+               << ") was interrupted by a signal '" << strsignal(sig_num)
+               << "' (" << sig_num << ")";
   } else {
     LOG(INFO) << "subprocess " << name << " (" << pid
               << ") has exited for unknown reasons";
@@ -72,7 +74,8 @@ void LogSubprocessExit(const std::string& name, const siginfo_t& infop) {
               << ") has exited with exit code " << infop.si_status;
   } else if (infop.si_code == CLD_KILLED) {
     LOG(ERROR) << "Subprocess " << name << " (" << infop.si_pid
-               << ") was interrupted by a signal: " << infop.si_status;
+               << ") was interrupted by a signal '"
+               << strsignal(infop.si_status) << "' (" << infop.si_status << ")";
   } else {
     LOG(INFO) << "subprocess " << name << " (" << infop.si_pid
               << ") has exited for unknown reasons (code = " << infop.si_code
