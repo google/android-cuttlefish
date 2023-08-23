@@ -17,29 +17,27 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
+rust_binary {
     name: "android.hardware.nfc-service.cuttlefish",
     relative_install_path: "hw",
     init_rc: ["nfc-service-cuttlefish.rc"],
     vintf_fragments: ["nfc-service-cuttlefish.xml"],
     vendor: true,
-    cflags: [
-        "-Wall",
-        "-Wextra",
+    rustlibs: [
+        "libandroid_logger",
+        "liblog_rust",
+        "libbinder_rs",
+        "libbinder_tokio_rs",
+        "libtokio",
+        "liblibc",
+        "libnix",
+        "libclap",
+        "android.hardware.nfc-V1-rust"
     ],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libutils",
-        "libbinder_ndk",
-        "android.hardware.nfc-V1-ndk",
+    proc_macros: [
+        "libasync_trait",
     ],
-    required: [
-        "libnfc-hal-cf.conf-default",
-    ],
-    srcs: [
-        "main.cc",
-        "Nfc.cc",
-        "Cf_hal_api.cc",
-    ],
+    features: ["rt"],
+    required: ["libnfc-hal-cf.conf-default"],
+    srcs: ["src/main.rs"],
 }
