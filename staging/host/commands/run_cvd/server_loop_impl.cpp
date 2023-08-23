@@ -274,6 +274,8 @@ void ServerLoopImpl::DeleteFifos() {
       instance_.PerInstanceInternalPath("oemlock_fifo_vm.out"),
       instance_.PerInstanceInternalPath("bt_fifo_vm.in"),
       instance_.PerInstanceInternalPath("bt_fifo_vm.out"),
+      instance_.PerInstanceInternalPath("nfc_fifo_vm.in"),
+      instance_.PerInstanceInternalPath("nfc_fifo_vm.out"),
       instance_.PerInstanceInternalPath("uwb_fifo_vm.in"),
       instance_.PerInstanceInternalPath("uwb_fifo_vm.out"),
       instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.in"),

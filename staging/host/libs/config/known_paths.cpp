@@ -72,6 +72,7 @@ std::string ProcessRestarterBinary() {
 
 std::string RootCanalBinary() { return HostBinaryPath("root-canal"); }
 
+std::string CasimirBinary() { return HostBinaryPath("casimir"); }
 
 std::string SecureEnvBinary() { return HostBinaryPath("secure_env"); }
 
