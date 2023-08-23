@@ -60,7 +60,6 @@ fi
 
 web_ui_port=$((8443+$base_instance_num-1))
 adb_port=$((6520+$base_instance_num-1))
-fastboot_port=$((7520+$base_instance_num-1))
 instance_id=$(uuidgen)
 # sets up SSH port forwarding to the remote server for various ports and launch cvd instance
 # port forward rule as base_instance_num=1 in local
@@ -68,5 +67,5 @@ ssh $server -L 8443:127.0.0.1:$web_ui_port \
   -L 15550:127.0.0.1:15550 -L 15551:127.0.0.1:15551 -L 15552:127.0.0.1:15552 \
   -L 15553:127.0.0.1:15553 -L 15554:127.0.0.1:15554 -L 15555:127.0.0.1:15555 \
   -L 15556:127.0.0.1:15556 -L 15557:127.0.0.1:15557 -L 15558:127.0.0.1:15558 \
-  -L 6520:127.0.0.1:$adb_port -L 7520:127.0.0.1:$fastboot_port \
+  -L 6520:127.0.0.1:$adb_port \
   -t "cd cvd_home && HOME=~/cvd_home bin/launch_cvd --base_instance_num=$base_instance_num"
