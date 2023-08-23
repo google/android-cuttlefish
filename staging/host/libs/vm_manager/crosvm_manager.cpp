@@ -684,6 +684,15 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       instance.PerInstanceInternalPath("keymint_fifo_vm.out"),
       instance.PerInstanceInternalPath("keymint_fifo_vm.in"));
 
+  // /dev/hvc12 = NFC
+  if (config.enable_host_nfc()) {
+    crosvm_cmd.AddHvcReadWrite(
+        instance.PerInstanceInternalPath("nfc_fifo_vm.out"),
+        instance.PerInstanceInternalPath("nfc_fifo_vm.in"));
+  } else {
+    crosvm_cmd.AddHvcSink();
+  }
+
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
     crosvm_cmd.AddHvcSink();
   }

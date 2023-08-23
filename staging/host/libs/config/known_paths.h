@@ -34,6 +34,7 @@ std::string OpenwrtControlServerBinary();
 std::string PicaBinary();
 std::string ProcessRestarterBinary();
 std::string RootCanalBinary();
+std::string CasimirBinary();
 std::string SecureEnvBinary();
 std::string SocketVsockProxyBinary();
 std::string StopCvdBinary();
