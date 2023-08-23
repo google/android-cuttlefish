@@ -300,6 +300,56 @@ bool CuttlefishConfig::enable_host_bluetooth_connector() const {
   return (*dictionary_)[kenableHostBluetoothConnector].asBool();
 }
 
+static constexpr char kenableHostNfc[] = "enable_host_nfc";
+void CuttlefishConfig::set_enable_host_nfc(bool enable_host_nfc) {
+  (*dictionary_)[kenableHostNfc] = enable_host_nfc;
+}
+bool CuttlefishConfig::enable_host_nfc() const {
+  return (*dictionary_)[kenableHostNfc].asBool();
+}
+
+static constexpr char kenableHostNfcConnector[] = "enable_host_nfc_connector";
+void CuttlefishConfig::set_enable_host_nfc_connector(bool enable_host_nfc) {
+  (*dictionary_)[kenableHostNfcConnector] = enable_host_nfc;
+}
+bool CuttlefishConfig::enable_host_nfc_connector() const {
+  return (*dictionary_)[kenableHostNfcConnector].asBool();
+}
+
+static constexpr char kCasimirInstanceNum[] = "casimir_instance_num";
+void CuttlefishConfig::set_casimir_instance_num(int casimir_instance_num) {
+  (*dictionary_)[kCasimirInstanceNum] = casimir_instance_num;
+}
+int CuttlefishConfig::casimir_instance_num() const {
+  return (*dictionary_)[kCasimirInstanceNum].asInt();
+}
+
+static constexpr char kCasimirArgs[] = "casimir_args";
+void CuttlefishConfig::set_casimir_args(const std::string& casimir_args) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : android::base::Split(casimir_args, " ")) {
+    if (!arg.empty()) {
+      args_json_obj.append(arg);
+    }
+  }
+  (*dictionary_)[kCasimirArgs] = args_json_obj;
+}
+std::vector<std::string> CuttlefishConfig::casimir_args() const {
+  std::vector<std::string> casimir_args;
+  for (const Json::Value& arg : (*dictionary_)[kCasimirArgs]) {
+    casimir_args.push_back(arg.asString());
+  }
+  return casimir_args;
+}
+
+static constexpr char kCasimirNciPort[] = "casimir_nci_port";
+void CuttlefishConfig::set_casimir_nci_port(int port) {
+  (*dictionary_)[kCasimirNciPort] = port;
+}
+int CuttlefishConfig::casimir_nci_port() const {
+  return (*dictionary_)[kCasimirNciPort].asInt();
+}
+
 static constexpr char kenableWifi[] = "enable_wifi";
 void CuttlefishConfig::set_enable_wifi(bool enable_wifi) {
   (*dictionary_)[kenableWifi] = enable_wifi;

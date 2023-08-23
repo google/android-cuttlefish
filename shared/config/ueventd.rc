@@ -44,5 +44,8 @@
 # keymint / Rust
 /dev/hvc11 0666 system system
 
+# NFC
+/dev/hvc12 0666 nfc nfc
+
 # Factory Reset Protection
 /dev/block/by-name/frp 0660 system system
