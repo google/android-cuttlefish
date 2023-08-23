@@ -23,10 +23,9 @@
 #include <sstream>
 
 #include <android-base/file.h>
-#include <android-base/scopeguard.h>
-#include <fmt/format.h>
+#include "fmt/format.h"
 #include <fruit/fruit.h>
-#include <json/value.h>
+#include "json/value.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -165,11 +164,12 @@ Result<void> InstanceManager::SetInstanceGroup(
   using InstanceInfo = selector::InstanceDatabase::InstanceInfo;
   std::vector<InstanceInfo> instances_info;
   for (const auto& instance : per_instance_info) {
-    InstanceInfo info{.id = instance.instance_id_,
-                      .name = instance.per_instance_name_};
+    InstanceInfo info{.name = instance.per_instance_name_,
+                      .id = instance.instance_id_};
     instances_info.push_back(info);
   }
-  android::base::ScopeGuard action_on_failure([&instance_db, &new_group]() {
+  auto result = instance_db.AddInstances(group_name, instances_info);
+  if (!result.ok()) {
     /*
      * The way InstanceManager uses the database is that it adds an empty
      * group, gets an handle, and add instances to it. Thus, failing to adding
@@ -181,12 +181,8 @@ Result<void> InstanceManager::SetInstanceGroup(
      *
      */
     instance_db.RemoveInstanceGroup(new_group.Get());
-  });
-  CF_EXPECTF(instance_db.AddInstances(group_name, instances_info),
-             "Failed to add instances to the group \"{}\" so the group "
-             "is not added",
-             group_name);
-  action_on_failure.Disable();
+    return CF_ERR(result.error().Trace());
+  }
   return {};
 }
 
@@ -287,35 +283,34 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
                                                   const SharedFD& err) {
   std::lock_guard assemblies_lock(instance_db_mutex_);
   auto& instance_db = GetInstanceDB(uid);
+  const char _GroupDeviceInfoStart[] = "[\n";
+  const char _GroupDeviceInfoSeparate[] = ",\n";
+  const char _GroupDeviceInfoEnd[] = "]\n";
+  WriteAll(out, _GroupDeviceInfoStart);
   auto&& instance_groups = instance_db.InstanceGroups();
   cvd::Status status;
   status.set_code(cvd::Status::OK);
 
-  Json::Value groups_json(Json::arrayValue);
   for (const auto& group : instance_groups) {
     CF_EXPECT(group != nullptr);
     Json::Value group_json(Json::objectValue);
     group_json["group_name"] = group->GroupName();
     auto result = IssueStatusCommand(*group, err);
     if (!result.ok()) {
-      WriteAll(err,
-               fmt::format("Group '{}' status error: '{}'", group->GroupName(),
-                           result.error().FormatForEnv()));
+      WriteAll(err, fmt::format("Group '{}' status error: '{}'",
+                                group->GroupName(), result.error().Message()));
       status.set_code(cvd::Status::INTERNAL);
       continue;
     }
     group_json["instances"] = *result;
-    groups_json.append(group_json);
+    WriteAll(out, group_json.toStyledString());
+    // move on
+    if (group == *instance_groups.crbegin()) {
+      continue;
+    }
+    WriteAll(out, _GroupDeviceInfoSeparate);
   }
-  Json::Value output(Json::objectValue);
-  output["groups"] = groups_json;
-  // Calling toStyledString here puts the string representation of all instance
-  // groups into a single string in memory. That sounds large, but the host's
-  // RAM should be able to handle it if it can handle that many instances
-  // running simultaneously.
-  // The alternative is probably to create an std::ostream from
-  // cuttlefish::SharedFD and use Json::Value's operator<< to print it.
-  WriteAll(out, output.toStyledString());
+  WriteAll(out, _GroupDeviceInfoEnd);
   return status;
 }
 
@@ -405,7 +400,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
       if (config_path.ok()) {
         auto stop_result = IssueStopCommand(out, err, *config_path, *group);
         if (!stop_result.ok()) {
-          LOG(ERROR) << stop_result.error().FormatForEnv();
+          LOG(ERROR) << stop_result.error().Message();
         }
       }
       RemoveFile(group->HomeDir() + "/cuttlefish_runtime");
