@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -52,6 +53,12 @@ class ServerLoopImpl : public ServerLoop,
 
   // SetupFeature
   std::string Name() const override { return "ServerLoop"; }
+
+  enum class DeviceStatus : int {
+    kUnknown = 0,
+    kActive = 1,
+    kSuspended = 2,
+  };
 
  private:
   bool Enabled() const override { return true; }
@@ -92,6 +99,7 @@ class ServerLoopImpl : public ServerLoop,
   SharedFD server_;
   // mapping from the name of vm_manager to control_sock path
   std::unordered_map<std::string, std::string> vm_name_to_control_sock_;
+  std::atomic<DeviceStatus> device_status_;
 };
 
 }  // namespace run_cvd_impl

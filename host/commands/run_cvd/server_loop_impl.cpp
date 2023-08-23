@@ -65,7 +65,8 @@ ServerLoopImpl::ServerLoopImpl(
     const CuttlefishConfig::InstanceSpecific& instance)
     : config_(config),
       instance_(instance),
-      vm_name_to_control_sock_{InitializeVmToControlSockPath(instance)} {}
+      vm_name_to_control_sock_{InitializeVmToControlSockPath(instance)},
+      device_status_{DeviceStatus::kUnknown} {}
 
 Result<void> ServerLoopImpl::LateInject(fruit::Injector<>& injector) {
   command_sources_ = injector.getMultibindings<CommandSource>();
@@ -87,6 +88,7 @@ Result<void> ServerLoopImpl::Run() {
   ProcessMonitor process_monitor(std::move(process_monitor_properties));
 
   CF_EXPECT(process_monitor.StartAndMonitorProcesses());
+  device_status_ = DeviceStatus::kActive;
 
   while (true) {
     // TODO: use select to handle simultaneous connections.
@@ -141,15 +143,19 @@ Result<void> ServerLoopImpl::HandleExtended(
     case ExtendedActionType::kSuspend: {
       LOG(DEBUG) << "Run_cvd received suspend request.";
       CF_EXPECT(HandleSuspend(action_info.serialized_data, process_monitor));
+      device_status_ = DeviceStatus::kSuspended;
       return {};
     }
     case ExtendedActionType::kResume: {
       LOG(DEBUG) << "Run_cvd received resume request.";
       CF_EXPECT(HandleResume(action_info.serialized_data, process_monitor));
+      device_status_ = DeviceStatus::kActive;
       return {};
     }
     case ExtendedActionType::kSnapshotTake: {
       LOG(DEBUG) << "Run_cvd received snapshot request.";
+      CF_EXPECT(device_status_.load() == DeviceStatus::kSuspended,
+                "The device is not suspended, and snapshot cannot be taken");
       CF_EXPECT(HandleSnapshotTake(action_info.serialized_data));
       return {};
     }
