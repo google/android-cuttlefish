@@ -73,6 +73,8 @@ cc_library {
 cc_test_host {
     name: "libcuttlefish_utils_test",
     srcs: [
+        "files_test.cpp",
+        "files_test_helper.cpp",
         "flag_parser_test.cpp",
         "proc_file_utils_test.cpp",
         "result_test.cpp",
