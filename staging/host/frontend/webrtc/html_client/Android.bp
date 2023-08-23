@@ -79,10 +79,3 @@ prebuilt_usr_share_host {
     filename: "location.js",
     sub_dir: "webrtc/assets/js",
 }
-
-prebuilt_usr_share_host {
-    name: "webrtc_sensors.js",
-    src: "js/sensors.js",
-    filename: "sensors.js",
-    sub_dir: "webrtc/assets/js",
-}
