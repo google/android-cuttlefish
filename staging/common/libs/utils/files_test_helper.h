@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/common_utils.h"
+#include "common/libs/utils/files.h"
 
 namespace cuttlefish {
 
