@@ -114,11 +114,7 @@ class InstanceManager {
  private:
   Result<cvd::Status> CvdFleetImpl(const uid_t uid, const SharedFD& out,
                                    const SharedFD& err);
-  struct StatusCommandOutput {
-    std::string stderr_msg;
-    Json::Value stdout_json;
-  };
-  Result<StatusCommandOutput> IssueStatusCommand(
+  Result<Json::Value> IssueStatusCommand(
       const selector::LocalInstanceGroup& group, const SharedFD& err);
   Result<void> IssueStopCommand(const SharedFD& out, const SharedFD& err,
                                 const std::string& config_file_path,
