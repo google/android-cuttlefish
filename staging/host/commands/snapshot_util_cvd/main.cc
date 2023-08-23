@@ -15,6 +15,7 @@
  */
 
 #include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -98,12 +99,27 @@ Result<RequestInfo> SerializeRequest(const SnapshotCmd subcmd,
   }
 }
 
+Result<std::string> ToAbsolutePath(const std::string& snapshot_path) {
+  const InputPathForm default_path_form{
+      .current_working_dir = std::nullopt,
+      .home_dir = std::nullopt,
+      .path_to_convert = snapshot_path,
+      .follow_symlink = false,
+  };
+  return CF_EXPECTF(
+      EmulateAbsolutePath(default_path_form),
+      "The snapshot path, \"{}\", cannot be converted to an absolute path",
+      snapshot_path);
+}
+
 Result<void> SnapshotCvdMain(std::vector<std::string> args) {
   CF_EXPECT(!args.empty(), "No arguments was given");
   const auto prog_path = args.front();
   args.erase(args.begin());
   auto parsed = CF_EXPECT(Parse(args));
-
+  if (!parsed.snapshot_path.empty()) {
+    parsed.snapshot_path = CF_EXPECT(ToAbsolutePath(parsed.snapshot_path));
+  }
   // make sure the snapshot directory exists
   if (parsed.cmd == SnapshotCmd::kSnapshotTake) {
     CF_EXPECT(!parsed.snapshot_path.empty(),
