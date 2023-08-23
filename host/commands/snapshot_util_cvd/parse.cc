@@ -35,6 +35,10 @@ constexpr char snapshot_cmd_help[] =
     "Command to control regarding the snapshot operations: "
     "suspend/resume/snapshot_take";
 
+constexpr char cleanup_snapshot_path_help[] =
+    "If true, snapshot_util_cvd will clean up the snapshot path on "
+    "failure of snapshot-taking";
+
 constexpr char wait_for_launcher_help[] =
     "How many seconds to wait for the launcher to respond to the status "
     "command. A value of zero means wait indefinitely.";
@@ -58,6 +62,11 @@ Flag WaitForLauncherFlag(int& wait_for_launcher) {
 
 Flag SnapshotPathFlag(std::string& path_buf) {
   return GflagsCompatFlag("snapshot_path", path_buf).Help(snapshot_path_help);
+}
+
+Flag CleanupSnapshotPathFlag(bool& cleanup) {
+  return GflagsCompatFlag("cleanup_snapshot_path", cleanup)
+      .Help(cleanup_snapshot_path_help);
 }
 
 }  // namespace
@@ -100,6 +109,7 @@ static Result<std::vector<int>> InstanceNums() {
 Result<Parsed> Parse(std::vector<std::string>& args) {
   Parsed parsed{
       .wait_for_launcher = 30,
+      .cleanup_snapshot_path = false,
   };
   std::vector<Flag> flags;
   bool help_xml = false;
@@ -108,6 +118,7 @@ Result<Parsed> Parse(std::vector<std::string>& args) {
   flags.push_back(SnapshotCmdFlag(snapshot_op));
   flags.push_back(WaitForLauncherFlag(parsed.wait_for_launcher));
   flags.push_back(SnapshotPathFlag(snapshot_path));
+  flags.push_back(CleanupSnapshotPathFlag(parsed.cleanup_snapshot_path));
   flags.push_back(HelpFlag(flags));
   flags.push_back(HelpXmlFlag(flags, std::cout, help_xml));
   flags.push_back(UnexpectedArgumentGuard());

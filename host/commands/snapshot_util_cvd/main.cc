@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/scopeguard.h>
 #include <fmt/core.h>
 
 #include "common/libs/fs/shared_fd.h"
@@ -111,6 +112,14 @@ Result<std::string> ToAbsolutePath(const std::string& snapshot_path) {
       snapshot_path);
 }
 
+static void OnSnapshotTakeFailure(const std::string& snapshot_path) {
+  if (snapshot_path.empty()) {
+    return;
+  }
+  LOG(DEBUG) << "Deleting " << snapshot_path << "....";
+  RecursivelyRemoveDirectory(snapshot_path);
+}
+
 Result<void> SnapshotCvdMain(std::vector<std::string> args) {
   CF_EXPECT(!args.empty(), "No arguments was given");
   const auto prog_path = args.front();
@@ -127,9 +136,17 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
     CF_EXPECTF(!FileExists(parsed.snapshot_path, /* follow symlink */ false),
                "Delete the destination directiory \"{}\" first",
                parsed.snapshot_path);
+    android::base::ScopeGuard delete_snapshot_on_fail([&parsed]() {
+      if (!parsed.cleanup_snapshot_path) {
+        return;
+      }
+      LOG(ERROR) << "Snapshot take failed, so running clean-up.";
+      OnSnapshotTakeFailure(parsed.snapshot_path);
+    });
     meta_json_path =
         CF_EXPECT(HandleHostGroupSnapshot(parsed.snapshot_path),
                   "Failed to back up the group-level host runtime files.");
+    delete_snapshot_on_fail.Disable();
   }
 
   const CuttlefishConfig* config =
@@ -141,6 +158,15 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
 
     LOG(INFO) << "Requesting " << parsed.cmd << " for instance #"
               << instance_num;
+
+    android::base::ScopeGuard delete_snapshot_on_fail([&parsed]() {
+      LOG(ERROR) << "Snapshot take failed, so running clean-up.";
+      OnSnapshotTakeFailure(parsed.snapshot_path);
+    });
+    if (parsed.cmd != SnapshotCmd::kSnapshotTake) {
+      delete_snapshot_on_fail.Disable();
+    }
+
     auto [serialized_data, extended_type] =
         CF_EXPECT(SerializeRequest(parsed.cmd, meta_json_path));
     CF_EXPECT(
@@ -154,6 +180,9 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
                "{}\" request.",
                static_cast<char>(response), static_cast<int>(parsed.cmd));
     LOG(INFO) << parsed.cmd << " was successful for instance #" << instance_num;
+    if (parsed.cmd == SnapshotCmd::kSnapshotTake) {
+      delete_snapshot_on_fail.Disable();
+    }
   }
   return {};
 }
