@@ -170,7 +170,6 @@ cvd_host_webrtc_assets = [
     "webrtc_index.css",
     "webrtc_controls.css",
     "webrtc_trusted.pem",
-    "webrtc_sensors.js",
 ]
 
 cvd_host_model_simulator_files = [
