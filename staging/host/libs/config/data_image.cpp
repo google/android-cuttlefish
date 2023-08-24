@@ -345,7 +345,7 @@ class InitializeEspImageImpl : public InitializeEspImage {
     const auto is_not_gem5 = config_.vm_manager() != vm_manager::Gem5Manager::name();
     const auto esp_required_for_boot_flow = EspRequiredForBootFlow();
     if (is_not_gem5 && esp_required_for_boot_flow) {
-      LOG(DEBUG) << "creating esp_image: " << instance_.otheros_esp_image_path();
+      LOG(DEBUG) << "creating esp_image: " << instance_.esp_image_path();
       CF_EXPECT(BuildOSImage());
     }
     return {};
@@ -355,8 +355,10 @@ class InitializeEspImageImpl : public InitializeEspImage {
 
   bool EspRequiredForBootFlow() const {
     const auto flow = instance_.boot_flow();
-    return flow == CuttlefishConfig::InstanceSpecific::BootFlow::Linux ||
-        flow == CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia;
+    return flow ==
+               CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader ||
+           flow == CuttlefishConfig::InstanceSpecific::BootFlow::Linux ||
+           flow == CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia;
   }
 
   bool EspRequiredForAPBootFlow() const {
@@ -381,8 +383,15 @@ class InitializeEspImageImpl : public InitializeEspImage {
 
   bool BuildOSImage() {
     switch (instance_.boot_flow()) {
+      case CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader: {
+        auto android_efi_loader =
+            AndroidEfiLoaderEspBuilder(instance_.esp_image_path());
+        android_efi_loader.EfiLoaderPath(instance_.android_efi_loader())
+            .Architecture(instance_.target_arch());
+        return android_efi_loader.Build();
+      }
       case CuttlefishConfig::InstanceSpecific::BootFlow::Linux: {
-        auto linux = LinuxEspBuilder(instance_.otheros_esp_image_path());
+        auto linux = LinuxEspBuilder(instance_.esp_image_path());
         InitLinuxArgs(linux);
 
         linux.Root("/dev/vda2")
@@ -396,7 +405,7 @@ class InitializeEspImageImpl : public InitializeEspImage {
         return linux.Build();
       }
       case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia: {
-        auto fuchsia = FuchsiaEspBuilder(instance_.otheros_esp_image_path());
+        auto fuchsia = FuchsiaEspBuilder(instance_.esp_image_path());
         return fuchsia.Architecture(instance_.target_arch())
                       .Zedboot(instance_.fuchsia_zedboot_path())
                       .MultibootBinary(instance_.fuchsia_multiboot_bin_path())
