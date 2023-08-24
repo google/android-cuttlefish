@@ -58,7 +58,8 @@ class VmManager {
   // - /dev/hvc9 = uwb
   // - /dev/hvc10 = oemlock
   // - /dev/hvc11 = keymint
-  static const int kDefaultNumHvcs = 12;
+  // - /dev/hvc12 = NFC
+  static const int kDefaultNumHvcs = 13;
 
   // This is the number of virtual disks (block devices) that should be
   // configured by the VmManager. Related to the description above regarding
