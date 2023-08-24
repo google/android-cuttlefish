@@ -1438,6 +1438,14 @@ bool CuttlefishConfig::InstanceSpecific::start_rootcanal() const {
   return (*Dictionary())[kStartRootcanal].asBool();
 }
 
+static constexpr char kStartCasimir[] = "start_casimir";
+void CuttlefishConfig::MutableInstanceSpecific::set_start_casimir(bool start) {
+  (*Dictionary())[kStartCasimir] = start;
+}
+bool CuttlefishConfig::InstanceSpecific::start_casimir() const {
+  return (*Dictionary())[kStartCasimir].asBool();
+}
+
 static constexpr char kStartPica[] = "start_pica";
 void CuttlefishConfig::MutableInstanceSpecific::set_start_pica(
     bool start) {

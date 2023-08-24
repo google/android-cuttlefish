@@ -154,6 +154,19 @@ class CuttlefishConfig {
   void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
   bool enable_host_bluetooth_connector() const;
 
+  void set_enable_host_nfc(bool enable_host_nfc);
+  bool enable_host_nfc() const;
+
+  void set_enable_host_nfc_connector(bool enable_host_nfc_connector);
+  bool enable_host_nfc_connector() const;
+
+  void set_casimir_args(const std::string& casimir_args);
+  std::vector<std::string> casimir_args() const;
+  void set_casimir_instance_num(int casimir_instance_num);
+  int casimir_instance_num() const;
+  void set_casimir_nci_port(int port);
+  int casimir_nci_port() const;
+
   void set_enable_wifi(const bool enable_wifi);
   bool enable_wifi() const;
 
@@ -449,6 +462,9 @@ class CuttlefishConfig {
     // Whether this instance should start a rootcanal instance
     bool start_rootcanal() const;
 
+    // Whether this instance should start a casimir instance
+    bool start_casimir() const;
+
     // Whether this instance should start a pica instance
     bool start_pica() const;
 
@@ -682,6 +698,7 @@ class CuttlefishConfig {
     void set_start_webrtc_sig_server_proxy(bool start);
     void set_start_wmediumd(bool start);
     void set_start_rootcanal(bool start);
+    void set_start_casimir(bool start);
     void set_start_pica(bool start);
     void set_start_netsim(bool start);
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
