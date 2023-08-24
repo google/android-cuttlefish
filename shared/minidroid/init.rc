@@ -61,7 +61,7 @@ on init
     # apexd.status to activated, but immediately transitions to ready. Therefore, it's not safe to
     # wait for the activated status, by the time this line is reached it may be already be ready.
     wait_for_prop apexd.status ready
-    perform_apex_config
+    perform_apex_config --bootstrap
 
     # Notify to microdroid_manager that perform_apex_config is done.
     # Microdroid_manager shouldn't execute payload before this, because app
