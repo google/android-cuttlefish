@@ -52,8 +52,9 @@ bool IsRegular(const struct stat& file_stat) {
 // assumes that src_dir_path and dest_dir_path exist and both are
 // existing directories or links to the directories. Also they are
 // different directories.
-Result<void> CopyDirectoryImpl(const std::string& src_dir_path,
-                               const std::string& dest_dir_path) {
+Result<void> CopyDirectoryImpl(
+    const std::string& src_dir_path, const std::string& dest_dir_path,
+    const std::function<bool(const std::string&)>& predicate) {
   // create an empty dest_dir_path with the same permission as src_dir_path
   // and then, recursively copy the contents
   LOG(DEBUG) << "Making sure " << dest_dir_path
@@ -63,6 +64,9 @@ Result<void> CopyDirectoryImpl(const std::string& src_dir_path,
              dest_dir_path);
   const auto src_contents = CF_EXPECT(DirectoryContents(src_dir_path));
   for (const auto& src_base_path : src_contents) {
+    if (!predicate(src_dir_path + "/" + src_base_path)) {
+      continue;
+    }
     if (src_base_path == "." || src_base_path == "..") {
       LOG(DEBUG) << "Skipping \"" << src_base_path << "\"";
       continue;
@@ -98,7 +102,7 @@ Result<void> CopyDirectoryImpl(const std::string& src_dir_path,
     if (DirectoryExists(src_path)) {
       LOG(DEBUG) << "Recursively calling CopyDirectoryImpl(" << src_path << ", "
                  << dest_path << ")";
-      CF_EXPECT(CopyDirectoryImpl(src_path, dest_path));
+      CF_EXPECT(CopyDirectoryImpl(src_path, dest_path, predicate));
       LOG(DEBUG) << "Returned from Recursive call CopyDirectoryImpl("
                  << src_path << ", " << dest_path << ")";
       continue;
@@ -134,9 +138,10 @@ std::string RealpathOrSelf(const std::string& path) {
 
 }  // namespace
 
-Result<void> CopyDirectoryRecursively(const std::string& src_dir_path,
-                                      const std::string& dest_dir_path,
-                                      const bool verify_dest_dir_empty) {
+Result<void> CopyDirectoryRecursively(
+    const std::string& src_dir_path, const std::string& dest_dir_path,
+    const bool verify_dest_dir_empty,
+    std::function<bool(const std::string&)> predicate) {
   CF_EXPECTF(FileExists(src_dir_path),
              "A file/directory \"{}\" does not exist.", src_dir_path);
   CF_EXPECTF(DirectoryExists(src_dir_path), "\"{}\" is not a directory.",
@@ -162,7 +167,7 @@ Result<void> CopyDirectoryRecursively(const std::string& src_dir_path,
    * we don't delete the runtime directory, eventually. We could, however,
    * start with deleting it.
    */
-  CF_EXPECT(CopyDirectoryImpl(src_final_target, dest_final_target));
+  CF_EXPECT(CopyDirectoryImpl(src_final_target, dest_final_target, predicate));
   return {};
 }
 
