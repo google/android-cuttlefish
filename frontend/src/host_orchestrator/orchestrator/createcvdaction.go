@@ -15,8 +15,10 @@
 package orchestrator
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"strconv"
 	"sync"
@@ -62,6 +64,7 @@ type CreateCVDAction struct {
 	userArtifactsDirResolver UserArtifactsDirResolver
 	artifactsMngr            *artifacts.Manager
 	startCVDHandler          *startCVDHandler
+	cvdStartTimeout          time.Duration
 
 	instanceCounter uint32
 }
@@ -79,6 +82,7 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		artifactsFetcher:         opts.ArtifactsFetcher,
 		cvdBundleFetcher:         opts.CVDBundleFetcher,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
+		cvdStartTimeout:          opts.CVDStartTimeout,
 
 		artifactsMngr: artifacts.NewManager(
 			opts.Paths.ArtifactsRootDir,
@@ -115,10 +119,60 @@ func (a *CreateCVDAction) Run() (apiv1.Operation, error) {
 }
 
 func (a *CreateCVDAction) launchCVD(op apiv1.Operation) {
-	result := a.launchCVDResult(op)
+	result := &OperationResult{}
+	if a.req.EnvConfig != nil {
+		result.Value, result.Error = a.launchWithCanonicalConfig(op)
+	} else {
+		result = a.launchCVDResult(op)
+	}
 	if err := a.om.Complete(op.Name, result); err != nil {
 		log.Printf("error completing launch cvd operation %q: %v\n", op.Name, err)
 	}
+}
+
+func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.CreateCVDResponse, error) {
+	data, err := json.MarshalIndent(a.req.EnvConfig, "", " ")
+	if err != nil {
+		return nil, err
+	}
+	file, err := ioutil.TempFile("", "cvdload*.json")
+	if err != nil {
+		return nil, err
+	}
+	if err := file.Chmod(0640); err != nil {
+		return nil, err
+	}
+	_, err = file.Write(data)
+	if closeErr := file.Close(); closeErr != nil && err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		return nil, err
+	}
+	args := []string{"load", file.Name()}
+	opts := cvd.CommandOpts{
+		Timeout: a.cvdStartTimeout,
+	}
+	cmd := cvd.NewCommand(a.execContext, a.paths.CVDBin(), args, opts)
+	if err := cmd.Run(); err != nil {
+		var details string
+		var execError *cvd.CommandExecErr
+		var timeoutErr *cvd.CommandTimeoutErr
+		if errors.As(err, &execError) {
+			details = execError.Error()
+			// Overwrite err with the unwrapped error as execution errors were already logged.
+			err = execError.Unwrap()
+		} else if errors.As(err, &timeoutErr) {
+			details = timeoutErr.Error()
+		}
+		log.Printf("failed to launch cvd with error: %v", err)
+		return nil, operator.NewInternalErrorD(ErrMsgLaunchCVDFailed, details, err)
+	}
+	fleet, err := cvdFleet(a.execContext, a.paths.CVDBin())
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.CreateCVDResponse{CVDs: fleetToCVDs(fleet)}, nil
 }
 
 func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
@@ -287,6 +341,9 @@ func (a *CreateCVDAction) newInstanceNumbers(n uint32) []uint32 {
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
+	if r.EnvConfig != nil {
+		return nil
+	}
 	if r.CVD == nil {
 		return EmptyFieldError("CVD")
 	}
