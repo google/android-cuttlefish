@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -153,9 +154,9 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 	if err != nil {
 		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
-	relevant := []cvdInstance{}
+	relevant := []*cvdInstance{}
 	for _, item := range fleet {
-		n, err := nameToNumber(item.InstanceName)
+		n, err := strconv.Atoi(item.InstanceName)
 		if err != nil {
 			return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 		}
