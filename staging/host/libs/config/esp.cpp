@@ -54,6 +54,8 @@ static constexpr char kBootSrcPathAA64[] =
     "/usr/lib/grub/arm64-efi/monolithic/grubaa64.efi";
 static constexpr char kBootDestPathAA64[] = "/EFI/BOOT/BOOTAA64.EFI";
 
+static constexpr char kBootDestPathRiscV64[] = "/EFI/BOOT/BOOTRISCV64.EFI";
+
 static constexpr char kMultibootModuleSrcPathIA32[] =
     "/usr/lib/grub/i386-efi/multiboot.mod";
 static constexpr char kMultibootModuleDestPathIA32[] =
@@ -314,6 +316,48 @@ EspBuilder AddGrubConfig(const std::string& config) {
          .File(config, kGrubConfigDestPath, /*required*/ true);
 
   return builder;
+}
+
+AndroidEfiLoaderEspBuilder& AndroidEfiLoaderEspBuilder::EfiLoaderPath(
+    std::string efi_loader_path) & {
+  efi_loader_path_ = efi_loader_path;
+  return *this;
+}
+
+AndroidEfiLoaderEspBuilder& AndroidEfiLoaderEspBuilder::Architecture(
+    Arch arch) & {
+  arch_ = arch;
+  return *this;
+}
+
+bool AndroidEfiLoaderEspBuilder::Build() const {
+  if (efi_loader_path_.empty()) {
+    LOG(ERROR)
+        << "Efi loader is required argument for AndroidEfiLoaderEspBuilder";
+    return false;
+  }
+  EspBuilder builder = EspBuilder(image_path_);
+  builder.Directory("EFI").Directory("EFI/BOOT");
+  std::string dest_path;
+  switch (arch_) {
+    case Arch::Arm:
+    case Arch::Arm64:
+      dest_path = kBootDestPathAA64;
+      break;
+    case Arch::RiscV64:
+      dest_path = kBootDestPathRiscV64;
+      break;
+    case Arch::X86:
+    case Arch::X86_64: {
+      dest_path = kBootDestPathIA32;
+      break;
+      default:
+        LOG(ERROR) << "Unknown architecture";
+        return false;
+    }
+  }
+  builder.File(efi_loader_path_, dest_path, /* required */ true);
+  return builder.Build();
 }
 
 LinuxEspBuilder& LinuxEspBuilder::Argument(std::string key, std::string value) & {
