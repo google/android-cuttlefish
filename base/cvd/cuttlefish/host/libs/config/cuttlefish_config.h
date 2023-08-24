@@ -422,7 +422,7 @@ class CuttlefishConfig {
 
     std::string ap_esp_image_path() const;
 
-    std::string otheros_esp_image_path() const;
+    std::string esp_image_path() const;
 
     std::string otheros_esp_grub_config() const;
 
@@ -430,11 +430,7 @@ class CuttlefishConfig {
 
     std::string audio_server_path() const;
 
-    enum class BootFlow {
-      Android,
-      Linux,
-      Fuchsia
-    };
+    enum class BootFlow { Android, AndroidEfiLoader, Linux, Fuchsia };
 
     BootFlow boot_flow() const;
 
@@ -626,6 +622,9 @@ class CuttlefishConfig {
     // otheros artifacts
     std::string otheros_esp_image() const;
 
+    // android efi loader flow
+    std::string android_efi_loader() const;
+
     // linux artifacts for otheros flow
     std::string linux_kernel_path() const;
     std::string linux_initramfs_path() const;
@@ -809,6 +808,7 @@ class CuttlefishConfig {
     void set_default_target_zip(const std::string& default_target_zip);
     void set_system_target_zip(const std::string& system_target_zip);
     void set_otheros_esp_image(const std::string& otheros_esp_image);
+    void set_android_efi_loader(const std::string& android_efi_loader);
     void set_linux_kernel_path(const std::string& linux_kernel_path);
     void set_linux_initramfs_path(const std::string& linux_initramfs_path);
     void set_linux_root_image(const std::string& linux_root_image);
