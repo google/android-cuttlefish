@@ -77,10 +77,6 @@ std::string ConcatToString(Args&&... args) {
   return ConcatToStream(concatenator, std::forward<Args>(args)...).str();
 }
 
-// given /a/b/c/d/e, ensures
-// all directories from /a through /a/b/c/d/e exist
-Result<void> EnsureDirectoryExistsAllTheWay(const std::string& dir);
-
 constexpr android::base::LogSeverity kCvdDefaultVerbosity = android::base::INFO;
 
 Result<android::base::LogSeverity> EncodeVerbosity(

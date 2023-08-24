@@ -112,6 +112,21 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
   if (DirectoryExists(directory_path)) {
     return {};
   }
+  if (FileExists(directory_path)) {
+    std::string target;
+    CF_EXPECTF(android::base::Readlink(directory_path, &target),
+               "As file \"{}\" exists, it must be a link to a directory.",
+               directory_path);
+    std::string real_path;
+    CF_EXPECTF(android::base::Realpath(directory_path, &real_path),
+               "While the link \"{}\" is broken and not a directory.",
+               directory_path);
+    CF_EXPECTF(DirectoryExists(real_path),
+               "The eventual target of \"{}\" to \"{}\" must"
+               "be a directory.",
+               directory_path, real_path);
+    return {};
+  }
   const auto parent_dir = cpp_dirname(directory_path);
   if (parent_dir.size() > 1) {
     EnsureDirectoryExists(parent_dir, mode, group_name);
