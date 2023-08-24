@@ -35,6 +35,9 @@
 # hvc11 for keymint / Rust
 /dev/hvc11  u:object_r:keymint_device:s0
 
+# hvc12 for NFC
+/dev/hvc12  u:object_r:nfc_device:s0
+
 # ARM serial console device
 /dev/ttyAMA[0-9]*  u:object_r:serial_device:s0
 
