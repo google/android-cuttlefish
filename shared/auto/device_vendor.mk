@@ -76,7 +76,7 @@ endif
 PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 
 # Remote access HAL
-PRODUCT_PACKAGES += android.hardware.automotive.remoteaccess@V1-default-service
+PRODUCT_PACKAGES += android.hardware.automotive.remoteaccess@V2-default-service
 
 # Broadcast Radio
 PRODUCT_PACKAGES += android.hardware.broadcastradio-service.default
