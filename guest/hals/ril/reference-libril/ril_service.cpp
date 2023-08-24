@@ -13377,6 +13377,13 @@ static void publishRadioHal(std::shared_ptr<compat::DriverContext> ctx, sp<V1_5:
     const auto instance = T::descriptor + "/"s + slot;
     RLOGD("Publishing %s", instance.c_str());
 
+    if (!AServiceManager_isDeclared(instance.c_str())) {
+        RLOGW("%s is not declared in VINTF (this may be intentional on `next` when interface is "
+              "not frozen)",
+              instance.c_str());
+        return;
+    }
+
     auto aidlHal = ndk::SharedRefBase::make<T>(ctx, hidlHal, cm);
     gPublishedHals.push_back(aidlHal);
     const auto status = AServiceManager_addService(aidlHal->asBinder().get(), instance.c_str());
