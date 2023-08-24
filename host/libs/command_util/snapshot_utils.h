@@ -41,7 +41,10 @@ Result<Json::Value> CreateMetaInfo(const CuttlefishConfig& config,
 Result<std::string> InstanceGuestSnapshotPath(const Json::Value& meta_json,
                                               const std::string& instance_id);
 std::string SnapshotMetaJsonPath(const std::string& snapshot_path);
+Result<Json::Value> LoadMetaJson(const std::string& snapshot_path);
 
+Result<std::vector<std::string>> GuestSnapshotDirectories(
+    const std::string& snapshot_path);
 inline constexpr const char kMetaInfoJsonFileName[] = "snapshot_meta_info.json";
 inline constexpr const char kGuestSnapshotField[] = "guest_snapshot";
 inline constexpr const char kSnapshotPathField[] = "snapshot_path";

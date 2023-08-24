@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <unordered_map>
 
@@ -89,8 +90,8 @@ Result<void> CopyDirectoryImpl(
                    dest_path);
       }
       CF_EXPECTF(symlink(target.data(), dest_path.data()) == 0,
-                 "Creating symbolic link from {} to {} failed.", dest_path,
-                 target);
+                 "Creating symbolic link from {} to {} failed: {}", dest_path,
+                 target, strerror(errno));
       continue;
     }
 
@@ -233,6 +234,27 @@ Result<Json::Value> CreateMetaInfo(const CuttlefishConfig& cuttlefish_config,
 
 std::string SnapshotMetaJsonPath(const std::string& snapshot_path) {
   return snapshot_path + "/" + kMetaInfoJsonFileName;
+}
+
+Result<Json::Value> LoadMetaJson(const std::string& snapshot_path) {
+  auto meta_json_path = SnapshotMetaJsonPath(snapshot_path);
+  auto meta_json = CF_EXPECT(LoadFromFile(meta_json_path));
+  return meta_json;
+}
+
+Result<std::vector<std::string>> GuestSnapshotDirectories(
+    const std::string& snapshot_path) {
+  auto meta_json = CF_EXPECT(LoadMetaJson(snapshot_path));
+  CF_EXPECT(meta_json.isMember(kGuestSnapshotField));
+  const auto& guest_snapshot_dir_jsons = meta_json[kGuestSnapshotField];
+  std::vector<std::string> id_strs = guest_snapshot_dir_jsons.getMemberNames();
+  std::vector<std::string> guest_snapshot_paths;
+  for (const auto& id_str : id_strs) {
+    CF_EXPECT(guest_snapshot_dir_jsons.isMember(id_str));
+    std::string path_suffix = guest_snapshot_dir_jsons[id_str].asString();
+    guest_snapshot_paths.push_back(snapshot_path + "/" + path_suffix);
+  }
+  return guest_snapshot_paths;
 }
 
 }  // namespace cuttlefish
