@@ -82,27 +82,6 @@ cvd::Request MakeRequest(const MakeRequestForm& request_form,
   return request;
 }
 
-// given /a/b/c/d/e, ensures
-// all directories from /a through /a/b/c/d/e exist
-Result<void> EnsureDirectoryExistsAllTheWay(const std::string& dir) {
-  CF_EXPECT(!dir.empty() && dir.at(0) == '/',
-            "EnsureDirectoryExistsAllTheWay() handles absolute paths only.");
-  if (dir == "/") {
-    return {};
-  }
-  std::string path_exclude_root = dir.substr(1);
-  std::vector<std::string> tokens =
-      android::base::Tokenize(path_exclude_root, "/");
-  std::string current_dir = "/";
-  for (int i = 0; i < tokens.size(); i++) {
-    current_dir.append(tokens[i]);
-    CF_EXPECT(EnsureDirectoryExists(current_dir),
-              current_dir << " does not exist and cannot be created.");
-    current_dir.append("/");
-  }
-  return {};
-}
-
 template <typename T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& v) {
   if (v.empty()) {
