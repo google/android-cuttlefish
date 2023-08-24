@@ -90,6 +90,9 @@ DEFINE_string(
     system_target_zip, CF_DEFAULTS_SYSTEM_TARGET_ZIP,
     "Location of system target zip file.");
 
+DEFINE_string(android_efi_loader, CF_DEFAULTS_ANDROID_EFI_LOADER,
+              "Location of android EFI loader for android efi load flow.");
+
 DEFINE_string(linux_kernel_path, CF_DEFAULTS_LINUX_KERNEL_PATH,
               "Location of linux kernel for cuttlefish otheros flow.");
 DEFINE_string(linux_initramfs_path, CF_DEFAULTS_LINUX_INITRAMFS_PATH,
@@ -250,7 +253,7 @@ std::vector<ImagePartition> linux_composite_disk_config(
 
   partitions.push_back(ImagePartition{
       .label = "linux_esp",
-      .image_file_path = AbsolutePath(instance.otheros_esp_image_path()),
+      .image_file_path = AbsolutePath(instance.esp_image_path()),
       .type = kEfiSystemPartition,
       .read_only = FLAGS_use_overlay,
   });
@@ -269,7 +272,7 @@ std::vector<ImagePartition> fuchsia_composite_disk_config(
 
   partitions.push_back(ImagePartition{
       .label = "fuchsia_esp",
-      .image_file_path = AbsolutePath(instance.otheros_esp_image_path()),
+      .image_file_path = AbsolutePath(instance.esp_image_path()),
       .type = kEfiSystemPartition,
       .read_only = FLAGS_use_overlay,
   });
@@ -406,6 +409,24 @@ std::vector<ImagePartition> android_composite_disk_config(
   return partitions;
 }
 
+std::vector<ImagePartition> AndroidEfiLoaderCompositeDiskConfig(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  std::vector<ImagePartition> partitions =
+      android_composite_disk_config(instance);
+  // Cuttlefish uboot EFI bootflow by default looks at the first partition
+  // for EFI application. Thus we put "android_esp" at the beginning.
+  partitions.insert(
+      partitions.begin(),
+      ImagePartition{
+          .label = "android_esp",
+          .image_file_path = AbsolutePath(instance.esp_image_path()),
+          .type = kEfiSystemPartition,
+          .read_only = FLAGS_use_overlay,
+      });
+
+  return partitions;
+}
+
 std::vector<ImagePartition> GetApCompositeDiskConfig(const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
@@ -433,6 +454,9 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
   switch (instance.boot_flow()) {
     case CuttlefishConfig::InstanceSpecific::BootFlow::Android:
       return android_composite_disk_config(instance);
+      break;
+    case CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader:
+      return AndroidEfiLoaderCompositeDiskConfig(instance);
       break;
     case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
       return linux_composite_disk_config(instance);
@@ -742,6 +766,9 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
   std::vector<std::string> system_target_zip_vec =
       android::base::Split(FLAGS_system_target_zip, ",");
 
+  std::vector<std::string> android_efi_loader =
+      android::base::Split(FLAGS_android_efi_loader, ",");
+
   std::vector<std::string> linux_kernel_path =
       android::base::Split(FLAGS_linux_kernel_path, ",");
   std::vector<std::string> linux_initramfs_path =
@@ -840,6 +867,11 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       instance.set_data_image(data_image[0]);
     } else {
       instance.set_data_image(data_image[instance_index]);
+    }
+    if (instance_index >= android_efi_loader.size()) {
+      instance.set_android_efi_loader(android_efi_loader[0]);
+    } else {
+      instance.set_android_efi_loader(android_efi_loader[instance_index]);
     }
     if (instance_index >= linux_kernel_path.size()) {
       instance.set_linux_kernel_path(linux_kernel_path[0]);
