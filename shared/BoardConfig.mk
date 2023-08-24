@@ -291,7 +291,7 @@ BOARD_SUPER_IMAGE_IN_UPDATE_PACKAGE := true
 TARGET_RELEASETOOLS_EXTENSIONS := device/google/cuttlefish/shared
 
 # Generate a partial ota update package for partitions in vbmeta_system
-BOARD_PARTIAL_OTA_UPDATE_PARTITIONS_LIST := product system system_ext vbmeta_system init_boot
+BOARD_PARTIAL_OTA_UPDATE_PARTITIONS_LIST := $(BOARD_AVB_VBMETA_SYSTEM) vbmeta_system init_boot
 
 BOARD_BOOTLOADER_IN_UPDATE_PACKAGE := true
 BOARD_RAMDISK_USE_LZ4 := true
