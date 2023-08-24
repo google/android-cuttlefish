@@ -109,7 +109,7 @@ static Result<std::vector<int>> InstanceNums() {
 Result<Parsed> Parse(std::vector<std::string>& args) {
   Parsed parsed{
       .wait_for_launcher = 30,
-      .cleanup_snapshot_path = false,
+      .cleanup_snapshot_path = true,
   };
   std::vector<Flag> flags;
   bool help_xml = false;

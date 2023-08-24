@@ -143,6 +143,9 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
       LOG(ERROR) << "Snapshot take failed, so running clean-up.";
       OnSnapshotTakeFailure(parsed.snapshot_path);
     });
+    if (!parsed.cleanup_snapshot_path) {
+      delete_snapshot_on_fail.Disable();
+    }
     meta_json_path =
         CF_EXPECT(HandleHostGroupSnapshot(parsed.snapshot_path),
                   "Failed to back up the group-level host runtime files.");
