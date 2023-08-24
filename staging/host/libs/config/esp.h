@@ -24,6 +24,23 @@
 
 namespace cuttlefish {
 
+class AndroidEfiLoaderEspBuilder final {
+ public:
+  AndroidEfiLoaderEspBuilder() = delete;
+  AndroidEfiLoaderEspBuilder(std::string image_path)
+      : image_path_(std::move(image_path)) {}
+
+  AndroidEfiLoaderEspBuilder& EfiLoaderPath(std::string efi_loader_path) &;
+  AndroidEfiLoaderEspBuilder& Architecture(Arch arch) &;
+
+  bool Build() const;
+
+ private:
+  const std::string image_path_;
+  std::string efi_loader_path_;
+  Arch arch_;
+};
+
 class LinuxEspBuilder final {
  public:
   LinuxEspBuilder() = delete;
