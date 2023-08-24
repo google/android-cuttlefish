@@ -50,7 +50,7 @@ Result<ConstRef<LocalInstanceGroup>> InstanceDatabase::AddInstanceGroup(
     const AddInstanceGroupParam& param) {
   CF_EXPECT(IsValidGroupName(param.group_name),
             "GroupName " << param.group_name << " is ill-formed.");
-  CF_EXPECT(EnsureDirectoryExistsAllTheWay(param.home_dir),
+  CF_EXPECT(EnsureDirectoryExists(param.home_dir),
             "HOME dir, " << param.home_dir << " does not exist");
   CF_EXPECT(PotentiallyHostArtifactsPath(param.host_artifacts_path),
             "ANDROID_HOST_OUT, " << param.host_artifacts_path
