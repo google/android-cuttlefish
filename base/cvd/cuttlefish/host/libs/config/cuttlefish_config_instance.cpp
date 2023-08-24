@@ -245,6 +245,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_otheros_esp_image(
     const std::string& otheros_esp_image) {
   (*Dictionary())[kOtherosEspImage] = otheros_esp_image;
 }
+static constexpr char kAndroidEfiLoader[] = "android_efi_loader";
+std::string CuttlefishConfig::InstanceSpecific::android_efi_loader() const {
+  return (*Dictionary())[kAndroidEfiLoader].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_android_efi_loader(
+    const std::string& android_efi_loader) {
+  (*Dictionary())[kAndroidEfiLoader] = android_efi_loader;
+}
 static constexpr char kLinuxKernelPath[] = "linux_kernel_path";
 std::string CuttlefishConfig::InstanceSpecific::linux_kernel_path() const {
   return (*Dictionary())[kLinuxKernelPath].asString();
@@ -1118,7 +1126,7 @@ std::string CuttlefishConfig::InstanceSpecific::ap_uboot_env_image_path() const 
   return AbsolutePath(PerInstancePath("ap_uboot_env.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::otheros_esp_image_path() const {
+std::string CuttlefishConfig::InstanceSpecific::esp_image_path() const {
   return AbsolutePath(PerInstancePath("esp.img"));
 }
 
@@ -1141,6 +1149,8 @@ std::string CuttlefishConfig::InstanceSpecific::audio_server_path() const {
 }
 
 CuttlefishConfig::InstanceSpecific::BootFlow CuttlefishConfig::InstanceSpecific::boot_flow() const {
+  const bool android_efi_loader_flow_used = !android_efi_loader().empty();
+
   const bool linux_flow_used = !linux_kernel_path().empty()
     || !linux_initramfs_path().empty()
     || !linux_root_image().empty();
@@ -1148,6 +1158,10 @@ CuttlefishConfig::InstanceSpecific::BootFlow CuttlefishConfig::InstanceSpecific:
   const bool fuchsia_flow_used = !fuchsia_zedboot_path().empty()
     || !fuchsia_root_image().empty()
     || !fuchsia_multiboot_bin_path().empty();
+
+  if (android_efi_loader_flow_used) {
+    return BootFlow::AndroidEfiLoader;
+  }
 
   if (linux_flow_used) {
     return BootFlow::Linux;
