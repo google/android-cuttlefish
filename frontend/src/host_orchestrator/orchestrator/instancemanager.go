@@ -98,6 +98,15 @@ func createRuntimesRootDir(name string) error {
 	return os.Chmod(name, 0774|os.ModeSetgid)
 }
 
+type cvdFleetOutput struct {
+	Groups []*cvdGroup `json:"groups"`
+}
+
+type cvdGroup struct {
+	Name      string         `json:"group_name"`
+	Instances []*cvdInstance `json:"instances"`
+}
+
 type cvdInstance struct {
 	InstanceName string   `json:"instance_name"`
 	Status       string   `json:"status"`
@@ -105,26 +114,26 @@ type cvdInstance struct {
 	InstanceDir  string   `json:"instance_dir"`
 }
 
-func cvdFleet(ctx cvd.CVDExecContext, cvdBin string) ([]cvdInstance, error) {
+func cvdFleet(ctx cvd.CVDExecContext, cvdBin string) ([]*cvdInstance, error) {
 	stdout := &bytes.Buffer{}
 	cvdCmd := cvd.NewCommand(ctx, cvdBin, []string{"fleet"}, cvd.CommandOpts{Stdout: stdout})
 	err := cvdCmd.Run()
 	if err != nil {
 		return nil, err
 	}
-	items := make([][]cvdInstance, 0)
-	if err := json.Unmarshal(stdout.Bytes(), &items); err != nil {
+	output := &cvdFleetOutput{}
+	if err := json.Unmarshal(stdout.Bytes(), output); err != nil {
 		log.Printf("Failed parsing `cvd fleet` ouput. Output: \n\n%s\n", cvd.OutputLogMessage(stdout.String()))
 		return nil, fmt.Errorf("failed parsing `cvd fleet` output: %w", err)
 	}
-	if len(items) == 0 {
-		return []cvdInstance{}, nil
+	if len(output.Groups) == 0 {
+		return []*cvdInstance{}, nil
 	}
 	// Host orchestrator only works with one instances group.
-	return items[0], nil
+	return output.Groups[0].Instances, nil
 }
 
-func fleetToCVDs(val []cvdInstance) []*apiv1.CVD {
+func fleetToCVDs(val []*cvdInstance) []*apiv1.CVD {
 	result := make([]*apiv1.CVD, len(val))
 	for i, item := range val {
 		result[i] = &apiv1.CVD{
@@ -502,15 +511,15 @@ func downloadArtifactToFile(buildAPI artifacts.BuildAPI, filename, artifactName,
 	return downloadErr
 }
 
-type cvdInstances []cvdInstance
+type cvdInstances []*cvdInstance
 
-func (s cvdInstances) findByName(name string) (bool, cvdInstance) {
+func (s cvdInstances) findByName(name string) (bool, *cvdInstance) {
 	for _, e := range s {
 		if e.InstanceName == name {
 			return true, e
 		}
 	}
-	return false, cvdInstance{}
+	return false, &cvdInstance{}
 }
 
 func runAcloudSetup(execContext cvd.CVDExecContext, artifactsRootDir, artifactsDir, runtimeDir string) {
@@ -533,19 +542,6 @@ func SliceItoa(s []uint32) []string {
 		result[i] = strconv.Itoa(int(v))
 	}
 	return result
-}
-
-func nameToNumber(s string) (int, error) {
-	// instance names follow format "cvd-[NUMBER]".
-	parts := strings.Split(s, "-")
-	if len(parts) != 2 {
-		return 0, fmt.Errorf("failed parsing instance name %q", s)
-	}
-	n, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return 0, fmt.Errorf("failed parsing instance name %q: %w", s, err)
-	}
-	return n, nil
 }
 
 func contains(s []uint32, e uint32) bool {

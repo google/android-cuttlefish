@@ -30,23 +30,29 @@ import (
 func TestListCVDsSucceeds(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
-	output := `[
-  [
-          {
-                  "adb_serial" : "0.0.0.0:6520",
-                  "assembly_dir" : "/var/lib/cuttlefish-common/runtimes/cvd-1/cuttlefish/assembly",
-                  "displays" :
-                  [
-                          "720 x 1280 ( 320 )"
-                  ],
-                  "instance_dir" : "/var/lib/cuttlefish-common/runtimes/cvd-1/cuttlefish/instances/cvd-1",
-                  "instance_name" : "cvd-1",
-                  "status" : "Running",
-                  "web_access" : "https:///run/cuttlefish/operator:8443/client.html?deviceId=cvd-1",
-                  "webrtc_port" : "8443"
-          }
-  ]
-]`
+	output :=
+		`{
+                  "groups": [
+                    {
+                      "group_name": "cvd",
+                      "instances": [
+                        {
+                          "adb_serial": "0.0.0.0:6520",
+                          "assembly_dir": "/var/lib/cuttlefish-common/runtimes/cuttlefish/assembly",
+                          "displays": [
+                            "720 x 1280 ( 320 )"
+                          ],
+                          "instance_dir": "/var/lib/cuttlefish-common/runtimes/cuttlefish/instances/cvd-1",
+                          "instance_name": "1",
+                          "status": "Running",
+                          "web_access": "https://localhost:1443/devices/cvd-1/files/client.html",
+                          "webrtc_device_id": "cvd-1",
+                          "webrtc_port": "8443"
+                        }
+                      ]
+                    }
+                  ]
+                }`
 	execContext := func(ctx context.Context, name string, args ...string) *exec.Cmd {
 		cmd := exec.Command("true")
 		if path.Base(args[len(args)-1]) == "fleet" {
@@ -75,7 +81,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 
 	want := &apiv1.ListCVDsResponse{CVDs: []*apiv1.CVD{
 		{
-			Name:        "cvd-1",
+			Name:        "1",
 			BuildSource: &apiv1.BuildSource{},
 			Status:      "Running",
 			Displays:    []string{"720 x 1280 ( 320 )"},
