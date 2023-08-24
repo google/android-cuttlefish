@@ -39,7 +39,7 @@ static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
 
 static std::map<std::string, Json::ValueType> kFetchKeyMap = {
     {"api_key", Json::ValueType::stringValue},
-    {"credential", Json::ValueType::stringValue},
+    {"credential_source", Json::ValueType::stringValue},
     {"wait_retry_period", Json::ValueType::uintValue},
     {"external_dns_resolver", Json::ValueType::booleanValue},
     {"keep_downloaded_archives", Json::ValueType::booleanValue},
