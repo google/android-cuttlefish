@@ -175,8 +175,8 @@ func HostBugReport(ctx cvd.CVDExecContext, paths IMPaths, out string) error {
 
 const (
 	// TODO(b/267525748): Make these values configurable.
-	mainBuildDefaultBranch = "aosp-master"
-	mainBuildDefaultTarget = "aosp_cf_x86_64_phone-userdebug"
+	mainBuildDefaultBranch = "aosp-main"
+	mainBuildDefaultTarget = "aosp_cf_x86_64_phone-trunk_staging-userdebug"
 )
 
 func defaultMainBuild() *apiv1.AndroidCIBuild {
