@@ -159,18 +159,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_new_super_image(
     const std::string& super_image) {
   (*Dictionary())[kNewSuperImage] = super_image;
 }
-static constexpr char kMiscImage[] = "misc_image";
-std::string CuttlefishConfig::InstanceSpecific::misc_image() const {
-  return (*Dictionary())[kMiscImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_misc_image(
-    const std::string& misc_image) {
-  (*Dictionary())[kMiscImage] = misc_image;
-}
-static constexpr char kNewMiscImage[] = "new_misc_image";
-std::string CuttlefishConfig::InstanceSpecific::new_misc_image() const {
-  return (*Dictionary())[kNewMiscImage].asString();
-}
 static constexpr char kMiscInfoTxt[] = "misc_info_txt";
 std::string CuttlefishConfig::InstanceSpecific::misc_info_txt() const {
   return (*Dictionary())[kMiscInfoTxt].asString();
@@ -178,26 +166,6 @@ std::string CuttlefishConfig::InstanceSpecific::misc_info_txt() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_misc_info_txt(
     const std::string& misc_info) {
   (*Dictionary())[kMiscInfoTxt] = misc_info;
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_new_misc_image(
-    const std::string& new_misc_image) {
-  (*Dictionary())[kNewMiscImage] = new_misc_image;
-}
-static constexpr char kMetadataImage[] = "metadata_image";
-std::string CuttlefishConfig::InstanceSpecific::metadata_image() const {
-  return (*Dictionary())[kMetadataImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_metadata_image(
-    const std::string& metadata_image) {
-  (*Dictionary())[kMetadataImage] = metadata_image;
-}
-static constexpr char kNewMetadataImage[] = "new_metadata_image";
-std::string CuttlefishConfig::InstanceSpecific::new_metadata_image() const {
-  return (*Dictionary())[kNewMetadataImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_new_metadata_image(
-    const std::string& new_metadata_image) {
-  (*Dictionary())[kNewMetadataImage] = new_metadata_image;
 }
 static constexpr char kVendorBootImage[] = "vendor_boot_image";
 std::string CuttlefishConfig::InstanceSpecific::vendor_boot_image() const {
@@ -276,6 +244,14 @@ std::string CuttlefishConfig::InstanceSpecific::otheros_esp_image() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_otheros_esp_image(
     const std::string& otheros_esp_image) {
   (*Dictionary())[kOtherosEspImage] = otheros_esp_image;
+}
+static constexpr char kAndroidEfiLoader[] = "android_efi_loader";
+std::string CuttlefishConfig::InstanceSpecific::android_efi_loader() const {
+  return (*Dictionary())[kAndroidEfiLoader].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_android_efi_loader(
+    const std::string& android_efi_loader) {
+  (*Dictionary())[kAndroidEfiLoader] = android_efi_loader;
 }
 static constexpr char kLinuxKernelPath[] = "linux_kernel_path";
 std::string CuttlefishConfig::InstanceSpecific::linux_kernel_path() const {
@@ -594,7 +570,7 @@ std::string CuttlefishConfig::InstanceSpecific::setupwizard_mode() const {
 }
 Result<void> CuttlefishConfig::MutableInstanceSpecific::set_setupwizard_mode(
     const std::string& mode) {
-  CF_EXPECT(ValidateStupWizardMode(mode),
+  CF_EXPECT(ValidateSetupWizardMode(mode),
             "setupwizard_mode flag has invalid value: " << mode);
   (*Dictionary())[kSetupWizardMode] = mode;
   return {};
@@ -742,6 +718,33 @@ void CuttlefishConfig::MutableInstanceSpecific::set_enable_gpu_udmabuf(const boo
 }
 bool CuttlefishConfig::InstanceSpecific::enable_gpu_udmabuf() const {
   return (*Dictionary())[kEnableGpuUdmabuf].asBool();
+}
+
+static constexpr char kEnableGpuVhostUser[] = "enable_gpu_vhost_user";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_gpu_vhost_user(
+    const bool enable_gpu_vhost_user) {
+  (*Dictionary())[kEnableGpuVhostUser] = enable_gpu_vhost_user;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_gpu_vhost_user() const {
+  return (*Dictionary())[kEnableGpuVhostUser].asBool();
+}
+
+static constexpr char kEnableGpuExternalBlob[] = "enable_gpu_external_blob";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_gpu_external_blob(
+    const bool enable_gpu_external_blob) {
+  (*Dictionary())[kEnableGpuExternalBlob] = enable_gpu_external_blob;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_gpu_external_blob() const {
+  return (*Dictionary())[kEnableGpuExternalBlob].asBool();
+}
+
+static constexpr char kEnableGpuSystemBlob[] = "enable_gpu_system_blob";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_gpu_system_blob(
+    const bool enable_gpu_system_blob) {
+  (*Dictionary())[kEnableGpuSystemBlob] = enable_gpu_system_blob;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_gpu_system_blob() const {
+  return (*Dictionary())[kEnableGpuSystemBlob].asBool();
 }
 
 static constexpr char kEnableAudio[] = "enable_audio";
@@ -1060,6 +1063,14 @@ std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
   return AbsolutePath(PerInstanceLogPath("launcher.log"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::metadata_image() const {
+  return AbsolutePath(PerInstancePath("metadata.img"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::misc_image() const {
+  return AbsolutePath(PerInstancePath("misc.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
   return AbsolutePath(PerInstancePath("sdcard.img"));
 }
@@ -1115,7 +1126,7 @@ std::string CuttlefishConfig::InstanceSpecific::ap_uboot_env_image_path() const 
   return AbsolutePath(PerInstancePath("ap_uboot_env.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::otheros_esp_image_path() const {
+std::string CuttlefishConfig::InstanceSpecific::esp_image_path() const {
   return AbsolutePath(PerInstancePath("esp.img"));
 }
 
@@ -1138,6 +1149,8 @@ std::string CuttlefishConfig::InstanceSpecific::audio_server_path() const {
 }
 
 CuttlefishConfig::InstanceSpecific::BootFlow CuttlefishConfig::InstanceSpecific::boot_flow() const {
+  const bool android_efi_loader_flow_used = !android_efi_loader().empty();
+
   const bool linux_flow_used = !linux_kernel_path().empty()
     || !linux_initramfs_path().empty()
     || !linux_root_image().empty();
@@ -1145,6 +1158,10 @@ CuttlefishConfig::InstanceSpecific::BootFlow CuttlefishConfig::InstanceSpecific:
   const bool fuchsia_flow_used = !fuchsia_zedboot_path().empty()
     || !fuchsia_root_image().empty()
     || !fuchsia_multiboot_bin_path().empty();
+
+  if (android_efi_loader_flow_used) {
+    return BootFlow::AndroidEfiLoader;
+  }
 
   if (linux_flow_used) {
     return BootFlow::Linux;
@@ -1366,6 +1383,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_config_server_port(int confi
   (*Dictionary())[kConfigServerPort] = config_server_port;
 }
 
+static constexpr char kLightsServerPort[] = "lights_server_port";
+int CuttlefishConfig::InstanceSpecific::lights_server_port() const {
+  return (*Dictionary())[kLightsServerPort].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_lights_server_port(int lights_server_port) {
+  (*Dictionary())[kLightsServerPort] = lights_server_port;
+}
+
 static constexpr char kCameraServerPort[] = "camera_server_port";
 int CuttlefishConfig::InstanceSpecific::camera_server_port() const {
   return (*Dictionary())[kCameraServerPort].asInt();
@@ -1382,6 +1407,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_device_id(
 }
 std::string CuttlefishConfig::InstanceSpecific::webrtc_device_id() const {
   return (*Dictionary())[kWebrtcDeviceId].asString();
+}
+
+static constexpr char kGroupId[] = "group_id";
+void CuttlefishConfig::MutableInstanceSpecific::set_group_id(
+    const std::string& id) {
+  (*Dictionary())[kGroupId] = id;
+}
+std::string CuttlefishConfig::InstanceSpecific::group_id() const {
+  return (*Dictionary())[kGroupId].asString();
 }
 
 static constexpr char kStartSigServer[] = "webrtc_start_sig_server";
@@ -1416,6 +1450,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_start_rootcanal(
 }
 bool CuttlefishConfig::InstanceSpecific::start_rootcanal() const {
   return (*Dictionary())[kStartRootcanal].asBool();
+}
+
+static constexpr char kStartCasimir[] = "start_casimir";
+void CuttlefishConfig::MutableInstanceSpecific::set_start_casimir(bool start) {
+  (*Dictionary())[kStartCasimir] = start;
+}
+bool CuttlefishConfig::InstanceSpecific::start_casimir() const {
+  return (*Dictionary())[kStartCasimir].asBool();
 }
 
 static constexpr char kStartPica[] = "start_pica";
@@ -1468,6 +1510,17 @@ void CuttlefishConfig::MutableInstanceSpecific::set_use_pmem(
 }
 bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
   return (*Dictionary())[kCrosvmUsePmem].asBool();
+}
+
+static constexpr char kSockVsockWaitAdbdStart[] =
+    "sock_vsock_proxy_wait_adbd_start";
+void CuttlefishConfig::MutableInstanceSpecific::
+    set_sock_vsock_proxy_wait_adbd_start(const bool wait_adbd_start) {
+  (*Dictionary())[kSockVsockWaitAdbdStart] = wait_adbd_start;
+}
+bool CuttlefishConfig::InstanceSpecific::sock_vsock_proxy_wait_adbd_start()
+    const {
+  return (*Dictionary())[kSockVsockWaitAdbdStart].asBool();
 }
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(

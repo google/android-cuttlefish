@@ -13,61 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "host/commands/cvd/parser/launch_cvd_parser.h"
 
-#include <android-base/file.h>
-#include <gflags/gflags.h>
-
-#include <stdio.h>
-#include <fstream>
 #include <string>
+#include <vector>
 
-#include "common/libs/utils/files.h"
+#include <json/json.h>
+
 #include "common/libs/utils/json.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_configs_instances.h"
-#include "host/commands/cvd/parser/launch_cvd_parser.h"
+#include "host/commands/cvd/parser/cf_metrics_configs.h"
 #include "host/commands/cvd/parser/launch_cvd_templates.h"
 
 namespace cuttlefish {
+namespace {
 
-std::string GenerateNumInstancesFlag(const Json::Value& root) {
-  int num_instances = root["instances"].size();
-  LOG(DEBUG) << "num_instances = " << num_instances;
-  std::string result = "--num_instances=" + std::to_string(num_instances);
-  return result;
-}
-
-std::string GenerateCommonGflag(const Json::Value& root,
-                                const std::string& gflag_name,
-                                const std::string& json_flag) {
-  std::stringstream buff;
-  // Append Header
-  buff << "--" << gflag_name << "=" << root[json_flag].asString();
-  return buff.str();
-}
-
-std::vector<std::string> GenerateCfFlags(const Json::Value& root) {
+Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
   std::vector<std::string> result;
-  result.emplace_back(GenerateNumInstancesFlag(root));
-  result.emplace_back(GenerateCommonGflag(root, "netsim_bt", "netsim_bt"));
-
-  result = MergeResults(result, GenerateInstancesFlags(root["instances"]));
+  result.emplace_back(GenerateGflag(
+      "num_instances", {std::to_string(root["instances"].size())}));
+  result.emplace_back(GenerateGflag(
+      "netsim_bt", {CF_EXPECT(GetValue<std::string>(root, {"netsim_bt"}))}));
+  result = MergeResults(result, CF_EXPECT(GenerateMetricsFlags(root)));
+  result = MergeResults(result,
+                        CF_EXPECT(GenerateInstancesFlags(root["instances"])));
   return result;
 }
 
-void InitCvdConfigs(Json::Value& root) {
-  // Handle common flags
-  if (!root.isMember("netsim_bt")) {
-    root["netsim_bt"] = CF_DEFAULTS_NETSIM_BT;
-  }
-  // Handle instances flags
-  InitInstancesConfigs(root["instances"]);
+Result<void> InitCvdConfigs(Json::Value& root) {
+  CF_EXPECT(InitConfig(root, CF_DEFAULTS_NETSIM_BT, {"netsim_bt"}));
+  CF_EXPECT(InitMetricsConfigs(root));
+  CF_EXPECT(InitInstancesConfigs(root["instances"]));
+  return {};
 }
 
-std::vector<std::string> ParseLaunchCvdConfigs(Json::Value& root) {
+}  // namespace
+
+Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root) {
   ExtractLaunchTemplates(root["instances"]);
-  InitCvdConfigs(root);
+  CF_EXPECT(InitCvdConfigs(root));
   return GenerateCfFlags(root);
 }
 

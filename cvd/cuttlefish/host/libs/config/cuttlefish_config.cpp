@@ -300,6 +300,56 @@ bool CuttlefishConfig::enable_host_bluetooth_connector() const {
   return (*dictionary_)[kenableHostBluetoothConnector].asBool();
 }
 
+static constexpr char kenableHostNfc[] = "enable_host_nfc";
+void CuttlefishConfig::set_enable_host_nfc(bool enable_host_nfc) {
+  (*dictionary_)[kenableHostNfc] = enable_host_nfc;
+}
+bool CuttlefishConfig::enable_host_nfc() const {
+  return (*dictionary_)[kenableHostNfc].asBool();
+}
+
+static constexpr char kenableHostNfcConnector[] = "enable_host_nfc_connector";
+void CuttlefishConfig::set_enable_host_nfc_connector(bool enable_host_nfc) {
+  (*dictionary_)[kenableHostNfcConnector] = enable_host_nfc;
+}
+bool CuttlefishConfig::enable_host_nfc_connector() const {
+  return (*dictionary_)[kenableHostNfcConnector].asBool();
+}
+
+static constexpr char kCasimirInstanceNum[] = "casimir_instance_num";
+void CuttlefishConfig::set_casimir_instance_num(int casimir_instance_num) {
+  (*dictionary_)[kCasimirInstanceNum] = casimir_instance_num;
+}
+int CuttlefishConfig::casimir_instance_num() const {
+  return (*dictionary_)[kCasimirInstanceNum].asInt();
+}
+
+static constexpr char kCasimirArgs[] = "casimir_args";
+void CuttlefishConfig::set_casimir_args(const std::string& casimir_args) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : android::base::Split(casimir_args, " ")) {
+    if (!arg.empty()) {
+      args_json_obj.append(arg);
+    }
+  }
+  (*dictionary_)[kCasimirArgs] = args_json_obj;
+}
+std::vector<std::string> CuttlefishConfig::casimir_args() const {
+  std::vector<std::string> casimir_args;
+  for (const Json::Value& arg : (*dictionary_)[kCasimirArgs]) {
+    casimir_args.push_back(arg.asString());
+  }
+  return casimir_args;
+}
+
+static constexpr char kCasimirNciPort[] = "casimir_nci_port";
+void CuttlefishConfig::set_casimir_nci_port(int port) {
+  (*dictionary_)[kCasimirNciPort] = port;
+}
+int CuttlefishConfig::casimir_nci_port() const {
+  return (*dictionary_)[kCasimirNciPort].asInt();
+}
+
 static constexpr char kenableWifi[] = "enable_wifi";
 void CuttlefishConfig::set_enable_wifi(bool enable_wifi) {
   (*dictionary_)[kenableWifi] = enable_wifi;
@@ -321,6 +371,30 @@ void CuttlefishConfig::netsim_radio_enable(NetsimRadio flag) {
 
 bool CuttlefishConfig::netsim_radio_enabled(NetsimRadio flag) const {
   return (*dictionary_)[kNetsimRadios].asInt() & flag;
+}
+
+static constexpr char kNetsimInstanceNum[] = "netsim_instance_num";
+int CuttlefishConfig::netsim_instance_num() const {
+  return (*dictionary_)[kNetsimInstanceNum].asInt();
+}
+void CuttlefishConfig::set_netsim_instance_num(int netsim_instance_num) {
+  (*dictionary_)[kNetsimInstanceNum] = netsim_instance_num;
+}
+
+static constexpr char kNetsimArgs[] = "netsim_args";
+void CuttlefishConfig::set_netsim_args(const std::string& netsim_args) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : android::base::Tokenize(netsim_args, " ")) {
+    args_json_obj.append(arg);
+  }
+  (*dictionary_)[kNetsimArgs] = args_json_obj;
+}
+std::vector<std::string> CuttlefishConfig::netsim_args() const {
+  std::vector<std::string> netsim_args;
+  for (const Json::Value& arg : (*dictionary_)[kNetsimArgs]) {
+    netsim_args.push_back(arg.asString());
+  }
+  return netsim_args;
 }
 
 static constexpr char kEnableMetrics[] = "enable_metrics";
@@ -482,14 +556,12 @@ void CuttlefishConfig::set_rootcanal_test_port(int rootcanal_test_port) {
   (*dictionary_)[kRootcanalTestPort] = rootcanal_test_port;
 }
 
-static constexpr char kRootcanalConfigFile[] = "rootcanal_config_file";
-std::string CuttlefishConfig::rootcanal_config_file() const {
-  return (*dictionary_)[kRootcanalConfigFile].asString();
+static constexpr char kSnapshotPath[] = "snapshot_path";
+std::string CuttlefishConfig::snapshot_path() const {
+  return (*dictionary_)[kSnapshotPath].asString();
 }
-void CuttlefishConfig::set_rootcanal_config_file(
-    const std::string& rootcanal_config_file) {
-  (*dictionary_)[kRootcanalConfigFile] =
-      DefaultHostArtifactsPath(rootcanal_config_file);
+void CuttlefishConfig::set_snapshot_path(const std::string& snapshot_path) {
+  (*dictionary_)[kSnapshotPath] = snapshot_path;
 }
 
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
@@ -719,8 +791,12 @@ std::string DefaultGuestImagePath(const std::string& file_name) {
 
 bool HostSupportsQemuCli() {
   static bool supported =
+#ifdef __linux__
       std::system(
           "/usr/lib/cuttlefish-common/bin/capability_query.py qemu_cli") == 0;
+#else
+      true;
+#endif
   return supported;
 }
 

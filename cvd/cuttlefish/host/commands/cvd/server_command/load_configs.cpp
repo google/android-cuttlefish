@@ -15,14 +15,13 @@
  */
 #include "host/commands/cvd/server_command/load_configs.h"
 
-#include <chrono>
 #include <iostream>
 #include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include <android-base/parseint.h>
+#include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <json/json.h>
 
@@ -31,8 +30,6 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/parser/cf_configs_common.h"
-#include "host/commands/cvd/parser/fetch_cvd_parser.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_client.h"
@@ -40,49 +37,6 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
-namespace {
-
-std::string GenerateSystemImageFlag(
-    const std::vector<FetchCvdInstanceConfig>& configs) {
-  std::string result = "";
-
-  for (const auto& config : configs) {
-    result += config.artifacts_directory + ",";
-  }
-
-  // remove the last comma character from the final string, if it exists
-  if (!result.empty()) {
-    result.pop_back();
-  }
-
-  return "--system_image_dir=" + result;
-}
-
-std::string GenerateParentDirectory() {
-  const uid_t uid = getuid();
-  // Prefix for the parent directory.
-  constexpr char kParentDirPrefix[] = "/tmp/cvd/";
-  std::stringstream ss;
-
-  // Constructs the full directory path.
-  ss << kParentDirPrefix << uid << "/";
-
-  return ss.str();
-}
-
-std::string GenerateHostArtifactsDirectoryName(int64_t time,
-                                        int instance_index) {
-  return GenerateParentDirectory() + std::to_string(time) + "_" +
-         std::to_string(instance_index) + "/";
-}
-
-std::string GenerateHomeDirectoryName(int64_t time) {
-  return GenerateParentDirectory() + std::to_string(time) + "_home/";
-}
-
-using DemoCommandSequence = std::vector<RequestWithStdio>;
-
-}  // namespace
 
 class LoadConfigsCommand : public CvdServerHandler {
  public:
@@ -108,6 +62,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     response.mutable_command_response();
     return response;
   }
+
   Result<void> Interrupt() override {
     std::scoped_lock interrupt_lock(interrupt_mutex_);
     interrupted_ = true;
@@ -117,119 +72,7 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   cvd_common::Args CmdList() const override { return {kLoadSubCmd}; }
 
-  // TODO(moelsherif): expand this enum in the future to support more types ( double , float
-  // , etc) if neeeded
-  enum ArgValueType { UINTEGER, BOOLEAN, TEXT };
-
-  bool IsUnsignedInteger(const std::string& str) {
-    return !str.empty() && std::all_of(str.begin(), str.end(),
-                                       [](char c) { return std::isdigit(c); });
-  }
-
-  ArgValueType GetArgValueType(const std::string& str) {
-    if (IsUnsignedInteger(str)) {
-      return UINTEGER;
-    }
-
-    if (str == "true" || str == "false") {
-      return BOOLEAN;
-    }
-
-    // Otherwise, treat the string as text
-    return TEXT;
-  }
-
-  Json::Value ConvertArgToJson(const std::string& key,
-                               const std::string& leafValue) {
-    std::stack<std::string> levels;
-    std::stringstream ks(key);
-    std::string token;
-    while (std::getline(ks, token, '.')) {
-      levels.push(token);
-    }
-
-    // assign the leaf value based on the type of input value
-    Json::Value leaf;
-    if (GetArgValueType(leafValue) == UINTEGER) {
-      std::uint32_t leaf_val{};
-      if (!android::base::ParseUint(leafValue ,&leaf_val)){
-        LOG(ERROR) << "Failed to parse unsigned integer " << leafValue;
-        return Json::Value::null;
-      };
-      leaf = leaf_val;
-    } else if (GetArgValueType(leafValue) == BOOLEAN) {
-      leaf = (leafValue == "true");
-    } else {
-      leaf = leafValue;
-    }
-
-    while (!levels.empty()) {
-      Json::Value curr;
-      std::string index = levels.top();
-
-      if (GetArgValueType(index) == UINTEGER) {
-        std::uint32_t index_val{};
-        if (!android::base::ParseUint(index, &index_val)){
-          LOG(ERROR) << "Failed to parse unsigned integer " << index;
-          return Json::Value::null;
-        }
-        curr[index_val] = leaf;
-      } else {
-        curr[index] = leaf;
-      }
-
-      leaf = curr;
-      levels.pop();
-    }
-
-    return leaf;
-  }
-
-  Json::Value ParseArgsToJson(const std::vector<std::string>& strings) {
-    Json::Value jsonValue;
-    for (const auto& str : strings) {
-      std::string key;
-      std::string value;
-      size_t equals_pos = str.find('=');
-      if (equals_pos != std::string::npos) {
-        key = str.substr(0, equals_pos);
-        value = str.substr(equals_pos + 1);
-      } else {
-        key = str;
-        value.clear();
-        LOG(WARNING) << "No value provided for key " << key;
-        return Json::Value::null;
-      }
-      MergeTwoJsonObjs(jsonValue, ConvertArgToJson(key, value));
-    }
-
-    return jsonValue;
-  }
-
-  Result<void> ValidateArgFormat(const std::string& str) {
-    auto equalsPos = str.find('=');
-    CF_EXPECT(equalsPos != std::string::npos,
-              "equal value is not provided in the argument");
-    std::string prefix = str.substr(0, equalsPos);
-    CF_EXPECT(!prefix.empty(), "argument value should not be empty");
-    CF_EXPECT(prefix.find('.') != std::string::npos,
-              "argument value must be dot separated");
-    CF_EXPECT(prefix[0] != '.', "argument value should not start with a dot");
-    CF_EXPECT(prefix.find("..") == std::string::npos,
-              "argument value should not contain two consecutive dots");
-    CF_EXPECT(prefix.back() != '.', "argument value should not end with a dot");
-    return {};
-  }
-
-  Result<void> ValidateArgsFormat(const std::vector<std::string>& strings) {
-    for (const auto& str : strings) {
-      CF_EXPECT(ValidateArgFormat(str),
-                "Invalid  argument format. " << str << " Please use arg=value");
-    }
-    return {};
-  }
-
-  Result<DemoCommandSequence> CreateCommandSequence(
+  Result<std::vector<RequestWithStdio>> CreateCommandSequence(
       const RequestWithStdio& request) {
     bool help = false;
 
@@ -237,10 +80,10 @@ class LoadConfigsCommand : public CvdServerHandler {
     flags.emplace_back(GflagsCompatFlag("help", help));
     std::vector<std::string> overrides;
     FlagAlias alias = {FlagAliasMode::kFlagPrefix, "--override="};
-    flags.emplace_back(
-        Flag().Alias(alias).Setter([&overrides](const FlagMatch& m) {
+    flags.emplace_back(Flag().Alias(alias).Setter(
+        [&overrides](const FlagMatch& m) -> Result<void> {
           overrides.push_back(m.value);
-          return true;
+          return {};
         }));
     auto args = ParseInvocation(request.Message()).arguments;
     CF_EXPECT(ParseFlags(flags, args));
@@ -256,89 +99,46 @@ class LoadConfigsCommand : public CvdServerHandler {
       return {};
     }
 
-    // Extract the config_path from the arguments
     std::string config_path = args.front();
-    Json::Value json_configs =
-        CF_EXPECT(ParseJsonFile(config_path), "parsing input file failed");
-
-    // remove the config_path from the arguments
-    args.erase(args.begin());
-
-    // Handle the rest of the arguments (Overrides)
-    if (overrides.size() > 0) {
-      // Validate all arguments follow specific pattern
-      CF_EXPECT(ValidateArgsFormat(overrides),
-                "override parameters are not in the correct format");
-
-      // Convert all arguments to json tree
-      auto args_tree = ParseArgsToJson(overrides);
-      MergeTwoJsonObjs(json_configs, args_tree);
+    if (config_path[0] != '/') {
+      config_path = request.Message().command_request().working_directory() +
+                    "/" + config_path;
     }
-
-    auto cvd_flags =
-        CF_EXPECT(ParseCvdConfigs(json_configs), "parsing json configs failed");
-
-    int num_instances = cvd_flags.fetch_cvd_flags.instances.size();
-    CF_EXPECT_GT(num_instances, 0, "No instances to load");
-
+    Json::Value json_configs =
+        CF_EXPECT(GetOverridedJsonConfig(config_path, overrides));
+    const auto load_directories =
+        CF_EXPECT(GenerateLoadDirectories(json_configs["instances"].size()));
+    auto cvd_flags = CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
+                               "parsing json configs failed");
     std::vector<cvd::Request> req_protos;
-
     const auto& client_env = request.Message().command_request().env();
 
-    auto time = std::chrono::system_clock::now().time_since_epoch().count();
-    // set the home directory for each instance
-    for (int instance_index = 0; instance_index < num_instances;
-         instance_index++) {
-      cvd_flags.fetch_cvd_flags.instances[instance_index].artifacts_directory =
-          GenerateHostArtifactsDirectoryName(time, instance_index);
-      LOG(INFO) << "Home directory for instance " << instance_index << " is "
-                << cvd_flags.fetch_cvd_flags.instances[instance_index]
-                       .artifacts_directory;
-    }
-
-    for (const auto& instance : cvd_flags.fetch_cvd_flags.instances) {
-      auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
-      *mkdir_cmd.mutable_env() = client_env;
-      mkdir_cmd.add_args("cvd");
-      mkdir_cmd.add_args("mkdir");
-      mkdir_cmd.add_args("-p");
-      mkdir_cmd.add_args(instance.artifacts_directory);
-
-      if (instance.should_fetch) {
-        // TODO(moelsherif):Separate fetch from launch command
-        auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
-        *fetch_cmd.mutable_env() = client_env;
-        fetch_cmd.set_working_directory(instance.artifacts_directory);
-        fetch_cmd.add_args("cvd");
-        fetch_cmd.add_args("fetch");
-        fetch_cmd.add_args("--directory=" + instance.artifacts_directory);
-        fetch_cmd.add_args("-default_build=" + instance.default_build);
-        // TODO: other flags like system_build, kernel_build and credential
-        // optionally later fetch_cmd.add_args("-credential_source=" +
-        // cvd_flags.fetch_cvd_flags.credential);
+    if (!cvd_flags.fetch_cvd_flags.empty()) {
+      auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
+      *fetch_cmd.mutable_env() = client_env;
+      fetch_cmd.add_args("cvd");
+      fetch_cmd.add_args("fetch");
+      for (const auto& flag : cvd_flags.fetch_cvd_flags) {
+        fetch_cmd.add_args(flag);
       }
     }
-    // Create the launch home directory
-    std::string launch_home_dir = GenerateHomeDirectoryName(time);
+
     auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
     *mkdir_cmd.mutable_env() = client_env;
     mkdir_cmd.add_args("cvd");
     mkdir_cmd.add_args("mkdir");
     mkdir_cmd.add_args("-p");
-    mkdir_cmd.add_args(launch_home_dir);
+    mkdir_cmd.add_args(load_directories.launch_home_directory);
 
-    // Handle the launch command
     auto& launch_cmd = *req_protos.emplace_back().mutable_command_request();
-
-    auto first_instance_dir =
-        cvd_flags.fetch_cvd_flags.instances[0].artifacts_directory;
+    launch_cmd.set_working_directory(load_directories.first_instance_directory);
     *launch_cmd.mutable_env() = client_env;
-    launch_cmd.set_working_directory(first_instance_dir);
-    (*launch_cmd.mutable_env())["HOME"] = launch_home_dir;
-
-    (*launch_cmd.mutable_env())[kAndroidHostOut] = first_instance_dir;
-    (*launch_cmd.mutable_env())[kAndroidSoongHostOut] = first_instance_dir;
-
+    (*launch_cmd.mutable_env())["HOME"] =
+        load_directories.launch_home_directory;
+    (*launch_cmd.mutable_env())[kAndroidHostOut] =
+        load_directories.first_instance_directory;
+    (*launch_cmd.mutable_env())[kAndroidSoongHostOut] =
+        load_directories.first_instance_directory;
     if (Contains(*launch_cmd.mutable_env(), kAndroidProductOut)) {
       (*launch_cmd.mutable_env()).erase(kAndroidProductOut);
     }
@@ -350,12 +150,11 @@ class LoadConfigsCommand : public CvdServerHandler {
     launch_cmd.add_args("cvd");
     launch_cmd.add_args("start");
     launch_cmd.add_args("--daemon");
-    for (auto& parsed_flag : cvd_flags.launch_cvd_flags) {
+    for (const auto& parsed_flag : cvd_flags.launch_cvd_flags) {
       launch_cmd.add_args(parsed_flag);
     }
     // Add system flag for multi-build scenario
-    launch_cmd.add_args(
-        GenerateSystemImageFlag(cvd_flags.fetch_cvd_flags.instances));
+    launch_cmd.add_args(load_directories.system_image_directory_flag);
 
     launch_cmd.mutable_selector_opts()->add_args(
         std::string("--") + selector::SelectorFlags::kDisableDefaultGroup);
@@ -364,7 +163,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
     CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
     std::vector<SharedFD> fds = {dev_null, dev_null, dev_null};
-    DemoCommandSequence ret;
+    std::vector<RequestWithStdio> ret;
 
     for (auto& request_proto : req_protos) {
       ret.emplace_back(RequestWithStdio(request.Client(), request_proto, fds,

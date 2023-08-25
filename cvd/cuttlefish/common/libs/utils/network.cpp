@@ -16,16 +16,18 @@
 
 #include "common/libs/utils/network.h"
 
+#ifdef __linux__
+#include <linux/if_ether.h>
 // Kernel headers don't mix well with userspace headers, but there is no
 // userspace header that provides the if_tun.h #defines.  Include the kernel
 // header, but move conflicting definitions out of the way using macros.
 #define ethhdr __kernel_ethhdr
 #include <linux/if_tun.h>
 #undef ethhdr
+#endif
 
 #include <fcntl.h>
 #include <ifaddrs.h>
-#include <linux/if_ether.h>
 #include <net/if.h>
 
 #include <cstdint>
@@ -50,6 +52,7 @@
 namespace cuttlefish {
 namespace {
 
+#ifdef __linux__
 // This should be the size of virtio_net_hdr_v1, from linux/virtio_net.h, but
 // the version of that header that ships with android in Pie does not include
 // that struct (it was added in Q).
@@ -64,6 +67,7 @@ namespace {
 // u16 num_buffers;
 // };
 static constexpr int SIZE_OF_VIRTIO_NET_HDR_V1 = 12;
+#endif
 
 /**
  * Generate mac address following:
@@ -98,6 +102,7 @@ bool NetworkInterfaceExists(const std::string& interface_name) {
   return ret;
 }
 
+#ifdef __linux__
 SharedFD OpenTapInterface(const std::string& interface_name) {
   constexpr auto TUNTAP_DEV = "/dev/net/tun";
 
@@ -152,6 +157,7 @@ std::set<std::string> TapInterfacesInUse() {
   }
   return tap_interfaces;
 }
+#endif
 
 std::string MacAddressToString(const std::uint8_t mac[6]) {
   std::stringstream result;
