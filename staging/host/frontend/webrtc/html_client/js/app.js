@@ -455,7 +455,6 @@ class DeviceControlApp {
 
     // TODO: move to webrtc backend.
     // Inject sensors with new values.
-    this.#initializeAdb();
     adbShell(`/vendor/bin/cuttlefish_sensor_injection motion ${sensor_vals[3]} ${sensor_vals[4]} ${sensor_vals[5]} ${sensor_vals[6]} ${sensor_vals[7]} ${sensor_vals[8]} ${sensor_vals[9]} ${sensor_vals[10]} ${sensor_vals[11]}`);
 
     // Display new sensor values after injection.
@@ -473,7 +472,7 @@ class DeviceControlApp {
   }
 
   // Send new rotation angles for sensor values' processing.
-  #onMotionChanged(deviceConnection) {
+  #onMotionChanged(deviceConnection = this.#deviceConnection) {
     let values = document.getElementsByClassName('rotation-slider-value');
     let xyz = [];
     for (var i = 0; i < values.length; i++) {
@@ -507,9 +506,9 @@ class DeviceControlApp {
       }
       sliders[2].value = current_z;
       values[2].textContent = `${current_z}`;
-      this.#onMotionChanged(this.#deviceConnection);
+      this.#onMotionChanged();
       if (current_z == z) {
-        this.#onMotionChanged(this.#deviceConnection);
+        this.#onMotionChanged();
         clearInterval(move);
       }
     }, 5);
@@ -883,6 +882,8 @@ class DeviceControlApp {
 
     // Start the adb connection if it is not already started.
     this.#initializeAdb();
+    // TODO(b/297361564)
+    this.#onMotionChanged();
   }
 
   #onRotateLeftButton(e) {
