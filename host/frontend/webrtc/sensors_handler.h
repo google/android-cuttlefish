@@ -16,8 +16,12 @@
 
 #pragma once
 
-#include "common/libs/fs/shared_fd.h"
 #include "host/frontend/webrtc/sensors_simulator.h"
+
+#include <chrono>
+#include <mutex>
+#include <thread>
+#include <unordered_map>
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -25,14 +29,16 @@ namespace webrtc_streaming {
 struct SensorsHandler {
   SensorsHandler();
   ~SensorsHandler();
-  void InitializeHandler(std::function<void(const uint8_t*, size_t)> send_to_client);
-  void SendInitialState();
   void HandleMessage(const double x, const double y, const double z);
+  int Subscribe(std::function<void(const uint8_t*, size_t)> send_to_client);
+  void UnSubscribe(int subscriber_id);
 
  private:
+  void UpdateSensors();
   SensorsSimulator* sensors_simulator_ = new SensorsSimulator();
-  std::function<void(const uint8_t *, size_t)> send_to_client_;
-  SharedFD shutdown_;
+  std::unordered_map<int, std::function<void(const uint8_t*, size_t)>> client_channels_;
+  int last_client_channel_id_ = -1;
+  std::mutex subscribers_mtx_;
 };
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish
