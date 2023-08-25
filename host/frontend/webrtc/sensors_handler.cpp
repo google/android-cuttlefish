@@ -26,31 +26,42 @@ namespace webrtc_streaming {
 
 SensorsHandler::SensorsHandler() {}
 
-SensorsHandler::~SensorsHandler() {
-  // Send a message to the looper to shut down.
-  uint64_t v = 1;
-  shutdown_->Write(&v, sizeof(v));
-}
-
-void SensorsHandler::InitializeHandler(std::function<void(const uint8_t*, size_t)> send_to_client) {
-  send_to_client_ = send_to_client;
-}
-
-// Send device's initial rotation angles and sensor values to display.
-void SensorsHandler::SendInitialState() {
-  std::string new_sensors_data = sensors_simulator_->GetSensorsData();
-  const uint8_t* message =
-      reinterpret_cast<const uint8_t*>(new_sensors_data.c_str());
-  send_to_client_(message, new_sensors_data.size());
-}
+SensorsHandler::~SensorsHandler() {}
 
 // Get new sensor values and send them to client.
 void SensorsHandler::HandleMessage(const double x, const double y, const double z) {
   sensors_simulator_->RefreshSensors(x, y, z);
+  UpdateSensors();
+}
+
+int SensorsHandler::Subscribe(std::function<void(const uint8_t*, size_t)> send_to_client) {
+  std::lock_guard<std::mutex> lock(subscribers_mtx_);
+  int subscriber_id = ++last_client_channel_id_;
+  client_channels_[subscriber_id] = send_to_client;
+
+  // Send device's initial state to the new client.
   std::string new_sensors_data = sensors_simulator_->GetSensorsData();
   const uint8_t* message =
       reinterpret_cast<const uint8_t*>(new_sensors_data.c_str());
-  send_to_client_(message, new_sensors_data.size());
+  client_channels_[subscriber_id](message, new_sensors_data.size());
+
+  return subscriber_id;
+}
+
+void SensorsHandler::UnSubscribe(int subscriber_id) {
+  std::lock_guard<std::mutex> lock(subscribers_mtx_);
+  client_channels_.erase(subscriber_id);
+}
+
+void SensorsHandler::UpdateSensors() {
+  std::string new_sensors_data = sensors_simulator_->GetSensorsData();
+  const uint8_t* message =
+      reinterpret_cast<const uint8_t*>(new_sensors_data.c_str());
+  for (auto itr = client_channels_.begin(); itr != client_channels_.end();
+       itr++) {
+    std::lock_guard<std::mutex> lock(subscribers_mtx_);
+    itr->second(message, new_sensors_data.size());
+  }
 }
 
 }  // namespace webrtc_streaming
