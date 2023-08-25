@@ -44,6 +44,7 @@ cc_library {
         "libfruit",
         "libgflags",
         "libjsoncpp",
+        "libsparse",
         "libz",
     ],
     target: {
