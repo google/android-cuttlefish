@@ -1,4 +1,4 @@
-service nfc_hal_service /vendor/bin/hw/android.hardware.nfc-service.cuttlefish --virtio-dev-path /dev/hvc12
+service nfc_hal_service /apex/com.google.cf.nfc/bin/hw/android.hardware.nfc-service.cuttlefish --virtio-dev-path /dev/hvc12
     class hal
     user nfc
     group nfc
