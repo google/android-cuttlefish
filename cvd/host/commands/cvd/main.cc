@@ -155,7 +155,7 @@ int main(int argc, char** argv, char** envp) {
   if (result.ok()) {
     return 0;
   } else {
-    std::cerr << result.error().Trace() << std::endl;
+    std::cerr << result.error().FormatForEnv() << std::endl;
     return -1;
   }
 }
