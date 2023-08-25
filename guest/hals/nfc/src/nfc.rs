@@ -247,7 +247,7 @@ impl INfcAsyncServer for NfcService {
     async fn getConfig(&self) -> binder::Result<NfcConfig> {
         info!("getConfig");
         let _status = self.status.lock().await;
-        // TODO: read config from /vendor/etc/libnfc-hal-cf.conf
+        // TODO: read config from libnfc-hal-cf.conf (/apex/<name>/etc)
         Ok(NfcConfig {
             nfaPollBailOutMode: true,
             maxIsoDepTransceiveLength: 0xFEFF,
