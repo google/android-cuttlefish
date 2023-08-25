@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#pragma once
+#include "host/commands/cvd/parser/selector_parser.h"
 
 #include <string>
 #include <vector>
 
 #include <json/json.h>
 
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/parser/cf_configs_common.h"
 
 namespace cuttlefish {
 
-Result<std::vector<std::string>> ParseSelectorConfigs(Json::Value& root);
+Result<std::vector<std::string>> ParseSelectorConfigs(Json::Value& root) {
+  return {{CF_EXPECT(GenerateGflag(root["instances"], "instance_name", {"name"}))}};
+}
 
-};  // namespace cuttlefish
+}  // namespace cuttlefish
 
