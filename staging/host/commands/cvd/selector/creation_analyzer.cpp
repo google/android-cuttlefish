@@ -215,8 +215,12 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
   std::vector<PerInstanceInfo> instance_info;
   for (size_t i = 0; i != allocated_ids.size(); i++) {
     const auto id = allocated_ids.at(i);
-    std::string name = (per_instance_names_opt ? per_instance_names_opt->at(i)
-                                               : std::to_string(id));
+
+    std::string name = std::to_string(id);
+    // Use the user provided instance name only if it's not empty.
+    if (per_instance_names_opt && !(*per_instance_names_opt)[i].empty()) {
+      name = (*per_instance_names_opt)[i];
+    }
     instance_info.emplace_back(id, name, std::move(id_to_lockfile_map.at(id)));
   }
   return instance_info;
