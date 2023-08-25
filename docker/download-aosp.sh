@@ -134,7 +134,7 @@ SKIP_USERDATA=""
 
 parse_opts $*
 
-URL=https://ci.android.com/builds/latest/branches/aosp-master${THROTTLED}/targets/aosp_cf_${ARCH}_phone-userdebug/view/BUILD_INFO
+URL=https://ci.android.com/builds/latest/branches/aosp-main${THROTTLED}/targets/aosp_cf_${ARCH}_phone-userdebug/view/BUILD_INFO
 RURL=$(curl -Ls -o /dev/null -w %{url_effective} ${URL})
 
 if [ "${DOWNLOAD_ANDROID}" -eq 1 ]; then

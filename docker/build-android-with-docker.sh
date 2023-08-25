@@ -20,7 +20,7 @@ function multiline_helper {
 function get_default_lunch_target {
     local def_lunch_target=""
     case "$(uname -m)" in
-        x86_64|i386|x86|amd64) def_lunch_target="aosp_cf_x86_64_phone-userdebug" ;;
+        x86_64|i386|x86|amd64) def_lunch_target="aosp_cf_x86_64_phone-trunk_staging-userdebug" ;;
         aarch64|arm64) def_lunch_target="aosp_cf_arm64_phone-userdebug" ;;
         *)
             >&2 echo "unsupported architecture $(uname -m)"
