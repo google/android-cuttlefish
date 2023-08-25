@@ -37,38 +37,42 @@ class Value;
 }
 
 namespace cuttlefish {
-constexpr char kLogcatSerialMode[] = "serial";
-constexpr char kLogcatVsockMode[] = "vsock";
 
-constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
-constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
-constexpr char kCuttlefishInstanceEnvVarName[] = "CUTTLEFISH_INSTANCE";
-constexpr char kVsocUserPrefix[] = "vsoc-";
-constexpr char kCvdNamePrefix[] = "cvd-";
-constexpr char kBootStartedMessage[] ="VIRTUAL_DEVICE_BOOT_STARTED";
-constexpr char kBootCompletedMessage[] = "VIRTUAL_DEVICE_BOOT_COMPLETED";
-constexpr char kBootFailedMessage[] = "VIRTUAL_DEVICE_BOOT_FAILED";
-constexpr char kMobileNetworkConnectedMessage[] =
+inline constexpr char kLogcatSerialMode[] = "serial";
+inline constexpr char kLogcatVsockMode[] = "vsock";
+
+inline constexpr char kDefaultUuidPrefix[] =
+    "699acfc4-c8c4-11e7-882b-5065f31dc1";
+inline constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
+inline constexpr char kCuttlefishInstanceEnvVarName[] = "CUTTLEFISH_INSTANCE";
+inline constexpr char kVsocUserPrefix[] = "vsoc-";
+inline constexpr char kCvdNamePrefix[] = "cvd-";
+inline constexpr char kBootStartedMessage[] = "VIRTUAL_DEVICE_BOOT_STARTED";
+inline constexpr char kBootCompletedMessage[] = "VIRTUAL_DEVICE_BOOT_COMPLETED";
+inline constexpr char kBootFailedMessage[] = "VIRTUAL_DEVICE_BOOT_FAILED";
+inline constexpr char kMobileNetworkConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED";
-constexpr char kWifiConnectedMessage[] =
+inline constexpr char kWifiConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
-constexpr char kEthernetConnectedMessage[] =
+inline constexpr char kEthernetConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_ETHERNET_CONNECTED";
 // TODO(b/131864854): Replace this with a string less likely to change
-constexpr char kAdbdStartedMessage[] =
+inline constexpr char kAdbdStartedMessage[] =
     "init: starting service 'adbd'...";
-constexpr char kFastbootdStartedMessage[] =
+inline constexpr char kFastbootdStartedMessage[] =
     "init: starting service 'fastbootd'...";
-constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
-constexpr char kDisplayPowerModeChangedMessage[] =
+inline constexpr char kFastbootStartedMessage[] =
+    "Listening for fastboot command on tcp";
+inline constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
+inline constexpr char kDisplayPowerModeChangedMessage[] =
     "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";
-constexpr char kInternalDirName[] = "internal";
-constexpr char kGrpcSocketDirName[] = "grpc_socket";
-constexpr char kSharedDirName[] = "shared";
-constexpr char kLogDirName[] = "logs";
-constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
-constexpr char kKernelLoadedMessage[] = "] Linux version";
-constexpr char kBootloaderLoadedMessage[] = "U-Boot 20";
+inline constexpr char kInternalDirName[] = "internal";
+inline constexpr char kGrpcSocketDirName[] = "grpc_socket";
+inline constexpr char kSharedDirName[] = "shared";
+inline constexpr char kLogDirName[] = "logs";
+inline constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
+inline constexpr char kKernelLoadedMessage[] = "] Linux version";
+inline constexpr char kBootloaderLoadedMessage[] = "U-Boot 20";
 
 enum class SecureHal {
   Unknown,
@@ -150,6 +154,19 @@ class CuttlefishConfig {
   void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
   bool enable_host_bluetooth_connector() const;
 
+  void set_enable_host_nfc(bool enable_host_nfc);
+  bool enable_host_nfc() const;
+
+  void set_enable_host_nfc_connector(bool enable_host_nfc_connector);
+  bool enable_host_nfc_connector() const;
+
+  void set_casimir_args(const std::string& casimir_args);
+  std::vector<std::string> casimir_args() const;
+  void set_casimir_instance_num(int casimir_instance_num);
+  int casimir_instance_num() const;
+  void set_casimir_nci_port(int port);
+  int casimir_nci_port() const;
+
   void set_enable_wifi(const bool enable_wifi);
   bool enable_wifi() const;
 
@@ -162,6 +179,10 @@ class CuttlefishConfig {
 
   void netsim_radio_enable(NetsimRadio flag);
   bool netsim_radio_enabled(NetsimRadio flag) const;
+  void set_netsim_instance_num(int netsim_instance_num);
+  int netsim_instance_num() const;
+  void set_netsim_args(const std::string& netsim_args);
+  std::vector<std::string> netsim_args() const;
 
   enum Answer {
     kUnknown = 0,
@@ -248,12 +269,13 @@ class CuttlefishConfig {
   void set_rootcanal_test_port(int rootcanal_test_port);
   int rootcanal_test_port() const;
 
-  void set_rootcanal_config_file(const std::string& rootcanal_config_file);
-  std::string rootcanal_config_file() const;
-
   // The path of an AP image in composite disk
   std::string ap_image_dev_path() const;
   void set_ap_image_dev_path(const std::string& dev_path);
+
+  // path to the saved snapshot file(s)
+  std::string snapshot_path() const;
+  void set_snapshot_path(const std::string& snapshot_path);
 
   class InstanceSpecific;
   class MutableInstanceSpecific;
@@ -305,6 +327,8 @@ class CuttlefishConfig {
     std::string adb_ip_and_port() const;
     // Port number to connect to the camera hal on the guest
     int camera_server_port() const;
+    // Port number to connect to the lights hal on the guest
+    int lights_server_port() const;
 
     std::string adb_device_name() const;
     std::string gnss_file_path() const;
@@ -398,7 +422,7 @@ class CuttlefishConfig {
 
     std::string ap_esp_image_path() const;
 
-    std::string otheros_esp_image_path() const;
+    std::string esp_image_path() const;
 
     std::string otheros_esp_grub_config() const;
 
@@ -406,11 +430,7 @@ class CuttlefishConfig {
 
     std::string audio_server_path() const;
 
-    enum class BootFlow {
-      Android,
-      Linux,
-      Fuchsia
-    };
+    enum class BootFlow { Android, AndroidEfiLoader, Linux, Fuchsia };
 
     BootFlow boot_flow() const;
 
@@ -420,6 +440,10 @@ class CuttlefishConfig {
     // The device id the webrtc process should use to register with the
     // signaling server
     std::string webrtc_device_id() const;
+
+    // The group id the webrtc process should use to register with the
+    // signaling server
+    std::string group_id() const;
 
     // Whether this instance should start the webrtc signaling server
     bool start_webrtc_sig_server() const;
@@ -433,6 +457,9 @@ class CuttlefishConfig {
 
     // Whether this instance should start a rootcanal instance
     bool start_rootcanal() const;
+
+    // Whether this instance should start a casimir instance
+    bool start_casimir() const;
 
     // Whether this instance should start a pica instance
     bool start_pica() const;
@@ -460,6 +487,14 @@ class CuttlefishConfig {
     bool crosvm_use_balloon() const;
     bool crosvm_use_rng() const;
     bool use_pmem() const;
+    /* fmayle@ found out that when cuttlefish starts from the saved snapshot
+     * that was saved after ADBD start event, the socket_vsock_proxy must not
+     * wait for the AdbdStarted event.
+     *
+     * This instance-specific configuration tells the host sock_vsock_proxy
+     * not to wait for the adbd start event.
+     */
+    bool sock_vsock_proxy_wait_adbd_start() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -554,6 +589,9 @@ class CuttlefishConfig {
     std::string gpu_angle_feature_overrides_disabled() const;
     std::string gpu_capture_binary() const;
     bool enable_gpu_udmabuf() const;
+    bool enable_gpu_vhost_user() const;
+    bool enable_gpu_external_blob() const;
+    bool enable_gpu_system_blob() const;
 
     std::string hwcomposer() const;
 
@@ -568,10 +606,8 @@ class CuttlefishConfig {
     std::string super_image() const;
     std::string new_super_image() const;
     std::string misc_image() const;
-    std::string new_misc_image() const;
     std::string misc_info_txt() const;
     std::string metadata_image() const;
-    std::string new_metadata_image() const;
     std::string vendor_boot_image() const;
     std::string new_vendor_boot_image() const;
     std::string vbmeta_image() const;
@@ -585,6 +621,9 @@ class CuttlefishConfig {
 
     // otheros artifacts
     std::string otheros_esp_image() const;
+
+    // android efi loader flow
+    std::string android_efi_loader() const;
 
     // linux artifacts for otheros flow
     std::string linux_kernel_path() const;
@@ -628,6 +667,7 @@ class CuttlefishConfig {
     void set_gatekeeper_vsock_port(int gatekeeper_vsock_port);
     void set_keymaster_vsock_port(int keymaster_vsock_port);
     void set_audiocontrol_server_port(int audiocontrol_server_port);
+    void set_lights_server_port(int lights_server_port);
     void set_adb_host_port(int adb_host_port);
     void set_modem_simulator_host_id(int modem_simulator_id);
     void set_adb_ip_and_port(const std::string& ip_port);
@@ -652,16 +692,19 @@ class CuttlefishConfig {
     void set_modem_simulator_ports(const std::string& modem_simulator_ports);
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
     void set_webrtc_device_id(const std::string& id);
+    void set_group_id(const std::string& id);
     void set_start_webrtc_signaling_server(bool start);
     void set_start_webrtc_sig_server_proxy(bool start);
     void set_start_wmediumd(bool start);
     void set_start_rootcanal(bool start);
+    void set_start_casimir(bool start);
     void set_start_pica(bool start);
     void set_start_netsim(bool start);
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
     void set_crosvm_use_balloon(const bool use_balloon);
     void set_crosvm_use_rng(const bool use_rng);
     void set_use_pmem(const bool use_pmem);
+    void set_sock_vsock_proxy_wait_adbd_start(const bool);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
@@ -733,6 +776,9 @@ class CuttlefishConfig {
     void set_gpu_angle_feature_overrides_disabled(const std::string& overrides);
     void set_gpu_capture_binary(const std::string&);
     void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
+    void set_enable_gpu_vhost_user(const bool enable_gpu_vhost_user);
+    void set_enable_gpu_external_blob(const bool enable_gpu_external_blob);
+    void set_enable_gpu_system_blob(const bool enable_gpu_system_blob);
 
     void set_hwcomposer(const std::string&);
 
@@ -746,11 +792,7 @@ class CuttlefishConfig {
     void set_new_data_image(const std::string& new_data_image);
     void set_super_image(const std::string& super_image);
     void set_new_super_image(const std::string& super_image);
-    void set_misc_image(const std::string& misc_image);
-    void set_new_misc_image(const std::string& new_misc_image);
     void set_misc_info_txt(const std::string& misc_image);
-    void set_metadata_image(const std::string& metadata_image);
-    void set_new_metadata_image(const std::string& new_metadata_image);
     void set_vendor_boot_image(const std::string& vendor_boot_image);
     void set_new_vendor_boot_image(const std::string& new_vendor_boot_image);
     void set_vbmeta_image(const std::string& vbmeta_image);
@@ -766,6 +808,7 @@ class CuttlefishConfig {
     void set_default_target_zip(const std::string& default_target_zip);
     void set_system_target_zip(const std::string& system_target_zip);
     void set_otheros_esp_image(const std::string& otheros_esp_image);
+    void set_android_efi_loader(const std::string& android_efi_loader);
     void set_linux_kernel_path(const std::string& linux_kernel_path);
     void set_linux_initramfs_path(const std::string& linux_initramfs_path);
     void set_linux_root_image(const std::string& linux_root_image);

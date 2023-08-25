@@ -69,34 +69,31 @@ struct DemoCommandSequence {
 
 /** Returns a `Flag` object that accepts comma-separated unsigned integers. */
 template <typename T>
-Flag DeviceSpecificUintFlag(const std::string& name, std::vector<T>& values,
-                            const RequestWithStdio& request) {
+Flag DeviceSpecificUintFlag(const std::string& name, std::vector<T>& values) {
   return GflagsCompatFlag(name).Setter(
-      [&request, &values](const FlagMatch& match) {
+      [&values](const FlagMatch& match) -> Result<void> {
         auto parsed_values = android::base::Tokenize(match.value, ", ");
         for (auto& parsed_value : parsed_values) {
           std::uint32_t num = 0;
-          if (!android::base::ParseUint(parsed_value, &num)) {
-            constexpr char kError[] = "Failed to parse integer";
-            WriteAll(request.Out(), kError, sizeof(kError));
-            return false;
-          }
+          CF_EXPECTF(android::base::ParseUint(parsed_value, &num),
+                     "Failed to parse {} as an integer", parsed_value);
           values.push_back(num);
         }
-        return true;
+        return {};
       });
 }
 
 /** Returns a `Flag` object that accepts comma-separated strings. */
 Flag DeviceSpecificStringFlag(const std::string& name,
                               std::vector<std::string>& values) {
-  return GflagsCompatFlag(name).Setter([&values](const FlagMatch& match) {
-    auto parsed_values = android::base::Tokenize(match.value, ", ");
-    for (auto& parsed_value : parsed_values) {
-      values.push_back(parsed_value);
-    }
-    return true;
-  });
+  return GflagsCompatFlag(name).Setter(
+      [&values](const FlagMatch& match) -> Result<void> {
+        auto parsed_values = android::base::Tokenize(match.value, ", ");
+        for (auto& parsed_value : parsed_values) {
+          values.push_back(parsed_value);
+        }
+        return {};
+      });
 }
 
 std::string ParentDir(const uid_t uid) {
@@ -167,19 +164,19 @@ class SerialLaunchCommand : public CvdServerHandler {
     flags.emplace_back(GflagsCompatFlag("verbose", verbose));
 
     std::vector<std::uint32_t> x_res;
-    flags.emplace_back(DeviceSpecificUintFlag("x_res", x_res, request));
+    flags.emplace_back(DeviceSpecificUintFlag("x_res", x_res));
 
     std::vector<std::uint32_t> y_res;
-    flags.emplace_back(DeviceSpecificUintFlag("y_res", y_res, request));
+    flags.emplace_back(DeviceSpecificUintFlag("y_res", y_res));
 
     std::vector<std::uint32_t> dpi;
-    flags.emplace_back(DeviceSpecificUintFlag("dpi", dpi, request));
+    flags.emplace_back(DeviceSpecificUintFlag("dpi", dpi));
 
     std::vector<std::uint32_t> cpus;
-    flags.emplace_back(DeviceSpecificUintFlag("cpus", cpus, request));
+    flags.emplace_back(DeviceSpecificUintFlag("cpus", cpus));
 
     std::vector<std::uint32_t> memory_mb;
-    flags.emplace_back(DeviceSpecificUintFlag("memory_mb", memory_mb, request));
+    flags.emplace_back(DeviceSpecificUintFlag("memory_mb", memory_mb));
 
     std::vector<std::string> setupwizard_mode;
     flags.emplace_back(
@@ -207,27 +204,20 @@ class SerialLaunchCommand : public CvdServerHandler {
     auto& device_flag = flags.emplace_back();
     device_flag.Alias({FlagAliasMode::kFlagPrefix, "--device="});
     device_flag.Alias({FlagAliasMode::kFlagConsumesFollowing, "--device"});
-    device_flag.Setter(
-        [this, time, client_uid, &devices, &request](const FlagMatch& mat) {
-          auto lock = lock_file_manager_.TryAcquireUnusedLock();
-          if (!lock.ok()) {
-            WriteAll(request.Err(), lock.error().Message());
-            return false;
-          } else if (!lock->has_value()) {
-            constexpr char kError[] = "could not acquire instance lock";
-            WriteAll(request.Err(), kError, sizeof(kError));
-            return false;
-          }
-          int num = (*lock)->Instance();
-          std::string home_dir = ParentDir(client_uid) + std::to_string(time) +
-                                 "_" + std::to_string(num) + "/";
-          devices.emplace_back(Device{
-              .build = mat.value,
-              .home_dir = std::move(home_dir),
-              .ins_lock = std::move(**lock),
-          });
-          return true;
-        });
+    device_flag.Setter([this, time, client_uid,
+                        &devices](const FlagMatch& mat) -> Result<void> {
+      auto lock = CF_EXPECT(lock_file_manager_.TryAcquireUnusedLock());
+      CF_EXPECT(lock.has_value(), "could not acquire instance lock");
+      int num = lock->Instance();
+      std::string home_dir = ParentDir(client_uid) + std::to_string(time) +
+                             "_" + std::to_string(num) + "/";
+      devices.emplace_back(Device{
+          .build = mat.value,
+          .home_dir = std::move(home_dir),
+          .ins_lock = std::move(*lock),
+      });
+      return {};
+    });
 
     auto args = ParseInvocation(request.Message()).arguments;
     for (const auto& arg : args) {

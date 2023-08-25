@@ -21,21 +21,10 @@
 
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
-struct FetchCvdInstanceConfig {
-  bool should_fetch;
-  std::string default_build;
-  std::string system_build;
-  std::string kernel_build;
-  std::string artifacts_directory;
-};
-
-struct FetchCvdConfig {
-  std::string credential_source;
-  std::vector<FetchCvdInstanceConfig> instances;
-};
-
-FetchCvdConfig ParseFetchCvdConfigs(Json::Value& root);
+Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root);
 
 };  // namespace cuttlefish

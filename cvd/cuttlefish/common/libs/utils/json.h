@@ -15,7 +15,9 @@
 
 #pragma once
 
+#include <string>
 #include <string_view>
+#include <vector>
 
 #include <json/json.h>
 
@@ -24,5 +26,27 @@
 namespace cuttlefish {
 
 Result<Json::Value> ParseJson(std::string_view input);
+
+template <typename T>
+Result<T> GetValue(const Json::Value& root,
+                   const std::vector<std::string>& selectors) {
+  const Json::Value* traversal = &root;
+  for (const auto& selector : selectors) {
+    CF_EXPECTF(traversal->isMember(selector),
+               "JSON selector \"{}\" does not exist", selector);
+    traversal = &(*traversal)[selector];
+  }
+  return traversal->as<T>();
+}
+
+template <typename T>
+Result<std::vector<T>> GetArrayValues(
+    const Json::Value& array, const std::vector<std::string>& selectors) {
+  std::vector<T> result;
+  for (const auto& element : array) {
+    result.emplace_back(CF_EXPECT(GetValue<T>(element, selectors)));
+  }
+  return result;
+}
 
 }  // namespace cuttlefish

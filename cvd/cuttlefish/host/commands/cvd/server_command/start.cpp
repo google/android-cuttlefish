@@ -380,6 +380,7 @@ Result<std::vector<std::string>> CvdStartCommandHandler::UpdateWebrtcDeviceId(
   // take --webrtc_device_id flag away
   new_args.emplace_back("--webrtc_device_id=" +
                         android::base::Join(device_name_list, ","));
+  new_args.emplace_back("--group_id=" + group_name);
   return new_args;
 }
 
@@ -518,7 +519,7 @@ static Result<bool> IsDaemonModeFlag(const cvd_common::Args& args) {
   Flag daemon_bool = GflagsCompatFlag("daemon", is_daemon);
   std::vector<Flag> as_bool_flags{daemon_bool};
   cvd_common::Args copied_args{args};
-  if (ParseFlags(as_bool_flags, copied_args)) {
+  if (ParseFlags(as_bool_flags, copied_args).ok()) {
     if (initial_size != copied_args.size()) {
       return is_daemon;
     }
@@ -527,7 +528,7 @@ static Result<bool> IsDaemonModeFlag(const cvd_common::Args& args) {
   Flag daemon_string = GflagsCompatFlag("daemon", daemon_values);
   cvd_common::Args copied_args2{args};
   std::vector<Flag> as_string_flags{daemon_string};
-  if (!ParseFlags(as_string_flags, copied_args2)) {
+  if (!ParseFlags(as_string_flags, copied_args2).ok()) {
     return false;
   }
   if (initial_size == copied_args2.size()) {

@@ -30,7 +30,9 @@ struct ControlMessage {
   static ControlMessage FromRaw(const cmsghdr*);
   static Result<ControlMessage> FromFileDescriptors(
       const std::vector<SharedFD>&);
+#ifdef __linux__
   static ControlMessage FromCredentials(const ucred&);
+#endif
   ControlMessage(const ControlMessage&) = delete;
   ControlMessage(ControlMessage&&);
   ~ControlMessage();
@@ -39,8 +41,10 @@ struct ControlMessage {
 
   const cmsghdr* Raw() const;
 
+#ifdef __linux__
   bool IsCredentials() const;
   Result<ucred> AsCredentials() const;
+#endif
 
   bool IsFileDescriptors() const;
   Result<std::vector<SharedFD>> AsSharedFDs() const;
@@ -60,8 +64,10 @@ struct UnixSocketMessage {
 
   bool HasFileDescriptors();
   Result<std::vector<SharedFD>> FileDescriptors();
+#ifdef __linux__
   bool HasCredentials();
   Result<ucred> Credentials();
+#endif
 };
 
 class UnixMessageSocket {
@@ -70,7 +76,9 @@ class UnixMessageSocket {
   [[nodiscard]] Result<void> WriteMessage(const UnixSocketMessage&);
   Result<UnixSocketMessage> ReadMessage();
 
+#ifdef __linux__
   [[nodiscard]] Result<void> EnableCredentials(bool);
+#endif
 
  private:
   SharedFD socket_;

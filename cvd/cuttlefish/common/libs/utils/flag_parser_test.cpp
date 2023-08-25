@@ -16,15 +16,19 @@
 
 #include <common/libs/utils/flag_parser.h>
 
-#include <android-base/strings.h>
-
-#include <gtest/gtest.h>
-#include <libxml/tree.h>
 #include <map>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <gtest/gtest.h>
+#include <libxml/tree.h>
+
+#include "common/libs/utils/result_matchers.h"
+#include "gmock/gmock-matchers.h"
 
 namespace cuttlefish {
 
@@ -43,15 +47,15 @@ TEST(FlagParser, ConflictingAlias) {
 TEST(FlagParser, StringFlag) {
   std::string value;
   auto flag = GflagsCompatFlag("myflag", value);
-  ASSERT_TRUE(flag.Parse({"-myflag=a"}));
+  ASSERT_THAT(flag.Parse({"-myflag=a"}), IsOk());
   ASSERT_EQ(value, "a");
-  ASSERT_TRUE(flag.Parse({"--myflag=b"}));
+  ASSERT_THAT(flag.Parse({"--myflag=b"}), IsOk());
   ASSERT_EQ(value, "b");
-  ASSERT_TRUE(flag.Parse({"-myflag", "c"}));
+  ASSERT_THAT(flag.Parse({"-myflag", "c"}), IsOk());
   ASSERT_EQ(value, "c");
-  ASSERT_TRUE(flag.Parse({"--myflag", "d"}));
+  ASSERT_THAT(flag.Parse({"--myflag", "d"}), IsOk());
   ASSERT_EQ(value, "d");
-  ASSERT_TRUE(flag.Parse({"--myflag="}));
+  ASSERT_THAT(flag.Parse({"--myflag="}), IsOk());
   ASSERT_EQ(value, "");
 }
 
@@ -106,18 +110,18 @@ TEST(FlagParser, StringFlagXml) {
 TEST(FlagParser, RepeatedStringFlag) {
   std::string value;
   auto flag = GflagsCompatFlag("myflag", value);
-  ASSERT_TRUE(flag.Parse({"-myflag=a", "--myflag", "b"}));
+  ASSERT_THAT(flag.Parse({"-myflag=a", "--myflag", "b"}), IsOk());
   ASSERT_EQ(value, "b");
 }
 
 TEST(FlagParser, RepeatedListFlag) {
   std::vector<std::string> elems;
   auto flag = GflagsCompatFlag("myflag");
-  flag.Setter([&elems](const FlagMatch& match) {
+  flag.Setter([&elems](const FlagMatch& match) -> Result<void> {
     elems.push_back(match.value);
-    return true;
+    return {};
   });
-  ASSERT_TRUE(flag.Parse({"-myflag=a", "--myflag", "b"}));
+  ASSERT_THAT(flag.Parse({"-myflag=a", "--myflag", "b"}), IsOk());
   ASSERT_EQ(elems, (std::vector<std::string>{"a", "b"}));
 }
 
@@ -125,11 +129,11 @@ TEST(FlagParser, FlagRemoval) {
   std::string value;
   auto flag = GflagsCompatFlag("myflag", value);
   std::vector<std::string> flags = {"-myflag=a", "-otherflag=c"};
-  ASSERT_TRUE(flag.Parse(flags));
+  ASSERT_THAT(flag.Parse(flags), IsOk());
   ASSERT_EQ(value, "a");
   ASSERT_EQ(flags, std::vector<std::string>{"-otherflag=c"});
   flags = {"-otherflag=a", "-myflag=c"};
-  ASSERT_TRUE(flag.Parse(flags));
+  ASSERT_THAT(flag.Parse(flags), IsOk());
   ASSERT_EQ(value, "c");
   ASSERT_EQ(flags, std::vector<std::string>{"-otherflag=a"});
 }
@@ -137,13 +141,13 @@ TEST(FlagParser, FlagRemoval) {
 TEST(FlagParser, IntFlag) {
   std::int32_t value = 0;
   auto flag = GflagsCompatFlag("myflag", value);
-  ASSERT_TRUE(flag.Parse({"-myflag=5"}));
+  ASSERT_THAT(flag.Parse({"-myflag=5"}), IsOk());
   ASSERT_EQ(value, 5);
-  ASSERT_TRUE(flag.Parse({"--myflag=6"}));
+  ASSERT_THAT(flag.Parse({"--myflag=6"}), IsOk());
   ASSERT_EQ(value, 6);
-  ASSERT_TRUE(flag.Parse({"-myflag", "7"}));
+  ASSERT_THAT(flag.Parse({"-myflag", "7"}), IsOk());
   ASSERT_EQ(value, 7);
-  ASSERT_TRUE(flag.Parse({"--myflag", "8"}));
+  ASSERT_THAT(flag.Parse({"--myflag", "8"}), IsOk());
   ASSERT_EQ(value, 8);
 }
 
@@ -163,38 +167,38 @@ TEST(FlagParser, IntFlagXml) {
 TEST(FlagParser, BoolFlag) {
   bool value = false;
   auto flag = GflagsCompatFlag("myflag", value);
-  ASSERT_TRUE(flag.Parse({"-myflag"}));
+  ASSERT_THAT(flag.Parse({"-myflag"}), IsOk());
   ASSERT_TRUE(value);
 
   value = false;
-  ASSERT_TRUE(flag.Parse({"--myflag"}));
+  ASSERT_THAT(flag.Parse({"--myflag"}), IsOk());
   ASSERT_TRUE(value);
 
   value = false;
-  ASSERT_TRUE(flag.Parse({"-myflag=true"}));
+  ASSERT_THAT(flag.Parse({"-myflag=true"}), IsOk());
   ASSERT_TRUE(value);
 
   value = false;
-  ASSERT_TRUE(flag.Parse({"--myflag=true"}));
+  ASSERT_THAT(flag.Parse({"--myflag=true"}), IsOk());
   ASSERT_TRUE(value);
 
   value = true;
-  ASSERT_TRUE(flag.Parse({"-nomyflag"}));
+  ASSERT_THAT(flag.Parse({"-nomyflag"}), IsOk());
   ASSERT_FALSE(value);
 
   value = true;
-  ASSERT_TRUE(flag.Parse({"--nomyflag"}));
+  ASSERT_THAT(flag.Parse({"--nomyflag"}), IsOk());
   ASSERT_FALSE(value);
 
   value = true;
-  ASSERT_TRUE(flag.Parse({"-myflag=false"}));
+  ASSERT_THAT(flag.Parse({"-myflag=false"}), IsOk());
   ASSERT_FALSE(value);
 
   value = true;
-  ASSERT_TRUE(flag.Parse({"--myflag=false"}));
+  ASSERT_THAT(flag.Parse({"--myflag=false"}), IsOk());
   ASSERT_FALSE(value);
 
-  ASSERT_FALSE(flag.Parse({"--myflag=nonsense"}));
+  ASSERT_THAT(flag.Parse({"--myflag=nonsense"}), IsError());
 }
 
 TEST(FlagParser, BoolFlagXml) {
@@ -216,16 +220,16 @@ TEST(FlagParser, StringIntFlag) {
   auto int_flag = GflagsCompatFlag("int", int_value);
   auto string_flag = GflagsCompatFlag("string", string_value);
   std::vector<Flag> flags = {int_flag, string_flag};
-  ASSERT_TRUE(ParseFlags(flags, {"-int=5", "-string=a"}));
+  EXPECT_THAT(ParseFlags(flags, {"-int=5", "-string=a"}), IsOk());
   ASSERT_EQ(int_value, 5);
   ASSERT_EQ(string_value, "a");
-  ASSERT_TRUE(ParseFlags(flags, {"--int=6", "--string=b"}));
+  EXPECT_THAT(ParseFlags(flags, {"--int=6", "--string=b"}), IsOk());
   ASSERT_EQ(int_value, 6);
   ASSERT_EQ(string_value, "b");
-  ASSERT_TRUE(ParseFlags(flags, {"-int", "7", "-string", "c"}));
+  EXPECT_THAT(ParseFlags(flags, {"-int", "7", "-string", "c"}), IsOk());
   ASSERT_EQ(int_value, 7);
   ASSERT_EQ(string_value, "c");
-  ASSERT_TRUE(ParseFlags(flags, {"--int", "8", "--string", "d"}));
+  EXPECT_THAT(ParseFlags(flags, {"--int", "8", "--string", "d"}), IsOk());
   ASSERT_EQ(int_value, 8);
   ASSERT_EQ(string_value, "d");
 }
@@ -234,22 +238,22 @@ TEST(FlagParser, StringVectorFlag) {
   std::vector<std::string> value;
   auto flag = GflagsCompatFlag("myflag", value);
 
-  ASSERT_FALSE(flag.Parse({"--myflag="}));
+  ASSERT_THAT(flag.Parse({"--myflag="}), IsOk());
   ASSERT_TRUE(value.empty());
 
-  ASSERT_TRUE(flag.Parse({"--myflag=foo"}));
+  ASSERT_THAT(flag.Parse({"--myflag=foo"}), IsOk());
   ASSERT_EQ(value, std::vector<std::string>({"foo"}));
 
-  ASSERT_TRUE(flag.Parse({"--myflag=foo,bar"}));
+  ASSERT_THAT(flag.Parse({"--myflag=foo,bar"}), IsOk());
   ASSERT_EQ(value, std::vector<std::string>({"foo", "bar"}));
 
-  ASSERT_TRUE(flag.Parse({"--myflag=,bar"}));
+  ASSERT_THAT(flag.Parse({"--myflag=,bar"}), IsOk());
   ASSERT_EQ(value, std::vector<std::string>({"", "bar"}));
 
-  ASSERT_TRUE(flag.Parse({"--myflag=foo,"}));
+  ASSERT_THAT(flag.Parse({"--myflag=foo,"}), IsOk());
   ASSERT_EQ(value, std::vector<std::string>({"foo", ""}));
 
-  ASSERT_TRUE(flag.Parse({"--myflag=,"}));
+  ASSERT_THAT(flag.Parse({"--myflag=,"}), IsOk());
   ASSERT_EQ(value, std::vector<std::string>({"", ""}));
 }
 
@@ -258,36 +262,36 @@ TEST(FlagParser, BoolVectorFlag) {
   bool default_value = true;
   auto flag = GflagsCompatFlag("myflag", value, default_value);
 
-  ASSERT_FALSE(flag.Parse({"--myflag="}));
+  ASSERT_THAT(flag.Parse({"--myflag="}), IsOk());
   ASSERT_TRUE(value.empty());
 
-  ASSERT_FALSE(flag.Parse({"--myflag=foo"}));
+  ASSERT_THAT(flag.Parse({"--myflag=foo"}), IsError());
   ASSERT_TRUE(value.empty());
 
-  ASSERT_FALSE(flag.Parse({"--myflag=true,bar"}));
+  ASSERT_THAT(flag.Parse({"--myflag=true,bar"}), IsError());
   ASSERT_TRUE(value.empty());
 
-  ASSERT_TRUE(flag.Parse({"--myflag=true"}));
+  ASSERT_THAT(flag.Parse({"--myflag=true"}), IsOk());
   ASSERT_EQ(value, std::vector<bool>({true}));
   ASSERT_TRUE(flagXml(flag));
   ASSERT_EQ((*flagXml(flag))["default"], "true");
 
-  ASSERT_TRUE(flag.Parse({"--myflag=true,false"}));
+  ASSERT_THAT(flag.Parse({"--myflag=true,false"}), IsOk());
   ASSERT_EQ(value, std::vector<bool>({true, false}));
   ASSERT_TRUE(flagXml(flag));
   ASSERT_EQ((*flagXml(flag))["default"], "true,false");
 
-  ASSERT_TRUE(flag.Parse({"--myflag=,false"}));
+  ASSERT_THAT(flag.Parse({"--myflag=,false"}), IsOk());
   ASSERT_EQ(value, std::vector<bool>({true, false}));
   ASSERT_TRUE(flagXml(flag));
   ASSERT_EQ((*flagXml(flag))["default"], "true,false");
 
-  ASSERT_TRUE(flag.Parse({"--myflag=true,"}));
+  ASSERT_THAT(flag.Parse({"--myflag=true,"}), IsOk());
   ASSERT_EQ(value, std::vector<bool>({true, true}));
   ASSERT_TRUE(flagXml(flag));
   ASSERT_EQ((*flagXml(flag))["default"], "true,true");
 
-  ASSERT_TRUE(flag.Parse({"--myflag=,"}));
+  ASSERT_THAT(flag.Parse({"--myflag=,"}), IsOk());
   ASSERT_EQ(value, std::vector<bool>({true, true}));
   ASSERT_TRUE(flagXml(flag));
   ASSERT_EQ((*flagXml(flag))["default"], "true,true");
@@ -296,37 +300,77 @@ TEST(FlagParser, BoolVectorFlag) {
 TEST(FlagParser, InvalidStringFlag) {
   std::string value;
   auto flag = GflagsCompatFlag("myflag", value);
-  ASSERT_FALSE(flag.Parse({"-myflag"}));
-  ASSERT_FALSE(flag.Parse({"--myflag"}));
+  ASSERT_THAT(flag.Parse({"-myflag"}), IsError());
+  ASSERT_THAT(flag.Parse({"--myflag"}), IsError());
 }
 
 TEST(FlagParser, InvalidIntFlag) {
   int value;
   auto flag = GflagsCompatFlag("myflag", value);
-  ASSERT_FALSE(flag.Parse({"-myflag"}));
-  ASSERT_FALSE(flag.Parse({"--myflag"}));
-  ASSERT_FALSE(flag.Parse({"-myflag=abc"}));
-  ASSERT_FALSE(flag.Parse({"--myflag=def"}));
-  ASSERT_FALSE(flag.Parse({"-myflag", "abc"}));
-  ASSERT_FALSE(flag.Parse({"--myflag", "def"}));
+  ASSERT_THAT(flag.Parse({"-myflag"}), IsError());
+  ASSERT_THAT(flag.Parse({"--myflag"}), IsError());
+  ASSERT_THAT(flag.Parse({"-myflag=abc"}), IsError());
+  ASSERT_THAT(flag.Parse({"--myflag=def"}), IsError());
+  ASSERT_THAT(flag.Parse({"-myflag", "abc"}), IsError());
+  ASSERT_THAT(flag.Parse({"--myflag", "def"}), IsError());
+}
+
+TEST(FlagParser, VerbosityFlag) {
+  android::base::LogSeverity value = android::base::VERBOSE;
+  auto flag = VerbosityFlag(value);
+  ASSERT_THAT(flag.Parse({"-verbosity=DEBUG"}), IsOk());
+  ASSERT_EQ(value, android::base::DEBUG);
+  ASSERT_THAT(flag.Parse({"--verbosity=INFO"}), IsOk());
+  ASSERT_EQ(value, android::base::INFO);
+  ASSERT_THAT(flag.Parse({"--verbosity=WARNING"}), IsOk());
+  ASSERT_EQ(value, android::base::WARNING);
+  ASSERT_THAT(flag.Parse({"--verbosity=ERROR"}), IsOk());
+  ASSERT_EQ(value, android::base::ERROR);
+  ASSERT_THAT(flag.Parse({"--verbosity=FATAL_WITHOUT_ABORT"}), IsOk());
+  ASSERT_EQ(value, android::base::FATAL_WITHOUT_ABORT);
+  ASSERT_THAT(flag.Parse({"--verbosity=FATAL"}), IsOk());
+  ASSERT_EQ(value, android::base::FATAL);
+  ASSERT_THAT(flag.Parse({"--verbosity=VERBOSE"}), IsOk());
+  ASSERT_EQ(value, android::base::VERBOSE);
+}
+
+TEST(FlagParser, InvalidVerbosityFlag) {
+  android::base::LogSeverity value = android::base::VERBOSE;
+  auto flag = VerbosityFlag(value);
+  ASSERT_THAT(flag.Parse({"-verbosity"}), IsError());
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_THAT(flag.Parse({"--verbosity"}), IsError());
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_THAT(flag.Parse({"-verbosity="}), IsError());
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_THAT(flag.Parse({"--verbosity="}), IsError());
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_THAT(flag.Parse({"-verbosity=not_a_severity"}), IsError());
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_THAT(flag.Parse({"--verbosity=not_a_severity"}), IsError());
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_THAT(flag.Parse({"-verbosity", "not_a_severity"}), IsError());
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_THAT(flag.Parse({"--verbosity", "not_a_severity"}), IsError());
+  ASSERT_EQ(value, android::base::VERBOSE);
 }
 
 TEST(FlagParser, InvalidFlagGuard) {
   auto flag = InvalidFlagGuard();
-  ASSERT_TRUE(flag.Parse({}));
-  ASSERT_TRUE(flag.Parse({"positional"}));
-  ASSERT_TRUE(flag.Parse({"positional", "positional2"}));
-  ASSERT_FALSE(flag.Parse({"-flag"}));
-  ASSERT_FALSE(flag.Parse({"-"}));
+  ASSERT_THAT(flag.Parse({}), IsOk());
+  ASSERT_THAT(flag.Parse({"positional"}), IsOk());
+  ASSERT_THAT(flag.Parse({"positional", "positional2"}), IsOk());
+  ASSERT_THAT(flag.Parse({"-flag"}), IsError());
+  ASSERT_THAT(flag.Parse({"-"}), IsError());
 }
 
 TEST(FlagParser, UnexpectedArgumentGuard) {
   auto flag = UnexpectedArgumentGuard();
-  ASSERT_TRUE(flag.Parse({}));
-  ASSERT_FALSE(flag.Parse({"positional"}));
-  ASSERT_FALSE(flag.Parse({"positional", "positional2"}));
-  ASSERT_FALSE(flag.Parse({"-flag"}));
-  ASSERT_FALSE(flag.Parse({"-"}));
+  ASSERT_THAT(flag.Parse({}), IsOk());
+  ASSERT_THAT(flag.Parse({"positional"}), IsError());
+  ASSERT_THAT(flag.Parse({"positional", "positional2"}), IsError());
+  ASSERT_THAT(flag.Parse({"-flag"}), IsError());
+  ASSERT_THAT(flag.Parse({"-"}), IsError());
 }
 
 TEST(FlagParser, EndOfOptionMark) {
@@ -334,9 +378,10 @@ TEST(FlagParser, EndOfOptionMark) {
   bool flag = false;
   std::vector<Flag> flags{GflagsCompatFlag("flag", flag), InvalidFlagGuard()};
 
-  ASSERT_FALSE(ParseFlags(flags, args));
-  ASSERT_TRUE(ParseFlags(flags, args,
-                         /* recognize_end_of_option_mark */ true));
+  EXPECT_THAT(ParseFlags(flags, args), IsError());
+  EXPECT_THAT(ParseFlags(flags, args,
+                         /* recognize_end_of_option_mark */ true),
+              IsOk());
   ASSERT_TRUE(flag);
 }
 
@@ -346,9 +391,9 @@ class FlagConsumesArbitraryTest : public ::testing::Test {
     elems_.clear();
     flag_ = Flag()
                 .Alias({FlagAliasMode::kFlagConsumesArbitrary, "--flag"})
-                .Setter([this](const FlagMatch& match) {
+                .Setter([this](const FlagMatch& match) -> Result<void> {
                   elems_.push_back(match.value);
-                  return true;
+                  return {};
                 });
   }
   Flag flag_;
@@ -357,42 +402,42 @@ class FlagConsumesArbitraryTest : public ::testing::Test {
 
 TEST_F(FlagConsumesArbitraryTest, NoValues) {
   std::vector<std::string> inputs = {"--flag"};
-  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_THAT(flag_.Parse(inputs), IsOk());
   ASSERT_EQ(inputs, (std::vector<std::string>{}));
   ASSERT_EQ(elems_, (std::vector<std::string>{""}));
 }
 
 TEST_F(FlagConsumesArbitraryTest, OneValue) {
   std::vector<std::string> inputs = {"--flag", "value"};
-  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_THAT(flag_.Parse(inputs), IsOk());
   ASSERT_EQ(inputs, (std::vector<std::string>{}));
   ASSERT_EQ(elems_, (std::vector<std::string>{"value", ""}));
 }
 
 TEST_F(FlagConsumesArbitraryTest, TwoValues) {
   std::vector<std::string> inputs = {"--flag", "value1", "value2"};
-  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_THAT(flag_.Parse(inputs), IsOk());
   ASSERT_EQ(inputs, (std::vector<std::string>{}));
   ASSERT_EQ(elems_, (std::vector<std::string>{"value1", "value2", ""}));
 }
 
 TEST_F(FlagConsumesArbitraryTest, NoValuesOtherFlag) {
   std::vector<std::string> inputs = {"--flag", "--otherflag"};
-  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_THAT(flag_.Parse(inputs), IsOk());
   ASSERT_EQ(inputs, (std::vector<std::string>{"--otherflag"}));
   ASSERT_EQ(elems_, (std::vector<std::string>{""}));
 }
 
 TEST_F(FlagConsumesArbitraryTest, OneValueOtherFlag) {
   std::vector<std::string> inputs = {"--flag", "value", "--otherflag"};
-  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_THAT(flag_.Parse(inputs), IsOk());
   ASSERT_EQ(inputs, (std::vector<std::string>{"--otherflag"}));
   ASSERT_EQ(elems_, (std::vector<std::string>{"value", ""}));
 }
 
 TEST_F(FlagConsumesArbitraryTest, TwoValuesOtherFlag) {
   std::vector<std::string> inputs = {"--flag", "v1", "v2", "--otherflag"};
-  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_THAT(flag_.Parse(inputs), IsOk());
   ASSERT_EQ(inputs, (std::vector<std::string>{"--otherflag"}));
   ASSERT_EQ(elems_, (std::vector<std::string>{"v1", "v2", ""}));
 }
