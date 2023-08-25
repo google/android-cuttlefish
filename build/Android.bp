@@ -46,7 +46,6 @@ soong_config_module_type {
 }
 
 cvd_host_tools = [
-    "android.hardware.automotive.vehicle@2.0-virtualization-grpc-server",
     "adb",
     "adb_connector",
     "allocd",

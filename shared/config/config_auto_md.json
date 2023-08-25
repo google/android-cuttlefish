@@ -1,0 +1,7 @@
+{
+	"display0": "width=1080,height=600,dpi=120",
+	"display1": "width=400,height=600,dpi=120",
+	"display2": "width=800,height=600,dpi=120",
+	"display3": "width=800,height=600,dpi=120",
+	"memory_mb" : 4096
+}

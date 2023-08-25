@@ -39,7 +39,6 @@ cc_binary {
         "launch/pica.cpp",
         "launch/secure_env.cpp",
         "launch/streamer.cpp",
-        "launch/vehicle_hal_server.cpp",
         "launch/netsim_server.cpp",
         "main.cc",
         "reporting.cpp",

@@ -280,18 +280,6 @@
 <path fill="none" stroke="black" d="M490.32,-869.8C498.24,-903.26 520.25,-974.8 569.08,-1007.87 620.09,-1042.41 690.55,-1047.4 744.28,-1044.74"/>
 <polygon fill="black" stroke="black" points="744.68,-1048.22 754.46,-1044.14 744.27,-1041.24 744.68,-1048.22"/>
 </g>
-<!-- vehicle_hal_server -->
-<g id="node20" class="node">
-<title>vehicle_hal_server</title>
-<ellipse fill="none" stroke="black" cx="823.86" cy="-980.87" rx="254.55" ry="18"/>
-<text text-anchor="middle" x="823.86" y="-977.17" font-family="Times,serif" font-size="14.00">android.hardware.automotive.vehicle@2.0&#45;virtualization&#45;grpc&#45;server</text>
-</g>
-<!-- run_cvd&#45;&gt;vehicle_hal_server -->
-<g id="edge34" class="edge">
-<title>run_cvd&#45;&gt;vehicle_hal_server</title>
-<path fill="none" stroke="black" stroke-dasharray="5,2" d="M494.53,-869.62C506.62,-894.44 532.25,-938.73 569.08,-958.87 575.68,-962.48 582.53,-965.71 589.56,-968.58"/>
-<polygon fill="black" stroke="black" points="588.66,-971.99 599.25,-972.3 591.16,-965.45 588.66,-971.99"/>
-</g>
 <!-- adb_connector -->
 <g id="node21" class="node">
 <title>adb_connector</title>

@@ -20,7 +20,6 @@ digraph {
   secure_env
   stop_cvd
   tombstone_receiver
-  vehicle_hal_server [label = "android.hardware.automotive.vehicle@2.0-virtualization-grpc-server"]
 
   subgraph cluster_adb_group {
     label = "ADB"
@@ -101,7 +100,6 @@ digraph {
   run_cvd -> secure_env
   run_cvd -> socket_vsock_proxy [style = "dashed"]
   run_cvd -> tombstone_receiver
-  run_cvd -> vehicle_hal_server [style = "dashed"]
   run_cvd -> vmm
   run_cvd -> webrtc [style = "dashed"]
   run_cvd -> wmediumd
