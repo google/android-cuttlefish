@@ -594,10 +594,7 @@ PRODUCT_PACKAGES += \
 
 # NFC AIDL HAL
 PRODUCT_PACKAGES += \
-    android.hardware.nfc-service.cuttlefish
-
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.nfc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.nfc.xml
+    com.google.cf.nfc
 
 # CAS AIDL HAL
 PRODUCT_PACKAGES += \

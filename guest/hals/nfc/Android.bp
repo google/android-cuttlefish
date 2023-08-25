@@ -20,9 +20,8 @@ package {
 rust_binary {
     name: "android.hardware.nfc-service.cuttlefish",
     relative_install_path: "hw",
-    init_rc: ["nfc-service-cuttlefish.rc"],
-    vintf_fragments: ["nfc-service-cuttlefish.xml"],
     vendor: true,
+    prefer_rlib: true,
     rustlibs: [
         "libandroid_logger",
         "liblog_rust",
@@ -38,6 +37,36 @@ rust_binary {
         "libasync_trait",
     ],
     features: ["rt"],
-    required: ["libnfc-hal-cf.conf-default"],
     srcs: ["src/main.rs"],
+}
+
+prebuilt_etc {
+    name: "nfc-service-cuttlefish.rc",
+    src: "nfc-service-cuttlefish.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "nfc-service-cuttlefish.xml",
+    src: "nfc-service-cuttlefish.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.google.cf.nfc",
+    manifest: "apex_manifest.json",
+    file_contexts: "file_contexts",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: ["android.hardware.nfc-service.cuttlefish"],
+    prebuilts: [
+        "nfc-service-cuttlefish.rc", // init_rc
+        "nfc-service-cuttlefish.xml", // vintf_fragments
+        "android.hardware.nfc.prebuilt.xml", // permission
+        "libnfc-hal-cf.conf-default", // conf
+    ],
 }
