@@ -56,6 +56,11 @@ BOARD_VENDOR_RAMDISK_KERNEL_MODULES := \
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(KERNEL_MODULES_PATH)/virtio_pci_legacy_dev.ko)
 # GKI >5.10 will have and require virtio_pci_modern_dev.ko
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(KERNEL_MODULES_PATH)/virtio_pci_modern_dev.ko)
+# GKI >6.4 will have an required vmw_vsock_virtio_transport_common.ko and vsock.ko
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES += \
+	$(wildcard $(KERNEL_MODULES_PATH)/vmw_vsock_virtio_transport_common.ko) \
+	$(wildcard $(KERNEL_MODULES_PATH)/vsock.ko)
+
 
 # TODO(b/176860479) once virt_wifi is deprecated we can stop loading mac80211 in
 # first stage init. To minimize scope of modules options to first stage init,
