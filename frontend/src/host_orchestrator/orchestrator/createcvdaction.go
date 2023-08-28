@@ -303,13 +303,3 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	}
 	return nil
 }
-
-func ExtractCredentials(r *apiv1.CreateCVDRequest) string {
-	if r == nil ||
-		r.CVD == nil ||
-		r.CVD.BuildSource == nil ||
-		r.CVD.BuildSource.AndroidCIBuildSource == nil {
-		return ""
-	}
-	return r.CVD.BuildSource.AndroidCIBuildSource.Credentials
-}
