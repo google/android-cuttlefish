@@ -36,6 +36,7 @@
 #include "host/commands/cvd/parser/cf_flags_validator.h"
 #include "host/commands/cvd/parser/fetch_cvd_parser.h"
 #include "host/commands/cvd/parser/launch_cvd_parser.h"
+#include "host/commands/cvd/parser/selector_parser.h"
 
 namespace cuttlefish {
 namespace {
@@ -212,6 +213,7 @@ Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
                                  const LoadDirectories& load_directories) {
   CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
   return CvdFlags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(root)),
+                  .selector_flags = CF_EXPECT(ParseSelectorConfigs(root)),
                   .fetch_cvd_flags = CF_EXPECT(ParseFetchCvdConfigs(
                       root, load_directories.target_directory,
                       load_directories.target_subdirectories))};
