@@ -176,7 +176,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	}
 	cvdDwnl := NewAndroidCICVDDownloader(
 		artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
-	creds := ExtractCredentials(req)
+	creds := r.Header.Get(HeaderBuildAPICreds)
 	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Credentials: creds}
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)

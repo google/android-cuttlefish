@@ -86,6 +86,7 @@ type AndroidCIBundle struct {
 	Type ArtifactsBundleType `json:"type"`
 }
 
+// Use `X-Cutf-Host-Orchestrator-BuildAPI-Creds` http header to pass the Build API credentials.
 type CreateCVDRequest struct {
 	// REQUIRED.
 	CVD *CVD `json:"cvd"`
@@ -117,8 +118,6 @@ type AndroidCIBuildSource struct {
 	BootloaderBuild *AndroidCIBuild `json:"bootloader_build,omitempty"`
 	// Uses this specific system image build target if set.
 	SystemImageBuild *AndroidCIBuild `json:"system_image_build,omitempty"`
-	// Credentials to use when connecting to the build API
-	Credentials string `json:"credentials,omitempty"`
 }
 
 // Represents a user build.
