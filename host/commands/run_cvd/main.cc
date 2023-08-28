@@ -156,7 +156,6 @@ fruit::Component<> runCvdComponent(
       .install(CasimirComponent)
       .install(NetsimServerComponent)
       .install(SecureEnvComponent)
-      .install(VehicleHalServerComponent)
       .install(serverLoopComponent)
       .install(validationComponent)
       .install(vm_manager::VmManagerComponent);

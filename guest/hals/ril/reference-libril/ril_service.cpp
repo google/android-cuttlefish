@@ -16,6 +16,10 @@
 
 #define LOG_TAG "RILC"
 
+#include "RefRadioSim.h"
+#include "RefImsMedia.h"
+#include "RefRadioIms.h"
+#include "RefRadioModem.h"
 #include "RefRadioNetwork.h"
 
 #include <android-base/logging.h>
@@ -27,6 +31,8 @@
 #include <android/hardware/radio/1.6/types.h>
 #include <libradiocompat/CallbackManager.h>
 #include <libradiocompat/RadioData.h>
+#include <libradiocompat/RadioIms.h>
+#include <libradiocompat/RadioImsMedia.h>
 #include <libradiocompat/RadioMessaging.h>
 #include <libradiocompat/RadioModem.h>
 #include <libradiocompat/RadioSim.h>
@@ -13439,14 +13445,17 @@ void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
         publishRadioHal<cf::ril::RefRadioNetwork>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<compat::RadioSim>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<compat::RadioVoice>(context, radioHidl, callbackMgr, slot);
-
+        publishRadioHal<cf::ril::RefRadioIms>(context, radioHidl, callbackMgr, slot);
+        publishRadioHal<cf::ril::RefImsMedia>(context, radioHidl, callbackMgr,
+                                              std::string("default"));
+        publishRadioHal<cf::ril::RefRadioModem>(context, radioHidl, callbackMgr, slot);
+        publishRadioHal<cf::ril::RefRadioSim>(context, radioHidl, callbackMgr, slot);
         RLOGD("registerService: OemHook is enabled = %s", kOemHookEnabled ? "true" : "false");
         if (kOemHookEnabled) {
             oemHookService[i] = new OemHookImpl;
             oemHookService[i]->mSlotId = i;
             // status = oemHookService[i]->registerAsService(serviceNames[i]);
         }
-
         ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
         CHECK_EQ(ret, 0);
     }

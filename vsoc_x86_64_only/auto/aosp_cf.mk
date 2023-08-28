@@ -27,6 +27,10 @@ PRODUCT_ENFORCE_RRO_TARGETS := frameworks-res
 # FIXME: Disable mainline path checks
 PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false
 
+# HSUM is currently incompatible with telephony.
+# TODO(b/283853205): Properly disable telephony using per-partition makefile.
+TARGET_NO_TELEPHONY := true
+
 #
 # All components inherited here go to system_ext image
 #

@@ -2,3 +2,8 @@ gpu_access(platform_app)
 
 allow platform_app broadcastradio_service:service_manager find;
 allow platform_app hal_wlc_hwservice:hwservice_manager find;
+
+# b/263830018
+# Ignore lookup for vendor.google.wireless_charger.IWirelessCharger/default
+# and vendor.google.google_battery.IGoogleBattery/default.
+dontaudit platform_app default_android_service:service_manager find;
