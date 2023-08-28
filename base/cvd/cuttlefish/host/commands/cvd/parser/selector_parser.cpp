@@ -23,21 +23,12 @@
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
-#include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
 
 Result<std::vector<std::string>> ParseSelectorConfigs(Json::Value& root) {
-  std::string instance_name_flag =
-      CF_EXPECT(GenerateGflag(root["instances"], "instance_name", {"name"}));
-
-  if (!HasValue(root, {"common", "group_name"})) {
-    return {{instance_name_flag}};
-  }
-
-  return {{instance_name_flag,
-           GenerateGflag("group_name", {CF_EXPECT(GetValue<std::string>(
-                                           root, {"common", "group_name"}))})}};
+  return {{CF_EXPECT(GenerateGflag(root["instances"], "instance_name", {"name"}))}};
 }
 
 }  // namespace cuttlefish
+

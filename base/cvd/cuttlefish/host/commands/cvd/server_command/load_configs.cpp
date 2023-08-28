@@ -143,7 +143,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       (*launch_cmd.mutable_env()).erase(kAndroidProductOut);
     }
 
-    /* cvd load will always create instances in deamon mode (to be independent
+    /* cvd load will always create instances in daemon mode (to be independent
      of terminal) and will enable reporting automatically (to run automatically
      without question during launch)
      */
@@ -156,8 +156,12 @@ class LoadConfigsCommand : public CvdServerHandler {
     // Add system flag for multi-build scenario
     launch_cmd.add_args(load_directories.system_image_directory_flag);
 
-    launch_cmd.mutable_selector_opts()->add_args(
+    auto selector_opts = launch_cmd.mutable_selector_opts();
+    selector_opts->add_args(
         std::string("--") + selector::SelectorFlags::kDisableDefaultGroup);
+    for (const auto& flag: cvd_flags.selector_flags) {
+      selector_opts->add_args(flag);
+    }
 
     /*Verbose is disabled by default*/
     auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
