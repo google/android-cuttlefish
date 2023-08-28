@@ -88,8 +88,16 @@ type AndroidCIBundle struct {
 
 // Use `X-Cutf-Host-Orchestrator-BuildAPI-Creds` http header to pass the Build API credentials.
 type CreateCVDRequest struct {
-	// REQUIRED.
+	// Environment canonical configuration.
+	// Structure: https://android.googlesource.com/device/google/cuttlefish/+/8bbd3b9cd815f756f332791d45c4f492b663e493/host/commands/cvd/parser/README.md
+	// Example: https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/host/cvd_test_configs/main_phone-main_watch.json;drc=b2e8f4f014abb7f9cb56c0ae199334aacb04542d
+	// NOTE: Using this as a black box for now as its content is unstable. Use the test configs pointed
+	// above as reference to build your config object.
+	EnvConfig interface{} `json:"env_config"`
+
+	// [DEPRECATED]. Use `Config` field.
 	CVD *CVD `json:"cvd"`
+	// [DEPRECATED]. Use `Config` field.
 	// Use to create multiple homogeneous instances.
 	AdditionalInstancesNum uint32 `json:"additional_instances_num,omitempty"`
 }
