@@ -53,7 +53,7 @@ PRODUCT_COPY_FILES += \
 
 ifeq ($(PRODUCT_IS_ATV_CF),true)
     PRODUCT_COPY_FILES += \
-        hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_front.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_front.json
+        hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_external.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_external.json
 else
     PRODUCT_COPY_FILES += \
         hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_back.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_back.json \
