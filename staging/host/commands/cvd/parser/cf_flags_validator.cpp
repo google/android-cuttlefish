@@ -47,6 +47,7 @@ static std::map<std::string, Json::ValueType> kFetchKeyMap = {
 
 static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
     {"@import", Json::ValueType::stringValue},
+    {"name", Json::ValueType::stringValue},
     {"vm", Json::ValueType::objectValue},
     {"boot", Json::ValueType::objectValue},
     {"security", Json::ValueType::objectValue},

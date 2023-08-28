@@ -28,6 +28,7 @@ namespace cuttlefish {
 
 typedef struct _CvdFlags {
   std::vector<std::string> launch_cvd_flags;
+  std::vector<std::string> selector_flags;
   std::vector<std::string> fetch_cvd_flags;
 } CvdFlags;
 
