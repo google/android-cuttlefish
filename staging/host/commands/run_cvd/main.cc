@@ -131,6 +131,7 @@ fruit::Component<> runCvdComponent(
       .install(launchStreamerComponent)
       .install(OpenWrtComponent)
       .install(TombstoneReceiverComponent)
+      .install(WmediumdServerComponent)
 #endif
       .install(AdbConfigComponent)
       .install(AdbConfigFragmentComponent)
