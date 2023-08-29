@@ -18,12 +18,16 @@
 
 #include <unistd.h>
 
+#include <cstdlib>
 #include <string>
+#include <unordered_map>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
@@ -160,6 +164,70 @@ Result<void> CopyDirectoryRecursively(const std::string& src_dir_path,
    */
   CF_EXPECT(CopyDirectoryImpl(src_final_target, dest_final_target));
   return {};
+}
+
+Result<std::string> InstanceGuestSnapshotPath(const Json::Value& meta_json,
+                                              const std::string& instance_id) {
+  CF_EXPECTF(meta_json.isMember(kSnapshotPathField),
+             "The given json is missing : {}", kSnapshotPathField);
+  const std::string snapshot_path = meta_json[kSnapshotPathField].asString();
+
+  const std::vector<std::string> guest_snapshot_path_selectors{
+      kGuestSnapshotField, instance_id};
+  const auto guest_snapshot_dir = CF_EXPECTF(
+      GetValue<std::string>(meta_json, guest_snapshot_path_selectors),
+      "root[\"{}\"][\"{}\"] is missing in \"{}\"", kGuestSnapshotField,
+      instance_id, kMetaInfoJsonFileName);
+  auto snapshot_path_direct_parent = snapshot_path + "/" + guest_snapshot_dir;
+  LOG(DEBUG) << "Returning snapshot path : " << snapshot_path_direct_parent;
+  return snapshot_path_direct_parent;
+}
+
+Result<Json::Value> CreateMetaInfo(const CuttlefishConfig& cuttlefish_config,
+                                   const std::string& snapshot_path) {
+  Json::Value meta_info;
+  meta_info[kSnapshotPathField] = snapshot_path;
+
+  const auto cuttlefish_home = StringFromEnv("HOME", "");
+  CF_EXPECT(!cuttlefish_home.empty(),
+            "\"HOME\" environment variable must be set.");
+  meta_info[kCfHomeField] = cuttlefish_home;
+
+  const auto instances = cuttlefish_config.Instances();
+  // "id" -> relative path of instance_dir from cuttlefish_home
+  //         + kGuestSnapshotField
+  // e.g. "2" -> cuttlefish/instances/cvd-2/guest_snapshot
+  std::unordered_map<std::string, std::string>
+      id_to_relative_guest_snapshot_dir;
+  for (const auto& instance : instances) {
+    const std::string instance_snapshot_dir =
+        instance.instance_dir() + "/" + kGuestSnapshotField;
+    std::string_view sv_relative_path(instance_snapshot_dir);
+
+    CF_EXPECTF(android::base::ConsumePrefix(&sv_relative_path, cuttlefish_home),
+               "Instance Guest Snapshot Directory \"{}\""
+               "is not a subdirectory of \"{}\"",
+               instance_snapshot_dir, cuttlefish_home);
+    if (!sv_relative_path.empty() && sv_relative_path.at(0) == '/') {
+      sv_relative_path.remove_prefix(1);
+    }
+    id_to_relative_guest_snapshot_dir[instance.id()] =
+        std::string(sv_relative_path);
+  }
+
+  Json::Value snapshot_mapping;
+  // 2 -> cuttlefish/instances/cvd-2
+  // relative path to cuttlefish_home
+  for (const auto& [id_str, relative_guest_snapshot_dir] :
+       id_to_relative_guest_snapshot_dir) {
+    snapshot_mapping[id_str] = relative_guest_snapshot_dir;
+  }
+  meta_info[kGuestSnapshotField] = snapshot_mapping;
+  return meta_info;
+}
+
+std::string SnapshotMetaJsonPath(const std::string& snapshot_path) {
+  return snapshot_path + "/" + kMetaInfoJsonFileName;
 }
 
 }  // namespace cuttlefish
