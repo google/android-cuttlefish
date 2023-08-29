@@ -17,35 +17,23 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
+cc_binary_host {
     name: "mkenvimage_slim",
     defaults: ["cuttlefish_host"],
     srcs: [
         "mkenvimage_slim.cc",
     ],
+    static_libs: [
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libgflags",
+        "liblog",
+        "libz",
+    ],
     target: {
-        host: {
-            static_libs: [
-                "libbase",
-                "libcuttlefish_fs",
-                "libcuttlefish_utils",
-                "libgflags",
-                "liblog",
-                "libz",
-            ],
-        },
         darwin: {
             enabled: true,
-        },
-        android: {
-            shared_libs: [
-                "libbase",
-                "libcuttlefish_fs",
-                "libcuttlefish_utils",
-                "libgflags",
-                "liblog",
-                "libz",
-            ],
         },
     },
 }
