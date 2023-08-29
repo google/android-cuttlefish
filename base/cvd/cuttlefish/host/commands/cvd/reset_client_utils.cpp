@@ -206,7 +206,7 @@ Result<void> RunCvdProcessManager::RunStopCvd(const GroupProcInfo& group_info,
     Command first_stop_cvd = CreateStopCvdCommand(
         stopper_path, stop_cvd_envs, {"--clear_instance_dirs=true"});
     LOG(ERROR) << "Running HOME=" << stop_cvd_envs.at("HOME") << " "
-               << stopper_path << " --clear_instance_dirs";
+               << stopper_path << " --clear_instance_dirs=true";
     std::string stdout_str;
     std::string stderr_str;
     ret_code = RunWithManagedStdio(std::move(first_stop_cvd), nullptr,
@@ -218,7 +218,7 @@ Result<void> RunCvdProcessManager::RunStopCvd(const GroupProcInfo& group_info,
   if (!clear_runtime_dirs || ret_code != 0) {
     if (clear_runtime_dirs) {
       LOG(ERROR) << "Failed to run " << stopper_path
-                 << " --clear_runtime_dirs=true";
+                 << " --clear_instance_dirs=true";
       LOG(ERROR) << "Perhaps --clear_instance_dirs is not taken.";
       LOG(ERROR) << "Trying again without it";
     }
