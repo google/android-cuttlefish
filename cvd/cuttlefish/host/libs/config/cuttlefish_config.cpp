@@ -467,22 +467,6 @@ bool CuttlefishConfig::virtio_mac80211_hwsim() const {
   return (*dictionary_)[kVirtioMac80211Hwsim].asBool();
 }
 
-static constexpr char kVhostUserMac80211Hwsim[] = "vhost_user_mac80211_hwsim";
-void CuttlefishConfig::set_vhost_user_mac80211_hwsim(const std::string& path) {
-  (*dictionary_)[kVhostUserMac80211Hwsim] = path;
-}
-std::string CuttlefishConfig::vhost_user_mac80211_hwsim() const {
-  return (*dictionary_)[kVhostUserMac80211Hwsim].asString();
-}
-
-static constexpr char kWmediumdApiServerSocket[] = "wmediumd_api_server_socket";
-void CuttlefishConfig::set_wmediumd_api_server_socket(const std::string& path) {
-  (*dictionary_)[kWmediumdApiServerSocket] = path;
-}
-std::string CuttlefishConfig::wmediumd_api_server_socket() const {
-  return (*dictionary_)[kWmediumdApiServerSocket].asString();
-}
-
 static constexpr char kApRootfsImage[] = "ap_rootfs_image";
 std::string CuttlefishConfig::ap_rootfs_image() const {
   return (*dictionary_)[kApRootfsImage].asString();
@@ -497,14 +481,6 @@ std::string CuttlefishConfig::ap_kernel_image() const {
 }
 void CuttlefishConfig::set_ap_kernel_image(const std::string& ap_kernel_image) {
   (*dictionary_)[kApKernelImage] = ap_kernel_image;
-}
-
-static constexpr char kWmediumdConfig[] = "wmediumd_config";
-void CuttlefishConfig::set_wmediumd_config(const std::string& config) {
-  (*dictionary_)[kWmediumdConfig] = config;
-}
-std::string CuttlefishConfig::wmediumd_config() const {
-  return (*dictionary_)[kWmediumdConfig].asString();
 }
 
 static constexpr char kRootcanalArgs[] = "rootcanal_args";
@@ -670,6 +646,34 @@ std::string CuttlefishConfig::InstancesUdsPath(
   return AbsolutePath(instances_uds_dir() + "/" + file_name);
 }
 
+std::string CuttlefishConfig::environments_dir() const {
+  return AbsolutePath(root_dir() + "/environments");
+}
+
+std::string CuttlefishConfig::EnvironmentsPath(
+    const std::string& file_name) const {
+  return AbsolutePath(environments_dir() + "/" + file_name);
+}
+
+std::string CuttlefishConfig::environments_uds_dir() const {
+  // Try to use /tmp/cf_env_{uid}/ for UDS directory.
+  // If it fails, use HOME directory instead.
+
+  auto defaultPath = AbsolutePath("/tmp/cf_env_" + std::to_string(getuid()));
+
+  if (!DirectoryExists(defaultPath) ||
+      CanAccess(defaultPath, R_OK | W_OK | X_OK)) {
+    return defaultPath;
+  }
+
+  return environments_dir();
+}
+
+std::string CuttlefishConfig::EnvironmentsUdsPath(
+    const std::string& file_name) const {
+  return AbsolutePath(environments_uds_dir() + "/" + file_name);
+}
+
 CuttlefishConfig::MutableInstanceSpecific CuttlefishConfig::ForInstance(int num) {
   return MutableInstanceSpecific(this, std::to_string(num));
 }
@@ -728,6 +732,38 @@ std::vector<std::string> CuttlefishConfig::instance_names() const {
     names.push_back(name.asString());
   }
   return names;
+}
+
+CuttlefishConfig::MutableEnvironmentSpecific CuttlefishConfig::ForEnvironment(
+    const std::string& envName) {
+  return MutableEnvironmentSpecific(this, envName);
+}
+
+CuttlefishConfig::EnvironmentSpecific CuttlefishConfig::ForEnvironment(
+    const std::string& envName) const {
+  return EnvironmentSpecific(this, envName);
+}
+
+CuttlefishConfig::MutableEnvironmentSpecific
+CuttlefishConfig::ForDefaultEnvironment() {
+  return MutableEnvironmentSpecific(this,
+                                    ForDefaultInstance().environment_name());
+}
+
+CuttlefishConfig::EnvironmentSpecific CuttlefishConfig::ForDefaultEnvironment()
+    const {
+  return EnvironmentSpecific(this, ForDefaultInstance().environment_name());
+}
+
+std::vector<std::string> CuttlefishConfig::environment_dirs() const {
+  auto environment = ForDefaultEnvironment();
+
+  std::vector<std::string> result;
+
+  result.push_back(environment.environment_dir());
+  result.push_back(environment.environment_uds_dir());
+
+  return result;
 }
 
 int GetInstance() {
