@@ -30,8 +30,6 @@
 
 DEFINE_string(process_name, "", "The process to credit log messages to");
 DEFINE_int32(log_fd_in, -1, "The file descriptor to read logs from.");
-DEFINE_string(env_name, "",
-              "Environment name when launching under environment.");
 
 // Crosvm formats logs starting with a local ISO 8601 timestamp and then a
 // log level (based on external/crosvm/base/src/syslog.rs).
@@ -64,21 +62,14 @@ int main(int argc, char** argv) {
 
   CHECK(config) << "Could not open cuttlefish config";
 
-  if (FLAGS_env_name == "") {
-    auto instance = config->ForDefaultInstance();
+  auto instance = config->ForDefaultInstance();
 
-    if (instance.run_as_daemon()) {
-      android::base::SetLogger(
-          cuttlefish::LogToFiles({instance.launcher_log_path()}));
-    } else {
-      android::base::SetLogger(
-          cuttlefish::LogToStderrAndFiles({instance.launcher_log_path()}));
-    }
-  } else {
-    auto environment = config->ForEnvironment(FLAGS_env_name);
-
+  if (instance.run_as_daemon()) {
     android::base::SetLogger(
-        cuttlefish::LogToStderrAndFiles({environment.launcher_log_path()}));
+        cuttlefish::LogToFiles({instance.launcher_log_path()}));
+  } else {
+    android::base::SetLogger(
+        cuttlefish::LogToStderrAndFiles({instance.launcher_log_path()}));
   }
 
   auto log_fd = cuttlefish::SharedFD::Dup(FLAGS_log_fd_in);
