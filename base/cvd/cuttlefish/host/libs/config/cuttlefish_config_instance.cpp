@@ -1308,6 +1308,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_uuid(const std::string& uuid
   (*Dictionary())[kUuid] = uuid;
 }
 
+static constexpr char kEnvironmentName[] = "environment_name";
+std::string CuttlefishConfig::InstanceSpecific::environment_name() const {
+  return (*Dictionary())[kEnvironmentName].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_environment_name(
+    const std::string& environment_name) {
+  (*Dictionary())[kEnvironmentName] = environment_name;
+}
+
 static constexpr char kHostPort[] = "adb_host_port";
 int CuttlefishConfig::InstanceSpecific::adb_host_port() const {
   return (*Dictionary())[kHostPort].asInt();
@@ -1433,14 +1442,6 @@ void CuttlefishConfig::MutableInstanceSpecific::
 }
 bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server_proxy() const {
   return (*Dictionary())[kStartSigServerProxy].asBool();
-}
-
-static constexpr char kStartWmediumd[] = "start_wmediumd";
-void CuttlefishConfig::MutableInstanceSpecific::set_start_wmediumd(bool start) {
-  (*Dictionary())[kStartWmediumd] = start;
-}
-bool CuttlefishConfig::InstanceSpecific::start_wmediumd() const {
-  return (*Dictionary())[kStartWmediumd].asBool();
 }
 
 static constexpr char kStartRootcanal[] = "start_rootcanal";
