@@ -109,29 +109,14 @@ bool DirectoryExists(const std::string& path, bool follow_symlinks) {
 Result<void> EnsureDirectoryExists(const std::string& directory_path,
                                    const mode_t mode,
                                    const std::string& group_name) {
-  if (DirectoryExists(directory_path)) {
+  if (DirectoryExists(directory_path, /* follow_symlinks */ true)) {
     return {};
   }
-  if (FileExists(directory_path)) {
-    std::string target;
-    CF_EXPECTF(android::base::Readlink(directory_path, &target),
-               "As file \"{}\" exists, it must be a link to a directory.",
-               directory_path);
-    std::string real_path;
-    CF_EXPECTF(android::base::Realpath(directory_path, &real_path),
-               "While the link \"{}\" is broken and not a directory.",
-               directory_path);
-    CF_EXPECTF(DirectoryExists(real_path),
-               "The eventual target of \"{}\" to \"{}\" must"
-               "be a directory.",
-               directory_path, real_path);
-    return {};
-  }
-  const auto parent_dir = cpp_dirname(directory_path);
+  const auto parent_dir = android::base::Dirname(directory_path);
   if (parent_dir.size() > 1) {
     EnsureDirectoryExists(parent_dir, mode, group_name);
   }
-  LOG(DEBUG) << "Setting up " << directory_path;
+  LOG(VERBOSE) << "Setting up " << directory_path;
   if (mkdir(directory_path.c_str(), mode) < 0 && errno != EEXIST) {
     return CF_ERRNO("Failed to create directory: \"" << directory_path << "\""
                                                      << strerror(errno));
@@ -452,10 +437,7 @@ std::string cpp_basename(const std::string& str) {
 }
 
 std::string cpp_dirname(const std::string& str) {
-  char* copy = strdup(str.c_str()); // dirname may modify its argument
-  std::string ret(dirname(copy));
-  free(copy);
-  return ret;
+  return android::base::Dirname(str);
 }
 
 bool FileIsSocket(const std::string& path) {
