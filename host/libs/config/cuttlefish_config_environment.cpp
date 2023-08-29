@@ -70,10 +70,10 @@ std::string CuttlefishConfig::EnvironmentSpecific::PerEnvironmentGrpcSocketPath(
     const std::string& file_name) const {
   if (file_name.size() == 0) {
     // Don't append a / if file_name is empty.
-    return PerEnvironmentUdsPath(kGrpcSocketDirName);
+    return PerEnvironmentPath(kGrpcSocketDirName);
   }
   auto relative_path = (std::string(kGrpcSocketDirName) + "/") + file_name;
-  return PerEnvironmentUdsPath(relative_path.c_str());
+  return PerEnvironmentPath(relative_path.c_str());
 }
 
 std::string CuttlefishConfig::EnvironmentSpecific::control_socket_path() const {
