@@ -30,8 +30,6 @@
 
 #define CF_DEFAULTS_SYSTEM_IMAGE_DIR CF_DEFAULTS_DYNAMIC_STRING
 
-#define CF_DEFAULTS_ENV_NAME "default"
-
 // Instance specific parameters
 //  VM default parameters
 #define CF_DEFAULTS_DISPLAY_DPI 320
