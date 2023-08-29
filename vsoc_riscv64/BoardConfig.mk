@@ -27,7 +27,11 @@ TARGET_CPU_ABI := riscv64
 AUDIOSERVER_MULTILIB := first
 
 HOST_CROSS_OS := linux_musl
+ifdef RISCV64_BUILD_X86_64_HOST_TOOLS
+HOST_CROSS_ARCH := x86_64
+else
 HOST_CROSS_ARCH := arm64
+endif
 HOST_CROSS_2ND_ARCH :=
 
 # Include 64-bit mediaserver to support 64-bit only devices
