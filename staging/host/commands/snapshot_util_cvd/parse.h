@@ -41,6 +41,7 @@ struct Parsed {
   std::vector<int> instance_nums;
   int wait_for_launcher;
   std::string snapshot_path;
+  bool cleanup_snapshot_path;
   std::optional<android::base::LogSeverity> verbosity_level;
 };
 Result<Parsed> Parse(int argc, char** argv);
