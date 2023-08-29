@@ -27,6 +27,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/snapshot_util_cvd/parse.h"
+#include "host/commands/snapshot_util_cvd/snapshot_taker.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "run_cvd.pb.h"
@@ -68,7 +69,7 @@ struct RequestInfo {
   ExtendedActionType extended_action_type;
 };
 Result<RequestInfo> SerializeRequest(const SnapshotCmd subcmd,
-                                     const std::string& snapshot_path) {
+                                     const std::string& meta_json_path) {
   switch (subcmd) {
     case SnapshotCmd::kSuspend: {
       return RequestInfo{
@@ -85,11 +86,9 @@ Result<RequestInfo> SerializeRequest(const SnapshotCmd subcmd,
       break;
     }
     case SnapshotCmd::kSnapshotTake: {
-      CF_EXPECT(!snapshot_path.empty(),
-                "Snapshot operation requires snapshot_path");
       return RequestInfo{
           .serialized_data =
-              CF_EXPECT(SerializeSnapshotTakeRequest(snapshot_path)),
+              CF_EXPECT(SerializeSnapshotTakeRequest(meta_json_path)),
           .extended_action_type = ExtendedActionType::kSnapshotTake,
       };
       break;
@@ -121,12 +120,16 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
     parsed.snapshot_path = CF_EXPECT(ToAbsolutePath(parsed.snapshot_path));
   }
   // make sure the snapshot directory exists
+  std::string meta_json_path;
   if (parsed.cmd == SnapshotCmd::kSnapshotTake) {
     CF_EXPECT(!parsed.snapshot_path.empty(),
               "Snapshot operation requires snapshot path.");
     CF_EXPECTF(!FileExists(parsed.snapshot_path, /* follow symlink */ false),
                "Delete the destination directiory \"{}\" first",
                parsed.snapshot_path);
+    meta_json_path =
+        CF_EXPECT(HandleHostGroupSnapshot(parsed.snapshot_path),
+                  "Failed to back up the group-level host runtime files.");
   }
 
   const CuttlefishConfig* config =
@@ -139,7 +142,7 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
     LOG(INFO) << "Requesting " << parsed.cmd << " for instance #"
               << instance_num;
     auto [serialized_data, extended_type] =
-        CF_EXPECT(SerializeRequest(parsed.cmd, parsed.snapshot_path));
+        CF_EXPECT(SerializeRequest(parsed.cmd, meta_json_path));
     CF_EXPECT(
         WriteLauncherActionWithData(monitor_socket, LauncherAction::kExtended,
                                     extended_type, std::move(serialized_data)));
