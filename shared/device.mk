@@ -40,6 +40,8 @@ PRODUCT_SOONG_NAMESPACES += device/generic/goldfish # for audio and wifi
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 DISABLE_RILD_OEM_HOOK := true
 
+PRODUCT_16K_DEVELOPER_OPTION := true
+
 # TODO(b/205788876) remove this condition when openwrt has an image for arm.
 ifndef PRODUCT_ENFORCE_MAC80211_HWSIM
 PRODUCT_ENFORCE_MAC80211_HWSIM := true
