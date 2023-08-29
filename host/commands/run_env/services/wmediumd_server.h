@@ -24,8 +24,8 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/launch/grpc_socket_creator.h"
-#include "host/commands/run_cvd/launch/log_tee_creator.h"
+#include "host/commands/run_env/services/env_grpc_socket_creator.h"
+#include "host/commands/run_env/services/env_log_tee_creator.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
@@ -34,10 +34,9 @@ namespace cuttlefish {
 
 class WmediumdServer : public vm_manager::VmmDependencyCommand {
  public:
-  INJECT(WmediumdServer(const CuttlefishConfig& config,
-                        const CuttlefishConfig::InstanceSpecific& instance,
-                        LogTeeCreator& log_tee,
-                        GrpcSocketCreator& grpc_socket));
+  INJECT(WmediumdServer(
+      const CuttlefishConfig::EnvironmentSpecific& environment,
+      EnvLogTeeCreator& log_tee, EnvGrpcSocketCreator& grpc_socket));
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override;
@@ -52,10 +51,9 @@ class WmediumdServer : public vm_manager::VmmDependencyCommand {
   std::unordered_set<SetupFeature*> Dependencies() const override;
   Result<void> ResultSetup() override;
 
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  LogTeeCreator& log_tee_;
-  GrpcSocketCreator& grpc_socket_;
+  const CuttlefishConfig::EnvironmentSpecific& environment_;
+  EnvLogTeeCreator& log_tee_;
+  EnvGrpcSocketCreator& grpc_socket_;
   std::string config_path_;
 };
 

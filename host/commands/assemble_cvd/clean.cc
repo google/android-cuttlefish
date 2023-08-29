@@ -105,17 +105,14 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
 } // namespace
 
 Result<void> CleanPriorFiles(const std::set<std::string>& preserving,
-                             const std::string& assembly_dir,
-                             const std::vector<std::string>& instance_dirs) {
+                             const std::vector<std::string>& clean_dirs) {
   std::vector<std::string> paths = {
-    // Everything in the assembly directory
-    assembly_dir,
-    // The environment file
-    GetCuttlefishEnvPath(),
-    // The global link to the config file
-    GetGlobalConfigFileLink(),
+      // The environment file
+      GetCuttlefishEnvPath(),
+      // The global link to the config file
+      GetGlobalConfigFileLink(),
   };
-  paths.insert(paths.end(), instance_dirs.begin(), instance_dirs.end());
+  paths.insert(paths.end(), clean_dirs.begin(), clean_dirs.end());
   using android::base::Join;
   CF_EXPECT(CleanPriorFiles(paths, preserving),
             "CleanPriorFiles("
