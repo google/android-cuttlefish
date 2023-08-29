@@ -169,6 +169,63 @@ Result<void> CreateLegacySymlinks(
   return {};
 }
 
+Result<std::set<std::string>> PreservingOnResume(
+    const bool creating_os_disk, const int modem_simulator_count) {
+  const auto snapshot_path = FLAGS_snapshot_path;
+  const bool resume_requested = FLAGS_resume || !snapshot_path.empty();
+  if (!resume_requested) {
+    return std::set<std::string>{};
+  }
+  CF_EXPECT(snapshot_path.empty() || !creating_os_disk,
+            "Restoring from snapshot requires not creating OS disks");
+  if (creating_os_disk) {
+    // not snapshot restore, must be --resume
+    LOG(INFO) << "Requested resuming a previous session (the default behavior) "
+              << "but the base images have changed under the overlay, making "
+              << "the overlay incompatible. Wiping the overlay files.";
+    return std::set<std::string>{};
+  }
+
+  // either --resume && !creating_os_disk, or restoring from a snapshot
+  std::set<std::string> preserving;
+  preserving.insert("overlay.img");
+  preserving.insert("ap_overlay.img");
+  preserving.insert("os_composite_disk_config.txt");
+  preserving.insert("os_composite_gpt_header.img");
+  preserving.insert("os_composite_gpt_footer.img");
+  preserving.insert("os_composite.img");
+  preserving.insert("sdcard.img");
+  preserving.insert("sdcard_overlay.img");
+  preserving.insert("boot_repacked.img");
+  preserving.insert("vendor_dlkm_repacked.img");
+  preserving.insert("vendor_boot_repacked.img");
+  preserving.insert("access-kregistry");
+  preserving.insert("hwcomposer-pmem");
+  preserving.insert("NVChip");
+  preserving.insert("gatekeeper_secure");
+  preserving.insert("gatekeeper_insecure");
+  preserving.insert("keymint_secure_deletion_data");
+  preserving.insert("modem_nvram.json");
+  preserving.insert("recording");
+  preserving.insert("persistent_composite_disk_config.txt");
+  preserving.insert("persistent_composite_gpt_header.img");
+  preserving.insert("persistent_composite_gpt_footer.img");
+  preserving.insert("persistent_composite.img");
+  preserving.insert("persistent_composite_overlay.img");
+  preserving.insert("uboot_env.img");
+  preserving.insert("factory_reset_protected.img");
+  preserving.insert("misc.img");
+  preserving.insert("metadata.img");
+  preserving.insert("oemlock_secure");
+  preserving.insert("oemlock_insecure");
+  for (int i = 0; i < modem_simulator_count; i++) {
+    std::stringstream ss;
+    ss << "iccprofile_for_sim" << i << ".xml";
+    preserving.insert(ss.str());
+  }
+  return preserving;
+}
+
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     FetcherConfig fetcher_config, const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector) {
@@ -205,7 +262,6 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // which is used for preserving/deleting iccprofile_for_simX.xml files
     int modem_simulator_count = 0;
 
-    std::set<std::string> preserving;
     bool creating_os_disk = false;
     // if any device needs to rebuild its composite disk,
     // then don't preserve any files and delete everything.
@@ -226,49 +282,11 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // the overlay, then we want to keep this until userdata.img was externally
     // replaced.
     creating_os_disk &= FLAGS_use_overlay;
-    if (FLAGS_resume && creating_os_disk) {
-      LOG(INFO) << "Requested resuming a previous session (the default behavior) "
-                << "but the base images have changed under the overlay, making the "
-                << "overlay incompatible. Wiping the overlay files.";
-    } else if (FLAGS_resume && !creating_os_disk) {
-      preserving.insert("overlay.img");
-      preserving.insert("ap_overlay.img");
-      preserving.insert("os_composite_disk_config.txt");
-      preserving.insert("os_composite_gpt_header.img");
-      preserving.insert("os_composite_gpt_footer.img");
-      preserving.insert("os_composite.img");
-      preserving.insert("sdcard.img");
-      preserving.insert("sdcard_overlay.img");
-      preserving.insert("boot_repacked.img");
-      preserving.insert("vendor_dlkm_repacked.img");
-      preserving.insert("vendor_boot_repacked.img");
-      preserving.insert("access-kregistry");
-      preserving.insert("hwcomposer-pmem");
-      preserving.insert("NVChip");
-      preserving.insert("gatekeeper_secure");
-      preserving.insert("gatekeeper_insecure");
-      preserving.insert("keymint_secure_deletion_data");
-      preserving.insert("modem_nvram.json");
-      preserving.insert("recording");
-      preserving.insert("persistent_composite_disk_config.txt");
-      preserving.insert("persistent_composite_gpt_header.img");
-      preserving.insert("persistent_composite_gpt_footer.img");
-      preserving.insert("persistent_composite.img");
-      preserving.insert("persistent_composite_overlay.img");
-      preserving.insert("uboot_env.img");
-      preserving.insert("factory_reset_protected.img");
-      preserving.insert("misc.img");
-      preserving.insert("metadata.img");
-      preserving.insert("oemlock_secure");
-      preserving.insert("oemlock_insecure");
-      std::stringstream ss;
-      for (int i = 0; i < modem_simulator_count; i++) {
-        ss.clear();
-        ss << "iccprofile_for_sim" << i << ".xml";
-        preserving.insert(ss.str());
-        ss.str("");
-      }
-    }
+
+    std::set<std::string> preserving =
+        CF_EXPECT(PreservingOnResume(creating_os_disk, modem_simulator_count),
+                  "Error in Preserving set calculation.");
+
     auto instance_dirs = config.instance_dirs();
     auto environment_dirs = config.environment_dirs();
     std::vector<std::string> clean_dirs;
@@ -388,6 +406,22 @@ static void ExtractKernelParamsFromFetcherConfig(
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
+Result<void> VerifyConditionsOnSnapshotRestore(
+    const std::string& snapshot_path) {
+  if (snapshot_path.empty()) {
+    return {};
+  }
+  const std::string instance_dir(FLAGS_instance_dir);
+  const std::string assembly_dir(FLAGS_assembly_dir);
+  CF_EXPECT(snapshot_path.empty() || FLAGS_resume,
+            "--resume must be true when restoring from snapshot.");
+  CF_EXPECT_EQ(instance_dir, CF_DEFAULTS_INSTANCE_DIR,
+               "--snapshot_path does not allow customizing --instance_dir");
+  CF_EXPECT_EQ(assembly_dir, CF_DEFAULTS_ASSEMBLY_DIR,
+               "--snapshot_path does not allow customizing --assembly_dir");
+  return {};
+}
+
 fruit::Component<> FlagsComponent() {
   return fruit::createComponent()
       .install(AdbConfigComponent)
@@ -473,10 +507,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
     return 1;  // For parity with gflags
   }
 
-  // set --resume=true if --snapshot_path is not empty
-  const std::string snapshot_path(FLAGS_snapshot_path);
-  CF_EXPECT(snapshot_path.empty() || FLAGS_resume,
-            "--resume must be true when restoring from snapshot.");
+  CF_EXPECT(VerifyConditionsOnSnapshotRestore(FLAGS_snapshot_path),
+            "The conditions for --snapshot_path=<dir> do not meet.");
 
   // TODO(schuffelen): Put in "unknown flag" guards after gflags is removed.
   // gflags either consumes all arguments that start with - or leaves all of
