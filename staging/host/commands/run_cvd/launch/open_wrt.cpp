@@ -14,7 +14,6 @@
 // limitations under the License.
 
 #include "host/commands/run_cvd/launch/launch.h"
-#include "host/commands/run_cvd/launch/wmediumd_server.h"
 
 #include <string>
 #include <unordered_set>
@@ -38,25 +37,24 @@ namespace {
 
 using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
 
+// TODO(b/288987294) Remove dependency to InstanceSpecific config when moving
+// to run_env is completed.
 class OpenWrt : public CommandSource {
  public:
   INJECT(OpenWrt(const CuttlefishConfig& config,
+                 const CuttlefishConfig::EnvironmentSpecific& environment,
                  const CuttlefishConfig::InstanceSpecific& instance,
-                 LogTeeCreator& log_tee, WmediumdServer& wmediumd_server))
+                 LogTeeCreator& log_tee))
       : config_(config),
+        environment_(environment),
         instance_(instance),
-        log_tee_(log_tee),
-        wmediumd_server_(wmediumd_server) {}
+        log_tee_(log_tee) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
     constexpr auto crosvm_for_ap_socket = "ap_control.sock";
 
     CrosvmBuilder ap_cmd;
-
-    ap_cmd.Cmd().AddPrerequisite([this]() -> Result<void> {
-      return wmediumd_server_.WaitForAvailability();
-    });
 
     ap_cmd.ApplyProcessRestarter(instance_.crosvm_binary(),
                                  kOpenwrtVmResetExitCode);
@@ -67,12 +65,12 @@ class OpenWrt : public CommandSource {
 
     ap_cmd.Cmd().AddParameter("--core-scheduling=false");
 
-    if (!config_.vhost_user_mac80211_hwsim().empty()) {
+    if (!environment_.vhost_user_mac80211_hwsim().empty()) {
       ap_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
-                                config_.vhost_user_mac80211_hwsim());
+                                environment_.vhost_user_mac80211_hwsim());
     }
     SharedFD wifi_tap;
-    if (config_.enable_wifi()) {
+    if (environment_.enable_wifi()) {
       wifi_tap = ap_cmd.AddTap(instance_.wifi_tap_name());
     }
 
@@ -148,18 +146,18 @@ class OpenWrt : public CommandSource {
   Result<void> ResultSetup() override { return {}; }
 
   const CuttlefishConfig& config_;
+  const CuttlefishConfig::EnvironmentSpecific& environment_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   LogTeeCreator& log_tee_;
-  WmediumdServer& wmediumd_server_;
 
   static constexpr int kOpenwrtVmResetExitCode = 32;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific,
-                                 LogTeeCreator, WmediumdServer>>
+fruit::Component<fruit::Required<
+    const CuttlefishConfig, const CuttlefishConfig::EnvironmentSpecific,
+    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 OpenWrtComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, OpenWrt>()
