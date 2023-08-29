@@ -396,6 +396,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     const CuttlefishConfig& config,
     std::vector<VmmDependencyCommand*>& dependencyCommands) {
   auto instance = config.ForDefaultInstance();
+  auto environment = config.ForDefaultEnvironment();
 
   CrosvmBuilder crosvm_cmd;
   crosvm_cmd.Cmd().AddPrerequisite([&dependencyCommands]() -> Result<void> {
@@ -427,9 +428,9 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   if (config.virtio_mac80211_hwsim() &&
-      !config.vhost_user_mac80211_hwsim().empty()) {
+      !environment.vhost_user_mac80211_hwsim().empty()) {
     crosvm_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
-                                  config.vhost_user_mac80211_hwsim());
+                                  environment.vhost_user_mac80211_hwsim());
   }
 
   if (instance.protected_vm()) {
@@ -518,7 +519,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac());
     crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac());
 
-    if (!config.virtio_mac80211_hwsim() && config.enable_wifi()) {
+    if (!config.virtio_mac80211_hwsim() && environment.enable_wifi()) {
       wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name());
     }
   }

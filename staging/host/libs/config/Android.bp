@@ -24,6 +24,7 @@ cc_library {
         "config_flag.cpp",
         "custom_actions.cpp",
         "cuttlefish_config.cpp",
+        "cuttlefish_config_environment.cpp",
         "cuttlefish_config_instance.cpp",
         "data_image.cpp",
         "esp.cpp",
