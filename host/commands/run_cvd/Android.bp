@@ -95,6 +95,7 @@ cc_binary_host {
                 "launch/tombstone_receiver.cpp",
                 "launch/modem.cpp",
                 "launch/open_wrt.cpp",
+                "launch/wmediumd_server.cpp",
             ],
             shared_libs: [
                 "libnl",
