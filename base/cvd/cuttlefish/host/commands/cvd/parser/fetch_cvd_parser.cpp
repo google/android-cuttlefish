@@ -76,7 +76,7 @@ bool ShouldFetch(const Json::Value& instance) {
         instance["boot"]["bootloader"]["build"], instance["disk"]["otatools"],
         instance["disk"]["host_package"]}) {
     // expects non-prefixed build strings already converted to empty strings
-    if (!value.empty()) {
+    if (!value.asString().empty()) {
       return true;
     }
   }
