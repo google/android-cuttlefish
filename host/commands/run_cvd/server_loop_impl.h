@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -24,6 +25,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/server_loop.h"
@@ -51,6 +53,12 @@ class ServerLoopImpl : public ServerLoop,
 
   // SetupFeature
   std::string Name() const override { return "ServerLoop"; }
+
+  enum class DeviceStatus : int {
+    kUnknown = 0,
+    kActive = 1,
+    kSuspended = 2,
+  };
 
  private:
   bool Enabled() const override { return true; }
@@ -81,6 +89,9 @@ class ServerLoopImpl : public ServerLoop,
 
   static std::unordered_map<std::string, std::string>
   InitializeVmToControlSockPath(const CuttlefishConfig::InstanceSpecific&);
+  Result<std::string> VmControlSocket() const;
+  Result<void> TakeGuestSnapshot(const std::string&, const std::string&);
+  Result<void> TakeCrosvmGuestSnapshot(const Json::Value&);
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
@@ -88,6 +99,7 @@ class ServerLoopImpl : public ServerLoop,
   SharedFD server_;
   // mapping from the name of vm_manager to control_sock path
   std::unordered_map<std::string, std::string> vm_name_to_control_sock_;
+  std::atomic<DeviceStatus> device_status_;
 };
 
 }  // namespace run_cvd_impl
