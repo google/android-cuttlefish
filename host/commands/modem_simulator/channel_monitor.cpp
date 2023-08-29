@@ -40,13 +40,22 @@ bool ClientId::operator==(const ClientId& other) const {
   return id_ == other.id_;
 }
 
-Client::Client(SharedFD fd) : client_fd(fd) {}
+Client::Client(SharedFD fd) : client_read_fd_(fd), client_write_fd_(fd) {}
+
+Client::Client(SharedFD read, SharedFD write)
+    : client_read_fd_(std::move(read)), client_write_fd_(std::move(write)) {}
 
 Client::Client(SharedFD fd, ClientType client_type)
-    : type(client_type), client_fd(fd) {}
+    : type(client_type), client_read_fd_(fd), client_write_fd_(fd) {}
+
+Client::Client(SharedFD read, SharedFD write, ClientType client_type)
+    : type(client_type),
+      client_read_fd_(std::move(read)),
+      client_write_fd_(std::move(write)) {}
 
 bool Client::operator==(const Client& other) const {
-  return client_fd == other.client_fd;
+  return client_read_fd_ == other.client_read_fd_ &&
+         client_write_fd_ == other.client_write_fd_;
 }
 
 void Client::SendCommandResponse(std::string response) const {
@@ -61,7 +70,7 @@ void Client::SendCommandResponse(std::string response) const {
   LOG(VERBOSE) << " AT< " << response;
 
   std::lock_guard<std::mutex> lock(write_mutex);
-  WriteAll(client_fd, response);
+  WriteAll(client_write_fd_, response);
 }
 
 void Client::SendCommandResponse(
@@ -92,7 +101,8 @@ ClientId ChannelMonitor::SetRemoteClient(SharedFD client, bool is_accepted) {
     ReadCommand(*remote_client);
   }
 
-  if (remote_client->client_fd->IsOpen()) {
+  if (remote_client->client_read_fd_->IsOpen() &&
+      remote_client->client_write_fd_->IsOpen()) {
     remote_client->first_read_command_ = false;
     remote_clients_.push_back(std::move(remote_client));
     LOG(DEBUG) << "added one remote client";
@@ -124,7 +134,7 @@ void ChannelMonitor::AcceptIncomingConnection() {
 
 void ChannelMonitor::ReadCommand(Client& client) {
   std::vector<char> buffer(kMaxCommandLength);
-  auto bytes_read = client.client_fd->Read(buffer.data(), buffer.size());
+  auto bytes_read = client.client_read_fd_->Read(buffer.data(), buffer.size());
   if (bytes_read <= 0) {
     if (errno == EAGAIN && client.type == Client::REMOTE &&
         client.first_read_command_) {
@@ -133,8 +143,9 @@ void ChannelMonitor::ReadCommand(Client& client) {
       return;
     }
     LOG(DEBUG) << "Error reading from client fd: "
-               << client.client_fd->StrError();
-    client.client_fd->Close();  // Ignore errors here
+               << client.client_read_fd_->StrError();
+    client.client_read_fd_->Close();  // Ignore errors here
+    client.client_write_fd_->Close();
     // Erase client from the vector clients
     auto& clients = client.type == Client::REMOTE ? remote_clients_ : clients_;
     auto iter = std::find_if(
@@ -204,7 +215,8 @@ void ChannelMonitor::CloseRemoteConnection(ClientId client) {
   auto iter = remote_clients_.begin();
   for (; iter != remote_clients_.end(); ++iter) {
     if (iter->get()->Id() == client) {
-      iter->get()->client_fd->Close();
+      iter->get()->client_read_fd_->Close();
+      iter->get()->client_write_fd_->Close();
       iter->get()->is_valid = false;
 
       // Trigger monitor loop
@@ -250,10 +262,10 @@ void ChannelMonitor::MonitorLoop() {
     read_set.Set(server_);
     read_set.Set(read_pipe_);
     for (auto& client: clients_) {
-      if (client->is_valid) read_set.Set(client->client_fd);
+      if (client->is_valid) read_set.Set(client->client_read_fd_);
     }
     for (auto& client: remote_clients_) {
-      if (client->is_valid) read_set.Set(client->client_fd);
+      if (client->is_valid) read_set.Set(client->client_read_fd_);
     }
     int num_fds = cuttlefish::Select(&read_set, nullptr, nullptr, nullptr);
     if (num_fds < 0) {
@@ -276,12 +288,12 @@ void ChannelMonitor::MonitorLoop() {
         removeInvalidClients(remote_clients_);
       }
       for (auto& client : clients_) {
-        if (read_set.IsSet(client->client_fd)) {
+        if (read_set.IsSet(client->client_read_fd_)) {
           ReadCommand(*client);
         }
       }
       for (auto& client : remote_clients_) {
-        if (read_set.IsSet(client->client_fd)) {
+        if (read_set.IsSet(client->client_read_fd_)) {
           ReadCommand(*client);
         }
       }
