@@ -611,3 +611,5 @@ PRODUCT_PACKAGES += \
     com.android.hardware.threadnetwork \
     ot-cli-ftd
 endif # RELEASE_AIDL_USE_UNFROZEN
+
+PRODUCT_CHECK_VENDOR_SEAPP_VIOLATIONS := true
