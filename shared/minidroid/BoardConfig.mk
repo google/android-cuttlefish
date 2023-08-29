@@ -42,6 +42,10 @@ BOARD_VENDOR_RAMDISK_KERNEL_MODULES := \
 
 # GKI >5.15 will have and require virtio_pci_legacy_dev.ko
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(KERNEL_MODULES_PATH)/virtio_pci_legacy_dev.ko)
+# GKI >6.4 will have an required vmw_vsock_virtio_transport_common.ko and vsock.ko
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES += \
+	$(wildcard $(KERNEL_MODULES_PATH)/vmw_vsock_virtio_transport_common.ko) \
+	$(wildcard $(KERNEL_MODULES_PATH)/vsock.ko)
 
 TARGET_NO_RECOVERY := true
 
