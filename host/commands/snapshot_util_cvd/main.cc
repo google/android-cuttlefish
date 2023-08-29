@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
   std::vector<std::string> all_args = cuttlefish::ArgsToVec(argc, argv);
   auto result = cuttlefish::SnapshotCvdMain(std::move(all_args));
   if (!result.ok()) {
-    LOG(ERROR) << result.error().Trace();
+    LOG(ERROR) << result.error().FormatForEnv();
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
