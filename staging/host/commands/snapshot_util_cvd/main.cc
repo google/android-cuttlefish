@@ -124,8 +124,8 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
   if (parsed.cmd == SnapshotCmd::kSnapshotTake) {
     CF_EXPECT(!parsed.snapshot_path.empty(),
               "Snapshot operation requires snapshot path.");
-    CF_EXPECTF(EnsureDirectoryExists(parsed.snapshot_path),
-               "Failed to ensure that snapshot directory {} exists",
+    CF_EXPECTF(!FileExists(parsed.snapshot_path, /* follow symlink */ false),
+               "Delete the destination directiory \"{}\" first",
                parsed.snapshot_path);
   }
 
