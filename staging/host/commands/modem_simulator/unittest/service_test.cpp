@@ -107,11 +107,12 @@ class ModemServiceTest : public ::testing::Test {
     do {
       std::vector<char> buffer(4096);  // kMaxCommandLength
       auto bytes_read =
-          ril_side_->client_fd->Read(buffer.data(), buffer.size());
+          ril_side_->client_read_fd_->Read(buffer.data(), buffer.size());
       if (bytes_read <= 0) {
         // Close here to ensure the other side gets reset if it's still
         // connected
-        ril_side_->client_fd->Close();
+        ril_side_->client_read_fd_->Close();
+        ril_side_->client_write_fd_->Close();
         LOG(WARNING) << "Detected close from the other side";
         break;
       }
