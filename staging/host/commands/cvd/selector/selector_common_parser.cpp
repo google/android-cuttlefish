@@ -92,7 +92,7 @@ SelectorCommonParser::HandleNameOpts(const NameFlagsParam& name_flags) const {
 
 Result<std::vector<std::string>> SelectorCommonParser::HandleInstanceNames(
     const std::optional<std::string>& per_instance_names) const {
-  CF_EXPECT(per_instance_names && !per_instance_names.value().empty());
+  CF_EXPECT(per_instance_names.has_value());
 
   auto instance_names = android::base::Split(per_instance_names.value(), ",");
   std::unordered_set<std::string> duplication_check;
