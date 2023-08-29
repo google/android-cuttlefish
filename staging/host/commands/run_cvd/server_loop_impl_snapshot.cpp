@@ -17,14 +17,18 @@
 #include "host/commands/run_cvd/server_loop_impl.h"
 
 #include <sstream>
+#include <string>
 
 #include <android-base/file.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/runner_defs.h"
+#include "host/libs/command_util/snapshot_utils.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -136,6 +140,52 @@ Result<void> ServerLoopImpl::HandleResume(const std::string& serialized_data,
   return {};
 }
 
+Result<void> ServerLoopImpl::TakeCrosvmGuestSnapshot(
+    const Json::Value& meta_json) {
+  const auto snapshots_parent_dir =
+      CF_EXPECT(InstanceGuestSnapshotPath(meta_json, instance_.id()));
+  const auto crosvm_bin = config_.crosvm_binary();
+  const auto control_socket_path =
+      CF_EXPECT(VmControlSocket(), "Failed to find crosvm control.sock path.");
+  const std::string snapshot_guest_param =
+      snapshots_parent_dir + "/" + kGuestSnapshotBase;
+  std::vector<std::string> crosvm_command_args{crosvm_bin, "snapshot", "take",
+                                               snapshot_guest_param,
+                                               control_socket_path};
+  std::stringstream ss;
+  LOG(DEBUG) << "Running the following command to take snapshot..." << std::endl
+             << "  ";
+  for (const auto& arg : crosvm_command_args) {
+    LOG(DEBUG) << arg << " ";
+  }
+  CF_EXPECT(Execute(crosvm_command_args) >= 0,
+            "Executing crosvm command returned -1");
+  LOG(DEBUG) << "Guest snapshot for instance #" << instance_.id()
+             << " should have been stored in " << snapshots_parent_dir;
+  return {};
+}
+
+/*
+ * Parse json file at json_path, and take guest snapshot
+ */
+Result<void> ServerLoopImpl::TakeGuestSnapshot(const std::string& vm_manager,
+                                               const std::string& json_path) {
+  // common code across vm_manager
+  CF_EXPECTF(FileExists(json_path), "{} must exist but does not.", json_path);
+  SharedFD json_fd = SharedFD::Open(json_path, O_RDONLY);
+  CF_EXPECTF(json_fd->IsOpen(), "Failed to open {}", json_path);
+  std::string json_contents;
+  CF_EXPECT_GE(ReadAll(json_fd, &json_contents), 0,
+               std::string("Failed to read from ") + json_path);
+  Json::Value meta_json = CF_EXPECTF(
+      ParseJson(json_contents), "Failed to parse json: \n{}", json_contents);
+  CF_EXPECTF(vm_manager == "crosvm",
+             "{}, which is not crosvm, is not yet supported.", vm_manager);
+  CF_EXPECT(TakeCrosvmGuestSnapshot(meta_json),
+            "TakeCrosvmGuestSnapshot() failed.");
+  return {};
+}
+
 Result<void> ServerLoopImpl::HandleSnapshotTake(
     const std::string& serialized_data) {
   run_cvd::ExtendedLauncherAction extended_action;
@@ -150,8 +200,8 @@ Result<void> ServerLoopImpl::HandleSnapshotTake(
   }
   CF_EXPECT_EQ(path_to_snapshots.size(), 1);
   const auto& path_to_snapshot = path_to_snapshots.front();
-  LOG(DEBUG) << "run_cvd server loop will take snapshot to "
-             << path_to_snapshot;
+  CF_EXPECT(TakeGuestSnapshot(config_.vm_manager(), path_to_snapshot),
+            "Failed to take guest snapshot");
   return {};
 }
 

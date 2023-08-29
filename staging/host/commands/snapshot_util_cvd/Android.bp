@@ -22,6 +22,7 @@ cc_binary_host {
     srcs: [
         "main.cc",
         "parse.cc",
+        "snapshot_taker.cc",
     ],
     shared_libs: [
         "libbase",
