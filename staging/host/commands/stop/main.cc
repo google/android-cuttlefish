@@ -135,18 +135,6 @@ Result<void> CleanStopInstance(
   return {};
 }
 
-std::set<std::string> DirsForEnvironment(
-    const CuttlefishConfig::EnvironmentSpecific environment) {
-  return {
-      environment.environment_dir(),
-      environment.environment_uds_dir(),
-  };
-}
-
-int StopEnvironment(const CuttlefishConfig::EnvironmentSpecific& environment) {
-  return FallBackStop(DirsForEnvironment(environment));
-}
-
 int StopInstance(const CuttlefishConfig& config,
                  const CuttlefishConfig::InstanceSpecific& instance,
                  const std::int32_t wait_for_launcher) {
@@ -255,17 +243,6 @@ int StopCvdMain(const std::int32_t wait_for_launcher,
         });
     exit_state_futures.push_back(std::move(exit_code_from_thread));
   }
-
-  auto environment = config->ForDefaultEnvironment();
-  StopEnvironment(environment);
-
-  if (clear_instance_dirs && DirectoryExists(environment.environment_dir())) {
-    LOG(INFO) << "Deleting environment dir " << environment.environment_dir();
-    if (!RecursivelyRemoveDirectory(environment.environment_dir())) {
-      LOG(ERROR) << "Unable to rmdir " << environment.environment_dir();
-    }
-  }
-
   for (auto& exit_status : exit_state_futures) {
     exit_code |= exit_status.get();
   }

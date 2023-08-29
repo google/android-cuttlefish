@@ -25,8 +25,7 @@ namespace cuttlefish {
 
 class ValidateTapDevices : public SetupFeature {};
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
-                                 const CuttlefishConfig::EnvironmentSpecific>,
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
                  ValidateTapDevices>
 validationComponent();
 }

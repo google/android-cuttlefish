@@ -23,7 +23,6 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -124,38 +123,16 @@ class ValidateHostKernelFeature : public SetupFeature {
   }
 };
 
-class ValidateEnvironmentSettled : public SetupFeature {
- public:
-  INJECT(ValidateEnvironmentSettled(
-      const CuttlefishConfig::EnvironmentSpecific& environment))
-      : environment_(environment) {}
-
-  bool Enabled() const override { return true; }
-  std::string Name() const override { return "ValidateEnvironmentSettled"; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    CF_EXPECT(WaitForUnixSocket(environment_.control_socket_path(), 30));
-
-    return {};
-  }
-
-  const CuttlefishConfig::EnvironmentSpecific& environment_;
-};
-
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
-                                 const CuttlefishConfig::EnvironmentSpecific>,
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
                  ValidateTapDevices>
 validationComponent() {
   return fruit::createComponent()
       .addMultibinding<SetupFeature, ValidateHostConfigurationFeature>()
       .addMultibinding<SetupFeature, ValidateHostKernelFeature>()
       .bind<ValidateTapDevices, ValidateTapDevicesImpl>()
-      .addMultibinding<SetupFeature, ValidateTapDevicesImpl>()
-      .addMultibinding<SetupFeature, ValidateEnvironmentSettled>();
+      .addMultibinding<SetupFeature, ValidateTapDevicesImpl>();
 }
 
 }  // namespace cuttlefish
