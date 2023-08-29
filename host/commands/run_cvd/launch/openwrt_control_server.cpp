@@ -33,12 +33,16 @@ namespace {
 
 class OpenwrtControlServer : public CommandSource {
  public:
-  INJECT(OpenwrtControlServer(const CuttlefishConfig& config,
-                              GrpcSocketCreator& grpc_socket))
-      : config_(config), grpc_socket_(grpc_socket) {}
+  INJECT(OpenwrtControlServer(
+      const CuttlefishConfig& config,
+      const CuttlefishConfig::EnvironmentSpecific& environment,
+      GrpcSocketCreator& grpc_socket))
+      : config_(config), environment_(environment), grpc_socket_(grpc_socket) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
+    // TODO(b/288987294) Remove dependency to first_instance config when moving
+    // OpenWrt to run_env is completed.
     auto first_instance = config_.Instances()[0];
 
     Command openwrt_control_server_cmd(OpenwrtControlServerBinary());
@@ -62,19 +66,22 @@ class OpenwrtControlServer : public CommandSource {
 
   // SetupFeature
   std::string Name() const override { return "OpenwrtControlServer"; }
-  bool Enabled() const override { return config_.enable_wifi(); }
+  bool Enabled() const override { return environment_.enable_wifi(); }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override { return {}; }
 
   const CuttlefishConfig& config_;
+  const CuttlefishConfig::EnvironmentSpecific& environment_;
   GrpcSocketCreator& grpc_socket_;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig, GrpcSocketCreator>>
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::EnvironmentSpecific,
+                                 GrpcSocketCreator>>
 OpenwrtControlServerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, OpenwrtControlServer>()
