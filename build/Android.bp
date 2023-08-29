@@ -114,7 +114,6 @@ cvd_host_tools = [
     "casimir",
     "snapshot_util_cvd",
     "run_cvd",
-    "run_env",
     "secure_env",
     "sefcontext_compile",
     "cvd_send_sms",

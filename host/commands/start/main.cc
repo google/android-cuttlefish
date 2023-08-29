@@ -116,7 +116,6 @@ std::string SubtoolPath(const std::string& subtool_base) {
 }
 
 std::string kAssemblerBin = SubtoolPath("assemble_cvd");
-std::string kRunEnvBin = SubtoolPath("run_env");
 std::string kRunnerBin = SubtoolPath("run_cvd");
 
 cuttlefish::Subprocess StartAssembler(cuttlefish::SharedFD assembler_stdin,
@@ -131,19 +130,6 @@ cuttlefish::Subprocess StartAssembler(cuttlefish::SharedFD assembler_stdin,
   }
   assemble_cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdOut, assembler_stdout);
   return assemble_cmd.Start();
-}
-
-cuttlefish::Subprocess StartEnv(cuttlefish::SharedFD env_stdin,
-                                const std::string& env_name,
-                                const std::vector<std::string>& argv) {
-  cuttlefish::Command env_cmd(kRunEnvBin);
-  env_cmd.AddParameter("--env_name=" + env_name);
-  for (const auto& arg : argv) {
-    env_cmd.AddParameter(arg);
-  }
-  env_cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdIn,
-                        env_stdin);
-  return env_cmd.Start();
 }
 
 cuttlefish::Subprocess StartRunner(cuttlefish::SharedFD runner_stdin,
@@ -344,7 +330,7 @@ bool OverrideBoolArg(std::vector<std::string>& args) {
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
-  FlagForwarder forwarder({kAssemblerBin, kRunnerBin, kRunEnvBin});
+  FlagForwarder forwarder({kAssemblerBin, kRunnerBin});
 
   // Used to find bool flag and convert "flag"/"noflag" to "--flag=value"
   // This is the solution for vectorize bool flags in gFlags
@@ -449,20 +435,6 @@ int main(int argc, char** argv) {
     return assemble_ret;
   } else {
     LOG(DEBUG) << "assemble_cvd exited successfully.";
-  }
-
-  {
-    cuttlefish::SharedFD env_stdin_in, env_stdin_out;
-    cuttlefish::SharedFD::Pipe(&env_stdin_out, &env_stdin_in);
-
-    auto env_proc = StartEnv(std::move(env_stdin_out),
-                             fmt::format("env-{}", (*instance_nums)[0]),
-                             forwarder.ArgvForSubprocess(kRunEnvBin));
-    if (cuttlefish::WriteAll(env_stdin_in, assembler_output) < 0) {
-      int error_num = errno;
-      LOG(ERROR) << "Could not write to run_env: " << strerror(error_num);
-      return -1;
-    }
   }
 
   std::vector<cuttlefish::Subprocess> runners;
