@@ -117,7 +117,8 @@ Result<void> SaveConfig(const CuttlefishConfig& tmp_config_obj) {
 #endif
 
 Result<void> CreateLegacySymlinks(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const CuttlefishConfig::EnvironmentSpecific& environment) {
   std::string log_files[] = {"kernel.log",
                              "launcher.log",
                              "logcat",
@@ -130,6 +131,19 @@ Result<void> CreateLegacySymlinks(
     auto log_target = "logs/" + log_file;  // Relative path
     if (symlink(log_target.c_str(), symlink_location.c_str()) != 0) {
       return CF_ERRNO("symlink(\"" << log_target << ", " << symlink_location
+                                   << ") failed");
+    }
+  }
+
+  // TODO(b/294157747) Remove hard-coded socket name when environment is able to
+  // launch without running instance.
+  std::string grpc_sockets[] = {"WmediumdServer.sock"};
+
+  for (const auto& socket_name : grpc_sockets) {
+    auto symlink_location = instance.PerInstanceGrpcSocketPath(socket_name);
+    auto socket_target = environment.PerEnvironmentGrpcSocketPath(socket_name);
+    if (symlink(socket_target.c_str(), symlink_location.c_str()) != 0) {
+      return CF_ERRNO("symlink(\"" << socket_target << ", " << symlink_location
                                    << ") failed");
     }
   }
@@ -157,7 +171,7 @@ Result<void> CreateLegacySymlinks(
   const auto mac80211_uds_name = "vhost_user_mac80211";
 
   const auto mac80211_uds_path =
-      instance.PerInstanceInternalUdsPath(mac80211_uds_name);
+      environment.PerEnvironmentUdsPath(mac80211_uds_name);
   const auto legacy_mac80211_uds_path =
       instance.PerInstanceInternalPath(mac80211_uds_name);
 
@@ -269,8 +283,15 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
         ss.str("");
       }
     }
-    CF_EXPECT(CleanPriorFiles(preserving, config.assembly_dir(),
-                              config.instance_dirs()),
+    auto instance_dirs = config.instance_dirs();
+    auto environment_dirs = config.environment_dirs();
+    std::vector<std::string> clean_dirs;
+    clean_dirs.push_back(config.assembly_dir());
+    clean_dirs.insert(clean_dirs.end(), instance_dirs.begin(),
+                      instance_dirs.end());
+    clean_dirs.insert(clean_dirs.end(), environment_dirs.begin(),
+                      environment_dirs.end());
+    CF_EXPECT(CleanPriorFiles(preserving, clean_dirs),
               "Failed to clean prior files");
 
     auto defaultGroup = "cvdnetwork";
@@ -281,6 +302,23 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(EnsureDirectoryExists(config.instances_dir()));
     CF_EXPECT(EnsureDirectoryExists(config.instances_uds_dir(), defaultMode,
                                     defaultGroup));
+    CF_EXPECT(EnsureDirectoryExists(config.environments_dir(), defaultMode,
+                                    defaultGroup));
+    CF_EXPECT(EnsureDirectoryExists(config.environments_uds_dir(), defaultMode,
+                                    defaultGroup));
+
+    auto environment =
+        const_cast<const CuttlefishConfig&>(config).ForDefaultEnvironment();
+
+    CF_EXPECT(EnsureDirectoryExists(environment.environment_dir(), defaultMode,
+                                    defaultGroup));
+    CF_EXPECT(EnsureDirectoryExists(environment.environment_uds_dir(),
+                                    defaultMode, defaultGroup));
+    CF_EXPECT(EnsureDirectoryExists(environment.PerEnvironmentLogPath(""),
+                                    defaultMode, defaultGroup));
+    CF_EXPECT(
+        EnsureDirectoryExists(environment.PerEnvironmentGrpcSocketPath(""),
+                              defaultMode, defaultGroup));
 
     LOG(INFO) << "Path for instance UDS: " << config.instances_uds_dir();
 
@@ -308,7 +346,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
                                       defaultMode, defaultGroup));
 
       // TODO(schuffelen): Move this code somewhere better
-      CF_EXPECT(CreateLegacySymlinks(instance));
+      CF_EXPECT(CreateLegacySymlinks(instance, environment));
     }
     CF_EXPECT(SaveConfig(config), "Failed to initialize configuration");
   }
