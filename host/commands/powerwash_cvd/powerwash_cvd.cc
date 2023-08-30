@@ -78,8 +78,7 @@ int main(int argc, char** argv) {
 
   cuttlefish::Result<void> result = cuttlefish::PowerwashCvdMain();
   if (!result.ok()) {
-    LOG(ERROR) << result.error().Message();
-    LOG(DEBUG) << result.error().Trace();
+    LOG(ERROR) << result.error().FormatForEnv();
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
