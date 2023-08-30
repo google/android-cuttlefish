@@ -174,7 +174,7 @@ std::string DefaultCustomActionConfig() {
     auto directory_contents_result =
         DirectoryContents(custom_action_config_dir);
     CHECK(directory_contents_result.ok())
-        << directory_contents_result.error().Trace();
+        << directory_contents_result.error().FormatForEnv();
     auto custom_action_configs = std::move(*directory_contents_result);
     // Two entries are always . and ..
     if (custom_action_configs.size() > 3) {

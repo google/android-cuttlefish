@@ -196,7 +196,7 @@ Result<int> DoRemove(std::vector<std::string>& args) {
   };
   auto parse_res = ParseFlags(remove_displays_flags, args);
   if (!parse_res.ok()) {
-    std::cerr << parse_res.error().Message() << std::endl;
+    std::cerr << parse_res.error().FormatForEnv() << std::endl;
     std::cerr << "Failed to parse flags. Usage:" << std::endl;
     std::cerr << kRemoveUsage << std::endl;
     return 1;
@@ -248,7 +248,7 @@ int DisplayMain(int argc, char** argv) {
 
   auto result = command_func_it->second(args);
   if (!result.ok()) {
-    std::cerr << result.error().Message();
+    std::cerr << result.error().FormatForEnv();
     return 1;
   }
   return result.value();

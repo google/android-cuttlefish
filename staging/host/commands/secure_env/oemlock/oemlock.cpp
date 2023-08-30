@@ -59,7 +59,7 @@ OemLock::OemLock(secure_env::Storage& storage) : storage_(storage) {
   auto result = InitializeDefaultState(storage_);
   if (!result.ok()) {
     LOG(FATAL) << "Failed to initialize default state for OemLock TEE storage: "
-               << result.error().Message();
+               << result.error().FormatForEnv();
   }
 }
 
@@ -99,4 +99,4 @@ Result<void> OemLock::SetOemLocked(bool locked) {
 }
 
 } // namespace oemlock
-} // namespace cuttlefish
+}  // namespace cuttlefish

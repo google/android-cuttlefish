@@ -126,7 +126,8 @@ bool GatekeeperWindowsChannel::SendMessage(
 
   auto to_send_result = secure_env::CreateMessage(command, is_response, payload_size);
   if (!to_send_result.ok()) {
-    LOG(ERROR) << "Could not allocate Gatekeeper Message: " << to_send_result.error().Message();
+    LOG(ERROR) << "Could not allocate Gatekeeper Message: "
+               << to_send_result.error().FormatForEnv();
     return false;
   }
   auto to_send = std::move(to_send_result.value());

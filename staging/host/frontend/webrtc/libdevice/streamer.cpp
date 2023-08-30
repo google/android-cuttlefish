@@ -196,21 +196,21 @@ std::unique_ptr<Streamer> Streamer::Create(
 
   auto network_thread_result = CreateAndStartThread("network-thread");
   if (!network_thread_result.ok()) {
-    LOG(ERROR) << network_thread_result.error().Trace();
+    LOG(ERROR) << network_thread_result.error().FormatForEnv();
     return nullptr;
   }
   impl->network_thread_ = std::move(*network_thread_result);
 
   auto worker_thread_result = CreateAndStartThread("worker-thread");
   if (!worker_thread_result.ok()) {
-    LOG(ERROR) << worker_thread_result.error().Trace();
+    LOG(ERROR) << worker_thread_result.error().FormatForEnv();
     return nullptr;
   }
   impl->worker_thread_ = std::move(*worker_thread_result);
 
   auto signal_thread_result = CreateAndStartThread("signal-thread");
   if (!signal_thread_result.ok()) {
-    LOG(ERROR) << signal_thread_result.error().Trace();
+    LOG(ERROR) << signal_thread_result.error().FormatForEnv();
     return nullptr;
   }
   impl->signal_thread_ = std::move(*signal_thread_result);
@@ -224,7 +224,7 @@ std::unique_ptr<Streamer> Streamer::Create(
       impl->signal_thread_.get(), impl->audio_device_module_->device_module());
 
   if (!result.ok()) {
-    LOG(ERROR) << result.error().Trace();
+    LOG(ERROR) << result.error().FormatForEnv();
     return nullptr;
   }
   impl->peer_connection_factory_ = *result;
@@ -503,7 +503,7 @@ void Streamer::Impl::HandleConfigMessage(const Json::Value& server_message) {
   auto result = ParseIceServersMessage(server_message);
   if (!result.ok()) {
     LOG(WARNING) << "Failed to parse ice servers message from server: "
-                 << result.error().Trace();
+                 << result.error().FormatForEnv();
   }
   operator_config_.servers = *result;
 }

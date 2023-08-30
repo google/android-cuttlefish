@@ -97,8 +97,7 @@ Result<void> ServerLoopImpl::Run() {
       auto launcher_action_with_info_result = ReadLauncherActionFromFd(client);
       if (!launcher_action_with_info_result.ok()) {
         LOG(ERROR) << "Reading launcher command from monitor failed: "
-                   << launcher_action_with_info_result.error().Message();
-        LOG(DEBUG) << launcher_action_with_info_result.error().Trace();
+                   << launcher_action_with_info_result.error().FormatForEnv();
         break;
       }
       auto launcher_action = std::move(*launcher_action_with_info_result);
@@ -112,7 +111,7 @@ Result<void> ServerLoopImpl::Run() {
       auto response = LauncherResponse::kSuccess;
       if (!result.ok()) {
         LOG(ERROR) << "Failed to handle extended action request.";
-        LOG(DEBUG) << result.error().Trace();
+        LOG(ERROR) << result.error().FormatForEnv();
         response = LauncherResponse::kError;
       }
       const auto n_written = client->Write(&response, sizeof(response));
@@ -186,8 +185,7 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
         std::exit(0);
       } else {
         LOG(ERROR) << "Failed to stop subprocesses:\n"
-                   << stop.error().Message();
-        LOG(DEBUG) << "Failed to stop subprocesses:\n" << stop.error().Trace();
+                   << stop.error().FormatForEnv();
         auto response = LauncherResponse::kError;
         client->Write(&response, sizeof(response));
       }
@@ -212,8 +210,8 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
 
       auto stop = process_monitor.StopMonitoredProcesses();
       if (!stop.ok()) {
-        LOG(ERROR) << "Stopping processes failed:\n" << stop.error().Message();
-        LOG(DEBUG) << "Stopping processes failed:\n" << stop.error().Trace();
+        LOG(ERROR) << "Stopping processes failed:\n"
+                   << stop.error().FormatForEnv();
         auto response = LauncherResponse::kError;
         client->Write(&response, sizeof(response));
         break;
@@ -237,8 +235,8 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
     case LauncherAction::kRestart: {
       auto stop = process_monitor.StopMonitoredProcesses();
       if (!stop.ok()) {
-        LOG(ERROR) << "Stopping processes failed:\n" << stop.error().Message();
-        LOG(DEBUG) << "Stopping processes failed:\n" << stop.error().Trace();
+        LOG(ERROR) << "Stopping processes failed:\n"
+                   << stop.error().FormatForEnv();
         auto response = LauncherResponse::kError;
         client->Write(&response, sizeof(response));
         break;

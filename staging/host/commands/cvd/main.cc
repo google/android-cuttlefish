@@ -85,7 +85,7 @@ Result<void> KillOldServer() {
     LOG(ERROR) << "Old server listening on \"cvd_server\" socket "
                << "must be killed first but failed to terminate it.";
     LOG(ERROR) << "Perhaps, try cvd reset -y";
-    CF_EXPECT(result.ok(), result.error().Trace());
+    CF_EXPECT(std::move(result));
   }
   return {};
 }
