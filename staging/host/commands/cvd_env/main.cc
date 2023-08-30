@@ -105,6 +105,6 @@ Result<void> CvdEnvMain(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   const auto& ret = cuttlefish::CvdEnvMain(argc, argv);
-  CHECK(ret.ok()) << ret.error().Message();
+  CHECK(ret.ok()) << ret.error().FormatForEnv();
   return 0;
 }

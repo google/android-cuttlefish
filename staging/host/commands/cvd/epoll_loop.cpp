@@ -28,8 +28,7 @@ namespace cuttlefish {
 EpollPool::EpollPool() {
   auto epoll = Epoll::Create();
   if (!epoll.ok()) {
-    LOG(ERROR) << epoll.error().Message();
-    LOG(DEBUG) << epoll.error().Trace();
+    LOG(ERROR) << epoll.error().FormatForEnv();
     abort();
   }
   epoll_ = std::move(*epoll);

@@ -77,8 +77,7 @@ int main(int argc, char** argv) {
   auto result = cuttlefish::RunProcessRestarter(
       std::move(cuttlefish::ArgsToVec(argc - 1, argv + 1)));
   if (!result.ok()) {
-    LOG(ERROR) << result.error().Message();
-    LOG(DEBUG) << result.error().Trace();
+    LOG(DEBUG) << result.error().FormatForEnv();
     return EXIT_FAILURE;
   }
   return result.value();

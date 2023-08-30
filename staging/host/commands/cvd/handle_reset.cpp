@@ -131,7 +131,7 @@ static Result<void> TimedKillCvdServer(CvdClient& client, const int timeout) {
     auto stop_server_result = client.StopCvdServer(clear_running_devices_first);
     if (!stop_server_result.ok()) {
       LOG(ERROR) << "cvd kill-server returned error"
-                 << stop_server_result.error().Trace();
+                 << stop_server_result.error().FormatForEnv();
       LOG(ERROR) << "However, cvd reset will continue cleaning up.";
     }
     sem_post(binary_sem);
@@ -194,7 +194,7 @@ Result<void> HandleReset(CvdClient& client,
 
   auto result = TimedKillCvdServer(client, 50);
   if (!result.ok()) {
-    LOG(ERROR) << result.error().Trace();
+    LOG(ERROR) << result.error().FormatForEnv();
     LOG(ERROR) << "Cvd reset continues cleaning up devices.";
   }
   // cvd reset handler placeholder. identical to cvd kill-server for now.

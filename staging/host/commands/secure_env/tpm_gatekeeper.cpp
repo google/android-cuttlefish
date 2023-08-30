@@ -180,7 +180,8 @@ bool TpmGatekeeper::GetFailureRecord(
   secure_env::Storage& storage = secure ? secure_storage_ : insecure_storage_;
   auto result = GetFailureRecordImpl(storage, uid, secure_user_id, record);
   if (!result.ok()) {
-    LOG(ERROR) << "Failed to get failure record: " << result.error().Message();
+    LOG(ERROR) << "Failed to get failure record: "
+               << result.error().FormatForEnv();
   }
   return result.ok();
 }
@@ -201,7 +202,8 @@ bool TpmGatekeeper::ClearFailureRecord(
   gatekeeper::failure_record_t record = DefaultRecord(secure_user_id);
   auto result = WriteFailureRecordImpl(storage, uid, &record);
   if (!result.ok()) {
-    LOG(ERROR) << "Failed to clear failure record: " << result.error().Message();
+    LOG(ERROR) << "Failed to clear failure record: "
+               << result.error().FormatForEnv();
   }
   return result.ok();
 }
@@ -211,7 +213,8 @@ bool TpmGatekeeper::WriteFailureRecord(
   secure_env::Storage& storage = secure ? secure_storage_ : insecure_storage_;
   auto result = WriteFailureRecordImpl(storage, uid, record);
   if (!result.ok()) {
-    LOG(ERROR) << "Failed to write failure record: " << result.error().Message();
+    LOG(ERROR) << "Failed to write failure record: "
+               << result.error().FormatForEnv();
   }
   return result.ok();
 }

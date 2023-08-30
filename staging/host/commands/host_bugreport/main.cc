@@ -109,6 +109,6 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   auto result = cuttlefish::CvdHostBugreportMain(argc, argv);
-  CHECK(result.ok()) << result.error().Message();
+  CHECK(result.ok()) << result.error().FormatForEnv();
   return 0;
 }
