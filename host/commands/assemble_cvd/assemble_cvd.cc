@@ -298,31 +298,31 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(CleanPriorFiles(preserving, clean_dirs),
               "Failed to clean prior files");
 
-    auto defaultGroup = "cvdnetwork";
-    const mode_t defaultMode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+    auto default_group = "cvdnetwork";
+    const mode_t default_mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
 
     CF_EXPECT(EnsureDirectoryExists(config.root_dir()));
     CF_EXPECT(EnsureDirectoryExists(config.assembly_dir()));
     CF_EXPECT(EnsureDirectoryExists(config.instances_dir()));
-    CF_EXPECT(EnsureDirectoryExists(config.instances_uds_dir(), defaultMode,
-                                    defaultGroup));
-    CF_EXPECT(EnsureDirectoryExists(config.environments_dir(), defaultMode,
-                                    defaultGroup));
-    CF_EXPECT(EnsureDirectoryExists(config.environments_uds_dir(), defaultMode,
-                                    defaultGroup));
+    CF_EXPECT(EnsureDirectoryExists(config.instances_uds_dir(), default_mode,
+                                    default_group));
+    CF_EXPECT(EnsureDirectoryExists(config.environments_dir(), default_mode,
+                                    default_group));
+    CF_EXPECT(EnsureDirectoryExists(config.environments_uds_dir(), default_mode,
+                                    default_group));
 
     auto environment =
         const_cast<const CuttlefishConfig&>(config).ForDefaultEnvironment();
 
-    CF_EXPECT(EnsureDirectoryExists(environment.environment_dir(), defaultMode,
-                                    defaultGroup));
+    CF_EXPECT(EnsureDirectoryExists(environment.environment_dir(), default_mode,
+                                    default_group));
     CF_EXPECT(EnsureDirectoryExists(environment.environment_uds_dir(),
-                                    defaultMode, defaultGroup));
+                                    default_mode, default_group));
     CF_EXPECT(EnsureDirectoryExists(environment.PerEnvironmentLogPath(""),
-                                    defaultMode, defaultGroup));
+                                    default_mode, default_group));
     CF_EXPECT(
         EnsureDirectoryExists(environment.PerEnvironmentGrpcSocketPath(""),
-                              defaultMode, defaultGroup));
+                              default_mode, default_group));
 
     LOG(INFO) << "Path for instance UDS: " << config.instances_uds_dir();
 
@@ -342,12 +342,12 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       CF_EXPECT(EnsureDirectoryExists(recording_dir));
       CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceLogPath("")));
 
-      CF_EXPECT(EnsureDirectoryExists(instance.instance_uds_dir(), defaultMode,
-                                      defaultGroup));
+      CF_EXPECT(EnsureDirectoryExists(instance.instance_uds_dir(), default_mode,
+                                      default_group));
       CF_EXPECT(EnsureDirectoryExists(instance.instance_internal_uds_dir(),
-                                      defaultMode, defaultGroup));
+                                      default_mode, default_group));
       CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceGrpcSocketPath(""),
-                                      defaultMode, defaultGroup));
+                                      default_mode, default_group));
 
       // TODO(schuffelen): Move this code somewhere better
       CF_EXPECT(CreateLegacySymlinks(instance));
