@@ -380,7 +380,6 @@ Result<std::vector<std::string>> CvdStartCommandHandler::UpdateWebrtcDeviceId(
   // take --webrtc_device_id flag away
   new_args.emplace_back("--webrtc_device_id=" +
                         android::base::Join(device_name_list, ","));
-  new_args.emplace_back("--group_id=" + group_name);
   return new_args;
 }
 
@@ -446,6 +445,18 @@ Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
     group_creation_info.args = CF_EXPECT(UpdateWebrtcDeviceId(
         std::move(group_creation_info.args), group_creation_info.group_name,
         group_creation_info.instances));
+  }
+
+  // for backward compatibility, older cvd host tools don't accept group_id
+  auto has_group_id_flag =
+      host_tool_target_manager_
+          .ReadFlag({.artifacts_path = group_creation_info.host_artifacts_path,
+                     .op = "start",
+                     .flag_name = "group_id"})
+          .ok();
+  if (has_group_id_flag) {
+    group_creation_info.args.emplace_back("--group_id=" +
+                                          group_creation_info.group_name);
   }
 
   group_creation_info.envs["HOME"] = group_creation_info.home;
