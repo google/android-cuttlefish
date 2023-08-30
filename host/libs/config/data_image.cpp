@@ -257,7 +257,7 @@ class InitializeDataImageImpl : public InitializeDataImage {
                     << kDataPolicyResizeUpTo << " (\"" << current_fs_type
                     << "\" != \"" << instance_.userdata_format() << "\")");
       if (instance_.data_policy() == kDataPolicyUseExisting) {
-        LOG(INFO) << "Userdata format chanegd, wiping userdata image "
+        LOG(INFO) << "Userdata format changed, wiping userdata image "
                   << instance_.new_data_image();
         return DataImageAction::kWipeImage;
       }
