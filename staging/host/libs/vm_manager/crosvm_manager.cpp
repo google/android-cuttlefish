@@ -353,7 +353,7 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
   if (gpu_mode == kGpuModeGuestSwiftshader) {
     crosvm_cmd->AddParameter("--gpu=backend=2D", gpu_common_string);
   } else if (gpu_mode == kGpuModeDrmVirgl) {
-    crosvm_cmd->AddParameter("--gpu=backend=virglrenderer",
+    crosvm_cmd->AddParameter("--gpu=backend=virglrenderer,context-types=virgl2",
                              gpu_common_3d_string);
   } else if (gpu_mode == kGpuModeGfxstream) {
     crosvm_cmd->AddParameter(
