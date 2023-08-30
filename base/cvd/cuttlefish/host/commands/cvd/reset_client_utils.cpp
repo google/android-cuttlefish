@@ -146,7 +146,7 @@ RunCvdProcessManager::CollectInfo() {
     if (!run_cvd_info_result.ok()) {
       LOG(ERROR) << "Failed to collect information for run_cvd at #"
                  << run_cvd_pid << std::endl
-                 << run_cvd_info_result.error().Trace();
+                 << run_cvd_info_result.error().FormatForEnv();
       continue;
     }
     run_cvd_infos.push_back(*run_cvd_info_result);
@@ -251,7 +251,7 @@ Result<void> RunCvdProcessManager::RunStopCvdAll(
     }
     auto stop_cvd_result = RunStopCvd(group_info, clear_instance_dirs);
     if (!stop_cvd_result.ok()) {
-      LOG(ERROR) << stop_cvd_result.error().Trace();
+      LOG(ERROR) << stop_cvd_result.error().FormatForEnv();
       continue;
     }
   }
@@ -359,7 +359,7 @@ void RunCvdProcessManager::DeleteLockFiles(
   if (!cvd_server_children_only) {
     auto delete_all_result = DeleteAllLockFiles(lock_dir);
     if (!delete_all_result.ok()) {
-      LOG(ERROR) << delete_all_result.error().Message();
+      LOG(ERROR) << delete_all_result.error().FormatForEnv();
     }
     return;
   }

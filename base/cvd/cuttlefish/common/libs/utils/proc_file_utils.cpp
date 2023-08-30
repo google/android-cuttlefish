@@ -163,7 +163,7 @@ Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
   for (const auto pid : input_pids) {
     auto pid_exec_path = GetExecutablePath(pid);
     if (!pid_exec_path.ok()) {
-      LOG(ERROR) << pid_exec_path.error().Trace();
+      LOG(ERROR) << pid_exec_path.error().FormatForEnv();
       continue;
     }
     if (cpp_basename(*pid_exec_path) == exec_name) {

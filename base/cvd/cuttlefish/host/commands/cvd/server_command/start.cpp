@@ -282,7 +282,7 @@ void CvdStartCommandHandler::MarkLockfiles(
     }
     auto result = instance.instance_file_lock_->Status(state);
     if (!result.ok()) {
-      LOG(ERROR) << result.error().Message();
+      LOG(ERROR) << result.error().FormatForEnv();
     }
   }
 }
@@ -687,7 +687,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
       AcloudCompatActions(*group_creation_info, request);
   acloud_action_ended_ = true;
   if (!acloud_compat_action_result.ok()) {
-    LOG(ERROR) << acloud_compat_action_result.error().Trace();
+    LOG(ERROR) << acloud_compat_action_result.error().FormatForEnv();
     LOG(ERROR) << "AcloudCompatActions() failed"
                << " but continue as they are minor errors.";
   }
@@ -763,7 +763,7 @@ Result<cvd::Response> CvdStartCommandHandler::HandleNoDaemon(
         auto result = HandleNoDaemonWorker(*group_info, interrupted_ptr, uid);
         *worker_success_ptr = result.ok();
         if (*worker_success_ptr == false) {
-          LOG(ERROR) << result.error().Trace();
+          LOG(ERROR) << result.error().FormatForEnv();
         }
       });
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
@@ -804,7 +804,7 @@ Result<cvd::Response> CvdStartCommandHandler::HandleDaemon(
     LOG(ERROR) << "Failed to set a build Id for "
                << group_creation_info->group_name << " but will continue.";
     LOG(ERROR) << "The error message was : "
-               << set_build_id_result.error().Trace();
+               << set_build_id_result.error().FormatForEnv();
   }
 
   // group_creation_info is nullopt only if is_help is false
@@ -828,7 +828,7 @@ Result<void> CvdStartCommandHandler::Interrupt() {
     auto result = command_executor_.Interrupt();
     if (!result.ok()) {
       LOG(ERROR) << "Failed to interrupt CommandExecutor"
-                 << result.error().Message();
+                 << result.error().FormatForEnv();
     }
   }
   CF_EXPECT(subprocess_waiter_.Interrupt());
