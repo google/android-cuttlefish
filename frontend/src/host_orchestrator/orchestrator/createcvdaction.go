@@ -16,7 +16,6 @@ package orchestrator
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -155,18 +154,7 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	}
 	cmd := cvd.NewCommand(a.execContext, a.paths.CVDBin(), args, opts)
 	if err := cmd.Run(); err != nil {
-		var details string
-		var execError *cvd.CommandExecErr
-		var timeoutErr *cvd.CommandTimeoutErr
-		if errors.As(err, &execError) {
-			details = execError.Error()
-			// Overwrite err with the unwrapped error as execution errors were already logged.
-			err = execError.Unwrap()
-		} else if errors.As(err, &timeoutErr) {
-			details = timeoutErr.Error()
-		}
-		log.Printf("failed to launch cvd with error: %v", err)
-		return nil, operator.NewInternalErrorD(ErrMsgLaunchCVDFailed, details, err)
+		return nil, operator.NewInternalError(ErrMsgLaunchCVDFailed, err)
 	}
 	fleet, err := cvdFleet(a.execContext, a.paths.CVDBin())
 	if err != nil {
@@ -191,18 +179,7 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 		}
 	}
 	if err != nil {
-		var details string
-		var execError *cvd.CommandExecErr
-		var timeoutErr *cvd.CommandTimeoutErr
-		if errors.As(err, &execError) {
-			details = execError.Error()
-			// Overwrite err with the unwrapped error as execution errors were already logged.
-			err = execError.Unwrap()
-		} else if errors.As(err, &timeoutErr) {
-			details = timeoutErr.Error()
-		}
-		log.Printf("failed to launch cvd with error: %v", err)
-		return &OperationResult{Error: operator.NewInternalErrorD(ErrMsgLaunchCVDFailed, details, err)}
+		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
 	fleet, err := cvdFleet(a.execContext, a.paths.CVDBin())
 	if err != nil {
