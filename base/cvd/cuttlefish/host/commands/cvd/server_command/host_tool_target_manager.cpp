@@ -62,6 +62,7 @@ Result<void> HostToolTargetManagerImpl::UpdateOutdated(
     return {};
   }
   LOG(ERROR) << artifacts_path << " is new, so updating HostToolTarget";
+  host_target_table_.erase(artifacts_path);
   HostToolTarget new_host_tool_target =
       CF_EXPECT(HostToolTarget::Create(artifacts_path));
   host_target_table_.emplace(artifacts_path, std::move(new_host_tool_target));
