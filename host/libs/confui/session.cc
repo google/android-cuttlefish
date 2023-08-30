@@ -61,7 +61,7 @@ bool Session::RenderDialog() {
   auto result =
       renderer_.RenderDialog(display_num_, prompt_text_, locale_, ui_options_);
   if (!result.ok()) {
-    LOG(ERROR) << result.error().Trace();
+    LOG(ERROR) << result.error().FormatForEnv();
     return false;
   }
   return true;
