@@ -149,7 +149,7 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
                         << " . Exited with status " << success;
   }
   const auto ret = EnsureDirectoryExists(ramdisk_stage_dir);
-  CHECK(ret.ok()) << ret.error().Message();
+  CHECK(ret.ok()) << ret.error().FormatForEnv();
 
   success = Execute(
       {"/bin/bash", "-c",

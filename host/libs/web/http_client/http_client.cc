@@ -229,7 +229,7 @@ class CurlClient : public HttpClient {
     auto result = ParseJson(response.data);
     if (!result.ok()) {
       Json::Value error_json;
-      LOG(ERROR) << "Could not parse json: " << result.error().Message();
+      LOG(ERROR) << "Could not parse json: " << result.error().FormatForEnv();
       error_json["error"] = "Failed to parse json: " + result.error().Message();
       error_json["response"] = response.data;
       return HttpResponse<Json::Value>{error_json, response.http_code};

@@ -311,7 +311,7 @@ Result<void> InstanceDatabase::LoadGroupFromJson(
     auto add_instance_result = AddInstance(group_name, id, instance_name);
     if (!add_instance_result.ok()) {
       RemoveInstanceGroup(new_group_ref.Get());
-      CF_EXPECT(add_instance_result.ok(), add_instance_result.error().Trace());
+      CF_EXPECT(std::move(add_instance_result));
     }
   }
   return {};
