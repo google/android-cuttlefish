@@ -535,7 +535,6 @@ int main(int argc, char** argv) {
   if (res.ok()) {
     return *res;
   }
-  LOG(ERROR) << "assemble_cvd failed: \n" << res.error().Message();
-  LOG(DEBUG) << "assemble_cvd failed: \n" << res.error().Trace();
+  LOG(ERROR) << "assemble_cvd failed: \n" << res.error().FormatForEnv();
   abort();
 }
