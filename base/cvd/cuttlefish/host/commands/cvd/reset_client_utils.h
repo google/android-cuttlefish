@@ -67,18 +67,18 @@ class RunCvdProcessManager {
     auto stop_cvd_result =
         RunStopCvdAll(cvd_server_children_only, clear_runtime_dirs);
     if (!stop_cvd_result.ok()) {
-      LOG(ERROR) << stop_cvd_result.error().Message();
+      LOG(ERROR) << stop_cvd_result.error().FormatForEnv();
     }
     auto send_signals_result = SendSignals(cvd_server_children_only);
     if (!send_signals_result.ok()) {
-      LOG(ERROR) << send_signals_result.error().Message();
+      LOG(ERROR) << send_signals_result.error().FormatForEnv();
     }
     DeleteLockFiles(cvd_server_children_only);
     cf_groups_.clear();
     auto recollect_info_result = CollectInfo();
     if (!recollect_info_result.ok()) {
       LOG(ERROR) << "Recollecting run_cvd processes information failed.";
-      LOG(ERROR) << recollect_info_result.error().Trace();
+      LOG(ERROR) << recollect_info_result.error().FormatForEnv();
     }
     return {};
   }

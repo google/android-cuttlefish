@@ -344,7 +344,7 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
       http_client, content, BUILD_SCOPE);
   if (!result.ok()) {
     LOG(DEBUG) << "Failed to load service account json file: \n"
-               << result.error().Trace();
+               << result.error().FormatForEnv();
     return {};
   }
   return std::unique_ptr<CredentialSource>(
@@ -384,7 +384,7 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
             new RefreshCredentialSource(std::move(*attempt_load)));
       } else {
         LOG(DEBUG) << "Failed to load acloud credentials: "
-                   << attempt_load.error().Trace();
+                   << attempt_load.error().FormatForEnv();
       }
     } else {
       LOG(INFO) << "\"" << file << "\" missing, running without credentials";
@@ -773,7 +773,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
 
   auto result = InnerMain(flags, fetch_root_directory);
   if (!result.ok()) {
-    LOG(ERROR) << result.error().Trace();
+    LOG(ERROR) << result.error().FormatForEnv();
   }
   return result;
 }
