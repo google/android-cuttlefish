@@ -109,7 +109,7 @@ func replyJSONOK(w http.ResponseWriter, obj interface{}) error {
 func replyJSONErr(w http.ResponseWriter, err error) error {
 	appErr, ok := err.(*operator.AppError)
 	if !ok {
-		return replyJSON(w, apiv1.ErrorMsg{Error: "Internal Server Error"}, http.StatusInternalServerError)
+		appErr, _ = (operator.NewInternalError("Internal server error", err)).(*operator.AppError)
 	}
 	return replyJSON(w, appErr.JSONResponse(), appErr.StatusCode)
 }
