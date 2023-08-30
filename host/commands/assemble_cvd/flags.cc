@@ -1450,10 +1450,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
     comma_str = ",";
 
-    auto graphics_check = vmm->ConfigureGraphics(const_instance);
-    if (!graphics_check.ok()) {
-      LOG(FATAL) << graphics_check.error().Message();
-    }
+    CF_EXPECT(vmm->ConfigureGraphics(const_instance));
 
     // end of gpu related settings
 
