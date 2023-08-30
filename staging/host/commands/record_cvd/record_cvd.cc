@@ -105,8 +105,7 @@ int main(int argc, char* argv[]) {
 
   cuttlefish::Result<void> result = cuttlefish::RecordCvdMain(argc, argv);
   if (!result.ok()) {
-    LOG(ERROR) << result.error().Message();
-    LOG(DEBUG) << result.error().Trace();
+    LOG(DEBUG) << result.error().FormatForEnv();
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

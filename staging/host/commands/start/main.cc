@@ -379,8 +379,7 @@ int main(int argc, char** argv) {
   auto instance_nums =
       cuttlefish::InstanceNumsCalculator().FromGlobalGflags().Calculate();
   if (!instance_nums.ok()) {
-    LOG(ERROR) << instance_nums.error().Message();
-    LOG(DEBUG) << instance_nums.error().Trace();
+    LOG(ERROR) << instance_nums.error().FormatForEnv();
     abort();
   }
 

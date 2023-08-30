@@ -181,7 +181,7 @@ Result<void> InstanceManager::SetInstanceGroup(
      *
      */
     instance_db.RemoveInstanceGroup(new_group.Get());
-    return CF_ERR(result.error().Trace());
+    CF_EXPECT(std::move(result));
   }
   return {};
 }
@@ -294,8 +294,9 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
     group_json["group_name"] = group->GroupName();
     auto result = IssueStatusCommand(*group, err);
     if (!result.ok()) {
-      WriteAll(err, fmt::format("Group '{}' status error: '{}'",
-                                group->GroupName(), result.error().Message()));
+      WriteAll(err,
+               fmt::format("Group '{}' status error: '{}'", group->GroupName(),
+                           result.error().FormatForEnv()));
       status.set_code(cvd::Status::INTERNAL);
       continue;
     }
@@ -400,7 +401,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
       if (config_path.ok()) {
         auto stop_result = IssueStopCommand(out, err, *config_path, *group);
         if (!stop_result.ok()) {
-          LOG(ERROR) << stop_result.error().Message();
+          LOG(ERROR) << stop_result.error().FormatForEnv();
         }
       }
       RemoveFile(group->HomeDir() + "/cuttlefish_runtime");
