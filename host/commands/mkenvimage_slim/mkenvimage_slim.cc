@@ -87,7 +87,6 @@ int main(int argc, char** argv) {
   if (res.ok()) {
     return *res;
   }
-  LOG(ERROR) << "mkenvimage_slim failed: \n" << res.error().Message();
-  LOG(ERROR) << "mkenvimage_slim failed: \n" << res.error().Trace();
+  LOG(ERROR) << "mkenvimage_slim failed: \n" << res.error().FormatForEnv();
   abort();
 }
