@@ -469,7 +469,7 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
   const auto vendor_modules_dir = vendor_dlkm_build_dir + "/lib/modules";
   const auto system_modules_dir = system_dlkm_build_dir + "/lib/modules";
   auto ret = EnsureDirectoryExists(vendor_modules_dir);
-  CHECK(ret.ok()) << ret.error().Message();
+  CHECK(ret.ok()) << ret.error().FormatForEnv();
   ret = EnsureDirectoryExists(system_modules_dir);
   UnpackRamdisk(ramdisk_path, ramdisk_stage_dir);
   const auto module_load_file =
@@ -590,7 +590,7 @@ bool MoveIfChanged(const std::string& src, const std::string& dst) {
   }
   const auto ret = RenameFile(src, dst);
   if (!ret.ok()) {
-    LOG(ERROR) << ret.error().Message();
+    LOG(ERROR) << ret.error().FormatForEnv();
     return false;
   }
   return true;

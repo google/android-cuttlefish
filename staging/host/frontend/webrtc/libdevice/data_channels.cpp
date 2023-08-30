@@ -109,7 +109,7 @@ class InputChannelHandler : public DataChannelHandler {
                               {"y", Json::ValueType::intValue},
                               {"display_label", Json::ValueType::stringValue}});
       if (!result.ok()) {
-        LOG(ERROR) << result.error().Trace();
+        LOG(ERROR) << result.error().FormatForEnv();
         return;
       }
       auto label = evt["display_label"].asString();
@@ -128,7 +128,7 @@ class InputChannelHandler : public DataChannelHandler {
                               {"slot", Json::ValueType::arrayValue},
                               {"display_label", Json::ValueType::stringValue}});
       if (!result.ok()) {
-        LOG(ERROR) << result.error().Trace();
+        LOG(ERROR) << result.error().FormatForEnv();
         return;
       }
 
@@ -148,7 +148,7 @@ class InputChannelHandler : public DataChannelHandler {
                              {{"event_type", Json::ValueType::stringValue},
                               {"keycode", Json::ValueType::stringValue}});
       if (!result.ok()) {
-        LOG(ERROR) << result.error().Trace();
+        LOG(ERROR) << result.error().FormatForEnv();
         return;
       }
       auto down = evt["event_type"].asString() == std::string("keydown");
@@ -159,8 +159,8 @@ class InputChannelHandler : public DataChannelHandler {
           ValidateJsonObject(evt, "wheel",
                              {{"pixels", Json::ValueType::intValue}});
        if (!result.ok()) {
-         LOG(ERROR) << result.error().Trace();
-         return;
+        LOG(ERROR) << result.error().FormatForEnv();
+        return;
        }
        auto pixels = evt["pixels"].asInt();
        observer()->OnWheelEvent(pixels);
@@ -202,7 +202,7 @@ class ControlChannelHandler : public DataChannelHandler {
             {"hinge_angle_value", Json::ValueType::intValue},
         });
     if (!result.ok()) {
-      LOG(ERROR) << result.error().Trace();
+      LOG(ERROR) << result.error().FormatForEnv();
       return;
     }
     auto command = evt["command"].asString();

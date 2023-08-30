@@ -89,12 +89,12 @@ CvdServer::CvdServer(BuildApi& build_api, EpollPool& epoll_pool,
       while (running_) {
         auto result = epoll_pool_.HandleEvent();
         if (!result.ok()) {
-          LOG(ERROR) << "Epoll worker error:\n" << result.error().Message();
-          LOG(DEBUG) << "Epoll worker error:\n" << result.error().Trace();
+          LOG(ERROR) << "Epoll worker error:\n"
+                     << result.error().FormatForEnv();
         }
       }
       auto wakeup = BestEffortWakeup();
-      CHECK(wakeup.ok()) << wakeup.error().Trace();
+      CHECK(wakeup.ok()) << wakeup.error().FormatForEnv();
     });
   }
 }
@@ -102,7 +102,7 @@ CvdServer::CvdServer(BuildApi& build_api, EpollPool& epoll_pool,
 CvdServer::~CvdServer() {
   running_ = false;
   auto wakeup = BestEffortWakeup();
-  CHECK(wakeup.ok()) << wakeup.error().Trace();
+  CHECK(wakeup.ok()) << wakeup.error().FormatForEnv();
   Join();
 }
 
@@ -172,7 +172,7 @@ void CvdServer::Stop() {
       request->handler->Interrupt();
     }
     auto wakeup = BestEffortWakeup();
-    CHECK(wakeup.ok()) << wakeup.error().Trace();
+    CHECK(wakeup.ok()) << wakeup.error().FormatForEnv();
     std::scoped_lock lock(threads_mutex_);
     for (auto& thread : threads_) {
       auto current_thread = thread.get_id() == std::this_thread::get_id();

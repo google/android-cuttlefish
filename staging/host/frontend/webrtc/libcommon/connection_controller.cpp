@@ -254,8 +254,7 @@ ConnectionController::ThisAsSetRemoteSDPObserver() {
 void ConnectionController::HandleSignalingMessage(const Json::Value& msg) {
   auto result = HandleSignalingMessageInner(msg);
   if (!result.ok()) {
-    LOG(ERROR) << result.error().Message();
-    LOG(DEBUG) << result.error().Trace();
+    LOG(ERROR) << result.error().FormatForEnv();
     FailConnection(result.error().Message());
   }
 }
