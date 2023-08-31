@@ -254,6 +254,12 @@ PRODUCT_PACKAGES += \
 
 # Packages for HAL implementations
 
+# TODO(b/218588089) remove this once cuttlefish can drop HIDL.
+# This adds hwservicemanager and the allocator service to the device.
+PRODUCT_PACKAGES += \
+    hwservicemanager \
+    android.hidl.allocator@1.0-service
+
 #
 # Weaver aidl HAL
 #
