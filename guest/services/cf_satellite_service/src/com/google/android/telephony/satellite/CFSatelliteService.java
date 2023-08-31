@@ -27,7 +27,7 @@ import android.telephony.satellite.stub.NTRadioTechnology;
 import android.telephony.satellite.stub.PointingInfo;
 import android.telephony.satellite.stub.SatelliteCapabilities;
 import android.telephony.satellite.stub.SatelliteDatagram;
-import android.telephony.satellite.stub.SatelliteError;
+import android.telephony.satellite.stub.SatelliteResult;
 import android.telephony.satellite.stub.SatelliteImplBase;
 import android.telephony.satellite.stub.SatelliteModemState;
 import android.telephony.satellite.stub.SatelliteService;
@@ -125,7 +125,7 @@ public class CFSatelliteService extends SatelliteImplBase {
         } else {
             updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_IDLE);
         }
-        runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+        runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
     }
 
     @Override
@@ -142,13 +142,13 @@ public class CFSatelliteService extends SatelliteImplBase {
     private void enableSatellite(@NonNull IIntegerConsumer errorCallback) {
         mIsEnabled = true;
         updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_IDLE);
-        runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+        runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
     }
 
     private void disableSatellite(@NonNull IIntegerConsumer errorCallback) {
         mIsEnabled = false;
         updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_OFF);
-        runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+        runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
     }
 
     @Override
@@ -182,20 +182,20 @@ public class CFSatelliteService extends SatelliteImplBase {
         if (!verifySatelliteModemState(errorCallback)) {
             return;
         }
-        runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+        runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
     }
 
     @Override
     public void stopSendingSatellitePointingInfo(@NonNull IIntegerConsumer errorCallback) {
         logd("stopSendingSatellitePointingInfo");
-        runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+        runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
     }
 
     @Override
     public void provisionSatelliteService(@NonNull String token, @NonNull byte[] provisionData,
             @NonNull IIntegerConsumer errorCallback) {
         logd("provisionSatelliteService");
-        runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+        runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
         updateSatelliteProvisionState(true);
     }
 
@@ -203,7 +203,7 @@ public class CFSatelliteService extends SatelliteImplBase {
     public void deprovisionSatelliteService(@NonNull String token,
             @NonNull IIntegerConsumer errorCallback) {
         logd("deprovisionSatelliteService");
-        runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+        runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
         updateSatelliteProvisionState(false);
     }
 
@@ -217,14 +217,14 @@ public class CFSatelliteService extends SatelliteImplBase {
     @Override
     public void pollPendingSatelliteDatagrams(@NonNull IIntegerConsumer errorCallback) {
         logd("pollPendingSatelliteDatagrams");
-        runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+        runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
     }
 
     @Override
     public void sendSatelliteDatagram(@NonNull SatelliteDatagram datagram, boolean isEmergency,
             @NonNull IIntegerConsumer errorCallback) {
         logd("sendSatelliteDatagram");
-        runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+        runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
     }
 
     @Override
@@ -261,15 +261,18 @@ public class CFSatelliteService extends SatelliteImplBase {
      */
     private boolean verifySatelliteModemState(@NonNull IIntegerConsumer errorCallback) {
         if (!mIsSupported) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.REQUEST_NOT_SUPPORTED));
+            runWithExecutor(() -> errorCallback.accept(
+                SatelliteResult.SATELLITE_RESULT_REQUEST_NOT_SUPPORTED));
             return false;
         }
         if (!mIsProvisioned) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.SERVICE_NOT_PROVISIONED));
+            runWithExecutor(() -> errorCallback.accept(
+                SatelliteResult.SATELLITE_RESULT_SERVICE_NOT_PROVISIONED));
             return false;
         }
         if (!mIsEnabled) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.INVALID_MODEM_STATE));
+            runWithExecutor(() -> errorCallback.accept(
+                SatelliteResult.SATELLITE_RESULT_INVALID_MODEM_STATE));
             return false;
         }
         return true;
