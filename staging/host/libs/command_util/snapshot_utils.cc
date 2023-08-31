@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <unordered_map>
 
@@ -52,8 +53,9 @@ bool IsRegular(const struct stat& file_stat) {
 // assumes that src_dir_path and dest_dir_path exist and both are
 // existing directories or links to the directories. Also they are
 // different directories.
-Result<void> CopyDirectoryImpl(const std::string& src_dir_path,
-                               const std::string& dest_dir_path) {
+Result<void> CopyDirectoryImpl(
+    const std::string& src_dir_path, const std::string& dest_dir_path,
+    const std::function<bool(const std::string&)>& predicate) {
   // create an empty dest_dir_path with the same permission as src_dir_path
   // and then, recursively copy the contents
   LOG(DEBUG) << "Making sure " << dest_dir_path
@@ -63,6 +65,9 @@ Result<void> CopyDirectoryImpl(const std::string& src_dir_path,
              dest_dir_path);
   const auto src_contents = CF_EXPECT(DirectoryContents(src_dir_path));
   for (const auto& src_base_path : src_contents) {
+    if (!predicate(src_dir_path + "/" + src_base_path)) {
+      continue;
+    }
     if (src_base_path == "." || src_base_path == "..") {
       LOG(DEBUG) << "Skipping \"" << src_base_path << "\"";
       continue;
@@ -85,8 +90,8 @@ Result<void> CopyDirectoryImpl(const std::string& src_dir_path,
                    dest_path);
       }
       CF_EXPECTF(symlink(target.data(), dest_path.data()) == 0,
-                 "Creating symbolic link from {} to {} failed.", dest_path,
-                 target);
+                 "Creating symbolic link from {} to {} failed: {}", dest_path,
+                 target, strerror(errno));
       continue;
     }
 
@@ -98,7 +103,7 @@ Result<void> CopyDirectoryImpl(const std::string& src_dir_path,
     if (DirectoryExists(src_path)) {
       LOG(DEBUG) << "Recursively calling CopyDirectoryImpl(" << src_path << ", "
                  << dest_path << ")";
-      CF_EXPECT(CopyDirectoryImpl(src_path, dest_path));
+      CF_EXPECT(CopyDirectoryImpl(src_path, dest_path, predicate));
       LOG(DEBUG) << "Returned from Recursive call CopyDirectoryImpl("
                  << src_path << ", " << dest_path << ")";
       continue;
@@ -134,9 +139,10 @@ std::string RealpathOrSelf(const std::string& path) {
 
 }  // namespace
 
-Result<void> CopyDirectoryRecursively(const std::string& src_dir_path,
-                                      const std::string& dest_dir_path,
-                                      const bool verify_dest_dir_empty) {
+Result<void> CopyDirectoryRecursively(
+    const std::string& src_dir_path, const std::string& dest_dir_path,
+    const bool verify_dest_dir_empty,
+    std::function<bool(const std::string&)> predicate) {
   CF_EXPECTF(FileExists(src_dir_path),
              "A file/directory \"{}\" does not exist.", src_dir_path);
   CF_EXPECTF(DirectoryExists(src_dir_path), "\"{}\" is not a directory.",
@@ -162,7 +168,7 @@ Result<void> CopyDirectoryRecursively(const std::string& src_dir_path,
    * we don't delete the runtime directory, eventually. We could, however,
    * start with deleting it.
    */
-  CF_EXPECT(CopyDirectoryImpl(src_final_target, dest_final_target));
+  CF_EXPECT(CopyDirectoryImpl(src_final_target, dest_final_target, predicate));
   return {};
 }
 
@@ -228,6 +234,27 @@ Result<Json::Value> CreateMetaInfo(const CuttlefishConfig& cuttlefish_config,
 
 std::string SnapshotMetaJsonPath(const std::string& snapshot_path) {
   return snapshot_path + "/" + kMetaInfoJsonFileName;
+}
+
+Result<Json::Value> LoadMetaJson(const std::string& snapshot_path) {
+  auto meta_json_path = SnapshotMetaJsonPath(snapshot_path);
+  auto meta_json = CF_EXPECT(LoadFromFile(meta_json_path));
+  return meta_json;
+}
+
+Result<std::vector<std::string>> GuestSnapshotDirectories(
+    const std::string& snapshot_path) {
+  auto meta_json = CF_EXPECT(LoadMetaJson(snapshot_path));
+  CF_EXPECT(meta_json.isMember(kGuestSnapshotField));
+  const auto& guest_snapshot_dir_jsons = meta_json[kGuestSnapshotField];
+  std::vector<std::string> id_strs = guest_snapshot_dir_jsons.getMemberNames();
+  std::vector<std::string> guest_snapshot_paths;
+  for (const auto& id_str : id_strs) {
+    CF_EXPECT(guest_snapshot_dir_jsons.isMember(id_str));
+    std::string path_suffix = guest_snapshot_dir_jsons[id_str].asString();
+    guest_snapshot_paths.push_back(snapshot_path + "/" + path_suffix);
+  }
+  return guest_snapshot_paths;
 }
 
 }  // namespace cuttlefish
