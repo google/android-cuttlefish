@@ -117,7 +117,8 @@ Result<void> SaveConfig(const CuttlefishConfig& tmp_config_obj) {
 #endif
 
 Result<void> CreateLegacySymlinks(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const CuttlefishConfig::EnvironmentSpecific& environment) {
   std::string log_files[] = {"kernel.log",
                              "launcher.log",
                              "logcat",
@@ -157,7 +158,7 @@ Result<void> CreateLegacySymlinks(
   const auto mac80211_uds_name = "vhost_user_mac80211";
 
   const auto mac80211_uds_path =
-      instance.PerInstanceInternalUdsPath(mac80211_uds_name);
+      environment.PerEnvironmentUdsPath(mac80211_uds_name);
   const auto legacy_mac80211_uds_path =
       instance.PerInstanceInternalPath(mac80211_uds_name);
 
@@ -350,7 +351,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
                                       default_mode, default_group));
 
       // TODO(schuffelen): Move this code somewhere better
-      CF_EXPECT(CreateLegacySymlinks(instance));
+      CF_EXPECT(CreateLegacySymlinks(instance, environment));
     }
     CF_EXPECT(SaveConfig(config), "Failed to initialize configuration");
   }
