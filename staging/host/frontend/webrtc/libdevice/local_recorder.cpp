@@ -47,6 +47,9 @@ class LocalRecorder::Display
     , public rtc::VideoSinkInterface<webrtc::VideoFrame> {
 public:
   Display(LocalRecorder::Impl& impl);
+  ~Display() {
+    CHECK(!encoder_running_) << "LocalRecorder::Display destroyed before calling Stop()";
+  }
 
   void EncoderLoop();
   void Stop();
@@ -189,8 +192,6 @@ void LocalRecorder::Stop() {
   for (auto& [label, display] : impl_->displays_) {
     display->Stop();
   }
-  impl_->displays_.clear();
-
   std::lock_guard lock(impl_->mkv_mutex_);
   impl_->segment_.Finalize();
 }

@@ -36,8 +36,8 @@ public:
 
   void AddDisplay(const std::string& name, size_t width, size_t height,
                   std::shared_ptr<webrtc::VideoTrackSourceInterface> video);
-
   void Stop();
+
 private:
   class Display;
   class Impl;
