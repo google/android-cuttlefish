@@ -126,4 +126,9 @@ fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
                                  const CustomActionConfigProvider>>
 launchStreamerComponent();
 
+fruit::Component<
+    fruit::Required<const CuttlefishConfig,
+                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
+McuComponent();
+
 }  // namespace cuttlefish
