@@ -63,8 +63,10 @@ Result<std::string> HandleHostGroupSnapshot(const std::string& path) {
              cuttlefish_root, cuttlefish_home);
 
   // cp -r HOME snapshot_path
+  auto always_true = [](const std::string&) -> bool { return true; };
   CF_EXPECTF(CopyDirectoryRecursively(cuttlefish_home, snapshot_path,
-                                      /* verify_dest_dir_empty */ true),
+                                      /* verify_dest_dir_empty */ true,
+                                      /* predicate */ std::move(always_true)),
              "\"cp -r {} {} failed.\"", cuttlefish_home, snapshot_path);
 
   const auto meta_json =

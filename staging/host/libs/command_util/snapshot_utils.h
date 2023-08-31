@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <functional>
 #include <string>
 
 #include "common/libs/utils/result.h"
@@ -27,9 +28,12 @@ namespace cuttlefish {
  * Copy recursively from src_dir_path to dest_dir_path as long as
  * the predicate function returns true
  */
-Result<void> CopyDirectoryRecursively(const std::string& src_dir_path,
-                                      const std::string& dest_dir_path,
-                                      const bool verify_dest_dir_empty = false);
+Result<void> CopyDirectoryRecursively(
+    const std::string& src_dir_path, const std::string& dest_dir_path,
+    const bool verify_dest_dir_empty = false,
+    std::function<bool(const std::string&)> predicate = [](const std::string&) {
+      return true;
+    });
 
 Result<Json::Value> CreateMetaInfo(const CuttlefishConfig& config,
                                    const std::string& snapshot_path);
@@ -37,7 +41,10 @@ Result<Json::Value> CreateMetaInfo(const CuttlefishConfig& config,
 Result<std::string> InstanceGuestSnapshotPath(const Json::Value& meta_json,
                                               const std::string& instance_id);
 std::string SnapshotMetaJsonPath(const std::string& snapshot_path);
+Result<Json::Value> LoadMetaJson(const std::string& snapshot_path);
 
+Result<std::vector<std::string>> GuestSnapshotDirectories(
+    const std::string& snapshot_path);
 inline constexpr const char kMetaInfoJsonFileName[] = "snapshot_meta_info.json";
 inline constexpr const char kGuestSnapshotField[] = "guest_snapshot";
 inline constexpr const char kSnapshotPathField[] = "snapshot_path";
