@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -156,7 +155,7 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	if err := cmd.Run(); err != nil {
 		return nil, operator.NewInternalError(ErrMsgLaunchCVDFailed, err)
 	}
-	fleet, err := cvdFleet(a.execContext, a.paths.CVDBin())
+	fleet, err := getCVDFleet(a.execContext, a.paths.CVDBin())
 	if err != nil {
 		return nil, err
 	}
@@ -165,13 +164,12 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 
 func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 	instancesCount := 1 + a.req.AdditionalInstancesNum
-	var instanceNumbers []uint32
 	var err error
 	switch {
 	case a.req.CVD.BuildSource.AndroidCIBuildSource != nil:
-		instanceNumbers, err = a.launchFromAndroidCI(a.req.CVD.BuildSource.AndroidCIBuildSource, instancesCount, op)
+		_, err = a.launchFromAndroidCI(a.req.CVD.BuildSource.AndroidCIBuildSource, instancesCount, op)
 	case a.req.CVD.BuildSource.UserBuildSource != nil:
-		instanceNumbers, err = a.launchFromUserBuild(a.req.CVD.BuildSource.UserBuildSource, instancesCount, op)
+		_, err = a.launchFromUserBuild(a.req.CVD.BuildSource.UserBuildSource, instancesCount, op)
 	default:
 		return &OperationResult{
 			Error: operator.NewBadRequestError(
@@ -181,22 +179,12 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 	if err != nil {
 		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
-	fleet, err := cvdFleet(a.execContext, a.paths.CVDBin())
+	fleet, err := getCVDFleet(a.execContext, a.paths.CVDBin())
 	if err != nil {
 		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
-	relevant := []*cvdInstance{}
-	for _, item := range fleet {
-		n, err := strconv.Atoi(item.InstanceName)
-		if err != nil {
-			return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
-		}
-		if contains(instanceNumbers, uint32(n)) {
-			relevant = append(relevant, item)
-		}
-	}
 	res := &apiv1.CreateCVDResponse{
-		CVDs: fleetToCVDs(relevant),
+		CVDs: fleetToCVDs(fleet),
 	}
 	return &OperationResult{Value: res}
 }

@@ -81,7 +81,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 
 	want := &apiv1.ListCVDsResponse{CVDs: []*apiv1.CVD{
 		{
-			Name:        "1",
+			Name:        "cvd-1",
 			BuildSource: &apiv1.BuildSource{},
 			Status:      "Running",
 			Displays:    []string{"720 x 1280 ( 320 )"},

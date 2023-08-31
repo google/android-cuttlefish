@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -98,7 +99,7 @@ func createRuntimesRootDir(name string) error {
 	return os.Chmod(name, 0774|os.ModeSetgid)
 }
 
-type cvdFleetOutput struct {
+type cvdFleet struct {
 	Groups []*cvdGroup `json:"groups"`
 }
 
@@ -114,45 +115,61 @@ type cvdInstance struct {
 	InstanceDir  string   `json:"instance_dir"`
 }
 
-func cvdFleet(ctx cvd.CVDExecContext, cvdBin string) ([]*cvdInstance, error) {
+func getCVDFleet(ctx cvd.CVDExecContext, cvdBin string) (cvdFleet, error) {
 	stdout := &bytes.Buffer{}
 	cvdCmd := cvd.NewCommand(ctx, cvdBin, []string{"fleet"}, cvd.CommandOpts{Stdout: stdout})
-	err := cvdCmd.Run()
-	if err != nil {
-		return nil, err
+	if err := cvdCmd.Run(); err != nil {
+		return cvdFleet{}, err
 	}
-	output := &cvdFleetOutput{}
-	if err := json.Unmarshal(stdout.Bytes(), output); err != nil {
+	result := cvdFleet{}
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
 		log.Printf("Failed parsing `cvd fleet` ouput. Output: \n\n%s\n", cvd.OutputLogMessage(stdout.String()))
-		return nil, fmt.Errorf("failed parsing `cvd fleet` output: %w", err)
+		return cvdFleet{}, fmt.Errorf("failed parsing `cvd fleet` output: %w", err)
 	}
-	if len(output.Groups) == 0 {
-		return []*cvdInstance{}, nil
-	}
-	// Host orchestrator only works with one instances group.
-	return output.Groups[0].Instances, nil
+	return result, nil
 }
 
-func fleetToCVDs(val []*cvdInstance) []*apiv1.CVD {
-	result := make([]*apiv1.CVD, len(val))
-	for i, item := range val {
-		result[i] = &apiv1.CVD{
-			Name: item.InstanceName,
-			// TODO(b/259725479): Update when `cvd fleet` prints out build information.
-			BuildSource: &apiv1.BuildSource{},
-			Status:      item.Status,
-			Displays:    item.Displays,
+func fleetToCVDs(fleet cvdFleet) []*apiv1.CVD {
+	result := []*apiv1.CVD{}
+	for _, group := range fleet.Groups {
+		for _, ins := range group.Instances {
+			cvd := &apiv1.CVD{
+				Name: encodeCVDName(group.Name, ins.InstanceName),
+				// TODO(b/259725479): Update when `cvd fleet` prints out build information.
+				BuildSource: &apiv1.BuildSource{},
+				Status:      ins.Status,
+				Displays:    ins.Displays,
+			}
+			result = append(result, cvd)
 		}
 	}
 	return result
 }
 
-func CVDLogsDir(ctx cvd.CVDExecContext, cvdBin, name string) (string, error) {
-	instances, err := cvdFleet(ctx, cvdBin)
+// Use same name format used in `GET /devices` API.
+func encodeCVDName(group, name string) string {
+	return group + "-" + name
+}
+
+func decodeCVDName(name string) (string, string, error) {
+	parts := strings.SplitN(name, "-", 2)
+	if len(parts) != 2 {
+		return "", "", errors.New("invalid <GROUP>-<NAME> format")
+	}
+	return parts[0], parts[1], nil
+}
+
+func CVDLogsDir(ctx cvd.CVDExecContext, cvdBin, cvdName string) (string, error) {
+	fleet, err := getCVDFleet(ctx, cvdBin)
 	if err != nil {
 		return "", err
 	}
-	ok, ins := cvdInstances(instances).findByName(name)
+	group, name, err := decodeCVDName(cvdName)
+	if err != nil {
+		return "", operator.NewBadRequestError(fmt.Sprintf("Invalid name %q", name), err)
+	}
+
+	ok, ins := fleet.find(group, name)
 	if !ok {
 		return "", operator.NewNotFoundError(fmt.Sprintf("Instance %q not found", name), nil)
 	}
@@ -160,11 +177,11 @@ func CVDLogsDir(ctx cvd.CVDExecContext, cvdBin, name string) (string, error) {
 }
 
 func HostBugReport(ctx cvd.CVDExecContext, paths IMPaths, out string) error {
-	fleet, err := cvdFleet(ctx, paths.CVDBin())
+	fleet, err := getCVDFleet(ctx, paths.CVDBin())
 	if err != nil {
 		return err
 	}
-	if len(fleet) == 0 {
+	if len(fleet.Groups) == 0 {
 		return operator.NewNotFoundError("no artifacts found", nil)
 	}
 	opts := cvd.CommandOpts{
@@ -511,15 +528,17 @@ func downloadArtifactToFile(buildAPI artifacts.BuildAPI, filename, artifactName,
 	return downloadErr
 }
 
-type cvdInstances []*cvdInstance
-
-func (s cvdInstances) findByName(name string) (bool, *cvdInstance) {
-	for _, e := range s {
-		if e.InstanceName == name {
-			return true, e
+func (f *cvdFleet) find(group, name string) (bool, *cvdInstance) {
+	for _, g := range f.Groups {
+		if g.Name == group {
+			for _, ins := range g.Instances {
+				if ins.InstanceName == name {
+					return true, ins
+				}
+			}
 		}
 	}
-	return false, &cvdInstance{}
+	return false, nil
 }
 
 func runAcloudSetup(execContext cvd.CVDExecContext, artifactsRootDir, artifactsDir, runtimeDir string) {
