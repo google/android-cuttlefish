@@ -108,10 +108,11 @@ type cvdGroup struct {
 }
 
 type cvdInstance struct {
-	InstanceName string   `json:"instance_name"`
-	Status       string   `json:"status"`
-	Displays     []string `json:"displays"`
-	InstanceDir  string   `json:"instance_dir"`
+	InstanceName   string   `json:"instance_name"`
+	Status         string   `json:"status"`
+	Displays       []string `json:"displays"`
+	InstanceDir    string   `json:"instance_dir"`
+	WebRTCDeviceID string   `json:"webrtc_device_id"`
 }
 
 func cvdFleet(ctx cvd.CVDExecContext, cvdBin string) ([]*cvdInstance, error) {
@@ -139,9 +140,10 @@ func fleetToCVDs(val []*cvdInstance) []*apiv1.CVD {
 		result[i] = &apiv1.CVD{
 			Name: item.InstanceName,
 			// TODO(b/259725479): Update when `cvd fleet` prints out build information.
-			BuildSource: &apiv1.BuildSource{},
-			Status:      item.Status,
-			Displays:    item.Displays,
+			BuildSource:    &apiv1.BuildSource{},
+			Status:         item.Status,
+			Displays:       item.Displays,
+			WebRTCDeviceID: item.WebRTCDeviceID,
 		}
 	}
 	return result
