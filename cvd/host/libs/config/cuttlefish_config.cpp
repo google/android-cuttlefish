@@ -182,8 +182,6 @@ void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
   (*dictionary_)[kCrosvmBinary] = crosvm_binary;
 }
 
-bool CuttlefishConfig::IsCrosvm() const { return vm_manager() == "crosvm"; }
-
 static constexpr char kGem5DebugFlags[] = "gem5_debug_flags";
 std::string CuttlefishConfig::gem5_debug_flags() const {
   return (*dictionary_)[kGem5DebugFlags].asString();
@@ -389,6 +387,16 @@ int CuttlefishConfig::netsim_instance_num() const {
 }
 void CuttlefishConfig::set_netsim_instance_num(int netsim_instance_num) {
   (*dictionary_)[kNetsimInstanceNum] = netsim_instance_num;
+}
+
+static constexpr char kNetsimConnectorInstanceNum[] =
+    "netsim_connector_instance_num";
+int CuttlefishConfig::netsim_connector_instance_num() const {
+  return (*dictionary_)[kNetsimConnectorInstanceNum].asInt();
+}
+void CuttlefishConfig::set_netsim_connector_instance_num(
+    int netsim_instance_num) {
+  (*dictionary_)[kNetsimConnectorInstanceNum] = netsim_instance_num;
 }
 
 static constexpr char kNetsimArgs[] = "netsim_args";
