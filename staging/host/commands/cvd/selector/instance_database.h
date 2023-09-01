@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
