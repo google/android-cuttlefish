@@ -189,6 +189,14 @@ class CuttlefishConfig {
   bool netsim_radio_enabled(NetsimRadio flag) const;
   void set_netsim_instance_num(int netsim_instance_num);
   int netsim_instance_num() const;
+  // Netsim has a built-in connector to forward packets to another daemon based
+  // on instance number.  This is set in the serial launch case when FLAGS
+  // rootcanal_instance_num is specified. The non-netsim case uses
+  // bluetooth_connector and rootcanal_hci_port for the same purpose. Purposely
+  // restricted to legacy bluetooth serial invocation because new cases should
+  // use cvd.
+  int netsim_connector_instance_num() const;
+  void set_netsim_connector_instance_num(int netsim_instance_num);
   void set_netsim_args(const std::string& netsim_args);
   std::vector<std::string> netsim_args() const;
 
