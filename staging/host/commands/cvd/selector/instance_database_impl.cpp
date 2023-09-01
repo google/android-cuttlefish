@@ -208,6 +208,20 @@ InstanceDatabase::FindGroupsByInstanceName(
   return subset;
 }
 
+Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesByHome(
+    const std::string& home) const {
+  auto collector =
+      [&home](const std::unique_ptr<LocalInstanceGroup>& group)
+      -> Result<Set<ConstRef<LocalInstance>>> {
+    CF_EXPECT(group != nullptr);
+    CF_EXPECT(group->HomeDir() == home, "Group Home: " << group->HomeDir()
+              << " is different than input home query: " << home);
+    return (group->FindAllInstances());
+  };
+  return CollectAllElements<LocalInstance, LocalInstanceGroup>(
+      collector, local_instance_groups_);
+}
+
 Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesById(
     const std::string& id) const {
   int parsed_int = 0;
