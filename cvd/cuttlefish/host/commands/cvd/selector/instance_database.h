@@ -134,6 +134,8 @@ class InstanceDatabase {
       const Value& group_name) const;
   Result<Set<ConstRef<LocalInstanceGroup>>> FindGroupsByInstanceName(
       const Value& instance_name) const;
+  Result<Set<ConstRef<LocalInstance>>> FindInstancesByHome(
+      const Value& home) const;
   Result<Set<ConstRef<LocalInstance>>> FindInstancesById(const Value& id) const;
   Result<Set<ConstRef<LocalInstance>>> FindInstancesByGroupName(
       const Value& instance_specific_name) const;
