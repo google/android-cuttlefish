@@ -452,9 +452,7 @@ PRODUCT_PACKAGES += $(LOCAL_THERMAL_HAL_PRODUCT_PACKAGE)
 # NeuralNetworks HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.neuralnetworks-service-sample-all \
-    android.hardware.neuralnetworks-service-sample-limited \
-    android.hardware.neuralnetworks-shim-service-sample
+    com.android.hardware.neuralnetworks
 
 # USB
 PRODUCT_PACKAGES += \
