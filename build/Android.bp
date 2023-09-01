@@ -135,12 +135,6 @@ cvd_host_tools = [
     "vulkan.pastel",
 ]
 
-cvd_host_tools_aarch64 = [
-    "aarch64_linux_gnu_crosvm",
-    "aarch64_linux_gnu_libgfxstream_backend.so_for_crosvm",
-    "aarch64_linux_gnu_libminijail.so_for_crosvm",
-]
-
 cvd_openwrt_images = [
     "openwrt_kernel_x86_64",
     "openwrt_rootfs_x86_64",
@@ -183,6 +177,17 @@ cvd_host_acloud_data = [
     "default.config_host",
 ]
 
+cvd_host_x86_64 = [
+    "x86_64_linux_gnu_crosvm",
+    "x86_64_linux_gnu_libdrm.so.2_for_crosvm",
+    "x86_64_linux_gnu_libepoxy.so.0_for_crosvm",
+    "x86_64_linux_gnu_libffi.so.7_for_crosvm",
+    "x86_64_linux_gnu_libgbm.so.1_for_crosvm",
+    "x86_64_linux_gnu_libgfxstream_backend.so_for_crosvm",
+    "x86_64_linux_gnu_libminijail.so_for_crosvm",
+    "x86_64_linux_gnu_libvirglrenderer.so.1_for_crosvm",
+    "x86_64_linux_gnu_libwayland_client.so.0_for_crosvm",
+]
 cvd_host_seccomp_policy_x86_64 = [
     "9p_device.policy_x86_64",
     "balloon_device.policy_x86_64",
@@ -198,7 +203,9 @@ cvd_host_seccomp_policy_x86_64 = [
     "gpu_render_server.policy_x86_64",
     "input_device.policy_x86_64",
     "iommu_device.policy_x86_64",
+    "jail_warden.policy_x86_64",
     "net_device.policy_x86_64",
+    "net_device_vhost_user.policy_x86_64",
     "null_audio_device.policy_x86_64",
     "pmem_device.policy_x86_64",
     "rng_device.policy_x86_64",
@@ -207,10 +214,13 @@ cvd_host_seccomp_policy_x86_64 = [
     "serial_device_vvu.policy_x86_64",
     "snd_cras_device.policy_x86_64",
     "snd_null_device.policy_x86_64",
+    "swap_monitor.policy_x86_64",
     "tpm_device.policy_x86_64",
     "vfio_device.policy_x86_64",
     "vhost_net_device.policy_x86_64",
     "vhost_vsock_device.policy_x86_64",
+    "vhost_vsock_device_vhost_user.policy_x86_64",
+    "vhost_vsock_device_vvu.policy_x86_64",
     "video_device.policy_x86_64",
     "vios_audio_device.policy_x86_64",
     "vtpm_proxy_device.policy_x86_64",
@@ -219,6 +229,17 @@ cvd_host_seccomp_policy_x86_64 = [
     "xhci_device.policy_x86_64",
 ]
 
+cvd_host_aarch64 = [
+    "aarch64_linux_gnu_crosvm",
+    "aarch64_linux_gnu_libdrm.so.2_for_crosvm",
+    "aarch64_linux_gnu_libepoxy.so.0_for_crosvm",
+    "aarch64_linux_gnu_libffi.so.7_for_crosvm",
+    "aarch64_linux_gnu_libgbm.so.1_for_crosvm",
+    "aarch64_linux_gnu_libgfxstream_backend.so_for_crosvm",
+    "aarch64_linux_gnu_libminijail.so_for_crosvm",
+    "aarch64_linux_gnu_libvirglrenderer.so.1_for_crosvm",
+    "aarch64_linux_gnu_libwayland_client.so.0_for_crosvm",
+]
 cvd_host_seccomp_policy_aarch64 = [
     "9p_device.policy_aarch64",
     "balloon_device.policy_aarch64",
@@ -350,7 +371,7 @@ cvd_host_package_customization {
             },
         },
         arm64: {
-            deps: cvd_host_tools_aarch64,
+            deps: cvd_host_aarch64,
             multilib: {
                 common: {
                     deps: cvd_host_seccomp_policy_aarch64,
