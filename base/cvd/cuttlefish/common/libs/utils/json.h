@@ -53,4 +53,16 @@ Result<std::vector<T>> GetArrayValues(
   return result;
 }
 
+inline bool HasValue(const Json::Value& root,
+                     const std::vector<std::string>& selectors) {
+  const Json::Value* traversal = &root;
+  for (const auto& selector : selectors) {
+    if (!traversal->isMember(selector)) {
+      return false;
+    }
+    traversal = &(*traversal)[selector];
+  }
+  return true;
+}
+
 }  // namespace cuttlefish
