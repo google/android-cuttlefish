@@ -157,8 +157,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     launch_cmd.add_args(load_directories.system_image_directory_flag);
 
     auto selector_opts = launch_cmd.mutable_selector_opts();
-    selector_opts->add_args(
-        std::string("--") + selector::SelectorFlags::kDisableDefaultGroup);
+
     for (const auto& flag: cvd_flags.selector_flags) {
       selector_opts->add_args(flag);
     }
