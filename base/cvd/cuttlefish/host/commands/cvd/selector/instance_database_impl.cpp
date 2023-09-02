@@ -16,12 +16,9 @@
 
 #include "host/commands/cvd/selector/instance_database.h"
 
-#include <algorithm>
-#include <regex>
-#include <sstream>
-
 #include <android-base/file.h>
 #include <android-base/parseint.h>
+#include <android-base/scopeguard.h>
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
@@ -48,22 +45,21 @@ void InstanceDatabase::Clear() { local_instance_groups_.clear(); }
 
 Result<ConstRef<LocalInstanceGroup>> InstanceDatabase::AddInstanceGroup(
     const AddInstanceGroupParam& param) {
-  CF_EXPECT(IsValidGroupName(param.group_name),
-            "GroupName " << param.group_name << " is ill-formed.");
-  CF_EXPECT(EnsureDirectoryExists(param.home_dir),
-            "HOME dir, " << param.home_dir << " does not exist");
-  CF_EXPECT(PotentiallyHostArtifactsPath(param.host_artifacts_path),
-            "ANDROID_HOST_OUT, " << param.host_artifacts_path
-                                 << " is not a tool dir");
+  CF_EXPECTF(IsValidGroupName(param.group_name),
+             "GroupName \"{}\" is ill-formed.", param.group_name);
+  CF_EXPECTF(EnsureDirectoryExists(param.home_dir),
+             "HOME dir, \"{}\" neither exists nor can be created.",
+             param.home_dir);
+  CF_EXPECTF(PotentiallyHostArtifactsPath(param.host_artifacts_path),
+             "ANDROID_HOST_OUT, \"{}\" is not a tool directory",
+             param.host_artifacts_path);
   std::vector<Query> queries = {{kHomeField, param.home_dir},
                                 {kGroupNameField, param.group_name}};
   for (const auto& query : queries) {
     auto instance_groups =
         CF_EXPECT(Find<LocalInstanceGroup>(query, group_handlers_));
-    std::stringstream err_msg;
-    err_msg << query.field_name_ << " : " << query.field_value_
-            << " is already taken.";
-    CF_EXPECT(instance_groups.empty(), err_msg.str());
+    CF_EXPECTF(instance_groups.empty(), "[\"{}\" : \"{}\"] is already taken",
+               query.field_name_, query.field_value_);
   }
   auto new_group =
       new LocalInstanceGroup({.group_name = param.group_name,
@@ -83,23 +79,20 @@ Result<void> InstanceDatabase::AddInstance(const std::string& group_name,
   LocalInstanceGroup* group_ptr = CF_EXPECT(FindMutableGroup(group_name));
   LocalInstanceGroup& group = *group_ptr;
 
-  CF_EXPECT(IsValidInstanceName(instance_name),
-            "instance_name " << instance_name << " is invalid.");
+  CF_EXPECTF(IsValidInstanceName(instance_name),
+             "instance_name \"{}\" is invalid", instance_name);
   auto itr = FindIterator(group);
-  CF_EXPECT(
-      itr != local_instance_groups_.end() && *itr != nullptr,
-      "Adding instances to non-existing group " + group.InternalGroupName());
+  CF_EXPECTF(itr != local_instance_groups_.end() && *itr != nullptr,
+             "Adding instances to non-existing group \"{}\"",
+             group.InternalGroupName());
 
   auto instances =
       CF_EXPECT(FindInstances({kInstanceIdField, std::to_string(id)}));
-  if (instances.size() != 0) {
-    return CF_ERR("instance id " << id << " is taken");
-  }
+  CF_EXPECTF(instances.empty(), "instance id \"{}\" is taken.", id);
 
   auto instances_by_name = CF_EXPECT((*itr)->FindByInstanceName(instance_name));
-  if (!instances_by_name.empty()) {
-    return CF_ERR("instance name " << instance_name << " is taken");
-  }
+  CF_EXPECTF(instances_by_name.empty(),
+             "instance name \"{}\" is already taken.", instance_name);
   return (*itr)->AddInstance(id, instance_name);
 }
 
@@ -128,8 +121,8 @@ Result<LocalInstanceGroup*> InstanceDatabase::FindMutableGroup(
       break;
     }
   }
-  CF_EXPECT(group_ptr != nullptr,
-            "Instance Group named as " << group_name << " is not found.");
+  CF_EXPECTF(group_ptr != nullptr,
+             "Instance Group named as \"{}\" is not found.", group_name);
   return group_ptr;
 }
 
@@ -214,8 +207,10 @@ Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesByHome(
       [&home](const std::unique_ptr<LocalInstanceGroup>& group)
       -> Result<Set<ConstRef<LocalInstance>>> {
     CF_EXPECT(group != nullptr);
-    CF_EXPECT(group->HomeDir() == home, "Group Home: " << group->HomeDir()
-              << " is different than input home query: " << home);
+    CF_EXPECTF(group->HomeDir() == home,
+               "Group Home, \"{}\", is different from the input home query "
+               "\"{}\"",
+               group->HomeDir(), home);
     return (group->FindAllInstances());
   };
   return CollectAllElements<LocalInstance, LocalInstanceGroup>(
@@ -225,9 +220,8 @@ Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesByHome(
 Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesById(
     const std::string& id) const {
   int parsed_int = 0;
-  if (!android::base::ParseInt(id, &parsed_int)) {
-    return CF_ERR(id << " cannot be converted to an integer");
-  }
+  CF_EXPECTF(android::base::ParseInt(id, &parsed_int),
+             "\"{}\" cannot be converted to an integer.", id);
   auto collector =
       [parsed_int](const std::unique_ptr<LocalInstanceGroup>& group)
       -> Result<Set<ConstRef<LocalInstance>>> {
@@ -306,6 +300,10 @@ Result<void> InstanceDatabase::LoadGroupFromJson(
   if (build_id) {
     CF_EXPECT(SetBuildId(group_name, *build_id));
   }
+  android::base::ScopeGuard remove_already_added_new_group(
+      [&new_group_ref, this]() {
+        this->RemoveInstanceGroup(new_group_ref.Get());
+      });
   const Json::Value& instances_json_array =
       group_json[LocalInstanceGroup::kJsonInstances];
   for (int i = 0; i < instances_json_array.size(); i++) {
@@ -314,20 +312,17 @@ Result<void> InstanceDatabase::LoadGroupFromJson(
         instance_json[LocalInstance::kJsonInstanceName].asString();
     const std::string instance_id =
         instance_json[LocalInstance::kJsonInstanceId].asString();
+
     int id;
     auto parse_result =
         android::base::ParseInt(instance_id, std::addressof(id));
-    if (!parse_result) {
-      CF_EXPECT(parse_result == true,
-                "Invalid instance ID in instance json: " << instance_id);
-      RemoveInstanceGroup(new_group_ref.Get());
-    }
-    auto add_instance_result = AddInstance(group_name, id, instance_name);
-    if (!add_instance_result.ok()) {
-      RemoveInstanceGroup(new_group_ref.Get());
-      CF_EXPECT(std::move(add_instance_result));
-    }
+    CF_EXPECTF(parse_result == true, "Invalid instance ID in instance json: {}",
+               instance_id);
+    CF_EXPECTF(AddInstance(group_name, id, instance_name),
+               "Adding instance [{} : \"{}\"] to the group \"{}\" failed.",
+               instance_name, id, group_name);
   }
+  remove_already_added_new_group.Disable();
   return {};
 }
 
