@@ -583,10 +583,6 @@ PRODUCT_SYSTEM_PROPERTIES += \
 PRODUCT_PACKAGES += \
    dlkm_loader
 
-# NFC AIDL HAL
-PRODUCT_PACKAGES += \
-    com.google.cf.nfc
-
 # CAS AIDL HAL
 PRODUCT_PACKAGES += \
     android.hardware.cas-service.example

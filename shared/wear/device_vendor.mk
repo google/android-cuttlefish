@@ -49,6 +49,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PRODUCT_PROPERTIES += \
     config.disable_cameraservice=true
 
+# NFC AIDL HAL
+PRODUCT_PACKAGES += \
+    com.google.cf.nfc
+
 PRODUCT_CHARACTERISTICS := nosdcard,watch
 
 TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/wear/android-info.txt
