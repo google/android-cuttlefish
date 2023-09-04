@@ -36,6 +36,7 @@ PRODUCT_PACKAGES += \
     librs_jni \
     ManagedProvisioning \
     MmsService \
+    NfcNci \
     netutils-wrapper-1.0 \
     screenrecord \
     StatementService \
