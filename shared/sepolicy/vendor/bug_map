@@ -2,3 +2,4 @@ init system_lib_file dir b/133444385
 init system_lib_file file b/133444385
 priv_app radio_vendor_data_file dir b/188833462
 rs privapp_data_file file b/291029681
+mediashell_app rootfs dir b/293075059
