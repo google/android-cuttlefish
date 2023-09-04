@@ -604,10 +604,6 @@ PRODUCT_VENDOR_PROPERTIES += ro.vendor.fingerprint_virtual_hal_start=true
 PRODUCT_PACKAGES += \
    dlkm_loader
 
-# NFC AIDL HAL
-PRODUCT_PACKAGES += \
-    com.google.cf.nfc
-
 # CAS AIDL HAL
 PRODUCT_PACKAGES += \
     android.hardware.cas-service.example
