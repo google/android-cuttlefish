@@ -67,6 +67,7 @@ apex {
         "nfc-service-cuttlefish.rc", // init_rc
         "nfc-service-cuttlefish.xml", // vintf_fragments
         "android.hardware.nfc.prebuilt.xml", // permission
+        "android.hardware.nfc.hce.prebuilt.xml", // permission
         "libnfc-hal-cf.conf-default", // conf
     ],
 }
