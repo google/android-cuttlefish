@@ -122,6 +122,8 @@ message MetricsEvent {
   // The company that's sending the log event.
   optional string company = 10;
 
+  // TODO(moelsherif) : The following fields are not yet implemented.
+
   // The allowlist of launch_cvd flags attached to the launch_cvd command
   // associated with this instance
   repeated string launch_cvd_flags = 11;
