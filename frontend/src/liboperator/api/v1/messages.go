@@ -159,6 +159,8 @@ type CVD struct {
 	Status string `json:"status"`
 	// [Output Only]
 	Displays []string `json:"displays"`
+	// [Output Only]
+	WebRTCDeviceID string `json:"webrtc_device_id"`
 }
 
 type DeviceInfoReply struct {
