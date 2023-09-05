@@ -156,6 +156,9 @@ class CuttlefishConfig {
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
 
+  void set_enable_automotive_proxy(bool enable_automotive_proxy);
+  bool enable_automotive_proxy() const;
+
   // Bluetooth is enabled by bt_connector and rootcanal
   void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
   bool enable_host_bluetooth_connector() const;
@@ -172,8 +175,6 @@ class CuttlefishConfig {
   int casimir_instance_num() const;
   void set_casimir_nci_port(int port);
   int casimir_nci_port() const;
-  void set_casimir_rf_port(int port);
-  int casimir_rf_port() const;
 
   void set_enable_wifi(const bool enable_wifi);
   bool enable_wifi() const;
@@ -189,14 +190,6 @@ class CuttlefishConfig {
   bool netsim_radio_enabled(NetsimRadio flag) const;
   void set_netsim_instance_num(int netsim_instance_num);
   int netsim_instance_num() const;
-  // Netsim has a built-in connector to forward packets to another daemon based
-  // on instance number.  This is set in the serial launch case when FLAGS
-  // rootcanal_instance_num is specified. The non-netsim case uses
-  // bluetooth_connector and rootcanal_hci_port for the same purpose. Purposely
-  // restricted to legacy bluetooth serial invocation because new cases should
-  // use cvd.
-  int netsim_connector_instance_num() const;
-  void set_netsim_connector_instance_num(int netsim_instance_num);
   void set_netsim_args(const std::string& netsim_args);
   std::vector<std::string> netsim_args() const;
 
@@ -284,8 +277,6 @@ class CuttlefishConfig {
   std::string snapshot_path() const;
   void set_snapshot_path(const std::string& snapshot_path);
 
-  bool IsCrosvm() const;
-
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
@@ -369,7 +360,6 @@ class CuttlefishConfig {
     std::string PerInstanceInternalPath(const std::string& file_name) const;
     std::string PerInstanceLogPath(const std::string& file_name) const;
 
-    std::string CrosvmSocketPath() const;
     std::string instance_dir() const;
 
     std::string instance_internal_dir() const;

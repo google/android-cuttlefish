@@ -182,8 +182,6 @@ void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
   (*dictionary_)[kCrosvmBinary] = crosvm_binary;
 }
 
-bool CuttlefishConfig::IsCrosvm() const { return vm_manager() == "crosvm"; }
-
 static constexpr char kGem5DebugFlags[] = "gem5_debug_flags";
 std::string CuttlefishConfig::gem5_debug_flags() const {
   return (*dictionary_)[kGem5DebugFlags].asString();
@@ -302,6 +300,15 @@ bool CuttlefishConfig::enable_host_bluetooth_connector() const {
   return (*dictionary_)[kenableHostBluetoothConnector].asBool();
 }
 
+static constexpr char kenableAutomotiveProxy[] = "enable_automotive_proxy";
+void CuttlefishConfig::set_enable_automotive_proxy(
+    bool enable_automotive_proxy) {
+  (*dictionary_)[kenableAutomotiveProxy] = enable_automotive_proxy;
+}
+bool CuttlefishConfig::enable_automotive_proxy() const {
+  return (*dictionary_)[kenableAutomotiveProxy].asBool();
+}
+
 static constexpr char kenableHostNfc[] = "enable_host_nfc";
 void CuttlefishConfig::set_enable_host_nfc(bool enable_host_nfc) {
   (*dictionary_)[kenableHostNfc] = enable_host_nfc;
@@ -352,14 +359,6 @@ int CuttlefishConfig::casimir_nci_port() const {
   return (*dictionary_)[kCasimirNciPort].asInt();
 }
 
-static constexpr char kCasimirRfPort[] = "casimir_rf_port";
-void CuttlefishConfig::set_casimir_rf_port(int port) {
-  (*dictionary_)[kCasimirRfPort] = port;
-}
-int CuttlefishConfig::casimir_rf_port() const {
-  return (*dictionary_)[kCasimirRfPort].asInt();
-}
-
 static constexpr char kenableWifi[] = "enable_wifi";
 void CuttlefishConfig::set_enable_wifi(bool enable_wifi) {
   (*dictionary_)[kenableWifi] = enable_wifi;
@@ -389,16 +388,6 @@ int CuttlefishConfig::netsim_instance_num() const {
 }
 void CuttlefishConfig::set_netsim_instance_num(int netsim_instance_num) {
   (*dictionary_)[kNetsimInstanceNum] = netsim_instance_num;
-}
-
-static constexpr char kNetsimConnectorInstanceNum[] =
-    "netsim_connector_instance_num";
-int CuttlefishConfig::netsim_connector_instance_num() const {
-  return (*dictionary_)[kNetsimConnectorInstanceNum].asInt();
-}
-void CuttlefishConfig::set_netsim_connector_instance_num(
-    int netsim_instance_num) {
-  (*dictionary_)[kNetsimConnectorInstanceNum] = netsim_instance_num;
 }
 
 static constexpr char kNetsimArgs[] = "netsim_args";
