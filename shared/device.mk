@@ -376,7 +376,7 @@ PRODUCT_PACKAGES += \
 LOCAL_ENABLE_OEMLOCK ?= true
 ifeq ($(LOCAL_ENABLE_OEMLOCK),true)
 ifeq ($(LOCAL_OEMLOCK_PRODUCT_PACKAGE),)
-    LOCAL_OEMLOCK_PRODUCT_PACKAGE := android.hardware.oemlock-service.remote
+    LOCAL_OEMLOCK_PRODUCT_PACKAGE := com.google.cf.oemlock
 endif
 PRODUCT_PACKAGES += \
     $(LOCAL_OEMLOCK_PRODUCT_PACKAGE)
