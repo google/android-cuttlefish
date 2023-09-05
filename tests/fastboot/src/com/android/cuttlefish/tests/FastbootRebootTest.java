@@ -24,7 +24,6 @@ import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -60,7 +59,6 @@ public class FastbootRebootTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    @Ignore("b/296629925")
     public void testRebootFastboot() throws Exception {
         getDevice().rebootIntoFastbootd();
         assertEquals(TestDeviceState.FASTBOOTD, getDevice().getDeviceState());
