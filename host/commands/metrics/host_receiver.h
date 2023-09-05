@@ -25,6 +25,8 @@ class MetricsHostReceiver {
   const CuttlefishConfig& config_;
   std::thread thread_;
   void ServerLoop();
+  // Send different Clearcut events based on the received message
+  void ProcessMessage(const std::string& text);
 
  public:
   MetricsHostReceiver(const cuttlefish::CuttlefishConfig& config);
