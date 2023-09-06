@@ -46,3 +46,34 @@ cc_binary {
 }
 
 subdirs = ["proto"]
+
+cc_test_host {
+    name: "metrics_test",
+    shared_libs: [
+        "cf_proto",
+        "libbase",
+        "libcurl",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libfruit",
+        "libjsoncpp",
+        "liblog",
+        "libprotobuf-cpp-lite",
+        "libz",
+    ],
+    srcs: [
+        "utils.cc",
+        "unittest/main_test.cc",
+        "unittest/utils_tests.cpp",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libcuttlefish_msg_queue",
+        "libgflags",
+        "libgmock",
+    ],
+    test_options: {
+        unit_test: true,
+    },
+    defaults: ["cuttlefish_host"],
+}
