@@ -40,12 +40,12 @@ using cuttlefish::MetricsExitCodes;
 
 namespace metrics {
 
-static std::string hashing(std::string input) {
+static std::string Hashing(const std::string& input) {
   const std::hash<std::string> hasher;
   return std::to_string(hasher(input));
 }
 
-cuttlefish::MetricsEvent::OsType osType() {
+cuttlefish::MetricsEvent::OsType GetOsType() {
   struct utsname buf;
   if (uname(&buf) != 0) {
     LOG(ERROR) << "failed to retrieve system information";
@@ -72,17 +72,17 @@ cuttlefish::MetricsEvent::OsType osType() {
   return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
 }
 
-std::string sessionId(uint64_t now_ms) {
+std::string GenerateSessionId(uint64_t now_ms) {
   uint64_t now_day = now_ms / 1000 / 60 / 60 / 24;
-  return hashing(macAddress() + std::to_string(now_day));
+  return Hashing(GetMacAddress() + std::to_string(now_day));
 }
 
-std::string cfVersion() {
+std::string GetCfVersion() {
   // TODO: per ellisr@ leave empty for now
   return "";
 }
 
-std::string osVersion() {
+std::string GetOsVersion() {
   struct utsname buf;
   if (uname(&buf) != 0) {
     LOG(ERROR) << "failed to retrieve system information";
@@ -91,7 +91,7 @@ std::string osVersion() {
   return version;
 }
 
-std::string macAddress() {
+std::string GetMacAddress() {
   int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
   if (sock == -1) {
     LOG(ERROR) << "couldn't connect to socket";
@@ -133,12 +133,12 @@ std::string macAddress() {
   return mac;
 }
 
-std::string company() {
+std::string GetCompany() {
   // TODO: per ellisr@ leave hard-coded for now
   return "GOOGLE";
 }
 
-cuttlefish::MetricsEvent::VmmType vmmManager() {
+cuttlefish::MetricsEvent::VmmType GetVmmManager() {
   auto config = cuttlefish::CuttlefishConfig::Get();
   CHECK(config) << "Could not open cuttlefish config";
   auto vmm = config->vm_manager();
@@ -151,18 +151,19 @@ cuttlefish::MetricsEvent::VmmType vmmManager() {
   return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_UNSPECIFIED;
 }
 
-std::string vmmVersion() {
+std::string GetVmmVersion() {
   // TODO: per ellisr@ leave empty for now
   return "";
 }
 
-uint64_t epochTimeMs() {
+uint64_t GetEpochTimeMs() {
   auto now = std::chrono::system_clock::now().time_since_epoch();
   uint64_t milliseconds_since_epoch =
       std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
   return milliseconds_since_epoch;
 }
 
+// TODO (moelsherif@): remove this function in the future since it is not used
 cuttlefish::CuttlefishLogEvent* sampleEvent() {
   cuttlefish::CuttlefishLogEvent* event = new cuttlefish::CuttlefishLogEvent();
   event->set_device_type(
@@ -170,7 +171,8 @@ cuttlefish::CuttlefishLogEvent* sampleEvent() {
   return event;
 }
 
-std::string protoToStr(LogEvent* event) {
+// TODO (moelsherif@): remove this function in the future since it is not used
+std::string ProtoToString(LogEvent* event) {
   std::string output;
   if (!event->SerializeToString(&output)) {
     LOG(ERROR) << "failed to serialize proto LogEvent";
@@ -183,7 +185,8 @@ size_t curl_out_writer([[maybe_unused]] char* response, size_t size,
   return size * nmemb;
 }
 
-MetricsExitCodes postReq(std::string output, metrics::ClearcutServer server) {
+MetricsExitCodes PostRequest(const std::string& output,
+                             metrics::ClearcutServer server) {
   const char *clearcut_scheme, *clearcut_host, *clearcut_path, *clearcut_port;
   switch (server) {
     case metrics::kLocal:
