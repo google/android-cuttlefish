@@ -34,6 +34,7 @@ message CuttlefishLogEvent {
     CUTTLEFISH_DEVICE_TYPE_HOST = 1;
 
     // A log event that was sent by an Cuttlefish guest device.
+    //TODO(moelsherif) : This event is not coverted yet in the code
     CUTTLEFISH_DEVICE_TYPE_GUEST = 2;
   }
 
