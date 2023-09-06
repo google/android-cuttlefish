@@ -27,6 +27,7 @@ message ClientInfo {
   optional int32 client_type = 1;
 }
 
+// TODO(moelsherif) : This message is not used yet. It will be used to send back the next request wait time.
 message LogResponse {
   optional int64 next_request_wait_millis = 1;
 }
