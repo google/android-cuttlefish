@@ -88,7 +88,6 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
         instance_.PerInstanceInternalPath("keymint_fifo_vm.in"),
         instance_.PerInstanceInternalPath("keymint_fifo_vm.out"),
     };
-    std::vector<SharedFD> fifos;
     for (const auto& path : fifo_paths) {
       unlink(path.c_str());
       CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
