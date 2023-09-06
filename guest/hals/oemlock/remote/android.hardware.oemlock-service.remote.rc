@@ -1,4 +1,4 @@
-service vendor.oemlock_default /vendor/bin/hw/android.hardware.oemlock-service.remote /dev/hvc10
+service vendor.oemlock_default /apex/com.google.cf.oemlock/bin/hw/android.hardware.oemlock-service.remote /dev/hvc10
     class hal
     user hsm
     group hsm

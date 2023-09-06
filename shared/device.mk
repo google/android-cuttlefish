@@ -388,7 +388,7 @@ PRODUCT_PACKAGES += \
 LOCAL_ENABLE_OEMLOCK ?= true
 ifeq ($(LOCAL_ENABLE_OEMLOCK),true)
 ifeq ($(LOCAL_OEMLOCK_PRODUCT_PACKAGE),)
-    LOCAL_OEMLOCK_PRODUCT_PACKAGE := android.hardware.oemlock-service.remote
+    LOCAL_OEMLOCK_PRODUCT_PACKAGE := com.google.cf.oemlock
 endif
 PRODUCT_PACKAGES += \
     $(LOCAL_OEMLOCK_PRODUCT_PACKAGE)
@@ -399,7 +399,7 @@ endif
 # Health
 ifeq ($(LOCAL_HEALTH_PRODUCT_PACKAGE),)
     LOCAL_HEALTH_PRODUCT_PACKAGE := \
-    android.hardware.health-service.cuttlefish \
+    com.google.cf.health \
     android.hardware.health-service.cuttlefish_recovery \
 
 endif
@@ -407,7 +407,7 @@ PRODUCT_PACKAGES += $(LOCAL_HEALTH_PRODUCT_PACKAGE)
 
 # Health Storage
 PRODUCT_PACKAGES += \
-    android.hardware.health.storage-service.cuttlefish
+    com.google.cf.health.storage
 
 PRODUCT_PACKAGES += \
     android.hardware.input.processor-service.example
