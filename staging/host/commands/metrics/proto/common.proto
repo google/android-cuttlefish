@@ -15,6 +15,7 @@
  */
 syntax = "proto2";
 
+//TODO(moelsherif) : This message is not used yet
 message Duration {
   required int64 seconds = 1;
   required int32 nanos = 2;
@@ -25,6 +26,7 @@ message Timestamp {
   required int32 nanos = 2;
 }
 
+//TODO(moelsherif) : This message is not used yet
 enum UserType {
   GOOGLE = 0;
   EXTERNAL = 1;
