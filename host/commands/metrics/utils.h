@@ -16,6 +16,8 @@
 #pragma once
 
 #include <string.h>
+
+#include "host/commands/metrics/metrics_defs.h"
 #include "host/commands/metrics/proto/cf_metrics_proto.h"
 
 namespace metrics {
