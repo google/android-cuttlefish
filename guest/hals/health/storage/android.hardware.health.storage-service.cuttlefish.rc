@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-service vendor.health-storage-default /vendor/bin/hw/android.hardware.health.storage-service.cuttlefish
+service vendor.health-storage-default /apex/com.google.cf.health.storage/bin/hw/android.hardware.health.storage-service.cuttlefish
     interface aidl android.hardware.health.storage.IStorage/default
     oneshot
     disabled
