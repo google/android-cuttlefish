@@ -959,6 +959,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_sig_server_strict(FLAGS_verify_sig_server_certificate);
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
+  // TODO(moelsherif): Handle this flag (set_metrics_binary) in the future
 
 #ifdef ENFORCE_MAC80211_HWSIM
   tmp_config_obj.set_virtio_mac80211_hwsim(true);
