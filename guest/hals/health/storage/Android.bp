@@ -23,10 +23,7 @@ cc_binary {
     vendor: true,
     defaults: ["hidl_defaults"],
     relative_install_path: "hw",
-    init_rc: ["android.hardware.health.storage-service.cuttlefish.rc"],
-    vintf_fragments: [
-        "manifest_android.hardware.health.storage.cuttlefish.xml",
-    ],
+
     srcs: [
         "Storage.cpp",
         "service.cpp",
@@ -37,10 +34,47 @@ cc_binary {
         "-Werror",
     ],
 
-    shared_libs: [
+    static_libs: [
         "android.hardware.health.storage-V1-ndk",
         "libbase",
-        "libbinder_ndk",
         "libutils",
     ],
+
+    stl: "c++_static",
+
+    shared_libs: [
+        "libbinder_ndk",
+        "liblog",
+    ],
+
+    installable: false, // installed in APEX
+}
+
+apex {
+    name: "com.google.cf.health.storage",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: ["android.hardware.health.storage-service.cuttlefish"],
+    prebuilts: [
+        "android.hardware.health.storage-service.cuttlefish.rc",
+        "android.hardware.health.storage-service.cuttlefish.xml",
+    ],
+}
+
+prebuilt_etc {
+    name: "android.hardware.health.storage-service.cuttlefish.rc",
+    src: "android.hardware.health.storage-service.cuttlefish.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.health.storage-service.cuttlefish.xml",
+    src: "android.hardware.health.storage-service.cuttlefish.xml",
+    sub_dir: "vintf",
+    installable: false,
 }

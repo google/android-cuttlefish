@@ -23,20 +23,54 @@ cc_binary {
     defaults: ["cuttlefish_guest_only"],
     vendor: true,
     relative_install_path: "hw",
-    init_rc: ["android.hardware.oemlock-service.remote.rc"],
 
     srcs: [
         "remote_oemlock.cpp",
         "service.cpp",
     ],
 
-    shared_libs: [
+    static_libs: [
         "android.hardware.oemlock-V1-ndk",
         "libbase",
-        "libbinder_ndk",
         "libcuttlefish_fs",
         "libcuttlefish_security",
     ],
 
-    vintf_fragments: ["android.hardware.oemlock-service.remote.xml"],
+    stl: "c++_static",
+
+    shared_libs: [
+        "libbinder_ndk",
+        "liblog",
+    ],
+
+    installable: false, // install in APEX
+}
+
+apex {
+    name: "com.google.cf.oemlock",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: ["android.hardware.oemlock-service.remote"],
+    prebuilts: [
+        "android.hardware.oemlock-service.remote.rc",
+        "android.hardware.oemlock-service.remote.xml",
+    ],
+}
+
+prebuilt_etc {
+    name: "android.hardware.oemlock-service.remote.rc",
+    src: "android.hardware.oemlock-service.remote.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.oemlock-service.remote.xml",
+    src: "android.hardware.oemlock-service.remote.xml",
+    sub_dir: "vintf",
+    installable: false,
 }
