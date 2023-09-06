@@ -20,7 +20,6 @@ package {
 cc_defaults {
     name: "android.hardware.health-service.cuttlefish-defaults",
     relative_install_path: "hw",
-    vintf_fragments: ["android.hardware.health-service.cuttlefish.xml"],
 
     srcs: [
         "health-aidl.cpp",
@@ -32,20 +31,20 @@ cc_defaults {
     ],
 
     static_libs: [
-        "android.hardware.health-translate-ndk",
+        "android.hardware.health-V2-ndk",
+        "libbase",
         "libbatterymonitor",
-        "libhealthloop",
+        "libcutils",
         "libhealth_aidl_impl",
+        "libhealthloop",
+        "libutils",
     ],
 
+    stl: "c++_static",
+
     shared_libs: [
-        "libbase",
         "libbinder_ndk",
-        "libcutils",
-        "libhidlbase",
         "liblog",
-        "libutils",
-        "android.hardware.health-V2-ndk",
     ],
 }
 
@@ -53,8 +52,7 @@ cc_binary {
     name: "android.hardware.health-service.cuttlefish",
     defaults: ["android.hardware.health-service.cuttlefish-defaults"],
     proprietary: true,
-    init_rc: ["android.hardware.health-service.cuttlefish.rc"],
-    overrides: ["charger"],
+    installable: false, // installed in APEX
 }
 
 cc_binary {
@@ -62,7 +60,38 @@ cc_binary {
     defaults: ["android.hardware.health-service.cuttlefish-defaults"],
     recovery: true,
     init_rc: ["android.hardware.health-service.cuttlefish_recovery.rc"],
+    vintf_fragments: ["android.hardware.health-service.cuttlefish.xml"],
     overrides: ["charger.recovery"],
+}
+
+prebuilt_etc {
+    name: "android.hardware.health-service.cuttlefish.rc",
+    src: "android.hardware.health-service.cuttlefish.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.health-service.cuttlefish.xml",
+    src: "android.hardware.health-service.cuttlefish.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.google.cf.health",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: ["android.hardware.health-service.cuttlefish"],
+    overrides: ["charger"],
+    prebuilts: [
+        "android.hardware.health-service.cuttlefish.rc",
+        "android.hardware.health-service.cuttlefish.xml",
+    ],
 }
 
 // Deprecated. Retained to be used on other devices. It is not installed on cuttlefish.
