@@ -22,14 +22,14 @@
 
 namespace cuttlefish {
 TEST(MacAddressTest, ValidMacAddress) {
-  std::string mac = metrics::macAddress();
+  std::string mac = metrics::GetMacAddress();
   ASSERT_FALSE(mac.empty());
   EXPECT_EQ(mac.size(), 17);  // Ensure MAC address has correct length
   // Add other assertions as needed
 }
 
 TEST(MacAddressTest, MacAddressFormat) {
-  std::string mac = metrics::macAddress();
+  std::string mac = metrics::GetMacAddress();
   // Ensure MAC address has the correct format (e.g., XX:XX:XX:XX:XX:XX)
   EXPECT_EQ(mac[2], ':');
   EXPECT_EQ(mac[5], ':');
