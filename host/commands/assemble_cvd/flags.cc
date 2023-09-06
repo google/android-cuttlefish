@@ -1155,6 +1155,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     casimir_instance_num = FLAGS_casimir_instance_num - 1;
   }
   tmp_config_obj.set_casimir_nci_port(7100 + casimir_instance_num);
+  LOG(DEBUG) << "casimir_instance_num: " << casimir_instance_num;
+  LOG(DEBUG) << "launch casimir: " << (FLAGS_casimir_instance_num <= 0);
 
   int netsim_instance_num = *instance_nums.begin() - 1;
   tmp_config_obj.set_netsim_instance_num(netsim_instance_num);
@@ -1560,7 +1562,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_start_rootcanal(is_first_instance && !is_bt_netsim &&
                                  (FLAGS_rootcanal_instance_num <= 0));
 
-    instance.set_start_casimir(FLAGS_casimir_instance_num <= 0);
+    instance.set_start_casimir(is_first_instance && FLAGS_casimir_instance_num <= 0);
 
     instance.set_start_pica(is_first_instance && FLAGS_pica_instance_num <= 0);
 
