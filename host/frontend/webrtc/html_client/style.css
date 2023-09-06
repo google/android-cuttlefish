@@ -104,9 +104,6 @@ body {
   align-items: center;
 }
 
-#camera_off_btn {
-  display: none !important;
-}
 #record_video_btn {
   display: none !important;
 }
