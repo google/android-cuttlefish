@@ -694,6 +694,11 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.AddHvcSink();
   }
 
+  // /dev/hvc13 = sensors
+  crosvm_cmd.AddHvcReadWrite(
+      instance.PerInstanceInternalPath("sensors_fifo_vm.out"),
+      instance.PerInstanceInternalPath("sensors_fifo_vm.in"));
+
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
     crosvm_cmd.AddHvcSink();
   }
