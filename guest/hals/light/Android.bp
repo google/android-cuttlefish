@@ -13,7 +13,7 @@ rust_binary {
         "liblog_rust",
         "libbinder_rs",
         "android.hardware.light-V2-rust",
-        "libvsock_utils_rust",
+        "libvsock",
         "librustutils",
     ],
     srcs: [ "main.rs" ],
