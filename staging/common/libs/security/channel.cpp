@@ -16,15 +16,11 @@
 
 #include "common/libs/security/channel.h"
 
-#include "keymaster/android_keymaster_utils.h"
-
 namespace cuttlefish {
 namespace secure_env {
 
 void MessageDestroyer::operator()(RawMessage* ptr) {
-  {
-    keymaster::Eraser(ptr, sizeof(RawMessage) + ptr->payload_size);
-  }
+  std::memset(ptr, 0, sizeof(RawMessage) + ptr->payload_size);
   std::free(ptr);
 }
 
