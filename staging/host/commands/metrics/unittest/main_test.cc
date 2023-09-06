@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
-#include <thread>
-#include "host/libs/config/cuttlefish_config.h"
+#include <android-base/file.h>
+#include <gtest/gtest.h>
 
-namespace cuttlefish {
-
-class MetricsHostReceiver {
- private:
-  const CuttlefishConfig& config_;
-  std::thread thread_;
-  void ServerLoop();
-  // Send different Clearcut events based on the received message
-  void ProcessMessage(const std::string& text);
-
- public:
-  MetricsHostReceiver(const cuttlefish::CuttlefishConfig& config);
-  ~MetricsHostReceiver();
-  bool Initialize();
-  void Join();
-};
-
-}  // namespace cuttlefish
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
