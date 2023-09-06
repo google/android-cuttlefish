@@ -111,6 +111,8 @@ class StreamerSockets : public virtual SetupFeature {
     }
     cmd.AddParameter("--confui_in_fd=", confui_in_fd_);
     cmd.AddParameter("--confui_out_fd=", confui_out_fd_);
+    cmd.AddParameter("--sensors_in_fd=", sensors_host_to_guest_fd_);
+    cmd.AddParameter("--sensors_out_fd=", sensors_guest_to_host_fd_);
   }
 
   // SetupFeature
@@ -148,14 +150,17 @@ class StreamerSockets : public virtual SetupFeature {
           SharedFD::SocketLocalServer(path, false, SOCK_SEQPACKET, 0666);
       CF_EXPECT(audio_server_->IsOpen(), audio_server_->StrError());
     }
-    AddConfUiFifo();
+    InitializeVConsoles();
     return {};
   }
 
-  Result<void> AddConfUiFifo() {
+  Result<void> InitializeVConsoles() {
     std::vector<std::string> fifo_files = {
         instance_.PerInstanceInternalPath("confui_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("confui_fifo_vm.out")};
+        instance_.PerInstanceInternalPath("confui_fifo_vm.out"),
+        instance_.PerInstanceInternalPath("sensors_fifo_vm.in"),
+        instance_.PerInstanceInternalPath("sensors_fifo_vm.out"),
+    };
     for (const auto& path : fifo_files) {
       unlink(path.c_str());
     }
@@ -169,6 +174,8 @@ class StreamerSockets : public virtual SetupFeature {
     }
     confui_in_fd_ = fds[0];
     confui_out_fd_ = fds[1];
+    sensors_host_to_guest_fd_ = fds[2];
+    sensors_guest_to_host_fd_ = fds[3];
     return {};
   }
 
@@ -181,6 +188,8 @@ class StreamerSockets : public virtual SetupFeature {
   SharedFD audio_server_;
   SharedFD confui_in_fd_;   // host -> guest
   SharedFD confui_out_fd_;  // guest -> host
+  SharedFD sensors_host_to_guest_fd_;
+  SharedFD sensors_guest_to_host_fd_;
 };
 
 class WebRtcServer : public virtual CommandSource,
