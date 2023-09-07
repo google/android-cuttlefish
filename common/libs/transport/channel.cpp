@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "common/libs/security/channel.h"
+#include "common/libs/transport/channel.h"
 
 namespace cuttlefish {
-namespace secure_env {
+namespace transport {
 
 void MessageDestroyer::operator()(RawMessage* ptr) {
   std::memset(ptr, 0, sizeof(RawMessage) + ptr->payload_size);
@@ -44,5 +44,5 @@ Result<ManagedMessage> CreateMessage(uint32_t command, size_t payload_size) {
   return CreateMessage(command, false, payload_size);
 }
 
-}  // namespace secure_env
+}  // namespace transport
 }  // namespace cuttlefish

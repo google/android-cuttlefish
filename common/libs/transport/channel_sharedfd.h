@@ -17,10 +17,10 @@
 #pragma once
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/security/channel.h"
+#include "common/libs/transport/channel.h"
 
 namespace cuttlefish {
-namespace secure_env {
+namespace transport {
 
 class SharedFdChannel : public Channel {
  public:
@@ -36,5 +36,5 @@ class SharedFdChannel : public Channel {
   Result<void> SendMessage(RawMessage& message, bool response);
 };
 
-}  // namespace secure_env
+}  // namespace transport
 }  // namespace cuttlefish
