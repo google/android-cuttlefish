@@ -26,7 +26,6 @@
 #include "host/commands/metrics/proto/cf_metrics_proto.h"
 #include "host/commands/metrics/utils.h"
 #include "host/libs/config/config_flag.h"
-#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
 #include "shared/api_level.h"
 
