@@ -18,7 +18,7 @@
 
 #include "gatekeeper/gatekeeper_messages.h"
 
-#include "common/libs/security/channel.h"
+#include "common/libs/transport/channel.h"
 
 namespace cuttlefish {
 
@@ -34,7 +34,7 @@ class GatekeeperChannel {
                            const gatekeeper::GateKeeperMessage& message) = 0;
   virtual bool SendResponse(uint32_t command,
                             const gatekeeper::GateKeeperMessage& message) = 0;
-  virtual secure_env::ManagedMessage ReceiveMessage() = 0;
+  virtual transport::ManagedMessage ReceiveMessage() = 0;
   virtual ~GatekeeperChannel() {}
 };
 

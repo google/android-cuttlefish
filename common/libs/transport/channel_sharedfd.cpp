@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "common/libs/security/channel_sharedfd.h"
+#include "common/libs/transport/channel_sharedfd.h"
 
 #include "common/libs/fs/shared_buf.h"
 
 namespace cuttlefish {
-namespace secure_env {
+namespace transport {
 
 SharedFdChannel::SharedFdChannel(SharedFD input, SharedFD output)
     : input_(std::move(input)), output_(std::move(output)) {}
@@ -60,5 +60,5 @@ Result<void> SharedFdChannel::SendMessage(RawMessage& message, bool response) {
   return {};
 }
 
-}  // namespace secure_env
+}  // namespace transport
 }  // namespace cuttlefish
