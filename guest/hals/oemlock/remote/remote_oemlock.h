@@ -18,8 +18,8 @@
 
 #include <aidl/android/hardware/oemlock/BnOemLock.h>
 
-#include "common/libs/security/channel.h"
 #include "common/libs/security/oemlock.h"
+#include "common/libs/transport/channel.h"
 #include "common/libs/utils/result.h"
 
 namespace aidl {
@@ -31,7 +31,7 @@ using namespace cuttlefish;
 
 struct OemLock : public BnOemLock {
 public:
-    OemLock(secure_env::Channel& channel);
+    OemLock(transport::Channel& channel);
 
     // Methods from ::android::hardware::oemlock::IOemLock follow.
     ::ndk::ScopedAStatus getName(std::string* out_name) override;
@@ -43,7 +43,7 @@ public:
     ::ndk::ScopedAStatus setOemUnlockAllowedByDevice(bool in_allowed) override;
 
 private:
-    secure_env::Channel& channel_;
+    transport::Channel& channel_;
 
     Result<void> requestValue(secure_env::OemLockField field, bool *out);
     Result<void> setValue(secure_env::OemLockField field, bool value);

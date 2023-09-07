@@ -124,7 +124,7 @@ bool GatekeeperWindowsChannel::SendMessage(
                  << " and size: " << payload_size;
   }
 
-  auto to_send_result = secure_env::CreateMessage(command, is_response, payload_size);
+  auto to_send_result = transport::CreateMessage(command, is_response, payload_size);
   if (!to_send_result.ok()) {
     LOG(ERROR) << "Could not allocate Gatekeeper Message: "
                << to_send_result.error().FormatForEnv();
@@ -132,7 +132,7 @@ bool GatekeeperWindowsChannel::SendMessage(
   }
   auto to_send = std::move(to_send_result.value());
   message.Serialize(to_send->payload, to_send->payload + payload_size);
-  auto write_size = payload_size + sizeof(secure_env::RawMessage);
+  auto write_size = payload_size + sizeof(transport::RawMessage);
   auto to_send_bytes = reinterpret_cast<const char*>(to_send.get());
   if (!WriteFile(pipe_handle_, to_send_bytes, write_size, NULL,
                  &pipe_overlapped_) &&
@@ -197,8 +197,8 @@ bool GatekeeperWindowsChannel::ReadFromPipe(LPVOID buffer, DWORD size) {
   return true;
 }
 
-secure_env::ManagedMessage GatekeeperWindowsChannel::ReceiveMessage() {
-  struct secure_env::RawMessage message_header;
+transport::ManagedMessage GatekeeperWindowsChannel::ReceiveMessage() {
+  struct transport::RawMessage message_header;
 
   if (!ReadFromPipe(&message_header, sizeof(message_header))) {
     return {};
@@ -209,7 +209,7 @@ secure_env::ManagedMessage GatekeeperWindowsChannel::ReceiveMessage() {
                  << " and size " << message_header.payload_size;
   }
 
-  auto message_result = secure_env::CreateMessage(message_header.command,
+  auto message_result = transport::CreateMessage(message_header.command,
                                                   message_header.is_response,
                                                   message_header.payload_size);
   if (!message_result.ok()) {

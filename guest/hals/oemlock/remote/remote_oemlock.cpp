@@ -38,7 +38,7 @@ enum {
 
 }
 
-OemLock::OemLock(secure_env::Channel& channel) : channel_(channel) {}
+OemLock::OemLock(transport::Channel& channel) : channel_(channel) {}
 
 ::ndk::ScopedAStatus OemLock::getName(std::string *out_name) {
     *out_name = "CF Remote Implementation";
@@ -65,7 +65,7 @@ OemLock::OemLock(secure_env::Channel& channel) : channel_(channel) {}
 }
 
 Result<void> OemLock::requestValue(secure_env::OemLockField field, bool *out) {
-    auto message = CF_EXPECT(secure_env::CreateMessage(static_cast<uint32_t>(field), 0),
+    auto message = CF_EXPECT(transport::CreateMessage(static_cast<uint32_t>(field), 0),
                              "Cannot allocate message for oemlock request: " <<
                              static_cast<uint32_t>(field));
     CF_EXPECT(channel_.SendRequest(*message),
@@ -78,7 +78,7 @@ Result<void> OemLock::requestValue(secure_env::OemLockField field, bool *out) {
 }
 
 Result<void> OemLock::setValue(secure_env::OemLockField field, bool value) {
-    auto message = CF_EXPECT(secure_env::CreateMessage(static_cast<uint32_t>(field), sizeof(bool)),
+    auto message = CF_EXPECT(transport::CreateMessage(static_cast<uint32_t>(field), sizeof(bool)),
                              "Cannot allocate message for oemlock request: " <<
                              static_cast<uint32_t>(field));
     memcpy(message->payload, &value, sizeof(bool));
