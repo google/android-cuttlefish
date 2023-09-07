@@ -19,7 +19,7 @@
 #include <android/binder_process.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/security/channel_sharedfd.h"
+#include "common/libs/transport/channel_sharedfd.h"
 #include "guest/hals/oemlock/remote/remote_oemlock.h"
 
 using ::aidl::android::hardware::oemlock::OemLock;
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
         LOG(FATAL) << "Could not make " << argv[1] << " a raw terminal: " << fd->StrError();
     }
 
-    cuttlefish::secure_env::SharedFdChannel channel(fd, fd);
+    cuttlefish::transport::SharedFdChannel channel(fd, fd);
     std::shared_ptr<OemLock> oemlock = ndk::SharedRefBase::make<OemLock>(channel);
 
     const std::string instance = std::string() + OemLock::descriptor + "/default";
