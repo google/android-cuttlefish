@@ -21,7 +21,7 @@
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-namespace secure_env {
+namespace transport {
 
 /**
  * RawMessage - Header and raw byte payload for a serialized
@@ -71,5 +71,5 @@ class Channel {
   virtual ~Channel() {}
 };
 
-}  // namespace secure_env
+}  // namespace transport
 }  // namespace cuttlefish
