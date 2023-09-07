@@ -39,5 +39,3 @@ ifneq (,$(filter eng, $(TARGET_BUILD_VARIANT)))
 endif
 
 TARGET_SYSTEM_PROP += device/google/cuttlefish/shared/wear/wearable-1024.prop
-
-TARGET_VNDK_USE_CORE_VARIANT := true
