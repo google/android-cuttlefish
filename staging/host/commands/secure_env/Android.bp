@@ -24,6 +24,7 @@ cc_defaults {
         "libcppbor_external",
         "libcppcose_rkp",
         "libcuttlefish_security",
+        "libcuttlefish_transport",
         "libgatekeeper",
         "libjsoncpp",
         "libkeymaster_portable",
