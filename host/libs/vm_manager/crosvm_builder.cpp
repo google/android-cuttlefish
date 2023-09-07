@@ -18,9 +18,12 @@
 #include <android-base/logging.h>
 
 #include <string>
+#include <vector>
 
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/libs/command_util/snapshot_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
@@ -125,6 +128,23 @@ SharedFD CrosvmBuilder::AddTap(const std::string& tap_name, const std::string& m
 #endif
 
 int CrosvmBuilder::HvcNum() { return hvc_num_; }
+
+Result<void> CrosvmBuilder::SetToRestoreFromSnapshot(
+    const std::string& snapshot_dir_path,
+    const std::string& instance_id_in_str) {
+  auto meta_info_json = CF_EXPECT(LoadMetaJson(snapshot_dir_path));
+  const std::vector<std::string> selectors{kGuestSnapshotField,
+                                           instance_id_in_str};
+  const auto guest_snapshot_dir_suffix =
+      CF_EXPECT(GetValue<std::string>(meta_info_json, selectors));
+  // guest_snapshot_dir_suffix is a relative to
+  // the snapshot_path
+  const auto restore_path = snapshot_dir_path + "/" +
+                            guest_snapshot_dir_suffix + "/" +
+                            kGuestSnapshotBase;
+  command_.AddParameter("--restore=", restore_path);
+  return {};
+}
 
 Command& CrosvmBuilder::Cmd() { return command_; }
 
