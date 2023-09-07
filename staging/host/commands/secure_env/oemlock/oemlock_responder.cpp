@@ -20,7 +20,7 @@
 namespace cuttlefish {
 namespace oemlock {
 
-OemLockResponder::OemLockResponder(secure_env::Channel& channel,
+OemLockResponder::OemLockResponder(transport::Channel& channel,
                                    OemLock& oemlock)
     : channel_(channel), oemlock_(oemlock) {}
 
@@ -70,7 +70,7 @@ Result<void> OemLockResponder::ProcessMessage() {
       return CF_ERR("Unrecognized message id " << reinterpret_cast<uint32_t>(request->command));
   }
 
-  auto message = CF_EXPECT(secure_env::CreateMessage(request->command, sizeof(bool)),
+  auto message = CF_EXPECT(transport::CreateMessage(request->command, sizeof(bool)),
                            "Failed to allocate message for oemlock response");
   memcpy(message->payload, &result, sizeof(bool));
   CF_EXPECT(channel_.SendResponse(*message),

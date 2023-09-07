@@ -20,7 +20,7 @@
 
 #include "gatekeeper/gatekeeper_messages.h"
 
-#include "common/libs/security/channel_sharedfd.h"
+#include "common/libs/transport/channel_sharedfd.h"
 
 namespace cuttlefish {
 /*
@@ -35,10 +35,10 @@ class SharedFdGatekeeperChannel : public GatekeeperChannel {
                    const gatekeeper::GateKeeperMessage& message) override;
   bool SendResponse(uint32_t command,
                     const gatekeeper::GateKeeperMessage& message) override;
-  secure_env::ManagedMessage ReceiveMessage() override;
+  transport::ManagedMessage ReceiveMessage() override;
 
  private:
-  secure_env::SharedFdChannel channel_;
+  transport::SharedFdChannel channel_;
   bool SendMessage(uint32_t command, bool response,
                    const gatekeeper::GateKeeperMessage& message);
 };
