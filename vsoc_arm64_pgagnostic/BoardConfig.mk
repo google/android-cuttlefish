@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 The Android Open Source Project
+# Copyright 2023 The Android Open-Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
 # limitations under the License.
 #
 
-$(call inherit-product, device/google/cuttlefish/vsoc_arm64_only/phone/aosp_cf.mk)
+#
+# arm64 (64-bit only) page size agnostic target for Cuttlefish
+#
 
-PRODUCT_NAME := aosp_cf_arm64_phone_pgagnostic
-PRODUCT_PAGE_SIZE_AGNOSTIC := true
-PRODUCT_MAX_PAGE_SIZE_SUPPORTED := 65536
+-include device/google/cuttlefish/vsoc_arm64_only/BoardConfig.mk
+
