@@ -45,6 +45,7 @@ cc_binary {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_security",
+        "libcuttlefish_transport",
         "libhidlbase",
         "libgatekeeper",
         "libutils",
