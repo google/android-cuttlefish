@@ -34,6 +34,7 @@ cc_binary {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_security",
+        "libcuttlefish_transport",
     ],
 
     stl: "c++_static",

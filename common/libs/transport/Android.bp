@@ -13,26 +13,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
 
-#include "common/libs/transport/channel.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/secure_env/oemlock/oemlock.h"
-
-namespace cuttlefish {
-namespace oemlock {
-
-class OemLockResponder {
- public:
-  OemLockResponder(transport::Channel& channel,
-                   OemLock& oemlock);
-
-  Result<void> ProcessMessage();
-
- private:
-  transport::Channel& channel_;
-  OemLock& oemlock_;
-};
-
-}  // namespace oemlock
-}  // namespace cuttlefish
+cc_library {
+    name: "libcuttlefish_transport",
+    srcs: [
+        "channel.cpp",
+    ],
+    shared_libs: [
+        "liblog",
+        "libbase",
+    ],
+    target: {
+        linux: {
+            srcs: ["channel_sharedfd.cpp"],
+            shared_libs: ["libcuttlefish_fs"]
+        },
+        darwin: {
+            enabled: true,
+            srcs: ["channel_sharedfd.cpp"],
+            shared_libs: ["libcuttlefish_fs"]
+        },
+        windows: {
+            enabled: true,
+        },
+    },
+    defaults: ["cuttlefish_host"],
+}

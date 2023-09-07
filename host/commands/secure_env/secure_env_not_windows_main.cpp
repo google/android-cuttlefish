@@ -26,10 +26,10 @@
 #include <tss2/tss2_rc.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/security/channel_sharedfd.h"
 #include "common/libs/security/confui_sign.h"
 #include "common/libs/security/gatekeeper_channel_sharedfd.h"
 #include "common/libs/security/keymaster_channel_sharedfd.h"
+#include "common/libs/transport/channel_sharedfd.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/commands/secure_env/confui_sign_server.h"
@@ -323,7 +323,7 @@ int SecureEnvMain(int argc, char** argv) {
   auto oemlock_out = DupFdFlag(FLAGS_oemlock_fd_out);
   threads.emplace_back([oemlock_in, oemlock_out, &oemlock]() {
     while (true) {
-      secure_env::SharedFdChannel channel(oemlock_in, oemlock_out);
+      transport::SharedFdChannel channel(oemlock_in, oemlock_out);
       oemlock::OemLockResponder responder(channel, *oemlock);
       while (responder.ProcessMessage().ok()) {
       }
