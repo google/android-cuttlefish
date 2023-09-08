@@ -40,8 +40,6 @@ cc_defaults {
         "libutils",
     ],
 
-    stl: "c++_static",
-
     shared_libs: [
         "libbinder_ndk",
         "liblog",
@@ -51,6 +49,7 @@ cc_defaults {
 cc_binary {
     name: "android.hardware.health-service.cuttlefish",
     defaults: ["android.hardware.health-service.cuttlefish-defaults"],
+    stl: "c++_static",
     proprietary: true,
     installable: false, // installed in APEX
 }
