@@ -87,13 +87,13 @@ class LoadConfigsCommand : public CvdServerHandler {
         }));
     auto args = ParseInvocation(request.Message()).arguments;
     CF_EXPECT(ParseFlags(flags, args));
-    CF_EXPECT(args.size() > 0,
+    CF_EXPECT(help || args.size() > 0,
               "No arguments provided to cvd load command, please provide at "
               "least one argument (help or path to json file)");
 
     if (help) {
       std::stringstream help_msg_stream;
-      help_msg_stream << "Usage: cvd " << kLoadSubCmd;
+      help_msg_stream << "Usage: cvd " << kLoadSubCmd << "\n";
       const auto help_msg = help_msg_stream.str();
       CF_EXPECT(WriteAll(request.Out(), help_msg) == help_msg.size());
       return {};
