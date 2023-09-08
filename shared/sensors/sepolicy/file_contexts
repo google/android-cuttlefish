@@ -2,3 +2,5 @@
 # Vendor files
 #
 /vendor/bin/cuttlefish_sensor_injection   u:object_r:cuttlefish_sensor_injection_exec:s0
+/vendor/bin/hw/android\.hardware\.sensors-service\.example  u:object_r:hal_sensors_default_exec:s0
+/vendor/bin/hw/android\.hardware\.sensors@2\.1-service\.mock  u:object_r:hal_sensors_default_exec:s0
