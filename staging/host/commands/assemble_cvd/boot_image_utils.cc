@@ -494,7 +494,7 @@ Result<std::string> ReadAndroidVersionFromBootImage(
               << ". Defaulting to 0.0.0.";
     return "0.0.0";
   }
-  std::regex re("[1-9][0-9]*[.[0-9]+]*");
+  std::regex re("[1-9][0-9]*([.][0-9]+)*");
   CF_EXPECT(std::regex_match(os_version, re), "Version string is not a valid version \"" + os_version + "\"");
   return os_version;
 }
