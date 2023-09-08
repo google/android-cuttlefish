@@ -288,8 +288,6 @@ void ServerLoopImpl::DeleteFifos() {
       instance_.PerInstanceInternalPath("locationhvc_fifo_vm.out"),
       instance_.PerInstanceInternalPath("confui_fifo_vm.in"),
       instance_.PerInstanceInternalPath("confui_fifo_vm.out"),
-      instance_.PerInstanceInternalPath("sensors_fifo_vm.in"),
-      instance_.PerInstanceInternalPath("sensors_fifo_vm.out"),
   };
   for (const auto& pipe : pipes) {
     unlink(pipe.c_str());
