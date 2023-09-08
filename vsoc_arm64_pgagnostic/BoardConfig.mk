@@ -20,3 +20,5 @@
 
 -include device/google/cuttlefish/vsoc_arm64_only/BoardConfig.mk
 
+TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE := ext4
+
