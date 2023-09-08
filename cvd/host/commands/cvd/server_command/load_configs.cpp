@@ -19,6 +19,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <android-base/strings.h>
@@ -40,15 +41,21 @@ namespace cuttlefish {
 
 namespace {
 
+constexpr std::string_view kCredentialSourceOverride =
+    "fetch.credential_source=";
+
 struct LoadFlags {
   bool help = false;
   std::vector<std::string> overrides;
   std::string config_path;
+  std::string credential_source;
 };
 
 std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
   std::vector<Flag> flags;
   flags.emplace_back(GflagsCompatFlag("help", load_flags.help));
+  flags.emplace_back(
+      GflagsCompatFlag("credential_source", load_flags.credential_source));
   FlagAlias alias = {FlagAliasMode::kFlagPrefix, "--override="};
   flags.emplace_back(Flag().Alias(alias).Setter(
       [&overrides = load_flags.overrides](const FlagMatch& m) -> Result<void> {
@@ -71,6 +78,15 @@ Result<LoadFlags> GetFlags(const RequestWithStdio& request) {
     load_flags.config_path =
         request.Message().command_request().working_directory() + "/" +
         load_flags.config_path;
+  }
+  if (!load_flags.credential_source.empty()) {
+    for (const auto& name : load_flags.overrides) {
+      CF_EXPECT(!android::base::StartsWith(name, kCredentialSourceOverride),
+                "Specifying both --override=fetch.credential_source and the "
+                "--credential_source flag is not allowed.");
+    }
+    load_flags.overrides.emplace_back(std::string(kCredentialSourceOverride) +
+                                      load_flags.credential_source);
   }
   return load_flags;
 }
