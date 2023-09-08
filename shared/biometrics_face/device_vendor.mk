@@ -20,4 +20,4 @@ PRODUCT_COPY_FILES += \
 endif
 
 PRODUCT_PACKAGES += \
-    com.android.hardware.biometrics.face
+    com.android.hardware.biometrics.face.virtual
