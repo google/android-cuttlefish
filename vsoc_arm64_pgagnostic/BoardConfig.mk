@@ -18,8 +18,10 @@
 # arm64 (64-bit only) page size agnostic target for Cuttlefish
 #
 
--include device/google/cuttlefish/vsoc_arm64_only/BoardConfig.mk
-
 TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_RO_FILE_SYSTEM_TYPE := ext4
 
+BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE := ext4
+BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
+
+-include device/google/cuttlefish/vsoc_arm64_only/BoardConfig.mk
