@@ -1,6 +1,6 @@
 # This file is based on https://hub.docker.com/r/jrei/systemd-debian/.
 
-FROM debian:buster-slim AS cuttlefish-softgpu
+FROM debian:bookworm-slim AS cuttlefish-softgpu
 
 ENV container docker
 ENV LC_ALL C
