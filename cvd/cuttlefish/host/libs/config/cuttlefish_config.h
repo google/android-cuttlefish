@@ -172,6 +172,8 @@ class CuttlefishConfig {
   int casimir_instance_num() const;
   void set_casimir_nci_port(int port);
   int casimir_nci_port() const;
+  void set_casimir_rf_port(int port);
+  int casimir_rf_port() const;
 
   void set_enable_wifi(const bool enable_wifi);
   bool enable_wifi() const;
