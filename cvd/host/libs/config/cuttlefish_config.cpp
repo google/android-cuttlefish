@@ -182,6 +182,8 @@ void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
   (*dictionary_)[kCrosvmBinary] = crosvm_binary;
 }
 
+bool CuttlefishConfig::IsCrosvm() const { return vm_manager() == "crosvm"; }
+
 static constexpr char kGem5DebugFlags[] = "gem5_debug_flags";
 std::string CuttlefishConfig::gem5_debug_flags() const {
   return (*dictionary_)[kGem5DebugFlags].asString();
@@ -431,14 +433,6 @@ void CuttlefishConfig::set_metrics_binary(const std::string& metrics_binary) {
 }
 std::string CuttlefishConfig::metrics_binary() const {
   return (*dictionary_)[kMetricsBinary].asString();
-}
-
-static constexpr char kMcu[] = "mcu";
-Json::Value& CuttlefishConfig::mcu() const {
-  return (*dictionary_)[kMcu];
-}
-void CuttlefishConfig::set_mcu(const Json::Value& cfg) {
-  (*dictionary_)[kMcu] = cfg;
 }
 
 static constexpr char kExtraKernelCmdline[] = "extra_kernel_cmdline";
