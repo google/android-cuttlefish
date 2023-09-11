@@ -62,9 +62,11 @@ bool ServerLoopImpl::CreateQcowOverlay(const std::string& crosvm_path,
 
 ServerLoopImpl::ServerLoopImpl(
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance)
+    const CuttlefishConfig::InstanceSpecific& instance,
+    SecureEnvFiles& secure_env_files)
     : config_(config),
       instance_(instance),
+      secure_env_files_(secure_env_files),
       vm_name_to_control_sock_{InitializeVmToControlSockPath(instance)},
       device_status_{DeviceStatus::kUnknown} {}
 
