@@ -37,7 +37,6 @@ const char CPIO_EXT[] = ".cpio";
 const char TMP_RD_DIR[] = "stripped_ramdisk_dir";
 const char STRIPPED_RD[] = "stripped_ramdisk";
 const char CONCATENATED_VENDOR_RAMDISK[] = "concatenated_vendor_ramdisk";
-const char BOOT_IMAGE_AVB_METADATA[] = "/boot_image_avb_metadata";
 namespace cuttlefish {
 namespace {
 std::string ExtractValue(const std::string& dictionary, const std::string& key) {
@@ -159,30 +158,6 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
                       << success;
 }
 
-bool GetAvbMetadatFromBootImage(const std::string& boot_image_path,
-                                const std::string& unpack_dir) {
-  auto avbtool_path = HostBinaryPath("avbtool");
-  Command avb_cmd(avbtool_path);
-  avb_cmd.AddParameter("info_image");
-  avb_cmd.AddParameter("--image");
-  avb_cmd.AddParameter(boot_image_path);
-
-  auto output_file =
-      SharedFD::Creat(unpack_dir + BOOT_IMAGE_AVB_METADATA, 0666);
-  if (!output_file->IsOpen()) {
-    LOG(ERROR) << "Unable to create intermediate boot params file: "
-               << output_file->StrError();
-    return false;
-  }
-  avb_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
-
-  int success = avb_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to run avb command. Exited with status " << success;
-    return false;
-  }
-  return true;
-}
 
 bool UnpackBootImage(const std::string& boot_image_path,
                      const std::string& unpack_dir) {
@@ -469,7 +444,7 @@ Result<std::string> ReadAndroidVersionFromBootImage(
   if (!unpack_dir) {
     return CF_ERR("boot image unpack dir could not be created");
   }
-  bool unpack_status = GetAvbMetadatFromBootImage(boot_image_path, unpack_dir);
+  bool unpack_status = UnpackBootImage(boot_image_path, unpack_dir);
   if (!unpack_status) {
     RecursivelyRemoveDirectory(unpack_dir);
     return CF_ERR("\"" + boot_image_path + "\" boot image unpack into \"" +
@@ -478,23 +453,18 @@ Result<std::string> ReadAndroidVersionFromBootImage(
 
   // dirty hack to read out boot params
   size_t dir_path_len = strlen(tmp_dir);
-  std::string boot_params =
-      ReadFile(strcat(unpack_dir, BOOT_IMAGE_AVB_METADATA));
+  std::string boot_params = ReadFile(strcat(unpack_dir, "/boot_params"));
   unpack_dir[dir_path_len] = '\0';
 
   RecursivelyRemoveDirectory(unpack_dir);
-  std::string os_version =
-      ExtractValue(boot_params, "Prop: com.android.build.boot.os_version -> ");
-  // os_version returned above is surrounded by single quotes. Removing the
-  // single quotes.
-  os_version.erase(remove(os_version.begin(), os_version.end(), '\''),
-                   os_version.end());
+  std::string os_version = ExtractValue(boot_params, "os version: ");
+  // if the OS version is "None", it wasn't set when the boot image was made.
   if (os_version == "None") {
     LOG(INFO) << "Could not extract os version from " << boot_image_path
               << ". Defaulting to 0.0.0.";
     return "0.0.0";
   }
-  std::regex re("[1-9][0-9]*([.][0-9]+)*");
+  std::regex re("[1-9][0-9]*.[0-9]+.[0-9]+");
   CF_EXPECT(std::regex_match(os_version, re), "Version string is not a valid version \"" + os_version + "\"");
   return os_version;
 }
