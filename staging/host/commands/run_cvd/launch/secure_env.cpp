@@ -15,6 +15,8 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <unistd.h>
+
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -23,6 +25,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/run_cvd/launch/secure_env_files.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
@@ -33,15 +36,22 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
  public:
   INJECT(SecureEnvironment(const CuttlefishConfig& config,
                            const CuttlefishConfig::InstanceSpecific& instance,
+                           SecureEnvFiles& secure_env_files,
                            KernelLogPipeProvider& kernel_log_pipe_provider))
       : config_(config),
         instance_(instance),
+        secure_env_files_(secure_env_files),
         kernel_log_pipe_provider_(kernel_log_pipe_provider) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
     Command command(SecureEnvBinary());
-    command.AddParameter("-confui_server_fd=", confui_server_fd_);
+    command.AddParameter("-confui_server_fd=",
+                         secure_env_files_.ConfUiServerFd());
+#ifndef _WIN32
+    command.AddParameter("-snapshot_control_fd=",
+                         secure_env_files_.SnapshotControlFd());
+#endif
     command.AddParameter("-keymaster_fd_out=", fifos_[0]);
     command.AddParameter("-keymaster_fd_in=", fifos_[1]);
     command.AddParameter("-gatekeeper_fd_out=", fifos_[2]);
@@ -75,7 +85,7 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override {
-    return {&kernel_log_pipe_provider_};
+    return {&kernel_log_pipe_provider_, &secure_env_files_};
   }
   Result<void> ResultSetup() override {
     std::vector<std::string> fifo_paths = {
@@ -96,14 +106,6 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
                 "Could not open " << path << ": " << fd->StrError());
       fifos_.push_back(fd);
     }
-
-    auto confui_socket_path =
-        instance_.PerInstanceInternalUdsPath("confui_sign.sock");
-    confui_server_fd_ = SharedFD::SocketLocalServer(confui_socket_path, false,
-                                                    SOCK_STREAM, 0600);
-    CF_EXPECT(confui_server_fd_->IsOpen(),
-              "Could not open " << confui_socket_path << ": "
-                                << confui_server_fd_->StrError());
     kernel_log_pipe_ = kernel_log_pipe_provider_.KernelLogPipe();
 
     return {};
@@ -111,7 +113,7 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
-  SharedFD confui_server_fd_;
+  SecureEnvFiles& secure_env_files_;
   std::vector<SharedFD> fifos_;
   KernelLogPipeProvider& kernel_log_pipe_provider_;
   SharedFD kernel_log_pipe_;
@@ -121,7 +123,7 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific,
-                                 KernelLogPipeProvider>>
+                                 SecureEnvFiles, KernelLogPipeProvider>>
 SecureEnvComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, SecureEnvironment>()
