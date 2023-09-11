@@ -584,6 +584,9 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     add_hvc_sink();
   }
 
+  // /dev/hvc13 = sensors
+  add_hvc(instance.PerInstanceInternalPath("sensors_fifo_vm"));
+
   auto disk_num = instance.virtual_disk_paths().size();
 
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {

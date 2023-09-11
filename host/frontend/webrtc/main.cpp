@@ -55,6 +55,8 @@ DEFINE_int32(confui_in_fd, -1,
              "Confirmation UI virtio-console from host to guest");
 DEFINE_int32(confui_out_fd, -1,
              "Confirmation UI virtio-console from guest to host");
+DEFINE_int32(sensors_in_fd, -1, "Sensors virtio-console from host to guest");
+DEFINE_int32(sensors_out_fd, -1, "Sensors virtio-console from guest to host");
 DEFINE_string(action_servers, "",
               "A comma-separated list of server_name:fd pairs, "
               "where each entry corresponds to one custom action server.");
