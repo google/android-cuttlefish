@@ -26,6 +26,7 @@
 #include <iostream>
 #include <map>
 #include <mutex>
+#include <optional>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -49,6 +50,39 @@
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
+namespace {
+
+std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
+  int initial_size = args.size();
+  std::string config_file;
+  std::vector<Flag> config_flags = {
+      GflagsCompatFlag("config_file", config_file)};
+  auto result = ParseFlags(config_flags, args);
+  if (!result.ok() || initial_size == args.size()) {
+    return std::nullopt;
+  }
+  return config_file;
+}
+
+RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
+                                   cvd_common::Args& args,
+                                   const std::string& config_file) {
+  cvd::Request request_proto;
+  auto& load_command = *request_proto.mutable_command_request();
+  *load_command.mutable_env() = request.Message().command_request().env();
+  load_command.set_working_directory(
+      request.Message().command_request().working_directory());
+  load_command.add_args("cvd");
+  load_command.add_args("load");
+  for (const auto& arg : args) {
+    load_command.add_args(arg);
+  }
+  load_command.add_args(config_file);
+  return RequestWithStdio(request.Client(), request_proto,
+                          request.FileDescriptors(), request.Credentials());
+}
+
+}  // namespace
 
 class CvdStartCommandHandler : public CvdServerHandler {
  public:
@@ -579,6 +613,17 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   cvd::Response response;
   response.mutable_command_response();
 
+  auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
+  std::optional<std::string> config_file = GetConfigPath(subcmd_args);
+  if (config_file) {
+    auto subrequest = CreateLoadCommand(request, subcmd_args, *config_file);
+    interrupt_lock.unlock();
+    response =
+        CF_EXPECT(command_executor_.ExecuteOne(subrequest, request.Err()));
+    sub_action_ended_ = true;
+    return response;
+  }
+
   auto precondition_verified = VerifyPrecondition(request);
   if (!precondition_verified.ok()) {
     response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
@@ -622,7 +667,6 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
 
   // update DB if not help
   // collect group creation infos
-  auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
   CF_EXPECT(Contains(supported_commands_, subcmd),
             "subcmd should be start but is " << subcmd);
   const bool is_help = HasHelpOpts(subcmd_args);
