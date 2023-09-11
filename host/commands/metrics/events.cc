@@ -42,10 +42,10 @@ std::unique_ptr<CuttlefishLogEvent> BuildCfLogEvent(
   // "cfEvent" is the top level CuttlefishLogEvent
   auto cfEvent = std::make_unique<CuttlefishLogEvent>();
   cfEvent->set_device_type(device_type);
-  cfEvent->set_session_id(metrics::sessionId(now_ms));
+  cfEvent->set_session_id(metrics::GenerateSessionId(now_ms));
 
-  if (!metrics::cfVersion().empty()) {
-    cfEvent->set_cuttlefish_version(metrics::cfVersion());
+  if (!metrics::GetCfVersion().empty()) {
+    cfEvent->set_cuttlefish_version(metrics::GetCfVersion());
   }
 
   Timestamp* timestamp = cfEvent->mutable_timestamp_ms();
@@ -63,15 +63,15 @@ void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent* cfEvent,
   // "metrics_event" is the 2nd level MetricsEvent
   cuttlefish::MetricsEvent* metrics_event = cfEvent->mutable_metrics_event();
   metrics_event->set_event_type(event_type);
-  metrics_event->set_os_type(metrics::osType());
-  metrics_event->set_os_version(metrics::osVersion());
-  metrics_event->set_vmm_type(metrics::vmmManager());
+  metrics_event->set_os_type(metrics::GetOsType());
+  metrics_event->set_os_version(metrics::GetOsVersion());
+  metrics_event->set_vmm_type(metrics::GetVmmManager());
 
-  if (!metrics::vmmVersion().empty()) {
-    metrics_event->set_vmm_version(metrics::vmmVersion());
+  if (!metrics::GetVmmVersion().empty()) {
+    metrics_event->set_vmm_version(metrics::GetVmmVersion());
   }
 
-  metrics_event->set_company(metrics::company());
+  metrics_event->set_company(metrics::GetCompany());
   metrics_event->set_api_level(PRODUCT_SHIPPING_API_LEVEL);
 
   Timestamp* metrics_timestamp = metrics_event->mutable_event_time_ms();
@@ -110,7 +110,7 @@ Clearcut::~Clearcut() = default;
 
 int Clearcut::SendEvent(CuttlefishLogEvent::DeviceType device_type,
                         MetricsEvent::EventType event_type) {
-  uint64_t now_ms = metrics::epochTimeMs();
+  uint64_t now_ms = metrics::GetEpochTimeMs();
 
   auto cfEvent = BuildCfLogEvent(now_ms, device_type);
   AddCfMetricsEventToLog(now_ms, cfEvent.get(), event_type);
@@ -127,7 +127,7 @@ int Clearcut::SendEvent(CuttlefishLogEvent::DeviceType device_type,
     return MetricsExitCodes::kMetricsError;
   }
 
-  return metrics::postReq(logRequestStr, metrics::kProd);
+  return metrics::PostRequest(logRequestStr, metrics::kProd);
 }
 
 int Clearcut::SendVMStart(CuttlefishLogEvent::DeviceType device) {
