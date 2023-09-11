@@ -37,8 +37,8 @@
 #include "host/commands/secure_env/gatekeeper_responder.h"
 #include "host/commands/secure_env/in_process_tpm.h"
 #include "host/commands/secure_env/keymaster_responder.h"
-#include "host/commands/secure_env/oemlock/oemlock_responder.h"
 #include "host/commands/secure_env/oemlock/oemlock.h"
+#include "host/commands/secure_env/oemlock/oemlock_responder.h"
 #include "host/commands/secure_env/proxy_keymaster_context.h"
 #include "host/commands/secure_env/rust/kmr_ta.h"
 #include "host/commands/secure_env/soft_gatekeeper.h"
@@ -224,7 +224,7 @@ SecureEnvComponent() {
 
 }  // namespace
 
-int SecureEnvMain(int argc, char** argv) {
+Result<void> SecureEnvMain(int argc, char** argv) {
   DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   keymaster::SoftKeymasterLogger km_logger;
@@ -248,8 +248,7 @@ int SecureEnvMain(int argc, char** argv) {
   } else if (FLAGS_keymint_impl == "tpm") {
     security_level = KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT;
   } else {
-    LOG(FATAL) << "Unknown keymint implementation " << FLAGS_keymint_impl;
-    return -1;
+    return CF_ERR("Unknown Keymint Implementation: " + FLAGS_keymint_impl);
   }
 
   // The guest image may have either the C++ implementation of
@@ -274,17 +273,18 @@ int SecureEnvMain(int argc, char** argv) {
   // Start the C++ reference implementation of KeyMint.
   LOG(INFO) << "starting C++ KeyMint implementation in a thread with FDs in="
             << FLAGS_keymaster_fd_in << ", out=" << FLAGS_keymaster_fd_out;
+  CF_EXPECTF(security_level == KM_SECURITY_LEVEL_SOFTWARE ||
+                 security_level == KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT,
+             "Unknown keymaster security_level \"{}\" for \"{}\"",
+             security_level, FLAGS_keymint_impl);
   if (security_level == KM_SECURITY_LEVEL_SOFTWARE) {
     keymaster_context.reset(new keymaster::PureSoftKeymasterContext(
         keymaster::KmVersion::KEYMINT_3, KM_SECURITY_LEVEL_SOFTWARE));
-  } else if (security_level == KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT) {
+  } else /* KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT */ {
     keymaster_context.reset(
         new TpmKeymasterContext(*resource_manager, *keymaster_enforcement));
-  } else {
-    LOG(FATAL) << "Unknown keymaster security level " << security_level
-               << " for " << FLAGS_keymint_impl;
-    return -1;
   }
+
   // keymaster::AndroidKeymaster puts the context pointer into a UniquePtr,
   // taking ownership.
   keymaster.reset(new keymaster::AndroidKeymaster(
@@ -345,11 +345,16 @@ int SecureEnvMain(int argc, char** argv) {
     t.join();
   }
 
-  return 0;
+  return {};
 }
 
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  return cuttlefish::SecureEnvMain(argc, argv);
+  auto result = cuttlefish::SecureEnvMain(argc, argv);
+  if (result.ok()) {
+    return 0;
+  }
+  LOG(FATAL) << result.error().Trace();
+  return -1;
 }
