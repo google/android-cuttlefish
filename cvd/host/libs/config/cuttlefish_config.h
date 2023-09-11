@@ -204,9 +204,6 @@ class CuttlefishConfig {
   void set_metrics_binary(const std::string& metrics_binary);
   std::string metrics_binary() const;
 
-  void set_mcu(const Json::Value &v);
-  Json::Value& mcu() const;
-
   void set_extra_kernel_cmdline(const std::string& extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
 
@@ -278,6 +275,8 @@ class CuttlefishConfig {
   // path to the saved snapshot file(s)
   std::string snapshot_path() const;
   void set_snapshot_path(const std::string& snapshot_path);
+
+  bool IsCrosvm() const;
 
   class InstanceSpecific;
   class MutableInstanceSpecific;
@@ -362,6 +361,7 @@ class CuttlefishConfig {
     std::string PerInstanceInternalPath(const std::string& file_name) const;
     std::string PerInstanceLogPath(const std::string& file_name) const;
 
+    std::string CrosvmSocketPath() const;
     std::string instance_dir() const;
 
     std::string instance_internal_dir() const;
