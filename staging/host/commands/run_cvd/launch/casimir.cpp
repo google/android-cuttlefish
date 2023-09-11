@@ -52,6 +52,8 @@ class Casimir : public CommandSource {
     command.AddParameter(CasimirBinary());
     command.AddParameter("--nci-port");
     command.AddParameter(config_.casimir_nci_port());
+    command.AddParameter("--rf-port");
+    command.AddParameter(config_.casimir_rf_port());
     for (auto const& arg : config_.casimir_args()) {
       command.AddParameter(arg);
     }
