@@ -53,6 +53,7 @@
 #include "host/libs/config/logging.h"
 
 DEFINE_int32(confui_server_fd, -1, "A named socket to serve confirmation UI");
+DEFINE_int32(snapshot_control_fd, -1, "A named socket for snapshot operations");
 DEFINE_int32(keymaster_fd_in, -1, "A pipe for keymaster communication");
 DEFINE_int32(keymaster_fd_out, -1, "A pipe for keymaster communication");
 DEFINE_int32(keymint_fd_in, -1, "A pipe for keymint communication");
