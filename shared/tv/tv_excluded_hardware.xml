@@ -50,7 +50,4 @@
 
     <!-- ATV CF does not support credentials -->
     <unavailable-feature name="android.software.credentials" />
-
-    <!-- ATV CF does not support IPSEC tunnel migration -->
-    <unavailable-feature name="android.software.ipsec_tunnel_migration" />
 </permissions>
