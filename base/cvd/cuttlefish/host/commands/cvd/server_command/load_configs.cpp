@@ -19,6 +19,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <android-base/strings.h>
@@ -37,6 +38,60 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+
+namespace {
+
+constexpr std::string_view kCredentialSourceOverride =
+    "fetch.credential_source=";
+
+struct LoadFlags {
+  bool help = false;
+  std::vector<std::string> overrides;
+  std::string config_path;
+  std::string credential_source;
+};
+
+std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
+  std::vector<Flag> flags;
+  flags.emplace_back(GflagsCompatFlag("help", load_flags.help));
+  flags.emplace_back(
+      GflagsCompatFlag("credential_source", load_flags.credential_source));
+  FlagAlias alias = {FlagAliasMode::kFlagPrefix, "--override="};
+  flags.emplace_back(Flag().Alias(alias).Setter(
+      [&overrides = load_flags.overrides](const FlagMatch& m) -> Result<void> {
+        overrides.push_back(m.value);
+        return {};
+      }));
+  return flags;
+}
+
+Result<LoadFlags> GetFlags(const RequestWithStdio& request) {
+  LoadFlags load_flags;
+  auto flags = GetFlagsVector(load_flags);
+  auto args = ParseInvocation(request.Message()).arguments;
+  CF_EXPECT(ParseFlags(flags, args));
+  CF_EXPECT(load_flags.help || args.size() > 0,
+            "No arguments provided to cvd load command, please provide at "
+            "least one argument (help or path to json file)");
+  load_flags.config_path = args.front();
+  if (load_flags.config_path[0] != '/') {
+    load_flags.config_path =
+        request.Message().command_request().working_directory() + "/" +
+        load_flags.config_path;
+  }
+  if (!load_flags.credential_source.empty()) {
+    for (const auto& name : load_flags.overrides) {
+      CF_EXPECT(!android::base::StartsWith(name, kCredentialSourceOverride),
+                "Specifying both --override=fetch.credential_source and the "
+                "--credential_source flag is not allowed.");
+    }
+    load_flags.overrides.emplace_back(std::string(kCredentialSourceOverride) +
+                                      load_flags.credential_source);
+  }
+  return load_flags;
+}
+
+}  // namespace
 
 class LoadConfigsCommand : public CvdServerHandler {
  public:
@@ -74,38 +129,18 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   Result<std::vector<RequestWithStdio>> CreateCommandSequence(
       const RequestWithStdio& request) {
-    bool help = false;
+    const auto flags = CF_EXPECT(GetFlags(request));
 
-    std::vector<Flag> flags;
-    flags.emplace_back(GflagsCompatFlag("help", help));
-    std::vector<std::string> overrides;
-    FlagAlias alias = {FlagAliasMode::kFlagPrefix, "--override="};
-    flags.emplace_back(Flag().Alias(alias).Setter(
-        [&overrides](const FlagMatch& m) -> Result<void> {
-          overrides.push_back(m.value);
-          return {};
-        }));
-    auto args = ParseInvocation(request.Message()).arguments;
-    CF_EXPECT(ParseFlags(flags, args));
-    CF_EXPECT(args.size() > 0,
-              "No arguments provided to cvd load command, please provide at "
-              "least one argument (help or path to json file)");
-
-    if (help) {
+    if (flags.help) {
       std::stringstream help_msg_stream;
-      help_msg_stream << "Usage: cvd " << kLoadSubCmd;
+      help_msg_stream << "Usage: cvd " << kLoadSubCmd << "\n";
       const auto help_msg = help_msg_stream.str();
       CF_EXPECT(WriteAll(request.Out(), help_msg) == help_msg.size());
       return {};
     }
 
-    std::string config_path = args.front();
-    if (config_path[0] != '/') {
-      config_path = request.Message().command_request().working_directory() +
-                    "/" + config_path;
-    }
     Json::Value json_configs =
-        CF_EXPECT(GetOverridedJsonConfig(config_path, overrides));
+        CF_EXPECT(GetOverridedJsonConfig(flags.config_path, flags.overrides));
     const auto load_directories =
         CF_EXPECT(GenerateLoadDirectories(json_configs["instances"].size()));
     auto cvd_flags = CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
