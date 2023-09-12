@@ -27,15 +27,17 @@ enum ClearcutServer : int {
   kProd = 2,
 };
 
-cuttlefish::MetricsEvent::OsType osType();
-std::string osVersion();
-std::string sessionId(uint64_t now);
-std::string cfVersion();
-std::string macAddress();
-std::string company();
-cuttlefish::MetricsEvent::VmmType vmmManager();
-std::string vmmVersion();
-uint64_t epochTimeMs();
-std::string protoToStr(LogEvent* event);
-cuttlefish::MetricsExitCodes postReq(std::string output, ClearcutServer server);
+cuttlefish::MetricsEvent::OsType GetOsType();
+std::string GetOsVersion();
+std::string GenerateSessionId(uint64_t now);
+std::string GetCfVersion();
+std::string GetMacAddress();
+std::string GetCompany();
+cuttlefish::MetricsEvent::VmmType GetVmmManager();
+std::string GetVmmVersion();
+uint64_t GetEpochTimeMs();
+std::string ProtoToString(LogEvent* event);
+cuttlefish::MetricsExitCodes PostRequest(const std::string& output,
+                                         ClearcutServer server);
+
 }  // namespace metrics
