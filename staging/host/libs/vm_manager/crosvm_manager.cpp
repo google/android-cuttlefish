@@ -45,16 +45,6 @@
 namespace cuttlefish {
 namespace vm_manager {
 
-namespace {
-
-std::string GetControlSocketPath(
-    const CuttlefishConfig::InstanceSpecific& instance,
-    const std::string& socket_name) {
-  return instance.PerInstanceInternalUdsPath(socket_name.c_str());
-}
-
-}  // namespace
-
 bool CrosvmManager::IsSupported() {
 #ifdef __ANDROID__
   return true;
@@ -164,8 +154,6 @@ std::string ToSingleLineString(const Json::Value& value) {
   builder["indentation"] = "";
   return Json::writeString(builder, value);
 }
-
-constexpr auto crosvm_socket = "crosvm_control.sock";
 
 void MaybeConfigureVulkanIcd(const CuttlefishConfig& config, Command* command) {
   const auto& gpu_mode = config.ForDefaultInstance().gpu_mode();
@@ -410,7 +398,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   crosvm_cmd.ApplyProcessRestarter(instance.crosvm_binary(),
                                    kCrosvmVmResetExitCode);
   crosvm_cmd.Cmd().AddParameter("run");
-  crosvm_cmd.AddControlSocket(GetControlSocketPath(instance, crosvm_socket),
+  crosvm_cmd.AddControlSocket(instance.CrosvmSocketPath(),
                               instance.crosvm_binary());
 
   // --restore_path=<guest snapshot directory>
