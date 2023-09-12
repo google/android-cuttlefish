@@ -211,3 +211,6 @@
 // Metrics default parameters
 // TODO: Defined twice , please remove redundant definitions
 #define CF_DEFAULTS_REPORT_ANONYMOUS_USAGE_STATS CF_DEFAULTS_DYNAMIC_STRING
+
+// MCU emulator default configuration path
+#define CF_DEFAULTS_MCU_CONFIG_PATH CF_DEFAULTS_DYNAMIC_STRING
