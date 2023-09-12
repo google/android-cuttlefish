@@ -701,10 +701,20 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.AddHvcSink();
   }
 
+
   // /dev/hvc13 = sensors
   crosvm_cmd.AddHvcReadWrite(
       instance.PerInstanceInternalPath("sensors_fifo_vm.out"),
       instance.PerInstanceInternalPath("sensors_fifo_vm.in"));
+
+  // /dev/hvc14 = MCU UART
+  if (config.mcu()["uart0"]["type"].asString() == "serial") {
+    auto path = instance.PerInstanceInternalPath("mcu");
+    path += "/" + config.mcu()["uart0"]["path"].asString();
+    crosvm_cmd.AddHvcReadWrite(path, path);
+  } else {
+    crosvm_cmd.AddHvcSink();
+  }
 
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
     crosvm_cmd.AddHvcSink();
