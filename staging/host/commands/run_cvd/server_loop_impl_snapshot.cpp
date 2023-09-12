@@ -44,8 +44,7 @@ ServerLoopImpl::InitializeVmToControlSockPath(
       // TODO(kwstephenkim): add the following two lines to support QEMU
       // {QemuManager::name(),
       // instance.PerInstanceInternalUdsPath("qemu_monitor.sock")},
-      {vm_manager::CrosvmManager::name(),
-       instance.PerInstanceInternalUdsPath("crosvm_control.sock")},
+      {vm_manager::CrosvmManager::name(), instance.CrosvmSocketPath()},
   };
 }
 
