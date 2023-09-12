@@ -33,5 +33,6 @@ allow init uwb_device:chr_file rw_file_perms;
 allow init oemlock_device:chr_file rw_file_perms;
 allow init keymint_device:chr_file rw_file_perms;
 allow init sensors_device:chr_file rw_file_perms;
+allow init mcu_uart_device:chr_file rw_file_perms;
 
 allow init frp_block_device:blk_file setattr;
