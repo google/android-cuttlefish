@@ -24,8 +24,7 @@
 #include "host/libs/vm_manager/vm_manager.h"
 
 std::string GetControlSocketPath(const cuttlefish::CuttlefishConfig& config) {
-  return config.ForDefaultInstance().PerInstanceInternalUdsPath(
-      "crosvm_control.sock");
+  return config.ForDefaultInstance().CrosvmSocketPath();
 }
 
 static constexpr char kUsageMessage[] =
