@@ -596,8 +596,10 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     add_hvc_sink();
   }
 
+  // sensors_fifo_vm.{in/out} are created along with the streamer process,
+  // which is not created w/ QEMU.
   // /dev/hvc13 = sensors
-  add_hvc(instance.PerInstanceInternalPath("sensors_fifo_vm"));
+  add_hvc_sink();
 
   // /dev/hvc14 = MCU UART
   if (config.mcu()["uart0"]["type"].asString() == "serial") {
