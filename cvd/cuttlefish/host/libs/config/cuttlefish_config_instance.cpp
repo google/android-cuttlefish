@@ -1321,6 +1321,11 @@ std::string CuttlefishConfig::InstanceSpecific::CrosvmSocketPath() const {
   return PerInstanceInternalUdsPath("crosvm_control.sock");
 }
 
+std::string CuttlefishConfig::InstanceSpecific::OpenwrtCrosvmSocketPath()
+    const {
+  return PerInstanceInternalUdsPath("ap_control.sock");
+}
+
 static constexpr char kHostPort[] = "adb_host_port";
 int CuttlefishConfig::InstanceSpecific::adb_host_port() const {
   return (*Dictionary())[kHostPort].asInt();
