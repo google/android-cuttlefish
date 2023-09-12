@@ -970,6 +970,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     LOG(FATAL) << "Invalid vm_manager: " << vm_manager_vec[0];
   }
   tmp_config_obj.set_vm_manager(vm_manager_vec[0]);
+  tmp_config_obj.set_ap_vm_manager(vm_manager_vec[0] + "_openwrt");
 
   auto secure_hals = android::base::Split(FLAGS_secure_hals, ",");
   tmp_config_obj.set_secure_hals(

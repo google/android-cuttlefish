@@ -73,6 +73,7 @@ inline constexpr char kLogDirName[] = "logs";
 inline constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
 inline constexpr char kKernelLoadedMessage[] = "] Linux version";
 inline constexpr char kBootloaderLoadedMessage[] = "U-Boot 20";
+inline constexpr char kApName[] = "crosvm_openwrt";
 
 enum class SecureHal {
   Unknown,
@@ -130,6 +131,9 @@ class CuttlefishConfig {
 
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
+
+  std::string ap_vm_manager() const;
+  void set_ap_vm_manager(const std::string& name);
 
   struct DisplayConfig {
     int width;
@@ -368,6 +372,7 @@ class CuttlefishConfig {
     std::string PerInstanceLogPath(const std::string& file_name) const;
 
     std::string CrosvmSocketPath() const;
+    std::string OpenwrtCrosvmSocketPath() const;
     std::string instance_dir() const;
 
     std::string instance_internal_dir() const;
