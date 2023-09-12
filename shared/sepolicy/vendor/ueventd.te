@@ -7,3 +7,4 @@ allow ueventd metrics_helper_device:chr_file { rw_file_perms create setattr };
 allow ueventd oemlock_device:chr_file { rw_file_perms create setattr };
 allow ueventd keymint_device:chr_file { rw_file_perms create setattr };
 allow ueventd sensors_device:chr_file { rw_file_perms create setattr };
+allow ueventd mcu_uart_device:chr_file { rw_file_perms create setattr };
