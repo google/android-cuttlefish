@@ -279,6 +279,8 @@ class CuttlefishConfig {
   std::string snapshot_path() const;
   void set_snapshot_path(const std::string& snapshot_path);
 
+  bool IsCrosvm() const;
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
@@ -360,6 +362,7 @@ class CuttlefishConfig {
     std::string PerInstanceInternalPath(const std::string& file_name) const;
     std::string PerInstanceLogPath(const std::string& file_name) const;
 
+    std::string CrosvmSocketPath() const;
     std::string instance_dir() const;
 
     std::string instance_internal_dir() const;
