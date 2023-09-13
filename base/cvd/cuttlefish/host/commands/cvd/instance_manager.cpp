@@ -23,9 +23,10 @@
 #include <sstream>
 
 #include <android-base/file.h>
-#include "fmt/format.h"
+#include <android-base/scopeguard.h>
+#include <fmt/format.h>
 #include <fruit/fruit.h>
-#include "json/value.h"
+#include <json/value.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -164,12 +165,11 @@ Result<void> InstanceManager::SetInstanceGroup(
   using InstanceInfo = selector::InstanceDatabase::InstanceInfo;
   std::vector<InstanceInfo> instances_info;
   for (const auto& instance : per_instance_info) {
-    InstanceInfo info{.name = instance.per_instance_name_,
-                      .id = instance.instance_id_};
+    InstanceInfo info{.id = instance.instance_id_,
+                      .name = instance.per_instance_name_};
     instances_info.push_back(info);
   }
-  auto result = instance_db.AddInstances(group_name, instances_info);
-  if (!result.ok()) {
+  android::base::ScopeGuard action_on_failure([&instance_db, &new_group]() {
     /*
      * The way InstanceManager uses the database is that it adds an empty
      * group, gets an handle, and add instances to it. Thus, failing to adding
@@ -181,8 +181,12 @@ Result<void> InstanceManager::SetInstanceGroup(
      *
      */
     instance_db.RemoveInstanceGroup(new_group.Get());
-    CF_EXPECT(std::move(result));
-  }
+  });
+  CF_EXPECTF(instance_db.AddInstances(group_name, instances_info),
+             "Failed to add instances to the group \"{}\" so the group "
+             "is not added",
+             group_name);
+  action_on_failure.Disable();
   return {};
 }
 
