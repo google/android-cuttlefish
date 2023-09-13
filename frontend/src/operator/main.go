@@ -30,7 +30,6 @@ import (
 const (
 	DefaultSocketPath     = "/run/cuttlefish/operator"
 	DefaultHttpPort       = "1080"
-	DefaultHttpsPort      = "1443"
 	DefaultTLSCertDir     = "/etc/cuttlefish-common/operator/cert"
 	DefaultStaticFilesDir = "static"    // relative path
 	DefaultInterceptDir   = "intercept" // relative path
@@ -90,7 +89,7 @@ func start(starters []func() error) {
 func main() {
 	socketPath := fromEnvOrDefault("OPERATOR_SOCKET_PATH", DefaultSocketPath)
 	httpPort := fromEnvOrDefault("OPERATOR_HTTP_PORT", DefaultHttpPort)
-	httpsPort := fromEnvOrDefault("OPERATOR_HTTPS_PORT", DefaultHttpsPort)
+	httpsPort := fromEnvOrDefault("OPERATOR_HTTPS_PORT", "")
 	tlsCertDir := fromEnvOrDefault("OPERATOR_TLS_CERT_DIR", DefaultTLSCertDir)
 	webUiUrlStr := fromEnvOrDefault("OPERATOR_WEBUI_URL", DefaultWebUIUrl)
 
@@ -119,8 +118,10 @@ func main() {
 
 	starters := []func() error{
 		func() error { return operator.SetupDeviceEndpoint(pool, config, socketPath)() },
-		func() error { return startHttpsServer(httpsPort, certPath, keyPath) },
 		func() error { return startHttpServer(httpPort) },
+	}
+	if httpPort != "" {
+		starters = append(starters, func() error { return startHttpsServer(httpsPort, certPath, keyPath) })
 	}
 	start(starters)
 }
