@@ -198,6 +198,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDStartTimeout:          3 * time.Minute,
 		CVDUser:                  h.Config.CVDUser,
 		UserArtifactsDirResolver: h.UADirResolver,
+		BuildAPICredentials:      creds,
 	}
 	return NewCreateCVDAction(opts).Run()
 }

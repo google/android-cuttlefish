@@ -19,9 +19,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
@@ -47,6 +49,7 @@ type CreateCVDActionOpts struct {
 	CVDUser                  string
 	CVDStartTimeout          time.Duration
 	UserArtifactsDirResolver UserArtifactsDirResolver
+	BuildAPICredentials      string
 }
 
 type CreateCVDAction struct {
@@ -63,7 +66,9 @@ type CreateCVDAction struct {
 	userArtifactsDirResolver UserArtifactsDirResolver
 	artifactsMngr            *artifacts.Manager
 	startCVDHandler          *startCVDHandler
+	cvdUser                  string
 	cvdStartTimeout          time.Duration
+	buildAPICredentials      string
 
 	instanceCounter uint32
 }
@@ -81,7 +86,9 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		artifactsFetcher:         opts.ArtifactsFetcher,
 		cvdBundleFetcher:         opts.CVDBundleFetcher,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
+		cvdUser:                  opts.CVDUser,
 		cvdStartTimeout:          opts.CVDStartTimeout,
+		buildAPICredentials:      opts.BuildAPICredentials,
 
 		artifactsMngr: artifacts.NewManager(
 			opts.Paths.ArtifactsRootDir,
@@ -134,21 +141,26 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	if err != nil {
 		return nil, err
 	}
-	file, err := ioutil.TempFile("", "cvdload*.json")
+	configFile, err := createTempFile("cvdload*.json", data, 0640)
 	if err != nil {
 		return nil, err
 	}
-	if err := file.Chmod(0640); err != nil {
-		return nil, err
+	args := []string{"load", configFile.Name()}
+	if a.buildAPICredentials != "" {
+		filename, err := createCredsFile(a.execContext)
+		if err != nil {
+			return nil, err
+		}
+		if err := writeCredsFile(a.execContext, filename, []byte(a.buildAPICredentials)); err != nil {
+			return nil, err
+		}
+		defer func() {
+			if err := removeCredsFile(a.execContext, filename); err != nil {
+				log.Println("failed to remove credentials file: ", err)
+			}
+		}()
+		args = append(args, "--credential_source="+filename)
 	}
-	_, err = file.Write(data)
-	if closeErr := file.Close(); closeErr != nil && err == nil {
-		err = closeErr
-	}
-	if err != nil {
-		return nil, err
-	}
-	args := []string{"load", file.Name()}
 	opts := cvd.CommandOpts{
 		Timeout: a.cvdStartTimeout,
 	}
@@ -336,4 +348,99 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 		}
 	}
 	return nil
+}
+
+// See https://pkg.go.dev/io/ioutil@go1.13.15#TempFile
+func createTempFile(pattern string, data []byte, mode os.FileMode) (*os.File, error) {
+	file, err := ioutil.TempFile("", pattern)
+	if err != nil {
+		return nil, err
+	}
+	if err := file.Chmod(mode); err != nil {
+		return nil, err
+	}
+	_, err = file.Write(data)
+	if closeErr := file.Close(); closeErr != nil && err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
+}
+
+// Create the credential file so it's owned by the configured `cvd user`, e.g: `_cvd-executor`.
+func createCredsFile(ctx cvd.CVDExecContext) (string, error) {
+	name, err := tempFilename("cvdload*.creds")
+	if err != nil {
+		return "", err
+	}
+	if err := cvd.Exec(ctx, "touch", name); err != nil {
+		return "", err
+	}
+	if err := cvd.Exec(ctx, "chmod", "0600", name); err != nil {
+		return "", err
+	}
+	return name, nil
+}
+
+// Write into credential files by granting temporary write permission to `cvdnetwork` group.
+func writeCredsFile(ctx cvd.CVDExecContext, name string, data []byte) error {
+	info, err := os.Stat(name)
+	if err != nil {
+		return err
+	}
+	infoSys := info.Sys()
+	var gid uint32
+	if stat, ok := infoSys.(*syscall.Stat_t); ok {
+		gid = stat.Gid
+	} else {
+		panic("unexpected stat syscall type")
+	}
+	defer func() {
+		// Reverts the write permission.
+		if err := cvd.Exec(ctx, "chgrp", strconv.Itoa(int(gid)), name); err != nil {
+			log.Println(err)
+		}
+		if err := cvd.Exec(ctx, "chmod", "0600", name); err != nil {
+			log.Println(err)
+		}
+	}()
+	// Grants temporal write permission to `cvdnetwork`, so this process can write the file.
+	if err := cvd.Exec(ctx, "chgrp", "cvdnetwork", name); err != nil {
+		return err
+	}
+	if err := cvd.Exec(ctx, "chmod", "0620", name); err != nil {
+		return err
+	}
+	file, err := os.OpenFile(name, os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(data)
+	if closeErr := file.Close(); closeErr != nil && err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func removeCredsFile(ctx cvd.CVDExecContext, name string) error {
+	return cvd.Exec(ctx, "rm", name)
+}
+
+// Returns a random name for a file in the /tmp directory given a pattern.
+// See https://pkg.go.dev/io/ioutil@go1.13.15#TempFile
+func tempFilename(pattern string) (string, error) {
+	file, err := ioutil.TempFile("", pattern)
+	if err != nil {
+		return "", err
+	}
+	name := file.Name()
+	if os.Remove(name); err != nil {
+		return "", err
+	}
+	return name, nil
 }
