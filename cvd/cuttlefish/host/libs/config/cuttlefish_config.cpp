@@ -391,6 +391,16 @@ void CuttlefishConfig::set_netsim_instance_num(int netsim_instance_num) {
   (*dictionary_)[kNetsimInstanceNum] = netsim_instance_num;
 }
 
+static constexpr char kNetsimConnectorInstanceNum[] =
+    "netsim_connector_instance_num";
+int CuttlefishConfig::netsim_connector_instance_num() const {
+  return (*dictionary_)[kNetsimConnectorInstanceNum].asInt();
+}
+void CuttlefishConfig::set_netsim_connector_instance_num(
+    int netsim_instance_num) {
+  (*dictionary_)[kNetsimConnectorInstanceNum] = netsim_instance_num;
+}
+
 static constexpr char kNetsimArgs[] = "netsim_args";
 void CuttlefishConfig::set_netsim_args(const std::string& netsim_args) {
   Json::Value args_json_obj(Json::arrayValue);
