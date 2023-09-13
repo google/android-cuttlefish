@@ -3,11 +3,10 @@ package {
 }
 
 rust_binary {
-    name: "android.hardware.lights-service.cuttlefish",
+    name: "android.hardware.light-service.cuttlefish",
     relative_install_path: "hw",
-    init_rc: ["lights-cuttlefish.rc"],
-    vintf_fragments: ["lights-cuttlefish.xml"],
     vendor: true,
+    prefer_rlib: true,
     rustlibs: [
         "liblogger",
         "liblog_rust",
@@ -17,4 +16,34 @@ rust_binary {
         "librustutils",
     ],
     srcs: [ "main.rs" ],
+    installable: false, // installed in APEX
+}
+
+prebuilt_etc {
+    name: "lights-cuttlefish.rc",
+    src: "lights-cuttlefish.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "lights-cuttlefish.xml",
+    src: "lights-cuttlefish.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.google.cf.light",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: ["android.hardware.light-service.cuttlefish"],
+    prebuilts: [
+        "lights-cuttlefish.rc",
+        "lights-cuttlefish.xml",
+    ],
 }
