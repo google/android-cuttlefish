@@ -1176,6 +1176,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_netsim_instance_num(netsim_instance_num);
   LOG(DEBUG) << "netsim_instance_num: " << netsim_instance_num;
   tmp_config_obj.set_netsim_args(FLAGS_netsim_args);
+  // netsim built-in connector will forward packets to another daemon instance,
+  // filling the role of bluetooth_connector when is_bt_netsim is true.
+  auto netsim_connector_instance_num = netsim_instance_num;
+  if (netsim_instance_num != rootcanal_instance_num) {
+    netsim_connector_instance_num = rootcanal_instance_num;
+  }
+  tmp_config_obj.set_netsim_connector_instance_num(
+      netsim_connector_instance_num);
 
   // crosvm should create fifos for UWB
   auto pica_instance_num = *instance_nums.begin() - 1;
