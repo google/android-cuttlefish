@@ -440,7 +440,7 @@ endif
 # Tetheroffload HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.tetheroffload-service.example
+    com.android.hardware.tetheroffload
 
 #
 # Thermal HAL
