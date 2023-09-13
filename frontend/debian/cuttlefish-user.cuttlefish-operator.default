@@ -5,8 +5,8 @@
 # operator_http_port=
 #
 # The port on which the operator server should listen on for HTTPS.
-# Defaults to 1443.
-# operator_https_port=
+# Serve over http only when not provided.
+operator_https_port=1443
 #
 # The directory where the TLS certificate needed to establish the HTTPS
 # communication lives.
