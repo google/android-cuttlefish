@@ -41,7 +41,6 @@
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/server_command/generic.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/start_impl.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
@@ -53,12 +52,15 @@ namespace cuttlefish {
 
 class CvdStartCommandHandler : public CvdServerHandler {
  public:
-  INJECT(
-      CvdStartCommandHandler(InstanceManager& instance_manager,
-                             HostToolTargetManager& host_tool_target_manager))
+  INJECT(CvdStartCommandHandler(InstanceManager& instance_manager,
+                                HostToolTargetManager& host_tool_target_manager,
+                                CommandSequenceExecutor& command_executor))
       : instance_manager_(instance_manager),
         host_tool_target_manager_(host_tool_target_manager),
-        acloud_action_ended_(false) {}
+        // TODO: b/300476262 - Migrate to using local instances rather than
+        // constructor-injected ones
+        command_executor_(command_executor),
+        sub_action_ended_(false) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
@@ -131,7 +133,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
-  CommandSequenceExecutor command_executor_;
+  CommandSequenceExecutor& command_executor_;
   std::mutex interruptible_;
   bool interrupted_ = false;
   /*
@@ -140,20 +142,9 @@ class CvdStartCommandHandler : public CvdServerHandler {
    * If true, it is guaranteed that the command_executor_ ended the execution.
    * If false, it may or may not be after the command_executor_.Execute()
    */
-  std::atomic<bool> acloud_action_ended_;
+  std::atomic<bool> sub_action_ended_;
   static const std::array<std::string, 2> supported_commands_;
 };
-
-fruit::Component<> GenericNestedHandlerComponent(
-    InstanceManager* instance_manager,
-    HostToolTargetManager* host_tool_target_manager,
-    SubprocessWaiter* subprocess_waiter_for_nested_handler) {
-  return fruit::createComponent()
-      .bindInstance(*instance_manager)
-      .bindInstance(*host_tool_target_manager)
-      .bindInstance(*subprocess_waiter_for_nested_handler)
-      .install(cvdGenericCommandComponent);
-}
 
 Result<void> CvdStartCommandHandler::AcloudCompatActions(
     const selector::GroupCreationInfo& group_creation_info,
@@ -260,14 +251,6 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
     new_requests.emplace_back(request.Client(), request_proto, dev_null_fds,
                               request.Credentials());
   }
-  SubprocessWaiter subprocess_waiter;
-  // injector only with the GenericCommandHandler for ln and mkdir
-  fruit::Injector<> injector(GenericNestedHandlerComponent,
-                             std::addressof(this->instance_manager_),
-                             std::addressof(this->host_tool_target_manager_),
-                             std::addressof(subprocess_waiter));
-  CF_EXPECT(command_executor_.LateInject(injector),
-            "Creating local CommandSequenceExecutor in cvd start failed.");
   interrupt_lock.unlock();
   CF_EXPECT(command_executor_.Execute(new_requests, dev_null));
   return {};
@@ -685,7 +668,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   // make acquire interrupt_lock inside.
   auto acloud_compat_action_result =
       AcloudCompatActions(*group_creation_info, request);
-  acloud_action_ended_ = true;
+  sub_action_ended_ = true;
   if (!acloud_compat_action_result.ok()) {
     LOG(ERROR) << acloud_compat_action_result.error().FormatForEnv();
     LOG(ERROR) << "AcloudCompatActions() failed"
@@ -824,7 +807,7 @@ Result<void> CvdStartCommandHandler::SetBuildId(const uid_t uid,
 Result<void> CvdStartCommandHandler::Interrupt() {
   std::scoped_lock interrupt_lock(interruptible_);
   interrupted_ = true;
-  if (!acloud_action_ended_) {
+  if (!sub_action_ended_) {
     auto result = command_executor_.Interrupt();
     if (!result.ok()) {
       LOG(ERROR) << "Failed to interrupt CommandExecutor"
@@ -887,7 +870,8 @@ std::vector<std::string> CvdStartCommandHandler::CmdList() const {
 const std::array<std::string, 2> CvdStartCommandHandler::supported_commands_{
     "start", "launch_cvd"};
 
-fruit::Component<fruit::Required<InstanceManager, HostToolTargetManager>>
+fruit::Component<fruit::Required<InstanceManager, HostToolTargetManager,
+                                 CommandSequenceExecutor>>
 CvdStartCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdStartCommandHandler>();
