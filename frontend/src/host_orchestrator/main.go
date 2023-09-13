@@ -27,20 +27,14 @@ import (
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
-	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
-	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
+	"github.com/gorilla/mux"
 
 	"github.com/google/uuid"
 )
 
 const (
-	DefaultSocketPath     = "/run/cuttlefish/operator"
-	DefaultHttpPort       = "1080"
-	DefaultTLSCertDir     = "/etc/cuttlefish-common/host_orchestrator/cert"
-	DefaultStaticFilesDir = "static"    // relative path
-	DefaultInterceptDir   = "intercept" // relative path
-	DefaultWebUIUrl       = ""
-
+	DefaultHttpPort                 = "1080"
+	DefaultTLSCertDir               = "/etc/cuttlefish-common/host_orchestrator/cert"
 	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
 	defaultCVDBinAndroidBuildID     = "10796991"
 	defaultCVDBinAndroidBuildTarget = "aosp_cf_x86_64_phone-trunk_staging-userdebug"
@@ -73,15 +67,6 @@ func fromEnvOrDefault(key string, def string) string {
 	return def
 }
 
-// Whether a device file request should be intercepted and served from the signaling server instead
-func maybeIntercept(path string) *string {
-	if path == "/js/server_connector.js" {
-		alt := fmt.Sprintf("%s%s", DefaultInterceptDir, path)
-		return &alt
-	}
-	return nil
-}
-
 func start(starters []func() error) {
 	wg := new(sync.WaitGroup)
 	wg.Add(len(starters))
@@ -96,24 +81,26 @@ func start(starters []func() error) {
 	wg.Wait()
 }
 
+func newOperatorProxy(port string) *httputil.ReverseProxy {
+	if port == "" {
+		log.Fatal("The host orchestrator requires access to the operator")
+	}
+	operatorURL, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%s", port))
+	if err != nil {
+		log.Fatalf("Invalid operator port (%s): %v", port, err)
+	}
+	return httputil.NewSingleHostReverseProxy(operatorURL)
+}
+
 func main() {
-	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", DefaultSocketPath)
 	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", DefaultHttpPort)
 	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", "")
 	tlsCertDir := fromEnvOrDefault("ORCHESTRATOR_TLS_CERT_DIR", DefaultTLSCertDir)
-	webUIUrlStr := fromEnvOrDefault("ORCHESTRATOR_WEBUI_URL", DefaultWebUIUrl)
 	certPath := filepath.Join(tlsCertDir, "cert.pem")
 	keyPath := filepath.Join(tlsCertDir, "key.pem")
 	cvdUser := fromEnvOrDefault("ORCHESTRATOR_CVD_USER", "")
+	operatorPort := fromEnvOrDefault("OPERATOR_HTTP_PORT", "")
 
-	pool := operator.NewDevicePool()
-	polledSet := operator.NewPolledSet()
-	config := apiv1.InfraConfig{
-		Type: "config",
-		IceServers: []apiv1.IceServer{
-			{URLs: []string{"stun:stun.l.google.com:19302"}},
-		},
-	}
 	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
 	cvdBinAndroidBuildID := fromEnvOrDefault("ORCHESTRATOR_CVDBIN_ANDROID_BUILD_ID", defaultCVDBinAndroidBuildID)
 	cvdBinAndroidBuildTarget := fromEnvOrDefault("ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET", defaultCVDBinAndroidBuildTarget)
@@ -139,7 +126,6 @@ func main() {
 		InitialCVDBinAndroidBuildTarget: cvdToolsVersion.Target,
 	}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
-	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
 	imController := orchestrator.Controller{
 		Config: orchestrator.Config{
 			Paths:                  imPaths,
@@ -152,21 +138,17 @@ func main() {
 		UserArtifactsManager:  uam,
 		DebugVariablesManager: debugVarsManager,
 	}
+	proxy := newOperatorProxy(operatorPort)
+
+	r := mux.NewRouter()
 	imController.AddRoutes(r)
-	// The host orchestrator currently has no use for this, since clients won't connect
-	// to it directly, however they probably will once the multi-device feature matures.
-	if len(webUIUrlStr) > 0 {
-		webUIUrl, _ := url.Parse(webUIUrlStr)
-		proxy := httputil.NewSingleHostReverseProxy(webUIUrl)
-		r.PathPrefix("/").Handler(proxy)
-	} else {
-		fs := http.FileServer(http.Dir(DefaultStaticFilesDir))
-		r.PathPrefix("/").Handler(fs)
-	}
+	// Defer to the operator for every route not covered by the orchestrator. That
+	// includes web UI and other static files.
+	r.PathPrefix("/").Handler(proxy)
+
 	http.Handle("/", r)
 
 	starters := []func() error{
-		func() error { return operator.SetupDeviceEndpoint(pool, config, socketPath)() },
 		func() error { return startHttpServer(httpPort) },
 	}
 	if httpsPort != "" {

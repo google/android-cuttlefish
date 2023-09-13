@@ -1,5 +1,7 @@
 cuttlefish-frontend (0.9.28) UNRELEASED; urgency=medium
 
+  * Replace operator functionality with reverse proxy in host operator
+
  -- Jorge Moreira <jemoreira@google.com>  Wed, 13 Sep 2023 11:59:23 -0700
 
 cuttlefish-frontend (0.9.27) unstable; urgency=medium
