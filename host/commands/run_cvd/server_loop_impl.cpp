@@ -300,7 +300,7 @@ bool ServerLoopImpl::PowerwashFiles() {
   DeleteFifos();
 
   // TODO(b/269669405): Figure out why this file is not being deleted
-  unlink(instance_.PerInstanceInternalUdsPath("crosvm_control.sock").c_str());
+  unlink(instance_.CrosvmSocketPath().c_str());
 
   // TODO(schuffelen): Clean up duplication with assemble_cvd
   unlink(instance_.PerInstancePath("NVChip").c_str());
@@ -380,7 +380,7 @@ void ServerLoopImpl::RestartRunCvd(int notification_fd) {
 Result<std::string> ServerLoopImpl::VmControlSocket() const {
   CF_EXPECT_EQ(config_.vm_manager(), "crosvm",
                "Other VMs but crosvm is not yet supported.");
-  return instance_.PerInstanceInternalUdsPath("crosvm_control.sock");
+  return instance_.CrosvmSocketPath();
 }
 
 }  // namespace run_cvd_impl
