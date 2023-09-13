@@ -96,8 +96,17 @@ class NetsimServer : public CommandSource {
     // Port configuration.
     netsimd.AddParameter("--hci_port=", config_.rootcanal_hci_port());
 
-    // Netsim instance number.
-    netsimd.AddParameter("--instance_num=", config_.netsim_instance_num());
+    // When no connector is requested, add the instance number
+    if (config_.netsim_connector_instance_num() ==
+        config_.netsim_instance_num()) {
+      netsimd.AddParameter("--instance_num=", config_.netsim_instance_num());
+    } else {
+      // If instance_num is not the target, then inform netsim to forward
+      // packets to another netsim daemon that was launched from cuttlefish with
+      // a different instance_num.
+      netsimd.AddParameter("--connector_instance_num=",
+                           config_.netsim_connector_instance_num());
+    }
 
     // Add parameters from passthrough option --netsim-args.
     for (auto const& arg : config_.netsim_args()) {
