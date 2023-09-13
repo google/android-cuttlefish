@@ -18,6 +18,14 @@
 # arm64 (64-bit only) page size agnostic target for Cuttlefish
 #
 
+# Use 16K page size kernel
+TARGET_KERNEL_USE ?= mainline
+TARGET_KERNEL_ARCH ?= arm64
+SYSTEM_DLKM_SRC ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)/16k
+TARGET_KERNEL_PATH ?= $(SYSTEM_DLKM_SRC)/kernel-$(TARGET_KERNEL_USE)
+KERNEL_MODULES_PATH ?= \
+    kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/$(subst _,-,$(TARGET_KERNEL_ARCH))/16k
+
 TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_RO_FILE_SYSTEM_TYPE := ext4
 
