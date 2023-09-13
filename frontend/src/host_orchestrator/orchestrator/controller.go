@@ -183,6 +183,11 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(
 		exec.CommandContext, h.Config.Paths.FetchCVDBin(), creds)
+	cvdStartTimeout := 3 * time.Minute
+	if req.EnvConfig != nil {
+		// Use a lengthier timeout when using canonical configs as this operation downloads artifacts as well.
+		cvdStartTimeout = 7 * time.Minute
+	}
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
@@ -195,7 +200,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		ArtifactsFetcher:         artifactsFetcher,
 		CVDBundleFetcher:         cvdBundleFetcher,
 		UUIDGen:                  func() string { return uuid.New().String() },
-		CVDStartTimeout:          3 * time.Minute,
+		CVDStartTimeout:          cvdStartTimeout,
 		CVDUser:                  h.Config.CVDUser,
 		UserArtifactsDirResolver: h.UADirResolver,
 		BuildAPICredentials:      creds,
