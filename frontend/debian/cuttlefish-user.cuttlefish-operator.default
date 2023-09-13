@@ -1,5 +1,9 @@
 # defaults for cuttlefish-operator
 
+# The network address to listen on for both HTTP and HTTPS.
+# Defaults to all ip addresses.
+operator_listen_address=0.0.0.0
+#
 # The port on which the operator server should listen on for plain HTTP.
 # Defaults to 1080.
 # operator_http_port=

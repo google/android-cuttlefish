@@ -34,18 +34,19 @@ const (
 	DefaultStaticFilesDir = "static"    // relative path
 	DefaultInterceptDir   = "intercept" // relative path
 	DefaultWebUIUrl       = ""
+	DefaultListenAddress  = "127.0.0.1"
 )
 
-func startHttpServer(port string) error {
+func startHttpServer(address, port string) error {
 	log.Println(fmt.Sprint("Operator is listening at http://localhost:", port))
 
 	// handler is nil, so DefaultServeMux is used.
-	return http.ListenAndServe(fmt.Sprint(":", port), nil)
+	return http.ListenAndServe(fmt.Sprintf("%s:%s", address, port), nil)
 }
 
-func startHttpsServer(port string, certPath string, keyPath string) error {
+func startHttpsServer(address, port string, certPath string, keyPath string) error {
 	log.Println(fmt.Sprint("Operator is listening at https://localhost:", port))
-	return http.ListenAndServeTLS(fmt.Sprint(":", port),
+	return http.ListenAndServeTLS(fmt.Sprintf("%s:%s", address, port),
 		certPath,
 		keyPath,
 		// handler is nil, so DefaultServeMux is used.
@@ -92,6 +93,7 @@ func main() {
 	httpsPort := fromEnvOrDefault("OPERATOR_HTTPS_PORT", "")
 	tlsCertDir := fromEnvOrDefault("OPERATOR_TLS_CERT_DIR", DefaultTLSCertDir)
 	webUiUrlStr := fromEnvOrDefault("OPERATOR_WEBUI_URL", DefaultWebUIUrl)
+	address := fromEnvOrDefault("OPERATOR_LISTEN_ADDRESS", DefaultListenAddress)
 
 	certPath := tlsCertDir + "/cert.pem"
 	keyPath := tlsCertDir + "/key.pem"
@@ -118,10 +120,10 @@ func main() {
 
 	starters := []func() error{
 		func() error { return operator.SetupDeviceEndpoint(pool, config, socketPath)() },
-		func() error { return startHttpServer(httpPort) },
+		func() error { return startHttpServer(address, httpPort) },
 	}
 	if httpPort != "" {
-		starters = append(starters, func() error { return startHttpsServer(httpsPort, certPath, keyPath) })
+		starters = append(starters, func() error { return startHttpsServer(address, httpsPort, certPath, keyPath) })
 	}
 	start(starters)
 }
