@@ -30,4 +30,7 @@ orchestrator_https_port=1443
 # If it isn't empty, the application uses web UI from the url,
 # else, it uses web pages which is generated during the build
 # Defaults to ""
-# orchestrator_webui_url=
+# operator_webui_url=
+#
+# The port where the operator is to listen on.
+operator_http_port=2080
