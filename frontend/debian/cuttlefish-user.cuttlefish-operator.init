@@ -76,6 +76,7 @@ start() {
   OPERATOR_TLS_CERT_DIR="${operator_tls_cert_dir}" \
   OPERATOR_SOCKET_PATH="${RUN_DIR}"/operator \
   OPERATOR_WEBUI_URL="${operator_webui_url}" \
+  OPERATOR_LISTEN_ADDRESS="${operator_listen_address}" \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \
     --chuid _cutf-operator:cvdnetwork \
