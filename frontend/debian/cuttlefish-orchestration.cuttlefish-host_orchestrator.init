@@ -39,9 +39,11 @@ orchestrator_tls_cert_dir=${orchestrator_tls_cert_dir:-"/etc/cuttlefish-common/h
 orchestrator_cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir:-"/var/lib/cuttlefish-common"}
 
 RUN_DIR="/run/cuttlefish"
-ASSET_DIR="/usr/share/cuttlefish-common/host_orchestrator"
-DAEMON="/usr/lib/cuttlefish-common/bin/host_orchestrator"
-PIDFILE="${RUN_DIR}"/host_orchestrator.pid
+ORCHESTRATOR_BIN="/usr/lib/cuttlefish-common/bin/host_orchestrator"
+ORCHESTRATOR_PIDFILE="${RUN_DIR}"/host_orchestrator.pid
+ASSET_DIR="/usr/share/cuttlefish-common/operator"
+OPERATOR_BIN="/usr/lib/cuttlefish-common/bin/operator"
+OPERATOR_PIDFILE="${RUN_DIR}"/operator.pid
 
 gen_cert() {
   CERT_FILE="${orchestrator_tls_cert_dir}/cert.pem"
@@ -84,24 +86,38 @@ start() {
   eval $(set_config_expr ORCHESTRATOR_CVDBIN_ANDROID_BUILD_ID orchestrator_cvdbin_android_build_id)
   eval $(set_config_expr ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET orchestrator_cvdbin_android_build_target)
   eval $(set_config_expr ORCHESTRATOR_CVD_ARTIFACTS_DIR orchestrator_cvd_artifacts_dir)
-  eval $(set_config_expr ORCHESTRATOR_WEBUI_URL orchestrator_webui_url)
+  eval $(set_config_expr OPERATOR_WEBUI_URL operator_webui_url)
+  eval $(set_config_expr OPERATOR_HTTP_PORT operator_http_port)
 
-  ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
+  OPERATOR_SOCKET_PATH="${RUN_DIR}"/operator \
+  start-stop-daemon --start \
+    --pidfile "${OPERATOR_PIDFILE}" \
+    --chdir "${ASSET_DIR}" \
+    --background --no-close \
+    --make-pidfile \
+    --exec "${OPERATOR_BIN}"
+
   ORCHESTRATOR_CVD_USER="_cvd-executor" \
   start-stop-daemon --start \
-    --pidfile "${PIDFILE}" \
+    --pidfile "${ORCHESTRATOR_PIDFILE}" \
     --chuid _cutf-operator:cvdnetwork \
     --chdir "${ASSET_DIR}" \
     --background --no-close \
     --make-pidfile \
-    --exec "${DAEMON}"
+    --exec "${ORCHESTRATOR_BIN}"
 }
 
 stop() {
   start-stop-daemon --stop \
-    --pidfile "${PIDFILE}" \
+    --pidfile "${ORCHESTRATOR_PIDFILE}" \
     --remove-pidfile \
-    --exec "${DAEMON}"
+    --exec "${ORCHESTRATOR_BIN}"
+
+  start-stop-daemon --stop \
+    --pidfile "${OPERATOR_PIDFILE}" \
+    --remove-pidfile \
+    --exec "${OPERATOR_BIN}"
+
   # The presence of the socket will cause devices to try to connect to it
   # instead of starting their own signaling servers, so it needs to be removed
   # once the service isn't running.
@@ -114,9 +130,9 @@ status() {
   #   1 if daemon is dead and pid file exists
   #   3 if daemon is not running
   #   4 if daemon status is unknown
-  start-stop-daemon --start --quiet --pidfile "${PIDFILE}" --exec ${DAEMON} --test > /dev/null
+  start-stop-daemon --start --quiet --pidfile "${ORCHESTRATOR_PIDFILE}" --exec ${ORCHESTRATOR_BIN} --test > /dev/null
   case "${?}" in
-    0) [ -e "${PIDFILE}" ] && return 1 ; return 3 ;;
+    0) [ -e "${ORCHESTRATOR_PIDFILE}" ] && return 1 ; return 3 ;;
     1) return 0 ;;
     *) return 4 ;;
   esac
