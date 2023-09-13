@@ -139,11 +139,6 @@ func main() {
 		InitialCVDBinAndroidBuildTarget: cvdToolsVersion.Target,
 	}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
-	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
-	go func() {
-		err := deviceServerLoop()
-		log.Fatal("Error with device endpoint: ", err)
-	}()
 	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
 	imController := orchestrator.Controller{
 		Config: orchestrator.Config{
