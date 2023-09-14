@@ -66,7 +66,17 @@ void LightsObserver::Stop() {
 }
 
 void LightsObserver::ReadServerMessages() {
-  //  TODO: Expand this with the rest of the protocol. Cache lights states.
+   static constexpr auto kEventKey = "event";
+   static constexpr auto kMessageStart = "VIRTUAL_DEVICE_START_LIGHTS_SESSION";
+   static constexpr auto kMessageStop = "VIRTUAL_DEVICE_STOP_LIGHTS_SESSION";
+
+   auto json_value = cvd_connection_.ReadJsonMessage();
+
+   if (json_value[kEventKey] == kMessageStart) {
+     session_active_ = true;
+   } else if (json_value[kEventKey] == kMessageStop) {
+     session_active_ = false;
+   }
 }
 
 }  // namespace webrtc_streaming
