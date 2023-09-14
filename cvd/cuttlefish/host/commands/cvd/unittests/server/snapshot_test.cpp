@@ -66,20 +66,18 @@ TEST_F(CvdSnapshotTest, CvdSuspendSnapshotResumeRestore) {
   auto cmd_stop = CmdRunner::Run("cvd stop", envs);
   ASSERT_TRUE(cmd_stop.Success()) << cmd_stop.Stderr();
 
-  // TODO(khei): un-comment the remaining lines after aosp/2726020 is merged
-  // // clean up for the next test
-  // CmdRunner::Run("cvd reset -y", envs);
+  // clean up for the next test
+  CmdRunner::Run("cvd reset -y", envs);
 
-  // cvd_common::Args start_args{"cvd", "start",
-  //                             "--report_anonymous_usage_stats=yes",
-  //                             "--daemon",
-  //                             "--snapshot_path=/tmp/snapshots/snapshot"};
+  cvd_common::Args start_args{"cvd", "start",
+                              "--report_anonymous_usage_stats=yes", "--daemon",
+                              "--snapshot_path=/tmp/snapshots/snapshot"};
 
-  // auto cmd_start_2 = CmdRunner::Run(start_args, envs);
-  // ASSERT_TRUE(cmd_start_2.Success()) << cmd_start_2.Stderr();
+  auto cmd_start_2 = CmdRunner::Run(start_args, envs);
+  ASSERT_TRUE(cmd_start_2.Success()) << cmd_start_2.Stderr();
 
-  // auto cmd_stop_2 = CmdRunner::Run("cvd stop", envs);
-  // ASSERT_TRUE(cmd_stop_2.Success()) << cmd_stop_2.Stderr();
+  auto cmd_stop_2 = CmdRunner::Run("cvd stop", envs);
+  ASSERT_TRUE(cmd_stop_2.Success()) << cmd_stop_2.Stderr();
 
   auto cmd_rm = CmdRunner::Run("rm -rf /tmp/snapshots/snapshot", envs);
   ASSERT_TRUE(cmd_rm.Success()) << cmd_rm.Stderr();
