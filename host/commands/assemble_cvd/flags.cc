@@ -27,7 +27,6 @@
 #include <sstream>
 #include <unordered_map>
 
-#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
@@ -42,7 +41,6 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/network.h"
 #include "host/commands/assemble_cvd/alloc.h"
 #include "host/commands/assemble_cvd/boot_config.h"
@@ -50,7 +48,6 @@
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/commands/assemble_cvd/display.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
@@ -444,10 +441,6 @@ DEFINE_bool(enable_wifi, true, "Enables the guest WIFI. Mainly for Minidroid");
 
 DEFINE_vec(device_external_network, CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK,
            "The mechanism to connect to the public internet.");
-
-DEFINE_string(mcu_config_path, CF_DEFAULTS_MCU_CONFIG_PATH,
-              "configuration file for the MCU emulator");
-
 
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
@@ -1149,19 +1142,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   LOG(DEBUG) << "rootcanal_instance_num: " << rootcanal_instance_num;
   LOG(DEBUG) << "launch rootcanal: " << (FLAGS_rootcanal_instance_num <= 0);
 
-  LOG(DEBUG) << "mcu_config_path: " << (FLAGS_mcu_config_path);
-  if (!FLAGS_mcu_config_path.empty()) {
-    CF_EXPECT(FileExists(FLAGS_mcu_config_path),
-              "MCU config file does not exist");
-    std::string file_content;
-    using android::base::ReadFileToString;
-    CF_EXPECT(ReadFileToString(FLAGS_mcu_config_path.c_str(), &file_content,
-                               /* follow_symlinks */ true),
-              "Failed to read mcu config file");
-    auto cfg = CF_EXPECT(ParseJson(file_content), "Failed parsing JSON file");
-    tmp_config_obj.set_mcu(cfg);
-  }
-
   tmp_config_obj.set_casimir_args(FLAGS_casimir_args);
   auto casimir_instance_num = *instance_nums.begin() - 1;
   if (FLAGS_casimir_instance_num > 0) {
@@ -1776,13 +1756,6 @@ void SetDefaultFlagsForGem5() {
   SetCommandLineOptionWithMode("cpus", "1", SET_FLAGS_DEFAULT);
 }
 
-void SetDefaultFlagsForMcu() {
-  auto path = DefaultHostArtifactsPath("etc/mcu_config.json");
-  if (!CanAccess(path, R_OK))
-    return;
-  SetCommandLineOptionWithMode("mcu_config_path", path.c_str(), SET_FLAGS_DEFAULT);
-}
-
 void SetDefaultFlagsForOpenwrt(Arch target_arch) {
   if (target_arch == Arch::X86_64) {
     SetCommandLineOptionWithMode(
@@ -1881,8 +1854,6 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
   }
 
   SetDefaultFlagsForOpenwrt(guest_configs[0].target_arch);
-
-  SetDefaultFlagsForMcu();
 
   // Set the env variable to empty (in case the caller passed a value for it).
   unsetenv(kCuttlefishConfigEnvVarName);

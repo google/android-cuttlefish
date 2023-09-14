@@ -313,18 +313,6 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
                           ".0,chardev=hvc", hvc_num);
     hvc_num++;
   };
-  auto add_hvc_serial = [&qemu_cmd, &hvc_num](const std::string& prefix) {
-    qemu_cmd.AddParameter("-chardev");
-    qemu_cmd.AddParameter("serial,id=hvc", hvc_num, ",path=", prefix);
-    qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter(
-        "virtio-serial-pci-non-transitional,max_ports=1,id=virtio-serial",
-        hvc_num);
-    qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter("virtconsole,bus=virtio-serial", hvc_num,
-                          ".0,chardev=hvc", hvc_num);
-    hvc_num++;
-  };
 
   bool is_arm = arch_ == Arch::Arm || arch_ == Arch::Arm64;
   bool is_x86 = arch_ == Arch::X86 || arch_ == Arch::X86_64;
@@ -598,15 +586,6 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   // /dev/hvc13 = sensors
   add_hvc(instance.PerInstanceInternalPath("sensors_fifo_vm"));
-
-  // /dev/hvc14 = MCU UART
-  if (config.mcu()["uart0"]["type"].asString() == "serial") {
-    auto path = instance.PerInstanceInternalPath("mcu");
-    path += "/" + config.mcu()["uart0"]["path"].asString();
-    add_hvc_serial(path);
-  } else {
-    add_hvc_sink();
-  }
 
   auto disk_num = instance.virtual_disk_paths().size();
 
