@@ -15,6 +15,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -33,24 +34,23 @@ import (
 )
 
 const (
-	DefaultHttpPort                 = "1080"
-	DefaultTLSCertDir               = "/etc/cuttlefish-common/host_orchestrator/cert"
+	defaultTLSCertDir               = "/etc/cuttlefish-common/host_orchestrator/cert"
 	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
 	defaultCVDBinAndroidBuildID     = "10796991"
 	defaultCVDBinAndroidBuildTarget = "aosp_cf_x86_64_phone-trunk_staging-userdebug"
 	defaultCVDArtifactsDir          = "/var/lib/cuttlefish-common"
 )
 
-func startHttpServer(port string) error {
-	log.Println(fmt.Sprint("Host Orchestrator is listening at http://localhost:", port))
+func startHttpServer(port int) error {
+	log.Println(fmt.Sprintf("Host Orchestrator is listening at http://localhost:%d", port))
 
 	// handler is nil, so DefaultServeMux is used.
-	return http.ListenAndServe(fmt.Sprint(":", port), nil)
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
 
-func startHttpsServer(port string, certPath string, keyPath string) error {
+func startHttpsServer(port int, certPath string, keyPath string) error {
 	log.Println(fmt.Sprint("Host Orchestrator is listening at https://localhost:", port))
-	return http.ListenAndServeTLS(fmt.Sprint(":", port),
+	return http.ListenAndServeTLS(fmt.Sprintf(":%d", port),
 		certPath,
 		keyPath,
 		// handler is nil, so DefaultServeMux is used.
@@ -81,45 +81,48 @@ func start(starters []func() error) {
 	wg.Wait()
 }
 
-func newOperatorProxy(port string) *httputil.ReverseProxy {
-	if port == "" {
+func newOperatorProxy(port int) *httputil.ReverseProxy {
+	if port <= 0 {
 		log.Fatal("The host orchestrator requires access to the operator")
 	}
-	operatorURL, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%s", port))
+	operatorURL, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", port))
 	if err != nil {
-		log.Fatalf("Invalid operator port (%s): %v", port, err)
+		log.Fatalf("Invalid operator port (%d): %v", port, err)
 	}
 	return httputil.NewSingleHostReverseProxy(operatorURL)
 }
 
 func main() {
-	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", DefaultHttpPort)
-	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", "")
-	tlsCertDir := fromEnvOrDefault("ORCHESTRATOR_TLS_CERT_DIR", DefaultTLSCertDir)
-	certPath := filepath.Join(tlsCertDir, "cert.pem")
-	keyPath := filepath.Join(tlsCertDir, "key.pem")
-	cvdUser := fromEnvOrDefault("ORCHESTRATOR_CVD_USER", "")
-	operatorPort := fromEnvOrDefault("OPERATOR_HTTP_PORT", "")
+	httpPort := flag.Int("http_port", 1080, "Port to listen on for HTTP requests.")
+	httpsPort := flag.Int("https_port", -1, "Port to listen on for HTTPS requests.")
+	tlsCertDir := flag.String("tls_cert_dir", defaultTLSCertDir, "Directory with the TLS certificate.")
+	cvdUser := flag.String("cvd_user", "", "User to execute cvd as.")
+	operatorPort := flag.Int("operator_http_port", 2080, "Port where the operator is listening.")
+	abURL := flag.String("android_build_url", defaultAndroidBuildURL, "URL to an Android Build API.")
+	cvdBinAndroidBuildID := flag.String("cvd_build_id", defaultCVDBinAndroidBuildID, "Build ID to fetch the cvd binary from.")
+	cvdBinAndroidBuildTarget := flag.String("cvd_build_target", defaultCVDBinAndroidBuildTarget, "Build target to fetch the cvd binary from.")
+	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir, "Directory where cvd will download android build artifacts to.")
 
-	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
-	cvdBinAndroidBuildID := fromEnvOrDefault("ORCHESTRATOR_CVDBIN_ANDROID_BUILD_ID", defaultCVDBinAndroidBuildID)
-	cvdBinAndroidBuildTarget := fromEnvOrDefault("ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET", defaultCVDBinAndroidBuildTarget)
-	imRootDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
+	flag.Parse()
+
+	certPath := filepath.Join(*tlsCertDir, "cert.pem")
+	keyPath := filepath.Join(*tlsCertDir, "key.pem")
+
 	imPaths := orchestrator.IMPaths{
-		RootDir:          imRootDir,
-		CVDToolsDir:      imRootDir,
-		ArtifactsRootDir: filepath.Join(imRootDir, "artifacts"),
-		RuntimesRootDir:  filepath.Join(imRootDir, "runtimes"),
+		RootDir:          *imRootDir,
+		CVDToolsDir:      *imRootDir,
+		ArtifactsRootDir: filepath.Join(*imRootDir, "artifacts"),
+		RuntimesRootDir:  filepath.Join(*imRootDir, "runtimes"),
 	}
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
-		RootDir:     filepath.Join(imRootDir, "user_artifacs"),
+		RootDir:     filepath.Join(*imRootDir, "user_artifacs"),
 		NameFactory: func() string { return uuid.New().String() },
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	cvdToolsVersion := orchestrator.AndroidBuild{
-		ID:     cvdBinAndroidBuildID,
-		Target: cvdBinAndroidBuildTarget,
+		ID:     *cvdBinAndroidBuildID,
+		Target: *cvdBinAndroidBuildTarget,
 	}
 	debugStaticVars := debug.StaticVariables{
 		InitialCVDBinAndroidBuildID:     cvdToolsVersion.ID,
@@ -130,15 +133,15 @@ func main() {
 		Config: orchestrator.Config{
 			Paths:                  imPaths,
 			CVDToolsVersion:        cvdToolsVersion,
-			AndroidBuildServiceURL: abURL,
-			CVDUser:                cvdUser,
+			AndroidBuildServiceURL: *abURL,
+			CVDUser:                *cvdUser,
 		},
 		OperationManager:      om,
 		WaitOperationDuration: 2 * time.Minute,
 		UserArtifactsManager:  uam,
 		DebugVariablesManager: debugVarsManager,
 	}
-	proxy := newOperatorProxy(operatorPort)
+	proxy := newOperatorProxy(*operatorPort)
 
 	r := mux.NewRouter()
 	imController.AddRoutes(r)
@@ -149,10 +152,10 @@ func main() {
 	http.Handle("/", r)
 
 	starters := []func() error{
-		func() error { return startHttpServer(httpPort) },
+		func() error { return startHttpServer(*httpPort) },
 	}
-	if httpsPort != "" {
-		starters = append(starters, func() error { return startHttpsServer(httpsPort, certPath, keyPath) })
+	if *httpsPort > 0 {
+		starters = append(starters, func() error { return startHttpsServer(*httpsPort, certPath, keyPath) })
 	}
 	start(starters)
 }
