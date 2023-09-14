@@ -212,9 +212,6 @@ class CuttlefishConfig {
   void set_metrics_binary(const std::string& metrics_binary);
   std::string metrics_binary() const;
 
-  void set_mcu(const Json::Value &v);
-  Json::Value& mcu() const;
-
   void set_extra_kernel_cmdline(const std::string& extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
 
