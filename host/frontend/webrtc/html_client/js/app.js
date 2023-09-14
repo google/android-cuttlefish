@@ -152,6 +152,7 @@ class DeviceControlApp {
   start() {
     console.debug('Device description: ', this.#deviceConnection.description);
     this.#deviceConnection.onControlMessage(msg => this.#onControlMessage(msg));
+    this.#deviceConnection.onLightsMessage(msg => this.#onLightsMessage(msg));
     this.#deviceConnection.onSensorsMessage(msg => this.#onSensorsMessage(msg));
     createToggleControl(
         document.getElementById('camera_off_btn'),
@@ -747,6 +748,12 @@ class DeviceControlApp {
     if (message_data.event == 'VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED') {
       this.#updateDisplayVisibility(metadata.display, metadata.mode);
     }
+  }
+
+  #onLightsMessage(message) {
+    let message_data = JSON.parse(message.data);
+    // TODO(286106270): Add an UI component for this
+    console.debug('Lights message received: ', message_data)
   }
 
   #updateDeviceStateDetails(lidSwitchOpen, hingeAngle) {
