@@ -151,7 +151,6 @@ fruit::Component<> runCvdComponent(
       .install(GnssGrpcProxyServerComponent)
       .install(LogcatReceiverComponent)
       .install(KernelLogMonitorComponent)
-      .install(McuComponent)
       .install(MetricsServiceComponent)
       .install(OpenwrtControlServerComponent)
       .install(PicaComponent)
