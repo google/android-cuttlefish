@@ -70,22 +70,58 @@ set_config_expr() {
   echo "\${$2+"export $1=\$$2"}"
 }
 
-start() {
-  gen_cert
+prepare_run_dir() {
   mkdir -p "${RUN_DIR}"
   chown _cutf-operator:cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
+}
 
+start_orchestrator() {
   mkdir -p  "${orchestrator_cvd_artifacts_dir}"
   chown _cutf-operator:cvdnetwork "${orchestrator_cvd_artifacts_dir}"
 
-  eval $(set_config_expr ORCHESTRATOR_HTTP_PORT orchestrator_http_port)
-  eval $(set_config_expr ORCHESTRATOR_HTTPS_PORT orchestrator_https_port)
-  eval $(set_config_expr ORCHESTRATOR_TLS_CERT_DIR orchestrator_tls_cert_dir)
-  eval $(set_config_expr ORCHESTRATOR_ANDROID_BUILD_URL orchestrator_android_build_url)
-  eval $(set_config_expr ORCHESTRATOR_CVDBIN_ANDROID_BUILD_ID orchestrator_cvdbin_android_build_id)
-  eval $(set_config_expr ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET orchestrator_cvdbin_android_build_target)
-  eval $(set_config_expr ORCHESTRATOR_CVD_ARTIFACTS_DIR orchestrator_cvd_artifacts_dir)
+  orhcestrator_args=()
+
+  if [[ -n "${orchestrator_http_port}" ]]; then
+    args+=("--http_port=${orchestrator_http_port}")
+  fi
+  if [[ -n "${orchestrator_https_port}" ]]; then
+    args+=("--https_port=${orchestrator_https_port}")
+  fi
+  if [[ -n "${orchestrator_tls_cert_dir}" ]]; then
+    args+=("--tls_cert_dir=${orchestrator_tls_cert_dir}")
+  fi
+  if [[ -n "${orchestrator_android_build_url}" ]]; then
+    args+=("--android_build_url=${orchestrator_android_build_url}")
+  fi
+  if [[ -n "${orchestrator_cvdbin_android_build_id}" ]]; then
+    args+=("--cvd_build_id=${orchestrator_cvdbin_android_build_id}")
+  fi
+  if [[ -n "${orchestrator_cvdbin_android_build_target}" ]]; then
+    args+=("--cvd_build_target=${orchestrator_cvdbin_android_build_target}")
+  fi
+  if [[ -n "${orchestrator_cvd_artifacts_dir}" ]]; then
+    args+=("--cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir}")
+  fi
+  if [[ -n "${operator_http_port}" ]]; then
+    args+=("--operator_http_port=${operator_http_port}")
+  fi
+  args+=("--cvd_user=_cvd-executor")
+
+  start-stop-daemon --start \
+    --pidfile "${ORCHESTRATOR_PIDFILE}" \
+    --chuid _cutf-operator:cvdnetwork \
+    --chdir "${ASSET_DIR}" \
+    --background --no-close \
+    --make-pidfile \
+    --exec "${ORCHESTRATOR_BIN}" "${args[@]}"
+}
+
+start() {
+  gen_cert
+
+  prepare_run_dir
+
   eval $(set_config_expr OPERATOR_WEBUI_URL operator_webui_url)
   eval $(set_config_expr OPERATOR_HTTP_PORT operator_http_port)
 
@@ -97,14 +133,7 @@ start() {
     --make-pidfile \
     --exec "${OPERATOR_BIN}"
 
-  ORCHESTRATOR_CVD_USER="_cvd-executor" \
-  start-stop-daemon --start \
-    --pidfile "${ORCHESTRATOR_PIDFILE}" \
-    --chuid _cutf-operator:cvdnetwork \
-    --chdir "${ASSET_DIR}" \
-    --background --no-close \
-    --make-pidfile \
-    --exec "${ORCHESTRATOR_BIN}"
+  start_orchestrator
 }
 
 stop() {
