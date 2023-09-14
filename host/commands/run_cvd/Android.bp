@@ -41,7 +41,6 @@ cc_binary_host {
         "launch/streamer.cpp",
         "launch/vehicle_hal_server.cpp",
         "launch/netsim_server.cpp",
-        "launch/mcu.cpp",
         "main.cc",
         "reporting.cpp",
         "server_loop.cpp",
