@@ -16,6 +16,8 @@ rust_binary {
         "librustutils",
         "libserde_json",
         "libanyhow",
+        "libserde",
+        "libnix",
     ],
     srcs: [ "main.rs" ],
     installable: false, // installed in APEX
