@@ -19,6 +19,8 @@
 #include <chrono>
 #include "common/libs/utils/vsock_connection.h"
 
+#include <json/json.h>
+
 namespace cuttlefish {
 namespace webrtc_streaming {
 
@@ -66,17 +68,27 @@ void LightsObserver::Stop() {
 }
 
 void LightsObserver::ReadServerMessages() {
-   static constexpr auto kEventKey = "event";
-   static constexpr auto kMessageStart = "VIRTUAL_DEVICE_START_LIGHTS_SESSION";
-   static constexpr auto kMessageStop = "VIRTUAL_DEVICE_STOP_LIGHTS_SESSION";
+  static constexpr auto kEventKey = "event";
+  static constexpr auto kMessageStart = "VIRTUAL_DEVICE_START_LIGHTS_SESSION";
+  static constexpr auto kMessageStop = "VIRTUAL_DEVICE_STOP_LIGHTS_SESSION";
+  static constexpr auto kMessageUpdate = "VIRTUAL_DEVICE_LIGHTS_UPDATE";
 
-   auto json_value = cvd_connection_.ReadJsonMessage();
+  auto json_value = cvd_connection_.ReadJsonMessage();
 
-   if (json_value[kEventKey] == kMessageStart) {
-     session_active_ = true;
-   } else if (json_value[kEventKey] == kMessageStop) {
-     session_active_ = false;
-   }
+  if (json_value[kEventKey] == kMessageStart) {
+    session_active_ = true;
+  } else if (json_value[kEventKey] == kMessageStop) {
+    session_active_ = false;
+  } else if (json_value[kEventKey] == kMessageUpdate) {
+    for (const auto& light : json_value["lights"]) {
+      const unsigned int id = light["id"].asUInt();
+      lights_state_[id] = Light{
+          .id = id,
+          .color = light["color"].asUInt(),
+          .light_type = Light::Type(light["light_type"].asUInt()),
+      };
+    }
+  }
 }
 
 }  // namespace webrtc_streaming
