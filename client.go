@@ -761,8 +761,8 @@ func BuildRootEndpoint(serviceURL, version, zone string) string {
 	return result
 }
 
-func BuildWebRTCStreamURL(rootEndpoint, host, cvd string) string {
-	return fmt.Sprintf("%s/hosts/%s/devices/%s/files/client.html", rootEndpoint, host, cvd)
+func BuilHostIndexURL(rootEndpoint, host string) string {
+	return fmt.Sprintf("%s/hosts/%s/", rootEndpoint, host)
 }
 
 func BuildCVDLogsURL(rootEndpoint, host, cvd string) string {
