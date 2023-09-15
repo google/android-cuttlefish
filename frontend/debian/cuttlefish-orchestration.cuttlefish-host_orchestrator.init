@@ -76,6 +76,26 @@ prepare_run_dir() {
   chmod 775 "${RUN_DIR}"
 }
 
+start_operator() {
+  args=()
+
+  if [[ -n "${operator_http_port}" ]]; then
+    args+=("--http_port=${operator_http_port}")
+  fi
+  if [[ -n "${operator_webui_url}" ]]; then
+    args+=("--webui_url=${operator_webui_url}")
+  fi
+  args+=("socket_path=${RUN_DIR}/operator")
+
+  start-stop-daemon --start \
+    --pidfile "${OPERATOR_PIDFILE}" \
+    --chdir "${ASSET_DIR}" \
+    --background --no-close \
+    --make-pidfile \
+    --exec "${OPERATOR_BIN}" "${args[@]}"
+
+}
+
 start_orchestrator() {
   mkdir -p  "${orchestrator_cvd_artifacts_dir}"
   chown _cutf-operator:cvdnetwork "${orchestrator_cvd_artifacts_dir}"
@@ -122,16 +142,7 @@ start() {
 
   prepare_run_dir
 
-  eval $(set_config_expr OPERATOR_WEBUI_URL operator_webui_url)
-  eval $(set_config_expr OPERATOR_HTTP_PORT operator_http_port)
-
-  OPERATOR_SOCKET_PATH="${RUN_DIR}"/operator \
-  start-stop-daemon --start \
-    --pidfile "${OPERATOR_PIDFILE}" \
-    --chdir "${ASSET_DIR}" \
-    --background --no-close \
-    --make-pidfile \
-    --exec "${OPERATOR_BIN}"
+  start_operator
 
   start_orchestrator
 }
