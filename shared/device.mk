@@ -420,7 +420,7 @@ PRODUCT_PACKAGES += \
 # Lights
 #
 PRODUCT_PACKAGES += \
-    android.hardware.lights-service.cuttlefish \
+    com.google.cf.light \
 
 #
 # KeyMint HAL
