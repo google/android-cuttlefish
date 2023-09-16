@@ -35,7 +35,7 @@ struct Light {
     state: HwLightState,
 }
 
-const NUM_DEFAULT_LIGHTS: i32 = 3;
+const NUM_DEFAULT_LIGHTS: i32 = 1;
 
 /// Defined so we can implement the ILights AIDL interface.
 pub struct LightsService {
@@ -77,7 +77,7 @@ impl LightsService {
 impl Default for LightsService {
     fn default() -> Self {
         let id_mapping_closure =
-            |light_id| HwLight { id: light_id, ordinal: light_id, r#type: LightType::BACKLIGHT };
+            |light_id| HwLight { id: light_id, ordinal: light_id, r#type: LightType::BATTERY };
 
         Self::new((1..=NUM_DEFAULT_LIGHTS).map(id_mapping_closure))
     }
