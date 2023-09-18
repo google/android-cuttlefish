@@ -126,6 +126,9 @@ start_orchestrator() {
   if [[ -n "${operator_http_port}" ]]; then
     args+=("--operator_http_port=${operator_http_port}")
   fi
+  if [[ -n "${orchestrator_listen_address}" ]]; then
+    args+=("--listen_addr=${orchestrator_listen_address}")
+  fi
   args+=("--cvd_user=_cvd-executor")
 
   start-stop-daemon --start \
