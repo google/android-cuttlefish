@@ -25,6 +25,8 @@
 
 namespace cuttlefish {
 
-Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root);
+Result<std::vector<std::string>> ParseFetchCvdConfigs(
+    Json::Value& root, const std::string& target_directory,
+    const std::vector<std::string>& target_subdirectories);
 
 };  // namespace cuttlefish
