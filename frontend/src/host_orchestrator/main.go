@@ -39,18 +39,19 @@ const (
 	defaultCVDBinAndroidBuildID     = "10796991"
 	defaultCVDBinAndroidBuildTarget = "aosp_cf_x86_64_phone-trunk_staging-userdebug"
 	defaultCVDArtifactsDir          = "/var/lib/cuttlefish-common"
+	DefaultListenAddress            = "127.0.0.1"
 )
 
-func startHttpServer(port int) error {
-	log.Println(fmt.Sprintf("Host Orchestrator is listening at http://localhost:%d", port))
+func startHttpServer(addr string, port int) error {
+	log.Printf("Host Orchestrator is listening at http://%s:%d", addr, port)
 
 	// handler is nil, so DefaultServeMux is used.
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", addr, port), nil)
 }
 
-func startHttpsServer(port int, certPath string, keyPath string) error {
-	log.Println(fmt.Sprint("Host Orchestrator is listening at https://localhost:", port))
-	return http.ListenAndServeTLS(fmt.Sprintf(":%d", port),
+func startHttpsServer(addr string, port int, certPath string, keyPath string) error {
+	log.Printf("Host Orchestrator is listening at https://%s:%d", addr, port)
+	return http.ListenAndServeTLS(fmt.Sprintf("%s:%d", addr, port),
 		certPath,
 		keyPath,
 		// handler is nil, so DefaultServeMux is used.
@@ -102,6 +103,7 @@ func main() {
 	cvdBinAndroidBuildID := flag.String("cvd_build_id", defaultCVDBinAndroidBuildID, "Build ID to fetch the cvd binary from.")
 	cvdBinAndroidBuildTarget := flag.String("cvd_build_target", defaultCVDBinAndroidBuildTarget, "Build target to fetch the cvd binary from.")
 	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir, "Directory where cvd will download android build artifacts to.")
+	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
 
 	flag.Parse()
 
@@ -152,10 +154,12 @@ func main() {
 	http.Handle("/", r)
 
 	starters := []func() error{
-		func() error { return startHttpServer(*httpPort) },
+		func() error { return startHttpServer(*address, *httpPort) },
 	}
 	if *httpsPort > 0 {
-		starters = append(starters, func() error { return startHttpsServer(*httpsPort, certPath, keyPath) })
+		starters = append(starters, func() error {
+			return startHttpsServer(*address, *httpsPort, certPath, keyPath)
+		})
 	}
 	start(starters)
 }
