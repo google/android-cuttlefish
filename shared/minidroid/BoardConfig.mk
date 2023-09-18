@@ -149,7 +149,3 @@ TARGET_SKIP_OTA_PACKAGE := true
 TARGET_SKIP_OTATOOLS_PACKAGE := true
 
 BOARD_VENDOR_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy/vendor/seriallogging
-
-# TODO(b/300267995): find a way to build Minidroid without setting this variable. libc, and possibly
-# other libraries are not added to the system image without setting this environment variable.
-BUILD_BROKEN_INCORRECT_PARTITION_IMAGES := true

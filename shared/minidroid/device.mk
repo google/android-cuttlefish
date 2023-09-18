@@ -99,6 +99,11 @@ PRODUCT_PACKAGES += \
 # Additional packages
 PRODUCT_PACKAGES += \
     com.android.runtime \
+    libc.bootstrap \
+    libdl.bootstrap \
+    libdl_android.bootstrap \
+    libm.bootstrap \
+    selinux_policy \
     com.android.adbd \
     mdnsd \
 
