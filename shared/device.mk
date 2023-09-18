@@ -486,7 +486,7 @@ PRODUCT_PACKAGES += \
 
 # Memtrack HAL
 PRODUCT_PACKAGES += \
-    android.hardware.memtrack-service.example
+    com.android.hardware.memtrack
 
 # Fastboot HAL & fastbootd
 PRODUCT_PACKAGES += \
