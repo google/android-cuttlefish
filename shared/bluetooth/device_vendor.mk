@@ -33,7 +33,24 @@ PRODUCT_COPY_FILES += \
 #
 # Bluetooth HAL and Compatibility Bluetooth library (for older revs).
 #
+ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
+PRODUCT_COPY_FILES +=\
+    frameworks/native/data/etc/android.hardware.bluetooth.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth.xml \
+    frameworks/native/data/etc/android.hardware.bluetooth_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth_le.xml
+
+PRODUCT_PACKAGES += \
+    android.hardware.bluetooth-service.default \
+    bt_vhci_forwarder
+
+# Bluetooth initialization configuration is copied to the init folder here instead of being added
+# as an init_rc attribute of the bt_vhci_forward binary.  The bt_vhci_forward binary is used by
+# multiple targets with different initialization configurations.
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/guest/commands/bt_vhci_forwarder/bt_vhci_forwarder.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/bt_vhci_forwarder.rc
+
+else
 PRODUCT_PACKAGES += com.google.cf.bt
+endif
 
 #
 # Bluetooth Audio AIDL HAL

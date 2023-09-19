@@ -14,6 +14,11 @@
 # limitations under the License.
 #
 
+ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.reboot_escrow.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.reboot_escrow.xml
+endif
+
 PRODUCT_VENDOR_PROPERTIES += \
     ro.rebootescrow.device=/dev/block/pmem0
 
