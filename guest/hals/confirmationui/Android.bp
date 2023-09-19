@@ -28,21 +28,26 @@ cc_binary {
     defaults: ["cuttlefish_guest_only"],
     relative_install_path: "hw",
     vendor: true,
+
+    stl: "c++_static",
+
     shared_libs: [
-        "android.hardware.confirmationui-V1-ndk",
-        "android.hardware.confirmationui-lib.cuttlefish",
-        "libbase",
         "libbinder_ndk",
+        "liblog",
+    ],
+
+    static_libs: [
+        "android.hardware.confirmationui-lib.cuttlefish",
+        "android.hardware.confirmationui-V1-ndk",
+        "android.hardware.security.keymint-V3-ndk",
+        "android.hardware.security.secureclock-V1-ndk",
+        "libbase",
+        "libcutils",
+        "libcuttlefish_confui",
         "libteeui_hal_support",
         "libutils",
+        "libcuttlefish_fs",
     ],
-    static_libs: [
-        "libcuttlefish_confui",
-    ],
-
-    init_rc: ["android.hardware.confirmationui@1.0-service.cuttlefish.rc"],
-
-    vintf_fragments: ["android.hardware.confirmationui@1.0-service.cuttlefish.xml"],
 
     srcs: [
         "service.cpp",
@@ -53,6 +58,8 @@ cc_binary {
         "-Werror",
         "-DTEEUI_USE_STD_VECTOR",
     ],
+
+    installable: false, // installed in APEX
 }
 
 cc_library {
@@ -87,5 +94,34 @@ cc_library {
         "-Wall",
         "-Werror",
         "-DTEEUI_USE_STD_VECTOR",
+    ],
+}
+
+prebuilt_etc {
+    name: "android.hardware.confirmationui-service.cuttlefish.rc",
+    src: "android.hardware.confirmationui-service.cuttlefish.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.confirmationui-service.cuttlefish.xml",
+    src: "android.hardware.confirmationui-service.cuttlefish.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.google.cf.confirmationui",
+    vendor: true,
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
+    updatable: false,
+
+    binaries: ["android.hardware.confirmationui-service.cuttlefish"],
+    prebuilts: [
+        "android.hardware.confirmationui-service.cuttlefish.rc",
+        "android.hardware.confirmationui-service.cuttlefish.xml",
     ],
 }
