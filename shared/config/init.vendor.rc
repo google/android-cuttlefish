@@ -119,7 +119,3 @@ service suspend_blocker /vendor/bin/suspend_blocker
     class early_hal # Start together with system_suspend HAL
     group system
     user root
-
-on boot && property:ro.boot.enable_confirmationui=*
-   enable vendor.confirmationui_default
-   start vendor.confirmationui_default
