@@ -34,6 +34,8 @@ cc_binary {
         "libcuttlefish_command_util",
         "libcuttlefish_host_config",
         "libgflags",
+        "libcuttlefish_msg_queue",
+        "libcuttlefish_metrics",
     ],
     target: {
         darwin: {
