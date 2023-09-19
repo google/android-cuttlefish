@@ -38,6 +38,7 @@
 #include "host/libs/allocd/utils.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/metrics/metrics_receiver.h"
 
 namespace cuttlefish {
 namespace {
@@ -143,6 +144,7 @@ int StopInstance(const CuttlefishConfig& config,
     LOG(ERROR) << "Clean stop failed: " << result.error().FormatForEnv();
     return FallBackStop(DirsForInstance(config, instance));
   }
+
   return 0;
 }
 
@@ -267,5 +269,6 @@ int main(int argc, char** argv) {
      */
     return 134;
   }
+  cuttlefish::MetricsReceiver::LogMetricsVMStop();
   return cuttlefish::StopCvdMain(wait_for_launcher, clear_instance_dirs);
 }
