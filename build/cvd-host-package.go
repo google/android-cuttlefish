@@ -81,6 +81,13 @@ func (c *cvdHostPackage) DepsMutator(ctx android.BottomUpMutatorContext) {
 			}
 		}
 	}
+
+	// Include custom CSS file in host package if custom_style is set
+	custom_style := ctx.Config().VendorConfig("cvd").String("custom_style")
+	if custom_style == "" || !ctx.OtherModuleExists(custom_style) {
+		custom_style = "webrtc_custom_blank.css"
+	}
+	ctx.AddVariationDependencies(variations, cvdHostPackageDependencyTag, custom_style)
 }
 
 var pctx = android.NewPackageContext("android/soong/cuttlefish")
