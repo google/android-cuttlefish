@@ -207,11 +207,16 @@ Result<void> ProcessMonitor::SuspendHostProcessesImpl() {
     auto prog_name = android::base::Basename(entry.cmd->Executable());
     auto process_restart_bin =
         android::base::Basename(ProcessRestarterBinary());
+    if (prog_name == "log_tee") {
+      // Don't stop log_tee, we want to continue processing logs while
+      // suspended.
+      continue;
+    }
     if (process_restart_bin == prog_name) {
       CF_EXPECT(entry.proc->SendSignal(SIGTSTP));
-    } else {
-      CF_EXPECT(entry.proc->SendSignalToGroup(SIGTSTP));
+      continue;
     }
+    CF_EXPECT(entry.proc->SendSignalToGroup(SIGTSTP));
   }
   using process_monitor_impl::ChildToParentResponse;
   using process_monitor_impl::ChildToParentResponseType;
