@@ -606,7 +606,7 @@ PRODUCT_PACKAGES += \
 
 # CAS AIDL HAL
 PRODUCT_PACKAGES += \
-    android.hardware.cas-service.example
+    com.android.hardware.cas
 
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/pci.ids:$(TARGET_COPY_OUT_VENDOR)/pci.ids
