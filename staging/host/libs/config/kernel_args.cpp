@@ -63,6 +63,10 @@ std::vector<std::string> VmManagerKernelCmdline(
         // In the virt.dts file, look for a uart node
         // Only 'mmio' mode works; mmio32 does not
         vm_manager_cmdline.push_back("earlycon=uart8250,mmio,0x10000000");
+
+        // The kernel defaults to Sv57. Disable 5-level paging to set the mode
+        // to Sv48.
+        vm_manager_cmdline.push_back("no5lvl");
     } else {
       if (instance.enable_kernel_log()) {
         vm_manager_cmdline.push_back("console=hvc0");
