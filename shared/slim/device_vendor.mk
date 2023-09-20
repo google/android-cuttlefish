@@ -19,8 +19,12 @@ SYSTEM_EXT_MANIFEST_FILES += device/google/cuttlefish/shared/config/system_ext_m
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_vendor.mk)
 
-# Permission to access services
-LOCAL_HARDWARE_PERMISSIONS_PRODUCT_PACKAGE := com.google.cf_handheld_slim.hardware.core_permissions
+ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.software.sip.voip.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.sip.voip.xml \
+    frameworks/native/data/etc/handheld_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/handheld_core_hardware.xml
+PRODUCT_PACKAGES += slim_excluded_hardware.prebuilt.xml
+endif
 
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/biometrics_face/device_vendor.mk)
@@ -42,9 +46,21 @@ $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 PRODUCT_VENDOR_PROPERTIES += \
     debug.hwui.drawing_enabled=0 \
 
+ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.faketouch.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.faketouch.xml \
+
+endif
+
 # Runtime Resource Overlays
+ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += \
     com.google.aosp_cf_phone.rros \
     com.google.aosp_cf_slim.rros
+else
+PRODUCT_PACKAGES += \
+    cuttlefish_phone_overlay_frameworks_base_core \
+    slim_overlay_frameworks_base_core
+endif
 
 TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/slim/android-info.txt
