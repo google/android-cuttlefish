@@ -18,10 +18,8 @@
 
 #include <unistd.h>
 
-#include <chrono>
 #include <cstdio>
 #include <fstream>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -184,13 +182,9 @@ Result<Json::Value> GetOverridedJsonConfig(
   return result;
 }
 
-Result<LoadDirectories> GenerateLoadDirectories(const int num_instances) {
+Result<LoadDirectories> GenerateLoadDirectories(const std::string& parent_directory,
+                                                const int num_instances) {
   CF_EXPECT_GT(num_instances, 0, "No instances in config to load");
-
-  auto time = std::chrono::system_clock::now().time_since_epoch().count();
-  std::stringstream ss;
-  ss << "/tmp/cvd/" << getuid() << "/" << time;
-  auto parent_directory = ss.str();
   auto result = LoadDirectories{
       .target_directory = parent_directory + "/artifacts",
       .launch_home_directory = parent_directory + "/home",
