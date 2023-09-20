@@ -141,24 +141,3 @@ cc_library_host_static {
     ],
     defaults: ["cvd_and_fetch_cvd_defaults"],
 }
-
-// These are set up as two separate executables rather than a symlink so that
-// either can be downloaded as a standalone statically linked executable from
-// the build system.
-
-cc_binary_host {
-    name: "cvd",
-    symlinks: ["acloud"],
-    static_libs: [
-        "cvd_and_fetch_cvd",
-    ],
-    defaults: ["cvd_and_fetch_cvd_defaults"],
-}
-
-cc_binary_host {
-    name: "fetch_cvd",
-    static_libs: [
-        "cvd_and_fetch_cvd",
-    ],
-    defaults: ["cvd_and_fetch_cvd_defaults"],
-}
