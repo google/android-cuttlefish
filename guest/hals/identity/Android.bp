@@ -20,19 +20,17 @@ package {
 cc_binary {
     name: "android.hardware.identity-service.remote",
     relative_install_path: "hw",
-    init_rc: ["android.hardware.identity-service.remote.rc"],
-    vintf_fragments: ["android.hardware.identity-service.remote.xml"],
     vendor: true,
     cflags: [
         "-Wall",
         "-Wextra",
         "-g",
     ],
+    stl: "c++_static",
     shared_libs: [
         "liblog",
         "libcrypto",
         "libbinder_ndk",
-        "libkeymaster_messages",
     ],
     static_libs: [
         "libbase",
@@ -63,9 +61,7 @@ cc_binary {
         "libeic/EicProvisioning.c",
         "libeic/EicOpsImpl.cc",
     ],
-    required: [
-        "android.hardware.identity_credential.remote.xml",
-    ],
+    installable: false, // installed in APEX
 }
 
 prebuilt_etc {
@@ -73,4 +69,35 @@ prebuilt_etc {
     sub_dir: "permissions",
     vendor: true,
     src: "android.hardware.identity_credential.remote.xml",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.identity-service.remote.xml",
+    src: "android.hardware.identity-service.remote.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.identity-service.remote.rc",
+    src: "android.hardware.identity-service.remote.rc",
+    installable: false,
+}
+
+apex {
+    name: "com.google.cf.identity",
+    vendor: true,
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
+    updatable: false,
+
+    binaries: ["android.hardware.identity-service.remote"],
+    prebuilts: [
+        "android.hardware.identity-service.remote.rc",
+        "android.hardware.identity-service.remote.xml",
+        "android.hardware.identity_credential.remote.xml",
+    ]
 }
