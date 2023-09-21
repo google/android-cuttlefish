@@ -34,6 +34,7 @@ class Parser {
   bool WhenKilled() const;
   bool WhenExitedWithFailure() const;
   std::int32_t WhenExitedWithCode() const;
+  std::string FirstTimeArgument() const;
 
  private:
   Parser();
@@ -49,6 +50,7 @@ class Parser {
   bool when_killed_;
   bool when_exited_with_failure_;
   std::int32_t when_exited_with_code_;
+  std::string first_time_argument_;
 };
 
 }  // namespace cuttlefish
