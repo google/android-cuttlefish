@@ -55,6 +55,10 @@ Result<Parser> Parser::ConsumeAndParse(std::vector<std::string>& args) {
   flags.push_back(parser.WhenKilledFlag());
   flags.push_back(parser.WhenExitedWithFailureFlag());
   flags.push_back(parser.WhenExitedWithCodeFlag());
+  flags.push_back(
+      GflagsCompatFlag("first_time_argument", parser.first_time_argument_)
+          .Help(
+              "add an argument to the first invocation, but not to restarts"));
   flags.push_back(HelpFlag(flags, kHelp));
   bool matched_help_xml = false;
   flags.push_back(HelpXmlFlag(flags, std::cout, matched_help_xml, ""));
@@ -68,6 +72,7 @@ bool Parser::IgnoreSigtstp() const { return ignore_sigtstp_; }
 bool Parser::WhenDumped() const { return when_dumped_; }
 bool Parser::WhenKilled() const { return when_killed_; }
 bool Parser::WhenExitedWithFailure() const { return when_exited_with_failure_; }
+std::string Parser::FirstTimeArgument() const { return first_time_argument_; }
 std::int32_t Parser::WhenExitedWithCode() const {
   return when_exited_with_code_;
 }
