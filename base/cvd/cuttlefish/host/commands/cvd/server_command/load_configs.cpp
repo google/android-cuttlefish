@@ -15,6 +15,7 @@
  */
 #include "host/commands/cvd/server_command/load_configs.h"
 
+#include <chrono>
 #include <iostream>
 #include <mutex>
 #include <sstream>
@@ -49,6 +50,7 @@ struct LoadFlags {
   std::vector<std::string> overrides;
   std::string config_path;
   std::string credential_source;
+  std::string base_dir;
 };
 
 std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
@@ -56,6 +58,10 @@ std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
   flags.emplace_back(GflagsCompatFlag("help", load_flags.help));
   flags.emplace_back(
       GflagsCompatFlag("credential_source", load_flags.credential_source));
+  flags.emplace_back(
+      GflagsCompatFlag("base_directory", load_flags.base_dir)
+          .Help("Parent directory for artifacts and runtime files. Defaults to "
+                "/tmp/cvd/<uid>/<timestamp>."));
   FlagAlias alias = {FlagAliasMode::kFlagPrefix, "--override="};
   flags.emplace_back(Flag().Alias(alias).Setter(
       [&overrides = load_flags.overrides](const FlagMatch& m) -> Result<void> {
@@ -63,6 +69,20 @@ std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
         return {};
       }));
   return flags;
+}
+
+std::string DefaultBaseDir() {
+    auto time = std::chrono::system_clock::now().time_since_epoch().count();
+    std::stringstream ss;
+    ss << "/tmp/cvd/" << getuid() << "/" << time;
+    return ss.str();
+}
+
+void MakeAbsolute(std::string& path, const std::string& working_dir) {
+    if (path.size() > 0 && path[0] == '/') {
+      return;
+    }
+    path.insert(0, working_dir + "/");
 }
 
 Result<LoadFlags> GetFlags(const RequestWithStdio& request) {
@@ -73,12 +93,16 @@ Result<LoadFlags> GetFlags(const RequestWithStdio& request) {
   CF_EXPECT(load_flags.help || args.size() > 0,
             "No arguments provided to cvd load command, please provide at "
             "least one argument (help or path to json file)");
-  load_flags.config_path = args.front();
-  if (load_flags.config_path[0] != '/') {
-    load_flags.config_path =
-        request.Message().command_request().working_directory() + "/" +
-        load_flags.config_path;
+  auto working_directory = request.Message().command_request().working_directory();
+
+  if (load_flags.base_dir.empty()) {
+    load_flags.base_dir = DefaultBaseDir();
   }
+  MakeAbsolute(load_flags.base_dir, working_directory);
+
+  load_flags.config_path = args.front();
+  MakeAbsolute(load_flags.config_path, working_directory);
+
   if (!load_flags.credential_source.empty()) {
     for (const auto& name : load_flags.overrides) {
       CF_EXPECT(!android::base::StartsWith(name, kCredentialSourceOverride),
@@ -142,7 +166,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     Json::Value json_configs =
         CF_EXPECT(GetOverridedJsonConfig(flags.config_path, flags.overrides));
     const auto load_directories =
-        CF_EXPECT(GenerateLoadDirectories(json_configs["instances"].size()));
+        CF_EXPECT(GenerateLoadDirectories(flags.base_dir, json_configs["instances"].size()));
     auto cvd_flags = CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
                                "parsing json configs failed");
     std::vector<cvd::Request> req_protos;
