@@ -41,22 +41,23 @@ static constexpr char kHelp[] = R"(
 
       ./process_restarter -when_dumped -- my_program --arg1 --arg2)";
 
-/*
- * TODO(288166029): if the flag is not given, do not restart
- * with the exit code of -1 or 255.
- */
-Parser::Parser() : when_exited_with_code_(-1) {}
-
 Result<Parser> Parser::ConsumeAndParse(std::vector<std::string>& args) {
   Parser parser;
   std::vector<Flag> flags;
-  flags.push_back(parser.IgnoreSigtstpFlag());
-  flags.push_back(parser.WhenDumpedFlag());
-  flags.push_back(parser.WhenKilledFlag());
-  flags.push_back(parser.WhenExitedWithFailureFlag());
-  flags.push_back(parser.WhenExitedWithCodeFlag());
+  flags.push_back(GflagsCompatFlag("ignore_sigtstp", parser.ignore_sigtstp)
+                      .Help(kIgnoreSigtstpHelp));
+  flags.push_back(GflagsCompatFlag("when_dumped", parser.when_dumped)
+                      .Help(kWhenDumpedHelp));
+  flags.push_back(GflagsCompatFlag("when_killed", parser.when_killed)
+                      .Help(kWhenKilledHelp));
+  flags.push_back(GflagsCompatFlag("when_exited_with_failure",
+                                   parser.when_exited_with_failure)
+                      .Help(kWhenExitedWithFailureHelp));
   flags.push_back(
-      GflagsCompatFlag("first_time_argument", parser.first_time_argument_)
+      GflagsCompatFlag("when_exited_with_code", parser.when_exited_with_code)
+          .Help(kWhenExitedWithCodeHelp));
+  flags.push_back(
+      GflagsCompatFlag("first_time_argument", parser.first_time_argument)
           .Help(
               "add an argument to the first invocation, but not to restarts"));
   flags.push_back(HelpFlag(flags, kHelp));
@@ -66,38 +67,6 @@ Result<Parser> Parser::ConsumeAndParse(std::vector<std::string>& args) {
   constexpr const bool recognize_end_of_option_mark = true;
   CF_EXPECT(ParseFlags(flags, args, recognize_end_of_option_mark));
   return parser;
-}
-
-bool Parser::IgnoreSigtstp() const { return ignore_sigtstp_; }
-bool Parser::WhenDumped() const { return when_dumped_; }
-bool Parser::WhenKilled() const { return when_killed_; }
-bool Parser::WhenExitedWithFailure() const { return when_exited_with_failure_; }
-std::string Parser::FirstTimeArgument() const { return first_time_argument_; }
-std::int32_t Parser::WhenExitedWithCode() const {
-  return when_exited_with_code_;
-}
-
-Flag Parser::IgnoreSigtstpFlag() {
-  return GflagsCompatFlag("ignore_sigtstp", ignore_sigtstp_)
-      .Help(kIgnoreSigtstpHelp);
-}
-
-Flag Parser::WhenDumpedFlag() {
-  return GflagsCompatFlag("when_dumped", when_dumped_).Help(kWhenDumpedHelp);
-}
-
-Flag Parser::WhenKilledFlag() {
-  return GflagsCompatFlag("when_killed", when_killed_).Help(kWhenKilledHelp);
-}
-
-Flag Parser::WhenExitedWithFailureFlag() {
-  return GflagsCompatFlag("when_exited_with_failure", when_exited_with_failure_)
-      .Help(kWhenExitedWithFailureHelp);
-}
-
-Flag Parser::WhenExitedWithCodeFlag() {
-  return GflagsCompatFlag("when_exited_with_code", when_exited_with_code_)
-      .Help(kWhenExitedWithCodeHelp);
 }
 
 }  // namespace cuttlefish

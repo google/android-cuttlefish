@@ -25,32 +25,19 @@
 
 namespace cuttlefish {
 
-class Parser {
- public:
+struct Parser {
   static Result<Parser> ConsumeAndParse(std::vector<std::string>&);
 
-  bool IgnoreSigtstp() const;
-  bool WhenDumped() const;
-  bool WhenKilled() const;
-  bool WhenExitedWithFailure() const;
-  std::int32_t WhenExitedWithCode() const;
-  std::string FirstTimeArgument() const;
-
- private:
-  Parser();
-
-  Flag IgnoreSigtstpFlag();
-  Flag WhenDumpedFlag();
-  Flag WhenKilledFlag();
-  Flag WhenExitedWithFailureFlag();
-  Flag WhenExitedWithCodeFlag();
-
-  bool ignore_sigtstp_;
-  bool when_dumped_;
-  bool when_killed_;
-  bool when_exited_with_failure_;
-  std::int32_t when_exited_with_code_;
-  std::string first_time_argument_;
+  bool ignore_sigtstp = false;
+  bool when_dumped = false;
+  bool when_killed = false;
+  bool when_exited_with_failure = false;
+  /*
+   * TODO(288166029): if the flag is not given, do not restart
+   * with the exit code of -1 or 255.
+   */
+  std::int32_t when_exited_with_code = -1;
+  std::string first_time_argument;
 };
 
 }  // namespace cuttlefish
