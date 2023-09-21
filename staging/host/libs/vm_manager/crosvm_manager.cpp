@@ -34,9 +34,11 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/libs/command_util/snapshot_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_builder.h"
@@ -395,17 +397,33 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     return {};
   });
 
+  // Add "--restore_path=<guest snapshot directory>" if there is a snapshot
+  // path supplied.
+  //
+  // Use the process_restarter "-first_time_argument" flag to only do this for
+  // the first invocation. If the guest requests a restart, we don't want crosvm
+  // to restore again. It should reboot normally.
+  std::string first_time_argument;
+  const std::string snapshot_dir_path = config.snapshot_path();
+  if (!snapshot_dir_path.empty()) {
+    auto meta_info_json = CF_EXPECT(LoadMetaJson(snapshot_dir_path));
+    const std::vector<std::string> selectors{kGuestSnapshotField,
+                                             instance.id()};
+    const auto guest_snapshot_dir_suffix =
+        CF_EXPECT(GetValue<std::string>(meta_info_json, selectors));
+    // guest_snapshot_dir_suffix is a relative to
+    // the snapshot_path
+    const auto restore_path = snapshot_dir_path + "/" +
+                              guest_snapshot_dir_suffix + "/" +
+                              kGuestSnapshotBase;
+    first_time_argument = "--restore=" + restore_path;
+  }
+
   crosvm_cmd.ApplyProcessRestarter(instance.crosvm_binary(),
-                                   kCrosvmVmResetExitCode);
+                                   first_time_argument, kCrosvmVmResetExitCode);
   crosvm_cmd.Cmd().AddParameter("run");
   crosvm_cmd.AddControlSocket(instance.CrosvmSocketPath(),
                               instance.crosvm_binary());
-
-  // --restore_path=<guest snapshot directory>
-  const std::string snapshot_dir = config.snapshot_path();
-  if (!snapshot_dir.empty()) {
-    CF_EXPECT(crosvm_cmd.SetToRestoreFromSnapshot(snapshot_dir, instance.id()));
-  }
 
   if (!instance.smt()) {
     crosvm_cmd.Cmd().AddParameter("--no-smt");

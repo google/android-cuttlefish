@@ -63,6 +63,7 @@ class OpenWrt : public CommandSource {
     });
 
     ap_cmd.ApplyProcessRestarter(instance_.crosvm_binary(),
+                                 /*first_time_argument=*/"",
                                  kOpenwrtVmResetExitCode);
     ap_cmd.Cmd().AddParameter("run");
     ap_cmd.AddControlSocket(
