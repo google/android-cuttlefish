@@ -54,17 +54,27 @@ Result<int> RunProcessRestarter(std::vector<std::string> args) {
   auto parsed = CF_EXPECT(Parser::ConsumeAndParse(args));
 
   // move-assign the remaining args to exec_args
-  const std::vector<std::string> exec_args = std::move(args);
-  const std::string& exec_cmd = exec_args.front();
+  std::vector<std::string> exec_args = std::move(args);
+
+  bool needs_pop = false;
+  if (!parsed.FirstTimeArgument().empty()) {
+    exec_args.push_back(parsed.FirstTimeArgument());
+    needs_pop = true;
+  }
 
   siginfo_t info;
   do {
-    LOG(VERBOSE) << "Starting monitored process " << exec_cmd;
+    LOG(VERBOSE) << "Starting monitored process " << exec_args.front();
     // The Execute() API and all APIs effectively called by it show the proper
     // error message using LOG(ERROR).
     info = CF_EXPECT(
         Execute(exec_args, SubprocessOptions().ExitWithParent(true), WEXITED),
         "Executing " << android::base::Join(exec_args, " ") << " failed.");
+
+    if (needs_pop) {
+      needs_pop = false;
+      exec_args.pop_back();
+    }
   } while (ShouldRestartProcess(info, parsed));
   return info.si_status;
 }
