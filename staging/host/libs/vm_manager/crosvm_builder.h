@@ -28,7 +28,9 @@ class CrosvmBuilder {
  public:
   CrosvmBuilder();
 
-  void ApplyProcessRestarter(const std::string& crosvm_binary, int exit_code);
+  void ApplyProcessRestarter(const std::string& crosvm_binary,
+                             const std::string& first_time_argument,
+                             int exit_code);
   void AddControlSocket(const std::string&, const std::string&);
 
   void AddHvcSink();
@@ -51,12 +53,6 @@ class CrosvmBuilder {
 #endif
 
   int HvcNum();
-
-  /**
-   * Configures the crosvm to start with --restore=<guest snapshot path>
-   */
-  Result<void> SetToRestoreFromSnapshot(const std::string& snapshot_dir_path,
-                                        const std::string& instance_id_in_str);
 
   Command& Cmd();
 
