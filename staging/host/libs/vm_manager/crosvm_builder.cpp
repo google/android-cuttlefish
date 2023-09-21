@@ -31,11 +31,15 @@ namespace cuttlefish {
 
 CrosvmBuilder::CrosvmBuilder() : command_("crosvm") {}
 
-void CrosvmBuilder::ApplyProcessRestarter(const std::string& crosvm_binary,
-                                          int exit_code) {
+void CrosvmBuilder::ApplyProcessRestarter(
+    const std::string& crosvm_binary, const std::string& first_time_argument,
+    int exit_code) {
   command_.SetExecutableAndName(ProcessRestarterBinary());
   command_.AddParameter("-when_exited_with_code=", exit_code);
   command_.AddParameter("-ignore_sigtstp");
+  if (!first_time_argument.empty()) {
+    command_.AddParameter("-first_time_argument=", first_time_argument);
+  }
   command_.AddParameter("--");
   command_.AddParameter(crosvm_binary);
   // Flag allows exit codes other than 0 or 1, must be before command argument
@@ -128,23 +132,6 @@ SharedFD CrosvmBuilder::AddTap(const std::string& tap_name, const std::string& m
 #endif
 
 int CrosvmBuilder::HvcNum() { return hvc_num_; }
-
-Result<void> CrosvmBuilder::SetToRestoreFromSnapshot(
-    const std::string& snapshot_dir_path,
-    const std::string& instance_id_in_str) {
-  auto meta_info_json = CF_EXPECT(LoadMetaJson(snapshot_dir_path));
-  const std::vector<std::string> selectors{kGuestSnapshotField,
-                                           instance_id_in_str};
-  const auto guest_snapshot_dir_suffix =
-      CF_EXPECT(GetValue<std::string>(meta_info_json, selectors));
-  // guest_snapshot_dir_suffix is a relative to
-  // the snapshot_path
-  const auto restore_path = snapshot_dir_path + "/" +
-                            guest_snapshot_dir_suffix + "/" +
-                            kGuestSnapshotBase;
-  command_.AddParameter("--restore=", restore_path);
-  return {};
-}
 
 Command& CrosvmBuilder::Cmd() { return command_; }
 
