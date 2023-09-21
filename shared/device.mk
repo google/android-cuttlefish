@@ -335,7 +335,7 @@ PRODUCT_PACKAGES += \
 # Contexthub HAL
 #
 LOCAL_CONTEXTHUB_PRODUCT_PACKAGE ?= \
-    android.hardware.contexthub-service.example
+    com.android.hardware.contexthub
 PRODUCT_PACKAGES += $(LOCAL_CONTEXTHUB_PRODUCT_PACKAGE)
 
 #
