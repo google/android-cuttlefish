@@ -21,6 +21,7 @@ cc_binary_host {
     name: "run_cvd",
     srcs: [
         "boot_state_machine.cc",
+        "launch/automotive_proxy.cpp",
         "launch/bluetooth_connector.cpp",
         "launch/nfc_connector.cpp",
         "launch/uwb_connector.cpp",

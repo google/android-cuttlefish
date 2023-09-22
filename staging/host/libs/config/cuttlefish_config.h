@@ -156,6 +156,9 @@ class CuttlefishConfig {
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
 
+  void set_enable_automotive_proxy(bool enable_automotive_proxy);
+  bool enable_automotive_proxy() const;
+
   // Bluetooth is enabled by bt_connector and rootcanal
   void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
   bool enable_host_bluetooth_connector() const;

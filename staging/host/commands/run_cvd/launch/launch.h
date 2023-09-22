@@ -38,6 +38,9 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 UwbConnectorComponent();
 
+fruit::Component<fruit::Required<const CuttlefishConfig>>
+AutomotiveProxyComponent();
+
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 BluetoothConnectorComponent();

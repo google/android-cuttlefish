@@ -46,5 +46,6 @@ std::string WebRtcSigServerBinary();
 std::string WebRtcSigServerProxyBinary();
 std::string WmediumdBinary();
 std::string WmediumdGenConfigBinary();
+std::string AutomotiveProxyBinary();
 
 } // namespace cuttlefish
