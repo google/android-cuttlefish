@@ -156,6 +156,10 @@ class DeviceControlApp {
     createToggleControl(
         document.getElementById('camera_off_btn'),
         enabled => this.#onCameraCaptureToggle(enabled));
+    // disable the camera button if we are not using VSOCK camera
+    if (!this.#deviceConnection.description.hardware.camera_passthrough) {
+      document.getElementById('camera_off_btn').style.display = "none";
+    }
     createToggleControl(
         document.getElementById('record_video_btn'),
         enabled => this.#onVideoCaptureToggle(enabled));
