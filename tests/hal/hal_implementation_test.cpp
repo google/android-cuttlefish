@@ -165,6 +165,7 @@ static const std::set<std::string> kAutomotiveOnlyAidl = {
      */
     "android.automotive.watchdog",
     "android.frameworks.automotive.display",
+    "android.frameworks.automotive.powerpolicy",
     "android.frameworks.automotive.powerpolicy.internal",
     "android.frameworks.automotive.telemetry",
     "android.hardware.automotive.audiocontrol",
@@ -262,7 +263,6 @@ static const std::vector<VersionedAidlPackage> kKnownMissingAidl = {
 
     {"android.automotive.computepipe.registry.", 2, 273549907},
     {"android.automotive.computepipe.runner.", 2, 273549907},
-    {"android.frameworks.automotive.powerpolicy.", 2, 274160980},
     {"android.hardware.automotive.evs.", 2, 274162534},
 };
 
