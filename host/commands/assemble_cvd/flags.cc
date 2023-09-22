@@ -189,6 +189,9 @@ DEFINE_bool(netsim_bt, CF_DEFAULTS_NETSIM_BT,
 DEFINE_string(netsim_args, CF_DEFAULTS_NETSIM_ARGS,
               "Space-separated list of netsim args.");
 
+DEFINE_bool(enable_automotive_proxy, CF_DEFAULTS_ENABLE_AUTOMOTIVE_PROXY,
+            "Enable the automotive proxy service on the host.");
+
 /**
  * crosvm sandbox feature requires /var/empty and seccomp directory
  *
@@ -995,6 +998,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Bluetooth);
   }
   // end of vectorize ap_rootfs_image, ap_kernel_image, wmediumd_config
+
+  tmp_config_obj.set_enable_automotive_proxy(FLAGS_enable_automotive_proxy);
 
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());

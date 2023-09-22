@@ -133,6 +133,7 @@ cvd_host_tools = [
     "wmediumd",
     "wmediumd_gen_config",
     "vulkan.pastel",
+    "automotive_vsock_proxy",
 ]
 
 cvd_openwrt_images = [
@@ -279,6 +280,10 @@ prebuilt_etc_host {
     src: ":avb_testkey_rsa4096",
 }
 
+automotive_proxy_config = [
+    "automotive_proxy_config"
+]
+
 cvd_host_avb_testkey = [
     "cvd_avb_pubkey",
     "cvd_avb_testkey",
@@ -354,7 +359,8 @@ cvd_host_package_customization {
                 cvd_host_bootloader +
                 cvd_host_swiftshader_files +
                 cvd_openwrt_images +
-                cvd_host_netsim_gui_assets,
+                cvd_host_netsim_gui_assets +
+                automotive_proxy_config,
         },
     },
 

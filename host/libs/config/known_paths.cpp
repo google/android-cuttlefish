@@ -111,4 +111,8 @@ std::string WmediumdGenConfigBinary() {
   return HostBinaryPath("wmediumd_gen_config");
 }
 
+std::string AutomotiveProxyBinary() {
+  return HostBinaryPath("automotive_vsock_proxy");
+}
+
 } // namespace cuttlefish
