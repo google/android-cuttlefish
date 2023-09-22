@@ -242,6 +242,7 @@ int main(int argc, char** argv) {
     auto camera_controller = streamer->AddCamera(instance.camera_server_port(),
                                                  instance.vsock_guest_cid());
     observer_factory->SetCameraHandler(camera_controller);
+    streamer->SetHardwareSpec("camera_passthrough", true);
   }
 
   observer_factory->SetDisplayHandler(display_handler);
