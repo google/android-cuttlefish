@@ -302,6 +302,15 @@ bool CuttlefishConfig::enable_host_bluetooth_connector() const {
   return (*dictionary_)[kenableHostBluetoothConnector].asBool();
 }
 
+static constexpr char kenableAutomotiveProxy[] = "enable_automotive_proxy";
+void CuttlefishConfig::set_enable_automotive_proxy(
+    bool enable_automotive_proxy) {
+  (*dictionary_)[kenableAutomotiveProxy] = enable_automotive_proxy;
+}
+bool CuttlefishConfig::enable_automotive_proxy() const {
+  return (*dictionary_)[kenableAutomotiveProxy].asBool();
+}
+
 static constexpr char kenableHostNfc[] = "enable_host_nfc";
 void CuttlefishConfig::set_enable_host_nfc(bool enable_host_nfc) {
   (*dictionary_)[kenableHostNfc] = enable_host_nfc;
