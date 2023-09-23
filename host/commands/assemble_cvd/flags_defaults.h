@@ -163,6 +163,9 @@
 #define CF_DEFAULTS_ENABLE_HOST_UWB false
 #define CF_DEFAULTS_ENABLE_PICA_INSTANCE_NUM 0
 
+// Automotive Proxy default parameter
+#define CF_DEFAULTS_ENABLE_AUTOMOTIVE_PROXY false
+
 // Bluetooth default parameters
 #define CF_DEFAULTS_ENABLE_HOST_BLUETOOTH true
 #define CF_DEFAULTS_ROOTCANAL_INSTANCE_NUM 0
