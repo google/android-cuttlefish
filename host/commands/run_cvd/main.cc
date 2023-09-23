@@ -126,6 +126,7 @@ fruit::Component<> runCvdComponent(
       .bindInstance(*instance)
       .bindInstance(*environment)
 #ifdef __linux__
+      .install(AutomotiveProxyComponent)
       .install(ConfigServerComponent)
       .install(launchModemComponent)
       .install(launchStreamerComponent)
