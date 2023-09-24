@@ -39,6 +39,7 @@ cc_binary_host {
         "launch/casimir.cpp",
         "launch/pica.cpp",
         "launch/secure_env.cpp",
+        "launch/secure_env_files.cpp",
         "launch/streamer.cpp",
         "launch/netsim_server.cpp",
         "main.cc",
