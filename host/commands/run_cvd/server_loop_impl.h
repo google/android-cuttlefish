@@ -44,7 +44,8 @@ class ServerLoopImpl : public ServerLoop,
                        public LateInjected {
  public:
   INJECT(ServerLoopImpl(const CuttlefishConfig& config,
-                        const CuttlefishConfig::InstanceSpecific& instance));
+                        const CuttlefishConfig::InstanceSpecific& instance,
+                        SecureEnvFiles& secure_env_files));
 
   Result<void> LateInject(fruit::Injector<>& injector) override;
 
@@ -62,7 +63,9 @@ class ServerLoopImpl : public ServerLoop,
 
  private:
   bool Enabled() const override { return true; }
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override {
+    return {&secure_env_files_};
+  }
   Result<void> ResultSetup() override;
   Result<void> HandleExtended(const LauncherActionInfo& action_info,
                               ProcessMonitor& process_monitor);
@@ -95,6 +98,12 @@ class ServerLoopImpl : public ServerLoop,
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  /*
+   * This is needed to get the run_cvd side socket pair connected to
+   * secure_env. The socket pairs are used to send suspend/resume to
+   * secure_env, and get the responses.
+   */
+  SecureEnvFiles& secure_env_files_;
   std::vector<CommandSource*> command_sources_;
   SharedFD server_;
   // mapping from the name of vm_manager to control_sock path
