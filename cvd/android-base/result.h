@@ -137,7 +137,7 @@ struct ResultError {
     return android::base::unexpected(ResultError<E>(message_, code_));
   }
 
-  std::string message() const { return message_; }
+  const std::string& message() const { return message_; }
   const E& code() const { return code_; }
 
  private:
