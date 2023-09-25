@@ -42,7 +42,7 @@ public class FastbootRebootTest extends BaseHostJUnit4Test {
 
     @Test
     public void testReboot() throws Exception {
-        getDevice().rebootUserspace();
+        getDevice().reboot();
         assertEquals(TestDeviceState.ONLINE, getDevice().getDeviceState());
     }
 
