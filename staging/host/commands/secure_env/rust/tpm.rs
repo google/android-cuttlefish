@@ -30,6 +30,10 @@ pub struct TpmHmac {
     trm: *mut libc::c_void,
 }
 
+// Safety: Checked TpmResourceManager c++ definition to determine if it could be sent between
+//         threads.
+unsafe impl Send for TpmHmac {}
+
 impl TpmHmac {
     pub fn new(trm: *mut libc::c_void) -> Self {
         Self { trm }
