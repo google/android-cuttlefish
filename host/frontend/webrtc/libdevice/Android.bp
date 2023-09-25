@@ -30,6 +30,7 @@ cc_library {
         "streamer.cpp",
         "video_track_source_impl.cpp",
         "server_connection.cpp",
+        "recording_manager.cpp",
     ],
     cflags: [
         // libwebrtc headers need this
