@@ -15,4 +15,4 @@
 #
 
 PRODUCT_PACKAGES += \
-    android.hardware.identity-service.remote
+    com.google.cf.identity
