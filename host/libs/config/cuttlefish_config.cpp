@@ -262,20 +262,20 @@ std::map<std::string, uint32_t> CuttlefishConfig::host_tools_version() const {
   return versions;
 }
 
-static constexpr char kenableHostUwb[] = "enable_host_uwb";
+static constexpr char kEnableHostUwb[] = "enable_host_uwb";
 void CuttlefishConfig::set_enable_host_uwb(bool enable_host_uwb) {
-  (*dictionary_)[kenableHostUwb] = enable_host_uwb;
+  (*dictionary_)[kEnableHostUwb] = enable_host_uwb;
 }
 bool CuttlefishConfig::enable_host_uwb() const {
-  return (*dictionary_)[kenableHostUwb].asBool();
+  return (*dictionary_)[kEnableHostUwb].asBool();
 }
 
-static constexpr char kenableHostUwbConnector[] = "enable_host_uwb_connector";
+static constexpr char kEnableHostUwbConnector[] = "enable_host_uwb_connector";
 void CuttlefishConfig::set_enable_host_uwb_connector(bool enable_host_uwb) {
-  (*dictionary_)[kenableHostUwbConnector] = enable_host_uwb;
+  (*dictionary_)[kEnableHostUwbConnector] = enable_host_uwb;
 }
 bool CuttlefishConfig::enable_host_uwb_connector() const {
-  return (*dictionary_)[kenableHostUwbConnector].asBool();
+  return (*dictionary_)[kEnableHostUwbConnector].asBool();
 }
 
 static constexpr char kPicaUciPort[] = "pica_uci_port";
@@ -286,45 +286,46 @@ void CuttlefishConfig::set_pica_uci_port(int pica_uci_port) {
   (*dictionary_)[kPicaUciPort] = pica_uci_port;
 }
 
-static constexpr char kenableHostBluetooth[] = "enable_host_bluetooth";
+static constexpr char kEnableHostBluetooth[] = "enable_host_bluetooth";
 void CuttlefishConfig::set_enable_host_bluetooth(bool enable_host_bluetooth) {
-  (*dictionary_)[kenableHostBluetooth] = enable_host_bluetooth;
+  (*dictionary_)[kEnableHostBluetooth] = enable_host_bluetooth;
 }
 bool CuttlefishConfig::enable_host_bluetooth() const {
-  return (*dictionary_)[kenableHostBluetooth].asBool();
+  return (*dictionary_)[kEnableHostBluetooth].asBool();
 }
 
-static constexpr char kenableHostBluetoothConnector[] = "enable_host_bluetooth_connector";
+static constexpr char kEnableHostBluetoothConnector[] =
+    "enable_host_bluetooth_connector";
 void CuttlefishConfig::set_enable_host_bluetooth_connector(bool enable_host_bluetooth) {
-  (*dictionary_)[kenableHostBluetoothConnector] = enable_host_bluetooth;
+  (*dictionary_)[kEnableHostBluetoothConnector] = enable_host_bluetooth;
 }
 bool CuttlefishConfig::enable_host_bluetooth_connector() const {
-  return (*dictionary_)[kenableHostBluetoothConnector].asBool();
+  return (*dictionary_)[kEnableHostBluetoothConnector].asBool();
 }
 
-static constexpr char kenableAutomotiveProxy[] = "enable_automotive_proxy";
+static constexpr char kEnableAutomotiveProxy[] = "enable_automotive_proxy";
 void CuttlefishConfig::set_enable_automotive_proxy(
     bool enable_automotive_proxy) {
-  (*dictionary_)[kenableAutomotiveProxy] = enable_automotive_proxy;
+  (*dictionary_)[kEnableAutomotiveProxy] = enable_automotive_proxy;
 }
 bool CuttlefishConfig::enable_automotive_proxy() const {
-  return (*dictionary_)[kenableAutomotiveProxy].asBool();
+  return (*dictionary_)[kEnableAutomotiveProxy].asBool();
 }
 
-static constexpr char kenableHostNfc[] = "enable_host_nfc";
+static constexpr char kEnableHostNfc[] = "enable_host_nfc";
 void CuttlefishConfig::set_enable_host_nfc(bool enable_host_nfc) {
-  (*dictionary_)[kenableHostNfc] = enable_host_nfc;
+  (*dictionary_)[kEnableHostNfc] = enable_host_nfc;
 }
 bool CuttlefishConfig::enable_host_nfc() const {
-  return (*dictionary_)[kenableHostNfc].asBool();
+  return (*dictionary_)[kEnableHostNfc].asBool();
 }
 
-static constexpr char kenableHostNfcConnector[] = "enable_host_nfc_connector";
+static constexpr char kEnableHostNfcConnector[] = "enable_host_nfc_connector";
 void CuttlefishConfig::set_enable_host_nfc_connector(bool enable_host_nfc) {
-  (*dictionary_)[kenableHostNfcConnector] = enable_host_nfc;
+  (*dictionary_)[kEnableHostNfcConnector] = enable_host_nfc;
 }
 bool CuttlefishConfig::enable_host_nfc_connector() const {
-  return (*dictionary_)[kenableHostNfcConnector].asBool();
+  return (*dictionary_)[kEnableHostNfcConnector].asBool();
 }
 
 static constexpr char kCasimirInstanceNum[] = "casimir_instance_num";
@@ -369,12 +370,12 @@ int CuttlefishConfig::casimir_rf_port() const {
   return (*dictionary_)[kCasimirRfPort].asInt();
 }
 
-static constexpr char kenableWifi[] = "enable_wifi";
+static constexpr char kEnableWifi[] = "enable_wifi";
 void CuttlefishConfig::set_enable_wifi(bool enable_wifi) {
-  (*dictionary_)[kenableWifi] = enable_wifi;
+  (*dictionary_)[kEnableWifi] = enable_wifi;
 }
 bool CuttlefishConfig::enable_wifi() const {
-  return (*dictionary_)[kenableWifi].asBool();
+  return (*dictionary_)[kEnableWifi].asBool();
 }
 
 static constexpr char kNetsimRadios[] = "netsim_radios";
