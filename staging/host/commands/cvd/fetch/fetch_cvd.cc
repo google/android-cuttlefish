@@ -52,22 +52,15 @@
 namespace cuttlefish {
 namespace {
 
-const std::string DEFAULT_BUILD_TARGET =
+constexpr char kDefaultBuildTarget[] =
     "aosp_cf_x86_64_phone-trunk_staging-userdebug";
-const std::string HOST_TOOLS = "cvd-host_package.tar.gz";
-const std::string KERNEL = "kernel";
-const std::string OTA_TOOLS = "otatools.zip";
-const std::string OTA_TOOLS_DIR = "/otatools/";
-const std::string DEFAULT_DIR = "/default";
-const std::string SYSTEM_DIR = "/system";
-const std::string USAGE_MESSAGE =
+constexpr char kUsageMessage[] =
     "*_build flags accept values in the following format:\n"
     "{<branch> | <build_id>}[/<build_target>]\n"
     "<branch> fetches artifacts from the latest build of the argument\n"
     "if <build_target> is not specified then the default build target is: ";
-const mode_t RWX_ALL_MODE = S_IRWXU | S_IRWXG | S_IRWXO;
-const bool OVERRIDE_ENTRIES = true;
-const std::string LOG_FILENAME = "fetch.log";
+constexpr mode_t kRwxAllMode = S_IRWXU | S_IRWXG | S_IRWXO;
+constexpr bool kOverrideEntries = true;
 
 struct BuildApiFlags {
   std::string api_key = kDefaultApiKey;
@@ -216,7 +209,7 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
           .Help("Whether to fetch the -target_files-*.zip file."));
 
   std::stringstream help_message;
-  help_message << USAGE_MESSAGE << DEFAULT_BUILD_TARGET;
+  help_message << kUsageMessage << kDefaultBuildTarget;
   flags.emplace_back(HelpFlag(flags, help_message.str()));
   flags.emplace_back(
       HelpXmlFlag(flags, std::cout, fetch_flags.helpxml, help_message.str()));
@@ -353,8 +346,8 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
 Result<std::vector<std::string>> ProcessHostPackage(
     BuildApi& build_api, const Build& build, const std::string& target_dir,
     const bool keep_archives) {
-  std::string host_tools_filepath =
-      CF_EXPECT(build_api.DownloadFile(build, target_dir, HOST_TOOLS));
+  std::string host_tools_filepath = CF_EXPECT(
+      build_api.DownloadFile(build, target_dir, "cvd-host_package.tar.gz"));
   return ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives);
 }
 
@@ -430,9 +423,9 @@ Result<std::optional<Build>> GetBuildHelper(BuildApi& build_api,
 Result<Builds> GetBuildsFromSources(BuildApi& build_api,
                                     const BuildSourceFlags& build_sources) {
   auto default_build = CF_EXPECT(GetBuildHelper(
-      build_api, build_sources.default_build, DEFAULT_BUILD_TARGET));
+      build_api, build_sources.default_build, kDefaultBuildTarget));
   auto host_package_build = CF_EXPECT(GetBuildHelper(
-      build_api, build_sources.host_package_build, DEFAULT_BUILD_TARGET));
+      build_api, build_sources.host_package_build, kDefaultBuildTarget));
   CF_EXPECT(host_package_build.has_value() || default_build.has_value(),
             "Either the host_package_build or default_build requires a value. "
             "(previous default_build default was "
@@ -441,15 +434,15 @@ Result<Builds> GetBuildsFromSources(BuildApi& build_api,
   Builds result = Builds{
       .default_build = default_build,
       .system = CF_EXPECT(GetBuildHelper(build_api, build_sources.system_build,
-                                         DEFAULT_BUILD_TARGET)),
+                                         kDefaultBuildTarget)),
       .kernel = CF_EXPECT(
-          GetBuildHelper(build_api, build_sources.kernel_build, KERNEL)),
+          GetBuildHelper(build_api, build_sources.kernel_build, "kernel")),
       .boot = CF_EXPECT(GetBuildHelper(build_api, build_sources.boot_build,
                                        "gki_x86_64-user")),
       .bootloader = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.bootloader_build, "u-boot_crosvm_x86_64")),
       .otatools = CF_EXPECT(GetBuildHelper(
-          build_api, build_sources.otatools_build, DEFAULT_BUILD_TARGET)),
+          build_api, build_sources.otatools_build, kDefaultBuildTarget)),
       .host_package = host_package_build.value_or(*default_build),
   };
   if (!result.otatools) {
@@ -466,14 +459,14 @@ Result<TargetDirectories> CreateDirectories(
     const std::string& target_directory) {
   TargetDirectories targets =
       TargetDirectories{.root = target_directory,
-                        .otatools = target_directory + OTA_TOOLS_DIR,
-                        .default_target_files = target_directory + DEFAULT_DIR,
-                        .system_target_files = target_directory + SYSTEM_DIR};
+                        .otatools = target_directory + "/otatools/",
+                        .default_target_files = target_directory + "/default",
+                        .system_target_files = target_directory + "/system"};
 
   for (const auto& dir_path :
        {targets.root, targets.otatools, targets.default_target_files,
         targets.system_target_files}) {
-    CF_EXPECT(EnsureDirectoryExists(dir_path, RWX_ALL_MODE));
+    CF_EXPECT(EnsureDirectoryExists(dir_path, kRwxAllMode));
   }
   return {targets};
 }
@@ -517,7 +510,7 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
       CF_EXPECT(config.AddFilesToConfig(
           FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
           {misc_info_result.value()}, target_directories.root,
-          OVERRIDE_ENTRIES));
+          kOverrideEntries));
     }
 
     if (flags.download_img_zip) {
@@ -573,7 +566,7 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
           CF_EXPECT(config.AddFilesToConfig(
               FileSource::SYSTEM_BUILD, system_id, system_target,
               extract_result.value(), target_directories.root,
-              OVERRIDE_ENTRIES));
+              kOverrideEntries));
         }
       }
       if (!system_img_zip_result.ok() || !extract_result.ok()) {
@@ -672,7 +665,7 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
     const auto [boot_id, boot_target] = GetBuildIdAndTarget(*builds.boot);
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::BOOT_BUILD, boot_id, boot_target, boot_files,
-        target_directories.root, OVERRIDE_ENTRIES));
+        target_directories.root, kOverrideEntries));
   }
 
   if (builds.bootloader) {
@@ -688,12 +681,12 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
         GetBuildIdAndTarget(*builds.bootloader);
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::BOOTLOADER_BUILD, bootloader_id, bootloader_target,
-        {bootloader_filepath}, target_directories.root, OVERRIDE_ENTRIES));
+        {bootloader_filepath}, target_directories.root, kOverrideEntries));
   }
 
   if (builds.otatools) {
     std::string otatools_filepath = CF_EXPECT(build_api.DownloadFile(
-        *builds.otatools, target_directories.root, OTA_TOOLS));
+        *builds.otatools, target_directories.root, "ota_tools.zip"));
     std::vector<std::string> ota_tools_files = CF_EXPECT(
         ExtractArchiveContents(otatools_filepath, target_directories.otatools,
                                keep_downloaded_archives));
@@ -765,9 +758,9 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   android::base::InitLogging(argv, android::base::StderrLogger);
   const FetchFlags flags = CF_EXPECT(GetFlagValues(argc, argv));
   const std::string fetch_root_directory = AbsolutePath(flags.target_directory);
-  CF_EXPECT(EnsureDirectoryExists(fetch_root_directory, RWX_ALL_MODE));
+  CF_EXPECT(EnsureDirectoryExists(fetch_root_directory, kRwxAllMode));
   android::base::SetLogger(
-      LogToStderrAndFiles({fetch_root_directory + "/" + LOG_FILENAME}));
+      LogToStderrAndFiles({fetch_root_directory + "/fetch.log"}));
   android::base::SetMinimumLogSeverity(flags.verbosity);
 
   auto result = InnerMain(flags, fetch_root_directory);
