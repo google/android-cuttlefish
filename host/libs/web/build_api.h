@@ -21,6 +21,7 @@
 #include <ostream>
 #include <string>
 #include <tuple>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -30,31 +31,6 @@
 #include "host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
-
-class Artifact {
- public:
-  Artifact(const Json::Value&);
-  Artifact(std::string name) : name_(std::move(name)) {}
-
-  const std::string& Name() const { return name_; }
-  size_t Size() const { return size_; }
-  unsigned long LastModifiedTime() const { return last_modified_time_; }
-  const std::string& Md5() const { return md5_; }
-  const std::string& ContentType() const { return content_type_; }
-  const std::string& Revision() const { return revision_; }
-  unsigned long CreationTime() const { return creation_time_; }
-  unsigned int Crc32() const { return crc32_; }
-
- private:
-  std::string name_;
-  size_t size_;
-  unsigned long last_modified_time_;
-  std::string md5_;
-  std::string content_type_;
-  std::string revision_;
-  unsigned long creation_time_;
-  unsigned int crc32_;
-};
 
 struct DeviceBuild {
   DeviceBuild(std::string id, std::string target)
@@ -122,15 +98,15 @@ class BuildApi {
 
   Result<std::string> ProductName(const DeviceBuild&);
 
-  Result<std::vector<Artifact>> Artifacts(
+  Result<std::unordered_set<std::string>> Artifacts(
       const DeviceBuild& build,
       const std::vector<std::string>& artifact_filenames);
 
-  Result<std::vector<Artifact>> Artifacts(
+  Result<std::unordered_set<std::string>> Artifacts(
       const DirectoryBuild& build,
       const std::vector<std::string>& artifact_filenames);
 
-  Result<std::vector<Artifact>> Artifacts(
+  Result<std::unordered_set<std::string>> Artifacts(
       const Build& build, const std::vector<std::string>& artifact_filenames) {
     auto res = std::visit(
         [this, &artifact_filenames](auto&& arg) {
