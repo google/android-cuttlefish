@@ -86,8 +86,14 @@ __TARGET_NO_BOOTLOADER := $(TARGET_NO_BOOTLOADER)
 include build/make/target/board/BoardConfigMainlineCommon.mk
 TARGET_NO_BOOTLOADER := $(__TARGET_NO_BOOTLOADER)
 
+# For now modules are only blocked in second stage init.
+# If a module ever needs to blocked in first stage init - add a new blocklist to
+# BOARD_VENDOR_RAMDISK_KERNEL_MODULES_BLOCKLIST_FILE
 BOARD_VENDOR_KERNEL_MODULES_BLOCKLIST_FILE := \
     device/google/cuttlefish/shared/modules.blocklist
+
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES_OPTIONS_FILE := \
+    device/google/cuttlefish/shared/config/first_stage_modules.options
 
 ifndef TARGET_BOOTLOADER_BOARD_NAME
 TARGET_BOOTLOADER_BOARD_NAME := cutf
@@ -339,9 +345,9 @@ endif
 
 BOARD_BOOTCONFIG += androidboot.hardware=cutf_cvm
 
-# TODO(b/182417593): Move all of these module options to modules.options
-# TODO(b/176860479): Remove once goldfish and cuttlefish share a wifi implementation
-BOARD_BOOTCONFIG += kernel.mac80211_hwsim.radios=0
+# TODO(b/182417593): vsock transport is a module on some kernels and builtin
+# on others. To maintain the buffer size setting across these two configs,
+# the setting will remain in the bootconfig AND also the modules.options file.
 # Reduce slab size usage from virtio vsock to reduce slab fragmentation
 BOARD_BOOTCONFIG += \
     kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_buf_size=16384
