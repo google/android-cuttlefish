@@ -1,14 +1,4 @@
 dnl Run "m4 genfs_contexts" to test
-dnl # $1 = pci prefix
-dnl # $2 = pci ID start (hex)
-dnl # $3 = virtio ID start (decimal)
-pushdef(`cf_pci_block_device', `dnl
-genfscon sysfs $1/0000:00:eval($2 + 0, 16, 2).0/virtio`'eval($3 + 0)`'/block u:object_r:sysfs_devices_block:s0 # vda
-genfscon sysfs $1/0000:00:eval($2 + 1, 16, 2).0/virtio`'eval($3 + 1)`'/block u:object_r:sysfs_devices_block:s0 # vdb
-genfscon sysfs $1/0000:00:eval($2 + 2, 16, 2).0/virtio`'eval($3 + 2)`'/block u:object_r:sysfs_devices_block:s0 # vdc
-genfscon sysfs $1/0000:00:eval($2 + 3, 16, 2).0/virtio`'eval($3 + 3)`'/ndbus0 u:object_r:sysfs_devices_block:s0 # pmem0
-genfscon sysfs $1/0000:00:eval($2 + 4, 16, 2).0/virtio`'eval($3 + 4)`'/ndbus0 u:object_r:sysfs_devices_block:s0 # pmem1
-dnl')dnl
 dnl
 dnl # $1 = pci prefix
 dnl # $2 = pci ID start (hex)
@@ -30,8 +20,6 @@ genfscon sysfs $1/rtc/rtc$2/alarmtimer.0.auto/wakeup u:object_r:sysfs_wakeup:s0 
 dnl')dnl
 dnl
 # crosvm (x86)
-cf_pci_block_device(/devices/pci0000:00, 0x11, 17) # --gpu_mode=gfxstream_guest_angle_host_swiftshader
-cf_pci_block_device(/devices/pci0000:00, 0x11, 18) # --gpu-mode=guest_swiftshader
 cf_pci_gpu_device(/devices/pci0000:00, 0x2)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/rtc_cmos/rtc u:object_r:sysfs_rtc:s0
@@ -87,7 +75,6 @@ genfscon sysfs /devices/virtual/mac80211_hwsim/hwsim0/net u:object_r:sysfs_net:s
 genfscon sysfs /devices/virtual/mac80211_hwsim/hwsim1/net u:object_r:sysfs_net:s0
 
 # crosvm (arm64)
-cf_pci_block_device(/devices/platform/10000.pci/pci0000:00, 0x11, 17)
 cf_pci_gpu_device(/devices/platform/10000.pci/pci0000:00, 0x2)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/2000.rtc/rtc u:object_r:sysfs_rtc:s0
@@ -95,7 +82,6 @@ genfscon sysfs /devices/platform/2000.rtc/rtc u:object_r:sysfs_rtc:s0
 ## arm64 2000.rtc on crosvm does not currently expose a wakeup node
 
 # qemu (x86)
-cf_pci_block_device(/devices/pci0000:00, 0x11, 16)
 #cf_pci_gpu_device(/devices/pci0000:00, 0x2) - duplicated with crosvm(x86)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/pnp0/00:04/rtc u:object_r:sysfs_rtc:s0
@@ -103,7 +89,6 @@ genfscon sysfs /devices/pnp0/00:04/rtc u:object_r:sysfs_rtc:s0
 cf_rtc_wakeup_alarmtimer(/devices/pnp0/00:04, 0, 19)
 
 # qemu (arm64)
-cf_pci_block_device(/devices/platform/4010000000.pcie/pci0000:00, 0x10, 16)
 cf_pci_gpu_device(/devices/platform/4010000000.pcie/pci0000:00, 0x1)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/9010000.pl031/rtc u:object_r:sysfs_rtc:s0
@@ -111,13 +96,11 @@ genfscon sysfs /devices/platform/9010000.pl031/rtc u:object_r:sysfs_rtc:s0
 cf_rtc_wakeup_alarmtimer(/devices/platform/9010000.pl031, 0, 0)
 
 # qemu (arm)
-cf_pci_block_device(/devices/platform/3f000000.pcie/pci0000:00, 0x10, 16)
 cf_pci_gpu_device(/devices/platform/3f000000.pcie/pci0000:00, 0x1)
 genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup3 u:object_r:sysfs_wakeup:s0
 
 # qemu (riscv64)
-cf_pci_block_device(/devices/platform/soc/30000000.pci/pci0000:00, 0x11, 17)
 cf_pci_gpu_device(/devices/platform/soc/30000000.pci/pci0000:00, 0x1)
 
 # common on all platforms / vm managers
@@ -128,6 +111,5 @@ genfscon sysfs /bus/iio/devices u:object_r:sysfs_iio_devices:s0
 cf_rtc_wakeup_alarmtimer(/devices/platform/rtc-test.1, 2, 0)
 genfscon sysfs /devices/platform/rtc-test.2/wakeup u:object_r:sysfs_wakeup:s0
 dnl
-popdef(`cf_pci_block_device')dnl
 popdef(`cf_pci_gpu_device')dnl
 popdef(`cf_rtc_wakeup_alarmtimer')dnl
