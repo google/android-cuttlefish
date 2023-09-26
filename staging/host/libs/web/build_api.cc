@@ -24,12 +24,14 @@
 #include <string>
 #include <thread>
 #include <tuple>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
@@ -48,16 +50,6 @@ bool StatusIsTerminal(const std::string& status) {
   return terminal_statuses.count(status) > 0;
 }
 
-bool ArtifactsContain(const std::vector<Artifact>& artifacts,
-                      const std::string& name) {
-  for (const auto& artifact : artifacts) {
-    if (artifact.Name() == name) {
-      return true;
-    }
-  }
-  return false;
-}
-
 std::string BuildNameRegexp(
     const std::vector<std::string>& artifact_filenames) {
   // surrounding with \Q and \E treats the text literally to avoid
@@ -74,17 +66,6 @@ std::string BuildNameRegexp(
 }
 
 }  // namespace
-
-Artifact::Artifact(const Json::Value& json_artifact) {
-  name_ = json_artifact["name"].asString();
-  size_ = std::stol(json_artifact["size"].asString());
-  last_modified_time_ = std::stol(json_artifact["lastModifiedTime"].asString());
-  md5_ = json_artifact["md5"].asString();
-  content_type_ = json_artifact["contentType"].asString();
-  revision_ = json_artifact["revision"].asString();
-  creation_time_ = std::stol(json_artifact["creationTime"].asString());
-  crc32_ = json_artifact["crc32"].asUInt();
-}
 
 std::ostream& operator<<(std::ostream& out, const DeviceBuild& build) {
   return out << "(id=\"" << build.id << "\", target=\"" << build.target
@@ -207,11 +188,11 @@ Result<std::string> BuildApi::ProductName(const DeviceBuild& build) {
   return json["target"]["product"].asString();
 }
 
-Result<std::vector<Artifact>> BuildApi::Artifacts(
+Result<std::unordered_set<std::string>> BuildApi::Artifacts(
     const DeviceBuild& build,
     const std::vector<std::string>& artifact_filenames) {
   std::string page_token = "";
-  std::vector<Artifact> artifacts;
+  std::unordered_set<std::string> artifacts;
   do {
     std::string url = BUILD_API + "/builds/" +
                       http_client->UrlEscape(build.id) + "/" +
@@ -243,7 +224,7 @@ Result<std::vector<Artifact>> BuildApi::Artifacts(
       page_token = "";
     }
     for (const auto& artifact_json : json["artifacts"]) {
-      artifacts.emplace_back(artifact_json);
+      artifacts.emplace(artifact_json["name"].asString());
     }
   } while (page_token != "");
   return artifacts;
@@ -253,15 +234,15 @@ struct CloseDir {
   void operator()(DIR* dir) { closedir(dir); }
 };
 
-Result<std::vector<Artifact>> BuildApi::Artifacts(
+Result<std::unordered_set<std::string>> BuildApi::Artifacts(
     const DirectoryBuild& build, const std::vector<std::string>&) {
-  std::vector<Artifact> artifacts;
+  std::unordered_set<std::string> artifacts;
   for (const auto& path : build.paths) {
     auto dir = std::unique_ptr<DIR, CloseDir>(opendir(path.c_str()));
     CF_EXPECT(dir != nullptr, "Could not read files from \"" << path << "\"");
     for (auto entity = readdir(dir.get()); entity != nullptr;
          entity = readdir(dir.get())) {
-      artifacts.emplace_back(std::string(entity->d_name));
+      artifacts.emplace(std::string(entity->d_name));
     }
   }
   return artifacts;
@@ -392,9 +373,9 @@ Result<Build> BuildApi::ArgumentToBuild(
 Result<std::string> BuildApi::DownloadFile(const Build& build,
                                            const std::string& target_directory,
                                            const std::string& artifact_name) {
-  std::vector<Artifact> artifacts =
+  std::unordered_set<std::string> artifacts =
       CF_EXPECT(Artifacts(build, {artifact_name}));
-  CF_EXPECT(ArtifactsContain(artifacts, artifact_name),
+  CF_EXPECT(Contains(artifacts, artifact_name),
             "Target " << build << " did not contain " << artifact_name);
   return DownloadTargetFile(build, target_directory, artifact_name);
 }
@@ -402,10 +383,10 @@ Result<std::string> BuildApi::DownloadFile(const Build& build,
 Result<std::string> BuildApi::DownloadFileWithBackup(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name, const std::string& backup_artifact_name) {
-  std::vector<Artifact> artifacts =
+  std::unordered_set<std::string> artifacts =
       CF_EXPECT(Artifacts(build, {artifact_name, backup_artifact_name}));
   std::string selected_artifact = artifact_name;
-  if (!ArtifactsContain(artifacts, artifact_name)) {
+  if (!Contains(artifacts, artifact_name)) {
     selected_artifact = backup_artifact_name;
   }
   return DownloadTargetFile(build, target_directory, selected_artifact);
