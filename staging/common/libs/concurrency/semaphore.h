@@ -36,7 +36,7 @@ class Semaphore {
 
   void SemPost() {
     std::unique_lock<std::mutex> lock(mtx_);
-    room_cv_.wait(lock, [this]() -> bool { return count_ <= capacity_; });
+    room_cv_.wait(lock, [this]() -> bool { return count_ < capacity_; });
     ++count_;
     resoure_cv_.notify_one();
   }
