@@ -171,8 +171,8 @@ class CvdRestartHandler : public CvdServerHandler {
 
     CF_EXPECT(server_.Exec({.new_exe = new_exe,
                             .carryover_client_fd = request.Client(),
-                            .client_stderr_fd = request.Err(),
                             .in_memory_data_fd = mem_fd,
+                            .client_stderr_fd = request.Err(),
                             .verbose = parsed.verbose}));
     return CF_ERR("Should be unreachable");
   }
