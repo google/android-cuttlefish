@@ -37,6 +37,7 @@ class MetricsReceiver {
   static void LogMetricsVMStop();
   static void LogMetricsDeviceBoot();
   static void LogMetricsLockScreen();
+  static void LogMetricsSendLaunchCommand(const std::string& command_line);
 };
 
 }  // namespace cuttlefish
