@@ -63,4 +63,9 @@ void MetricsReceiver::LogMetricsVMStop() { SendHelper("VMStop"); }
 void MetricsReceiver::LogMetricsDeviceBoot() { SendHelper("DeviceBoot"); }
 
 void MetricsReceiver::LogMetricsLockScreen() { SendHelper("LockScreen"); }
+
+void MetricsReceiver::LogMetricsSendLaunchCommand(
+    const std::string& command_line) {
+  SendHelper(command_line);
+}
 }  // namespace cuttlefish

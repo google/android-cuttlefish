@@ -25,6 +25,7 @@ cc_library_shared {
         "cf_metrics_event.proto",
         "clientanalytics.proto",
         "common.proto",
+        "internal_user_log.proto",
     ],
 
     shared_libs: [
