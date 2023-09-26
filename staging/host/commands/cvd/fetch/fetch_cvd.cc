@@ -24,6 +24,7 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <utility>
@@ -51,7 +52,8 @@
 namespace cuttlefish {
 namespace {
 
-const std::string DEFAULT_BUILD_TARGET = "aosp_cf_x86_64_phone-userdebug";
+const std::string DEFAULT_BUILD_TARGET =
+    "aosp_cf_x86_64_phone-trunk_staging-userdebug";
 const std::string HOST_TOOLS = "cvd-host_package.tar.gz";
 const std::string KERNEL = "kernel";
 const std::string OTA_TOOLS = "otatools.zip";
@@ -59,15 +61,10 @@ const std::string OTA_TOOLS_DIR = "/otatools/";
 const std::string DEFAULT_DIR = "/default";
 const std::string SYSTEM_DIR = "/system";
 const std::string USAGE_MESSAGE =
-    "<flags>\n"
-    "\n"
-    "\"*_build\" flags accept values in the following format:\n"
-    "\"branch/build_target\" - latest build of \"branch\" for "
-    "\"build_target\"\n"
-    "\"build_id/build_target\" - build \"build_id\" for \"build_target\"\n"
-    "\"branch\" - latest build of \"branch\" for "
-    "\"aosp_cf_x86_phone-userdebug\"\n"
-    "\"build_id\" - build \"build_id\" for \"aosp_cf_x86_phone-userdebug\"\n";
+    "*_build flags accept values in the following format:\n"
+    "{<branch> | <build_id>}[/<build_target>]\n"
+    "<branch> fetches artifacts from the latest build of the argument\n"
+    "if <build_target> is not specified then the default build target is: ";
 const mode_t RWX_ALL_MODE = S_IRWXU | S_IRWXG | S_IRWXO;
 const bool OVERRIDE_ENTRIES = true;
 const std::string LOG_FILENAME = "fetch.log";
@@ -218,9 +215,11 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                        kDefaultDownloadTargetFilesZip)
           .Help("Whether to fetch the -target_files-*.zip file."));
 
-  flags.emplace_back(HelpFlag(flags, USAGE_MESSAGE));
+  std::stringstream help_message;
+  help_message << USAGE_MESSAGE << DEFAULT_BUILD_TARGET;
+  flags.emplace_back(HelpFlag(flags, help_message.str()));
   flags.emplace_back(
-      HelpXmlFlag(flags, std::cout, fetch_flags.helpxml, USAGE_MESSAGE));
+      HelpXmlFlag(flags, std::cout, fetch_flags.helpxml, help_message.str()));
 
   flags.emplace_back(UnexpectedArgumentGuard());
   return flags;
