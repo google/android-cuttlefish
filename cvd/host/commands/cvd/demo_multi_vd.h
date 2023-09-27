@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
-
-#include <atomic>
 
 #include <fruit/fruit.h>
 
@@ -24,10 +21,7 @@
 
 namespace cuttlefish {
 
-struct AcloudTranslatorOptOut {};
+fruit::Component<fruit::Required<CommandSequenceExecutor>>
+DemoMultiVdComponent();
 
-fruit::Component<fruit::Required<
-    CommandSequenceExecutor,
-    fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
-AcloudCommandComponent();
 }
