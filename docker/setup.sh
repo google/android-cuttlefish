@@ -472,7 +472,7 @@ function cf_docker_rm {
         local ip_addr_var_name="ip_${name}"
         unset ${ip_addr_var_name}
 
-		if [ -n "$(docker ps -q -a -f name=${name})" ]; then
+		if [ -n "$(docker ps -a -f name=${name})" ]; then
 			homedir=$(cf_gethome_${name})
 			echo "Deleting container ${name}."
 			docker rm -f ${name}
@@ -673,7 +673,7 @@ function cf_clean_autogens() {
 cf_clean_autogens
 unset -f cf_clean_autogens
 
-for cf in $(docker ps -q -a --filter="ancestor=cuttlefish" --format "table {{.Names}}" | tail -n+2); do
+for cf in $(docker ps -a --filter="ancestor=cuttlefish" --format "table {{.Names}}" | tail -n+2); do
 	__gen_funcs "${cf}"
 	if [ -z "$cf_script" ]; then
 		help_on_container "${cf}"
