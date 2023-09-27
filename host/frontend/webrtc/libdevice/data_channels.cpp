@@ -299,6 +299,12 @@ class SensorsChannelHandler : public DataChannelHandler {
     observer()->OnSensorsMessage(msg.data.cdata(), msg.size());
   }
 
+  void OnStateChangeInner(webrtc::DataChannelInterface::DataState state) override {
+    if (state == webrtc::DataChannelInterface::kClosed) {
+      observer()->OnSensorsChannelClosed();
+    }
+  }
+
  private:
   bool first_msg_received_ = false;
 };
