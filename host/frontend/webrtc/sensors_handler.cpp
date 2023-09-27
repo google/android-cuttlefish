@@ -35,15 +35,17 @@ void SensorsHandler::HandleMessage(const double x, const double y, const double 
 }
 
 int SensorsHandler::Subscribe(std::function<void(const uint8_t*, size_t)> send_to_client) {
-  std::lock_guard<std::mutex> lock(subscribers_mtx_);
   int subscriber_id = ++last_client_channel_id_;
-  client_channels_[subscriber_id] = send_to_client;
+  {
+    std::lock_guard<std::mutex> lock(subscribers_mtx_);
+    client_channels_[subscriber_id] = send_to_client;
+  }
 
   // Send device's initial state to the new client.
   std::string new_sensors_data = sensors_simulator_->GetSensorsData();
   const uint8_t* message =
       reinterpret_cast<const uint8_t*>(new_sensors_data.c_str());
-  client_channels_[subscriber_id](message, new_sensors_data.size());
+  send_to_client(message, new_sensors_data.size());
 
   return subscriber_id;
 }
@@ -57,9 +59,9 @@ void SensorsHandler::UpdateSensors() {
   std::string new_sensors_data = sensors_simulator_->GetSensorsData();
   const uint8_t* message =
       reinterpret_cast<const uint8_t*>(new_sensors_data.c_str());
+  std::lock_guard<std::mutex> lock(subscribers_mtx_);
   for (auto itr = client_channels_.begin(); itr != client_channels_.end();
        itr++) {
-    std::lock_guard<std::mutex> lock(subscribers_mtx_);
     itr->second(message, new_sensors_data.size());
   }
 }
