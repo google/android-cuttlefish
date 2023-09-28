@@ -87,7 +87,7 @@ FetcherConfig FindFetcherConfig(const std::vector<std::string>& files) {
       LOG(ERROR) << "Could not load fetcher config file.";
     }
   }
-  LOG(ERROR) << "Could locate fetcher config file.";
+  LOG(DEBUG) << "Could not locate fetcher config file.";
   return fetcher_config;
 }
 
