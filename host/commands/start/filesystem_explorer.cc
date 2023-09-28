@@ -44,21 +44,6 @@ cuttlefish::FetcherConfig AvailableFilesReport() {
   std::string fetcher_config_path = home_directory + "/fetcher_config.json";
   if (cuttlefish::FileExists(fetcher_config_path)) {
     config.LoadFromFile(fetcher_config_path);
-    return config;
   }
-
-  std::set<std::string> files;
-
-  std::string pseudo_fetcher_dir = cuttlefish::StringFromEnv(
-      "ANDROID_HOST_OUT", cuttlefish::StringFromEnv("HOME", current_directory));
-  std::string pseudo_fetcher_config =
-      pseudo_fetcher_dir + "/launcher_pseudo_fetcher_config.json";
-  files.insert(pseudo_fetcher_config);
-
-  config.RecordFlags();
-  for (const auto& file : files) {
-    config.add_cvd_file(cuttlefish::CvdFile(cuttlefish::FileSource::LOCAL_FILE, "", "", file));
-  }
-  config.SaveToFile(pseudo_fetcher_config);
   return config;
 }
