@@ -17,21 +17,16 @@
 
 #include <android-base/logging.h>
 #include <android-base/result.h>
-#include <sparse/sparse.h>
-
-#include <unistd.h>
 
 #include "blkid.h"
 
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/esp.h"
 #include "host/libs/config/mbr.h"
 #include "host/libs/config/openwrt_args.h"
-#include "host/libs/image_aggregator/sparse_image_utils.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
 namespace cuttlefish {
@@ -44,26 +39,6 @@ static constexpr std::string_view kDataPolicyResizeUpTo = "resize_up_to";
 
 const int FSCK_ERROR_CORRECTED = 1;
 const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
-
-size_t SparseImageSize(const char* path) {
-  android::base::unique_fd fd(open(path, O_RDONLY | O_CLOEXEC));
-  if (!fd.ok()) {
-    return 0;
-  }
-  // Android-Sparse
-  if (auto sparse =
-          sparse_file_import(fd.get(), /* verbose */ false, /* crc */ false);
-      sparse) {
-    auto size = sparse_file_len(sparse, false, true);
-    sparse_file_destroy(sparse);
-    return size;
-  }
-  struct stat st {};
-  if (fstat(fd, &st) != 0) {
-    return 0;
-  }
-  return st.st_size;
-}
 
 bool ForceFsckImage(const std::string& data_image,
                     const CuttlefishConfig::InstanceSpecific& instance) {
@@ -229,12 +204,7 @@ class InitializeDataImageImpl : public InitializeDataImage {
   }
 
  private:
-  enum class DataImageAction {
-    kNoAction,
-    kCreateImage,
-    kResizeImage,
-    kWipeImage
-  };
+  enum class DataImageAction { kNoAction, kCreateImage, kResizeImage };
 
   Result<DataImageAction> ChooseAction() {
     if (instance_.data_policy() == kDataPolicyAlwaysCreate) {
@@ -250,21 +220,16 @@ class InitializeDataImageImpl : public InitializeDataImage {
       }
       return DataImageAction::kCreateImage;
     }
+    if (instance_.data_policy() == kDataPolicyUseExisting) {
+      return DataImageAction::kNoAction;
+    }
     auto current_fs_type = GetFsType(instance_.data_image());
     if (current_fs_type != instance_.userdata_format()) {
       CF_EXPECT(instance_.data_policy() != kDataPolicyResizeUpTo,
                 "Changing the fs format is incompatible with -data_policy="
                     << kDataPolicyResizeUpTo << " (\"" << current_fs_type
                     << "\" != \"" << instance_.userdata_format() << "\")");
-      if (instance_.data_policy() == kDataPolicyUseExisting) {
-        LOG(INFO) << "Userdata format changed, wiping userdata image "
-                  << instance_.new_data_image();
-        return DataImageAction::kWipeImage;
-      }
       return DataImageAction::kCreateImage;
-    }
-    if (instance_.data_policy() == kDataPolicyUseExisting) {
-      return DataImageAction::kNoAction;
     }
     if (instance_.data_policy() == kDataPolicyResizeUpTo) {
       return DataImageAction::kResizeImage;
@@ -279,14 +244,11 @@ class InitializeDataImageImpl : public InitializeDataImage {
         return {};
       case DataImageAction::kCreateImage: {
         RemoveFile(instance_.new_data_image());
-        auto image_size_mb = instance_.blank_data_image_mb();
-        if (image_size_mb == 0) {
-          image_size_mb = SparseImageSize(instance_.data_image().c_str()) >> 20;
-        }
-        CF_EXPECT(image_size_mb != 0,
+        CF_EXPECT(instance_.blank_data_image_mb() != 0,
                   "Expected `-blank_data_image_mb` to be set for "
-                  "image creation if the input image doesn't exist.");
-        CF_EXPECT(CreateBlankImage(instance_.new_data_image(), image_size_mb,
+                  "image creation.");
+        CF_EXPECT(CreateBlankImage(instance_.new_data_image(),
+                                   instance_.blank_data_image_mb(),
                                    instance_.userdata_format()),
                   "Failed to create a blank image at \""
                       << instance_.new_data_image() << "\" with size "
@@ -306,19 +268,6 @@ class InitializeDataImageImpl : public InitializeDataImage {
                   "Failed to resize \"" << instance_.new_data_image() << "\" to "
                                         << instance_.blank_data_image_mb()
                                         << " MB");
-        return {};
-      }
-      case DataImageAction::kWipeImage: {
-        auto fd = SharedFD::Open(instance_.new_data_image(),
-                                 O_RDWR | O_CREAT | O_CLOEXEC | O_TRUNC, 0644);
-        CF_EXPECTF(fd->IsOpen(), "Failed to open {} for writing",
-                   instance_.new_data_image());
-        auto data_size = SparseImageSize(instance_.data_image().c_str());
-        if (data_size == 0) {
-          data_size = 2 * (1UL << 30);
-        }
-        CF_EXPECT(fd->Truncate(data_size) == 0);
-
         return {};
       }
     }

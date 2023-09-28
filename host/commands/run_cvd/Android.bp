@@ -61,7 +61,6 @@ cc_binary_host {
         "libfruit",
         "libjsoncpp",
         "libprotobuf-cpp-full",
-        "libsparse",
     ],
     static_libs: [
         "libbuildversion",
