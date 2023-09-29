@@ -27,7 +27,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/runner_defs.h"
+#include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/snapshot_utils.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
