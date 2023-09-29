@@ -52,5 +52,8 @@ struct ConverterParsed {
 
 Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments);
 
+// Parse and generates a `cvdr` command given an `acloud` command.
+Result<cvd_common::Args> CompileFromAcloudToCvdr(cvd_common::Args& arguments);
+
 }  // namespace acloud_impl
 }  // namespace cuttlefish
