@@ -27,6 +27,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/flags.h"
 
 namespace cuttlefish {
@@ -80,21 +81,46 @@ Result<void> CleanPriorFiles(const std::string& path,
 
 Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
                              const std::set<std::string>& preserving) {
-  std::string prior_files;
-  for (auto path : paths) {
+  std::vector<std::string> prior_dirs;
+  std::vector<std::string> prior_files;
+  for (const auto& path : paths) {
     struct stat statbuf;
-    if (stat(path.c_str(), &statbuf) < 0 && errno != ENOENT) {
-      // If ENOENT, it doesn't exist yet, so there is no work to do'
+    if (stat(path.c_str(), &statbuf) < 0) {
+      if (errno == ENOENT) {
+        continue;  // it doesn't exist yet, so there is no work to do
+      }
       return CF_ERRNO("Could not stat \"" << path << "\"");
     }
     bool is_directory = (statbuf.st_mode & S_IFMT) == S_IFDIR;
-    prior_files += (is_directory ? (path + "/*") : path) + " ";
+    (is_directory ? prior_dirs : prior_files).emplace_back(path);
   }
-  LOG(DEBUG) << "Assuming prior files of " << prior_files;
-  std::string lsof_cmd = "lsof -t " + prior_files + " >/dev/null 2>&1";
-  int rval = std::system(lsof_cmd.c_str());
-  // lsof returns 0 if any of the files are open
-  CF_EXPECT(WEXITSTATUS(rval) != 0, "Clean aborted: files are in use");
+  LOG(DEBUG) << fmt::format("Prior dirs: {}", fmt::join(prior_dirs, ", "));
+  LOG(DEBUG) << fmt::format("Prior files: {}", fmt::join(prior_files, ", "));
+
+  if (prior_dirs.size() > 0 || prior_files.size() > 0) {
+    Command lsof("lsof");
+    lsof.AddParameter("-t");
+    for (const auto& prior_dir : prior_dirs) {
+      lsof.AddParameter("+D").AddParameter(prior_dir);
+    }
+    for (const auto& prior_file : prior_files) {
+      lsof.AddParameter(prior_file);
+    }
+
+    std::string lsof_out;
+    std::string lsof_err;
+    int rval =
+        RunWithManagedStdio(std::move(lsof), nullptr, &lsof_out, &lsof_err);
+    if (rval != 0 && !lsof_err.empty()) {
+      LOG(ERROR) << "Failed to run `lsof`, received message: " << lsof_err;
+    }
+    auto pids = android::base::Split(lsof_out, "\n");
+    CF_EXPECTF(
+        lsof_out.empty(),
+        "Instance directory files in use. Try `cvd reset`? Observed PIDs: {}",
+        fmt::join(pids, ", "));
+  }
+
   for (const auto& path : paths) {
     CF_EXPECT(CleanPriorFiles(path, preserving),
               "CleanPriorFiles failed for \"" << path << "\"");
