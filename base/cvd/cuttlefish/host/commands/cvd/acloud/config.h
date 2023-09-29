@@ -36,6 +36,8 @@ class AcloudConfig {
   // UserConfig/user_config.proto members
   std::string launch_args;
 
+  bool use_cvdr;
+
   // InternalConfig/internal_config.proto members
 
   // In both config

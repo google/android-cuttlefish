@@ -26,7 +26,7 @@
 namespace cuttlefish {
 
 AcloudConfig::AcloudConfig(const acloud::UserConfig& usr_cfg)
-    : launch_args(usr_cfg.launch_args()) {
+    : launch_args(usr_cfg.launch_args()), use_cvdr(usr_cfg.use_cvdr()) {
   // TODO(weihsu): Add back fields/variables (except of cheeps and emulator
   // fields) in config files. Remove cheeps (Android on ChromeOS) and emulator
   // fields.
