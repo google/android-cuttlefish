@@ -22,6 +22,7 @@
 #include <string_view>
 #include <vector>
 
+#include <fruit/fruit.h>
 #include <json/json.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -38,7 +39,8 @@ namespace cuttlefish {
 
 class LoadConfigsCommand : public CvdServerHandler {
  public:
-  LoadConfigsCommand(CommandSequenceExecutor& executor) : executor_(executor) {}
+  INJECT(LoadConfigsCommand(CommandSequenceExecutor& executor))
+      : executor_(executor) {}
   ~LoadConfigsCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -86,12 +88,23 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     Json::Value json_configs =
         CF_EXPECT(GetOverriddenConfig(flags.config_path, flags.overrides));
-    const auto load_directories =
-        CF_EXPECT(GenerateLoadDirectories(flags.base_dir, json_configs["instances"].size()));
+
+    Result<std::vector<std::string>> system_image_path_configs =
+        CF_EXPECT(GetConfiguredSystemImagePaths(json_configs));
+
+    std::optional<std::string> host_package_dir =
+        GetConfiguredSystemHostPath(json_configs);
+
+    const auto& client_env = request.Message().command_request().env();
+
+    const auto load_directories = CF_EXPECT(GenerateLoadDirectories(
+        flags.base_dir, *system_image_path_configs, host_package_dir,
+        json_configs["instances"].size()));
+
     auto cvd_flags = CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
                                "parsing json configs failed");
+
     std::vector<cvd::Request> req_protos;
-    const auto& client_env = request.Message().command_request().env();
 
     if (!cvd_flags.fetch_cvd_flags.empty()) {
       auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
@@ -138,7 +151,7 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     auto selector_opts = launch_cmd.mutable_selector_opts();
 
-    for (const auto& flag: cvd_flags.selector_flags) {
+    for (const auto& flag : cvd_flags.selector_flags) {
       selector_opts->add_args(flag);
     }
 
@@ -165,9 +178,10 @@ class LoadConfigsCommand : public CvdServerHandler {
   bool interrupted_ = false;
 };
 
-std::unique_ptr<CvdServerHandler> NewLoadConfigsCommand(
-    CommandSequenceExecutor& executor) {
-  return std::unique_ptr<CvdServerHandler>(new LoadConfigsCommand(executor));
+fruit::Component<fruit::Required<CommandSequenceExecutor>>
+LoadConfigsComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CvdServerHandler, LoadConfigsCommand>();
 }
 
 }  // namespace cuttlefish
