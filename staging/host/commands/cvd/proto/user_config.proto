@@ -130,4 +130,7 @@ message UserConfig {
 
   // [CVD only] Ssh connect with hostname.
   optional bool connect_hostname = 37;
+
+  // [CVD only] If installed, use cvdr.
+  optional bool use_cvdr = 38;
 }
