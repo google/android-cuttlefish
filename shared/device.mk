@@ -468,7 +468,7 @@ endif
 
 # BootControl HAL
 PRODUCT_PACKAGES += \
-    com.android.hardware.boot \
+    android.hardware.boot-service.default \
     android.hardware.boot-service.default_recovery
 
 
