@@ -26,6 +26,7 @@
 #undef ethhdr
 #endif
 
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
 #include <net/if.h>
@@ -46,6 +47,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <fmt/format.h>
 
 #include "common/libs/utils/subprocess.h"
 
@@ -160,37 +162,14 @@ std::set<std::string> TapInterfacesInUse() {
 #endif
 
 std::string MacAddressToString(const std::uint8_t mac[6]) {
-  std::stringstream result;
-
-  result << std::hex;
-  for (int i = 0; i < 6; i++) {
-    result << std::setfill('0') << std::setw(2)
-           << static_cast<int>(mac[i]);
-
-    if (i < 5) {
-      result << ':';
-    }
-  }
-
-  return result.str();
+  std::vector<std::uint8_t> mac_vec(mac, mac + 6);
+  return fmt::format("{:0>2x}", fmt::join(mac_vec, ":"));
 }
 
 std::string Ipv6ToString(const std::uint8_t ip[16]) {
-  std::stringstream result;
-
-  result << std::hex;
-  for (int i = 0; i < 16; i = i + 2) {
-    result << std::setfill('0') << std::setw(2)
-           << static_cast<int>(ip[i])
-           << std::setfill('0') << std::setw(2)
-           << static_cast<int>(ip[i + 1]);
-
-    if (i < 14) {
-      result << ':';
-    }
-  }
-
-  return result.str();
+  char ipv6_str[INET6_ADDRSTRLEN + 1];
+  inet_ntop(AF_INET6, ip, ipv6_str, sizeof(ipv6_str));
+  return std::string(ipv6_str);
 }
 
 void GenerateMobileMacForInstance(int index, std::uint8_t out[6]) {
