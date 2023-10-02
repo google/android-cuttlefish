@@ -77,7 +77,6 @@ cc_library_shared {
         "libhidlbase",
         "liblog",
         "libutils",
-        "libui",
         "libvsock_utils",
         "libcuttlefish_fs",
         "libjsoncpp",
