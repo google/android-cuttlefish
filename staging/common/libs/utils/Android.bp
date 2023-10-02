@@ -76,6 +76,7 @@ cc_test_host {
         "files_test.cpp",
         "files_test_helper.cpp",
         "flag_parser_test.cpp",
+        "network_test.cpp",
         "proc_file_utils_test.cpp",
         "result_test.cpp",
         "unique_resource_allocator_test.cpp",
