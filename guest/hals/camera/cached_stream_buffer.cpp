@@ -96,8 +96,23 @@ YCbCrLayout CachedStreamBuffer::acquireAsYUV(int32_t width, int32_t height,
       acquire_fence_ = -1;
     }
   }
-  IMapper::Rect region{0, 0, width, height};
-  return g_importer.lockYCbCr(buffer_, GRALLOC_USAGE_SW_WRITE_OFTEN, region);
+  android::Rect region{0, 0, width, height};
+  android_ycbcr result =
+      g_importer.lockYCbCr(buffer_, GRALLOC_USAGE_SW_WRITE_OFTEN, region);
+  if (result.ystride > UINT32_MAX || result.cstride > UINT32_MAX ||
+      result.chroma_step > UINT32_MAX) {
+    ALOGE(
+        "%s: lockYCbCr failed. Unexpected values! ystride: %zu cstride: %zu "
+        "chroma_step: %zu",
+        __FUNCTION__, result.ystride, result.cstride, result.chroma_step);
+    return {};
+  }
+  return {.y = result.y,
+          .cb = result.cb,
+          .cr = result.cr,
+          .yStride = static_cast<uint32_t>(result.ystride),
+          .cStride = static_cast<uint32_t>(result.cstride),
+          .chromaStep = static_cast<uint32_t>(result.chroma_step)};
 }
 
 void* CachedStreamBuffer::acquireAsBlob(int32_t size, int timeout_ms) {
