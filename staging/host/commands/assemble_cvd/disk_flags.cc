@@ -926,29 +926,22 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
     }
     instance.set_initramfs_path(cur_initramfs_path);
 
+    using android::base::ParseInt;
     if (instance_index >= blank_metadata_image_mb.size()) {
-      CHECK(android::base::ParseInt(blank_metadata_image_mb[0],
-                                    &value))
-          << "Invalid 'blank_metadata_image_mb' "
-          << blank_metadata_image_mb[0];
+      CF_EXPECTF(ParseInt(blank_metadata_image_mb[0], &value), "'{}'",
+                 blank_metadata_image_mb[0]);
     } else {
-      CHECK(android::base::ParseInt(blank_metadata_image_mb[instance_index],
-                                    &value))
-          << "Invalid 'blank_metadata_image_mb' "
-          << blank_metadata_image_mb[instance_index];
+      CF_EXPECTF(ParseInt(blank_metadata_image_mb[instance_index], &value),
+                 "'{}'", blank_metadata_image_mb[value]);
     }
     instance.set_blank_metadata_image_mb(value);
 
     if (instance_index >= blank_sdcard_image_mb.size()) {
-      CHECK(android::base::ParseInt(blank_sdcard_image_mb[0],
-                                    &value))
-          << "Invalid 'blank_sdcard_image_mb' "
-          << blank_sdcard_image_mb[0];
+      CF_EXPECTF(ParseInt(blank_sdcard_image_mb[0], &value), "'{}'",
+                 blank_sdcard_image_mb[0]);
     } else {
-      CHECK(android::base::ParseInt(blank_sdcard_image_mb[instance_index],
-                                    &value))
-          << "Invalid 'blank_sdcard_image_mb' "
-          << blank_sdcard_image_mb[instance_index];
+      CF_EXPECTF(ParseInt(blank_sdcard_image_mb[instance_index], &value),
+                 "'{}'", blank_sdcard_image_mb[instance_index]);
     }
     instance.set_blank_sdcard_image_mb(value);
 
