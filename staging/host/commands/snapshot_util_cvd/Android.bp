@@ -33,9 +33,9 @@ cc_binary_host {
     static_libs: [
         "libcuttlefish_command_util",
         "libcuttlefish_host_config",
-	"libcuttlefish_run_cvd_proto",
+        "libcuttlefish_run_cvd_proto",
         "libgflags",
-	"libprotobuf-cpp-full",
+        "libprotobuf-cpp-full",
     ],
     defaults: ["cuttlefish_host"],
 }
