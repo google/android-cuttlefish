@@ -46,10 +46,15 @@ logs_directory="/tmp/clearcut-logwriter"
 cuttlefish_logs=$(FindLogFiles "$logs_directory" "cuttlefish")
 echo "$cuttlefish_logs"
 
-# Find log files for "atest" metrics
-atest_logs=$(FindLogFiles "$logs_directory" "atest")
-echo "$atest_logs"
+# Find log files for "atest" internal metrics
+atest_internal_logs=$(FindLogFiles "$logs_directory" "atest_internal")
+echo "$atest_internal_logs"
+
+# Find log files for "atest" external metrics
+atest_external_logs=$(FindLogFiles "$logs_directory" "atest_external")
+echo "$atest_external_logs"
 
 # gqui is a tool to parse clearcut logs
 gqui from "$cuttlefish_logs" proto GWSLogEntryProto > clearcut_cf.txt 2> clearcut_cf_error.txt
-gqui from "$atest_logs" proto GWSLogEntryProto > clearcut_atest.txt 2> clearcut_atest_error.txt
+gqui from "$atest_internal_logs" proto GWSLogEntryProto > clearcut_atest_internal.txt 2> clearcut_atest_internal_error.txt
+gqui from "$atest_external_logs" proto GWSLogEntryProto > clearcut_atest_external.txt 2> clearcut_atest_external_error.txt
