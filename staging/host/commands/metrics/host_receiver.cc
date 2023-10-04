@@ -80,6 +80,8 @@ void MetricsHostReceiver::ProcessMessage(const std::string& text) {
     rc = Clearcut::SendDeviceBoot(hostDev);
   } else if (text == "LockScreen") {
     rc = Clearcut::SendLockScreen(hostDev);
+  } else {
+    rc = Clearcut::SendLaunchCommand(text);
   }
 
   if (rc != MetricsExitCodes::kSuccess) {
