@@ -6,7 +6,7 @@ init_daemon_domain(hal_confirmationui_cuttlefish)
 
 binder_call(hal_confirmationui_cuttlefish, keystore)
 
-type confirmationui_device, file_type;
+type confirmationui_device, dev_type;
 
 allow hal_confirmationui_cuttlefish device:dir r_dir_perms;
 allow hal_confirmationui_cuttlefish confirmationui_device:chr_file rw_file_perms;
