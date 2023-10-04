@@ -44,6 +44,9 @@ cc_test_host {
         unit_test: false,
     },
     defaults: ["cvd_and_fetch_cvd_defaults"],
+    test_suites: [
+        "general-tests",
+    ],
 }
 
 cc_test_host {
