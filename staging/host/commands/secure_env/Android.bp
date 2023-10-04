@@ -107,6 +107,11 @@ common_libsecure_srcs = [
 // 3. Base64 isn't supported (need for software oemlock implementation)
 cc_library {
     name: "libsecure_env_not_windows",
+    static_libs: [
+        "libcuttlefish_command_util",
+        "libcuttlefish_run_cvd_proto",
+        "libprotobuf-cpp-full",
+    ],
     srcs: common_libsecure_srcs + [
         "confui_sign_server.cpp",
         "device_tpm.cpp",
@@ -159,6 +164,8 @@ cc_binary_host {
                 "secure_env_not_windows_main.cpp",
             ],
             static_libs: [
+                "libcuttlefish_command_util",
+                "libcuttlefish_run_cvd_proto",
                 "libsecure_env_not_windows",
             ],
         },

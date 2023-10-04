@@ -195,6 +195,7 @@ Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
 Result<void> ProcessMonitor::SuspendHostProcessesImpl() {
   std::lock_guard lock(properties_mutex_);
   auto& monitor_entries = properties_.entries_;
+  bool has_secure_env = false;
   for (const auto& entry : monitor_entries) {
     if (!entry.cmd) {
       LOG(ERROR) << "Monitor Entry has a nullptr for cmd.";
@@ -216,7 +217,20 @@ Result<void> ProcessMonitor::SuspendHostProcessesImpl() {
       CF_EXPECT(entry.proc->SendSignal(SIGTSTP));
       continue;
     }
+    if (prog_name == "secure_env") {
+      has_secure_env = true;
+      continue;
+    }
     CF_EXPECT(entry.proc->SendSignalToGroup(SIGTSTP));
+  }
+  if (has_secure_env) {
+    CF_EXPECT(channel_to_secure_env_->IsOpen(),
+              "channel to secure_env is not open.");
+    /*
+     * TODO(kwstephenkim): send suspend command to secure_env channel
+     * and wait for the response. If the response is error, write
+     * kError back to the parent.
+     */
   }
   using process_monitor_impl::ChildToParentResponse;
   using process_monitor_impl::ChildToParentResponseType;
@@ -228,6 +242,7 @@ Result<void> ProcessMonitor::SuspendHostProcessesImpl() {
 Result<void> ProcessMonitor::ResumeHostProcessesImpl() {
   std::lock_guard lock(properties_mutex_);
   auto& monitor_entries = properties_.entries_;
+  bool has_secure_env = false;
   for (const auto& entry : monitor_entries) {
     if (!entry.cmd) {
       LOG(ERROR) << "Monitor Entry has a nullptr for cmd.";
@@ -242,9 +257,22 @@ Result<void> ProcessMonitor::ResumeHostProcessesImpl() {
         android::base::Basename(ProcessRestarterBinary());
     if (process_restart_bin == prog_name) {
       CF_EXPECT(entry.proc->SendSignal(SIGCONT));
-    } else {
-      CF_EXPECT(entry.proc->SendSignalToGroup(SIGCONT));
+      continue;
     }
+    if (prog_name == "secure_env") {
+      has_secure_env = true;
+      continue;
+    }
+    CF_EXPECT(entry.proc->SendSignalToGroup(SIGCONT));
+  }
+  if (has_secure_env) {
+    CF_EXPECT(channel_to_secure_env_->IsOpen(),
+              "channel to secure env is not open.");
+    /*
+     * TODO(kwstephenkim): send resume command to the channel, wait for
+     * the response. If the response is error, send kError back to the
+     * parent.
+     */
   }
   using process_monitor_impl::ChildToParentResponse;
   using process_monitor_impl::ChildToParentResponseType;
@@ -275,8 +303,11 @@ ProcessMonitor::Properties ProcessMonitor::Properties::AddCommand(
   return std::move(AddCommand(std::move(cmd)));
 }
 
-ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties)
-    : properties_(std::move(properties)), monitor_(-1) {}
+ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties,
+                               const SharedFD& secure_env_fd)
+    : properties_(std::move(properties)),
+      channel_to_secure_env_(secure_env_fd),
+      monitor_(-1) {}
 
 Result<void> ProcessMonitor::StopMonitoredProcesses() {
   CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
