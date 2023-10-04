@@ -1,1 +1,4 @@
 allow shell serial_device:chr_file { getattr ioctl read write };
+
+# b/303346666
+dontaudit shell adbd:{ socket vsock_socket } rw_socket_perms_no_ioctl;
