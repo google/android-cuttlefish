@@ -45,6 +45,15 @@ static std::string Hashing(const std::string& input) {
   return std::to_string(hasher(input));
 }
 
+std::string GetOsName() {
+  struct utsname buf;
+  if (uname(&buf) != 0) {
+    LOG(ERROR) << "failed to retrieve system information";
+    return "Error";
+  }
+  return std::string(buf.sysname);
+}
+
 cuttlefish::MetricsEvent::OsType GetOsType() {
   struct utsname buf;
   if (uname(&buf) != 0) {
