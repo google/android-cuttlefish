@@ -26,6 +26,7 @@ cc_library_shared {
         "clientanalytics.proto",
         "common.proto",
         "internal_user_log.proto",
+        "external_user_log.proto",
     ],
 
     shared_libs: [
