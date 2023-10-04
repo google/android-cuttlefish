@@ -34,6 +34,7 @@ class Clearcut {
       cuttlefish::CuttlefishLogEvent::DeviceType device_type);
   static int SendLockScreen(
       cuttlefish::CuttlefishLogEvent::DeviceType device_type);
+  static int SendLaunchCommand(const std::string& command_line);
 };
 
 }  // namespace cuttlefish
