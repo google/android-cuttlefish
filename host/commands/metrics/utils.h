@@ -27,6 +27,7 @@ enum ClearcutServer : int {
   kProd = 2,
 };
 
+std::string GetOsName();
 cuttlefish::MetricsEvent::OsType GetOsType();
 std::string GetOsVersion();
 std::string GenerateSessionId(uint64_t now);
