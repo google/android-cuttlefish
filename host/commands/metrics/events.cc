@@ -13,9 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/metrics/events.h"
+#include <uuid.h>
+
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "host/commands/metrics/events.h"
 #include "host/commands/metrics/metrics_defs.h"
+#include "host/commands/metrics/proto/acloud_metrics_proto.h"
 #include "host/commands/metrics/proto/cf_metrics_proto.h"
 #include "host/commands/metrics/utils.h"
 #include "shared/api_level.h"
@@ -53,6 +57,15 @@ std::unique_ptr<CuttlefishLogEvent> BuildCfLogEvent(
   timestamp->set_nanos(now_ns);
 
   return cfEvent;
+}
+
+std::string GenerateUUID() {
+  uuid_t uuid;
+  uuid_generate_random(uuid);
+  std::string uuid_str = "xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx";
+  uuid_unparse(uuid, uuid_str.data());
+  LOG(INFO) << "uuid_str: " << uuid_str;
+  return uuid_str;
 }
 
 // Builds the 2nd level MetricsEvent.
