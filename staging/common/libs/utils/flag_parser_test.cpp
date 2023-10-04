@@ -25,7 +25,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
-#include <libxml/tree.h>
+#include <libxml/parser.h>
 
 #include "common/libs/utils/result_matchers.h"
 #include "gmock/gmock-matchers.h"
