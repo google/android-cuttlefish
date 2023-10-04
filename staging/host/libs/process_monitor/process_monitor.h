@@ -68,7 +68,10 @@ class ProcessMonitor {
 
     friend class ProcessMonitor;
   };
-  ProcessMonitor(Properties&&);
+  /*
+   * secure_env_fd is to send suspend/resume commands to secure_env.
+   */
+  ProcessMonitor(Properties&&, const SharedFD& secure_env_fd);
 
   // Start all processes given by AddCommand.
   Result<void> StartAndMonitorProcesses();
@@ -92,6 +95,7 @@ class ProcessMonitor {
   Result<void> ResumeHostProcessesImpl();
 
   Properties properties_;
+  const SharedFD channel_to_secure_env_;
   pid_t monitor_;
   SharedFD parent_monitor_socket_;
   SharedFD child_monitor_socket_;

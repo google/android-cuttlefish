@@ -19,7 +19,11 @@
 
 #include <thread>
 
+#include "common/libs/fs/shared_buf.h"
+#include "host/commands/run_cvd/runner_defs.h"
+#include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "run_cvd.pb.h"
 
 namespace cuttlefish {
 
@@ -63,11 +67,30 @@ bool SnapshotController::TrySuspend() {
 Result<void> SnapshotController::ControllerLoop() {
   LOG(INFO) << "run_cvd connected to secure_env";
   CF_EXPECT(channel_to_run_cvd_->IsOpen());
-  /* TODO(kwstephenkim): add an infinite loop that reads
-   * the suspend/resume command, sets/clears the atomic
-   * boolean flag accordingly, and notifies the waiting
-   * threads
-   */
+  while (true) {
+    auto launcher_action =
+        CF_EXPECT(ReadLauncherActionFromFd(channel_to_run_cvd_),
+                  "Failed to read LauncherAction from run_cvd");
+    CF_EXPECT(launcher_action.action == LauncherAction::kExtended);
+    const auto action_type = launcher_action.type;
+    CF_EXPECTF(action_type == ExtendedActionType::kSuspend ||
+                   action_type == ExtendedActionType::kResume,
+               "Unsupported ExtendedActionType \"{}\"", action_type);
+
+    auto response = LauncherResponse::kError;
+    if (action_type == ExtendedActionType::kSuspend) {
+      if (TrySuspend()) {
+        response = LauncherResponse::kSuccess;
+      }
+    } else {
+      if (ResumeAndNotify()) {
+        response = LauncherResponse::kSuccess;
+      }
+    }
+    const auto n_written =
+        channel_to_run_cvd_->Write(&response, sizeof(response));
+    CF_EXPECT_EQ(n_written, sizeof(response));
+  }
   return {};
 }
 
