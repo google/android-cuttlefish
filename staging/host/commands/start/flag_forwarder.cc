@@ -23,9 +23,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include <gflags/gflags.h>
 #include <android-base/logging.h>
-#include <libxml/tree.h>
+#include <gflags/gflags.h>
+#include <libxml/parser.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
