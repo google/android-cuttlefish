@@ -41,6 +41,7 @@ cc_binary {
         "libcuttlefish_host_config",
         "libcuttlefish_msg_queue",
         "libgflags",
+        "libext2_uuid",
     ],
     defaults: ["cuttlefish_host"],
 }
