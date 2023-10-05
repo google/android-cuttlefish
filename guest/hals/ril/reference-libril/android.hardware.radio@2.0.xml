@@ -20,10 +20,6 @@
         <fqname>IRadioNetwork/slot1</fqname>
     </hal>
     <hal format="aidl">
-        <name>android.hardware.radio.sap</name>
-        <fqname>ISap/slot1</fqname>
-    </hal>
-    <hal format="aidl">
         <name>android.hardware.radio.sim</name>
         <fqname>IRadioSim/slot1</fqname>
     </hal>

@@ -61,22 +61,27 @@
         occupant.
 
         Some examples are:
-        <item>displayPort=0,displayType=MAIN,occupantZoneId=0</item>
-        <item>displayPort=1,displayType=INSTRUMENT_CLUSTER,occupantZoneId=0</item>
-        <item>displayPort=2,displayType=MAIN,occupantZoneId=1</item>
-        <item>displayPort=3,displayType=MAIN,occupantZoneId=2</item>
-        <item>displayPort=4,displayType=MAIN,occupantZoneId=3</item>
+        <item>displayPort=0,displayType=MAIN,occupantZoneId=0,inputTypes=DPAD_KEYS|
+            NAVIGATE_KEYS|ROTARY_NAVIGATION</item>
+        <item>displayPort=1,displayType=INSTRUMENT_CLUSTER,occupantZoneId=0,
+            inputTypes=DPAD_KEYS</item>
+        <item>displayPort=2,displayType=MAIN,occupantZoneId=1,
+            inputTypes=NAVIGATE_KEYS</item>
+        <item>displayPort=3,displayType=MAIN,occupantZoneId=2,
+            inputTypes=NAVIGATE_KEYS</item>
+        <item>displayUniqueId=virtual:com.example:MainD,displayType=MAIN,occupantZoneId=3,
+            inputTypes=NAVIGATE_KEYS</item>
 
         displayPort: Unique port id for the display.
         displayType: Display type for the display. Use * part from
                        CarOccupantZoneManager.DISPLAY_TYPE_* like MAIN, INSTRUMENT_CLUSTER and
                        etc.
         occupantZoneId: occupantZoneId specified from config_occupant_zones.
-
+        inputTypes: supported input types for the corresponding display.
     -->
     <string-array translatable="false" name="config_occupant_display_mapping">
-        <item>displayPort=0,displayType=MAIN,occupantZoneId=0</item>
-        <item>displayPort=1,displayType=INSTRUMENT_CLUSTER,occupantZoneId=0</item>
+        <item>displayPort=0,displayType=MAIN,occupantZoneId=0,inputTypes=TOUCH_SCREEN|DPAD_KEYS|NAVIGATE_KEYS|ROTARY_NAVIGATION</item>
+        <item>displayPort=1,displayType=INSTRUMENT_CLUSTER,occupantZoneId=0,inputTypes=DPAD_KEYS</item>
     </string-array>
 
     <!-- A name of a camera device that provides the rearview through EVS service -->

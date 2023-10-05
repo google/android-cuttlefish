@@ -55,6 +55,8 @@
   <string name="config_mms_user_agent_profile_url" translatable="false">http://gsm.lge.com/html/gsm/Nexus5-M3.xml</string>
   <string name="config_wlan_data_service_package" translatable="false">com.android.ims</string>
   <string name="config_wlan_network_service_package" translatable="false">com.android.ims</string>
+  <string name="config_qualified_networks_service_package">com.android.qns</string>
+  <string name="config_gba_package">com.android.gbaservice</string>
 
   <!-- Enable Night display, which requires HWC 2.0. -->
   <bool name="config_nightDisplayAvailable">true</bool>
@@ -63,4 +65,7 @@
 
   <!-- Is the device capable of hot swapping an UICC Card -->
   <bool name="config_hotswapCapable">true</bool>
+
+  <!-- String indicating the package name of the vendor satellite service implementation -->
+  <string name="config_satellite_service_package" translatable="false">com.google.android.telephony.satellite</string>
 </resources>

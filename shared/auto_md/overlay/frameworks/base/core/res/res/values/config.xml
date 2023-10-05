@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/*
+** Copyright 2022, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+-->
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Whether the system enables per-display focus. If the system has the input method for each
+         display, this value should be true. -->
+    <bool name="config_perDisplayFocusEnabled">true</bool>
+
+    <!--  Maximum number of supported users -->
+    <integer name="config_multiuserMaximumUsers">10</integer>
+
+    <!-- Maximum number of users we allow to be running at a time -->
+    <integer name="config_multiuserMaxRunningUsers">5</integer>
+
+    <!-- True if the device supports system decorations on secondary displays. -->
+    <bool name="config_supportsSystemDecorsOnSecondaryDisplays">true</bool>
+    <!-- This is the default launcher package with an activity to use on secondary displays that
+         support system decorations.
+         This launcher package must have an activity that supports multiple instances and has
+         corresponding launch mode set in AndroidManifest.
+         {@see android.view.Display#FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS} -->
+    <string name="config_secondaryHomePackage" translatable="false">com.android.car.multidisplay</string>
+    <!-- Whether to only install system packages on a user if they're whitelisted for that user
+         type. These are flags and can be freely combined.
+         0  - disable whitelist (install all system packages; no logging)
+         1  - enforce (only install system packages if they are whitelisted)
+         2  - log (log non-whitelisted packages)
+         4  - any package not mentioned in the whitelist file is implicitly whitelisted on all users
+         8  - same as 4, but just for the SYSTEM user
+         16 - ignore OTAs (don't install system packages during OTAs)
+         Common scenarios:
+          - to enable feature (fully enforced) for a complete whitelist: 1
+          - to enable feature for an incomplete whitelist (so use implicit whitelist mode): 5
+          - to enable feature but implicitly whitelist for SYSTEM user to ease local development: 9
+          - to disable feature completely if it had never been enabled: 16
+          - to henceforth disable feature and try to undo its previous effects: 0
+        Note: This list must be kept current with PACKAGE_WHITELIST_MODE_PROP in
+        frameworks/base/services/core/java/com/android/server/pm/UserSystemPackageInstaller.java
+        Package whitelist disabled for testing profile user as default whitelist does not
+        support PROFILE user. -->
+    <integer name="config_userTypePackageWhitelistMode">2</integer>
+
+    <!-- Whether the device allows users to start in background visible on displays.
+         Should be false for most devices, except automotive vehicle with passenger displays. -->
+    <bool name="config_multiuserVisibleBackgroundUsers">true</bool>
+
+    <!-- Enable multi-user IME sessions -->
+    <string translatable="false" name="config_deviceSpecificInputMethodManagerService">com.android.server.inputmethod.InputMethodManagerServiceProxy$Lifecycle</string>
+
+</resources>

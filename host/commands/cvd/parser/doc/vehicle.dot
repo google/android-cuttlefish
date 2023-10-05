@@ -1,5 +1,0 @@
-graph {
-  rankdir=LR
-
-  vehicle--enable_vehicle_hal_grpc_server
-}

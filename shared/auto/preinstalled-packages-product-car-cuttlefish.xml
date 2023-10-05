@@ -30,10 +30,6 @@
         <install-in user-type="FULL" />
         <install-in user-type="SYSTEM" />
     </install-in-user-type>
-    <install-in-user-type package="com.android.car.hvac">
-        <install-in user-type="FULL" />
-        <install-in user-type="SYSTEM" />
-    </install-in-user-type>
     <install-in-user-type package="com.android.phone">
         <install-in user-type="FULL" />
         <install-in user-type="SYSTEM" />
@@ -43,11 +39,6 @@
         <install-in user-type="SYSTEM" />
     </install-in-user-type>
     <install-in-user-type package="com.android.traceur">
-        <install-in user-type="FULL" />
-        <install-in user-type="SYSTEM" />
-    </install-in-user-type>
-    <!-- Android remote display which need to work for all users-->
-    <install-in-user-type package="com.android.car.acast.source">
         <install-in user-type="FULL" />
         <install-in user-type="SYSTEM" />
     </install-in-user-type>

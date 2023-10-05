@@ -47,4 +47,46 @@ ScopedAStatus RefRadioNetwork::getUsageSetting(int32_t serial) {
     return ok();
 }
 
+ScopedAStatus RefRadioNetwork::setEmergencyMode(int32_t serial,
+                                                network::EmergencyMode emergencyMode) {
+    network::EmergencyRegResult regState;
+    respond()->setEmergencyModeResponse(responseInfo(serial), regState);
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::triggerEmergencyNetworkScan(
+        int32_t serial, const network::EmergencyNetworkScanTrigger& request) {
+    respond()->triggerEmergencyNetworkScanResponse(responseInfo(serial));
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::exitEmergencyMode(int32_t serial) {
+    respond()->exitEmergencyModeResponse(responseInfo(serial));
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::cancelEmergencyNetworkScan(int32_t serial, bool resetScan) {
+    respond()->cancelEmergencyNetworkScanResponse(responseInfo(serial));
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::isN1ModeEnabled(int32_t serial) {
+    respond()->isN1ModeEnabledResponse(responseInfo(serial), false);
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::setN1ModeEnabled(int32_t serial, bool enable) {
+    respond()->setN1ModeEnabledResponse(responseInfo(serial));
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::setNullCipherAndIntegrityEnabled(int32_t serial, bool enabled) {
+    respond()->setNullCipherAndIntegrityEnabledResponse(responseInfo(serial));
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::isNullCipherAndIntegrityEnabled(int32_t serial) {
+    respond()->isNullCipherAndIntegrityEnabledResponse(responseInfo(serial), true);
+    return ok();
+}
 }  // namespace cf::ril

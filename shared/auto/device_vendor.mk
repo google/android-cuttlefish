@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/auto/manifest.xml
 PRODUCT_MANIFEST_FILES += device/google/cuttlefish/shared/config/product_manifest.xml
 SYSTEM_EXT_MANIFEST_FILES += device/google/cuttlefish/shared/config/system_ext_manifest.xml
 
@@ -81,7 +80,10 @@ PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 PRODUCT_PACKAGES += android.hardware.automotive.remoteaccess@V1-default-service
 
 # Broadcast Radio
-PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
+PRODUCT_PACKAGES += android.hardware.broadcastradio-service.default
+
+# IVN HAL
+PRODUCT_PACKAGES += android.hardware.automotive.ivn@V1-default-service
 
 # AudioControl HAL
 ifeq ($(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE),)
@@ -91,7 +93,7 @@ endif
 PRODUCT_PACKAGES += $(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE)
 
 # CAN bus HAL
-PRODUCT_PACKAGES += android.hardware.automotive.can@1.0-service
+PRODUCT_PACKAGES += android.hardware.automotive.can-service
 PRODUCT_PACKAGES_DEBUG += canhalctrl \
     canhaldump \
     canhalsend
@@ -116,8 +118,10 @@ ENABLE_CARTELEMETRY_SERVICE ?= true
 
 ifeq ($(ENABLE_MOCK_EVSHAL), true)
 CUSTOMIZE_EVS_SERVICE_PARAMETER := true
-PRODUCT_PACKAGES += android.hardware.automotive.evs@1.1-service \
-    android.frameworks.automotive.display@1.0-service
+PRODUCT_PACKAGES += \
+    android.hardware.automotive.evs-aidl-default-service \
+    cardisplayproxyd
+
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/auto/evs/init.evs.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.evs.rc
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/evs
@@ -126,7 +130,7 @@ endif
 ifeq ($(ENABLE_SAMPLE_EVS_APP), true)
 PRODUCT_PACKAGES += evs_app
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/auto/evs/evs_app_config.json:$(TARGET_COPY_OUT_SYSTEM)/etc/automotive/evs/config_override.json
+    device/google/cuttlefish/shared/auto/evs/evs_app_config.json:$(TARGET_COPY_OUT_VENDOR)/etc/automotive/evs/config_override.json
 include packages/services/Car/cpp/evs/apps/sepolicy/evsapp.mk
 endif
 
