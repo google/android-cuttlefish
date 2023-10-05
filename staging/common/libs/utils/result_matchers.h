@@ -28,7 +28,7 @@ MATCHER(IsOk, "an ok result") {
   auto& result = arg;
   if (!result.ok()) {
     *result_listener << "which is an error result with trace: "
-                     << result.error().Message();
+                     << result.error().Trace();
     return false;
   }
   return true;
