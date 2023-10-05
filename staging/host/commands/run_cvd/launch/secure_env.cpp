@@ -18,7 +18,6 @@
 #include <unistd.h>
 
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -30,105 +29,61 @@
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
-namespace {
 
-class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
- public:
-  INJECT(SecureEnvironment(const CuttlefishConfig& config,
-                           const CuttlefishConfig::InstanceSpecific& instance,
-                           SecureEnvFiles& secure_env_files,
-                           KernelLogPipeProvider& kernel_log_pipe_provider))
-      : config_(config),
-        instance_(instance),
-        secure_env_files_(secure_env_files),
-        kernel_log_pipe_provider_(kernel_log_pipe_provider) {}
-
-  // CommandSource
-  Result<std::vector<MonitorCommand>> Commands() override {
-    Command command(SecureEnvBinary());
-    command.AddParameter("-confui_server_fd=",
-                         secure_env_files_.ConfUiServerFd());
+Result<MonitorCommand> SecureEnv(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    SecureEnvFiles& secure_env_files,
+    KernelLogPipeProvider& kernel_log_pipe_provider) {
+  Command command(SecureEnvBinary());
+  command.AddParameter("-confui_server_fd=", secure_env_files.ConfUiServerFd());
 #ifndef _WIN32
-    command.AddParameter("-snapshot_control_fd=",
-                         secure_env_files_.SnapshotControlFd());
+  command.AddParameter("-snapshot_control_fd=",
+                       secure_env_files.SnapshotControlFd());
 #endif
-    command.AddParameter("-keymaster_fd_out=", fifos_[0]);
-    command.AddParameter("-keymaster_fd_in=", fifos_[1]);
-    command.AddParameter("-gatekeeper_fd_out=", fifos_[2]);
-    command.AddParameter("-gatekeeper_fd_in=", fifos_[3]);
-    command.AddParameter("-oemlock_fd_out=", fifos_[4]);
-    command.AddParameter("-oemlock_fd_in=", fifos_[5]);
-    command.AddParameter("-keymint_fd_out=", fifos_[6]);
-    command.AddParameter("-keymint_fd_in=", fifos_[7]);
-
-    const auto& secure_hals = config_.secure_hals();
-    bool secure_keymint = secure_hals.count(SecureHal::Keymint) > 0;
-    command.AddParameter("-keymint_impl=", secure_keymint ? "tpm" : "software");
-    bool secure_gatekeeper = secure_hals.count(SecureHal::Gatekeeper) > 0;
-    auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
-    command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
-
-    bool secure_oemlock = secure_hals.count(SecureHal::Oemlock) > 0;
-    auto oemlock_impl = secure_oemlock ? "tpm" : "software";
-    command.AddParameter("-oemlock_impl=", oemlock_impl);
-
-    command.AddParameter("-kernel_events_fd=", kernel_log_pipe_);
-
-    std::vector<MonitorCommand> commands;
-    commands.emplace_back(std::move(command));
-    return commands;
+  std::vector<std::string> fifo_paths = {
+      instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
+      instance.PerInstanceInternalPath("keymaster_fifo_vm.out"),
+      instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
+      instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
+      instance.PerInstanceInternalPath("oemlock_fifo_vm.in"),
+      instance.PerInstanceInternalPath("oemlock_fifo_vm.out"),
+      instance.PerInstanceInternalPath("keymint_fifo_vm.in"),
+      instance.PerInstanceInternalPath("keymint_fifo_vm.out"),
+  };
+  std::vector<SharedFD> fifos;
+  for (const auto& path : fifo_paths) {
+    unlink(path.c_str());
+    CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
+    auto fd = SharedFD::Open(path, O_RDWR);
+    CF_EXPECT(fd->IsOpen(),
+              "Could not open " << path << ": " << fd->StrError());
+    fifos.push_back(fd);
   }
+  command.AddParameter("-keymaster_fd_out=", fifos[0]);
+  command.AddParameter("-keymaster_fd_in=", fifos[1]);
+  command.AddParameter("-gatekeeper_fd_out=", fifos[2]);
+  command.AddParameter("-gatekeeper_fd_in=", fifos[3]);
+  command.AddParameter("-oemlock_fd_out=", fifos[4]);
+  command.AddParameter("-oemlock_fd_in=", fifos[5]);
+  command.AddParameter("-keymint_fd_out=", fifos[6]);
+  command.AddParameter("-keymint_fd_in=", fifos[7]);
 
-  // SetupFeature
-  std::string Name() const override { return "SecureEnvironment"; }
-  bool Enabled() const override { return true; }
+  const auto& secure_hals = config.secure_hals();
+  bool secure_keymint = secure_hals.count(SecureHal::Keymint) > 0;
+  command.AddParameter("-keymint_impl=", secure_keymint ? "tpm" : "software");
+  bool secure_gatekeeper = secure_hals.count(SecureHal::Gatekeeper) > 0;
+  auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
+  command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
 
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override {
-    return {&kernel_log_pipe_provider_, &secure_env_files_};
-  }
-  Result<void> ResultSetup() override {
-    std::vector<std::string> fifo_paths = {
-        instance_.PerInstanceInternalPath("keymaster_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("keymaster_fifo_vm.out"),
-        instance_.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
-        instance_.PerInstanceInternalPath("oemlock_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("oemlock_fifo_vm.out"),
-        instance_.PerInstanceInternalPath("keymint_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("keymint_fifo_vm.out"),
-    };
-    for (const auto& path : fifo_paths) {
-      unlink(path.c_str());
-      CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
-      auto fd = SharedFD::Open(path, O_RDWR);
-      CF_EXPECT(fd->IsOpen(),
-                "Could not open " << path << ": " << fd->StrError());
-      fifos_.push_back(fd);
-    }
-    kernel_log_pipe_ = kernel_log_pipe_provider_.KernelLogPipe();
+  bool secure_oemlock = secure_hals.count(SecureHal::Oemlock) > 0;
+  auto oemlock_impl = secure_oemlock ? "tpm" : "software";
+  command.AddParameter("-oemlock_impl=", oemlock_impl);
 
-    return {};
-  }
+  command.AddParameter("-kernel_events_fd=",
+                       kernel_log_pipe_provider.KernelLogPipe());
 
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  SecureEnvFiles& secure_env_files_;
-  std::vector<SharedFD> fifos_;
-  KernelLogPipeProvider& kernel_log_pipe_provider_;
-  SharedFD kernel_log_pipe_;
-};
-
-}  // namespace
-
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific,
-                                 SecureEnvFiles, KernelLogPipeProvider>>
-SecureEnvComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CommandSource, SecureEnvironment>()
-      .addMultibinding<KernelLogPipeConsumer, SecureEnvironment>()
-      .addMultibinding<SetupFeature, SecureEnvironment>();
+  return std::move(command);
 }
 
 }  // namespace cuttlefish
