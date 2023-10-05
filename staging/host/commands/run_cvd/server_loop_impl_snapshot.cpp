@@ -157,8 +157,8 @@ Result<void> ServerLoopImpl::TakeCrosvmGuestSnapshot(
   for (const auto& arg : crosvm_command_args) {
     LOG(DEBUG) << arg << " ";
   }
-  CF_EXPECT(Execute(crosvm_command_args) >= 0,
-            "Executing crosvm command returned -1");
+  CF_EXPECT(Execute(crosvm_command_args) == 0,
+            "Executing crosvm command failed");
   LOG(DEBUG) << "Guest snapshot for instance #" << instance_.id()
              << " should have been stored in " << snapshots_parent_dir;
   return {};
