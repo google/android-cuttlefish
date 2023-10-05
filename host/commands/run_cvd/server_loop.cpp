@@ -28,10 +28,10 @@ namespace cuttlefish {
 
 ServerLoop::~ServerLoop() = default;
 
-fruit::Component<
-    fruit::Required<const CuttlefishConfig,
-                    const CuttlefishConfig::InstanceSpecific, SecureEnvFiles>,
-    ServerLoop>
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 AutoSecureEnvFiles::Type>,
+                 ServerLoop>
 serverLoopComponent() {
   using run_cvd_impl::ServerLoopImpl;
   return fruit::createComponent()
