@@ -15,61 +15,19 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <string>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
-#include <fruit/fruit.h>
-
 #include "common/libs/utils/result.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
-namespace {
 
-class ConfigServer : public CommandSource {
- public:
-  INJECT(ConfigServer(const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  // CommandSource
-  Result<std::vector<MonitorCommand>> Commands() override {
-    Command command(ConfigServerBinary());
-    command.AddParameter("-server_fd=", socket_);
-    std::vector<MonitorCommand> commands;
-    commands.emplace_back(std::move(command));
-    return commands;
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "ConfigServer"; }
-  bool Enabled() const override { return true; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    auto port = instance_.config_server_port();
-    socket_ = SharedFD::VsockServer(port, SOCK_STREAM);
-    CF_EXPECT(socket_->IsOpen(),
-              "Unable to create configuration server socket: "
-                  << socket_->StrError());
-    return {};
-  }
-
- private:
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  SharedFD socket_;
-};
-
-}  // namespace
-
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
-ConfigServerComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CommandSource, ConfigServer>()
-      .addMultibinding<SetupFeature, ConfigServer>();
+Result<MonitorCommand> ConfigServer(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  auto port = instance.config_server_port();
+  auto socket = SharedFD::VsockServer(port, SOCK_STREAM);
+  CF_EXPECTF(socket->IsOpen(), "Can't configuration server socket: '{}'",
+             socket->StrError());
+  return Command(ConfigServerBinary()).AddParameter("-server_fd=", socket);
 }
 
 }  // namespace cuttlefish
