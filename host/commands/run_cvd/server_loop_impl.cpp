@@ -32,7 +32,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/run_cvd/runner_defs.h"
+#include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
