@@ -16,102 +16,59 @@
 #include "host/commands/run_cvd/launch/launch.h"
 
 #include <string>
-#include <unordered_set>
-#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/files.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
-namespace {
 
-class GnssGrpcProxyServer : public CommandSource {
- public:
-  INJECT(GnssGrpcProxyServer(const CuttlefishConfig::InstanceSpecific& instance,
-                             GrpcSocketCreator& grpc_socket))
-      : instance_(instance), grpc_socket_(grpc_socket) {}
-
-  // CommandSource
-  Result<std::vector<MonitorCommand>> Commands() override {
-    Command gnss_grpc_proxy_cmd(GnssGrpcProxyBinary());
-    const unsigned gnss_grpc_proxy_server_port =
-        instance_.gnss_grpc_proxy_server_port();
-    gnss_grpc_proxy_cmd.AddParameter("--gnss_in_fd=", gnss_grpc_proxy_in_wr_);
-    gnss_grpc_proxy_cmd.AddParameter("--gnss_out_fd=", gnss_grpc_proxy_out_rd_);
-    gnss_grpc_proxy_cmd.AddParameter("--fixed_location_in_fd=",
-                                     fixed_location_grpc_proxy_in_wr_);
-    gnss_grpc_proxy_cmd.AddParameter("--fixed_location_out_fd=",
-                                     fixed_location_grpc_proxy_out_rd_);
-    gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_port=",
-                                     gnss_grpc_proxy_server_port);
-    gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_socket=",
-                                     grpc_socket_.CreateGrpcSocket(Name()));
-    if (!instance_.gnss_file_path().empty()) {
-      // If path is provided, proxy will start as local mode.
-      gnss_grpc_proxy_cmd.AddParameter("--gnss_file_path=",
-                                       instance_.gnss_file_path());
-    }
-    if (!instance_.fixed_location_file_path().empty()) {
-      gnss_grpc_proxy_cmd.AddParameter("--fixed_location_file_path=",
-                                       instance_.fixed_location_file_path());
-    }
-    std::vector<MonitorCommand> commands;
-    commands.emplace_back(std::move(gnss_grpc_proxy_cmd));
-    return commands;
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "GnssGrpcProxyServer"; }
-  bool Enabled() const override { return instance_.enable_gnss_grpc_proxy(); }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    std::vector<SharedFD> fifos;
-    std::vector<std::string> fifo_paths = {
-        instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.out"),
-        instance_.PerInstanceInternalPath("locationhvc_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("locationhvc_fifo_vm.out"),
-    };
-    for (const auto& path : fifo_paths) {
-      unlink(path.c_str());
-      CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
-      auto fd = SharedFD::Open(path, O_RDWR);
-      CF_EXPECT(fd->IsOpen(),
-                "Could not open " << path << ": " << fd->StrError());
-      fifos.push_back(fd);
-    }
-
-    gnss_grpc_proxy_in_wr_ = fifos[0];
-    gnss_grpc_proxy_out_rd_ = fifos[1];
-    fixed_location_grpc_proxy_in_wr_ = fifos[2];
-    fixed_location_grpc_proxy_out_rd_ = fifos[3];
+Result<std::optional<MonitorCommand>> GnssGrpcProxyServer(
+    const CuttlefishConfig::InstanceSpecific& instance,
+    GrpcSocketCreator& grpc_socket) {
+  if (!instance.enable_gnss_grpc_proxy()) {
     return {};
   }
+  std::vector<SharedFD> fifos;
+  std::vector<std::string> fifo_paths = {
+      instance.PerInstanceInternalPath("gnsshvc_fifo_vm.in"),
+      instance.PerInstanceInternalPath("gnsshvc_fifo_vm.out"),
+      instance.PerInstanceInternalPath("locationhvc_fifo_vm.in"),
+      instance.PerInstanceInternalPath("locationhvc_fifo_vm.out"),
+  };
+  for (const auto& path : fifo_paths) {
+    unlink(path.c_str());
+    CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
+    auto fd = SharedFD::Open(path, O_RDWR);
+    CF_EXPECT(fd->IsOpen(),
+              "Could not open " << path << ": " << fd->StrError());
+    fifos.push_back(fd);
+  }
 
- private:
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  SharedFD gnss_grpc_proxy_in_wr_;
-  SharedFD gnss_grpc_proxy_out_rd_;
-  SharedFD fixed_location_grpc_proxy_in_wr_;
-  SharedFD fixed_location_grpc_proxy_out_rd_;
-  GrpcSocketCreator& grpc_socket_;
-};
-
-}  // namespace
-
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
-                                 GrpcSocketCreator>>
-GnssGrpcProxyServerComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CommandSource, GnssGrpcProxyServer>()
-      .addMultibinding<SetupFeature, GnssGrpcProxyServer>();
+  auto gnss_grpc_proxy_cmd =
+      Command(GnssGrpcProxyBinary())
+          .AddParameter("--gnss_in_fd=", fifos[0])
+          .AddParameter("--gnss_out_fd=", fifos[1])
+          .AddParameter("--fixed_location_in_fd=", fifos[2])
+          .AddParameter("--fixed_location_out_fd=", fifos[3])
+          .AddParameter("--gnss_grpc_port=",
+                        instance.gnss_grpc_proxy_server_port())
+          .AddParameter("--gnss_grpc_socket=",
+                        grpc_socket.CreateGrpcSocket("GnssGrpcProxyServer"));
+  if (!instance.gnss_file_path().empty()) {
+    // If path is provided, proxy will start as local mode.
+    gnss_grpc_proxy_cmd.AddParameter("--gnss_file_path=",
+                                     instance.gnss_file_path());
+  }
+  if (!instance.fixed_location_file_path().empty()) {
+    gnss_grpc_proxy_cmd.AddParameter("--fixed_location_file_path=",
+                                     instance.fixed_location_file_path());
+  }
+  return gnss_grpc_proxy_cmd;
 }
 
 }  // namespace cuttlefish
