@@ -33,13 +33,14 @@ namespace cuttlefish {
 Result<MonitorCommand> SecureEnv(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    SecureEnvFiles& secure_env_files,
+    AutoSecureEnvFiles::Type& secure_env_files,
     KernelLogPipeProvider& kernel_log_pipe_provider) {
   Command command(SecureEnvBinary());
-  command.AddParameter("-confui_server_fd=", secure_env_files.ConfUiServerFd());
+  command.AddParameter("-confui_server_fd=",
+                       secure_env_files->confui_server_fd);
 #ifndef _WIN32
   command.AddParameter("-snapshot_control_fd=",
-                       secure_env_files.SnapshotControlFd());
+                       secure_env_files->snapshot_control_fd);
 #endif
   std::vector<std::string> fifo_paths = {
       instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),

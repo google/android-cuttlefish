@@ -24,6 +24,7 @@
 #include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/image_aggregator/image_aggregator.h"
+#include "host/libs/vm_manager/qemu_manager.h"
 
 DECLARE_bool(resume);
 
@@ -82,89 +83,55 @@ std::vector<ImagePartition> PersistentAPCompositeDiskConfig(
 
 }  // namespace
 
-class InitializeInstanceCompositeDiskImpl
-    : public InitializeInstanceCompositeDisk {
- public:
-  INJECT(InitializeInstanceCompositeDiskImpl(
-      const CuttlefishConfig& config,
-      const CuttlefishConfig::InstanceSpecific& instance,
-      InitializeFactoryResetProtected& frp, GeneratePersistentVbmeta& vbmeta))
-      : config_(config), instance_(instance), frp_(frp), vbmeta_(vbmeta) {}
-
-  std::string Name() const override {
-    return "InitializeInstanceCompositeDisk";
+bool IsVmManagerQemu(const CuttlefishConfig& config) {
+  return config.vm_manager() == vm_manager::QemuManager::name();
+}
+Result<void> InitializeInstanceCompositeDisk(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    InitializeFactoryResetProtected& /* dependency */,
+    GeneratePersistentVbmeta& /* dependency */) {
+  const auto ipath = [&instance](const std::string& path) -> std::string {
+    return instance.PerInstancePath(path.c_str());
+  };
+  auto persistent_disk_builder =
+      DiskBuilder()
+          .Partitions(PersistentCompositeDiskConfig(instance))
+          .VmManager(config.vm_manager())
+          .CrosvmPath(instance.crosvm_binary())
+          .ConfigPath(ipath("persistent_composite_disk_config.txt"))
+          .HeaderPath(ipath("persistent_composite_gpt_header.img"))
+          .FooterPath(ipath("persistent_composite_gpt_footer.img"))
+          .CompositeDiskPath(instance.persistent_composite_disk_path())
+          .ResumeIfPossible(FLAGS_resume);
+  CF_EXPECT(persistent_disk_builder.BuildCompositeDiskIfNecessary());
+  persistent_disk_builder.OverlayPath(
+      instance.PerInstancePath("persistent_composite_overlay.img"));
+  if (IsVmManagerQemu(config)) {
+    CF_EXPECT(persistent_disk_builder.BuildOverlayIfNecessary());
   }
-  bool Enabled() const override { return true; }
 
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override {
-    return {
-        static_cast<SetupFeature*>(&frp_),
-        static_cast<SetupFeature*>(&vbmeta_),
-    };
-  }
-  Result<void> ResultSetup() override {
-    const auto ipath = [this](const std::string& path) -> std::string {
-      return instance_.PerInstancePath(path.c_str());
-    };
-    auto persistent_disk_builder =
+  using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
+  if (instance.ap_boot_flow() == APBootFlow::Grub) {
+    auto persistent_ap_disk_builder =
         DiskBuilder()
-            .Partitions(PersistentCompositeDiskConfig(instance_))
-            .VmManager(config_.vm_manager())
-            .CrosvmPath(instance_.crosvm_binary())
-            .ConfigPath(ipath("persistent_composite_disk_config.txt"))
-            .HeaderPath(ipath("persistent_composite_gpt_header.img"))
-            .FooterPath(ipath("persistent_composite_gpt_footer.img"))
-            .CompositeDiskPath(instance_.persistent_composite_disk_path())
+            .Partitions(PersistentAPCompositeDiskConfig(instance))
+            .VmManager(config.vm_manager())
+            .CrosvmPath(instance.crosvm_binary())
+            .ConfigPath(ipath("ap_persistent_composite_disk_config.txt"))
+            .HeaderPath(ipath("ap_persistent_composite_gpt_header.img"))
+            .FooterPath(ipath("ap_persistent_composite_gpt_footer.img"))
+            .CompositeDiskPath(instance.persistent_ap_composite_disk_path())
             .ResumeIfPossible(FLAGS_resume);
-    CF_EXPECT(persistent_disk_builder.BuildCompositeDiskIfNecessary());
-    persistent_disk_builder.OverlayPath(
-        instance_.PerInstancePath("persistent_composite_overlay.img"));
-    if (IsVmManagerQemu()) {
-      CF_EXPECT(persistent_disk_builder.BuildOverlayIfNecessary());
+    CF_EXPECT(persistent_ap_disk_builder.BuildCompositeDiskIfNecessary());
+    persistent_ap_disk_builder.OverlayPath(
+        instance.PerInstancePath("ap_persistent_composite_overlay.img"));
+    if (IsVmManagerQemu(config)) {
+      CF_EXPECT(persistent_ap_disk_builder.BuildOverlayIfNecessary());
     }
-
-    using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
-    if (instance_.ap_boot_flow() == APBootFlow::Grub) {
-      auto persistent_ap_disk_builder =
-          DiskBuilder()
-              .Partitions(PersistentAPCompositeDiskConfig(instance_))
-              .VmManager(config_.vm_manager())
-              .CrosvmPath(instance_.crosvm_binary())
-              .ConfigPath(ipath("ap_persistent_composite_disk_config.txt"))
-              .HeaderPath(ipath("ap_persistent_composite_gpt_header.img"))
-              .FooterPath(ipath("ap_persistent_composite_gpt_footer.img"))
-              .CompositeDiskPath(instance_.persistent_ap_composite_disk_path())
-              .ResumeIfPossible(FLAGS_resume);
-      CF_EXPECT(persistent_ap_disk_builder.BuildCompositeDiskIfNecessary());
-      persistent_ap_disk_builder.OverlayPath(
-          instance_.PerInstancePath("ap_persistent_composite_overlay.img"));
-      if (IsVmManagerQemu()) {
-        CF_EXPECT(persistent_ap_disk_builder.BuildOverlayIfNecessary());
-      }
-    }
-
-    return {};
   }
 
-  bool IsVmManagerQemu() const { return config_.vm_manager() == "qemu_cli"; }
-
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  InitializeFactoryResetProtected& frp_;
-  GeneratePersistentVbmeta& vbmeta_;
-};
-
-fruit::Component<
-    fruit::Required<const CuttlefishConfig,
-                    const CuttlefishConfig::InstanceSpecific,
-                    InitializeFactoryResetProtected, GeneratePersistentVbmeta>,
-    InitializeInstanceCompositeDisk>
-InitializeInstanceCompositeDiskComponent() {
-  return fruit::createComponent()
-      .bind<InitializeInstanceCompositeDisk,
-            InitializeInstanceCompositeDiskImpl>()
-      .addMultibinding<SetupFeature, InitializeInstanceCompositeDisk>();
+  return {};
 }
 
 }  // namespace cuttlefish

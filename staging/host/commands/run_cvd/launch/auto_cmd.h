@@ -17,7 +17,6 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -72,35 +71,11 @@ class GenericCommandSource : public CommandSource,
   }
 
   std::string Name() const override {
-    std::string_view name = __PRETTY_FUNCTION__;
-    static constexpr std::string_view kClassName = "GenericCommandSource<";
-    CHECK(name.find(kClassName) != std::string_view::npos);
-    name = name.substr(name.find(kClassName) + kClassName.size());
-    if (name.size() > 0 && name[0] == '&') {
-      name = name.substr(1);
-    }
-    if (name.find(',') != std::string_view::npos) {
-      name = name.substr(0, name.find(','));
-    }
-    return std::string(name);
+    return ExtractAutoFn(__PRETTY_FUNCTION__, "GenericCommandSource");
   }
 
   std::unordered_set<SetupFeature*> Dependencies() const override {
-    std::unordered_set<SetupFeature*> deps;
-    std::apply(
-        [&deps](auto&&... args) {
-          (
-              [&] {
-                if constexpr (std::is_base_of_v<
-                                  SetupFeature,
-                                  std::remove_reference_t<decltype(args)>>) {
-                  deps.insert(static_cast<SetupFeature*>(&args));
-                }
-              }(),
-              ...);
-        },
-        args_);
-    return deps;
+    return SetupFeatureDeps(args_);
   }
 
   Result<std::vector<MonitorCommand>> Commands() override {
