@@ -161,7 +161,7 @@ Result<void> CopyDirectoryRecursively(
   }
 
   LOG(INFO) << "Copy from \"" << src_final_target << "\" to \""
-            << dest_final_target;
+            << dest_final_target << "\"";
 
   /**
    * On taking snapshot, we should delete dest_dir first. On Restoring,
