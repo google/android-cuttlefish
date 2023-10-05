@@ -15,53 +15,17 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <string>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
-#include <fruit/fruit.h>
-
-#include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
-namespace {
 
-class MetricsService : public CommandSource {
- public:
-  INJECT(MetricsService(const CuttlefishConfig& config)) : config_(config) {}
-
-  // CommandSource
-  Result<std::vector<MonitorCommand>> Commands() override {
-    Command command(MetricsBinary());
-    std::vector<MonitorCommand> commands;
-    commands.emplace_back(std::move(command));
-    return commands;
+std::optional<MonitorCommand> MetricsService(const CuttlefishConfig& config) {
+  if (config.enable_metrics() != CuttlefishConfig::kYes) {
+    return {};
   }
-
-  // SetupFeature
-  std::string Name() const override { return "MetricsService"; }
-  bool Enabled() const override {
-    return config_.enable_metrics() == CuttlefishConfig::kYes;
-  }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override { return {}; }
-
- private:
-  const CuttlefishConfig& config_;
-};
-
-}  // namespace
-
-fruit::Component<fruit::Required<const CuttlefishConfig>>
-MetricsServiceComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CommandSource, MetricsService>()
-      .addMultibinding<SetupFeature, MetricsService>();
+  return Command(MetricsBinary());
 }
 
 }  // namespace cuttlefish

@@ -15,10 +15,9 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <optional>
 #include <string>
-#include <unordered_set>
 #include <utility>
-#include <vector>
 
 #include <fruit/fruit.h>
 
@@ -27,42 +26,16 @@
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
-namespace {
 
-class AutomotiveProxyService : public CommandSource {
- public:
-  INJECT(AutomotiveProxyService(const CuttlefishConfig& config))
-      : config_(config) {}
-
-  // Command Source
-  Result<std::vector<MonitorCommand>> Commands() override {
-    // Create the Automotive Proxy command
-    Command automotiveProxy(AutomotiveProxyBinary());
-    automotiveProxy.AddParameter(
-        DefaultHostArtifactsPath("etc/automotive/proxy_config.json"));
-
-    std::vector<MonitorCommand> commands;
-    commands.emplace_back(std::move(automotiveProxy));
-    return commands;
+std::optional<MonitorCommand> AutomotiveProxyService(
+    const CuttlefishConfig& config) {
+  if (!config.enable_automotive_proxy()) {
+    return {};
   }
-
-  // SetupFeature
-  std::string Name() const override { return "automotive_vsock_proxy"; }
-  bool Enabled() const override { return config_.enable_automotive_proxy(); }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override { return {}; }
-
-  const CuttlefishConfig& config_;
-};
-}  // namespace
-
-fruit::Component<fruit::Required<const CuttlefishConfig>>
-AutomotiveProxyComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CommandSource, AutomotiveProxyService>()
-      .addMultibinding<SetupFeature, AutomotiveProxyService>();
+  // Create the Automotive Proxy command
+  return Command(AutomotiveProxyBinary())
+      .AddParameter(
+          DefaultHostArtifactsPath("etc/automotive/proxy_config.json"));
 }
 
 }  // namespace cuttlefish
