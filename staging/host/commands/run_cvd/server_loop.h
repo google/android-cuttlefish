@@ -29,9 +29,9 @@ class ServerLoop {
   virtual Result<void> Run() = 0;
 };
 
-fruit::Component<
-    fruit::Required<const CuttlefishConfig,
-                    const CuttlefishConfig::InstanceSpecific, SecureEnvFiles>,
-    ServerLoop>
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 AutoSecureEnvFiles::Type>,
+                 ServerLoop>
 serverLoopComponent();
 }
