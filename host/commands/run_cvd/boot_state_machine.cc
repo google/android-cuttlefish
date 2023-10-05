@@ -29,8 +29,8 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/commands/kernel_log_monitor/utils.h"
-#include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/validate.h"
+#include "host/libs/command_util/runner/defs.h"
 #include "host/libs/config/feature.h"
 
 DEFINE_int32(reboot_notification_fd, CF_DEFAULTS_REBOOT_NOTIFICATION_FD,
