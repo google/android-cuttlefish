@@ -18,6 +18,8 @@
 
 #include <unordered_set>
 
+#include <android-base/strings.h>
+
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
@@ -85,6 +87,17 @@ bool FlagFeature::WriteGflagsHelpXml(const std::vector<FlagFeature*>& features,
   }
   out << "</AllFlags>";
   return true;
+}
+
+std::string ExtractAutoFn(std::string_view name, std::string_view class_name) {
+  CHECK(name.find(class_name) != std::string_view::npos);
+  name = name.substr(name.find(class_name) + class_name.size());
+  android::base::ConsumePrefix(&name, "<");
+  android::base::ConsumePrefix(&name, "&");
+  if (name.find(',') != std::string_view::npos) {
+    name = name.substr(0, name.find(','));
+  }
+  return std::string(name);
 }
 
 }  // namespace cuttlefish
