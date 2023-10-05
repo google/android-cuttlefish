@@ -25,8 +25,8 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/command_util/launcher_message.h"
+#include "host/libs/command_util/runner/defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
