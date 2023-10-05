@@ -332,10 +332,11 @@ int RunWithManagedStdio(Command&& command, const std::string* stdin,
                         SubprocessOptions options = SubprocessOptions());
 
 /**
- * Returns pid on success, negative values on error
+ * Returns the exit status on success, negative values on error
  *
  * If failed in fork() or exec(), returns -1.
- * Or, returns pid.
+ * If the child exited from an unhandled signal, returns -1.
+ * Otherwise, returns the exit status.
  *
  * TODO: Changes return type to Result<int>
  *
@@ -348,7 +349,7 @@ int Execute(const std::vector<std::string>& commands,
 
 /**
  * Similar as the two above but returns CF_ERR instead of -1, and siginfo_t
- * instead of pid.
+ * instead of the exit status.
  */
 Result<siginfo_t> Execute(const std::vector<std::string>& commands,
                           SubprocessOptions subprocess_options,
