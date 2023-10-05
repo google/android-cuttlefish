@@ -63,7 +63,7 @@ bool ServerLoopImpl::CreateQcowOverlay(const std::string& crosvm_path,
 ServerLoopImpl::ServerLoopImpl(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    SecureEnvFiles& secure_env_files)
+    AutoSecureEnvFiles::Type& secure_env_files)
     : config_(config),
       instance_(instance),
       secure_env_files_(secure_env_files),
@@ -87,7 +87,8 @@ Result<void> ServerLoopImpl::Run() {
       process_monitor_properties.AddCommands(std::move(commands));
     }
   }
-  const auto& channel_to_secure_env = secure_env_files_.RunCvdSideFd();
+  const auto& channel_to_secure_env =
+      secure_env_files_->run_cvd_to_secure_env_fd;
   ProcessMonitor process_monitor(std::move(process_monitor_properties),
                                  channel_to_secure_env);
 

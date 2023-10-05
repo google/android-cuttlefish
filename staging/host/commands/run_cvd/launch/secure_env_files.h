@@ -24,30 +24,15 @@
 
 namespace cuttlefish {
 
-class SecureEnvFiles : public SetupFeature {
- public:
-  INJECT(SecureEnvFiles(const CuttlefishConfig::InstanceSpecific& instance));
+struct SecureEnvFiles {
+  SharedFD confui_server_fd;
+  SharedFD snapshot_control_fd;
+  SharedFD run_cvd_to_secure_env_fd;
 
-  std::string Name() const override { return "SecureEnvFiles"; }
-  bool Enabled() const override { return true; }
-
-  SharedFD ConfUiServerFd() const { return confui_server_fd_; }
-  SharedFD SnapshotControlFd() const { return snapshot_control_fd_; }
-  SharedFD RunCvdSideFd() const { return run_cvd_to_secure_env_fd_; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override;
-
-  const CuttlefishConfig::InstanceSpecific& instance_;
-
-  SharedFD confui_server_fd_;
-  SharedFD snapshot_control_fd_;
-  SharedFD run_cvd_to_secure_env_fd_;
+  static Result<SecureEnvFiles> Create(
+      const CuttlefishConfig::InstanceSpecific&);
 };
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
-                 SecureEnvFiles>
-SecureEnvFilesComponent();
+using AutoSecureEnvFiles = AutoSetup<SecureEnvFiles::Create>;
 
 }  // namespace cuttlefish
