@@ -72,6 +72,9 @@ Args:
 
 Experimental:
   reset                  See cvd reset --help. Requires cvd >= v1.2
+  snapshot_take          cvd snapshot_take --help. Requires crosvm, cvd >= v1.4
+  suspend                cvd suspend --help. Requires crosvm, cvd >= v1.4
+  resume                 cvd resume --help. Requires crosvm, cvd >= v1.4
 )";
 
 class CvdHelpHandler : public CvdServerHandler {
