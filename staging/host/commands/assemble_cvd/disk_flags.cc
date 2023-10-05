@@ -505,201 +505,105 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
 }
 
-class InitializeMetadataImage : public SetupFeature {
- public:
-  INJECT(InitializeMetadataImage(
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  // SetupFeature
-  std::string Name() const override { return "InitializeMetadataImage"; }
-  bool Enabled() const override { return true; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    if (FileExists(instance_.metadata_image()) &&
-        FileSize(instance_.metadata_image()) == instance_.blank_metadata_image_mb() << 20) {
-      return {};
-    }
-
-    CF_EXPECT(CreateBlankImage(instance_.metadata_image(),
-                               instance_.blank_metadata_image_mb(), "none"),
-              "Failed to create \"" << instance_.metadata_image()
-                                    << "\" with size "
-                                    << instance_.blank_metadata_image_mb());
-    return {};
-  }
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
-
-class InitializeAccessKregistryImage : public SetupFeature {
- public:
-  INJECT(InitializeAccessKregistryImage(
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  // SetupFeature
-  std::string Name() const override { return "InitializeAccessKregistryImage"; }
-  bool Enabled() const override { return !instance_.protected_vm(); }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    auto access_kregistry = instance_.access_kregistry_path();
-    if (FileExists(access_kregistry)) {
-      return {};
-    }
-    CF_EXPECT(CreateBlankImage(access_kregistry, 2 /* mb */, "none"),
-              "Failed to create \"" << access_kregistry << "\"");
+Result<void> InitializeMetadataImage(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (FileExists(instance.metadata_image()) &&
+      FileSize(instance.metadata_image()) == instance.blank_metadata_image_mb()
+                                                 << 20) {
     return {};
   }
 
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
+  CF_EXPECT(CreateBlankImage(instance.metadata_image(),
+                             instance.blank_metadata_image_mb(), "none"),
+            "Failed to create \"" << instance.metadata_image()
+                                  << "\" with size "
+                                  << instance.blank_metadata_image_mb());
+  return {};
+}
 
-class InitializeHwcomposerPmemImage : public SetupFeature {
- public:
-  INJECT(InitializeHwcomposerPmemImage(
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  // SetupFeature
-  std::string Name() const override { return "InitializeHwcomposerPmemImage"; }
-  bool Enabled() const override {
-    return instance_.hwcomposer() != kHwComposerNone &&
-           !instance_.protected_vm();
+Result<void> InitializeAccessKregistryImage(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  auto access_kregistry = instance.access_kregistry_path();
+  if (FileExists(access_kregistry)) {
+    return {};
   }
+  CF_EXPECT(CreateBlankImage(access_kregistry, 2 /* mb */, "none"),
+            "Failed to create \"" << access_kregistry << "\"");
+  return {};
+}
 
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    if (FileExists(instance_.hwcomposer_pmem_path())) {
-      return {};
-    }
-    CF_EXPECT(
-        CreateBlankImage(instance_.hwcomposer_pmem_path(), 2 /* mb */, "none"),
-        "Failed creating \"" << instance_.hwcomposer_pmem_path() << "\"");
+Result<void> InitializeHwcomposerPmemImage(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (FileExists(instance.hwcomposer_pmem_path())) {
+    return {};
+  }
+  CF_EXPECT(
+      CreateBlankImage(instance.hwcomposer_pmem_path(), 2 /* mb */, "none"),
+      "Failed creating \"" << instance.hwcomposer_pmem_path() << "\"");
+  return {};
+}
+
+Result<void> InitializePstore(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (FileExists(instance.pstore_path())) {
     return {};
   }
 
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
+  CF_EXPECT(CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none"),
+            "Failed to create \"" << instance.pstore_path() << "\"");
+  return {};
+}
 
-class InitializePstore : public SetupFeature {
- public:
-  INJECT(InitializePstore(const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  // SetupFeature
-  std::string Name() const override { return "InitializePstore"; }
-  bool Enabled() const override { return !instance_.protected_vm(); }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    if (FileExists(instance_.pstore_path())) {
-      return {};
-    }
-
-    CF_EXPECT(CreateBlankImage(instance_.pstore_path(), 2 /* mb */, "none"),
-              "Failed to create \"" << instance_.pstore_path() << "\"");
+Result<void> InitializeSdCard(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (!(instance.use_sdcard() && !instance.protected_vm())) {
     return {};
   }
-
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
-
-class InitializeSdCard : public SetupFeature {
- public:
-  INJECT(InitializeSdCard(const CuttlefishConfig& config,
-                          const CuttlefishConfig::InstanceSpecific& instance))
-      : config_{config}, instance_(instance) {}
-
-  // SetupFeature
-  std::string Name() const override { return "InitializeSdCard"; }
-  bool Enabled() const override {
-    return instance_.use_sdcard() && !instance_.protected_vm();
-  }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    if (FileExists(instance_.sdcard_path())) {
-      return {};
-    }
-    CF_EXPECT(CreateBlankImage(instance_.sdcard_path(),
-                               instance_.blank_sdcard_image_mb(), "sdcard"),
-              "Failed to create \"" << instance_.sdcard_path() << "\"");
-    if (IsVmManagerQemu()) {
-      const std::string crosvm_path = instance_.crosvm_binary();
-      CreateQcowOverlay(crosvm_path, instance_.sdcard_path(),
-                        instance_.sdcard_overlay_path());
-    }
+  if (FileExists(instance.sdcard_path())) {
     return {};
   }
+  CF_EXPECT(CreateBlankImage(instance.sdcard_path(),
+                             instance.blank_sdcard_image_mb(), "sdcard"),
+            "Failed to create \"" << instance.sdcard_path() << "\"");
+  if (config.vm_manager() == "qemu_cli") {
+    const std::string crosvm_path = instance.crosvm_binary();
+    CreateQcowOverlay(crosvm_path, instance.sdcard_path(),
+                      instance.sdcard_overlay_path());
+  }
+  return {};
+}
 
-  bool IsVmManagerQemu() const { return config_.vm_manager() == "qemu_cli"; }
-
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
-
-class VbmetaEnforceMinimumSize : public SetupFeature {
- public:
-  INJECT(VbmetaEnforceMinimumSize(
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  std::string Name() const override { return "VbmetaEnforceMinimumSize"; }
-  bool Enabled() const override { return true; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    // libavb expects to be able to read the maximum vbmeta size, so we must
-    // provide a partition which matches this or the read will fail
-    for (const auto& vbmeta_image :
-         {instance_.vbmeta_image(), instance_.vbmeta_system_image(),
-          instance_.vbmeta_vendor_dlkm_image(), instance_.vbmeta_system_dlkm_image()}) {
-      // In some configurations of cuttlefish, the vendor dlkm vbmeta image does
-      // not exist
-      if (FileExists(vbmeta_image) && FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
-        auto fd = SharedFD::Open(vbmeta_image, O_RDWR);
-        CF_EXPECTF(fd->IsOpen(), "Could not open \"{}\": {}", vbmeta_image,
-                   fd->StrError());
-        CF_EXPECTF(fd->Truncate(VBMETA_MAX_SIZE) == 0,
-                   "`truncate --size={} {}` failed: {}", VBMETA_MAX_SIZE,
-                   vbmeta_image, fd->StrError());
-        CF_EXPECTF(fd->Fsync() == 0, "fsync on `{}` failed: {}", vbmeta_image,
-                   fd->StrError());
-      }
+Result<void> VbmetaEnforceMinimumSize(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  // libavb expects to be able to read the maximum vbmeta size, so we must
+  // provide a partition which matches this or the read will fail
+  for (const auto& vbmeta_image :
+       {instance.vbmeta_image(), instance.vbmeta_system_image(),
+        instance.vbmeta_vendor_dlkm_image(),
+        instance.vbmeta_system_dlkm_image()}) {
+    // In some configurations of cuttlefish, the vendor dlkm vbmeta image does
+    // not exist
+    if (FileExists(vbmeta_image) && FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
+      auto fd = SharedFD::Open(vbmeta_image, O_RDWR);
+      CF_EXPECTF(fd->IsOpen(), "Could not open \"{}\": {}", vbmeta_image,
+                 fd->StrError());
+      CF_EXPECTF(fd->Truncate(VBMETA_MAX_SIZE) == 0,
+                 "`truncate --size={} {}` failed: {}", VBMETA_MAX_SIZE,
+                 vbmeta_image, fd->StrError());
+      CF_EXPECTF(fd->Fsync() == 0, "fsync on `{}` failed: {}", vbmeta_image,
+                 fd->StrError());
     }
-    return {};
   }
+  return {};
+}
 
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
-
-class BootloaderPresentCheck : public SetupFeature {
- public:
-  INJECT(BootloaderPresentCheck(
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  std::string Name() const override { return "BootloaderPresentCheck"; }
-  bool Enabled() const override { return true; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    CF_EXPECT(FileHasContent(instance_.bootloader()),
-              "File not found: " << instance_.bootloader());
-    return {};
-  }
-
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
+Result<void> BootloaderPresentCheck(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  CF_EXPECT(FileHasContent(instance.bootloader()),
+            "File not found: " << instance.bootloader());
+  return {};
+}
 
 static fruit::Component<> DiskChangesComponent(
     const FetcherConfig* fetcher, const CuttlefishConfig* config,
@@ -709,10 +613,10 @@ static fruit::Component<> DiskChangesComponent(
       .bindInstance(*config)
       .bindInstance(*instance)
       .install(CuttlefishKeyAvbComponent)
-      .addMultibinding<SetupFeature, InitializeMetadataImage>()
+      .install(AutoSetup<InitializeMetadataImage>::Component)
       .install(KernelRamdiskRepackerComponent)
-      .addMultibinding<SetupFeature, VbmetaEnforceMinimumSize>()
-      .addMultibinding<SetupFeature, BootloaderPresentCheck>()
+      .install(AutoSetup<VbmetaEnforceMinimumSize>::Component)
+      .install(AutoSetup<BootloaderPresentCheck>::Component)
       .install(Gem5ImageUnpackerComponent)
       .install(InitializeMiscImageComponent)
       // Create esp if necessary
@@ -727,14 +631,14 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .bindInstance(*fetcher)
       .bindInstance(*config)
       .bindInstance(*instance)
-      .addMultibinding<SetupFeature, InitializeAccessKregistryImage>()
-      .addMultibinding<SetupFeature, InitializeHwcomposerPmemImage>()
-      .addMultibinding<SetupFeature, InitializePstore>()
-      .addMultibinding<SetupFeature, InitializeSdCard>()
+      .install(AutoSetup<InitializeAccessKregistryImage>::Component)
+      .install(AutoSetup<InitializeHwcomposerPmemImage>::Component)
+      .install(AutoSetup<InitializePstore>::Component)
+      .install(AutoSetup<InitializeSdCard>::Component)
       .install(InitializeFactoryResetProtectedComponent)
       .install(GeneratePersistentBootconfigComponent)
       .install(GeneratePersistentVbmetaComponent)
-      .install(InitializeInstanceCompositeDiskComponent)
+      .install(AutoSetup<InitializeInstanceCompositeDisk>::Component)
       .install(InitializeDataImageComponent)
       .install(InitBootloaderEnvPartitionComponent);
 }

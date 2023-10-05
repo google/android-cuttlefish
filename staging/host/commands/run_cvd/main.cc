@@ -158,7 +158,7 @@ fruit::Component<> runCvdComponent(
       .install(RootCanalComponent)
       .install(AutoCmd<Casimir>::Component)
       .install(NetsimServerComponent)
-      .install(SecureEnvFilesComponent)
+      .install(AutoSecureEnvFiles::Component)
       .install(AutoCmd<SecureEnv>::Component)
       .install(serverLoopComponent)
       .install(validationComponent)
