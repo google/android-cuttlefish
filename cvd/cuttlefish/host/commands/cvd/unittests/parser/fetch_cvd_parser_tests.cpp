@@ -88,8 +88,7 @@ TEST(FetchCvdParserTests, SingleFetch) {
   Json::Value json_config = GetTestJson(raw_json);
 
   auto result_flags = FetchCvdParserTestHelper(json_config, "/target", {"0"});
-  ASSERT_THAT(result_flags, IsOk())
-      << "Parsing config failed:  " << result_flags.error().Trace();
+  ASSERT_THAT(result_flags, IsOk());
 
   const auto flags = result_flags.value();
   EXPECT_THAT(flags, Contains("--wait_retry_period=20"));
@@ -140,8 +139,7 @@ TEST(FetchCvdParserTests, SingleFetchNoPrefix) {
   Json::Value json_config = GetTestJson(raw_json);
 
   auto result_flags = FetchCvdParserTestHelper(json_config, "/target", {"0"});
-  ASSERT_THAT(result_flags, IsOk())
-      << "Parsing config failed:  " << result_flags.error().Trace();
+  ASSERT_THAT(result_flags, IsOk());
 }
 
 TEST(FetchCvdParserTests, MultiFetch) {
@@ -194,8 +192,7 @@ TEST(FetchCvdParserTests, MultiFetch) {
 
   auto result_flags =
       FetchCvdParserTestHelper(json_config, "/target", {"0", "1"});
-  ASSERT_THAT(result_flags, IsOk())
-      << "Parsing config failed:  " << result_flags.error().Trace();
+  ASSERT_THAT(result_flags, IsOk());
 
   const auto flags = result_flags.value();
   EXPECT_THAT(flags, Contains("--wait_retry_period=20"));
