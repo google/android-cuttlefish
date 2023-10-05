@@ -87,7 +87,9 @@ Result<void> ServerLoopImpl::Run() {
       process_monitor_properties.AddCommands(std::move(commands));
     }
   }
-  ProcessMonitor process_monitor(std::move(process_monitor_properties));
+  const auto& channel_to_secure_env = secure_env_files_.RunCvdSideFd();
+  ProcessMonitor process_monitor(std::move(process_monitor_properties),
+                                 channel_to_secure_env);
 
   CF_EXPECT(process_monitor.StartAndMonitorProcesses());
   device_status_ = DeviceStatus::kActive;
