@@ -17,7 +17,7 @@
 #include "host/commands/run_cvd/server_loop_impl.h"
 
 #include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/runner_defs.h"
+#include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/util.h"
 #include "run_cvd.pb.h"
 
