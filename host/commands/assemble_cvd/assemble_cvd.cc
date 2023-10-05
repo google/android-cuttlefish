@@ -172,9 +172,9 @@ Result<void> CreateLegacySymlinks(
   return {};
 }
 
-Result<void> RestoreHostFiles(const std::string& snapshot_dir_path) {
+Result<void> RestoreHostFiles(const std::string& cuttlefish_root_dir,
+                              const std::string& snapshot_dir_path) {
   const auto meta_json_path = SnapshotMetaJsonPath(snapshot_dir_path);
-  const auto cuttlefish_home = StringFromEnv("HOME", CurrentDirectory());
 
   auto guest_snapshot_dirs =
       CF_EXPECT(GuestSnapshotDirectories(snapshot_dir_path));
@@ -183,7 +183,7 @@ Result<void> RestoreHostFiles(const std::string& snapshot_dir_path) {
     return !Contains(guest_snapshot_dirs, src_dir);
   };
   // cp -r snapshot_dir_path HOME
-  CF_EXPECT(CopyDirectoryRecursively(snapshot_dir_path, cuttlefish_home,
+  CF_EXPECT(CopyDirectoryRecursively(snapshot_dir_path, cuttlefish_root_dir,
                                      /* delete destination first */ false,
                                      filter_guest_dir));
 
@@ -310,7 +310,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
 
     const std::string snapshot_path = FLAGS_snapshot_path;
     if (!snapshot_path.empty()) {
-      CF_EXPECT(RestoreHostFiles(snapshot_path));
+      CF_EXPECT(RestoreHostFiles(config.root_dir(), snapshot_path));
     }
     auto instance_dirs = config.instance_dirs();
     auto environment_dirs = config.environment_dirs();
