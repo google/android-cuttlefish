@@ -38,6 +38,7 @@
 #include "host/frontend/webrtc/gpx_locations_handler.h"
 #include "host/frontend/webrtc/kml_locations_handler.h"
 #include "host/frontend/webrtc/libdevice/camera_controller.h"
+#include "host/frontend/webrtc/libdevice/lights_observer.h"
 #include "host/frontend/webrtc/location_handler.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/input_connector/input_connector.h"
@@ -52,18 +53,20 @@ namespace cuttlefish {
 class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
  public:
   ConnectionObserverImpl(
-      InputConnector& input_connector,
+      InputConnector &input_connector,
       KernelLogEventsHandler *kernel_log_events_handler,
       std::map<std::string, SharedFD> commands_to_custom_action_servers,
       std::weak_ptr<DisplayHandler> display_handler,
       CameraController *camera_controller,
-      std::shared_ptr<webrtc_streaming::SensorsHandler> sensors_handler)
+      std::shared_ptr<webrtc_streaming::SensorsHandler> sensors_handler,
+      std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer)
       : input_connector_(input_connector),
         kernel_log_events_handler_(kernel_log_events_handler),
         commands_to_custom_action_servers_(commands_to_custom_action_servers),
         weak_display_handler_(display_handler),
         camera_controller_(camera_controller),
-        sensors_handler_(sensors_handler) {}
+        sensors_handler_(sensors_handler),
+        lights_observer_(lights_observer) {}
   virtual ~ConnectionObserverImpl() {
     auto display_handler = weak_display_handler_.lock();
     if (kernel_log_subscription_id_ != -1) {
@@ -229,6 +232,18 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     sensors_handler_->HandleMessage(x, y, z);
   }
 
+  void OnLightsChannelOpen(
+      std::function<bool(const Json::Value &)> lights_message_sender) override {
+    LOG(DEBUG) << "Lights channel open";
+
+    lights_subscription_id_ =
+        lights_observer_->Subscribe(lights_message_sender);
+  }
+
+  void OnLightsChannelClosed() override {
+    lights_observer_->Unsubscribe(lights_subscription_id_);
+  }
+
   void OnLocationChannelOpen(std::function<bool(const uint8_t *, size_t)>
                                  location_message_sender) override {
     LOG(VERBOSE) << "Location channel open";
@@ -308,14 +323,18 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   std::weak_ptr<DisplayHandler> weak_display_handler_;
   CameraController *camera_controller_;
   std::shared_ptr<webrtc_streaming::SensorsHandler> sensors_handler_;
+  std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer_;
   int sensors_subscription_id = -1;
+  int lights_subscription_id_ = -1;
 };
 
 CfConnectionObserverFactory::CfConnectionObserverFactory(
-    InputConnector& input_connector,
-    KernelLogEventsHandler *kernel_log_events_handler)
+    InputConnector &input_connector,
+    KernelLogEventsHandler *kernel_log_events_handler,
+    std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer)
     : input_connector_(input_connector),
-      kernel_log_events_handler_(kernel_log_events_handler) {}
+      kernel_log_events_handler_(kernel_log_events_handler),
+      lights_observer_(lights_observer) {}
 
 std::shared_ptr<webrtc_streaming::ConnectionObserver>
 CfConnectionObserverFactory::CreateObserver() {
@@ -323,7 +342,7 @@ CfConnectionObserverFactory::CreateObserver() {
       new ConnectionObserverImpl(input_connector_, kernel_log_events_handler_,
                                  commands_to_custom_action_servers_,
                                  weak_display_handler_, camera_controller_,
-                                 shared_sensors_handler_));
+                                 shared_sensors_handler_, lights_observer_));
 }
 
 void CfConnectionObserverFactory::AddCustomActionServer(

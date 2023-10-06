@@ -49,6 +49,7 @@ class DataChannelHandlers {
   std::unique_ptr<DataChannelHandler> bluetooth_;
   std::unique_ptr<DataChannelHandler> camera_;
   std::unique_ptr<DataChannelHandler> sensors_;
+  std::unique_ptr<DataChannelHandler> lights_;
   std::unique_ptr<DataChannelHandler> location_;
   std::unique_ptr<DataChannelHandler> kml_location_;
   std::unique_ptr<DataChannelHandler> gpx_location_;
