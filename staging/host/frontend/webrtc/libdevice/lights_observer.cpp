@@ -25,7 +25,11 @@ namespace cuttlefish {
 namespace webrtc_streaming {
 
 LightsObserver::LightsObserver(unsigned int port, unsigned int cid)
-    : cid_(cid), port_(port), is_running_(false), session_active_(false) {}
+    : cid_(cid),
+      port_(port),
+      is_running_(false),
+      session_active_(false),
+      last_client_channel_id_(-1) {}
 
 LightsObserver::~LightsObserver() { Stop(); }
 
@@ -79,16 +83,38 @@ void LightsObserver::ReadServerMessages() {
     session_active_ = true;
   } else if (json_value[kEventKey] == kMessageStop) {
     session_active_ = false;
-  } else if (json_value[kEventKey] == kMessageUpdate) {
-    for (const auto& light : json_value["lights"]) {
-      const unsigned int id = light["id"].asUInt();
-      lights_state_[id] = Light{
-          .id = id,
-          .color = light["color"].asUInt(),
-          .light_type = Light::Type(light["light_type"].asUInt()),
-      };
+  } else if (json_value[kEventKey] == kMessageUpdate && session_active_) {
+    // Cache the latest update for when new clients register
+    std::lock_guard<std::mutex> lock(clients_lock_);
+    cached_latest_update_ = json_value;
+
+    // Send update to all subscribed clients
+    for (auto itr = client_message_senders_.begin();
+         itr != client_message_senders_.end(); itr++) {
+      itr->second(json_value);
     }
   }
+}
+
+int LightsObserver::Subscribe(
+    std::function<bool(const Json::Value&)> lights_message_sender) {
+  int client_id = -1;
+  {
+    std::lock_guard<std::mutex> lock(clients_lock_);
+    client_id = ++last_client_channel_id_;
+    client_message_senders_[client_id] = lights_message_sender;
+
+    if (!cached_latest_update_.empty()) {
+      lights_message_sender(cached_latest_update_);
+    }
+  }
+
+  return client_id;
+}
+
+void LightsObserver::Unsubscribe(int id) {
+  std::lock_guard<std::mutex> lock(clients_lock_);
+  client_message_senders_.erase(id);
 }
 
 }  // namespace webrtc_streaming
