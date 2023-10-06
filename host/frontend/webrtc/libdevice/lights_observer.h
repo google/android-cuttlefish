@@ -21,7 +21,8 @@
 #include <mutex>
 #include <thread>
 #include <unordered_map>
-#include <vector>
+
+#include <json/json.h>
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -54,6 +55,8 @@ class LightsObserver {
   LightsObserver& operator=(const LightsObserver& other) = delete;
 
   bool Start();
+  int Subscribe(std::function<bool(const Json::Value&)> lights_message_sender);
+  void Unsubscribe(int lights_message_sender_id);
 
  private:
   void Stop();
@@ -66,6 +69,12 @@ class LightsObserver {
   std::atomic<bool> is_running_;
   std::atomic<bool> session_active_;
   std::unordered_map<unsigned int, Light> lights_state_;
+
+  std::mutex clients_lock_;
+  Json::Value cached_latest_update_;
+  std::unordered_map<int, std::function<bool(const Json::Value&)>>
+      client_message_senders_;
+  int last_client_channel_id_;
 };
 
 }  // namespace webrtc_streaming
