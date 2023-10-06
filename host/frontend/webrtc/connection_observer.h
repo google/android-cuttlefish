@@ -21,12 +21,13 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "host/frontend/webrtc/display_handler.h"
-#include "host/libs/input_connector/input_connector.h"
 #include "host/frontend/webrtc/kernel_log_events_handler.h"
 #include "host/frontend/webrtc/libdevice/camera_controller.h"
 #include "host/frontend/webrtc/libdevice/connection_observer.h"
+#include "host/frontend/webrtc/libdevice/lights_observer.h"
 #include "host/frontend/webrtc/sensors_handler.h"
 #include "host/libs/confui/host_virtual_input.h"
+#include "host/libs/input_connector/input_connector.h"
 
 namespace cuttlefish {
 
@@ -35,7 +36,8 @@ class CfConnectionObserverFactory
  public:
   CfConnectionObserverFactory(
       InputConnector& input_connector,
-      KernelLogEventsHandler* kernel_log_events_handler);
+      KernelLogEventsHandler* kernel_log_events_handler,
+      std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer);
   ~CfConnectionObserverFactory() override = default;
 
   std::shared_ptr<webrtc_streaming::ConnectionObserver> CreateObserver()
@@ -57,6 +59,7 @@ class CfConnectionObserverFactory
   cuttlefish::CameraController* camera_controller_ = nullptr;
   std::shared_ptr<webrtc_streaming::SensorsHandler> shared_sensors_handler_ =
       std::make_shared<webrtc_streaming::SensorsHandler>();
+  std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer_;
 };
 
 }  // namespace cuttlefish

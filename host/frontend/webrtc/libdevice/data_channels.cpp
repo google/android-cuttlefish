@@ -66,6 +66,7 @@ static constexpr auto kAdbChannelLabel = "adb-channel";
 static constexpr auto kBluetoothChannelLabel = "bluetooth-channel";
 static constexpr auto kCameraDataChannelLabel = "camera-data-channel";
 static constexpr auto kSensorsDataChannelLabel = "sensors-channel";
+static constexpr auto kLightsChannelLabel = "lights-channel";
 static constexpr auto kLocationDataChannelLabel = "location-channel";
 static constexpr auto kKmlLocationsDataChannelLabel = "kml-locations-channel";
 static constexpr auto kGpxLocationsDataChannelLabel = "gpx-locations-channel";
@@ -309,6 +310,21 @@ class SensorsChannelHandler : public DataChannelHandler {
   bool first_msg_received_ = false;
 };
 
+class LightsChannelHandler : public DataChannelHandler {
+ public:
+  // We do not expect any messages from the frontend.
+  void OnMessageInner(const webrtc::DataBuffer &msg) override {}
+
+  void OnStateChangeInner(
+      webrtc::DataChannelInterface::DataState state) override {
+    if (state == webrtc::DataChannelInterface::kOpen) {
+      observer()->OnLightsChannelOpen(GetJSONSender());
+    } else if (state == webrtc::DataChannelInterface::kClosed) {
+      observer()->OnLightsChannelClosed();
+    }
+  }
+};
+
 class LocationChannelHandler : public DataChannelHandler {
  public:
   void OnMessageInner(const webrtc::DataBuffer &msg) override {
@@ -437,6 +453,9 @@ void DataChannelHandlers::OnDataChannelOpen(
   } else if (label == kCameraDataChannelLabel) {
     camera_.reset(
         new DataChannelHandlerImpl<CameraChannelHandler>(channel, observer_));
+  } else if (label == kLightsChannelLabel) {
+    lights_.reset(
+        new DataChannelHandlerImpl<LightsChannelHandler>(channel, observer_));
   } else if (label == kLocationDataChannelLabel) {
     location_.reset(
         new DataChannelHandlerImpl<LocationChannelHandler>(channel, observer_));

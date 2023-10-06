@@ -92,6 +92,7 @@ class DeviceConnection {
   #inputChannel;
   #adbChannel;
   #bluetoothChannel;
+  #lightsChannel;
   #locationChannel;
   #sensorsChannel;
   #kmlLocationsChannel;
@@ -112,6 +113,7 @@ class DeviceConnection {
   #onLocationMessage;
   #onKmlLocationsMessage;
   #onGpxLocationsMessage;
+  #onLightsMessage;
 
   #micRequested = false;
   #cameraRequested = false;
@@ -184,6 +186,14 @@ class DeviceConnection {
           }
           this.#onGpxLocationsMessage(msg.data);
         });
+    this.#lightsChannel = createDataChannel(pc, 'lights-channel', (msg) => {
+      if (!this.#onLightsMessage) {
+        console.error('Received unexpected Lights message');
+        return;
+      }
+      this.#onLightsMessage(msg);
+    });
+
     this.#streams = {};
     this.#streamPromiseResolvers = {};
 
@@ -466,6 +476,10 @@ class DeviceConnection {
   onConnectionStateChange(cb) {
     this.#pc.addEventListener(
         'connectionstatechange', evt => cb(this.#pc.connectionState));
+  }
+
+  onLightsMessage(cb) {
+    this.#onLightsMessage = cb;
   }
 }
 
