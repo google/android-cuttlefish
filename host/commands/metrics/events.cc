@@ -31,6 +31,7 @@ namespace {
 constexpr int kLogSourceId = 1753;
 // 971 for atest internal events, while 934 for external events
 constexpr int kAtestInternalLogSourceId = 971;
+constexpr char kToolName[] = "cvd";
 
 constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
 constexpr int kCppClientType =
@@ -83,6 +84,7 @@ std::unique_ptr<AtestLogEventInternal> BuildAtestLogEvent(
   std::string dir = CurrentDirectory();
   event->set_user_key(user_key);
   event->set_run_id(run_id);
+  event->set_tool_name(kToolName);
   event->set_user_type(UserType::GOOGLE);
 
   // Create and populate AtestStartEvent
