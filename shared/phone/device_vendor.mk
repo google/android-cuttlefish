@@ -51,6 +51,11 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.faketouch.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.faketouch.xml \
     frameworks/native/data/etc/android.hardware.fingerprint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.fingerprint.xml \
 
+    ifneq ($(TARGET_DISABLE_BIOMETRICS_FACE),true)
+        PRODUCT_COPY_FILES += \
+        frameworks/native/data/etc/android.hardware.biometrics.face.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.biometrics.face.xml \
+
+    endif
 endif
 
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/phone/overlay

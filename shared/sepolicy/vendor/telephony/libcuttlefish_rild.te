@@ -12,3 +12,4 @@ get_prop(libcuttlefish_rild, vendor_cuttlefish_config_server_port_prop)
 get_prop(libcuttlefish_rild, vendor_modem_simulator_ports_prop)
 
 allow libcuttlefish_rild self:{ socket vsock_socket } { create_socket_perms_no_ioctl getattr };
+allow libcuttlefish_rild su:{ socket udp_socket } { create_socket_perms_no_ioctl getattr };

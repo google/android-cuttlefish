@@ -299,10 +299,6 @@ DEFINE_string(gem5_debug_flags, CF_DEFAULTS_GEM5_DEBUG_FLAGS,
 DEFINE_vec(restart_subprocesses,
            fmt::format("{}", CF_DEFAULTS_RESTART_SUBPROCESSES),
            "Restart any crashed host process");
-DEFINE_vec(enable_vehicle_hal_grpc_server,
-           fmt::format("{}", CF_DEFAULTS_ENABLE_VEHICLE_HAL_GRPC_SERVER),
-           "Enables the vehicle HAL "
-           "emulation gRPC server on the host");
 DEFINE_vec(bootloader, CF_DEFAULTS_BOOTLOADER, "Bootloader binary path");
 DEFINE_vec(boot_slot, CF_DEFAULTS_BOOT_SLOT,
               "Force booting into the given slot. If empty, "
@@ -1091,8 +1087,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       modem_simulator_sim_type));
   std::vector<bool> console_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(console));
   std::vector<bool> enable_audio_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_audio));
-  std::vector<bool> enable_vehicle_hal_grpc_server_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      enable_vehicle_hal_grpc_server));
   std::vector<bool> start_gnss_proxy_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       start_gnss_proxy));
   std::vector<bool> enable_bootanimation_vec =
@@ -1294,8 +1288,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
     instance.set_use_allocd(use_allocd_vec[instance_index]);
     instance.set_enable_audio(enable_audio_vec[instance_index]);
-    instance.set_enable_vehicle_hal_grpc_server(
-      enable_vehicle_hal_grpc_server_vec[instance_index]);
     instance.set_enable_gnss_grpc_proxy(start_gnss_proxy_vec[instance_index]);
     instance.set_enable_bootanimation(enable_bootanimation_vec[instance_index]);
     instance.set_record_screen(record_screen_vec[instance_index]);
@@ -1450,7 +1442,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_ethernet_ipv6(Ipv6ToString(ethernet_ipv6));
 
     instance.set_tombstone_receiver_port(calc_vsock_port(6600));
-    instance.set_vehicle_hal_server_port(9300 + num - 1);
     instance.set_audiocontrol_server_port(9410);  /* OK to use the same port number across instances */
     instance.set_config_server_port(calc_vsock_port(6800));
     instance.set_lights_server_port(calc_vsock_port(6900));

@@ -23,3 +23,10 @@ runtime_resource_overlay {
     vendor: true,
     sdk_version: "current",
 }
+
+override_runtime_resource_overlay {
+    name: "CuttlefishTetheringOverlayGoogle",
+    base: "CuttlefishTetheringOverlay",
+    package_name: "com.google.android.networkstack.tethering.cuttlefishoverlay",
+    target_package_name: "com.google.android.networkstack.tethering",
+}

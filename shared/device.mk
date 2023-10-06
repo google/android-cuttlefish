@@ -74,8 +74,7 @@ PRODUCT_PRODUCT_PROPERTIES += \
     persist.adb.tcp.port=5555 \
     ro.com.google.locationfeatures=1 \
     persist.sys.fuse.passthrough.enable=true \
-    persist.sys.fuse.bpf.enable=false \
-    remote_provisioning.tee.rkp_only=1 \
+    remote_provisioning.tee.rkp_only=1
 
 # Until we support adb keys on user builds, and fix logcat over serial,
 # spawn adbd by default without authorization for "adb logcat"
@@ -146,7 +145,7 @@ PRODUCT_PACKAGES += \
     suspend_blocker \
     metrics_helper \
 
-$(call soong_config_append,cvd,launch_configs,cvd_config_auto.json cvd_config_foldable.json cvd_config_go.json cvd_config_phone.json cvd_config_slim.json cvd_config_tablet.json cvd_config_tv.json cvd_config_wear.json)
+$(call soong_config_append,cvd,launch_configs,cvd_config_auto.json cvd_config_auto_portrait.json cvd_config_auto_md.json cvd_config_foldable.json cvd_config_go.json cvd_config_phone.json cvd_config_slim.json cvd_config_tablet.json cvd_config_tv.json cvd_config_wear.json)
 $(call soong_config_append,cvd,grub_config,grub.cfg)
 
 #
@@ -158,6 +157,18 @@ PRODUCT_PACKAGES += \
     sleep \
     tcpdump \
     wificond \
+
+#
+# Package for AOSP QNS
+#
+PRODUCT_PACKAGES += \
+    QualifiedNetworksService
+
+#
+# Package for AOSP GBA
+#
+PRODUCT_PACKAGES += \
+    GbaService
 
 #
 # Packages for testing
@@ -176,6 +187,11 @@ PRODUCT_PACKAGES += \
     cuttlefish_overlay_settings_provider
 
 endif
+
+#
+# Satellite vendor service for CF
+#
+PRODUCT_PACKAGES += CFSatelliteService
 
 # PRODUCT_AAPT_CONFIG and PRODUCT_AAPT_PREF_CONFIG are intentionally not set to
 # pick up every density resources.
@@ -231,6 +247,7 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml \
     frameworks/av/services/audiopolicy/config/surround_sound_configuration_5_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/surround_sound_configuration_5_0.xml \
     device/google/cuttlefish/shared/config/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json \
+    frameworks/native/data/etc/android.software.credentials.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.credentials.xml \
 
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.google.cf.input.config
@@ -265,8 +282,8 @@ PRODUCT_PACKAGES += \
 #
 # Weaver aidl HAL
 #
-PRODUCT_PACKAGES += \
-    android.hardware.weaver-service.example
+# TODO(b/262418065) Add a real weaver implementation
+
 
 #
 # Authsecret AIDL HAL
@@ -329,7 +346,7 @@ DEVICE_PACKAGE_OVERLAYS += $(LOCAL_AUDIO_DEVICE_PACKAGE_OVERLAYS)
 # BiometricsFingerprint HAL (AIDL)
 #
 PRODUCT_PACKAGES += \
-    android.hardware.biometrics.fingerprint-service.example
+    com.android.hardware.biometrics.fingerprint.virtual
 
 #
 # Contexthub HAL
@@ -342,8 +359,9 @@ PRODUCT_PACKAGES += $(LOCAL_CONTEXTHUB_PRODUCT_PACKAGE)
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.drm@latest-service.clearkey \
-    android.hardware.drm@latest-service.widevine
+    android.hardware.drm@latest-service.clearkey
+
+-include vendor/widevine/libwvdrmengine/apex/device/device.mk
 
 #
 # Confirmation UI HAL
@@ -518,7 +536,7 @@ PRODUCT_PACKAGES += \
     setup_wifi \
     mac80211_create_radios \
     hostapd \
-    android.hardware.wifi@1.0-service \
+    android.hardware.wifi-service \
     init.wifi
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/wpa_supplicant.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/wpa_supplicant.rc
@@ -578,6 +596,9 @@ PRODUCT_VENDOR_PROPERTIES += \
 # Disable GPU-intensive background blur for widget picker
 PRODUCT_SYSTEM_PROPERTIES += \
     ro.launcher.depth.widget=0
+
+# Start fingerprint virtual HAL process
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.fingerprint_virtual_hal_start=true
 
 # Vendor Dlkm Locader
 PRODUCT_PACKAGES += \

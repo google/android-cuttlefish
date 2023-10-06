@@ -26,11 +26,44 @@
       <item>2:3</item> <!-- OPENED : STATE_FLIPPED -->
       <item>3:1</item> <!-- REAR_DISPLAY: STATE_FLAT -->
   </string-array>
-  <!-- The device states (supplied by DeviceStateManager) that should be treated as folded by the
+
+  <!-- Map of DeviceState to rotation lock setting. Each entry must be in the format "key:value",
+     or "key:value:fallback_key" for example: "0:1" or "2:0:1". The keys are device states, and
+     the values are one of Settings.Secure.DeviceStateRotationLockSetting.
+     The fallback is a key to a device state that can be specified when the value is
+     Settings.Secure.DEVICE_STATE_ROTATION_LOCK_IGNORED.
+ -->
+  <string-array name="config_perDeviceStateRotationLockDefaults" translatable="false">
+    <item>0:1</item> <!-- CLOSED -> LOCKED -->
+    <item>1:0:2</item> <!-- HALF_OPENED -> IGNORED and fallback to device state OPENED -->
+    <item>2:2</item> <!-- OPENED -> UNLOCKED -->
+    <item>3:0:0</item> <!-- REAR_DISPLAY -> IGNORED and fallback to device state CLOSED -->
+  </string-array>
+
+  <!-- The device states (supplied by DeviceStateManager) that should be treated as open by the
        display fold controller. -->
+  <integer-array name="config_openDeviceStates" translatable="false">
+    <item>2</item> <!-- OPEN -->
+  </integer-array>
+
+  <!-- The device states (supplied by DeviceStateManager) that should be treated as folded by the
+       display fold controller. This also controls the folded bit in CameraServiceProxy. -->
   <integer-array name="config_foldedDeviceStates" translatable="false">
     <item>0</item> <!-- CLOSED -->
   </integer-array>
+
+  <!-- The device states (supplied by DeviceStateManager) that should be treated as half folded by
+       the display fold controller. This also controls the folded bit in CameraServiceProxy. -->
+  <integer-array name="config_halfFoldedDeviceStates" translatable="false">
+    <item>1</item> <!-- HALF_OPENED -->
+  </integer-array>
+
+  <!-- The device states (supplied by DeviceStateManager) that should be treated as a rear display
+       state. Default is empty. -->
+  <integer-array name="config_rearDisplayDeviceStates" translatable="false">
+    <item>3</item> <!-- REAR_DISPLAY_STATE -->
+  </integer-array>
+
   <!-- Indicates whether to enable an animation when unfolding a device or not -->
   <bool name="config_unfoldTransitionEnabled">true</bool>
   <!-- Indicates whether to enable hinge angle sensor when using unfold animation -->
