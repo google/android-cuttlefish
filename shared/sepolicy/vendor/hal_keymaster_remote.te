@@ -4,7 +4,7 @@ hal_server_domain(hal_keymaster_remote, hal_keymaster)
 type hal_keymaster_remote_exec, exec_type, vendor_file_type, file_type;
 init_daemon_domain(hal_keymaster_remote)
 
-type keymaster_device, file_type;
+type keymaster_device, dev_type;
 
 allow hal_keymaster_remote device:dir r_dir_perms;
 allow hal_keymaster_remote keymaster_device:chr_file rw_file_perms;
