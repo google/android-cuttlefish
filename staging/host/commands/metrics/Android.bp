@@ -34,7 +34,7 @@ cc_binary {
         "libfruit",
         "libjsoncpp",
         "liblog",
-        "libprotobuf-cpp-lite",
+        "libprotobuf-cpp-full",
         "libz",
     ],
     static_libs: [
@@ -59,7 +59,7 @@ cc_test_host {
         "libfruit",
         "libjsoncpp",
         "liblog",
-        "libprotobuf-cpp-lite",
+        "libprotobuf-cpp-full",
         "libz",
     ],
     srcs: [
