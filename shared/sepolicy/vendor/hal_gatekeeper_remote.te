@@ -4,7 +4,7 @@ hal_server_domain(hal_gatekeeper_remote, hal_gatekeeper)
 type hal_gatekeeper_remote_exec, exec_type, vendor_file_type, file_type;
 init_daemon_domain(hal_gatekeeper_remote)
 
-type gatekeeper_device, file_type;
+type gatekeeper_device, dev_type;
 
 allow hal_gatekeeper_remote device:dir r_dir_perms;
 allow hal_gatekeeper_remote gatekeeper_device:chr_file rw_file_perms;
