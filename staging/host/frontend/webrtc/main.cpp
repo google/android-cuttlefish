@@ -28,9 +28,9 @@
 #include "host/frontend/webrtc/client_server.h"
 #include "host/frontend/webrtc/connection_observer.h"
 #include "host/frontend/webrtc/display_handler.h"
-#include "host/libs/input_connector/socket_input_connector.h"
 #include "host/frontend/webrtc/kernel_log_events_handler.h"
 #include "host/frontend/webrtc/libdevice/camera_controller.h"
+#include "host/frontend/webrtc/libdevice/lights_observer.h"
 #include "host/frontend/webrtc/libdevice/local_recorder.h"
 #include "host/frontend/webrtc/libdevice/streamer.h"
 #include "host/frontend/webrtc/libdevice/video_sink.h"
@@ -40,6 +40,7 @@
 #include "host/libs/config/openwrt_args.h"
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_server.h"
+#include "host/libs/input_connector/socket_input_connector.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
 DEFINE_string(touch_fds, "",
@@ -212,8 +213,17 @@ int main(int argc, char** argv) {
   }
 
   KernelLogEventsHandler kernel_logs_event_handler(kernel_log_events_client);
+
+  std::shared_ptr<cuttlefish::webrtc_streaming::LightsObserver> lights_observer;
+  if (instance.lights_server_port()) {
+    lights_observer =
+        std::make_shared<cuttlefish::webrtc_streaming::LightsObserver>(
+            instance.lights_server_port(), instance.vsock_guest_cid());
+    lights_observer->Start();
+  }
+
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      confui_virtual_input, &kernel_logs_event_handler);
+      confui_virtual_input, &kernel_logs_event_handler, lights_observer);
 
   RecordingManager recording_manager;
 
