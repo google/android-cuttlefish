@@ -99,13 +99,15 @@ class NetsimServer : public CommandSource {
     // When no connector is requested, add the instance number
     if (config_.netsim_connector_instance_num() ==
         config_.netsim_instance_num()) {
-      netsimd.AddParameter("--instance_num=", config_.netsim_instance_num());
+      // external instance numbers start at 1 not 0
+      netsimd.AddParameter("--instance_num=",
+                           config_.netsim_instance_num() + 1);
     } else {
       // If instance_num is not the target, then inform netsim to forward
       // packets to another netsim daemon that was launched from cuttlefish with
       // a different instance_num.
       netsimd.AddParameter("--connector_instance_num=",
-                           config_.netsim_connector_instance_num());
+                           config_.netsim_connector_instance_num() + 1);
     }
 
     // Add parameters from passthrough option --netsim-args.
