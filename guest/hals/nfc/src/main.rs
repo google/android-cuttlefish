@@ -59,7 +59,7 @@ fn main() {
 
     // Initializes.
     let cli = Cli::parse();
-    let nfc_service = NfcService::new(&cli.virtio_dev_path);
+    let nfc_service = runtime.block_on(NfcService::new(&cli.virtio_dev_path));
     let nfc_service_binder =
         BnNfc::new_async_binder(nfc_service, TokioRuntime(runtime), BinderFeatures::default());
 
@@ -68,6 +68,8 @@ fn main() {
     binder::add_service(&service_name, nfc_service_binder.as_binder())
         .expect("Failed to register service");
 
-    // Wait for binder thread to be completed.
-    ProcessState::join_thread_pool()
+    // Wait for binder thread to be completed. Unexpected for HAL, though.
+    ProcessState::join_thread_pool();
+
+    info!("NFC HAL is shutting down");
 }

@@ -26,7 +26,7 @@ use binder::{DeathRecipient, IBinder, Interface, Strong};
 use log::{error, info};
 use nix::sys::termios;
 use std::os::fd::AsRawFd;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 use tokio::fs::{File, OpenOptions};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -38,8 +38,6 @@ const NCI_HEADER_SIZE: usize = 3;
 struct NfcClient {
     callback: Strong<dyn INfcClientCallback>,
     death_recipient: DeathRecipient,
-    device: File,
-    tasks: JoinSet<()>,
 }
 
 impl NfcClient {
@@ -65,23 +63,33 @@ impl NfcClient {
 }
 
 #[derive(Default)]
-enum NfcServiceStatus {
+enum NfcSession {
     #[default]
     Closed,
     Opened(NfcClient),
 }
 
+#[derive(Default)]
+struct NfcHalConfig {
+    dbg_logging: bool,
+}
+
+struct NfcServiceStatus {
+    writer: File,
+    session: NfcSession,
+}
+
 impl NfcServiceStatus {
     fn unwrap_mut_opened(&mut self) -> &mut NfcClient {
-        match self {
-            NfcServiceStatus::Opened(client) => client,
+        match self.session {
+            NfcSession::Opened(ref mut client) => client,
             _ => unreachable!(),
         }
     }
 
     fn ensure_opened(&self) -> binder::Result<&NfcClient> {
-        match self {
-            NfcServiceStatus::Opened(client) => Ok(client),
+        match self.session {
+            NfcSession::Opened(ref client) => Ok(client),
             _ => {
                 error!("NFC isn't opened");
                 Err(binder::Status::new_service_specific_error(NfcStatus::FAILED.0, None))
@@ -89,9 +97,9 @@ impl NfcServiceStatus {
         }
     }
 
-    fn ensure_opened_mut(&mut self) -> binder::Result<&mut NfcClient> {
-        match self {
-            NfcServiceStatus::Opened(client) => Ok(client),
+    fn ensure_opened_mut(&mut self) -> binder::Result<(&mut File, &mut NfcClient)> {
+        match self.session {
+            NfcSession::Opened(ref mut client) => Ok((&mut self.writer, client)),
             _ => {
                 error!("NFC isn't opened");
                 Err(binder::Status::new_service_specific_error(NfcStatus::FAILED.0, None))
@@ -100,12 +108,11 @@ impl NfcServiceStatus {
     }
 
     async fn close(&mut self) -> binder::Result<()> {
-        match self {
-            NfcServiceStatus::Opened(client) => {
+        match self.session {
+            NfcSession::Opened(ref mut client) => {
                 client.callback.as_binder().unlink_to_death(&mut client.death_recipient)?;
                 client.send_event_callback(NfcEvent::CLOSE_CPLT, NfcStatus::OK)?;
-                client.tasks.shutdown().await; // this will abort all pending tasks.
-                *self = NfcServiceStatus::Closed;
+                self.session = NfcSession::Closed;
                 Ok(())
             }
             _ => Err(binder::Status::new_service_specific_error(NfcStatus::FAILED.0, None)),
@@ -113,25 +120,11 @@ impl NfcServiceStatus {
     }
 }
 
-#[derive(Default)]
-struct NfcHalConfig {
-    dbg_logging: bool,
-}
-
-#[derive(Default)]
 pub struct NfcService {
-    dev_path: PathBuf,
+    _tasks: JoinSet<()>,
     status: Arc<Mutex<NfcServiceStatus>>,
     config: Arc<Mutex<NfcHalConfig>>,
 }
-
-impl NfcService {
-    pub fn new(dev_path: &Path) -> NfcService {
-        NfcService { dev_path: dev_path.to_path_buf(), ..Default::default() }
-    }
-}
-
-impl Interface for NfcService {}
 
 fn set_console_fd_raw(file: &mut File) {
     let fd = file.as_raw_fd();
@@ -141,54 +134,31 @@ fn set_console_fd_raw(file: &mut File) {
         .expect("Failed to set virtio-console to raw mode");
 }
 
-#[async_trait]
-impl INfcAsyncServer for NfcService {
-    async fn open(&self, callback: &Strong<dyn INfcClientCallback>) -> binder::Result<()> {
-        info!("open");
-
-        let mut status = self.status.lock().await;
-        if let NfcServiceStatus::Opened(_) = *status {
-            status.close().await?;
-        }
-
-        let status_death_recipient = self.status.clone();
-        let mut death_recipient = DeathRecipient::new(move || {
-            let mut status = status_death_recipient.blocking_lock();
-            if let NfcServiceStatus::Opened(ref mut _client) = *status {
-                info!("Nfc service has died");
-                // Just set status to closed, because no need to unlink DeathRecipient nor send event callback.
-                *status = NfcServiceStatus::Closed;
-            }
-        });
-        callback.as_binder().link_to_death(&mut death_recipient)?;
-
-        // Must share FD for reading and writing.
-        let mut device = OpenOptions::new()
+impl NfcService {
+    pub async fn new(dev_path: &Path) -> NfcService {
+        // Important notes:
+        // - Must clone FD for writing and reading. Otherwise can't read data from host side.
+        // - Must not be closed while HAL is running. Otherwise packet loss may happen.
+        let mut writer = OpenOptions::new()
             .read(true)
             .write(true)
-            .open(self.dev_path.as_path())
+            .open(dev_path)
             .await
             .expect("Failed to open virtio-console device");
 
         // Make FD raw mode for sending raw bytes via console driver (virtio-console),
-        set_console_fd_raw(&mut device);
+        set_console_fd_raw(&mut writer);
 
-        *status = NfcServiceStatus::Opened(NfcClient {
-            callback: callback.clone(),
-            death_recipient,
-            device,
-            tasks: JoinSet::new(),
-        });
-
-        let client = status.unwrap_mut_opened();
         // Must clone FD -- otherwise read may not get incoming data from host side.
-        let mut reader = client
-            .device
-            .try_clone()
-            .await
-            .expect("Failed to prepare virtio-console device for reading");
-        let state_read_task = self.status.clone();
-        client.tasks.spawn(async move {
+        let mut reader =
+            writer.try_clone().await.expect("Failed to prepare virtio-console device for reading");
+        let mut tasks = JoinSet::new();
+        let status = Arc::new(Mutex::new(NfcServiceStatus { writer, session: Default::default() }));
+        let status_clone = status.clone();
+
+        // Keep this task running forever to prevent packet loss. read_exact() may partially read
+        // packets and dropped if cancelled.
+        tasks.spawn(async move {
             let mut buf = [0_u8; BUF_SIZE];
             loop {
                 reader
@@ -201,28 +171,60 @@ impl INfcAsyncServer for NfcService {
                     .await
                     .expect("Failed to read from virtio-console device");
 
-                let mut status = state_read_task.lock().await;
-                if let NfcServiceStatus::Opened(ref mut client) = *status {
+                let status = status_clone.lock().await;
+                if let NfcSession::Opened(ref client) = status.session {
                     if let Err(e) = client.send_data_callback(&buf[0..total_packet_length]) {
                         info!("Failed to send data callback. Maybe closed?: err={e:?}");
                         // If client is disconnected, DeathRecipient will handle clean up.
                     }
                 } else {
-                    info!("Nfc service is closed");
+                    info!("Nfc service is closed. Dropping incoming packets");
                     break;
                 }
             }
         });
 
-        client.send_event_callback(NfcEvent::OPEN_CPLT, NfcStatus::OK)
+        NfcService { _tasks: tasks, status, config: Default::default() }
+    }
+}
+
+impl Interface for NfcService {}
+
+#[async_trait]
+impl INfcAsyncServer for NfcService {
+    async fn open(&self, callback: &Strong<dyn INfcClientCallback>) -> binder::Result<()> {
+        info!("open");
+
+        let mut status = self.status.lock().await;
+        if let NfcSession::Opened(ref _client) = status.session {
+            info!("already opened. closing first.");
+            status.close().await?;
+        }
+
+        let status_death_recipient = self.status.clone();
+        let mut death_recipient = DeathRecipient::new(move || {
+            let mut status = status_death_recipient.blocking_lock();
+            if let NfcSession::Opened(ref _client) = status.session {
+                info!("Nfc service has died");
+                // Just set status to closed, because no need to unlink DeathRecipient nor send event callback.
+                status.session = NfcSession::Closed;
+            }
+        });
+        callback.as_binder().link_to_death(&mut death_recipient)?;
+
+        status.session =
+            NfcSession::Opened(NfcClient { callback: callback.clone(), death_recipient });
+
+        let session = status.unwrap_mut_opened();
+        session.send_event_callback(NfcEvent::OPEN_CPLT, NfcStatus::OK)
     }
 
     async fn close(&self, _close_type: NfcCloseType) -> binder::Result<()> {
         info!("close");
 
         let mut status = self.status.lock().await;
-        match *status {
-            NfcServiceStatus::Opened(_) => status.close().await,
+        match status.session {
+            NfcSession::Opened(_) => status.close().await,
             _ => {
                 error!("NFC isn't opened");
                 Err(binder::Status::new_service_specific_error(NfcStatus::FAILED.0, None))
@@ -280,8 +282,8 @@ impl INfcAsyncServer for NfcService {
     async fn write(&self, data: &[u8]) -> binder::Result<i32> {
         info!("write");
         let mut status = self.status.lock().await;
-        let client = status.ensure_opened_mut()?;
-        client.device.write_all(data).await.expect("Failed to write virtio-console device");
+        let (writer, _) = status.ensure_opened_mut()?;
+        writer.write_all(data).await.expect("Failed to write virtio-console device");
 
         Ok(data.len().try_into().unwrap())
     }
