@@ -4,7 +4,7 @@ hal_server_domain(hal_keymint_rust, hal_keymint)
 type hal_keymint_rust_exec, exec_type, vendor_file_type, file_type;
 init_daemon_domain(hal_keymint_rust)
 
-type keymint_device, file_type;
+type keymint_device, dev_type;
 
 allow hal_keymint_rust device:dir r_dir_perms;
 allow hal_keymint_rust keymint_device:chr_file rw_file_perms;
