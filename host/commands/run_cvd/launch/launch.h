@@ -101,7 +101,8 @@ NetsimServerComponent();
 
 Result<MonitorCommand> SecureEnv(const CuttlefishConfig&,
                                  const CuttlefishConfig::InstanceSpecific&,
-                                 SecureEnvFiles&, KernelLogPipeProvider&);
+                                 AutoSecureEnvFiles::Type&,
+                                 KernelLogPipeProvider&);
 
 Result<MonitorCommand> TombstoneReceiver(
     const CuttlefishConfig::InstanceSpecific&);
