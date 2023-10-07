@@ -29,65 +29,34 @@
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
-namespace {
 
-class Casimir : public CommandSource {
- public:
-  INJECT(Casimir(const CuttlefishConfig& config,
-                 const CuttlefishConfig::InstanceSpecific& instance,
-                 LogTeeCreator& log_tee))
-      : config_(config), instance_(instance), log_tee_(log_tee) {}
-
-  // CommandSource
-  Result<std::vector<MonitorCommand>> Commands() override {
-    if (!Enabled()) {
-      return {};
-    }
-    Command command(ProcessRestarterBinary());
-    command.AddParameter("-when_killed");
-    command.AddParameter("-when_dumped");
-    command.AddParameter("-when_exited_with_failure");
-    command.AddParameter("--");
-
-    command.AddParameter(CasimirBinary());
-    command.AddParameter("--nci-port");
-    command.AddParameter(config_.casimir_nci_port());
-    command.AddParameter("--rf-port");
-    command.AddParameter(config_.casimir_rf_port());
-    for (auto const& arg : config_.casimir_args()) {
-      command.AddParameter(arg);
-    }
-
-    std::vector<MonitorCommand> commands;
-    commands.emplace_back(std::move(log_tee_.CreateLogTee(command, "casimir")));
-    commands.emplace_back(std::move(command));
-    return commands;
+std::vector<MonitorCommand> Casimir(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    LogTeeCreator& log_tee) {
+  if (!(config.enable_host_nfc() && instance.start_casimir())) {
+    return {};
   }
 
-  // SetupFeature
-  std::string Name() const override { return "Casimir"; }
-  bool Enabled() const override {
-    return config_.enable_host_nfc() && instance_.start_casimir();
+  Command command(ProcessRestarterBinary());
+  command.AddParameter("-when_killed");
+  command.AddParameter("-when_dumped");
+  command.AddParameter("-when_exited_with_failure");
+  command.AddParameter("--");
+
+  command.AddParameter(CasimirBinary());
+  command.AddParameter("--nci-port");
+  command.AddParameter(config.casimir_nci_port());
+  command.AddParameter("--rf-port");
+  command.AddParameter(config.casimir_rf_port());
+  for (auto const& arg : config.casimir_args()) {
+    command.AddParameter(arg);
   }
 
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override { return {}; }
-
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  LogTeeCreator& log_tee_;
-};
-
-}  // namespace
-
-fruit::Component<
-    fruit::Required<const CuttlefishConfig,
-                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
-CasimirComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CommandSource, Casimir>()
-      .addMultibinding<SetupFeature, Casimir>();
+  std::vector<MonitorCommand> commands;
+  commands.emplace_back(log_tee.CreateLogTee(command, "casimir"));
+  commands.emplace_back(std::move(command));
+  return commands;
 }
 
 }  // namespace cuttlefish
