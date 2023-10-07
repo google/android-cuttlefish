@@ -25,69 +25,26 @@
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
-namespace {
 
-class Pica : public CommandSource {
- public:
-  INJECT(Pica(const CuttlefishConfig& config,
-                   const CuttlefishConfig::InstanceSpecific& instance,
-                   LogTeeCreator& log_tee))
-      : config_(config), instance_(instance), log_tee_(log_tee) {}
-
-  Result<void> ResultSetup() override {
-    if (!Enabled()) {
-      return {};
-    }
-
-    pcap_dir_ = instance_.PerInstanceLogPath("/pica/");
-    CF_EXPECT(EnsureDirectoryExists(pcap_dir_),
-              "Pica pcap directory cannot be created.");
+Result<std::vector<MonitorCommand>> Pica(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    LogTeeCreator& log_tee) {
+  if (!(config.enable_host_uwb_connector() && instance.start_pica())) {
     return {};
   }
+  auto pcap_dir = instance.PerInstanceLogPath("/pica/");
+  CF_EXPECT(EnsureDirectoryExists(pcap_dir),
+            "Pica pcap directory cannot be created.");
 
-  // CommandSource
-  Result<std::vector<MonitorCommand>> Commands() override {
-    if (!Enabled()) {
-      return {};
-    }
-    Command command(PicaBinary());
+  auto pica = Command(PicaBinary())
+                  .AddParameter("--uci-port=", config.pica_uci_port())
+                  .AddParameter("--pcap-dir=", pcap_dir);
 
-    // UCI server port
-    command.AddParameter("--uci-port=", config_.pica_uci_port());
-
-    // pcap dir
-    command.AddParameter("--pcapng-dir=", std::move(pcap_dir_));
-
-    std::vector<MonitorCommand> commands;
-    commands.emplace_back(std::move(log_tee_.CreateLogTee(command, "pica")));
-    commands.emplace_back(std::move(command));
-    return commands;
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "Pica"; }
-  bool Enabled() const override {
-    return config_.enable_host_uwb_connector() && instance_.start_pica();
-  }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-
-  std::string pcap_dir_;
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  LogTeeCreator& log_tee_;
-};
-
-}  // namespace
-
-fruit::Component<
-    fruit::Required<const CuttlefishConfig,
-                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
-PicaComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CommandSource, Pica>()
-      .addMultibinding<SetupFeature, Pica>();
+  std::vector<MonitorCommand> commands;
+  commands.emplace_back(log_tee.CreateLogTee(pica, "pica"));
+  commands.emplace_back(std::move(pica));
+  return commands;
 }
 
 }  // namespace cuttlefish
