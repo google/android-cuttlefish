@@ -19,30 +19,26 @@
 
 namespace cuttlefish {
 
-SecureEnvFiles::SecureEnvFiles(
-    const CuttlefishConfig::InstanceSpecific& instance)
-    : instance_(instance) {}
-
-Result<void> SecureEnvFiles::ResultSetup() {
+Result<SecureEnvFiles> SecureEnvFiles::Create(
+    const CuttlefishConfig::InstanceSpecific& instance) {
   auto confui_socket_path =
-      instance_.PerInstanceInternalUdsPath("confui_sign.sock");
+      instance.PerInstanceInternalUdsPath("confui_sign.sock");
   unlink(confui_socket_path.c_str());
-  confui_server_fd_ =
+  auto confui_server_fd =
       SharedFD::SocketLocalServer(confui_socket_path, false, SOCK_STREAM, 0600);
-  CF_EXPECTF(confui_server_fd_->IsOpen(), "Could not open \"{}\": {}",
-             confui_socket_path, confui_server_fd_->StrError());
+  CF_EXPECTF(confui_server_fd->IsOpen(), "Could not open \"{}\": {}",
+             confui_socket_path, confui_server_fd->StrError());
 
-  SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0, &snapshot_control_fd_,
-                       &run_cvd_to_secure_env_fd_);
+  SharedFD snapshot_control_fd;
+  SharedFD run_cvd_to_secure_env_fd;
+  CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0, &snapshot_control_fd,
+                                 &run_cvd_to_secure_env_fd));
 
-  return {};
-}
-
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
-                 SecureEnvFiles>
-SecureEnvFilesComponent() {
-  return fruit::createComponent()
-      .addMultibinding<SetupFeature, SecureEnvFiles>();
+  return SecureEnvFiles{
+      confui_server_fd,
+      snapshot_control_fd,
+      run_cvd_to_secure_env_fd,
+  };
 }
 
 }  // namespace cuttlefish
