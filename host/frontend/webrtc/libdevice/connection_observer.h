@@ -78,6 +78,9 @@ class ConnectionObserver {
       std::function<bool(const uint8_t*, size_t)> sensors_message_sender) = 0;
   virtual void OnSensorsMessage(const uint8_t* msg, size_t size) = 0;
   virtual void OnSensorsChannelClosed() = 0;
+  virtual void OnLightsChannelOpen(
+      std::function<bool(const Json::Value&)> lights_message_sender) = 0;
+  virtual void OnLightsChannelClosed() = 0;
   virtual void OnLocationChannelOpen(
       std::function<bool(const uint8_t*, size_t)> location_message_sender) = 0;
   virtual void OnLocationMessage(const uint8_t* msg, size_t size) = 0;
