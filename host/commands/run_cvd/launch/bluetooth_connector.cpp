@@ -16,8 +16,6 @@
 #include "host/commands/run_cvd/launch/launch.h"
 
 #include <string>
-#include <unordered_set>
-#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
@@ -35,62 +33,28 @@
 constexpr const size_t kBufferSize = (HCI_MAX_FRAME_SIZE + 1) * 2;
 
 namespace cuttlefish {
-namespace {
 
-class BluetoothConnector : public CommandSource {
- public:
-  INJECT(BluetoothConnector(const CuttlefishConfig& config,
-                            const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
-
-  // CommandSource
-  Result<std::vector<MonitorCommand>> Commands() override {
-    Command command(TcpConnectorBinary());
-    command.AddParameter("-fifo_out=", fifos_[0]);
-    command.AddParameter("-fifo_in=", fifos_[1]);
-    command.AddParameter("-data_port=", config_.rootcanal_hci_port());
-    command.AddParameter("-buffer_size=", kBufferSize);
-    std::vector<MonitorCommand> commands;
-    commands.emplace_back(std::move(command));
-    return commands;
+Result<MonitorCommand> BluetoothConnector(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  std::vector<std::string> fifo_paths = {
+      instance.PerInstanceInternalPath("bt_fifo_vm.in"),
+      instance.PerInstanceInternalPath("bt_fifo_vm.out"),
+  };
+  std::vector<SharedFD> fifos;
+  for (const auto& path : fifo_paths) {
+    unlink(path.c_str());
+    CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
+    auto fd = SharedFD::Open(path, O_RDWR);
+    CF_EXPECT(fd->IsOpen(),
+              "Could not open " << path << ": " << fd->StrError());
+    fifos.push_back(fd);
   }
-
-  // SetupFeature
-  std::string Name() const override { return "BluetoothConnector"; }
-  bool Enabled() const override { return config_.enable_host_bluetooth_connector(); }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() {
-    std::vector<std::string> fifo_paths = {
-        instance_.PerInstanceInternalPath("bt_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("bt_fifo_vm.out"),
-    };
-    for (const auto& path : fifo_paths) {
-      unlink(path.c_str());
-      CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
-      auto fd = SharedFD::Open(path, O_RDWR);
-      CF_EXPECT(fd->IsOpen(),
-                "Could not open " << path << ": " << fd->StrError());
-      fifos_.push_back(fd);
-    }
-    return {};
-  }
-
- private:
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  std::vector<SharedFD> fifos_;
-};
-
-}  // namespace
-
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
-BluetoothConnectorComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CommandSource, BluetoothConnector>()
-      .addMultibinding<SetupFeature, BluetoothConnector>();
+  return Command(TcpConnectorBinary())
+      .AddParameter("-fifo_out=", fifos[0])
+      .AddParameter("-fifo_in=", fifos[1])
+      .AddParameter("-data_port=", config.rootcanal_hci_port())
+      .AddParameter("-buffer_size=", kBufferSize);
 }
 
 }  // namespace cuttlefish
