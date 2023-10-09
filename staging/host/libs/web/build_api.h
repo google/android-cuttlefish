@@ -18,6 +18,7 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <tuple>
@@ -27,6 +28,7 @@
 #include <vector>
 
 #include "common/libs/utils/result.h"
+#include "host/libs/web/build_string.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
 
@@ -69,18 +71,26 @@ class BuildApi {
            const std::chrono::seconds retry_period);
   ~BuildApi() = default;
 
-  Result<std::string> LatestBuildId(const std::string& branch,
-                                    const std::string& target);
+  Result<std::optional<std::string>> LatestBuildId(const std::string& branch,
+                                                   const std::string& target);
 
   // download the artifact from the build and apply the callback
   Result<void> ArtifactToCallback(const DeviceBuild& build,
                                   const std::string& artifact,
                                   HttpClient::DataCallback callback);
 
-  // determine the format of the build source argument and parse for the
-  // relevant build identifiers
-  Result<Build> ArgumentToBuild(const std::string& arg,
-                                const std::string& default_build_target);
+  Result<Build> GetBuild(const DeviceBuildString& build_string,
+                         const std::string& fallback_target);
+  Result<Build> GetBuild(const DirectoryBuildString& build_string,
+                         const std::string& fallback_target);
+  Result<Build> GetBuild(const BuildString& build_string,
+                         const std::string& fallback_target) {
+    auto result =
+        std::visit([this, &fallback_target](
+                       auto&& arg) { return GetBuild(arg, fallback_target); },
+                   build_string);
+    return CF_EXPECT(std::move(result));
+  }
 
   Result<std::string> DownloadFile(const Build& build,
                                    const std::string& target_directory,
