@@ -229,7 +229,7 @@ int Clearcut::SendLaunchCommand(const std::string& command_line) {
     LOG(ERROR) << "Serialization failed for atest LogRequest";
     return MetricsExitCodes::kMetricsError;
   }
-  return metrics::PostRequest(logRequestStr, metrics::kLocal);
+  return metrics::PostRequest(logRequestStr, metrics::kProd);
 }
 
 }  // namespace cuttlefish
