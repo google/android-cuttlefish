@@ -57,7 +57,9 @@ Common:
     --help                    print this message
 
 Crosvm:
-  No crosvm-specific arguments at the moment
+  --snapshot_compat           Tells the device to be snapshot-compatible
+                              The device to be created is checked if it is
+                              compatible with snapshot operations
 
 QEMU:
   No QEMU-specific arguments at the moment
