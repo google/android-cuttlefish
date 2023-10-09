@@ -487,7 +487,7 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     GuestConfig ret{};
     ret.target_arch = HostArch();
     ret.bootconfig_supported = true;
-    ret.android_version_number = "0.0.0";
+    ret.android_version_number = "0";
     rets.push_back(ret);
   }
   return rets;
@@ -576,7 +576,9 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     guest_config.hctr2_supported =
         (config.find("\nCONFIG_CRYPTO_HCTR2=y") != std::string::npos) &&
         (guest_config.android_version_number != "11.0.0") &&
-        (guest_config.android_version_number != "13.0.0");
+        (guest_config.android_version_number != "13.0.0") &&
+        (guest_config.android_version_number != "11") &&
+        (guest_config.android_version_number != "13");
 
     unlink(ikconfig_path.c_str());
     guest_configs.push_back(guest_config);
