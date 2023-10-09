@@ -61,7 +61,9 @@ Result<SharedFD> LatestCvdAsFd(BuildApi& build_api) {
   static constexpr char kBuild[] = "aosp-master";
   static constexpr char kTarget[] = "aosp_cf_x86_64_phone-userdebug";
   auto latest = CF_EXPECT(build_api.LatestBuildId(kBuild, kTarget));
-  DeviceBuild build{latest, kTarget};
+  CF_EXPECT(latest.has_value(),
+            "Unable to retrieve the build id for the latest cvd");
+  DeviceBuild build{*latest, kTarget};
 
   auto fd = SharedFD::MemfdCreate("cvd");
   CF_EXPECT(fd->IsOpen(), "MemfdCreate failed: " << fd->StrError());
