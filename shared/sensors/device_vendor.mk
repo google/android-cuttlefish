@@ -28,6 +28,8 @@ ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
 endif
 endif
 
+PRODUCT_SOONG_NAMESPACES += device/google/cuttlefish/shared/sensors/multihal
+
 #
 # Sensors
 #

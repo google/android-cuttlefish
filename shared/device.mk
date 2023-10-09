@@ -35,7 +35,7 @@ BOOT_SECURITY_PATCH = $(PLATFORM_SECURITY_PATCH)
 PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.boot_security_patch=$(BOOT_SECURITY_PATCH)
 
-PRODUCT_SOONG_NAMESPACES += device/generic/goldfish # for audio and wifi
+PRODUCT_SOONG_NAMESPACES += device/generic/goldfish # for audio, wifi and sensors
 
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 DISABLE_RILD_OEM_HOOK := true
