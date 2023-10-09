@@ -279,6 +279,11 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
                                           injector, fetcher_config),
         "cuttlefish configuration initialization failed");
 
+    const std::string snapshot_path = FLAGS_snapshot_path;
+    if (!snapshot_path.empty()) {
+      CF_EXPECT(RestoreHostFiles(config.root_dir(), snapshot_path));
+    }
+
     // take the max value of modem_simulator_instance_number in each instance
     // which is used for preserving/deleting iccprofile_for_simX.xml files
     int modem_simulator_count = 0;
@@ -307,11 +312,6 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     std::set<std::string> preserving =
         CF_EXPECT(PreservingOnResume(creating_os_disk, modem_simulator_count),
                   "Error in Preserving set calculation.");
-
-    const std::string snapshot_path = FLAGS_snapshot_path;
-    if (!snapshot_path.empty()) {
-      CF_EXPECT(RestoreHostFiles(config.root_dir(), snapshot_path));
-    }
     auto instance_dirs = config.instance_dirs();
     auto environment_dirs = config.environment_dirs();
     std::vector<std::string> clean_dirs;
