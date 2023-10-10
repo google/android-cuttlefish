@@ -15,25 +15,21 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/security/confui_sign.h"
-#include "host/commands/secure_env/snapshot_control.h"
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
 class ConfUiSignServer {
  public:
   ConfUiSignServer(TpmResourceManager& tpm_resource_manager,
-                   std::shared_ptr<SnapshotController> snapshot_ctrl,
                    SharedFD server_fd);
   [[noreturn]] void MainLoop();
 
  private:
   TpmResourceManager& tpm_resource_manager_;
-  std::shared_ptr<SnapshotController> snapshot_ctrl_;
   std::string server_socket_path_;
   SharedFD server_fd_;
 };
