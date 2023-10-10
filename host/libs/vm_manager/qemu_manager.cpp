@@ -457,6 +457,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     }
   }
 
+  // /dev/hvc0 = kernel console
   // If kernel log is enabled, the virtio-console port will be specified as
   // a true console for Linux, and kernel messages will be printed there.
   // Otherwise, the port will still be set up for bootloader and userspace
@@ -469,6 +470,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   //  actually managed by the kernel as a console is handled elsewhere.)
   add_hvc_ro(instance.kernel_log_pipe_name());
 
+  // /dev/hvc1 = serial console
   if (instance.console()) {
     if (instance.kgdb() || instance.use_bootloader()) {
       add_serial_console(instance.console_pipe_prefix());
@@ -495,17 +497,23 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     add_hvc_sink();
   }
 
+  // /dev/hvc2 = serial logging
   // Serial port for logcat, redirected to a pipe
   add_hvc_ro(instance.logcat_pipe_name());
 
+  // /dev/hvc3 = keymaster (C++ implementation)
   add_hvc(instance.PerInstanceInternalPath("keymaster_fifo_vm"));
+  // /dev/hvc4 = gatekeeper
   add_hvc(instance.PerInstanceInternalPath("gatekeeper_fifo_vm"));
+  // /dev/hvc5 = bt
   if (config.enable_host_bluetooth()) {
     add_hvc(instance.PerInstanceInternalPath("bt_fifo_vm"));
   } else {
     add_hvc_sink();
   }
 
+  // /dev/hvc6 = gnss
+  // /dev/hvc7 = location
   if (instance.enable_gnss_grpc_proxy()) {
     add_hvc(instance.PerInstanceInternalPath("gnsshvc_fifo_vm"));
     add_hvc(instance.PerInstanceInternalPath("locationhvc_fifo_vm"));
@@ -526,15 +534,21 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
    * confui_fifo_vm.{in/out} are created along with the streamer process,
    * which is not created w/ QEMU.
    */
+  // /dev/hvc8 = confirmationui
   add_hvc_sink();
 
+  // /dev/hvc9 = uwb
   if (config.enable_host_uwb()) {
     add_hvc("uwb_fifo_vm");
   } else {
     add_hvc_sink();
   }
 
+  // /dev/hvc10 = oemlock
   add_hvc(instance.PerInstanceInternalPath("oemlock_fifo_vm"));
+
+  // /dev/hvc11 = keymint (Rust implementation)
+  add_hvc(instance.PerInstanceInternalPath("keymint_fifo_vm"));
 
   auto disk_num = instance.virtual_disk_paths().size();
 
