@@ -117,7 +117,6 @@ cc_library {
         "device_tpm.cpp",
         "oemlock/oemlock.cpp",
         "oemlock/oemlock_responder.cpp",
-        "snapshot_control.cpp",
         "storage/insecure_json_storage.cpp",
     ],
     target: {
@@ -162,6 +161,7 @@ cc_binary_host {
         not_windows: {
             srcs: [
                 "secure_env_not_windows_main.cpp",
+                "snapshot_control.cpp",
             ],
             static_libs: [
                 "libcuttlefish_command_util",
