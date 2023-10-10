@@ -15,9 +15,6 @@
 
 #include "confui_sign_server.h"
 
-#include <mutex>
-#include <shared_mutex>
-
 #include <android-base/logging.h>
 
 #include "host/commands/secure_env/primary_key_builder.h"
@@ -34,12 +31,9 @@ constexpr const char kConfirmationTokenMessageTag[] = "confirmation token";
 }  // namespace
 
 namespace cuttlefish {
-ConfUiSignServer::ConfUiSignServer(
-    TpmResourceManager& tpm_resource_manager,
-    std::shared_ptr<SnapshotController> snapshot_ctrl, SharedFD server_fd)
-    : tpm_resource_manager_(tpm_resource_manager),
-      snapshot_ctrl_{std::move(snapshot_ctrl)},
-      server_fd_(server_fd) {
+ConfUiSignServer::ConfUiSignServer(TpmResourceManager& tpm_resource_manager,
+                                   SharedFD server_fd)
+    : tpm_resource_manager_(tpm_resource_manager), server_fd_(server_fd) {
   auto config = cuttlefish::CuttlefishConfig::Get();
   CHECK(config) << "Config must not be null";
   auto instance = config->ForDefaultInstance();
@@ -53,10 +47,6 @@ ConfUiSignServer::ConfUiSignServer(
                                                SOCK_STREAM, 0600);
     }
     auto accepted_socket_fd = SharedFD::Accept(*server_fd_);
-    std::shared_lock<std::shared_mutex> reader_lock;
-    if (snapshot_ctrl_->Enabled()) {
-      reader_lock = std::move(snapshot_ctrl_->WaitInitializedOrResumed());
-    }
     if (!accepted_socket_fd->IsOpen()) {
       LOG(ERROR) << "Confirmation UI host signing client socket is broken.";
       continue;
