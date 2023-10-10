@@ -41,6 +41,9 @@
 # hvc10 for oemlock
 /dev/hvc10  u:object_r:oemlock_device:s0
 
+# hvc11 for keymint / Rust
+/dev/hvc11  u:object_r:keymint_device:s0
+
 # ARM serial console device
 /dev/ttyAMA[0-9]*  u:object_r:serial_device:s0
 
@@ -97,7 +100,7 @@
 /vendor/bin/hw/android\.hardware\.thermal@2\.0-service\.mock  u:object_r:hal_thermal_default_exec:s0
 /vendor/bin/hw/android\.hardware\.identity-service\.remote  u:object_r:hal_identity_remote_exec:s0
 /vendor/bin/hw/android\.hardware\.security\.keymint-service\.remote  u:object_r:hal_keymint_remote_exec:s0
-/vendor/bin/hw/android\.hardware\.security\.keymint-service\.rust  u:object_r:hal_keymint_remote_exec:s0
+/vendor/bin/hw/android\.hardware\.security\.keymint-service\.rust  u:object_r:hal_keymint_rust_exec:s0
 /vendor/bin/hw/android\.hardware\.keymaster@4\.1-service.remote  u:object_r:hal_keymaster_remote_exec:s0
 /vendor/bin/hw/android\.hardware\.gatekeeper-service.remote  u:object_r:hal_gatekeeper_remote_exec:s0
 /vendor/bin/hw/android\.hardware\.confirmationui-service.cuttlefish  u:object_r:hal_confirmationui_cuttlefish_exec:s0
