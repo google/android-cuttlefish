@@ -20,6 +20,7 @@
 
 #include <chrono>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <thread>
@@ -35,6 +36,7 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
+#include "host/libs/web/build_string.h"
 #include "host/libs/web/credential_source.h"
 
 namespace cuttlefish {
@@ -115,8 +117,8 @@ Result<std::vector<std::string>> BuildApi::Headers() {
   return headers;
 }
 
-Result<std::string> BuildApi::LatestBuildId(const std::string& branch,
-                                            const std::string& target) {
+Result<std::optional<std::string>> BuildApi::LatestBuildId(
+    const std::string& branch, const std::string& target) {
   std::string url =
       BUILD_API + "/builds?branch=" + http_client->UrlEscape(branch) +
       "&buildAttemptStatus=complete" +
@@ -137,13 +139,16 @@ Result<std::string> BuildApi::LatestBuildId(const std::string& branch,
             "Response had \"error\" but had http success status. Received \""
                 << json << "\"");
 
-  if (!json.isMember("builds") || json["builds"].size() != 1) {
-    LOG(WARNING) << "expected to receive 1 build for \"" << target << "\" on \""
-                 << branch << "\", but received " << json["builds"].size()
-                 << ". Full response was " << json;
-    // TODO(schuffelen): Return a failed Result here, and update ArgumentToBuild
-    return "";
+  if (!json.isMember("builds")) {
+    return std::nullopt;
   }
+  CF_EXPECTF(json["builds"].size() == 1,
+             "Expected to receive 1 build for \"{}\" on \"{}\", but received "
+             "{}. Full response:\n{}",
+             target, branch, json["builds"].size(), json);
+  CF_EXPECTF(json["builds"][0].isMember("buildId"),
+             "\"buildId\" member missing from response.  Full response:\n{}",
+             json);
   return json["builds"][0]["buildId"].asString();
 }
 
@@ -325,35 +330,20 @@ Result<void> BuildApi::ArtifactToFile(const DirectoryBuild& build,
                                              << build << "\"");
 }
 
-Result<Build> BuildApi::ArgumentToBuild(
-    const std::string& arg, const std::string& default_build_target) {
-  if (arg.find(':') != std::string::npos) {
-    std::vector<std::string> dirs = android::base::Split(arg, ":");
-    std::string id = dirs.back();
-    dirs.pop_back();
-    return DirectoryBuild(dirs, id);
+Result<Build> BuildApi::GetBuild(const DeviceBuildString& build_string,
+                                 const std::string& fallback_target) {
+  auto proposed_build = DeviceBuild(
+      build_string.branch_or_id, build_string.target.value_or(fallback_target));
+  auto latest_build_id =
+      CF_EXPECT(LatestBuildId(build_string.branch_or_id,
+                              build_string.target.value_or(fallback_target)));
+  if (latest_build_id) {
+    proposed_build.id = *latest_build_id;
+    LOG(INFO) << "Latest build id for branch" << build_string.branch_or_id
+              << " and target " << proposed_build.target << " is "
+              << proposed_build.id;
   }
-  size_t slash_pos = arg.find('/');
-  if (slash_pos != std::string::npos &&
-      arg.find('/', slash_pos + 1) != std::string::npos) {
-    return CF_ERR("Build argument cannot have more than one '/' slash. Was at "
-                  << slash_pos << " and " << arg.find('/', slash_pos + 1));
-  }
-  std::string build_target = slash_pos == std::string::npos
-                                 ? default_build_target
-                                 : arg.substr(slash_pos + 1);
-  std::string branch_or_id =
-      slash_pos == std::string::npos ? arg : arg.substr(0, slash_pos);
-  std::string branch_latest_build_id =
-      CF_EXPECT(LatestBuildId(branch_or_id, build_target));
-  std::string build_id = branch_or_id;
-  if (branch_latest_build_id != "") {
-    LOG(INFO) << "The latest good build on branch \"" << branch_or_id
-              << "\"with build target \"" << build_target << "\" is \""
-              << branch_latest_build_id << "\"";
-    build_id = branch_latest_build_id;
-  }
-  DeviceBuild proposed_build = DeviceBuild(build_id, build_target);
+
   std::string status = CF_EXPECT(BuildStatus(proposed_build));
   CF_EXPECT(status != "",
             proposed_build << " is not a valid branch or build id.");
@@ -368,6 +358,11 @@ Result<Build> BuildApi::ArgumentToBuild(
   LOG(INFO) << "Status for build " << proposed_build << " is " << status;
   proposed_build.product = CF_EXPECT(ProductName(proposed_build));
   return proposed_build;
+}
+
+Result<Build> BuildApi::GetBuild(const DirectoryBuildString& build_string,
+                                 const std::string&) {
+  return DirectoryBuild(build_string.paths, build_string.target);
 }
 
 Result<std::string> BuildApi::DownloadFile(const Build& build,
