@@ -17,6 +17,7 @@
 #include "host/libs/command_util/snapshot_utils.h"
 
 #include <unistd.h>
+#include <utime.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -27,6 +28,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
@@ -116,6 +118,20 @@ Result<void> CopyDirectoryImpl(
 
     CF_EXPECTF(Copy(src_path, dest_path), "Copy from {} to {} failed", src_path,
                dest_path);
+
+    auto dest_fd = SharedFD::Open(dest_path, O_RDONLY);
+    CF_EXPECT(dest_fd->IsOpen(), "Failed to open \"" << dest_path << "\"");
+    // Copy the mtime from the src file. The mtime of the disk image files can
+    // be important because we later validate that the disk overlays are not
+    // older than the disk components.
+    const struct timespec times[2] = {
+        src_stat.st_atim,
+        src_stat.st_mtim,
+    };
+    if (dest_fd->Futimens(times) != 0) {
+      return CF_ERR("futimens(\""
+                    << dest_path << "\", ...) failed: " << dest_fd->StrError());
+    }
   }
   return {};
 }
