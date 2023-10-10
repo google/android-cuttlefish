@@ -27,6 +27,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/run_cvd/launch/webrtc_recorder.h"
 #include "host/commands/run_cvd/server_loop.h"
 #include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/util.h"
@@ -45,7 +46,8 @@ class ServerLoopImpl : public ServerLoop,
  public:
   INJECT(ServerLoopImpl(const CuttlefishConfig& config,
                         const CuttlefishConfig::InstanceSpecific& instance,
-                        AutoSecureEnvFiles::Type& secure_env_files));
+                        AutoSecureEnvFiles::Type& secure_env_files,
+                        WebRtcRecorder& webrtc_recorder));
 
   Result<void> LateInject(fruit::Injector<>& injector) override;
 
@@ -98,12 +100,14 @@ class ServerLoopImpl : public ServerLoop,
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+
   /*
    * This is needed to get the run_cvd side socket pair connected to
    * secure_env. The socket pairs are used to send suspend/resume to
    * secure_env, and get the responses.
    */
   AutoSecureEnvFiles::Type& secure_env_files_;
+  WebRtcRecorder& webrtc_recorder_;
   std::vector<CommandSource*> command_sources_;
   SharedFD server_;
   // mapping from the name of vm_manager to control_sock path
