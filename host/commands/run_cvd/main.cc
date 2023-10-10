@@ -161,6 +161,7 @@ fruit::Component<> runCvdComponent(
       .install(AutoSecureEnvFiles::Component)
       .install(AutoCmd<SecureEnv>::Component)
       .install(serverLoopComponent)
+      .install(WebRtcRecorderComponent)
       .install(validationComponent)
       .install(vm_manager::VmManagerComponent);
 }
@@ -236,7 +237,6 @@ Result<void> RunCvdMain(int argc, char** argv) {
   auto config = CF_EXPECT(FindConfigFromStdin());
   auto environment = config->ForDefaultEnvironment();
   auto instance = config->ForDefaultInstance();
-
   ConfigureLogs(*config, instance);
   CF_EXPECT(ChdirIntoRuntimeDir(instance));
 
