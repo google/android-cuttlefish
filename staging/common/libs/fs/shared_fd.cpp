@@ -955,6 +955,13 @@ bool FileInstance::IsATTY() {
   return rval;
 }
 
+int FileInstance::Futimens(const struct timespec times[2]) {
+  errno = 0;
+  int rval = TEMP_FAILURE_RETRY(futimens(fd_, times));
+  errno_ = errno;
+  return rval;
+}
+
 #ifdef __linux__
 Result<std::string> FileInstance::ProcFdLinkTarget() const {
   std::stringstream output_composer;
