@@ -17,6 +17,7 @@
 
 #include <unistd.h>
 
+#include <mutex>
 #include <thread>
 
 #include "common/libs/fs/shared_buf.h"
@@ -94,14 +95,12 @@ Result<void> SnapshotController::ControllerLoop() {
   return {};
 }
 
-std::shared_lock<std::shared_mutex>
-SnapshotController::WaitInitializedOrResumed() {
+void SnapshotController::WaitInitializedOrResumed() {
   std::shared_lock reader_lock(reader_writer_mutex_);
   std::atomic<bool>* suspended_atomic_ptr = &suspended_;
   suspended_cv_.wait(reader_lock, [suspended_atomic_ptr]() {
     return !(suspended_atomic_ptr->load());
   });
-  return std::move(reader_lock);
 }
 
 }  // namespace cuttlefish
