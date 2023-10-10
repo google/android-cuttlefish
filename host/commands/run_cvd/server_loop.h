@@ -19,6 +19,7 @@
 #include <fruit/fruit.h>
 
 #include "host/commands/run_cvd/launch/secure_env_files.h"
+#include "host/commands/run_cvd/launch/webrtc_recorder.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -31,7 +32,8 @@ class ServerLoop {
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific,
-                                 AutoSecureEnvFiles::Type>,
+                                 AutoSecureEnvFiles::Type,
+                                 WebRtcRecorder>,
                  ServerLoop>
 serverLoopComponent();
 }
