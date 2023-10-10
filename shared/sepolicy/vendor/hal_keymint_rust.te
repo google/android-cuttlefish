@@ -1,0 +1,18 @@
+type hal_keymint_rust, domain;
+hal_server_domain(hal_keymint_rust, hal_keymint)
+
+type hal_keymint_rust_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(hal_keymint_rust)
+
+type keymint_device, file_type;
+
+allow hal_keymint_rust device:dir r_dir_perms;
+allow hal_keymint_rust keymint_device:chr_file rw_file_perms;
+
+# Write to kernel log (/dev/kmsg)
+allow hal_keymint_rust kmsg_device:chr_file w_file_perms;
+allow hal_keymint_rust kmsg_device:chr_file getattr;
+
+get_prop(hal_keymint_rust, vendor_security_patch_level_prop)
+get_prop(hal_keymint_rust, vendor_boot_security_patch_level_prop)
+get_prop(hal_keymint_rust, serialno_prop)
