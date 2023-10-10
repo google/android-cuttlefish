@@ -425,6 +425,10 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.AddHvcSink();
   }
 
+  crosvm_cmd.AddHvcReadWrite(
+      instance.PerInstanceInternalPath("oemlock_fifo_vm.out"),
+      instance.PerInstanceInternalPath("oemlock_fifo_vm.in"));
+
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
     crosvm_cmd.AddHvcSink();
   }
