@@ -1,0 +1,14 @@
+type hal_oemlock_remote, domain;
+hal_server_domain(hal_oemlock_remote, hal_oemlock)
+
+type hal_oemlock_remote_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(hal_oemlock_remote)
+
+type oemlock_device, file_type;
+
+allow hal_oemlock_remote device:dir r_dir_perms;
+allow hal_oemlock_remote oemlock_device:chr_file rw_file_perms;
+
+# Write to kernel log (/dev/kmsg)
+allow hal_oemlock_remote kmsg_device:chr_file w_file_perms;
+allow hal_oemlock_remote kmsg_device:chr_file getattr;
