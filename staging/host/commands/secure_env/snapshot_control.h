@@ -18,7 +18,6 @@
 #include <atomic>
 #include <condition_variable>
 #include <memory>
-#include <mutex>
 #include <shared_mutex>
 
 #include "common/libs/fs/shared_fd.h"
@@ -36,9 +35,9 @@ class SnapshotController {
   SnapshotController& operator=(SnapshotController&&) = delete;
 
   /*
-   * waits until the "suspended_" is false and returns reader lock
+   * waits until the "suspended_" is false.
    */
-  std::shared_lock<std::shared_mutex> WaitInitializedOrResumed();
+  void WaitInitializedOrResumed();
 
   bool Enabled() const { return is_crosvm_; }
 

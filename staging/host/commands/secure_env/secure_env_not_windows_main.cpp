@@ -41,7 +41,6 @@
 #include "host/commands/secure_env/oemlock/oemlock_responder.h"
 #include "host/commands/secure_env/proxy_keymaster_context.h"
 #include "host/commands/secure_env/rust/kmr_ta.h"
-#include "host/commands/secure_env/snapshot_control.h"
 #include "host/commands/secure_env/soft_gatekeeper.h"
 #include "host/commands/secure_env/storage/insecure_json_storage.h"
 #include "host/commands/secure_env/storage/storage.h"
@@ -293,89 +292,51 @@ Result<void> SecureEnvMain(int argc, char** argv) {
       keymaster::MessageVersion(keymaster::KmVersion::KEYMINT_3,
                                 0 /* km_date */)));
 
-  SharedFD channel_to_run_cvd = DupFdFlag(FLAGS_snapshot_control_fd);
-  std::shared_ptr<SnapshotController> snapshot_controller = std::move(CF_EXPECT(
-      SnapshotController::CreateSnapshotController(channel_to_run_cvd)));
-  CF_EXPECT(snapshot_controller != nullptr);
-  threads.emplace_back([&snapshot_controller]() {
-    // will send suspend/resume commands to all the other worker threads
-    snapshot_controller->ControllerLoop();
-  });
-
   auto keymaster_in = DupFdFlag(FLAGS_keymaster_fd_in);
   auto keymaster_out = DupFdFlag(FLAGS_keymaster_fd_out);
   keymaster::AndroidKeymaster* borrowed_km = keymaster.get();
-  threads.emplace_back([keymaster_in, keymaster_out, borrowed_km,
-                        &snapshot_controller]() {
+  threads.emplace_back([keymaster_in, keymaster_out, borrowed_km]() {
     while (true) {
       SharedFdKeymasterChannel keymaster_channel(keymaster_in, keymaster_out);
 
       KeymasterResponder keymaster_responder(keymaster_channel, *borrowed_km);
 
-      bool loop_continue = true;
-      do {
-        std::shared_lock<std::shared_mutex> reader_lock;
-        if (snapshot_controller->Enabled()) {
-          reader_lock =
-              std::move(snapshot_controller->WaitInitializedOrResumed());
-        }
-        loop_continue = keymaster_responder.ProcessMessage();
-        // release the reader lock.
-      } while (loop_continue);
+      while (keymaster_responder.ProcessMessage()) {
+      }
     }
   });
 
   auto gatekeeper_in = DupFdFlag(FLAGS_gatekeeper_fd_in);
   auto gatekeeper_out = DupFdFlag(FLAGS_gatekeeper_fd_out);
-  threads.emplace_back([gatekeeper_in, gatekeeper_out, &gatekeeper,
-                        &snapshot_controller]() {
+  threads.emplace_back([gatekeeper_in, gatekeeper_out, &gatekeeper]() {
     while (true) {
       SharedFdGatekeeperChannel gatekeeper_channel(gatekeeper_in,
                                                    gatekeeper_out);
 
       GatekeeperResponder gatekeeper_responder(gatekeeper_channel, *gatekeeper);
 
-      bool loop_continue = true;
-      do {
-        std::shared_lock<std::shared_mutex> reader_lock;
-        if (snapshot_controller->Enabled()) {
-          reader_lock =
-              std::move(snapshot_controller->WaitInitializedOrResumed());
-        }
-        loop_continue = gatekeeper_responder.ProcessMessage();
-        // release the reader lock.
-      } while (loop_continue);
+      while (gatekeeper_responder.ProcessMessage()) {
+      }
     }
   });
 
   auto oemlock_in = DupFdFlag(FLAGS_oemlock_fd_in);
   auto oemlock_out = DupFdFlag(FLAGS_oemlock_fd_out);
-  threads.emplace_back(
-      [oemlock_in, oemlock_out, &oemlock, &snapshot_controller]() {
-        while (true) {
-          transport::SharedFdChannel channel(oemlock_in, oemlock_out);
-          oemlock::OemLockResponder responder(channel, *oemlock);
-          bool loop_continue = true;
-          do {
-            std::shared_lock<std::shared_mutex> reader_lock;
-            if (snapshot_controller->Enabled()) {
-              reader_lock =
-                  std::move(snapshot_controller->WaitInitializedOrResumed());
-            }
-            loop_continue = responder.ProcessMessage().ok();
-            // release the reader lock.
-          } while (loop_continue);
-        }
-      });
+  threads.emplace_back([oemlock_in, oemlock_out, &oemlock]() {
+    while (true) {
+      transport::SharedFdChannel channel(oemlock_in, oemlock_out);
+      oemlock::OemLockResponder responder(channel, *oemlock);
+      while (responder.ProcessMessage().ok()) {
+      }
+    }
+  });
 
   auto confui_server_fd = DupFdFlag(FLAGS_confui_server_fd);
-  threads.emplace_back(
-      [confui_server_fd, resource_manager, &snapshot_controller]() {
-        ConfUiSignServer confui_sign_server(
-            *resource_manager, snapshot_controller, confui_server_fd);
-        // no return, infinite loop
-        confui_sign_server.MainLoop();
-      });
+  threads.emplace_back([confui_server_fd, resource_manager]() {
+    ConfUiSignServer confui_sign_server(*resource_manager, confui_server_fd);
+    // no return, infinite loop
+    confui_sign_server.MainLoop();
+  });
 
   auto kernel_events_fd = DupFdFlag(FLAGS_kernel_events_fd);
   threads.emplace_back(StartKernelEventMonitor(kernel_events_fd));
