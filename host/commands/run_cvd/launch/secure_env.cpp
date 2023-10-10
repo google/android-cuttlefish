@@ -48,15 +48,12 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
     command.AddParameter("-gatekeeper_fd_in=", fifos_[3]);
     command.AddParameter("-oemlock_fd_out=", fifos_[4]);
     command.AddParameter("-oemlock_fd_in=", fifos_[5]);
+    command.AddParameter("-keymint_fd_out=", fifos_[6]);
+    command.AddParameter("-keymint_fd_in=", fifos_[7]);
 
     const auto& secure_hals = config_.secure_hals();
     bool secure_keymint = secure_hals.count(SecureHal::Keymint) > 0;
-#ifdef CUTTLEFISH_KEYMINT_RUST
-    command.AddParameter("-keymint_impl=",
-                         secure_keymint ? "rust-tpm" : "rust-software");
-#else
     command.AddParameter("-keymint_impl=", secure_keymint ? "tpm" : "software");
-#endif
     bool secure_gatekeeper = secure_hals.count(SecureHal::Gatekeeper) > 0;
     auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
     command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
@@ -88,6 +85,8 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
         instance_.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
         instance_.PerInstanceInternalPath("oemlock_fifo_vm.in"),
         instance_.PerInstanceInternalPath("oemlock_fifo_vm.out"),
+        instance_.PerInstanceInternalPath("keymint_fifo_vm.in"),
+        instance_.PerInstanceInternalPath("keymint_fifo_vm.out"),
     };
     std::vector<SharedFD> fifos;
     for (const auto& path : fifo_paths) {
