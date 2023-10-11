@@ -203,31 +203,26 @@ CURLUcode SetCurlUrlPart(CURLU* url, CURLUPart part, const char* value) {
   return urc;
 }
 
-MetricsExitCodes PostRequest(const std::string& output,
-                             metrics::ClearcutServer server) {
-  const char *clearcut_scheme, *clearcut_host, *clearcut_path, *clearcut_port;
+std::string ClearcutServerUrl(metrics::ClearcutServer server) {
   switch (server) {
     case metrics::kLocal:
-      clearcut_scheme = "http";
-      clearcut_host = "localhost";
-      clearcut_path = "/log";
-      clearcut_port = "27910";
-      break;
+      return "http://localhost:27910/log";
+
     case metrics::kStaging:
-      clearcut_scheme = "https";
-      clearcut_host = "play.googleapis.com";
-      clearcut_path = "/staging/log";
-      clearcut_port = "443";
-      break;
+      return "https://play.googleapis.com:443/staging/log";
+
     case metrics::kProd:
-      clearcut_scheme = "https";
-      clearcut_host = "play.googleapis.com";
-      clearcut_path = "/log";
-      clearcut_port = "443";
-      break;
+      return "https://play.googleapis.com:443/log";
+
     default:
-      return cuttlefish::kInvalidHostConfiguration;
+      LOG(FATAL) << "Invalid host configuration";
+      return "";
   }
+}
+
+MetricsExitCodes PostRequest(const std::string& output,
+                             metrics::ClearcutServer server) {
+  std::string clearcut_url = ClearcutServerUrl(server);
 
   std::unique_ptr<CURLU, void (*)(CURLU*)> url(curl_url(), curl_url_cleanup);
   if (!url) {
@@ -235,10 +230,11 @@ MetricsExitCodes PostRequest(const std::string& output,
     return cuttlefish::kMetricsError;
   }
 
-  if (0 != SetCurlUrlPart(url.get(), CURLUPART_SCHEME, clearcut_scheme) ||
-      0 != SetCurlUrlPart(url.get(), CURLUPART_HOST, clearcut_host) ||
-      0 != SetCurlUrlPart(url.get(), CURLUPART_PATH, clearcut_path) ||
-      0 != SetCurlUrlPart(url.get(), CURLUPART_PORT, clearcut_port)) {
+  CURLUcode urc =
+      curl_url_set(url.get(), CURLUPART_URL, clearcut_url.c_str(), 0);
+  if (urc != 0) {
+    LOG(ERROR) << "Failed to set url to " << url.get() << clearcut_url
+               << "': " << curl_url_strerror(urc) << "'";
     return cuttlefish::kMetricsError;
   }
   curl_global_init(CURL_GLOBAL_ALL);
