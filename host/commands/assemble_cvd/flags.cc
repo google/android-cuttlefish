@@ -175,7 +175,7 @@ DEFINE_int32(
 DEFINE_string(casimir_args, CF_DEFAULTS_CASIMIR_ARGS,
               "Space-separated list of casimir args.");
 DEFINE_bool(enable_host_uwb, CF_DEFAULTS_ENABLE_HOST_UWB,
-            "Enable Pica in the host.");
+            "Enable the uwb host and the uwb connector.");
 DEFINE_int32(
     pica_instance_num, CF_DEFAULTS_ENABLE_PICA_INSTANCE_NUM,
     "If it is greater than 0, use an existing pica instance which is "
@@ -1216,9 +1216,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     pica_instance_num = FLAGS_pica_instance_num - 1;
   }
   tmp_config_obj.set_enable_host_uwb(FLAGS_enable_host_uwb);
-  tmp_config_obj.set_enable_host_uwb_connector(FLAGS_enable_host_uwb);
   tmp_config_obj.set_pica_uci_port(7000 + pica_instance_num);
-  LOG(DEBUG) << "pica_instance_num: " << pica_instance_num;
   LOG(DEBUG) << "launch pica: " << (FLAGS_pica_instance_num <= 0);
 
   // Environment specific configs
