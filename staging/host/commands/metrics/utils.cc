@@ -247,7 +247,8 @@ MetricsExitCodes PostRequest(const std::string& output,
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_out_writer);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl, CURLOPT_CURLU, url);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, output.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, output.data());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, output.size());
     CURLcode rc = curl_easy_perform(curl);
     long http_code = 0;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
