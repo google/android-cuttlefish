@@ -23,9 +23,12 @@ constexpr const size_t kBufferSize = UCI_MAX_PACKET_SIZE * 2;
 
 namespace cuttlefish {
 
-Result<MonitorCommand> UwbConnector(
+Result<std::optional<MonitorCommand>> UwbConnector(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
+  if (!config.enable_host_uwb()) {
+    return {};
+  }
   std::vector<std::string> fifo_paths = {
       instance.PerInstanceInternalPath("uwb_fifo_vm.in"),
       instance.PerInstanceInternalPath("uwb_fifo_vm.out"),
