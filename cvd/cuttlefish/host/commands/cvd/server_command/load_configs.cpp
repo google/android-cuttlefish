@@ -62,12 +62,14 @@ std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
       GflagsCompatFlag("base_directory", load_flags.base_dir)
           .Help("Parent directory for artifacts and runtime files. Defaults to "
                 "/tmp/cvd/<uid>/<timestamp>."));
-  FlagAlias alias = {FlagAliasMode::kFlagPrefix, "--override="};
-  flags.emplace_back(Flag().Alias(alias).Setter(
-      [&overrides = load_flags.overrides](const FlagMatch& m) -> Result<void> {
-        overrides.push_back(m.value);
-        return {};
-      }));
+  flags.emplace_back(GflagsCompatFlag("override")
+                         .Help("Use --override=<config_identifier>=<new_value> "
+                               "to override config values")
+                         .Setter([&overrides = load_flags.overrides](
+                                     const FlagMatch& m) -> Result<void> {
+                           overrides.push_back(m.value);
+                           return {};
+                         }));
   return flags;
 }
 
