@@ -34,38 +34,25 @@
 
 namespace cuttlefish {
 
-inline constexpr char kAndroidBuildServiceUrl[] =
-    "https://www.googleapis.com/android/internal/build/v3";
-
 struct DeviceBuild {
-  // TODO(chadreynolds): remove this constructor after refactoring restart.cpp
-  // to use DeviceBuildString and GetBuild
   DeviceBuild(std::string id, std::string target)
       : id(std::move(id)), target(std::move(target)) {}
-  DeviceBuild(std::string id, std::string target,
-              std::optional<std::string> filepath)
-      : id(std::move(id)),
-        target(std::move(target)),
-        filepath(std::move(filepath)) {}
 
   std::string id;
   std::string target;
   std::string product;
-  std::optional<std::string> filepath;
 };
 
 std::ostream& operator<<(std::ostream&, const DeviceBuild&);
 
 struct DirectoryBuild {
   // TODO(schuffelen): Support local builds other than "eng"
-  DirectoryBuild(std::vector<std::string> paths, std::string target,
-                 std::optional<std::string> filepath);
+  DirectoryBuild(std::vector<std::string> paths, std::string target);
 
   std::vector<std::string> paths;
   std::string target;
   std::string id;
   std::string product;
-  std::optional<std::string> filepath;
 };
 
 std::ostream& operator<<(std::ostream&, const DirectoryBuild&);
@@ -78,18 +65,11 @@ class BuildApi {
  public:
   BuildApi();
   BuildApi(BuildApi&&) = default;
-  BuildApi(std::unique_ptr<HttpClient> http_client,
-           std::unique_ptr<CredentialSource> credential_source,
-           std::string api_base_url);
-  BuildApi(std::unique_ptr<HttpClient> http_client,
-           std::unique_ptr<HttpClient> inner_http_client,
-           std::unique_ptr<CredentialSource> credential_source,
-           std::string api_key, const std::chrono::seconds retry_period,
-           std::string api_base_url);
+  BuildApi(std::unique_ptr<HttpClient>, std::unique_ptr<CredentialSource>);
+  BuildApi(std::unique_ptr<HttpClient>, std::unique_ptr<HttpClient>,
+           std::unique_ptr<CredentialSource>, std::string api_key,
+           const std::chrono::seconds retry_period);
   ~BuildApi() = default;
-
-  Result<std::optional<std::string>> LatestBuildId(const std::string& branch,
-                                                   const std::string& target);
 
   // download the artifact from the build and apply the callback
   Result<void> ArtifactToCallback(const DeviceBuild& build,
@@ -120,6 +100,9 @@ class BuildApi {
 
  private:
   Result<std::vector<std::string>> Headers();
+
+  Result<std::optional<std::string>> LatestBuildId(const std::string& branch,
+                                                   const std::string& target);
 
   Result<std::string> BuildStatus(const DeviceBuild&);
 
@@ -171,13 +154,10 @@ class BuildApi {
   std::unique_ptr<CredentialSource> credential_source;
   std::string api_key_;
   std::chrono::seconds retry_period_;
-  std::string api_base_url_;
 };
 
 std::string GetBuildZipName(const Build& build, const std::string& name);
 
 std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);
-
-std::optional<std::string> GetFilepath(const Build& build);
 
 }  // namespace cuttlefish
