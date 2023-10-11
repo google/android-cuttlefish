@@ -31,6 +31,7 @@ cc_library {
     ],
     static_libs: [
         "grpc_cli_libs",
+        "libabsl_host",
         "libc++fs",
         "libgflags",
     ],
