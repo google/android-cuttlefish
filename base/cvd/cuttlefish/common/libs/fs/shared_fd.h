@@ -362,6 +362,8 @@ class FileInstance {
 #endif
   bool IsATTY();
 
+  int Futimens(const struct timespec times[2]);
+
   // Returns the target of "/proc/getpid()/fd/" + std::to_string(fd_)
   // if appropriate
   Result<std::string> ProcFdLinkTarget() const;
