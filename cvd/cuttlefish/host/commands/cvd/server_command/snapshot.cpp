@@ -157,7 +157,8 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
 
     const auto& home = instance_group.HomeDir();
     const auto& android_host_out = instance_group.HostArtifactsPath();
-    auto cvd_snapshot_bin_path = CF_EXPECT(GetBin(android_host_out, subcmd));
+    auto cvd_snapshot_bin_path = android_host_out + "/bin/" +
+                                 CF_EXPECT(GetBin(android_host_out, subcmd));
     const std::string& snapshot_util_cmd = subcmd;
     cvd_common::Args cvd_snapshot_args{"--subcmd=" + snapshot_util_cmd};
     cvd_snapshot_args.insert(cvd_snapshot_args.end(), subcmd_args.begin(),
