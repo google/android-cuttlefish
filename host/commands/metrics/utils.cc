@@ -194,6 +194,15 @@ size_t curl_out_writer([[maybe_unused]] char* response, size_t size,
   return size * nmemb;
 }
 
+CURLUcode SetCurlUrlPart(CURLU* url, CURLUPart part, const char* value) {
+  CURLUcode urc = curl_url_set(url, part, value, 0);
+  if (urc != 0) {
+    LOG(ERROR) << "Failed to set url part '" << part << "' to '" << value
+               << "': Error '" << curl_url_strerror(urc) << "'";
+  }
+  return urc;
+}
+
 MetricsExitCodes PostRequest(const std::string& output,
                              metrics::ClearcutServer server) {
   const char *clearcut_scheme, *clearcut_host, *clearcut_path, *clearcut_port;
@@ -226,24 +235,10 @@ MetricsExitCodes PostRequest(const std::string& output,
     return cuttlefish::kMetricsError;
   }
 
-  CURLUcode urc = curl_url_set(url.get(), CURLUPART_SCHEME, clearcut_scheme, 0);
-  if (urc != 0) {
-    LOG(ERROR) << "failed to set url CURLUPART_SCHEME";
-    return cuttlefish::kMetricsError;
-  }
-  urc = curl_url_set(url.get(), CURLUPART_HOST, clearcut_host, 0);
-  if (urc != 0) {
-    LOG(ERROR) << "failed to set url CURLUPART_HOST";
-    return cuttlefish::kMetricsError;
-  }
-  urc = curl_url_set(url.get(), CURLUPART_PATH, clearcut_path, 0);
-  if (urc != 0) {
-    LOG(ERROR) << "failed to set url CURLUPART_PATH";
-    return cuttlefish::kMetricsError;
-  }
-  urc = curl_url_set(url.get(), CURLUPART_PORT, clearcut_port, 0);
-  if (urc != 0) {
-    LOG(ERROR) << "failed to set url CURLUPART_PORT";
+  if (0 != SetCurlUrlPart(url.get(), CURLUPART_SCHEME, clearcut_scheme) ||
+      0 != SetCurlUrlPart(url.get(), CURLUPART_HOST, clearcut_host) ||
+      0 != SetCurlUrlPart(url.get(), CURLUPART_PATH, clearcut_path) ||
+      0 != SetCurlUrlPart(url.get(), CURLUPART_PORT, clearcut_port)) {
     return cuttlefish::kMetricsError;
   }
   curl_global_init(CURL_GLOBAL_ALL);
