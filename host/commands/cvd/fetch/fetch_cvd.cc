@@ -406,7 +406,7 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
 
   return BuildApi(std::move(retrying_http_client), std::move(curl),
                   std::move(credential_source), flags.api_key,
-                  flags.wait_retry_period);
+                  flags.wait_retry_period, kAndroidBuildServiceUrl);
 }
 
 Result<std::optional<Build>> GetBuildHelper(
