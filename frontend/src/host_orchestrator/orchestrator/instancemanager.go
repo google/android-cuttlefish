@@ -294,7 +294,7 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 	out, err := fetchCmd.CombinedOutput()
 	if err != nil {
 		cvd.LogCombinedStdoutStderr(fetchCmd, string(out))
-		return err
+		return fmt.Errorf("`fetch_cvd` failed: %w. \n\nCombined Output:\n%s", err, string(out))
 	}
 	// TODO(b/286466643): Remove this hack once cuttlefish is capable of booting from read-only artifacts again.
 	chmodCmd := f.execContext(context.TODO(), "chmod", "-R", "g+rw", outDir)
