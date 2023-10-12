@@ -68,6 +68,7 @@ struct BuildApiFlags {
   std::string credential_source = kDefaultCredentialSource;
   std::chrono::seconds wait_retry_period = kDefaultWaitRetryPeriod;
   bool external_dns_resolver = kDefaultExternalDnsResolver;
+  std::string api_base_url = kAndroidBuildServiceUrl;
 };
 
 struct VectorFlags {
@@ -176,6 +177,9 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
       GflagsCompatFlag("external_dns_resolver",
                        build_api_flags.external_dns_resolver)
           .Help("Use an out-of-process mechanism to resolve DNS queries"));
+  flags.emplace_back(
+      GflagsCompatFlag("api_base_url", build_api_flags.api_base_url)
+          .Help("The base url for API requests to download artifacts from"));
 
   flags.emplace_back(
       GflagsCompatFlag("default_build", vector_flags.default_build)
@@ -406,7 +410,7 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
 
   return BuildApi(std::move(retrying_http_client), std::move(curl),
                   std::move(credential_source), flags.api_key,
-                  flags.wait_retry_period);
+                  flags.wait_retry_period, flags.api_base_url);
 }
 
 Result<std::optional<Build>> GetBuildHelper(
