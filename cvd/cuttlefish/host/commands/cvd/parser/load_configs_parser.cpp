@@ -27,6 +27,7 @@
 #include <android-base/file.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include <fmt/format.h>
 #include <json/json.h>
 
 #include "common/libs/utils/files.h"
@@ -42,30 +43,40 @@
 namespace cuttlefish {
 namespace {
 
+constexpr std::string_view kOverrideSeparator = ":";
 constexpr std::string_view kCredentialSourceOverride =
     "fetch.credential_source";
 
-Result<void> ValidateArgFormat(const std::string& str) {
-  auto equalsPos = str.find(':');
-  CF_EXPECT(equalsPos != std::string::npos,
-            "equal value is not provided in the argument");
-  std::string prefix = str.substr(0, equalsPos);
-  CF_EXPECT(!prefix.empty(), "argument value should not be empty");
-  CF_EXPECT(prefix.find('.') != std::string::npos,
-            "argument value must be dot separated");
-  CF_EXPECT(prefix[0] != '.', "argument value should not start with a dot");
-  CF_EXPECT(prefix.find("..") == std::string::npos,
-            "argument value should not contain two consecutive dots");
-  CF_EXPECT(prefix.back() != '.', "argument value should not end with a dot");
-  return {};
-}
-
-Result<void> ValidateArgsFormat(const std::vector<std::string>& strings) {
-  for (const auto& str : strings) {
-    CF_EXPECT(ValidateArgFormat(str),
-              "Invalid  argument format. " << str << " Please use arg:value");
-  }
-  return {};
+Flag GflagsCompatFlagOverride(const std::string& name,
+                              std::vector<Override>& values) {
+  return GflagsCompatFlag(name)
+      .Getter([&values]() { return android::base::Join(values, ','); })
+      .Setter([&values](const FlagMatch& match) -> Result<void> {
+        std::size_t separator_index = match.value.find(kOverrideSeparator);
+        CF_EXPECTF(separator_index != std::string::npos,
+                   "Unable to find separator \"{}\" in input \"{}\"",
+                   kOverrideSeparator, match.value);
+        auto result =
+            Override{.config_path = match.value.substr(0, separator_index),
+                     .new_value = match.value.substr(separator_index + 1)};
+        CF_EXPECTF(!result.config_path.empty(),
+                   "Config path before the separator \"{}\" cannot be empty in "
+                   "input \"{}\"",
+                   kOverrideSeparator, match.value);
+        CF_EXPECTF(!result.new_value.empty(),
+                   "New value after the separator \"{}\" cannot be empty in "
+                   "input \"{}\"",
+                   kOverrideSeparator, match.value);
+        CF_EXPECTF(result.config_path.front() != '.' &&
+                       result.config_path.back() != '.',
+                   "Config path \"{}\" must not start or end with dot",
+                   result.config_path);
+        CF_EXPECTF(result.config_path.find("..") == std::string::npos,
+                   "Config path \"{}\" cannot contain two consecutive dots",
+                   result.config_path);
+        values.emplace_back(result);
+        return {};
+      });
 }
 
 // TODO(moelsherif): expand this enum in the future to support more types (
@@ -90,8 +101,8 @@ ArgValueType GetArgValueType(const std::string& str) {
   return TEXT;
 }
 
-Json::Value ConvertArgToJson(const std::string& key,
-                             const std::string& leafValue) {
+Json::Value OverrideToJson(const std::string& key,
+                           const std::string& leafValue) {
   std::stack<std::string> levels;
   std::stringstream ks(key);
   std::string token;
@@ -136,26 +147,6 @@ Json::Value ConvertArgToJson(const std::string& key,
   return leaf;
 }
 
-Json::Value ParseArgsToJson(const std::vector<std::string>& strings) {
-  Json::Value jsonValue;
-  for (const auto& str : strings) {
-    std::string key;
-    std::string value;
-    size_t equals_pos = str.find(':');
-    if (equals_pos != std::string::npos) {
-      key = str.substr(0, equals_pos);
-      value = str.substr(equals_pos + 1);
-    } else {
-      key = str;
-      value.clear();
-      LOG(WARNING) << "No value provided for key " << key;
-      return Json::Value::null;
-    }
-    MergeTwoJsonObjs(jsonValue, ConvertArgToJson(key, value));
-  }
-  return jsonValue;
-}
-
 std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
   std::vector<Flag> flags;
   flags.emplace_back(GflagsCompatFlag("help", load_flags.help));
@@ -165,14 +156,9 @@ std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
       GflagsCompatFlag("base_directory", load_flags.base_dir)
           .Help("Parent directory for artifacts and runtime files. Defaults to "
                 "/tmp/cvd/<uid>/<timestamp>."));
-  flags.emplace_back(GflagsCompatFlag("override")
+  flags.emplace_back(GflagsCompatFlagOverride("override", load_flags.overrides)
                          .Help("Use --override=<config_identifier>:<new_value> "
-                               "to override config values")
-                         .Setter([&overrides = load_flags.overrides](
-                                     const FlagMatch& m) -> Result<void> {
-                           overrides.push_back(m.value);
-                           return {};
-                         }));
+                               "to override config values"));
   return flags;
 }
 
@@ -210,13 +196,15 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
   MakeAbsolute(load_flags.config_path, working_directory);
 
   if (!load_flags.credential_source.empty()) {
-    for (const auto& name : load_flags.overrides) {
-      CF_EXPECT(!android::base::StartsWith(name, kCredentialSourceOverride),
+    for (const auto& flag : load_flags.overrides) {
+      CF_EXPECT(!android::base::StartsWith(flag.config_path,
+                                           kCredentialSourceOverride),
                 "Specifying both --override=fetch.credential_source and the "
                 "--credential_source flag is not allowed.");
     }
-    load_flags.overrides.emplace_back(std::string(kCredentialSourceOverride) +
-                                      ":" + load_flags.credential_source);
+    load_flags.overrides.emplace_back(
+        Override{.config_path = std::string(kCredentialSourceOverride),
+                 .new_value = load_flags.credential_source});
   }
   return load_flags;
 }
@@ -237,17 +225,23 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path) {
 
 Result<Json::Value> GetOverridedJsonConfig(
     const std::string& config_path,
-    const std::vector<std::string>& override_flags) {
+    const std::vector<Override>& override_flags) {
   Json::Value result = CF_EXPECT(ParseJsonFile(config_path));
 
   if (override_flags.size() > 0) {
-    CF_EXPECT(ValidateArgsFormat(override_flags),
-              "override flag parameters are not in the correct format");
-    auto args_tree = ParseArgsToJson(override_flags);
-    MergeTwoJsonObjs(result, args_tree);
+    for (const auto& flag : override_flags) {
+      MergeTwoJsonObjs(result,
+                       OverrideToJson(flag.config_path, flag.new_value));
+    }
   }
 
   return result;
+}
+
+std::ostream& operator<<(std::ostream& out, const Override& override) {
+  fmt::print(out, "(config_path=\"{}\", new_value=\"{}\")",
+             override.config_path, override.new_value);
+  return out;
 }
 
 Result<LoadDirectories> GenerateLoadDirectories(const std::string& parent_directory,
