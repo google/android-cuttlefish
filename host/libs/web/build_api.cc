@@ -42,9 +42,6 @@
 namespace cuttlefish {
 namespace {
 
-const std::string BUILD_API =
-    "https://www.googleapis.com/android/internal/build/v3";
-
 bool StatusIsTerminal(const std::string& status) {
   const static std::set<std::string> terminal_statuses = {
       "abandoned", "complete", "error", "ABANDONED", "COMPLETE", "ERROR",
@@ -91,22 +88,27 @@ DirectoryBuild::DirectoryBuild(std::vector<std::string> paths,
   product = StringFromEnv("TARGET_PRODUCT", "");
 }
 
-BuildApi::BuildApi() : BuildApi(std::move(HttpClient::CurlClient()), nullptr) {}
+BuildApi::BuildApi()
+    : BuildApi(std::move(HttpClient::CurlClient()), nullptr,
+               kAndroidBuildServiceUrl) {}
 
 BuildApi::BuildApi(std::unique_ptr<HttpClient> http_client,
-                   std::unique_ptr<CredentialSource> credential_source)
+                   std::unique_ptr<CredentialSource> credential_source,
+                   std::string api_base_url)
     : BuildApi(std::move(http_client), nullptr, std::move(credential_source),
-               "", std::chrono::seconds(0)) {}
+               "", std::chrono::seconds(0), std::move(api_base_url)) {}
 
 BuildApi::BuildApi(std::unique_ptr<HttpClient> http_client,
                    std::unique_ptr<HttpClient> inner_http_client,
                    std::unique_ptr<CredentialSource> credential_source,
-                   std::string api_key, const std::chrono::seconds retry_period)
+                   std::string api_key, const std::chrono::seconds retry_period,
+                   std::string api_base_url)
     : http_client(std::move(http_client)),
       inner_http_client(std::move(inner_http_client)),
       credential_source(std::move(credential_source)),
       api_key_(std::move(api_key)),
-      retry_period_(retry_period) {}
+      retry_period_(retry_period),
+      api_base_url_(std::move(api_base_url)) {}
 
 Result<std::vector<std::string>> BuildApi::Headers() {
   std::vector<std::string> headers;
@@ -120,7 +122,7 @@ Result<std::vector<std::string>> BuildApi::Headers() {
 Result<std::optional<std::string>> BuildApi::LatestBuildId(
     const std::string& branch, const std::string& target) {
   std::string url =
-      BUILD_API + "/builds?branch=" + http_client->UrlEscape(branch) +
+      api_base_url_ + "/builds?branch=" + http_client->UrlEscape(branch) +
       "&buildAttemptStatus=complete" +
       "&buildType=submitted&maxResults=1&successful=true&target=" +
       http_client->UrlEscape(target);
@@ -153,8 +155,9 @@ Result<std::optional<std::string>> BuildApi::LatestBuildId(
 }
 
 Result<std::string> BuildApi::BuildStatus(const DeviceBuild& build) {
-  std::string url = BUILD_API + "/builds/" + http_client->UrlEscape(build.id) +
-                    "/" + http_client->UrlEscape(build.target);
+  std::string url = api_base_url_ + "/builds/" +
+                    http_client->UrlEscape(build.id) + "/" +
+                    http_client->UrlEscape(build.target);
   if (!api_key_.empty()) {
     url += "?key=" + http_client->UrlEscape(api_key_);
   }
@@ -173,8 +176,9 @@ Result<std::string> BuildApi::BuildStatus(const DeviceBuild& build) {
 }
 
 Result<std::string> BuildApi::ProductName(const DeviceBuild& build) {
-  std::string url = BUILD_API + "/builds/" + http_client->UrlEscape(build.id) +
-                    "/" + http_client->UrlEscape(build.target);
+  std::string url = api_base_url_ + "/builds/" +
+                    http_client->UrlEscape(build.id) + "/" +
+                    http_client->UrlEscape(build.target);
   if (!api_key_.empty()) {
     url += "?key=" + http_client->UrlEscape(api_key_);
   }
@@ -199,7 +203,7 @@ Result<std::unordered_set<std::string>> BuildApi::Artifacts(
   std::string page_token = "";
   std::unordered_set<std::string> artifacts;
   do {
-    std::string url = BUILD_API + "/builds/" +
+    std::string url = api_base_url_ + "/builds/" +
                       http_client->UrlEscape(build.id) + "/" +
                       http_client->UrlEscape(build.target) +
                       "/attempts/latest/artifacts?maxResults=100";
@@ -257,7 +261,7 @@ Result<void> BuildApi::ArtifactToCallback(const DeviceBuild& build,
                                           const std::string& artifact,
                                           HttpClient::DataCallback callback) {
   std::string download_url_endpoint =
-      BUILD_API + "/builds/" + http_client->UrlEscape(build.id) + "/" +
+      api_base_url_ + "/builds/" + http_client->UrlEscape(build.id) + "/" +
       http_client->UrlEscape(build.target) + "/attempts/latest/artifacts/" +
       http_client->UrlEscape(artifact) + "/url";
   if (!api_key_.empty()) {
@@ -287,7 +291,7 @@ Result<void> BuildApi::ArtifactToFile(const DeviceBuild& build,
                                       const std::string& artifact,
                                       const std::string& path) {
   std::string download_url_endpoint =
-      BUILD_API + "/builds/" + http_client->UrlEscape(build.id) + "/" +
+      api_base_url_ + "/builds/" + http_client->UrlEscape(build.id) + "/" +
       http_client->UrlEscape(build.target) + "/attempts/latest/artifacts/" +
       http_client->UrlEscape(artifact) + "/url";
   if (!api_key_.empty()) {
