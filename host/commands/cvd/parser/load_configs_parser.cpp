@@ -18,6 +18,7 @@
 
 #include <unistd.h>
 
+#include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <string>
@@ -29,6 +30,7 @@
 #include <json/json.h>
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
@@ -39,6 +41,9 @@
 
 namespace cuttlefish {
 namespace {
+
+constexpr std::string_view kCredentialSourceOverride =
+    "fetch.credential_source";
 
 Result<void> ValidateArgFormat(const std::string& str) {
   auto equalsPos = str.find(':');
@@ -151,7 +156,70 @@ Json::Value ParseArgsToJson(const std::vector<std::string>& strings) {
   return jsonValue;
 }
 
+std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
+  std::vector<Flag> flags;
+  flags.emplace_back(GflagsCompatFlag("help", load_flags.help));
+  flags.emplace_back(
+      GflagsCompatFlag("credential_source", load_flags.credential_source));
+  flags.emplace_back(
+      GflagsCompatFlag("base_directory", load_flags.base_dir)
+          .Help("Parent directory for artifacts and runtime files. Defaults to "
+                "/tmp/cvd/<uid>/<timestamp>."));
+  flags.emplace_back(GflagsCompatFlag("override")
+                         .Help("Use --override=<config_identifier>:<new_value> "
+                               "to override config values")
+                         .Setter([&overrides = load_flags.overrides](
+                                     const FlagMatch& m) -> Result<void> {
+                           overrides.push_back(m.value);
+                           return {};
+                         }));
+  return flags;
+}
+
+std::string DefaultBaseDir() {
+  auto time = std::chrono::system_clock::now().time_since_epoch().count();
+  std::stringstream ss;
+  ss << "/tmp/cvd/" << getuid() << "/" << time;
+  return ss.str();
+}
+
+void MakeAbsolute(std::string& path, const std::string& working_dir) {
+  if (path.size() > 0 && path[0] == '/') {
+    return;
+  }
+  path.insert(0, working_dir + "/");
+}
+
 }  // namespace
+
+Result<LoadFlags> GetFlags(std::vector<std::string>& args,
+                           const std::string& working_directory) {
+  LoadFlags load_flags;
+  auto flags = GetFlagsVector(load_flags);
+  CF_EXPECT(ParseFlags(flags, args));
+  CF_EXPECT(load_flags.help || args.size() > 0,
+            "No arguments provided to cvd load command, please provide at "
+            "least one argument (help or path to json file)");
+
+  if (load_flags.base_dir.empty()) {
+    load_flags.base_dir = DefaultBaseDir();
+  }
+  MakeAbsolute(load_flags.base_dir, working_directory);
+
+  load_flags.config_path = args.front();
+  MakeAbsolute(load_flags.config_path, working_directory);
+
+  if (!load_flags.credential_source.empty()) {
+    for (const auto& name : load_flags.overrides) {
+      CF_EXPECT(!android::base::StartsWith(name, kCredentialSourceOverride),
+                "Specifying both --override=fetch.credential_source and the "
+                "--credential_source flag is not allowed.");
+    }
+    load_flags.overrides.emplace_back(std::string(kCredentialSourceOverride) +
+                                      ":" + load_flags.credential_source);
+  }
+  return load_flags;
+}
 
 Result<Json::Value> ParseJsonFile(const std::string& file_path) {
   CF_EXPECTF(FileExists(file_path),

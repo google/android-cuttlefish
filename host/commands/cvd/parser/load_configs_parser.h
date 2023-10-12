@@ -40,6 +40,17 @@ struct LoadDirectories {
   std::string system_image_directory_flag;
 };
 
+struct LoadFlags {
+  bool help = false;
+  std::vector<std::string> overrides;
+  std::string config_path;
+  std::string credential_source;
+  std::string base_dir;
+};
+
+Result<LoadFlags> GetFlags(std::vector<std::string>& args,
+                           const std::string& working_directory);
+
 Result<Json::Value> ParseJsonFile(const std::string& file_path);
 
 Result<Json::Value> GetOverridedJsonConfig(
