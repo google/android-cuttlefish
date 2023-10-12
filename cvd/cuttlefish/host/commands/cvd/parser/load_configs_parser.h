@@ -36,7 +36,7 @@ struct LoadDirectories {
   std::string target_directory;
   std::vector<std::string> target_subdirectories;
   std::string launch_home_directory;
-  std::string first_instance_directory;
+  std::string host_package_directory;
   std::string system_image_directory_flag;
 };
 
@@ -60,7 +60,7 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
 
 Result<Json::Value> ParseJsonFile(const std::string& file_path);
 
-Result<Json::Value> GetOverridedJsonConfig(
+Result<Json::Value> GetOverriddenConfig(
     const std::string& config_path,
     const std::vector<Override>& override_flags);
 
