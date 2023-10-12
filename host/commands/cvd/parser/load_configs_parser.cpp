@@ -41,7 +41,7 @@ namespace cuttlefish {
 namespace {
 
 Result<void> ValidateArgFormat(const std::string& str) {
-  auto equalsPos = str.find('=');
+  auto equalsPos = str.find(':');
   CF_EXPECT(equalsPos != std::string::npos,
             "equal value is not provided in the argument");
   std::string prefix = str.substr(0, equalsPos);
@@ -58,7 +58,7 @@ Result<void> ValidateArgFormat(const std::string& str) {
 Result<void> ValidateArgsFormat(const std::vector<std::string>& strings) {
   for (const auto& str : strings) {
     CF_EXPECT(ValidateArgFormat(str),
-              "Invalid  argument format. " << str << " Please use arg=value");
+              "Invalid  argument format. " << str << " Please use arg:value");
   }
   return {};
 }
@@ -136,7 +136,7 @@ Json::Value ParseArgsToJson(const std::vector<std::string>& strings) {
   for (const auto& str : strings) {
     std::string key;
     std::string value;
-    size_t equals_pos = str.find('=');
+    size_t equals_pos = str.find(':');
     if (equals_pos != std::string::npos) {
       key = str.substr(0, equals_pos);
       value = str.substr(equals_pos + 1);
