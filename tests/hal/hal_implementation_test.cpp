@@ -98,7 +98,6 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.graphics.composer@2.4", // converted to AIDL, see b/193240715
     "android.hardware.graphics.mapper@2.1",
     "android.hardware.graphics.mapper@3.0",
-    "android.hardware.graphics.mapper@4.0", // converted to Stable C, see b/205761028
     "android.hardware.health.storage@1.0", // converted to AIDL, see b/177470478
     "android.hardware.health@2.1", // converted to AIDL, see b/177269435
     "android.hardware.input.classifier@1.0", // converted to AIDL, see b/205761620
