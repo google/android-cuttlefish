@@ -22,6 +22,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/user"
 	"path/filepath"
 	"sync"
 	"time"
@@ -38,9 +39,16 @@ const (
 	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
 	defaultCVDBinAndroidBuildID     = "10796991"
 	defaultCVDBinAndroidBuildTarget = "aosp_cf_x86_64_phone-trunk_staging-userdebug"
-	defaultCVDArtifactsDir          = "/var/lib/cuttlefish-common"
 	DefaultListenAddress            = "127.0.0.1"
 )
+
+func defaultCVDArtifactsDir() string {
+	u, err := user.Current()
+	if err != nil {
+		log.Fatalf("Unable to get current user uid: %v", err)
+	}
+	return fmt.Sprintf("/tmp/cvd/%s/artifacts", u.Uid)
+}
 
 func startHttpServer(addr string, port int) error {
 	log.Printf("Host Orchestrator is listening at http://%s:%d", addr, port)
@@ -94,21 +102,25 @@ func newOperatorProxy(port int) *httputil.ReverseProxy {
 }
 
 func main() {
-	httpPort := flag.Int("http_port", 1080, "Port to listen on for HTTP requests.")
+	httpPort := flag.Int("http_port", 2080, "Port to listen on for HTTP requests.")
 	httpsPort := flag.Int("https_port", -1, "Port to listen on for HTTPS requests.")
 	tlsCertDir := flag.String("tls_cert_dir", defaultTLSCertDir, "Directory with the TLS certificate.")
 	cvdUser := flag.String("cvd_user", "", "User to execute cvd as.")
-	operatorPort := flag.Int("operator_http_port", 2080, "Port where the operator is listening.")
+	operatorPort := flag.Int("operator_http_port", 1080, "Port where the operator is listening.")
 	abURL := flag.String("android_build_url", defaultAndroidBuildURL, "URL to an Android Build API.")
 	cvdBinAndroidBuildID := flag.String("cvd_build_id", defaultCVDBinAndroidBuildID, "Build ID to fetch the cvd binary from.")
 	cvdBinAndroidBuildTarget := flag.String("cvd_build_target", defaultCVDBinAndroidBuildTarget, "Build target to fetch the cvd binary from.")
-	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir, "Directory where cvd will download android build artifacts to.")
+	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir(), "Directory where cvd will download android build artifacts to.")
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
 
 	flag.Parse()
 
 	certPath := filepath.Join(*tlsCertDir, "cert.pem")
 	keyPath := filepath.Join(*tlsCertDir, "key.pem")
+
+	if err := os.MkdirAll(*imRootDir, 0774); err != nil {
+		log.Fatalf("Unable to create artifacts directory: %v", err)
+	}
 
 	imPaths := orchestrator.IMPaths{
 		RootDir:          *imRootDir,
