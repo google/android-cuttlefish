@@ -47,6 +47,7 @@ static std::map<std::string, Json::ValueType> kFetchKeyMap = {
     {"wait_retry_period", Json::ValueType::uintValue},
     {"external_dns_resolver", Json::ValueType::booleanValue},
     {"keep_downloaded_archives", Json::ValueType::booleanValue},
+    {"api_base_url", Json::ValueType::stringValue},
 };
 
 static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
