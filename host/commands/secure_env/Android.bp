@@ -120,6 +120,7 @@ cc_library {
         "oemlock/oemlock.cpp",
         "oemlock/oemlock_responder.cpp",
         "storage/insecure_json_storage.cpp",
+        "suspend_resume_handler.cpp",
     ],
     target: {
         darwin: {
