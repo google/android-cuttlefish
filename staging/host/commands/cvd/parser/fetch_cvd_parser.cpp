@@ -27,6 +27,7 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
+#include "host/libs/web/build_api.h"
 
 namespace cuttlefish {
 namespace {
@@ -63,6 +64,8 @@ Result<void> InitFetchCvdConfigs(Json::Value& root) {
                        {"fetch", "external_dns_resolver"}));
   CF_EXPECT(InitConfig(root, kDefaultKeepDownloadedArchives,
                        {"fetch", "keep_downloaded_archives"}));
+  CF_EXPECT(
+      InitConfig(root, kAndroidBuildServiceUrl, {"fetch", "api_base_url"}));
   for (auto& instance : root["instances"]) {
     CF_EXPECT(InitFetchInstanceConfigs(instance));
   }
@@ -156,6 +159,9 @@ Result<std::vector<std::string>> GenerateFetchFlags(
       GenerateGflag("keep_downloaded_archives",
                     {CF_EXPECT(GetValue<std::string>(
                         root, {"fetch", "keep_downloaded_archives"}))}));
+  result.emplace_back(GenerateGflag(
+      "api_base_url",
+      {CF_EXPECT(GetValue<std::string>(root, {"fetch", "api_base_url"}))}));
 
   result.emplace_back(
       GenerateGflag("target_subdirectory", fetch_subdirectories));

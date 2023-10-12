@@ -396,7 +396,8 @@ Result<void> TestGceDriverMain(int argc, char** argv) {
       CF_EXPECT(ServiceAccountOauthCredentialSource::FromJson(
           *curl, service_json, BUILD_SCOPE)));
 
-  BuildApi build(std::move(curl), std::move(build_creds));
+  BuildApi build(std::move(curl), std::move(build_creds),
+                 kAndroidBuildServiceUrl);
 
   ReadEvalPrintLoop executor(gce, build, STDIN_FILENO, STDOUT_FILENO,
                              internal_addresses);
