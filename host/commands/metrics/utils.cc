@@ -194,64 +194,63 @@ size_t curl_out_writer([[maybe_unused]] char* response, size_t size,
   return size * nmemb;
 }
 
-MetricsExitCodes PostRequest(const std::string& output,
-                             metrics::ClearcutServer server) {
-  const char *clearcut_scheme, *clearcut_host, *clearcut_path, *clearcut_port;
+CURLUcode SetCurlUrlPart(CURLU* url, CURLUPart part, const char* value) {
+  CURLUcode urc = curl_url_set(url, part, value, 0);
+  if (urc != 0) {
+    LOG(ERROR) << "Failed to set url part '" << part << "' to '" << value
+               << "': Error '" << curl_url_strerror(urc) << "'";
+  }
+  return urc;
+}
+
+std::string ClearcutServerUrl(metrics::ClearcutServer server) {
   switch (server) {
     case metrics::kLocal:
-      clearcut_scheme = "http";
-      clearcut_host = "localhost";
-      clearcut_path = "/log";
-      clearcut_port = "27910";
-      break;
+      return "http://localhost:27910/log";
+
     case metrics::kStaging:
-      clearcut_scheme = "https";
-      clearcut_host = "play.googleapis.com";
-      clearcut_path = "/staging/log";
-      clearcut_port = "443";
-      break;
+      return "https://play.googleapis.com:443/staging/log";
+
     case metrics::kProd:
-      clearcut_scheme = "https";
-      clearcut_host = "play.googleapis.com";
-      clearcut_path = "/log";
-      clearcut_port = "443";
-      break;
+      return "https://play.googleapis.com:443/log";
+
     default:
-      return cuttlefish::kInvalidHostConfiguration;
+      LOG(FATAL) << "Invalid host configuration";
+      return "";
+  }
+}
+
+MetricsExitCodes PostRequest(const std::string& output,
+                             metrics::ClearcutServer server) {
+  std::string clearcut_url = ClearcutServerUrl(server);
+
+  std::unique_ptr<CURLU, void (*)(CURLU*)> url(curl_url(), curl_url_cleanup);
+  if (!url) {
+    LOG(ERROR) << "Failed to initialize CURLU.";
+    return cuttlefish::kMetricsError;
   }
 
-  CURLU* url = curl_url();
-  CURLUcode urc = curl_url_set(url, CURLUPART_SCHEME, clearcut_scheme, 0);
+  CURLUcode urc =
+      curl_url_set(url.get(), CURLUPART_URL, clearcut_url.c_str(), 0);
   if (urc != 0) {
-    LOG(ERROR) << "failed to set url CURLUPART_SCHEME";
-    return cuttlefish::kMetricsError;
-  }
-  urc = curl_url_set(url, CURLUPART_HOST, clearcut_host, 0);
-  if (urc != 0) {
-    LOG(ERROR) << "failed to set url CURLUPART_HOST";
-    return cuttlefish::kMetricsError;
-  }
-  urc = curl_url_set(url, CURLUPART_PATH, clearcut_path, 0);
-  if (urc != 0) {
-    LOG(ERROR) << "failed to set url CURLUPART_PATH";
-    return cuttlefish::kMetricsError;
-  }
-  urc = curl_url_set(url, CURLUPART_PORT, clearcut_port, 0);
-  if (urc != 0) {
-    LOG(ERROR) << "failed to set url CURLUPART_PORT";
+    LOG(ERROR) << "Failed to set url to " << url.get() << clearcut_url
+               << "': " << curl_url_strerror(urc) << "'";
     return cuttlefish::kMetricsError;
   }
   curl_global_init(CURL_GLOBAL_ALL);
-  CURL* curl = curl_easy_init();
+
+  std::unique_ptr<CURL, void (*)(CURL*)> curl(curl_easy_init(),
+                                              curl_easy_cleanup);
+
   if (curl) {
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_out_writer);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    curl_easy_setopt(curl, CURLOPT_CURLU, url);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, output.data());
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, output.size());
-    CURLcode rc = curl_easy_perform(curl);
+    curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, &curl_out_writer);
+    curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl.get(), CURLOPT_CURLU, url.get());
+    curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, output.data());
+    curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDSIZE, output.size());
+    CURLcode rc = curl_easy_perform(curl.get());
     long http_code = 0;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE, &http_code);
     if (http_code == 200 && rc != CURLE_ABORTED_BY_CALLBACK) {
       LOG(INFO) << "Metrics posted to ClearCut";
     } else {
@@ -263,9 +262,10 @@ MetricsExitCodes PostRequest(const std::string& output,
       }
       return cuttlefish::kMetricsError;
     }
-    curl_easy_cleanup(curl);
+  } else {
+    LOG(ERROR) << "Failed to initialize CURL.";
+    return cuttlefish::kMetricsError;
   }
-  curl_url_cleanup(url);
   curl_global_cleanup();
   return cuttlefish::kSuccess;
 }
