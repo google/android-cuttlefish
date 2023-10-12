@@ -156,7 +156,11 @@ std::unique_ptr<LogRequest> BuildAtestLogRequest(
   ClientInfo* client_info = log_request->mutable_client_info();
   client_info->set_client_type(kCppClientType);
 
-  std::string atest_log_event = cfEvent->DebugString();
+  std::string atest_log_event;
+  if (!cfEvent->SerializeToString(&atest_log_event)) {
+    LOG(ERROR) << "Serialization failed for atest event";
+    return nullptr;
+  }
 
   LogEvent* logEvent = log_request->add_log_event();
   logEvent->set_event_time_ms(now_ms);
