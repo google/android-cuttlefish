@@ -43,7 +43,7 @@ namespace cuttlefish {
 namespace {
 
 constexpr std::string_view kCredentialSourceOverride =
-    "fetch.credential_source=";
+    "fetch.credential_source";
 
 struct LoadFlags {
   bool help = false;
@@ -62,12 +62,14 @@ std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
       GflagsCompatFlag("base_directory", load_flags.base_dir)
           .Help("Parent directory for artifacts and runtime files. Defaults to "
                 "/tmp/cvd/<uid>/<timestamp>."));
-  FlagAlias alias = {FlagAliasMode::kFlagPrefix, "--override="};
-  flags.emplace_back(Flag().Alias(alias).Setter(
-      [&overrides = load_flags.overrides](const FlagMatch& m) -> Result<void> {
-        overrides.push_back(m.value);
-        return {};
-      }));
+  flags.emplace_back(GflagsCompatFlag("override")
+                         .Help("Use --override=<config_identifier>:<new_value> "
+                               "to override config values")
+                         .Setter([&overrides = load_flags.overrides](
+                                     const FlagMatch& m) -> Result<void> {
+                           overrides.push_back(m.value);
+                           return {};
+                         }));
   return flags;
 }
 
@@ -110,7 +112,7 @@ Result<LoadFlags> GetFlags(const RequestWithStdio& request) {
                 "--credential_source flag is not allowed.");
     }
     load_flags.overrides.emplace_back(std::string(kCredentialSourceOverride) +
-                                      load_flags.credential_source);
+                                      ":" + load_flags.credential_source);
   }
   return load_flags;
 }
