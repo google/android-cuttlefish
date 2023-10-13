@@ -20,7 +20,7 @@ extern crate alloc;
 use kmr_common::crypto;
 use kmr_crypto_boring::{
     aes::BoringAes, aes_cmac::BoringAesCmac, des::BoringDes, ec::BoringEc, eq::BoringEq,
-    hmac::BoringHmac, rng::BoringRng, rsa::BoringRsa,
+    hmac::BoringHmac, rng::BoringRng, rsa::BoringRsa, sha256::BoringSha256,
 };
 use kmr_ta::device::{
     BootloaderDone, CsrSigningAlgorithm, Implementation, TrustedPresenceUnsupported,
@@ -112,6 +112,7 @@ pub unsafe fn ta_main(
         ec: Box::new(ec),
         ckdf: Box::new(BoringAesCmac),
         hkdf,
+        sha256: Box::new(BoringSha256),
     };
 
     let sign_info = attest::CertSignInfo::new();
