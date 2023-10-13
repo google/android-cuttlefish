@@ -15,7 +15,6 @@
  */
 #include "host/commands/cvd/server_command/load_configs.h"
 
-#include <chrono>
 #include <iostream>
 #include <mutex>
 #include <sstream>
@@ -23,12 +22,10 @@
 #include <string_view>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <json/json.h>
 
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
@@ -39,85 +36,6 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
-
-namespace {
-
-constexpr std::string_view kCredentialSourceOverride =
-    "fetch.credential_source";
-
-struct LoadFlags {
-  bool help = false;
-  std::vector<std::string> overrides;
-  std::string config_path;
-  std::string credential_source;
-  std::string base_dir;
-};
-
-std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
-  std::vector<Flag> flags;
-  flags.emplace_back(GflagsCompatFlag("help", load_flags.help));
-  flags.emplace_back(
-      GflagsCompatFlag("credential_source", load_flags.credential_source));
-  flags.emplace_back(
-      GflagsCompatFlag("base_directory", load_flags.base_dir)
-          .Help("Parent directory for artifacts and runtime files. Defaults to "
-                "/tmp/cvd/<uid>/<timestamp>."));
-  flags.emplace_back(GflagsCompatFlag("override")
-                         .Help("Use --override=<config_identifier>:<new_value> "
-                               "to override config values")
-                         .Setter([&overrides = load_flags.overrides](
-                                     const FlagMatch& m) -> Result<void> {
-                           overrides.push_back(m.value);
-                           return {};
-                         }));
-  return flags;
-}
-
-std::string DefaultBaseDir() {
-    auto time = std::chrono::system_clock::now().time_since_epoch().count();
-    std::stringstream ss;
-    ss << "/tmp/cvd/" << getuid() << "/" << time;
-    return ss.str();
-}
-
-void MakeAbsolute(std::string& path, const std::string& working_dir) {
-    if (path.size() > 0 && path[0] == '/') {
-      return;
-    }
-    path.insert(0, working_dir + "/");
-}
-
-Result<LoadFlags> GetFlags(const RequestWithStdio& request) {
-  LoadFlags load_flags;
-  auto flags = GetFlagsVector(load_flags);
-  auto args = ParseInvocation(request.Message()).arguments;
-  CF_EXPECT(ParseFlags(flags, args));
-  CF_EXPECT(load_flags.help || args.size() > 0,
-            "No arguments provided to cvd load command, please provide at "
-            "least one argument (help or path to json file)");
-  auto working_directory = request.Message().command_request().working_directory();
-
-  if (load_flags.base_dir.empty()) {
-    load_flags.base_dir = DefaultBaseDir();
-  }
-  MakeAbsolute(load_flags.base_dir, working_directory);
-
-  load_flags.config_path = args.front();
-  MakeAbsolute(load_flags.config_path, working_directory);
-
-  if (!load_flags.credential_source.empty()) {
-    for (const auto& name : load_flags.overrides) {
-      CF_EXPECT(!android::base::StartsWith(name, kCredentialSourceOverride),
-                "Specifying both --override=fetch.credential_source and the "
-                "--credential_source flag is not allowed.");
-    }
-    load_flags.overrides.emplace_back(std::string(kCredentialSourceOverride) +
-                                      ":" + load_flags.credential_source);
-  }
-  return load_flags;
-}
-
-}  // namespace
 
 class LoadConfigsCommand : public CvdServerHandler {
  public:
@@ -155,7 +73,10 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   Result<std::vector<RequestWithStdio>> CreateCommandSequence(
       const RequestWithStdio& request) {
-    const auto flags = CF_EXPECT(GetFlags(request));
+    auto args = ParseInvocation(request.Message()).arguments;
+    auto working_directory =
+        request.Message().command_request().working_directory();
+    const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
 
     if (flags.help) {
       std::stringstream help_msg_stream;
