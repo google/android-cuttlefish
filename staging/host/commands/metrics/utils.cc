@@ -242,30 +242,27 @@ MetricsExitCodes PostRequest(const std::string& output,
   std::unique_ptr<CURL, void (*)(CURL*)> curl(curl_easy_init(),
                                               curl_easy_cleanup);
 
-  if (curl) {
-    curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, &curl_out_writer);
-    curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYPEER, 0L);
-    curl_easy_setopt(curl.get(), CURLOPT_CURLU, url.get());
-    curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, output.data());
-    curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDSIZE, output.size());
-    CURLcode rc = curl_easy_perform(curl.get());
-    long http_code = 0;
-    curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE, &http_code);
-    if (http_code == 200 && rc != CURLE_ABORTED_BY_CALLBACK) {
-      LOG(INFO) << "Metrics posted to ClearCut";
-    } else {
-      LOG(ERROR) << "Metrics message failed: [" << output << "]";
-      LOG(ERROR) << "http error code: " << http_code;
-      if (rc != CURLE_OK) {
-        LOG(ERROR) << "curl error code: " << rc << " | "
-                   << curl_easy_strerror(rc);
-      }
-      return cuttlefish::kMetricsError;
-    }
-  } else {
+  if (!curl) {
     LOG(ERROR) << "Failed to initialize CURL.";
     return cuttlefish::kMetricsError;
   }
+
+  curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, &curl_out_writer);
+  curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYPEER, 0L);
+  curl_easy_setopt(curl.get(), CURLOPT_CURLU, url.get());
+  curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, output.data());
+  curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDSIZE, output.size());
+  CURLcode rc = curl_easy_perform(curl.get());
+  long http_code = 0;
+  curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE, &http_code);
+
+  if (rc == CURLE_ABORTED_BY_CALLBACK || http_code != 200) {
+    LOG(ERROR) << "Metrics message failed: [" << output << "]";
+    LOG(ERROR) << "http error code: " << http_code;
+    LOG(ERROR) << "curl error code: " << rc << " | " << curl_easy_strerror(rc);
+    return cuttlefish::kMetricsError;
+  }
+  LOG(INFO) << "Metrics posted to ClearCut";
   curl_global_cleanup();
   return cuttlefish::kSuccess;
 }
