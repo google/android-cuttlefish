@@ -42,12 +42,12 @@
    udev rules.
 
 3. Go to http://ci.android.com/
-4. Enter a branch name. Start with `aosp-master` if you don't know what you're
+4. Enter a branch name. Start with `aosp-main` if you don't know what you're
    looking for
 5. Navigate to `aosp_cf_x86_64_phone` and click on `userdebug` for the latest build
 
 *** promo
-   For ARM, use branch `aosp-master-throttled-copped` and device target `aosp_cf_arm64_only_phone-userdebug`
+   For ARM, use branch `aosp-main-throttled` and device target `aosp_cf_arm64_only_phone-trunk_staging-userdebug`
 ***
 
 6. Click on `Artifacts`
