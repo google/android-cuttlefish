@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+#include <string>
+#include <vector>
+
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
 Result<std::string> HandleCmds(const std::string& grpc_socket_path,
