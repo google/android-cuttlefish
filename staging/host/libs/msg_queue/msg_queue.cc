@@ -28,7 +28,27 @@
 
 #include <android-base/logging.h>
 
+#define DEFAULT_MSGQ_KEY 0x1234
+#define HASH_MULTIPLIER 5381
+
 namespace cuttlefish {
+
+key_t GenerateQueueKey(const char* str) {
+  if (str == nullptr || *str == '\0') {
+    LOG(ERROR) << "Invalid queue name provided: " << str;
+    LOG(ERROR) << "Using default msg queue key: " << DEFAULT_MSGQ_KEY;
+    return DEFAULT_MSGQ_KEY;
+  }
+
+  uint64_t hash = HASH_MULTIPLIER;
+  int c;
+
+  while ((c = *str++)) {
+    hash = ((hash << 5) + hash) + c;
+  }
+
+  return static_cast<key_t>(hash);
+}
 
 // class holds `msgid` returned from msg_queue_create, and match the lifetime of
 // the message queue to the lifetime of the object.
@@ -46,14 +66,9 @@ SysVMessageQueue::~SysVMessageQueue(void) {
 // SysVMessageQueue::Create would return an empty/null std::unique_ptr if
 // initialization failed.
 std::unique_ptr<SysVMessageQueue> SysVMessageQueue::Create(
-    const std::string& path, char proj_id, bool auto_close) {
-  // key file must exist before calling ftok
-  std::fstream fs;
-  fs.open(path, std::ios::out);
-  fs.close();
+    const std::string& path, char, bool auto_close) {
+  key_t key = GenerateQueueKey(path.c_str());
 
-  // only the owning user has access
-  key_t key = ftok(path.c_str(), proj_id);
   if (key < 0) {
     int error_num = errno;
     LOG(ERROR) << "Could not ftok to create IPC key: " << strerror(error_num);
