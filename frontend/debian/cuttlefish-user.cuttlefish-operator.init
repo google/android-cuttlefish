@@ -91,7 +91,7 @@ start() {
     --chdir "${ASSET_DIR}" \
     --background --no-close \
     --make-pidfile \
-    --exec "${DAEMON}" "${args[@]}"
+    --exec "${DAEMON}" -- "${args[@]}"
 }
 
 stop() {
