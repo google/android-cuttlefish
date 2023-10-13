@@ -19,6 +19,7 @@
 
 #include <fruit/fruit.h>
 
+#include "common/libs/utils/result.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
 
@@ -37,8 +38,8 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
                  InitializeEspImage>
 InitializeEspImageComponent();
 
-bool CreateBlankImage(
-    const std::string& image, int num_mb, const std::string& image_fmt);
+Result<void> CreateBlankImage(const std::string& image, int num_mb,
+                              const std::string& image_fmt);
 
 class InitializeMiscImage : public SetupFeature {};
 
