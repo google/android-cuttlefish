@@ -99,10 +99,21 @@ int SysVMessageQueue::Send(void* data, size_t size, bool block) {
 // type less than or equal to the absolute value of msgtyp will be read.
 ssize_t SysVMessageQueue::Receive(void* data, size_t size, long msgtyp,
                                   bool block) {
+  // Ensure data buffer has space for message type
+  if (size < sizeof(long)) {
+    LOG(ERROR) << "receive: buffer size too small";
+    return -1;
+  }
   // System call fails with errno set to ENOMSG if queue is empty and
   // non-blocking.
   int msgflg = block ? 0 : IPC_NOWAIT;
-  return msgrcv(msgid_, data, size, msgtyp, msgflg);
+  ssize_t result = msgrcv(msgid_, data, size, msgtyp, msgflg);
+  if (result == -1) {
+    LOG(ERROR) << "receive: failed to receive any messages. Error: "
+               << strerror(errno);
+  }
+
+  return result;
 }
 
 }  // namespace cuttlefish
