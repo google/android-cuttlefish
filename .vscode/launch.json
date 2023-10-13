@@ -1,0 +1,40 @@
+{
+   "configurations": [
+       {
+           "name": "Launch",
+           "type": "lldb",
+           "request": "launch",
+           "program": "${workspaceFolder}../../../../out/host/linux-x86/bin/cvd",
+           "args": [
+               "start",
+               "-verbosity",
+               "VERBOSE",
+           ],
+           "env": {
+               "HOME":"${userHome}" ,
+               "ANDROID_HOST_OUT":"${workspaceFolder}../../../../out/host/linux-x86" ,
+               "ANDROID_SOONG_HOST_OUT":"${workspaceFolder}../../../../out/host/linux-x86" ,
+               "ANDROID_PRODUCT_OUT":"${workspaceFolder}../../../../out/target/product/vsoc_x86_64" ,
+           },
+           "cwd": "${workspaceFolder}",
+           "initCommands": [
+               "settings set target.process.follow-fork-mode child",
+           ]
+       },
+       {
+           "name": "reset",
+           "type": "lldb",
+           "request": "launch",
+           "program": "${workspaceFolder}../../../../out/host/linux-x86/bin/cvd",
+           "args": [
+               "reset"
+           ],
+           "env": {
+               "HOME":"${userHome}" ,
+               "ANDROID_HOST_OUT":"${workspaceFolder}../../../../out/host/linux-x86" ,
+               "ANDROID_SOONG_HOST_OUT":"${workspaceFolder}../../../../out/host/linux-x86" ,
+               "ANDROID_PRODUCT_OUT":"${workspaceFolder}../../../../out/target/product/vsoc_x86_64" ,
+           }
+       }
+   ],
+}
