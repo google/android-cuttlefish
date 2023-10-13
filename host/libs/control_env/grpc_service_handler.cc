@@ -15,10 +15,17 @@
  */
 
 #include <filesystem>
+#include <functional>
+#include <memory>
+#include <sstream>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <android-base/strings.h>
+#include <grpcpp/security/credentials.h>
 #include <json/json.h>
+#include <test/cpp/util/cli_credentials.h>
 #include <test/cpp/util/grpc_tool.h>
 #include <test/cpp/util/test_config.h>
 
@@ -43,7 +50,7 @@ constexpr char kServiceControlEnvProxy[] = "ControlEnvProxyService";
 constexpr char kServiceControlEnvProxyFull[] =
     "controlenvproxyserver.ControlEnvProxyService";
 
-bool PrintStream(std::stringstream* ss, const grpc::string& output) {
+bool PrintStream(std::stringstream* ss, const std::string& output) {
   (*ss) << output;
   return true;
 }
@@ -54,7 +61,7 @@ class InsecureCliCredentials final : public grpc::testing::CliCredentials {
       const override {
     return InsecureChannelCredentials();
   }
-  const grpc::string GetCredentialUsage() const override { return ""; }
+  std::string GetCredentialUsage() const override { return ""; }
 };
 
 std::vector<char*> CombineArgumentsAndOptions(
