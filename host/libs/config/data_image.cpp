@@ -100,8 +100,8 @@ bool ResizeImage(const std::string& data_image, int data_image_mb,
 }
 } // namespace
 
-bool CreateBlankImage(
-    const std::string& image, int num_mb, const std::string& image_fmt) {
+Result<void> CreateBlankImage(const std::string& image, int num_mb,
+                              const std::string& image_fmt) {
   LOG(DEBUG) << "Creating " << image;
 
   off_t image_size_bytes = static_cast<off_t>(num_mb) << 20;
@@ -109,33 +109,24 @@ bool CreateBlankImage(
   // as below to zero the image file, so we don't need to do it here
   if (image_fmt != "sdcard") {
     auto fd = SharedFD::Open(image, O_CREAT | O_TRUNC | O_RDWR, 0666);
-    if (fd->Truncate(image_size_bytes) != 0) {
-      LOG(ERROR) << "`truncate --size=" << num_mb << "M " << image
-                 << "` failed:" << fd->StrError();
-      return false;
-    }
+    CF_EXPECTF(fd->Truncate(image_size_bytes) == 0,
+               "`truncate --size={}M '{}'` failed: {}", num_mb, image,
+               fd->StrError());
   }
 
   if (image_fmt == "ext4") {
-    if (Execute({"/sbin/mkfs.ext4", image}) != 0) {
-      return false;
-    }
+    CF_EXPECT(Execute({"/sbin/mkfs.ext4", image}) == 0);
   } else if (image_fmt == "f2fs") {
     auto make_f2fs_path = HostBinaryPath("make_f2fs");
-    if (Execute({make_f2fs_path, "-l", "data", image, "-C", "utf8", "-O",
-                 "compression,extra_attr,project_quota,casefold", "-g",
-                 "android"}) != 0) {
-      return false;
-    }
+    CF_EXPECT(Execute({make_f2fs_path, "-l", "data", image, "-C", "utf8", "-O",
+                       "compression,extra_attr,project_quota,casefold", "-g",
+                       "android"}) == 0);
   } else if (image_fmt == "sdcard") {
     // Reserve 1MB in the image for the MBR and padding, to simulate what
     // other OSes do by default when partitioning a drive
     off_t offset_size_bytes = 1 << 20;
     image_size_bytes -= offset_size_bytes;
-    if (!NewfsMsdos(image, num_mb, 1)) {
-      LOG(ERROR) << "Failed to create SD-Card filesystem";
-      return false;
-    }
+    CF_EXPECT(NewfsMsdos(image, num_mb, 1), "Failed to create SD-Card fs");
     // Write the MBR after the filesystem is formatted, as the formatting tools
     // don't consistently preserve the image contents
     MasterBootRecord mbr = {
@@ -147,15 +138,13 @@ bool CreateBlankImage(
         .boot_signature = {0x55, 0xAA},
     };
     auto fd = SharedFD::Open(image, O_RDWR);
-    if (WriteAllBinary(fd, &mbr) != sizeof(MasterBootRecord)) {
-      LOG(ERROR) << "Writing MBR to " << image << " failed:" << fd->StrError();
-      return false;
-    }
+    CF_EXPECTF(WriteAllBinary(fd, &mbr) == sizeof(MasterBootRecord),
+               "Writing MBR to '{}' failed: '{}'", image, fd->StrError());
   } else if (image_fmt != "none") {
     LOG(WARNING) << "Unknown image format '" << image_fmt
                  << "' for " << image << ", treating as 'none'.";
   }
-  return true;
+  return {};
 }
 
 std::string GetFsType(const std::string& path) {
