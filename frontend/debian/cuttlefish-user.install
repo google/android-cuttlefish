@@ -1,3 +1,4 @@
 src/operator/operator /usr/lib/cuttlefish-common/bin/
+src/host_orchestrator/host_orchestrator /usr/lib/cuttlefish-common/bin/
 src/operator/webui/dist/static /usr/share/cuttlefish-common/operator/
 src/operator/intercept /usr/share/cuttlefish-common/operator/
