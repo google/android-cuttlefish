@@ -66,14 +66,9 @@ SysVMessageQueue::~SysVMessageQueue(void) {
 // SysVMessageQueue::Create would return an empty/null std::unique_ptr if
 // initialization failed.
 std::unique_ptr<SysVMessageQueue> SysVMessageQueue::Create(
-    const std::string& path, char, bool auto_close) {
-  key_t key = GenerateQueueKey(path.c_str());
+    const std::string& queue_name, bool auto_close) {
+  key_t key = GenerateQueueKey(queue_name.c_str());
 
-  if (key < 0) {
-    int error_num = errno;
-    LOG(ERROR) << "Could not ftok to create IPC key: " << strerror(error_num);
-    return NULL;
-  }
   int queue_id = msgget(key, 0);
   if (queue_id < 0) {
     queue_id = msgget(key, IPC_CREAT | IPC_EXCL | 0600);

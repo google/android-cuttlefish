@@ -19,6 +19,7 @@
 
 namespace cuttlefish {
 
+// TODO(moelsherif) : move this  configuration to a common header
 const uint32_t MAX_MSG_SIZE = 200;
 
 typedef struct msg_buffer {

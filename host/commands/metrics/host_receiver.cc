@@ -32,9 +32,9 @@ MetricsHostReceiver::MetricsHostReceiver(
 MetricsHostReceiver::~MetricsHostReceiver() {}
 
 void MetricsHostReceiver::ServerLoop() {
-  auto msg_queue = cuttlefish::SysVMessageQueue::Create("cuttlefish_ipc", 'a');
+  auto msg_queue = SysVMessageQueue::Create("metrics_msg_queue");
   if (msg_queue == NULL) {
-    LOG(FATAL) << "create: failed to create cuttlefish_ipc";
+    LOG(FATAL) << "create: failed to create metrics_msg_queue";
   }
 
   struct msg_buffer msg = {0, {0}};

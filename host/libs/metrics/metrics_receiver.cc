@@ -42,9 +42,9 @@ MetricsReceiver::MetricsReceiver() {}
 MetricsReceiver::~MetricsReceiver() {}
 
 void MetricsReceiver::SendHelper(const std::string &message) {
-  auto msg_queue = SysVMessageQueue::Create("cuttlefish_ipc", 'a', false);
+  auto msg_queue = SysVMessageQueue::Create("metrics_msg_queue", false);
   if (msg_queue == NULL) {
-    LOG(FATAL) << "Create: failed to create cuttlefish_ipc";
+    LOG(FATAL) << "Create: failed to create metrics_msg_queue";
   }
 
   struct msg_buffer msg;
