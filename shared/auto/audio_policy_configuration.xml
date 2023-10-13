@@ -21,7 +21,7 @@
   Overlay resources to configure car service based on each OEM's preference.
   See also packages/services/Car/service/res/values/config.xml
 -->
-<audioPolicyConfiguration version="1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+<audioPolicyConfiguration version="7.0" xmlns:xi="http://www.w3.org/2001/XInclude">
     <!-- Global configuration Decalaration -->
     <globalConfiguration speaker_drc_enabled="true"/>
     <modules>
@@ -39,7 +39,7 @@
             </mixPort>
             <mixPort name="primary input" role="sink">
                 <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
-                    samplingRates="8000,16000" channelMasks="AUDIO_CHANNEL_IN_MONO"/>
+                    samplingRates="8000 16000" channelMasks="AUDIO_CHANNEL_IN_MONO"/>
             </mixPort>
             <mixPort name="mixport_tuner0" role="sink">
                 <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
@@ -82,6 +82,9 @@
 
       <!-- Remote Submix Audio HAL -->
       <xi:include href="r_submix_audio_policy_configuration.xml"/>
+
+      <!-- Bluetooth Audio HAL -->
+      <xi:include href="bluetooth_audio_policy_configuration_7_0.xml"/>
     </modules>
 
     <xi:include href="audio_policy_volumes.xml"/>
