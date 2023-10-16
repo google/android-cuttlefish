@@ -73,7 +73,6 @@ inline constexpr char kLogDirName[] = "logs";
 inline constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
 inline constexpr char kKernelLoadedMessage[] = "] Linux version";
 inline constexpr char kBootloaderLoadedMessage[] = "U-Boot 20";
-inline constexpr char kApName[] = "crosvm_openwrt";
 
 enum class SecureHal {
   Unknown,
@@ -131,9 +130,6 @@ class CuttlefishConfig {
 
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
-
-  std::string ap_vm_manager() const;
-  void set_ap_vm_manager(const std::string& name);
 
   struct DisplayConfig {
     int width;
@@ -204,7 +200,7 @@ class CuttlefishConfig {
   void set_netsim_args(const std::string& netsim_args);
   std::vector<std::string> netsim_args() const;
 
-  enum class Answer {
+  enum Answer {
     kUnknown = 0,
     kYes,
     kNo,
@@ -372,7 +368,6 @@ class CuttlefishConfig {
     std::string PerInstanceLogPath(const std::string& file_name) const;
 
     std::string CrosvmSocketPath() const;
-    std::string OpenwrtCrosvmSocketPath() const;
     std::string instance_dir() const;
 
     std::string instance_internal_dir() const;
@@ -388,7 +383,7 @@ class CuttlefishConfig {
 
     std::string instance_internal_uds_dir() const;
 
-    std::string touch_socket_path(int screen_idx) const;
+    std::string touch_socket_path(int touch_dev_idx) const;
     std::string rotary_socket_path() const;
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
@@ -530,7 +525,6 @@ class CuttlefishConfig {
     bool console() const;
     std::string console_dev() const;
     bool enable_sandbox() const;
-    bool enable_virtiofs() const;
 
     // KGDB configuration for kernel debugging
     bool kgdb() const;
@@ -732,7 +726,6 @@ class CuttlefishConfig {
     // Serial console
     void set_console(bool console);
     void set_enable_sandbox(const bool enable_sandbox);
-    void set_enable_virtiofs(const bool enable_virtiofs);
     void set_kgdb(bool kgdb);
     void set_target_arch(Arch target_arch);
     void set_cpus(int cpus);
