@@ -357,10 +357,8 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
     LOG(DEBUG) << "Could not parse credential file as Service Account";
     return {};
   }
-  static constexpr char BUILD_SCOPE[] =
-      "https://www.googleapis.com/auth/androidbuild.internal";
   auto result = ServiceAccountOauthCredentialSource::FromJson(
-      http_client, content, BUILD_SCOPE);
+      http_client, content, kBuildScope);
   if (!result.ok()) {
     LOG(DEBUG) << "Failed to load service account json file: \n"
                << result.error().FormatForEnv();
@@ -390,7 +388,7 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
   std::unique_ptr<CredentialSource> credential_source;
   if (flags.credential_source == "gce") {
     credential_source =
-        GceMetadataCredentialSource::make(*retrying_http_client);
+        GceMetadataCredentialSource::Make(*retrying_http_client);
   } else if (flags.credential_source == "") {
     std::string file = StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
     LOG(VERBOSE) << "Probing acloud credentials at " << file;
@@ -411,7 +409,7 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
   } else if (!FileExists(flags.credential_source)) {
     // If the parameter doesn't point to an existing file it must be the
     // credentials.
-    credential_source = FixedCredentialSource::make(flags.credential_source);
+    credential_source = FixedCredentialSource::Make(flags.credential_source);
   } else {
     // Read the file only once in case it's a pipe.
     LOG(DEBUG) << "Attempting to open credentials file \""
@@ -426,7 +424,7 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
     if (auto crds = TryParseServiceAccount(*curl, file_content)) {
       credential_source = std::move(crds);
     } else {
-      credential_source = FixedCredentialSource::make(file_content);
+      credential_source = FixedCredentialSource::Make(file_content);
     }
   }
 
