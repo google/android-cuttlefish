@@ -69,7 +69,7 @@ Result<void> GceMetadataCredentialSource::RefreshCredential() {
   return {};
 }
 
-std::unique_ptr<CredentialSource> GceMetadataCredentialSource::make(
+std::unique_ptr<CredentialSource> GceMetadataCredentialSource::Make(
     HttpClient& http_client) {
   return std::unique_ptr<CredentialSource>(
       new GceMetadataCredentialSource(http_client));
@@ -81,7 +81,7 @@ FixedCredentialSource::FixedCredentialSource(const std::string& credential) {
 
 Result<std::string> FixedCredentialSource::Credential() { return credential; }
 
-std::unique_ptr<CredentialSource> FixedCredentialSource::make(
+std::unique_ptr<CredentialSource> FixedCredentialSource::Make(
     const std::string& credential) {
   return std::unique_ptr<CredentialSource>(new FixedCredentialSource(credential));
 }
