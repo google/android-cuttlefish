@@ -386,7 +386,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         parsed_flags.build_target) {
       auto target = parsed_flags.build_target ? *parsed_flags.build_target : "";
       auto build = parsed_flags.build_id.value_or(
-          parsed_flags.branch.value_or("aosp-master"));
+          parsed_flags.branch.value_or("aosp-main"));
       host_dir += (build + target);
     } else {
       given_branch_target_info = CF_EXPECT(GetDefaultBranchBuildTarget(
@@ -418,7 +418,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       auto target =
           parsed_flags.build_target ? "/" + *parsed_flags.build_target : "";
       auto build = parsed_flags.build_id.value_or(
-          parsed_flags.branch.value_or("aosp-master"));
+          parsed_flags.branch.value_or("aosp-main"));
       fetch_command.add_args(build + target);
       fetch_command_str += (build + target);
     }
@@ -431,7 +431,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         target = "/" + target;
       }
       auto build =
-          system_build_id.value_or(system_branch.value_or("aosp-master"));
+          system_build_id.value_or(system_branch.value_or("aosp-main"));
       fetch_command.add_args(build + target);
       fetch_command_str += (build + target);
     }
@@ -455,7 +455,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       if (target != "") {
         target = "/" + target;
       }
-      auto build = boot_build_id.value_or(boot_branch.value_or("aosp-master"));
+      auto build = boot_build_id.value_or(boot_branch.value_or("aosp-main"));
       fetch_command.add_args(build + target);
       fetch_command_str += (build + target);
     }
