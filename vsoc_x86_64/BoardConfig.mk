@@ -47,6 +47,7 @@ TARGET_NATIVE_BRIDGE_2ND_ABI := armeabi-v7a armeabi
 -include device/google/cuttlefish/shared/sensors/BoardConfig.mk
 -include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
 -include device/google/cuttlefish/shared/telephony/BoardConfig.mk
+-include device/google/cuttlefish/shared/vibrator/BoardConfig.mk
 
 ifneq ($(BOARD_IS_AUTOMOTIVE), true)
 -include device/google/cuttlefish/shared/virgl/BoardConfig.mk
