@@ -113,4 +113,7 @@
   <bool name="config_wearAllowAllAppsForegroundLocation">true</bool>
   <bool name="config_telephonySingleSimDefaultSubscription">false</bool>
   <bool name="config_disableTaskSnapshots">true</bool>
+
+  <!-- Package name of the required service extension package. -->
+  <string name="config_servicesExtensionPackage" translatable="false">android.ext.services</string>
 </resources>
