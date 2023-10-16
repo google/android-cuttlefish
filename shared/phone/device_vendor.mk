@@ -72,3 +72,7 @@ PRODUCT_PACKAGES += \
     com.google.cf.nfc
 
 TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/phone/android-info.txt
+
+# Storage: for factory reset protection feature
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.frp.pst=/dev/block/by-name/frp
