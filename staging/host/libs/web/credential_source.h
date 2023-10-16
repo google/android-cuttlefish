@@ -26,6 +26,9 @@
 
 namespace cuttlefish {
 
+inline constexpr char kBuildScope[] =
+    "https://www.googleapis.com/auth/androidbuild.internal";
+
 class CredentialSource {
 public:
   virtual ~CredentialSource() = default;
@@ -45,7 +48,7 @@ class GceMetadataCredentialSource : public CredentialSource {
 
   Result<std::string> Credential() override;
 
-  static std::unique_ptr<CredentialSource> make(HttpClient&);
+  static std::unique_ptr<CredentialSource> Make(HttpClient&);
 };
 
 class FixedCredentialSource : public CredentialSource {
@@ -55,7 +58,7 @@ public:
 
   Result<std::string> Credential() override;
 
-  static std::unique_ptr<CredentialSource> make(const std::string& credential);
+  static std::unique_ptr<CredentialSource> Make(const std::string& credential);
 };
 
 class RefreshCredentialSource : public CredentialSource {
