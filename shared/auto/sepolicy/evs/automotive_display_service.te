@@ -1,2 +1,6 @@
 # Allow automotive_display_service to perform binder IPC to hal_evs_default
 binder_call(automotive_display_service_server, hal_evs_default)
+
+# Suppress warnings for minigbm trying to read vendor.minigbm.debug
+# property for the devices which do not use this property.
+dontaudit automotive_display_service_server vendor_default_prop:file read;
