@@ -372,8 +372,8 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
     LOG(VERBOSE) << "Probing acloud credentials at " << file;
     if (FileExists(file)) {
       std::ifstream stream(file);
-      auto attempt_load =
-          RefreshCredentialSource::FromOauth2ClientFile(*curl, stream);
+      auto attempt_load = RefreshCredentialSource::FromOauth2ClientFile(
+          *retrying_http_client, stream);
       if (attempt_load.ok()) {
         credential_source.reset(
             new RefreshCredentialSource(std::move(*attempt_load)));
@@ -399,7 +399,8 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
     auto size = ReadAll(file, &file_content);
     CF_EXPECT(size >= 0,
               "Failed to read credentials file: " << file->StrError());
-    if (auto crds = TryParseServiceAccount(*curl, file_content)) {
+    if (auto crds =
+            TryParseServiceAccount(*retrying_http_client, file_content)) {
       credential_source = std::move(crds);
     } else {
       credential_source = FixedCredentialSource::Make(file_content);
