@@ -38,24 +38,34 @@ inline constexpr char kAndroidBuildServiceUrl[] =
     "https://www.googleapis.com/android/internal/build/v3";
 
 struct DeviceBuild {
+  // TODO(chadreynolds): remove this constructor after refactoring restart.cpp
+  // to use DeviceBuildString and GetBuild
   DeviceBuild(std::string id, std::string target)
       : id(std::move(id)), target(std::move(target)) {}
+  DeviceBuild(std::string id, std::string target,
+              std::optional<std::string> filepath)
+      : id(std::move(id)),
+        target(std::move(target)),
+        filepath(std::move(filepath)) {}
 
   std::string id;
   std::string target;
   std::string product;
+  std::optional<std::string> filepath;
 };
 
 std::ostream& operator<<(std::ostream&, const DeviceBuild&);
 
 struct DirectoryBuild {
   // TODO(schuffelen): Support local builds other than "eng"
-  DirectoryBuild(std::vector<std::string> paths, std::string target);
+  DirectoryBuild(std::vector<std::string> paths, std::string target,
+                 std::optional<std::string> filepath);
 
   std::vector<std::string> paths;
   std::string target;
   std::string id;
   std::string product;
+  std::optional<std::string> filepath;
 };
 
 std::ostream& operator<<(std::ostream&, const DirectoryBuild&);
@@ -167,5 +177,7 @@ class BuildApi {
 std::string GetBuildZipName(const Build& build, const std::string& name);
 
 std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);
+
+std::optional<std::string> GetFilepath(const Build& build);
 
 }  // namespace cuttlefish
