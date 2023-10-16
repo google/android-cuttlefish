@@ -57,12 +57,8 @@ constexpr char kDefaultBuildTarget[] =
     "aosp_cf_x86_64_phone-trunk_staging-userdebug";
 constexpr char kUsageMessage[] =
     "*_build flags accept values in the following format:\n"
-    "{<branch> | <build_id>}[/<build_target>][{<filepath>}]\n"
-    "For example: "
-    "\"aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug{file.txt}\""
+    "{<branch> | <build_id>}[/<build_target>]\n"
     "<branch> fetches artifacts from the latest build of the argument\n"
-    "{<filepath>} is used for certain artifacts to specify the file to "
-    "download location in the build artifacts\n"
     "if <build_target> is not specified then the default build target is: ";
 constexpr mode_t kRwxAllMode = S_IRWXU | S_IRWXG | S_IRWXO;
 constexpr bool kOverrideEntries = true;
@@ -83,6 +79,7 @@ struct VectorFlags {
   std::vector<std::optional<BuildString>> bootloader_build;
   std::vector<std::optional<BuildString>> otatools_build;
   std::vector<std::optional<BuildString>> host_package_build;
+  std::vector<std::string> boot_artifact;
   std::vector<bool> download_img_zip;
   std::vector<bool> download_target_files_zip;
 };
@@ -98,6 +95,7 @@ struct BuildSourceFlags {
 };
 
 struct DownloadFlags {
+  std::string boot_artifact;
   bool download_img_zip;
   bool download_target_files_zip;
 };
@@ -146,7 +144,6 @@ Flag GflagsCompatFlagSeconds(const std::string& name,
 std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                                  BuildApiFlags& build_api_flags,
                                  VectorFlags& vector_flags,
-                                 std::vector<std::string>& boot_artifact,
                                  std::string& directory) {
   std::vector<Flag> flags;
   flags.emplace_back(
@@ -203,8 +200,9 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
       GflagsCompatFlag("host_package_build", vector_flags.host_package_build)
           .Help("source for the host cvd tools"));
 
-  flags.emplace_back(GflagsCompatFlag("boot_artifact", boot_artifact)
-                         .Help("name of the boot image in boot_build"));
+  flags.emplace_back(
+      GflagsCompatFlag("boot_artifact", vector_flags.boot_artifact)
+          .Help("name of the boot image in boot_build"));
   flags.emplace_back(GflagsCompatFlag("download_img_zip",
                                       vector_flags.download_img_zip,
                                       kDefaultDownloadImgZip)
@@ -225,15 +223,15 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   return flags;
 }
 
-Result<int> GetNumberOfBuilds(const VectorFlags& flags,
-                              const std::vector<std::string>& subdirectory_flag,
-                              const std::vector<std::string>& boot_artifact) {
+Result<int> GetNumberOfBuilds(
+    const VectorFlags& flags,
+    const std::vector<std::string>& subdirectory_flag) {
   std::optional<int> number_of_builds;
   for (const auto& flag_size :
        {flags.default_build.size(), flags.system_build.size(),
         flags.kernel_build.size(), flags.boot_build.size(),
         flags.bootloader_build.size(), flags.otatools_build.size(),
-        flags.host_package_build.size(), boot_artifact.size(),
+        flags.host_package_build.size(), flags.boot_artifact.size(),
         flags.download_img_zip.size(), flags.download_target_files_zip.size(),
         subdirectory_flag.size()}) {
     if (flag_size == 0) {
@@ -264,9 +262,7 @@ T AccessOrDefault(const std::vector<T>& vector, const int i,
 // Maps existing vectors of flags to the flag collections used for each build's
 // fetch, providing default values for flags that were not provided
 Result<std::vector<std::tuple<BuildSourceFlags, DownloadFlags, int>>>
-MapToBuildTargetFlags(const VectorFlags& flags,
-                      const std::vector<std::string>& boot_artifact,
-                      const int num_builds) {
+MapToBuildTargetFlags(const VectorFlags& flags, const int num_builds) {
   std::vector<std::tuple<BuildSourceFlags, DownloadFlags, int>> result(
       num_builds);
   for (int i = 0; i < result.size(); ++i) {
@@ -287,17 +283,13 @@ MapToBuildTargetFlags(const VectorFlags& flags,
             flags.host_package_build, i, std::nullopt),
     };
     auto download = DownloadFlags{
+        .boot_artifact =
+            AccessOrDefault<std::string>(flags.boot_artifact, i, ""),
         .download_img_zip = AccessOrDefault<bool>(flags.download_img_zip, i,
                                                   kDefaultDownloadImgZip),
         .download_target_files_zip = AccessOrDefault<bool>(
             flags.download_target_files_zip, i, kDefaultDownloadTargetFilesZip),
     };
-
-    auto possible_boot_artifact =
-        AccessOrDefault<std::string>(boot_artifact, i, "");
-    if (!possible_boot_artifact.empty() && build_source.boot_build) {
-      SetFilepath(*build_source.boot_build, possible_boot_artifact);
-    }
     result[i] = {build_source, download, i};
   }
   return result;
@@ -307,11 +299,10 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   FetchFlags fetch_flags;
   BuildApiFlags build_api_flags;
   VectorFlags vector_flags;
-  std::vector<std::string> boot_artifact;
   std::string directory;
 
-  std::vector<Flag> flags = GetFlagsVector(
-      fetch_flags, build_api_flags, vector_flags, boot_artifact, directory);
+  std::vector<Flag> flags =
+      GetFlagsVector(fetch_flags, build_api_flags, vector_flags, directory);
   std::vector<std::string> args = ArgsToVec(argc - 1, argv + 1);
   CF_EXPECT(ParseFlags(flags, args), "Could not process command line flags.");
 
@@ -326,24 +317,11 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
     }
   }
 
-  if (!boot_artifact.empty()) {
-    LOG(ERROR) << "Please use the build string filepath syntax instead of "
-                  "deprecated --boot_artifact";
-    for (const auto& build_string : vector_flags.boot_build) {
-      if (build_string) {
-        CF_EXPECT(!GetFilepath(*build_string),
-                  "Cannot use both the --boot_artifact flag and set the "
-                  "filepath in the boot build string.  Please use only the "
-                  "build string filepath");
-      }
-    }
-  }
-
   fetch_flags.build_api_flags = build_api_flags;
-  const int num_builds = CF_EXPECT(GetNumberOfBuilds(
-      vector_flags, fetch_flags.target_subdirectory, boot_artifact));
+  const int num_builds = CF_EXPECT(
+      GetNumberOfBuilds(vector_flags, fetch_flags.target_subdirectory));
   fetch_flags.build_target_flags =
-      CF_EXPECT(MapToBuildTargetFlags(vector_flags, boot_artifact, num_builds));
+      CF_EXPECT(MapToBuildTargetFlags(vector_flags, num_builds));
   return {fetch_flags};
 }
 
@@ -394,8 +372,8 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
     LOG(VERBOSE) << "Probing acloud credentials at " << file;
     if (FileExists(file)) {
       std::ifstream stream(file);
-      auto attempt_load =
-          RefreshCredentialSource::FromOauth2ClientFile(*curl, stream);
+      auto attempt_load = RefreshCredentialSource::FromOauth2ClientFile(
+          *retrying_http_client, stream);
       if (attempt_load.ok()) {
         credential_source.reset(
             new RefreshCredentialSource(std::move(*attempt_load)));
@@ -421,7 +399,8 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
     auto size = ReadAll(file, &file_content);
     CF_EXPECT(size >= 0,
               "Failed to read credentials file: " << file->StrError());
-    if (auto crds = TryParseServiceAccount(*curl, file_content)) {
+    if (auto crds =
+            TryParseServiceAccount(*retrying_http_client, file_content)) {
       credential_source = std::move(crds);
     } else {
       credential_source = FixedCredentialSource::Make(file_content);
@@ -655,23 +634,23 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
 
   if (builds.boot) {
     std::string boot_img_zip_name = GetBuildZipName(*builds.boot, "img");
-    std::string downloaded_boot_filepath;
-    std::optional<std::string> boot_filepath = GetFilepath(*builds.boot);
-    if (boot_filepath) {
-      downloaded_boot_filepath = CF_EXPECT(build_api.DownloadFileWithBackup(
-          *builds.boot, target_directories.root, *boot_filepath,
+    std::string boot_filepath;
+    if (flags.boot_artifact != "") {
+      boot_filepath = CF_EXPECT(build_api.DownloadFileWithBackup(
+          *builds.boot, target_directories.root, flags.boot_artifact,
           boot_img_zip_name));
     } else {
-      downloaded_boot_filepath = CF_EXPECT(build_api.DownloadFile(
+      boot_filepath = CF_EXPECT(build_api.DownloadFile(
           *builds.boot, target_directories.root, boot_img_zip_name));
     }
 
     std::vector<std::string> boot_files;
     // downloaded a zip that needs to be extracted
-    if (android::base::EndsWith(downloaded_boot_filepath, boot_img_zip_name)) {
-      std::string extract_target = boot_filepath.value_or("boot.img");
-      std::string extracted_boot = CF_EXPECT(ExtractImage(
-          downloaded_boot_filepath, target_directories.root, extract_target));
+    if (android::base::EndsWith(boot_filepath, boot_img_zip_name)) {
+      std::string extract_target =
+          flags.boot_artifact != "" ? flags.boot_artifact : "boot.img";
+      std::string extracted_boot = CF_EXPECT(
+          ExtractImage(boot_filepath, target_directories.root, extract_target));
       std::string target_boot = CF_EXPECT(
           RenameFile(extracted_boot, target_directories.root + "/boot.img"));
       boot_files.push_back(target_boot);
@@ -679,13 +658,13 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
       // keep_downloaded_archives flag used because this is the last extract
       // on this archive
       Result<std::string> extracted_vendor_boot_result =
-          ExtractImage(downloaded_boot_filepath, target_directories.root,
+          ExtractImage(boot_filepath, target_directories.root,
                        "vendor_boot.img", keep_downloaded_archives);
       if (extracted_vendor_boot_result.ok()) {
         boot_files.push_back(extracted_vendor_boot_result.value());
       }
     } else {
-      boot_files.push_back(downloaded_boot_filepath);
+      boot_files.push_back(boot_filepath);
     }
     const auto [boot_id, boot_target] = GetBuildIdAndTarget(*builds.boot);
     CF_EXPECT(config.AddFilesToConfig(
