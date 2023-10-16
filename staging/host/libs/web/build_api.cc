@@ -68,13 +68,13 @@ std::string BuildNameRegexp(
 
 std::ostream& operator<<(std::ostream& out, const DeviceBuild& build) {
   return out << "(id=\"" << build.id << "\", target=\"" << build.target
-             << "\")";
+             << "\", filepath=\"" << build.filepath.value_or("") << "\")";
 }
 
 std::ostream& operator<<(std::ostream& out, const DirectoryBuild& build) {
   auto paths = android::base::Join(build.paths, ":");
   return out << "(paths=\"" << paths << "\", target=\"" << build.target
-             << "\")";
+             << "\", filepath=\"" << build.filepath.value_or("") << "\")";
 }
 
 std::ostream& operator<<(std::ostream& out, const Build& build) {
@@ -83,8 +83,12 @@ std::ostream& operator<<(std::ostream& out, const Build& build) {
 }
 
 DirectoryBuild::DirectoryBuild(std::vector<std::string> paths,
-                               std::string target)
-    : paths(std::move(paths)), target(std::move(target)), id("eng") {
+                               std::string target,
+                               std::optional<std::string> filepath)
+    : paths(std::move(paths)),
+      target(std::move(target)),
+      id("eng"),
+      filepath(std::move(filepath)) {
   product = StringFromEnv("TARGET_PRODUCT", "");
 }
 
@@ -337,7 +341,8 @@ Result<void> BuildApi::ArtifactToFile(const DirectoryBuild& build,
 Result<Build> BuildApi::GetBuild(const DeviceBuildString& build_string,
                                  const std::string& fallback_target) {
   auto proposed_build = DeviceBuild(
-      build_string.branch_or_id, build_string.target.value_or(fallback_target));
+      build_string.branch_or_id, build_string.target.value_or(fallback_target),
+      build_string.filepath);
   auto latest_build_id =
       CF_EXPECT(LatestBuildId(build_string.branch_or_id,
                               build_string.target.value_or(fallback_target)));
@@ -366,7 +371,8 @@ Result<Build> BuildApi::GetBuild(const DeviceBuildString& build_string,
 
 Result<Build> BuildApi::GetBuild(const DirectoryBuildString& build_string,
                                  const std::string&) {
-  return DirectoryBuild(build_string.paths, build_string.target);
+  return DirectoryBuild(build_string.paths, build_string.target,
+                        build_string.filepath);
 }
 
 Result<std::string> BuildApi::DownloadFile(const Build& build,
@@ -417,6 +423,10 @@ std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build) {
   auto id = std::visit([](auto&& arg) { return arg.id; }, build);
   auto target = std::visit([](auto&& arg) { return arg.target; }, build);
   return {id, target};
+}
+
+std::optional<std::string> GetFilepath(const Build& build) {
+  return std::visit([](auto&& arg) { return arg.filepath; }, build);
 }
 
 }  // namespace cuttlefish
