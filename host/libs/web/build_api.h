@@ -88,9 +88,6 @@ class BuildApi {
            std::string api_base_url);
   ~BuildApi() = default;
 
-  Result<std::optional<std::string>> LatestBuildId(const std::string& branch,
-                                                   const std::string& target);
-
   // download the artifact from the build and apply the callback
   Result<void> ArtifactToCallback(const DeviceBuild& build,
                                   const std::string& artifact,
@@ -120,6 +117,9 @@ class BuildApi {
 
  private:
   Result<std::vector<std::string>> Headers();
+
+  Result<std::optional<std::string>> LatestBuildId(const std::string& branch,
+                                                   const std::string& target);
 
   Result<std::string> BuildStatus(const DeviceBuild&);
 
