@@ -20,6 +20,10 @@
 
 #include <cstdio>
 #include <iostream>
+#include <optional>
+#include <string>
+#include <variant>
+#include <vector>
 
 #include <android-base/file.h>
 #include <fruit/fruit.h>
@@ -38,6 +42,7 @@
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/web/build_api.h"
+#include "host/libs/web/build_string.h"
 
 namespace cuttlefish {
 namespace {
@@ -58,12 +63,14 @@ Modes:
 )";
 
 Result<SharedFD> LatestCvdAsFd(BuildApi& build_api) {
-  static constexpr char kBuild[] = "aosp-master";
-  static constexpr char kTarget[] = "aosp_cf_x86_64_phone-userdebug";
-  auto latest = CF_EXPECT(build_api.LatestBuildId(kBuild, kTarget));
-  CF_EXPECT(latest.has_value(),
-            "Unable to retrieve the build id for the latest cvd");
-  DeviceBuild build{*latest, kTarget};
+  static constexpr char kTarget[] =
+      "aosp_cf_x86_64_phone-trunk_staging-userdebug";
+  const auto build_string =
+      DeviceBuildString{.branch_or_id = "aosp-main", .target = kTarget};
+  Build build = CF_EXPECT(build_api.GetBuild(build_string, kTarget));
+  CF_EXPECT(std::holds_alternative<DeviceBuild>(build),
+            "Unable to process non-DeviceBuild. Something has gone wrong.");
+  DeviceBuild device_build = *std::get_if<DeviceBuild>(&build);
 
   auto fd = SharedFD::MemfdCreate("cvd");
   CF_EXPECT(fd->IsOpen(), "MemfdCreate failed: " << fd->StrError());
@@ -79,7 +86,7 @@ Result<SharedFD> LatestCvdAsFd(BuildApi& build_api) {
     }
     return true;
   };
-  CF_EXPECT(build_api.ArtifactToCallback(build, "cvd", write));
+  CF_EXPECT(build_api.ArtifactToCallback(device_build, "cvd", write));
 
   return fd;
 }
