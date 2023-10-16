@@ -90,6 +90,39 @@ TEST(ParseBuildStringTests, DeviceBuildStringMultipleSlashesFail) {
   EXPECT_THAT(result, IsError());
 }
 
+TEST(ParseBuildStringTests, FilepathExistsSuccess) {
+  auto result = ParseBuildString("abcde{filepath}");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(),
+              VariantWith<DeviceBuildString>(DeviceBuildString{
+                  .branch_or_id = "abcde", .filepath = "filepath"}));
+
+  result = ParseBuildString("abcde/target{filepath}");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(), VariantWith<DeviceBuildString>(
+                                  DeviceBuildString{.branch_or_id = "abcde",
+                                                    .target = "target",
+                                                    .filepath = "filepath"}));
+}
+
+TEST(ParseBuildStringTests, FilepathExistsMissingBracketFail) {
+  auto result = ParseBuildString("abcde{filepath");
+  EXPECT_THAT(result, IsError());
+
+  result = ParseBuildString("abcdefilepath}");
+  EXPECT_THAT(result, IsError());
+}
+
+TEST(ParseBuildStringTests, FilepathBracketsButNoValueFail) {
+  auto result = ParseBuildString("abcde{}");
+  EXPECT_THAT(result, IsError());
+}
+
+TEST(ParseBuildStringTests, FilepathOnlyFail) {
+  auto result = ParseBuildString("{filepath}");
+  EXPECT_THAT(result, IsError());
+}
+
 TEST(BuildStringGflagsCompatFlagTests, EmptyInputEmptyResultSuccess) {
   std::vector<std::optional<BuildString>> value;
   auto flag = GflagsCompatFlag("myflag", value);

@@ -28,6 +28,7 @@ namespace cuttlefish {
 struct DeviceBuildString {
   std::string branch_or_id;
   std::optional<std::string> target;
+  std::optional<std::string> filepath;
 };
 
 std::ostream& operator<<(std::ostream& out,
@@ -38,6 +39,7 @@ bool operator!=(const DeviceBuildString& lhs, const DeviceBuildString& rhs);
 struct DirectoryBuildString {
   std::vector<std::string> paths;
   std::string target;
+  std::optional<std::string> filepath;
 };
 
 std::ostream& operator<<(std::ostream& out,
@@ -53,6 +55,10 @@ std::ostream& operator<<(std::ostream& out, const BuildString& build_string);
 
 std::ostream& operator<<(std::ostream& out,
                          const std::optional<BuildString>& build_string);
+
+std::optional<std::string> GetFilepath(const BuildString& build_string);
+
+void SetFilepath(BuildString& build_string, const std::string& value);
 
 Result<BuildString> ParseBuildString(const std::string& build_string);
 
