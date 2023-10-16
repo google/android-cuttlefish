@@ -1096,10 +1096,10 @@ class DeviceControlApp {
     // NOTE: Rotation is handled automatically because the CSS rotation through
     // transforms also rotates the coordinates of events on the object.
 
-    const display_label = deviceDisplay.id;
+    const device_label = deviceDisplay.id;
 
     this.#deviceConnection.sendMultiTouch(
-        {idArr, xArr, yArr, down: ctx.down, slotArr, display_label});
+        {idArr, xArr, yArr, down: ctx.down, slotArr, device_label});
   }
 
   #updateDisplayVisibility(displayId, powerMode) {

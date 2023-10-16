@@ -96,12 +96,12 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     }
   }
 
-  void OnTouchEvent(const std::string &display_label, int x, int y,
+  void OnTouchEvent(const std::string &device_label, int x, int y,
                     bool down) override {
-    input_connector_.SendTouchEvent(display_label, x, y, down);
+    input_connector_.SendTouchEvent(device_label, x, y, down);
   }
 
-  void OnMultiTouchEvent(const std::string &display_label, Json::Value id,
+  void OnMultiTouchEvent(const std::string &device_label, Json::Value id,
                          Json::Value slot, Json::Value x, Json::Value y,
                          bool down, int size) {
     std::vector<MultitouchSlot> slots(size);
@@ -111,7 +111,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
       slots[i].x = x[i].asInt();
       slots[i].y = y[i].asInt();
     }
-    input_connector_.SendMultiTouchEvent(display_label, slots, down);
+    input_connector_.SendMultiTouchEvent(device_label, slots, down);
   }
 
   void OnKeyboardEvent(uint16_t code, bool down) override {

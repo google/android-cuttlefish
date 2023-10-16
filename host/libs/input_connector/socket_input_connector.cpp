@@ -127,7 +127,7 @@ Result<void> InputSocket::WriteEvents(
   return {};
 }
 
-struct Touchscreen {
+struct TouchDevice {
   std::unique_ptr<InputSocket> socket;
   std::set<int32_t> active_slots;
 };
@@ -136,9 +136,9 @@ struct Touchscreen {
 // devices.
 class InputSocketsConnector : public InputConnector {
  public:
-  Result<void> SendTouchEvent(const std::string& display, int x, int y,
+  Result<void> SendTouchEvent(const std::string& device_label, int x, int y,
                               bool down) override;
-  Result<void> SendMultiTouchEvent(const std::string& display_label,
+  Result<void> SendMultiTouchEvent(const std::string& device_label,
                                    const std::vector<MultitouchSlot>& slots,
                                    bool down) override;
   Result<void> SendKeyboardEvent(uint16_t code, bool down) override;
@@ -149,7 +149,7 @@ class InputSocketsConnector : public InputConnector {
   InputEventType event_type_;
   // TODO (b/186773052): Finding strings in a map for every input event may
   // introduce unwanted latency.
-  std::map<std::string, Touchscreen> touchscreens_;
+  std::map<std::string, TouchDevice> touch_devices_;
 
   std::unique_ptr<InputSocket> keyboard_;
   std::unique_ptr<InputSocket> switches_;
@@ -163,29 +163,31 @@ class InputSocketsConnector : public InputConnector {
 InputSocketsConnector::InputSocketsConnector(InputEventType event_type)
     : event_type_(event_type) {}
 
-Result<void> InputSocketsConnector::SendTouchEvent(const std::string& display,
-                                                   int x, int y, bool down) {
+Result<void> InputSocketsConnector::SendTouchEvent(
+    const std::string& device_label, int x, int y, bool down) {
   auto buffer = CreateBuffer(event_type_, 4);
   CF_EXPECT(buffer != nullptr, "Failed to allocate input events buffer");
   buffer->AddEvent(EV_ABS, ABS_X, x);
   buffer->AddEvent(EV_ABS, ABS_Y, y);
   buffer->AddEvent(EV_KEY, BTN_TOUCH, down);
   buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
-  auto ts_it = touchscreens_.find(display);
-  CF_EXPECT(ts_it != touchscreens_.end(), "Unknown display: " << display);
+  auto ts_it = touch_devices_.find(device_label);
+  CF_EXPECT(ts_it != touch_devices_.end(),
+            "Unknown touch device: " << device_label);
   auto& ts = ts_it->second;
   ts.socket->WriteEvents(std::move(buffer));
   return {};
 }
 
 Result<void> InputSocketsConnector::SendMultiTouchEvent(
-    const std::string& display, const std::vector<MultitouchSlot>& slots,
+    const std::string& device_label, const std::vector<MultitouchSlot>& slots,
     bool down) {
   auto buffer = CreateBuffer(event_type_, 1 + 7 * slots.size());
   CF_EXPECT(buffer != nullptr, "Failed to allocate input events buffer");
 
-  auto ts_it = touchscreens_.find(display);
-  CF_EXPECT(ts_it != touchscreens_.end(), "Unknown display: " << display);
+  auto ts_it = touch_devices_.find(device_label);
+  CF_EXPECT(ts_it != touch_devices_.end(),
+            "Unknown touch device: " << device_label);
   auto& ts = ts_it->second;
 
   for (auto& f : slots) {
@@ -260,13 +262,14 @@ InputSocketsConnectorBuilder::InputSocketsConnectorBuilder(InputEventType type)
 
 InputSocketsConnectorBuilder::~InputSocketsConnectorBuilder() = default;
 
-void InputSocketsConnectorBuilder::WithTouchscreen(const std::string& display,
-                                                   SharedFD server) {
-  CHECK(connector_->touchscreens_.find(display) ==
-        connector_->touchscreens_.end())
-      << "Multiple displays with same label: " << display;
-  connector_->touchscreens_.emplace(
-      display, Touchscreen{.socket = std::make_unique<InputSocket>(server)});
+void InputSocketsConnectorBuilder::WithTouchDevice(
+    const std::string& device_label, SharedFD server) {
+  CHECK(connector_->touch_devices_.find(device_label) ==
+        connector_->touch_devices_.end())
+      << "Multiple touch devices with same label: " << device_label;
+  connector_->touch_devices_.emplace(
+      device_label,
+      TouchDevice{.socket = std::make_unique<InputSocket>(server)});
 }
 
 void InputSocketsConnectorBuilder::WithKeyboard(SharedFD server) {
