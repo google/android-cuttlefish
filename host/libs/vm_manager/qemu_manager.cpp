@@ -566,7 +566,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   // /dev/hvc9 = uwb
   if (config.enable_host_uwb()) {
-    add_hvc("uwb_fifo_vm");
+    add_hvc(instance.PerInstanceInternalPath("uwb_fifo_vm"));
   } else {
     add_hvc_sink();
   }
