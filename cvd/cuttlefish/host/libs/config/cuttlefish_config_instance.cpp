@@ -991,14 +991,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_enable_sandbox(const bool en
 bool CuttlefishConfig::InstanceSpecific::enable_sandbox() const {
   return (*Dictionary())[kEnableSandbox].asBool();
 }
-static constexpr char kEnableVirtiofs[] = "enable_virtiofs";
-void CuttlefishConfig::MutableInstanceSpecific::set_enable_virtiofs(
-    const bool enable_virtiofs) {
-  (*Dictionary())[kEnableVirtiofs] = enable_virtiofs;
-}
-bool CuttlefishConfig::InstanceSpecific::enable_virtiofs() const {
-  return (*Dictionary())[kEnableVirtiofs].asBool();
-}
 static constexpr char kConsole[] = "console";
 void CuttlefishConfig::MutableInstanceSpecific::set_console(bool console) {
   (*Dictionary())[kConsole] = console;
@@ -1329,11 +1321,6 @@ std::string CuttlefishConfig::InstanceSpecific::CrosvmSocketPath() const {
   return PerInstanceInternalUdsPath("crosvm_control.sock");
 }
 
-std::string CuttlefishConfig::InstanceSpecific::OpenwrtCrosvmSocketPath()
-    const {
-  return PerInstanceInternalUdsPath("ap_control.sock");
-}
-
 static constexpr char kHostPort[] = "adb_host_port";
 int CuttlefishConfig::InstanceSpecific::adb_host_port() const {
   return (*Dictionary())[kHostPort].asInt();
@@ -1542,9 +1529,9 @@ bool CuttlefishConfig::InstanceSpecific::sock_vsock_proxy_wait_adbd_start()
 }
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
-    int screen_idx) const {
+    int touch_dev_idx) const {
   return PerInstanceInternalUdsPath(
-      ("touch_" + std::to_string(screen_idx) + ".sock").c_str());
+      ("touch_" + std::to_string(touch_dev_idx) + ".sock").c_str());
 }
 
 std::string CuttlefishConfig::InstanceSpecific::rotary_socket_path() const {
