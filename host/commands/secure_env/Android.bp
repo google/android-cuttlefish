@@ -161,7 +161,6 @@ cc_binary_host {
         not_windows: {
             srcs: [
                 "secure_env_not_windows_main.cpp",
-                "snapshot_control.cpp",
             ],
             static_libs: [
                 "libcuttlefish_command_util",
