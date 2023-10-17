@@ -29,6 +29,7 @@
 #include <memory>
 
 #include "common/libs/utils/tee_logging.h"
+#include "host/commands/metrics/metrics_configs.h"
 #include "host/commands/metrics/metrics_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/msg_queue/msg_queue.h"
@@ -42,9 +43,9 @@ MetricsReceiver::MetricsReceiver() {}
 MetricsReceiver::~MetricsReceiver() {}
 
 void MetricsReceiver::SendHelper(const std::string &message) {
-  auto msg_queue = SysVMessageQueue::Create("cuttlefish_ipc", 'a', false);
+  auto msg_queue = SysVMessageQueue::Create(kMetricsQueueName, false);
   if (msg_queue == NULL) {
-    LOG(FATAL) << "Create: failed to create cuttlefish_ipc";
+    LOG(FATAL) << "Create: failed to create" << kMetricsQueueName;
   }
 
   struct msg_buffer msg;
