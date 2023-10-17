@@ -244,7 +244,7 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
 Result<cvd_common::Args> CompileFromAcloudToCvdr(cvd_common::Args& arguments) {
   CF_EXPECT(arguments.size() > 0);
   CF_EXPECT(Contains(kAcloudCommands, arguments[0]));
-  std::string main_cmd = arguments[0];
+  std::string& main_cmd = arguments[0];
   arguments.erase(arguments.begin());
 
   // Only `acloud create` works with extra arguments/flags.
