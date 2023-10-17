@@ -13,21 +13,19 @@ typedef struct msg_buffer {
 
 int example_send()
 {
-    // create message queue with the key 'a'
-	int queue_id = msg_queue_create('a');
-	struct msg_buffer msg;
-	for (int i=1; i <= NUM_MESSAGES; i++) {
-        // create message types 1-3
-		msg.mesg_type = (i % 3) + 1;
-		sprintf(msg.mesg_text, "test %d", i);
-		int rc = msg_queue_send(queue_id, &msg, strlen(msg.mesg_text)+1, false);
-		if (rc == -1) {
-			perror("main: msgsnd");
-			exit(1);
-		}
-	}
-	printf("generated %d messages, exiting.\n", NUM_MESSAGES);
-	return 0;
+  const std::string message ="Test message"
+  auto msg_queue = SysVMessageQueue::Create("unique_queue_name", false);
+  if (msg_queue == NULL) {
+    LOG(FATAL) << "Create: failed to create" << "unique_queue_name";
+  }
+
+  struct msg_buffer msg;
+  msg.mesg_type = 1;
+  strcpy(msg.mesg_text, message.c_str());
+  int rc = msg_queue->Send(&msg, message.length() + 1, true);
+  if (rc == -1) {
+    LOG(FATAL) << "Send: failed to send message to msg_queue";
+  }
 }
 ```
 
@@ -41,17 +39,19 @@ typedef struct msg_buffer {
 
 int example_receive()
 {
-    // create message queue with the key 'a'
-	int queue_id = msg_queue_create('a');
-	struct msg_buffer msg;
-	while (1) {
-		int rc = msg_queue_receive(queue_id, &msg, MAX_MSG_SIZE, 1, false);
-		if (rc == -1) {
-			perror("main: msgrcv");
-			exit(1);
-		}
-		printf("Reader '%d' read message: '%s'\n", 1, msg.mesg_text);
-	}
+  auto msg_queue = SysVMessageQueue::Create("unique_queue_name");
+  if (msg_queue == NULL) {
+    LOG(FATAL) << "create: failed to create" << "unique_queue_name";
+  }
+
+  struct msg_buffer msg = {0, {0}};
+  int rc = msg_queue->Receive(&msg, MAX_MSG_SIZE, 1, true);
+  if (rc == -1) {
+	LOG(FATAL) << "receive: failed to receive any messages";
+  }
+
+  std::string text(msg.mesg_text);
+  LOG(INFO) << "Metrics host received: " << text;
 	return 0;
 }
 ```
