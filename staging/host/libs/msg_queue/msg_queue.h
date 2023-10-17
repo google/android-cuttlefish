@@ -20,8 +20,7 @@
 namespace cuttlefish {
 class SysVMessageQueue {
  public:
-  static std::unique_ptr<SysVMessageQueue> Create(const std::string& path,
-                                                  char proj_id,
+  static std::unique_ptr<SysVMessageQueue> Create(const std::string& queue_name,
                                                   bool auto_close = true);
   ~SysVMessageQueue();
 
