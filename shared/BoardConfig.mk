@@ -366,9 +366,6 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/dtb.img:dtb.img \
     device/google/cuttlefish/required_images:required_images \
 
-# Cuttlefish doesn't support ramdump feature yet, exclude the ramdump debug tool.
-EXCLUDE_BUILD_RAMDUMP_UPLOADER_DEBUG_TOOL := true
-
 # GKI-related variables.
 BOARD_USES_GENERIC_KERNEL_IMAGE := true
 ifdef TARGET_DEDICATED_RECOVERY
