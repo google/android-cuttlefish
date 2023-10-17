@@ -19,7 +19,11 @@ package {
 
 cc_binary {
     name: "cvd_internal_stop",
-    symlinks: ["stop_cvd"],
+    arch: {
+        arm64: {
+            symlinks: ["stop_cvd"],
+        },
+    },
     srcs: [
         "main.cc",
     ],
