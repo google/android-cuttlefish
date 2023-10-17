@@ -42,9 +42,7 @@ Result<void> RunServer(const RunServerParam& params) {
   CF_EXPECT(server_logger != nullptr, "ServerLogger memory allocation failed.");
 
   const auto& verbosity_level = params.verbosity_level;
-  SharedFD stderr_fd =
-      (params.carryover_stderr_fd->IsOpen() ? params.carryover_stderr_fd
-                                            : SharedFD::Dup(2));
+  SharedFD stderr_fd = params.carryover_stderr_fd;
   std::unique_ptr<ServerLogger::ScopedLogger> run_server_logger;
   if (verbosity_level) {
     ServerLogger::ScopedLogger tmp_logger =
