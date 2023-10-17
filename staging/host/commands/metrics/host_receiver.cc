@@ -15,6 +15,7 @@
 
 #include "host/commands/metrics/host_receiver.h"
 #include "host/commands/metrics/events.h"
+#include "host/commands/metrics/metrics_configs.h"
 #include "host/commands/metrics/metrics_defs.h"
 #include "host/commands/metrics/proto/cf_metrics_proto.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -32,9 +33,9 @@ MetricsHostReceiver::MetricsHostReceiver(
 MetricsHostReceiver::~MetricsHostReceiver() {}
 
 void MetricsHostReceiver::ServerLoop() {
-  auto msg_queue = cuttlefish::SysVMessageQueue::Create("cuttlefish_ipc", 'a');
+  auto msg_queue = SysVMessageQueue::Create(kMetricsQueueName);
   if (msg_queue == NULL) {
-    LOG(FATAL) << "create: failed to create cuttlefish_ipc";
+    LOG(FATAL) << "create: failed to create" << kMetricsQueueName;
   }
 
   struct msg_buffer msg = {0, {0}};
