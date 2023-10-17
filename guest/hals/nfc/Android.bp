@@ -31,13 +31,19 @@ rust_binary {
         "liblibc",
         "libnix",
         "libclap",
-        "android.hardware.nfc-V1-rust"
+        "android.hardware.nfc-V1-rust",
+        "libanyhow",
+        "libthiserror",
+        "libbytes",
     ],
     proc_macros: [
         "libasync_trait",
     ],
     features: ["rt"],
-    srcs: ["src/main.rs"],
+    srcs: [
+        "src/main.rs",
+        ":casimir_nci_packets_rust_gen",
+    ],
 }
 
 prebuilt_etc {

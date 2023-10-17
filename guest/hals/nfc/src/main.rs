@@ -23,6 +23,7 @@ use std::path::PathBuf;
 use std::{panic, process};
 use tokio::runtime::Runtime;
 
+mod nci;
 mod nfc;
 
 use crate::nfc::NfcService;
@@ -38,7 +39,7 @@ struct Cli {
 
 fn main() {
     android_logger::init_once(
-        android_logger::Config::default().with_tag(LOG_TAG).with_max_level(LevelFilter::Info),
+        android_logger::Config::default().with_tag(LOG_TAG).with_max_level(LevelFilter::Debug),
     );
 
     // Redirect panic messages to logcat.
