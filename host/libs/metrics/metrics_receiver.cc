@@ -38,14 +38,10 @@ using cuttlefish::MetricsExitCodes;
 
 namespace cuttlefish {
 
-MetricsReceiver::MetricsReceiver() {}
-
-MetricsReceiver::~MetricsReceiver() {}
-
-void MetricsReceiver::SendHelper(const std::string &message) {
-  auto msg_queue = SysVMessageQueue::Create(kMetricsQueueName, false);
+void SendHelper(const std::string &queue_name, const std::string &message) {
+  auto msg_queue = SysVMessageQueue::Create(queue_name, false);
   if (msg_queue == NULL) {
-    LOG(FATAL) << "Create: failed to create" << kMetricsQueueName;
+    LOG(FATAL) << "Create: failed to create" << queue_name;
   }
 
   struct msg_buffer msg;
@@ -57,16 +53,23 @@ void MetricsReceiver::SendHelper(const std::string &message) {
   }
 }
 
-void MetricsReceiver::LogMetricsVMStart() { SendHelper("VMStart"); }
+void MetricsReceiver::LogMetricsVMStart() {
+  SendHelper(kMetricsQueueName, "VMStart");
+}
 
-void MetricsReceiver::LogMetricsVMStop() { SendHelper("VMStop"); }
+void MetricsReceiver::LogMetricsVMStop() {
+  SendHelper(kMetricsQueueName, "VMStop");
+}
 
-void MetricsReceiver::LogMetricsDeviceBoot() { SendHelper("DeviceBoot"); }
+void MetricsReceiver::LogMetricsDeviceBoot() {
+  SendHelper(kMetricsQueueName, "DeviceBoot");
+}
 
-void MetricsReceiver::LogMetricsLockScreen() { SendHelper("LockScreen"); }
+void MetricsReceiver::LogMetricsLockScreen() {
+  SendHelper(kMetricsQueueName, "LockScreen");
+}
 
-void MetricsReceiver::LogMetricsSendLaunchCommand(
-    const std::string& command_line) {
-  SendHelper(command_line);
+void AtestMetricsReceiver::LogMetricsSendCmd(const std::string &command_line) {
+  SendHelper(kMetricsQueueName, command_line);
 }
 }  // namespace cuttlefish
