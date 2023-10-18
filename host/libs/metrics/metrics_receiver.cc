@@ -54,22 +54,22 @@ void SendHelper(const std::string &queue_name, const std::string &message) {
 }
 
 void MetricsReceiver::LogMetricsVMStart() {
-  SendHelper(kMetricsQueueName, "VMStart");
+  SendHelper(kCfMetricsQueueName, "VMStart");
 }
 
 void MetricsReceiver::LogMetricsVMStop() {
-  SendHelper(kMetricsQueueName, "VMStop");
+  SendHelper(kCfMetricsQueueName, "VMStop");
 }
 
 void MetricsReceiver::LogMetricsDeviceBoot() {
-  SendHelper(kMetricsQueueName, "DeviceBoot");
+  SendHelper(kCfMetricsQueueName, "DeviceBoot");
 }
 
 void MetricsReceiver::LogMetricsLockScreen() {
-  SendHelper(kMetricsQueueName, "LockScreen");
+  SendHelper(kCfMetricsQueueName, "LockScreen");
 }
 
 void AtestMetricsReceiver::LogMetricsSendCmd(const std::string &command_line) {
-  SendHelper(kMetricsQueueName, command_line);
+  SendHelper(kAtestMetricsQueueName, command_line);
 }
 }  // namespace cuttlefish

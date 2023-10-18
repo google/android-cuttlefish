@@ -33,9 +33,9 @@ MetricsHostReceiver::MetricsHostReceiver(
 MetricsHostReceiver::~MetricsHostReceiver() {}
 
 void MetricsHostReceiver::ServerLoop() {
-  auto msg_queue = SysVMessageQueue::Create(kMetricsQueueName);
+  auto msg_queue = SysVMessageQueue::Create(kCfMetricsQueueName);
   if (msg_queue == NULL) {
-    LOG(FATAL) << "create: failed to create" << kMetricsQueueName;
+    LOG(FATAL) << "create: failed to create" << kCfMetricsQueueName;
   }
 
   struct msg_buffer msg = {0, {0}};
