@@ -18,7 +18,6 @@
 #include "host/commands/metrics/metrics_configs.h"
 #include "host/commands/metrics/metrics_defs.h"
 #include "host/commands/metrics/proto/cf_metrics_proto.h"
-#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/metrics/metrics_receiver.h"
 #include "host/libs/msg_queue/msg_queue.h"
 
@@ -33,9 +32,9 @@ MetricsHostReceiver::MetricsHostReceiver(
 MetricsHostReceiver::~MetricsHostReceiver() {}
 
 void MetricsHostReceiver::ServerLoop() {
-  auto msg_queue = SysVMessageQueue::Create(kCfMetricsQueueName);
+  auto msg_queue = SysVMessageQueue::Create(metrics_queue_name_);
   if (msg_queue == NULL) {
-    LOG(FATAL) << "create: failed to create" << kCfMetricsQueueName;
+    LOG(FATAL) << "create: failed to create" << metrics_queue_name_;
   }
 
   struct msg_buffer msg = {0, {0}};
@@ -57,7 +56,8 @@ void MetricsHostReceiver::ServerLoop() {
 
 void MetricsHostReceiver::Join() { thread_.join(); }
 
-bool MetricsHostReceiver::Initialize() {
+bool MetricsHostReceiver::Initialize(const std::string& metrics_queue_name) {
+  metrics_queue_name_ = metrics_queue_name;
   if (!config_.enable_metrics()) {
     LOG(ERROR) << "init: metrics not enabled";
     return false;
