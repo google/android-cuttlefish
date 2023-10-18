@@ -28,3 +28,16 @@ java_test_host {
         "tradefed",
     ],
 }
+
+java_test_host {
+    name: "FastbootFlashingTest",
+    srcs: [
+        "src/com/android/cuttlefish/tests/FastbootFlashingTest.java",
+    ],
+    test_suites: [
+        "device-tests",
+    ],
+    libs: [
+        "tradefed",
+    ],
+}
