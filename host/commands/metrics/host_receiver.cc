@@ -17,7 +17,7 @@
 #include "host/commands/metrics/events.h"
 #include "host/commands/metrics/metrics_configs.h"
 #include "host/commands/metrics/metrics_defs.h"
-#include "host/commands/metrics/proto/cf_metrics_proto.h"
+#include "host/commands/metrics/proto/cf_metrics_protos.h"
 #include "host/libs/metrics/metrics_receiver.h"
 #include "host/libs/msg_queue/msg_queue.h"
 
