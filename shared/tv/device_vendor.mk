@@ -26,6 +26,7 @@ $(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendo
 $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
+$(call inherit-product, vendor/google/tv/gcbs/projects/reference-v4/dtvstack.mk)
 
 # Inform the camera HAL that we only want an external camera loaded.
 PRODUCT_VENDOR_PROPERTIES += \

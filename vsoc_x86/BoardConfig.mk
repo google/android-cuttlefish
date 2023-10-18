@@ -46,3 +46,4 @@ TARGET_KERNEL_ARCH := x86_64
 -include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
 -include device/google/cuttlefish/shared/telephony/BoardConfig.mk
 -include device/google/cuttlefish/shared/virgl/BoardConfig.mk
+-include vendor/google/tv/gcbs/projects/reference-v4/dtvBoardConfig.mk
