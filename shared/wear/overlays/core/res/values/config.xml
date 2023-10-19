@@ -124,4 +124,7 @@
 
   <!-- Package name of the required service extension package. -->
   <string name="config_servicesExtensionPackage" translatable="false">android.ext.services</string>
+
+  <!-- The name of the package that will hold the assistant role by default. -->
+  <string name="config_defaultAssistant" translatable="false">com.google.android.wearable.assistant</string>
 </resources>
