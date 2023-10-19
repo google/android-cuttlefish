@@ -24,14 +24,10 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.File;
-import java.io.IOException;
-
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class FastbootFlashingTest extends BaseHostJUnit4Test {
 
-    private static final String TMP_GUEST_FILE_NAME = "check_factory_reset.txt";
-    private static final String TMP_GUEST_FILE_PATH = "/data/" + TMP_GUEST_FILE_NAME;
+    private static final String TMP_GUEST_FILE_PATH = "/data/check_factory_reset.txt";
 
     @Test
     public void testFastbootUserdataEraseClearsTheDevice() throws Exception {
@@ -45,13 +41,9 @@ public class FastbootFlashingTest extends BaseHostJUnit4Test {
         assertTemporaryGuestFileExists(false);
     }
 
-    private void createTemporaryGuestFile()
-            throws DeviceNotAvailableException, IOException, InterruptedException {
-        final File file = new File(TMP_GUEST_FILE_NAME);
-        file.createNewFile();
-
+    private void createTemporaryGuestFile() throws DeviceNotAvailableException {
         getDevice().enableAdbRoot();
-        getDevice().pushFile(file, TMP_GUEST_FILE_PATH);
+        getDevice().executeShellV2Command("touch " + TMP_GUEST_FILE_PATH);
 
         assertTemporaryGuestFileExists(true);
     }
