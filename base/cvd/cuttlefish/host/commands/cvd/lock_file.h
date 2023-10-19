@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -38,6 +39,31 @@ namespace cvd_impl {
 class LockFile {
   friend class LockFileManager;
 
+  /* b/303724170
+   *
+   * Unfortunately, the LockFile implementation forgot to release
+   * the Flock() it got on destruction. Also, unfortunately, the
+   * LockFile is being copied as we have used std::optional
+   * here and there, which means LockFile objects are copied.
+   *
+   * The goal is to disable LockFile(const LockFile&) and the
+   * copy assignment operator. For now, however, we add to LockFile
+   * a shared_ptr of this class, so that at the very last LockFile
+   * object for a given lock is destroyed, the LockFileReleaser will
+   * releases the lock.
+   *
+   * Must be created only in the LockFile constructors
+   */
+  class LockFileReleaser {
+   public:
+    LockFileReleaser(const SharedFD& fd, const std::string& lock_file_path);
+    ~LockFileReleaser();
+
+   private:
+    SharedFD flocked_file_fd_;
+    const std::string lock_file_path_;  // for error message
+  };
+
  public:
   const auto& LockFilePath() const { return lock_file_path_; }
   Result<InUseState> Status() const;
@@ -51,6 +77,7 @@ class LockFile {
 
   SharedFD fd_;
   const std::string lock_file_path_;
+  std::shared_ptr<LockFileReleaser> lock_file_lock_releaser_;
 };
 
 class LockFileManager {
