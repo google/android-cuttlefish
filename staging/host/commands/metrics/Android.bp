@@ -47,6 +47,36 @@ cc_binary {
     defaults: ["cuttlefish_host"],
 }
 
+cc_binary {
+    name: "metrics_cvd",
+    srcs: [
+        "events.cc",
+        "host_receiver.cc",
+        "cvd_metrics.cc",
+        "utils.cc",
+    ],
+    shared_libs: [
+        "cf_metrics_proto",
+        "cvd_metrics_proto",
+        "libbase",
+        "libcurl",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libfruit",
+        "libjsoncpp",
+        "liblog",
+        "libprotobuf-cpp-full",
+        "libz",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libcuttlefish_msg_queue",
+        "libgflags",
+        "libext2_uuid",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
 subdirs = ["proto"]
 
 cc_test_host {
