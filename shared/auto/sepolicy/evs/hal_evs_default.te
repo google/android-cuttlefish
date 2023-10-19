@@ -18,3 +18,9 @@ allow hal_evs_default fwk_automotive_display_hwservice:hwservice_manager find;
 # TODO(b/289381868): Remove below line when a vendor process can initialize
 #                    EGL without violating selinux rules.
 dontaudit hal_evs_default system_prop:file read;
+
+# Allow to access graphics related properties
+get_prop(hal_evs_default, graphics_config_writable_prop)
+
+# allow to use binder IPC.
+binder_use(hal_evs_default)
