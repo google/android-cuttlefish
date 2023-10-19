@@ -87,9 +87,6 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   SharedFD carryover_client_fd;
   flags.emplace_back(
       SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
-  SharedFD carryover_stderr_fd;
-  flags.emplace_back(
-      SharedFDFlag("INTERNAL_carryover_stderr_fd", carryover_stderr_fd));
   SharedFD memory_carryover_fd;
   flags.emplace_back(
       SharedFDFlag("INTERNAL_memory_carryover_fd", memory_carryover_fd));
@@ -126,7 +123,6 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
       .internal_server_fd = internal_server_fd,
       .carryover_client_fd = carryover_client_fd,
       .memory_carryover_fd = memory_carryover_fd_opt,
-      .carryover_stderr_fd = carryover_stderr_fd,
       .acloud_translator_optout = acloud_translator_optout_opt,
       .verbosity_level = verbosity_level,
   };
