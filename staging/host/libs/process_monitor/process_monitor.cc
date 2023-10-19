@@ -208,7 +208,7 @@ Result<void> ProcessMonitor::SuspendHostProcessesImpl() {
     auto prog_name = android::base::Basename(entry.cmd->Executable());
     auto process_restart_bin =
         android::base::Basename(ProcessRestarterBinary());
-    if (prog_name == "log_tee") {
+    if (prog_name == "log_tee" || prog_name == "wmediumd") {
       // Don't stop log_tee, we want to continue processing logs while
       // suspended.
       continue;
