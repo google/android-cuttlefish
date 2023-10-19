@@ -200,10 +200,6 @@ Result<void> CvdServer::Exec(const ExecParam& exec_param) {
   android::base::unique_fd client_dup{
       exec_param.carryover_client_fd->UNMANAGED_Dup()};
   CF_EXPECT(client_dup.get() >= 0, "dup: \"" << server_fd_->StrError() << "\"");
-  android::base::unique_fd client_stderr_dup{
-      exec_param.client_stderr_fd->UNMANAGED_Dup()};
-  CF_EXPECT(client_stderr_dup.get() >= 0,
-            "dup: \"" << exec_param.client_stderr_fd->StrError() << "\"");
   std::string acloud_translator_opt_out_arg(
       "-INTERNAL_acloud_translator_optout=");
   if (optout_) {
@@ -215,8 +211,6 @@ Result<void> CvdServer::Exec(const ExecParam& exec_param) {
       kServerExecPath,
       "-INTERNAL_server_fd=" + std::to_string(server_dup.get()),
       "-INTERNAL_carryover_client_fd=" + std::to_string(client_dup.get()),
-      "-INTERNAL_carryover_stderr_fd=" +
-          std::to_string(client_stderr_dup.get()),
       acloud_translator_opt_out_arg,
   };
 
