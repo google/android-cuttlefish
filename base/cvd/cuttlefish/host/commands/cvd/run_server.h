@@ -34,16 +34,6 @@ struct RunServerParam {
   SharedFD internal_server_fd;
   SharedFD carryover_client_fd;
   std::optional<SharedFD> memory_carryover_fd;
-  /**
-   * Cvd server usually prints out in the client's stream. However,
-   * after Exec(), the client stdout and stderr becomes unreachable by
-   * LOG(ERROR), etc.
-   *
-   * Thus, in that case, the client fd is passed to print Exec() log
-   * on it.
-   *
-   */
-  SharedFD carryover_stderr_fd;
   std::optional<android::base::LogSeverity> verbosity_level;
   std::optional<bool> acloud_translator_optout;
 };
@@ -53,7 +43,6 @@ struct ParseResult {
   SharedFD internal_server_fd;
   SharedFD carryover_client_fd;
   std::optional<SharedFD> memory_carryover_fd;
-  SharedFD carryover_stderr_fd;
   std::optional<bool> acloud_translator_optout;
   std::optional<android::base::LogSeverity> verbosity_level;
 };

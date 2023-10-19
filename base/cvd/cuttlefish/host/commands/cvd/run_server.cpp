@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/run_server.h"
 
+#include <unistd.h>
+
 #include <memory>
 
 #include "common/libs/utils/flag_parser.h"
@@ -25,6 +27,11 @@
 #include "host/commands/cvd/server.h"
 
 namespace cuttlefish {
+
+SharedFD ServerMainLog() {
+  std::string log_path = "/tmp/cvd_server" + std::to_string(getuid()) + ".log";
+  return SharedFD::Open(log_path, O_CREAT | O_APPEND | O_RDWR, 0644);
+}
 
 bool IsServerModeExpected(const std::string& exec_file) {
   return exec_file == kServerExecPath;
@@ -42,20 +49,24 @@ Result<void> RunServer(const RunServerParam& params) {
   CF_EXPECT(server_logger != nullptr, "ServerLogger memory allocation failed.");
 
   const auto& verbosity_level = params.verbosity_level;
-  SharedFD stderr_fd = params.carryover_stderr_fd;
+  // TODO(kwstephenkim): for cvd restart-server, it should print the LOG(ERROR)
+  // of the server codes outside handlers into the file descriptor eventually
+  // passed from the cvd restart client. However, the testing frameworks are
+  // waiting for the client's stderr to be closed. Thus, it should not be the
+  // client's stderr. See b/293191537.
+  SharedFD stderr_fd = ServerMainLog();
   std::unique_ptr<ServerLogger::ScopedLogger> run_server_logger;
-  if (verbosity_level) {
+  if (stderr_fd->IsOpen()) {
     ServerLogger::ScopedLogger tmp_logger =
-        server_logger->LogThreadToFd(std::move(stderr_fd), *verbosity_level);
-    run_server_logger =
-        std::make_unique<ServerLogger::ScopedLogger>(std::move(tmp_logger));
-  } else {
-    ServerLogger::ScopedLogger tmp_logger =
-        server_logger->LogThreadToFd(std::move(stderr_fd));
+        (verbosity_level ? server_logger->LogThreadToFd(std::move(stderr_fd),
+                                                        *verbosity_level)
+                         : server_logger->LogThreadToFd(std::move(stderr_fd)));
     run_server_logger =
         std::make_unique<ServerLogger::ScopedLogger>(std::move(tmp_logger));
   }
 
+  // run_server_logger will be destroyed only if CvdServerMain terminates, which
+  // normally does not. And, CvdServerMain does not refer its .scoped_logger.
   if (params.memory_carryover_fd && !(*params.memory_carryover_fd)->IsOpen()) {
     LOG(ERROR) << "Memory carryover file is supposed to be open but is not.";
   }
@@ -76,9 +87,6 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   SharedFD carryover_client_fd;
   flags.emplace_back(
       SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
-  SharedFD carryover_stderr_fd;
-  flags.emplace_back(
-      SharedFDFlag("INTERNAL_carryover_stderr_fd", carryover_stderr_fd));
   SharedFD memory_carryover_fd;
   flags.emplace_back(
       SharedFDFlag("INTERNAL_memory_carryover_fd", memory_carryover_fd));
@@ -115,7 +123,6 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
       .internal_server_fd = internal_server_fd,
       .carryover_client_fd = carryover_client_fd,
       .memory_carryover_fd = memory_carryover_fd_opt,
-      .carryover_stderr_fd = carryover_stderr_fd,
       .acloud_translator_optout = acloud_translator_optout_opt,
       .verbosity_level = verbosity_level,
   };
