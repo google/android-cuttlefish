@@ -559,11 +559,11 @@ Result<int> CvdServerMain(ServerMainParam&& param) {
   }
   server.StartServer(server_fd);
 
-  SharedFD carryover_client = std::move(param.carryover_client_fd);
   // The carryover_client wouldn't be available after AcceptCarryoverClient()
-  if (carryover_client->IsOpen()) {
+  if (param.carryover_client_fd->IsOpen()) {
     // release scoped_logger for this thread inside AcceptCarryoverClient()
-    CF_EXPECT(server.AcceptCarryoverClient(carryover_client));
+    CF_EXPECT(
+        server.AcceptCarryoverClient(std::move(param.carryover_client_fd)));
   }
   server.Join();
 
