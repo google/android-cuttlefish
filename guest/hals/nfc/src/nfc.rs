@@ -17,13 +17,15 @@
 //! `INfc.aidl` only has blocking calls, but calls are called by multiple thread
 //! so implementation should prepare calls from multiple thread.
 
+use crate::nci;
+
 use android_hardware_nfc::aidl::android::hardware::nfc::{
     INfc::INfcAsyncServer, INfcClientCallback::INfcClientCallback, NfcCloseType::NfcCloseType,
     NfcConfig::NfcConfig, NfcEvent::NfcEvent, NfcStatus::NfcStatus,
 };
 use async_trait::async_trait;
 use binder::{DeathRecipient, IBinder, Interface, Strong};
-use log::{error, info};
+use log::{debug, error, info};
 use nix::sys::termios;
 use std::os::fd::AsRawFd;
 use std::path::Path;
@@ -34,6 +36,7 @@ use tokio::sync::Mutex;
 use tokio::task::JoinSet;
 const BUF_SIZE: usize = 1024;
 const NCI_HEADER_SIZE: usize = 3;
+const DBG: bool = true;
 
 struct NfcClient {
     callback: Strong<dyn INfcClientCallback>,
@@ -171,6 +174,14 @@ impl NfcService {
                     .await
                     .expect("Failed to read from virtio-console device");
 
+                info!("read sz={}", total_packet_length);
+                if let Err(e) = log_packet(&buf[0..total_packet_length]) {
+                    debug!(
+                        "+ Unidentified packet ({e:?}): bytes={:?}",
+                        &buf[0..total_packet_length]
+                    );
+                }
+
                 let status = status_clone.lock().await;
                 if let NfcSession::Opened(ref client) = status.session {
                     if let Err(e) = client.send_data_callback(&buf[0..total_packet_length]) {
@@ -186,6 +197,24 @@ impl NfcService {
 
         NfcService { _tasks: tasks, status, config: Default::default() }
     }
+}
+
+fn log_packet(packet: &[u8]) -> Result<(), anyhow::Error> {
+    if !DBG {
+        return Ok(());
+    }
+    let header = nci::PacketHeader::parse(&packet[0..3])?;
+    match header.get_mt() {
+        nci::MessageType::Data => {
+            let packet = nci::DataPacket::parse(packet)?;
+            debug!("+ Packet: {packet:?}");
+        }
+        _ => {
+            let packet = nci::ControlPacket::parse(packet)?;
+            debug!("+ Packet: {packet:?}");
+        }
+    }
+    Ok(())
 }
 
 impl Interface for NfcService {}
@@ -280,10 +309,15 @@ impl INfcAsyncServer for NfcService {
     }
 
     async fn write(&self, data: &[u8]) -> binder::Result<i32> {
-        info!("write");
+        info!("write, sz={}", data.len());
         let mut status = self.status.lock().await;
         let (writer, _) = status.ensure_opened_mut()?;
+
         writer.write_all(data).await.expect("Failed to write virtio-console device");
+
+        if let Err(e) = log_packet(data) {
+            debug!("+ Unidentified packet ({e:?}): bytes={data:?}");
+        }
 
         Ok(data.len().try_into().unwrap())
     }
