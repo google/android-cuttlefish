@@ -29,8 +29,6 @@ namespace cuttlefish {
 namespace {
 
 Result<void> MetricsLauncherMain() {
-  cuttlefish::MetricsReceiver receiver;
-
   while (true) {
     std::cout << "Please choose an action: \n";
     std::cout << "  start - send start event to cuttlefish metrics client \n";
@@ -55,7 +53,7 @@ Result<void> MetricsLauncherMain() {
       std::cout << "Enter command line: ";
       std::string command_line;
       std::getline(std::cin, command_line);
-      cuttlefish::MetricsReceiver::LogMetricsSendLaunchCommand(command_line);
+      cuttlefish::AtestMetricsReceiver::LogMetricsSendCmd(command_line);
     } else if (command == "exit") {
       break;
     } else {

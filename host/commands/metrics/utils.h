@@ -18,7 +18,7 @@
 #include <string.h>
 
 #include "host/commands/metrics/metrics_defs.h"
-#include "host/commands/metrics/proto/cf_metrics_proto.h"
+#include "host/commands/metrics/proto/cf_metrics_protos.h"
 
 namespace metrics {
 enum ClearcutServer : int {
