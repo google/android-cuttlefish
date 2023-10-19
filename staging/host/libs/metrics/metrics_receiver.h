@@ -20,17 +20,24 @@
 namespace cuttlefish {
 
 class MetricsReceiver {
- private:
-  static void SendHelper(const std::string &message);
-
  public:
-  MetricsReceiver();
-  ~MetricsReceiver();
+  MetricsReceiver() = default;
+  ;
+  ~MetricsReceiver() = default;
+  ;
   static void LogMetricsVMStart();
   static void LogMetricsVMStop();
   static void LogMetricsDeviceBoot();
   static void LogMetricsLockScreen();
-  static void LogMetricsSendLaunchCommand(const std::string& command_line);
+};
+
+class AtestMetricsReceiver {
+ public:
+  AtestMetricsReceiver() = default;
+  ;
+  ~AtestMetricsReceiver() = default;
+  ;
+  static void LogMetricsSendCmd(const std::string& command_line);
 };
 
 }  // namespace cuttlefish
