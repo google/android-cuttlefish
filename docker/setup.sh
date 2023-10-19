@@ -356,6 +356,7 @@ function cf_docker_create {
 
 	    if [[ -f "${cuttlefish}" ]]; then
 		    local home="$(mktemp -d)"
+		    echo "home=$home"
 		    echo "Setting up Cuttlefish host image from ${cuttlefish} in ${home}."
 		    tar xz -C "${home}" -f "${cuttlefish}"
 	    fi
@@ -363,13 +364,13 @@ function cf_docker_create {
 		    echo "Setting up Android images from ${android} in ${home}."
 		    if [[ $(compgen -G "${android}"/*.img) != "${android}/*.img" ]]; then
 				for f in "${android}"/*.img; do
-					volumes+=("-v ${f}:/home/vsoc-01/$(basename ${f}):rw")
+					cp "${f}" "${home}"
 				done
 		    else
 			    echo "WARNING: No Android images in ${android}."
 		    fi
             if [ -f "${android}/bootloader" ]; then
-                volumes+=("-v ${android}/bootloader:/home/vsoc-01/bootloader:rw")
+		cp ${android}/bootloader ${home}
             fi
 	    fi
 	    if [[ -f "${cuttlefish}" || -d "${android}" ]]; then
@@ -403,6 +404,7 @@ function cf_docker_create {
 	    fi
 
         echo "Starting container ${name} (id ${cf_instance}) from image cuttlefish.";
+#        echo "-v /sys/fs/cgroup:/sys/fs/cgroup:rw ${volumes[@]}"
 	    docker run -d ${as_host_x[@]} \
 		        --cgroupns=host \
 		        --name "${name}" -h "${name}" \
@@ -545,13 +547,15 @@ function $(__gen_login_func_name ${name}) {
   if [[ -n "\$@" ]]; then
 	_cmd="\$@"
   fi
-  docker exec -it --user vsoc-01 "${name}" \${_cmd}
+  echo "Executing: docker exec -it  --user vsoc-01 ${name} \${_cmd}"
+  docker exec -it  --user vsoc-01 "${name}" \${_cmd}
 }
 EOF
 
 read -r -d '' start_func <<EOF
 function $(__gen_start_func_name ${name}) {
-  $(__gen_login_func_name ${name}) ./bin/launch_cvd "${vcid_opt}" "\$@"
+  echo "Starting ./bin/launch_cvd  \$@"
+  $(__gen_login_func_name ${name}) ./bin/launch_cvd  "\$@"
 }
 EOF
 
