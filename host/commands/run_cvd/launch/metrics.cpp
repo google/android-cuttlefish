@@ -22,7 +22,7 @@
 namespace cuttlefish {
 
 std::optional<MonitorCommand> MetricsService(const CuttlefishConfig& config) {
-  if (config.enable_metrics() != CuttlefishConfig::kYes) {
+  if (config.enable_metrics() != cuttlefish::CuttlefishConfig::Answer::kYes) {
     return {};
   }
   return Command(MetricsBinary());
