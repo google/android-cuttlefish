@@ -73,7 +73,6 @@ class CvdServer {
     SharedFD carryover_client_fd;  // the client that called cvd restart-server
     std::optional<SharedFD>
         in_memory_data_fd;  // fd to carry over in-memory data
-    SharedFD client_stderr_fd;
     bool verbose;
   };
   Result<void> Exec(const ExecParam&);
