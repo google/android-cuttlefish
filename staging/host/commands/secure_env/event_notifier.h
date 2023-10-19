@@ -39,4 +39,10 @@ class EventNotifier {
   bool flag_ = false;
 };
 
+struct EventNotifiers {
+  EventNotifier keymaster_suspended_;
+  EventNotifier gatekeeper_suspended_;
+  EventNotifier oemlock_suspended_;
+};
+
 }  // namespace cuttlefish
