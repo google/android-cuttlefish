@@ -17,16 +17,63 @@ package {
 }
 
 cc_library_shared {
-    name: "cf_proto",
+    name: "cf_metrics_proto",
     vendor_available: true,
 
     srcs: [
+        "common.proto",
         "cf_log.proto",
         "cf_metrics_event.proto",
         "clientanalytics.proto",
+    ],
+
+    shared_libs: [
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libbase",
+        "libprotobuf-cpp-lite",
+        "libprotobuf-cpp-full",
+    ],
+
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libgflags",
+        "libjsoncpp",
+    ],
+
+    proto: {
+        export_proto_headers: true,
+        type: "full",
+        canonical_path_from_root: false,
+        include_dirs: ["external/protobuf/src"],
+    },
+
+    cppflags: [
+        "-Werror",
+        "-Wno-unused-parameter",
+        "-Wno-format",
+        "-Wno-c++98-compat-pedantic",
+        "-Wno-float-conversion",
+        "-Wno-disabled-macro-expansion",
+        "-Wno-float-equal",
+        "-Wno-sign-conversion",
+        "-Wno-padded",
+        "-Wno-old-style-cast",
+        "-Wno-undef",
+    ],
+
+    defaults: ["cuttlefish_host"],
+}
+
+cc_library_shared {
+    name: "cvd_metrics_proto",
+    vendor_available: true,
+
+    srcs: [
         "common.proto",
         "internal_user_log.proto",
         "external_user_log.proto",
+        "clientanalytics.proto",
     ],
 
     shared_libs: [

@@ -26,6 +26,7 @@ typedef struct msg_buffer {
   char mesg_text[MAX_MSG_SIZE];
 } msg_buffer;
 
-constexpr char kMetricsQueueName[] = "metrics_msg_queue";
+constexpr char kCfMetricsQueueName[] = "cf_metrics_msg_queue";
+constexpr char kAtestMetricsQueueName[] = "atest_metrics_msg_queue";
 
 }  // namespace cuttlefish

@@ -26,7 +26,8 @@ cc_binary {
         "utils.cc",
     ],
     shared_libs: [
-        "cf_proto",
+        "cf_metrics_proto",
+        "cvd_metrics_proto",
         "libbase",
         "libcurl",
         "libcuttlefish_fs",
@@ -51,7 +52,8 @@ subdirs = ["proto"]
 cc_test_host {
     name: "metrics_test",
     shared_libs: [
-        "cf_proto",
+        "cf_metrics_proto",
+        "cvd_metrics_proto",
         "libbase",
         "libcurl",
         "libcuttlefish_fs",

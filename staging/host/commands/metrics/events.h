@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include "host/commands/metrics/proto/cf_metrics_proto.h"
+#include "host/commands/metrics/proto/cf_metrics_protos.h"
 
 namespace cuttlefish {
 

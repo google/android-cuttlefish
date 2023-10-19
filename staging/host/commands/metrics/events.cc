@@ -19,8 +19,8 @@
 #include "common/libs/utils/flag_parser.h"
 #include "host/commands/metrics/events.h"
 #include "host/commands/metrics/metrics_defs.h"
-#include "host/commands/metrics/proto/acloud_metrics_proto.h"
-#include "host/commands/metrics/proto/cf_metrics_proto.h"
+#include "host/commands/metrics/proto/cf_metrics_protos.h"
+#include "host/commands/metrics/proto/cvd_metrics_protos.h"
 #include "host/commands/metrics/utils.h"
 #include "shared/api_level.h"
 

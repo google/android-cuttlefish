@@ -17,6 +17,7 @@
 
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/metrics/host_receiver.h"
+#include "host/commands/metrics/metrics_configs.h"
 #include "host/commands/metrics/metrics_defs.h"
 
 using cuttlefish::MetricsExitCodes;
@@ -42,7 +43,7 @@ int main(int argc, char** argv) {
   }
 
   cuttlefish::MetricsHostReceiver host_receiver(*config);
-  if (!host_receiver.Initialize()) {
+  if (!host_receiver.Initialize(cuttlefish::kCfMetricsQueueName)) {
     LOG(ERROR) << "metrics host_receiver failed to init";
     return MetricsExitCodes::kMetricsError;
   }
