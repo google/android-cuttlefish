@@ -30,7 +30,7 @@
 
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/metrics/metrics_defs.h"
-#include "host/commands/metrics/proto/cf_metrics_proto.h"
+#include "host/commands/metrics/proto/cf_metrics_protos.h"
 #include "host/commands/metrics/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
