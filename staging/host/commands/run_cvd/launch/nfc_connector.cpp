@@ -44,6 +44,7 @@ class NfcConnector : public CommandSource {
     command.AddParameter("-fifo_in=", fifos_[1]);
     command.AddParameter("-data_port=", config_.casimir_nci_port());
     command.AddParameter("-buffer_size=", kBufferSize);
+    command.AddParameter("-dump_packet_size=", 10);
     std::vector<MonitorCommand> commands;
     commands.emplace_back(std::move(command));
     return commands;
