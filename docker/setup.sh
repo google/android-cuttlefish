@@ -528,7 +528,7 @@ function __gen_gethome_func_name {
 function __gen_funcs {
 	local name=$1
 	local instance_id=$(cf_get_instance_id ${name})
-	local vcid_opt="--base_instance_num=${instance_id}"
+	local vcid_opt
 	local login_func
 	local start_func
 	local stop_func
