@@ -32,11 +32,35 @@ DEFINE_int32(fifo_in, -1, "A pipe for incoming communication");
 DEFINE_int32(fifo_out, -1, "A pipe for outgoing communication");
 DEFINE_int32(data_port, -1, "A port for datas");
 DEFINE_int32(buffer_size, -1, "The buffer size");
+DEFINE_int32(dump_packet_size, -1,
+             "Dump incoming/outgoing packets up to given size");
 
 void openSocket(cuttlefish::SharedFD* fd, int port) {
   static std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
   *fd = cuttlefish::SharedFD::SocketLocalClient(port, SOCK_STREAM);
+}
+
+void dump_packets(const char* prefix, char* buf, int size) {
+  if (FLAGS_dump_packet_size < 0) {
+    return;
+  }
+  char bytes_string[1001] = {0};
+  int len = FLAGS_dump_packet_size < size ? FLAGS_dump_packet_size : size;
+  for (int i = 0; i < len; i++) {
+    if ((i + 1) * 5 > sizeof(bytes_string)) {
+      // Buffer out of bounds
+      break;
+    }
+    sprintf(bytes_string + (i * 5), "0x%02x ", buf[i]);
+  }
+  if (len < size) {
+    LOG(DEBUG) << prefix << ": sz=" << size << ", first " << len << " bytes=["
+               << bytes_string << "...]";
+  } else {
+    LOG(DEBUG) << prefix << ": sz=" << size << ", bytes=[" << bytes_string
+               << "]";
+  }
 }
 
 int main(int argc, char** argv) {
@@ -64,6 +88,7 @@ int main(int argc, char** argv) {
     while (true) {
       char buf[FLAGS_buffer_size];
       auto read = fifo_in->Read(buf, sizeof(buf));
+      dump_packets("Read from FIFO", buf, read);
       while (cuttlefish::WriteAll(sock, buf, read) == -1) {
         LOG(ERROR) << "failed to write to socket, retry.";
         // Wait for the host process to be ready
@@ -77,6 +102,7 @@ int main(int argc, char** argv) {
     while (true) {
       char buf[FLAGS_buffer_size];
       auto read = sock->Read(buf, sizeof(buf));
+      dump_packets("Read from socket", buf, read);
       if (read == -1) {
         LOG(ERROR) << "failed to read from socket, retry.";
         // Wait for the host process to be ready
