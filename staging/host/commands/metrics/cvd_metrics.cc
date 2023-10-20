@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 
   // TODO(moelsherif): fix this initial version , since the cvd metrics will
   // need to depend on cvd configuration flag
-  if (config->enable_metrics() != cuttlefish::CuttlefishConfig::kYes) {
+  if (config->enable_metrics() != cuttlefish::CuttlefishConfig::Answer::kYes) {
     LOG(ERROR) << "cvd metrics not enabled, but metrics were launched.";
     return MetricsExitCodes::kInvalidHostConfiguration;
   }
