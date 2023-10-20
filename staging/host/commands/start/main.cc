@@ -160,9 +160,11 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
     if (cuttlefish::CuttlefishConfig::ConfigExists()) {
       auto config = cuttlefish::CuttlefishConfig::Get();
       if (config) {
-        if (config->enable_metrics() == cuttlefish::CuttlefishConfig::kYes) {
+        if (config->enable_metrics() ==
+            cuttlefish::CuttlefishConfig::Answer::kYes) {
           use_metrics = "y";
-        } else if (config->enable_metrics() == cuttlefish::CuttlefishConfig::kNo) {
+        } else if (config->enable_metrics() ==
+                   cuttlefish::CuttlefishConfig::Answer::kNo) {
           use_metrics = "n";
         }
       }
