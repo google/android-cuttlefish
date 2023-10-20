@@ -223,7 +223,7 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path) {
   return root;
 }
 
-Result<Json::Value> GetOverridedJsonConfig(
+Result<Json::Value> GetOverriddenConfig(
     const std::string& config_path,
     const std::vector<Override>& override_flags) {
   Json::Value result = CF_EXPECT(ParseJsonFile(config_path));
@@ -261,7 +261,7 @@ Result<LoadDirectories> GenerateLoadDirectories(const std::string& parent_direct
     system_image_directories.emplace_back(result.target_directory + "/" +
                                           target_subdirectory);
   }
-  result.first_instance_directory =
+  result.host_package_directory =
       result.target_directory + "/" + result.target_subdirectories[0];
   result.system_image_directory_flag =
       "--system_image_dir=" +
