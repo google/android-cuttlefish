@@ -29,6 +29,7 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/snapshot_util_cvd/parse.h"
 #include "host/commands/snapshot_util_cvd/snapshot_taker.h"
+#include "host/libs/command_util/runner/proto_utils.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "run_cvd.pb.h"
@@ -36,39 +37,6 @@
 namespace cuttlefish {
 namespace {
 
-Result<std::string> SerializeSuspendRequest() {
-  run_cvd::ExtendedLauncherAction action_proto;
-  action_proto.mutable_suspend();
-  std::string serialized;
-  CF_EXPECT(action_proto.SerializeToString(&serialized),
-            "Failed to serialize Suspend Request protobuf.");
-  return serialized;
-}
-
-Result<std::string> SerializeResumeRequest() {
-  run_cvd::ExtendedLauncherAction action_proto;
-  action_proto.mutable_resume();
-  std::string serialized;
-  CF_EXPECT(action_proto.SerializeToString(&serialized),
-            "Failed to serialize Resume Request protobuf.");
-  return serialized;
-}
-
-Result<std::string> SerializeSnapshotTakeRequest(
-    const std::string& snapshot_path) {
-  run_cvd::ExtendedLauncherAction action_proto;
-  auto* snapshot_take_request = action_proto.mutable_snapshot_take();
-  snapshot_take_request->add_snapshot_path(snapshot_path);
-  std::string serialized;
-  CF_EXPECT(action_proto.SerializeToString(&serialized),
-            "Failed to serialize Resume Request protobuf.");
-  return serialized;
-}
-
-struct RequestInfo {
-  std::string serialized_data;
-  ExtendedActionType extended_action_type;
-};
 Result<RequestInfo> SerializeRequest(const SnapshotCmd subcmd,
                                      const std::string& meta_json_path) {
   switch (subcmd) {
