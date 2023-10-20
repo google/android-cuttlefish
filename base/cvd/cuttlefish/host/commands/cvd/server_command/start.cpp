@@ -131,10 +131,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
       const std::vector<selector::PerInstanceInfo>& instances,
       const std::string& artifacts_path, const std::string& start_bin);
 
-  static Result<std::vector<std::string>> UpdateWebrtcDeviceId(
-      std::vector<std::string>&& args, const std::string& group_name,
-      const std::vector<selector::PerInstanceInfo>& per_instance_info);
-
   Result<selector::GroupCreationInfo> UpdateArgsAndEnvs(
       selector::GroupCreationInfo&& old_group_info,
       const std::string& start_bin);
@@ -371,35 +367,6 @@ CvdStartCommandHandler::UpdateInstanceArgsAndEnvs(
                             .envs = std::move(new_envs)};
 }
 
-/*
- * Adds --webrtc_device_id when necessary to cmd_args_
- */
-Result<std::vector<std::string>> CvdStartCommandHandler::UpdateWebrtcDeviceId(
-    std::vector<std::string>&& args, const std::string& group_name,
-    const std::vector<selector::PerInstanceInfo>& per_instance_info) {
-  std::vector<std::string> new_args{std::move(args)};
-  // consume webrtc_device_id
-  // it was verified by start_selector_parser
-  std::string flag_value;
-  std::vector<Flag> webrtc_device_id_flag{
-      GflagsCompatFlag("webrtc_device_id", flag_value)};
-  CF_EXPECT(ParseFlags(webrtc_device_id_flag, new_args));
-
-  CF_EXPECT(!group_name.empty());
-  std::vector<std::string> device_name_list;
-  device_name_list.reserve(per_instance_info.size());
-  for (const auto& instance : per_instance_info) {
-    const auto& per_instance_name = instance.per_instance_name_;
-    std::string device_name{group_name};
-    device_name.append("-").append(per_instance_name);
-    device_name_list.emplace_back(device_name);
-  }
-  // take --webrtc_device_id flag away
-  new_args.emplace_back("--webrtc_device_id=" +
-                        android::base::Join(device_name_list, ","));
-  return new_args;
-}
-
 Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
     const std::string& bin_file, const selector::GroupCreationInfo& group_info,
     const RequestWithStdio& request) {
@@ -453,16 +420,6 @@ Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
       instances, host_artifacts_path, start_bin));
   group_creation_info.args = std::move(new_args);
   group_creation_info.envs = std::move(new_envs);
-
-  auto webrtc_device_id_flag = host_tool_target_manager_.ReadFlag(
-      {.artifacts_path = group_creation_info.host_artifacts_path,
-       .op = "start",
-       .flag_name = "webrtc_device_id"});
-  if (webrtc_device_id_flag.ok()) {
-    group_creation_info.args = CF_EXPECT(UpdateWebrtcDeviceId(
-        std::move(group_creation_info.args), group_creation_info.group_name,
-        group_creation_info.instances));
-  }
 
   // for backward compatibility, older cvd host tools don't accept group_id
   auto has_group_id_flag =
