@@ -58,7 +58,7 @@ void MetricsHostReceiver::Join() { thread_.join(); }
 
 bool MetricsHostReceiver::Initialize(const std::string& metrics_queue_name) {
   metrics_queue_name_ = metrics_queue_name;
-  if (!config_.enable_metrics()) {
+  if (config_.enable_metrics() != cuttlefish::CuttlefishConfig::Answer::kYes) {
     LOG(ERROR) << "init: metrics not enabled";
     return false;
   }
