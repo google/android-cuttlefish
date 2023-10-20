@@ -200,7 +200,7 @@ class CuttlefishConfig {
   void set_netsim_args(const std::string& netsim_args);
   std::vector<std::string> netsim_args() const;
 
-  enum Answer {
+  enum class Answer {
     kUnknown = 0,
     kYes,
     kNo,
