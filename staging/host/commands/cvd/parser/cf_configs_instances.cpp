@@ -29,6 +29,7 @@
 #include "host/commands/cvd/parser/instance/cf_disk_configs.h"
 #include "host/commands/cvd/parser/instance/cf_graphics_configs.h"
 #include "host/commands/cvd/parser/instance/cf_security_configs.h"
+#include "host/commands/cvd/parser/instance/cf_streaming_configs.h"
 #include "host/commands/cvd/parser/instance/cf_vm_configs.h"
 
 namespace cuttlefish {
@@ -41,6 +42,7 @@ Result<void> InitInstancesConfigs(Json::Value& instances) {
   CF_EXPECT(InitDiskConfigs(instances));
   CF_EXPECT(InitGraphicsConfigs(instances));
   CF_EXPECT(InitSecurityConfigs(instances));
+  CF_EXPECT(InitStreamingConfigs(instances));
   CF_EXPECT(InitVmConfigs(instances));
   return {};
 }
@@ -51,6 +53,7 @@ Result<std::vector<std::string>> GenerateInstancesFlags(
   result = MergeResults(result, CF_EXPECT(GenerateDiskFlags(instances)));
   result = MergeResults(result, CF_EXPECT(GenerateGraphicsFlags(instances)));
   result = MergeResults(result, CF_EXPECT(GenerateSecurityFlags(instances)));
+  result = MergeResults(result, CF_EXPECT(GenerateStreamingFlags(instances)));
   result = MergeResults(result, CF_EXPECT(GenerateVmFlags(instances)));
 
   return result;
