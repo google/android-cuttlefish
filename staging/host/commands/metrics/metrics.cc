@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
         cuttlefish::LogToStderrAndFiles(
             {metrics_log_path, instance.launcher_log_path()}));
   }
-  if (config->enable_metrics() != cuttlefish::CuttlefishConfig::kYes) {
+  if (config->enable_metrics() != cuttlefish::CuttlefishConfig::Answer::kYes) {
     LOG(ERROR) << "metrics not enabled, but metrics were launched.";
     return MetricsExitCodes::kInvalidHostConfiguration;
   }
