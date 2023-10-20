@@ -29,6 +29,7 @@ cc_library_host_static {
         "instance/cf_disk_configs.cpp",
         "instance/cf_graphics_configs.cpp",
         "instance/cf_security_configs.cpp",
+        "instance/cf_streaming_configs.cpp",
         "instance/cf_vm_configs.cpp",
         "launch_cvd_templates.cpp",
         "launch_cvd_parser.cpp",
