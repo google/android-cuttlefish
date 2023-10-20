@@ -129,12 +129,6 @@ class StartSelectorParser {
   Result<bool> CalcMayBeDefaultGroup();
   Result<bool> CalcAcquireFileLock();
 
-  struct WebrtcCalculatedNames {
-    std::optional<std::string> group_name;
-    std::optional<std::vector<std::string>> per_instance_names;
-  };
-  Result<WebrtcCalculatedNames> CalcNamesUsingWebrtcDeviceId();
-
   /**
    * The following are considered, and left empty if can't be figured out.
    *
