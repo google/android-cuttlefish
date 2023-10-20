@@ -42,7 +42,9 @@ int main(int argc, char** argv) {
     return MetricsExitCodes::kInvalidHostConfiguration;
   }
 
-  cuttlefish::MetricsHostReceiver host_receiver(*config);
+  bool is_metrics_enabled =
+      cuttlefish::CuttlefishConfig::Answer::kYes == config->enable_metrics();
+  cuttlefish::MetricsHostReceiver host_receiver(is_metrics_enabled);
   if (!host_receiver.Initialize(cuttlefish::kCfMetricsQueueName)) {
     LOG(ERROR) << "metrics host_receiver failed to init";
     return MetricsExitCodes::kMetricsError;
