@@ -45,9 +45,9 @@ int main(int argc, char** argv) {
     return MetricsExitCodes::kInvalidHostConfiguration;
   }
 
-  // TODO(moelsherif): decouple host_receiver configuration from instance
-  // configuration
-  cuttlefish::MetricsHostReceiver host_receiver(*config);
+  bool is_metrics_enabled = true;
+  cuttlefish::MetricsHostReceiver host_receiver(is_metrics_enabled);
+
   if (!host_receiver.Initialize(cuttlefish::kAtestMetricsQueueName)) {
     LOG(ERROR) << "cvd metrics host_receiver failed to init";
     return MetricsExitCodes::kMetricsError;
