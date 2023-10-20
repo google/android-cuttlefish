@@ -87,7 +87,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     }
 
     Json::Value json_configs =
-        CF_EXPECT(GetOverridedJsonConfig(flags.config_path, flags.overrides));
+        CF_EXPECT(GetOverriddenConfig(flags.config_path, flags.overrides));
     const auto load_directories =
         CF_EXPECT(GenerateLoadDirectories(flags.base_dir, json_configs["instances"].size()));
     auto cvd_flags = CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
@@ -113,14 +113,14 @@ class LoadConfigsCommand : public CvdServerHandler {
     mkdir_cmd.add_args(load_directories.launch_home_directory);
 
     auto& launch_cmd = *req_protos.emplace_back().mutable_command_request();
-    launch_cmd.set_working_directory(load_directories.first_instance_directory);
+    launch_cmd.set_working_directory(load_directories.host_package_directory);
     *launch_cmd.mutable_env() = client_env;
     (*launch_cmd.mutable_env())["HOME"] =
         load_directories.launch_home_directory;
     (*launch_cmd.mutable_env())[kAndroidHostOut] =
-        load_directories.first_instance_directory;
+        load_directories.host_package_directory;
     (*launch_cmd.mutable_env())[kAndroidSoongHostOut] =
-        load_directories.first_instance_directory;
+        load_directories.host_package_directory;
     if (Contains(*launch_cmd.mutable_env(), kAndroidProductOut)) {
       (*launch_cmd.mutable_env()).erase(kAndroidProductOut);
     }
