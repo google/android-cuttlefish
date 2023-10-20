@@ -88,9 +88,15 @@ int main(int argc, char** argv) {
     while (true) {
       char buf[FLAGS_buffer_size];
       auto read = fifo_in->Read(buf, sizeof(buf));
+      if (read < 0) {
+        LOG(WARNING) << "Error reading from guest: " << fifo_in->StrError();
+        sleep(1);
+        continue;
+      }
       dump_packets("Read from FIFO", buf, read);
       while (cuttlefish::WriteAll(sock, buf, read) == -1) {
-        LOG(ERROR) << "failed to write to socket, retry.";
+        LOG(WARNING) << "Failed to write to host socket (will retry): "
+                     << sock->StrError();
         // Wait for the host process to be ready
         sleep(1);
         openSocket(&sock, FLAGS_data_port);
@@ -104,13 +110,19 @@ int main(int argc, char** argv) {
       auto read = sock->Read(buf, sizeof(buf));
       dump_packets("Read from socket", buf, read);
       if (read == -1) {
-        LOG(ERROR) << "failed to read from socket, retry.";
+        LOG(WARNING) << "Failed to read from host socket (will retry): "
+                     << sock->StrError();
         // Wait for the host process to be ready
         sleep(1);
         openSocket(&sock, FLAGS_data_port);
         continue;
       }
-      cuttlefish::WriteAll(fifo_out, buf, read);
+      auto wrote = cuttlefish::WriteAll(fifo_out, buf, read);
+      if (wrote < 0) {
+        LOG(WARNING) << "Failed to write to guest: " << fifo_out->StrError();
+        sleep(1);
+        continue;
+      }
     }
   });
   guest_to_host.join();
