@@ -106,7 +106,7 @@ void AdbHandler::handleMessage(const uint8_t *msg, size_t len) {
   while (sent < len) {
     auto this_sent = adb_socket_->Write(&msg[sent], len - sent);
     if (this_sent < 0) {
-      LOG(FATAL) << "Error writing to adb socket: " << adb_socket_->StrError();
+      LOG(ERROR) << "Error writing to adb socket: " << adb_socket_->StrError();
       return;
     }
     sent += this_sent;
