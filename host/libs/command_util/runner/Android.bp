@@ -34,3 +34,33 @@ cc_library {
         "cvd_cc_defaults",
     ],
 }
+
+cc_library {
+    name: "libcuttlefish_runner_proto",
+    srcs: [
+        "proto_utils.cc",
+    ],
+    static_libs: [
+        "libbase",
+        "libcuttlefish_run_cvd_proto",
+    ],
+    target: {
+        host: {
+            static_libs: [
+                "libprotobuf-cpp-full",
+            ],
+        },
+        android: {
+            shared_libs: [
+                "libprotobuf-cpp-full",
+            ],
+        },
+        darwin: {
+            static_libs: [
+                "libprotobuf-cpp-full",
+            ],
+            enabled: true,
+        },
+    },
+    defaults: ["cuttlefish_host"],
+}
