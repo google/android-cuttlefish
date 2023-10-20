@@ -23,6 +23,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/command_util/runner/defs.h"
+#include "host/libs/command_util/runner/proto_utils.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "run_cvd.pb.h"
@@ -37,29 +38,6 @@ DEFINE_int32(
 
 namespace cuttlefish {
 namespace {
-
-Result<std::string> SerializeStartScreenRecordingRequest() {
-  run_cvd::ExtendedLauncherAction action_proto;
-  action_proto.mutable_start_screen_recording();
-  std::string serialized;
-  CF_EXPECT(action_proto.SerializeToString(&serialized),
-            "Failed to serialize start recording request protobuf.");
-  return serialized;
-}
-
-Result<std::string> SerializeStopScreenRecordingRequest() {
-  run_cvd::ExtendedLauncherAction action_proto;
-  action_proto.mutable_stop_screen_recording();
-  std::string serialized;
-  CF_EXPECT(action_proto.SerializeToString(&serialized),
-            "Failed to serialize stop recording request protobuf.");
-  return serialized;
-}
-
-struct RequestInfo {
-  std::string serialized_data;
-  ExtendedActionType extended_action_type;
-};
 
 Result<void> RecordCvdMain(int argc, char* argv[]) {
   CF_EXPECT_EQ(argc, 2, "Expected exactly one argument with record_cvd.");
