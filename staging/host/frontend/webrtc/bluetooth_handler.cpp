@@ -76,7 +76,7 @@ void BluetoothHandler::handleMessage(const uint8_t *msg, size_t len) {
   while (sent < len) {
     auto this_sent = rootcanal_socket_->Write(&msg[sent], len - sent);
     if (this_sent < 0) {
-      PLOG(FATAL) << "Error writing to rootcanal socket.";
+      PLOG(ERROR) << "Error writing to rootcanal socket.";
       return;
     }
     sent += this_sent;
