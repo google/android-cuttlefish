@@ -37,6 +37,14 @@ digraph {
     root_canal_log_tee [label = "log_tee"]
   }
 
+  subgraph cluster_nfc_group {
+    label = "NFC"
+
+    nfc_connector
+    casimir [label = "casimir (NFC rootcanal)"]
+    casimir_log_tee [label = "log_tee"]
+  }
+
   subgraph cluster_vmm_group {
     label = "VMM"
 
@@ -97,6 +105,10 @@ digraph {
   run_cvd -> root_canal [style = "dashed"]
   run_cvd -> root_canal_log_tee [style = "dashed"]
   root_canal_log_tee -> root_canal [dir = "back"]
+  run_cvd -> nfc_connector [style = "dashed"]
+  run_cvd -> casimir [style = "dashed"]
+  run_cvd -> casimir_log_tee [style = "dashed"]
+  casimir_log_tee -> casimir [dir = "back"]
   run_cvd -> secure_env
   run_cvd -> socket_vsock_proxy [style = "dashed"]
   run_cvd -> tombstone_receiver
@@ -104,6 +116,7 @@ digraph {
   run_cvd -> webrtc [style = "dashed"]
   run_cvd -> wmediumd
   run_cvd -> wmediumd_log_tee
+
   wmediumd_log_tee -> wmediumd [dir = "back"]
 
   crosvm_android_log_tee -> crosvm_android [dir = "back", style = "dashed"]
