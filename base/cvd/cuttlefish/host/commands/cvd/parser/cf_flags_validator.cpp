@@ -200,6 +200,17 @@ Result<void> ValidateBootConfigs(const Json::Value& root) {
   return {};
 }
 
+Result<void> ValidateStreamingConfigs(const Json::Value& root) {
+  static const auto& kStreamingKeyMap =
+      *new std::map<std::string, Json::ValueType>{
+          {"device_id", Json::ValueType::stringValue},
+      };
+
+  CF_EXPECT(ValidateTypo(root, kStreamingKeyMap),
+            "ValidateStreamingConfigs ValidateTypo fail");
+  return {};
+}
+
 Result<void> ValidateInstancesConfigs(const Json::Value& instances) {
   for (const auto& instance : instances) {
     CF_EXPECT(ValidateTypo(instance, kInstanceKeyMap),
@@ -226,6 +237,9 @@ Result<void> ValidateInstancesConfigs(const Json::Value& instances) {
     }
     if (instance.isMember("graphics")) {
       CF_EXPECT(ValidateGraphicsConfigs(instance["graphics"]));
+    }
+    if (instance.isMember("streaming")) {
+      CF_EXPECT(ValidateStreamingConfigs(instance["streaming"]));
     }
     CF_EXPECT(ValidateConfig<std::string>(instance, ValidateSetupWizardMode,
                                           {"vm", "setupwizard_mode"}),
