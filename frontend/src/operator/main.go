@@ -125,7 +125,7 @@ func main() {
 		func() error { return operator.SetupDeviceEndpoint(pool, config, *socketPath)() },
 		func() error { return startHttpServer(*address, *httpPort) },
 	}
-	if *httpPort <= 0 {
+	if *httpsPort <= 0 {
 		starters = append(starters, func() error {
 			return startHttpsServer(*address, *httpsPort, certPath, keyPath)
 		})
