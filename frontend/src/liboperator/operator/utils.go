@@ -61,7 +61,6 @@ func ReplyJSON(w http.ResponseWriter, obj interface{}, statusCode int) error {
 	return encoder.Encode(obj)
 }
 
-
 // Connect ControlEnvProxyServer
 func ConnectControlEnvProxyServer(devId string, pool *DevicePool) (*grpc.ClientConn, error) {
 	dev := pool.GetDevice(devId)
@@ -74,5 +73,5 @@ func ConnectControlEnvProxyServer(devId string, pool *DevicePool) (*grpc.ClientC
 	if !ok {
 		return nil, errors.New("ControlEnvProxyServer path not found")
 	}
-	return grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
+	return grpc.Dial("unix://"+serverPath, grpc.WithInsecure())
 }
