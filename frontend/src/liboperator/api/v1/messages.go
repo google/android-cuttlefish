@@ -90,9 +90,9 @@ type CreateCVDRequest struct {
 	// above as reference to build your config object.
 	EnvConfig interface{} `json:"env_config"`
 
-	// [DEPRECATED]. Use `Config` field.
+	// [DEPRECATED]. Use `EnvConfig` field.
 	CVD *CVD `json:"cvd"`
-	// [DEPRECATED]. Use `Config` field.
+	// [DEPRECATED]. Use `EnvConfig` field.
 	// Use to create multiple homogeneous instances.
 	AdditionalInstancesNum uint32 `json:"additional_instances_num,omitempty"`
 }
