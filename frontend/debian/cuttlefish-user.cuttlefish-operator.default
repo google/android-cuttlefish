@@ -14,7 +14,8 @@ operator_https_port=1443
 #
 # The directory where the TLS certificate needed to establish the HTTPS
 # communication lives.
-operator_tls_cert_dir="/etc/cuttlefish-common/operator/cert"
+# Defaults to "/etc/cuttlefish-common/operator/cert".
+# operator_tls_cert_dir=
 #
 # Where web UI in the application is from
 # If it isn't empty, the application uses web UI from the url,

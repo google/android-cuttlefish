@@ -41,6 +41,7 @@ DAEMON="/usr/lib/cuttlefish-common/bin/operator"
 PIDFILE="${RUN_DIR}"/operator.pid
 
 gen_cert() {
+  operator_tls_cert_dir=${operator_tls_cert_dir:-/etc/cuttlefish-common/operator/cert}
   CERT_FILE="${operator_tls_cert_dir}/cert.pem"
   KEY_FILE="${operator_tls_cert_dir}/key.pem"
   if [ -f "$CERT_FILE" ] && [ -f "$KEY_FILE" ]; then
