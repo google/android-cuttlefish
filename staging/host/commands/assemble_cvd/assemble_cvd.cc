@@ -210,6 +210,10 @@ Result<std::set<std::string>> PreservingOnResume(
   // either --resume && !creating_os_disk, or restoring from a snapshot
   std::set<std::string> preserving;
   preserving.insert("overlay.img");
+  preserving.insert("ap_composite.img");
+  preserving.insert("ap_composite_disk_config.txt");
+  preserving.insert("ap_composite_gpt_footer.img");
+  preserving.insert("ap_composite_gpt_header.img");
   preserving.insert("ap_overlay.img");
   preserving.insert("os_composite_disk_config.txt");
   preserving.insert("os_composite_gpt_header.img");
@@ -237,6 +241,7 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("factory_reset_protected.img");
   preserving.insert("misc.img");
   preserving.insert("metadata.img");
+  preserving.insert("vbmeta.img");
   preserving.insert("oemlock_secure");
   preserving.insert("oemlock_insecure");
   for (int i = 0; i < modem_simulator_count; i++) {
