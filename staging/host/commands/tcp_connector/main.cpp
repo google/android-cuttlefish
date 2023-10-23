@@ -42,7 +42,7 @@ void openSocket(cuttlefish::SharedFD* fd, int port) {
 }
 
 void dump_packets(const char* prefix, char* buf, int size) {
-  if (FLAGS_dump_packet_size < 0) {
+  if (FLAGS_dump_packet_size < 0 || size <= 0) {
     return;
   }
   char bytes_string[1001] = {0};
