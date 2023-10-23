@@ -150,10 +150,6 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 		log.Println("Error reading from device: ", err)
 		return
 	}
-	if msg.Type != "register" {
-		ReplyError(c, "First device message must be the registration")
-		return
-	}
 	id := msg.DeviceId
 	if id == "" {
 		ReplyError(c, "Missing device_id")
@@ -179,10 +175,6 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 		var msg apiv1.ForwardMsg
 		if err := c.Recv(&msg); err != nil {
 			log.Println("Error reading from device: ", err)
-			return
-		}
-		if msg.Type != "forward" {
-			ReplyError(c, fmt.Sprintln("Unrecognized message type: ", msg.Type))
 			return
 		}
 		clientId := msg.ClientId
@@ -441,7 +433,6 @@ func forward(w http.ResponseWriter, r *http.Request, polledSet *PolledSet) {
 		return
 	}
 	cMsg := apiv1.ClientMsg{
-		Type:     "client_msg",
 		ClientId: conn.ClientId(),
 		Payload:  msg.Payload,
 	}
