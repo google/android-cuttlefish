@@ -144,7 +144,7 @@ fruit::Component<> runCvdComponent(
       .install(LaunchAdbComponent)
       .install(LaunchFastbootComponent)
       .install(AutoCmd<BluetoothConnector>::Component)
-      .install(NfcConnectorComponent)
+      .install(AutoCmd<NfcConnector>::Component)
       .install(AutoCmd<UwbConnector>::Component)
       .install(ConsoleForwarderComponent)
       .install(ControlEnvProxyServerComponent)
