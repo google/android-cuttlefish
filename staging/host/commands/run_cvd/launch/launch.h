@@ -46,9 +46,8 @@ std::optional<MonitorCommand> AutomotiveProxyService(const CuttlefishConfig&);
 Result<MonitorCommand> BluetoothConnector(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
-NfcConnectorComponent();
+Result<MonitorCommand> NfcConnector(const CuttlefishConfig&,
+                                    const CuttlefishConfig::InstanceSpecific&);
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
                  KernelLogPipeProvider>
