@@ -16,14 +16,10 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"regexp"
-	"sync"
 	"testing"
 	"time"
 
@@ -75,163 +71,6 @@ func TestRetryLogic(t *testing.T) {
 	}
 }
 
-func TestUploadFilesChunkSizeBytesIsZeroPanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("did not panic")
-		}
-	}()
-	opts := &ServiceOptions{
-		RootEndpoint: "https://test.com",
-		DumpOut:      io.Discard,
-	}
-	srv, _ := NewService(opts)
-
-	srv.UploadFiles("foo", "bar", []string{"baz"})
-}
-
-func TestUploadFilesSucceeds(t *testing.T) {
-	host := "foo"
-	uploadDir := "bar"
-	tempDir := createTempDir(t)
-	defer os.RemoveAll(tempDir)
-	quxFile := createTempFile(t, tempDir, "qux", []byte("lorem"))
-	waldoFile := createTempFile(t, tempDir, "waldo", []byte("l"))
-	xyzzyFile := createTempFile(t, tempDir, "xyzzy", []byte("abraca"))
-	mu := sync.Mutex{}
-	// expected uploads are keyed by format %filename %chunknumber of %chunktotal with the chunk content as value
-	uploads := map[string]struct{ Content []byte }{
-		// qux
-		"qux 1 of 3": {Content: []byte("lo")},
-		"qux 2 of 3": {Content: []byte("re")},
-		"qux 3 of 3": {Content: []byte("m")},
-		// waldo
-		"waldo 1 of 1": {Content: []byte("l")},
-		// xyzzy
-		"xyzzy 1 of 3": {Content: []byte("ab")},
-		"xyzzy 2 of 3": {Content: []byte("ra")},
-		"xyzzy 3 of 3": {Content: []byte("ca")},
-	}
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		mu.Lock()
-		defer mu.Unlock()
-		switch ep := r.Method + " " + r.URL.Path; ep {
-		case "PUT /hosts/" + host + "/userartifacts/" + uploadDir:
-			chunkNumber := r.PostFormValue("chunk_number")
-			chunkTotal := r.PostFormValue("chunk_total")
-			f, fheader, err := r.FormFile("file")
-			if err != nil {
-				t.Fatal(err)
-			}
-			expectedUploadKey := fmt.Sprintf("%s %s of %s", fheader.Filename, chunkNumber, chunkTotal)
-			val, ok := uploads[expectedUploadKey]
-			if !ok {
-				t.Fatalf("unexpected upload with filename: %q, chunk number: %s, chunk total: %s",
-					fheader.Filename, chunkNumber, chunkTotal)
-			}
-			delete(uploads, expectedUploadKey)
-			b, err := io.ReadAll(f)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if diff := cmp.Diff(val.Content, b); diff != "" {
-				t.Fatalf("chunk content mismatch %q (-want +got):\n%s", fheader.Filename, diff)
-			}
-			writeOK(w, struct{}{})
-		default:
-			t.Fatal("unexpected endpoint: " + ep)
-		}
-
-	}))
-	defer ts.Close()
-	opts := &ServiceOptions{
-		RootEndpoint:   ts.URL,
-		DumpOut:        io.Discard,
-		ChunkSizeBytes: 2,
-	}
-	srv, _ := NewService(opts)
-
-	err := srv.UploadFiles(host, uploadDir, []string{quxFile, waldoFile, xyzzyFile})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(uploads) != 0 {
-		t.Errorf("missing chunk uploads:  %v", uploads)
-	}
-}
-
-func TestUploadFilesExponentialBackoff(t *testing.T) {
-	tempDir := createTempDir(t)
-	defer os.RemoveAll(tempDir)
-	waldoFile := createTempFile(t, tempDir, "waldo", []byte("l"))
-	timestamps := make([]time.Time, 0)
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		timestamps = append(timestamps, time.Now())
-		if len(timestamps) < 3 {
-			writeErr(w, 500)
-			return
-		}
-		writeOK(w, struct{}{})
-	}))
-	defer ts.Close()
-	opts := &ServiceOptions{
-		RootEndpoint:   ts.URL,
-		DumpOut:        io.Discard,
-		ChunkSizeBytes: 2,
-		ChunkUploadBackOffOpts: BackOffOpts{
-			InitialDuration: 100 * time.Millisecond,
-			Multiplier:      2,
-			MaxElapsedTime:  1 * time.Minute,
-		},
-	}
-	srv, _ := NewService(opts)
-
-	err := srv.UploadFiles("foo", "bar", []string{waldoFile})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	if timestamps[1].Sub(timestamps[0]) < 100*time.Millisecond {
-		t.Fatal("first retry shouldn't be in less than 100ms")
-	}
-	if timestamps[2].Sub(timestamps[1]) < 200*time.Millisecond {
-		t.Fatal("first retry shouldn't be in less than 200ms")
-	}
-}
-
-func TestUploadFilesExponentialBackoffReachedElapsedTime(t *testing.T) {
-	tempDir := createTempDir(t)
-	defer os.RemoveAll(tempDir)
-	waldoFile := createTempFile(t, tempDir, "waldo", []byte("l"))
-	attempts := 0
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		attempts = attempts + 1
-		writeErr(w, 500)
-	}))
-	defer ts.Close()
-	opts := &ServiceOptions{
-		RootEndpoint:   ts.URL,
-		DumpOut:        io.Discard,
-		ChunkSizeBytes: 2,
-		ChunkUploadBackOffOpts: BackOffOpts{
-			InitialDuration: 100 * time.Millisecond,
-			Multiplier:      2,
-			MaxElapsedTime:  1 * time.Second,
-		},
-	}
-	srv, _ := NewService(opts)
-
-	err := srv.UploadFiles("foo", "bar", []string{waldoFile})
-
-	if err == nil {
-		t.Fatal("expected error")
-	}
-	if attempts == 0 {
-		t.Fatal("server was never reached")
-	}
-}
-
 func TestDeleteHosts(t *testing.T) {
 	existingNames := map[string]struct{}{"bar": {}, "baz": {}}
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -263,22 +102,6 @@ func TestDeleteHosts(t *testing.T) {
 	if len(errs) != 2 {
 		t.Errorf("expected 2, got: %d", len(errs))
 	}
-}
-
-func createTempDir(t *testing.T) string {
-	dir, err := os.MkdirTemp("", "cvdrTest")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return dir
-}
-
-func createTempFile(t *testing.T, dir, name string, content []byte) string {
-	file := filepath.Join(dir, name)
-	if err := os.WriteFile(file, content, 0666); err != nil {
-		t.Fatal(err)
-	}
-	return file
 }
 
 func writeErr(w http.ResponseWriter, statusCode int) {
