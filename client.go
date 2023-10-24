@@ -26,7 +26,6 @@ import (
 	apiv1 "github.com/google/cloud-android-orchestration/api/v1"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/pion/webrtc/v3"
 )
 
 type OpTimeoutError string
@@ -148,16 +147,6 @@ func (c *serviceImpl) DeleteHosts(names []string) error {
 func (c *serviceImpl) waitForOperation(op *apiv1.Operation, res any) error {
 	path := "/operations/" + op.Name + "/:wait"
 	return c.httpHelper.NewPostRequest(path, nil).Do(res)
-}
-
-func asWebRTCICEServers(in []apiv1.IceServer) []webrtc.ICEServer {
-	out := []webrtc.ICEServer{}
-	for _, s := range in {
-		out = append(out, webrtc.ICEServer{
-			URLs: s.URLs,
-		})
-	}
-	return out
 }
 
 const headerNameCOInjectBuildAPICreds = "X-Cutf-Cloud-Orchestrator-Inject-BuildAPI-Creds"
