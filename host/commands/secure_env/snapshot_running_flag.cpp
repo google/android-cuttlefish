@@ -13,31 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
-
-#include <thread>
-
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
 #include "host/commands/secure_env/snapshot_running_flag.h"
-#include "host/libs/command_util/runner/defs.h"
+
+#include <condition_variable>
+#include <mutex>
 
 namespace cuttlefish {
 
-class SnapshotCommandHandler {
- public:
-  ~SnapshotCommandHandler();
-  SnapshotCommandHandler(SharedFD channel_to_run_cvd,
-                         SnapshotRunningFlag& running);
+void SnapshotRunningFlag::UnsetRunning() {
+  std::lock_guard lock(running_mutex_);
+  running_ = false;
+}
 
- private:
-  Result<void> SuspendResumeHandler();
-  Result<ExtendedActionType> ReadRunCvdSnapshotCmd() const;
-  void Join();
+void SnapshotRunningFlag::SetRunning() {
+  std::lock_guard lock(running_mutex_);
+  running_ = true;
+  running_true_cv_.notify_all();
+}
 
-  SharedFD channel_to_run_cvd_;
-  SnapshotRunningFlag& shared_running_;  // shared by other components outside
-  std::thread handler_thread_;
-};
+void SnapshotRunningFlag::WaitRunning() {
+  std::unique_lock lock(running_mutex_);
+  while (!running_) {
+    running_true_cv_.wait(lock);
+  }
+}
 
 }  // namespace cuttlefish

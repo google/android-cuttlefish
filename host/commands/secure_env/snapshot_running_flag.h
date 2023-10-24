@@ -15,29 +15,28 @@
 
 #pragma once
 
-#include <thread>
-
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/secure_env/snapshot_running_flag.h"
-#include "host/libs/command_util/runner/defs.h"
+#include <condition_variable>
+#include <mutex>
 
 namespace cuttlefish {
 
-class SnapshotCommandHandler {
+class SnapshotRunningFlag {
  public:
-  ~SnapshotCommandHandler();
-  SnapshotCommandHandler(SharedFD channel_to_run_cvd,
-                         SnapshotRunningFlag& running);
+  SnapshotRunningFlag() {}
+  // called by Suspend handler
+  void UnsetRunning();
+
+  // called by Resume handler
+  void SetRunning();
+
+  // called by each worker thread
+  // blocks if running_ is false, and wakes up on running_ == true
+  void WaitRunning();
 
  private:
-  Result<void> SuspendResumeHandler();
-  Result<ExtendedActionType> ReadRunCvdSnapshotCmd() const;
-  void Join();
-
-  SharedFD channel_to_run_cvd_;
-  SnapshotRunningFlag& shared_running_;  // shared by other components outside
-  std::thread handler_thread_;
+  bool running_ = true;
+  std::mutex running_mutex_;
+  std::condition_variable running_true_cv_;
 };
 
 }  // namespace cuttlefish
