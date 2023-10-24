@@ -42,23 +42,13 @@ cc_library {
     ],
     static_libs: [
         "libbase",
+    ],
+    shared_libs: [
         "libcuttlefish_run_cvd_proto",
+	"libprotobuf-cpp-full",
     ],
     target: {
-        host: {
-            static_libs: [
-                "libprotobuf-cpp-full",
-            ],
-        },
-        android: {
-            shared_libs: [
-                "libprotobuf-cpp-full",
-            ],
-        },
         darwin: {
-            static_libs: [
-                "libprotobuf-cpp-full",
-            ],
             enabled: true,
         },
     },
