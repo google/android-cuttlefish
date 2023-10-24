@@ -21,7 +21,7 @@ cc_binary {
     defaults: ["cuttlefish_guest_only"],
     vendor: true,
     relative_install_path: "hw",
-    init_rc: ["android.hardware.gatekeeper-service.remote.rc"],
+    installable: false, // installed in APEX
 
     srcs: [
         "remote_gatekeeper.cpp",
@@ -53,6 +53,35 @@ cc_binary {
         "libcutils",
         "libtrusty",
     ],
+}
 
-    vintf_fragments: ["android.hardware.gatekeeper-service.remote.xml"],
+prebuilt_etc {
+    name: "android.hardware.gatekeeper-service.remote.xml",
+    src: "android.hardware.gatekeeper-service.remote.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.gatekeeper-service.remote.rc",
+    src: "android.hardware.gatekeeper-service.remote.rc",
+    installable: false,
+}
+
+apex {
+    name: "com.google.cf.gatekeeper",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
+    vendor: true,
+    updatable: false,
+
+    binaries: [
+        "android.hardware.gatekeeper-service.remote",
+    ],
+    prebuilts: [
+        "android.hardware.gatekeeper-service.remote.xml",
+        "android.hardware.gatekeeper-service.remote.rc",
+    ],
 }
