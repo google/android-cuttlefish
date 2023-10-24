@@ -119,6 +119,7 @@ cc_library {
         "event_notifier.cpp",
         "oemlock/oemlock.cpp",
         "oemlock/oemlock_responder.cpp",
+	"snapshot_running_flag.cpp",
         "storage/insecure_json_storage.cpp",
         "suspend_resume_handler.cpp",
     ],
