@@ -25,12 +25,16 @@ cc_library {
     ],
     shared_libs: [
         "libcuttlefish_fs",
+        "libcuttlefish_runner_proto",
+        "libcuttlefish_run_cvd_proto",
         "libcuttlefish_utils",
         "libbase",
         "libfruit",
         "libjsoncpp",
+        "libprotobuf-cpp-full",
     ],
     static_libs: [
+        "libcuttlefish_command_util",
         "libcuttlefish_host_config",
         "libgflags",
     ],

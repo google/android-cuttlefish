@@ -35,6 +35,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
@@ -43,6 +44,9 @@
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/libs/command_util/runner/defs.h"
+#include "host/libs/command_util/runner/proto_utils.h"
+#include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/process_monitor/process_monitor_channel.h"
@@ -163,6 +167,82 @@ Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
   return {};
 }
 
+Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
+                               std::mutex& properties_mutex,
+                               const SharedFD& channel_to_secure_env,
+                               const bool is_suspend,
+                               SharedFD child_monitor_socket) {
+  std::lock_guard lock(properties_mutex);
+  auto secure_env_itr = std::find_if(
+      monitor_entries.begin(), monitor_entries.end(), [](MonitorEntry& entry) {
+        auto prog_name = android::base::Basename(entry.cmd->Executable());
+        return (prog_name == "secure_env");
+      });
+  if (secure_env_itr != monitor_entries.end()) {
+    CF_EXPECT(channel_to_secure_env->IsOpen(),
+              "channel to secure_env is not open.");
+    const ExtendedActionType extended_type =
+        (is_suspend ? ExtendedActionType::kSuspend
+                    : ExtendedActionType::kResume);
+    auto serialized_request = CF_EXPECT(
+        (is_suspend ? SerializeSuspendRequest() : SerializeResumeRequest()),
+        "Failed to serialize request.");
+    CF_EXPECT(WriteLauncherActionWithData(
+        channel_to_secure_env, LauncherAction::kExtended, extended_type,
+        std::move(serialized_request)));
+    const std::string failed_command = (is_suspend ? "suspend" : "resume");
+    CF_EXPECT(ReadLauncherResponse(channel_to_secure_env),
+              "secure_env refused to " + failed_command);
+  }
+
+  for (const auto& entry : monitor_entries) {
+    if (!entry.cmd) {
+      LOG(ERROR) << "Monitor Entry has a nullptr for cmd.";
+      continue;
+    }
+    if (!entry.proc) {
+      LOG(ERROR) << "Monitor Entry has a nullptr for proc.";
+      continue;
+    }
+    auto prog_name = android::base::Basename(entry.cmd->Executable());
+    auto process_restart_bin =
+        android::base::Basename(ProcessRestarterBinary());
+    if (prog_name == "log_tee") {
+      // Don't stop log_tee, we want to continue processing logs while
+      // suspended.
+      continue;
+    }
+    if (prog_name == "wmediumd") {
+      // wmediumd should be running while openWRT is saved using the
+      // guest snapshot logic
+      continue;
+    }
+    if (prog_name == "secure_env") {
+      // secure_env was handled above in a customized way
+      continue;
+    }
+
+    if (process_restart_bin == prog_name) {
+      if (is_suspend) {
+        CF_EXPECT(entry.proc->SendSignal(SIGTSTP));
+      } else {
+        CF_EXPECT(entry.proc->SendSignal(SIGCONT));
+      }
+      continue;
+    }
+    if (is_suspend) {
+      CF_EXPECT(entry.proc->SendSignalToGroup(SIGTSTP));
+    } else {
+      CF_EXPECT(entry.proc->SendSignalToGroup(SIGCONT));
+    }
+  }
+  using process_monitor_impl::ChildToParentResponse;
+  using process_monitor_impl::ChildToParentResponseType;
+  ChildToParentResponse response(ChildToParentResponseType::kSuccess);
+  CF_EXPECT(response.Write(child_monitor_socket));
+  return {};
+}
+
 }  // namespace
 
 Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
@@ -193,91 +273,18 @@ Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
 }
 
 Result<void> ProcessMonitor::SuspendHostProcessesImpl() {
-  std::lock_guard lock(properties_mutex_);
-  auto& monitor_entries = properties_.entries_;
-  bool has_secure_env = false;
-  for (const auto& entry : monitor_entries) {
-    if (!entry.cmd) {
-      LOG(ERROR) << "Monitor Entry has a nullptr for cmd.";
-      continue;
-    }
-    if (!entry.proc) {
-      LOG(ERROR) << "Monitor Entry has a nullptr for proc.";
-      continue;
-    }
-    auto prog_name = android::base::Basename(entry.cmd->Executable());
-    auto process_restart_bin =
-        android::base::Basename(ProcessRestarterBinary());
-    if (prog_name == "log_tee" || prog_name == "wmediumd") {
-      // Don't stop log_tee, we want to continue processing logs while
-      // suspended.
-      continue;
-    }
-    if (process_restart_bin == prog_name) {
-      CF_EXPECT(entry.proc->SendSignal(SIGTSTP));
-      continue;
-    }
-    if (prog_name == "secure_env") {
-      has_secure_env = true;
-      continue;
-    }
-    CF_EXPECT(entry.proc->SendSignalToGroup(SIGTSTP));
-  }
-  if (has_secure_env) {
-    CF_EXPECT(channel_to_secure_env_->IsOpen(),
-              "channel to secure_env is not open.");
-    /*
-     * TODO(kwstephenkim): send suspend command to secure_env channel
-     * and wait for the response. If the response is error, write
-     * kError back to the parent.
-     */
-  }
-  using process_monitor_impl::ChildToParentResponse;
-  using process_monitor_impl::ChildToParentResponseType;
-  ChildToParentResponse response(ChildToParentResponseType::kSuccess);
-  CF_EXPECT(response.Write(child_monitor_socket_));
+  CF_EXPECT(SuspendResumeImpl(properties_.entries_, properties_mutex_,
+                              channel_to_secure_env_, /* is_suspend */ true,
+                              child_monitor_socket_),
+            "Failed suspend");
   return {};
 }
 
 Result<void> ProcessMonitor::ResumeHostProcessesImpl() {
-  std::lock_guard lock(properties_mutex_);
-  auto& monitor_entries = properties_.entries_;
-  bool has_secure_env = false;
-  for (const auto& entry : monitor_entries) {
-    if (!entry.cmd) {
-      LOG(ERROR) << "Monitor Entry has a nullptr for cmd.";
-      continue;
-    }
-    if (!entry.proc) {
-      LOG(ERROR) << "Monitor Entry has a nullptr for proc.";
-      continue;
-    }
-    auto prog_name = android::base::Basename(entry.cmd->Executable());
-    auto process_restart_bin =
-        android::base::Basename(ProcessRestarterBinary());
-    if (process_restart_bin == prog_name) {
-      CF_EXPECT(entry.proc->SendSignal(SIGCONT));
-      continue;
-    }
-    if (prog_name == "secure_env") {
-      has_secure_env = true;
-      continue;
-    }
-    CF_EXPECT(entry.proc->SendSignalToGroup(SIGCONT));
-  }
-  if (has_secure_env) {
-    CF_EXPECT(channel_to_secure_env_->IsOpen(),
-              "channel to secure env is not open.");
-    /*
-     * TODO(kwstephenkim): send resume command to the channel, wait for
-     * the response. If the response is error, send kError back to the
-     * parent.
-     */
-  }
-  using process_monitor_impl::ChildToParentResponse;
-  using process_monitor_impl::ChildToParentResponseType;
-  ChildToParentResponse response(ChildToParentResponseType::kSuccess);
-  CF_EXPECT(response.Write(child_monitor_socket_));
+  CF_EXPECT(SuspendResumeImpl(properties_.entries_, properties_mutex_,
+                              channel_to_secure_env_, /* is_suspend */ false,
+                              child_monitor_socket_),
+            "Failed resume");
   return {};
 }
 
