@@ -38,10 +38,9 @@ Result<MonitorCommand> SecureEnv(
   Command command(SecureEnvBinary());
   command.AddParameter("-confui_server_fd=",
                        secure_env_files->confui_server_fd);
-#ifndef _WIN32
   command.AddParameter("-snapshot_control_fd=",
                        secure_env_files->snapshot_control_fd);
-#endif
+
   std::vector<std::string> fifo_paths = {
       instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
       instance.PerInstanceInternalPath("keymaster_fifo_vm.out"),

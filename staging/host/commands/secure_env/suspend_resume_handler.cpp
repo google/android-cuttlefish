@@ -30,7 +30,7 @@ void SnapshotCommandHandler::Join() {
 }
 
 SnapshotCommandHandler::SnapshotCommandHandler(SharedFD channel_to_run_cvd,
-                                               std::atomic<bool>& running)
+                                               SnapshotRunningFlag& running)
     : channel_to_run_cvd_(channel_to_run_cvd), shared_running_(running) {
   handler_thread_ = std::thread([this]() {
     while (true) {
@@ -53,11 +53,11 @@ Result<ExtendedActionType> SnapshotCommandHandler::ReadRunCvdSnapshotCmd()
 }
 
 Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
-  CF_EXPECT(shared_running_.load(), "running_ is not set as true");
   const auto snapshot_cmd = CF_EXPECT(ReadRunCvdSnapshotCmd());
   switch (snapshot_cmd) {
     case ExtendedActionType::kSuspend: {
       // TODO(kwstephenkim): implement suspend handler
+      shared_running_.UnsetRunning();
       auto response = LauncherResponse::kSuccess;
       LOG(INFO) << "secure_env received the suspend command";
       const auto n_written =
@@ -67,6 +67,7 @@ Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
     };
     case ExtendedActionType::kResume: {
       // TODO(kwstephenkim): implement resume handler
+      shared_running_.SetRunning();
       auto response = LauncherResponse::kSuccess;
       LOG(INFO) << "secure_env received the resume command";
       const auto n_written =

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <atomic>
+#include <memory>
 #include <optional>
 #include <thread>
 
@@ -43,6 +43,7 @@
 #include "host/commands/secure_env/oemlock/oemlock_responder.h"
 #include "host/commands/secure_env/proxy_keymaster_context.h"
 #include "host/commands/secure_env/rust/kmr_ta.h"
+#include "host/commands/secure_env/snapshot_running_flag.h"
 #include "host/commands/secure_env/soft_gatekeeper.h"
 #include "host/commands/secure_env/storage/insecure_json_storage.h"
 #include "host/commands/secure_env/storage/storage.h"
@@ -257,18 +258,9 @@ Result<void> SecureEnvMain(int argc, char** argv) {
   }
 
   // go/cf-secure-env-snapshot
-  std::atomic<bool> running = true;
-  SharedFD channel_to_run_cvd;
-  std::unique_ptr<SnapshotCommandHandler> suspend_resume_handler;
-  if (FLAGS_snapshot_control_fd != -1) {
-    // intentionally leak the snapshop control file descriptor as we might run
-    // exec() and use the same file descriptor in the next run
-    channel_to_run_cvd = DupFdFlag(FLAGS_snapshot_control_fd);
-    // For now, this will do nothing but printing. The command has no effects
-    // yet.
-    suspend_resume_handler.reset(
-        new SnapshotCommandHandler(channel_to_run_cvd, running));
-  }
+  SnapshotRunningFlag running;  // initialized as true
+  SharedFD channel_to_run_cvd = DupFdFlag(FLAGS_snapshot_control_fd);
+  SnapshotCommandHandler suspend_resume_handler(channel_to_run_cvd, running);
 
   // The guest image may have either the C++ implementation of
   // KeyMint/Keymaster, xor the Rust implementation of KeyMint.  Those different
