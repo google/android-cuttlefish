@@ -411,7 +411,7 @@ PRODUCT_PACKAGES += \
     com.google.cf.health.storage
 
 PRODUCT_PACKAGES += \
-    android.hardware.input.processor-service.example
+    com.android.hardware.input.processor
 
 # Netlink Interceptor HAL
 PRODUCT_PACKAGES += \
