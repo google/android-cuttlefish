@@ -21,6 +21,7 @@ cc_binary {
     name: "metrics",
     srcs: [
         "events.cc",
+        "cvd_events.cc",
         "host_receiver.cc",
         "metrics.cc",
         "utils.cc",
@@ -51,6 +52,7 @@ cc_binary {
     name: "metrics_cvd",
     srcs: [
         "events.cc",
+        "cvd_events.cc",
         "host_receiver.cc",
         "cvd_metrics.cc",
         "utils.cc",
