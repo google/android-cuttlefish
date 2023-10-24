@@ -14,6 +14,7 @@ Package: cuttlefish-orchestration
 Architecture: any
 Depends: cuttlefish-base,
          adduser,
+         bash,
          openssl,
          ${misc:Depends},
          ${shlibs:Depends}
