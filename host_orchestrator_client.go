@@ -19,7 +19,6 @@ import (
 	"net/http"
 	"time"
 
-	apiv1 "github.com/google/cloud-android-orchestration/api/v1"
 	wclient "github.com/google/cloud-android-orchestration/pkg/webrtcclient"
 
 	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
@@ -59,8 +58,8 @@ type hostOrchestratorServiceImpl struct {
 	ChunkUploadBackOffOpts BackOffOpts
 }
 
-func (c *hostOrchestratorServiceImpl) getInfraConfig() (*apiv1.InfraConfig, error) {
-	var res apiv1.InfraConfig
+func (c *hostOrchestratorServiceImpl) getInfraConfig() (*hoapi.InfraConfig, error) {
+	var res hoapi.InfraConfig
 	if err := c.httpHelper.NewGetRequest(fmt.Sprintf("/infra_config")).Do(&res); err != nil {
 		return nil, err
 	}
@@ -167,7 +166,7 @@ func (c *hostOrchestratorServiceImpl) webRTCForward(srcCh chan any, connID strin
 			close(stopPollCh)
 			break
 		}
-		forwardMsg := apiv1.ForwardMsg{Payload: msg}
+		forwardMsg := hoapi.ForwardMsg{Payload: msg}
 		path := fmt.Sprintf("/polled_connections/%s/:forward", connID)
 		i := 0
 		for ; i < maxConsecutiveErrors; i++ {
@@ -186,9 +185,9 @@ func (c *hostOrchestratorServiceImpl) webRTCForward(srcCh chan any, connID strin
 	}
 }
 
-func (c *hostOrchestratorServiceImpl) createPolledConnection(device string) (*apiv1.NewConnReply, error) {
-	var res apiv1.NewConnReply
-	rb := c.httpHelper.NewPostRequest("/polled_connections", &apiv1.NewConnMsg{DeviceId: device})
+func (c *hostOrchestratorServiceImpl) createPolledConnection(device string) (*hoapi.NewConnReply, error) {
+	var res hoapi.NewConnReply
+	rb := c.httpHelper.NewPostRequest("/polled_connections", &hoapi.NewConnMsg{DeviceId: device})
 	if err := rb.Do(&res); err != nil {
 		return nil, err
 	}
@@ -281,4 +280,14 @@ func (c *hostOrchestratorServiceImpl) UploadFiles(uploadDir string, filenames []
 		BackOffOpts:    c.ChunkUploadBackOffOpts,
 	}
 	return uploader.Upload(filenames)
+}
+
+func asWebRTCICEServers(in []hoapi.IceServer) []webrtc.ICEServer {
+	out := []webrtc.ICEServer{}
+	for _, s := range in {
+		out = append(out, webrtc.ICEServer{
+			URLs: s.URLs,
+		})
+	}
+	return out
 }
