@@ -61,7 +61,7 @@ const defaultHostOrchestratorCredentialsHeader = "X-Cutf-Host-Orchestrator-Build
 
 func NewHostOrchestratoService(url string) HostOrchestratorService {
 	return &HostOrchestratorServiceImpl{
-		httpHelper: HTTPHelper{
+		HTTPHelper: HTTPHelper{
 			Client:       http.DefaultClient,
 			RootEndpoint: url,
 		},
@@ -72,7 +72,7 @@ func NewHostOrchestratoService(url string) HostOrchestratorService {
 }
 
 type HostOrchestratorServiceImpl struct {
-	httpHelper                HTTPHelper
+	HTTPHelper                HTTPHelper
 	WaitRetries               uint
 	WaitRetryDelay            time.Duration
 	BuildAPICredentialsHeader string
@@ -80,7 +80,7 @@ type HostOrchestratorServiceImpl struct {
 
 func (c *HostOrchestratorServiceImpl) getInfraConfig() (*hoapi.InfraConfig, error) {
 	var res hoapi.InfraConfig
-	if err := c.httpHelper.NewGetRequest(fmt.Sprintf("/infra_config")).Do(&res); err != nil {
+	if err := c.HTTPHelper.NewGetRequest(fmt.Sprintf("/infra_config")).Do(&res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -140,7 +140,7 @@ func (c *HostOrchestratorServiceImpl) webRTCPoll(sinkCh chan map[string]any, con
 	for {
 		path := fmt.Sprintf("/polled_connections/%s/messages?start=%d", connID, start)
 		var messages []map[string]any
-		if err := c.httpHelper.NewGetRequest(path).Do(&messages); err != nil {
+		if err := c.HTTPHelper.NewGetRequest(path).Do(&messages); err != nil {
 			fmt.Fprintf(logger, "Error polling messages: %v\n", err)
 			errCount++
 			if errCount >= maxConsecutiveErrors {
@@ -190,7 +190,7 @@ func (c *HostOrchestratorServiceImpl) webRTCForward(srcCh chan any, connID strin
 		path := fmt.Sprintf("/polled_connections/%s/:forward", connID)
 		i := 0
 		for ; i < maxConsecutiveErrors; i++ {
-			rb := c.httpHelper.NewPostRequest(path, &forwardMsg)
+			rb := c.HTTPHelper.NewPostRequest(path, &forwardMsg)
 			if err := rb.Do(nil); err != nil {
 				fmt.Fprintf(logger, "Error sending message to device: %v\n", err)
 			} else {
@@ -207,7 +207,7 @@ func (c *HostOrchestratorServiceImpl) webRTCForward(srcCh chan any, connID strin
 
 func (c *HostOrchestratorServiceImpl) createPolledConnection(device string) (*hoapi.NewConnReply, error) {
 	var res hoapi.NewConnReply
-	rb := c.httpHelper.NewPostRequest("/polled_connections", &hoapi.NewConnMsg{DeviceId: device})
+	rb := c.HTTPHelper.NewPostRequest("/polled_connections", &hoapi.NewConnMsg{DeviceId: device})
 	if err := rb.Do(&res); err != nil {
 		return nil, err
 	}
@@ -221,12 +221,12 @@ func (c *HostOrchestratorServiceImpl) waitForOperation(op *hoapi.Operation, res 
 		NumRetries:  c.WaitRetries,
 		RetryDelay:  c.WaitRetryDelay,
 	}
-	return c.httpHelper.NewPostRequest(path, nil).DoWithRetries(res, retryOpts)
+	return c.HTTPHelper.NewPostRequest(path, nil).DoWithRetries(res, retryOpts)
 }
 
 func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds string) (*hoapi.FetchArtifactsResponse, error) {
 	var op hoapi.Operation
-	rb := c.httpHelper.NewPostRequest("/artifacts", req)
+	rb := c.HTTPHelper.NewPostRequest("/artifacts", req)
 	if creds != "" {
 		rb.AddHeader(c.BuildAPICredentialsHeader, creds)
 	}
@@ -243,7 +243,7 @@ func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRe
 
 func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, creds string) (*hoapi.CreateCVDResponse, error) {
 	var op hoapi.Operation
-	rb := c.httpHelper.NewPostRequest("/cvds", req)
+	rb := c.HTTPHelper.NewPostRequest("/cvds", req)
 	if creds != "" {
 		rb.AddHeader(c.BuildAPICredentialsHeader, creds)
 	}
@@ -259,18 +259,18 @@ func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, cre
 
 func (c *HostOrchestratorServiceImpl) ListCVDs() ([]*hoapi.CVD, error) {
 	var res hoapi.ListCVDsResponse
-	if err := c.httpHelper.NewGetRequest("/cvds").Do(&res); err != nil {
+	if err := c.HTTPHelper.NewGetRequest("/cvds").Do(&res); err != nil {
 		return nil, err
 	}
 	return res.CVDs, nil
 }
 
 func (c *HostOrchestratorServiceImpl) DownloadRuntimeArtifacts(dst io.Writer) error {
-	req, err := http.NewRequest("POST", c.httpHelper.RootEndpoint+"/runtimeartifacts/:pull", nil)
+	req, err := http.NewRequest("POST", c.HTTPHelper.RootEndpoint+"/runtimeartifacts/:pull", nil)
 	if err != nil {
 		return err
 	}
-	res, err := c.httpHelper.Client.Do(req)
+	res, err := c.HTTPHelper.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -286,7 +286,7 @@ func (c *HostOrchestratorServiceImpl) DownloadRuntimeArtifacts(dst io.Writer) er
 
 func (c *HostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
 	uploadDir := &hoapi.UploadDirectory{}
-	if err := c.httpHelper.NewPostRequest("/userartifacts", nil).Do(uploadDir); err != nil {
+	if err := c.HTTPHelper.NewPostRequest("/userartifacts", nil).Do(uploadDir); err != nil {
 		return "", err
 	}
 	return uploadDir.Name, nil
@@ -322,9 +322,9 @@ func (c *HostOrchestratorServiceImpl) UploadFilesWithOptions(uploadDir string, f
 		panic("MaxElapsedTime value cannot be zero")
 	}
 	uploader := &FilesUploader{
-		Client:        c.httpHelper.Client,
-		EndpointURL:   c.httpHelper.RootEndpoint + "/userartifacts/" + uploadDir,
-		DumpOut:       c.httpHelper.Dumpster,
+		Client:        c.HTTPHelper.Client,
+		EndpointURL:   c.HTTPHelper.RootEndpoint + "/userartifacts/" + uploadDir,
+		DumpOut:       c.HTTPHelper.Dumpster,
 		UploadOptions: uploadOpts,
 	}
 	return uploader.Upload(filenames)

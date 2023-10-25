@@ -171,13 +171,13 @@ func (s *serviceImpl) RootURI() string {
 
 func (s *serviceImpl) HostService(host string) HostOrchestratorService {
 	hs := &HostOrchestratorServiceImpl{
-		httpHelper:     s.httpHelper,
+		HTTPHelper:     s.httpHelper,
 		WaitRetries:    uint(s.ServiceOptions.RetryAttempts),
 		WaitRetryDelay: s.ServiceOptions.RetryDelay,
 		// Make the cloud orchestrator inject the credentials instead
 		BuildAPICredentialsHeader: headerNameCOInjectBuildAPICreds,
 	}
-	hs.httpHelper.RootEndpoint = s.httpHelper.RootEndpoint + "/hosts/" + host
+	hs.HTTPHelper.RootEndpoint = s.httpHelper.RootEndpoint + "/hosts/" + host
 	return hs
 }
 
