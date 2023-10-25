@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <sys/utsname.h>
 #include <uuid.h>
 
 #include "common/libs/utils/files.h"
@@ -21,6 +22,9 @@
 #include "host/commands/metrics/metrics_defs.h"
 #include "host/commands/metrics/proto/cf_metrics_protos.h"
 #include "host/commands/metrics/utils.h"
+#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
+#include "host/libs/vm_manager/qemu_manager.h"
 #include "shared/api_level.h"
 
 namespace cuttlefish {
@@ -58,6 +62,47 @@ std::unique_ptr<CuttlefishLogEvent> BuildCfLogEvent(
 
   return cfEvent;
 }
+
+cuttlefish::MetricsEvent::OsType GetOsType() {
+  struct utsname buf;
+  if (uname(&buf) != 0) {
+    LOG(ERROR) << "failed to retrieve system information";
+    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
+  }
+  std::string sysname(buf.sysname);
+  std::string machine(buf.machine);
+
+  if (sysname != "Linux") {
+    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
+  }
+  if (machine == "x86_64") {
+    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_X86_64;
+  }
+  if (machine == "x86") {
+    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_X86;
+  }
+  if (machine == "aarch64" || machine == "arm64") {
+    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_AARCH64;
+  }
+  if (machine[0] == 'a') {
+    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_AARCH32;
+  }
+  return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
+}
+
+cuttlefish::MetricsEvent::VmmType GetVmmManager() {
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  CHECK(config) << "Could not open cuttlefish config";
+  auto vmm = config->vm_manager();
+  if (vmm == cuttlefish::vm_manager::CrosvmManager::name()) {
+    return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_CROSVM;
+  }
+  if (vmm == cuttlefish::vm_manager::QemuManager::name()) {
+    return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_QEMU;
+  }
+  return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_UNSPECIFIED;
+}
+
 // Builds the 2nd level MetricsEvent.
 void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent* cfEvent,
                             MetricsEvent::EventType event_type) {
@@ -66,9 +111,9 @@ void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent* cfEvent,
   // "metrics_event" is the 2nd level MetricsEvent
   cuttlefish::MetricsEvent* metrics_event = cfEvent->mutable_metrics_event();
   metrics_event->set_event_type(event_type);
-  metrics_event->set_os_type(metrics::GetOsType());
+  metrics_event->set_os_type(GetOsType());
   metrics_event->set_os_version(metrics::GetOsVersion());
-  metrics_event->set_vmm_type(metrics::GetVmmManager());
+  metrics_event->set_vmm_type(GetVmmManager());
 
   if (!metrics::GetVmmVersion().empty()) {
     metrics_event->set_vmm_version(metrics::GetVmmVersion());
@@ -145,6 +190,23 @@ int Clearcut::SendDeviceBoot(CuttlefishLogEvent::DeviceType device) {
 int Clearcut::SendLockScreen(CuttlefishLogEvent::DeviceType device) {
   return SendEvent(device,
                    MetricsEvent::CUTTLEFISH_EVENT_TYPE_LOCK_SCREEN_AVAILABLE);
+}
+
+// TODO (moelsherif@): remove this function in the future since it is not used
+cuttlefish::CuttlefishLogEvent* sampleEvent() {
+  cuttlefish::CuttlefishLogEvent* event = new cuttlefish::CuttlefishLogEvent();
+  event->set_device_type(
+      cuttlefish::CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
+  return event;
+}
+
+// TODO (moelsherif@): remove this function in the future since it is not used
+std::string ProtoToString(LogEvent* event) {
+  std::string output;
+  if (!event->SerializeToString(&output)) {
+    LOG(ERROR) << "failed to serialize proto LogEvent";
+  }
+  return output;
 }
 
 }  // namespace cuttlefish

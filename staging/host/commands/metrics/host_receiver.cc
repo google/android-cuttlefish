@@ -14,7 +14,7 @@
 // limitations under the License.
 
 #include "host/commands/metrics/host_receiver.h"
-#include "host/commands/metrics/cvd_events.h"
+#include "host/commands/metrics/cvd_metrics_api.h"
 #include "host/commands/metrics/events.h"
 #include "host/commands/metrics/metrics_configs.h"
 #include "host/commands/metrics/metrics_defs.h"
@@ -82,7 +82,7 @@ void MetricsHostReceiver::ProcessMessage(const std::string& text) {
   } else if (text == "LockScreen") {
     rc = Clearcut::SendLockScreen(hostDev);
   } else {
-    rc = CvdClearcut::SendLaunchCommand(text);
+    rc = CvdMetrics::SendLaunchCommand(text);
   }
 
   if (rc != MetricsExitCodes::kSuccess) {
