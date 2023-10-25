@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-// pragma is used here to disable the warnings emitted from the protobuf
-// headers. By adding #pragma before including cf_log.pb.h, it suppresses
-// protobuf warnings, but allows the rest of the files to continue using
-// the current flags.
-// This file should be included instead of directly including cf_log.pb.h
-
 #pragma GCC system_header
 
 #include <common.pb.h>

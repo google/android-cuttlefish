@@ -15,14 +15,12 @@
  */
 #pragma once
 
-#include "host/commands/metrics/proto/cf_metrics_protos.h"
-
 namespace cuttlefish {
 
-class CvdClearcut {
+class CvdMetrics {
  public:
-  CvdClearcut() = default;
-  ~CvdClearcut() = default;
+  CvdMetrics() = default;
+  ~CvdMetrics() = default;
   static int SendLaunchCommand(const std::string& command_line);
 };
 

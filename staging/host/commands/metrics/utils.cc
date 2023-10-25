@@ -17,7 +17,6 @@
 #include <android-base/strings.h>
 #include <curl/curl.h>
 #include <gflags/gflags.h>
-#include <json/json.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -30,11 +29,7 @@
 
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/metrics/metrics_defs.h"
-#include "host/commands/metrics/proto/cf_metrics_protos.h"
 #include "host/commands/metrics/utils.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/qemu_manager.h"
 
 using cuttlefish::MetricsExitCodes;
 
@@ -52,33 +47,6 @@ std::string GetOsName() {
     return "Error";
   }
   return std::string(buf.sysname);
-}
-
-cuttlefish::MetricsEvent::OsType GetOsType() {
-  struct utsname buf;
-  if (uname(&buf) != 0) {
-    LOG(ERROR) << "failed to retrieve system information";
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
-  }
-  std::string sysname(buf.sysname);
-  std::string machine(buf.machine);
-
-  if (sysname != "Linux") {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
-  }
-  if (machine == "x86_64") {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_X86_64;
-  }
-  if (machine == "x86") {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_X86;
-  }
-  if (machine == "aarch64" || machine == "arm64") {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_AARCH64;
-  }
-  if (machine[0] == 'a') {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_AARCH32;
-  }
-  return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
 }
 
 std::string GenerateSessionId(uint64_t now_ms) {
@@ -147,19 +115,6 @@ std::string GetCompany() {
   return "GOOGLE";
 }
 
-cuttlefish::MetricsEvent::VmmType GetVmmManager() {
-  auto config = cuttlefish::CuttlefishConfig::Get();
-  CHECK(config) << "Could not open cuttlefish config";
-  auto vmm = config->vm_manager();
-  if (vmm == cuttlefish::vm_manager::CrosvmManager::name()) {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_CROSVM;
-  }
-  if (vmm == cuttlefish::vm_manager::QemuManager::name()) {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_QEMU;
-  }
-  return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_UNSPECIFIED;
-}
-
 std::string GetVmmVersion() {
   // TODO: per ellisr@ leave empty for now
   return "";
@@ -170,23 +125,6 @@ uint64_t GetEpochTimeMs() {
   uint64_t milliseconds_since_epoch =
       std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
   return milliseconds_since_epoch;
-}
-
-// TODO (moelsherif@): remove this function in the future since it is not used
-cuttlefish::CuttlefishLogEvent* sampleEvent() {
-  cuttlefish::CuttlefishLogEvent* event = new cuttlefish::CuttlefishLogEvent();
-  event->set_device_type(
-      cuttlefish::CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
-  return event;
-}
-
-// TODO (moelsherif@): remove this function in the future since it is not used
-std::string ProtoToString(LogEvent* event) {
-  std::string output;
-  if (!event->SerializeToString(&output)) {
-    LOG(ERROR) << "failed to serialize proto LogEvent";
-  }
-  return output;
 }
 
 size_t curl_out_writer([[maybe_unused]] char* response, size_t size,
