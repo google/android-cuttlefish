@@ -10,4 +10,5 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/go-multierror v1.1.1
+	google.golang.org/grpc v1.56.3 // indirect
 )
