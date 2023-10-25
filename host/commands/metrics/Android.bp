@@ -21,7 +21,7 @@ cc_binary {
     name: "metrics",
     srcs: [
         "events.cc",
-        "cvd_events.cc",
+        "cvd_metrics_api.cc",
         "host_receiver.cc",
         "metrics.cc",
         "utils.cc",
@@ -48,11 +48,35 @@ cc_binary {
     defaults: ["cuttlefish_host"],
 }
 
+cc_library {
+    name: "libcvd_metrics",
+    srcs: [
+        "cvd_metrics_api.cc",
+        "utils.cc",
+    ],
+    shared_libs: [
+        "cvd_metrics_proto",
+        "libbase",
+        "libcurl",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "liblog",
+        "libprotobuf-cpp-full",
+        "libz",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libgflags",
+        "libext2_uuid",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
 cc_binary {
     name: "metrics_cvd",
     srcs: [
         "events.cc",
-        "cvd_events.cc",
+        "cvd_metrics_api.cc",
         "host_receiver.cc",
         "cvd_metrics.cc",
         "utils.cc",
