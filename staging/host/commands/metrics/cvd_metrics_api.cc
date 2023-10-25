@@ -17,7 +17,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "host/commands/metrics/cvd_events.h"
+#include "host/commands/metrics/cvd_metrics_api.h"
 #include "host/commands/metrics/metrics_defs.h"
 #include "host/commands/metrics/proto/cvd_metrics_protos.h"
 #include "host/commands/metrics/utils.h"
@@ -94,7 +94,7 @@ std::unique_ptr<LogRequest> BuildAtestLogRequest(
 }
 
 }  // namespace
-int CvdClearcut::SendLaunchCommand(const std::string& command_line) {
+int CvdMetrics::SendLaunchCommand(const std::string& command_line) {
   uint64_t now_ms = metrics::GetEpochTimeMs();
   auto cfEvent = BuildAtestLogEvent(command_line);
 
