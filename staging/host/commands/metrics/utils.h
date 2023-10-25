@@ -17,8 +17,8 @@
 
 #include <string.h>
 
+#include <clientanalytics.pb.h>
 #include "host/commands/metrics/metrics_defs.h"
-#include "host/commands/metrics/proto/cf_metrics_protos.h"
 
 namespace metrics {
 enum ClearcutServer : int {
@@ -28,13 +28,11 @@ enum ClearcutServer : int {
 };
 
 std::string GetOsName();
-cuttlefish::MetricsEvent::OsType GetOsType();
 std::string GetOsVersion();
 std::string GenerateSessionId(uint64_t now);
 std::string GetCfVersion();
 std::string GetMacAddress();
 std::string GetCompany();
-cuttlefish::MetricsEvent::VmmType GetVmmManager();
 std::string GetVmmVersion();
 uint64_t GetEpochTimeMs();
 std::string ProtoToString(LogEvent* event);
