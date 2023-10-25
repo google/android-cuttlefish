@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <android-base/logging.h>
+
 #include "host/commands/metrics/host_receiver.h"
 #include "host/commands/metrics/cvd_metrics_api.h"
 #include "host/commands/metrics/events.h"
