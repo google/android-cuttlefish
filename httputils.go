@@ -60,30 +60,40 @@ type HTTPHelper struct {
 }
 
 func (h *HTTPHelper) NewGetRequest(path string) *HTTPRequestBuilder {
+	req, err := http.NewRequest(http.MethodGet, h.RootEndpoint+path, nil)
 	return &HTTPRequestBuilder{
-		helper: h,
-		url:    h.RootEndpoint + path,
-		method: "GET",
-		Header: make(http.Header),
+		helper:  h,
+		request: req,
+		err:     err,
 	}
 }
 
 func (h *HTTPHelper) NewDeleteRequest(path string) *HTTPRequestBuilder {
+	req, err := http.NewRequest(http.MethodDelete, h.RootEndpoint+path, nil)
 	return &HTTPRequestBuilder{
-		helper: h,
-		url:    h.RootEndpoint + path,
-		method: "DELETE",
-		Header: make(http.Header),
+		helper:  h,
+		request: req,
+		err:     err,
 	}
 }
 
 func (h *HTTPHelper) NewPostRequest(path string, jsonBody any) *HTTPRequestBuilder {
+	body := []byte{}
+	var err error
+	if jsonBody != nil {
+		if body, err = json.Marshal(jsonBody); err != nil {
+			return &HTTPRequestBuilder{helper: h, request: nil, err: err}
+		}
+	}
+	var req *http.Request
+	if req, err = http.NewRequest(http.MethodPost, h.RootEndpoint+path, bytes.NewBuffer(body)); err != nil {
+		return &HTTPRequestBuilder{helper: h, request: nil, err: err}
+	}
+	req.Header.Set("Content-Type", "application/json")
 	return &HTTPRequestBuilder{
-		helper:   h,
-		url:      h.RootEndpoint + path,
-		method:   "POST",
-		Header:   make(http.Header),
-		jsonBody: jsonBody,
+		helper:  h,
+		request: req,
+		err:     err,
 	}
 }
 
@@ -112,34 +122,33 @@ func (h *HTTPHelper) dumpResponse(r *http.Response) error {
 }
 
 type HTTPRequestBuilder struct {
-	helper   *HTTPHelper
-	url      string
-	Header   http.Header
-	method   string
-	jsonBody any
+	helper  *HTTPHelper
+	request *http.Request
+	err     error
+}
+
+func (rb *HTTPRequestBuilder) AddHeader(key, value string) {
+	if rb.request == nil {
+		return
+	}
+	rb.request.Header.Add(key, value)
+}
+
+func (rb *HTTPRequestBuilder) SetHeader(key, value string) {
+	if rb.request == nil {
+		return
+	}
+	rb.request.Header.Set(key, value)
 }
 
 func (rb *HTTPRequestBuilder) Do(ret any) error {
-	var body io.Reader
-	if rb.jsonBody != nil {
-		json, err := json.Marshal(rb.jsonBody)
-		if err != nil {
-			return fmt.Errorf("Error marshaling request: %w", err)
-		}
-		body = bytes.NewBuffer(json)
-		rb.Header.Set("Content-Type", "application/json")
+	if rb.err != nil {
+		return rb.err
 	}
-	req, err := http.NewRequest(rb.method, rb.url, body)
-	if err != nil {
-		return fmt.Errorf("Error creating request: %w", err)
-	}
-	for k, v := range rb.Header {
-		req.Header[k] = v
-	}
-	if err := rb.helper.dumpRequest(req); err != nil {
+	if err := rb.helper.dumpRequest(rb.request); err != nil {
 		return err
 	}
-	res, err := rb.helper.Client.Do(req)
+	res, err := rb.helper.Client.Do(rb.request)
 	if err != nil {
 		return fmt.Errorf("Error sending request: %w", err)
 	}
@@ -150,7 +159,7 @@ func (rb *HTTPRequestBuilder) Do(ret any) error {
 			return err
 		}
 		time.Sleep(rb.helper.RetryDelay)
-		if res, err = rb.helper.Client.Do(req); err != nil {
+		if res, err = rb.helper.Client.Do(rb.request); err != nil {
 			return fmt.Errorf("Error sending request: %w", err)
 		}
 	}

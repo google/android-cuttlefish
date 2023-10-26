@@ -203,7 +203,7 @@ func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRe
 	var op hoapi.Operation
 	rb := c.httpHelper.NewPostRequest("/artifacts", req)
 	// Cloud Orchestrator only checks for the presence of the header, hence an empty string value is ok.
-	rb.Header.Add(headerNameCOInjectBuildAPICreds, "")
+	rb.AddHeader(headerNameCOInjectBuildAPICreds, "")
 	if err := rb.Do(&op); err != nil {
 		return nil, err
 	}
@@ -219,7 +219,7 @@ func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest) (*h
 	var op hoapi.Operation
 	rb := c.httpHelper.NewPostRequest("/cvds", req)
 	// Cloud Orchestrator only checks for the existence of the header, hence an empty string value is ok.
-	rb.Header.Add(headerNameCOInjectBuildAPICreds, "")
+	rb.AddHeader(headerNameCOInjectBuildAPICreds, "")
 	if err := rb.Do(&op); err != nil {
 		return nil, err
 	}
