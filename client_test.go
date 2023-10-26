@@ -44,6 +44,8 @@ func TestRetryLogic(t *testing.T) {
 				return
 			}
 			writeOK(w, &apiv1.HostInstance{Name: "foo"})
+		case "GET /hosts/foo/":
+			writeOK(w, make(map[string]any))
 		default:
 			t.Fatal("unexpected endpoint: " + ep)
 		}
