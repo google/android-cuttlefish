@@ -52,14 +52,21 @@ class MessageDestroyer {
 /** An owning pointer for a RawMessage instance. */
 using ManagedMessage = std::unique_ptr<RawMessage, MessageDestroyer>;
 
+/**
+ * Allocates memory for a RawMessage carrying a message of size
+ * `payload_size`.
+ */
+Result<ManagedMessage> CreateMessage(uint32_t command, bool is_response, size_t payload_size);
+Result<ManagedMessage> CreateMessage(uint32_t command, size_t payload_size);
+
 /*
  * Interface for communication channels that synchronously communicate
  * HAL IPC/RPC calls.
  */
 class Channel {
  public:
-  virtual Result<void> SendRequest(uint32_t command, void* message, size_t message_size) = 0;
-  virtual Result<void> SendResponse(uint32_t command, void* message, size_t message_size) = 0;
+  virtual Result<void> SendRequest(RawMessage& message) = 0;
+  virtual Result<void> SendResponse(RawMessage& message) = 0;
   virtual Result<ManagedMessage> ReceiveMessage() = 0;
   virtual ~Channel() {}
 };
