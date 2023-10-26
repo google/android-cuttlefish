@@ -901,8 +901,8 @@ class InitializeMetadataImage : public SetupFeature {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    if (FileExists(instance_.metadata_image()) &&
-        FileSize(instance_.metadata_image()) == instance_.blank_metadata_image_mb() << 20) {
+    if (FileExists(instance_.new_metadata_image()) &&
+        FileSize(instance_.new_metadata_image()) == instance_.blank_metadata_image_mb() << 20) {
       return {};
     }
 
