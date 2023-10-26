@@ -37,7 +37,6 @@ cc_binary {
         "libjsoncpp",
         "liblog",
         "libprotobuf-cpp-full",
-        "libz",
     ],
     static_libs: [
         "libcuttlefish_host_config",
@@ -62,7 +61,6 @@ cc_library {
         "libcuttlefish_utils",
         "liblog",
         "libprotobuf-cpp-full",
-        "libz",
     ],
     static_libs: [
         "libcuttlefish_host_config",
@@ -92,7 +90,6 @@ cc_binary {
         "libjsoncpp",
         "liblog",
         "libprotobuf-cpp-full",
-        "libz",
     ],
     static_libs: [
         "libcuttlefish_host_config",
@@ -115,10 +112,8 @@ cc_test_host {
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libfruit",
-        "libjsoncpp",
         "liblog",
         "libprotobuf-cpp-full",
-        "libz",
     ],
     srcs: [
         "utils.cc",

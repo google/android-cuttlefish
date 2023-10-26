@@ -19,6 +19,7 @@
 #include "host/commands/metrics/host_receiver.h"
 #include "host/commands/metrics/metrics_configs.h"
 #include "host/commands/metrics/metrics_defs.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 using cuttlefish::MetricsExitCodes;
 
