@@ -39,12 +39,13 @@
 #include "host/commands/secure_env/in_process_tpm.h"
 #include "host/commands/secure_env/insecure_fallback_storage.h"
 #include "host/commands/secure_env/keymaster_responder.h"
-#include "host/commands/secure_env/oemlock_responder.h"
-#include "host/commands/secure_env/oemlock.h"
+#include "host/commands/secure_env/oemlock/oemlock_responder.h"
+#include "host/commands/secure_env/oemlock/oemlock.h"
 #include "host/commands/secure_env/proxy_keymaster_context.h"
 #include "host/commands/secure_env/rust/kmr_ta.h"
 #include "host/commands/secure_env/soft_gatekeeper.h"
-#include "host/commands/secure_env/soft_oemlock.h"
+#include "host/commands/secure_env/storage/insecure_json_storage.h"
+#include "host/commands/secure_env/storage/storage.h"
 #include "host/commands/secure_env/tpm_gatekeeper.h"
 #include "host/commands/secure_env/tpm_keymaster_context.h"
 #include "host/commands/secure_env/tpm_keymaster_enforcement.h"
@@ -150,22 +151,27 @@ ChooseGatekeeperComponent() {
   }
 }
 
-fruit::Component<oemlock::OemLock> ChooseOemlockComponent() {
-  if (FLAGS_oemlock_impl == "software") {
-    return fruit::createComponent()
-        .bind<oemlock::OemLock, oemlock::SoftOemLock>();
-  } else if (FLAGS_oemlock_impl == "tpm") {
-    LOG(FATAL) << "Oemlock doesn't support TPM implementation";
-    abort();
-  } else {
-    LOG(FATAL) << "Invalid oemlock implementation: "
-               << FLAGS_oemlock_impl;
-    abort();
-  }
+fruit::Component<secure_env::Storage, oemlock::OemLock> ChooseOemlockComponent() {
+  return fruit::createComponent()
+      .registerProvider([]() -> secure_env::Storage* {
+        if (FLAGS_oemlock_impl == "software") {
+          return new secure_env::InsecureJsonStorage("oemlock_insecure");
+        } else if (FLAGS_oemlock_impl == "tpm") {
+          LOG(FATAL) << "Oemlock doesn't support TPM implementation";
+          abort();
+        } else {
+          LOG(FATAL) << "Invalid oemlock implementation: "
+                     << FLAGS_oemlock_impl;
+          abort();
+        }
+      })
+      .registerProvider([](secure_env::Storage& storage) -> oemlock::OemLock* {
+        return new oemlock::OemLock(storage);
+      });;
 }
 
 fruit::Component<TpmResourceManager, gatekeeper::GateKeeper,
-                 oemlock::OemLock, keymaster::KeymasterEnforcement>
+                 secure_env::Storage, oemlock::OemLock, keymaster::KeymasterEnforcement>
 SecureEnvComponent() {
   return fruit::createComponent()
       .registerProvider([]() -> Tpm* {  // fruit will take ownership
@@ -224,7 +230,7 @@ int SecureEnvMain(int argc, char** argv) {
   keymaster::SoftKeymasterLogger km_logger;
 
   fruit::Injector<TpmResourceManager, gatekeeper::GateKeeper,
-                  oemlock::OemLock, keymaster::KeymasterEnforcement>
+                  secure_env::Storage, oemlock::OemLock, keymaster::KeymasterEnforcement>
       injector(SecureEnvComponent);
   TpmResourceManager* resource_manager = injector.get<TpmResourceManager*>();
   gatekeeper::GateKeeper* gatekeeper = injector.get<gatekeeper::GateKeeper*>();
