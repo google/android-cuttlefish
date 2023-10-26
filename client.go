@@ -98,8 +98,6 @@ func NewService(opts *ServiceOptions) (Service, error) {
 		httpHelper: HTTPHelper{
 			Client:       httpClient,
 			RootEndpoint: opts.RootEndpoint,
-			Retries:      uint(opts.RetryAttempts),
-			RetryDelay:   opts.RetryDelay,
 			Dumpster:     opts.DumpOut,
 		},
 	}, nil
@@ -113,6 +111,18 @@ func (c *serviceImpl) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInsta
 	ins := &apiv1.HostInstance{}
 	if err := c.waitForOperation(&op, ins); err != nil {
 		return nil, err
+	}
+	// There is a short delay between the creation of the host and the availability of the host
+	// orchestrator. This call ensures the host orchestrator had time to start before returning
+	// from the this function.
+	retryOpts := RetryOptions{
+		StatusCodes: []int{http.StatusBadGateway},
+		NumRetries:  3,
+		RetryDelay:  5 * time.Second,
+	}
+	hostPath := fmt.Sprintf("/hosts/%s/", ins.Name)
+	if err := c.httpHelper.NewGetRequest(hostPath).DoWithRetries(nil, retryOpts); err != nil {
+		return nil, fmt.Errorf("Unable to communicate with host orchestrator: %w", err)
 	}
 	return ins, nil
 }
@@ -146,7 +156,12 @@ func (c *serviceImpl) DeleteHosts(names []string) error {
 
 func (c *serviceImpl) waitForOperation(op *apiv1.Operation, res any) error {
 	path := "/operations/" + op.Name + "/:wait"
-	return c.httpHelper.NewPostRequest(path, nil).Do(res)
+	retryOpts := RetryOptions{
+		StatusCodes: []int{http.StatusServiceUnavailable},
+		NumRetries:  uint(c.ServiceOptions.RetryAttempts),
+		RetryDelay:  c.RetryDelay,
+	}
+	return c.httpHelper.NewPostRequest(path, nil).DoWithRetries(res, retryOpts)
 }
 
 func (s *serviceImpl) RootURI() string {
@@ -155,9 +170,11 @@ func (s *serviceImpl) RootURI() string {
 
 func (s *serviceImpl) HostService(host string) HostOrchestratorService {
 	hs := &HostOrchestratorServiceImpl{
-		httpHelper:                s.httpHelper,
-		ChunkSizeBytes:            s.ChunkSizeBytes,
-		ChunkUploadBackOffOpts:    s.ChunkUploadBackOffOpts,
+		httpHelper:             s.httpHelper,
+		ChunkSizeBytes:         s.ChunkSizeBytes,
+		ChunkUploadBackOffOpts: s.ChunkUploadBackOffOpts,
+		WaitRetries:            uint(s.ServiceOptions.RetryAttempts),
+		WaitRetryDelay:         s.ServiceOptions.RetryDelay,
 		// Make the cloud orchestrator inject the credentials instead
 		BuildAPICredentialsHeader: headerNameCOInjectBuildAPICreds,
 	}

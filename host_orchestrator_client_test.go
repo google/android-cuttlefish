@@ -149,7 +149,7 @@ func TestUploadFilesExponentialBackoff(t *testing.T) {
 		t.Fatal("first retry shouldn't be in less than 100ms")
 	}
 	if timestamps[2].Sub(timestamps[1]) < 200*time.Millisecond {
-		t.Fatal("first retry shouldn't be in less than 200ms")
+		t.Fatal("second retry shouldn't be in less than 200ms")
 	}
 }
 

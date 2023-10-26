@@ -41,7 +41,7 @@ type HostOrchestratorService interface {
 	UploadFiles(uploadDir string, filenames []string) error
 
 	// Create a new device with artifacts from the build server or previously uploaded by the user.
-	// If not empty, the provided credentials will be used to download any necessary artifacts from the build api.
+	// If not empty, the provided credentials will be used to download necessary artifacts from the build api.
 	CreateCVD(req *hoapi.CreateCVDRequest, buildAPICredentials string) (*hoapi.CreateCVDResponse, error)
 
 	// Calls cvd fetch in the remote host, the downloaded artifacts can be used to create a CVD later.
@@ -59,6 +59,8 @@ type HostOrchestratorServiceImpl struct {
 	httpHelper                HTTPHelper
 	ChunkSizeBytes            int64
 	ChunkUploadBackOffOpts    BackOffOpts
+	WaitRetries               uint
+	WaitRetryDelay            time.Duration
 	BuildAPICredentialsHeader string
 }
 
@@ -200,7 +202,12 @@ func (c *HostOrchestratorServiceImpl) createPolledConnection(device string) (*ho
 
 func (c *HostOrchestratorServiceImpl) waitForOperation(op *hoapi.Operation, res any) error {
 	path := "/operations/" + op.Name + "/:wait"
-	return c.httpHelper.NewPostRequest(path, nil).Do(res)
+	retryOpts := RetryOptions{
+		StatusCodes: []int{http.StatusServiceUnavailable},
+		NumRetries:  c.WaitRetries,
+		RetryDelay:  c.WaitRetryDelay,
+	}
+	return c.httpHelper.NewPostRequest(path, nil).DoWithRetries(res, retryOpts)
 }
 
 func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds string) (*hoapi.FetchArtifactsResponse, error) {

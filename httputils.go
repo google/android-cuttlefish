@@ -52,8 +52,6 @@ func DefaultChunkUploadBackOffOpts() BackOffOpts {
 type HTTPHelper struct {
 	Client                 *http.Client
 	RootEndpoint           string
-	Retries                uint
-	RetryDelay             time.Duration
 	ChunkSizeBytes         int64
 	ChunkUploadBackOffOpts BackOffOpts
 	Dumpster               io.Writer
@@ -141,7 +139,17 @@ func (rb *HTTPRequestBuilder) SetHeader(key, value string) {
 	rb.request.Header.Set(key, value)
 }
 
+type RetryOptions struct {
+	StatusCodes []int
+	NumRetries  uint
+	RetryDelay  time.Duration
+}
+
 func (rb *HTTPRequestBuilder) Do(ret any) error {
+	return rb.DoWithRetries(ret, RetryOptions{})
+}
+
+func (rb *HTTPRequestBuilder) DoWithRetries(ret any, retryOpts RetryOptions) error {
 	if rb.err != nil {
 		return rb.err
 	}
@@ -152,13 +160,13 @@ func (rb *HTTPRequestBuilder) Do(ret any) error {
 	if err != nil {
 		return fmt.Errorf("Error sending request: %w", err)
 	}
-	for i := uint(0); i < rb.helper.Retries && isRetryableErrorCode(res.StatusCode); i++ {
+	for i := uint(0); i < retryOpts.NumRetries && isIn(res.StatusCode, retryOpts.StatusCodes); i++ {
 		err = rb.helper.dumpResponse(res)
 		res.Body.Close()
 		if err != nil {
 			return err
 		}
-		time.Sleep(rb.helper.RetryDelay)
+		time.Sleep(retryOpts.RetryDelay)
 		if res, err = rb.helper.Client.Do(rb.request); err != nil {
 			return fmt.Errorf("Error sending request: %w", err)
 		}
@@ -181,6 +189,16 @@ func (rb *HTTPRequestBuilder) Do(ret any) error {
 		}
 	}
 	return nil
+}
+
+// Ideally this would use slices.Contains, but it needs to build with an older go version.
+func isIn(code int, codes []int) bool {
+	for _, c := range codes {
+		if c == code {
+			return true
+		}
+	}
+	return false
 }
 
 type fileInfo struct {
