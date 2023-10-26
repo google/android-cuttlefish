@@ -41,9 +41,12 @@ type HostOrchestratorService interface {
 	UploadFiles(uploadDir string, filenames []string) error
 
 	// Create a new device with artifacts from the build server or previously uploaded by the user.
-	CreateCVD(req *hoapi.CreateCVDRequest) (*hoapi.CreateCVDResponse, error)
+	// If not empty, the provided credentials will be used to download any necessary artifacts from the build api.
+	CreateCVD(req *hoapi.CreateCVDRequest, buildAPICredentials string) (*hoapi.CreateCVDResponse, error)
 
-	FetchArtifacts(req *hoapi.FetchArtifactsRequest) (*hoapi.FetchArtifactsResponse, error)
+	// Calls cvd fetch in the remote host, the downloaded artifacts can be used to create a CVD later.
+	// If not empty, the provided credentials will be used by the host orchestrator to access the build api.
+	FetchArtifacts(req *hoapi.FetchArtifactsRequest, buildAPICredentials string) (*hoapi.FetchArtifactsResponse, error)
 
 	// Downloads runtime artifacts tar file into `dst`.
 	DownloadRuntimeArtifacts(dst io.Writer) error
@@ -53,9 +56,10 @@ type HostOrchestratorService interface {
 }
 
 type HostOrchestratorServiceImpl struct {
-	httpHelper             HTTPHelper
-	ChunkSizeBytes         int64
-	ChunkUploadBackOffOpts BackOffOpts
+	httpHelper                HTTPHelper
+	ChunkSizeBytes            int64
+	ChunkUploadBackOffOpts    BackOffOpts
+	BuildAPICredentialsHeader string
 }
 
 func (c *HostOrchestratorServiceImpl) getInfraConfig() (*hoapi.InfraConfig, error) {
@@ -199,11 +203,12 @@ func (c *HostOrchestratorServiceImpl) waitForOperation(op *hoapi.Operation, res 
 	return c.httpHelper.NewPostRequest(path, nil).Do(res)
 }
 
-func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest) (*hoapi.FetchArtifactsResponse, error) {
+func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds string) (*hoapi.FetchArtifactsResponse, error) {
 	var op hoapi.Operation
 	rb := c.httpHelper.NewPostRequest("/artifacts", req)
-	// Cloud Orchestrator only checks for the presence of the header, hence an empty string value is ok.
-	rb.AddHeader(headerNameCOInjectBuildAPICreds, "")
+	if creds != "" {
+		rb.AddHeader(c.BuildAPICredentialsHeader, creds)
+	}
 	if err := rb.Do(&op); err != nil {
 		return nil, err
 	}
@@ -215,11 +220,12 @@ func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRe
 	return res, nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest) (*hoapi.CreateCVDResponse, error) {
+func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, creds string) (*hoapi.CreateCVDResponse, error) {
 	var op hoapi.Operation
 	rb := c.httpHelper.NewPostRequest("/cvds", req)
-	// Cloud Orchestrator only checks for the existence of the header, hence an empty string value is ok.
-	rb.AddHeader(headerNameCOInjectBuildAPICreds, "")
+	if creds != "" {
+		rb.AddHeader(c.BuildAPICredentialsHeader, creds)
+	}
 	if err := rb.Do(&op); err != nil {
 		return nil, err
 	}
