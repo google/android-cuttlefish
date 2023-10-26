@@ -28,17 +28,7 @@ cc_library_shared {
     ],
 
     shared_libs: [
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "libbase",
-        "libprotobuf-cpp-lite",
         "libprotobuf-cpp-full",
-    ],
-
-    static_libs: [
-        "libcuttlefish_host_config",
-        "libgflags",
-        "libjsoncpp",
     ],
 
     proto: {
@@ -77,17 +67,7 @@ cc_library_shared {
     ],
 
     shared_libs: [
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "libbase",
-        "libprotobuf-cpp-lite",
         "libprotobuf-cpp-full",
-    ],
-
-    static_libs: [
-        "libcuttlefish_host_config",
-        "libgflags",
-        "libjsoncpp",
     ],
 
     proto: {
