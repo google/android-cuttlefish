@@ -28,12 +28,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-type OpTimeoutError string
-
-func (s OpTimeoutError) Error() string {
-	return fmt.Sprintf("waiting for operation %q timed out", string(s))
-}
-
 type ApiCallError struct {
 	Code     int    `json:"code,omitempty"`
 	ErrorMsg string `json:"error,omitempty"`
