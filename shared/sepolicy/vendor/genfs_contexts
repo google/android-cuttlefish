@@ -95,12 +95,51 @@ genfscon sysfs /devices/platform/2000.rtc/rtc u:object_r:sysfs_rtc:s0
 ## arm64 2000.rtc on crosvm does not currently expose a wakeup node
 
 # qemu (x86)
-cf_pci_block_device(/devices/pci0000:00, 0x11, 16)
+cf_pci_block_device(/devices/pci0000:00, 0x11, 15)
 #cf_pci_gpu_device(/devices/pci0000:00, 0x2) - duplicated with crosvm(x86)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/pnp0/00:04/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9][0-9]'
 cf_rtc_wakeup_alarmtimer(/devices/pnp0/00:04, 0, 19)
+## find /sys/devices/LNXSYSTM:00/* -type d -name 'wakeup[0-9]*'
+#genfscon sysfs /devices/LNXSYSTM:00/LNXPWRBN:00/wakeup u:object_r:sysfs_wakeup:s0 - duplicated with crosvm(x86)
+#genfscon sysfs /devices/LNXSYSTM:00/LNXSLPBN:00/wakeup u:object_r:sysfs_wakeup:s0 - duplicated with crosvm(x86)
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:02/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:03/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:04/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:05/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:06/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:07/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:08/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:09/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0a/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0b/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0c/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0d/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0e/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0f/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:10/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:11/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:12/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:13/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:14/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:15/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:16/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:17/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:18/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:19/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:1a/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:1b/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:1c/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:1d/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:1e/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:1f/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:20/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:21/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:22/wakeup u:object_r:sysfs_wakeup:s0
 
 # qemu (arm64)
 cf_pci_block_device(/devices/platform/4010000000.pcie/pci0000:00, 0x10, 16)
