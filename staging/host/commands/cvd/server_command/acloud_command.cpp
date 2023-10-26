@@ -241,6 +241,9 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
       "`" << kCvdrBinName << "` was not found in the current environment.");
   auto args = ParseInvocation(request.Message()).arguments;
   args = CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
+  WriteAll(request.Err(),
+           "UPDATE! Try the new `cvdr` tool directly. Run `cvdr --help` to get "
+           "started.\n");
   Command cmd = Command("cvdr");
   for (auto a : args) {
     cmd.AddParameter(a);
