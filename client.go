@@ -150,7 +150,7 @@ func (s *serviceImpl) RootURI() string {
 }
 
 func (s *serviceImpl) HostService(host string) HostOrchestratorService {
-	hs := &hostOrchestratorServiceImpl{
+	hs := &HostOrchestratorServiceImpl{
 		httpHelper:             s.httpHelper,
 		ChunkSizeBytes:         s.ChunkSizeBytes,
 		ChunkUploadBackOffOpts: s.ChunkUploadBackOffOpts,

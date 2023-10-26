@@ -52,13 +52,13 @@ type HostOrchestratorService interface {
 	ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
 }
 
-type hostOrchestratorServiceImpl struct {
+type HostOrchestratorServiceImpl struct {
 	httpHelper             HTTPHelper
 	ChunkSizeBytes         int64
 	ChunkUploadBackOffOpts BackOffOpts
 }
 
-func (c *hostOrchestratorServiceImpl) getInfraConfig() (*hoapi.InfraConfig, error) {
+func (c *HostOrchestratorServiceImpl) getInfraConfig() (*hoapi.InfraConfig, error) {
 	var res hoapi.InfraConfig
 	if err := c.httpHelper.NewGetRequest(fmt.Sprintf("/infra_config")).Do(&res); err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (c *hostOrchestratorServiceImpl) getInfraConfig() (*hoapi.InfraConfig, erro
 	return &res, nil
 }
 
-func (c *hostOrchestratorServiceImpl) ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error) {
+func (c *HostOrchestratorServiceImpl) ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error) {
 	polledConn, err := c.createPolledConnection(device)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create polled connection: %w", err)
@@ -88,7 +88,7 @@ func (c *hostOrchestratorServiceImpl) ConnectWebRTC(device string, observer wcli
 	return conn, nil
 }
 
-func (c *hostOrchestratorServiceImpl) initHandling(connID string, iceServers []webrtc.ICEServer, logger io.Writer) wclient.Signaling {
+func (c *HostOrchestratorServiceImpl) initHandling(connID string, iceServers []webrtc.ICEServer, logger io.Writer) wclient.Signaling {
 	sendCh := make(chan any)
 	recvCh := make(chan map[string]any)
 
@@ -113,7 +113,7 @@ const (
 	maxConsecutiveErrors = 10
 )
 
-func (c *hostOrchestratorServiceImpl) webRTCPoll(sinkCh chan map[string]any, connID string, stopCh chan bool, logger io.Writer) {
+func (c *HostOrchestratorServiceImpl) webRTCPoll(sinkCh chan map[string]any, connID string, stopCh chan bool, logger io.Writer) {
 	start := 0
 	pollInterval := initialPollInterval
 	errCount := 0
@@ -158,7 +158,7 @@ func (c *hostOrchestratorServiceImpl) webRTCPoll(sinkCh chan map[string]any, con
 	}
 }
 
-func (c *hostOrchestratorServiceImpl) webRTCForward(srcCh chan any, connID string, stopPollCh chan bool, logger io.Writer) {
+func (c *HostOrchestratorServiceImpl) webRTCForward(srcCh chan any, connID string, stopPollCh chan bool, logger io.Writer) {
 	for {
 		msg, open := <-srcCh
 		if !open {
@@ -185,7 +185,7 @@ func (c *hostOrchestratorServiceImpl) webRTCForward(srcCh chan any, connID strin
 	}
 }
 
-func (c *hostOrchestratorServiceImpl) createPolledConnection(device string) (*hoapi.NewConnReply, error) {
+func (c *HostOrchestratorServiceImpl) createPolledConnection(device string) (*hoapi.NewConnReply, error) {
 	var res hoapi.NewConnReply
 	rb := c.httpHelper.NewPostRequest("/polled_connections", &hoapi.NewConnMsg{DeviceId: device})
 	if err := rb.Do(&res); err != nil {
@@ -194,12 +194,12 @@ func (c *hostOrchestratorServiceImpl) createPolledConnection(device string) (*ho
 	return &res, nil
 }
 
-func (c *hostOrchestratorServiceImpl) waitForOperation(op *hoapi.Operation, res any) error {
+func (c *HostOrchestratorServiceImpl) waitForOperation(op *hoapi.Operation, res any) error {
 	path := "/operations/" + op.Name + "/:wait"
 	return c.httpHelper.NewPostRequest(path, nil).Do(res)
 }
 
-func (c *hostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest) (*hoapi.FetchArtifactsResponse, error) {
+func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest) (*hoapi.FetchArtifactsResponse, error) {
 	var op hoapi.Operation
 	rb := c.httpHelper.NewPostRequest("/artifacts", req)
 	// Cloud Orchestrator only checks for the presence of the header, hence an empty string value is ok.
@@ -215,7 +215,7 @@ func (c *hostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRe
 	return res, nil
 }
 
-func (c *hostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest) (*hoapi.CreateCVDResponse, error) {
+func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest) (*hoapi.CreateCVDResponse, error) {
 	var op hoapi.Operation
 	rb := c.httpHelper.NewPostRequest("/cvds", req)
 	// Cloud Orchestrator only checks for the existence of the header, hence an empty string value is ok.
@@ -230,7 +230,7 @@ func (c *hostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest) (*h
 	return res, nil
 }
 
-func (c *hostOrchestratorServiceImpl) ListCVDs() ([]*hoapi.CVD, error) {
+func (c *HostOrchestratorServiceImpl) ListCVDs() ([]*hoapi.CVD, error) {
 	var res hoapi.ListCVDsResponse
 	if err := c.httpHelper.NewGetRequest("/cvds").Do(&res); err != nil {
 		return nil, err
@@ -238,7 +238,7 @@ func (c *hostOrchestratorServiceImpl) ListCVDs() ([]*hoapi.CVD, error) {
 	return res.CVDs, nil
 }
 
-func (c *hostOrchestratorServiceImpl) DownloadRuntimeArtifacts(dst io.Writer) error {
+func (c *HostOrchestratorServiceImpl) DownloadRuntimeArtifacts(dst io.Writer) error {
 	req, err := http.NewRequest("POST", c.httpHelper.RootEndpoint+"/runtimeartifacts/:pull", nil)
 	if err != nil {
 		return err
@@ -257,7 +257,7 @@ func (c *hostOrchestratorServiceImpl) DownloadRuntimeArtifacts(dst io.Writer) er
 	return nil
 }
 
-func (c *hostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
+func (c *HostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
 	uploadDir := &hoapi.UploadDirectory{}
 	if err := c.httpHelper.NewPostRequest("/userartifacts", nil).Do(uploadDir); err != nil {
 		return "", err
@@ -267,7 +267,7 @@ func (c *hostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
 
 const openConnections = 32
 
-func (c *hostOrchestratorServiceImpl) UploadFiles(uploadDir string, filenames []string) error {
+func (c *HostOrchestratorServiceImpl) UploadFiles(uploadDir string, filenames []string) error {
 	if c.ChunkSizeBytes == 0 {
 		panic("ChunkSizeBytes value cannot be zero")
 	}
