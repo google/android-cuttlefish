@@ -23,4 +23,4 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.rebootescrow.device=/dev/block/pmem0
 
 PRODUCT_PACKAGES += \
-    android.hardware.rebootescrow-service.default
+    com.android.hardware.rebootescrow
