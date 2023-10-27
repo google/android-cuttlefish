@@ -40,7 +40,7 @@ func TestUploadFilesChunkSizeBytesIsZeroPanic(t *testing.T) {
 	}
 	srv, _ := NewService(opts)
 
-	srv.HostService("foo").UploadFiles("bar", []string{"baz"})
+	srv.HostService("foo").UploadFilesWithOptions("bar", []string{"baz"}, UploadOptions{ChunkSizeBytes: 0})
 }
 
 func TestUploadFilesSucceeds(t *testing.T) {
@@ -94,7 +94,6 @@ func TestUploadFilesSucceeds(t *testing.T) {
 		default:
 			t.Fatal("unexpected endpoint: " + ep)
 		}
-
 	}))
 	defer ts.Close()
 	opts := &ServiceOptions{
@@ -104,7 +103,16 @@ func TestUploadFilesSucceeds(t *testing.T) {
 	}
 	srv, _ := NewService(opts)
 
-	err := srv.HostService(host).UploadFiles(uploadDir, []string{quxFile, waldoFile, xyzzyFile})
+	err := srv.HostService(host).UploadFilesWithOptions(uploadDir, []string{quxFile, waldoFile, xyzzyFile},
+		UploadOptions{
+			BackOffOpts: ExpBackOffOptions{
+				InitialDuration: 100 * time.Millisecond,
+				Multiplier:      2,
+				MaxElapsedTime:  1 * time.Second,
+			},
+			ChunkSizeBytes: 2,
+			NumWorkers:     10,
+		})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,15 +140,18 @@ func TestUploadFilesExponentialBackoff(t *testing.T) {
 		RootEndpoint:   ts.URL,
 		DumpOut:        io.Discard,
 		ChunkSizeBytes: 2,
-		ChunkUploadBackOffOpts: BackOffOpts{
-			InitialDuration: 100 * time.Millisecond,
-			Multiplier:      2,
-			MaxElapsedTime:  1 * time.Minute,
-		},
 	}
 	srv, _ := NewService(opts)
 
-	err := srv.HostService("foo").UploadFiles("bar", []string{waldoFile})
+	err := srv.HostService("foo").UploadFilesWithOptions("bar", []string{waldoFile}, UploadOptions{
+		BackOffOpts: ExpBackOffOptions{
+			InitialDuration: 100 * time.Millisecond,
+			Multiplier:      2,
+			MaxElapsedTime:  1 * time.Second,
+		},
+		ChunkSizeBytes: 2,
+		NumWorkers:     10,
+	})
 
 	if err != nil {
 		t.Fatal(err)
@@ -167,15 +178,19 @@ func TestUploadFilesExponentialBackoffReachedElapsedTime(t *testing.T) {
 		RootEndpoint:   ts.URL,
 		DumpOut:        io.Discard,
 		ChunkSizeBytes: 2,
-		ChunkUploadBackOffOpts: BackOffOpts{
-			InitialDuration: 100 * time.Millisecond,
-			Multiplier:      2,
-			MaxElapsedTime:  1 * time.Second,
-		},
 	}
 	srv, _ := NewService(opts)
 
-	err := srv.HostService("foo").UploadFiles("bar", []string{waldoFile})
+	err := srv.HostService("foo").UploadFilesWithOptions("bar", []string{waldoFile}, UploadOptions{
+		BackOffOpts: ExpBackOffOptions{
+			InitialDuration:     100 * time.Millisecond,
+			RandomizationFactor: 0.5,
+			Multiplier:          2,
+			MaxElapsedTime:      1 * time.Second,
+		},
+		ChunkSizeBytes: 2,
+		NumWorkers:     10,
+	})
 
 	if err == nil {
 		t.Fatal("expected error")

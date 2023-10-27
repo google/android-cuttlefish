@@ -33,28 +33,10 @@ import (
 	"time"
 )
 
-type BackOffOpts struct {
-	InitialDuration     time.Duration
-	RandomizationFactor float64
-	Multiplier          float64
-	MaxElapsedTime      time.Duration
-}
-
-func DefaultChunkUploadBackOffOpts() BackOffOpts {
-	return BackOffOpts{
-		InitialDuration:     500 * time.Millisecond,
-		RandomizationFactor: 0.5,
-		Multiplier:          1.5,
-		MaxElapsedTime:      2 * time.Minute,
-	}
-}
-
 type HTTPHelper struct {
-	Client                 *http.Client
-	RootEndpoint           string
-	ChunkSizeBytes         int64
-	ChunkUploadBackOffOpts BackOffOpts
-	Dumpster               io.Writer
+	Client       *http.Client
+	RootEndpoint string
+	Dumpster     io.Writer
 }
 
 func (h *HTTPHelper) NewGetRequest(path string) *HTTPRequestBuilder {
@@ -210,13 +192,24 @@ type fileInfo struct {
 	TotalChunks int
 }
 
-type FilesUploader struct {
-	Client         *http.Client
-	EndpointURL    string
+type ExpBackOffOptions struct {
+	InitialDuration     time.Duration
+	RandomizationFactor float64
+	Multiplier          float64
+	MaxElapsedTime      time.Duration
+}
+
+type UploadOptions struct {
+	BackOffOpts    ExpBackOffOptions
 	ChunkSizeBytes int64
-	DumpOut        io.Writer
 	NumWorkers     int
-	BackOffOpts
+}
+
+type FilesUploader struct {
+	Client      *http.Client
+	EndpointURL string
+	DumpOut     io.Writer
+	UploadOptions
 }
 
 func (u *FilesUploader) Upload(files []string) error {
@@ -288,12 +281,12 @@ func (u *FilesUploader) startWorkers(ctx context.Context, jobsChan <-chan upload
 	for i := 0; i < u.NumWorkers; i++ {
 		wg.Add(1)
 		w := uploadChunkWorker{
-			Context:     ctx,
-			Client:      u.Client,
-			EndpointURL: u.EndpointURL,
-			DumpOut:     u.DumpOut,
-			JobsChan:    jobsChan,
-			BackOffOpts: u.BackOffOpts,
+			Context:       ctx,
+			Client:        u.Client,
+			EndpointURL:   u.EndpointURL,
+			DumpOut:       u.DumpOut,
+			JobsChan:      jobsChan,
+			UploadOptions: u.UploadOptions,
 		}
 		go func() {
 			defer wg.Done()
@@ -325,7 +318,7 @@ type uploadChunkWorker struct {
 	EndpointURL string
 	DumpOut     io.Writer
 	JobsChan    <-chan uploadChunkJob
-	BackOffOpts
+	UploadOptions
 }
 
 // Returns a channel that will return the result for each of the handled `uploadChunkJob` instances.

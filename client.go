@@ -54,14 +54,13 @@ func (e *ApiCallError) Is(target error) bool {
 }
 
 type ServiceOptions struct {
-	RootEndpoint           string
-	ProxyURL               string
-	DumpOut                io.Writer
-	ErrOut                 io.Writer
-	RetryAttempts          int
-	RetryDelay             time.Duration
-	ChunkSizeBytes         int64
-	ChunkUploadBackOffOpts BackOffOpts
+	RootEndpoint   string
+	ProxyURL       string
+	DumpOut        io.Writer
+	ErrOut         io.Writer
+	RetryAttempts  int
+	RetryDelay     time.Duration
+	ChunkSizeBytes int64
 }
 
 type Service interface {
@@ -112,6 +111,7 @@ func (c *serviceImpl) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInsta
 	if err := c.waitForOperation(&op, ins); err != nil {
 		return nil, err
 	}
+
 	// There is a short delay between the creation of the host and the availability of the host
 	// orchestrator. This call ensures the host orchestrator had time to start before returning
 	// from the this function.
@@ -124,6 +124,7 @@ func (c *serviceImpl) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInsta
 	if err := c.httpHelper.NewGetRequest(hostPath).DoWithRetries(nil, retryOpts); err != nil {
 		return nil, fmt.Errorf("Unable to communicate with host orchestrator: %w", err)
 	}
+
 	return ins, nil
 }
 
@@ -170,11 +171,9 @@ func (s *serviceImpl) RootURI() string {
 
 func (s *serviceImpl) HostService(host string) HostOrchestratorService {
 	hs := &HostOrchestratorServiceImpl{
-		httpHelper:             s.httpHelper,
-		ChunkSizeBytes:         s.ChunkSizeBytes,
-		ChunkUploadBackOffOpts: s.ChunkUploadBackOffOpts,
-		WaitRetries:            uint(s.ServiceOptions.RetryAttempts),
-		WaitRetryDelay:         s.ServiceOptions.RetryDelay,
+		httpHelper:     s.httpHelper,
+		WaitRetries:    uint(s.ServiceOptions.RetryAttempts),
+		WaitRetryDelay: s.ServiceOptions.RetryDelay,
 		// Make the cloud orchestrator inject the credentials instead
 		BuildAPICredentialsHeader: headerNameCOInjectBuildAPICreds,
 	}
