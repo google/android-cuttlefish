@@ -35,13 +35,13 @@ DEFINE_int32(buffer_size, -1, "The buffer size");
 DEFINE_int32(dump_packet_size, -1,
              "Dump incoming/outgoing packets up to given size");
 
-void openSocket(cuttlefish::SharedFD* fd, int port) {
+void OpenSocket(cuttlefish::SharedFD* fd, int port) {
   static std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
   *fd = cuttlefish::SharedFD::SocketLocalClient(port, SOCK_STREAM);
 }
 
-void dump_packets(const char* prefix, char* buf, int size) {
+void DumpPackets(const char* prefix, char* buf, int size) {
   if (FLAGS_dump_packet_size < 0 || size <= 0) {
     return;
   }
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
   }
   close(FLAGS_fifo_out);
   cuttlefish::SharedFD sock;
-  openSocket(&sock, FLAGS_data_port);
+  OpenSocket(&sock, FLAGS_data_port);
 
   auto guest_to_host = std::thread([&]() {
     while (true) {
@@ -93,13 +93,13 @@ int main(int argc, char** argv) {
         sleep(1);
         continue;
       }
-      dump_packets("Read from FIFO", buf, read);
+      DumpPackets("Read from FIFO", buf, read);
       while (cuttlefish::WriteAll(sock, buf, read) == -1) {
         LOG(WARNING) << "Failed to write to host socket (will retry): "
                      << sock->StrError();
         // Wait for the host process to be ready
         sleep(1);
-        openSocket(&sock, FLAGS_data_port);
+        OpenSocket(&sock, FLAGS_data_port);
       }
     }
   });
@@ -108,13 +108,13 @@ int main(int argc, char** argv) {
     while (true) {
       char buf[FLAGS_buffer_size];
       auto read = sock->Read(buf, sizeof(buf));
-      dump_packets("Read from socket", buf, read);
+      DumpPackets("Read from socket", buf, read);
       if (read == -1) {
         LOG(WARNING) << "Failed to read from host socket (will retry): "
                      << sock->StrError();
         // Wait for the host process to be ready
         sleep(1);
-        openSocket(&sock, FLAGS_data_port);
+        OpenSocket(&sock, FLAGS_data_port);
         continue;
       }
       auto wrote = cuttlefish::WriteAll(fifo_out, buf, read);
