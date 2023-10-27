@@ -24,6 +24,7 @@
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/acloud/config.h"
 #include "host/commands/cvd/acloud/converter.h"
+#include "host/commands/cvd/acloud/create_converter_parser.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -54,10 +55,12 @@ class TryAcloudCommand : public CvdServerHandler {
    *
    * - Or `cvdr` for remote instance management.
    *
+   * If the test fails, the command will be handed to the `python acloud CLI`.
+   *
    */
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    auto remote_mgmt = VerifyRemoteMgmt(request);
-    return remote_mgmt.ok() ? remote_mgmt : VerifyLocalMgmt(request);
+    auto res = VerifyWithCvdRemote(request);
+    return res.ok() ? res : VerifyWithCvd(request);
   }
 
   Result<void> Interrupt() override {
@@ -68,8 +71,8 @@ class TryAcloudCommand : public CvdServerHandler {
   }
 
  private:
-  Result<cvd::Response> VerifyLocalMgmt(const RequestWithStdio& request);
-  Result<cvd::Response> VerifyRemoteMgmt(const RequestWithStdio& request);
+  Result<cvd::Response> VerifyWithCvd(const RequestWithStdio& request);
+  Result<cvd::Response> VerifyWithCvdRemote(const RequestWithStdio& request);
 
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
@@ -77,7 +80,7 @@ class TryAcloudCommand : public CvdServerHandler {
   const std::atomic<bool>& optout_;
 };
 
-Result<cvd::Response> TryAcloudCommand::VerifyLocalMgmt(
+Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
     const RequestWithStdio& request) {
   std::unique_lock interrupt_lock(interrupt_mutex_);
   bool lock_released = false;
@@ -115,14 +118,14 @@ Result<cvd::Response> TryAcloudCommand::VerifyLocalMgmt(
   return response;
 }
 
-Result<cvd::Response> TryAcloudCommand::VerifyRemoteMgmt(
+Result<cvd::Response> TryAcloudCommand::VerifyWithCvdRemote(
     const RequestWithStdio& request) {
   const uid_t uid = request.Credentials()->uid;
   auto filename = CF_EXPECT(GetDefaultConfigFile(uid));
   auto config = CF_EXPECT(LoadAcloudConfig(filename, uid));
-  // If client didn't enable using `cvdr` the request should fail so it can
-  // be handled by the legacy python acloud CLI.
   CF_EXPECT(config.use_cvdr == true);
+  auto args = ParseInvocation(request.Message()).arguments;
+  CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
   cvd::Response response;
   response.mutable_command_response();
   return response;
