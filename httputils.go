@@ -175,6 +175,10 @@ func (rb *HTTPRequestBuilder) DoWithRetries(ret any, retryOpts RetryOptions) err
 	if err := rb.helper.dumpResponse(res); err != nil {
 		return err
 	}
+	return rb.parseResponse(res, ret)
+}
+
+func (rb *HTTPRequestBuilder) parseResponse(res *http.Response, ret any) error {
 	dec := json.NewDecoder(res.Body)
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		errpl := new(ApiCallError)
