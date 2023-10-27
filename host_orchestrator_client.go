@@ -57,6 +57,20 @@ type HostOrchestratorService interface {
 	ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
 }
 
+const defaultHostOrchestratorCredentialsHeader = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
+
+func NewHostOrchestratoService(url string) HostOrchestratorService {
+	return &HostOrchestratorServiceImpl{
+		httpHelper: HTTPHelper{
+			Client:       http.DefaultClient,
+			RootEndpoint: url,
+		},
+		WaitRetries:               3,
+		WaitRetryDelay:            5 * time.Second,
+		BuildAPICredentialsHeader: defaultHostOrchestratorCredentialsHeader,
+	}
+}
+
 type HostOrchestratorServiceImpl struct {
 	httpHelper                HTTPHelper
 	WaitRetries               uint
