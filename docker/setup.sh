@@ -362,15 +362,15 @@ function cf_docker_create {
 	    if [[ -d "${android}" ]]; then
 		    echo "Setting up Android images from ${android} in ${home}."
 		    if [[ $(compgen -G "${android}"/*.img) != "${android}/*.img" ]]; then
-				for f in "${android}"/*.img; do
-					cp "${f}" "${home}"
-				done
+			    for f in "${android}"/*.img; do
+				    cp "${f}" "${home}"
+			    done
 		    else
 			    echo "WARNING: No Android images in ${android}."
 		    fi
-            if [ -f "${android}/bootloader" ]; then
-		cp ${android}/bootloader ${home}
-            fi
+		    if [ -f "${android}/bootloader" ]; then
+	    	    	    cp ${android}/bootloader ${home}
+            	    fi
 	    fi
 	    if [[ -f "${cuttlefish}" || -d "${android}" ]]; then
 		    volumes+=("-v ${home}:/home/vsoc-01:rw")
