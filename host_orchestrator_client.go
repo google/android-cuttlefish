@@ -40,6 +40,8 @@ type HostOrchestratorService interface {
 	// Uploads user files to a previously created directory.
 	UploadFiles(uploadDir string, filenames []string) error
 
+	UploadFilesWithOptions(uploadDir string, filenames []string, options UploadOptions) error
+
 	// Create a new device with artifacts from the build server or previously uploaded by the user.
 	// If not empty, the provided credentials will be used to download necessary artifacts from the build api.
 	CreateCVD(req *hoapi.CreateCVDRequest, buildAPICredentials string) (*hoapi.CreateCVDResponse, error)
@@ -57,8 +59,6 @@ type HostOrchestratorService interface {
 
 type HostOrchestratorServiceImpl struct {
 	httpHelper                HTTPHelper
-	ChunkSizeBytes            int64
-	ChunkUploadBackOffOpts    BackOffOpts
 	WaitRetries               uint
 	WaitRetryDelay            time.Duration
 	BuildAPICredentialsHeader string
@@ -281,16 +281,37 @@ func (c *HostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
 const openConnections = 32
 
 func (c *HostOrchestratorServiceImpl) UploadFiles(uploadDir string, filenames []string) error {
-	if c.ChunkSizeBytes == 0 {
+	return c.UploadFilesWithOptions(uploadDir, filenames, DefaultUploadOptions())
+}
+
+func DefaultUploadOptions() UploadOptions {
+	return UploadOptions{
+		BackOffOpts: ExpBackOffOptions{
+			InitialDuration:     500 * time.Millisecond,
+			RandomizationFactor: 0.5,
+			Multiplier:          1.5,
+			MaxElapsedTime:      2 * time.Minute,
+		},
+		ChunkSizeBytes: 16 * 1024 * 1024, // 16 MB
+		NumWorkers:     32,
+	}
+}
+
+func (c *HostOrchestratorServiceImpl) UploadFilesWithOptions(uploadDir string, filenames []string, uploadOpts UploadOptions) error {
+	if uploadOpts.ChunkSizeBytes == 0 {
 		panic("ChunkSizeBytes value cannot be zero")
 	}
+	if uploadOpts.NumWorkers == 0 {
+		panic("NumWorkers value cannot be zero")
+	}
+	if uploadOpts.BackOffOpts.MaxElapsedTime == 0 {
+		panic("MaxElapsedTime value cannot be zero")
+	}
 	uploader := &FilesUploader{
-		Client:         c.httpHelper.Client,
-		EndpointURL:    c.httpHelper.RootEndpoint + "/userartifacts/" + uploadDir,
-		ChunkSizeBytes: c.ChunkSizeBytes,
-		DumpOut:        c.httpHelper.Dumpster,
-		NumWorkers:     openConnections,
-		BackOffOpts:    c.ChunkUploadBackOffOpts,
+		Client:        c.httpHelper.Client,
+		EndpointURL:   c.httpHelper.RootEndpoint + "/userartifacts/" + uploadDir,
+		DumpOut:       c.httpHelper.Dumpster,
+		UploadOptions: uploadOpts,
 	}
 	return uploader.Upload(filenames)
 }
