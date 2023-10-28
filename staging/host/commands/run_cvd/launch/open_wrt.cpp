@@ -70,6 +70,7 @@ class OpenWrt : public CommandSource {
         instance_.PerInstanceInternalUdsPath(crosvm_for_ap_socket),
         instance_.crosvm_binary());
 
+    ap_cmd.Cmd().AddParameter("--no-usb");
     ap_cmd.Cmd().AddParameter("--core-scheduling=false");
 
     if (!environment_.vhost_user_mac80211_hwsim().empty()) {
@@ -79,6 +80,12 @@ class OpenWrt : public CommandSource {
     SharedFD wifi_tap;
     if (environment_.enable_wifi()) {
       wifi_tap = ap_cmd.AddTap(instance_.wifi_tap_name());
+    }
+
+    const std::string snapshot_dir = config_.snapshot_path();
+    if (!snapshot_dir.empty()) {
+      CF_EXPECT(ap_cmd.SetToRestoreFromSnapshot(snapshot_dir, instance_.id(),
+                                                "_openwrt"));
     }
 
     /* TODO(kwstephenkim): delete this code when Minidroid completely disables
