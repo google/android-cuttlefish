@@ -145,6 +145,14 @@ void CuttlefishConfig::set_vm_manager(const std::string& name) {
   (*dictionary_)[kVmManager] = name;
 }
 
+static constexpr char kApVmManager[] = "ap_vm_manager";
+std::string CuttlefishConfig::ap_vm_manager() const {
+  return (*dictionary_)[kApVmManager].asString();
+}
+void CuttlefishConfig::set_ap_vm_manager(const std::string& name) {
+  (*dictionary_)[kApVmManager] = name;
+}
+
 static SecureHal StringToSecureHal(std::string mode) {
   std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
   if (mode == "keymint") {

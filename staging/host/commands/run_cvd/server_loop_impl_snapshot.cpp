@@ -36,6 +36,7 @@
 
 namespace cuttlefish {
 namespace run_cvd_impl {
+using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
 
 std::unordered_map<std::string, std::string>
 ServerLoopImpl::InitializeVmToControlSockPath(
@@ -45,6 +46,7 @@ ServerLoopImpl::InitializeVmToControlSockPath(
       // {QemuManager::name(),
       // instance.PerInstanceInternalUdsPath("qemu_monitor.sock")},
       {vm_manager::CrosvmManager::name(), instance.CrosvmSocketPath()},
+      {cuttlefish::kApName, instance.OpenwrtCrosvmSocketPath()},
   };
 }
 
@@ -57,6 +59,15 @@ static std::string SubtoolPath(const std::string& subtool_name) {
     return HostBinaryPath(subtool_name);
   }
   return subtool_path;
+}
+
+static std::string GetSocketPath(
+    const std::string name,
+    std::unordered_map<std::string, std::string>& vm_name_to_control_sock_) {
+  if (!Contains(vm_name_to_control_sock_, name)) {
+    return "";
+  }
+  return vm_name_to_control_sock_.at(name);
 }
 
 static Result<void> SuspendCrosvm(const std::string& vm_sock_path) {
@@ -82,24 +93,50 @@ static Result<void> ResumeCrosvm(const std::string& vm_sock_path) {
 }
 
 Result<void> ServerLoopImpl::SuspendGuest() {
+  // If openwrt is running in crosvm, suspend it.
+  const auto ap_vm_name = config_.ap_vm_manager();
+  if (instance_.ap_boot_flow() != APBootFlow::None &&
+      ap_vm_name == cuttlefish::kApName) {
+    const auto openwrt_sock =
+        GetSocketPath(ap_vm_name, vm_name_to_control_sock_);
+    if (openwrt_sock == "") {
+      return CF_ERR("The vm_manager " + ap_vm_name + " is not supported yet");
+    }
+    CF_EXPECT(SuspendCrosvm(openwrt_sock),
+              "failed to suspend openwrt crosvm instance.");
+  }
   const auto vm_name = config_.vm_manager();
-  CF_EXPECTF(Contains(vm_name_to_control_sock_, vm_name),
-             "vm_manager \"{}\" is not supported for suspend yet.", vm_name);
-  const auto& vm_sock_path = vm_name_to_control_sock_.at(vm_name);
   if (vm_name == vm_manager::CrosvmManager::name()) {
-    return SuspendCrosvm(vm_sock_path);
+    const auto& vm_sock = GetSocketPath(vm_name, vm_name_to_control_sock_);
+    if (vm_sock == "") {
+      return CF_ERR("The vm_manager " + vm_name + " is not supported yet");
+    }
+    return SuspendCrosvm(vm_sock);
   } else {
     return CF_ERR("The vm_manager " + vm_name + " is not supported yet");
   }
 }
 
 Result<void> ServerLoopImpl::ResumeGuest() {
+  // If openwrt is running in crosvm, resume it.
+  const auto ap_vm_name = config_.ap_vm_manager();
+  if (instance_.ap_boot_flow() != APBootFlow::None &&
+      ap_vm_name == cuttlefish::kApName) {
+    const auto& openwrt_sock =
+        GetSocketPath(ap_vm_name, vm_name_to_control_sock_);
+    if (openwrt_sock == "") {
+      return CF_ERR("The vm_manager " + ap_vm_name + " is not supported yet");
+    }
+    CF_EXPECT(ResumeCrosvm(openwrt_sock),
+              "failed to resume openwrt crosvm instance.");
+  }
   const auto vm_name = config_.vm_manager();
-  CF_EXPECTF(Contains(vm_name_to_control_sock_, vm_name),
-             "vm_manager \"{}\" is not supported for resume yet.", vm_name);
-  const auto& vm_sock_path = vm_name_to_control_sock_.at(vm_name);
   if (vm_name == vm_manager::CrosvmManager::name()) {
-    return ResumeCrosvm(vm_sock_path);
+    const auto& vm_sock = GetSocketPath(vm_name, vm_name_to_control_sock_);
+    if (vm_sock == "") {
+      return CF_ERR("The vm_manager " + vm_name + " is not supported yet");
+    }
+    return ResumeCrosvm(vm_sock);
   } else {
     return CF_ERR("The vm_manager " + vm_name + " is not supported yet");
   }
@@ -144,14 +181,37 @@ Result<void> ServerLoopImpl::TakeCrosvmGuestSnapshot(
   const auto snapshots_parent_dir =
       CF_EXPECT(InstanceGuestSnapshotPath(meta_json, instance_.id()));
   const auto crosvm_bin = config_.crosvm_binary();
-  const auto control_socket_path =
-      CF_EXPECT(VmControlSocket(), "Failed to find crosvm control.sock path.");
   const std::string snapshot_guest_param =
       snapshots_parent_dir + "/" + kGuestSnapshotBase;
+  // If openwrt is running in crosvm, snapshot it.
+  const auto ap_vm_name = config_.ap_vm_manager();
+  if (instance_.ap_boot_flow() != APBootFlow::None &&
+      ap_vm_name == cuttlefish::kApName) {
+    const auto& openwrt_sock =
+        GetSocketPath(ap_vm_name, vm_name_to_control_sock_);
+    if (openwrt_sock == "") {
+      return CF_ERR("The vm_manager " + ap_vm_name + " is not supported yet");
+    }
+    std::vector<std::string> openwrt_crosvm_command_args{
+        crosvm_bin, "snapshot", "take", snapshot_guest_param + "_openwrt",
+        openwrt_sock};
+    LOG(DEBUG) << "Running the following command to take snapshot..."
+               << std::endl
+               << "  ";
+    for (const auto& arg : openwrt_crosvm_command_args) {
+      LOG(DEBUG) << arg << " ";
+    }
+    CF_EXPECT(Execute(openwrt_crosvm_command_args) == 0,
+              "Executing openwrt crosvm command returned -1");
+    LOG(DEBUG) << "Guest snapshot for openwrt instance #" << instance_.id()
+               << " should have been stored in " << snapshots_parent_dir
+               << "_openwrt";
+  }
+  const auto control_socket_path =
+      CF_EXPECT(VmControlSocket(), "Failed to find crosvm control.sock path.");
   std::vector<std::string> crosvm_command_args{crosvm_bin, "snapshot", "take",
                                                snapshot_guest_param,
                                                control_socket_path};
-  std::stringstream ss;
   LOG(DEBUG) << "Running the following command to take snapshot..." << std::endl
              << "  ";
   for (const auto& arg : crosvm_command_args) {
