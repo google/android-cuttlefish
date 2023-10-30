@@ -91,10 +91,6 @@ class CvdGenericCommandHandler : public CvdServerHandler {
                                     const cvd_common::Envs& envs) const;
   Result<BinPathInfo> CvdHelpBinPath(const std::string& subcmd,
                                      const cvd_common::Envs& envs) const;
-  Result<BinPathInfo> CvdBinPath(const std::string& subcmd,
-                                 const cvd_common::Envs& envs,
-                                 const std::string& home,
-                                 const uid_t uid) const;
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
@@ -297,38 +293,6 @@ CvdGenericCommandHandler::CvdHelpBinPath(const std::string& subcmd,
       .bin_ = bin_path_base,
       .bin_path_ = tool_dir_path.append("/bin/").append(bin_path_base),
       .host_artifacts_path_ = envs.at(kAndroidHostOut)};
-}
-
-Result<CvdGenericCommandHandler::BinPathInfo>
-CvdGenericCommandHandler::CvdBinPath(const std::string& subcmd,
-                                     const cvd_common::Envs& envs,
-                                     const std::string& home,
-                                     const uid_t uid) const {
-  std::string host_artifacts_path;
-  auto instance_group_result = instance_manager_.FindGroup(
-      uid, InstanceManager::Query{selector::kHomeField, home});
-
-  // the dir that "bin/<this subcmd bin file>" belongs to
-  std::string tool_dir_path;
-  if (instance_group_result.ok()) {
-    host_artifacts_path = instance_group_result->HostArtifactsPath();
-    tool_dir_path = host_artifacts_path;
-  } else {
-    // if the group does not exist (e.g. cvd status --help)
-    // falls back here
-    host_artifacts_path = envs.at(kAndroidHostOut);
-    tool_dir_path = host_artifacts_path;
-    if (!DirectoryExists(tool_dir_path + "/bin")) {
-      tool_dir_path =
-          android::base::Dirname(android::base::GetExecutableDirectory());
-    }
-  }
-  const std::string bin = CF_EXPECT(GetBin(subcmd, tool_dir_path));
-  const std::string bin_path = tool_dir_path.append("/bin/").append(bin);
-  CF_EXPECT(FileExists(bin_path));
-  return BinPathInfo{.bin_ = bin,
-                     .bin_path_ = bin_path,
-                     .host_artifacts_path_ = host_artifacts_path};
 }
 
 /*
