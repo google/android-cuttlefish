@@ -139,6 +139,7 @@ fruit::Component<> runCvdComponent(
       .install(FastbootConfigComponent)
       .install(FastbootConfigFragmentComponent)
       .install(bootStateMachineComponent)
+      .install(AutoCmd<CasimirControlServer>::Component)
       .install(ConfigFlagPlaceholder)
       .install(CustomActionsComponent)
       .install(LaunchAdbComponent)
