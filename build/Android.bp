@@ -54,6 +54,7 @@ cvd_host_tools = [
     "avbtool",
     "build_super_image",
     "tcp_connector",
+    "casimir_control_server",
     "common_crosvm",
     "config_server",
     "console_forwarder",
