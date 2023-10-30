@@ -42,10 +42,6 @@ Driver Options:
   -help                  Print this message
   -verbosity=<LEVEL>     Adjust Cvd verbosity level. LEVEL is Android log
                          severity. (Required: cvd >= v1.3)
-  -disable_default_group If the flag is true, the group's runtime files are
-                         not populated under the user's HOME. Instead the
-                         files are created under an automatically-generated
-                         directory. (default: false)
   -acquire_file_lock     If the flag is given, the cvd server attempts to
                          acquire the instance lock file lock. (default: true)
 
@@ -63,8 +59,6 @@ Commands:
   restart                Restart the device without reinitializing the disks
   restart-server         Restart the cvd_server background process.
   status                 Check and print the state of a running instance.
-  env                    Control the environment of running instances like wifi
-                         or geolocation.
   host_bugreport         Capture a host bugreport, including configs, logs, and
                          tombstones.
 

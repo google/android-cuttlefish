@@ -233,16 +233,8 @@ StartSelectorParser::HandleInstanceIds(
 }
 
 Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
-  auto disable_default_group_flag = CF_EXPECT(
-      SelectorFlags::Get().GetFlag(SelectorFlags::kDisableDefaultGroup));
-  if (CF_EXPECT(
-          disable_default_group_flag.CalculateFlag<bool>(selector_args_))) {
-    return false;
-  }
   /*
-   * --disable_default_group instructs that the default group
-   * should be disabled anyway. If not given, the logic to determine
-   * whether this group is the default one or not is:
+   * the logic to determine whether this group is the default one or not:
    *  If HOME is not overridden and no selector options, then
    *   the default group
    *  Or, not a default group
