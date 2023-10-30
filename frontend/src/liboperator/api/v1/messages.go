@@ -15,22 +15,26 @@
 package v1
 
 type RegisterMsg struct {
+	Type     string      `json:"message_type"`
 	DeviceId string      `json:"device_id"`
 	Port     int         `json:"device_port"`
 	Info     interface{} `json:"device_info"`
 }
 
 type ConnectMsg struct {
+	Type     string `json:"message_type"`
 	DeviceId string `json:"device_id"`
 }
 
 type ForwardMsg struct {
+	Type    string      `json:"message_type"`
 	Payload interface{} `json:"payload"`
 	// This is used by the device message and ignored by the client
 	ClientId int `json:"client_id"`
 }
 
 type ClientMsg struct {
+	Type     string      `json:"message_type"`
 	ClientId int         `json:"client_id"`
 	Payload  interface{} `json:"payload"`
 }
@@ -50,6 +54,7 @@ type NewConnReply struct {
 }
 
 type InfraConfig struct {
+	Type       string      `json:"message_type"`
 	IceServers []IceServer `json:"ice_servers"`
 }
 
