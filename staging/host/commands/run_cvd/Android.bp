@@ -25,6 +25,7 @@ cc_binary_host {
         "launch/bluetooth_connector.cpp",
         "launch/nfc_connector.cpp",
         "launch/uwb_connector.cpp",
+        "launch/casimir_control_server.cpp",
         "launch/console_forwarder.cpp",
         "launch/control_env_proxy_server.cpp",
         "launch/gnss_grpc_proxy.cpp",
