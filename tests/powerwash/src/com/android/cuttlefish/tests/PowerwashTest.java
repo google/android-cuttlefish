@@ -54,9 +54,6 @@ public class PowerwashTest extends BaseHostJUnit4Test {
             description = "Force to check device type of RemoteAndroidVirtualDevice.")
     private boolean mForceRemoteAvdType = false;
 
-    private String mCuttlefishHostUser = null;
-    private Integer mCuttlefishDeviceNumOffset = null;
-
     @Test
     public void testPowerwash() throws Exception {
         if (mForceRemoteAvdType) {
