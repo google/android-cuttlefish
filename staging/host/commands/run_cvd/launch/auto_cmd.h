@@ -26,6 +26,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/type_name.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/feature.h"
 #include "host/libs/config/kernel_log_pipe_provider.h"
@@ -71,7 +72,8 @@ class GenericCommandSource : public CommandSource,
   }
 
   std::string Name() const override {
-    return ExtractAutoFn(__PRETTY_FUNCTION__, "GenericCommandSource");
+    static constexpr auto kName = ValueName<Fn>();
+    return std::string(kName);
   }
 
   std::unordered_set<SetupFeature*> Dependencies() const override {
