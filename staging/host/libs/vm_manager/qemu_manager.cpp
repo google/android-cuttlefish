@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include <cstdlib>
+#include <iomanip>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -207,7 +208,8 @@ QemuManager::ConfigureBootDevices(
     case Arch::X86_64: {
       // QEMU has additional PCI devices for an ISA bridge and PIIX4
       // virtio_gpu precedes the first console or disk
-      return ConfigureMultipleBootDevices("pci0000:00/0000:00:", 2 + num_gpu,
+      int pci_offset = 2 + num_gpu - VmManager::kDefaultNumHvcs;
+      return ConfigureMultipleBootDevices("pci0000:00/0000:00:", pci_offset,
                                           num_disks);
     }
   }
@@ -258,7 +260,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-device");
     qemu_cmd.AddParameter(
         "virtio-serial-pci-non-transitional,max_ports=1,id=virtio-serial",
-        hvc_num);
+        hvc_num, ",bus=hvc-bridge,addr=", fmt::format("{:0>2x}", hvc_num + 1));
     qemu_cmd.AddParameter("-device");
     qemu_cmd.AddParameter("virtconsole,bus=virtio-serial", hvc_num,
                           ".0,chardev=hvc", hvc_num);
@@ -295,7 +297,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-device");
     qemu_cmd.AddParameter(
         "virtio-serial-pci-non-transitional,max_ports=1,id=virtio-serial",
-        hvc_num);
+        hvc_num, ",bus=hvc-bridge,addr=", fmt::format("{:0>2x}", hvc_num + 1));
     qemu_cmd.AddParameter("-device");
     qemu_cmd.AddParameter("virtconsole,bus=virtio-serial", hvc_num,
                           ".0,chardev=hvc", hvc_num);
@@ -307,7 +309,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-device");
     qemu_cmd.AddParameter(
         "virtio-serial-pci-non-transitional,max_ports=1,id=virtio-serial",
-        hvc_num);
+        hvc_num, ",bus=hvc-bridge,addr=", fmt::format("{:0>2x}", hvc_num + 1));
     qemu_cmd.AddParameter("-device");
     qemu_cmd.AddParameter("virtconsole,bus=virtio-serial", hvc_num,
                           ".0,chardev=hvc", hvc_num);
@@ -433,6 +435,13 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   } else {
     qemu_cmd.AddParameter("-display");
     qemu_cmd.AddParameter("none");
+  }
+
+  qemu_cmd.AddParameter("-device");
+  if (is_x86) {
+    qemu_cmd.AddParameter("pcie-pci-bridge,id=hvc-bridge,addr=01.2");
+  } else {
+    qemu_cmd.AddParameter("pcie-pci-bridge,id=hvc-bridge");
   }
 
   if (instance.hwcomposer() != kHwComposerNone) {
