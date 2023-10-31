@@ -28,6 +28,12 @@ namespace {
 
 constexpr char kCvdEnvHelpMessage[] =
     "cvd env: cuttlefish environment controller\n"
+    "  e.g. Wmediumd & OpenWRT for Wifi, GNSS for geolocation"
+    "\n"
+    "Please visit following link for the more information.\n"
+    "https://source.android.com/docs/setup/create/"
+    "cuttlefish-control-environment\n"
+    "\n"
     "Basic usage: cvd [selector options] env [sub_command] [args] [options]\n"
     "Sub commands:\n"
     "  ls: list services and methods for given arguments\n"
