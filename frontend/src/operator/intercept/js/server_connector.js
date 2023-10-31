@@ -90,6 +90,13 @@ class Connector {
   async sendToDevice(msg) {
     throw 'Not implemented!';
   }
+
+  // Provides a hint to this controller that it should expect messages from the
+  // signaling server soon. This is useful for a connector which polls for
+  // example which might want to poll more quickly for a period of time.
+  expectMessagesSoon(durationMilliseconds) {
+    throw 'Not implemented!';
+  }
 }
 
 // Returns real implementation for ParentController.
@@ -160,6 +167,8 @@ async function ajaxPostJson(url, data) {
   return response.json();
 }
 
+const SHORT_POLL_DELAY = 1000;
+
 // Implementation of the Connector interface using HTTP polling
 class PollingConnector extends Connector {
   #configUrl = httpUrl('infra_config');
@@ -169,6 +178,7 @@ class PollingConnector extends Connector {
   #config = undefined;
   #messagesReceived = 0;
   #pollerSchedule;
+  #pollQuicklyUntil = Date.now();
   #onDeviceMsgCb = msg =>
       console.error('Received device message without registered listener');
 
@@ -222,26 +232,45 @@ class PollingConnector extends Connector {
     return arr;
   }
 
+  #calcNextPollDelay(previousPollDelay) {
+    if (Date.now() < this.#pollQuicklyUntil) {
+      return SHORT_POLL_DELAY;
+    } else {
+      // Do exponential backoff on the polling up to 60 seconds
+      return Math.min(60000, 2 * previousPollDelay);
+    }
+  }
+
   #startPolling() {
     if (this.#pollerSchedule !== undefined) {
       return;
     }
 
-    let currentPollDelay = 1000;
+    let currentPollDelay = SHORT_POLL_DELAY;
     let pollerRoutine = async () => {
       let messages = await this.#pollMessages();
 
-      // Do exponential backoff on the polling up to 60 seconds
-      currentPollDelay = Math.min(60000, 2 * currentPollDelay);
+      currentPollDelay = this.#calcNextPollDelay(currentPollDelay);
+
       for (const message of messages) {
         this.#onDeviceMsgCb(message.payload);
         // There is at least one message, poll sooner
-        currentPollDelay = 1000;
+        currentPollDelay = SHORT_POLL_DELAY;
       }
       this.#pollerSchedule = setTimeout(pollerRoutine, currentPollDelay);
     };
 
     this.#pollerSchedule = setTimeout(pollerRoutine, currentPollDelay);
+  }
+
+  expectMessagesSoon(durationMilliseconds) {
+    console.debug("Polling frequently for ", durationMilliseconds, " ms.");
+
+    clearTimeout(this.#pollerSchedule);
+    this.#pollerSchedule = undefined;
+
+    this.#pollQuicklyUntil = Date.now() + durationMilliseconds;
+    this.#startPolling();
   }
 }
 
