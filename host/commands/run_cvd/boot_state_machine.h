@@ -24,7 +24,7 @@ namespace cuttlefish {
 
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
                                  const CuttlefishConfig::InstanceSpecific,
-                                 ValidateTapDevices>>
+                                 AutoSetup<ValidateTapDevices>::Type>>
 bootStateMachineComponent();
 
 }  // namespace cuttlefish
