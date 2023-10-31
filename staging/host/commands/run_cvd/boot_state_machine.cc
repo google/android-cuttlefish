@@ -111,54 +111,33 @@ SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
   }
 }
 
-class ProcessLeader : public SetupFeature {
- public:
-  INJECT(ProcessLeader(const CuttlefishConfig& config,
-                       const CuttlefishConfig::InstanceSpecific& instance,
-                       ValidateTapDevices& validate_tap))
-      : config_(config), instance_(instance), validate_tap_(validate_tap) {}
-
-  SharedFD ForegroundLauncherPipe() { return foreground_launcher_pipe_; }
-
-  // SetupFeature
-  std::string Name() const override { return "ProcessLeader"; }
-  bool Enabled() const override { return true; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override {
-    // Report errors from this validation before we lose stderr from `--daemon`
-    return {&validate_tap_};
+Result<SharedFD> ProcessLeader(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    AutoSetup<ValidateTapDevices>::Type& /* dependency */) {
+  /* These two paths result in pretty different process state, but both
+   * achieve the same goal of making the current process the leader of a
+   * process group, and are therefore grouped together. */
+  if (instance.run_as_daemon()) {
+    auto foreground_launcher_pipe = DaemonizeLauncher(config);
+    CF_EXPECT(foreground_launcher_pipe->IsOpen());
+    return foreground_launcher_pipe;
   }
-  Result<void> ResultSetup() override {
-    /* These two paths result in pretty different process state, but both
-     * achieve the same goal of making the current process the leader of a
-     * process group, and are therefore grouped together. */
-    if (instance_.run_as_daemon()) {
-      foreground_launcher_pipe_ = DaemonizeLauncher(config_);
-      CF_EXPECT(foreground_launcher_pipe_->IsOpen());
-    } else {
-      // Make sure the launcher runs in its own process group even when running
-      // in the foreground
-      if (getsid(0) != getpid()) {
-        CF_EXPECTF(setpgid(0, 0) == 0, "Failed to create new process group: {}",
-                   strerror(errno));
-      }
-    }
-    return {};
+  // Make sure the launcher runs in its own process group even when running
+  // in the foreground
+  if (getsid(0) != getpid()) {
+    CF_EXPECTF(setpgid(0, 0) == 0, "Failed to create new process group: {}",
+               strerror(errno));
   }
-
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  ValidateTapDevices& validate_tap_;
-  SharedFD foreground_launcher_pipe_;
-};
+  return {};
+}
 
 // Maintains the state of the boot process, once a final state is reached
 // (success or failure) it sends the appropriate exit code to the foreground
 // launcher process
 class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
  public:
-  INJECT(CvdBootStateMachine(ProcessLeader& process_leader,
+  INJECT(CvdBootStateMachine(AutoSetup<ProcessLeader>::Type& process_leader,
                              KernelLogPipeProvider& kernel_log_pipe_provider))
       : process_leader_(process_leader),
         kernel_log_pipe_provider_(kernel_log_pipe_provider),
@@ -190,7 +169,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     CF_EXPECT(SharedFD::Pipe(&interrupt_fd_read_, &interrupt_fd_write_));
     CF_EXPECT(interrupt_fd_read_->IsOpen(), interrupt_fd_read_->StrError());
     CF_EXPECT(interrupt_fd_write_->IsOpen(), interrupt_fd_write_->StrError());
-    fg_launcher_pipe_ = process_leader_.ForegroundLauncherPipe();
+    fg_launcher_pipe_ = *process_leader_;
     if (FLAGS_reboot_notification_fd >= 0) {
       reboot_notification_ = SharedFD::Dup(FLAGS_reboot_notification_fd);
       CF_EXPECTF(reboot_notification_->IsOpen(),
@@ -287,7 +266,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     return BootCompleted() || (state_ & kGuestBootFailed);
   }
 
-  ProcessLeader& process_leader_;
+  AutoSetup<ProcessLeader>::Type& process_leader_;
   KernelLogPipeProvider& kernel_log_pipe_provider_;
 
   std::thread boot_event_handler_;
@@ -305,12 +284,12 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
 
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
                                  const CuttlefishConfig::InstanceSpecific,
-                                 ValidateTapDevices>>
+                                 AutoSetup<ValidateTapDevices>::Type>>
 bootStateMachineComponent() {
   return fruit::createComponent()
       .addMultibinding<KernelLogPipeConsumer, CvdBootStateMachine>()
-      .addMultibinding<SetupFeature, ProcessLeader>()
-      .addMultibinding<SetupFeature, CvdBootStateMachine>();
+      .addMultibinding<SetupFeature, CvdBootStateMachine>()
+      .install(AutoSetup<ProcessLeader>::Component);
 }
 
 }  // namespace cuttlefish
