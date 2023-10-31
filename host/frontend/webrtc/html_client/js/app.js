@@ -746,6 +746,7 @@ class DeviceControlApp {
       }
     }
     if (message_data.event == 'VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED') {
+      this.#deviceConnection.expectStreamChange();
       this.#updateDisplayVisibility(metadata.display, metadata.mode);
     }
   }
