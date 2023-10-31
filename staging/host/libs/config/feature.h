@@ -26,6 +26,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/type_name.h"
 
 namespace cuttlefish {
 
@@ -188,9 +189,6 @@ std::unordered_set<SetupFeature*> SetupFeatureDeps(
   return deps;
 }
 
-std::string ExtractAutoFn(std::string_view pretty_func,
-                          std::string_view class_name);
-
 template <auto Fn, typename R, typename... Args>
 class GenericReturningSetupFeature : public ReturningSetupFeature<R> {
  public:
@@ -200,7 +198,8 @@ class GenericReturningSetupFeature : public ReturningSetupFeature<R> {
   bool Enabled() const override { return true; }
 
   std::string Name() const override {
-    return ExtractAutoFn(__PRETTY_FUNCTION__, "GenericReturningSetupFeature");
+    static constexpr auto kName = ValueName<Fn>();
+    return std::string(kName);
   }
 
   std::unordered_set<SetupFeature*> Dependencies() const override {
