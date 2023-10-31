@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
+#include <functional>
 #include <optional>
 #include <thread>
 
@@ -53,6 +53,7 @@
 #include "host/commands/secure_env/tpm_keymaster_context.h"
 #include "host/commands/secure_env/tpm_keymaster_enforcement.h"
 #include "host/commands/secure_env/tpm_resource_manager.h"
+#include "host/commands/secure_env/worker_thread_loop_body.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/config/logging.h"
 
@@ -258,9 +259,13 @@ Result<void> SecureEnvMain(int argc, char** argv) {
   }
 
   // go/cf-secure-env-snapshot
-  SnapshotRunningFlag running;  // initialized as true
+  SnapshotRunningFlag running;
   SharedFD channel_to_run_cvd = DupFdFlag(FLAGS_snapshot_control_fd);
-  SnapshotCommandHandler suspend_resume_handler(channel_to_run_cvd, running);
+  EventFdsManager event_fds_manager = CF_EXPECT(EventFdsManager::Create());
+  EventNotifiers suspended_notifiers;
+
+  SnapshotCommandHandler suspend_resume_handler(
+      channel_to_run_cvd, event_fds_manager, suspended_notifiers, running);
 
   // The guest image may have either the C++ implementation of
   // KeyMint/Keymaster, xor the Rust implementation of KeyMint.  Those different
@@ -306,39 +311,67 @@ Result<void> SecureEnvMain(int argc, char** argv) {
   auto keymaster_in = DupFdFlag(FLAGS_keymaster_fd_in);
   auto keymaster_out = DupFdFlag(FLAGS_keymaster_fd_out);
   keymaster::AndroidKeymaster* borrowed_km = keymaster.get();
-  threads.emplace_back([keymaster_in, keymaster_out, borrowed_km]() {
+  threads.emplace_back([keymaster_in, keymaster_out, borrowed_km, &running,
+                        &event_fds_manager, &suspended_notifiers]() {
     while (true) {
       SharedFdKeymasterChannel keymaster_channel(keymaster_in, keymaster_out);
 
       KeymasterResponder keymaster_responder(keymaster_channel, *borrowed_km);
 
-      while (keymaster_responder.ProcessMessage()) {
-      }
+      std::function<bool()> keymaster_process_cb = [&keymaster_responder]() {
+        return keymaster_responder.ProcessMessage();
+      };
+
+      auto keymaster_event_fd = event_fds_manager.KeymasterEventFd();
+
+      // infinite loop that returns if resetting responder is needed
+      secure_env_impl::WorkerInnerLoop(
+          keymaster_process_cb, running, keymaster_in, keymaster_event_fd,
+          suspended_notifiers.keymaster_suspended_);
     }
   });
 
   auto gatekeeper_in = DupFdFlag(FLAGS_gatekeeper_fd_in);
   auto gatekeeper_out = DupFdFlag(FLAGS_gatekeeper_fd_out);
-  threads.emplace_back([gatekeeper_in, gatekeeper_out, &gatekeeper]() {
+  threads.emplace_back([gatekeeper_in, gatekeeper_out, &gatekeeper, &running,
+                        &event_fds_manager, &suspended_notifiers]() {
     while (true) {
       SharedFdGatekeeperChannel gatekeeper_channel(gatekeeper_in,
                                                    gatekeeper_out);
 
       GatekeeperResponder gatekeeper_responder(gatekeeper_channel, *gatekeeper);
 
-      while (gatekeeper_responder.ProcessMessage()) {
-      }
+      std::function<bool()> gatekeeper_process_cb = [&gatekeeper_responder]() {
+        return gatekeeper_responder.ProcessMessage();
+      };
+
+      auto gatekeeper_event_fd = event_fds_manager.GatekeeperEventFd();
+
+      // infinite loop that returns if resetting responder is needed
+      secure_env_impl::WorkerInnerLoop(
+          gatekeeper_process_cb, running, gatekeeper_in, gatekeeper_event_fd,
+          suspended_notifiers.gatekeeper_suspended_);
     }
   });
 
   auto oemlock_in = DupFdFlag(FLAGS_oemlock_fd_in);
   auto oemlock_out = DupFdFlag(FLAGS_oemlock_fd_out);
-  threads.emplace_back([oemlock_in, oemlock_out, &oemlock]() {
+  threads.emplace_back([oemlock_in, oemlock_out, &oemlock, &running,
+                        &event_fds_manager, &suspended_notifiers]() {
     while (true) {
       transport::SharedFdChannel channel(oemlock_in, oemlock_out);
       oemlock::OemLockResponder responder(channel, *oemlock);
-      while (responder.ProcessMessage().ok()) {
-      }
+
+      std::function<bool()> oemlock_process_cb = [&responder]() -> bool {
+        return (responder.ProcessMessage().ok());
+      };
+
+      auto oemlock_event_fd = event_fds_manager.OemlockEventFd();
+
+      // infinite loop that returns if resetting responder is needed
+      secure_env_impl::WorkerInnerLoop(oemlock_process_cb, running, oemlock_in,
+                                       oemlock_event_fd,
+                                       suspended_notifiers.oemlock_suspended_);
     }
   });
 

@@ -15,9 +15,10 @@
 
 #include "host/commands/secure_env/suspend_resume_handler.h"
 
-#include <sstream>
+#include <android-base/logging.h>
 
 #include "host/libs/command_util/util.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
@@ -29,9 +30,13 @@ void SnapshotCommandHandler::Join() {
   }
 }
 
-SnapshotCommandHandler::SnapshotCommandHandler(SharedFD channel_to_run_cvd,
-                                               SnapshotRunningFlag& running)
-    : channel_to_run_cvd_(channel_to_run_cvd), shared_running_(running) {
+SnapshotCommandHandler::SnapshotCommandHandler(
+    SharedFD channel_to_run_cvd, EventFdsManager& event_fds_manager,
+    EventNotifiers& suspended_notifiers, SnapshotRunningFlag& running)
+    : channel_to_run_cvd_(channel_to_run_cvd),
+      event_fds_manager_(event_fds_manager),
+      suspended_notifiers_(suspended_notifiers),
+      shared_running_(running) {
   handler_thread_ = std::thread([this]() {
     while (true) {
       auto result = SuspendResumeHandler();
@@ -45,41 +50,47 @@ SnapshotCommandHandler::SnapshotCommandHandler(SharedFD channel_to_run_cvd,
 
 Result<ExtendedActionType> SnapshotCommandHandler::ReadRunCvdSnapshotCmd()
     const {
+  CF_EXPECT(channel_to_run_cvd_->IsOpen(), channel_to_run_cvd_->StrError());
   auto launcher_action =
       CF_EXPECT(ReadLauncherActionFromFd(channel_to_run_cvd_),
                 "Failed to read LauncherAction from run_cvd");
   CF_EXPECT(launcher_action.action == LauncherAction::kExtended);
-  return launcher_action.type;
+  const auto action_type = launcher_action.type;
+  CF_EXPECTF(action_type == ExtendedActionType::kSuspend ||
+                 action_type == ExtendedActionType::kResume,
+             "Unsupported ExtendedActionType \"{}\"", action_type);
+  return action_type;
 }
 
 Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
   const auto snapshot_cmd = CF_EXPECT(ReadRunCvdSnapshotCmd());
   switch (snapshot_cmd) {
     case ExtendedActionType::kSuspend: {
-      // TODO(kwstephenkim): implement suspend handler
-      shared_running_.UnsetRunning();
+      LOG(DEBUG) << "Handling suspended...";
+      shared_running_.UnsetRunning();  // running := false
+      CF_EXPECT(event_fds_manager_.SuspendKeymasterResponder());
+      CF_EXPECT(event_fds_manager_.SuspendGatekeeperResponder());
+      CF_EXPECT(event_fds_manager_.SuspendOemlockResponder());
+      suspended_notifiers_.keymaster_suspended_.WaitAndReset();
+      suspended_notifiers_.gatekeeper_suspended_.WaitAndReset();
+      suspended_notifiers_.oemlock_suspended_.WaitAndReset();
       auto response = LauncherResponse::kSuccess;
-      LOG(INFO) << "secure_env received the suspend command";
       const auto n_written =
           channel_to_run_cvd_->Write(&response, sizeof(response));
       CF_EXPECT_EQ(sizeof(response), n_written);
       return {};
     };
     case ExtendedActionType::kResume: {
-      // TODO(kwstephenkim): implement resume handler
-      shared_running_.SetRunning();
+      LOG(DEBUG) << "Handling resume...";
+      shared_running_.SetRunning();  // running := true, and notifies all
       auto response = LauncherResponse::kSuccess;
-      LOG(INFO) << "secure_env received the resume command";
       const auto n_written =
           channel_to_run_cvd_->Write(&response, sizeof(response));
       CF_EXPECT_EQ(sizeof(response), n_written);
       return {};
     };
     default:
-      std::stringstream error_msg;
-      error_msg << "Unsupported run_cvd ExtendedActionType: "
-                << static_cast<std::uint32_t>(snapshot_cmd);
-      return CF_ERR(error_msg.str());
+      return CF_ERR("Unsupported run_cvd snapshot command.");
   }
 }
 
