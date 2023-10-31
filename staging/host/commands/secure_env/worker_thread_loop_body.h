@@ -15,35 +15,19 @@
 
 #pragma once
 
-#include <thread>
+#include <functional>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/secure_env/event_fds_manager.h"
 #include "host/commands/secure_env/event_notifier.h"
 #include "host/commands/secure_env/snapshot_running_flag.h"
-#include "host/libs/command_util/runner/defs.h"
 
 namespace cuttlefish {
+namespace secure_env_impl {
 
-class SnapshotCommandHandler {
- public:
-  ~SnapshotCommandHandler();
-  SnapshotCommandHandler(SharedFD channel_to_run_cvd,
-                         EventFdsManager& event_fds,
-                         EventNotifiers& suspended_notifiers,
-                         SnapshotRunningFlag& running);
+void WorkerInnerLoop(std::function<bool()> process_callback,
+                     SnapshotRunningFlag& running, SharedFD read_fd,
+                     SharedFD suspend_event_fd,
+                     EventNotifier& suspended_notifier);
 
- private:
-  Result<void> SuspendResumeHandler();
-  Result<ExtendedActionType> ReadRunCvdSnapshotCmd() const;
-  void Join();
-
-  SharedFD channel_to_run_cvd_;
-  EventFdsManager& event_fds_manager_;
-  EventNotifiers& suspended_notifiers_;
-  SnapshotRunningFlag& shared_running_;  // shared by other components outside
-  std::thread handler_thread_;
-};
-
+}  // namespace secure_env_impl
 }  // namespace cuttlefish
