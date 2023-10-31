@@ -262,6 +262,10 @@ class WebsocketConnector extends Connector {
   async #wsSendJson(obj) {
     return this.#websocket.send(JSON.stringify(obj));
   }
+
+  expectMessagesSoon(durationMilliseconds) {
+    // No-op
+  }
 }
 
 const SHORT_POLL_DELAY = 1000;
