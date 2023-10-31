@@ -63,6 +63,8 @@ Commands:
   restart                Restart the device without reinitializing the disks
   restart-server         Restart the cvd_server background process.
   status                 Check and print the state of a running instance.
+  env                    Control the environment of running instances like wifi
+                         or geolocation.
   host_bugreport         Capture a host bugreport, including configs, logs, and
                          tombstones.
 
