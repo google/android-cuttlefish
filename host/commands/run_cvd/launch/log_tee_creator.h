@@ -26,7 +26,7 @@ class LogTeeCreator {
  public:
   INJECT(LogTeeCreator(const CuttlefishConfig::InstanceSpecific& instance));
 
-  Command CreateLogTee(Command& cmd, const std::string& process_name);
+  Result<Command> CreateLogTee(Command& cmd, const std::string& process_name);
 
  private:
   const CuttlefishConfig::InstanceSpecific& instance_;
