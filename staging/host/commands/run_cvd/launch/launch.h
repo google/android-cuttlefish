@@ -43,7 +43,7 @@ Result<std::optional<MonitorCommand>> UwbConnector(
 
 std::optional<MonitorCommand> AutomotiveProxyService(const CuttlefishConfig&);
 
-Result<MonitorCommand> BluetoothConnector(
+Result<std::optional<MonitorCommand>> BluetoothConnector(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 
 Result<MonitorCommand> NfcConnector(const CuttlefishConfig&,
