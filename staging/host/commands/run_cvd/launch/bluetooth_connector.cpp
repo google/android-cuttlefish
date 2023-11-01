@@ -34,9 +34,12 @@ constexpr const size_t kBufferSize = (HCI_MAX_FRAME_SIZE + 1) * 2;
 
 namespace cuttlefish {
 
-Result<MonitorCommand> BluetoothConnector(
+Result<std::optional<MonitorCommand>> BluetoothConnector(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
+  if (!config.enable_host_bluetooth_connector()) {
+    return {};
+  }
   std::vector<std::string> fifo_paths = {
       instance.PerInstanceInternalPath("bt_fifo_vm.in"),
       instance.PerInstanceInternalPath("bt_fifo_vm.out"),
