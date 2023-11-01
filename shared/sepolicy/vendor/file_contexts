@@ -52,12 +52,22 @@
 # sys files
 # x86
 /sys/devices/pci0000:00/0000:00:[0-9a-fA-F]{2}\.0/virtio[0-9]+/net(/.*)? u:object_r:sysfs_net:s0
-# qemu (x86)
+/sys/devices/pci0000:00/0000:00:[0-9a-fA-F]{2}\.0/virtio[0-9]+/(block|ndbus[0-9]+)(/.*)? u:object_r:sysfs_devices_block:s0
+# crosvm (arm64)
 /sys/devices/platform/10000.pci/pci0000:00/0000:00:[0-9a-fA-F]{2}\.0/virtio[0-9]+/net(/.*)? u:object_r:sysfs_net:s0
+/sys/devices/platform/10000.pci/pci0000:00/0000:00:[0-9a-fA-F]{2}\.0/virtio[0-9]+/(block|ndbus[0-9]+)(/.*)? u:object_r:sysfs_devices_block:s0
+# qemu (x86)
+/sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00(/device:[0-9a-fA-F]{2})?/wakeup/wakeup[0-9]+(/.*)? u:object_r:sysfs_wakeup:s0
+# crosvm (x86)
+/sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00(/device:[0-9a-fA-F]{2})?/wakeup/wakeup[0-9]+(/.*)? u:object_r:sysfs_wakeup:s0
 # qemu (aarch64)
 /sys/devices/platform/4010000000.pcie/pci0000:00/0000:00:[0-9a-fA-F]{2}.0/virtio[0-9]+/net u:object_r:sysfs_net:s0
+/sys/devices/platform/4010000000.pcie/pci0000:00/0000:00:[0-9a-fA-F]{2}.0/virtio[0-9]+/(block|ndbus[0-9]+)(/.*)? u:object_r:sysfs_devices_block:s0
 # qemu (arm)
 /sys/devices/platform/3f000000.pcie/pci0000:00/0000:00:[0-9a-fA-F]{2}.0/virtio[0-9]+/net u:object_r:sysfs_net:s0
+/sys/devices/platform/3f000000.pcie/pci0000:00/0000:00:[0-9a-fA-F]{2}.0/virtio[0-9]+/(block|ndbus[0-9]+)(/.*)? u:object_r:sysfs_devices_block:s0
+# qemu (riscv64)
+/sys/devices/platform/soc/30000000.pci/pci0000:00/0000:00:[0-9a-fA-F]{2}.0/virtio[0-9]+/(block|ndbus[0-9]+)(/.*)? u:object_r:sysfs_devices_block:s0
 
 #############################
 # Vendor files
