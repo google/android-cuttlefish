@@ -33,10 +33,12 @@ pub unsafe extern "C" fn kmr_ta_main(
     security_level: c_int,
     trm: *mut libc::c_void,
 ) {
-    let security_level = match security_level {
-        x if x == SecurityLevel::TrustedEnvironment as i32 => SecurityLevel::TrustedEnvironment,
-        x if x == SecurityLevel::Strongbox as i32 => SecurityLevel::Strongbox,
-        x if x == SecurityLevel::Software as i32 => SecurityLevel::Software,
+    let security_level = match SecurityLevel::n(security_level) {
+        Some(
+            x @ (SecurityLevel::Software
+            | SecurityLevel::TrustedEnvironment
+            | SecurityLevel::Strongbox),
+        ) => x,
         _ => {
             error!("unexpected security level {}, running as SOFTWARE", security_level);
             SecurityLevel::Software
