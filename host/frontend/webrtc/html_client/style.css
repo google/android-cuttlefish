@@ -37,6 +37,7 @@ body, body.dark-theme {
   --button-disabled-fg: #9aa0a6; /* Google grey 500 */
   --button-pressed-border: #505050;
   --button-pressed-bg: #303030;
+  --display-border: solid #202020 1px;
 }
 /* End of dark theme */
 
@@ -63,6 +64,7 @@ body.light-theme {
   --button-disabled-fg: #c4c4c4; /* Google grey 300 */
   --button-pressed-border: #c4c4c4; /* Google grey 300 */
   --button-pressed-bg: #d9d9d9; /* Google grey 200 */
+  --display-border: solid #f0f0f0 1px;
 }
 /* End of light theme */
 
@@ -376,4 +378,5 @@ body {
   max-width: 100%;
   max-height: 100%;
   touch-action: none;
+  border: var(--display-border);
 }
