@@ -39,7 +39,9 @@ static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
 };
 
 static std::map<std::string, Json::ValueType> kCommonKeyMap = {
-    {"group_name", Json::ValueType::stringValue}};
+    {"group_name", Json::ValueType::stringValue},
+    {"host_package", Json::ValueType::stringValue},
+};
 
 static std::map<std::string, Json::ValueType> kFetchKeyMap = {
     {"api_key", Json::ValueType::stringValue},
@@ -124,7 +126,6 @@ static std::map<std::string, Json::ValueType> kDiskKeyMap = {
     {"download_target_zip_files", Json::ValueType::booleanValue},
     {"blank_data_image_mb", Json::ValueType::uintValue},
     {"otatools", Json::ValueType::stringValue},
-    {"host_package", Json::ValueType::stringValue},
 };
 
 static std::map<std::string, Json::ValueType> kSuperKeyMap = {

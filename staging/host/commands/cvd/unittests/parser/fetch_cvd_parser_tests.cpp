@@ -46,7 +46,8 @@ Result<std::vector<std::string>> FetchCvdParserTestHelper(
     Json::Value& root, const std::string& target_directory,
     const std::vector<std::string>& target_subdirectories) {
   CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
-  return ParseFetchCvdConfigs(root, target_directory, target_subdirectories);
+  return CF_EXPECT(
+      ParseFetchCvdConfigs(root, target_directory, target_subdirectories));
 }
 
 }  // namespace
@@ -54,6 +55,9 @@ Result<std::vector<std::string>> FetchCvdParserTestHelper(
 TEST(FetchCvdParserTests, SingleFetch) {
   const char* raw_json = R""""(
 {
+  "common" : {
+    "host_package" : "@ab/git_master/cf_x86_64_phone-userdebug"
+  },
   "instances" : [
     {
       "@import" : "phone",
@@ -65,8 +69,7 @@ TEST(FetchCvdParserTests, SingleFetch) {
       "disk" : {
         "default_build" : "@ab/git_master/cf_x86_64_phone-userdebug",
         "download_img_zip" : true,
-        "otatools" : "@ab/git_master/cf_x86_64_phone-userdebug",
-        "host_package" : "@ab/git_master/cf_x86_64_phone-userdebug"
+        "otatools" : "@ab/git_master/cf_x86_64_phone-userdebug"
       },
       "boot" : {
         "build" : "@ab/git_master/cf_x86_64_phone-userdebug",
@@ -119,9 +122,8 @@ TEST(FetchCvdParserTests, SingleFetchNoPrefix) {
     {
       "@import" : "phone",
       "disk" : {
-        "default_build" : "git_master/cf_x86_64_phone-userdebug",
-        "otatools" : "git_master/cf_x86_64_phone-userdebug",
-        "host_package" : "git_master/cf_x86_64_phone-userdebug"
+        "default_build" : "git_master/cf_x86_64_phone-userdebug"
+        "otatools" : "git_master/cf_x86_64_phone-userdebug"
       },
       "boot" : {
         "build" : "git_master/cf_x86_64_phone-userdebug",
@@ -145,6 +147,9 @@ TEST(FetchCvdParserTests, SingleFetchNoPrefix) {
 TEST(FetchCvdParserTests, MultiFetch) {
   const char* raw_json = R""""(
 {
+  "common" : {
+    "host_package" : "@ab/git_master/cf_x86_64_phone-userdebug"
+  },
   "instances" : [
     {
       "@import" : "phone",
@@ -156,8 +161,7 @@ TEST(FetchCvdParserTests, MultiFetch) {
       "disk" : {
         "default_build" : "@ab/git_master/cf_x86_64_phone-userdebug",
         "download_img_zip" : true,
-        "otatools" : "@ab/git_master/cf_x86_64_phone-userdebug",
-        "host_package" : "@ab/git_master/cf_x86_64_phone-userdebug"
+        "otatools" : "@ab/git_master/cf_x86_64_phone-userdebug"
       },
       "boot" : {
         "build" : "@ab/git_master/cf_x86_64_phone-userdebug",
@@ -209,7 +213,7 @@ TEST(FetchCvdParserTests, MultiFetch) {
       Contains("--otatools_build=git_master/cf_x86_64_phone-userdebug,"));
   EXPECT_THAT(
       flags,
-      Contains("--host_package_build=git_master/cf_x86_64_phone-userdebug,"));
+      Contains("--host_package_build=git_master/cf_x86_64_phone-userdebug"));
   EXPECT_THAT(flags,
               Contains("--boot_build=git_master/cf_x86_64_phone-userdebug,"));
   EXPECT_THAT(flags,
