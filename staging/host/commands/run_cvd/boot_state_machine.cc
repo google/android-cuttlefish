@@ -54,6 +54,15 @@ SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
     // child process dies.
     write_end->Close();
     RunnerExitCodes exit_code;
+    // Temporary solution for restore. Restore does not print out the boot
+    // successful message, and as such READ would indefinitely block. Instead,
+    // exit the process early to have it running in the background until a
+    // proper solution is implemented. This is needed to keep the daemon
+    // behavior while restoring. Tracking actual fix in b/309006171
+    if (!config.snapshot_path().empty()) {
+      exit_code = RunnerExitCodes::kSuccess;
+      std::exit(exit_code);
+    }
     auto bytes_read = read_end->Read(&exit_code, sizeof(exit_code));
     if (bytes_read != sizeof(exit_code)) {
       LOG(ERROR) << "Failed to read a complete exit code, read " << bytes_read
