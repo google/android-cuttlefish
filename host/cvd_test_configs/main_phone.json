@@ -1,4 +1,7 @@
 {
+  "common": {
+    "host_package": "@ab/aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+  },
   "instances": [
     {
       "@import": "phone",
