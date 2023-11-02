@@ -746,6 +746,7 @@ class DeviceControlApp {
       }
     }
     if (message_data.event == 'VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED') {
+      this.#deviceConnection.expectStreamChange();
       this.#updateDisplayVisibility(metadata.display, metadata.mode);
     }
   }
@@ -837,6 +838,8 @@ class DeviceControlApp {
         stream.addEventListener('removetrack', evt => {
           this.#updateDeviceDisplays();
         });
+
+        this.#requestNewFrameForDisplay(i);
       } else {
         console.debug('Removing display', i);
 
@@ -850,6 +853,15 @@ class DeviceControlApp {
     }
 
     this.#updateDeviceDisplaysInfo();
+  }
+
+  #requestNewFrameForDisplay(display_number) {
+    let message = {
+      command: "display",
+      refresh_display: display_number,
+    };
+    this.#deviceConnection.sendControlMessage(JSON.stringify(message));
+    console.debug('Control message sent: ', JSON.stringify(message));
   }
 
   #initializeAdb() {
@@ -1114,10 +1126,18 @@ class DeviceControlApp {
       console.error('Unknown display id: ' + displayId);
       return;
     }
+
+    const display_number = parseInt(displayId);
+    if (isNaN(display_number)) {
+      console.error('Invalid display id: ' + displayId);
+      return;
+    }
+
     powerMode = powerMode.toLowerCase();
     switch (powerMode) {
       case 'on':
         display.style.visibility = 'visible';
+        this.#requestNewFrameForDisplay(display_number);
         break;
       case 'off':
         display.style.visibility = 'hidden';
