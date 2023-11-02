@@ -1,4 +1,7 @@
 {
+  "common": {
+    "host_package": "@ab/aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+  },
   "instances": [
     {
       "@import": "phone",
@@ -8,8 +11,7 @@
         "cpus": 4
       },
       "disk": {
-        "default_build": "@ab/git_tm-qpr-dev/cf_x86_64_phone-userdebug",
-        "host_package": "@ab/aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+        "default_build": "@ab/git_tm-qpr-dev/cf_x86_64_phone-userdebug"
       }
     },
     {
@@ -20,8 +22,7 @@
         "cpus": 4
       },
       "disk": {
-        "default_build": "@ab/git_tm-wear-dev/cf_gwear_x86-userdebug",
-        "host_package": "@ab/aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+        "default_build": "@ab/git_tm-wear-dev/cf_gwear_x86-userdebug"
       }
     }
   ]
