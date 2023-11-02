@@ -267,6 +267,10 @@ class DeviceConnection {
     this.#streamChangeCallback = cb;
   }
 
+  expectStreamChange() {
+    this.#control.expectMessagesSoon(5000);
+  }
+
   #sendJsonInput(evt) {
     this.#inputChannel.send(JSON.stringify(evt));
   }
@@ -560,6 +564,14 @@ class Controller {
   #onIceCandidate(iceCandidate) {
     console.debug(`Remote ICE Candidate: `, iceCandidate);
     this.#pc.addIceCandidate(iceCandidate);
+  }
+
+  expectMessagesSoon(durationMilliseconds) {
+    if (this.#serverConnector.expectMessagesSoon) {
+      this.#serverConnector.expectMessagesSoon(durationMilliseconds);
+    } else {
+      console.warn(`Unavailable expectMessagesSoon(). Messages may be slow.`);
+    }
   }
 
   // This effectively ensures work that changes connection state doesn't run
