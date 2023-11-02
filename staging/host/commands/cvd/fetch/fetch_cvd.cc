@@ -82,7 +82,6 @@ struct VectorFlags {
   std::vector<std::optional<BuildString>> boot_build;
   std::vector<std::optional<BuildString>> bootloader_build;
   std::vector<std::optional<BuildString>> otatools_build;
-  std::vector<std::optional<BuildString>> host_package_build;
   std::vector<bool> download_img_zip;
   std::vector<bool> download_target_files_zip;
   std::vector<std::string> boot_artifact;
@@ -91,6 +90,7 @@ struct VectorFlags {
 struct FetchFlags {
   std::string target_directory = kDefaultTargetDirectory;
   std::vector<std::string> target_subdirectory;
+  std::optional<BuildString> host_package_build;
   bool keep_downloaded_archives = kDefaultKeepDownloadedArchives;
   android::base::LogSeverity verbosity = android::base::INFO;
   bool helpxml = false;
@@ -121,12 +121,6 @@ struct TargetDirectories {
   std::string system_target_files;
 };
 
-struct Target {
-  BuildStrings build_strings;
-  DownloadFlags download_flags;
-  TargetDirectories directories;
-};
-
 struct Builds {
   std::optional<Build> default_build;
   std::optional<Build> system;
@@ -134,7 +128,18 @@ struct Builds {
   std::optional<Build> boot;
   std::optional<Build> bootloader;
   std::optional<Build> otatools;
-  Build host_package;
+};
+
+struct Target {
+  BuildStrings build_strings;
+  DownloadFlags download_flags;
+  TargetDirectories directories;
+  Builds builds;
+};
+
+struct HostToolsTarget {
+  std::optional<BuildString> build_string;
+  std::string host_tools_directory;
 };
 
 Flag GflagsCompatFlagSeconds(const std::string& name,
@@ -165,13 +170,15 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                                       fetch_flags.keep_downloaded_archives)
                          .Help("Keep downloaded zip/tar."));
   flags.emplace_back(VerbosityFlag(fetch_flags.verbosity));
-
   flags.emplace_back(
       GflagsCompatFlag("target_subdirectory", fetch_flags.target_subdirectory)
           .Help("Target subdirectory to fetch files into.  Specifically aimed "
                 "at organizing builds when there are multiple fetches. "
                 "**Note**: directory separator automatically prepended, only "
                 "give the subdirectory name."));
+  flags.emplace_back(
+      GflagsCompatFlag("host_package_build", fetch_flags.host_package_build)
+          .Help("source for the host cvd tools"));
 
   flags.emplace_back(GflagsCompatFlag("api_key", build_api_flags.api_key)
                          .Help("API key ofr the Android Build API"));
@@ -205,9 +212,6 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(
       GflagsCompatFlag("otatools_build", vector_flags.otatools_build)
           .Help("source for the host ota tools"));
-  flags.emplace_back(
-      GflagsCompatFlag("host_package_build", vector_flags.host_package_build)
-          .Help("source for the host cvd tools"));
 
   flags.emplace_back(
       GflagsCompatFlag("boot_artifact", vector_flags.boot_artifact)
@@ -240,9 +244,8 @@ Result<int> GetNumberOfBuilds(
        {flags.default_build.size(), flags.system_build.size(),
         flags.kernel_build.size(), flags.boot_build.size(),
         flags.bootloader_build.size(), flags.otatools_build.size(),
-        flags.host_package_build.size(), flags.boot_artifact.size(),
-        flags.download_img_zip.size(), flags.download_target_files_zip.size(),
-        subdirectory_flag.size()}) {
+        flags.boot_artifact.size(), flags.download_img_zip.size(),
+        flags.download_target_files_zip.size(), subdirectory_flag.size()}) {
     if (flag_size == 0) {
       // a size zero flag vector means the flag was not given
       continue;
@@ -301,6 +304,10 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   return {fetch_flags};
 }
 
+bool ShouldAppendSubdirectory(const FetchFlags& flags) {
+  return flags.number_of_builds > 1 || !flags.target_subdirectory.empty();
+}
+
 template <typename T>
 T AccessOrDefault(const std::vector<T>& vector, const int i,
                   const T& default_value) {
@@ -325,8 +332,6 @@ BuildStrings GetBuildStrings(const VectorFlags& flags, const int index) {
           flags.bootloader_build, index, std::nullopt),
       .otatools_build = AccessOrDefault<std::optional<BuildString>>(
           flags.otatools_build, index, std::nullopt),
-      .host_package_build = AccessOrDefault<std::optional<BuildString>>(
-          flags.host_package_build, index, std::nullopt),
   };
   auto possible_boot_artifact =
       AccessOrDefault<std::string>(flags.boot_artifact, index, "");
@@ -362,11 +367,9 @@ TargetDirectories GetTargetDirectories(
                            .system_target_files = base_directory + "/system"};
 }
 
-std::vector<Target> GetFetchTargets(const FetchFlags& flags) {
-  const bool append_subdirectory =
-      flags.number_of_builds > 1 || !flags.target_subdirectory.empty();
+std::vector<Target> GetFetchTargets(const FetchFlags& flags,
+                                    const bool append_subdirectory) {
   std::vector<Target> result(flags.number_of_builds);
-
   for (int i = 0; i < result.size(); ++i) {
     result[i] = Target{
         .build_strings = GetBuildStrings(flags.vector_flags, i),
@@ -379,9 +382,23 @@ std::vector<Target> GetFetchTargets(const FetchFlags& flags) {
   return result;
 }
 
+HostToolsTarget GetHostToolsTarget(const FetchFlags& flags,
+                                   const bool append_subdirectory) {
+  std::string host_directory = flags.target_directory;
+  if (append_subdirectory) {
+    host_directory = host_directory + "/" + kHostToolsSubdirectory;
+  }
+  return HostToolsTarget{
+      .build_string = flags.host_package_build,
+      .host_tools_directory = host_directory,
+  };
+}
+
 Result<void> EnsureDirectoriesExist(const std::string& target_directory,
+                                    const std::string& host_tools_directory,
                                     const std::vector<Target>& targets) {
   CF_EXPECT(EnsureDirectoryExists(target_directory));
+  CF_EXPECT(EnsureDirectoryExists(host_tools_directory));
   for (const auto& target : targets) {
     CF_EXPECT(EnsureDirectoryExists(target.directories.root, kRwxAllMode));
     CF_EXPECT(EnsureDirectoryExists(target.directories.otatools, kRwxAllMode));
@@ -414,12 +431,14 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
       new ServiceAccountOauthCredentialSource(std::move(*result)));
 }
 
-Result<std::vector<std::string>> ProcessHostPackage(
-    BuildApi& build_api, const Build& build, const std::string& target_dir,
-    const bool keep_archives) {
+Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
+                              const std::string& target_dir,
+                              const bool keep_archives) {
   std::string host_tools_filepath = CF_EXPECT(
       build_api.DownloadFile(build, target_dir, "cvd-host_package.tar.gz"));
-  return ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives);
+  CF_EXPECT(
+      ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
+  return {};
 }
 
 Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
@@ -498,17 +517,9 @@ Result<std::optional<Build>> GetBuildHelper(
 
 Result<Builds> GetBuilds(BuildApi& build_api,
                          const BuildStrings& build_sources) {
-  auto default_build = CF_EXPECT(GetBuildHelper(
-      build_api, build_sources.default_build, kDefaultBuildTarget));
-  auto host_package_build = CF_EXPECT(GetBuildHelper(
-      build_api, build_sources.host_package_build, kDefaultBuildTarget));
-  CF_EXPECT(host_package_build.has_value() || default_build.has_value(),
-            "Either the host_package_build or default_build requires a value. "
-            "(previous default_build default was "
-            "aosp-master/aosp_cf_x86_64_phone-userdebug)");
-
   Builds result = Builds{
-      .default_build = default_build,
+      .default_build = CF_EXPECT(GetBuildHelper(
+          build_api, build_sources.default_build, kDefaultBuildTarget)),
       .system = CF_EXPECT(GetBuildHelper(build_api, build_sources.system_build,
                                          kDefaultBuildTarget)),
       .kernel = CF_EXPECT(
@@ -519,7 +530,6 @@ Result<Builds> GetBuilds(BuildApi& build_api,
           build_api, build_sources.bootloader_build, "u-boot_crosvm_x86_64")),
       .otatools = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.otatools_build, kDefaultBuildTarget)),
-      .host_package = host_package_build.value_or(*default_build),
   };
   if (!result.otatools) {
     if (result.system) {
@@ -529,6 +539,25 @@ Result<Builds> GetBuilds(BuildApi& build_api,
     }
   }
   return {result};
+}
+
+Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
+                                     std::vector<Target>& targets) {
+  for (auto& target : targets) {
+    target.builds = CF_EXPECT(GetBuilds(build_api, target.build_strings));
+  }
+  return {};
+}
+
+Result<Build> GetHostBuild(BuildApi& build_api, HostToolsTarget& host_target,
+                           const std::optional<Build>& fallback_host_build) {
+  auto host_package_build = CF_EXPECT(
+      GetBuildHelper(build_api, host_target.build_string, kDefaultBuildTarget));
+  CF_EXPECT(host_package_build.has_value() || fallback_host_build.has_value(),
+            "Either the host_package_build or default_build requires a value. "
+            "(previous default_build default was "
+            "aosp-master/aosp_cf_x86_64_phone-userdebug)");
+  return host_package_build.value_or(*fallback_host_build);
 }
 
 Result<void> SaveConfig(FetcherConfig& config,
@@ -552,13 +581,7 @@ Result<void> FetchTarget(BuildApi& build_api, const Builds& builds,
                          const TargetDirectories& target_directories,
                          const DownloadFlags& flags,
                          const bool keep_downloaded_archives,
-                         const bool is_host_package_build,
                          FetcherConfig& config) {
-  auto process_pkg_ret = std::async(
-      std::launch::async, ProcessHostPackage, std::ref(build_api),
-      std::cref(builds.host_package), std::cref(target_directories.root),
-      std::cref(keep_downloaded_archives));
-
   if (builds.default_build) {
     const auto [default_build_id, default_build_target] =
         GetBuildIdAndTarget(*builds.default_build);
@@ -757,23 +780,11 @@ Result<void> FetchTarget(BuildApi& build_api, const Builds& builds,
         FileSource::DEFAULT_BUILD, otatools_build_id, otatools_build_target,
         ota_tools_files, target_directories.root));
   }
-
-  // Wait for ProcessHostPackage to return.
-  std::vector<std::string> host_package_files =
-      CF_EXPECT(process_pkg_ret.get());
-  const auto [host_id, host_target] = GetBuildIdAndTarget(builds.host_package);
-  FileSource host_filesource = FileSource::DEFAULT_BUILD;
-  if (is_host_package_build) {
-    host_filesource = FileSource::HOST_PACKAGE_BUILD;
-  }
-  CF_EXPECT(config.AddFilesToConfig(host_filesource, host_id, host_target,
-                                    host_package_files,
-                                    target_directories.root));
   return {};
 }
 
-Result<void> Fetch(const FetchFlags& flags,
-                   const std::vector<Target>& targets) {
+Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
+                   std::vector<Target>& targets) {
 #ifdef __BIONIC__
   // TODO(schuffelen): Find a better way to deal with tzdata
   setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
@@ -783,22 +794,32 @@ Result<void> Fetch(const FetchFlags& flags,
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
     BuildApi build_api = CF_EXPECT(GetBuildApi(flags.build_api_flags));
+    CF_EXPECT(UpdateTargetsWithBuilds(build_api, targets));
+    std::optional<Build> fallback_host_build = std::nullopt;
+    if (!targets.empty()) {
+      fallback_host_build = targets[0].builds.default_build;
+    }
+    const auto host_target_build =
+        CF_EXPECT(GetHostBuild(build_api, host_target, fallback_host_build));
 
+    auto host_package_future =
+        std::async(std::launch::async, FetchHostPackage, std::ref(build_api),
+                   std::cref(host_target_build),
+                   std::cref(host_target.host_tools_directory),
+                   std::cref(flags.keep_downloaded_archives));
     for (const auto& target : targets) {
       LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
       FetcherConfig config;
-      const Builds builds =
-          CF_EXPECT(GetBuilds(build_api, target.build_strings));
-      const bool is_host_package_build =
-          target.build_strings.host_package_build.has_value();
-      CF_EXPECT(FetchTarget(
-          build_api, builds, target.directories, target.download_flags,
-          flags.keep_downloaded_archives, is_host_package_build, config));
+      CF_EXPECT(FetchTarget(build_api, target.builds, target.directories,
+                            target.download_flags,
+                            flags.keep_downloaded_archives, config));
       CF_EXPECT(SaveConfig(config, target.directories.root));
       LOG(INFO) << "Completed fetch to \"" << target.directories.root << "\"";
     }
+    CF_EXPECT(host_package_future.get());
   }
   curl_global_cleanup();
+
   LOG(INFO) << "Completed all fetches";
   return {};
 }
@@ -808,13 +829,16 @@ Result<void> Fetch(const FetchFlags& flags,
 Result<void> FetchCvdMain(int argc, char** argv) {
   android::base::InitLogging(argv, android::base::StderrLogger);
   const FetchFlags flags = CF_EXPECT(GetFlagValues(argc, argv));
-  const std::vector<Target> targets = GetFetchTargets(flags);
-  CF_EXPECT(EnsureDirectoriesExist(flags.target_directory, targets));
+  const bool append_subdirectory = ShouldAppendSubdirectory(flags);
+  std::vector<Target> targets = GetFetchTargets(flags, append_subdirectory);
+  HostToolsTarget host_target = GetHostToolsTarget(flags, append_subdirectory);
+  CF_EXPECT(EnsureDirectoriesExist(flags.target_directory,
+                                   host_target.host_tools_directory, targets));
   android::base::SetLogger(
       LogToStderrAndFiles({flags.target_directory + "/fetch.log"}));
   android::base::SetMinimumLogSeverity(flags.verbosity);
 
-  auto result = Fetch(flags, targets);
+  auto result = Fetch(flags, host_target, targets);
   if (!result.ok()) {
     LOG(ERROR) << result.error().FormatForEnv();
   }

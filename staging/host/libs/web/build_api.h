@@ -38,10 +38,6 @@ inline constexpr char kAndroidBuildServiceUrl[] =
     "https://www.googleapis.com/android/internal/build/v3";
 
 struct DeviceBuild {
-  // TODO(chadreynolds): remove this constructor after refactoring restart.cpp
-  // to use DeviceBuildString and GetBuild
-  DeviceBuild(std::string id, std::string target)
-      : id(std::move(id)), target(std::move(target)) {}
   DeviceBuild(std::string id, std::string target,
               std::optional<std::string> filepath)
       : id(std::move(id)),
