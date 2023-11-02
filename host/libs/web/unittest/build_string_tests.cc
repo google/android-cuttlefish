@@ -28,7 +28,9 @@
 namespace cuttlefish {
 
 using ::testing::ElementsAre;
+using ::testing::Eq;
 using ::testing::IsEmpty;
+using ::testing::Optional;
 using ::testing::SizeIs;
 using ::testing::VariantWith;
 
@@ -121,6 +123,25 @@ TEST(ParseBuildStringTests, FilepathBracketsButNoValueFail) {
 TEST(ParseBuildStringTests, FilepathOnlyFail) {
   auto result = ParseBuildString("{filepath}");
   EXPECT_THAT(result, IsError());
+}
+
+TEST(SingleBuildStringGflagsCompatFlagTests, EmptyInputEmptyResultSuccess) {
+  std::optional<BuildString> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+
+  ASSERT_THAT(flag.Parse({"--myflag="}), IsOk());
+  ASSERT_THAT(value, Eq(std::nullopt));
+}
+
+TEST(SingleBuildStringGflagsCompatFlagTests, HasValueSuccess) {
+  std::optional<BuildString> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+
+  ASSERT_THAT(flag.Parse({"--myflag=12345"}), IsOk());
+  ASSERT_THAT(value, Optional(DeviceBuildString{.branch_or_id = "12345"}));
+  ASSERT_THAT(flag.Parse({"--myflag=abcde/test_target"}), IsOk());
+  ASSERT_THAT(value, Optional(DeviceBuildString{.branch_or_id = "abcde",
+                                                .target = "test_target"}));
 }
 
 TEST(BuildStringGflagsCompatFlagTests, EmptyInputEmptyResultSuccess) {
