@@ -219,6 +219,9 @@ class ControlChannelHandler : public DataChannelHandler {
     } else if (command.rfind("camera_", 0) == 0) {
       observer()->OnCameraControlMsg(evt);
       return;
+    } else if (command == "display") {
+      observer()->OnDisplayControlMsg(evt);
+      return;
     }
 
     auto button_state = evt["button_state"].asString();
