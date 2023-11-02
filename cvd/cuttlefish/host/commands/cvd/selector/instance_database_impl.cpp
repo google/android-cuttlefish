@@ -186,6 +186,24 @@ InstanceDatabase::FindGroupsByGroupName(const std::string& group_name) const {
                    GenerateTooManyInstancesErrorMsg(1, kGroupNameField));
 }
 
+Result<Set<ConstRef<LocalInstanceGroup>>> InstanceDatabase::FindGroupsById(
+    const std::string& id_str) const {
+  auto subset = CollectToSet<LocalInstanceGroup>(
+      local_instance_groups_,
+      [&id_str](const std::unique_ptr<LocalInstanceGroup>& group) {
+        if (!group) {
+          return false;
+        }
+        int id;
+        if (!android::base::ParseInt(id_str, &id)) {
+          return false;
+        }
+        auto group_set_result = group->FindById(static_cast<unsigned>(id));
+        return group_set_result.ok() && (group_set_result->size() == 1);
+      });
+  return subset;
+}
+
 Result<Set<ConstRef<LocalInstanceGroup>>>
 InstanceDatabase::FindGroupsByInstanceName(
     const std::string& instance_name) const {
