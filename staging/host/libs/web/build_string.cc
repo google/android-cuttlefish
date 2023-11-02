@@ -169,6 +169,23 @@ Result<BuildString> ParseBuildString(const std::string& build_string) {
 }
 
 Flag GflagsCompatFlag(const std::string& name,
+                      std::optional<BuildString>& value) {
+  return GflagsCompatFlag(name)
+      .Getter([&value]() {
+        std::stringstream result;
+        result << value;
+        return result.str();
+      })
+      .Setter([&value](const FlagMatch& match) -> Result<void> {
+        value = std::nullopt;
+        if (!match.value.empty()) {
+          value = CF_EXPECT(ParseBuildString(match.value));
+        }
+        return {};
+      });
+}
+
+Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::optional<BuildString>>& value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return android::base::Join(value, ','); })
