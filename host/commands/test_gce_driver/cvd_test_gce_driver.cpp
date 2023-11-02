@@ -75,7 +75,7 @@ class ReadEvalPrintLoop {
   ReadEvalPrintLoop(GceApi& gce, BuildApi& build, int in_fd, int out_fd,
                     bool internal_addresses)
       : gce_(gce),
-        build_(build),
+        build_api_(build),
         in_(in_fd),
         out_(out_fd),
         internal_addresses_(internal_addresses) {}
@@ -268,9 +268,10 @@ class ReadEvalPrintLoop {
       return true;
     };
 
-    DeviceBuild build(request.build().id(), request.build().target());
+    DeviceBuild build(request.build().id(), request.build().target(),
+                      std::nullopt);
     CF_EXPECT(
-        build_.ArtifactToCallback(build, request.artifact_name(), callback),
+        build_api_.ArtifactToCallback(build, request.artifact_name(), callback),
         "Failed to send file: (\n"
             << (callback_state.result.ok()
                     ? "Unknown failure"
@@ -353,7 +354,7 @@ class ReadEvalPrintLoop {
   }
 
   GceApi& gce_;
-  BuildApi& build_;
+  BuildApi& build_api_;
   google::protobuf::io::FileInputStream in_;
   int out_;
   bool internal_addresses_;
