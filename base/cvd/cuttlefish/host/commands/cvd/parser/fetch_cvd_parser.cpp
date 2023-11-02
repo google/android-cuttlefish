@@ -45,8 +45,6 @@ Result<void> InitFetchInstanceConfigs(Json::Value& instance) {
   CF_EXPECT(InitConfig(instance, kDefaultBuildString,
                        {"boot", "bootloader", "build"}));
   CF_EXPECT(InitConfig(instance, kDefaultBuildString, {"disk", "otatools"}));
-  CF_EXPECT(
-      InitConfig(instance, kDefaultBuildString, {"disk", "host_package"}));
   CF_EXPECT(InitConfig(instance, kDefaultDownloadImgZip,
                        {"disk", "download_img_zip"}));
   CF_EXPECT(InitConfig(instance, kDefaultDownloadTargetFilesZip,
@@ -66,6 +64,7 @@ Result<void> InitFetchCvdConfigs(Json::Value& root) {
                        {"fetch", "keep_downloaded_archives"}));
   CF_EXPECT(
       InitConfig(root, kAndroidBuildServiceUrl, {"fetch", "api_base_url"}));
+  CF_EXPECT(InitConfig(root, kDefaultBuildString, {"common", "host_package"}));
   for (auto& instance : root["instances"]) {
     CF_EXPECT(InitFetchInstanceConfigs(instance));
   }
@@ -76,8 +75,8 @@ bool ShouldFetch(const Json::Value& instance) {
   for (const auto& value :
        {instance["disk"]["default_build"], instance["disk"]["super"]["system"],
         instance["boot"]["kernel"]["build"], instance["boot"]["build"],
-        instance["boot"]["bootloader"]["build"], instance["disk"]["otatools"],
-        instance["disk"]["host_package"]}) {
+        instance["boot"]["bootloader"]["build"],
+        instance["disk"]["otatools"]}) {
     // expects non-prefixed build strings already converted to empty strings
     if (!value.asString().empty()) {
       return true;
@@ -114,8 +113,6 @@ Result<Json::Value> RemoveNonPrefixedBuildStrings(const Json::Value& instance) {
       CF_EXPECT(GetFetchBuildString(result["boot"]["bootloader"]["build"]));
   result["disk"]["otatools"] =
       CF_EXPECT(GetFetchBuildString(result["disk"]["otatools"]));
-  result["disk"]["host_package"] =
-      CF_EXPECT(GetFetchBuildString(result["disk"]["host_package"]));
   return result;
 }
 
@@ -137,10 +134,13 @@ Result<std::vector<std::string>> GenerateFetchFlags(
     }
   }
 
+  const std::string host_package_build =
+      CF_EXPECT(GetFetchBuildString(root["common"]["host_package"]));
   std::vector<std::string> result;
-  if (fetch_subdirectories.empty()) {
+  if (fetch_subdirectories.empty() && host_package_build.empty()) {
     return result;
   }
+
   result.emplace_back(GenerateGflag("target_directory", {target_directory}));
   result.emplace_back(GenerateGflag(
       "api_key",
@@ -162,6 +162,8 @@ Result<std::vector<std::string>> GenerateFetchFlags(
   result.emplace_back(GenerateGflag(
       "api_base_url",
       {CF_EXPECT(GetValue<std::string>(root, {"fetch", "api_base_url"}))}));
+  result.emplace_back(
+      GenerateGflag("host_package_build", {host_package_build}));
 
   result.emplace_back(
       GenerateGflag("target_subdirectory", fetch_subdirectories));
@@ -178,8 +180,6 @@ Result<std::vector<std::string>> GenerateFetchFlags(
   result.emplace_back(CF_EXPECT(
       GenerateGflag(fetch_instances, "otatools_build", {"disk", "otatools"})));
   result.emplace_back(CF_EXPECT(GenerateGflag(
-      fetch_instances, "host_package_build", {"disk", "host_package"})));
-  result.emplace_back(CF_EXPECT(GenerateGflag(
       fetch_instances, "download_img_zip", {"disk", "download_img_zip"})));
   result.emplace_back(
       CF_EXPECT(GenerateGflag(fetch_instances, "download_target_files_zip",
@@ -193,7 +193,8 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
     Json::Value& root, const std::string& target_directory,
     const std::vector<std::string>& target_subdirectories) {
   CF_EXPECT(InitFetchCvdConfigs(root));
-  return GenerateFetchFlags(root, target_directory, target_subdirectories);
+  return CF_EXPECT(
+      GenerateFetchFlags(root, target_directory, target_subdirectories));
 }
 
 }  // namespace cuttlefish
