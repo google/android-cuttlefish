@@ -104,7 +104,7 @@ class ClientHandler : public ConnectionController::Observer,
   void Close();
 
   void LogAndReplyError(const std::string& error_msg) const;
-  Result<void> CreateOffer();
+
   rtc::scoped_refptr<webrtc::RtpSenderInterface> AddTrackToConnection(
       rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
       rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection,
