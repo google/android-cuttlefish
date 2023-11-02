@@ -63,6 +63,8 @@ void SetFilepath(BuildString& build_string, const std::string& value);
 Result<BuildString> ParseBuildString(const std::string& build_string);
 
 Flag GflagsCompatFlag(const std::string& name,
+                      std::optional<BuildString>& value);
+Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::optional<BuildString>>& value);
 
 }  // namespace cuttlefish
