@@ -8,9 +8,9 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"strconv"
 	"strings"
 	"time"
-	"strconv"
 )
 
 type OnFail int
@@ -376,6 +376,12 @@ func main() {
 	}
 	gce(ExitOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` "`+build_instance+
 		`"`+` -- `+ssh_flags.AsArgs()+` ./create_base_image_gce.sh `+ho_arg)
+
+	// Reboot the instance to force a clean umount of the disk's file system.
+	gce(WarnOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` "`+build_instance+
+		`" -- `+ssh_flags.AsArgs()+` sudo reboot`)
+	waitForInstance(PZ)
+
 	gce(ExitOnFail, `compute instances delete -q `+PZ+` "`+build_instance+`"`)
 	gce(ExitOnFail, `compute images create --project="`+build_project+
 		`" --source-disk="`+dest_image+`" --source-disk-zone="`+build_zone+
