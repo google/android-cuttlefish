@@ -88,29 +88,44 @@ DisplayHandler::GenerateProcessedFrameCallback DisplayHandler::GetScreenConnecto
 [[noreturn]] void DisplayHandler::Loop() {
   for (;;) {
     auto processed_frame = screen_connector_.OnNextFrame();
-    // processed_frame has display number from the guest
+
+    std::shared_ptr<CvdVideoFrameBuffer> buffer =
+        std::move(processed_frame.buf_);
+
+    const uint32_t display_number = processed_frame.display_number_;
     {
       std::lock_guard<std::mutex> lock(last_buffer_mutex_);
-      std::shared_ptr<CvdVideoFrameBuffer> buffer = std::move(processed_frame.buf_);
-      last_buffer_display_ = processed_frame.display_number_;
-      last_buffer_ =
+      display_last_buffers_[display_number] =
           std::static_pointer_cast<webrtc_streaming::VideoFrameBuffer>(buffer);
     }
     if (processed_frame.is_success_) {
-      SendLastFrame();
+      SendLastFrame(display_number);
     }
   }
 }
 
-void DisplayHandler::SendLastFrame() {
-  std::shared_ptr<webrtc_streaming::VideoFrameBuffer> buffer;
-  std::uint32_t buffer_display;
+void DisplayHandler::SendLastFrame(std::optional<uint32_t> display_number) {
+  std::map<uint32_t, std::shared_ptr<webrtc_streaming::VideoFrameBuffer>>
+      buffers;
   {
     std::lock_guard<std::mutex> lock(last_buffer_mutex_);
-    buffer = last_buffer_;
-    buffer_display = last_buffer_display_;
+    if (display_number) {
+      // Resend the last buffer for a single display.
+      auto last_buffer_it = display_last_buffers_.find(*display_number);
+      if (last_buffer_it == display_last_buffers_.end()) {
+        return;
+      }
+      auto& last_buffer = last_buffer_it->second;
+      if (!last_buffer) {
+        return;
+      }
+      buffers[*display_number] = last_buffer;
+    } else {
+      // Resend the last buffer for all displays.
+      buffers = display_last_buffers_;
+    }
   }
-  if (!buffer) {
+  if (buffers.empty()) {
     // If a connection request arrives before the first frame is available don't
     // send any frame.
     return;
@@ -124,10 +139,13 @@ void DisplayHandler::SendLastFrame() {
             std::chrono::system_clock::now().time_since_epoch())
             .count();
 
-    auto it = display_sinks_.find(buffer_display);
-    if (it != display_sinks_.end()) {
-      it->second->OnFrame(buffer, time_stamp);
+    for (const auto& [display_number, buffer] : buffers) {
+      auto it = display_sinks_.find(display_number);
+      if (it != display_sinks_.end()) {
+        it->second->OnFrame(buffer, time_stamp);
+      }
     }
   }
 }
+
 }  // namespace cuttlefish
