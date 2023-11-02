@@ -35,6 +35,7 @@ inline constexpr char kDefaultBuildString[] = "";
 inline constexpr bool kDefaultDownloadImgZip = true;
 inline constexpr bool kDefaultDownloadTargetFilesZip = false;
 inline constexpr char kDefaultTargetDirectory[] = "";
+inline constexpr char kHostToolsSubdirectory[] = "host_tools";
 inline constexpr bool kDefaultKeepDownloadedArchives = false;
 
 Result<void> FetchCvdMain(int argc, char** argv);
