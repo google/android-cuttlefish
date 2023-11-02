@@ -4558,7 +4558,7 @@ Return<void> RadioImpl_1_6::setIndicationFilter_1_5(
         int32_t serial,
         hidl_bitfield<::android::hardware::radio::V1_5::IndicationFilter> indicationFilter) {
 #if VDBG
-    RLOGE("setIndicationFilter_1_5: serial %d");
+    RLOGE("setIndicationFilter_1_5: serial %d", serial);
 #endif
     dispatchInts(serial, mSlotId, RIL_REQUEST_SET_UNSOLICITED_RESPONSE_FILTER, 1, indicationFilter);
     return Void();
