@@ -34,6 +34,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_flags_validator.h"
 #include "host/commands/cvd/parser/fetch_cvd_parser.h"
@@ -261,8 +262,9 @@ Result<LoadDirectories> GenerateLoadDirectories(const std::string& parent_direct
     system_image_directories.emplace_back(result.target_directory + "/" +
                                           target_subdirectory);
   }
+
   result.host_package_directory =
-      result.target_directory + "/" + result.target_subdirectories[0];
+      result.target_directory + "/" + kHostToolsSubdirectory;
   result.system_image_directory_flag =
       "--system_image_dir=" +
       android::base::Join(system_image_directories, ',');
