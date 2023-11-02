@@ -424,6 +424,15 @@ bool SharedFD::SocketPair(int domain, int type, int protocol,
   return false;
 }
 
+Result<std::pair<SharedFD, SharedFD>> SharedFD::SocketPair(int domain, int type,
+                                                           int protocol) {
+  SharedFD a, b;
+  if (!SharedFD::SocketPair(domain, type, protocol, &a, &b)) {
+    return CF_ERR("socketpair failed: " << strerror(errno));
+  }
+  return std::make_pair(std::move(a), std::move(b));
+}
+
 SharedFD SharedFD::Open(const std::string& path, int flags, mode_t mode) {
   return Open(path.c_str(), flags, mode);
 }
