@@ -151,6 +151,8 @@ class SharedFD {
   static int Poll(std::vector<PollSharedFd>& fds, int timeout);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
+  static Result<std::pair<SharedFD, SharedFD>> SocketPair(int domain, int type,
+                                                          int protocol);
   static SharedFD Socket(int domain, int socket_type, int protocol);
   static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
                                     int in_type);
