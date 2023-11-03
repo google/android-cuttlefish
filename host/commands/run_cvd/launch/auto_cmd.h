@@ -33,6 +33,9 @@
 
 namespace cuttlefish {
 
+template <class...>
+constexpr std::false_type CommandAlwaysFalse{};
+
 template <auto Fn, typename R, typename... Args>
 class GenericCommandSource : public CommandSource,
                              public KernelLogPipeConsumer {
@@ -62,7 +65,7 @@ class GenericCommandSource : public CommandSource,
         commands_.emplace_back(std::move(*cmd));
       }
     } else {
-      static_assert(false, "Unexpected AutoCmd return type");
+      static_assert(CommandAlwaysFalse<R>, "Unexpected AutoCmd return type");
     }
     return {};
   }
