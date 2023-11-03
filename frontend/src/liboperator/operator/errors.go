@@ -38,7 +38,7 @@ func (e *AppError) Unwrap() error {
 }
 
 func (e *AppError) JSONResponse() apiv1.ErrorMsg {
-	return apiv1.ErrorMsg{Error: e.Msg, Details: e.Err.Error()}
+	return apiv1.ErrorMsg{Error: e.Msg, Details: e.Error()}
 }
 
 func NewBadRequestError(msg string, e error) error {
