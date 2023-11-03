@@ -28,7 +28,6 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/launch/auto_cmd.h"
 #include "host/commands/run_cvd/reporting.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -193,97 +192,131 @@ class StreamerSockets : public virtual SetupFeature {
   SharedFD sensors_guest_to_host_fd_;
 };
 
-std::vector<std::string> WebRtcInfo(
-    const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance,
-    StreamerSockets& sockets) {
-  if (!sockets.Enabled() || !instance.enable_webrtc() ||
-      !(instance.start_webrtc_sig_server() ||
-        instance.start_webrtc_sig_server_proxy())) {
-    // When WebRTC is enabled but an operator other than the one launched by
-    // run_cvd is used there is no way to know the url to which to point the
-    // browser to.
-    return {};
-  } else {
-    return {
-        fmt::format("Point your browser at https://localhost:{} to interact "
-                    "with the device",
-                    config.sig_server_port())};
-  }
-}
-
-Result<std::vector<MonitorCommand>> WebRtcServer(
-    const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance,
-    StreamerSockets& sockets, KernelLogPipeProvider& log_pipe_provider,
-    const CustomActionConfigProvider& custom_action_config,
-    WebRtcRecorder& webrtc_recorder) {
-  if (!sockets.Enabled() || !instance.enable_webrtc()) {
-    return {};
-  }
-  SharedFD switches_server;
-  if (config.vm_manager() == vm_manager::CrosvmManager::name()) {
-    switches_server = CreateUnixInputServer(instance.switches_socket_path());
-    CF_EXPECT(switches_server->IsOpen(), switches_server->StrError());
-  }
-  auto kernel_log_events_pipe = log_pipe_provider.KernelLogPipe();
-  CF_EXPECT(kernel_log_events_pipe->IsOpen(),
-            kernel_log_events_pipe->StrError());
-  std::vector<MonitorCommand> commands;
-  if (instance.start_webrtc_sig_server()) {
-    Command sig_server(WebRtcSigServerBinary());
-    sig_server.AddParameter("-assets_dir=", instance.webrtc_assets_dir());
-    sig_server.AddParameter("-use_secure_http=",
-                            config.sig_server_secure() ? "true" : "false");
-    if (!config.webrtc_certs_dir().empty()) {
-      sig_server.AddParameter("-certs_dir=", config.webrtc_certs_dir());
+class WebRtcServer : public virtual CommandSource,
+                     public DiagnosticInformation,
+                     public KernelLogPipeConsumer {
+ public:
+  INJECT(WebRtcServer(const CuttlefishConfig& config,
+                      const CuttlefishConfig::InstanceSpecific& instance,
+                      StreamerSockets& sockets,
+                      KernelLogPipeProvider& log_pipe_provider,
+                      const CustomActionConfigProvider& custom_action_config,
+                      WebRtcRecorder& webrtc_recorder))
+      : config_(config),
+        instance_(instance),
+        sockets_(sockets),
+        log_pipe_provider_(log_pipe_provider),
+        custom_action_config_(custom_action_config),
+        webrtc_recorder_(webrtc_recorder) {}
+  // DiagnosticInformation
+  std::vector<std::string> Diagnostics() const override {
+    if (!Enabled() ||
+        !(config_.ForDefaultInstance().start_webrtc_sig_server() ||
+          config_.ForDefaultInstance().start_webrtc_sig_server_proxy())) {
+      // When WebRTC is enabled but an operator other than the one launched by
+      // run_cvd is used there is no way to know the url to which to point the
+      // browser to.
+      return {};
     }
-    sig_server.AddParameter("-http_server_port=", config.sig_server_port());
-    commands.emplace_back(std::move(sig_server));
+    std::ostringstream out;
+    out << "Point your browser to https://localhost:"
+        << config_.sig_server_port() << " to interact with the device.";
+    return {out.str()};
   }
 
-  if (instance.start_webrtc_sig_server_proxy()) {
-    Command sig_proxy(WebRtcSigServerProxyBinary());
-    sig_proxy.AddParameter("-server_port=", config.sig_server_port());
-    commands.emplace_back(std::move(sig_proxy));
+  // CommandSource
+  Result<std::vector<MonitorCommand>> Commands() override {
+    std::vector<MonitorCommand> commands;
+    if (instance_.start_webrtc_sig_server()) {
+      Command sig_server(WebRtcSigServerBinary());
+      sig_server.AddParameter("-assets_dir=", instance_.webrtc_assets_dir());
+      sig_server.AddParameter("-use_secure_http=",
+                              config_.sig_server_secure() ? "true" : "false");
+      if (!config_.webrtc_certs_dir().empty()) {
+        sig_server.AddParameter("-certs_dir=", config_.webrtc_certs_dir());
+      }
+      sig_server.AddParameter("-http_server_port=", config_.sig_server_port());
+      commands.emplace_back(std::move(sig_server));
+    }
+
+    if (instance_.start_webrtc_sig_server_proxy()) {
+      Command sig_proxy(WebRtcSigServerProxyBinary());
+      sig_proxy.AddParameter("-server_port=", config_.sig_server_port());
+      commands.emplace_back(std::move(sig_proxy));
+    }
+
+    auto stopper = [webrtc_recorder = webrtc_recorder_](Subprocess* proc) {
+      webrtc_recorder.SendStopRecordingCommand();
+      return KillSubprocess(proc) == StopperResult::kStopSuccess
+                 ? StopperResult::kStopCrash
+                 : StopperResult::kStopFailure;
+    };
+
+    Command webrtc(WebRtcBinary(), stopper);
+
+    webrtc.AddParameter("-group_id=", instance_.group_id());
+
+    webrtc.UnsetFromEnvironment("http_proxy");
+    sockets_.AppendCommandArguments(webrtc);
+    if (config_.vm_manager() == vm_manager::CrosvmManager::name()) {
+      webrtc.AddParameter("-switches_fd=", switches_server_);
+    }
+    // Currently there is no way to ensure the signaling server will already
+    // have bound the socket to the port by the time the webrtc process runs
+    // (the common technique of doing it from the launcher is not possible here
+    // as the server library being used creates its own sockets). However, this
+    // issue is mitigated slightly by doing some retrying and backoff in the
+    // webrtc process when connecting to the websocket, so it shouldn't be an
+    // issue most of the time.
+    webrtc.AddParameter("--command_fd=", webrtc_recorder_.GetClientSocket());
+    webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe_);
+    webrtc.AddParameter("-client_dir=",
+                        DefaultHostArtifactsPath("usr/share/webrtc/assets"));
+
+    // TODO get from launcher params
+    const auto& actions =
+        custom_action_config_.CustomActionServers(instance_.id());
+    for (auto& action : LaunchCustomActionServers(webrtc, actions)) {
+      commands.emplace_back(std::move(action));
+    }
+    commands.emplace_back(std::move(webrtc));
+    return commands;
   }
 
-  auto stopper = [webrtc_recorder = webrtc_recorder](Subprocess* proc) {
-    webrtc_recorder.SendStopRecordingCommand();
-    return KillSubprocess(proc) == StopperResult::kStopSuccess
-               ? StopperResult::kStopCrash
-               : StopperResult::kStopFailure;
-  };
-
-  Command webrtc(WebRtcBinary(), stopper);
-
-  webrtc.AddParameter("-group_id=", instance.group_id());
-
-  webrtc.UnsetFromEnvironment("http_proxy");
-  sockets.AppendCommandArguments(webrtc);
-  if (config.vm_manager() == vm_manager::CrosvmManager::name()) {
-    webrtc.AddParameter("-switches_fd=", switches_server);
+  // SetupFeature
+  bool Enabled() const override {
+    return sockets_.Enabled() && instance_.enable_webrtc();
   }
-  // Currently there is no way to ensure the signaling server will already
-  // have bound the socket to the port by the time the webrtc process runs
-  // (the common technique of doing it from the launcher is not possible here
-  // as the server library being used creates its own sockets). However, this
-  // issue is mitigated slightly by doing some retrying and backoff in the
-  // webrtc process when connecting to the websocket, so it shouldn't be an
-  // issue most of the time.
-  webrtc.AddParameter("--command_fd=", webrtc_recorder.GetClientSocket());
-  webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe);
-  webrtc.AddParameter("-client_dir=",
-                      DefaultHostArtifactsPath("usr/share/webrtc/assets"));
 
-  // TODO get from launcher params
-  const auto& actions = custom_action_config.CustomActionServers(instance.id());
-  for (auto& action : LaunchCustomActionServers(webrtc, actions)) {
-    commands.emplace_back(std::move(action));
+ private:
+  std::string Name() const override { return "WebRtcServer"; }
+  std::unordered_set<SetupFeature*> Dependencies() const override {
+    return {static_cast<SetupFeature*>(&sockets_),
+            static_cast<SetupFeature*>(&log_pipe_provider_),
+            static_cast<SetupFeature*>(&webrtc_recorder_)};
   }
-  commands.emplace_back(std::move(webrtc));
-  return commands;
-}
+
+  Result<void> ResultSetup() override {
+    if (config_.vm_manager() == vm_manager::CrosvmManager::name()) {
+      switches_server_ =
+          CreateUnixInputServer(instance_.switches_socket_path());
+      CF_EXPECT(switches_server_->IsOpen(), switches_server_->StrError());
+    }
+    kernel_log_events_pipe_ = log_pipe_provider_.KernelLogPipe();
+    CF_EXPECT(kernel_log_events_pipe_->IsOpen(),
+              kernel_log_events_pipe_->StrError());
+    return {};
+  }
+
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+  StreamerSockets& sockets_;
+  KernelLogPipeProvider& log_pipe_provider_;
+  const CustomActionConfigProvider& custom_action_config_;
+  WebRtcRecorder& webrtc_recorder_;
+  SharedFD kernel_log_events_pipe_;
+  SharedFD switches_server_;
+};
 
 }  // namespace
 
@@ -293,9 +326,11 @@ fruit::Component<
                     const CustomActionConfigProvider, WebRtcRecorder>>
 launchStreamerComponent() {
   return fruit::createComponent()
-      .install(AutoCmd<WebRtcServer>::Component)
-      .install(AutoDiagnostic<WebRtcInfo>::Component)
-      .addMultibinding<SetupFeature, StreamerSockets>();
+      .addMultibinding<CommandSource, WebRtcServer>()
+      .addMultibinding<DiagnosticInformation, WebRtcServer>()
+      .addMultibinding<KernelLogPipeConsumer, WebRtcServer>()
+      .addMultibinding<SetupFeature, StreamerSockets>()
+      .addMultibinding<SetupFeature, WebRtcServer>();
 }
 
 }  // namespace cuttlefish
