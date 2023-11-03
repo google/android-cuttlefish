@@ -25,9 +25,9 @@
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
-#include "host/libs/web/android_build_api.h"
+#include "host/libs/web/build_api.h"
 
 namespace cuttlefish {
 namespace {
@@ -177,9 +177,6 @@ Result<std::vector<std::string>> GenerateFetchFlags(
       GenerateGflag(fetch_instances, "boot_build", {"boot", "build"})));
   result.emplace_back(CF_EXPECT(GenerateGflag(
       fetch_instances, "bootloader_build", {"boot", "bootloader", "build"})));
-  result.emplace_back(
-      CF_EXPECT(GenerateGflag(fetch_instances, "android_efi_loader_build",
-                              {"boot", "bootloader", "build"})));
   result.emplace_back(CF_EXPECT(
       GenerateGflag(fetch_instances, "otatools_build", {"disk", "otatools"})));
   result.emplace_back(CF_EXPECT(GenerateGflag(

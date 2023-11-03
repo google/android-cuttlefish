@@ -22,7 +22,7 @@
 #include <json/json.h>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/parser/fetch_cvd_parser.h"
+#include "host/commands/cvd/parser/fetch_config_parser.h"
 
 namespace cuttlefish {
 
