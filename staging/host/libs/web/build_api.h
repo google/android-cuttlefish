@@ -39,10 +39,7 @@ inline constexpr char kAndroidBuildServiceUrl[] =
 
 struct DeviceBuild {
   DeviceBuild(std::string id, std::string target,
-              std::optional<std::string> filepath)
-      : id(std::move(id)),
-        target(std::move(target)),
-        filepath(std::move(filepath)) {}
+              std::optional<std::string> filepath);
 
   std::string id;
   std::string target;
@@ -94,13 +91,7 @@ class BuildApi {
   Result<Build> GetBuild(const DirectoryBuildString& build_string,
                          const std::string& fallback_target);
   Result<Build> GetBuild(const BuildString& build_string,
-                         const std::string& fallback_target) {
-    auto result =
-        std::visit([this, &fallback_target](
-                       auto&& arg) { return GetBuild(arg, fallback_target); },
-                   build_string);
-    return CF_EXPECT(std::move(result));
-  }
+                         const std::string& fallback_target);
 
   Result<std::string> DownloadFile(const Build& build,
                                    const std::string& target_directory,
@@ -130,14 +121,7 @@ class BuildApi {
       const std::vector<std::string>& artifact_filenames);
 
   Result<std::unordered_set<std::string>> Artifacts(
-      const Build& build, const std::vector<std::string>& artifact_filenames) {
-    auto res = std::visit(
-        [this, &artifact_filenames](auto&& arg) {
-          return Artifacts(arg, artifact_filenames);
-        },
-        build);
-    return CF_EXPECT(std::move(res));
-  }
+      const Build& build, const std::vector<std::string>& artifact_filenames);
 
   Result<void> ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
@@ -148,15 +132,7 @@ class BuildApi {
                               const std::string& path);
 
   Result<void> ArtifactToFile(const Build& build, const std::string& artifact,
-                              const std::string& path) {
-    auto res = std::visit(
-        [this, &artifact, &path](auto&& arg) {
-          return ArtifactToFile(arg, artifact, path);
-        },
-        build);
-    CF_EXPECT(std::move(res));
-    return {};
-  }
+                              const std::string& path);
 
   Result<std::string> DownloadTargetFile(const Build& build,
                                          const std::string& target_directory,
