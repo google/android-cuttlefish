@@ -38,7 +38,15 @@ DEFINE_int32(dump_packet_size, -1,
 void OpenSocket(cuttlefish::SharedFD* fd, int port) {
   static std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
-  *fd = cuttlefish::SharedFD::SocketLocalClient(port, SOCK_STREAM);
+  for (;;) {
+    *fd = cuttlefish::SharedFD::SocketLocalClient(port, SOCK_STREAM);
+    if ((*fd)->IsOpen()) {
+      return;
+    }
+    LOG(ERROR) << "Failed to open socket: " << (*fd)->StrError();
+    // Wait a little and try again
+    sleep(1);
+  }
 }
 
 void DumpPackets(const char* prefix, char* buf, int size) {
