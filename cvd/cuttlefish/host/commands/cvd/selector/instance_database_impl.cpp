@@ -225,10 +225,9 @@ Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesByHome(
       [&home](const std::unique_ptr<LocalInstanceGroup>& group)
       -> Result<Set<ConstRef<LocalInstance>>> {
     CF_EXPECT(group != nullptr);
-    CF_EXPECTF(group->HomeDir() == home,
-               "Group Home, \"{}\", is different from the input home query "
-               "\"{}\"",
-               group->HomeDir(), home);
+    if (group->HomeDir() != home) {
+      return Set<ConstRef<LocalInstance>>{};
+    }
     return (group->FindAllInstances());
   };
   return CollectAllElements<LocalInstance, LocalInstanceGroup>(
