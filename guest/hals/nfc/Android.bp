@@ -35,6 +35,7 @@ rust_binary {
         "libanyhow",
         "libthiserror",
         "libbytes",
+        "libpdl_runtime",
     ],
     proc_macros: [
         "libasync_trait",
