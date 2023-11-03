@@ -24,7 +24,7 @@ cc_library_host_static {
         "cf_configs_instances.cpp",
         "cf_flags_validator.cpp",
         "cf_metrics_configs.cpp",
-        "fetch_cvd_parser.cpp",
+        "fetch_config_parser.cpp",
         "instance/cf_boot_configs.cpp",
         "instance/cf_disk_configs.cpp",
         "instance/cf_graphics_configs.cpp",
