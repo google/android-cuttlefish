@@ -420,8 +420,12 @@ PRODUCT_PACKAGES += \
 #
 # Lights
 #
+LOCAL_ENABLE_LIGHT ?= true
+ifeq ($(LOCAL_ENABLE_LIGHT),true)
 PRODUCT_PACKAGES += \
     com.google.cf.light \
+
+endif
 
 #
 # KeyMint HAL
