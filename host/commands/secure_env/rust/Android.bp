@@ -23,6 +23,7 @@ rust_protobuf {
     protos: ["storage.proto"],
     source_stem: "kmr_proto",
     host_supported: true,
+    use_protobuf3: true,
 }
 
 rust_library_host {
@@ -38,7 +39,7 @@ rust_library_host {
         "libkmr_wire",
         "liblibc",
         "liblog_rust",
-        "libprotobuf_deprecated",
+        "libprotobuf",
         "libsecure_env_tpm",
     ],
     defaults: ["cuttlefish_buildhost_only"],
@@ -71,7 +72,7 @@ rust_test_host {
         "libkmr_wire",
         "liblibc",
         "liblog_rust",
-        "libprotobuf_deprecated",
+        "libprotobuf",
         "libsecure_env_tpm",
     ],
     defaults: ["cuttlefish_buildhost_only"],
