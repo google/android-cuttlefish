@@ -44,12 +44,11 @@ bool readSettingsFromJson(VsockCameraDevice::Settings& settings,
 }  // namespace
 
 VsockCameraServer::VsockCameraServer() {
-  ALOGI("%s: Create server", __FUNCTION__);
-  connection_ = std::make_shared<cuttlefish::VsockServerConnection>();
+  ALOGI("%s: Create server", __PRETTY_FUNCTION__);
 }
 
 VsockCameraServer::~VsockCameraServer() {
-  ALOGI("%s: Destroy server", __FUNCTION__);
+  ALOGI("%s: Destroy server", __PRETTY_FUNCTION__);
   stop();
 }
 
@@ -60,7 +59,8 @@ void VsockCameraServer::start(unsigned int port, unsigned int cid) {
 }
 
 void VsockCameraServer::stop() {
-  connection_->ServerShutdown();
+  server_.Stop();
+  connection_->Disconnect();
   is_running_ = false;
   if (server_thread_.joinable()) {
     server_thread_.join();
@@ -78,27 +78,37 @@ void VsockCameraServer::setConnectedCallback(callback_t callback) {
 
 void VsockCameraServer::serverLoop(unsigned int port, unsigned int cid) {
   while (is_running_.load()) {
-    ALOGI("%s: Accepting connections...", __FUNCTION__);
-    if (connection_->Connect(
-            port, cid,
-            std::nullopt /* vhost_user_vsock: because it's guest */)) {
-      auto json_settings = connection_->ReadJsonMessage();
-      VsockCameraDevice::Settings settings;
-      if (readSettingsFromJson(settings, json_settings)) {
-        std::lock_guard<std::mutex> lock(settings_mutex_);
-        settings_ = settings;
-        if (connected_callback_) {
-          connected_callback_(connection_, settings);
-        }
-        ALOGI("%s: Client connected", __FUNCTION__);
-      } else {
-        ALOGE("%s: Could not read settings", __FUNCTION__);
+    ALOGI("%s: Accepting connections...", __PRETTY_FUNCTION__);
+    /* vhost_user_vsock: nullopt because it's guest */
+    if (!server_.IsRunning() && !server_.Start(port, cid, std::nullopt).ok()) {
+      ALOGE("%s: Failed to start server", __PRETTY_FUNCTION__);
+      continue;
+    }
+    auto connect_result = server_.AcceptConnection();
+    if (!connect_result.ok()) {
+      ALOGE("%s: Accepting connections failed", __PRETTY_FUNCTION__);
+      continue;
+    }
+    connection_ = std::move(*connect_result);
+    auto json_settings_result = connection_->ReadJsonMessage();
+    if (json_settings_result.ok()) {
+      ALOGE("%s: Could not read settings", __PRETTY_FUNCTION__);
+      continue;
+    }
+    auto json_settings = *json_settings_result;
+    VsockCameraDevice::Settings settings;
+    if (readSettingsFromJson(settings, json_settings)) {
+      std::lock_guard<std::mutex> lock(settings_mutex_);
+      settings_ = settings;
+      if (connected_callback_) {
+        connected_callback_(connection_, settings);
       }
+      ALOGI("%s: Client connected", __PRETTY_FUNCTION__);
     } else {
-      ALOGE("%s: Accepting connections failed", __FUNCTION__);
+      ALOGE("%s: Could not read settings", __PRETTY_FUNCTION__);
     }
   }
-  ALOGI("%s: Exiting", __FUNCTION__);
+  ALOGI("%s: Exiting", __PRETTY_FUNCTION__);
 }
 
 }  // namespace android::hardware::camera::provider::V2_7::implementation
