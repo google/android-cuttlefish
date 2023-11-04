@@ -30,8 +30,6 @@ Result<void> InitBootConfigs(Json::Value& instances) {
   for (auto& instance : instances) {
     CF_EXPECT(InitConfig(instance, CF_DEFAULTS_ENABLE_BOOTANIMATION,
                          {"boot", "enable_bootanimation"}));
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_EXTRA_KERNEL_CMDLINE,
-                         {"boot", "kernel", "extra_kernel_cmdline"}));
     CF_EXPECT(InitConfig(instance, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
                          {"boot", "bootconfig_args"}));
   }
@@ -43,9 +41,6 @@ Result<std::vector<std::string>> GenerateBootFlags(
   std::vector<std::string> result;
   result.emplace_back(CF_EXPECT(GenerateGflag(
       instances, "enable_bootanimation", {"boot", "enable_bootanimation"})));
-  result.emplace_back(
-      CF_EXPECT(GenerateGflag(instances, "extra_kernel_cmdline",
-                              {"boot", "kernel", "extra_kernel_cmdline"})));
   result.emplace_back(CF_EXPECT(GenerateGflag(
       instances, "extra_bootconfig_args", {"boot", "bootconfig_args"})));
   return result;
