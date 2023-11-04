@@ -95,7 +95,6 @@ static std::map<std::string, Json::ValueType> kBootKeyMap = {
 };
 
 static std::map<std::string, Json::ValueType> kKernelKeyMap = {
-    {"extra_kernel_cmdline", Json::ValueType::stringValue},
     {"build", Json::ValueType::stringValue},
 };
 
