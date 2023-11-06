@@ -20,7 +20,8 @@ package {
 cc_library_host_static {
     name: "libcvd_fetch",
     srcs: [
-        "fetch_cvd.cc"
+        "fetch_cvd.cc",
+        "fetch_cvd_parser.cc",
     ],
     defaults: ["cvd_lib_defaults"],
 }
