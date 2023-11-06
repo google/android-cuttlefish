@@ -15,8 +15,13 @@
  */
 
 #include "host/commands/cvd/selector/group_selector.h"
+
+#include <android-base/parseint.h>
+
+#include "common/libs/utils/contains.h"
 #include "host/commands/cvd/selector/device_selector_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -58,6 +63,16 @@ Result<GroupSelector> GroupSelector::GetSelector(
     for (const auto& per_instance_name : per_instance_names) {
       queries.emplace_back(kInstanceNameField, per_instance_name);
     }
+  }
+  // if CUTTLEFISH_INSTANCE is set, cvd start should ignore if there's
+  // --base_instance_num, etc. cvd start has its own custom logic. Thus,
+  // non-start operations cannot share the SelectorCommonParser to parse
+  // the environment variable. It should be here.
+  if (Contains(envs, kCuttlefishInstanceEnvVarName)) {
+    int id;
+    auto cuttlefish_instance = envs.at(kCuttlefishInstanceEnvVarName);
+    CF_EXPECT(android::base::ParseInt(cuttlefish_instance, &id));
+    queries.emplace_back(kInstanceIdField, cuttlefish_instance);
   }
 
   for (const auto& extra_query : extra_queries) {
