@@ -20,6 +20,6 @@ PRODUCT_COPY_FILES += \
 endif
 
 LOCAL_GNSS_PRODUCT_PACKAGE ?= \
-    android.hardware.gnss-service.example
+    com.android.hardware.gnss
 
 PRODUCT_PACKAGES += $(LOCAL_GNSS_PRODUCT_PACKAGE)
