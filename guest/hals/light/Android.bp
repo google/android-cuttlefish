@@ -50,4 +50,12 @@ apex {
         "lights-cuttlefish.rc",
         "lights-cuttlefish.xml",
     ],
+
+    // remove some modules manually.
+    // TODO(b/295593640) delete this once the bug fixed.
+    unwanted_transitive_deps: [
+        "libbase",
+        "libc++",
+        "libcutils",
+    ],
 }
