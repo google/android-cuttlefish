@@ -44,19 +44,6 @@ constexpr char kFlagLocalImage[] = "local-image";
 constexpr char kFlagLocalInstance[] = "local-instance";
 
 constexpr char kAcloudCmdCreate[] = "create";
-constexpr char kAcloudCmdList[] = "list";
-constexpr char kAcloudCmdDelete[] = "delete";
-constexpr char kAcloudCmdReconnect[] = "reconnect";
-constexpr char kAcloudCmdPowerdash[] = "reconnect";
-constexpr char kAcloudCmdPull[] = "pull";
-constexpr char kAcloudCmdRestart[] = "restart";
-constexpr char kAcloudCmdHostCleanup[] = "hostcleanup";
-
-constexpr std::array kAcloudCommands = {
-    kAcloudCmdCreate,    kAcloudCmdList,        kAcloudCmdDelete,
-    kAcloudCmdReconnect, kAcloudCmdPowerdash,   kAcloudCmdPull,
-    kAcloudCmdRestart,   kAcloudCmdHostCleanup,
-};
 
 struct VerboseParser {
   std::optional<bool> token;
@@ -243,31 +230,18 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
 
 Result<cvd_common::Args> CompileFromAcloudToCvdr(cvd_common::Args& arguments) {
   CF_EXPECT(arguments.size() > 0);
-  CF_EXPECT(Contains(kAcloudCommands, arguments[0]));
+  CF_EXPECT(arguments[0] == kAcloudCmdCreate);
   std::string main_cmd = arguments[0];
   arguments.erase(arguments.begin());
-
-  // Only `acloud create` works with extra arguments/flags.
-  CF_EXPECT(main_cmd == kAcloudCmdCreate || arguments.empty());
-
-  if (main_cmd == kAcloudCmdCreate) {
-    auto tokens = CF_EXPECT(ParseForCvdrCreate(arguments));
-    CF_EXPECTF(arguments.empty(), "Unrecognized arguments: '{}'",
-               fmt::join(arguments, "', '"));
-    std::vector<std::string> result{main_cmd};
-    for (const auto& t : tokens.strings) {
-      result.emplace_back("--" + t.first);
-      result.emplace_back(t.second);
-    }
-    return result;
+  auto tokens = CF_EXPECT(ParseForCvdrCreate(arguments));
+  CF_EXPECTF(arguments.empty(), "Unrecognized arguments: '{}'",
+             fmt::join(arguments, "', '"));
+  std::vector<std::string> result{"create"};
+  for (const auto& t : tokens.strings) {
+    result.emplace_back("--" + t.first);
+    result.emplace_back(t.second);
   }
-
-  if (main_cmd == kAcloudCmdDelete) {
-    // In cvdr, `delete` is a subcommand of the `host` command.
-    return std::vector<std::string>{"host", kAcloudCmdDelete};
-  }
-
-  return std::vector<std::string>{main_cmd};
+  return result;
 }
 
 }  // namespace acloud_impl
