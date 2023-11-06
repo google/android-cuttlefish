@@ -728,7 +728,9 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   // TODO(b/162071003): virtiofs crashes without sandboxing, this should be
   // fixed
-  if (instance.enable_sandbox()) {
+  if (instance.enable_virtiofs()) {
+    CF_EXPECT(instance.enable_sandbox(),
+              "virtiofs is currently not supported without sandboxing");
     // Set up directory shared with virtiofs
     crosvm_cmd.Cmd().AddParameter(
         "--shared-dir=", instance.PerInstancePath(kSharedDirName),
