@@ -25,7 +25,7 @@
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/fetch/fetch_cvd.h"
+#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/libs/web/build_api.h"
 
