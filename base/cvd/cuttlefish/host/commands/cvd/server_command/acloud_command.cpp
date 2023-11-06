@@ -18,6 +18,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <thread>
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
@@ -26,6 +27,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/acloud/converter.h"
@@ -109,6 +111,8 @@ class AcloudCommand : public CvdServerHandler {
   Result<cvd::Response> HandleLocal(const ConvertedAcloudCreateCommand& command,
                                     const RequestWithStdio& request);
   Result<cvd::Response> HandleRemote(const RequestWithStdio& request);
+  Result<void> RunAcloudConnect(const RequestWithStdio& request,
+                                const std::string& hostname);
 
   CommandSequenceExecutor& executor_;
   std::mutex interrupt_mutex_;
@@ -234,32 +238,85 @@ Result<cvd::Response> AcloudCommand::HandleLocal(
 
 Result<cvd::Response> AcloudCommand::HandleRemote(
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interrupt_mutex_);
-  CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(
       CheckIfCvdrExist(),
       "`" << kCvdrBinName << "` was not found in the current environment.");
   auto args = ParseInvocation(request.Message()).arguments;
   args = CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
-  WriteAll(request.Err(),
-           "UPDATE! Try the new `cvdr` tool directly. Run `cvdr --help` to get "
-           "started.\n");
   Command cmd = Command("cvdr");
   for (auto a : args) {
     cmd.AddParameter(a);
   }
+  // Do not perform ADB connection with `cvdr` until acloud CLI is fully
+  // deprecated.
+  if (args[0] == "create") {
+    cmd.AddParameter("--auto_connect=false");
+  }
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, request.In());
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, request.Out());
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.Err());
-  auto subprocess = cmd.Start();
-  CF_EXPECT(subprocess.Started());
-  CF_EXPECT(waiter_.Setup(std::move(subprocess)));
-  // Allows the waiter_ to be interrupted if there's an interrupt.
-  interrupt_lock.unlock();
-  CF_EXPECT(waiter_.Wait());
+  std::string stdout_;
+  SharedFD stdout_pipe_read, stdout_pipe_write;
+  CF_EXPECT(SharedFD::Pipe(&stdout_pipe_read, &stdout_pipe_write),
+            "Could not create a pipe");
+  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, stdout_pipe_write);
+  std::thread stdout_thread([stdout_pipe_read, &stdout_]() {
+    int read = ReadAll(stdout_pipe_read, &stdout_);
+    if (read < 0) {
+      LOG(ERROR) << "Error in reading stdout from process";
+    }
+  });
+  WriteAll(request.Err(),
+           "UPDATE! Try the new `cvdr` tool directly. Run `cvdr --help` to get "
+           "started.\n");
+  {
+    std::unique_lock interrupt_lock(interrupt_mutex_);
+    CF_EXPECT(!interrupted_, "Interrupted");
+    auto subprocess = cmd.Start();
+    CF_EXPECT(subprocess.Started());
+    CF_EXPECT(waiter_.Setup(std::move(subprocess)));
+  }
+  siginfo_t siginfo = CF_EXPECT(waiter_.Wait());
+  {
+    // Force the destructor to run by moving it into a smaller scope.
+    // This is necessary to close the write end of the pipe.
+    Command forceDelete = std::move(cmd);
+  }
+  stdout_pipe_write->Close();
+  stdout_thread.join();
+  WriteAll(request.Out(), stdout_);
+  if (args[0] == "create" && siginfo.si_status == EXIT_SUCCESS) {
+    std::string hostname = stdout_.substr(0, stdout_.find(" "));
+    CF_EXPECT(RunAcloudConnect(request, hostname));
+  }
   cvd::Response response;
   response.mutable_command_response();
   return response;
+}
+
+Result<void> AcloudCommand::RunAcloudConnect(const RequestWithStdio& request,
+                                             const std::string& hostname) {
+  auto build_top = StringFromEnv("ANDROID_BUILD_TOP", "");
+  CF_EXPECT(
+      build_top != "",
+      "Missing ANDROID_BUILD_TOP environment variable. Please run `source "
+      "build/envsetup.sh`");
+  Command cmd =
+      Command(build_top + "/prebuilts/asuite/acloud/linux-x86/acloud");
+  cmd.AddParameter("reconnect");
+  cmd.AddParameter("--instance-names");
+  cmd.AddParameter(hostname);
+  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, request.In());
+  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, request.Out());
+  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.Err());
+  {
+    std::unique_lock interrupt_lock(interrupt_mutex_);
+    CF_EXPECT(!interrupted_, "Interrupted");
+    auto subprocess = cmd.Start();
+    CF_EXPECT(subprocess.Started());
+    CF_EXPECT(waiter_.Setup(std::move(subprocess)));
+  }
+  CF_EXPECT(waiter_.Wait());
+  return {};
 }
 
 fruit::Component<fruit::Required<CommandSequenceExecutor>>
