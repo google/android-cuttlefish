@@ -207,6 +207,9 @@ DEFINE_vec(
     "cannot be created. Otherwise, sandbox is enabled on the supported "
     "architecture when no option is given.");
 
+DEFINE_vec(enable_virtiofs, fmt::format("{}", CF_DEFAULTS_ENABLE_VIRTIOFS),
+           "Enable shared folder using virtiofs");
+
 DEFINE_string(
     seccomp_policy_dir, CF_DEFAULTS_SECCOMP_POLICY_DIR,
     "With sandbox'ed crosvm, overrieds the security comp policy directory");
@@ -1122,6 +1125,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // At this time, FLAGS_enable_sandbox comes from SetDefaultFlagsForCrosvm
   std::vector<bool> enable_sandbox_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       enable_sandbox));
+  std::vector<bool> enable_virtiofs_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_virtiofs));
 
   std::vector<std::string> gpu_mode_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_mode));
@@ -1171,6 +1176,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(device_external_network));
 
   std::string default_enable_sandbox = "";
+  std::string default_enable_virtiofs = "";
   std::string comma_str = "";
 
   CHECK(FLAGS_use_overlay || instance_nums.size() == 1)
@@ -1495,12 +1501,16 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // 3. Sepolicy rules need to be updated to support gpu mode. Temporarily disable
     // auto-enabling sandbox when gpu is enabled (b/152323505).
     default_enable_sandbox += comma_str;
+    default_enable_virtiofs += comma_str;
     if ((gpu_mode != kGpuModeGuestSwiftshader) || console_vec[instance_index]) {
       // original code, just moved to each instance setting block
       default_enable_sandbox += "false";
+      default_enable_virtiofs += "false";
     } else {
       default_enable_sandbox +=
           fmt::format("{}", enable_sandbox_vec[instance_index]);
+      default_enable_virtiofs +=
+          fmt::format("{}", enable_virtiofs_vec[instance_index]);
     }
     comma_str = ",";
 
@@ -1664,17 +1674,25 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   SetCommandLineOptionWithMode("enable_sandbox", default_enable_sandbox.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
+  // Set virtiofs to match enable_sandbox as it did before adding
+  // enable_virtiofs flag.
+  SetCommandLineOptionWithMode("enable_virtiofs",
+                               default_enable_sandbox.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+
   // After SetCommandLineOptionWithMode,
   // default flag values changed, need recalculate name_to_default_value
   name_to_default_value = CurrentFlagsToDefaultValue();
   // After last SetCommandLineOptionWithMode, we could set these special flags
   enable_sandbox_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       enable_sandbox));
+  enable_virtiofs_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_virtiofs));
 
   instance_index = 0;
   for (const auto& num : instance_nums) {
     auto instance = tmp_config_obj.ForInstance(num);
     instance.set_enable_sandbox(enable_sandbox_vec[instance_index]);
+    instance.set_enable_virtiofs(enable_virtiofs_vec[instance_index]);
     instance_index++;
   }
 
@@ -1805,6 +1823,8 @@ Result<void> SetDefaultFlagsForCrosvm(
   // This is the 1st place to set "enable_sandbox" flag value
   SetCommandLineOptionWithMode("enable_sandbox",
                                default_enable_sandbox_str.c_str(), SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode(
+      "enable_virtiofs", default_enable_sandbox_str.c_str(), SET_FLAGS_DEFAULT);
   return {};
 }
 
