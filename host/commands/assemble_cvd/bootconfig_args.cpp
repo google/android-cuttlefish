@@ -168,6 +168,10 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   // set a large timeout multiplier.
   if (!IsHostCompatible(instance.target_arch())) {
     bootconfig_args["androidboot.hw_timeout_multiplier"] = "50";
+  } else {
+    // Even on native architecture, Cuttlefish is still slower than physical
+    // devices in CI environments, so add a small timeout multiplier.
+    bootconfig_args["androidboot.hw_timeout_multiplier"] = "3";
   }
 
   // TODO(b/217564326): improve this checks for a hypervisor in the VM.
