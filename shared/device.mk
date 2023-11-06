@@ -622,7 +622,6 @@ ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
 # Thread Network AIDL HAL, simulation CLI and OT daemon controller
 PRODUCT_PACKAGES += \
     com.android.hardware.threadnetwork \
-    ot-cli-ftd \
     ot-ctl
 endif # RELEASE_AIDL_USE_UNFROZEN
 
