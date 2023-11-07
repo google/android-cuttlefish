@@ -903,28 +903,18 @@ Result<std::string> InitializeGpuMode(
 }
 
 Result<void> CheckSnapshotCompatible(
-    const bool must_be_compatible, const bool enable_wifi,
-    const std::vector<bool>& enable_sandbox_vec,
+    const bool must_be_compatible,
     const std::map<int, std::string>& calculated_gpu_mode) {
   if (!must_be_compatible) {
     return {};
   }
 
   /*
-   * TODO(kwstephenkim@): delete this block once openwrt snapshot is supported
-   */
-  CF_EXPECTF(!enable_wifi,
-             "--enable_wifi should be disabled for snapshot, consider \"{}\"",
-             "--enable_wifi=false");
-
-  /*
    * TODO(kwstephenkim@): delete this block once virtio-fs is supported
    */
-  for (const auto& enable_sandbox : enable_sandbox_vec) {
-    CF_EXPECTF(!enable_sandbox,
-               "--enable_sandbox should be false for snapshot, consider \"{}\"",
-               "--enable_sandbox=false");
-  }
+  CF_EXPECTF(!gflags::GetCommandLineFlagInfoOrDie("enable_virtiofs").is_default,
+             "--enable_virtiofs should be false for snapshot, consider \"{}\"",
+             "--enable_virtiofs=false");
 
   /*
    * TODO(kwstephenkim@): delete this block once 3D gpu mode snapshots are
@@ -1702,7 +1692,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   CF_EXPECT(CheckSnapshotCompatible(
                 FLAGS_snapshot_compatible &&
                     (tmp_config_obj.vm_manager() == CrosvmManager::name()),
-                environment_specific.enable_wifi(), enable_sandbox_vec,
                 calculated_gpu_mode_vec),
             "The set of flags is incompatible with snapshot");
 
