@@ -991,6 +991,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_enable_sandbox(const bool en
 bool CuttlefishConfig::InstanceSpecific::enable_sandbox() const {
   return (*Dictionary())[kEnableSandbox].asBool();
 }
+static constexpr char kEnableVirtiofs[] = "enable_virtiofs";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_virtiofs(
+    const bool enable_virtiofs) {
+  (*Dictionary())[kEnableVirtiofs] = enable_virtiofs;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_virtiofs() const {
+  return (*Dictionary())[kEnableVirtiofs].asBool();
+}
 static constexpr char kConsole[] = "console";
 void CuttlefishConfig::MutableInstanceSpecific::set_console(bool console) {
   (*Dictionary())[kConsole] = console;
