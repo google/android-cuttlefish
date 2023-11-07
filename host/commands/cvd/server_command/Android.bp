@@ -47,9 +47,8 @@ cc_library_host_static {
         "shutdown.cpp",
         "snapshot.cpp",
         "start.cpp",
-        "start_impl.cpp",
         "subprocess_waiter.cpp",
-	"try_acloud.cpp",
+        "try_acloud.cpp",
         "version.cpp",
     ],
     static_libs: [
