@@ -530,6 +530,7 @@ class CuttlefishConfig {
     bool console() const;
     std::string console_dev() const;
     bool enable_sandbox() const;
+    bool enable_virtiofs() const;
 
     // KGDB configuration for kernel debugging
     bool kgdb() const;
@@ -731,6 +732,7 @@ class CuttlefishConfig {
     // Serial console
     void set_console(bool console);
     void set_enable_sandbox(const bool enable_sandbox);
+    void set_enable_virtiofs(const bool enable_virtiofs);
     void set_kgdb(bool kgdb);
     void set_target_arch(Arch target_arch);
     void set_cpus(int cpus);
