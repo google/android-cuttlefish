@@ -49,7 +49,6 @@ class LocalInstanceGroup {
   const std::string& HomeDir() const { return home_dir_; }
   const std::string& HostArtifactsPath() const { return host_artifacts_path_; }
   const std::string& ProductOutPath() const { return product_out_path_; }
-  const std::optional<std::string>& BuildId() const { return build_id_; }
   Result<std::string> GetCuttlefishConfigPath() const;
   const Set<std::unique_ptr<LocalInstance>>& Instances() const {
     return instances_;
@@ -63,7 +62,6 @@ class LocalInstanceGroup {
   Result<void> AddInstance(const unsigned instance_id,
                            const std::string& instance_name);
   bool HasInstance(const unsigned instance_id) const;
-  void SetBuildId(const std::string& build_id);
   Result<Set<ConstRef<LocalInstance>>> FindById(const unsigned id) const;
   /**
    * Find by per-instance name.
@@ -109,8 +107,6 @@ class LocalInstanceGroup {
   static constexpr const char kJsonProductOutPath[] = "Product Out Dir";
   static constexpr const char kJsonInstances[] = "Instances";
   static constexpr const char kJsonParent[] = "Parent Group";
-  static constexpr const char kJsonBuildId[] = "Build Id";
-  static constexpr const char kJsonUnknownBuildId[] = "Unknown Build";
 
   /*
    * Expose constructor to the tests in InstanceRecord unit test suite.
