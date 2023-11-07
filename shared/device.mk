@@ -415,7 +415,7 @@ PRODUCT_PACKAGES += \
 
 # Netlink Interceptor HAL
 PRODUCT_PACKAGES += \
-    android.hardware.net.nlinterceptor-service.default
+    com.android.hardware.net.nlinterceptor
 
 #
 # Lights
