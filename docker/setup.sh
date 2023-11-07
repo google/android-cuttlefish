@@ -52,7 +52,7 @@ function cf_allocate_instance_id {
 	done
 	local sorted;
 	IFS=$'\n' sorted=($(sort -n <<<"${ids[*]}")); unset IFS
-	local prev=0
+	local prev=1
 	for id in ${sorted[@]}; do
 		if [[ "${prev}" -lt "${id}" ]]; then
 			break;
@@ -349,7 +349,7 @@ function cf_docker_create {
 	    echo "Container ${name} does not exist.";
 
         local cf_instance=$(cf_allocate_instance_id)
-        if [ "${cf_instance}" -gt 7 ]; then
+        if [ "${cf_instance}" -gt 8 ]; then
                 echo "Limit is maximum 8 Cuttlefish instances."
                 return
         fi
