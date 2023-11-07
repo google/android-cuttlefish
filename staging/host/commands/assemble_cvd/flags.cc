@@ -1492,7 +1492,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // auto-enabling sandbox when gpu is enabled (b/152323505).
     default_enable_sandbox += comma_str;
     default_enable_virtiofs += comma_str;
-    if ((gpu_mode != kGpuModeGuestSwiftshader) || console_vec[instance_index]) {
+    if (gpu_mode != kGpuModeGuestSwiftshader) {
       // original code, just moved to each instance setting block
       default_enable_sandbox += "false";
       default_enable_virtiofs += "false";
