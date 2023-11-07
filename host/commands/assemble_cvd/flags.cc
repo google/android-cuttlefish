@@ -912,9 +912,11 @@ Result<void> CheckSnapshotCompatible(
   /*
    * TODO(kwstephenkim@): delete this block once virtio-fs is supported
    */
-  CF_EXPECTF(!gflags::GetCommandLineFlagInfoOrDie("enable_virtiofs").is_default,
-             "--enable_virtiofs should be false for snapshot, consider \"{}\"",
-             "--enable_virtiofs=false");
+  CF_EXPECTF(
+      gflags::GetCommandLineFlagInfoOrDie("enable_virtiofs").current_value ==
+          "false",
+      "--enable_virtiofs should be false for snapshot, consider \"{}\"",
+      "--enable_virtiofs=false");
 
   /*
    * TODO(kwstephenkim@): delete this block once 3D gpu mode snapshots are
