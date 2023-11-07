@@ -67,15 +67,13 @@ LocalInstance::Copy::Copy(const LocalInstance& src)
           .home_dir = src.ParentGroup().HomeDir(),
           .host_artifacts_path = src.ParentGroup().HostArtifactsPath(),
           .internal_group_name = src.ParentGroup().InternalGroupName(),
-          .group_name = src.ParentGroup().GroupName(),
-          .build_id = src.ParentGroup().BuildId()}} {}
+          .group_name = src.ParentGroup().GroupName()}} {}
 
 LocalInstance::Copy::MockParent::MockParent(const MockParentParam& params)
     : home_dir_{params.home_dir},
       host_artifacts_path_{params.host_artifacts_path},
       internal_group_name_{params.internal_group_name},
-      group_name_{params.group_name},
-      build_id_{params.build_id} {}
+      group_name_{params.group_name} {}
 
 }  // namespace selector
 }  // namespace cuttlefish

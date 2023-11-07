@@ -61,7 +61,6 @@ class LocalInstance {
       std::string host_artifacts_path;
       std::string internal_group_name;
       std::string group_name;
-      std::optional<std::string> build_id;
     };
 
    public:
@@ -80,14 +79,12 @@ class LocalInstance {
       const std::string& HostArtifactsPath() const {
         return host_artifacts_path_;
       }
-      const std::optional<std::string>& BuildId() const { return build_id_; }
 
      private:
       std::string home_dir_;
       std::string host_artifacts_path_;
       std::string internal_group_name_;
       std::string group_name_;
-      std::optional<std::string> build_id_;
     };
     Copy(const LocalInstance& src);
     const std::string& InternalName() const { return internal_name_; }
