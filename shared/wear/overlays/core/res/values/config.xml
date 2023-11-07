@@ -127,4 +127,8 @@
 
   <!-- The name of the package that will hold the assistant role by default. -->
   <string name="config_defaultAssistant" translatable="false">com.google.android.wearable.assistant</string>
+
+  <!-- Colon separated list of package names that should be granted Notification Listener access -->
+  <string name="config_defaultListenerAccessPackages" translatable="false">com.google.android.wearable.media.sessions:com.google.wear.services</string>
+
 </resources>
