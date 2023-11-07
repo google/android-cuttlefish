@@ -35,7 +35,6 @@ LocalInstanceGroup::LocalInstanceGroup(const LocalInstanceGroup& src)
       product_out_path_{src.product_out_path_},
       internal_group_name_{src.internal_group_name_},
       group_name_{src.group_name_},
-      build_id_{src.build_id_},
       instances_{CopyInstances(src.instances_)} {}
 
 LocalInstanceGroup& LocalInstanceGroup::operator=(
@@ -48,7 +47,6 @@ LocalInstanceGroup& LocalInstanceGroup::operator=(
   product_out_path_ = src.product_out_path_;
   internal_group_name_ = src.internal_group_name_;
   group_name_ = src.group_name_;
-  build_id_ = src.build_id_;
   instances_ = CopyInstances(src.instances_);
   return *this;
 }
@@ -129,18 +127,12 @@ bool LocalInstanceGroup::HasInstance(const unsigned instance_id) const {
   return false;
 }
 
-void LocalInstanceGroup::SetBuildId(const std::string& build_id) {
-  build_id_ = build_id;
-}
-
 Json::Value LocalInstanceGroup::Serialize() const {
   Json::Value group_json;
   group_json[kJsonGroupName] = group_name_;
   group_json[kJsonHomeDir] = home_dir_;
   group_json[kJsonHostArtifactPath] = host_artifacts_path_;
   group_json[kJsonProductOutPath] = product_out_path_;
-  auto build_id_opt = BuildId();
-  group_json[kJsonBuildId] = build_id_opt ? *build_id_opt : kJsonUnknownBuildId;
   int i = 0;
   Json::Value instances_array_json;
   for (const auto& instance : instances_) {
