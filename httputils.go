@@ -83,7 +83,7 @@ func (h *HTTPHelper) dumpRequest(r *http.Request) error {
 	}
 	dump, err := httputil.DumpRequestOut(r, true)
 	if err != nil {
-		return fmt.Errorf("Error dumping request: %w", err)
+		return fmt.Errorf("error dumping request: %w", err)
 	}
 	fmt.Fprintf(h.Dumpster, "%s\n", dump)
 	return nil
@@ -95,7 +95,7 @@ func (h *HTTPHelper) dumpResponse(r *http.Response) error {
 	}
 	dump, err := httputil.DumpResponse(r, true)
 	if err != nil {
-		return fmt.Errorf("Error dumping response: %w", err)
+		return fmt.Errorf("error dumping response: %w", err)
 	}
 	fmt.Fprintf(h.Dumpster, "%s\n", dump)
 	return nil
@@ -140,7 +140,7 @@ func (rb *HTTPRequestBuilder) DoWithRetries(ret any, retryOpts RetryOptions) err
 	}
 	res, err := rb.helper.Client.Do(rb.request)
 	if err != nil {
-		return fmt.Errorf("Error sending request: %w", err)
+		return fmt.Errorf("error sending request: %w", err)
 	}
 	for i := uint(0); i < retryOpts.NumRetries && isIn(res.StatusCode, retryOpts.StatusCodes); i++ {
 		err = rb.helper.dumpResponse(res)
@@ -150,7 +150,7 @@ func (rb *HTTPRequestBuilder) DoWithRetries(ret any, retryOpts RetryOptions) err
 		}
 		time.Sleep(retryOpts.RetryDelay)
 		if res, err = rb.helper.Client.Do(rb.request); err != nil {
-			return fmt.Errorf("Error sending request: %w", err)
+			return fmt.Errorf("error sending request: %w", err)
 		}
 	}
 	defer res.Body.Close()
@@ -165,13 +165,13 @@ func (rb *HTTPRequestBuilder) parseResponse(res *http.Response, ret any) error {
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		errpl := new(ApiCallError)
 		if err := dec.Decode(errpl); err != nil {
-			return fmt.Errorf("Error decoding response: %w", err)
+			return fmt.Errorf("error decoding response: %w", err)
 		}
 		return errpl
 	}
 	if ret != nil {
 		if err := dec.Decode(ret); err != nil {
-			return fmt.Errorf("Error decoding response: %w", err)
+			return fmt.Errorf("error decoding response: %w", err)
 		}
 	}
 	return nil
@@ -387,8 +387,8 @@ func (w *uploadChunkWorker) upload(job uploadChunkJob) error {
 		return err
 	}
 	if res.StatusCode != 200 {
-		const msg = "Failed uploading file chunk with status code %q. " +
-			"File %q, chunk number: %d, chunk total: %d."
+		const msg = "failed uploading file chunk with status code %q. " +
+			"File %q, chunk number: %d, chunk total: %d"
 		return fmt.Errorf(msg, res.Status, filepath.Base(job.Filename), job.ChunkNumber, job.TotalChunks)
 	}
 	return nil

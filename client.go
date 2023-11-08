@@ -122,7 +122,7 @@ func (c *serviceImpl) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInsta
 	}
 	hostPath := fmt.Sprintf("/hosts/%s/", ins.Name)
 	if err := c.httpHelper.NewGetRequest(hostPath).DoWithRetries(nil, retryOpts); err != nil {
-		return nil, fmt.Errorf("Unable to communicate with host orchestrator: %w", err)
+		return nil, fmt.Errorf("unable to communicate with host orchestrator: %w", err)
 	}
 
 	return ins, nil
@@ -147,7 +147,7 @@ func (c *serviceImpl) DeleteHosts(names []string) error {
 			if err := c.httpHelper.NewDeleteRequest("/hosts/" + name).Do(nil); err != nil {
 				mu.Lock()
 				defer mu.Unlock()
-				merr = multierror.Append(merr, fmt.Errorf("Delete host %q failed: %w", name, err))
+				merr = multierror.Append(merr, fmt.Errorf("delete host %q failed: %w", name, err))
 			}
 		}(name)
 	}
