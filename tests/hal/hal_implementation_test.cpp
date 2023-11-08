@@ -222,6 +222,7 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     "android.media.audio.common.types",
     "android.hardware.radio",
     "android.hardware.uwb.fira_android",
+    "android.hardware.wifi.common",
     "android.hardware.keymaster",
     "android.hardware.automotive.vehicle.property",
     // not on Cuttlefish since it's needed only on systems using HIDL audio HAL
