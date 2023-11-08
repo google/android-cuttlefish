@@ -89,7 +89,7 @@ func (c *HostOrchestratorServiceImpl) getInfraConfig() (*hoapi.InfraConfig, erro
 func (c *HostOrchestratorServiceImpl) ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error) {
 	polledConn, err := c.createPolledConnection(device)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create polled connection: %w", err)
+		return nil, fmt.Errorf("failed to create polled connection: %w", err)
 	}
 	iceServers := []webrtc.ICEServer{}
 	if opts.LocalICEConfig != nil {
@@ -97,13 +97,13 @@ func (c *HostOrchestratorServiceImpl) ConnectWebRTC(device string, observer wcli
 	}
 	infraConfig, err := c.getInfraConfig()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to obtain infra config: %w", err)
+		return nil, fmt.Errorf("failed to obtain infra config: %w", err)
 	}
 	iceServers = append(iceServers, asWebRTCICEServers(infraConfig.IceServers)...)
 	signaling := c.initHandling(polledConn.ConnId, iceServers, logger)
 	conn, err := wclient.NewConnectionWithLogger(&signaling, observer, logger)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to connect to device over webrtc: %w", err)
+		return nil, fmt.Errorf("failed to connect to device over webrtc: %w", err)
 	}
 	return conn, nil
 }
