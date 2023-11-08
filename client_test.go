@@ -43,7 +43,6 @@ a=max-message-size:262144
 `
 
 type TestObserver struct {
-	dc               *webrtc.DataChannel
 	onADBDataChannel func(*webrtc.DataChannel)
 	onError          func(error)
 }
