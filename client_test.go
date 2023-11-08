@@ -62,13 +62,13 @@ func (o *TestObserver) OnError(err error) {
 
 func (o *TestObserver) OnClose() {
 	if o.onError != nil {
-		o.onError(fmt.Errorf("Connection closed"))
+		o.onError(fmt.Errorf("connection closed"))
 	}
 }
 
 func (o *TestObserver) OnFailure() {
 	if o.onError != nil {
-		o.onError(fmt.Errorf("Connection failed"))
+		o.onError(fmt.Errorf("connection failed"))
 	}
 }
 

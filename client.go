@@ -49,11 +49,11 @@ func (c *Controller) connect(onComplete func(error)) {
 			// Connected successfully
 			onComplete(nil)
 		case webrtc.PeerConnectionStateFailed:
-			onComplete(fmt.Errorf("Peer Connection failed"))
+			onComplete(fmt.Errorf("peer Connection failed"))
 			c.observer.OnFailure()
 			c.stopGoRoutines()
 		case webrtc.PeerConnectionStateClosed:
-			onComplete(fmt.Errorf("Peer Connection closed unexpectedly"))
+			onComplete(fmt.Errorf("peer Connection closed unexpectedly"))
 			c.observer.OnClose()
 			c.stopGoRoutines()
 		default:
@@ -100,7 +100,7 @@ func (c *Controller) recvLoop() error {
 				panic(fmt.Sprintf("Failed to reshape json: %v", err))
 			}
 			if err := c.onOffer(offer); err != nil {
-				return fmt.Errorf("Error handling offer: %w", err)
+				return fmt.Errorf("error handling offer: %w", err)
 			}
 		case ICECandidateMsgType:
 			candidate, err := Reshape[webrtc.ICECandidateInit](msg)
@@ -109,7 +109,7 @@ func (c *Controller) recvLoop() error {
 				panic(fmt.Sprintf("Failed to reshape json: %v", err))
 			}
 			if err := c.onICECandidate(candidate); err != nil {
-				return fmt.Errorf("Error handling ICE candidate: %w", err)
+				return fmt.Errorf("error handling ICE candidate: %w", err)
 			}
 		case AnswerMsgType:
 			answer, err := Reshape[webrtc.SessionDescription](msg)
@@ -118,13 +118,13 @@ func (c *Controller) recvLoop() error {
 				panic(fmt.Sprintf("Failed to reshape json: %v", err))
 			}
 			if err := c.onAnswer(answer); err != nil {
-				return fmt.Errorf("Error handling answer: %w", err)
+				return fmt.Errorf("error handling answer: %w", err)
 			}
 		default:
 			if errMsg, errPresent := msg["error"]; errPresent {
-				return fmt.Errorf("Received error from signaling server: %v", errMsg)
+				return fmt.Errorf("received error from signaling server: %v", errMsg)
 			} else {
-				return fmt.Errorf("Unknown message type: %v", msg["type"])
+				return fmt.Errorf("unknown message type: %v", msg["type"])
 			}
 		}
 	}
@@ -160,14 +160,14 @@ func (c *Controller) sendSigMsg(msg any) {
 
 func (c *Controller) onOffer(offer *webrtc.SessionDescription) error {
 	if err := c.peerConnection.SetRemoteDescription(*offer); err != nil {
-		return fmt.Errorf("Failed to set remote description: %w", err)
+		return fmt.Errorf("failed to set remote description: %w", err)
 	}
 	answer, err := c.peerConnection.CreateAnswer(nil)
 	if err != nil {
-		return fmt.Errorf("Failed to create answer: %w", err)
+		return fmt.Errorf("failed to create answer: %w", err)
 	}
 	if err = c.peerConnection.SetLocalDescription(answer); err != nil {
-		return fmt.Errorf("Failed to set local description: %w", err)
+		return fmt.Errorf("failed to set local description: %w", err)
 	}
 	c.sendSigMsg(answer)
 	return nil
@@ -176,7 +176,7 @@ func (c *Controller) onOffer(offer *webrtc.SessionDescription) error {
 func (c *Controller) onAnswer(answer *webrtc.SessionDescription) error {
 	err := c.peerConnection.SetRemoteDescription(*answer)
 	if err != nil {
-		return fmt.Errorf("Failed to set remote description: %w", err)
+		return fmt.Errorf("failed to set remote description: %w", err)
 	}
 	return nil
 }
@@ -184,7 +184,7 @@ func (c *Controller) onAnswer(answer *webrtc.SessionDescription) error {
 func (c *Controller) onICECandidate(candidate *webrtc.ICECandidateInit) error {
 	err := c.peerConnection.AddICECandidate(*candidate)
 	if err != nil {
-		return fmt.Errorf("Failed to add ICE candidate: %w", err)
+		return fmt.Errorf("failed to add ICE candidate: %w", err)
 	}
 	return nil
 }
@@ -227,11 +227,11 @@ func NewConnectionWithLogger(signaling *Signaling, observer Observer, logger io.
 	}
 	pc, err := api.NewPeerConnection(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create peer connection: %w", err)
+		return nil, fmt.Errorf("failed to create peer connection: %w", err)
 	}
 	adbChannel, err := pc.CreateDataChannel("adb-channel", nil /*options*/)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create adb data channel: %w", err)
+		return nil, fmt.Errorf("failed to create adb data channel: %w", err)
 	}
 	pc.OnNegotiationNeeded(func() {
 		// TODO(jemoreira): This needs to be handled when unnecessary tracks and

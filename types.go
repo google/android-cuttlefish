@@ -60,12 +60,12 @@ func NewICECandidateMsg(candidate webrtc.ICECandidateInit) *ICECandidateMsg {
 func Reshape[K any](original any) (*K, error) {
 	str, err := json.Marshal(original)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to marshal original message: %v", err)
+		return nil, fmt.Errorf("failed to marshal original message: %v", err)
 	}
 	var ret K
 	err = json.Unmarshal(str, &ret)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to unmarshal into new object: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal into new object: %v", err)
 	}
 	return &ret, nil
 }
