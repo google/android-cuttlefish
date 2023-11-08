@@ -439,8 +439,3 @@ func addFormField(writer *multipart.Writer, field, value string) error {
 	}
 	return nil
 }
-
-func isRetryableErrorCode(code int) bool {
-	return code == http.StatusServiceUnavailable ||
-		code == http.StatusBadGateway
-}

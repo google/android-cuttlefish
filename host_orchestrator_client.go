@@ -80,7 +80,7 @@ type HostOrchestratorServiceImpl struct {
 
 func (c *HostOrchestratorServiceImpl) getInfraConfig() (*hoapi.InfraConfig, error) {
 	var res hoapi.InfraConfig
-	if err := c.HTTPHelper.NewGetRequest(fmt.Sprintf("/infra_config")).Do(&res); err != nil {
+	if err := c.HTTPHelper.NewGetRequest("/infra_config").Do(&res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -168,7 +168,7 @@ func (c *HostOrchestratorServiceImpl) webRTCPoll(sinkCh chan map[string]any, con
 			start++
 		}
 		select {
-		case _, _ = <-stopCh:
+		case <-stopCh:
 			// The forwarding goroutine has requested a stop
 			close(sinkCh)
 			return
@@ -291,8 +291,6 @@ func (c *HostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
 	}
 	return uploadDir.Name, nil
 }
-
-const openConnections = 32
 
 func (c *HostOrchestratorServiceImpl) UploadFiles(uploadDir string, filenames []string) error {
 	return c.UploadFilesWithOptions(uploadDir, filenames, DefaultUploadOptions())
