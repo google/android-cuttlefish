@@ -27,6 +27,7 @@ apex {
     // Install the apex in /vendor/apex
     soc_specific: true,
     prebuilts: [
+        "Crosvm_Virtio_Multitouch_Touchpad_0.idc",
         "Crosvm_Virtio_Multitouch_Touchscreen_0.idc",
         "Crosvm_Virtio_Multitouch_Touchscreen_1.idc",
         "Crosvm_Virtio_Multitouch_Touchscreen_2.idc",
