@@ -26,7 +26,10 @@ extern "C" {
 //   values from SecurityLevel.aidl.
 // - trm: pointer to a valid `TpmResourceManager`, which must remain valid
 //   for the entire duration of the function execution.
-void kmr_ta_main(int fd_in, int fd_out, int security_level, void* trm);
+// - snapshot_socket_fd: file descriptor for a socket used to communicate with
+//   the secure_env suspend-resume handler thread.
+void kmr_ta_main(int fd_in, int fd_out, int security_level, void* trm,
+                 int snapshot_socket_fd);
 
 #ifdef __cplusplus
 }
