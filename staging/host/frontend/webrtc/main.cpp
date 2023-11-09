@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
   for (const auto& touch_fd_str : android::base::Split(FLAGS_touch_fds, ",")) {
     auto touch_fd = std::stoi(touch_fd_str);
     auto display_label = "display_" + std::to_string(display_counter++);
-    inputs_builder.WithTouchscreen(display_label,
+    inputs_builder.WithTouchDevice(display_label,
                                    cuttlefish::SharedFD::Dup(touch_fd));
     close(touch_fd);
   }

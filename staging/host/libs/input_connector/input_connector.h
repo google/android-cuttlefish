@@ -35,8 +35,8 @@ class InputConnector {
   virtual Result<void> SendTouchEvent(const std::string& display, int x, int y,
                                       bool down) = 0;
   virtual Result<void> SendMultiTouchEvent(
-      const std::string& display_label,
-      const std::vector<MultitouchSlot>& slots, bool down) = 0;
+      const std::string& device_label, const std::vector<MultitouchSlot>& slots,
+      bool down) = 0;
   virtual Result<void> SendKeyboardEvent(uint16_t code, bool down) = 0;
   virtual Result<void> SendRotaryEvent(int pixels) = 0;
   virtual Result<void> SendSwitchesEvent(uint16_t code, bool state) = 0;

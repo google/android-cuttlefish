@@ -42,7 +42,7 @@ class ConnectionObserver {
 
   virtual void OnConnected() = 0;
 
-  virtual void OnTouchEvent(const std::string& display_label, int x, int y,
+  virtual void OnTouchEvent(const std::string& device_label, int x, int y,
                             bool down) = 0;
   virtual void OnMultiTouchEvent(const std::string& label, Json::Value id,
                                  Json::Value slot, Json::Value x, Json::Value y,
