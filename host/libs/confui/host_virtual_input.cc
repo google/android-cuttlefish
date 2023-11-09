@@ -32,10 +32,10 @@ bool HostVirtualInput::IsConfUiActive() {
   return host_mode_ctrl_.IsConfirmatioUiMode();
 }
 
-Result<void> HostVirtualInput::SendTouchEvent(const std::string& display, int x,
-                                              int y, bool down) {
+Result<void> HostVirtualInput::SendTouchEvent(const std::string& device_label,
+                                              int x, int y, bool down) {
   if (!IsConfUiActive()) {
-    return android_mode_input_.SendTouchEvent(display, x, y, down);
+    return android_mode_input_.SendTouchEvent(device_label, x, y, down);
   }
 
   if (down) {
@@ -47,10 +47,10 @@ Result<void> HostVirtualInput::SendTouchEvent(const std::string& display, int x,
 }
 
 Result<void> HostVirtualInput::SendMultiTouchEvent(
-    const std::string& display_label, const std::vector<MultitouchSlot>& slots,
+    const std::string& device_label, const std::vector<MultitouchSlot>& slots,
     bool down) {
   if (!IsConfUiActive()) {
-    return android_mode_input_.SendMultiTouchEvent(display_label, slots, down);
+    return android_mode_input_.SendMultiTouchEvent(device_label, slots, down);
   }
   for (auto& slot: slots) {
     if (down) {
