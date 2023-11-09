@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 #include <json/json.h>
 
@@ -30,245 +31,133 @@
 namespace cuttlefish {
 namespace {
 
-static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
-    {"netsim_bt", Json::ValueType::booleanValue},
-    {"instances", Json::ValueType::arrayValue},
-    {"fetch", Json::ValueType::objectValue},
-    {"metrics", Json::ValueType::objectValue},
-    {"common", Json::ValueType::objectValue},
+using Json::ValueType::arrayValue;
+using Json::ValueType::booleanValue;
+using Json::ValueType::intValue;
+using Json::ValueType::objectValue;
+using Json::ValueType::stringValue;
+using Json::ValueType::uintValue;
+
+const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
+  {"netsim_bt", ConfigNode{.type = booleanValue}},
+  {"instances", ConfigNode{.type = arrayValue, .children = {
+    {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
+        {"@import", ConfigNode{.type = stringValue}},
+        {"vm", ConfigNode{.type = objectValue, .children = {
+          {"cpus", ConfigNode{.type = uintValue}},
+          {"memory_mb", ConfigNode{.type = uintValue}},
+          {"use_sdcard", ConfigNode{.type = booleanValue}},
+          {"setupwizard_mode", ConfigNode{.type = stringValue}},
+          {"uuid", ConfigNode{.type = stringValue}},
+          {"crosvm", ConfigNode{.type = objectValue, .children = {
+            {"enable_sandbox", ConfigNode{.type = booleanValue}},
+          }}},
+          {"custom_actions", ConfigNode{.type = arrayValue, .children = {
+            {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
+              {"shell_command", ConfigNode{.type = stringValue}},
+              {"button", ConfigNode{.type = objectValue, .children = {
+                {"command", ConfigNode{.type = stringValue}},
+                {"title", ConfigNode{.type = stringValue}},
+                {"icon_name", ConfigNode{.type = stringValue}},
+              }}},
+              {"server", ConfigNode{.type = stringValue}},
+              {"buttons", ConfigNode{.type = arrayValue, .children = {
+                {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
+                  {"command", ConfigNode{.type = stringValue}},
+                  {"title", ConfigNode{.type = stringValue}},
+                  {"icon_name", ConfigNode{.type = stringValue}},
+                }}},
+              }}},
+              {"device_states", ConfigNode{.type = arrayValue, .children = {
+                {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
+                  {"lid_switch_open", ConfigNode{.type = booleanValue}},
+                  {"hinge_angle_value", ConfigNode{.type = intValue}},
+                }}},
+              }}},
+            }}},
+          }}},
+        }}},
+        {"boot", ConfigNode{.type = objectValue, .children = {
+          {"kernel", ConfigNode{.type = objectValue, .children = {
+            {"build", ConfigNode{.type = stringValue}},
+          }}},
+          {"enable_bootanimation", ConfigNode{.type = booleanValue}},
+          {"build", ConfigNode{.type = stringValue}},
+          {"bootloader", ConfigNode{.type = objectValue, .children = {
+            {"build", ConfigNode{.type = stringValue}},
+          }}},
+          {"bootconfig_args", ConfigNode{.type = stringValue}},
+        }}},
+        {"security", ConfigNode{.type = objectValue, .children = {
+          {"serial_number", ConfigNode{.type = stringValue}},
+          {"use_random_serial", ConfigNode{.type = stringValue}},
+          {"guest_enforce_security", ConfigNode{.type = booleanValue}},
+        }}},
+        {"disk", ConfigNode{.type = objectValue, .children = {
+          {"default_build", ConfigNode{.type = stringValue}},
+          {"super", ConfigNode{.type = objectValue, .children = {
+            {"system", ConfigNode{.type = stringValue}},
+          }}},
+          {"download_img_zip", ConfigNode{.type = booleanValue}},
+          {"download_target_zip_files", ConfigNode{.type = booleanValue}},
+          {"blank_data_image_mb", ConfigNode{.type = uintValue}},
+          {"otatools", ConfigNode{.type = stringValue}},
+        }}},
+        {"graphics", ConfigNode{.type = objectValue, .children = {
+          {"displays", ConfigNode{.type = arrayValue, .children = {
+            {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children {
+              {"width", ConfigNode{.type = uintValue}},
+              {"height", ConfigNode{.type = uintValue}},
+              {"dpi", ConfigNode{.type = uintValue}},
+              {"refresh_rate_hertz", ConfigNode{.type = uintValue}},
+            }}},
+          }}},
+          {"record_screen", ConfigNode{.type = booleanValue}},
+        }}},
+        {"streaming", ConfigNode{.type = objectValue, .children = {
+          {"device_id", ConfigNode{.type = stringValue}},
+        }}},
+      }}},
+    }}},
+  {"fetch", ConfigNode{.type = objectValue, .children = {
+      {"api_key", ConfigNode{.type = stringValue}},
+      {"credential_source", ConfigNode{.type = stringValue}},
+      {"wait_retry_period", ConfigNode{.type = uintValue}},
+      {"external_dns_resolver", ConfigNode{.type = booleanValue}},
+      {"keep_downloaded_archives", ConfigNode{.type = booleanValue}},
+      {"api_base_url", ConfigNode{.type = stringValue}},
+    }}},
+  {"metrics", ConfigNode{.type = objectValue, .children = {
+      {"enable", ConfigNode{.type = booleanValue}},
+    }}},
+  {"common", ConfigNode{.type = objectValue, .children = {
+    {"group_name", ConfigNode{.type = stringValue}},
+    {"host_package", ConfigNode{.type = stringValue}},
+  }}},
+},
 };
 
-static std::map<std::string, Json::ValueType> kCommonKeyMap = {
-    {"group_name", Json::ValueType::stringValue},
-    {"host_package", Json::ValueType::stringValue},
-};
+}  // namespace
 
-static std::map<std::string, Json::ValueType> kFetchKeyMap = {
-    {"api_key", Json::ValueType::stringValue},
-    {"credential_source", Json::ValueType::stringValue},
-    {"wait_retry_period", Json::ValueType::uintValue},
-    {"external_dns_resolver", Json::ValueType::booleanValue},
-    {"keep_downloaded_archives", Json::ValueType::booleanValue},
-    {"api_base_url", Json::ValueType::stringValue},
-};
+Result<void> ValidateCfConfigs(const Json::Value& root) {
+  static const auto& kSupportedImportValues =
+      *new std::unordered_set<std::string>{"phone", "tablet", "tv", "wearable",
+                                           "auto",  "slim",   "go", "foldable"};
 
-static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
-    {"@import", Json::ValueType::stringValue},
-    {"name", Json::ValueType::stringValue},
-    {"vm", Json::ValueType::objectValue},
-    {"boot", Json::ValueType::objectValue},
-    {"security", Json::ValueType::objectValue},
-    {"disk", Json::ValueType::objectValue},
-    {"graphics", Json::ValueType::objectValue},
-    {"camera", Json::ValueType::objectValue},
-    {"connectivity", Json::ValueType::objectValue},
-    {"audio", Json::ValueType::objectValue},
-    {"streaming", Json::ValueType::objectValue},
-    {"adb", Json::ValueType::objectValue},
-    {"vehicle", Json::ValueType::objectValue},
-    {"location", Json::ValueType::objectValue}};
-
-static std::unordered_set<std::string> kSupportedImportValues = {
-    "phone", "tablet", "tv", "wearable", "auto", "slim", "go", "foldable"};
-
-static std::map<std::string, Json::ValueType> kVmKeyMap = {
-    {"cpus", Json::ValueType::uintValue},
-    {"memory_mb", Json::ValueType::uintValue},
-    {"use_sdcard", Json::ValueType::booleanValue},
-    {"setupwizard_mode", Json::ValueType::stringValue},
-    {"uuid", Json::ValueType::stringValue},
-    {"crosvm", Json::ValueType::objectValue},
-    {"qemu", Json::ValueType::objectValue},
-    {"gem5", Json::ValueType::objectValue},
-    {"custom_actions", Json::ValueType::arrayValue},
-};
-static std::map<std::string, Json::ValueType> kCrosvmKeyMap = {
-    {"enable_sandbox", Json::ValueType::booleanValue},
-};
-
-static std::map<std::string, Json::ValueType> kBootKeyMap = {
-    {"kernel", Json::ValueType::objectValue},
-    {"enable_bootanimation", Json::ValueType::booleanValue},
-    {"build", Json::ValueType::stringValue},
-    {"bootloader", Json::ValueType::objectValue},
-    {"bootconfig_args", Json::ValueType::stringValue},
-};
-
-static std::map<std::string, Json::ValueType> kKernelKeyMap = {
-    {"build", Json::ValueType::stringValue},
-};
-
-static std::map<std::string, Json::ValueType> kBootloaderKeyMap = {
-    {"build", Json::ValueType::stringValue},
-};
-
-static std::map<std::string, Json::ValueType> kGraphicsKeyMap = {
-    {"displays", Json::ValueType::arrayValue},
-    {"record_screen", Json::ValueType::booleanValue},
-};
-static std::map<std::string, Json::ValueType> kDisplayKeyMap = {
-    {"width", Json::ValueType::uintValue},
-    {"height", Json::ValueType::uintValue},
-    {"dpi", Json::ValueType::uintValue},
-    {"refresh_rate_hertz", Json::ValueType::uintValue},
-};
-
-static std::map<std::string, Json::ValueType> kSecurityKeyMap = {
-    {"serial_number", Json::ValueType::stringValue},
-    {"use_random_serial", Json::ValueType::stringValue},
-    {"guest_enforce_security", Json::ValueType::booleanValue},
-};
-
-static std::map<std::string, Json::ValueType> kDiskKeyMap = {
-    {"default_build", Json::ValueType::stringValue},
-    {"super", Json::ValueType::objectValue},
-    {"download_img_zip", Json::ValueType::booleanValue},
-    {"download_target_zip_files", Json::ValueType::booleanValue},
-    {"blank_data_image_mb", Json::ValueType::uintValue},
-    {"otatools", Json::ValueType::stringValue},
-};
-
-static std::map<std::string, Json::ValueType> kSuperKeyMap = {
-    {"system", Json::ValueType::stringValue},
-};
-
-Result<void> ValidateSecurityConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kSecurityKeyMap),
-            "ValidateSecurityConfigs ValidateTypo fail");
-  return {};
-}
-Result<void> ValidateDiskConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kDiskKeyMap),
-            "ValidateDiskConfigs ValidateTypo fail");
-  if (root.isMember("super")) {
-    CF_EXPECT(ValidateTypo(root["super"], kSuperKeyMap),
-              "ValidateDiskSuperConfigs ValidateTypo fail");
-  }
-  return {};
-}
-
-Result<void> ValidateDisplaysConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kDisplayKeyMap),
-            "ValidateDisplaysConfigs ValidateTypo fail");
-  return {};
-}
-
-Result<void> ValidateGraphicsConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kGraphicsKeyMap),
-            "ValidateGraphicsConfigs ValidateTypo fail");
-
-  if (root.isMember("displays") && root["displays"].size() != 0) {
-    for (const auto& display : root["displays"]) {
-      CF_EXPECT(ValidateDisplaysConfigs(display));
-    }
-  }
-
-  return {};
-}
-
-Result<void> ValidateVmConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kVmKeyMap),
-            "ValidateVmConfigs ValidateTypo fail");
-  if (root.isMember("crosvm")) {
-    CF_EXPECT(ValidateTypo(root["crosvm"], kCrosvmKeyMap),
-              "ValidateVmConfigs ValidateTypo crosvm fail");
-  }
-  return {};
-}
-
-Result<void> ValidateKernelConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kKernelKeyMap),
-            "ValidateKernelConfigs ValidateTypo fail");
-  return {};
-}
-
-Result<void> ValidateBootloaderConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kBootloaderKeyMap),
-            "ValidateBootloaderConfigs ValidateTypo fail");
-  return {};
-}
-
-Result<void> ValidateBootConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kBootKeyMap),
-            "ValidateBootConfigs ValidateTypo fail");
-
-  if (root.isMember("kernel")) {
-    CF_EXPECT(ValidateKernelConfigs(root["kernel"]));
-  }
-  if (root.isMember("bootloader")) {
-    CF_EXPECT(ValidateBootloaderConfigs(root["bootloader"]));
-  }
-  return {};
-}
-
-Result<void> ValidateStreamingConfigs(const Json::Value& root) {
-  static const auto& kStreamingKeyMap =
-      *new std::map<std::string, Json::ValueType>{
-          {"device_id", Json::ValueType::stringValue},
-      };
-
-  CF_EXPECT(ValidateTypo(root, kStreamingKeyMap),
-            "ValidateStreamingConfigs ValidateTypo fail");
-  return {};
-}
-
-Result<void> ValidateInstancesConfigs(const Json::Value& instances) {
-  for (const auto& instance : instances) {
-    CF_EXPECT(ValidateTypo(instance, kInstanceKeyMap),
-              "instance ValidateTypo fail");
-
-    if (instance.isMember("vm")) {
-      CF_EXPECT(ValidateVmConfigs(instance["vm"]));
-    }
-
+  CF_EXPECT(Validate(root, kRoot), "Validation failure in [root object] ->");
+  for (const auto& instance : root["instances"]) {
+    // TODO(chadreynolds): update `ExtractLaunchTemplates` to return a Result
+    // and check import values there, then remove this check
     if (instance.isMember("@import")) {
-      CF_EXPECT(
-          kSupportedImportValues.count(instance["@import"].asString()) > 0,
-          "@Import flag values are not supported");
-    }
-
-    if (instance.isMember("boot")) {
-      CF_EXPECT(ValidateBootConfigs(instance["boot"]));
-    }
-    if (instance.isMember("security")) {
-      CF_EXPECT(ValidateSecurityConfigs(instance["security"]));
-    }
-    if (instance.isMember("disk")) {
-      CF_EXPECT(ValidateDiskConfigs(instance["disk"]));
-    }
-    if (instance.isMember("graphics")) {
-      CF_EXPECT(ValidateGraphicsConfigs(instance["graphics"]));
-    }
-    if (instance.isMember("streaming")) {
-      CF_EXPECT(ValidateStreamingConfigs(instance["streaming"]));
+      const std::string import_value = instance["@import"].asString();
+      CF_EXPECTF(kSupportedImportValues.find(import_value) !=
+                     kSupportedImportValues.end(),
+                 "import value of \"{}\" is not supported", import_value);
     }
     CF_EXPECT(ValidateConfig<std::string>(instance, ValidateSetupWizardMode,
                                           {"vm", "setupwizard_mode"}),
               "Invalid value for setupwizard_mode flag");
   }
-
-  return {};
-}
-
-}  // namespace
-
-Result<void> ValidateCfConfigs(const Json::Value& root) {
-  static const auto& kMetricsMap = *new std::map<std::string, Json::ValueType>{
-      {"enable", Json::ValueType::booleanValue},
-  };
-
-  CF_EXPECT(ValidateTypo(root, kConfigsKeyMap),
-            "Typo in config main parameters");
-  CF_EXPECT(ValidateTypo(root["common"], kCommonKeyMap),
-            "Typo in config common parameters");
-  CF_EXPECT(ValidateTypo(root["fetch"], kFetchKeyMap),
-            "Typo in config fetch parameters");
-  CF_EXPECT(ValidateTypo(root["metrics"], kMetricsMap),
-            "Typo in config metrics parameters");
-  CF_EXPECT(root.isMember("instances"), "instances object is missing");
-  CF_EXPECT(ValidateInstancesConfigs(root["instances"]),
-            "ValidateInstancesConfigs failed");
-
   return {};
 }
 
