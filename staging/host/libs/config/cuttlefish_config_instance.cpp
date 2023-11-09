@@ -1542,9 +1542,9 @@ bool CuttlefishConfig::InstanceSpecific::sock_vsock_proxy_wait_adbd_start()
 }
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
-    int screen_idx) const {
+    int touch_dev_idx) const {
   return PerInstanceInternalUdsPath(
-      ("touch_" + std::to_string(screen_idx) + ".sock").c_str());
+      ("touch_" + std::to_string(touch_dev_idx) + ".sock").c_str());
 }
 
 std::string CuttlefishConfig::InstanceSpecific::rotary_socket_path() const {
