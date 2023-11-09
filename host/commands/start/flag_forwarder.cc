@@ -314,7 +314,7 @@ void FlagForwarder::UpdateFlagDefaults() const {
 
 // Hash table for repeatable flags (able to have repeated flag inputs)
 static std::unordered_set<std::string> kRepeatableFlags = {
-    "custom_action_config", "custom_actions", "display"};
+    "custom_action_config", "custom_actions", "display", "touchpad"};
 
 std::vector<std::string> FlagForwarder::ArgvForSubprocess(
     const std::string& subprocess, const std::vector<std::string>& args) const {
