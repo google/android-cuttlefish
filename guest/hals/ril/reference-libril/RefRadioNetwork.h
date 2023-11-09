@@ -22,6 +22,8 @@ namespace cf::ril {
 class RefRadioNetwork : public android::hardware::radio::compat::RadioNetwork {
     ::aidl::android::hardware::radio::network::UsageSetting mUsageSetting =
             ::aidl::android::hardware::radio::network::UsageSetting::VOICE_CENTRIC;
+    // As per the specs, the default is true.
+    bool mIsCellualIdentifierTransparencyEnabled = true;
 
   public:
     using android::hardware::radio::compat::RadioNetwork::RadioNetwork;
@@ -51,6 +53,10 @@ class RefRadioNetwork : public android::hardware::radio::compat::RadioNetwork {
     ::ndk::ScopedAStatus setNullCipherAndIntegrityEnabled(int32_t serial, bool enabled) override;
 
     ::ndk::ScopedAStatus isNullCipherAndIntegrityEnabled(int32_t serial) override;
+
+    ::ndk::ScopedAStatus setCellularIdentifierTransparencyEnabled(int32_t serial, bool enabled) override;
+
+    ::ndk::ScopedAStatus isCellularIdentifierTransparencyEnabled(int32_t serial) override;
 };
 
 }  // namespace cf::ril
