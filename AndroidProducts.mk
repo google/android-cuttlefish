@@ -42,6 +42,7 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_x86_64_host:$(LOCAL_DIR)/vsoc_x86_64_host/aosp_cf.mk \
 	aosp_cf_x86_64_minidroid:$(LOCAL_DIR)/vsoc_x86_64_minidroid/aosp_cf.mk \
 	aosp_cf_x86_64_only_phone:$(LOCAL_DIR)/vsoc_x86_64_only/phone/aosp_cf.mk \
+	aosp_cf_x86_64_phone_pgagnostic:$(LOCAL_DIR)/vsoc_x86_64_pgagnostic/phone/aosp_cf.mk \
 	aosp_cf_x86_64_only_phone_hsum:$(LOCAL_DIR)/vsoc_x86_64_only/phone/aosp_cf_hsum.mk \
 	aosp_cf_x86_64_slim:$(LOCAL_DIR)/vsoc_x86_64_only/slim/aosp_cf.mk \
 	aosp_cf_x86_64_wear:$(LOCAL_DIR)/vsoc_x86_64_only/wear/aosp_cf.mk \
