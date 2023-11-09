@@ -29,8 +29,13 @@
 
 namespace cuttlefish {
 
-Result<void> ValidateTypo(const Json::Value& root,
-                          const std::map<std::string, Json::ValueType>& map);
+// sentinel lookup value for validating arrays to retrieve type of the elements
+inline constexpr char kArrayValidationSentinel[] = "kArrayValidationSentinel";
+
+struct ConfigNode {
+  Json::ValueType type;
+  std::map<std::string, ConfigNode> children;
+};
 
 template <typename T>
 Result<void> ValidateConfig(const Json::Value& instance,
@@ -94,5 +99,7 @@ std::vector<std::string> MergeResults(std::vector<std::string> first_list,
                                       std::vector<std::string> scond_list);
 
 void MergeTwoJsonObjs(Json::Value& dst, const Json::Value& src);
+
+Result<void> Validate(const Json::Value& value, const ConfigNode& node);
 
 }  // namespace cuttlefish
