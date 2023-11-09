@@ -57,6 +57,10 @@ class RefRadioNetwork : public android::hardware::radio::compat::RadioNetwork {
     ::ndk::ScopedAStatus setCellularIdentifierTransparencyEnabled(int32_t serial, bool enabled) override;
 
     ::ndk::ScopedAStatus isCellularIdentifierTransparencyEnabled(int32_t serial) override;
+
+    ::ndk::ScopedAStatus setSecurityAlgorithmsUpdatedEnabled(int32_t serial, bool enabled) override;
+
+    ::ndk::ScopedAStatus isSecurityAlgorithmsUpdatedEnabled(int32_t serial) override;
 };
 
 }  // namespace cf::ril

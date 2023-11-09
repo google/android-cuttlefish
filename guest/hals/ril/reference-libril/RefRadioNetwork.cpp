@@ -101,4 +101,14 @@ ScopedAStatus RefRadioNetwork::isCellularIdentifierTransparencyEnabled(int32_t s
       responseInfo(serial), mIsCellualIdentifierTransparencyEnabled);
   return ok();
 }
+
+ScopedAStatus RefRadioNetwork::setSecurityAlgorithmsUpdatedEnabled(int32_t serial, bool enabled) {
+  respond()->setSecurityAlgorithmsUpdatedEnabledResponse(responseInfo(serial));
+  return ok();
+}
+
+ScopedAStatus RefRadioNetwork::isSecurityAlgorithmsUpdatedEnabled(int32_t serial) {
+  respond()->isSecurityAlgorithmsUpdatedEnabledResponse(responseInfo(serial), true);
+  return ok();
+}
 }  // namespace cf::ril
