@@ -25,6 +25,7 @@
 
 #include "common/libs/utils/contains.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
@@ -277,6 +278,45 @@ Result<std::string> SelectGpuMode(
 
   return gpu_mode_arg;
 }
+
+Result<bool> SelectGpuVhostUserMode(const std::string& gpu_mode,
+                                    const std::string& gpu_vhost_user_mode_arg,
+                                    const std::string& vm_manager) {
+  CF_EXPECT(gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto ||
+            gpu_vhost_user_mode_arg == kGpuVhostUserModeOn ||
+            gpu_vhost_user_mode_arg == kGpuVhostUserModeOff);
+  if (gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto) {
+    if (gpu_mode == kGpuModeGuestSwiftshader ||
+        gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+      LOG(INFO) << "GPU vhost user auto mode: not needed for --gpu_mode="
+                << gpu_mode << ". Not enabling vhost user gpu.";
+      return false;
+    }
+
+    if (vm_manager != vm_manager::CrosvmManager::name()) {
+      LOG(INFO) << "GPU vhost user auto mode: not yet supported with "
+                << vm_manager << ". Not enabling vhost user gpu.";
+      return false;
+    }
+
+    // Android built ARM host tools seem to be incompatible with host GPU
+    // libraries. Enable vhost user gpu which will run the virtio GPU device
+    // in a separate process with a VMM prebuilt. See b/200592498.
+    const auto host_arch = HostArch();
+    if (host_arch == Arch::Arm64) {
+      LOG(INFO) << "GPU vhost user auto mode: detected arm64 host. Enabling "
+                   "vhost user gpu.";
+      return true;
+    }
+
+    LOG(INFO) << "GPU vhost user auto mode: not needed. Not enabling vhost "
+                 "user gpu.";
+    return false;
+  }
+
+  return gpu_vhost_user_mode_arg == kGpuVhostUserModeOn;
+}
+
 #endif
 
 Result<std::string> GraphicsDetectorBinaryPath() {
@@ -314,10 +354,11 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
 }  // namespace
 
 Result<std::string> ConfigureGpuSettings(
-    const std::string& gpu_mode_arg, const bool gpu_vhost_user_arg,
+    const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
     const std::string& vm_manager, const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
 #ifdef __APPLE__
+  (void)gpu_vhost_user_mode_arg;
   (void)vm_manager;
   (void)guest_config;
   CF_EXPECT(gpu_mode_arg == kGpuModeAuto ||
@@ -328,6 +369,7 @@ Result<std::string> ConfigureGpuSettings(
     gpu_mode = kGpuModeGuestSwiftshader;
   }
   instance.set_gpu_mode(gpu_mode);
+  instance.set_enable_gpu_vhost_user(false);
 #else
   gfxstream::proto::GraphicsAvailability graphics_availability;
 
@@ -343,6 +385,8 @@ Result<std::string> ConfigureGpuSettings(
 
   const std::string gpu_mode = CF_EXPECT(SelectGpuMode(
       gpu_mode_arg, vm_manager, guest_config, graphics_availability));
+  const bool enable_gpu_vhost_user = CF_EXPECT(
+      SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode_arg, vm_manager));
 
   const auto angle_features = CF_EXPECT(GetNeededAngleFeatures(
       CF_EXPECT(GetRenderingMode(gpu_mode)), graphics_availability));
@@ -351,7 +395,7 @@ Result<std::string> ConfigureGpuSettings(
   instance.set_gpu_angle_feature_overrides_disabled(
       angle_features.angle_feature_overrides_disabled);
 
-  if (gpu_vhost_user_arg) {
+  if (enable_gpu_vhost_user) {
     const auto gpu_vhost_user_features =
         CF_EXPECT(GetNeededVhostUserGpuHostRendererFeatures(
             CF_EXPECT(GetRenderingMode(gpu_mode)), graphics_availability));
@@ -363,9 +407,10 @@ Result<std::string> ConfigureGpuSettings(
     instance.set_enable_gpu_system_blob(false);
   }
 
-#endif
   instance.set_gpu_mode(gpu_mode);
-  instance.set_enable_gpu_vhost_user(gpu_vhost_user_arg);
+  instance.set_enable_gpu_vhost_user(enable_gpu_vhost_user);
+#endif
+
   return gpu_mode;
 }
 
