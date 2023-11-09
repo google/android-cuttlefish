@@ -28,20 +28,30 @@
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
+namespace {
 
-/**
- * Validate Json data Name and type
- */
-Result<void> ValidateTypo(const Json::Value& root,
-                          const std::map<std::string, Json::ValueType>& map) {
-  for (const std::string& flag : root.getMemberNames()) {
-    CF_EXPECT(map.count(flag) != 0,
-              "Invalid input flag name:- " << flag << " not recognized");
-    CF_EXPECT(root[flag].isConvertibleTo(map.at(flag)),
-              "Invalid flag type" << flag);
+std::string ToString(const Json::ValueType value_type) {
+  switch (value_type) {
+    case Json::ValueType::nullValue:
+      return "null";
+    case Json::ValueType::intValue:
+      return "int";
+    case Json::ValueType::uintValue:
+      return "uint";
+    case Json::ValueType::realValue:
+      return "real";
+    case Json::ValueType::stringValue:
+      return "string";
+    case Json::ValueType::booleanValue:
+      return "boolean";
+    case Json::ValueType::arrayValue:
+      return "array";
+    case Json::ValueType::objectValue:
+      return "object";
   }
-  return {};
 }
+
+}  // namespace
 
 void InitIntConfigSubGroupVector(Json::Value& instances,
                                  const std::string& group,
@@ -109,6 +119,34 @@ void MergeTwoJsonObjs(Json::Value& dst, const Json::Value& src) {
       dst[key] = src[key];
     }
   }
+}
+
+// TODO(chadreynolds): collect all Result values under object and array cases to
+// help user make fixes in less runs
+Result<void> Validate(const Json::Value& value, const ConfigNode& node) {
+  if (node.type == Json::ValueType::objectValue) {
+    for (const std::string& member : value.getMemberNames()) {
+      const auto lookup_pair = node.children.find(member);
+      CF_EXPECTF(lookup_pair != node.children.end(), "Unexpected node name: {}",
+                 member);
+      CF_EXPECTF(Validate(value[member], lookup_pair->second), "\"{}\" ->",
+                 member);
+    }
+  } else if (node.type == Json::ValueType::arrayValue) {
+    const auto lookup_pair = node.children.find(kArrayValidationSentinel);
+    CF_EXPECTF(lookup_pair != node.children.end(),
+               "Developer error in validation structure definition. A \"{}\" "
+               "node is expected under any array to determine element types.",
+               kArrayValidationSentinel);
+    for (const auto& element : value) {
+      CF_EXPECT(Validate(element, lookup_pair->second), "[array element] ->");
+    }
+  } else {  // is a leaf node
+    CF_EXPECTF(value.isConvertibleTo(node.type),
+               "Failure to convert value \"{}\" to expected JSON type: {}",
+               value.asString(), ToString(node.type));
+  }
+  return {};
 }
 
 }  // namespace cuttlefish

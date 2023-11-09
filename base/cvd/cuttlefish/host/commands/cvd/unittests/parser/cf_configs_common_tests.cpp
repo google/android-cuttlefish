@@ -348,4 +348,119 @@ TEST(CfConfigsCommonTests, GenerateGflagMissingValue) {
   EXPECT_THAT(result, IsError());
 }
 
+TEST(ValidateTests, ValidateArrayTypeSuccess) {
+  const char* raw_json = R""""(
+  [
+    "value1",
+    "value2",
+    "value3"
+  ]
+  )"""";
+  const auto validation_definition =
+      ConfigNode{.type = Json::ValueType::arrayValue,
+                 .children = {
+                     {kArrayValidationSentinel,
+                      ConfigNode{.type = Json::ValueType::stringValue}},
+                 }};
+
+  Json::Value json_config;
+  std::string json_text(raw_json);
+  ASSERT_TRUE(ParseJsonString(json_text, json_config))
+      << "Invalid JSON string for test";
+
+  auto result = Validate(json_config, validation_definition);
+  EXPECT_THAT(result, IsOk());
+}
+
+TEST(ValidateTests, ValidateArrayTypeFailure) {
+  const char* raw_json = R""""(
+  [
+    "value1",
+    "value2",
+    "value3"
+  ]
+  )"""";
+  const auto validation_definition =
+      ConfigNode{.type = Json::ValueType::arrayValue,
+                 .children = {
+                     {"foo", ConfigNode{.type = Json::ValueType::stringValue}},
+                 }};
+
+  Json::Value json_config;
+  std::string json_text(raw_json);
+  ASSERT_TRUE(ParseJsonString(json_text, json_config))
+      << "Invalid JSON string for test";
+
+  auto result = Validate(json_config, validation_definition);
+  EXPECT_THAT(result, IsError());
+}
+
+TEST(ValidateTests, ValidateObjectTypeSuccess) {
+  const char* raw_json = R""""(
+  {
+    "key" : "value",
+    "key2" : 1234,
+    "key3" : {
+      "key4" : true
+    }
+  }
+  )"""";
+  const auto validation_definition = ConfigNode{
+      .type = Json::ValueType::objectValue,
+      .children = {
+          {"key", ConfigNode{.type = Json::ValueType::stringValue}},
+          {"key2", ConfigNode{.type = Json::ValueType::uintValue}},
+          {"key3",
+           ConfigNode{
+               .type = Json::ValueType::objectValue,
+               .children =
+                   {
+                       {"key4",
+                        ConfigNode{.type = Json::ValueType::booleanValue}},
+                   }}},
+      }};
+
+  Json::Value json_config;
+  std::string json_text(raw_json);
+  ASSERT_TRUE(ParseJsonString(json_text, json_config))
+      << "Invalid JSON string for test";
+
+  auto result = Validate(json_config, validation_definition);
+  EXPECT_THAT(result, IsOk());
+}
+
+TEST(ValidateTests, ValidateObjectTypeFailure) {
+  const char* raw_json = R""""(
+  {
+    "key" : "value",
+    "key2" : 1234,
+    "key3" : {
+      "key4" : true
+    }
+  }
+  )"""";
+  const auto validation_definition = ConfigNode{
+      .type = Json::ValueType::objectValue,
+      .children = {
+          {"key", ConfigNode{.type = Json::ValueType::booleanValue}},
+          {"key2", ConfigNode{.type = Json::ValueType::uintValue}},
+          {"key3",
+           ConfigNode{
+               .type = Json::ValueType::objectValue,
+               .children =
+                   {
+                       {"key4",
+                        ConfigNode{.type = Json::ValueType::stringValue}},
+                   }}},
+      }};
+
+  Json::Value json_config;
+  std::string json_text(raw_json);
+  ASSERT_TRUE(ParseJsonString(json_text, json_config))
+      << "Invalid JSON string for test";
+
+  auto result = Validate(json_config, validation_definition);
+  EXPECT_THAT(result, IsError());
+}
+
 }  // namespace cuttlefish
