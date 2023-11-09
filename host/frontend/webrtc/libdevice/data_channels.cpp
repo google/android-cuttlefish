@@ -113,7 +113,7 @@ class InputChannelHandler : public DataChannelHandler {
         LOG(ERROR) << result.error().FormatForEnv();
         return;
       }
-      auto label = evt["display_label"].asString();
+      auto label = evt["device_label"].asString();
       int32_t down = evt["down"].asInt();
       int32_t x = evt["x"].asInt();
       int32_t y = evt["y"].asInt();
@@ -127,13 +127,13 @@ class InputChannelHandler : public DataChannelHandler {
                               {"x", Json::ValueType::arrayValue},
                               {"y", Json::ValueType::arrayValue},
                               {"slot", Json::ValueType::arrayValue},
-                              {"display_label", Json::ValueType::stringValue}});
+                              {"device_label", Json::ValueType::stringValue}});
       if (!result.ok()) {
         LOG(ERROR) << result.error().FormatForEnv();
         return;
       }
 
-      auto label = evt["display_label"].asString();
+      auto label = evt["device_label"].asString();
       auto idArr = evt["id"];
       int32_t down = evt["down"].asInt();
       auto xArr = evt["x"];
