@@ -40,6 +40,7 @@ cc_binary_host {
         "kernel_module_parser.cc",
         "misc_info.cc",
         "super_image_mixer.cc",
+        "touchpad.cpp",
         "vendor_dlkm_utils.cc",
     ],
     header_libs: [

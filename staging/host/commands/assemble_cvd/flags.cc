@@ -48,12 +48,14 @@
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/commands/assemble_cvd/display.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
+#include "host/commands/assemble_cvd/touchpad.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
 #include "host/libs/config/esp.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/config/instance_nums.h"
+#include "host/libs/config/touchpad.h"
 #include "host/libs/graphics_detector/graphics_configuration.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -1390,6 +1392,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       }
     }
     instance.set_display_configs(display_configs);
+
+    auto touchpad_configs_bindings =
+        injector.getMultibindings<TouchpadsConfigs>();
+    CF_EXPECT_EQ(touchpad_configs_bindings.size(), 1,
+                 "Expected a single binding?");
+    auto touchpad_configs = touchpad_configs_bindings[0]->GetConfigs();
+    instance.set_touchpad_configs(touchpad_configs);
 
     instance.set_memory_mb(memory_mb_vec[instance_index]);
     instance.set_ddr_mem_mb(memory_mb_vec[instance_index] * 1.2);

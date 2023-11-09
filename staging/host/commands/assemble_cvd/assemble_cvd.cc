@@ -35,6 +35,7 @@
 #include "host/commands/assemble_cvd/flag_feature.h"
 #include "host/commands/assemble_cvd/flags.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
+#include "host/commands/assemble_cvd/touchpad.h"
 #include "host/libs/command_util/snapshot_utils.h"
 #include "host/libs/config/adb/adb.h"
 #include "host/libs/config/config_flag.h"
@@ -460,6 +461,8 @@ fruit::Component<> FlagsComponent() {
       .install(DisplaysConfigsComponent)
       .install(DisplaysConfigsFlagComponent)
       .install(DisplaysConfigsFragmentComponent)
+      .install(TouchpadsConfigsComponent)
+      .install(TouchpadsConfigsFlagComponent)
       .install(FastbootConfigComponent)
       .install(FastbootConfigFlagComponent)
       .install(FastbootConfigFragmentComponent)

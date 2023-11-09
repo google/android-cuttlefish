@@ -47,6 +47,8 @@
 namespace cuttlefish {
 namespace vm_manager {
 
+constexpr auto kTouchpadDefaultPrefix = "Crosvm_Virtio_Multitouch_Touchpad_";
+
 bool CrosvmManager::IsSupported() {
 #ifdef __ANDROID__
   return true;
@@ -501,18 +503,24 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   if (instance.enable_webrtc()) {
-    auto touch_type_parameter =
-        instance.enable_webrtc() ? "--multi-touch=" : "--single-touch=";
+    auto touch_type_parameter = "--multi-touch=";
 
     auto display_configs = instance.display_configs();
     CF_EXPECT(display_configs.size() >= 1);
 
-    for (int i = 0; i < display_configs.size(); ++i) {
-      auto display_config = display_configs[i];
+    int touch_idx = 0;
+    for (auto& display_config : display_configs) {
       crosvm_cmd.Cmd().AddParameter(
-          touch_type_parameter, instance.touch_socket_path(i), ":",
+          touch_type_parameter, instance.touch_socket_path(touch_idx++), ":",
           display_config.width, ":", display_config.height);
-
+    }
+    auto touchpad_configs = instance.touchpad_configs();
+    for (int i = 0; i < touchpad_configs.size(); ++i) {
+      auto touchpad_config = touchpad_configs[i];
+      crosvm_cmd.Cmd().AddParameter(
+          touch_type_parameter, instance.touch_socket_path(touch_idx++), ":",
+          touchpad_config.width, ":", touchpad_config.height, ":",
+          kTouchpadDefaultPrefix, i);
     }
     crosvm_cmd.Cmd().AddParameter("--rotary=",
                                   instance.rotary_socket_path());

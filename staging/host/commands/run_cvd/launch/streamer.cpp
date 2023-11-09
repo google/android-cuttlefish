@@ -127,12 +127,13 @@ class StreamerSockets : public virtual SetupFeature {
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
 
   Result<void> ResultSetup() override {
-    for (int i = 0; i < instance_.display_configs().size(); ++i) {
+    int display_cnt = instance_.display_configs().size();
+    int touchpad_cnt = instance_.touchpad_configs().size();
+    for (int i = 0; i < display_cnt + touchpad_cnt; ++i) {
       SharedFD touch_socket =
           CreateUnixInputServer(instance_.touch_socket_path(i));
       CF_EXPECT(touch_socket->IsOpen(), touch_socket->StrError());
       touch_servers_.emplace_back(std::move(touch_socket));
-
     }
     rotary_server_ =
         CreateUnixInputServer(instance_.rotary_socket_path());
