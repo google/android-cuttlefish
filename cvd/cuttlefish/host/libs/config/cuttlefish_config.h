@@ -143,6 +143,15 @@ class CuttlefishConfig {
     int refresh_rate_hz;
   };
 
+  struct TouchpadConfig {
+    int width;
+    int height;
+
+    static Json::Value Serialize(
+        const CuttlefishConfig::TouchpadConfig& config);
+    static TouchpadConfig Deserialize(const Json::Value& config_json);
+  };
+
   void set_secure_hals(const std::set<std::string>& hals);
   std::set<SecureHal> secure_hals() const;
 
@@ -389,7 +398,7 @@ class CuttlefishConfig {
 
     std::string instance_internal_uds_dir() const;
 
-    std::string touch_socket_path(int screen_idx) const;
+    std::string touch_socket_path(int touch_dev_idx) const;
     std::string rotary_socket_path() const;
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
@@ -553,6 +562,7 @@ class CuttlefishConfig {
     int gdb_port() const;
 
     std::vector<DisplayConfig> display_configs() const;
+    std::vector<TouchpadConfig> touchpad_configs() const;
 
     std::string grpc_socket_path() const;
     int memory_mb() const;
@@ -741,6 +751,8 @@ class CuttlefishConfig {
     void set_blank_data_image_mb(int blank_data_image_mb);
     void set_gdb_port(int gdb_port);
     void set_display_configs(const std::vector<DisplayConfig>& display_configs);
+    void set_touchpad_configs(
+        const std::vector<TouchpadConfig>& touchpad_configs);
     void set_memory_mb(int memory_mb);
     void set_ddr_mem_mb(int ddr_mem_mb);
     Result<void> set_setupwizard_mode(const std::string& title);
