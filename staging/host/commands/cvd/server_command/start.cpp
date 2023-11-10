@@ -486,70 +486,40 @@ Result<std::string> CvdStartCommandHandler::FindStartBin(
   return start_bin;
 }
 
-// std::string -> bool
-enum class BoolValueType : std::uint8_t { kTrue = 0, kFalse, kUnknown };
-static Result<bool> IsDaemonModeFlag(const cvd_common::Args& args) {
-  /*
-   * --daemon could be either bool or string flags.
-   */
-  bool is_daemon = false;
-  auto initial_size = args.size();
-  Flag daemon_bool = GflagsCompatFlag("daemon", is_daemon);
-  std::vector<Flag> as_bool_flags{daemon_bool};
-  cvd_common::Args copied_args{args};
-  if (ParseFlags(as_bool_flags, copied_args).ok()) {
-    if (initial_size != copied_args.size()) {
-      return is_daemon;
-    }
-  }
-  std::string daemon_values;
-  Flag daemon_string = GflagsCompatFlag("daemon", daemon_values);
-  cvd_common::Args copied_args2{args};
-  std::vector<Flag> as_string_flags{daemon_string};
-  if (!ParseFlags(as_string_flags, copied_args2).ok()) {
-    return false;
-  }
-  if (initial_size == copied_args2.size()) {
-    return false;  // not consumed
-  }
-  // --daemon should have been handled above
-  CF_EXPECT(!daemon_values.empty());
-  std::unordered_set<std::string> true_strings = {"y", "yes", "true"};
-  std::unordered_set<std::string> false_strings = {"n", "no", "false"};
-  auto tokens = android::base::Tokenize(daemon_values, ",");
-  std::unordered_set<BoolValueType> value_set;
-  for (const auto& token : tokens) {
-    std::string daemon_value(token);
-    /*
-     * https://en.cppreference.com/w/cpp/string/byte/tolower
-     *
-     * char should be converted to unsigned char first.
-     */
-    std::transform(daemon_value.begin(), daemon_value.end(),
-                   daemon_value.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
-    if (Contains(true_strings, daemon_value)) {
-      value_set.insert(BoolValueType::kTrue);
-      continue;
-    }
-    if (Contains(false_strings, daemon_value)) {
-      value_set.insert(BoolValueType::kFalse);
-    } else {
-      value_set.insert(BoolValueType::kUnknown);
-    }
-  }
-  CF_EXPECT_LE(value_set.size(), 1,
-               "Vectorized flags for --daemon is not supported by cvd");
-  const auto only_element = *(value_set.begin());
-  // We want to, basically, launch with daemon mode, and want to know
-  // when we must not do so
-  if (only_element == BoolValueType::kFalse) {
-    return false;
-  }
-  // if kUnknown, the launcher will fail. Which mode doesn't matter
-  // for the launcher. But it matters for cvd in how cvd handles the
-  // failure.
-  return true;
+Result<bool> IsDaemonModeFlag(const cvd_common::Args& args) {
+  bool flag_set = false;
+  bool is_daemon = true;
+  Flag flag =
+      Flag()
+          .Alias({FlagAliasMode::kFlagPrefix, "-daemon="})
+          .Alias({FlagAliasMode::kFlagPrefix, "--daemon="})
+          .Alias({FlagAliasMode::kFlagExact, "-daemon"})
+          .Alias({FlagAliasMode::kFlagExact, "--daemon"})
+          .Alias({FlagAliasMode::kFlagExact, "-nodaemon"})
+          .Alias({FlagAliasMode::kFlagExact, "--nodaemon"})
+          .Setter([&is_daemon,
+                   &flag_set](const FlagMatch& match) -> Result<void> {
+            flag_set = true;
+            if (match.key == match.value) {
+              is_daemon = match.key.find("no") == std::string::npos;
+              return {};
+            }
+            CF_EXPECTF(match.value.find(",") == std::string::npos,
+                       "{} had a comma", match.value);
+            static constexpr std::string_view kFalseStrings[] = {"n", "no",
+                                                                 "false"};
+            for (const auto& falseString : kFalseStrings) {
+              if (android::base::EqualsIgnoreCase(falseString, match.value)) {
+                is_daemon = false;
+              }
+            }
+            // Allow `cvd_internal_start` to produce its own error for other
+            // invalid strings.
+            return {};
+          });
+  auto args_copy = args;
+  CF_EXPECT(ParseFlags({flag}, args_copy));
+  return flag_set && is_daemon;
 }
 
 Result<cvd::Response> CvdStartCommandHandler::Handle(
