@@ -950,6 +950,25 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config) {
   CuttlefishConfig tmp_config_obj;
+  // If a snapshot path is provided, do not read all flags to set up the config.
+  // Instead, read the config that was saved at time of snapshot and restore
+  // that for this run.
+  // TODO (khei@/kwstephenkim@): b/310034839
+  const std::string snapshot_path = FLAGS_snapshot_path;
+  if (!snapshot_path.empty()) {
+    const std::string snapshot_path_config =
+        snapshot_path + "/assembly/cuttlefish_config.json";
+    tmp_config_obj.LoadFromFile(snapshot_path_config.c_str());
+    tmp_config_obj.set_snapshot_path(snapshot_path);
+    auto instance_nums =
+        CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+
+    for (const auto& num : instance_nums) {
+      auto instance = tmp_config_obj.ForInstance(num);
+      instance.set_sock_vsock_proxy_wait_adbd_start(false);
+    }
+    return tmp_config_obj;
+  }
 
   for (const auto& fragment : injector.getMultibindings<ConfigFragment>()) {
     CHECK(tmp_config_obj.SaveFragment(*fragment))

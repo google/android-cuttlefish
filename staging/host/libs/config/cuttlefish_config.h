@@ -107,6 +107,7 @@ class CuttlefishConfig {
   // Saves the configuration object in a file, it can then be read in other
   // processes by passing the --config_file option.
   bool SaveToFile(const std::string& file) const;
+  bool LoadFromFile(const char* file);
 
   bool SaveFragment(const ConfigFragment&);
   bool LoadFragment(ConfigFragment&) const;
@@ -936,7 +937,6 @@ class CuttlefishConfig {
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
-  bool LoadFromFile(const char* file);
   static CuttlefishConfig* BuildConfigImpl(const std::string& path);
 
   CuttlefishConfig(const CuttlefishConfig&) = delete;
