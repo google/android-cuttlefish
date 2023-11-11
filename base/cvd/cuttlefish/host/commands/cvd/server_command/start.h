@@ -24,6 +24,8 @@
 
 namespace cuttlefish {
 
+Result<bool> IsDaemonModeFlag(const cvd_common::Args& args);
+
 fruit::Component<fruit::Required<InstanceManager, HostToolTargetManager,
                                  CommandSequenceExecutor>>
 CvdStartCommandComponent();
