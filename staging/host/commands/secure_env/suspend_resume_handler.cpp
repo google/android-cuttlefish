@@ -21,6 +21,34 @@
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
+namespace {
+
+Result<void> WriteSuspendRequest(const SharedFD& socket) {
+  const SnapshotSocketMessage suspend_request = SnapshotSocketMessage::kSuspend;
+  CF_EXPECT_EQ(sizeof(suspend_request),
+               socket->Write(&suspend_request, sizeof(suspend_request)),
+               "socket write failed: " << socket->StrError());
+  return {};
+}
+
+Result<void> ReadSuspendAck(const SharedFD& socket) {
+  SnapshotSocketMessage ack_response;
+  CF_EXPECT_EQ(sizeof(ack_response),
+               socket->Read(&ack_response, sizeof(ack_response)),
+               "socket read failed: " << socket->StrError());
+  CF_EXPECT_EQ(SnapshotSocketMessage::kSuspendAck, ack_response);
+  return {};
+}
+
+Result<void> WriteResumeRequest(const SharedFD& socket) {
+  const SnapshotSocketMessage resume_request = SnapshotSocketMessage::kResume;
+  CF_EXPECT_EQ(sizeof(resume_request),
+               socket->Write(&resume_request, sizeof(resume_request)),
+               "socket write failed: " << socket->StrError());
+  return {};
+}
+
+}  // namespace
 
 SnapshotCommandHandler::~SnapshotCommandHandler() { Join(); }
 
@@ -32,11 +60,13 @@ void SnapshotCommandHandler::Join() {
 
 SnapshotCommandHandler::SnapshotCommandHandler(
     SharedFD channel_to_run_cvd, EventFdsManager& event_fds_manager,
-    EventNotifiers& suspended_notifiers, SnapshotRunningFlag& running)
+    EventNotifiers& suspended_notifiers, SnapshotRunningFlag& running,
+    SharedFD rust_snapshot_socket)
     : channel_to_run_cvd_(channel_to_run_cvd),
       event_fds_manager_(event_fds_manager),
       suspended_notifiers_(suspended_notifiers),
-      shared_running_(running) {
+      shared_running_(running),
+      rust_snapshot_socket_(std::move(rust_snapshot_socket)) {
   handler_thread_ = std::thread([this]() {
     while (true) {
       auto result = SuspendResumeHandler();
@@ -67,13 +97,18 @@ Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
   switch (snapshot_cmd) {
     case ExtendedActionType::kSuspend: {
       LOG(DEBUG) << "Handling suspended...";
+      // Request all worker threads to suspend.
       shared_running_.UnsetRunning();  // running := false
       CF_EXPECT(event_fds_manager_.SuspendKeymasterResponder());
       CF_EXPECT(event_fds_manager_.SuspendGatekeeperResponder());
       CF_EXPECT(event_fds_manager_.SuspendOemlockResponder());
+      CF_EXPECT(WriteSuspendRequest(rust_snapshot_socket_));
+      // Wait for ACKs from worker threads.
       suspended_notifiers_.keymaster_suspended_.WaitAndReset();
       suspended_notifiers_.gatekeeper_suspended_.WaitAndReset();
       suspended_notifiers_.oemlock_suspended_.WaitAndReset();
+      CF_EXPECT(ReadSuspendAck(rust_snapshot_socket_));
+      // Write response to run_cvd.
       auto response = LauncherResponse::kSuccess;
       const auto n_written =
           channel_to_run_cvd_->Write(&response, sizeof(response));
@@ -82,7 +117,10 @@ Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
     };
     case ExtendedActionType::kResume: {
       LOG(DEBUG) << "Handling resume...";
+      // Request all worker threads to resume.
       shared_running_.SetRunning();  // running := true, and notifies all
+      CF_EXPECT(WriteResumeRequest(rust_snapshot_socket_));
+      // Write response to run_cvd.
       auto response = LauncherResponse::kSuccess;
       const auto n_written =
           channel_to_run_cvd_->Write(&response, sizeof(response));
