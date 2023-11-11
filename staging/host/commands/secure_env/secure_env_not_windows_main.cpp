@@ -259,13 +259,16 @@ Result<void> SecureEnvMain(int argc, char** argv) {
   }
 
   // go/cf-secure-env-snapshot
+  auto [rust_snapshot_socket1, rust_snapshot_socket2] =
+      CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0));
   SnapshotRunningFlag running;
   SharedFD channel_to_run_cvd = DupFdFlag(FLAGS_snapshot_control_fd);
   EventFdsManager event_fds_manager = CF_EXPECT(EventFdsManager::Create());
   EventNotifiers suspended_notifiers;
 
   SnapshotCommandHandler suspend_resume_handler(
-      channel_to_run_cvd, event_fds_manager, suspended_notifiers, running);
+      channel_to_run_cvd, event_fds_manager, suspended_notifiers, running,
+      std::move(rust_snapshot_socket1));
 
   // The guest image may have either the C++ implementation of
   // KeyMint/Keymaster, xor the Rust implementation of KeyMint.  Those different
@@ -281,8 +284,12 @@ Result<void> SecureEnvMain(int argc, char** argv) {
   int keymint_in = FLAGS_keymint_fd_in;
   int keymint_out = FLAGS_keymint_fd_out;
   TpmResourceManager* rm = resource_manager;
-  threads.emplace_back([rm, keymint_in, keymint_out, security_level]() {
-    kmr_ta_main(keymint_in, keymint_out, security_level, rm);
+  threads.emplace_back([rm, keymint_in, keymint_out, security_level,
+                        rust_snapshot_socket2 =
+                            std::move(rust_snapshot_socket2)]() {
+    int snapshot_socket_fd = std::move(rust_snapshot_socket2)->UNMANAGED_Dup();
+    kmr_ta_main(keymint_in, keymint_out, security_level, rm,
+                snapshot_socket_fd);
   });
 #endif
 
