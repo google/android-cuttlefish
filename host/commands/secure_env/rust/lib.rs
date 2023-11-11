@@ -32,6 +32,7 @@ use libc::c_int;
 use log::{error, info, trace};
 use std::ffi::CString;
 use std::io::{Read, Write};
+use std::os::fd::AsRawFd;
 use std::os::unix::{ffi::OsStrExt, io::FromRawFd};
 
 pub mod attest;
@@ -44,16 +45,23 @@ mod tpm;
 #[cfg(test)]
 mod tests;
 
+// See `SnapshotSocketMessage` in suspend_resume_handler.h for docs.
+const SNAPSHOT_SOCKET_MESSAGE_SUSPEND: u8 = 1;
+const SNAPSHOT_SOCKET_MESSAGE_SUSPEND_ACK: u8 = 2;
+const SNAPSHOT_SOCKET_MESSAGE_RESUME: u8 = 3;
+
 /// Main routine for the KeyMint TA. Only returns if there is a fatal error.
 ///
 /// # Safety
 ///
-/// `fd_in` and `fd_out` must be valid and open file descriptors.
+/// `fd_in` and `fd_out` must be valid and open file descriptors and the caller must not use or
+/// close them after the call.
 pub unsafe fn ta_main(
     fd_in: c_int,
     fd_out: c_int,
     security_level: SecurityLevel,
     trm: *mut libc::c_void,
+    mut snapshot_socket: std::os::unix::net::UnixStream,
 ) {
     log::set_logger(&AndroidCppLogger).unwrap();
     log::set_max_level(log::LevelFilter::Debug); // Filtering happens elsewhere
@@ -62,9 +70,9 @@ pub unsafe fn ta_main(
         fd_in, fd_out, security_level,
     );
 
-    // SAFETY: The caller guarantees that `fd_in` is valid and open.
+    // SAFETY: The caller guarantees that `fd_in` is valid and open and exclusive.
     let mut infile = unsafe { std::fs::File::from_raw_fd(fd_in) };
-    // SAFETY: The caller guarantees that `fd_out` is valid and open.
+    // SAFETY: The caller guarantees that `fd_out` is valid and open and exclusive.
     let mut outfile = unsafe { std::fs::File::from_raw_fd(fd_out) };
 
     let hw_info = HardwareInfo {
@@ -147,52 +155,107 @@ pub unsafe fn ta_main(
 
     let mut buf = [0; kmr_wire::DEFAULT_MAX_SIZE];
     loop {
-        // Read a request message from the pipe, as a 4-byte BE length followed by the message.
-        let mut req_len_data = [0u8; 4];
-        if let Err(e) = infile.read_exact(&mut req_len_data) {
-            error!("FATAL: Failed to read request length from connection: {:?}", e);
-            return;
-        }
-        let req_len = u32::from_be_bytes(req_len_data) as usize;
-        if req_len > kmr_wire::DEFAULT_MAX_SIZE {
-            error!("FATAL: Request too long ({})", req_len);
-            return;
-        }
-        let req_data = &mut buf[..req_len];
-        if let Err(e) = infile.read_exact(req_data) {
-            error!(
-                "FATAL: Failed to read request data of length {} from connection: {:?}",
-                req_len, e
-            );
+        // Wait for data from either `infile` or `snapshot_socket`. If both have data, we prioritize
+        // processing only `infile` until it is empty so that there is no pending state when we
+        // suspend the loop.
+        let mut fd_set = nix::sys::select::FdSet::new();
+        fd_set.insert(infile.as_raw_fd());
+        fd_set.insert(snapshot_socket.as_raw_fd());
+        if let Err(e) = nix::sys::select::select(
+            None,
+            /*readfds=*/ Some(&mut fd_set),
+            None,
+            None,
+            /*timeout=*/ None,
+        ) {
+            error!("FATAL: Failed to select on input FDs: {:?}", e);
             return;
         }
 
-        // Pass to the TA to process.
-        trace!("-> TA: received data: (len={})", req_data.len());
-        let rsp = ta.process(req_data);
-        trace!("<- TA: send data: (len={})", rsp.len());
-
-        // Send the response message down the pipe, as a 4-byte BE length followed by the message.
-        let rsp_len: u32 = match rsp.len().try_into() {
-            Ok(l) => l,
-            Err(_e) => {
-                error!("FATAL: Response too long (len={})", rsp.len());
+        if fd_set.contains(infile.as_raw_fd()) {
+            // Read a request message from the pipe, as a 4-byte BE length followed by the message.
+            let mut req_len_data = [0u8; 4];
+            if let Err(e) = infile.read_exact(&mut req_len_data) {
+                error!("FATAL: Failed to read request length from connection: {:?}", e);
                 return;
             }
-        };
-        let rsp_len_data = rsp_len.to_be_bytes();
-        if let Err(e) = outfile.write_all(&rsp_len_data[..]) {
-            error!("FATAL: Failed to write response length to connection: {:?}", e);
-            return;
+            let req_len = u32::from_be_bytes(req_len_data) as usize;
+            if req_len > kmr_wire::DEFAULT_MAX_SIZE {
+                error!("FATAL: Request too long ({})", req_len);
+                return;
+            }
+            let req_data = &mut buf[..req_len];
+            if let Err(e) = infile.read_exact(req_data) {
+                error!(
+                    "FATAL: Failed to read request data of length {} from connection: {:?}",
+                    req_len, e
+                );
+                return;
+            }
+
+            // Pass to the TA to process.
+            trace!("-> TA: received data: (len={})", req_data.len());
+            let rsp = ta.process(req_data);
+            trace!("<- TA: send data: (len={})", rsp.len());
+
+            // Send the response message down the pipe, as a 4-byte BE length followed by the message.
+            let rsp_len: u32 = match rsp.len().try_into() {
+                Ok(l) => l,
+                Err(_e) => {
+                    error!("FATAL: Response too long (len={})", rsp.len());
+                    return;
+                }
+            };
+            let rsp_len_data = rsp_len.to_be_bytes();
+            if let Err(e) = outfile.write_all(&rsp_len_data[..]) {
+                error!("FATAL: Failed to write response length to connection: {:?}", e);
+                return;
+            }
+            if let Err(e) = outfile.write_all(&rsp) {
+                error!(
+                    "FATAL: Failed to write response data of length {} to connection: {:?}",
+                    rsp_len, e
+                );
+                return;
+            }
+            let _ = outfile.flush();
+
+            continue;
         }
-        if let Err(e) = outfile.write_all(&rsp) {
-            error!(
-                "FATAL: Failed to write response data of length {} to connection: {:?}",
-                rsp_len, e
-            );
-            return;
+
+        if fd_set.contains(snapshot_socket.as_raw_fd()) {
+            // Read suspend request.
+            let mut suspend_request = 0u8;
+            if let Err(e) = snapshot_socket.read_exact(std::slice::from_mut(&mut suspend_request)) {
+                error!("FATAL: Failed to read suspend request: {:?}", e);
+                return;
+            }
+            if suspend_request != SNAPSHOT_SOCKET_MESSAGE_SUSPEND {
+                error!(
+                    "FATAL: Unexpected value from snapshot socket: got {}, expected {}",
+                    suspend_request, SNAPSHOT_SOCKET_MESSAGE_SUSPEND
+                );
+                return;
+            }
+            // Write ACK.
+            if let Err(e) = snapshot_socket.write_all(&[SNAPSHOT_SOCKET_MESSAGE_SUSPEND_ACK]) {
+                error!("FATAL: Failed to write suspend ACK request: {:?}", e);
+                return;
+            }
+            // Block until we get a resume request.
+            let mut resume_request = 0u8;
+            if let Err(e) = snapshot_socket.read_exact(std::slice::from_mut(&mut resume_request)) {
+                error!("FATAL: Failed to read resume request: {:?}", e);
+                return;
+            }
+            if resume_request != SNAPSHOT_SOCKET_MESSAGE_RESUME {
+                error!(
+                    "FATAL: Unexpected value from snapshot socket: got {}, expected {}",
+                    resume_request, SNAPSHOT_SOCKET_MESSAGE_RESUME
+                );
+                return;
+            }
         }
-        let _ = outfile.flush();
     }
 }
 
