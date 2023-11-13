@@ -32,7 +32,6 @@ TEST(CvdClear, ClearAfterThreeStarts) {
 
   cvd_common::Args start_two_instances_args{
       "cvd",
-      "--disable_default_group",
       "start",
       "--report_anonymous_usage_stats=yes",
       "--daemon",
@@ -40,7 +39,6 @@ TEST(CvdClear, ClearAfterThreeStarts) {
       "--num_instances=2"};
   cvd_common::Args start_three_instances_args{
       "cvd",
-      "--disable_default_group",
       "start",
       "--report_anonymous_usage_stats=yes",
       "--daemon",
@@ -48,7 +46,6 @@ TEST(CvdClear, ClearAfterThreeStarts) {
       "--num_instances=3"};
   cvd_common::Args start_one_instances_args{
       "cvd",
-      "--disable_default_group",
       "start",
       "--report_anonymous_usage_stats=yes",
       "--daemon",

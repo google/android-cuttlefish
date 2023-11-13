@@ -32,9 +32,7 @@ Result<std::vector<std::string>> ParseSelectorConfigs(Json::Value& root) {
       CF_EXPECT(GenerateGflag(root["instances"], "instance_name", {"name"}));
 
   if (!HasValue(root, {"common", "group_name"})) {
-    return {
-        {instance_name_flag,
-         std::string("--") + selector::SelectorFlags::kDisableDefaultGroup}};
+    return {{instance_name_flag}};
   }
 
   return {{instance_name_flag,
@@ -43,4 +41,3 @@ Result<std::vector<std::string>> ParseSelectorConfigs(Json::Value& root) {
 }
 
 }  // namespace cuttlefish
-
