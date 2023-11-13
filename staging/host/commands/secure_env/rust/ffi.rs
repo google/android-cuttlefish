@@ -20,7 +20,7 @@ extern crate alloc;
 use kmr_wire::keymint::SecurityLevel;
 use libc::c_int;
 use log::error;
-use std::os::fd::FromRawFd;
+use std::os::fd::OwnedFd;
 
 /// FFI wrapper around [`kmr_cf::ta_main`].
 ///
@@ -28,13 +28,15 @@ use std::os::fd::FromRawFd;
 ///
 /// `fd_in`, `fd_out`, and `snapshot_socket_fd` must be valid and open file descriptors and the
 /// caller must not use or close them after the call.
+///
+/// TODO: What are the preconditions for `trm`?
 #[no_mangle]
 pub unsafe extern "C" fn kmr_ta_main(
-    fd_in: c_int,
-    fd_out: c_int,
+    fd_in: OwnedFd,
+    fd_out: OwnedFd,
     security_level: c_int,
     trm: *mut libc::c_void,
-    snapshot_socket_fd: c_int,
+    snapshot_socket_fd: OwnedFd,
 ) {
     let security_level = match security_level {
         x if x == SecurityLevel::TrustedEnvironment as i32 => SecurityLevel::TrustedEnvironment,
@@ -45,10 +47,8 @@ pub unsafe extern "C" fn kmr_ta_main(
             SecurityLevel::Software
         }
     };
-    let snapshot_socket =
-        // SAFETY: fd being valid and open and exclusive is asserted in the unsafe function's
-        // preconditions, so this is pushed up to the caller.
-        unsafe { std::os::unix::net::UnixStream::from_raw_fd(snapshot_socket_fd) };
-    // SAFETY: The caller guarantees that `fd_in` and `fd_out` are valid and open.
-    unsafe { kmr_cf::ta_main(fd_in, fd_out, security_level, trm, snapshot_socket) }
+    // SAFETY: TODO: What are the preconditions for `trm`?
+    unsafe {
+        kmr_cf::ta_main(fd_in.into(), fd_out.into(), security_level, trm, snapshot_socket_fd.into())
+    }
 }

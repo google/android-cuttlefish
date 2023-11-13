@@ -28,12 +28,11 @@ use kmr_ta::device::{
 use kmr_ta::{HardwareInfo, KeyMintTa, RpcInfo, RpcInfoV3};
 use kmr_wire::keymint::SecurityLevel;
 use kmr_wire::rpc::MINIMUM_SUPPORTED_KEYS_IN_CSR;
-use libc::c_int;
 use log::{error, info, trace};
 use std::ffi::CString;
 use std::io::{Read, Write};
 use std::os::fd::AsRawFd;
-use std::os::unix::{ffi::OsStrExt, io::FromRawFd};
+use std::os::unix::ffi::OsStrExt;
 
 pub mod attest;
 mod clock;
@@ -54,11 +53,10 @@ const SNAPSHOT_SOCKET_MESSAGE_RESUME: u8 = 3;
 ///
 /// # Safety
 ///
-/// `fd_in` and `fd_out` must be valid and open file descriptors and the caller must not use or
-/// close them after the call.
+/// TODO: What are the preconditions for `trm`?
 pub unsafe fn ta_main(
-    fd_in: c_int,
-    fd_out: c_int,
+    mut infile: std::fs::File,
+    mut outfile: std::fs::File,
     security_level: SecurityLevel,
     trm: *mut libc::c_void,
     mut snapshot_socket: std::os::unix::net::UnixStream,
@@ -66,14 +64,11 @@ pub unsafe fn ta_main(
     log::set_logger(&AndroidCppLogger).unwrap();
     log::set_max_level(log::LevelFilter::Debug); // Filtering happens elsewhere
     info!(
-        "KeyMint Rust TA running with fd_in={}, fd_out={}, security_level={:?}",
-        fd_in, fd_out, security_level,
+        "KeyMint Rust TA running with infile={}, outfile={}, security_level={:?}",
+        infile.as_raw_fd(),
+        outfile.as_raw_fd(),
+        security_level,
     );
-
-    // SAFETY: The caller guarantees that `fd_in` is valid and open and exclusive.
-    let mut infile = unsafe { std::fs::File::from_raw_fd(fd_in) };
-    // SAFETY: The caller guarantees that `fd_out` is valid and open and exclusive.
-    let mut outfile = unsafe { std::fs::File::from_raw_fd(fd_out) };
 
     let hw_info = HardwareInfo {
         version_number: 1,
