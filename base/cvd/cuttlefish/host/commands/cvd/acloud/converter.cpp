@@ -640,6 +640,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       start_command.add_args(arg);
     }
   }
+  start_command.mutable_selector_opts()->add_args(
+      std::string("--") + selector::SelectorFlags::kDisableDefaultGroup +
+      "=true");
   if (pet_name) {
     const auto [group_name, instance_name] =
         CF_EXPECT(selector::BreakDeviceName(*pet_name),
