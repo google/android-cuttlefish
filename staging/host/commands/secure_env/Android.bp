@@ -115,11 +115,8 @@ cc_library {
     srcs: common_libsecure_srcs + [
         "confui_sign_server.cpp",
         "device_tpm.cpp",
-        "event_fds_manager.cpp",
-        "event_notifier.cpp",
         "oemlock/oemlock.cpp",
         "oemlock/oemlock_responder.cpp",
-	"snapshot_running_flag.cpp",
         "storage/insecure_json_storage.cpp",
         "suspend_resume_handler.cpp",
 	"worker_thread_loop_body.cpp",
