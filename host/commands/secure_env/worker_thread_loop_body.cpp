@@ -15,49 +15,62 @@
 
 #include "host/commands/secure_env/worker_thread_loop_body.h"
 
-#include <android-base/scopeguard.h>
-
 #include "common/libs/fs/shared_select.h"
+#include "host/commands/secure_env/suspend_resume_handler.h"
 
 namespace cuttlefish {
 namespace secure_env_impl {
 
-void WorkerInnerLoop(std::function<bool()> process_callback,
-                     SnapshotRunningFlag& running, SharedFD read_fd,
-                     SharedFD suspend_event_fd,
-                     EventNotifier& suspended_notifier) {
-  bool break_loop = false;
-  do {
-    SharedFDSet event_and_read_fds;
-    event_and_read_fds.Set(read_fd);
-    event_and_read_fds.Set(suspend_event_fd);
+Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
+                             SharedFD read_fd, SharedFD snapshot_socket) {
+  for (;;) {
+    SharedFDSet readable_fds;
+    readable_fds.Set(read_fd);
+    readable_fds.Set(snapshot_socket);
 
-    // blocking wait for running_ == true
-    running.WaitRunning();
-    int num_fds = Select(&event_and_read_fds, nullptr, nullptr, nullptr);
+    int num_fds = Select(&readable_fds, nullptr, nullptr, nullptr);
     if (num_fds < 0) {
       LOG(FATAL) << "Select() returned a negative value: " << num_fds
                  << strerror(errno);
     }
 
-    // will run the lambda function in its destructor
-    android::base::ScopeGuard inner_loop_body_exit_action(
-        [&event_and_read_fds, &suspend_event_fd, &suspended_notifier]() {
-          if (event_and_read_fds.IsSet(suspend_event_fd)) {
-            eventfd_t value;
-            if (suspend_event_fd->EventfdRead(&value) != 0) {
-              LOG(FATAL) << "Eventfd was set but failed to be read."
-                         << suspend_event_fd->StrError();
-            }
-            suspended_notifier.Notify();
-          }
-        });
-    if (event_and_read_fds.IsSet(read_fd)) {
+    if (readable_fds.IsSet(read_fd)) {
       // if process_callback() fails, we need to reset the secure_env
       // component.
-      break_loop = !process_callback();
+      if (!process_callback()) {
+        // NOTE: We don't need to worry about whether `snapshot_socket` is
+        // readable at this point. After the component is reset, we'll re-enter
+        // this loop and take care of it.
+        break;
+      }
+      continue;
     }
-  } while (!break_loop);
+
+    if (readable_fds.IsSet(snapshot_socket)) {
+      // Read the suspend request.
+      SnapshotSocketMessage suspend_request;
+      CF_EXPECT_EQ(
+          sizeof(suspend_request),
+          snapshot_socket->Read(&suspend_request, sizeof(suspend_request)),
+          "socket read failed: " << snapshot_socket->StrError());
+      CF_EXPECT_EQ(SnapshotSocketMessage::kSuspend, suspend_request);
+      // Send the ACK response.
+      const SnapshotSocketMessage ack_response =
+          SnapshotSocketMessage::kSuspendAck;
+      CF_EXPECT_EQ(sizeof(ack_response),
+                   snapshot_socket->Write(&ack_response, sizeof(ack_response)),
+                   "socket write failed: " << snapshot_socket->StrError());
+      // Block until resumed.
+      SnapshotSocketMessage resume_request;
+      CF_EXPECT_EQ(
+          sizeof(resume_request),
+          snapshot_socket->Read(&resume_request, sizeof(resume_request)),
+          "socket read failed: " << snapshot_socket->StrError());
+      CF_EXPECT_EQ(SnapshotSocketMessage::kResume, resume_request);
+    }
+  }
+
+  return {};
 }
 
 }  // namespace secure_env_impl

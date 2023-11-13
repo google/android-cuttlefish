@@ -19,9 +19,6 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/secure_env/event_fds_manager.h"
-#include "host/commands/secure_env/event_notifier.h"
-#include "host/commands/secure_env/snapshot_running_flag.h"
 #include "host/libs/command_util/runner/defs.h"
 
 namespace cuttlefish {
@@ -57,12 +54,16 @@ enum SnapshotSocketMessage : uint8_t {
 
 class SnapshotCommandHandler {
  public:
+  struct SnapshotSockets {
+    SharedFD rust;
+    SharedFD keymaster;
+    SharedFD gatekeeper;
+    SharedFD oemlock;
+  };
+
   ~SnapshotCommandHandler();
   SnapshotCommandHandler(SharedFD channel_to_run_cvd,
-                         EventFdsManager& event_fds,
-                         EventNotifiers& suspended_notifiers,
-                         SnapshotRunningFlag& running,
-                         SharedFD rust_snapshot_socket);
+                         SnapshotSockets snapshot_sockets);
 
  private:
   Result<void> SuspendResumeHandler();
@@ -70,10 +71,7 @@ class SnapshotCommandHandler {
   void Join();
 
   SharedFD channel_to_run_cvd_;
-  EventFdsManager& event_fds_manager_;
-  EventNotifiers& suspended_notifiers_;
-  SnapshotRunningFlag& shared_running_;  // shared by other components outside
-  SharedFD rust_snapshot_socket_;
+  SnapshotSockets snapshot_sockets_;
   std::thread handler_thread_;
 };
 
