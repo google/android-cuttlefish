@@ -152,8 +152,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<void> AcloudCompatActions(
       const selector::GroupCreationInfo& group_creation_info,
       const RequestWithStdio& request);
-  Result<void> CreateSymlinks(
-      const selector::GroupCreationInfo& group_creation_info);
 
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
@@ -524,70 +522,6 @@ Result<bool> IsDaemonModeFlag(const cvd_common::Args& args) {
   return flag_set && is_daemon;
 }
 
-// For backward compatibility, we add extra symlink in system wide home
-// when HOME is NOT overridden and selector flags are NOT given.
-Result<void> CvdStartCommandHandler::CreateSymlinks(
-    const selector::GroupCreationInfo& group_creation_info) {
-  std::string instance_home_dir = "";
-  auto system_wide_home = CF_EXPECT(SystemWideUserHome());
-  for (const auto& instance : group_creation_info.instances) {
-    std::string legacy_path = system_wide_home + "/cuttlefish_runtime.";
-    legacy_path = ConcatToString(legacy_path, instance.instance_id_);
-    instance_home_dir = group_creation_info.home;
-    instance_home_dir = instance_home_dir + "/cuttlefish/instances/cvd-";
-    instance_home_dir = ConcatToString(instance_home_dir, instance.instance_id_);
-    if (DirectoryExists(legacy_path, /* follow_symlinks */ true)) {
-      CF_EXPECT(RecursivelyRemoveDirectory(legacy_path),
-                "Failed to remove legacy directory " << legacy_path);
-    }
-    if (symlink(instance_home_dir.c_str(), legacy_path.c_str())) {
-      return CF_ERRNO("symlink(\"" << instance_home_dir << "\", \""
-                                   << legacy_path << "\") failed");
-    }
-    legacy_path = system_wide_home + "/cuttlefish_runtime";
-    if (DirectoryExists(legacy_path, true)) {
-      CF_EXPECT(RecursivelyRemoveDirectory(legacy_path),
-                "Failed to remove legacy directory " << legacy_path);
-    }
-    if (symlink(instance_home_dir.c_str(), legacy_path.c_str())) {
-      return CF_ERRNO("symlink(\"" << instance_home_dir << "\", \""
-                                   << legacy_path << "\") failed");
-    }
-    std::string cuttlefish_path = group_creation_info.home + "/cuttlefish/";
-    legacy_path = system_wide_home + "/cuttlefish";
-    if (DirectoryExists(legacy_path,  true)) {
-      CF_EXPECT(RecursivelyRemoveDirectory(legacy_path),
-                "Failed to remove legacy directory " << legacy_path);
-    }
-    if (symlink(cuttlefish_path.c_str(), legacy_path.c_str())) {
-      return CF_ERRNO("symlink(\"" << cuttlefish_path << "\", \"" << legacy_path
-                                   << "\") failed");
-    }
-    std::string cuttlefish_assembly_path = cuttlefish_path + "assembly/";
-    legacy_path = system_wide_home + "/cuttlefish_assembly";
-    if (DirectoryExists(legacy_path,  true)) {
-      CF_EXPECT(RecursivelyRemoveDirectory(legacy_path),
-                "Failed to remove legacy directory " << legacy_path);
-    }
-    if (symlink(cuttlefish_assembly_path.c_str(), legacy_path.c_str())) {
-      return CF_ERRNO("symlink(\"" << cuttlefish_assembly_path << "\", \""
-                                   << legacy_path << "\") failed");
-    }
-    std::string config_path =
-        cuttlefish_assembly_path + "cuttlefish_config.json";
-    legacy_path = system_wide_home + "/.cuttlefish_config.json";
-    if (FileExists(legacy_path,  false)) {
-      CF_EXPECT(RemoveFile(legacy_path),
-                "Failed to remove instance_dir symlink " << legacy_path);
-    }
-    if (symlink(config_path.c_str(), legacy_path.c_str())) {
-      return CF_ERRNO("symlink(\"" << config_path << "\", \"" << legacy_path
-                                   << "\") failed");
-    }
-  }
-  return {};
-}
-
 Result<cvd::Response> CvdStartCommandHandler::Handle(
     const RequestWithStdio& request) {
   std::unique_lock interrupt_lock(interruptible_);
@@ -693,12 +627,6 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   if (is_help) {
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());
     return ResponseFromSiginfo(infop);
-  }
-
-  // For backward compatibility, we add extra symlink in system wide home
-  // when HOME is NOT overridden and selector flags are NOT given.
-  if (group_creation_info->is_default_group) {
-    CreateSymlinks(*group_creation_info);
   }
 
   // make acquire interrupt_lock inside.
