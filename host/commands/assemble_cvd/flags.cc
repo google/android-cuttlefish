@@ -48,16 +48,14 @@
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/commands/assemble_cvd/display.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
+#include "host/commands/assemble_cvd/graphics_flags.h"
 #include "host/commands/assemble_cvd/touchpad.h"
-#include "host/libs/config/config_flag.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
 #include "host/libs/config/esp.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/config/instance_nums.h"
 #include "host/libs/config/touchpad.h"
-#include "host/libs/graphics_detector/graphics_configuration.h"
-#include "host/libs/graphics_detector/graphics_detector.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -801,119 +799,6 @@ Result<std::vector<std::string>> GetFlagStrValueForInstances(
   return value_vec;
 }
 
-#ifndef __APPLE__
-Result<std::string> SelectGpuMode(
-    const std::string& gpu_mode_arg, const std::string& vm_manager,
-    const GuestConfig& guest_config,
-    const GraphicsAvailability& graphics_availability) {
-  if (gpu_mode_arg != kGpuModeAuto && gpu_mode_arg != kGpuModeDrmVirgl &&
-      gpu_mode_arg != kGpuModeGfxstream &&
-      gpu_mode_arg != kGpuModeGfxstreamGuestAngle &&
-      gpu_mode_arg != kGpuModeGfxstreamGuestAngleHostSwiftShader &&
-      gpu_mode_arg != kGpuModeGuestSwiftshader &&
-      gpu_mode_arg != kGpuModeNone) {
-    return CF_ERR("Invalid gpu_mode: " << gpu_mode_arg);
-  }
-
-  if (gpu_mode_arg == kGpuModeAuto) {
-    // TODO (280826461) Android T Cuttlefish is currently not compatible
-    // with accelerated graphics.
-    if (guest_config.android_version_number == "13.0.0" ||
-        guest_config.android_version_number == "13") {
-      LOG(INFO) << "GPU auto mode: detected guest of version T"
-                << ". Accelerated rendering support is not compatible, "
-                   "enabling --gpu_mode=guest_swiftshader.";
-      return kGpuModeGuestSwiftshader;
-    }
-
-    if (vm_manager == QemuManager::name() &&
-        !IsHostCompatible(guest_config.target_arch)) {
-      LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
-      return kGpuModeDrmVirgl;
-    }
-
-    if (ShouldEnableAcceleratedRendering(graphics_availability)) {
-      LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
-                << "rendering support.";
-      if (vm_manager == QemuManager::name()) {
-        LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
-        return kGpuModeDrmVirgl;
-      } else {
-        LOG(INFO) << "Enabling --gpu_mode=gfxstream.";
-        return kGpuModeGfxstream;
-      }
-    } else {
-      LOG(INFO) << "GPU auto mode: did not detect prerequisites for "
-                   "accelerated rendering support, enabling "
-                   "--gpu_mode=guest_swiftshader.";
-      return kGpuModeGuestSwiftshader;
-    }
-  }
-
-  if (gpu_mode_arg == kGpuModeGfxstream ||
-      gpu_mode_arg == kGpuModeGfxstreamGuestAngle ||
-      gpu_mode_arg == kGpuModeDrmVirgl) {
-    if (!ShouldEnableAcceleratedRendering(graphics_availability)) {
-      LOG(ERROR) << "--gpu_mode=" << gpu_mode_arg
-                 << " was requested but the prerequisites for accelerated "
-                    "rendering were not detected so the device may not "
-                    "function correctly. Please consider switching to "
-                    "--gpu_mode=auto or --gpu_mode=guest_swiftshader.";
-    }
-  }
-
-  return gpu_mode_arg;
-}
-#endif
-
-Result<std::string> InitializeGpuMode(
-    const std::string& gpu_mode_arg, const bool gpu_vhost_user_arg,
-    const std::string& vm_manager, const GuestConfig& guest_config,
-    CuttlefishConfig::MutableInstanceSpecific* instance) {
-#ifdef __APPLE__
-  (void)vm_manager;
-  (void)guest_config;
-  CF_EXPECT(gpu_mode_arg == kGpuModeAuto ||
-            gpu_mode_arg == kGpuModeGuestSwiftshader ||
-            gpu_mode_arg == kGpuModeDrmVirgl || gpu_mode_arg == kGpuModeNone);
-  std::string gpu_mode = gpu_mode_arg;
-  if (gpu_mode == kGpuModeAuto) {
-    gpu_mode = kGpuModeGuestSwiftshader;
-  }
-  instance->set_gpu_mode(gpu_mode);
-#else
-  const GraphicsAvailability graphics_availability =
-      GetGraphicsAvailabilityWithSubprocessCheck();
-  LOG(DEBUG) << graphics_availability;
-
-  const std::string gpu_mode = CF_EXPECT(SelectGpuMode(
-      gpu_mode_arg, vm_manager, guest_config, graphics_availability));
-
-  const auto angle_features = CF_EXPECT(GetNeededAngleFeatures(
-      CF_EXPECT(GetRenderingMode(gpu_mode)), graphics_availability));
-  instance->set_gpu_angle_feature_overrides_enabled(
-      angle_features.angle_feature_overrides_enabled);
-  instance->set_gpu_angle_feature_overrides_disabled(
-      angle_features.angle_feature_overrides_disabled);
-
-  if (gpu_vhost_user_arg) {
-    const auto gpu_vhost_user_features =
-        CF_EXPECT(GetNeededVhostUserGpuHostRendererFeatures(
-            CF_EXPECT(GetRenderingMode(gpu_mode)), graphics_availability));
-    instance->set_enable_gpu_external_blob(
-        gpu_vhost_user_features.external_blob);
-    instance->set_enable_gpu_system_blob(gpu_vhost_user_features.system_blob);
-  } else {
-    instance->set_enable_gpu_external_blob(false);
-    instance->set_enable_gpu_system_blob(false);
-  }
-
-#endif
-  instance->set_gpu_mode(gpu_mode);
-  instance->set_enable_gpu_vhost_user(gpu_vhost_user_arg);
-  return gpu_mode;
-}
-
 Result<void> CheckSnapshotCompatible(
     const bool must_be_compatible,
     const std::map<int, std::string>& calculated_gpu_mode) {
@@ -1484,10 +1369,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_lights_server_port(calc_vsock_port(6900));
 
     // gpu related settings
-    const std::string gpu_mode = CF_EXPECT(InitializeGpuMode(
+    const std::string gpu_mode = CF_EXPECT(ConfigureGpuSettings(
         gpu_mode_vec[instance_index], enable_gpu_vhost_user_vec[instance_index],
         vm_manager_vec[instance_index], guest_configs[instance_index],
-        &instance));
+        instance));
     calculated_gpu_mode_vec[instance_index] = gpu_mode_vec[instance_index];
 
     instance.set_restart_subprocesses(restart_subprocesses_vec[instance_index]);

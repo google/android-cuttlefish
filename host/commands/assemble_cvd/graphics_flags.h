@@ -15,10 +15,17 @@
  */
 #pragma once
 
-#include "host/libs/graphics_detector/graphics_detector.h"
+#include <string>
+
+#include "common/libs/utils/result.h"
+#include "host/commands/assemble_cvd/flags.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-void PopulateVulkanAvailability(GraphicsAvailability* availability);
+Result<std::string> ConfigureGpuSettings(
+    const std::string& gpu_mode_arg, const bool gpu_vhost_user_arg,
+    const std::string& vm_manager, const GuestConfig& guest_config,
+    CuttlefishConfig::MutableInstanceSpecific& instance);
 
 }  // namespace cuttlefish
