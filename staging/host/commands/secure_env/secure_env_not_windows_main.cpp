@@ -43,7 +43,6 @@
 #include "host/commands/secure_env/oemlock/oemlock_responder.h"
 #include "host/commands/secure_env/proxy_keymaster_context.h"
 #include "host/commands/secure_env/rust/kmr_ta.h"
-#include "host/commands/secure_env/snapshot_running_flag.h"
 #include "host/commands/secure_env/soft_gatekeeper.h"
 #include "host/commands/secure_env/storage/insecure_json_storage.h"
 #include "host/commands/secure_env/storage/storage.h"
@@ -261,14 +260,22 @@ Result<void> SecureEnvMain(int argc, char** argv) {
   // go/cf-secure-env-snapshot
   auto [rust_snapshot_socket1, rust_snapshot_socket2] =
       CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0));
-  SnapshotRunningFlag running;
+  auto [keymaster_snapshot_socket1, keymaster_snapshot_socket2] =
+      CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0));
+  auto [gatekeeper_snapshot_socket1, gatekeeper_snapshot_socket2] =
+      CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0));
+  auto [oemlock_snapshot_socket1, oemlock_snapshot_socket2] =
+      CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0));
   SharedFD channel_to_run_cvd = DupFdFlag(FLAGS_snapshot_control_fd);
-  EventFdsManager event_fds_manager = CF_EXPECT(EventFdsManager::Create());
-  EventNotifiers suspended_notifiers;
 
   SnapshotCommandHandler suspend_resume_handler(
-      channel_to_run_cvd, event_fds_manager, suspended_notifiers, running,
-      std::move(rust_snapshot_socket1));
+      channel_to_run_cvd,
+      SnapshotCommandHandler::SnapshotSockets{
+          .rust = std::move(rust_snapshot_socket1),
+          .keymaster = std::move(keymaster_snapshot_socket1),
+          .gatekeeper = std::move(gatekeeper_snapshot_socket1),
+          .oemlock = std::move(oemlock_snapshot_socket1),
+      });
 
   // The guest image may have either the C++ implementation of
   // KeyMint/Keymaster, xor the Rust implementation of KeyMint.  Those different
@@ -318,8 +325,9 @@ Result<void> SecureEnvMain(int argc, char** argv) {
   auto keymaster_in = DupFdFlag(FLAGS_keymaster_fd_in);
   auto keymaster_out = DupFdFlag(FLAGS_keymaster_fd_out);
   keymaster::AndroidKeymaster* borrowed_km = keymaster.get();
-  threads.emplace_back([keymaster_in, keymaster_out, borrowed_km, &running,
-                        &event_fds_manager, &suspended_notifiers]() {
+  threads.emplace_back([keymaster_in, keymaster_out, borrowed_km,
+                        keymaster_snapshot_socket2 =
+                            std::move(keymaster_snapshot_socket2)]() {
     while (true) {
       SharedFdKeymasterChannel keymaster_channel(keymaster_in, keymaster_out);
 
@@ -329,19 +337,20 @@ Result<void> SecureEnvMain(int argc, char** argv) {
         return keymaster_responder.ProcessMessage();
       };
 
-      auto keymaster_event_fd = event_fds_manager.KeymasterEventFd();
-
       // infinite loop that returns if resetting responder is needed
-      secure_env_impl::WorkerInnerLoop(
-          keymaster_process_cb, running, keymaster_in, keymaster_event_fd,
-          suspended_notifiers.keymaster_suspended_);
+      auto result = secure_env_impl::WorkerInnerLoop(
+          keymaster_process_cb, keymaster_in, keymaster_snapshot_socket2);
+      if (!result.ok()) {
+        LOG(FATAL) << "keymaster worker failed: " << result.error().Trace();
+      }
     }
   });
 
   auto gatekeeper_in = DupFdFlag(FLAGS_gatekeeper_fd_in);
   auto gatekeeper_out = DupFdFlag(FLAGS_gatekeeper_fd_out);
-  threads.emplace_back([gatekeeper_in, gatekeeper_out, &gatekeeper, &running,
-                        &event_fds_manager, &suspended_notifiers]() {
+  threads.emplace_back([gatekeeper_in, gatekeeper_out, &gatekeeper,
+                        gatekeeper_snapshot_socket2 =
+                            std::move(gatekeeper_snapshot_socket2)]() {
     while (true) {
       SharedFdGatekeeperChannel gatekeeper_channel(gatekeeper_in,
                                                    gatekeeper_out);
@@ -352,19 +361,20 @@ Result<void> SecureEnvMain(int argc, char** argv) {
         return gatekeeper_responder.ProcessMessage();
       };
 
-      auto gatekeeper_event_fd = event_fds_manager.GatekeeperEventFd();
-
       // infinite loop that returns if resetting responder is needed
-      secure_env_impl::WorkerInnerLoop(
-          gatekeeper_process_cb, running, gatekeeper_in, gatekeeper_event_fd,
-          suspended_notifiers.gatekeeper_suspended_);
+      auto result = secure_env_impl::WorkerInnerLoop(
+          gatekeeper_process_cb, gatekeeper_in, gatekeeper_snapshot_socket2);
+      if (!result.ok()) {
+        LOG(FATAL) << "gatekeeper worker failed: " << result.error().Trace();
+      }
     }
   });
 
   auto oemlock_in = DupFdFlag(FLAGS_oemlock_fd_in);
   auto oemlock_out = DupFdFlag(FLAGS_oemlock_fd_out);
-  threads.emplace_back([oemlock_in, oemlock_out, &oemlock, &running,
-                        &event_fds_manager, &suspended_notifiers]() {
+  threads.emplace_back([oemlock_in, oemlock_out, &oemlock,
+                        oemlock_snapshot_socket2 =
+                            std::move(oemlock_snapshot_socket2)]() {
     while (true) {
       transport::SharedFdChannel channel(oemlock_in, oemlock_out);
       oemlock::OemLockResponder responder(channel, *oemlock);
@@ -373,12 +383,12 @@ Result<void> SecureEnvMain(int argc, char** argv) {
         return (responder.ProcessMessage().ok());
       };
 
-      auto oemlock_event_fd = event_fds_manager.OemlockEventFd();
-
       // infinite loop that returns if resetting responder is needed
-      secure_env_impl::WorkerInnerLoop(oemlock_process_cb, running, oemlock_in,
-                                       oemlock_event_fd,
-                                       suspended_notifiers.oemlock_suspended_);
+      auto result = secure_env_impl::WorkerInnerLoop(
+          oemlock_process_cb, oemlock_in, oemlock_snapshot_socket2);
+      if (!result.ok()) {
+        LOG(FATAL) << "oemlock worker failed: " << result.error().Trace();
+      }
     }
   });
 
