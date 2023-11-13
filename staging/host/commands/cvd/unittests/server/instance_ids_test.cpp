@@ -31,28 +31,24 @@ TEST(CvdInstanceIds, CvdTakenInstanceIds) {
   CmdRunner::Run("cvd reset -y", envs);
 
   cvd_common::Args start_1_2_args{"cvd",
-                                  "--disable_default_group",
                                   "start",
                                   "--report_anonymous_usage_stats=yes",
                                   "--daemon",
                                   "--norestart_subprocesses",
                                   "--instance_nums=1,2"};
   cvd_common::Args start_3_args{"cvd",
-                                "--disable_default_group",
                                 "start",
                                 "--report_anonymous_usage_stats=yes",
                                 "--daemon",
                                 "--norestart_subprocesses",
                                 "--instance_nums=3"};
   cvd_common::Args start_4_5_6_args{"cvd",
-                                    "--disable_default_group",
                                     "start",
                                     "--report_anonymous_usage_stats=yes",
                                     "--daemon",
                                     "--norestart_subprocesses",
                                     "--instance_nums=4,5,6"};
   cvd_common::Args start_5_7_args{"cvd",
-                                  "--disable_default_group",
                                   "start",
                                   "--report_anonymous_usage_stats=yes",
                                   "--daemon",
