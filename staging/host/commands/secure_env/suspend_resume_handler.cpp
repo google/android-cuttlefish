@@ -18,7 +18,6 @@
 #include <android-base/logging.h>
 
 #include "host/libs/command_util/util.h"
-#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace {
@@ -58,15 +57,10 @@ void SnapshotCommandHandler::Join() {
   }
 }
 
-SnapshotCommandHandler::SnapshotCommandHandler(
-    SharedFD channel_to_run_cvd, EventFdsManager& event_fds_manager,
-    EventNotifiers& suspended_notifiers, SnapshotRunningFlag& running,
-    SharedFD rust_snapshot_socket)
+SnapshotCommandHandler::SnapshotCommandHandler(SharedFD channel_to_run_cvd,
+                                               SnapshotSockets snapshot_sockets)
     : channel_to_run_cvd_(channel_to_run_cvd),
-      event_fds_manager_(event_fds_manager),
-      suspended_notifiers_(suspended_notifiers),
-      shared_running_(running),
-      rust_snapshot_socket_(std::move(rust_snapshot_socket)) {
+      snapshot_sockets_(std::move(snapshot_sockets)) {
   handler_thread_ = std::thread([this]() {
     while (true) {
       auto result = SuspendResumeHandler();
@@ -98,16 +92,15 @@ Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
     case ExtendedActionType::kSuspend: {
       LOG(DEBUG) << "Handling suspended...";
       // Request all worker threads to suspend.
-      shared_running_.UnsetRunning();  // running := false
-      CF_EXPECT(event_fds_manager_.SuspendKeymasterResponder());
-      CF_EXPECT(event_fds_manager_.SuspendGatekeeperResponder());
-      CF_EXPECT(event_fds_manager_.SuspendOemlockResponder());
-      CF_EXPECT(WriteSuspendRequest(rust_snapshot_socket_));
+      CF_EXPECT(WriteSuspendRequest(snapshot_sockets_.rust));
+      CF_EXPECT(WriteSuspendRequest(snapshot_sockets_.keymaster));
+      CF_EXPECT(WriteSuspendRequest(snapshot_sockets_.gatekeeper));
+      CF_EXPECT(WriteSuspendRequest(snapshot_sockets_.oemlock));
       // Wait for ACKs from worker threads.
-      suspended_notifiers_.keymaster_suspended_.WaitAndReset();
-      suspended_notifiers_.gatekeeper_suspended_.WaitAndReset();
-      suspended_notifiers_.oemlock_suspended_.WaitAndReset();
-      CF_EXPECT(ReadSuspendAck(rust_snapshot_socket_));
+      CF_EXPECT(ReadSuspendAck(snapshot_sockets_.rust));
+      CF_EXPECT(ReadSuspendAck(snapshot_sockets_.keymaster));
+      CF_EXPECT(ReadSuspendAck(snapshot_sockets_.gatekeeper));
+      CF_EXPECT(ReadSuspendAck(snapshot_sockets_.oemlock));
       // Write response to run_cvd.
       auto response = LauncherResponse::kSuccess;
       const auto n_written =
@@ -118,8 +111,10 @@ Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
     case ExtendedActionType::kResume: {
       LOG(DEBUG) << "Handling resume...";
       // Request all worker threads to resume.
-      shared_running_.SetRunning();  // running := true, and notifies all
-      CF_EXPECT(WriteResumeRequest(rust_snapshot_socket_));
+      CF_EXPECT(WriteResumeRequest(snapshot_sockets_.rust));
+      CF_EXPECT(WriteResumeRequest(snapshot_sockets_.keymaster));
+      CF_EXPECT(WriteResumeRequest(snapshot_sockets_.gatekeeper));
+      CF_EXPECT(WriteResumeRequest(snapshot_sockets_.oemlock));
       // Write response to run_cvd.
       auto response = LauncherResponse::kSuccess;
       const auto n_written =
