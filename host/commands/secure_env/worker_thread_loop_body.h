@@ -18,16 +18,13 @@
 #include <functional>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/commands/secure_env/event_notifier.h"
-#include "host/commands/secure_env/snapshot_running_flag.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 namespace secure_env_impl {
 
-void WorkerInnerLoop(std::function<bool()> process_callback,
-                     SnapshotRunningFlag& running, SharedFD read_fd,
-                     SharedFD suspend_event_fd,
-                     EventNotifier& suspended_notifier);
+Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
+                             SharedFD read_fd, SharedFD suspend_socket);
 
 }  // namespace secure_env_impl
 }  // namespace cuttlefish
