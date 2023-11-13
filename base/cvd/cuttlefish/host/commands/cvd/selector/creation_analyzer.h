@@ -63,6 +63,7 @@ struct GroupCreationInfo {
   std::vector<PerInstanceInfo> instances;
   std::vector<std::string> args;
   std::unordered_map<std::string, std::string> envs;
+  bool is_default_group { false };
 };
 
 /**
@@ -101,6 +102,11 @@ class CreationAnalyzer {
     const std::vector<std::string>& selector_args;
   };
 
+  struct GroupInfo {
+    std::string group_name;
+    const bool default_group;
+  };
+
   static Result<GroupCreationInfo> Analyze(
       const std::string& cmd, const CreationAnalyzerParam& param,
       const ucred& credential, const InstanceDatabase& instance_database,
@@ -127,7 +133,7 @@ class CreationAnalyzer {
    * If the instanc group is the default one, the group name is cvd. Otherwise,
    * for given instance ids, {i}, the group name will be cvd_i.
    */
-  Result<std::string> AnalyzeGroupName(
+  Result<GroupInfo> ExtractGroup(
       const std::vector<PerInstanceInfo>&) const;
 
   /**
