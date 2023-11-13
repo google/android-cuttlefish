@@ -43,7 +43,6 @@
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/start_impl.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -137,25 +136,19 @@ class CvdStartCommandHandler : public CvdServerHandler {
 
   Result<std::string> FindStartBin(const std::string& android_host_out);
 
-  Result<void> SetBuildId(const uid_t uid, const std::string& group_name,
-                          const std::string& home);
-
   static void MarkLockfiles(selector::GroupCreationInfo& group_info,
                             const InUseState state);
   static void MarkLockfilesInUse(selector::GroupCreationInfo& group_info) {
     MarkLockfiles(group_info, InUseState::kInUse);
   }
 
-  Result<void> HandleNoDaemonWorker(
-      const selector::GroupCreationInfo& group_creation_info,
-      std::atomic<bool>* interrupted, const uid_t uid);
-
-  Result<cvd::Response> HandleNoDaemon(
-      const std::optional<selector::GroupCreationInfo>& group_creation_info,
-      const uid_t uid);
-  Result<cvd::Response> HandleDaemon(
+  /*
+   * wait, remove the instance group if start failed, filling out the
+   * response.
+   */
+  Result<cvd::Response> PostStartExecutionActions(
       std::optional<selector::GroupCreationInfo>& group_creation_info,
-      const uid_t uid);
+      const uid_t uid, const bool is_daemonized);
   Result<void> AcloudCompatActions(
       const selector::GroupCreationInfo& group_creation_info,
       const RequestWithStdio& request);
@@ -495,70 +488,40 @@ Result<std::string> CvdStartCommandHandler::FindStartBin(
   return start_bin;
 }
 
-// std::string -> bool
-enum class BoolValueType : std::uint8_t { kTrue = 0, kFalse, kUnknown };
-static Result<bool> IsDaemonModeFlag(const cvd_common::Args& args) {
-  /*
-   * --daemon could be either bool or string flags.
-   */
-  bool is_daemon = false;
-  auto initial_size = args.size();
-  Flag daemon_bool = GflagsCompatFlag("daemon", is_daemon);
-  std::vector<Flag> as_bool_flags{daemon_bool};
-  cvd_common::Args copied_args{args};
-  if (ParseFlags(as_bool_flags, copied_args).ok()) {
-    if (initial_size != copied_args.size()) {
-      return is_daemon;
-    }
-  }
-  std::string daemon_values;
-  Flag daemon_string = GflagsCompatFlag("daemon", daemon_values);
-  cvd_common::Args copied_args2{args};
-  std::vector<Flag> as_string_flags{daemon_string};
-  if (!ParseFlags(as_string_flags, copied_args2).ok()) {
-    return false;
-  }
-  if (initial_size == copied_args2.size()) {
-    return false;  // not consumed
-  }
-  // --daemon should have been handled above
-  CF_EXPECT(!daemon_values.empty());
-  std::unordered_set<std::string> true_strings = {"y", "yes", "true"};
-  std::unordered_set<std::string> false_strings = {"n", "no", "false"};
-  auto tokens = android::base::Tokenize(daemon_values, ",");
-  std::unordered_set<BoolValueType> value_set;
-  for (const auto& token : tokens) {
-    std::string daemon_value(token);
-    /*
-     * https://en.cppreference.com/w/cpp/string/byte/tolower
-     *
-     * char should be converted to unsigned char first.
-     */
-    std::transform(daemon_value.begin(), daemon_value.end(),
-                   daemon_value.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
-    if (Contains(true_strings, daemon_value)) {
-      value_set.insert(BoolValueType::kTrue);
-      continue;
-    }
-    if (Contains(false_strings, daemon_value)) {
-      value_set.insert(BoolValueType::kFalse);
-    } else {
-      value_set.insert(BoolValueType::kUnknown);
-    }
-  }
-  CF_EXPECT_LE(value_set.size(), 1,
-               "Vectorized flags for --daemon is not supported by cvd");
-  const auto only_element = *(value_set.begin());
-  // We want to, basically, launch with daemon mode, and want to know
-  // when we must not do so
-  if (only_element == BoolValueType::kFalse) {
-    return false;
-  }
-  // if kUnknown, the launcher will fail. Which mode doesn't matter
-  // for the launcher. But it matters for cvd in how cvd handles the
-  // failure.
-  return true;
+Result<bool> IsDaemonModeFlag(const cvd_common::Args& args) {
+  bool flag_set = false;
+  bool is_daemon = true;
+  Flag flag =
+      Flag()
+          .Alias({FlagAliasMode::kFlagPrefix, "-daemon="})
+          .Alias({FlagAliasMode::kFlagPrefix, "--daemon="})
+          .Alias({FlagAliasMode::kFlagExact, "-daemon"})
+          .Alias({FlagAliasMode::kFlagExact, "--daemon"})
+          .Alias({FlagAliasMode::kFlagExact, "-nodaemon"})
+          .Alias({FlagAliasMode::kFlagExact, "--nodaemon"})
+          .Setter([&is_daemon,
+                   &flag_set](const FlagMatch& match) -> Result<void> {
+            flag_set = true;
+            if (match.key == match.value) {
+              is_daemon = match.key.find("no") == std::string::npos;
+              return {};
+            }
+            CF_EXPECTF(match.value.find(",") == std::string::npos,
+                       "{} had a comma", match.value);
+            static constexpr std::string_view kFalseStrings[] = {"n", "no",
+                                                                 "false"};
+            for (const auto& falseString : kFalseStrings) {
+              if (android::base::EqualsIgnoreCase(falseString, match.value)) {
+                is_daemon = false;
+              }
+            }
+            // Allow `cvd_internal_start` to produce its own error for other
+            // invalid strings.
+            return {};
+          });
+  auto args_copy = args;
+  CF_EXPECT(ParseFlags({flag}, args_copy));
+  return flag_set && is_daemon;
 }
 
 // For backward compatibility, we add extra symlink in system wide home
@@ -747,134 +710,33 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     LOG(ERROR) << "AcloudCompatActions() failed"
                << " but continue as they are minor errors.";
   }
-  return is_daemon ? HandleDaemon(group_creation_info, uid)
-                   : HandleNoDaemon(group_creation_info, uid);
+  return PostStartExecutionActions(group_creation_info, uid, is_daemon);
 }
 
-Result<void> CvdStartCommandHandler::HandleNoDaemonWorker(
-    const selector::GroupCreationInfo& group_creation_info,
-    std::atomic<bool>* interrupted, const uid_t uid) {
-  const std::string home_dir = group_creation_info.home;
-  const std::string group_name = group_creation_info.group_name;
-  std::string kernel_log_path =
-      ConcatToString(home_dir, "/cuttlefish_runtime/kernel.log");
-  std::regex finger_pattern(
-      "\\[\\s*[0-9]*\\.[0-9]+\\]\\s*GUEST_BUILD_FINGERPRINT:");
-  std::regex boot_pattern("VIRTUAL_DEVICE_BOOT_COMPLETED");
-  std::streampos last_pos;
-  bool first_iteration = true;
-  while (*interrupted == false) {
-    if (!FileExists(kernel_log_path)) {
-      LOG(ERROR) << kernel_log_path << " does not yet exist, so wait for 5s";
-      using namespace std::chrono_literals;
-      std::this_thread::sleep_for(5s);
-      continue;
-    }
-    std::ifstream kernel_log_file(kernel_log_path);
-    CF_EXPECT(kernel_log_file.is_open(),
-              "The kernel log file exists but it cannot be open.");
-    if (!first_iteration) {
-      kernel_log_file.seekg(last_pos);
-    } else {
-      first_iteration = false;
-      last_pos = kernel_log_file.tellg();
-    }
-    for (std::string line; std::getline(kernel_log_file, line);) {
-      last_pos = kernel_log_file.tellg();
-      // if the line broke before a newline, this will end up reading the
-      // previous line one more time but only with '\n'. That's okay
-      last_pos -= line.size();
-      if (last_pos != std::ios_base::beg) {
-        last_pos -= std::string("\n").size();
-      }
-      std::smatch matched;
-      if (std::regex_search(line, matched, finger_pattern)) {
-        std::string build_id = matched.suffix().str();
-        CF_EXPECT(instance_manager_.SetBuildId(uid, group_name, build_id));
-        continue;
-      }
-      if (std::regex_search(line, matched, boot_pattern)) {
-        return {};
-      }
-    }
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(2s);
-  }
-  return CF_ERR("Cvd start kernel monitor interrupted.");
-}
-
-Result<cvd::Response> CvdStartCommandHandler::HandleNoDaemon(
-    const std::optional<selector::GroupCreationInfo>& group_creation_info,
-    const uid_t uid) {
-  std::atomic<bool> interrupted;
-  std::atomic<bool> worker_success;
-  interrupted = false;
-  worker_success = false;
-  const auto* group_info = std::addressof(*group_creation_info);
-  auto* interrupted_ptr = std::addressof(interrupted);
-  auto* worker_success_ptr = std::addressof(worker_success);
-  std::thread worker = std::thread(
-      [this, group_info, interrupted_ptr, worker_success_ptr, uid]() {
-        LOG(ERROR) << "worker thread started.";
-        auto result = HandleNoDaemonWorker(*group_info, interrupted_ptr, uid);
-        *worker_success_ptr = result.ok();
-        if (*worker_success_ptr == false) {
-          LOG(ERROR) << result.error().FormatForEnv();
-        }
-      });
+Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
+    std::optional<selector::GroupCreationInfo>& group_creation_info,
+    const uid_t uid, const bool is_daemonized) {
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
     // perhaps failed in launch
     instance_manager_.RemoveInstanceGroup(uid, group_creation_info->home);
-    interrupted = true;
   }
-  worker.join();
   auto final_response = ResponseFromSiginfo(infop);
   if (!final_response.has_status() ||
       final_response.status().code() != cvd::Status::OK) {
     return final_response;
   }
+  if (is_daemonized) {
+    // If not daemonized, reaching here means the instance group terminated.
+    // Thus, it's enough to release the file lock in the destructor.
+    // If daemonized, reaching here means the group started successfully
+    // As the destructor will release the file lock, the instance lock
+    // files must be marked as used
+    MarkLockfilesInUse(*group_creation_info);
+  }
   // group_creation_info is nullopt only if is_help is false
   return FillOutNewInstanceInfo(std::move(final_response),
                                 *group_creation_info);
-}
-
-Result<cvd::Response> CvdStartCommandHandler::HandleDaemon(
-    std::optional<selector::GroupCreationInfo>& group_creation_info,
-    const uid_t uid) {
-  auto infop = CF_EXPECT(subprocess_waiter_.Wait());
-  if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
-    instance_manager_.RemoveInstanceGroup(uid, group_creation_info->home);
-  }
-
-  auto final_response = ResponseFromSiginfo(infop);
-  if (!final_response.has_status() ||
-      final_response.status().code() != cvd::Status::OK) {
-    return final_response;
-  }
-  MarkLockfilesInUse(*group_creation_info);
-
-  auto set_build_id_result = SetBuildId(uid, group_creation_info->group_name,
-                                        group_creation_info->home);
-  if (!set_build_id_result.ok()) {
-    LOG(ERROR) << "Failed to set a build Id for "
-               << group_creation_info->group_name << " but will continue.";
-    LOG(ERROR) << "The error message was : "
-               << set_build_id_result.error().FormatForEnv();
-  }
-
-  // group_creation_info is nullopt only if is_help is false
-  return FillOutNewInstanceInfo(std::move(final_response),
-                                *group_creation_info);
-}
-
-Result<void> CvdStartCommandHandler::SetBuildId(const uid_t uid,
-                                                const std::string& group_name,
-                                                const std::string& home) {
-  // build id can't be found before this point
-  const auto build_id = CF_EXPECT(cvd_start_impl::ExtractBuildId(home));
-  CF_EXPECT(instance_manager_.SetBuildId(uid, group_name, build_id));
-  return {};
 }
 
 Result<void> CvdStartCommandHandler::Interrupt() {
