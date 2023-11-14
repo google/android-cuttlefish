@@ -17,10 +17,10 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "host/commands/metrics/cvd_metrics_api.h"
+#include "host/commands/cvd/metrics/cvd_metrics_api.h"
+#include "host/commands/cvd/metrics/proto/cvd_metrics_protos.h"
+#include "host/commands/cvd/metrics/utils.h"
 #include "host/commands/metrics/metrics_defs.h"
-#include "host/commands/metrics/proto/cvd_metrics_protos.h"
-#include "host/commands/metrics/utils.h"
 #include "shared/api_level.h"
 
 namespace cuttlefish {

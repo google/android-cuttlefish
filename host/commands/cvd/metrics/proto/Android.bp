@@ -26,9 +26,7 @@ cc_library_static {
         type: "full",
     },
     srcs: [
-        "common.proto",
         "internal_user_log.proto",
-        "external_user_log.proto",
         "clientanalytics.proto",
     ],
 }
