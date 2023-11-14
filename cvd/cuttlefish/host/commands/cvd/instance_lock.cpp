@@ -27,7 +27,6 @@
 #include <android-base/file.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
-#include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"

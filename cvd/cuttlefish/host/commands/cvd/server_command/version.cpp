@@ -18,11 +18,9 @@
 
 #include <build/version.h>
 #include <cvd_server.pb.h>
-#include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/server_command/components.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/host_tools_version.h"
@@ -32,7 +30,7 @@ namespace {
 
 class CvdVersionHandler : public CvdServerHandler {
  public:
-  INJECT(CvdVersionHandler()) = default;
+  CvdVersionHandler() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     return request.Message().contents_case() ==
@@ -58,9 +56,8 @@ class CvdVersionHandler : public CvdServerHandler {
 
 }  // namespace
 
-fruit::Component<> cvdVersionComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdVersionHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdVersionHandler() {
+  return std::unique_ptr<CvdServerHandler>(new CvdVersionHandler());
 }
 
 }  // namespace cuttlefish

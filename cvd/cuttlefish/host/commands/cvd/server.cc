@@ -30,8 +30,6 @@
 #include <android-base/logging.h>
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
-#include <fruit/fruit.h>
-
 #include "cvd_server.pb.h"
 
 #include "common/libs/fs/shared_buf.h"
@@ -42,14 +40,12 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/build_api.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/demo_multi_vd.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/logger.h"
+#include "host/commands/cvd/request_context.h"
 #include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/server_command/acloud.h"
 #include "host/commands/cvd/server_command/cmd_list.h"
 #include "host/commands/cvd/server_command/display.h"
 #include "host/commands/cvd/server_command/env.h"
@@ -63,7 +59,6 @@
 #include "host/commands/cvd/server_command/subcmd.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/inject.h"
 #include "host/libs/config/known_paths.h"
 
 using android::base::ScopeGuard;
@@ -104,35 +99,6 @@ CvdServer::~CvdServer() {
   auto wakeup = BestEffortWakeup();
   CHECK(wakeup.ok()) << wakeup.error().FormatForEnv();
   Join();
-}
-
-fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
-  return fruit::createComponent()
-      .bindInstance(*server)
-      .bindInstance(server->instance_manager_)
-      .bindInstance(server->build_api_)
-      .bindInstance(server->host_tool_target_manager_)
-      .bindInstance<
-          fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>(
-          server->optout_)
-      .install(CvdAcloudComponent)
-      .install(CvdCmdlistComponent)
-      .install(CommandSequenceExecutorComponent)
-      .install(cvdCommandComponent)
-      .install(CvdDevicePowerComponent)
-      .install(CvdDisplayComponent)
-      .install(CvdEnvComponent)
-      .install(cvdGenericCommandComponent)
-      .install(CvdHandlerProxyComponent)
-      .install(CvdHelpComponent)
-      .install(CvdResetComponent)
-      .install(CvdRestartComponent)
-      .install(CvdSnapshotComponent)
-      .install(cvdShutdownComponent)
-      .install(CvdStartCommandComponent)
-      .install(cvdVersionComponent)
-      .install(DemoMultiVdComponent)
-      .install(LoadConfigsComponent);
 }
 
 Result<void> CvdServer::BestEffortWakeup() {
@@ -248,22 +214,6 @@ Result<void> CvdServer::Exec(const ExecParam& exec_param) {
     free(argv);
   }
   return CF_ERR("fexecve failed: \"" << strerror(errno) << "\"");
-}
-
-Result<CvdServerHandler*> RequestHandler(
-    const RequestWithStdio& request,
-    const std::vector<CvdServerHandler*>& handlers) {
-  Result<cvd::Response> response;
-  std::vector<CvdServerHandler*> compatible_handlers;
-  for (auto& handler : handlers) {
-    if (CF_EXPECT(handler->CanHandle(request))) {
-      compatible_handlers.push_back(handler);
-    }
-  }
-  CF_EXPECT(compatible_handlers.size() == 1,
-            "Expected exactly one handler for message, found "
-                << compatible_handlers.size());
-  return compatible_handlers[0];
 }
 
 Result<void> CvdServer::StartServer(SharedFD server_fd) {
@@ -451,19 +401,14 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
       CF_EXPECT(Verbosity(request, request.Message().verbosity()));
   server_logger_.SetSeverity(verbosity);
 
-  fruit::Injector<> injector(RequestComponent, this);
-
-  for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
-    CF_EXPECT(late_injected->LateInject(injector));
-  }
-
-  auto possible_handlers = injector.getMultibindings<CvdServerHandler>();
+  RequestContext context(*this, instance_manager_, build_api_,
+                         host_tool_target_manager_, optout_);
 
   // Even if the interrupt callback outlives the request handler, it'll only
   // hold on to this struct which will be cleaned out when the request handler
   // exits.
   auto shared = std::make_shared<OngoingRequest>();
-  shared->handler = CF_EXPECT(RequestHandler(request, possible_handlers));
+  shared->handler = CF_EXPECT(context.Handler(request));
   shared->thread_id = std::this_thread::get_id();
 
   {
@@ -507,15 +452,6 @@ Result<void> CvdServer::InstanceDbFromJson(const std::string& json_string) {
   return {};
 }
 
-static fruit::Component<> ServerComponent(ServerLogger* server_logger) {
-  return fruit::createComponent()
-      .addMultibinding<CvdServer, CvdServer>()
-      .bindInstance(*server_logger)
-      .install(BuildApiModule)
-      .install(EpollLoopComponent)
-      .install(HostToolTargetManagerComponent);
-}
-
 Result<int> CvdServerMain(ServerMainParam&& param) {
   SetMinimumVerbosity(android::base::VERBOSE);
 
@@ -529,16 +465,13 @@ Result<int> CvdServerMain(ServerMainParam&& param) {
   CF_EXPECT(server_fd->IsOpen(), "Did not receive a valid cvd_server fd");
 
   std::unique_ptr<ServerLogger> server_logger = std::move(param.server_logger);
-  fruit::Injector<> injector(ServerComponent, server_logger.get());
-
-  for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
-    CF_EXPECT(late_injected->LateInject(injector));
-  }
-
-  auto server_bindings = injector.getMultibindings<CvdServer>();
-  CF_EXPECT(server_bindings.size() == 1,
-            "Expected 1 server binding, got " << server_bindings.size());
-  auto& server = *(server_bindings[0]);
+  BuildApi build_api;
+  EpollPool epoll_pool;
+  auto host_tool_target_manager = NewHostToolTargetManager();
+  InstanceLockFileManager lock_manager;
+  InstanceManager instance_manager(lock_manager, *host_tool_target_manager);
+  CvdServer server(build_api, epoll_pool, instance_manager,
+                   *host_tool_target_manager, *server_logger);
 
   std::optional<SharedFD> memory_carryover_fd =
       std::move(param.memory_carryover_fd);
