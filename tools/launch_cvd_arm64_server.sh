@@ -22,7 +22,7 @@ fi
 # map arguments to variables
 server=$1
 base_instance_num=$2
-if ["$#" -eq 3]
+if [ "$#" -eq 3 ]; then
  num_instances=$3
 else
  num_instances=1
