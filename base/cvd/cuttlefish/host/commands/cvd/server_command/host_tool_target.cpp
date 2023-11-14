@@ -35,8 +35,11 @@ namespace {
 const std::map<std::string, std::vector<std::string>>& OpToBinsMap() {
   static const auto& map = *new std::map<std::string, std::vector<std::string>>{
       {"stop", {"cvd_internal_stop", "stop_cvd"}},
+      {"stop_cvd", {"cvd_internal_stop", "stop_cvd"}},
       {"start", {"cvd_internal_start", "launch_cvd"}},
+      {"launch_cvd", {"cvd_internal_start", "launch_cvd"}},
       {"status", {"cvd_internal_status", "cvd_status"}},
+      {"cvd_status", {"cvd_internal_status", "cvd_status"}},
       {"restart", {"restart_cvd"}},
       {"powerwash", {"powerwash_cvd"}},
       {"suspend", {"snapshot_util_cvd"}},
