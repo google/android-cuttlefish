@@ -48,9 +48,9 @@ namespace cuttlefish {
 
 class CvdGenericCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdGenericCommandHandler(
-      InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
-      HostToolTargetManager& host_tool_target_manager));
+  CvdGenericCommandHandler(InstanceManager& instance_manager,
+                           SubprocessWaiter& subprocess_waiter,
+                           HostToolTargetManager& host_tool_target_manager);
 
   Result<bool> CanHandle(const RequestWithStdio& request) const;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
@@ -387,11 +387,11 @@ Result<std::string> CvdGenericCommandHandler::GetBin(
   return bin;
 }
 
-fruit::Component<
-    fruit::Required<InstanceManager, SubprocessWaiter, HostToolTargetManager>>
-cvdGenericCommandComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdGenericCommandHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdGenericCommandHandler(
+    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+    HostToolTargetManager& host_tool_target_manager) {
+  return std::unique_ptr<CvdServerHandler>(new CvdGenericCommandHandler(
+      instance_manager, subprocess_waiter, host_tool_target_manager));
 }
 
 }  // namespace cuttlefish

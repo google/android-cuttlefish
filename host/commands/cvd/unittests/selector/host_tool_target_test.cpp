@@ -56,18 +56,16 @@ TEST(HostToolManager, KnownFlags) {
   if (android_host_out.empty()) {
     GTEST_SKIP() << "Set ANDROID_HOST_OUT";
   }
-  fruit::Injector<HostToolTargetManager> injector(
-      HostToolTargetManagerComponent);
-  auto& host_tool_manager = injector.get<HostToolTargetManager&>();
+  auto host_tool_manager = NewHostToolTargetManager();
 
   auto daemon_flag =
-      host_tool_manager.ReadFlag({.artifacts_path = android_host_out,
-                                  .op = "start",
-                                  .flag_name = "daemon"});
+      host_tool_manager->ReadFlag({.artifacts_path = android_host_out,
+                                   .op = "start",
+                                   .flag_name = "daemon"});
   auto bad_flag =
-      host_tool_manager.ReadFlag({.artifacts_path = android_host_out,
-                                  .op = "start",
-                                  .flag_name = "@never_exist@"});
+      host_tool_manager->ReadFlag({.artifacts_path = android_host_out,
+                                   .op = "start",
+                                   .flag_name = "@never_exist@"});
 
   EXPECT_THAT(daemon_flag, IsOk());
   ASSERT_EQ(daemon_flag->Name(), "daemon");
@@ -80,15 +78,13 @@ TEST(HostToolManager, KnownBins) {
   if (android_host_out.empty()) {
     GTEST_SKIP() << "Set ANDROID_HOST_OUT";
   }
-  fruit::Injector<HostToolTargetManager> injector(
-      HostToolTargetManagerComponent);
-  auto& host_tool_manager = injector.get<HostToolTargetManager&>();
+  auto host_tool_manager = NewHostToolTargetManager();
 
-  auto start_bin = host_tool_manager.ExecBaseName(
+  auto start_bin = host_tool_manager->ExecBaseName(
       {.artifacts_path = android_host_out, .op = "start"});
-  auto stop_bin = host_tool_manager.ExecBaseName(
+  auto stop_bin = host_tool_manager->ExecBaseName(
       {.artifacts_path = android_host_out, .op = "stop"});
-  auto bad_bin = host_tool_manager.ExecBaseName(
+  auto bad_bin = host_tool_manager->ExecBaseName(
       {.artifacts_path = android_host_out, .op = "bad"});
 
   EXPECT_THAT(start_bin, IsOk());
