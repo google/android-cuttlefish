@@ -200,7 +200,6 @@ MetricsExitCodes PostRequest(const std::string& output,
     LOG(ERROR) << "curl error code: " << rc << " | " << curl_easy_strerror(rc);
     return cuttlefish::kMetricsError;
   }
-  LOG(INFO) << "Metrics posted to ClearCut";
   curl_global_cleanup();
   return cuttlefish::kSuccess;
 }

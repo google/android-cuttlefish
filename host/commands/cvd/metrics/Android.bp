@@ -24,7 +24,9 @@ cc_library_host_static {
         "utils.cpp",
     ],
     static_libs: [
+        "libcuttlefish_cvd_metrics_proto",
         "libext2_uuid",
+        "libprotobuf-cpp-full",
     ],
     defaults: ["cvd_lib_defaults"],
 }
