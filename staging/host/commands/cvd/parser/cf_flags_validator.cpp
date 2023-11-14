@@ -86,7 +86,6 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
           {"bootloader", ConfigNode{.type = objectValue, .children = {
             {"build", ConfigNode{.type = stringValue}},
           }}},
-          {"bootconfig_args", ConfigNode{.type = stringValue}},
         }}},
         {"security", ConfigNode{.type = objectValue, .children = {
           {"serial_number", ConfigNode{.type = stringValue}},
