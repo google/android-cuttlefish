@@ -16,6 +16,5 @@
 
 #pragma GCC system_header
 
-#include <common.pb.h>
 #include <google/protobuf/duration.pb.h>
 #include <internal_user_log.pb.h>
