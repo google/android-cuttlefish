@@ -43,6 +43,7 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
   {"instances", ConfigNode{.type = arrayValue, .children = {
     {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
         {"@import", ConfigNode{.type = stringValue}},
+        {"name", ConfigNode{.type = stringValue}},
         {"vm", ConfigNode{.type = objectValue, .children = {
           {"cpus", ConfigNode{.type = uintValue}},
           {"memory_mb", ConfigNode{.type = uintValue}},
@@ -86,6 +87,7 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
           {"bootloader", ConfigNode{.type = objectValue, .children = {
             {"build", ConfigNode{.type = stringValue}},
           }}},
+          {"bootconfig_args", ConfigNode{.type = stringValue}},
         }}},
         {"security", ConfigNode{.type = objectValue, .children = {
           {"serial_number", ConfigNode{.type = stringValue}},
