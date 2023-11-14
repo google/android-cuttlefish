@@ -19,7 +19,11 @@ package {
 
 cc_binary {
     name: "cvd_internal_start",
-    symlinks: ["launch_cvd"],
+    arch: {
+        arm64: {
+            symlinks: ["launch_cvd"],
+        },
+    },
     srcs: [
         "filesystem_explorer.cc",
         "flag_forwarder.cc",
