@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 syntax = "proto2";
-package cuttlefish;
 
 message LogRequest {
   optional ClientInfo client_info = 1;
   optional int32 log_source = 2;
   optional int64 request_time_ms = 4;
   repeated LogEvent log_event = 3;
-  optional string log_source_name = 6;
+  optional string log_source_name = 5;
 }
 
 message ClientInfo {

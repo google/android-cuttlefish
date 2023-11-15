@@ -35,7 +35,7 @@ std::string GetMacAddress();
 std::string GetCompany();
 std::string GetVmmVersion();
 uint64_t GetEpochTimeMs();
-std::string ProtoToString(cuttlefish::LogEvent* event);
+std::string ProtoToString(LogEvent* event);
 cuttlefish::MetricsExitCodes PostRequest(const std::string& output,
                                          ClearcutServer server);
 
