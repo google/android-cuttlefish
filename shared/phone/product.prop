@@ -23,11 +23,11 @@ bluetooth.profile.pan.nap.enabled=true
 bluetooth.profile.pan.panu.enabled=true
 bluetooth.profile.pbap.server.enabled=true
 
-# Disable LeAudio related profile as there is no support for it
+# Enable LE Audio and its related profiles
 bluetooth.profile.bap.broadcast.assist.enabled=false
-bluetooth.profile.bap.unicast.client.enabled=false
-bluetooth.profile.bas.client.enabled=false
-bluetooth.profile.ccp.server.enabled=false
-bluetooth.profile.csip.set_coordinator.enabled=false
-bluetooth.profile.hap.client.enabled=false
-bluetooth.profile.vcp.controller.enabled=false
+bluetooth.profile.bap.unicast.client.enabled=true
+bluetooth.profile.bas.client.enabled=true
+bluetooth.profile.ccp.server.enabled=true
+bluetooth.profile.csip.set_coordinator.enabled=true
+bluetooth.profile.hap.client.enabled=true
+bluetooth.profile.vcp.controller.enabled=true
