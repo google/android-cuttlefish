@@ -23,6 +23,7 @@
 
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/frontline_parser.h"
+#include "host/commands/cvd/metrics/cvd_metrics_api.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -82,6 +83,7 @@ class CvdServerHandlerProxy : public CvdServerHandler {
       new_exec_args.push_back(*new_sub_cmd);
     }
     new_exec_args.insert(new_exec_args.end(), cmd_args.begin(), cmd_args.end());
+    CvdMetrics::SendCvdMetrics(new_exec_args);
 
     cvd::Request exec_request = MakeRequest(
         {.cmd_args = new_exec_args,
@@ -100,6 +102,7 @@ class CvdServerHandlerProxy : public CvdServerHandler {
     const auto responses =
         CF_EXPECT(executor_.Execute({std::move(forwarded_request)}, dev_null));
     CF_EXPECT_EQ(responses.size(), 1);
+    // TODO(moelsherif): check the response for failed command
     return responses.front();
   }
 
