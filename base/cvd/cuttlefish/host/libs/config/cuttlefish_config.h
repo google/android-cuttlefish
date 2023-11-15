@@ -613,6 +613,9 @@ class CuttlefishConfig {
     std::string gpu_angle_feature_overrides_enabled() const;
     std::string gpu_angle_feature_overrides_disabled() const;
     std::string gpu_capture_binary() const;
+
+    std::string gpu_vhost_user_mode() const;
+
     bool enable_gpu_udmabuf() const;
     bool enable_gpu_vhost_user() const;
     bool enable_gpu_external_blob() const;
@@ -988,6 +991,11 @@ extern const char* const kGpuModeGfxstreamGuestAngle;
 extern const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader;
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeNone;
+
+// GPU vhost user modes
+extern const char* const kGpuVhostUserModeAuto;
+extern const char* const kGpuVhostUserModeOn;
+extern const char* const kGpuVhostUserModeOff;
 
 // HwComposer modes
 extern const char* const kHwComposerAuto;
