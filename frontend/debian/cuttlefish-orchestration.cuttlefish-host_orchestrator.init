@@ -77,58 +77,64 @@ prepare_run_dir() {
 }
 
 start_operator() {
-  args=()
-
   if [[ -n "${operator_http_port}" ]]; then
-    args+=("--http_port=${operator_http_port}")
+    http_port="--http_port=${operator_http_port}"
   fi
   if [[ -n "${operator_webui_url}" ]]; then
-    args+=("--webui_url=${operator_webui_url}")
+    webui_url="--webui_url=${operator_webui_url}"
   fi
-  args+=("socket_path=${RUN_DIR}/operator")
+  socket_path="socket_path=${RUN_DIR}/operator"
+
+  set -- $http_port $webui_url $socket_path
 
   start-stop-daemon --start \
     --pidfile "${OPERATOR_PIDFILE}" \
     --chdir "${ASSET_DIR}" \
     --background --no-close \
     --make-pidfile \
-    --exec "${OPERATOR_BIN}" -- "${args[@]}"
+    --exec "${OPERATOR_BIN}" -- "${@}"
 }
 
 start_orchestrator() {
   mkdir -p  "${orchestrator_cvd_artifacts_dir}"
   chown _cutf-operator:cvdnetwork "${orchestrator_cvd_artifacts_dir}"
 
-  orhcestrator_args=()
-
   if [[ -n "${orchestrator_http_port}" ]]; then
-    args+=("--http_port=${orchestrator_http_port}")
+    http_port="--http_port=${orchestrator_http_port}"
   fi
   if [[ -n "${orchestrator_https_port}" ]]; then
-    args+=("--https_port=${orchestrator_https_port}")
+    https_port="--https_port=${orchestrator_https_port}"
   fi
   if [[ -n "${orchestrator_tls_cert_dir}" ]]; then
-    args+=("--tls_cert_dir=${orchestrator_tls_cert_dir}")
+    tls_cert_dir="--tls_cert_dir=${orchestrator_tls_cert_dir}"
   fi
   if [[ -n "${orchestrator_android_build_url}" ]]; then
-    args+=("--android_build_url=${orchestrator_android_build_url}")
+    android_build_url="--android_build_url=${orchestrator_android_build_url}"
   fi
   if [[ -n "${orchestrator_cvdbin_android_build_id}" ]]; then
-    args+=("--cvd_build_id=${orchestrator_cvdbin_android_build_id}")
+    orchestrator_cvdbin_android_build_id="--cvd_build_id=${orchestrator_cvdbin_android_build_id}"
   fi
   if [[ -n "${orchestrator_cvdbin_android_build_target}" ]]; then
-    args+=("--cvd_build_target=${orchestrator_cvdbin_android_build_target}")
+    orchestrator_cvdbin_android_build_target="--cvd_build_target=${orchestrator_cvdbin_android_build_target}"
   fi
   if [[ -n "${orchestrator_cvd_artifacts_dir}" ]]; then
-    args+=("--cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir}")
+    orchestrator_cvd_artifacts_dir="--cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir}"
   fi
   if [[ -n "${operator_http_port}" ]]; then
-    args+=("--operator_http_port=${operator_http_port}")
+    operator_http_port="--operator_http_port=${operator_http_port}"
   fi
   if [[ -n "${orchestrator_listen_address}" ]]; then
-    args+=("--listen_addr=${orchestrator_listen_address}")
+    orchestrator_listen_address="--listen_addr=${orchestrator_listen_address}"
   fi
-  args+=("--cvd_user=_cvd-executor")
+  cvd_user="--cvd_user=_cvd-executor"
+
+  set -- $http_port $https_port $tls_cert_dir \
+    $android_build_url \
+    $orchestrator_cvdbin_android_build_id $orchestrator_cvdbin_android_build_target \
+    $orchestrator_cvd_artifacts_dir \
+    $operator_http_port \
+    $orchestrator_listen_address \
+    $cvd_user
 
   start-stop-daemon --start \
     --pidfile "${ORCHESTRATOR_PIDFILE}" \
@@ -136,7 +142,7 @@ start_orchestrator() {
     --chdir "${ASSET_DIR}" \
     --background --no-close \
     --make-pidfile \
-    --exec "${ORCHESTRATOR_BIN}" -- "${args[@]}"
+    --exec "${ORCHESTRATOR_BIN}" -- "${@}"
 }
 
 start() {
