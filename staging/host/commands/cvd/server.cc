@@ -30,7 +30,7 @@
 #include <android-base/logging.h>
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
-#include "cvd_server.pb.h"
+#include <fmt/core.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -40,11 +40,13 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
+#include "cvd_server.pb.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/request_context.h"
+#include "host/commands/cvd/run_server.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/cmd_list.h"
 #include "host/commands/cvd/server_command/display.h"
@@ -166,18 +168,13 @@ Result<void> CvdServer::Exec(const ExecParam& exec_param) {
   android::base::unique_fd client_dup{
       exec_param.carryover_client_fd->UNMANAGED_Dup()};
   CF_EXPECT(client_dup.get() >= 0, "dup: \"" << server_fd_->StrError() << "\"");
-  std::string acloud_translator_opt_out_arg(
-      "-INTERNAL_acloud_translator_optout=");
-  if (optout_) {
-    acloud_translator_opt_out_arg.append("true");
-  } else {
-    acloud_translator_opt_out_arg.append("false");
-  }
+
   cvd_common::Args argv_str = {
       kServerExecPath,
-      "-INTERNAL_server_fd=" + std::to_string(server_dup.get()),
-      "-INTERNAL_carryover_client_fd=" + std::to_string(client_dup.get()),
-      acloud_translator_opt_out_arg,
+      fmt::format("-{}={}", kInternalServerFd, server_dup.get()),
+      fmt::format("-{}={}", kInternalCarryoverClientFd, client_dup.get()),
+      fmt::format("-{}={}", kInternalAcloudTranslatorOptOut, optout_),
+      fmt::format("-{}={}", kInternalRestartedInProcess, true),
   };
 
   int in_memory_dup = -1;
@@ -192,8 +189,8 @@ Result<void> CvdServer::Exec(const ExecParam& exec_param) {
     in_memory_dup = exec_param.in_memory_data_fd.value()->UNMANAGED_Dup();
     CF_EXPECTF(in_memory_dup >= 0, "dup: \"{}\"",
                exec_param.in_memory_data_fd.value()->StrError());
-    argv_str.push_back("-INTERNAL_memory_carryover_fd=" +
-                       std::to_string(in_memory_dup));
+    argv_str.push_back(
+        ConcatToString("-", kInternalMemoryCarryoverFd, "=", in_memory_dup));
   }
 
   std::vector<char*> argv_cstr;
