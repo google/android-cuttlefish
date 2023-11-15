@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
 
-#include <fruit/fruit.h>
+#include <memory>
 
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
-CvdHandlerProxyComponent();
+std::unique_ptr<CvdServerHandler> NewSerialPreset(
+    CommandSequenceExecutor& executor);
 
 }  // namespace cuttlefish

@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
+#include <memory>
+
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "host/commands/cvd/common_utils.h"
@@ -24,7 +26,7 @@ namespace cuttlefish {
 
 class HostToolTargetManagerImpl : public HostToolTargetManager {
  public:
-  INJECT(HostToolTargetManagerImpl()) = default;
+  HostToolTargetManagerImpl() = default;
 
   Result<FlagInfo> ReadFlag(const HostToolFlagRequestForm& request) override;
   Result<std::string> ExecBaseName(
@@ -96,9 +98,9 @@ Result<std::string> HostToolTargetManagerImpl::ExecBaseName(
   return base_name;
 }
 
-fruit::Component<HostToolTargetManager> HostToolTargetManagerComponent() {
-  return fruit::createComponent()
-      .bind<HostToolTargetManager, HostToolTargetManagerImpl>();
+std::unique_ptr<HostToolTargetManager> NewHostToolTargetManager() {
+  return std::unique_ptr<HostToolTargetManager>(
+      new HostToolTargetManagerImpl());
 }
 
 }  // namespace cuttlefish

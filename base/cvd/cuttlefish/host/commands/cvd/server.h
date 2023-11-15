@@ -23,21 +23,19 @@
 #include <string>
 #include <vector>
 
-#include <fruit/fruit.h>
-
 #include "cvd_server.pb.h"
 
 #include "common/libs/fs/epoll.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/unix_sockets.h"
+#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/logger.h"
 // including "server_command/subcmd.h" causes cyclic dependency
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/libs/config/inject.h"
 #include "host/libs/web/build_api.h"
 
 namespace cuttlefish {
@@ -63,8 +61,8 @@ class CvdServer {
   friend Result<int> CvdServerMain(ServerMainParam&& fds);
 
  public:
-  INJECT(CvdServer(BuildApi&, EpollPool&, InstanceManager&,
-                   HostToolTargetManager&, ServerLogger&));
+  CvdServer(BuildApi&, EpollPool&, InstanceManager&, HostToolTargetManager&,
+            ServerLogger&);
   ~CvdServer();
 
   Result<void> StartServer(SharedFD server);
@@ -88,9 +86,6 @@ class CvdServer {
     std::thread::id thread_id;
   };
 
-  /* this has to be static due to the way fruit includes components */
-  static fruit::Component<> RequestComponent(CvdServer*);
-
   Result<void> AcceptClient(EpollEvent);
   Result<void> HandleMessage(EpollEvent);
   Result<cvd::Response> HandleRequest(RequestWithStdio, SharedFD client);
@@ -113,10 +108,6 @@ class CvdServer {
   // translator optout
   std::atomic<bool> optout_;
 };
-
-Result<CvdServerHandler*> RequestHandler(
-    const RequestWithStdio& request,
-    const std::vector<CvdServerHandler*>& handlers);
 
 // Read all contents from the file
 Result<std::string> ReadAllFromMemFd(const SharedFD& mem_fd);

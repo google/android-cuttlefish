@@ -25,8 +25,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <fruit/fruit.h>
-
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
@@ -56,7 +54,7 @@ class InstanceManager {
   template <typename T>
   using Set = selector::Set<T>;
 
-  INJECT(InstanceManager(InstanceLockFileManager&, HostToolTargetManager&));
+  InstanceManager(InstanceLockFileManager&, HostToolTargetManager&);
 
   // For cvd start
   Result<GroupCreationInfo> Analyze(const std::string& sub_cmd,

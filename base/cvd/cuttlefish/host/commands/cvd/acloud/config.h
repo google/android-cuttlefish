@@ -23,13 +23,12 @@
 #include "user_config.pb.h"
 
 #include "common/libs/utils/result.h"
-#include "host/libs/config/inject.h"
 
 namespace cuttlefish {
 
 class AcloudConfig {
  public:
-  INJECT(AcloudConfig(const acloud::UserConfig&));
+  AcloudConfig(const acloud::UserConfig&);
   ~AcloudConfig() = default;
 
  public:

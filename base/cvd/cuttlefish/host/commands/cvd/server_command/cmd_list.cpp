@@ -31,8 +31,7 @@ namespace cuttlefish {
 
 class CvdCmdlistHandler : public CvdServerHandler {
  public:
-  INJECT(CvdCmdlistHandler(CommandSequenceExecutor& executor))
-      : executor_(executor) {}
+  CvdCmdlistHandler(CommandSequenceExecutor& executor) : executor_(executor) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
@@ -76,10 +75,9 @@ class CvdCmdlistHandler : public CvdServerHandler {
   CommandSequenceExecutor& executor_;
 };
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
-CvdCmdlistComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdCmdlistHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdCmdlistHandler(
+    CommandSequenceExecutor& executor) {
+  return std::unique_ptr<CvdServerHandler>(new CvdCmdlistHandler(executor));
 }
 
 }  // namespace cuttlefish
