@@ -51,6 +51,7 @@ cc_library_host_static {
     ],
     static_libs: [
         "libcvd_acloud",
+        "libcvd_metrics",
         "libcvd_selector",
     ],
     defaults: ["cvd_lib_defaults"],
