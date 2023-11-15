@@ -19,8 +19,6 @@
 #include <mutex>
 #include <optional>
 
-#include <fruit/fruit.h>
-
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 
@@ -42,7 +40,7 @@ struct RunOutput { // a better name please
 
 class SubprocessWaiter {
  public:
-  INJECT(SubprocessWaiter()) {}
+  SubprocessWaiter() {}
 
   Result<void> Setup(Subprocess subprocess);
   Result<siginfo_t> Wait();

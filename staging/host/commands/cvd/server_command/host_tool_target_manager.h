@@ -17,12 +17,11 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/server_command/flags_collector.h"
@@ -51,6 +50,6 @@ class HostToolTargetManager {
       const HostToolExecNameRequestForm& request) = 0;
 };
 
-fruit::Component<HostToolTargetManager> HostToolTargetManagerComponent();
+std::unique_ptr<HostToolTargetManager> NewHostToolTargetManager();
 
 }  // namespace cuttlefish
