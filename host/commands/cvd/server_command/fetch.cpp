@@ -28,7 +28,7 @@ namespace cuttlefish {
 
 class CvdFetchCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdFetchCommandHandler(SubprocessWaiter& subprocess_waiter))
+  CvdFetchCommandHandler(SubprocessWaiter& subprocess_waiter)
       : subprocess_waiter_(subprocess_waiter),
         fetch_cmd_list_{std::vector<std::string>{"fetch", "fetch_cvd"}} {}
 
@@ -107,10 +107,10 @@ Result<void> CvdFetchCommandHandler::Interrupt() {
   return {};
 }
 
-fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
-cvdFetchCommandComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdFetchCommandHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdFetchCommandHandler(
+    SubprocessWaiter& subprocess_waiter) {
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdFetchCommandHandler(subprocess_waiter));
 }
 
 }  // namespace cuttlefish
