@@ -72,7 +72,7 @@ genfscon sysfs /devices/platform/rtc-test.0/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/platform/rtc-test.1/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/platform/rtc-test.2/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /bus/iio/devices u:object_r:sysfs_iio_devices:s0
-cf_rtc_wakeup_alarmtimer(/devices/platform/rtc-test.1, 1, 0)
+cf_rtc_wakeup_alarmtimer(/devices/platform/rtc-test.1, 2, 0)
 genfscon sysfs /devices/platform/rtc-test.2/wakeup u:object_r:sysfs_wakeup:s0
 dnl
 popdef(`cf_pci_gpu_device')dnl
