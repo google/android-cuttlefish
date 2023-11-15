@@ -63,14 +63,19 @@ else
 fi
 
 web_ui_port=$((8443+$base_instance_num-1))
-adb_port=$((6520+$base_instance_num-1))
+adb_port_forwarding=""
 instance_id=$(uuidgen)
+for instance_num in $(seq $base_instance_num $(($base_instance_num+$num_instances-1))); do
+  adb_port=$((6520+$instance_num-1))
+  echo "Device-$instance_num is using adb port $adb_port (adb connect 127.0.0.1:$adb_port if you want to connect to this device)"
+  adb_port_forwarding+="-L $adb_port:127.0.0.1:$adb_port "
+done
+
 echo "Web UI port: $web_ui_port"
-echo "adb port: $adb_port (adb connect 127.0.0.1:$adb_port if you want to connect to the device)"
 # sets up SSH port forwarding to the remote server for various ports and launch cvd instance
 ssh $server -L $web_ui_port:127.0.0.1:$web_ui_port \
   -L 15550:127.0.0.1:15550 -L 15551:127.0.0.1:15551 -L 15552:127.0.0.1:15552 \
   -L 15553:127.0.0.1:15553 -L 15554:127.0.0.1:15554 -L 15555:127.0.0.1:15555 \
   -L 15556:127.0.0.1:15556 -L 15557:127.0.0.1:15557 -L 15558:127.0.0.1:15558 \
-  -L $adb_port:127.0.0.1:$adb_port \
+  $adb_port_forwarding \
   -t "cd cvd_home && HOME=~/cvd_home bin/launch_cvd --base_instance_num=$base_instance_num --num_instances=$num_instances"
