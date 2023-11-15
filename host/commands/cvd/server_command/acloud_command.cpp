@@ -22,7 +22,6 @@
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
-#include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -32,6 +31,7 @@
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/acloud/create_converter_parser.h"
+#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server_command/acloud_common.h"
 #include "host/commands/cvd/server_command/server_handler.h"
@@ -54,8 +54,7 @@ bool CheckIfCvdrExist() {
 
 class AcloudCommand : public CvdServerHandler {
  public:
-  INJECT(AcloudCommand(CommandSequenceExecutor& executor))
-      : executor_(executor) {}
+  AcloudCommand(CommandSequenceExecutor& executor) : executor_(executor) {}
   ~AcloudCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -319,10 +318,9 @@ Result<void> AcloudCommand::RunAcloudConnect(const RequestWithStdio& request,
   return {};
 }
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
-AcloudCommandComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, AcloudCommand>();
+std::unique_ptr<CvdServerHandler> NewAcloudCommand(
+    CommandSequenceExecutor& executor) {
+  return std::unique_ptr<CvdServerHandler>(new AcloudCommand(executor));
 }
 
 }  // namespace cuttlefish
