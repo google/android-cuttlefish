@@ -37,6 +37,7 @@ cc_binary_host {
         "display.cpp",
         "flags.cc",
         "flag_feature.cpp",
+        "graphics_flags.cc",
         "kernel_module_parser.cc",
         "misc_info.cc",
         "super_image_mixer.cc",
@@ -98,8 +99,7 @@ cc_binary_host {
                 "libnl",
             ],
             static_libs: [
-                "libcuttlefish_graphics_configuration",
-                "libcuttlefish_graphics_detector",
+                "libgfxstream_graphics_detector_proto",
             ],
             required: [
                 "mkuserimg_mke2fs",
