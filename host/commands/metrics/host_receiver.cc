@@ -84,7 +84,8 @@ void MetricsHostReceiver::ProcessMessage(const std::string& text) {
   } else if (text == "LockScreen") {
     rc = Clearcut::SendLockScreen(hostDev);
   } else {
-    rc = CvdMetrics::SendLaunchCommand(text);
+    LOG(ERROR) << "Message not recognized: " << text;
+    rc = MetricsExitCodes::kMetricsError;
   }
 
   if (rc != MetricsExitCodes::kSuccess) {
