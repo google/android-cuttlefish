@@ -60,12 +60,18 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
 
 Result<Json::Value> ParseJsonFile(const std::string& file_path);
 
+Result<std::vector<std::string>> GetConfiguredSystemImagePaths(
+    Json::Value& root);
+std::optional<std::string> GetConfiguredSystemHostPath(Json::Value& root);
+
 Result<Json::Value> GetOverriddenConfig(
     const std::string& config_path,
     const std::vector<Override>& override_flags);
 
 Result<LoadDirectories> GenerateLoadDirectories(
-    const std::string& parent_directory, const int num_instances);
+    const std::string& parent_directory,
+    std::vector<std::string>& system_image_path_configs,
+    std::optional<std::string> system_host_path, const int num_instances);
 
 Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
                                  const LoadDirectories& load_directories);
