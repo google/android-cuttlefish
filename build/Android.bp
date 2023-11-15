@@ -92,7 +92,6 @@ cvd_host_tools = [
     "lz4",
     "make_f2fs",
     "metrics",
-    "metrics_cvd",
     "metrics_launcher",
     "mkbootfs",
     "mkbootimg",
