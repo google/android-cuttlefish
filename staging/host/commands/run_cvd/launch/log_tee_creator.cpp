@@ -20,15 +20,11 @@ namespace cuttlefish {
 LogTeeCreator::LogTeeCreator(const CuttlefishConfig::InstanceSpecific& instance)
     : instance_(instance) {}
 
-Command LogTeeCreator::CreateLogTee(Command& cmd,
-                                    const std::string& process_name) {
+Result<Command> LogTeeCreator::CreateLogTee(Command& cmd,
+                                            const std::string& process_name) {
   auto name_with_ext = process_name + "_logs.fifo";
   auto logs_path = instance_.PerInstanceInternalPath(name_with_ext.c_str());
-  auto logs = SharedFD::Fifo(logs_path, 0666);
-  if (!logs->IsOpen()) {
-    LOG(FATAL) << "Failed to create fifo for " << process_name
-               << " output: " << logs->StrError();
-  }
+  auto logs = CF_EXPECT(SharedFD::Fifo(logs_path, 0666));
 
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, logs);
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);

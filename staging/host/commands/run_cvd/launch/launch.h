@@ -91,9 +91,9 @@ fruit::Component<
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 RootCanalComponent();
 
-std::vector<MonitorCommand> Casimir(const CuttlefishConfig&,
-                                    const CuttlefishConfig::InstanceSpecific&,
-                                    LogTeeCreator&);
+Result<std::vector<MonitorCommand>> Casimir(
+    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
+    LogTeeCreator&);
 
 Result<std::vector<MonitorCommand>> Pica(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,

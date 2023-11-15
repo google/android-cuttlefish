@@ -84,7 +84,7 @@ Result<std::vector<MonitorCommand>> WmediumdServer::Commands() {
   cmd.AddParameter("--grpc_uds_path=", grpc_socket_.CreateGrpcSocket(Name()));
 
   std::vector<MonitorCommand> commands;
-  commands.emplace_back(std::move(log_tee_.CreateLogTee(cmd, "wmediumd")));
+  commands.emplace_back(CF_EXPECT(log_tee_.CreateLogTee(cmd, "wmediumd")));
   commands.emplace_back(std::move(cmd));
   return commands;
 }
