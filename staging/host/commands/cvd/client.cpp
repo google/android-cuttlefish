@@ -159,6 +159,8 @@ Result<ClientCommandCheckResult> HandleClientCommands(
     output.new_all_args = cvd_common::Args{"cvd", "help"};
     return output;
   }
+  // handle the exception for kill-server and reset
+  CvdMetrics::SendCvdMetrics(output.new_all_args);
 
   // Special case for `cvd kill-server`, handled by directly
   // stopping the cvd_server.
