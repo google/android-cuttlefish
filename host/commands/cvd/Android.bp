@@ -54,6 +54,7 @@ cc_defaults {
     static_libs: [
         "libbuildversion",
         "libcuttlefish_cvd_proto",
+        "libcuttlefish_cvd_metrics_proto",
         "libcuttlefish_acloud_proto",
         "libcuttlefish_host_config",
         "libcuttlefish_web",
@@ -108,6 +109,8 @@ cc_library_host_static {
     ],
     static_libs: [
         "libcvd_selector",
+        "libcvd_metrics",
+        "libext2_uuid",
     ],
     defaults: ["cvd_lib_defaults"],
 }
@@ -120,6 +123,8 @@ cc_defaults {
         "libcvd_parser",
         "libcvd_selector",
         "libcvd_server_client",
+        "libcvd_metrics",
+        "libext2_uuid",
         "libcvd_sub_commands",
         "libcvd_fetch",
     ],
