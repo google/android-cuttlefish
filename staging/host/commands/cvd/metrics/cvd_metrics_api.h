@@ -22,6 +22,7 @@ class CvdMetrics {
   CvdMetrics() = default;
   ~CvdMetrics() = default;
   static int SendLaunchCommand(const std::string& command_line);
+  static int SendCvdMetrics(const std::vector<std::string>& args);
 };
 
 }  // namespace cuttlefish
