@@ -119,3 +119,10 @@ service suspend_blocker /vendor/bin/suspend_blocker
     class early_hal # Start together with system_suspend HAL
     group system
     user root
+
+on early-init
+    setprop ro.setupwizard.mode ${ro.boot.setupwizard_mode}
+
+on early-init && property:ro.boot.enable_bootanimation=0
+    setprop debug.sf.nobootanimation 1
+
