@@ -77,7 +77,8 @@ Result<void> RunServer(const RunServerParam& params) {
        .memory_carryover_fd = params.memory_carryover_fd,
        .acloud_translator_optout = params.acloud_translator_optout,
        .server_logger = std::move(server_logger),
-       .scoped_logger = std::move(run_server_logger)}));
+       .scoped_logger = std::move(run_server_logger),
+       .restarted_in_process = params.restarted_in_process}));
   return {};
 }
 
