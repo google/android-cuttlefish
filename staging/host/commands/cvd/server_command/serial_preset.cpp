@@ -32,8 +32,7 @@ namespace cuttlefish {
 
 class SerialPreset : public CvdServerHandler {
  public:
-  INJECT(SerialPreset(CommandSequenceExecutor& executor))
-      : executor_(executor) {}
+  SerialPreset(CommandSequenceExecutor& executor) : executor_(executor) {}
   ~SerialPreset() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -107,10 +106,9 @@ class SerialPreset : public CvdServerHandler {
   bool interrupted_ = false;
 };
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
-cvdSerialPresetComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, SerialPreset>();
+std::unique_ptr<CvdServerHandler> NewSerialPreset(
+    CommandSequenceExecutor& executor) {
+  return std::unique_ptr<CvdServerHandler>(new SerialPreset(executor));
 }
 
 }  // namespace cuttlefish
