@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/server_command/restart.h"
 
 #include <sys/types.h>
 
@@ -26,7 +26,6 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -38,7 +37,7 @@
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server_command/components.h"
+#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/web/build_api.h"
@@ -93,8 +92,8 @@ Result<SharedFD> LatestCvdAsFd(BuildApi& build_api) {
 
 class CvdRestartHandler : public CvdServerHandler {
  public:
-  INJECT(CvdRestartHandler(BuildApi& build_api, CvdServer& server,
-                           InstanceManager& instance_manager))
+  CvdRestartHandler(BuildApi& build_api, CvdServer& server,
+                    InstanceManager& instance_manager)
       : build_api_(build_api),
         supported_modes_({"match-client", "latest", "reuse-server"}),
         server_(server),
@@ -291,10 +290,10 @@ class CvdRestartHandler : public CvdServerHandler {
 
 }  // namespace
 
-fruit::Component<fruit::Required<BuildApi, CvdServer, InstanceManager>>
-CvdRestartComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdRestartHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdRestartHandler(
+    BuildApi& build_api, CvdServer& server, InstanceManager& instance_manager) {
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdRestartHandler(build_api, server, instance_manager));
 }
 
 }  // namespace cuttlefish

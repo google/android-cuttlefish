@@ -18,8 +18,6 @@
 #include <set>
 #include <string>
 
-#include <fruit/fruit.h>
-
 #include "host/commands/cvd/lock_file.h"
 
 namespace cuttlefish {
@@ -47,7 +45,7 @@ class InstanceLockFileManager {
   using LockFileManager = cvd_impl::LockFileManager;
 
  public:
-  INJECT(InstanceLockFileManager());
+  InstanceLockFileManager();
 
   Result<InstanceLockFile> AcquireLock(int instance_num);
   Result<std::set<InstanceLockFile>> AcquireLocks(const std::set<int>& nums);

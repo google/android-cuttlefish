@@ -17,15 +17,13 @@
 #pragma once
 
 #include <atomic>
-
-#include <fruit/fruit.h>
+#include <memory>
 
 #include "host/commands/cvd/server_command/acloud_common.h"
+#include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<
-    fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
-AcloudTranslatorCommandComponent();
-
+std::unique_ptr<CvdServerHandler> NewAcloudTranslatorCommand(
+    std::atomic<bool>& optout);
 }

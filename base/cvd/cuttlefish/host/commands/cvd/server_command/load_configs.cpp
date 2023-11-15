@@ -22,7 +22,6 @@
 #include <string_view>
 #include <vector>
 
-#include <fruit/fruit.h>
 #include <json/json.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -39,8 +38,7 @@ namespace cuttlefish {
 
 class LoadConfigsCommand : public CvdServerHandler {
  public:
-  INJECT(LoadConfigsCommand(CommandSequenceExecutor& executor))
-      : executor_(executor) {}
+  LoadConfigsCommand(CommandSequenceExecutor& executor) : executor_(executor) {}
   ~LoadConfigsCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -167,10 +165,9 @@ class LoadConfigsCommand : public CvdServerHandler {
   bool interrupted_ = false;
 };
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
-LoadConfigsComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, LoadConfigsCommand>();
+std::unique_ptr<CvdServerHandler> NewLoadConfigsCommand(
+    CommandSequenceExecutor& executor) {
+  return std::unique_ptr<CvdServerHandler>(new LoadConfigsCommand(executor));
 }
 
 }  // namespace cuttlefish

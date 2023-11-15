@@ -40,8 +40,8 @@ namespace cuttlefish {
 
 class CvdEnvCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdEnvCommandHandler(InstanceManager& instance_manager,
-                              SubprocessWaiter& subprocess_waiter))
+  CvdEnvCommandHandler(InstanceManager& instance_manager,
+                       SubprocessWaiter& subprocess_waiter)
       : instance_manager_{instance_manager},
         subprocess_waiter_(subprocess_waiter),
         cvd_env_operations_{"env"} {}
@@ -145,10 +145,10 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   static constexpr char kCvdEnvBin[] = "cvd_internal_env";
 };
 
-fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
-CvdEnvComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdEnvCommandHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdEnvCommandHandler(
+    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter) {
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdEnvCommandHandler(instance_manager, subprocess_waiter));
 }
 
 }  // namespace cuttlefish

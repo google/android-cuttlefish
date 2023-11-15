@@ -21,9 +21,7 @@
 
 #include <android-base/logging.h>
 
-#include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
-#include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/acloud_command.h"
@@ -38,7 +36,6 @@
 #include "host/commands/cvd/server_command/handler_proxy.h"
 #include "host/commands/cvd/server_command/help.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
-#include "host/commands/cvd/server_command/lint.h"
 #include "host/commands/cvd/server_command/load_configs.h"
 #include "host/commands/cvd/server_command/power.h"
 #include "host/commands/cvd/server_command/reset.h"
@@ -49,7 +46,6 @@
 #include "host/commands/cvd/server_command/shutdown.h"
 #include "host/commands/cvd/server_command/snapshot.h"
 #include "host/commands/cvd/server_command/start.h"
-#include "host/commands/cvd/server_command/status.h"
 #include "host/commands/cvd/server_command/subcmd.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/try_acloud.h"
@@ -58,13 +54,12 @@
 
 namespace cuttlefish {
 
-RequestContext::RequestContext(
-    CvdServer& cvd_server, InstanceLockFileManager& instance_lockfile_manager,
-    InstanceManager& instance_manager, BuildApi& build_api,
-    HostToolTargetManager& host_tool_target_manager,
-    std::atomic<bool>& acloud_translator_optout)
+RequestContext::RequestContext(CvdServer& cvd_server,
+                               InstanceManager& instance_manager,
+                               BuildApi& build_api,
+                               HostToolTargetManager& host_tool_target_manager,
+                               std::atomic<bool>& acloud_translator_optout)
     : cvd_server_(cvd_server),
-      instance_lockfile_manager_(instance_lockfile_manager),
       instance_manager_(instance_manager),
       build_api_(build_api),
       host_tool_target_manager_(host_tool_target_manager),
@@ -81,15 +76,13 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(
       NewCvdEnvCommandHandler(instance_manager_, subprocess_waiter_));
   request_handlers_.emplace_back(NewCvdFetchCommandHandler(subprocess_waiter_));
-  request_handlers_.emplace_back(NewCvdFleetCommandHandler(
-      instance_manager_, subprocess_waiter_, host_tool_target_manager_));
+  request_handlers_.emplace_back(
+      NewCvdFleetCommandHandler(instance_manager_, subprocess_waiter_));
   request_handlers_.emplace_back(NewCvdGenericCommandHandler(
-      instance_lockfile_manager_, instance_manager_, subprocess_waiter_,
-      host_tool_target_manager_));
+      instance_manager_, subprocess_waiter_, host_tool_target_manager_));
   request_handlers_.emplace_back(
       NewCvdServerHandlerProxy(command_sequence_executor_));
-  request_handlers_.emplace_back(NewCvdHelpHandler(this->request_handlers_));
-  request_handlers_.emplace_back(NewLintCommand());
+  request_handlers_.emplace_back(NewCvdHelpHandler(command_sequence_executor_));
   request_handlers_.emplace_back(
       NewLoadConfigsCommand(command_sequence_executor_));
   request_handlers_.emplace_back(NewCvdDevicePowerCommandHandler(
@@ -107,8 +100,6 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(
       NewCvdStartCommandHandler(instance_manager_, host_tool_target_manager_,
                                 command_sequence_executor_));
-  request_handlers_.emplace_back(
-      NewCvdStatusCommandHandler(instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(
       NewTryAcloudCommand(acloud_translator_optout_));
   request_handlers_.emplace_back(NewCvdVersionHandler());

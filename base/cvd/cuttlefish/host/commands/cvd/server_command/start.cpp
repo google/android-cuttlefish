@@ -30,6 +30,7 @@
 #include <regex>
 #include <sstream>
 #include <string>
+#include <thread>
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
@@ -85,9 +86,9 @@ RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
 
 class CvdStartCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdStartCommandHandler(InstanceManager& instance_manager,
-                                HostToolTargetManager& host_tool_target_manager,
-                                CommandSequenceExecutor& command_executor))
+  CvdStartCommandHandler(InstanceManager& instance_manager,
+                         HostToolTargetManager& host_tool_target_manager,
+                         CommandSequenceExecutor& command_executor)
       : instance_manager_(instance_manager),
         host_tool_target_manager_(host_tool_target_manager),
         // TODO: b/300476262 - Migrate to using local instances rather than
@@ -805,11 +806,12 @@ std::vector<std::string> CvdStartCommandHandler::CmdList() const {
 const std::array<std::string, 2> CvdStartCommandHandler::supported_commands_{
     "start", "launch_cvd"};
 
-fruit::Component<fruit::Required<InstanceManager, HostToolTargetManager,
-                                 CommandSequenceExecutor>>
-CvdStartCommandComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdStartCommandHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdStartCommandHandler(
+    InstanceManager& instance_manager,
+    HostToolTargetManager& host_tool_target_manager,
+    CommandSequenceExecutor& executor) {
+  return std::unique_ptr<CvdServerHandler>(new CvdStartCommandHandler(
+      instance_manager, host_tool_target_manager, executor));
 }
 
 }  // namespace cuttlefish

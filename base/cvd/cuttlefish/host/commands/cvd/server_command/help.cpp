@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/server_command/help.h"
 
 #include <mutex>
 
 #include "common/libs/fs/shared_buf.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
-#include "host/libs/config/inject.h"
 
 namespace cuttlefish {
 
@@ -77,8 +77,7 @@ Experimental:
 
 class CvdHelpHandler : public CvdServerHandler {
  public:
-  INJECT(CvdHelpHandler(CommandSequenceExecutor& executor))
-      : executor_(executor) {}
+  CvdHelpHandler(CommandSequenceExecutor& executor) : executor_(executor) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
@@ -161,9 +160,9 @@ cvd::Request CvdHelpHandler::HelpSubcommandToFlag(
   return modified_proto;
 }
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>> CvdHelpComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdHelpHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdHelpHandler(
+    CommandSequenceExecutor& executor) {
+  return std::unique_ptr<CvdServerHandler>(new CvdHelpHandler(executor));
 }
 
 }  // namespace cuttlefish

@@ -20,8 +20,6 @@
 
 #include <map>
 
-#include <fruit/fruit.h>
-
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
