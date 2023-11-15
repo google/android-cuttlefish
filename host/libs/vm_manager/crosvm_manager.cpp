@@ -206,11 +206,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
 
   auto gpu_device_logs_path =
       instance.PerInstanceInternalPath("crosvm_vhost_user_gpu.fifo");
-  auto gpu_device_logs = SharedFD::Fifo(gpu_device_logs_path, 0666);
-  CF_EXPECT(
-      gpu_device_logs->IsOpen(),
-      "Failed to create log fifo for crosvm vhost user gpu's stdout/stderr: "
-          << gpu_device_logs->StrError());
+  auto gpu_device_logs = CF_EXPECT(SharedFD::Fifo(gpu_device_logs_path, 0666));
 
   Command gpu_device_logs_cmd(HostBinaryPath("log_tee"));
   gpu_device_logs_cmd.AddParameter("--process_name=crosvm_gpu");
@@ -625,10 +621,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   auto crosvm_logs_path = instance.PerInstanceInternalPath("crosvm.fifo");
-  auto crosvm_logs = SharedFD::Fifo(crosvm_logs_path, 0666);
-  CF_EXPECT(crosvm_logs->IsOpen(),
-            "Failed to create log fifo for crosvm's stdout/stderr: "
-                << crosvm_logs->StrError());
+  auto crosvm_logs = CF_EXPECT(SharedFD::Fifo(crosvm_logs_path, 0666));
 
   Command crosvm_log_tee_cmd(HostBinaryPath("log_tee"));
   crosvm_log_tee_cmd.AddParameter("--process_name=crosvm");
@@ -759,10 +752,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
     auto gpu_capture_logs_path =
         instance.PerInstanceInternalPath("gpu_capture.fifo");
-    auto gpu_capture_logs = SharedFD::Fifo(gpu_capture_logs_path, 0666);
-    CF_EXPECT(gpu_capture_logs->IsOpen(),
-              "Failed to create log fifo for gpu capture's stdout/stderr: "
-                  << gpu_capture_logs->StrError());
+    auto gpu_capture_logs =
+        CF_EXPECT(SharedFD::Fifo(gpu_capture_logs_path, 0666));
 
     Command gpu_capture_log_tee_cmd(HostBinaryPath("log_tee"));
     gpu_capture_log_tee_cmd.AddParameter("--process_name=",
