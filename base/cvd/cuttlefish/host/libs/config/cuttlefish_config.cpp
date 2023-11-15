@@ -93,6 +93,10 @@ const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader =
 const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
 const char* const kGpuModeNone = "none";
 
+const char* const kGpuVhostUserModeAuto = "auto";
+const char* const kGpuVhostUserModeOn = "on";
+const char* const kGpuVhostUserModeOff = "off";
+
 const char* const kHwComposerAuto = "auto";
 const char* const kHwComposerDrm = "drm";
 const char* const kHwComposerRanchu = "ranchu";
