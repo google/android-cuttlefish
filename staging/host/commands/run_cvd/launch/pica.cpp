@@ -42,7 +42,7 @@ Result<std::vector<MonitorCommand>> Pica(
                   .AddParameter("--pcapng-dir=", pcap_dir);
 
   std::vector<MonitorCommand> commands;
-  commands.emplace_back(log_tee.CreateLogTee(pica, "pica"));
+  commands.emplace_back(CF_EXPECT(log_tee.CreateLogTee(pica, "pica")));
   commands.emplace_back(std::move(pica));
   return commands;
 }
