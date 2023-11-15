@@ -32,7 +32,7 @@ namespace cuttlefish {
 
 class CvdServerHandlerProxy : public CvdServerHandler {
  public:
-  INJECT(CvdServerHandlerProxy(CommandSequenceExecutor& executor))
+  CvdServerHandlerProxy(CommandSequenceExecutor& executor)
       : executor_(executor) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -119,10 +119,9 @@ class CvdServerHandlerProxy : public CvdServerHandler {
   CommandSequenceExecutor& executor_;
 };
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
-CvdHandlerProxyComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdServerHandlerProxy>();
+std::unique_ptr<CvdServerHandler> NewCvdServerHandlerProxy(
+    CommandSequenceExecutor& executor) {
+  return std::unique_ptr<CvdServerHandler>(new CvdServerHandlerProxy(executor));
 }
 
 }  // namespace cuttlefish

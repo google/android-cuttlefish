@@ -18,8 +18,6 @@
 
 #include <mutex>
 
-#include <fruit/fruit.h>
-
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
@@ -44,9 +42,7 @@ Both -opt-out and --opt-in are mutually exclusive.
 
 class AcloudTranslatorCommand : public CvdServerHandler {
  public:
-  INJECT(AcloudTranslatorCommand(ANNOTATED(AcloudTranslatorOptOut,
-                                           std::atomic<bool>&) optout))
-      : optout_(optout) {}
+  AcloudTranslatorCommand(std::atomic<bool>& optout) : optout_(optout) {}
   ~AcloudTranslatorCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -98,11 +94,9 @@ class AcloudTranslatorCommand : public CvdServerHandler {
   std::atomic<bool>& optout_;
 };
 
-fruit::Component<fruit::Required<
-    fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
-AcloudTranslatorCommandComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, AcloudTranslatorCommand>();
+std::unique_ptr<CvdServerHandler> NewAcloudTranslatorCommand(
+    std::atomic<bool>& optout) {
+  return std::unique_ptr<CvdServerHandler>(new AcloudTranslatorCommand(optout));
 }
 
 }  // namespace cuttlefish

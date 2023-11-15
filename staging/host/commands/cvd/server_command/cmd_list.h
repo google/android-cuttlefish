@@ -16,13 +16,14 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
+#include <memory>
 
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
-CvdCmdlistComponent();
+std::unique_ptr<CvdServerHandler> NewCvdCmdlistHandler(
+    CommandSequenceExecutor& executor);
 
 }  // namespace cuttlefish

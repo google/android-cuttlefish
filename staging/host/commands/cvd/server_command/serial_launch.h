@@ -15,13 +15,16 @@
  */
 #pragma once
 
-#include <fruit/fruit.h>
+#include <memory>
 
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/instance_lock.h"
+#include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
-cvdSerialLaunchComponent();
+std::unique_ptr<CvdServerHandler> NewSerialLaunchCommand(
+    CommandSequenceExecutor& executor,
+    InstanceLockFileManager& lock_file_manager);
 
 }  // namespace cuttlefish

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,16 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
+#include <memory>
 
-#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server.h"
-#include "host/commands/cvd/server_command/generic.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
+#include "host/commands/cvd/server_command/server_handler.h"
 #include "host/libs/web/build_api.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>> CvdHelpComponent();
-
-fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
-cvdCommandComponent();
-
-fruit::Component<fruit::Required<BuildApi, CvdServer, InstanceManager>>
-CvdRestartComponent();
-
-fruit::Component<fruit::Required<CvdServer, InstanceManager>>
-cvdShutdownComponent();
-
-fruit::Component<> cvdVersionComponent();
+std::unique_ptr<CvdServerHandler> NewCvdRestartHandler(
+    BuildApi& build_api, CvdServer& server, InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

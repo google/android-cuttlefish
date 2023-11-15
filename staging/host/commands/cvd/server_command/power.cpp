@@ -42,9 +42,9 @@ namespace cuttlefish {
 
 class CvdDevicePowerCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdDevicePowerCommandHandler(
-      HostToolTargetManager& host_tool_target_manager,
-      InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter))
+  CvdDevicePowerCommandHandler(HostToolTargetManager& host_tool_target_manager,
+                               InstanceManager& instance_manager,
+                               SubprocessWaiter& subprocess_waiter)
       : host_tool_target_manager_(host_tool_target_manager),
         instance_manager_{instance_manager},
         subprocess_waiter_(subprocess_waiter) {
@@ -233,11 +233,11 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
   std::unordered_map<std::string, BinGetter> cvd_power_operations_;
 };
 
-fruit::Component<
-    fruit::Required<HostToolTargetManager, InstanceManager, SubprocessWaiter>>
-CvdDevicePowerComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdDevicePowerCommandHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdDevicePowerCommandHandler(
+    HostToolTargetManager& host_tool_target_manager,
+    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter) {
+  return std::unique_ptr<CvdServerHandler>(new CvdDevicePowerCommandHandler(
+      host_tool_target_manager, instance_manager, subprocess_waiter));
 }
 
 }  // namespace cuttlefish

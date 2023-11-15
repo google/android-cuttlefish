@@ -16,14 +16,13 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
+#include <memory>
 
 #include "host/commands/cvd/server_command/acloud_common.h"
+#include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<>>
-AcloudMixSuperImageCommandComponent();
-
+std::unique_ptr<CvdServerHandler> NewAcloudMixSuperImageCommand();
 }
