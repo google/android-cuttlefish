@@ -132,6 +132,7 @@
 // Graphics default parameters
 #define CF_DEFAULTS_HWCOMPOSER cuttlefish::kHwComposerAuto
 #define CF_DEFAULTS_GPU_MODE cuttlefish::kGpuModeAuto
+#define CF_DEFAULTS_GPU_VHOST_USER_MODE cuttlefish::kGpuVhostUserModeAuto
 #define CF_DEFAULTS_RECORD_SCREEN false
 #define CF_DEFAULTS_GPU_CAPTURE_BINARY CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_ENABLE_GPU_UDMABUF false
