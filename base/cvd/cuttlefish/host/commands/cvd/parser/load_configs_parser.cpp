@@ -48,6 +48,10 @@ constexpr std::string_view kOverrideSeparator = ":";
 constexpr std::string_view kCredentialSourceOverride =
     "fetch.credential_source";
 
+bool IsLocalBuild(std::string path) {
+  return android::base::StartsWith(path, "/");
+}
+
 Flag GflagsCompatFlagOverride(const std::string& name,
                               std::vector<Override>& values) {
   return GflagsCompatFlag(name)
@@ -224,6 +228,21 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path) {
   return root;
 }
 
+Result<std::vector<std::string>> GetConfiguredSystemImagePaths(
+    Json::Value& root) {
+  return CF_EXPECTF(
+      GetArrayValues<std::string>(root["instances"], {"disk", "default_build"}),
+      "Instance is missing required Image path", "");
+}
+
+std::optional<std::string> GetConfiguredSystemHostPath(Json::Value& root) {
+  auto result = GetValue<std::string>(root, {"common", "host_package"});
+  if (result.ok()) {
+    return std::optional<std::string>{*result};
+  }
+  return std::nullopt;
+}
+
 Result<Json::Value> GetOverriddenConfig(
     const std::string& config_path,
     const std::vector<Override>& override_flags) {
@@ -245,8 +264,10 @@ std::ostream& operator<<(std::ostream& out, const Override& override) {
   return out;
 }
 
-Result<LoadDirectories> GenerateLoadDirectories(const std::string& parent_directory,
-                                                const int num_instances) {
+Result<LoadDirectories> GenerateLoadDirectories(
+    const std::string& parent_directory,
+    std::vector<std::string>& system_image_path_configs,
+    std::optional<std::string> system_host_path, const int num_instances) {
   CF_EXPECT_GT(num_instances, 0, "No instances in config to load");
   auto result = LoadDirectories{
       .target_directory = parent_directory + "/artifacts",
@@ -254,17 +275,40 @@ Result<LoadDirectories> GenerateLoadDirectories(const std::string& parent_direct
   };
 
   std::vector<std::string> system_image_directories;
+  int num_remote = 0;
   for (int i = 0; i < num_instances; i++) {
-    LOG(INFO) << "Instance " << i << " directory is " << result.target_directory
-              << "/" << std::to_string(i);
+    const std::string instance_build_path = system_image_path_configs[i];
+    CF_EXPECT_EQ(system_image_path_configs.size(), num_instances,
+                 "Number of instances is inconsistent");
+
     auto target_subdirectory = std::to_string(i);
     result.target_subdirectories.emplace_back(target_subdirectory);
-    system_image_directories.emplace_back(result.target_directory + "/" +
-                                          target_subdirectory);
+    if (IsLocalBuild(instance_build_path)) {
+      system_image_directories.emplace_back(instance_build_path);
+    } else {
+      const std::string dir =
+          result.target_directory + "/" + target_subdirectory;
+      system_image_directories.emplace_back(dir);
+      num_remote++;
+    }
+    LOG(INFO) << "Instance " << i << " directory is "
+              << system_image_directories.back();
   }
 
-  result.host_package_directory =
-      result.target_directory + "/" + kHostToolsSubdirectory;
+  CF_EXPECT_EQ(
+      (system_host_path || num_remote > 0), true,
+      "Host tools path must be provided when using local-only instances");
+  CF_EXPECT_EQ(system_host_path && !IsLocalBuild(system_host_path.value()),
+               false, "Host tools package must be a local path");
+
+  if (system_host_path && IsLocalBuild(system_host_path.value())) {
+    // If config specifies a host tools path, we use this.
+    result.host_package_directory = system_host_path.value();
+  } else {
+    result.host_package_directory =
+        result.target_directory + "/" + kHostToolsSubdirectory;
+  }
+
   result.system_image_directory_flag =
       "--system_image_dir=" +
       android::base::Join(system_image_directories, ',');
