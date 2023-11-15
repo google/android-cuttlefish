@@ -34,6 +34,7 @@
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/handle_reset.h"
+#include "host/commands/cvd/metrics/cvd_metrics_api.h"
 #include "host/libs/config/host_tools_version.h"
 
 namespace cuttlefish {
@@ -116,6 +117,7 @@ Result<VersionCommandReport> HandleVersionCommand(
   if (subcmd == "version") {
     auto version_msg = CF_EXPECT(client.HandleVersion());
     std::cout << version_msg;
+    CvdMetrics::SendCvdMetrics(cvd_args);
     return VersionCommandReport::kVersion;
   }
   return VersionCommandReport::kNonVersion;
