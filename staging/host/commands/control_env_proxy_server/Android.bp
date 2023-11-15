@@ -85,9 +85,10 @@ genrule {
         "aprotoc",
         "protoc-gen-grpc-cpp-plugin",
     ],
-    cmd: "$(location aprotoc) -Idevice/google/cuttlefish/host/commands/control_env_proxy_server -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    cmd: "$(location aprotoc) -Idevice/google/cuttlefish/host/commands/control_env_proxy_server -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(location :ControlEnvProxyServerProto) --grpc_out=$(genDir) --cpp_out=$(genDir)",
     srcs: [
         ":ControlEnvProxyServerProto",
+        ":libprotobuf-internal-protos",
     ],
     out: [
         "control_env_proxy.grpc.pb.h",
@@ -101,9 +102,10 @@ genrule {
         "aprotoc",
         "protoc-gen-grpc-cpp-plugin",
     ],
-    cmd: "$(location aprotoc) -Idevice/google/cuttlefish/host/commands/control_env_proxy_server -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    cmd: "$(location aprotoc) -Idevice/google/cuttlefish/host/commands/control_env_proxy_server -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(location :ControlEnvProxyServerProto) --grpc_out=$(genDir) --cpp_out=$(genDir)",
     srcs: [
         ":ControlEnvProxyServerProto",
+        ":libprotobuf-internal-protos",
     ],
     out: [
         "control_env_proxy.grpc.pb.cc",
