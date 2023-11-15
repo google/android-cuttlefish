@@ -30,7 +30,7 @@
 
 namespace cuttlefish {
 
-std::vector<MonitorCommand> Casimir(
+Result<std::vector<MonitorCommand>> Casimir(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     LogTeeCreator& log_tee) {
@@ -54,7 +54,7 @@ std::vector<MonitorCommand> Casimir(
   }
 
   std::vector<MonitorCommand> commands;
-  commands.emplace_back(log_tee.CreateLogTee(command, "casimir"));
+  commands.emplace_back(CF_EXPECT(log_tee.CreateLogTee(command, "casimir")));
   commands.emplace_back(std::move(command));
   return commands;
 }

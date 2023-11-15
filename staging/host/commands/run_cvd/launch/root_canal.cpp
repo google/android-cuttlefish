@@ -83,7 +83,7 @@ class RootCanal : public CommandSource {
 
     std::vector<MonitorCommand> commands;
     commands.emplace_back(
-        std::move(log_tee_.CreateLogTee(rootcanal, "rootcanal")));
+        CF_EXPECT(log_tee_.CreateLogTee(rootcanal, "rootcanal")));
     commands.emplace_back(std::move(rootcanal));
     commands.emplace_back(std::move(hci_vsock_proxy));
     commands.emplace_back(std::move(test_vsock_proxy));
