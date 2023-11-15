@@ -107,8 +107,8 @@ std::string ParentDir(const uid_t uid) {
 
 class SerialLaunchCommand : public CvdServerHandler {
  public:
-  INJECT(SerialLaunchCommand(CommandSequenceExecutor& executor,
-                             InstanceLockFileManager& lock_file_manager))
+  SerialLaunchCommand(CommandSequenceExecutor& executor,
+                      InstanceLockFileManager& lock_file_manager)
       : executor_(executor), lock_file_manager_(lock_file_manager) {}
   ~SerialLaunchCommand() = default;
 
@@ -400,10 +400,11 @@ class SerialLaunchCommand : public CvdServerHandler {
   bool interrupted_ = false;
 };
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
-cvdSerialLaunchComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, SerialLaunchCommand>();
+std::unique_ptr<CvdServerHandler> NewSerialLaunchCommand(
+    CommandSequenceExecutor& executor,
+    InstanceLockFileManager& lock_file_manager) {
+  return std::unique_ptr<CvdServerHandler>(
+      new SerialLaunchCommand(executor, lock_file_manager));
 }
 
 }  // namespace cuttlefish
