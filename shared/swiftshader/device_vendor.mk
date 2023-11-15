@@ -20,6 +20,6 @@ $(call inherit-product, build/make/target/product/angle_supported.mk)
 
 # TODO(b/65201432): Swiftshader needs to create executable memory.
 PRODUCT_REQUIRES_INSECURE_EXECMEM_FOR_SWIFTSHADER := true
-PRODUCT_PACKAGES += vulkan.pastel
+$(call soong_config_set,cvd,use_vulkan_pastel,true)
 
 endif
