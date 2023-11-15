@@ -16,14 +16,15 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
+#include <memory>
 
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
-cvdFleetCommandComponent();
+std::unique_ptr<CvdServerHandler> NewCvdFleetCommandHandler(
+    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter);
 
 }  // namespace cuttlefish

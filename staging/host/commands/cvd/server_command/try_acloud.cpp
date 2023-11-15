@@ -18,8 +18,6 @@
 
 #include <mutex>
 
-#include <fruit/fruit.h>
-
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/acloud/config.h"
@@ -34,9 +32,7 @@ namespace cuttlefish {
 
 class TryAcloudCommand : public CvdServerHandler {
  public:
-  INJECT(TryAcloudCommand(ANNOTATED(AcloudTranslatorOptOut,
-                                    const std::atomic<bool>&) optout))
-      : optout_(optout) {}
+  TryAcloudCommand(const std::atomic<bool>& optout) : optout_(optout) {}
   ~TryAcloudCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -131,11 +127,9 @@ Result<cvd::Response> TryAcloudCommand::VerifyWithCvdRemote(
   return response;
 }
 
-fruit::Component<fruit::Required<
-    fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
-TryAcloudCommandComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, TryAcloudCommand>();
+std::unique_ptr<CvdServerHandler> NewTryAcloudCommand(
+    std::atomic<bool>& optout) {
+  return std::unique_ptr<CvdServerHandler>(new TryAcloudCommand(optout));
 }
 
 }  // namespace cuttlefish

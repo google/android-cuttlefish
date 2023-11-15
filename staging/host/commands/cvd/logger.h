@@ -21,8 +21,6 @@
 #include <unordered_map>
 
 #include <android-base/logging.h>
-#include <fruit/fruit.h>
-
 #include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
@@ -61,7 +59,7 @@ class ServerLogger {
     SharedFD target_;
     android::base::LogSeverity verbosity_;
   };
-  INJECT(ServerLogger());
+  ServerLogger();
   ~ServerLogger();
 
   /**

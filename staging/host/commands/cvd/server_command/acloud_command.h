@@ -16,14 +16,12 @@
 
 #pragma once
 
-#include <atomic>
-
-#include <fruit/fruit.h>
+#include <memory>
 
 #include "host/commands/cvd/command_sequence.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
-AcloudCommandComponent();
+std::unique_ptr<CvdServerHandler> NewAcloudCommand(
+    CommandSequenceExecutor& executor);
 }

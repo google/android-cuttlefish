@@ -68,9 +68,9 @@ QEMU:
 
 class CvdSnapshotCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdSnapshotCommandHandler(
-      InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
-      HostToolTargetManager& host_tool_target_manager))
+  CvdSnapshotCommandHandler(InstanceManager& instance_manager,
+                            SubprocessWaiter& subprocess_waiter,
+                            HostToolTargetManager& host_tool_target_manager)
       : instance_manager_{instance_manager},
         subprocess_waiter_(subprocess_waiter),
         host_tool_target_manager_(host_tool_target_manager),
@@ -216,11 +216,11 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
   std::vector<std::string> cvd_snapshot_operations_;
 };
 
-fruit::Component<
-    fruit::Required<InstanceManager, SubprocessWaiter, HostToolTargetManager>>
-CvdSnapshotComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdSnapshotCommandHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdSnapshotCommandHandler(
+    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+    HostToolTargetManager& host_tool_target_manager) {
+  return std::unique_ptr<CvdServerHandler>(new CvdSnapshotCommandHandler(
+      instance_manager, subprocess_waiter, host_tool_target_manager));
 }
 
 }  // namespace cuttlefish

@@ -67,8 +67,4 @@ Result<void> EpollPool::Remove(SharedFD fd) {
   return {};
 }
 
-fruit::Component<EpollPool> EpollLoopComponent() {
-  return fruit::createComponent();
-}
-
 }  // namespace cuttlefish

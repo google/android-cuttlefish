@@ -15,10 +15,10 @@
 
 #include "host/commands/cvd/command_sequence.h"
 
-#include <fruit/fruit.h>
+#include <memory>
 
 #include "common/libs/fs/shared_buf.h"
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/request_context.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/types.h"
 
@@ -74,12 +74,9 @@ std::string FormattedCommand(const cvd::CommandRequest command) {
 
 }  // namespace
 
-CommandSequenceExecutor::CommandSequenceExecutor() {}
-
-Result<void> CommandSequenceExecutor::LateInject(fruit::Injector<>& injector) {
-  server_handlers_ = injector.getMultibindings<CvdServerHandler>();
-  return {};
-}
+CommandSequenceExecutor::CommandSequenceExecutor(
+    const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers)
+    : server_handlers_(server_handlers) {}
 
 Result<void> CommandSequenceExecutor::Interrupt() {
   std::unique_lock interrupt_lock(interrupt_mutex_);
@@ -138,11 +135,6 @@ std::vector<std::string> CommandSequenceExecutor::CmdList() const {
   }
   // duplication removed
   return std::vector<std::string>{subcmds.begin(), subcmds.end()};
-}
-
-fruit::Component<CommandSequenceExecutor> CommandSequenceExecutorComponent() {
-  return fruit::createComponent()
-      .addMultibinding<LateInjected, CommandSequenceExecutor>();
 }
 
 }  // namespace cuttlefish

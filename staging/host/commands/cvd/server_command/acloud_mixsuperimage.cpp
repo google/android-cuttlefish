@@ -19,7 +19,6 @@
 #include <iostream>
 
 #include <android-base/file.h>
-#include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
@@ -158,7 +157,7 @@ Result<void> _RewriteMiscInfo(
 
 class AcloudMixSuperImageCommand : public CvdServerHandler {
  public:
-  INJECT(AcloudMixSuperImageCommand()) {}
+  AcloudMixSuperImageCommand() {}
   ~AcloudMixSuperImageCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -313,10 +312,8 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
   SubprocessWaiter waiter_;
 };
 
-fruit::Component<fruit::Required<>>
-AcloudMixSuperImageCommandComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, AcloudMixSuperImageCommand>();
+std::unique_ptr<CvdServerHandler> NewAcloudMixSuperImageCommand() {
+  return std::unique_ptr<CvdServerHandler>(new AcloudMixSuperImageCommand());
 }
 
 }  // namespace cuttlefish
