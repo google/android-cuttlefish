@@ -21,13 +21,11 @@ cc_library_host_static {
     name: "libcvd_sub_commands",
     srcs: [
         "utils.cpp",
-        "acloud.cpp",
         "acloud_command.cpp",
         "acloud_common.cpp",
         "acloud_translator.cpp",
         "acloud_mixsuperimage.cpp",
         "cmd_list.cpp",
-        "components.cpp",
         "display.cpp",
         "env.cpp",
         "fetch.cpp",

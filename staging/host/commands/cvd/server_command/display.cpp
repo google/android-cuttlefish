@@ -41,8 +41,8 @@ namespace cuttlefish {
 
 class CvdDisplayCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdDisplayCommandHandler(InstanceManager& instance_manager,
-                                  SubprocessWaiter& subprocess_waiter))
+  CvdDisplayCommandHandler(InstanceManager& instance_manager,
+                           SubprocessWaiter& subprocess_waiter)
       : instance_manager_{instance_manager},
         subprocess_waiter_(subprocess_waiter),
         cvd_display_operations_{"display"} {}
@@ -186,10 +186,10 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
   static constexpr char kDisplayBin[] = "cvd_internal_display";
 };
 
-fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
-CvdDisplayComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdDisplayCommandHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdDisplayCommandHandler(
+    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter) {
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdDisplayCommandHandler(instance_manager, subprocess_waiter));
 }
 
 }  // namespace cuttlefish

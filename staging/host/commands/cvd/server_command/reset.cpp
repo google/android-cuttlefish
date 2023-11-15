@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command/fleet.h"
+#include "host/commands/cvd/server_command/reset.h"
 
 #include <iostream>
 #include <sstream>
@@ -40,7 +40,7 @@ namespace cuttlefish {
  */
 class CvdResetCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdResetCommandHandler()) {}
+  CvdResetCommandHandler() {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
     auto invocation = ParseInvocation(request.Message());
@@ -67,9 +67,8 @@ class CvdResetCommandHandler : public CvdServerHandler {
   static constexpr char kResetSubcmd[] = "reset";
 };
 
-fruit::Component<> CvdResetComponent() {
-  return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdResetCommandHandler>();
+std::unique_ptr<CvdServerHandler> NewCvdResetCommandHandler() {
+  return std::unique_ptr<CvdServerHandler>(new CvdResetCommandHandler());
 }
 
 }  // namespace cuttlefish
