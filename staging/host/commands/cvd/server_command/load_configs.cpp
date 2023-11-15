@@ -86,12 +86,23 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     Json::Value json_configs =
         CF_EXPECT(GetOverriddenConfig(flags.config_path, flags.overrides));
-    const auto load_directories =
-        CF_EXPECT(GenerateLoadDirectories(flags.base_dir, json_configs["instances"].size()));
+
+    Result<std::vector<std::string>> system_image_path_configs =
+        CF_EXPECT(GetConfiguredSystemImagePaths(json_configs));
+
+    std::optional<std::string> host_package_dir =
+        GetConfiguredSystemHostPath(json_configs);
+
+    const auto& client_env = request.Message().command_request().env();
+
+    const auto load_directories = CF_EXPECT(GenerateLoadDirectories(
+        flags.base_dir, *system_image_path_configs, host_package_dir,
+        json_configs["instances"].size()));
+
     auto cvd_flags = CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
                                "parsing json configs failed");
+
     std::vector<cvd::Request> req_protos;
-    const auto& client_env = request.Message().command_request().env();
 
     if (!cvd_flags.fetch_cvd_flags.empty()) {
       auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
@@ -138,7 +149,7 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     auto selector_opts = launch_cmd.mutable_selector_opts();
 
-    for (const auto& flag: cvd_flags.selector_flags) {
+    for (const auto& flag : cvd_flags.selector_flags) {
       selector_opts->add_args(flag);
     }
 
