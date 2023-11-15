@@ -18,8 +18,16 @@
 
 package cuttlefish;
 
-import "google/protobuf/duration.proto";
-import "common.proto";
+message Duration {
+  required int64 seconds = 1;
+  required int32 nanos = 2;
+}
+
+//TODO(moelsherif) : This message is not used yet
+enum UserType {
+  GOOGLE = 0;
+  EXTERNAL = 1;
+}
 
 // Proto used by Atest CLI Tool for Internal PII Users
 message AtestLogEventInternal {
@@ -36,7 +44,7 @@ message AtestLogEventInternal {
 
   // Occurs when atest exits for any reason
   message AtestExitEvent {
-    optional google.protobuf.Duration duration = 1;
+    optional Duration duration = 1;
     optional int32 exit_code = 2;
     optional string stacktrace = 3;
     optional string logs = 4;
@@ -45,7 +53,7 @@ message AtestLogEventInternal {
   // Occurs after a SINGLE test reference has been resolved to a test or
   // not found
   message FindTestFinishEvent {
-    optional google.protobuf.Duration duration = 1;
+    optional Duration duration = 1;
     optional bool success = 2;
     optional string test_reference = 3
        ;
@@ -55,14 +63,14 @@ message AtestLogEventInternal {
 
   // Occurs after the build finishes, either successfully or not.
   message BuildFinishEvent {
-    optional google.protobuf.Duration duration = 1;
+    optional Duration duration = 1;
     optional bool success = 2;
     repeated string targets = 3;
   }
 
   // Occurs when a single test runner has completed
   message RunnerFinishEvent {
-    optional google.protobuf.Duration duration = 1;
+    optional Duration duration = 1;
     optional bool success = 2;
     optional string runner_name = 3;
     message Test {
@@ -75,7 +83,7 @@ message AtestLogEventInternal {
 
   // Occurs after all test runners and tests have finished
   message RunTestsFinishEvent {
-    optional google.protobuf.Duration duration = 1;
+    optional Duration duration = 1;
   }
   // Occurs after detection of catching bug by atest have finished
   message LocalDetectEvent {

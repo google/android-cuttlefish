@@ -17,10 +17,10 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "host/commands/metrics/cvd_metrics_api.h"
+#include "host/commands/cvd/metrics/cvd_metrics_api.h"
+#include "host/commands/cvd/metrics/proto/cvd_metrics_protos.h"
+#include "host/commands/cvd/metrics/utils.h"
 #include "host/commands/metrics/metrics_defs.h"
-#include "host/commands/metrics/proto/cvd_metrics_protos.h"
-#include "host/commands/metrics/utils.h"
 #include "shared/api_level.h"
 
 namespace cuttlefish {
@@ -40,7 +40,6 @@ std::string GenerateUUID() {
   uuid_generate_random(uuid);
   std::string uuid_str = "xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx";
   uuid_unparse(uuid, uuid_str.data());
-  LOG(INFO) << "uuid_str: " << uuid_str;
   return uuid_str;
 }
 
@@ -93,7 +92,20 @@ std::unique_ptr<LogRequest> BuildAtestLogRequest(
   return log_request;
 }
 
+std::string createCommandLine(const std::vector<std::string>& args) {
+  std::string commandLine;
+  for (const auto& arg : args) {
+    commandLine += arg + " ";
+  }
+  // Remove the trailing space
+  if (!commandLine.empty()) {
+    commandLine.pop_back();
+  }
+  return commandLine;
+}
+
 }  // namespace
+
 int CvdMetrics::SendLaunchCommand(const std::string& command_line) {
   uint64_t now_ms = metrics::GetEpochTimeMs();
   auto cfEvent = BuildAtestLogEvent(command_line);
@@ -110,6 +122,11 @@ int CvdMetrics::SendLaunchCommand(const std::string& command_line) {
     return MetricsExitCodes::kMetricsError;
   }
   return metrics::PostRequest(logRequestStr, metrics::kProd);
+}
+
+int CvdMetrics::SendCvdMetrics(const std::vector<std::string>& args) {
+  std::string command_line = createCommandLine(args);
+  return CvdMetrics::SendLaunchCommand(command_line);
 }
 
 }  // namespace cuttlefish

@@ -13,10 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+syntax = "proto2";
 
-#pragma GCC system_header
+message LogRequest {
+  optional ClientInfo client_info = 1;
+  optional int32 log_source = 2;
+  optional int64 request_time_ms = 4;
+  repeated LogEvent log_event = 3;
+  optional string log_source_name = 5;
+}
 
-#include <common.pb.h>
-#include <external_user_log.pb.h>
-#include <google/protobuf/duration.pb.h>
-#include <internal_user_log.pb.h>
+message ClientInfo {
+  optional int32 client_type = 1;
+}
+
+// TODO(moelsherif) : This message is not used yet. It will be used to send back the next request wait time.
+message LogResponse {
+  optional int64 next_request_wait_millis = 1;
+}
+
+message LogEvent {
+  optional int64 event_time_ms = 1;
+  optional bytes source_extension = 6;
+}
