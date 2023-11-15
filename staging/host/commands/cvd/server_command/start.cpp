@@ -30,9 +30,9 @@
 #include <regex>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <thread>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
 
 #include "common/libs/fs/shared_fd.h"
@@ -149,7 +149,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
    */
   Result<cvd::Response> PostStartExecutionActions(
       std::optional<selector::GroupCreationInfo>& group_creation_info,
-      const uid_t uid, const bool is_daemonized);
+      const uid_t uid);
   Result<void> AcloudCompatActions(
       const selector::GroupCreationInfo& group_creation_info,
       const RequestWithStdio& request);
@@ -489,9 +489,7 @@ Result<std::string> CvdStartCommandHandler::FindStartBin(
   return start_bin;
 }
 
-Result<bool> IsDaemonModeFlag(const cvd_common::Args& args) {
-  bool flag_set = false;
-  bool is_daemon = true;
+static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
   Flag flag =
       Flag()
           .Alias({FlagAliasMode::kFlagPrefix, "-daemon="})
@@ -500,29 +498,26 @@ Result<bool> IsDaemonModeFlag(const cvd_common::Args& args) {
           .Alias({FlagAliasMode::kFlagExact, "--daemon"})
           .Alias({FlagAliasMode::kFlagExact, "-nodaemon"})
           .Alias({FlagAliasMode::kFlagExact, "--nodaemon"})
-          .Setter([&is_daemon,
-                   &flag_set](const FlagMatch& match) -> Result<void> {
-            flag_set = true;
+          .Setter([](const FlagMatch& match) -> Result<void> {
             if (match.key == match.value) {
-              is_daemon = match.key.find("no") == std::string::npos;
               return {};
             }
-            CF_EXPECTF(match.value.find(",") == std::string::npos,
-                       "{} had a comma", match.value);
-            static constexpr std::string_view kFalseStrings[] = {"n", "no",
-                                                                 "false"};
-            for (const auto& falseString : kFalseStrings) {
-              if (android::base::EqualsIgnoreCase(falseString, match.value)) {
-                is_daemon = false;
-              }
+            std::vector<std::string> values =
+                android::base::Split(match.value, ",");
+            const std::vector<std::string_view> kFalseStrings{"n", "no",
+                                                              "false"};
+            const std::vector<std::string_view> kTrueStrings{"y", "yes",
+                                                             "true"};
+            for (const auto& value : values) {
+              CF_EXPECTF(Contains(kTrueStrings, value) ||
+                             Contains(kFalseStrings, value),
+                         "{} is not a valid value for --daemon=", match.value);
             }
-            // Allow `cvd_internal_start` to produce its own error for other
-            // invalid strings.
             return {};
           });
-  auto args_copy = args;
-  CF_EXPECT(ParseFlags({flag}, args_copy));
-  return flag_set && is_daemon;
+  CF_EXPECT(ParseFlags({flag}, args));
+  args.push_back("--daemon=true");
+  return {};
 }
 
 // For backward compatibility, we add extra symlink in system wide home
@@ -657,7 +652,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   CF_EXPECT(Contains(supported_commands_, subcmd),
             "subcmd should be start but is " << subcmd);
   const bool is_help = HasHelpOpts(subcmd_args);
-  const bool is_daemon = CF_EXPECT(IsDaemonModeFlag(subcmd_args));
+  CF_EXPECT(ConsumeDaemonModeFlag(subcmd_args));
 
   std::optional<selector::GroupCreationInfo> group_creation_info;
   if (!is_help) {
@@ -711,12 +706,12 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     LOG(ERROR) << "AcloudCompatActions() failed"
                << " but continue as they are minor errors.";
   }
-  return PostStartExecutionActions(group_creation_info, uid, is_daemon);
+  return PostStartExecutionActions(group_creation_info, uid);
 }
 
 Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
     std::optional<selector::GroupCreationInfo>& group_creation_info,
-    const uid_t uid, const bool is_daemonized) {
+    const uid_t uid) {
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
     // perhaps failed in launch
@@ -727,14 +722,10 @@ Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
       final_response.status().code() != cvd::Status::OK) {
     return final_response;
   }
-  if (is_daemonized) {
-    // If not daemonized, reaching here means the instance group terminated.
-    // Thus, it's enough to release the file lock in the destructor.
-    // If daemonized, reaching here means the group started successfully
-    // As the destructor will release the file lock, the instance lock
-    // files must be marked as used
-    MarkLockfilesInUse(*group_creation_info);
-  }
+
+  MarkLockfilesInUse(*group_creation_info);
+  LOG(INFO) << "The Cuttlefish devices are now always daemonized";
+
   // group_creation_info is nullopt only if is_help is false
   return FillOutNewInstanceInfo(std::move(final_response),
                                 *group_creation_info);
