@@ -218,6 +218,41 @@ Result<cvd::Version> CvdClient::GetServerVersion() {
   return response->version_response().version();
 }
 
+static bool operator<(const cvd::Version& src, const cvd::Version& target) {
+  return (src.major() == target.major()) ? (src.minor() < target.minor())
+                                         : (src.major() < target.major());
+}
+
+static std::ostream& operator<<(std::ostream& out,
+                                const cvd::Version& version) {
+  out << "v" << version.major() << "." << version.minor();
+  return out;
+}
+
+Result<void> CvdClient::RestartServer(const cvd::Version& server_version) {
+  cvd::Version reference;
+  reference.set_major(1);
+  reference.set_minor(4);
+
+  if (server_version < reference) {
+    LOG(INFO) << "server version " << server_version << " does not support "
+              << "the restart-server operation, so will stop & start it.";
+    CF_EXPECT(StopCvdServer(/*clear=*/false));
+    CF_EXPECT(StartCvdServer());
+    return {};
+  }
+
+  LOG(INFO) << "server version v" << server_version
+            << " supports restart-server, so will restart the server"
+            << " in the same process.";
+
+  const cvd_common::Args cvd_process_args{"cvd", "process"};
+  CF_EXPECT(HandleCommand(
+      cvd_process_args, cvd_common::Envs{},
+      cvd_common::Args{"cvd", "restart-server", "match-client"}, OverrideFd{}));
+  return {};
+}
+
 Result<void> CvdClient::ValidateServerVersion(const int num_retries) {
   auto server_version = CF_EXPECT(GetServerVersion());
   if (server_version.major() != cvd::kVersionMajor) {
@@ -230,8 +265,7 @@ Result<void> CvdClient::ValidateServerVersion(const int num_retries) {
   if (server_version.minor() < cvd::kVersionMinor) {
     std::cerr << "Minor version of cvd_server is older than latest. "
               << "Attempting to restart..." << std::endl;
-    CF_EXPECT(StopCvdServer(/*clear=*/false));
-    CF_EXPECT(StartCvdServer());
+    CF_EXPECT(RestartServer(server_version));
     if (num_retries > 0) {
       CF_EXPECT(ValidateServerVersion(num_retries - 1));
       return {};
