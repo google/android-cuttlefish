@@ -99,7 +99,7 @@ start_orchestrator() {
   mkdir -p  "${orchestrator_cvd_artifacts_dir}"
   chown _cutf-operator:cvdnetwork "${orchestrator_cvd_artifacts_dir}"
 
-  orhcestrator_args=()
+  args=()
 
   if [[ -n "${orchestrator_http_port}" ]]; then
     args+=("--http_port=${orchestrator_http_port}")
