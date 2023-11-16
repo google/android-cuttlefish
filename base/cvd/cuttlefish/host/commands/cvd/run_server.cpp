@@ -39,15 +39,17 @@ bool IsServerModeExpected(const std::string& exec_file) {
 }
 
 Result<void> RunServer(const RunServerParam& params) {
-  CF_EXPECTF(params.internal_server_fd->IsOpen(),
-             "Expected to be in server mode, but didn't get a server fd: {}",
-             params.internal_server_fd->StrError());
-
+  if (!params.internal_server_fd->IsOpen()) {
+    return CF_ERR(
+        "Expected to be in server mode, but didn't get a server "
+        "fd: "
+        << params.internal_server_fd->StrError());
+  }
   std::unique_ptr<ServerLogger> server_logger =
       std::make_unique<ServerLogger>();
   CF_EXPECT(server_logger != nullptr, "ServerLogger memory allocation failed.");
 
-  const auto verbosity_level = params.verbosity_level;
+  const auto& verbosity_level = params.verbosity_level;
   // TODO(kwstephenkim): for cvd restart-server, it should print the LOG(ERROR)
   // of the server codes outside handlers into the file descriptor eventually
   // passed from the cvd restart client. However, the testing frameworks are
@@ -75,8 +77,7 @@ Result<void> RunServer(const RunServerParam& params) {
        .memory_carryover_fd = params.memory_carryover_fd,
        .acloud_translator_optout = params.acloud_translator_optout,
        .server_logger = std::move(server_logger),
-       .scoped_logger = std::move(run_server_logger),
-       .restarted_in_process = params.restarted_in_process}));
+       .scoped_logger = std::move(run_server_logger)}));
   return {};
 }
 

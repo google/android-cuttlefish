@@ -454,10 +454,7 @@ Result<int> CvdServerMain(ServerMainParam&& param) {
 
   LOG(INFO) << "Starting server";
 
-  if (!param.restarted_in_process) {
-    LOG(INFO) << "Server is being daemonized...";
-    CF_EXPECT(daemon(0, 0) != -1, strerror(errno));
-  }
+  CF_EXPECT(daemon(0, 0) != -1, strerror(errno));
 
   signal(SIGPIPE, SIG_IGN);
 
