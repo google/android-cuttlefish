@@ -71,9 +71,11 @@ for instance_num in $(seq $base_instance_num $(($base_instance_num+$num_instance
   adb_port_forwarding+="-L $adb_port:127.0.0.1:$adb_port "
 done
 
-echo "Web UI port: $web_ui_port"
+# Web UI port is 2443 instead 1443 because there could be a running operator in this machine as well.
+echo "Web UI port: 2443"
 # sets up SSH port forwarding to the remote server for various ports and launch cvd instance
-ssh $server -L 1443:127.0.0.1:1443 -L $web_ui_port:127.0.0.1:$web_ui_port \
+# TODO: remove webui ports except 1443
+ssh $server -L 2443:127.0.0.1:1443 -L $web_ui_port:127.0.0.1:$web_ui_port \
   -L 15550:127.0.0.1:15550 -L 15551:127.0.0.1:15551 -L 15552:127.0.0.1:15552 \
   -L 15553:127.0.0.1:15553 -L 15554:127.0.0.1:15554 -L 15555:127.0.0.1:15555 \
   -L 15556:127.0.0.1:15556 -L 15557:127.0.0.1:15557 -L 15558:127.0.0.1:15558 \
