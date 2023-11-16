@@ -44,19 +44,8 @@ PRODUCT_PACKAGES += \
 
 # Gfxstream Vulkan implementation (Vulkan streamed to the host).
 ifeq ($(TARGET_VULKAN_SUPPORT),true)
-PRODUCT_PACKAGES += \
-    vulkan.ranchu \
-    libvulkan_enc
-endif
-
-ifeq ($(TARGET_VULKAN_SUPPORT),true)
-ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.vulkan.level-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level.xml \
-    frameworks/native/data/etc/android.hardware.vulkan.version-1_0_3.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.version.xml \
-    frameworks/native/data/etc/android.software.vulkan.deqp.level-latest.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.vulkan.deqp.level.xml \
-    frameworks/native/data/etc/android.software.opengles.deqp.level-latest.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.opengles.deqp.level.xml
-endif
+PRODUCT_PACKAGES += com.google.cf.vulkan
+PRODUCT_VENDOR_PROPERTIES += ro.vulkan.apex=com.google.cf.vulkan
 endif
 
 #
