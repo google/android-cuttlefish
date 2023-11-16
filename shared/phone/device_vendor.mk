@@ -50,6 +50,7 @@ $(call inherit-product, device/google/cuttlefish/shared/camera/config/standard.m
 PRODUCT_EXTRA_VNDK_VERSIONS := 30 31 32 33 34
 
 TARGET_PRODUCT_PROP := $(LOCAL_PATH)/product.prop
+TARGET_VENDOR_PROP := $(LOCAL_PATH)/vendor.prop
 
 ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_COPY_FILES += \
