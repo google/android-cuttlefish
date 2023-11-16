@@ -59,7 +59,6 @@ public class FastbootRebootTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    @Ignore("b/303236495")
     public void testRebootFastboot() throws Exception {
         getDevice().rebootIntoFastbootd();
         assertEquals(TestDeviceState.FASTBOOTD, getDevice().getDeviceState());
