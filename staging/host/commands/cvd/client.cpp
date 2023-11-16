@@ -118,7 +118,7 @@ Result<VersionCommandReport> HandleVersionCommand(
   if (subcmd == "version") {
     auto version_msg = CF_EXPECT(client.HandleVersion());
     std::cout << version_msg;
-    CvdMetrics::SendCvdMetrics(cvd_args);
+    CvdMetrics::SendCvdMetrics(all_args);
     return VersionCommandReport::kVersion;
   }
   return VersionCommandReport::kNonVersion;
