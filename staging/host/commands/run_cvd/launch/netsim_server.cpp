@@ -174,8 +174,8 @@ class NetsimServer : public CommandSource {
       if (config_.netsim_radio_enabled(
               CuttlefishConfig::NetsimRadio::Bluetooth)) {
         Chip chip("BLUETOOTH");
-        CF_EXPECT(MakeFifo(instance, "bt_fifo_vm.in", chip.fd_in));
-        CF_EXPECT(MakeFifo(instance, "bt_fifo_vm.out", chip.fd_out));
+        chip.fd_in = CF_EXPECT(MakeFifo(instance, "bt_fifo_vm.in"));
+        chip.fd_out = CF_EXPECT(MakeFifo(instance, "bt_fifo_vm.out"));
         device.chips.emplace_back(chip);
       }
       // Add other chips if enabled
@@ -184,19 +184,10 @@ class NetsimServer : public CommandSource {
     return {};
   }
 
-  Result<void> MakeFifo(const CuttlefishConfig::InstanceSpecific& instance,
-                        const char* relative_path, SharedFD& fd) {
+  Result<SharedFD> MakeFifo(const CuttlefishConfig::InstanceSpecific& instance,
+                            const char* relative_path) {
     auto path = instance.PerInstanceInternalPath(relative_path);
-    unlink(path.c_str());
-    CF_EXPECT(mkfifo(path.c_str(), 0660) == 0,
-              "Failed to create fifo for Netsim: " << strerror(errno));
-
-    fd = SharedFD::Open(path, O_RDWR);
-
-    CF_EXPECT(fd->IsOpen(),
-              "Failed to open fifo for Netsim: " << fd->StrError());
-
-    return {};
+    return CF_EXPECT(SharedFD::Fifo(path, 0660));
   }
 
  private:

@@ -31,19 +31,13 @@ std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific& instance) {
 
 Result<MonitorCommand> LogcatReceiver(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  auto log_name = instance.logcat_pipe_name();
-  CF_EXPECT(
-      mkfifo(log_name.c_str(), 0600) == 0,
-      "Unable to create named pipe at " << log_name << ": " << strerror(errno));
   // Open the pipe here (from the launcher) to ensure the pipe is not deleted
   // due to the usage counters in the kernel reaching zero. If this is not
   // done and the logcat_receiver crashes for some reason the VMM may get
   // SIGPIPE.
-  auto pipe = SharedFD::Open(log_name.c_str(), O_RDWR);
-  CF_EXPECT(pipe->IsOpen(),
-            "Can't open \"" << log_name << "\": " << pipe->StrError());
-
-  return Command(LogcatReceiverBinary()).AddParameter("-log_pipe_fd=", pipe);
+  auto log_name = instance.logcat_pipe_name();
+  return Command(LogcatReceiverBinary())
+      .AddParameter("-log_pipe_fd=", CF_EXPECT(SharedFD::Fifo(log_name, 0600)));
 }
 
 }  // namespace cuttlefish

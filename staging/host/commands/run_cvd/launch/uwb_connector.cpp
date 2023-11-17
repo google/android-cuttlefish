@@ -35,12 +35,7 @@ Result<std::optional<MonitorCommand>> UwbConnector(
   };
   std::vector<SharedFD> fifos;
   for (const auto& path : fifo_paths) {
-    unlink(path.c_str());
-    CF_EXPECTF(mkfifo(path.c_str(), 0660) == 0, "Could not create '{}': '{}'",
-               path, strerror(errno));
-    auto fd = SharedFD::Open(path, O_RDWR);
-    CF_EXPECTF(fd->IsOpen(), "Could not open '{}': {}", path, fd->StrError());
-    fifos.push_back(fd);
+    fifos.push_back(CF_EXPECT(SharedFD::Fifo(path, 0660)));
   }
   return Command(HostBinaryPath("tcp_connector"))
       .AddParameter("-fifo_out=", fifos[0])

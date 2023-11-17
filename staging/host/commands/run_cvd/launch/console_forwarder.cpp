@@ -38,29 +38,15 @@ Result<std::optional<MonitorCommand>> ConsoleForwarder(
   if (!instance.console()) {
     return {};
   }
-  auto console_in_pipe_name = instance.console_in_pipe_name();
-  CF_EXPECT(
-      mkfifo(console_in_pipe_name.c_str(), 0600) == 0,
-      "Failed to create console input fifo for crosvm: " << strerror(errno));
-
-  auto console_out_pipe_name = instance.console_out_pipe_name();
-  CF_EXPECT(
-      mkfifo(console_out_pipe_name.c_str(), 0660) == 0,
-      "Failed to create console output fifo for crosvm: " << strerror(errno));
-
   // These fds will only be read from or written to, but open them with
   // read and write access to keep them open in case the subprocesses exit
+  auto console_in_pipe_name = instance.console_in_pipe_name();
   auto console_forwarder_in_wr =
-      SharedFD::Open(console_in_pipe_name.c_str(), O_RDWR);
-  CF_EXPECT(console_forwarder_in_wr->IsOpen(),
-            "Failed to open console_forwarder input fifo for writes: "
-                << console_forwarder_in_wr->StrError());
+      CF_EXPECT(SharedFD::Fifo(console_in_pipe_name, 0600));
 
+  auto console_out_pipe_name = instance.console_out_pipe_name();
   auto console_forwarder_out_rd =
-      SharedFD::Open(console_out_pipe_name.c_str(), O_RDWR);
-  CF_EXPECT(console_forwarder_out_rd->IsOpen(),
-            "Failed to open console_forwarder output fifo for reads: "
-                << console_forwarder_out_rd->StrError());
+      CF_EXPECT(SharedFD::Fifo(console_out_pipe_name, 0600));
 
   Command console_forwarder_cmd(ConsoleForwarderBinary());
   return Command(ConsoleForwarderBinary())
