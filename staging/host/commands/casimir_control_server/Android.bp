@@ -52,6 +52,9 @@ cc_library {
 cc_binary_host {
     name: "casimir_control_server",
     shared_libs: [
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
     ],
@@ -61,7 +64,9 @@ cc_binary_host {
         "libcasimir_control_server",
         "libgrpc++_reflection",
     ],
+    header_libs: ["casimir_rf_packets_cxx"],
     srcs: [
+        "casimir_controller.cpp",
         "main.cpp",
     ],
     cflags: [
