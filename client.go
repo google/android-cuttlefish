@@ -264,6 +264,6 @@ func NewConnectionWithLogger(signaling *Signaling, observer Observer, logger io.
 	return ret, err
 }
 
-func (dc Connection) Close() {
+func (dc *Connection) Close() {
 	dc.controller.peerConnection.Close()
 }
