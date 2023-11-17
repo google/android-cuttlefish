@@ -218,6 +218,12 @@ func (u *FilesUploader) Upload(files []string) error {
 		return err
 	}
 	ctx, cancel := context.WithCancel(context.Background())
+	// cancel shouldn't be called twice, safeCancel wraps it so that it's safe to do so
+	safeCancel := func() {
+		cancel()
+		cancel = func() {}
+	}
+	defer safeCancel()
 	jobsChan := make(chan uploadChunkJob)
 	resultsChan := u.startWorkers(ctx, jobsChan)
 	go func() {
@@ -231,8 +237,8 @@ func (u *FilesUploader) Upload(files []string) error {
 			fmt.Fprintf(u.DumpOut, "Error uploading file chunk: %v\n", err)
 			if returnErr == nil {
 				returnErr = err
-				cancel()
-				// Do not return from here and let the cancellation logic to propagate, resultsChan
+				safeCancel()
+				// Do not return from here and let the cancellation logic propagate, resultsChan
 				// will be closed eventually.
 			}
 		}
