@@ -454,6 +454,8 @@ Result<void> CvdClient::HandleAcloud(
   auto server_running = ValidateServerVersion();
 
   std::vector<std::string> args_copy{args};
+  // handle acloud command
+  CvdMetrics::SendCvdMetrics(args);
 
   // TODO(b/206893146): Make this decision inside the server.
   if (!server_running.ok()) {
