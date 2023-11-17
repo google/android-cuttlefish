@@ -18,28 +18,86 @@
 #include <memory>
 #include <string>
 
+#include <android-base/hex.h>
 #include <gflags/gflags.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
 #include "casimir_control.grpc.pb.h"
+#include "casimir_controller.h"
+#include "utils.h"
 
 using casimircontrolserver::CasimirControlService;
-using casimircontrolserver::GetRfPortReply;
+using casimircontrolserver::SendApduReply;
+using casimircontrolserver::SendApduRequest;
+
+using cuttlefish::CasimirController;
+
 using google::protobuf::Empty;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
+using grpc::StatusCode;
+using std::string;
+using std::vector;
 
 DEFINE_string(grpc_uds_path, "", "grpc_uds_path");
 DEFINE_int32(casimir_rf_port, -1, "RF port to control Casimir");
 
 class CasimirControlServiceImpl final : public CasimirControlService::Service {
-  Status GetRfPort(ServerContext* context, const Empty* request,
-                   GetRfPortReply* reply) override {
-    reply->set_port(FLAGS_casimir_rf_port);
+  Status SendApdu(ServerContext* context, const SendApduRequest* request,
+                  SendApduReply* response) override {
+    // Step 0: Parse input
+    std::vector<std::shared_ptr<std::vector<uint8_t>>> apdu_bytes;
+    for (int i = 0; i < request->apdu_hex_strings_size(); i++) {
+      auto apdu_bytes_res =
+          cuttlefish::BytesArray(request->apdu_hex_strings(i));
+      if (!apdu_bytes_res.ok()) {
+        LOG(ERROR) << "Failed to parse input " << request->apdu_hex_strings(i)
+                   << ", " << apdu_bytes_res.error().FormatForEnv();
+        return Status(StatusCode::INVALID_ARGUMENT,
+                      "Failed to parse input. Must only contain [0-9a-fA-F]");
+      }
+      apdu_bytes.push_back(apdu_bytes_res.value());
+    }
+
+    // Step 1: Initialize connection with casimir
+    CasimirController device;
+    auto init_res = device.Init(FLAGS_casimir_rf_port);
+    if (!init_res.ok()) {
+      LOG(ERROR) << "Failed to initialize connection to casimir: "
+                 << init_res.error().FormatForEnv();
+      return Status(StatusCode::FAILED_PRECONDITION,
+                    "Failed to connect with casimir");
+    }
+
+    // Step 2: Poll
+    auto poll_res = device.Poll();
+    if (!poll_res.ok()) {
+      LOG(ERROR) << "Failed to poll(): " << poll_res.error().FormatForEnv();
+      return Status(StatusCode::FAILED_PRECONDITION,
+                    "Failed to poll and select NFC-A and ISO-DEP");
+    }
+    uint16_t id = poll_res.value();
+
+    // Step 3: Send APDU bytes
+    response->clear_response_hex_strings();
+    for (int i = 0; i < apdu_bytes.size(); i++) {
+      auto send_res = device.SendApdu(id, apdu_bytes[i]);
+      if (!send_res.ok()) {
+        LOG(ERROR) << "Failed to send APDU bytes: "
+                   << send_res.error().FormatForEnv();
+        return Status(StatusCode::UNKNOWN, "Failed to send APDU bytes");
+      }
+      auto bytes = *(send_res.value());
+      auto resp = android::base::HexString(
+          reinterpret_cast<void*>(bytes.data()), bytes.size());
+      response->add_response_hex_strings(resp);
+    }
+
+    // Returns OK although returned bytes is valids if ends with [0x90, 0x00].
     return Status::OK;
   }
 };

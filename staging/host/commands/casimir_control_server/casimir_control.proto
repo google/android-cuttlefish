@@ -19,10 +19,13 @@ package casimircontrolserver;
 import "google/protobuf/empty.proto";
 
 service CasimirControlService {
-  // TODO(269281745) : Delete this method and append methods for NFC.
-  rpc GetRfPort (google.protobuf.Empty) returns (GetRfPortReply) {}
+  rpc SendApdu (SendApduRequest) returns (SendApduReply) {}
 }
 
-message GetRfPortReply {
-  int32 port = 1;
+message SendApduRequest {
+  repeated string apdu_hex_strings = 1;
+}
+
+message SendApduReply {
+  repeated string response_hex_strings = 1;
 }
