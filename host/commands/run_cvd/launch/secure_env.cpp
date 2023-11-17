@@ -53,12 +53,7 @@ Result<MonitorCommand> SecureEnv(
   };
   std::vector<SharedFD> fifos;
   for (const auto& path : fifo_paths) {
-    unlink(path.c_str());
-    CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
-    auto fd = SharedFD::Open(path, O_RDWR);
-    CF_EXPECT(fd->IsOpen(),
-              "Could not open " << path << ": " << fd->StrError());
-    fifos.push_back(fd);
+    fifos.emplace_back(CF_EXPECT(SharedFD::Fifo(path, 0660)));
   }
   command.AddParameter("-keymaster_fd_out=", fifos[0]);
   command.AddParameter("-keymaster_fd_in=", fifos[1]);
