@@ -43,6 +43,9 @@ Result<std::optional<MonitorCommand>> UwbConnector(
 
 std::optional<MonitorCommand> AutomotiveProxyService(const CuttlefishConfig&);
 
+Result<std::vector<MonitorCommand>> VhostDeviceVsock(
+    LogTeeCreator& log_tee, const CuttlefishConfig::InstanceSpecific& instance);
+
 Result<std::optional<MonitorCommand>> BluetoothConnector(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 
