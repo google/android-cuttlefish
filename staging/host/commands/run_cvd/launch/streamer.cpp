@@ -151,7 +151,7 @@ class StreamerSockets : public virtual SetupFeature {
           SharedFD::SocketLocalServer(path, false, SOCK_SEQPACKET, 0666);
       CF_EXPECT(audio_server_->IsOpen(), audio_server_->StrError());
     }
-    InitializeVConsoles();
+    CF_EXPECT(InitializeVConsoles());
     return {};
   }
 
@@ -167,11 +167,7 @@ class StreamerSockets : public virtual SetupFeature {
     }
     std::vector<SharedFD> fds;
     for (const auto& path : fifo_files) {
-      CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
-      auto fd = SharedFD::Open(path, O_RDWR);
-      CF_EXPECT(fd->IsOpen(),
-                "Could not open " << path << ": " << fd->StrError());
-      fds.emplace_back(fd);
+      fds.emplace_back(CF_EXPECT(SharedFD::Fifo(path, 0660)));
     }
     confui_in_fd_ = fds[0];
     confui_out_fd_ = fds[1];
