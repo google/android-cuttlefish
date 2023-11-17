@@ -88,17 +88,11 @@ class KernelLogMonitor : public CommandSource,
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
     auto log_name = instance_.kernel_log_pipe_name();
-    CF_EXPECT(mkfifo(log_name.c_str(), 0600) == 0,
-              "Unable to create named pipe at " << log_name << ": "
-                                                << strerror(errno));
-
     // Open the pipe here (from the launcher) to ensure the pipe is not deleted
     // due to the usage counters in the kernel reaching zero. If this is not
     // done and the kernel_log_monitor crashes for some reason the VMM may get
     // SIGPIPE.
-    fifo_ = SharedFD::Open(log_name, O_RDWR);
-    CF_EXPECT(fifo_->IsOpen(),
-              "Unable to open \"" << log_name << "\": " << fifo_->StrError());
+    fifo_ = CF_EXPECT(SharedFD::Fifo(log_name, 0600));
 
     for (unsigned int i = 0; i < number_of_event_pipes_; ++i) {
       SharedFD event_pipe_write_end, event_pipe_read_end;
