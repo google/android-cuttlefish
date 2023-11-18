@@ -617,8 +617,8 @@ Result<siginfo_t> Execute(const std::vector<std::string>& commands,
   auto ret_code =
       CF_EXPECT(ExecuteImpl(commands, /* envs */ std::nullopt,
                             ExtraParam{.subprocess_options = subprocess_options,
-                                       .infop = &info,
-                                       .wait_options = wait_options}));
+                                       .wait_options = wait_options,
+                                       .infop = &info}));
   CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
   return info;
 }
@@ -631,8 +631,8 @@ Result<siginfo_t> Execute(const std::vector<std::string>& commands,
   auto ret_code =
       CF_EXPECT(ExecuteImpl(commands, envs,
                             ExtraParam{.subprocess_options = subprocess_options,
-                                       .infop = &info,
-                                       .wait_options = wait_options}));
+                                       .wait_options = wait_options,
+                                       .infop = &info}));
   CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
   return info;
 }
