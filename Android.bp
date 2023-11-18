@@ -98,7 +98,7 @@ soong_config_module_type {
     module_type: "cc_defaults",
     config_namespace: "cvdhost",
     bool_variables: ["enforce_mac80211_hwsim"],
-    value_variables: ["default_userdata_fs_type"],
+    value_variables: ["default_userdata_fs_type", "board_f2fs_blocksize"],
     properties: ["cflags"],
 }
 
@@ -120,7 +120,14 @@ cf_cc_defaults {
             conditions_default: {
                 cflags: ["-DUSERDATA_FILE_SYSTEM_TYPE=\"f2fs\""],
             }
-        }
+        },
+        // PRODUCT_F2FS_BLOCKSIZE sets this
+        board_f2fs_blocksize: {
+            cflags: ["-DF2FS_BLOCKSIZE=\"%s\""],
+            conditions_default: {
+                cflags: ["-DF2FS_BLOCKSIZE=\"4096\""],
+            }
+        },
     }
 }
 // Defaults for cuttlefish modules that are available only in the guest OS (i.e. cuttlefish running
