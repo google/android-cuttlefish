@@ -458,13 +458,13 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       gpu_device = "virtio-gpu-gl-pci";
     } else if (gpu_mode == kGpuModeGfxstream) {
       gpu_device =
-          "virtio-gpu-rutabaga-pci,capset_names=gfxstream-gles:gfxstream-"
-          "vulkan:gfxstream-composer,hostmem=256M";
+          "virtio-gpu-rutabaga,x-gfxstream-gles=on,gfxstream-vulkan=on,"
+          "x-gfxstream-composer=on,hostmem=256M";
     } else if (gpu_mode == kGpuModeGfxstreamGuestAngle ||
                gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
       gpu_device =
-          "virtio-gpu-rutabaga-pci,capset_names=gfxstream-vulkan:gfxstream-"
-          "composer,hostmem=256M";
+          "virtio-gpu-rutabaga,gfxstream-vulkan=on,"
+          "x-gfxstream-composer=on,hostmem=256M";
 
       if (gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
         // See https://github.com/KhronosGroup/Vulkan-Loader.
@@ -783,7 +783,9 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 #endif
 
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("AC97");
+  qemu_cmd.AddParameter("AC97,audiodev=audio_none");
+  qemu_cmd.AddParameter("-audiodev");
+  qemu_cmd.AddParameter("driver=none,id=audio_none");
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("qemu-xhci,id=xhci");
@@ -800,8 +802,6 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-gdb");
     qemu_cmd.AddParameter("tcp::", instance.gdb_port());
   }
-
-  qemu_cmd.AddEnvironmentVariable("QEMU_AUDIO_DRV", "none");
 
   std::vector<MonitorCommand> commands;
   commands.emplace_back(std::move(qemu_cmd), true);
