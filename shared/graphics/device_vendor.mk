@@ -62,7 +62,7 @@ PRODUCT_PACKAGES += \
     hwcomposer.drm
 else
 PRODUCT_PACKAGES += \
-    android.hardware.graphics.composer3-service.ranchu
+    com.android.hardware.graphics.composer.ranchu
 endif
 
 PRODUCT_VENDOR_PROPERTIES += \
