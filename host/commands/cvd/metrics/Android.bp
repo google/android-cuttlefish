@@ -22,6 +22,7 @@ cc_library_host_static {
     srcs: [
         "cvd_metrics_api.cpp",
         "utils.cpp",
+        "metrics_notice.cpp",
     ],
     static_libs: [
         "libcuttlefish_cvd_metrics_proto",
