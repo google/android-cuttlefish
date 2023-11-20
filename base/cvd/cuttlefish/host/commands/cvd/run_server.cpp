@@ -24,6 +24,7 @@
 #include "common/libs/utils/shared_fd_flag.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/logger.h"
+#include "host/commands/cvd/metrics/metrics_notice.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_constants.h"
 
@@ -104,6 +105,7 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   // In the future, it might be determined by the server if not given.
   const auto all_args_size_before = all_args.size();
   bool acloud_translator_optout_value = false;
+  PrintDataCollectionNotice();
   flags.emplace_back(GflagsCompatFlag("INTERNAL_acloud_translator_optout",
                                       acloud_translator_optout_value));
   CF_EXPECT(ParseFlags({GflagsCompatFlag("INTERNAL_acloud_translator_optout",
