@@ -159,10 +159,6 @@ Result<Tokens> ParseForCvdRemoteCreate(cvd_common::Args& arguments) {
       StringParser(kFlagBranch),
       StringParser(kFlagBuildId, "build-id"),
       StringParser(kFlagBuildTarget, "build-target"),
-      StringParser(kFlagBootloaderBuildId, "bootloader-build-id"),
-      StringParser(kFlagBootloaderBuildTarget, "bootloader-build-target"),
-      StringParser(kFlagBootloaderBranch, "bootloader-branch"),
-      StringParser(kFlagLocalImage, true),
   };
 
   std::vector<Flag> parsers;
