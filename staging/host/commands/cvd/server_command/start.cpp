@@ -724,7 +724,6 @@ Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
   }
 
   MarkLockfilesInUse(*group_creation_info);
-  LOG(INFO) << "The Cuttlefish devices are now always daemonized";
 
   // group_creation_info is nullopt only if is_help is false
   return FillOutNewInstanceInfo(std::move(final_response),
