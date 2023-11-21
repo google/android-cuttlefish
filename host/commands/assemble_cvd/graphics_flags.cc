@@ -380,7 +380,9 @@ Result<std::string> ConfigureGpuSettings(
   auto graphics_availability_result =
       GetGraphicsAvailabilityWithSubprocessCheck();
   if (!graphics_availability_result.ok()) {
-    LOG(ERROR) << "Failed to get graphics availability. Assuming none.";
+    LOG(ERROR) << "Failed to get graphics availability: "
+               << graphics_availability_result.error().Message()
+               << ". Assuming none.";
   } else {
     graphics_availability = graphics_availability_result.value();
     LOG(DEBUG) << "Host Graphics Availability:"
