@@ -252,6 +252,10 @@ Result<std::string> SelectGpuMode(
       if (vm_manager == vm_manager::QemuManager::name()) {
         LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
         return kGpuModeDrmVirgl;
+      } else if (!guest_config.gfxstream_supported) {
+        LOG(INFO) << "GPU auto mode: guest does not support gfxstream, "
+                     "enabling --gpu_mode=guest_swiftshader";
+        return kGpuModeGuestSwiftshader;
       } else {
         LOG(INFO) << "Enabling --gpu_mode=gfxstream.";
         return kGpuModeGfxstream;
