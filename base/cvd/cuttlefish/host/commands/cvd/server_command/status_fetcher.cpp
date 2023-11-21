@@ -18,7 +18,6 @@
 
 #include <map>
 #include <mutex>
-#include <sstream>
 #include <vector>
 
 #include <fmt/core.h>
@@ -29,7 +28,7 @@
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/utils.h"
-#include "host/libs/config/config_constants.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace {
@@ -54,9 +53,8 @@ Result<void> StatusFetcher::Interrupt() {
 static Result<SharedFD> CreateFileToRedirect(
     const std::string& stderr_or_stdout) {
   auto thread_id = std::this_thread::get_id();
-  std::stringstream ss;
-  ss << "cvd.status." << stderr_or_stdout << "." << thread_id;
-  auto mem_fd_name = ss.str();
+  auto mem_fd_name =
+      fmt::format("cvd.status.{}.{}", stderr_or_stdout, thread_id);
   SharedFD fd = SharedFD::MemfdCreate(mem_fd_name);
   CF_EXPECT(fd->IsOpen());
   return fd;
@@ -102,7 +100,8 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
                                             .err = redirect_stderr_fd};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
+  SubprocessOptions options;
+  CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
 
   interrupt_lock.unlock();
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
