@@ -1,1 +1,2 @@
 config=tv
+gfxstream=supported
