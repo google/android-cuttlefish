@@ -30,9 +30,10 @@ namespace cuttlefish {
 
 struct GuestConfig {
   Arch target_arch;
-  bool bootconfig_supported;
-  bool hctr2_supported;
+  bool bootconfig_supported = false;
+  bool hctr2_supported = false;
   std::string android_version_number;
+  bool gfxstream_supported = false;
 };
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults();
