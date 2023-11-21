@@ -26,20 +26,31 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/status_fetcher.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
+static constexpr char kHelpMessage[] = R"(
+usage: cvd fleet [--help]
+
+  cvd fleet will list the active devices with information.
+)";
+
 class CvdFleetCommandHandler : public CvdServerHandler {
  public:
   CvdFleetCommandHandler(InstanceManager& instance_manager,
-                         SubprocessWaiter& subprocess_waiter)
+                         SubprocessWaiter& subprocess_waiter,
+                         HostToolTargetManager& host_tool_target_manager)
       : instance_manager_(instance_manager),
-        subprocess_waiter_(subprocess_waiter) {}
+        subprocess_waiter_(subprocess_waiter),
+        status_fetcher_(instance_manager_, host_tool_target_manager) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
@@ -49,13 +60,11 @@ class CvdFleetCommandHandler : public CvdServerHandler {
  private:
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
+  StatusFetcher status_fetcher_;
   std::mutex interruptible_;
   bool interrupted_ = false;
 
   static constexpr char kFleetSubcmd[] = "fleet";
-  Result<cvd::Status> HandleCvdFleet(const uid_t uid, const SharedFD& out,
-                                     const SharedFD& err,
-                                     const cvd_common::Args& cmd_args) const;
   Result<cvd::Status> CvdFleetHelp(const SharedFD& out) const;
   bool IsHelp(const cvd_common::Args& cmd_args) const;
 };
@@ -76,39 +85,59 @@ Result<void> CvdFleetCommandHandler::Interrupt() {
 Result<cvd::Response> CvdFleetCommandHandler::Handle(
     const RequestWithStdio& request) {
   std::unique_lock interrupt_lock(interruptible_);
-  if (interrupted_) {
-    return CF_ERR("Interrupted");
-  }
+  CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
-  CF_EXPECT(request.Credentials() != std::nullopt);
-  const uid_t uid = request.Credentials()->uid;
+  const uid_t uid = CF_EXPECT(request.Credentials()).uid;
 
-  cvd::Response response;
-  response.mutable_command_response();
+  cvd::Response ok_response;
+  ok_response.mutable_command_response();
+  auto& status = *ok_response.mutable_status();
+  status.set_code(cvd::Status::OK);
 
   auto [sub_cmd, args] = ParseInvocation(request.Message());
   auto envs =
       cvd_common::ConvertToEnvs(request.Message().command_request().env());
-  if (!IsHelp(args)) {
-    CF_EXPECT(Contains(envs, "ANDROID_HOST_OUT") &&
-              DirectoryExists(envs.at("ANDROID_HOST_OUT")));
+  interrupt_lock.unlock();
+
+  if (IsHelp(args)) {
+    CF_EXPECT(CvdFleetHelp(request.Out()));
+    return ok_response;
   }
 
-  *response.mutable_status() =
-      CF_EXPECT(HandleCvdFleet(uid, request.Out(), request.Err(), args));
+  CF_EXPECT(Contains(envs, "ANDROID_HOST_OUT") &&
+            DirectoryExists(envs.at("ANDROID_HOST_OUT")));
+  Json::Value groups_json(Json::arrayValue);
+  auto all_group_names = CF_EXPECT(instance_manager_.AllGroupNames(uid));
+  envs.erase(kCuttlefishInstanceEnvVarName);
+  for (const auto& group_name : all_group_names) {
+    Json::Value group_json(Json::objectValue);
+    group_json["group_name"] = group_name;
 
-  return response;
-}
-
-Result<cvd::Status> CvdFleetCommandHandler::HandleCvdFleet(
-    const uid_t uid, const SharedFD& out, const SharedFD& err,
-    const cvd_common::Args& cmd_args) const {
-  if (IsHelp(cmd_args)) {
-    auto status = CF_EXPECT(CvdFleetHelp(out));
-    return status;
+    auto request_message = MakeRequest(
+        {.cmd_args = {"cvd", "status", "--print", "--all_instances"},
+         .env = envs,
+         .selector_args = {"--group_name", group_name},
+         .working_dir =
+             request.Message().command_request().working_directory()});
+    RequestWithStdio group_request{request.Client(), request_message,
+                                   request.FileDescriptors(),
+                                   request.Credentials()};
+    auto [_, instances_json, group_response] =
+        CF_EXPECT(status_fetcher_.FetchStatus(group_request));
+    CF_EXPECT_EQ(
+        group_response.status().code(), cvd::Status::OK,
+        fmt::format(
+            "Running cvd status --all_instances for group \"{}\" failed",
+            group_name));
+    group_json["instances"] = instances_json;
+    groups_json.append(group_json);
   }
-  auto status = CF_EXPECT(instance_manager_.CvdFleet(uid, out, err, cmd_args));
-  return status;
+  Json::Value output_json(Json::objectValue);
+  output_json["groups"] = groups_json;
+  auto serialized_json = output_json.toStyledString();
+  CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
+               serialized_json.size());
+  return ok_response;
 }
 
 bool CvdFleetCommandHandler::IsHelp(const cvd_common::Args& args) const {
@@ -122,23 +151,18 @@ bool CvdFleetCommandHandler::IsHelp(const cvd_common::Args& args) const {
 
 Result<cvd::Status> CvdFleetCommandHandler::CvdFleetHelp(
     const SharedFD& out) const {
-  WriteAll(out, "Simply run \"cvd fleet\" as it has no other flags.\n");
-  WriteAll(out, "\n");
-  WriteAll(out, "\"cvd fleet\" will:\n");
-  WriteAll(out,
-           "      1. tell whether the devices (i.e. \"run_cvd\" processes) are "
-           "active.\n");
-  WriteAll(out,
-           "      2. optionally list the active devices with information.\n");
+  const std::string help_message(kHelpMessage);
+  CF_EXPECT_EQ(WriteAll(out, help_message), help_message.size());
   cvd::Status status;
   status.set_code(cvd::Status::OK);
   return status;
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdFleetCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter) {
-  return std::unique_ptr<CvdServerHandler>(
-      new CvdFleetCommandHandler(instance_manager, subprocess_waiter));
+    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+    HostToolTargetManager& host_tool_target_manager) {
+  return std::unique_ptr<CvdServerHandler>(new CvdFleetCommandHandler(
+      instance_manager, subprocess_waiter, host_tool_target_manager));
 }
 
 }  // namespace cuttlefish
