@@ -37,8 +37,6 @@ import (
 const (
 	defaultTLSCertDir               = "/etc/cuttlefish-common/host_orchestrator/cert"
 	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
-	defaultCVDBinAndroidBuildID     = "10796991"
-	defaultCVDBinAndroidBuildTarget = "aosp_cf_x86_64_phone-trunk_staging-userdebug"
 	DefaultListenAddress            = "127.0.0.1"
 )
 
