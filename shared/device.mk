@@ -451,6 +451,14 @@ PRODUCT_PACKAGES += \
 endif
 
 #
+# Non-secure implementation of Secretkeeper HAL for compliance.
+#
+ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
+PRODUCT_PACKAGES += \
+    android.hardware.security.secretkeeper-service.nonsecure
+endif
+
+#
 # Power and PowerStats HALs
 #
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
