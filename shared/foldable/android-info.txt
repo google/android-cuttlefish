@@ -1,1 +1,2 @@
 config=foldable
+gfxstream=supported
