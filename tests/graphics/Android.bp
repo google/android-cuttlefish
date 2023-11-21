@@ -49,9 +49,9 @@ java_test_host {
 }
 
 java_test_host {
-    name: "GfxstreamEnabledTest",
+    name: "CuttlefishGraphicsConfigurationTest",
     srcs: [
-        "src/com/android/cuttlefish/tests/GfxstreamEnabledTest.java",
+        "src/com/android/cuttlefish/tests/CuttlefishGraphicsConfigurationTest.java",
     ],
     test_options: {
         unit_test: false,
