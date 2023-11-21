@@ -77,7 +77,7 @@ prepare_run_dir() {
 }
 
 start_operator() {
-  args=()
+  local args=()
 
   if [[ -n "${operator_http_port}" ]]; then
     args+=("--http_port=${operator_http_port}")
@@ -99,7 +99,7 @@ start_orchestrator() {
   mkdir -p  "${orchestrator_cvd_artifacts_dir}"
   chown _cutf-operator:cvdnetwork "${orchestrator_cvd_artifacts_dir}"
 
-  orhcestrator_args=()
+  local args=()
 
   if [[ -n "${orchestrator_http_port}" ]]; then
     args+=("--http_port=${orchestrator_http_port}")
