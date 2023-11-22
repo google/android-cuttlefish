@@ -91,7 +91,7 @@ soong_config_module_type {
     name: "cf_cc_defaults",
     module_type: "cc_defaults",
     config_namespace: "cvdhost",
-    bool_variables: ["enforce_mac80211_hwsim"],
+    bool_variables: ["enforce_mac80211_hwsim", "vhost_user_vsock_by_default"],
     properties: ["cflags"],
 }
 
@@ -106,6 +106,12 @@ cf_cc_defaults {
                 cflags: [],
             }
         },
+        vhost_user_vsock_by_default: {
+            cflags: ["-DVHOST_USER_VSOCK_BY_DEFAULT=true"],
+            conditions_default: {
+                cflags: [],
+            }
+        }
     }
 }
 // Defaults for cuttlefish modules that are available only in the guest OS (i.e. cuttlefish running
