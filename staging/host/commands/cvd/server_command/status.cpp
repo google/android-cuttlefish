@@ -36,7 +36,7 @@
 #include "host/commands/cvd/server_command/status_fetcher.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 

@@ -23,6 +23,7 @@ cc_library {
         "display.cpp",
         "touchpad.cpp",
         "config_flag.cpp",
+        "config_utils.cpp",
         "custom_actions.cpp",
         "cuttlefish_config.cpp",
         "cuttlefish_config_environment.cpp",

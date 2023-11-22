@@ -34,7 +34,6 @@
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
-#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace selector {
