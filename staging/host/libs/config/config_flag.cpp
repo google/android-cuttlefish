@@ -176,6 +176,7 @@ class ConfigFlagImpl : public ConfigFlag {
   }
   std::optional<std::string> FindAndroidInfoConfig() const {
     auto info_path = system_image_dir_flag_.Path() + "/android-info.txt";
+    LOG(INFO) << "Reading --config option from: " << info_path;
     if (!FileExists(info_path)) {
       return {};
     }
