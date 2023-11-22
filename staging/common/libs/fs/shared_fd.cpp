@@ -664,18 +664,7 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
 }
 
 #ifdef __linux__
-SharedFD SharedFD::VsockServer(unsigned int port, int type, bool vhost_user,
-                               unsigned int cid) {
-#ifndef CUTTLEFISH_HOST
-  CHECK(!vhost_user) << "vhost_user is supposed to be false in the guest";
-#endif
-  if (vhost_user) {
-    // TODO(b/277909042): better path than /tmp/vm{}.vsock_{}
-    return SharedFD::SocketLocalServer(
-        fmt::format("/tmp/vm{}.vsock_{}", cid, port), false /* abstract */,
-        type, 0666 /* mode */);
-  }
-
+SharedFD SharedFD::VsockServer(unsigned int port, int type, unsigned int cid) {
   auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
     return vsock;
@@ -700,37 +689,11 @@ SharedFD SharedFD::VsockServer(unsigned int port, int type, bool vhost_user,
   return vsock;
 }
 
-SharedFD SharedFD::VsockServer(int type, bool vhost_user) {
-  return VsockServer(VMADDR_PORT_ANY, type, vhost_user);
+SharedFD SharedFD::VsockServer(int type) {
+  return VsockServer(VMADDR_PORT_ANY, type);
 }
 
-SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
-                               bool vhost_user) {
-#ifndef CUTTLEFISH_HOST
-  CHECK(!vhost_user) << "vhost_user is supposed to be false in the guest";
-#endif
-  if (vhost_user) {
-    // TODO(b/277909042): better path than /tmp/vm{}.vsock
-    auto client = SharedFD::SocketLocalClient(
-        fmt::format("/tmp/vm{}.vsock", cid), false /* abstract */, type);
-    const std::string msg = fmt::format("connect {}\n", port);
-    SendAll(client, msg);
-
-    const std::string expected_res = fmt::format("OK {}\n", port);
-    char buf[64] = {0};
-    if (client->Read(buf, sizeof(buf)) <= 0) {
-      client->Close();
-      LOG(ERROR) << "cannot connect to " << cid << ":" << port;
-      return client;
-    }
-    if (strncmp(buf, expected_res.c_str(), sizeof(buf))) {
-      client->Close();
-      LOG(ERROR) << "response from server: " << buf << ", but expect "
-                 << expected_res;
-      return client;
-    }
-    return client;
-  }
+SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
   auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
     return vsock;

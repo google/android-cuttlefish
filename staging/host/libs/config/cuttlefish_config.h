@@ -585,7 +585,6 @@ class CuttlefishConfig {
     // Kernel and bootloader logging
     bool enable_kernel_log() const;
     bool vhost_net() const;
-    bool vhost_user_vsock() const;
 
     // The dns address of mobile network (RIL)
     std::string ril_dns() const;
@@ -793,7 +792,6 @@ class CuttlefishConfig {
     void set_qemu_binary_dir(const std::string& qemu_binary_dir);
 
     void set_vhost_net(bool vhost_net);
-    void set_vhost_user_vsock(bool vhost_user_vsock);
 
     // The dns address of mobile network (RIL)
     void set_ril_dns(const std::string& ril_dns);

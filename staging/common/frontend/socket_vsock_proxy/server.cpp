@@ -68,18 +68,14 @@ std::string TcpServer::Describe() const {
   return fmt::format("tcp: {}", port_);
 }
 
-VsockServer::VsockServer(int port, bool vhost_user_vsock)
-    : port_(port), vhost_user_vsock_(vhost_user_vsock) {}
+VsockServer::VsockServer(int port) : port_(port) {}
 
 // Intended to run in the guest
 Result<SharedFD> VsockServer::Start() {
   SharedFD server;
-#ifdef CUTTLEFISH_HOST
-  LOG(FATAL) << "this block is supposed to run in the guest";
-#endif
+
   do {
-    server = SharedFD::VsockServer(port_, SOCK_STREAM, vhost_user_vsock_,
-                                   2 /*host cid*/);
+    server = SharedFD::VsockServer(port_, SOCK_STREAM);
     if (!server->IsOpen() && !socketErrorIsRecoverable(server->GetErrno())) {
       LOG(ERROR) << "Could not open vsock socket: " << server->StrError();
       // socket_vsock_proxy will now wait forever in the guest on encountering an
