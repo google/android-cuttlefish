@@ -30,6 +30,7 @@ InstanceIdTest::InstanceIdTest() {
   if (cuttlefish_instance) {
     envs_[kCuttlefishInstanceEnvVarName] = cuttlefish_instance.value();
   }
+  uid_ = getuid();
   cmd_args_ = android::base::Tokenize(GetParam().cmd_args, " ");
   selector_args_ = android::base::Tokenize(GetParam().selector_args, " ");
   expected_ids_ = GetParam().expected_ids;

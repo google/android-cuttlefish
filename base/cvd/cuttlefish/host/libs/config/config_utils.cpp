@@ -16,8 +16,6 @@
 
 #include "host/libs/config/config_utils.h"
 
-#include <string.h>
-
 #include <iomanip>
 #include <sstream>
 
@@ -107,24 +105,11 @@ std::string DefaultHostArtifactsPath(const std::string& file_name) {
          file_name;
 }
 
-std::string HostBinaryDir() {
-  return DefaultHostArtifactsPath("bin");
-}
-
-std::string DefaultQemuBinaryDir() {
-  const std::string target_prod_str = StringFromEnv("TARGET_PRODUCT", "");
-  if (HostArch() == Arch::X86_64 &&
-      target_prod_str.find("arm") == std::string::npos) {
-    return HostBinaryDir();
-  }
-  return "/usr/bin";
-}
-
 std::string HostBinaryPath(const std::string& binary_name) {
 #ifdef __ANDROID__
   return binary_name;
 #else
-  return HostBinaryDir() + "/" + binary_name;
+  return DefaultHostArtifactsPath("bin/" + binary_name);
 #endif
 }
 
