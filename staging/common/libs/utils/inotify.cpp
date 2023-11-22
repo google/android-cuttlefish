@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <limits.h>
+#include <string.h>
 #include <sys/inotify.h>
 #include <unistd.h>
 #include <string>
