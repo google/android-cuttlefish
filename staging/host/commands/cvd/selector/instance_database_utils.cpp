@@ -26,7 +26,7 @@
 #include <android-base/strings.h>
 
 #include "common/libs/utils/files.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace selector {

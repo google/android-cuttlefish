@@ -23,7 +23,7 @@
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 
