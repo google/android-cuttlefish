@@ -79,8 +79,7 @@ void VsockCameraServer::setConnectedCallback(callback_t callback) {
 void VsockCameraServer::serverLoop(unsigned int port, unsigned int cid) {
   while (is_running_.load()) {
     ALOGI("%s: Accepting connections...", __FUNCTION__);
-    if (connection_->Connect(
-            port, cid, false /* vhost_user_vsock: because it's guest */)) {
+    if (connection_->Connect(port, cid)) {
       auto json_settings = connection_->ReadJsonMessage();
       VsockCameraDevice::Settings settings;
       if (readSettingsFromJson(settings, json_settings)) {
