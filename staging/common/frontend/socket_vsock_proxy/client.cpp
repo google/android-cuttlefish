@@ -84,12 +84,10 @@ std::string TcpClient::Describe() const {
   return fmt::format("tcp: {}:{}", host_, port_);
 }
 
-VsockClient::VsockClient(int id, int port, bool vhost_user_vsock)
-    : id_(id), port_(port), vhost_user_vsock_(vhost_user_vsock) {}
+VsockClient::VsockClient(int id, int port) : id_(id), port_(port) {}
 
 SharedFD VsockClient::Start() {
-  auto vsock_socket =
-      SharedFD::VsockClient(id_, port_, SOCK_STREAM, vhost_user_vsock_);
+  auto vsock_socket = SharedFD::VsockClient(id_, port_, SOCK_STREAM);
 
   if (vsock_socket->IsOpen()) {
     last_failure_reason_ = 0;
@@ -106,8 +104,7 @@ SharedFD VsockClient::Start() {
 }
 
 std::string VsockClient::Describe() const {
-  return fmt::format("vsock: {}:{} vhost_user: {}", id_, port_,
-                     vhost_user_vsock_);
+  return fmt::format("vsock: {}:{}", id_, port_);
 }
 
 }

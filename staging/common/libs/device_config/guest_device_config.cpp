@@ -39,13 +39,9 @@ bool GetRawFromServer(DeviceConfig* data) {
         port_property;
     return false;
   }
-
-#ifdef CUTTLEFISH_HOST
-  LOG(FATAL) << "it is supposed to run in the guest";
-#endif
   auto config_server =
-      SharedFD::VsockClient(2 /*host cid*/, static_cast<unsigned int>(port),
-                            SOCK_STREAM, false /* it's guest */);
+      SharedFD::VsockClient(2 /*host cid*/,
+                            static_cast<unsigned int>(port), SOCK_STREAM);
   if (!config_server->IsOpen()) {
     LOG(ERROR) << "Unable to connect to config server: "
                << config_server->StrError();
