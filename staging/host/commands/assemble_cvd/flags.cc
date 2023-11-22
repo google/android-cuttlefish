@@ -353,6 +353,9 @@ DEFINE_vec(enable_kernel_log, fmt::format("{}", CF_DEFAULTS_ENABLE_KERNEL_LOG),
 DEFINE_vec(vhost_net, fmt::format("{}", CF_DEFAULTS_VHOST_NET),
            "Enable vhost acceleration of networking");
 
+DEFINE_vec(vhost_user_vsock, fmt::format("{}", CF_DEFAULTS_VHOST_USER_VSOCK),
+           "Enable vhost-user-vsock");
+
 DEFINE_string(
     vhost_user_mac80211_hwsim, CF_DEFAULTS_VHOST_USER_MAC80211_HWSIM,
     "Unix socket path for vhost-user of mac80211_hwsim, typically served by "
@@ -1054,6 +1057,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(udp_port_range));
   std::vector<bool> vhost_net_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       vhost_net));
+  std::vector<bool> vhost_user_vsock_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(vhost_user_vsock));
   std::vector<std::string> ril_dns_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(ril_dns));
 
@@ -1249,6 +1254,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_ril_dns(ril_dns_vec[instance_index]);
 
     instance.set_vhost_net(vhost_net_vec[instance_index]);
+
+    CF_EXPECT(!vhost_user_vsock_vec[instance_index] ||
+                  tmp_config_obj.vm_manager() == CrosvmManager::name(),
+              "vhost_user_vsock is available only in crosvm.");
+
+    instance.set_vhost_user_vsock(vhost_user_vsock_vec[instance_index]);
     // end of wifi, bluetooth, connectivity setup
 
     if (use_random_serial_vec[instance_index]) {
