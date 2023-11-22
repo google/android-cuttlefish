@@ -41,9 +41,11 @@ namespace cuttlefish {
 VsockConnection::~VsockConnection() { Disconnect(); }
 
 std::future<bool> VsockConnection::ConnectAsync(unsigned int port,
-                                                unsigned int cid) {
-  return std::async(std::launch::async,
-                    [this, port, cid]() { return Connect(port, cid); });
+                                                unsigned int cid,
+                                                bool vhost_user) {
+  return std::async(std::launch::async, [this, port, cid, vhost_user]() {
+    return Connect(port, cid, vhost_user);
+  });
 }
 
 void VsockConnection::Disconnect() {
@@ -206,8 +208,9 @@ bool VsockConnection::WriteStrides(const char* data, unsigned int size,
   return true;
 }
 
-bool VsockClientConnection::Connect(unsigned int port, unsigned int cid) {
-  fd_ = SharedFD::VsockClient(cid, port, SOCK_STREAM);
+bool VsockClientConnection::Connect(unsigned int port, unsigned int cid,
+                                    bool vhost_user) {
+  fd_ = SharedFD::VsockClient(cid, port, SOCK_STREAM, vhost_user);
   if (!fd_->IsOpen()) {
     LOG(ERROR) << "Failed to connect:" << fd_->StrError();
   }
@@ -225,9 +228,11 @@ void VsockServerConnection::ServerShutdown() {
   }
 }
 
-bool VsockServerConnection::Connect(unsigned int port, unsigned int cid) {
+bool VsockServerConnection::Connect(unsigned int port, unsigned int cid,
+                                    bool vhost_user) {
   if (!server_fd_->IsOpen()) {
-    server_fd_ = cuttlefish::SharedFD::VsockServer(port, SOCK_STREAM, cid);
+    server_fd_ =
+        cuttlefish::SharedFD::VsockServer(port, SOCK_STREAM, vhost_user, cid);
   }
   if (server_fd_->IsOpen()) {
     fd_ = SharedFD::Accept(*server_fd_);
