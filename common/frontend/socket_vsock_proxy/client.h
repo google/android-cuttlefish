@@ -44,14 +44,13 @@ class TcpClient : public Client {
 
 class VsockClient : public Client {
  public:
-  VsockClient(int id, int port, bool vhost_user_vsock);
+  VsockClient(int id, int port);
   SharedFD Start() override;
   std::string Describe() const override;
 
  private:
   int id_;
   int port_;
-  bool vhost_user_vsock_;
   int last_failure_reason_ = 0;
 };
 

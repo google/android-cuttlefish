@@ -63,18 +63,11 @@ DEFINE_uint32(stop_event_id, -1, "Kernel event id (cuttlefish::monitor::Event fr
                                   "kernel_log_server.h) that we will listen to stop proxy");
 DEFINE_bool(start_immediately, false, "A flag to start proxying without waiting for "
                                       "initial start event");
-DEFINE_bool(vhost_user_vsock, false, "A flag to user vhost_user_vsock");
 
 namespace cuttlefish {
 namespace socket_proxy {
 namespace {
-static bool use_vhost_vsock() {
-#ifdef CUTTLEFISH_HOST
-  return FLAGS_vhost_user_vsock;
-#else
-  return false;
-#endif
-}
+
 static std::unique_ptr<Server> BuildServer() {
   if (FLAGS_server_fd >= 0) {
     return std::make_unique<DupServer>(FLAGS_server_fd);
@@ -98,8 +91,7 @@ static std::unique_ptr<Server> BuildServer() {
     server = std::make_unique<TcpServer>(FLAGS_server_tcp_port, TCP_SERVER_START_RETRIES_COUNT,
                                          TCP_SERVER_RETRIES_DELAY);
   } else if (FLAGS_server_type == TRANSPORT_VSOCK) {
-    server = std::make_unique<VsockServer>(FLAGS_server_vsock_port,
-                                           use_vhost_vsock());
+    server = std::make_unique<VsockServer>(FLAGS_server_vsock_port);
   } else {
     LOG(FATAL) << "Unknown server type: " << FLAGS_server_type;
   }
@@ -126,8 +118,7 @@ static std::unique_ptr<Client> BuildClient() {
     client = std::make_unique<TcpClient>(FLAGS_client_tcp_host, FLAGS_client_tcp_port,
                                          TCP_CLIENT_TIMEOUT);
   } else if (FLAGS_client_type == TRANSPORT_VSOCK) {
-    client = std::make_unique<VsockClient>(
-        FLAGS_client_vsock_id, FLAGS_client_vsock_port, use_vhost_vsock());
+    client = std::make_unique<VsockClient>(FLAGS_client_vsock_id, FLAGS_client_vsock_port);
   } else {
     LOG(FATAL) << "Unknown client type: " << FLAGS_client_type;
   }
