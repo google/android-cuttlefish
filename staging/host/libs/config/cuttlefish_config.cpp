@@ -41,46 +41,7 @@
 namespace cuttlefish {
 namespace {
 
-static constexpr int kDefaultInstance = 1;
-
-int InstanceFromString(std::string instance_str) {
-  if (android::base::StartsWith(instance_str, kVsocUserPrefix)) {
-    instance_str = instance_str.substr(std::string(kVsocUserPrefix).size());
-  } else if (android::base::StartsWith(instance_str, kCvdNamePrefix)) {
-    instance_str = instance_str.substr(std::string(kCvdNamePrefix).size());
-  }
-
-  int instance = std::stoi(instance_str);
-  if (instance <= 0) {
-    LOG(INFO) << "Failed to interpret \"" << instance_str << "\" as an id, "
-              << "using instance id " << kDefaultInstance;
-    return kDefaultInstance;
-  }
-  return instance;
-}
-
-int InstanceFromEnvironment() {
-  std::string instance_str = StringFromEnv(kCuttlefishInstanceEnvVarName, "");
-  if (instance_str.empty()) {
-    // Try to get it from the user instead
-    instance_str = StringFromEnv("USER", "");
-
-    if (instance_str.empty()) {
-      LOG(DEBUG) << kCuttlefishInstanceEnvVarName
-                 << " and USER unset, using instance id " << kDefaultInstance;
-      return kDefaultInstance;
-    }
-    if (!android::base::StartsWith(instance_str, kVsocUserPrefix)) {
-      // No user or we don't recognize this user
-      LOG(DEBUG) << "Non-vsoc user, using instance id " << kDefaultInstance;
-      return kDefaultInstance;
-    }
-  }
-  return InstanceFromString(instance_str);
-}
-
 const char* kInstances = "instances";
-
 
 }  // namespace
 
@@ -815,76 +776,6 @@ std::vector<std::string> CuttlefishConfig::environment_dirs() const {
   result.push_back(environment.environment_uds_dir());
 
   return result;
-}
-
-int GetInstance() {
-  static int instance_id = InstanceFromEnvironment();
-  return instance_id;
-}
-
-int GetDefaultVsockCid() {
-  // we assume that this function is used to configure CuttlefishConfig once
-  static const int default_vsock_cid = 3 + GetInstance() - 1;
-  return default_vsock_cid;
-}
-
-int GetVsockServerPort(const int base,
-                       const int vsock_guest_cid /**< per instance guest cid */) {
-    return base + (vsock_guest_cid - 3);
-}
-
-std::string GetGlobalConfigFileLink() {
-  return StringFromEnv("HOME", ".") + "/.cuttlefish_config.json";
-}
-
-std::string ForCurrentInstance(const char* prefix) {
-  std::ostringstream stream;
-  stream << prefix << std::setfill('0') << std::setw(2) << GetInstance();
-  return stream.str();
-}
-int ForCurrentInstance(int base) { return base + GetInstance() - 1; }
-
-std::string RandomSerialNumber(const std::string& prefix) {
-  const char hex_characters[] = "0123456789ABCDEF";
-  std::srand(time(0));
-  char str[10];
-  for(int i=0; i<10; i++){
-    str[i] = hex_characters[rand() % strlen(hex_characters)];
-  }
-  return prefix + str;
-}
-
-std::string DefaultHostArtifactsPath(const std::string& file_name) {
-  return (StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) + "/") +
-         file_name;
-}
-
-std::string HostBinaryPath(const std::string& binary_name) {
-#ifdef __ANDROID__
-  return binary_name;
-#else
-  return DefaultHostArtifactsPath("bin/" + binary_name);
-#endif
-}
-
-std::string HostUsrSharePath(const std::string& binary_name) {
-  return DefaultHostArtifactsPath("usr/share/" + binary_name);
-}
-
-std::string DefaultGuestImagePath(const std::string& file_name) {
-  return (StringFromEnv("ANDROID_PRODUCT_OUT", StringFromEnv("HOME", "."))) +
-         file_name;
-}
-
-bool HostSupportsQemuCli() {
-  static bool supported =
-#ifdef __linux__
-      std::system(
-          "/usr/lib/cuttlefish-common/bin/capability_query.py qemu_cli") == 0;
-#else
-      true;
-#endif
-  return supported;
 }
 
 }  // namespace cuttlefish

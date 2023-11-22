@@ -30,50 +30,15 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/result.h"
+#include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_fragment.h"
+#include "host/libs/config/config_utils.h"
 
 namespace Json {
 class Value;
 }
 
 namespace cuttlefish {
-
-inline constexpr char kLogcatSerialMode[] = "serial";
-inline constexpr char kLogcatVsockMode[] = "vsock";
-
-inline constexpr char kDefaultUuidPrefix[] =
-    "699acfc4-c8c4-11e7-882b-5065f31dc1";
-inline constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
-inline constexpr char kCuttlefishInstanceEnvVarName[] = "CUTTLEFISH_INSTANCE";
-inline constexpr char kVsocUserPrefix[] = "vsoc-";
-inline constexpr char kCvdNamePrefix[] = "cvd-";
-inline constexpr char kBootStartedMessage[] = "VIRTUAL_DEVICE_BOOT_STARTED";
-inline constexpr char kBootCompletedMessage[] = "VIRTUAL_DEVICE_BOOT_COMPLETED";
-inline constexpr char kBootFailedMessage[] = "VIRTUAL_DEVICE_BOOT_FAILED";
-inline constexpr char kMobileNetworkConnectedMessage[] =
-    "VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED";
-inline constexpr char kWifiConnectedMessage[] =
-    "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
-inline constexpr char kEthernetConnectedMessage[] =
-    "VIRTUAL_DEVICE_NETWORK_ETHERNET_CONNECTED";
-// TODO(b/131864854): Replace this with a string less likely to change
-inline constexpr char kAdbdStartedMessage[] =
-    "init: starting service 'adbd'...";
-inline constexpr char kFastbootdStartedMessage[] =
-    "init: starting service 'fastbootd'...";
-inline constexpr char kFastbootStartedMessage[] =
-    "Listening for fastboot command on tcp";
-inline constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
-inline constexpr char kDisplayPowerModeChangedMessage[] =
-    "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";
-inline constexpr char kInternalDirName[] = "internal";
-inline constexpr char kGrpcSocketDirName[] = "grpc_socket";
-inline constexpr char kSharedDirName[] = "shared";
-inline constexpr char kLogDirName[] = "logs";
-inline constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
-inline constexpr char kKernelLoadedMessage[] = "] Linux version";
-inline constexpr char kBootloaderLoadedMessage[] = "U-Boot 20";
-inline constexpr char kApName[] = "crosvm_openwrt";
 
 enum class SecureHal {
   Unknown,
@@ -945,43 +910,6 @@ class CuttlefishConfig {
   CuttlefishConfig(const CuttlefishConfig&) = delete;
   CuttlefishConfig& operator=(const CuttlefishConfig&) = delete;
 };
-
-// Returns the instance number as obtained from the
-// *kCuttlefishInstanceEnvVarName environment variable or the username.
-int GetInstance();
-
-// Returns default Vsock CID, which is
-// GetInstance() + 2
-int GetDefaultVsockCid();
-
-// Calculates vsock server port number
-// return base + (vsock_guest_cid - 3)
-int GetVsockServerPort(const int base,
-                       const int vsock_guest_cid);
-
-// Returns a path where the launhcer puts a link to the config file which makes
-// it easily discoverable regardless of what vm manager is in use
-std::string GetGlobalConfigFileLink();
-
-// These functions modify a given base value to make it different accross
-// different instances by appending the instance id in case of strings or adding
-// it in case of integers.
-std::string ForCurrentInstance(const char* prefix);
-int ForCurrentInstance(int base);
-
-// Returns a random serial number appeneded to a given prefix.
-std::string RandomSerialNumber(const std::string& prefix);
-
-std::string DefaultHostArtifactsPath(const std::string& file);
-std::string HostBinaryPath(const std::string& file);
-std::string HostUsrSharePath(const std::string& file);
-std::string DefaultGuestImagePath(const std::string& file);
-std::string DefaultEnvironmentPath(const char* environment_key,
-                                   const char* default_value,
-                                   const char* path);
-
-// Whether the host supports qemu
-bool HostSupportsQemuCli();
 
 // GPU modes
 extern const char* const kGpuModeAuto;
