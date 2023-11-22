@@ -48,7 +48,7 @@ struct Light {
 
 class LightsObserver {
  public:
-  LightsObserver(unsigned int port, unsigned int cid);
+  LightsObserver(unsigned int port, unsigned int cid, bool vhost_user_vsock);
   ~LightsObserver();
 
   LightsObserver(const LightsObserver& other) = delete;
@@ -65,6 +65,7 @@ class LightsObserver {
   VsockClientConnection cvd_connection_;
   unsigned int cid_;
   unsigned int port_;
+  bool vhost_user_vsock_;
   std::thread connection_thread_;
   std::atomic<bool> is_running_;
   std::atomic<bool> session_active_;
