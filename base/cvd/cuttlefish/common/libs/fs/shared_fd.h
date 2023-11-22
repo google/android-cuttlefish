@@ -168,10 +168,11 @@ class SharedFD {
   static SharedFD SocketLocalServer(int port, int type);
 
 #ifdef __linux__
-  static SharedFD VsockServer(unsigned int port, int type,
+  static SharedFD VsockServer(unsigned int port, int type, bool vhost_user,
                               unsigned int cid = VMADDR_CID_ANY);
-  static SharedFD VsockServer(int type);
-  static SharedFD VsockClient(unsigned int cid, unsigned int port, int type);
+  static SharedFD VsockServer(int type, bool vhost_user);
+  static SharedFD VsockClient(unsigned int cid, unsigned int port, int type,
+                              bool vhost_user);
 #endif
 
   bool operator==(const SharedFD& rhs) const { return value_ == rhs.value_; }
