@@ -24,11 +24,9 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
-LightsObserver::LightsObserver(unsigned int port, unsigned int cid,
-                               bool vhost_user_vsock)
+LightsObserver::LightsObserver(unsigned int port, unsigned int cid)
     : cid_(cid),
       port_(port),
-      vhost_user_vsock_(vhost_user_vsock),
       is_running_(false),
       session_active_(false),
       last_client_channel_id_(-1) {}
@@ -50,8 +48,7 @@ bool LightsObserver::Start() {
       }
 
       // Try to start a new connection. If this fails, delay retrying a bit.
-      if (is_running_ &&
-          !cvd_connection_.Connect(port_, cid_, vhost_user_vsock_)) {
+      if (is_running_ && !cvd_connection_.Connect(port_, cid_)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         continue;
       }

@@ -77,8 +77,7 @@ Result<std::optional<MonitorCommand>> ModemSimulator(
     auto port = std::stoi(temp);
     ports = ports.substr(pos + 1);
 
-    auto modem_sim_socket = SharedFD::VsockServer(
-        port, SOCK_STREAM, instance.vhost_user_vsock(), 2 /*host cid*/);
+    auto modem_sim_socket = SharedFD::VsockServer(port, SOCK_STREAM);
     CF_EXPECT(
         modem_sim_socket->IsOpen(),
         modem_sim_socket->StrError()

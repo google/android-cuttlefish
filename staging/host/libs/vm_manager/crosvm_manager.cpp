@@ -569,13 +569,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   if (instance.vsock_guest_cid() >= 2) {
-    if (instance.vhost_user_vsock()) {
-      auto param = fmt::format("/tmp/vhost{}.socket,max-queue-size=256",
-                               instance.vsock_guest_cid());
-      crosvm_cmd.Cmd().AddParameter("--vhost-user-vsock=", param);
-    } else {
-      crosvm_cmd.Cmd().AddParameter("--cid=", instance.vsock_guest_cid());
-    }
+    crosvm_cmd.Cmd().AddParameter("--cid=", instance.vsock_guest_cid());
   }
 
   // /dev/hvc0 = kernel console
