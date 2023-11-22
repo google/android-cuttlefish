@@ -101,8 +101,7 @@ class Streamer {
   // stream here.
   std::shared_ptr<AudioSource> GetAudioSource();
 
-  CameraController* AddCamera(unsigned int port, unsigned int cid,
-                              bool vhost_user);
+  CameraController* AddCamera(unsigned int port, unsigned int cid);
 
   // Add a custom button to the control panel.
   void AddCustomControlPanelButton(const std::string& command,
