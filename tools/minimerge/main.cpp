@@ -44,7 +44,6 @@ ManagedGitType<T> ManagedGitErr(F function, Args... args) {
   T* output = nullptr;
   handle_git2_error(function(&output, args...));
   return ManagedGitType<T>(output);
-
 }
 
 struct GitBuf {
@@ -145,6 +144,48 @@ std::optional<UnanchoredCommit> FilterCommit(const git_commit& commit, const std
     ret.message = message;
   }
   ret.updated_file_contents = std::move(updated_file_contents);
+  return ret;
+}
+
+std::optional<UnanchoredCommit> FixupCommit(git_repository& repo, const std::vector<std::pair<std::string_view, std::string_view>>& mappings) {
+  struct Payload {
+    git_repository* repo;
+    std::unordered_map<std::string, GitBuf> file_contents;
+    const std::vector<std::pair<std::string_view, std::string_view>>* mappings;
+  };
+  Payload payload;
+  payload.repo = &repo;
+  payload.mappings = &mappings;
+  auto obj = ManagedGitErr<git_object>(git_revparse_single, &repo, "HEAD^{tree}");
+  auto tree = reinterpret_cast<git_tree*>(obj.get());
+  handle_git2_error(git_tree_walk(tree, GIT_TREEWALK_PRE, [](const char* root, const git_tree_entry* entry, void* void_payload) {
+    Payload* payload = reinterpret_cast<Payload*>(void_payload);
+    auto name = std::string(root) + std::string(git_tree_entry_name(entry));
+    for (const auto& [mapping_key, mapping_value] : *(payload->mappings)) {
+      if (name == mapping_key) {
+        std::cerr << "Ensuring '" << name << "' is correct\n";
+        auto object = ManagedGitErr<git_object>(git_tree_entry_to_object, payload->repo, entry);
+        if (git_object_type(object.get()) != GIT_OBJECT_BLOB) {
+          std::cerr << "object was not blob\n";
+          std::abort();
+        }
+        git_blob* blob = reinterpret_cast<git_blob*>(object.get());
+        GitBuf buf;
+        git_buf_set(&buf.buffer, git_blob_rawcontent(blob), git_blob_rawsize(blob));
+        (payload->file_contents)[std::string(mapping_value)] = std::move(buf);
+        break;
+      }
+    }
+    return 0;
+  }, &payload));
+  GitSignature signature(nullptr);
+  signature.name = "No one";
+  signature.email = "No-one@google.com";
+  signature.when.time = 0;
+  signature.when.offset = 0;
+  signature.when.sign = 0;
+  UnanchoredCommit ret = { signature, signature };
+  ret.updated_file_contents = std::move(payload.file_contents);
   return ret;
 }
 
@@ -298,10 +339,23 @@ int RunMiniMerge(int argc, char** argv) {
   for (auto it = commits.rbegin(); it != commits.rend(); it++) {
     ApplyCommit(*dest, *it);
   }
+
+  auto fixup = FixupCommit(*source, mappings);
+  if (fixup.has_value()) {
+    ApplyCommit(*dest, *fixup);
+  }
+
+  auto tree_obj = ManagedGitErr<git_object>(git_revparse_single, dest.get(), "HEAD^{tree}");
+  auto tree = reinterpret_cast<git_tree*>(tree_obj.get());
+
+  auto index = ManagedGitErr<git_index>(git_repository_index, dest.get());
+  handle_git2_error(git_index_read_tree(index.get(), tree));
+  handle_git2_error(git_index_write(index.get()));
+
   git_checkout_options checkout_options;
   handle_git2_error(git_checkout_options_init(&checkout_options, GIT_CHECKOUT_OPTIONS_VERSION));
-  checkout_options.checkout_strategy = GIT_CHECKOUT_RECREATE_MISSING;
-  handle_git2_error(git_checkout_tree(dest.get(), nullptr, &checkout_options));
+  checkout_options.checkout_strategy = GIT_CHECKOUT_FORCE;
+  handle_git2_error(git_checkout_tree(dest.get(), tree_obj.get(), &checkout_options));
 
   return 0;
 }
