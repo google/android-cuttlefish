@@ -39,7 +39,8 @@
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_constants.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/config_constants.h"
+#include "host/libs/config/config_utils.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {

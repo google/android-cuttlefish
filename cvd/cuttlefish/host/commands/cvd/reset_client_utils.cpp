@@ -30,13 +30,14 @@
 #include <android-base/parseint.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/proc_file_utils.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/reset_client_utils.h"
 #include "host/commands/cvd/run_server.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 
