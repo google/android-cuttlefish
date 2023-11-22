@@ -38,8 +38,7 @@ Result<MonitorCommand> TombstoneReceiver(
   }
 
   auto port = instance.tombstone_receiver_port();
-  auto socket = SharedFD::VsockServer(
-      port, SOCK_STREAM, instance.vhost_user_vsock(), 2 /*host cid*/);
+  auto socket = SharedFD::VsockServer(port, SOCK_STREAM);
   CF_EXPECTF(socket->IsOpen(), "Can't tombstone server socket: '{}'",
              socket->StrError());
 
