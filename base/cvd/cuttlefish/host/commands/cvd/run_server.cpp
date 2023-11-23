@@ -26,7 +26,6 @@
 #include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/metrics/metrics_notice.h"
 #include "host/commands/cvd/server.h"
-#include "host/commands/cvd/server_constants.h"
 
 namespace cuttlefish {
 
@@ -85,10 +84,10 @@ Result<void> RunServer(const RunServerParam& params) {
 Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   std::vector<Flag> flags;
   SharedFD internal_server_fd;
-  flags.emplace_back(SharedFDFlag(kInternalServerFd, internal_server_fd));
+  flags.emplace_back(SharedFDFlag("INTERNAL_server_fd", internal_server_fd));
   SharedFD carryover_client_fd;
   flags.emplace_back(
-      SharedFDFlag(kInternalCarryoverClientFd, carryover_client_fd));
+      SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
   SharedFD memory_carryover_fd;
   flags.emplace_back(
       SharedFDFlag("INTERNAL_memory_carryover_fd", memory_carryover_fd));
