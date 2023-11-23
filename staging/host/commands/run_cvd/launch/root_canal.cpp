@@ -64,6 +64,8 @@ class RootCanal : public CommandSource {
     // Add command for forwarding the HCI port to a vsock server.
     Command hci_vsock_proxy(SocketVsockProxyBinary());
     hci_vsock_proxy.AddParameter("--server_type=vsock");
+    hci_vsock_proxy.AddParameter("--server_vsock_id=",
+                                 instance_.vsock_guest_cid());
     hci_vsock_proxy.AddParameter("--server_vsock_port=",
                                  config_.rootcanal_hci_port());
     hci_vsock_proxy.AddParameter("--client_type=tcp");
@@ -74,6 +76,8 @@ class RootCanal : public CommandSource {
     // Add command for forwarding the test port to a vsock server.
     Command test_vsock_proxy(SocketVsockProxyBinary());
     test_vsock_proxy.AddParameter("--server_type=vsock");
+    test_vsock_proxy.AddParameter("--server_vsock_id=",
+                                  instance_.vsock_guest_cid());
     test_vsock_proxy.AddParameter("--server_vsock_port=",
                                   config_.rootcanal_test_port());
     test_vsock_proxy.AddParameter("--client_type=tcp");
