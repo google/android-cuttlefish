@@ -24,7 +24,11 @@ namespace cuttlefish {
 Result<MonitorCommand> ConfigServer(
     const CuttlefishConfig::InstanceSpecific& instance) {
   auto port = instance.config_server_port();
-  auto socket = SharedFD::VsockServer(port, SOCK_STREAM);
+  auto socket =
+      SharedFD::VsockServer(port, SOCK_STREAM,
+                            instance.vhost_user_vsock()
+                                ? std::make_optional(instance.vsock_guest_cid())
+                                : std::nullopt);
   CF_EXPECTF(socket->IsOpen(), "Can't configuration server socket: '{}'",
              socket->StrError());
   return Command(ConfigServerBinary()).AddParameter("-server_fd=", socket);
