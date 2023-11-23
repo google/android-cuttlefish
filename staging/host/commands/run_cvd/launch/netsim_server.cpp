@@ -120,6 +120,8 @@ class NetsimServer : public CommandSource {
     hci_vsock_proxy.AddParameter("--server_type=vsock");
     hci_vsock_proxy.AddParameter("--server_vsock_port=",
                                  config_.rootcanal_hci_port());
+    hci_vsock_proxy.AddParameter("--server_vsock_id=",
+                                 instance_.vsock_guest_cid());
     hci_vsock_proxy.AddParameter("--client_type=tcp");
     hci_vsock_proxy.AddParameter("--client_tcp_host=127.0.0.1");
     hci_vsock_proxy.AddParameter("--client_tcp_port=",
@@ -130,6 +132,8 @@ class NetsimServer : public CommandSource {
     test_vsock_proxy.AddParameter("--server_type=vsock");
     test_vsock_proxy.AddParameter("--server_vsock_port=",
                                   config_.rootcanal_test_port());
+    test_vsock_proxy.AddParameter("--server_vsock_id=",
+                                  instance_.vsock_guest_cid());
     test_vsock_proxy.AddParameter("--client_type=tcp");
     test_vsock_proxy.AddParameter("--client_tcp_host=127.0.0.1");
     test_vsock_proxy.AddParameter("--client_tcp_port=",

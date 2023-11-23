@@ -45,12 +45,13 @@ class TcpServer : public Server {
 
 class VsockServer : public Server {
  public:
-  VsockServer(int port);
+  VsockServer(int port, std::optional<int> vhost_user_vsock_cid);
   Result<SharedFD> Start() override;
   std::string Describe() const override;
 
  private:
   int port_;
+  std::optional<int> vhost_user_vsock_cid_;
 };
 
 class DupServer : public Server {

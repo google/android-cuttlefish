@@ -218,7 +218,8 @@ int main(int argc, char** argv) {
   if (instance.lights_server_port()) {
     lights_observer =
         std::make_shared<cuttlefish::webrtc_streaming::LightsObserver>(
-            instance.lights_server_port(), instance.vsock_guest_cid());
+            instance.lights_server_port(), instance.vsock_guest_cid(),
+            instance.vhost_user_vsock());
     lights_observer->Start();
   }
 
@@ -236,7 +237,8 @@ int main(int argc, char** argv) {
 
   if (instance.camera_server_port()) {
     auto camera_controller = streamer->AddCamera(instance.camera_server_port(),
-                                                 instance.vsock_guest_cid());
+                                                 instance.vsock_guest_cid(),
+                                                 instance.vhost_user_vsock());
     observer_factory->SetCameraHandler(camera_controller);
     streamer->SetHardwareSpec("camera_passthrough", true);
   }
