@@ -26,6 +26,7 @@
 #include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/metrics/metrics_notice.h"
 #include "host/commands/cvd/server.h"
+#include "host/commands/cvd/server_constants.h"
 
 namespace cuttlefish {
 
@@ -77,17 +78,18 @@ Result<void> RunServer(const RunServerParam& params) {
        .memory_carryover_fd = params.memory_carryover_fd,
        .acloud_translator_optout = params.acloud_translator_optout,
        .server_logger = std::move(server_logger),
-       .scoped_logger = std::move(run_server_logger)}));
+       .scoped_logger = std::move(run_server_logger),
+       .restarted_in_process = params.restarted_in_process}));
   return {};
 }
 
 Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
+  ParseResult result;
   std::vector<Flag> flags;
-  SharedFD internal_server_fd;
-  flags.emplace_back(SharedFDFlag("INTERNAL_server_fd", internal_server_fd));
-  SharedFD carryover_client_fd;
   flags.emplace_back(
-      SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
+      SharedFDFlag(kInternalServerFd, result.internal_server_fd));
+  flags.emplace_back(
+      SharedFDFlag(kInternalCarryoverClientFd, result.carryover_client_fd));
   SharedFD memory_carryover_fd;
   flags.emplace_back(
       SharedFDFlag("INTERNAL_memory_carryover_fd", memory_carryover_fd));
@@ -95,10 +97,14 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   // the LogSeverity control will be done later on by the server by masking
   std::string verbosity = "VERBOSE";
   flags.emplace_back(GflagsCompatFlag("verbosity", verbosity));
+  result.restarted_in_process = false;
+  flags.emplace_back(GflagsCompatFlag(kInternalRestartedInProcess,
+                                      result.restarted_in_process));
   CF_EXPECT(ParseFlags(flags, all_args));
 
-  // now the three flags above are all consumed from all_args
-  std::optional<bool> acloud_translator_optout_opt;
+  // now the flags above consumed their lexical tokens from all_args
+  // For now, the default value of acloud_translator_optout is false
+  // In the future, it might be determined by the server if not given.
   const auto all_args_size_before = all_args.size();
   bool acloud_translator_optout_value = false;
   PrintDataCollectionNotice();
@@ -108,27 +114,18 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
                                          acloud_translator_optout_value)},
                        all_args));
   if (all_args.size() != all_args_size_before) {
-    acloud_translator_optout_opt = acloud_translator_optout_value;
+    result.acloud_translator_optout = acloud_translator_optout_value;
   }
 
-  std::optional<SharedFD> memory_carryover_fd_opt;
   if (memory_carryover_fd->IsOpen()) {
-    memory_carryover_fd_opt = std::move(memory_carryover_fd);
+    result.memory_carryover_fd = std::move(memory_carryover_fd);
   }
 
-  std::optional<android::base::LogSeverity> verbosity_level;
   if (!verbosity.empty()) {
-    verbosity_level = CF_EXPECT(EncodeVerbosity(verbosity));
+    result.verbosity_level = CF_EXPECT(EncodeVerbosity(verbosity));
   }
 
-  ParseResult result = {
-      .internal_server_fd = internal_server_fd,
-      .carryover_client_fd = carryover_client_fd,
-      .memory_carryover_fd = memory_carryover_fd_opt,
-      .acloud_translator_optout = acloud_translator_optout_opt,
-      .verbosity_level = verbosity_level,
-  };
-  return {result};
+  return result;
 }
 
 }  // namespace cuttlefish
