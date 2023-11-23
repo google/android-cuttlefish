@@ -424,3 +424,7 @@ endif
 ifneq ($(PRODUCT_BUILD_VBMETA_IMAGE), false)
 AB_OTA_PARTITIONS += vbmeta
 endif
+
+ifeq ($(TARGET_ARCH),arm64)
+$(call soong_config_append,cvdhost,vhost_user_vsock_by_default,true)
+endif
