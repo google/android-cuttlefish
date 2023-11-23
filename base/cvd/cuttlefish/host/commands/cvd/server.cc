@@ -173,7 +173,6 @@ Result<void> CvdServer::Exec(const ExecParam& exec_param) {
       fmt::format("-{}={}", kInternalServerFd, server_dup.get()),
       fmt::format("-{}={}", kInternalCarryoverClientFd, client_dup.get()),
       fmt::format("-{}={}", kInternalAcloudTranslatorOptOut, optout_),
-      fmt::format("-{}={}", kInternalRestartedInProcess, true),
   };
 
   int in_memory_dup = -1;
