@@ -96,17 +96,6 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   cvd_common::Args all_args = ArgsToVec(argc, argv);
   CF_EXPECT(!all_args.empty());
 
-  if (IsServerModeExpected(all_args[0])) {
-    auto parsed = CF_EXPECT(ParseIfServer(all_args));
-    return RunServer(
-        {.internal_server_fd = parsed.internal_server_fd,
-         .carryover_client_fd = parsed.carryover_client_fd,
-         .memory_carryover_fd = parsed.memory_carryover_fd,
-         .verbosity_level = parsed.verbosity_level,
-         .acloud_translator_optout = parsed.acloud_translator_optout,
-         .restarted_in_process = parsed.restarted_in_process});
-  }
-
   auto env = EnvpToMap(envp);
   CvdMetrics::SendCvdMetrics(all_args);
 
@@ -120,6 +109,18 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {
     return client.HandleAcloud(all_args, env);
+  }
+
+  if (IsServerModeExpected(all_args[0])) {
+    auto parsed = CF_EXPECT(ParseIfServer(all_args));
+
+    return RunServer(
+        {.internal_server_fd = parsed.internal_server_fd,
+         .carryover_client_fd = parsed.carryover_client_fd,
+         .memory_carryover_fd = parsed.memory_carryover_fd,
+         .verbosity_level = parsed.verbosity_level,
+         .acloud_translator_optout = parsed.acloud_translator_optout,
+         .restarted_in_process = parsed.restarted_in_process});
   }
 
   if (android::base::Basename(all_args[0]) == "cvd") {
