@@ -52,9 +52,6 @@ struct ServerMainParam {
    * The scoped_logger should expire just after AcceptCarryoverClient()
    */
   std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger;
-  // If true, the server restarted in the previous server process
-  // This is common for restart-server operations.
-  bool restarted_in_process;
 };
 Result<int> CvdServerMain(ServerMainParam&& fds);
 
