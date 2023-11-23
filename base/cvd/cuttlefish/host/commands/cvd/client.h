@@ -85,8 +85,6 @@ class CvdClient {
   Result<SharedFD> ConnectToServer();
   static cvd::Version GetClientVersion();
 
-  Result<void> RestartServer(const cvd::Version& server_version);
-
   std::string server_socket_path_;
   android::base::LogSeverity verbosity_;
 };
