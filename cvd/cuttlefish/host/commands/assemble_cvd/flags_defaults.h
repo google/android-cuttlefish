@@ -68,7 +68,7 @@
 #define CF_DEFAULTS_ENABLE_VIRTIOFS false
 
 // Qemu default parameters
-#define CF_DEFAULTS_QEMU_BINARY_DIR "/usr/bin"
+#define CF_DEFAULTS_QEMU_BINARY_DIR cuttlefish::DefaultQemuBinaryDir()
 
 // Gem5 default parameters
 #define CF_DEFAULTS_GEM5_BINARY_DIR HostBinaryPath("gem5")
