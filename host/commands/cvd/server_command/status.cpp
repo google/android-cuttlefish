@@ -18,31 +18,69 @@
 
 #include <sys/types.h>
 
-#include <functional>
 #include <mutex>
 
-#include <android-base/file.h>
-#include <android-base/scopeguard.h>
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
 #include "cvd_server.pb.h"
-#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
+#include "host/commands/cvd/server_command/status_fetcher.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
+
+static constexpr char kHelpMessage[] = R"(
+
+usage: cvd <selector/driver options> <command> <args>
+
+Selector Options:
+  -group_name <name>     Specify the name of the instance group created
+                         or selected.
+  -instance_name <name>  Selects the device of the given name to perform the
+                         commands for.
+  -instance_name <names> Takes the names of the devices to create within an
+                         instance group. The 'names' is comma-separated.
+
+Driver Options:
+  -verbosity=<LEVEL>     Adjust Cvd verbosity level. LEVEL is Android log
+                         severity. (Required: cvd >= v1.3)
+
+Args:
+  --wait_for_launcher    How many seconds to wait for the launcher to respond
+                         to the status command. A value of zero means wait
+                         indefinitely
+                         (Current value: "5")
+
+  --instance_name        Either instance id (e.g. 1) or internal name (e.g.
+                         cvd-1) If not provided, the smallest id in the given
+                         instance group is selected.
+                         (Current value: "", Required: Android > 12)
+
+  --print                If provided, prints status and instance config
+                         information to stdout instead of CHECK.
+                         (Current value: "false", Required: Android > 12)
+
+  --all_instances        List, within the given instance group, all instances
+                         status and instance config information.
+                         (Current value: "false", Required: Android > 12)
+
+  --help                 List this message
+
+  *                      Only the flags in `-help` are supported. Positional
+                         arguments are not supported.
+
+)";
 
 class CvdStatusCommandHandler : public CvdServerHandler {
  public:
@@ -55,73 +93,23 @@ class CvdStatusCommandHandler : public CvdServerHandler {
   cvd_common::Args CmdList() const override;
 
  private:
-  struct CommandInvocationInfo {
-    std::string command;
-    std::string bin;
-    std::string bin_path;
-    std::string home;
-    std::string host_artifacts_path;
-    uid_t uid;
-    std::vector<std::string> args;
-    cvd_common::Envs envs;
-  };
-  struct ExtractedInfo {
-    CommandInvocationInfo invocation_info;
-    std::optional<selector::LocalInstanceGroup> group;
-  };
-  Result<ExtractedInfo> ExtractInfo(const RequestWithStdio& request) const;
-  Result<std::string> GetBin(const std::string& host_artifacts_path) const;
-  // whether the "bin" is cvd bins like stop_cvd or not (e.g. ln, ls, mkdir)
-  // The information to fire the command might be different. This information
-  // is about what the executable binary is and how to find it.
-  struct BinPathInfo {
-    std::string bin_;
-    std::string bin_path_;
-    std::string host_artifacts_path_;
-  };
-  Result<BinPathInfo> HelpBinPath(const cvd_common::Envs& envs) const;
-  Result<BinPathInfo> NonHelpBinPath(const cvd_common::Envs& envs,
-                                     const std::string& home,
-                                     const uid_t uid) const;
+  Result<cvd::Response> HandleHelp(const RequestWithStdio&);
 
-  Result<bool> IsInstanceStatus(cvd_common::Args selector_args_copy,
-                                const cvd_common::Envs& envs) const;
   InstanceManager& instance_manager_;
-  SubprocessWaiter subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
+  StatusFetcher status_fetcher_;
   std::mutex interruptible_;
   bool interrupted_ = false;
   std::vector<std::string> supported_subcmds_;
-  selector::SelectorFlags selector_flags_;
 };
-
-Result<bool> CvdStatusCommandHandler::IsInstanceStatus(
-    cvd_common::Args selector_args_copy, const cvd_common::Envs& envs) const {
-  auto instance_name_flag =
-      CF_EXPECT(selector_flags_.GetFlag(selector_flags_.kInstanceName));
-  auto instance_name_opt =
-      CF_EXPECT(instance_name_flag.FilterFlag(selector_args_copy));
-  if (instance_name_opt) {
-    return true;
-  }
-
-  if (Contains(envs, kCuttlefishInstanceEnvVarName)) {
-    auto id_tokens =
-        android::base::Tokenize(envs.at(kCuttlefishInstanceEnvVarName), ",");
-    if (id_tokens.size() == 1) {
-      return true;
-    }
-  }
-  return false;
-}
 
 CvdStatusCommandHandler::CvdStatusCommandHandler(
     InstanceManager& instance_manager,
     HostToolTargetManager& host_tool_target_manager)
     : instance_manager_(instance_manager),
       host_tool_target_manager_(host_tool_target_manager),
-      supported_subcmds_{"status", "cvd_status"},
-      selector_flags_{selector::SelectorFlags::New()} {}
+      status_fetcher_(instance_manager_, host_tool_target_manager_),
+      supported_subcmds_{"status", "cvd_status"} {}
 
 Result<bool> CvdStatusCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
@@ -132,8 +120,56 @@ Result<bool> CvdStatusCommandHandler::CanHandle(
 Result<void> CvdStatusCommandHandler::Interrupt() {
   std::scoped_lock interrupt_lock(interruptible_);
   interrupted_ = true;
-  CF_EXPECT(subprocess_waiter_.Interrupt());
+  CF_EXPECT(status_fetcher_.Interrupt());
   return {};
+}
+
+static Result<RequestWithStdio> ProcessInstanceNameFlag(
+    const RequestWithStdio& request) {
+  cvd_common::Envs envs =
+      cvd_common::ConvertToEnvs(request.Message().command_request().env());
+  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+
+  CvdFlag<std::string> instance_name_flag("instance_name");
+  auto instance_name_flag_opt =
+      CF_EXPECT(instance_name_flag.FilterFlag(cmd_args));
+
+  if (!instance_name_flag_opt) {
+    return request;
+  }
+
+  std::string internal_name_or_id = *instance_name_flag_opt;
+  int id;
+  if (android::base::ParseInt(internal_name_or_id, &id)) {
+    envs[kCuttlefishInstanceEnvVarName] = std::to_string(id);
+  } else {
+    CF_EXPECT(android::base::StartsWith(internal_name_or_id, kCvdNamePrefix),
+              "--instance_name should be either cvd-<id> or id");
+    std::string id_part =
+        internal_name_or_id.substr(std::string(kCvdNamePrefix).size());
+    CF_EXPECT(android::base::ParseInt(id_part, &id),
+              "--instance_name should be either cvd-<id> or id");
+    envs[kCuttlefishInstanceEnvVarName] = std::to_string(id);
+  }
+
+  cvd_common::Args new_cmd_args{"cvd", "status"};
+  new_cmd_args.insert(new_cmd_args.end(), cmd_args.begin(), cmd_args.end());
+  const auto& selector_opts =
+      request.Message().command_request().selector_opts();
+  cvd::Request new_message = MakeRequest({
+      .cmd_args = new_cmd_args,
+      .env = envs,
+      .selector_args = cvd_common::ConvertToArgs(selector_opts.args()),
+      .working_dir = request.Message().command_request().working_directory(),
+  });
+  return RequestWithStdio(request.Client(), new_message,
+                          request.FileDescriptors(), request.Credentials());
+}
+
+static Result<bool> HasPrint(cvd_common::Args cmd_args) {
+  CvdFlag<bool> print_flag("print");
+  auto print_flag_opt = CF_EXPECT(print_flag.FilterFlag(cmd_args));
+  return print_flag_opt.has_value() && *print_flag_opt;
 }
 
 Result<cvd::Response> CvdStatusCommandHandler::Handle(
@@ -141,177 +177,61 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   std::unique_lock interrupt_lock(interruptible_);
   CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
-  CF_EXPECT(request.Credentials() != std::nullopt);
-
-  cvd::Response response;
-  response.mutable_command_response();
+  CF_EXPECT(request.Credentials());
 
   auto precondition_verified = VerifyPrecondition(request);
   if (!precondition_verified.ok()) {
+    cvd::Response response;
+    response.mutable_command_response();
     response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
     response.mutable_status()->set_message(
         precondition_verified.error().Message());
     return response;
   }
-  auto [invocation_info, group_opt] = CF_EXPECT(ExtractInfo(request));
 
-  ConstructCommandParam construct_cmd_param{
-      .bin_path = invocation_info.bin_path,
-      .home = invocation_info.home,
-      .args = invocation_info.args,
-      .envs = invocation_info.envs,
-      .working_dir = request.Message().command_request().working_directory(),
-      .command_name = invocation_info.bin,
-      .in = request.In(),
-      .out = request.Out(),
-      .err = request.Err()};
-  Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
-
-  SubprocessOptions options;
   CF_EXPECT_NE(request.Message().command_request().wait_behavior(),
                cvd::WAIT_BEHAVIOR_START,
                "cvd status shouldn't be cvd::WAIT_BEHAVIOR_START");
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
-
   interrupt_lock.unlock();
 
-  auto infop = CF_EXPECT(subprocess_waiter_.Wait());
+  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+  CF_EXPECT(Contains(supported_subcmds_, subcmd));
+  const bool has_print = CF_EXPECT(HasPrint(cmd_args));
 
-  return ResponseFromSiginfo(infop);
+  if (IsHelpSubcmd(cmd_args)) {
+    return HandleHelp(request);
+  }
+
+  RequestWithStdio new_request = CF_EXPECT(ProcessInstanceNameFlag(request));
+
+  auto [entire_stderr_msg, instances_json, response] =
+      CF_EXPECT(status_fetcher_.FetchStatus(new_request));
+  if (response.status().code() != cvd::Status::OK) {
+    return response;
+  }
+
+  std::string serialized_group_json = instances_json.toStyledString();
+  CF_EXPECT_EQ(WriteAll(request.Err(), entire_stderr_msg),
+               entire_stderr_msg.size());
+  if (has_print) {
+    CF_EXPECT_EQ(WriteAll(request.Out(), serialized_group_json),
+                 serialized_group_json.size());
+  }
+  return response;
 }
 
 std::vector<std::string> CvdStatusCommandHandler::CmdList() const {
   return supported_subcmds_;
 }
 
-Result<CvdStatusCommandHandler::BinPathInfo>
-CvdStatusCommandHandler::HelpBinPath(const cvd_common::Envs& envs) const {
-  auto tool_dir_path = envs.at(kAndroidHostOut);
-  if (!DirectoryExists(tool_dir_path + "/bin")) {
-    tool_dir_path =
-        android::base::Dirname(android::base::GetExecutableDirectory());
-  }
-  auto bin_path_base = CF_EXPECT(GetBin(tool_dir_path));
-  // no need of executable directory. Will look up by PATH
-  // bin_path_base is like ln, mkdir, etc.
-  return BinPathInfo{
-      .bin_ = bin_path_base,
-      .bin_path_ = tool_dir_path.append("/bin/").append(bin_path_base),
-      .host_artifacts_path_ = envs.at(kAndroidHostOut)};
-}
-
-Result<CvdStatusCommandHandler::BinPathInfo>
-CvdStatusCommandHandler::NonHelpBinPath(const cvd_common::Envs& envs,
-                                        const std::string& home,
-                                        const uid_t uid) const {
-  std::string host_artifacts_path;
-  auto instance_group_result = instance_manager_.FindGroup(
-      uid, InstanceManager::Query{selector::kHomeField, home});
-
-  // the dir that "bin/cvd_internal_status" belongs to
-  std::string tool_dir_path;
-  if (instance_group_result.ok()) {
-    host_artifacts_path = instance_group_result->HostArtifactsPath();
-    tool_dir_path = host_artifacts_path;
-  } else {
-    // if the group does not exist (e.g. cvd status --help)
-    // falls back here
-    host_artifacts_path = envs.at(kAndroidHostOut);
-    tool_dir_path = host_artifacts_path;
-    if (!DirectoryExists(tool_dir_path + "/bin")) {
-      tool_dir_path =
-          android::base::Dirname(android::base::GetExecutableDirectory());
-    }
-  }
-  const std::string bin = CF_EXPECT(GetBin(tool_dir_path));
-  const std::string bin_path = tool_dir_path.append("/bin/").append(bin);
-  CF_EXPECT(FileExists(bin_path));
-  return BinPathInfo{.bin_ = bin,
-                     .bin_path_ = bin_path,
-                     .host_artifacts_path_ = host_artifacts_path};
-}
-
-Result<CvdStatusCommandHandler::ExtractedInfo>
-CvdStatusCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
-  auto result_opt = request.Credentials();
-  CF_EXPECT(result_opt != std::nullopt);
-  const uid_t uid = result_opt->uid;
-
-  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
-  CF_EXPECT(Contains(supported_subcmds_, subcmd));
-
-  cvd_common::Envs envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
-  const auto& selector_opts =
-      request.Message().command_request().selector_opts();
-  const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
-  CF_EXPECT(Contains(envs, kAndroidHostOut) &&
-            DirectoryExists(envs.at(kAndroidHostOut)));
-
-  if (IsHelpSubcmd(cmd_args)) {
-    const auto [bin, bin_path, host_artifacts_path] =
-        CF_EXPECT(HelpBinPath(envs));
-    return ExtractedInfo{
-        .invocation_info =
-            CommandInvocationInfo{
-                .command = subcmd,
-                .bin = bin,
-                .bin_path = bin_path,
-                .home = CF_EXPECT(SystemWideUserHome(uid)),
-                .host_artifacts_path = envs.at(kAndroidHostOut),
-                .uid = uid,
-                .args = cmd_args,
-                .envs = envs},
-        .group = std::nullopt};
-  }
-
-  const auto instance_status_intended =
-      CF_EXPECT(IsInstanceStatus(selector_args, envs));
-  auto instance_group =
-      CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs, uid));
-  auto android_host_out = instance_group.HostArtifactsPath();
-  auto home = instance_group.HomeDir();
-  auto bin = CF_EXPECT(GetBin(android_host_out));
-  auto bin_path = ConcatToString(android_host_out, "/bin/", bin);
-
-  // add instance_name=<internal_name>
-  if (instance_status_intended) {
-    // note that only inside instance_manager_, the data structures are
-    // protected by mutex. So, we can't simply get the instances from the
-    // instance_group above to iterate over
-    auto instance_record =
-        CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs, uid));
-    auto id = instance_record.InstanceId();
-    envs[kCuttlefishInstanceEnvVarName] = std::to_string(id);
-  } else {
-    if (host_tool_target_manager_
-            .ReadFlag({
-                .artifacts_path = android_host_out,
-                .op = "status",
-                .flag_name = "all_instances",
-            })
-            .ok()) {
-      cmd_args.push_back("--all_instances");
-    }
-  }
-  CommandInvocationInfo result = {.command = subcmd,
-                                  .bin = bin,
-                                  .bin_path = bin_path,
-                                  .home = home,
-                                  .host_artifacts_path = android_host_out,
-                                  .uid = uid,
-                                  .args = cmd_args,
-                                  .envs = envs};
-  result.envs["HOME"] = home;
-  return ExtractedInfo{.invocation_info = result, .group = instance_group};
-}
-
-Result<std::string> CvdStatusCommandHandler::GetBin(
-    const std::string& host_artifacts_path) const {
-  return CF_EXPECT(host_tool_target_manager_.ExecBaseName({
-      .artifacts_path = host_artifacts_path,
-      .op = "status",
-  }));
+Result<cvd::Response> CvdStatusCommandHandler::HandleHelp(
+    const RequestWithStdio& request) {
+  cvd::Response response;
+  response.mutable_command_response();  // Sets oneof member
+  response.mutable_status()->set_code(cvd::Status::OK);
+  CF_EXPECT_EQ(WriteAll(request.Out(), kHelpMessage),
+               strnlen(kHelpMessage, sizeof(kHelpMessage) - 1));
+  return response;
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdStatusCommandHandler(
