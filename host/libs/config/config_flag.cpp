@@ -36,6 +36,8 @@
 DEFINE_string(system_image_dir, CF_DEFAULTS_SYSTEM_IMAGE_DIR, "");
 
 using gflags::FlagSettingMode::SET_FLAGS_DEFAULT;
+using android::base::ReadFileToString;
+using android::base::Split;
 
 namespace cuttlefish {
 
@@ -180,22 +182,36 @@ class ConfigFlagImpl : public ConfigFlag {
     if (!FileExists(info_path)) {
       return {};
     }
-    std::ifstream ifs{info_path};
-    if (!ifs.is_open()) {
-      return {};
-    }
     std::string android_info;
-    ifs >> android_info;
-    std::string_view local_android_info(android_info);
-    if (!android::base::ConsumePrefix(&local_android_info, "config=")) {
+    if(!ReadFileToString(info_path, &android_info)) {
       return {};
     }
-    if (!config_reader_.HasConfig(std::string{local_android_info})) {
+    // grab the last value of config in android-info.txt,
+    // it's the setting that's respected.
+    // TODO (rammuthiah) Replace this logic with ParseMiscInfo
+    // from host/commands/assemble_cvd/misc_info.h
+    // Currently blocked on linking error for misc_info which is part of
+    // assemble_cvd and this bit of code which is in run_cvd.
+    size_t config_idx = android_info.rfind("config=");
+    if (config_idx == std::string::npos) {
+      return {};
+    }
+    std::string config_value = android_info.substr(config_idx);
+    std::string_view local_config_value(config_value);
+    if (!android::base::ConsumePrefix(&local_config_value, "config=")) {
+      return {};
+    }
+    auto split_config = Split(std::string{local_config_value},"\n");
+    if (split_config.empty()) {
+      return {};
+    }
+    config_value = split_config[0];
+    if (!config_reader_.HasConfig(config_value)) {
       LOG(WARNING) << info_path << " contains invalid config preset: '"
-                   << local_android_info << "'.";
+                   << config_value << "'.";
       return {};
     }
-    return std::string{local_android_info};
+    return config_value;
   }
 
   ConfigReader& config_reader_;
