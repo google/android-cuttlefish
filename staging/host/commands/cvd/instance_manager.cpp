@@ -200,6 +200,132 @@ void InstanceManager::RemoveInstanceGroup(const uid_t uid,
   instance_db.RemoveInstanceGroup(group);
 }
 
+template <typename... Args>
+static Command GetCommand(const std::string& prog_path, Args&&... args) {
+  Command command(prog_path);
+  (command.AddParameter(args), ...);
+  return command;
+}
+
+struct ExecCommandResult {
+  std::string stdout_buf;
+  std::string stderr_buf;
+};
+
+static Result<ExecCommandResult> ExecCommand(Command&& command) {
+  ExecCommandResult command_result;
+  CF_EXPECT_EQ(RunWithManagedStdio(std::move(command), /* stdin */ nullptr,
+                                   std::addressof(command_result.stdout_buf),
+                                   std::addressof(command_result.stderr_buf)),
+               0);
+  return command_result;
+}
+
+Result<Json::Value>
+InstanceManager::IssueStatusCommand(const selector::LocalInstanceGroup& group,
+                                    const SharedFD& err) {
+  std::string not_supported_version_msg = " does not comply with cvd fleet.\n";
+  const auto host_android_out = group.HostArtifactsPath();
+  auto status_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
+      .artifacts_path = host_android_out,
+      .op = "status",
+  }));
+  const auto prog_path = host_android_out + "/bin/" + status_bin;
+
+  Json::Value output(Json::arrayValue);
+  for (const auto& instance_ref : CF_EXPECT(group.FindAllInstances())) {
+    const auto id = instance_ref.Get().InstanceId();
+    Command status_cmd = GetCommand(prog_path, "-print");
+    std::vector<std::string> new_envs{
+        ConcatToString("HOME=", group.HomeDir()),
+        ConcatToString(kCuttlefishInstanceEnvVarName, "=", std::to_string(id))};
+    status_cmd.SetEnvironment(new_envs);
+    auto cmd_result = CF_EXPECT(ExecCommand(std::move(status_cmd)));
+    if (cmd_result.stdout_buf.empty()) {
+      WriteAll(err,
+               instance_ref.Get().DeviceName() + not_supported_version_msg);
+      cmd_result.stdout_buf.append("{}");
+    }
+    auto status = CF_EXPECT(ParseJson(cmd_result.stdout_buf));
+    if (status.isArray()) {
+      // cvd_internal_status returns an array even when limited to a single
+      // instance.
+      CF_EXPECT(status.size() == 1,
+                status_bin << " returned unexpected number of instances: "
+                           << status.size());
+      status = status[0];
+    }
+    static constexpr auto kWebrtcProp = "webrtc_device_id";
+    static constexpr auto kNameProp = "instance_name";
+    // Check for isObject first, calling isMember on anything else causes a
+    // runtime error
+    if (status.isObject() && !status.isMember(kWebrtcProp) &&
+        status.isMember(kNameProp)) {
+      // b/296644913 some cuttlefish versions printed the webrtc device id as
+      // the instance name.
+      status[kWebrtcProp] = status[kNameProp];
+    }
+    // The instance doesn't know the name under which it was created on the
+    // server.
+    status[kNameProp] = instance_ref.Get().PerInstanceName();
+    output.append(status);
+  }
+  return output;
+}
+
+Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
+                                                  const SharedFD& out,
+                                                  const SharedFD& err) {
+  std::lock_guard assemblies_lock(instance_db_mutex_);
+  auto& instance_db = GetInstanceDB(uid);
+  auto&& instance_groups = instance_db.InstanceGroups();
+  cvd::Status status;
+  status.set_code(cvd::Status::OK);
+
+  Json::Value groups_json(Json::arrayValue);
+  for (const auto& group : instance_groups) {
+    CF_EXPECT(group != nullptr);
+    Json::Value group_json(Json::objectValue);
+    group_json["group_name"] = group->GroupName();
+    auto result = IssueStatusCommand(*group, err);
+    if (!result.ok()) {
+      WriteAll(err,
+               fmt::format("Group '{}' status error: '{}'", group->GroupName(),
+                           result.error().FormatForEnv()));
+      status.set_code(cvd::Status::INTERNAL);
+      continue;
+    }
+    group_json["instances"] = *result;
+    groups_json.append(group_json);
+  }
+  Json::Value output(Json::objectValue);
+  output["groups"] = groups_json;
+  // Calling toStyledString here puts the string representation of all instance
+  // groups into a single string in memory. That sounds large, but the host's
+  // RAM should be able to handle it if it can handle that many instances
+  // running simultaneously.
+  // The alternative is probably to create an std::ostream from
+  // cuttlefish::SharedFD and use Json::Value's operator<< to print it.
+  WriteAll(out, output.toStyledString());
+  return status;
+}
+
+Result<cvd::Status> InstanceManager::CvdFleet(
+    const uid_t uid, const SharedFD& out, const SharedFD& err,
+    const std::vector<std::string>& fleet_cmd_args) {
+  bool is_help = false;
+  for (const auto& arg : fleet_cmd_args) {
+    if (arg == "--help" || arg == "-help") {
+      is_help = true;
+      break;
+    }
+  }
+  CF_EXPECT(!is_help,
+            "cvd fleet --help should be handled by fleet handler itself.");
+  const auto status = CF_EXPECT(CvdFleetImpl(uid, out, err));
+  return status;
+}
+
 Result<std::string> InstanceManager::StopBin(
     const std::string& host_android_out) {
   const auto stop_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
