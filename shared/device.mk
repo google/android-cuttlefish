@@ -447,7 +447,7 @@ PRODUCT_COPY_FILES += \
 #
 ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
 PRODUCT_PACKAGES += \
-    android.hardware.security.authgraph-service.nonsecure
+    com.android.hardware.security.authgraph
 endif
 
 #
