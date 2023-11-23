@@ -48,7 +48,7 @@ namespace {
 
 // Returns true only if command terminated normally, and returns 0
 Result<void> RunCommand(Command&& command) {
-  auto subprocess = std::move(command.Start());
+  auto subprocess = command.Start();
   siginfo_t infop{};
   // This blocks until the process exits, but doesn't reap it.
   auto result = subprocess.Wait(&infop, WEXITED);
