@@ -17,7 +17,9 @@
 #include "host/commands/cvd/server_command/try_acloud.h"
 
 #include <mutex>
+#include <thread>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/acloud/config.h"
@@ -69,6 +71,7 @@ class TryAcloudCommand : public CvdServerHandler {
  private:
   Result<cvd::Response> VerifyWithCvd(const RequestWithStdio& request);
   Result<cvd::Response> VerifyWithCvdRemote(const RequestWithStdio& request);
+  Result<std::string> RunCvdRemoteGetConfig(const std::string& name);
 
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
@@ -122,9 +125,52 @@ Result<cvd::Response> TryAcloudCommand::VerifyWithCvdRemote(
   CF_EXPECT(config.use_cvdr == true);
   auto args = ParseInvocation(request.Message()).arguments;
   CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
+  std::string cvdr_service_url =
+      CF_EXPECT(RunCvdRemoteGetConfig("service_url"));
+  CF_EXPECT(config.project == "google.com:android-treehugger-developer" &&
+            cvdr_service_url ==
+                "http://android-treehugger-developer.googleplex.com");
+  std::string cvdr_zone = CF_EXPECT(RunCvdRemoteGetConfig("zone"));
+  CF_EXPECT(config.zone == cvdr_zone);
   cvd::Response response;
   response.mutable_command_response();
   return response;
+}
+
+Result<std::string> TryAcloudCommand::RunCvdRemoteGetConfig(
+    const std::string& name) {
+  Command cmd = Command("cvdr");
+  cmd.AddParameter("get_config");
+  cmd.AddParameter(name);
+  std::string stdout_;
+  SharedFD stdout_pipe_read, stdout_pipe_write;
+  CF_EXPECT(SharedFD::Pipe(&stdout_pipe_read, &stdout_pipe_write),
+            "Could not create a pipe");
+  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, stdout_pipe_write);
+  std::thread stdout_thread([stdout_pipe_read, &stdout_]() {
+    int read = ReadAll(stdout_pipe_read, &stdout_);
+    if (read < 0) {
+      LOG(ERROR) << "Error in reading stdout from process";
+    }
+  });
+  {
+    std::unique_lock interrupt_lock(interrupt_mutex_);
+    CF_EXPECT(!interrupted_, "Interrupted");
+    auto subprocess = cmd.Start();
+    CF_EXPECT(subprocess.Started());
+    CF_EXPECT(waiter_.Setup(std::move(subprocess)));
+  }
+  siginfo_t siginfo = CF_EXPECT(waiter_.Wait());
+  {
+    // Force the destructor to run by moving it into a smaller scope.
+    // This is necessary to close the write end of the pipe.
+    Command forceDelete = std::move(cmd);
+  }
+  stdout_pipe_write->Close();
+  stdout_thread.join();
+  CF_EXPECT(siginfo.si_status == EXIT_SUCCESS);
+  stdout_.erase(stdout_.find('\n'));
+  return stdout_;
 }
 
 std::unique_ptr<CvdServerHandler> NewTryAcloudCommand(
