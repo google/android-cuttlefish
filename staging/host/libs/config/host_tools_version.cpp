@@ -23,7 +23,7 @@
 #include <zlib.h>
 
 #include "common/libs/utils/files.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/config_utils.h"
 
 using std::uint32_t;
 
