@@ -106,6 +106,7 @@ class InstanceManager {
                                        const Queries& queries) const;
   Result<Json::Value> Serialize(const uid_t uid);
   Result<void> LoadFromJson(const uid_t uid, const Json::Value&);
+  std::vector<std::string> AllGroupNames(const uid_t uid) const;
 
  private:
   Result<cvd::Status> CvdFleetImpl(const uid_t uid, const SharedFD& out,
