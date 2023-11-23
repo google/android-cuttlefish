@@ -46,7 +46,6 @@
 #include "host/commands/cvd/server_command/shutdown.h"
 #include "host/commands/cvd/server_command/snapshot.h"
 #include "host/commands/cvd/server_command/start.h"
-#include "host/commands/cvd/server_command/status.h"
 #include "host/commands/cvd/server_command/subcmd.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/try_acloud.h"
@@ -101,8 +100,6 @@ RequestContext::RequestContext(CvdServer& cvd_server,
   request_handlers_.emplace_back(
       NewCvdStartCommandHandler(instance_manager_, host_tool_target_manager_,
                                 command_sequence_executor_));
-  request_handlers_.emplace_back(
-      NewCvdStatusCommandHandler(instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(
       NewTryAcloudCommand(acloud_translator_optout_));
   request_handlers_.emplace_back(NewCvdVersionHandler());
