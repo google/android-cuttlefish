@@ -46,7 +46,6 @@ cc_library_host_static {
         "snapshot.cpp",
         "start.cpp",
         "status.cpp",
-        "status_fetcher.cpp",
         "subprocess_waiter.cpp",
         "try_acloud.cpp",
         "version.cpp",
