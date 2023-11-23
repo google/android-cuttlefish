@@ -309,8 +309,10 @@ std::shared_ptr<AudioSource> Streamer::GetAudioSource() {
   return impl_->audio_device_module_;
 }
 
-CameraController* Streamer::AddCamera(unsigned int port, unsigned int cid) {
-  impl_->camera_streamer_ = std::make_unique<CameraStreamer>(port, cid);
+CameraController* Streamer::AddCamera(unsigned int port, unsigned int cid,
+                                      bool vhost_user) {
+  impl_->camera_streamer_ =
+      std::make_unique<CameraStreamer>(port, cid, vhost_user);
   return impl_->camera_streamer_.get();
 }
 

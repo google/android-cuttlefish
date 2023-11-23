@@ -159,6 +159,7 @@ cvd_host_tools = [
     "wmediumd_gen_config",
     "vulkan.pastel",
     "automotive_vsock_proxy",
+    "vhost_device_vsock",
 ]
 
 cvd_openwrt_images = [
