@@ -35,7 +35,6 @@
 #include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/handle_reset.h"
 #include "host/commands/cvd/metrics/cvd_metrics_api.h"
-#include "host/commands/cvd/run_server.h"
 #include "host/libs/config/host_tools_version.h"
 
 namespace cuttlefish {
@@ -389,7 +388,7 @@ Result<void> CvdClient::StartCvdServer() {
   CF_EXPECT(server_fd->IsOpen(), server_fd->StrError());
 
   Command command(kServerExecPath);
-  command.AddParameter("-", kInternalServerFd, "=", server_fd);
+  command.AddParameter("-INTERNAL_server_fd=", server_fd);
   SubprocessOptions options;
   options.ExitWithParent(false);
   command.Start(options);
