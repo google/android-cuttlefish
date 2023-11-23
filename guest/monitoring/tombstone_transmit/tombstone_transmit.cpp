@@ -65,8 +65,8 @@ DEFINE_bool(remove_tombstones_after_transmitting, false,
 #define TOMBSTONE_BUFFER_SIZE (1024)
 
 static void tombstone_send_to_host(const std::string& ts_path) {
-  auto log_fd =
-      cuttlefish::SharedFD::VsockClient(FLAGS_cid, FLAGS_port, SOCK_STREAM);
+  auto log_fd = cuttlefish::SharedFD::VsockClient(
+      FLAGS_cid, FLAGS_port, SOCK_STREAM, false /* it's guest */);
   std::ifstream ifs(ts_path);
   char buffer[TOMBSTONE_BUFFER_SIZE];
   size_t num_transfers = 0;
