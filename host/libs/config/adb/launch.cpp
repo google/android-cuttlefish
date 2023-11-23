@@ -139,6 +139,8 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
     }
 
     Command adb_tunnel(SocketVsockProxyBinary());
+    adb_tunnel.AddParameter("--vhost_user_vsock=",
+                            instance_.vhost_user_vsock());
     adb_tunnel.AddParameter("--events_fd=", kernel_log_pipe_);
     adb_tunnel.AddParameter("--start_event_id=", monitor::Event::AdbdStarted);
     adb_tunnel.AddParameter("--stop_event_id=",
