@@ -16,6 +16,8 @@
 
 #include "host/libs/config/config_utils.h"
 
+#include <string.h>
+
 #include <iomanip>
 #include <sstream>
 
