@@ -182,7 +182,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
   }
   auto unused_id_pool =
       CF_EXPECT(CollectUnusedIds(instance_database_, std::move(id_pool)));
-  auto unique_id_allocator = std::move(IdAllocator::New(unused_id_pool));
+  auto unique_id_allocator = IdAllocator::New(unused_id_pool);
   CF_EXPECT(unique_id_allocator != nullptr,
             "Memory allocation for UniqueResourceAllocator failed.");
 
