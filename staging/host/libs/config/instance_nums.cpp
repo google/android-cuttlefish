@@ -21,7 +21,7 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/flag_parser.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/config_utils.h"
 
 namespace cuttlefish {
 

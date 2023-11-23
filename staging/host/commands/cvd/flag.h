@@ -242,8 +242,8 @@ class FlagCollection {
   std::vector<CvdFlagProxy> Flags() const;
 
   struct FlagValuePair {
-    ValueVariant value;
     CvdFlagProxy flag;
+    ValueVariant value;
   };
 
   /* does not consider default values
