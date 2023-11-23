@@ -84,9 +84,6 @@ class InstanceManager {
   void RemoveInstanceGroup(const uid_t uid, const std::string&);
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
-  Result<cvd::Status> CvdFleet(const uid_t uid, const SharedFD& out,
-                               const SharedFD& err,
-                               const std::vector<std::string>& fleet_cmd_args);
   static Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
   Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
@@ -108,10 +105,6 @@ class InstanceManager {
   Result<void> LoadFromJson(const uid_t uid, const Json::Value&);
 
  private:
-  Result<cvd::Status> CvdFleetImpl(const uid_t uid, const SharedFD& out,
-                                   const SharedFD& err);
-  Result<Json::Value> IssueStatusCommand(
-      const selector::LocalInstanceGroup& group, const SharedFD& err);
   Result<void> IssueStopCommand(const SharedFD& out, const SharedFD& err,
                                 const std::string& config_file_path,
                                 const selector::LocalInstanceGroup& group);
