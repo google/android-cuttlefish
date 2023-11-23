@@ -22,8 +22,12 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
-CameraStreamer::CameraStreamer(unsigned int port, unsigned int cid)
-    : cid_(cid), port_(port), camera_session_active_(false) {}
+CameraStreamer::CameraStreamer(unsigned int port, unsigned int cid,
+                               bool vhost_user)
+    : cid_(cid),
+      port_(port),
+      vhost_user_(vhost_user),
+      camera_session_active_(false) {}
 
 CameraStreamer::~CameraStreamer() { Disconnect(); }
 
@@ -32,7 +36,8 @@ void CameraStreamer::OnFrame(const webrtc::VideoFrame& client_frame) {
   std::lock_guard<std::mutex> lock(onframe_mutex_);
   if (!cvd_connection_.IsConnected() && !pending_connection_.valid()) {
     // Start new connection
-    pending_connection_ = cvd_connection_.ConnectAsync(port_, cid_);
+    pending_connection_ =
+        cvd_connection_.ConnectAsync(port_, cid_, vhost_user_);
     return;
   } else if (pending_connection_.valid()) {
     if (!IsConnectionReady()) {

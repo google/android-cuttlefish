@@ -932,6 +932,15 @@ bool CuttlefishConfig::InstanceSpecific::vhost_net() const {
   return (*Dictionary())[kVhostNet].asBool();
 }
 
+static constexpr char kVhostUserVsock[] = "vhost_user_vsock";
+void CuttlefishConfig::MutableInstanceSpecific::set_vhost_user_vsock(
+    bool vhost_user_vsock) {
+  (*Dictionary())[kVhostUserVsock] = vhost_user_vsock;
+}
+bool CuttlefishConfig::InstanceSpecific::vhost_user_vsock() const {
+  return (*Dictionary())[kVhostUserVsock].asBool();
+}
+
 static constexpr char kRilDns[] = "ril_dns";
 void CuttlefishConfig::MutableInstanceSpecific::set_ril_dns(const std::string& ril_dns) {
   (*Dictionary())[kRilDns] = ril_dns;

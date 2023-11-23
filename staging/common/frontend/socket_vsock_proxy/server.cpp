@@ -68,14 +68,13 @@ std::string TcpServer::Describe() const {
   return fmt::format("tcp: {}", port_);
 }
 
-VsockServer::VsockServer(int port) : port_(port) {}
+VsockServer::VsockServer(int port, std::optional<int> vhost_user_vsock_cid)
+    : port_(port), vhost_user_vsock_cid_(vhost_user_vsock_cid) {}
 
-// Intended to run in the guest
 Result<SharedFD> VsockServer::Start() {
   SharedFD server;
-
   do {
-    server = SharedFD::VsockServer(port_, SOCK_STREAM);
+    server = SharedFD::VsockServer(port_, SOCK_STREAM, vhost_user_vsock_cid_);
     if (!server->IsOpen() && !socketErrorIsRecoverable(server->GetErrno())) {
       LOG(ERROR) << "Could not open vsock socket: " << server->StrError();
       // socket_vsock_proxy will now wait forever in the guest on encountering an
