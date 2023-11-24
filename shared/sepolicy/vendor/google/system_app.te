@@ -1,1 +1,3 @@
-allow system_app hal_wlc_hwservice:hwservice_manager find;
+# WLC
+allow system_app hal_wireless_charger_service:service_manager find;
+binder_call(system_app, hal_wireless_charger)
