@@ -7,3 +7,7 @@ allow platform_app hal_wlc_hwservice:hwservice_manager find;
 # Ignore lookup for vendor.google.wireless_charger.IWirelessCharger/default
 # and vendor.google.google_battery.IGoogleBattery/default.
 dontaudit platform_app default_android_service:service_manager find;
+
+# WLC
+allow platform_app hal_wireless_charger_service:service_manager find;
+binder_call(platform_app, hal_wireless_charger)
