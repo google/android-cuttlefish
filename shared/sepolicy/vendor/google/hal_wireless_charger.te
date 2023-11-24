@@ -1,0 +1,7 @@
+type hal_wireless_charger, domain;
+type hal_wireless_charger_exec, exec_type, vendor_file_type, file_type;
+
+# target is not real device, not needed
+# r_dir_file(hal_wireless_charger, sysfs_wlc)
+# allow hal_wireless_charger sysfs_wlc:dir search;
+# allow hal_wireless_charger sysfs_wlc:file rw_file_perms;
