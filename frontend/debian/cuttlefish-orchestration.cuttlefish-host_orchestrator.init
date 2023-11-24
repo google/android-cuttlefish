@@ -89,6 +89,7 @@ start_operator() {
 
   start-stop-daemon --start \
     --pidfile "${OPERATOR_PIDFILE}" \
+    --chuid _cutf-operator:cvdnetwork \
     --chdir "${ASSET_DIR}" \
     --background --no-close \
     --make-pidfile \
