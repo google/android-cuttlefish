@@ -39,7 +39,7 @@ class AcloudConfig {
 
   std::string zone;
 
-  bool use_cvdr;
+  bool use_legacy_acloud;
 
   // InternalConfig/internal_config.proto members
 
