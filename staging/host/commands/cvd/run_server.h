@@ -28,6 +28,15 @@
 
 namespace cuttlefish {
 
+// names of the flags to start cvd server
+inline constexpr char kInternalServerFd[] = "INTERNAL_server_fd";
+inline constexpr char kInternalCarryoverClientFd[] =
+    "INTERNAL_carryover_client_fd";
+inline constexpr char kInternalMemoryCarryoverFd[] =
+    "INTERNAL_memory_carryover_fd";
+inline constexpr char kInternalAcloudTranslatorOptOut[] =
+    "INTERNAL_acloud_translator_optout";
+
 bool IsServerModeExpected(const std::string& exec_file);
 
 struct RunServerParam {

@@ -36,6 +36,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/reset_client_utils.h"
+#include "host/commands/cvd/run_server.h"
 #include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
@@ -420,7 +421,7 @@ Result<void> KillCvdServerProcess() {
       continue;
     }
     for (const auto& arg : proc_info_result->args_) {
-      if (Contains(arg, "INTERNAL_server_fd")) {
+      if (Contains(arg, kInternalServerFd)) {
         cvd_server_pids.push_back(pid);
         break;
       }
