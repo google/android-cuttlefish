@@ -36,6 +36,8 @@ inline constexpr char kInternalMemoryCarryoverFd[] =
     "INTERNAL_memory_carryover_fd";
 inline constexpr char kInternalAcloudTranslatorOptOut[] =
     "INTERNAL_acloud_translator_optout";
+inline constexpr char kInternalRestartedInProcess[] =
+    "INTERNAL_restarted_in_process";
 
 bool IsServerModeExpected(const std::string& exec_file);
 
@@ -45,6 +47,7 @@ struct RunServerParam {
   std::optional<SharedFD> memory_carryover_fd;
   std::optional<android::base::LogSeverity> verbosity_level;
   std::optional<bool> acloud_translator_optout;
+  bool restarted_in_process;
 };
 Result<void> RunServer(const RunServerParam& params);
 
@@ -54,6 +57,7 @@ struct ParseResult {
   std::optional<SharedFD> memory_carryover_fd;
   std::optional<bool> acloud_translator_optout;
   std::optional<android::base::LogSeverity> verbosity_level;
+  bool restarted_in_process;
 };
 Result<ParseResult> ParseIfServer(cvd_common::Args& all_args);
 
