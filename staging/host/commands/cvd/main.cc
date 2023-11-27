@@ -119,7 +119,8 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
          .carryover_client_fd = parsed.carryover_client_fd,
          .memory_carryover_fd = parsed.memory_carryover_fd,
          .verbosity_level = parsed.verbosity_level,
-         .acloud_translator_optout = parsed.acloud_translator_optout});
+         .acloud_translator_optout = parsed.acloud_translator_optout,
+         .restarted_in_process = parsed.restarted_in_process});
   }
 
   if (android::base::Basename(all_args[0]) == "cvd") {
