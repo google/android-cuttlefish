@@ -173,7 +173,6 @@ Result<void> CvdServer::Exec(const ExecParam& exec_param) {
       fmt::format("-{}={}", kInternalServerFd, server_dup.get()),
       fmt::format("-{}={}", kInternalCarryoverClientFd, client_dup.get()),
       fmt::format("-{}={}", kInternalAcloudTranslatorOptOut, optout_),
-      fmt::format("-{}={}", kInternalRestartedInProcess, true),
   };
 
   int in_memory_dup = -1;
@@ -453,10 +452,7 @@ Result<int> CvdServerMain(ServerMainParam&& param) {
 
   LOG(INFO) << "Starting server";
 
-  if (!param.restarted_in_process) {
-    LOG(INFO) << "Server is being daemonized...";
-    CF_EXPECT(daemon(0, 0) != -1, strerror(errno));
-  }
+  CF_EXPECT(daemon(0, 0) != -1, strerror(errno));
 
   signal(SIGPIPE, SIG_IGN);
 
