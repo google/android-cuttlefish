@@ -218,7 +218,7 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
       .bootloader =
           {
               .build_id = tokens.StringVal(kFlagBootloaderBuildId),
-              .build_target = tokens.StringVal(kFlagBuildTarget),
+              .build_target = tokens.StringVal(kFlagBootloaderBuildTarget),
               .branch = tokens.StringVal(kFlagBootloaderBranch),
           },
   };
