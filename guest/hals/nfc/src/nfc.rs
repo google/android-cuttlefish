@@ -135,6 +135,11 @@ fn set_console_fd_raw(file: &mut File) {
     termios::cfmakeraw(&mut attrs);
     termios::tcsetattr(fd, termios::SetArg::TCSANOW, &attrs)
         .expect("Failed to set virtio-console to raw mode");
+
+    let raw_attrs = termios::tcgetattr(fd).expect("Failed to validate virtio-console mode");
+    if attrs != raw_attrs {
+        panic!("Failed to set virtio-console to raw mode. Only partially applied");
+    }
 }
 
 impl NfcService {
