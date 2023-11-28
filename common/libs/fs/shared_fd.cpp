@@ -957,6 +957,22 @@ int FileInstance::SetTerminalRaw() {
   cfmakeraw(&terminal_settings);
   rval = tcsetattr(fd_, TCSANOW, &terminal_settings);
   errno_ = errno;
+  if (rval < 0) {
+    return rval;
+  }
+
+  // tcsetattr() success if any of the requested change success.
+  // So double check whether everything is applied.
+  termios raw_settings;
+  rval = tcgetattr(fd_, &raw_settings);
+  errno_ = errno;
+  if (rval < 0) {
+    return rval;
+  }
+  if (memcmp(&terminal_settings, &raw_settings, sizeof(terminal_settings))) {
+    errno_ = EPROTO;
+    return -1;
+  }
   return rval;
 }
 
