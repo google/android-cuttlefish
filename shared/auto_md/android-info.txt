@@ -1,1 +1,2 @@
 config=auto_md
+gfxstream=supported

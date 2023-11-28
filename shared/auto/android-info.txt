@@ -1,1 +1,2 @@
 config=auto
+gfxstream=supported

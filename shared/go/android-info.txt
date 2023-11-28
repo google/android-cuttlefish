@@ -1,1 +1,2 @@
 config=go
+gfxstream=supported
