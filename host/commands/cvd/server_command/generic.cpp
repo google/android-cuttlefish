@@ -20,7 +20,6 @@
 
 #include <functional>
 #include <mutex>
-#include <variant>
 
 #include <android-base/file.h>
 #include <android-base/scopeguard.h>
@@ -98,14 +97,16 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   bool interrupted_ = false;
   using BinGeneratorType = std::function<Result<std::string>(
       const std::string& host_artifacts_path)>;
-  using BinType = std::variant<std::string, BinGeneratorType>;
-  std::map<std::string, BinType> command_to_binary_map_;
+  std::map<std::string, std::string> command_to_binary_map_;
 
   static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
   static constexpr char kLnBin[] = "ln";
   static constexpr char kMkdirBin[] = "mkdir";
   static constexpr char kClearBin[] =
       "clear_placeholder";  // Unused, runs CvdClear()
+  // Only indicates that host_tool_target_manager_ should generate at runtime
+  static constexpr char kBinGeneratedAtRuntime[] =
+      "host_tool_manager_generates_at_runtime_placeholder";
 };
 
 CvdGenericCommandHandler::CvdGenericCommandHandler(
@@ -114,49 +115,15 @@ CvdGenericCommandHandler::CvdGenericCommandHandler(
     : instance_manager_(instance_manager),
       subprocess_waiter_(subprocess_waiter),
       host_tool_target_manager_(host_tool_target_manager),
-      command_to_binary_map_{
-          {"host_bugreport", kHostBugreportBin},
-          {"cvd_host_bugreport", kHostBugreportBin},
-          {"status",
-           [this](
-               const std::string& host_artifacts_path) -> Result<std::string> {
-             auto stat_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
-                 .artifacts_path = host_artifacts_path,
-                 .op = "status",
-             }));
-             return stat_bin;
-           }},
-          {"cvd_status",
-           [this](
-               const std::string& host_artifacts_path) -> Result<std::string> {
-             auto stat_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
-                 .artifacts_path = host_artifacts_path,
-                 .op = "status",
-             }));
-             return stat_bin;
-           }},
-          {"stop",
-           [this](
-               const std::string& host_artifacts_path) -> Result<std::string> {
-             auto stop_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
-                 .artifacts_path = host_artifacts_path,
-                 .op = "stop",
-             }));
-             return stop_bin;
-           }},
-          {"stop_cvd",
-           [this](
-               const std::string& host_artifacts_path) -> Result<std::string> {
-             auto stop_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
-                 .artifacts_path = host_artifacts_path,
-                 .op = "stop",
-             }));
-             return stop_bin;
-           }},
-          {"clear", kClearBin},
-          {"mkdir", kMkdirBin},
-          {"ln", kLnBin},
-      } {}
+      command_to_binary_map_{{"host_bugreport", kHostBugreportBin},
+                             {"cvd_host_bugreport", kHostBugreportBin},
+                             {"status", kBinGeneratedAtRuntime},
+                             {"cvd_status", kBinGeneratedAtRuntime},
+                             {"stop", kBinGeneratedAtRuntime},
+                             {"stop_cvd", kBinGeneratedAtRuntime},
+                             {"clear", kClearBin},
+                             {"mkdir", kMkdirBin},
+                             {"ln", kLnBin}} {}
 
 Result<bool> CvdGenericCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
@@ -361,29 +328,23 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
 
 Result<std::string> CvdGenericCommandHandler::GetBin(
     const std::string& subcmd) const {
-  const auto& bin_type_entry = command_to_binary_map_.at(subcmd);
-  const std::string* ptr_if_string =
-      std::get_if<std::string>(std::addressof(bin_type_entry));
-  CF_EXPECT(ptr_if_string != nullptr,
-            "To figure out bin for " << subcmd << ", we need ANDROID_HOST_OUT");
-  return *ptr_if_string;
+  CF_EXPECT(Contains(command_to_binary_map_, subcmd));
+  const auto& bin_name = command_to_binary_map_.at(subcmd);
+  CF_EXPECT(bin_name != kBinGeneratedAtRuntime);
+  return bin_name;
 }
 
 Result<std::string> CvdGenericCommandHandler::GetBin(
     const std::string& subcmd, const std::string& host_artifacts_path) const {
-  auto bin_getter = Overload{
-      [](const std::string& str) -> Result<std::string> { return str; },
-      [&host_artifacts_path](
-          const BinGeneratorType& bin_generator) -> Result<std::string> {
-        const auto bin = CF_EXPECT(bin_generator(host_artifacts_path));
-        return bin;
-      },
-      [](auto) -> Result<std::string> {
-        return CF_ERR("Unsupported parameter type for GetBin()");
-      }};
-  auto bin =
-      CF_EXPECT(std::visit(bin_getter, command_to_binary_map_.at(subcmd)));
-  return bin;
+  CF_EXPECT(Contains(command_to_binary_map_, subcmd));
+  const auto& bin_name = command_to_binary_map_.at(subcmd);
+  if (bin_name != kBinGeneratedAtRuntime) {
+    return GetBin(subcmd);
+  }
+  std::string calculated_bin_name =
+      CF_EXPECT(host_tool_target_manager_.ExecBaseName(
+          {.artifacts_path = host_artifacts_path, .op = subcmd}));
+  return calculated_bin_name;
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdGenericCommandHandler(
