@@ -101,6 +101,7 @@ cc_library_host_static {
         "logger.cpp",
         "request_context.cpp",
         "reset_client_utils.cpp",
+        "run_cvd_proc_collector.cpp",
         "run_server.cpp",
         "server.cc",
         "server_client.cpp",
