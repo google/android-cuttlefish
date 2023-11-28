@@ -1,4 +1,4 @@
-cuttlefish-frontend (0.9.28) UNRELEASED; urgency=medium
+cuttlefish-frontend (0.9.28) stable; urgency=medium
 
   * Replace operator functionality with reverse proxy in host operator
 
