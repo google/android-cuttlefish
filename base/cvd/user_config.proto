@@ -131,6 +131,9 @@ message UserConfig {
   // [CVD only] Ssh connect with hostname.
   optional bool connect_hostname = 37;
 
-  // [CVD only] If installed, use cvdr.
+  // [CVD only] [DEPRECATED].
   optional bool use_cvdr = 38;
+
+  // [CVD only] Opt out from using cvdr.
+  optional bool use_legacy_acloud = 39;
 }
