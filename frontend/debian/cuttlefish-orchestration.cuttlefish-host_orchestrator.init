@@ -42,8 +42,6 @@ RUN_DIR="/run/cuttlefish"
 ORCHESTRATOR_BIN="/usr/lib/cuttlefish-common/bin/host_orchestrator"
 ORCHESTRATOR_PIDFILE="${RUN_DIR}"/host_orchestrator.pid
 ASSET_DIR="/usr/share/cuttlefish-common/operator"
-OPERATOR_BIN="/usr/lib/cuttlefish-common/bin/operator"
-OPERATOR_PIDFILE="${RUN_DIR}"/operator.pid
 
 gen_cert() {
   CERT_FILE="${orchestrator_tls_cert_dir}/cert.pem"
@@ -74,26 +72,6 @@ prepare_run_dir() {
   mkdir -p "${RUN_DIR}"
   chown _cutf-operator:cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
-}
-
-start_operator() {
-  args=()
-
-  if [[ -n "${operator_http_port}" ]]; then
-    args+=("--http_port=${operator_http_port}")
-  fi
-  if [[ -n "${operator_webui_url}" ]]; then
-    args+=("--webui_url=${operator_webui_url}")
-  fi
-  args+=("socket_path=${RUN_DIR}/operator")
-
-  start-stop-daemon --start \
-    --pidfile "${OPERATOR_PIDFILE}" \
-    --chuid _cutf-operator:cvdnetwork \
-    --chdir "${ASSET_DIR}" \
-    --background --no-close \
-    --make-pidfile \
-    --exec "${OPERATOR_BIN}" -- "${args[@]}"
 }
 
 start_orchestrator() {
@@ -145,8 +123,6 @@ start() {
 
   prepare_run_dir
 
-  start_operator
-
   start_orchestrator
 }
 
@@ -155,16 +131,6 @@ stop() {
     --pidfile "${ORCHESTRATOR_PIDFILE}" \
     --remove-pidfile \
     --exec "${ORCHESTRATOR_BIN}"
-
-  start-stop-daemon --stop \
-    --pidfile "${OPERATOR_PIDFILE}" \
-    --remove-pidfile \
-    --exec "${OPERATOR_BIN}"
-
-  # The presence of the socket will cause devices to try to connect to it
-  # instead of starting their own signaling servers, so it needs to be removed
-  # once the service isn't running.
-  unlink "${RUN_DIR}"/operator
 }
 
 status() {

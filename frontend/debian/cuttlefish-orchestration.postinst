@@ -4,16 +4,11 @@ set -e
 
 case "$1" in
   configure)
-    if ! getent passwd _cutf-operator > /dev/null 2>&1
-    then
-        # The cvdnetwork group is created by cuttlefish-base
-        adduser --system --disabled-password --disabled-login --home /var/empty \
-                --no-create-home --quiet --force-badname --ingroup cvdnetwork _cutf-operator
-    fi
     if ! getent passwd _cvd-executor > /dev/null 2>&1
     then
         adduser --system --disabled-password --disabled-login --home /var/empty \
                 --no-create-home --quiet --force-badname --group _cvd-executor
+        # The cvdnetwork group is created by cuttlefish-base
         usermod -a -G cvdnetwork,kvm _cvd-executor
     fi
 esac
