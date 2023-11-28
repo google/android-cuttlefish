@@ -30,7 +30,7 @@
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
-#define ENABLE_CVDR_TRANSLATION 0
+#define ENABLE_CVDR_TRANSLATION 1
 
 namespace cuttlefish {
 namespace {
