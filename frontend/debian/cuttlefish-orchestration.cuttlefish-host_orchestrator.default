@@ -6,11 +6,11 @@ orchestrator_listen_address=0.0.0.0
 #
 # The port on which the orchestrator server should listen on for plain HTTP.
 # Defaults to 2080.
-orchestrator_http_port=1080
+# orchestrator_http_port=
 #
 # The port on which the orchestrator server should listen on for HTTPS.
 # The orchestrator won't server over HTTPS if the port is not set.
-orchestrator_https_port=1443
+orchestrator_https_port=2443
 #
 # The directory where the TLS certificate needed to establish the HTTPS
 # communication lives.
@@ -38,4 +38,4 @@ orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common
 #
 # The port where the operator is to listen on.
 # Defaults to 1080.
-operator_http_port=2080
+# operator_http_port=

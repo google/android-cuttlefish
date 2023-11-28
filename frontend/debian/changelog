@@ -1,3 +1,9 @@
+cuttlefish-frontend (0.9.29) UNRELEASED; urgency=medium
+
+  * Make cuttlefish-orchestration depend on cuttlefish-user
+
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 12 Oct 2023 18:12:35 -0700
+
 cuttlefish-frontend (0.9.28) stable; urgency=medium
 
   * Replace operator functionality with reverse proxy in host operator
