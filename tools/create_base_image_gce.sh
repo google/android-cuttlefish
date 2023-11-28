@@ -67,11 +67,9 @@ for dsc in *.dsc; do
 done
 
 # Now gather all of the relevant .deb files to copy them into the image
-debs=()
+debs=(!(cuttlefish-orchestration*).deb)
 if [[ "${host_orchestration_flag}" == "true" ]]; then
-  debs=(!(cuttlefish-@(common|user)*).deb)
-else
-  debs=(!(cuttlefish-orchestration*).deb)
+  debs+=( cuttlefish-orchestration*.deb )
 fi
 
 tmp_debs=()
