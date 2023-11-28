@@ -39,18 +39,6 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
-namespace {
-
-constexpr char kCvdrBinName[] = "cvdr";
-
-bool CheckIfCvdrExist() {
-  auto cmd = Command("which").AddParameter(kCvdrBinName);
-  int ret = RunWithManagedStdio(std::move(cmd), nullptr, nullptr, nullptr,
-                                SubprocessOptions());
-  return ret == 0;
-}
-
-}  // namespace
 
 class AcloudCommand : public CvdServerHandler {
  public:
@@ -237,9 +225,6 @@ Result<cvd::Response> AcloudCommand::HandleLocal(
 
 Result<cvd::Response> AcloudCommand::HandleRemote(
     const RequestWithStdio& request) {
-  CF_EXPECT(
-      CheckIfCvdrExist(),
-      "`" << kCvdrBinName << "` was not found in the current environment.");
   auto args = ParseInvocation(request.Message()).arguments;
   args = CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
   Command cmd = Command("cvdr");

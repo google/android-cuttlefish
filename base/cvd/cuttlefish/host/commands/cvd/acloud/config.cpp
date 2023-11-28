@@ -29,7 +29,7 @@ AcloudConfig::AcloudConfig(const acloud::UserConfig& usr_cfg)
     : launch_args(usr_cfg.launch_args()),
       project(usr_cfg.project()),
       zone(usr_cfg.zone()),
-      use_cvdr(usr_cfg.use_cvdr()) {
+      use_legacy_acloud(usr_cfg.use_legacy_acloud()) {
   // TODO(weihsu): Add back fields/variables (except of cheeps and emulator
   // fields) in config files. Remove cheeps (Android on ChromeOS) and emulator
   // fields.

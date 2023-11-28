@@ -33,6 +33,18 @@
 #define ENABLE_CVDR_TRANSLATION 0
 
 namespace cuttlefish {
+namespace {
+
+constexpr char kCvdrBinName[] = "cvdr";
+
+bool CheckIfCvdrExist() {
+  auto cmd = Command("which").AddParameter(kCvdrBinName);
+  int ret = RunWithManagedStdio(std::move(cmd), nullptr, nullptr, nullptr,
+                                SubprocessOptions());
+  return ret == 0;
+}
+
+}  // namespace
 
 class TryAcloudCommand : public CvdServerHandler {
  public:
@@ -127,7 +139,8 @@ Result<cvd::Response> TryAcloudCommand::VerifyWithCvdRemote(
   const uid_t uid = request.Credentials()->uid;
   auto filename = CF_EXPECT(GetDefaultConfigFile(uid));
   auto config = CF_EXPECT(LoadAcloudConfig(filename, uid));
-  CF_EXPECT(config.use_cvdr == true);
+  CF_EXPECT(config.use_legacy_acloud == false);
+  CF_EXPECT(CheckIfCvdrExist());
   auto args = ParseInvocation(request.Message()).arguments;
   CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
   std::string cvdr_service_url =
