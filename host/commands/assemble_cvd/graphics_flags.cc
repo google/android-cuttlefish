@@ -230,16 +230,6 @@ Result<std::string> SelectGpuMode(
   }
 
   if (gpu_mode_arg == kGpuModeAuto) {
-    // TODO (280826461) Android T Cuttlefish is currently not compatible
-    // with accelerated graphics.
-    if (guest_config.android_version_number == "13.0.0" ||
-        guest_config.android_version_number == "13") {
-      LOG(INFO) << "GPU auto mode: detected guest of version T"
-                << ". Accelerated rendering support is not compatible, "
-                   "enabling --gpu_mode=guest_swiftshader.";
-      return kGpuModeGuestSwiftshader;
-    }
-
     if (vm_manager == vm_manager::QemuManager::name() &&
         !IsHostCompatible(guest_config.target_arch)) {
       LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
