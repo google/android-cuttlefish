@@ -58,6 +58,7 @@
 #include "host/commands/cvd/server_command/reset.h"
 #include "host/commands/cvd/server_command/snapshot.h"
 #include "host/commands/cvd/server_command/start.h"
+#include "host/commands/cvd/server_command/status.h"
 #include "host/commands/cvd/server_command/subcmd.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/known_paths.h"
