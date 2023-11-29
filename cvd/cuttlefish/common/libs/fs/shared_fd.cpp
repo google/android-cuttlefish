@@ -722,15 +722,15 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
     SendAll(client, msg);
 
     const std::string expected_res = fmt::format("OK {}\n", port);
-    char buf[64] = {0};
-    if (client->Read(buf, sizeof(buf)) <= 0) {
+    std::string actual_res(expected_res.length(), ' ');
+    if (ReadExact(client, &actual_res) != expected_res.length()) {
       client->Close();
       LOG(ERROR) << "cannot connect to " << cid << ":" << port;
       return client;
     }
-    if (strncmp(buf, expected_res.c_str(), sizeof(buf))) {
+    if (actual_res != expected_res) {
       client->Close();
-      LOG(ERROR) << "response from server: " << buf << ", but expect "
+      LOG(ERROR) << "response from server: " << actual_res << ", but expect "
                  << expected_res;
       return client;
     }
@@ -957,22 +957,6 @@ int FileInstance::SetTerminalRaw() {
   cfmakeraw(&terminal_settings);
   rval = tcsetattr(fd_, TCSANOW, &terminal_settings);
   errno_ = errno;
-  if (rval < 0) {
-    return rval;
-  }
-
-  // tcsetattr() success if any of the requested change success.
-  // So double check whether everything is applied.
-  termios raw_settings;
-  rval = tcgetattr(fd_, &raw_settings);
-  errno_ = errno;
-  if (rval < 0) {
-    return rval;
-  }
-  if (memcmp(&terminal_settings, &raw_settings, sizeof(terminal_settings))) {
-    errno_ = EPROTO;
-    return -1;
-  }
   return rval;
 }
 
