@@ -89,8 +89,12 @@ ports_forwarding="-L 2443:127.0.0.1:1443 \
   -L 15556:127.0.0.1:15556 -L 15557:127.0.0.1:15557 -L 15558:127.0.0.1:15558 \
   $adb_port_forwarding"
 
+# TODO(kwstephenkim): remove the flag at once if cuttlefish removes the flag
+daemon_flag="--daemon=true"
+instance_ids_flag="--base_instance_num=$base_instance_num \
+  --num_instances=$num_instances"
 ssh $server $ports_forwarding \
-  -t "cd ~/$cvd_home_dir && HOME=~/$cvd_home_dir bin/launch_cvd --base_instance_num=$base_instance_num --num_instances=$num_instances"
+  -t "cd ~/$cvd_home_dir && HOME=~/$cvd_home_dir bin/launch_cvd $instance_ids_flag $daemon_flag"
 
 echo "Set up ssh ports forwarding: $ports_forwarding"
 echo "Please stop the running instances by ctrl+c"
