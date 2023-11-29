@@ -97,9 +97,12 @@ CrosvmManager::ConfigureGraphics(
         instance.gpu_mode() == kGpuModeGfxstreamGuestAngleHostSwiftShader;
 
     const std::string gles_impl = uses_angle ? "angle" : "emulation";
-    const std::string gltransport =
-        (instance.guest_android_version() == "11.0.0") ? "virtio-gpu-pipe"
-                                                       : "virtio-gpu-asg";
+
+    const std::string gfxstream_transport = instance.gpu_gfxstream_transport();
+    CF_EXPECT(gfxstream_transport == "virtio-gpu-asg" ||
+                  gfxstream_transport == "virtio-gpu-pipe",
+              "Invalid Gfxstream transport option: \"" << gfxstream_transport
+                                                       << "\"");
 
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", "0"},
@@ -108,7 +111,7 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
         {"androidboot.hardware.egl", gles_impl},
         {"androidboot.hardware.vulkan", "ranchu"},
-        {"androidboot.hardware.gltransport", gltransport},
+        {"androidboot.hardware.gltransport", gfxstream_transport},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
     };
   } else if (instance.gpu_mode() == kGpuModeNone) {

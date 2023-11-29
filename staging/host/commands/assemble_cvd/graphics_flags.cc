@@ -345,6 +345,53 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
   return availability;
 }
 
+bool IsAmdGpu(const gfxstream::proto::GraphicsAvailability& availability) {
+  return (availability.has_egl() &&
+          ((availability.egl().has_gles2_availability() &&
+            availability.egl().gles2_availability().has_vendor() &&
+            availability.egl().gles2_availability().vendor().find("AMD") !=
+                std::string::npos) ||
+           (availability.egl().has_gles3_availability() &&
+            availability.egl().gles3_availability().has_vendor() &&
+            availability.egl().gles3_availability().vendor().find("AMD") !=
+                std::string::npos))) ||
+         (availability.has_vulkan() &&
+          !availability.vulkan().physical_devices().empty() &&
+          availability.vulkan().physical_devices(0).has_name() &&
+          availability.vulkan().physical_devices(0).name().find("AMD") !=
+              std::string::npos);
+}
+
+const std::string kGfxstreamTransportAsg = "virtio-gpu-asg";
+const std::string kGfxstreamTransportPipe = "virtio-gpu-pipe";
+
+Result<void> SetGfxstreamFlags(
+    const std::string& gpu_mode, const GuestConfig& guest_config,
+    const gfxstream::proto::GraphicsAvailability& availability,
+    CuttlefishConfig::MutableInstanceSpecific& instance) {
+  std::string gfxstream_transport = kGfxstreamTransportAsg;
+
+  // Some older R branches are missing some Gfxstream backports
+  // which introduced a backward incompatible change (b/267483000).
+  if (guest_config.android_version_number == "11.0.0") {
+    gfxstream_transport = kGfxstreamTransportPipe;
+  }
+
+  if (IsAmdGpu(availability)) {
+    // KVM does not support mapping host graphics buffers into the guest because
+    // the AMD GPU driver uses TTM memory. More info in
+    // https://lore.kernel.org/all/20230911021637.1941096-1-stevensd@google.com
+    //
+    // TODO(b/254721007): replace with a kernel version check after KVM patches
+    // land.
+    CF_EXPECT(gpu_mode != kGpuModeGfxstreamGuestAngle,
+              "--gpu_mode=gfxstream_guest_angle is broken on AMD GPUs.");
+  }
+
+  instance.set_gpu_gfxstream_transport(gfxstream_transport);
+  return {};
+}
+
 }  // namespace
 
 Result<std::string> ConfigureGpuSettings(
@@ -370,7 +417,9 @@ Result<std::string> ConfigureGpuSettings(
   auto graphics_availability_result =
       GetGraphicsAvailabilityWithSubprocessCheck();
   if (!graphics_availability_result.ok()) {
-    LOG(ERROR) << "Failed to get graphics availability. Assuming none.";
+    LOG(ERROR) << "Failed to get graphics availability: "
+               << graphics_availability_result.error().Message()
+               << ". Assuming none.";
   } else {
     graphics_availability = graphics_availability_result.value();
     LOG(DEBUG) << "Host Graphics Availability:"
@@ -381,6 +430,13 @@ Result<std::string> ConfigureGpuSettings(
       gpu_mode_arg, vm_manager, guest_config, graphics_availability));
   const bool enable_gpu_vhost_user = CF_EXPECT(
       SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode_arg, vm_manager));
+
+  if (gpu_mode == kGpuModeGfxstream ||
+      gpu_mode == kGpuModeGfxstreamGuestAngle ||
+      gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+    CF_EXPECT(SetGfxstreamFlags(gpu_mode, guest_config, graphics_availability,
+                                instance));
+  }
 
   const auto angle_features = CF_EXPECT(GetNeededAngleFeatures(
       CF_EXPECT(GetRenderingMode(gpu_mode)), graphics_availability));
