@@ -186,11 +186,32 @@ RunCvdProcessCollector::CollectInfo() {
     // this is the other run_cvd process under the same instance i
     id_instance_map[run_cvd_info.id_].pids_.insert(run_cvd_info.pid_);
   }
+
+  for (auto& [_, group] : groups) {
+    auto& id_instance_map = group.instances_;
+    for (auto& [id, instance] : id_instance_map) {
+      const auto& instance_run_cvd_pids = instance.pids_;
+      for (const auto run_cvd_pid : instance_run_cvd_pids) {
+        auto ppid_result = Ppid(run_cvd_pid);
+        if (!ppid_result.ok()) {
+          LOG(VERBOSE) << "Failed to fetch the parent id of " << run_cvd_pid;
+          continue;
+        }
+        if (Contains(instance_run_cvd_pids, *ppid_result) &&
+            run_cvd_pid != *ppid_result) {
+          continue;
+        }
+        instance.parent_run_cvd_pids_.insert(run_cvd_pid);
+      }
+    }
+  }
+
   std::vector<GroupProcInfo> output;
   output.reserve(groups.size());
   for (auto& [_, group] : groups) {
     output.emplace_back(std::move(group));
   }
+
   return output;
 }
 
