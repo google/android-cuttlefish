@@ -697,6 +697,16 @@ void CuttlefishConfig::MutableInstanceSpecific::set_gpu_capture_binary(const std
   (*Dictionary())[kGpuCaptureBinary] = name;
 }
 
+static constexpr char kGpuGfxstreamTransport[] = "gpu_gfxstream_transport";
+std::string CuttlefishConfig::InstanceSpecific::gpu_gfxstream_transport()
+    const {
+  return (*Dictionary())[kGpuGfxstreamTransport].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_gpu_gfxstream_transport(
+    const std::string& transport) {
+  (*Dictionary())[kGpuGfxstreamTransport] = transport;
+}
+
 static constexpr char kRestartSubprocesses[] = "restart_subprocesses";
 bool CuttlefishConfig::InstanceSpecific::restart_subprocesses() const {
   return (*Dictionary())[kRestartSubprocesses].asBool();
