@@ -72,9 +72,6 @@ for instance_num in $(seq $base_instance_num $(($base_instance_num+$num_instance
   adb_port_forwarding+="-L $adb_port:127.0.0.1:$adb_port "
 done
 
-# Web UI port is 2443 instead 1443 because there could be a running operator in this machine as well.
-echo "Web UI port: 2443"
-
 trap cleanup SIGINT
 cleanup() {
   echo "SIGINT: stopping the launch instances"
@@ -82,10 +79,23 @@ cleanup() {
 }
 
 # sets up SSH port forwarding to the remote server for various ports and launch cvd instance
+# Web UI port is 2443 instead 1443 because there could be a running operator in this machine as well.
 # TODO: remove webui ports except 1443
-ssh $server -L 2443:127.0.0.1:1443 -L $web_ui_port:127.0.0.1:$web_ui_port \
+echo "Web UI port: 2443"
+ports_forwarding="-L 2443:127.0.0.1:1443 \
+  -L $web_ui_port:127.0.0.1:$web_ui_port \
   -L 15550:127.0.0.1:15550 -L 15551:127.0.0.1:15551 -L 15552:127.0.0.1:15552 \
   -L 15553:127.0.0.1:15553 -L 15554:127.0.0.1:15554 -L 15555:127.0.0.1:15555 \
   -L 15556:127.0.0.1:15556 -L 15557:127.0.0.1:15557 -L 15558:127.0.0.1:15558 \
-  $adb_port_forwarding \
-  -t "cd ~/$cvd_home_dir && HOME=~/$cvd_home_dir bin/launch_cvd --base_instance_num=$base_instance_num --num_instances=$num_instances"
+  $adb_port_forwarding"
+
+# TODO(kwstephenkim): remove the flag at once if cuttlefish removes the flag
+daemon_flag="--daemon=true"
+instance_ids_flag="--base_instance_num=$base_instance_num \
+  --num_instances=$num_instances"
+ssh $server $ports_forwarding \
+  -t "cd ~/$cvd_home_dir && HOME=~/$cvd_home_dir bin/launch_cvd $instance_ids_flag $daemon_flag"
+
+echo "Set up ssh ports forwarding: $ports_forwarding"
+echo "Please stop the running instances by ctrl+c"
+ssh -N $server $ports_forwarding
