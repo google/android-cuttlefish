@@ -1255,11 +1255,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_vhost_net(vhost_net_vec[instance_index]);
 
-    CF_EXPECT(!vhost_user_vsock_vec[instance_index] ||
-                  tmp_config_obj.vm_manager() == CrosvmManager::name(),
-              "vhost_user_vsock is available only in crosvm.");
+    if (vhost_user_vsock_vec[instance_index] &&
+        tmp_config_obj.vm_manager() != CrosvmManager::name()) {
+      LOG(WARNING) << "vhost_user_vsock is available only in crosvm.";
+      instance.set_vhost_user_vsock(false);
+    } else {
+      instance.set_vhost_user_vsock(vhost_user_vsock_vec[instance_index]);
+    }
 
-    instance.set_vhost_user_vsock(vhost_user_vsock_vec[instance_index]);
     // end of wifi, bluetooth, connectivity setup
 
     if (use_random_serial_vec[instance_index]) {
