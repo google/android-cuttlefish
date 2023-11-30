@@ -892,6 +892,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_root_dir(root_dir);
 
+  auto instance_nums =
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+
   // TODO(weihsu), b/250988697:
   // FLAGS_vm_manager used too early, have to handle this vectorized string early
   // Currently, all instances should use same vmm, added checking here
@@ -901,6 +904,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     CF_EXPECT(
         vm_manager_vec[0] == vm_manager_vec[i],
         "All instances should have same vm_manager, " << FLAGS_vm_manager);
+  }
+  CF_EXPECT_GT(vm_manager_vec.size(), 0);
+  while (vm_manager_vec.size() < instance_nums.size()) {
+    vm_manager_vec.emplace_back(vm_manager_vec[0]);
   }
 
   // TODO(weihsu), b/250988697: moved bootconfig_supported and hctr2_supported
@@ -982,9 +989,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // end of vectorize ap_rootfs_image, ap_kernel_image, wmediumd_config
 
   tmp_config_obj.set_enable_automotive_proxy(FLAGS_enable_automotive_proxy);
-
-  auto instance_nums =
-      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
 
   // get flag default values and store into map
   auto name_to_default_value = CurrentFlagsToDefaultValue();
