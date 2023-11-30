@@ -126,6 +126,7 @@ static Command CreateStopCvdCommand(const std::string& stopper_path,
     command.AddParameter(arg);
   }
   for (const auto& [key, value] : envs) {
+    command.UnsetFromEnvironment(key);
     command.AddEnvironmentVariable(key, value);
   }
   return command;
@@ -265,7 +266,7 @@ static bool IsStillRunCvd(const pid_t pid) {
   if (!FileExists(pid_dir)) {
     return false;
   }
-  auto owner_result = OwnerUid(pid_dir);
+  auto owner_result = OwnerUid(pid);
   if (!owner_result.ok() || (getuid() != *owner_result)) {
     return false;
   }
