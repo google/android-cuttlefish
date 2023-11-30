@@ -148,13 +148,16 @@ Result<bool> ParseBool(const std::string& value, const std::string& name) {
 
 Result<Flag::FlagProcessResult> Flag::Process(
     const std::string& arg, const std::optional<std::string>& next_arg) const {
+  using android::base::StringReplace;
+  auto normalized_arg = StringReplace(arg, "-", "_", true);
   if (!setter_ && aliases_.size() > 0) {
     return CF_ERRF("No setter for flag with alias {}", aliases_[0].name);
   }
   for (auto& alias : aliases_) {
+    auto normalized_alias = StringReplace(alias.name, "-", "_", true);
     switch (alias.mode) {
       case FlagAliasMode::kFlagConsumesArbitrary:
-        if (arg != alias.name) {
+        if (normalized_arg != normalized_alias) {
           continue;
         }
         if (!next_arg || LikelyFlag(*next_arg)) {
@@ -165,7 +168,7 @@ Result<Flag::FlagProcessResult> Flag::Process(
                    "Processing \"{}\" \"{}\" failed", arg, *next_arg);
         return FlagProcessResult::kFlagConsumedOnlyFollowing;
       case FlagAliasMode::kFlagConsumesFollowing:
-        if (arg != alias.name) {
+        if (normalized_arg != normalized_alias) {
           continue;
         }
         CF_EXPECTF(next_arg.has_value(), "Expected an argument after \"{}\"",
@@ -174,13 +177,13 @@ Result<Flag::FlagProcessResult> Flag::Process(
                    "Processing \"{}\" \"{}\" failed", arg, *next_arg);
         return FlagProcessResult::kFlagConsumedWithFollowing;
       case FlagAliasMode::kFlagExact:
-        if (arg != alias.name) {
+        if (normalized_arg != normalized_alias) {
           continue;
         }
         CF_EXPECTF((*setter_)({arg, arg}), "Processing \"{}\" failed", arg);
         return FlagProcessResult::kFlagConsumed;
       case FlagAliasMode::kFlagPrefix:
-        if (!android::base::StartsWith(arg, alias.name)) {
+        if (!android::base::StartsWith(normalized_arg, normalized_alias)) {
           continue;
         }
         CF_EXPECTF((*setter_)({alias.name, arg.substr(alias.name.size())}),
