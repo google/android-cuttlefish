@@ -2,5 +2,6 @@
 /bin/hw/android.hardware.bluetooth-service.default            u:object_r:hal_bluetooth_btlinux_exec:s0
 /bin/hw/android.hardware.bluetooth.finder-service.default     u:object_r:hal_bluetooth_btlinux_exec:s0
 /bin/hw/android.hardware.bluetooth.ranging-service.default    u:object_r:hal_bluetooth_btlinux_exec:s0
+/bin/hw/android.hardware.bluetooth.lmp_event-service.default  u:object_r:hal_bluetooth_btlinux_exec:s0
 /bin/bt_vhci_forwarder                                        u:object_r:bt_vhci_forwarder_exec:s0
 /etc(/.*)?                                                    u:object_r:vendor_configs_file:s0
