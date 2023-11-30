@@ -59,6 +59,21 @@ TEST(FlagParser, StringFlag) {
   ASSERT_EQ(value, "");
 }
 
+TEST(FlagParser, NormalizedStringFlag) {
+  std::string value;
+  auto flag = GflagsCompatFlag("my_flag", value);
+  ASSERT_THAT(flag.Parse({"-my-flag=a"}), IsOk());
+  ASSERT_EQ(value, "a");
+  ASSERT_THAT(flag.Parse({"--my-flag=b"}), IsOk());
+  ASSERT_EQ(value, "b");
+  ASSERT_THAT(flag.Parse({"-my-flag", "c"}), IsOk());
+  ASSERT_EQ(value, "c");
+  ASSERT_THAT(flag.Parse({"--my-flag", "d"}), IsOk());
+  ASSERT_EQ(value, "d");
+  ASSERT_THAT(flag.Parse({"--my-flag="}), IsOk());
+  ASSERT_EQ(value, "");
+}
+
 std::optional<std::map<std::string, std::string>> flagXml(const Flag& f) {
   std::stringstream xml_stream;
   if (!f.WriteGflagsCompatXml(xml_stream)) {
