@@ -36,6 +36,8 @@ static constexpr char kProcDir[] = "/proc";
 
 struct ProcInfo {
   pid_t pid_;
+  uid_t real_owner_;
+  uid_t effective_owner_;
   std::string actual_exec_path_;
   std::unordered_map<std::string, std::string> envs_;
   std::vector<std::string> args_;
@@ -71,9 +73,6 @@ Result<std::vector<pid_t>> CollectPidsByArgv0(const std::string& expected_argv0,
                                               const uid_t uid = getuid());
 
 Result<uid_t> OwnerUid(const pid_t pid);
-// sometimes, files under /proc/<pid> owned by a different user
-// e.g. /proc/<pid>/exe
-Result<uid_t> OwnerUid(const std::string& file_path);
 
 // retrieves command line args for the pid
 Result<std::vector<std::string>> GetCmdArgs(const pid_t pid);
