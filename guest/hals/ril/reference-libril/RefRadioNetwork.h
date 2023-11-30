@@ -23,7 +23,8 @@ class RefRadioNetwork : public android::hardware::radio::compat::RadioNetwork {
     ::aidl::android::hardware::radio::network::UsageSetting mUsageSetting =
             ::aidl::android::hardware::radio::network::UsageSetting::VOICE_CENTRIC;
     // As per the specs, the default is true.
-    bool mIsCellualIdentifierTransparencyEnabled = true;
+    bool mIsCellularIdentifierTransparencyEnabled = true;
+    bool mIsCipheringTransparencyEnabled = true;
 
   public:
     using android::hardware::radio::compat::RadioNetwork::RadioNetwork;
