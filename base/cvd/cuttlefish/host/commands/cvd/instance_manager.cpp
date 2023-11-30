@@ -475,4 +475,19 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::FindGroup(
   return *(output.begin());
 }
 
+std::vector<std::string> InstanceManager::AllGroupNames(const uid_t uid) const {
+  std::lock_guard lock(instance_db_mutex_);
+  if (!Contains(instance_dbs_, uid)) {
+    return {};
+  }
+  const auto& db = instance_dbs_.at(uid);
+  auto& local_instance_groups = db.InstanceGroups();
+  std::vector<std::string> group_names;
+  group_names.reserve(local_instance_groups.size());
+  for (const auto& group : local_instance_groups) {
+    group_names.push_back(group->GroupName());
+  }
+  return group_names;
+}
+
 }  // namespace cuttlefish
