@@ -722,15 +722,15 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
     SendAll(client, msg);
 
     const std::string expected_res = fmt::format("OK {}\n", port);
-    char buf[64] = {0};
-    if (client->Read(buf, sizeof(buf)) <= 0) {
+    std::string actual_res(expected_res.length(), ' ');
+    if (ReadExact(client, &actual_res) != expected_res.length()) {
       client->Close();
       LOG(ERROR) << "cannot connect to " << cid << ":" << port;
       return client;
     }
-    if (strncmp(buf, expected_res.c_str(), sizeof(buf))) {
+    if (actual_res != expected_res) {
       client->Close();
-      LOG(ERROR) << "response from server: " << buf << ", but expect "
+      LOG(ERROR) << "response from server: " << actual_res << ", but expect "
                  << expected_res;
       return client;
     }
