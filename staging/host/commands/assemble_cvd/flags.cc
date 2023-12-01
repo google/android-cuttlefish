@@ -27,6 +27,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
@@ -41,6 +42,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/network.h"
 #include "host/commands/assemble_cvd/alloc.h"
 #include "host/commands/assemble_cvd/boot_config.h"
@@ -51,6 +53,8 @@
 #include "host/commands/assemble_cvd/graphics_flags.h"
 #include "host/commands/assemble_cvd/misc_info.h"
 #include "host/commands/assemble_cvd/touchpad.h"
+#include "host/commands/cvd/parser/load_configs_parser.h"
+#include "host/libs/config/config_flag.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
 #include "host/libs/config/esp.h"
@@ -453,6 +457,10 @@ DEFINE_vec(device_external_network, CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK,
 DEFINE_bool(snapshot_compatible, false,
             "Declaring that device is snapshot'able and runs with only "
             "supported ones.");
+
+DEFINE_vec(mcu_config_path, CF_DEFAULTS_MCU_CONFIG_PATH,
+           "configuration file for the MCU emulator");
+
 
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
@@ -1119,6 +1127,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<std::string> device_external_network_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(device_external_network));
 
+  std::vector<std::string> mcu_config_vec = CF_EXPECT(GET_FLAG_STR_VALUE(mcu_config_path));
+
   std::string default_enable_sandbox = "";
   std::string default_enable_virtiofs = "";
   std::string comma_str = "";
@@ -1617,6 +1627,17 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
               "TODO(b/286284441): slirp only works on QEMU");
     instance.set_external_network_mode(external_network_mode);
 
+    if (!mcu_config_vec[instance_index].empty()) {
+      auto mcu_cfg_path = mcu_config_vec[instance_index];
+      CF_EXPECT(FileExists(mcu_cfg_path), "MCU config file does not exist");
+      std::string file_content;
+      using android::base::ReadFileToString;
+      CF_EXPECT(ReadFileToString(mcu_cfg_path.c_str(), &file_content,
+                                 /* follow_symlinks */ true),
+                "Failed to read mcu config file");
+      instance.set_mcu(CF_EXPECT(ParseJson(file_content), "Failed parsing JSON file"));
+    }
+
     instance_index++;
   }  // end of num_instances loop
 
@@ -1795,6 +1816,14 @@ void SetDefaultFlagsForGem5() {
   SetCommandLineOptionWithMode("cpus", "1", SET_FLAGS_DEFAULT);
 }
 
+void SetDefaultFlagsForMcu() {
+  auto path = DefaultHostArtifactsPath("etc/mcu_config.json");
+  if (!CanAccess(path, R_OK)) {
+    return;
+  }
+  SetCommandLineOptionWithMode("mcu_config_path", path.c_str(), SET_FLAGS_DEFAULT);
+}
+
 void SetDefaultFlagsForOpenwrt(Arch target_arch) {
   if (target_arch == Arch::X86_64) {
     SetCommandLineOptionWithMode(
@@ -1892,6 +1921,8 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
   }
 
   SetDefaultFlagsForOpenwrt(guest_configs[0].target_arch);
+
+  SetDefaultFlagsForMcu();
 
   // Set the env variable to empty (in case the caller passed a value for it).
   unsetenv(kCuttlefishConfigEnvVarName);

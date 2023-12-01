@@ -455,6 +455,8 @@ class CuttlefishConfig {
     // Whether this instance should start a netsim instance
     bool start_netsim() const;
 
+    const Json::Value& mcu() const;
+
     enum class APBootFlow {
       // Not starting AP at all (for example not the 1st instance)
       None,
@@ -695,6 +697,7 @@ class CuttlefishConfig {
     void set_start_casimir(bool start);
     void set_start_pica(bool start);
     void set_start_netsim(bool start);
+    void set_mcu(const Json::Value &v);
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
     void set_crosvm_use_balloon(const bool use_balloon);
     void set_crosvm_use_rng(const bool use_rng);

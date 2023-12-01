@@ -159,6 +159,7 @@ fruit::Component<> runCvdComponent(
       .install(AutoCmd<MetricsService>::Component)
       .install(OpenwrtControlServerComponent)
       .install(AutoCmd<Pica>::Component)
+      .install(McuComponent)
       .install(RootCanalComponent)
       .install(AutoCmd<Casimir>::Component)
       .install(NetsimServerComponent)
