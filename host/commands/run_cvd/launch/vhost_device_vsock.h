@@ -34,7 +34,8 @@ namespace cuttlefish {
 class VhostDeviceVsock : public vm_manager::VmmDependencyCommand {
  public:
   INJECT(VhostDeviceVsock(LogTeeCreator& log_tee,
-                          const CuttlefishConfig::InstanceSpecific& instance));
+                          const CuttlefishConfig::InstanceSpecific& instance,
+                          const CuttlefishConfig& cfconfig));
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override;
@@ -51,6 +52,7 @@ class VhostDeviceVsock : public vm_manager::VmmDependencyCommand {
 
   LogTeeCreator& log_tee_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig& cfconfig_;
 };
 
 }  // namespace cuttlefish
