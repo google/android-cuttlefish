@@ -131,4 +131,9 @@ fruit::Component<
 launchStreamerComponent();
 
 fruit::Component<WebRtcRecorder> WebRtcRecorderComponent();
+
+fruit::Component<
+    fruit::Required<const CuttlefishConfig,
+                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
+McuComponent();
 }  // namespace cuttlefish

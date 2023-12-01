@@ -1554,6 +1554,14 @@ bool CuttlefishConfig::InstanceSpecific::start_netsim() const {
   return (*Dictionary())[kStartNetsim].asBool();
 }
 
+static constexpr char kMcu[] = "mcu";
+void CuttlefishConfig::MutableInstanceSpecific::set_mcu(const Json::Value& cfg) {
+  (*Dictionary())[kMcu] = cfg;
+}
+const Json::Value& CuttlefishConfig::InstanceSpecific::mcu() const {
+  return (*Dictionary())[kMcu];
+}
+
 static constexpr char kApBootFlow[] = "ap_boot_flow";
 void CuttlefishConfig::MutableInstanceSpecific::set_ap_boot_flow(APBootFlow flow) {
   (*Dictionary())[kApBootFlow] = static_cast<int>(flow);
