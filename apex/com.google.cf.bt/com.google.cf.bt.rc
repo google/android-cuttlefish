@@ -11,3 +11,9 @@ service btlinux /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth-service
     user bluetooth
     group bluetooth net_admin net_bt_admin
     capabilities NET_ADMIN
+
+service bt_finder /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth.finder-service.default
+    class hal
+    user bluetooth
+    group bluetooth net_admin net_bt_admin
+    capabilities NET_ADMIN
