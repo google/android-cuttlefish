@@ -33,6 +33,7 @@ apex {
     soc_specific: true,
     binaries: [
         "android.hardware.bluetooth-service.default",
+        "android.hardware.bluetooth.finder-service.default",
         "bt_vhci_forwarder",
     ],
     prebuilts: [
@@ -40,5 +41,8 @@ apex {
         "android.hardware.bluetooth.prebuilt.xml",
         "com.google.cf.bt.rc",
     ],
-    vintf_fragments: [":manifest_android.hardware.bluetooth-service.default.xml"],
+    vintf_fragments: [
+        ":manifest_android.hardware.bluetooth-service.default.xml",
+        ":manifest_android.hardware.bluetooth.finder-service.default.xml",
+        ],
 }
