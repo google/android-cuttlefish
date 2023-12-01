@@ -15,13 +15,14 @@
  */
 #include "host/frontend/adb_connector/adb_connection_maintainer.h"
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <cctype>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 #include <string>
-#include <memory>
 #include <vector>
-#include <android-base/logging.h>
 
 #include <unistd.h>
 
@@ -54,10 +55,15 @@ std::string MakeDisconnectMessage(const std::string& address) {
   return MakeMessage("host:disconnect:" + address);
 }
 
+std::string MakeGetStateMessage(const std::string& address) {
+  return MakeMessage("host-serial:" + address + ":get-state");
+}
+
 // Response will either be OKAY or FAIL
 constexpr char kAdbOkayStatusResponse[] = "OKAY";
 constexpr std::size_t kAdbStatusResponseLength =
     sizeof kAdbOkayStatusResponse - 1;
+constexpr std::string_view kAdbUnauthorizedMsg = "device unauthorized.";
 // adb sends the length of what is to follow as a 4 characters string of hex
 // digits
 constexpr std::size_t kAdbMessageLengthLength = 4;
@@ -140,6 +146,38 @@ int RecvUptimeResult(const SharedFD& sock) {
   return std::stoi(uptime_str);
 }
 
+// Check if the connection state is waiting for authorization. This function
+// returns true only when explicitly receiving the unauthorized error message,
+// while returns false for all the other error cases because we need to call
+// AdbConnect() again rather than waiting for users' authorization.
+bool WaitForAdbAuthorization(const std::string& address) {
+  auto sock = SharedFD::SocketLocalClient(kAdbDaemonPort, SOCK_STREAM);
+  // Socket doesn't open, so we should not block at waiting for authorization.
+  if (!sock->IsOpen()) {
+    LOG(WARNING) << "failed to open adb connection: " << sock->StrError();
+    return false;
+  }
+
+  if (!SendAll(sock, MakeGetStateMessage(address))) {
+    LOG(WARNING) << "failed to send get state message to adb daemon";
+    return false;
+  }
+
+  const std::string status = RecvAll(sock, kAdbStatusResponseLength);
+  // Stop waiting because the authorization check passed.
+  if (status == kAdbOkayStatusResponse) {
+    return false;
+  }
+
+  const auto response = RecvAdbResponse(sock);
+  // Do not wait for authorization due to failure to receive an adb response.
+  if (response.empty()) {
+    return false;
+  }
+
+  return android::base::StartsWith(response, kAdbUnauthorizedMsg);
+}
+
 // There needs to be a gap between the adb commands, the daemon isn't able to
 // handle the avalanche of requests we would be sending without a sleep. Five
 // seconds is much larger than seems necessary so we should be more than okay.
@@ -151,6 +189,13 @@ void EstablishConnection(const std::string& address) {
     sleep(kAdbCommandGapTime);
   }
   LOG(DEBUG) << "adb connect message for " << address << " successfully sent";
+  sleep(kAdbCommandGapTime);
+
+  while (WaitForAdbAuthorization(address)) {
+    LOG(WARNING) << "adb unauthorized, retrying";
+    sleep(kAdbCommandGapTime);
+  }
+  LOG(DEBUG) << "adb connected to " << address;
   sleep(kAdbCommandGapTime);
 }
 
