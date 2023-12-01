@@ -965,7 +965,7 @@ class DeviceControlApp {
   }
 
   #addMouseTracking(displayDeviceVideo) {
-    emulateTouchScreen(displayDeviceVideo, this.#deviceConnection);
+    trackPointerEvents(displayDeviceVideo, this.#deviceConnection);
   }
 
   #updateDisplayVisibility(displayId, powerMode) {
