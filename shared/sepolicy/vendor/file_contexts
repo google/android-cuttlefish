@@ -41,6 +41,11 @@
 # hvc13 for Sensors
 /dev/hvc13  u:object_r:sensors_device:s0
 
+# hvc14 for MCU control
+/dev/hvc14  u:object_r:mcu_control_device:s0
+# hvc14 for MCU UART
+/dev/hvc15  u:object_r:mcu_uart_device:s0
+
 # ARM serial console device
 /dev/ttyAMA[0-9]*  u:object_r:serial_device:s0
 
