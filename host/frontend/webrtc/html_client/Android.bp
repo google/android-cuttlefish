@@ -86,3 +86,10 @@ prebuilt_usr_share_host {
     filename: "location.js",
     sub_dir: "webrtc/assets/js",
 }
+
+prebuilt_usr_share_host {
+    name: "webrtc_touch.js",
+    src: "js/touch.js",
+    filename: "touch.js",
+    sub_dir: "webrtc/assets/js",
+}
