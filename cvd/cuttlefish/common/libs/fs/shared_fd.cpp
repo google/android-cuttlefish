@@ -314,6 +314,17 @@ int Select(SharedFDSet* read_set, SharedFDSet* write_set,
   return rval;
 }
 
+SharedFD::SharedFD(SharedFD&& other) {
+  value_ = std::move(other.value_);
+  other.value_.reset(new FileInstance(-1, EBADF));
+}
+
+SharedFD& SharedFD::operator=(SharedFD&& other) {
+  value_ = std::move(other.value_);
+  other.value_.reset(new FileInstance(-1, EBADF));
+  return *this;
+}
+
 int SharedFD::Poll(std::vector<PollSharedFd>& fds, int timeout) {
   return Poll(fds.data(), fds.size(), timeout);
 }

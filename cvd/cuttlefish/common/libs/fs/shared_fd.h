@@ -49,7 +49,7 @@
 #include <android-base/cmsg.h>
 
 #ifdef __linux__
-#include <linux/vm_sockets.h>
+#include "vm_sockets.h"
 #endif
 
 #include "common/libs/utils/result.h"
@@ -130,6 +130,10 @@ class SharedFD {
  public:
   inline SharedFD();
   SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
+  SharedFD(SharedFD const&) = default;
+  SharedFD(SharedFD&& other);
+  SharedFD& operator=(SharedFD const&) = default;
+  SharedFD& operator=(SharedFD&& other);
   // Reference the listener as a FileInstance to make this FD type agnostic.
   static SharedFD Accept(const FileInstance& listener, struct sockaddr* addr,
                          socklen_t* addrlen);
