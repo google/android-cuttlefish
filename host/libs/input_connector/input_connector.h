@@ -24,7 +24,6 @@ namespace cuttlefish {
 
 struct MultitouchSlot {
   int32_t id;
-  int32_t slot;
   int32_t x;
   int32_t y;
 };
@@ -34,9 +33,19 @@ class InputConnector {
   virtual ~InputConnector() = default;
   virtual Result<void> SendTouchEvent(const std::string& display, int x, int y,
                                       bool down) = 0;
+  // The source parameter is used to differentiate between events coming from
+  // different sources with the same id. For example when multiple clients are
+  // connected and sending touch events at the same time.
   virtual Result<void> SendMultiTouchEvent(
-      const std::string& device_label, const std::vector<MultitouchSlot>& slots,
-      bool down) = 0;
+      void* source, const std::string& device_label,
+      const std::vector<MultitouchSlot>& slots, bool down) = 0;
+  // The InputConnector holds state of on-going touch contacts. Event sources
+  // that can produce multi touch events should call this function when it's
+  // known they won't produce any more events (because, for example, the
+  // streaming client disconnected) to make sure no stale touch contacts remain.
+  // This addresses issues arising from clients disconnecting in the middle of a
+  // touch action.
+  virtual void OnDisconnectedSource(void* source) = 0;
   virtual Result<void> SendKeyboardEvent(uint16_t code, bool down) = 0;
   virtual Result<void> SendRotaryEvent(int pixels) = 0;
   virtual Result<void> SendSwitchesEvent(uint16_t code, bool state) = 0;
