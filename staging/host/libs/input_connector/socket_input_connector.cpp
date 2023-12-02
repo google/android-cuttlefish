@@ -127,9 +127,78 @@ Result<void> InputSocket::WriteEvents(
   return {};
 }
 
-struct TouchDevice {
-  std::unique_ptr<InputSocket> socket;
-  std::set<int32_t> active_slots;
+class TouchDevice {
+ public:
+  TouchDevice(std::unique_ptr<InputSocket> s) : socket_(std::move(s)) {}
+
+  Result<void> WriteEvents(std::unique_ptr<InputEventsBuffer> buffer) {
+    return socket_->WriteEvents(std::move(buffer));
+  }
+
+  bool HasSlot(void* source, int32_t id) {
+    std::lock_guard<std::mutex> lock(slots_mtx_);
+    return slots_by_source_and_id_.find({source, id}) !=
+           slots_by_source_and_id_.end();
+  }
+
+  int32_t GetOrAcquireSlot(void* source, int32_t id) {
+    std::lock_guard<std::mutex> lock(slots_mtx_);
+    auto slot_it = slots_by_source_and_id_.find({source, id});
+    if (slot_it != slots_by_source_and_id_.end()) {
+      return slot_it->second;
+    }
+    return slots_by_source_and_id_[std::make_pair(source, id)] = UseNewSlot();
+  }
+
+  void ReleaseSlot(void* source, int32_t id) {
+    std::lock_guard<std::mutex> lock(slots_mtx_);
+    auto slot_it = slots_by_source_and_id_.find({source, id});
+    if (slot_it == slots_by_source_and_id_.end()) {
+      return;
+    }
+    slots_by_source_and_id_.erase(slot_it);
+    active_slots_[slot_it->second] = false;
+  }
+
+  size_t NumActiveSlots() {
+    std::lock_guard<std::mutex> lock(slots_mtx_);
+    return slots_by_source_and_id_.size();
+  }
+
+  void OnDisconnectedSource(void* source) {
+    std::lock_guard<std::mutex> lock(slots_mtx_);
+    auto it = slots_by_source_and_id_.begin();
+    while (it != slots_by_source_and_id_.end()) {
+      if (it->first.first == source) {
+        active_slots_[it->second] = false;
+        it = slots_by_source_and_id_.erase(it);
+      } else {
+        ++it;
+      }
+    }
+  }
+
+ private:
+  int32_t UseNewSlot() {
+    // This is not the most efficient implementation for a large number of
+    // slots, but that case should be extremely rare. For the typical number of
+    // slots iterating over a vector is likely faster than using other data
+    // structures.
+    for (auto slot = 0; slot < active_slots_.size(); ++slot) {
+      if (!active_slots_[slot]) {
+        active_slots_[slot] = true;
+        return slot;
+      }
+    }
+    active_slots_.push_back(true);
+    return active_slots_.size() - 1;
+  }
+
+  std::unique_ptr<InputSocket> socket_;
+
+  std::mutex slots_mtx_;
+  std::map<std::pair<void*, int32_t>, int32_t> slots_by_source_and_id_;
+  std::vector<bool> active_slots_;
 };
 
 // Implements the InputConnector interface using unix socket based virtual input
@@ -138,9 +207,11 @@ class InputSocketsConnector : public InputConnector {
  public:
   Result<void> SendTouchEvent(const std::string& device_label, int x, int y,
                               bool down) override;
-  Result<void> SendMultiTouchEvent(const std::string& device_label,
+  Result<void> SendMultiTouchEvent(void* source,
+                                   const std::string& device_label,
                                    const std::vector<MultitouchSlot>& slots,
                                    bool down) override;
+  void OnDisconnectedSource(void* source) override;
   Result<void> SendKeyboardEvent(uint16_t code, bool down) override;
   Result<void> SendRotaryEvent(int pixels) override;
   Result<void> SendSwitchesEvent(uint16_t code, bool state) override;
@@ -175,13 +246,13 @@ Result<void> InputSocketsConnector::SendTouchEvent(
   CF_EXPECT(ts_it != touch_devices_.end(),
             "Unknown touch device: " << device_label);
   auto& ts = ts_it->second;
-  ts.socket->WriteEvents(std::move(buffer));
+  ts.WriteEvents(std::move(buffer));
   return {};
 }
 
 Result<void> InputSocketsConnector::SendMultiTouchEvent(
-    const std::string& device_label, const std::vector<MultitouchSlot>& slots,
-    bool down) {
+    void* source, const std::string& device_label,
+    const std::vector<MultitouchSlot>& slots, bool down) {
   auto buffer = CreateBuffer(event_type_, 1 + 7 * slots.size());
   CF_EXPECT(buffer != nullptr, "Failed to allocate input events buffer");
 
@@ -191,38 +262,50 @@ Result<void> InputSocketsConnector::SendMultiTouchEvent(
   auto& ts = ts_it->second;
 
   for (auto& f : slots) {
-    auto this_slot = f.slot;
     auto this_id = f.id;
     auto this_x = f.x;
     auto this_y = f.y;
 
+    auto is_new_contact = !ts.HasSlot(source, this_id);
+    auto was_down = ts.NumActiveSlots() > 0;
+
+    // Make sure to call HasSlot before this line or it will always return true
+    auto this_slot = ts.GetOrAcquireSlot(source, this_id);
+
+    // BTN_TOUCH DOWN must be the first event in a series
+    if (down && !was_down) {
+      buffer->AddEvent(EV_KEY, BTN_TOUCH, 1);
+    }
+
     buffer->AddEvent(EV_ABS, ABS_MT_SLOT, this_slot);
     if (down) {
-      bool is_new = ts.active_slots.insert(this_slot).second;
-      if (is_new) {
+      if (is_new_contact) {
+        // We already assigned this slot to this source and id combination, we
+        // could use any tracking id for the slot as long as it's greater than 0
         buffer->AddEvent(EV_ABS, ABS_MT_TRACKING_ID, this_id);
-        if (ts.active_slots.size() == 1) {
-          buffer->AddEvent(EV_KEY, BTN_TOUCH, 1);
-        }
       }
       buffer->AddEvent(EV_ABS, ABS_MT_POSITION_X, this_x);
       buffer->AddEvent(EV_ABS, ABS_MT_POSITION_Y, this_y);
-      // send ABS_X and ABS_Y for single-touch compatibility
-      buffer->AddEvent(EV_ABS, ABS_X, this_x);
-      buffer->AddEvent(EV_ABS, ABS_Y, this_y);
     } else {
       // released touch
-      buffer->AddEvent(EV_ABS, ABS_MT_TRACKING_ID, this_id);
-      ts.active_slots.erase(this_slot);
-      if (ts.active_slots.empty()) {
-        buffer->AddEvent(EV_KEY, BTN_TOUCH, 0);
-      }
+      buffer->AddEvent(EV_ABS, ABS_MT_TRACKING_ID, -1);
+      ts.ReleaseSlot(source, this_id);
+    }
+    // Send BTN_TOUCH UP when no more contacts are detected
+    if (was_down && ts.NumActiveSlots() == 0) {
+      buffer->AddEvent(EV_KEY, BTN_TOUCH, 0);
     }
   }
 
   buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
-  ts.socket->WriteEvents(std::move(buffer));
+  ts.WriteEvents(std::move(buffer));
   return {};
+}
+
+void InputSocketsConnector::OnDisconnectedSource(void* source) {
+  for (auto& it: touch_devices_) {
+    it.second.OnDisconnectedSource(source);
+  }
 }
 
 Result<void> InputSocketsConnector::SendKeyboardEvent(uint16_t code,
@@ -267,9 +350,8 @@ void InputSocketsConnectorBuilder::WithTouchDevice(
   CHECK(connector_->touch_devices_.find(device_label) ==
         connector_->touch_devices_.end())
       << "Multiple touch devices with same label: " << device_label;
-  connector_->touch_devices_.emplace(
-      device_label,
-      TouchDevice{.socket = std::make_unique<InputSocket>(server)});
+  connector_->touch_devices_.emplace(device_label,
+                                     std::make_unique<InputSocket>(server));
 }
 
 void InputSocketsConnectorBuilder::WithKeyboard(SharedFD server) {
