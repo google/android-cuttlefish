@@ -45,9 +45,11 @@ class HostVirtualInput : public InputConnector {
   // InputConnector implementation.
   Result<void> SendTouchEvent(const std::string& device_label, int x, int y,
                               bool down) override;
-  Result<void> SendMultiTouchEvent(const std::string& device_label,
+  Result<void> SendMultiTouchEvent(void* source,
+                                   const std::string& device_label,
                                    const std::vector<MultitouchSlot>& slots,
                                    bool down) override;
+  void OnDisconnectedSource(void* source) override;
   Result<void> SendKeyboardEvent(uint16_t code, bool down) override;
   Result<void> SendRotaryEvent(int pixels) override;
   Result<void> SendSwitchesEvent(uint16_t code, bool state) override;

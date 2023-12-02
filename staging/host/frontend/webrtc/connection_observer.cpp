@@ -72,6 +72,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     if (kernel_log_subscription_id_ != -1) {
       kernel_log_events_handler_->Unsubscribe(kernel_log_subscription_id_);
     }
+    input_connector_.OnDisconnectedSource(this);
   }
 
   void OnConnected() override {
@@ -88,12 +89,11 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
                          bool down, int size) {
     std::vector<MultitouchSlot> slots(size);
     for (int i = 0; i < size; i++) {
-      slots[i].slot = slot[i].asInt();
       slots[i].id = id[i].asInt();
       slots[i].x = x[i].asInt();
       slots[i].y = y[i].asInt();
     }
-    input_connector_.SendMultiTouchEvent(device_label, slots, down);
+    input_connector_.SendMultiTouchEvent(this, device_label, slots, down);
   }
 
   void OnKeyboardEvent(uint16_t code, bool down) override {
