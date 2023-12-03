@@ -52,6 +52,9 @@ cvd::Request MakeRequest(const MakeRequestForm& request_form,
 
 cvd::Request MakeRequest(const MakeRequestForm& request_form);
 
+cvd::Response CommandResponse(const cvd::Status_Code,
+                              const std::string message = "");
+
 // name of environment variable to mark the launch_cvd initiated by the cvd
 // server
 static constexpr char kCvdMarkEnv[] = "_STARTED_BY_CVD_SERVER_";
