@@ -83,4 +83,6 @@ Result<std::string> GetExecutablePath(const pid_t pid);
 // retrieves the environment variables of the process, pid
 Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid);
 
+Result<pid_t> Ppid(const pid_t pid);
+
 }  // namespace cuttlefish
