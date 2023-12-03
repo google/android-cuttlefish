@@ -105,7 +105,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<void> UpdateInstanceDatabase(
       const uid_t uid, const selector::GroupCreationInfo& group_creation_info);
   Result<void> FireCommand(Command&& command, const bool wait);
-  bool HasHelpOpts(const cvd_common::Args& args) const;
 
   Result<Command> ConstructCvdNonHelpCommand(
       const std::string& bin_file,
@@ -656,7 +655,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   // collect group creation infos
   CF_EXPECT(Contains(supported_commands_, subcmd),
             "subcmd should be start but is " << subcmd);
-  const bool is_help = HasHelpOpts(subcmd_args);
+  const bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));
   const bool is_daemon = CF_EXPECT(IsDaemonModeFlag(subcmd_args));
 
   std::optional<selector::GroupCreationInfo> group_creation_info;
@@ -787,11 +786,6 @@ Result<void> CvdStartCommandHandler::FireCommand(Command&& command,
   }
   CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
   return {};
-}
-
-bool CvdStartCommandHandler::HasHelpOpts(
-    const std::vector<std::string>& args) const {
-  return IsHelpSubcmd(args);
 }
 
 std::vector<std::string> CvdStartCommandHandler::CmdList() const {
