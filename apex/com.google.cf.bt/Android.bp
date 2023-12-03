@@ -34,6 +34,7 @@ apex {
     binaries: [
         "android.hardware.bluetooth-service.default",
         "android.hardware.bluetooth.finder-service.default",
+        "android.hardware.bluetooth.ranging-service.default",
         "bt_vhci_forwarder",
     ],
     prebuilts: [
@@ -44,5 +45,6 @@ apex {
     vintf_fragments: [
         ":manifest_android.hardware.bluetooth-service.default.xml",
         ":manifest_android.hardware.bluetooth.finder-service.default.xml",
+        ":manifest_android.hardware.bluetooth.ranging-service.default.xml",
         ],
 }
