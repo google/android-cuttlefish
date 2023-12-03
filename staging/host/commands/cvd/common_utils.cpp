@@ -82,6 +82,16 @@ cvd::Request MakeRequest(const MakeRequestForm& request_form,
   return request;
 }
 
+cvd::Response CommandResponse(const cvd::Status_Code code,
+                              const std::string message) {
+  cvd::Response response;
+  response.mutable_command_response();  // set oneof field
+  auto& status = *response.mutable_status();
+  status.set_code(code);
+  status.set_message(message);
+  return response;
+}
+
 template <typename T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& v) {
   if (v.empty()) {

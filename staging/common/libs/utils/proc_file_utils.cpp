@@ -19,7 +19,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <fstream>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -254,21 +253,21 @@ static Result<ProcStatusUids> OwnerUids(const pid_t pid) {
   // parse from /proc/<pid>/status
   std::regex uid_pattern(R"(Uid:\s+[0-9]+\s+[0-9]+\s+[0-9]+\s+[0-9]+)");
   std::string status_path = fmt::format("/proc/{}/status", pid);
-  std::ifstream status_file(status_path, std::ifstream::in);
-  CF_EXPECTF(!status_file.fail(), "Failed to open /proc/{}/status", pid);
-  std::string line;
+  std::string status_content;
+  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content));
   std::vector<uid_t> uids;
   uids.reserve(4);
-  while (getline(status_file, line)) {
+  for (const std::string& line :
+       android::base::Tokenize(status_content, "\n")) {
     if (!std::regex_match(line, uid_pattern)) {
       continue;
     }
     uids = CF_EXPECT(UidsFromUidLine(line));
+    CF_EXPECT_EQ(uids.size(), 4,
+                 fmt::format("Error in the Uid line: \"{}\"", line));
     break;
   }
   CF_EXPECT(!uids.empty(), "The \"Uid:\" line was not found");
-  CF_EXPECT_EQ(uids.size(), 4,
-               fmt::format("Error in the Uid line: \"{}\"", line));
   return ProcStatusUids{
       .real_ = uids.at(0),
       .effective_ = uids.at(1),
@@ -317,6 +316,24 @@ Result<ProcInfo> ExtractProcInfo(const pid_t pid) {
                   .actual_exec_path_ = CF_EXPECT(GetExecutablePath(pid)),
                   .envs_ = CF_EXPECT(GetEnvs(pid)),
                   .args_ = CF_EXPECT(GetCmdArgs(pid))};
+}
+
+Result<pid_t> Ppid(const pid_t pid) {
+  // parse from /proc/<pid>/status
+  std::regex uid_pattern(R"(PPid:\s*([0-9]+))");
+  std::string status_path = fmt::format("/proc/{}/status", pid);
+  std::string status_content;
+  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content));
+  for (const auto& line : android::base::Tokenize(status_content, "\n")) {
+    std::smatch matches;
+    if (!std::regex_match(line, matches, uid_pattern)) {
+      continue;
+    }
+    unsigned ppid;
+    CF_EXPECT(android::base::ParseUint(matches[1], &ppid));
+    return static_cast<pid_t>(ppid);
+  }
+  return CF_ERR("Status file does not have PPid: line in the right format");
 }
 
 }  // namespace cuttlefish
