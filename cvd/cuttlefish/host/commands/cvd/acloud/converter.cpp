@@ -103,7 +103,7 @@ static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
     .stdin_ = nullptr,
     .callback_ = callback_unlock
   };
-  callback_lock();
+  CF_EXPECT(callback_lock());
   RunOutput output_git = CF_EXPECT(waiter.RunWithManagedStdioInterruptable(param_git));
 
   output_git.stdout_.erase(std::remove(
@@ -628,14 +628,14 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
 
   if (launch_args) {
-    callback_lock();
+    CF_EXPECT(callback_lock());
     for (const auto& arg : CF_EXPECT(BashTokenize(
              *launch_args, waiter, callback_unlock))) {
       start_command.add_args(arg);
     }
   }
   if (acloud_config.launch_args != "") {
-    callback_lock();
+    CF_EXPECT(callback_lock());
     for (const auto& arg : CF_EXPECT(BashTokenize(
              acloud_config.launch_args, waiter, callback_unlock))) {
       start_command.add_args(arg);
