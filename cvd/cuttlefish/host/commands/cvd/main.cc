@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
+#include <unistd.h>
+
+#include <cstdio>
 #include <iostream>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/scopeguard.h>
+#include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/client.h"
 #include "host/commands/cvd/common_utils.h"
@@ -134,6 +141,48 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   return {};
 }
 
+/**
+ * Returns the URL as a colored string
+ *
+ * If stderr is not terminal, no color.
+ * If stderr is a tty, tries to use ".deb" file color
+ * If .deb is not available in LS_COLORS, uses .zip
+ * color. If none are available, use a default color that
+ * is red.
+ */
+std::string ColoredUrl(const std::string& url) {
+  if (!isatty(STDERR_FILENO)) {
+    return url;
+  }
+  std::string coloring_prefix = "\033[01;31m";
+  std::string output;
+  auto ls_colors = StringFromEnv("LS_COLORS", "");
+  std::vector<std::string> colors_vec = android::base::Tokenize(ls_colors, ":");
+  std::unordered_map<std::string, std::string> colors;
+  for (const auto& color_entry : colors_vec) {
+    std::vector<std::string> tokenized =
+        android::base::Tokenize(color_entry, "=");
+    if (tokenized.size() != 2) {
+      continue;
+    }
+    colors[tokenized.front()] = tokenized.back();
+  }
+
+  android::base::ScopeGuard return_action([&coloring_prefix, url, &output]() {
+    static constexpr char kRestoreColor[] = "\033[0m";
+    output = fmt::format("{}{}{}", coloring_prefix, url, kRestoreColor);
+  });
+  auto deb_color_itr = colors.find("*.deb");
+  auto zip_color_itr = colors.find("*.zip");
+  if (deb_color_itr == colors.end() && zip_color_itr == colors.end()) {
+    return output;
+  }
+  coloring_prefix = fmt::format(
+      "{}{}m", "\033[",
+      (deb_color_itr == colors.end() ? colors["*.zip"] : colors["*.deb"]));
+  return output;
+}
+
 }  // namespace
 }  // namespace cuttlefish
 
@@ -148,7 +197,18 @@ int main(int argc, char** argv, char** envp) {
   if (result.ok()) {
     return 0;
   } else {
+    // TODO: we should not print the stack trace, instead, we should rely on
+    // each handler to print the error message directly in the client's
+    // std::cerr. We print the stack trace only in the verbose mode.
     std::cerr << result.error().FormatForEnv() << std::endl;
+    // TODO(kwstephenkim): better coloring
+    constexpr char kUserReminder[] =
+        R"(    If the error above is unclear, please copy the text into an issue at:)";
+    constexpr char kCuttlefishBugUrl[] = "http://go/cuttlefish-bug";
+    std::cerr << std::endl << kUserReminder << std::endl;
+    std::cerr << "        " << cuttlefish::ColoredUrl(kCuttlefishBugUrl)
+              << std::endl
+              << std::endl;
     return -1;
   }
 }
