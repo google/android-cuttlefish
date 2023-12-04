@@ -20,7 +20,6 @@ override_apex {
     name: "com.google.aosp_cf_slim.hardware.core_permissions",
     base: "com.android.hardware.core_permissions",
     prebuilts: [
-        "android.hardware.audio.low_latency.prebuilt.xml",
         "android.hardware.biometrics.face.prebuilt.xml",
         "android.hardware.ethernet.prebuilt.xml",
         "android.hardware.faketouch.prebuilt.xml",
