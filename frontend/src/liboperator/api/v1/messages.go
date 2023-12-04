@@ -90,7 +90,7 @@ type CreateCVDRequest struct {
 	// Example: https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/host/cvd_test_configs/main_phone-main_watch.json;drc=b2e8f4f014abb7f9cb56c0ae199334aacb04542d
 	// NOTE: Using this as a black box for now as its content is unstable. Use the test configs pointed
 	// above as reference to build your config object.
-	EnvConfig interface{} `json:"env_config"`
+	EnvConfig map[string]interface{} `json:"env_config"`
 
 	// [DEPRECATED]. Use `EnvConfig` field.
 	CVD *CVD `json:"cvd"`
