@@ -42,6 +42,7 @@ class RunCvdProcessCollector {
     std::optional<std::string> android_host_out_;
     struct InstanceInfo {
       std::set<pid_t> pids_;
+      std::set<pid_t> parent_run_cvd_pids_;
       cvd_common::Envs envs_;
       cvd_common::Args cmd_args_;
       unsigned id_;
