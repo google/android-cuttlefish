@@ -403,7 +403,7 @@ Result<void> ProcessMonitor::MonitorRoutine() {
 #endif
 
   LOG(DEBUG) << "Monitoring subprocesses";
-  StartSubprocesses(properties_.entries_);
+  CF_EXPECT(StartSubprocesses(properties_.entries_));
 
   std::atomic_bool running(true);
 
@@ -415,11 +415,12 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   auto parent_comms = std::async(std::launch::async, read_monitor_socket_loop,
                                  std::ref(running));
 
-  MonitorLoop(running, properties_mutex_, properties_.restart_subprocesses_,
-              properties_.entries_);
+  CF_EXPECT(MonitorLoop(running, properties_mutex_,
+                        properties_.restart_subprocesses_,
+                        properties_.entries_));
   CF_EXPECT(parent_comms.get(), "Should have exited if monitoring stopped");
 
-  StopSubprocesses(properties_.entries_);
+  CF_EXPECT(StopSubprocesses(properties_.entries_));
   LOG(DEBUG) << "Done monitoring subprocesses";
   return {};
 }
