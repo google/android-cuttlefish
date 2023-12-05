@@ -151,15 +151,11 @@ cc_library_host_static {
 
 cc_binary_host {
     name: "cvd",
-    arch: {
-        x86_64: {
-            symlinks: [
-                "launch_cvd",
-                "stop_cvd"
-            ],
-        },
-    },
-    symlinks: ["acloud"],
+    symlinks: [
+        "launch_cvd",
+    	"stop_cvd",
+        "acloud"
+    ],
     static_libs: [
         "cvd_and_fetch_cvd",
     ],
