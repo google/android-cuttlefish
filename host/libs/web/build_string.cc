@@ -141,7 +141,7 @@ std::ostream& operator<<(std::ostream& out, const BuildString& build_string) {
 std::ostream& operator<<(std::ostream& out,
                          const std::optional<BuildString>& build_string) {
   if (build_string) {
-    fmt::print(out, "has_value({})", *build_string);
+    out << "has_value(" << *build_string << ")";
   } else {
     out << "no_value()";
   }
