@@ -52,7 +52,9 @@ class CameraStreamer : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
   };
   bool ForwardClientMessage(const Json::Value& message);
   Resolution GetResolutionFromSettings(const Json::Value& settings);
-  bool VsockSendYUVFrame(const webrtc::I420BufferInterface* frame);
+  bool VsockSendYUVFrame(const webrtc::I420BufferInterface& frame);
+  bool VsockSendStrides(const char* data, unsigned int size,
+                        unsigned int num_strides, int stride_size);
   bool IsConnectionReady();
   void StartReadLoop();
   void Disconnect();

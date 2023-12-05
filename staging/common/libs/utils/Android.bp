@@ -90,9 +90,17 @@ cc_test_host {
     ],
     shared_libs: [
         "libcrypto",
+        "libjsoncpp",
         "liblog",
         "libxml2",
     ],
+    target: {
+        linux: {
+            srcs: [
+                "vsock_connection_test.cpp",
+            ]
+        }
+    },
     test_options: {
         unit_test: true,
     },
