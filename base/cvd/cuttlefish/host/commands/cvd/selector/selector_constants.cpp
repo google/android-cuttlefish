@@ -22,6 +22,8 @@
 #include <deque>
 #include <sstream>
 
+#include <android-base/errors.h>
+
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
@@ -155,12 +157,18 @@ CvdFlag<bool> SelectorFlags::AcquireFileLockFlag(const std::string& name,
 }
 
 const SelectorFlags& SelectorFlags::Get() {
-  static SelectorFlags singleton_selector_flags;
-  return singleton_selector_flags;
+  static Result<SelectorFlags> singleton = New();
+  CHECK(singleton.ok()) << singleton.error().FormatForEnv();
+  return *singleton;
 }
 
-const SelectorFlags SelectorFlags::New() {
+Result<SelectorFlags> SelectorFlags::New() {
   SelectorFlags selector_flags;
+  CF_EXPECT(selector_flags.flags_.EnrollFlag(GroupNameFlag(kGroupName)));
+  CF_EXPECT(selector_flags.flags_.EnrollFlag(InstanceNameFlag(kInstanceName)));
+  CF_EXPECT(selector_flags.flags_.EnrollFlag(
+      AcquireFileLockFlag(kAcquireFileLock, true)));
+  CF_EXPECT(selector_flags.flags_.EnrollFlag(VerbosityFlag(kVerbosity)));
   return selector_flags;
 }
 

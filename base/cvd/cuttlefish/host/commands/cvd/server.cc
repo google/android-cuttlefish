@@ -310,9 +310,9 @@ static Result<android::base::LogSeverity> Verbosity(
   const auto& selector_opts =
       request.Message().command_request().selector_opts();
   auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
-  auto verbosity_flag =
-      selector::SelectorFlags::New().FlagsAsCollection().GetFlag(
-          selector::SelectorFlags::kVerbosity);
+  auto verbosity_flag = CF_EXPECT(selector::SelectorFlags::New())
+                            .FlagsAsCollection()
+                            .GetFlag(selector::SelectorFlags::kVerbosity);
   auto verbosity_opt =
       CF_EXPECT(verbosity_flag->FilterFlag<std::string>(selector_args));
   auto ret_val = verbosity_opt.value_or(default_val);
