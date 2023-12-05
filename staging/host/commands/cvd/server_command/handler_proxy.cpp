@@ -62,7 +62,7 @@ class CvdServerHandlerProxy : public CvdServerHandler {
 
     auto subcmds = executor_.CmdList();
     auto selector_flag_collection =
-        selector::SelectorFlags::New().FlagsAsCollection();
+        CF_EXPECT(selector::SelectorFlags::New()).FlagsAsCollection();
 
     FrontlineParser::ParserParam server_param{
         .server_supported_subcmds = subcmds,
