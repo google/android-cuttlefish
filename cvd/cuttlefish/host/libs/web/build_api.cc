@@ -256,13 +256,14 @@ Result<std::optional<std::string>> BuildApi::LatestBuildId(
   if (!json.isMember("builds")) {
     return std::nullopt;
   }
-  CF_EXPECTF(json["builds"].size() == 1,
-             "Expected to receive 1 build for \"{}\" on \"{}\", but received "
-             "{}. Full response:\n{}",
-             target, branch, json["builds"].size(), json);
-  CF_EXPECTF(json["builds"][0].isMember("buildId"),
-             "\"buildId\" member missing from response.  Full response:\n{}",
-             json);
+  CF_EXPECT(json["builds"].size() == 1,
+            "Expected to receive 1 build for \""
+                << target << "\" on \"" << branch << "\", but received "
+                << json["builds"].size() << ". Full response:\n"
+                << json);
+  CF_EXPECT(json["builds"][0].isMember("buildId"),
+            "\"buildId\" member missing from response.  Full response:\n"
+                << json);
   return json["builds"][0]["buildId"].asString();
 }
 
