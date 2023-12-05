@@ -148,13 +148,17 @@ Result<void> ServerLoopImpl::HandleExtended(
   switch (action_info.type) {
     case ExtendedActionType::kSuspend: {
       LOG(DEBUG) << "Run_cvd received suspend request.";
-      CF_EXPECT(HandleSuspend(action_info.serialized_data, process_monitor));
+      if (device_status_.load() == DeviceStatus::kActive) {
+        CF_EXPECT(HandleSuspend(action_info.serialized_data, process_monitor));
+      }
       device_status_ = DeviceStatus::kSuspended;
       return {};
     }
     case ExtendedActionType::kResume: {
       LOG(DEBUG) << "Run_cvd received resume request.";
-      CF_EXPECT(HandleResume(action_info.serialized_data, process_monitor));
+      if (device_status_.load() == DeviceStatus::kSuspended) {
+        CF_EXPECT(HandleResume(action_info.serialized_data, process_monitor));
+      }
       device_status_ = DeviceStatus::kActive;
       return {};
     }
