@@ -19,6 +19,15 @@ ifeq ($(TARGET_USE_CAMERA_ADVANCED_EXTENSION_SAMPLE),true)
 PRODUCT_PACKAGES += \
     androidx.camera.extensions.impl.advanced advancedSample_camera_extensions.xml \
     libencoderjpeg_jni
+
+PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
+    system/app/EyesFreeVidService/EyesFreeVidService.apk
+
+PRODUCT_PACKAGES += EyesFreeVidService
+
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.vendor.camera.extensions.package=android.camera.extensions.impl.service \
+    ro.vendor.camera.extensions.service=android.camera.extensions.impl.service.EyesFreeVidService
 else
 PRODUCT_PACKAGES += androidx.camera.extensions.impl sample_camera_extensions.xml
 endif
