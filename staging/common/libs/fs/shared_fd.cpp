@@ -23,10 +23,12 @@
 #include <poll.h>
 #include <sys/file.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <cerrno>
 #include <cstddef>
 
 #include <algorithm>
@@ -39,6 +41,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/result.h"
+#include "shared_select.h"
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
 
@@ -694,7 +697,9 @@ SharedFD SharedFD::VsockServer(
                << ")";
     return SharedFD::ErrorFD(vsock->GetErrno());
   }
-  if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
+  constexpr int SOCK_TYPE_MASK = 0xf;
+  auto socket_type = type & SOCK_TYPE_MASK;
+  if (socket_type == SOCK_STREAM || socket_type == SOCK_SEQPACKET) {
     if (vsock->Listen(4) < 0) {
       LOG(ERROR) << "Port" << port << " Listen failed (" << vsock->StrError()
                  << ")";
@@ -746,6 +751,17 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
   addr.svm_cid = cid;
   auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
   if (vsock->Connect(casted_addr, sizeof(addr)) == -1) {
+    // Wait for connection to be established if socket is nonblocking
+    if (vsock->GetErrno() == EINPROGRESS) {
+      SharedFDSet wset, error_set;
+      wset.Set(vsock);
+      error_set.Set(vsock);
+      if (Select(nullptr, &wset, &error_set, nullptr) > 0) {
+        if (wset.IsSet(vsock)) {
+          return vsock;
+        }
+      }
+    }
     return SharedFD::ErrorFD(vsock->GetErrno());
   }
   return vsock;
