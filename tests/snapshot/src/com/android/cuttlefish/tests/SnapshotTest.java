@@ -50,7 +50,11 @@ public class SnapshotTest extends BaseHostJUnit4Test {
     // Snapshot the device
     DeviceSnapshotHandler handler = new DeviceSnapshotHandler(getInvocationContext());
     boolean snapshotRes = false;
-    snapshotRes = handler.snapshotDevice(getDevice(), "snapshot_img");
+    snapshotRes = handler.snapshotDevice(getDevice(), String.format("snapshot_img%d", mTestCount));
+
+    if (!snapshotRes) {
+      Assert.fail("failed to snapshot.");
+    }
 
     // Create a file in tmp directory
     final String tmpFile = "/data/local/tmp/snapshot_tmp";
@@ -71,7 +75,7 @@ public class SnapshotTest extends BaseHostJUnit4Test {
       // validating the feature itself so it's fine
       boolean restoreRes = false;
       try {
-        restoreRes = handler.restoreSnapshotDevice(getDevice(), "snapshot_img");
+        restoreRes = handler.restoreSnapshotDevice(getDevice(), String.format("snapshot_img%d", mTestCount));
       } catch (DeviceNotAvailableException e) {
         CLog.e(e);
       }
