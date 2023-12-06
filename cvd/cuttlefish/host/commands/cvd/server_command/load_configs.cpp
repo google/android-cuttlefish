@@ -84,25 +84,10 @@ class LoadConfigsCommand : public CvdServerHandler {
       return {};
     }
 
-    Json::Value json_configs =
-        CF_EXPECT(GetOverriddenConfig(flags.config_path, flags.overrides));
-
-    Result<std::vector<std::string>> system_image_path_configs =
-        CF_EXPECT(GetConfiguredSystemImagePaths(json_configs));
-
-    std::optional<std::string> host_package_dir =
-        GetConfiguredSystemHostPath(json_configs);
-
-    const auto& client_env = request.Message().command_request().env();
-
-    const auto load_directories = CF_EXPECT(GenerateLoadDirectories(
-        flags.base_dir, *system_image_path_configs, host_package_dir,
-        json_configs["instances"].size()));
-
-    auto cvd_flags = CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
-                               "parsing json configs failed");
+    auto cvd_flags = CF_EXPECT(GetCvdFlags(flags));
 
     std::vector<cvd::Request> req_protos;
+    const auto& client_env = request.Message().command_request().env();
 
     if (!cvd_flags.fetch_cvd_flags.empty()) {
       auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
@@ -119,17 +104,18 @@ class LoadConfigsCommand : public CvdServerHandler {
     mkdir_cmd.add_args("cvd");
     mkdir_cmd.add_args("mkdir");
     mkdir_cmd.add_args("-p");
-    mkdir_cmd.add_args(load_directories.launch_home_directory);
+    mkdir_cmd.add_args(cvd_flags.load_directories.launch_home_directory);
 
     auto& launch_cmd = *req_protos.emplace_back().mutable_command_request();
-    launch_cmd.set_working_directory(load_directories.host_package_directory);
+    launch_cmd.set_working_directory(
+        cvd_flags.load_directories.host_package_directory);
     *launch_cmd.mutable_env() = client_env;
     (*launch_cmd.mutable_env())["HOME"] =
-        load_directories.launch_home_directory;
+        cvd_flags.load_directories.launch_home_directory;
     (*launch_cmd.mutable_env())[kAndroidHostOut] =
-        load_directories.host_package_directory;
+        cvd_flags.load_directories.host_package_directory;
     (*launch_cmd.mutable_env())[kAndroidSoongHostOut] =
-        load_directories.host_package_directory;
+        cvd_flags.load_directories.host_package_directory;
     if (Contains(*launch_cmd.mutable_env(), kAndroidProductOut)) {
       (*launch_cmd.mutable_env()).erase(kAndroidProductOut);
     }
@@ -145,7 +131,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       launch_cmd.add_args(parsed_flag);
     }
     // Add system flag for multi-build scenario
-    launch_cmd.add_args(load_directories.system_image_directory_flag);
+    launch_cmd.add_args(cvd_flags.load_directories.system_image_directory_flag);
 
     auto selector_opts = launch_cmd.mutable_selector_opts();
 
