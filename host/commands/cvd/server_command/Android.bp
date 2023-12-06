@@ -36,6 +36,7 @@ cc_library_host_static {
         "generic.cpp",
         "handler_proxy.cpp",
         "help.cpp",
+        "lint.cpp",
         "load_configs.cpp",
         "power.cpp",
         "reset.cpp",
