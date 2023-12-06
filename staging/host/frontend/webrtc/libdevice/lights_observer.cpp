@@ -51,7 +51,11 @@ bool LightsObserver::Start() {
 
       // Try to start a new connection. If this fails, delay retrying a bit.
       if (is_running_ &&
-          !cvd_connection_.Connect(port_, cid_, vhost_user_vsock_)) {
+          !cvd_connection_.Connect(
+              port_, cid_,
+              vhost_user_vsock_
+                  ? std::optional(0) /* any value is okay for client */
+                  : std::nullopt)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         continue;
       }
@@ -80,12 +84,8 @@ void LightsObserver::ReadServerMessages() {
   static constexpr auto kMessageStop = "VIRTUAL_DEVICE_STOP_LIGHTS_SESSION";
   static constexpr auto kMessageUpdate = "VIRTUAL_DEVICE_LIGHTS_UPDATE";
 
-  auto json_value_result = cvd_connection_.ReadJsonMessage();
-  if (!json_value_result.ok()) {
-    return;
-  }
+  auto json_value = cvd_connection_.ReadJsonMessage();
 
-  auto json_value = *json_value_result;
   if (json_value[kEventKey] == kMessageStart) {
     session_active_ = true;
   } else if (json_value[kEventKey] == kMessageStop) {
