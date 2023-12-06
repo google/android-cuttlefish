@@ -17,13 +17,12 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
-#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
 
 std::unique_ptr<CvdServerHandler> NewCvdHelpHandler(
-    CommandSequenceExecutor& executor);
-
+    const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers);
 }

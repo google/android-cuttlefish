@@ -19,6 +19,7 @@
 #include <atomic>
 #include <vector>
 
+#include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_client.h"
