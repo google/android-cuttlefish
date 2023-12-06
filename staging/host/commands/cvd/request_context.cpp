@@ -21,6 +21,7 @@
 
 #include <android-base/logging.h>
 
+#include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_client.h"
@@ -84,7 +85,7 @@ RequestContext::RequestContext(CvdServer& cvd_server,
       instance_manager_, subprocess_waiter_, host_tool_target_manager_));
   request_handlers_.emplace_back(
       NewCvdServerHandlerProxy(command_sequence_executor_));
-  request_handlers_.emplace_back(NewCvdHelpHandler(command_sequence_executor_));
+  request_handlers_.emplace_back(NewCvdHelpHandler(this->request_handlers_));
   request_handlers_.emplace_back(NewLintCommand());
   request_handlers_.emplace_back(
       NewLoadConfigsCommand(command_sequence_executor_));
