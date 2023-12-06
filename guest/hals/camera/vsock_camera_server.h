@@ -46,8 +46,7 @@ class VsockCameraServer {
   void serverLoop(unsigned int port, unsigned int cid);
   std::thread server_thread_;
   std::atomic<bool> is_running_;
-  cuttlefish::VsockServer server_;
-  std::shared_ptr<cuttlefish::VsockConnection> connection_;
+  std::shared_ptr<cuttlefish::VsockServerConnection> connection_;
   std::mutex settings_mutex_;
   VsockCameraDevice::Settings settings_;
   callback_t connected_callback_;
