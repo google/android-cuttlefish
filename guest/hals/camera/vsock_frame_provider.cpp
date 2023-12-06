@@ -28,7 +28,7 @@ bool writeJsonEventMessage(
     const std::string& message) {
   Json::Value json_message;
   json_message["event"] = message;
-  return connection && connection->WriteMessage(json_message).ok();
+  return connection && connection->WriteMessage(json_message);
 }
 }  // namespace
 
@@ -154,7 +154,7 @@ bool VsockFrameProvider::framesizeMatches(uint32_t width, uint32_t height,
 
 void VsockFrameProvider::VsockReadLoop(uint32_t width, uint32_t height) {
   jpeg_pending_ = false;
-  while (running_.load() && connection_->ReadMessage(next_frame_).ok()) {
+  while (running_.load() && connection_->ReadMessage(next_frame_)) {
     if (framesizeMatches(width, height, next_frame_)) {
       std::lock_guard<std::mutex> lock(frame_mutex_);
       timestamp_ = systemTime();
