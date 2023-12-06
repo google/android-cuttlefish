@@ -455,7 +455,7 @@ endif
 #
 ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
 PRODUCT_PACKAGES += \
-    android.hardware.security.secretkeeper-service.nonsecure
+    com.android.hardware.security.secretkeeper
 endif
 
 #
