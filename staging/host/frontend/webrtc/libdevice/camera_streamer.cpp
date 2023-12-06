@@ -44,10 +44,8 @@ void CameraStreamer::OnFrame(const webrtc::VideoFrame& client_frame) {
       return;
     }
     std::lock_guard<std::mutex> lock(settings_mutex_);
-    auto write_result = cvd_connection_.WriteMessage(settings_buffer_);
-    if (!write_result.ok()) {
-      LOG(ERROR) << "Failed writing camera settings: "
-                 << write_result.error().FormatForEnv();
+    if (!cvd_connection_.WriteMessage(settings_buffer_)) {
+      LOG(ERROR) << "Failed writing camera settings:";
       return;
     }
     StartReadLoop();
@@ -73,7 +71,7 @@ void CameraStreamer::OnFrame(const webrtc::VideoFrame& client_frame) {
     scaled_frame_->CropAndScaleFrom(*frame);
     frame = scaled_frame_.get();
   }
-  if (!VsockSendYUVFrame(*frame)) {
+  if (!VsockSendYUVFrame(frame)) {
     LOG(ERROR) << "Sending frame over vsock failed";
   }
 }
@@ -111,31 +109,22 @@ CameraStreamer::Resolution CameraStreamer::GetResolutionFromSettings(
 }
 
 bool CameraStreamer::VsockSendYUVFrame(
-    const webrtc::I420BufferInterface& frame) {
-  int32_t size = frame.width() * frame.height() +
-                 2 * frame.ChromaWidth() * frame.ChromaHeight();
-  const char* y = reinterpret_cast<const char*>(frame.DataY());
-  const char* u = reinterpret_cast<const char*>(frame.DataU());
-  const char* v = reinterpret_cast<const char*>(frame.DataV());
-  auto chroma_width = frame.ChromaWidth();
-  auto chroma_height = frame.ChromaHeight();
+    const webrtc::I420BufferInterface* frame) {
+  int32_t size = frame->width() * frame->height() +
+                 2 * frame->ChromaWidth() * frame->ChromaHeight();
+  const char* y = reinterpret_cast<const char*>(frame->DataY());
+  const char* u = reinterpret_cast<const char*>(frame->DataU());
+  const char* v = reinterpret_cast<const char*>(frame->DataV());
+  auto chroma_width = frame->ChromaWidth();
+  auto chroma_height = frame->ChromaHeight();
   std::lock_guard<std::mutex> lock(frame_mutex_);
-  return cvd_connection_.Write(size).ok() &&
-         VsockSendStrides(y, frame.width(), frame.height(), frame.StrideY()) &&
-         VsockSendStrides(u, chroma_width, chroma_height, frame.StrideU()) &&
-         VsockSendStrides(v, chroma_width, chroma_height, frame.StrideV());
-}
-
-bool CameraStreamer::VsockSendStrides(const char* data, unsigned int size,
-                                      unsigned int num_strides,
-                                      int stride_size) {
-  const char* src = data;
-  for (unsigned int i = 0; i < num_strides; ++i, src += stride_size) {
-    if (!cvd_connection_.Write(src, size).ok()) {
-      return false;
-    }
-  }
-  return true;
+  return cvd_connection_.Write(size) &&
+         cvd_connection_.WriteStrides(y, frame->width(), frame->height(),
+                                      frame->StrideY()) &&
+         cvd_connection_.WriteStrides(u, chroma_width, chroma_height,
+                                      frame->StrideU()) &&
+         cvd_connection_.WriteStrides(v, chroma_width, chroma_height,
+                                      frame->StrideV());
 }
 
 bool CameraStreamer::IsConnectionReady() {
@@ -163,19 +152,15 @@ void CameraStreamer::StartReadLoop() {
       static constexpr auto kMessageStart =
           "VIRTUAL_DEVICE_START_CAMERA_SESSION";
       static constexpr auto kMessageStop = "VIRTUAL_DEVICE_STOP_CAMERA_SESSION";
-      auto json_value_result = cvd_connection_.ReadJsonMessage();
-      if (!json_value_result.ok()) {
-        LOG(ERROR) << "Unexpected message from camera server: "
-                   << json_value_result.error().FormatForEnv();
-        continue;
-      }
-      auto json_value = *json_value_result;
+      auto json_value = cvd_connection_.ReadJsonMessage();
       if (json_value[kEventKey] == kMessageStart) {
         camera_session_active_ = true;
       } else if (json_value[kEventKey] == kMessageStop) {
         camera_session_active_ = false;
       }
-      SendMessage(json_value);
+      if (!json_value.empty()) {
+        SendMessage(json_value);
+      }
     }
     LOG(INFO) << "Exit reader thread";
   });
