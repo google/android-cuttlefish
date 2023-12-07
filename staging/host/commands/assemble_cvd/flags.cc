@@ -1361,7 +1361,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_memory_mb(memory_mb_vec[instance_index]);
     instance.set_ddr_mem_mb(memory_mb_vec[instance_index] * 1.2);
-    instance.set_setupwizard_mode(setupwizard_mode_vec[instance_index]);
+    CF_EXPECT(
+        instance.set_setupwizard_mode(setupwizard_mode_vec[instance_index]));
     instance.set_userdata_format(userdata_format_vec[instance_index]);
     instance.set_guest_enforce_security(guest_enforce_security_vec[instance_index]);
     instance.set_pause_in_bootloader(pause_in_bootloader_vec[instance_index]);
@@ -1686,7 +1687,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                 calculated_gpu_mode_vec),
             "The set of flags is incompatible with snapshot");
 
-  DiskImageFlagsVectorization(tmp_config_obj, fetcher_config);
+  CF_EXPECT(DiskImageFlagsVectorization(tmp_config_obj, fetcher_config));
 
   return tmp_config_obj;
 }
