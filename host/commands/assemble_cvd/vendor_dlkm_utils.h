@@ -34,11 +34,6 @@ bool RepackSuperWithPartition(const std::string& superimg_path,
                               const std::string& image_path,
                               const std::string& partition_name);
 
-bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
-                     const std::string& output_image);
-bool BuildSystemDLKM(const std::string& src_dir, const bool is_erofs,
-                     const std::string& output_image);
-
 bool BuildVbmetaImage(const std::string& vendor_dlkm_img,
                       const std::string& vbmeta_path);
 bool BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
