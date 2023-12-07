@@ -154,7 +154,7 @@ git_version_h = vcs_tag(
 
 executable(
   'cvd',
-  cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings'],
+  cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings', '-DNODISCARD_EXPECTED=true'],
   sources: ['cuttlefish/host/commands/cvd/main.cc'] + sources + server + launch_cvd_proto + internal_config + user_config + client_analytics_proto + internal_user_log_proto + git_version_h,
   dependencies: [
     boringssl_crypto_lib,
@@ -177,7 +177,7 @@ executable(
 )
 executable(
   'allocd',
-  cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings'],
+  cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings', '-DNODISCARD_EXPECTED=true'],
   sources: ['cuttlefish/host/libs/allocd/allocd.cpp'] + sources + server + launch_cvd_proto + internal_config + user_config + client_analytics_proto + internal_user_log_proto + git_version_h,
   dependencies: [
     boringssl_crypto_lib,
