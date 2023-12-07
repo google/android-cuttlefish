@@ -78,7 +78,7 @@ void WriteEFIEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
                          std::optional<std::uint16_t> partition_num,
                          std::ostream& env) {
   std::string partition_str =
-      partition_num ? fmt::format("setenv devplist {};", *partition_num) : "";
+      partition_num ? fmt::format("setenv devplist {:x};", *partition_num) : "";
   WritePausedEntrypoint(
       partition_str +
           "load virtio 0:${devplist} ${loadaddr} efi/boot/bootaa64.efi "
@@ -108,12 +108,15 @@ size_t WriteEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
       WriteAndroidEnvironment(env, instance);
       break;
     case CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader:
-    case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
-    case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
-      WriteEFIEnvironment(instance, {}, env);
-      break;
     case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs:
       WriteEFIEnvironment(instance, 2, env);
+      break;
+    case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOsDisk:
+      WriteEFIEnvironment(instance, 12, env);
+      break;
+    case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
+    case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
+      WriteEFIEnvironment(instance, {}, env);
       break;
   }
 
