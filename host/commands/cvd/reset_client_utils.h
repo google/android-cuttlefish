@@ -33,10 +33,12 @@ class RunCvdProcessManager {
   using GroupProcInfo = RunCvdProcessCollector::GroupProcInfo;
 
   static Result<RunCvdProcessManager> Get();
+  // called by cvd reset handler
   Result<void> KillAllCuttlefishInstances(bool cvd_server_children_only,
                                           bool clear_runtime_dirs);
-  void ForcefullyStopGroup(bool cvd_server_children_only,
-                           const GroupProcInfo& group);
+  // called by cvd start
+  Result<void> ForcefullyStopGroup(bool cvd_server_children_only,
+                                   uid_t any_id_in_group);
 
  private:
   RunCvdProcessManager() = delete;
@@ -46,7 +48,10 @@ class RunCvdProcessManager {
   Result<void> RunStopCvdAll(bool cvd_server_children_only,
                              bool clear_runtime_dirs);
   Result<void> SendSignal(bool cvd_server_children_only, const GroupProcInfo&);
-  void DeleteLockFile(bool cvd_server_children_only, const GroupProcInfo&);
+  Result<void> DeleteLockFile(bool cvd_server_children_only,
+                              const GroupProcInfo&);
+  Result<void> ForcefullyStopGroup(bool cvd_server_children_only,
+                                   const GroupProcInfo& group);
 
   RunCvdProcessCollector run_cvd_process_collector_;
 };
