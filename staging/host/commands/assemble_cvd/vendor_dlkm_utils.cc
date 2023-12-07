@@ -390,16 +390,6 @@ bool BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
   return AddVbmetaFooter(output_image, partition_name);
 }
 
-bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
-                     const std::string& output_image) {
-  return BuildDlkmImage(src_dir, is_erofs, "vendor_dlkm", output_image);
-}
-
-bool BuildSystemDLKM(const std::string& src_dir, const bool is_erofs,
-                     const std::string& output_image) {
-  return BuildDlkmImage(src_dir, is_erofs, "system_dlkm", output_image);
-}
-
 bool RepackSuperWithPartition(const std::string& superimg_path,
                               const std::string& image_path,
                               const std::string& partition_name) {
