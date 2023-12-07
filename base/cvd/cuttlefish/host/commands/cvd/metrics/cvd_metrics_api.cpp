@@ -21,7 +21,6 @@
 #include "host/commands/cvd/metrics/proto/cvd_metrics_protos.h"
 #include "host/commands/cvd/metrics/utils.h"
 #include "host/commands/metrics/metrics_defs.h"
-#include "shared/api_level.h"
 
 namespace cuttlefish {
 
