@@ -609,7 +609,7 @@ auto ErrorFromType(Result<T>&& value) {
       current_entry << "Expected \"" << #LHS_RESULT << "\" " << #COMPARE_OP \
                     << " \"" << #RHS_RESULT << "\" but was "                \
                     << lhs_macro_intermediate_result << " vs "              \
-                    << rhs_macro_intermediate_result << ".";                \
+                    << rhs_macro_intermediate_result << ". ";               \
       current_entry << MSG;                                                 \
       auto error = ErrorFromType(false);                                    \
       error.PushEntry(std::move(current_entry));                            \
