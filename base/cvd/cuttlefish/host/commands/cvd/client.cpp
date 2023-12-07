@@ -440,9 +440,9 @@ Result<void> CvdClient::CheckStatus(const cvd::Status& status,
   if (status.code() == cvd::Status::OK) {
     return {};
   }
-  return CF_ERR("Received error response for \"" << rpc << "\":\n"
-                                                 << status.message()
-                                                 << "\nIn client");
+  return CF_ERRF("Received error response for \"{}\"\n{}\n\n{}\n{}", rpc,
+                 "*** End of Client Stack Trace ***", status.message(),
+                 "*** End of Server Stack Trace/Error ***");
 }
 
 Result<void> CvdClient::HandleAcloud(
