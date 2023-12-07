@@ -323,7 +323,7 @@ CvdStartCommandHandler::UpdateInstanceArgsAndEnvs(
       GflagsCompatFlag("num_instances", old_num_instances),
       GflagsCompatFlag("base_instance_num", old_base_instance_num)};
   // discard old ones
-  ParseFlags(instance_id_flags, new_args);
+  CF_EXPECT(ParseFlags(instance_id_flags, new_args));
 
   auto check_flag = [artifacts_path, start_bin,
                      this](const std::string& flag_name) -> Result<void> {
@@ -688,7 +688,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
               cvd::WAIT_BEHAVIOR_START);
   }
 
-  FireCommand(std::move(command), /*should_wait*/ true);
+  CF_EXPECT(FireCommand(std::move(command), /*should_wait*/ true));
   interrupt_lock.unlock();
 
   if (is_help) {
@@ -699,7 +699,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   // For backward compatibility, we add extra symlink in system wide home
   // when HOME is NOT overridden and selector flags are NOT given.
   if (group_creation_info->is_default_group) {
-    CreateSymlinks(*group_creation_info);
+    CF_EXPECT(CreateSymlinks(*group_creation_info));
   }
 
   // make acquire interrupt_lock inside.
