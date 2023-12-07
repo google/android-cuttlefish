@@ -295,11 +295,8 @@ Result<LoadDirectories> GenerateLoadDirectories(
               << system_image_directories.back();
   }
 
-  CF_EXPECT_EQ(
-      (system_host_path || num_remote > 0), true,
-      "Host tools path must be provided when using local-only instances");
-  CF_EXPECT_EQ(system_host_path && !IsLocalBuild(system_host_path.value()),
-               false, "Host tools package must be a local path");
+  CF_EXPECT(system_host_path || num_remote > 0,
+            "Host tools path must be provided when using only local artifacts");
 
   if (system_host_path && IsLocalBuild(system_host_path.value())) {
     // If config specifies a host tools path, we use this.
