@@ -116,7 +116,8 @@ class CvdHelpHandler : public CvdServerHandler {
                                request.Credentials());
 
     interrupt_lock.unlock();
-    executor_.Execute({inner_cmd}, SharedFD::Open("/dev/null", O_RDWR));
+    CF_EXPECT(
+        executor_.Execute({inner_cmd}, SharedFD::Open("/dev/null", O_RDWR)));
 
     return response;
   }
