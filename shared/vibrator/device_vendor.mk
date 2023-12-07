@@ -15,9 +15,4 @@
 #
 
 # Vibrator HAL
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.android.hardware.vibrator
-else
-PRODUCT_PACKAGES += \
-	android.hardware.vibrator-service.example
-endif
