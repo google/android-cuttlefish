@@ -198,7 +198,7 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   CF_EXPECT(Contains(supported_subcmds_, subcmd));
   const bool has_print = CF_EXPECT(HasPrint(cmd_args));
 
-  if (IsHelpSubcmd(cmd_args)) {
+  if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
     return HandleHelp(request);
   }
 

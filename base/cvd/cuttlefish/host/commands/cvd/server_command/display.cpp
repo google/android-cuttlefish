@@ -63,7 +63,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
 
     auto [_, subcmd_args] = ParseInvocation(request.Message());
 
-    bool is_help = IsHelp(subcmd_args);
+    bool is_help = CF_EXPECT(IsHelp(subcmd_args));
     // may modify subcmd_args by consuming in parsing
     Command command =
         is_help ? CF_EXPECT(HelpCommand(request, uid, subcmd_args, envs))
@@ -169,9 +169,9 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
     return command;
   }
 
-  bool IsHelp(const cvd_common::Args& cmd_args) const {
+  Result<bool> IsHelp(const cvd_common::Args& cmd_args) const {
     // cvd display --help, --helpxml, etc or simply cvd display
-    if (cmd_args.empty() || IsHelpSubcmd(cmd_args)) {
+    if (cmd_args.empty() || CF_EXPECT(IsHelpSubcmd(cmd_args))) {
       return true;
     }
     // cvd display help <subcommand> format
