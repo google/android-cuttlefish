@@ -43,9 +43,9 @@ namespace {
 
 Result<FlagCollection> CvdFlags() {
   FlagCollection cvd_flags;
-  cvd_flags.EnrollFlag(CvdFlag<bool>("clean", false));
-  cvd_flags.EnrollFlag(CvdFlag<bool>("help", false));
-  cvd_flags.EnrollFlag(CvdFlag<std::string>("verbosity"));
+  CF_EXPECT(cvd_flags.EnrollFlag(CvdFlag<bool>("clean", false)));
+  CF_EXPECT(cvd_flags.EnrollFlag(CvdFlag<bool>("help", false)));
+  CF_EXPECT(cvd_flags.EnrollFlag(CvdFlag<std::string>("verbosity")));
   return cvd_flags;
 }
 
