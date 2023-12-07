@@ -105,7 +105,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<void> UpdateInstanceDatabase(
       const uid_t uid, const selector::GroupCreationInfo& group_creation_info);
   Result<void> FireCommand(Command&& command, const bool wait);
-  bool HasHelpOpts(const cvd_common::Args& args) const;
 
   Result<Command> ConstructCvdNonHelpCommand(
       const std::string& bin_file,
@@ -323,7 +322,7 @@ CvdStartCommandHandler::UpdateInstanceArgsAndEnvs(
       GflagsCompatFlag("num_instances", old_num_instances),
       GflagsCompatFlag("base_instance_num", old_base_instance_num)};
   // discard old ones
-  ParseFlags(instance_id_flags, new_args);
+  CF_EXPECT(ParseFlags(instance_id_flags, new_args));
 
   auto check_flag = [artifacts_path, start_bin,
                      this](const std::string& flag_name) -> Result<void> {
@@ -656,7 +655,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   // collect group creation infos
   CF_EXPECT(Contains(supported_commands_, subcmd),
             "subcmd should be start but is " << subcmd);
-  const bool is_help = HasHelpOpts(subcmd_args);
+  const bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));
   const bool is_daemon = CF_EXPECT(IsDaemonModeFlag(subcmd_args));
 
   std::optional<selector::GroupCreationInfo> group_creation_info;
@@ -688,7 +687,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
               cvd::WAIT_BEHAVIOR_START);
   }
 
-  FireCommand(std::move(command), /*should_wait*/ true);
+  CF_EXPECT(FireCommand(std::move(command), /*should_wait*/ true));
   interrupt_lock.unlock();
 
   if (is_help) {
@@ -699,7 +698,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   // For backward compatibility, we add extra symlink in system wide home
   // when HOME is NOT overridden and selector flags are NOT given.
   if (group_creation_info->is_default_group) {
-    CreateSymlinks(*group_creation_info);
+    CF_EXPECT(CreateSymlinks(*group_creation_info));
   }
 
   // make acquire interrupt_lock inside.
@@ -787,11 +786,6 @@ Result<void> CvdStartCommandHandler::FireCommand(Command&& command,
   }
   CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
   return {};
-}
-
-bool CvdStartCommandHandler::HasHelpOpts(
-    const std::vector<std::string>& args) const {
-  return IsHelpSubcmd(args);
 }
 
 std::vector<std::string> CvdStartCommandHandler::CmdList() const {

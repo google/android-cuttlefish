@@ -288,7 +288,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
             DirectoryExists(envs.at(kAndroidHostOut)));
 
   std::unordered_set<std::string> non_cvd_op{"clear", "mkdir", "ln"};
-  if (Contains(non_cvd_op, subcmd) || IsHelpSubcmd(cmd_args)) {
+  if (Contains(non_cvd_op, subcmd) || CF_EXPECT(IsHelpSubcmd(cmd_args))) {
     const auto [bin, bin_path, host_artifacts_path] =
         Contains(non_cvd_op, subcmd) ? CF_EXPECT(NonCvdBinPath(subcmd, envs))
                                      : CF_EXPECT(CvdHelpBinPath(subcmd, envs));
