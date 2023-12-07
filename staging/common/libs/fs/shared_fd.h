@@ -49,7 +49,7 @@
 #include <android-base/cmsg.h>
 
 #ifdef __linux__
-#include "vm_sockets.h"
+#include <linux/vm_sockets.h>
 #endif
 
 #include "common/libs/utils/result.h"
