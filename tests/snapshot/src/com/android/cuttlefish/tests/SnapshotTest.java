@@ -48,7 +48,7 @@ public class SnapshotTest extends BaseHostJUnit4Test {
   @Test
   public void testSnapshot() throws Exception {
     // Snapshot the device
-    DeviceSnapshotHandler handler = new DeviceSnapshotHandler(getInvocationContext());
+    DeviceSnapshotHandler handler = new DeviceSnapshotHandler();
     boolean snapshotRes = false;
     snapshotRes = handler.snapshotDevice(getDevice(), String.format("snapshot_img%d", mTestCount));
 
