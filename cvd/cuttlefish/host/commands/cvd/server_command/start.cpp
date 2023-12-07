@@ -22,15 +22,12 @@
 #include <atomic>
 #include <cstdint>
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
-#include <map>
 #include <mutex>
 #include <optional>
 #include <regex>
 #include <sstream>
 #include <string>
-#include <thread>
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
@@ -147,8 +144,8 @@ class CvdStartCommandHandler : public CvdServerHandler {
    * response.
    */
   Result<cvd::Response> PostStartExecutionActions(
-      std::optional<selector::GroupCreationInfo>& group_creation_info,
-      const uid_t uid, const bool is_daemonized);
+      selector::GroupCreationInfo& group_creation_info, const uid_t uid,
+      const bool is_daemonized);
   Result<void> AcloudCompatActions(
       const selector::GroupCreationInfo& group_creation_info,
       const RequestWithStdio& request);
@@ -710,16 +707,16 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     LOG(ERROR) << "AcloudCompatActions() failed"
                << " but continue as they are minor errors.";
   }
-  return PostStartExecutionActions(group_creation_info, uid, is_daemon);
+  return PostStartExecutionActions(*group_creation_info, uid, is_daemon);
 }
 
 Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
-    std::optional<selector::GroupCreationInfo>& group_creation_info,
-    const uid_t uid, const bool is_daemonized) {
+    selector::GroupCreationInfo& group_creation_info, const uid_t uid,
+    const bool is_daemonized) {
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
     // perhaps failed in launch
-    instance_manager_.RemoveInstanceGroup(uid, group_creation_info->home);
+    instance_manager_.RemoveInstanceGroup(uid, group_creation_info.home);
   }
   auto final_response = ResponseFromSiginfo(infop);
   if (!final_response.has_status() ||
@@ -732,11 +729,10 @@ Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
     // If daemonized, reaching here means the group started successfully
     // As the destructor will release the file lock, the instance lock
     // files must be marked as used
-    MarkLockfilesInUse(*group_creation_info);
+    MarkLockfilesInUse(group_creation_info);
   }
   // group_creation_info is nullopt only if is_help is false
-  return FillOutNewInstanceInfo(std::move(final_response),
-                                *group_creation_info);
+  return FillOutNewInstanceInfo(std::move(final_response), group_creation_info);
 }
 
 Result<void> CvdStartCommandHandler::Interrupt() {
