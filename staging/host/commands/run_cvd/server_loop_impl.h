@@ -84,7 +84,7 @@ class ServerLoopImpl : public ServerLoop,
                               ProcessMonitor& process_monitor);
 
   void DeleteFifos();
-  bool PowerwashFiles();
+  Result<void> PowerwashFiles();
   void RestartRunCvd(int notification_fd);
   static bool CreateQcowOverlay(const std::string& crosvm_path,
                                 const std::string& backing_file,
