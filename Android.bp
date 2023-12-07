@@ -80,7 +80,13 @@ cc_defaults {
             enabled: false,
         },
     },
-    cflags: ["-Werror", "-Wall", "-D_FILE_OFFSET_BITS=64"],
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-D_FILE_OFFSET_BITS=64",
+        "-DNODISCARD_EXPECTED=true",
+        "-Wno-error=unused-result", // TODO(b/314526051): Fix Result<> uses
+    ],
     apex_available: [
         "//apex_available:platform",
         "com.android.virt",
