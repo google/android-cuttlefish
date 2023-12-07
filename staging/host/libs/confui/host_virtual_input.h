@@ -18,6 +18,8 @@
 
 #include <cstdint>
 
+#include <memory>
+
 #include <fruit/fruit.h>
 
 #include "host/libs/confui/host_server.h"
@@ -33,26 +35,20 @@ enum class ConfUiKeys : std::uint32_t { Confirm = 7, Cancel = 8 };
  */
 class HostVirtualInput : public InputConnector {
  public:
-  INJECT(HostVirtualInput(HostServer& host_server,
-                          HostModeCtrl& host_mode_ctrl,
+  INJECT(HostVirtualInput(HostServer& host_server, HostModeCtrl& host_mode_ctrl,
                           InputConnector& android_mode_input));
 
-  void UserAbortEvent();
   ~HostVirtualInput() = default;
+
+  void UserAbortEvent();
+
   // guarantees that if this returns true, it is confirmation UI mode
   bool IsConfUiActive();
 
+  HostServer& host_server() { return host_server_; }
+
   // InputConnector implementation.
-  Result<void> SendTouchEvent(const std::string& device_label, int x, int y,
-                              bool down) override;
-  Result<void> SendMultiTouchEvent(void* source,
-                                   const std::string& device_label,
-                                   const std::vector<MultitouchSlot>& slots,
-                                   bool down) override;
-  void OnDisconnectedSource(void* source) override;
-  Result<void> SendKeyboardEvent(uint16_t code, bool down) override;
-  Result<void> SendRotaryEvent(int pixels) override;
-  Result<void> SendSwitchesEvent(uint16_t code, bool state) override;
+  std::unique_ptr<EventSink> CreateSink() override;
 
  private:
   HostServer& host_server_;
