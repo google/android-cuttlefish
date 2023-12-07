@@ -32,6 +32,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
@@ -40,6 +41,7 @@
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/reset_client_utils.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -710,13 +712,55 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   return PostStartExecutionActions(*group_creation_info, uid, is_daemon);
 }
 
+static constexpr char kCollectorFailure[] = R"(
+  Consider running:
+     cvd reset -y
+
+  cvd start failed. While we should collect run_cvd processes to manually
+  clean them up, collecting run_cvd failed.
+)";
+static constexpr char kStopFailure[] = R"(
+  Consider running:
+     cvd reset -y
+
+  cvd start failed, and stopping run_cvd processes failed.
+)";
+static Result<cvd::Response> CvdResetGroup(
+    const selector::GroupCreationInfo& group_creation_info) {
+  auto run_cvd_process_manager = RunCvdProcessManager::Get();
+  if (!run_cvd_process_manager.ok()) {
+    return CommandResponse(cvd::Status::INTERNAL, kCollectorFailure);
+  }
+  // We can't run stop_cvd here. It may hang forever, and doesn't make sense
+  // to interrupt it.
+  const auto& instances = group_creation_info.instances;
+  CF_EXPECT(!instances.empty());
+  const auto& first_instance = instances.front();
+  auto stop_result = run_cvd_process_manager->ForcefullyStopGroup(
+      /* cvd_server_children_only */ true, first_instance.instance_id_);
+  if (!stop_result.ok()) {
+    return CommandResponse(cvd::Status::INTERNAL, kStopFailure);
+  }
+  return CommandResponse(cvd::Status::OK, "");
+}
+
 Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
     selector::GroupCreationInfo& group_creation_info, const uid_t uid,
     const bool is_daemonized) {
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
-    // perhaps failed in launch
-    instance_manager_.RemoveInstanceGroup(uid, group_creation_info.home);
+    if (is_daemonized) {
+      // run_cvd processes may be still running in background
+      // the order of the following operations should be kept
+      auto reset_response = CF_EXPECT(CvdResetGroup(group_creation_info));
+      instance_manager_.RemoveInstanceGroup(uid, group_creation_info.home);
+      if (reset_response.status().code() != cvd::Status::OK) {
+        return reset_response;
+      }
+    } else {
+      // run_cvd processes are not running
+      instance_manager_.RemoveInstanceGroup(uid, group_creation_info.home);
+    }
   }
   auto final_response = ResponseFromSiginfo(infop);
   if (!final_response.has_status() ||
