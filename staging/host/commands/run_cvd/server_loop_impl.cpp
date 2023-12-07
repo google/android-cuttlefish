@@ -227,8 +227,10 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
         client->Write(&response, sizeof(response));
         break;
       }
-      if (!PowerwashFiles()) {
-        LOG(ERROR) << "Powerwashing files failed.";
+      auto powerwash = PowerwashFiles();
+      if (!powerwash.ok()) {
+        LOG(ERROR) << "Powerwashing files failed:\n"
+                   << powerwash.error().FormatForEnv();
         auto response = LauncherResponse::kError;
         client->Write(&response, sizeof(response));
         break;
@@ -307,7 +309,7 @@ void ServerLoopImpl::DeleteFifos() {
   }
 }
 
-bool ServerLoopImpl::PowerwashFiles() {
+Result<void> ServerLoopImpl::PowerwashFiles() {
   DeleteFifos();
 
   // TODO(b/269669405): Figure out why this file is not being deleted
@@ -318,15 +320,15 @@ bool ServerLoopImpl::PowerwashFiles() {
 
   auto kregistry_path = instance_.access_kregistry_path();
   unlink(kregistry_path.c_str());
-  CreateBlankImage(kregistry_path, 2 /* mb */, "none");
+  CF_EXPECT(CreateBlankImage(kregistry_path, 2 /* mb */, "none"));
 
   auto hwcomposer_pmem_path = instance_.hwcomposer_pmem_path();
   unlink(hwcomposer_pmem_path.c_str());
-  CreateBlankImage(hwcomposer_pmem_path, 2 /* mb */, "none");
+  CF_EXPECT(CreateBlankImage(hwcomposer_pmem_path, 2 /* mb */, "none"));
 
   auto pstore_path = instance_.pstore_path();
   unlink(pstore_path.c_str());
-  CreateBlankImage(pstore_path, 2 /* mb */, "none");
+  CF_EXPECT(CreateBlankImage(pstore_path, 2 /* mb */, "none"));
 
   auto sdcard_path = instance_.sdcard_path();
   auto sdcard_size = FileSize(sdcard_path);
@@ -334,7 +336,7 @@ bool ServerLoopImpl::PowerwashFiles() {
   // round up
   auto sdcard_mb_size = (sdcard_size + (1 << 20) - 1) / (1 << 20);
   LOG(DEBUG) << "Size in mb is " << sdcard_mb_size;
-  CreateBlankImage(sdcard_path, sdcard_mb_size, "sdcard");
+  CF_EXPECT(CreateBlankImage(sdcard_path, sdcard_mb_size, "sdcard"));
 
   struct OverlayFile {
     std::string name;
@@ -356,13 +358,10 @@ bool ServerLoopImpl::PowerwashFiles() {
     auto composite_disk_path = overlay_file.composite_disk_path.c_str();
 
     unlink(overlay_path.c_str());
-    if (!CreateQcowOverlay(instance_.crosvm_binary(), composite_disk_path,
-                           overlay_path)) {
-      LOG(ERROR) << "CreateQcowOverlay failed";
-      return false;
-    }
+    CF_EXPECT(CreateQcowOverlay(instance_.crosvm_binary(), composite_disk_path,
+                                overlay_path));
   }
-  return true;
+  return {};
 }
 
 void ServerLoopImpl::RestartRunCvd(int notification_fd) {
