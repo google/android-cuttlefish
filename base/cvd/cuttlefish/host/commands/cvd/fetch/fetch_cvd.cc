@@ -486,7 +486,7 @@ Result<void> FetchTarget(BuildApi& build_api, const Builds& builds,
     std::string downloaded_kernel_filepath =
         CF_EXPECT(build_api.DownloadFileWithBackup(
             *builds.kernel, target_directories.root, "bzImage", "Image"));
-    RenameFile(downloaded_kernel_filepath, kernel_filepath);
+    CF_EXPECT(RenameFile(downloaded_kernel_filepath, kernel_filepath));
     const auto [kernel_id, kernel_target] = GetBuildIdAndTarget(*builds.kernel);
     CF_EXPECT(config.AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_id,
                                       kernel_target, {kernel_filepath},
@@ -550,7 +550,7 @@ Result<void> FetchTarget(BuildApi& build_api, const Builds& builds,
         CF_EXPECT(build_api.DownloadFileWithBackup(*builds.bootloader,
                                                    target_directories.root,
                                                    "u-boot.rom", "u-boot.bin"));
-    RenameFile(downloaded_bootloader_filepath, bootloader_filepath);
+    CF_EXPECT(RenameFile(downloaded_bootloader_filepath, bootloader_filepath));
     const auto [bootloader_id, bootloader_target] =
         GetBuildIdAndTarget(*builds.bootloader);
     CF_EXPECT(config.AddFilesToConfig(
