@@ -130,10 +130,6 @@ class SharedFD {
  public:
   inline SharedFD();
   SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
-  SharedFD(SharedFD const&) = default;
-  SharedFD(SharedFD&& other);
-  SharedFD& operator=(SharedFD const&) = default;
-  SharedFD& operator=(SharedFD&& other);
   // Reference the listener as a FileInstance to make this FD type agnostic.
   static SharedFD Accept(const FileInstance& listener, struct sockaddr* addr,
                          socklen_t* addrlen);
@@ -305,9 +301,9 @@ class FileInstance {
   // Otherwise an error will be set either on this file or the input.
   // The non-const reference is needed to avoid binding this to a particular
   // reference type.
-  bool CopyFrom(FileInstance& in, size_t length, FileInstance* stop = nullptr);
+  bool CopyFrom(FileInstance& in, size_t length);
   // Same as CopyFrom, but reads from input until EOF is reached.
-  bool CopyAllFrom(FileInstance& in, FileInstance* stop = nullptr);
+  bool CopyAllFrom(FileInstance& in);
 
   int UNMANAGED_Dup();
   int UNMANAGED_Dup2(int newfd);
