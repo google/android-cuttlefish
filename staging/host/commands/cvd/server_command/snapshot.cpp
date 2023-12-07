@@ -192,13 +192,6 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
     return command;
   }
 
-  bool IsHelp(const cvd_common::Args& cmd_args) const {
-    if (IsHelpSubcmd(cmd_args)) {
-      return true;
-    }
-    return (cmd_args.front() == "help");
-  }
-
   Result<std::string> GetBin(const std::string& host_artifacts_path,
                              const std::string& op) const {
     auto snapshot_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
