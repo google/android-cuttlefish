@@ -22,6 +22,7 @@
 #include <regex>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -44,17 +45,50 @@ static Result<uid_t> FileOwnerUid(const std::string& file_path) {
   return buf.st_uid;
 }
 
-// TODO(kwstephenkim): This logic is used broadly, so consider
-// to create a new library.
-template <typename... Args>
-static std::string ConcatToString(Args&&... args) {
-  std::stringstream concatenator;
-  (concatenator << ... << std::forward<Args>(args));
-  return concatenator.str();
+struct ProcStatusUids {
+  uid_t real_;
+  uid_t effective_;
+  uid_t saved_set_;
+  uid_t filesystem_;
+};
+
+// /proc/<pid>/status has Uid: <uid> <uid> <uid> <uid> line
+// It normally is separated by a tab or more but that's not guaranteed forever
+static Result<ProcStatusUids> OwnerUids(const pid_t pid) {
+  // parse from /proc/<pid>/status
+  std::regex uid_pattern(R"(Uid:\s+([0-9]+)\s+([0-9]+)\s+([0-9]+)\s+([0-9]+))");
+  std::string status_path = fmt::format("/proc/{}/status", pid);
+  std::string status_content;
+  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content));
+  std::vector<uid_t> uids;
+  for (const std::string& line :
+       android::base::Tokenize(status_content, "\n")) {
+    std::smatch matches;
+    if (!std::regex_match(line, matches, uid_pattern)) {
+      continue;
+    }
+    // the line, then 4 uids
+    CF_EXPECT_EQ(matches.size(), 5,
+                 fmt::format("Error in the Uid line: \"{}\"", line));
+    uids.reserve(4);
+    for (int i = 1; i < 5; i++) {
+      unsigned uid = 0;
+      CF_EXPECT(android::base::ParseUint(matches[i], &uid));
+      uids.push_back(uid);
+    }
+    break;
+  }
+  CF_EXPECT(!uids.empty(), "The \"Uid:\" line was not found");
+  return ProcStatusUids{
+      .real_ = uids.at(0),
+      .effective_ = uids.at(1),
+      .saved_set_ = uids.at(2),
+      .filesystem_ = uids.at(3),
+  };
 }
 
 static std::string PidDirPath(const pid_t pid) {
-  return ConcatToString(kProcDir, "/", pid);
+  return fmt::format("{}/{}", kProcDir, pid);
 }
 
 /* ReadFile does not work for /proc/<pid>/<some files>
@@ -122,24 +156,10 @@ Result<std::vector<pid_t>> CollectPids(const uid_t uid) {
     // Shouldn't failed here. If failed, either regex or
     // android::base::ParseInt needs serious fixes
     CF_EXPECT(android::base::ParseInt(subdir, &pid));
-    struct stat dir_stat_buf;
-    if (::stat(PidDirPath(pid).data(), &dir_stat_buf) != 0) {
-      continue;
+    auto owner_uid_result = OwnerUids(pid);
+    if (owner_uid_result.ok() && owner_uid_result->real_ == uid) {
+      pids.push_back(pid);
     }
-    if (dir_stat_buf.st_uid != uid) {
-      continue;
-    }
-    // as we collect cuttlefish-related stuff, we want exe to be
-    // shared by the same owner
-    struct stat exe_stat_buf;
-    std::string exe_path = PidDirPath(pid) + "/exe";
-    if (::stat(exe_path.data(), &exe_stat_buf) != 0) {
-      continue;
-    }
-    if (exe_stat_buf.st_uid != uid) {
-      continue;
-    }
-    pids.push_back(pid);
   }
   return pids;
 }
@@ -154,7 +174,7 @@ Result<std::vector<std::string>> GetCmdArgs(const pid_t pid) {
 
 Result<std::string> GetExecutablePath(const pid_t pid) {
   std::string exec_target_path;
-  std::string proc_exe_path = ConcatToString("/proc/", pid, "/exe");
+  std::string proc_exe_path = fmt::format("/proc/{}/exe", pid);
   CF_EXPECT(
       android::base::Readlink(proc_exe_path, std::addressof(exec_target_path)),
       proc_exe_path << " Should be a symbolic link but it is not.");
@@ -165,18 +185,42 @@ Result<std::string> GetExecutablePath(const pid_t pid) {
   return exec_target_path;
 }
 
+static Result<void> CheckExecNameFromStatus(const std::string& exec_name,
+                                            const pid_t pid) {
+  std::string status_path = fmt::format("/proc/{}/status", pid);
+  std::string status_content;
+  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content));
+  bool found = false;
+  for (const std::string& line :
+       android::base::Tokenize(status_content, "\n")) {
+    std::string_view line_view(line);
+    if (!android::base::ConsumePrefix(&line_view, "Name:")) {
+      continue;
+    }
+    auto trimmed_line = android::base::Trim(line_view);
+    if (trimmed_line == exec_name) {
+      found = true;
+      break;
+    }
+  }
+  CF_EXPECTF(found == true,
+             "\"Name:  [name]\" line is not found in the status file: \"{}\"",
+             status_path);
+  return {};
+}
+
 Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
                                                  const uid_t uid) {
   CF_EXPECT(cpp_basename(exec_name) == exec_name);
   auto input_pids = CF_EXPECT(CollectPids(uid));
   std::vector<pid_t> output_pids;
   for (const auto pid : input_pids) {
-    auto pid_exec_path = GetExecutablePath(pid);
-    if (!pid_exec_path.ok()) {
-      LOG(ERROR) << pid_exec_path.error().FormatForEnv();
+    auto owner_uids_result = OwnerUids(pid);
+    if (!owner_uids_result.ok() || owner_uids_result->real_ != uid) {
+      LOG(VERBOSE) << "Process #" << pid << " does not belong to " << uid;
       continue;
     }
-    if (cpp_basename(*pid_exec_path) == exec_name) {
+    if (CheckExecNameFromStatus(exec_name, pid).ok()) {
       output_pids.push_back(pid);
     }
   }
@@ -216,64 +260,6 @@ Result<std::vector<pid_t>> CollectPidsByArgv0(const std::string& expected_argv0,
     }
   }
   return output_pids;
-}
-
-// /proc/<pid>/status has Uid: <uid> <uid> <uid> <uid> line
-// It normally is separated by a tab or more but that's not guaranteed forever
-static Result<std::vector<uid_t>> UidsFromUidLine(std::string uid_line) {
-  auto start = uid_line.find_first_of("0123456789");
-  if (start == std::string::npos) {
-    return {};
-  }
-
-  auto end = uid_line.find_first_not_of("0123456789", start);
-  std::string token = (end != std::string::npos)
-                          ? uid_line.substr(start, end - start)
-                          : uid_line.substr(start);
-
-  int current_uid;
-  CF_EXPECT(android::base::ParseInt(token, &current_uid));
-  std::vector<uid_t> uids{static_cast<uid_t>(current_uid)};
-
-  if (end == std::string::npos) {
-    return uids;
-  }
-  auto the_rest = CF_EXPECT(UidsFromUidLine(uid_line.substr(end)));
-  uids.insert(uids.end(), the_rest.begin(), the_rest.end());
-  return uids;
-}
-
-struct ProcStatusUids {
-  uid_t real_;
-  uid_t effective_;
-  uid_t saved_set_;
-  uid_t filesystem_;
-};
-static Result<ProcStatusUids> OwnerUids(const pid_t pid) {
-  // parse from /proc/<pid>/status
-  std::regex uid_pattern(R"(Uid:\s+[0-9]+\s+[0-9]+\s+[0-9]+\s+[0-9]+)");
-  std::string status_path = fmt::format("/proc/{}/status", pid);
-  std::string status_content;
-  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content));
-  std::vector<uid_t> uids;
-  uids.reserve(4);
-  for (const std::string& line :
-       android::base::Tokenize(status_content, "\n")) {
-    if (!std::regex_match(line, uid_pattern)) {
-      continue;
-    }
-    uids = CF_EXPECT(UidsFromUidLine(line));
-    CF_EXPECT_EQ(uids.size(), 4,
-                 fmt::format("Error in the Uid line: \"{}\"", line));
-    break;
-  }
-  CF_EXPECT(!uids.empty(), "The \"Uid:\" line was not found");
-  return ProcStatusUids{
-      .real_ = uids.at(0),
-      .effective_ = uids.at(1),
-      .saved_set_ = uids.at(2),
-      .filesystem_ = uids.at(3),
-  };
 }
 
 Result<uid_t> OwnerUid(const pid_t pid) {
