@@ -133,6 +133,7 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
   {"common", ConfigNode{.type = objectValue, .children = {
     {"group_name", ConfigNode{.type = stringValue}},
     {"host_package", ConfigNode{.type = stringValue}},
+    {"bootconfig_args", ConfigNode{.type = stringValue}},
   }}},
 },
 };
