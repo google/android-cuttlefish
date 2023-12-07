@@ -423,7 +423,14 @@ class CuttlefishConfig {
 
     std::string audio_server_path() const;
 
-    enum class BootFlow { Android, AndroidEfiLoader, ChromeOs, Linux, Fuchsia };
+    enum class BootFlow {
+      Android,
+      AndroidEfiLoader,
+      ChromeOs,
+      ChromeOsDisk,
+      Linux,
+      Fuchsia
+    };
 
     BootFlow boot_flow() const;
 
@@ -623,8 +630,9 @@ class CuttlefishConfig {
 
     // android efi loader flow
     std::string android_efi_loader() const;
-    //
-    // linux artifacts for otheros flow
+
+    // chromeos artifacts for otheros flow
+    std::string chromeos_disk() const;
     std::string chromeos_kernel_path() const;
     std::string chromeos_root_image() const;
 
@@ -818,6 +826,7 @@ class CuttlefishConfig {
     void set_system_target_zip(const std::string& system_target_zip);
     void set_otheros_esp_image(const std::string& otheros_esp_image);
     void set_android_efi_loader(const std::string& android_efi_loader);
+    void set_chromeos_disk(const std::string& chromeos_disk);
     void set_chromeos_kernel_path(const std::string& linux_kernel_path);
     void set_chromeos_root_image(const std::string& linux_root_image);
     void set_linux_kernel_path(const std::string& linux_kernel_path);
