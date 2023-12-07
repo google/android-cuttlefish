@@ -187,7 +187,7 @@ constexpr static std::array help_str_opts{
     "helpmatch",
 };
 
-bool IsHelpSubcmd(const std::vector<std::string>& args) {
+Result<bool> IsHelpSubcmd(const std::vector<std::string>& args) {
   std::vector<std::string> copied_args(args);
   std::vector<Flag> flags;
   flags.reserve(help_bool_opts.size() + help_str_opts.size());
@@ -199,7 +199,7 @@ bool IsHelpSubcmd(const std::vector<std::string>& args) {
   for (const auto str_opt : help_str_opts) {
     flags.emplace_back(GflagsCompatFlag(str_opt, str_value_placeholder));
   }
-  ParseFlags(flags, copied_args);
+  CF_EXPECT(ParseFlags(flags, copied_args));
   // if there was any match, some in copied_args were consumed.
   return (args.size() != copied_args.size());
 }

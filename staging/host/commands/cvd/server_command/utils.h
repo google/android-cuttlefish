@@ -75,6 +75,6 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
     const ConstructNonHelpForm& request_form, const RequestWithStdio& request);
 
 // e.g. cvd start --help, cvd stop --help
-bool IsHelpSubcmd(const std::vector<std::string>& args);
+Result<bool> IsHelpSubcmd(const std::vector<std::string>& args);
 
 }  // namespace cuttlefish
