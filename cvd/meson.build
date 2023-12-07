@@ -139,11 +139,22 @@ protoc_generator = generator(protoc,
   arguments : ['--proto_path=@CURRENT_SOURCE_DIR@', '--cpp_out=@BUILD_DIR@', '@INPUT@'])
 
 server = protoc_generator.process('cvd_server.proto')
+server_dependency = declare_dependency(sources: server)
+
 internal_config = protoc_generator.process('internal_config.proto')
+internal_config_dependency = declare_dependency(sources: internal_config)
+
 launch_cvd_proto = protoc_generator.process('launch_cvd.proto')
+launch_cvd_proto_dependency = declare_dependency(sources: launch_cvd_proto)
+
 user_config = protoc_generator.process('user_config.proto')
+user_config_dependency = declare_dependency(sources: user_config)
+
 client_analytics_proto = protoc_generator.process('clientanalytics.proto')
+client_analytics_proto_dependency = declare_dependency(sources: client_analytics_proto)
+
 internal_user_log_proto = protoc_generator.process('internal_user_log.proto')
+internal_user_log_proto_dependency = declare_dependency(sources: internal_user_log_proto)
 
 git_version_h = vcs_tag(
   command : ['git', 'describe'],
@@ -151,24 +162,34 @@ git_version_h = vcs_tag(
   input : 'build_version.h.in',
   output :'version.h',
 )
+git_version_h_dependency = declare_dependency(sources: git_version_h)
+
+dependencies = [
+  boringssl_crypto_lib,
+  boringssl_ssl_lib,
+  client_analytics_proto_dependency,
+  dependency('fmt'),
+  dependency('gflags'),
+  dependency('jsoncpp'),
+  dependency('libcurl'),
+  dependency('libglog'),
+  dependency('libxml-2.0'),
+  dependency('protobuf'),
+  dependency('uuid'),
+  dependency('zlib'),
+  git_version_h_dependency,
+  internal_config_dependency,
+  internal_user_log_proto_dependency,
+  launch_cvd_proto_dependency,
+  server_dependency,
+  user_config_dependency,
+]
 
 executable(
   'cvd',
-  cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings', '-DNODISCARD_EXPECTED=true'],
-  sources: ['cuttlefish/host/commands/cvd/main.cc'] + sources + server + launch_cvd_proto + internal_config + user_config + client_analytics_proto + internal_user_log_proto + git_version_h,
-  dependencies: [
-    boringssl_crypto_lib,
-    boringssl_ssl_lib,
-    dependency('fmt'),
-    dependency('gflags'),
-    dependency('jsoncpp'),
-    dependency('libcurl'),
-    dependency('libglog'),
-    dependency('libxml-2.0'),
-    dependency('protobuf'),
-    dependency('uuid'),
-    dependency('zlib'),
-  ],
+  cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings',  '-DNODISCARD_EXPECTED=true'],
+  sources: ['cuttlefish/host/commands/cvd/main.cc'] + sources,
+  dependencies: dependencies,
   include_directories: [
     '/usr/include/android/',
     '/usr/local/include',
@@ -178,20 +199,8 @@ executable(
 executable(
   'allocd',
   cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings', '-DNODISCARD_EXPECTED=true'],
-  sources: ['cuttlefish/host/libs/allocd/allocd.cpp'] + sources + server + launch_cvd_proto + internal_config + user_config + client_analytics_proto + internal_user_log_proto + git_version_h,
-  dependencies: [
-    boringssl_crypto_lib,
-    boringssl_ssl_lib,
-    dependency('fmt'),
-    dependency('gflags'),
-    dependency('jsoncpp'),
-    dependency('libcurl'),
-    dependency('libglog'),
-    dependency('libxml-2.0'),
-    dependency('protobuf'),
-    dependency('uuid'),
-    dependency('zlib'),
-  ],
+  sources: ['cuttlefish/host/libs/allocd/allocd.cpp'] + sources,
+  dependencies: dependencies,
   include_directories: [
     '/usr/include/android/',
     '/usr/local/include',

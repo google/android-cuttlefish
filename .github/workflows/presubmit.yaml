@@ -43,3 +43,18 @@ jobs:
       run: cd android-cuttlefish/frontend && debuild -i -us -uc -b
     - name: install user debian package
       run: dpkg -i android-cuttlefish/cuttlefish-user_*_*64.deb || apt-get install -f -y
+  build-cvd:
+    runs-on: ubuntu-latest
+    container: 
+      image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Setup apt
+      run: apt update -y && apt upgrade -y
+    - name: Install dependencies
+      run: apt install -y clang pkg-config meson libfmt-dev libgflags-dev libjsoncpp-dev protobuf-compiler android-libboringssl-dev libgtest-dev libcurl4-openssl-dev libprotobuf-c-dev libgoogle-glog-dev libxml2-dev uuid-dev
+    - name: Setup meson
+      run: mkdir cvd/build && cd cvd/build && meson setup
+    # - name: Build cvd
+    #   run: cd cvd/build && meson compile
