@@ -326,9 +326,10 @@ Result<void> StartSelectorParser::ParseOptions() {
   std::optional<std::string> instance_nums;
   std::optional<std::string> base_instance_num;
   // set num_instances as std::nullptr or the value of --num_instances
-  FilterSelectorFlag(cmd_args_, "num_instances", num_instances);
-  FilterSelectorFlag(cmd_args_, "instance_nums", instance_nums);
-  FilterSelectorFlag(cmd_args_, "base_instance_num", base_instance_num);
+  CF_EXPECT(FilterSelectorFlag(cmd_args_, "num_instances", num_instances));
+  CF_EXPECT(FilterSelectorFlag(cmd_args_, "instance_nums", instance_nums));
+  CF_EXPECT(
+      FilterSelectorFlag(cmd_args_, "base_instance_num", base_instance_num));
 
   InstanceIdsParams instance_nums_param{
       .num_instances = std::move(num_instances),
