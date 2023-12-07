@@ -53,14 +53,14 @@ namespace cuttlefish {
 class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
  public:
   ConnectionObserverImpl(
-      InputConnector &input_connector,
+      std::unique_ptr<InputConnector::EventSink> input_events_sink,
       KernelLogEventsHandler *kernel_log_events_handler,
       std::map<std::string, SharedFD> commands_to_custom_action_servers,
       std::weak_ptr<DisplayHandler> display_handler,
       CameraController *camera_controller,
       std::shared_ptr<webrtc_streaming::SensorsHandler> sensors_handler,
       std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer)
-      : input_connector_(input_connector),
+      : input_events_sink_(std::move(input_events_sink)),
         kernel_log_events_handler_(kernel_log_events_handler),
         commands_to_custom_action_servers_(commands_to_custom_action_servers),
         weak_display_handler_(display_handler),
@@ -72,7 +72,6 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     if (kernel_log_subscription_id_ != -1) {
       kernel_log_events_handler_->Unsubscribe(kernel_log_subscription_id_);
     }
-    input_connector_.OnDisconnectedSource(this);
   }
 
   void OnConnected() override {
@@ -81,7 +80,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnTouchEvent(const std::string &device_label, int x, int y,
                     bool down) override {
-    input_connector_.SendTouchEvent(device_label, x, y, down);
+    input_events_sink_->SendTouchEvent(device_label, x, y, down);
   }
 
   void OnMultiTouchEvent(const std::string &device_label, Json::Value id,
@@ -93,19 +92,19 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
       slots[i].x = x[i].asInt();
       slots[i].y = y[i].asInt();
     }
-    input_connector_.SendMultiTouchEvent(this, device_label, slots, down);
+    input_events_sink_->SendMultiTouchEvent(device_label, slots, down);
   }
 
   void OnKeyboardEvent(uint16_t code, bool down) override {
-    input_connector_.SendKeyboardEvent(code, down);
+    input_events_sink_->SendKeyboardEvent(code, down);
   }
 
   void OnWheelEvent(int pixels) {
-    input_connector_.SendRotaryEvent(pixels);
+    input_events_sink_->SendRotaryEvent(pixels);
   }
 
   void OnSwitchEvent(uint16_t code, bool state) {
-    input_connector_.SendSwitchesEvent(code, state);
+    input_events_sink_->SendSwitchesEvent(code, state);
   }
 
   void OnAdbChannelOpen(std::function<bool(const uint8_t *, size_t)>
@@ -333,7 +332,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     }
   }
 
-  InputConnector& input_connector_;
+  std::unique_ptr<InputConnector::EventSink> input_events_sink_;
   KernelLogEventsHandler *kernel_log_events_handler_;
   int kernel_log_subscription_id_ = -1;
   std::shared_ptr<webrtc_streaming::AdbHandler> adb_handler_;
@@ -361,10 +360,10 @@ CfConnectionObserverFactory::CfConnectionObserverFactory(
 std::shared_ptr<webrtc_streaming::ConnectionObserver>
 CfConnectionObserverFactory::CreateObserver() {
   return std::shared_ptr<webrtc_streaming::ConnectionObserver>(
-      new ConnectionObserverImpl(input_connector_, kernel_log_events_handler_,
-                                 commands_to_custom_action_servers_,
-                                 weak_display_handler_, camera_controller_,
-                                 shared_sensors_handler_, lights_observer_));
+      new ConnectionObserverImpl(
+          input_connector_.CreateSink(), kernel_log_events_handler_,
+          commands_to_custom_action_servers_, weak_display_handler_,
+          camera_controller_, shared_sensors_handler_, lights_observer_));
 }
 
 void CfConnectionObserverFactory::AddCustomActionServer(
