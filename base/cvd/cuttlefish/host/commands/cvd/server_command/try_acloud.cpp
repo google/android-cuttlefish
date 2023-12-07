@@ -81,7 +81,7 @@ class TryAcloudCommand : public CvdServerHandler {
   Result<void> Interrupt() override {
     std::lock_guard interrupt_lock(interrupt_mutex_);
     interrupted_ = true;
-    waiter_.Interrupt();
+    CF_EXPECT(waiter_.Interrupt());
     return {};
   }
 
