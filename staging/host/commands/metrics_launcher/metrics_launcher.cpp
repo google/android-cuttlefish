@@ -49,11 +49,6 @@ Result<void> MetricsLauncherMain() {
       cuttlefish::MetricsReceiver::LogMetricsDeviceBoot();
     } else if (command == "lock") {
       cuttlefish::MetricsReceiver::LogMetricsLockScreen();
-    } else if (command == "atest") {
-      std::cout << "Enter command line: ";
-      std::string command_line;
-      std::getline(std::cin, command_line);
-      cuttlefish::AtestMetricsReceiver::LogMetricsSendCmd(command_line);
     } else if (command == "exit") {
       break;
     } else {
