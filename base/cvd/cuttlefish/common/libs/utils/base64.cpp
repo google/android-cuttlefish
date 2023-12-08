@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include <openssl/evp.h>
+#include <openssl/base64.h>
 
 namespace cuttlefish {
 
@@ -85,20 +85,9 @@ bool DecodeBase64(const std::string &data, std::vector<std::uint8_t> *buffer) {
   }
   auto out_len = *len_res;
   buffer->resize(out_len);
-  auto actual_len = EVP_DecodeBlock(buffer->data(),
-                                reinterpret_cast<const uint8_t *>(data.data()),
-                                data.size());
-  if (actual_len < 0) {
-    return false;
-  }
-
-  // DecodeBlock leaves null characters at the end of the buffer when the
-  // decoded message is not a multiple of 3.
-  while (!buffer->empty() && buffer->back() == '\0') {
-    buffer->pop_back();
-  }
-
-  return true;
+  auto result = EVP_DecodeBlock(buffer->data(), buffer->data(), data.size());
+  buffer->resize(out_len);
+  return result;
 }
 
 }  // namespace cuttlefish
