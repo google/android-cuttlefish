@@ -25,6 +25,7 @@
 
 #include "cvd_server.pb.h"
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/server_client.h"
@@ -93,5 +94,7 @@ enum class TerminalColors : int {
 };
 
 std::string TerminalColor(const bool is_tty, TerminalColors color);
+
+Result<cvd::Response> WriteToFd(SharedFD fd, const std::string& output);
 
 }  // namespace cuttlefish
