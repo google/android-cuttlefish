@@ -31,13 +31,4 @@ class MetricsReceiver {
   static void LogMetricsLockScreen();
 };
 
-class AtestMetricsReceiver {
- public:
-  AtestMetricsReceiver() = default;
-  ;
-  ~AtestMetricsReceiver() = default;
-  ;
-  static void LogMetricsSendCmd(const std::string& command_line);
-};
-
 }  // namespace cuttlefish
