@@ -31,7 +31,7 @@ namespace cuttlefish {
 bool IsSparseImage(const std::string& image_path) {
   std::ifstream file(image_path, std::ios::binary);
   if (!file) {
-    LOG(FATAL) << "Could not open " << image_path;
+    LOG(FATAL) << "Could not open '" << image_path << "'";
     return false;
   }
   char buffer[5] = {0};
