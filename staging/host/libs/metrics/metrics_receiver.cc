@@ -69,7 +69,4 @@ void MetricsReceiver::LogMetricsLockScreen() {
   SendHelper(kCfMetricsQueueName, "LockScreen");
 }
 
-void AtestMetricsReceiver::LogMetricsSendCmd(const std::string &command_line) {
-  SendHelper(kAtestMetricsQueueName, command_line);
-}
 }  // namespace cuttlefish
