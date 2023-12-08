@@ -18,6 +18,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -25,13 +26,48 @@
 
 namespace cuttlefish {
 
+namespace {
+
+// EVP_EncodedLength is boringssl specific so it can't be used outside of
+// android.
+std::optional<size_t> EncodedLength(size_t len) {
+  if (len + 2 < len) {
+    return std::nullopt;
+  }
+  len += 2;
+  len /= 3;
+
+  if (((len << 2) >> 2) != len) {
+    return std::nullopt;
+  }
+  len <<= 2;
+
+  if (len + 1 < len) {
+    return std::nullopt;
+  }
+  len++;
+
+  return {len};
+}
+
+// EVP_DecodedLength is boringssl specific so it can't be used outside of
+// android.
+std::optional<size_t> DecodedLength(size_t len) {
+  if (len % 4 != 0) {
+    return std::nullopt;
+  }
+
+  return {(len / 4) * 3};
+}
+
+}  // namespace
+
 bool EncodeBase64(const void *data, std::size_t size, std::string *out) {
-  std::size_t enc_len = 0;
-  auto len_res = EVP_EncodedLength(&enc_len, size);
+  auto len_res = EncodedLength(size);
   if (!len_res) {
     return false;
   }
-  out->resize(enc_len);
+  out->resize(*len_res);
   auto enc_res =
       EVP_EncodeBlock(reinterpret_cast<std::uint8_t *>(out->data()),
                       reinterpret_cast<const std::uint8_t *>(data), size);
@@ -43,16 +79,14 @@ bool EncodeBase64(const void *data, std::size_t size, std::string *out) {
 }
 
 bool DecodeBase64(const std::string &data, std::vector<std::uint8_t> *buffer) {
-  std::size_t out_len;
-  auto len_res = EVP_DecodedLength(&out_len, data.size());
+  auto len_res = DecodedLength(data.size());
   if (!len_res) {
     return false;
   }
+  auto out_len = *len_res;
   buffer->resize(out_len);
-  auto result = EVP_DecodeBase64(buffer->data(), &out_len, out_len,
-                          reinterpret_cast<const std::uint8_t *>(data.data()),
-                          data.size());
-  buffer->resize(out_len); // remove padding '=' characters
+  auto result = EVP_DecodeBlock(buffer->data(), buffer->data(), data.size());
+  buffer->resize(out_len);
   return result;
 }
 
