@@ -26,9 +26,9 @@ PRODUCT_ENFORCE_RRO_TARGETS := frameworks-res
 
 PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := true
 
-# HSUM is currently incompatible with telephony.
-# TODO(b/283853205): Properly disable telephony using per-partition makefile.
-TARGET_NO_TELEPHONY := true
+# Telephony: Use Minradio RIL instead of Cuttlefish RIL
+TARGET_USES_CF_RILD := false
+PRODUCT_PACKAGES += com.android.hardware.radio.minradio.virtual
 
 #
 # All components inherited here go to system_ext image
