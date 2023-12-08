@@ -110,22 +110,32 @@ constexpr size_t kPreferredBufferSize = 8192;
 
 }  // namespace
 
-bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
+bool FileInstance::CopyFrom(FileInstance& in, size_t length, FileInstance* stop) {
   std::vector<char> buffer(kPreferredBufferSize);
   while (length > 0) {
+    int nfds = stop == nullptr ? 2 : 3;
     // Wait until either in becomes readable or our fd closes.
     constexpr ssize_t IN = 0;
     constexpr ssize_t OUT = 1;
-    struct pollfd pollfds[2];
+    constexpr ssize_t STOP = 2;
+    struct pollfd pollfds[3];
     pollfds[IN].fd = in.fd_;
     pollfds[IN].events = POLLIN;
     pollfds[IN].revents = 0;
     pollfds[OUT].fd = fd_;
     pollfds[OUT].events = 0;
     pollfds[OUT].revents = 0;
-    int res = poll(pollfds, 2, -1 /* indefinitely */);
+    if (stop) {
+      pollfds[STOP].fd = stop->fd_;
+      pollfds[STOP].events = POLLIN;
+      pollfds[STOP].revents = 0;
+    }
+    int res = poll(pollfds, nfds, -1 /* indefinitely */);
     if (res < 0) {
       errno_ = errno;
+      return false;
+    }
+    if (stop && pollfds[STOP].revents & POLLIN) {
       return false;
     }
     if (pollfds[OUT].revents != 0) {
@@ -155,12 +165,12 @@ bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
   return true;
 }
 
-bool FileInstance::CopyAllFrom(FileInstance& in) {
+bool FileInstance::CopyAllFrom(FileInstance& in, FileInstance* stop) {
   // FileInstance may have been constructed with a non-zero errno_ value because
   // the errno variable is not zeroed out before.
   errno_ = 0;
   in.errno_ = 0;
-  while (CopyFrom(in, kPreferredBufferSize)) {
+  while (CopyFrom(in, kPreferredBufferSize, stop)) {
   }
   // Only return false if there was an actual error.
   return !GetErrno() && !in.GetErrno();
@@ -312,6 +322,17 @@ int Select(SharedFDSet* read_set, SharedFDSet* write_set,
   CheckMarked(&writefds, write_set);
   CheckMarked(&errorfds, error_set);
   return rval;
+}
+
+SharedFD::SharedFD(SharedFD&& other) {
+  value_ = std::move(other.value_);
+  other.value_.reset(new FileInstance(-1, EBADF));
+}
+
+SharedFD& SharedFD::operator=(SharedFD&& other) {
+  value_ = std::move(other.value_);
+  other.value_.reset(new FileInstance(-1, EBADF));
+  return *this;
 }
 
 int SharedFD::Poll(std::vector<PollSharedFd>& fds, int timeout) {
