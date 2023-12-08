@@ -24,6 +24,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/esp.h"
 #include "host/libs/config/mbr.h"
 #include "host/libs/config/openwrt_args.h"
@@ -332,10 +333,9 @@ class InitializeEspImageImpl : public InitializeEspImage {
 
   bool EspRequiredForBootFlow() const {
     const auto flow = instance_.boot_flow();
-    return flow ==
-               CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader ||
-           flow == CuttlefishConfig::InstanceSpecific::BootFlow::Linux ||
-           flow == CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia;
+    using BootFlow = CuttlefishConfig::InstanceSpecific::BootFlow;
+    return flow == BootFlow::AndroidEfiLoader || flow == BootFlow::ChromeOs ||
+           flow == BootFlow::Linux || flow == BootFlow::Fuchsia;
   }
 
   bool EspRequiredForAPBootFlow() const {
@@ -366,6 +366,16 @@ class InitializeEspImageImpl : public InitializeEspImage {
         android_efi_loader.EfiLoaderPath(instance_.android_efi_loader())
             .Architecture(instance_.target_arch());
         return android_efi_loader.Build();
+      }
+      case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs: {
+        auto linux = LinuxEspBuilder(instance_.esp_image_path());
+        InitChromeOsArgs(linux);
+
+        linux.Root("/dev/vda3")
+            .Architecture(instance_.target_arch())
+            .Kernel(instance_.chromeos_kernel_path());
+
+        return linux.Build();
       }
       case CuttlefishConfig::InstanceSpecific::BootFlow::Linux: {
         auto linux = LinuxEspBuilder(instance_.esp_image_path());
@@ -419,6 +429,28 @@ class InitializeEspImageImpl : public InitializeEspImage {
              .Argument("noexec", "off");
         break;
     }
+  }
+
+  void InitChromeOsArgs(LinuxEspBuilder& linux) {
+    linux.Root("/dev/vda2")
+        .Argument("console", "ttyS0")
+        .Argument("panic", "-1")
+        .Argument("noefi")
+        .Argument("init=/sbin/init")
+        .Argument("boot=local")
+        .Argument("rootwait")
+        .Argument("noresume")
+        .Argument("noswap")
+        .Argument("loglevel=7")
+        .Argument("noinitrd")
+        .Argument("cros_efi")
+        .Argument("cros_debug")
+        .Argument("earlyprintk=serial,ttyS0,115200")
+        .Argument("earlycon=uart8250,io,0x3f8")
+        .Argument("pnpacpi", "off")
+        .Argument("acpi", "noirq")
+        .Argument("reboot", "k")
+        .Argument("noexec", "off");
   }
 
   const CuttlefishConfig& config_;
