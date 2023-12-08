@@ -254,6 +254,22 @@ void CuttlefishConfig::MutableInstanceSpecific::set_android_efi_loader(
     const std::string& android_efi_loader) {
   (*Dictionary())[kAndroidEfiLoader] = android_efi_loader;
 }
+static constexpr char kChromeOsKernelPath[] = "chromeos_kernel_path";
+std::string CuttlefishConfig::InstanceSpecific::chromeos_kernel_path() const {
+  return (*Dictionary())[kChromeOsKernelPath].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_chromeos_kernel_path(
+    const std::string& chromeos_kernel_path) {
+  (*Dictionary())[kChromeOsKernelPath] = chromeos_kernel_path;
+}
+static constexpr char kChromeOsRootImage[] = "chromeos_root_image";
+std::string CuttlefishConfig::InstanceSpecific::chromeos_root_image() const {
+  return (*Dictionary())[kChromeOsRootImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_chromeos_root_image(
+    const std::string& chromeos_root_image) {
+  (*Dictionary())[kChromeOsRootImage] = chromeos_root_image;
+}
 static constexpr char kLinuxKernelPath[] = "linux_kernel_path";
 std::string CuttlefishConfig::InstanceSpecific::linux_kernel_path() const {
   return (*Dictionary())[kLinuxKernelPath].asString();
@@ -1193,6 +1209,10 @@ std::string CuttlefishConfig::InstanceSpecific::ap_uboot_env_image_path() const 
   return AbsolutePath(PerInstancePath("ap_uboot_env.img"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::chromeos_state_image() const {
+  return AbsolutePath(PerInstancePath("chromeos_state.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::esp_image_path() const {
   return AbsolutePath(PerInstancePath("esp.img"));
 }
@@ -1218,6 +1238,9 @@ std::string CuttlefishConfig::InstanceSpecific::audio_server_path() const {
 CuttlefishConfig::InstanceSpecific::BootFlow CuttlefishConfig::InstanceSpecific::boot_flow() const {
   const bool android_efi_loader_flow_used = !android_efi_loader().empty();
 
+  const bool chromeos_flow_used =
+      !chromeos_kernel_path().empty() || !chromeos_root_image().empty();
+
   const bool linux_flow_used = !linux_kernel_path().empty()
     || !linux_initramfs_path().empty()
     || !linux_root_image().empty();
@@ -1228,16 +1251,15 @@ CuttlefishConfig::InstanceSpecific::BootFlow CuttlefishConfig::InstanceSpecific:
 
   if (android_efi_loader_flow_used) {
     return BootFlow::AndroidEfiLoader;
-  }
-
-  if (linux_flow_used) {
+  } else if (chromeos_flow_used) {
+    return BootFlow::ChromeOs;
+  } else if (linux_flow_used) {
     return BootFlow::Linux;
-  }
-  if (fuchsia_flow_used) {
+  } else if (fuchsia_flow_used) {
     return BootFlow::Fuchsia;
+  } else {
+    return BootFlow::Android;
   }
-
-  return BootFlow::Android;
  }
 
 std::string CuttlefishConfig::InstanceSpecific::mobile_bridge_name() const {

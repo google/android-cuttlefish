@@ -28,6 +28,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
@@ -99,6 +100,11 @@ DEFINE_string(linux_initramfs_path, CF_DEFAULTS_LINUX_INITRAMFS_PATH,
               "Location of linux initramfs.img for cuttlefish otheros flow.");
 DEFINE_string(linux_root_image, CF_DEFAULTS_LINUX_ROOT_IMAGE,
               "Location of linux root filesystem image for cuttlefish otheros flow.");
+
+DEFINE_string(chromeos_kernel_path, CF_DEFAULTS_CHROMEOS_KERNEL_PATH,
+              "Location of the chromeos kernel for the chromeos flow.");
+DEFINE_string(chromeos_root_image, CF_DEFAULTS_CHROMEOS_ROOT_IMAGE,
+              "Location of chromeos root filesystem image for chromeos flow.");
 
 DEFINE_string(fuchsia_zedboot_path, CF_DEFAULTS_FUCHSIA_ZEDBOOT_PATH,
               "Location of fuchsia zedboot path for cuttlefish otheros flow.");
@@ -245,6 +251,32 @@ Result<void> ResolveInstanceFiles() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return {};
+}
+
+std::vector<ImagePartition> chromeos_composite_disk_config(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  std::vector<ImagePartition> partitions;
+
+  partitions.emplace_back(ImagePartition{
+      .label = "STATE",
+      .image_file_path = AbsolutePath(instance.chromeos_state_image()),
+      .type = kLinuxFilesystem,
+      .read_only = FLAGS_use_overlay,
+  });
+  partitions.emplace_back(ImagePartition{
+      .label = "linux_esp",
+      .image_file_path = AbsolutePath(instance.esp_image_path()),
+      .type = kEfiSystemPartition,
+      .read_only = FLAGS_use_overlay,
+  });
+  partitions.emplace_back(ImagePartition{
+      .label = "linux_root",
+      .image_file_path = AbsolutePath(instance.chromeos_root_image()),
+      .type = kLinuxFilesystem,
+      .read_only = FLAGS_use_overlay,
+  });
+
+  return partitions;
 }
 
 std::vector<ImagePartition> linux_composite_disk_config(
@@ -450,20 +482,17 @@ std::vector<ImagePartition> GetApCompositeDiskConfig(const CuttlefishConfig& con
 
 std::vector<ImagePartition> GetOsCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance) {
-
   switch (instance.boot_flow()) {
     case CuttlefishConfig::InstanceSpecific::BootFlow::Android:
       return android_composite_disk_config(instance);
-      break;
     case CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader:
       return AndroidEfiLoaderCompositeDiskConfig(instance);
-      break;
+    case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs:
+      return chromeos_composite_disk_config(instance);
     case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
       return linux_composite_disk_config(instance);
-      break;
     case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
       return fuchsia_composite_disk_config(instance);
-      break;
   }
 }
 
@@ -503,6 +532,18 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   }
   // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
+}
+
+Result<void> InitializeChromeOsState(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  using BootFlow = CuttlefishConfig::InstanceSpecific::BootFlow;
+  if (instance.boot_flow() != BootFlow::ChromeOs) {
+    return {};
+  } else if (FileExists(instance.chromeos_state_image())) {
+    return {};
+  }
+  CF_EXPECT(CreateBlankImage(instance.chromeos_state_image(), 8096, "ext4"));
+  return {};
 }
 
 Result<void> InitializeMetadataImage(
@@ -614,6 +655,7 @@ static fruit::Component<> DiskChangesComponent(
       .bindInstance(*instance)
       .install(CuttlefishKeyAvbComponent)
       .install(AutoSetup<InitializeMetadataImage>::Component)
+      .install(AutoSetup<InitializeChromeOsState>::Component)
       .install(KernelRamdiskRepackerComponent)
       .install(AutoSetup<VbmetaEnforceMinimumSize>::Component)
       .install(AutoSetup<BootloaderPresentCheck>::Component)
@@ -672,6 +714,11 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
 
   std::vector<std::string> android_efi_loader =
       android::base::Split(FLAGS_android_efi_loader, ",");
+
+  std::vector<std::string> chromeos_kernel_path =
+      android::base::Split(FLAGS_chromeos_kernel_path, ",");
+  std::vector<std::string> chromeos_root_image =
+      android::base::Split(FLAGS_chromeos_root_image, ",");
 
   std::vector<std::string> linux_kernel_path =
       android::base::Split(FLAGS_linux_kernel_path, ",");
@@ -776,6 +823,16 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       instance.set_android_efi_loader(android_efi_loader[0]);
     } else {
       instance.set_android_efi_loader(android_efi_loader[instance_index]);
+    }
+    if (instance_index >= chromeos_kernel_path.size()) {
+      instance.set_chromeos_kernel_path(chromeos_kernel_path[0]);
+    } else {
+      instance.set_chromeos_kernel_path(chromeos_kernel_path[instance_index]);
+    }
+    if (instance_index >= chromeos_root_image.size()) {
+      instance.set_chromeos_root_image(chromeos_root_image[0]);
+    } else {
+      instance.set_chromeos_root_image(chromeos_root_image[instance_index]);
     }
     if (instance_index >= linux_kernel_path.size()) {
       instance.set_linux_kernel_path(linux_kernel_path[0]);

@@ -51,8 +51,9 @@ namespace {
 // Ethernet tap device is the second one (eth1) we're passing ATM
 static constexpr char kUbootPrimaryEth[] = "eth1";
 
-void WritePausedEntrypoint(std::ostream& env, const char* entrypoint,
-                           const CuttlefishConfig::InstanceSpecific& instance) {
+void WritePausedEntrypoint(const std::string& entrypoint,
+                           const CuttlefishConfig::InstanceSpecific& instance,
+                           std::ostream& env) {
   if (instance.pause_in_bootloader()) {
     env << "if test $paused -ne 1; then paused=1; else " << entrypoint << "; fi";
   } else {
@@ -65,7 +66,7 @@ void WritePausedEntrypoint(std::ostream& env, const char* entrypoint,
 void WriteAndroidEnvironment(
     std::ostream& env,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  WritePausedEntrypoint(env, "run bootcmd_android", instance);
+  WritePausedEntrypoint("run bootcmd_android", instance, env);
 
   if (!instance.boot_slot().empty()) {
     env << "android_slot_suffix=_" << instance.boot_slot() << '\0';
@@ -73,17 +74,20 @@ void WriteAndroidEnvironment(
   env << '\0';
 }
 
-void WriteEFIEnvironment(
-    std::ostream& env, const CuttlefishConfig::InstanceSpecific& instance) {
+void WriteEFIEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
+                         std::optional<std::uint16_t> partition_num,
+                         std::ostream& env) {
+  std::string partition_str =
+      partition_num ? fmt::format("setenv devplist {};", *partition_num) : "";
   WritePausedEntrypoint(
-      env,
-      "load virtio 0:${devplist} ${loadaddr} efi/boot/bootaa64.efi "
-      "&& bootefi ${loadaddr} ${fdtcontroladdr}; "
-      "load virtio 0:${devplist} ${loadaddr} efi/boot/bootia32.efi && "
-      "bootefi ${loadaddr} ${fdtcontroladdr};"
-      "load virtio 0:${devplist} ${loadaddr} efi/boot/bootriscv64.efi && "
-      "bootefi ${loadaddr} ${fdtcontroladdr}",
-      instance);
+      partition_str +
+          "load virtio 0:${devplist} ${loadaddr} efi/boot/bootaa64.efi "
+          "&& bootefi ${loadaddr} ${fdtcontroladdr}; "
+          "load virtio 0:${devplist} ${loadaddr} efi/boot/bootia32.efi && "
+          "bootefi ${loadaddr} ${fdtcontroladdr};"
+          "load virtio 0:${devplist} ${loadaddr} efi/boot/bootriscv64.efi && "
+          "bootefi ${loadaddr} ${fdtcontroladdr}",
+      instance, env);
 }
 
 size_t WriteEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
@@ -106,7 +110,10 @@ size_t WriteEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
     case CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader:
     case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
     case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
-      WriteEFIEnvironment(env, instance);
+      WriteEFIEnvironment(instance, {}, env);
+      break;
+    case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs:
+      WriteEFIEnvironment(instance, 2, env);
       break;
   }
 
