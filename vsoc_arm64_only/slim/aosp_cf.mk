@@ -46,12 +46,8 @@ $(call inherit-product, device/google/cuttlefish/shared/slim/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_arm64/bootloader.mk)
 
 # Exclude features that are not available on AOSP devices.
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_PACKAGES += com.google.aosp_cf_slim.hardware.core_permissions
-else
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/aosp_excluded_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/aosp_excluded_hardware.xml
-endif
 
 PRODUCT_NAME := aosp_cf_arm64_slim
 PRODUCT_DEVICE := vsoc_arm64_only
