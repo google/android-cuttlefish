@@ -21,6 +21,7 @@
 
 #include <cstring>
 #include <functional>
+#include <list>
 #include <memory>
 #include <string>
 #include <thread>
@@ -32,34 +33,85 @@
 namespace cuttlefish {
 namespace {
 
-void Forward(const std::string& label, SharedFD from, SharedFD to) {
-  LOG(DEBUG) << label << ": Proxy thread started. Starting copying data";
-  auto success = to->CopyAllFrom(*from);
-  if (!success) {
-    if (from->GetErrno()) {
-      LOG(ERROR) << label << ": Error reading: " << from->StrError();
-    }
-    if (to->GetErrno()) {
-      LOG(ERROR) << label << ": Error writing: " << to->StrError();
+class ProxyPair {
+ public:
+  ProxyPair()
+      : stop_fd_(SharedFD::Event()) {
+    if (!stop_fd_->IsOpen()) {
+      LOG(FATAL) << "Failed to open eventfd: " << stop_fd_->StrError();
+      return;
     }
   }
-  to->Shutdown(SHUT_WR);
-  LOG(DEBUG) << label << ": Proxy thread completed";
-}
 
-void SetupProxying(SharedFD client, SharedFD target) {
-  LOG(DEBUG) << "Launching proxy threads";
-  std::thread client2target(Forward, "c2t", client, target);
-  std::thread target2client(Forward, "t2c", target, client);
-  client2target.detach();
-  target2client.detach();
-}
+  ProxyPair(ProxyPair&& other)
+      : started_(other.started_),
+        stop_fd_(std::move(other.stop_fd_)),
+        c2t_running_(other.c2t_running_.load()),
+        t2c_running_(other.t2c_running_.load()) {
+    if (other.started_) {
+      LOG(FATAL) << "ProxyPair cannot be moved after Start() being executed";
+    }
+  }
+
+  ~ProxyPair() {
+    if (stop_fd_->IsOpen() && stop_fd_->EventfdWrite(1) != 0) {
+      LOG(ERROR) << "Failed to stop proxy thread: " << stop_fd_->StrError();
+    }
+    if (c2t_.joinable()) {
+      c2t_.join();
+    }
+    if (t2c_.joinable()) {
+      t2c_.join();
+    }
+  }
+
+  void Start(SharedFD from, SharedFD to) {
+    if (started_) {
+      LOG(FATAL) << "ProxyPair cannot be started second time";
+    }
+    started_ = true;
+    c2t_running_ = true;
+    t2c_running_ = true;
+    c2t_ = std::thread(&ProxyPair::Forward, this, "c2t", from, to, stop_fd_,
+                       std::ref(c2t_running_));
+    t2c_ = std::thread(&ProxyPair::Forward, this, "t2c", to, from, stop_fd_,
+                       std::ref(t2c_running_));
+  }
+
+  bool Running() {
+    return c2t_running_ || t2c_running_;
+  }
+
+ private:
+  void Forward(const std::string& label, SharedFD from, SharedFD to,
+               SharedFD stop, std::atomic<bool>& running) {
+    LOG(DEBUG) << label << ": Proxy thread started. Starting copying data";
+    auto success = to->CopyAllFrom(*from, &(*stop));
+    if (!success) {
+      if (from->GetErrno()) {
+        LOG(ERROR) << label << ": Error reading: " << from->StrError();
+      }
+      if (to->GetErrno()) {
+        LOG(ERROR) << label << ": Error writing: " << to->StrError();
+      }
+    }
+    to->Shutdown(SHUT_WR);
+    running = false;
+    LOG(DEBUG) << label << ": Proxy thread completed";
+  }
+
+  bool started_;
+  SharedFD stop_fd_;
+  std::atomic<bool> c2t_running_;
+  std::atomic<bool> t2c_running_;
+  std::thread c2t_;
+  std::thread t2c_;
+};
 
 }  // namespace
 
 ProxyServer::ProxyServer(SharedFD server, std::function<SharedFD()> clients_factory)
     : stop_fd_(SharedFD::Event()) {
-
   if (!stop_fd_->IsOpen()) {
     LOG(FATAL) << "Failed to open eventfd: " << stop_fd_->StrError();
     return;
@@ -68,6 +120,7 @@ ProxyServer::ProxyServer(SharedFD server, std::function<SharedFD()> clients_fact
                             clients_factory = std::move(clients_factory)]() {
     constexpr ssize_t SERVER = 0;
     constexpr ssize_t STOP = 1;
+    std::list<ProxyPair> watched;
 
     std::vector<PollSharedFd> server_poll = {
       {.fd = server_fd, .events = POLLIN},
@@ -101,13 +154,22 @@ ProxyServer::ProxyServer(SharedFD server, std::function<SharedFD()> clients_fact
       }
       auto target = clients_factory();
       if (target->IsOpen()) {
-        SetupProxying(client, target);
+        LOG(DEBUG) << "Launching proxy threads";
+        watched.push_back(ProxyPair());
+        watched.back().Start(client, target);
+        LOG(DEBUG) << "Proxy is launched. Amount of currently tracked proxy pairs: "
+                   << watched.size();
       } else {
         LOG(ERROR) << "Cannot connect to the target to setup proxying: " << target->StrError();
       }
-      // The client will close when it goes out of scope here if the target
-      // didn't open.
+      // Unwatch completed proxy pairs
+      watched.remove_if([](ProxyPair& proxy) { return !proxy.Running(); });
     }
+
+    // Making sure all launched proxy pairs are finished by triggering their destructor
+    LOG(DEBUG) << "Waiting for proxy threads to turn down";
+    watched.clear();
+    LOG(DEBUG) << "Proxy threads are successfully turned down";
   });
 }
 
@@ -130,8 +192,7 @@ void Proxy(SharedFD server, std::function<SharedFD()> conn_factory) {
 }
 
 std::unique_ptr<ProxyServer> ProxyAsync(SharedFD server, std::function<SharedFD()> conn_factory) {
-  return std::unique_ptr<ProxyServer>(
-      new ProxyServer(std::move(server), std::move(conn_factory)));
+  return std::make_unique<ProxyServer>(std::move(server), std::move(conn_factory));
 }
 
 }  // namespace cuttlefish
