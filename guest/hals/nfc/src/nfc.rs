@@ -27,7 +27,6 @@ use async_trait::async_trait;
 use binder::{DeathRecipient, IBinder, Interface, Strong};
 use log::{debug, error, info};
 use nix::sys::termios;
-use std::os::fd::AsRawFd;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::fs::{File, OpenOptions};
@@ -129,14 +128,13 @@ pub struct NfcService {
     config: Arc<Mutex<NfcHalConfig>>,
 }
 
-fn set_console_fd_raw(file: &mut File) {
-    let fd = file.as_raw_fd();
-    let mut attrs = termios::tcgetattr(fd).expect("Failed to setup virtio-console to raw mode");
+fn set_console_fd_raw(file: &File) {
+    let mut attrs = termios::tcgetattr(file).expect("Failed to setup virtio-console to raw mode");
     termios::cfmakeraw(&mut attrs);
-    termios::tcsetattr(fd, termios::SetArg::TCSANOW, &attrs)
+    termios::tcsetattr(file, termios::SetArg::TCSANOW, &attrs)
         .expect("Failed to set virtio-console to raw mode");
 
-    let raw_attrs = termios::tcgetattr(fd).expect("Failed to validate virtio-console mode");
+    let raw_attrs = termios::tcgetattr(file).expect("Failed to validate virtio-console mode");
     if attrs != raw_attrs {
         panic!("Failed to set virtio-console to raw mode. Only partially applied");
     }
@@ -147,7 +145,7 @@ impl NfcService {
         // Important notes:
         // - Must clone FD for writing and reading. Otherwise can't read data from host side.
         // - Must not be closed while HAL is running. Otherwise packet loss may happen.
-        let mut writer = OpenOptions::new()
+        let writer = OpenOptions::new()
             .read(true)
             .write(true)
             .open(dev_path)
@@ -155,7 +153,7 @@ impl NfcService {
             .expect("Failed to open virtio-console device");
 
         // Make FD raw mode for sending raw bytes via console driver (virtio-console),
-        set_console_fd_raw(&mut writer);
+        set_console_fd_raw(&writer);
 
         // Must clone FD -- otherwise read may not get incoming data from host side.
         let mut reader =
