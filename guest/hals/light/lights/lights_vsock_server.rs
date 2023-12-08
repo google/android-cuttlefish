@@ -21,6 +21,7 @@ use nix::sys::socket::{connect, socket, AddressFamily, SockFlag, SockType};
 use serde::Serialize;
 use serde_json::json;
 use std::io::Write;
+use std::os::fd::AsRawFd;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc;
 use std::sync::Arc;
@@ -148,7 +149,7 @@ impl Drop for VsockServer {
         )
         .unwrap();
         let addr = VsockAddr::new(vsock::VMADDR_CID_LOCAL, self.guest_port);
-        connect(fd, &addr).unwrap();
+        connect(fd.as_raw_fd(), &addr).unwrap();
 
         // We made sure to unblock the connection thread, now join it.
         let thread_result = self.thread_handle.take().unwrap().join().unwrap();
