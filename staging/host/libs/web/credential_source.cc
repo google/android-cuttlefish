@@ -249,7 +249,7 @@ static Result<std::string> CreateJwt(const std::string& email,
   std::string jwt_to_sign = header_str + "." + claim_set_str;
 
   std::unique_ptr<EVP_MD_CTX, void (*)(EVP_MD_CTX*)> sign_ctx(
-      EVP_MD_CTX_new(), EVP_MD_CTX_free);
+      EVP_MD_CTX_create(), EVP_MD_CTX_free);
   CF_EXPECT(EVP_DigestSignInit(sign_ctx.get(), nullptr, EVP_sha256(), nullptr,
                                private_key));
   CF_EXPECT(EVP_DigestSignUpdate(sign_ctx.get(), jwt_to_sign.c_str(),
