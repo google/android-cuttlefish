@@ -30,3 +30,6 @@ PRODUCT_MODEL := Cuttlefish x86_64 auto 64-bit only multi-displays, no-driver
 
 PRODUCT_PACKAGE_OVERLAYS += \
     device/google/cuttlefish/shared/auto_mdnd/overlay
+
+$(warning ${PRODUCT_NAME} is for development purposes only.)
+

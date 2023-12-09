@@ -108,9 +108,6 @@
   Apps that do need to run on SYSTEM and evaluated by package owner.
   Here the apps will have FULL only.
 -->
-    <install-in-user-type package="com.android.car.datacenter">
-        <install-in user-type="FULL" />
-    </install-in-user-type>
     <install-in-user-type package="com.android.car.goldilocks">
         <install-in user-type="FULL" />
     </install-in-user-type>

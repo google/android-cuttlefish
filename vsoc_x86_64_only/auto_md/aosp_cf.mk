@@ -48,8 +48,15 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
 # This will disable dynamic displays and enable hardcoded displays on hwservicemanager.
 $(call inherit-product, device/generic/car/emulator/cluster/cluster-hwservicemanager.mk)
 
+# Disable shared system image checking
+PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false
+
 # Add the regular stuff.
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64_only/auto/aosp_cf.mk)
 
 PRODUCT_NAME := aosp_cf_x86_64_auto_md
 PRODUCT_MODEL := Cuttlefish x86_64 auto 64-bit only multi-displays
+
+ifeq ($(words ${_include_stack}),1)  # Show warning only when this is the final target product.
+$(warning ${PRODUCT_NAME} is for development purposes only.)
+endif

@@ -34,6 +34,9 @@ DISABLE_CAR_PRODUCT_VISUAL_OVERLAY := true
 PRODUCT_COPY_FILES += \
     packages/services/Car/car_product/car_ui_portrait/bootanimation/bootanimation.zip:system/media/bootanimation.zip
 
+# Disable shared system image checking
+PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false
+
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64_only/auto/aosp_cf.mk)
 
 PRODUCT_NAME := aosp_cf_x86_64_only_auto_portrait
@@ -45,7 +48,7 @@ $(call inherit-product, packages/services/Car/car_product/car_ui_portrait/apps/c
 $(call inherit-product, packages/services/Car/car_product/car_ui_portrait/rro/car_ui_portrait_rro.mk)
 
 PRODUCT_COPY_FILES += \
-    packages/services/Car/car_product/car_ui_portrait/android.software.car.splitscreen_multitasking.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.car.splitscreen_multitasking.xml
+    packages/services/Car/car_product/car_ui_portrait/car_ui_portrait_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/car_ui_portrait_hardware.xml
 
 # Include the`launch_cvd --config auto_portrait` option.
 $(call soong_config_append,cvd,launch_configs,cvd_config_auto_portrait.json)
