@@ -149,7 +149,7 @@ fruit::Component<> runCvdComponent(
       .install(AutoCmd<UwbConnector>::Component)
       .install(AutoCmd<ConsoleForwarder>::Component)
       .install(AutoDiagnostic<ConsoleInfo>::Component)
-      .install(AutoCmd<VhostDeviceVsock>::Component)
+      .install(VhostDeviceVsockComponent)
       .install(ControlEnvProxyServerComponent)
       .install(AutoCmd<EchoServer>::Component)
       .install(AutoCmd<GnssGrpcProxyServer>::Component)
