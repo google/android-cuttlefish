@@ -59,7 +59,7 @@ type HostOrchestratorService interface {
 
 const defaultHostOrchestratorCredentialsHeader = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
 
-func NewHostOrchestratoService(url string) HostOrchestratorService {
+func NewHostOrchestratorService(url string) HostOrchestratorService {
 	return &HostOrchestratorServiceImpl{
 		HTTPHelper: HTTPHelper{
 			Client:       http.DefaultClient,
