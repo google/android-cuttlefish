@@ -77,4 +77,8 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
 // e.g. cvd start --help, cvd stop --help
 Result<bool> IsHelpSubcmd(const std::vector<std::string>& args);
 
+// Call this when there is no instance group is running
+// The function does not verify that.
+Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request);
+
 }  // namespace cuttlefish
