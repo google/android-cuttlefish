@@ -19,7 +19,6 @@
 #include <fmt/core.h>
 
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
@@ -202,7 +201,7 @@ Result<bool> IsHelpSubcmd(const std::vector<std::string>& args) {
   for (const auto str_opt : help_str_opts) {
     flags.emplace_back(GflagsCompatFlag(str_opt, str_value_placeholder));
   }
-  CF_EXPECT(ConsumeFlags(flags, copied_args));
+  CF_EXPECT(ParseFlags(flags, copied_args));
   // if there was any match, some in copied_args were consumed.
   return (args.size() != copied_args.size());
 }
@@ -212,76 +211,19 @@ static constexpr char kTerminalCyan[] = "\033[0;36m";
 static constexpr char kTerminalRed[] = "\033[0;31m";
 static constexpr char kTerminalReset[] = "\033[0m";
 
-std::string TerminalColor(const bool is_tty, TerminalColors color) {
-  if (!is_tty) {
-    return "";
-  }
-  switch (color) {
-    case TerminalColors::kReset: {
-      return kTerminalReset;
-    }
-    case TerminalColors::kBoldRed: {
-      return kTerminalBoldRed;
-    }
-    case TerminalColors::kCyan: {
-      return kTerminalCyan;
-    }
-    case TerminalColors::kRed: {
-      return kTerminalRed;
-    }
-    default:
-      return kTerminalReset;
-  }
-}
-
 Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
   cvd::Response response;
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   const uid_t uid = CF_EXPECT(request.Credentials()).uid;
-  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
   auto notice = fmt::format(
-      "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      TerminalColor(is_tty, TerminalColors::kRed),
-      fmt::join(request.Message().command_request().args(), " "),
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kBoldRed), "no device",
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kCyan), uid,
-      TerminalColor(is_tty, TerminalColors::kReset));
+      "Command `{}{}{}` is not applicable: {}{}{} (uid: '{}{}{}')",
+      kTerminalRed, fmt::join(request.Message().command_request().args(), " "),
+      kTerminalReset, kTerminalBoldRed, "no device", kTerminalReset,
+      kTerminalCyan, uid, kTerminalReset);
   CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"), notice.size() + 1);
 
   response.mutable_status()->set_message(notice);
-  return response;
-}
-
-Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
-  cvd::Response response;
-  response.mutable_command_response();
-  response.mutable_status()->set_code(cvd::Status::OK);
-  const uid_t uid = CF_EXPECT(request.Credentials()).uid;
-  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
-  auto notice = fmt::format(
-      "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      TerminalColor(is_tty, TerminalColors::kRed),
-      fmt::join(request.Message().command_request().args(), " "),
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kBoldRed),
-      "No terminal/tty for selecting one of multiple Cuttlefish groups",
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kCyan), uid,
-      TerminalColor(is_tty, TerminalColors::kReset));
-  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"), notice.size() + 1);
-  response.mutable_status()->set_message(notice);
-  return response;
-}
-
-Result<cvd::Response> WriteToFd(SharedFD fd, const std::string& output) {
-  cvd::Response response;
-  auto written_size = WriteAll(fd, output);
-  CF_EXPECT_EQ(output.size(), written_size, fd->StrError());
-  response.mutable_command_response();  // Sets oneof member
-  response.mutable_status()->set_code(cvd::Status::OK);
   return response;
 }
 
