@@ -24,6 +24,7 @@
 #include <android-base/file.h>
 #include <android-base/scopeguard.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
@@ -69,6 +70,7 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   struct ExtractedInfo {
     CommandInvocationInfo invocation_info;
     std::optional<selector::LocalInstanceGroup> group;
+    bool is_non_help_cvd;
   };
   Result<ExtractedInfo> ExtractInfo(const RequestWithStdio& request) const;
   Result<std::string> GetBin(const std::string& subcmd) const;
@@ -156,11 +158,16 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
         precondition_verified.error().Message());
     return response;
   }
-  auto [invocation_info, group_opt] = CF_EXPECT(ExtractInfo(request));
+  auto [invocation_info, group_opt, is_non_help_cvd] =
+      CF_EXPECT(ExtractInfo(request));
   if (invocation_info.bin == kClearBin) {
     *response.mutable_status() =
         instance_manager_.CvdClear(request.Out(), request.Err());
     return response;
+  }
+
+  if (is_non_help_cvd && !group_opt) {
+    return CF_EXPECT(NoGroupResponse(request));
   }
 
   ConstructCommandParam construct_cmd_param{
@@ -303,11 +310,20 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
                 .uid = uid,
                 .args = cmd_args,
                 .envs = envs},
-        .group = std::nullopt};
+        .group = std::nullopt,
+        .is_non_help_cvd = false};
   }
 
-  auto instance_group =
-      CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs, uid));
+  auto instance_group_result =
+      instance_manager_.SelectGroup(selector_args, envs, uid);
+  ExtractedInfo extracted_info;
+  extracted_info.is_non_help_cvd = true;
+  if (!instance_group_result.ok()) {
+    CF_EXPECT(!instance_manager_.HasInstanceGroups(uid),
+              instance_group_result.error().FormatForEnv());
+    return extracted_info;
+  }
+  auto& instance_group = *instance_group_result;
   auto android_host_out = instance_group.HostArtifactsPath();
   auto home = instance_group.HomeDir();
   auto bin = CF_EXPECT(GetBin(subcmd, android_host_out));
@@ -321,7 +337,9 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
                                   .args = cmd_args,
                                   .envs = envs};
   result.envs["HOME"] = home;
-  return ExtractedInfo{.invocation_info = result, .group = instance_group};
+  extracted_info.invocation_info = result;
+  extracted_info.group = instance_group;
+  return extracted_info;
 }
 
 Result<std::string> CvdGenericCommandHandler::GetBin(

@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/server_command/utils.h"
 
+#include <fmt/core.h>
+
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
@@ -202,6 +204,27 @@ Result<bool> IsHelpSubcmd(const std::vector<std::string>& args) {
   CF_EXPECT(ParseFlags(flags, copied_args));
   // if there was any match, some in copied_args were consumed.
   return (args.size() != copied_args.size());
+}
+
+static constexpr char kTerminalBoldRed[] = "\033[0;1;31m";
+static constexpr char kTerminalCyan[] = "\033[0;36m";
+static constexpr char kTerminalRed[] = "\033[0;31m";
+static constexpr char kTerminalReset[] = "\033[0m";
+
+Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
+  cvd::Response response;
+  response.mutable_command_response();
+  response.mutable_status()->set_code(cvd::Status::OK);
+  const uid_t uid = CF_EXPECT(request.Credentials()).uid;
+  auto notice = fmt::format(
+      "Command `{}{}{}` is not applicable: {}{}{} (uid: '{}{}{}')",
+      kTerminalRed, fmt::join(request.Message().command_request().args(), " "),
+      kTerminalReset, kTerminalBoldRed, "no device", kTerminalReset,
+      kTerminalCyan, uid, kTerminalReset);
+  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"), notice.size() + 1);
+
+  response.mutable_status()->set_message(notice);
+  return response;
 }
 
 }  // namespace cuttlefish
