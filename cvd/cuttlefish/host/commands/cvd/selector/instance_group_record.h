@@ -96,9 +96,6 @@ class LocalInstanceGroup {
   // for now, "cvd", which is "cvd-".remove_suffix(1)
   std::string internal_group_name_;
   std::string group_name_;
-  // This will be initialized after the LocalInstanceGroup is created,
-  // which is also after the device completes the boot.
-  std::optional<std::string> build_id_;
   Set<std::unique_ptr<LocalInstance>> instances_;
 
   static constexpr const char kJsonGroupName[] = "Group Name";
