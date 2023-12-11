@@ -22,3 +22,9 @@ bluetooth.profile.opp.enabled=true
 bluetooth.profile.pan.nap.enabled=true
 bluetooth.profile.pan.panu.enabled=true
 bluetooth.profile.pbap.server.enabled=true
+
+# Increase timeouts for virtual devices
+ro.bluetooth.ble_start_timeout_delay=8000
+ro.bluetooth.ble_stop_timeout_delay=8000
+bluetooth.gd.start_timeout=7000
+bluetooth.gd.stop_timeout=7000
