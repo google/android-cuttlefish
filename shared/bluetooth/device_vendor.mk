@@ -41,6 +41,7 @@ PRODUCT_COPY_FILES +=\
 PRODUCT_PACKAGES += \
     android.hardware.bluetooth-service.default \
     android.hardware.bluetooth.finder-service.default \
+    android.hardware.bluetooth.ranging-service.default \
     bt_vhci_forwarder
 
 # Bluetooth initialization configuration is copied to the init folder here instead of being added
