@@ -17,3 +17,9 @@ service bt_finder /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth.finde
     user bluetooth
     group bluetooth net_admin net_bt_admin
     capabilities NET_ADMIN
+
+service bt_ranging /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth.ranging-service.default
+    class hal
+    user bluetooth
+    group bluetooth net_admin net_bt_admin
+    capabilities NET_ADMIN
