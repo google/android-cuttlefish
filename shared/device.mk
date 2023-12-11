@@ -450,14 +450,7 @@ endif
 #
 # Power and PowerStats HALs
 #
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.android.hardware.power
-else
-PRODUCT_PACKAGES += \
-    android.hardware.power-service.example \
-    android.hardware.power.stats-service.example \
-
-endif
 
 #
 # Tetheroffload HAL
