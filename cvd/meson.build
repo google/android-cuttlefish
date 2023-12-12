@@ -129,8 +129,6 @@ sources = [
 ]
 
 cc = meson.get_compiler('cpp')
-boringssl_crypto_lib = cc.find_library('crypto', dirs: ['/usr/lib/x86_64-linux-gnu/android'])
-boringssl_ssl_lib = cc.find_library('ssl', dirs: ['/usr/lib/x86_64-linux-gnu/android'])
 
 protoc = find_program('protoc', required : true)
 deps = dependency('protobuf', required : true)
@@ -165,8 +163,6 @@ git_version_h = vcs_tag(
 git_version_h_dependency = declare_dependency(sources: git_version_h)
 
 dependencies = [
-  boringssl_crypto_lib,
-  boringssl_ssl_lib,
   client_analytics_proto_dependency,
   dependency('fmt'),
   dependency('gflags'),
@@ -174,6 +170,7 @@ dependencies = [
   dependency('libcurl'),
   dependency('libglog'),
   dependency('libxml-2.0'),
+  dependency('openssl'),
   dependency('protobuf'),
   dependency('uuid'),
   dependency('zlib'),
@@ -191,7 +188,6 @@ executable(
   sources: ['cuttlefish/host/commands/cvd/main.cc'] + sources,
   dependencies: dependencies,
   include_directories: [
-    '/usr/include/android/',
     '/usr/local/include',
     'cuttlefish',
   ],
@@ -202,7 +198,6 @@ executable(
   sources: ['cuttlefish/host/libs/allocd/allocd.cpp'] + sources,
   dependencies: dependencies,
   include_directories: [
-    '/usr/include/android/',
     '/usr/local/include',
     'cuttlefish',
   ],
