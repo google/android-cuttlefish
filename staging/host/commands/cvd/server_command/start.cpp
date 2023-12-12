@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cstdint>
@@ -79,6 +80,23 @@ RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
   load_command.add_args(config_file);
   return RequestWithStdio(request.Client(), request_proto,
                           request.FileDescriptors(), request.Credentials());
+}
+
+// link might be a directory, so we clean that up, and create a link from
+// target to link
+Result<void> EnsureSymlink(const std::string& target, const std::string link) {
+  if (DirectoryExists(link, /* follow_symlinks */ false)) {
+    CF_EXPECTF(RecursivelyRemoveDirectory(link),
+               "Failed to remove legacy directory \"{}\"", link);
+  }
+  if (FileExists(link, /* follow_symlinks */ false)) {
+    CF_EXPECTF(RemoveFile(link), "Failed to remove file \"{}\": {}", link,
+               std::strerror(errno));
+  }
+  CF_EXPECTF(symlink(target.c_str(), link.c_str()) == 0,
+             "symlink(\"{}\", \"{}\") failed: {}", target, link,
+             std::strerror(errno));
+  return {};
 }
 
 }  // namespace
@@ -527,63 +545,34 @@ Result<bool> IsDaemonModeFlag(const cvd_common::Args& args) {
 // when HOME is NOT overridden and selector flags are NOT given.
 Result<void> CvdStartCommandHandler::CreateSymlinks(
     const selector::GroupCreationInfo& group_creation_info) {
-  std::string instance_home_dir = "";
+  CF_EXPECT(EnsureDirectoryExists(group_creation_info.home));
   auto system_wide_home = CF_EXPECT(SystemWideUserHome());
+  auto smallest_id = std::numeric_limits<unsigned>::max();
   for (const auto& instance : group_creation_info.instances) {
-    std::string legacy_path = system_wide_home + "/cuttlefish_runtime.";
-    legacy_path = ConcatToString(legacy_path, instance.instance_id_);
-    instance_home_dir = group_creation_info.home;
-    instance_home_dir = instance_home_dir + "/cuttlefish/instances/cvd-";
-    instance_home_dir = ConcatToString(instance_home_dir, instance.instance_id_);
-    if (DirectoryExists(legacy_path, /* follow_symlinks */ true)) {
-      CF_EXPECT(RecursivelyRemoveDirectory(legacy_path),
-                "Failed to remove legacy directory " << legacy_path);
-    }
-    if (symlink(instance_home_dir.c_str(), legacy_path.c_str())) {
-      return CF_ERRNO("symlink(\"" << instance_home_dir << "\", \""
-                                   << legacy_path << "\") failed");
-    }
-    legacy_path = system_wide_home + "/cuttlefish_runtime";
-    if (DirectoryExists(legacy_path, true)) {
-      CF_EXPECT(RecursivelyRemoveDirectory(legacy_path),
-                "Failed to remove legacy directory " << legacy_path);
-    }
-    if (symlink(instance_home_dir.c_str(), legacy_path.c_str())) {
-      return CF_ERRNO("symlink(\"" << instance_home_dir << "\", \""
-                                   << legacy_path << "\") failed");
-    }
-    std::string cuttlefish_path = group_creation_info.home + "/cuttlefish/";
-    legacy_path = system_wide_home + "/cuttlefish";
-    if (DirectoryExists(legacy_path,  true)) {
-      CF_EXPECT(RecursivelyRemoveDirectory(legacy_path),
-                "Failed to remove legacy directory " << legacy_path);
-    }
-    if (symlink(cuttlefish_path.c_str(), legacy_path.c_str())) {
-      return CF_ERRNO("symlink(\"" << cuttlefish_path << "\", \"" << legacy_path
-                                   << "\") failed");
-    }
-    std::string cuttlefish_assembly_path = cuttlefish_path + "assembly/";
-    legacy_path = system_wide_home + "/cuttlefish_assembly";
-    if (DirectoryExists(legacy_path,  true)) {
-      CF_EXPECT(RecursivelyRemoveDirectory(legacy_path),
-                "Failed to remove legacy directory " << legacy_path);
-    }
-    if (symlink(cuttlefish_assembly_path.c_str(), legacy_path.c_str())) {
-      return CF_ERRNO("symlink(\"" << cuttlefish_assembly_path << "\", \""
-                                   << legacy_path << "\") failed");
-    }
-    std::string config_path =
-        cuttlefish_assembly_path + "cuttlefish_config.json";
-    legacy_path = system_wide_home + "/.cuttlefish_config.json";
-    if (FileExists(legacy_path,  false)) {
-      CF_EXPECT(RemoveFile(legacy_path),
-                "Failed to remove instance_dir symlink " << legacy_path);
-    }
-    if (symlink(config_path.c_str(), legacy_path.c_str())) {
-      return CF_ERRNO("symlink(\"" << config_path << "\", \"" << legacy_path
-                                   << "\") failed");
-    }
+    // later on, we link cuttlefish_runtime to cuttlefish_runtime.smallest_id
+    smallest_id = std::min(smallest_id, instance.instance_id_);
+    const std::string instance_home_dir =
+        fmt::format("{}/cuttlefish/instances/cvd-{}", group_creation_info.home,
+                    instance.instance_id_);
+    CF_EXPECT(
+        EnsureSymlink(instance_home_dir,
+                      fmt::format("{}/cuttlefish_runtime.{}", system_wide_home,
+                                  instance.instance_id_)));
+    CF_EXPECT(EnsureSymlink(group_creation_info.home + "/cuttlefish",
+                            system_wide_home + "/cuttlefish"));
+    CF_EXPECT(EnsureSymlink(group_creation_info.home +
+                                "/cuttlefish/assembly/cuttlefish_config.json",
+                            system_wide_home + "/.cuttlefish_config.json"));
   }
+
+  // create cuttlefish_runtime to cuttlefish_runtime.id
+  CF_EXPECT_NE(std::numeric_limits<unsigned>::max(), smallest_id,
+               "The group did not have any instance, which is not expected.");
+  const std::string instance_runtime_dir = fmt::format(
+      "{}/cuttlefish_runtime.{}", group_creation_info.home, smallest_id);
+  const std::string runtime_dir_link =
+      group_creation_info.home + "/cuttlefish_runtime";
+  CF_EXPECT(EnsureSymlink(instance_runtime_dir, runtime_dir_link));
   return {};
 }
 
