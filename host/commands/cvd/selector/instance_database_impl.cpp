@@ -296,11 +296,26 @@ Result<void> InstanceDatabase::LoadGroupFromJson(
       group_json[LocalInstanceGroup::kJsonHostArtifactPath].asString();
   const std::string product_out_path =
       group_json[LocalInstanceGroup::kJsonProductOutPath].asString();
+  TimeStamp start_time = CvdServerClock::now();
+
+  // test if the field is available as the field has been added
+  // recently as of b/315855286
+  if (group_json.isMember(LocalInstanceGroup::kJsonStartTime)) {
+    auto restored_start_time_result = DeserializeTimePoint(group_json);
+    if (restored_start_time_result.ok()) {
+      start_time = std::move(*restored_start_time_result);
+    } else {
+      LOG(ERROR) << "Start time restoration from json failed, so we use "
+                 << " the current system time. Reasons: "
+                 << restored_start_time_result.error().FormatForEnv();
+    }
+  }
   const auto new_group_ref =
       CF_EXPECT(AddInstanceGroup({.group_name = group_name,
                                   .home_dir = home_dir,
                                   .host_artifacts_path = host_artifacts_path,
-                                  .product_out_path = product_out_path}));
+                                  .product_out_path = product_out_path,
+                                  .start_time = std::move(start_time)}));
   android::base::ScopeGuard remove_already_added_new_group(
       [&new_group_ref, this]() {
         this->RemoveInstanceGroup(new_group_ref.Get());
