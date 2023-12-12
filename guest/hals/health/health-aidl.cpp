@@ -53,6 +53,7 @@ class HealthImpl : public Health {
   ScopedAStatus getCurrentAverageMicroamps(int32_t* out) override;
   ScopedAStatus getCapacity(int32_t* out) override;
   ScopedAStatus getChargeStatus(BatteryStatus* out) override;
+  ScopedAStatus getBatteryHealthData(BatteryHealthData* out) override;
 
  protected:
   void UpdateHealthInfo(HealthInfo* health_info) override;
@@ -98,6 +99,15 @@ ScopedAStatus HealthImpl::getCapacity(int32_t* out) {
 
 ScopedAStatus HealthImpl::getChargeStatus(BatteryStatus* out) {
   *out = BatteryStatus::CHARGING;
+  return ScopedAStatus::ok();
+}
+
+ScopedAStatus HealthImpl::getBatteryHealthData(BatteryHealthData* out) {
+  out->batteryManufacturingDateSeconds = 0;
+  out->batteryFirstUsageSeconds = 0;
+  out->batteryStateOfHealth = 99;
+  out->batterySerialNumber = std::nullopt;
+  out->batteryPartStatus = BatteryPartStatus::UNSUPPORTED;
   return ScopedAStatus::ok();
 }
 
