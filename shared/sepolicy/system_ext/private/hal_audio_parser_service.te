@@ -1,2 +1,0 @@
-# Currently this is a stub. This service is only actually implemented by SoC vendors.
-allow audioserver hal_audio_vendor_parameter_parser_service:service_manager find;
