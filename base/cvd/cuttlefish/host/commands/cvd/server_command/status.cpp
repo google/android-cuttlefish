@@ -202,7 +202,8 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
     return HandleHelp(request);
   }
 
-  if (instance_manager_.AllGroupNames().empty()) {
+  const auto uid = CF_EXPECT(request.Credentials()).uid;
+  if (instance_manager_.AllGroupNames(uid).empty()) {
     return CF_EXPECT(NoGroupResponse(request));
   }
   RequestWithStdio new_request = CF_EXPECT(ProcessInstanceNameFlag(request));
