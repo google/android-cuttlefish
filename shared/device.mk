@@ -310,6 +310,7 @@ LOCAL_AUDIO_PRODUCT_PACKAGE := \
     libpreprocessingaidl \
     libpresetreverbsw \
     libreverbaidl \
+    libspatializersw \
     libtinyxml2 \
     libvirtualizersw \
     libvisualizeraidl \
