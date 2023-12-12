@@ -31,7 +31,7 @@ cc_defaults {
     ],
 
     static_libs: [
-        "android.hardware.health-V2-ndk",
+        "android.hardware.health-V3-ndk",
         "libbase",
         "libbatterymonitor",
         "libcutils",
