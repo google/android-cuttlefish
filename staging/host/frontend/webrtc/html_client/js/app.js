@@ -947,6 +947,11 @@ class DeviceControlApp {
   }
 
   #onKeyEvent(e) {
+    if (e.cancelable) {
+      // Some keyboard events cause unwanted side effects, like elements losing
+      // focus, if the default behavior is not prevented.
+      e.preventDefault();
+    }
     this.#deviceConnection.sendKeyEvent(e.code, e.type);
   }
 
