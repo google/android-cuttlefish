@@ -16,7 +16,8 @@
 
 #include "host/commands/cvd/selector/instance_group_record.h"
 
-#include "host/commands/cvd/selector/instance_database_types.h"
+#include <ctime>
+
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
@@ -30,8 +31,13 @@ LocalInstanceGroup::LocalInstanceGroup(const InstanceGroupParam& param)
       internal_group_name_(GenInternalGroupName()),
       group_name_(param.group_name),
       start_time_(param.start_time) {
-  LOG(VERBOSE) << "Creating a group \"" << group_name_ << "\" ("
-               << Format(start_time_) << ")";
+  time_t time = std::chrono::system_clock::to_time_t(start_time_);
+  std::string ctime_str = std::ctime(&time);
+  if (!ctime_str.empty() && (*ctime_str.rbegin() == '\n')) {
+    ctime_str.pop_back();
+  }
+  LOG(VERBOSE) << "Creating a group \"" << group_name_ << "\" (" << ctime_str
+               << ")";
 }
 
 LocalInstanceGroup::LocalInstanceGroup(const LocalInstanceGroup& src)
@@ -139,8 +145,6 @@ Json::Value LocalInstanceGroup::Serialize() const {
   group_json[kJsonHomeDir] = home_dir_;
   group_json[kJsonHostArtifactPath] = host_artifacts_path_;
   group_json[kJsonProductOutPath] = product_out_path_;
-  group_json[kJsonStartTime] = SerializeTimePoint(start_time_);
-
   int i = 0;
   Json::Value instances_array_json;
   for (const auto& instance : instances_) {
