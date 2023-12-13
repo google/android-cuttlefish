@@ -16,11 +16,56 @@
 
 #include "host/commands/cvd/selector/instance_database_types.h"
 
+#include <ctime>
+
+#include <android-base/parseint.h>
+#include <fmt/core.h>
+
+#include "host/commands/cvd/selector/instance_group_record.h"
+
 namespace cuttlefish {
 namespace selector {
 
 Query::Query(const std::string& field_name, const std::string& field_value)
     : field_name_(field_name), field_value_(field_value) {}
+
+std::string SerializeTimePoint(const TimeStamp& present) {
+  const auto duration =
+      std::chrono::duration_cast<CvdTimeDuration>(present.time_since_epoch());
+  return fmt::format("{}", duration.count());
+}
+
+Result<TimeStamp> DeserializeTimePoint(const Json::Value& group_json) {
+  std::string group_name = "unknown";
+  if (group_json.isMember(LocalInstanceGroup::kJsonGroupName)) {
+    group_name = group_json[LocalInstanceGroup::kJsonGroupName].asString();
+  }
+  CF_EXPECTF(group_json.isMember(LocalInstanceGroup::kJsonStartTime),
+             "The serialized instance database in json file for group \"{}\""
+             " is missing the start time field: {}",
+             group_name, LocalInstanceGroup::kJsonStartTime);
+  std::string serialized(
+      group_json[LocalInstanceGroup::kJsonStartTime].asString());
+
+  using CountType = decltype(((const CvdTimeDuration*)nullptr)->count());
+  CountType count = 0;
+  CF_EXPECTF(android::base::ParseInt(serialized, &count),
+             "Failed to serialize: {}", serialized);
+  CvdTimeDuration duration(count);
+  TimeStamp restored_time(duration);
+  LOG(VERBOSE) << "The start time of the group \"" << group_name
+               << "\" is restored as: " << Format(restored_time);
+  return restored_time;
+}
+
+std::string Format(const TimeStamp& time_point) {
+  time_t time = std::chrono::system_clock::to_time_t(time_point);
+  std::string ctime_str = std::ctime(&time);
+  if (!ctime_str.empty() && (*ctime_str.rbegin() == '\n')) {
+    ctime_str.pop_back();
+  }
+  return ctime_str;
+}
 
 }  // namespace selector
 }  // namespace cuttlefish
