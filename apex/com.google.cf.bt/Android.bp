@@ -22,15 +22,36 @@ prebuilt_etc {
     installable: false,
 }
 
+prebuilt_etc {
+    name: "android.hardware.bluetooth-service.default.xml",
+    src: ":manifest_android.hardware.bluetooth-service.default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.bluetooth.finder-service.default.xml",
+    src: ":manifest_android.hardware.bluetooth.finder-service.default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.bluetooth.ranging-service.default.xml",
+    src: ":manifest_android.hardware.bluetooth.ranging-service.default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
 apex {
     name: "com.google.cf.bt",
     manifest: "manifest.json",
     file_contexts: "file_contexts",
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",
-    use_vndk_as_stable: true,
     updatable: false,
     soc_specific: true,
+
     binaries: [
         "android.hardware.bluetooth-service.default",
         "android.hardware.bluetooth.finder-service.default",
@@ -38,13 +59,14 @@ apex {
         "bt_vhci_forwarder",
     ],
     prebuilts: [
+        // permissions
         "android.hardware.bluetooth_le.prebuilt.xml",
         "android.hardware.bluetooth.prebuilt.xml",
+        // vintf
+        "android.hardware.bluetooth-service.default.xml",
+        "android.hardware.bluetooth.finder-service.default.xml",
+        "android.hardware.bluetooth.ranging-service.default.xml",
+        // init rc
         "com.google.cf.bt.rc",
     ],
-    vintf_fragments: [
-        ":manifest_android.hardware.bluetooth-service.default.xml",
-        ":manifest_android.hardware.bluetooth.finder-service.default.xml",
-        ":manifest_android.hardware.bluetooth.ranging-service.default.xml",
-        ],
 }
