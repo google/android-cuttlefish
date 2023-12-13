@@ -807,26 +807,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_enable_bootanimation(
   (*Dictionary())[kEnableBootAnimation] = enable_bootanimation;
 }
 
-static constexpr char kExtraBootconfigArgsInstanced[] = "extra_bootconfig_args";
-std::vector<std::string>
-CuttlefishConfig::InstanceSpecific::extra_bootconfig_args() const {
-  std::string extra_bootconfig_args_str =
-      (*Dictionary())[kExtraBootconfigArgsInstanced].asString();
-  std::vector<std::string> bootconfig;
-  if (!extra_bootconfig_args_str.empty()) {
-    for (const auto& arg :
-         android::base::Split(extra_bootconfig_args_str, " ")) {
-      bootconfig.push_back(arg);
-    }
-  }
-  return bootconfig;
-}
-
-void CuttlefishConfig::MutableInstanceSpecific::set_extra_bootconfig_args(
-    const std::string& transport) {
-  (*Dictionary())[kExtraBootconfigArgsInstanced] = transport;
-}
-
 static constexpr char kRecordScreen[] = "record_screen";
 void CuttlefishConfig::MutableInstanceSpecific::set_record_screen(
     bool record_screen) {
@@ -1134,14 +1114,6 @@ std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_pipe_name() const {
   return AbsolutePath(PerInstanceInternalPath("logcat-pipe"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::restore_pipe_name() const {
-  return AbsolutePath(PerInstanceInternalPath("restore-pipe"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::restore_adbd_pipe_name() const {
-  return AbsolutePath(PerInstanceInternalPath("restore-pipe-adbd"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::access_kregistry_path() const {
@@ -1614,16 +1586,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_start_netsim(bool start) {
 }
 bool CuttlefishConfig::InstanceSpecific::start_netsim() const {
   return (*Dictionary())[kStartNetsim].asBool();
-}
-
-// TODO(b/288987294) Remove this when separating environment is done
-static constexpr char kStartWmediumdInstance[] = "start_wmediumd_instance";
-void CuttlefishConfig::MutableInstanceSpecific::set_start_wmediumd_instance(
-    bool start) {
-  (*Dictionary())[kStartWmediumdInstance] = start;
-}
-bool CuttlefishConfig::InstanceSpecific::start_wmediumd_instance() const {
-  return (*Dictionary())[kStartWmediumdInstance].asBool();
 }
 
 static constexpr char kMcu[] = "mcu";

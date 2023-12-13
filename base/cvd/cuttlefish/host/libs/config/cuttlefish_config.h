@@ -129,9 +129,6 @@ class CuttlefishConfig {
   void set_enable_host_uwb(bool enable_host_uwb);
   bool enable_host_uwb() const;
 
-  void set_enable_host_uwb_connector(bool enable_host_uwb);
-  bool enable_host_uwb_connector() const;
-
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
 
@@ -196,6 +193,9 @@ class CuttlefishConfig {
 
   void set_extra_kernel_cmdline(const std::string& extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
+
+  void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
+  std::vector<std::string> extra_bootconfig_args() const;
 
   // A directory containing the SSL certificates for the signaling server
   void set_webrtc_certs_dir(const std::string& certs_dir);
@@ -262,12 +262,6 @@ class CuttlefishConfig {
   // path to the saved snapshot file(s)
   std::string snapshot_path() const;
   void set_snapshot_path(const std::string& snapshot_path);
-
-  std::set<std::string> straced_host_executables() const;
-  void set_straced_host_executables(const std::set<std::string>& executables);
-
-  bool host_sandbox() const;
-  void set_host_sandbox(bool host_sandbox);
 
   bool IsCrosvm() const;
 
@@ -396,8 +390,6 @@ class CuttlefishConfig {
     std::string gnss_out_pipe_name() const;
 
     std::string logcat_pipe_name() const;
-    std::string restore_pipe_name() const;
-    std::string restore_adbd_pipe_name() const;
 
     std::string launcher_log_path() const;
 
@@ -471,10 +463,6 @@ class CuttlefishConfig {
 
     // Whether this instance should start a netsim instance
     bool start_netsim() const;
-
-    // TODO(b/288987294) Remove this when separating environment is done
-    // Whether this instance should start a wmediumd instance
-    bool start_wmediumd_instance() const;
 
     const Json::Value& mcu() const;
 
@@ -564,7 +552,6 @@ class CuttlefishConfig {
     bool enable_audio() const;
     bool enable_gnss_grpc_proxy() const;
     bool enable_bootanimation() const;
-    std::vector<std::string> extra_bootconfig_args() const;
     bool record_screen() const;
     std::string gem5_debug_file() const;
     bool protected_vm() const;
@@ -724,8 +711,6 @@ class CuttlefishConfig {
     void set_start_casimir(bool start);
     void set_start_pica(bool start);
     void set_start_netsim(bool start);
-    // TODO(b/288987294) Remove this when separating environment is done
-    void set_start_wmediumd_instance(bool start);
     void set_mcu(const Json::Value &v);
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
     void set_crosvm_use_balloon(const bool use_balloon);
@@ -766,7 +751,6 @@ class CuttlefishConfig {
     void set_enable_audio(bool enable);
     void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
     void set_enable_bootanimation(const bool enable_bootanimation);
-    void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
     void set_record_screen(bool record_screen);
     void set_gem5_debug_file(const std::string& gem5_debug_file);
     void set_protected_vm(bool protected_vm);
@@ -951,23 +935,6 @@ class CuttlefishConfig {
   CuttlefishConfig& operator=(const CuttlefishConfig&) = delete;
 };
 
-// Whether the instance is restored from a snapshot. Stays true until the device
-// reboots.
-// When the device is booting, the config  init function checks if
-// "FLAGS_snapshot_path" is not empty, and if it isn't empty, a file called
-// "restore" will be created to keep track of the restore.
-// This is necessary because we don't want to
-// modify the config when the device boots, however we also want to only restore
-// once. Tracking via "restore" is necessary as a bug existed when checking if
-// "snapshot_path" existed during boot, where a restart or a powerwash of the
-// device would actually perform a restore instead of their respective actions.
-bool IsRestoring(const CuttlefishConfig&);
-
-// Vhost-user-vsock modes
-extern const char* const kVhostUserVsockModeAuto;
-extern const char* const kVhostUserVsockModeTrue;
-extern const char* const kVhostUserVsockModeFalse;
-
 // GPU modes
 extern const char* const kGpuModeAuto;
 extern const char* const kGpuModeDrmVirgl;
@@ -988,8 +955,3 @@ extern const char* const kHwComposerDrm;
 extern const char* const kHwComposerRanchu;
 extern const char* const kHwComposerNone;
 }  // namespace cuttlefish
-
-#if FMT_VERSION >= 90000
-template <>
-struct fmt::formatter<cuttlefish::ExternalNetworkMode> : ostream_formatter {};
-#endif
