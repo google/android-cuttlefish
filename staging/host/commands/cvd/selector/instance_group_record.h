@@ -77,6 +77,14 @@ class LocalInstanceGroup {
   // returns all instances in the dedicated data type
   Result<Set<ConstRef<LocalInstance>>> FindAllInstances() const;
 
+  static constexpr const char kJsonGroupName[] = "Group Name";
+  static constexpr const char kJsonHomeDir[] = "Runtime/Home Dir";
+  static constexpr const char kJsonHostArtifactPath[] = "Host Tools Dir";
+  static constexpr const char kJsonProductOutPath[] = "Product Out Dir";
+  static constexpr const char kJsonStartTime[] = "Start Time";
+  static constexpr const char kJsonInstances[] = "Instances";
+  static constexpr const char kJsonParent[] = "Parent Group";
+
  private:
   struct InstanceGroupParam {
     std::string group_name;
@@ -100,13 +108,6 @@ class LocalInstanceGroup {
   std::string group_name_;
   TimeStamp start_time_;
   Set<std::unique_ptr<LocalInstance>> instances_;
-
-  static constexpr const char kJsonGroupName[] = "Group Name";
-  static constexpr const char kJsonHomeDir[] = "Runtime/Home Dir";
-  static constexpr const char kJsonHostArtifactPath[] = "Host Tools Dir";
-  static constexpr const char kJsonProductOutPath[] = "Product Out Dir";
-  static constexpr const char kJsonInstances[] = "Instances";
-  static constexpr const char kJsonParent[] = "Parent Group";
 
   /*
    * Expose constructor to the tests in InstanceRecord unit test suite.
