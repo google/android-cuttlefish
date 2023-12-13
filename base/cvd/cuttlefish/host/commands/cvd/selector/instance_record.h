@@ -36,9 +36,6 @@ class LocalInstance {
   friend class InstanceDatabase;
 
  public:
-  static constexpr const char kJsonInstanceId[] = "Instance Id";
-  static constexpr const char kJsonInstanceName[] = "Per-Instance Name";
-
   /* names:
    *
    * Many components in Cuttlefish traditionally expect the name to be "cvd-N,"
@@ -115,6 +112,9 @@ class LocalInstance {
  private:
   LocalInstance(const LocalInstanceGroup& parent_group,
                 const unsigned instance_id, const std::string& instance_name);
+
+  static constexpr const char kJsonInstanceId[] = "Instance Id";
+  static constexpr const char kJsonInstanceName[] = "Per-Instance Name";
 
   const LocalInstanceGroup& parent_group_;
   unsigned instance_id_;
