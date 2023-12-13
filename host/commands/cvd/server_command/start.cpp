@@ -568,10 +568,9 @@ Result<void> CvdStartCommandHandler::CreateSymlinks(
   // create cuttlefish_runtime to cuttlefish_runtime.id
   CF_EXPECT_NE(std::numeric_limits<unsigned>::max(), smallest_id,
                "The group did not have any instance, which is not expected.");
-  const std::string instance_runtime_dir = fmt::format(
-      "{}/cuttlefish_runtime.{}", group_creation_info.home, smallest_id);
-  const std::string runtime_dir_link =
-      group_creation_info.home + "/cuttlefish_runtime";
+  const std::string instance_runtime_dir =
+      fmt::format("{}/cuttlefish_runtime.{}", system_wide_home, smallest_id);
+  const std::string runtime_dir_link = system_wide_home + "/cuttlefish_runtime";
   CF_EXPECT(EnsureSymlink(instance_runtime_dir, runtime_dir_link));
   return {};
 }
