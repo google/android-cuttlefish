@@ -109,6 +109,8 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 NetsimServerComponent();
 
+Result<std::optional<MonitorCommand>> ScreenRecordingServer(GrpcSocketCreator&);
+
 Result<MonitorCommand> SecureEnv(const CuttlefishConfig&,
                                  const CuttlefishConfig::InstanceSpecific&,
                                  AutoSecureEnvFiles::Type&,
