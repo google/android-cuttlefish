@@ -34,6 +34,9 @@ constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
 constexpr int kCppClientType =
     19;  // C++ native client type (clientanalytics.proto)
 
+const std::string kInternalEmail = "@google.com";
+const std::vector<std::string> kInternalHostname = {"google"};
+
 std::string GenerateUUID() {
   uuid_t uuid;
   uuid_generate_random(uuid);
@@ -103,6 +106,42 @@ std::string createCommandLine(const std::vector<std::string>& args) {
   return commandLine;
 }
 
+std::string GetUserEmail() {
+  std::string email;
+  FILE* pipe = popen("git config --get user.email", "r");
+  if (!pipe) {
+    LOG(ERROR) << "popen() failed!";
+    return "";
+  }
+  char buffer[128];
+  while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+    email += buffer;
+  }
+  pclose(pipe);
+  email.erase(std::remove(email.begin(), email.end(), '\n'), email.end());
+  return email;
+}
+
+UserType GetUserType() {
+  std::string email = GetUserEmail();
+  if (email.find(kInternalEmail) != std::string::npos) {
+    return UserType::GOOGLE;
+  }
+
+  char hostname[1024];
+  hostname[1023] = '\0';
+  gethostname(hostname, sizeof(hostname) - 1);
+  std::string host_str(hostname);
+
+  for (const auto& internal_host : kInternalHostname) {
+    if (host_str.find(internal_host) != std::string::npos) {
+      return UserType::GOOGLE;
+    }
+  }
+
+  return UserType::EXTERNAL;
+}
+
 }  // namespace
 
 int CvdMetrics::SendLaunchCommand(const std::string& command_line) {
@@ -124,6 +163,9 @@ int CvdMetrics::SendLaunchCommand(const std::string& command_line) {
 }
 
 int CvdMetrics::SendCvdMetrics(const std::vector<std::string>& args) {
+  if (GetUserType() != UserType::GOOGLE) {
+    return 0;
+  }
   std::string command_line = createCommandLine(args);
   return CvdMetrics::SendLaunchCommand(command_line);
 }
