@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -61,6 +62,9 @@ using Set = std::unordered_set<T>;
 
 template <typename K, typename V>
 using Map = std::unordered_map<K, V>;
+
+using CvdServerClock = std::chrono::system_clock;
+using TimeStamp = std::chrono::time_point<CvdServerClock>;
 
 }  // namespace selector
 }  // namespace cuttlefish
