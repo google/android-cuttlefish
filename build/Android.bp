@@ -140,6 +140,7 @@ cvd_host_tools = [
     "casimir",
     "snapshot_util_cvd",
     "run_cvd",
+    "screen_recording_server",
     "secure_env",
     "sefcontext_compile",
     "cvd_send_sms",
