@@ -617,5 +617,3 @@ PRODUCT_CHECK_DEV_TYPE_VIOLATIONS := true
 ifeq ($(RELEASE_DEPRECATE_VNDK),true)
 KEEP_VNDK ?= false
 endif
-
-TARGET_BOARD_FASTBOOT_INFO_FILE = device/google/cuttlefish/shared/fastboot-info.txt
