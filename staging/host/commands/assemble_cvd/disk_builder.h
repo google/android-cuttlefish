@@ -27,6 +27,9 @@ namespace cuttlefish {
 
 class DiskBuilder {
  public:
+  DiskBuilder& EntireDisk(std::string path) &;
+  DiskBuilder EntireDisk(std::string path) &&;
+
   DiskBuilder& Partitions(std::vector<ImagePartition> partitions) &;
   DiskBuilder Partitions(std::vector<ImagePartition> partitions) &&;
 
@@ -64,6 +67,7 @@ class DiskBuilder {
   Result<std::string> TextConfig();
 
   std::vector<ImagePartition> partitions_;
+  std::string entire_disk_;
   std::string header_path_;
   std::string footer_path_;
   std::string vm_manager_;
