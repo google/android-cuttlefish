@@ -23,8 +23,9 @@ prebuilt_etc {
 }
 
 prebuilt_etc {
-    name: "ld.config.txt",
-    src: "ld.config.txt",
+    name: "com.google.cf.rild.xml",
+    src: ":libril-modem-lib-manifests",
+    sub_dir: "vintf",
     installable: false,
 }
 
@@ -34,10 +35,9 @@ apex {
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",
     file_contexts: "file_contexts",
-    use_vndk_as_stable: true,
     updatable: false,
-    // Install the apex in /vendor/apex
     soc_specific: true,
+
     binaries: [
         "libcuttlefish-rild",
     ],
@@ -47,11 +47,9 @@ apex {
     prebuilts: [
         "android.hardware.telephony.gsm.prebuilt.xml",
         "android.hardware.telephony.ims.prebuilt.xml",
-        "android.hardware.telephony.satellite.prebuilt.xml",
         "com.google.cf.rild.rc",
-        "ld.config.txt",
+        "com.google.cf.rild.xml",
     ],
-    vintf_fragments: [":libril-modem-lib-manifests"],
     overrides: [
         "libril",
         "libreference-ril",
