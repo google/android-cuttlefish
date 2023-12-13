@@ -65,7 +65,8 @@ Result<ConstRef<LocalInstanceGroup>> InstanceDatabase::AddInstanceGroup(
       new LocalInstanceGroup({.group_name = param.group_name,
                               .home_dir = param.home_dir,
                               .host_artifacts_path = param.host_artifacts_path,
-                              .product_out_path = param.product_out_path});
+                              .product_out_path = param.product_out_path,
+                              .start_time = param.start_time});
   CF_EXPECT(new_group != nullptr);
   local_instance_groups_.emplace_back(new_group);
   const auto raw_ptr = local_instance_groups_.back().get();
