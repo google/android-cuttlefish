@@ -54,6 +54,7 @@ class LocalInstanceGroup {
     return instances_;
   }
   Json::Value Serialize() const;
+  auto StartTime() const { return start_time_; }
 
   /**
    * return error if instance id of instance is taken AND that taken id
@@ -82,6 +83,7 @@ class LocalInstanceGroup {
     std::string home_dir;
     std::string host_artifacts_path;
     std::string product_out_path;
+    TimeStamp start_time;
   };
   LocalInstanceGroup(const InstanceGroupParam& param);
   // Eventually copies the instances of a src to *this
@@ -96,9 +98,7 @@ class LocalInstanceGroup {
   // for now, "cvd", which is "cvd-".remove_suffix(1)
   std::string internal_group_name_;
   std::string group_name_;
-  // This will be initialized after the LocalInstanceGroup is created,
-  // which is also after the device completes the boot.
-  std::optional<std::string> build_id_;
+  TimeStamp start_time_;
   Set<std::unique_ptr<LocalInstance>> instances_;
 
   static constexpr const char kJsonGroupName[] = "Group Name";

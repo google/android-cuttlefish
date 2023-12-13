@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/selector/instance_group_record.h"
 
+#include <ctime>
+
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
@@ -27,7 +29,16 @@ LocalInstanceGroup::LocalInstanceGroup(const InstanceGroupParam& param)
       host_artifacts_path_{param.host_artifacts_path},
       product_out_path_{param.product_out_path},
       internal_group_name_(GenInternalGroupName()),
-      group_name_(param.group_name) {}
+      group_name_(param.group_name),
+      start_time_(param.start_time) {
+  time_t time = std::chrono::system_clock::to_time_t(start_time_);
+  std::string ctime_str = std::ctime(&time);
+  if (!ctime_str.empty() && (*ctime_str.rbegin() == '\n')) {
+    ctime_str.pop_back();
+  }
+  LOG(VERBOSE) << "Creating a group \"" << group_name_ << "\" (" << ctime_str
+               << ")";
+}
 
 LocalInstanceGroup::LocalInstanceGroup(const LocalInstanceGroup& src)
     : home_dir_{src.home_dir_},
@@ -35,6 +46,7 @@ LocalInstanceGroup::LocalInstanceGroup(const LocalInstanceGroup& src)
       product_out_path_{src.product_out_path_},
       internal_group_name_{src.internal_group_name_},
       group_name_{src.group_name_},
+      start_time_{src.start_time_},
       instances_{CopyInstances(src.instances_)} {}
 
 LocalInstanceGroup& LocalInstanceGroup::operator=(
