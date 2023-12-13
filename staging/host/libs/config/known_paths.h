@@ -36,6 +36,7 @@ std::string PicaBinary();
 std::string ProcessRestarterBinary();
 std::string RootCanalBinary();
 std::string CasimirBinary();
+std::string ScreenRecordingServerBinary();
 std::string SecureEnvBinary();
 std::string SocketVsockProxyBinary();
 std::string StopCvdBinary();
