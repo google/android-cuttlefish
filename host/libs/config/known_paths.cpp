@@ -78,6 +78,10 @@ std::string RootCanalBinary() { return HostBinaryPath("root-canal"); }
 
 std::string CasimirBinary() { return HostBinaryPath("casimir"); }
 
+std::string ScreenRecordingServerBinary() {
+  return HostBinaryPath("screen_recording_server");
+}
+
 std::string SecureEnvBinary() { return HostBinaryPath("secure_env"); }
 
 std::string SocketVsockProxyBinary() {
