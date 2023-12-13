@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/selector/instance_database_types.h"
 
+#include <ctime>
+
 #include <android-base/parseint.h>
 #include <fmt/core.h>
 
@@ -57,7 +59,12 @@ Result<TimeStamp> DeserializeTimePoint(const Json::Value& group_json) {
 }
 
 std::string Format(const TimeStamp& time_point) {
-  return fmt::format("{:%b-%d-%Y %H:%M:%S}", time_point);
+  time_t time = std::chrono::system_clock::to_time_t(time_point);
+  std::string ctime_str = std::ctime(&time);
+  if (!ctime_str.empty() && (*ctime_str.rbegin() == '\n')) {
+    ctime_str.pop_back();
+  }
+  return ctime_str;
 }
 
 }  // namespace selector
