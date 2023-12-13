@@ -36,6 +36,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_constants.h"
@@ -155,12 +156,12 @@ Result<void> InstanceManager::SetInstanceGroup(
   const auto host_artifacts_path = group_info.host_artifacts_path;
   const auto product_out_path = group_info.product_out_path;
   const auto& per_instance_info = group_info.instances;
-
-  auto new_group = CF_EXPECT(
-      instance_db.AddInstanceGroup({.group_name = group_name,
-                                    .home_dir = home_dir,
-                                    .host_artifacts_path = host_artifacts_path,
-                                    .product_out_path = product_out_path}));
+  auto new_group = CF_EXPECT(instance_db.AddInstanceGroup(
+      {.group_name = group_name,
+       .home_dir = home_dir,
+       .host_artifacts_path = host_artifacts_path,
+       .product_out_path = product_out_path,
+       .start_time = selector::CvdServerClock::now()}));
 
   using InstanceInfo = selector::InstanceDatabase::InstanceInfo;
   std::vector<InstanceInfo> instances_info;
