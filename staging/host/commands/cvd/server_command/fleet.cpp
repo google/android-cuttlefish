@@ -28,6 +28,8 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/selector/instance_database_types.h"
+#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/status_fetcher.h"
@@ -110,8 +112,19 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   auto all_group_names = instance_manager_.AllGroupNames(uid);
   envs.erase(kCuttlefishInstanceEnvVarName);
   for (const auto& group_name : all_group_names) {
+    auto group_obj_copy_result = instance_manager_.SelectGroup(
+        {}, InstanceManager::Queries{{selector::kGroupNameField, group_name}},
+        {}, uid);
+    if (!group_obj_copy_result.ok()) {
+      LOG(DEBUG) << "Group \"" << group_name
+                 << "\" has already been removed. Skipped.";
+      continue;
+    }
+
     Json::Value group_json(Json::objectValue);
     group_json["group_name"] = group_name;
+    group_json["start_time"] =
+        selector::Format(group_obj_copy_result->StartTime());
 
     auto request_message = MakeRequest(
         {.cmd_args = {"cvd", "status", "--print", "--all_instances"},

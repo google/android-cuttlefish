@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/selector/instance_database_types.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -61,6 +61,7 @@ class LocalInstance {
       std::string host_artifacts_path;
       std::string internal_group_name;
       std::string group_name;
+      TimeStamp start_time;
     };
 
    public:
@@ -79,12 +80,14 @@ class LocalInstance {
       const std::string& HostArtifactsPath() const {
         return host_artifacts_path_;
       }
+      auto StartTime() const { return start_time_; }
 
      private:
       std::string home_dir_;
       std::string host_artifacts_path_;
       std::string internal_group_name_;
       std::string group_name_;
+      TimeStamp start_time_;
     };
     Copy(const LocalInstance& src);
     const std::string& InternalName() const { return internal_name_; }
