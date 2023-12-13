@@ -254,6 +254,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_android_efi_loader(
     const std::string& android_efi_loader) {
   (*Dictionary())[kAndroidEfiLoader] = android_efi_loader;
 }
+static constexpr char kChromeOsDisk[] = "chromeos_disk";
+std::string CuttlefishConfig::InstanceSpecific::chromeos_disk() const {
+  return (*Dictionary())[kChromeOsDisk].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_chromeos_disk(
+    const std::string& chromeos_disk) {
+  (*Dictionary())[kChromeOsDisk] = chromeos_disk;
+}
 static constexpr char kChromeOsKernelPath[] = "chromeos_kernel_path";
 std::string CuttlefishConfig::InstanceSpecific::chromeos_kernel_path() const {
   return (*Dictionary())[kChromeOsKernelPath].asString();
@@ -1238,6 +1246,8 @@ std::string CuttlefishConfig::InstanceSpecific::audio_server_path() const {
 CuttlefishConfig::InstanceSpecific::BootFlow CuttlefishConfig::InstanceSpecific::boot_flow() const {
   const bool android_efi_loader_flow_used = !android_efi_loader().empty();
 
+  const bool chromeos_disk_flow_used = !chromeos_disk().empty();
+
   const bool chromeos_flow_used =
       !chromeos_kernel_path().empty() || !chromeos_root_image().empty();
 
@@ -1253,6 +1263,8 @@ CuttlefishConfig::InstanceSpecific::BootFlow CuttlefishConfig::InstanceSpecific:
     return BootFlow::AndroidEfiLoader;
   } else if (chromeos_flow_used) {
     return BootFlow::ChromeOs;
+  } else if (chromeos_disk_flow_used) {
+    return BootFlow::ChromeOsDisk;
   } else if (linux_flow_used) {
     return BootFlow::Linux;
   } else if (fuchsia_flow_used) {
