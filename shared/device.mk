@@ -180,13 +180,7 @@ PRODUCT_PACKAGES += \
     hidl_lazy_cb_test_server
 
 # Runtime Resource Overlays
-ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_PACKAGES += \
-    cuttlefish_overlay_connectivity \
-    cuttlefish_overlay_frameworks_base_core \
-    cuttlefish_overlay_settings_provider
-
-endif
+PRODUCT_PACKAGES += com.google.aosp_cf.rros
 
 #
 # Satellite vendor service for CF

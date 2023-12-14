@@ -1,4 +1,4 @@
-// Copyright (C) 2022 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-soong_namespace {
-    imports: [
-        "device/generic/goldfish",
-    ],
-}
-
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
 apex {
-    name: "com.google.aosp_cf_slim.rros",
+    name: "com.google.aosp_cf.rros",
     manifest: "apex_manifest.json",
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",
     file_contexts: "file_contexts",
-    use_vndk_as_stable: true,
     updatable: false,
-    // Install the apex in /vendor/apex
     soc_specific: true,
+
+    // RROs shared across CF-derived devices
     rros: [
-        "slim_overlay_frameworks_base_core",
+        "cuttlefish_overlay_connectivity",
+        "cuttlefish_overlay_frameworks_base_core",
+        "cuttlefish_overlay_settings_provider",
     ],
 }

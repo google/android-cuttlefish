@@ -62,11 +62,7 @@ PRODUCT_COPY_FILES += \
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/phone/overlay
 
 # Runtime Resource Overlays
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_PACKAGES += com.google.aosp_cf_phone.rros
-else
 PRODUCT_PACKAGES += cuttlefish_phone_overlay_frameworks_base_core
-endif
 
 # NFC AIDL HAL
 PRODUCT_PACKAGES += \

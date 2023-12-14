@@ -51,16 +51,9 @@ PRODUCT_VENDOR_PROPERTIES += \
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.faketouch.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.faketouch.xml \
 
-
 # Runtime Resource Overlays
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_PACKAGES += \
-    com.google.aosp_cf_phone.rros \
-    com.google.aosp_cf_slim.rros
-else
 PRODUCT_PACKAGES += \
     cuttlefish_phone_overlay_frameworks_base_core \
     slim_overlay_frameworks_base_core
-endif
 
 TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/slim/android-info.txt
