@@ -56,7 +56,6 @@ type IMPaths struct {
 	RootDir          string
 	CVDToolsDir      string
 	ArtifactsRootDir string
-	RuntimesRootDir  string
 }
 
 func (p *IMPaths) CVDBin() string {
@@ -169,10 +168,13 @@ func HostBugReport(ctx cvd.CVDExecContext, paths IMPaths, out string) error {
 	if len(fleet) == 0 {
 		return operator.NewNotFoundError("no artifacts found", nil)
 	}
-	opts := cvd.CommandOpts{
-		Home: paths.RuntimesRootDir,
-	}
-	return cvd.NewCommand(ctx, paths.CVDBin(), []string{"host_bugreport", "--output=" + out}, opts).Run()
+	cmd := cvd.NewCommand(
+		ctx,
+		paths.CVDBin(),
+		[]string{"host_bugreport", "--output=" + out},
+		cvd.CommandOpts{},
+	)
+	return cmd.Run()
 }
 
 const (
@@ -524,7 +526,7 @@ func (s cvdInstances) findByName(name string) (bool, *cvdInstance) {
 	return false, &cvdInstance{}
 }
 
-func runAcloudSetup(execContext cvd.CVDExecContext, artifactsRootDir, artifactsDir, runtimeDir string) {
+func runAcloudSetup(execContext cvd.CVDExecContext, artifactsRootDir, artifactsDir string) {
 	run := func(cmd *exec.Cmd) {
 		var b bytes.Buffer
 		cmd.Stdout = &b
