@@ -15,11 +15,10 @@
 
 #include <uuid.h>
 
-#include <internal_user_log.pb.h>
-
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "host/commands/cvd/metrics/cvd_metrics_api.h"
+#include "host/commands/cvd/metrics/proto/cvd_metrics_protos.h"
 #include "host/commands/cvd/metrics/utils.h"
 #include "host/commands/metrics/metrics_defs.h"
 
@@ -28,6 +27,7 @@ namespace cuttlefish {
 namespace {
 
 // 971 for atest internal events, while 934 for external events
+constexpr int kAtestInternalLogSourceId = 971;
 constexpr char kToolName[] = "cvd";
 
 constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
@@ -75,6 +75,7 @@ std::unique_ptr<LogRequest> BuildAtestLogRequest(
   // "log_request" is the top level LogRequest
   auto log_request = std::make_unique<LogRequest>();
   log_request->set_request_time_ms(now_ms);
+  log_request->set_log_source(kAtestInternalLogSourceId);
   log_request->set_log_source_name(kLogSourceStr);
 
   ClientInfo* client_info = log_request->mutable_client_info();
@@ -107,7 +108,7 @@ std::string createCommandLine(const std::vector<std::string>& args) {
 
 std::string GetUserEmail() {
   std::string email;
-  FILE* pipe = popen("git config --get user.email 2>/dev/null", "r");
+  FILE* pipe = popen("git config --get user.email", "r");
   if (!pipe) {
     LOG(ERROR) << "popen() failed!";
     return "";
