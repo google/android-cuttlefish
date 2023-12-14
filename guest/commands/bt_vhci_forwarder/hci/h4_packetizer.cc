@@ -83,7 +83,8 @@ void H4Packetizer::OnDataReady(int fd) {
       return;
     }
 
-    LOG_ALWAYS_FATAL("Read error in %d: %s", h4_parser_.CurrentState(),
+    LOG_ALWAYS_FATAL("Read error in %d: %s",
+                     static_cast<int>(h4_parser_.CurrentState()),
                      strerror(errno));
   }
   h4_parser_.Consume(buffer.data(), bytes_read);
