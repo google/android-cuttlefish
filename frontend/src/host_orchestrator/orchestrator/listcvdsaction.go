@@ -48,9 +48,9 @@ func (a *ListCVDsAction) Run() (*apiv1.ListCVDsResponse, error) {
 	if err := a.cvdDownloader.Download(a.cvdToolsVersion, a.paths.CVDBin(), a.paths.FetchCVDBin()); err != nil {
 		return nil, err
 	}
-	fleet, err := cvdFleet(a.execContext, a.paths.CVDBin())
+	group, err := cvdFleetFirstGroup(a.execContext, a.paths.CVDBin())
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.ListCVDsResponse{CVDs: fleetToCVDs(fleet)}, nil
+	return &apiv1.ListCVDsResponse{CVDs: group.toAPIObject()}, nil
 }

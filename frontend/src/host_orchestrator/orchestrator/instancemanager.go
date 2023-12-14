@@ -106,6 +106,14 @@ type cvdGroup struct {
 	Instances []*cvdInstance `json:"instances"`
 }
 
+func (g *cvdGroup) toAPIObject() []*apiv1.CVD {
+	result := make([]*apiv1.CVD, len(g.Instances))
+	for i, item := range g.Instances {
+		result[i] = item.toAPIObject(g.Name)
+	}
+	return result
+}
+
 type cvdInstance struct {
 	InstanceName   string   `json:"instance_name"`
 	Status         string   `json:"status"`
@@ -114,7 +122,19 @@ type cvdInstance struct {
 	WebRTCDeviceID string   `json:"webrtc_device_id"`
 }
 
-func cvdFleet(ctx cvd.CVDExecContext, cvdBin string) ([]*cvdInstance, error) {
+func (i *cvdInstance) toAPIObject(group string) *apiv1.CVD {
+	return &apiv1.CVD{
+		Group: group,
+		Name:  i.InstanceName,
+		// TODO(b/259725479): Update when `cvd fleet` prints out build information.
+		BuildSource:    &apiv1.BuildSource{},
+		Status:         i.Status,
+		Displays:       i.Displays,
+		WebRTCDeviceID: i.WebRTCDeviceID,
+	}
+}
+
+func cvdFleet(ctx cvd.CVDExecContext, cvdBin string) (*cvdFleetOutput, error) {
 	stdout := &bytes.Buffer{}
 	cvdCmd := cvd.NewCommand(ctx, cvdBin, []string{"fleet"}, cvd.CommandOpts{Stdout: stdout})
 	err := cvdCmd.Run()
@@ -126,34 +146,28 @@ func cvdFleet(ctx cvd.CVDExecContext, cvdBin string) ([]*cvdInstance, error) {
 		log.Printf("Failed parsing `cvd fleet` ouput. Output: \n\n%s\n", cvd.OutputLogMessage(stdout.String()))
 		return nil, fmt.Errorf("failed parsing `cvd fleet` output: %w", err)
 	}
-	if len(output.Groups) == 0 {
-		return []*cvdInstance{}, nil
-	}
-	// Host orchestrator only works with one instances group.
-	return output.Groups[0].Instances, nil
+	return output, nil
 }
 
-func fleetToCVDs(val []*cvdInstance) []*apiv1.CVD {
-	result := make([]*apiv1.CVD, len(val))
-	for i, item := range val {
-		result[i] = &apiv1.CVD{
-			Name: item.InstanceName,
-			// TODO(b/259725479): Update when `cvd fleet` prints out build information.
-			BuildSource:    &apiv1.BuildSource{},
-			Status:         item.Status,
-			Displays:       item.Displays,
-			WebRTCDeviceID: item.WebRTCDeviceID,
-		}
+// Helper for listing first group instances only. Legacy flows didn't have a multi-group environment hence unsing
+// the first group only.
+func cvdFleetFirstGroup(ctx cvd.CVDExecContext, cvdBin string) (*cvdGroup, error) {
+	fleet, err := cvdFleet(ctx, cvdBin)
+	if err != nil {
+		return nil, err
 	}
-	return result
+	if len(fleet.Groups) == 0 {
+		return &cvdGroup{}, nil
+	}
+	return fleet.Groups[0], nil
 }
 
 func CVDLogsDir(ctx cvd.CVDExecContext, cvdBin, name string) (string, error) {
-	instances, err := cvdFleet(ctx, cvdBin)
+	group, err := cvdFleetFirstGroup(ctx, cvdBin)
 	if err != nil {
 		return "", err
 	}
-	ok, ins := cvdInstances(instances).findByName(name)
+	ok, ins := cvdInstances(group.Instances).findByName(name)
 	if !ok {
 		return "", operator.NewNotFoundError(fmt.Sprintf("Instance %q not found", name), nil)
 	}
@@ -161,11 +175,11 @@ func CVDLogsDir(ctx cvd.CVDExecContext, cvdBin, name string) (string, error) {
 }
 
 func HostBugReport(ctx cvd.CVDExecContext, paths IMPaths, out string) error {
-	fleet, err := cvdFleet(ctx, paths.CVDBin())
+	group, err := cvdFleetFirstGroup(ctx, paths.CVDBin())
 	if err != nil {
 		return err
 	}
-	if len(fleet) == 0 {
+	if len(group.Instances) == 0 {
 		return operator.NewNotFoundError("no artifacts found", nil)
 	}
 	cmd := cvd.NewCommand(
