@@ -36,9 +36,9 @@ import (
 )
 
 const (
-	defaultTLSCertDir               = "/etc/cuttlefish-common/host_orchestrator/cert"
-	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
-	DefaultListenAddress            = "127.0.0.1"
+	defaultTLSCertDir      = "/etc/cuttlefish-common/host_orchestrator/cert"
+	defaultAndroidBuildURL = "https://androidbuildinternal.googleapis.com"
+	DefaultListenAddress   = "127.0.0.1"
 )
 
 func defaultCVDArtifactsDir() string {
@@ -125,7 +125,6 @@ func main() {
 		RootDir:          *imRootDir,
 		CVDToolsDir:      *imRootDir,
 		ArtifactsRootDir: filepath.Join(*imRootDir, "artifacts"),
-		RuntimesRootDir:  filepath.Join(*imRootDir, "runtimes"),
 	}
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{

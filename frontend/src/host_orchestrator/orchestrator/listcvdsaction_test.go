@@ -66,7 +66,6 @@ func TestListCVDsSucceeds(t *testing.T) {
 	paths := IMPaths{
 		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
 	}
 	opts := ListCVDsActionOpts{
 		Paths:           paths,

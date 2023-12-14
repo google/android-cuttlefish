@@ -16,7 +16,6 @@ package orchestrator
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -112,9 +111,6 @@ func (a *CreateCVDAction) Run() (apiv1.Operation, error) {
 	}
 	if err := createDir(a.paths.ArtifactsRootDir); err != nil {
 		return apiv1.Operation{}, err
-	}
-	if err := createRuntimesRootDir(a.paths.RuntimesRootDir); err != nil {
-		return apiv1.Operation{}, fmt.Errorf("failed creating cuttlefish runtime directory: %w", err)
 	}
 	if err := a.cvdDownloader.Download(a.cvdToolsVersion, a.paths.CVDBin(), a.paths.FetchCVDBin()); err != nil {
 		return apiv1.Operation{}, err
@@ -285,7 +281,6 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 	startParams := startCVDParams{
 		InstanceNumbers:  a.newInstanceNumbers(instancesCount),
 		MainArtifactsDir: mainBuildDir,
-		RuntimeDir:       a.paths.RuntimesRootDir,
 		KernelDir:        kernelBuildDir,
 		BootloaderDir:    bootloaderBuildDir,
 	}
@@ -294,7 +289,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
 	if contains(startParams.InstanceNumbers, 1) {
-		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, mainBuildDir, a.paths.RuntimesRootDir)
+		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, mainBuildDir)
 	}
 	return startParams.InstanceNumbers, nil
 }
@@ -308,14 +303,13 @@ func (a *CreateCVDAction) launchFromUserBuild(
 	startParams := startCVDParams{
 		InstanceNumbers:  a.newInstanceNumbers(instancesCount),
 		MainArtifactsDir: artifactsDir,
-		RuntimeDir:       a.paths.RuntimesRootDir,
 	}
 	if err := a.startCVDHandler.Start(startParams); err != nil {
 		return nil, err
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
 	if contains(startParams.InstanceNumbers, 1) {
-		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, artifactsDir, a.paths.RuntimesRootDir)
+		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, artifactsDir)
 	}
 	return startParams.InstanceNumbers, nil
 }
