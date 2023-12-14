@@ -1,0 +1,14 @@
+# cuttlefish
+version 1
+flash boot
+flash init_boot
+flash vendor_boot
+flash --apply-vbmeta vbmeta
+flash vbmeta_system
+flash vbmeta_vendor_dlkm
+flash vbmeta_system_dlkm
+reboot fastboot
+update-super
+flash super
+if-wipe erase userdata
+if-wipe erase metadata
