@@ -75,6 +75,7 @@ public class SnapshotTest extends BaseHostJUnit4Test {
       // validating the feature itself so it's fine
       boolean restoreRes = false;
       try {
+        handler = new DeviceSnapshotHandler();
         restoreRes = handler.restoreSnapshotDevice(getDevice(), String.format("snapshot_img%d", mTestCount));
       } catch (DeviceNotAvailableException e) {
         CLog.e(e);
