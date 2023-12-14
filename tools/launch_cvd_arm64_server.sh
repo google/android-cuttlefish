@@ -87,10 +87,13 @@ echo -e "Web UI port: $web_ui_port. ${color_cyan}Please point your browser to ht
 
 # sets up SSH port forwarding to the remote server for various ports and launch cvd instance
 adb_port_forwarding=""
+print_launcher_logs=""
 for instance_num in $(seq $base_instance_num $(($base_instance_num+$num_instances-1))); do
+  device_name="cvd_$base_instance_num-$instance_num"
   adb_port=$((6520+$instance_num-1))
-  echo -e "Device-$instance_num is using adb port $adb_port. Try ${color_cyan}adb connect 127.0.0.1:${adb_port}${color_plain} if you want to connect to this device"
+  echo -e "$device_name is using adb port $adb_port. Try ${color_cyan}adb connect 127.0.0.1:${adb_port}${color_plain} if you want to connect to this device"
   adb_port_forwarding+="-L $adb_port:127.0.0.1:$adb_port "
+  print_launcher_logs+="tail -f ~/$cvd_home_dir/cuttlefish/instances/cvd-$instance_num/logs/launcher.log | sed 's/^/[$device_name] /' &"
 done
 
 ports_forwarding="-L $web_ui_port:127.0.0.1:1443 \
@@ -100,4 +103,4 @@ ports_forwarding="-L $web_ui_port:127.0.0.1:1443 \
   $adb_port_forwarding"
 echo "Set up ssh ports forwarding: $ports_forwarding"
 echo -e "${color_yellow}Please stop the running instances by ctrl+c${color_plain}"
-ssh -N $server $ports_forwarding
+ssh $server $ports_forwarding $print_launcher_logs
