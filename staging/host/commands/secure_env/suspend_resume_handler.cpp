@@ -82,7 +82,8 @@ Result<ExtendedActionType> SnapshotCommandHandler::ReadRunCvdSnapshotCmd()
   const auto action_type = launcher_action.type;
   CF_EXPECTF(action_type == ExtendedActionType::kSuspend ||
                  action_type == ExtendedActionType::kResume,
-             "Unsupported ExtendedActionType \"{}\"", action_type);
+             "Unsupported ExtendedActionType \"{}\"",
+             fmt::underlying(action_type));
   return action_type;
 }
 
