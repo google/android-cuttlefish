@@ -372,7 +372,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
     terminal_ = std::make_unique<InterruptibleTerminal>(request.In());
     lock.unlock();
 
-    const bool is_tty = true;
+    const bool is_tty = request.Err()->IsOpen() && request.Err()->IsATTY();
     while (true) {
       lock.lock();
       std::string question = fmt::format(
