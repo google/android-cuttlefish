@@ -148,7 +148,9 @@ type Operation struct {
 }
 
 type CVD struct {
-	// [Output Only]
+	// [Output Only] The group name the instance belongs to.
+	Group string `json:"group"`
+	// [Output Only] Identifier within a group.
 	Name string `json:"name"`
 	// [REQUIRED]
 	BuildSource *BuildSource `json:"build_source"`
@@ -159,6 +161,9 @@ type CVD struct {
 	// [Output Only]
 	WebRTCDeviceID string `json:"webrtc_device_id"`
 }
+
+// Identifier within the whole fleet. Format: "{group}/{name}".
+func (c *CVD) ID() string { return c.Group + "/" + c.Name }
 
 type DeviceInfoReply struct {
 	DeviceId         string      `json:"device_id"`

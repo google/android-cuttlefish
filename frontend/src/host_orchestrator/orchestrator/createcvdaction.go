@@ -164,11 +164,11 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	if err := cmd.Run(); err != nil {
 		return nil, operator.NewInternalError(ErrMsgLaunchCVDFailed, err)
 	}
-	fleet, err := cvdFleet(a.execContext, a.paths.CVDBin())
+	group, err := cvdFleetFirstGroup(a.execContext, a.paths.CVDBin())
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.CreateCVDResponse{CVDs: fleetToCVDs(fleet)}, nil
+	return &apiv1.CreateCVDResponse{CVDs: group.toAPIObject()}, nil
 }
 
 func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
@@ -189,12 +189,12 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 	if err != nil {
 		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
-	fleet, err := cvdFleet(a.execContext, a.paths.CVDBin())
+	group, err := cvdFleetFirstGroup(a.execContext, a.paths.CVDBin())
 	if err != nil {
 		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
 	relevant := []*cvdInstance{}
-	for _, item := range fleet {
+	for _, item := range group.Instances {
 		n, err := strconv.Atoi(item.InstanceName)
 		if err != nil {
 			return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
@@ -203,9 +203,8 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 			relevant = append(relevant, item)
 		}
 	}
-	res := &apiv1.CreateCVDResponse{
-		CVDs: fleetToCVDs(relevant),
-	}
+	group.Instances = relevant
+	res := &apiv1.CreateCVDResponse{CVDs: group.toAPIObject()}
 	return &OperationResult{Value: res}
 }
 
