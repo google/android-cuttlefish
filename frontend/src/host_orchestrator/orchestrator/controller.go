@@ -59,6 +59,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newCreateCVDHandler(c.Config, c.OperationManager, c.UserArtifactsManager))).Methods("POST")
 	router.Handle("/cvds", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
 	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
+	router.Handle("/cvds/{group}", httpHandler(newStopCVDHandler(c.Config, c.OperationManager))).Methods("DELETE")
+	router.Handle("/cvds/{group}/{name}", httpHandler(newStopCVDHandler(c.Config, c.OperationManager))).Methods("DELETE")
 	router.Handle("/operations/{name}", httpHandler(&getOperationHandler{om: c.OperationManager})).Methods("GET")
 	// The expected response of the operation in case of success.  If the original method returns no data on
 	// success, such as `Delete`, response will be empty. If the original method is standard
@@ -223,6 +225,36 @@ func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDUser:         h.Config.CVDUser,
 	}
 	return NewListCVDsAction(opts).Run()
+}
+
+type stopCVDHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newStopCVDHandler(c Config, om OperationManager) *stopCVDHandler {
+	return &stopCVDHandler{
+		Config: c,
+		OM:     om,
+	}
+}
+
+func (h *stopCVDHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	buildAPI := artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL)
+	cvdDwnl := NewAndroidCICVDDownloader(buildAPI)
+	opts := StopCVDActionOpts{
+		Selector:         CVDSelector{Group: group, Name: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+		CVDToolsVersion:  h.Config.CVDToolsVersion,
+		CVDDownloader:    cvdDwnl,
+		CVDUser:          h.Config.CVDUser,
+	}
+	return NewStopCVDAction(opts).Run()
 }
 
 type getCVDLogsHandler struct {
