@@ -103,7 +103,16 @@ class InstanceManager {
                                        const Queries& queries) const;
   Result<Json::Value> Serialize(const uid_t uid);
   Result<void> LoadFromJson(const uid_t uid, const Json::Value&);
-  std::vector<std::string> AllGroupNames(const uid_t uid) const;
+  std::vector<std::string> AllGroupNames(uid_t uid) const;
+
+  struct UserGroupSelectionSummary {
+    // Index to group name. This is the index printed in the menu
+    // This field offers mapping between the number/index the user
+    // selects and the group that is to be chosen
+    std::unordered_map<int, std::string> idx_to_group_name;
+    std::string menu;
+  };
+  Result<UserGroupSelectionSummary> GroupSummaryMenu(uid_t uid) const;
 
  private:
   Result<void> IssueStopCommand(const SharedFD& out, const SharedFD& err,
