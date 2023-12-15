@@ -111,18 +111,10 @@ std::string HostBinaryDir() {
   return DefaultHostArtifactsPath("bin");
 }
 
-bool UseQemu8() {
+std::string DefaultQemuBinaryDir() {
   const std::string target_prod_str = StringFromEnv("TARGET_PRODUCT", "");
   if (HostArch() == Arch::X86_64 &&
       target_prod_str.find("arm") == std::string::npos) {
-    return true;
-  }
-
-  return false;
-}
-
-std::string DefaultQemuBinaryDir() {
-  if (UseQemu8()) {
     return HostBinaryDir();
   }
   return "/usr/bin";
