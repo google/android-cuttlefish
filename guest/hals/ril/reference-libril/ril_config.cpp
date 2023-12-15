@@ -17,6 +17,8 @@
 
 #define LOG_TAG "RILC"
 
+#include "RefRadioConfig.h"
+
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
@@ -286,7 +288,7 @@ void radio_1_6::registerConfigService(RIL_RadioFunctions *callbacks, CommandInfo
 
     // use a compat shim to convert HIDL interface to AIDL and publish it
     // TODO(bug 220004469): replace with a full AIDL implementation
-    static auto aidlHal = ndk::SharedRefBase::make<compat::RadioConfig>(radioConfigService);
+    static auto aidlHal = ndk::SharedRefBase::make<cf::ril::RefRadioConfig>(radioConfigService);
     const auto instance = compat::RadioConfig::descriptor + "/"s + std::string(serviceNames);
     const auto status = AServiceManager_addService(aidlHal->asBinder().get(), instance.c_str());
     RLOGD("registerConfigService addService: status %d", status);
