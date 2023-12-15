@@ -19,7 +19,6 @@
 #include <fmt/core.h>
 
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
@@ -239,7 +238,7 @@ Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   const uid_t uid = CF_EXPECT(request.Credentials()).uid;
-  const bool is_tty = request.In()->IsOpen() && request.In()->IsATTY();
+  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
   auto notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
       TerminalColor(is_tty, TerminalColors::kRed),
@@ -260,7 +259,7 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   const uid_t uid = CF_EXPECT(request.Credentials()).uid;
-  const bool is_tty = request.In()->IsOpen() && request.In()->IsATTY();
+  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
   auto notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
       TerminalColor(is_tty, TerminalColors::kRed),
@@ -273,15 +272,6 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
       TerminalColor(is_tty, TerminalColors::kReset));
   CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"), notice.size() + 1);
   response.mutable_status()->set_message(notice);
-  return response;
-}
-
-Result<cvd::Response> WriteToFd(SharedFD fd, const std::string& output) {
-  cvd::Response response;
-  auto written_size = WriteAll(fd, output);
-  CF_EXPECT_EQ(output.size(), written_size, fd->StrError());
-  response.mutable_command_response();  // Sets oneof member
-  response.mutable_status()->set_code(cvd::Status::OK);
   return response;
 }
 
