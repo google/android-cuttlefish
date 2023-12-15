@@ -108,7 +108,7 @@ std::string createCommandLine(const std::vector<std::string>& args) {
 
 std::string GetUserEmail() {
   std::string email;
-  FILE* pipe = popen("git config --get user.email", "r");
+  FILE* pipe = popen("git config --get user.email 2>/dev/null", "r");
   if (!pipe) {
     LOG(ERROR) << "popen() failed!";
     return "";
