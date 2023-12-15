@@ -66,6 +66,22 @@ func (p *IMPaths) FetchCVDBin() string {
 	return filepath.Join(p.CVDToolsDir, "fetch_cvd")
 }
 
+type CVDSelector struct {
+	Group string
+	Name  string
+}
+
+func (s *CVDSelector) ToCVDCLI() []string {
+	res := []string{}
+	if s.Group != "" {
+		res = append(res, "--group_name="+s.Group)
+	}
+	if s.Name != "" {
+		res = append(res, "--instance_name="+s.Name)
+	}
+	return res
+}
+
 // Creates a CVD execution context from a regular execution context.
 // If a non-empty user name is provided the returned execution context executes commands as that user.
 func newCVDExecContext(execContext ExecContext, user string) cvd.CVDExecContext {

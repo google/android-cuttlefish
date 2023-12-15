@@ -182,3 +182,5 @@ type UploadDirectory struct {
 type ListUploadDirectoriesResponse struct {
 	Items []*UploadDirectory `json:"items"`
 }
+
+type StopCVDResponse struct{}
