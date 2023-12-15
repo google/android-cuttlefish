@@ -17,6 +17,7 @@
 #pragma once
 
 #include <chrono>
+#include <iostream>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
