@@ -6211,6 +6211,43 @@ static void onUnsolicited (const char *s, const char *sms_pdu)
         }
 
         free(line);
+    } else if (strStartsWith(s, "+REMOTEIDDISCLOSURE")) {
+        RLOGD("starting REMOTEIDDISCLOSURE %s", s);
+        line = p = strdup(s);
+        if (!line) {
+            RLOGE("+REMOTEIDDISCLOSURE unable to allocate memory");
+            return;
+        }
+        if (at_tok_start(&p) < 0) {
+            RLOGE("invalid +REMOTEIDDISCLOSURE command: %s", s);
+            free(line);
+            return;
+        }
+
+        RIL_CellularIdentifierDisclosure disclosure;
+
+        if (at_tok_nextstr(&p, &disclosure.plmn) < 0) {
+            RLOGE("+REMOTEIDDISCLOSURE unable to parse plmn %s", s);
+            return;
+        }
+        if (at_tok_nextint(&p, &disclosure.identifierType) < 0) {
+            RLOGE("+REMOTEIDDISCLOSURE unable to parse identifier %s", s);
+            return;
+        }
+        if (at_tok_nextint(&p, &disclosure.protocolMessage) < 0) {
+            RLOGE("+REMOTEIDDISCLOSURE unable to parse protocol message %s", s);
+            return;
+        }
+        if (at_tok_nextbool(&p, (char*)&disclosure.isEmergency) < 0) {
+            RLOGE("+REMOTEIDDISCLOSURE unable to parse isEmergency %s", s);
+            return;
+        }
+
+        RIL_onUnsolicitedResponse(RIL_UNSOL_CELLULAR_IDENTIFIER_DISCLOSED, (void*)&disclosure,
+                                  sizeof(disclosure));
+        free(line);
+    } else {
+        RLOGE("Unexpected unsolicited request: %s", s);
     }
 }
 
