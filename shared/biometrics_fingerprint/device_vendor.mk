@@ -14,10 +14,8 @@
 # limitations under the License.
 #
 
-ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.fingerprint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.fingerprint.xml
-endif
 
 PRODUCT_PACKAGES += \
     com.android.hardware.biometrics.fingerprint.virtual
