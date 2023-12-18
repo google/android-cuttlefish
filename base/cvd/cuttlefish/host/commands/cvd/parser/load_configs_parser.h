@@ -49,6 +49,7 @@ struct Override {
 std::ostream& operator<<(std::ostream& out, const Override& override);
 
 struct LoadFlags {
+  bool help = false;
   std::vector<Override> overrides;
   std::string config_path;
   std::string credential_source;
