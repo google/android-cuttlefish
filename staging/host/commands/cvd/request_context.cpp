@@ -36,6 +36,7 @@
 #include "host/commands/cvd/server_command/handler_proxy.h"
 #include "host/commands/cvd/server_command/help.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
+#include "host/commands/cvd/server_command/lint.h"
 #include "host/commands/cvd/server_command/load_configs.h"
 #include "host/commands/cvd/server_command/power.h"
 #include "host/commands/cvd/server_command/reset.h"
@@ -84,6 +85,7 @@ RequestContext::RequestContext(CvdServer& cvd_server,
   request_handlers_.emplace_back(
       NewCvdServerHandlerProxy(command_sequence_executor_));
   request_handlers_.emplace_back(NewCvdHelpHandler(command_sequence_executor_));
+  request_handlers_.emplace_back(NewLintCommand());
   request_handlers_.emplace_back(
       NewLoadConfigsCommand(command_sequence_executor_));
   request_handlers_.emplace_back(NewCvdDevicePowerCommandHandler(
