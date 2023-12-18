@@ -154,6 +154,7 @@ Json::Value OverrideToJson(const std::string& key,
 
 std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
   std::vector<Flag> flags;
+  flags.emplace_back(GflagsCompatFlag("help", load_flags.help));
   flags.emplace_back(
       GflagsCompatFlag("credential_source", load_flags.credential_source));
   flags.emplace_back(
@@ -295,10 +296,10 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
                            const std::string& working_directory) {
   LoadFlags load_flags;
   auto flags = GetFlagsVector(load_flags);
-  CF_EXPECT(ConsumeFlags(flags, args));
-  CF_EXPECT(
-      args.size() > 0,
-      "No arguments provided to cvd command, please provide path to json file");
+  CF_EXPECT(ParseFlags(flags, args));
+  CF_EXPECT(load_flags.help || args.size() > 0,
+            "No arguments provided to cvd command, please provide at "
+            "least one argument (help or path to json file)");
 
   if (load_flags.base_dir.empty()) {
     load_flags.base_dir = DefaultBaseDir();

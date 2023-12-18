@@ -37,19 +37,6 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
-namespace {
-
-constexpr char kSummaryHelpText[] =
-    R"(error checks the input virtual device json config file)";
-
-constexpr char kDetailedHelpText[] = R"(
-
-Error check of the virtual device json config file.
-
-Usage: cvd lint /path/to/input.json
-)";
-
-}  // namespace
 
 class LintCommandHandler : public CvdServerHandler {
  public:
@@ -66,7 +53,8 @@ class LintCommandHandler : public CvdServerHandler {
     auto args = ParseInvocation(request.Message()).arguments;
     auto working_directory =
         request.Message().command_request().working_directory();
-    const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
+    const auto config_path =
+        CF_EXPECT(ValidateConfig(request.Out(), args, working_directory));
 
     std::stringstream message_stream;
     message_stream << "Lint of flags and config \"" << config_path
@@ -84,19 +72,22 @@ class LintCommandHandler : public CvdServerHandler {
 
   cvd_common::Args CmdList() const override { return {kLintSubCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
-
-  bool ShouldInterceptHelp() const override { return true; }
-
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
-    return kDetailedHelpText;
-  }
-
  private:
-  Result<std::string> ValidateConfig(std::vector<std::string>& args,
+  Result<std::string> ValidateConfig(SharedFD out,
+                                     std::vector<std::string>& args,
                                      const std::string& working_directory) {
     const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
+
+    if (flags.help) {
+      std::stringstream help_msg_stream;
+      help_msg_stream << "Usage: cvd " << kLintSubCmd << "\n";
+      const auto help_msg = help_msg_stream.str();
+      CF_EXPECT(WriteAll(out, help_msg) == help_msg.size());
+      return {};
+    }
+
     CF_EXPECT(GetCvdFlags(flags));
+
     return flags.config_path;
   }
 
