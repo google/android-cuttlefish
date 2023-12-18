@@ -143,6 +143,7 @@ cvd_host_tools = [
     "screen_recording_server",
     "secure_env",
     "sefcontext_compile",
+    "cvd_send_id_disclosure",
     "cvd_send_sms",
     "cvd_update_location",
     "cvd_import_locations",
