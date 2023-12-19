@@ -239,7 +239,7 @@ Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   const uid_t uid = CF_EXPECT(request.Credentials()).uid;
-  const bool is_tty = request.In()->IsOpen() && request.In()->IsATTY();
+  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
   auto notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
       TerminalColor(is_tty, TerminalColors::kRed),
@@ -260,7 +260,7 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   const uid_t uid = CF_EXPECT(request.Credentials()).uid;
-  const bool is_tty = request.In()->IsOpen() && request.In()->IsATTY();
+  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
   auto notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
       TerminalColor(is_tty, TerminalColors::kRed),
