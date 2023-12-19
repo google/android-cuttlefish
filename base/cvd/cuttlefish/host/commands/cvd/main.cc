@@ -36,8 +36,7 @@
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/frontline_parser.h"
-// TODO(315772518) Re-enable once metrics send is reenabled
-// #include "host/commands/cvd/metrics/cvd_metrics_api.h"
+#include "host/commands/cvd/metrics/cvd_metrics_api.h"
 #include "host/commands/cvd/run_server.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/host_tools_version.h"
@@ -65,7 +64,7 @@ android::base::LogSeverity CvdVerbosityOption(const int argc, char** argv) {
   std::string verbosity_flag_value;
   std::vector<Flag> verbosity_flag{
       GflagsCompatFlag("verbosity", verbosity_flag_value)};
-  if (!ConsumeFlags(verbosity_flag, all_args).ok()) {
+  if (!ParseFlags(verbosity_flag, all_args).ok()) {
     LOG(ERROR) << "Verbosity flag parsing failed, so use the default value.";
     return GetMinimumVerbosity();
   }
@@ -107,18 +106,16 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   if (IsServerModeExpected(all_args[0])) {
     auto parsed = CF_EXPECT(ParseIfServer(all_args));
     return RunServer(
-        {.internal_server_fd = std::move(parsed.internal_server_fd),
-         .carryover_client_fd = std::move(parsed.carryover_client_fd),
-         .memory_carryover_fd = std::move(parsed.memory_carryover_fd),
+        {.internal_server_fd = parsed.internal_server_fd,
+         .carryover_client_fd = parsed.carryover_client_fd,
+         .memory_carryover_fd = parsed.memory_carryover_fd,
          .verbosity_level = parsed.verbosity_level,
          .acloud_translator_optout = parsed.acloud_translator_optout,
          .restarted_in_process = parsed.restarted_in_process});
   }
 
   auto env = EnvpToMap(envp);
-  // TODO(315772518) Re-enable once metrics send is skipped in a env
-  // without network support
-  // CvdMetrics::SendCvdMetrics(all_args);
+  CvdMetrics::SendCvdMetrics(all_args);
 
   if (android::base::Basename(all_args[0]) == "fetch_cvd") {
     CF_EXPECT(FetchCvdMain(argc, argv));
