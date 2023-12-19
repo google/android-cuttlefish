@@ -58,26 +58,26 @@ Result<ManagedStorageData> TpmStorage::Read(const std::string& key) const {
   auto handle_optional = CF_EXPECT(GetHandle(key));
   auto handle = CF_EXPECT(handle_optional.value());
   auto close_tr = [this](ESYS_TR* handle) {
-    Esys_TR_Close(resource_manager_.Esys(), handle);
+    Esys_TR_Close(*resource_manager_.Esys(), handle);
     delete handle;
   };
   std::unique_ptr<ESYS_TR, decltype(close_tr)> nv_handle(new ESYS_TR, close_tr);
   auto rc = Esys_TR_FromTPMPublic(
-    /* esysContext */ resource_manager_.Esys(),
-    /* tpm_handle */ handle,
-    /* optionalSession1 */ ESYS_TR_NONE,
-    /* optionalSession2 */ ESYS_TR_NONE,
-    /* optionalSession3 */ ESYS_TR_NONE,
-    /* object */ nv_handle.get());
+      /* esysContext */ *resource_manager_.Esys(),
+      /* tpm_handle */ handle,
+      /* optionalSession1 */ ESYS_TR_NONE,
+      /* optionalSession2 */ ESYS_TR_NONE,
+      /* optionalSession3 */ ESYS_TR_NONE,
+      /* object */ nv_handle.get());
   CF_EXPECTF(rc == TPM2_RC_SUCCESS, "Esys_TR_FromTPMPublic failed: {}: {}",
              rc, Tss2_RC_Decode(rc));
 
   TPM2B_AUTH auth = { .size = 0, .buffer = {} };
-  Esys_TR_SetAuth(resource_manager_.Esys(), *nv_handle, &auth);
+  Esys_TR_SetAuth(*resource_manager_.Esys(), *nv_handle, &auth);
 
   TPM2B_NV_PUBLIC* public_area;
   rc = Esys_NV_ReadPublic(
-      /* esysContext */ resource_manager_.Esys(),
+      /* esysContext */ *resource_manager_.Esys(),
       /* nvIndex */ *nv_handle,
       /* shandle1 */ ESYS_TR_NONE,
       /* shandle2 */ ESYS_TR_NONE,
@@ -90,7 +90,7 @@ Result<ManagedStorageData> TpmStorage::Read(const std::string& key) const {
   std::unique_ptr<TPM2B_NV_PUBLIC, decltype(Esys_Free)*> public_deleter(public_area, Esys_Free);
   TPM2B_MAX_NV_BUFFER* buffer = nullptr;
   rc = Esys_NV_Read(
-      /* esysContext */ resource_manager_.Esys(),
+      /* esysContext */ *resource_manager_.Esys(),
       /* authHandle */ *nv_handle,
       /* nvIndex */ *nv_handle,
       /* shandle1 */ ESYS_TR_PASSWORD,
@@ -116,7 +116,7 @@ Result<void> TpmStorage::Write(const std::string& key, const StorageData& data) 
   auto handle = CF_EXPECT(handle_optional.value());
   ESYS_TR nv_handle;
   auto rc = Esys_TR_FromTPMPublic(
-      /* esysContext */ resource_manager_.Esys(),
+      /* esysContext */ *resource_manager_.Esys(),
       /* tpm_handle */ handle,
       /* optionalSession1 */ ESYS_TR_NONE,
       /* optionalSession2 */ ESYS_TR_NONE,
@@ -126,14 +126,14 @@ Result<void> TpmStorage::Write(const std::string& key, const StorageData& data) 
              rc, Tss2_RC_Decode(rc));
 
   TPM2B_AUTH auth = { .size = 0, .buffer = {} };
-  Esys_TR_SetAuth(resource_manager_.Esys(), nv_handle, &auth);
+  Esys_TR_SetAuth(*resource_manager_.Esys(), nv_handle, &auth);
 
   TPM2B_MAX_NV_BUFFER buffer;
   buffer.size = data.size;
   std::memcpy(buffer.buffer, data.payload, data.size);
 
   rc = Esys_NV_Write(
-      /* esysContext */ resource_manager_.Esys(),
+      /* esysContext */ *resource_manager_.Esys(),
       /* authHandle */ nv_handle,
       /* nvIndex */ nv_handle,
       /* shandle1 */ ESYS_TR_PASSWORD,
@@ -141,7 +141,7 @@ Result<void> TpmStorage::Write(const std::string& key, const StorageData& data) 
       /* shandle3 */ ESYS_TR_NONE,
       /* data */ &buffer,
       /* offset */ 0);
-  Esys_TR_Close(resource_manager_.Esys(), &nv_handle);
+  Esys_TR_Close(*resource_manager_.Esys(), &nv_handle);
   CF_EXPECTF(rc == TSS2_RC_SUCCESS, "Esys_NV_Write failed with return code {} ({})",
              rc, Tss2_RC_Decode(rc));
 
@@ -149,7 +149,7 @@ Result<void> TpmStorage::Write(const std::string& key, const StorageData& data) 
 }
 
 TPM2_HANDLE TpmStorage::GenerateRandomHandle() {
-  TpmRandomSource random_source{resource_manager_.Esys()};
+  TpmRandomSource random_source{resource_manager_};
   TPM2_HANDLE handle = 0;
   random_source.GenerateRandom(reinterpret_cast<uint8_t*>(&handle), sizeof(handle));
   if (handle == 0) {
@@ -191,22 +191,22 @@ Result<void> TpmStorage::Allocate(const std::string& key, uint16_t size) {
       }
     };
     TPM2B_AUTH auth = { .size = 0, .buffer = {} };
-    Esys_TR_SetAuth(resource_manager_.Esys(), ESYS_TR_RH_OWNER, &auth);
+    Esys_TR_SetAuth(*resource_manager_.Esys(), ESYS_TR_RH_OWNER, &auth);
     ESYS_TR nv_handle;
     auto rc = Esys_NV_DefineSpace(
-      /* esysContext */ resource_manager_.Esys(),
-      /* authHandle */ ESYS_TR_RH_OWNER,
-      /* shandle1 */ ESYS_TR_PASSWORD,
-      /* shandle2 */ ESYS_TR_NONE,
-      /* shandle3 */ ESYS_TR_NONE,
-      /* auth */ &auth,
-      /* publicInfo */ &public_info,
-      /* nvHandle */ &nv_handle);
+        /* esysContext */ *resource_manager_.Esys(),
+        /* authHandle */ ESYS_TR_RH_OWNER,
+        /* shandle1 */ ESYS_TR_PASSWORD,
+        /* shandle2 */ ESYS_TR_NONE,
+        /* shandle3 */ ESYS_TR_NONE,
+        /* auth */ &auth,
+        /* publicInfo */ &public_info,
+        /* nvHandle */ &nv_handle);
     if (rc == TPM2_RC_NV_DEFINED) {
       LOG(VERBOSE) << "Esys_NV_DefineSpace failed with TPM2_RC_NV_DEFINED";
       continue;
     } else if (rc == TPM2_RC_SUCCESS) {
-      Esys_TR_Close(resource_manager_.Esys(), &nv_handle);
+      Esys_TR_Close(*resource_manager_.Esys(), &nv_handle);
       break;
     } else {
       LOG(DEBUG) << "Esys_NV_DefineSpace failed with " << rc << ": "
