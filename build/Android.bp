@@ -50,6 +50,7 @@ soong_config_module_type {
 qemu_x86_64_linux_gnu_binary = [
     "x86_64_linux_gnu_libc++.so.1_binary_for_qemu",
     "x86_64_linux_gnu_libepoxy.so.0_binary_for_qemu",
+    "x86_64_linux_gnu_libgbm.so.1_binary_for_qemu",
     "x86_64_linux_gnu_libgfxstream_backend.so.0_binary_for_qemu",
     "x86_64_linux_gnu_librutabaga_gfx_ffi.so.0_binary_for_qemu",
     "x86_64_linux_gnu_libvirglrenderer.so.1_binary_for_qemu",
