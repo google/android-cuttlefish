@@ -70,4 +70,6 @@ TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files,
                               const std::string& log_prefix = "",
                               MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE);
 
+std::string StripColorCodes(const std::string& str);
+
 } // namespace cuttlefish
