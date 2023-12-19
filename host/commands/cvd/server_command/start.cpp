@@ -488,7 +488,7 @@ static void ShowLaunchCommand(const std::string& bin,
     }
   }
   ss << " " << bin << " " << args;
-  LOG(ERROR) << "launcher command: " << ss.str();
+  LOG(INFO) << "launcher command: " << ss.str();
 }
 
 static void ShowLaunchCommand(const std::string& bin,
