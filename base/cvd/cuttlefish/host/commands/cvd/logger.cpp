@@ -16,7 +16,6 @@
 #include "host/commands/cvd/logger.h"
 
 #include <shared_mutex>
-#include <mutex>
 #include <thread>
 #include <unordered_map>
 
