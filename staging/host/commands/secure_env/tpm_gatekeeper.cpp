@@ -85,7 +85,7 @@ void TpmGatekeeper::ComputePasswordSignature(
 
 void TpmGatekeeper::GetRandom(void* random, uint32_t requested_size) const {
   auto random_uint8 = reinterpret_cast<uint8_t*>(random);
-  TpmRandomSource(resource_manager_.Esys())
+  TpmRandomSource(resource_manager_)
       .GenerateRandom(random_uint8, requested_size);
 }
 
