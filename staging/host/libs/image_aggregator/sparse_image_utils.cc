@@ -41,23 +41,7 @@ bool IsSparseImage(const std::string& image_path) {
 }
 
 bool ConvertToRawImage(const std::string& image_path) {
-  std::string tmp_lock_image_path = image_path + ".lock";
-  int timer = 10;
-  while (true) {
-    int fd = open(tmp_lock_image_path.c_str(), O_RDWR|O_CREAT|O_EXCL, 0666);
-    if (fd >= 0) break;
-    // May need a timeout.
-    if(timer == 0) {
-      LOG(FATAL) << "Unable to convert Android sparse image " << image_path
-                 << " to raw image. Timeout";
-      return false;
-    }
-    sleep(1);
-    timer--;
-  }
   if (!IsSparseImage(image_path)) {
-    // Release lock before return
-    remove( tmp_lock_image_path.c_str() );
     LOG(DEBUG) << "Skip non-sparse image " << image_path;
     return false;
   }
@@ -71,8 +55,6 @@ bool ConvertToRawImage(const std::string& image_path) {
   // Use simg2img to convert sparse image to raw image.
   int success = simg2img_cmd.Start().Wait();
   if (success != 0) {
-    // Release lock before FATAL and return
-    remove( tmp_lock_image_path.c_str() );
     LOG(FATAL) << "Unable to convert Android sparse image " << image_path
                << " to raw image. " << success;
     return false;
@@ -88,8 +70,6 @@ bool ConvertToRawImage(const std::string& image_path) {
   mv_cmd.AddParameter(tmp_raw_image_path);
   mv_cmd.AddParameter(image_path);
   success = mv_cmd.Start().Wait();
-  // Release lock and then leave critical section
-  remove( tmp_lock_image_path.c_str() );
   if (success != 0) {
     LOG(FATAL) << "Unable to rename raw image " << success;
     return false;
