@@ -231,8 +231,12 @@ class StackTraceEntry {
           }
           break;
         case FormatSpecifier::kPrettyFunction:
-          out = fmt::format_to(out, "{}{}{}", kTerminalCyan, pretty_function_,
-                               kTerminalReset);
+          if (color) {
+            out = fmt::format_to(out, "{}{}{}", kTerminalCyan, pretty_function_,
+                                 kTerminalReset);
+          } else {
+            out = fmt::format_to(out, "{}", pretty_function_);
+          }
           break;
         case FormatSpecifier::kShort: {
           auto last_slash = file_.rfind("/");
@@ -289,9 +293,11 @@ class StackTraceEntry {
   std::stringstream message_;
 };
 
-inline std::string ResultErrorFormat() {
+inline std::string ResultErrorFormat(bool color) {
   auto error_format = getenv("CF_ERROR_FORMAT");
-  std::string fmt_str = error_format == nullptr ? "cns/acLFEm" : error_format;
+  std::string default_error_format = (color ? "cns/acLFEm" : "ns/aLFEm");
+  std::string fmt_str =
+      error_format == nullptr ? default_error_format : error_format;
   if (fmt_str.find("}") != std::string::npos) {
     fmt_str = "v";
   }
@@ -365,8 +371,8 @@ class StackTraceError {
 
   std::string Trace() const { return fmt::format(fmt::runtime("{:v}"), *this); }
 
-  std::string FormatForEnv() const {
-    return fmt::format(fmt::runtime(ResultErrorFormat()), *this);
+  std::string FormatForEnv(bool color = (isatty(STDERR_FILENO) == 1)) const {
+    return fmt::format(fmt::runtime(ResultErrorFormat(color)), *this);
   }
 
   template <typename T>
