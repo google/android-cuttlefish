@@ -204,7 +204,7 @@ std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
 }
 
 // TODO(schuffelen): Do something less primitive.
-static std::string StripColorCodes(const std::string& str) {
+std::string StripColorCodes(const std::string& str) {
   std::stringstream sstream;
   bool in_color_code = false;
   for (char c : str) {
