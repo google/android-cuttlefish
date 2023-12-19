@@ -23,3 +23,9 @@ service bt_ranging /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth.rang
     user bluetooth
     group bluetooth net_admin net_bt_admin
     capabilities NET_ADMIN
+
+service bt_lmp_event /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth.lmp_event-service.default
+    class hal
+    user bluetooth
+    group bluetooth net_admin net_bt_admin
+    capabilities NET_ADMIN
