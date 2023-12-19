@@ -22,6 +22,8 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/result.h>
+#include <build/version.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/json.h"
