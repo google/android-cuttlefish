@@ -23,7 +23,6 @@
 #include <sstream>
 
 #include <android-base/file.h>
-#include <build/version.h>
 #include <google/protobuf/text_format.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -36,6 +35,7 @@
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/handle_reset.h"
+#include "host/commands/cvd/metrics/cvd_metrics_api.h"
 #include "host/commands/cvd/run_server.h"
 #include "host/libs/config/host_tools_version.h"
 
@@ -425,7 +425,9 @@ Result<void> CvdClient::StartCvdServer() {
 
   Command command(kServerExecPath);
   command.AddParameter("-", kInternalServerFd, "=", server_fd);
-  command.Start(SubprocessOptions{}.ExitWithParent(false));
+  SubprocessOptions options;
+  options.ExitWithParent(false);
+  command.Start(options);
 
   // Connect to the server_fd, which waits for startup.
   CF_EXPECT(SetServer(SharedFD::SocketLocalClient(server_socket_path_,
