@@ -38,9 +38,8 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
-namespace {
 
-constexpr char kHelpIntroText[] = R"(Cuttlefish Virtual Device (CVD) CLI.
+static constexpr char kHelpMessage[] = R"(Cuttlefish Virtual Device (CVD) CLI.
 
 usage: cvd <selector/driver options> <command> <args>
 
@@ -61,20 +60,6 @@ Driver Options:
 
 Commands (cvd help <command> for more information):)";
 
-constexpr char kSummaryHelpText[] =
-    "Used to display help information for other commands";
-
-constexpr char kDetailedHelpText[] =
-    R"(cvd help - used to display help text for cvd and its commands
-
-Example usage:
-  cvd help - displays summary help for available commands
-
-  cvd help <command> - displays more detailed help for the specific command
-)";
-
-}  // namespace
-
 class CvdHelpHandler : public CvdServerHandler {
  public:
   CvdHelpHandler(
@@ -93,15 +78,22 @@ class CvdHelpHandler : public CvdServerHandler {
     }
     CF_EXPECT(CanHandle(request));
 
+    cvd::Response response;
+    response.mutable_command_response();  // Sets oneof member
     std::string output;
+
     auto args = ParseInvocation(request.Message()).arguments;
     if (args.empty()) {
       output = CF_EXPECT(TopLevelHelp());
     } else {
       output = CF_EXPECT(SubCommandHelp(args));
     }
-    auto response = CF_EXPECT(WriteToFd(request.Out(), output));
+
+    auto written_size = WriteAll(request.Out(), output);
+    CF_EXPECT_EQ(output.size(), written_size, request.Out()->StrError());
+
     interrupt_lock.unlock();
+    response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
 
@@ -112,14 +104,6 @@ class CvdHelpHandler : public CvdServerHandler {
   }
 
   cvd_common::Args CmdList() const override { return {"help"}; }
-
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
-
-  bool ShouldInterceptHelp() const override { return true; }
-
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
-    return kDetailedHelpText;
-  }
 
  private:
   Result<RequestWithStdio> GetLookupRequest(const std::string& arg) {
@@ -135,7 +119,7 @@ class CvdHelpHandler : public CvdServerHandler {
 
   Result<std::string> TopLevelHelp() {
     std::stringstream help_message;
-    help_message << kHelpIntroText << std::endl;
+    help_message << kHelpMessage << std::endl;
     for (const auto& handler : request_handlers_) {
       std::string command_list = android::base::Join(handler->CmdList(), ", ");
       // exclude commands without any command list values as not intended for

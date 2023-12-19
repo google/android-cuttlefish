@@ -38,7 +38,6 @@ class CvdServerHandler {
   virtual Result<std::string> SummaryHelp() const {
     return "Consider contributing a CL with help text if you read this :)";
   }
-  virtual bool ShouldInterceptHelp() const { return false; }
   virtual Result<std::string> DetailedHelp(std::vector<std::string>&) const {
     return "Consider contributing a CL with help text if you read this :)";
   }
