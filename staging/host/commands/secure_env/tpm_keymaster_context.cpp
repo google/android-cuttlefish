@@ -80,7 +80,7 @@ TpmKeymasterContext::TpmKeymasterContext(
     : resource_manager_(resource_manager),
       enforcement_(enforcement),
       key_blob_maker_(new TpmKeyBlobMaker(resource_manager_)),
-      random_source_(new TpmRandomSource(resource_manager_.Esys())),
+      random_source_(new TpmRandomSource(resource_manager_)),
       attestation_context_(new TpmAttestationRecordContext),
       remote_provisioning_context_(
           new TpmRemoteProvisioningContext(resource_manager_)) {
