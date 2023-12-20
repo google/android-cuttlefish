@@ -130,7 +130,7 @@
 
 // Policy default parameters
 #define CF_DEFAULTS_DATA_POLICY "use_existing"
-#define CF_DEFAULTS_USERDATA_FORMAT "f2fs"
+#define CF_DEFAULTS_USERDATA_FORMAT USERDATA_FILE_SYSTEM_TYPE
 #define CF_DEFAULTS_BLANK_DATA_IMAGE_MB CF_DEFAULTS_DYNAMIC_INT
 
 // Graphics default parameters
