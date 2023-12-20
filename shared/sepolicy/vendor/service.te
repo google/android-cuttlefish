@@ -3,3 +3,6 @@ type gce_service,               service_manager_type;
 
 # WLC
 type hal_wireless_charger_service, hal_service_type, protected_service, service_manager_type;
+
+# google_battery
+type hal_googlebattery_service, service_manager_type;
