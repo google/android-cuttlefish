@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include <openssl/base64.h>
+#include <openssl/evp.h>
 
 namespace cuttlefish {
 
