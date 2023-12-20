@@ -36,6 +36,9 @@ TARGET_KERNEL_PATH ?= $(SYSTEM_DLKM_SRC)/kernel-$(TARGET_KERNEL_USE)
 KERNEL_MODULES_PATH ?= \
     kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/$(subst _,-,$(TARGET_KERNEL_ARCH))/16k
 
+TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE := ext4
+TARGET_RO_FILE_SYSTEM_TYPE := ext4
+
 AUDIOSERVER_MULTILIB := first
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
