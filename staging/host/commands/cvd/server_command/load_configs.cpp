@@ -35,6 +35,25 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+namespace {
+
+constexpr char kSummaryHelpText[] =
+    R"(Loads the given JSON configuration file and launches devices based on the options provided)";
+
+constexpr char kDetailedHelpText[] = R"(
+Warning: This command is deprecated, use cvd start --config_file instead.
+
+Usage:
+cvd load <config_filepath> [--override=<key>:<value>]
+
+Reads the fields in the JSON configuration file and translates them to corresponding start command and flags.  
+
+Optionally fetches remote artifacts prior to launching the cuttlefish environment.
+
+The --override flag can be used to give new values for properties in the config file without needing to edit the file directly.  Convenient for one-off invocations.
+)";
+
+}  // namespace
 
 class LoadConfigsCommand : public CvdServerHandler {
  public:
@@ -69,21 +88,20 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   cvd_common::Args CmdList() const override { return {kLoadSubCmd}; }
 
+  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+
+  bool ShouldInterceptHelp() const override { return true; }
+
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return kDetailedHelpText;
+  }
+
   Result<std::vector<RequestWithStdio>> CreateCommandSequence(
       const RequestWithStdio& request) {
     auto args = ParseInvocation(request.Message()).arguments;
     auto working_directory =
         request.Message().command_request().working_directory();
     const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
-
-    if (flags.help) {
-      std::stringstream help_msg_stream;
-      help_msg_stream << "Usage: cvd " << kLoadSubCmd << "\n";
-      const auto help_msg = help_msg_stream.str();
-      CF_EXPECT(WriteAll(request.Out(), help_msg) == help_msg.size());
-      return {};
-    }
-
     auto cvd_flags = CF_EXPECT(GetCvdFlags(flags));
 
     std::vector<cvd::Request> req_protos;
