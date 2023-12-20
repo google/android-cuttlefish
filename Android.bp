@@ -98,6 +98,7 @@ soong_config_module_type {
     module_type: "cc_defaults",
     config_namespace: "cvdhost",
     bool_variables: ["enforce_mac80211_hwsim"],
+    value_variables: ["default_userdata_fs_type"],
     properties: ["cflags"],
 }
 
@@ -112,6 +113,14 @@ cf_cc_defaults {
                 cflags: [],
             }
         },
+        // TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE sets this from BoardConfig.mk
+        // The only user is the page agnostic cf target
+        default_userdata_fs_type: {
+            cflags: ["-DUSERDATA_FILE_SYSTEM_TYPE=\"%s\""],
+            conditions_default: {
+                cflags: ["-DUSERDATA_FILE_SYSTEM_TYPE=\"f2fs\""],
+            }
+        }
     }
 }
 // Defaults for cuttlefish modules that are available only in the guest OS (i.e. cuttlefish running
