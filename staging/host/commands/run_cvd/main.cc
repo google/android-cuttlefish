@@ -254,7 +254,9 @@ Result<void> RunCvdMain(int argc, char** argv) {
     CF_EXPECT(late_injected->LateInject(injector));
   }
 
-  MetricsReceiver::LogMetricsVMStart();
+  if (config->enable_metrics() == cuttlefish::CuttlefishConfig::Answer::kYes) {
+    MetricsReceiver::LogMetricsVMStart();
+  }
 
   auto instance_bindings = injector.getMultibindings<InstanceLifecycle>();
   CF_EXPECT(instance_bindings.size() == 1);
