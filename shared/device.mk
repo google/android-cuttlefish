@@ -87,7 +87,7 @@ endif
 # Explanation of specific properties:
 #   ro.hardware.keystore_desede=true needed for CtsKeystoreTestCases
 PRODUCT_VENDOR_PROPERTIES += \
-    tombstoned.max_tombstone_count=500 \
+    tombstoned.max_tombstone_count=100 \
     ro.carrier=unknown \
     ro.com.android.dataroaming?=false \
     ro.hardware.virtual_device=1 \
