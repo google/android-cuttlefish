@@ -269,6 +269,11 @@ int main(int argc, char** argv) {
      */
     return 134;
   }
-  cuttlefish::MetricsReceiver::LogMetricsVMStop();
+
+  if (cuttlefish::CuttlefishConfig::Get()->enable_metrics() ==
+      cuttlefish::CuttlefishConfig::Answer::kYes) {
+    cuttlefish::MetricsReceiver::LogMetricsVMStop();
+  }
+
   return cuttlefish::StopCvdMain(wait_for_launcher, clear_instance_dirs);
 }
