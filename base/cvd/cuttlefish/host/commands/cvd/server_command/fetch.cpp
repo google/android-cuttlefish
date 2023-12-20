@@ -90,7 +90,7 @@ Result<cvd::Response> CvdFetchCommandHandler::Handle(
     }
   }
 
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start(std::move(options))));
+  CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
 
   if (command_request.wait_behavior() == cvd::WAIT_BEHAVIOR_START) {
     cvd::Response response;
