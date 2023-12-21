@@ -1,0 +1,14 @@
+# "mapper/minigbm" represents "mapper.minigbm.so" which is a minigbm
+# implementation of mapper5 stable-c interface. This corresponds to the
+# VINTF manifest declaration:
+#    <hal format="native">
+#        <name>mapper</name>
+#        <version>5.0</version>
+#        <interface>
+#            <instance>minigbm</instance>
+#        </interface>
+#    </hal>
+# Note that native/passthrough HALs use the "{type}/{instance}" pattern from
+# SEPolicy perspective and are looked up via the corresponding filename
+# "{type}.{instance}.so".
+mapper/minigbm      u:object_r:hal_graphics_mapper_service:s0
