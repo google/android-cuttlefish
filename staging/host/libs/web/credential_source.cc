@@ -21,6 +21,7 @@
 #include <android-base/strings.h>
 #include <json/json.h>
 #include <openssl/bio.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 
