@@ -39,6 +39,7 @@
 --map=common/libs/utils/proc_file_utils.cpp:cvd/cuttlefish/common/libs/utils/proc_file_utils.cpp
 --map=common/libs/utils/proc_file_utils.h:cvd/cuttlefish/common/libs/utils/proc_file_utils.h
 --map=common/libs/utils/proc_file_utils_test.cpp:cvd/cuttlefish/common/libs/utils/proc_file_utils_test.cpp
+--map=common/libs/utils/proto.h:cvd/cuttlefish/common/libs/utils/proto.h
 --map=common/libs/utils/result.h:cvd/cuttlefish/common/libs/utils/result.h
 --map=common/libs/utils/result_matchers.h:cvd/cuttlefish/common/libs/utils/result_matchers.h
 --map=common/libs/utils/result_test.cpp:cvd/cuttlefish/common/libs/utils/result_test.cpp
@@ -128,6 +129,8 @@
 --map=host/commands/cvd/instance_manager.h:cvd/cuttlefish/host/commands/cvd/instance_manager.h
 --map=host/commands/cvd/instance_record.cpp:cvd/cuttlefish/host/commands/cvd/selector/instance_record.cpp
 --map=host/commands/cvd/instance_record.h:cvd/cuttlefish/host/commands/cvd/selector/instance_record.h
+--map=host/commands/cvd/interruptible_terminal.cpp:cvd/cuttlefish/host/commands/cvd/interruptible_terminal.cpp
+--map=host/commands/cvd/interruptible_terminal.h:cvd/cuttlefish/host/commands/cvd/interruptible_terminal.h
 --map=host/commands/cvd/load_configs.cpp:cvd/cuttlefish/host/commands/cvd/server_command/load_configs.cpp
 --map=host/commands/cvd/load_configs.h:cvd/cuttlefish/host/commands/cvd/server_command/load_configs.h
 --map=host/commands/cvd/lock_file.cpp:cvd/cuttlefish/host/commands/cvd/lock_file.cpp
@@ -299,6 +302,8 @@
 --map=host/commands/cvd/server_command/host_tool_target.h:cvd/cuttlefish/host/commands/cvd/server_command/host_tool_target.h
 --map=host/commands/cvd/server_command/host_tool_target_manager.cpp:cvd/cuttlefish/host/commands/cvd/server_command/host_tool_target_manager.cpp
 --map=host/commands/cvd/server_command/host_tool_target_manager.h:cvd/cuttlefish/host/commands/cvd/server_command/host_tool_target_manager.h
+--map=host/commands/cvd/server_command/lint.cpp:cvd/cuttlefish/host/commands/cvd/server_command/lint.cpp
+--map=host/commands/cvd/server_command/lint.h:cvd/cuttlefish/host/commands/cvd/server_command/lint.h
 --map=host/commands/cvd/server_command/load_configs.cpp:cvd/cuttlefish/host/commands/cvd/server_command/load_configs.cpp
 --map=host/commands/cvd/server_command/load_configs.h:cvd/cuttlefish/host/commands/cvd/server_command/load_configs.h
 --map=host/commands/cvd/server_command/power.cpp:cvd/cuttlefish/host/commands/cvd/server_command/power.cpp
