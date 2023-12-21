@@ -1,3 +1,3 @@
 #!/bin/bash
 
-g++ main.cpp -o main -lgit2 -O2
+g++ main.cpp -o minimerge_tool -lgit2 -O2
