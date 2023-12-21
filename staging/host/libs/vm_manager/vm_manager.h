@@ -80,6 +80,10 @@ class VmManager {
   // the persistent disk
   static const int kDefaultNumBootDevices = 2;
 
+  // LINT.IfChange(virtio_gpu_pci_address)
+  static constexpr const int kGpuPciSlotNum = 2;
+  // LINT.ThenChange(../../../shared/sepolicy/vendor/file_contexts:virtio_gpu_pci_address)
+
   virtual ~VmManager() = default;
 
   virtual bool IsSupported() = 0;
