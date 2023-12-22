@@ -36,7 +36,8 @@
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/frontline_parser.h"
-#include "host/commands/cvd/metrics/cvd_metrics_api.h"
+// TODO(315772518) Re-enable once metrics send is reenabled
+// #include "host/commands/cvd/metrics/cvd_metrics_api.h"
 #include "host/commands/cvd/run_server.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/host_tools_version.h"
@@ -115,7 +116,9 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   }
 
   auto env = EnvpToMap(envp);
-  CvdMetrics::SendCvdMetrics(all_args);
+  // TODO(315772518) Re-enable once metrics send is skipped in a env
+  // without network support
+  // CvdMetrics::SendCvdMetrics(all_args);
 
   if (android::base::Basename(all_args[0]) == "fetch_cvd") {
     CF_EXPECT(FetchCvdMain(argc, argv));
