@@ -35,7 +35,6 @@
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/handle_reset.h"
-#include "host/commands/cvd/metrics/cvd_metrics_api.h"
 #include "host/commands/cvd/run_server.h"
 #include "host/libs/config/host_tools_version.h"
 
