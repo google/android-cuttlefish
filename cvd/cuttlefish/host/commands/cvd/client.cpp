@@ -28,6 +28,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/proto.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
@@ -188,7 +189,7 @@ Result<SharedFD> CvdClient::ConnectToServer() {
   return connection;
 }
 
-cvd::Version CvdClient::GetClientVersion() {
+static cvd::Version ClientVersion() {
   cvd::Version client_version;
   client_version.set_major(cvd::kVersionMajor);
   client_version.set_minor(cvd::kVersionMinor);
@@ -495,18 +496,8 @@ Result<void> CvdClient::HandleCvdCommand(
 }
 
 Result<std::string> CvdClient::HandleVersion() {
-  using google::protobuf::TextFormat;
-  std::stringstream result;
-  std::string output;
-  auto server_version = CF_EXPECT(GetServerVersion());
-  CF_EXPECT(TextFormat::PrintToString(server_version, &output),
-            "converting server_version to string failed");
-  result << "Server version:" << std::endl << std::endl << output << std::endl;
-
-  CF_EXPECT(TextFormat::PrintToString(CvdClient::GetClientVersion(), &output),
-            "converting client version to string failed");
-  result << "Client version:" << std::endl << std::endl << output << std::endl;
-  return {result.str()};
+  return fmt::format("Server version:\n\n{}\nClient version:\n\n{}\n",
+                     CF_EXPECT(GetServerVersion()), ClientVersion());
 }
 
 Result<Json::Value> CvdClient::ListSubcommands(const cvd_common::Envs& envs) {
