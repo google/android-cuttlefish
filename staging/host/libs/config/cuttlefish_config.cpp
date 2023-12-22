@@ -45,6 +45,10 @@ const char* kInstances = "instances";
 
 }  // namespace
 
+const char* const kVhostUserVsockModeAuto = "auto";
+const char* const kVhostUserVsockModeTrue = "true";
+const char* const kVhostUserVsockModeFalse = "false";
+
 const char* const kGpuModeAuto = "auto";
 const char* const kGpuModeDrmVirgl = "drm_virgl";
 const char* const kGpuModeGfxstream = "gfxstream";
