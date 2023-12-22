@@ -203,7 +203,8 @@ int main(int argc, char** argv, char** envp) {
     // TODO: we should not print the stack trace, instead, we should rely on
     // each handler to print the error message directly in the client's
     // std::cerr. We print the stack trace only in the verbose mode.
-    std::cerr << result.error().FormatForEnv() << std::endl;
+    std::cerr << result.error().FormatForEnv(isatty(STDERR_FILENO))
+              << std::endl;
     // TODO(kwstephenkim): better coloring
     constexpr char kUserReminder[] =
         R"(    If the error above is unclear, please copy the text into an issue at:)";
