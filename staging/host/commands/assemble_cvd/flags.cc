@@ -1069,8 +1069,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(udp_port_range));
   std::vector<bool> vhost_net_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       vhost_net));
-  std::vector<bool> vhost_user_vsock_vec =
-      CF_EXPECT(GET_FLAG_BOOL_VALUE(vhost_user_vsock));
+  std::vector<std::string> vhost_user_vsock_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(vhost_user_vsock));
   std::vector<std::string> ril_dns_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(ril_dns));
 
@@ -1269,15 +1269,30 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_vhost_net(vhost_net_vec[instance_index]);
 
-    if (vhost_user_vsock_vec[instance_index] &&
-        tmp_config_obj.vm_manager() != CrosvmManager::name()) {
-      LOG(WARNING) << "vhost_user_vsock is available only in crosvm.";
+    // end of wifi, bluetooth, connectivity setup
+
+    if (vhost_user_vsock_vec[instance_index] == kVhostUserVsockModeAuto) {
+      std::set<Arch> default_on_arch = {Arch::Arm64};
+      if (tmp_config_obj.vm_manager() == CrosvmManager::name() &&
+          default_on_arch.find(guest_configs[instance_index].target_arch) !=
+              default_on_arch.end()) {
+        instance.set_vhost_user_vsock(true);
+      } else {
+        instance.set_vhost_user_vsock(false);
+      }
+    } else if (vhost_user_vsock_vec[instance_index] ==
+               kVhostUserVsockModeTrue) {
+      CHECK(tmp_config_obj.vm_manager() == CrosvmManager::name())
+          << "For now, only crosvm supports vhost_user_vsock";
+      instance.set_vhost_user_vsock(true);
+    } else if (vhost_user_vsock_vec[instance_index] ==
+               kVhostUserVsockModeFalse) {
       instance.set_vhost_user_vsock(false);
     } else {
-      instance.set_vhost_user_vsock(vhost_user_vsock_vec[instance_index]);
+      CHECK(false)
+          << "--vhost_user_vsock should be one of 'auto', 'true', 'false', but "
+          << vhost_user_vsock_vec[instance_index];
     }
-
-    // end of wifi, bluetooth, connectivity setup
 
     if (use_random_serial_vec[instance_index]) {
       instance.set_serial_number(
