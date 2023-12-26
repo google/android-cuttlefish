@@ -10692,6 +10692,33 @@ int radio_aidl::cellularIdentifierDisclosedInd(int slotId, int indicationType, i
     return 0;
 }
 
+int radio_aidl::securityAlgorithmUpdatedInd(int slotId, int indicationType, int token, RIL_Errno e,
+                                            void* response, size_t responselen) {
+    if (radioService[slotId] == NULL || radioService[slotId]->mCallbackManager == NULL) {
+        RLOGE("securityAlgorithmUpdatedInd: radioService[%d]->mCallbackManager == NULL", slotId);
+        return 0;
+    }
+    auto networkCb = radioService[slotId]->mCallbackManager->indication().networkCb();
+
+    if (!networkCb) {
+        RLOGE("networkCB is null");
+        return 0;
+    }
+
+    RIL_SecurityAlgorithmUpdate* rawUpdate = static_cast<RIL_SecurityAlgorithmUpdate*>(response);
+
+    aidl_radio::network::SecurityAlgorithmUpdate update;
+    update.connectionEvent =
+            static_cast<aidl_radio::network::ConnectionEvent>(rawUpdate->connectionEvent);
+    update.encryption = static_cast<aidl_radio::network::SecurityAlgorithm>(rawUpdate->encryption);
+    update.integrity = static_cast<aidl_radio::network::SecurityAlgorithm>(rawUpdate->integrity);
+    update.isUnprotectedEmergency = rawUpdate->isUnprotectedEmergency;
+
+    networkCb->securityAlgorithmsUpdated(aidl_radio::RadioIndicationType(indicationType), update);
+
+    return 0;
+}
+
 extern "C" uint8_t hexCharToInt(uint8_t c) {
     if (c >= '0' && c <= '9') return (c - '0');
     if (c >= 'A' && c <= 'F') return (c - 'A' + 10);

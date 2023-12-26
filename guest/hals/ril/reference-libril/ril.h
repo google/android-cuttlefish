@@ -8347,7 +8347,9 @@ typedef enum {
 
 #define RIL_UNSOL_CELLULAR_IDENTIFIER_DISCLOSED 1056
 
-#define RIL_UNSOL_RESPONSE_LAST RIL_UNSOL_CELLULAR_IDENTIFIER_DISCLOSED
+#define RIL_UNSOL_SECURITY_ALGORITHM_UPDATED 1057
+
+#define RIL_UNSOL_RESPONSE_LAST RIL_UNSOL_SECURITY_ALGORITHM_UPDATED
 
 /***********************************************************************/
 
@@ -8559,6 +8561,16 @@ typedef struct {
     char* plmn;
     bool isEmergency;
 } RIL_CellularIdentifierDisclosure;
+
+/**
+ * A C-representation of aidl::android::hardware::radio::network::SecurityAlgorithmUpdate
+ */
+typedef struct {
+    int32_t connectionEvent;
+    int32_t encryption;
+    int32_t integrity;
+    bool isUnprotectedEmergency;
+} RIL_SecurityAlgorithmUpdate;
 
 #ifdef RIL_SHLIB
 struct RIL_Env {
