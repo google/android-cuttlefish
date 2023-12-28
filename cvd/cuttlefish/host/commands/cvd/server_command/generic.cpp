@@ -49,8 +49,7 @@ namespace cuttlefish {
 
 class CvdGenericCommandHandler : public CvdServerHandler {
  public:
-  CvdGenericCommandHandler(InstanceLockFileManager& instance_lockfile_manager,
-                           InstanceManager& instance_manager,
+  CvdGenericCommandHandler(InstanceManager& instance_manager,
                            SubprocessWaiter& subprocess_waiter,
                            HostToolTargetManager& host_tool_target_manager);
 
@@ -102,7 +101,6 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   Result<BinPathInfo> CvdHelpBinPath(const std::string& subcmd,
                                      const cvd_common::Envs& envs) const;
 
-  InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
@@ -124,11 +122,9 @@ class CvdGenericCommandHandler : public CvdServerHandler {
 };
 
 CvdGenericCommandHandler::CvdGenericCommandHandler(
-    InstanceLockFileManager& instance_lockfile_manager,
     InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
     HostToolTargetManager& host_tool_target_manager)
-    : instance_lockfile_manager_(instance_lockfile_manager),
-      instance_manager_(instance_manager),
+    : instance_manager_(instance_manager),
       subprocess_waiter_(subprocess_waiter),
       host_tool_target_manager_(host_tool_target_manager),
       command_to_binary_map_{{"host_bugreport", kHostBugreportBin},
@@ -215,7 +211,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
       cvd::WAIT_BEHAVIOR_START) {
     options.ExitWithParent(false);
   }
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
+  CF_EXPECT(subprocess_waiter_.Setup(command.Start(std::move(options))));
 
   bool is_stop = IsStopCommand(invocation_info.command);
 
@@ -230,13 +226,13 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
       return;
     }
     for (const auto& instance : group_ptr->Instances()) {
-      auto lock =
-          instance_lockfile_manager_.RemoveLockFile(instance->InstanceId());
-      if (!lock.ok()) {
-        LOG(ERROR) << "Deleting instance Lock file for ID #"
-                   << instance->InstanceId()
-                   << " failed: " << lock.error().Message();
+      auto lock = instance_manager_.TryAcquireLock(instance->InstanceId());
+      if (lock.ok() && (*lock)) {
+        (*lock)->Status(InUseState::kNotInUse);
+        continue;
       }
+      LOG(ERROR) << "InstanceLockFileManager failed to acquire lock for #"
+                 << instance->InstanceId();
     }
   });
 
@@ -461,12 +457,10 @@ Result<std::string> CvdGenericCommandHandler::GetBin(
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdGenericCommandHandler(
-    InstanceLockFileManager& instance_lockfile_manager,
     InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
     HostToolTargetManager& host_tool_target_manager) {
   return std::unique_ptr<CvdServerHandler>(new CvdGenericCommandHandler(
-      instance_lockfile_manager, instance_manager, subprocess_waiter,
-      host_tool_target_manager));
+      instance_manager, subprocess_waiter, host_tool_target_manager));
 }
 
 }  // namespace cuttlefish

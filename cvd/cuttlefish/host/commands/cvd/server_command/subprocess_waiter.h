@@ -30,7 +30,7 @@ struct RunWithManagedIoParam {
   const bool redirect_stderr_ = false;
   const std::string* stdin_;
   std::function<Result<void>(void)> callback_;
-  const SubprocessOptions options_ = SubprocessOptions();
+  SubprocessOptions options_ = SubprocessOptions();
 };
 
 struct RunOutput { // a better name please
@@ -46,7 +46,8 @@ class SubprocessWaiter {
   Result<siginfo_t> Wait();
   Result<void> Interrupt();
 
-  Result<RunOutput> RunWithManagedStdioInterruptable(RunWithManagedIoParam& param);
+  Result<RunOutput> RunWithManagedStdioInterruptable(
+      RunWithManagedIoParam param);
 
  private:
   std::optional<Subprocess> subprocess_;
