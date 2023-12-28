@@ -424,9 +424,7 @@ Result<void> CvdClient::StartCvdServer() {
 
   Command command(kServerExecPath);
   command.AddParameter("-", kInternalServerFd, "=", server_fd);
-  SubprocessOptions options;
-  options.ExitWithParent(false);
-  command.Start(options);
+  command.Start(SubprocessOptions{}.ExitWithParent(false));
 
   // Connect to the server_fd, which waits for startup.
   CF_EXPECT(SetServer(SharedFD::SocketLocalClient(server_socket_path_,
