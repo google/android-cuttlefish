@@ -275,18 +275,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     com.android.hardware.authsecret
 
-#
-# Audio HAL
-# Note: aidl services are loaded, however they are not fully functional yet,
-#       and are not used by the framework, only by VTS tests.
-#
 ifndef LOCAL_AUDIO_PRODUCT_PACKAGE
 LOCAL_AUDIO_PRODUCT_PACKAGE := \
-    android.hardware.audio.service \
-    android.hardware.audio@7.1-impl.ranchu \
-    android.hardware.audio.effect@7.0-impl \
-    android.hardware.audio.service-aidl.example \
-    android.hardware.audio.effect.service-aidl.example \
     libaecsw \
     libagc1sw \
     libagc2sw \
@@ -308,8 +298,21 @@ LOCAL_AUDIO_PRODUCT_PACKAGE := \
     libvirtualizersw \
     libvisualizeraidl \
     libvolumesw
+#
+# Still use HIDL Audio HAL on 'next'
+#
+ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
+LOCAL_AUDIO_PRODUCT_PACKAGE += \
+    android.hardware.audio.service-aidl.example \
+    android.hardware.audio.effect.service-aidl.example
+else
+LOCAL_AUDIO_PRODUCT_PACKAGE += \
+    android.hardware.audio.service \
+    android.hardware.audio@7.1-impl.ranchu \
+    android.hardware.audio.effect@7.0-impl
 DEVICE_MANIFEST_FILE += \
     device/google/cuttlefish/guest/hals/audio/effects/manifest.xml
+endif
 endif
 
 ifndef LOCAL_AUDIO_PRODUCT_COPY_FILES
