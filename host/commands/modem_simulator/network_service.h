@@ -307,6 +307,9 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   };
 
   KeepSignalStrengthChangingLoop keep_signal_strength_changing_loop_;
+
+  void HandleIdentifierDisclosure(const Client& client,
+                                  std::string& basicString);
 };
 
 }  // namespace cuttlefish
