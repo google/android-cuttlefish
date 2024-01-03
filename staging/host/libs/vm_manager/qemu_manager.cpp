@@ -491,7 +491,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
     qemu_cmd.AddParameter(
         gpu_device, ",id=gpu0",
-        fmt::format(",bus=pci.0,addr={:0>2x}.0", VmManager::kGpuPciSlotNum),
+        fmt::format(",addr={:0>2x}.0", VmManager::kGpuPciSlotNum),
         ",xres=", display_config.width, ",yres=", display_config.height);
   }
 
