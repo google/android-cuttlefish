@@ -176,8 +176,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     aidl_lazy_test_server \
     aidl_lazy_cb_test_server \
-    hidl_lazy_test_server \
-    hidl_lazy_cb_test_server
 
 # Runtime Resource Overlays
 PRODUCT_PACKAGES += com.google.aosp_cf.rros
