@@ -17,6 +17,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
@@ -24,7 +25,7 @@
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewCvdDisplayCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter);
+std::unique_ptr<CvdServerHandler> NewCvdFetchCommandHandler(
+    SubprocessWaiter& subprocess_waiter);
 
 }  // namespace cuttlefish
