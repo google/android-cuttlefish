@@ -108,6 +108,10 @@ std::vector<CommandHandler> NetworkService::InitializeCommandHandlers() {
                      [this](const Client& client, std::string& cmd) {
                        this->HandleReceiveRemoteVoiceDataReg(client, cmd);
                      }),
+      CommandHandler("+REMOTEIDDISCLOSURE",
+                     [this](const Client& client, std::string& cmd) {
+                       this->HandleIdentifierDisclosure(client, cmd);
+                     }),
   };
   return (command_handlers);
 }
@@ -1243,6 +1247,13 @@ void NetworkService::HandleReceiveRemoteSignal(const Client& client,
   }
 
   OnSignalStrengthChanged();
+}
+
+void NetworkService::HandleIdentifierDisclosure(const Client& client,
+                                                std::string& command) {
+  (void)client;
+  LOG(INFO) << "Handling disclosure event: " << command;
+  SendUnsolicitedCommand(command.substr(2));
 }
 
 void NetworkService::OnSignalStrengthChanged() {
