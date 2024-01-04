@@ -8345,7 +8345,9 @@ typedef enum {
 
 #define RIL_UNSOL_PHYSICAL_CHANNEL_CONFIGS 1051
 
-#define RIL_UNSOL_RESPONSE_LAST RIL_UNSOL_PHYSICAL_CHANNEL_CONFIGS
+#define RIL_UNSOL_CELLULAR_IDENTIFIER_DISCLOSED 1056
+
+#define RIL_UNSOL_RESPONSE_LAST RIL_UNSOL_CELLULAR_IDENTIFIER_DISCLOSED
 
 /***********************************************************************/
 
@@ -8355,7 +8357,7 @@ typedef enum {
  *
  * "data" is the RIL_SimSlotStatus_V1_2 structure
  */
-#define RIL_UNSOL_CONFIG_ICC_SLOT_STATUS 1052
+#define RIL_UNSOL_CONFIG_ICC_SLOT_STATUS 1100
 
 #define RIL_UNSOL_RESPONSE_RADIO_CONFIG_LAST RIL_UNSOL_CONFIG_ICC_SLOT_STATUS
 
@@ -8547,6 +8549,16 @@ typedef struct {
     int32_t sessionHandle;
     RIL_KeepaliveStatusCode code;
 } RIL_KeepaliveStatus;
+
+/**
+ * A C-representation of aidl::android::hardware::radio::network::CellularIdentifierDisclosure
+ */
+typedef struct {
+    int32_t identifierType;
+    int32_t protocolMessage;
+    char* plmn;
+    bool isEmergency;
+} RIL_CellularIdentifierDisclosure;
 
 #ifdef RIL_SHLIB
 struct RIL_Env {
