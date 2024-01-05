@@ -122,7 +122,13 @@ func main() {
 	http.Handle("/", r)
 
 	starters := []func() error{
-		func() error { return operator.SetupDeviceEndpoint(pool, config, *socketPath)() },
+		func() error {
+			st, err := operator.SetupDeviceEndpoint(pool, config, *socketPath)
+			if err != nil {
+				return err
+			}
+			return st()
+		},
 		func() error { return startHttpServer(*address, *httpPort) },
 	}
 	if *httpsPort > 0 {

@@ -37,18 +37,18 @@ import (
 
 // Sets up a unix socket for devices to connect to and returns a function that listens on the
 // socket until an error occurrs.
-func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string) func() error {
+func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string) (func() error, error) {
 	if err := os.RemoveAll(path); err != nil {
-		return func() error { return fmt.Errorf("Failed to clean previous socket: %w", err) }
+		return nil, fmt.Errorf("Failed to clean previous socket: %w", err)
 	}
 	addr, err := net.ResolveUnixAddr("unixpacket", path)
 	if err != nil {
 		// Returns a loop function that will immediately return an error when invoked
-		return func() error { return fmt.Errorf("Failed to create unix address from path: %w", err) }
+		return nil, fmt.Errorf("Failed to create unix address from path: %w", err)
 	}
 	sock, err := net.ListenUnix("unixpacket", addr)
 	if err != nil {
-		return func() error { return fmt.Errorf("Failed to create unix socket: %w", err) }
+		return nil, fmt.Errorf("Failed to create unix socket: %w", err)
 	}
 	// Make sure the socket is only accessible by owner and group
 	if err := os.Chmod(path, 0770); err != nil {
@@ -66,7 +66,7 @@ func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string
 			}
 			go deviceEndpoint(NewJSONUnix(c), pool, config)
 		}
-	}
+	}, nil
 }
 
 // Creates a router with handlers for the following endpoints:
