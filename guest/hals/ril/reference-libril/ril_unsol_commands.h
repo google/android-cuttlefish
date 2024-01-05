@@ -84,3 +84,5 @@
         {1055, NULL, DONT_WAKE},
         {RIL_UNSOL_CELLULAR_IDENTIFIER_DISCLOSED, radio_aidl::cellularIdentifierDisclosedInd,
          WAKE_PARTIAL},
+        {RIL_UNSOL_SECURITY_ALGORITHM_UPDATED, radio_aidl::securityAlgorithmUpdatedInd,
+         WAKE_PARTIAL},

@@ -877,6 +877,9 @@ namespace radio_aidl {
  * coordinate holding a wake lock and invoking these methods. */
 int cellularIdentifierDisclosedInd(int slotId, int indicationType, int token, RIL_Errno e,
                                    void* response, size_t responselen);
+
+int securityAlgorithmUpdatedInd(int slotId, int indicationType, int token, RIL_Errno e,
+                                void* response, size_t responselen);
 }  // namespace radio_aidl
 
 #endif  // RIL_SERVICE_H
