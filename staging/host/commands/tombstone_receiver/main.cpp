@@ -21,6 +21,7 @@
 #include <fstream>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "host/libs/config/logging.h"
@@ -48,6 +49,7 @@ static std::string next_tombstone_path(const std::string& dir) {
 }
 
 static constexpr size_t CHUNK_RECV_MAX_LEN = 1024;
+static constexpr size_t TIMEOUT_SEC = 3;
 
 int TombstoneReceiverMain(int argc, char** argv) {
   DefaultSubprocessLogging(argv);
@@ -82,17 +84,40 @@ int TombstoneReceiverMain(int argc, char** argv) {
     auto conn = SharedFD::Accept(*server_fd);
     std::ofstream file(next_tombstone_path(tombstone_dir),
                        std::ofstream::out | std::ofstream::binary);
+    auto acc = 0;
+    auto cnt = 0;
 
+    SharedFDSet read_set;
+    read_set.Set(conn);
+
+    SharedFDSet error_set;
+    error_set.Set(conn);
     while (file.is_open()) {
-      char buff[CHUNK_RECV_MAX_LEN];
-      auto bytes_read = conn->Read(buff, sizeof(buff));
-      if (bytes_read <= 0) {
-        // reset the other side if it's still connected
+      struct timeval timeout = {TIMEOUT_SEC, 0};
+      auto val = Select(&read_set, nullptr, &error_set, &timeout);
+      if (val == 0) {
+        LOG(DEBUG) << "timeout";
         break;
-      } else {
-        file.write(buff, bytes_read);
+      }
+      if (read_set.IsSet(conn)) {
+        char buff[CHUNK_RECV_MAX_LEN];
+        auto bytes_read = conn->Recv(buff, sizeof(buff), 0);
+        acc += bytes_read;
+        if (bytes_read <= 0) {
+          // reset the other side if it's still connected
+          break;
+        } else {
+          file.write(buff, bytes_read);
+          cnt++;
+        }
+      }
+
+      if (error_set.IsSet(conn)) {
+        LOG(DEBUG) << "error";
+        break;
       }
     }
+    LOG(DEBUG) << "done: " << acc << " bytes via " << cnt;
   }
 
   return 0;
