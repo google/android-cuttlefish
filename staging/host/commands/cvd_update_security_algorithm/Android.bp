@@ -1,0 +1,61 @@
+// Copyright (C) 2023 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_defaults {
+    name: "cvd_update_security_algorithm_defaults",
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_fs",
+        "liblog",
+        "libcuttlefish_utils",
+        "libjsoncpp",
+    ],
+    defaults: ["cuttlefish_buildhost_only"],
+}
+
+cc_library {
+    name: "libcvd_update_security_algorithm_builder",
+    srcs: [
+        "update_security_algorithm_command_builder.cc",
+    ],
+    defaults: ["cvd_update_security_algorithm_defaults"],
+}
+
+cc_binary {
+    name: "cvd_update_security_algorithm",
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libgflags",
+    ],
+    srcs: [
+        "main.cc",
+        "update_security_algorithm_command_builder.cc",
+    ],
+    defaults: ["cvd_update_security_algorithm_defaults"],
+}
+
+cc_test_host {
+    name: "cvd_update_security_algorithm_test",
+    srcs: [
+        "unittest/update_security_algorithm_command_builder_test.cc",
+    ],
+    shared_libs: [
+        "libcvd_update_security_algorithm_builder",
+    ],
+    defaults: ["cuttlefish_host", "cvd_update_security_algorithm_defaults"],
+}
