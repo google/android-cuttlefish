@@ -146,6 +146,7 @@ cvd_host_tools = [
     "cvd_send_id_disclosure",
     "cvd_send_sms",
     "cvd_update_location",
+    "cvd_update_security_algorithm",
     "cvd_import_locations",
     "simg2img",
     "socket_vsock_proxy",
