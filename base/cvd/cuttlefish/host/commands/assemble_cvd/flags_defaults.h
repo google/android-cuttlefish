@@ -226,3 +226,6 @@
 
 // MCU emulator default configuration path
 #define CF_DEFAULTS_MCU_CONFIG_PATH CF_DEFAULTS_DYNAMIC_STRING
+
+// Which executables to run under strace by default
+#define CF_DEFAULTS_STRACED_HOST_EXECUTABLES ""

@@ -127,7 +127,7 @@ SubprocessOptions& SubprocessOptions::Verbose(bool verbose) & {
 }
 SubprocessOptions SubprocessOptions::Verbose(bool verbose) && {
   verbose_ = verbose;
-  return std::move(*this);
+  return *this;
 }
 
 #ifdef __linux__
@@ -137,21 +137,9 @@ SubprocessOptions& SubprocessOptions::ExitWithParent(bool v) & {
 }
 SubprocessOptions SubprocessOptions::ExitWithParent(bool v) && {
   exit_with_parent_ = v;
-  return std::move(*this);
+  return *this;
 }
 #endif
-
-SubprocessOptions& SubprocessOptions::SandboxArguments(
-    std::vector<std::string> args) & {
-  sandbox_arguments_ = std::move(args);
-  return *this;
-}
-
-SubprocessOptions SubprocessOptions::SandboxArguments(
-    std::vector<std::string> args) && {
-  sandbox_arguments_ = std::move(args);
-  return *this;
-}
 
 SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
   in_group_ = in_group;
@@ -159,7 +147,7 @@ SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
 }
 SubprocessOptions SubprocessOptions::InGroup(bool in_group) && {
   in_group_ = in_group;
-  return std::move(*this);
+  return *this;
 }
 
 SubprocessOptions& SubprocessOptions::Strace(std::string s) & {
@@ -168,7 +156,7 @@ SubprocessOptions& SubprocessOptions::Strace(std::string s) & {
 }
 SubprocessOptions SubprocessOptions::Strace(std::string s) && {
   strace_ = std::move(s);
-  return std::move(*this);
+  return *this;
 }
 
 Subprocess::Subprocess(Subprocess&& subprocess)
@@ -407,24 +395,6 @@ Subprocess Command::Start(SubprocessOptions options) const {
     return Subprocess(-1, {});
   }
 
-  std::string fds_arg;
-  if (!options.SandboxArguments().empty()) {
-    std::vector<int> fds;
-    for (const auto& redirect : redirects_) {
-      fds.emplace_back(static_cast<int>(redirect.first));
-    }
-    for (const auto& inherited_fd : inherited_fds_) {
-      fds.emplace_back(inherited_fd.second);
-    }
-    fds_arg = "--inherited_fds=" + fmt::format("{}", fmt::join(fds, ","));
-
-    auto forwarding_args = {fds_arg.c_str(), "--"};
-    cmd.insert(cmd.begin(), forwarding_args);
-    auto sbox_ptrs = ToCharPointers(options.SandboxArguments());
-    sbox_ptrs.pop_back();  // Final null pointer will end argv early
-    cmd.insert(cmd.begin(), sbox_ptrs.begin(), sbox_ptrs.end());
-  }
-
   pid_t pid = fork();
   if (!pid) {
 #ifdef __linux__
@@ -591,7 +561,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
     });
   }
 
-  auto subprocess = cmd.Start(std::move(options));
+  auto subprocess = cmd.Start(options);
   if (!subprocess.Started()) {
     return -1;
   }
@@ -624,7 +594,7 @@ struct ExtraParam {
 };
 Result<int> ExecuteImpl(const std::vector<std::string>& command,
                         const std::optional<std::vector<std::string>>& envs,
-                        std::optional<ExtraParam> extra_param) {
+                        const std::optional<ExtraParam>& extra_param) {
   Command cmd(command[0]);
   for (size_t i = 1; i < command.size(); ++i) {
     cmd.AddParameter(command[i]);
@@ -633,8 +603,7 @@ Result<int> ExecuteImpl(const std::vector<std::string>& command,
     cmd.SetEnvironment(*envs);
   }
   auto subprocess =
-      (!extra_param ? cmd.Start()
-                    : cmd.Start(std::move(extra_param->subprocess_options)));
+      (!extra_param ? cmd.Start() : cmd.Start(extra_param->subprocess_options));
   CF_EXPECT(subprocess.Started(), "Subprocess failed to start.");
 
   if (extra_param) {
@@ -666,11 +635,11 @@ Result<siginfo_t> Execute(const std::vector<std::string>& commands,
                           SubprocessOptions subprocess_options,
                           int wait_options) {
   siginfo_t info;
-  auto ret_code = CF_EXPECT(ExecuteImpl(
-      commands, /* envs */ std::nullopt,
-      ExtraParam{.subprocess_options = std::move(subprocess_options),
-                 .wait_options = wait_options,
-                 .infop = &info}));
+  auto ret_code =
+      CF_EXPECT(ExecuteImpl(commands, /* envs */ std::nullopt,
+                            ExtraParam{.subprocess_options = subprocess_options,
+                                       .wait_options = wait_options,
+                                       .infop = &info}));
   CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
   return info;
 }
@@ -680,11 +649,11 @@ Result<siginfo_t> Execute(const std::vector<std::string>& commands,
                           SubprocessOptions subprocess_options,
                           int wait_options) {
   siginfo_t info;
-  auto ret_code = CF_EXPECT(ExecuteImpl(
-      commands, envs,
-      ExtraParam{.subprocess_options = std::move(subprocess_options),
-                 .wait_options = wait_options,
-                 .infop = &info}));
+  auto ret_code =
+      CF_EXPECT(ExecuteImpl(commands, envs,
+                            ExtraParam{.subprocess_options = subprocess_options,
+                                       .wait_options = wait_options,
+                                       .infop = &info}));
   CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
   return info;
 }

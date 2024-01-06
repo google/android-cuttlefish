@@ -18,6 +18,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+
 #include <atomic>
 #include <cstdio>
 #include <cstring>
@@ -31,9 +34,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-#include <android-base/logging.h>
-#include <android-base/strings.h>
 
 #include "common/libs/fs/shared_fd.h"
 
@@ -68,7 +68,9 @@ class Subprocess {
   };
 
   Subprocess(pid_t pid, SubprocessStopper stopper = KillSubprocess)
-      : pid_(pid), started_(pid > 0), stopper_(stopper) {}
+      : pid_(pid),
+        started_(pid > 0),
+        stopper_(stopper) {}
   // The default implementation won't do because we need to reset the pid of the
   // moved object.
   Subprocess(Subprocess&&);
@@ -104,12 +106,13 @@ class SubprocessOptions {
  public:
   SubprocessOptions()
       : verbose_(true), exit_with_parent_(true), in_group_(false) {}
+
   SubprocessOptions& Verbose(bool verbose) &;
   SubprocessOptions Verbose(bool verbose) &&;
+#ifdef __linux__
   SubprocessOptions& ExitWithParent(bool exit_with_parent) &;
   SubprocessOptions ExitWithParent(bool exit_with_parent) &&;
-  SubprocessOptions& SandboxArguments(std::vector<std::string>) &;
-  SubprocessOptions SandboxArguments(std::vector<std::string>) &&;
+#endif
   // The subprocess runs as head of its own process group.
   SubprocessOptions& InGroup(bool in_group) &;
   SubprocessOptions InGroup(bool in_group) &&;
@@ -119,16 +122,12 @@ class SubprocessOptions {
 
   bool Verbose() const { return verbose_; }
   bool ExitWithParent() const { return exit_with_parent_; }
-  const std::vector<std::string>& SandboxArguments() const {
-    return sandbox_arguments_;
-  }
   bool InGroup() const { return in_group_; }
   const std::string& Strace() const { return strace_; }
 
  private:
   bool verbose_;
   bool exit_with_parent_;
-  std::vector<std::string> sandbox_arguments_;
   bool in_group_;
   std::string strace_;
 };
