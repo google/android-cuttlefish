@@ -82,7 +82,7 @@ class VmManager {
 
   // LINT.IfChange(virtio_gpu_pci_address)
   static constexpr const int kGpuPciSlotNum = 2;
-  // LINT.ThenChange(../../../shared/sepolicy/vendor/file_contexts:virtio_gpu_pci_address)
+  // LINT.ThenChange(../../../shared/sepolicy/vendor/genfs_contexts:virtio_gpu_pci_address)
 
   virtual ~VmManager() = default;
 
