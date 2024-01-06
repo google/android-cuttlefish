@@ -461,6 +461,9 @@ DEFINE_bool(snapshot_compatible, false,
 DEFINE_vec(mcu_config_path, CF_DEFAULTS_MCU_CONFIG_PATH,
            "configuration file for the MCU emulator");
 
+DEFINE_string(straced_host_executables, CF_DEFAULTS_STRACED_HOST_EXECUTABLES,
+              "Comma-separated list of executable names to run under strace "
+              "to collect their system call information.");
 
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
@@ -1179,6 +1182,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_host_uwb(FLAGS_enable_host_uwb);
   tmp_config_obj.set_pica_uci_port(7000 + pica_instance_num);
   LOG(DEBUG) << "launch pica: " << (FLAGS_pica_instance_num <= 0);
+
+  auto straced = android::base::Tokenize(FLAGS_straced_host_executables, ",");
+  std::set<std::string> straced_set(straced.begin(), straced.end());
+  tmp_config_obj.set_straced_host_executables(straced_set);
 
   // Environment specific configs
   // Currently just setting for the default environment
