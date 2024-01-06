@@ -556,6 +556,23 @@ void CuttlefishConfig::set_snapshot_path(const std::string& snapshot_path) {
   (*dictionary_)[kSnapshotPath] = snapshot_path;
 }
 
+static constexpr char kStracedExecutables[] = "straced_host_executables";
+void CuttlefishConfig::set_straced_host_executables(
+    const std::set<std::string>& straced_host_executables) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : straced_host_executables) {
+    args_json_obj.append(arg);
+  }
+  (*dictionary_)[kStracedExecutables] = args_json_obj;
+}
+std::set<std::string> CuttlefishConfig::straced_host_executables() const {
+  std::set<std::string> straced_host_executables;
+  for (const Json::Value& arg : (*dictionary_)[kStracedExecutables]) {
+    straced_host_executables.insert(arg.asString());
+  }
+  return straced_host_executables;
+}
+
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
     const std::string& path) {
   auto ret = new CuttlefishConfig();

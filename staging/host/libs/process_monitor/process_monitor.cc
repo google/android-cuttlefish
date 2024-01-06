@@ -42,6 +42,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/command_util/runner/defs.h"
@@ -85,17 +86,6 @@ void LogSubprocessExit(const std::string& name, const siginfo_t& infop) {
               << ") has exited for unknown reasons (code = " << infop.si_code
               << ", status = " << infop.si_status << ")";
   }
-}
-
-Result<void> StartSubprocesses(std::vector<MonitorEntry>& entries) {
-  LOG(DEBUG) << "Starting monitored subprocesses";
-  for (auto& monitored : entries) {
-    LOG(INFO) << monitored.cmd->GetShortName();
-    auto options = SubprocessOptions().InGroup(true);
-    monitored.proc.reset(new Subprocess(monitored.cmd->Start(options)));
-    CF_EXPECT(monitored.proc->Started(), "Failed to start subprocess");
-  }
-  return {};
 }
 
 Result<void> MonitorLoop(const std::atomic_bool& running,
@@ -245,6 +235,26 @@ Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
 
 }  // namespace
 
+Result<void> ProcessMonitor::StartSubprocesses(
+    ProcessMonitor::Properties& properties) {
+  LOG(DEBUG) << "Starting monitored subprocesses";
+  for (auto& monitored : properties.entries_) {
+    LOG(INFO) << monitored.cmd->GetShortName();
+    auto options = SubprocessOptions().InGroup(true);
+    std::string short_name = monitored.cmd->GetShortName();
+    auto last_slash = short_name.find_last_of('/');
+    if (last_slash != std::string::npos) {
+      short_name = short_name.substr(last_slash + 1);
+    }
+    if (Contains(properties_.strace_commands_, short_name)) {
+      options.Strace(properties.strace_log_dir_ + "/strace-" + short_name);
+    }
+    monitored.proc.reset(new Subprocess(monitored.cmd->Start(options)));
+    CF_EXPECT(monitored.proc->Started(), "Failed to start subprocess");
+  }
+  return {};
+}
+
 Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
   LOG(DEBUG) << "Waiting for a `stop` message from the parent";
   while (running.load()) {
@@ -308,6 +318,26 @@ ProcessMonitor::Properties& ProcessMonitor::Properties::AddCommand(
 ProcessMonitor::Properties ProcessMonitor::Properties::AddCommand(
     MonitorCommand cmd) && {
   return std::move(AddCommand(std::move(cmd)));
+}
+
+ProcessMonitor::Properties& ProcessMonitor::Properties::StraceCommands(
+    std::set<std::string> strace) & {
+  strace_commands_ = std::move(strace);
+  return *this;
+}
+ProcessMonitor::Properties ProcessMonitor::Properties::StraceCommands(
+    std::set<std::string> strace) && {
+  return std::move(StraceCommands(std::move(strace)));
+}
+
+ProcessMonitor::Properties& ProcessMonitor::Properties::StraceLogDir(
+    std::string log_dir) & {
+  strace_log_dir_ = std::move(log_dir);
+  return *this;
+}
+ProcessMonitor::Properties ProcessMonitor::Properties::StraceLogDir(
+    std::string log_dir) && {
+  return std::move(StraceLogDir(std::move(log_dir)));
 }
 
 ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties,
@@ -403,7 +433,7 @@ Result<void> ProcessMonitor::MonitorRoutine() {
 #endif
 
   LOG(DEBUG) << "Monitoring subprocesses";
-  CF_EXPECT(StartSubprocesses(properties_.entries_));
+  CF_EXPECT(StartSubprocesses(properties_));
 
   std::atomic_bool running(true);
 

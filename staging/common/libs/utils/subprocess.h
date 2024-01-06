@@ -117,14 +117,19 @@ class SubprocessOptions {
   SubprocessOptions& InGroup(bool in_group) &;
   SubprocessOptions InGroup(bool in_group) &&;
 
+  SubprocessOptions& Strace(std::string strace_output_path) &;
+  SubprocessOptions Strace(std::string strace_output_path) &&;
+
   bool Verbose() const { return verbose_; }
   bool ExitWithParent() const { return exit_with_parent_; }
   bool InGroup() const { return in_group_; }
+  const std::string& Strace() const { return strace_; }
 
  private:
   bool verbose_;
   bool exit_with_parent_;
   bool in_group_;
+  std::string strace_;
 };
 
 // An executable command. Multiple subprocesses can be started from the same
