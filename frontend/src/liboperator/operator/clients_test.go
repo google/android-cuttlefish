@@ -21,11 +21,11 @@ import (
 
 func TestNewPolledConnection(t *testing.T) {
 	ps := NewPolledSet()
-	c1 := ps.NewConnection(NewDevice(nil, 0, ""))
+	c1 := ps.NewConnection(newDevice("d1", nil, 0, ""))
 	if c1 == nil {
 		t.Error("Failed to create polled connection")
 	}
-	c2 := ps.NewConnection(NewDevice(nil, 0, ""))
+	c2 := ps.NewConnection(newDevice("d1", nil, 0, ""))
 	if c2 == nil {
 		t.Error("Failed to create polled connection")
 	}
@@ -36,14 +36,14 @@ func TestNewPolledConnection(t *testing.T) {
 
 func TestGetConnection(t *testing.T) {
 	ps := NewPolledSet()
-	c1 := ps.NewConnection(NewDevice(nil, 0, ""))
+	c1 := ps.NewConnection(newDevice("d1", nil, 0, ""))
 	if ps.GetConnection(c1.Id()) != c1 {
 		t.Error("Failed to get connection by id")
 	}
 	if ps.GetConnection(c1.Id()+"some suffix") == c1 {
 		t.Error("Returned connection with wrong id")
 	}
-	c2 := ps.NewConnection(NewDevice(nil, 0, ""))
+	c2 := ps.NewConnection(newDevice("d1", nil, 0, ""))
 	if ps.GetConnection(c1.Id()) == c2 || ps.GetConnection(c2.Id()) == c1 {
 		t.Error("Returned the wrong connection")
 	}
@@ -60,7 +60,7 @@ func TestGetConnection(t *testing.T) {
 
 func TestMessages(t *testing.T) {
 	ps := NewPolledSet()
-	c := ps.NewConnection(NewDevice(nil, 0, ""))
+	c := ps.NewConnection(newDevice("d1", nil, 0, ""))
 	msgs := c.GetMessages(0, -1)
 	if len(msgs) != 0 {
 		t.Error("Returned messages")
@@ -80,7 +80,7 @@ func TestMessages(t *testing.T) {
 
 func TestDestroy(t *testing.T) {
 	ps := NewPolledSet()
-	c := ps.NewConnection(NewDevice(nil, 0, ""))
+	c := ps.NewConnection(newDevice("d1", nil, 0, ""))
 	c.OnDeviceDisconnected()
 	if ps.GetConnection(c.Id()) != nil {
 		t.Error("connection was not destroyed after device disconnect")

@@ -23,10 +23,19 @@ import (
 	"sync"
 )
 
+type DeviceDesc struct {
+	DeviceId string `json:"device_id"`
+	GroupId  string `json:"group_id"`
+	Owner    string `json:"owner"`
+	Name     string `json:"name"`
+}
+
 type Device struct {
-	info    interface{}
-	groupId string
-	conn    *JSONUnix
+	// Provided by the device at registration time
+	privateData interface{}
+	// Provided at pre-registration time
+	desc DeviceDesc
+	conn *JSONUnix
 	// Reverse proxy to the client files
 	Proxy *httputil.ReverseProxy
 	// Synchronizes access to the client list and the client count
@@ -36,18 +45,13 @@ type Device struct {
 	clientCount int
 }
 
-type DeviceInfo struct {
-	DeviceId string `json:"device_id"`
-	GroupId  string `json:"group_id"`
-}
-
 type Group struct {
 	deviceIds []string
 }
 
 const DEFAULT_GROUP_ID = "default"
 
-func NewDevice(conn *JSONUnix, port int, info interface{}) *Device {
+func newDevice(id string, conn *JSONUnix, port int, privateData interface{}) *Device {
 	url, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", port))
 	if err != nil {
 		// This should not happen
@@ -56,8 +60,18 @@ func NewDevice(conn *JSONUnix, port int, info interface{}) *Device {
 	}
 	proxy := httputil.NewSingleHostReverseProxy(url)
 
-	groupId := GetGroupId(info)
-	return &Device{conn: conn, Proxy: proxy, info: info, groupId: groupId, clients: make(map[int]Client), clientCount: 0}
+	groupId := groupIdFromPrivateData(privateData)
+	return &Device{
+		conn:        conn,
+		Proxy:       proxy,
+		privateData: privateData,
+		desc: DeviceDesc{
+			DeviceId: id,
+			GroupId:  groupId,
+		},
+		clients:     make(map[int]Client),
+		clientCount: 0,
+	}
 }
 
 // Sends a message to the device
@@ -103,8 +117,18 @@ func (d *Device) ToClient(id int, msg interface{}) error {
 	return client.Send(msg)
 }
 
+// preDevice holds information about a device between pre-registration and registration.
+type preDevice struct {
+	Desc  DeviceDesc
+	RegCh chan bool
+}
+
 // Keeps track of the registered devices.
 type DevicePool struct {
+	// preDevicesMtx must always be locked before devicesMtx
+	preDevicesMtx sync.Mutex
+	// Pre-registered devices by id
+	preDevices map[string]*preDevice
 	devicesMtx sync.Mutex
 	devices    map[string]*Device
 	groups     map[string]*Group
@@ -112,13 +136,14 @@ type DevicePool struct {
 
 func NewDevicePool() *DevicePool {
 	return &DevicePool{
-		devices: make(map[string]*Device),
-		groups:  make(map[string]*Group),
+		preDevices: make(map[string]*preDevice),
+		devices:    make(map[string]*Device),
+		groups:     make(map[string]*Group),
 	}
 }
 
-func GetGroupId(info interface{}) string {
-	deviceInfo, ok := info.(map[string]interface{})
+func groupIdFromPrivateData(privateData interface{}) string {
+	deviceInfo, ok := privateData.(map[string]interface{})
 	if !ok {
 		return DEFAULT_GROUP_ID
 	}
@@ -140,28 +165,66 @@ func CreateOrGetGroup(p *DevicePool, groupId string) *Group {
 	return p.groups[groupId]
 }
 
+// PreRegister accepts a channel of boolean which it closes if the pre-registration is cancelled or
+// sends the output of registering the device as a boolean.
+func (p *DevicePool) PreRegister(desc *DeviceDesc, regCh chan bool) error {
+	d := &preDevice{
+		Desc:  *desc,
+		RegCh: regCh,
+	}
+	p.preDevicesMtx.Lock()
+	defer p.preDevicesMtx.Unlock()
+	if _, found := p.preDevices[d.Desc.DeviceId]; found {
+		return fmt.Errorf("Device Id already pre-registered")
+	}
+	// This locks devicesMtx after preDevicesMtx, which is the right order
+	if d := p.GetDevice(d.Desc.DeviceId); d != nil {
+		return fmt.Errorf("Device Id already registered")
+	}
+	p.preDevices[d.Desc.DeviceId] = d
+	return nil
+}
+
+func (p *DevicePool) CancelPreRegistration(id string) {
+	p.preDevicesMtx.Lock()
+	defer p.preDevicesMtx.Unlock()
+	if d, ok := p.preDevices[id]; ok {
+		close(d.RegCh)
+	}
+	delete(p.preDevices, id)
+}
+
 // Register a new device, returns false if a device with that id already exists
-func (p *DevicePool) Register(d *Device, id string) bool {
+func (p *DevicePool) Register(id string, conn *JSONUnix, port int, privateData interface{}) *Device {
+	// acquire locks in this order to avoid deadlock
+	p.preDevicesMtx.Lock()
+	defer p.preDevicesMtx.Unlock()
 	p.devicesMtx.Lock()
 	defer p.devicesMtx.Unlock()
-	_, ok := p.devices[id]
-	if ok {
-		return false
+	if _, ok := p.devices[id]; ok {
+		// already registered
+		return nil
+	}
+	d := newDevice(id, conn, port, privateData)
+	if preDevice, ok := p.preDevices[id]; ok {
+		d.desc = preDevice.Desc
+		delete(p.preDevices, id)
+		preDevice.RegCh <- true
 	}
 	p.devices[id] = d
 
-	groupId := GetGroupId(d.info)
+	groupId := d.desc.GroupId
 	group := CreateOrGetGroup(p, groupId)
 	group.deviceIds = append(group.deviceIds, id)
 
-	return true
+	return d
 }
 
 func (p *DevicePool) Unregister(id string) {
 	p.devicesMtx.Lock()
 	defer p.devicesMtx.Unlock()
 	if d, ok := p.devices[id]; ok {
-		groupId := GetGroupId(d.info)
+		groupId := d.desc.GroupId
 		group := CreateOrGetGroup(p, groupId)
 
 		for i, deviceId := range group.deviceIds {
@@ -208,27 +271,27 @@ func (p *DevicePool) DeviceIds() []string {
 	return ret
 }
 
-func (p *DevicePool) GetDeviceInfoList() []*DeviceInfo {
+func (p *DevicePool) GetDeviceDescList() []*DeviceDesc {
 	p.devicesMtx.Lock()
 	defer p.devicesMtx.Unlock()
-	ret := make([]*DeviceInfo, 0)
-	for id, device := range p.devices {
-		ret = append(ret, &DeviceInfo{DeviceId: id, GroupId: device.groupId})
+	ret := make([]*DeviceDesc, 0)
+	for _, device := range p.devices {
+		ret = append(ret, &device.desc)
 	}
 	return ret
 }
 
-func (p *DevicePool) GetDeviceInfoListByGroupId(groupId string) []*DeviceInfo {
+func (p *DevicePool) GetDeviceDescByGroupId(groupId string) []*DeviceDesc {
 	p.devicesMtx.Lock()
 	defer p.devicesMtx.Unlock()
-	ret := make([]*DeviceInfo, 0)
+	ret := make([]*DeviceDesc, 0)
 	group, ok := p.groups[groupId]
 	if !ok {
 		return ret
 	}
 
 	for _, deviceId := range group.deviceIds {
-		ret = append(ret, &DeviceInfo{DeviceId: deviceId, GroupId: groupId})
+		ret = append(ret, &DeviceDesc{DeviceId: deviceId, GroupId: groupId})
 	}
 	return ret
 }

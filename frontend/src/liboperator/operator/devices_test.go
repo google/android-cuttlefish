@@ -16,10 +16,12 @@ package operator
 
 import (
 	"testing"
+
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 )
 
 func TestNewDevice(t *testing.T) {
-	d := NewDevice(nil, 0, "info")
+	d := newDevice("d1", nil, 0, "info")
 	if d == nil {
 		t.Error("null device")
 	}
@@ -40,7 +42,7 @@ func (c *MockClient) OnDeviceDisconnected() {
 }
 
 func TestDeviceRegister(t *testing.T) {
-	d := NewDevice(nil, 0, "info")
+	d := newDevice("d1", nil, 0, "info")
 	// Unregistering unexisting client has no effect
 	d.Unregister(9)
 	// Register a client
@@ -92,11 +94,11 @@ func TestPoolRegister(t *testing.T) {
 	p := NewDevicePool()
 	// Unregistering wrong device has no effect
 	p.Unregister("id1")
-	d := NewDevice(nil, 0, "info1")
 	if p.GetDevice("id1") != nil {
 		t.Error("Empty pool returned device")
 	}
-	if !p.Register(d, "id1") {
+	d := p.Register("id1", nil, 0, "info1")
+	if d == nil {
 		t.Error("Failed to register new device")
 	}
 	if p.GetDevice("id1") != d {
@@ -106,10 +108,10 @@ func TestPoolRegister(t *testing.T) {
 		t.Error("Returned wrong device")
 	}
 	// Register with the same id
-	if p.Register(d, "id1") {
+	if p.Register("id1", nil, 0, "info1") != nil {
 		t.Error("Didn't fail with same device id")
 	}
-	if !p.Register(d, "id2") {
+	if p.Register("id2", nil, 0, "info1") == nil {
 		t.Error("Failed to register with different id")
 	}
 	// Try to get device after unregistering another
@@ -123,19 +125,59 @@ func TestPoolRegister(t *testing.T) {
 	}
 }
 
+func TestPoolPreRegister(t *testing.T) {
+	p := NewDevicePool()
+	p.CancelPreRegistration("inexistent_device")
+	dd1 := &apiv1.DeviceDescriptor{
+		DeviceId: "d1",
+		GroupId:  "g1",
+		Owner:    "o1",
+		Name:     "n1",
+	}
+	if err := p.PreRegister(dd1, make(chan bool, 1)); err != nil {
+		t.Fatal("Failed to pre-register: ", err)
+	}
+
+	dd2 := &apiv1.DeviceDescriptor{
+		DeviceId: "d2",
+		GroupId:  "g2",
+		Owner:    "o2",
+		Name:     "n2",
+	}
+	if err := p.PreRegister(dd2, make(chan bool, 1)); err != nil {
+		t.Fatal("Failed to pre-register: ", err)
+	}
+
+	p.CancelPreRegistration("d2")
+
+	d1 := p.Register("d1", nil, 0, "foo")
+	if d1 == nil {
+		t.Fatal("Failed to register pre-registered device")
+	}
+	if d1.desc.GroupId != "g1" || d1.desc.Name != "n1" || d1.desc.Owner != "o1" {
+		t.Fatal("Registered device doesn't match pre-registration: ", d1)
+	}
+
+	d2 := p.Register("d2", nil, 0, "bar")
+	if d2 == nil {
+		t.Fatal("Failed to register un-pre-registered device")
+	}
+	if d2.desc.GroupId == "g2" || d2.desc.Name == "n2" || d2.desc.Owner == "o2" {
+		t.Fatal("Device with cancelled pre-registration contains pre-registration data: ", d2)
+	}
+}
+
 func TestListDevices(t *testing.T) {
 	p := NewDevicePool()
-	d1 := NewDevice(nil, 0, "info1")
-	d2 := NewDevice(nil, 0, "info2")
 	if len(p.DeviceIds()) != 0 {
 		t.Error("Empty pool listed devices")
 	}
-	p.Register(d1, "1")
+	p.Register("1", nil, 0, "info1")
 	l := p.DeviceIds()
 	if len(l) != 1 || l[0] != "1" {
 		t.Error("Error listing after 1 device registration: ", l)
 	}
-	p.Register(d2, "2")
+	p.Register("2", nil, 0, "info2")
 	l = p.DeviceIds()
 	if len(l) != 2 || l[0] != "1" && l[0] != "2" || l[1] != "1" && l[1] != "2" || l[0] == l[1] {
 		t.Error("Error listing after 2 device restrations: ", l)
@@ -166,45 +208,38 @@ func MakeInfo(groupId string) map[string]interface{} {
 func TestListDevicesByGroup(t *testing.T) {
 	p := NewDevicePool()
 
-	foo_d1 := NewDevice(nil, 0, MakeInfo("foo"))
-	foo_d2 := NewDevice(nil, 0, MakeInfo("foo"))
-	bar_d1 := NewDevice(nil, 0, MakeInfo("bar"))
-	bar_d2 := NewDevice(nil, 0, MakeInfo("bar"))
-	bar_d3 := NewDevice(nil, 0, MakeInfo("bar"))
+	p.Register("1", nil, 0, MakeInfo("foo"))
+	p.Register("2", nil, 0, MakeInfo("foo"))
+	p.Register("3", nil, 0, MakeInfo("bar"))
+	p.Register("4", nil, 0, MakeInfo("bar"))
+	p.Register("5", nil, 0, MakeInfo("bar"))
 
-	p.Register(foo_d1, "1")
-	p.Register(foo_d2, "2")
-	p.Register(bar_d1, "3")
-	p.Register(bar_d2, "4")
-	p.Register(bar_d3, "5")
-
-	if deviceCnt := len(p.GetDeviceInfoListByGroupId("foo")); deviceCnt != 2 {
+	if deviceCnt := len(p.GetDeviceDescByGroupId("foo")); deviceCnt != 2 {
 		t.Error("List of devices in group foo should have size of 2, but have ", deviceCnt)
 	}
 
-	if deviceCnt := len(p.GetDeviceInfoListByGroupId("bar")); deviceCnt != 3 {
+	if deviceCnt := len(p.GetDeviceDescByGroupId("bar")); deviceCnt != 3 {
 		t.Error("List of devices in group bar should have size of 3, but have ", deviceCnt)
 	}
 }
 
 func TestListDevicesEmpty(t *testing.T) {
 	p := NewDevicePool()
-	d := NewDevice(nil, 0, MakeInfo("foo"))
-	p.Register(d, "d")
+	p.Register("d", nil, 0, MakeInfo("foo"))
 	p.Unregister("d")
 
-	if deviceCnt := len(p.GetDeviceInfoList()); deviceCnt != 0 {
+	if deviceCnt := len(p.GetDeviceDescList()); deviceCnt != 0 {
 		t.Error("List of all devices should have size of 0, but have ", deviceCnt)
 	}
 
-	if deviceCnt := len(p.GetDeviceInfoListByGroupId("foo")); deviceCnt != 0 {
+	if deviceCnt := len(p.GetDeviceDescByGroupId("foo")); deviceCnt != 0 {
 		t.Error("List of devices in group foo should have size of 0, but have ", deviceCnt)
 	}
 }
 
-func TestGetGroupId(t *testing.T) {
+func TestGroupIdFromPrivateData(t *testing.T) {
 	info := MakeInfo("foo")
-	groupId := GetGroupId(info)
+	groupId := groupIdFromPrivateData(info)
 
 	if groupId != "foo" {
 		t.Error("info should have group_id as foo")
@@ -214,16 +249,13 @@ func TestGetGroupId(t *testing.T) {
 
 func TestListGroups(t *testing.T) {
 	p := NewDevicePool()
-	d1 := NewDevice(nil, 0, MakeInfo("group1"))
-	d2 := NewDevice(nil, 0, MakeInfo("group2"))
-	d3 := NewDevice(nil, 0, MakeInfo("group2"))
 	if len(p.GroupIds()) != 0 {
 		t.Error("Empty pool listed groups")
 	}
 
-	p.Register(d1, "d1")
-	p.Register(d2, "d2")
-	p.Register(d3, "d3")
+	p.Register("d1", nil, 0, MakeInfo("group1"))
+	p.Register("d2", nil, 0, MakeInfo("group2"))
+	p.Register("d3", nil, 0, MakeInfo("group2"))
 
 	if len(p.devices) != 3 {
 		t.Error("Error listing after 3 device registrations - expected 3 but ", len(p.devices))
@@ -247,15 +279,10 @@ func TestListGroups(t *testing.T) {
 
 func TestDefaultGroup(t *testing.T) {
 	p := NewDevicePool()
-	d1 := NewDevice(nil, 0, MakeInfo("foo"))
-	d2 := NewDevice(nil, 0, map[string]interface{}{})
-	d3 := NewDevice(nil, 0, "")
-	d4 := NewDevice(nil, 0, MakeInfo(""))
-
-	p.Register(d1, "d1")
-	p.Register(d2, "d2")
-	p.Register(d3, "d3")
-	p.Register(d4, "d4")
+	p.Register("d1", nil, 0, MakeInfo("foo"))
+	p.Register("d2", nil, 0, map[string]interface{}{})
+	p.Register("d3", nil, 0, "")
+	p.Register("d4", nil, 0, MakeInfo(""))
 
 	if len(p.devices) != 4 {
 		t.Error("Error listing after 4 device registrations - expected 4 but ", len(p.devices))
@@ -265,7 +292,7 @@ func TestDefaultGroup(t *testing.T) {
 		t.Error("Error after 3 device in default group - expected 3 but ", defaultDeviceCount)
 	}
 
-	if defaultDeviceCount := len(p.GetDeviceInfoListByGroupId(DEFAULT_GROUP_ID)); defaultDeviceCount != 3 {
+	if defaultDeviceCount := len(p.GetDeviceDescByGroupId(DEFAULT_GROUP_ID)); defaultDeviceCount != 3 {
 		t.Error("Error after 3 device in default group - expected 3 but ", defaultDeviceCount)
 	}
 
