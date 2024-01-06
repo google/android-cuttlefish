@@ -35,9 +35,7 @@ import (
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
-// Sets up a unix socket for devices to connect to and returns a function that listens on the
-// socket until an error occurrs.
-func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string) (func() error, error) {
+func createUnixSocketEndpoint(path string) (*net.UnixListener, error) {
 	if err := os.RemoveAll(path); err != nil {
 		return nil, fmt.Errorf("Failed to clean previous socket: %w", err)
 	}
@@ -55,6 +53,16 @@ func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string
 		// This shouldn't happen since the creation of the socket just succeeded
 		log.Println("Failed to change permissions on socket file: ", err)
 	}
+	return sock, err
+}
+
+// Sets up a unix socket for devices to connect to and returns a function that listens on the
+// socket until an error occurrs.
+func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string) (func() error, error) {
+	sock, err := createUnixSocketEndpoint(path)
+	if err != nil {
+		return nil, err
+	}
 	log.Println("Device endpoint created")
 	// Serve the register_device endpoint in a background thread
 	return func() error {
@@ -65,6 +73,27 @@ func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string
 				return err
 			}
 			go deviceEndpoint(NewJSONUnix(c), pool, config)
+		}
+	}, nil
+}
+
+// Sets up a unix socket for server control and returns a function that listens on the socket
+// until an error occurrs.
+func SetupControlEndpoint(pool *DevicePool, path string) (func() error, error) {
+	sock, err := createUnixSocketEndpoint(path)
+	if err != nil {
+		return nil, err
+	}
+	log.Println("Control endpoint created")
+	// Serve the register_device endpoint in a background thread
+	return func() error {
+		defer sock.Close()
+		for {
+			c, err := sock.AcceptUnix()
+			if err != nil {
+				return err
+			}
+			go controlEndpoint(NewJSONUnix(c), pool)
 		}
 	}, nil
 }
@@ -141,6 +170,112 @@ func CreateHttpHandlers(
 	return router
 }
 
+// Control endpoint
+func controlEndpoint(c *JSONUnix, pool *DevicePool) {
+	log.Println("Controller connected")
+	defer c.Close()
+
+	msg := make(map[string]interface{})
+	if err := c.Recv(&msg); err != nil {
+		log.Println("Error reading control message: ", err)
+		return
+	}
+	typeRaw, ok := msg["message_type"]
+	if !ok {
+		log.Println("Control message doesn't include message_type: ", msg)
+		return
+	}
+	typeStr, ok := typeRaw.(string)
+	if !ok {
+		log.Println("Control message's message_type field is not a string: ", msg)
+		return
+	}
+	switch typeStr {
+	case "pre-register":
+		var preRegisterMsg apiv1.PreRegisterMsg
+		// Ignore errors, msg was parsed from json so this can't fail
+		j, _ := json.Marshal(msg)
+		json.Unmarshal(j, &preRegisterMsg)
+		PreRegister(c, pool, &preRegisterMsg)
+	default:
+		log.Println("Invalid control type: ", typeStr)
+		return
+	}
+}
+
+func PreRegister(c *JSONUnix, pool *DevicePool, msg *apiv1.PreRegisterMsg) {
+	var ret apiv1.PreRegistrationResponse
+	idSet := make(map[string]bool)
+	// Lenght ensures no writers will block on this channel
+	devCh := make(chan string, len(msg.Devices))
+	for _, d := range msg.Devices {
+		regCh := make(chan bool, 1)
+		err := pool.PreRegister(
+			&DeviceDesc{
+				DeviceId: d.Id,
+				GroupId:  msg.GroupName,
+				Owner:    msg.Owner,
+				Name:     d.Name,
+			},
+			regCh,
+		)
+		status := apiv1.RegistrationStatusReport{
+			Id:     d.Id,
+			Status: "accepted",
+		}
+		if err != nil {
+			status.Status = "failed"
+			status.Msg = err.Error()
+		} else {
+			idSet[d.Id] = true
+			go func(regCh chan bool, devCh chan string, id string) {
+				registered, ok := <-regCh
+				// The channel is closed if cancelled, true is sent when registration succeeds.
+				if registered && ok {
+					devCh <- id
+				}
+			}(regCh, devCh, d.Id)
+		}
+		ret = append(ret, status)
+	}
+
+	if err := c.Send(ret); err != nil {
+		log.Println("Error sending pre-registration response: ", err)
+		return
+	}
+
+	closeCh := make(chan bool)
+	go func(c *JSONUnix, ch chan bool) {
+		// Wait until socket closes or produces another error
+		var err error
+		for err == nil {
+			var ignored interface{}
+			err = c.Recv(ignored)
+		}
+		ch <- true
+	}(c, closeCh)
+
+	for {
+		select {
+		case id := <-devCh:
+			evt := apiv1.RegistrationStatusReport{
+				Id:     id,
+				Status: "registered",
+			}
+			if err := c.Send(&evt); err != nil {
+				log.Println("Error sending registration event: ", err)
+			}
+			delete(idSet, id)
+		case <-closeCh:
+			// Cancel all pending pre-registrations when this function returns
+			for id := range idSet {
+				pool.CancelPreRegistration(id)
+			}
+			return
+		}
+	}
+}
+
 // Device endpoint
 func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 	log.Println("Device connected")
@@ -161,8 +296,8 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 		info = make(map[string]interface{})
 	}
 	port := msg.Port
-	device := NewDevice(c, port, info)
-	if !pool.Register(device, id) {
+	device := pool.Register(id, c, port, info)
+	if device == nil {
 		ReplyError(c, fmt.Sprintln("Device id already taken: ", id))
 		return
 	}
@@ -325,7 +460,7 @@ func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		return
 	}
 
-	devInfo := dev.info.(map[string]interface{})
+	devInfo := dev.privateData.(map[string]interface{})
 	openwrtDevId, ok := devInfo["openwrt_device_id"].(string)
 	if !ok {
 		http.Error(w, "Device obtaining Openwrt not found", http.StatusNotFound)
@@ -356,13 +491,13 @@ func listDevices(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	groupId := r.URL.Query().Get("groupId")
 
 	if len(groupId) == 0 {
-		if err := ReplyJSONOK(w, pool.GetDeviceInfoList()); err != nil {
+		if err := ReplyJSONOK(w, pool.GetDeviceDescList()); err != nil {
 			log.Println(err)
 		}
 		return
 	}
 
-	if err := ReplyJSONOK(w, pool.GetDeviceInfoListByGroupId(groupId)); err != nil {
+	if err := ReplyJSONOK(w, pool.GetDeviceDescByGroupId(groupId)); err != nil {
 		log.Println(err)
 	}
 }
@@ -377,7 +512,7 @@ func deviceInfo(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		http.NotFound(w, r)
 		return
 	}
-	ReplyJSONOK(w, apiv1.DeviceInfoReply{DeviceId: devId, RegistrationInfo: dev.info})
+	ReplyJSONOK(w, apiv1.DeviceInfoReply{DeviceId: devId, RegistrationInfo: dev.privateData})
 }
 
 func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool, maybeIntercept func(string) *string) {
@@ -414,7 +549,7 @@ func createPolledConnection(w http.ResponseWriter, r *http.Request, pool *Device
 		return
 	}
 	conn := polledSet.NewConnection(device)
-	reply := apiv1.NewConnReply{ConnId: conn.Id(), DeviceInfo: device.info}
+	reply := apiv1.NewConnReply{ConnId: conn.Id(), DeviceInfo: device.privateData}
 	ReplyJSONOK(w, reply)
 }
 

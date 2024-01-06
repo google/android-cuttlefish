@@ -29,13 +29,14 @@ import (
 )
 
 const (
-	DefaultSocketPath     = "/run/cuttlefish/operator"
-	DefaultHttpPort       = 1080
-	DefaultTLSCertDir     = "/etc/cuttlefish-common/operator/cert"
-	DefaultStaticFilesDir = "static"    // relative path
-	DefaultInterceptDir   = "intercept" // relative path
-	DefaultWebUIUrl       = ""
-	DefaultListenAddress  = "127.0.0.1"
+	DefaultSocketPath        = "/run/cuttlefish/operator"
+	DefaultControlSocketPath = "/run/cuttlefish/operator_control"
+	DefaultHttpPort          = 1080
+	DefaultTLSCertDir        = "/etc/cuttlefish-common/operator/cert"
+	DefaultStaticFilesDir    = "static"    // relative path
+	DefaultInterceptDir      = "intercept" // relative path
+	DefaultWebUIUrl          = ""
+	DefaultListenAddress     = "127.0.0.1"
 )
 
 func startHttpServer(address string, port int) error {
@@ -90,6 +91,7 @@ func start(starters []func() error) {
 
 func main() {
 	socketPath := flag.String("socket_path", DefaultSocketPath, "Path to the device endpoint unix socket.")
+	controlSocketPath := flag.String("control_socket_path", DefaultControlSocketPath, "Path to the control endpoint unix socket.")
 	httpPort := flag.Int("http_port", DefaultHttpPort, "Port to serve HTTP requests on.")
 	httpsPort := flag.Int("https_port", -1, "Port to serve HTTPS requests on.")
 	tlsCertDir := flag.String("tls_cert_dir", DefaultTLSCertDir, "Directory where the TLS certificates are located.")
@@ -122,6 +124,13 @@ func main() {
 	http.Handle("/", r)
 
 	starters := []func() error{
+		func() error {
+			st, err := operator.SetupControlEndpoint(pool, *controlSocketPath)
+			if err != nil {
+				return err
+			}
+			return st()
+		},
 		func() error {
 			st, err := operator.SetupDeviceEndpoint(pool, config, *socketPath)
 			if err != nil {

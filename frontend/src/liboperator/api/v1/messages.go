@@ -14,6 +14,33 @@
 
 package v1
 
+// Control messages
+
+type ControlMsgHeader struct {
+	Type string `json:"message_type"`
+}
+
+type PreRegisterMsg struct {
+	// Type must be set to "pre-register"
+	ControlMsgHeader
+	GroupName string `json:"group_name"`
+	Owner     string `json:"owner"`
+	Devices   []struct {
+		Id   string `json:"id"`
+		Name string `json:"name"`
+	} `json:"devices"`
+}
+
+type RegistrationStatusReport struct {
+	Id     string `json:"id"`
+	Status string `json:"status"`
+	Msg    string `json:"message"`
+}
+
+type PreRegistrationResponse []RegistrationStatusReport
+
+// Device and client messages
+
 type RegisterMsg struct {
 	DeviceId string      `json:"device_id"`
 	Port     int         `json:"device_port"`
