@@ -263,6 +263,9 @@ class CuttlefishConfig {
   std::string snapshot_path() const;
   void set_snapshot_path(const std::string& snapshot_path);
 
+  std::set<std::string> straced_host_executables() const;
+  void set_straced_host_executables(const std::set<std::string>& executables);
+
   bool IsCrosvm() const;
 
   class InstanceSpecific;
