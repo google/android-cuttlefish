@@ -24,6 +24,7 @@
 #include <android-base/strings.h>
 #include <json/json.h>
 
+#include "common/libs/utils/base64.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 
@@ -88,6 +89,20 @@ Result<std::string> GenerateGflag(const Json::Value& instances,
                                   const std::vector<std::string>& selectors) {
   auto values = CF_EXPECTF(GetArrayValues<std::string>(instances, selectors),
                            "Unable to get values for gflag \"{}\"", gflag_name);
+  return GenerateGflag(gflag_name, values);
+}
+
+Result<std::string> Base64EncodeGflag(
+    const Json::Value& instances, const std::string& gflag_name,
+    const std::vector<std::string>& selectors) {
+  auto values =
+      CF_EXPECTF(GetArrayValues<std::string>(instances, selectors),
+                 "Unable to produce values for gflag \"{}\"", gflag_name);
+  for (int i = 0; i < values.size(); i++) {
+    std::string out;
+    CF_EXPECT(EncodeBase64(values[i].c_str(), values[i].size(), &out));
+    values[i] = out;
+  }
   return GenerateGflag(gflag_name, values);
 }
 

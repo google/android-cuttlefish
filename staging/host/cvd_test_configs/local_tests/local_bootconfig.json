@@ -1,0 +1,15 @@
+{
+  "common": {
+    "host_package": "/tmp/linux-x86"
+  },
+  "instances": [
+    {
+      "disk": {
+        "default_build": "/tmp/vsoc_x86_64"
+      },
+      "boot": {
+        "extra_bootconfig_args": "androidboot.W=X androidboot.Y=Z"
+      }
+    }
+  ]
+}
