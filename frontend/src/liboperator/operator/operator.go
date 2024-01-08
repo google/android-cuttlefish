@@ -211,7 +211,7 @@ func PreRegister(c *JSONUnix, pool *DevicePool, msg *apiv1.PreRegisterMsg) {
 	for _, d := range msg.Devices {
 		regCh := make(chan bool, 1)
 		err := pool.PreRegister(
-			&DeviceDesc{
+			&apiv1.DeviceDescriptor{
 				DeviceId: d.Id,
 				GroupId:  msg.GroupName,
 				Owner:    msg.Owner,
@@ -512,7 +512,7 @@ func deviceInfo(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		http.NotFound(w, r)
 		return
 	}
-	ReplyJSONOK(w, apiv1.DeviceInfoReply{DeviceId: devId, RegistrationInfo: dev.privateData})
+	ReplyJSONOK(w, apiv1.DeviceInfoReply{DeviceDescriptor: dev.Descriptor, RegistrationInfo: dev.privateData})
 }
 
 func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool, maybeIntercept func(string) *string) {

@@ -154,7 +154,7 @@ func TestPoolPreRegister(t *testing.T) {
 	if d1 == nil {
 		t.Fatal("Failed to register pre-registered device")
 	}
-	if d1.desc.GroupId != "g1" || d1.desc.Name != "n1" || d1.desc.Owner != "o1" {
+	if d1.Descriptor.GroupId != "g1" || d1.Descriptor.Name != "n1" || d1.Descriptor.Owner != "o1" {
 		t.Fatal("Registered device doesn't match pre-registration: ", d1)
 	}
 
@@ -162,7 +162,7 @@ func TestPoolPreRegister(t *testing.T) {
 	if d2 == nil {
 		t.Fatal("Failed to register un-pre-registered device")
 	}
-	if d2.desc.GroupId == "g2" || d2.desc.Name == "n2" || d2.desc.Owner == "o2" {
+	if d2.Descriptor.GroupId == "g2" || d2.Descriptor.Name == "n2" || d2.Descriptor.Owner == "o2" {
 		t.Fatal("Device with cancelled pre-registration contains pre-registration data: ", d2)
 	}
 }
@@ -261,19 +261,19 @@ func TestListGroups(t *testing.T) {
 		t.Error("Error listing after 3 device registrations - expected 3 but ", len(p.devices))
 	}
 
-	if len(p.groups) != 2 {
-		t.Error("Error listing after 3 device registrations - expected 2 but ", len(p.groups))
+	if len(p.GroupIds()) != 2 {
+		t.Error("Error listing after 3 device registrations - expected 2 but ", len(p.GroupIds()))
 	}
 
 	p.Unregister("d1")
 
-	if len(p.groups) != 1 {
-		t.Error("Error listing after 3 device registrations, 1 unregistration - expected 1 but ", len(p.groups))
+	if len(p.GroupIds()) != 1 {
+		t.Error("Error listing after 3 device registrations, 1 unregistration - expected 1 but ", len(p.GroupIds()))
 	}
 
 	p.Unregister(("d2"))
-	if len(p.groups) != 1 {
-		t.Error("Error listing after 3 device registrations, 2 unregistrations - expected 1 but ", len(p.groups))
+	if len(p.GroupIds()) != 1 {
+		t.Error("Error listing after 3 device registrations, 2 unregistrations - expected 1 but ", len(p.GroupIds()))
 	}
 }
 
@@ -288,7 +288,7 @@ func TestDefaultGroup(t *testing.T) {
 		t.Error("Error listing after 4 device registrations - expected 4 but ", len(p.devices))
 	}
 
-	if defaultDeviceCount := len(p.groups[DEFAULT_GROUP_ID].deviceIds); defaultDeviceCount != 3 {
+	if defaultDeviceCount := len(p.GetDeviceDescByGroupId(DEFAULT_GROUP_ID)); defaultDeviceCount != 3 {
 		t.Error("Error after 3 device in default group - expected 3 but ", defaultDeviceCount)
 	}
 

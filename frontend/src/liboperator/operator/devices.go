@@ -21,21 +21,16 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"sync"
-)
 
-type DeviceDesc struct {
-	DeviceId string `json:"device_id"`
-	GroupId  string `json:"group_id"`
-	Owner    string `json:"owner"`
-	Name     string `json:"name"`
-}
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+)
 
 type Device struct {
 	// Provided by the device at registration time
 	privateData interface{}
 	// Provided at pre-registration time
-	desc DeviceDesc
-	conn *JSONUnix
+	Descriptor apiv1.DeviceDescriptor
+	conn       *JSONUnix
 	// Reverse proxy to the client files
 	Proxy *httputil.ReverseProxy
 	// Synchronizes access to the client list and the client count
@@ -65,7 +60,7 @@ func newDevice(id string, conn *JSONUnix, port int, privateData interface{}) *De
 		conn:        conn,
 		Proxy:       proxy,
 		privateData: privateData,
-		desc: DeviceDesc{
+		Descriptor: apiv1.DeviceDescriptor{
 			DeviceId: id,
 			GroupId:  groupId,
 		},
@@ -119,7 +114,7 @@ func (d *Device) ToClient(id int, msg interface{}) error {
 
 // preDevice holds information about a device between pre-registration and registration.
 type preDevice struct {
-	Desc  DeviceDesc
+	Desc  apiv1.DeviceDescriptor
 	RegCh chan bool
 }
 
@@ -131,14 +126,12 @@ type DevicePool struct {
 	preDevices map[string]*preDevice
 	devicesMtx sync.Mutex
 	devices    map[string]*Device
-	groups     map[string]*Group
 }
 
 func NewDevicePool() *DevicePool {
 	return &DevicePool{
 		preDevices: make(map[string]*preDevice),
 		devices:    make(map[string]*Device),
-		groups:     make(map[string]*Group),
 	}
 }
 
@@ -156,20 +149,11 @@ func groupIdFromPrivateData(privateData interface{}) string {
 	return groupId
 }
 
-func CreateOrGetGroup(p *DevicePool, groupId string) *Group {
-	_, ok := p.groups[groupId]
-	if !ok {
-		p.groups[groupId] = &Group{}
-	}
-
-	return p.groups[groupId]
-}
-
 // PreRegister accepts a channel of boolean which it closes if the pre-registration is cancelled or
 // sends the output of registering the device as a boolean.
-func (p *DevicePool) PreRegister(desc *DeviceDesc, regCh chan bool) error {
+func (p *DevicePool) PreRegister(Descriptor *apiv1.DeviceDescriptor, regCh chan bool) error {
 	d := &preDevice{
-		Desc:  *desc,
+		Desc:  *Descriptor,
 		RegCh: regCh,
 	}
 	p.preDevicesMtx.Lock()
@@ -207,15 +191,11 @@ func (p *DevicePool) Register(id string, conn *JSONUnix, port int, privateData i
 	}
 	d := newDevice(id, conn, port, privateData)
 	if preDevice, ok := p.preDevices[id]; ok {
-		d.desc = preDevice.Desc
+		d.Descriptor = preDevice.Desc
 		delete(p.preDevices, id)
 		preDevice.RegCh <- true
 	}
 	p.devices[id] = d
-
-	groupId := d.desc.GroupId
-	group := CreateOrGetGroup(p, groupId)
-	group.deviceIds = append(group.deviceIds, id)
 
 	return d
 }
@@ -224,20 +204,6 @@ func (p *DevicePool) Unregister(id string) {
 	p.devicesMtx.Lock()
 	defer p.devicesMtx.Unlock()
 	if d, ok := p.devices[id]; ok {
-		groupId := d.desc.GroupId
-		group := CreateOrGetGroup(p, groupId)
-
-		for i, deviceId := range group.deviceIds {
-			if id == deviceId {
-				group.deviceIds = append(group.deviceIds[:i], group.deviceIds[(i+1):]...)
-				break
-			}
-		}
-
-		if len(group.deviceIds) == 0 {
-			delete(p.groups, groupId)
-		}
-
 		d.DisconnectClients()
 		delete(p.devices, id)
 	}
@@ -251,11 +217,13 @@ func (p *DevicePool) GetDevice(id string) *Device {
 
 // List the registered groups' ids
 func (p *DevicePool) GroupIds() []string {
-	p.devicesMtx.Lock()
-	defer p.devicesMtx.Unlock()
-	ret := make([]string, 0, len(p.groups))
-	for key := range p.groups {
-		ret = append(ret, key)
+	set := make(map[string]bool)
+	for _, d := range p.GetDeviceDescList() {
+		set[d.GroupId] = true
+	}
+	ret := make([]string, 0, len(set))
+	for k := range set {
+		ret = append(ret, k)
 	}
 	return ret
 }
@@ -271,27 +239,23 @@ func (p *DevicePool) DeviceIds() []string {
 	return ret
 }
 
-func (p *DevicePool) GetDeviceDescList() []*DeviceDesc {
+func (p *DevicePool) GetDeviceDescList() []*apiv1.DeviceDescriptor {
 	p.devicesMtx.Lock()
 	defer p.devicesMtx.Unlock()
-	ret := make([]*DeviceDesc, 0)
+	ret := make([]*apiv1.DeviceDescriptor, 0)
 	for _, device := range p.devices {
-		ret = append(ret, &device.desc)
+		ret = append(ret, &device.Descriptor)
 	}
 	return ret
 }
 
-func (p *DevicePool) GetDeviceDescByGroupId(groupId string) []*DeviceDesc {
-	p.devicesMtx.Lock()
-	defer p.devicesMtx.Unlock()
-	ret := make([]*DeviceDesc, 0)
-	group, ok := p.groups[groupId]
-	if !ok {
-		return ret
-	}
-
-	for _, deviceId := range group.deviceIds {
-		ret = append(ret, &DeviceDesc{DeviceId: deviceId, GroupId: groupId})
+func (p *DevicePool) GetDeviceDescByGroupId(groupId string) []*apiv1.DeviceDescriptor {
+	ret := make([]*apiv1.DeviceDescriptor, 0)
+	devs := p.GetDeviceDescList()
+	for _, d := range devs {
+		if d.GroupId == groupId {
+			ret = append(ret, d)
+		}
 	}
 	return ret
 }
