@@ -194,9 +194,6 @@ class CuttlefishConfig {
   void set_extra_kernel_cmdline(const std::string& extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
 
-  void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
-  std::vector<std::string> extra_bootconfig_args() const;
-
   // A directory containing the SSL certificates for the signaling server
   void set_webrtc_certs_dir(const std::string& certs_dir);
   std::string webrtc_certs_dir() const;
@@ -555,6 +552,7 @@ class CuttlefishConfig {
     bool enable_audio() const;
     bool enable_gnss_grpc_proxy() const;
     bool enable_bootanimation() const;
+    std::vector<std::string> extra_bootconfig_args() const;
     bool record_screen() const;
     std::string gem5_debug_file() const;
     bool protected_vm() const;
@@ -754,6 +752,7 @@ class CuttlefishConfig {
     void set_enable_audio(bool enable);
     void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
     void set_enable_bootanimation(const bool enable_bootanimation);
+    void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
     void set_record_screen(bool record_screen);
     void set_gem5_debug_file(const std::string& gem5_debug_file);
     void set_protected_vm(bool protected_vm);
