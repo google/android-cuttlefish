@@ -25,7 +25,6 @@
 
 #include <json/json.h>
 
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
@@ -44,13 +43,22 @@ Result<void> ValidateConfig(const Json::Value& instance,
                             const std::vector<std::string>& selectors) {
   const int size = selectors.size();
   CF_EXPECT(size > 0, "No keys given for initializing config");
-  auto result = GetValue<T>(instance, selectors);
-  if (!result.ok()) {
-    // Field isn't present, nothing to validate
-    return {};
+  int i = 0;
+  const Json::Value* traverse = &instance;
+  for (const auto& selector : selectors) {
+    if (traverse->isMember(selector)) {
+      if (i == size - 1) {
+        T flag_value = (*traverse)[selector].as<T>();
+        CF_EXPECTF(validator(flag_value), "Invalid flag value \"{}\"",
+                   flag_value);
+      }
+    } else {
+      // field does not exist, no validation needed
+      break;
+    }
+    traverse = &(*traverse)[selector];
+    ++i;
   }
-  auto flag_value = *result;
-  CF_EXPECTF(validator(flag_value), "Invalid flag value \"{}\"", flag_value);
   return {};
 }
 
