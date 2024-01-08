@@ -46,6 +46,9 @@ type HostOrchestratorService interface {
 	// If not empty, the provided credentials will be used to download necessary artifacts from the build api.
 	CreateCVD(req *hoapi.CreateCVDRequest, buildAPICredentials string) (*hoapi.CreateCVDResponse, error)
 
+	// Deletes an existing cvd instance.
+	DeleteCVD(id string) error
+
 	// Calls cvd fetch in the remote host, the downloaded artifacts can be used to create a CVD later.
 	// If not empty, the provided credentials will be used by the host orchestrator to access the build api.
 	FetchArtifacts(req *hoapi.FetchArtifactsRequest, buildAPICredentials string) (*hoapi.FetchArtifactsResponse, error)
@@ -255,6 +258,19 @@ func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, cre
 		return nil, err
 	}
 	return res, nil
+}
+
+func (c *HostOrchestratorServiceImpl) DeleteCVD(id string) error {
+	var op hoapi.Operation
+	rb := c.HTTPHelper.NewDeleteRequest("/cvds/" + id)
+	if err := rb.Do(&op); err != nil {
+		return err
+	}
+	res := &hoapi.StopCVDResponse{}
+	if err := c.waitForOperation(&op, &res); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *HostOrchestratorServiceImpl) ListCVDs() ([]*hoapi.CVD, error) {
