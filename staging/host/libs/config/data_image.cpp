@@ -107,9 +107,10 @@ Result<void> CreateBlankImage(const std::string& image, int num_mb,
     CF_EXPECT(Execute({"/sbin/mkfs.ext4", image}) == 0);
   } else if (image_fmt == "f2fs") {
     auto make_f2fs_path = HostBinaryPath("make_f2fs");
-    CF_EXPECT(Execute({make_f2fs_path, "-l", "data", image, "-C", "utf8", "-O",
-                       "compression,extra_attr,project_quota,casefold", "-g",
-                       "android"}) == 0);
+    CF_EXPECT(
+        Execute({make_f2fs_path, "-l", "data", image, "-C", "utf8", "-O",
+                 "compression,extra_attr,project_quota,casefold", "-g",
+                 "android", "-b", F2FS_BLOCKSIZE, "-w", F2FS_BLOCKSIZE}) == 0);
   } else if (image_fmt == "sdcard") {
     // Reserve 1MB in the image for the MBR and padding, to simulate what
     // other OSes do by default when partitioning a drive
