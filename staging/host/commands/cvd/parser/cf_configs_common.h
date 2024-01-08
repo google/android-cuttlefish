@@ -94,6 +94,9 @@ std::string GenerateGflag(const std::string& gflag_name,
 Result<std::string> GenerateGflag(const Json::Value& instances,
                                   const std::string& gflag_name,
                                   const std::vector<std::string>& selectors);
+Result<std::string> Base64EncodeGflag(
+    const Json::Value& instances, const std::string& gflag_name,
+    const std::vector<std::string>& selectors);
 
 std::vector<std::string> MergeResults(std::vector<std::string> first_list,
                                       std::vector<std::string> scond_list);
