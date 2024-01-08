@@ -192,8 +192,15 @@ type CVD struct {
 // Identifier within the whole fleet. Format: "{group}/{name}".
 func (c *CVD) ID() string { return c.Group + "/" + c.Name }
 
+type DeviceDescriptor struct {
+	DeviceId string `json:"device_id"`
+	GroupId  string `json:"group_id"`
+	Owner    string `json:"owner,omitempty"`
+	Name     string `json:"name,omitempty"`
+}
+
 type DeviceInfoReply struct {
-	DeviceId         string      `json:"device_id"`
+	DeviceDescriptor
 	RegistrationInfo interface{} `json:"registration_info"`
 }
 
