@@ -292,6 +292,10 @@ DEFINE_vec(enable_bootanimation,
            fmt::format("{}", CF_DEFAULTS_ENABLE_BOOTANIMATION),
            "Whether to enable the boot animation.");
 
+DEFINE_vec(extra_bootconfig_args_base64, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
+           "This is base64 encoded version of extra_bootconfig_args"
+           "Used for multi device clusters.");
+
 DEFINE_string(qemu_binary_dir, CF_DEFAULTS_QEMU_BINARY_DIR,
               "Path to the directory containing the qemu binary to use");
 DEFINE_string(crosvm_binary, CF_DEFAULTS_CROSVM_BINARY,
@@ -936,7 +940,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       std::set<std::string>(secure_hals.begin(), secure_hals.end()));
 
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
-  tmp_config_obj.set_extra_bootconfig_args(FLAGS_extra_bootconfig_args);
 
   if (FLAGS_track_host_tools_crc) {
     tmp_config_obj.set_host_tools_version(HostToolsCrc());
@@ -1050,6 +1053,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       start_gnss_proxy));
   std::vector<bool> enable_bootanimation_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_bootanimation));
+
+  std::vector<std::string> extra_bootconfig_args_base64_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(extra_bootconfig_args_base64));
+
   std::vector<bool> record_screen_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       record_screen));
   std::vector<std::string> gem5_debug_file_vec =
@@ -1258,6 +1265,16 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_enable_audio(enable_audio_vec[instance_index]);
     instance.set_enable_gnss_grpc_proxy(start_gnss_proxy_vec[instance_index]);
     instance.set_enable_bootanimation(enable_bootanimation_vec[instance_index]);
+
+    instance.set_extra_bootconfig_args(FLAGS_extra_bootconfig_args);
+    if (!extra_bootconfig_args_base64_vec[instance_index].empty()) {
+      std::vector<uint8_t> decoded_args;
+      CF_EXPECT(DecodeBase64(extra_bootconfig_args_base64_vec[instance_index],
+                             &decoded_args));
+      std::string decoded_args_str(decoded_args.begin(), decoded_args.end());
+      instance.set_extra_bootconfig_args(decoded_args_str);
+    }
+
     instance.set_record_screen(record_screen_vec[instance_index]);
     instance.set_gem5_debug_file(gem5_debug_file_vec[instance_index]);
     instance.set_protected_vm(protected_vm_vec[instance_index]);

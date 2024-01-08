@@ -191,7 +191,12 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     bootconfig_args["androidboot.ramdisk_hotswapped"] = "1";
   }
 
-  for (const std::string& kv : config.extra_bootconfig_args()) {
+  std::vector<std::string> args = instance.extra_bootconfig_args();
+
+  LOG(DEBUG) << "Parsing extra_bootconfig_args of size:" << args.size()
+             << "; Contents: " << android::base::Join(args, "\n");
+
+  for (const std::string& kv : args) {
     if (kv.empty()) {
       continue;
     }
