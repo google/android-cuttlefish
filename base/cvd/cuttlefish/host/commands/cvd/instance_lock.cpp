@@ -19,7 +19,6 @@
 #include <sys/file.h>
 
 #include <algorithm>
-#include <cstring>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -237,12 +236,6 @@ InstanceLockFileManager::TryAcquireUnusedLock() {
       return std::move(*lock);
     }
   }
-  return {};
-}
-
-Result<void> InstanceLockFileManager::RemoveLockFile(int instance_num) {
-  const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
-  CF_EXPECT(RemoveFile(lock_file_path), std::strerror(errno));
   return {};
 }
 
