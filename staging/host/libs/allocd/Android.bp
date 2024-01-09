@@ -38,28 +38,6 @@ cc_library {
 }
 
 cc_binary {
-    name: "allocd",
-    srcs: [
-        "allocd.cpp",
-        "alloc_utils.cpp",
-        "resource_manager.cpp",
-        "resource.cpp",
-    ],
-    shared_libs: [
-        "libbase",
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "libcuttlefish_allocd_utils",
-        "libjsoncpp",
-        "liblog",
-    ],
-    static_libs: [
-        "libgflags",
-    ],
-    defaults: ["cuttlefish_host"],
-}
-
-cc_binary {
     name: "allocd_client",
     srcs: [
         "test/client.cpp",
