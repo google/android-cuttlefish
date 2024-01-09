@@ -145,7 +145,7 @@ struct ResourceManager {
   std::set<std::string> active_interfaces_;
   std::map<uint32_t, std::shared_ptr<Session>> managed_sessions_;
   std::map<uint32_t, std::shared_ptr<StaticResource>> pending_add_;
-  std::string location = kDefaultLocation;
+  std::string location_ = kDefaultLocation;
   bool use_ipv4_bridge_ = true;
   bool use_ipv6_bridge_ = true;
   bool use_ebtables_legacy_ = false;
