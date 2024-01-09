@@ -56,11 +56,11 @@ ResourceManager::~ResourceManager() {
   resp["request_status"] = StatusToStr(status);
   SendJsonMsg(shutdown_socket_, resp);
   LOG(INFO) << "Daemon Shutdown complete";
-  unlink(location.c_str());
+  unlink(location_.c_str());
 }
 
 void ResourceManager::SetSocketLocation(const std::string& sock_name) {
-  location = sock_name;
+  location_ = sock_name;
 }
 
 void ResourceManager::SetUseEbtablesLegacy(bool use_legacy) {
@@ -230,10 +230,10 @@ bool ResourceManager::ValidateRequest(const Json::Value& request) {
 }
 
 void ResourceManager::JsonServer() {
-  LOG(INFO) << "Starting server on " << kDefaultLocation;
-  auto server = SharedFD::SocketLocalServer(kDefaultLocation, false,
-                                            SOCK_STREAM, kSocketMode);
-  CHECK(server->IsOpen()) << "Could not start server at " << kDefaultLocation;
+  LOG(INFO) << "Starting server on " << location_;
+  auto server =
+      SharedFD::SocketLocalServer(location_, false, SOCK_STREAM, kSocketMode);
+  CHECK(server->IsOpen()) << "Could not start server at " << location_;
   LOG(INFO) << "Accepting client connections";
 
   while (true) {
