@@ -47,7 +47,6 @@ int main(int argc, char* argv[]) {
 
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  cuttlefish::SharedFD FinalFD;
   {
     cuttlefish::ResourceManager m;
     m.SetSocketLocation(FLAGS_socket_path);
