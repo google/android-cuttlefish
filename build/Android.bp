@@ -72,7 +72,6 @@ qemu_x86_64_linux_gnu_resource = [
 cvd_host_tools = [
     "adb",
     "adb_connector",
-    "allocd",
     "allocd_client",
     "assemble_cvd",
     "avbtool",
