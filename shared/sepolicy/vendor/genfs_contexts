@@ -4,11 +4,11 @@ dnl # $1 = pci prefix
 pushdef(`cf_pci_gpu_device', `dnl
 # VMM is configured to always assign the GPU to PCI address 00:02.0 (if present).
 # LINT.IfChange(virtio_gpu_pci_address)
-genfscon sysfs $1/0000:00:0000:00:02.0/device u:object_r:sysfs_gpu:s0
-genfscon sysfs $1/0000:00:0000:00:02.0/subsystem_device u:object_r:sysfs_gpu:s0
-genfscon sysfs $1/0000:00:0000:00:02.0/subsystem_vendor u:object_r:sysfs_gpu:s0
-genfscon sysfs $1/0000:00:0000:00:02.0/uevent u:object_r:sysfs_gpu:s0
-genfscon sysfs $1/0000:00:0000:00:02.0/vendor u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/0000:00:02.0/device u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/0000:00:02.0/subsystem_device u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/0000:00:02.0/subsystem_vendor u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/0000:00:02.0/uevent u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/0000:00:02.0/vendor u:object_r:sysfs_gpu:s0
 # LINT.ThenChange(../../../host/libs/vm_manager/vm_manager.h:virtio_gpu_pci_address)
 dnl')dnl
 dnl
