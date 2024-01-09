@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "host/libs/allocd/resource.h"
+#include "resource.h"
 
 #include <android-base/logging.h>
 
-#include "host/libs/allocd/alloc_utils.h"
+#include "alloc_utils.h"
 
 namespace cuttlefish {
 

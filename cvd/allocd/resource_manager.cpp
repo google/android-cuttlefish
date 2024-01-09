@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/allocd/resource_manager.h"
+#include "resource_manager.h"
 
 #include <android-base/logging.h>
 #include <pwd.h>
@@ -32,13 +32,13 @@
 #include <sstream>
 #include <string>
 
+#include "alloc_utils.h"
 #include "common/libs/fs/shared_fd.h"
-#include "host/libs/allocd/alloc_utils.h"
-#include "host/libs/allocd/request.h"
-#include "host/libs/allocd/utils.h"
 #include "json/forwards.h"
 #include "json/value.h"
 #include "json/writer.h"
+#include "request.h"
+#include "utils.h"
 
 namespace cuttlefish {
 

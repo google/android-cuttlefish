@@ -25,11 +25,11 @@
 #include <optional>
 #include <set>
 
+#include "alloc_utils.h"
 #include "common/libs/fs/shared_fd.h"
-#include "host/libs/allocd/alloc_utils.h"
-#include "host/libs/allocd/request.h"
-#include "host/libs/allocd/resource.h"
-#include "host/libs/allocd/utils.h"
+#include "request.h"
+#include "resource.h"
+#include "utils.h"
 
 namespace cuttlefish {
 

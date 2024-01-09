@@ -22,9 +22,9 @@
 #include <iostream>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/libs/allocd/request.h"
-#include "host/libs/allocd/utils.h"
 #include "host/libs/config/logging.h"
+#include "request.h"
+#include "utils.h"
 
 using namespace cuttlefish;
 
