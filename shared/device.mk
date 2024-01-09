@@ -84,6 +84,9 @@ PRODUCT_PRODUCT_PROPERTIES += \
     ro.debuggable=1
 endif
 
+# Use AIDL for media.c2 HAL
+PRODUCT_VENDOR_PROPERTIES += media.c2.hal.selection=aidl
+
 # Explanation of specific properties:
 #   ro.hardware.keystore_desede=true needed for CtsKeystoreTestCases
 PRODUCT_VENDOR_PROPERTIES += \
