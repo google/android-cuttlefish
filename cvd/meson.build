@@ -124,10 +124,10 @@ sources = [
   'cuttlefish/host/libs/web/credential_source.cc',
   'cuttlefish/host/libs/web/http_client/http_client.cc',
   'cuttlefish/host/libs/web/http_client/http_client_util.cc',
-  'cuttlefish/host/libs/allocd/alloc_utils.cpp',
-  'cuttlefish/host/libs/allocd/resource.cpp',
-  'cuttlefish/host/libs/allocd/resource_manager.cpp',
-  'cuttlefish/host/libs/allocd/utils.cpp',
+  'allocd/alloc_utils.cpp',
+  'allocd/resource.cpp',
+  'allocd/resource_manager.cpp',
+  'allocd/utils.cpp',
 ]
 
 cc = meson.get_compiler('cpp')
@@ -197,7 +197,7 @@ executable(
 executable(
   'allocd',
   cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings', '-DNODISCARD_EXPECTED=true'],
-  sources: ['cuttlefish/host/libs/allocd/allocd.cpp'] + sources,
+  sources: ['allocd/allocd.cpp'] + sources,
   dependencies: dependencies,
   include_directories: [
     '/usr/local/include',

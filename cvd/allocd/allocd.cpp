@@ -33,11 +33,11 @@
 #include <sstream>
 #include <thread>
 
+#include "alloc_utils.h"
 #include "common/libs/fs/shared_fd.h"
-#include "host/libs/allocd/alloc_utils.h"
-#include "host/libs/allocd/request.h"
-#include "host/libs/allocd/resource_manager.h"
 #include "host/libs/config/logging.h"
+#include "request.h"
+#include "resource_manager.h"
 
 DEFINE_string(socket_path, cuttlefish::kDefaultLocation, "Socket path");
 DEFINE_bool(ebtables_legacy, false, "use ebtables-legacy instead of ebtables");

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/allocd/alloc_utils.h"
+#include "alloc_utils.h"
 
 #include <cstdint>
 #include <fstream>
