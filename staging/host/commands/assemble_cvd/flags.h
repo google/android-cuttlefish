@@ -34,6 +34,7 @@ struct GuestConfig {
   bool hctr2_supported = false;
   std::string android_version_number;
   bool gfxstream_supported = false;
+  bool vhost_user_vsock = false;
 };
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults();
