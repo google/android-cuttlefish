@@ -95,6 +95,7 @@ PRODUCT_PACKAGES += \
     server_minidroid \
     client_minidroid \
     client_minidroid_rust \
+    vsock-test
 
 # Additional packages
 PRODUCT_PACKAGES += \
