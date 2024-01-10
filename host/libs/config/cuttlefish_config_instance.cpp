@@ -1608,6 +1608,16 @@ bool CuttlefishConfig::InstanceSpecific::start_netsim() const {
   return (*Dictionary())[kStartNetsim].asBool();
 }
 
+// TODO(b/288987294) Remove this when separating environment is done
+static constexpr char kStartWmediumdInstance[] = "start_wmediumd_instance";
+void CuttlefishConfig::MutableInstanceSpecific::set_start_wmediumd_instance(
+    bool start) {
+  (*Dictionary())[kStartWmediumdInstance] = start;
+}
+bool CuttlefishConfig::InstanceSpecific::start_wmediumd_instance() const {
+  return (*Dictionary())[kStartWmediumdInstance].asBool();
+}
+
 static constexpr char kMcu[] = "mcu";
 void CuttlefishConfig::MutableInstanceSpecific::set_mcu(const Json::Value& cfg) {
   (*Dictionary())[kMcu] = cfg;
