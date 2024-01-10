@@ -36,6 +36,7 @@ class WmediumdServer : public vm_manager::VmmDependencyCommand {
  public:
   INJECT(
       WmediumdServer(const CuttlefishConfig::EnvironmentSpecific& environment,
+                     const CuttlefishConfig::InstanceSpecific& instance,
                      LogTeeCreator& log_tee, GrpcSocketCreator& grpc_socket));
 
   // CommandSource
@@ -52,6 +53,7 @@ class WmediumdServer : public vm_manager::VmmDependencyCommand {
   Result<void> ResultSetup() override;
 
   const CuttlefishConfig::EnvironmentSpecific& environment_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
   LogTeeCreator& log_tee_;
   GrpcSocketCreator& grpc_socket_;
   std::string config_path_;
