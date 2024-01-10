@@ -43,12 +43,13 @@ class ValidateWmediumdService : public SetupFeature {
  public:
   INJECT(ValidateWmediumdService(
       const CuttlefishConfig& config,
-      const CuttlefishConfig::EnvironmentSpecific& environment))
-      : config_(config), environment_(environment) {}
+      const CuttlefishConfig::EnvironmentSpecific& environment,
+      const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), environment_(environment), instance_(instance) {}
   std::string Name() const override { return "ValidateWmediumdService"; }
   bool Enabled() const override {
     return config_.enable_wifi() && config_.virtio_mac80211_hwsim() &&
-           !environment_.start_wmediumd();
+           !instance_.start_wmediumd_instance();
   }
 
  private:
@@ -66,14 +67,19 @@ class ValidateWmediumdService : public SetupFeature {
  private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::EnvironmentSpecific& environment_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
 }  // namespace
 
 WmediumdServer::WmediumdServer(
     const CuttlefishConfig::EnvironmentSpecific& environment,
-    LogTeeCreator& log_tee, GrpcSocketCreator& grpc_socket)
-    : environment_(environment), log_tee_(log_tee), grpc_socket_(grpc_socket) {}
+    const CuttlefishConfig::InstanceSpecific& instance, LogTeeCreator& log_tee,
+    GrpcSocketCreator& grpc_socket)
+    : environment_(environment),
+      instance_(instance),
+      log_tee_(log_tee),
+      grpc_socket_(grpc_socket) {}
 
 Result<std::vector<MonitorCommand>> WmediumdServer::Commands() {
   Command cmd(WmediumdBinary());
@@ -91,7 +97,9 @@ Result<std::vector<MonitorCommand>> WmediumdServer::Commands() {
 
 std::string WmediumdServer::Name() const { return "WmediumdServer"; }
 
-bool WmediumdServer::Enabled() const { return environment_.start_wmediumd(); }
+bool WmediumdServer::Enabled() const {
+  return instance_.start_wmediumd_instance();
+}
 
 Result<void> WmediumdServer::WaitForAvailability() const {
   if (Enabled()) {
@@ -130,9 +138,9 @@ Result<void> WmediumdServer::ResultSetup() {
   return {};
 }
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::EnvironmentSpecific,
-                                 LogTeeCreator, GrpcSocketCreator>>
+fruit::Component<fruit::Required<
+    const CuttlefishConfig, const CuttlefishConfig::EnvironmentSpecific,
+    const CuttlefishConfig::InstanceSpecific, LogTeeCreator, GrpcSocketCreator>>
 WmediumdServerComponent() {
   return fruit::createComponent()
       .addMultibinding<vm_manager::VmmDependencyCommand, WmediumdServer>()
