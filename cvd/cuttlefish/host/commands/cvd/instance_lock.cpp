@@ -19,6 +19,7 @@
 #include <sys/file.h>
 
 #include <algorithm>
+#include <cstring>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -116,13 +117,7 @@ InstanceLockFileManager::LockAllAvailable() {
 
   std::vector<InstanceLockFile> acquired_lock_files;
   for (const auto num : *all_instance_nums_) {
-    auto lock_result = TryAcquireLock(num);
-    if (!lock_result.ok()) {
-      LOG(DEBUG) << "Unable to open lock file for ID #" << num << " but "
-                 << "moving on to the next one as it's not a critical failure.";
-      continue;
-    }
-    auto lock = std::move(*lock_result);
+    auto lock = CF_EXPECT(TryAcquireLock(num));
     if (!lock) {
       continue;
     }
@@ -236,6 +231,12 @@ InstanceLockFileManager::TryAcquireUnusedLock() {
       return std::move(*lock);
     }
   }
+  return {};
+}
+
+Result<void> InstanceLockFileManager::RemoveLockFile(int instance_num) {
+  const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
+  CF_EXPECT(RemoveFile(lock_file_path), std::strerror(errno));
   return {};
 }
 
