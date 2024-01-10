@@ -40,6 +40,11 @@ cc_binary {
     ],
 }
 
+cc_binary {
+    name: "vsock-test",
+    srcs: ["vsock-test.c"],
+}
+
 // https://google.github.io/comprehensive-rust/android/aidl/client.html
 rust_binary {
     name: "client_minidroid_rust",

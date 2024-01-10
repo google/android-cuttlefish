@@ -35,10 +35,16 @@
 namespace cuttlefish {
 
 VhostDeviceVsock::VhostDeviceVsock(
-    LogTeeCreator& log_tee, const CuttlefishConfig::InstanceSpecific& instance)
-    : log_tee_(log_tee), instance_(instance) {}
+    LogTeeCreator& log_tee, const CuttlefishConfig::InstanceSpecific& instance,
+    const CuttlefishConfig& cfconfig)
+    : log_tee_(log_tee), instance_(instance), cfconfig_(cfconfig) {}
 
 Result<std::vector<MonitorCommand>> VhostDeviceVsock::Commands() {
+  auto instances = cfconfig_.Instances();
+  if (instance_.serial_number() != instances[0].serial_number()) {
+    return {};
+  }
+
   Command command(ProcessRestarterBinary());
   command.AddParameter("-when_killed");
   command.AddParameter("-when_dumped");
@@ -47,12 +53,15 @@ Result<std::vector<MonitorCommand>> VhostDeviceVsock::Commands() {
   command.AddParameter(HostBinaryPath("vhost_device_vsock"));
   command.AddEnvironmentVariable("RUST_BACKTRACE", "1");
   command.AddEnvironmentVariable("RUST_LOG", "debug");
-  auto param = fmt::format(
-      "guest-cid={0},socket=/tmp/vhost{0}.socket,uds-path=/tmp/vm{0}.vsock",
-      instance_.vsock_guest_cid());
 
-  command.AddParameter("--vm");
-  command.AddParameter(param);
+  for (auto i : instances) {
+    auto param = fmt::format(
+        "guest-cid={0},socket=/tmp/vhost{0}.socket,uds-path=/tmp/vm{0}.vsock",
+        i.vsock_guest_cid());
+    command.AddParameter("--vm");
+    command.AddParameter(param);
+  }
+
   std::vector<MonitorCommand> commands;
   commands.emplace_back(std::move(
       CF_EXPECT(log_tee_.CreateLogTee(command, "vhost_device_vsock"))));

@@ -145,6 +145,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     launch_cmd.add_args("cvd");
     launch_cmd.add_args("start");
     launch_cmd.add_args("--daemon");
+
     for (const auto& parsed_flag : cvd_flags.launch_cvd_flags) {
       launch_cmd.add_args(parsed_flag);
     }
