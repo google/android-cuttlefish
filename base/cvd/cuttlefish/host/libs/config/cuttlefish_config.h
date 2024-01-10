@@ -464,6 +464,10 @@ class CuttlefishConfig {
     // Whether this instance should start a netsim instance
     bool start_netsim() const;
 
+    // TODO(b/288987294) Remove this when separating environment is done
+    // Whether this instance should start a wmediumd instance
+    bool start_wmediumd_instance() const;
+
     const Json::Value& mcu() const;
 
     enum class APBootFlow {
@@ -712,6 +716,8 @@ class CuttlefishConfig {
     void set_start_casimir(bool start);
     void set_start_pica(bool start);
     void set_start_netsim(bool start);
+    // TODO(b/288987294) Remove this when separating environment is done
+    void set_start_wmediumd_instance(bool start);
     void set_mcu(const Json::Value &v);
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
     void set_crosvm_use_balloon(const bool use_balloon);
