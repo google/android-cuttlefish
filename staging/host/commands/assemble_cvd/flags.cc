@@ -629,6 +629,11 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     auto res = GetAndroidInfoConfig(instance_android_info_txt, "gfxstream");
     guest_config.gfxstream_supported =
         res.ok() && res.value() == "supported";
+
+    auto res_vhost_user_vsock =
+        GetAndroidInfoConfig(instance_android_info_txt, "vhost_user_vsock");
+    guest_config.vhost_user_vsock = res_vhost_user_vsock.value_or("") == "true";
+
     guest_configs.push_back(guest_config);
   }
   return guest_configs;
@@ -1297,9 +1302,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     if (vhost_user_vsock_vec[instance_index] == kVhostUserVsockModeAuto) {
       std::set<Arch> default_on_arch = {Arch::Arm64};
-      if (tmp_config_obj.vm_manager() == CrosvmManager::name() &&
-          default_on_arch.find(guest_configs[instance_index].target_arch) !=
-              default_on_arch.end()) {
+      if (guest_configs[instance_index].vhost_user_vsock) {
+        instance.set_vhost_user_vsock(true);
+      } else if (tmp_config_obj.vm_manager() == CrosvmManager::name() &&
+                 default_on_arch.find(
+                     guest_configs[instance_index].target_arch) !=
+                     default_on_arch.end()) {
         instance.set_vhost_user_vsock(true);
       } else {
         instance.set_vhost_user_vsock(false);
