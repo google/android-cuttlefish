@@ -618,7 +618,12 @@ class Controller {
     // connection, while #onOffer may be called more than once due to
     // renegotiations.
     this.#pc.addEventListener('icecandidate', evt => {
-      if (evt.candidate) this.#sendIceCandidate(evt.candidate);
+      // The last candidate is null, which indicates the end of ICE gathering.
+      // Firefox's second to last candidate has the candidate property set to
+      // empty, skip that one.
+      if (evt.candidate && evt.candidate.candidate) {
+        this.#sendIceCandidate(evt.candidate);
+      }
     });
     return this.#onReadyToNegotiate(_ => {
       this.#serverConnector.sendToDevice(
