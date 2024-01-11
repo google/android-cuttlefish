@@ -56,8 +56,9 @@ Result<std::vector<MonitorCommand>> VhostDeviceVsock::Commands() {
 
   for (auto i : instances) {
     auto param = fmt::format(
-        "guest-cid={0},socket=/tmp/vhost{0}.socket,uds-path=/tmp/vm{0}.vsock",
-        i.vsock_guest_cid());
+        "guest-cid={0},socket=/tmp/vsock_{0}_{1}/vhost.socket,uds-path=/tmp/"
+        "vsock_{0}_{1}/vm.vsock",
+        i.vsock_guest_cid(), std::to_string(getuid()));
     command.AddParameter("--vm");
     command.AddParameter(param);
   }
@@ -76,7 +77,9 @@ bool VhostDeviceVsock::Enabled() const { return instance_.vhost_user_vsock(); }
 Result<void> VhostDeviceVsock::WaitForAvailability() const {
   if (Enabled()) {
     CF_EXPECT(WaitForUnixSocket(
-        fmt::format("/tmp/vm{0}.vsock", instance_.vsock_guest_cid()), 30));
+        fmt::format("/tmp/vsock_{0}_{1}/vm.vsock", instance_.vsock_guest_cid(),
+                    std::to_string(getuid())),
+        30));
   }
   return {};
 }

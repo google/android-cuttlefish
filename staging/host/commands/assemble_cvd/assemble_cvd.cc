@@ -379,6 +379,11 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
                                       default_mode, default_group));
       CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceGrpcSocketPath(""),
                                       default_mode, default_group));
+      auto vsock_dir =
+          fmt::format("/tmp/vsock_{0}_{1}", instance.vsock_guest_cid(),
+                      std::to_string(getuid()));
+      RecursivelyRemoveDirectory(vsock_dir);
+      CF_EXPECT(EnsureDirectoryExists(vsock_dir, default_mode, default_group));
 
       // TODO(schuffelen): Move this code somewhere better
       CF_EXPECT(CreateLegacySymlinks(instance, environment));
