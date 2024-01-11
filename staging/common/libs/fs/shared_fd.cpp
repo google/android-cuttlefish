@@ -694,9 +694,10 @@ SharedFD SharedFD::VsockServer(
          "guest";
 #endif
   if (vhost_user_vsock_listening_cid) {
-    // TODO(b/277909042): better path than /tmp/vm{}.vsock_{}
+    // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock_{}
     return SharedFD::SocketLocalServer(
-        fmt::format("/tmp/vm{}.vsock_{}", *vhost_user_vsock_listening_cid,
+        fmt::format("/tmp/vsock_{}_{}/vm.vsock_{}",
+                    *vhost_user_vsock_listening_cid, std::to_string(getuid()),
                     port),
         false /* abstract */, type, 0666 /* mode */);
   }
@@ -736,9 +737,10 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
   CHECK(!vhost_user) << "vhost_user is supposed to be false in the guest";
 #endif
   if (vhost_user) {
-    // TODO(b/277909042): better path than /tmp/vm{}.vsock
+    // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock
     auto client = SharedFD::SocketLocalClient(
-        fmt::format("/tmp/vm{}.vsock", cid), false /* abstract */, type);
+        fmt::format("/tmp/vsock_{}_{}/vm.vsock", cid, std::to_string(getuid())),
+        false /* abstract */, type);
     const std::string msg = fmt::format("connect {}\n", port);
     SendAll(client, msg);
 
