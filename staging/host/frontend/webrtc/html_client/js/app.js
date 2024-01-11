@@ -444,9 +444,16 @@ class DeviceControlApp {
     deviceConnection.sendLocationMessage(location_msg);
   }
 
-  #onSensorsMessage(message) {
+  async #onSensorsMessage(message) {
+    let data = message.data;
+    if (data.arrayBuffer != undefined) {
+      // On firefox these messages are not ArrayBuffer, but have an
+      // arrayBuffer() method returning a promise of one.
+      data = await data.arrayBuffer();
+    }
+
     var decoder = new TextDecoder("utf-8");
-    message = decoder.decode(message.data);
+    message = decoder.decode(data);
 
     // Get sensor values from message.
     var sensor_vals = message.split(" ");
