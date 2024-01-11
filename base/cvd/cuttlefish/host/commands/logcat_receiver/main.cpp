@@ -46,6 +46,7 @@ int main(int argc, char** argv) {
   sigaction(SIGPIPE, &new_action, &old_action);
 
   cuttlefish::SharedFD pipe;
+
   if (FLAGS_log_pipe_fd < 0) {
     auto log_name = instance.logcat_pipe_name();
     pipe = cuttlefish::SharedFD::Open(log_name.c_str(), O_RDONLY);
@@ -63,6 +64,7 @@ int main(int argc, char** argv) {
   auto logcat_file =
       cuttlefish::SharedFD::Open(path.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
 
+  bool first_iter = true;
   // Server loop
   while (true) {
     char buff[1024];
@@ -75,6 +77,22 @@ int main(int argc, char** argv) {
     CHECK(written == read)
         << "Error writing to log file: " << logcat_file->StrError()
         << ". This is unrecoverable.";
+    if (first_iter) {
+      first_iter = false;
+      if ((!config->snapshot_path().empty()) && instance.run_as_daemon()) {
+        cuttlefish::SharedFD restore_pipe = cuttlefish::SharedFD::Open(
+            instance.restore_pipe_name().c_str(), O_WRONLY);
+        if (!restore_pipe->IsOpen()) {
+          LOG(ERROR) << "Error opening restore pipe: "
+                     << restore_pipe->StrError();
+          return 2;
+        }
+
+        CHECK(cuttlefish::WriteAll(restore_pipe, "1") == 1)
+            << "Error writing to restore pipe: " << restore_pipe->StrError()
+            << ". This is unrecoverable.";
+      }
+    }
   }
 
   logcat_file->Close();
