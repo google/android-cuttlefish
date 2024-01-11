@@ -62,6 +62,10 @@ class OpenWrt : public CommandSource {
       return wmediumd_server_.WaitForAvailability();
     });
 
+    /* TODO(b/305102099): Due to hostapd issue of OpenWRT 22.03.X versions,
+     * OpenWRT instance should be rebooted.
+     */
+    LOG(DEBUG) << "Restart OpenWRT due to hostapd issue";
     ap_cmd.ApplyProcessRestarter(instance_.crosvm_binary(),
                                  /*first_time_argument=*/"",
                                  kOpenwrtVmResetExitCode);
