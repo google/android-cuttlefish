@@ -37,7 +37,7 @@
 // including "server_command/subcmd.h" causes cyclic dependency
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/libs/web/android_build_api.h"
+#include "host/libs/web/build_api.h"
 
 namespace cuttlefish {
 
@@ -77,7 +77,7 @@ class CvdServer {
         in_memory_data_fd;  // fd to carry over in-memory data
     bool verbose;
   };
-  Result<void> Exec(ExecParam&&);
+  Result<void> Exec(const ExecParam&);
   Result<void> AcceptCarryoverClient(SharedFD client);
   void Stop();
   void Join();
