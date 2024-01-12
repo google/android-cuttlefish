@@ -263,6 +263,9 @@ class CuttlefishConfig {
   std::set<std::string> straced_host_executables() const;
   void set_straced_host_executables(const std::set<std::string>& executables);
 
+  bool host_sandbox() const;
+  void set_host_sandbox(bool host_sandbox);
+
   bool IsCrosvm() const;
 
   class InstanceSpecific;
