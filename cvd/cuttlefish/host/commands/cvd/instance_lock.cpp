@@ -117,7 +117,13 @@ InstanceLockFileManager::LockAllAvailable() {
 
   std::vector<InstanceLockFile> acquired_lock_files;
   for (const auto num : *all_instance_nums_) {
-    auto lock = CF_EXPECT(TryAcquireLock(num));
+    auto lock_result = TryAcquireLock(num);
+    if (!lock_result.ok()) {
+      LOG(DEBUG) << "Unable to open lock file for ID #" << num << " but "
+                 << "moving on to the next one as it's not a critical failure.";
+      continue;
+    }
+    auto lock = std::move(*lock_result);
     if (!lock) {
       continue;
     }
