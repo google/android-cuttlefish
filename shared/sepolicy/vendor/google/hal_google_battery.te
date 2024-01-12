@@ -1,0 +1,2 @@
+type hal_googlebattery, domain;
+type hal_googlebattery_exec, exec_type, vendor_file_type, file_type;
