@@ -58,6 +58,11 @@ class InstanceLockFileManager {
 
   Result<std::vector<InstanceLockFile>> LockAllAvailable();
 
+  // TODO: This routine should  be removed and replaced with allocd
+  // The caller must check if the instance_num belongs to the user, before
+  // calling this. It is a quick fix for b/316824572
+  Result<void> RemoveLockFile(int instance_num);
+
  private:
   /*
    * Generate value to initialize
