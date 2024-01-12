@@ -248,8 +248,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     Command command(build_super_image_binary);
     command.AddParameter(new_misc_info_path);
     command.AddParameter(output_path);
-    SubprocessOptions options;
-    auto subprocess = command.Start(options);
+    auto subprocess = command.Start();
     CF_EXPECT(subprocess.Started());
     CF_EXPECT(waiter_.Setup(std::move(subprocess)));
     CF_EXPECT(callback_unlock());

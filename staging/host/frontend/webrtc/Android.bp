@@ -49,6 +49,7 @@ cc_binary_host {
         "libeigen",
     ],
     static_libs: [
+        "libabsl_host",
         "libaom",
         "libcap",
         "libcn-cbor",
@@ -98,6 +99,7 @@ cc_binary_host {
         "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
         "libxml2",
+        "sandboxed_api_sandbox2",
     ],
     defaults: ["cuttlefish_buildhost_only"],
 }

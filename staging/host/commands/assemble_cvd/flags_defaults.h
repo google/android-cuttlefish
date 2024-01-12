@@ -229,3 +229,6 @@
 
 // Which executables to run under strace by default
 #define CF_DEFAULTS_STRACED_HOST_EXECUTABLES ""
+
+// Whether to use sandbox2 to lock down host processes where policies exist
+#define CF_DEFAULTS_HOST_SANDBOX false
