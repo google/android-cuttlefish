@@ -215,7 +215,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
       cvd::WAIT_BEHAVIOR_START) {
     options.ExitWithParent(false);
   }
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
+  CF_EXPECT(subprocess_waiter_.Setup(command.Start(std::move(options))));
 
   bool is_stop = IsStopCommand(invocation_info.command);
 
