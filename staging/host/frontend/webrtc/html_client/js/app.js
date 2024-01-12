@@ -623,26 +623,14 @@ class DeviceControlApp {
     }
 
     document.querySelectorAll('.device-display-video').forEach((v, i) => {
-      const stream = v.srcObject;
-      if (stream == null) {
-        console.error('Missing corresponding device display video stream', l);
+      const width = v.videoWidth;
+      const height = v.videoHeight;
+      if (!width  || !height) {
+        console.error('Stream dimensions not yet available?', v);
         return;
       }
 
-      const streamVideoTracks = stream.getVideoTracks();
-      if (streamVideoTracks == null || streamVideoTracks.length == 0) {
-        return;
-      }
-
-      const streamSettings = stream.getVideoTracks()[0].getSettings();
-      const streamWidth = streamSettings.width;
-      const streamHeight = streamSettings.height;
-      if (streamWidth == 0 || streamHeight == 0) {
-        console.error('Stream dimensions not yet available?', stream);
-        return;
-      }
-
-      const aspectRatio = streamWidth / streamHeight;
+      const aspectRatio = width / height;
 
       let keyFrames = [];
       let from = this.#currentScreenStyles[v.id];
