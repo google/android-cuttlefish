@@ -26,7 +26,7 @@ cc_binary {
     ],
     shared_libs: [
         "libbase",
-	"libcuttlefish_command_util",
+        "libcuttlefish_command_util",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libjsoncpp",
@@ -45,6 +45,13 @@ cc_binary {
     target: {
         darwin: {
             enabled: true,
+        },
+        host_linux: {
+            shared_libs: ["sandboxed_api_sandbox2"],
+            static_libs: [
+                "libabsl_host",
+                "libcap",
+            ],
         },
     },
     defaults: ["cuttlefish_host"],

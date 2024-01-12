@@ -42,6 +42,9 @@ cc_binary {
                 "libcuttlefish_host_config",
             ],
         },
+        host_linux: {
+            shared_libs: ["sandboxed_api_sandbox2"],
+        },
     },
     // Don't inherit from cuttlefish_host because it is with `vendor_available: true` which isn't
     // compatible with `vendor: true`.
