@@ -17,9 +17,17 @@
 
 #include <string>
 
+#ifdef CUTTLEFISH_LINUX_HOST
+// Pre-define this include guard since the header that normally defines it
+// fights with <android-base/logging.h>
+#define ABSL_LOG_CHECK_H_ /* this header fights with android-base/logging.h */
+#include "sandboxed_api/sandbox2/policy.h"
+#include "sandboxed_api/sandbox2/policybuilder.h"
+#endif
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
@@ -36,8 +44,17 @@ Result<MonitorCommand> LogcatReceiver(
   // done and the logcat_receiver crashes for some reason the VMM may get
   // SIGPIPE.
   auto log_name = instance.logcat_pipe_name();
-  return Command(LogcatReceiverBinary())
-      .AddParameter("-log_pipe_fd=", CF_EXPECT(SharedFD::Fifo(log_name, 0600)));
+  MonitorCommand cmd =
+      Command(LogcatReceiverBinary())
+          .AddParameter("-log_pipe_fd=",
+                        CF_EXPECT(SharedFD::Fifo(log_name, 0600)));
+#ifdef CUTTLEFISH_LINUX_HOST
+  cmd.policy = sandbox2::PolicyBuilder()
+                   .DangerDefaultAllowAll()
+                   .DisableNamespaces()
+                   .BuildOrDie();
+#endif
+  return cmd;
 }
 
 }  // namespace cuttlefish

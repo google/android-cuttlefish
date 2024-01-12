@@ -812,7 +812,7 @@ Result<void> CvdStartCommandHandler::FireCommand(Command&& command,
   if (!wait) {
     options.ExitWithParent(false);
   }
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
+  CF_EXPECT(subprocess_waiter_.Setup(command.Start(std::move(options))));
   return {};
 }
 

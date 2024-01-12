@@ -24,6 +24,10 @@
 #include <utility>
 #include <vector>
 
+#ifdef CUTTLEFISH_LINUX_HOST
+#include <sandboxed_api/sandbox2/policy.h>
+#endif
+
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/command_source.h"
@@ -32,6 +36,9 @@ namespace cuttlefish {
 
 struct MonitorEntry {
   std::unique_ptr<Command> cmd;
+#ifdef CUTTLEFISH_LINUX_HOST
+  std::unique_ptr<sandbox2::Policy> policy;
+#endif
   std::unique_ptr<Subprocess> proc;
   bool is_critical;
 
@@ -57,6 +64,9 @@ class ProcessMonitor {
     Properties& StraceLogDir(std::string) &;
     Properties StraceLogDir(std::string) &&;
 
+    Properties& SandboxProcesses(bool) &;
+    Properties SandboxProcesses(bool) &&;
+
     template <typename T>
     Properties& AddCommands(T commands) & {
       for (auto& command : commands) {
@@ -75,6 +85,7 @@ class ProcessMonitor {
     std::vector<MonitorEntry> entries_;
     std::set<std::string> strace_commands_;
     std::string strace_log_dir_;
+    bool sandbox_processes_;
 
     friend class ProcessMonitor;
   };
