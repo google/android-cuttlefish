@@ -23,6 +23,7 @@
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/acloud_command.h"
@@ -57,12 +58,13 @@
 
 namespace cuttlefish {
 
-RequestContext::RequestContext(CvdServer& cvd_server,
-                               InstanceManager& instance_manager,
-                               BuildApi& build_api,
-                               HostToolTargetManager& host_tool_target_manager,
-                               std::atomic<bool>& acloud_translator_optout)
+RequestContext::RequestContext(
+    CvdServer& cvd_server, InstanceLockFileManager& instance_lockfile_manager,
+    InstanceManager& instance_manager, BuildApi& build_api,
+    HostToolTargetManager& host_tool_target_manager,
+    std::atomic<bool>& acloud_translator_optout)
     : cvd_server_(cvd_server),
+      instance_lockfile_manager_(instance_lockfile_manager),
       instance_manager_(instance_manager),
       build_api_(build_api),
       host_tool_target_manager_(host_tool_target_manager),
@@ -82,7 +84,8 @@ RequestContext::RequestContext(CvdServer& cvd_server,
   request_handlers_.emplace_back(NewCvdFleetCommandHandler(
       instance_manager_, subprocess_waiter_, host_tool_target_manager_));
   request_handlers_.emplace_back(NewCvdGenericCommandHandler(
-      instance_manager_, subprocess_waiter_, host_tool_target_manager_));
+      instance_lockfile_manager_, instance_manager_, subprocess_waiter_,
+      host_tool_target_manager_));
   request_handlers_.emplace_back(
       NewCvdServerHandlerProxy(command_sequence_executor_));
   request_handlers_.emplace_back(NewCvdHelpHandler(this->request_handlers_));
