@@ -115,7 +115,7 @@ Result<void> MonitorLoop(const std::atomic_bool& running,
       if (restart_subprocesses) {
         auto options = SubprocessOptions().InGroup(true);
         // in the future, cmd->Start might not run exec()
-        it->proc.reset(new Subprocess(it->cmd->Start(options)));
+        it->proc.reset(new Subprocess(it->cmd->Start(std::move(options))));
       } else {
         bool is_critical = it->is_critical;
         monitored.erase(it);
@@ -249,7 +249,13 @@ Result<void> ProcessMonitor::StartSubprocesses(
     if (Contains(properties_.strace_commands_, short_name)) {
       options.Strace(properties.strace_log_dir_ + "/strace-" + short_name);
     }
-    monitored.proc.reset(new Subprocess(monitored.cmd->Start(options)));
+#ifdef CUTTLEFISH_LINUX_HOST
+    if (properties.sandbox_processes_) {
+      options.SandboxPolicy(std::move(monitored.policy));
+    }
+#endif
+    monitored.proc.reset(
+        new Subprocess(monitored.cmd->Start(std::move(options))));
     CF_EXPECT(monitored.proc->Started(), "Failed to start subprocess");
   }
   return {};
@@ -311,7 +317,12 @@ ProcessMonitor::Properties ProcessMonitor::Properties::RestartSubprocesses(
 
 ProcessMonitor::Properties& ProcessMonitor::Properties::AddCommand(
     MonitorCommand cmd) & {
-  entries_.emplace_back(std::move(cmd.command), cmd.is_critical);
+  auto& entry = entries_.emplace_back(std::move(cmd.command), cmd.is_critical);
+#ifdef CUTTLEFISH_LINUX_HOST
+  entry.policy = std::move(cmd.policy);
+#else
+  (void)entry;
+#endif
   return *this;
 }
 
@@ -338,6 +349,16 @@ ProcessMonitor::Properties& ProcessMonitor::Properties::StraceLogDir(
 ProcessMonitor::Properties ProcessMonitor::Properties::StraceLogDir(
     std::string log_dir) && {
   return std::move(StraceLogDir(std::move(log_dir)));
+}
+
+ProcessMonitor::Properties& ProcessMonitor::Properties::SandboxProcesses(
+    bool r) & {
+  sandbox_processes_ = r;
+  return *this;
+}
+ProcessMonitor::Properties ProcessMonitor::Properties::SandboxProcesses(
+    bool r) && {
+  return std::move(SandboxProcesses(r));
 }
 
 ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties,
