@@ -350,7 +350,12 @@ Result<std::string> RenameFile(const std::string& current_filepath,
 
 bool RemoveFile(const std::string& file) {
   LOG(DEBUG) << "Removing file " << file;
-  return remove(file.c_str()) == 0;
+  if (remove(file.c_str()) == 0) {
+    return true;
+  }
+  LOG(ERROR) << "Failed to remove file " << file << " : "
+             << std::strerror(errno);
+  return false;
 }
 
 std::string ReadFile(const std::string& file) {
