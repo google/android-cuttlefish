@@ -19,13 +19,16 @@
 #include <cstdlib>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <android-base/strings.h>
 
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/process_restarter/parser.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
 
 namespace cuttlefish {
@@ -49,6 +52,25 @@ static bool ShouldRestartProcess(siginfo_t const& info, const Parser& parsed) {
   return false;
 }
 
+std::string_view ExecutableShortName(std::string_view short_name) {
+  auto last_slash = short_name.find_last_of('/');
+  if (last_slash != std::string::npos) {
+    short_name = short_name.substr(last_slash + 1);
+  }
+  return short_name;
+}
+
+Result<SubprocessOptions> OptionsForExecutable(std::string_view name) {
+  const auto& config = CF_EXPECT(CuttlefishConfig::Get());
+  auto options = SubprocessOptions().ExitWithParent(true);
+  std::string short_name{ExecutableShortName(name)};
+  if (Contains(config->straced_host_executables(), short_name)) {
+    const auto& instance = config->ForDefaultInstance();
+    options.Strace(instance.PerInstanceLogPath("/strace-" + short_name));
+  }
+  return options;
+}
+
 Result<int> RunProcessRestarter(std::vector<std::string> args) {
   LOG(VERBOSE) << "process_restarter starting";
   auto parsed = CF_EXPECT(Parser::ConsumeAndParse(args));
@@ -64,12 +86,13 @@ Result<int> RunProcessRestarter(std::vector<std::string> args) {
 
   siginfo_t info;
   do {
+    CF_EXPECT(!exec_args.empty());
     LOG(VERBOSE) << "Starting monitored process " << exec_args.front();
     // The Execute() API and all APIs effectively called by it show the proper
     // error message using LOG(ERROR).
-    info = CF_EXPECT(
-        Execute(exec_args, SubprocessOptions().ExitWithParent(true), WEXITED),
-        "Executing " << android::base::Join(exec_args, " ") << " failed.");
+    auto options = CF_EXPECT(OptionsForExecutable(exec_args.front()));
+    info = CF_EXPECTF(Execute(exec_args, std::move(options), WEXITED),
+                      "Executing '{}' failed.", fmt::join(exec_args, "' '"));
 
     if (needs_pop) {
       needs_pop = false;
@@ -85,7 +108,7 @@ Result<int> RunProcessRestarter(std::vector<std::string> args) {
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   auto result = cuttlefish::RunProcessRestarter(
-      std::move(cuttlefish::ArgsToVec(argc - 1, argv + 1)));
+      cuttlefish::ArgsToVec(argc - 1, argv + 1));
   if (!result.ok()) {
     LOG(DEBUG) << result.error().FormatForEnv();
     return EXIT_FAILURE;
