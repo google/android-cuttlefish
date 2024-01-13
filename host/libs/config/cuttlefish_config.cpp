@@ -556,6 +556,14 @@ std::set<std::string> CuttlefishConfig::straced_host_executables() const {
   return straced_host_executables;
 }
 
+static constexpr char kHostSandbox[] = "host_sandbox";
+bool CuttlefishConfig::host_sandbox() const {
+  return (*dictionary_)[kHostSandbox].asBool();
+}
+void CuttlefishConfig::set_host_sandbox(bool host_sandbox) {
+  (*dictionary_)[kHostSandbox] = host_sandbox;
+}
+
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
     const std::string& path) {
   auto ret = new CuttlefishConfig();
