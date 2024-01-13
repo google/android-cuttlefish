@@ -73,7 +73,7 @@ Result<void> SubprocessWaiter::Interrupt() {
 }
 
 Result<RunOutput> SubprocessWaiter::RunWithManagedStdioInterruptable(
-    RunWithManagedIoParam& param) {
+    RunWithManagedIoParam param) {
   RunOutput output;
   std::thread stdin_thread, stdout_thread, stderr_thread;
   std::vector<std::thread*> threads_({&stdin_thread, &stdout_thread, &stderr_thread});
@@ -126,7 +126,7 @@ Result<RunOutput> SubprocessWaiter::RunWithManagedStdioInterruptable(
   }
 
   // lower half
-  auto subprocess = cmd.Start(param.options_);
+  auto subprocess = cmd.Start(std::move(param.options_));
   CF_EXPECT(subprocess.Started());
 
   auto cmd_short_name = cmd.GetShortName();

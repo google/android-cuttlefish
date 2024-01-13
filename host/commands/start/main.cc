@@ -264,6 +264,7 @@ std::unordered_set<std::string> kBoolFlags = {
     "vhost_net",
     "vhost_user_vsock",
     "chromeos_boot",
+    "enable_host_sandbox",
 };
 
 struct BooleanFlag {

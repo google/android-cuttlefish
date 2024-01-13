@@ -72,6 +72,9 @@ cc_defaults {
                 keep_symbols_and_debug_frame: true,
             },
         },
+        host_linux: {
+            cflags: ["-DCUTTLEFISH_LINUX_HOST"],
+        },
         linux: {
             host_ldlibs: ["-lrt"],
         },
