@@ -17,6 +17,7 @@
 function createDataChannel(pc, label, onMessage) {
   console.debug('creating data channel: ' + label);
   let dataChannel = pc.createDataChannel(label);
+  dataChannel.binaryType = "arraybuffer";
   // Return an object with a send function like that of the dataChannel, but
   // that only actually sends over the data channel once it has connected.
   return {
