@@ -237,6 +237,17 @@ Result<std::string> SelectGpuMode(
     }
 
     if (ShouldEnableAcceleratedRendering(graphics_availability)) {
+      if (HostArch() == Arch::Arm64) {
+        LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
+                     "rendering support but enabling "
+                     "--gpu_mode=guest_swiftshader until vhost-user-gpu "
+                     "based accelerated rendering on ARM has been more "
+                     "thoroughly tested. Please explicitly use "
+                     "--gpu_mode=gfxstream or "
+                     "--gpu_mode=gfxstream_guest_angle to enable for now.";
+        return kGpuModeGuestSwiftshader;
+      }
+
       LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
                 << "rendering support.";
       if (vm_manager == vm_manager::QemuManager::name()) {
