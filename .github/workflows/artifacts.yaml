@@ -1,8 +1,8 @@
 name: Artifacts
 on:
-  pull_request:
-    types:
-      - closed
+  push:
+    branches:
+      - main
 jobs:
   export-debs:
     runs-on: ubuntu-22.04
