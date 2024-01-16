@@ -51,9 +51,10 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze(
     InstanceLockFileManager& instance_lock_file_manager) {
   CF_EXPECT(IsCvdStart(cmd),
             "CreationAnalyzer::Analyze() is for cvd start only.");
+  const auto client_uid = credential.uid;
   auto selector_options_parser =
       CF_EXPECT(StartSelectorParser::ConductSelectFlagsParser(
-          param.selector_args, param.cmd_args, param.envs));
+          client_uid, param.selector_args, param.cmd_args, param.envs));
   CreationAnalyzer analyzer(param, credential,
                             std::move(selector_options_parser),
                             instance_database, instance_lock_file_manager);
@@ -100,7 +101,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
             "Instance IDs were specified, so should be one or more.");
   for (const auto id : requested_instance_ids) {
     CF_EXPECT(IsIdAvailable(instance_database_, id),
-              "instance ID #" << id << " is requested but not available.");
+              "instance ID #" << id << " is requeested but not available.");
   }
 
   std::vector<std::string> per_instance_names;
@@ -245,7 +246,7 @@ static Result<std::vector<std::string>> UpdateInstanceArgs(
       GflagsCompatFlag("num_instances", old_num_instances),
       GflagsCompatFlag("base_instance_num", old_base_instance_num)};
   // discard old ones
-  CF_EXPECT(ConsumeFlags(instance_id_flags, new_args));
+  CF_EXPECT(ParseFlags(instance_id_flags, new_args));
 
   auto max = *(std::max_element(ids.cbegin(), ids.cend()));
   auto min = *(std::min_element(ids.cbegin(), ids.cend()));
@@ -274,7 +275,7 @@ Result<std::vector<std::string>> CreationAnalyzer::UpdateWebrtcDeviceId(
   std::vector<Flag> webrtc_device_id_flag{
       GflagsCompatFlag("webrtc_device_id", flag_value)};
   std::vector<std::string> copied_args{new_args};
-  CF_EXPECT(ConsumeFlags(webrtc_device_id_flag, copied_args));
+  CF_EXPECT(ParseFlags(webrtc_device_id_flag, copied_args));
 
   if (!flag_value.empty()) {
     return new_args;
@@ -359,7 +360,7 @@ Result<CreationAnalyzer::GroupInfo> CreationAnalyzer::ExtractGroup(
 }
 
 Result<std::string> CreationAnalyzer::AnalyzeHome() const {
-  auto system_wide_home = CF_EXPECT(SystemWideUserHome());
+  auto system_wide_home = CF_EXPECT(SystemWideUserHome(credential_.uid));
   if (Contains(envs_, "HOME") && envs_.at("HOME") != system_wide_home) {
     return envs_.at("HOME");
   }
