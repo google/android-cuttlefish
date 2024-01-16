@@ -1,5 +1,9 @@
 name: Artifacts
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/artifacts.yaml'
+      - 'tools/buildimage/**'
   push:
     branches:
       - main
