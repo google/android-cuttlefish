@@ -239,10 +239,12 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
           gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader,
       "GPU mode " << gpu_mode << " not yet supported with vhost user gpu.");
 
+  const std::string gpu_pci_address =
+      fmt::format("00:{:0>2x}.0", VmManager::kGpuPciSlotNum);
+
   // Why does this need JSON instead of just following the normal flags style...
   Json::Value gpu_params_json;
-  gpu_params_json["pci-address"] =
-      fmt::format("00:{:0>2x}.0", VmManager::kGpuPciSlotNum);
+  gpu_params_json["pci-address"] = gpu_pci_address;
   if (gpu_mode == kGpuModeGfxstream) {
     gpu_params_json["context-types"] = "gfxstream-gles:gfxstream-vulkan";
     gpu_params_json["egl"] = true;
@@ -302,7 +304,9 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
 
   // Connect device to main crosvm:
   gpu_device_cmd.AddParameter("--socket=", gpu_device_socket_path);
-  main_crosvm_cmd->AddParameter("--vhost-user-gpu=", gpu_device_socket_path);
+  main_crosvm_cmd->AddParameter(
+      "--vhost-user=gpu,pci-address=", gpu_pci_address,
+      ",socket=", gpu_device_socket_path);
 
   gpu_device_cmd.AddParameter("--params");
   gpu_device_cmd.AddParameter(ToSingleLineString(gpu_params_json));
