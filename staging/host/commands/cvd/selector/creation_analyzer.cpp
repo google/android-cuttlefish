@@ -188,12 +188,8 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
 
   // auto-generation means the user did not specify much: e.g. "cvd start"
   // In this case, the user may expect the instance id to be 1+
-  using ReservationSet = UniqueResourceAllocator<unsigned>::ReservationSet;
-  std::optional<ReservationSet> allocated_ids_opt;
-  if (!allocated_ids_opt) {
-    allocated_ids_opt =
-        unique_id_allocator->UniqueConsecutiveItems(n_instances);
-  }
+  auto allocated_ids_opt =
+      unique_id_allocator->UniqueConsecutiveItems(n_instances);
   CF_EXPECT(allocated_ids_opt != std::nullopt, "Unique ID allocation failed.");
 
   std::vector<unsigned> allocated_ids;
