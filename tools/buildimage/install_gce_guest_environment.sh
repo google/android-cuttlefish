@@ -52,11 +52,13 @@ sudo mkdir ${mount_point}
 # starts and `512` bytes is the sectors size. See `sudo fdisk -l disk.raw`.
 sudo mount -o loop,offset=$((262144 * 512)) ${diskraw} ${mount_point}
 
-cat <<'EOF' >/tmp/rc.local
+sudo chroot /mnt/image mkdir /run/resolvconf
+sudo cp /etc/resolv.conf /mnt/image/run/resolvconf/resolv.conf
+
+cat <<'EOF' >${mount_point}/tmp/install.sh
 #!/bin/bash
 echo "== Installing Google guest environment for Debian =="
 export DEBIAN_FRONTEND=noninteractive
-sleep 30 # Wait for network.
 echo "Determining Debian version..."
 eval $(grep VERSION_CODENAME /etc/os-release)
 if [[ -z $VERSION_CODENAME ]]; then
@@ -66,7 +68,7 @@ fi
 echo "Running apt update..."
 apt update
 echo "Installing gnupg..."
-apt install -y gnupg  
+apt install -y gnupg
 echo "Adding GPG key for Google cloud repo."
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 echo "Updating repo file..."
@@ -84,24 +86,10 @@ for pkg in google-cloud-packages-archive-keyring google-compute-engine; do
     echo "ERROR: Failed to install ${pkg}."
  fi
 done
-echo "Removing this rc.local script."
-rm /etc/rc.local
-# Move back any previous rc.local:
-if [[ -f "/etc/moved-rc.local" ]]; then
- echo "Restoring a previous rc.local script."
- mv "/etc/moved-rc.local" "/etc/rc.local"
-fi
-echo "Restarting the instance..."
-reboot
 EOF
+sudo chroot /mnt/image bash /tmp/install.sh
 
-if [[ -f "${mount_point}/etc/rc.local" ]]; then
-   sudo mv "${mount_point}/etc/rc.local" \
-   "${mount_point}/etc/moved-rc.local"
-fi
-sudo mv /tmp/rc.local "${mount_point}/etc/rc.local"
-sudo chmod 0755 "${mount_point}/etc/rc.local"
-sudo chown root:root "${mount_point}/etc/rc.local"
+sudo rm -r ${mount_point}/run/resolvconf
 
 sudo umount ${mount_point}
 sudo rm -r ${mount_point}
