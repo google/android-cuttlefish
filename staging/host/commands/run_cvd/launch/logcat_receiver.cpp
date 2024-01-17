@@ -15,20 +15,27 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#if defined(CUTTLEFISH_HOST) && defined(__linux)
+#include <sys/prctl.h>
+#include <sys/syscall.h>
+#endif
+
 #include <string>
 
 #ifdef CUTTLEFISH_LINUX_HOST
 // Pre-define this include guard since the header that normally defines it
 // fights with <android-base/logging.h>
-#define ABSL_LOG_CHECK_H_ /* this header fights with android-base/logging.h */
-#include "sandboxed_api/sandbox2/policy.h"
-#include "sandboxed_api/sandbox2/policybuilder.h"
+#define ABSL_LOG_CHECK_H_
+#include <sandboxed_api/sandbox2/policy.h>
+#include <sandboxed_api/sandbox2/policybuilder.h>
+#include <sandboxed_api/sandbox2/util/bpf_helper.h>
 #endif
-#include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/command_source.h"
+#include "host/libs/config/config_constants.h"
+#include "host/libs/config/config_utils.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -38,23 +45,52 @@ std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific& instance) {
 }
 
 Result<MonitorCommand> LogcatReceiver(
+    const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
   // Open the pipe here (from the launcher) to ensure the pipe is not deleted
   // due to the usage counters in the kernel reaching zero. If this is not
   // done and the logcat_receiver crashes for some reason the VMM may get
   // SIGPIPE.
   auto log_name = instance.logcat_pipe_name();
-  MonitorCommand cmd =
-      Command(LogcatReceiverBinary())
-          .AddParameter("-log_pipe_fd=",
-                        CF_EXPECT(SharedFD::Fifo(log_name, 0600)));
+  auto cmd = Command(LogcatReceiverBinary())
+                 .AddParameter("-log_pipe_fd=",
+                               CF_EXPECT(SharedFD::Fifo(log_name, 0600)));
+  if (config.host_sandbox()) {
+    cmd.UnsetFromEnvironment(kCuttlefishConfigEnvVarName);
+    cmd.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
+                               "/cuttlefish_config.json");
+    cmd.AddEnvironmentVariable("LD_LIBRARY_PATH",
+                               DefaultHostArtifactsPath("lib64"));
+  }
+  MonitorCommand monitor_cmd = std::move(cmd);
 #ifdef CUTTLEFISH_LINUX_HOST
-  cmd.policy = sandbox2::PolicyBuilder()
-                   .DangerDefaultAllowAll()
-                   .DisableNamespaces()
-                   .BuildOrDie();
+  monitor_cmd.policy =
+      sandbox2::PolicyBuilder()
+          .AddDirectory(DefaultHostArtifactsPath("lib64"))
+          .AddDirectory(instance.PerInstanceLogPath(""), /* is_ro= */ false)
+          .AddFileAt(config.AssemblyPath("cuttlefish_config.json"),
+                     "/cuttlefish_config.json")
+          .AddLibrariesForBinary(LogcatReceiverBinary(),
+                                 DefaultHostArtifactsPath("lib64"))
+          // For dynamic linking
+          .AddPolicyOnSyscall(__NR_prctl,
+                              {ARG_32(0), JEQ32(PR_CAPBSET_READ, ALLOW)})
+          .AllowDynamicStartup()
+          .AllowExit()
+          .AllowGetPIDs()
+          .AllowGetRandom()
+          .AllowHandleSignals()
+          .AllowMmap()
+          .AllowOpen()
+          .AllowRead()
+          .AllowReadlink()
+          .AllowRestartableSequences(sandbox2::PolicyBuilder::kAllowSlowFences)
+          .AllowSafeFcntl()
+          .AllowSyscall(__NR_tgkill)
+          .AllowWrite()
+          .BuildOrDie();
 #endif
-  return cmd;
+  return monitor_cmd;
 }
 
 }  // namespace cuttlefish
