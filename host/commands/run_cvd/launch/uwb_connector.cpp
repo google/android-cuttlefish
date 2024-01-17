@@ -26,7 +26,7 @@ namespace cuttlefish {
 Result<std::optional<MonitorCommand>> UwbConnector(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (!config.enable_host_uwb()) {
+  if (!config.enable_host_uwb_connector()) {
     return {};
   }
   std::vector<std::string> fifo_paths = {
