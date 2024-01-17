@@ -58,7 +58,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
 KernelLogMonitorComponent();
 
 Result<MonitorCommand> LogcatReceiver(
-    const CuttlefishConfig::InstanceSpecific&);
+    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific&);
 
 Result<std::optional<MonitorCommand>> CasimirControlServer(
