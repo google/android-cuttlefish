@@ -43,7 +43,18 @@ namespace {
 // process waits for boot events to come through the pipe and exits accordingly.
 SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
-  SharedFD read_end, write_end;
+  auto restore_pipe_name = instance.restore_pipe_name();
+  SharedFD read_end, write_end, restore_pipe_read;
+  if (!config.snapshot_path().empty()) {
+    if (Result<SharedFD> restore_pipe = SharedFD::Fifo(restore_pipe_name, 0600);
+        !restore_pipe.ok()) {
+      LOG(ERROR) << "Unable to create restore fifo"
+                 << restore_pipe.error().FormatForEnv();
+      return {};
+    } else {
+      restore_pipe_read = restore_pipe.value();
+    }
+  }
   if (!SharedFD::Pipe(&read_end, &write_end)) {
     LOG(ERROR) << "Unable to create pipe";
     return {};  // a closed FD
@@ -54,12 +65,21 @@ SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
     // child process dies.
     write_end->Close();
     RunnerExitCodes exit_code;
-    // Temporary solution for restore. Restore does not print out the boot
-    // successful message, and as such READ would indefinitely block. Instead,
-    // exit the process early to have it running in the background until a
-    // proper solution is implemented. This is needed to keep the daemon
-    // behavior while restoring. Tracking actual fix in b/309006171
     if (!config.snapshot_path().empty()) {
+      if (!restore_pipe_read->IsOpen()) {
+        LOG(ERROR) << "Error opening restore pipe: "
+                   << restore_pipe_read->StrError();
+        std::exit(RunnerExitCodes::kDaemonizationError);
+      }
+      // Try to read from restore pipe. IF successfully reads, that means logcat
+      // has started, and the VM has resumed. Exit the thread.
+      char buff[1];
+      auto read = restore_pipe_read->Read(buff, 1);
+      if (read <= 0) {
+        LOG(ERROR) << "Could not read restore pipe: "
+                   << restore_pipe_read->StrError();
+        std::exit(RunnerExitCodes::kDaemonizationError);
+      }
       exit_code = RunnerExitCodes::kSuccess;
       std::exit(exit_code);
     }

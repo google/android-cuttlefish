@@ -282,6 +282,7 @@ void ServerLoopImpl::DeleteFifos() {
       instance_.console_in_pipe_name(),
       instance_.console_out_pipe_name(),
       instance_.logcat_pipe_name(),
+      instance_.restore_pipe_name(),
       instance_.PerInstanceInternalPath("keymaster_fifo_vm.in"),
       instance_.PerInstanceInternalPath("keymaster_fifo_vm.out"),
       instance_.PerInstanceInternalPath("keymint_fifo_vm.in"),
