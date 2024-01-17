@@ -51,11 +51,6 @@ LockFile::LockFileReleaser::~LockFileReleaser() {
                << " is closed and unable to un-flock()";
     return;
   }
-  auto set_status_result = SetStatus(flocked_file_fd_, InUseState::kNotInUse);
-  if (!set_status_result.ok()) {
-    LOG(ERROR) << "The supposedly-locked file \"" << lock_file_path_
-               << " is not writable: " << set_status_result.error().Trace();
-  }
   auto funlock_result = flocked_file_fd_->Flock(LOCK_UN | LOCK_NB);
   if (!funlock_result.ok()) {
     LOG(ERROR) << "Unlock the \"" << lock_file_path_
