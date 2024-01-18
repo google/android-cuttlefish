@@ -40,6 +40,7 @@ using Json::ValueType::uintValue;
 
 const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
   {"netsim_bt", ConfigNode{.type = booleanValue}},
+  {"netsim_uwb", ConfigNode{.type = booleanValue}},
   {"instances", ConfigNode{.type = arrayValue, .children = {
     {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
         {"@import", ConfigNode{.type = stringValue}},

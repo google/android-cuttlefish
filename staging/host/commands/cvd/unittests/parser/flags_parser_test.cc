@@ -137,12 +137,15 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEmptyJson) {
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=true)"))
       << "netsim_bt flag is missing or wrongly formatted";
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_uwb=false)"))
+      << "netsim_uwb flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
   const char* test_string = R""""(
 {
    "netsim_bt": false,
+   "netsim_uwb": true,
      "instances" :
      [
         {
@@ -164,6 +167,8 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=false)"))
       << "netsim_bt flag is missing or wrongly formatted";
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_uwb=true)"))
+      << "netsim_uwb flag is missing or wrongly formatted";
 }
 
 }  // namespace cuttlefish
