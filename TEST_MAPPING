@@ -15,6 +15,9 @@
       "name": "vts_treble_vintf_vendor_test"
     },
     {
+      "name": "SnapshotTest"
+    },
+    {
       "name": "hal_implementation_test"
     },
     {
