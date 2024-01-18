@@ -21,3 +21,19 @@ blueprint_go_binary {
     name: "create_base_image",
     srcs: ["create_base_image.go"],
 }
+
+sh_binary_host {
+    name: "launch_cvd_arm64_server.sh",
+    src: "launch_cvd_arm64_server.sh",
+    dist: {
+        targets: ["cvd_arm64_host_tools"],
+    },
+}
+
+sh_binary_host {
+    name: "launch_cvd_arm64_server_docker.sh",
+    src: "launch_cvd_arm64_server_docker.sh",
+    dist: {
+        targets: ["cvd_arm64_host_tools"],
+    },
+}
