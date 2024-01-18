@@ -37,6 +37,8 @@ Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
       "num_instances", {std::to_string(root["instances"].size())}));
   result.emplace_back(GenerateGflag(
       "netsim_bt", {CF_EXPECT(GetValue<std::string>(root, {"netsim_bt"}))}));
+  result.emplace_back(GenerateGflag(
+      "netsim_uwb", {CF_EXPECT(GetValue<std::string>(root, {"netsim_uwb"}))}));
   result = MergeResults(result, CF_EXPECT(GenerateMetricsFlags(root)));
   result = MergeResults(result,
                         CF_EXPECT(GenerateInstancesFlags(root["instances"])));
@@ -45,6 +47,7 @@ Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
 
 Result<void> InitCvdConfigs(Json::Value& root) {
   CF_EXPECT(InitConfig(root, CF_DEFAULTS_NETSIM_BT, {"netsim_bt"}));
+  CF_EXPECT(InitConfig(root, CF_DEFAULTS_NETSIM_UWB, {"netsim_uwb"}));
   CF_EXPECT(InitMetricsConfigs(root));
   CF_EXPECT(InitInstancesConfigs(root["instances"]));
   return {};
