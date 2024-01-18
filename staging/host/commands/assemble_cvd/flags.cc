@@ -191,7 +191,9 @@ DEFINE_bool(netsim, CF_DEFAULTS_NETSIM,
             "[Experimental] Connect all radios to netsim.");
 
 DEFINE_bool(netsim_bt, CF_DEFAULTS_NETSIM_BT,
-            "[Experimental] Connect Bluetooth radio to netsim.");
+            "Connect Bluetooth radio to netsim.");
+DEFINE_bool(netsim_uwb, CF_DEFAULTS_NETSIM_UWB,
+            "[Experimental] Connect Uwb radio to netsim.");
 DEFINE_string(netsim_args, CF_DEFAULTS_NETSIM_ARGS,
               "Space-separated list of netsim args.");
 
@@ -991,8 +993,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_ap_kernel_image(FLAGS_ap_kernel_image);
 
   // netsim flags allow all radios or selecting a specific radio
-  bool is_any_netsim = FLAGS_netsim || FLAGS_netsim_bt;
+  bool is_any_netsim = FLAGS_netsim || FLAGS_netsim_bt || FLAGS_netsim_uwb;
   bool is_bt_netsim = FLAGS_netsim || FLAGS_netsim_bt;
+  bool is_uwb_netsim = FLAGS_netsim || FLAGS_netsim_uwb;
 
   // crosvm should create fifos for Bluetooth
   tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth ||
@@ -1194,7 +1197,16 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   if (FLAGS_pica_instance_num > 0) {
     pica_instance_num = FLAGS_pica_instance_num - 1;
   }
-  tmp_config_obj.set_enable_host_uwb(FLAGS_enable_host_uwb);
+  tmp_config_obj.set_enable_host_uwb(FLAGS_enable_host_uwb || is_uwb_netsim);
+
+  // netsim has its own connector for uwb
+  tmp_config_obj.set_enable_host_uwb_connector(FLAGS_enable_host_uwb &&
+                                               !is_uwb_netsim);
+
+  if (is_uwb_netsim) {
+    tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Uwb);
+  }
+
   tmp_config_obj.set_pica_uci_port(7000 + pica_instance_num);
   LOG(DEBUG) << "launch pica: " << (FLAGS_pica_instance_num <= 0);
 
@@ -1640,7 +1652,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_start_casimir(is_first_instance && FLAGS_casimir_instance_num <= 0);
 
-    instance.set_start_pica(is_first_instance && FLAGS_pica_instance_num <= 0);
+    instance.set_start_pica(is_first_instance && !is_uwb_netsim &&
+                            FLAGS_pica_instance_num <= 0);
 
     // TODO(b/288987294) Remove this when separating environment is done
     instance.set_start_wmediumd_instance(is_first_instance && start_wmediumd);
