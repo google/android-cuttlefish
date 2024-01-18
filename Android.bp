@@ -180,11 +180,3 @@ java_test_host {
 
     test_suites: ["general-tests"],
 }
-
-sh_binary_host {
-    name: "launch_cvd_arm64_server.sh",
-    src: "tools/launch_cvd_arm64_server.sh",
-    dist: {
-        targets: ["cvd-host_package"],
-    },
-}
