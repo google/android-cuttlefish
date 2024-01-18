@@ -232,15 +232,15 @@ Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
 }
 
 Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
-    HttpClient& http_client, const std::string& credential_source) {
+    HttpClient& http_client, const std::string& credential_source,
+    const std::string& oauth_filepath) {
   std::unique_ptr<CredentialSource> result;
   if (credential_source == "gce") {
     result = GceMetadataCredentialSource::Make(http_client);
   } else if (credential_source == "") {
-    std::string file = StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
-    LOG(VERBOSE) << "Probing acloud credentials at " << file;
-    if (FileExists(file)) {
-      std::ifstream stream(file);
+    LOG(VERBOSE) << "Probing acloud credentials at " << oauth_filepath;
+    if (FileExists(oauth_filepath)) {
+      std::ifstream stream(oauth_filepath);
       auto attempt_load =
           RefreshCredentialSource::FromOauth2ClientFile(http_client, stream);
       if (attempt_load.ok()) {
@@ -250,7 +250,8 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
                    << attempt_load.error().FormatForEnv();
       }
     } else {
-      LOG(INFO) << "\"" << file << "\" missing, running without credentials";
+      LOG(INFO) << "\"" << oauth_filepath
+                << "\" missing, running without credentials";
     }
   } else if (!FileExists(credential_source)) {
     // If the parameter doesn't point to an existing file it must be the
@@ -285,8 +286,11 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
   std::unique_ptr<HttpClient> retrying_http_client =
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
-  std::unique_ptr<CredentialSource> credential_source = CF_EXPECT(
-      GetCredentialSource(*retrying_http_client, flags.credential_source));
+  std::string oauth_filepath =
+      StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
+  std::unique_ptr<CredentialSource> credential_source =
+      CF_EXPECT(GetCredentialSource(*retrying_http_client,
+                                    flags.credential_source, oauth_filepath));
 
   return BuildApi(std::move(retrying_http_client), std::move(curl),
                   std::move(credential_source), flags.api_key,
