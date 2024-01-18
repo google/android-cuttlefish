@@ -200,27 +200,6 @@ Result<void> EnsureDirectoriesExist(const std::string& target_directory,
   return {};
 }
 
-std::unique_ptr<CredentialSource> TryParseServiceAccount(
-    HttpClient& http_client, const std::string& file_content) {
-  Json::Reader reader;
-  Json::Value content;
-  if (!reader.parse(file_content, content)) {
-    // Don't log the actual content of the file since it could be the actual
-    // access token.
-    LOG(DEBUG) << "Could not parse credential file as Service Account";
-    return {};
-  }
-  auto result = ServiceAccountOauthCredentialSource::FromJson(
-      http_client, content, kBuildScope);
-  if (!result.ok()) {
-    LOG(DEBUG) << "Failed to load service account json file: \n"
-               << result.error().FormatForEnv();
-    return {};
-  }
-  return std::unique_ptr<CredentialSource>(
-      new ServiceAccountOauthCredentialSource(std::move(*result)));
-}
-
 Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
                               const std::string& target_dir,
                               const bool keep_archives) {
@@ -229,52 +208,6 @@ Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
   CF_EXPECT(
       ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
   return {};
-}
-
-Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
-    HttpClient& http_client, const std::string& credential_source,
-    const std::string& oauth_filepath) {
-  std::unique_ptr<CredentialSource> result;
-  if (credential_source == "gce") {
-    result = GceMetadataCredentialSource::Make(http_client);
-  } else if (credential_source == "") {
-    LOG(VERBOSE) << "Probing acloud credentials at " << oauth_filepath;
-    if (FileExists(oauth_filepath)) {
-      std::ifstream stream(oauth_filepath);
-      auto attempt_load =
-          RefreshCredentialSource::FromOauth2ClientFile(http_client, stream);
-      if (attempt_load.ok()) {
-        result.reset(new RefreshCredentialSource(std::move(*attempt_load)));
-      } else {
-        LOG(DEBUG) << "Failed to load acloud credentials: "
-                   << attempt_load.error().FormatForEnv();
-      }
-    } else {
-      LOG(INFO) << "\"" << oauth_filepath
-                << "\" missing, running without credentials";
-    }
-  } else if (!FileExists(credential_source)) {
-    // If the parameter doesn't point to an existing file it must be the
-    // credentials.
-    result = FixedCredentialSource::Make(credential_source);
-  } else {
-    // Read the file only once in case it's a pipe.
-    LOG(DEBUG) << "Attempting to open credentials file \"" << credential_source
-               << "\"";
-    auto file = SharedFD::Open(credential_source, O_RDONLY);
-    CF_EXPECT(file->IsOpen(),
-              "Failed to open credential_source file: " << file->StrError());
-    std::string file_content;
-    auto size = ReadAll(file, &file_content);
-    CF_EXPECT(size >= 0,
-              "Failed to read credentials file: " << file->StrError());
-    if (auto crds = TryParseServiceAccount(http_client, file_content)) {
-      result = std::move(crds);
-    } else {
-      result = FixedCredentialSource::Make(file_content);
-    }
-  }
-  return result;
 }
 
 Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
