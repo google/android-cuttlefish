@@ -101,7 +101,10 @@ soong_config_module_type {
     module_type: "cc_defaults",
     config_namespace: "cvdhost",
     bool_variables: ["enforce_mac80211_hwsim"],
-    value_variables: ["default_userdata_fs_type", "board_f2fs_blocksize"],
+    value_variables: [
+        "default_userdata_fs_type",
+        "board_f2fs_blocksize",
+    ],
     properties: ["cflags"],
 }
 
@@ -114,7 +117,7 @@ cf_cc_defaults {
             cflags: ["-DENFORCE_MAC80211_HWSIM=true"],
             conditions_default: {
                 cflags: [],
-            }
+            },
         },
         // TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE sets this from BoardConfig.mk
         // The only user is the page agnostic cf target
@@ -122,17 +125,18 @@ cf_cc_defaults {
             cflags: ["-DUSERDATA_FILE_SYSTEM_TYPE=\"%s\""],
             conditions_default: {
                 cflags: ["-DUSERDATA_FILE_SYSTEM_TYPE=\"f2fs\""],
-            }
+            },
         },
         // PRODUCT_F2FS_BLOCKSIZE sets this
         board_f2fs_blocksize: {
             cflags: ["-DF2FS_BLOCKSIZE=\"%s\""],
             conditions_default: {
                 cflags: ["-DF2FS_BLOCKSIZE=\"4096\""],
-            }
+            },
         },
-    }
+    },
 }
+
 // Defaults for cuttlefish modules that are available only in the guest OS (i.e. cuttlefish running
 // in a guest VM).
 cc_defaults {
@@ -158,7 +162,10 @@ cc_defaults {
     host_supported: true, // this "host" means (1)
     device_supported: true, // this is for (2)
     vendor_available: true,
-    defaults: ["cuttlefish_base", "cvd_cc_defaults"],
+    defaults: [
+        "cuttlefish_base",
+        "cvd_cc_defaults",
+    ],
 }
 
 // Same as "cuttlefish_host", but only for non-Android OS.
@@ -174,7 +181,7 @@ java_test_host {
 
     libs: ["tradefed"],
 
-    srcs:  ["tests/src/**/TombstoneTransmitTest.java"],
+    srcs: ["tests/src/**/TombstoneTransmitTest.java"],
 
     test_config: "tests/tombstone-transmit-tests.xml",
 
