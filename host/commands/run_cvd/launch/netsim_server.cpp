@@ -182,6 +182,13 @@ class NetsimServer : public CommandSource {
         chip.fd_out = CF_EXPECT(MakeFifo(instance, "bt_fifo_vm.out"));
         device.chips.emplace_back(chip);
       }
+      // Add uwb chip if enabled
+      if (config_.netsim_radio_enabled(CuttlefishConfig::NetsimRadio::Uwb)) {
+        Chip chip("UWB");
+        chip.fd_in = CF_EXPECT(MakeFifo(instance, "uwb_fifo_vm.in"));
+        chip.fd_out = CF_EXPECT(MakeFifo(instance, "uwb_fifo_vm.out"));
+        device.chips.emplace_back(chip);
+      }
       // Add other chips if enabled
       devices_.emplace_back(device);
     }

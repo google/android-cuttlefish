@@ -247,6 +247,14 @@ bool CuttlefishConfig::enable_host_uwb() const {
   return (*dictionary_)[kEnableHostUwb].asBool();
 }
 
+static constexpr char kEnableHostUwbConnector[] = "enable_host_uwb_connector";
+void CuttlefishConfig::set_enable_host_uwb_connector(bool enable_host_uwb) {
+  (*dictionary_)[kEnableHostUwbConnector] = enable_host_uwb;
+}
+bool CuttlefishConfig::enable_host_uwb_connector() const {
+  return (*dictionary_)[kEnableHostUwbConnector].asBool();
+}
+
 static constexpr char kPicaUciPort[] = "pica_uci_port";
 int CuttlefishConfig::pica_uci_port() const {
   return (*dictionary_)[kPicaUciPort].asInt();
