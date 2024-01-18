@@ -34,19 +34,16 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/archive.h"
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "host/libs/config/fetcher_config.h"
-#include "host/libs/web/android_build_api.h"
-#include "host/libs/web/android_build_string.h"
-#include "host/libs/web/chrome_os_build_string.h"
+#include "host/libs/web/build_api.h"
+#include "host/libs/web/build_string.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
-#include "host/libs/web/luci_build_api.h"
 
 namespace cuttlefish {
 namespace {
@@ -60,10 +57,8 @@ struct BuildStrings {
   std::optional<BuildString> kernel_build;
   std::optional<BuildString> boot_build;
   std::optional<BuildString> bootloader_build;
-  std::optional<BuildString> android_efi_loader_build;
   std::optional<BuildString> otatools_build;
   std::optional<BuildString> host_package_build;
-  std::optional<ChromeOsBuildString> chrome_os_build;
 };
 
 struct DownloadFlags {
@@ -76,7 +71,6 @@ struct TargetDirectories {
   std::string otatools;
   std::string default_target_files;
   std::string system_target_files;
-  std::string chrome_os;
 };
 
 struct Builds {
@@ -85,9 +79,7 @@ struct Builds {
   std::optional<Build> kernel;
   std::optional<Build> boot;
   std::optional<Build> bootloader;
-  std::optional<Build> android_efi_loader;
   std::optional<Build> otatools;
-  std::optional<ChromeOsBuildString> chrome_os;
 };
 
 struct Target {
@@ -128,12 +120,8 @@ BuildStrings GetBuildStrings(const VectorFlags& flags, const int index) {
           flags.boot_build, index, std::nullopt),
       .bootloader_build = AccessOrDefault<std::optional<BuildString>>(
           flags.bootloader_build, index, std::nullopt),
-      .android_efi_loader_build = AccessOrDefault<std::optional<BuildString>>(
-          flags.android_efi_loader_build, index, std::nullopt),
       .otatools_build = AccessOrDefault<std::optional<BuildString>>(
           flags.otatools_build, index, std::nullopt),
-      .chrome_os_build = AccessOrDefault<std::optional<ChromeOsBuildString>>(
-          flags.chrome_os_build, index, std::nullopt),
   };
   auto possible_boot_artifact =
       AccessOrDefault<std::string>(flags.boot_artifact, index, "");
@@ -166,8 +154,7 @@ TargetDirectories GetTargetDirectories(
   return TargetDirectories{.root = base_directory,
                            .otatools = base_directory + "/otatools/",
                            .default_target_files = base_directory + "/default",
-                           .system_target_files = base_directory + "/system",
-                           .chrome_os = base_directory + "/chromeos"};
+                           .system_target_files = base_directory + "/system"};
 }
 
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
@@ -209,9 +196,29 @@ Result<void> EnsureDirectoriesExist(const std::string& target_directory,
                                     kRwxAllMode));
     CF_EXPECT(EnsureDirectoryExists(target.directories.system_target_files,
                                     kRwxAllMode));
-    CF_EXPECT(EnsureDirectoryExists(target.directories.chrome_os, kRwxAllMode));
   }
   return {};
+}
+
+std::unique_ptr<CredentialSource> TryParseServiceAccount(
+    HttpClient& http_client, const std::string& file_content) {
+  Json::Reader reader;
+  Json::Value content;
+  if (!reader.parse(file_content, content)) {
+    // Don't log the actual content of the file since it could be the actual
+    // access token.
+    LOG(DEBUG) << "Could not parse credential file as Service Account";
+    return {};
+  }
+  auto result = ServiceAccountOauthCredentialSource::FromJson(
+      http_client, content, kBuildScope);
+  if (!result.ok()) {
+    LOG(DEBUG) << "Failed to load service account json file: \n"
+               << result.error().FormatForEnv();
+    return {};
+  }
+  return std::unique_ptr<CredentialSource>(
+      new ServiceAccountOauthCredentialSource(std::move(*result)));
 }
 
 Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
@@ -222,6 +229,52 @@ Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
   CF_EXPECT(
       ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
   return {};
+}
+
+Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
+    HttpClient& http_client, const std::string& credential_source,
+    const std::string& oauth_filepath) {
+  std::unique_ptr<CredentialSource> result;
+  if (credential_source == "gce") {
+    result = GceMetadataCredentialSource::Make(http_client);
+  } else if (credential_source == "") {
+    LOG(VERBOSE) << "Probing acloud credentials at " << oauth_filepath;
+    if (FileExists(oauth_filepath)) {
+      std::ifstream stream(oauth_filepath);
+      auto attempt_load =
+          RefreshCredentialSource::FromOauth2ClientFile(http_client, stream);
+      if (attempt_load.ok()) {
+        result.reset(new RefreshCredentialSource(std::move(*attempt_load)));
+      } else {
+        LOG(DEBUG) << "Failed to load acloud credentials: "
+                   << attempt_load.error().FormatForEnv();
+      }
+    } else {
+      LOG(INFO) << "\"" << oauth_filepath
+                << "\" missing, running without credentials";
+    }
+  } else if (!FileExists(credential_source)) {
+    // If the parameter doesn't point to an existing file it must be the
+    // credentials.
+    result = FixedCredentialSource::Make(credential_source);
+  } else {
+    // Read the file only once in case it's a pipe.
+    LOG(DEBUG) << "Attempting to open credentials file \"" << credential_source
+               << "\"";
+    auto file = SharedFD::Open(credential_source, O_RDONLY);
+    CF_EXPECT(file->IsOpen(),
+              "Failed to open credential_source file: " << file->StrError());
+    std::string file_content;
+    auto size = ReadAll(file, &file_content);
+    CF_EXPECT(size >= 0,
+              "Failed to read credentials file: " << file->StrError());
+    if (auto crds = TryParseServiceAccount(http_client, file_content)) {
+      result = std::move(crds);
+    } else {
+      result = FixedCredentialSource::Make(file_content);
+    }
+  }
+  return result;
 }
 
 Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
@@ -236,46 +289,12 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
   std::string oauth_filepath =
       StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
   std::unique_ptr<CredentialSource> credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
+      CF_EXPECT(GetCredentialSource(*retrying_http_client,
+                                    flags.credential_source, oauth_filepath));
 
   return BuildApi(std::move(retrying_http_client), std::move(curl),
                   std::move(credential_source), flags.api_key,
                   flags.wait_retry_period, flags.api_base_url);
-}
-
-Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {
-  auto resolver =
-      flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
-  const bool use_logging_debug_function = true;
-  std::unique_ptr<HttpClient> curl =
-      HttpClient::CurlClient(resolver, use_logging_debug_function);
-  std::unique_ptr<HttpClient> retrying_http_client =
-      HttpClient::ServerErrorRetryClient(*curl, 10,
-                                         std::chrono::milliseconds(5000));
-  std::string luci_oauth_filepath =
-      StringFromEnv("HOME", ".") + "/.config/chrome_infra/auth/tokens.json";
-  std::unique_ptr<CredentialSource> luci_credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, luci_oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
-
-  std::string gsutil_oauth_filepath = StringFromEnv("HOME", ".") + "/.boto";
-  std::unique_ptr<CredentialSource> gsutil_credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, gsutil_oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
-
-  return LuciBuildApi(std::move(retrying_http_client), std::move(curl),
-                      std::move(luci_credential_source),
-                      std::move(gsutil_credential_source));
 }
 
 Result<std::optional<Build>> GetBuildHelper(
@@ -303,12 +322,8 @@ Result<Builds> GetBuilds(BuildApi& build_api,
                                        "gki_x86_64-user")),
       .bootloader = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.bootloader_build, "u-boot_crosvm_x86_64")),
-      .android_efi_loader = CF_EXPECT(
-          GetBuildHelper(build_api, build_sources.android_efi_loader_build,
-                         "gbl_efi_dist_and_test")),
       .otatools = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.otatools_build, kDefaultBuildTarget)),
-      .chrome_os = build_sources.chrome_os_build,
   };
   if (!result.otatools) {
     if (result.system) {
@@ -356,8 +371,7 @@ Result<void> SaveConfig(FetcherConfig& config,
   return {};
 }
 
-Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
-                         const Builds& builds,
+Result<void> FetchTarget(BuildApi& build_api, const Builds& builds,
                          const TargetDirectories& target_directories,
                          const DownloadFlags& flags,
                          const bool keep_downloaded_archives,
@@ -548,30 +562,9 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
         {bootloader_filepath}, target_directories.root, kOverrideEntries));
   }
 
-  if (builds.android_efi_loader) {
-    std::string android_efi_loader_target_filepath =
-        target_directories.root + "/android_efi_loader.efi";
-    std::optional<std::string> android_efi_loader_filepath =
-        GetFilepath(*builds.android_efi_loader);
-
-    std::string downloaded_android_efi_loader_filepath =
-        CF_EXPECT(build_api.DownloadFile(
-            *builds.android_efi_loader, target_directories.root,
-            android_efi_loader_filepath.value_or("gbl_x86_64.efi")));
-    CF_EXPECT(RenameFile(downloaded_android_efi_loader_filepath,
-                         android_efi_loader_target_filepath));
-
-    const auto [android_efi_loader_id, android_efi_loader_target] =
-        GetBuildIdAndTarget(*builds.android_efi_loader);
-    CF_EXPECT(config.AddFilesToConfig(
-        FileSource::ANDROID_EFI_LOADER_BUILD, android_efi_loader_id,
-        android_efi_loader_target, {android_efi_loader_target_filepath},
-        target_directories.root, kOverrideEntries));
-  }
-
   if (builds.otatools) {
     std::string otatools_filepath = CF_EXPECT(build_api.DownloadFile(
-        *builds.otatools, target_directories.root, "otatools.zip"));
+        *builds.otatools, target_directories.root, "ota_tools.zip"));
     std::vector<std::string> ota_tools_files = CF_EXPECT(
         ExtractArchiveContents(otatools_filepath, target_directories.otatools,
                                keep_downloaded_archives));
@@ -581,22 +574,6 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
         FileSource::DEFAULT_BUILD, otatools_build_id, otatools_build_target,
         ota_tools_files, target_directories.root));
   }
-
-  if (builds.chrome_os) {
-    auto artifacts_opt =
-        CF_EXPECT(luci_build_api.GetBuildArtifacts(*builds.chrome_os));
-    auto artifacts = CF_EXPECT(std::move(artifacts_opt));
-    std::string archive_name = "chromiumos_test_image.tar.xz";
-    CF_EXPECT(Contains(artifacts.artifact_files, archive_name));
-    auto archive_path = target_directories.root + "/" + archive_name;
-    CF_EXPECT(luci_build_api.DownloadArtifact(artifacts.artifact_link,
-                                              archive_name, archive_path));
-    auto archive_files = CF_EXPECT(ExtractArchiveContents(
-        archive_path, target_directories.chrome_os, keep_downloaded_archives));
-    CF_EXPECT(config.AddFilesToConfig(FileSource::CHROME_OS_BUILD, "", "",
-                                      archive_files, target_directories.root));
-  }
-
   return {};
 }
 
@@ -611,8 +588,6 @@ Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
     BuildApi build_api = CF_EXPECT(GetBuildApi(flags.build_api_flags));
-    LuciBuildApi luci_build_api =
-        CF_EXPECT(GetLuciBuildApi(flags.build_api_flags));
     CF_EXPECT(UpdateTargetsWithBuilds(build_api, targets));
     std::optional<Build> fallback_host_build = std::nullopt;
     if (!targets.empty()) {
@@ -629,8 +604,8 @@ Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
     for (const auto& target : targets) {
       LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
       FetcherConfig config;
-      CF_EXPECT(FetchTarget(build_api, luci_build_api, target.builds,
-                            target.directories, target.download_flags,
+      CF_EXPECT(FetchTarget(build_api, target.builds, target.directories,
+                            target.download_flags,
                             flags.keep_downloaded_archives, config));
       CF_EXPECT(SaveConfig(config, target.directories.root));
       LOG(INFO) << "Completed fetch to \"" << target.directories.root << "\"";
