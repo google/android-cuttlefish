@@ -15,8 +15,9 @@
 
 #include "host/libs/web/credential_source.h"
 
+#include <fcntl.h>
+
 #include <chrono>
-#include <fstream>
 #include <istream>
 #include <memory>
 #include <sstream>
@@ -31,8 +32,6 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/base64.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
@@ -62,6 +61,49 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
   }
   return std::unique_ptr<CredentialSource>(
       new ServiceAccountOauthCredentialSource(std::move(*result)));
+}
+
+Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
+    HttpClient& http_client, const std::string& credential_source,
+    const std::string& oauth_filepath) {
+  std::unique_ptr<CredentialSource> result;
+  if (credential_source == "gce") {
+    result = GceMetadataCredentialSource::Make(http_client);
+  } else if (credential_source == "") {
+    LOG(VERBOSE) << "Probing acloud credentials at " << oauth_filepath;
+    if (FileExists(oauth_filepath)) {
+      std::ifstream stream(oauth_filepath);
+      auto attempt_load =
+          RefreshCredentialSource::FromOauth2ClientFile(http_client, stream);
+      if (attempt_load.ok()) {
+        result.reset(new RefreshCredentialSource(std::move(*attempt_load)));
+      } else {
+        LOG(DEBUG) << "Failed to load acloud credentials: "
+                   << attempt_load.error().FormatForEnv();
+      }
+    } else {
+      LOG(INFO) << "\"" << oauth_filepath
+                << "\" missing, running without credentials";
+    }
+  } else if (!FileExists(credential_source)) {
+    // If the parameter doesn't point to an existing file it must be the
+    // credentials.
+    result = FixedCredentialSource::Make(credential_source);
+  } else {
+    // Read the file only once in case it's a pipe.
+    LOG(DEBUG) << "Attempting to open credentials file \"" << credential_source
+               << "\"";
+    auto file_content =
+        CF_EXPECTF(ReadFileContents(credential_source),
+                   "Failure getting credential file contents from file \"{}\"",
+                   credential_source);
+    if (auto crds = TryParseServiceAccount(http_client, file_content)) {
+      result = std::move(crds);
+    } else {
+      result = FixedCredentialSource::Make(file_content);
+    }
+  }
+  return result;
 }
 
 }  // namespace
@@ -337,48 +379,44 @@ Result<std::string> ServiceAccountOauthCredentialSource::Credential() {
 
 Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
     HttpClient& http_client, const std::string& credential_source,
-    const std::string& oauth_filepath) {
-  std::unique_ptr<CredentialSource> result;
-  if (credential_source == "gce") {
-    result = GceMetadataCredentialSource::Make(http_client);
-  } else if (credential_source == "") {
-    LOG(VERBOSE) << "Probing acloud credentials at " << oauth_filepath;
-    if (FileExists(oauth_filepath)) {
-      std::ifstream stream(oauth_filepath);
-      auto attempt_load =
-          RefreshCredentialSource::FromOauth2ClientFile(http_client, stream);
-      if (attempt_load.ok()) {
-        result.reset(new RefreshCredentialSource(std::move(*attempt_load)));
-      } else {
-        LOG(DEBUG) << "Failed to load acloud credentials: "
-                   << attempt_load.error().FormatForEnv();
-      }
-    } else {
-      LOG(INFO) << "\"" << oauth_filepath
-                << "\" missing, running without credentials";
-    }
-  } else if (!FileExists(credential_source)) {
-    // If the parameter doesn't point to an existing file it must be the
-    // credentials.
-    result = FixedCredentialSource::Make(credential_source);
-  } else {
-    // Read the file only once in case it's a pipe.
-    LOG(DEBUG) << "Attempting to open credentials file \"" << credential_source
-               << "\"";
-    auto file = SharedFD::Open(credential_source, O_RDONLY);
-    CF_EXPECT(file->IsOpen(),
-              "Failed to open credential_source file: " << file->StrError());
-    std::string file_content;
-    auto size = ReadAll(file, &file_content);
-    CF_EXPECT(size >= 0,
-              "Failed to read credentials file: " << file->StrError());
-    if (auto crds = TryParseServiceAccount(http_client, file_content)) {
-      result = std::move(crds);
-    } else {
-      result = FixedCredentialSource::Make(file_content);
-    }
+    const std::string& oauth_filepath, const bool use_gce_metadata,
+    const std::string& credential_filepath,
+    const std::string& service_account_filepath) {
+  const int number_of_set_credentials =
+      !credential_source.empty() + use_gce_metadata +
+      !credential_filepath.empty() + !service_account_filepath.empty();
+  CF_EXPECT_LE(number_of_set_credentials, 1,
+               "At most a single credential option may be used.");
+
+  if (use_gce_metadata) {
+    return GceMetadataCredentialSource::Make(http_client);
   }
-  return result;
+  if (!credential_filepath.empty()) {
+    std::string contents =
+        CF_EXPECTF(ReadFileContents(credential_filepath),
+                   "Failure getting credential file contents from file \"{}\".",
+                   credential_filepath);
+    return FixedCredentialSource::Make(contents);
+  }
+  if (!service_account_filepath.empty()) {
+    std::string contents =
+        CF_EXPECTF(ReadFileContents(service_account_filepath),
+                   "Failure getting service account credential file contents "
+                   "from file \"{}\".",
+                   service_account_filepath);
+    auto service_account_credentials =
+        TryParseServiceAccount(http_client, contents);
+    CF_EXPECTF(service_account_credentials != nullptr,
+               "Unable to parse service account credentials in file \"{}\".  "
+               "File contents: {}",
+               service_account_filepath, contents);
+    return std::move(service_account_credentials);
+  }
+  // use the deprecated credential_source or no value
+  // when this helper is removed its `.acloud2_oauth2.dat` processing should be
+  // moved here
+  return GetCredentialSourceLegacy(http_client, credential_source,
+                                   oauth_filepath);
 }
 
 }  // namespace cuttlefish
