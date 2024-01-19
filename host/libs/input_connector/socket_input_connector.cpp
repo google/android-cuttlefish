@@ -29,6 +29,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
@@ -211,6 +212,7 @@ struct InputDevices {
   InputEventType event_type;
   // TODO (b/186773052): Finding strings in a map for every input event may
   // introduce unwanted latency.
+  std::map<std::string, TouchDevice> multitouch_devices;
   std::map<std::string, TouchDevice> touch_devices;
 
   std::unique_ptr<InputSocket> keyboard;
@@ -246,6 +248,9 @@ InputSocketsEventSink::InputSocketsEventSink(InputDevices& devices,
 }
 
 InputSocketsEventSink::~InputSocketsEventSink() {
+  for (auto& it : input_devices_.multitouch_devices) {
+    it.second.OnDisconnectedSource(this);
+  }
   for (auto& it : input_devices_.touch_devices) {
     it.second.OnDisconnectedSource(this);
   }
@@ -274,9 +279,13 @@ Result<void> InputSocketsEventSink::SendMultiTouchEvent(
   auto buffer = CreateBuffer(input_devices_.event_type, 1 + 7 * slots.size());
   CF_EXPECT(buffer != nullptr, "Failed to allocate input events buffer");
 
-  auto ts_it = input_devices_.touch_devices.find(device_label);
-  CF_EXPECT(ts_it != input_devices_.touch_devices.end(),
-            "Unknown touch device: " << device_label);
+  auto ts_it = input_devices_.multitouch_devices.find(device_label);
+  if (ts_it == input_devices_.multitouch_devices.end()) {
+    for (const auto& slot : slots) {
+      CF_EXPECT(SendTouchEvent(device_label, slot.x, slot.y, down));
+    }
+    return {};
+  }
   auto& ts = ts_it->second;
 
   for (auto& f : slots) {
@@ -381,6 +390,15 @@ InputSocketsConnectorBuilder::InputSocketsConnectorBuilder(InputEventType type)
     : connector_(new InputSocketsConnector(type)) {}
 
 InputSocketsConnectorBuilder::~InputSocketsConnectorBuilder() = default;
+
+void InputSocketsConnectorBuilder::WithMultitouchDevice(
+    const std::string& device_label, SharedFD server) {
+  CHECK(connector_->devices_.multitouch_devices.find(device_label) ==
+        connector_->devices_.multitouch_devices.end())
+      << "Multiple touch devices with same label: " << device_label;
+  connector_->devices_.multitouch_devices.emplace(
+      device_label, std::make_unique<InputSocket>(server));
+}
 
 void InputSocketsConnectorBuilder::WithTouchDevice(
     const std::string& device_label, SharedFD server) {
