@@ -47,6 +47,7 @@ cc_binary {
         "libteeui_hal_support",
         "libutils",
         "libcuttlefish_fs",
+        "libcuttlefish_utils",
     ],
 
     srcs: [
@@ -89,6 +90,7 @@ cc_library {
     static_libs: [
         "libcuttlefish_confui",
         "libcuttlefish_fs",
+        "libcuttlefish_utils",
     ],
     cflags: [
         "-Wall",
