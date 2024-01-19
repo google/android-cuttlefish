@@ -24,15 +24,16 @@
 set -e
 
 usage() {
-  echo "usage: $0 -s head-commit-sha -t /path/to/github_auth_token.txt -b bucket-name -f image-family-name"
+  echo "usage: $0 -s head-commit-sha -t /path/to/github_auth_token.txt -b bucket-name -p project-name -f image-family-name"
 }
 
 commit_sha=
 github_auth_token_filename=
 gce_bucket=
+image_dest_project=
 image_family_name=
 
-while getopts ":hs:t:b:f:" opt; do
+while getopts ":hs:t:p:b:f:" opt; do
   case "${opt}" in
     h)
       usage
@@ -46,6 +47,9 @@ while getopts ":hs:t:b:f:" opt; do
       ;;
     b)
       gce_bucket="${OPTARG}"
+      ;;
+    p)
+      image_dest_project="${OPTARG}"
       ;;
     f)
       image_family_name="${OPTARG}"
@@ -99,4 +103,5 @@ gcloud storage cp image.tar.gz  gs://${gce_bucket}/${name}.tar.gz
 echo "Creating image ..."
 gcloud compute images create ${name} \
   --source-uri gs://${gce_bucket}/${name}.tar.gz \
+  --project ${image_dest_project} \
   --family ${image_family_name}
