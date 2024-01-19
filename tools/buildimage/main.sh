@@ -29,5 +29,6 @@ cp /tmp/debian-11-genericcloud-amd64-20240104-1616.raw ${out_dir}/disk.raw
 
 bash ${script_dir}/install_gce_guest_environment.sh -r ${out_dir}/disk.raw
 bash ${script_dir}/install_cf_packages.sh -r ${out_dir}/disk.raw -p $(pwd)
+bash ${script_dir}/increase_disk_size.sh -r ${out_dir}/disk.raw
 
 tar -czvf image.tar.gz -C ${out_dir} disk.raw
