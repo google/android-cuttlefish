@@ -19,7 +19,6 @@ package {
 
 cc_defaults {
     name: "cvd_send_sms_defaults",
-    cpp_std: "gnu++17",
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
