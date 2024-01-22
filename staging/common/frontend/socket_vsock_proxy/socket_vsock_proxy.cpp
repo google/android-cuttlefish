@@ -161,7 +161,7 @@ static Result<void> ListenEventsAndProxy(int events_fd,
     proxy = std::move(CF_EXPECT(StartProxyAsync(server, client)));
   }
 
-  LOG(DEBUG) << "Start reading evets to start/stop proxying";
+  LOG(DEBUG) << "Start reading events to start/stop proxying";
   while (events->IsOpen()) {
     std::optional<monitor::ReadEventResult> received_event = monitor::ReadEvent(events);
 
