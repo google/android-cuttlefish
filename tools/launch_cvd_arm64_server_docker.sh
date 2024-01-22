@@ -93,7 +93,7 @@ docker_inspect=$(ssh $server "docker inspect --format='{{json .NetworkSettings.P
 docker_port_parser_script='
 import sys, json;
 web_ui_port = int(sys.argv[1])
-max_instances = 40
+max_instances = 100
 num_instance = int(sys.argv[2])
 json_raw=input()
 data = json.loads(json_raw)
