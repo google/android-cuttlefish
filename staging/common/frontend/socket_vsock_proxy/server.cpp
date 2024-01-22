@@ -54,8 +54,8 @@ Result<SharedFD> TcpServer::Start() {
     last_error = server->GetErrno();
 
     LOG(INFO) << "Failed to start TCP server on port: " << port_
-              << " after " << i + 1 << "th attempt (going to have "
-              << retries_count_ << " total attempts" << "). Error: " << last_error;
+              << " after attempt #" << i + 1 << " (going to have "
+              << retries_count_ << " total attempts). Error: " << last_error;
 
     std::this_thread::sleep_for(retries_delay_);
   }
@@ -105,4 +105,4 @@ std::string DupServer::Describe() const {
 }
 
 }
-}
+}  // namespace cuttlefish
