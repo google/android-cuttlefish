@@ -18,6 +18,7 @@
 #include <fcntl.h>
 
 #include <chrono>
+#include <fstream>
 #include <istream>
 #include <memory>
 #include <sstream>
