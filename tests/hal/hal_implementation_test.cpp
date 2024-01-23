@@ -374,6 +374,8 @@ static std::vector<VersionedAidlPackage> allAidlManifestInterfaces() {
 
 TEST(Hal, AllAidlInterfacesAreInAosp) {
   if (!kAidlUseUnfrozen) GTEST_SKIP() << "Not valid in 'next' configuration";
+  if (getDeviceType() != DeviceType::PHONE)
+    GTEST_SKIP() << "Test only supports phones right now";
   for (const auto& package : allAidlManifestInterfaces()) {
     EXPECT_TRUE(isAospAidlInterface(package.name))
         << "This device should only have AOSP interfaces, not: "
@@ -388,6 +390,8 @@ struct AidlPackageCheck {
 
 TEST(Hal, AidlInterfacesImplemented) {
   if (!kAidlUseUnfrozen) GTEST_SKIP() << "Not valid in 'next' configuration";
+  if (getDeviceType() != DeviceType::PHONE)
+    GTEST_SKIP() << "Test only supports phones right now";
   std::vector<VersionedAidlPackage> manifest = allAidlManifestInterfaces();
   std::vector<VersionedAidlPackage> thoughtMissing = kKnownMissingAidl;
 
