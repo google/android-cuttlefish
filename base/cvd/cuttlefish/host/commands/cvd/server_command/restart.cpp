@@ -40,8 +40,8 @@
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
-#include "host/libs/web/android_build_api.h"
-#include "host/libs/web/android_build_string.h"
+#include "host/libs/web/build_api.h"
+#include "host/libs/web/build_string.h"
 
 namespace cuttlefish {
 namespace {
@@ -148,9 +148,11 @@ class CvdRestartHandler : public CvdServerHandler {
     server_.Stop();
 
     CF_EXPECT(request.Credentials() != std::nullopt);
-    auto json_string = CF_EXPECT(SerializedInstanceDatabaseToString());
+    const uid_t client_uid = request.Credentials()->uid;
+    auto json_string =
+        CF_EXPECT(SerializedInstanceDatabaseToString(client_uid));
     std::optional<SharedFD> mem_fd;
-    if (instance_manager_.HasInstanceGroups()) {
+    if (instance_manager_.HasInstanceGroups(client_uid)) {
       mem_fd = CF_EXPECT(CreateMemFileWithSerializedDb(json_string));
       CF_EXPECT(mem_fd != std::nullopt && (*mem_fd)->IsOpen(),
                 "mem file not open?");
@@ -250,8 +252,9 @@ class CvdRestartHandler : public CvdServerHandler {
     return new_exe;
   }
 
-  Result<std::string> SerializedInstanceDatabaseToString() {
-    auto db_json = CF_EXPECT(instance_manager_.Serialize(),
+  Result<std::string> SerializedInstanceDatabaseToString(
+      const uid_t client_uid) {
+    auto db_json = CF_EXPECT(instance_manager_.Serialize(client_uid),
                              "Failed to serialized instance database");
     return db_json.toStyledString();
   }
