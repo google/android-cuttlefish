@@ -222,8 +222,11 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
   std::string oauth_filepath =
       StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
   std::unique_ptr<CredentialSource> credential_source =
-      CF_EXPECT(GetCredentialSource(*retrying_http_client,
-                                    flags.credential_source, oauth_filepath));
+      CF_EXPECT(GetCredentialSource(
+          *retrying_http_client, flags.credential_source, oauth_filepath,
+          flags.credential_flags.use_gce_metadata,
+          flags.credential_flags.credential_filepath,
+          flags.credential_flags.service_account_filepath));
 
   return BuildApi(std::move(retrying_http_client), std::move(curl),
                   std::move(credential_source), flags.api_key,

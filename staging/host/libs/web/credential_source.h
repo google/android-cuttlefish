@@ -111,5 +111,7 @@ class ServiceAccountOauthCredentialSource : public CredentialSource {
 
 Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
     HttpClient& http_client, const std::string& credential_source,
-    const std::string& oauth_filepath);
+    const std::string& oauth_filepath, const bool use_gce_metadata,
+    const std::string& credential_filepath,
+    const std::string& service_account_filepath);
 }
