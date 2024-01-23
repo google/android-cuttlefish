@@ -769,7 +769,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       break;
     }
     default:
-      return CF_ERR("Unexpected net mode " << instance.external_network_mode());
+      return CF_ERRF("Unexpected net mode {}",
+                     instance.external_network_mode());
   }
 
   // The ordering of virtio-net devices is important. Make sure any change here
