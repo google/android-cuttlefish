@@ -23,8 +23,9 @@ cc_library {
         "channel.cpp",
     ],
     shared_libs: [
-        "liblog",
         "libbase",
+        "libcuttlefish_utils_result",
+        "liblog",
     ],
     target: {
         linux: {
