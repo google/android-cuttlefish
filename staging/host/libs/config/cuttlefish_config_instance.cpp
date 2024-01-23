@@ -457,7 +457,7 @@ ExternalNetworkMode CuttlefishConfig::InstanceSpecific::external_network_mode()
 }
 void CuttlefishConfig::MutableInstanceSpecific::set_external_network_mode(
     ExternalNetworkMode mode) {
-  (*Dictionary())[kExternalNetworkMode] = fmt::format("{}", mode);
+  (*Dictionary())[kExternalNetworkMode] = (std::stringstream() << mode).str();
 }
 
 std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
