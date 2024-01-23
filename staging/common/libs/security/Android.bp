@@ -29,6 +29,7 @@ cc_library {
     shared_libs: [
         "libbase",
         "libcuttlefish_transport",
+        "libcuttlefish_utils_result",
         "libgatekeeper",
         "libkeymaster_messages",
         "liblog",
@@ -70,6 +71,7 @@ cc_test {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
+        "libcuttlefish_utils_result",
         "libcuttlefish_security",
         "libgatekeeper",
         "libkeymaster_messages",
