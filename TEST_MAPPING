@@ -5,6 +5,9 @@
     },
     {
       "name": "RebootRecoveryTest"
+    },
+    {
+      "name": "SnapshotTest"
     }
   ],
   "presubmit": [
