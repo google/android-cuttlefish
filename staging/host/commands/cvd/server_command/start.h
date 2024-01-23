@@ -25,8 +25,6 @@
 
 namespace cuttlefish {
 
-Result<bool> IsDaemonModeFlag(const cvd_common::Args& args);
-
 std::unique_ptr<CvdServerHandler> NewCvdStartCommandHandler(
     InstanceManager& instance_manager,
     HostToolTargetManager& host_tool_target_manager,
