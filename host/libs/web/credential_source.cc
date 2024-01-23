@@ -16,6 +16,7 @@
 #include "host/libs/web/credential_source.h"
 
 #include <chrono>
+#include <fstream>
 #include <istream>
 #include <memory>
 #include <sstream>
