@@ -45,6 +45,7 @@ bool RemoveFile(const std::string& file);
 Result<std::string> RenameFile(const std::string& current_filepath,
                                const std::string& target_filepath);
 std::string ReadFile(const std::string& file);
+Result<std::string> ReadFileContents(const std::string& filepath);
 bool MakeFileExecutable(const std::string& path);
 std::chrono::system_clock::time_point FileModificationTime(const std::string& path);
 std::string cpp_dirname(const std::string& str);

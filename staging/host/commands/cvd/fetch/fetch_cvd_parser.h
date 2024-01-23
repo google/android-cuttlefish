@@ -28,6 +28,9 @@
 
 namespace cuttlefish {
 
+inline constexpr bool kDefaultUseGceMetadata = false;
+inline constexpr char kDefaultCredentialFilepath[] = "";
+inline constexpr char kDefaultServiceAccountFilepath[] = "";
 inline constexpr char kDefaultApiKey[] = "";
 inline constexpr char kDefaultCredentialSource[] = "";
 inline constexpr std::chrono::seconds kDefaultWaitRetryPeriod =
@@ -47,8 +50,15 @@ inline constexpr bool kDefaultKeepDownloadedArchives = false;
 inline constexpr char kDefaultBuildTarget[] =
     "aosp_cf_x86_64_phone-trunk_staging-userdebug";
 
+struct CredentialFlags {
+  bool use_gce_metadata = kDefaultUseGceMetadata;
+  std::string credential_filepath = kDefaultCredentialFilepath;
+  std::string service_account_filepath = kDefaultServiceAccountFilepath;
+};
+
 struct BuildApiFlags {
   std::string api_key = kDefaultApiKey;
+  CredentialFlags credential_flags;
   std::string credential_source = kDefaultCredentialSource;
   std::chrono::seconds wait_retry_period = kDefaultWaitRetryPeriod;
   bool external_dns_resolver = kDefaultExternalDnsResolver;
