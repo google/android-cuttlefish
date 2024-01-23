@@ -49,7 +49,8 @@ struct RunServerParam {
   std::optional<bool> acloud_translator_optout;
   bool restarted_in_process;
 };
-Result<void> RunServer(const RunServerParam& params);
+// must move to ensure the clarity of the ownership
+Result<void> RunServer(RunServerParam&& params);
 
 struct ParseResult {
   SharedFD internal_server_fd;
