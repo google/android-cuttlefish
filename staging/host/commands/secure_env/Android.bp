@@ -70,6 +70,7 @@ cc_defaults {
             cflags: [
                 "-DNOGDI",
             ],
+            static_libs: ["libcuttlefish_utils_result"],
         },
     },
 }
