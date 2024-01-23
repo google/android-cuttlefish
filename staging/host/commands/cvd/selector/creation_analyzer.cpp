@@ -101,7 +101,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
             "Instance IDs were specified, so should be one or more.");
   for (const auto id : requested_instance_ids) {
     CF_EXPECT(IsIdAvailable(instance_database_, id),
-              "instance ID #" << id << " is requeested but not available.");
+              "instance ID #" << id << " is requested but not available.");
   }
 
   std::vector<std::string> per_instance_names;

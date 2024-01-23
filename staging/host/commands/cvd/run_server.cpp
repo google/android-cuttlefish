@@ -39,7 +39,7 @@ bool IsServerModeExpected(const std::string& exec_file) {
   return exec_file == kServerExecPath;
 }
 
-Result<void> RunServer(const RunServerParam& params) {
+Result<void> RunServer(RunServerParam&& params) {
   CF_EXPECTF(params.internal_server_fd->IsOpen(),
              "Expected to be in server mode, but didn't get a server fd: {}",
              params.internal_server_fd->StrError());
@@ -71,9 +71,9 @@ Result<void> RunServer(const RunServerParam& params) {
     LOG(ERROR) << "Memory carryover file is supposed to be open but is not.";
   }
   CF_EXPECT(CvdServerMain(
-      {.internal_server_fd = params.internal_server_fd,
-       .carryover_client_fd = params.carryover_client_fd,
-       .memory_carryover_fd = params.memory_carryover_fd,
+      {.internal_server_fd = std::move(params.internal_server_fd),
+       .carryover_client_fd = std::move(params.carryover_client_fd),
+       .memory_carryover_fd = std::move(params.memory_carryover_fd),
        .acloud_translator_optout = params.acloud_translator_optout,
        .server_logger = std::move(server_logger),
        .scoped_logger = std::move(run_server_logger),
