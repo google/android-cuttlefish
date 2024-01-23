@@ -1656,9 +1656,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                             FLAGS_pica_instance_num <= 0);
 
     // TODO(b/288987294) Remove this when separating environment is done
-    instance.set_start_wmediumd_instance(is_first_instance && start_wmediumd);
+    bool instance_start_wmediumd = is_first_instance && start_wmediumd;
+    instance.set_start_wmediumd_instance(instance_start_wmediumd);
 
-    if (!FLAGS_ap_rootfs_image.empty() && !FLAGS_ap_kernel_image.empty() && start_wmediumd) {
+    if (!FLAGS_ap_rootfs_image.empty() && !FLAGS_ap_kernel_image.empty() &&
+        const_instance.start_wmediumd_instance()) {
       // TODO(264537774): Ubuntu grub modules / grub monoliths cannot be used to boot
       // 64 bit kernel using 32 bit u-boot / grub.
       // Enable this code back after making sure it works across all popular environments
