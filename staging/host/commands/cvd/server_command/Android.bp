@@ -59,18 +59,3 @@ cc_library_host_static {
     ],
     defaults: ["cvd_lib_defaults"],
 }
-
-cc_test_host {
-    name: "libcvd_sub_commands_test",
-    srcs: [
-        "start_test.cpp",
-    ],
-    test_options: {
-        unit_test: true,
-    },
-    static_libs: [
-        "libcvd_sub_commands",
-        "libgmock",
-    ],
-    defaults: ["cvd_and_fetch_cvd_defaults"],
-}
