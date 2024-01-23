@@ -44,8 +44,10 @@ cc_library {
         "libbase",
     ],
     shared_libs: [
+        "libcuttlefish_utils",
         "libcuttlefish_run_cvd_proto",
-	"libprotobuf-cpp-full",
+        "liblog",
+        "libprotobuf-cpp-full",
     ],
     target: {
         darwin: {
