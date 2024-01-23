@@ -976,3 +976,5 @@ extern const char* const kHwComposerRanchu;
 extern const char* const kHwComposerNone;
 }  // namespace cuttlefish
 
+template <>
+struct fmt::formatter<cuttlefish::ExternalNetworkMode> : ostream_formatter {};
