@@ -77,7 +77,7 @@ class CvdServer {
         in_memory_data_fd;  // fd to carry over in-memory data
     bool verbose;
   };
-  Result<void> Exec(const ExecParam&);
+  Result<void> Exec(ExecParam&&);
   Result<void> AcceptCarryoverClient(SharedFD client);
   void Stop();
   void Join();
