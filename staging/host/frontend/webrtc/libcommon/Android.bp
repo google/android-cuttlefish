@@ -47,6 +47,7 @@ cc_library {
     ],
     shared_libs: [
         "libbase",
+        "libcuttlefish_utils",
         "libcrypto",
         "libjsoncpp",
         "libssl",

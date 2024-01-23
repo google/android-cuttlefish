@@ -26,6 +26,7 @@ cc_library {
     ],
     shared_libs: [
         "libbase",
+        "libcuttlefish_utils_result",
         "liblog",
     ],
     target: {
