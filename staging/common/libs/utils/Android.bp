@@ -74,6 +74,7 @@ cc_library {
             ],
         },
     },
+    whole_static_libs: ["libcuttlefish_utils_result"],
     defaults: ["cuttlefish_host"],
     product_available: true,
 }
@@ -126,3 +127,20 @@ cc_library {
     include_dirs: ["device/google/cuttlefish"],
     export_include_dirs: ["."],
 }
+
+cc_library {
+    name: "libcuttlefish_utils_result",
+    product_available: true,
+    srcs: ["result.cpp"],
+    static_libs: ["libbase"],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+        windows: {
+            enabled: true,
+        },
+    },
+    defaults: ["cuttlefish_host"],
+}
+
