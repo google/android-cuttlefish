@@ -18,6 +18,7 @@
 package main
 
 const (
+	// Build ID relies on aosp-main
 	defaultCVDBinAndroidBuildID     = "11219993"
 	defaultCVDBinAndroidBuildTarget = "aosp_cf_x86_64_phone-trunk_staging-userdebug"
 )
