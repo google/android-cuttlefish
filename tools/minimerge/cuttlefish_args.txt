@@ -261,7 +261,6 @@
 --map=host/commands/cvd/server_client.cpp:cvd/cuttlefish/host/commands/cvd/server_client.cpp
 --map=host/commands/cvd/server_client.h:cvd/cuttlefish/host/commands/cvd/server_client.h
 --map=host/commands/cvd/server_command/acloud.cpp:cvd/cuttlefish/host/commands/cvd/server_command/acloud.cpp
---map=host/commands/cvd/server_command/acloud.h:cvd/cuttlefish/host/commands/cvd/server_command/acloud.h
 --map=host/commands/cvd/server_command/acloud_command.cpp:cvd/cuttlefish/host/commands/cvd/server_command/acloud_command.cpp
 --map=host/commands/cvd/server_command/acloud_command.h:cvd/cuttlefish/host/commands/cvd/server_command/acloud_command.h
 --map=host/commands/cvd/server_command/acloud_common.cpp:cvd/cuttlefish/host/commands/cvd/server_command/acloud_common.cpp
