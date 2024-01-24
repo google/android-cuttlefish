@@ -451,7 +451,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   if (config.virtio_mac80211_hwsim() &&
       !environment.vhost_user_mac80211_hwsim().empty()) {
-    crosvm_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
+    crosvm_cmd.Cmd().AddParameter("--vhost-user=mac80211-hwsim,socket=",
                                   environment.vhost_user_mac80211_hwsim());
   }
 
@@ -583,7 +583,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     if (instance.vhost_user_vsock()) {
       auto param = fmt::format("/tmp/vhost{}.socket,max-queue-size=256",
                                instance.vsock_guest_cid());
-      crosvm_cmd.Cmd().AddParameter("--vhost-user-vsock=", param);
+      crosvm_cmd.Cmd().AddParameter("--vhost-user=vsock,socket=", param);
     } else {
       crosvm_cmd.Cmd().AddParameter("--cid=", instance.vsock_guest_cid());
     }
