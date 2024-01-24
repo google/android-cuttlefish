@@ -18,6 +18,7 @@
 package main
 
 const (
-	defaultCVDBinAndroidBuildID     = "11219993"
+	// Build ID relies on aosp-main-throttled
+	defaultCVDBinAndroidBuildID     = "11220041"
 	defaultCVDBinAndroidBuildTarget = "aosp_cf_arm64_only_phone-trunk_staging-userdebug"
 )
