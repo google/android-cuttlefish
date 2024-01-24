@@ -1140,6 +1140,10 @@ std::string CuttlefishConfig::InstanceSpecific::restore_pipe_name() const {
   return AbsolutePath(PerInstanceInternalPath("restore-pipe"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::restore_adbd_pipe_name() const {
+  return AbsolutePath(PerInstanceInternalPath("restore-pipe-adbd"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::access_kregistry_path() const {
   return AbsolutePath(PerInstancePath("access-kregistry"));
 }
