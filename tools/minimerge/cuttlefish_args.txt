@@ -75,8 +75,6 @@
 --map=host/commands/cvd/acloud/data/default.config:cvd/cuttlefish/host/commands/cvd/acloud/data/default.config
 --map=host/commands/cvd/acloud_config.cpp:cvd/cuttlefish/host/commands/cvd/acloud/config.cpp
 --map=host/commands/cvd/acloud_config.h:cvd/cuttlefish/host/commands/cvd/acloud/config.h
---map=host/commands/cvd/build_api.cpp:cvd/cuttlefish/host/commands/cvd/build_api.cpp
---map=host/commands/cvd/build_api.h:cvd/cuttlefish/host/commands/cvd/build_api.h
 --map=host/commands/cvd/client.cpp:cvd/cuttlefish/host/commands/cvd/client.cpp
 --map=host/commands/cvd/client.h:cvd/cuttlefish/host/commands/cvd/client.h
 --map=host/commands/cvd/command_sequence.cpp:cvd/cuttlefish/host/commands/cvd/command_sequence.cpp
