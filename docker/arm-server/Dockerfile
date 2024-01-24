@@ -10,7 +10,7 @@ RUN set -x
 RUN apt update
 RUN apt install -y --no-install-recommends git
 RUN apt install -y --no-install-recommends ca-certificates && update-ca-certificates
-RUN apt install -y --no-install-recommends dpkg-dev build-essential:native config-package-dev debhelper-compat golang-1.13 libprotobuf-dev protobuf-compiler curl
+RUN apt install -y --no-install-recommends dpkg-dev build-essential:native config-package-dev debhelper-compat golang-1.13 libprotobuf-dev protobuf-compiler curl sudo
 RUN apt install -y --no-install-recommends gcc-10
 
 WORKDIR /root
