@@ -114,7 +114,7 @@ static Result<std::optional<std::int32_t>> GflagsBaseInstanceFlag() {
     return {};
   }
   CF_EXPECT(info.type == "int32");
-  return *reinterpret_cast<const std::int32_t*>(info.flag_ptr);
+  return std::atoi(info.current_value.c_str());
 }
 
 // Failed result: The flag was specified in an invalid way
@@ -129,7 +129,7 @@ static Result<std::optional<std::int32_t>> GflagsNumInstancesFlag() {
     return {};
   }
   CF_EXPECT(info.type == "int32");
-  return *reinterpret_cast<const std::int32_t*>(info.flag_ptr);
+  return std::atoi(info.current_value.c_str());
 }
 
 // Failed result: The flag was specified in an invalid way
@@ -144,7 +144,7 @@ static Result<std::vector<std::int32_t>> GflagsInstanceNumsFlag() {
     return {};
   }
   CF_EXPECT(info.type == "string");
-  auto contents = *reinterpret_cast<const std::string*>(info.flag_ptr);
+  auto contents = info.current_value;
   return CF_EXPECT(ParseInstanceNums(contents));
 }
 
