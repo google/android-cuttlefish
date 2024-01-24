@@ -19,8 +19,6 @@
 #include <memory>
 #include <string>
 
-#include <gtest/gtest.h>
-
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/constant_reference.h"
@@ -38,9 +36,15 @@ class InstanceDatabase;
  * Needs design changes to support both Remote Instances
  */
 class LocalInstanceGroup {
-  friend InstanceDatabase;
-
  public:
+  struct InstanceGroupParam {
+    std::string group_name;
+    std::string home_dir;
+    std::string host_artifacts_path;
+    std::string product_out_path;
+    TimeStamp start_time;
+  };
+  LocalInstanceGroup(const InstanceGroupParam& param);
   LocalInstanceGroup(const LocalInstanceGroup& src);
   LocalInstanceGroup& operator=(const LocalInstanceGroup& src);
 
@@ -86,14 +90,6 @@ class LocalInstanceGroup {
   static constexpr const char kJsonParent[] = "Parent Group";
 
  private:
-  struct InstanceGroupParam {
-    std::string group_name;
-    std::string home_dir;
-    std::string host_artifacts_path;
-    std::string product_out_path;
-    TimeStamp start_time;
-  };
-  LocalInstanceGroup(const InstanceGroupParam& param);
   // Eventually copies the instances of a src to *this
   Set<std::unique_ptr<LocalInstance>> CopyInstances(
       const Set<std::unique_ptr<LocalInstance>>& src_instances);
@@ -108,17 +104,6 @@ class LocalInstanceGroup {
   std::string group_name_;
   TimeStamp start_time_;
   Set<std::unique_ptr<LocalInstance>> instances_;
-
-  /*
-   * Expose constructor to the tests in InstanceRecord unit test suite.
-   *
-   * To create InstanceRecords, we should create InstanceGroup first.
-   */
-  FRIEND_TEST(CvdInstanceRecordUnitTest, Fields);
-  FRIEND_TEST(CvdInstanceRecordUnitTest, Copy);
-
-  friend class CvdInstanceGroupUnitTest;
-  friend class CvdInstanceGroupSearchUnitTest;
 };
 
 }  // namespace selector
