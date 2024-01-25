@@ -56,8 +56,10 @@ NvramConfig* NvramConfig::BuildConfigImpl(size_t num_instances, int sim_type) {
     } else {
       auto loaded = ret->LoadFromFile(nvram_config_path.c_str());
       if (!loaded) {
-        delete ret;
-        return nullptr;
+        /** Bug: (b/315167296)
+         * Fall back to default nvram config if LoadFromFile fails.
+         */
+        ret->InitDefaultNvramConfig();
       }
     }
   }
