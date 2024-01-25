@@ -43,7 +43,7 @@ ModemSimulator::~ModemSimulator() {
 void ModemSimulator::LoadNvramConfig() {
   auto nvram_config = NvramConfig::Get();
   if (!nvram_config) {
-    LOG(ERROR) << "Failed to obtain nvram config singleton";
+    LOG(FATAL) << "Failed to obtain nvram config singleton";
     return;
   }
 }
