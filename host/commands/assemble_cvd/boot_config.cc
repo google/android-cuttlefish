@@ -108,6 +108,8 @@ size_t WriteEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
       WriteAndroidEnvironment(env, instance);
       break;
     case CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader:
+      WriteEFIEnvironment(instance, 1, env);
+      break;
     case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs:
       WriteEFIEnvironment(instance, 2, env);
       break;
