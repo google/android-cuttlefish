@@ -316,8 +316,13 @@ PRODUCT_PACKAGES += $(LOCAL_CONTEXTHUB_PRODUCT_PACKAGE)
 #
 # Drm HAL
 #
+ifeq ($(TARGET_USE_LAZY_CLEARKEY),true)
+PRODUCT_PACKAGES += \
+    android.hardware.drm-service-lazy.clearkey
+else
 PRODUCT_PACKAGES += \
     android.hardware.drm@latest-service.clearkey
+endif
 
 -include vendor/widevine/libwvdrmengine/apex/device/device.mk
 
