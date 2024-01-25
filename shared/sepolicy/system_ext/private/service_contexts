@@ -1,1 +1,1 @@
-android.media.audio.IHalAdapterVendorExtension/default               u:object_r:hal_audio_vendor_parameter_parser_service:s0
+android.media.audio.IHalAdapterVendorExtension/default u:object_r:audio_vendor_parameter_parser_service:s0

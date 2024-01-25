@@ -1,1 +1,1 @@
-type hal_audio_vendor_parameter_parser_service, service_manager_type;
+type audio_vendor_parameter_parser_service, service_manager_type;
