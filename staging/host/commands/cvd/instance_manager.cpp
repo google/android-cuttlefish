@@ -25,7 +25,7 @@
 #include <android-base/file.h>
 #include <android-base/scopeguard.h>
 #include <fmt/format.h>
-#include <json/value.h>
+#include <json/json.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
