@@ -49,11 +49,13 @@ namespace webrtc_streaming {
 namespace {
 
 constexpr auto kStreamIdField = "stream_id";
+constexpr auto kLabelField = "label";
 constexpr auto kXResField = "x_res";
 constexpr auto kYResField = "y_res";
 constexpr auto kDpiField = "dpi";
 constexpr auto kIsTouchField = "is_touch";
 constexpr auto kDisplaysField = "displays";
+constexpr auto kTouchpadsField = "touchpads";
 constexpr auto kAudioStreamsField = "audio_streams";
 constexpr auto kHardwareField = "hardware";
 constexpr auto kOpenwrtDeviceIdField = "openwrt_device_id";
@@ -89,6 +91,11 @@ struct DisplayDescriptor {
   int dpi;
   bool touch_enabled;
   rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source;
+};
+
+struct TouchpadDescriptor {
+  int width;
+  int height;
 };
 
 struct ControlPanelButtonDescriptor {
@@ -168,6 +175,7 @@ class Streamer::Impl : public ServerConnectionObserver,
   std::unique_ptr<rtc::Thread> worker_thread_;
   std::unique_ptr<rtc::Thread> signal_thread_;
   std::map<std::string, DisplayDescriptor> displays_;
+  std::map<std::string, TouchpadDescriptor> touchpads_;
   std::map<std::string, rtc::scoped_refptr<AudioTrackSourceImpl>>
       audio_sources_;
   std::map<int, std::shared_ptr<ClientHandler>> clients_;
@@ -284,6 +292,20 @@ bool Streamer::RemoveDisplay(const std::string& label) {
         }
 
         impl_->displays_.erase(label);
+        return true;
+      });
+}
+
+bool Streamer::AddTouchpad(const std::string& label, int width, int height) {
+  // Usually called from an application thread
+  return impl_->signal_thread_->BlockingCall(
+      [this, &label, width, height]() -> bool {
+        if (impl_->touchpads_.count(label)) {
+          LOG(ERROR) << "Touchpad with same label already exists: " << label;
+          return false;
+        }
+        impl_->touchpads_[label] = {width, height};
+
         return true;
       });
 }
@@ -406,6 +428,16 @@ void Streamer::Impl::OnOpen() {
 
     device_info[kGroupIdField] = config_.group_id;
     device_info[kDisplaysField] = displays;
+
+    Json::Value touchpads(Json::ValueType::arrayValue);
+    for (const auto& [label, touchpad_desc] : touchpads_) {
+      Json::Value touchpad;
+      touchpad[kXResField] = touchpad_desc.width;
+      touchpad[kYResField] = touchpad_desc.height;
+      touchpad[kLabelField] = label;
+      touchpads.append(touchpad);
+    }
+    device_info[kTouchpadsField] = touchpads;
     Json::Value audio_streams(Json::ValueType::arrayValue);
     for (auto& entry : audio_sources_) {
       Json::Value audio;
