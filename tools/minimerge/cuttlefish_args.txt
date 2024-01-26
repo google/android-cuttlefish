@@ -41,6 +41,7 @@
 --map=common/libs/utils/proc_file_utils_test.cpp:cvd/cuttlefish/common/libs/utils/proc_file_utils_test.cpp
 --map=common/libs/utils/proto.h:cvd/cuttlefish/common/libs/utils/proto.h
 --map=common/libs/utils/result.h:cvd/cuttlefish/common/libs/utils/result.h
+--map=common/libs/utils/result.cpp:cvd/cuttlefish/common/libs/utils/result.cpp
 --map=common/libs/utils/result_matchers.h:cvd/cuttlefish/common/libs/utils/result_matchers.h
 --map=common/libs/utils/result_test.cpp:cvd/cuttlefish/common/libs/utils/result_test.cpp
 --map=common/libs/utils/shared_fd_flag.cpp:cvd/cuttlefish/common/libs/utils/shared_fd_flag.cpp
