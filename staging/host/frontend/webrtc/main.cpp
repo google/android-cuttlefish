@@ -17,6 +17,7 @@
 #include <memory>
 
 #include <android-base/logging.h>
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
@@ -79,6 +80,8 @@ using cuttlefish::webrtc_streaming::StreamerConfig;
 using cuttlefish::webrtc_streaming::VideoSink;
 
 constexpr auto kOpewnrtWanIpAddressName = "wan_ipaddr";
+constexpr auto kTouchscreenPrefix = "display_";
+constexpr auto kTouchpadPrefix = "touch_";
 
 class CfOperatorObserver
     : public cuttlefish::webrtc_streaming::OperatorObserver {
@@ -130,14 +133,27 @@ int main(int argc, char** argv) {
   auto control_socket = cuttlefish::SharedFD::Dup(FLAGS_command_fd);
   close(FLAGS_command_fd);
 
+  auto cvd_config = cuttlefish::CuttlefishConfig::Get();
+  auto instance = cvd_config->ForDefaultInstance();
+
   cuttlefish::InputSocketsConnectorBuilder inputs_builder(
       FLAGS_write_virtio_input ? cuttlefish::InputEventType::Virtio
                                : cuttlefish::InputEventType::Evdev);
-  auto display_counter = 0;
-  for (const auto& touch_fd_str : android::base::Split(FLAGS_touch_fds, ",")) {
-    auto touch_fd = std::stoi(touch_fd_str);
-    auto display_label = "display_" + std::to_string(display_counter++);
-    inputs_builder.WithTouchDevice(display_label,
+
+  const auto display_count = instance.display_configs().size();
+  const auto touch_fds = android::base::Split(FLAGS_touch_fds, ",");
+  CHECK(touch_fds.size() == display_count + instance.touchpad_configs().size())
+      << "Number of touch FDs does not match the number of configured displays "
+         "and touchpads";
+  for (int i = 0; i < touch_fds.size(); i++) {
+    int touch_fd;
+    CHECK(android::base::ParseInt(touch_fds[i], &touch_fd))
+        << "Invalid touch_fd: " << touch_fds[i];
+    // Displays are listed first, then touchpads
+    auto label_prefix =
+        i < display_count ? kTouchscreenPrefix : kTouchpadPrefix;
+    auto device_idx = i < display_count ? i : i - display_count;
+    inputs_builder.WithTouchDevice(label_prefix + std::to_string(device_idx),
                                    cuttlefish::SharedFD::Dup(touch_fd));
     close(touch_fd);
   }
@@ -159,9 +175,6 @@ int main(int argc, char** argv) {
   auto kernel_log_events_client =
       cuttlefish::SharedFD::Dup(FLAGS_kernel_log_events_fd);
   close(FLAGS_kernel_log_events_fd);
-
-  auto cvd_config = cuttlefish::CuttlefishConfig::Get();
-  auto instance = cvd_config->ForDefaultInstance();
 
   cuttlefish::confui::PipeConnectionPair conf_ui_comm_fd_pair{
       .from_guest_ = cuttlefish::SharedFD::Dup(FLAGS_confui_out_fd),
@@ -244,6 +257,13 @@ int main(int argc, char** argv) {
   }
 
   observer_factory->SetDisplayHandler(display_handler);
+
+  const auto touchpad_configs = instance.touchpad_configs();
+  for (int i = 0; i < touchpad_configs.size(); i++) {
+    streamer->AddTouchpad(kTouchpadPrefix + std::to_string(i),
+                          touchpad_configs[i].width,
+                          touchpad_configs[i].height);
+  }
 
   streamer->SetHardwareSpec("CPUs", instance.cpus());
   streamer->SetHardwareSpec("RAM", std::to_string(instance.memory_mb()) + " mb");
