@@ -90,8 +90,8 @@ Result<std::unique_ptr<ArgumentsLexer>> ArgumentsLexerBuilder::Build(
 
 ArgumentsLexer::ArgumentsLexer(FlagPatterns&& flag_patterns)
     : flag_patterns_{std::move(flag_patterns)} {
-  valid_bool_values_in_lower_cases_ = std::move(
-      std::unordered_set<std::string>{"true", "false", "yes", "no", "y", "n"});
+  valid_bool_values_in_lower_cases_ =
+      std::unordered_set<std::string>{"true", "false", "yes", "no", "y", "n"};
 }
 
 bool ArgumentsLexer::Registered(const std::string& flag_string,
