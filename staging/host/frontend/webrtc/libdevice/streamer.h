@@ -87,6 +87,8 @@ class Streamer {
                                         bool touch_enabled);
   bool RemoveDisplay(const std::string& label);
 
+  bool AddTouchpad(const std::string& label, int width, int height);
+
   void SetHardwareSpec(std::string key, std::string value);
 
   template <typename V>
