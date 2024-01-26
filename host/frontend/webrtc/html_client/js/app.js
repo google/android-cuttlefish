@@ -882,6 +882,48 @@ class DeviceControlApp {
         .forEach(b => b.disabled = true);
   }
 
+  #initializeTouchpads() {
+    const touchpadListElem = document.getElementById("touchpad-list");
+    const touchpadElementContainer = touchpadListElem.querySelector(".touchpads");
+    const touchpadSelectorContainer = touchpadListElem.querySelector(".selectors");
+    const touchpads = this.#deviceConnection.description.touchpads;
+
+    let setActiveTouchpad = (tab_touchpad_id, touchpad_num) => {
+      const touchPadElem = document.getElementById(tab_touchpad_id);
+      const tabButtonElem = document.getElementById("touch_button_" + touchpad_num);
+
+      touchpadElementContainer.querySelectorAll(".selected").forEach(e => e.classList.remove("selected"));
+      touchpadSelectorContainer.querySelectorAll(".selected").forEach(e => e.classList.remove("selected"));
+
+      touchPadElem.classList.add("selected");
+      tabButtonElem.classList.add("selected");
+    };
+
+    for (let i = 0; i < touchpads.length; i++) {
+      const touchpad = touchpads[i];
+
+      let touchPadElem = document.createElement("div");
+      touchPadElem.classList.add("touchpad");
+      touchPadElem.style.aspectRatio = touchpad.x_res / touchpad.y_res;
+      touchPadElem.id = touchpad.label;
+      touchpadElementContainer.appendChild(touchPadElem);
+
+      let tabButtonElem = document.createElement("button");
+      tabButtonElem.id = "touch_button_" + i;
+      tabButtonElem.innerHTML = "Touchpad " + i;
+      tabButtonElem.class = "touchpad-tab-button"
+      tabButtonElem.onclick = () => {
+        setActiveTouchpad(touchpad.label, i);
+      };
+      touchpadSelectorContainer.appendChild(tabButtonElem);
+    }
+
+    if (touchpads.length > 0) {
+      document.getElementById("touchpad-modal-button").style.display = "block";
+      setActiveTouchpad(touchpads[0].label, 0);
+    }
+  }
+
   #onDeviceDisplayLoaded() {
     if (!this.#adbConnected) {
       // ADB may have connected before, don't show this message in that case
@@ -893,6 +935,8 @@ class DeviceControlApp {
     for (const deviceDisplay of deviceDisplayList) {
       deviceDisplay.style.visibility = 'visible';
     }
+
+    this.#initializeTouchpads();
 
     // Start the adb connection if it is not already started.
     this.#initializeAdb();
