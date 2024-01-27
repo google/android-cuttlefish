@@ -51,13 +51,13 @@ static Result<unsigned> ParseNaturalNumber(const std::string& token) {
 }
 
 Result<StartSelectorParser> StartSelectorParser::ConductSelectFlagsParser(
-    const cvd_common::Args& selector_args,
+    const uid_t uid, const cvd_common::Args& selector_args,
     const cvd_common::Args& cmd_args, const cvd_common::Envs& envs) {
-  const std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
+  const std::string system_wide_home = CF_EXPECT(SystemWideUserHome(uid));
   cvd_common::Args selector_args_copied{selector_args};
   StartSelectorParser parser(
       system_wide_home, selector_args_copied, cmd_args, envs,
-      CF_EXPECT(SelectorCommonParser::Parse(selector_args_copied, envs)));
+      CF_EXPECT(SelectorCommonParser::Parse(uid, selector_args_copied, envs)));
   CF_EXPECT(parser.ParseOptions(), "selector option flag parsing failed.");
   return {std::move(parser)};
 }
