@@ -23,6 +23,7 @@
 #include <sstream>
 
 #include <android-base/file.h>
+#include <build/version.h>
 #include <google/protobuf/text_format.h>
 
 #include "common/libs/fs/shared_buf.h"
