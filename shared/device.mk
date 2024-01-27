@@ -585,8 +585,7 @@ PRODUCT_COPY_FILES += \
 ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
 # Thread Network AIDL HAL, simulation CLI and OT daemon controller
 PRODUCT_PACKAGES += \
-    com.android.hardware.threadnetwork \
-    ot-ctl
+    com.android.hardware.threadnetwork
 endif # RELEASE_AIDL_USE_UNFROZEN
 
 PRODUCT_CHECK_VENDOR_SEAPP_VIOLATIONS := true
