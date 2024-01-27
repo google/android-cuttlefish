@@ -17,6 +17,7 @@
 #include "common/libs/utils/tcp_socket.h"
 
 #include <netinet/in.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <cerrno>
