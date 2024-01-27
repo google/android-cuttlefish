@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <sys/types.h>
 #include <sys/socket.h>  // for ucred
 
 #include <memory>
