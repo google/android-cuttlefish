@@ -84,7 +84,7 @@ SelectorCommonParser::HandleNameOpts(const NameFlagsParam& name_flags) const {
 
   if (name_flags.instance_names) {
     instance_names_output =
-        std::move(CF_EXPECT(HandleInstanceNames(name_flags.instance_names)));
+        CF_EXPECT(HandleInstanceNames(name_flags.instance_names));
   }
   return {ParsedNameFlags{.group_name = std::move(group_name_output),
                           .instance_names = std::move(instance_names_output)}};
