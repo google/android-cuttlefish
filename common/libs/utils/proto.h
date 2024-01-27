@@ -44,7 +44,7 @@ struct fmt::formatter<
       auto result = google::protobuf::util::MessageToJsonString(proto, &text);
       if (!result.ok()) {
         return fmt::format_to(ctx.out(), "(json error: {})",
-                              result.message().ToString());
+                              std::string(result.message()));
       }
     } else {
       return fmt::format_to(ctx.out(), "(unknown format specifier)");
