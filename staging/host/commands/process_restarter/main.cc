@@ -84,22 +84,30 @@ Result<int> RunProcessRestarter(std::vector<std::string> args) {
     needs_pop = true;
   }
 
-  siginfo_t info;
-  do {
+  for (;;) {
     CF_EXPECT(!exec_args.empty());
     LOG(VERBOSE) << "Starting monitored process " << exec_args.front();
     // The Execute() API and all APIs effectively called by it show the proper
     // error message using LOG(ERROR).
     auto options = CF_EXPECT(OptionsForExecutable(exec_args.front()));
-    info = CF_EXPECTF(Execute(exec_args, std::move(options), WEXITED),
-                      "Executing '{}' failed.", fmt::join(exec_args, "' '"));
+    siginfo_t info =
+        CF_EXPECTF(Execute(exec_args, std::move(options), WEXITED),
+                   "Executing '{}' failed.", fmt::join(exec_args, "' '"));
 
     if (needs_pop) {
       needs_pop = false;
       exec_args.pop_back();
     }
-  } while (ShouldRestartProcess(info, parsed));
-  return info.si_status;
+
+    if (ShouldRestartProcess(info, parsed)) {
+      continue;
+    }
+    if (info.si_code == CLD_EXITED) {
+      return info.si_status;
+    }
+    LOG(ERROR) << "Process exited with unexpected si_code: " << info.si_code;
+    return 1;
+  }
 }
 
 }  // namespace
