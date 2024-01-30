@@ -27,16 +27,6 @@
 #include <android-base/logging.h>
 #include <android-base/result.h>  // IWYU pragma: export
 
-#if FMT_VERSION < 80000
-namespace fmt {
-  // fmt::runtime was added in v8.0.0
-  template<typename T>
-  const T& runtime(const T& param) {
-    return param;
-  }
-}
-#endif
-
 namespace cuttlefish {
 
 class StackTraceError;
@@ -368,7 +358,7 @@ auto ErrorFromType(Result<T>&& value) {
       current_entry << MSG;                                   \
       auto error = ErrorFromType(macro_intermediate_result);  \
       error.PushEntry(std::move(current_entry));              \
-      return error;                                           \
+      return std::move(error);                                \
     };                                                        \
     OutcomeDereference(std::move(macro_intermediate_result)); \
   })
@@ -432,7 +422,7 @@ auto ErrorFromType(Result<T>&& value) {
       current_entry << MSG;                                                 \
       auto error = ErrorFromType(false);                                    \
       error.PushEntry(std::move(current_entry));                            \
-      return error;                                                         \
+      return std::move(error);                                              \
     };                                                                      \
     comparison_result;                                                      \
   })
