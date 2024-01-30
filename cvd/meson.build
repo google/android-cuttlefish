@@ -196,6 +196,7 @@ dependencies = [
 executable(
   'cvd',
   cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings',  '-DNODISCARD_EXPECTED=true'],
+  link_args: ['-pthread'],
   sources: common_sources + cvd_sources,
   dependencies: dependencies,
   include_directories: [
@@ -206,6 +207,7 @@ executable(
 executable(
   'allocd',
   cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings', '-DNODISCARD_EXPECTED=true'],
+  link_args: ['-pthread'],
   sources: common_sources + allocd_sources,
   dependencies: dependencies,
   include_directories: [
