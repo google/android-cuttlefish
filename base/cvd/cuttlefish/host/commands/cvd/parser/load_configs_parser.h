@@ -26,18 +26,19 @@
 
 namespace cuttlefish {
 
-typedef struct _CvdFlags {
-  std::vector<std::string> launch_cvd_flags;
-  std::vector<std::string> selector_flags;
-  std::vector<std::string> fetch_cvd_flags;
-} CvdFlags;
-
 struct LoadDirectories {
   std::string target_directory;
   std::vector<std::string> target_subdirectories;
   std::string launch_home_directory;
   std::string host_package_directory;
   std::string system_image_directory_flag;
+};
+
+struct CvdFlags {
+  std::vector<std::string> launch_cvd_flags;
+  std::vector<std::string> selector_flags;
+  std::vector<std::string> fetch_cvd_flags;
+  LoadDirectories load_directories;
 };
 
 struct Override {
@@ -48,7 +49,6 @@ struct Override {
 std::ostream& operator<<(std::ostream& out, const Override& override);
 
 struct LoadFlags {
-  bool help = false;
   std::vector<Override> overrides;
   std::string config_path;
   std::string credential_source;
@@ -58,22 +58,6 @@ struct LoadFlags {
 Result<LoadFlags> GetFlags(std::vector<std::string>& args,
                            const std::string& working_directory);
 
-Result<Json::Value> ParseJsonFile(const std::string& file_path);
-
-Result<std::vector<std::string>> GetConfiguredSystemImagePaths(
-    Json::Value& root);
-std::optional<std::string> GetConfiguredSystemHostPath(Json::Value& root);
-
-Result<Json::Value> GetOverriddenConfig(
-    const std::string& config_path,
-    const std::vector<Override>& override_flags);
-
-Result<LoadDirectories> GenerateLoadDirectories(
-    const std::string& parent_directory,
-    std::vector<std::string>& system_image_path_configs,
-    std::optional<std::string> system_host_path, const int num_instances);
-
-Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
-                                 const LoadDirectories& load_directories);
+Result<CvdFlags> GetCvdFlags(const LoadFlags& flags);
 
 };  // namespace cuttlefish

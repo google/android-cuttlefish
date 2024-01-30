@@ -22,8 +22,6 @@
 #include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/result.h>
-#include <build/version.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/json.h"
@@ -83,7 +81,6 @@ class CvdClient {
 
   Result<Json::Value> ListSubcommands(const cvd_common::Envs& envs);
   Result<SharedFD> ConnectToServer();
-  static cvd::Version GetClientVersion();
 
   Result<void> RestartServer(const cvd::Version& server_version);
 

@@ -44,6 +44,10 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#ifdef CUTTLEFISH_LINUX_HOST
+#include <sandboxed_api/sandbox2/executor.h>
+#include <sandboxed_api/sandbox2/sandbox2.h>
+#endif
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
@@ -127,7 +131,7 @@ SubprocessOptions& SubprocessOptions::Verbose(bool verbose) & {
 }
 SubprocessOptions SubprocessOptions::Verbose(bool verbose) && {
   verbose_ = verbose;
-  return *this;
+  return std::move(*this);
 }
 
 #ifdef __linux__
@@ -137,8 +141,23 @@ SubprocessOptions& SubprocessOptions::ExitWithParent(bool v) & {
 }
 SubprocessOptions SubprocessOptions::ExitWithParent(bool v) && {
   exit_with_parent_ = v;
+  return std::move(*this);
+}
+#ifdef CUTTLEFISH_LINUX_HOST
+SubprocessOptions& SubprocessOptions::SandboxPolicy(
+    std::unique_ptr<sandbox2::Policy> policy) & {
+  sandbox_policy_ = std::move(policy);
   return *this;
 }
+SubprocessOptions SubprocessOptions::SandboxPolicy(
+    std::unique_ptr<sandbox2::Policy> policy) && {
+  sandbox_policy_ = std::move(policy);
+  return std::move(*this);
+}
+std::unique_ptr<sandbox2::Policy> SubprocessOptions::MoveSandboxPolicy() {
+  return std::move(sandbox_policy_);
+}
+#endif
 #endif
 
 SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
@@ -147,7 +166,16 @@ SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
 }
 SubprocessOptions SubprocessOptions::InGroup(bool in_group) && {
   in_group_ = in_group;
+  return std::move(*this);
+}
+
+SubprocessOptions& SubprocessOptions::Strace(std::string s) & {
+  strace_ = std::move(s);
   return *this;
+}
+SubprocessOptions SubprocessOptions::Strace(std::string s) && {
+  strace_ = std::move(s);
+  return std::move(*this);
 }
 
 Subprocess::Subprocess(Subprocess&& subprocess)
@@ -370,9 +398,27 @@ Command Command::AddPrerequisite(
 Subprocess Command::Start(SubprocessOptions options) const {
   auto cmd = ToCharPointers(command_);
 
+  if (!options.Strace().empty()) {
+    auto strace_args = {
+        "/usr/bin/strace",
+        "--daemonize",
+        "--output-separately",  // Add .pid suffix
+        "--follow-forks",
+        "-o",  // Write to a separate file.
+        options.Strace().c_str(),
+    };
+    cmd.insert(cmd.begin(), strace_args);
+  }
+
   if (!validate_redirects(redirects_, inherited_fds_)) {
     return Subprocess(-1, {});
   }
+
+#ifdef CUTTLEFISH_LINUX_HOST
+  if (options.SandboxPolicy()) {
+    return StartSandboxed(std::move(options));
+  }
+#endif
 
   pid_t pid = fork();
   if (!pid) {
@@ -444,6 +490,48 @@ Subprocess Command::Start(SubprocessOptions options) const {
   }
   return Subprocess(pid, subprocess_stopper_);
 }
+
+#ifdef CUTTLEFISH_LINUX_HOST
+Subprocess Command::StartSandboxed(SubprocessOptions options) const {
+  auto executable = executable_.value_or(command_[0]);
+  auto executor =
+      std::make_unique<sandbox2::Executor>(executable, command_, env_);
+  if (working_directory_->IsOpen()) {
+    auto cwd_res = working_directory_->ProcFdLinkTarget();
+    if (!cwd_res.ok()) {
+      LOG(ERROR) << cwd_res.error().FormatForEnv();
+      return Subprocess(-1, subprocess_stopper_);
+    }
+    executor->set_cwd(*cwd_res);
+  }
+  auto& ipc = *executor->ipc();
+  for (const auto& [channel, inner_fd] : redirects_) {
+    ipc.MapDupedFd(static_cast<int>(channel), inner_fd);
+  }
+  for (const auto& [unused_shared_fd, inner_fd] : inherited_fds_) {
+    ipc.MapDupedFd(inner_fd, inner_fd);
+  }
+  auto sandbox = std::make_unique<sandbox2::Sandbox2>(
+      std::move(executor), options.MoveSandboxPolicy());
+  bool success = sandbox->RunAsync();
+  if (options.Verbose()) {  // "more verbose", and LOG(DEBUG) > LOG(VERBOSE)
+    LOG(DEBUG) << "Started (pid: " << sandbox->pid() << "): " << executable;
+    for (int i = 1; i < command_.size(); i++) {
+      LOG(DEBUG) << command_[i];
+    }
+  } else {
+    LOG(VERBOSE) << "Started (pid: " << sandbox->pid() << "): " << executable;
+    for (int i = 1; i < command_.size(); i++) {
+      LOG(VERBOSE) << command_[i];
+    }
+  }
+  if (!success) {
+    auto result = sandbox->AwaitResult().ToString();
+    LOG(ERROR) << fmt::format("Failed to run '{}': '{}'", executable, result);
+  }
+  return Subprocess(sandbox->pid(), subprocess_stopper_, std::move(sandbox));
+}
+#endif
 
 std::string Command::AsBashScript(
     const std::string& redirected_stdio_path) const {
@@ -540,7 +628,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
     });
   }
 
-  auto subprocess = cmd.Start(options);
+  auto subprocess = cmd.Start(std::move(options));
   if (!subprocess.Started()) {
     return -1;
   }
@@ -573,7 +661,7 @@ struct ExtraParam {
 };
 Result<int> ExecuteImpl(const std::vector<std::string>& command,
                         const std::optional<std::vector<std::string>>& envs,
-                        const std::optional<ExtraParam>& extra_param) {
+                        std::optional<ExtraParam> extra_param) {
   Command cmd(command[0]);
   for (size_t i = 1; i < command.size(); ++i) {
     cmd.AddParameter(command[i]);
@@ -582,7 +670,8 @@ Result<int> ExecuteImpl(const std::vector<std::string>& command,
     cmd.SetEnvironment(*envs);
   }
   auto subprocess =
-      (!extra_param ? cmd.Start() : cmd.Start(extra_param->subprocess_options));
+      (!extra_param ? cmd.Start()
+                    : cmd.Start(std::move(extra_param->subprocess_options)));
   CF_EXPECT(subprocess.Started(), "Subprocess failed to start.");
 
   if (extra_param) {
@@ -614,11 +703,11 @@ Result<siginfo_t> Execute(const std::vector<std::string>& commands,
                           SubprocessOptions subprocess_options,
                           int wait_options) {
   siginfo_t info;
-  auto ret_code =
-      CF_EXPECT(ExecuteImpl(commands, /* envs */ std::nullopt,
-                            ExtraParam{.subprocess_options = subprocess_options,
-                                       .wait_options = wait_options,
-                                       .infop = &info}));
+  auto ret_code = CF_EXPECT(ExecuteImpl(
+      commands, /* envs */ std::nullopt,
+      ExtraParam{.subprocess_options = std::move(subprocess_options),
+                 .wait_options = wait_options,
+                 .infop = &info}));
   CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
   return info;
 }
@@ -628,11 +717,11 @@ Result<siginfo_t> Execute(const std::vector<std::string>& commands,
                           SubprocessOptions subprocess_options,
                           int wait_options) {
   siginfo_t info;
-  auto ret_code =
-      CF_EXPECT(ExecuteImpl(commands, envs,
-                            ExtraParam{.subprocess_options = subprocess_options,
-                                       .wait_options = wait_options,
-                                       .infop = &info}));
+  auto ret_code = CF_EXPECT(ExecuteImpl(
+      commands, envs,
+      ExtraParam{.subprocess_options = std::move(subprocess_options),
+                 .wait_options = wait_options,
+                 .infop = &info}));
   CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
   return info;
 }

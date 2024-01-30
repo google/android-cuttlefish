@@ -15,10 +15,11 @@
 
 #include <uuid.h>
 
+#include <internal_user_log.pb.h>
+
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "host/commands/cvd/metrics/cvd_metrics_api.h"
-#include "host/commands/cvd/metrics/proto/cvd_metrics_protos.h"
 #include "host/commands/cvd/metrics/utils.h"
 #include "host/commands/metrics/metrics_defs.h"
 
@@ -27,12 +28,14 @@ namespace cuttlefish {
 namespace {
 
 // 971 for atest internal events, while 934 for external events
-constexpr int kAtestInternalLogSourceId = 971;
 constexpr char kToolName[] = "cvd";
 
 constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
 constexpr int kCppClientType =
     19;  // C++ native client type (clientanalytics.proto)
+
+const std::string kInternalEmail = "@google.com";
+const std::vector<std::string> kInternalHostname = {"google"};
 
 std::string GenerateUUID() {
   uuid_t uuid;
@@ -72,7 +75,6 @@ std::unique_ptr<LogRequest> BuildAtestLogRequest(
   // "log_request" is the top level LogRequest
   auto log_request = std::make_unique<LogRequest>();
   log_request->set_request_time_ms(now_ms);
-  log_request->set_log_source(kAtestInternalLogSourceId);
   log_request->set_log_source_name(kLogSourceStr);
 
   ClientInfo* client_info = log_request->mutable_client_info();
@@ -103,6 +105,42 @@ std::string createCommandLine(const std::vector<std::string>& args) {
   return commandLine;
 }
 
+std::string GetUserEmail() {
+  std::string email;
+  FILE* pipe = popen("git config --get user.email 2>/dev/null", "r");
+  if (!pipe) {
+    LOG(ERROR) << "popen() failed!";
+    return "";
+  }
+  char buffer[128];
+  while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+    email += buffer;
+  }
+  pclose(pipe);
+  email.erase(std::remove(email.begin(), email.end(), '\n'), email.end());
+  return email;
+}
+
+UserType GetUserType() {
+  std::string email = GetUserEmail();
+  if (email.find(kInternalEmail) != std::string::npos) {
+    return UserType::GOOGLE;
+  }
+
+  char hostname[1024];
+  hostname[1023] = '\0';
+  gethostname(hostname, sizeof(hostname) - 1);
+  std::string host_str(hostname);
+
+  for (const auto& internal_host : kInternalHostname) {
+    if (host_str.find(internal_host) != std::string::npos) {
+      return UserType::GOOGLE;
+    }
+  }
+
+  return UserType::EXTERNAL;
+}
+
 }  // namespace
 
 int CvdMetrics::SendLaunchCommand(const std::string& command_line) {
@@ -124,6 +162,9 @@ int CvdMetrics::SendLaunchCommand(const std::string& command_line) {
 }
 
 int CvdMetrics::SendCvdMetrics(const std::vector<std::string>& args) {
+  if (GetUserType() != UserType::GOOGLE) {
+    return 0;
+  }
   std::string command_line = createCommandLine(args);
   return CvdMetrics::SendLaunchCommand(command_line);
 }

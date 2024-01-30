@@ -25,7 +25,7 @@
 #include <android-base/file.h>
 #include <android-base/scopeguard.h>
 #include <fmt/format.h>
-#include <json/value.h>
+#include <json/json.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -350,7 +350,7 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::FindGroup(
   return *(output.begin());
 }
 
-std::vector<std::string> InstanceManager::AllGroupNames(const uid_t uid) const {
+std::vector<std::string> InstanceManager::AllGroupNames(uid_t uid) const {
   std::lock_guard lock(instance_db_mutex_);
   if (!Contains(instance_dbs_, uid)) {
     return {};
@@ -363,6 +363,36 @@ std::vector<std::string> InstanceManager::AllGroupNames(const uid_t uid) const {
     group_names.push_back(group->GroupName());
   }
   return group_names;
+}
+
+Result<InstanceManager::UserGroupSelectionSummary>
+InstanceManager::GroupSummaryMenu(uid_t uid) const {
+  std::lock_guard lock(instance_db_mutex_);
+  CF_EXPECT(Contains(instance_dbs_, uid));
+  const auto& db = instance_dbs_.at(uid);
+
+  UserGroupSelectionSummary summary;
+
+  // List of Cuttlefish Instance Groups:
+  //   [i] : group_name (created: TIME)
+  //      <a> instance0.device_name() (id: instance_id)
+  //      <b> instance1.device_name() (id: instance_id)
+  std::stringstream ss;
+  ss << "List of Cuttlefish Instance Groups:" << std::endl;
+  int group_idx = 0;
+  for (const auto& group : db.InstanceGroups()) {
+    fmt::print(ss, "  [{}] : {} (created: {})\n", group_idx, group->GroupName(),
+               selector::Format(group->StartTime()));
+    summary.idx_to_group_name[group_idx] = group->GroupName();
+    char instance_idx = 'a';
+    for (const auto& instance : CF_EXPECT(group->FindAllInstances())) {
+      fmt::print(ss, "    <{}> {} (id : {})\n", instance_idx++,
+                 instance.Get().DeviceName(), instance.Get().InstanceId());
+    }
+    group_idx++;
+  }
+  summary.menu = ss.str();
+  return summary;
 }
 
 }  // namespace cuttlefish

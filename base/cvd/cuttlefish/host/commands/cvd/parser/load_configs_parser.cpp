@@ -154,7 +154,6 @@ Json::Value OverrideToJson(const std::string& key,
 
 std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
   std::vector<Flag> flags;
-  flags.emplace_back(GflagsCompatFlag("help", load_flags.help));
   flags.emplace_back(
       GflagsCompatFlag("credential_source", load_flags.credential_source));
   flags.emplace_back(
@@ -181,42 +180,9 @@ void MakeAbsolute(std::string& path, const std::string& working_dir) {
   path.insert(0, working_dir + "/");
 }
 
-}  // namespace
-
-Result<LoadFlags> GetFlags(std::vector<std::string>& args,
-                           const std::string& working_directory) {
-  LoadFlags load_flags;
-  auto flags = GetFlagsVector(load_flags);
-  CF_EXPECT(ParseFlags(flags, args));
-  CF_EXPECT(load_flags.help || args.size() > 0,
-            "No arguments provided to cvd load command, please provide at "
-            "least one argument (help or path to json file)");
-
-  if (load_flags.base_dir.empty()) {
-    load_flags.base_dir = DefaultBaseDir();
-  }
-  MakeAbsolute(load_flags.base_dir, working_directory);
-
-  load_flags.config_path = args.front();
-  MakeAbsolute(load_flags.config_path, working_directory);
-
-  if (!load_flags.credential_source.empty()) {
-    for (const auto& flag : load_flags.overrides) {
-      CF_EXPECT(!android::base::StartsWith(flag.config_path,
-                                           kCredentialSourceOverride),
-                "Specifying both --override=fetch.credential_source and the "
-                "--credential_source flag is not allowed.");
-    }
-    load_flags.overrides.emplace_back(
-        Override{.config_path = std::string(kCredentialSourceOverride),
-                 .new_value = load_flags.credential_source});
-  }
-  return load_flags;
-}
-
 Result<Json::Value> ParseJsonFile(const std::string& file_path) {
   CF_EXPECTF(FileExists(file_path),
-             "Provided file \"{}\" to cvd load does not exist", file_path);
+             "Provided file \"{}\" to cvd command does not exist", file_path);
 
   std::string file_content;
   using android::base::ReadFileToString;
@@ -256,12 +222,6 @@ Result<Json::Value> GetOverriddenConfig(
   }
 
   return result;
-}
-
-std::ostream& operator<<(std::ostream& out, const Override& override) {
-  fmt::print(out, "(config_path=\"{}\", new_value=\"{}\")",
-             override.config_path, override.new_value);
-  return out;
 }
 
 Result<LoadDirectories> GenerateLoadDirectories(
@@ -319,7 +279,63 @@ Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
                   .selector_flags = CF_EXPECT(ParseSelectorConfigs(root)),
                   .fetch_cvd_flags = CF_EXPECT(ParseFetchCvdConfigs(
                       root, load_directories.target_directory,
-                      load_directories.target_subdirectories))};
+                      load_directories.target_subdirectories)),
+                  .load_directories = load_directories};
+}
+
+}  // namespace
+
+std::ostream& operator<<(std::ostream& out, const Override& override) {
+  fmt::print(out, "(config_path=\"{}\", new_value=\"{}\")",
+             override.config_path, override.new_value);
+  return out;
+}
+
+Result<LoadFlags> GetFlags(std::vector<std::string>& args,
+                           const std::string& working_directory) {
+  LoadFlags load_flags;
+  auto flags = GetFlagsVector(load_flags);
+  CF_EXPECT(ParseFlags(flags, args));
+  CF_EXPECT(
+      args.size() > 0,
+      "No arguments provided to cvd command, please provide path to json file");
+
+  if (load_flags.base_dir.empty()) {
+    load_flags.base_dir = DefaultBaseDir();
+  }
+  MakeAbsolute(load_flags.base_dir, working_directory);
+
+  load_flags.config_path = args.front();
+  MakeAbsolute(load_flags.config_path, working_directory);
+
+  if (!load_flags.credential_source.empty()) {
+    for (const auto& flag : load_flags.overrides) {
+      CF_EXPECT(!android::base::StartsWith(flag.config_path,
+                                           kCredentialSourceOverride),
+                "Specifying both --override=fetch.credential_source and the "
+                "--credential_source flag is not allowed.");
+    }
+    load_flags.overrides.emplace_back(
+        Override{.config_path = std::string(kCredentialSourceOverride),
+                 .new_value = load_flags.credential_source});
+  }
+  return load_flags;
+}
+
+Result<CvdFlags> GetCvdFlags(const LoadFlags& flags) {
+  Json::Value json_configs =
+      CF_EXPECT(GetOverriddenConfig(flags.config_path, flags.overrides));
+
+  std::vector<std::string> system_image_path_configs =
+      CF_EXPECT(GetConfiguredSystemImagePaths(json_configs));
+  std::optional<std::string> host_package_dir =
+      GetConfiguredSystemHostPath(json_configs);
+
+  const auto load_directories = CF_EXPECT(GenerateLoadDirectories(
+      flags.base_dir, system_image_path_configs, host_package_dir,
+      json_configs["instances"].size()));
+  return CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
+                   "Parsing json configs failed");
 }
 
 }  // namespace cuttlefish

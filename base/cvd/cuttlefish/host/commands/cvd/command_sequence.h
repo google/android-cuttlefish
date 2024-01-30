@@ -16,6 +16,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include "common/libs/fs/shared_fd.h"
@@ -36,6 +37,7 @@ class CommandSequenceExecutor {
   Result<cvd::Response> ExecuteOne(const RequestWithStdio&, SharedFD report);
 
   std::vector<std::string> CmdList() const;
+  Result<CvdServerHandler*> GetHandler(const RequestWithStdio& request);
 
  private:
   const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers_;

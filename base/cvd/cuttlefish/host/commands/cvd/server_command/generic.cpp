@@ -22,6 +22,7 @@
 #include <mutex>
 
 #include <android-base/file.h>
+#include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -35,6 +36,7 @@
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/interruptible_terminal.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
@@ -47,7 +49,8 @@ namespace cuttlefish {
 
 class CvdGenericCommandHandler : public CvdServerHandler {
  public:
-  CvdGenericCommandHandler(InstanceManager& instance_manager,
+  CvdGenericCommandHandler(InstanceLockFileManager& instance_lockfile_manager,
+                           InstanceManager& instance_manager,
                            SubprocessWaiter& subprocess_waiter,
                            HostToolTargetManager& host_tool_target_manager);
 
@@ -67,12 +70,19 @@ class CvdGenericCommandHandler : public CvdServerHandler {
     std::vector<std::string> args;
     cvd_common::Envs envs;
   };
+  enum class UiResponseType : int {
+    kNoGroup = 1,        // no group is active
+    kNoTTY = 2,          // there are groups to select but no tty for user input
+    kUserSelection = 3,  // selector couldn't pick so asked the user
+    kCvdServerPick = 4,  // selector picks based on selector flags, env, etc
+  };
   struct ExtractedInfo {
     CommandInvocationInfo invocation_info;
     std::optional<selector::LocalInstanceGroup> group;
     bool is_non_help_cvd;
+    UiResponseType ui_response_type;
   };
-  Result<ExtractedInfo> ExtractInfo(const RequestWithStdio& request) const;
+  Result<ExtractedInfo> ExtractInfo(const RequestWithStdio& request);
   Result<std::string> GetBin(const std::string& subcmd) const;
   Result<std::string> GetBin(const std::string& subcmd,
                              const std::string& host_artifacts_path) const;
@@ -92,6 +102,7 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   Result<BinPathInfo> CvdHelpBinPath(const std::string& subcmd,
                                      const cvd_common::Envs& envs) const;
 
+  InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
@@ -100,6 +111,7 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   using BinGeneratorType = std::function<Result<std::string>(
       const std::string& host_artifacts_path)>;
   std::map<std::string, std::string> command_to_binary_map_;
+  std::unique_ptr<InterruptibleTerminal> terminal_ = nullptr;
 
   static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
   static constexpr char kLnBin[] = "ln";
@@ -112,9 +124,11 @@ class CvdGenericCommandHandler : public CvdServerHandler {
 };
 
 CvdGenericCommandHandler::CvdGenericCommandHandler(
+    InstanceLockFileManager& instance_lockfile_manager,
     InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
     HostToolTargetManager& host_tool_target_manager)
-    : instance_manager_(instance_manager),
+    : instance_lockfile_manager_(instance_lockfile_manager),
+      instance_manager_(instance_manager),
       subprocess_waiter_(subprocess_waiter),
       host_tool_target_manager_(host_tool_target_manager),
       command_to_binary_map_{{"host_bugreport", kHostBugreportBin},
@@ -134,6 +148,13 @@ Result<bool> CvdGenericCommandHandler::CanHandle(
 Result<void> CvdGenericCommandHandler::Interrupt() {
   std::scoped_lock interrupt_lock(interruptible_);
   interrupted_ = true;
+  if (terminal_) {
+    auto terminal_interrupt_result = terminal_->Interrupt();
+    // TODO(b/316202887): utilize the multi-CF_EXPECT feature
+    if (!terminal_interrupt_result.ok()) {
+      LOG(ERROR) << "Failed to interrupt terminal";
+    }
+  }
   CF_EXPECT(subprocess_waiter_.Interrupt());
   return {};
 }
@@ -141,9 +162,7 @@ Result<void> CvdGenericCommandHandler::Interrupt() {
 Result<cvd::Response> CvdGenericCommandHandler::Handle(
     const RequestWithStdio& request) {
   std::unique_lock interrupt_lock(interruptible_);
-  if (interrupted_) {
-    return CF_ERR("Interrupted");
-  }
+  CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
   CF_EXPECT(request.Credentials() != std::nullopt);
   const uid_t uid = request.Credentials()->uid;
@@ -158,16 +177,25 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
         precondition_verified.error().Message());
     return response;
   }
-  auto [invocation_info, group_opt, is_non_help_cvd] =
+
+  interrupt_lock.unlock();
+  auto [invocation_info, group_opt, is_non_help_cvd, ui_response_type] =
       CF_EXPECT(ExtractInfo(request));
+
+  interrupt_lock.lock();
+  CF_EXPECT(!interrupted_, "Interrupted");
   if (invocation_info.bin == kClearBin) {
     *response.mutable_status() =
         instance_manager_.CvdClear(request.Out(), request.Err());
     return response;
   }
 
-  if (is_non_help_cvd && !group_opt) {
+  // besides the two cases, the rest will be handled by running subprocesses
+  if (is_non_help_cvd && ui_response_type == UiResponseType::kNoGroup) {
     return CF_EXPECT(NoGroupResponse(request));
+  }
+  if (is_non_help_cvd && ui_response_type == UiResponseType::kNoTTY) {
+    return CF_EXPECT(NoTTYResponse(request));
   }
 
   ConstructCommandParam construct_cmd_param{
@@ -187,7 +215,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
       cvd::WAIT_BEHAVIOR_START) {
     options.ExitWithParent(false);
   }
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
+  CF_EXPECT(subprocess_waiter_.Setup(command.Start(std::move(options))));
 
   bool is_stop = IsStopCommand(invocation_info.command);
 
@@ -202,13 +230,13 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
       return;
     }
     for (const auto& instance : group_ptr->Instances()) {
-      auto lock = instance_manager_.TryAcquireLock(instance->InstanceId());
-      if (lock.ok() && (*lock)) {
-        (*lock)->Status(InUseState::kNotInUse);
-        continue;
+      auto lock =
+          instance_lockfile_manager_.RemoveLockFile(instance->InstanceId());
+      if (!lock.ok()) {
+        LOG(ERROR) << "Deleting instance Lock file for ID #"
+                   << instance->InstanceId()
+                   << " failed: " << lock.error().Message();
       }
-      LOG(ERROR) << "InstanceLockFileManager failed to acquire lock for #"
-                 << instance->InstanceId();
     }
   });
 
@@ -278,7 +306,7 @@ CvdGenericCommandHandler::CvdHelpBinPath(const std::string& subcmd,
  *
  */
 Result<CvdGenericCommandHandler::ExtractedInfo>
-CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
+CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
   auto result_opt = request.Credentials();
   CF_EXPECT(result_opt != std::nullopt);
   const uid_t uid = result_opt->uid;
@@ -311,18 +339,87 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
                 .args = cmd_args,
                 .envs = envs},
         .group = std::nullopt,
-        .is_non_help_cvd = false};
+        .is_non_help_cvd = false,
+        .ui_response_type = UiResponseType::kCvdServerPick,
+    };
   }
 
   auto instance_group_result =
       instance_manager_.SelectGroup(selector_args, envs, uid);
-  ExtractedInfo extracted_info;
-  extracted_info.is_non_help_cvd = true;
+  ExtractedInfo extracted_info{
+      .invocation_info = CommandInvocationInfo(),
+      .group = std::nullopt,
+      .is_non_help_cvd = true,
+      .ui_response_type = UiResponseType::kCvdServerPick,
+  };
+  std::string chosen_group_name;
   if (!instance_group_result.ok()) {
-    CF_EXPECT(!instance_manager_.HasInstanceGroups(uid),
-              instance_group_result.error().FormatForEnv());
-    return extracted_info;
+    if (!instance_manager_.HasInstanceGroups(uid)) {
+      extracted_info.ui_response_type = UiResponseType::kNoGroup;
+      return extracted_info;
+    }
+
+    if (!request.In()->IsOpen() || !request.In()->IsATTY()) {
+      // can't take the user input
+      extracted_info.ui_response_type = UiResponseType::kNoTTY;
+      return extracted_info;
+    }
+
+    extracted_info.ui_response_type = UiResponseType::kUserSelection;
+    std::unique_lock lock(interruptible_);
+    CF_EXPECT(!interrupted_, "Interrupted");
+    // show the menu and let the user choose
+    auto group_summaries = CF_EXPECT(instance_manager_.GroupSummaryMenu(uid));
+    auto& group_summary_menu = group_summaries.menu;
+    CF_EXPECT_EQ(WriteAll(request.Out(), group_summary_menu + "\n"),
+                 group_summary_menu.size() + 1);
+    terminal_ = std::make_unique<InterruptibleTerminal>(request.In());
+    lock.unlock();
+
+    const bool is_tty = request.Err()->IsOpen() && request.Err()->IsATTY();
+    while (true) {
+      lock.lock();
+      std::string question = fmt::format(
+          "For which instance group would you like to run {}? ", subcmd);
+      CF_EXPECT_EQ(WriteAll(request.Out(), question), question.size());
+      lock.unlock();
+
+      std::string input_line = CF_EXPECT(terminal_->ReadLine());
+      int selection = -1;
+      if (android::base::ParseInt(input_line, &selection)) {
+        const auto n_groups = group_summaries.idx_to_group_name.size();
+        if (n_groups <= selection || selection < 0) {
+          std::string out_of_range = fmt::format(
+              "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
+              TerminalColor(is_tty, TerminalColors::kBoldRed), selection,
+              TerminalColor(is_tty, TerminalColors::kReset),
+              TerminalColor(is_tty, TerminalColors::kCyan), n_groups - 1,
+              TerminalColor(is_tty, TerminalColors::kReset));
+          CF_EXPECT_EQ(WriteAll(request.Err(), out_of_range),
+                       out_of_range.size());
+          continue;
+        }
+        chosen_group_name = group_summaries.idx_to_group_name[selection];
+      } else {
+        chosen_group_name = android::base::Trim(input_line);
+      }
+
+      InstanceManager::Queries extra_queries{
+          {selector::kGroupNameField, chosen_group_name}};
+      instance_group_result = instance_manager_.SelectGroup(
+          selector_args, extra_queries, envs, uid);
+      if (instance_group_result.ok()) {
+        break;
+      }
+      std::string cannot_find_group_name = fmt::format(
+          "\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
+          TerminalColor(is_tty, TerminalColors::kBoldRed), chosen_group_name,
+          TerminalColor(is_tty, TerminalColors::kReset));
+      CF_EXPECT_EQ(WriteAll(request.Err(), cannot_find_group_name),
+                   cannot_find_group_name.size());
+    }
   }
+
   auto& instance_group = *instance_group_result;
   auto android_host_out = instance_group.HostArtifactsPath();
   auto home = instance_group.HomeDir();
@@ -364,10 +461,12 @@ Result<std::string> CvdGenericCommandHandler::GetBin(
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdGenericCommandHandler(
+    InstanceLockFileManager& instance_lockfile_manager,
     InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
     HostToolTargetManager& host_tool_target_manager) {
   return std::unique_ptr<CvdServerHandler>(new CvdGenericCommandHandler(
-      instance_manager, subprocess_waiter, host_tool_target_manager));
+      instance_lockfile_manager, instance_manager, subprocess_waiter,
+      host_tool_target_manager));
 }
 
 }  // namespace cuttlefish

@@ -61,6 +61,7 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/inotify.h"
@@ -350,7 +351,12 @@ Result<std::string> RenameFile(const std::string& current_filepath,
 
 bool RemoveFile(const std::string& file) {
   LOG(DEBUG) << "Removing file " << file;
-  return remove(file.c_str()) == 0;
+  if (remove(file.c_str()) == 0) {
+    return true;
+  }
+  LOG(ERROR) << "Failed to remove file " << file << " : "
+             << std::strerror(errno);
+  return false;
 }
 
 std::string ReadFile(const std::string& file) {
@@ -370,6 +376,19 @@ std::string ReadFile(const std::string& file) {
   in.read(&contents[0], contents.size());
   in.close();
   return(contents);
+}
+
+Result<std::string> ReadFileContents(const std::string& filepath) {
+  CF_EXPECTF(FileExists(filepath), "The file at \"{}\" does not exist.",
+             filepath);
+  auto file = SharedFD::Open(filepath, O_RDONLY);
+  CF_EXPECTF(file->IsOpen(), "Failed to open file \"{}\".  Error:\n", filepath,
+             file->StrError());
+  std::string file_content;
+  auto size = ReadAll(file, &file_content);
+  CF_EXPECTF(size >= 0, "Failed to read file contents.  Error:\n",
+             file->StrError());
+  return file_content;
 }
 
 std::string CurrentDirectory() {

@@ -137,4 +137,9 @@ std::vector<std::string> CommandSequenceExecutor::CmdList() const {
   return std::vector<std::string>{subcmds.begin(), subcmds.end()};
 }
 
+Result<CvdServerHandler*> CommandSequenceExecutor::GetHandler(
+    const RequestWithStdio& request) {
+  return CF_EXPECT(RequestHandler(request, server_handlers_));
+}
+
 }  // namespace cuttlefish
