@@ -68,8 +68,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
     Command command =
         is_help ? CF_EXPECT(HelpCommand(request, uid, subcmd_args, envs))
                 : CF_EXPECT(NonHelpCommand(request, uid, subcmd_args, envs));
-    SubprocessOptions options;
-    CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
+    CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
     interrupt_lock.unlock();
 
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());

@@ -70,11 +70,13 @@ namespace cuttlefish {
 static constexpr int kNumThreads = 10;
 
 CvdServer::CvdServer(BuildApi& build_api, EpollPool& epoll_pool,
+                     InstanceLockFileManager& lock_manager,
                      InstanceManager& instance_manager,
                      HostToolTargetManager& host_tool_target_manager,
                      ServerLogger& server_logger)
     : build_api_(build_api),
       epoll_pool_(epoll_pool),
+      instance_lockfile_manager_(lock_manager),
       instance_manager_(instance_manager),
       host_tool_target_manager_(host_tool_target_manager),
       server_logger_(server_logger),
@@ -160,7 +162,7 @@ void CvdServer::Join() {
   }
 }
 
-Result<void> CvdServer::Exec(const ExecParam& exec_param) {
+Result<void> CvdServer::Exec(ExecParam&& exec_param) {
   CF_EXPECT(server_fd_->IsOpen(), "Server not running");
   Stop();
   android::base::unique_fd server_dup{server_fd_->UNMANAGED_Dup()};
@@ -168,7 +170,6 @@ Result<void> CvdServer::Exec(const ExecParam& exec_param) {
   android::base::unique_fd client_dup{
       exec_param.carryover_client_fd->UNMANAGED_Dup()};
   CF_EXPECT(client_dup.get() >= 0, "dup: \"" << server_fd_->StrError() << "\"");
-
   cvd_common::Args argv_str = {
       kServerExecPath,
       fmt::format("-{}={}", kInternalServerFd, server_dup.get()),
@@ -201,11 +202,19 @@ Result<void> CvdServer::Exec(const ExecParam& exec_param) {
   android::base::unique_fd new_exe_dup{exec_param.new_exe->UNMANAGED_Dup()};
   CF_EXPECT(new_exe_dup.get() >= 0,
             "dup: \"" << exec_param.new_exe->StrError() << "\"");
+  if (fcntl(new_exe_dup.get(), F_SETFD, FD_CLOEXEC) != 0) {
+    LOG(WARNING) << "Failed to set FD_CLOEXEC on the exec file descriptor: "
+                 << std::strerror(errno)
+                 << ". As it's not fatal, so the operation continues";
+  }
 
   if (exec_param.verbose) {
     LOG(ERROR) << "Server Exec'ing: " << android::base::Join(argv_str, " ");
   }
 
+  server_fd_->Close();
+  exec_param.carryover_client_fd->Close();
+  exec_param.new_exe->Close();
   fexecve(new_exe_dup.get(), argv_cstr.data(), environ);
   for (const auto& argv : argv_cstr) {
     free(argv);
@@ -283,8 +292,9 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
   if (!response.ok()) {
     cvd::Response failure_message;
     failure_message.mutable_status()->set_code(cvd::Status::INTERNAL);
+    const bool color = request->Err()->IsOpen() && request->Err()->IsATTY();
     failure_message.mutable_status()->set_message(
-        response.error().FormatForEnv());
+        response.error().FormatForEnv(color));
     CF_EXPECT(SendResponse(event.fd, failure_message));
     return {};  // Error already sent to the client, don't repeat on the server
   }
@@ -398,8 +408,8 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
       CF_EXPECT(Verbosity(request, request.Message().verbosity()));
   server_logger_.SetSeverity(verbosity);
 
-  RequestContext context(*this, instance_manager_, build_api_,
-                         host_tool_target_manager_, optout_);
+  RequestContext context(*this, instance_lockfile_manager_, instance_manager_,
+                         build_api_, host_tool_target_manager_, optout_);
 
   // Even if the interrupt callback outlives the request handler, it'll only
   // hold on to this struct which will be cleaned out when the request handler
@@ -470,14 +480,13 @@ Result<int> CvdServerMain(ServerMainParam&& param) {
   auto host_tool_target_manager = NewHostToolTargetManager();
   InstanceLockFileManager lock_manager;
   InstanceManager instance_manager(lock_manager, *host_tool_target_manager);
-  CvdServer server(build_api, epoll_pool, instance_manager,
+  CvdServer server(build_api, epoll_pool, lock_manager, instance_manager,
                    *host_tool_target_manager, *server_logger);
 
-  std::optional<SharedFD> memory_carryover_fd =
-      std::move(param.memory_carryover_fd);
-  if (memory_carryover_fd) {
+  if (param.memory_carryover_fd) {
+    SharedFD memory_carryover_fd = std::move(*param.memory_carryover_fd);
     const std::string json_string =
-        CF_EXPECT(ReadAllFromMemFd(*memory_carryover_fd));
+        CF_EXPECT(ReadAllFromMemFd(memory_carryover_fd));
     CF_EXPECT(server.InstanceDbFromJson(json_string),
               "Failed to load from: " << json_string);
   }

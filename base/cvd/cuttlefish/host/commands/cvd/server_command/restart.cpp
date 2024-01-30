@@ -177,7 +177,7 @@ class CvdRestartHandler : public CvdServerHandler {
       return CF_ERR("unsupported subcommand");
     }
 
-    CF_EXPECT(server_.Exec({.new_exe = new_exe,
+    CF_EXPECT(server_.Exec({.new_exe = std::move(new_exe),
                             .carryover_client_fd = request.Client(),
                             .in_memory_data_fd = mem_fd,
                             .verbose = parsed.verbose}));

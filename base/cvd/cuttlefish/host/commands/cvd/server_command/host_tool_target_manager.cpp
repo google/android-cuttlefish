@@ -63,7 +63,7 @@ Result<void> HostToolTargetManagerImpl::UpdateOutdated(
   if (!host_target.IsDirty()) {
     return {};
   }
-  LOG(ERROR) << artifacts_path << " is new, so updating HostToolTarget";
+  LOG(INFO) << artifacts_path << " is new, so updating HostToolTarget";
   host_target_table_.erase(artifacts_path);
   HostToolTarget new_host_tool_target =
       CF_EXPECT(HostToolTarget::Create(artifacts_path));

@@ -222,7 +222,7 @@ StartSelectorParser::HandleInstanceIds(
     unsigned base = CF_EXPECT(ParseNaturalNumber(*base_instance_num));
     calculator.BaseInstanceNum(static_cast<std::int32_t>(base));
   }
-  auto instance_ids = std::move(CF_EXPECT(calculator.CalculateFromFlags()));
+  auto instance_ids = CF_EXPECT(calculator.CalculateFromFlags());
   CF_EXPECT(!instance_ids.empty(),
             "CalculateFromFlags() must be called when --num_instances or "
                 << "--base_instance_num is given, and must not return an "
@@ -338,7 +338,7 @@ Result<void> StartSelectorParser::ParseOptions() {
       .cuttlefish_instance_env = TryFromCuttlefishInstance(envs_)};
   auto parsed_ids = CF_EXPECT(HandleInstanceIds(instance_nums_param));
   requested_num_instances_ = parsed_ids.GetNumOfInstances();
-  instance_ids_ = std::move(parsed_ids.GetInstanceIds());
+  instance_ids_ = parsed_ids.GetInstanceIds();
 
   return {};
 }

@@ -17,6 +17,7 @@
 #include "common/libs/utils/socket2socket_proxy.h"
 
 #include <poll.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <cstring>

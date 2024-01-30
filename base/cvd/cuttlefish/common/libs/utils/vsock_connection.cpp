@@ -16,6 +16,7 @@
 
 #include "common/libs/utils/vsock_connection.h"
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 

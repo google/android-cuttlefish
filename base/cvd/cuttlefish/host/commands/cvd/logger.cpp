@@ -16,6 +16,7 @@
 #include "host/commands/cvd/logger.h"
 
 #include <shared_mutex>
+#include <mutex>
 #include <thread>
 #include <unordered_map>
 
@@ -117,7 +118,8 @@ void ServerLogger::ScopedLogger::LogMessage(
   auto output_string =
       StderrOutputGenerator(now, getpid(), android::base::GetThreadId(),
                             severity, tag, file, line, message);
-  WriteAll(target_, output_string);
+  const bool color = target_->IsOpen() && target_->IsATTY();
+  WriteAll(target_, (color ? output_string : StripColorCodes(output_string)));
 }
 
 void ServerLogger::ScopedLogger::SetSeverity(const LogSeverity severity) {

@@ -40,6 +40,7 @@ using Json::ValueType::uintValue;
 
 const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
   {"netsim_bt", ConfigNode{.type = booleanValue}},
+  {"netsim_uwb", ConfigNode{.type = booleanValue}},
   {"instances", ConfigNode{.type = arrayValue, .children = {
     {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
         {"@import", ConfigNode{.type = stringValue}},
@@ -83,6 +84,7 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
             {"build", ConfigNode{.type = stringValue}},
           }}},
           {"enable_bootanimation", ConfigNode{.type = booleanValue}},
+          {"extra_bootconfig_args", ConfigNode{.type = stringValue}},
           {"build", ConfigNode{.type = stringValue}},
           {"bootloader", ConfigNode{.type = objectValue, .children = {
             {"build", ConfigNode{.type = stringValue}},
@@ -133,7 +135,6 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
   {"common", ConfigNode{.type = objectValue, .children = {
     {"group_name", ConfigNode{.type = stringValue}},
     {"host_package", ConfigNode{.type = stringValue}},
-    {"bootconfig_args", ConfigNode{.type = stringValue}},
   }}},
 },
 };

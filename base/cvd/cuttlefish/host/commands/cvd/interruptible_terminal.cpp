@@ -44,9 +44,9 @@ Result<std::string> InterruptibleTerminal::ReadLine() {
   {
     std::lock_guard lock(terminal_mutex_);
     CF_EXPECT(interrupted_ == false, "Interrupted");
-    CF_EXPECTF(owner_tid_ == std::nullopt,
-               "This InterruptibleTerminal is already owned by {}",
-               owner_tid_.value());
+    CF_EXPECT(owner_tid_ == std::nullopt,
+              "This InterruptibleTerminal is already owned by "
+                  << owner_tid_.value());
     CF_EXPECT(stdin_fd_->IsOpen(),
               "The copy of client stdin fd has been already closed.");
     owner_tid_ = std::this_thread::get_id();

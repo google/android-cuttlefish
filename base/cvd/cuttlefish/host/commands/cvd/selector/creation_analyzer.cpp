@@ -101,7 +101,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
             "Instance IDs were specified, so should be one or more.");
   for (const auto id : requested_instance_ids) {
     CF_EXPECT(IsIdAvailable(instance_database_, id),
-              "instance ID #" << id << " is requeested but not available.");
+              "instance ID #" << id << " is requested but not available.");
   }
 
   std::vector<std::string> per_instance_names;
@@ -188,12 +188,8 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
 
   // auto-generation means the user did not specify much: e.g. "cvd start"
   // In this case, the user may expect the instance id to be 1+
-  using ReservationSet = UniqueResourceAllocator<unsigned>::ReservationSet;
-  std::optional<ReservationSet> allocated_ids_opt;
-  if (!allocated_ids_opt) {
-    allocated_ids_opt =
-        unique_id_allocator->UniqueConsecutiveItems(n_instances);
-  }
+  auto allocated_ids_opt =
+      unique_id_allocator->UniqueConsecutiveItems(n_instances);
   CF_EXPECT(allocated_ids_opt != std::nullopt, "Unique ID allocation failed.");
 
   std::vector<unsigned> allocated_ids;

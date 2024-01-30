@@ -102,8 +102,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
                                             .err = redirect_stderr_fd};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
-  SubprocessOptions options;
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
+  CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
 
   interrupt_lock.unlock();
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());

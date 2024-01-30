@@ -149,7 +149,7 @@ static Result<void> TimedKillCvdServer(CvdClient& client, const int timeout) {
     LOG(ERROR) << "Sleeping " << timeout << " seconds, and "
                << "will send sigkill to the server.";
     using namespace std::chrono_literals;
-    std::this_thread::sleep_for(operator""s((unsigned long long)timeout));
+    std::this_thread::sleep_for(std::chrono::seconds(timeout));
     auto result_kill = KillCvdServerProcess();
     worker_process.Stop();
     // TODO(kwstephenkim): Compose error messages, and propagate
