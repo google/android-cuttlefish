@@ -308,12 +308,6 @@ PRODUCT_COPY_FILES += $(LOCAL_AUDIO_PRODUCT_COPY_FILES)
 DEVICE_PACKAGE_OVERLAYS += $(LOCAL_AUDIO_DEVICE_PACKAGE_OVERLAYS)
 
 #
-# BiometricsFingerprint HAL (AIDL)
-#
-PRODUCT_PACKAGES += \
-    com.android.hardware.biometrics.fingerprint.virtual
-
-#
 # Contexthub HAL
 #
 LOCAL_CONTEXTHUB_PRODUCT_PACKAGE ?= \

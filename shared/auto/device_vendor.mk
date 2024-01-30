@@ -73,13 +73,13 @@ PRODUCT_COPY_FILES += \
 
 # vehicle HAL
 ifeq ($(LOCAL_VHAL_PRODUCT_PACKAGE),)
-    LOCAL_VHAL_PRODUCT_PACKAGE := android.hardware.automotive.vehicle@V1-emulator-service
+    LOCAL_VHAL_PRODUCT_PACKAGE := android.hardware.automotive.vehicle@V3-emulator-service
     BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/vhal
 endif
 PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 
 # Remote access HAL
-PRODUCT_PACKAGES += android.hardware.automotive.remoteaccess@V1-default-service
+PRODUCT_PACKAGES += android.hardware.automotive.remoteaccess@V2-default-service
 
 # Broadcast Radio
 PRODUCT_PACKAGES += android.hardware.broadcastradio-service.default
@@ -96,6 +96,13 @@ PRODUCT_PACKAGES += $(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE)
 
 # CAN bus HAL
 PRODUCT_PACKAGES += android.hardware.automotive.can-service
+
+# MACSEC HAL
+PRODUCT_PACKAGES += android.hardware.macsec-service
+PRODUCT_PACKAGES += wpa_supplicant_macsec
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/macsec/wpa_supplicant_macsec.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wpa_supplicant_macsec.conf \
+    $(LOCAL_PATH)/macsec/init.wpa_supplicant_macsec.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.wpa_supplicant_macsec.rc
 
 # Occupant Awareness HAL
 PRODUCT_PACKAGES += android.hardware.automotive.occupant_awareness@1.0-service
@@ -135,5 +142,8 @@ DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/auto/overlay
 
 PRODUCT_PACKAGES += CarServiceOverlayCuttleFish
 GOOGLE_CAR_SERVICE_OVERLAY += CarServiceOverlayCuttleFishGoogle
+
+PRODUCT_PACKAGES += ConnectivityOverlayCuttleFish
+GOOGLE_CAR_SERVICE_OVERLAY += ConnectivityOverlayCuttleFishGoogle
 
 TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/auto/android-info.txt

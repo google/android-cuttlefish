@@ -1,4 +1,5 @@
-// Copyright (C) 2021 The Android Open Source Project
+//
+// Copyright (C) 2023 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,15 +14,12 @@
 // limitations under the License.
 
 package {
-    default_applicable_licenses: [
-        "external_wpa_supplicant_8_license",
-    ],
+    default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "wpa_supplicant_cf",
-    defaults: ["wpa_supplicant_defaults"],
-    static_libs: [
-        "lib_driver_cmd_simulated_cf_bp",
-    ],
+prebuilt_etc {
+    name: "tablet_excluded_hardware.prebuilt.xml",
+    src: "tablet_excluded_hardware.xml",
+    relative_install_path: "permissions",
+    soc_specific: true,
 }

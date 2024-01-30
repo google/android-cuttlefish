@@ -37,6 +37,15 @@
     },
     {
       "name": "CtsScopedStorageDeviceOnlyTest"
+    },
+    {
+      "name": "CtsScopedStorageBypassDatabaseOperationsTest"
+    },
+    {
+      "name": "CtsScopedStorageGeneralTest"
+    },
+    {
+      "name": "CtsScopedStorageRedactUriTest"
     }
   ],
   "auto-presubmit": [

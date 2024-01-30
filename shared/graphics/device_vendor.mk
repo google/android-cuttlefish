@@ -60,5 +60,4 @@ PRODUCT_VENDOR_PROPERTIES += \
 # Gralloc implementation
 PRODUCT_PACKAGES += \
     android.hardware.graphics.allocator-service.minigbm \
-    android.hardware.graphics.mapper@4.0-impl.minigbm \
     mapper.minigbm
