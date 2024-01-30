@@ -56,5 +56,5 @@ jobs:
       run: apt install -y clang pkg-config meson libfmt-dev libgflags-dev libjsoncpp-dev protobuf-compiler libgtest-dev libcurl4-openssl-dev libprotobuf-c-dev libgoogle-glog-dev libssl-dev libxml2-dev openssl uuid-dev
     - name: Setup meson
       run: mkdir cvd/build && cd cvd/build && meson setup
-    # - name: Build cvd
-    #   run: cd cvd/build && meson compile
+    - name: Build cvd
+      run: cd cvd/build && meson compile
