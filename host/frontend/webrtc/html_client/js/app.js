@@ -220,6 +220,9 @@ class DeviceControlApp {
         'rotation-modal-button', 'rotation-modal',
         'rotation-modal-close');
     createModalButton(
+      'touchpad-modal-button', 'touchpad-modal',
+      'touchpad-modal-close');
+    createModalButton(
         'bluetooth-modal-button', 'bluetooth-prompt', 'bluetooth-prompt-close');
     createModalButton(
         'bluetooth-prompt-wizard', 'bluetooth-wizard', 'bluetooth-wizard-close',
