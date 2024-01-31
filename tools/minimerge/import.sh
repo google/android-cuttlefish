@@ -3,7 +3,7 @@
 set -e
 
 DIR="$(realpath "$(dirname $0)")"
-REPO_DIR="$(realpath "${DIR}/../../")"
+REPO_DIR="$(git rev-parse --show-toplevel)"
 TOOL="${DIR}/minimerge_tool"
 METADATA_FILE="${DIR}/cuttlefish_import_metadata.txt"
 CUTTLEFISH_REPO_URL="https://android.googlesource.com/device/google/cuttlefish"
