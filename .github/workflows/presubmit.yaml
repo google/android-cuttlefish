@@ -35,6 +35,8 @@ jobs:
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
       with:
         path: "android-cuttlefish"
+    - name: install package build dependencies
+      run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
     - name: build base debian package
       run: cd android-cuttlefish/base && debuild -i -us -uc -b
     - name: install base debian package
