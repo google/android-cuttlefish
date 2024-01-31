@@ -37,6 +37,7 @@ type HTTPHelper struct {
 	Client       *http.Client
 	RootEndpoint string
 	Dumpster     io.Writer
+	AccessToken  string
 }
 
 func (h *HTTPHelper) NewGetRequest(path string) *HTTPRequestBuilder {
@@ -132,6 +133,9 @@ func (rb *HTTPRequestBuilder) Do(ret any) error {
 }
 
 func (rb *HTTPRequestBuilder) DoWithRetries(ret any, retryOpts RetryOptions) error {
+	if rb.helper.AccessToken != "" {
+		rb.AddHeader("Authorization", "Bearer "+rb.helper.AccessToken)
+	}
 	if rb.err != nil {
 		return rb.err
 	}

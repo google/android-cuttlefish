@@ -53,6 +53,14 @@ func (e *ApiCallError) Is(target error) bool {
 	return errors.As(target, &a) && *a == *e
 }
 
+type AuthnOpts struct {
+	OIDCToken *OIDCToken
+}
+
+type OIDCToken struct {
+	Value string
+}
+
 type ServiceOptions struct {
 	RootEndpoint   string
 	ProxyURL       string
@@ -61,6 +69,7 @@ type ServiceOptions struct {
 	RetryAttempts  int
 	RetryDelay     time.Duration
 	ChunkSizeBytes int64
+	Authn          *AuthnOpts
 }
 
 type Service interface {
@@ -83,23 +92,22 @@ type serviceImpl struct {
 type ServiceBuilder func(opts *ServiceOptions) (Service, error)
 
 func NewService(opts *ServiceOptions) (Service, error) {
-	httpClient := &http.Client{}
-	// Handles http proxy
+	helper := HTTPHelper{
+		Client:       &http.Client{},
+		RootEndpoint: opts.RootEndpoint,
+		Dumpster:     opts.DumpOut,
+	}
 	if opts.ProxyURL != "" {
 		proxyUrl, err := url.Parse(opts.ProxyURL)
 		if err != nil {
 			return nil, err
 		}
-		httpClient.Transport = &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
+		helper.Client.Transport = &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
 	}
-	return &serviceImpl{
-		ServiceOptions: opts,
-		httpHelper: HTTPHelper{
-			Client:       httpClient,
-			RootEndpoint: opts.RootEndpoint,
-			Dumpster:     opts.DumpOut,
-		},
-	}, nil
+	if opts.Authn != nil && opts.Authn.OIDCToken != nil {
+		helper.AccessToken = opts.Authn.OIDCToken.Value
+	}
+	return &serviceImpl{ServiceOptions: opts, httpHelper: helper}, nil
 }
 
 func (c *serviceImpl) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInstance, error) {
