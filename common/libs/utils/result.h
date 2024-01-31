@@ -27,6 +27,16 @@
 #include <android-base/logging.h>
 #include <android-base/result.h>  // IWYU pragma: export
 
+#if FMT_VERSION < 80000
+namespace fmt {
+  // fmt::runtime was added in v8.0.0
+  template<typename T>
+  const T& runtime(const T& param) {
+    return param;
+  }
+}
+#endif
+
 namespace cuttlefish {
 
 class StackTraceError;
