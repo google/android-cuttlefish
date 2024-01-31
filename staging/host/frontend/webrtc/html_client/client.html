@@ -41,6 +41,7 @@
             <button id='back_btn' title='Back' disabled='true' class='material-icons'>arrow_back</button>
             <button id='home_btn' title='Home' disabled='true' class='material-icons'>home</button>
             <button id='menu_btn' title='Menu' disabled='true' class='material-icons'>menu</button>
+            <button id='touchpad-modal-button' title='Touchpads' class='material-icons'>touch_app</button>
             <button id='rotate_left_btn' title='Rotate left' disabled='true' class='material-icons' data-adb="true">rotate_90_degrees_ccw</button>
             <button id='rotate_right_btn' title='Rotate right' disabled='true' class='material-icons' data-adb="true">rotate_90_degrees_cw</button>
             <button id='volume_up_btn' title='Volume up' disabled='true' class='material-icons'>volume_up</button>
@@ -54,8 +55,10 @@
             <button id='rotation-modal-button' title='Rotation sensors' class='material-icons'>more_vert</button>
           </div>
           <div id='control-panel-custom-buttons' class='control-panel-column'></div>
-          <!-- tabindex="-1" allows this element to capture keyboard events -->
-          <div id='device-displays' tabindex="-1">
+          <div id="device-display-column">
+            <!-- tabindex="-1" allows this element to capture keyboard events -->
+            <div id='device-displays' tabindex="-1">
+            </div>
           </div>
         </div>
       </section>
@@ -242,6 +245,15 @@
             <span id='gyroscope-value'>0.00 0.00 0.00</span>
           </div>
         </div>
+      </div>
+      <div id='touchpad-modal' class='modal'>
+        <div id='touchpad-modal-header' class='modal-header'>
+            <button id='touchpad-modal-close' title='Close' class='material-icons modal-close'>close</button>
+        </div>
+        <span id='touchpad-list'>
+          <div class='selectors'></div>
+          <div class='touchpads'></div>
+        </span>
       </div>
       <script src="js/adb.js"></script>
       <script src="js/location.js"></script>
