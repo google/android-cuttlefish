@@ -23,11 +23,11 @@ use lights::LightsService;
 
 const LOG_TAG: &str = "lights_service_cuttlefish";
 
-use log::Level;
+use log::LevelFilter;
 
 fn main() {
     let logger_success = logger::init(
-        logger::Config::default().with_tag_on_device(LOG_TAG).with_min_level(Level::Trace),
+        logger::Config::default().with_tag_on_device(LOG_TAG).with_max_level(LevelFilter::Trace),
     );
     if !logger_success {
         panic!("{LOG_TAG}: Failed to start logger.");
