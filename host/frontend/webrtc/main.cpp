@@ -44,6 +44,8 @@
 #include "host/libs/input_connector/socket_input_connector.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
+DEFINE_bool(multitouch, true,
+            "Whether to send multi-touch or single-touch events");
 DEFINE_string(touch_fds, "",
               "A list of fds to listen on for touch connections.");
 DEFINE_int32(rotary_fd, -1, "An fd to listen on for rotary connections.");
@@ -153,8 +155,13 @@ int main(int argc, char** argv) {
     auto label_prefix =
         i < display_count ? kTouchscreenPrefix : kTouchpadPrefix;
     auto device_idx = i < display_count ? i : i - display_count;
-    inputs_builder.WithTouchDevice(label_prefix + std::to_string(device_idx),
-                                   cuttlefish::SharedFD::Dup(touch_fd));
+    auto device_label = fmt::format("{}{}", label_prefix, device_idx);
+    auto touch_shared_fd = cuttlefish::SharedFD::Dup(touch_fd);
+    if (FLAGS_multitouch) {
+      inputs_builder.WithMultitouchDevice(device_label, touch_shared_fd);
+    } else {
+      inputs_builder.WithTouchDevice(device_label, touch_shared_fd);
+    }
     close(touch_fd);
   }
   if (FLAGS_rotary_fd >= 0) {
