@@ -98,6 +98,14 @@ class StreamerSockets : public virtual SetupFeature {
       cmd.AddParameter("-write_virtio_input");
     }
     if (!touch_servers_.empty()) {
+      bool is_chromeos =
+          instance_.boot_flow() ==
+              CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs ||
+          instance_.boot_flow() ==
+              CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOsDisk;
+      if (is_chromeos) {
+        cmd.AddParameter("--multitouch=false");
+      }
       cmd.AddParameter("-touch_fds=", touch_servers_[0]);
       for (int i = 1; i < touch_servers_.size(); ++i) {
         cmd.AppendToLastParameter(",", touch_servers_[i]);
