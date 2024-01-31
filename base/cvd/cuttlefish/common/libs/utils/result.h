@@ -368,7 +368,7 @@ auto ErrorFromType(Result<T>&& value) {
       current_entry << MSG;                                   \
       auto error = ErrorFromType(macro_intermediate_result);  \
       error.PushEntry(std::move(current_entry));              \
-      return error;                                           \
+      return std::move(error);                                \
     };                                                        \
     OutcomeDereference(std::move(macro_intermediate_result)); \
   })
@@ -432,7 +432,7 @@ auto ErrorFromType(Result<T>&& value) {
       current_entry << MSG;                                                 \
       auto error = ErrorFromType(false);                                    \
       error.PushEntry(std::move(current_entry));                            \
-      return error;                                                         \
+      return std::move(error);                                              \
     };                                                                      \
     comparison_result;                                                      \
   })
