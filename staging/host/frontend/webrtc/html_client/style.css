@@ -28,6 +28,7 @@ body, body.dark-theme {
   --modal-button-border: black;
   --modal-button-invalid-border: red;
   --modal-button-highlight-bg: #f4cccc; /* light red */
+  --modal-padding: 20px;
   --bt-label-fg: green;
   --bt-label-invalid-fg: red;
   --bt-action-bg: transparent;
@@ -161,7 +162,7 @@ body {
   position: absolute;
 
   border-radius: 10px;
-  padding: 20px;
+  padding: var(--modal-padding);
   padding-top: 1px;
 
   background-color: var(--modal-bg);
@@ -379,4 +380,67 @@ body {
   max-height: 100%;
   touch-action: none;
   border: var(--display-border);
+}
+
+#touchpad-modal {
+  /* Disable select to avoid weird behavior when dragging mouse while
+  interacting with touchpads */
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  width: 200px;
+}
+
+#touchpad-modal-header {
+  justify-content: right;
+  margin-right: calc(-1 * var(--modal-padding));
+}
+
+#touchpad-modal-button {
+  display: none;
+}
+
+#touchpad-controls {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  outline: 0px solid transparent;
+}
+
+.touchpad {
+  background-color: var(--button-fg);
+  touch-action: none;
+  position: relative;
+  flex-direction: column;
+  display: none;
+}
+
+.touchpad.selected {
+  display: block;
+}
+
+.touchpad:active {
+  background-color: var(--button-pressed-bg);
+}
+
+#touchpad-list .selectors {
+  margin-bottom: 10px;
+}
+
+#touchpad-list .selectors button {
+  color: var(--main-fg);
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+#touchpad-list .selectors button:hover {
+  color: var(--main-bg);
+  background-color: var(--main-fg);
+}
+
+#touchpad-list .selectors button.selected {
+  color: var(--main-bg);
+  background-color: var(--button-fg);
 }
