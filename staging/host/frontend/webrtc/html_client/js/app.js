@@ -820,7 +820,7 @@ class DeviceControlApp {
           this.#updateDeviceDisplaysInfo();
         });
 
-        this.#addMouseTracking(deviceDisplayVideo);
+        this.#addMouseTracking(deviceDisplayVideo, scaleDisplayCoordinates);
 
         deviceDisplays.appendChild(displayFragment);
 
@@ -906,6 +906,7 @@ class DeviceControlApp {
       touchPadElem.classList.add("touchpad");
       touchPadElem.style.aspectRatio = touchpad.x_res / touchpad.y_res;
       touchPadElem.id = touchpad.label;
+      this.#addMouseTracking(touchPadElem, makeScaleTouchpadCoordinates(touchpad));
       touchpadElementContainer.appendChild(touchPadElem);
 
       let tabButtonElem = document.createElement("button");
@@ -1004,8 +1005,8 @@ class DeviceControlApp {
     }
   }
 
-  #addMouseTracking(displayDeviceVideo) {
-    trackPointerEvents(displayDeviceVideo, this.#deviceConnection);
+  #addMouseTracking(touchInputElement, scaleCoordinates) {
+    trackPointerEvents(touchInputElement, this.#deviceConnection, scaleCoordinates);
   }
 
   #updateDisplayVisibility(displayId, powerMode) {

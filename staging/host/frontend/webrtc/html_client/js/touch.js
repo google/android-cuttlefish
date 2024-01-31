@@ -16,14 +16,14 @@
 
 'use strict';
 
-function trackPointerEvents(videoElement, dc) {
+function trackPointerEvents(touchInputElement, dc, scaleCoordinates) {
   let activePointers = new Set();
 
   function onPointerDown(e) {
     // Can't prevent event default behavior to allow the element gain focus
     // when touched and start capturing keyboard input in the parent.
     activePointers.add(e.pointerId);
-    sendEventUpdate(dc, e.target, [{x: e.offsetX, y: e.offsetY, id: e.pointerId}], true);
+    sendEventUpdate(dc, e.target, [{x: e.offsetX, y: e.offsetY, id: e.pointerId}], scaleCoordinates, true);
   }
 
   function onPointerUp(e) {
@@ -33,7 +33,7 @@ function trackPointerEvents(videoElement, dc) {
     if (!wasDown) {
       return;
     }
-    sendEventUpdate(dc, e.target, [{x: e.offsetX, y: e.offsetY, id: e.pointerId}], false);
+    sendEventUpdate(dc, e.target, [{x: e.offsetX, y: e.offsetY, id: e.pointerId}], scaleCoordinates, false);
   }
 
   function onPointerMove(e) {
@@ -43,50 +43,54 @@ function trackPointerEvents(videoElement, dc) {
       // This is just a mouse move, not a drag
       return;
     }
-    sendEventUpdate(dc, e.target, [{x: e.offsetX, y: e.offsetY, id: e.pointerId}], true);
+    sendEventUpdate(dc, e.target, [{x: e.offsetX, y: e.offsetY, id: e.pointerId}], scaleCoordinates, true);
   }
 
-  videoElement.addEventListener('pointerdown', onPointerDown);
-  videoElement.addEventListener('pointermove', onPointerMove);
-  videoElement.addEventListener('pointerup', onPointerUp);
-  videoElement.addEventListener('pointerleave', onPointerUp);
-  videoElement.addEventListener('pointercancel', onPointerUp);
+  touchInputElement.addEventListener('pointerdown', onPointerDown);
+  touchInputElement.addEventListener('pointermove', onPointerMove);
+  touchInputElement.addEventListener('pointerup', onPointerUp);
+  touchInputElement.addEventListener('pointerleave', onPointerUp);
+  touchInputElement.addEventListener('pointercancel', onPointerUp);
 }
 
-function sendEventUpdate(dc, deviceDisplay, evs /*[{x, y, id}]*/, down) {
-  if (evs.length == 0) {
-    return;
-  }
-
+function scaleDisplayCoordinates(deviceDisplayElement, x, y) {
   // Before the first video frame arrives there is no way to know width and
   // height of the device's screen, so turn every click into a click at 0x0.
   // A click at that position is not more dangerous than anywhere else since
   // the user is clicking blind anyways.
-  const videoWidth = deviceDisplay.videoWidth ? deviceDisplay.videoWidth : 1;
-  const elementWidth =
-      deviceDisplay.offsetWidth ? deviceDisplay.offsetWidth : 1;
-  const scaling = videoWidth / elementWidth;
+  const actualWidth = deviceDisplayElement.videoWidth ? deviceDisplayElement.videoWidth : 1;
+  const elementWidth = deviceDisplayElement.offsetWidth ? deviceDisplayElement.offsetWidth : 1;
+  const scaling = actualWidth / elementWidth;
+  return [Math.trunc(x * scaling), Math.trunc(y * scaling)];
+}
 
+function makeScaleTouchpadCoordinates(touchpad) {
+  return (touchpadElement, x, y)  => {
+    const elementWidth = touchpadElement.offsetWidth ? touchpadElement.offsetWidth : 1;
+    const scaling = touchpad.x_res / elementWidth;
+    return [Math.trunc(x * scaling), Math.trunc(y * scaling)];
+  };
+}
+
+function sendEventUpdate(dc, touchInputElement, evs /*[{x, y, id}]*/, scaleCoordinates, down) {
+  if (evs.length == 0) {
+    return;
+  }
+
+  const device_label = touchInputElement.id;
   let xArr = [];
   let yArr = [];
   let idArr = [];
 
   for (const e of evs) {
-      xArr.push(e.x);
-      yArr.push(e.y);
+      const [x_scaled, y_scaled] = scaleCoordinates(touchInputElement, e.x, e.y);
+      xArr.push(x_scaled);
+      yArr.push(y_scaled);
       idArr.push(e.id);
-  }
-
-  for (const i in xArr) {
-    xArr[i] = Math.trunc(xArr[i] * scaling);
-    yArr[i] = Math.trunc(yArr[i] * scaling);
   }
 
   // NOTE: Rotation is handled automatically because the CSS rotation through
   // transforms also rotates the coordinates of events on the object.
-
-  const device_label = deviceDisplay.id;
-
   dc.sendMultiTouch(
       {idArr, xArr, yArr, down: down, device_label});
 }
