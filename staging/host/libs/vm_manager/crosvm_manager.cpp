@@ -524,16 +524,20 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     int touch_idx = 0;
     for (auto& display_config : display_configs) {
       crosvm_cmd.Cmd().AddParameter(
-          touch_type_parameter, instance.touch_socket_path(touch_idx++), ":",
-          display_config.width, ":", display_config.height);
+          touch_type_parameter,
+          "path=", instance.touch_socket_path(touch_idx++),
+          ",width=", display_config.width,
+          ",height=", display_config.height);
     }
     auto touchpad_configs = instance.touchpad_configs();
     for (int i = 0; i < touchpad_configs.size(); ++i) {
       auto touchpad_config = touchpad_configs[i];
       crosvm_cmd.Cmd().AddParameter(
-          touch_type_parameter, instance.touch_socket_path(touch_idx++), ":",
-          touchpad_config.width, ":", touchpad_config.height, ":",
-          kTouchpadDefaultPrefix, i);
+          touch_type_parameter,
+          "path=", instance.touch_socket_path(touch_idx++),
+          ",width=", touchpad_config.width,
+          ",height=", touchpad_config.height,
+          ",name=", kTouchpadDefaultPrefix, i);
     }
     crosvm_cmd.Cmd().AddParameter("--rotary=",
                                   instance.rotary_socket_path());

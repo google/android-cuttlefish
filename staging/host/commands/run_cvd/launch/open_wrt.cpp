@@ -78,7 +78,7 @@ class OpenWrt : public CommandSource {
     ap_cmd.Cmd().AddParameter("--core-scheduling=false");
 
     if (!environment_.vhost_user_mac80211_hwsim().empty()) {
-      ap_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
+      ap_cmd.Cmd().AddParameter("--vhost-user=mac80211-hwsim,socket=",
                                 environment_.vhost_user_mac80211_hwsim());
     }
     SharedFD wifi_tap;
