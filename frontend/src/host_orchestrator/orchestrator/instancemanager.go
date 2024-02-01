@@ -353,17 +353,17 @@ func createCredentialsFile(content string) (*os.File, error) {
 	return p1, nil
 }
 
-type buildAPIArtifacstFetcher struct {
+type buildAPIArtifactsFetcher struct {
 	buildAPI artifacts.BuildAPI
 }
 
-func newBuildAPIArtifactsFetcher(buildAPI artifacts.BuildAPI) *buildAPIArtifacstFetcher {
-	return &buildAPIArtifacstFetcher{
+func newBuildAPIArtifactsFetcher(buildAPI artifacts.BuildAPI) *buildAPIArtifactsFetcher {
+	return &buildAPIArtifactsFetcher{
 		buildAPI: buildAPI,
 	}
 }
 
-func (f *buildAPIArtifacstFetcher) Fetch(outDir, buildID, target string, artifactNames ...string) error {
+func (f *buildAPIArtifactsFetcher) Fetch(outDir, buildID, target string, artifactNames ...string) error {
 	var chans []chan error
 	for _, name := range artifactNames {
 		ch := make(chan error)
