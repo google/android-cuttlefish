@@ -47,7 +47,7 @@ type UserArtifactsManager interface {
 	NewDir() (*apiv1.UploadDirectory, error)
 	// List existing directories
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
-	// Upldate artifact with the passed chunk.
+	// Update artifact with the passed chunk.
 	UpdateArtifact(dir string, chunk UserArtifactChunk) error
 }
 

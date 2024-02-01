@@ -128,7 +128,7 @@ func main() {
 	}
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
-		RootDir:     filepath.Join(*imRootDir, "user_artifacs"),
+		RootDir:     filepath.Join(*imRootDir, "user_artifacts"),
 		NameFactory: func() string { return uuid.New().String() },
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
