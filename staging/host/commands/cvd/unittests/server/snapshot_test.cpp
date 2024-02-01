@@ -21,7 +21,7 @@
 #include "common/libs/utils/contains.h"
 #include "host/commands/cvd/types.h"
 #include "host/commands/cvd/unittests/server/cmd_runner.h"
-#include "host/commands/cvd/unittests/server/snapshot_test_helper.cpp"
+#include "host/commands/cvd/unittests/server/snapshot_test_helper.h"
 
 namespace cuttlefish {
 namespace cvdsnapshot {

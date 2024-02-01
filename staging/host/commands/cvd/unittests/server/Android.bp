@@ -35,7 +35,6 @@ cc_test_host {
         "help_test.cpp",
         "instance_ids_test.cpp",
         "snapshot_test.cpp",
-        "snapshot_test_helper.cpp",
     ],
     static_libs: [
         "cvd_test_cmd_utils",
