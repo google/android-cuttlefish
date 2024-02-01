@@ -281,7 +281,6 @@ ifndef LOCAL_AUDIO_PRODUCT_PACKAGE
 #
 ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
 LOCAL_AUDIO_PRODUCT_PACKAGE += \
-    android.hardware.audio.parameter_parser.example_service \
     com.android.hardware.audio
 else
 LOCAL_AUDIO_PRODUCT_PACKAGE += \
