@@ -388,10 +388,10 @@ TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
   }
   // end of set up
 
-  auto result_miau = db.FindGroups({kInstanceNameField, "8"});
-  auto result_both = db.FindGroups({kInstanceNameField, "tv_instance"});
-  auto result_nyah = db.FindGroups({kInstanceNameField, "my_favorite_phone"});
-  auto result_invalid = db.FindGroups({kInstanceNameField, "name_never_seen"});
+  auto result_miau = db.FindGroups(Query(kInstanceNameField, "8"));
+  auto result_both = db.FindGroups(Query(kInstanceNameField, "tv_instance"));
+  auto result_nyah = db.FindGroups(Query(kInstanceNameField, "my_favorite_phone"));
+  auto result_invalid = db.FindGroups(Query(kInstanceNameField, "name_never_seen"));
 
   ASSERT_TRUE(result_miau.ok());
   ASSERT_TRUE(result_both.ok());
