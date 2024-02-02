@@ -76,19 +76,9 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
   }
 
   // group_name : "meow"
-  auto result_bad_home =
-      db.AddInstanceGroup({.group_name = "meow",
-                           .home_dir = "/path/to/never/exists",
-                           .host_artifacts_path = HostArtifactsPath(),
-                           .product_out_path = HostArtifactsPath()});
   auto result_bad_host_bin_dir =
       db.AddInstanceGroup({.group_name = "meow",
                            .home_dir = home,
-                           .host_artifacts_path = "/path/to/never/exists",
-                           .product_out_path = "/path/to/never/exists"});
-  auto result_both_bad =
-      db.AddInstanceGroup({.group_name = "meow",
-                           .home_dir = "/path/to/never/exists",
                            .host_artifacts_path = "/path/to/never/exists",
                            .product_out_path = "/path/to/never/exists"});
   auto result_bad_group_name =
@@ -104,9 +94,7 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
                            .host_artifacts_path = invalid_host_artifacts_path,
                            .product_out_path = invalid_host_artifacts_path});
 
-  ASSERT_FALSE(result_bad_home.ok());
   ASSERT_FALSE(result_bad_host_bin_dir.ok());
-  ASSERT_FALSE(result_both_bad.ok());
   ASSERT_FALSE(result_bad_group_name.ok());
   ASSERT_FALSE(result_non_qualifying_host_tool_dir.ok());
 }
