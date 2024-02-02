@@ -234,13 +234,23 @@ std::vector<gflags::CommandLineFlagInfo> FlagsForSubprocess(std::string helpxml_
 
 } // namespace
 
-FlagForwarder::FlagForwarder(std::set<std::string> subprocesses)
+FlagForwarder::FlagForwarder(std::set<std::string> subprocesses,
+                             const std::vector<std::vector<std::string>>& args)
     : subprocesses_(std::move(subprocesses)) {
   std::map<std::string, std::string> flag_to_type = CurrentFlagsToTypes();
 
+  int subprocess_index = 0;
   for (const auto& subprocess : subprocesses_) {
     cuttlefish::Command cmd(subprocess);
     cmd.AddParameter("--helpxml");
+
+    if (subprocess_index < args.size()) {
+      for (auto arg : args[subprocess_index]) {
+        cmd.AddParameter(arg);
+      }
+    }
+    subprocess_index++;
+
     std::string helpxml_input, helpxml_output, helpxml_error;
     cuttlefish::SubprocessOptions options;
     options.Verbose(false);
