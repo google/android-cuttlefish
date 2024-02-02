@@ -58,3 +58,5 @@ jobs:
       run: mkdir base/cvd/build && cd base/cvd/build && meson setup
     - name: Build cvd
       run: cd base/cvd/build && meson compile
+    - name: Test cvd
+      run: cd base/cvd/build && meson test -v
