@@ -45,7 +45,7 @@
 #include "host/commands/test_gce_driver/gce_api.h"
 #include "host/commands/test_gce_driver/key_pair.h"
 #include "host/commands/test_gce_driver/scoped_instance.h"
-#include "host/libs/web/build_api.h"
+#include "host/libs/web/android_build_api.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
 

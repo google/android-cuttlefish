@@ -23,8 +23,8 @@
 #include <android-base/logging.h>
 
 #include "common/libs/utils/result.h"
-#include "host/libs/web/build_api.h"
-#include "host/libs/web/build_string.h"
+#include "host/libs/web/android_build_api.h"
+#include "host/libs/web/android_build_string.h"
 
 namespace cuttlefish {
 
