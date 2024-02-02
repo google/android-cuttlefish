@@ -279,12 +279,12 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   }
   // The end of set up
 
-  auto result1 = db.FindInstance({kInstanceIdField, std::to_string(1)});
-  auto result10 = db.FindInstance({kInstanceIdField, std::to_string(10)});
-  auto result7 = db.FindInstance({kInstanceIdField, std::to_string(7)});
-  auto result11 = db.FindInstance({kInstanceIdField, std::to_string(11)});
-  auto result3 = db.FindInstance({kInstanceIdField, std::to_string(3)});
-  auto result_invalid = db.FindInstance({kInstanceIdField, std::to_string(20)});
+  auto result1 = db.FindInstance(Query(kInstanceIdField, std::to_string(1)));
+  auto result10 = db.FindInstance(Query(kInstanceIdField, std::to_string(10)));
+  auto result7 = db.FindInstance(Query(kInstanceIdField, std::to_string(7)));
+  auto result11 = db.FindInstance(Query(kInstanceIdField, std::to_string(11)));
+  auto result3 = db.FindInstance(Query(kInstanceIdField, std::to_string(3)));
+  auto result_invalid = db.FindInstance(Query(kInstanceIdField, std::to_string(20)));
 
   ASSERT_TRUE(result1.ok());
   ASSERT_TRUE(result10.ok());
@@ -321,11 +321,11 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   }
   // end of set up
 
-  auto result1 = db.FindInstance({kInstanceNameField, "8"});
-  auto result10_and_11 = db.FindInstances({kInstanceNameField, "tv_instance"});
-  auto result7 = db.FindInstance({kInstanceNameField, "my_favorite_phone"});
+  auto result1 = db.FindInstance(Query(kInstanceNameField, "8"));
+  auto result10_and_11 = db.FindInstances(Query(kInstanceNameField, "tv_instance"));
+  auto result7 = db.FindInstance(Query(kInstanceNameField, "my_favorite_phone"));
   auto result_invalid =
-      db.FindInstance({kInstanceNameField, "name_never_seen"});
+      db.FindInstance(Query(kInstanceNameField, "name_never_seen"));
 
   ASSERT_TRUE(result1.ok());
   ASSERT_TRUE(result10_and_11.ok());
@@ -353,8 +353,8 @@ TEST_F(CvdInstanceDatabaseTest, FindInstancesByGroupName) {
   }
   // end of set up
 
-  auto result_nyah = db.FindInstances({kGroupNameField, "nyah"});
-  auto result_invalid = db.FindInstance({kGroupNameField, "name_never_seen"});
+  auto result_nyah = db.FindInstances(Query(kGroupNameField, "nyah"));
+  auto result_invalid = db.FindInstance(Query(kGroupNameField, "name_never_seen"));
 
   ASSERT_TRUE(result_nyah.ok());
   std::set<std::string> nyah_instance_names;
@@ -421,8 +421,8 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesTogether) {
   auto add_result = db.AddInstances("miau", miau_group_instance_id_name_pairs);
   ASSERT_TRUE(add_result.ok()) << add_result.error().Trace();
 
-  auto result_8 = db.FindInstance({kInstanceNameField, "8"});
-  auto result_tv = db.FindInstance({kInstanceNameField, "tv_instance"});
+  auto result_8 = db.FindInstance(Query(kInstanceNameField, "8"));
+  auto result_tv = db.FindInstance(Query(kInstanceNameField, "tv_instance"));
 
   ASSERT_TRUE(result_8.ok()) << result_8.error().Trace();
   ASSERT_TRUE(result_tv.ok()) << result_tv.error().Trace();
@@ -463,8 +463,8 @@ TEST_F(CvdInstanceDatabaseJsonTest, DumpLoadDumpCompare) {
     // re-look up the group and the instances
     auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
     ASSERT_TRUE(miau_group.ok()) << miau_group.error().Trace();
-    auto result_8 = db.FindInstance({kInstanceNameField, "8"});
-    auto result_tv = db.FindInstance({kInstanceNameField, "tv_instance"});
+    auto result_8 = db.FindInstance(Query(kInstanceNameField, "8"));
+    auto result_tv = db.FindInstance(Query(kInstanceNameField, "tv_instance"));
 
     ASSERT_TRUE(result_8.ok()) << result_8.error().Trace();
     ASSERT_TRUE(result_tv.ok()) << result_tv.error().Trace();
