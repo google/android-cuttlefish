@@ -29,7 +29,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "host/libs/web/build_string.h"
+#include "host/libs/web/android_build_string.h"
 
 namespace cuttlefish {
 namespace {
