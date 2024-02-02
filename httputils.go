@@ -78,6 +78,19 @@ func (h *HTTPHelper) NewPostRequest(path string, jsonBody any) *HTTPRequestBuild
 	}
 }
 
+func (h *HTTPHelper) NewUploadFileRequest(ctx context.Context, path string, body io.Reader, contentType string) *HTTPRequestBuilder {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, h.RootEndpoint+path, body)
+	if err != nil {
+		return &HTTPRequestBuilder{helper: h, request: nil, err: err}
+	}
+	req.Header.Set("Content-Type", contentType)
+	return &HTTPRequestBuilder{
+		helper:  h,
+		request: req,
+		err:     err,
+	}
+}
+
 func (h *HTTPHelper) dumpRequest(r *http.Request) error {
 	if h.Dumpster == nil {
 		return nil
@@ -128,40 +141,54 @@ type RetryOptions struct {
 	RetryDelay  time.Duration
 }
 
-func (rb *HTTPRequestBuilder) Do(ret any) error {
-	return rb.DoWithRetries(ret, RetryOptions{})
+func (rb *HTTPRequestBuilder) Do() (*http.Response, error) {
+	return rb.doWithRetries(RetryOptions{})
 }
 
-func (rb *HTTPRequestBuilder) DoWithRetries(ret any, retryOpts RetryOptions) error {
+// Expects a response with JSON body to be decoded into `ret`.
+func (rb *HTTPRequestBuilder) JSONResDo(ret any) error {
+	return rb.JSONResDoWithRetries(ret, RetryOptions{})
+}
+
+// Expects a response with JSON body to be decoded into `ret`.
+func (rb *HTTPRequestBuilder) JSONResDoWithRetries(ret any, retryOpts RetryOptions) error {
+	res, err := rb.doWithRetries(retryOpts)
+	if err != nil {
+		return err
+	}
+	return rb.parseResponse(res, ret)
+}
+
+func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Response, error) {
 	if rb.helper.AccessToken != "" {
 		rb.AddHeader("Authorization", "Bearer "+rb.helper.AccessToken)
 	}
 	if rb.err != nil {
-		return rb.err
+		return nil, rb.err
 	}
 	if err := rb.helper.dumpRequest(rb.request); err != nil {
-		return err
+		return nil, err
 	}
 	res, err := rb.helper.Client.Do(rb.request)
 	if err != nil {
-		return fmt.Errorf("error sending request: %w", err)
+		return nil, fmt.Errorf("error sending request: %w", err)
 	}
 	for i := uint(0); i < retryOpts.NumRetries && isIn(res.StatusCode, retryOpts.StatusCodes); i++ {
 		err = rb.helper.dumpResponse(res)
 		res.Body.Close()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		time.Sleep(retryOpts.RetryDelay)
 		if res, err = rb.helper.Client.Do(rb.request); err != nil {
-			return fmt.Errorf("error sending request: %w", err)
+			return nil, fmt.Errorf("error sending request: %w", err)
 		}
 	}
 	defer res.Body.Close()
 	if err := rb.helper.dumpResponse(res); err != nil {
-		return err
+		return nil, err
 	}
-	return rb.parseResponse(res, ret)
+	return res, nil
 }
 
 func (rb *HTTPRequestBuilder) parseResponse(res *http.Response, ret any) error {
@@ -210,9 +237,9 @@ type UploadOptions struct {
 }
 
 type FilesUploader struct {
-	Client      *http.Client
-	EndpointURL string
-	DumpOut     io.Writer
+	HTTPHelper HTTPHelper
+	UploadDir  string
+	DumpOut    io.Writer
 	UploadOptions
 }
 
@@ -292,8 +319,8 @@ func (u *FilesUploader) startWorkers(ctx context.Context, jobsChan <-chan upload
 		wg.Add(1)
 		w := uploadChunkWorker{
 			Context:       ctx,
-			Client:        u.Client,
-			EndpointURL:   u.EndpointURL,
+			HTTPHelper:    u.HTTPHelper,
+			UploadDir:     u.UploadDir,
 			DumpOut:       u.DumpOut,
 			JobsChan:      jobsChan,
 			UploadOptions: u.UploadOptions,
@@ -323,11 +350,11 @@ type uploadChunkJob struct {
 }
 
 type uploadChunkWorker struct {
-	Context     context.Context
-	Client      *http.Client
-	EndpointURL string
-	DumpOut     io.Writer
-	JobsChan    <-chan uploadChunkJob
+	Context    context.Context
+	HTTPHelper HTTPHelper
+	UploadDir  string
+	DumpOut    io.Writer
+	JobsChan   <-chan uploadChunkJob
 	UploadOptions
 }
 
@@ -387,12 +414,12 @@ func (w *uploadChunkWorker) upload(job uploadChunkJob) error {
 		},
 	}
 	traceCtx := httptrace.WithClientTrace(ctx, clientTrace)
-	req, err := http.NewRequestWithContext(traceCtx, http.MethodPut, w.EndpointURL, pipeReader)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	res, err := w.Client.Do(req)
+	res, err := w.HTTPHelper.NewUploadFileRequest(
+		traceCtx,
+		"/userartifacts/"+w.UploadDir,
+		pipeReader,
+		writer.FormDataContentType()).
+		Do()
 	if err != nil {
 		return err
 	}
