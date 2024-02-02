@@ -54,7 +54,7 @@
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/try_acloud.h"
 #include "host/commands/cvd/server_command/version.h"
-#include "host/libs/web/build_api.h"
+#include "host/libs/web/android_build_api.h"
 
 namespace cuttlefish {
 

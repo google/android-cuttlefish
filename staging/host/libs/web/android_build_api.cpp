@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "build_api.h"
+#include "host/libs/web/android_build_api.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -37,7 +37,7 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "host/libs/web/build_string.h"
+#include "host/libs/web/android_build_string.h"
 #include "host/libs/web/credential_source.h"
 
 namespace cuttlefish {
