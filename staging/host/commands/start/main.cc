@@ -30,6 +30,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/start/filesystem_explorer.h"
@@ -338,11 +339,28 @@ bool OverrideBoolArg(std::vector<std::string>& args) {
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
-  FlagForwarder forwarder({kAssemblerBin, kRunnerBin});
+  std::vector<std::string> args(argv + 1, argv + argc);
+
+  std::vector<std::string> assemble_args;
+  std::string image_dir;
+  std::vector<std::string> args_copy = args;
+  auto parse_res = cuttlefish::ParseFlags(
+      {cuttlefish::GflagsCompatFlag("system_image_dir", image_dir)}, args_copy);
+  LOG(INFO) << "Using system_image_dir of: " << image_dir;
+
+  if (!parse_res.ok()) {
+    LOG(ERROR) << "Error extracting system_image_dir from args: "
+               << parse_res.error().FormatForEnv();
+    return -1;
+  } else if (!image_dir.empty()) {
+    assemble_args = {"--system_image_dir=" + image_dir};
+  }
+
+  std::vector<std::vector<std::string>> spargs = {assemble_args, {}};
+  FlagForwarder forwarder({kAssemblerBin, kRunnerBin}, spargs);
 
   // Used to find bool flag and convert "flag"/"noflag" to "--flag=value"
   // This is the solution for vectorize bool flags in gFlags
-  std::vector<std::string> args(argv + 1, argv + argc);
   if (OverrideBoolArg(args)) {
     for (int i = 1; i < argc; i++) {
       argv[i] = &args[i-1][0]; // args[] start from 0
