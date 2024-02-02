@@ -79,8 +79,8 @@ cleanup() {
   ssh $server "docker kill $container_id"
 }
 
-# Web UI port is 2443 instead 1443 because there could be a running operator in this machine as well.
-web_ui_port=2443
+# Web UI port is 3443 instead 1443 because there could be a running operator or host orchestrator in this machine as well.
+web_ui_port=3443
 echo -e "Web UI port: $web_ui_port. ${color_cyan}Please point your browser to https://localhost:$web_ui_port for the UI${color_plain}"
 
 # sets up SSH port forwarding to the remote server for various ports and launch cvd instance
