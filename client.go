@@ -112,7 +112,7 @@ func NewService(opts *ServiceOptions) (Service, error) {
 
 func (c *serviceImpl) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInstance, error) {
 	var op apiv1.Operation
-	if err := c.httpHelper.NewPostRequest("/hosts", req).Do(&op); err != nil {
+	if err := c.httpHelper.NewPostRequest("/hosts", req).JSONResDo(&op); err != nil {
 		return nil, err
 	}
 	ins := &apiv1.HostInstance{}
@@ -129,7 +129,7 @@ func (c *serviceImpl) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInsta
 		RetryDelay:  5 * time.Second,
 	}
 	hostPath := fmt.Sprintf("/hosts/%s/", ins.Name)
-	if err := c.httpHelper.NewGetRequest(hostPath).DoWithRetries(nil, retryOpts); err != nil {
+	if err := c.httpHelper.NewGetRequest(hostPath).JSONResDoWithRetries(nil, retryOpts); err != nil {
 		return nil, fmt.Errorf("unable to communicate with host orchestrator: %w", err)
 	}
 
@@ -138,7 +138,7 @@ func (c *serviceImpl) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInsta
 
 func (c *serviceImpl) ListHosts() (*apiv1.ListHostsResponse, error) {
 	var res apiv1.ListHostsResponse
-	if err := c.httpHelper.NewGetRequest("/hosts").Do(&res); err != nil {
+	if err := c.httpHelper.NewGetRequest("/hosts").JSONResDo(&res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -152,7 +152,7 @@ func (c *serviceImpl) DeleteHosts(names []string) error {
 		wg.Add(1)
 		go func(name string) {
 			defer wg.Done()
-			if err := c.httpHelper.NewDeleteRequest("/hosts/" + name).Do(nil); err != nil {
+			if err := c.httpHelper.NewDeleteRequest("/hosts/" + name).JSONResDo(nil); err != nil {
 				mu.Lock()
 				defer mu.Unlock()
 				merr = multierror.Append(merr, fmt.Errorf("delete host %q failed: %w", name, err))
@@ -170,7 +170,7 @@ func (c *serviceImpl) waitForOperation(op *apiv1.Operation, res any) error {
 		NumRetries:  uint(c.ServiceOptions.RetryAttempts),
 		RetryDelay:  c.RetryDelay,
 	}
-	return c.httpHelper.NewPostRequest(path, nil).DoWithRetries(res, retryOpts)
+	return c.httpHelper.NewPostRequest(path, nil).JSONResDoWithRetries(res, retryOpts)
 }
 
 func (s *serviceImpl) RootURI() string {
