@@ -35,6 +35,7 @@ common_sources = [
   'cuttlefish/host/libs/web/credential_source.cc',
   'cuttlefish/host/libs/web/http_client/http_client.cc',
   'cuttlefish/host/libs/web/http_client/http_client_util.cc',
+  'cuttlefish/host/libs/web/http_client/sso_client.cc',
 ]
 
 cvd_sources = [
@@ -56,7 +57,6 @@ cvd_sources = [
   'cuttlefish/host/commands/cvd/interruptible_terminal.cpp',
   'cuttlefish/host/commands/cvd/lock_file.cpp',
   'cuttlefish/host/commands/cvd/logger.cpp',
-  'cuttlefish/host/commands/cvd/main.cc',
   'cuttlefish/host/commands/cvd/metrics/metrics_notice.cpp',
   'cuttlefish/host/commands/cvd/parser/cf_configs_common.cpp',
   'cuttlefish/host/commands/cvd/parser/cf_configs_instances.cpp',
@@ -191,26 +191,98 @@ dependencies = [
   user_config_dependency,
 ]
 
+inc_dirs = [
+  '/usr/local/include',
+  'cuttlefish',
+]
+
+libcvd = static_library(
+  'libcvd',
+  cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings',  '-DNODISCARD_EXPECTED=true'],
+  sources: common_sources + cvd_sources,
+  dependencies: dependencies,
+  include_directories: inc_dirs,
+)
+libcvd_dep = declare_dependency(
+  link_with : libcvd,
+  include_directories: inc_dirs,
+)
+
 executable(
   'cvd',
   cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings',  '-DNODISCARD_EXPECTED=true'],
   link_args: ['-pthread'],
-  sources: common_sources + cvd_sources,
-  dependencies: dependencies,
-  include_directories: [
-    '/usr/local/include',
-    'cuttlefish',
+  sources: [
+    'cuttlefish/host/commands/cvd/main.cc',
   ],
+  dependencies: dependencies + [libcvd_dep],
+  include_directories: inc_dirs,
 )
+
+test_dependencies = [
+  dependency('gtest'),
+  dependency('gmock'),
+  dependency('gtest_main'),
+]
+
+cvd_test = executable(
+  'cvd_tests',
+  cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings',  '-DNODISCARD_EXPECTED=true'],
+  link_args: ['-pthread'],
+  sources: [
+    'cuttlefish/common/libs/fs/shared_fd_test.cpp',
+    'cuttlefish/common/libs/utils/flag_parser_test.cpp',
+    'cuttlefish/common/libs/utils/proc_file_utils_test.cpp',
+    'cuttlefish/common/libs/utils/result_matchers.h',
+    'cuttlefish/common/libs/utils/result_test.cpp',
+    'cuttlefish/common/libs/utils/unique_resource_allocator_test.cpp',
+    'cuttlefish/common/libs/utils/unique_resource_allocator_test.h',
+    'cuttlefish/common/libs/utils/unix_sockets_test.cpp',
+    'cuttlefish/host/commands/cvd/unittests/parser/configs_inheritance_test.cc',
+    'cuttlefish/host/commands/cvd/unittests/parser/flags_parser_test.cc',
+    'cuttlefish/host/commands/cvd/unittests/parser/instance/boot_configs_test.cc',
+    'cuttlefish/host/commands/cvd/unittests/parser/instance/disk_configs_test.cc',
+    'cuttlefish/host/commands/cvd/unittests/parser/instance/graphics_configs_test.cc',
+    'cuttlefish/host/commands/cvd/unittests/parser/instance/vm_configs_test.cc',
+    'cuttlefish/host/commands/cvd/unittests/parser/metrics_configs_test.cc',
+    'cuttlefish/host/commands/cvd/unittests/parser/test_common.h',
+    'cuttlefish/host/commands/cvd/unittests/parser/test_common.cc',
+    'cuttlefish/host/commands/cvd/unittests/selector/client_lexer_helper.h',
+    'cuttlefish/host/commands/cvd/unittests/selector/client_lexer_helper.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/client_lexer_test.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/cvd_flags_helper.h',
+    'cuttlefish/host/commands/cvd/unittests/selector/cvd_flags_helper.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/cvd_flags_test.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/group_record_test.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/host_tool_target_test.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/instance_database_helper.h',
+    'cuttlefish/host/commands/cvd/unittests/selector/instance_database_helper.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/instance_database_test.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/instance_record_test.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/parser_ids_helper.h',
+    'cuttlefish/host/commands/cvd/unittests/selector/parser_ids_helper.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/parser_ids_test.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/parser_names_helper.h',
+    'cuttlefish/host/commands/cvd/unittests/selector/parser_names_helper.cpp',
+    'cuttlefish/host/commands/cvd/unittests/selector/parser_names_test.cpp',
+    'cuttlefish/host/commands/cvd/unittests/server/frontline_parser_test.cpp',
+    'cuttlefish/host/commands/cvd/unittests/server/utils.h',
+    'cuttlefish/host/libs/web/http_client/unittest/http_client_util_test.cc',
+    'cuttlefish/host/libs/web/http_client/unittest/main_test.cc',
+    'cuttlefish/host/libs/web/http_client/unittest/sso_client_test.cc',
+  ],
+  dependencies: dependencies + [libcvd_dep] + test_dependencies,
+  include_directories: inc_dirs,
+)
+test('cvd_test', cvd_test)
+
+
 executable(
   'allocd',
   cpp_args: ['-Wno-reorder', '-Wno-unknown-pragmas', '-Wno-attributes', '-Wno-sign-compare', '-Wno-write-strings', '-DNODISCARD_EXPECTED=true'],
   link_args: ['-pthread'],
   sources: common_sources + allocd_sources,
   dependencies: dependencies,
-  include_directories: [
-    '/usr/local/include',
-    'cuttlefish',
-  ],
+  include_directories: inc_dirs,
 )
 
