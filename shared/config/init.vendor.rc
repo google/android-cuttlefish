@@ -9,8 +9,6 @@ on early-init
     start vendor.dlkm_loader
     # specially load zram as it is a "leaf" GKI module
     exec u:r:modprobe:s0 -- /system/bin/modprobe -a -d /system/lib/modules zram.ko
-    # specially load memhealth as it is a "leaf" GKI module
-    exec u:r:modprobe:s0 -- /system/bin/modprobe -a -d /system/lib/modules memhealth.ko
 
 on init
     # ZRAM setup
