@@ -40,8 +40,8 @@
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
-#include "host/libs/web/build_api.h"
-#include "host/libs/web/build_string.h"
+#include "host/libs/web/android_build_api.h"
+#include "host/libs/web/android_build_string.h"
 
 namespace cuttlefish {
 namespace {
