@@ -20,8 +20,8 @@ package {
 cc_library {
     name: "libcuttlefish_web",
     srcs: [
-        "build_api.cc",
-        "build_string.cc",
+        "android_build_api.cpp",
+        "android_build_string.cpp",
         "credential_source.cc",
         "http_client/http_client.cc",
         "http_client/http_client_util.cc",
