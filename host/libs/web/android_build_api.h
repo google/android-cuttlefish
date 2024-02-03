@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "common/libs/utils/result.h"
-#include "host/libs/web/build_string.h"
+#include "host/libs/web/android_build_string.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
 
