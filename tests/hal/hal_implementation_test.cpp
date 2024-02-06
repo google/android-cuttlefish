@@ -243,6 +243,13 @@ static const std::set<std::string> kAlwaysMissingAidl = {
 };
 
 /*
+ * Non-vintf stable packages. See b/323989070.
+ */
+static const std::set<std::string> kOtherStableAidl = {
+    "android.media.audio.IHalAdapterVendorExtension",
+};
+
+/*
  * These packages should have implementations but currently do not.
  * These must be accompanied by a bug and expected to be here temporarily.
  */
@@ -400,7 +407,11 @@ TEST(Hal, AidlInterfacesImplemented) {
                      isAospAidlInterface) ||
         isMissingAidl(treePackage.name))
       continue;
-    if (treePackage.stability != "vintf") continue;
+    if (treePackage.stability != "vintf" &&
+        std::none_of(
+            treePackage.types.begin(), treePackage.types.end(),
+            [](const auto& name) { return kOtherStableAidl.count(name) != 0; }))
+      continue;
 
     // expect versions from 1 to latest version. If the package has development
     // the latest version is the latest known version + 1. Each of these need
