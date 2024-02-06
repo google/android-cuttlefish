@@ -57,6 +57,7 @@ struct BuildStrings {
   std::optional<BuildString> kernel_build;
   std::optional<BuildString> boot_build;
   std::optional<BuildString> bootloader_build;
+  std::optional<BuildString> android_efi_loader_build;
   std::optional<BuildString> otatools_build;
   std::optional<BuildString> host_package_build;
 };
@@ -79,6 +80,7 @@ struct Builds {
   std::optional<Build> kernel;
   std::optional<Build> boot;
   std::optional<Build> bootloader;
+  std::optional<Build> android_efi_loader;
   std::optional<Build> otatools;
 };
 
@@ -120,6 +122,8 @@ BuildStrings GetBuildStrings(const VectorFlags& flags, const int index) {
           flags.boot_build, index, std::nullopt),
       .bootloader_build = AccessOrDefault<std::optional<BuildString>>(
           flags.bootloader_build, index, std::nullopt),
+      .android_efi_loader_build = AccessOrDefault<std::optional<BuildString>>(
+          flags.android_efi_loader_build, index, std::nullopt),
       .otatools_build = AccessOrDefault<std::optional<BuildString>>(
           flags.otatools_build, index, std::nullopt),
   };
@@ -258,6 +262,9 @@ Result<Builds> GetBuilds(BuildApi& build_api,
                                        "gki_x86_64-user")),
       .bootloader = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.bootloader_build, "u-boot_crosvm_x86_64")),
+      .android_efi_loader = CF_EXPECT(
+          GetBuildHelper(build_api, build_sources.android_efi_loader_build,
+                         "gbl_efi_dist_and_test")),
       .otatools = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.otatools_build, kDefaultBuildTarget)),
   };
@@ -496,6 +503,27 @@ Result<void> FetchTarget(BuildApi& build_api, const Builds& builds,
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::BOOTLOADER_BUILD, bootloader_id, bootloader_target,
         {bootloader_filepath}, target_directories.root, kOverrideEntries));
+  }
+
+  if (builds.android_efi_loader) {
+    std::string android_efi_loader_target_filepath =
+        target_directories.root + "/android_efi_loader.efi";
+    std::optional<std::string> android_efi_loader_filepath =
+        GetFilepath(*builds.android_efi_loader);
+
+    std::string downloaded_android_efi_loader_filepath =
+        CF_EXPECT(build_api.DownloadFile(
+            *builds.android_efi_loader, target_directories.root,
+            android_efi_loader_filepath.value_or("gbl_x86_64.efi")));
+    CF_EXPECT(RenameFile(downloaded_android_efi_loader_filepath,
+                         android_efi_loader_target_filepath));
+
+    const auto [android_efi_loader_id, android_efi_loader_target] =
+        GetBuildIdAndTarget(*builds.android_efi_loader);
+    CF_EXPECT(config.AddFilesToConfig(
+        FileSource::ANDROID_EFI_LOADER_BUILD, android_efi_loader_id,
+        android_efi_loader_target, {android_efi_loader_target_filepath},
+        target_directories.root, kOverrideEntries));
   }
 
   if (builds.otatools) {

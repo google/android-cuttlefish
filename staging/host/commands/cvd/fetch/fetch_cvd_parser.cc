@@ -124,6 +124,9 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(
       GflagsCompatFlag("bootloader_build", vector_flags.bootloader_build)
           .Help("source for the bootloader target"));
+  flags.emplace_back(GflagsCompatFlag("android_efi_loader_build",
+                                      vector_flags.android_efi_loader_build)
+                         .Help("source for the uefi app target"));
   flags.emplace_back(
       GflagsCompatFlag("otatools_build", vector_flags.otatools_build)
           .Help("source for the host ota tools"));
@@ -158,9 +161,10 @@ Result<int> GetNumberOfBuilds(
   for (const auto& flag_size :
        {flags.default_build.size(), flags.system_build.size(),
         flags.kernel_build.size(), flags.boot_build.size(),
-        flags.bootloader_build.size(), flags.otatools_build.size(),
-        flags.boot_artifact.size(), flags.download_img_zip.size(),
-        flags.download_target_files_zip.size(), subdirectory_flag.size()}) {
+        flags.bootloader_build.size(), flags.android_efi_loader_build.size(),
+        flags.otatools_build.size(), flags.boot_artifact.size(),
+        flags.download_img_zip.size(), flags.download_target_files_zip.size(),
+        subdirectory_flag.size()}) {
     if (flag_size == 0) {
       // a size zero flag vector means the flag was not given
       continue;
