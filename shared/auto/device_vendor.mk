@@ -30,7 +30,8 @@ $(call inherit-product, device/google/cuttlefish/shared/sensors/device_vendor.mk
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
 # Extend cuttlefish common sepolicy with auto-specific functionality
-BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/vendor
+BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy \
+                       device/google/cuttlefish/shared/auto/sepolicy/vendor
 
 ################################################
 # Begin general Android Auto Embedded configurations
