@@ -1,1 +1,2 @@
 /data/vendor/radio(/.*)?               u:object_r:radio_vendor_data_file:s0
+/(system_ext|system/system_ext)/bin/hw/android\.hardware\.audio\.parameter_parser\.example_service u:object_r:audio_vendor_parameter_parser_exec:s0
