@@ -55,6 +55,8 @@ FileSource SourceStringToEnum(std::string source) {
     return FileSource::GENERATED;
   } else if (source == "bootloader_build") {
     return FileSource::BOOTLOADER_BUILD;
+  } else if (source == "android_efi_loader_build") {
+    return FileSource::ANDROID_EFI_LOADER_BUILD;
   } else if (source == "boot_build") {
     return FileSource::BOOT_BUILD;
   } else if (source == "host_package_build") {
@@ -77,6 +79,8 @@ std::string SourceEnumToString(const FileSource& source) {
     return "generated";
   } else if (source == FileSource::BOOTLOADER_BUILD) {
     return "bootloader_build";
+  } else if (source == FileSource::ANDROID_EFI_LOADER_BUILD) {
+    return "android_efi_loader_build";
   } else if (source == FileSource::BOOT_BUILD) {
     return "boot_build";
   } else if (source == FileSource::HOST_PACKAGE_BUILD) {
