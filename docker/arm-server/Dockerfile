@@ -1,30 +1,44 @@
-FROM ubuntu:22.04
+# Docker image for running CF instances in ARM64 server.
+# Docker image includes HO(Host Orchestrator) inside,
+# so it could execute CF instance with API in HO.
+FROM ubuntu:22.04 AS cuttlefish-arm64
 
+# Expose Operator Port (HTTP:1080, HTTPS:1443)
+EXPOSE 1080 1443
+# Expose HO(Host Orchestrator) Port (HTTP:2080, HTTPS:2443)
+EXPOSE 2080 2443
+# Expose WebRTC Port
 EXPOSE 15550-15560
-EXPOSE 1443
+# Expose ADB Port
+# Corresponding ADB port for CF instance is, 6520+instance_num-1.
 EXPOSE 6520-6620
+
 USER root
 
 RUN set -x
 
+# Install dependants of CF debian packages.
 RUN apt update
-RUN apt install -y --no-install-recommends git
-RUN apt install -y --no-install-recommends ca-certificates && update-ca-certificates
-RUN apt install -y --no-install-recommends dpkg-dev build-essential:native config-package-dev debhelper-compat golang-1.13 libprotobuf-dev protobuf-compiler curl sudo
-RUN apt install -y --no-install-recommends gcc-10
+RUN apt install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    sudo
+RUN update-ca-certificates
 
+# ADD CF debian packages built by
+# docker/debs-builder-docker/build-debs-with-docker.sh.
+COPY ./out/cuttlefish-base_*.deb /root/
+COPY ./out/cuttlefish-user_*.deb /root/
+COPY ./out/cuttlefish-orchestration_*.deb /root/
+
+# Install CF debian packages.
 WORKDIR /root
-RUN git clone https://github.com/google/android-cuttlefish.git
-WORKDIR /root/android-cuttlefish/base
-RUN dpkg-buildpackage
-WORKDIR /root/android-cuttlefish/frontend
-RUN dpkg-buildpackage
+RUN apt install -y -f \
+    /root/cuttlefish-base_*.deb \
+    /root/cuttlefish-user_*.deb \
+    /root/cuttlefish-orchestration_*.deb
 
-WORKDIR /root/android-cuttlefish
-RUN apt install -y -f ./cuttlefish-base_*.deb ./cuttlefish-user_*.deb ./cuttlefish-orchestration_*.deb
 RUN echo "num_cvd_accounts=100" >> /etc/default/cuttlefish-host-resources
-
-WORKDIR /root
 
 RUN usermod -aG kvm root
 RUN usermod -aG cvdnetwork root
