@@ -20,17 +20,8 @@ RUN set -x
 # Install dependants of CF debian packages.
 RUN apt update
 RUN apt install -y --no-install-recommends \
-    build-essential:native \
     ca-certificates \
-    config-package-dev \
     curl \
-    debhelper-compat \
-    dpkg-dev \
-    gcc-10 \
-    git \
-    golang-1.13 \
-    libprotobuf-dev \
-    protobuf-compiler \
     sudo
 RUN update-ca-certificates
 
