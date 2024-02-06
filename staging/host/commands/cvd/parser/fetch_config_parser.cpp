@@ -177,6 +177,9 @@ Result<std::vector<std::string>> GenerateFetchFlags(
       GenerateGflag(fetch_instances, "boot_build", {"boot", "build"})));
   result.emplace_back(CF_EXPECT(GenerateGflag(
       fetch_instances, "bootloader_build", {"boot", "bootloader", "build"})));
+  result.emplace_back(
+      CF_EXPECT(GenerateGflag(fetch_instances, "android_efi_loader_build",
+                              {"boot", "bootloader", "build"})));
   result.emplace_back(CF_EXPECT(
       GenerateGflag(fetch_instances, "otatools_build", {"disk", "otatools"})));
   result.emplace_back(CF_EXPECT(GenerateGflag(
