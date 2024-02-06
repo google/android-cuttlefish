@@ -32,6 +32,8 @@ jobs:
     needs: export-debs 
     runs-on: ubuntu-22.04
     steps:
+    - name: Free space 
+      run: rm -rf /opt/hostedtoolcache
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Download debs.tar
