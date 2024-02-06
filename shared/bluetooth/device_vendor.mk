@@ -32,13 +32,11 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_PACKAGES += com.google.cf.bt
 
-ifneq ($(RELEASE_AIDL_USE_UNFROZEN),true)
 #
 # Bluetooth Audio AIDL HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.bluetooth.audio-impl
-endif
+    android.hardware.bluetooth.audio-impl \
 
 else # BOARD_HAVE_BLUETOOTH == true
 
