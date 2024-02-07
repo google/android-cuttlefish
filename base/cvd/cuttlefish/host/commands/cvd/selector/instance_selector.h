@@ -31,7 +31,7 @@ class InstanceSelector {
  public:
   static Result<InstanceSelector> GetSelector(
       const cvd_common::Args& selector_args, const Queries& extra_queries,
-      const cvd_common::Envs& envs, const uid_t uid);
+      const cvd_common::Envs& envs);
   /*
    * If default, try running single instance group. If multiple, try to find
    * HOME == SystemWideUserHome. If not exists, give up.
@@ -44,14 +44,13 @@ class InstanceSelector {
       const InstanceDatabase& instance_database);
 
  private:
-  InstanceSelector(const uid_t uid, const Queries& queries)
-      : client_uid_{uid}, queries_(queries) {}
+  InstanceSelector( Queries& queries)
+      : queries_(queries) {}
   static bool IsHomeOverridden(const SelectorCommonParser& common_parser);
 
   Result<LocalInstance::Copy> FindDefaultInstance(
       const InstanceDatabase& instance_database);
 
-  const uid_t client_uid_;
   const Queries queries_;
 };
 

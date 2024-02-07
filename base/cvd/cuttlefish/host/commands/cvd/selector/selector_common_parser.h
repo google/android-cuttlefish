@@ -33,8 +33,7 @@ namespace selector {
 class SelectorCommonParser {
  public:
   // parses common selector options, and drop the used selector_args
-  static Result<SelectorCommonParser> Parse(const uid_t client_uid,
-                                            cvd_common::Args& selector_args,
+  static Result<SelectorCommonParser> Parse(cvd_common::Args& selector_args,
                                             const cvd_common::Envs& envs);
 
   std::optional<std::string> GroupName() const { return group_name_; }

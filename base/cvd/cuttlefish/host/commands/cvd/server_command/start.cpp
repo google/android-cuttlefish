@@ -120,7 +120,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
 
  private:
   Result<void> UpdateInstanceDatabase(
-      const uid_t uid, const selector::GroupCreationInfo& group_creation_info);
+      const selector::GroupCreationInfo& group_creation_info);
   Result<void> FireCommand(Command&& command, const bool wait);
 
   Result<Command> ConstructCvdNonHelpCommand(
@@ -164,7 +164,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
    * response.
    */
   Result<cvd::Response> PostStartExecutionActions(
-      selector::GroupCreationInfo& group_creation_info, const uid_t uid);
+      selector::GroupCreationInfo& group_creation_info);
   Result<void> AcloudCompatActions(
       const selector::GroupCreationInfo& group_creation_info,
       const RequestWithStdio& request);
@@ -611,7 +611,6 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     return response;
   }
 
-  const uid_t uid = request.Credentials()->uid;
   cvd_common::Envs envs =
       cvd_common::ConvertToEnvs(request.Message().command_request().env());
   if (Contains(envs, "HOME")) {
@@ -636,7 +635,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
                 "The HOME directory should not start with ~");
       envs["HOME"] = CF_EXPECT(
           EmulateAbsolutePath({.current_working_dir = client_pwd,
-                               .home_dir = CF_EXPECT(SystemWideUserHome(uid)),
+                               .home_dir = CF_EXPECT(SystemWideUserHome()),
                                .path_to_convert = given_home_dir,
                                .follow_symlink = false}));
     }
@@ -656,7 +655,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   if (!is_help) {
     group_creation_info = CF_EXPECT(
         GetGroupCreationInfo(bin, subcmd, subcmd_args, envs, request));
-    CF_EXPECT(UpdateInstanceDatabase(uid, *group_creation_info));
+    CF_EXPECT(UpdateInstanceDatabase(*group_creation_info));
     response = CF_EXPECT(
         FillOutNewInstanceInfo(std::move(response), *group_creation_info));
   }
@@ -698,7 +697,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     LOG(ERROR) << "AcloudCompatActions() failed"
                << " but continue as they are minor errors.";
   }
-  return PostStartExecutionActions(*group_creation_info, uid);
+  return PostStartExecutionActions(*group_creation_info);
 }
 
 static constexpr char kCollectorFailure[] = R"(
@@ -734,13 +733,13 @@ static Result<cvd::Response> CvdResetGroup(
 }
 
 Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
-    selector::GroupCreationInfo& group_creation_info, const uid_t uid) {
+    selector::GroupCreationInfo& group_creation_info) {
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
     // run_cvd processes may be still running in background
     // the order of the following operations should be kept
     auto reset_response = CF_EXPECT(CvdResetGroup(group_creation_info));
-    instance_manager_.RemoveInstanceGroup(uid, group_creation_info.home);
+    instance_manager_.RemoveInstanceGroup(group_creation_info.home);
     if (reset_response.status().code() != cvd::Status::OK) {
       return reset_response;
     }
@@ -799,8 +798,8 @@ Result<cvd::Response> CvdStartCommandHandler::FillOutNewInstanceInfo(
 }
 
 Result<void> CvdStartCommandHandler::UpdateInstanceDatabase(
-    const uid_t uid, const selector::GroupCreationInfo& group_creation_info) {
-  CF_EXPECT(instance_manager_.SetInstanceGroup(uid, group_creation_info),
+    const selector::GroupCreationInfo& group_creation_info) {
+  CF_EXPECT(instance_manager_.SetInstanceGroup(group_creation_info),
             group_creation_info.home
                 << " is already taken so can't create new instance.");
   return {};

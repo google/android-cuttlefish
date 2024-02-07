@@ -43,7 +43,6 @@ class InstanceIdTest : public testing::TestWithParam<InstanceIdTestInput> {
   bool expected_result_;
   unsigned requested_num_instances_;
   std::optional<std::vector<unsigned>> expected_ids_;
-  uid_t uid_;
   cvd_common::Args cmd_args_;
   cvd_common::Args selector_args_;
   cvd_common::Envs envs_;

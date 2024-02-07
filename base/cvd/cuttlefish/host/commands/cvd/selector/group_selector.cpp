@@ -28,10 +28,10 @@ namespace selector {
 
 Result<GroupSelector> GroupSelector::GetSelector(
     const cvd_common::Args& selector_args, const Queries& extra_queries,
-    const cvd_common::Envs& envs, const uid_t uid) {
+    const cvd_common::Envs& envs) {
   cvd_common::Args selector_args_copied{selector_args};
   SelectorCommonParser common_parser =
-      CF_EXPECT(SelectorCommonParser::Parse(uid, selector_args_copied, envs));
+      CF_EXPECT(SelectorCommonParser::Parse(selector_args_copied, envs));
   std::stringstream unused_args;
   unused_args << "{";
   for (const auto& arg : selector_args_copied) {
@@ -79,7 +79,7 @@ Result<GroupSelector> GroupSelector::GetSelector(
     queries.push_back(extra_query);
   }
 
-  GroupSelector group_selector(uid, queries);
+  GroupSelector group_selector(queries);
   return group_selector;
 }
 
@@ -105,7 +105,7 @@ Result<LocalInstanceGroup> GroupSelector::FindGroup(
 
 Result<LocalInstanceGroup> GroupSelector::FindDefaultGroup(
     const InstanceDatabase& instance_database) {
-  auto group = CF_EXPECT(GetDefaultGroup(instance_database, client_uid_));
+  auto group = CF_EXPECT(GetDefaultGroup(instance_database));
   return group;
 }
 
