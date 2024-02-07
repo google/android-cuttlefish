@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let _ = logger::init(
         logger::Config::default()
             .with_tag_on_device("client_minidroid_rust")
-            .with_min_level(log::Level::Debug),
+            .with_max_level(log::LevelFilter::Debug),
     );
     // Redirect panic messages to logcat.
     std::panic::set_hook(Box::new(|panic_info| {
