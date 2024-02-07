@@ -25,6 +25,8 @@ The packages can be built with the following command:
 ```bash
 for dir in base frontend; do
     pushd $dir
+    # Install build dependencies
+    sudo mk-build-deps -i
     dpkg-buildpackage -uc -us
     popd
 done
