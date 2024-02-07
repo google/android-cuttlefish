@@ -46,8 +46,7 @@ class AcloudConfig {
   // In both config
 };
 
-Result<const std::string> GetDefaultConfigFile(const uid_t uid);
-Result<AcloudConfig> LoadAcloudConfig(const std::string& user_config_path,
-                                      const uid_t uid);
+Result<const std::string> GetDefaultConfigFile();
+Result<AcloudConfig> LoadAcloudConfig(const std::string& user_config_path);
 
 }  // namespace cuttlefish
