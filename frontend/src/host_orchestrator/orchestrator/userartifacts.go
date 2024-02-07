@@ -126,7 +126,18 @@ func (m *UserArtifactsManagerImpl) UpdateArtifact(dir string, chunk UserArtifact
 
 func writeChunk(dir string, chunk UserArtifactChunk) error {
 	filename := dir + "/" + chunk.Name
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
+
+	// If file doesn't exist, create file and set filemode.
+	_, err := os.Stat(filename);
+	if os.IsNotExist(err) {
+		_, err := os.Create(filename);
+		if err != nil {
+			return err
+		}
+		os.Chmod(filename, 0664);
+	}
+
+	f, err := os.OpenFile(filename, os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
