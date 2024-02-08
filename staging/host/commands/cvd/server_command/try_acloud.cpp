@@ -136,9 +136,8 @@ Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
 
 Result<cvd::Response> TryAcloudCommand::VerifyWithCvdRemote(
     const RequestWithStdio& request) {
-  const uid_t uid = request.Credentials()->uid;
-  auto filename = CF_EXPECT(GetDefaultConfigFile(uid));
-  auto config = CF_EXPECT(LoadAcloudConfig(filename, uid));
+  auto filename = CF_EXPECT(GetDefaultConfigFile());
+  auto config = CF_EXPECT(LoadAcloudConfig(filename));
   CF_EXPECT(config.use_legacy_acloud == false);
   CF_EXPECT(CheckIfCvdrExist());
   auto args = ParseInvocation(request.Message()).arguments;

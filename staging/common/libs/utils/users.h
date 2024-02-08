@@ -27,13 +27,6 @@ gid_t GroupIdFromName(const std::string& group_name);
 bool InGroup(const std::string& group);
 
 /**
- * returns the user's home defined by the system
- *
- * This is done not by using HOME but by calling getpwuid()
- */
-Result<std::string> SystemWideUserHome(const uid_t uid);
-
-/**
  * returns SystemWideUserHome(getuid())
  */
 Result<std::string> SystemWideUserHome();

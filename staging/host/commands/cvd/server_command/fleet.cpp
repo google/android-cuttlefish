@@ -89,7 +89,6 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   std::unique_lock interrupt_lock(interruptible_);
   CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
-  const uid_t uid = CF_EXPECT(request.Credentials()).uid;
 
   cvd::Response ok_response;
   ok_response.mutable_command_response();
@@ -109,12 +108,12 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   CF_EXPECT(Contains(envs, "ANDROID_HOST_OUT") &&
             DirectoryExists(envs.at("ANDROID_HOST_OUT")));
   Json::Value groups_json(Json::arrayValue);
-  auto all_group_names = instance_manager_.AllGroupNames(uid);
+  auto all_group_names = instance_manager_.AllGroupNames();
   envs.erase(kCuttlefishInstanceEnvVarName);
   for (const auto& group_name : all_group_names) {
     auto group_obj_copy_result = instance_manager_.SelectGroup(
         {}, InstanceManager::Queries{{selector::kGroupNameField, group_name}},
-        {}, uid);
+        {});
     if (!group_obj_copy_result.ok()) {
       LOG(DEBUG) << "Group \"" << group_name
                  << "\" has already been removed. Skipped.";

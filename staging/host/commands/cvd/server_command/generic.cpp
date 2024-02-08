@@ -165,7 +165,6 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
   CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
   CF_EXPECT(request.Credentials() != std::nullopt);
-  const uid_t uid = request.Credentials()->uid;
 
   cvd::Response response;
   response.mutable_command_response();
@@ -251,7 +250,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
 
   if (infop.si_code == CLD_EXITED && IsStopCommand(invocation_info.command)) {
-    instance_manager_.RemoveInstanceGroup(uid, invocation_info.home);
+    instance_manager_.RemoveInstanceGroup(invocation_info.home);
   }
 
   return ResponseFromSiginfo(infop);
@@ -333,7 +332,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
                 .command = subcmd,
                 .bin = bin,
                 .bin_path = bin_path,
-                .home = CF_EXPECT(SystemWideUserHome(uid)),
+                .home = CF_EXPECT(SystemWideUserHome()),
                 .host_artifacts_path = envs.at(kAndroidHostOut),
                 .uid = uid,
                 .args = cmd_args,
@@ -345,7 +344,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
   }
 
   auto instance_group_result =
-      instance_manager_.SelectGroup(selector_args, envs, uid);
+      instance_manager_.SelectGroup(selector_args, envs);
   ExtractedInfo extracted_info{
       .invocation_info = CommandInvocationInfo(),
       .group = std::nullopt,
@@ -354,7 +353,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
   };
   std::string chosen_group_name;
   if (!instance_group_result.ok()) {
-    if (!instance_manager_.HasInstanceGroups(uid)) {
+    if (!instance_manager_.HasInstanceGroups()) {
       extracted_info.ui_response_type = UiResponseType::kNoGroup;
       return extracted_info;
     }
@@ -369,7 +368,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
     std::unique_lock lock(interruptible_);
     CF_EXPECT(!interrupted_, "Interrupted");
     // show the menu and let the user choose
-    auto group_summaries = CF_EXPECT(instance_manager_.GroupSummaryMenu(uid));
+    auto group_summaries = CF_EXPECT(instance_manager_.GroupSummaryMenu());
     auto& group_summary_menu = group_summaries.menu;
     CF_EXPECT_EQ(WriteAll(request.Out(), group_summary_menu + "\n"),
                  group_summary_menu.size() + 1);
@@ -407,7 +406,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
       InstanceManager::Queries extra_queries{
           {selector::kGroupNameField, chosen_group_name}};
       instance_group_result = instance_manager_.SelectGroup(
-          selector_args, extra_queries, envs, uid);
+          selector_args, extra_queries, envs);
       if (instance_group_result.ok()) {
         break;
       }
