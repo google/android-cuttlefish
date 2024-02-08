@@ -31,9 +31,8 @@ namespace cuttlefish {
 namespace selector {
 
 Result<SelectorCommonParser> SelectorCommonParser::Parse(
-    const uid_t client_uid, cvd_common::Args& selector_args,
-    const cvd_common::Envs& envs) {
-  std::string system_wide_home = CF_EXPECT(SystemWideUserHome(client_uid));
+    cvd_common::Args& selector_args, const cvd_common::Envs& envs) {
+  std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
   SelectorCommonParser parser(system_wide_home, envs);
   CF_EXPECT(parser.ParseOptions(selector_args));
   return std::move(parser);
