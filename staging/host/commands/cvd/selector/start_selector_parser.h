@@ -48,8 +48,8 @@ namespace selector {
 class StartSelectorParser {
  public:
   static Result<StartSelectorParser> ConductSelectFlagsParser(
-      const uid_t uid, const cvd_common::Args& selector_args,
-      const cvd_common::Args& cmd_args, const cvd_common::Envs& envs);
+      const cvd_common::Args& selector_args, const cvd_common::Args& cmd_args,
+      const cvd_common::Envs& envs);
   std::optional<std::string> GroupName() const;
   std::optional<std::vector<std::string>> PerInstanceNames() const;
   const std::optional<std::vector<unsigned>>& InstanceIds() const {

@@ -57,7 +57,6 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
     CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(VerifyPrecondition(request));
-    const uid_t uid = request.Credentials()->uid;
     cvd_common::Envs envs =
         cvd_common::ConvertToEnvs(request.Message().command_request().env());
 
@@ -66,8 +65,8 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
     bool is_help = CF_EXPECT(IsHelp(subcmd_args));
     // may modify subcmd_args by consuming in parsing
     Command command =
-        is_help ? CF_EXPECT(HelpCommand(request, uid, subcmd_args, envs))
-                : CF_EXPECT(NonHelpCommand(request, uid, subcmd_args, envs));
+        is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, envs))
+                : CF_EXPECT(NonHelpCommand(request, subcmd_args, envs));
     CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
     interrupt_lock.unlock();
 
@@ -88,7 +87,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
   }
 
  private:
-  Result<Command> HelpCommand(const RequestWithStdio& request, const uid_t uid,
+  Result<Command> HelpCommand(const RequestWithStdio& request,
                               const cvd_common::Args& subcmd_args,
                               cvd_common::Envs envs) {
     CF_EXPECT(Contains(envs, kAndroidHostOut));
@@ -96,7 +95,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
         ConcatToString(envs.at(kAndroidHostOut), "/bin/", kDisplayBin);
     std::string home = Contains(envs, "HOME")
                            ? envs.at("HOME")
-                           : CF_EXPECT(SystemWideUserHome(uid));
+                           : CF_EXPECT(SystemWideUserHome());
     envs["HOME"] = home;
     envs[kAndroidSoongHostOut] = envs.at(kAndroidHostOut);
     ConstructCommandParam construct_cmd_param{
@@ -114,7 +113,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
   }
 
   Result<Command> NonHelpCommand(const RequestWithStdio& request,
-                                 const uid_t uid, cvd_common::Args& subcmd_args,
+                                 cvd_common::Args& subcmd_args,
                                  cvd_common::Envs envs) {
     // test if there is --instance_num flag
     CvdFlag<std::int32_t> instance_num_flag("instance_num");
@@ -129,8 +128,8 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
         request.Message().command_request().selector_opts();
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
 
-    auto instance = CF_EXPECT(instance_manager_.SelectInstance(
-        selector_args, extra_queries, envs, uid));
+    auto instance = CF_EXPECT(
+        instance_manager_.SelectInstance(selector_args, extra_queries, envs));
     const auto& instance_group = instance.ParentGroup();
     const auto& home = instance_group.HomeDir();
 

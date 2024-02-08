@@ -350,12 +350,11 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
             "Missing " << kAndroidHostOut);
 
   std::vector<cvd::Request> request_protos;
-  const uid_t uid = request.Credentials()->uid;
   const std::string user_config_path =
-      parsed_flags.config_file.value_or(CF_EXPECT(GetDefaultConfigFile(uid)));
+      parsed_flags.config_file.value_or(CF_EXPECT(GetDefaultConfigFile()));
 
   AcloudConfig acloud_config =
-      CF_EXPECT(LoadAcloudConfig(user_config_path, uid));
+      CF_EXPECT(LoadAcloudConfig(user_config_path));
 
   std::string fetch_command_str;
   std::string fetch_cvd_args_file;

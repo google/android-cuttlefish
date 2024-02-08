@@ -453,9 +453,8 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
 }
 
 Result<void> CvdServer::InstanceDbFromJson(const std::string& json_string) {
-  const uid_t uid = getuid();
   auto json = CF_EXPECT(ParseJson(json_string));
-  CF_EXPECT(instance_manager_.LoadFromJson(uid, json));
+  CF_EXPECT(instance_manager_.LoadFromJson(json));
   return {};
 }
 
