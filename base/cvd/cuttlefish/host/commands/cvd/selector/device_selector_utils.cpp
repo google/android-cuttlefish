@@ -23,12 +23,12 @@ namespace cuttlefish {
 namespace selector {
 
 Result<LocalInstanceGroup> GetDefaultGroup(
-    const InstanceDatabase& instance_database, const uid_t client_uid) {
+    const InstanceDatabase& instance_database) {
   const auto& all_groups = instance_database.InstanceGroups();
   if (all_groups.size() == 1) {
     return *(all_groups.front());
   }
-  std::string system_wide_home = CF_EXPECT(SystemWideUserHome(client_uid));
+  std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
   auto group =
       CF_EXPECT(instance_database.FindGroup({kHomeField, system_wide_home}));
   return group;
