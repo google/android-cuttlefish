@@ -1,7 +1,7 @@
 # Docker image for running CF instances in ARM64 server.
 # Docker image includes HO(Host Orchestrator) inside,
 # so it could execute CF instance with API in HO.
-FROM ubuntu:22.04 AS cuttlefish-arm64
+FROM debian:stable-20211011 AS cuttlefish-arm64
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443
