@@ -148,11 +148,9 @@ class CvdRestartHandler : public CvdServerHandler {
     server_.Stop();
 
     CF_EXPECT(request.Credentials() != std::nullopt);
-    const uid_t client_uid = request.Credentials()->uid;
-    auto json_string =
-        CF_EXPECT(SerializedInstanceDatabaseToString(client_uid));
+    auto json_string = CF_EXPECT(SerializedInstanceDatabaseToString());
     std::optional<SharedFD> mem_fd;
-    if (instance_manager_.HasInstanceGroups(client_uid)) {
+    if (instance_manager_.HasInstanceGroups()) {
       mem_fd = CF_EXPECT(CreateMemFileWithSerializedDb(json_string));
       CF_EXPECT(mem_fd != std::nullopt && (*mem_fd)->IsOpen(),
                 "mem file not open?");
@@ -252,9 +250,8 @@ class CvdRestartHandler : public CvdServerHandler {
     return new_exe;
   }
 
-  Result<std::string> SerializedInstanceDatabaseToString(
-      const uid_t client_uid) {
-    auto db_json = CF_EXPECT(instance_manager_.Serialize(client_uid),
+  Result<std::string> SerializedInstanceDatabaseToString() {
+    auto db_json = CF_EXPECT(instance_manager_.Serialize(),
                              "Failed to serialized instance database");
     return db_json.toStyledString();
   }

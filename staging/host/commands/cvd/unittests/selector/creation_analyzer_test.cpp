@@ -33,7 +33,7 @@ std::string TestUserHome() {
   if (!home.empty()) {
     return home;
   }
-  auto result = SystemWideUserHome(getuid());
+  auto result = SystemWideUserHome();
   return (result.ok() ? *result : "");
 }
 
