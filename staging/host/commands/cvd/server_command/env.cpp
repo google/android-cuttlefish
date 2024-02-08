@@ -74,7 +74,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
 
     Command command =
         is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, envs))
-                : CF_EXPECT(NonHelpCommand(request, uid, subcmd_args, envs));
+                : CF_EXPECT(NonHelpCommand(request, subcmd_args, envs));
     CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
     interrupt_lock.unlock();
 
@@ -104,7 +104,6 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   }
 
   Result<Command> NonHelpCommand(const RequestWithStdio& request,
-                                 const uid_t uid,
                                  const cvd_common::Args& subcmd_args,
                                  const cvd_common::Envs& envs) {
     const auto& selector_opts =
@@ -112,7 +111,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
 
     auto instance =
-        CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs, uid));
+        CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs));
     const auto& instance_group = instance.ParentGroup();
     const auto& home = instance_group.HomeDir();
 

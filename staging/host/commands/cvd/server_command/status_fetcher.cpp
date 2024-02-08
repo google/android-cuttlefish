@@ -149,7 +149,6 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
     const RequestWithStdio& request) {
   std::unique_lock interrupt_lock(interruptible_);
   CF_EXPECT(!interrupted_, "Interrupted");
-  const uid_t uid = CF_EXPECT(request.Credentials()).uid;
   cvd_common::Envs envs =
       cvd_common::ConvertToEnvs(request.Message().command_request().env());
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
@@ -165,11 +164,11 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
   auto all_instances_opt = CF_EXPECT(all_instances_flag.FilterFlag(cmd_args));
 
   auto instance_group =
-      CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs, uid));
+      CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs));
 
   std::vector<IdAndPerInstanceName> instance_infos;
   auto instance_record_result =
-      instance_manager_.SelectInstance(selector_args, envs, uid);
+      instance_manager_.SelectInstance(selector_args, envs);
 
   bool status_the_group_flag = all_instances_opt && *all_instances_opt;
   if (instance_record_result.ok() && !status_the_group_flag) {
@@ -178,7 +177,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
         static_cast<unsigned>(instance_record_result->InstanceId()));
   } else {
     auto instances = CF_EXPECT(instance_manager_.FindInstances(
-        uid, {selector::kGroupNameField, instance_group.GroupName()}));
+        {selector::kGroupNameField, instance_group.GroupName()}));
     if (status_the_group_flag) {
       instance_infos.reserve(instances.size());
       for (const auto& instance : instances) {

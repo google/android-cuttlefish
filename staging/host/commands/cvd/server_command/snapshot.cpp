@@ -86,7 +86,6 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
     CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(VerifyPrecondition(request));
-    const uid_t uid = request.Credentials()->uid;
     cvd_common::Envs envs =
         cvd_common::ConvertToEnvs(request.Message().command_request().env());
 
@@ -110,7 +109,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
 
     // may modify subcmd_args by consuming in parsing
     Command command =
-        CF_EXPECT(NonHelpCommand(request, uid, subcmd, subcmd_args, envs));
+        CF_EXPECT(NonHelpCommand(request, subcmd, subcmd_args, envs));
     CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
     interrupt_lock.unlock();
 
@@ -143,7 +142,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
   }
 
   Result<Command> NonHelpCommand(const RequestWithStdio& request,
-                                 const uid_t uid, const std::string& subcmd,
+                                 const std::string& subcmd,
                                  cvd_common::Args& subcmd_args,
                                  cvd_common::Envs envs) {
     const auto& selector_opts =
@@ -152,7 +151,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
 
     // create a string that is comma-separated instance IDs
     auto instance_group =
-        CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs, uid));
+        CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs));
 
     const auto& home = instance_group.HomeDir();
     const auto& android_host_out = instance_group.HostArtifactsPath();

@@ -28,10 +28,10 @@ namespace selector {
 
 Result<InstanceSelector> InstanceSelector::GetSelector(
     const cvd_common::Args& selector_args, const Queries& extra_queries,
-    const cvd_common::Envs& envs, const uid_t uid) {
+    const cvd_common::Envs& envs) {
   cvd_common::Args selector_args_copied{selector_args};
   SelectorCommonParser common_parser =
-      CF_EXPECT(SelectorCommonParser::Parse(uid, selector_args_copied, envs));
+      CF_EXPECT(SelectorCommonParser::Parse(selector_args_copied, envs));
   std::stringstream unused_args;
   unused_args << "{";
   for (const auto& arg : selector_args_copied) {
@@ -82,7 +82,7 @@ Result<InstanceSelector> InstanceSelector::GetSelector(
     queries.push_back(extra_query);
   }
 
-  InstanceSelector instance_selector(uid, queries);
+  InstanceSelector instance_selector(queries);
   return instance_selector;
 }
 
@@ -110,7 +110,7 @@ Result<LocalInstance::Copy> InstanceSelector::FindInstance(
 
 Result<LocalInstance::Copy> InstanceSelector::FindDefaultInstance(
     const InstanceDatabase& instance_database) {
-  auto group = CF_EXPECT(GetDefaultGroup(instance_database, client_uid_));
+  auto group = CF_EXPECT(GetDefaultGroup(instance_database));
   const auto instances = CF_EXPECT(group.FindAllInstances());
   CF_EXPECT_EQ(instances.size(), 1,
                "Default instance is the single instance in the default group.");
