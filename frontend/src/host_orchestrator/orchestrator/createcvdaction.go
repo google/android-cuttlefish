@@ -16,10 +16,13 @@ package orchestrator
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -296,7 +299,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 func (a *CreateCVDAction) launchFromUserBuild(
 	buildSource *apiv1.UserBuildSource, instancesCount uint32, op apiv1.Operation) ([]uint32, error) {
 	artifactsDir := a.userArtifactsDirResolver.GetDirPath(buildSource.ArtifactsDir)
-	if err := untarCVDHostPackage(artifactsDir); err != nil {
+	if err := extractUserArtifacts(artifactsDir); err != nil {
 		return nil, err
 	}
 	startParams := startCVDParams{
@@ -436,4 +439,34 @@ func tempFilename(pattern string) (string, error) {
 		return "", err
 	}
 	return name, nil
+}
+
+// Untar every .tar.gz file uploaded by the user.
+func extractUserArtifacts(dir string) error {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("failed to extract user artifacts: %w", err)
+	}
+	tarballs := []string{}
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".tar.gz") {
+			tarballs = append(tarballs, file.Name())
+		}
+	}
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var merr error
+	for _, file := range tarballs {
+		wg.Add(1)
+		go func(name string) {
+			defer wg.Done()
+			if err := Untar(dir, filepath.Join(dir, name)); err != nil {
+				mu.Lock()
+				defer mu.Unlock()
+				merr = multierror.Append(merr, fmt.Errorf("failed extracting %q: %w", name, err))
+			}
+		}(file)
+	}
+	wg.Wait()
+	return merr
 }

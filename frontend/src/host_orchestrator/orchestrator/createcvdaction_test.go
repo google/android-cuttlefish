@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -330,8 +329,6 @@ func (r *fakeUADirRes) GetDirPath(string) string { return r.Dir }
 func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
-	tarContent, _ := ioutil.ReadFile(getTestTarFilename())
-	ioutil.WriteFile(dir+"/"+CVDHostPackageName, tarContent, 0755)
 	expected := fmt.Sprintf("sudo -u fakecvduser "+
 		"ANDROID_HOST_OUT=%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s", dir)
