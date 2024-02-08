@@ -22,9 +22,8 @@ namespace cuttlefish {
 namespace selector {
 
 TEST_P(ValidNamesTest, ValidInputs) {
-  const uid_t uid = getuid();
   auto parser = StartSelectorParser::ConductSelectFlagsParser(
-      uid, selector_args_, cvd_common::Args{}, cvd_common::Envs{});
+      selector_args_, cvd_common::Args{}, cvd_common::Envs{});
 
   ASSERT_TRUE(parser.ok());
 }
@@ -33,10 +32,8 @@ TEST_P(ValidNamesTest, ValidInputs) {
  * Note that invalid inputs must be tested at the InstanceDatabase level
  */
 TEST_P(ValidNamesTest, FieldsNoSubstring) {
-  const uid_t uid = getuid();
-
   auto parser = StartSelectorParser::ConductSelectFlagsParser(
-      uid, selector_args_, cvd_common::Args{}, cvd_common::Envs{});
+      selector_args_, cvd_common::Args{}, cvd_common::Envs{});
 
   ASSERT_TRUE(parser.ok());
   ASSERT_EQ(parser->GroupName(), expected_output_.group_name);
@@ -73,10 +70,8 @@ INSTANTIATE_TEST_SUITE_P(
                 .per_instance_names = std::vector<std::string>{"my-cool"}}}));
 
 TEST_P(InvalidNamesTest, InvalidInputs) {
-  const uid_t uid = getuid();
-
   auto parser = StartSelectorParser::ConductSelectFlagsParser(
-      uid, selector_args_, cvd_common::Args{}, cvd_common::Envs{});
+      selector_args_, cvd_common::Args{}, cvd_common::Envs{});
 
   ASSERT_FALSE(parser.ok());
 }
