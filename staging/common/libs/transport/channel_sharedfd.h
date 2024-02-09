@@ -28,6 +28,7 @@ class SharedFdChannel : public Channel {
   Result<void> SendRequest(RawMessage& message) override;
   Result<void> SendResponse(RawMessage& message) override;
   Result<ManagedMessage> ReceiveMessage() override;
+  Result<int> WaitForMessage() override;
 
  private:
   SharedFD input_;
