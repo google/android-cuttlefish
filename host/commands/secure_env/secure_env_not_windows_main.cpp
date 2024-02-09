@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <functional>
+#include <mutex>
 #include <optional>
 #include <thread>
 
@@ -91,6 +92,7 @@ namespace {
 
 // Copied from AndroidKeymaster4Device
 constexpr size_t kOperationTableSize = 16;
+constexpr std::chrono::seconds kRestartLockTimeout(2);
 
 // Dup a command line file descriptor into a SharedFD.
 SharedFD DupFdFlag(gflags::int32 fd) {
@@ -120,14 +122,29 @@ SharedFD DupFdFlag(gflags::int32 fd) {
 
 // Spin up a thread that monitors for a kernel loaded event, then re-execs
 // this process. This way, secure_env's boot tracking matches up with the guest.
-std::thread StartKernelEventMonitor(SharedFD kernel_events_fd) {
-  return std::thread([kernel_events_fd]() {
+std::thread StartKernelEventMonitor(SharedFD kernel_events_fd,
+                                    std::timed_mutex& oemlock_lock) {
+  return std::thread([kernel_events_fd, &oemlock_lock]() {
     while (kernel_events_fd->IsOpen()) {
       auto read_result = monitor::ReadEvent(kernel_events_fd);
       CHECK(read_result.has_value()) << kernel_events_fd->StrError();
       if (read_result->event == monitor::Event::BootloaderLoaded) {
         LOG(DEBUG) << "secure_env detected guest reboot, restarting.";
+
+        // secure_env app potentially may become stuck at IO during holding the
+        // lock, so limit the waiting time to make sure self-restart is executed
+        // as expected
+        const bool locked = oemlock_lock.try_lock_for(kRestartLockTimeout);
+        if (!locked) {
+          LOG(WARNING) << "Couldn't acquire oemlock lock within timeout. "
+                          "Executing self-restart anyway";
+        }
+
         ReExecSelf();
+
+        if (locked) {
+          oemlock_lock.unlock();
+        }
       }
     }
   });
@@ -161,24 +178,27 @@ ChooseGatekeeperComponent() {
 fruit::Component<fruit::Required<TpmResourceManager>, oemlock::OemLock>
 ChooseOemlockComponent() {
   return fruit::createComponent()
-      .registerProvider([](TpmResourceManager& resource_manager) -> secure_env::Storage* {
-        if (FLAGS_oemlock_impl == "software") {
-          return new secure_env::InsecureJsonStorage("oemlock_insecure");
-        } else if (FLAGS_oemlock_impl == "tpm") {
-          return new secure_env::TpmStorage(resource_manager, "oemlock_secure");
-        } else {
-          LOG(FATAL) << "Invalid oemlock implementation: "
-                     << FLAGS_oemlock_impl;
-          abort();
-        }
-      })
+      .registerProvider(
+          [](TpmResourceManager& resource_manager) -> secure_env::Storage* {
+            if (FLAGS_oemlock_impl == "software") {
+              return new secure_env::InsecureJsonStorage("oemlock_insecure");
+            } else if (FLAGS_oemlock_impl == "tpm") {
+              return new secure_env::TpmStorage(resource_manager,
+                                                "oemlock_secure");
+            } else {
+              LOG(FATAL) << "Invalid oemlock implementation: "
+                         << FLAGS_oemlock_impl;
+              abort();
+            }
+          })
       .registerProvider([](secure_env::Storage& storage) -> oemlock::OemLock* {
         return new oemlock::OemLock(storage);
-      });;
+      });
+  ;
 }
 
-fruit::Component<TpmResourceManager, gatekeeper::GateKeeper,
-                 oemlock::OemLock, keymaster::KeymasterEnforcement>
+fruit::Component<TpmResourceManager, gatekeeper::GateKeeper, oemlock::OemLock,
+                 keymaster::KeymasterEnforcement>
 SecureEnvComponent() {
   return fruit::createComponent()
       .registerProvider([]() -> Tpm* {  // fruit will take ownership
@@ -212,7 +232,8 @@ SecureEnvComponent() {
                 esys.get());  // fruit will take ownership
           })
       .registerProvider([](TpmResourceManager& resource_manager) {
-        return new secure_env::TpmStorage(resource_manager, "gatekeeper_secure");
+        return new secure_env::TpmStorage(resource_manager,
+                                          "gatekeeper_secure");
       })
       .registerProvider([]() {
         return new secure_env::InsecureJsonStorage("gatekeeper_insecure");
@@ -235,8 +256,8 @@ Result<void> SecureEnvMain(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   keymaster::SoftKeymasterLogger km_logger;
 
-  fruit::Injector<TpmResourceManager, gatekeeper::GateKeeper,
-                  oemlock::OemLock, keymaster::KeymasterEnforcement>
+  fruit::Injector<TpmResourceManager, gatekeeper::GateKeeper, oemlock::OemLock,
+                  keymaster::KeymasterEnforcement>
       injector(SecureEnvComponent);
   TpmResourceManager* resource_manager = injector.get<TpmResourceManager*>();
   gatekeeper::GateKeeper* gatekeeper = injector.get<gatekeeper::GateKeeper*>();
@@ -245,7 +266,7 @@ Result<void> SecureEnvMain(int argc, char** argv) {
       injector.get<keymaster::KeymasterEnforcement*>();
   std::unique_ptr<keymaster::KeymasterContext> keymaster_context;
   std::unique_ptr<keymaster::AndroidKeymaster> keymaster;
-
+  std::timed_mutex oemlock_lock;
   std::vector<std::thread> threads;
 
   int security_level;
@@ -372,25 +393,25 @@ Result<void> SecureEnvMain(int argc, char** argv) {
 
   auto oemlock_in = DupFdFlag(FLAGS_oemlock_fd_in);
   auto oemlock_out = DupFdFlag(FLAGS_oemlock_fd_out);
-  threads.emplace_back([oemlock_in, oemlock_out, &oemlock,
-                        oemlock_snapshot_socket2 =
-                            std::move(oemlock_snapshot_socket2)]() {
-    while (true) {
-      transport::SharedFdChannel channel(oemlock_in, oemlock_out);
-      oemlock::OemLockResponder responder(channel, *oemlock);
+  threads.emplace_back(
+      [oemlock_in, oemlock_out, &oemlock, &oemlock_lock,
+       oemlock_snapshot_socket2 = std::move(oemlock_snapshot_socket2)]() {
+        while (true) {
+          transport::SharedFdChannel channel(oemlock_in, oemlock_out);
+          oemlock::OemLockResponder responder(channel, *oemlock, oemlock_lock);
 
-      std::function<bool()> oemlock_process_cb = [&responder]() -> bool {
-        return (responder.ProcessMessage().ok());
-      };
+          std::function<bool()> oemlock_process_cb = [&responder]() -> bool {
+            return (responder.ProcessMessage().ok());
+          };
 
-      // infinite loop that returns if resetting responder is needed
-      auto result = secure_env_impl::WorkerInnerLoop(
-          oemlock_process_cb, oemlock_in, oemlock_snapshot_socket2);
-      if (!result.ok()) {
-        LOG(FATAL) << "oemlock worker failed: " << result.error().Trace();
-      }
-    }
-  });
+          // infinite loop that returns if resetting responder is needed
+          auto result = secure_env_impl::WorkerInnerLoop(
+              oemlock_process_cb, oemlock_in, oemlock_snapshot_socket2);
+          if (!result.ok()) {
+            LOG(FATAL) << "oemlock worker failed: " << result.error().Trace();
+          }
+        }
+      });
 
   auto confui_server_fd = DupFdFlag(FLAGS_confui_server_fd);
   threads.emplace_back([confui_server_fd, resource_manager]() {
@@ -400,7 +421,7 @@ Result<void> SecureEnvMain(int argc, char** argv) {
   });
 
   auto kernel_events_fd = DupFdFlag(FLAGS_kernel_events_fd);
-  threads.emplace_back(StartKernelEventMonitor(kernel_events_fd));
+  threads.emplace_back(StartKernelEventMonitor(kernel_events_fd, oemlock_lock));
 
   for (auto& t : threads) {
     t.join();
