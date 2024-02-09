@@ -528,7 +528,7 @@ Result<void> FetchTarget(BuildApi& build_api, const Builds& builds,
 
   if (builds.otatools) {
     std::string otatools_filepath = CF_EXPECT(build_api.DownloadFile(
-        *builds.otatools, target_directories.root, "ota_tools.zip"));
+        *builds.otatools, target_directories.root, "otatools.zip"));
     std::vector<std::string> ota_tools_files = CF_EXPECT(
         ExtractArchiveContents(otatools_filepath, target_directories.otatools,
                                keep_downloaded_archives));
