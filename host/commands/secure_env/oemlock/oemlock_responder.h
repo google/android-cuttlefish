@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <mutex>
+
 #include "common/libs/transport/channel.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/secure_env/oemlock/oemlock.h"
@@ -24,14 +26,15 @@ namespace oemlock {
 
 class OemLockResponder {
  public:
-  OemLockResponder(transport::Channel& channel,
-                   OemLock& oemlock);
+  OemLockResponder(transport::Channel& channel, OemLock& oemlock,
+                   std::timed_mutex& lock);
 
   Result<void> ProcessMessage();
 
  private:
   transport::Channel& channel_;
   OemLock& oemlock_;
+  std::timed_mutex& lock_;
 };
 
 }  // namespace oemlock
