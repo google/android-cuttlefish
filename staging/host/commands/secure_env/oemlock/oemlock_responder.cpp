@@ -21,60 +21,72 @@ namespace cuttlefish {
 namespace oemlock {
 
 OemLockResponder::OemLockResponder(transport::Channel& channel,
-                                   OemLock& oemlock)
-    : channel_(channel), oemlock_(oemlock) {}
+                                   OemLock& oemlock, std::timed_mutex& lock)
+    : channel_(channel), oemlock_(oemlock), lock_(lock) {}
 
 Result<void> OemLockResponder::ProcessMessage() {
-  auto request = CF_EXPECT(channel_.ReceiveMessage(), "Could not receive message");
+  CF_EXPECT(channel_.WaitForMessage(), "Could not receive message");
 
-  bool result = false;
-  switch(secure_env::OemLockField(request->command)) {
-    case secure_env::OemLockField::ALLOWED_BY_CARRIER: {
-      if (request->payload_size == 0) {
-        result = CF_EXPECT(oemlock_.IsOemUnlockAllowedByCarrier());
-      } else if (request->payload_size == sizeof(bool)) {
-        result = *reinterpret_cast<bool*>(request->payload);
-        CF_EXPECT(oemlock_.SetOemUnlockAllowedByCarrier(result));
+  {
+    std::lock_guard lock(lock_);
+    LOG(DEBUG) << "Receiving oemlock command";
+    auto request =
+        CF_EXPECT(channel_.ReceiveMessage(), "Could not receive message");
+
+    bool result = false;
+    switch (secure_env::OemLockField(request->command)) {
+      case secure_env::OemLockField::ALLOWED_BY_CARRIER: {
+        if (request->payload_size == 0) {
+          result = CF_EXPECT(oemlock_.IsOemUnlockAllowedByCarrier());
+        } else if (request->payload_size == sizeof(bool)) {
+          result = *reinterpret_cast<bool*>(request->payload);
+          CF_EXPECT(oemlock_.SetOemUnlockAllowedByCarrier(result));
+        }
+        break;
       }
-      break;
+
+      case secure_env::OemLockField::ALLOWED_BY_DEVICE: {
+        if (request->payload_size == 0) {
+          result = CF_EXPECT(oemlock_.IsOemUnlockAllowedByDevice());
+        } else if (request->payload_size == sizeof(bool)) {
+          result = *reinterpret_cast<bool*>(request->payload);
+          CF_EXPECT(oemlock_.SetOemUnlockAllowedByDevice(result));
+        }
+        break;
+      }
+
+      case secure_env::OemLockField::ALLOWED: {
+        if (request->payload_size == 0) {
+          result = CF_EXPECT(oemlock_.IsOemUnlockAllowed());
+        }
+        break;
+      }
+
+      case secure_env::OemLockField::LOCKED: {
+        if (request->payload_size == 0) {
+          result = CF_EXPECT(oemlock_.IsOemLocked());
+        } else if (request->payload_size == sizeof(bool)) {
+          result = *reinterpret_cast<bool*>(request->payload);
+          CF_EXPECT(oemlock_.SetOemLocked(result));
+        }
+        break;
+      }
+
+      default:
+        return CF_ERR("Unrecognized message id "
+                      << reinterpret_cast<uint32_t>(request->command));
     }
 
-    case secure_env::OemLockField::ALLOWED_BY_DEVICE: {
-      if (request->payload_size == 0) {
-        result = CF_EXPECT(oemlock_.IsOemUnlockAllowedByDevice());
-      } else if (request->payload_size == sizeof(bool)) {
-        result = *reinterpret_cast<bool*>(request->payload);
-        CF_EXPECT(oemlock_.SetOemUnlockAllowedByDevice(result));
-      }
-      break;
-    }
-
-    case secure_env::OemLockField::ALLOWED: {
-      if (request->payload_size == 0) {
-        result = CF_EXPECT(oemlock_.IsOemUnlockAllowed());
-      }
-      break;
-    }
-
-    case secure_env::OemLockField::LOCKED: {
-      if (request->payload_size == 0) {
-        result = CF_EXPECT(oemlock_.IsOemLocked());
-      } else if (request->payload_size == sizeof(bool)) {
-        result = *reinterpret_cast<bool*>(request->payload);
-        CF_EXPECT(oemlock_.SetOemLocked(result));
-      }
-      break;
-    }
-
-    default:
-      return CF_ERR("Unrecognized message id " << reinterpret_cast<uint32_t>(request->command));
+    auto message =
+        CF_EXPECT(transport::CreateMessage(request->command, sizeof(bool)),
+                  "Failed to allocate message for oemlock response");
+    memcpy(message->payload, &result, sizeof(bool));
+    LOG(DEBUG) << "Sending oemlock response";
+    CF_EXPECT(channel_.SendResponse(*message),
+              "Could not answer to "
+                  << reinterpret_cast<uint32_t>(request->command)
+                  << " request");
   }
-
-  auto message = CF_EXPECT(transport::CreateMessage(request->command, sizeof(bool)),
-                           "Failed to allocate message for oemlock response");
-  memcpy(message->payload, &result, sizeof(bool));
-  CF_EXPECT(channel_.SendResponse(*message),
-            "Could not answer to " << reinterpret_cast<uint32_t>(request->command) << " request");
 
   return {};
 }
