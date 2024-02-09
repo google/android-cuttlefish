@@ -56,7 +56,8 @@ using ManagedMessage = std::unique_ptr<RawMessage, MessageDestroyer>;
  * Allocates memory for a RawMessage carrying a message of size
  * `payload_size`.
  */
-Result<ManagedMessage> CreateMessage(uint32_t command, bool is_response, size_t payload_size);
+Result<ManagedMessage> CreateMessage(uint32_t command, bool is_response,
+                                     size_t payload_size);
 Result<ManagedMessage> CreateMessage(uint32_t command, size_t payload_size);
 
 /*
@@ -68,6 +69,7 @@ class Channel {
   virtual Result<void> SendRequest(RawMessage& message) = 0;
   virtual Result<void> SendResponse(RawMessage& message) = 0;
   virtual Result<ManagedMessage> ReceiveMessage() = 0;
+  virtual Result<int> WaitForMessage() = 0;
   virtual ~Channel() {}
 };
 
