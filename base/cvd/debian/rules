@@ -16,6 +16,10 @@ include /usr/share/dpkg/buildflags.mk
 %:
 	dh $@ --with=config-package
 
-override_dh_installinit:
-	dh_installinit --name=cuttlefish-host-resources
-	dh_installinit
+override_dh_auto_build:
+	meson setup --reconfigure build && meson compile -C build
+
+override_dh_auto_install:
+
+override_dh_auto_test:
+

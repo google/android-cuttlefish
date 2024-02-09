@@ -1,0 +1,32 @@
+Source: cuttlefish-cvd
+Maintainer: Cuttlefish Team
+Section: misc
+Priority: optional
+Build-Depends: config-package-dev,
+               debhelper-compat (= 12),
+               clang,
+               pkg-config,
+               meson,
+               libfmt-dev,
+               libgflags-dev,
+               libjsoncpp-dev,
+               libcurl4-openssl-dev,
+               libgoogle-glog-dev,
+               libssl-dev,
+               libxml2-dev,
+               uuid-dev,
+               libprotobuf-dev,
+               libprotobuf-c-dev,
+               protobuf-compiler,
+               libz3-dev
+Standards-Version: 4.5.0
+
+Package: cuttlefish-cvd
+Architecture: any
+Depends: cuttlefish-user,
+         openssl,
+         curl,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Pre-Depends: ${misc:Pre-Depends}
+Description: Cuttlefish Android Virtual Device local orchestrator tool.
