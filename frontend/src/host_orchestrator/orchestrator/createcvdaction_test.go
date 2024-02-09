@@ -331,6 +331,8 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
 	tarContent, _ := ioutil.ReadFile(getTestTarFilename())
+	ioutil.WriteFile(dir+"/vbmeta.img", []byte{}, 0755)
+	ioutil.WriteFile(dir+"/vbmeta_system.img", []byte{}, 0755)
 	ioutil.WriteFile(dir+"/"+CVDHostPackageName, tarContent, 0755)
 	expected := fmt.Sprintf("sudo -u fakecvduser "+
 		"ANDROID_HOST_OUT=%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
