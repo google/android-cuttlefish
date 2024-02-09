@@ -16,6 +16,9 @@
 
 #include "common/libs/transport/channel_sharedfd.h"
 
+#include <poll.h>
+#include <vector>
+
 #include "common/libs/fs/shared_buf.h"
 
 namespace cuttlefish {
@@ -36,11 +39,12 @@ Result<ManagedMessage> SharedFdChannel::ReceiveMessage() {
   struct RawMessage message_header;
   auto read = ReadExactBinary(input_, &message_header);
   CF_EXPECT(read == sizeof(RawMessage),
-            "Expected " << sizeof(RawMessage) << ", received " << read << "\n" <<
-            "Could not read message: " << input_->StrError());
+            "Expected " << sizeof(RawMessage) << ", received " << read << "\n"
+                        << "Could not read message: " << input_->StrError());
   LOG(DEBUG) << "Received message with id: " << message_header.command;
 
-  auto message = CF_EXPECT(CreateMessage(message_header.command, message_header.is_response,
+  auto message = CF_EXPECT(CreateMessage(message_header.command,
+                                         message_header.is_response,
                                          message_header.payload_size));
   auto message_bytes = reinterpret_cast<char*>(message->payload);
   read = ReadExact(input_, message_bytes, message->payload_size);
@@ -48,6 +52,18 @@ Result<ManagedMessage> SharedFdChannel::ReceiveMessage() {
             "Could not read message: " << input_->StrError());
 
   return message;
+}
+
+Result<int> SharedFdChannel::WaitForMessage() {
+  std::vector<PollSharedFd> input_poll = {
+      {.fd = input_, .events = POLLIN},
+  };
+  const int poll_result = SharedFD::Poll(input_poll, -1);
+
+  CF_EXPECT(poll_result >= 0,
+            "Cannot execute poll on input stream to wait for incoming message");
+
+  return poll_result;
 }
 
 Result<void> SharedFdChannel::SendMessage(RawMessage& message, bool response) {
