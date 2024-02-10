@@ -24,3 +24,24 @@ get_prop(hal_evs_default, graphics_config_writable_prop)
 
 # allow to use binder IPC.
 binder_use(hal_evs_default)
+
+# Allow the driver to access vendor files
+allow hal_evs_default vendor_data_file:file r_file_perms;
+
+# Allow to access default property.
+# get_prop(hal_evs_default, default_prop) triggers neverallow checks.
+# Known issue (b/322843384).
+dontaudit hal_evs_default default_prop:file read;
+
+# Allow to access /dev/dma_heap/system
+allow hal_evs_default dmabuf_system_heap_device:chr_file r_file_perms;
+
+# Allow to use the media extractor.
+allow hal_evs_default mediaextractor_service:service_manager find;
+allow hal_evs_default mediaserver_service:service_manager find;
+binder_call(hal_evs_default, mediaextractor)
+binder_call(hal_evs_default, mediaserver)
+
+# Allow to use OMX service.
+hal_client_domain(hal_evs_default, hal_omx)
+hal_client_domain(hal_evs_default, hal_codec2)
