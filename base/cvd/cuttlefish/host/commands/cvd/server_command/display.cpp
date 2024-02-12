@@ -38,6 +38,22 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+namespace {
+constexpr char kSummaryHelpText[] =
+    R"(Enables hotplug/unplug of displays from running cuttlefish virtual devices)";
+
+constexpr char kDetailedHelpText[] =
+    R"(Cuttlefish Virtual Device (CVD) Display CLI.
+
+usage: cvd display <command> <args>
+
+Commands:
+    help <command>      Print help for a command.
+    add                 Adds a new display to a given device.
+    list                Prints the currently connected displays.
+    remove              Removes a display from a given device.
+)";
+}
 
 class CvdDisplayCommandHandler : public CvdServerHandler {
  public:
@@ -84,6 +100,14 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
   cvd_common::Args CmdList() const override {
     return cvd_common::Args(cvd_display_operations_.begin(),
                             cvd_display_operations_.end());
+  }
+
+  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+
+  bool ShouldInterceptHelp() const override { return true; }
+
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return kDetailedHelpText;
   }
 
  private:
