@@ -32,19 +32,6 @@
 namespace cuttlefish {
 namespace {
 
-static const std::string kUsage =
-    R"(Cuttlefish Virtual Device (CVD) Display CLI.
-
-usage: cvd display <command> <args>
-
-Commands:
-    help                Print this message.
-    help <command>      Print help for a command.
-    add                 Adds a new display to a given device.
-    list                Prints the currently connected displays.
-    remove              Removes a display from a given device.
-)";
-
 static const std::string kAddUsage =
     R"(Cuttlefish Virtual Device (CVD) Display CLI.
 
@@ -78,7 +65,6 @@ usage: cvd display remove \\
 static const std::unordered_map<std::string, std::string> kSubCommandUsages = {
     {"add", kAddUsage},
     {"list", kListUsage},
-    {"help", kUsage},
     {"remove", kRemoveUsage},
 };
 
@@ -124,11 +110,6 @@ Result<int> GetInstanceNum(std::vector<std::string>& args) {
 }
 
 Result<int> DoHelp(std::vector<std::string>& args) {
-  if (args.empty()) {
-    std::cout << kUsage << std::endl;
-    return 0;
-  }
-
   const std::string& subcommand_str = args[0];
   auto subcommand_usage = kSubCommandUsages.find(subcommand_str);
   if (subcommand_usage == kSubCommandUsages.end()) {
