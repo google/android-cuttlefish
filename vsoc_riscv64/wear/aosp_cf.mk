@@ -70,12 +70,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_SYSTEM_PROPERTIES += \
     config.disable_renderscript=1 \
 
-# TODO(b/271573990): This property can be removed when ART support for JIT on
-# this architecture is available. This is an override as the original property
-# is defined in runtime_libart.mk.
-PRODUCT_PROPERTY_OVERRIDES += \
-    dalvik.vm.usejit=false
-
 PRODUCT_NAME := aosp_cf_riscv64_wear
 PRODUCT_DEVICE := vsoc_riscv64
 PRODUCT_MANUFACTURER := Google
