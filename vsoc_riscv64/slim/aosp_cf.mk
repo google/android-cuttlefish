@@ -38,6 +38,7 @@ PRODUCT_PACKAGES += FakeSystemApp
 # All components inherited here go to vendor image
 #
 LOCAL_PREFER_VENDOR_APEX := true
+LOCAL_ENABLE_WIDEVINE := false
 $(call inherit-product, device/google/cuttlefish/shared/slim/device_vendor.mk)
 
 PRODUCT_ENFORCE_MAC80211_HWSIM := false
