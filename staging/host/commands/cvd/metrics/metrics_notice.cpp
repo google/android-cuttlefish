@@ -62,14 +62,14 @@ void PrintDataCollectionNotice(bool colorful = true) {
       kPrivacyPolicyUrl + ") and Terms of Service (" + kTermsServiceUrl + ").";
 
   if (colorful) {
-    std::cout << "\n"
+    std::cerr << "\n"
               << delimiter << "\n"
               << start << red << "Notice:" << end << std::endl;
-    std::cout << start << green << " " << notice << end << "\n"
+    std::cerr << start << green << " " << notice << end << "\n"
               << delimiter << "\n";
   } else {
-    std::cout << "\n" << delimiter << "\nNotice:" << std::endl;
-    std::cout << " " << notice << "\n" << delimiter << "\n";
+    std::cerr << "\n" << delimiter << "\nNotice:" << std::endl;
+    std::cerr << " " << notice << "\n" << delimiter << "\n";
   }
 }
 
