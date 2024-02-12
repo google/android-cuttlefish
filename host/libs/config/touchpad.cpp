@@ -74,7 +74,7 @@ ParseTouchpadConfigsFromArgs(std::vector<std::string>& args) {
           }),
   };
 
-  CF_EXPECT(ParseFlags(touchpad_flags, args),
+  CF_EXPECT(ConsumeFlags(touchpad_flags, args),
             "Failed to parse touchpad flags.");
 
   std::vector<CuttlefishConfig::TouchpadConfig> touchpad_configs;

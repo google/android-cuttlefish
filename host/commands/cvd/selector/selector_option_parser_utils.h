@@ -39,7 +39,7 @@ Result<void> FilterSelectorFlag(std::vector<std::string>& args,
   }
 
   T value;
-  CF_EXPECT(ParseFlags({GflagsCompatFlag(flag_name, value)}, args),
+  CF_EXPECT(ConsumeFlags({GflagsCompatFlag(flag_name, value)}, args),
             "Failed to parse --" << flag_name);
   if (args.size() == args_initial_size) {
     // not consumed

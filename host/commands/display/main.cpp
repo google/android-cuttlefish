@@ -119,7 +119,8 @@ Result<int> RunCrosvmDisplayCommand(int instance_num,
 
 Result<int> GetInstanceNum(std::vector<std::string>& args) {
   int instance_num = 1;
-  CF_EXPECT(ParseFlags({GflagsCompatFlag("instance_num", instance_num)}, args));
+  CF_EXPECT(
+      ConsumeFlags({GflagsCompatFlag("instance_num", instance_num)}, args));
   return instance_num;
 }
 
@@ -193,7 +194,7 @@ Result<int> DoRemove(std::vector<std::string>& args) {
             return {};
           }),
   };
-  auto parse_res = ParseFlags(remove_displays_flags, args);
+  auto parse_res = ConsumeFlags(remove_displays_flags, args);
   if (!parse_res.ok()) {
     std::cerr << parse_res.error().FormatForEnv() << std::endl;
     std::cerr << "Failed to parse flags. Usage:" << std::endl;
