@@ -1,4 +1,19 @@
-include platform/system/sepolicy:/OWNERS
+set noparent
 
+# Cuttlefish Core TLs
 adelva@google.com
-rurumihong@google.com
+ellisr@google.com
+jemoreira@google.com
+natsu@google.com
+rammuthiah@google.com
+schuffelen@google.com
+
+# Android Platform Security Owners
+alanstokes@google.com
+bowgotsai@google.com
+inseob@google.com
+jbires@google.com
+jeffv@google.com
+jiyong@google.com
+smoreland@google.com
+tweek@google.com
