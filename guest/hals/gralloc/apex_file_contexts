@@ -1,5 +1,0 @@
-(/.*)?                                                           u:object_r:vendor_file:s0
-/etc(/.*)?                                                       u:object_r:vendor_configs_file:s0
-/etc/linker.config.pb                                            u:object_r:linkerconfig_file:s0
-/lib(64)?(/.*)?                                                  u:object_r:same_process_hal_file:s0
-/bin/hw/android\.hardware\.graphics\.allocator-service\.minigbm  u:object_r:hal_graphics_allocator_default_exec:s0
