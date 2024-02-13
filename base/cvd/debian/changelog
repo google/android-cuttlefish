@@ -1,5 +1,0 @@
-cuttlefish-cvd (0.1.0) UNRELEASED; urgency=medium
-
-  * Import cvd and allocd from AOSP
-
- -- Jorge Moreira <jemoreira@google.com>  Thu, 06 Dec 2023 18:12:35 -0700
