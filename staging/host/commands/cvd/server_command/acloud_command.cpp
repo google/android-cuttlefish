@@ -39,6 +39,21 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+namespace {
+
+constexpr char kSummaryHelpText[] =
+    R"(Toggles translation of acloud commands to run through cvd if supported)";
+
+constexpr char kDetailedHelpText[] = R"(
+Usage:
+cvd acloud translator (--opt-out|--opt-in)
+Any acloud command will by default (and if supported by cvd) be translated to the appropriate cvd command and executed.
+If not supported by cvd, acloud will be used.
+
+To opt out or opt back in, run this translation toggle.
+)";
+
+}  // namespace
 
 class AcloudCommand : public CvdServerHandler {
  public:
@@ -58,6 +73,14 @@ class AcloudCommand : public CvdServerHandler {
   }
 
   cvd_common::Args CmdList() const override { return {"acloud"}; }
+
+  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+
+  bool ShouldInterceptHelp() const override { return true; }
+
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return kDetailedHelpText;
+  }
 
   /**
    * The `acloud` command satisfies the original `acloud CLI` command using
@@ -110,7 +133,7 @@ class AcloudCommand : public CvdServerHandler {
 Result<cvd::InstanceGroupInfo> AcloudCommand::HandleStartResponse(
     const cvd::Response& start_response) {
   CF_EXPECT(start_response.has_command_response(),
-            "cvd start did ont return a command response.");
+            "cvd start did not return a command response.");
   const auto& start_command_response = start_response.command_response();
   CF_EXPECT(start_command_response.has_instance_group_info(),
             "cvd start command response did not return instance_group_info.");
