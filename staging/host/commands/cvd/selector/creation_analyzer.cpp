@@ -245,7 +245,7 @@ static Result<std::vector<std::string>> UpdateInstanceArgs(
       GflagsCompatFlag("num_instances", old_num_instances),
       GflagsCompatFlag("base_instance_num", old_base_instance_num)};
   // discard old ones
-  CF_EXPECT(ParseFlags(instance_id_flags, new_args));
+  CF_EXPECT(ConsumeFlags(instance_id_flags, new_args));
 
   auto max = *(std::max_element(ids.cbegin(), ids.cend()));
   auto min = *(std::min_element(ids.cbegin(), ids.cend()));
@@ -274,7 +274,7 @@ Result<std::vector<std::string>> CreationAnalyzer::UpdateWebrtcDeviceId(
   std::vector<Flag> webrtc_device_id_flag{
       GflagsCompatFlag("webrtc_device_id", flag_value)};
   std::vector<std::string> copied_args{new_args};
-  CF_EXPECT(ParseFlags(webrtc_device_id_flag, copied_args));
+  CF_EXPECT(ConsumeFlags(webrtc_device_id_flag, copied_args));
 
   if (!flag_value.empty()) {
     return new_args;
