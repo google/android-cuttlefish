@@ -36,7 +36,7 @@ class FastbootConfigFlagImpl : public FastbootConfigFlag {
   Result<void> Process(std::vector<std::string>& args) override {
     bool proxy_fastboot = true;
     Flag proxy_fastboot_flag = GflagsCompatFlag(kName, proxy_fastboot);
-    CF_EXPECT(ParseFlags({proxy_fastboot_flag}, args),
+    CF_EXPECT(ConsumeFlags({proxy_fastboot_flag}, args),
               "Failed to parse proxy_fastboot config flags");
     config_.SetProxyFastboot(proxy_fastboot);
     return {};

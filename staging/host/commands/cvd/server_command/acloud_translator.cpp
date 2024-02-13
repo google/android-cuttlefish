@@ -77,7 +77,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
         GflagsCompatFlag("opt-out", flag_optout),
         GflagsCompatFlag("opt-in", flag_optin),
     };
-    CF_EXPECT(ParseFlags(translator_flags, invocation.arguments),
+    CF_EXPECT(ConsumeFlags(translator_flags, invocation.arguments),
               "Failed to process translator flag.");
     if (help) {
       WriteAll(request.Out(), kTranslatorHelpMessage);

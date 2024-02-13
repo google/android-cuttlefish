@@ -72,8 +72,8 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
 
   // remove --all_instances if there is
   bool all_instances = false;
-  CF_EXPECT(
-      ParseFlags({GflagsCompatFlag("all_instances", all_instances)}, cmd_args));
+  CF_EXPECT(ConsumeFlags({GflagsCompatFlag("all_instances", all_instances)},
+                         cmd_args));
 
   const auto working_dir =
       request.Message().command_request().working_directory();

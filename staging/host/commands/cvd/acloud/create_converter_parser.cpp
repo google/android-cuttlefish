@@ -140,7 +140,7 @@ Result<Tokens> ParseForCvdCreate(cvd_common::Args& arguments) {
   }
   parsers.emplace_back(verbose_parser.Parser());
 
-  CF_EXPECT(ParseFlags(parsers, arguments));
+  CF_EXPECT(ConsumeFlags(parsers, arguments));
 
   auto result = Tokens{};
   for (auto& p : string_parsers) {
@@ -167,7 +167,7 @@ Result<Tokens> ParseForCvdRemoteCreate(cvd_common::Args& arguments) {
     parsers.emplace_back(p.Parser());
   }
 
-  CF_EXPECT(ParseFlags(parsers, arguments));
+  CF_EXPECT(ConsumeFlags(parsers, arguments));
 
   auto result = Tokens{};
   for (auto& p : string_parsers) {

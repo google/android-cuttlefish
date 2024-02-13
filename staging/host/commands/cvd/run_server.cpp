@@ -112,7 +112,7 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   result.restarted_in_process = false;
   flags.emplace_back(GflagsCompatFlag(kInternalRestartedInProcess,
                                       result.restarted_in_process));
-  CF_EXPECT(ParseFlags(flags, all_args));
+  CF_EXPECT(ConsumeFlags(flags, all_args));
 
   // now the flags above consumed their lexical tokens from all_args
   // For now, the default value of acloud_translator_optout is false
@@ -122,9 +122,9 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   PrintDataCollectionNotice();
   flags.emplace_back(GflagsCompatFlag("INTERNAL_acloud_translator_optout",
                                       acloud_translator_optout_value));
-  CF_EXPECT(ParseFlags({GflagsCompatFlag("INTERNAL_acloud_translator_optout",
-                                         acloud_translator_optout_value)},
-                       all_args));
+  CF_EXPECT(ConsumeFlags({GflagsCompatFlag("INTERNAL_acloud_translator_optout",
+                                           acloud_translator_optout_value)},
+                         all_args));
   if (all_args.size() != all_args_size_before) {
     result.acloud_translator_optout = acloud_translator_optout_value;
   }
