@@ -26,7 +26,6 @@ cc_binary_host {
         "launch/nfc_connector.cpp",
         "launch/uwb_connector.cpp",
         "launch/casimir_control_server.cpp",
-        "launch/vhost_device_vsock.cpp",
         "launch/console_forwarder.cpp",
         "launch/control_env_proxy_server.cpp",
         "launch/gnss_grpc_proxy.cpp",
@@ -46,7 +45,6 @@ cc_binary_host {
         "launch/webrtc_recorder.cpp",
         "launch/streamer.cpp",
         "launch/netsim_server.cpp",
-        "launch/mcu.cpp",
         "main.cc",
         "reporting.cpp",
         "server_loop.cpp",
@@ -84,8 +82,6 @@ cc_binary_host {
     ],
     required: [
         "console_forwarder",
-        "echo_server",
-        "gnss_grpc_proxy",
         "kernel_log_monitor",
         "logcat_receiver",
         "log_tee",
@@ -97,11 +93,17 @@ cc_binary_host {
             enabled: true,
         },
         linux: {
+            required: [
+                "echo_server",
+                "gnss_grpc_proxy",
+            ],
             srcs: [
                 "launch/config_server.cpp",
-                "launch/tombstone_receiver.cpp",
+                "launch/mcu.cpp",
                 "launch/modem.cpp",
                 "launch/open_wrt.cpp",
+                "launch/tombstone_receiver.cpp",
+                "launch/vhost_device_vsock.cpp",
                 "launch/wmediumd_server.cpp",
             ],
             shared_libs: [
