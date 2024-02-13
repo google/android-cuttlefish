@@ -39,7 +39,7 @@ static Result<void> TestTapDevices(
   auto eth = instance.ethernet_tap_name();
   CF_EXPECTF(taps.count(eth) == 0, "Device \"{}\" in use", eth);
 #else
-  (void)instance_;
+  (void)instance;
 #endif
   return {};
 }

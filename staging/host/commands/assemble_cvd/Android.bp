@@ -72,6 +72,7 @@ cc_binary_host {
         "libcuttlefish_vm_manager",
         "libext2_uuid",
         "libgflags",
+        "libgfxstream_graphics_detector_proto",
         "libimage_aggregator",
         "libsparse",
     ],
@@ -104,9 +105,6 @@ cc_binary_host {
         linux: {
             shared_libs: [
                 "libnl",
-            ],
-            static_libs: [
-                "libgfxstream_graphics_detector_proto",
             ],
             required: [
                 "mkuserimg_mke2fs",
