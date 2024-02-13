@@ -328,7 +328,7 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
   }
 
   Result<void> Process(std::vector<std::string>& args) override {
-    CF_EXPECT(ParseFlags(Flags(), args));
+    CF_EXPECT(ConsumeFlags(Flags(), args));
     if (custom_action_config_.empty()) {
       // no custom action flag input
       custom_action_config_.push_back(DefaultCustomActionConfig());

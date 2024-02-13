@@ -175,7 +175,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
    * converter_parser.{h,cpp}.
    *
    * Note that the transfer should be done from the top through the bottom.
-   * ParseFlags() parses each flag in order.
+   * ConsumeFlags() parses each flag in order.
    */
   auto parsed_flags = CF_EXPECT(acloud_impl::ParseAcloudCreateFlags(arguments));
 
@@ -331,7 +331,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
             return {};
           }));
 
-  CF_EXPECT(ParseFlags(flags, arguments));
+  CF_EXPECT(ConsumeFlags(flags, arguments));
   CF_EXPECT(arguments.size() == 0, "Unrecognized arguments:'"
                                        << android::base::Join(arguments, "', '")
                                        << "'");

@@ -235,16 +235,16 @@ TEST(FlagParser, StringIntFlag) {
   auto int_flag = GflagsCompatFlag("int", int_value);
   auto string_flag = GflagsCompatFlag("string", string_value);
   std::vector<Flag> flags = {int_flag, string_flag};
-  EXPECT_THAT(ParseFlags(flags, {"-int=5", "-string=a"}), IsOk());
+  EXPECT_THAT(ConsumeFlags(flags, {"-int=5", "-string=a"}), IsOk());
   ASSERT_EQ(int_value, 5);
   ASSERT_EQ(string_value, "a");
-  EXPECT_THAT(ParseFlags(flags, {"--int=6", "--string=b"}), IsOk());
+  EXPECT_THAT(ConsumeFlags(flags, {"--int=6", "--string=b"}), IsOk());
   ASSERT_EQ(int_value, 6);
   ASSERT_EQ(string_value, "b");
-  EXPECT_THAT(ParseFlags(flags, {"-int", "7", "-string", "c"}), IsOk());
+  EXPECT_THAT(ConsumeFlags(flags, {"-int", "7", "-string", "c"}), IsOk());
   ASSERT_EQ(int_value, 7);
   ASSERT_EQ(string_value, "c");
-  EXPECT_THAT(ParseFlags(flags, {"--int", "8", "--string", "d"}), IsOk());
+  EXPECT_THAT(ConsumeFlags(flags, {"--int", "8", "--string", "d"}), IsOk());
   ASSERT_EQ(int_value, 8);
   ASSERT_EQ(string_value, "d");
 }
@@ -393,9 +393,9 @@ TEST(FlagParser, EndOfOptionMark) {
   bool flag = false;
   std::vector<Flag> flags{GflagsCompatFlag("flag", flag), InvalidFlagGuard()};
 
-  EXPECT_THAT(ParseFlags(flags, args), IsError());
-  EXPECT_THAT(ParseFlags(flags, args,
-                         /* recognize_end_of_option_mark */ true),
+  EXPECT_THAT(ConsumeFlags(flags, args), IsError());
+  EXPECT_THAT(ConsumeFlags(flags, args,
+                           /* recognize_end_of_option_mark */ true),
               IsOk());
   ASSERT_TRUE(flag);
 }

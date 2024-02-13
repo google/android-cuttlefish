@@ -225,7 +225,7 @@ class SerialLaunchCommand : public CvdServerHandler {
       CF_EXPECT(WriteAll(request.Err(), message) == message.size());
     }
 
-    CF_EXPECT(ParseFlags(flags, args));
+    CF_EXPECT(ConsumeFlags(flags, args));
 
     if (help) {
       static constexpr char kHelp[] =

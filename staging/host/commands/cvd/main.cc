@@ -65,7 +65,7 @@ android::base::LogSeverity CvdVerbosityOption(const int argc, char** argv) {
   std::string verbosity_flag_value;
   std::vector<Flag> verbosity_flag{
       GflagsCompatFlag("verbosity", verbosity_flag_value)};
-  if (!ParseFlags(verbosity_flag, all_args).ok()) {
+  if (!ConsumeFlags(verbosity_flag, all_args).ok()) {
     LOG(ERROR) << "Verbosity flag parsing failed, so use the default value.";
     return GetMinimumVerbosity();
   }
