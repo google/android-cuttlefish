@@ -44,6 +44,20 @@ Result<void> RunServer(RunServerParam&& params) {
              "Expected to be in server mode, but didn't get a server fd: {}",
              params.internal_server_fd->StrError());
 
+  struct rlimit old_lim;
+  // Get old limits
+  if (getrlimit(RLIMIT_NOFILE, &old_lim) == 0) {
+    LOG(INFO) << "Old limits -> soft limit= " << old_lim.rlim_cur << "\t"
+              << " hard limit= " << old_lim.rlim_max;
+  } else {
+    PLOG(FATAL) << "CVD Server getrlimit error";
+  }
+  // Set new value
+  old_lim.rlim_cur = old_lim.rlim_max;
+  // Set limits
+  CF_EXPECTF(setrlimit(RLIMIT_NOFILE, &old_lim) == 0,
+             "CVD Server setrlimit error, {}", strerror(errno));
+
   std::unique_ptr<ServerLogger> server_logger =
       std::make_unique<ServerLogger>();
   CF_EXPECT(server_logger != nullptr, "ServerLogger memory allocation failed.");
