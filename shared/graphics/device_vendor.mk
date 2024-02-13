@@ -58,9 +58,6 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.hwcomposer.pmem=/dev/block/pmem1
 
 # Gralloc implementation
-$(call soong_config_set,cvd,RELEASE_SM_OPEN_DECLARED_PASSTHROUGH_HAL,$(RELEASE_SM_OPEN_DECLARED_PASSTHROUGH_HAL))
-PRODUCT_PACKAGES += com.google.cf.gralloc
-
 PRODUCT_PACKAGES += \
     android.hardware.graphics.allocator-service.minigbm \
     mapper.minigbm
