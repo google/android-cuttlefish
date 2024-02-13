@@ -45,20 +45,6 @@ Result<void> RunServer(RunServerParam&& params) {
              "Expected to be in server mode, but didn't get a server fd: {}",
              params.internal_server_fd->StrError());
 
-  struct rlimit old_lim;
-  // Get old limits
-  if (getrlimit(RLIMIT_NOFILE, &old_lim) == 0) {
-    LOG(INFO) << "Old limits -> soft limit= " << old_lim.rlim_cur << "\t"
-              << " hard limit= " << old_lim.rlim_max;
-  } else {
-    PLOG(FATAL) << "CVD Server getrlimit error";
-  }
-  // Set new value
-  old_lim.rlim_cur = old_lim.rlim_max;
-  // Set limits
-  CF_EXPECTF(setrlimit(RLIMIT_NOFILE, &old_lim) == 0,
-             "CVD Server setrlimit error, {}", strerror(errno));
-
   std::unique_ptr<ServerLogger> server_logger =
       std::make_unique<ServerLogger>();
   CF_EXPECT(server_logger != nullptr, "ServerLogger memory allocation failed.");
@@ -113,7 +99,7 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   result.restarted_in_process = false;
   flags.emplace_back(GflagsCompatFlag(kInternalRestartedInProcess,
                                       result.restarted_in_process));
-  CF_EXPECT(ConsumeFlags(flags, all_args));
+  CF_EXPECT(ParseFlags(flags, all_args));
 
   // now the flags above consumed their lexical tokens from all_args
   // For now, the default value of acloud_translator_optout is false
@@ -123,9 +109,9 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   PrintDataCollectionNotice();
   flags.emplace_back(GflagsCompatFlag("INTERNAL_acloud_translator_optout",
                                       acloud_translator_optout_value));
-  CF_EXPECT(ConsumeFlags({GflagsCompatFlag("INTERNAL_acloud_translator_optout",
-                                           acloud_translator_optout_value)},
-                         all_args));
+  CF_EXPECT(ParseFlags({GflagsCompatFlag("INTERNAL_acloud_translator_optout",
+                                         acloud_translator_optout_value)},
+                       all_args));
   if (all_args.size() != all_args_size_before) {
     result.acloud_translator_optout = acloud_translator_optout_value;
   }
