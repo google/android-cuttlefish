@@ -19,3 +19,7 @@ include /usr/share/dpkg/buildflags.mk
 override_dh_installinit:
 	dh_installinit --name=cuttlefish-host-resources
 	dh_installinit
+
+override_dh_auto_build:
+	mkdir -p cvd/build && rm -rf cvd/build/* && cd cvd/build && meson setup && meson compile
+	dh_auto_build

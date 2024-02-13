@@ -2,3 +2,4 @@ host/deploy/install_zip.sh /usr/bin/
 host/deploy/unpack_boot_image.py /usr/lib/cuttlefish-common/bin/
 host/deploy/capability_query.py /usr/lib/cuttlefish-common/bin/
 host/packages/cuttlefish-base/* /
+cvd/build/cvd /usr/lib/cuttlefish-common/bin/
