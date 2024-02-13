@@ -67,7 +67,7 @@ Result<StatusFlags> GetFlagValues(int argc, char** argv) {
 
   std::vector<std::string> args =
       ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
-  CF_EXPECT(ParseFlags(flags, args), "Could not process command line flags.");
+  CF_EXPECT(ConsumeFlags(flags, args), "Could not process command line flags.");
   return flag_values;
 }
 

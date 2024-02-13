@@ -295,7 +295,7 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
                            const std::string& working_directory) {
   LoadFlags load_flags;
   auto flags = GetFlagsVector(load_flags);
-  CF_EXPECT(ParseFlags(flags, args));
+  CF_EXPECT(ConsumeFlags(flags, args));
   CF_EXPECT(
       args.size() > 0,
       "No arguments provided to cvd command, please provide path to json file");

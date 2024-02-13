@@ -58,7 +58,7 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
     config_.SetModes({AdbMode::VsockHalfTunnel});
     bool run_adb_connector = !IsRunningInContainer();
     Flag run_flag = GflagsCompatFlag("run_adb_connector", run_adb_connector);
-    CF_EXPECT(ParseFlags({run_flag, mode_flag_}, args),
+    CF_EXPECT(ConsumeFlags({run_flag, mode_flag_}, args),
               "Failed to parse adb config flags");
     config_.SetRunConnector(run_adb_connector);
 
