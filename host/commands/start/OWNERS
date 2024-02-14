@@ -1,7 +1,5 @@
 set noparent
 
-include platform/system/sepolicy:/OWNERS
-
 # Cuttlefish Core TLs
 adelva@google.com
 ellisr@google.com
