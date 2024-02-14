@@ -16,7 +16,7 @@ jobs:
     - name: Vet Test Build
       run: cd frontend/src/host_orchestrator && go vet ./... && go test ./... && go build ./...
   build-debian-package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: ${{ always() && needs.build-orchestrator.result == 'success' }}
     needs: [build-orchestrator]
     container:
