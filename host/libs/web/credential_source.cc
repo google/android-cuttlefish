@@ -318,10 +318,12 @@ static Result<std::string> CreateJwt(const std::string& email,
   claim_set_json["aud"] = "https://oauth2.googleapis.com/token";
   auto time = system_clock::now();
   claim_set_json["iat"] =
-      (uint64_t)duration_cast<seconds>(time.time_since_epoch()).count();
+      (Json::Value::UInt64)duration_cast<seconds>(time.time_since_epoch())
+          .count();
   auto exp = time + minutes(30);
   claim_set_json["exp"] =
-      (uint64_t)duration_cast<seconds>(exp.time_since_epoch()).count();
+      (Json::Value::UInt64)duration_cast<seconds>(exp.time_since_epoch())
+          .count();
   std::string claim_set_str = CF_EXPECT(JsonToBase64Url(claim_set_json));
 
   std::string jwt_to_sign = header_str + "." + claim_set_str;
