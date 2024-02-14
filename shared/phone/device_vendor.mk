@@ -51,7 +51,7 @@ TARGET_PRODUCT_PROP := $(LOCAL_PATH)/product.prop
 TARGET_VENDOR_PROP := $(LOCAL_PATH)/vendor.prop
 
 PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.faketouch.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.faketouch.xml \
+    frameworks/native/data/etc/android.hardware.touchscreen.multitouch.distinct.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.touchscreen.multitouch.distinct.xml \
 
     ifneq ($(TARGET_DISABLE_BIOMETRICS_FACE),true)
         PRODUCT_COPY_FILES += \
