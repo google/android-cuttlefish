@@ -1,6 +1,5 @@
 --map=file.cpp:base/cvd/android-base/file.cpp
 --map=logging.cpp:base/cvd/android-base/logging.cpp
---map=logging_splitters.h:base/cvd/logging_splitters.h
 --map=parsebool.cpp:base/cvd/android-base/parsebool.cpp
 --map=posix_strerror_r.cpp:base/cvd/android-base/posix_strerror_r.cpp
 --map=strings.cpp:base/cvd/android-base/strings.cpp

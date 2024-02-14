@@ -68,11 +68,11 @@ static void SplitByLogdChunks(LogId log_id, LogSeverity severity, const char* ta
   }
   int file_header_size = file_header.size();
 
-  __attribute__((uninitialized)) char logd_chunk[max_size + 1];
+  __attribute__((uninitialized)) std::vector<char> logd_chunk(max_size + 1);
   ptrdiff_t chunk_position = 0;
 
   auto call_log_function = [&]() {
-    log_function(log_id, severity, tag, logd_chunk);
+    log_function(log_id, severity, tag, logd_chunk.data());
     chunk_position = 0;
   };
 
@@ -80,10 +80,10 @@ static void SplitByLogdChunks(LogId log_id, LogSeverity severity, const char* ta
     int size_written = 0;
     const char* new_line = chunk_position > 0 ? "\n" : "";
     if (add_file) {
-      size_written = snprintf(logd_chunk + chunk_position, sizeof(logd_chunk) - chunk_position,
+      size_written = snprintf(logd_chunk.data() + chunk_position, logd_chunk.size() - chunk_position,
                               "%s%s%.*s", new_line, file_header.c_str(), length, message);
     } else {
-      size_written = snprintf(logd_chunk + chunk_position, sizeof(logd_chunk) - chunk_position,
+      size_written = snprintf(logd_chunk.data() + chunk_position, logd_chunk.size() - chunk_position,
                               "%s%.*s", new_line, length, message);
     }
 
@@ -123,8 +123,8 @@ static void SplitByLogdChunks(LogId log_id, LogSeverity severity, const char* ta
     }
     // Then write the rest of the msg.
     if (add_file) {
-      snprintf(logd_chunk, sizeof(logd_chunk), "%s%s", file_header.c_str(), msg);
-      log_function(log_id, severity, tag, logd_chunk);
+      snprintf(logd_chunk.data(), logd_chunk.size(), "%s%s", file_header.c_str(), msg);
+      log_function(log_id, severity, tag, logd_chunk.data());
     } else {
       log_function(log_id, severity, tag, msg);
     }
