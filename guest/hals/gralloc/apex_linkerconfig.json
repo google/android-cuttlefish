@@ -1,0 +1,4 @@
+{
+  // visible so that mapper can be loaded from the apex
+  "visible": true
+}
