@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/run_server.h"
 
+#include <sys/resource.h>
 #include <unistd.h>
 
 #include <memory>
