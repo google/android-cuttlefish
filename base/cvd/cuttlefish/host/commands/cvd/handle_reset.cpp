@@ -80,7 +80,7 @@ static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
       help_flag,
       GflagsCompatFlag("verbosity", verbosity_flag_value),
       UnexpectedArgumentGuard()};
-  CF_EXPECT(ParseFlags(flags, subcmd_args));
+  CF_EXPECT(ConsumeFlags(flags, subcmd_args));
 
   std::optional<android::base::LogSeverity> verbosity;
   if (!verbosity_flag_value.empty()) {

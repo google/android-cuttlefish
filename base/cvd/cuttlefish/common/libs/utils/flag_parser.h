@@ -32,7 +32,7 @@
  * Start with Flag() or one of the GflagsCompatFlag(...) functions to create new
  * flags. These flags should be aggregated through the application through some
  * other mechanism and then evaluated individually with Flag::Parse or together
- * with ParseFlags on arguments. */
+ * with ConsumeFlags on arguments. */
 
 namespace cuttlefish {
 
@@ -135,12 +135,12 @@ Result<bool> ParseBool(const std::string& value, const std::string& name);
 /* Handles a list of flags. Flags are matched in the order given in case two
  * flags match the same argument. Matched flags are removed, leaving only
  * unmatched arguments. */
-Result<void> ParseFlags(const std::vector<Flag>& flags,
-                        std::vector<std::string>& args,
-                        const bool recognize_end_of_option_mark = false);
-Result<void> ParseFlags(const std::vector<Flag>& flags,
-                        std::vector<std::string>&&,
-                        const bool recognize_end_of_option_mark = false);
+Result<void> ConsumeFlags(const std::vector<Flag>& flags,
+                          std::vector<std::string>& args,
+                          const bool recognize_end_of_option_mark = false);
+Result<void> ConsumeFlags(const std::vector<Flag>& flags,
+                          std::vector<std::string>&&,
+                          const bool recognize_end_of_option_mark = false);
 
 bool WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
 

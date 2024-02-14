@@ -191,7 +191,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
         GflagsCompatFlag("help", help),
         GflagsCompatFlag("super_image", flag_paths),
     };
-    CF_EXPECT(ParseFlags(mixsuperimage_flags, invocation.arguments),
+    CF_EXPECT(ConsumeFlags(mixsuperimage_flags, invocation.arguments),
               "Failed to process mix-super-image flag.");
     if (help) {
       WriteAll(request.Out(), kMixSuperImageHelpMessage);
