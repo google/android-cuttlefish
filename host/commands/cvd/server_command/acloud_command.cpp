@@ -199,12 +199,7 @@ Result<ConvertedAcloudCreateCommand> AcloudCommand::ValidateLocal(
   // ConvertAcloudCreate converts acloud to cvd commands.
   // The input parameters waiter_, cb_unlock, cb_lock are.used to
   // support interrupt which have locking and unlocking functions
-  auto result =
-      acloud_impl::ConvertAcloudCreate(request, waiter_, cb_unlock, cb_lock);
-  if (!lock_released) {
-    interrupt_lock.unlock();
-  }
-  return result;
+  return acloud_impl::ConvertAcloudCreate(request, waiter_, cb_unlock, cb_lock);
 }
 
 bool AcloudCommand::ValidateRemoteArgs(const RequestWithStdio& request) {
