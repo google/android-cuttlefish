@@ -1,5 +1,4 @@
-//
-// Copyright (C) 2022 The Android Open Source Project
+// Copyright (C) 2024 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,24 +16,29 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+// NOTE: This is intended to build both inside and outside the Android
+// environment. When adding dependencies, ensure that they are in the
+// intersection of available libraries in all environments.
+
 cc_binary_host {
-    name: "mkenvimage_slim",
-    defaults: ["cuttlefish_host"],
+    name: "process_sandboxer",
+    defaults: ["cuttlefish_buildhost_only"],
     srcs: [
-        "mkenvimage_slim.cc",
+        "main.cpp",
+        "policies.cpp",
+        "policies/logcat_receiver.cpp",
     ],
+    shared_libs: ["sandboxed_api_sandbox2"],
     static_libs: [
-        "libbase",
-        "libcuttlefish_fs",
-        "libcuttlefish_host_config",
-        "libcuttlefish_utils",
-        "libgflags",
-        "liblog",
-        "libz",
+        "libabsl_host",
+        "libcap",
     ],
     target: {
         darwin: {
-            enabled: true,
+            enabled: false,
+        },
+        windows: {
+            enabled: false,
         },
     },
 }

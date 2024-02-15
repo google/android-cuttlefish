@@ -29,13 +29,4 @@ cc_binary_host {
     static_libs: [
         "libcuttlefish_host_config",
     ],
-    target: {
-        host_linux: {
-            shared_libs: ["sandboxed_api_sandbox2"],
-            static_libs: [
-                "libabsl_host",
-                "libcap",
-            ],
-        },
-    },
 }

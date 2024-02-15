@@ -50,13 +50,6 @@ cc_defaults {
                 "libz",
             ],
         },
-        host_linux: {
-            static_libs: [
-                "libabsl_host",
-                "libcap",
-                "sandboxed_api_sandbox2"
-            ],
-        }
     },
     static_libs: [
         "libbuildversion",
