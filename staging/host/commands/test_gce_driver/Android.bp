@@ -48,13 +48,6 @@ cc_binary {
                 "libprotobuf-cpp-full",
             ],
         },
-        host_linux: {
-            shared_libs: ["sandboxed_api_sandbox2"],
-            static_libs: [
-                "libabsl_host",
-                "libcap",
-            ],
-        },
         android: {
             shared_libs: [
                 "libbase",
