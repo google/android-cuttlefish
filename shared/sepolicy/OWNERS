@@ -1,12 +1,3 @@
 set noparent
-
-include platform/system/sepolicy:/OWNERS
-
-# Cuttlefish Core TLs
-adelva@google.com
-ellisr@google.com
-jemoreira@google.com
-natsu@google.com
-rammuthiah@google.com
-schuffelen@google.com
-
+file:platform/system/sepolicy:/OWNERS
+file:device/google/cuttlefish:/OWNERS_techleads
