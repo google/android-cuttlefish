@@ -65,14 +65,6 @@ cc_library {
                 "vsock_connection.cpp",
             ]
         },
-        host_linux: {
-            shared_libs: ["sandboxed_api_sandbox2"],
-            static_libs: [
-                "libabsl_host",
-                "libcap",
-                "libprotobuf-cpp-full",
-            ],
-        },
     },
     whole_static_libs: ["libcuttlefish_utils_result"],
     defaults: ["cuttlefish_host"],
@@ -103,16 +95,6 @@ cc_test_host {
         "liblog",
         "libxml2",
     ],
-    target: {
-        host_linux: {
-            shared_libs: ["sandboxed_api_sandbox2"],
-            static_libs: [
-                "libabsl_host",
-                "libcap",
-                "libprotobuf-cpp-full",
-            ],
-        },
-    },
     test_options: {
         unit_test: true,
     },
