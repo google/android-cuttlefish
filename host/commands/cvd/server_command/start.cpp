@@ -57,7 +57,7 @@ std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
   std::string config_file;
   std::vector<Flag> config_flags = {
       GflagsCompatFlag("config_file", config_file)};
-  auto result = ParseFlags(config_flags, args);
+  auto result = ConsumeFlags(config_flags, args);
   if (!result.ok() || initial_size == args.size()) {
     return std::nullopt;
   }
@@ -338,7 +338,7 @@ CvdStartCommandHandler::UpdateInstanceArgsAndEnvs(
       GflagsCompatFlag("num_instances", old_num_instances),
       GflagsCompatFlag("base_instance_num", old_base_instance_num)};
   // discard old ones
-  CF_EXPECT(ParseFlags(instance_id_flags, new_args));
+  CF_EXPECT(ConsumeFlags(instance_id_flags, new_args));
 
   auto check_flag = [artifacts_path, start_bin,
                      this](const std::string& flag_name) -> Result<void> {
@@ -543,7 +543,7 @@ static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
                 "\"--daemon=true\"",
                 match.key, match.value, kPossibleCmds);
           });
-  CF_EXPECT(ParseFlags({flag}, args));
+  CF_EXPECT(ConsumeFlags({flag}, args));
   return {};
 }
 
