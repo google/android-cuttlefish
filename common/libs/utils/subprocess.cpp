@@ -44,10 +44,6 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#ifdef CUTTLEFISH_LINUX_HOST
-#include <sandboxed_api/sandbox2/executor.h>
-#include <sandboxed_api/sandbox2/sandbox2.h>
-#endif
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
@@ -143,22 +139,19 @@ SubprocessOptions SubprocessOptions::ExitWithParent(bool v) && {
   exit_with_parent_ = v;
   return std::move(*this);
 }
-#ifdef CUTTLEFISH_LINUX_HOST
-SubprocessOptions& SubprocessOptions::SandboxPolicy(
-    std::unique_ptr<sandbox2::Policy> policy) & {
-  sandbox_policy_ = std::move(policy);
+#endif
+
+SubprocessOptions& SubprocessOptions::SandboxArguments(
+    std::vector<std::string> args) & {
+  sandbox_arguments_ = std::move(args);
   return *this;
 }
-SubprocessOptions SubprocessOptions::SandboxPolicy(
-    std::unique_ptr<sandbox2::Policy> policy) && {
-  sandbox_policy_ = std::move(policy);
-  return std::move(*this);
+
+SubprocessOptions SubprocessOptions::SandboxArguments(
+    std::vector<std::string> args) && {
+  sandbox_arguments_ = std::move(args);
+  return *this;
 }
-std::unique_ptr<sandbox2::Policy> SubprocessOptions::MoveSandboxPolicy() {
-  return std::move(sandbox_policy_);
-}
-#endif
-#endif
 
 SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
   in_group_ = in_group;
@@ -414,11 +407,23 @@ Subprocess Command::Start(SubprocessOptions options) const {
     return Subprocess(-1, {});
   }
 
-#ifdef CUTTLEFISH_LINUX_HOST
-  if (options.SandboxPolicy()) {
-    return StartSandboxed(std::move(options));
+  std::string fds_arg;
+  if (!options.SandboxArguments().empty()) {
+    std::vector<int> fds;
+    for (const auto& redirect : redirects_) {
+      fds.emplace_back(static_cast<int>(redirect.first));
+    }
+    for (const auto& inherited_fd : inherited_fds_) {
+      fds.emplace_back(inherited_fd.second);
+    }
+    fds_arg = "--inherited_fds=" + fmt::format("{}", fmt::join(fds, ","));
+
+    auto forwarding_args = {fds_arg.c_str(), "--"};
+    cmd.insert(cmd.begin(), forwarding_args);
+    auto sbox_ptrs = ToCharPointers(options.SandboxArguments());
+    sbox_ptrs.pop_back();  // Final null pointer will end argv early
+    cmd.insert(cmd.begin(), sbox_ptrs.begin(), sbox_ptrs.end());
   }
-#endif
 
   pid_t pid = fork();
   if (!pid) {
@@ -490,48 +495,6 @@ Subprocess Command::Start(SubprocessOptions options) const {
   }
   return Subprocess(pid, subprocess_stopper_);
 }
-
-#ifdef CUTTLEFISH_LINUX_HOST
-Subprocess Command::StartSandboxed(SubprocessOptions options) const {
-  auto executable = executable_.value_or(command_[0]);
-  auto executor =
-      std::make_unique<sandbox2::Executor>(executable, command_, env_);
-  if (working_directory_->IsOpen()) {
-    auto cwd_res = working_directory_->ProcFdLinkTarget();
-    if (!cwd_res.ok()) {
-      LOG(ERROR) << cwd_res.error().FormatForEnv();
-      return Subprocess(-1, subprocess_stopper_);
-    }
-    executor->set_cwd(*cwd_res);
-  }
-  auto& ipc = *executor->ipc();
-  for (const auto& [channel, inner_fd] : redirects_) {
-    ipc.MapDupedFd(static_cast<int>(channel), inner_fd);
-  }
-  for (const auto& [unused_shared_fd, inner_fd] : inherited_fds_) {
-    ipc.MapDupedFd(inner_fd, inner_fd);
-  }
-  auto sandbox = std::make_unique<sandbox2::Sandbox2>(
-      std::move(executor), options.MoveSandboxPolicy());
-  bool success = sandbox->RunAsync();
-  if (options.Verbose()) {  // "more verbose", and LOG(DEBUG) > LOG(VERBOSE)
-    LOG(DEBUG) << "Started (pid: " << sandbox->pid() << "): " << executable;
-    for (int i = 1; i < command_.size(); i++) {
-      LOG(DEBUG) << command_[i];
-    }
-  } else {
-    LOG(VERBOSE) << "Started (pid: " << sandbox->pid() << "): " << executable;
-    for (int i = 1; i < command_.size(); i++) {
-      LOG(VERBOSE) << command_[i];
-    }
-  }
-  if (!success) {
-    auto result = sandbox->AwaitResult().ToString();
-    LOG(ERROR) << fmt::format("Failed to run '{}': '{}'", executable, result);
-  }
-  return Subprocess(sandbox->pid(), subprocess_stopper_, std::move(sandbox));
-}
-#endif
 
 std::string Command::AsBashScript(
     const std::string& redirected_stdio_path) const {
