@@ -32,15 +32,5 @@ cc_binary_host {
         "libjsoncpp",
         "liblog",
     ],
-    target: {
-        host_linux: {
-            shared_libs: ["sandboxed_api_sandbox2"],
-            static_libs: [
-                "libabsl_host",
-                "libcap",
-                "libprotobuf-cpp-full",
-            ],
-        },
-    },
     defaults: ["cuttlefish_host"],
 }

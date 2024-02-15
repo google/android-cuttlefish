@@ -44,14 +44,6 @@ cc_library {
                 "libjsoncpp",
             ],
         },
-        host_linux: {
-            shared_libs: ["sandboxed_api_sandbox2"],
-            static_libs: [
-                "libabsl_host",
-                "libcap",
-                "libprotobuf-cpp-full",
-            ],
-        },
         android: {
             shared_libs: [
                 "libbase",
@@ -90,14 +82,5 @@ cc_test_host {
        "libssl",
        "libz",
     ],
-    target: {
-        host_linux: {
-            shared_libs: ["sandboxed_api_sandbox2"],
-            static_libs: [
-                "libabsl_host",
-                "libprotobuf-cpp-full",
-            ],
-        },
-    },
     defaults: ["cuttlefish_host"],
 }

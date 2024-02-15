@@ -44,10 +44,8 @@ cc_binary_host {
         "libjsoncpp",
         "libssl",
         "libcuttlefish_fs",
-        "sandboxed_api_sandbox2",
     ],
     static_libs: [
-        "libabsl_host",
         "libcap",
         "libgflags",
         "libcuttlefish_utils",

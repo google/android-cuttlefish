@@ -19,15 +19,13 @@ package {
 
 cc_binary {
     name: "metrics_launcher",
-    srcs: [
-        "metrics_launcher.cpp",
-    ],
-        shared_libs: [
-        "libbase", ],
+    srcs: ["metrics_launcher.cpp"],
+    shared_libs: ["libbase"],
     static_libs: [
-        "libgflags",
-        "libcuttlefish_msg_queue",
         "libcuttlefish_metrics",
+        "libcuttlefish_msg_queue",
+        "libcuttlefish_utils",
+        "libgflags",
     ],
     defaults: ["cuttlefish_host"],
 }
