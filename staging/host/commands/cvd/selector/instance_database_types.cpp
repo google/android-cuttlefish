@@ -16,6 +16,10 @@
 
 #include "host/commands/cvd/selector/instance_database_types.h"
 
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+
 #include <android-base/parseint.h>
 #include <fmt/core.h>
 
@@ -57,7 +61,10 @@ Result<TimeStamp> DeserializeTimePoint(const Json::Value& group_json) {
 }
 
 std::string Format(const TimeStamp& time_point) {
-  return fmt::format("{:%b-%d-%Y %H:%M:%S}", time_point);
+  auto tc = CvdServerClock::to_time_t(time_point);
+  std::stringstream ss;
+  ss << std::put_time(std::localtime(&tc), "%F %T");
+  return ss.str();
 }
 
 }  // namespace selector
