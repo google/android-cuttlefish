@@ -27,11 +27,8 @@ cc_binary_host {
         "liblog",
         "libjsoncpp",
         "libcuttlefish_fs",
-        "sandboxed_api_sandbox2",
     ],
     static_libs: [
-        "libabsl_host",
-        "libcap",
         "libgflags",
         "libcuttlefish_utils",
         "libcuttlefish_host_config",
