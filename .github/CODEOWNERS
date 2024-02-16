@@ -1,0 +1,15 @@
+# refer to https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeo
+
+# overall code owners
+* @Databean @jemoreira @rmuthiah @jmacnak @adelva1984
+
+/.github/workflows/ @jemoreira @ser-io
+
+# docker TLs
+/docker/ @jemoreira @ikicha @0405ysj @Databean
+
+# host orchestration TLs
+/frontend/ @jemoreira @ser-io
+
+# WebUI Owners
+/frontend/src/operator/webui/ @jemoreira @ikicha 
