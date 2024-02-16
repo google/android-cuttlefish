@@ -325,7 +325,10 @@ PRODUCT_PACKAGES += \
     android.hardware.drm@latest-service.clearkey
 endif
 
+LOCAL_ENABLE_WIDEVINE ?= true
+ifeq ($(LOCAL_ENABLE_WIDEVINE),true)
 -include vendor/widevine/libwvdrmengine/apex/device/device.mk
+endif
 
 #
 # Confirmation UI HAL
