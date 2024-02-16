@@ -1,4 +1,4 @@
-# refer to https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeo
+# refer to https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
 
 # overall code owners
 * @Databean @jemoreira @rmuthiah @jmacnak @adelva1984
