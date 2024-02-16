@@ -134,6 +134,7 @@ cvd_host_tools = [
     "pica",
     "powerwash_cvd",
     "process_restarter",
+    "process_sandboxer",
     "record_cvd",
     "restart_cvd",
     "root-canal",
