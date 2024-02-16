@@ -32,7 +32,22 @@ java_test_host {
 java_test_host {
     name: "FastbootFlashingTest",
     srcs: [
+        "src/com/android/cuttlefish/tests/FactoryResetUtils.java",
         "src/com/android/cuttlefish/tests/FastbootFlashingTest.java",
+    ],
+    test_suites: [
+        "device-tests",
+    ],
+    libs: [
+        "tradefed",
+    ],
+}
+
+java_test_host {
+    name: "OemlockTest",
+    srcs: [
+        "src/com/android/cuttlefish/tests/FactoryResetUtils.java",
+        "src/com/android/cuttlefish/tests/OemlockTest.java",
     ],
     test_suites: [
         "device-tests",
