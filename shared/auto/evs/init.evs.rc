@@ -1,5 +1,7 @@
 on late-init
     start cardisplayproxyd
+
+on post-fs-data
     start vendor.evs-hal-cf
     start evs_manager_cf
 
