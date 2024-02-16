@@ -52,6 +52,7 @@ $(call inherit-product, device/google/cuttlefish/shared/wear/aosp_product.mk)
 #
 # All components inherited here go to vendor image
 #
+LOCAL_ENABLE_WIDEVINE := false
 $(call inherit-product, device/google/cuttlefish/shared/wear/aosp_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/wear/device_vendor.mk)
 
