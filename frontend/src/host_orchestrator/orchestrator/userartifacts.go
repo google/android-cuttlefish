@@ -47,7 +47,7 @@ type UserArtifactsManager interface {
 	NewDir() (*apiv1.UploadDirectory, error)
 	// List existing directories
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
-	// Upldate artifact with the passed chunk.
+	// Update artifact with the passed chunk.
 	UpdateArtifact(dir string, chunk UserArtifactChunk) error
 }
 
@@ -126,17 +126,19 @@ func (m *UserArtifactsManagerImpl) UpdateArtifact(dir string, chunk UserArtifact
 
 func writeChunk(dir string, chunk UserArtifactChunk) error {
 	filename := dir + "/" + chunk.Name
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0664)
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 	if _, err := f.Seek(int64(chunk.ChunkNumber-1)*chunk.ChunkSizeBytes, 0); err != nil {
 		return err
 	}
 	if _, err = io.Copy(f, chunk.File); err != nil {
 		return err
 	}
-	return nil
+	// Sets permission regardless of umask.
+	return os.Chmod(filename, 0664)
 }
 
 func Untar(dst string, src string) error {

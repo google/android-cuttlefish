@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import {DisplaysService} from '../displays.service';
 import {
+  asyncScheduler,
   BehaviorSubject,
   merge,
   fromEvent,
@@ -237,6 +238,10 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
 
     item.placed = true;
 
+    asyncScheduler.schedule(() => {
+      this.forceShowDevice(item.id);
+    }, 10000);
+
     return item;
   }
 
@@ -259,6 +264,13 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
             : updateItem.values;
 
           updateItem.overwrites.forEach(prop => {
+            // Ignore force show display message when display size is already set
+            if ((prop === 'display_width' || prop === 'display_height')
+               && item[prop] !== null && item[prop] !== this.freeScale
+               && updateItem.values[prop] === this.freeScale) {
+                 return;
+            }
+
             item[prop] = updateItem.values[prop]!;
           });
 

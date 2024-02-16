@@ -15,12 +15,15 @@
 package orchestrator
 
 import (
-	"errors"
-	"fmt"
+	"encoding/json"
+	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
@@ -46,6 +49,7 @@ type CreateCVDActionOpts struct {
 	CVDUser                  string
 	CVDStartTimeout          time.Duration
 	UserArtifactsDirResolver UserArtifactsDirResolver
+	BuildAPICredentials      string
 }
 
 type CreateCVDAction struct {
@@ -62,6 +66,9 @@ type CreateCVDAction struct {
 	userArtifactsDirResolver UserArtifactsDirResolver
 	artifactsMngr            *artifacts.Manager
 	startCVDHandler          *startCVDHandler
+	cvdUser                  string
+	cvdStartTimeout          time.Duration
+	buildAPICredentials      string
 
 	instanceCounter uint32
 }
@@ -79,6 +86,9 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		artifactsFetcher:         opts.ArtifactsFetcher,
 		cvdBundleFetcher:         opts.CVDBundleFetcher,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
+		cvdUser:                  opts.CVDUser,
+		cvdStartTimeout:          opts.CVDStartTimeout,
+		buildAPICredentials:      opts.BuildAPICredentials,
 
 		artifactsMngr: artifacts.NewManager(
 			opts.Paths.ArtifactsRootDir,
@@ -103,9 +113,6 @@ func (a *CreateCVDAction) Run() (apiv1.Operation, error) {
 	if err := createDir(a.paths.ArtifactsRootDir); err != nil {
 		return apiv1.Operation{}, err
 	}
-	if err := createRuntimesRootDir(a.paths.RuntimesRootDir); err != nil {
-		return apiv1.Operation{}, fmt.Errorf("failed creating cuttlefish runtime directory: %w", err)
-	}
 	if err := a.cvdDownloader.Download(a.cvdToolsVersion, a.paths.CVDBin(), a.paths.FetchCVDBin()); err != nil {
 		return apiv1.Operation{}, err
 	}
@@ -115,10 +122,54 @@ func (a *CreateCVDAction) Run() (apiv1.Operation, error) {
 }
 
 func (a *CreateCVDAction) launchCVD(op apiv1.Operation) {
-	result := a.launchCVDResult(op)
+	result := &OperationResult{}
+	if a.req.EnvConfig != nil {
+		result.Value, result.Error = a.launchWithCanonicalConfig(op)
+	} else {
+		result = a.launchCVDResult(op)
+	}
 	if err := a.om.Complete(op.Name, result); err != nil {
 		log.Printf("error completing launch cvd operation %q: %v\n", op.Name, err)
 	}
+}
+
+func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.CreateCVDResponse, error) {
+	data, err := json.MarshalIndent(a.req.EnvConfig, "", " ")
+	if err != nil {
+		return nil, err
+	}
+	configFile, err := createTempFile("cvdload*.json", data, 0640)
+	if err != nil {
+		return nil, err
+	}
+	args := []string{"load", configFile.Name()}
+	if a.buildAPICredentials != "" {
+		filename, err := createCredsFile(a.execContext)
+		if err != nil {
+			return nil, err
+		}
+		if err := writeCredsFile(a.execContext, filename, []byte(a.buildAPICredentials)); err != nil {
+			return nil, err
+		}
+		defer func() {
+			if err := removeCredsFile(a.execContext, filename); err != nil {
+				log.Println("failed to remove credentials file: ", err)
+			}
+		}()
+		args = append(args, "--credential_source="+filename)
+	}
+	opts := cvd.CommandOpts{
+		Timeout: a.cvdStartTimeout,
+	}
+	cmd := cvd.NewCommand(a.execContext, a.paths.CVDBin(), args, opts)
+	if err := cmd.Run(); err != nil {
+		return nil, operator.NewInternalError(ErrMsgLaunchCVDFailed, err)
+	}
+	group, err := cvdFleetFirstGroup(a.execContext, a.paths.CVDBin())
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.CreateCVDResponse{CVDs: group.toAPIObject()}, nil
 }
 
 func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
@@ -137,25 +188,14 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 		}
 	}
 	if err != nil {
-		var details string
-		var execError *cvd.CommandExecErr
-		var timeoutErr *cvd.CommandTimeoutErr
-		if errors.As(err, &execError) {
-			details = execError.Error()
-			// Overwrite err with the unwrapped error as execution errors were already logged.
-			err = execError.Unwrap()
-		} else if errors.As(err, &timeoutErr) {
-			details = timeoutErr.Error()
-		}
-		log.Printf("failed to launch cvd with error: %v", err)
-		return &OperationResult{Error: operator.NewInternalErrorD(ErrMsgLaunchCVDFailed, details, err)}
+		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
-	fleet, err := cvdFleet(a.execContext, a.paths.CVDBin())
+	group, err := cvdFleetFirstGroup(a.execContext, a.paths.CVDBin())
 	if err != nil {
 		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
 	relevant := []*cvdInstance{}
-	for _, item := range fleet {
+	for _, item := range group.Instances {
 		n, err := strconv.Atoi(item.InstanceName)
 		if err != nil {
 			return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
@@ -164,9 +204,8 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 			relevant = append(relevant, item)
 		}
 	}
-	res := &apiv1.CreateCVDResponse{
-		CVDs: fleetToCVDs(relevant),
-	}
+	group.Instances = relevant
+	res := &apiv1.CreateCVDResponse{CVDs: group.toAPIObject()}
 	return &OperationResult{Value: res}
 }
 
@@ -242,7 +281,6 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 	startParams := startCVDParams{
 		InstanceNumbers:  a.newInstanceNumbers(instancesCount),
 		MainArtifactsDir: mainBuildDir,
-		RuntimeDir:       a.paths.RuntimesRootDir,
 		KernelDir:        kernelBuildDir,
 		BootloaderDir:    bootloaderBuildDir,
 	}
@@ -251,7 +289,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
 	if contains(startParams.InstanceNumbers, 1) {
-		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, mainBuildDir, a.paths.RuntimesRootDir)
+		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, mainBuildDir)
 	}
 	return startParams.InstanceNumbers, nil
 }
@@ -262,17 +300,23 @@ func (a *CreateCVDAction) launchFromUserBuild(
 	if err := untarCVDHostPackage(artifactsDir); err != nil {
 		return nil, err
 	}
+	// assemble_cvd needs writer permission over vbmeta images
+	// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/host/commands/assemble_cvd/disk_flags.cc;l=639;drc=b0ec6e4df1126fd4045ce32bbfcedb79f25bd5bc
+	for _, name := range []string{"vbmeta.img", "vbmeta_system.img"} {
+		if err := os.Chmod(filepath.Join(artifactsDir, name), 0664); err != nil {
+			return nil, err
+		}
+	}
 	startParams := startCVDParams{
 		InstanceNumbers:  a.newInstanceNumbers(instancesCount),
 		MainArtifactsDir: artifactsDir,
-		RuntimeDir:       a.paths.RuntimesRootDir,
 	}
 	if err := a.startCVDHandler.Start(startParams); err != nil {
 		return nil, err
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
 	if contains(startParams.InstanceNumbers, 1) {
-		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, artifactsDir, a.paths.RuntimesRootDir)
+		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, artifactsDir)
 	}
 	return startParams.InstanceNumbers, nil
 }
@@ -287,6 +331,9 @@ func (a *CreateCVDAction) newInstanceNumbers(n uint32) []uint32 {
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
+	if r.EnvConfig != nil {
+		return nil
+	}
 	if r.CVD == nil {
 		return EmptyFieldError("CVD")
 	}
@@ -304,12 +351,97 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	return nil
 }
 
-func ExtractCredentials(r *apiv1.CreateCVDRequest) string {
-	if r == nil ||
-		r.CVD == nil ||
-		r.CVD.BuildSource == nil ||
-		r.CVD.BuildSource.AndroidCIBuildSource == nil {
-		return ""
+// See https://pkg.go.dev/io/ioutil@go1.13.15#TempFile
+func createTempFile(pattern string, data []byte, mode os.FileMode) (*os.File, error) {
+	file, err := ioutil.TempFile("", pattern)
+	if err != nil {
+		return nil, err
 	}
-	return r.CVD.BuildSource.AndroidCIBuildSource.Credentials
+	if err := file.Chmod(mode); err != nil {
+		return nil, err
+	}
+	_, err = file.Write(data)
+	if closeErr := file.Close(); closeErr != nil && err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
+}
+
+// Create the credential file so it's owned by the configured `cvd user`, e.g: `_cvd-executor`.
+func createCredsFile(ctx cvd.CVDExecContext) (string, error) {
+	name, err := tempFilename("cvdload*.creds")
+	if err != nil {
+		return "", err
+	}
+	if err := cvd.Exec(ctx, "touch", name); err != nil {
+		return "", err
+	}
+	if err := cvd.Exec(ctx, "chmod", "0600", name); err != nil {
+		return "", err
+	}
+	return name, nil
+}
+
+// Write into credential files by granting temporary write permission to `cvdnetwork` group.
+func writeCredsFile(ctx cvd.CVDExecContext, name string, data []byte) error {
+	info, err := os.Stat(name)
+	if err != nil {
+		return err
+	}
+	infoSys := info.Sys()
+	var gid uint32
+	if stat, ok := infoSys.(*syscall.Stat_t); ok {
+		gid = stat.Gid
+	} else {
+		panic("unexpected stat syscall type")
+	}
+	defer func() {
+		// Reverts the write permission.
+		if err := cvd.Exec(ctx, "chgrp", strconv.Itoa(int(gid)), name); err != nil {
+			log.Println(err)
+		}
+		if err := cvd.Exec(ctx, "chmod", "0600", name); err != nil {
+			log.Println(err)
+		}
+	}()
+	// Grants temporal write permission to `cvdnetwork`, so this process can write the file.
+	if err := cvd.Exec(ctx, "chgrp", "cvdnetwork", name); err != nil {
+		return err
+	}
+	if err := cvd.Exec(ctx, "chmod", "0620", name); err != nil {
+		return err
+	}
+	file, err := os.OpenFile(name, os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(data)
+	if closeErr := file.Close(); closeErr != nil && err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func removeCredsFile(ctx cvd.CVDExecContext, name string) error {
+	return cvd.Exec(ctx, "rm", name)
+}
+
+// Returns a random name for a file in the /tmp directory given a pattern.
+// See https://pkg.go.dev/io/ioutil@go1.13.15#TempFile
+func tempFilename(pattern string) (string, error) {
+	file, err := ioutil.TempFile("", pattern)
+	if err != nil {
+		return "", err
+	}
+	name := file.Name()
+	if os.Remove(name); err != nil {
+		return "", err
+	}
+	return name, nil
 }

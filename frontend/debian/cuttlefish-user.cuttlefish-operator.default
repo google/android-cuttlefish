@@ -1,12 +1,16 @@
 # defaults for cuttlefish-operator
 
+# The network address to listen on for both HTTP and HTTPS.
+# Defaults to all ip addresses.
+operator_listen_address=0.0.0.0
+#
 # The port on which the operator server should listen on for plain HTTP.
 # Defaults to 1080.
 # operator_http_port=
 #
 # The port on which the operator server should listen on for HTTPS.
-# Defaults to 1443.
-# operator_https_port=
+# Serve over http only when not provided.
+operator_https_port=1443
 #
 # The directory where the TLS certificate needed to establish the HTTPS
 # communication lives.

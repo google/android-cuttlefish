@@ -14,20 +14,44 @@
 
 package v1
 
+// Control messages
+
+type ControlMsgHeader struct {
+	Type string `json:"message_type"`
+}
+
+type PreRegisterMsg struct {
+	// Type must be set to "pre-register"
+	ControlMsgHeader
+	GroupName string `json:"group_name"`
+	Owner     string `json:"owner"`
+	Devices   []struct {
+		Id   string `json:"id"`
+		Name string `json:"name"`
+	} `json:"devices"`
+}
+
+type RegistrationStatusReport struct {
+	Id     string `json:"id"`
+	Status string `json:"status"`
+	Msg    string `json:"message"`
+}
+
+type PreRegistrationResponse []RegistrationStatusReport
+
+// Device and client messages
+
 type RegisterMsg struct {
-	Type     string      `json:"message_type"`
 	DeviceId string      `json:"device_id"`
 	Port     int         `json:"device_port"`
 	Info     interface{} `json:"device_info"`
 }
 
 type ConnectMsg struct {
-	Type     string `json:"message_type"`
 	DeviceId string `json:"device_id"`
 }
 
 type ForwardMsg struct {
-	Type    string      `json:"message_type"`
 	Payload interface{} `json:"payload"`
 	// This is used by the device message and ignored by the client
 	ClientId int `json:"client_id"`
@@ -86,9 +110,18 @@ type AndroidCIBundle struct {
 	Type ArtifactsBundleType `json:"type"`
 }
 
+// Use `X-Cutf-Host-Orchestrator-BuildAPI-Creds` http header to pass the Build API credentials.
 type CreateCVDRequest struct {
-	// REQUIRED.
+	// Environment canonical configuration.
+	// Structure: https://android.googlesource.com/device/google/cuttlefish/+/8bbd3b9cd815f756f332791d45c4f492b663e493/host/commands/cvd/parser/README.md
+	// Example: https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/host/cvd_test_configs/main_phone-main_watch.json;drc=b2e8f4f014abb7f9cb56c0ae199334aacb04542d
+	// NOTE: Using this as a black box for now as its content is unstable. Use the test configs pointed
+	// above as reference to build your config object.
+	EnvConfig map[string]interface{} `json:"env_config"`
+
+	// [DEPRECATED]. Use `EnvConfig` field.
 	CVD *CVD `json:"cvd"`
+	// [DEPRECATED]. Use `EnvConfig` field.
 	// Use to create multiple homogeneous instances.
 	AdditionalInstancesNum uint32 `json:"additional_instances_num,omitempty"`
 }
@@ -117,8 +150,6 @@ type AndroidCIBuildSource struct {
 	BootloaderBuild *AndroidCIBuild `json:"bootloader_build,omitempty"`
 	// Uses this specific system image build target if set.
 	SystemImageBuild *AndroidCIBuild `json:"system_image_build,omitempty"`
-	// Credentials to use when connecting to the build API
-	Credentials string `json:"credentials,omitempty"`
 }
 
 // Represents a user build.
@@ -144,7 +175,9 @@ type Operation struct {
 }
 
 type CVD struct {
-	// [Output Only]
+	// [Output Only] The group name the instance belongs to.
+	Group string `json:"group"`
+	// [Output Only] Identifier within a group.
 	Name string `json:"name"`
 	// [REQUIRED]
 	BuildSource *BuildSource `json:"build_source"`
@@ -152,10 +185,22 @@ type CVD struct {
 	Status string `json:"status"`
 	// [Output Only]
 	Displays []string `json:"displays"`
+	// [Output Only]
+	WebRTCDeviceID string `json:"webrtc_device_id"`
+}
+
+// Identifier within the whole fleet. Format: "{group}/{name}".
+func (c *CVD) ID() string { return c.Group + "/" + c.Name }
+
+type DeviceDescriptor struct {
+	DeviceId string `json:"device_id"`
+	GroupId  string `json:"group_id"`
+	Owner    string `json:"owner,omitempty"`
+	Name     string `json:"name,omitempty"`
 }
 
 type DeviceInfoReply struct {
-	DeviceId         string      `json:"device_id"`
+	DeviceDescriptor
 	RegistrationInfo interface{} `json:"registration_info"`
 }
 
@@ -171,3 +216,5 @@ type UploadDirectory struct {
 type ListUploadDirectoriesResponse struct {
 	Items []*UploadDirectory `json:"items"`
 }
+
+type StopCVDResponse struct{}

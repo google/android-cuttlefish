@@ -12,51 +12,53 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package exists for running host orchestrator(HO) server.
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/user"
 	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
-	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
-	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
+	"github.com/gorilla/mux"
 
 	"github.com/google/uuid"
 )
 
 const (
-	DefaultSocketPath     = "/run/cuttlefish/operator"
-	DefaultHttpPort       = "1080"
-	DefaultTLSCertDir     = "/etc/cuttlefish-common/host_orchestrator/cert"
-	DefaultStaticFilesDir = "static"    // relative path
-	DefaultInterceptDir   = "intercept" // relative path
-	DefaultWebUIUrl       = ""
-
-	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
-	defaultCVDBinAndroidBuildID     = "10712190"
-	defaultCVDBinAndroidBuildTarget = "aosp_cf_x86_64_phone-trunk_staging-userdebug"
-	defaultCVDArtifactsDir          = "/var/lib/cuttlefish-common"
+	defaultTLSCertDir      = "/etc/cuttlefish-common/host_orchestrator/cert"
+	defaultAndroidBuildURL = "https://androidbuildinternal.googleapis.com"
+	DefaultListenAddress   = "127.0.0.1"
 )
 
-func startHttpServer(port string) error {
-	log.Println(fmt.Sprint("Host Orchestrator is listening at http://localhost:", port))
-
-	// handler is nil, so DefaultServeMux is used.
-	return http.ListenAndServe(fmt.Sprint(":", port), nil)
+func defaultCVDArtifactsDir() string {
+	u, err := user.Current()
+	if err != nil {
+		log.Fatalf("Unable to get current user uid: %v", err)
+	}
+	return fmt.Sprintf("/tmp/cvd/%s/artifacts", u.Uid)
 }
 
-func startHttpsServer(port string, certPath string, keyPath string) error {
-	log.Println(fmt.Sprint("Host Orchestrator is listening at https://localhost:", port))
-	return http.ListenAndServeTLS(fmt.Sprint(":", port),
+func startHttpServer(addr string, port int) error {
+	log.Printf("Host Orchestrator is listening at http://%s:%d", addr, port)
+
+	// handler is nil, so DefaultServeMux is used.
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", addr, port), nil)
+}
+
+func startHttpsServer(addr string, port int, certPath string, keyPath string) error {
+	log.Printf("Host Orchestrator is listening at https://%s:%d", addr, port)
+	return http.ListenAndServeTLS(fmt.Sprintf("%s:%d", addr, port),
 		certPath,
 		keyPath,
 		// handler is nil, so DefaultServeMux is used.
@@ -73,15 +75,6 @@ func fromEnvOrDefault(key string, def string) string {
 	return def
 }
 
-// Whether a device file request should be intercepted and served from the signaling server instead
-func maybeIntercept(path string) *string {
-	if path == "/js/server_connector.js" {
-		alt := fmt.Sprintf("%s%s", DefaultInterceptDir, path)
-		return &alt
-	}
-	return nil
-}
-
 func start(starters []func() error) {
 	wg := new(sync.WaitGroup)
 	wg.Add(len(starters))
@@ -96,86 +89,87 @@ func start(starters []func() error) {
 	wg.Wait()
 }
 
-func main() {
-	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", DefaultSocketPath)
-	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", DefaultHttpPort)
-	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", "")
-	tlsCertDir := fromEnvOrDefault("ORCHESTRATOR_TLS_CERT_DIR", DefaultTLSCertDir)
-	webUIUrlStr := fromEnvOrDefault("ORCHESTRATOR_WEBUI_URL", DefaultWebUIUrl)
-	certPath := filepath.Join(tlsCertDir, "cert.pem")
-	keyPath := filepath.Join(tlsCertDir, "key.pem")
-	cvdUser := fromEnvOrDefault("ORCHESTRATOR_CVD_USER", "")
-
-	pool := operator.NewDevicePool()
-	polledSet := operator.NewPolledSet()
-	config := apiv1.InfraConfig{
-		Type: "config",
-		IceServers: []apiv1.IceServer{
-			{URLs: []string{"stun:stun.l.google.com:19302"}},
-		},
+func newOperatorProxy(port int) *httputil.ReverseProxy {
+	if port <= 0 {
+		log.Fatal("The host orchestrator requires access to the operator")
 	}
-	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
-	cvdBinAndroidBuildID := fromEnvOrDefault("ORCHESTRATOR_CVDBIN_ANDROID_BUILD_ID", defaultCVDBinAndroidBuildID)
-	cvdBinAndroidBuildTarget := fromEnvOrDefault("ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET", defaultCVDBinAndroidBuildTarget)
-	imRootDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
+	operatorURL, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", port))
+	if err != nil {
+		log.Fatalf("Invalid operator port (%d): %v", port, err)
+	}
+	return httputil.NewSingleHostReverseProxy(operatorURL)
+}
+
+func main() {
+	httpPort := flag.Int("http_port", 2080, "Port to listen on for HTTP requests.")
+	httpsPort := flag.Int("https_port", -1, "Port to listen on for HTTPS requests.")
+	tlsCertDir := flag.String("tls_cert_dir", defaultTLSCertDir, "Directory with the TLS certificate.")
+	cvdUser := flag.String("cvd_user", "", "User to execute cvd as.")
+	operatorPort := flag.Int("operator_http_port", 1080, "Port where the operator is listening.")
+	abURL := flag.String("android_build_url", defaultAndroidBuildURL, "URL to an Android Build API.")
+	cvdBinAndroidBuildID := flag.String("cvd_build_id", defaultCVDBinAndroidBuildID, "Build ID to fetch the cvd binary from.")
+	cvdBinAndroidBuildTarget := flag.String("cvd_build_target", defaultCVDBinAndroidBuildTarget, "Build target to fetch the cvd binary from.")
+	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir(), "Directory where cvd will download android build artifacts to.")
+	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
+
+	flag.Parse()
+
+	certPath := filepath.Join(*tlsCertDir, "cert.pem")
+	keyPath := filepath.Join(*tlsCertDir, "key.pem")
+
+	if err := os.MkdirAll(*imRootDir, 0774); err != nil {
+		log.Fatalf("Unable to create artifacts directory: %v", err)
+	}
+
 	imPaths := orchestrator.IMPaths{
-		RootDir:          imRootDir,
-		CVDToolsDir:      imRootDir,
-		ArtifactsRootDir: filepath.Join(imRootDir, "artifacts"),
-		RuntimesRootDir:  filepath.Join(imRootDir, "runtimes"),
+		RootDir:          *imRootDir,
+		CVDToolsDir:      *imRootDir,
+		ArtifactsRootDir: filepath.Join(*imRootDir, "artifacts"),
 	}
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
-		RootDir:     filepath.Join(imRootDir, "user_artifacs"),
+		RootDir:     filepath.Join(*imRootDir, "user_artifacts"),
 		NameFactory: func() string { return uuid.New().String() },
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	cvdToolsVersion := orchestrator.AndroidBuild{
-		ID:     cvdBinAndroidBuildID,
-		Target: cvdBinAndroidBuildTarget,
+		ID:     *cvdBinAndroidBuildID,
+		Target: *cvdBinAndroidBuildTarget,
 	}
 	debugStaticVars := debug.StaticVariables{
 		InitialCVDBinAndroidBuildID:     cvdToolsVersion.ID,
 		InitialCVDBinAndroidBuildTarget: cvdToolsVersion.Target,
 	}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
-	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
-	go func() {
-		err := deviceServerLoop()
-		log.Fatal("Error with device endpoint: ", err)
-	}()
-	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
 	imController := orchestrator.Controller{
 		Config: orchestrator.Config{
 			Paths:                  imPaths,
 			CVDToolsVersion:        cvdToolsVersion,
-			AndroidBuildServiceURL: abURL,
-			CVDUser:                cvdUser,
+			AndroidBuildServiceURL: *abURL,
+			CVDUser:                *cvdUser,
 		},
 		OperationManager:      om,
 		WaitOperationDuration: 2 * time.Minute,
 		UserArtifactsManager:  uam,
 		DebugVariablesManager: debugVarsManager,
 	}
+	proxy := newOperatorProxy(*operatorPort)
+
+	r := mux.NewRouter()
 	imController.AddRoutes(r)
-	// The host orchestrator currently has no use for this, since clients won't connect
-	// to it directly, however they probably will once the multi-device feature matures.
-	if len(webUIUrlStr) > 0 {
-		webUIUrl, _ := url.Parse(webUIUrlStr)
-		proxy := httputil.NewSingleHostReverseProxy(webUIUrl)
-		r.PathPrefix("/").Handler(proxy)
-	} else {
-		fs := http.FileServer(http.Dir(DefaultStaticFilesDir))
-		r.PathPrefix("/").Handler(fs)
-	}
+	// Defer to the operator for every route not covered by the orchestrator. That
+	// includes web UI and other static files.
+	r.PathPrefix("/").Handler(proxy)
+
 	http.Handle("/", r)
 
 	starters := []func() error{
-		func() error { return operator.SetupDeviceEndpoint(pool, config, socketPath)() },
-		func() error { return startHttpServer(httpPort) },
+		func() error { return startHttpServer(*address, *httpPort) },
 	}
-	if httpsPort != "" {
-		starters = append(starters, func() error { return startHttpsServer(httpsPort, certPath, keyPath) })
+	if *httpsPort > 0 {
+		starters = append(starters, func() error {
+			return startHttpsServer(*address, *httpsPort, certPath, keyPath)
+		})
 	}
 	start(starters)
 }

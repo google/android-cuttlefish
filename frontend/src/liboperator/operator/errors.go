@@ -22,7 +22,6 @@ import (
 
 type AppError struct {
 	Msg        string
-	Details    string
 	StatusCode int
 	Err        error
 }
@@ -39,9 +38,7 @@ func (e *AppError) Unwrap() error {
 }
 
 func (e *AppError) JSONResponse() apiv1.ErrorMsg {
-	// Include only the high level error message in the error response, the
-	// lower level errors are just for logging
-	return apiv1.ErrorMsg{Error: e.Msg, Details: e.Details}
+	return apiv1.ErrorMsg{Error: e.Msg, Details: e.Error()}
 }
 
 func NewBadRequestError(msg string, e error) error {
@@ -50,10 +47,6 @@ func NewBadRequestError(msg string, e error) error {
 
 func NewInternalError(msg string, e error) error {
 	return &AppError{Msg: msg, StatusCode: http.StatusInternalServerError, Err: e}
-}
-
-func NewInternalErrorD(msg string, details string, e error) error {
-	return &AppError{Msg: msg, Details: details, StatusCode: http.StatusInternalServerError, Err: e}
 }
 
 func NewNotFoundError(msg string, e error) error {

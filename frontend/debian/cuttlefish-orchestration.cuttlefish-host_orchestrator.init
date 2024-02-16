@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 ### BEGIN INIT INFO
 # Provides: cuttlefish-host_orchestrator
@@ -39,9 +39,9 @@ orchestrator_tls_cert_dir=${orchestrator_tls_cert_dir:-"/etc/cuttlefish-common/h
 orchestrator_cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir:-"/var/lib/cuttlefish-common"}
 
 RUN_DIR="/run/cuttlefish"
-ASSET_DIR="/usr/share/cuttlefish-common/host_orchestrator"
-DAEMON="/usr/lib/cuttlefish-common/bin/host_orchestrator"
-PIDFILE="${RUN_DIR}"/host_orchestrator.pid
+ORCHESTRATOR_BIN="/usr/lib/cuttlefish-common/bin/host_orchestrator"
+ORCHESTRATOR_PIDFILE="${RUN_DIR}"/host_orchestrator.pid
+ASSET_DIR="/usr/share/cuttlefish-common/operator"
 
 gen_cert() {
   CERT_FILE="${orchestrator_tls_cert_dir}/cert.pem"
@@ -68,44 +68,69 @@ set_config_expr() {
   echo "\${$2+"export $1=\$$2"}"
 }
 
-start() {
-  gen_cert
+prepare_run_dir() {
   mkdir -p "${RUN_DIR}"
   chown _cutf-operator:cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
+}
 
+start_orchestrator() {
   mkdir -p  "${orchestrator_cvd_artifacts_dir}"
   chown _cutf-operator:cvdnetwork "${orchestrator_cvd_artifacts_dir}"
 
-  eval $(set_config_expr ORCHESTRATOR_HTTP_PORT orchestrator_http_port)
-  eval $(set_config_expr ORCHESTRATOR_HTTPS_PORT orchestrator_https_port)
-  eval $(set_config_expr ORCHESTRATOR_TLS_CERT_DIR orchestrator_tls_cert_dir)
-  eval $(set_config_expr ORCHESTRATOR_ANDROID_BUILD_URL orchestrator_android_build_url)
-  eval $(set_config_expr ORCHESTRATOR_CVDBIN_ANDROID_BUILD_ID orchestrator_cvdbin_android_build_id)
-  eval $(set_config_expr ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET orchestrator_cvdbin_android_build_target)
-  eval $(set_config_expr ORCHESTRATOR_CVD_ARTIFACTS_DIR orchestrator_cvd_artifacts_dir)
-  eval $(set_config_expr ORCHESTRATOR_WEBUI_URL orchestrator_webui_url)
+  args=()
 
-  ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
-  ORCHESTRATOR_CVD_USER="_cvd-executor" \
+  if [[ -n "${orchestrator_http_port}" ]]; then
+    args+=("--http_port=${orchestrator_http_port}")
+  fi
+  if [[ -n "${orchestrator_https_port}" ]]; then
+    args+=("--https_port=${orchestrator_https_port}")
+  fi
+  if [[ -n "${orchestrator_tls_cert_dir}" ]]; then
+    args+=("--tls_cert_dir=${orchestrator_tls_cert_dir}")
+  fi
+  if [[ -n "${orchestrator_android_build_url}" ]]; then
+    args+=("--android_build_url=${orchestrator_android_build_url}")
+  fi
+  if [[ -n "${orchestrator_cvdbin_android_build_id}" ]]; then
+    args+=("--cvd_build_id=${orchestrator_cvdbin_android_build_id}")
+  fi
+  if [[ -n "${orchestrator_cvdbin_android_build_target}" ]]; then
+    args+=("--cvd_build_target=${orchestrator_cvdbin_android_build_target}")
+  fi
+  if [[ -n "${orchestrator_cvd_artifacts_dir}" ]]; then
+    args+=("--cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir}")
+  fi
+  if [[ -n "${operator_http_port}" ]]; then
+    args+=("--operator_http_port=${operator_http_port}")
+  fi
+  if [[ -n "${orchestrator_listen_address}" ]]; then
+    args+=("--listen_addr=${orchestrator_listen_address}")
+  fi
+  args+=("--cvd_user=_cvd-executor")
+
   start-stop-daemon --start \
-    --pidfile "${PIDFILE}" \
+    --pidfile "${ORCHESTRATOR_PIDFILE}" \
     --chuid _cutf-operator:cvdnetwork \
     --chdir "${ASSET_DIR}" \
     --background --no-close \
     --make-pidfile \
-    --exec "${DAEMON}"
+    --exec "${ORCHESTRATOR_BIN}" -- "${args[@]}"
+}
+
+start() {
+  gen_cert
+
+  prepare_run_dir
+
+  start_orchestrator
 }
 
 stop() {
   start-stop-daemon --stop \
-    --pidfile "${PIDFILE}" \
+    --pidfile "${ORCHESTRATOR_PIDFILE}" \
     --remove-pidfile \
-    --exec "${DAEMON}"
-  # The presence of the socket will cause devices to try to connect to it
-  # instead of starting their own signaling servers, so it needs to be removed
-  # once the service isn't running.
-  unlink "${RUN_DIR}"/operator
+    --exec "${ORCHESTRATOR_BIN}"
 }
 
 status() {
@@ -114,9 +139,9 @@ status() {
   #   1 if daemon is dead and pid file exists
   #   3 if daemon is not running
   #   4 if daemon status is unknown
-  start-stop-daemon --start --quiet --pidfile "${PIDFILE}" --exec ${DAEMON} --test > /dev/null
+  start-stop-daemon --start --quiet --pidfile "${ORCHESTRATOR_PIDFILE}" --exec ${ORCHESTRATOR_BIN} --test > /dev/null
   case "${?}" in
-    0) [ -e "${PIDFILE}" ] && return 1 ; return 3 ;;
+    0) [ -e "${ORCHESTRATOR_PIDFILE}" ] && return 1 ; return 3 ;;
     1) return 0 ;;
     *) return 4 ;;
   esac

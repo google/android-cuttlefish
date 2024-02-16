@@ -15,6 +15,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -28,25 +29,26 @@ import (
 )
 
 const (
-	DefaultSocketPath     = "/run/cuttlefish/operator"
-	DefaultHttpPort       = "1080"
-	DefaultHttpsPort      = "1443"
-	DefaultTLSCertDir     = "/etc/cuttlefish-common/operator/cert"
-	DefaultStaticFilesDir = "static"    // relative path
-	DefaultInterceptDir   = "intercept" // relative path
-	DefaultWebUIUrl       = ""
+	DefaultSocketPath        = "/run/cuttlefish/operator"
+	DefaultControlSocketPath = "/run/cuttlefish/operator_control"
+	DefaultHttpPort          = 1080
+	DefaultTLSCertDir        = "/etc/cuttlefish-common/operator/cert"
+	DefaultStaticFilesDir    = "static"    // relative path
+	DefaultInterceptDir      = "intercept" // relative path
+	DefaultWebUIUrl          = ""
+	DefaultListenAddress     = "127.0.0.1"
 )
 
-func startHttpServer(port string) error {
+func startHttpServer(address string, port int) error {
 	log.Println(fmt.Sprint("Operator is listening at http://localhost:", port))
 
 	// handler is nil, so DefaultServeMux is used.
-	return http.ListenAndServe(fmt.Sprint(":", port), nil)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
 }
 
-func startHttpsServer(port string, certPath string, keyPath string) error {
+func startHttpsServer(address string, port int, certPath string, keyPath string) error {
 	log.Println(fmt.Sprint("Operator is listening at https://localhost:", port))
-	return http.ListenAndServeTLS(fmt.Sprint(":", port),
+	return http.ListenAndServeTLS(fmt.Sprintf("%s:%d", address, port),
 		certPath,
 		keyPath,
 		// handler is nil, so DefaultServeMux is used.
@@ -88,14 +90,18 @@ func start(starters []func() error) {
 }
 
 func main() {
-	socketPath := fromEnvOrDefault("OPERATOR_SOCKET_PATH", DefaultSocketPath)
-	httpPort := fromEnvOrDefault("OPERATOR_HTTP_PORT", DefaultHttpPort)
-	httpsPort := fromEnvOrDefault("OPERATOR_HTTPS_PORT", DefaultHttpsPort)
-	tlsCertDir := fromEnvOrDefault("OPERATOR_TLS_CERT_DIR", DefaultTLSCertDir)
-	webUiUrlStr := fromEnvOrDefault("OPERATOR_WEBUI_URL", DefaultWebUIUrl)
+	socketPath := flag.String("socket_path", DefaultSocketPath, "Path to the device endpoint unix socket.")
+	controlSocketPath := flag.String("control_socket_path", DefaultControlSocketPath, "Path to the control endpoint unix socket.")
+	httpPort := flag.Int("http_port", DefaultHttpPort, "Port to serve HTTP requests on.")
+	httpsPort := flag.Int("https_port", -1, "Port to serve HTTPS requests on.")
+	tlsCertDir := flag.String("tls_cert_dir", DefaultTLSCertDir, "Directory where the TLS certificates are located.")
+	webUiUrlStr := flag.String("webui_url", DefaultWebUIUrl, "WebUI URL.")
+	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
 
-	certPath := tlsCertDir + "/cert.pem"
-	keyPath := tlsCertDir + "/key.pem"
+	flag.Parse()
+
+	certPath := *tlsCertDir + "/cert.pem"
+	keyPath := *tlsCertDir + "/key.pem"
 
 	pool := operator.NewDevicePool()
 	polledSet := operator.NewPolledSet()
@@ -107,8 +113,8 @@ func main() {
 	}
 
 	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
-	if len(webUiUrlStr) > 0 {
-		webUiUrl, _ := url.Parse(webUiUrlStr)
+	if *webUiUrlStr != "" {
+		webUiUrl, _ := url.Parse(*webUiUrlStr)
 		proxy := httputil.NewSingleHostReverseProxy(webUiUrl)
 		r.PathPrefix("/").Handler(proxy)
 	} else {
@@ -118,9 +124,26 @@ func main() {
 	http.Handle("/", r)
 
 	starters := []func() error{
-		func() error { return operator.SetupDeviceEndpoint(pool, config, socketPath)() },
-		func() error { return startHttpsServer(httpsPort, certPath, keyPath) },
-		func() error { return startHttpServer(httpPort) },
+		func() error {
+			st, err := operator.SetupControlEndpoint(pool, *controlSocketPath)
+			if err != nil {
+				return err
+			}
+			return st()
+		},
+		func() error {
+			st, err := operator.SetupDeviceEndpoint(pool, config, *socketPath)
+			if err != nil {
+				return err
+			}
+			return st()
+		},
+		func() error { return startHttpServer(*address, *httpPort) },
+	}
+	if *httpsPort > 0 {
+		starters = append(starters, func() error {
+			return startHttpsServer(*address, *httpsPort, certPath, keyPath)
+		})
 	}
 	start(starters)
 }

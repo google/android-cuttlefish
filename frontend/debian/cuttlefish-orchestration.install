@@ -1,4 +1,1 @@
 host/packages/cuttlefish-orchestration/* /
-src/host_orchestrator/host_orchestrator /usr/lib/cuttlefish-common/bin/
-src/operator/webui/dist/static /usr/share/cuttlefish-common/host_orchestrator/
-src/operator/intercept /usr/share/cuttlefish-common/host_orchestrator/

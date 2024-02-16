@@ -1,6 +1,6 @@
 # This file is based on https://hub.docker.com/r/jrei/systemd-debian/.
 
-FROM debian:buster-slim AS cuttlefish-softgpu
+FROM debian:stable-20211011 AS cuttlefish-softgpu
 
 ENV container docker
 ENV LC_ALL C
@@ -39,7 +39,7 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y apt-utils sudo vim gawk coreutils \
        openssh-server openssh-client psmisc iptables iproute2 dnsmasq \
        net-tools rsyslog equivs equivs devscripts dpkg-dev dialog \
-       protobuf-compiler # qemu-system-x86
+       protobuf-compiler libegl1 libegl-dev # qemu-system-x86
 
 SHELL ["/bin/bash", "-c"]
 
@@ -47,7 +47,7 @@ RUN if test $(uname -m) == aarch64; then \
 	    dpkg --add-architecture amd64 \
 	    && apt-get update \
 	    && apt-get install --no-install-recommends -y libc6:amd64 \
-	    && apt-get install --no-install-recommends -y qemu qemu-user qemu-user-static binfmt-support; \
+	    && apt-get install --no-install-recommends -y qemu-system-arm qemu-user qemu-user-static binfmt-support; \
     fi
 
 # host packages and google-chrome (google-chrome*.deb)
@@ -57,9 +57,11 @@ RUN cd /root/android-cuttlefish/out \
     && apt-get install --no-install-recommends -y -f ./cuttlefish-base_*.deb \
     && apt-get install --no-install-recommends -y -f ./cuttlefish-user_*.deb \
     && apt-get install --no-install-recommends -y -f ./cuttlefish-common_*.deb \
+    && apt-get install --no-install-recommends -y -f ./cuttlefish-orchestration_*.deb \
     && rm -rvf ./cuttlefish-base_*.deb \
     && rm -rvf ./cuttlefish-user_*.deb \
     && rm -rvf ./cuttlefish-common_*.deb \
+    && rm -rvf ./cuttlefish-orchestration_*.deb \
     && cd /root
 
 # to share X with the local docker host

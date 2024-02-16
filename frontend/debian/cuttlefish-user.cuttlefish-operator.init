@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 ### BEGIN INIT INFO
 # Provides: cuttlefish-operator
@@ -34,10 +34,6 @@
 if [ -f /etc/default/cuttlefish-operator ]; then
     . /etc/default/cuttlefish-operator
 fi
-operator_http_port=${operator_http_port:-1080}
-operator_https_port=${operator_https_port:-1443}
-operator_tls_cert_dir=${operator_tls_cert_dir:-"/etc/cuttlefish-common/operator/cert"}
-operator_webui_url=${operator_webui_url:-""}
 
 RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/operator"
@@ -45,6 +41,7 @@ DAEMON="/usr/lib/cuttlefish-common/bin/operator"
 PIDFILE="${RUN_DIR}"/operator.pid
 
 gen_cert() {
+  operator_tls_cert_dir=${operator_tls_cert_dir:-/etc/cuttlefish-common/operator/cert}
   CERT_FILE="${operator_tls_cert_dir}/cert.pem"
   KEY_FILE="${operator_tls_cert_dir}/key.pem"
   if [ -f "$CERT_FILE" ] && [ -f "$KEY_FILE" ]; then
@@ -71,18 +68,31 @@ start() {
   chown _cutf-operator:cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
 
-  OPERATOR_HTTP_PORT="${operator_http_port}" \
-  OPERATOR_HTTPS_PORT="${operator_https_port}" \
-  OPERATOR_TLS_CERT_DIR="${operator_tls_cert_dir}" \
-  OPERATOR_SOCKET_PATH="${RUN_DIR}"/operator \
-  OPERATOR_WEBUI_URL="${operator_webui_url}" \
+  args=()
+  if [[ -n "${operator_http_port}" ]]; then
+    args+=(--http_port="${operator_http_port}")
+  fi
+  if [[ -n "${operator_https_port}" ]]; then
+    args+=(--https_port="${operator_https_port}")
+  fi
+  if [[ -n "${operator_tls_cert_dir}" ]]; then
+    args+=(--tls_cert_dir="${operator_tls_cert_dir}")
+  fi
+  args+=(--socket_path="${RUN_DIR}"/operator)
+  if [[ -n "${operator_webui_url}" ]]; then
+    args+=(--webui_url="${operator_webui_url}")
+  fi
+  if [[ -n "${operator_listen_address}" ]]; then
+    args+=(--listen_addr="${operator_listen_address}")
+  fi
+
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \
     --chuid _cutf-operator:cvdnetwork \
     --chdir "${ASSET_DIR}" \
     --background --no-close \
     --make-pidfile \
-    --exec "${DAEMON}"
+    --exec "${DAEMON}" -- "${args[@]}"
 }
 
 stop() {

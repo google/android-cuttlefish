@@ -34,7 +34,25 @@ func TestListCVDsSucceeds(t *testing.T) {
 		`{
                   "groups": [
                     {
-                      "group_name": "cvd",
+                      "group_name": "foo",
+                      "instances": [
+                        {
+                          "adb_serial": "0.0.0.0:6520",
+                          "assembly_dir": "/var/lib/cuttlefish-common/runtimes/cuttlefish/assembly",
+                          "displays": [
+                            "720 x 1280 ( 320 )"
+                          ],
+                          "instance_dir": "/var/lib/cuttlefish-common/runtimes/cuttlefish/instances/cvd-1",
+                          "instance_name": "1",
+                          "status": "Running",
+                          "web_access": "https://localhost:1443/devices/cvd-1/files/client.html",
+                          "webrtc_device_id": "cvd-1",
+                          "webrtc_port": "8443"
+                        }
+                      ]
+                    },
+                    {
+                      "group_name": "bar",
                       "instances": [
                         {
                           "adb_serial": "0.0.0.0:6520",
@@ -66,7 +84,6 @@ func TestListCVDsSucceeds(t *testing.T) {
 	paths := IMPaths{
 		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
 	}
 	opts := ListCVDsActionOpts{
 		Paths:           paths,
@@ -81,10 +98,12 @@ func TestListCVDsSucceeds(t *testing.T) {
 
 	want := &apiv1.ListCVDsResponse{CVDs: []*apiv1.CVD{
 		{
-			Name:        "1",
-			BuildSource: &apiv1.BuildSource{},
-			Status:      "Running",
-			Displays:    []string{"720 x 1280 ( 320 )"},
+			Group:          "foo",
+			Name:           "1",
+			BuildSource:    &apiv1.BuildSource{},
+			Status:         "Running",
+			Displays:       []string{"720 x 1280 ( 320 )"},
+			WebRTCDeviceID: "cvd-1",
 		},
 	}}
 	if diff := cmp.Diff(want, res); diff != "" {

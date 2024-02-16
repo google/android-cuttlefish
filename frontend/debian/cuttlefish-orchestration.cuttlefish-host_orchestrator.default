@@ -1,12 +1,16 @@
 # defaults for cuttlefish-host_orchestrator
 
+# The network address to listen on for both HTTP and HTTPS.
+# Defaults to localhost only.
+orchestrator_listen_address=0.0.0.0
+#
 # The port on which the orchestrator server should listen on for plain HTTP.
-# Defaults to 1080.
+# Defaults to 2080.
 # orchestrator_http_port=
 #
 # The port on which the orchestrator server should listen on for HTTPS.
 # The orchestrator won't server over HTTPS if the port is not set.
-orchestrator_https_port=1443
+orchestrator_https_port=2443
 #
 # The directory where the TLS certificate needed to establish the HTTPS
 # communication lives.
@@ -23,11 +27,15 @@ orchestrator_https_port=1443
 # orchestrator_cvdbin_android_build_target=
 #
 # Directory used to store the CVD artifacts.
-# Defaults to "/var/lib/cuttlefish-common"
-# orchestrator_cvd_artifacts_dir=
+# Defaults to "/tmp/<uid>/cvd_artifacts"
+orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common
 #
 # Where web UI in the application is from
 # If it isn't empty, the application uses web UI from the url,
 # else, it uses web pages which is generated during the build
 # Defaults to ""
-# orchestrator_webui_url=
+# operator_webui_url=
+#
+# The port where the operator is to listen on.
+# Defaults to 1080.
+# operator_http_port=

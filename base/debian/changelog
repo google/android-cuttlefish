@@ -1,10 +1,18 @@
-cuttlefish-common (0.9.27) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.28) UNRELEASED; urgency=medium
+
+  * Include the cvd command in the base package
+
+  * Explicitly specify dependency on iproute2
+
+ -- Jorge E. Moreira <jemoreira@google.com>  Wed, 31 Jan 2024 11:40:30 -0700
+
+cuttlefish-common (0.9.27) unstable; urgency=medium
 
   * Increase nofile soft limit to support passthrough GPU modes
 
  -- Jason Macnak <natsu@google.com>  Tue, 23 May 2023 08:58:58 -0700
 
-cuttlefish-common (0.9.26) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.26) stable; urgency=medium
 
   * Change operator's web UI to tile UI
 

@@ -33,7 +33,6 @@ const CVDCommandDefaultTimeout = 30 * time.Second
 
 const (
 	envVarAndroidHostOut = "ANDROID_HOST_OUT"
-	envVarHome           = "HOME"
 )
 
 type CommandOpts struct {
@@ -88,7 +87,7 @@ func (c *Command) Run() error {
 	}
 	// TODO: Use `context.WithTimeout` if upgrading to go 1.19 as `exec.Cmd` adds the `Cancel` function field,
 	// so the cancel logic could be customized to continue sending the SIGINT signal.
-	cmd := c.execContext(context.TODO(), cvdEnv(c.opts.AndroidHostOut, c.opts.Home), c.cvdBin, c.args...)
+	cmd := c.execContext(context.TODO(), cvdEnv(c.opts.AndroidHostOut), c.cvdBin, c.args...)
 	stderr := &bytes.Buffer{}
 	cmd.Stdout = c.opts.Stdout
 	cmd.Stderr = stderr
@@ -123,7 +122,7 @@ func (c *Command) Run() error {
 }
 
 func (c *Command) startCVDServer() error {
-	cmd := c.execContext(context.TODO(), cvdEnv("", ""), c.cvdBin)
+	cmd := c.execContext(context.TODO(), cvdEnv(""), c.cvdBin)
 	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
 	// file descriptor to the null device (os.DevNull).
 	// Otherwhise, `Run` will never complete. Why? a pipe will be created to handle
@@ -135,8 +134,8 @@ func (c *Command) startCVDServer() error {
 	return cmd.Run()
 }
 
-func cvdEnv(androidHostOut, home string) []string {
-	env := []string{envVarHome + "=" + home}
+func cvdEnv(androidHostOut string) []string {
+	env := []string{}
 	if androidHostOut != "" {
 		env = append(env, envVarAndroidHostOut+"="+androidHostOut)
 	}
@@ -162,4 +161,16 @@ func LogStderr(cmd *exec.Cmd, val string) {
 func LogCombinedStdoutStderr(cmd *exec.Cmd, val string) {
 	msg := "`%s`, combined stdout and stderr :\n%s"
 	log.Printf(msg, strings.Join(cmd.Args, " "), OutputLogMessage(val))
+}
+
+func Exec(ctx CVDExecContext, name string, args ...string) error {
+	cmd := ctx(context.TODO(), nil, name, args...)
+	var b bytes.Buffer
+	cmd.Stdout = nil
+	cmd.Stderr = &b
+	err := cmd.Run()
+	if err != nil {
+		return &CommandExecErr{args, b.String(), err}
+	}
+	return nil
 }

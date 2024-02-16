@@ -1,0 +1,6 @@
+graph {
+  rankdir=LR
+    location--start_gnss_proxy
+    location--fixed_location_file_path
+    location--gnss_file_path
+}

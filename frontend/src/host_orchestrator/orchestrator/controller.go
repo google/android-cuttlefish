@@ -59,6 +59,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newCreateCVDHandler(c.Config, c.OperationManager, c.UserArtifactsManager))).Methods("POST")
 	router.Handle("/cvds", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
 	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
+	router.Handle("/cvds/{group}", httpHandler(newStopCVDHandler(c.Config, c.OperationManager))).Methods("DELETE")
+	router.Handle("/cvds/{group}/{name}", httpHandler(newStopCVDHandler(c.Config, c.OperationManager))).Methods("DELETE")
 	router.Handle("/operations/{name}", httpHandler(&getOperationHandler{om: c.OperationManager})).Methods("GET")
 	// The expected response of the operation in case of success.  If the original method returns no data on
 	// success, such as `Delete`, response will be empty. If the original method is standard
@@ -109,7 +111,7 @@ func replyJSONOK(w http.ResponseWriter, obj interface{}) error {
 func replyJSONErr(w http.ResponseWriter, err error) error {
 	appErr, ok := err.(*operator.AppError)
 	if !ok {
-		return replyJSON(w, apiv1.ErrorMsg{Error: "Internal Server Error"}, http.StatusInternalServerError)
+		appErr, _ = (operator.NewInternalError("Internal server error", err)).(*operator.AppError)
 	}
 	return replyJSON(w, appErr.JSONResponse(), appErr.StatusCode)
 }
@@ -176,13 +178,18 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	}
 	cvdDwnl := NewAndroidCICVDDownloader(
 		artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
-	creds := ExtractCredentials(req)
+	creds := r.Header.Get(HeaderBuildAPICreds)
 	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Credentials: creds}
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(
 		exec.CommandContext, h.Config.Paths.FetchCVDBin(), creds)
+	cvdStartTimeout := 3 * time.Minute
+	if req.EnvConfig != nil {
+		// Use a lengthier timeout when using canonical configs as this operation downloads artifacts as well.
+		cvdStartTimeout = 7 * time.Minute
+	}
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
@@ -195,9 +202,10 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		ArtifactsFetcher:         artifactsFetcher,
 		CVDBundleFetcher:         cvdBundleFetcher,
 		UUIDGen:                  func() string { return uuid.New().String() },
-		CVDStartTimeout:          3 * time.Minute,
+		CVDStartTimeout:          cvdStartTimeout,
 		CVDUser:                  h.Config.CVDUser,
 		UserArtifactsDirResolver: h.UADirResolver,
+		BuildAPICredentials:      creds,
 	}
 	return NewCreateCVDAction(opts).Run()
 }
@@ -217,6 +225,36 @@ func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDUser:         h.Config.CVDUser,
 	}
 	return NewListCVDsAction(opts).Run()
+}
+
+type stopCVDHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newStopCVDHandler(c Config, om OperationManager) *stopCVDHandler {
+	return &stopCVDHandler{
+		Config: c,
+		OM:     om,
+	}
+}
+
+func (h *stopCVDHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	buildAPI := artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL)
+	cvdDwnl := NewAndroidCICVDDownloader(buildAPI)
+	opts := StopCVDActionOpts{
+		Selector:         CVDSelector{Group: group, Name: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+		CVDToolsVersion:  h.Config.CVDToolsVersion,
+		CVDDownloader:    cvdDwnl,
+		CVDUser:          h.Config.CVDUser,
+	}
+	return NewStopCVDAction(opts).Run()
 }
 
 type getCVDLogsHandler struct {

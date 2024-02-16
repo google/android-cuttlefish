@@ -96,7 +96,6 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	paths := IMPaths{
 		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
@@ -138,7 +137,6 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	paths := IMPaths{
 		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
@@ -166,16 +164,12 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	if diff := cmp.Diff("drwxrwxr--", stats.Mode().String()); diff != "" {
 		t.Errorf("mode mismatch (-want +got):\n%s", diff)
 	}
-	stats, _ = os.Stat(paths.RuntimesRootDir)
-	if diff := cmp.Diff("dgrwxrwxr--", stats.Mode().String()); diff != "" {
-		t.Errorf("mode mismatch (-want +got):\n%s", diff)
-	}
 }
 
 func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
-	goldenPrefixFmt := fmt.Sprintf("sudo -u fakecvduser HOME=%[1]s/runtimes "+
+	goldenPrefixFmt := fmt.Sprintf("sudo -u fakecvduser "+
 		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s/artifacts/%%[1]s", dir)
 	tests := []struct {
@@ -289,7 +283,6 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 			paths := IMPaths{
 				CVDToolsDir:      dir,
 				ArtifactsRootDir: dir + "/artifacts",
-				RuntimesRootDir:  dir + "/runtimes",
 			}
 			om := NewMapOM()
 			buildAPI := &fakeBuildAPI{}
@@ -338,8 +331,10 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
 	tarContent, _ := ioutil.ReadFile(getTestTarFilename())
+	ioutil.WriteFile(dir+"/vbmeta.img", []byte{}, 0755)
+	ioutil.WriteFile(dir+"/vbmeta_system.img", []byte{}, 0755)
 	ioutil.WriteFile(dir+"/"+CVDHostPackageName, tarContent, 0755)
-	expected := fmt.Sprintf("sudo -u fakecvduser HOME=%[1]s/runtimes "+
+	expected := fmt.Sprintf("sudo -u fakecvduser "+
 		"ANDROID_HOST_OUT=%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s", dir)
 	var usedCmdName string
@@ -354,7 +349,6 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 	paths := IMPaths{
 		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
@@ -407,7 +401,6 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 	paths := IMPaths{
 		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
@@ -444,7 +437,6 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 	paths := IMPaths{
 		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
@@ -488,7 +480,6 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 	paths := IMPaths{
 		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	opts := CreateCVDActionOpts{
@@ -506,49 +497,5 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 
 	if err == nil {
 		t.Error("expected error")
-	}
-}
-
-func TestExtractCredentials(t *testing.T) {
-	var tests = []struct {
-		req *apiv1.CreateCVDRequest
-		exp string
-	}{
-		{
-			req: nil,
-			exp: "",
-		},
-		{
-			req: &apiv1.CreateCVDRequest{},
-			exp: "",
-		},
-		{
-			req: &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{}},
-			exp: "",
-		},
-		{
-			req: &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: &apiv1.BuildSource{}}},
-			exp: "",
-		},
-		{
-			req: &apiv1.CreateCVDRequest{
-				CVD: &apiv1.CVD{
-					BuildSource: &apiv1.BuildSource{
-						AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
-							Credentials: "foo",
-						},
-					},
-				},
-			},
-			exp: "foo",
-		},
-	}
-
-	for _, test := range tests {
-		creds := ExtractCredentials(test.req)
-
-		if diff := cmp.Diff(test.exp, creds); diff != "" {
-			t.Errorf("cred mismatch (-want +got):\n%s", diff)
-		}
 	}
 }

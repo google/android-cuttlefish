@@ -1,10 +1,26 @@
-cuttlefish-frontend (0.9.27) UNRELEASED; urgency=medium
+cuttlefish-frontend (0.9.29) UNRELEASED; urgency=medium
+
+  * Make cuttlefish-orchestration depend on cuttlefish-user
+
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 12 Oct 2023 18:12:35 -0700
+
+cuttlefish-frontend (0.9.28) stable; urgency=medium
+
+  * Replace operator functionality with reverse proxy in host operator
+
+  * Make operator and host_orchestrator configurable via CLI flags
+
+  * Make the host_orchestrator available as a command in cuttlefish-user
+
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 12 Oct 2023 18:12:35 -0700
+
+cuttlefish-frontend (0.9.27) unstable; urgency=medium
 
   * Increase nofile soft limit to support passthrough GPU modes
 
  -- Jason Macnak <natsu@google.com>  Tue, 23 May 2023 08:58:58 -0700
 
-cuttlefish-frontend (0.9.26) UNRELEASED; urgency=medium
+cuttlefish-frontend (0.9.26) unstable; urgency=medium
 
   * Change operator's web UI to tile UI
 

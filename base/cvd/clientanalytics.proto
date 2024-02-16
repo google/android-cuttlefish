@@ -1,0 +1,39 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto2";
+package cuttlefish;
+
+message LogRequest {
+  optional ClientInfo client_info = 1;
+  optional int32 log_source = 2;
+  optional int64 request_time_ms = 4;
+  repeated LogEvent log_event = 3;
+  optional string log_source_name = 6;
+}
+
+message ClientInfo {
+  optional int32 client_type = 1;
+}
+
+// TODO(moelsherif) : This message is not used yet. It will be used to send back the next request wait time.
+message LogResponse {
+  optional int64 next_request_wait_millis = 1;
+}
+
+message LogEvent {
+  optional int64 event_time_ms = 1;
+  optional bytes source_extension = 6;
+}

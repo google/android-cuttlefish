@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# at /path/to/android-cuttlefish, run like this:
+# at /path/to/android-cuttlefish/docker, run like this:
 #  ./debs-builder-docker/build-debs-docker.sh
 #
 

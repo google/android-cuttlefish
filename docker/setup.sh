@@ -52,7 +52,7 @@ function cf_allocate_instance_id {
 	done
 	local sorted;
 	IFS=$'\n' sorted=($(sort -n <<<"${ids[*]}")); unset IFS
-	local prev=0
+	local prev=1
 	for id in ${sorted[@]}; do
 		if [[ "${prev}" -lt "${id}" ]]; then
 			break;
@@ -349,7 +349,7 @@ function cf_docker_create {
 	    echo "Container ${name} does not exist.";
 
         local cf_instance=$(cf_allocate_instance_id)
-        if [ "${cf_instance}" -gt 7 ]; then
+        if [ "${cf_instance}" -gt 8 ]; then
                 echo "Limit is maximum 8 Cuttlefish instances."
                 return
         fi
@@ -362,15 +362,15 @@ function cf_docker_create {
 	    if [[ -d "${android}" ]]; then
 		    echo "Setting up Android images from ${android} in ${home}."
 		    if [[ $(compgen -G "${android}"/*.img) != "${android}/*.img" ]]; then
-				for f in "${android}"/*.img; do
-					volumes+=("-v ${f}:/home/vsoc-01/$(basename ${f}):rw")
-				done
+			    for f in "${android}"/*.img; do
+				    cp "${f}" "${home}"
+			    done
 		    else
 			    echo "WARNING: No Android images in ${android}."
 		    fi
-            if [ -f "${android}/bootloader" ]; then
-                volumes+=("-v ${android}/bootloader:/home/vsoc-01/bootloader:rw")
-            fi
+		    if [ -f "${android}/bootloader" ]; then
+	    	    	    cp ${android}/bootloader ${home}
+            	    fi
 	    fi
 	    if [[ -f "${cuttlefish}" || -d "${android}" ]]; then
 		    volumes+=("-v ${home}:/home/vsoc-01:rw")
@@ -472,7 +472,7 @@ function cf_docker_rm {
         local ip_addr_var_name="ip_${name}"
         unset ${ip_addr_var_name}
 
-		if [ -n "$(docker ps -q -a -f name=${name})" ]; then
+		if [ -n "$(docker ps -a -f name=${name})" ]; then
 			homedir=$(cf_gethome_${name})
 			echo "Deleting container ${name}."
 			docker rm -f ${name}
@@ -528,7 +528,7 @@ function __gen_gethome_func_name {
 function __gen_funcs {
 	local name=$1
 	local instance_id=$(cf_get_instance_id ${name})
-	local vcid_opt="--base_instance_num=${instance_id}"
+	local vcid_opt
 	local login_func
 	local start_func
 	local stop_func
@@ -673,7 +673,7 @@ function cf_clean_autogens() {
 cf_clean_autogens
 unset -f cf_clean_autogens
 
-for cf in $(docker ps -q -a --filter="ancestor=cuttlefish" --format "table {{.Names}}" | tail -n+2); do
+for cf in $(docker ps -a --filter="ancestor=cuttlefish" --format "table {{.Names}}" | tail -n+2); do
 	__gen_funcs "${cf}"
 	if [ -z "$cf_script" ]; then
 		help_on_container "${cf}"
