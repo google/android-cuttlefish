@@ -1,4 +1,7 @@
-on late-init
+on post-fs-data
+    # cardisplayproxyd and vendor.evs-hal-cf services need to be started
+    # after the file system gets mounted and therefore their dependent services
+    # become available.
     start cardisplayproxyd
     start vendor.evs-hal-cf
     start evs_manager_cf
