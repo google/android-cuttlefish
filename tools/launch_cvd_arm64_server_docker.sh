@@ -69,7 +69,7 @@ fi
 rsync -avch $temp_dir/cvd-host_package.tar.gz $server:~/$cvd_home_dir --info=progress2
 
 # run docker instance
-container_id=$(ssh $server -t "docker run --privileged -P -d cuttlefish")
+container_id=$(ssh $server -t "docker run --rm --privileged -P -d cuttlefish")
 container_id=${container_id//$'\r'} # to remove trailing ^M
 echo -e "${color_cyan}Booting container $container_id${color_plain}"
 
