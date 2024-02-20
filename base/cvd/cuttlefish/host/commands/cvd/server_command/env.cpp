@@ -37,6 +37,20 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+namespace {
+
+constexpr char kSummaryHelpText[] =
+    R"(Enumerate + Query APIs for all gRPC services made available by this virtual device instance)";
+
+constexpr char kDetailedHelpText[] = R"(
+Usage:
+cvd env ls - lists all available services per instance
+cvd env ls $SERVICE_NAME - lists all methods for $SERVICE_NAME
+cvd env ls $SERVICE_NAME $METHOD_NAME - list information on input + output message types for $SERVICE_NAME#$METHOD_NAME
+cvd env type $SERVICE_NAME $REQUEST_MESSAGE_TYPE - outputs the proto the specified request message type
+)";
+
+}  // namespace
 
 class CvdEnvCommandHandler : public CvdServerHandler {
  public:
@@ -91,6 +105,14 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   cvd_common::Args CmdList() const override {
     return cvd_common::Args(cvd_env_operations_.begin(),
                             cvd_env_operations_.end());
+  }
+
+  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+
+  bool ShouldInterceptHelp() const override { return true; }
+
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return kDetailedHelpText;
   }
 
  private:
