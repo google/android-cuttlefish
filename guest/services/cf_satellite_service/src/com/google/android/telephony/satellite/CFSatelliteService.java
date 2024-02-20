@@ -235,17 +235,6 @@ public class CFSatelliteService extends SatelliteImplBase {
     }
 
     @Override
-    public void requestIsSatelliteCommunicationAllowedForCurrentLocation(
-            @NonNull IIntegerConsumer errorCallback, @NonNull IBooleanConsumer callback) {
-        logd("requestIsSatelliteCommunicationAllowedForCurrentLocation");
-        if (mIsCommunicationAllowedInLocation) {
-            runWithExecutor(() -> callback.accept(true));
-        } else {
-            runWithExecutor(() -> callback.accept(false));
-        }
-    }
-
-    @Override
     public void requestTimeForNextSatelliteVisibility(@NonNull IIntegerConsumer errorCallback,
             @NonNull IIntegerConsumer callback) {
         logd("requestTimeForNextSatelliteVisibility");
