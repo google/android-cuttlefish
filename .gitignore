@@ -10,6 +10,7 @@
 cuttlefish-*_*.*.*.tar.xz
 
 !/.github/
+!/.kokoro/
 
 /*/debian/cuttlefish-*/
 /*/debian/*.substvars
