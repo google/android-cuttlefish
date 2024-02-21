@@ -42,6 +42,7 @@ digraph {
 
     launch_cvd
     restart_cvd
+    powerbtn_cvd
     powerwash_cvd
     all_cvd [label = "*_cvd"]
     cvd_status
@@ -84,6 +85,7 @@ digraph {
 
   CvdStartCommandHandler -> launch_cvd [label = "fork/exec"]
   CvdGenericCommandHandler -> restart_cvd [label = "fork/exec"]
+  CvdGenericCommandHandler -> powerbtn_cvd [label = "fork/exec"]
   CvdGenericCommandHandler -> powerwash_cvd [label = "fork/exec"]
   CvdHelpHandler -> all_cvd [label = "fork/exec"]
   CvdFleetCommandHandler -> cvd_status [label = "fork/exec"]

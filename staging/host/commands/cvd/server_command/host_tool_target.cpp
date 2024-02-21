@@ -40,6 +40,7 @@ const std::map<std::string, std::vector<std::string>>& OpToBinsMap() {
       {"cvd_status", {"cvd_internal_status", "cvd_status"}},
       {"restart", {"restart_cvd"}},
       {"powerwash", {"powerwash_cvd"}},
+      {"powerbtn", {"powerbtn_cvd"}},
       {"suspend", {"snapshot_util_cvd"}},
       {"resume", {"snapshot_util_cvd"}},
       {"snapshot_take", {"snapshot_util_cvd"}},
