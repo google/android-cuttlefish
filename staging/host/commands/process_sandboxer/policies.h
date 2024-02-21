@@ -29,6 +29,7 @@ struct HostInfo {
   std::string log_dir;
 };
 
+sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder LogcatReceiverPolicy(const HostInfo&);
 
 std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
