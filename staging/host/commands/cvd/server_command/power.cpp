@@ -56,6 +56,10 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
         [this](const std::string& android_host_out) -> Result<std::string> {
       return CF_EXPECT(PowerwashBin(android_host_out));
     };
+    cvd_power_operations_["powerbtn"] =
+        [this](const std::string& android_host_out) -> Result<std::string> {
+      return CF_EXPECT(PowerbtnBin(android_host_out));
+    };
   }
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
@@ -118,6 +122,14 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
         .op = "powerwash",
     }));
     return powerwash_bin;
+  }
+
+  Result<std::string> PowerbtnBin(const std::string& android_host_out) const {
+    auto powerbtn_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
+        .artifacts_path = android_host_out,
+        .op = "powerbtn",
+    }));
+    return powerbtn_bin;
   }
 
   Result<Command> HelpCommand(const RequestWithStdio& request,
@@ -207,11 +219,12 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     if (cmd_args.empty()) {
       return false;
     }
-    // cvd restart/powerwash --help, --helpxml, etc or simply cvd restart
+    // cvd restart/powerwash/powerbtn --help, --helpxml, etc or simply cvd
+    // restart
     if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
       return true;
     }
-    // cvd restart/powerwash help <subcommand> format
+    // cvd restart/powerwash/powerbtn help <subcommand> format
     return (cmd_args.front() == "help");
   }
 
