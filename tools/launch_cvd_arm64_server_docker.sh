@@ -108,18 +108,19 @@ done
 echo -e "Succeeded to create user_artifacts_dir"
 
 # upload artifacts and cvd-host_pachage.tar.gz into docker instance
-for filename in $(ssh $server ls $cvd_home_dir); do
-  absolute_path=$(ssh $server echo \$HOME)/$cvd_home_dir/$filename
-  size=$(ssh $server stat -c%s $absolute_path)
-  printf "Uploading $filename(size:$size) ... "
-  ssh $server "curl -s -k --location -X PUT $host_orchestrator_url/userartifacts/$user_artifacts_dir \
-    -H 'Content-Type: multipart/form-data' \
-    -F chunk_number=1 \
-    -F chunk_total=1 \
-    -F chunk_size_bytes=$size \
-    -F file=@$absolute_path"
-  echo -e "Done"
-done
+ssh $server \
+  "for filename in \$(ls $cvd_home_dir); do \
+     absolute_path=\$HOME/$cvd_home_dir/\$filename && \
+     size=\$(stat -c%s \$absolute_path) && \
+     echo Uploading \$filename\\(size:\$size\\) ... && \
+     curl -s -k --location -X PUT $host_orchestrator_url/userartifacts/$user_artifacts_dir \
+       -H 'Content-Type: multipart/form-data' \
+       -F chunk_number=1 \
+       -F chunk_total=1 \
+       -F chunk_size_bytes=\$size \
+       -F file=@\$absolute_path; \
+   done"
+echo -e "Done"
 
 # start Cuttlefish instance on top of docker instance
 echo -e "Starting Cuttlefish"
