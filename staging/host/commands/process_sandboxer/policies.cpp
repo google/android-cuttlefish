@@ -32,6 +32,8 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   using Builder = sandbox2::PolicyBuilder(const HostInfo&);
   absl::flat_hash_map<std::string, Builder*> builders;
 
+  builders[JoinPath(host.artifacts_path, "bin", "kernel_log_monitor")] =
+      KernelLogMonitorPolicy;
   builders[JoinPath(host.artifacts_path, "bin", "logcat_receiver")] =
       LogcatReceiverPolicy;
 
