@@ -26,6 +26,7 @@ cc_binary_host {
     srcs: [
         "main.cpp",
         "policies.cpp",
+        "policies/kernel_log_monitor.cpp",
         "policies/logcat_receiver.cpp",
     ],
     shared_libs: ["sandboxed_api_sandbox2"],

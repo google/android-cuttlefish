@@ -65,7 +65,7 @@ class KernelLogMonitor : public CommandSource,
       }
     }
     std::vector<MonitorCommand> commands;
-    commands.emplace_back(std::move(command));
+    commands.emplace_back(std::move(command)).can_sandbox = true;
     return commands;
   }
 
