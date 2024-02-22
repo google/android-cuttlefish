@@ -43,7 +43,7 @@ constexpr char kSummaryHelpText[] =
     R"(Enables hotplug/unplug of displays from running cuttlefish virtual devices)";
 
 constexpr char kDetailedHelpText[] =
-    R"(Cuttlefish Virtual Device (CVD) Display CLI.
+    R"(
 
 usage: cvd display <command> <args>
 

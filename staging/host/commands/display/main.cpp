@@ -33,7 +33,7 @@ namespace cuttlefish {
 namespace {
 
 static const std::string kAddUsage =
-    R"(Cuttlefish Virtual Device (CVD) Display CLI.
+    R"(
 
 Adds and connects a display to the given virtual device.
 
@@ -45,7 +45,7 @@ usage: cvd display add --width=720 --height=1280
 )";
 
 static const std::string kListUsage =
-    R"(Cuttlefish Virtual Device (CVD) Display CLI.
+    R"(
 
 Lists all of the displays currently connected to a given virtual device.
 
@@ -53,7 +53,7 @@ usage: cvd display list
 )";
 
 static const std::string kRemoveUsage =
-    R"(Cuttlefish Virtual Device (CVD) Display CLI.
+    R"(
 
 Disconnects and removes displays from the given virtual device.
 
