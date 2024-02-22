@@ -35,7 +35,8 @@ namespace cuttlefish {
 namespace {
 
 constexpr char kUsageMessage[] =
-    "*_build flags accept values in the following format:\n"
+    "*_build flags other than --chrome_os_build accept values in the following "
+    "format:\n"
     "{<branch> | <build_id>}[/<build_target>][{<filepath>}]\n"
     "For example: "
     "\"aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug{file.txt}\""
@@ -130,6 +131,10 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(
       GflagsCompatFlag("otatools_build", vector_flags.otatools_build)
           .Help("source for the host ota tools"));
+  flags.emplace_back(
+      GflagsCompatFlag("chrome_os_build", vector_flags.chrome_os_build)
+          .Help("source for a ChromeOS build. Formatted as as a numeric build "
+                "id, or '<project>/<bucket>/<builder>'"));
 
   flags.emplace_back(
       GflagsCompatFlag("boot_artifact", vector_flags.boot_artifact)
@@ -162,9 +167,9 @@ Result<int> GetNumberOfBuilds(
        {flags.default_build.size(), flags.system_build.size(),
         flags.kernel_build.size(), flags.boot_build.size(),
         flags.bootloader_build.size(), flags.android_efi_loader_build.size(),
-        flags.otatools_build.size(), flags.boot_artifact.size(),
-        flags.download_img_zip.size(), flags.download_target_files_zip.size(),
-        subdirectory_flag.size()}) {
+        flags.otatools_build.size(), flags.chrome_os_build.size(),
+        flags.boot_artifact.size(), flags.download_img_zip.size(),
+        flags.download_target_files_zip.size(), subdirectory_flag.size()}) {
     if (flag_size == 0) {
       // a size zero flag vector means the flag was not given
       continue;

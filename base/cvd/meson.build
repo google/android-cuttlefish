@@ -36,6 +36,8 @@ common_sources = [
   'cuttlefish/host/libs/web/http_client/http_client.cc',
   'cuttlefish/host/libs/web/http_client/http_client_util.cc',
   'cuttlefish/host/libs/web/http_client/sso_client.cc',
+  'cuttlefish/host/libs/web/chrome_os_build_string.cpp',
+  'cuttlefish/host/libs/web/luci_build_api.cpp',
 ]
 
 cvd_sources = [

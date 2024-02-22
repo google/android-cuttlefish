@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <json/json.h>
@@ -35,6 +36,7 @@
 
 #include "common/libs/utils/base64.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/web/http_client/http_client.h"
 
@@ -71,15 +73,15 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
   if (credential_source == "gce") {
     result = GceMetadataCredentialSource::Make(http_client);
   } else if (credential_source == "") {
-    LOG(VERBOSE) << "Probing acloud credentials at " << oauth_filepath;
+    LOG(VERBOSE) << "Probing oauth credentials at " << oauth_filepath;
     if (FileExists(oauth_filepath)) {
-      std::ifstream stream(oauth_filepath);
-      auto attempt_load =
-          RefreshCredentialSource::FromOauth2ClientFile(http_client, stream);
+      std::string oauth_contents = CF_EXPECT(ReadFileContents(oauth_filepath));
+      auto attempt_load = RefreshCredentialSource::FromOauth2ClientFile(
+          http_client, oauth_contents);
       if (attempt_load.ok()) {
         result.reset(new RefreshCredentialSource(std::move(*attempt_load)));
       } else {
-        LOG(DEBUG) << "Failed to load acloud credentials: "
+        LOG(ERROR) << "Failed to load oauth2 credentials: "
                    << attempt_load.error().FormatForEnv();
       }
     } else {
@@ -165,40 +167,90 @@ std::unique_ptr<CredentialSource> FixedCredentialSource::Make(
 }
 
 Result<RefreshCredentialSource> RefreshCredentialSource::FromOauth2ClientFile(
-    HttpClient& http_client, std::istream& stream) {
-  Json::CharReaderBuilder builder;
-  std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-  Json::Value json;
-  std::string errorMessage;
-  CF_EXPECT(Json::parseFromStream(builder, stream, &json, &errorMessage),
-            "Failed to parse json: " << errorMessage);
-  CF_EXPECT(json.isMember("data"));
-  auto& data = json["data"];
-  CF_EXPECT(data.type() == Json::ValueType::arrayValue);
+    HttpClient& http_client, const std::string& oauth_contents) {
+  if (android::base::StartsWith(oauth_contents, "[OAuth2]")) {  // .boto file
+    std::optional<std::string> client_id;
+    std::optional<std::string> client_secret;
+    std::optional<std::string> refresh_token;
+    auto lines = android::base::Tokenize(oauth_contents, "\n");
+    for (auto line : lines) {
+      std::string_view line_view = line;
+      static constexpr std::string_view kClientIdPrefix = "client_id =";
+      if (android::base::ConsumePrefix(&line_view, kClientIdPrefix)) {
+        client_id = android::base::Trim(line_view);
+        continue;
+      }
+      static constexpr std::string_view kClientSecretPrefix = "client_secret =";
+      if (android::base::ConsumePrefix(&line_view, kClientSecretPrefix)) {
+        client_secret = android::base::Trim(line_view);
+        continue;
+      }
+      static constexpr std::string_view kRefreshTokenPrefix =
+          "gs_oauth2_refresh_token =";
+      if (android::base::ConsumePrefix(&line_view, kRefreshTokenPrefix)) {
+        refresh_token = android::base::Trim(line_view);
+        continue;
+      }
+    }
+    return RefreshCredentialSource(http_client, CF_EXPECT(std::move(client_id)),
+                                   CF_EXPECT(std::move(client_secret)),
+                                   CF_EXPECT(std::move(refresh_token)));
+  }
+  auto json = CF_EXPECT(ParseJson(oauth_contents));
+  if (json.isMember("data")) {  // acloud style
+    auto& data = json["data"];
+    CF_EXPECT(data.type() == Json::ValueType::arrayValue);
 
-  CF_EXPECT(data.size() == 1);
-  auto& data_first = data[0];
-  CF_EXPECT(data_first.type() == Json::ValueType::objectValue);
+    CF_EXPECT(data.size() == 1);
+    auto& data_first = data[0];
+    CF_EXPECT(data_first.type() == Json::ValueType::objectValue);
 
-  CF_EXPECT(data_first.isMember("credential"));
-  auto& credential = data_first["credential"];
-  CF_EXPECT(credential.type() == Json::ValueType::objectValue);
+    CF_EXPECT(data_first.isMember("credential"));
+    auto& credential = data_first["credential"];
+    CF_EXPECT(credential.type() == Json::ValueType::objectValue);
 
-  CF_EXPECT(credential.isMember("client_id"));
-  auto& client_id = credential["client_id"];
-  CF_EXPECT(client_id.type() == Json::ValueType::stringValue);
+    CF_EXPECT(credential.isMember("client_id"));
+    auto& client_id = credential["client_id"];
+    CF_EXPECT(client_id.type() == Json::ValueType::stringValue);
 
-  CF_EXPECT(credential.isMember("client_secret"));
-  auto& client_secret = credential["client_secret"];
-  CF_EXPECT(client_secret.type() == Json::ValueType::stringValue);
+    CF_EXPECT(credential.isMember("client_secret"));
+    auto& client_secret = credential["client_secret"];
+    CF_EXPECT(client_secret.type() == Json::ValueType::stringValue);
 
-  CF_EXPECT(credential.isMember("refresh_token"));
-  auto& refresh_token = credential["refresh_token"];
-  CF_EXPECT(refresh_token.type() == Json::ValueType::stringValue);
+    CF_EXPECT(credential.isMember("refresh_token"));
+    auto& refresh_token = credential["refresh_token"];
+    CF_EXPECT(refresh_token.type() == Json::ValueType::stringValue);
 
-  return RefreshCredentialSource(http_client, client_id.asString(),
-                                 client_secret.asString(),
-                                 refresh_token.asString());
+    return RefreshCredentialSource(http_client, client_id.asString(),
+                                   client_secret.asString(),
+                                   refresh_token.asString());
+  } else if (json.isMember("cache")) {  // luci/chrome style
+    auto& cache = json["cache"];
+    CF_EXPECT_EQ(cache.type(), Json::ValueType::arrayValue);
+
+    CF_EXPECT_EQ(cache.size(), 1);
+    auto& cache_first = cache[0];
+    CF_EXPECT_EQ(cache_first.type(), Json::ValueType::objectValue);
+
+    CF_EXPECT(cache_first.isMember("token"));
+    auto& token = cache_first["token"];
+    CF_EXPECT_EQ(token.type(), Json::ValueType::objectValue);
+
+    CF_EXPECT(token.isMember("refresh_token"));
+    auto& refresh_token = token["refresh_token"];
+    CF_EXPECT_EQ(refresh_token.type(), Json::ValueType::stringValue);
+
+    // https://source.chromium.org/search?q=ClientSecret:%5Cs%2B%5C%22
+    static constexpr char kClientId[] =
+        "446450136466-mj75ourhccki9fffaq8bc1e50di315po.apps.googleusercontent."
+        "com";
+    static constexpr char kClientSecret[] =
+        "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";
+
+    return RefreshCredentialSource(http_client, kClientId, kClientSecret,
+                                   refresh_token.asString());
+  }
+  return CF_ERR("Unknown credential file format");
 }
 
 RefreshCredentialSource::RefreshCredentialSource(
