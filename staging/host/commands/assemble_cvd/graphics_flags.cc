@@ -240,12 +240,6 @@ Result<std::string> SelectGpuMode(
   }
 
   if (gpu_mode_arg == kGpuModeAuto) {
-    if (vm_manager == vm_manager::QemuManager::name() &&
-        !IsHostCompatible(guest_config.target_arch)) {
-      LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
-      return kGpuModeDrmVirgl;
-    }
-
     if (ShouldEnableAcceleratedRendering(graphics_availability)) {
       if (HostArch() == Arch::Arm64) {
         LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
