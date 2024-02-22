@@ -52,6 +52,9 @@ TARGET_NO_RECOVERY := true
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES_BLOCKLIST_FILE := \
     device/google/cuttlefish/shared/modules.blocklist
 
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES_OPTIONS_FILE := \
+    device/google/cuttlefish/shared/config/first_stage_modules.options
+
 TARGET_BOOTLOADER_BOARD_NAME := cutf
 
 BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE := ext4
@@ -122,7 +125,6 @@ BOARD_KERNEL_CMDLINE += init=/init
 BOARD_BOOTCONFIG += androidboot.hardware=$(LOCAL_ANDROIDBOOT_HARDWARE)
 BOARD_BOOTCONFIG += \
     androidboot.init_rc=$(LOCAL_ANDROIDBOOT_INIT_RC)
-BOARD_BOOTCONFIG += kernel.mac80211_hwsim.radios=0
 BOARD_BOOTCONFIG += \
     kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_buf_size=16384
 BOARD_BOOTCONFIG += \
