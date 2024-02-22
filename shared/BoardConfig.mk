@@ -68,7 +68,6 @@ BOARD_VENDOR_RAMDISK_KERNEL_MODULES += \
 # first stage init. To minimize scope of modules options to first stage init,
 # mac80211_hwsim.radios=0 has to be specified in the modules options file (which we
 # only read in first stage) and mac80211_hwsim has to be loaded in first stage consequently..
-ifneq ($(TARGET_KERNEL_ARCH),riscv64)
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(SYSTEM_DLKM_SRC)/libarc4.ko)
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(SYSTEM_DLKM_SRC)/rfkill.ko)
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(SYSTEM_DLKM_SRC)/cfg80211.ko)
@@ -77,7 +76,6 @@ BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(KERNEL_MODULES_PATH)/cfg8021
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(KERNEL_MODULES_PATH)/mac80211.ko)
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(KERNEL_MODULES_PATH)/mac80211_hwsim.ko)
 BOARD_DO_NOT_STRIP_VENDOR_RAMDISK_MODULES := true
-endif
 ALL_KERNEL_MODULES := $(wildcard $(KERNEL_MODULES_PATH)/*.ko)
 BOARD_VENDOR_KERNEL_MODULES := \
     $(filter-out $(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),\

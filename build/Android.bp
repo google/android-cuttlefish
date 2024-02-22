@@ -132,6 +132,7 @@ cvd_host_tools = [
     "newfs_msdos",
     "openwrt_control_server",
     "pica",
+    "powerbtn_cvd",
     "powerwash_cvd",
     "process_restarter",
     "process_sandboxer",
@@ -325,7 +326,7 @@ prebuilt_etc_host {
 }
 
 automotive_proxy_config = [
-    "automotive_proxy_config"
+    "automotive_proxy_config",
 ]
 
 cvd_host_avb_testkey = [
