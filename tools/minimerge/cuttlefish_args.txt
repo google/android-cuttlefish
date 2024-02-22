@@ -101,11 +101,7 @@
 --map=host/commands/cvd/driver_flags.h:base/cvd/cuttlefish/host/commands/cvd/driver_flags.h
 --map=host/commands/cvd/epoll_loop.cpp:base/cvd/cuttlefish/host/commands/cvd/epoll_loop.cpp
 --map=host/commands/cvd/epoll_loop.h:base/cvd/cuttlefish/host/commands/cvd/epoll_loop.h
---map=host/commands/cvd/fetch/fetch_cvd.cc:base/cvd/cuttlefish/host/commands/cvd/fetch/fetch_cvd.cc
 --map=host/commands/cvd/fetch/fetch_cvd.h:base/cvd/cuttlefish/host/commands/cvd/fetch/fetch_cvd.h
---map=host/commands/cvd/fetch/fetch_cvd_parser.cc:base/cvd/cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.cc
---map=host/commands/cvd/fetch/fetch_cvd_parser.h:base/cvd/cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h
---map=host/commands/cvd/fetch_cvd.cc:base/cvd/cuttlefish/host/commands/cvd/fetch/fetch_cvd.cc
 --map=host/commands/cvd/fetch_cvd.h:base/cvd/cuttlefish/host/commands/cvd/fetch/fetch_cvd.h
 --map=host/commands/cvd/flag.cpp:base/cvd/cuttlefish/host/commands/cvd/flag.cpp
 --map=host/commands/cvd/flag.h:base/cvd/cuttlefish/host/commands/cvd/flag.h
@@ -434,8 +430,6 @@
 --map=host/libs/config/cuttlefish_config.h:base/cvd/cuttlefish/host/libs/config/cuttlefish_config.h
 --map=host/libs/config/cuttlefish_config_environment.cpp:base/cvd/cuttlefish/host/libs/config/cuttlefish_config_environment.cpp
 --map=host/libs/config/cuttlefish_config_instance.cpp:base/cvd/cuttlefish/host/libs/config/cuttlefish_config_instance.cpp
---map=host/libs/config/fetcher_config.cpp:base/cvd/cuttlefish/host/libs/config/fetcher_config.cpp
---map=host/libs/config/fetcher_config.h:base/cvd/cuttlefish/host/libs/config/fetcher_config.h
 --map=host/libs/config/host_tools_version.cpp:base/cvd/cuttlefish/host/libs/config/host_tools_version.cpp
 --map=host/libs/config/host_tools_version.h:base/cvd/cuttlefish/host/libs/config/host_tools_version.h
 --map=host/libs/config/inject.h:base/cvd/cuttlefish/host/libs/config/inject.h
@@ -448,8 +442,6 @@
 --map=host/libs/web/android_build_api.h:base/cvd/cuttlefish/host/libs/web/android_build_api.h
 --map=host/libs/web/android_build_string.cpp:base/cvd/cuttlefish/host/libs/web/android_build_string.cpp
 --map=host/libs/web/android_build_string.h:base/cvd/cuttlefish/host/libs/web/android_build_string.h
---map=host/libs/web/credential_source.cc:base/cvd/cuttlefish/host/libs/web/credential_source.cc
---map=host/libs/web/credential_source.h:base/cvd/cuttlefish/host/libs/web/credential_source.h
 --map=host/libs/web/http_client.cc:base/cvd/cuttlefish/host/libs/web/http_client/http_client.cc
 --map=host/libs/web/http_client.h:base/cvd/cuttlefish/host/libs/web/http_client/http_client.h
 --map=host/libs/web/http_client/http_client.cc:base/cvd/cuttlefish/host/libs/web/http_client/http_client.cc

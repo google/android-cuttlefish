@@ -66,7 +66,7 @@ public:
 class RefreshCredentialSource : public CredentialSource {
  public:
   static Result<RefreshCredentialSource> FromOauth2ClientFile(
-      HttpClient& http_client, std::istream& stream);
+      HttpClient& http_client, const std::string& oauthcontents);
 
   RefreshCredentialSource(HttpClient& http_client, const std::string& client_id,
                           const std::string& client_secret,

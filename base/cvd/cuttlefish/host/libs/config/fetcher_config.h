@@ -40,6 +40,7 @@ enum class FileSource {
   ANDROID_EFI_LOADER_BUILD,
   BOOT_BUILD,
   HOST_PACKAGE_BUILD,
+  CHROME_OS_BUILD,
 };
 
 /*
