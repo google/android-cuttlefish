@@ -312,7 +312,9 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 	var file *os.File
 	var err error
 	fetchCmd := f.execContext(context.TODO(), f.fetchCVDBin, args...)
-	if f.credentials != "" {
+	if f.credentials == "gce" {
+		args = append(args, "--credential_source=gce")
+	} else if f.credentials != "" {
 		if file, err = createCredentialsFile(f.credentials); err != nil {
 			return err
 		}

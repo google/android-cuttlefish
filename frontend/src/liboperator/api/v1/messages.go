@@ -111,6 +111,8 @@ type AndroidCIBundle struct {
 }
 
 // Use `X-Cutf-Host-Orchestrator-BuildAPI-Creds` http header to pass the Build API credentials.
+//
+// - On GCE, use special value "gce" to use the instance service account credentials.
 type CreateCVDRequest struct {
 	// Environment canonical configuration.
 	// Structure: https://android.googlesource.com/device/google/cuttlefish/+/8bbd3b9cd815f756f332791d45c4f492b663e493/host/commands/cvd/parser/README.md
