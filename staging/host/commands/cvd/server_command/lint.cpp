@@ -37,6 +37,19 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+namespace {
+
+constexpr char kSummaryHelpText[] =
+    R"(error checks the input virtual device json config file)";
+
+constexpr char kDetailedHelpText[] = R"(
+
+Error check of the virtual device json config file.
+
+Usage: cvd lint /path/to/input.json
+)";
+
+}  // namespace
 
 class LintCommandHandler : public CvdServerHandler {
  public:
@@ -70,6 +83,14 @@ class LintCommandHandler : public CvdServerHandler {
   Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
 
   cvd_common::Args CmdList() const override { return {kLintSubCmd}; }
+
+  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+
+  bool ShouldInterceptHelp() const override { return true; }
+
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return kDetailedHelpText;
+  }
 
  private:
   Result<std::string> ValidateConfig(std::vector<std::string>& args,
