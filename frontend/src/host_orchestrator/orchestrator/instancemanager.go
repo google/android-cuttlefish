@@ -281,20 +281,28 @@ func (h *AndroidCICVDDownloader) download(build AndroidBuild, out string) error 
 	return os.Chmod(out, 0750)
 }
 
+type FetchCVDCommandArtifactsFetcherOpts struct {
+	// End user credentials will be used over the service account credentials.
+	UseSrvAccCreds bool
+}
+
 type fetchCVDCommandArtifactsFetcher struct {
-	execContext ExecContext
-	fetchCVDBin string
-	credentials string
+	execContext  ExecContext
+	fetchCVDBin  string
+	endUserCreds string
+	opts         FetchCVDCommandArtifactsFetcherOpts
 }
 
 func newFetchCVDCommandArtifactsFetcher(
 	execContext ExecContext,
 	fetchCVDBin string,
-	credentials string) *fetchCVDCommandArtifactsFetcher {
+	endUserCreds string,
+	opts FetchCVDCommandArtifactsFetcherOpts) *fetchCVDCommandArtifactsFetcher {
 	return &fetchCVDCommandArtifactsFetcher{
-		execContext: execContext,
-		fetchCVDBin: fetchCVDBin,
-		credentials: credentials,
+		execContext:  execContext,
+		fetchCVDBin:  fetchCVDBin,
+		endUserCreds: endUserCreds,
+		opts:         opts,
 	}
 }
 
@@ -312,8 +320,8 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 	var file *os.File
 	var err error
 	fetchCmd := f.execContext(context.TODO(), f.fetchCVDBin, args...)
-	if f.credentials != "" {
-		if file, err = createCredentialsFile(f.credentials); err != nil {
+	if f.endUserCreds != "" {
+		if file, err = createCredentialsFile(f.endUserCreds); err != nil {
 			return err
 		}
 		defer file.Close()
@@ -322,6 +330,8 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 		// The actual fd number is not retained, the lowest available number is used instead.
 		fd := 3 + len(fetchCmd.ExtraFiles) - 1
 		fetchCmd.Args = append(fetchCmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
+	} else if f.opts.UseSrvAccCreds {
+		fetchCmd.Args = append(fetchCmd.Args, "--credential_source=gce")
 	}
 	out, err := fetchCmd.CombinedOutput()
 	if err != nil {
