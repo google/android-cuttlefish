@@ -20,9 +20,6 @@ PRODUCT_PACKAGES += \
     androidx.camera.extensions.impl.advanced advancedSample_camera_extensions.xml \
     libencoderjpeg_jni
 
-PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
-    system/app/EyesFreeVidService/EyesFreeVidService.apk
-
 PRODUCT_PACKAGES += EyesFreeVidService
 
 else
