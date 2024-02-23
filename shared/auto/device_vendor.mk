@@ -66,6 +66,10 @@ LOCAL_AUDIO_PRODUCT_COPY_FILES := \
     device/google/cuttlefish/shared/auto/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/a2dp_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/a2dp_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml
+ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
+LOCAL_AUDIO_PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/auto/audio_effects_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects_config.xml
+endif
 endif
 
 # Include display settings for an auto device.
