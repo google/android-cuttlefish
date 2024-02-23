@@ -28,7 +28,7 @@ cc_library_shared {
     name: "android.hardware.sensors@2.1-impl.cuttlefish",
     defaults: [
         "android.hardware.sensors@2.1-impl.virtual.defaults",
-        "cuttlefish_guest_only"
+        "cuttlefish_guest_only",
     ],
     srcs: [
         "entry.cpp",
@@ -36,8 +36,9 @@ cc_library_shared {
     shared_libs: [
         "libcuttlefish_fs",
         "libcuttlefish_transport",
+        "libcuttlefish_utils_result",
     ],
     cflags: [
-        "-DLOG_TAG=\"android.hardware.sensors@2.1-impl.cuttlefish\""
+        "-DLOG_TAG=\"android.hardware.sensors@2.1-impl.cuttlefish\"",
     ],
 }
