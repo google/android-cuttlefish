@@ -242,6 +242,7 @@ PRODUCT_COPY_FILES += \
 # Install .kcm/.kl/.idc files via input.config apex
 #
 PRODUCT_PACKAGES += com.google.cf.input.config
+PRODUCT_VENDOR_PROPERTIES += input_device.config_file.apex=com.google.cf.input.config
 
 PRODUCT_PACKAGES += \
     fstab.cf.f2fs.hctr2 \

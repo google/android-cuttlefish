@@ -1,6 +1,5 @@
 {
-    // The apex name(com.android.input.config) is hard-coded in libinput
-    "name": "com.android.input.config",
+    "name": "com.google.cf.input.config",
     "version": 1,
     // This apex doesn't have any code
     "noCode": true
