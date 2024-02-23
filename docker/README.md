@@ -176,8 +176,8 @@ obtained the image at step #8, you can copy it to your container as follows:
 ```bash
 # We assume the container is called 'cuttlefish' and
 # it was created with "cf_docker_create cuttlefish"
-ssh vsoc-01@${ip_cuttlefish} -- 'tar xzvf -' < cvd-host_package.tar.gz
-scp *.img vsoc-01@${ip_cuttlefish}:~/
+# Both archives have been extracted to cf/ directory.
+scp -r cf/* vsoc-01@${ip_cuttlefish}:~/
 ```
 
 As an aid, if you would like to fetch the latest Cuttlefish build from AOSP:
