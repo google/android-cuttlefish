@@ -144,6 +144,15 @@ Result<SharedFD> ProcessLeader(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSetup<ValidateTapDevices>::Type& /* dependency */) {
+  if (!config.snapshot_path().empty()) {
+    if (Result<SharedFD> restore_adbd_pipe =
+            SharedFD::Fifo(instance.restore_adbd_pipe_name(), 0600);
+        !restore_adbd_pipe.ok()) {
+      LOG(ERROR) << "Unable to create adbd restore fifo"
+                 << restore_adbd_pipe.error().FormatForEnv();
+      return {};
+    }
+  }
   /* These two paths result in pretty different process state, but both
    * achieve the same goal of making the current process the leader of a
    * process group, and are therefore grouped together. */
