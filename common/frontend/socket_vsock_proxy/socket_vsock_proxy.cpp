@@ -31,6 +31,7 @@
 #include "host/commands/kernel_log_monitor/utils.h"
 
 #ifdef CUTTLEFISH_HOST
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
 #endif // CUTTLEFISH_HOST
 
@@ -62,8 +63,10 @@ DEFINE_uint32(start_event_id, -1, "Kernel event id (cuttlefish::monitor::Event f
                                   "kernel_log_server.h) that we will listen to start proxy");
 DEFINE_uint32(stop_event_id, -1, "Kernel event id (cuttlefish::monitor::Event from "
                                   "kernel_log_server.h) that we will listen to stop proxy");
-DEFINE_bool(start_immediately, false, "A flag to start proxying without waiting for "
-                                      "initial start event");
+#ifdef CUTTLEFISH_HOST
+DEFINE_bool(restore, false,
+            "Wait on the restore_adbd_pipe instead of the initial start event");
+#endif
 DEFINE_bool(vhost_user_vsock, false, "A flag to user vhost_user_vsock");
 
 namespace cuttlefish {
@@ -156,10 +159,31 @@ static Result<void> ListenEventsAndProxy(int events_fd,
 
   std::unique_ptr<ProxyServer> proxy;
 
-  if (FLAGS_start_immediately) {
-    LOG(INFO) << "start_immediately was set to true, so starting proxying";
+#ifdef CUTTLEFISH_HOST
+  if (FLAGS_restore) {
+    LOG(INFO) << "restoring proxy on CUTTLEFISH_HOST - wait for adbd to come "
+                 "online before starting proxy";
+    auto config = CF_EXPECT(CuttlefishConfig::Get());
+    auto instance = config->ForDefaultInstance();
+    SharedFD restore_pipe_read =
+        SharedFD::Open(instance.restore_adbd_pipe_name(), O_RDONLY);
+    if (!restore_pipe_read->IsOpen()) {
+      return CF_ERR(
+          "Error opening restore pipe: " << restore_pipe_read->StrError());
+    }
+    // Try to read from restore pipe. IF successfully reads, that means logcat
+    // has started, and the VM has resumed. Exit the thread.
+    // TODO (@khei): Add a device status tracking mechanism. b/325614380
+    char buff[1];
+    auto read = restore_pipe_read->Read(buff, 1);
+    if (read <= 0) {
+      return CF_ERR(
+          "Could not read restore pipe: " << restore_pipe_read->StrError());
+    }
+    LOG(INFO) << "restoring proxy on CUTTLEFISH_HOST - success";
     proxy = std::move(CF_EXPECT(StartProxyAsync(server, client)));
   }
+#endif
 
   LOG(DEBUG) << "Start reading events to start/stop proxying";
   while (events->IsOpen()) {
