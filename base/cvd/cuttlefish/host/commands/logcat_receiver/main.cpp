@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
         << ". This is unrecoverable.";
     if (first_iter) {
       first_iter = false;
-      if ((!config->snapshot_path().empty()) && instance.run_as_daemon()) {
+      if ((!config->snapshot_path().empty())) {
         cuttlefish::SharedFD restore_pipe = cuttlefish::SharedFD::Open(
             instance.restore_pipe_name().c_str(), O_WRONLY);
         if (!restore_pipe->IsOpen()) {
@@ -87,10 +87,20 @@ int main(int argc, char** argv) {
                      << restore_pipe->StrError();
           return 2;
         }
+        cuttlefish::SharedFD restore_adbd_pipe = cuttlefish::SharedFD::Open(
+            instance.restore_adbd_pipe_name().c_str(), O_WRONLY);
+        if (!restore_adbd_pipe->IsOpen()) {
+          LOG(ERROR) << "Error opening restore pipe: "
+                     << restore_adbd_pipe->StrError();
+          return 2;
+        }
 
         CHECK(cuttlefish::WriteAll(restore_pipe, "1") == 1)
             << "Error writing to restore pipe: " << restore_pipe->StrError()
             << ". This is unrecoverable.";
+        CHECK(cuttlefish::WriteAll(restore_adbd_pipe, "2") == 1)
+            << "Error writing to adbd restore pipe: "
+            << restore_adbd_pipe->StrError() << ". This is unrecoverable.";
       }
     }
   }
