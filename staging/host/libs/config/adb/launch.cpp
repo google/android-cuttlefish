@@ -150,7 +150,7 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
      * wait for the AdbdStarted event.
      */
     if (!instance_.sock_vsock_proxy_wait_adbd_start()) {
-      adb_tunnel.AddParameter("--start_immediately=true");
+      adb_tunnel.AddParameter("--restore=true");
     }
     adb_tunnel.AddParameter("--server_type=tcp");
     adb_tunnel.AddParameter("--server_tcp_port=", instance_.adb_host_port());
