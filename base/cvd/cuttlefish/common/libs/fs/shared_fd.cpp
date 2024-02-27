@@ -467,6 +467,12 @@ SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
   }
 }
 
+SharedFD SharedFD::InotifyFd(void) {
+  errno = 0;
+  int fd = TEMP_FAILURE_RETRY(inotify_init1(IN_CLOEXEC));
+  return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
+}
+
 SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
   return SharedFD::Open(path, O_CREAT|O_WRONLY|O_TRUNC, mode);
 }
@@ -1064,6 +1070,15 @@ Result<std::string> FileInstance::ProcFdLinkTarget() const {
   return mem_fd_target;
 }
 #endif
+
+// inotify related functions
+int FileInstance::InotifyAddWatch(const std::string& pathname, uint32_t mask) {
+  return inotify_add_watch(fd_, pathname.c_str(), mask);
+}
+
+void FileInstance::InotifyRmWatch(int watch) {
+  inotify_rm_watch(fd_, watch);
+}
 
 FileInstance::FileInstance(int fd, int in_errno)
     : fd_(fd), errno_(in_errno), is_regular_file_(IsRegularFile(fd_)) {
