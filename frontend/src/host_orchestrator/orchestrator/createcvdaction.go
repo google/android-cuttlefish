@@ -157,6 +157,12 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 			}
 		}()
 		args = append(args, "--credential_source="+filename)
+	} else if isRunningOnGCE() {
+		if ok, err := hasServiceAccountAccessToken(); err != nil {
+			log.Printf("service account token check failed: %s", err)
+		} else if ok {
+			args = append(args, "--credential_source=gce")
+		}
 	}
 	opts := cvd.CommandOpts{
 		Timeout: a.cvdStartTimeout,
