@@ -111,7 +111,6 @@ func main() {
 	cvdBinAndroidBuildTarget := flag.String("cvd_build_target", defaultCVDBinAndroidBuildTarget, "Build target to fetch the cvd binary from.")
 	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir(), "Directory where cvd will download android build artifacts to.")
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
-	useSrvAccCreds := flag.Bool("use_service_account_creds", true, "Use VM's service account credentials to fetch build artifacts.")
 
 	flag.Parse()
 
@@ -148,7 +147,6 @@ func main() {
 			CVDToolsVersion:        cvdToolsVersion,
 			AndroidBuildServiceURL: *abURL,
 			CVDUser:                *cvdUser,
-			UseSrvAccCreds:         *useSrvAccCreds,
 		},
 		OperationManager:      om,
 		WaitOperationDuration: 2 * time.Minute,

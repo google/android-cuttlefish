@@ -107,9 +107,6 @@ start_orchestrator() {
   if [[ -n "${orchestrator_listen_address}" ]]; then
     args+=("--listen_addr=${orchestrator_listen_address}")
   fi
-  if [[ -n "${use_service_account_creds+true}" ]]; then
-    args+=("--use_service_account_creds=${use_service_account_creds:-true}")
-  fi
   args+=("--cvd_user=_cvd-executor")
 
   start-stop-daemon --start \

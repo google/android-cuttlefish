@@ -42,9 +42,6 @@ type Config struct {
 	CVDToolsVersion        AndroidBuild
 	AndroidBuildServiceURL string
 	CVDUser                string
-	// Indicates whether to use the credentials of the service account
-	// managing the VM towards the Build API.
-	UseSrvAccCreds bool
 }
 
 type Controller struct {
@@ -144,9 +141,8 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	fetchCVDCmdOpts := FetchCVDCommandArtifactsFetcherOpts{UseSrvAccCreds: h.Config.UseSrvAccCreds}
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(
-		exec.CommandContext, h.Config.Paths.FetchCVDBin(), creds, fetchCVDCmdOpts)
+		exec.CommandContext, h.Config.Paths.FetchCVDBin(), creds)
 	opts := FetchArtifactsActionOpts{
 		Request:          &req,
 		Paths:            h.Config.Paths,
@@ -187,9 +183,8 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	fetchCVDCmdOpts := FetchCVDCommandArtifactsFetcherOpts{UseSrvAccCreds: h.Config.UseSrvAccCreds}
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(
-		exec.CommandContext, h.Config.Paths.FetchCVDBin(), creds, fetchCVDCmdOpts)
+		exec.CommandContext, h.Config.Paths.FetchCVDBin(), creds)
 	cvdStartTimeout := 3 * time.Minute
 	if req.EnvConfig != nil {
 		// Use a lengthier timeout when using canonical configs as this operation downloads artifacts as well.

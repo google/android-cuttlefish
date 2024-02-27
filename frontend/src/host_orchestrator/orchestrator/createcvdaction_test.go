@@ -100,7 +100,7 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "")
 	opts := CreateCVDActionOpts{
 		Request:          &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}},
 		HostValidator:    &AlwaysSucceedsValidator{},
@@ -141,7 +141,7 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "")
 	opts := CreateCVDActionOpts{
 		Request:          &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}},
 		HostValidator:    &AlwaysSucceedsValidator{},
@@ -287,7 +287,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 			om := NewMapOM()
 			buildAPI := &fakeBuildAPI{}
 			artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-			cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+			cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "")
 			opts := CreateCVDActionOpts{
 				Request:          &tc.req,
 				HostValidator:    &AlwaysSucceedsValidator{},
@@ -353,7 +353,7 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "")
 	req := apiv1.CreateCVDRequest{
 		CVD: &apiv1.CVD{
 			BuildSource: &apiv1.BuildSource{
@@ -405,7 +405,7 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "")
 	opts := CreateCVDActionOpts{
 		Request:          &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}},
 		HostValidator:    &AlwaysSucceedsValidator{},
@@ -441,7 +441,7 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "")
 	opts := CreateCVDActionOpts{
 		Request:          &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}},
 		HostValidator:    &AlwaysSucceedsValidator{},
