@@ -24,6 +24,7 @@
 #include "absl/flags/parse.h"
 #include "absl/log/check.h"
 #include "absl/log/initialize.h"
+#include "absl/strings/numbers.h"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #include "sandboxed_api/sandbox2/executor.h"
