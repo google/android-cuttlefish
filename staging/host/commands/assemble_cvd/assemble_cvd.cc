@@ -341,6 +341,12 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
                                     default_group));
     CF_EXPECT(EnsureDirectoryExists(config.environments_uds_dir(), default_mode,
                                     default_group));
+    if (!snapshot_path.empty()) {
+      SharedFD temp = SharedFD::Creat(config.AssemblyPath("restore"), 0660);
+      if (!temp->IsOpen()) {
+        return CF_ERR("Failed to create restore file: " << temp->StrError());
+      }
+    }
 
     auto environment =
         const_cast<const CuttlefishConfig&>(config).ForDefaultEnvironment();
