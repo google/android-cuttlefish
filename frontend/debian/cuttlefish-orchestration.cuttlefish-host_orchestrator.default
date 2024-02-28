@@ -20,12 +20,6 @@ orchestrator_https_port=2443
 # Android Build URL. Defaults to "https://androidbuildinternal.googleapis.com"
 # orchestrator_android_build_url=
 #
-# CVD binary Android Build Id. Defaults to ""
-# orchestrator_cvdbin_android_build_id=
-#
-# CVD binary Android Build Target. Defaults to ""
-# orchestrator_cvdbin_android_build_target=
-#
 # Directory used to store the CVD artifacts.
 # Defaults to "/tmp/<uid>/cvd_artifacts"
 orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common

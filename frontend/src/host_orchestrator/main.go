@@ -107,8 +107,6 @@ func main() {
 	cvdUser := flag.String("cvd_user", "", "User to execute cvd as.")
 	operatorPort := flag.Int("operator_http_port", 1080, "Port where the operator is listening.")
 	abURL := flag.String("android_build_url", defaultAndroidBuildURL, "URL to an Android Build API.")
-	cvdBinAndroidBuildID := flag.String("cvd_build_id", defaultCVDBinAndroidBuildID, "Build ID to fetch the cvd binary from.")
-	cvdBinAndroidBuildTarget := flag.String("cvd_build_target", defaultCVDBinAndroidBuildTarget, "Build target to fetch the cvd binary from.")
 	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir(), "Directory where cvd will download android build artifacts to.")
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
 
@@ -123,7 +121,6 @@ func main() {
 
 	imPaths := orchestrator.IMPaths{
 		RootDir:          *imRootDir,
-		CVDToolsDir:      *imRootDir,
 		ArtifactsRootDir: filepath.Join(*imRootDir, "artifacts"),
 	}
 	om := orchestrator.NewMapOM()
@@ -132,19 +129,11 @@ func main() {
 		NameFactory: func() string { return uuid.New().String() },
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
-	cvdToolsVersion := orchestrator.AndroidBuild{
-		ID:     *cvdBinAndroidBuildID,
-		Target: *cvdBinAndroidBuildTarget,
-	}
-	debugStaticVars := debug.StaticVariables{
-		InitialCVDBinAndroidBuildID:     cvdToolsVersion.ID,
-		InitialCVDBinAndroidBuildTarget: cvdToolsVersion.Target,
-	}
+	debugStaticVars := debug.StaticVariables{}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
 	imController := orchestrator.Controller{
 		Config: orchestrator.Config{
 			Paths:                  imPaths,
-			CVDToolsVersion:        cvdToolsVersion,
 			AndroidBuildServiceURL: *abURL,
 			CVDUser:                *cvdUser,
 		},

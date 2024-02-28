@@ -15,8 +15,6 @@
 package debug
 
 type StaticVariables struct {
-	InitialCVDBinAndroidBuildID     string `json:"initial_cvd_bin_android_build_id"`
-	InitialCVDBinAndroidBuildTarget string `json:"initial_cvd_bin_android_build_target"`
 }
 
 type DynamicVariables struct {
