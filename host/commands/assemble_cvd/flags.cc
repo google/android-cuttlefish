@@ -1759,21 +1759,39 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   return tmp_config_obj;
 }
 
-Result<void> SetDefaultFlagsForQemu(Arch target_arch, std::map<std::string, std::string>& name_to_default_value) {
+Result<void> SetDefaultFlagsForQemu(
+    Arch target_arch,
+    std::map<std::string, std::string>& name_to_default_value) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
   std::vector<std::string> gpu_mode_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_mode));
-  std::vector<bool> start_webrtc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      start_webrtc));
+  std::vector<bool> start_webrtc_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(start_webrtc));
+  std::vector<std::string> system_image_dir =
+      CF_EXPECT(GET_FLAG_STR_VALUE(system_image_dir));
+  std::string curr_android_efi_loader = "";
+  std::string default_android_efi_loader = "";
   std::string default_start_webrtc = "";
 
-  for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
+  for (int instance_index = 0; instance_index < instance_nums.size();
+       instance_index++) {
+    if (instance_index >= system_image_dir.size()) {
+      curr_android_efi_loader = system_image_dir[0];
+    } else {
+      curr_android_efi_loader = system_image_dir[instance_index];
+    }
+    curr_android_efi_loader += "/android_efi_loader.efi";
+
     if (instance_index > 0) {
+      default_android_efi_loader += ",";
       default_start_webrtc += ",";
     }
-    if (gpu_mode_vec[instance_index] == kGpuModeGuestSwiftshader && !start_webrtc_vec[instance_index]) {
+
+    default_android_efi_loader += curr_android_efi_loader;
+    if (gpu_mode_vec[instance_index] == kGpuModeGuestSwiftshader &&
+        !start_webrtc_vec[instance_index]) {
       // This makes WebRTC the default streamer unless the user requests
       // another via a --star_<streamer> flag, while at the same time it's
       // possible to run without any streamer by setting --start_webrtc=false.
@@ -1788,25 +1806,31 @@ Result<void> SetDefaultFlagsForQemu(Arch target_arch, std::map<std::string, std:
   SetCommandLineOptionWithMode("start_webrtc", default_start_webrtc.c_str(),
                                SET_FLAGS_DEFAULT);
 
-  std::string default_bootloader =
-      DefaultHostArtifactsPath("etc/bootloader_");
-  if(target_arch == Arch::Arm) {
-      // Bootloader is unstable >512MB RAM on 32-bit ARM
-      SetCommandLineOptionWithMode("memory_mb", "512", SET_FLAGS_VALUE);
-      default_bootloader += "arm";
+  std::string default_bootloader = DefaultHostArtifactsPath("etc/bootloader_");
+  if (target_arch == Arch::Arm) {
+    // Bootloader is unstable >512MB RAM on 32-bit ARM
+    SetCommandLineOptionWithMode("memory_mb", "512", SET_FLAGS_VALUE);
+    default_bootloader += "arm";
   } else if (target_arch == Arch::Arm64) {
-      default_bootloader += "aarch64";
+    default_bootloader += "aarch64";
   } else if (target_arch == Arch::RiscV64) {
-      default_bootloader += "riscv64";
+    default_bootloader += "riscv64";
   } else {
-      default_bootloader += "x86_64";
+    default_bootloader += "x86_64";
   }
   default_bootloader += "/bootloader.qemu";
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
                                SET_FLAGS_DEFAULT);
+  // EFI loader isn't presented in the output folder by default and can be only
+  // fetched by --uefi_app_build in fetch_cvd, so pick it only in case it's
+  // presented.
+  if (FileExists(default_android_efi_loader)) {
+    SetCommandLineOptionWithMode("android_efi_loader",
+                                 default_android_efi_loader.c_str(),
+                                 SET_FLAGS_DEFAULT);
+  }
   return {};
 }
-
 
 Result<void> SetDefaultFlagsForCrosvm(
     const std::vector<GuestConfig>& guest_configs,
@@ -1814,8 +1838,8 @@ Result<void> SetDefaultFlagsForCrosvm(
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
-  std::vector<bool> start_webrtc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      start_webrtc));
+  std::vector<bool> start_webrtc_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(start_webrtc));
   std::string default_start_webrtc = "";
 
   std::set<Arch> supported_archs{Arch::X86_64};
@@ -1825,11 +1849,14 @@ Result<void> SetDefaultFlagsForCrosvm(
       IsDirectoryEmpty(kCrosvmVarEmptyDir) && !IsRunningInContainer();
 
   std::vector<std::string> system_image_dir =
-      android::base::Split(FLAGS_system_image_dir, ",");
+      CF_EXPECT(GET_FLAG_STR_VALUE(system_image_dir));
+  std::string curr_android_efi_loader = "";
   std::string cur_bootloader = "";
+  std::string default_android_efi_loader = "";
   std::string default_bootloader = "";
   std::string default_enable_sandbox_str = "";
-  for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
+  for (int instance_index = 0; instance_index < instance_nums.size();
+       instance_index++) {
     if (guest_configs[instance_index].android_version_number == "11.0.0") {
       cur_bootloader = DefaultHostArtifactsPath("etc/bootloader_");
       if (guest_configs[instance_index].target_arch == Arch::Arm64) {
@@ -1846,12 +1873,21 @@ Result<void> SetDefaultFlagsForCrosvm(
       }
       cur_bootloader += "/bootloader";
     }
+    if (instance_index >= system_image_dir.size()) {
+      curr_android_efi_loader = system_image_dir[0];
+    } else {
+      curr_android_efi_loader = system_image_dir[instance_index];
+    }
+    curr_android_efi_loader += "/android_efi_loader.efi";
+
     if (instance_index > 0) {
       default_bootloader += ",";
+      default_android_efi_loader += ",";
       default_enable_sandbox_str += ",";
       default_start_webrtc += ",";
     }
     default_bootloader += cur_bootloader;
+    default_android_efi_loader += curr_android_efi_loader;
     default_enable_sandbox_str += fmt::format("{}", default_enable_sandbox);
     if (!start_webrtc_vec[instance_index]) {
       // This makes WebRTC the default streamer unless the user requests
@@ -1865,12 +1901,20 @@ Result<void> SetDefaultFlagsForCrosvm(
   }
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
                                SET_FLAGS_DEFAULT);
+  // EFI loader isn't presented in the output folder by default and can be only
+  // fetched by --uefi_app_build in fetch_cvd, so pick it only in case it's
+  // presented.
+  if (FileExists(default_android_efi_loader)) {
+    SetCommandLineOptionWithMode("android_efi_loader",
+                                 default_android_efi_loader.c_str(),
+                                 SET_FLAGS_DEFAULT);
+  }
   // This is the 1st place to set "start_webrtc" flag value
   SetCommandLineOptionWithMode("start_webrtc", default_start_webrtc.c_str(),
                                SET_FLAGS_DEFAULT);
   // This is the 1st place to set "enable_sandbox" flag value
-  SetCommandLineOptionWithMode("enable_sandbox",
-                               default_enable_sandbox_str.c_str(), SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode(
+      "enable_sandbox", default_enable_sandbox_str.c_str(), SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode(
       "enable_virtiofs", default_enable_sandbox_str.c_str(), SET_FLAGS_DEFAULT);
   return {};
