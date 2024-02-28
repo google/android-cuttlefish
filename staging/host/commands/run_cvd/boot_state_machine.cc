@@ -45,7 +45,7 @@ SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   auto restore_pipe_name = instance.restore_pipe_name();
   SharedFD read_end, write_end, restore_pipe_read;
-  if (!config.snapshot_path().empty()) {
+  if (IsRestoring(config)) {
     if (Result<SharedFD> restore_pipe = SharedFD::Fifo(restore_pipe_name, 0600);
         !restore_pipe.ok()) {
       LOG(ERROR) << "Unable to create restore fifo"
@@ -65,7 +65,7 @@ SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
     // child process dies.
     write_end->Close();
     RunnerExitCodes exit_code;
-    if (!config.snapshot_path().empty()) {
+    if (IsRestoring(config)) {
       if (!restore_pipe_read->IsOpen()) {
         LOG(ERROR) << "Error opening restore pipe: "
                    << restore_pipe_read->StrError();
@@ -144,14 +144,9 @@ Result<SharedFD> ProcessLeader(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSetup<ValidateTapDevices>::Type& /* dependency */) {
-  if (!config.snapshot_path().empty()) {
-    if (Result<SharedFD> restore_adbd_pipe =
-            SharedFD::Fifo(instance.restore_adbd_pipe_name(), 0600);
-        !restore_adbd_pipe.ok()) {
-      LOG(ERROR) << "Unable to create adbd restore fifo"
-                 << restore_adbd_pipe.error().FormatForEnv();
-      return {};
-    }
+  if (IsRestoring(config)) {
+    CF_EXPECT(SharedFD::Fifo(instance.restore_adbd_pipe_name(), 0600),
+              "Unable to create adbd restore fifo");
   }
   /* These two paths result in pretty different process state, but both
    * achieve the same goal of making the current process the leader of a

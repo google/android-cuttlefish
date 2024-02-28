@@ -370,6 +370,13 @@ bool ServerLoopImpl::PowerwashFiles() {
 }
 
 void ServerLoopImpl::RestartRunCvd(int notification_fd) {
+  // On device creation, if the file "restore" exists, a restore of the device
+  // occurs. This means a restart will instead perform a restore, which is
+  // undesired behavior. Always try to delete the file "restore" if a restart is
+  // requested.
+  if (IsRestoring(config_)) {
+    CHECK(RemoveFile(config_.AssemblyPath("restore")));
+  }
   auto config_path = config_.AssemblyPath("cuttlefish_config.json");
   auto followup_stdin = SharedFD::MemfdCreate("pseudo_stdin");
   WriteAll(followup_stdin, config_path + "\n");
