@@ -957,9 +957,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_gem5_debug_flags(FLAGS_gem5_debug_flags);
 
-  // setting snapshot path
-  tmp_config_obj.set_snapshot_path(FLAGS_snapshot_path);
-
   // streaming, webrtc setup
   tmp_config_obj.set_webrtc_certs_dir(FLAGS_webrtc_certs_dir);
   tmp_config_obj.set_sig_server_secure(FLAGS_webrtc_sig_server_secure);
