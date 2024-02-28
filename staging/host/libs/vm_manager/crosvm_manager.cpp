@@ -413,8 +413,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   // the first invocation. If the guest requests a restart, we don't want crosvm
   // to restore again. It should reboot normally.
   std::string first_time_argument;
-  const std::string snapshot_dir_path = config.snapshot_path();
-  if (!snapshot_dir_path.empty()) {
+  if (IsRestoring(config)) {
+    const std::string snapshot_dir_path = config.snapshot_path();
     auto meta_info_json = CF_EXPECT(LoadMetaJson(snapshot_dir_path));
     const std::vector<std::string> selectors{kGuestSnapshotField,
                                              instance.id()};
