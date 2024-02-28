@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
         << ". This is unrecoverable.";
     if (first_iter) {
       first_iter = false;
-      if ((!config->snapshot_path().empty())) {
+      if (cuttlefish::IsRestoring(*config)) {
         cuttlefish::SharedFD restore_pipe = cuttlefish::SharedFD::Open(
             instance.restore_pipe_name().c_str(), O_WRONLY);
         if (!restore_pipe->IsOpen()) {
