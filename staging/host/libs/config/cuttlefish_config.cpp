@@ -73,6 +73,9 @@ std::string DefaultEnvironmentPath(const char* environment_key,
   return StringFromEnv(environment_key, default_value) + "/" + subpath;
 }
 
+bool IsRestoring(const CuttlefishConfig& config) {
+  return FileExists(config.AssemblyPath("restore"));
+}
 ConfigFragment::~ConfigFragment() = default;
 
 static constexpr char kFragments[] = "fragments";

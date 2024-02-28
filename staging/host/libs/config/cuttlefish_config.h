@@ -951,6 +951,18 @@ class CuttlefishConfig {
   CuttlefishConfig& operator=(const CuttlefishConfig&) = delete;
 };
 
+// Whether the instance is restored from a snapshot. Stays true until the device
+// reboots.
+// When the device is booting, the config  init function checks if
+// "FLAGS_snapshot_path" is not empty, and if it isn't empty, a file called
+// "restore" will be created to keep track of the restore.
+// This is necessary because we don't want to
+// modify the config when the device boots, however we also want to only restore
+// once. Tracking via "restore" is necessary as a bug existed when checking if
+// "snapshot_path" existed during boot, where a restart or a powerwash of the
+// device would actually perform a restore instead of their respective actions.
+bool IsRestoring(const CuttlefishConfig&);
+
 // Vhost-user-vsock modes
 extern const char* const kVhostUserVsockModeAuto;
 extern const char* const kVhostUserVsockModeTrue;
