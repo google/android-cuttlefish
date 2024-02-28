@@ -6,7 +6,9 @@ system /system erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta_sys
 system /system ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta_system,avb_keys=/avb
 # Add all non-dynamic partitions except system, after this comment
 /dev/block/by-name/userdata /data @userdata_fs_type@ nodev,noatime,nosuid,@userdata_mount_flags@ latemount,wait,check,quota,formattable,keydirectory=/metadata/vold/metadata_encryption,@userdata_fsmgr_flags@
+/dev/block/by-name/userdata /data ext4 nodev,noatime,nosuid,errors=panic latemount,wait,check,quota,keydirectory=/metadata/vold/metadata_encryption,@userdata_fsmgr_flags@
 /dev/block/by-name/metadata /metadata @metadata_fs_type@ nodev,noatime,nosuid wait,check,formattable,first_stage_mount
+/dev/block/by-name/metadata /metadata ext4 nodev,noatime,nosuid wait,check,first_stage_mount
 /dev/block/by-name/misc /misc emmc defaults defaults
 # Add all dynamic partitions except system, after this comment
 odm /odm erofs ro wait,logical,first_stage_mount,slotselect,avb
