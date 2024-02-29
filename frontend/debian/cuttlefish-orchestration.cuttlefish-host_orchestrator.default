@@ -39,8 +39,3 @@ orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common
 # The port where the operator is to listen on.
 # Defaults to 1080.
 # operator_http_port=
-#
-# Indicates whether to use the credentials of the service account
-# managing the VM towards the Build API.
-# Defaults to true.
-# use_service_account_creds=
