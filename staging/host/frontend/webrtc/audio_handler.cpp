@@ -443,7 +443,7 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
         // webrtc api doesn't expect volatile memory. This should be safe though
         // because webrtc will use the contents of the buffer before returning
         // and only then we release it.
-        auto audio_frame_buffer = std::make_shared<CvdAudioFrameBuffer>(
+        CvdAudioFrameBuffer audio_frame_buffer(
             const_cast<const uint8_t*>(&buffer.get()[pos]),
             stream_desc.bits_per_sample, stream_desc.sample_rate,
             stream_desc.channels, frames);
@@ -453,9 +453,9 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
         pos += holding_buffer.Add(buffer.get() + pos, buffer.len() - pos);
         if (holding_buffer.full()) {
           auto buffer_ptr = const_cast<const uint8_t*>(holding_buffer.data());
-          auto audio_frame_buffer = std::make_shared<CvdAudioFrameBuffer>(
-              buffer_ptr, stream_desc.bits_per_sample,
-              stream_desc.sample_rate, stream_desc.channels, frames);
+          CvdAudioFrameBuffer audio_frame_buffer(
+              buffer_ptr, stream_desc.bits_per_sample, stream_desc.sample_rate,
+              stream_desc.channels, frames);
           audio_sink_->OnFrame(audio_frame_buffer, base_time);
           holding_buffer.count = 0;
         }
