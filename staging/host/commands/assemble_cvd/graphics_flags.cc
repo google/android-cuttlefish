@@ -71,8 +71,9 @@ Result<RenderingMode> GetRenderingMode(const std::string& mode) {
 
 struct AngleFeatures {
   // Prefer linear filtering for YUV AHBs to pass
-  // android.media.decoder.cts.DecodeAccuracyTest.
-  bool prefer_linear_filtering_for_yuv = true;
+  // android.media.decoder.cts.DecodeAccuracyTest on older branches.
+  // Generally not needed after b/315387961.
+  bool prefer_linear_filtering_for_yuv = false;
 
   // Map unspecified color spaces to PASS_THROUGH to pass
   // android.media.codec.cts.DecodeEditEncodeTest and
