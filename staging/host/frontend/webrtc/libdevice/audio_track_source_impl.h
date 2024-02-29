@@ -44,7 +44,7 @@ class AudioTrackSourceImpl : public webrtc::AudioSourceInterface {
   // audio network adaptation on the source is the wrong layer of abstraction).
   virtual const cricket::AudioOptions options() const;
 
-  void OnFrame(std::shared_ptr<AudioFrameBuffer> frame, int64_t timestamp_ms);
+  void OnFrame(const AudioFrameBuffer& frame, int64_t timestamp_ms);
 
   // MediaSourceInterface implementation
   SourceState state() const override;
@@ -74,7 +74,7 @@ class AudioTrackSourceImplSinkWrapper : public AudioSink {
   AudioTrackSourceImplSinkWrapper(rtc::scoped_refptr<AudioTrackSourceImpl> obj)
       : track_source_impl_(obj) {}
 
-  void OnFrame(std::shared_ptr<AudioFrameBuffer> frame,
+  void OnFrame(const AudioFrameBuffer& frame,
                int64_t timestamp_ms) override {
     track_source_impl_->OnFrame(frame, timestamp_ms);
   }

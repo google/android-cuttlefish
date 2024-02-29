@@ -51,12 +51,12 @@ const cricket::AudioOptions AudioTrackSourceImpl::options() const {
   return cricket::AudioOptions();
 }
 
-void AudioTrackSourceImpl::OnFrame(std::shared_ptr<AudioFrameBuffer> frame,
+void AudioTrackSourceImpl::OnFrame(const AudioFrameBuffer& frame,
                                    int64_t timestamp_ms) {
     std::lock_guard<std::mutex> lock(sinks_mutex_);
     for (auto sink : sinks_) {
-      sink->OnData(frame->data(), frame->bits_per_sample(),
-                   frame->sample_rate(), frame->channels(), frame->frames(),
+      sink->OnData(frame.data(), frame.bits_per_sample(),
+                   frame.sample_rate(), frame.channels(), frame.frames(),
                    timestamp_ms);
     }
 }
