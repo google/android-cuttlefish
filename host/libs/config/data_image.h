@@ -25,11 +25,7 @@
 
 namespace cuttlefish {
 
-class InitializeDataImage : public SetupFeature {};
-
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
-                 InitializeDataImage>
-InitializeDataImageComponent();
+Result<void> InitializeDataImage(const CuttlefishConfig::InstanceSpecific&);
 
 class InitializeEspImage : public SetupFeature {};
 
