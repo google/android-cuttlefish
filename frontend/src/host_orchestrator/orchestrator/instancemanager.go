@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -322,6 +324,12 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 		// The actual fd number is not retained, the lowest available number is used instead.
 		fd := 3 + len(fetchCmd.ExtraFiles) - 1
 		fetchCmd.Args = append(fetchCmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
+	} else if isRunningOnGCE() {
+		if ok, err := hasServiceAccountAccessToken(); err != nil {
+			log.Printf("service account token check failed: %s", err)
+		} else if ok {
+			fetchCmd.Args = append(fetchCmd.Args, "--credential_source=gce")
+		}
 	}
 	out, err := fetchCmd.CombinedOutput()
 	if err != nil {
@@ -585,4 +593,24 @@ func contains(s []uint32, e uint32) bool {
 		}
 	}
 	return false
+}
+
+func isRunningOnGCE() bool {
+	_, err := net.LookupIP("metadata.google.internal")
+	return err == nil
+}
+
+// For instances running on GCE, checks whether the instance was created with a service account having an access token.
+func hasServiceAccountAccessToken() (bool, error) {
+	req, err := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token", nil)
+	if err != nil {
+		return false, err
+	}
+	req.Header.Set("Metadata-Flavor", "Google")
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return false, err
+	}
+	return res.StatusCode == http.StatusOK, nil
 }
