@@ -56,16 +56,7 @@ type AndroidBuild struct {
 
 type IMPaths struct {
 	RootDir          string
-	CVDToolsDir      string
 	ArtifactsRootDir string
-}
-
-func (p *IMPaths) CVDBin() string {
-	return filepath.Join(p.CVDToolsDir, "cvd")
-}
-
-func (p *IMPaths) FetchCVDBin() string {
-	return filepath.Join(p.CVDToolsDir, "fetch_cvd")
 }
 
 type CVDSelector struct {
@@ -152,9 +143,9 @@ func (i *cvdInstance) toAPIObject(group string) *apiv1.CVD {
 	}
 }
 
-func cvdFleet(ctx cvd.CVDExecContext, cvdBin string) (*cvdFleetOutput, error) {
+func cvdFleet(ctx cvd.CVDExecContext) (*cvdFleetOutput, error) {
 	stdout := &bytes.Buffer{}
-	cvdCmd := cvd.NewCommand(ctx, cvdBin, []string{"fleet"}, cvd.CommandOpts{Stdout: stdout})
+	cvdCmd := cvd.NewCommand(ctx, []string{"fleet"}, cvd.CommandOpts{Stdout: stdout})
 	err := cvdCmd.Run()
 	if err != nil {
 		return nil, err
@@ -169,8 +160,8 @@ func cvdFleet(ctx cvd.CVDExecContext, cvdBin string) (*cvdFleetOutput, error) {
 
 // Helper for listing first group instances only. Legacy flows didn't have a multi-group environment hence unsing
 // the first group only.
-func cvdFleetFirstGroup(ctx cvd.CVDExecContext, cvdBin string) (*cvdGroup, error) {
-	fleet, err := cvdFleet(ctx, cvdBin)
+func cvdFleetFirstGroup(ctx cvd.CVDExecContext) (*cvdGroup, error) {
+	fleet, err := cvdFleet(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +171,8 @@ func cvdFleetFirstGroup(ctx cvd.CVDExecContext, cvdBin string) (*cvdGroup, error
 	return fleet.Groups[0], nil
 }
 
-func CVDLogsDir(ctx cvd.CVDExecContext, cvdBin, name string) (string, error) {
-	group, err := cvdFleetFirstGroup(ctx, cvdBin)
+func CVDLogsDir(ctx cvd.CVDExecContext, name string) (string, error) {
+	group, err := cvdFleetFirstGroup(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -193,19 +184,14 @@ func CVDLogsDir(ctx cvd.CVDExecContext, cvdBin, name string) (string, error) {
 }
 
 func HostBugReport(ctx cvd.CVDExecContext, paths IMPaths, out string) error {
-	group, err := cvdFleetFirstGroup(ctx, paths.CVDBin())
+	group, err := cvdFleetFirstGroup(ctx)
 	if err != nil {
 		return err
 	}
 	if len(group.Instances) == 0 {
 		return operator.NewNotFoundError("no artifacts found", nil)
 	}
-	cmd := cvd.NewCommand(
-		ctx,
-		paths.CVDBin(),
-		[]string{"host_bugreport", "--output=" + out},
-		cvd.CommandOpts{},
-	)
+	cmd := cvd.NewCommand(ctx, []string{"host_bugreport", "--output=" + out}, cvd.CommandOpts{})
 	return cmd.Run()
 }
 
@@ -228,74 +214,14 @@ func untarCVDHostPackage(dir string) error {
 	return nil
 }
 
-type CVDDownloader interface {
-	// Downloads the `cvd` and `fetch_cvd` binaries into the given filenames.
-	Download(build AndroidBuild, outCVD, outFetchCVD string) error
-}
-
-type AndroidCICVDDownloader struct {
-	buildAPI artifacts.BuildAPI
-}
-
-func NewAndroidCICVDDownloader(buildAPI artifacts.BuildAPI) *AndroidCICVDDownloader {
-	return &AndroidCICVDDownloader{
-		buildAPI: buildAPI,
-	}
-}
-
-func (h *AndroidCICVDDownloader) Download(build AndroidBuild, outCVD, outFetchCVD string) error {
-	if err := h.download(build, outCVD); err != nil {
-		return fmt.Errorf("failed downloading cvd file: %w", err)
-	}
-	if err := h.download(build, outFetchCVD); err != nil {
-		return fmt.Errorf("failed downloading fetch_cvd file: %w", err)
-	}
-	return nil
-}
-
-func (h *AndroidCICVDDownloader) download(build AndroidBuild, out string) error {
-	exist, err := fileExist(out)
-	if err != nil {
-		return fmt.Errorf("failed to test if the `%s` file %q does exist: %w", filepath.Base(out), out, err)
-	}
-	if exist {
-		return nil
-	}
-	f, err := os.Create(out)
-	if err != nil {
-		return fmt.Errorf("failed to create the `%s` file %q: %w", filepath.Base(out), out, err)
-	}
-	var downloadErr error
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Printf("failed closing `%s` file %q file, error: %v", filepath.Base(out), out, err)
-		}
-		if downloadErr != nil {
-			if err := os.Remove(out); err != nil {
-				log.Printf("failed removing  `%s` file %q: %v", filepath.Base(out), out, err)
-			}
-		}
-
-	}()
-	if err := h.buildAPI.DownloadArtifact(filepath.Base(out), build.ID, build.Target, f); err != nil {
-		return err
-	}
-	return os.Chmod(out, 0750)
-}
-
 type fetchCVDCommandArtifactsFetcher struct {
 	execContext ExecContext
-	fetchCVDBin string
 	credentials string
 }
 
-func newFetchCVDCommandArtifactsFetcher(
-	execContext ExecContext,
-	fetchCVDBin string,
-	credentials string) *fetchCVDCommandArtifactsFetcher {
+func newFetchCVDCommandArtifactsFetcher(execContext ExecContext, credentials string) *fetchCVDCommandArtifactsFetcher {
 	return &fetchCVDCommandArtifactsFetcher{
 		execContext: execContext,
-		fetchCVDBin: fetchCVDBin,
 		credentials: credentials,
 	}
 }
@@ -313,7 +239,7 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 	}
 	var file *os.File
 	var err error
-	fetchCmd := f.execContext(context.TODO(), f.fetchCVDBin, args...)
+	fetchCmd := f.execContext(context.TODO(), cvd.FetchCVDBin, args...)
 	if f.credentials != "" {
 		if file, err = createCredentialsFile(f.credentials); err != nil {
 			return err
@@ -402,7 +328,6 @@ const (
 
 type startCVDHandler struct {
 	ExecContext cvd.CVDExecContext
-	CVDBin      string
 	Timeout     time.Duration
 }
 
@@ -443,7 +368,7 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 		Home:           p.RuntimeDir,
 		Timeout:        h.Timeout,
 	}
-	cvdCmd := cvd.NewCommand(h.ExecContext, h.CVDBin, args, opts)
+	cvdCmd := cvd.NewCommand(h.ExecContext, args, opts)
 	err := cvdCmd.Run()
 	if err != nil {
 		return fmt.Errorf("launch cvd stage failed: %w", err)

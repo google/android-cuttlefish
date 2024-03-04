@@ -80,17 +80,11 @@ func TestListCVDsSucceeds(t *testing.T) {
 		}
 		return cmd
 	}
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDToolsDir:      dir,
-		ArtifactsRootDir: dir + "/artifacts",
-	}
+	paths := IMPaths{ArtifactsRootDir: dir + "/artifacts"}
 	opts := ListCVDsActionOpts{
-		Paths:           paths,
-		ExecContext:     execContext,
-		CVDToolsVersion: cvdBinAB,
-		CVDDownloader:   &fakeCVDDownloader{},
-		CVDUser:         fakeCVDUser,
+		Paths:       paths,
+		ExecContext: execContext,
+		CVDUser:     fakeCVDUser,
 	}
 	action := NewListCVDsAction(opts)
 

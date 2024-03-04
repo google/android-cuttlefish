@@ -21,34 +21,25 @@ import (
 )
 
 type ListCVDsActionOpts struct {
-	Paths           IMPaths
-	ExecContext     ExecContext
-	CVDToolsVersion AndroidBuild
-	CVDDownloader   CVDDownloader
-	CVDUser         string
+	Paths       IMPaths
+	ExecContext ExecContext
+	CVDUser     string
 }
 
 type ListCVDsAction struct {
-	paths           IMPaths
-	cvdToolsVersion AndroidBuild
-	cvdDownloader   CVDDownloader
-	execContext     cvd.CVDExecContext
+	paths       IMPaths
+	execContext cvd.CVDExecContext
 }
 
 func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {
 	return &ListCVDsAction{
-		paths:           opts.Paths,
-		cvdToolsVersion: opts.CVDToolsVersion,
-		cvdDownloader:   opts.CVDDownloader,
-		execContext:     newCVDExecContext(opts.ExecContext, opts.CVDUser),
+		paths:       opts.Paths,
+		execContext: newCVDExecContext(opts.ExecContext, opts.CVDUser),
 	}
 }
 
 func (a *ListCVDsAction) Run() (*apiv1.ListCVDsResponse, error) {
-	if err := a.cvdDownloader.Download(a.cvdToolsVersion, a.paths.CVDBin(), a.paths.FetchCVDBin()); err != nil {
-		return nil, err
-	}
-	group, err := cvdFleetFirstGroup(a.execContext, a.paths.CVDBin())
+	group, err := cvdFleetFirstGroup(a.execContext)
 	if err != nil {
 		return nil, err
 	}

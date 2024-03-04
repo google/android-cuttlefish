@@ -40,8 +40,6 @@ type CreateCVDActionOpts struct {
 	Paths                    IMPaths
 	OperationManager         OperationManager
 	ExecContext              ExecContext
-	CVDDownloader            CVDDownloader
-	CVDToolsVersion          AndroidBuild
 	BuildAPI                 artifacts.BuildAPI
 	ArtifactsFetcher         artifacts.Fetcher
 	CVDBundleFetcher         artifacts.CVDBundleFetcher
@@ -58,8 +56,6 @@ type CreateCVDAction struct {
 	paths                    IMPaths
 	om                       OperationManager
 	execContext              cvd.CVDExecContext
-	cvdToolsVersion          AndroidBuild
-	cvdDownloader            CVDDownloader
 	buildAPI                 artifacts.BuildAPI
 	artifactsFetcher         artifacts.Fetcher
 	cvdBundleFetcher         artifacts.CVDBundleFetcher
@@ -80,8 +76,6 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		hostValidator:            opts.HostValidator,
 		paths:                    opts.Paths,
 		om:                       opts.OperationManager,
-		cvdToolsVersion:          opts.CVDToolsVersion,
-		cvdDownloader:            opts.CVDDownloader,
 		buildAPI:                 opts.BuildAPI,
 		artifactsFetcher:         opts.ArtifactsFetcher,
 		cvdBundleFetcher:         opts.CVDBundleFetcher,
@@ -97,7 +91,6 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		execContext: cvdExecContext,
 		startCVDHandler: &startCVDHandler{
 			ExecContext: cvdExecContext,
-			CVDBin:      opts.Paths.CVDBin(),
 			Timeout:     opts.CVDStartTimeout,
 		},
 	}
@@ -111,9 +104,6 @@ func (a *CreateCVDAction) Run() (apiv1.Operation, error) {
 		return apiv1.Operation{}, err
 	}
 	if err := createDir(a.paths.ArtifactsRootDir); err != nil {
-		return apiv1.Operation{}, err
-	}
-	if err := a.cvdDownloader.Download(a.cvdToolsVersion, a.paths.CVDBin(), a.paths.FetchCVDBin()); err != nil {
 		return apiv1.Operation{}, err
 	}
 	op := a.om.New()
@@ -167,11 +157,11 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	opts := cvd.CommandOpts{
 		Timeout: a.cvdStartTimeout,
 	}
-	cmd := cvd.NewCommand(a.execContext, a.paths.CVDBin(), args, opts)
+	cmd := cvd.NewCommand(a.execContext, args, opts)
 	if err := cmd.Run(); err != nil {
 		return nil, operator.NewInternalError(ErrMsgLaunchCVDFailed, err)
 	}
-	group, err := cvdFleetFirstGroup(a.execContext, a.paths.CVDBin())
+	group, err := cvdFleetFirstGroup(a.execContext)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +186,7 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 	if err != nil {
 		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
-	group, err := cvdFleetFirstGroup(a.execContext, a.paths.CVDBin())
+	group, err := cvdFleetFirstGroup(a.execContext)
 	if err != nil {
 		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}

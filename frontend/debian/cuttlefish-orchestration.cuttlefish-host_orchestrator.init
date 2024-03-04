@@ -92,12 +92,6 @@ start_orchestrator() {
   if [[ -n "${orchestrator_android_build_url}" ]]; then
     args+=("--android_build_url=${orchestrator_android_build_url}")
   fi
-  if [[ -n "${orchestrator_cvdbin_android_build_id}" ]]; then
-    args+=("--cvd_build_id=${orchestrator_cvdbin_android_build_id}")
-  fi
-  if [[ -n "${orchestrator_cvdbin_android_build_target}" ]]; then
-    args+=("--cvd_build_target=${orchestrator_cvdbin_android_build_target}")
-  fi
   if [[ -n "${orchestrator_cvd_artifacts_dir}" ]]; then
     args+=("--cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir}")
   fi

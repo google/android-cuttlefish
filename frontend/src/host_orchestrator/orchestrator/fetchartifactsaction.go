@@ -27,8 +27,6 @@ import (
 type FetchArtifactsActionOpts struct {
 	Request          *apiv1.FetchArtifactsRequest
 	Paths            IMPaths
-	CVDToolsVersion  AndroidBuild
-	CVDDownloader    CVDDownloader
 	OperationManager OperationManager
 	BuildAPI         artifacts.BuildAPI
 	CVDBundleFetcher artifacts.CVDBundleFetcher
@@ -39,8 +37,6 @@ type FetchArtifactsActionOpts struct {
 type FetchArtifactsAction struct {
 	req              *apiv1.FetchArtifactsRequest
 	paths            IMPaths
-	cvdToolsVersion  AndroidBuild
-	cvdDownloader    CVDDownloader
 	om               OperationManager
 	buildAPI         artifacts.BuildAPI
 	cvdBundleFetcher artifacts.CVDBundleFetcher
@@ -52,8 +48,6 @@ func NewFetchArtifactsAction(opts FetchArtifactsActionOpts) *FetchArtifactsActio
 	return &FetchArtifactsAction{
 		req:              opts.Request,
 		paths:            opts.Paths,
-		cvdToolsVersion:  opts.CVDToolsVersion,
-		cvdDownloader:    opts.CVDDownloader,
 		om:               opts.OperationManager,
 		buildAPI:         opts.BuildAPI,
 		cvdBundleFetcher: opts.CVDBundleFetcher,
@@ -68,9 +62,6 @@ func (a *FetchArtifactsAction) Run() (apiv1.Operation, error) {
 		return apiv1.Operation{}, operator.NewBadRequestError("invalid FetchArtifactsRequest", err)
 	}
 	if err := createDir(a.paths.ArtifactsRootDir); err != nil {
-		return apiv1.Operation{}, err
-	}
-	if err := a.cvdDownloader.Download(a.cvdToolsVersion, a.paths.CVDBin(), a.paths.FetchCVDBin()); err != nil {
 		return apiv1.Operation{}, err
 	}
 	op := a.om.New()
