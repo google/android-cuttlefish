@@ -17,16 +17,12 @@
 
 #include <fruit/fruit.h>
 
+#include "common/libs/utils/result.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/feature.h"
 
 namespace cuttlefish {
 
-class InitBootloaderEnvPartition : public SetupFeature {};
-
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
-                 InitBootloaderEnvPartition>
-InitBootloaderEnvPartitionComponent();
+Result<void> InitBootloaderEnvPartition(
+    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 
 } // namespace cuttlefish
