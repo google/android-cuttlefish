@@ -89,7 +89,7 @@ bool IsVmManagerQemu(const CuttlefishConfig& config) {
 Result<void> InitializeInstanceCompositeDisk(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    InitializeFactoryResetProtected& /* dependency */,
+    AutoSetup<InitializeFactoryResetProtected>::Type& /* dependency */,
     GeneratePersistentVbmeta& /* dependency */) {
   const auto ipath = [&instance](const std::string& path) -> std::string {
     return instance.PerInstancePath(path.c_str());
