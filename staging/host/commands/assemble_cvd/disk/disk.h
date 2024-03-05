@@ -51,14 +51,12 @@ fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
                  GeneratePersistentVbmeta>
 GeneratePersistentVbmetaComponent();
 
-class InitializeFactoryResetProtected : public SetupFeature {};
-
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
-                 InitializeFactoryResetProtected>
-InitializeFactoryResetProtectedComponent();
+Result<void> InitializeFactoryResetProtected(
+    const CuttlefishConfig::InstanceSpecific&);
 
 Result<void> InitializeInstanceCompositeDisk(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
-    InitializeFactoryResetProtected&, GeneratePersistentVbmeta&);
+    AutoSetup<InitializeFactoryResetProtected>::Type&,
+    GeneratePersistentVbmeta&);
 
 }  // namespace cuttlefish
