@@ -45,10 +45,10 @@ Gem5ImageUnpackerComponent();
 
 class GeneratePersistentVbmeta : public SetupFeature {};
 
-fruit::Component<
-    fruit::Required<const CuttlefishConfig::InstanceSpecific,
-                    InitBootloaderEnvPartition, GeneratePersistentBootconfig>,
-    GeneratePersistentVbmeta>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
+                                 AutoSetup<InitBootloaderEnvPartition>::Type,
+                                 GeneratePersistentBootconfig>,
+                 GeneratePersistentVbmeta>
 GeneratePersistentVbmetaComponent();
 
 class InitializeFactoryResetProtected : public SetupFeature {};
