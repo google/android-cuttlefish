@@ -33,12 +33,8 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
                  KernelRamdiskRepacker>
 KernelRamdiskRepackerComponent();
 
-class GeneratePersistentBootconfig : public SetupFeature {};
-
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
-                 GeneratePersistentBootconfig>
-GeneratePersistentBootconfigComponent();
+Result<void> GeneratePersistentBootconfig(
+    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelRamdiskRepacker>>
 Gem5ImageUnpackerComponent();
@@ -47,7 +43,7 @@ class GeneratePersistentVbmeta : public SetupFeature {};
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
                                  AutoSetup<InitBootloaderEnvPartition>::Type,
-                                 GeneratePersistentBootconfig>,
+                                 AutoSetup<GeneratePersistentBootconfig>::Type>,
                  GeneratePersistentVbmeta>
 GeneratePersistentVbmetaComponent();
 

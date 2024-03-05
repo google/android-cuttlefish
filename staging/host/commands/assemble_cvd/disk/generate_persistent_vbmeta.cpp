@@ -35,7 +35,7 @@ class GeneratePersistentVbmetaImpl : public GeneratePersistentVbmeta {
   INJECT(GeneratePersistentVbmetaImpl(
       const CuttlefishConfig::InstanceSpecific& instance,
       AutoSetup<InitBootloaderEnvPartition>::Type& bootloader_env,
-      GeneratePersistentBootconfig& bootconfig))
+      AutoSetup<GeneratePersistentBootconfig>::Type& bootconfig))
       : instance_(instance),
         bootloader_env_(bootloader_env),
         bootconfig_(bootconfig) {}
@@ -112,12 +112,12 @@ class GeneratePersistentVbmetaImpl : public GeneratePersistentVbmeta {
 
   const CuttlefishConfig::InstanceSpecific& instance_;
   AutoSetup<InitBootloaderEnvPartition>::Type& bootloader_env_;
-  GeneratePersistentBootconfig& bootconfig_;
+  AutoSetup<GeneratePersistentBootconfig>::Type& bootconfig_;
 };
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
                                  AutoSetup<InitBootloaderEnvPartition>::Type,
-                                 GeneratePersistentBootconfig>,
+                                 AutoSetup<GeneratePersistentBootconfig>::Type>,
                  GeneratePersistentVbmeta>
 GeneratePersistentVbmetaComponent() {
   return fruit::createComponent()
