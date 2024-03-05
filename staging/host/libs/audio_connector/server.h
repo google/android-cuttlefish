@@ -87,10 +87,8 @@ class AudioClientConnection {
                    AudioServerExecutor& executor);
 
   ssize_t ReceiveMsg(SharedFD socket, void* buffer, size_t size);
-  const volatile uint8_t* TxBufferAt(size_t offset, size_t len) const;
-  volatile uint8_t* RxBufferAt(size_t offset, size_t len);
 
-  const ScopedMMap tx_shm_;
+  ScopedMMap tx_shm_;
   ScopedMMap rx_shm_;
   SharedFD control_socket_;
   SharedFD event_socket_;
