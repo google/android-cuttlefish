@@ -19,6 +19,7 @@
 
 #include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/flags.h"
+#include "host/libs/config/config_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {

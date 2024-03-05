@@ -59,4 +59,6 @@ std::string DefaultEnvironmentPath(const char* environment_key,
 // Whether the host supports qemu
 bool HostSupportsQemuCli();
 
+// Whether to use QEMU8
+bool UseQemu8();
 }
