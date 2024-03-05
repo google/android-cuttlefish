@@ -14,6 +14,7 @@
 // limitations under the License.
 #pragma once
 
+#include <atomic>
 #include <cinttypes>
 #include <functional>
 
@@ -35,11 +36,11 @@ using OnConsumedCb = std::function<void(AudioStatus, uint32_t /*latency*/,
 // Objects of this class can only be moved, not copied. Destroying a buffer
 // without sending the status to the client is a bug so the program aborts in
 // those cases.
+// This class is NOT thread safe despite its use of atomic variables.
 class ShmBuffer {
  public:
-  ShmBuffer(const virtio_snd_pcm_xfer& header, uint32_t len,
-            OnConsumedCb on_consumed)
-      : header_(header), len_(len), on_consumed_(on_consumed) {}
+  ShmBuffer(const virtio_snd_pcm_xfer& header, volatile uint8_t* buffer,
+            uint32_t len, OnConsumedCb on_consumed);
   ShmBuffer(const ShmBuffer& other) = delete;
   ShmBuffer(ShmBuffer&& other);
   ShmBuffer& operator=(const ShmBuffer& other) = delete;
@@ -52,41 +53,27 @@ class ShmBuffer {
   void SendStatus(AudioStatus status, uint32_t latency_bytes,
                   uint32_t consumed_len);
 
+  const uint8_t* get() const { return buffer_; }
+
  private:
   const virtio_snd_pcm_xfer header_;
   const uint32_t len_;
   OnConsumedCb on_consumed_;
-  bool status_sent_ = false;
+  std::atomic<bool> status_sent_ = false;
+
+ protected:
+  uint8_t* buffer_;
 };
 
-class TxBuffer : public ShmBuffer {
- public:
-  TxBuffer(const virtio_snd_pcm_xfer& header, const volatile uint8_t* buffer,
-           uint32_t len, OnConsumedCb on_consumed)
-      : ShmBuffer(header, len, on_consumed), buffer_(buffer) {}
-  TxBuffer(const TxBuffer& other) = delete;
-  TxBuffer(TxBuffer&& other) = default;
-  TxBuffer& operator=(const TxBuffer& other) = delete;
-
-  const volatile uint8_t* get() const { return buffer_; }
-
- private:
-  const volatile uint8_t* const buffer_;
-};
-
+using TxBuffer = ShmBuffer;
+// Only RxBuffer can be written to
 class RxBuffer : public ShmBuffer {
  public:
   RxBuffer(const virtio_snd_pcm_xfer& header, volatile uint8_t* buffer,
            uint32_t len, OnConsumedCb on_consumed)
-      : ShmBuffer(header, len, on_consumed), buffer_(buffer) {}
-  RxBuffer(const RxBuffer& other) = delete;
-  RxBuffer(RxBuffer&& other) = default;
-  RxBuffer& operator=(const RxBuffer& other) = delete;
+      : ShmBuffer(header, buffer, len, on_consumed) {}
 
-  volatile uint8_t* get() const { return buffer_; }
-
- private:
-  volatile uint8_t* const buffer_;
+  uint8_t* get() { return buffer_; }
 };
 
 }  // namespace cuttlefish
