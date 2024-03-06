@@ -123,6 +123,7 @@ ssh $server \
 echo -e "Done"
 
 # start Cuttlefish instance on top of docker instance
+# TODO(b/317942272): support starting the instance with an optional vendor boot debug image.
 echo -e "Starting Cuttlefish"
 ssh $server "curl -s -k -X POST $host_orchestrator_url/cvds \
   -H 'Content-Type: application/json' \

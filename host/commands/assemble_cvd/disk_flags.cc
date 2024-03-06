@@ -684,15 +684,15 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .bindInstance(*config)
       .bindInstance(*instance)
       .install(AutoSetup<InitializeAccessKregistryImage>::Component)
+      .install(AutoSetup<InitBootloaderEnvPartition>::Component)
+      .install(AutoSetup<InitializeFactoryResetProtected>::Component)
       .install(AutoSetup<InitializeHwcomposerPmemImage>::Component)
       .install(AutoSetup<InitializePstore>::Component)
       .install(AutoSetup<InitializeSdCard>::Component)
-      .install(InitializeFactoryResetProtectedComponent)
       .install(GeneratePersistentBootconfigComponent)
       .install(GeneratePersistentVbmetaComponent)
       .install(AutoSetup<InitializeInstanceCompositeDisk>::Component)
-      .install(InitializeDataImageComponent)
-      .install(InitBootloaderEnvPartitionComponent);
+      .install(InitializeDataImageComponent);
 }
 
 Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const FetcherConfig& fetcher_config) {

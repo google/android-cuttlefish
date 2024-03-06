@@ -17,19 +17,29 @@ color_cyan="\033[0;36m"
 color_plain="\033[0m"
 color_yellow="\033[0;33m"
 
-# validate number of arguments to equal 3
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-  echo "This script requires 2 mandatory and 1 optional parameters, server address, base instance number and optionally number of instances to invoke"
+# validate number of arguments to between 2 and 4
+if [ "$#" -lt 2 ] || [ "$#" -gt 4 ]; then
+  echo "This script requires 2 mandatory and 2 optional parameters:"
+  echo "Mandatory: server address, base instance number."
+  echo "Optional: the number of instances to invoke, the path to a vendor debug ramdisk image."
+  echo "For example: ./launch_cvd_arm64_server.sh user@<ip> 10 1 ./vendor_boot-debug.img"
   exit 1
 fi
 
 # map arguments to variables
 server=$1
 base_instance_num=$2
-if [ "$#" -eq 3 ]; then
- num_instances=$3
+if [ "$#" -gt 2 ]; then
+  num_instances=$3
 else
- num_instances=1
+  num_instances=1
+fi
+if [ "$#" -eq 4 ]; then
+  vendor_boot_debug_image=$4
+  vendor_boot_debug_flag="--vendor_boot_image=$(basename $4)"
+else
+  vendor_boot_debug_image=""
+  vendor_boot_debug_flag=""
 fi
 
 # set img_dir and cvd_host_tool_dir
@@ -49,6 +59,10 @@ if [ -f $img_dir/required_images ]; then
   rsync -aSvch --recursive $img_dir --files-from=$img_dir/required_images $server:~/$cvd_home_dir --info=progress2
 else
   rsync -aSvch --recursive $img_dir/bootloader $img_dir/*.img $server:~/$cvd_home_dir --info=progress2
+fi
+if [ ! -z "$vendor_boot_debug_image" ]; then
+  echo "use the debug ramdisk image: $vendor_boot_debug_image"
+  rsync -Svch $vendor_boot_debug_image $server:~/$cvd_home_dir --info=progress2
 fi
 
 # copy the cvd host package
@@ -79,7 +93,7 @@ instance_ids_flag="--base_instance_num=$base_instance_num \
   --num_instances=$num_instances"
 echo -e "${color_cyan}Booting the cuttlefish instances${color_plain}"
 ssh $server \
-  -t "cd ~/$cvd_home_dir && HOME=~/$cvd_home_dir bin/launch_cvd $instance_ids_flag $daemon_flag"
+  -t "cd ~/$cvd_home_dir && HOME=~/$cvd_home_dir bin/launch_cvd $instance_ids_flag $daemon_flag $vendor_boot_debug_flag"
 
 # Web UI port is 2443 instead 1443 because there could be a running operator in this machine as well.
 web_ui_port=2443
