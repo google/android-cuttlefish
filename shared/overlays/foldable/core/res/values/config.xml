@@ -76,7 +76,7 @@
   <!-- Radius of the software rounded corners. -->
   <dimen name="rounded_corner_radius">34px</dimen>
   <!-- Whether to show Fold lock behavior setting feature in Settings App -->
-  <bool name="config_fold_lock_behavior">false</bool>
+  <bool name="config_fold_lock_behavior">true</bool>
 
   <!-- List of the labels of requestable device state config values -->
   <string-array name="config_deviceStatesAvailableForAppRequests">

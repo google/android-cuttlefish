@@ -89,4 +89,28 @@ ScopedAStatus RefRadioNetwork::isNullCipherAndIntegrityEnabled(int32_t serial) {
     respond()->isNullCipherAndIntegrityEnabledResponse(responseInfo(serial), true);
     return ok();
 }
+
+ScopedAStatus RefRadioNetwork::setCellularIdentifierTransparencyEnabled(int32_t serial, bool enabled) {
+    mIsCellularIdentifierTransparencyEnabled = enabled;
+    respond()->setCellularIdentifierTransparencyEnabledResponse(responseInfo(serial));
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::isCellularIdentifierTransparencyEnabled(int32_t serial) {
+    respond()->isCellularIdentifierTransparencyEnabledResponse(
+            responseInfo(serial), mIsCellularIdentifierTransparencyEnabled);
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::setSecurityAlgorithmsUpdatedEnabled(int32_t serial, bool enabled) {
+    mIsCipheringTransparencyEnabled = enabled;
+    respond()->setSecurityAlgorithmsUpdatedEnabledResponse(responseInfo(serial));
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::isSecurityAlgorithmsUpdatedEnabled(int32_t serial) {
+    respond()->isSecurityAlgorithmsUpdatedEnabledResponse(responseInfo(serial),
+                                                          mIsCipheringTransparencyEnabled);
+    return ok();
+}
 }  // namespace cf::ril

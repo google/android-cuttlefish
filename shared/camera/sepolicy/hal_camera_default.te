@@ -16,3 +16,7 @@ set_prop(hal_camera_default, vendor_camera_prop)
 
 # For observing apex file changes
 allow hal_camera_default apex_info_file:file r_file_perms;
+
+# Allow vendor files to define their own config.
+set_prop(vendor_init, vendor_camera_config)
+get_prop(domain, vendor_camera_config)

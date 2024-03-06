@@ -40,6 +40,8 @@
   <bool name="config_voice_capable">true</bool>
   <bool name="config_requireCallCapableAccountForHandle">true</bool>
   <bool name="config_enableWallpaperService">true</bool>
+  <!-- Wallpaper will get top app scheduling priority if this is set to true.-->
+  <bool name="config_wallpaperTopApp">true</bool>
   <bool name="config_dreamsSupported">false</bool>
   <!--<bool name="config_suspendWhenScreenOffDueToProximity">true</bool>-->
   <!--<bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>-->
@@ -91,12 +93,14 @@
   <integer name="config_triplePressOnStemPrimaryBehavior">1</integer>
   <integer name="config_doublePressOnPowerBehavior">3</integer>
   <integer name="config_veryLongPressTimeout">3000</integer>
-  <integer name="config_mashPressOnPowerBehavior">1</integer>
-  <integer name="config_mashPressVibrateTimeOnPowerButton">500</integer>
   <item name="config_wallpaperMinScale" format="float" type="dimen">0</item>
   <item name="config_wallpaperMaxScale" format="float" type="dimen">1</item>
   <bool name="config_alwaysScaleWallpaper">true</bool>
   <integer-array name="config_wakeup_based_screen_timeouts">
+    <item>0</item>
+    <item>0</item>
+    <item>0</item>
+    <item>0</item>
     <item>0</item>
     <item>0</item>
     <item>0</item>
@@ -114,6 +118,17 @@
   <bool name="config_telephonySingleSimDefaultSubscription">false</bool>
   <bool name="config_disableTaskSnapshots">true</bool>
 
+  <!-- Restrict Wear to single user -->
+  <integer name="config_multiuserMaximumUsers">1</integer>
+  <bool name="config_windowIsRound">true</bool>
+
   <!-- Package name of the required service extension package. -->
   <string name="config_servicesExtensionPackage" translatable="false">android.ext.services</string>
+
+  <!-- The name of the package that will hold the assistant role by default. -->
+  <string name="config_defaultAssistant" translatable="false">com.google.android.wearable.assistant</string>
+
+  <!-- Colon separated list of package names that should be granted Notification Listener access -->
+  <string name="config_defaultListenerAccessPackages" translatable="false">com.google.android.wearable.media.sessions:com.google.wear.services</string>
+
 </resources>

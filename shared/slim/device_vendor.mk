@@ -26,8 +26,8 @@ PRODUCT_PACKAGES += slim_excluded_hardware.prebuilt.xml
 
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/biometrics_face/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/biometrics_fingerprint/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/bluetooth/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/consumerir/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/gnss/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
@@ -41,12 +41,15 @@ $(call inherit-product, device/google/cuttlefish/shared/sensors/device_vendor.mk
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
+# Loads the camera HAL and which set of cameras is required.
+$(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/camera/config/standard.mk)
+
 PRODUCT_VENDOR_PROPERTIES += \
     debug.hwui.drawing_enabled=0 \
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.faketouch.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.faketouch.xml \
-    frameworks/native/data/etc/android.hardware.fingerprint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.fingerprint.xml \
 
 # Runtime Resource Overlays
 PRODUCT_PACKAGES += \
