@@ -28,6 +28,7 @@ rust_binary {
         "libhex",
         "libkmr_wire",
         "libkmr_hal",
+        "libkmr_hal_nonsecure",
         "liblibc",
         "liblog_rust",
     ],
