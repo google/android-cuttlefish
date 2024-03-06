@@ -62,12 +62,14 @@ class Mcu : public vm_manager::VmmDependencyCommand {
     CF_EXPECT(start.type() == Json::arrayValue,
               "mcu: config: start-cmd: array expected");
     CF_EXPECT(start.size() > 0, "mcu: config: empty start-cmd");
-    Command command(start[0].asString());
+    Command command(android::base::StringReplace(start[0].asString(), "${bin}",
+                                                 HostBinaryPath(""), true));
 
-    std::string wdir = "${wdir}";
     for (unsigned int i = 1; i < start.size(); i++) {
       auto param = start[i].asString();
       param = android::base::StringReplace(param, "${wdir}", mcu_dir_, true);
+      param = android::base::StringReplace(param, "${bin}", HostBinaryPath(""),
+                                           true);
       command.AddParameter(param);
     }
 
