@@ -27,7 +27,7 @@ rust_protobuf {
 
 rust_library_host {
     name: "libkmr_cf",
-    srcs: [ "lib.rs" ],
+    srcs: ["lib.rs"],
     crate_name: "kmr_cf",
     rustlibs: [
         "libhex",
@@ -35,6 +35,7 @@ rust_library_host {
         "libkmr_crypto_boring",
         "libkmr_proto_rust",
         "libkmr_ta",
+        "libkmr_ta_nonsecure",
         "libkmr_wire",
         "liblibc",
         "liblog_rust",
@@ -48,7 +49,7 @@ rust_library_host {
 rust_ffi_host {
     name: "libkmr_cf_ffi",
     compile_multilib: "64",
-    srcs: [ "ffi.rs" ],
+    srcs: ["ffi.rs"],
     crate_name: "kmr_cf_ffi",
     rustlibs: [
         "libkmr_cf",
@@ -68,6 +69,7 @@ rust_test_host {
         "libkmr_crypto_boring",
         "libkmr_proto_rust",
         "libkmr_ta",
+        "libkmr_ta_nonsecure",
         "libkmr_tests",
         "libkmr_wire",
         "liblibc",
