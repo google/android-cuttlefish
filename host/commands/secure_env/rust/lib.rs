@@ -26,6 +26,7 @@ use kmr_ta::device::{
     BootloaderDone, CsrSigningAlgorithm, Implementation, TrustedPresenceUnsupported,
 };
 use kmr_ta::{HardwareInfo, KeyMintTa, RpcInfo, RpcInfoV3};
+use kmr_ta_nonsecure::{attest, rpc, soft};
 use kmr_wire::keymint::SecurityLevel;
 use kmr_wire::rpc::MINIMUM_SUPPORTED_KEYS_IN_CSR;
 use log::{error, info, trace};
@@ -34,11 +35,8 @@ use std::io::{Read, Write};
 use std::os::fd::AsRawFd;
 use std::os::unix::ffi::OsStrExt;
 
-pub mod attest;
 mod clock;
-pub mod rpc;
 mod sdd;
-mod soft;
 mod tpm;
 
 #[cfg(test)]
