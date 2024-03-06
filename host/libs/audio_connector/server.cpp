@@ -55,6 +55,13 @@ ScopedMMap AllocateShm(size_t size, const std::string& name, SharedFD* shm_fd) {
   return mmap_res;
 }
 
+volatile uint8_t* BufferAt(ScopedMMap& shm, size_t offset, size_t len) {
+  CHECK(shm.WithinBounds(offset, len))
+      << "Tx buffer bounds outside the buffer area: " << offset << " " << len;
+  void* ptr = shm.get();
+  return &reinterpret_cast<volatile uint8_t*>(ptr)[offset];
+}
+
 bool CreateSocketPair(SharedFD* local, SharedFD* remote) {
   auto ret = SharedFD::SocketPair(AF_UNIX, SOCK_SEQPACKET, 0, local, remote);
   if (!ret) {
@@ -301,10 +308,11 @@ bool AudioClientConnection::ReceivePlayback(AudioServerExecutor& executor) {
     LOG(ERROR) << "Received PCM_XFER message is too small: " << recv_size;
     return false;
   }
-  TxBuffer buffer(msg_hdr->io_xfer,
-                  TxBufferAt(msg_hdr->buffer_offset, msg_hdr->buffer_len),
-                  msg_hdr->buffer_len,
-                  SendStatusCallback(msg_hdr->buffer_offset, tx_socket_));
+  TxBuffer buffer(
+      msg_hdr->io_xfer,
+      BufferAt(tx_shm_, msg_hdr->buffer_offset, msg_hdr->buffer_len),
+      msg_hdr->buffer_len,
+      SendStatusCallback(msg_hdr->buffer_offset, tx_socket_));
   executor.OnPlaybackBuffer(std::move(buffer));
   return true;
 }
@@ -320,10 +328,11 @@ bool AudioClientConnection::ReceiveCapture(AudioServerExecutor& executor) {
     LOG(ERROR) << "Received PCM_XFER message is too small: " << recv_size;
     return false;
   }
-  RxBuffer buffer(msg_hdr->io_xfer,
-                  RxBufferAt(msg_hdr->buffer_offset, msg_hdr->buffer_len),
-                  msg_hdr->buffer_len,
-                  SendStatusCallback(msg_hdr->buffer_offset, rx_socket_));
+  RxBuffer buffer(
+      msg_hdr->io_xfer,
+      BufferAt(rx_shm_, msg_hdr->buffer_offset, msg_hdr->buffer_len),
+      msg_hdr->buffer_len,
+      SendStatusCallback(msg_hdr->buffer_offset, rx_socket_));
   executor.OnCaptureBuffer(std::move(buffer));
   return true;
 }
@@ -345,22 +354,6 @@ bool AudioClientConnection::CmdReply(AudioStatus status, const void* data,
     return false;
   }
   return true;
-}
-
-const volatile uint8_t* AudioClientConnection::TxBufferAt(size_t offset,
-                                                          size_t len) const {
-  CHECK(tx_shm_.WithinBounds(offset, len))
-      << "Tx buffer bounds outside the buffer area: " << offset << " " << len;
-  const void* ptr = tx_shm_.get();
-  return &reinterpret_cast<const volatile uint8_t*>(ptr)[offset];
-}
-
-volatile uint8_t* AudioClientConnection::RxBufferAt(size_t offset,
-                                                    size_t len) {
-  CHECK(rx_shm_.WithinBounds(offset, len))
-      << "Rx buffer bounds outside the buffer area: " << offset << " " << len;
-  void* ptr = rx_shm_.get();
-  return &reinterpret_cast<volatile uint8_t*>(ptr)[offset];
 }
 
 bool AudioClientConnection::SendEvent(/*TODO*/) { return false; }
