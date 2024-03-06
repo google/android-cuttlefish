@@ -32,6 +32,12 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_PACKAGES += com.google.cf.bt
 
+#
+# Bluetooth Audio AIDL HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.bluetooth.audio-impl \
+
 else # BOARD_HAVE_BLUETOOTH == true
 
 PRODUCT_COPY_FILES += \
