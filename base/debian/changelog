@@ -1,4 +1,4 @@
-cuttlefish-common (0.9.28) unstable; urgency=medium
+cuttlefish-common (0.9.28) stable; urgency=medium
 
   * Include the cvd command in the base package
 
