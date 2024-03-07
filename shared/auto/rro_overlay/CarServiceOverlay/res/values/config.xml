@@ -62,15 +62,15 @@
 
         Some examples are:
         <item>displayPort=0,displayType=MAIN,occupantZoneId=0,inputTypes=DPAD_KEYS|
-            NAVIGATE_KEYS|ROTARY_NAVIGATION</item>
+            NAVIGATE_KEYS|ROTARY_NAVIGATION|TOUCH_SCREEN</item>
         <item>displayPort=1,displayType=INSTRUMENT_CLUSTER,occupantZoneId=0,
             inputTypes=DPAD_KEYS</item>
         <item>displayPort=2,displayType=MAIN,occupantZoneId=1,
-            inputTypes=NAVIGATE_KEYS</item>
+            inputTypes=TOUCH_SCREEN</item>
         <item>displayPort=3,displayType=MAIN,occupantZoneId=2,
-            inputTypes=NAVIGATE_KEYS</item>
+            inputTypes=TOUCH_SCREEN</item>
         <item>displayUniqueId=virtual:com.example:MainD,displayType=MAIN,occupantZoneId=3,
-            inputTypes=NAVIGATE_KEYS</item>
+            inputTypes=TOUCH_SCREEN</item>
 
         displayPort: Unique port id for the display.
         displayType: Display type for the display. Use * part from

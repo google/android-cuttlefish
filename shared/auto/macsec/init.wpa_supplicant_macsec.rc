@@ -1,4 +1,3 @@
-#
 # Copyright (C) 2023 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-PRODUCT_PACKAGES += \
-    com.android.hardware.biometrics.face.virtual
+on late-fs
+    wait /sys/class/net/eth1
+    start wpa_supplicant_macsec
+
+service wpa_supplicant_macsec /vendor/bin/hw/wpa_supplicant_macsec \
+    -i eth1 -Dmacsec_linux -c /vendor/etc/wpa_supplicant_macsec.conf
+    user root
+    oneshot

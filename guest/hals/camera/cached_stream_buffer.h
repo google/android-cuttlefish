@@ -15,12 +15,16 @@
  */
 #pragma once
 #include <android/hardware/camera/device/3.4/ICameraDeviceSession.h>
+#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include <android/hardware/graphics/mapper/3.0/IMapper.h>
+#include <android/hardware/graphics/mapper/4.0/IMapper.h>
 #include "HandleImporter.h"
 
 namespace android::hardware::camera::device::V3_4::implementation {
 
 using ::android::hardware::camera::common::V1_0::helper::HandleImporter;
 using ::android::hardware::camera::device::V3_2::StreamBuffer;
+using ::android::hardware::graphics::mapper::V2_0::YCbCrLayout;
 
 // Small wrapper for allocating/freeing native handles
 class ReleaseFence {

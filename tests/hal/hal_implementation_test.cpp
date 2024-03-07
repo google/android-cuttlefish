@@ -100,6 +100,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.graphics.composer@2.4", // converted to AIDL, see b/193240715
     "android.hardware.graphics.mapper@2.1",
     "android.hardware.graphics.mapper@3.0",
+    "android.hardware.graphics.mapper@4.0", // converted to Stable C, see b/205761028
     "android.hardware.health.storage@1.0", // converted to AIDL, see b/177470478
     "android.hardware.health@2.1", // converted to AIDL, see b/177269435
     "android.hardware.input.classifier@1.0", // converted to AIDL, see b/205761620
@@ -168,6 +169,7 @@ static const std::set<std::string> kAutomotiveOnlyAidl = {
      */
     "android.automotive.watchdog",
     "android.frameworks.automotive.display",
+    "android.frameworks.automotive.powerpolicy",
     "android.frameworks.automotive.powerpolicy.internal",
     "android.frameworks.automotive.telemetry",
     "android.hardware.automotive.audiocontrol",
@@ -176,6 +178,8 @@ static const std::set<std::string> kAutomotiveOnlyAidl = {
     "android.hardware.automotive.occupant_awareness",
     "android.hardware.automotive.remoteaccess",
     "android.hardware.automotive.vehicle",
+    "android.hardware.automotive.ivn",
+    "android.hardware.macsec",
 };
 
 static const std::set<std::string> kTvOnlyAidl = {
@@ -196,6 +200,9 @@ static const std::set<std::string> kRadioOnlyAidl = {
     "android.hardware.radio.messaging", "android.hardware.radio.modem",
     "android.hardware.radio.network",   "android.hardware.radio.sap",
     "android.hardware.radio.sim",       "android.hardware.radio.voice",
+    "android.hardware.radio.ims",       "android.hardware.radio.ims.media",
+    "android.hardware.radio.satellite",
+
 };
 
 /*
@@ -219,6 +226,7 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     "android.media.audio.common.types",
     "android.hardware.radio",
     "android.hardware.uwb.fira_android",
+    "android.hardware.wifi.common",
     "android.hardware.keymaster",
     "android.hardware.automotive.vehicle.property",
     // not on Cuttlefish since it's needed only on systems using HIDL audio HAL
@@ -260,9 +268,7 @@ static const std::vector<VersionedAidlPackage> kKnownMissingAidl = {
 
     {"android.automotive.computepipe.registry.", 2, 273549907},
     {"android.automotive.computepipe.runner.", 2, 273549907},
-    {"android.frameworks.automotive.powerpolicy.", 2, 274160980},
     {"android.hardware.automotive.evs.", 2, 274162534},
-    {"android.hardware.automotive.ivn.", 1, 274139217},
 };
 
 // android.hardware.foo.IFoo -> android.hardware.foo.

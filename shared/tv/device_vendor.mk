@@ -23,9 +23,13 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/bluetooth/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
+$(call inherit-product, vendor/google/tv/gcbs/projects/reference-v4/dtvstack.mk)
+
+# Loads the camera HAL and which set of cameras is required.
+$(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/camera/config/external.mk)
 
 # Extend cuttlefish common sepolicy with tv-specific functionality
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/tv/sepolicy/vendor
@@ -58,7 +62,9 @@ PRODUCT_PACKAGES += \
      android.hardware.tv.hdmi.earc-service
 
 # Setup HDMI CEC as Playback Device
-PRODUCT_PROPERTY_OVERRIDES += ro.hdmi.device_type=4
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.hdmi.device_type=4 \
+    ro.hdmi.cec_device_types=playback_device
 
 # Tuner lazy HAL
 PRODUCT_PACKAGES += android.hardware.tv.tuner-service.example-lazy

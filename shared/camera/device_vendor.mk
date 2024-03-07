@@ -14,14 +14,20 @@
 # limitations under the License.
 #
 
-PRODUCT_VENDOR_PROPERTIES += \
-    ro.camerax.extensions.enabled=true
-
 # Enable Camera Extension sample
 ifeq ($(TARGET_USE_CAMERA_ADVANCED_EXTENSION_SAMPLE),true)
 PRODUCT_PACKAGES += \
     androidx.camera.extensions.impl.advanced advancedSample_camera_extensions.xml \
     libencoderjpeg_jni
+
+PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
+    system/app/EyesFreeVidService/EyesFreeVidService.apk
+
+PRODUCT_PACKAGES += EyesFreeVidService
+
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.vendor.camera.extensions.package=android.camera.extensions.impl.service \
+    ro.vendor.camera.extensions.service=android.camera.extensions.impl.service.EyesFreeVidService
 else
 PRODUCT_PACKAGES += androidx.camera.extensions.impl sample_camera_extensions.xml
 endif
@@ -43,23 +49,6 @@ PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gHAWB/native_
 $(call soong_config_set,lyric,camera_hardware,cuttlefish)
 $(call soong_config_set,lyric,tuning_product,cuttlefish)
 $(call soong_config_set,google3a_config,target_device,cuttlefish)
-
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.camera.concurrent.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.concurrent.xml \
-    frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.flash-autofocus.xml \
-    frameworks/native/data/etc/android.hardware.camera.front.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.front.xml \
-    frameworks/native/data/etc/android.hardware.camera.full.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.full.xml \
-    frameworks/native/data/etc/android.hardware.camera.raw.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.raw.xml \
-
-ifeq ($(PRODUCT_IS_ATV_CF),true)
-    PRODUCT_COPY_FILES += \
-        hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_front.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_front.json
-else
-    PRODUCT_COPY_FILES += \
-        hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_back.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_back.json \
-        hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_front.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_front.json \
-        hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_depth.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_depth.json
-endif
 
 ifeq ($(TARGET_USE_VSOCK_CAMERA_HAL_IMPL),true)
 PRODUCT_PACKAGES += \
