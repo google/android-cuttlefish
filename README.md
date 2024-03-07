@@ -23,6 +23,7 @@ metapackage that depends on `cuttlefish-base` and `cuttlefish-user`
 The packages can be built with the following command:
 
 ```bash
+sudo apt install devscripts equivs
 for dir in base frontend; do
     pushd $dir
     # Install build dependencies
