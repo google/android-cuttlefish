@@ -152,7 +152,6 @@ cc_library_host_static {
 
 cc_binary_host {
     name: "cvd",
-    symlinks: ["acloud"],
     static_libs: [
         "cvd_and_fetch_cvd",
     ],
