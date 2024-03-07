@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<layouts>
+  <layout>
+    <!-- Use the default state -->
+    <state>-1</state>
+
+    <display enabled="true" defaultDisplay="true">
+      <address>4619827353912518656</address>
+    </display>
+
+    <display enabled="true" defaultDisplay="false" displayGroup="passenger_display1">
+      <address>4619827353912518657</address>
+    </display>
+
+    <display enabled="true" defaultDisplay="false" displayGroup="passenger_display2">
+      <address>4619827353912518658</address>
+    </display>
+
+  </layout>
+</layouts>
