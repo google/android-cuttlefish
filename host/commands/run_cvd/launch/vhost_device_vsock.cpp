@@ -55,12 +55,18 @@ Result<std::vector<MonitorCommand>> VhostDeviceVsock::Commands() {
   command.AddEnvironmentVariable("RUST_LOG", "debug");
 
   for (auto i : instances) {
+    std::string isolation_groups = "";
+    if (i.vsock_guest_group().length()) {
+      isolation_groups = ",groups=" + i.vsock_guest_group();
+    }
+
     auto param = fmt::format(
         "guest-cid={0},socket=/tmp/vsock_{0}_{1}/vhost.socket,uds-path=/tmp/"
-        "vsock_{0}_{1}/vm.vsock",
-        i.vsock_guest_cid(), std::to_string(getuid()));
+        "vsock_{0}_{1}/vm.vsock{2}",
+        i.vsock_guest_cid(), getuid(), isolation_groups);
     command.AddParameter("--vm");
     command.AddParameter(param);
+    LOG(INFO) << "VhostDeviceVsock::vhost param is:" << param;
   }
 
   std::vector<MonitorCommand> commands;
