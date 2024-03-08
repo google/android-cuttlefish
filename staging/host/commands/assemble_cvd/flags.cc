@@ -53,7 +53,6 @@
 #include "host/commands/assemble_cvd/graphics_flags.h"
 #include "host/commands/assemble_cvd/misc_info.h"
 #include "host/commands/assemble_cvd/touchpad.h"
-#include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
