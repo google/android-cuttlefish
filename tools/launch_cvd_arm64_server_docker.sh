@@ -18,19 +18,28 @@ color_plain="\033[0m"
 color_yellow="\033[0;33m"
 
 # validate number of arguments
-if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-  echo "This script requires 1 mandatory and 1 optional parameters, server address and optionally number of instances to invoke"
+if [ "$#" -lt 1 ] || [ "$#" -gt 3 ]; then
+  echo "This script requires 1 mandatory and 2 optional parameters,"
+  echo "server address and optionally cvd instances per docker, and number of docker instances to invoke"
   exit 1
 fi
 
 # map arguments to variables
 # $1: ARM server address
-# $2: Instance number (Optional, default is 1)
+# $2: CVD Instance number per docker (Optional, default is 1)
+# $3: Docker Instance number (Optional, default is 1)
 server=$1
-if [ "$#" -eq 2 ]; then
- num_instances=$2
+
+if [ "$#" -lt 2 ]; then
+ num_instances_per_docker=1
 else
- num_instances=1
+ num_instances_per_docker=$2
+fi
+
+if [ "$#" -lt 3 ]; then
+ num_dockers=1
+else
+ num_dockers=$3
 fi
 
 # set img_dir and cvd_host_tool_dir
@@ -68,25 +77,30 @@ else
 fi
 rsync -avch $temp_dir/cvd-host_package.tar.gz $server:~/$cvd_home_dir --info=progress2
 
-# run docker instance
-container_id=$(ssh $server -t "docker run --rm --privileged -P -d cuttlefish")
-container_id=${container_id//$'\r'} # to remove trailing ^M
-echo -e "${color_cyan}Booting container $container_id${color_plain}"
+# run root docker instance
+root_container_id=$(ssh $server -t "docker run --privileged -p 2443 -d cuttlefish")
+root_container_id=${root_container_id//$'\r'} # to remove trailing ^M
+echo -e "${color_cyan}Booting root container $root_container_id${color_plain}"
 
 # set trap to stop docker instance
 trap cleanup SIGINT
 cleanup() {
   echo -e "${color_yellow}SIGINT: stopping the launch instances${color_plain}"
-  ssh $server "docker kill $container_id"
+  ssh $server "docker rm -f $root_container_id ${container_ids[*]}"
+  ssh $server "docker rmi -f cvd_root_image:$root_container_id"
+  exit 0
 }
 
 # extract Host Orchestrator Port
-docker_inspect=$(ssh $server "docker inspect --format='{{json .NetworkSettings.Ports }}' $container_id")
+docker_inspect=$(ssh $server "docker inspect --format='{{json .NetworkSettings.Ports }}' $root_container_id")
 docker_host_orchestrator_port_parser_script='
 import sys, json;
 json_raw=input()
 data = json.loads(json_raw)
 for k in data:
+  if not data[k]:
+    continue
+
   original_port = int(k.split("/")[0])
   assigned_port = int(data[k][0]["HostPort"])
   if original_port == 2443:
@@ -95,7 +109,7 @@ for k in data:
 '
 docker_host_orchestrator_port=$(echo $docker_inspect | python -c "$docker_host_orchestrator_port_parser_script")
 host_orchestrator_url=https://localhost:$docker_host_orchestrator_port
-echo -e "Extracting host orchestrator port in docker instance"
+echo -e "Extracting host orchestrator port in root docker instance"
 
 # create user artifact directory
 create_user_artifacts_dir_script="ssh $server curl -s -k -X POST ${host_orchestrator_url}/userartifacts | jq -r '.name'"
@@ -122,12 +136,57 @@ ssh $server \
    done"
 echo -e "Done"
 
+echo -e "Creating image from root docker container"
+root_image_id=$(ssh $server -t "docker commit $root_container_id cvd_root_image:$root_container_id")
+root_image_id=${root_image_id//$'\r'} # to remove trailing ^M
+echo -e "${color_cyan}Root image $root_image_id${color_plain}"
+
+echo -e "${color_cyan}Booting containers ... ${color_plain}"
+container_ids=$(ssh $server \
+  "container_ids=() && adb_port_num=6520 && \
+  for docker_num in \$(seq 1 $num_dockers); do \
+    if [ \$docker_num -eq 1 ]; then \
+      web_port_forward=\"-p 1443 -p 15550-15560 \"; \
+    else \
+      web_port_forward=\"\"; \
+    fi && \
+    adb_port_forward=\"\" && \
+    for instance_num in \$(seq 1 $num_instances_per_docker); do
+      adb_port_forward+=\"-p \$((instance_num + adb_port_num - 1)):\$((instance_num + 6520 - 1)) \";
+    done && \
+    adb_port_num=\$((adb_port_num + $num_instances_per_docker)) && \
+    container_id=\$(docker run --rm --privileged \$web_port_forward -p 2443 \$adb_port_forward -d $root_image_id) && \
+    container_id=\${container_id//\$'\\r'} && \
+    container_ids+=(\${container_id}); \
+  done && \
+  echo \${container_ids[*]}
+")
+
+echo -e "Extracting host orchestrator ports in docker instances"
+docker_inspects=$(ssh $server \
+  "docker_inspects=() && container_ids=(${container_ids[*]}) &&
+  for container_id in \${container_ids[*]}; do \
+    docker_inspect=\$(docker inspect --format='{{json .NetworkSettings.Ports }}' \$container_id) && \
+    docker_inspects+=(\${docker_inspect}); \
+  done && \
+  echo \${docker_inspects[*]}
+")
+host_orchestrator_ports=()
+for docker_inspect in ${docker_inspects[*]}; do
+  port=$(echo $docker_inspect | python -c "$docker_host_orchestrator_port_parser_script")
+  host_orchestrator_ports+=($port)
+done
+
 # start Cuttlefish instance on top of docker instance
 # TODO(b/317942272): support starting the instance with an optional vendor boot debug image.
 echo -e "Starting Cuttlefish"
-ssh $server "curl -s -k -X POST $host_orchestrator_url/cvds \
+ssh $server "for port in ${host_orchestrator_ports[*]}; do \
+  host_orchestrator_url=https://localhost:\$port && \
+  curl -s -k -X POST \$host_orchestrator_url/cvds \
   -H 'Content-Type: application/json' \
-  -d '{\"cvd\": {\"build_source\": {\"user_build_source\": {\"artifacts_dir\": \"$user_artifacts_dir\"}}}, \"additional_instances_num\": $(($num_instances-1))}'
+  -d '{\"cvd\": {\"build_source\": {\"user_build_source\": {\"artifacts_dir\": \"$user_artifacts_dir\"}}}, \
+       \"additional_instances_num\": $((num_instances_per_docker - 1))}'; \
+done
 "
 
 # Web UI port is 3443 instead 1443 because there could be a running operator or host orchestrator in this machine as well.
@@ -135,10 +194,12 @@ web_ui_port=3443
 echo -e "Web UI port: $web_ui_port. ${color_cyan}Please point your browser to https://localhost:$web_ui_port for the UI${color_plain}"
 
 # sets up SSH port forwarding to the remote server for various ports and launch cvd instance
-for instance_num in $(seq 1 $num_instances); do
-  device_name="cvd_$instance_num"
-  adb_port=$((6520+$instance_num-1))
-  echo -e "$device_name is using adb port $adb_port. Try ${color_cyan}adb connect 127.0.0.1:${adb_port}${color_plain} if you want to connect to this device"
+for docker_num in $(seq 1 $num_dockers); do
+  for instance_num in $(seq 1 $num_instances_per_docker); do
+    device_name="cvd_$instance_num"
+    adb_port=$((6520 + ( (docker_num - 1) * num_instances_per_docker) + instance_num - 1))
+    echo -e "$device_name of docker $docker_num is using adb port $adb_port. Try ${color_cyan}adb connect 127.0.0.1:${adb_port}${color_plain} if you want to connect to this device"
+  done
 done
 
 docker_port_parser_script='
@@ -149,6 +210,9 @@ num_instance = int(sys.argv[2])
 json_raw=input()
 data = json.loads(json_raw)
 for k in data:
+  if not data[k]:
+    continue
+
   original_port = int(k.split("/")[0])
   assigned_port = int(data[k][0]["HostPort"])
   if original_port == 1443:
@@ -158,10 +222,16 @@ for k in data:
   elif original_port >= 6520 and original_port <= 6520 + max_instances:
     if original_port - 6520 >= num_instance:
       continue
+    original_port = assigned_port
   print(f"-L {original_port}:127.0.0.1:{assigned_port}", end=" ")
 '
-ports_forwarding=$(echo $docker_inspect | python -c "$docker_port_parser_script" $web_ui_port $num_instances)
-echo -e $ports_forwarding
+
+ports_forwarding=""
+
+for docker_inspect in ${docker_inspects[*]}; do
+  ports_forwarding+=$(echo $docker_inspect | python -c "$docker_port_parser_script" $web_ui_port $((num_dockers * num_instances_per_docker)))
+done
+
 echo "Set up ssh ports forwarding: $ports_forwarding"
 echo -e "${color_yellow}Please stop the running instances by ctrl+c${color_plain}"
-ssh $server $ports_forwarding "docker logs -f $container_id"
+ssh $server $ports_forwarding "tail -f /dev/null"
