@@ -17,7 +17,6 @@
 #include "host/commands/assemble_cvd/disk/disk.h"
 
 #include <string>
-#include <unordered_set>
 
 #include <fruit/fruit.h>
 
@@ -30,99 +29,64 @@ namespace cuttlefish {
 
 using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
 
-class GeneratePersistentVbmetaImpl : public GeneratePersistentVbmeta {
- public:
-  INJECT(GeneratePersistentVbmetaImpl(
-      const CuttlefishConfig::InstanceSpecific& instance,
-      AutoSetup<InitBootloaderEnvPartition>::Type& bootloader_env,
-      AutoSetup<GeneratePersistentBootconfig>::Type& bootconfig))
-      : instance_(instance),
-        bootloader_env_(bootloader_env),
-        bootconfig_(bootconfig) {}
+static bool PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
+  auto avbtool_path = HostBinaryPath("avbtool");
+  Command vbmeta_cmd(avbtool_path);
+  vbmeta_cmd.AddParameter("make_vbmeta_image");
+  vbmeta_cmd.AddParameter("--output");
+  vbmeta_cmd.AddParameter(path);
+  vbmeta_cmd.AddParameter("--algorithm");
+  vbmeta_cmd.AddParameter("SHA256_RSA4096");
+  vbmeta_cmd.AddParameter("--key");
+  vbmeta_cmd.AddParameter(DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
 
-  // SetupFeature
-  std::string Name() const override { return "GeneratePersistentVbmeta"; }
-  bool Enabled() const override { return true; }
+  vbmeta_cmd.AddParameter("--chain_partition");
+  vbmeta_cmd.AddParameter("uboot_env:1:" +
+                          DefaultHostArtifactsPath("etc/cvd.avbpubkey"));
 
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override {
-    return {
-        static_cast<SetupFeature*>(&bootloader_env_),
-        static_cast<SetupFeature*>(&bootconfig_),
-    };
-  }
-
-  Result<void> ResultSetup() override {
-    if (!instance_.protected_vm()) {
-      CF_EXPECT(PrepareVBMetaImage(instance_.vbmeta_path(),
-                                   instance_.bootconfig_supported()));
-    }
-    if (instance_.ap_boot_flow() == APBootFlow::Grub) {
-      CF_EXPECT(PrepareVBMetaImage(instance_.ap_vbmeta_path(), false));
-    }
-    return {};
-  }
-
-  bool PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
-    auto avbtool_path = HostBinaryPath("avbtool");
-    Command vbmeta_cmd(avbtool_path);
-    vbmeta_cmd.AddParameter("make_vbmeta_image");
-    vbmeta_cmd.AddParameter("--output");
-    vbmeta_cmd.AddParameter(path);
-    vbmeta_cmd.AddParameter("--algorithm");
-    vbmeta_cmd.AddParameter("SHA256_RSA4096");
-    vbmeta_cmd.AddParameter("--key");
-    vbmeta_cmd.AddParameter(
-        DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
-
+  if (has_boot_config) {
     vbmeta_cmd.AddParameter("--chain_partition");
-    vbmeta_cmd.AddParameter("uboot_env:1:" +
+    vbmeta_cmd.AddParameter("bootconfig:2:" +
                             DefaultHostArtifactsPath("etc/cvd.avbpubkey"));
-
-    if (has_boot_config) {
-      vbmeta_cmd.AddParameter("--chain_partition");
-      vbmeta_cmd.AddParameter("bootconfig:2:" +
-                              DefaultHostArtifactsPath("etc/cvd.avbpubkey"));
-    }
-
-    bool success = vbmeta_cmd.Start().Wait();
-    if (success != 0) {
-      LOG(ERROR) << "Unable to create persistent vbmeta. Exited with status "
-                 << success;
-      return false;
-    }
-
-    const auto vbmeta_size = FileSize(path);
-    if (vbmeta_size > VBMETA_MAX_SIZE) {
-      LOG(ERROR) << "Generated vbmeta - " << path
-                 << " is larger than the expected " << VBMETA_MAX_SIZE
-                 << ". Stopping.";
-      return false;
-    }
-    if (vbmeta_size != VBMETA_MAX_SIZE) {
-      auto fd = SharedFD::Open(path, O_RDWR);
-      if (!fd->IsOpen() || fd->Truncate(VBMETA_MAX_SIZE) != 0) {
-        LOG(ERROR) << "`truncate --size=" << VBMETA_MAX_SIZE << " " << path
-                   << "` failed: " << fd->StrError();
-        return false;
-      }
-    }
-    return true;
   }
 
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  AutoSetup<InitBootloaderEnvPartition>::Type& bootloader_env_;
-  AutoSetup<GeneratePersistentBootconfig>::Type& bootconfig_;
-};
+  bool success = vbmeta_cmd.Start().Wait();
+  if (success != 0) {
+    LOG(ERROR) << "Unable to create persistent vbmeta. Exited with status "
+               << success;
+    return false;
+  }
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
-                                 AutoSetup<InitBootloaderEnvPartition>::Type,
-                                 AutoSetup<GeneratePersistentBootconfig>::Type>,
-                 GeneratePersistentVbmeta>
-GeneratePersistentVbmetaComponent() {
-  return fruit::createComponent()
-      .addMultibinding<SetupFeature, GeneratePersistentVbmetaImpl>()
-      .bind<GeneratePersistentVbmeta, GeneratePersistentVbmetaImpl>();
+  const auto vbmeta_size = FileSize(path);
+  if (vbmeta_size > VBMETA_MAX_SIZE) {
+    LOG(ERROR) << "Generated vbmeta - " << path
+               << " is larger than the expected " << VBMETA_MAX_SIZE
+               << ". Stopping.";
+    return false;
+  }
+  if (vbmeta_size != VBMETA_MAX_SIZE) {
+    auto fd = SharedFD::Open(path, O_RDWR);
+    if (!fd->IsOpen() || fd->Truncate(VBMETA_MAX_SIZE) != 0) {
+      LOG(ERROR) << "`truncate --size=" << VBMETA_MAX_SIZE << " " << path
+                 << "` failed: " << fd->StrError();
+      return false;
+    }
+  }
+  return true;
+}
+
+Result<void> GeneratePersistentVbmeta(
+    const CuttlefishConfig::InstanceSpecific& instance,
+    AutoSetup<InitBootloaderEnvPartition>::Type& /* dependency */,
+    AutoSetup<GeneratePersistentBootconfig>::Type& /* dependency */) {
+  if (!instance.protected_vm()) {
+    CF_EXPECT(PrepareVBMetaImage(instance.vbmeta_path(),
+                                 instance.bootconfig_supported()));
+  }
+  if (instance.ap_boot_flow() == APBootFlow::Grub) {
+    CF_EXPECT(PrepareVBMetaImage(instance.ap_vbmeta_path(), false));
+  }
+  return {};
 }
 
 }  // namespace cuttlefish
