@@ -55,6 +55,6 @@ cvd fetch --default_build="${BRANCH}/${TARGET}" --target_directory="${workdir}"
 
 (
   cd "${workdir}"
-  HOME=$(pwd) bin/launch_cvd --daemon --report_anonymous_usage_stats=y
+  HOME=$(pwd) bin/launch_cvd --daemon --report_anonymous_usage_stats=y --undefok=report_anonymous_usage_stats
   HOME=$(pwd) bin/stop_cvd
 )
