@@ -36,8 +36,7 @@ KernelRamdiskRepackerComponent();
 Result<void> GeneratePersistentBootconfig(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 
-fruit::Component<fruit::Required<const CuttlefishConfig, KernelRamdiskRepacker>>
-Gem5ImageUnpackerComponent();
+Result<void> Gem5ImageUnpacker(const CuttlefishConfig&, KernelRamdiskRepacker&);
 
 class GeneratePersistentVbmeta : public SetupFeature {};
 
