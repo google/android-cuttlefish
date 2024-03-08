@@ -690,7 +690,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .install(AutoSetup<InitializePstore>::Component)
       .install(AutoSetup<InitializeSdCard>::Component)
       .install(AutoSetup<GeneratePersistentBootconfig>::Component)
-      .install(GeneratePersistentVbmetaComponent)
+      .install(AutoSetup<GeneratePersistentVbmeta>::Component)
       .install(AutoSetup<InitializeInstanceCompositeDisk>::Component)
       .install(InitializeDataImageComponent);
 }
