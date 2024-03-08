@@ -21,7 +21,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include "json/json.h"
+#include <json/json.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flags_validator.h"
@@ -1427,6 +1427,15 @@ int CuttlefishConfig::InstanceSpecific::vsock_guest_cid() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_vsock_guest_cid(
     int vsock_guest_cid) {
   (*Dictionary())[kVsockGuestCid] = vsock_guest_cid;
+}
+
+static constexpr char kVsockGuestGroup[] = "vsock_guest_group";
+std::string CuttlefishConfig::InstanceSpecific::vsock_guest_group() const {
+  return (*Dictionary())[kVsockGuestGroup].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_vsock_guest_group(
+    const std::string& vsock_guest_group) {
+  (*Dictionary())[kVsockGuestGroup] = vsock_guest_group;
 }
 
 static constexpr char kUuid[] = "uuid";

@@ -42,6 +42,7 @@
 #define CF_DEFAULTS_DAEMON false
 #define CF_DEFAULTS_VM_MANAGER CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_VSOCK_GUEST_CID cuttlefish::GetDefaultVsockCid()
+#define CF_DEFAULTS_VSOCK_GUEST_GROUP ""
 #define CF_DEFAULTS_VHOST_USER_VSOCK cuttlefish::kVhostUserVsockModeAuto
 #define CF_DEFAULTS_ENABLE_MINIMAL_MODE false
 #define CF_DEFAULTS_RESTART_SUBPROCESSES false
@@ -211,7 +212,7 @@
 #define CF_DEFAULTS_UDP_PORT_RANGE "15550:15599"
 
 // Adb default parameters
-// TODO : Replaceconstants with these flags, they're currently defined through
+// TODO : Replaceconstants with these flags, they're currently defined throug
 // GflagsCompatFlag
 #define CF_DEFAULTS_RUN_ADB_CONNECTOR true
 #define CF_DEFAULTS_ADB_MODE "vsock_half_tunnel"
