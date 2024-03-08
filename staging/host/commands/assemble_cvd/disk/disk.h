@@ -38,13 +38,10 @@ Result<void> GeneratePersistentBootconfig(
 
 Result<void> Gem5ImageUnpacker(const CuttlefishConfig&, KernelRamdiskRepacker&);
 
-class GeneratePersistentVbmeta : public SetupFeature {};
-
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
-                                 AutoSetup<InitBootloaderEnvPartition>::Type,
-                                 AutoSetup<GeneratePersistentBootconfig>::Type>,
-                 GeneratePersistentVbmeta>
-GeneratePersistentVbmetaComponent();
+Result<void> GeneratePersistentVbmeta(
+    const CuttlefishConfig::InstanceSpecific&,
+    AutoSetup<InitBootloaderEnvPartition>::Type&,
+    AutoSetup<GeneratePersistentBootconfig>::Type&);
 
 Result<void> InitializeFactoryResetProtected(
     const CuttlefishConfig::InstanceSpecific&);
@@ -52,6 +49,6 @@ Result<void> InitializeFactoryResetProtected(
 Result<void> InitializeInstanceCompositeDisk(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
     AutoSetup<InitializeFactoryResetProtected>::Type&,
-    GeneratePersistentVbmeta&);
+    AutoSetup<GeneratePersistentVbmeta>::Type&);
 
 }  // namespace cuttlefish
