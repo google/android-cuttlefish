@@ -49,6 +49,11 @@ inline bool As(const Json::Value& v) {
   return v.asBool();
 }
 
+template <>
+inline Json::Value As(const Json::Value& v) {
+  return v;
+}
+
 template <typename T>
 Result<T> GetValue(const Json::Value& root,
                    const std::vector<std::string>& selectors) {
