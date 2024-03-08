@@ -22,7 +22,6 @@ java_test_host {
         "src/**/*.java",
     ],
     data_native_bins: [
-        "cvd",
         "cvd_internal_env",
     ],
     test_suites: [
