@@ -25,13 +25,13 @@ cc_binary {
     ],
     shared_libs: [
         "libbase",
+        "libcuttlefish_command_util",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libcuttlefish_allocd_utils",
         "libjsoncpp",
     ],
     static_libs: [
-        "libcuttlefish_command_util",
         "libcuttlefish_host_config",
         "libgflags",
         "libcuttlefish_msg_queue",

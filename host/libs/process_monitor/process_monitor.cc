@@ -46,7 +46,6 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/command_util/runner/defs.h"
-#include "host/libs/command_util/runner/proto_utils.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
@@ -174,11 +173,14 @@ Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
     const ExtendedActionType extended_type =
         (is_suspend ? ExtendedActionType::kSuspend
                     : ExtendedActionType::kResume);
-    auto serialized_request = CF_EXPECT(
-        (is_suspend ? SerializeSuspendRequest() : SerializeResumeRequest()),
-        "Failed to serialize request.");
+    run_cvd::ExtendedLauncherAction extended_action;
+    if (is_suspend) {
+      extended_action.mutable_suspend();
+    } else {
+      extended_action.mutable_resume();
+    }
     CF_EXPECT(RunLauncherAction(channel_to_secure_env, extended_type,
-                                std::move(serialized_request), std::nullopt));
+                                extended_action, std::nullopt));
   }
 
   for (const auto& entry : monitor_entries) {

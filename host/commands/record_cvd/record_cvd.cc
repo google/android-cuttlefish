@@ -23,7 +23,6 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/command_util/runner/defs.h"
-#include "host/libs/command_util/runner/proto_utils.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "run_cvd.pb.h"
@@ -52,15 +51,17 @@ Result<void> RecordCvdMain(int argc, char* argv[]) {
       GetLauncherMonitor(*config, FLAGS_instance_num, FLAGS_wait_for_launcher));
 
   bool is_start = command == "start";
-  auto request =
-      CF_EXPECT(is_start ? SerializeStartScreenRecordingRequest()
-                         : SerializeStopScreenRecordingRequest(),
-                "Failed to create serialized recording request proto.");
+  run_cvd::ExtendedLauncherAction extended_action;
+  if (is_start) {
+    extended_action.mutable_start_screen_recording();
+  } else {
+    extended_action.mutable_stop_screen_recording();
+  }
   auto extended_action_type = is_start
                                   ? ExtendedActionType::kStartScreenRecording
                                   : ExtendedActionType::kStopScreenRecording;
-  CF_EXPECT(RunLauncherAction(monitor_socket, extended_action_type, request,
-                              std::nullopt));
+  CF_EXPECT(RunLauncherAction(monitor_socket, extended_action_type,
+                              extended_action, std::nullopt));
   LOG(INFO) << "record_cvd " << command << " was successful.";
   return {};
 }

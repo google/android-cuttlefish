@@ -115,10 +115,13 @@ Result<void> RunLauncherAction(const SharedFD& monitor_socket,
   return {};
 }
 
-Result<void> RunLauncherAction(const SharedFD& monitor_socket,
-                               ExtendedActionType extended_action_type,
-                               std::string serialized_data,
-                               std::optional<int> timeout_seconds) {
+Result<void> RunLauncherAction(
+    const SharedFD& monitor_socket, ExtendedActionType extended_action_type,
+    const run_cvd::ExtendedLauncherAction& extended_action,
+    std::optional<int> timeout_seconds) {
+  const std::string serialized_data = extended_action.SerializeAsString();
+  CF_EXPECT(!serialized_data.empty(), "failed to serialize proto");
+
   auto message = CF_EXPECT(LauncherActionMessage::Create(
       LauncherAction::kExtended, extended_action_type,
       std::move(serialized_data)));

@@ -18,6 +18,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "device/google/cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "host/libs/command_util/runner/defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -50,11 +51,11 @@ Result<void> RunLauncherAction(const SharedFD& monitor_socket,
                                LauncherAction action,
                                std::optional<int> timeout_seconds);
 
-// Writes the extended action request serialized as `serialized_data` to
-// `monitor_socket`, then waits for the response and checks for errors.
-Result<void> RunLauncherAction(const SharedFD& monitor_socket,
-                               ExtendedActionType extended_action_type,
-                               std::string serialized_data,
-                               std::optional<int> timeout_seconds);
+// Writes the `action` request to `monitor_socket`, then waits for the response
+// and checks for errors.
+Result<void> RunLauncherAction(
+    const SharedFD& monitor_socket, ExtendedActionType extended_action_type,
+    const run_cvd::ExtendedLauncherAction& extended_action,
+    std::optional<int> timeout_seconds);
 
 }  // namespace cuttlefish

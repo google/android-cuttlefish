@@ -28,7 +28,12 @@ cc_library {
         "liblog",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libcuttlefish_run_cvd_proto",
         "libjsoncpp",
+        "libprotobuf-cpp-full",
+    ],
+    export_shared_lib_headers: [
+        "libcuttlefish_run_cvd_proto",
     ],
     static_libs: [
         "libbase",
