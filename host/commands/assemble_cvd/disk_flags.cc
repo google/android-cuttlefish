@@ -669,7 +669,7 @@ static fruit::Component<> DiskChangesComponent(
       .install(KernelRamdiskRepackerComponent)
       .install(AutoSetup<VbmetaEnforceMinimumSize>::Component)
       .install(AutoSetup<BootloaderPresentCheck>::Component)
-      .install(Gem5ImageUnpackerComponent)
+      .install(AutoSetup<Gem5ImageUnpacker>::Component)
       .install(InitializeMiscImageComponent)
       // Create esp if necessary
       .install(InitializeEspImageComponent)
@@ -690,7 +690,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .install(AutoSetup<InitializePstore>::Component)
       .install(AutoSetup<InitializeSdCard>::Component)
       .install(AutoSetup<GeneratePersistentBootconfig>::Component)
-      .install(GeneratePersistentVbmetaComponent)
+      .install(AutoSetup<GeneratePersistentVbmeta>::Component)
       .install(AutoSetup<InitializeInstanceCompositeDisk>::Component)
       .install(InitializeDataImageComponent);
 }
