@@ -2,6 +2,12 @@
   <device-state>
     <identifier>0</identifier>
     <name>CLOSED</name>
+    <properties>
+      <property>PROPERTY_POLICY_CANCEL_OVERRIDE_REQUESTS</property>
+      <property>PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_CLOSED</property>
+      <property>PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_OUTER_PRIMARY</property>
+      <property>PROPERTY_POWER_CONFIGURATION_TRIGGER_SLEEP</property>
+    </properties>
     <conditions>
       <lid-switch>
         <open>false</open>
@@ -11,6 +17,11 @@
   <device-state>
     <identifier>1</identifier>
     <name>HALF_OPENED</name>
+    <properties>
+      <property>PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_HALF_OPEN</property>
+      <property>PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_INNER_PRIMARY</property>
+      <property>PROPERTY_POWER_CONFIGURATION_TRIGGER_WAKE</property>
+    </properties>
     <conditions>
       <lid-switch>
         <open>true</open>
@@ -28,6 +39,11 @@
   <device-state>
     <identifier>2</identifier>
     <name>OPENED</name>
+    <properties>
+      <property>PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_OPEN</property>
+      <property>PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_INNER_PRIMARY</property>
+      <property>PROPERTY_POWER_CONFIGURATION_TRIGGER_WAKE</property>
+    </properties>
     <conditions>
       <lid-switch>
         <open>true</open>
@@ -37,8 +53,11 @@
   <device-state>
     <identifier>3</identifier>
     <name>REAR_DISPLAY_MODE</name>
-    <flags>
-      <flag>FLAG_EMULATED_ONLY</flag>
-    </flags>
+    <properties>
+      <property>PROPERTY_EMULATED_ONLY</property>
+      <property>PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_OUTER_PRIMARY</property>
+      <property>PROPERTY_POLICY_AVAILABLE_FOR_APP_REQUEST</property>
+      <property>PROPERTY_FEATURE_REAR_DISPLAY</property>
+    </properties>
   </device-state>
 </device-state-config>
