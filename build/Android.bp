@@ -71,6 +71,7 @@ qemu_x86_64_linux_gnu_resource = [
 // End of generated qemu_x86_64_linux_gnu_resource
 
 cvd_host_tools = [
+    "acloud_translator",
     "adb",
     "adb_connector",
     "allocd_client",
