@@ -113,6 +113,12 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
   if (DirectoryExists(directory_path, /* follow_symlinks */ true)) {
     return {};
   }
+  if (FileExists(directory_path, false) && !FileExists(directory_path, true)) {
+    // directory_path is a link to a path that doesn't exist. This could happen
+    // after executing certain cvd subcommands.
+    CF_EXPECT(RemoveFile(directory_path),
+              "Can't remove broken link: " << directory_path);
+  }
   const auto parent_dir = android::base::Dirname(directory_path);
   if (parent_dir.size() > 1) {
     EnsureDirectoryExists(parent_dir, mode, group_name);
