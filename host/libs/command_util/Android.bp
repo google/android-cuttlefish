@@ -20,7 +20,6 @@ package {
 cc_library {
     name: "libcuttlefish_command_util",
     srcs: [
-        "launcher_message.cc",
         "snapshot_utils.cc",
         "util.cc",
     ],
