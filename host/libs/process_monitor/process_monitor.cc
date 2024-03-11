@@ -177,12 +177,8 @@ Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
     auto serialized_request = CF_EXPECT(
         (is_suspend ? SerializeSuspendRequest() : SerializeResumeRequest()),
         "Failed to serialize request.");
-    CF_EXPECT(WriteLauncherActionWithData(
-        channel_to_secure_env, LauncherAction::kExtended, extended_type,
-        std::move(serialized_request)));
-    const std::string failed_command = (is_suspend ? "suspend" : "resume");
-    CF_EXPECT(ReadLauncherResponse(channel_to_secure_env),
-              "secure_env refused to " + failed_command);
+    CF_EXPECT(RunLauncherAction(channel_to_secure_env, extended_type,
+                                std::move(serialized_request), std::nullopt));
   }
 
   for (const auto& entry : monitor_entries) {

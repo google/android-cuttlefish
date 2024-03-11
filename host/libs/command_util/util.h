@@ -23,8 +23,6 @@
 
 namespace cuttlefish {
 
-Result<LauncherResponse> ReadLauncherResponse(const SharedFD& monitor_socket);
-
 Result<RunnerExitCodes> ReadExitCode(const SharedFD& monitor_socket);
 
 Result<SharedFD> GetLauncherMonitorFromInstance(
@@ -34,21 +32,6 @@ Result<SharedFD> GetLauncherMonitorFromInstance(
 Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
                                     const int instance_num,
                                     const int timeout_seconds);
-
-Result<void> WriteLauncherAction(const SharedFD& monitor_socket,
-                                 const LauncherAction request);
-
-/**
- * Sends launcher actions with data
- *
- * If the request is something that does not use serialized_data at all,
- * the type should be ExtendedActionType::kUnused. serialized_data should
- * be std:move'd if avoiding redundant copy is desired.
- */
-Result<void> WriteLauncherActionWithData(const SharedFD& monitor_socket,
-                                         const LauncherAction request,
-                                         const ExtendedActionType type,
-                                         std::string serialized_data);
 
 struct LauncherActionInfo {
   LauncherAction action;
@@ -60,5 +43,18 @@ Result<LauncherActionInfo> ReadLauncherActionFromFd(
 
 Result<void> WaitForRead(const SharedFD& monitor_socket,
                          const int timeout_seconds);
+
+// Writes the `action` request to `monitor_socket`, then waits for the response
+// and checks for errors.
+Result<void> RunLauncherAction(const SharedFD& monitor_socket,
+                               LauncherAction action,
+                               std::optional<int> timeout_seconds);
+
+// Writes the extended action request serialized as `serialized_data` to
+// `monitor_socket`, then waits for the response and checks for errors.
+Result<void> RunLauncherAction(const SharedFD& monitor_socket,
+                               ExtendedActionType extended_action_type,
+                               std::string serialized_data,
+                               std::optional<int> timeout_seconds);
 
 }  // namespace cuttlefish

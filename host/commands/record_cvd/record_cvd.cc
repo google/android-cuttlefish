@@ -56,20 +56,11 @@ Result<void> RecordCvdMain(int argc, char* argv[]) {
       CF_EXPECT(is_start ? SerializeStartScreenRecordingRequest()
                          : SerializeStopScreenRecordingRequest(),
                 "Failed to create serialized recording request proto.");
-  auto action_type = is_start ? ExtendedActionType::kStartScreenRecording
-                              : ExtendedActionType::kStopScreenRecording;
-  auto [serialized_data, extended_type] = RequestInfo{
-      .serialized_data = request, .extended_action_type = action_type};
-
-  CF_EXPECT(
-      WriteLauncherActionWithData(monitor_socket, LauncherAction::kExtended,
-                                  extended_type, std::move(serialized_data)));
-
-  LauncherResponse response = CF_EXPECT(ReadLauncherResponse(monitor_socket));
-  CF_EXPECTF(response == LauncherResponse::kSuccess,
-             "Received \"{}\" response from launcher monitor for \""
-             "{}\" request.",
-             static_cast<char>(response), command);
+  auto extended_action_type = is_start
+                                  ? ExtendedActionType::kStartScreenRecording
+                                  : ExtendedActionType::kStopScreenRecording;
+  CF_EXPECT(RunLauncherAction(monitor_socket, extended_action_type, request,
+                              std::nullopt));
   LOG(INFO) << "record_cvd " << command << " was successful.";
   return {};
 }

@@ -140,16 +140,8 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
 
     auto [serialized_data, extended_type] =
         CF_EXPECT(SerializeRequest(parsed.cmd, meta_json_path));
-    CF_EXPECT(
-        WriteLauncherActionWithData(monitor_socket, LauncherAction::kExtended,
-                                    extended_type, std::move(serialized_data)));
-    LOG(INFO) << "Wrote the extended serialized data and reading response";
-    LauncherResponse response = CF_EXPECT(ReadLauncherResponse(monitor_socket));
-    LOG(INFO) << "Read the response:  " << (int)LauncherResponse::kSuccess;
-    CF_EXPECTF(response == LauncherResponse::kSuccess,
-               "Received \"{}\" response from launcher monitor for \""
-               "{}\" request.",
-               static_cast<char>(response), static_cast<int>(parsed.cmd));
+    CF_EXPECT(RunLauncherAction(monitor_socket, extended_type,
+                                std::move(serialized_data), std::nullopt));
     LOG(INFO) << parsed.cmd << " was successful for instance #" << instance_num;
     if (parsed.cmd == SnapshotCmd::kSnapshotTake) {
       delete_snapshot_on_fail.Disable();

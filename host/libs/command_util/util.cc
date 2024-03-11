@@ -32,6 +32,8 @@
 namespace cuttlefish {
 namespace {
 
+using run_cvd_msg_impl::LauncherActionMessage;
+
 template <typename T>
 Result<T> ReadFromMonitor(const SharedFD& monitor_socket) {
   T response;
@@ -45,10 +47,6 @@ Result<T> ReadFromMonitor(const SharedFD& monitor_socket) {
 }
 
 }  // namespace
-
-Result<LauncherResponse> ReadLauncherResponse(const SharedFD& monitor_socket) {
-  return ReadFromMonitor<LauncherResponse>(monitor_socket);
-}
 
 Result<RunnerExitCodes> ReadExitCode(const SharedFD& monitor_socket) {
   return ReadFromMonitor<RunnerExitCodes>(monitor_socket);
@@ -75,24 +73,6 @@ Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
   return GetLauncherMonitorFromInstance(instance_config, timeout_seconds);
 }
 
-Result<void> WriteLauncherAction(const SharedFD& monitor_socket,
-                                 const LauncherAction request) {
-  CF_EXPECT(WriteLauncherActionWithData(monitor_socket, request,
-                                        ExtendedActionType::kUnused, ""));
-  return {};
-}
-
-Result<void> WriteLauncherActionWithData(const SharedFD& monitor_socket,
-                                         const LauncherAction request,
-                                         const ExtendedActionType type,
-                                         std::string serialized_data) {
-  using run_cvd_msg_impl::LauncherActionMessage;
-  auto message = CF_EXPECT(
-      LauncherActionMessage::Create(request, type, std::move(serialized_data)));
-  CF_EXPECT(message.WriteToFd(monitor_socket));
-  return {};
-}
-
 Result<LauncherActionInfo> ReadLauncherActionFromFd(
     const SharedFD& monitor_socket) {
   using run_cvd_msg_impl::LauncherActionMessage;
@@ -117,6 +97,38 @@ Result<void> WaitForRead(const SharedFD& monitor_socket,
   CF_EXPECT(
       select_result > 0,
       "Failed communication with the launcher monitor: " << strerror(errno));
+  return {};
+}
+
+Result<void> RunLauncherAction(const SharedFD& monitor_socket,
+                               LauncherAction action,
+                               std::optional<int> timeout_seconds) {
+  auto message = CF_EXPECT(
+      LauncherActionMessage::Create(action, ExtendedActionType::kUnused, ""));
+  CF_EXPECT(message.WriteToFd(monitor_socket));
+  if (timeout_seconds.has_value()) {
+    CF_EXPECT(WaitForRead(monitor_socket, timeout_seconds.value()));
+  }
+  LauncherResponse response =
+      CF_EXPECT(ReadFromMonitor<LauncherResponse>(monitor_socket));
+  CF_EXPECT_EQ((int)response, (int)LauncherResponse::kSuccess);
+  return {};
+}
+
+Result<void> RunLauncherAction(const SharedFD& monitor_socket,
+                               ExtendedActionType extended_action_type,
+                               std::string serialized_data,
+                               std::optional<int> timeout_seconds) {
+  auto message = CF_EXPECT(LauncherActionMessage::Create(
+      LauncherAction::kExtended, extended_action_type,
+      std::move(serialized_data)));
+  CF_EXPECT(message.WriteToFd(monitor_socket));
+  if (timeout_seconds.has_value()) {
+    CF_EXPECT(WaitForRead(monitor_socket, timeout_seconds.value()));
+  }
+  LauncherResponse response =
+      CF_EXPECT(ReadFromMonitor<LauncherResponse>(monitor_socket));
+  CF_EXPECT_EQ((int)response, (int)LauncherResponse::kSuccess);
   return {};
 }
 
