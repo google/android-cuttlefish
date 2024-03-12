@@ -97,8 +97,7 @@ Result<LauncherActionInfo> ReadLauncherActionFromFd(
   if (IsShortAction(action)) {
     return LauncherActionInfo{
         .action = action,
-        .type = ExtendedActionType::kUnused,
-        .serialized_data = "",
+        .extended_action = {},
     };
   }
   ExtendedActionType type;
@@ -110,8 +109,7 @@ Result<LauncherActionInfo> ReadLauncherActionFromFd(
   if (length == 0) {
     return LauncherActionInfo{
         .action = action,
-        .type = type,
-        .serialized_data = "",
+        .extended_action = {},
     };
   }
   std::string serialized_data(length, 0);
@@ -126,8 +124,7 @@ Result<LauncherActionInfo> ReadLauncherActionFromFd(
 
   return LauncherActionInfo{
       .action = action,
-      .type = type,
-      .serialized_data = std::move(serialized_data),
+      .extended_action = std::move(extended_action),
   };
 }
 

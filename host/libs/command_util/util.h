@@ -36,8 +36,7 @@ Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
 
 struct LauncherActionInfo {
   LauncherAction action;
-  ExtendedActionType type;
-  std::string serialized_data;
+  run_cvd::ExtendedLauncherAction extended_action;
 };
 Result<LauncherActionInfo> ReadLauncherActionFromFd(
     const SharedFD& monitor_socket);
