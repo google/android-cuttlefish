@@ -31,7 +31,7 @@ BOARD_KERNEL_VERSION := $(word 1,$(subst vermagic=,,$(shell egrep -h -ao -m 1 'v
 # The list of modules strictly/only required either to reach second stage
 # init, OR for recovery. Do not use this list to workaround second stage
 # issues.
-RAMDISK_KERNEL_MODULES := \
+RAMDISK_KERNEL_MODULES ?= \
     failover.ko \
     nd_virtio.ko \
     net_failover.ko \
