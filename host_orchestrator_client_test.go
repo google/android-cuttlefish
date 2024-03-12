@@ -25,6 +25,8 @@ import (
 	"testing"
 	"time"
 
+	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -197,6 +199,32 @@ func TestUploadFilesExponentialBackoffReachedElapsedTime(t *testing.T) {
 	}
 	if attempts == 0 {
 		t.Fatal("server was never reached")
+	}
+}
+
+func TestCreateCVD(t *testing.T) {
+	fakeRes := &hoapi.CreateCVDResponse{CVDs: []*hoapi.CVD{{Name: "1"}}}
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "POST /cvds":
+			writeOK(w, hoapi.Operation{Name: "foo"})
+		case "POST /operations/foo/:wait":
+			writeOK(w, fakeRes)
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	srv := NewHostOrchestratorService(ts.URL)
+	req := &hoapi.CreateCVDRequest{EnvConfig: map[string]interface{}{}}
+
+	res, err := srv.CreateCVD(req, "")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(fakeRes, res); diff != "" {
+		t.Fatalf("response mismatch (-want +got):\n%s", diff)
 	}
 }
 
