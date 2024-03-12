@@ -52,8 +52,10 @@ cvd_home_dir=cvd_home
 ssh $server -t "mkdir -p ~/.cvd_artifact; mkdir -p ~/$cvd_home_dir"
 if [ -f $img_dir/required_images ]; then
   rsync -aSvch --recursive $img_dir --files-from=$img_dir/required_images $server:~/$cvd_home_dir --info=progress2
+  cvd_home_files=($(rsync -rzan --recursive $img_dir --out-format="%n" --files-from=$img_dir/required_images $server:~/$cvd_home_dir --info=name2 | awk '{print $1}'))
 else
   rsync -aSvch --recursive $img_dir/bootloader $img_dir/*.img $server:~/$cvd_home_dir --info=progress2
+  cvd_home_files=($(rsync -rzan --recursive $img_dir/bootloader --out-format="%n" $img_dir/*.img $server:~/$cvd_home_dir --info=name2 | awk '{print $1}'))
 fi
 
 # upload cvd-host_package.tar.gz into ARM server
@@ -76,6 +78,7 @@ else
   exit 1
 fi
 rsync -avch $temp_dir/cvd-host_package.tar.gz $server:~/$cvd_home_dir --info=progress2
+cvd_home_files+=("cvd-host_package.tar.gz")
 
 # run root docker instance
 root_container_id=$(ssh $server -t "docker run --privileged -p 2443 -d cuttlefish")
@@ -123,7 +126,7 @@ echo -e "Succeeded to create user_artifacts_dir"
 
 # upload artifacts and cvd-host_pachage.tar.gz into docker instance
 ssh $server \
-  "for filename in \$(ls $cvd_home_dir); do \
+  "for filename in ${cvd_home_files[*]}; do \
      absolute_path=\$HOME/$cvd_home_dir/\$filename && \
      size=\$(stat -c%s \$absolute_path) && \
      echo Uploading \$filename\\(size:\$size\\) ... && \
