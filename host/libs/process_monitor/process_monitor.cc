@@ -170,17 +170,14 @@ Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
   if (secure_env_itr != monitor_entries.end()) {
     CF_EXPECT(channel_to_secure_env->IsOpen(),
               "channel to secure_env is not open.");
-    const ExtendedActionType extended_type =
-        (is_suspend ? ExtendedActionType::kSuspend
-                    : ExtendedActionType::kResume);
     run_cvd::ExtendedLauncherAction extended_action;
     if (is_suspend) {
       extended_action.mutable_suspend();
     } else {
       extended_action.mutable_resume();
     }
-    CF_EXPECT(RunLauncherAction(channel_to_secure_env, extended_type,
-                                extended_action, std::nullopt));
+    CF_EXPECT(RunLauncherAction(channel_to_secure_env, extended_action,
+                                std::nullopt));
   }
 
   for (const auto& entry : monitor_entries) {

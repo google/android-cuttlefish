@@ -53,7 +53,7 @@ Result<void> RunLauncherAction(const SharedFD& monitor_socket,
 // Writes the `action` request to `monitor_socket`, then waits for the response
 // and checks for errors.
 Result<void> RunLauncherAction(
-    const SharedFD& monitor_socket, ExtendedActionType extended_action_type,
+    const SharedFD& monitor_socket,
     const run_cvd::ExtendedLauncherAction& extended_action,
     std::optional<int> timeout_seconds);
 

@@ -36,41 +36,24 @@
 namespace cuttlefish {
 namespace {
 
-struct RequestInfo {
-  ExtendedActionType extended_action_type;
-  run_cvd::ExtendedLauncherAction extended_action;
-};
-
-Result<RequestInfo> SerializeRequest(const SnapshotCmd subcmd,
-                                     const std::string& meta_json_path) {
+Result<run_cvd::ExtendedLauncherAction> SerializeRequest(
+    const SnapshotCmd subcmd, const std::string& meta_json_path) {
   switch (subcmd) {
     case SnapshotCmd::kSuspend: {
       run_cvd::ExtendedLauncherAction extended_action;
       extended_action.mutable_suspend();
-      return RequestInfo{
-          .extended_action_type = ExtendedActionType::kSuspend,
-          .extended_action = extended_action,
-      };
-      break;
+      return extended_action;
     }
     case SnapshotCmd::kResume: {
       run_cvd::ExtendedLauncherAction extended_action;
       extended_action.mutable_resume();
-      return RequestInfo{
-          .extended_action_type = ExtendedActionType::kResume,
-          .extended_action = extended_action,
-      };
-      break;
+      return extended_action;
     }
     case SnapshotCmd::kSnapshotTake: {
       run_cvd::ExtendedLauncherAction extended_action;
       extended_action.mutable_snapshot_take()->add_snapshot_path(
           meta_json_path);
-      return RequestInfo{
-          .extended_action_type = ExtendedActionType::kSnapshotTake,
-          .extended_action = extended_action,
-      };
-      break;
+      return extended_action;
     }
     default:
       return CF_ERR("Operation not supported.");
@@ -148,10 +131,9 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
       delete_snapshot_on_fail.Disable();
     }
 
-    auto [extended_type, extended_action] =
+    auto extended_action =
         CF_EXPECT(SerializeRequest(parsed.cmd, meta_json_path));
-    CF_EXPECT(RunLauncherAction(monitor_socket, extended_type, extended_action,
-                                std::nullopt));
+    CF_EXPECT(RunLauncherAction(monitor_socket, extended_action, std::nullopt));
     LOG(INFO) << parsed.cmd << " was successful for instance #" << instance_num;
     if (parsed.cmd == SnapshotCmd::kSnapshotTake) {
       delete_snapshot_on_fail.Disable();

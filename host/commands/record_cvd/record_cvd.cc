@@ -57,11 +57,7 @@ Result<void> RecordCvdMain(int argc, char* argv[]) {
   } else {
     extended_action.mutable_stop_screen_recording();
   }
-  auto extended_action_type = is_start
-                                  ? ExtendedActionType::kStartScreenRecording
-                                  : ExtendedActionType::kStopScreenRecording;
-  CF_EXPECT(RunLauncherAction(monitor_socket, extended_action_type,
-                              extended_action, std::nullopt));
+  CF_EXPECT(RunLauncherAction(monitor_socket, extended_action, std::nullopt));
   LOG(INFO) << "record_cvd " << command << " was successful.";
   return {};
 }

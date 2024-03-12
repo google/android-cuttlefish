@@ -100,9 +100,6 @@ Result<LauncherActionInfo> ReadLauncherActionFromFd(
         .extended_action = {},
     };
   }
-  ExtendedActionType type;
-  CF_EXPECT(ReadExactBinaryResult(monitor_socket, &type),
-            "Error reading ExtendedActionType");
   std::uint32_t length = 0;
   CF_EXPECT(ReadExactBinaryResult(monitor_socket, &length),
             "Error reading proto length");
@@ -164,7 +161,7 @@ Result<void> RunLauncherAction(const SharedFD& monitor_socket,
 }
 
 Result<void> RunLauncherAction(
-    const SharedFD& monitor_socket, ExtendedActionType extended_action_type,
+    const SharedFD& monitor_socket,
     const run_cvd::ExtendedLauncherAction& extended_action,
     std::optional<int> timeout_seconds) {
   const std::string serialized_data = extended_action.SerializeAsString();
@@ -173,8 +170,6 @@ Result<void> RunLauncherAction(
   const LauncherAction action = LauncherAction::kExtended;
   CF_EXPECT(WriteAllBinaryResult(monitor_socket, &action),
             "Error writing LauncherAction");
-  CF_EXPECT(WriteAllBinaryResult(monitor_socket, &extended_action_type),
-            "Error writing ExtendedActionType");
   const std::uint32_t length = serialized_data.size();
   CF_EXPECT(WriteAllBinaryResult(monitor_socket, &length),
             "Error writing proto length");
