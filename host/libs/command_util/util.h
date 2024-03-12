@@ -24,7 +24,7 @@
 
 namespace cuttlefish {
 
-Result<RunnerExitCodes> ReadExitCode(const SharedFD& monitor_socket);
+Result<RunnerExitCodes> ReadExitCode(SharedFD monitor_socket);
 
 Result<SharedFD> GetLauncherMonitorFromInstance(
     const CuttlefishConfig::InstanceSpecific& instance_config,
@@ -38,22 +38,19 @@ struct LauncherActionInfo {
   LauncherAction action;
   run_cvd::ExtendedLauncherAction extended_action;
 };
-Result<LauncherActionInfo> ReadLauncherActionFromFd(
-    const SharedFD& monitor_socket);
+Result<LauncherActionInfo> ReadLauncherActionFromFd(SharedFD monitor_socket);
 
-Result<void> WaitForRead(const SharedFD& monitor_socket,
-                         const int timeout_seconds);
+Result<void> WaitForRead(SharedFD monitor_socket, const int timeout_seconds);
 
 // Writes the `action` request to `monitor_socket`, then waits for the response
 // and checks for errors.
-Result<void> RunLauncherAction(const SharedFD& monitor_socket,
-                               LauncherAction action,
+Result<void> RunLauncherAction(SharedFD monitor_socket, LauncherAction action,
                                std::optional<int> timeout_seconds);
 
 // Writes the `action` request to `monitor_socket`, then waits for the response
 // and checks for errors.
 Result<void> RunLauncherAction(
-    const SharedFD& monitor_socket,
+    SharedFD monitor_socket,
     const run_cvd::ExtendedLauncherAction& extended_action,
     std::optional<int> timeout_seconds);
 

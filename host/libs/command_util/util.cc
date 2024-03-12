@@ -61,7 +61,7 @@ static Result<void> ReadExactBinaryResult(const SharedFD& fd, T* t) {
 
 }  // namespace
 
-Result<RunnerExitCodes> ReadExitCode(const SharedFD& monitor_socket) {
+Result<RunnerExitCodes> ReadExitCode(SharedFD monitor_socket) {
   RunnerExitCodes exit_codes;
   CF_EXPECT(ReadExactBinaryResult(monitor_socket, &exit_codes),
             "Error reading RunnerExitCodes");
@@ -89,8 +89,7 @@ Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
   return GetLauncherMonitorFromInstance(instance_config, timeout_seconds);
 }
 
-Result<LauncherActionInfo> ReadLauncherActionFromFd(
-    const SharedFD& monitor_socket) {
+Result<LauncherActionInfo> ReadLauncherActionFromFd(SharedFD monitor_socket) {
   LauncherAction action;
   CF_EXPECT(ReadExactBinaryResult(monitor_socket, &action),
             "Error reading LauncherAction");
@@ -125,8 +124,7 @@ Result<LauncherActionInfo> ReadLauncherActionFromFd(
   };
 }
 
-Result<void> WaitForRead(const SharedFD& monitor_socket,
-                         const int timeout_seconds) {
+Result<void> WaitForRead(SharedFD monitor_socket, const int timeout_seconds) {
   // Perform a select with a timeout to guard against launcher hanging
   SharedFDSet read_set;
   read_set.Set(monitor_socket);
@@ -141,8 +139,7 @@ Result<void> WaitForRead(const SharedFD& monitor_socket,
   return {};
 }
 
-Result<void> RunLauncherAction(const SharedFD& monitor_socket,
-                               LauncherAction action,
+Result<void> RunLauncherAction(SharedFD monitor_socket, LauncherAction action,
                                std::optional<int> timeout_seconds) {
   CF_EXPECTF(IsShortAction(action),
              "PerformActionRequest doesn't support extended action \"{}\"",
@@ -161,7 +158,7 @@ Result<void> RunLauncherAction(const SharedFD& monitor_socket,
 }
 
 Result<void> RunLauncherAction(
-    const SharedFD& monitor_socket,
+    SharedFD monitor_socket,
     const run_cvd::ExtendedLauncherAction& extended_action,
     std::optional<int> timeout_seconds) {
   const std::string serialized_data = extended_action.SerializeAsString();
