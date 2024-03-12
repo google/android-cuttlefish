@@ -156,6 +156,7 @@ func (rb *HTTPRequestBuilder) JSONResDoWithRetries(ret any, retryOpts RetryOptio
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 	return rb.parseResponse(res, ret)
 }
 
@@ -184,7 +185,6 @@ func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Respo
 			return nil, fmt.Errorf("error sending request: %w", err)
 		}
 	}
-	defer res.Body.Close()
 	if err := rb.helper.dumpResponse(res); err != nil {
 		return nil, err
 	}
@@ -423,6 +423,7 @@ func (w *uploadChunkWorker) upload(job uploadChunkJob) error {
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 	if res.StatusCode != 200 {
 		const msg = "failed uploading file chunk with status code %q. " +
 			"File %q, chunk number: %d, chunk total: %d"
