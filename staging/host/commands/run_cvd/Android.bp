@@ -60,7 +60,6 @@ cc_binary_host {
         "libcuttlefish_fs",
         "libcuttlefish_kernel_log_monitor_utils",
         "libcuttlefish_run_cvd_proto",
-        "libcuttlefish_runner_proto",
         "libcuttlefish_utils",
         "libext2_blkid",
         "libfruit",

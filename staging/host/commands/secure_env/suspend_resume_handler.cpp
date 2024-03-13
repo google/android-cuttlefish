@@ -72,25 +72,17 @@ SnapshotCommandHandler::SnapshotCommandHandler(SharedFD channel_to_run_cvd,
   });
 }
 
-Result<ExtendedActionType> SnapshotCommandHandler::ReadRunCvdSnapshotCmd()
-    const {
-  CF_EXPECT(channel_to_run_cvd_->IsOpen(), channel_to_run_cvd_->StrError());
+Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
+  using ActionsCase =
+      ::cuttlefish::run_cvd::ExtendedLauncherAction::ActionsCase;
+
   auto launcher_action =
       CF_EXPECT(ReadLauncherActionFromFd(channel_to_run_cvd_),
                 "Failed to read LauncherAction from run_cvd");
   CF_EXPECT(launcher_action.action == LauncherAction::kExtended);
-  const auto action_type = launcher_action.type;
-  CF_EXPECTF(action_type == ExtendedActionType::kSuspend ||
-                 action_type == ExtendedActionType::kResume,
-             "Unsupported ExtendedActionType \"{}\"",
-             fmt::underlying(action_type));
-  return action_type;
-}
 
-Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
-  const auto snapshot_cmd = CF_EXPECT(ReadRunCvdSnapshotCmd());
-  switch (snapshot_cmd) {
-    case ExtendedActionType::kSuspend: {
+  switch (launcher_action.extended_action.actions_case()) {
+    case ActionsCase::kSuspend: {
       LOG(DEBUG) << "Handling suspended...";
       // Request all worker threads to suspend.
       CF_EXPECT(WriteSuspendRequest(snapshot_sockets_.rust));
@@ -109,7 +101,7 @@ Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
       CF_EXPECT_EQ(sizeof(response), n_written);
       return {};
     };
-    case ExtendedActionType::kResume: {
+    case ActionsCase::kResume: {
       LOG(DEBUG) << "Handling resume...";
       // Request all worker threads to resume.
       CF_EXPECT(WriteResumeRequest(snapshot_sockets_.rust));
