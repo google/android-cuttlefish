@@ -2,7 +2,7 @@
 
 set -x -e
 
-REPO_DIR="$(realpath "$(dirname "$0")/..")"
+REPO_DIR="$(realpath "$(dirname "$0")/../..")"
 OUTPUT_DIR="$(pwd)"
 
 function gather_test_results() {
