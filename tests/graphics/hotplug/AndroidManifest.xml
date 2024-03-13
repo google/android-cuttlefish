@@ -20,6 +20,7 @@
 
     <application>
       <activity android:name="DisplayHotplugHelperApp"
+           android:launchMode="singleTop"
            android:label="Cuttlefish Display Hotplug Helper"
            android:theme="@android:style/Theme.DeviceDefault"
            android:exported="true">
