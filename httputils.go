@@ -92,7 +92,7 @@ func (h *HTTPHelper) NewUploadFileRequest(ctx context.Context, path string, body
 }
 
 func (h *HTTPHelper) dumpRequest(r *http.Request) error {
-	if h.Dumpster == nil {
+	if h.Dumpster == nil || h.Dumpster == io.Discard {
 		return nil
 	}
 	dump, err := httputil.DumpRequestOut(r, true)
@@ -104,7 +104,7 @@ func (h *HTTPHelper) dumpRequest(r *http.Request) error {
 }
 
 func (h *HTTPHelper) dumpResponse(r *http.Response) error {
-	if h.Dumpster == nil {
+	if h.Dumpster == nil || h.Dumpster == io.Discard {
 		return nil
 	}
 	dump, err := httputil.DumpResponse(r, true)
