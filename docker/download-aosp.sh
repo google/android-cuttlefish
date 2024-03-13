@@ -27,12 +27,15 @@ function parse_opts() {
 					ARCH=$2
 					case "${ARCH}" in
 						x86)
+							TARGET='aosp_x86-trunk_staging-userdebug'
 							THROTTLED=
 							;;
 						x86_64)
-							THROTTLED='-throttled'
+							TARGET='aosp_cf_x86_64_phone-trunk_staging-userdebug'
+							THROTTLED=
 							;;
 						arm64|aarch64)
+							TARGET='aosp_cf_arm64_only_phone-trunk_staging-userdebug'
 							ARCH='arm64'
 							THROTTLED='-throttled'
 							;;
@@ -134,7 +137,7 @@ SKIP_USERDATA=""
 
 parse_opts $*
 
-URL=https://ci.android.com/builds/latest/branches/aosp-main${THROTTLED}/targets/aosp_cf_${ARCH}_phone-userdebug/view/BUILD_INFO
+URL=https://ci.android.com/builds/latest/branches/aosp-main${THROTTLED}/targets/${TARGET}/view/BUILD_INFO
 RURL=$(curl -Ls -o /dev/null -w %{url_effective} ${URL})
 
 if [ "${DOWNLOAD_ANDROID}" -eq 1 ]; then
