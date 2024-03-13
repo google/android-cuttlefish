@@ -29,7 +29,6 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/snapshot_util_cvd/parse.h"
 #include "host/commands/snapshot_util_cvd/snapshot_taker.h"
-#include "host/libs/command_util/runner/proto_utils.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "run_cvd.pb.h"
@@ -37,30 +36,24 @@
 namespace cuttlefish {
 namespace {
 
-Result<RequestInfo> SerializeRequest(const SnapshotCmd subcmd,
-                                     const std::string& meta_json_path) {
+Result<run_cvd::ExtendedLauncherAction> SerializeRequest(
+    const SnapshotCmd subcmd, const std::string& meta_json_path) {
   switch (subcmd) {
     case SnapshotCmd::kSuspend: {
-      return RequestInfo{
-          .serialized_data = CF_EXPECT(SerializeSuspendRequest()),
-          .extended_action_type = ExtendedActionType::kSuspend,
-      };
-      break;
+      run_cvd::ExtendedLauncherAction extended_action;
+      extended_action.mutable_suspend();
+      return extended_action;
     }
     case SnapshotCmd::kResume: {
-      return RequestInfo{
-          .serialized_data = CF_EXPECT(SerializeResumeRequest()),
-          .extended_action_type = ExtendedActionType::kResume,
-      };
-      break;
+      run_cvd::ExtendedLauncherAction extended_action;
+      extended_action.mutable_resume();
+      return extended_action;
     }
     case SnapshotCmd::kSnapshotTake: {
-      return RequestInfo{
-          .serialized_data =
-              CF_EXPECT(SerializeSnapshotTakeRequest(meta_json_path)),
-          .extended_action_type = ExtendedActionType::kSnapshotTake,
-      };
-      break;
+      run_cvd::ExtendedLauncherAction extended_action;
+      extended_action.mutable_snapshot_take()->add_snapshot_path(
+          meta_json_path);
+      return extended_action;
     }
     default:
       return CF_ERR("Operation not supported.");
@@ -138,18 +131,9 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
       delete_snapshot_on_fail.Disable();
     }
 
-    auto [serialized_data, extended_type] =
+    auto extended_action =
         CF_EXPECT(SerializeRequest(parsed.cmd, meta_json_path));
-    CF_EXPECT(
-        WriteLauncherActionWithData(monitor_socket, LauncherAction::kExtended,
-                                    extended_type, std::move(serialized_data)));
-    LOG(INFO) << "Wrote the extended serialized data and reading response";
-    LauncherResponse response = CF_EXPECT(ReadLauncherResponse(monitor_socket));
-    LOG(INFO) << "Read the response:  " << (int)LauncherResponse::kSuccess;
-    CF_EXPECTF(response == LauncherResponse::kSuccess,
-               "Received \"{}\" response from launcher monitor for \""
-               "{}\" request.",
-               static_cast<char>(response), static_cast<int>(parsed.cmd));
+    CF_EXPECT(RunLauncherAction(monitor_socket, extended_action, std::nullopt));
     LOG(INFO) << parsed.cmd << " was successful for instance #" << instance_num;
     if (parsed.cmd == SnapshotCmd::kSnapshotTake) {
       delete_snapshot_on_fail.Disable();
