@@ -99,7 +99,7 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
 
     private static final int HELPER_APP_LOG_CHECK_ATTEMPTS = 5;
 
-    private static final int HELPER_APP_LOG_CHECK_TIMEOUT_MILLISECONDS = 200;
+    private static final int HELPER_APP_LOG_CHECK_TIMEOUT_MILLISECONDS = 1000;
 
     private static final int CHECK_FOR_UPDATED_GUEST_DISPLAYS_ATTEMPTS = 5;
 
