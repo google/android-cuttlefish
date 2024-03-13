@@ -129,14 +129,8 @@ Result<void> CvdStatusMain(const StatusFlags& flag_values) {
 
     LOG(INFO) << "Requesting status for instance "
               << instance_config.instance_name();
-    CF_EXPECT(WriteLauncherAction(monitor_socket, LauncherAction::kStatus));
-    CF_EXPECT(WaitForRead(monitor_socket, flag_values.wait_for_launcher));
-    LauncherResponse status_response =
-        CF_EXPECT(ReadLauncherResponse(monitor_socket));
-    CF_EXPECT(
-        status_response == LauncherResponse::kSuccess,
-        "Received `" << static_cast<char>(status_response)
-                     << "` response from launcher monitor for status request");
+    CF_EXPECT(RunLauncherAction(monitor_socket, LauncherAction::kStatus,
+                                flag_values.wait_for_launcher));
 
     devices_info[index] =
         PopulateDevicesInfoFromInstance(*config, instance_config);

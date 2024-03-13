@@ -21,19 +21,11 @@
 #include "common/libs/utils/result.h"
 #include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/util.h"
-#include "run_cvd.pb.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {
 
-Result<void> ServerLoopImpl::HandleStartScreenRecording(
-    const std::string& serialized_data) {
-  run_cvd::ExtendedLauncherAction extended_action;
-  CF_EXPECT(extended_action.ParseFromString(serialized_data),
-            "Failed to load ExtendedLauncherAction proto.");
-  CF_EXPECT_EQ(
-      extended_action.actions_case(),
-      run_cvd::ExtendedLauncherAction::ActionsCase::kStartScreenRecording);
+Result<void> ServerLoopImpl::HandleStartScreenRecording() {
   LOG(INFO) << "Sending the request to start screen recording.";
 
   CF_EXPECT(webrtc_recorder_.SendStartRecordingCommand(),
@@ -41,14 +33,7 @@ Result<void> ServerLoopImpl::HandleStartScreenRecording(
   return {};
 }
 
-Result<void> ServerLoopImpl::HandleStopScreenRecording(
-    const std::string& serialized_data) {
-  run_cvd::ExtendedLauncherAction extended_action;
-  CF_EXPECT(extended_action.ParseFromString(serialized_data),
-            "Failed to load ExtendedLauncherAction proto.");
-  CF_EXPECT_EQ(
-      extended_action.actions_case(),
-      run_cvd::ExtendedLauncherAction::ActionsCase::kStopScreenRecording);
+Result<void> ServerLoopImpl::HandleStopScreenRecording() {
   LOG(INFO) << "Sending the request to stop screen recording.";
 
   CF_EXPECT(webrtc_recorder_.SendStopRecordingCommand(),
