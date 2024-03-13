@@ -6,8 +6,10 @@ set -e -x
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"
 TOOL_DIR="${REPO_DIR}/tools/testutils"
 
+"${TOOL_DIR}/build_packages.sh"
+
 # Add test user to the kokoro group so it has access to the source dir
-"${TOOL_DIR}/prepare_host.sh" -u testrunner -g kokoro
+"${TOOL_DIR}/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro
 
 # Run as different user without sudo privileges
 sudo -u testrunner "${TOOL_DIR}/runtests.sh" ...
