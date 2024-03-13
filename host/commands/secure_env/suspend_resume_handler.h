@@ -67,7 +67,6 @@ class SnapshotCommandHandler {
 
  private:
   Result<void> SuspendResumeHandler();
-  Result<ExtendedActionType> ReadRunCvdSnapshotCmd() const;
   void Join();
 
   SharedFD channel_to_run_cvd_;
