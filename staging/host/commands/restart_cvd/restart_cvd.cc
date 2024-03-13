@@ -48,14 +48,8 @@ Result<void> RestartCvdMain() {
       GetLauncherMonitor(*config, FLAGS_instance_num, FLAGS_wait_for_launcher));
 
   LOG(INFO) << "Requesting restart";
-  CF_EXPECT(WriteLauncherAction(monitor_socket, LauncherAction::kRestart));
-  CF_EXPECT(WaitForRead(monitor_socket, FLAGS_wait_for_launcher));
-  LauncherResponse restart_response =
-      CF_EXPECT(ReadLauncherResponse(monitor_socket));
-  CF_EXPECT(
-      restart_response == LauncherResponse::kSuccess,
-      "Received `" << static_cast<char>(restart_response)
-                   << "` response from launcher monitor for restart request");
+  CF_EXPECT(RunLauncherAction(monitor_socket, LauncherAction::kRestart,
+                              FLAGS_wait_for_launcher));
 
   LOG(INFO) << "Waiting for device to boot up again";
   CF_EXPECT(WaitForRead(monitor_socket, FLAGS_boot_timeout));
