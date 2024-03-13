@@ -46,7 +46,6 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/command_util/runner/defs.h"
-#include "host/libs/command_util/runner/proto_utils.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
@@ -171,18 +170,14 @@ Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
   if (secure_env_itr != monitor_entries.end()) {
     CF_EXPECT(channel_to_secure_env->IsOpen(),
               "channel to secure_env is not open.");
-    const ExtendedActionType extended_type =
-        (is_suspend ? ExtendedActionType::kSuspend
-                    : ExtendedActionType::kResume);
-    auto serialized_request = CF_EXPECT(
-        (is_suspend ? SerializeSuspendRequest() : SerializeResumeRequest()),
-        "Failed to serialize request.");
-    CF_EXPECT(WriteLauncherActionWithData(
-        channel_to_secure_env, LauncherAction::kExtended, extended_type,
-        std::move(serialized_request)));
-    const std::string failed_command = (is_suspend ? "suspend" : "resume");
-    CF_EXPECT(ReadLauncherResponse(channel_to_secure_env),
-              "secure_env refused to " + failed_command);
+    run_cvd::ExtendedLauncherAction extended_action;
+    if (is_suspend) {
+      extended_action.mutable_suspend();
+    } else {
+      extended_action.mutable_resume();
+    }
+    CF_EXPECT(RunLauncherAction(channel_to_secure_env, extended_action,
+                                std::nullopt));
   }
 
   for (const auto& entry : monitor_entries) {

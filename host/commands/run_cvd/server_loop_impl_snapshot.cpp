@@ -142,13 +142,7 @@ Result<void> ServerLoopImpl::ResumeGuest() {
   }
 }
 
-Result<void> ServerLoopImpl::HandleSuspend(const std::string& serialized_data,
-                                           ProcessMonitor& process_monitor) {
-  run_cvd::ExtendedLauncherAction extended_action;
-  CF_EXPECT(extended_action.ParseFromString(serialized_data),
-            "Failed to load ExtendedLauncherAction proto.");
-  CF_EXPECT_EQ(extended_action.actions_case(),
-               run_cvd::ExtendedLauncherAction::ActionsCase::kSuspend);
+Result<void> ServerLoopImpl::HandleSuspend(ProcessMonitor& process_monitor) {
   // right order: guest -> host
   LOG(DEBUG) << "Suspending the guest..";
   CF_EXPECT(SuspendGuest());
@@ -159,13 +153,7 @@ Result<void> ServerLoopImpl::HandleSuspend(const std::string& serialized_data,
   return {};
 }
 
-Result<void> ServerLoopImpl::HandleResume(const std::string& serialized_data,
-                                          ProcessMonitor& process_monitor) {
-  run_cvd::ExtendedLauncherAction extended_action;
-  CF_EXPECT(extended_action.ParseFromString(serialized_data),
-            "Failed to load ExtendedLauncherAction proto.");
-  CF_EXPECT_EQ(extended_action.actions_case(),
-               run_cvd::ExtendedLauncherAction::ActionsCase::kResume);
+Result<void> ServerLoopImpl::HandleResume(ProcessMonitor& process_monitor) {
   // right order: host -> guest
   CF_EXPECT(process_monitor.ResumeMonitoredProcesses(),
             "Failed to resume host processes.");
@@ -246,15 +234,10 @@ Result<void> ServerLoopImpl::TakeGuestSnapshot(const std::string& vm_manager,
 }
 
 Result<void> ServerLoopImpl::HandleSnapshotTake(
-    const std::string& serialized_data) {
-  run_cvd::ExtendedLauncherAction extended_action;
-  CF_EXPECT(extended_action.ParseFromString(serialized_data),
-            "Failed to load ExtendedLauncherAction proto.");
-  CF_EXPECT_EQ(extended_action.actions_case(),
-               run_cvd::ExtendedLauncherAction::ActionsCase::kSnapshotTake);
+    const run_cvd::SnapshotTake& snapshot_take) {
   // implement snapshot take
   std::vector<std::string> path_to_snapshots;
-  for (const auto& path : extended_action.snapshot_take().snapshot_path()) {
+  for (const auto& path : snapshot_take.snapshot_path()) {
     path_to_snapshots.push_back(path);
   }
   CF_EXPECT_EQ(path_to_snapshots.size(), 1);
