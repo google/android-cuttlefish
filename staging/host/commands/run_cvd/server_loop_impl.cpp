@@ -116,8 +116,6 @@ Result<void> ServerLoopImpl::Run() {
         continue;
       }
       auto result = HandleExtended(launcher_action, process_monitor);
-      const auto launcher_action_type_code =
-          static_cast<std::uint32_t>(launcher_action.type);
       auto response = LauncherResponse::kSuccess;
       if (!result.ok()) {
         LOG(ERROR) << "Failed to handle extended action request.";
@@ -126,8 +124,7 @@ Result<void> ServerLoopImpl::Run() {
       }
       const auto n_written = client->Write(&response, sizeof(response));
       if (n_written != sizeof(response)) {
-        LOG(ERROR) << "Failed to write response to "
-                   << launcher_action_type_code;
+        LOG(ERROR) << "Failed to write response";
       }
       // extended operations for now are 1 time request-response exchanges.
       // thus, we will close the client FD.
@@ -147,43 +144,47 @@ Result<void> ServerLoopImpl::ResultSetup() {
 
 Result<void> ServerLoopImpl::HandleExtended(
     const LauncherActionInfo& action_info, ProcessMonitor& process_monitor) {
+  using ActionsCase =
+      ::cuttlefish::run_cvd::ExtendedLauncherAction::ActionsCase;
+
   CF_EXPECT(action_info.action == LauncherAction::kExtended);
-  switch (action_info.type) {
-    case ExtendedActionType::kSuspend: {
+  switch (action_info.extended_action.actions_case()) {
+    case ActionsCase::kSuspend: {
       LOG(DEBUG) << "Run_cvd received suspend request.";
       if (device_status_.load() == DeviceStatus::kActive) {
-        CF_EXPECT(HandleSuspend(action_info.serialized_data, process_monitor));
+        CF_EXPECT(HandleSuspend(process_monitor));
       }
       device_status_ = DeviceStatus::kSuspended;
       return {};
     }
-    case ExtendedActionType::kResume: {
+    case ActionsCase::kResume: {
       LOG(DEBUG) << "Run_cvd received resume request.";
       if (device_status_.load() == DeviceStatus::kSuspended) {
-        CF_EXPECT(HandleResume(action_info.serialized_data, process_monitor));
+        CF_EXPECT(HandleResume(process_monitor));
       }
       device_status_ = DeviceStatus::kActive;
       return {};
     }
-    case ExtendedActionType::kSnapshotTake: {
+    case ActionsCase::kSnapshotTake: {
       LOG(DEBUG) << "Run_cvd received snapshot request.";
       CF_EXPECT(device_status_.load() == DeviceStatus::kSuspended,
                 "The device is not suspended, and snapshot cannot be taken");
-      CF_EXPECT(HandleSnapshotTake(action_info.serialized_data));
+      CF_EXPECT(
+          HandleSnapshotTake(action_info.extended_action.snapshot_take()));
       return {};
     }
-    case ExtendedActionType::kStartScreenRecording: {
+    case ActionsCase::kStartScreenRecording: {
       LOG(DEBUG) << "Run_cvd received start screen recording request.";
-      CF_EXPECT(HandleStartScreenRecording(action_info.serialized_data));
+      CF_EXPECT(HandleStartScreenRecording());
       return {};
     }
-    case ExtendedActionType::kStopScreenRecording: {
+    case ActionsCase::kStopScreenRecording: {
       LOG(DEBUG) << "Run_cvd received stop screen recording request.";
-      CF_EXPECT(HandleStopScreenRecording(action_info.serialized_data));
+      CF_EXPECT(HandleStopScreenRecording());
       return {};
     }
     default:
-      return CF_ERR("Unsupported ExtendedActionType");
+      return CF_ERR("Unsupported ExtendedLauncherAction");
   }
 }
 

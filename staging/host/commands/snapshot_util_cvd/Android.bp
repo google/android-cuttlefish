@@ -27,7 +27,6 @@ cc_binary_host {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
-        "libcuttlefish_runner_proto",
         "libcuttlefish_run_cvd_proto",
         "libcuttlefish_utils",
         "libjsoncpp",

@@ -71,13 +71,11 @@ class ServerLoopImpl : public ServerLoop,
   Result<void> ResultSetup() override;
   Result<void> HandleExtended(const LauncherActionInfo& action_info,
                               ProcessMonitor& process_monitor);
-  Result<void> HandleSuspend(const std::string& serialized_data,
-                             ProcessMonitor& process_monitor);
-  Result<void> HandleResume(const std::string& serialized_data,
-                            ProcessMonitor& process_monitor);
-  Result<void> HandleSnapshotTake(const std::string& serialized_data);
-  Result<void> HandleStartScreenRecording(const std::string& serialized_data);
-  Result<void> HandleStopScreenRecording(const std::string& serialized_data);
+  Result<void> HandleSuspend(ProcessMonitor& process_monitor);
+  Result<void> HandleResume(ProcessMonitor& process_monitor);
+  Result<void> HandleSnapshotTake(const run_cvd::SnapshotTake& snapshot_take);
+  Result<void> HandleStartScreenRecording();
+  Result<void> HandleStopScreenRecording();
 
   void HandleActionWithNoData(const LauncherAction action,
                               const SharedFD& client,

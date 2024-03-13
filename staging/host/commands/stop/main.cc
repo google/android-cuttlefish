@@ -122,14 +122,8 @@ Result<void> CleanStopInstance(
       GetLauncherMonitorFromInstance(instance_config, wait_for_launcher));
 
   LOG(INFO) << "Requesting stop";
-  CF_EXPECT(WriteLauncherAction(monitor_socket, LauncherAction::kStop));
-  CF_EXPECT(WaitForRead(monitor_socket, wait_for_launcher));
-  LauncherResponse stop_response =
-      CF_EXPECT(ReadLauncherResponse(monitor_socket));
-  CF_EXPECT(
-      stop_response == LauncherResponse::kSuccess,
-      "Received `" << static_cast<char>(stop_response)
-                   << "` response from launcher monitor for status request");
+  CF_EXPECT(RunLauncherAction(monitor_socket, LauncherAction::kStop,
+                              wait_for_launcher));
 
   LOG(INFO) << "Successfully stopped device " << instance_config.instance_name()
             << ": " << instance_config.adb_ip_and_port();

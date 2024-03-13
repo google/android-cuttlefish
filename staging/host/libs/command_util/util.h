@@ -18,14 +18,13 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "device/google/cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "host/libs/command_util/runner/defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-Result<LauncherResponse> ReadLauncherResponse(const SharedFD& monitor_socket);
-
-Result<RunnerExitCodes> ReadExitCode(const SharedFD& monitor_socket);
+Result<RunnerExitCodes> ReadExitCode(SharedFD monitor_socket);
 
 Result<SharedFD> GetLauncherMonitorFromInstance(
     const CuttlefishConfig::InstanceSpecific& instance_config,
@@ -35,30 +34,24 @@ Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
                                     const int instance_num,
                                     const int timeout_seconds);
 
-Result<void> WriteLauncherAction(const SharedFD& monitor_socket,
-                                 const LauncherAction request);
-
-/**
- * Sends launcher actions with data
- *
- * If the request is something that does not use serialized_data at all,
- * the type should be ExtendedActionType::kUnused. serialized_data should
- * be std:move'd if avoiding redundant copy is desired.
- */
-Result<void> WriteLauncherActionWithData(const SharedFD& monitor_socket,
-                                         const LauncherAction request,
-                                         const ExtendedActionType type,
-                                         std::string serialized_data);
-
 struct LauncherActionInfo {
   LauncherAction action;
-  ExtendedActionType type;
-  std::string serialized_data;
+  run_cvd::ExtendedLauncherAction extended_action;
 };
-Result<LauncherActionInfo> ReadLauncherActionFromFd(
-    const SharedFD& monitor_socket);
+Result<LauncherActionInfo> ReadLauncherActionFromFd(SharedFD monitor_socket);
 
-Result<void> WaitForRead(const SharedFD& monitor_socket,
-                         const int timeout_seconds);
+Result<void> WaitForRead(SharedFD monitor_socket, const int timeout_seconds);
+
+// Writes the `action` request to `monitor_socket`, then waits for the response
+// and checks for errors.
+Result<void> RunLauncherAction(SharedFD monitor_socket, LauncherAction action,
+                               std::optional<int> timeout_seconds);
+
+// Writes the `action` request to `monitor_socket`, then waits for the response
+// and checks for errors.
+Result<void> RunLauncherAction(
+    SharedFD monitor_socket,
+    const run_cvd::ExtendedLauncherAction& extended_action,
+    std::optional<int> timeout_seconds);
 
 }  // namespace cuttlefish
