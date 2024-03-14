@@ -16,6 +16,7 @@
 package com.android.cuttlefish.displayhotplughelper;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -52,12 +53,7 @@ public class DisplayHotplugHelperApp extends Activity {
         return displayInfo;
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        String loggingIdentifier = getIntent().getExtras().getString(HELPER_APP_UUID_FLAG);
-
+    private void logDisplayInfos(String loggingIdentifier) {
         Display[] displays = getSystemService(DisplayManager.class).getDisplays();
         try {
             JSONArray displayInfos = new JSONArray();
@@ -71,7 +67,27 @@ public class DisplayHotplugHelperApp extends Activity {
         } catch (JSONException e) {
             Log.e(TAG, "Failed to create display info JSON: " + e);
         }
+    }
 
-        finishAndRemoveTask();
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.e(TAG, "onCreate() called");
+        String loggingIdentifier = getIntent().getExtras().getString(HELPER_APP_UUID_FLAG);
+        logDisplayInfos(loggingIdentifier);
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String loggingIdentifier = intent.getExtras().getString(HELPER_APP_UUID_FLAG);
+        Log.e(TAG, "onNewIntent() called with uuid " + loggingIdentifier);
+        logDisplayInfos(loggingIdentifier);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.e(TAG, "onResume() called");
     }
 }
