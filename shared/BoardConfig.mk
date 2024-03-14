@@ -29,7 +29,7 @@ PRODUCT_COPY_FILES += $(TARGET_KERNEL_PATH):kernel
 # The list of modules strictly/only required either to reach second stage
 # init, OR for recovery. Do not use this list to workaround second stage
 # issues.
-RAMDISK_KERNEL_MODULES := \
+RAMDISK_KERNEL_MODULES ?= \
     failover.ko \
     nd_virtio.ko \
     net_failover.ko \
