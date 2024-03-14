@@ -20,7 +20,7 @@ genrule {
     name: "init.wifi_apex_srcs",
     srcs: ["init.wifi.sh"],
     out: ["init.wifi_apex.sh"],
-    cmd: "sed -E 's/\\/vendor\\/bin\\/mac802/\\/apex\\/com.android.wifi.hal\\/bin\\/mac802/' $(in) > $(out)",
+    cmd: "sed -E 's/\\/vendor\\/bin\\/mac802/\\/apex\\/com.google.cf.wifi\\/bin\\/mac802/' $(in) > $(out)",
 }
 
 sh_binary {
