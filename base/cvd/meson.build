@@ -8,6 +8,7 @@ common_sources = [
   'android-base/strings.cpp',
   'android-base/threads.cpp',
   'android-base/logging.cpp',
+  'android-base/mapped_file.cpp',
   'cuttlefish/common/libs/fs/epoll.cpp',
   'cuttlefish/common/libs/fs/shared_buf.cc',
   'cuttlefish/common/libs/fs/shared_fd.cpp',
@@ -38,6 +39,12 @@ common_sources = [
   'cuttlefish/host/libs/web/http_client/sso_client.cc',
   'cuttlefish/host/libs/web/chrome_os_build_string.cpp',
   'cuttlefish/host/libs/web/luci_build_api.cpp',
+  'libsparse/backed_block.cpp',
+  'libsparse/output_file.cpp',
+  'libsparse/sparse.cpp',
+  'libsparse/sparse_crc32.cpp',
+  'libsparse/sparse_err.cpp',
+  'libsparse/sparse_read.cpp',
 ]
 
 cvd_sources = [
@@ -196,6 +203,7 @@ dependencies = [
 inc_dirs = [
   '/usr/local/include',
   'cuttlefish',
+  'libsparse/include',
 ]
 
 libcvd = static_library(
