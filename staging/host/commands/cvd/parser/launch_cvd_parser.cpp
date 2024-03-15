@@ -15,10 +15,14 @@
  */
 #include "host/commands/cvd/parser/launch_cvd_parser.h"
 
+#include <optional>
+#include <regex>
 #include <string>
 #include <vector>
 
 #include <json/json.h>
+
+#include "android-base/strings.h"
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
@@ -31,6 +35,23 @@
 namespace cuttlefish {
 namespace {
 
+std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) {
+  // TODO(b/1153527): don't pass undefok, pass only the explicitly specified
+  // flags instead
+  if (flags.empty()) {
+    return {};
+  }
+  std::vector<std::string> flag_names;
+  std::regex dashes_re("^--?");
+  std::regex value_re("=.*$");
+  for (const auto& flag: flags) {
+    auto flag_without_dashes = std::regex_replace(flag, dashes_re, "");
+    auto flag_name = std::regex_replace(flag_without_dashes, value_re, "");
+    flag_names.emplace_back(std::move(flag_name));
+  }
+  return "--undefok=" + android::base::Join(flag_names, ',');
+}
+
 Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
   std::vector<std::string> result;
   result.emplace_back(GenerateGflag(
@@ -42,6 +63,10 @@ Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
   result = MergeResults(result, CF_EXPECT(GenerateMetricsFlags(root)));
   result = MergeResults(result,
                         CF_EXPECT(GenerateInstancesFlags(root["instances"])));
+  auto flag_op = GenerateUndefOkFlag(result);
+  if (flag_op.has_value()) {
+    result.emplace_back(std::move(*flag_op));
+  }
   return result;
 }
 

@@ -131,7 +131,6 @@ class CvdRestartHandler : public CvdServerHandler {
     cvd_common::Args all_args =
         cvd_common::ConvertToArgs(request.Message().command_request().args());
     CF_EXPECT_GE(all_args.size(), 2);
-    CF_EXPECT_EQ(all_args.at(0), "cvd");
     CF_EXPECT_EQ(all_args.at(1), kRestartServer);
     // erase the first item, "cvd"
     all_args.erase(all_args.begin());
