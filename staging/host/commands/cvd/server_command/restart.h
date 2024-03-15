@@ -26,6 +26,6 @@
 namespace cuttlefish {
 
 std::unique_ptr<CvdServerHandler> NewCvdRestartHandler(
-    BuildApi& build_api, CvdServer& server, InstanceManager& instance_manager);
+    CvdServer& server, InstanceManager& instance_manager);
 
 }  // namespace cuttlefish
