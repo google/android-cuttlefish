@@ -164,6 +164,11 @@ func newCreateCVDHandler(c Config, om OperationManager, uadr UserArtifactsManage
 	}
 }
 
+func isRunningInDocker() bool {
+	_, err := os.Stat("/.dockerenv")
+	return err == nil
+}
+
 func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	req := &apiv1.CreateCVDRequest{}
 	err := json.NewDecoder(r.Body).Decode(req)
@@ -177,7 +182,11 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds)
 	cvdStartTimeout := 3 * time.Minute
-	if req.EnvConfig != nil {
+	if isRunningInDocker() {
+		// Use a lengthier timeout when running within a docker because it could race resource with
+		// other containers and take much longer time than normal status.
+		cvdStartTimeout = 30 * time.Minute
+	} else if req.EnvConfig != nil {
 		// Use a lengthier timeout when using canonical configs as this operation downloads artifacts as well.
 		cvdStartTimeout = 7 * time.Minute
 	}
