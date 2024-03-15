@@ -37,7 +37,6 @@
 // including "server_command/subcmd.h" causes cyclic dependency
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/libs/web/android_build_api.h"
 
 namespace cuttlefish {
 
@@ -65,7 +64,7 @@ class CvdServer {
   friend Result<int> CvdServerMain(ServerMainParam&& fds);
 
  public:
-  CvdServer(BuildApi&, EpollPool&, InstanceLockFileManager&, InstanceManager&,
+  CvdServer(EpollPool&, InstanceLockFileManager&, InstanceManager&,
             HostToolTargetManager&, ServerLogger&);
   ~CvdServer();
 
@@ -96,7 +95,6 @@ class CvdServer {
   Result<void> BestEffortWakeup();
 
   SharedFD server_fd_;
-  BuildApi& build_api_;
   EpollPool& epoll_pool_;
   InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
