@@ -57,45 +57,14 @@ Common Args:
 
 Modes:
   match-client           Use the client executable.
-  latest                 Download the latest executable
   reuse-server           Use the server executable.
 )";
 
-Result<SharedFD> LatestCvdAsFd(BuildApi& build_api) {
-  static constexpr char kTarget[] =
-      "aosp_cf_x86_64_phone-trunk_staging-userdebug";
-  const auto build_string =
-      DeviceBuildString{.branch_or_id = "aosp-main", .target = kTarget};
-  Build build = CF_EXPECT(build_api.GetBuild(build_string, kTarget));
-  CF_EXPECT(std::holds_alternative<DeviceBuild>(build),
-            "Unable to process non-DeviceBuild. Something has gone wrong.");
-  DeviceBuild device_build = *std::get_if<DeviceBuild>(&build);
-
-  auto fd = SharedFD::MemfdCreate("cvd");
-  CF_EXPECT(fd->IsOpen(), "MemfdCreate failed: " << fd->StrError());
-
-  auto write = [fd](char* data, size_t size) -> bool {
-    if (size == 0) {
-      return true;
-    }
-    auto written = WriteAll(fd, data, size);
-    if (written != size) {
-      LOG(ERROR) << "Failed to persist data: " << fd->StrError();
-      return false;
-    }
-    return true;
-  };
-  CF_EXPECT(build_api.ArtifactToCallback(device_build, "cvd", write));
-
-  return fd;
-}
-
 class CvdRestartHandler : public CvdServerHandler {
  public:
-  CvdRestartHandler(BuildApi& build_api, CvdServer& server,
+  CvdRestartHandler(CvdServer& server,
                     InstanceManager& instance_manager)
-      : build_api_(build_api),
-        supported_modes_({"match-client", "latest", "reuse-server"}),
+      :supported_modes_({"match-client", "reuse-server"}),
         server_(server),
         instance_manager_(instance_manager) {
     flags_.EnrollFlag(CvdFlag<bool>("help", false));
@@ -166,8 +135,6 @@ class CvdRestartHandler : public CvdServerHandler {
     if (subcmd == "match-client") {
       CF_EXPECT(request.Extra(), "match-client requires the file descriptor.");
       new_exe = *request.Extra();
-    } else if (subcmd == "latest") {
-      new_exe = CF_EXPECT(LatestCvdAsFd(build_api_));
     } else if (subcmd == "reuse-server") {
       new_exe = CF_EXPECT(NewExecFromPath(request, kServerExecPath));
     } else {
@@ -277,7 +244,6 @@ class CvdRestartHandler : public CvdServerHandler {
     return;
   }
 
-  BuildApi& build_api_;
   std::vector<std::string> supported_modes_;
   FlagCollection flags_;
   CvdServer& server_;
@@ -287,9 +253,9 @@ class CvdRestartHandler : public CvdServerHandler {
 }  // namespace
 
 std::unique_ptr<CvdServerHandler> NewCvdRestartHandler(
-    BuildApi& build_api, CvdServer& server, InstanceManager& instance_manager) {
+    CvdServer& server, InstanceManager& instance_manager) {
   return std::unique_ptr<CvdServerHandler>(
-      new CvdRestartHandler(build_api, server, instance_manager));
+      new CvdRestartHandler(server, instance_manager));
 }
 
 }  // namespace cuttlefish
