@@ -69,13 +69,12 @@ namespace cuttlefish {
 
 static constexpr int kNumThreads = 10;
 
-CvdServer::CvdServer(BuildApi& build_api, EpollPool& epoll_pool,
+CvdServer::CvdServer(EpollPool& epoll_pool,
                      InstanceLockFileManager& lock_manager,
                      InstanceManager& instance_manager,
                      HostToolTargetManager& host_tool_target_manager,
                      ServerLogger& server_logger)
-    : build_api_(build_api),
-      epoll_pool_(epoll_pool),
+    : epoll_pool_(epoll_pool),
       instance_lockfile_manager_(lock_manager),
       instance_manager_(instance_manager),
       host_tool_target_manager_(host_tool_target_manager),
@@ -409,7 +408,7 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
   server_logger_.SetSeverity(verbosity);
 
   RequestContext context(*this, instance_lockfile_manager_, instance_manager_,
-                         build_api_, host_tool_target_manager_, optout_);
+                         host_tool_target_manager_, optout_);
 
   // Even if the interrupt callback outlives the request handler, it'll only
   // hold on to this struct which will be cleaned out when the request handler
@@ -474,12 +473,11 @@ Result<int> CvdServerMain(ServerMainParam&& param) {
   CF_EXPECT(server_fd->IsOpen(), "Did not receive a valid cvd_server fd");
 
   std::unique_ptr<ServerLogger> server_logger = std::move(param.server_logger);
-  BuildApi build_api;
   EpollPool epoll_pool;
   auto host_tool_target_manager = NewHostToolTargetManager();
   InstanceLockFileManager lock_manager;
   InstanceManager instance_manager(lock_manager, *host_tool_target_manager);
-  CvdServer server(build_api, epoll_pool, lock_manager, instance_manager,
+  CvdServer server(epoll_pool, lock_manager, instance_manager,
                    *host_tool_target_manager, *server_logger);
 
   if (param.memory_carryover_fd) {

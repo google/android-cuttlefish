@@ -60,13 +60,12 @@ namespace cuttlefish {
 
 RequestContext::RequestContext(
     CvdServer& cvd_server, InstanceLockFileManager& instance_lockfile_manager,
-    InstanceManager& instance_manager, BuildApi& build_api,
+    InstanceManager& instance_manager,
     HostToolTargetManager& host_tool_target_manager,
     std::atomic<bool>& acloud_translator_optout)
     : cvd_server_(cvd_server),
       instance_lockfile_manager_(instance_lockfile_manager),
       instance_manager_(instance_manager),
-      build_api_(build_api),
       host_tool_target_manager_(host_tool_target_manager),
       command_sequence_executor_(this->request_handlers_),
       acloud_translator_optout_(acloud_translator_optout) {
@@ -96,7 +95,7 @@ RequestContext::RequestContext(
       host_tool_target_manager_, instance_manager_, subprocess_waiter_));
   request_handlers_.emplace_back(NewCvdResetCommandHandler());
   request_handlers_.emplace_back(
-      NewCvdRestartHandler(build_api_, cvd_server_, instance_manager_));
+      NewCvdRestartHandler(cvd_server_, instance_manager_));
   request_handlers_.emplace_back(
       NewSerialLaunchCommand(command_sequence_executor_, lock_file_manager_));
   request_handlers_.emplace_back(NewSerialPreset(command_sequence_executor_));
