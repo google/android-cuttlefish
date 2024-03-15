@@ -37,7 +37,7 @@ class RequestContext {
  public:
   RequestContext(CvdServer& cvd_server,
                  InstanceLockFileManager& instance_lockfile_manager,
-                 InstanceManager& instance_manager, BuildApi& build_api,
+                 InstanceManager& instance_manager,
                  HostToolTargetManager& host_tool_target_manager,
                  std::atomic<bool>& acloud_translator_optout);
 
@@ -50,7 +50,6 @@ class RequestContext {
   std::vector<std::unique_ptr<CvdServerHandler>> request_handlers_;
   InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
-  BuildApi& build_api_;
   SubprocessWaiter subprocess_waiter_;
   InstanceLockFileManager lock_file_manager_;
   HostToolTargetManager& host_tool_target_manager_;
