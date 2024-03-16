@@ -16,6 +16,7 @@
 #pragma once
 
 #include "common/libs/utils/result.h"
+#include "host/libs/image_aggregator/sparse_image_utils.h"
 
 namespace cuttlefish {
 
