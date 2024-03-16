@@ -23,5 +23,9 @@ cc_library_host_static {
         "fetch_cvd.cc",
         "fetch_cvd_parser.cc",
     ],
+    static_libs: [
+        "libimage_aggregator",
+        "libsparse",
+    ],
     defaults: ["cvd_lib_defaults"],
 }
