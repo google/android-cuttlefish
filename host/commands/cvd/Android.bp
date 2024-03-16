@@ -129,6 +129,10 @@ cc_defaults {
         "libext2_uuid",
         "libcvd_sub_commands",
         "libcvd_fetch",
+        "libimage_aggregator",
+        "libcdisk_spec",
+        "libcuttlefish_host_config",
+        "libsparse",
     ],
     target: {
         linux_musl: {
