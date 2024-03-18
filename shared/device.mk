@@ -312,7 +312,7 @@ PRODUCT_PACKAGES += $(LOCAL_CONTEXTHUB_PRODUCT_PACKAGE)
 #
 ifeq ($(TARGET_USE_LAZY_CLEARKEY),true)
 PRODUCT_PACKAGES += \
-    android.hardware.drm-service-lazy.clearkey
+    com.android.hardware.drm.clearkey.lazy
 else
 PRODUCT_PACKAGES += \
     android.hardware.drm@latest-service.clearkey
