@@ -43,6 +43,7 @@ PRODUCT_PACKAGES += \
     TelephonyProvider \
     TeleService \
     UserDictionaryProvider \
+    init.zygote32.rc \
 
 PRODUCT_HOST_PACKAGES += \
     fsck.f2fs \
@@ -58,7 +59,6 @@ PRODUCT_SYSTEM_SERVER_JARS += \
 
 PRODUCT_COPY_FILES += \
     system/core/rootdir/etc/public.libraries.wear.txt:system/etc/public.libraries.txt \
-    system/core/rootdir/init.zygote32.rc:system/etc/init/hw/init.zygote32.rc \
 
 PRODUCT_USE_DYNAMIC_PARTITION_SIZE := true
 
