@@ -14,7 +14,6 @@
 * limitations under the License.
 */
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #define RIL_SHLIB
 #include "RilSapSocket.h"
