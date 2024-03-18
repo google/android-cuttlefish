@@ -350,7 +350,6 @@ cvd_host_netsim_gui_assets = [
     "netsim_ui_js_netsim-app.js",
     "netsim_ui_js_packet-info.js",
     "netsim_ui_js_pyramid-sprite.js",
-    "netsim_ui_js_model.js",
     "netsim_ui_tslib",
     "netsim_ui_assets_grid-background.svg",
     "netsim_ui_assets_hexagonal-background.png",
