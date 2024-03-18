@@ -38,9 +38,10 @@ import (
 const HeaderBuildAPICreds = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
 
 type Config struct {
-	Paths                  IMPaths
-	AndroidBuildServiceURL string
-	CVDUser                string
+	Paths                    IMPaths
+	AndroidBuildServiceURL   string
+	CVDCreationDockerTimeout int
+	CVDUser                  string
 }
 
 type Controller struct {
@@ -185,7 +186,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	if isRunningInDocker() {
 		// Use a lengthier timeout when running within a docker because it could race resource with
 		// other containers and take much longer time than normal status.
-		cvdStartTimeout = 30 * time.Minute
+		cvdStartTimeout = time.Duration(h.Config.CVDCreationDockerTimeout) * time.Minute
 	} else if req.EnvConfig != nil {
 		// Use a lengthier timeout when using canonical configs as this operation downloads artifacts as well.
 		cvdStartTimeout = 7 * time.Minute
