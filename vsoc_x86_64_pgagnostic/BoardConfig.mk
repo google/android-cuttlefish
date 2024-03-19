@@ -28,13 +28,16 @@ TARGET_NATIVE_BRIDGE_ARCH_VARIANT := armv8-a
 TARGET_NATIVE_BRIDGE_CPU_VARIANT := generic
 TARGET_NATIVE_BRIDGE_ABI := arm64-v8a
 
-# Use 16K page size kernel
-TARGET_KERNEL_USE ?= 6.1
+# Use 6.6 kernel
+TARGET_KERNEL_USE ?= 6.6
 TARGET_KERNEL_ARCH ?= x86_64
-SYSTEM_DLKM_SRC ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)/16k
+SYSTEM_DLKM_SRC ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)
 TARGET_KERNEL_PATH ?= $(SYSTEM_DLKM_SRC)/kernel-$(TARGET_KERNEL_USE)
 KERNEL_MODULES_PATH ?= \
-    kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/$(subst _,-,$(TARGET_KERNEL_ARCH))/16k
+    kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/$(subst _,-,$(TARGET_KERNEL_ARCH))
+
+# Emulate 16KB page size
+BOARD_KERNEL_CMDLINE += androidboot.page_shift=14
 
 TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_RO_FILE_SYSTEM_TYPE := ext4
