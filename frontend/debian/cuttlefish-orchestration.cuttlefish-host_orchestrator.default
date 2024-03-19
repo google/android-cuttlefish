@@ -26,7 +26,7 @@ orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common
 #
 # Timeout for CVD creation
 # Defaults to 7 mins
-orchestrator_cvd_creation_timeout=7
+orchestrator_cvd_creation_timeout_secs=420
 #
 # Where web UI in the application is from
 # If it isn't empty, the application uses web UI from the url,
