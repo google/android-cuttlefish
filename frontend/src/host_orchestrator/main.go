@@ -105,7 +105,7 @@ func main() {
 	httpsPort := flag.Int("https_port", -1, "Port to listen on for HTTPS requests.")
 	tlsCertDir := flag.String("tls_cert_dir", defaultTLSCertDir, "Directory with the TLS certificate.")
 	cvdUser := flag.String("cvd_user", "", "User to execute cvd as.")
-	cvdCreationDockerTimeout := flag.Int("cvd_creation_docker_timeout", 30, "CVD creation timeout under docker")
+	cvdCreationTimeout := flag.Int("cvd_creation_timeout", 7, "CVD creation timeout")
 	operatorPort := flag.Int("operator_http_port", 1080, "Port where the operator is listening.")
 	abURL := flag.String("android_build_url", defaultAndroidBuildURL, "URL to an Android Build API.")
 	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir(), "Directory where cvd will download android build artifacts to.")
@@ -134,10 +134,10 @@ func main() {
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
 	imController := orchestrator.Controller{
 		Config: orchestrator.Config{
-			Paths:                    imPaths,
-			AndroidBuildServiceURL:   *abURL,
-			CVDCreationDockerTimeout: *cvdCreationDockerTimeout,
-			CVDUser:                  *cvdUser,
+			Paths:                  imPaths,
+			AndroidBuildServiceURL: *abURL,
+			CVDCreationTimeout:     *cvdCreationTimeout,
+			CVDUser:                *cvdUser,
 		},
 		OperationManager:      om,
 		WaitOperationDuration: 2 * time.Minute,
