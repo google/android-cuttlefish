@@ -236,18 +236,10 @@ Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
 
 bool BuildSuperImage(const std::string& combined_target_zip,
                      const std::string& output_path) {
-  std::string build_super_image_binary;
-  std::string otatools_path;
-  if (FileExists(DefaultHostArtifactsPath("otatools/bin/build_super_image"))) {
-    build_super_image_binary =
-        DefaultHostArtifactsPath("otatools/bin/build_super_image");
-    otatools_path = DefaultHostArtifactsPath("otatools");
-  } else if (FileExists(HostBinaryPath("build_super_image"))) {
-    build_super_image_binary =
-        HostBinaryPath("build_super_image");
-    otatools_path = DefaultHostArtifactsPath("");
-  } else {
-    LOG(ERROR) << "Could not find otatools";
+  std::string otatools_path = DefaultHostArtifactsPath("");
+  std::string build_super_image_binary = HostBinaryPath("build_super_image");
+  if (!FileExists(build_super_image_binary)) {
+    LOG(ERROR) << "Could not find build_super_image";
     return false;
   }
   return Execute({
