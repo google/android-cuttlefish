@@ -38,10 +38,10 @@ import (
 const HeaderBuildAPICreds = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
 
 type Config struct {
-	Paths                    IMPaths
-	AndroidBuildServiceURL   string
-	CVDCreationDockerTimeout int
-	CVDUser                  string
+	Paths                  IMPaths
+	AndroidBuildServiceURL string
+	CVDCreationTimeout     int
+	CVDUser                string
 }
 
 type Controller struct {
@@ -165,11 +165,6 @@ func newCreateCVDHandler(c Config, om OperationManager, uadr UserArtifactsManage
 	}
 }
 
-func isRunningInDocker() bool {
-	_, err := os.Stat("/.dockerenv")
-	return err == nil
-}
-
 func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	req := &apiv1.CreateCVDRequest{}
 	err := json.NewDecoder(r.Body).Decode(req)
@@ -182,15 +177,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds)
-	cvdStartTimeout := 3 * time.Minute
-	if isRunningInDocker() {
-		// Use a lengthier timeout when running within a docker because it could race resource with
-		// other containers and take much longer time than normal status.
-		cvdStartTimeout = time.Duration(h.Config.CVDCreationDockerTimeout) * time.Minute
-	} else if req.EnvConfig != nil {
-		// Use a lengthier timeout when using canonical configs as this operation downloads artifacts as well.
-		cvdStartTimeout = 7 * time.Minute
-	}
+	cvdStartTimeout := time.Duration(h.Config.CVDCreationTimeout) * time.Minute
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},

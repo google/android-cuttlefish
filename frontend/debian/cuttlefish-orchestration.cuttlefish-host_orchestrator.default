@@ -24,11 +24,9 @@ orchestrator_https_port=2443
 # Defaults to "/tmp/<uid>/cvd_artifacts"
 orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common
 #
-# Timeout of CVD creation under docker environment
-# Docker containers can be run with other containers and creation time
-# could vary under environments.
-# Defaults to 30 mins
-orchestrator_cvd_creation_docker_timeout=30
+# Timeout for CVD creation
+# Defaults to 7 mins
+orchestrator_cvd_creation_timeout=7
 #
 # Where web UI in the application is from
 # If it isn't empty, the application uses web UI from the url,
