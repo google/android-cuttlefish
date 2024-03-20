@@ -573,13 +573,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/pci.ids:$(TARGET_COPY_OUT_VENDOR)/pci.ids
 
-# New in-development HAL services using unfrozen interfaces. Do not include if
-# RELEASE_AIDL_USE_UNFROZEN is true (in the 'next' release configuration).
-ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
-# Thread Network AIDL HAL, simulation CLI and OT daemon controller
+# Thread Network AIDL HAL and Demo App
 PRODUCT_PACKAGES += \
-    com.android.hardware.threadnetwork
-endif # RELEASE_AIDL_USE_UNFROZEN
+    com.android.hardware.threadnetwork \
+    ThreadNetworkDemoApp
 
 PRODUCT_CHECK_VENDOR_SEAPP_VIOLATIONS := true
 
