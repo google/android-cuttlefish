@@ -102,7 +102,7 @@
 --map=host/commands/cvd/epoll_loop.cpp:base/cvd/cuttlefish/host/commands/cvd/epoll_loop.cpp
 --map=host/commands/cvd/epoll_loop.h:base/cvd/cuttlefish/host/commands/cvd/epoll_loop.h
 --map=host/commands/cvd/fetch/fetch_cvd.h:base/cvd/cuttlefish/host/commands/cvd/fetch/fetch_cvd.h
---map=host/commands/cvd/fetch_cvd.h:base/cvd/cuttlefish/host/commands/cvd/fetch/fetch_cvd.h
+--map=host/commands/cvd/fetch/fetch_cvd.cc:base/cvd/cuttlefish/host/commands/cvd/fetch/fetch_cvd.cc
 --map=host/commands/cvd/flag.cpp:base/cvd/cuttlefish/host/commands/cvd/flag.cpp
 --map=host/commands/cvd/flag.h:base/cvd/cuttlefish/host/commands/cvd/flag.h
 --map=host/commands/cvd/frontline_parser.cpp:base/cvd/cuttlefish/host/commands/cvd/frontline_parser.cpp
@@ -438,6 +438,8 @@
 --map=host/libs/config/known_paths.h:base/cvd/cuttlefish/host/libs/config/known_paths.h
 --map=host/libs/config/logging.cpp:base/cvd/cuttlefish/host/libs/config/logging.cpp
 --map=host/libs/config/logging.h:base/cvd/cuttlefish/host/libs/config/logging.h
+--map=host/libs/image_aggregator/sparse_image_utils.cc:base/cvd/cuttlefish/host/libs/image_aggregator/sparse_image_utils.cc
+--map=host/libs/image_aggregator/sparse_image_utils.h:base/cvd/cuttlefish/host/libs/image_aggregator/sparse_image_utils.h
 --map=host/libs/web/android_build_api.cpp:base/cvd/cuttlefish/host/libs/web/android_build_api.cpp
 --map=host/libs/web/android_build_api.h:base/cvd/cuttlefish/host/libs/web/android_build_api.h
 --map=host/libs/web/android_build_string.cpp:base/cvd/cuttlefish/host/libs/web/android_build_string.cpp
