@@ -89,8 +89,9 @@ echo -e "${color_cyan}Booting root container $root_container_id${color_plain}"
 trap cleanup SIGINT
 cleanup() {
   echo -e "${color_yellow}SIGINT: stopping the launch instances${color_plain}"
-  ssh $server "docker rm -f $root_container_id ${container_ids[*]}"
-  ssh $server "docker rmi -f cvd_root_image:$root_container_id"
+  ssh $server "docker rm -f $root_container_id ${container_ids[*]} && \
+               docker rmi -f cvd_root_image:$root_container_id && \
+               docker system prune -f"
   exit 0
 }
 
