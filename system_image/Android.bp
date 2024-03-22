@@ -977,6 +977,7 @@ android_system_image {
                 "LatinIME",
                 "Launcher3QuickStep",
                 "LiveWallpapersPicker",
+                "llndk.libraries.txt",
                 "LocalTransport",
                 "ManagedProvisioning",
                 "MediaProviderLegacy",
