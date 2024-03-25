@@ -2,14 +2,29 @@
 
 set -e -x
 
-if [[ $# != 1 ]]; then
-  echo "Usage: $0 ENVIRONMENT_SPECIFICATION_FILE"
+usage="Usage: $0 [-c CREDENTIAL_SOURCE] ENVIRONMENT_SPECIFICATION_FILE"
+
+ENV_FILE=""
+CREDENTIAL_SOURCE=""
+while getopts "c:e:" opt; do
+  case "${opt}" in
+    c)
+      CREDENTIAL_SOURCE="${OPTARG}"
+      ;;
+    e)
+      ENV_FILE="${OPTARG}"
+      ;;
+    *)
+      echo "${usage}"
+      exit 1
+  esac
+done
+
+if [[ -z "${ENV_FILE}" ]]; then
+  echo "${usage}"
   exit 1
 fi
 
-ls
-
-ENV_FILE="$1"
 CMD_OUT="cvd_load_stdout.txt"
 CMD_ERR="cvd_load_stderr.txt"
 
@@ -45,4 +60,8 @@ trap collect_logs_and_cleanup EXIT
 # Make sure there is no cvd server around
 cvd reset -y
 
-cvd load "${ENV_FILE}" >"${CMD_OUT}" 2>"${CMD_ERR}"
+credential_arg=""
+if [[ -n "$CREDENTIAL_SOURCE" ]]; then
+    credential_arg="--override=fetch.credential_source:${CREDENTIAL_SOURCE}"
+fi
+cvd load ${credential_arg} "${ENV_FILE}" >"${CMD_OUT}" 2>"${CMD_ERR}"
