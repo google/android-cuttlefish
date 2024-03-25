@@ -48,6 +48,8 @@ std::string BashEscape(const std::string& input) {
 
 std::string FormattedCommand(const cvd::CommandRequest command) {
   std::stringstream effective_command;
+  effective_command << "*******************************************************"
+                       "*************************\n";
   effective_command << "Executing `";
   for (const auto& [name, val] : command.env()) {
     effective_command << BashEscape(name) << "=" << BashEscape(val) << " ";
