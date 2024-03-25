@@ -74,6 +74,7 @@ cvd_sources = [
   'cuttlefish/host/commands/cvd/parser/cf_metrics_configs.cpp',
   'cuttlefish/host/commands/cvd/parser/fetch_config_parser.cpp',
   'cuttlefish/host/commands/cvd/parser/instance/cf_boot_configs.cpp',
+  'cuttlefish/host/commands/cvd/parser/instance/cf_connectivity_configs.cpp',
   'cuttlefish/host/commands/cvd/parser/instance/cf_disk_configs.cpp',
   'cuttlefish/host/commands/cvd/parser/instance/cf_graphics_configs.cpp',
   'cuttlefish/host/commands/cvd/parser/instance/cf_security_configs.cpp',
