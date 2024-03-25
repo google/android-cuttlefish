@@ -1,9 +1,12 @@
-def launch_cvd_boot_test(name, branch, target):
+def launch_cvd_boot_test(name, branch, target, credential_source = ""):
+    args = ["-b", branch, "-t", target]
+    if credential_source:
+        args += ["-c", credential_source]
     native.sh_test(
         name = name,
         size = "medium",
         srcs = ["launch_cvd_boot_test.sh"],
-        args = ["-b", branch, "-t", target],
+        args = args,
         tags = [
             "exclusive",
             "external",
@@ -11,12 +14,15 @@ def launch_cvd_boot_test(name, branch, target):
         ],
     )
 
-def cvd_load_boot_test(name, env_file, size = "medium"):
+def cvd_load_boot_test(name, env_file, size = "medium", credential_source = ""):
+    args = ["-e", env_file]
+    if credential_source:
+        args += ["-c", credential_source]
     native.sh_test(
         name = name,
         size = size,
         srcs = ["cvd_load_boot_test.sh"],
-        args = [env_file],
+        args = args,
         data = [env_file],
         tags = [
             "exclusive",
