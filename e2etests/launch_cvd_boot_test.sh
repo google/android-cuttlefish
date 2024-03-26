@@ -4,11 +4,15 @@ set -e -x
 
 BRANCH=""
 TARGET=""
+CREDENTIAL_SOURCE=""
 
-while getopts "b:t:" opt; do
+while getopts "c:b:t:" opt; do
   case "${opt}" in
     b)
       BRANCH="${OPTARG}"
+      ;;
+    c)
+      CREDENTIAL_SOURCE="${OPTARG}"
       ;;
     t)
       TARGET="${OPTARG}"
@@ -51,7 +55,10 @@ trap collect_logs_and_cleanup EXIT
 # client can still connect to the server outside the sandbox and cause issues.
 cvd reset -y
 
-cvd fetch --default_build="${BRANCH}/${TARGET}" --target_directory="${workdir}"
+cvd fetch \
+  --default_build="${BRANCH}/${TARGET}" \
+  --target_directory="${workdir}" \
+  --credential_source="${CREDENTIAL_SOURCE}"
 
 (
   cd "${workdir}"
