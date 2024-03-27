@@ -33,6 +33,7 @@ namespace {
 
 bool IsShortAction(const LauncherAction action) {
   switch (action) {
+    case LauncherAction::kFail:
     case LauncherAction::kPowerwash:
     case LauncherAction::kRestart:
     case LauncherAction::kStatus:
