@@ -52,10 +52,17 @@ cc_library {
 cc_binary_host {
     name: "screen_recording_server",
     shared_libs: [
+        "libbase",
         "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
+        "libcuttlefish_fs",
+        "libcuttlefish_run_cvd_proto",
+        "libcuttlefish_utils",
+        "libjsoncpp",
+        "libprotobuf-cpp-full",
     ],
     static_libs: [
+        "libcuttlefish_command_util",
         "libcuttlefish_host_config",
         "libgflags",
         "libscreen_recording_server",
