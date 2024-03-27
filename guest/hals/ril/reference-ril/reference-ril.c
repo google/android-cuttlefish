@@ -1046,15 +1046,18 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
     err = at_tok_nextstr(&input, &sskip);  // local_addr_and_subnet_mask
     if (err < 0) goto error;
 
-    err = at_tok_nextstr(&input, &responses[i].gateways);  // gw_addr
+    err = at_tok_nextstr(
+        &input, (responses) ? &responses[i].gateways : &sskip);  // gw_addr
     if (err < 0) goto error;
 
-    err = at_tok_nextstr(&input, &responses[i].dnses);  // dns_prim_addr
+    err = at_tok_nextstr(
+        &input, (responses) ? &responses[i].dnses : &sskip);  // dns_prim_addr
     if (err < 0) goto error;
 
     if (t != NULL)
-        RIL_onRequestComplete(*t, RIL_E_SUCCESS, &responses[i],
-                               sizeof(RIL_Data_Call_Response_v11));
+      RIL_onRequestComplete(*t, RIL_E_SUCCESS,
+                            (responses != NULL) ? (responses + i) : responses,
+                            sizeof(RIL_Data_Call_Response_v11));
     else
         RIL_onUnsolicitedResponse(RIL_UNSOL_DATA_CALL_LIST_CHANGED,
                                   responses,
