@@ -206,6 +206,20 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       }
       break;
     }
+    case LauncherAction::kFail: {
+      auto stop = process_monitor.StopMonitoredProcesses();
+      if (stop.ok()) {
+        auto response = LauncherResponse::kSuccess;
+        client->Write(&response, sizeof(response));
+        std::exit(RunnerExitCodes::kVirtualDeviceBootFailed);
+      } else {
+        auto response = LauncherResponse::kError;
+        client->Write(&response, sizeof(response));
+        LOG(ERROR) << "Failed to stop subprocesses:\n"
+                   << stop.error().FormatForEnv();
+      }
+      break;
+    }
     case LauncherAction::kStatus: {
       // TODO(schuffelen): Return more information on a side channel
       auto response = LauncherResponse::kSuccess;
