@@ -190,6 +190,10 @@ func (testUAM) GetDirPath(string) string {
 	return ""
 }
 
+func (testUAM) ExtractArtifact(string, string) error {
+	return nil
+}
+
 func TestCreateUploadDirectoryIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("POST", "/userartifacts", strings.NewReader("{}"))

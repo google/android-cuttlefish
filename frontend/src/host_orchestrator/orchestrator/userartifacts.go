@@ -17,10 +17,12 @@ package orchestrator
 import (
 	"archive/tar"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
@@ -50,6 +52,8 @@ type UserArtifactsManager interface {
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
 	// Update artifact with the passed chunk.
 	UpdateArtifact(dir string, chunk UserArtifactChunk) error
+	// Extract artifact
+	ExtractArtifact(dir, name string) error
 }
 
 // Options for creating instances of UserArtifactsManager implementations.
@@ -140,6 +144,29 @@ func writeChunk(dir string, chunk UserArtifactChunk) error {
 	}
 	// Sets permission regardless of umask.
 	return os.Chmod(filename, 0664)
+}
+
+func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
+	dir = filepath.Join(m.RootDir, dir)
+	if ok, err := fileExist(dir); err != nil {
+		return err
+	} else if !ok {
+		return operator.NewBadRequestError(fmt.Sprintf("directory %q does not exist", dir), nil)
+	}
+	filename := filepath.Join(dir, name)
+	if ok, err := fileExist(filename); err != nil {
+		return err
+	} else if !ok {
+		return operator.NewBadRequestError(fmt.Sprintf("artifact %q does not exist", name), nil)
+	}
+	if strings.HasSuffix(filename, ".tar.gz") {
+		if err := Untar(dir, filename); err != nil {
+			return fmt.Errorf("failed extracting %q: %w", name, err)
+		}
+	} else {
+		return operator.NewBadRequestError(fmt.Sprintf("unsupported extension: %q", name), nil)
+	}
+	return nil
 }
 
 func Untar(dst string, src string) error {
