@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -168,7 +169,10 @@ func Untar(dst string, src string) error {
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0774); err != nil {
+				oldmask := syscall.Umask(0)
+				err := os.MkdirAll(target, 0774)
+				syscall.Umask(oldmask)
+				if err != nil {
 					return err
 				}
 			}
