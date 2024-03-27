@@ -23,6 +23,11 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/result.h"
+#include "host/libs/command_util/util.h"
+#include "host/libs/config/cuttlefish_config.h"
+#include "run_cvd.pb.h"
 #include "screen_recording.grpc.pb.h"
 
 using google::protobuf::Empty;
@@ -30,22 +35,73 @@ using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
-using screenrecordingserver::ExampleReply;
 using screenrecordingserver::ScreenRecordingService;
+using screenrecordingserver::StartRecordingResponse;
+using screenrecordingserver::StopRecordingResponse;
 
 DEFINE_string(grpc_uds_path, "", "grpc_uds_path");
 
+const int COMMAND_TIMEOUT_SEC = 10;
+
+namespace cuttlefish {
+namespace {
+
 class ScreenRecordingServiceImpl final
     : public ScreenRecordingService::Service {
-  // TODO(b/315845821): Remove this example method, and fill with real contents.
-  Status ExampleMethod(ServerContext* context, const Empty* request,
-                       ExampleReply* reply) override {
-    reply->set_message("This is a example method");
+  Status StartRecording(ServerContext* context, const Empty* request,
+                        StartRecordingResponse* reply) override {
+    run_cvd::ExtendedLauncherAction start_action;
+    start_action.mutable_start_screen_recording();
+
+    std::vector<bool> successes = SendToAllInstances(start_action);
+    reply->mutable_successes()->Assign(successes.begin(), successes.end());
     return Status::OK;
+  }
+
+  Status StopRecording(ServerContext* context, const Empty* request,
+                       StopRecordingResponse* reply) override {
+    run_cvd::ExtendedLauncherAction stop_action;
+    stop_action.mutable_stop_screen_recording();
+
+    std::vector<bool> successes = SendToAllInstances(stop_action);
+    reply->mutable_successes()->Assign(successes.begin(), successes.end());
+    return Status::OK;
+  }
+
+ private:
+  std::vector<bool> SendToAllInstances(
+      run_cvd::ExtendedLauncherAction extended_action) {
+    std::vector<bool> successes;
+
+    auto launcher_monitor_sockets = GetLauncherMonitorSockets();
+    for (const SharedFD& socket : *launcher_monitor_sockets) {
+      Result<void> result =
+          RunLauncherAction(socket, extended_action, std::nullopt);
+      successes.push_back(result.ok());
+    }
+
+    return successes;
+  }
+
+  Result<std::vector<SharedFD>> GetLauncherMonitorSockets() {
+    std::vector<SharedFD> monitor_sockets;
+
+    const CuttlefishConfig* config =
+        CF_EXPECT(CuttlefishConfig::Get(), "Failed to obtain config object");
+    std::vector<CuttlefishConfig::InstanceSpecific> instance_specifics =
+        config->Instances();
+    for (const CuttlefishConfig::InstanceSpecific& instance_specific :
+         instance_specifics) {
+      auto monitor_socket = CF_EXPECT(GetLauncherMonitorFromInstance(
+          instance_specific, COMMAND_TIMEOUT_SEC));
+      monitor_sockets.push_back(monitor_socket);
+    }
+
+    return monitor_sockets;
   }
 };
 
-void RunServer() {
+void RunScreenRecordingServer() {
   std::string server_address("unix:" + FLAGS_grpc_uds_path);
   ScreenRecordingServiceImpl service;
 
@@ -66,9 +122,12 @@ void RunServer() {
   server->Wait();
 }
 
+}  // namespace
+}  // namespace cuttlefish
+
 int main(int argc, char** argv) {
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
-  RunServer();
+  cuttlefish::RunScreenRecordingServer();
 
   return 0;
 }

@@ -19,10 +19,16 @@ package screenrecordingserver;
 import "google/protobuf/empty.proto";
 
 service ScreenRecordingService {
-  // TODO(b/315845821): Remove this example method, and fill with real contents.
-  rpc ExampleMethod (google.protobuf.Empty) returns (ExampleReply) {}
+  rpc StartRecording (google.protobuf.Empty) returns (StartRecordingResponse) {}
+  rpc StopRecording (google.protobuf.Empty) returns (StopRecordingResponse) {}
 }
 
-message ExampleReply {
-  string message = 1;
+message StartRecordingResponse {
+  // true if the action succeeded for each instance.
+  repeated bool successes = 1;
+}
+
+message StopRecordingResponse {
+  // true if the action succeeded for each instance.
+  repeated bool successes = 1;
 }
