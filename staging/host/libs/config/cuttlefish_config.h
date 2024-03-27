@@ -341,6 +341,7 @@ class CuttlefishConfig {
     uint32_t session_id() const;
     bool use_allocd() const;
     int vsock_guest_cid() const;
+    std::string vsock_guest_group() const;
     std::string uuid() const;
     std::string instance_name() const;
     std::string environment_name() const;
@@ -711,6 +712,7 @@ class CuttlefishConfig {
     void set_session_id(uint32_t session_id);
     void set_use_allocd(bool use_allocd);
     void set_vsock_guest_cid(int vsock_guest_cid);
+    void set_vsock_guest_group(const std::string& vsock_guest_group);
     void set_uuid(const std::string& uuid);
     void set_environment_name(const std::string& env_name);
     // modem simulator related

@@ -1,0 +1,47 @@
+{
+    "common": {
+      "host_package": "/tmp/linux-x86"
+    },
+    "instances": [
+      {
+        "disk": {
+          "default_build": "/tmp/vsoc_x86_64"
+        },
+        "connectivity": {
+          "vsock": {
+            "guest_group": "g1+g2"
+          }
+        }
+      },
+      {
+        "disk": {
+          "default_build": "/tmp/vsoc_x86_64"
+        },
+        "connectivity": {
+          "vsock": {
+            "guest_group": "g1+g6"
+          }
+        }
+      },
+      {
+        "disk": {
+          "default_build": "/tmp/vsoc_x86_64"
+        },
+        "connectivity": {
+          "vsock": {
+            "guest_group": "g3+g4"
+          }
+        }
+      },
+      {
+        "disk": {
+          "default_build": "/tmp/vsoc_x86_64"
+        },
+        "connectivity": {
+          "vsock": {
+            "guest_group": "g3+g5"
+          }
+        }
+      }
+    ]
+}
