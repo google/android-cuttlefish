@@ -30,7 +30,7 @@
 
 #include <android-base/strings.h>
 #include <android-base/logging.h>
-#include "json/json.h"
+#include <json/json.h>
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
@@ -127,15 +127,23 @@ void CuttlefishConfig::set_ap_vm_manager(const std::string& name) {
 
 static SecureHal StringToSecureHal(std::string mode) {
   std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
-  if (mode == "keymint") {
-    return SecureHal::Keymint;
-  } else if (mode == "gatekeeper") {
-    return SecureHal::Gatekeeper;
-  } else if (mode == "oemlock") {
-    return SecureHal::Oemlock;
-  } else {
-    return SecureHal::Unknown;
-  }
+  std::unordered_map<std::string, SecureHal> mapping = {
+      {"keymint", SecureHal::HostKeymintSecure},
+      {"host_secure_keymint", SecureHal::HostKeymintSecure},
+      {"host_keymint_secure", SecureHal::HostKeymintSecure},
+      {"guest_insecure_keymint", SecureHal::GuestKeymintInsecure},
+      {"guest_keymint_insecure", SecureHal::GuestKeymintInsecure},
+      {"gatekeeper", SecureHal::HostGatekeeperSecure},
+      {"host_gatekeeper_secure", SecureHal::HostGatekeeperSecure},
+      {"host_secure_gatekeeper", SecureHal::HostGatekeeperSecure},
+      {"host_gatekeeper_insecure", SecureHal::HostGatekeeperInsecure},
+      {"host_insecure_gatekeeper", SecureHal::HostGatekeeperInsecure},
+      {"oemlock", SecureHal::HostOemlockSecure},
+      {"host_oemlock_secure", SecureHal::HostOemlockSecure},
+      {"host_secure_oemlock", SecureHal::HostOemlockSecure},
+  };
+  auto it = mapping.find(mode);
+  return it == mapping.end() ? SecureHal::Unknown : it->second;
 }
 
 static constexpr char kSecureHals[] = "secure_hals";
