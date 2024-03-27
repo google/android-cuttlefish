@@ -1,5 +1,5 @@
 {
-  "name": "com.google.cf.keymint.rust",
+  "name": "com.android.hardware.keymint",
   "version": 1,
   "vendorBootstrap": true
 }
