@@ -876,6 +876,14 @@ std::string CuttlefishConfig::InstanceSpecific::boot_slot() const {
   return (*Dictionary())[kBootSlot].asString();
 }
 
+static constexpr char kFailFast[] = "fail_fast";
+void CuttlefishConfig::MutableInstanceSpecific::set_fail_fast(bool fail_fast) {
+  (*Dictionary())[kFailFast] = fail_fast;
+}
+bool CuttlefishConfig::InstanceSpecific::fail_fast() const {
+  return (*Dictionary())[kFailFast].asBool();
+}
+
 static constexpr char kEnableWebRTC[] = "enable_webrtc";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_webrtc(bool enable_webrtc) {
   (*Dictionary())[kEnableWebRTC] = enable_webrtc;
