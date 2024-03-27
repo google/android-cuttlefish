@@ -479,6 +479,10 @@ DEFINE_string(straced_host_executables, CF_DEFAULTS_STRACED_HOST_EXECUTABLES,
 DEFINE_bool(enable_host_sandbox, CF_DEFAULTS_HOST_SANDBOX,
             "Lock down host processes with sandbox2");
 
+DEFINE_vec(
+    fail_fast, CF_DEFAULTS_FAIL_FAST ? "true" : "false",
+    "Whether to exit when a heuristic predicts the boot will not complete");
+
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
@@ -1152,6 +1156,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<std::string> device_external_network_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(device_external_network));
 
+  std::vector<bool> fail_fast_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(fail_fast));
+
   std::vector<std::string> mcu_config_vec = CF_EXPECT(GET_FLAG_STR_VALUE(mcu_config_path));
 
   std::string default_enable_sandbox = "";
@@ -1387,6 +1393,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_kgdb(console_vec[instance_index] && kgdb_vec[instance_index]);
     instance.set_blank_data_image_mb(blank_data_image_mb_vec[instance_index]);
     instance.set_gdb_port(gdb_port_vec[instance_index]);
+    instance.set_fail_fast(fail_fast_vec[instance_index]);
 
     std::optional<std::vector<CuttlefishConfig::DisplayConfig>>
         binding_displays_configs;
