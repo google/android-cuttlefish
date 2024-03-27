@@ -409,6 +409,12 @@ DEFINE_vec(
     "sake."
     "Each vsock server port number is base + C - 3.");
 
+DEFINE_vec(
+    vsock_guest_group, CF_DEFAULTS_VSOCK_GUEST_GROUP,
+    "vsock_guest_group is used to determine the guest vsock isolation groups."
+    "vsock communications can only happen between VMs which are tagged with "
+    "the same group name, or between VMs which have no group assigned.");
+
 DEFINE_string(secure_hals, CF_DEFAULTS_SECURE_HALS,
               "Which HALs to use enable host security features for. Supports "
               "keymint and gatekeeper at the moment.");
@@ -1029,6 +1035,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       camera_server_port));
   std::vector<int> vsock_guest_cid_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
       vsock_guest_cid));
+  std::vector<std::string> vsock_guest_group_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(vsock_guest_group));
   std::vector<int> cpus_vec = CF_EXPECT(GET_FLAG_INT_VALUE(cpus));
   std::vector<int> blank_data_image_mb_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
       blank_data_image_mb));
@@ -1355,6 +1363,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       // a base (vsock) port is like 9600 for modem_simulator, etc
       return cuttlefish::GetVsockServerPort(base_port, vsock_guest_cid);
     };
+
+    const auto vsock_guest_group = vsock_guest_group_vec[instance_index];
+    instance.set_vsock_guest_group(vsock_guest_group);
+
     instance.set_session_id(iface_config.mobile_tap.session_id);
 
     instance.set_cpus(cpus_vec[instance_index]);

@@ -1429,6 +1429,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_vsock_guest_cid(
   (*Dictionary())[kVsockGuestCid] = vsock_guest_cid;
 }
 
+static constexpr char kVsockGuestGroup[] = "vsock_guest_group";
+std::string CuttlefishConfig::InstanceSpecific::vsock_guest_group() const {
+  return (*Dictionary())[kVsockGuestGroup].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_vsock_guest_group(
+    const std::string& vsock_guest_group) {
+  (*Dictionary())[kVsockGuestGroup] = vsock_guest_group;
+}
+
 static constexpr char kUuid[] = "uuid";
 std::string CuttlefishConfig::InstanceSpecific::uuid() const {
   return (*Dictionary())[kUuid].asString();
