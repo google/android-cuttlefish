@@ -205,15 +205,6 @@ func defaultMainBuild() *apiv1.AndroidCIBuild {
 	return &apiv1.AndroidCIBuild{Branch: mainBuildDefaultBranch, Target: mainBuildDefaultTarget}
 }
 
-const CVDHostPackageName = "cvd-host_package.tar.gz"
-
-func untarCVDHostPackage(dir string) error {
-	if err := Untar(dir, dir+"/"+CVDHostPackageName); err != nil {
-		return fmt.Errorf("Failed to untar %s with error: %w", CVDHostPackageName, err)
-	}
-	return nil
-}
-
 type fetchCVDCommandArtifactsFetcher struct {
 	execContext ExecContext
 	credentials string
