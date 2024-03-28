@@ -11,6 +11,7 @@ cuttlefish-*_*.*.*.tar.xz
 
 !/.github/
 !/.kokoro/
+!/.clang-format
 
 /*/debian/cuttlefish-*/
 /*/debian/*.substvars

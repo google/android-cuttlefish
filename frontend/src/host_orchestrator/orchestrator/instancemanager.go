@@ -347,7 +347,7 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 		// Use legacy `--base_instance_num` when multi-vd is not requested.
 		args = append(args, fmt.Sprintf("--base_instance_num=%d", p.InstanceNumbers[0]))
 	} else {
-		args = append(args, fmt.Sprintf("--num_instances=%s", strings.Join(SliceItoa(p.InstanceNumbers), ",")))
+		args = append(args, fmt.Sprintf("--instance_nums=%s", strings.Join(SliceItoa(p.InstanceNumbers), ",")))
 	}
 	args = append(args, fmt.Sprintf("--system_image_dir=%s", p.MainArtifactsDir))
 	if len(p.InstanceNumbers) > 1 {

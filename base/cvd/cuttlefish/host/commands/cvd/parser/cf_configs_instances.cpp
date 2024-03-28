@@ -31,6 +31,7 @@
 #include "host/commands/cvd/parser/instance/cf_security_configs.h"
 #include "host/commands/cvd/parser/instance/cf_streaming_configs.h"
 #include "host/commands/cvd/parser/instance/cf_vm_configs.h"
+#include "host/commands/cvd/parser/instance/cf_connectivity_configs.h"
 
 namespace cuttlefish {
 
@@ -55,6 +56,7 @@ Result<std::vector<std::string>> GenerateInstancesFlags(
   result = MergeResults(result, CF_EXPECT(GenerateSecurityFlags(instances)));
   result = MergeResults(result, CF_EXPECT(GenerateStreamingFlags(instances)));
   result = MergeResults(result, CF_EXPECT(GenerateVmFlags(instances)));
+  result = MergeResults(result, CF_EXPECT(GenerateConnectivityFlags(instances)));
 
   return result;
 }

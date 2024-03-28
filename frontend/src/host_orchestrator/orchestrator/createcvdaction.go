@@ -436,7 +436,7 @@ func tempFilename(pattern string) (string, error) {
 		return "", err
 	}
 	name := file.Name()
-	if os.Remove(name); err != nil {
+	if err := os.Remove(name); err != nil {
 		return "", err
 	}
 	return name, nil

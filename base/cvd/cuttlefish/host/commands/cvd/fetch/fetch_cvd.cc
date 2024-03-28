@@ -30,23 +30,22 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <curl/curl.h>
+#include <sparse/sparse.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/archive.h"
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "host/libs/config/fetcher_config.h"
+#include "host/libs/image_aggregator/sparse_image_utils.h"
 #include "host/libs/web/android_build_api.h"
 #include "host/libs/web/android_build_string.h"
-#include "host/libs/web/chrome_os_build_string.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
-#include "host/libs/web/luci_build_api.h"
 
 namespace cuttlefish {
 namespace {
@@ -63,7 +62,6 @@ struct BuildStrings {
   std::optional<BuildString> android_efi_loader_build;
   std::optional<BuildString> otatools_build;
   std::optional<BuildString> host_package_build;
-  std::optional<ChromeOsBuildString> chrome_os_build;
 };
 
 struct DownloadFlags {
@@ -76,7 +74,6 @@ struct TargetDirectories {
   std::string otatools;
   std::string default_target_files;
   std::string system_target_files;
-  std::string chrome_os;
 };
 
 struct Builds {
@@ -87,7 +84,6 @@ struct Builds {
   std::optional<Build> bootloader;
   std::optional<Build> android_efi_loader;
   std::optional<Build> otatools;
-  std::optional<ChromeOsBuildString> chrome_os;
 };
 
 struct Target {
@@ -132,8 +128,6 @@ BuildStrings GetBuildStrings(const VectorFlags& flags, const int index) {
           flags.android_efi_loader_build, index, std::nullopt),
       .otatools_build = AccessOrDefault<std::optional<BuildString>>(
           flags.otatools_build, index, std::nullopt),
-      .chrome_os_build = AccessOrDefault<std::optional<ChromeOsBuildString>>(
-          flags.chrome_os_build, index, std::nullopt),
   };
   auto possible_boot_artifact =
       AccessOrDefault<std::string>(flags.boot_artifact, index, "");
@@ -166,8 +160,81 @@ TargetDirectories GetTargetDirectories(
   return TargetDirectories{.root = base_directory,
                            .otatools = base_directory + "/otatools/",
                            .default_target_files = base_directory + "/default",
-                           .system_target_files = base_directory + "/system",
-                           .chrome_os = base_directory + "/chromeos"};
+                           .system_target_files = base_directory + "/system"};
+}
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
+bool ConvertToRawImageNoBinary(const std::string& image_path) {
+  if (!IsSparseImage(image_path)) {
+    LOG(DEBUG) << "Skip non-sparse image " << image_path;
+    return false;
+  }
+
+  std::string tmp_raw_image_path = image_path + ".raw";
+
+  //simg2img logic to convert sparse image to raw image.
+  struct sparse_file* s;
+  int out = open(tmp_raw_image_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0664);
+  int in = open(image_path.c_str(), O_RDONLY | O_BINARY);
+  if (in < 0) {
+    LOG(FATAL) << "Cannot open input file " << image_path;
+    return false;
+  }
+
+  s = sparse_file_import(in, true, false);
+  if (!s) {
+    LOG(FATAL) << "Failed to read sparse file " << image_path;
+    return false;
+  }
+
+  if (lseek(out, 0, SEEK_SET) == -1) {
+    LOG(FATAL) << "lseek failed " << tmp_raw_image_path;
+    return false;
+  }
+
+  if (sparse_file_write(s, out, false, false, false) < 0) {
+    LOG(FATAL) << "Cannot write output file " << image_path;
+    return false;
+  }
+  sparse_file_destroy(s);
+  close(in);
+  close(out);
+
+  // Replace the original sparse image with the raw image.
+  if (unlink(image_path.c_str()) != 0) {
+    PLOG(FATAL) << "Unable to delete original sparse image";
+  }
+
+  int success = rename(tmp_raw_image_path.c_str(), image_path.c_str());
+  if (success != 0) {
+    LOG(FATAL) << "Unable to rename raw image " << success;
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Converts any Android-Sparse image files in `image_files` to raw image files.
+ *
+ * Android-Sparse is a file format invented by Android that optimizes for
+ * chunks of zeroes or repeated data. The Android build system can produce
+ * sparse files to save on size of disk files after they are extracted from a
+ * disk file, as the imag eflashing process also can handle Android-Sparse
+ * images.
+ *
+ * crosvm has read-only support for Android-Sparse files, but QEMU does not
+ * support them.
+ */
+void DeAndroidSparse(const std::vector<std::string>& image_files) {
+  for (const auto& file : image_files) {
+    if (!ConvertToRawImageNoBinary(file)) {
+      LOG(DEBUG) << "Failed to desparse " << file;
+    }
+  }
 }
 
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
@@ -209,7 +276,6 @@ Result<void> EnsureDirectoriesExist(const std::string& target_directory,
                                     kRwxAllMode));
     CF_EXPECT(EnsureDirectoryExists(target.directories.system_target_files,
                                     kRwxAllMode));
-    CF_EXPECT(EnsureDirectoryExists(target.directories.chrome_os, kRwxAllMode));
   }
   return {};
 }
@@ -247,37 +313,6 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
                   flags.wait_retry_period, flags.api_base_url);
 }
 
-Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {
-  auto resolver =
-      flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
-  const bool use_logging_debug_function = true;
-  std::unique_ptr<HttpClient> curl =
-      HttpClient::CurlClient(resolver, use_logging_debug_function);
-  std::unique_ptr<HttpClient> retrying_http_client =
-      HttpClient::ServerErrorRetryClient(*curl, 10,
-                                         std::chrono::milliseconds(5000));
-  std::string luci_oauth_filepath =
-      StringFromEnv("HOME", ".") + "/.config/chrome_infra/auth/tokens.json";
-  std::unique_ptr<CredentialSource> luci_credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, luci_oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
-
-  std::string gsutil_oauth_filepath = StringFromEnv("HOME", ".") + "/.boto";
-  std::unique_ptr<CredentialSource> gsutil_credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, gsutil_oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
-
-  return LuciBuildApi(std::move(retrying_http_client), std::move(curl),
-                      std::move(luci_credential_source),
-                      std::move(gsutil_credential_source));
-}
-
 Result<std::optional<Build>> GetBuildHelper(
     BuildApi& build_api, const std::optional<BuildString>& build_source,
     const std::string& fallback_target) {
@@ -308,7 +343,6 @@ Result<Builds> GetBuilds(BuildApi& build_api,
                          "gbl_efi_dist_and_test")),
       .otatools = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.otatools_build, kDefaultBuildTarget)),
-      .chrome_os = build_sources.chrome_os_build,
   };
   if (!result.otatools) {
     if (result.system) {
@@ -356,8 +390,7 @@ Result<void> SaveConfig(FetcherConfig& config,
   return {};
 }
 
-Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
-                         const Builds& builds,
+Result<void> FetchTarget(BuildApi& build_api, const Builds& builds,
                          const TargetDirectories& target_directories,
                          const DownloadFlags& flags,
                          const bool keep_downloaded_archives,
@@ -391,6 +424,7 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
       CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
                                         default_build_id, default_build_target,
                                         image_files, target_directories.root));
+      DeAndroidSparse(image_files);
     }
 
     if (builds.system || flags.download_target_files_zip) {
@@ -403,6 +437,7 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
       CF_EXPECT(config.AddFilesToConfig(
           FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
           {target_files}, target_directories.root));
+      DeAndroidSparse({target_files});
     }
   }
 
@@ -416,6 +451,7 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
     CF_EXPECT(config.AddFilesToConfig(FileSource::SYSTEM_BUILD, system_id,
                                       system_target, {target_files},
                                       target_directories.root));
+    DeAndroidSparse({target_files});
 
     if (flags.download_img_zip) {
       std::string system_img_zip_name = GetBuildZipName(*builds.system, "img");
@@ -431,6 +467,7 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
               FileSource::SYSTEM_BUILD, system_id, system_target,
               extract_result.value(), target_directories.root,
               kOverrideEntries));
+          DeAndroidSparse(extract_result.value());
         }
       }
       if (!system_img_zip_result.ok() || !extract_result.ok()) {
@@ -481,6 +518,7 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
     CF_EXPECT(config.AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_id,
                                       kernel_target, {kernel_filepath},
                                       target_directories.root));
+    DeAndroidSparse({kernel_filepath});
 
     // Certain kernel builds do not have corresponding ramdisks.
     Result<std::string> initramfs_img_result = build_api.DownloadFile(
@@ -489,6 +527,7 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
       CF_EXPECT(config.AddFilesToConfig(
           FileSource::KERNEL_BUILD, kernel_id, kernel_target,
           {initramfs_img_result.value()}, target_directories.root));
+      DeAndroidSparse({initramfs_img_result.value()});
     }
   }
 
@@ -530,6 +569,7 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::BOOT_BUILD, boot_id, boot_target, boot_files,
         target_directories.root, kOverrideEntries));
+    DeAndroidSparse(boot_files);
   }
 
   if (builds.bootloader) {
@@ -546,6 +586,7 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::BOOTLOADER_BUILD, bootloader_id, bootloader_target,
         {bootloader_filepath}, target_directories.root, kOverrideEntries));
+    DeAndroidSparse({bootloader_filepath});
   }
 
   if (builds.android_efi_loader) {
@@ -567,6 +608,7 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
         FileSource::ANDROID_EFI_LOADER_BUILD, android_efi_loader_id,
         android_efi_loader_target, {android_efi_loader_target_filepath},
         target_directories.root, kOverrideEntries));
+    DeAndroidSparse({android_efi_loader_target_filepath});
   }
 
   if (builds.otatools) {
@@ -580,23 +622,8 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::DEFAULT_BUILD, otatools_build_id, otatools_build_target,
         ota_tools_files, target_directories.root));
+    DeAndroidSparse(ota_tools_files);
   }
-
-  if (builds.chrome_os) {
-    auto artifacts_opt =
-        CF_EXPECT(luci_build_api.GetBuildArtifacts(*builds.chrome_os));
-    auto artifacts = CF_EXPECT(std::move(artifacts_opt));
-    std::string archive_name = "chromiumos_test_image.tar.xz";
-    CF_EXPECT(Contains(artifacts.artifact_files, archive_name));
-    auto archive_path = target_directories.root + "/" + archive_name;
-    CF_EXPECT(luci_build_api.DownloadArtifact(artifacts.artifact_link,
-                                              archive_name, archive_path));
-    auto archive_files = CF_EXPECT(ExtractArchiveContents(
-        archive_path, target_directories.chrome_os, keep_downloaded_archives));
-    CF_EXPECT(config.AddFilesToConfig(FileSource::CHROME_OS_BUILD, "", "",
-                                      archive_files, target_directories.root));
-  }
-
   return {};
 }
 
@@ -611,8 +638,6 @@ Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
     BuildApi build_api = CF_EXPECT(GetBuildApi(flags.build_api_flags));
-    LuciBuildApi luci_build_api =
-        CF_EXPECT(GetLuciBuildApi(flags.build_api_flags));
     CF_EXPECT(UpdateTargetsWithBuilds(build_api, targets));
     std::optional<Build> fallback_host_build = std::nullopt;
     if (!targets.empty()) {
@@ -629,8 +654,8 @@ Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
     for (const auto& target : targets) {
       LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
       FetcherConfig config;
-      CF_EXPECT(FetchTarget(build_api, luci_build_api, target.builds,
-                            target.directories, target.download_flags,
+      CF_EXPECT(FetchTarget(build_api, target.builds, target.directories,
+                            target.download_flags,
                             flags.keep_downloaded_archives, config));
       CF_EXPECT(SaveConfig(config, target.directories.root));
       LOG(INFO) << "Completed fetch to \"" << target.directories.root << "\"";

@@ -1,0 +1,22 @@
+{
+  "instances": [
+    {
+      "name": "ins-1",
+      "disk": {
+        "default_build": "@ab\/aosp-main\/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+      }
+    },
+    {
+      "name": "ins-2",
+      "disk": {
+        "default_build": "@ab\/aosp-main\/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+      }
+    }
+  ],
+  "metrics": {
+    "enable": true
+  },
+  "common": {
+    "host_package": "@ab\/aosp-main\/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+  }
+}

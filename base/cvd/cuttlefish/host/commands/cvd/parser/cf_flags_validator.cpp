@@ -119,6 +119,11 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
         {"streaming", ConfigNode{.type = objectValue, .children = {
           {"device_id", ConfigNode{.type = stringValue}},
         }}},
+        {"connectivity", ConfigNode{.type = objectValue, .children = {
+          {"vsock", ConfigNode{.type = objectValue, .children = {
+            {"guest_group", ConfigNode{.type = stringValue}},
+          }}}
+        }}}
       }}},
     }}},
   {"fetch", ConfigNode{.type = objectValue, .children = {

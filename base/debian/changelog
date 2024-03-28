@@ -1,5 +1,9 @@
 cuttlefish-common (0.9.28) unstable; urgency=medium
 
+  * Other bug fixes
+
+  * Fetch_cvd converts android sparse images to raw
+
   * Include the cvd command in the base package
 
   * Explicitly specify dependency on iproute2
