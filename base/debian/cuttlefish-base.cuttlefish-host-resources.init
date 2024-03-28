@@ -286,7 +286,7 @@ start() {
 
     # When running inside a privileged container, set the ownership and access
     # of these device nodes.
-    if test -f /.dockerenv; then
+    if ( ( test -f /.dockerenv ) | ( printenv | grep DOCKER_RUNNING ) ); then
         chown root.kvm /dev/kvm
         chown root.cvdnetwork /dev/vhost-net
         chown root.cvdnetwork /dev/vhost-vsock
