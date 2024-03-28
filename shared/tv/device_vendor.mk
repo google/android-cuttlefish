@@ -25,7 +25,7 @@ $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.m
 $(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
-$(call inherit-product, vendor/google/tv/gcbs/projects/reference-v4/dtvstack.mk)
+$(call inherit-product-if-exists, vendor/google/tv/gcbs/projects/reference-v4/dtvstack.mk)
 
 # Loads the camera HAL and which set of cameras is required.
 $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
