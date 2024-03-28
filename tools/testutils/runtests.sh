@@ -8,13 +8,12 @@ OUTPUT_DIR="$(pwd)"
 function gather_test_results() {
   # Don't immediately exit on error anymore
   set +e
-  for d in ./bazel-testlogs/*; do
+  for d in "${REPO_DIR}"/e2etests/bazel-testlogs/*; do
     dir="${OUTPUT_DIR}/$(basename "$d")"
     mkdir -p "${dir}"
     cp "${d}/test.log" "${dir}/sponge_log.log"
     cp "${d}/test.xml" "${dir}/sponge_log.xml"
     if [[ -f "${d}/test.outputs/outputs.zip" ]]; then
-      mkdir -p "${dir}"
       unzip "${d}/test.outputs/outputs.zip" -d "${dir}/device_logs"
     fi
     # Make sure everyone has access to the output files
