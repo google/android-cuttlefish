@@ -20,7 +20,8 @@ case "$1" in
     fi
 
     # Create the kvm group when running inside a docker container.
-    if test -f /.dockerenv && ( ! getent group kvm > /dev/null 2>&1 )
+    if ( ( test -f /.dockerenv ) | ( printenv | grep DOCKER_RUNNING ) ) \
+      && ( ! getent group kvm > /dev/null 2>&1 )
     then
         addgroup --system kvm
     fi
