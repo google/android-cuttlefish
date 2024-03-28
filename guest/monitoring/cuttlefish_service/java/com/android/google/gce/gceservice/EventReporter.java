@@ -78,11 +78,10 @@ public class EventReporter extends JobBase {
      * If all jobs have completed, reports boot completed and stops.
      */
     @Override
-    public void onDependencyStraggling(ArrayList<GceFuture<?>> deps) {
-        reportMessage(String.format("%s: %s", VIRTUAL_DEVICE_BOOT_PENDING,
-                    GceFuture.toString(deps)));
+    public void onDependencyStraggling(List<GceFuture<?>> deps) {
+        reportMessage(
+            String.format("%s: %s", VIRTUAL_DEVICE_BOOT_PENDING, GceFuture.toString(deps)));
     }
-
 
     /** Report successful boot completion.
      *

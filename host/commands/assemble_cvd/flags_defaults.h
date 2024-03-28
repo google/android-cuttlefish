@@ -234,3 +234,6 @@
 
 // Whether to use sandbox2 to lock down host processes where policies exist
 #define CF_DEFAULTS_HOST_SANDBOX false
+
+// Whether to exit when heuristics predict the boot will not complete
+#define CF_DEFAULTS_FAIL_FAST true

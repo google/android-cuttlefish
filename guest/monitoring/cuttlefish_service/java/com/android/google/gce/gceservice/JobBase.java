@@ -16,7 +16,7 @@
 package com.android.google.gce.gceservice;
 
 import android.util.Log;
-import java.util.ArrayList;
+import java.util.List;
 
 public abstract class JobBase {
     private final String mTag;
@@ -41,10 +41,9 @@ public abstract class JobBase {
      * @param stragglingDependencies list of dependencies that have not completed
      *        in last 10 seconds.
      */
-    public void onDependencyStraggling(ArrayList<GceFuture<?>> stragglingDependencies) {
+    public void onDependencyStraggling(List<GceFuture<?>> stragglingDependencies) {
         Log.i(mTag, "Waiting for: " + GceFuture.toString(stragglingDependencies));
     }
-
 
     /** Invoked, when all dependencies are ready and job is clear to commence.
      *

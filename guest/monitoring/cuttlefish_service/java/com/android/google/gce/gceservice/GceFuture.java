@@ -16,13 +16,13 @@
 package com.android.google.gce.gceservice;
 
 import android.util.Log;
-import java.util.ArrayList;
+import com.google.common.util.concurrent.AbstractFuture;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
-import com.google.common.util.concurrent.AbstractFuture;
+import java.util.concurrent.TimeoutException;
 
 public class GceFuture<T> extends AbstractFuture<T> {
     private static final String LOG_TAG = "GceFuture";
@@ -90,10 +90,12 @@ public class GceFuture<T> extends AbstractFuture<T> {
 
     /** Convert list of GceFuture objects to string representation.
      */
-    public static String toString(ArrayList<GceFuture<?>> futures) {
+    public static String toString(List<GceFuture<?>> futures) {
         StringBuilder b = new StringBuilder();
         for (GceFuture<?> dep : futures) {
-            if (b.length() > 0) b.append(", ");
+            if (b.length() > 0) {
+                b.append(", ");
+            }
             b.append(dep.getName());
         }
 
