@@ -78,6 +78,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/userartifacts/{name}",
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
+	router.Handle("/userartifacts/{dir}/{name}/:extract",
+		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{Config: c.Config}).Methods("POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
@@ -392,6 +394,25 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 		File:           f,
 	}
 	return nil, h.m.UpdateArtifact(dir, chunk)
+}
+
+type extractUserArtifactHandler struct {
+	om  OperationManager
+	uam UserArtifactsManager
+}
+
+func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	dir := vars["dir"]
+	name := vars["name"]
+	op := h.om.New()
+	go func() {
+		err := h.uam.ExtractArtifact(dir, name)
+		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
+			log.Printf("error completing operation %q: %v\n", op.Name, err)
+		}
+	}()
+	return op, nil
 }
 
 type pullRuntimeArtifactsHandler struct {
