@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -163,6 +164,10 @@ func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
 		if err := Untar(dir, filename); err != nil {
 			return fmt.Errorf("failed extracting %q: %w", name, err)
 		}
+	} else if strings.HasSuffix(filename, ".zip") {
+		if err := Unzip(dir, filename); err != nil {
+			return fmt.Errorf("failed extracting %q: %w", name, err)
+		}
 	} else {
 		return operator.NewBadRequestError(fmt.Sprintf("unsupported extension: %q", name), nil)
 	}
@@ -218,4 +223,39 @@ func Untar(dst string, src string) error {
 			}
 		}
 	}
+}
+
+func Unzip(dstDir string, src string) error {
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+	extractAndCopy := func(dst string, src *zip.File) error {
+		rc, err := src.Open()
+		if err != nil {
+			return err
+		}
+		defer rc.Close()
+		dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_RDWR, os.FileMode(src.Mode()))
+		if err != nil {
+			return err
+		}
+		defer dstFile.Close()
+		if _, err := io.Copy(dstFile, rc); err != nil {
+			return err
+		}
+		return nil
+	}
+	for _, f := range r.File {
+		// Do not extract nested dirs as ci.android.com img.zip artifact
+		// does not contain nested dirs.
+		if f.Mode().IsDir() {
+			continue
+		}
+		if err := extractAndCopy(filepath.Join(dstDir, f.Name), f); err != nil {
+			return err
+		}
+	}
+	return nil
 }
