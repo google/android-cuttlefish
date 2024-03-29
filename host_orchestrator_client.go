@@ -37,10 +37,12 @@ type HostOrchestratorService interface {
 	// Creates a directory in the host where user artifacts can be uploaded to.
 	CreateUploadDir() (string, error)
 
-	// Uploads user files to a previously created directory.
-	UploadFiles(uploadDir string, filenames []string) error
+	// Uploads file into the given directory.
+	UploadFile(uploadDir string, filename string) error
+	UploadFileWithOptions(uploadDir string, filename string, options UploadOptions) error
 
-	UploadFilesWithOptions(uploadDir string, filenames []string, options UploadOptions) error
+	// Extracts a compressed file.
+	ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error)
 
 	// Create a new device with artifacts from the build server or previously uploaded by the user.
 	// If not empty, the provided credentials will be used to download necessary artifacts from the build api.
@@ -58,6 +60,9 @@ type HostOrchestratorService interface {
 
 	// Creates a webRTC connection to a device running in this host.
 	ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
+
+	// Wait for an operation, `result` will be populated with the relevant operation's result object.
+	WaitForOperation(name string, result any) error
 }
 
 const defaultHostOrchestratorCredentialsHeader = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
@@ -217,8 +222,8 @@ func (c *HostOrchestratorServiceImpl) createPolledConnection(device string) (*ho
 	return &res, nil
 }
 
-func (c *HostOrchestratorServiceImpl) waitForOperation(op *hoapi.Operation, res any) error {
-	path := "/operations/" + op.Name + "/:wait"
+func (c *HostOrchestratorServiceImpl) WaitForOperation(name string, res any) error {
+	path := "/operations/" + name + "/:wait"
 	retryOpts := RetryOptions{
 		StatusCodes: []int{http.StatusServiceUnavailable},
 		NumRetries:  c.WaitRetries,
@@ -238,7 +243,7 @@ func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRe
 	}
 
 	res := &hoapi.FetchArtifactsResponse{}
-	if err := c.waitForOperation(&op, &res); err != nil {
+	if err := c.WaitForOperation(op.Name, &res); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -254,7 +259,7 @@ func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, cre
 		return nil, err
 	}
 	res := &hoapi.CreateCVDResponse{}
-	if err := c.waitForOperation(&op, &res); err != nil {
+	if err := c.WaitForOperation(op.Name, &res); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -267,7 +272,7 @@ func (c *HostOrchestratorServiceImpl) DeleteCVD(id string) error {
 		return err
 	}
 	res := &hoapi.StopCVDResponse{}
-	if err := c.waitForOperation(&op, &res); err != nil {
+	if err := c.WaitForOperation(op.Name, &res); err != nil {
 		return err
 	}
 	return nil
@@ -308,8 +313,8 @@ func (c *HostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
 	return uploadDir.Name, nil
 }
 
-func (c *HostOrchestratorServiceImpl) UploadFiles(uploadDir string, filenames []string) error {
-	return c.UploadFilesWithOptions(uploadDir, filenames, DefaultUploadOptions())
+func (c *HostOrchestratorServiceImpl) UploadFile(uploadDir string, filename string) error {
+	return c.UploadFileWithOptions(uploadDir, filename, DefaultUploadOptions())
 }
 
 func DefaultUploadOptions() UploadOptions {
@@ -325,7 +330,7 @@ func DefaultUploadOptions() UploadOptions {
 	}
 }
 
-func (c *HostOrchestratorServiceImpl) UploadFilesWithOptions(uploadDir string, filenames []string, uploadOpts UploadOptions) error {
+func (c *HostOrchestratorServiceImpl) UploadFileWithOptions(uploadDir string, filename string, uploadOpts UploadOptions) error {
 	if uploadOpts.ChunkSizeBytes == 0 {
 		panic("ChunkSizeBytes value cannot be zero")
 	}
@@ -341,7 +346,16 @@ func (c *HostOrchestratorServiceImpl) UploadFilesWithOptions(uploadDir string, f
 		UploadDir:     uploadDir,
 		UploadOptions: uploadOpts,
 	}
-	return uploader.Upload(filenames)
+	return uploader.Upload([]string{filename})
+}
+
+func (c *HostOrchestratorServiceImpl) ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error) {
+	result := &hoapi.Operation{}
+	rb := c.HTTPHelper.NewPostRequest("/userartifacts/"+uploadDir+"/"+filename+"/:extract", nil)
+	if err := rb.JSONResDo(result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func asWebRTCICEServers(in []hoapi.IceServer) []webrtc.ICEServer {

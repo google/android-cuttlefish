@@ -30,7 +30,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestUploadFilesChunkSizeBytesIsZeroPanic(t *testing.T) {
+func TestUploadFileChunkSizeBytesIsZeroPanic(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("did not panic")
@@ -42,10 +42,10 @@ func TestUploadFilesChunkSizeBytesIsZeroPanic(t *testing.T) {
 	}
 	srv, _ := NewService(opts)
 
-	srv.HostService("foo").UploadFilesWithOptions("bar", []string{"baz"}, UploadOptions{ChunkSizeBytes: 0})
+	srv.HostService("foo").UploadFileWithOptions("dir", "baz", UploadOptions{ChunkSizeBytes: 0})
 }
 
-func TestUploadFilesSucceeds(t *testing.T) {
+func TestUploadFileSucceeds(t *testing.T) {
 	host := "foo"
 	uploadDir := "bar"
 	tempDir := createTempDir(t)
@@ -105,18 +105,20 @@ func TestUploadFilesSucceeds(t *testing.T) {
 	}
 	srv, _ := NewService(opts)
 
-	err := srv.HostService(host).UploadFilesWithOptions(uploadDir, []string{quxFile, waldoFile, xyzzyFile},
-		UploadOptions{
-			BackOffOpts: ExpBackOffOptions{
-				InitialDuration: 100 * time.Millisecond,
-				Multiplier:      2,
-				MaxElapsedTime:  1 * time.Second,
-			},
-			ChunkSizeBytes: 2,
-			NumWorkers:     10,
-		})
-	if err != nil {
-		t.Fatal(err)
+	for _, f := range []string{quxFile, waldoFile, xyzzyFile} {
+		err := srv.HostService(host).UploadFileWithOptions(uploadDir, f,
+			UploadOptions{
+				BackOffOpts: ExpBackOffOptions{
+					InitialDuration: 100 * time.Millisecond,
+					Multiplier:      2,
+					MaxElapsedTime:  1 * time.Second,
+				},
+				ChunkSizeBytes: 2,
+				NumWorkers:     10,
+			})
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	if len(uploads) != 0 {
@@ -124,7 +126,7 @@ func TestUploadFilesSucceeds(t *testing.T) {
 	}
 }
 
-func TestUploadFilesExponentialBackoff(t *testing.T) {
+func TestUploadFileExponentialBackoff(t *testing.T) {
 	tempDir := createTempDir(t)
 	defer os.RemoveAll(tempDir)
 	waldoFile := createTempFile(t, tempDir, "waldo", []byte("l"))
@@ -145,7 +147,7 @@ func TestUploadFilesExponentialBackoff(t *testing.T) {
 	}
 	srv, _ := NewService(opts)
 
-	err := srv.HostService("foo").UploadFilesWithOptions("bar", []string{waldoFile}, UploadOptions{
+	err := srv.HostService("foo").UploadFileWithOptions("dir", waldoFile, UploadOptions{
 		BackOffOpts: ExpBackOffOptions{
 			InitialDuration: 100 * time.Millisecond,
 			Multiplier:      2,
@@ -166,7 +168,7 @@ func TestUploadFilesExponentialBackoff(t *testing.T) {
 	}
 }
 
-func TestUploadFilesExponentialBackoffReachedElapsedTime(t *testing.T) {
+func TestUploadFileExponentialBackoffReachedElapsedTime(t *testing.T) {
 	tempDir := createTempDir(t)
 	defer os.RemoveAll(tempDir)
 	waldoFile := createTempFile(t, tempDir, "waldo", []byte("l"))
@@ -183,7 +185,7 @@ func TestUploadFilesExponentialBackoffReachedElapsedTime(t *testing.T) {
 	}
 	srv, _ := NewService(opts)
 
-	err := srv.HostService("foo").UploadFilesWithOptions("bar", []string{waldoFile}, UploadOptions{
+	err := srv.HostService("foo").UploadFileWithOptions("dir", waldoFile, UploadOptions{
 		BackOffOpts: ExpBackOffOptions{
 			InitialDuration:     100 * time.Millisecond,
 			RandomizationFactor: 0.5,
