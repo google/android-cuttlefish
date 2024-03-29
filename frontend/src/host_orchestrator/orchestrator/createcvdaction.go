@@ -293,9 +293,6 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 func (a *CreateCVDAction) launchFromUserBuild(
 	buildSource *apiv1.UserBuildSource, instancesCount uint32, op apiv1.Operation) ([]uint32, error) {
 	artifactsDir := a.userArtifactsDirResolver.GetDirPath(buildSource.ArtifactsDir)
-	if err := untarCVDHostPackage(artifactsDir); err != nil {
-		return nil, err
-	}
 	// assemble_cvd needs writer permission over vbmeta images
 	// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/host/commands/assemble_cvd/disk_flags.cc;l=639;drc=b0ec6e4df1126fd4045ce32bbfcedb79f25bd5bc
 	for _, name := range []string{"vbmeta.img", "vbmeta_system.img"} {
