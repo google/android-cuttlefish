@@ -99,5 +99,5 @@ apex {
         "android.hardware.identity-service.remote.rc",
         "android.hardware.identity-service.remote.xml",
         "android.hardware.identity_credential.remote.xml",
-    ]
+    ],
 }
