@@ -231,7 +231,7 @@ func Unzip(dstDir string, src string) error {
 		return err
 	}
 	defer r.Close()
-	extractAndCopy := func(dst string, src *zip.File) error {
+	extractTo := func(dst string, src *zip.File) error {
 		rc, err := src.Open()
 		if err != nil {
 			return err
@@ -253,7 +253,7 @@ func Unzip(dstDir string, src string) error {
 		if f.Mode().IsDir() {
 			continue
 		}
-		if err := extractAndCopy(filepath.Join(dstDir, f.Name), f); err != nil {
+		if err := extractTo(filepath.Join(dstDir, f.Name), f); err != nil {
 			return err
 		}
 	}
