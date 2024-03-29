@@ -21,7 +21,7 @@ cc_defaults {
     name: "secure_env_defaults",
     shared_libs: [
         "libbase",
-        "libcppbor_external",
+        "libcppbor",
         "libcppcose_rkp",
         "libcuttlefish_security",
         "libcuttlefish_transport",

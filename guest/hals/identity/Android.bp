@@ -34,7 +34,7 @@ cc_binary {
     ],
     static_libs: [
         "libbase",
-        "libcppbor_external",
+        "libcppbor",
         "libcppcose_rkp",
         "libutils",
         "libsoft_attestation_cert",
