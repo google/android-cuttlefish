@@ -648,7 +648,9 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
                                      int in_type, mode_t mode) {
   // DO NOT UNLINK addr.sun_path. It does NOT have to be null-terminated.
   // See man 7 unix for more details.
-  if (!abstract) (void)unlink(name.c_str());
+  if (!abstract) {
+    (void)unlink(name.c_str());
+  }
 
   struct sockaddr_un addr;
   socklen_t addrlen;
