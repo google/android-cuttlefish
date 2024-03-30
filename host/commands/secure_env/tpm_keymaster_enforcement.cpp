@@ -39,8 +39,12 @@ using keymaster::VerifyAuthorizationResponse;
 
 namespace {
 inline bool operator==(const keymaster_blob_t& a, const keymaster_blob_t& b) {
-  if (!a.data_length && !b.data_length) return true;
-  if (!(a.data && b.data)) return a.data == b.data;
+  if (!a.data_length && !b.data_length) {
+    return true;
+  }
+  if (!(a.data && b.data)) {
+    return a.data == b.data;
+  }
   return (a.data_length == b.data_length &&
           !memcmp(a.data, b.data, a.data_length));
 }
@@ -200,7 +204,9 @@ keymaster_error_t TpmKeymasterEnforcement::ComputeSharedHmac(
     sorted_hmac_inputs.emplace(std::move(sharing_params));
   }
 
-  if (!found_mine) return KM_ERROR_INVALID_ARGUMENT;
+  if (!found_mine) {
+    return KM_ERROR_INVALID_ARGUMENT;
+  }
 
   // unique data has a low maximum size, so combine the hmac parameters
   char unique_data[] = "\0\0\0\0\0\0\0\0\0\0";
