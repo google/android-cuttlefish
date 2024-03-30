@@ -38,7 +38,7 @@ cc_binary {
         "lib_android_keymaster_keymint_utils",
         "libbase",
         "libbinder_ndk",
-        "libcppbor_external",
+        "libcppbor",
         "libcrypto",
         "libcuttlefish_fs",
         "libcuttlefish_security",

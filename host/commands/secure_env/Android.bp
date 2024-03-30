@@ -21,7 +21,7 @@ cc_defaults {
     name: "secure_env_defaults",
     shared_libs: [
         "libbase",
-        "libcppbor_external",
+        "libcppbor",
         "libcppcose_rkp",
         "libcuttlefish_security",
         "libcuttlefish_transport",
@@ -76,30 +76,30 @@ cc_defaults {
 }
 
 common_libsecure_srcs = [
-        "composite_serialization.cpp",
-        "encrypted_serializable.cpp",
-        "storage/tpm_storage.cpp",
-        "gatekeeper_responder.cpp",
-        "hmac_serializable.cpp",
-        "in_process_tpm.cpp",
-        "json_serializable.cpp",
-        "keymaster_responder.cpp",
-        "primary_key_builder.cpp",
-        "storage/storage.cpp",
-        "tpm_attestation_record.cpp",
-        "tpm_auth.cpp",
-        "tpm_commands.cpp",
-        "tpm_encrypt_decrypt.cpp",
-        "tpm_ffi.cpp",
-        "tpm_gatekeeper.cpp",
-        "tpm_hmac.cpp",
-        "tpm_key_blob_maker.cpp",
-        "tpm_keymaster_context.cpp",
-        "tpm_keymaster_enforcement.cpp",
-        "tpm_random_source.cpp",
-        "tpm_remote_provisioning_context.cpp",
-        "tpm_resource_manager.cpp",
-        "tpm_serialize.cpp",
+    "composite_serialization.cpp",
+    "encrypted_serializable.cpp",
+    "storage/tpm_storage.cpp",
+    "gatekeeper_responder.cpp",
+    "hmac_serializable.cpp",
+    "in_process_tpm.cpp",
+    "json_serializable.cpp",
+    "keymaster_responder.cpp",
+    "primary_key_builder.cpp",
+    "storage/storage.cpp",
+    "tpm_attestation_record.cpp",
+    "tpm_auth.cpp",
+    "tpm_commands.cpp",
+    "tpm_encrypt_decrypt.cpp",
+    "tpm_ffi.cpp",
+    "tpm_gatekeeper.cpp",
+    "tpm_hmac.cpp",
+    "tpm_key_blob_maker.cpp",
+    "tpm_keymaster_context.cpp",
+    "tpm_keymaster_enforcement.cpp",
+    "tpm_random_source.cpp",
+    "tpm_remote_provisioning_context.cpp",
+    "tpm_resource_manager.cpp",
+    "tpm_serialize.cpp",
 ]
 
 // Things blocking us to use oemlock on windows:
@@ -120,14 +120,17 @@ cc_library {
         "oemlock/oemlock_responder.cpp",
         "storage/insecure_json_storage.cpp",
         "suspend_resume_handler.cpp",
-	"worker_thread_loop_body.cpp",
+        "worker_thread_loop_body.cpp",
     ],
     target: {
         darwin: {
             enabled: true,
         },
     },
-    defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
+    defaults: [
+        "cuttlefish_buildhost_only",
+        "secure_env_defaults",
+    ],
 }
 
 // Rust FFI bindings to access TPM-specific functionality in C/C++.
@@ -169,7 +172,7 @@ cc_binary_host {
                 "libcuttlefish_command_util",
                 "libcuttlefish_run_cvd_proto",
             ],
-	    static_libs: [
+            static_libs: [
                 "libsecure_env_not_windows",
             ],
         },
@@ -210,7 +213,7 @@ cc_library {
     device_supported: false,
     host_supported: true,
     defaults: ["secure_env_defaults"],
- }
+}
 
 cc_test_host {
     name: "libsecure_env_test",
@@ -221,7 +224,10 @@ cc_test_host {
     static_libs: [
         "libsecure_env_not_windows",
     ],
-    defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
+    defaults: [
+        "cuttlefish_buildhost_only",
+        "secure_env_defaults",
+    ],
     test_options: {
         unit_test: true,
     },
