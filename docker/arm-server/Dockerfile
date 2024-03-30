@@ -3,9 +3,6 @@
 # so it could execute CF instance with API in HO.
 FROM debian:stable-20211011 AS cuttlefish-arm64
 
-# to detect if it is running inside a docker
-ENV DOCKER_RUNNING=true
-
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443
 # Expose HO(Host Orchestrator) Port (HTTP:2080, HTTPS:2443)
@@ -33,6 +30,9 @@ RUN update-ca-certificates
 COPY ./out/cuttlefish-base_*.deb /root/
 COPY ./out/cuttlefish-user_*.deb /root/
 COPY ./out/cuttlefish-orchestration_*.deb /root/
+
+# to make sure this file always exist
+RUN touch /.dockerenv
 
 # Install CF debian packages.
 WORKDIR /root
