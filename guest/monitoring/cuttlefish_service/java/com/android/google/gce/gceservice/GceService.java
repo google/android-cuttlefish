@@ -87,7 +87,7 @@ public class GceService extends Service {
             mExecutor.schedule(mBluetoothChecker);
             mExecutor.schedule(mConnChecker);
 
-            mExecutor.schedule(mEventReporter, mBluetoothChecker.getEnabled());
+            mExecutor.schedule(mEventReporter, 10, mBluetoothChecker.getEnabled());
 
             NotificationManager notificationManager =
                     (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

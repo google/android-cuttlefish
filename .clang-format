@@ -17,6 +17,9 @@
 # See https://clang.llvm.org/docs/ClangFormatStyleOptions.html for the
 # various options that can be configured and for the definitions of each
 # of the below options.
-
+---
 BasedOnStyle: Google
 IncludeBlocks: Preserve
+---
+Language: Java
+IndentWidth: 4

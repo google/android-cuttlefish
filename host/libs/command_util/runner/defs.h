@@ -55,6 +55,7 @@ enum RunnerExitCodes : int {
 // Actions supported by the launcher server
 enum class LauncherAction : char {
   kExtended = 'A',  ///< expect additional information to follow
+  kFail = 'F',
   kPowerwash = 'P',
   kRestart = 'R',
   kStatus = 'I',

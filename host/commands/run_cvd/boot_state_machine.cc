@@ -31,6 +31,7 @@
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/commands/run_cvd/validate.h"
 #include "host/libs/command_util/runner/defs.h"
+#include "host/libs/command_util/util.h"
 #include "host/libs/config/feature.h"
 
 DEFINE_int32(reboot_notification_fd, CF_DEFAULTS_REBOOT_NOTIFICATION_FD,
@@ -92,6 +93,9 @@ SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
       LOG(INFO) << "Virtual device booted successfully";
     } else if (exit_code == RunnerExitCodes::kVirtualDeviceBootFailed) {
       LOG(ERROR) << "Virtual device failed to boot";
+      if (!instance.fail_fast()) {
+        LOG(ERROR) << "Device has been left running for debug";
+      }
     } else {
       LOG(ERROR) << "Unexpected exit code: " << exit_code;
     }
@@ -170,10 +174,13 @@ Result<SharedFD> ProcessLeader(
 // launcher process
 class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
  public:
-  INJECT(CvdBootStateMachine(AutoSetup<ProcessLeader>::Type& process_leader,
-                             KernelLogPipeProvider& kernel_log_pipe_provider))
+  INJECT(
+      CvdBootStateMachine(AutoSetup<ProcessLeader>::Type& process_leader,
+                          KernelLogPipeProvider& kernel_log_pipe_provider,
+                          const CuttlefishConfig::InstanceSpecific& instance))
       : process_leader_(process_leader),
         kernel_log_pipe_provider_(kernel_log_pipe_provider),
+        instance_(instance),
         state_(kBootStarted) {}
 
   ~CvdBootStateMachine() {
@@ -249,6 +256,17 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
       }
       auto sent_code = OnBootEvtReceived(boot_events_pipe);
       if (sent_code) {
+        if (!BootCompleted()) {
+          if (!instance_.fail_fast()) {
+            LOG(ERROR) << "Device running, likely in a bad state";
+            break;
+          }
+          auto monitor_res = GetLauncherMonitorFromInstance(instance_, 5);
+          CHECK(monitor_res.ok()) << monitor_res.error().FormatForEnv();
+          auto fail_res = RunLauncherAction(*monitor_res, LauncherAction::kFail,
+                                            std::optional<int>());
+          CHECK(fail_res.ok()) << fail_res.error().FormatForEnv();
+        }
         break;
       }
     }
@@ -301,6 +319,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
 
   AutoSetup<ProcessLeader>::Type& process_leader_;
   KernelLogPipeProvider& kernel_log_pipe_provider_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
 
   std::thread boot_event_handler_;
   SharedFD fg_launcher_pipe_;
