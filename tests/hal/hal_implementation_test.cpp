@@ -294,7 +294,9 @@ enum class DeviceType {
 
 static DeviceType getDeviceType() {
   static DeviceType type = DeviceType::UNKNOWN;
-  if (type != DeviceType::UNKNOWN) return type;
+  if (type != DeviceType::UNKNOWN) {
+    return type;
+  }
 
   sp<IBinder> binder =
       defaultServiceManager()->waitForService(String16("package_native"));
@@ -308,21 +310,27 @@ static DeviceType getDeviceType() {
             ->hasSystemFeature(String16("android.hardware.type.automotive"), 0,
                                &hasFeature)
             .isOk());
-  if (hasFeature) return DeviceType::AUTOMOTIVE;
+  if (hasFeature) {
+    return DeviceType::AUTOMOTIVE;
+  }
 
   // PackageManager.FEATURE_LEANBACK
   CHECK(packageManager
             ->hasSystemFeature(String16("android.software.leanback"), 0,
                                &hasFeature)
             .isOk());
-  if (hasFeature) return DeviceType::TV;
+  if (hasFeature) {
+    return DeviceType::TV;
+  }
 
   // PackageManager.FEATURE_WATCH
   CHECK(packageManager
             ->hasSystemFeature(String16("android.hardware.type.watch"), 0,
                                &hasFeature)
             .isOk());
-  if (hasFeature) return DeviceType::WATCH;
+  if (hasFeature) {
+    return DeviceType::WATCH;
+  }
 
   return DeviceType::PHONE;
 }
@@ -378,9 +386,12 @@ static std::vector<VersionedAidlPackage> allAidlManifestInterfaces() {
 }
 
 TEST(Hal, AllAidlInterfacesAreInAosp) {
-  if (!kAidlUseUnfrozen) GTEST_SKIP() << "Not valid in 'next' configuration";
-  if (getDeviceType() != DeviceType::PHONE)
+  if (!kAidlUseUnfrozen) {
+    GTEST_SKIP() << "Not valid in 'next' configuration";
+  }
+  if (getDeviceType() != DeviceType::PHONE) {
     GTEST_SKIP() << "Test only supports phones right now";
+  }
   for (const auto& package : allAidlManifestInterfaces()) {
     EXPECT_TRUE(isAospAidlInterface(package.name))
         << "This device should only have AOSP interfaces, not: "
@@ -394,9 +405,12 @@ struct AidlPackageCheck {
 };
 
 TEST(Hal, AidlInterfacesImplemented) {
-  if (!kAidlUseUnfrozen) GTEST_SKIP() << "Not valid in 'next' configuration";
-  if (getDeviceType() != DeviceType::PHONE)
+  if (!kAidlUseUnfrozen) {
+    GTEST_SKIP() << "Not valid in 'next' configuration";
+  }
+  if (getDeviceType() != DeviceType::PHONE) {
     GTEST_SKIP() << "Test only supports phones right now";
+  }
   std::vector<VersionedAidlPackage> manifest = allAidlManifestInterfaces();
   std::vector<VersionedAidlPackage> thoughtMissing = kKnownMissingAidl;
 
@@ -404,9 +418,12 @@ TEST(Hal, AidlInterfacesImplemented) {
     ASSERT_FALSE(treePackage.types.empty()) << treePackage.name;
     if (std::none_of(treePackage.types.begin(), treePackage.types.end(),
                      isAospAidlInterface) ||
-        isMissingAidl(treePackage.name))
+        isMissingAidl(treePackage.name)) {
       continue;
-    if (treePackage.stability != "vintf") continue;
+    }
+    if (treePackage.stability != "vintf") {
+      continue;
+    }
 
     // expect versions from 1 to latest version. If the package has development
     // the latest version is the latest known version + 1. Each of these need

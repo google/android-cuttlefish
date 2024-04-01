@@ -129,7 +129,9 @@ bool CanGenerateEsp(Arch arch) {
       const auto modules_presented = std::all_of(
           kGrubModulesX86.begin(), kGrubModulesX86.end(),
           [&](const std::string& m) { return FileExists(x86_modules + m); });
-      if (modules_presented) return true;
+      if (modules_presented) {
+        return true;
+      }
 
       const auto monolith_presented = FileExists(kBootSrcPathIA32);
       return monolith_presented;

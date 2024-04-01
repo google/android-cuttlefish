@@ -73,7 +73,9 @@ ScopedAStatus RemoteKeyMintOperation::update(
     const optional<TimeStampToken>&
     /* timestampToken */,
     vector<uint8_t>* output) {
-  if (!output) return kmError2ScopedAStatus(KM_ERROR_OUTPUT_PARAMETER_NULL);
+  if (!output) {
+    return kmError2ScopedAStatus(KM_ERROR_OUTPUT_PARAMETER_NULL);
+  }
 
   UpdateOperationRequest request(impl_.message_version());
   request.op_handle = opHandle_;
@@ -87,8 +89,9 @@ ScopedAStatus RemoteKeyMintOperation::update(
   UpdateOperationResponse response(impl_.message_version());
   impl_.UpdateOperation(request, &response);
 
-  if (response.error != KM_ERROR_OK)
+  if (response.error != KM_ERROR_OK) {
     return kmError2ScopedAStatus(response.error);
+  }
   if (response.input_consumed != request.input.buffer_size()) {
     return kmError2ScopedAStatus(KM_ERROR_UNKNOWN_ERROR);
   }
@@ -111,7 +114,9 @@ ScopedAStatus RemoteKeyMintOperation::finish(
 
   FinishOperationRequest request(impl_.message_version());
   request.op_handle = opHandle_;
-  if (input) request.input.Reinitialize(input->data(), input->size());
+  if (input) {
+    request.input.Reinitialize(input->data(), input->size());
+  }
   if (signature) {
     request.signature.Reinitialize(signature->data(), signature->size());
   }
@@ -130,8 +135,9 @@ ScopedAStatus RemoteKeyMintOperation::finish(
   impl_.FinishOperation(request, &response);
   opHandle_ = 0;
 
-  if (response.error != KM_ERROR_OK)
+  if (response.error != KM_ERROR_OK) {
     return kmError2ScopedAStatus(response.error);
+  }
 
   *output = kmBuffer2vector(response.output);
   return ScopedAStatus::ok();

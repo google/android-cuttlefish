@@ -60,8 +60,9 @@ ScopedAStatus RemoteSharedSecret::computeSharedSecret(
            params[i].nonce.size());
   }
   auto response = impl_.ComputeSharedHmac(request);
-  if (response.error == KM_ERROR_OK)
+  if (response.error == KM_ERROR_OK) {
     *sharingCheck = kmBlob2vector(response.sharing_check);
+  }
   return kmError2ScopedAStatus(response.error);
 }
 
