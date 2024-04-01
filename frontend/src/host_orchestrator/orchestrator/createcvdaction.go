@@ -40,8 +40,6 @@ type CreateCVDActionOpts struct {
 	Paths                    IMPaths
 	OperationManager         OperationManager
 	ExecContext              ExecContext
-	CVDDownloader            CVDDownloader
-	CVDToolsVersion          AndroidBuild
 	BuildAPI                 artifacts.BuildAPI
 	ArtifactsFetcher         artifacts.Fetcher
 	CVDBundleFetcher         artifacts.CVDBundleFetcher
@@ -58,8 +56,6 @@ type CreateCVDAction struct {
 	paths                    IMPaths
 	om                       OperationManager
 	execContext              cvd.CVDExecContext
-	cvdToolsVersion          AndroidBuild
-	cvdDownloader            CVDDownloader
 	buildAPI                 artifacts.BuildAPI
 	artifactsFetcher         artifacts.Fetcher
 	cvdBundleFetcher         artifacts.CVDBundleFetcher
@@ -80,8 +76,6 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		hostValidator:            opts.HostValidator,
 		paths:                    opts.Paths,
 		om:                       opts.OperationManager,
-		cvdToolsVersion:          opts.CVDToolsVersion,
-		cvdDownloader:            opts.CVDDownloader,
 		buildAPI:                 opts.BuildAPI,
 		artifactsFetcher:         opts.ArtifactsFetcher,
 		cvdBundleFetcher:         opts.CVDBundleFetcher,
@@ -97,7 +91,6 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		execContext: cvdExecContext,
 		startCVDHandler: &startCVDHandler{
 			ExecContext: cvdExecContext,
-			CVDBin:      opts.Paths.CVDBin(),
 			Timeout:     opts.CVDStartTimeout,
 		},
 	}
@@ -111,9 +104,6 @@ func (a *CreateCVDAction) Run() (apiv1.Operation, error) {
 		return apiv1.Operation{}, err
 	}
 	if err := createDir(a.paths.ArtifactsRootDir); err != nil {
-		return apiv1.Operation{}, err
-	}
-	if err := a.cvdDownloader.Download(a.cvdToolsVersion, a.paths.CVDBin(), a.paths.FetchCVDBin()); err != nil {
 		return apiv1.Operation{}, err
 	}
 	op := a.om.New()
@@ -157,15 +147,21 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 			}
 		}()
 		args = append(args, "--credential_source="+filename)
+	} else if isRunningOnGCE() {
+		if ok, err := hasServiceAccountAccessToken(); err != nil {
+			log.Printf("service account token check failed: %s", err)
+		} else if ok {
+			args = append(args, "--credential_source=gce")
+		}
 	}
 	opts := cvd.CommandOpts{
 		Timeout: a.cvdStartTimeout,
 	}
-	cmd := cvd.NewCommand(a.execContext, a.paths.CVDBin(), args, opts)
+	cmd := cvd.NewCommand(a.execContext, args, opts)
 	if err := cmd.Run(); err != nil {
 		return nil, operator.NewInternalError(ErrMsgLaunchCVDFailed, err)
 	}
-	group, err := cvdFleetFirstGroup(a.execContext, a.paths.CVDBin())
+	group, err := cvdFleetFirstGroup(a.execContext)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +186,7 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 	if err != nil {
 		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
-	group, err := cvdFleetFirstGroup(a.execContext, a.paths.CVDBin())
+	group, err := cvdFleetFirstGroup(a.execContext)
 	if err != nil {
 		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
@@ -297,9 +293,6 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 func (a *CreateCVDAction) launchFromUserBuild(
 	buildSource *apiv1.UserBuildSource, instancesCount uint32, op apiv1.Operation) ([]uint32, error) {
 	artifactsDir := a.userArtifactsDirResolver.GetDirPath(buildSource.ArtifactsDir)
-	if err := untarCVDHostPackage(artifactsDir); err != nil {
-		return nil, err
-	}
 	// assemble_cvd needs writer permission over vbmeta images
 	// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/host/commands/assemble_cvd/disk_flags.cc;l=639;drc=b0ec6e4df1126fd4045ce32bbfcedb79f25bd5bc
 	for _, name := range []string{"vbmeta.img", "vbmeta_system.img"} {
@@ -440,7 +433,7 @@ func tempFilename(pattern string) (string, error) {
 		return "", err
 	}
 	name := file.Name()
-	if os.Remove(name); err != nil {
+	if err := os.Remove(name); err != nil {
 		return "", err
 	}
 	return name, nil

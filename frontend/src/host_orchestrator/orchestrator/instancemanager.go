@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -54,16 +56,7 @@ type AndroidBuild struct {
 
 type IMPaths struct {
 	RootDir          string
-	CVDToolsDir      string
 	ArtifactsRootDir string
-}
-
-func (p *IMPaths) CVDBin() string {
-	return filepath.Join(p.CVDToolsDir, "cvd")
-}
-
-func (p *IMPaths) FetchCVDBin() string {
-	return filepath.Join(p.CVDToolsDir, "fetch_cvd")
 }
 
 type CVDSelector struct {
@@ -150,9 +143,9 @@ func (i *cvdInstance) toAPIObject(group string) *apiv1.CVD {
 	}
 }
 
-func cvdFleet(ctx cvd.CVDExecContext, cvdBin string) (*cvdFleetOutput, error) {
+func cvdFleet(ctx cvd.CVDExecContext) (*cvdFleetOutput, error) {
 	stdout := &bytes.Buffer{}
-	cvdCmd := cvd.NewCommand(ctx, cvdBin, []string{"fleet"}, cvd.CommandOpts{Stdout: stdout})
+	cvdCmd := cvd.NewCommand(ctx, []string{"fleet"}, cvd.CommandOpts{Stdout: stdout})
 	err := cvdCmd.Run()
 	if err != nil {
 		return nil, err
@@ -167,8 +160,8 @@ func cvdFleet(ctx cvd.CVDExecContext, cvdBin string) (*cvdFleetOutput, error) {
 
 // Helper for listing first group instances only. Legacy flows didn't have a multi-group environment hence unsing
 // the first group only.
-func cvdFleetFirstGroup(ctx cvd.CVDExecContext, cvdBin string) (*cvdGroup, error) {
-	fleet, err := cvdFleet(ctx, cvdBin)
+func cvdFleetFirstGroup(ctx cvd.CVDExecContext) (*cvdGroup, error) {
+	fleet, err := cvdFleet(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -178,8 +171,8 @@ func cvdFleetFirstGroup(ctx cvd.CVDExecContext, cvdBin string) (*cvdGroup, error
 	return fleet.Groups[0], nil
 }
 
-func CVDLogsDir(ctx cvd.CVDExecContext, cvdBin, name string) (string, error) {
-	group, err := cvdFleetFirstGroup(ctx, cvdBin)
+func CVDLogsDir(ctx cvd.CVDExecContext, name string) (string, error) {
+	group, err := cvdFleetFirstGroup(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -191,19 +184,14 @@ func CVDLogsDir(ctx cvd.CVDExecContext, cvdBin, name string) (string, error) {
 }
 
 func HostBugReport(ctx cvd.CVDExecContext, paths IMPaths, out string) error {
-	group, err := cvdFleetFirstGroup(ctx, paths.CVDBin())
+	group, err := cvdFleetFirstGroup(ctx)
 	if err != nil {
 		return err
 	}
 	if len(group.Instances) == 0 {
 		return operator.NewNotFoundError("no artifacts found", nil)
 	}
-	cmd := cvd.NewCommand(
-		ctx,
-		paths.CVDBin(),
-		[]string{"host_bugreport", "--output=" + out},
-		cvd.CommandOpts{},
-	)
+	cmd := cvd.NewCommand(ctx, []string{"host_bugreport", "--output=" + out}, cvd.CommandOpts{})
 	return cmd.Run()
 }
 
@@ -217,92 +205,15 @@ func defaultMainBuild() *apiv1.AndroidCIBuild {
 	return &apiv1.AndroidCIBuild{Branch: mainBuildDefaultBranch, Target: mainBuildDefaultTarget}
 }
 
-const CVDHostPackageName = "cvd-host_package.tar.gz"
-
-func untarCVDHostPackage(dir string) error {
-	if err := Untar(dir, dir+"/"+CVDHostPackageName); err != nil {
-		return fmt.Errorf("Failed to untar %s with error: %w", CVDHostPackageName, err)
-	}
-	return nil
-}
-
-type CVDDownloader interface {
-	// Downloads the `cvd` and `fetch_cvd` binaries into the given filenames.
-	Download(build AndroidBuild, outCVD, outFetchCVD string) error
-}
-
-type AndroidCICVDDownloader struct {
-	buildAPI artifacts.BuildAPI
-}
-
-func NewAndroidCICVDDownloader(buildAPI artifacts.BuildAPI) *AndroidCICVDDownloader {
-	return &AndroidCICVDDownloader{
-		buildAPI: buildAPI,
-	}
-}
-
-func (h *AndroidCICVDDownloader) Download(build AndroidBuild, outCVD, outFetchCVD string) error {
-	if err := h.download(build, outCVD); err != nil {
-		return fmt.Errorf("failed downloading cvd file: %w", err)
-	}
-	if err := h.download(build, outFetchCVD); err != nil {
-		return fmt.Errorf("failed downloading fetch_cvd file: %w", err)
-	}
-	return nil
-}
-
-func (h *AndroidCICVDDownloader) download(build AndroidBuild, out string) error {
-	exist, err := fileExist(out)
-	if err != nil {
-		return fmt.Errorf("failed to test if the `%s` file %q does exist: %w", filepath.Base(out), out, err)
-	}
-	if exist {
-		return nil
-	}
-	f, err := os.Create(out)
-	if err != nil {
-		return fmt.Errorf("failed to create the `%s` file %q: %w", filepath.Base(out), out, err)
-	}
-	var downloadErr error
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Printf("failed closing `%s` file %q file, error: %v", filepath.Base(out), out, err)
-		}
-		if downloadErr != nil {
-			if err := os.Remove(out); err != nil {
-				log.Printf("failed removing  `%s` file %q: %v", filepath.Base(out), out, err)
-			}
-		}
-
-	}()
-	if err := h.buildAPI.DownloadArtifact(filepath.Base(out), build.ID, build.Target, f); err != nil {
-		return err
-	}
-	return os.Chmod(out, 0750)
-}
-
-type FetchCVDCommandArtifactsFetcherOpts struct {
-	// End user credentials will be used over the service account credentials.
-	UseSrvAccCreds bool
-}
-
 type fetchCVDCommandArtifactsFetcher struct {
-	execContext  ExecContext
-	fetchCVDBin  string
-	endUserCreds string
-	opts         FetchCVDCommandArtifactsFetcherOpts
+	execContext ExecContext
+	credentials string
 }
 
-func newFetchCVDCommandArtifactsFetcher(
-	execContext ExecContext,
-	fetchCVDBin string,
-	endUserCreds string,
-	opts FetchCVDCommandArtifactsFetcherOpts) *fetchCVDCommandArtifactsFetcher {
+func newFetchCVDCommandArtifactsFetcher(execContext ExecContext, credentials string) *fetchCVDCommandArtifactsFetcher {
 	return &fetchCVDCommandArtifactsFetcher{
-		execContext:  execContext,
-		fetchCVDBin:  fetchCVDBin,
-		endUserCreds: endUserCreds,
-		opts:         opts,
+		execContext: execContext,
+		credentials: credentials,
 	}
 }
 
@@ -319,9 +230,9 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 	}
 	var file *os.File
 	var err error
-	fetchCmd := f.execContext(context.TODO(), f.fetchCVDBin, args...)
-	if f.endUserCreds != "" {
-		if file, err = createCredentialsFile(f.endUserCreds); err != nil {
+	fetchCmd := f.execContext(context.TODO(), cvd.FetchCVDBin, args...)
+	if f.credentials != "" {
+		if file, err = createCredentialsFile(f.credentials); err != nil {
 			return err
 		}
 		defer file.Close()
@@ -330,8 +241,12 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 		// The actual fd number is not retained, the lowest available number is used instead.
 		fd := 3 + len(fetchCmd.ExtraFiles) - 1
 		fetchCmd.Args = append(fetchCmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
-	} else if f.opts.UseSrvAccCreds {
-		fetchCmd.Args = append(fetchCmd.Args, "--credential_source=gce")
+	} else if isRunningOnGCE() {
+		if ok, err := hasServiceAccountAccessToken(); err != nil {
+			log.Printf("service account token check failed: %s", err)
+		} else if ok {
+			fetchCmd.Args = append(fetchCmd.Args, "--credential_source=gce")
+		}
 	}
 	out, err := fetchCmd.CombinedOutput()
 	if err != nil {
@@ -404,7 +319,6 @@ const (
 
 type startCVDHandler struct {
 	ExecContext cvd.CVDExecContext
-	CVDBin      string
 	Timeout     time.Duration
 }
 
@@ -424,7 +338,7 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 		// Use legacy `--base_instance_num` when multi-vd is not requested.
 		args = append(args, fmt.Sprintf("--base_instance_num=%d", p.InstanceNumbers[0]))
 	} else {
-		args = append(args, fmt.Sprintf("--num_instances=%s", strings.Join(SliceItoa(p.InstanceNumbers), ",")))
+		args = append(args, fmt.Sprintf("--instance_nums=%s", strings.Join(SliceItoa(p.InstanceNumbers), ",")))
 	}
 	args = append(args, fmt.Sprintf("--system_image_dir=%s", p.MainArtifactsDir))
 	if len(p.InstanceNumbers) > 1 {
@@ -445,7 +359,7 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 		Home:           p.RuntimeDir,
 		Timeout:        h.Timeout,
 	}
-	cvdCmd := cvd.NewCommand(h.ExecContext, h.CVDBin, args, opts)
+	cvdCmd := cvd.NewCommand(h.ExecContext, args, opts)
 	err := cvdCmd.Run()
 	if err != nil {
 		return fmt.Errorf("launch cvd stage failed: %w", err)
@@ -595,4 +509,24 @@ func contains(s []uint32, e uint32) bool {
 		}
 	}
 	return false
+}
+
+func isRunningOnGCE() bool {
+	_, err := net.LookupIP("metadata.google.internal")
+	return err == nil
+}
+
+// For instances running on GCE, checks whether the instance was created with a service account having an access token.
+func hasServiceAccountAccessToken() (bool, error) {
+	req, err := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token", nil)
+	if err != nil {
+		return false, err
+	}
+	req.Header.Set("Metadata-Flavor", "Google")
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return false, err
+	}
+	return res.StatusCode == http.StatusOK, nil
 }

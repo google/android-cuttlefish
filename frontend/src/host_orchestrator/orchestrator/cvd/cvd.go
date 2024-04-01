@@ -29,7 +29,12 @@ import (
 
 type CVDExecContext = func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd
 
-const CVDCommandDefaultTimeout = 30 * time.Second
+const (
+	CVDBin      = "/usr/bin/cvd"
+	FetchCVDBin = "/usr/bin/fetch_cvd"
+
+	CVDCommandDefaultTimeout = 30 * time.Second
+)
 
 const (
 	envVarAndroidHostOut = "ANDROID_HOST_OUT"
@@ -49,10 +54,10 @@ type Command struct {
 	opts        CommandOpts
 }
 
-func NewCommand(execContext CVDExecContext, cvdBin string, args []string, opts CommandOpts) *Command {
+func NewCommand(execContext CVDExecContext, args []string, opts CommandOpts) *Command {
 	return &Command{
 		execContext: execContext,
-		cvdBin:      cvdBin,
+		cvdBin:      CVDBin,
 		args:        args,
 		opts:        opts,
 	}

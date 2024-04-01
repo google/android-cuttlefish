@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Fail on errors
-set -e
+set -e -x
 
 echo "Cuttlefish debian package build and testing placeholder script for kokoro"
 

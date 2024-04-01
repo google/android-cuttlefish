@@ -26,6 +26,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	orchtesting "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/testing"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -92,23 +93,17 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 		}
 		return exec.Command("true")
 	}
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDToolsDir:      dir,
-		ArtifactsRootDir: dir + "/artifacts",
-	}
+	paths := IMPaths{ArtifactsRootDir: dir + "/artifacts"}
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, "")
 	opts := CreateCVDActionOpts{
 		Request:          &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}},
 		HostValidator:    &AlwaysSucceedsValidator{},
 		Paths:            paths,
 		OperationManager: om,
 		ExecContext:      execContext,
-		CVDToolsVersion:  cvdBinAB,
-		CVDDownloader:    &fakeCVDDownloader{},
 		BuildAPI:         buildAPI,
 		ArtifactsFetcher: artifactsFetcher,
 		CVDBundleFetcher: cvdBundleFetcher,
@@ -133,23 +128,17 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
 	execContext := execCtxAlwaysSucceeds
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDToolsDir:      dir,
-		ArtifactsRootDir: dir + "/artifacts",
-	}
+	paths := IMPaths{ArtifactsRootDir: dir + "/artifacts"}
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, "")
 	opts := CreateCVDActionOpts{
 		Request:          &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}},
 		HostValidator:    &AlwaysSucceedsValidator{},
 		Paths:            paths,
 		OperationManager: om,
 		ExecContext:      execContext,
-		CVDToolsVersion:  cvdBinAB,
-		CVDDownloader:    &fakeCVDDownloader{},
 		BuildAPI:         buildAPI,
 		ArtifactsFetcher: artifactsFetcher,
 		CVDBundleFetcher: cvdBundleFetcher,
@@ -170,8 +159,8 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
 	goldenPrefixFmt := fmt.Sprintf("sudo -u fakecvduser "+
-		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
-		" --base_instance_num=1 --system_image_dir=%[1]s/artifacts/%%[1]s", dir)
+		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s %[2]s --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
+		" --base_instance_num=1 --system_image_dir=%[1]s/artifacts/%%[1]s", dir, cvd.CVDBin)
 	tests := []struct {
 		name string
 		req  apiv1.CreateCVDRequest
@@ -280,22 +269,17 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 				}
 				return exec.Command("true")
 			}
-			paths := IMPaths{
-				CVDToolsDir:      dir,
-				ArtifactsRootDir: dir + "/artifacts",
-			}
+			paths := IMPaths{ArtifactsRootDir: dir + "/artifacts"}
 			om := NewMapOM()
 			buildAPI := &fakeBuildAPI{}
 			artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-			cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+			cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, "")
 			opts := CreateCVDActionOpts{
 				Request:          &tc.req,
 				HostValidator:    &AlwaysSucceedsValidator{},
 				Paths:            paths,
 				OperationManager: om,
 				ExecContext:      execContext,
-				CVDToolsVersion:  AndroidBuild{ID: "1", Target: "xyzzy"},
-				CVDDownloader:    &fakeCVDDownloader{},
 				BuildAPI:         buildAPI,
 				ArtifactsFetcher: artifactsFetcher,
 				CVDBundleFetcher: cvdBundleFetcher,
@@ -330,13 +314,11 @@ func (r *fakeUADirRes) GetDirPath(string) string { return r.Dir }
 func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
-	tarContent, _ := ioutil.ReadFile(getTestTarFilename())
 	ioutil.WriteFile(dir+"/vbmeta.img", []byte{}, 0755)
 	ioutil.WriteFile(dir+"/vbmeta_system.img", []byte{}, 0755)
-	ioutil.WriteFile(dir+"/"+CVDHostPackageName, tarContent, 0755)
 	expected := fmt.Sprintf("sudo -u fakecvduser "+
-		"ANDROID_HOST_OUT=%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
-		" --base_instance_num=1 --system_image_dir=%[1]s", dir)
+		"ANDROID_HOST_OUT=%[1]s %[2]s --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
+		" --base_instance_num=1 --system_image_dir=%[1]s", dir, cvd.CVDBin)
 	var usedCmdName string
 	var usedCmdArgs []string
 	execContext := func(cxt context.Context, name string, args ...string) *exec.Cmd {
@@ -346,14 +328,11 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 		}
 		return exec.Command("true")
 	}
-	paths := IMPaths{
-		CVDToolsDir:      dir,
-		ArtifactsRootDir: dir + "/artifacts",
-	}
+	paths := IMPaths{ArtifactsRootDir: dir + "/artifacts"}
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, "")
 	req := apiv1.CreateCVDRequest{
 		CVD: &apiv1.CVD{
 			BuildSource: &apiv1.BuildSource{
@@ -367,8 +346,6 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 		Paths:                    paths,
 		OperationManager:         om,
 		ExecContext:              execContext,
-		CVDToolsVersion:          AndroidBuild{ID: "1", Target: "xyzzy"},
-		CVDDownloader:            &fakeCVDDownloader{},
 		BuildAPI:                 buildAPI,
 		ArtifactsFetcher:         artifactsFetcher,
 		CVDBundleFetcher:         cvdBundleFetcher,
@@ -397,23 +374,17 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
 	execContext := execCtxCvdSubcmdFails
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDToolsDir:      dir,
-		ArtifactsRootDir: dir + "/artifacts",
-	}
+	paths := IMPaths{ArtifactsRootDir: dir + "/artifacts"}
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, "")
 	opts := CreateCVDActionOpts{
 		Request:          &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}},
 		HostValidator:    &AlwaysSucceedsValidator{},
 		Paths:            paths,
 		OperationManager: om,
 		ExecContext:      execContext,
-		CVDToolsVersion:  cvdBinAB,
-		CVDDownloader:    &fakeCVDDownloader{},
 		BuildAPI:         buildAPI,
 		ArtifactsFetcher: artifactsFetcher,
 		CVDBundleFetcher: cvdBundleFetcher,
@@ -433,23 +404,17 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
 	execContext := execCtxCvdSubcmdDelays
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDToolsDir:      dir,
-		ArtifactsRootDir: dir + "/artifacts",
-	}
+	paths := IMPaths{ArtifactsRootDir: dir + "/artifacts"}
 	om := NewMapOM()
 	buildAPI := &fakeBuildAPI{}
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, paths.FetchCVDBin(), "", FetchCVDCommandArtifactsFetcherOpts{})
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execContext, "")
 	opts := CreateCVDActionOpts{
 		Request:          &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}},
 		HostValidator:    &AlwaysSucceedsValidator{},
 		Paths:            paths,
 		OperationManager: om,
 		ExecContext:      execContext,
-		CVDToolsVersion:  cvdBinAB,
-		CVDDownloader:    &fakeCVDDownloader{},
 		BuildAPI:         buildAPI,
 		ArtifactsFetcher: artifactsFetcher,
 		CVDBundleFetcher: cvdBundleFetcher,
@@ -476,11 +441,7 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
 	execContext := execCtxAlwaysSucceeds
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDToolsDir:      dir,
-		ArtifactsRootDir: dir + "/artifacts",
-	}
+	paths := IMPaths{ArtifactsRootDir: dir + "/artifacts"}
 	om := NewMapOM()
 	opts := CreateCVDActionOpts{
 		Request:          &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}},
@@ -488,7 +449,6 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 		Paths:            paths,
 		OperationManager: om,
 		ExecContext:      execContext,
-		CVDToolsVersion:  cvdBinAB,
 		CVDUser:          fakeCVDUser,
 	}
 	action := NewCreateCVDAction(opts)

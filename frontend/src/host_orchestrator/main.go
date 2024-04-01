@@ -105,13 +105,11 @@ func main() {
 	httpsPort := flag.Int("https_port", -1, "Port to listen on for HTTPS requests.")
 	tlsCertDir := flag.String("tls_cert_dir", defaultTLSCertDir, "Directory with the TLS certificate.")
 	cvdUser := flag.String("cvd_user", "", "User to execute cvd as.")
+	cvdCreationTimeoutSecs := flag.Int("cvd_creation_timeout_secs", 420, "CVD creation timeout in seconds")
 	operatorPort := flag.Int("operator_http_port", 1080, "Port where the operator is listening.")
 	abURL := flag.String("android_build_url", defaultAndroidBuildURL, "URL to an Android Build API.")
-	cvdBinAndroidBuildID := flag.String("cvd_build_id", defaultCVDBinAndroidBuildID, "Build ID to fetch the cvd binary from.")
-	cvdBinAndroidBuildTarget := flag.String("cvd_build_target", defaultCVDBinAndroidBuildTarget, "Build target to fetch the cvd binary from.")
 	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir(), "Directory where cvd will download android build artifacts to.")
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
-	useSrvAccCreds := flag.Bool("use_service_account_creds", true, "Use VM's service account credentials to fetch build artifacts.")
 
 	flag.Parse()
 
@@ -124,7 +122,6 @@ func main() {
 
 	imPaths := orchestrator.IMPaths{
 		RootDir:          *imRootDir,
-		CVDToolsDir:      *imRootDir,
 		ArtifactsRootDir: filepath.Join(*imRootDir, "artifacts"),
 	}
 	om := orchestrator.NewMapOM()
@@ -133,22 +130,14 @@ func main() {
 		NameFactory: func() string { return uuid.New().String() },
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
-	cvdToolsVersion := orchestrator.AndroidBuild{
-		ID:     *cvdBinAndroidBuildID,
-		Target: *cvdBinAndroidBuildTarget,
-	}
-	debugStaticVars := debug.StaticVariables{
-		InitialCVDBinAndroidBuildID:     cvdToolsVersion.ID,
-		InitialCVDBinAndroidBuildTarget: cvdToolsVersion.Target,
-	}
+	debugStaticVars := debug.StaticVariables{}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
 	imController := orchestrator.Controller{
 		Config: orchestrator.Config{
 			Paths:                  imPaths,
-			CVDToolsVersion:        cvdToolsVersion,
 			AndroidBuildServiceURL: *abURL,
+			CVDCreationTimeout:     time.Duration(*cvdCreationTimeoutSecs) * time.Second,
 			CVDUser:                *cvdUser,
-			UseSrvAccCreds:         *useSrvAccCreds,
 		},
 		OperationManager:      om,
 		WaitOperationDuration: 2 * time.Minute,

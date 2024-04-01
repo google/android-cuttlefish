@@ -16,11 +16,15 @@ package orchestrator
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+	"syscall"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -49,6 +53,8 @@ type UserArtifactsManager interface {
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
 	// Update artifact with the passed chunk.
 	UpdateArtifact(dir string, chunk UserArtifactChunk) error
+	// Extract artifact
+	ExtractArtifact(dir, name string) error
 }
 
 // Options for creating instances of UserArtifactsManager implementations.
@@ -141,6 +147,33 @@ func writeChunk(dir string, chunk UserArtifactChunk) error {
 	return os.Chmod(filename, 0664)
 }
 
+func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
+	dir = filepath.Join(m.RootDir, dir)
+	if ok, err := fileExist(dir); err != nil {
+		return err
+	} else if !ok {
+		return operator.NewBadRequestError(fmt.Sprintf("directory %q does not exist", dir), nil)
+	}
+	filename := filepath.Join(dir, name)
+	if ok, err := fileExist(filename); err != nil {
+		return err
+	} else if !ok {
+		return operator.NewBadRequestError(fmt.Sprintf("artifact %q does not exist", name), nil)
+	}
+	if strings.HasSuffix(filename, ".tar.gz") {
+		if err := Untar(dir, filename); err != nil {
+			return fmt.Errorf("failed extracting %q: %w", name, err)
+		}
+	} else if strings.HasSuffix(filename, ".zip") {
+		if err := Unzip(dir, filename); err != nil {
+			return fmt.Errorf("failed extracting %q: %w", name, err)
+		}
+	} else {
+		return operator.NewBadRequestError(fmt.Sprintf("unsupported extension: %q", name), nil)
+	}
+	return nil
+}
+
 func Untar(dst string, src string) error {
 	r, err := os.Open(src)
 	if err != nil {
@@ -168,7 +201,10 @@ func Untar(dst string, src string) error {
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0774); err != nil {
+				oldmask := syscall.Umask(0)
+				err := os.MkdirAll(target, 0774)
+				syscall.Umask(oldmask)
+				if err != nil {
 					return err
 				}
 			}
@@ -187,4 +223,39 @@ func Untar(dst string, src string) error {
 			}
 		}
 	}
+}
+
+func Unzip(dstDir string, src string) error {
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+	extractTo := func(dst string, src *zip.File) error {
+		rc, err := src.Open()
+		if err != nil {
+			return err
+		}
+		defer rc.Close()
+		dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_RDWR, os.FileMode(src.Mode()))
+		if err != nil {
+			return err
+		}
+		defer dstFile.Close()
+		if _, err := io.Copy(dstFile, rc); err != nil {
+			return err
+		}
+		return nil
+	}
+	for _, f := range r.File {
+		// Do not extract nested dirs as ci.android.com img.zip artifact
+		// does not contain nested dirs.
+		if f.Mode().IsDir() {
+			continue
+		}
+		if err := extractTo(filepath.Join(dstDir, f.Name), f); err != nil {
+			return err
+		}
+	}
+	return nil
 }

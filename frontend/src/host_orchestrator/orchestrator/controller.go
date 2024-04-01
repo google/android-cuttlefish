@@ -39,12 +39,9 @@ const HeaderBuildAPICreds = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
 
 type Config struct {
 	Paths                  IMPaths
-	CVDToolsVersion        AndroidBuild
 	AndroidBuildServiceURL string
+	CVDCreationTimeout     time.Duration
 	CVDUser                string
-	// Indicates whether to use the credentials of the service account
-	// managing the VM towards the Build API.
-	UseSrvAccCreds bool
 }
 
 type Controller struct {
@@ -81,6 +78,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/userartifacts/{name}",
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
+	router.Handle("/userartifacts/{dir}/{name}/:extract",
+		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{Config: c.Config}).Methods("POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
@@ -137,21 +136,15 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
-	cvdDwnl := NewAndroidCICVDDownloader(
-		artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
 	creds := r.Header.Get(HeaderBuildAPICreds)
 	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Credentials: creds}
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	fetchCVDCmdOpts := FetchCVDCommandArtifactsFetcherOpts{UseSrvAccCreds: h.Config.UseSrvAccCreds}
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(
-		exec.CommandContext, h.Config.Paths.FetchCVDBin(), creds, fetchCVDCmdOpts)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds)
 	opts := FetchArtifactsActionOpts{
 		Request:          &req,
 		Paths:            h.Config.Paths,
-		CVDToolsVersion:  h.Config.CVDToolsVersion,
-		CVDDownloader:    cvdDwnl,
 		OperationManager: h.OM,
 		BuildAPI:         buildAPI,
 		CVDBundleFetcher: cvdBundleFetcher,
@@ -180,34 +173,23 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
-	cvdDwnl := NewAndroidCICVDDownloader(
-		artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL))
 	creds := r.Header.Get(HeaderBuildAPICreds)
 	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Credentials: creds}
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	fetchCVDCmdOpts := FetchCVDCommandArtifactsFetcherOpts{UseSrvAccCreds: h.Config.UseSrvAccCreds}
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(
-		exec.CommandContext, h.Config.Paths.FetchCVDBin(), creds, fetchCVDCmdOpts)
-	cvdStartTimeout := 3 * time.Minute
-	if req.EnvConfig != nil {
-		// Use a lengthier timeout when using canonical configs as this operation downloads artifacts as well.
-		cvdStartTimeout = 7 * time.Minute
-	}
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds)
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
 		Paths:                    h.Config.Paths,
 		OperationManager:         h.OM,
 		ExecContext:              exec.CommandContext,
-		CVDToolsVersion:          h.Config.CVDToolsVersion,
-		CVDDownloader:            cvdDwnl,
 		BuildAPI:                 buildAPI,
 		ArtifactsFetcher:         artifactsFetcher,
 		CVDBundleFetcher:         cvdBundleFetcher,
 		UUIDGen:                  func() string { return uuid.New().String() },
-		CVDStartTimeout:          cvdStartTimeout,
+		CVDStartTimeout:          h.Config.CVDCreationTimeout,
 		CVDUser:                  h.Config.CVDUser,
 		UserArtifactsDirResolver: h.UADirResolver,
 		BuildAPICredentials:      creds,
@@ -220,14 +202,10 @@ type listCVDsHandler struct {
 }
 
 func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
-	buildAPI := artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL)
-	cvdDwnl := NewAndroidCICVDDownloader(buildAPI)
 	opts := ListCVDsActionOpts{
-		Paths:           h.Config.Paths,
-		ExecContext:     exec.CommandContext,
-		CVDToolsVersion: h.Config.CVDToolsVersion,
-		CVDDownloader:   cvdDwnl,
-		CVDUser:         h.Config.CVDUser,
+		Paths:       h.Config.Paths,
+		ExecContext: exec.CommandContext,
+		CVDUser:     h.Config.CVDUser,
 	}
 	return NewListCVDsAction(opts).Run()
 }
@@ -248,15 +226,11 @@ func (h *stopCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	group := vars["group"]
 	name := vars["name"]
-	buildAPI := artifacts.NewAndroidCIBuildAPI(http.DefaultClient, h.Config.AndroidBuildServiceURL)
-	cvdDwnl := NewAndroidCICVDDownloader(buildAPI)
 	opts := StopCVDActionOpts{
 		Selector:         CVDSelector{Group: group, Name: name},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
-		CVDToolsVersion:  h.Config.CVDToolsVersion,
-		CVDDownloader:    cvdDwnl,
 		CVDUser:          h.Config.CVDUser,
 	}
 	return NewStopCVDAction(opts).Run()
@@ -271,7 +245,7 @@ func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name := vars["name"]
 	pathPrefix := "/cvds/" + name + "/logs"
 	ctx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
-	logsDir, err := CVDLogsDir(ctx, h.Config.Paths.CVDBin(), name)
+	logsDir, err := CVDLogsDir(ctx, name)
 	if err != nil {
 		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
 		appErr, ok := err.(*operator.AppError)
@@ -420,6 +394,25 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 		File:           f,
 	}
 	return nil, h.m.UpdateArtifact(dir, chunk)
+}
+
+type extractUserArtifactHandler struct {
+	om  OperationManager
+	uam UserArtifactsManager
+}
+
+func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	dir := vars["dir"]
+	name := vars["name"]
+	op := h.om.New()
+	go func() {
+		err := h.uam.ExtractArtifact(dir, name)
+		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
+			log.Printf("error completing operation %q: %v\n", op.Name, err)
+		}
+	}()
+	return op, nil
 }
 
 type pullRuntimeArtifactsHandler struct {

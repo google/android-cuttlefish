@@ -20,15 +20,13 @@ orchestrator_https_port=2443
 # Android Build URL. Defaults to "https://androidbuildinternal.googleapis.com"
 # orchestrator_android_build_url=
 #
-# CVD binary Android Build Id. Defaults to ""
-# orchestrator_cvdbin_android_build_id=
-#
-# CVD binary Android Build Target. Defaults to ""
-# orchestrator_cvdbin_android_build_target=
-#
 # Directory used to store the CVD artifacts.
 # Defaults to "/tmp/<uid>/cvd_artifacts"
 orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common
+#
+# Timeout for CVD creation
+# Defaults to 7 mins
+# orchestrator_cvd_creation_timeout_secs=420
 #
 # Where web UI in the application is from
 # If it isn't empty, the application uses web UI from the url,
@@ -39,8 +37,3 @@ orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common
 # The port where the operator is to listen on.
 # Defaults to 1080.
 # operator_http_port=
-#
-# Indicates whether to use the credentials of the service account
-# managing the VM towards the Build API.
-# Defaults to true.
-# use_service_account_creds=

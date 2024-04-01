@@ -92,23 +92,17 @@ start_orchestrator() {
   if [[ -n "${orchestrator_android_build_url}" ]]; then
     args+=("--android_build_url=${orchestrator_android_build_url}")
   fi
-  if [[ -n "${orchestrator_cvdbin_android_build_id}" ]]; then
-    args+=("--cvd_build_id=${orchestrator_cvdbin_android_build_id}")
-  fi
-  if [[ -n "${orchestrator_cvdbin_android_build_target}" ]]; then
-    args+=("--cvd_build_target=${orchestrator_cvdbin_android_build_target}")
-  fi
   if [[ -n "${orchestrator_cvd_artifacts_dir}" ]]; then
     args+=("--cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir}")
+  fi
+  if [[ -n "${orchestrator_cvd_creation_timeout_secs}" ]]; then
+    args+=("--cvd_creation_timeout_secs=${orchestrator_cvd_creation_timeout_secs}")
   fi
   if [[ -n "${operator_http_port}" ]]; then
     args+=("--operator_http_port=${operator_http_port}")
   fi
   if [[ -n "${orchestrator_listen_address}" ]]; then
     args+=("--listen_addr=${orchestrator_listen_address}")
-  fi
-  if [[ -n "${use_service_account_creds+true}" ]]; then
-    args+=("--use_service_account_creds=${use_service_account_creds:-true}")
   fi
   args+=("--cvd_user=_cvd-executor")
 

@@ -159,9 +159,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     }
 
     /*Verbose is disabled by default*/
-    auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
-    CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
-    std::vector<SharedFD> fds = {dev_null, dev_null, dev_null};
+    std::vector<SharedFD> fds = {request.In(), request.Out(), request.Err()};
     std::vector<RequestWithStdio> ret;
 
     for (auto& request_proto : req_protos) {

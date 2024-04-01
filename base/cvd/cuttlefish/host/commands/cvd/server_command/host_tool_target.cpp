@@ -57,11 +57,10 @@ Result<HostToolTarget> HostToolTarget::Create(
   for (const auto& [op, candidates] : OpToBinsMap()) {
     for (const auto& bin_name : candidates) {
       const auto bin_path = ConcatToString(bin_dir_path, "/", bin_name);
-      if (!FileExists(bin_path)) {
-        continue;
+      if (FileExists(bin_path)) {
+        op_to_impl_map[op] = OperationImplementation{.bin_name_ = bin_name};
+        break;
       }
-      op_to_impl_map[op] = OperationImplementation{.bin_name_ = bin_name};
-      break;
     }
   }
 

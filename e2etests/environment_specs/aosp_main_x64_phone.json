@@ -1,0 +1,42 @@
+{
+  "instances": [
+    {
+      "name": "ins-1",
+      "disk": {
+        "default_build": "@ab\/aosp-main\/aosp_cf_x86_64_phone-trunk_staging-userdebug",
+        "super": {
+          "system": "@ab\/aosp-main\/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+        }
+      },
+      "boot": {
+        "kernel": {
+          "build": "@ab\/aosp_kernel-common-android15-6.1\/kernel_virt_x86_64"
+        },
+        "build": "@ab\/aosp-main\/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+      },
+      "vm": {
+        "cpus": 4,
+        "memory_mb": 4096,
+        "setupwizard_mode": "REQUIRED"
+      },
+      "graphics": {
+        "displays": [
+          {
+            "width": 720,
+            "height": 1280,
+            "dpi": 140,
+            "refresh_rate_hertz": 60
+          }
+        ],
+        "record_screen": false
+      }
+    }
+  ],
+  "netsim_bt": false,
+  "metrics": {
+    "enable": true
+  },
+  "common": {
+    "host_package": "@ab\/aosp-main\/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+  }
+}

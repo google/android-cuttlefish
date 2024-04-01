@@ -27,28 +27,22 @@ type StopCVDActionOpts struct {
 	Paths            IMPaths
 	OperationManager OperationManager
 	ExecContext      ExecContext
-	CVDToolsVersion  AndroidBuild
-	CVDDownloader    CVDDownloader
 	CVDUser          string
 }
 
 type StopCVDAction struct {
-	selector        CVDSelector
-	paths           IMPaths
-	om              OperationManager
-	cvdToolsVersion AndroidBuild
-	cvdDownloader   CVDDownloader
-	execContext     cvd.CVDExecContext
+	selector    CVDSelector
+	paths       IMPaths
+	om          OperationManager
+	execContext cvd.CVDExecContext
 }
 
 func NewStopCVDAction(opts StopCVDActionOpts) *StopCVDAction {
 	return &StopCVDAction{
-		selector:        opts.Selector,
-		paths:           opts.Paths,
-		om:              opts.OperationManager,
-		cvdToolsVersion: opts.CVDToolsVersion,
-		cvdDownloader:   opts.CVDDownloader,
-		execContext:     newCVDExecContext(opts.ExecContext, opts.CVDUser),
+		selector:    opts.Selector,
+		paths:       opts.Paths,
+		om:          opts.OperationManager,
+		execContext: newCVDExecContext(opts.ExecContext, opts.CVDUser),
 	}
 }
 
@@ -65,12 +59,9 @@ func (a *StopCVDAction) Run() (apiv1.Operation, error) {
 }
 
 func (a *StopCVDAction) exec(op apiv1.Operation) (*apiv1.StopCVDResponse, error) {
-	if err := a.cvdDownloader.Download(a.cvdToolsVersion, a.paths.CVDBin(), a.paths.FetchCVDBin()); err != nil {
-		return nil, operator.NewInternalError("failed downloading the cvd binary", err)
-	}
 	args := a.selector.ToCVDCLI()
 	args = append(args, "stop")
-	cmd := cvd.NewCommand(a.execContext, a.paths.CVDBin(), args, cvd.CommandOpts{})
+	cmd := cvd.NewCommand(a.execContext, args, cvd.CommandOpts{})
 	if err := cmd.Run(); err != nil {
 		return nil, operator.NewInternalError("cvd stop failed", err)
 	}
