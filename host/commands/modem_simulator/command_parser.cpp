@@ -51,7 +51,9 @@ std::string_view CommandParser::GetNextStr() {
 std::string_view CommandParser::GetNextStr(char flag) {
   auto pos = command_.find(flag);
   auto str = command_.substr(0, pos);
-  if (pos != std::string_view::npos) pos += 1;  // npos + 1 = 0
+  if (pos != std::string_view::npos) {
+    pos += 1;  // npos + 1 = 0
+  }
   command_.remove_prefix(std::min(pos, command_.size()));
   return str;
 }
@@ -77,7 +79,9 @@ std::string CommandParser::GetNextStrDeciToHex() {
 }
 
 static int parse_int(const std::string& snumber, int base) {
-  if (snumber.empty()) return -1;
+  if (snumber.empty()) {
+    return -1;
+  }
   const char* p = snumber.c_str();
   char* p_end = nullptr;
   errno = 0;
@@ -87,7 +91,9 @@ static int parse_int(const std::string& snumber, int base) {
   }
   const bool range_error = errno == ERANGE;
 
-  if (range_error) return -1;
+  if (range_error) {
+    return -1;
+  }
   return lval;
 }
 
