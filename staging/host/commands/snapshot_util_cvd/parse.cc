@@ -122,6 +122,8 @@ Result<Parsed> Parse(std::vector<std::string>& args) {
   flags.push_back(
       GflagsCompatFlag("force", parsed.force)
           .Help("If the snapshot path already exists, delete it first"));
+  flags.push_back(GflagsCompatFlag("auto_suspend", parsed.auto_suspend)
+                      .Help("Suspend/resume before/after taking the snapshot"));
   flags.push_back(HelpFlag(flags));
   flags.push_back(HelpXmlFlag(flags, std::cout, help_xml));
   flags.push_back(UnexpectedArgumentGuard());
