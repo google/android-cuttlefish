@@ -73,7 +73,7 @@ prebuilt_etc {
 }
 
 apex {
-    name: "com.google.cf.keymint.rust",
+    name: "com.android.hardware.keymint.rust_cf_remote",
     manifest: "manifest.json",
     file_contexts: "file_contexts",
     key: "com.google.cf.apex.key",
