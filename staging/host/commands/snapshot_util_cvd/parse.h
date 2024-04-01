@@ -42,6 +42,8 @@ struct Parsed {
   int wait_for_launcher;
   std::string snapshot_path;
   bool cleanup_snapshot_path;
+  // Delete snapshot_path if already present.
+  bool force = false;
   std::optional<android::base::LogSeverity> verbosity_level;
 };
 Result<Parsed> Parse(int argc, char** argv);
