@@ -173,8 +173,6 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     // devices in CI environments, so add a small timeout multiplier.
     bootconfig_args["androidboot.hw_timeout_multiplier"] = "3";
   }
-  bootconfig_args["androidboot.vendor.apex.com.android.hardware.keymint"] =
-      "com.android.hardware.keymint.rust_cf_remote";
 
   // TODO(b/217564326): improve this checks for a hypervisor in the VM.
   if (instance.target_arch() == Arch::X86 ||
@@ -192,6 +190,11 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   if (!instance.initramfs_path().empty()) {
     bootconfig_args["androidboot.ramdisk_hotswapped"] = "1";
   }
+
+  bootconfig_args["androidboot.vendor.apex.com.android.hardware.keymint"] =
+      config.secure_hals().count(SecureHal::GuestKeymintInsecure)
+          ? "com.android.hardware.keymint.rust_nonsecure"
+          : "com.android.hardware.keymint.rust_cf_remote";
 
   std::vector<std::string> args = instance.extra_bootconfig_args();
 
