@@ -65,13 +65,14 @@ Result<MonitorCommand> SecureEnv(
   command.AddParameter("-keymint_fd_in=", fifos[7]);
 
   const auto& secure_hals = config.secure_hals();
-  bool secure_keymint = secure_hals.count(SecureHal::Keymint) > 0;
+  bool secure_keymint = secure_hals.count(SecureHal::HostKeymintSecure) > 0;
   command.AddParameter("-keymint_impl=", secure_keymint ? "tpm" : "software");
-  bool secure_gatekeeper = secure_hals.count(SecureHal::Gatekeeper) > 0;
+  bool secure_gatekeeper =
+      secure_hals.count(SecureHal::HostGatekeeperSecure) > 0;
   auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
   command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
 
-  bool secure_oemlock = secure_hals.count(SecureHal::Oemlock) > 0;
+  bool secure_oemlock = secure_hals.count(SecureHal::HostOemlockSecure) > 0;
   auto oemlock_impl = secure_oemlock ? "tpm" : "software";
   command.AddParameter("-oemlock_impl=", oemlock_impl);
 
