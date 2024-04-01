@@ -1,0 +1,13 @@
+metapackage-linaro-gigamp for Debian
+-----------------------------------
+
+This is the metapackage for Linaro's Gigabyte Ampere project.
+
+Please note that this package is usually not installed manually.
+It should be installed by Debian installer through preseed.
+
+For example, it changes the ntp.conf but not restarting the ntp server.
+Because we assume that it runs by preseed and will have a force reboot
+after installation completed.
+
+ -- Ying-Chun Liu (PaulLiu) <paul.liu@linaro.org>  Tue, 30 Jan 2024 12:14:05 +0800

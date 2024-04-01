@@ -1,0 +1,24 @@
+Source: metapackage-linaro-gigamp
+Section: misc
+Priority: optional
+Maintainer: Ying-Chun Liu (PaulLiu) <paul.liu@linaro.org>
+Uploaders: Ying-Chun Liu (PaulLiu) <paulliu@debian.org>
+Rules-Requires-Root: no
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Homepage: https://git.codelinaro.org/linaro/googlelt/gigabyte-ampere-cuttlefish-installer
+
+Package: metapackage-linaro-gigamp
+Architecture: any
+Multi-Arch: foreign
+Depends: dkms,
+         libc6-dev,
+         libglvnd-dev,
+         lzop,
+         ntpsec,
+         pkg-config,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: metapackage for Gigabyte Ampere server
+ This package depends on and install configs that the Gigabyte
+ Ampere server needs.

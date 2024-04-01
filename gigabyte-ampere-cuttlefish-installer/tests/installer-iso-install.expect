@@ -1,0 +1,210 @@
+#!/usr/bin/expect --
+
+if {$argc < 2} {
+    set filename1 test_filename1
+    set content1 Eimoh5be
+} else {
+    set filename1 [lindex $argv 0]
+    set content1 [lindex $argv 1]
+}
+
+set timeout 120
+log_file -noappend installer-iso-serial-console.log
+
+spawn ./installer-iso-run-qemu.sh
+set qemu_pid $spawn_id
+
+expect {
+    "Hit any key to stop" { send -- "\r" }
+    timeout { exit 1 }
+}
+
+set send_human {.4 .4 .2 .5 100}
+
+expect {
+    "=>" { send -- "true\r" }
+    timeout { exit 1 }
+}
+
+expect {
+    "=>" { send -- "virtio info\r" }
+    timeout { exit 1 }
+}
+
+expect {
+    # get the last virtio device
+    -re "Device (\[0-9\]+):" { set lastvirtiodev $expect_out(1,string); exp_continue }
+    "=>" { send -- "echo I think the last virtio device is ${lastvirtiodev}\r" }
+    timeout { exit 1 }
+}
+
+expect {
+    "=>" { send -- "eficonfig\r" }
+    timeout { exit 1 }
+}
+
+# eficonfig to add debian installer as boot option
+set timeout 5
+
+expect {
+    # ANSI: ESC[7m color invert, ESC[0K erase the line to EOL
+    -re "\x1b.7m\x1b.\[0-9\]+K(Add Boot Option)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    -re "\x1b.7m\x1b.\[0-9\]+K(Description:)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    "enter description:" { sleep 1; send -- "d-i\r" }
+}
+
+expect {
+    -re "\x1b.7m\x1b.\[0-9\]K(File:)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    -re "\x1b.7m\x1b.\[0-9\]K(Select File)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    -re "\x1b.7m\x1b.\[0-9\]K(virtio ${lastvirtiodev}:2)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    -re "\x1b.7m\x1b.\[0-9\]K(efi.)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    -re "\x1b.7m\x1b.\[0-9\]K(boot.)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    -re "\x1b.7m\x1b.\[0-9\]K(bootaa64.efi)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    -re "\x1b.7m\x1b.\[0-9\]K(Save)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    -re "\x1b.7m\x1b.\[0-9\]K(Change Boot Order)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    # unselect all virtio devices
+    -re "\x1b.7m\x1b.\[0-9\]K(\\\[\\*\\\]\\s+virtio.*)\x1b.0m" { sleep 1; send -- " "; exp_continue }
+    -re "\x1b.7m(\\\[\\*\\\]\\s+virtio.*)\x1b.0m" { sleep 1; send -- " "; exp_continue }
+    # select d-i if not selected
+    -re "\x1b.7m(\\\[\\s\\\]\\s+d-i)\x1b.0m" { sleep 1; send -- " "; exp_continue }
+    -re "\x1b.7m(\\\[\\*\\\]\\s+d-i)\x1b.0m" { sleep 1; exp_continue }
+    # Save
+    -re "\x1b.7m\x1b.\[0-9\]K(Save)\x1b.0m" { sleep 1; send -- "\r" }
+    -re "\x1b.7m(Save)\x1b.0m" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    -re "\x1b.7m\x1b.\[0-9\]K(Quit)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+set timeout 120
+
+expect {
+    "=>" { send -- "bootefi bootmgr\r" }
+    timeout { exit 1 }
+}
+
+# grub select serial console based install
+set timeout 3
+
+expect {
+    # select "Install"
+    -re "\\*(Install)" { sleep 1; send -- "e" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    # locate linux line
+    # ANSI: ESC[y;xH move the cursor
+    -re "\x1b\\\[(\[0-9\]+;\[0-9\]+)H\\s*(linux\\s)" { set linuxlocation $expect_out(1,string) }
+    timeout { exit 1 }
+}
+
+expect {
+    # move cursor to linux line
+    # ANSI: ESC[?25l turn off the cursor. ESC[?25h turn on the cursor
+    -re "\x1b.\\\?25l\x1b\\\[${linuxlocation}H\x1b.\\\?25h" { }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+expect {
+    # move cursor to end of line
+    timeout { send -- "\x05" }
+}
+
+expect {
+    timeout { send " DEBIAN_FRONTEND=text" }
+}
+
+expect {
+    # ctrl-x
+    timeout { send -- "\x18" }
+}
+
+# after installation
+set timeout -1
+
+expect {
+    "login:" { sleep 1; send -- "vsoc-01\r" }
+    -re "Dependency failed for (.*)ttyAMA0" {
+	send_user "\nttyAMA0 failed, exit earlier.\n"
+	sleep 60
+	spawn sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost "while ! systemctl is-active dev-ttyAMA0.device; do sleep 10; done; echo cuttlefish | sudo -S -k systemctl start serial-getty@ttyAMA0.service"
+	wait $spawn_id
+	exp_continue
+    }
+    timeout { exit 1 }
+}
+
+set timeout 120
+
+expect {
+    "Password:" { sleep 1; send -- "cuttlefish\r" }
+    timeout { exit 1 }
+}
+
+expect {
+    -re "(\\$) $" { send -- "echo $content1 > $filename1 ; sync\r" }
+    timeout { exit 1 }
+}
+
+expect {
+    -re "(\\$) $" { send -- "sudo su\r" }
+    timeout { exit 1 }
+}
+
+expect {
+    "password for vsoc-01" { sleep 1; send -- "cuttlefish\r" }
+    timeout { exit 1 }
+}
+
+set timeout 300
+
+expect {
+    -re "(#) $" { send -- "shutdown -h 1\r" }
+    timeout { exit 1 }
+}
+
+interact
