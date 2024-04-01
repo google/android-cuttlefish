@@ -954,9 +954,19 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_vm_manager(vm_manager_vec[0]);
   tmp_config_obj.set_ap_vm_manager(vm_manager_vec[0] + "_openwrt");
 
-  auto secure_hals = android::base::Split(FLAGS_secure_hals, ",");
+  auto secure_hals_strs = android::base::Split(FLAGS_secure_hals, ",");
   tmp_config_obj.set_secure_hals(
-      std::set<std::string>(secure_hals.begin(), secure_hals.end()));
+      std::set<std::string>(secure_hals_strs.begin(), secure_hals_strs.end()));
+  auto secure_hals = tmp_config_obj.secure_hals();
+  CF_EXPECT(!secure_hals.count(SecureHal::HostKeymintSecure) ||
+                !secure_hals.count(SecureHal::HostKeymintInsecure),
+            "Choose at most one host keymint implementation");
+  CF_EXPECT(!secure_hals.count(SecureHal::HostGatekeeperSecure) ||
+                !secure_hals.count(SecureHal::HostGatekeeperInsecure),
+            "Choose at most one host gatekeeper implementation");
+  CF_EXPECT(!secure_hals.count(SecureHal::HostOemlockSecure) ||
+                !secure_hals.count(SecureHal::HostOemlockInsecure),
+            "Choose at most one host oemlock implementation");
 
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
 
