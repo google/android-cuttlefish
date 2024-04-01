@@ -42,9 +42,13 @@ namespace cuttlefish {
 
 enum class SecureHal {
   Unknown,
-  Keymint,
-  Gatekeeper,
-  Oemlock,
+  GuestKeymintInsecure,
+  HostKeymintInsecure,
+  HostKeymintSecure,
+  HostGatekeeperInsecure,
+  HostGatekeeperSecure,
+  HostOemlockInsecure,
+  HostOemlockSecure,
 };
 
 enum class ExternalNetworkMode {
