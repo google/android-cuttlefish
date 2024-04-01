@@ -119,6 +119,9 @@ Result<Parsed> Parse(std::vector<std::string>& args) {
   flags.push_back(WaitForLauncherFlag(parsed.wait_for_launcher));
   flags.push_back(SnapshotPathFlag(snapshot_path));
   flags.push_back(CleanupSnapshotPathFlag(parsed.cleanup_snapshot_path));
+  flags.push_back(
+      GflagsCompatFlag("force", parsed.force)
+          .Help("If the snapshot path already exists, delete it first"));
   flags.push_back(HelpFlag(flags));
   flags.push_back(HelpXmlFlag(flags, std::cout, help_xml));
   flags.push_back(UnexpectedArgumentGuard());
