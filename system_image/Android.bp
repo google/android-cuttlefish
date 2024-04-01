@@ -1074,9 +1074,6 @@ android_system_image {
     linker_config_src: "linker.config.json",
     arch: {
         x86: {
-            deps: [
-                "libclcore_x86.bc",
-            ],
             multilib: {
                 common: {
                     deps: [
@@ -1087,7 +1084,6 @@ android_system_image {
         },
         x86_64: {
             deps: [
-                "libclcore_x86.bc",
                 "libgfxstream_backend",
             ],
             multilib: {
