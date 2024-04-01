@@ -27,9 +27,13 @@ static teeui::Color alfaCombineChannel(std::uint32_t shift, double alfa,
   b >>= shift;
   b &= 0xff;
   double acc = alfa * a + (1 - alfa) * b;
-  if (acc <= 0) return 0;
+  if (acc <= 0) {
+    return 0;
+  }
   std::uint32_t result = acc;
-  if (result > 255) return 255 << shift;
+  if (result > 255) {
+    return 255 << shift;
+  }
   return result << shift;
 }
 

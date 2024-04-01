@@ -121,7 +121,9 @@ bool KernelLogServer::HandleIncomingMessage() {
     LOG(ERROR) << "Could not read kernel logs: " << pipe_fd_->StrError();
     return false;
   }
-  if (ret == 0) return false;
+  if (ret == 0) {
+    return false;
+  }
   // Write the log to a file
   if (log_fd_->Write(buf, ret) < 0) {
     LOG(ERROR) << "Could not write kernel log to file: " << log_fd_->StrError();

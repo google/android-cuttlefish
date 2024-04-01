@@ -93,8 +93,9 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
     // This is the end of multi-part message.
     // It indicates there's nothing more netlink wants to tell us.
     // It also means we failed to find the response to our request.
-    if (nh->nlmsg_type == NLMSG_DONE)
+    if (nh->nlmsg_type == NLMSG_DONE) {
       break;
+    }
 
     // This is the 'nlmsgerr' package carrying response to our request.
     // It carries an 'error' value (errno) along with the netlink header info
@@ -142,7 +143,9 @@ bool NetlinkClientImpl::Send(const NetlinkRequest& message) {
 
 bool NetlinkClientImpl::OpenNetlink(int type) {
   netlink_fd_ = SharedFD::Socket(AF_NETLINK, SOCK_RAW, type);
-  if (!netlink_fd_->IsOpen()) return false;
+  if (!netlink_fd_->IsOpen()) {
+    return false;
+  }
 
   address_.nl_family = AF_NETLINK;
   address_.nl_groups = 0;

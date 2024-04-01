@@ -66,10 +66,14 @@ void StkService::HandleReportStkServiceIsRunning(const Client& client) {
   std::vector<std::string> response = {{"+CUSATD: 0,1"}, {"OK"}};
   client.SendCommandResponse(response);
 
-  if (!sim_service_) return;
+  if (!sim_service_) {
+    return;
+  }
 
-  XMLElement *root = sim_service_->GetIccProfile();
-  if (!root) return;
+  XMLElement* root = sim_service_->GetIccProfile();
+  if (!root) {
+    return;
+  }
 
   XMLElement *setup_menu = root->FirstChildElement("SETUPMENU");
   auto text = setup_menu->FindAttribute("text");
@@ -103,18 +107,24 @@ void StkService::HandleSendEnvelope(const Client& client , std::string& command)
   std::vector<std::string> response = {{"+CUSATE: 0"}, {"OK"}};
   client.SendCommandResponse(response);
 
-  if (!sim_service_) return;
+  if (!sim_service_) {
+    return;
+  }
 
   CommandParser cmd(command);
   cmd.SkipPrefix();
   auto data = cmd.GetNextStr();
   std::string menu_id(data.substr(data.size() - 2));  // get the last two char
 
-  XMLElement *root = sim_service_->GetIccProfile();
-  if (!root) return;
+  XMLElement* root = sim_service_->GetIccProfile();
+  if (!root) {
+    return;
+  }
 
-  XMLElement *setup_menu = root->FirstChildElement("SETUPMENU");
-  if (!setup_menu) return;
+  XMLElement* setup_menu = root->FirstChildElement("SETUPMENU");
+  if (!setup_menu) {
+    return;
+  }
 
   auto select_item = setup_menu->FirstChildElement("SELECTITEM");
   while (select_item) {
@@ -165,7 +175,9 @@ void StkService::HandleSendTerminalResponseToSim(const Client& client, std::stri
 }
 
 XMLElement* StkService::GetCurrentSelectItem() {
-  if (!sim_service_) return nullptr;
+  if (!sim_service_) {
+    return nullptr;
+  }
 
   XMLElement *root = sim_service_->GetIccProfile();
   if (!root) {
@@ -196,11 +208,15 @@ XMLElement* StkService::GetCurrentSelectItem() {
       auto menu_id_attr = select_item->FindAttribute("menuId");
       if (menu_id_attr && menu_id_attr->Value() == *iter) {
         auto menu_id_str = menu_id_attr->Value();
-        if (menu_id_str == *iter) break;
+        if (menu_id_str == *iter) {
+          break;
+        }
       }
       select_item = select_item->NextSiblingElement("SELECTITEM");
     }
-    if (!select_item) break;
+    if (!select_item) {
+      break;
+    }
     menu = select_item;
   }
 
@@ -257,7 +273,9 @@ void StkService::OnUnsolicitedCommandForTR(std::string& command) {
     auto attr = final->FindAttribute("menuId");
     if (attr && attr->Value() == menu_id) {
       std::string attr_value = attr->Value();
-      if (attr_value == menu_id) break;
+      if (attr_value == menu_id) {
+        break;
+      }
     }
     final = final->NextSiblingElement();
   }

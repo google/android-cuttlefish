@@ -87,7 +87,9 @@ bool HostServer::IsVirtioConsoleOpen() const {
 }
 
 bool HostServer::CheckVirtioConsole() {
-  if (IsVirtioConsoleOpen()) return true;
+  if (IsVirtioConsoleOpen()) {
+    return true;
+  }
   ConfUiLog(FATAL) << "Virtio console is not open";
   return false;
 }

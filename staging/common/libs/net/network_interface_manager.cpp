@@ -107,9 +107,13 @@ std::unique_ptr<NetworkInterface> NetworkInterfaceManager::Open(
 }
 
 bool NetworkInterfaceManager::ApplyChanges(const NetworkInterface& iface) {
-  if (!nl_client_->Send(BuildLinkRequest(iface))) return false;
+  if (!nl_client_->Send(BuildLinkRequest(iface))) {
+    return false;
+  }
   // Terminate immediately if interface is down.
-  if (!iface.IsOperational()) return true;
+  if (!iface.IsOperational()) {
+    return true;
+  }
   return nl_client_->Send(BuildAddrRequest(iface));
 }
 

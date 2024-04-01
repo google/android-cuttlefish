@@ -73,7 +73,9 @@ bool PDUParser::DecodePDU(std::string& pdu) {
   /* 4. Originator Address Length: 1 byte */
   temp = pdu_view.substr(std::min(pos, pdu_total_length), 2);
   auto oa_length = Hex2ToByte(temp);
-  if (oa_length & 0x01) oa_length += 1;
+  if (oa_length & 0x01) {
+    oa_length += 1;
+  }
 
   /* 5. Originator Address including OA length */
   originator_address_ = pdu_view.substr(std::min(pos, pdu_total_length), (oa_length + 4));
@@ -117,7 +119,9 @@ bool PDUParser::DecodePDU(std::string& pdu) {
  * When SRR bit is 1, it represents that SMS status report should be reported.
  */
 std::string PDUParser::CreatePDU() {
-  if (!is_valid_pdu_) return "";
+  if (!is_valid_pdu_) {
+    return "";
+  }
 
   // Ignore SMSC address, default to be '00'
   std::string pdu = kWithoutServiceCenterAddress;
@@ -143,7 +147,9 @@ std::string PDUParser::CreatePDU() {
  * When SRR bit is 1, it represents that SMS status report should be reported.
  */
 bool PDUParser::IsNeededStatuReport() {
-  if (!is_valid_pdu_) return false;
+  if (!is_valid_pdu_) {
+    return false;
+  }
 
   int pdu_type = Hex2ToByte(pdu_type_);
   if (pdu_type & 0x20) {
@@ -154,7 +160,9 @@ bool PDUParser::IsNeededStatuReport() {
 }
 
 std::string PDUParser::CreateStatuReport(int message_reference) {
-  if (!is_valid_pdu_) return "";
+  if (!is_valid_pdu_) {
+    return "";
+  }
 
   std::string pdu = kWithoutServiceCenterAddress;
   pdu += kStatusReportIndicator;
@@ -199,7 +207,9 @@ std::string PDUParser::CreateRemotePDU(std::string& host_port) {
 }
 
 std::string PDUParser::GetPhoneNumberFromAddress() {
-  if (!is_valid_pdu_) return "";
+  if (!is_valid_pdu_) {
+    return "";
+  }
 
   // Skip OA length and type
   std::string address;
@@ -213,9 +223,15 @@ std::string PDUParser::GetPhoneNumberFromAddress() {
 }
 
 int PDUParser::HexCharToInt(char c) {
-  if (c >= '0' && c <= '9') return (c - '0');
-  if (c >= 'A' && c <= 'F') return (c - 'A' + 10);
-  if (c >= 'a' && c <= 'f') return (c - 'a' + 10);
+  if (c >= '0' && c <= '9') {
+    return (c - '0');
+  }
+  if (c >= 'A' && c <= 'F') {
+    return (c - 'A' + 10);
+  }
+  if (c >= 'a' && c <= 'f') {
+    return (c - 'a' + 10);
+  }
 
   return -1;  // Invalid hex char
 }
