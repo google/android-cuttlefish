@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# This script should be called by postinst of the metapackage.
+# That's why we don't install this script to usr/bin.
+# Also the metapackage should be installed by Debian installer's preseed.
+# So you should not run this script manually. Nor install the metapackage
+# manually.
+
+if grep time1.google.com /etc/ntpsec/ntp.conf; then
+    echo "Already have Google's time servers."
+    exit
+fi
+
+if [ -e /etc/ntpsec/ntp.conf ]; then
+    if [ ! -e /var/lib/metapackage-linaro-gigamp/backup/ntp.conf ]; then
+	cp -f -a /etc/ntpsec/ntp.conf /var/lib/metapackage-linaro-gigamp/backup
+    fi
+fi
+
+sed -i 's/^\(# Specify one or more NTP servers.\)/\1\nserver time1.google.com iburst\nserver time2.google.com iburst\nserver time3.google.com iburst\nserver time4.google.com iburst\n/' /etc/ntpsec/ntp.conf
+

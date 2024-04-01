@@ -1,0 +1,5 @@
+metapackage-linaro-gigamp (1) unstable; urgency=low
+
+  * Initial release.
+
+ -- Ying-Chun Liu (PaulLiu) <paulliu@debian.org>  Tue, 30 Jan 2024 12:14:05 +0800
