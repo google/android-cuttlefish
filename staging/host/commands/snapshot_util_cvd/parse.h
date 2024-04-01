@@ -44,6 +44,11 @@ struct Parsed {
   bool cleanup_snapshot_path;
   // Delete snapshot_path if already present.
   bool force = false;
+  // Suspend/resume before/after taking the snapshot.
+  //
+  // Ideally we'd detect the suspended state of CF and do this automatically by
+  // default.
+  bool auto_suspend = false;
   std::optional<android::base::LogSeverity> verbosity_level;
 };
 Result<Parsed> Parse(int argc, char** argv);
