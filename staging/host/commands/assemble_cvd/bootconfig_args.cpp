@@ -173,6 +173,8 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     // devices in CI environments, so add a small timeout multiplier.
     bootconfig_args["androidboot.hw_timeout_multiplier"] = "3";
   }
+  bootconfig_args["androidboot.vendor.apex.com.android.hardware.keymint"] =
+      "com.android.hardware.keymint.rust_cf_remote";
 
   // TODO(b/217564326): improve this checks for a hypervisor in the VM.
   if (instance.target_arch() == Arch::X86 ||
