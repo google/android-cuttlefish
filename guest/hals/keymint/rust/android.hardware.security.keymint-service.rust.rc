@@ -1,4 +1,4 @@
-service vendor.keymint-rust /apex/com.google.cf.keymint.rust/bin/hw/android.hardware.security.keymint-service.rust
+service vendor.keymint-rust /apex/com.android.hardware.keymint/bin/hw/android.hardware.security.keymint-service.rust
     class early_hal
     user nobody
     # The keymint service is not allowed to restart.
