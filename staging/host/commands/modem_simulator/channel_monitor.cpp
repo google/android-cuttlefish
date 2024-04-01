@@ -261,11 +261,15 @@ void ChannelMonitor::MonitorLoop() {
     cuttlefish::SharedFDSet read_set;
     read_set.Set(server_);
     read_set.Set(read_pipe_);
-    for (auto& client: clients_) {
-      if (client->is_valid) read_set.Set(client->client_read_fd_);
+    for (auto& client : clients_) {
+      if (client->is_valid) {
+        read_set.Set(client->client_read_fd_);
+      }
     }
-    for (auto& client: remote_clients_) {
-      if (client->is_valid) read_set.Set(client->client_read_fd_);
+    for (auto& client : remote_clients_) {
+      if (client->is_valid) {
+        read_set.Set(client->client_read_fd_);
+      }
     }
     int num_fds = cuttlefish::Select(&read_set, nullptr, nullptr, nullptr);
     if (num_fds < 0) {

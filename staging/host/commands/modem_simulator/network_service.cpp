@@ -207,11 +207,16 @@ void NetworkService::InitializeSimOperator() {
       LOG(ERROR) << "unable to load XML file '" << file << " ', error " << err;
       return;
     }
-    XMLElement *resources = doc.RootElement();
-    if (resources == NULL)  return;
 
-    XMLElement *stringArray = resources->FirstChildElement("string-array");
-    if (stringArray == NULL) return;
+    XMLElement* resources = doc.RootElement();
+    if (resources == NULL) {
+      return;
+    }
+
+    XMLElement* stringArray = resources->FirstChildElement("string-array");
+    if (stringArray == NULL) {
+      return;
+    }
 
     XMLElement *item = stringArray->FirstChildElement("item");
     while (item) {
@@ -985,10 +990,11 @@ int NetworkService::getModemTechFromPrefer(int preferred_mask) {
 
   // Current implementation will only return the highest priority,
   // lowest numbered technology that is set in the mask.
-  for (i = 3 ; i >= 0; i--) {
-    for (j = 7 ; j >= 0 ; j--) {
-      if (preferred_mask & (1 << (j + 8 * i)))
-          return 1 << j;
+  for (i = 3; i >= 0; i--) {
+    for (j = 7; j >= 0; j--) {
+      if (preferred_mask & (1 << (j + 8 * i))) {
+        return 1 << j;
+      }
     }
   }
   // This should never happen. Just to please the compiler.
