@@ -161,9 +161,6 @@ class CuttlefishConfig {
   void set_casimir_rf_port(int port);
   int casimir_rf_port() const;
 
-  void set_enable_wifi(const bool enable_wifi);
-  bool enable_wifi() const;
-
   // Flags for the set of radios that are connected to netsim
   enum NetsimRadio {
     Bluetooth = 0b00000001,

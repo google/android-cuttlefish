@@ -48,7 +48,7 @@ class ValidateWmediumdService : public SetupFeature {
       : config_(config), environment_(environment), instance_(instance) {}
   std::string Name() const override { return "ValidateWmediumdService"; }
   bool Enabled() const override {
-    return config_.enable_wifi() && config_.virtio_mac80211_hwsim() &&
+    return environment_.enable_wifi() && config_.virtio_mac80211_hwsim() &&
            !instance_.start_wmediumd_instance();
   }
 
