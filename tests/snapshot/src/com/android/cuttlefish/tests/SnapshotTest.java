@@ -95,4 +95,23 @@ public class SnapshotTest extends BaseHostJUnit4Test {
       Assert.fail("Restore snapshot failed: pre-existing file still exists.");
     }
   }
+
+  // Make sure reboots work correctly after a restore.
+  //
+  // There is some overlap between the cuttleifsh's support for restore and
+  // reboot and so it can be easy for change to one to break the other.
+  @Test
+  public void testSnapshotReboot() throws Exception {
+    DeviceSnapshotHandler handler = new DeviceSnapshotHandler();
+    // Snapshot the device>
+    boolean snapshotRes = handler.snapshotDevice(getDevice(), "snapshot_img");
+    assertTrue("failed to snapshot", snapshotRes);
+    // Restore the device.
+    boolean restoreRes = handler.restoreSnapshotDevice(getDevice(), "snapshot_img");
+    assertTrue("Restore snapshot for device reset failed", restoreRes);
+    // Reboot the device.
+    getDevice().reboot();
+    // Verify that the device is back online.
+    getDevice().executeShellCommand("echo test");
+  }
 }
