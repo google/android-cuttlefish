@@ -358,14 +358,6 @@ int CuttlefishConfig::casimir_rf_port() const {
   return (*dictionary_)[kCasimirRfPort].asInt();
 }
 
-static constexpr char kEnableWifi[] = "enable_wifi";
-void CuttlefishConfig::set_enable_wifi(bool enable_wifi) {
-  (*dictionary_)[kEnableWifi] = enable_wifi;
-}
-bool CuttlefishConfig::enable_wifi() const {
-  return (*dictionary_)[kEnableWifi].asBool();
-}
-
 static constexpr char kNetsimRadios[] = "netsim_radios";
 
 void CuttlefishConfig::netsim_radio_enable(NetsimRadio flag) {
