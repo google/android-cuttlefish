@@ -907,6 +907,8 @@ android_system_image {
                 "com.android.hardware.wifi",
                 "com.android.i18n",
                 "com.android.ipsec",
+                "com.android.hardware.keymint.rust_cf_remote",
+                "com.android.hardware.keymint.rust_nonsecure",
                 "com.android.location.provider",
                 "com.android.media.remotedisplay.xml",
                 "com.android.media.remotedisplay",
@@ -932,7 +934,6 @@ android_system_image {
                 "com.google.cf.identity",
                 "com.google.cf.input.config",
                 "com.google.cf.ir",
-                "com.google.cf.keymint.rust",
                 "com.google.cf.light",
                 "com.google.cf.nfc",
                 "com.google.cf.oemlock",
@@ -1094,6 +1095,17 @@ android_system_image {
                 },
             },
         },
+    },
+    fsverity: {
+        inputs: [
+            "etc/boot-image.prof",
+            "etc/dirty-image-objects",
+            "etc/preloaded-classes",
+            "etc/classpaths/*.pb",
+            "framework/*",
+            "framework/*/*", // framework/{arch}
+            "framework/oat/*/*", // framework/oat/{arch}
+        ],
     },
 }
 

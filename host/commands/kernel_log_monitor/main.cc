@@ -123,7 +123,9 @@ int main(int argc, char** argv) {
     klog.BeforeSelect(&fd_read);
 
     int ret = cuttlefish::Select(&fd_read, nullptr, nullptr, nullptr);
-    if (ret <= 0) continue;
+    if (ret <= 0) {
+      continue;
+    }
 
     klog.AfterSelect(fd_read);
   }

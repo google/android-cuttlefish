@@ -396,12 +396,9 @@ endif
 #
 # KeyMint HAL
 #
-ifeq ($(LOCAL_KEYMINT_PRODUCT_PACKAGE),)
-    LOCAL_KEYMINT_PRODUCT_PACKAGE := com.google.cf.keymint.rust
-endif
-
 PRODUCT_PACKAGES += \
-    $(LOCAL_KEYMINT_PRODUCT_PACKAGE) \
+	com.android.hardware.keymint.rust_cf_remote \
+	com.android.hardware.keymint.rust_nonsecure \
 
 # Indicate that KeyMint includes support for the ATTEST_KEY key purpose.
 PRODUCT_COPY_FILES += \

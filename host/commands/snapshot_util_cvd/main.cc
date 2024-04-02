@@ -82,6 +82,9 @@ static void OnSnapshotTakeFailure(const std::string& snapshot_path) {
 }
 
 Result<void> SnapshotCvdMain(std::vector<std::string> args) {
+  const CuttlefishConfig* config =
+      CF_EXPECT(CuttlefishConfig::Get(), "Failed to obtain config object");
+
   CF_EXPECT(!args.empty(), "No arguments was given");
   const auto prog_path = args.front();
   args.erase(args.begin());
@@ -89,14 +92,55 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
   if (!parsed.snapshot_path.empty()) {
     parsed.snapshot_path = CF_EXPECT(ToAbsolutePath(parsed.snapshot_path));
   }
+  bool needs_resume = false;
+  auto maybe_resume_on_exit =
+      android::base::ScopeGuard([&needs_resume, &parsed, &config]() {
+        if (!needs_resume) {
+          return;
+        }
+        for (const auto instance_num : parsed.instance_nums) {
+          Result<SharedFD> monitor_socket = GetLauncherMonitor(
+              *config, instance_num, parsed.wait_for_launcher);
+          if (!monitor_socket.ok()) {
+            LOG(FATAL) << "GetLauncherMonitor failed: "
+                       << monitor_socket.error().FormatForEnv();
+          }
+          LOG(INFO) << "Requesting resume for instance #" << instance_num;
+          run_cvd::ExtendedLauncherAction extended_action;
+          extended_action.mutable_resume();
+          Result<void> result =
+              RunLauncherAction(*monitor_socket, extended_action, std::nullopt);
+          if (!result.ok()) {
+            LOG(FATAL) << "RunLauncherAction failed: "
+                       << result.error().FormatForEnv();
+          }
+          LOG(INFO) << "resume was successful for instance #" << instance_num;
+        }
+      });
   // make sure the snapshot directory exists
   std::string meta_json_path;
   if (parsed.cmd == SnapshotCmd::kSnapshotTake) {
     CF_EXPECT(!parsed.snapshot_path.empty(),
               "Snapshot operation requires snapshot path.");
+    if (parsed.force) {
+      RecursivelyRemoveDirectory(parsed.snapshot_path);
+    }
     CF_EXPECTF(!FileExists(parsed.snapshot_path, /* follow symlink */ false),
                "Delete the destination directiory \"{}\" first",
                parsed.snapshot_path);
+    if (parsed.auto_suspend) {
+      for (const auto instance_num : parsed.instance_nums) {
+        SharedFD monitor_socket = CF_EXPECT(GetLauncherMonitor(
+            *config, instance_num, parsed.wait_for_launcher));
+        LOG(INFO) << "Requesting suspend for instance #" << instance_num;
+        run_cvd::ExtendedLauncherAction extended_action;
+        extended_action.mutable_suspend();
+        CF_EXPECT(
+            RunLauncherAction(monitor_socket, extended_action, std::nullopt));
+        LOG(INFO) << "suspend was successful for instance #" << instance_num;
+        needs_resume = true;
+      }
+    }
     android::base::ScopeGuard delete_snapshot_on_fail([&parsed]() {
       if (!parsed.cleanup_snapshot_path) {
         return;
@@ -113,8 +157,6 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
     delete_snapshot_on_fail.Disable();
   }
 
-  const CuttlefishConfig* config =
-      CF_EXPECT(CuttlefishConfig::Get(), "Failed to obtain config object");
   // TODO(kwstephenkim): copy host files that are shared by the instance group
   for (const auto instance_num : parsed.instance_nums) {
     SharedFD monitor_socket = CF_EXPECT(

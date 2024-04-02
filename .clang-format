@@ -20,6 +20,7 @@
 ---
 BasedOnStyle: Google
 IncludeBlocks: Preserve
+InsertBraces: true
 ---
 Language: Java
 IndentWidth: 4
