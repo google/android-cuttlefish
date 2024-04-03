@@ -235,15 +235,11 @@ Result<void> ServerLoopImpl::TakeGuestSnapshot(const std::string& vm_manager,
 
 Result<void> ServerLoopImpl::HandleSnapshotTake(
     const run_cvd::SnapshotTake& snapshot_take) {
-  // implement snapshot take
-  std::vector<std::string> path_to_snapshots;
-  for (const auto& path : snapshot_take.snapshot_path()) {
-    path_to_snapshots.push_back(path);
-  }
-  CF_EXPECT_EQ(path_to_snapshots.size(), 1);
-  const auto& path_to_snapshot = path_to_snapshots.front();
-  CF_EXPECT(TakeGuestSnapshot(config_.vm_manager(), path_to_snapshot),
-            "Failed to take guest snapshot");
+  CF_EXPECT(!snapshot_take.snapshot_path().empty(),
+            "snapshot_path must be non-empty");
+  CF_EXPECT(
+      TakeGuestSnapshot(config_.vm_manager(), snapshot_take.snapshot_path()),
+      "Failed to take guest snapshot");
   return {};
 }
 
