@@ -138,7 +138,7 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
                     "Failed to back up the group-level host runtime files.");
       // Snapshot each instance.
       run_cvd::ExtendedLauncherAction extended_action;
-      extended_action.mutable_snapshot_take()->add_snapshot_path(
+      extended_action.mutable_snapshot_take()->set_snapshot_path(
           meta_json_path);
       CF_EXPECT(BroadcastLauncherAction(*config, parsed, extended_action));
       delete_snapshot_on_fail.Disable();
