@@ -30,6 +30,7 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_riscv64_wear:$(LOCAL_DIR)/vsoc_riscv64/wear/aosp_cf.mk \
 	aosp_cf_riscv64_phone:$(LOCAL_DIR)/vsoc_riscv64/phone/aosp_cf.mk \
 	aosp_cf_x86_64_auto:$(LOCAL_DIR)/vsoc_x86_64_only/auto/aosp_cf.mk \
+	aosp_cf_x86_64_auto_dd:$(LOCAL_DIR)/vsoc_x86_64_only/auto_dd/aosp_cf.mk \
 	aosp_cf_x86_64_auto_md:$(LOCAL_DIR)/vsoc_x86_64_only/auto_md/aosp_cf.mk \
 	aosp_cf_x86_64_auto_mdnd:$(LOCAL_DIR)/vsoc_x86_64_only/auto_mdnd/aosp_cf.mk \
 	aosp_cf_x86_64_auto_portrait:$(LOCAL_DIR)/vsoc_x86_64_only/auto_portrait/aosp_cf.mk \
