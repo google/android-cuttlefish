@@ -44,7 +44,7 @@ int ForCurrentInstance(int base);
 
 int InstanceFromString(std::string instance_str);
 
-// Returns a random serial number appended to a given prefix.
+// Returns a random serial number appeneded to a given prefix.
 std::string RandomSerialNumber(const std::string& prefix);
 
 std::string DefaultHostArtifactsPath(const std::string& file);

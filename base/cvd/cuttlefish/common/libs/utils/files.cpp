@@ -129,11 +129,8 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
                                                      << strerror(errno));
   }
 
-  CF_EXPECTF(chmod(directory_path.c_str(), mode) == 0,
-            "Failed to set permission on {}: {}", directory_path, strerror(errno));
-
   if (group_name != "") {
-    CF_EXPECT(ChangeGroup(directory_path, group_name));
+    ChangeGroup(directory_path, group_name);
   }
 
   return {};
