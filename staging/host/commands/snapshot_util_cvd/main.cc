@@ -89,7 +89,8 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
     case SnapshotCmd::kSnapshotTake: {
       CF_EXPECT(!parsed.snapshot_path.empty(), "--snapshot_path is required");
       parsed.snapshot_path = CF_EXPECT(ToAbsolutePath(parsed.snapshot_path));
-      if (parsed.force) {
+      if (parsed.force &&
+          FileExists(parsed.snapshot_path, /* follow symlink */ false)) {
         CF_EXPECTF(RecursivelyRemoveDirectory(parsed.snapshot_path),
                    "Failed to delete preexisting dir at {}",
                    parsed.snapshot_path);
