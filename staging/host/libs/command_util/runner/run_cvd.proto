@@ -33,5 +33,5 @@ message Resume {}
 message StartScreenRecording {}
 message StopScreenRecording {}
 message SnapshotTake {
-  repeated string snapshot_path = 1;
+  string snapshot_path = 1;
 }
