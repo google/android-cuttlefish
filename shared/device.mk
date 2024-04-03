@@ -55,7 +55,7 @@ TARGET_USERDATAIMAGE_PARTITION_SIZE ?= 8589934592
 TARGET_VULKAN_SUPPORT ?= true
 
 # Enable Virtual A/B
-$(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/vabc_features.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/android_t_baseline.mk)
 PRODUCT_VIRTUAL_AB_COMPRESSION_METHOD := lz4
 PRODUCT_VIRTUAL_AB_COW_VERSION := 3
 PRODUCT_VIRTUAL_AB_COMPRESSION_FACTOR := 65536
