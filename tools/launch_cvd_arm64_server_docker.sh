@@ -146,7 +146,7 @@ echo -e "${color_cyan}Root image $root_image_id${color_plain}"
 
 echo -e "${color_cyan}Booting containers ... ${color_plain}"
 container_ids=$(ssh $server \
-  "container_ids=() && adb_port_num=6520 && \
+  "container_ids=() && \
   for docker_num in \$(seq 1 $num_dockers); do \
     if [ \$docker_num -eq 1 ]; then \
       web_port_forward=\"-p 1443 -p 15550-15560 \"; \
@@ -155,9 +155,8 @@ container_ids=$(ssh $server \
     fi && \
     adb_port_forward=\"\" && \
     for instance_num in \$(seq 1 $num_instances_per_docker); do
-      adb_port_forward+=\"-p \$((instance_num + adb_port_num - 1)):\$((instance_num + 6520 - 1)) \";
+      adb_port_forward+=\"-p \$((instance_num + 6520 - 1)) \";
     done && \
-    adb_port_num=\$((adb_port_num + $num_instances_per_docker)) && \
     container_id=\$(docker run --rm --privileged \$web_port_forward -p 2443 \$adb_port_forward -d $root_image_id) && \
     container_id=\${container_id//\$'\\r'} && \
     container_ids+=(\${container_id}); \
@@ -197,19 +196,21 @@ web_ui_port=3443
 echo -e "Web UI port: $web_ui_port. ${color_cyan}Please point your browser to https://localhost:$web_ui_port for the UI${color_plain}"
 
 # sets up SSH port forwarding to the remote server for various ports and launch cvd instance
+adb_port=6520
 for docker_num in $(seq 1 $num_dockers); do
   for instance_num in $(seq 1 $num_instances_per_docker); do
     device_name="cvd_$instance_num"
-    adb_port=$((6520 + ( (docker_num - 1) * num_instances_per_docker) + instance_num - 1))
-    echo -e "$device_name of docker $docker_num is using adb port $adb_port. Try ${color_cyan}adb connect 127.0.0.1:${adb_port}${color_plain} if you want to connect to this device"
+    device_adb_port=$((adb_port + ( (docker_num - 1) * num_instances_per_docker) + instance_num - 1))
+    echo -e "$device_name of docker $docker_num is using adb port $device_adb_port. Try ${color_cyan}adb connect 127.0.0.1:${device_adb_port}${color_plain} if you want to connect to this device"
   done
 done
 
 docker_port_parser_script='
 import sys, json;
 web_ui_port = int(sys.argv[1])
+adb_port = int(sys.argv[2])
 max_instances = 100
-num_instance = int(sys.argv[2])
+num_instance = int(sys.argv[3])
 json_raw=input()
 data = json.loads(json_raw)
 for k in data:
@@ -225,14 +226,16 @@ for k in data:
   elif original_port >= 6520 and original_port <= 6520 + max_instances:
     if original_port - 6520 >= num_instance:
       continue
-    original_port = assigned_port
+    original_port = adb_port + original_port - 6520
   print(f"-L {original_port}:127.0.0.1:{assigned_port}", end=" ")
 '
 
 ports_forwarding=""
+current_adb_port=$adb_port
 
 for docker_inspect in ${docker_inspects[*]}; do
-  ports_forwarding+=$(echo $docker_inspect | python -c "$docker_port_parser_script" $web_ui_port $((num_dockers * num_instances_per_docker)))
+  ports_forwarding+=$(echo $docker_inspect | python -c "$docker_port_parser_script" $web_ui_port $current_adb_port $num_instances_per_docker)
+  current_adb_port=$((current_adb_port + num_instances_per_docker))
 done
 
 echo "Set up ssh ports forwarding: $ports_forwarding"
