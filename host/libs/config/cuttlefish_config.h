@@ -606,6 +606,7 @@ class CuttlefishConfig {
     std::string gpu_angle_feature_overrides_disabled() const;
     std::string gpu_capture_binary() const;
     std::string gpu_gfxstream_transport() const;
+    std::string gpu_renderer_features() const;
 
     std::string gpu_vhost_user_mode() const;
 
@@ -812,6 +813,7 @@ class CuttlefishConfig {
     void set_gpu_angle_feature_overrides_disabled(const std::string& overrides);
     void set_gpu_capture_binary(const std::string&);
     void set_gpu_gfxstream_transport(const std::string& transport);
+    void set_gpu_renderer_features(const std::string& features);
     void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
     void set_enable_gpu_vhost_user(const bool enable_gpu_vhost_user);
     void set_enable_gpu_external_blob(const bool enable_gpu_external_blob);
