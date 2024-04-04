@@ -187,6 +187,7 @@ Result<void> RecursivelyRemoveDirectory(const std::string& path) {
       case FTW_DNR:
         if (rmdir(child) == -1) {
           PLOG(ERROR) << "rmdir " << child;
+          return -1;
         }
         break;
       case FTW_NS:
@@ -201,6 +202,7 @@ Result<void> RecursivelyRemoveDirectory(const std::string& path) {
       case FTW_SLN:
         if (unlink(child) == -1) {
           PLOG(ERROR) << "unlink " << child;
+          return -1;
         }
         break;
     }
