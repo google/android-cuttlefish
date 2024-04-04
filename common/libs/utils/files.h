@@ -38,7 +38,7 @@ Result<void> ChangeGroup(const std::string& path,
                          const std::string& group_name);
 bool CanAccess(const std::string& path, const int mode);
 bool IsDirectoryEmpty(const std::string& path);
-bool RecursivelyRemoveDirectory(const std::string& path);
+Result<void> RecursivelyRemoveDirectory(const std::string& path);
 bool Copy(const std::string& from, const std::string& to);
 off_t FileSize(const std::string& path);
 bool RemoveFile(const std::string& file);

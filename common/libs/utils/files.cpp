@@ -177,7 +177,7 @@ bool IsDirectoryEmpty(const std::string& path) {
   return true;
 }
 
-bool RecursivelyRemoveDirectory(const std::string& path) {
+Result<void> RecursivelyRemoveDirectory(const std::string& path) {
   // Copied from libbase TemporaryDir destructor.
   auto callback = [](const char* child, const struct stat*, int file_type,
                      struct FTW*) -> int {
@@ -207,8 +207,11 @@ bool RecursivelyRemoveDirectory(const std::string& path) {
     return 0;
   };
 
-  return nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) ==
-         0;
+  if (nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) < 0) {
+    return CF_ERRNO("Failed to remove directory \""
+                    << path << "\": " << strerror(errno));
+  }
+  return {};
 }
 
 namespace {

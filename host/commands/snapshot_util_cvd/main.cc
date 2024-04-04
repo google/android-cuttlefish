@@ -91,9 +91,8 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
       parsed.snapshot_path = CF_EXPECT(ToAbsolutePath(parsed.snapshot_path));
       if (parsed.force &&
           FileExists(parsed.snapshot_path, /* follow symlink */ false)) {
-        CF_EXPECTF(RecursivelyRemoveDirectory(parsed.snapshot_path),
-                   "Failed to delete preexisting dir at {}",
-                   parsed.snapshot_path);
+        CF_EXPECT(RecursivelyRemoveDirectory(parsed.snapshot_path),
+                  "Failed to delete preexisting snapshot dir");
       }
       CF_EXPECTF(!FileExists(parsed.snapshot_path, /* follow symlink */ false),
                  "Delete the destination directiory \"{}\" first",
@@ -126,9 +125,10 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
           return;
         }
         LOG(ERROR) << "Snapshot take failed, so running clean-up.";
-        if (!RecursivelyRemoveDirectory(parsed.snapshot_path)) {
-          LOG(ERROR) << "Failed to delete incomplete snapshot at "
-                     << parsed.snapshot_path;
+        Result<void> result = RecursivelyRemoveDirectory(parsed.snapshot_path);
+        if (!result.ok()) {
+          LOG(ERROR) << "Failed to delete incomplete snapshot: "
+                     << result.error().FormatForEnv();
         }
       });
 
