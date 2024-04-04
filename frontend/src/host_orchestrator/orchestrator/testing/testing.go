@@ -40,3 +40,18 @@ func WriteFile(name string, data []byte, perm os.FileMode) error {
 	}
 	return err
 }
+
+// Helper to use 1 line rather than 3-lines block:
+// ```
+//
+//	if err != nil {
+//	    t.Fatal(err)
+//	}
+//
+// ```
+// in unit test functions.
+func FatalIfNil(t *testing.T, err error) {
+	if err != nil {
+		t.Fatal(err)
+	}
+}

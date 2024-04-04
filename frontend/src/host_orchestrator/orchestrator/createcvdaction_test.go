@@ -63,7 +63,6 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 			r.CVD.BuildSource.UserBuildSource = &apiv1.UserBuildSource{ArtifactsDir: ""}
 		}},
 	}
-
 	for _, test := range tests {
 		req := validRequest()
 		test.corruptRequest(req)
@@ -71,7 +70,9 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 			Request: req,
 		}
 		action := NewCreateCVDAction(opts)
+
 		_, err := action.Run()
+
 		var appErr *operator.AppError
 		if !errors.As(err, &appErr) {
 			t.Errorf("error type <<\"%T\">> not found in error chain", appErr)
@@ -111,11 +112,15 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	}
 	action := NewCreateCVDAction(opts)
 
-	op1, _ := action.Run()
-	op2, _ := action.Run()
+	op1, err := action.Run()
+	orchtesting.FatalIfNil(t, err)
+	op2, err := action.Run()
+	orchtesting.FatalIfNil(t, err)
 
-	om.Wait(op1.Name, 1*time.Second)
-	om.Wait(op2.Name, 1*time.Second)
+	_, err = om.Wait(op1.Name, 1*time.Second)
+	orchtesting.FatalIfNil(t, err)
+	_, err = om.Wait(op2.Name, 1*time.Second)
+	orchtesting.FatalIfNil(t, err)
 	if fetchCVDExecCounter == 0 {
 		t.Error("`fetch_cvd` was never executed")
 	}
@@ -146,10 +151,13 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	}
 	action := NewCreateCVDAction(opts)
 
-	op, _ := action.Run()
+	op, err := action.Run()
 
-	om.Wait(op.Name, 1*time.Second)
-	stats, _ := os.Stat(paths.ArtifactsRootDir)
+	orchtesting.FatalIfNil(t, err)
+	_, err = om.Wait(op.Name, 1*time.Second)
+	orchtesting.FatalIfNil(t, err)
+	stats, err := os.Stat(paths.ArtifactsRootDir)
+	orchtesting.FatalIfNil(t, err)
 	if diff := cmp.Diff("drwxrwxr--", stats.Mode().String()); diff != "" {
 		t.Errorf("mode mismatch (-want +got):\n%s", diff)
 	}
@@ -290,10 +298,9 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 
 			op, err := action.Run()
 
-			if err != nil {
-				t.Fatal(err)
-			}
-			om.Wait(op.Name, 1*time.Second)
+			orchtesting.FatalIfNil(t, err)
+			_, err = om.Wait(op.Name, 1*time.Second)
+			orchtesting.FatalIfNil(t, err)
 			got := usedCmdName + " " + strings.Join(usedCmdArgs, " ")
 			if diff := cmp.Diff(tc.exp, got); diff != "" {
 				t.Errorf("command line mismatch (-want +got):\n%s", diff)
@@ -357,10 +364,9 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 
 	op, err := action.Run()
 
-	if err != nil {
-		t.Fatal(err)
-	}
-	om.Wait(op.Name, 1*time.Second)
+	orchtesting.FatalIfNil(t, err)
+	_, err = om.Wait(op.Name, 1*time.Second)
+	orchtesting.FatalIfNil(t, err)
 	got := usedCmdName + " " + strings.Join(usedCmdArgs, " ")
 	if diff := cmp.Diff(expected, got); diff != "" {
 		t.Errorf("command line mismatch (-want +got):\n%s", diff)
@@ -392,9 +398,11 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 	}
 	action := NewCreateCVDAction(opts)
 
-	op, _ := action.Run()
+	op, err := action.Run()
 
-	res, _ := om.Wait(op.Name, 1*time.Second)
+	orchtesting.FatalIfNil(t, err)
+	res, err := om.Wait(op.Name, 1*time.Second)
+	orchtesting.FatalIfNil(t, err)
 	if res.Error == nil {
 		t.Error("expected error")
 	}
@@ -423,9 +431,11 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 	}
 	action := NewCreateCVDAction(opts)
 
-	op, _ := action.Run()
+	op, err := action.Run()
 
-	res, _ := om.Wait(op.Name, 1*time.Second)
+	orchtesting.FatalIfNil(t, err)
+	res, err := om.Wait(op.Name, 1*time.Second)
+	orchtesting.FatalIfNil(t, err)
 	if res.Error == nil {
 		t.Error("expected error")
 	}
