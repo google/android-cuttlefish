@@ -731,6 +731,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_gpu_gfxstream_transport(
   (*Dictionary())[kGpuGfxstreamTransport] = transport;
 }
 
+static constexpr char kGpuRendererFeatures[] = "gpu_renderer_features";
+std::string CuttlefishConfig::InstanceSpecific::gpu_renderer_features() const {
+  return (*Dictionary())[kGpuRendererFeatures].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_gpu_renderer_features(
+    const std::string& transport) {
+  (*Dictionary())[kGpuRendererFeatures] = transport;
+}
+
 static constexpr char kRestartSubprocesses[] = "restart_subprocesses";
 bool CuttlefishConfig::InstanceSpecific::restart_subprocesses() const {
   return (*Dictionary())[kRestartSubprocesses].asBool();
