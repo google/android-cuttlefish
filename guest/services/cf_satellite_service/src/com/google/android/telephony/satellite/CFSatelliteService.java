@@ -63,6 +63,7 @@ public class CFSatelliteService extends SatelliteImplBase {
     private boolean mIsProvisioned;
     private boolean mIsSupported;
     private int mModemState;
+    private boolean mIsEmergnecy;
 
     /**
      * Create CFSatelliteService using the Executor specified for methods being called from
@@ -77,6 +78,7 @@ public class CFSatelliteService extends SatelliteImplBase {
         mIsProvisioned = false;
         mIsSupported = true;
         mModemState = SatelliteModemState.SATELLITE_MODEM_STATE_OFF;
+        mIsEmergnecy = false;
     }
 
     /**
@@ -130,13 +132,14 @@ public class CFSatelliteService extends SatelliteImplBase {
 
     @Override
     public void requestSatelliteEnabled(boolean enableSatellite, boolean enableDemoMode,
-            @NonNull IIntegerConsumer errorCallback) {
+        boolean isEmergency, @NonNull IIntegerConsumer errorCallback) {
         logd("requestSatelliteEnabled");
         if (enableSatellite) {
             enableSatellite(errorCallback);
         } else {
             disableSatellite(errorCallback);
         }
+        mIsEmergnecy = isEmergency;
     }
 
     private void enableSatellite(@NonNull IIntegerConsumer errorCallback) {
@@ -294,6 +297,14 @@ public class CFSatelliteService extends SatelliteImplBase {
         mIsProvisioned = isProvisioned;
         mListeners.forEach(listener -> runWithExecutor(() ->
                 listener.onSatelliteProvisionStateChanged(mIsProvisioned)));
+    }
+
+    /**
+     * Get the emergency mode or not
+     */
+    public boolean getIsEmergency() {
+        logd("getIsEmergency");
+        return mIsEmergnecy;
     }
 
     /**
