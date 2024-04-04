@@ -343,11 +343,18 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
   const std::string gpu_udmabuf_string =
       instance.enable_gpu_udmabuf() ? ",udmabuf=true" : "";
 
+  const std::string gpu_renderer_features = instance.gpu_renderer_features();
+  const std::string gpu_renderer_features_param =
+      !gpu_renderer_features.empty()
+          ? ",renderer-features=\"" + gpu_renderer_features + "\""
+          : "";
+
   const std::string gpu_common_string =
       fmt::format(",pci-address=00:{:0>2x}.0", VmManager::kGpuPciSlotNum) +
       gpu_udmabuf_string + gpu_pci_bar_size;
   const std::string gpu_common_3d_string =
-      gpu_common_string + ",egl=true,surfaceless=true,glx=false" + gles_string;
+      gpu_common_string + ",egl=true,surfaceless=true,glx=false" + gles_string +
+      gpu_renderer_features_param;
 
   if (gpu_mode == kGpuModeGuestSwiftshader) {
     crosvm_cmd->AddParameter("--gpu=backend=2D", gpu_common_string);
