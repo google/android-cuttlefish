@@ -1,3 +1,9 @@
+cuttlefish-common (0.9.29) UNRELEASED; urgency=medium
+
+  * Add capability to `cvd fetch` to download ChromeOS builds
+
+ -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 05 Apr 2024 13:22:03 -0700
+
 cuttlefish-common (0.9.28) unstable; urgency=medium
 
   * Other bug fixes
