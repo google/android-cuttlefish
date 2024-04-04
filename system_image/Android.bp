@@ -1106,6 +1106,7 @@ android_system_image {
             "framework/*/*", // framework/{arch}
             "framework/oat/*/*", // framework/oat/{arch}
         ],
+        libs: [":framework-res{.export-package.apk}"],
     },
 }
 
