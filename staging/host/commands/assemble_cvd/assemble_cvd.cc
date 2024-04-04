@@ -147,8 +147,7 @@ Result<void> CreateLegacySymlinks(
   auto legacy_instance_path = legacy_instance_path_stream.str();
 
   if (DirectoryExists(legacy_instance_path, /* follow_symlinks */ false)) {
-    CF_EXPECT(RecursivelyRemoveDirectory(legacy_instance_path),
-              "Failed to remove legacy directory " << legacy_instance_path);
+    CF_EXPECT(RecursivelyRemoveDirectory(legacy_instance_path));
   } else if (FileExists(legacy_instance_path, /* follow_symlinks */ false)) {
     CF_EXPECT(RemoveFile(legacy_instance_path),
               "Failed to remove instance_dir symlink " << legacy_instance_path);
@@ -390,7 +389,9 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       auto vsock_dir =
           fmt::format("/tmp/vsock_{0}_{1}", instance.vsock_guest_cid(),
                       std::to_string(getuid()));
-      RecursivelyRemoveDirectory(vsock_dir);
+      if (DirectoryExists(vsock_dir, /* follow_symlinks */ false)) {
+        CF_EXPECT(RecursivelyRemoveDirectory(vsock_dir));
+      }
       CF_EXPECT(EnsureDirectoryExists(vsock_dir, default_mode, default_group));
 
       // TODO(schuffelen): Move this code somewhere better
@@ -405,8 +406,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
   CF_EXPECT(config != nullptr, "Failed to obtain config singleton");
 
   if (DirectoryExists(FLAGS_assembly_dir, /* follow_symlinks */ false)) {
-    CF_EXPECT(RecursivelyRemoveDirectory(FLAGS_assembly_dir),
-              "Failed to remove directory " << FLAGS_assembly_dir);
+    CF_EXPECT(RecursivelyRemoveDirectory(FLAGS_assembly_dir));
   } else if (FileExists(FLAGS_assembly_dir, /* follow_symlinks */ false)) {
     CF_EXPECT(RemoveFile(FLAGS_assembly_dir),
               "Failed to remove file" << FLAGS_assembly_dir);
