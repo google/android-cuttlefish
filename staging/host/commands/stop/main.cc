@@ -230,7 +230,7 @@ int StopCvdMain(const std::int32_t wait_for_launcher,
 
           if (clear_instance_dirs && DirectoryExists(instance.instance_dir())) {
             LOG(INFO) << "Deleting instance dir " << instance.instance_dir();
-            if (!RecursivelyRemoveDirectory(instance.instance_dir())) {
+            if (!RecursivelyRemoveDirectory(instance.instance_dir()).ok()) {
               LOG(ERROR) << "Unable to rmdir " << instance.instance_dir();
             }
           }
