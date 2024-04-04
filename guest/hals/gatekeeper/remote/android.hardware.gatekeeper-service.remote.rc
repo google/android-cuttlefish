@@ -1,4 +1,4 @@
-service vendor.gatekeeper_default /apex/com.google.cf.gatekeeper/bin/hw/android.hardware.gatekeeper-service.remote
+service vendor.gatekeeper_default /apex/com.android.hardware.gatekeeper/bin/hw/android.hardware.gatekeeper-service.remote
     class hal
     user system
     group system
