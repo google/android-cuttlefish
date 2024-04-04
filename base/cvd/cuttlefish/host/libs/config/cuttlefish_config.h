@@ -42,9 +42,13 @@ namespace cuttlefish {
 
 enum class SecureHal {
   Unknown,
-  Keymint,
-  Gatekeeper,
-  Oemlock,
+  GuestKeymintInsecure,
+  HostKeymintInsecure,
+  HostKeymintSecure,
+  HostGatekeeperInsecure,
+  HostGatekeeperSecure,
+  HostOemlockInsecure,
+  HostOemlockSecure,
 };
 
 enum class ExternalNetworkMode {
@@ -156,9 +160,6 @@ class CuttlefishConfig {
   int casimir_nci_port() const;
   void set_casimir_rf_port(int port);
   int casimir_rf_port() const;
-
-  void set_enable_wifi(const bool enable_wifi);
-  bool enable_wifi() const;
 
   // Flags for the set of radios that are connected to netsim
   enum NetsimRadio {
