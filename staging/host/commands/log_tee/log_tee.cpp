@@ -156,7 +156,13 @@ int main(int argc, char** argv) {
             } else if (level == "WARN") {
               LOG(WARNING) << trimmed;
             } else if (level == "INFO") {
-              LOG(INFO) << trimmed;
+              if (trimmed.find("disk] Disk image file is hosted") !=
+                      std::string::npos ||
+                  trimmed.find("disk] disk size") != std::string::npos) {
+                LOG(DEBUG) << trimmed;
+              } else {
+                LOG(INFO) << trimmed;
+              }
             } else if (level == "DEBUG") {
               LOG(DEBUG) << trimmed;
             } else if (level == "TRACE") {
