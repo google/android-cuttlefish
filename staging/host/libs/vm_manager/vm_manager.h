@@ -80,6 +80,8 @@ class VmManager {
   // the persistent disk
   static const int kDefaultNumBootDevices = 2;
 
+  static constexpr const int kNetPciDeviceNum = 31;
+
   // LINT.IfChange(virtio_gpu_pci_address)
   static constexpr const int kGpuPciSlotNum = 2;
   // LINT.ThenChange(../../../shared/sepolicy/vendor/genfs_contexts:virtio_gpu_pci_address)
