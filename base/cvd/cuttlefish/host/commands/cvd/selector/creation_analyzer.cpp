@@ -85,12 +85,11 @@ static std::unordered_map<unsigned, InstanceLockFile> ConstructIdLockFileMap(
   return mapping;
 }
 
-static Result<void> IsIdAvailable(const InstanceDatabase& instance_database,
+static Result<bool> IsIdAvailable(const InstanceDatabase& instance_database,
                                   const unsigned id) {
   auto subset =
       CF_EXPECT(instance_database.FindInstances(Query{kInstanceIdField, id}));
-  CF_EXPECT(subset.empty());
-  return {};
+  return subset.empty();
 }
 
 Result<std::vector<PerInstanceInfo>>
@@ -147,7 +146,7 @@ static Result<std::vector<unsigned>> CollectUnusedIds(
     std::vector<unsigned>&& id_pool) {
   std::vector<unsigned> collected_ids;
   for (const auto id : id_pool) {
-    if (IsIdAvailable(instance_database, id).ok()) {
+    if (CF_EXPECT(IsIdAvailable(instance_database, id))) {
       collected_ids.push_back(id);
     }
   }

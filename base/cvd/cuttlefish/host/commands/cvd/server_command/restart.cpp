@@ -118,7 +118,7 @@ class CvdRestartHandler : public CvdServerHandler {
     CF_EXPECT(request.Credentials() != std::nullopt);
     auto json_string = CF_EXPECT(SerializedInstanceDatabaseToString());
     std::optional<SharedFD> mem_fd;
-    if (instance_manager_.HasInstanceGroups()) {
+    if (CF_EXPECT(instance_manager_.HasInstanceGroups())) {
       mem_fd = CF_EXPECT(CreateMemFileWithSerializedDb(json_string));
       CF_EXPECT(mem_fd != std::nullopt && (*mem_fd)->IsOpen(),
                 "mem file not open?");

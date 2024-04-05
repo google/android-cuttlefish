@@ -55,11 +55,20 @@ bool Touch(const std::string& full_path) {
 }  // namespace
 
 CvdInstanceDatabaseTest::CvdInstanceDatabaseTest()
-    : error_{.error_code = ErrorCode::kOk, .msg = ""} {
+    : error_{.error_code = ErrorCode::kOk, .msg = ""},
+      db_backing_path_("/tmp/cvd_test_db_XXXXXX"),
+      db_backing_fd_(mkstemp(db_backing_path_.data())),
+      db_(db_backing_path_) {
+  if (db_backing_fd_ < 0) {
+    SetErrorCode(ErrorCode::kFileError, strerror(errno));
+  }
   InitWorkspace() && InitMockAndroidHostOut();
 }
 
-CvdInstanceDatabaseTest::~CvdInstanceDatabaseTest() { ClearWorkspace(); }
+CvdInstanceDatabaseTest::~CvdInstanceDatabaseTest() { 
+  ClearWorkspace();
+  close(db_backing_fd_);
+}
 
 void CvdInstanceDatabaseTest::ClearWorkspace() {
   if (!workspace_dir_.empty()) {
@@ -119,7 +128,7 @@ bool CvdInstanceDatabaseTest::AddGroups(
       SetErrorCode(ErrorCode::kFileError, home + " directory is not found.");
       return false;
     }
-    InstanceDatabase::AddInstanceGroupParam param{
+    InstanceGroup param{
         .group_name = base_name,
         .home_dir = home,
         .host_artifacts_path = android_artifacts_path_,

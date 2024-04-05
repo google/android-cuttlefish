@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
+#include <vector>
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
@@ -30,6 +30,14 @@ namespace selector {
 
 class InstanceDatabase;
 
+struct InstanceGroup {
+  std::string group_name;
+  std::string home_dir;
+  std::string host_artifacts_path;
+  std::string product_out_path;
+  TimeStamp start_time;
+};
+
 /**
  * TODO(kwstephenkim): add more methods, fields, and abstract out Instance
  *
@@ -37,16 +45,7 @@ class InstanceDatabase;
  */
 class LocalInstanceGroup {
  public:
-  struct InstanceGroupParam {
-    std::string group_name;
-    std::string home_dir;
-    std::string host_artifacts_path;
-    std::string product_out_path;
-    TimeStamp start_time;
-  };
-  LocalInstanceGroup(const InstanceGroupParam& param);
-  LocalInstanceGroup(const LocalInstanceGroup& src);
-  LocalInstanceGroup& operator=(const LocalInstanceGroup& src);
+  LocalInstanceGroup(const InstanceGroup& param);
 
   const std::string& InternalGroupName() const { return internal_group_name_; }
   const std::string& GroupName() const { return group_name_; }
@@ -54,10 +53,12 @@ class LocalInstanceGroup {
   const std::string& HostArtifactsPath() const { return host_artifacts_path_; }
   const std::string& ProductOutPath() const { return product_out_path_; }
   Result<std::string> GetCuttlefishConfigPath() const;
-  const Set<std::unique_ptr<LocalInstance>>& Instances() const {
+
+  const std::vector<LocalInstance>& Instances() const {
     return instances_;
   }
   Json::Value Serialize() const;
+  static Result<LocalInstanceGroup> Deserialize(const Json::Value& group_json);
   auto StartTime() const { return start_time_; }
 
   /**
@@ -67,7 +68,7 @@ class LocalInstanceGroup {
   Result<void> AddInstance(const unsigned instance_id,
                            const std::string& instance_name);
   bool HasInstance(const unsigned instance_id) const;
-  Result<Set<ConstRef<LocalInstance>>> FindById(const unsigned id) const;
+  Result<std::vector<LocalInstance>> FindById(const unsigned id) const;
   /**
    * Find by per-instance name.
    *
@@ -75,25 +76,15 @@ class LocalInstanceGroup {
    * "foo" or "4" is the per-instance names, and "cvd-foo" or "cvd-4" is
    * the device name.
    */
-  Result<Set<ConstRef<LocalInstance>>> FindByInstanceName(
+  Result<std::vector<LocalInstance>> FindByInstanceName(
       const std::string& instance_name) const;
 
   // returns all instances in the dedicated data type
-  Result<Set<ConstRef<LocalInstance>>> FindAllInstances() const;
-
-  static constexpr const char kJsonGroupName[] = "Group Name";
-  static constexpr const char kJsonHomeDir[] = "Runtime/Home Dir";
-  static constexpr const char kJsonHostArtifactPath[] = "Host Tools Dir";
-  static constexpr const char kJsonProductOutPath[] = "Product Out Dir";
-  static constexpr const char kJsonStartTime[] = "Start Time";
-  static constexpr const char kJsonInstances[] = "Instances";
-  static constexpr const char kJsonParent[] = "Parent Group";
+  Result<std::vector<LocalInstance>> FindAllInstances() const;
 
  private:
   // Eventually copies the instances of a src to *this
-  Set<std::unique_ptr<LocalInstance>> CopyInstances(
-      const Set<std::unique_ptr<LocalInstance>>& src_instances);
-  Json::Value Serialize(const std::unique_ptr<LocalInstance>& instance) const;
+  Json::Value Serialize(const LocalInstance& instance) const;
 
   std::string home_dir_;
   std::string host_artifacts_path_;
@@ -103,7 +94,7 @@ class LocalInstanceGroup {
   std::string internal_group_name_;
   std::string group_name_;
   TimeStamp start_time_;
-  Set<std::unique_ptr<LocalInstance>> instances_;
+  std::vector<LocalInstance> instances_;
 };
 
 }  // namespace selector

@@ -96,6 +96,8 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
   std::string android_artifacts_path_;
   std::string workspace_dir_;
   SetupError error_;
+  std::string db_backing_path_;
+  int db_backing_fd_;
   InstanceDatabase db_;
 };
 
