@@ -24,6 +24,7 @@ cc_library {
         "crosvm_manager.cpp",
         "gem5_manager.cpp",
         "host_configuration.cpp",
+        "pci.cpp",
         "qemu_manager.cpp",
         "vm_manager.cpp",
     ],
