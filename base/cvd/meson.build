@@ -93,7 +93,6 @@ cvd_sources = [
   'cuttlefish/host/commands/cvd/selector/device_selector_utils.cpp',
   'cuttlefish/host/commands/cvd/selector/group_selector.cpp',
   'cuttlefish/host/commands/cvd/selector/instance_database.cpp',
-  'cuttlefish/host/commands/cvd/selector/instance_database_impl.cpp',
   'cuttlefish/host/commands/cvd/selector/instance_database_types.cpp',
   'cuttlefish/host/commands/cvd/selector/instance_database_utils.cpp',
   'cuttlefish/host/commands/cvd/selector/instance_group_record.cpp',

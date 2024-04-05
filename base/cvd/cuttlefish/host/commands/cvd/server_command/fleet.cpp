@@ -119,12 +119,12 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   CF_EXPECT(Contains(envs, "ANDROID_HOST_OUT") &&
             DirectoryExists(envs.at("ANDROID_HOST_OUT")));
   Json::Value groups_json(Json::arrayValue);
-  auto all_group_names = instance_manager_.AllGroupNames();
+  auto all_group_names = CF_EXPECT(instance_manager_.AllGroupNames());
   envs.erase(kCuttlefishInstanceEnvVarName);
   for (const auto& group_name : all_group_names) {
     auto group_obj_copy_result = instance_manager_.SelectGroup(
-        {}, InstanceManager::Queries{{selector::kGroupNameField, group_name}},
-        {});
+        {}, {},
+        InstanceManager::Queries{{selector::kGroupNameField, group_name}});
     if (!group_obj_copy_result.ok()) {
       LOG(DEBUG) << "Group \"" << group_name
                  << "\" has already been removed. Skipped.";

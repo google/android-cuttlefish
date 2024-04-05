@@ -21,6 +21,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
+#include "common/libs/utils/result_matchers.h"
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/unittests/selector/instance_database_helper.h"
@@ -53,8 +54,9 @@ TEST_F(CvdInstanceDatabaseTest, Empty) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  ASSERT_TRUE(db.IsEmpty());
-  ASSERT_TRUE(db.InstanceGroups().empty());
+  ASSERT_THAT(db.IsEmpty(), IsOkAndValue(true));
+  auto group_res = db.InstanceGroups();
+  ASSERT_TRUE(group_res.ok() && (*group_res).empty());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
@@ -159,9 +161,9 @@ TEST_F(CvdInstanceDatabaseTest, Clear) {
   auto& db = GetDb();
 
   // test Clear()
-  ASSERT_FALSE(db.IsEmpty());
-  db.Clear();
-  ASSERT_TRUE(db.IsEmpty());
+  ASSERT_THAT(db.IsEmpty(), IsOkAndValue(false));
+  ASSERT_TRUE(db.Clear().ok());
+  ASSERT_THAT(db.IsEmpty(), IsOkAndValue(true));
 }
 
 TEST_F(CvdInstanceDatabaseTest, SearchGroups) {
@@ -172,9 +174,9 @@ TEST_F(CvdInstanceDatabaseTest, SearchGroups) {
   const std::string valid_home_search_key{Workspace() + "/" + "myau"};
   const std::string invalid_home_search_key{"/no/such/path"};
 
-  auto valid_groups = db.FindGroups({kHomeField, valid_home_search_key});
+  auto valid_groups = db.FindGroups(Query{kHomeField, valid_home_search_key});
   auto valid_group = db.FindGroup({kHomeField, valid_home_search_key});
-  auto invalid_groups = db.FindGroups({kHomeField, invalid_home_search_key});
+  auto invalid_groups = db.FindGroups(Query{kHomeField, invalid_home_search_key});
   auto invalid_group = db.FindGroup({kHomeField, invalid_home_search_key});
 
   ASSERT_TRUE(valid_groups.ok());
@@ -200,8 +202,10 @@ TEST_F(CvdInstanceDatabaseTest, RemoveGroup) {
                  << " group was not found.";
   }
 
-  ASSERT_TRUE(db.RemoveInstanceGroup(*eng_group));
-  ASSERT_FALSE(db.RemoveInstanceGroup(*eng_group));
+  ASSERT_THAT(db.RemoveInstanceGroup(eng_group->GroupName()),
+              IsOkAndValue(true));
+  ASSERT_THAT(db.RemoveInstanceGroup(eng_group->GroupName()),
+              IsOkAndValue(false));
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddInstances) {
@@ -214,15 +218,15 @@ TEST_F(CvdInstanceDatabaseTest, AddInstances) {
     GTEST_SKIP() << "yah_ong"
                  << " group was not found";
   }
-  const auto& instances = kitty_group->Get().Instances();
+  const auto& instances = kitty_group->Instances();
 
   ASSERT_TRUE(db.AddInstance("yah_ong", 1, "yumi").ok());
   ASSERT_FALSE(db.AddInstance("yah_ong", 3, "yumi").ok());
   ASSERT_FALSE(db.AddInstance("yah_ong", 1, "tiger").ok());
   ASSERT_TRUE(db.AddInstance("yah_ong", 3, "tiger").ok());
   for (auto const& instance_unique_ptr : instances) {
-    ASSERT_TRUE(instance_unique_ptr->PerInstanceName() == "yumi" ||
-                instance_unique_ptr->PerInstanceName() == "tiger");
+    ASSERT_TRUE(instance_unique_ptr.PerInstanceName() == "yumi" ||
+                instance_unique_ptr.PerInstanceName() == "tiger");
   }
 }
 
@@ -279,11 +283,11 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   ASSERT_TRUE(result7.ok());
   ASSERT_TRUE(result11.ok());
   ASSERT_TRUE(result3.ok());
-  ASSERT_EQ(result1->Get().PerInstanceName(), "8");
-  ASSERT_EQ(result10->Get().PerInstanceName(), "tv-instance");
-  ASSERT_EQ(result7->Get().PerInstanceName(), "my_favorite_phone");
-  ASSERT_EQ(result11->Get().PerInstanceName(), "tv-instance");
-  ASSERT_EQ(result3->Get().PerInstanceName(), "3_");
+  ASSERT_EQ(result1->PerInstanceName(), "8");
+  ASSERT_EQ(result10->PerInstanceName(), "tv-instance");
+  ASSERT_EQ(result7->PerInstanceName(), "my_favorite_phone");
+  ASSERT_EQ(result11->PerInstanceName(), "tv-instance");
+  ASSERT_EQ(result3->PerInstanceName(), "3_");
   ASSERT_FALSE(result_invalid.ok());
 }
 
@@ -319,8 +323,8 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   ASSERT_TRUE(result10_and_11.ok());
   ASSERT_TRUE(result7.ok());
   ASSERT_EQ(result10_and_11->size(), 2);
-  ASSERT_EQ(result1->Get().InstanceId(), 1);
-  ASSERT_EQ(result7->Get().InstanceId(), 7);
+  ASSERT_EQ(result1->InstanceId(), 1);
+  ASSERT_EQ(result7->InstanceId(), 7);
   ASSERT_FALSE(result_invalid.ok());
 }
 
@@ -347,7 +351,7 @@ TEST_F(CvdInstanceDatabaseTest, FindInstancesByGroupName) {
   ASSERT_TRUE(result_nyah.ok());
   std::set<std::string> nyah_instance_names;
   for (const auto& instance : *result_nyah) {
-    nyah_instance_names.insert(instance.Get().PerInstanceName());
+    nyah_instance_names.insert(instance.PerInstanceName());
   }
   std::set<std::string> expected{"my_favorite_phone", "tv_instance"};
   ASSERT_EQ(nyah_instance_names, expected);
@@ -437,8 +441,12 @@ TEST_F(CvdInstanceDatabaseJsonTest, DumpLoadDumpCompare) {
    * Dumping to json, clearing up the DB, loading from the json,
    *
    */
-  auto serialized_db = db.Serialize();
-  if (!db.RemoveInstanceGroup("miau")) {
+  auto serialized_db_res = db.Serialize();
+  ASSERT_THAT(serialized_db_res, IsOk());
+  auto& serialized_db = *serialized_db_res;
+  auto remove_res = db.RemoveInstanceGroup("miau");
+  ASSERT_THAT(remove_res, IsOk());
+  if (!*remove_res) {
     // not testing RemoveInstanceGroup
     GTEST_SKIP() << "miau had to be added.";
   }

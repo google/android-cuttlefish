@@ -133,10 +133,9 @@ class CvdEnvCommandHandler : public CvdServerHandler {
 
     auto instance =
         CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs));
-    const auto& instance_group = instance.ParentGroup();
-    const auto& home = instance_group.HomeDir();
+    const auto& home = instance.HomeDir();
 
-    const auto& android_host_out = instance_group.HostArtifactsPath();
+    const auto& android_host_out = instance.HostArtifactsPath();
     auto cvd_env_bin_path =
         ConcatToString(android_host_out, "/bin/", kCvdEnvBin);
     const auto& internal_device_name = instance.InternalDeviceName();

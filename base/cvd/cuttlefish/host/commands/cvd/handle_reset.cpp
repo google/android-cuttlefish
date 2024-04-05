@@ -31,6 +31,7 @@
 
 #include <android-base/logging.h>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
@@ -196,6 +197,11 @@ Result<void> HandleReset(CvdClient& client,
   if (!result.ok()) {
     LOG(ERROR) << result.error().FormatForEnv();
     LOG(ERROR) << "Cvd reset continues cleaning up devices.";
+  }
+  // The instance database is obsolete now, clear it.
+  auto instance_db_deleted = RemoveFile(InstanceDatabasePath());
+  if (!instance_db_deleted) {
+    LOG(ERROR) << "Error deleting instance database file";
   }
   // cvd reset handler placeholder. identical to cvd kill-server for now.
   CF_EXPECT(KillAllCuttlefishInstances(

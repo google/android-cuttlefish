@@ -40,7 +40,7 @@ class InstanceSelector {
    *
    * If group not given, not yet supported. Will be in next CLs
    */
-  Result<LocalInstance::Copy> FindInstance(
+  Result<LocalInstance> FindInstance(
       const InstanceDatabase& instance_database);
 
  private:
@@ -48,7 +48,7 @@ class InstanceSelector {
       : queries_(queries) {}
   static bool IsHomeOverridden(const SelectorCommonParser& common_parser);
 
-  Result<LocalInstance::Copy> FindDefaultInstance(
+  Result<LocalInstance> FindDefaultInstance(
       const InstanceDatabase& instance_database);
 
   const Queries queries_;
