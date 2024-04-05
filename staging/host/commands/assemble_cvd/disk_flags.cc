@@ -692,7 +692,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .install(AutoSetup<GeneratePersistentBootconfig>::Component)
       .install(AutoSetup<GeneratePersistentVbmeta>::Component)
       .install(AutoSetup<InitializeInstanceCompositeDisk>::Component)
-      .install(InitializeDataImageComponent);
+      .install(AutoSetup<InitializeDataImage>::Component);
 }
 
 Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const FetcherConfig& fetcher_config) {
