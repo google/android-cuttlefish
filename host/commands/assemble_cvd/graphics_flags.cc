@@ -412,6 +412,15 @@ Result<void> SetGfxstreamFlags(
               "--gpu_mode=gfxstream_guest_angle is broken on AMD GPUs.");
   }
 
+  std::string features;
+  if (gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+    features = "VulkanUseDedicatedAhbMemoryType:enabled";
+  }
+
+  if (!features.empty()) {
+    instance.set_gpu_renderer_features(features);
+  }
+
   instance.set_gpu_gfxstream_transport(gfxstream_transport);
   return {};
 }
