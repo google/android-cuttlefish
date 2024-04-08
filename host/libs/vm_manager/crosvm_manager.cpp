@@ -552,16 +552,10 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   // having to pass arguments to crosvm via a wrapper script.
 #ifdef __linux__
   if (!gpu_capture_enabled) {
-    // The PCI ordering of tap devices is important. Make sure any change here
-    // is reflected in ethprime u-boot variable.
-    // TODO(b/218364216, b/322862402): Crosvm occupies 32 PCI devices first and only then uses PCI
-    // functions which may break order. The final solution is going to be a PCI allocation strategy
-    // that will guarantee the ordering. For now, hardcode PCI network devices to unoccupied
-    // functions.
-    const pci::Address mobile_pci = pci::Address(0, VmManager::kNetPciDeviceNum, 1);
-    const pci::Address ethernet_pci = pci::Address(0, VmManager::kNetPciDeviceNum, 2);
-    crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac(), mobile_pci);
-    crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac(), ethernet_pci);
+    // The ordering of tap devices is important. Make sure any change here
+    // is reflected in ethprime u-boot variable
+    crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac());
+    crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac());
 
     if (!config.virtio_mac80211_hwsim() && environment.enable_wifi()) {
       wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name());
