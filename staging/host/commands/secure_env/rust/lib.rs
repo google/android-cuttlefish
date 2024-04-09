@@ -131,7 +131,7 @@ pub unsafe fn ta_main(
         };
     let dev = Implementation {
         keys,
-        sign_info: Box::new(sign_info),
+        sign_info: Some(Box::new(sign_info)),
         // HAL populates attestation IDs from properties.
         attest_ids: None,
         sdd_mgr,
