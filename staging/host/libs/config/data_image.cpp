@@ -236,41 +236,18 @@ Result<void> InitializeDataImage(
   }
 }
 
-class InitializeMiscImageImpl : public InitializeMiscImage {
- public:
-  INJECT(InitializeMiscImageImpl(
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  // SetupFeature
-  std::string Name() const override { return "InitializeMiscImageImpl"; }
-  bool Enabled() const override { return true; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    if (FileHasContent(instance_.misc_image())) {
-      LOG(DEBUG) << "misc partition image already exists";
-      return {};
-    }
-
-    LOG(DEBUG) << "misc partition image: creating empty at \""
-               << instance_.misc_image() << "\"";
-    CF_EXPECT(CreateBlankImage(instance_.misc_image(), 1 /* mb */, "none"),
-              "Failed to create misc image");
+Result<void> InitializeMiscImage(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (FileHasContent(instance.misc_image())) {
+    LOG(DEBUG) << "misc partition image already exists";
     return {};
   }
 
- private:
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
-
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
-                 InitializeMiscImage>
-InitializeMiscImageComponent() {
-  return fruit::createComponent()
-      .addMultibinding<SetupFeature, InitializeMiscImage>()
-      .bind<InitializeMiscImage, InitializeMiscImageImpl>();
+  LOG(DEBUG) << "misc partition image: creating empty at \""
+             << instance.misc_image() << "\"";
+  CF_EXPECT(CreateBlankImage(instance.misc_image(), 1 /* mb */, "none"),
+            "Failed to create misc image");
+  return {};
 }
 
 class InitializeEspImageImpl : public InitializeEspImage {

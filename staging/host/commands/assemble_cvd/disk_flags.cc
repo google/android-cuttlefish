@@ -670,7 +670,7 @@ static fruit::Component<> DiskChangesComponent(
       .install(AutoSetup<VbmetaEnforceMinimumSize>::Component)
       .install(AutoSetup<BootloaderPresentCheck>::Component)
       .install(AutoSetup<Gem5ImageUnpacker>::Component)
-      .install(InitializeMiscImageComponent)
+      .install(AutoSetup<InitializeMiscImage>::Component)
       // Create esp if necessary
       .install(InitializeEspImageComponent)
       .install(SuperImageRebuilderComponent);
