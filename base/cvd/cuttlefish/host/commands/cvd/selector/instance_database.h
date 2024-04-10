@@ -45,23 +45,9 @@ class InstanceDatabase {
    * If group_name or home_dir is already taken or host_artifacts_path is
    * not likely an artifacts path, CF_ERR is returned.
    */
-  Result<void> AddInstanceGroup(const InstanceGroup& param);
-
-  /**
-   * Adds instance to the group.
-   *
-   * If id is duplicated in the scope of the InstanceDatabase or instance_name
-   * is not unique within the group, CF_ERR is returned.
-   */
-  Result<void> AddInstance(const std::string& group_name, const unsigned id,
-                           const std::string& instance_name);
-
-  struct InstanceInfo {
-    const unsigned id;
-    const std::string name;
-  };
-  Result<void> AddInstances(const std::string& group_name,
-                            const std::vector<InstanceInfo>& instances);
+  Result<void> AddInstanceGroup(
+      const InstanceGroupInfo& group_info,
+      const std::vector<InstanceInfo>& instance_infos);
 
   Result<std::vector<LocalInstanceGroup>> InstanceGroups() const;
   Result<bool> RemoveInstanceGroup(const std::string& group_name);
@@ -115,6 +101,10 @@ class InstanceDatabase {
   Result<FindParam> ParamFromQueries(const Queries&) const;
   Result<std::vector<LocalInstanceGroup>> FindGroups(FindParam param) const;
   Result<std::vector<LocalInstance>> FindInstances(FindParam param) const;
+  static std::vector<LocalInstanceGroup> FindGroups(
+      const std::vector<LocalInstanceGroup>& groups, FindParam param);
+  static std::vector<LocalInstance> FindInstances(
+      const std::vector<LocalInstanceGroup>& groups, FindParam param);
 
   DataViewer<std::vector<LocalInstanceGroup>> viewer_;
 };

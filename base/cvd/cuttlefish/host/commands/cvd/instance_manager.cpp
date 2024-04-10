@@ -125,38 +125,17 @@ Result<void> InstanceManager::SetInstanceGroup(
   const auto product_out_path = group_info.product_out_path;
   const auto& per_instance_info = group_info.instances;
   auto new_group =
-      selector::InstanceGroup{.group_name = group_name,
+      selector::InstanceGroupInfo{.group_name = group_name,
                               .home_dir = home_dir,
                               .host_artifacts_path = host_artifacts_path,
                               .product_out_path = product_out_path,
                               .start_time = selector::CvdServerClock::now()};
-  CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
-
-  using InstanceInfo = selector::InstanceDatabase::InstanceInfo;
-  std::vector<InstanceInfo> instances_info;
+  std::vector<selector::InstanceInfo> instances_info;
   for (const auto& instance : per_instance_info) {
-    InstanceInfo info{.id = instance.instance_id_,
-                      .name = instance.per_instance_name_};
-    instances_info.push_back(info);
+    instances_info.push_back({.id = instance.instance_id_,
+                      .name = instance.per_instance_name_});
   }
-  android::base::ScopeGuard action_on_failure([this, &new_group]() {
-    /*
-     * The way InstanceManager uses the database is that it adds an empty
-     * group, gets an handle, and add instances to it. Thus, failing to adding
-     * an instance to the group does not always mean that the instance group
-     * addition fails. It is up to the caller. In this case, however, failing
-     * to add an instance to a new group means failing to create an instance
-     * group itself. Thus, we should remove the new instance group from the
-     * database.
-     *
-     */
-    instance_db_.RemoveInstanceGroup(new_group.group_name);
-  });
-  CF_EXPECTF(instance_db_.AddInstances(group_name, instances_info),
-             "Failed to add instances to the group \"{}\" so the group "
-             "is not added",
-             group_name);
-  action_on_failure.Disable();
+  CF_EXPECT(instance_db_.AddInstanceGroup(new_group, instances_info));
   return {};
 }
 
@@ -237,7 +216,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
   }
   auto instance_groups = *instance_groups_res;
   for (const auto& group : instance_groups) {
-    auto config_path = group.GetCuttlefishConfigPath();
+    auto config_path = selector::GetCuttlefishConfigPath(group.HomeDir());
     if (config_path.ok()) {
       auto stop_result = IssueStopCommand(out, err, *config_path, group);
       if (!stop_result.ok()) {
@@ -343,7 +322,7 @@ InstanceManager::GroupSummaryMenu() const {
                selector::Format(group.StartTime()));
     summary.idx_to_group_name[group_idx] = group.GroupName();
     char instance_idx = 'a';
-    for (const auto& instance : CF_EXPECT(group.FindAllInstances())) {
+    for (const auto& instance : group.Instances()) {
       fmt::print(ss, "    <{}> {} (id : {})\n", instance_idx++,
                  instance.DeviceName(), instance.InstanceId());
     }

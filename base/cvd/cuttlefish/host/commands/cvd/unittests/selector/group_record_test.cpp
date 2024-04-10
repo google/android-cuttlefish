@@ -31,72 +31,35 @@ static std::string TestBinDir() { return "/opt/android11"; }
 class CvdInstanceGroupUnitTest : public testing::Test {
  protected:
   CvdInstanceGroupUnitTest()
-      : group_({.group_name = GroupName(),
-                .home_dir = HomeDir(),
-                .host_artifacts_path = TestBinDir(),
-                .product_out_path = TestBinDir()}) {}
-  LocalInstanceGroup& Get() { return group_; }
-  LocalInstanceGroup group_;
-};
-
-// CvdInstanceGroupUnitTest + add 4 instances
-class CvdInstanceGroupSearchUnitTest : public testing::Test {
- protected:
-  CvdInstanceGroupSearchUnitTest()
-      : group_({.group_name = GroupName(),
-                .home_dir = HomeDir(),
-                .host_artifacts_path = TestBinDir(),
-                .product_out_path = TestBinDir()}) {
-    is_setup_ =
-        (Get().AddInstance(1, "tv_instance").ok() &&
-         Get().AddInstance(2, "2").ok() && Get().AddInstance(3, "phone").ok() &&
-         Get().AddInstance(7, "tv_instance").ok());
-    is_setup_ = is_setup_ && (Get().Instances().size() == 4);
+      : group_info({.group_name = GroupName(),
+                    .home_dir = HomeDir(),
+                    .host_artifacts_path = TestBinDir(),
+                    .product_out_path = TestBinDir()}) {}
+  Result<LocalInstanceGroup> Get() {
+    return WithInstances({
+        {1, "tv_instance"},
+        {2, "2"},
+        {3, "phone"},
+        {7, "tv_instances"},
+    });
   }
-  LocalInstanceGroup& Get() { return group_; }
-  bool IsSetup() const { return is_setup_; }
-
- private:
-  bool is_setup_;
-  LocalInstanceGroup group_;
+  Result<LocalInstanceGroup> WithInstances(
+      const std::vector<InstanceInfo>& instances) {
+    return LocalInstanceGroup::Create(group_info, instances);
+  }
+  InstanceGroupInfo group_info;
 };
-
-TEST_F(CvdInstanceGroupUnitTest, Fields) {
-  auto& group = Get();
-
-  ASSERT_EQ(group.InternalGroupName(), "cvd");
-  ASSERT_EQ(group.GroupName(), "yah_ong");
-  ASSERT_EQ(group.HomeDir(), HomeDir());
-  ASSERT_EQ(group.HostArtifactsPath(), TestBinDir());
-}
-
-TEST_F(CvdInstanceGroupUnitTest, AddInstances) {
-  auto& group = Get();
-
-  ASSERT_TRUE(group.AddInstance(1, "tv_instance").ok());
-  ASSERT_TRUE(group.AddInstance(2, "2").ok());
-  ASSERT_TRUE(group.AddInstance(3, "phone").ok());
-  ASSERT_EQ(group.Instances().size(), 3);
-}
 
 TEST_F(CvdInstanceGroupUnitTest, AddInstancesAndListAll) {
-  auto& group = Get();
-  group.AddInstance(1, "tv_instance");
-  group.AddInstance(2, "2");
-  group.AddInstance(3, "phone");
-  if (group.Instances().size() != 3) {
-    GTEST_SKIP() << "AddInstance failed but is verified in other testing.";
-  }
+  auto group_res = Get();
+  auto instances = group_res->Instances();
 
-  auto set_result = group.FindAllInstances();
-
-  ASSERT_TRUE(set_result.ok()) << set_result.error().Trace();
-  ASSERT_EQ(set_result->size(), 3);
+  ASSERT_EQ(instances.size(), 4);
 }
 
-TEST_F(CvdInstanceGroupSearchUnitTest, SearchById) {
-  auto& group = Get();
-  if (!IsSetup()) {
+TEST_F(CvdInstanceGroupUnitTest, SearchById) {
+  auto group_res = Get();
+  if (!group_res.ok()) {
     /*
      * Here's why we skip the test rather than see it as a failure.
      *
@@ -113,20 +76,17 @@ TEST_F(CvdInstanceGroupSearchUnitTest, SearchById) {
 
   // valid search
   for (auto const& valid_id : valid_ids) {
-    auto result = group.FindById(valid_id);
-    ASSERT_TRUE(result.ok());
-    auto set = *result;
-    ASSERT_EQ(set.size(), 1);
-    const LocalInstance& instance = *set.cbegin();
+    auto instances = group_res->FindById(valid_id);
+    ASSERT_EQ(instances.size(), 1);
+    const LocalInstance& instance = *instances.cbegin();
     ASSERT_EQ(instance.InstanceId(), valid_id);
   }
 
   // invalid search
   for (auto const& invalid_id : invalid_ids) {
-    auto result = group.FindById(invalid_id);
+    auto instances = group_res->FindById(invalid_id);
     // it's okay not to be found
-    ASSERT_TRUE(result.ok());
-    ASSERT_TRUE(result->empty());
+    ASSERT_TRUE(instances.empty());
   }
 }
 

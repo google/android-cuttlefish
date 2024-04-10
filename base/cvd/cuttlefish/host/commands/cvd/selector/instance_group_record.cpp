@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/selector/instance_group_record.h"
 
+#include <set>
+
 #include <android-base/parseint.h>
 
 #include "common/libs/utils/result.h"
@@ -47,56 +49,53 @@ std::vector<LocalInstance> Filter(
 
 }  // namespace
 
-LocalInstanceGroup::LocalInstanceGroup(const InstanceGroup& param)
-    : home_dir_{param.home_dir},
-      host_artifacts_path_{param.host_artifacts_path},
-      product_out_path_{param.product_out_path},
-      internal_group_name_(GenInternalGroupName()),
-      group_name_(param.group_name),
-      start_time_(param.start_time) {
-  LOG(VERBOSE) << "Creating a group \"" << group_name_ << "\" ("
-               << Format(start_time_) << ")";
-}
+Result<LocalInstanceGroup> LocalInstanceGroup::Create(
+    const InstanceGroupInfo& group_info,
+    const std::vector<InstanceInfo>& instance_infos) {
+  CF_EXPECT(!instance_infos.empty(), "New group can't be empty");
+  std::vector<LocalInstance> instances;
+  std::set<unsigned> ids;
+  std::set<std::string> names;
 
-Result<std::string> LocalInstanceGroup::GetCuttlefishConfigPath() const {
-  return ::cuttlefish::selector::GetCuttlefishConfigPath(HomeDir());
-}
-
-Result<void> LocalInstanceGroup::AddInstance(const unsigned instance_id,
-                                             const std::string& instance_name) {
-  if (HasInstance(instance_id)) {
-    return CF_ERR("Instance Id " << instance_id << " is taken");
+  for (const auto& instance_info : instance_infos) {
+    instances.emplace_back(group_info, instance_info.id, instance_info.name);
+    ids.insert(instance_info.id);
+    names.insert(instance_info.name);
   }
-  instances_.emplace_back(*this, instance_id, instance_name);
-  return {};
+  CF_EXPECT(ids.size() == instance_infos.size(),
+            "Instances must have unique ids");
+  CF_EXPECT(names.size() == instance_infos.size(),
+            "Instances must have unique names");
+  return LocalInstanceGroup(group_info.group_name, group_info.home_dir,
+                            group_info.host_artifacts_path,
+                            group_info.host_artifacts_path,
+                            group_info.start_time, instances);
 }
 
-Result<std::vector<LocalInstance>> LocalInstanceGroup::FindById(
+LocalInstanceGroup::LocalInstanceGroup(
+    const std::string& group_name, const std::string& home_dir,
+    const std::string& host_artifacts_path, const std::string& product_out_path,
+    const TimeStamp& start_time, const std::vector<LocalInstance>& instances)
+    : internal_group_name_(GenInternalGroupName()),
+      group_name_(group_name),
+      home_dir_(home_dir),
+      host_artifacts_path_(host_artifacts_path),
+      product_out_path_(host_artifacts_path),
+      start_time_(start_time),
+      instances_(instances) {};
+
+std::vector<LocalInstance> LocalInstanceGroup::FindById(
     const unsigned id) const {
   return Filter(instances_, [id](const LocalInstance& instance) {
     return id == instance.InstanceId();
   });
 }
 
-Result<std::vector<LocalInstance>> LocalInstanceGroup::FindByInstanceName(
+std::vector<LocalInstance> LocalInstanceGroup::FindByInstanceName(
     const std::string& instance_name) const {
   return Filter(instances_, [instance_name](const LocalInstance& instance) {
     return instance.PerInstanceName() == instance_name;
   });
-}
-
-Result<std::vector<LocalInstance>> LocalInstanceGroup::FindAllInstances()
-    const {
-  return instances_;
-}
-
-bool LocalInstanceGroup::HasInstance(const unsigned instance_id) const {
-  for (const auto& instance : instances_) {
-    if (instance_id == instance.InstanceId()) {
-      return true;
-    }
-  }
-  return false;
 }
 
 Json::Value LocalInstanceGroup::Serialize() const {
@@ -119,8 +118,7 @@ Json::Value LocalInstanceGroup::Serialize() const {
   return group_json;
 }
 
-Json::Value LocalInstanceGroup::Serialize(
-    const LocalInstance& instance) const {
+Json::Value LocalInstanceGroup::Serialize(const LocalInstance& instance) const {
   Json::Value instance_json;
   instance_json[LocalInstance::kJsonInstanceName] = instance.PerInstanceName();
   instance_json[LocalInstance::kJsonInstanceId] =
@@ -128,7 +126,8 @@ Json::Value LocalInstanceGroup::Serialize(
   return instance_json;
 }
 
-Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(const Json::Value& group_json) {
+Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
+    const Json::Value& group_json) {
   const std::string group_name = group_json[kJsonGroupName].asString();
   const std::string home_dir = group_json[kJsonHomeDir].asString();
   const std::string host_artifacts_path =
@@ -151,11 +150,12 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(const Json::Value& gr
     }
   }
 
-  LocalInstanceGroup group({.group_name = group_name,
-                            .home_dir = home_dir,
-                            .host_artifacts_path = host_artifacts_path,
-                            .product_out_path = product_out_path,
-                            .start_time = std::move(start_time)});
+  InstanceGroupInfo group_info({.group_name = group_name,
+                                .home_dir = home_dir,
+                                .host_artifacts_path = host_artifacts_path,
+                                .product_out_path = product_out_path,
+                                .start_time = std::move(start_time)});
+  std::vector<InstanceInfo> instance_infos;
   const Json::Value& instances_json_array = group_json[kJsonInstances];
   for (int i = 0; i < instances_json_array.size(); i++) {
     const Json::Value& instance_json = instances_json_array[i];
@@ -167,12 +167,10 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(const Json::Value& gr
     int id;
     CF_EXPECTF(android::base::ParseInt(instance_id, std::addressof(id)),
                "Invalid instance ID in instance json: {}", instance_id);
-    CF_EXPECTF(group.AddInstance(id, instance_name),
-               "Adding instance [{} : \"{}\"] to the group \"{}\" failed.",
-               instance_name, id, group_name);
+    instance_infos.push_back({.id = (unsigned)id, .name = instance_name});
   }
 
-  return group;
+  return Create(group_info, instance_infos);
 }
 
 }  // namespace selector
