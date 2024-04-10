@@ -46,7 +46,7 @@ int TranslatorMain(char** argv) {
   if (!FileExists(kCvdBinaryPath, true /*follow symlinks*/)) {
     LOG(WARNING)
         << "The host packages may not be installed or are old, "
-           "consider running `acloud setup` to get the latest features.";
+           "consider running `acloud setup --host` to get the latest features.";
     return FallbackToPythonAcloud(argv);
   }
 
