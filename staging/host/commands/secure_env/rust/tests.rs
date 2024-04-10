@@ -3,7 +3,7 @@ use crate::soft;
 
 #[test]
 fn test_signing_cert_parse() {
-    let sign_info = kmr_ta_nonsecure::attest::CertSignInfo::new();
+    let sign_info = crate::attest::CertSignInfo::new();
     kmr_tests::test_signing_cert_parse(sign_info, false);
 }
 
