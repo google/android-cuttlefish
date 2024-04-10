@@ -26,7 +26,7 @@ use kmr_ta::device::{
     BootloaderDone, CsrSigningAlgorithm, Implementation, TrustedPresenceUnsupported,
 };
 use kmr_ta::{HardwareInfo, KeyMintTa, RpcInfo, RpcInfoV3};
-use kmr_ta_nonsecure::{attest, rpc, soft};
+use kmr_ta_nonsecure::{rpc, soft};
 use kmr_wire::keymint::SecurityLevel;
 use kmr_wire::rpc::MINIMUM_SUPPORTED_KEYS_IN_CSR;
 use log::{error, info, trace};
@@ -116,7 +116,6 @@ pub unsafe fn ta_main(
         sha256: Box::new(BoringSha256),
     };
 
-    let sign_info = attest::CertSignInfo::new();
     let keys: Box<dyn kmr_ta::device::RetrieveKeyMaterial> =
         if security_level == SecurityLevel::TrustedEnvironment {
             Box::new(tpm::Keys::new(trm))
@@ -131,7 +130,12 @@ pub unsafe fn ta_main(
         };
     let dev = Implementation {
         keys,
-        sign_info: Some(Box::new(sign_info)),
+        // Cuttlefish has `remote_provisioning.tee.rkp_only=1` so don't support batch signing
+        // of keys.  This can be reinstated with:
+        // ```
+        // sign_info: Some(kmr_ta_nonsecure::attest::CertSignInfo::new()),
+        // ```
+        sign_info: None,
         // HAL populates attestation IDs from properties.
         attest_ids: None,
         sdd_mgr,
