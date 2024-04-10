@@ -25,8 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DEBIAN_ISO_URL: https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso
-    container:
-      image: debian@sha256:6496a3400e12fbff53da7318b304405a5cb2f185a74bdb4458dcc4b645839380 # debian:bookworm-20240311, linux/arm64/v8
     steps:
     - name: Prepare building environment
       run: apt-get update 
