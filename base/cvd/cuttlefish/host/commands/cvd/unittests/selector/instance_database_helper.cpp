@@ -119,40 +119,25 @@ bool CvdInstanceDatabaseTest::InitMockAndroidHostOut() {
   return true;
 }
 
-// Add an InstanceGroups with each home directory and android_host_out_
-bool CvdInstanceDatabaseTest::AddGroups(
-    const std::unordered_set<std::string>& base_names) {
-  for (const auto& base_name : base_names) {
+  bool CvdInstanceDatabaseTest::AddGroup(const std::string& base_name,
+                const std::vector<InstanceInfo>& instances) {
     const std::string home(Workspace() + "/" + base_name);
     if (!EnsureDirectoryExists(home).ok()) {
       SetErrorCode(ErrorCode::kFileError, home + " directory is not found.");
       return false;
     }
-    InstanceGroup param{
+    InstanceGroupInfo param{
         .group_name = base_name,
         .home_dir = home,
         .host_artifacts_path = android_artifacts_path_,
         .product_out_path = android_artifacts_path_};
-    if (!db_.AddInstanceGroup(param).ok()) {
+
+    if (!db_.AddInstanceGroup(param, instances).ok()) {
       SetErrorCode(ErrorCode::kInstanceDabaseError, "Failed to add group");
       return false;
     }
+    return true;
   }
-  return true;
-}
-
-bool CvdInstanceDatabaseTest::AddInstances(
-    const std::string& group_name,
-    const std::vector<InstanceInfo>& instances_info) {
-  for (const auto& [id, per_instance_name] : instances_info) {
-    if (!db_.AddInstance(group_name, id, per_instance_name).ok()) {
-      SetErrorCode(ErrorCode::kInstanceDabaseError,
-                   "Failed to add instance " + per_instance_name);
-      return false;
-    }
-  }
-  return true;
-}
 
 }  // namespace selector
 }  // namespace cuttlefish

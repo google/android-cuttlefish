@@ -24,11 +24,9 @@
 namespace cuttlefish {
 namespace selector {
 
-class LocalInstanceGroup;
+class InstanceGroupInfo;
 
 /**
- * TODO(kwstephenkim): add more methods, fields, and abstract out Instance
- *
  * Needs design changes to support both Remote and Local Instances
  */
 class LocalInstance {
@@ -36,7 +34,7 @@ class LocalInstance {
   static constexpr const char kJsonInstanceId[] = "Instance Id";
   static constexpr const char kJsonInstanceName[] = "Per-Instance Name";
 
-  LocalInstance(const LocalInstanceGroup& parent_group,
+  LocalInstance(const InstanceGroupInfo& parent_group,
                 const unsigned instance_id, const std::string& instance_name);
 
   /* names:
@@ -49,17 +47,15 @@ class LocalInstance {
    *
    */
   const std::string& InternalName() const;
-  std::string InternalDeviceName() const;
 
   unsigned InstanceId() const;
   const std::string& PerInstanceName() const;
   std::string DeviceName() const;
-
+  std::string InternalDeviceName() const {
+    return internal_device_name_;
+  }
   std::string GroupName() const {
     return group_name_;
-  }
-  std::string InternalGroupName() const {
-    return internal_group_name_;
   }
   std::string HomeDir() const {
     return home_dir_;
@@ -82,8 +78,9 @@ class LocalInstance {
    */
   std::string per_instance_name_;
 
-  // Information about the group
-  std::string internal_group_name_;
+  // Group specific information, repeated here because sometimes instances are
+  // accessed outside of their group
+  std::string internal_device_name_;
   std::string group_name_;
   std::string home_dir_;
   std::string host_artifacts_path_;

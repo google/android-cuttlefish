@@ -111,7 +111,7 @@ Result<LocalInstance> InstanceSelector::FindInstance(
 Result<LocalInstance> InstanceSelector::FindDefaultInstance(
     const InstanceDatabase& instance_database) {
   auto group = CF_EXPECT(GetDefaultGroup(instance_database));
-  const auto instances = CF_EXPECT(group.FindAllInstances());
+  const auto instances = group.Instances();
   CF_EXPECT_EQ(instances.size(), 1,
                "Default instance is the single instance in the default group.");
   return *instances.cbegin();

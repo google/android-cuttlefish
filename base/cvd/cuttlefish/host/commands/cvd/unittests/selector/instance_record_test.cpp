@@ -25,12 +25,12 @@ namespace selector {
  * Note that invalid inputs must be tested at the InstanceDatabase level
  */
 TEST(CvdInstanceRecordUnitTest, Fields) {
-  LocalInstanceGroup parent_group(
+  auto parent_group_res = LocalInstanceGroup::Create(
       {.group_name = "super",
        .home_dir = "/home/user",
        .host_artifacts_path = "/home/user/download/bin",
-       .product_out_path = "/home/user/download/bin"});
-  if (!parent_group.AddInstance(3, "phone").ok()) {
+       .product_out_path = "/home/user/download/bin"}, {{3, "phone"}});
+  if (!parent_group_res.ok()) {
     /*
      * Here's why we skip the test rather than see it as a failure.
      *
@@ -42,7 +42,8 @@ TEST(CvdInstanceRecordUnitTest, Fields) {
      */
     GTEST_SKIP() << "Failed to add instance group. Set up failed.";
   }
-  auto& instances = parent_group.Instances();
+  const auto& parent_group = *parent_group_res;
+  const auto& instances = parent_group.Instances();
   auto& instance = *instances.cbegin();
 
   ASSERT_EQ(instance.InstanceId(), 3);

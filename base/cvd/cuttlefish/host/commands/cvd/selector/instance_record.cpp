@@ -22,24 +22,20 @@
 namespace cuttlefish {
 namespace selector {
 
-LocalInstance::LocalInstance(const LocalInstanceGroup& parent_group,
+LocalInstance::LocalInstance(const InstanceGroupInfo& parent_group,
                              const unsigned instance_id,
                              const std::string& instance_name)
     : instance_id_(instance_id),
       internal_name_(std::to_string(instance_id_)),
       per_instance_name_(instance_name),
-   internal_group_name_(parent_group.InternalGroupName()),
-   group_name_(parent_group.GroupName()),
-   home_dir_(parent_group.HomeDir()),
-   host_artifacts_path_(parent_group.HostArtifactsPath()),
-   product_out_path_(parent_group.ProductOutPath())
-  {}
+      internal_device_name_(
+          LocalDeviceNameRule(GenInternalGroupName(), internal_name_)),
+      group_name_(parent_group.group_name),
+      home_dir_(parent_group.home_dir),
+      host_artifacts_path_(parent_group.host_artifacts_path),
+      product_out_path_(parent_group.product_out_path) {}
 
 unsigned LocalInstance::InstanceId() const { return instance_id_; }
-
-std::string LocalInstance::InternalDeviceName() const {
-  return LocalDeviceNameRule(internal_group_name_, internal_name_);
-}
 
 const std::string& LocalInstance::InternalName() const {
   return internal_name_;

@@ -73,16 +73,11 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
     return android_artifacts_path_;
   }
 
-  // Adds InstanceGroups, each by:
+  // Adds InstanceGroup by:
   //    "mkdir" : Workspace() + "/" + base_name, HostArtifactsPath()
   //    db_.AddInstanceGroup()
-  bool AddGroups(const std::unordered_set<std::string>& base_names);
-  struct InstanceInfo {
-    unsigned id;
-    std::string per_instance_name;
-  };
-  bool AddInstances(const std::string& group_name,
-                    const std::vector<InstanceInfo>& instances_info);
+  bool AddGroup(const std::string& base_name,
+                const std::vector<InstanceInfo>& instances);
   InstanceDatabase& GetDb() { return db_; }
   const SetupError& Error() const { return error_; }
 

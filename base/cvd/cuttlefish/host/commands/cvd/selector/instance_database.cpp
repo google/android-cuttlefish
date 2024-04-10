@@ -88,62 +88,45 @@ Result<void> InstanceDatabase::Clear() {
       });
 }
 
-Result<void> InstanceDatabase::AddInstanceGroup(const InstanceGroup& param) {
-  CF_EXPECTF(IsValidGroupName(param.group_name),
-             "GroupName \"{}\" is ill-formed.", param.group_name);
-  CF_EXPECTF(EnsureDirectoryExists(param.home_dir),
+Result<void> InstanceDatabase::AddInstanceGroup(
+    const InstanceGroupInfo& group_info,
+    const std::vector<InstanceInfo>& instance_infos) {
+  CF_EXPECTF(IsValidGroupName(group_info.group_name),
+             "GroupName \"{}\" is ill-formed.", group_info.group_name);
+  CF_EXPECTF(EnsureDirectoryExists(group_info.home_dir),
              "HOME dir, \"{}\" neither exists nor can be created.",
-             param.home_dir);
-  CF_EXPECTF(PotentiallyHostArtifactsPath(param.host_artifacts_path),
+             group_info.home_dir);
+  CF_EXPECTF(PotentiallyHostArtifactsPath(group_info.host_artifacts_path),
              "ANDROID_HOST_OUT, \"{}\" is not a tool directory",
-             param.host_artifacts_path);
-  return viewer_.WithExclusiveLock<void>(
-      [&param](std::vector<LocalInstanceGroup>& groups) -> Result<void> {
-        for (const auto& group : groups) {
-          CF_EXPECTF(group.HomeDir() != param.home_dir,
-                     "A group already exist in dir: {}", param.home_dir);
-          CF_EXPECTF(group.GroupName() != param.group_name,
-                     "A group named '{}' already exists", param.group_name);
-        }
-        groups.emplace_back(param);
-        return {};
-      });
-}
-
-Result<void> InstanceDatabase::AddInstance(const std::string& group_name,
-                                           const unsigned id,
-                                           const std::string& instance_name) {
-  return AddInstances(group_name, {{.id = id, .name = instance_name}});
-}
-
-Result<void> InstanceDatabase::AddInstances(
-    const std::string& group_name, const std::vector<InstanceInfo>& instances) {
-  for (const auto& instance_info : instances) {
+             group_info.host_artifacts_path);
+  for (const auto& instance_info : instance_infos) {
     CF_EXPECTF(IsValidInstanceName(instance_info.name),
                "instance_name \"{}\" is invalid", instance_info.name);
-
-    auto instances = CF_EXPECT(FindInstances(
-        Query{kInstanceIdField, std::to_string(instance_info.id)}));
-    CF_EXPECTF(instances.empty(), "instance id \"{}\" is taken.",
-               instance_info.id);
   }
-  return viewer_.WithExclusiveLock<void>(
-      [&group_name,
-       &instances](std::vector<LocalInstanceGroup>& groups) -> Result<void> {
-        for (auto& group : groups) {
-          if (group.GroupName() != group_name) {
-            continue;
-          }
-          for (const auto& instance : instances) {
-            auto instances_by_name =
-                CF_EXPECT(group.FindByInstanceName(instance.name));
-            CF_EXPECTF(instances_by_name.empty(),
-                       "instance name \"{}\" is already taken.", instance.name);
-            return group.AddInstance(instance.id, instance.name);
-          }
+  auto add_res = viewer_.WithExclusiveLock<void>(
+      [&group_info, &instance_infos](
+          std::vector<LocalInstanceGroup>& groups) -> Result<void> {
+        auto matching_groups = FindGroups(
+            groups,
+            {.home = group_info.home_dir, .group_name = group_info.group_name});
+        CF_EXPECTF(matching_groups.empty(),
+                   "New group conflicts with existing group: {} at {}",
+                   matching_groups[0].GroupName(),
+                   matching_groups[0].HomeDir());
+        for (const auto& info : instance_infos) {
+          auto matching_instances = FindInstances(groups, {.id = info.id});
+          CF_EXPECTF(
+              matching_instances.empty(),
+              "New instance conflicts with existing instance: {} with id {}",
+              matching_instances[0].PerInstanceName(),
+              matching_instances[0].InstanceId());
         }
-        return CF_ERRF("Group not found: {}", group_name);
+        groups.push_back(
+            CF_EXPECT(LocalInstanceGroup::Create(group_info, instance_infos)));
+        return {};
       });
+  CF_EXPECT(std::move(add_res));
+  return {};
 }
 
 Result<bool> InstanceDatabase::RemoveInstanceGroup(
@@ -185,29 +168,8 @@ Result<InstanceDatabase::FindParam> InstanceDatabase::ParamFromQueries(
 Result<std::vector<LocalInstanceGroup>> InstanceDatabase::FindGroups(
     FindParam param) const {
   return viewer_.WithSharedLock<std::vector<LocalInstanceGroup>>(
-      [&param](const std::vector<LocalInstanceGroup>& groups)
-          -> Result<std::vector<LocalInstanceGroup>> {
-        std::vector<LocalInstanceGroup> ret;
-        for (const auto& group : groups) {
-          if (param.home && param.home != group.HomeDir()) {
-            continue;
-          }
-          if (param.group_name && param.group_name != group.GroupName()) {
-            continue;
-          }
-          if (param.id) {
-            if (CF_EXPECT(group.FindById(*param.id)).empty()) {
-              continue;
-            }
-          }
-          if (param.instance_name &&
-              CF_EXPECT(group.FindByInstanceName(*param.instance_name))
-                  .empty()) {
-            continue;
-          }
-          ret.push_back(group);
-        }
-        return ret;
+      [&param](const std::vector<LocalInstanceGroup>& groups) {
+        return FindGroups(groups, param);
       });
 }
 
@@ -215,27 +177,56 @@ Result<std::vector<LocalInstance>> InstanceDatabase::FindInstances(
     FindParam param) const {
   return viewer_.WithSharedLock<std::vector<LocalInstance>>(
       [&param](const std::vector<LocalInstanceGroup>& groups) {
-        std::vector<LocalInstance> ret;
-        for (const auto& group : groups) {
-          if (param.group_name && param.group_name != group.GroupName()) {
-            continue;
-          }
-          if (param.home && param.home != group.HomeDir()) {
-            continue;
-          }
-          for (const auto& instance : group.Instances()) {
-            if (param.id && param.id != instance.InstanceId()) {
-              continue;
-            }
-            if (param.instance_name &&
-                param.instance_name != instance.PerInstanceName()) {
-              continue;
-            }
-            ret.push_back(instance);
-          }
-        }
-        return ret;
+        return FindInstances(groups, param);
       });
+}
+
+std::vector<LocalInstanceGroup> InstanceDatabase::FindGroups(
+    const std::vector<LocalInstanceGroup>& groups, FindParam param) {
+  std::vector<LocalInstanceGroup> ret;
+  for (const auto& group : groups) {
+    if (param.home && param.home != group.HomeDir()) {
+      continue;
+    }
+    if (param.group_name && param.group_name != group.GroupName()) {
+      continue;
+    }
+    if (param.id) {
+      if (group.FindById(*param.id).empty()) {
+        continue;
+      }
+    }
+    if (param.instance_name &&
+        group.FindByInstanceName(*param.instance_name).empty()) {
+      continue;
+    }
+    ret.push_back(group);
+  }
+  return ret;
+}
+
+std::vector<LocalInstance> InstanceDatabase::FindInstances(
+    const std::vector<LocalInstanceGroup>& groups, FindParam param) {
+  std::vector<LocalInstance> ret;
+  for (const auto& group : groups) {
+    if (param.group_name && param.group_name != group.GroupName()) {
+      continue;
+    }
+    if (param.home && param.home != group.HomeDir()) {
+      continue;
+    }
+    for (const auto& instance : group.Instances()) {
+      if (param.id && *param.id != instance.InstanceId()) {
+        continue;
+      }
+      if (param.instance_name &&
+          param.instance_name != instance.PerInstanceName()) {
+        continue;
+      }
+      ret.push_back(instance);
+    }
+  }
+  return ret;
 }
 
 Result<std::vector<LocalInstanceGroup>> InstanceDatabase::InstanceGroups()
