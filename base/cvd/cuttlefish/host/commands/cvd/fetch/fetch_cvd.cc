@@ -497,55 +497,44 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
     DeAndroidSparse({target_files});
 
     if (flags.download_img_zip) {
-      std::string system_img_zip_name = GetBuildZipName(*builds.system, "img");
-      Result<std::string> system_img_zip_result = build_api.DownloadFile(
-          *builds.system, target_directories.root, system_img_zip_name);
-      Result<std::vector<std::string>> extract_result;
-      if (system_img_zip_result.ok()) {
-        extract_result = ExtractImages(
-            system_img_zip_result.value(), target_directories.root,
-            {"system.img", "product.img"}, keep_downloaded_archives);
-        if (extract_result.ok()) {
-          CF_EXPECT(config.AddFilesToConfig(
-              FileSource::SYSTEM_BUILD, system_id, system_target,
-              extract_result.value(), target_directories.root,
-              kOverrideEntries));
-          DeAndroidSparse(extract_result.value());
-        }
+      std::vector<std::string> system_images;
+      std::string extracted_system = CF_EXPECT(ExtractImage(
+          target_files, target_directories.root, "IMAGES/system.img"));
+      const std::string system_path = target_directories.root + "/system.img";
+      CF_EXPECT(RenameFile(extracted_system, system_path));
+      system_images.emplace_back(system_path);
+
+      Result<std::string> extracted_product = ExtractImage(
+          target_files, target_directories.root, "IMAGES/product.img");
+      if (extracted_product.ok()) {
+        const std::string product_path =
+            target_directories.root + "/product.img";
+        CF_EXPECT(RenameFile(*extracted_product, product_path));
+        system_images.emplace_back(product_path);
       }
-      if (!system_img_zip_result.ok() || !extract_result.ok()) {
-        std::string extracted_system = CF_EXPECT(ExtractImage(
-            target_files, target_directories.root, "IMAGES/system.img"));
-        CF_EXPECT(RenameFile(extracted_system,
-                             target_directories.root + "/system.img"));
 
-        Result<std::string> extracted_product_result = ExtractImage(
-            target_files, target_directories.root, "IMAGES/product.img");
-        if (extracted_product_result.ok()) {
-          CF_EXPECT(RenameFile(extracted_product_result.value(),
-                               target_directories.root + "/product.img"));
-        }
-
-        Result<std::string> extracted_system_ext_result = ExtractImage(
-            target_files, target_directories.root, "IMAGES/system_ext.img");
-        if (extracted_system_ext_result.ok()) {
-          CF_EXPECT(RenameFile(extracted_system_ext_result.value(),
-                               target_directories.root + "/system_ext.img"));
-        }
-
-        Result<std::string> extracted_vbmeta_system = ExtractImage(
-            target_files, target_directories.root, "IMAGES/vbmeta_system.img");
-        if (extracted_vbmeta_system.ok()) {
-          CF_EXPECT(RenameFile(extracted_vbmeta_system.value(),
-                               target_directories.root + "/vbmeta_system.img"));
-        }
-        Result<std::string> extracted_init_boot = ExtractImage(
-            target_files, target_directories.root, "IMAGES/init_boot.img");
-        if (extracted_init_boot.ok()) {
-          CF_EXPECT(RenameFile(extracted_init_boot.value(),
-                               target_directories.root + "/init_boot.img"));
-        }
+      Result<std::string> extracted_system_ext = ExtractImage(
+          target_files, target_directories.root, "IMAGES/system_ext.img");
+      if (extracted_system_ext.ok()) {
+        const std::string system_ext_path =
+            target_directories.root + "/system_ext.img";
+        CF_EXPECT(RenameFile(*extracted_system_ext, system_ext_path));
+        system_images.emplace_back(system_ext_path);
       }
+
+      Result<std::string> extracted_vbmeta_system = ExtractImage(
+          target_files, target_directories.root, "IMAGES/vbmeta_system.img");
+      if (extracted_vbmeta_system.ok()) {
+        const std::string vbmeta_system_path =
+            target_directories.root + "/vbmeta_system.img";
+        CF_EXPECT(RenameFile(*extracted_vbmeta_system, vbmeta_system_path));
+        system_images.emplace_back(vbmeta_system_path);
+      }
+
+      CF_EXPECT(config.AddFilesToConfig(
+          FileSource::SYSTEM_BUILD, system_id, system_target, system_images,
+          target_directories.root, kOverrideEntries));
+      DeAndroidSparse(system_images);
     }
   }
 
