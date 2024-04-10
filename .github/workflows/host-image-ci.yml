@@ -22,7 +22,9 @@ on: [pull_request, push]
 
 jobs:
   build-installer-iso-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    container:
+      image: debian@sha256:4cb3f4198e4af2d03dffe6bfa4f3686773596494ef298f3882553d52e885634b # debian:bullseye-20240110
     env:
       DEBIAN_ISO_URL: https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso
     steps:
