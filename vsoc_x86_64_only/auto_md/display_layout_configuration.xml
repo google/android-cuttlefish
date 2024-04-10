@@ -16,5 +16,8 @@
       <address>4619827353912518658</address>
     </display>
 
+    <display enabled="true" defaultDisplay="false" displayGroup="passenger_display3">
+      <address>4619827353912518659</address>
+    </display>
   </layout>
 </layouts>
