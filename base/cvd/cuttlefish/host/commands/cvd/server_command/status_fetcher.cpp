@@ -138,10 +138,15 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   }
   instance_status_json[kNameProp] = per_instance_name;
 
+  auto response = ResponseFromSiginfo(infop);
+  if (response.status().code() != cvd::Status::OK) {
+    instance_status_json["warning"] = "cvd status failed";
+  }
+
   return StatusFetcherOutput{
       .stderr_buf = status_stderr,
       .json_from_stdout = instance_status_json,
-      .response = ResponseFromSiginfo(infop),
+      .response = response,
   };
 }
 
@@ -199,13 +204,10 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
   std::string entire_stderr_msg;
   Json::Value instances_json(Json::arrayValue);
   for (const auto& instance_info : instance_infos) {
-    auto [status_stderr, instance_status_json, instance_response] =
+    auto [status_stderr, instance_status_json, response] =
         CF_EXPECT(FetchOneInstanceStatus(request, instance_group,
                                          instance_info.per_instance_name,
                                          instance_info.id));
-    CF_EXPECTF(instance_response.status().code() == cvd::Status::OK,
-               "cvd status for {}-{} failed", instance_group.GroupName(),
-               instance_info.per_instance_name);
     instances_json.append(instance_status_json);
     entire_stderr_msg.append(status_stderr);
   }
