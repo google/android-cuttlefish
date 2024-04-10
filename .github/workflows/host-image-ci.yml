@@ -22,15 +22,11 @@ on: [pull_request, push]
 
 jobs:
   build-installer-iso-job:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     env:
       DEBIAN_ISO_URL: https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso
     container:
       image: debian@sha256:6496a3400e12fbff53da7318b304405a5cb2f185a74bdb4458dcc4b645839380 # debian:bookworm-20240311, linux/arm64/v8
     steps:
     - name: Prepare building environment
-      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y wget libarchive-tools && apt-get install -y xorriso && apt-get install -y cpio xz-utils && apt-get install -y fdisk
-    - name: Inject name and ID into preseed 
-      run: echo "CI_PROJECT_NAME=${{ github.event.repository.name }}" >> cuttlefish-host-image-installer/preseed/after_install_1.sh && echo "CI_PIPELINE_ID=${{ github.repository}}/${{ github.workflow }}" >> cuttlefish-host-image-installer/preseed//after_install_1.sh
-    - name: Download Debian installer
-      run: cd cuttlefish-host-image-installer && wget -nv -c ${DEBIAN_ISO_URL} && ./addpreseed.sh && xz -9e preseed-mini.iso
+      run: apt-get update 
