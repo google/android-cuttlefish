@@ -34,6 +34,7 @@
 #include "host/commands/assemble_cvd/bootconfig_args.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/kernel_args.h"
+#include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
@@ -211,8 +212,7 @@ Result<void> PrepareBootEnvImage(
   boot_env_hash_footer_cmd.AddParameter("--partition_name");
   boot_env_hash_footer_cmd.AddParameter("uboot_env");
   boot_env_hash_footer_cmd.AddParameter("--key");
-  boot_env_hash_footer_cmd.AddParameter(
-      DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
+  boot_env_hash_footer_cmd.AddParameter(TestKeyRsa4096());
   boot_env_hash_footer_cmd.AddParameter("--algorithm");
   boot_env_hash_footer_cmd.AddParameter("SHA256_RSA4096");
   success = boot_env_hash_footer_cmd.Start().Wait();

@@ -24,6 +24,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
+#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
@@ -38,16 +39,14 @@ static bool PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
   vbmeta_cmd.AddParameter("--algorithm");
   vbmeta_cmd.AddParameter("SHA256_RSA4096");
   vbmeta_cmd.AddParameter("--key");
-  vbmeta_cmd.AddParameter(DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
+  vbmeta_cmd.AddParameter(TestKeyRsa4096());
 
   vbmeta_cmd.AddParameter("--chain_partition");
-  vbmeta_cmd.AddParameter("uboot_env:1:" +
-                          DefaultHostArtifactsPath("etc/cvd.avbpubkey"));
+  vbmeta_cmd.AddParameter("uboot_env:1:" + TestPubKeyRsa4096());
 
   if (has_boot_config) {
     vbmeta_cmd.AddParameter("--chain_partition");
-    vbmeta_cmd.AddParameter("bootconfig:2:" +
-                            DefaultHostArtifactsPath("etc/cvd.avbpubkey"));
+    vbmeta_cmd.AddParameter("bootconfig:2:" + TestPubKeyRsa4096());
   }
 
   bool success = vbmeta_cmd.Start().Wait();
