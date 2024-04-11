@@ -76,6 +76,22 @@ std::string ProcessRestarterBinary() {
 
 std::string RootCanalBinary() { return HostBinaryPath("root-canal"); }
 
+std::string TestKeyRsa2048() {
+  return DefaultHostArtifactsPath("etc/cvd_avb_testkey_rsa2048.pem");
+}
+
+std::string TestKeyRsa4096() {
+  return DefaultHostArtifactsPath("etc/cvd_avb_testkey_rsa4096.pem");
+}
+
+std::string TestPubKeyRsa2048() {
+  return DefaultHostArtifactsPath("etc/cvd_rsa2048.avbpubkey");
+}
+
+std::string TestPubKeyRsa4096() {
+  return DefaultHostArtifactsPath("etc/cvd_rsa4096.avbpubkey");
+}
+
 std::string CasimirBinary() { return HostBinaryPath("casimir"); }
 
 std::string ScreenRecordingServerBinary() {
