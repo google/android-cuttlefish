@@ -32,6 +32,7 @@ use kmr_wire::rpc::MINIMUM_SUPPORTED_KEYS_IN_CSR;
 use log::{error, info, trace};
 use std::ffi::CString;
 use std::io::{Read, Write};
+use std::os::fd::AsFd;
 use std::os::fd::AsRawFd;
 use std::os::unix::ffi::OsStrExt;
 
@@ -153,8 +154,8 @@ pub unsafe fn ta_main(
         // processing only `infile` until it is empty so that there is no pending state when we
         // suspend the loop.
         let mut fd_set = nix::sys::select::FdSet::new();
-        fd_set.insert(&infile);
-        fd_set.insert(&snapshot_socket);
+        fd_set.insert(infile.as_fd());
+        fd_set.insert(snapshot_socket.as_fd());
         if let Err(e) = nix::sys::select::select(
             None,
             /*readfds=*/ Some(&mut fd_set),
@@ -166,7 +167,7 @@ pub unsafe fn ta_main(
             return;
         }
 
-        if fd_set.contains(&infile) {
+        if fd_set.contains(infile.as_fd()) {
             // Read a request message from the pipe, as a 4-byte BE length followed by the message.
             let mut req_len_data = [0u8; 4];
             if let Err(e) = infile.read_exact(&mut req_len_data) {
@@ -217,7 +218,7 @@ pub unsafe fn ta_main(
             continue;
         }
 
-        if fd_set.contains(&snapshot_socket) {
+        if fd_set.contains(snapshot_socket.as_fd()) {
             // Read suspend request.
             let mut suspend_request = 0u8;
             if let Err(e) = snapshot_socket.read_exact(std::slice::from_mut(&mut suspend_request)) {
