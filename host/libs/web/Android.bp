@@ -20,9 +20,6 @@ package {
 cc_library {
     name: "libcuttlefish_web",
     srcs: [
-        "android_build_api.cpp",
-        "android_build_string.cpp",
-        "credential_source.cc",
         "http_client/http_client.cc",
         "http_client/http_client_util.cc",
     ],
@@ -65,7 +62,6 @@ cc_test_host {
     srcs: [
         "http_client/unittest/http_client_util_test.cc",
         "http_client/unittest/main_test.cc",
-        "unittest/build_string_tests.cc",
     ],
     static_libs: [
        "libbase",
