@@ -34,6 +34,7 @@
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/kernel_module_parser.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
@@ -415,8 +416,7 @@ bool BuildVbmetaImage(const std::string& image_path,
   vbmeta_cmd.AddParameter("--algorithm");
   vbmeta_cmd.AddParameter("SHA256_RSA4096");
   vbmeta_cmd.AddParameter("--key");
-  vbmeta_cmd.AddParameter(DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
-
+  vbmeta_cmd.AddParameter(TestKeyRsa4096());
   vbmeta_cmd.AddParameter("--include_descriptors_from_image");
   vbmeta_cmd.AddParameter(image_path);
   vbmeta_cmd.AddParameter("--padding_size");

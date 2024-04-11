@@ -19,6 +19,7 @@
 
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
@@ -51,12 +52,10 @@ Result<void> Avb::AddHashFooter(const std::string& image_path,
 }
 
 fruit::Component<Avb> CuttlefishKeyAvbComponent() {
-  return fruit::createComponent()
-      .registerProvider([]() -> Avb* {
-        return new Avb(HostBinaryPath("avbtool"),
-                       "SHA256_RSA4096",
-                       DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
-      });
+  return fruit::createComponent().registerProvider([]() -> Avb* {
+    return new Avb(HostBinaryPath("avbtool"), "SHA256_RSA4096",
+                   TestKeyRsa4096());
+  });
 }
 
 } // namespace cuttlefish
