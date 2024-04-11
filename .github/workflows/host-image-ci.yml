@@ -40,4 +40,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: preseed-mini
-        path: preseed-mini.iso.xz
+        path: cuttlefish-host-image-installer/preseed-mini.iso.xz
