@@ -30,8 +30,6 @@ jobs:
     steps:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-      with:
-        path: "android-cuttlefish"
     - name: Prepare building environment
       run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y wget libarchive-tools && apt-get install -y xorriso && apt-get install -y cpio xz-utils && apt-get install -y fdisk
     - name: Inject name and ID into preseed 
