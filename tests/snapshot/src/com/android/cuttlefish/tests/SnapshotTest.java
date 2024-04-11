@@ -48,9 +48,10 @@ public class SnapshotTest extends BaseHostJUnit4Test {
   @Test
   public void testSnapshot() throws Exception {
     // Snapshot the device
-    DeviceSnapshotHandler handler = new DeviceSnapshotHandler();
     boolean snapshotRes = false;
-    snapshotRes = handler.snapshotDevice(getDevice(), String.format("snapshot_img%d", mTestCount));
+    snapshotRes =
+        new DeviceSnapshotHandler()
+            .snapshotDevice(getDevice(), String.format("snapshot_img%d", mTestCount));
 
     if (!snapshotRes) {
       Assert.fail("failed to snapshot.");
@@ -75,8 +76,10 @@ public class SnapshotTest extends BaseHostJUnit4Test {
       // validating the feature itself so it's fine
       boolean restoreRes = false;
       try {
-        handler = new DeviceSnapshotHandler();
-        restoreRes = handler.restoreSnapshotDevice(getDevice(), String.format("snapshot_img%d", mTestCount));
+        restoreRes =
+            new DeviceSnapshotHandler()
+                .restoreSnapshotDevice(
+                    getDevice(), String.format("snapshot_img%d", mTestCount));
       } catch (DeviceNotAvailableException e) {
         CLog.e(e);
       }
@@ -102,12 +105,13 @@ public class SnapshotTest extends BaseHostJUnit4Test {
   // reboot and so it can be easy for change to one to break the other.
   @Test
   public void testSnapshotReboot() throws Exception {
-    DeviceSnapshotHandler handler = new DeviceSnapshotHandler();
     // Snapshot the device>
-    boolean snapshotRes = handler.snapshotDevice(getDevice(), "snapshot_img");
+    boolean snapshotRes =
+        new DeviceSnapshotHandler().snapshotDevice(getDevice(), "snapshot_img");
     assertTrue("failed to snapshot", snapshotRes);
     // Restore the device.
-    boolean restoreRes = handler.restoreSnapshotDevice(getDevice(), "snapshot_img");
+    boolean restoreRes =
+        new DeviceSnapshotHandler().restoreSnapshotDevice(getDevice(), "snapshot_img");
     assertTrue("Restore snapshot for device reset failed", restoreRes);
     // Reboot the device.
     getDevice().reboot();
