@@ -398,6 +398,9 @@ PRODUCT_PACKAGES += \
 # Indicate that KeyMint includes support for the ATTEST_KEY key purpose.
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.keystore.app_attest_key.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.keystore.app_attest_key.xml
+# Indicate that KeyMint includes (emulated) support for device ID attestation.
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.software.device_id_attestation.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.device_id_attestation.xml
 
 #
 # Non-secure implementation of AuthGraph HAL for compliance.
