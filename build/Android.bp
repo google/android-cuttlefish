@@ -94,7 +94,6 @@ cvd_host_tools = [
     "cvd_internal_stop",
     "cvd_host_bugreport",
     "cvd_status",
-    "cvd_test_gce_driver",
     "cvdremote",
     "e2fsdroid",
     "extract-ikconfig",
