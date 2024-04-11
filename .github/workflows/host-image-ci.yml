@@ -62,6 +62,7 @@ jobs:
       run: cd cuttlefish-host-image-installer && ./uboot/download_uboot.sh
     - name: Building
       run: cd cuttlefish-host-image-installer/u-boot &&  ../uboot/build_uboot_qemu_aarch64.sh && cd .. && cp uboot_build_place/u-boot.bin .
+    - name: Publish u-boot.bin
       uses: actions/upload-artifact@v3
       with:
         name: u-boot
