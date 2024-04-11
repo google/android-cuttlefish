@@ -389,8 +389,49 @@ const std::string kGfxstreamTransportAsg = "virtio-gpu-asg";
 const std::string kGfxstreamTransportPipe = "virtio-gpu-pipe";
 
 CF_UNUSED_ON_MACOS
+Result<std::unordered_map<std::string, bool>> ParseGfxstreamRendererFlag(
+    const std::string& gpu_renderer_features_arg) {
+  std::unordered_map<std::string, bool> features;
+
+  for (const std::string& feature :
+       android::base::Split(gpu_renderer_features_arg, ";")) {
+    if (feature.empty()) {
+      continue;
+    }
+
+    const std::vector<std::string> feature_parts =
+        android::base::Split(feature, ":");
+    CF_EXPECT(feature_parts.size() == 2,
+              "Failed to parse renderer features from --gpu_renderer_features="
+                  << gpu_renderer_features_arg);
+
+    const std::string& feature_name = feature_parts[0];
+    const std::string& feature_enabled = feature_parts[1];
+    CF_EXPECT(feature_enabled == "enabled" || feature_enabled == "disabled",
+              "Failed to parse renderer features from --gpu_renderer_features="
+                  << gpu_renderer_features_arg);
+
+    features[feature_name] = (feature_enabled == "enabled");
+  }
+
+  return features;
+}
+
+CF_UNUSED_ON_MACOS
+std::string GetGfxstreamRendererFeaturesString(
+    const std::unordered_map<std::string, bool>& features) {
+  std::vector<std::string> parts;
+  for (const auto& [feature_name, feature_enabled] : features) {
+    parts.push_back(feature_name + ":" +
+                    (feature_enabled ? "enabled" : "disabled"));
+  }
+  return android::base::Join(parts, ",");
+}
+
+CF_UNUSED_ON_MACOS
 Result<void> SetGfxstreamFlags(
-    const std::string& gpu_mode, const GuestConfig& guest_config,
+    const std::string& gpu_mode, const std::string& gpu_renderer_features_arg,
+    const GuestConfig& guest_config,
     const gfxstream::proto::GraphicsAvailability& availability,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
   std::string gfxstream_transport = kGfxstreamTransportAsg;
@@ -412,13 +453,25 @@ Result<void> SetGfxstreamFlags(
               "--gpu_mode=gfxstream_guest_angle is broken on AMD GPUs.");
   }
 
-  std::string features;
+  std::unordered_map<std::string, bool> features;
+  // Apply features from host/mode requirements.
   if (gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
-    features = "VulkanUseDedicatedAhbMemoryType:enabled";
+    features["VulkanUseDedicatedAhbMemoryType"] = true;
   }
-
-  if (!features.empty()) {
-    instance.set_gpu_renderer_features(features);
+  // Apply feature overrides from --gpu_renderer_features.
+  const auto feature_overrides =
+      CF_EXPECT(ParseGfxstreamRendererFlag(gpu_renderer_features_arg));
+  for (const auto& [feature_name, feature_enabled] : feature_overrides) {
+    LOG(DEBUG) << "GPU renderer feature " << feature_name << " overridden to "
+               << (feature_enabled ? "enabled" : "disabled")
+               << " via command line argument.";
+    features[feature_name] = feature_enabled;
+  }
+  // Convert features back to a string for passing to the VMM.
+  const std::string features_string =
+      GetGfxstreamRendererFeaturesString(features);
+  if (!features_string.empty()) {
+    instance.set_gpu_renderer_features(features_string);
   }
 
   instance.set_gpu_gfxstream_transport(gfxstream_transport);
@@ -429,7 +482,8 @@ Result<void> SetGfxstreamFlags(
 
 Result<std::string> ConfigureGpuSettings(
     const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
-    const std::string& vm_manager, const GuestConfig& guest_config,
+    const std::string& gpu_renderer_features_arg, const std::string& vm_manager,
+    const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
 #ifdef __APPLE__
   (void)gpu_vhost_user_mode_arg;
@@ -467,8 +521,8 @@ Result<std::string> ConfigureGpuSettings(
   if (gpu_mode == kGpuModeGfxstream ||
       gpu_mode == kGpuModeGfxstreamGuestAngle ||
       gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
-    CF_EXPECT(SetGfxstreamFlags(gpu_mode, guest_config, graphics_availability,
-                                instance));
+    CF_EXPECT(SetGfxstreamFlags(gpu_mode, gpu_renderer_features_arg,
+                                guest_config, graphics_availability, instance));
   }
 
   const auto angle_features = CF_EXPECT(GetNeededAngleFeatures(

@@ -149,6 +149,11 @@ DEFINE_vec(gpu_capture_binary, CF_DEFAULTS_GPU_CAPTURE_BINARY,
 DEFINE_vec(enable_gpu_udmabuf,
            fmt::format("{}", CF_DEFAULTS_ENABLE_GPU_UDMABUF),
            "Use the udmabuf driver for zero-copy virtio-gpu");
+DEFINE_vec(
+    gpu_renderer_features, CF_DEFAULTS_GPU_RENDERER_FEATURES,
+    "Renderer specific features to enable. For Gfxstream, this should "
+    "be a semicolon separated list of \"<feature name>:[enabled|disabled]\""
+    "pairs.");
 
 DEFINE_vec(use_allocd, CF_DEFAULTS_USE_ALLOCD?"true":"false",
             "Acquire static resources from the resource allocator daemon.");
@@ -1124,6 +1129,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::map<int, std::string> calculated_gpu_mode_vec;
   std::vector<std::string> gpu_vhost_user_mode_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_vhost_user_mode));
+  std::vector<std::string> gpu_renderer_features_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(gpu_renderer_features));
 
   std::vector<std::string> gpu_capture_binary_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_capture_binary));
@@ -1516,6 +1523,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // gpu related settings
     const std::string gpu_mode = CF_EXPECT(ConfigureGpuSettings(
         gpu_mode_vec[instance_index], gpu_vhost_user_mode_vec[instance_index],
+        gpu_renderer_features_vec[instance_index],
         vm_manager_vec[instance_index], guest_configs[instance_index],
         instance));
     calculated_gpu_mode_vec[instance_index] = gpu_mode_vec[instance_index];
