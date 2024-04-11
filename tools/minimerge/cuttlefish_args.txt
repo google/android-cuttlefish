@@ -86,21 +86,14 @@
 --map=host/libs/config/logging.h:base/cvd/cuttlefish/host/libs/config/logging.h
 --map=host/libs/image_aggregator/sparse_image_utils.cc:base/cvd/cuttlefish/host/libs/image_aggregator/sparse_image_utils.cc
 --map=host/libs/image_aggregator/sparse_image_utils.h:base/cvd/cuttlefish/host/libs/image_aggregator/sparse_image_utils.h
---map=host/libs/web/android_build_api.cpp:base/cvd/cuttlefish/host/libs/web/android_build_api.cpp
---map=host/libs/web/android_build_api.h:base/cvd/cuttlefish/host/libs/web/android_build_api.h
---map=host/libs/web/android_build_string.cpp:base/cvd/cuttlefish/host/libs/web/android_build_string.cpp
---map=host/libs/web/android_build_string.h:base/cvd/cuttlefish/host/libs/web/android_build_string.h
 --map=host/libs/web/http_client.cc:base/cvd/cuttlefish/host/libs/web/http_client/http_client.cc
 --map=host/libs/web/http_client.h:base/cvd/cuttlefish/host/libs/web/http_client/http_client.h
 --map=host/libs/web/http_client/http_client.cc:base/cvd/cuttlefish/host/libs/web/http_client/http_client.cc
 --map=host/libs/web/http_client/http_client.h:base/cvd/cuttlefish/host/libs/web/http_client/http_client.h
 --map=host/libs/web/http_client/http_client_util.cc:base/cvd/cuttlefish/host/libs/web/http_client/http_client_util.cc
 --map=host/libs/web/http_client/http_client_util.h:base/cvd/cuttlefish/host/libs/web/http_client/http_client_util.h
---map=host/libs/web/http_client/sso_client.cc:base/cvd/cuttlefish/host/libs/web/http_client/sso_client.cc
---map=host/libs/web/http_client/sso_client.h:base/cvd/cuttlefish/host/libs/web/http_client/sso_client.h
 --map=host/libs/web/http_client/unittest/http_client_util_test.cc:base/cvd/cuttlefish/host/libs/web/http_client/unittest/http_client_util_test.cc
 --map=host/libs/web/http_client/unittest/main_test.cc:base/cvd/cuttlefish/host/libs/web/http_client/unittest/main_test.cc
---map=host/libs/web/http_client/unittest/sso_client_test.cc:base/cvd/cuttlefish/host/libs/web/http_client/unittest/sso_client_test.cc
 
 # Protos go to the top directory
 --map=host/commands/assemble_cvd/proto/launch_cvd.proto:base/cvd/launch_cvd.proto
