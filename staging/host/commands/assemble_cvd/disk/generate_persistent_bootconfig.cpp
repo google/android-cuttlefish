@@ -30,6 +30,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/feature.h"
+#include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
 // Taken from external/avb/avbtool.py; this define is not in the headers
@@ -98,8 +99,7 @@ Result<void> GeneratePersistentBootconfig(
     bootconfig_hash_footer_cmd.AddParameter("--partition_name");
     bootconfig_hash_footer_cmd.AddParameter("bootconfig");
     bootconfig_hash_footer_cmd.AddParameter("--key");
-    bootconfig_hash_footer_cmd.AddParameter(
-        DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
+    bootconfig_hash_footer_cmd.AddParameter(TestKeyRsa4096());
     bootconfig_hash_footer_cmd.AddParameter("--algorithm");
     bootconfig_hash_footer_cmd.AddParameter("SHA256_RSA4096");
     int success = bootconfig_hash_footer_cmd.Start().Wait();
