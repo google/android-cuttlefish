@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <array>
 #include <memory>
+#include <string>
+#include <unordered_set>
 
 #include <android-base/strings.h>
 #include <android-base/logging.h>
@@ -30,6 +32,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/misc_info.h"
+#include "host/libs/config/config_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
 
@@ -88,19 +91,24 @@ std::string TargetFilesZip(const FetcherConfig& fetcher_config,
 }
 
 constexpr char kMiscInfoPath[] = "META/misc_info.txt";
-constexpr std::array kDefaultTargetImages = {
+constexpr std::array kVendorTargetImages = {
     "IMAGES/boot.img",
+    "IMAGES/dtbo.img",
+    "IMAGES/init_boot.img",
     "IMAGES/odm.img",
     "IMAGES/odm_dlkm.img",
     "IMAGES/recovery.img",
+    "IMAGES/system_dlkm.img",
     "IMAGES/userdata.img",
     "IMAGES/vbmeta.img",
+    "IMAGES/vbmeta_system_dlkm.img",
+    "IMAGES/vbmeta_vendor.img",
+    "IMAGES/vbmeta_vendor_dlkm.img",
     "IMAGES/vendor.img",
     "IMAGES/vendor_dlkm.img",
-    "IMAGES/vbmeta_vendor_dlkm.img",
-    "IMAGES/system_dlkm.img",
+    "IMAGES/vendor_kernel_boot.img",
 };
-constexpr std::array kDefaultTargetBuildProp = {
+constexpr std::array kVendorTargetBuildProps = {
     "ODM/build.prop",
     "ODM/etc/build.prop",
     "VENDOR/build.prop",
@@ -188,7 +196,7 @@ Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
       continue;
     } else if (!android::base::EndsWith(name, ".img")) {
       continue;
-    } else if (!Contains(kDefaultTargetImages, name)) {
+    } else if (!Contains(kVendorTargetImages, name)) {
       continue;
     }
     LOG(INFO) << "Writing " << name;
@@ -198,7 +206,7 @@ Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
   for (const auto& name : default_target_contents) {
     if (!android::base::EndsWith(name, "build.prop")) {
       continue;
-    } else if (!Contains(kDefaultTargetBuildProp, name)) {
+    } else if (!Contains(kVendorTargetBuildProps, name)) {
       continue;
     }
     FindImports(&default_target_archive, name);
@@ -212,7 +220,7 @@ Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
       continue;
     } else if (!android::base::EndsWith(name, ".img")) {
       continue;
-    } else if (Contains(kDefaultTargetImages, name)) {
+    } else if (Contains(kVendorTargetImages, name)) {
       continue;
     }
     LOG(INFO) << "Writing " << name;
@@ -222,7 +230,7 @@ Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
   for (const auto& name : system_target_contents) {
     if (!android::base::EndsWith(name, "build.prop")) {
       continue;
-    } else if (Contains(kDefaultTargetBuildProp, name)) {
+    } else if (Contains(kVendorTargetBuildProps, name)) {
       continue;
     }
     FindImports(&system_target_archive, name);
