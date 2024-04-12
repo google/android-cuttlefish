@@ -65,6 +65,13 @@ constexpr std::array kVendorTargetBuildProps = {
     "VENDOR/etc/build.prop",
 };
 
+struct TargetFiles {
+  Archive vendor_zip;
+  Archive system_zip;
+  std::vector<std::string> vendor_contents;
+  std::vector<std::string> system_contents;
+};
+
 void FindImports(Archive* archive, const std::string& build_prop_file) {
   auto contents = archive->ExtractToMemory(build_prop_file);
   auto lines = android::base::Split(contents, "\n");
@@ -85,31 +92,32 @@ bool IsTargetFilesBuildProp(const std::string& filename) {
   return android::base::EndsWith(filename, "build.prop");
 }
 
-Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
-                                   const std::string& system_target_zip,
-                                   const std::string& output_path) {
-  Archive default_target_archive(default_target_zip);
-  auto default_target_contents = default_target_archive.Contents();
-  CF_EXPECT(default_target_contents.size() != 0,
-            "Could not open " << default_target_zip);
+Result<TargetFiles> GetTargetFiles(const std::string& vendor_zip_path,
+                                   const std::string& system_zip_path) {
+  auto result = TargetFiles{
+      .vendor_zip = Archive(vendor_zip_path),
+      .system_zip = Archive(system_zip_path),
+  };
+  result.vendor_contents = result.vendor_zip.Contents();
+  result.system_contents = result.system_zip.Contents();
+  CF_EXPECTF(!result.vendor_contents.empty(), "Could not open {}",
+             vendor_zip_path);
+  CF_EXPECTF(!result.system_contents.empty(), "Could not open {}",
+             system_zip_path);
+  return result;
+}
 
-  Archive system_target_archive(system_target_zip);
-  auto system_target_contents = system_target_archive.Contents();
-  CF_EXPECT(system_target_contents.size() != 0,
-            "Could not open " << system_target_zip);
-
-  CF_EXPECT(EnsureDirectoryExists(output_path));
-  CF_EXPECT(EnsureDirectoryExists(output_path + "/META"));
-
-  CF_EXPECTF(Contains(default_target_contents, kMiscInfoPath),
+Result<void> CombineMiscInfo(TargetFiles& target_files,
+                             const std::string& misc_output_path) {
+  CF_EXPECTF(Contains(target_files.vendor_contents, kMiscInfoPath),
              "Default target files zip does not contain {}", kMiscInfoPath);
-  CF_EXPECTF(Contains(system_target_contents, kMiscInfoPath),
+  CF_EXPECTF(Contains(target_files.system_contents, kMiscInfoPath),
              "System target files zip does not contain {}", kMiscInfoPath);
 
   const MiscInfo default_misc = CF_EXPECT(
-      ParseMiscInfo(default_target_archive.ExtractToMemory(kMiscInfoPath)));
+      ParseMiscInfo(target_files.vendor_zip.ExtractToMemory(kMiscInfoPath)));
   const MiscInfo system_misc = CF_EXPECT(
-      ParseMiscInfo(system_target_archive.ExtractToMemory(kMiscInfoPath)));
+      ParseMiscInfo(target_files.system_zip.ExtractToMemory(kMiscInfoPath)));
 
   auto output_misc = default_misc;
   auto system_super_partitions = SuperPartitionComponents(system_misc);
@@ -123,60 +131,78 @@ Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
   CF_EXPECT(SetSuperPartitionComponents(system_super_partitions, &output_misc),
             "Failed to update super partitions components for misc_info");
 
-  auto misc_output_path = output_path + "/" + kMiscInfoPath;
-  SharedFD misc_output_file =
-      SharedFD::Creat(misc_output_path.c_str(), 0644);
+  SharedFD misc_output_file = SharedFD::Creat(misc_output_path.c_str(), 0644);
   CF_EXPECT(misc_output_file->IsOpen(), "Failed to open output misc file: "
                                             << misc_output_file->StrError());
 
   CF_EXPECT(WriteAll(misc_output_file, WriteMiscInfo(output_misc)) >= 0,
             "Failed to write output misc file contents: "
                 << misc_output_file->StrError());
+  return {};
+}
 
-  for (const auto& name : default_target_contents) {
+Result<void> ExtractTargetFiles(TargetFiles& target_files,
+                                const std::string& combined_output_path) {
+  for (const auto& name : target_files.vendor_contents) {
     if (!IsTargetFilesImage(name)) {
       continue;
     } else if (!Contains(kVendorTargetImages, name)) {
       continue;
     }
-    LOG(INFO) << "Writing " << name;
-    CF_EXPECT(default_target_archive.ExtractFiles({name}, output_path),
-              "Failed to extract " << name << " from the default target zip");
+    LOG(INFO) << "Writing " << name << " from vendor target";
+    CF_EXPECT(
+        target_files.vendor_zip.ExtractFiles({name}, combined_output_path),
+        "Failed to extract " << name << " from the vendor target zip");
   }
-  for (const auto& name : default_target_contents) {
+  for (const auto& name : target_files.vendor_contents) {
     if (!IsTargetFilesBuildProp(name)) {
       continue;
     } else if (!Contains(kVendorTargetBuildProps, name)) {
       continue;
     }
-    FindImports(&default_target_archive, name);
-    LOG(INFO) << "Writing " << name;
-    CF_EXPECT(default_target_archive.ExtractFiles({name}, output_path),
-              "Failed to extract " << name << " from the default target zip");
+    FindImports(&target_files.vendor_zip, name);
+    LOG(INFO) << "Writing " << name << " from vendor target";
+    CF_EXPECT(
+        target_files.vendor_zip.ExtractFiles({name}, combined_output_path),
+        "Failed to extract " << name << " from the vendor target zip");
   }
 
-  for (const auto& name : system_target_contents) {
+  for (const auto& name : target_files.system_contents) {
     if (!IsTargetFilesImage(name)) {
       continue;
     } else if (Contains(kVendorTargetImages, name)) {
       continue;
     }
-    LOG(INFO) << "Writing " << name;
-    CF_EXPECT(system_target_archive.ExtractFiles({name}, output_path),
-              "Failed to extract " << name << " from the system target zip");
+    LOG(INFO) << "Writing " << name << " from system target";
+    CF_EXPECT(
+        target_files.system_zip.ExtractFiles({name}, combined_output_path),
+        "Failed to extract " << name << " from the system target zip");
   }
-  for (const auto& name : system_target_contents) {
+  for (const auto& name : target_files.system_contents) {
     if (!IsTargetFilesBuildProp(name)) {
       continue;
     } else if (Contains(kVendorTargetBuildProps, name)) {
       continue;
     }
-    FindImports(&system_target_archive, name);
-    LOG(INFO) << "Writing " << name;
-    CF_EXPECT(system_target_archive.ExtractFiles({name}, output_path),
-              "Failed to extract " << name << " from the default target zip");
+    FindImports(&target_files.system_zip, name);
+    LOG(INFO) << "Writing " << name << " from system target";
+    CF_EXPECT(
+        target_files.system_zip.ExtractFiles({name}, combined_output_path),
+        "Failed to extract " << name << " from the system target zip");
   }
+  return {};
+}
 
+Result<void> CombineTargetZipFiles(const std::string& vendor_zip_path,
+                                   const std::string& system_zip_path,
+                                   const std::string& output_path) {
+  CF_EXPECT(EnsureDirectoryExists(output_path));
+  CF_EXPECT(EnsureDirectoryExists(output_path + "/META"));
+  auto target_files =
+      CF_EXPECT(GetTargetFiles(vendor_zip_path, system_zip_path));
+  CF_EXPECT(ExtractTargetFiles(target_files, output_path));
+  const auto misc_output_path = output_path + "/" + kMiscInfoPath;
+  CF_EXPECT(CombineMiscInfo(target_files, misc_output_path));
   return {};
 }
 
