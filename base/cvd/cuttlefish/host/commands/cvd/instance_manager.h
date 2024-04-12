@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 
-#include <mutex>
 #include <optional>
 #include <set>
 #include <string>
@@ -109,7 +108,6 @@ class InstanceManager {
 
   InstanceLockFileManager& lock_manager_;
   HostToolTargetManager& host_tool_target_manager_;
-  mutable std::mutex instance_db_mutex_;
   selector::InstanceDatabase& instance_db_;
 };
 
