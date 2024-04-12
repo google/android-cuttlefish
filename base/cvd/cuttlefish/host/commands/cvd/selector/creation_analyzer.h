@@ -28,7 +28,6 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unique_resource_allocator.h"
 #include "host/commands/cvd/instance_lock.h"
-#include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/start_selector_parser.h"
 
 namespace cuttlefish {
@@ -110,7 +109,6 @@ class CreationAnalyzer {
 
   static Result<GroupCreationInfo> Analyze(
       const CreationAnalyzerParam& param, const ucred& credential,
-      const InstanceDatabase& instance_database,
       InstanceLockFileManager& instance_lock_file_manager);
 
  private:
@@ -118,7 +116,6 @@ class CreationAnalyzer {
 
   CreationAnalyzer(const CreationAnalyzerParam& param, const ucred& credential,
                    StartSelectorParser&& selector_options_parser,
-                   const InstanceDatabase& instance_database,
                    InstanceLockFileManager& instance_lock_file_manager);
 
   Result<GroupCreationInfo> Analyze();
@@ -174,7 +171,6 @@ class CreationAnalyzer {
 
   // internal, temporary
   StartSelectorParser selector_options_parser_;
-  const InstanceDatabase& instance_database_;
   InstanceLockFileManager& instance_file_lock_manager_;
 };
 
