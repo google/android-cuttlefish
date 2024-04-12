@@ -205,9 +205,9 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
   std::lock_guard lock(instance_db_mutex_);
   cvd::Status status;
   const std::string config_json_name = cpp_basename(GetGlobalConfigFileLink());
-  auto instance_groups_res = instance_db_.InstanceGroups();
+  auto instance_groups_res = instance_db_.Clear();
   if (!instance_groups_res.ok()) {
-    WriteAll(err, fmt::format("Failed to access instance database: {}",
+    WriteAll(err, fmt::format("Failed to clear instance database: {}",
                               instance_groups_res.error().Message()));
     status.set_code(cvd::Status::INTERNAL);
     return status;
@@ -223,13 +223,6 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
     }
     RemoveFile(group.HomeDir() + "/cuttlefish_runtime");
     RemoveFile(group.HomeDir() + config_json_name);
-  }
-  auto clear_res = instance_db_.Clear();
-  if (!clear_res.ok()) {
-    WriteAll(err, fmt::format("Failed to clear instance database: {}\n",
-                              clear_res.error().Message()));
-    status.set_code(cvd::Status::INTERNAL);
-    return status;
   }
   // TODO(kwstephenkim): we need a better mechanism to make sure that
   // we clear all run_cvd processes.
