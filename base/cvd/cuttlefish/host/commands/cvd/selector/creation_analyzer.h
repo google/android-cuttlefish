@@ -109,8 +109,8 @@ class CreationAnalyzer {
   };
 
   static Result<GroupCreationInfo> Analyze(
-      const std::string& cmd, const CreationAnalyzerParam& param,
-      const ucred& credential, const InstanceDatabase& instance_database,
+      const CreationAnalyzerParam& param, const ucred& credential,
+      const InstanceDatabase& instance_database,
       InstanceLockFileManager& instance_lock_file_manager);
 
  private:

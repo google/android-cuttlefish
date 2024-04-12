@@ -58,8 +58,7 @@ class InstanceManager {
                   selector::InstanceDatabase& instance_db);
 
   // For cvd start
-  Result<GroupCreationInfo> Analyze(const std::string& sub_cmd,
-                                    const CreationAnalyzerParam& param,
+  Result<GroupCreationInfo> Analyze(const CreationAnalyzerParam& param,
                                     const ucred& credential);
 
   Result<LocalInstanceGroup> SelectGroup(const cvd_common::Args& selector_args,
