@@ -21,20 +21,6 @@ name: HostImage
 on: [pull_request, push]
 
 jobs:
-  test-pbuilder-job:
-    runs-on: ubuntu-latest
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Prepare building environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Build cuttlefish package
-      run: cd cuttlefish-host-image-installer && ./build_cf_packages.sh
-      
   build-installer-iso-job:
     runs-on: ubuntu-latest
     container:
@@ -56,6 +42,53 @@ jobs:
         name: preseed-mini
         path: cuttlefish-host-image-installer/preseed-mini.iso.xz
 
+  build-cuttlefish-deb-job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Prepare building environment
+      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
+    - name: Pbuilder arm64 create
+      run: pbuilder-dist stable arm64 create
+    - name: Pbuilder arm64 update
+      run: pbuilder-dist stable arm64 update
+    - name: Building package
+      run: cd cuttlefish-host-image-installer && ./build_cf_packages.sh
+    - name: Create artifact
+      run: cd cuttlefish-host-image-installer && cp -f cuttlefish-common-buildplace/*.deb . && 7z a -mx=9 cuttlefish_packages.7z *.deb
+    - name: Publish cuttlefish_packages.7z
+      uses: actions/upload-artifact@v3
+      with:
+        name: cuttlefish_packages
+        path: cuttlefish-host-image-installer/cuttlefish_packages.7z
+
+
+  build-metapackage-deb-job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Prepare pbuilder environment
+      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
+    - name: Prepare building environment
+      run: sudo  apt-get update && sudo apt-get upgrade -y && apt-get install -y sudo && apt-get install -y debconf-utils
+    - name: Prepare tzdata
+      run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata
+    - name: Prepare pbuilder tool
+      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
+    - name: Prepare other tools
+      run: apt-get install -y ubuntu-dev-tools qemu-user-static && apt-get install -y git ca-certificates less && apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && apt-get install -y build-essential autoconf automake && apt-get install -y p7zip-full
+    - name: Building package
+      run: cd cuttlefish-host-image-installer/metapackage-linaro-gigamp && debuild --no-sign
+    - name: Create artifact
+      run: cd cuttlefish-host-image-installer && 7z a -mx=9 meta_gigamp_packages.7z *.deb
+    - name: Publish meta_gigamp_packages.7z
+      uses: actions/upload-artifact@v3
+      with:
+        name: meta_gigamp_packages
+        path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
+        
   build-uboot-qemu-job:
     runs-on: ubuntu-latest
     container:
