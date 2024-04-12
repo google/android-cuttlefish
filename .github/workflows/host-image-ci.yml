@@ -33,7 +33,7 @@ jobs:
     - name: Pbuilder arm64 update
       run: pbuilder-dist stable arm64 update
     - name: Build cuttlefish package
-      run: cd cuttlefish-host-image-installer && ./build_cf_package.sh
+      run: cd cuttlefish-host-image-installer && ./build_cf_packages.sh
       
   build-installer-iso-job:
     runs-on: ubuntu-latest
