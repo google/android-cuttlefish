@@ -30,6 +30,7 @@
 #include "common/libs/utils/archive.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/misc_info.h"
 #include "host/libs/config/config_utils.h"
@@ -37,58 +38,7 @@
 #include "host/libs/config/fetcher_config.h"
 
 namespace cuttlefish {
-
-Result<bool> SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config,
-                                       const std::string& default_target_zip,
-                                       const std::string& system_target_zip) {
-  bool has_default_target_zip = false;
-  bool has_system_target_zip = false;
-  if (default_target_zip != "" &&
-      default_target_zip != "unset") {
-    has_default_target_zip = true;
-  }
-  if (system_target_zip != "" &&
-      system_target_zip != "unset") {
-    has_system_target_zip = true;
-  }
-  CF_EXPECT(has_default_target_zip == has_system_target_zip,
-            "default_target_zip and system_target_zip "
-            "flags must be specified together");
-  // at this time, both should be the same, either true or false
-  // therefore, I only check one variable
-  if (has_default_target_zip) {
-    return true;
-  }
-
-  bool has_default_build = false;
-  bool has_system_build = false;
-  for (const auto& file_iter : fetcher_config.get_cvd_files()) {
-    if (file_iter.second.source == FileSource::DEFAULT_BUILD) {
-      has_default_build = true;
-    } else if (file_iter.second.source == FileSource::SYSTEM_BUILD) {
-      has_system_build = true;
-    }
-  }
-  return has_default_build && has_system_build;
-}
-
 namespace {
-
-std::string TargetFilesZip(const FetcherConfig& fetcher_config,
-                           FileSource source) {
-  for (const auto& file_iter : fetcher_config.get_cvd_files()) {
-    const auto& file_path = file_iter.first;
-    const auto& file_info = file_iter.second;
-    if (file_info.source != source) {
-      continue;
-    }
-    std::string expected_filename = "target_files-" + file_iter.second.build_id;
-    if (file_path.find(expected_filename) != std::string::npos) {
-      return file_path;
-    }
-  }
-  return "";
-}
 
 constexpr char kMiscInfoPath[] = "META/misc_info.txt";
 constexpr std::array kVendorTargetImages = {
@@ -126,6 +76,15 @@ void FindImports(Archive* archive, const std::string& build_prop_file) {
   }
 }
 
+bool IsTargetFilesImage(const std::string& filename) {
+  return android::base::StartsWith(filename, "IMAGES/") &&
+         android::base::EndsWith(filename, ".img");
+}
+
+bool IsTargetFilesBuildProp(const std::string& filename) {
+  return android::base::EndsWith(filename, "build.prop");
+}
+
 Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
                                    const std::string& system_target_zip,
                                    const std::string& output_path) {
@@ -139,42 +98,25 @@ Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
   CF_EXPECT(system_target_contents.size() != 0,
             "Could not open " << system_target_zip);
 
-  CF_EXPECT(
-      mkdir(output_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) >= 0,
-      "Could not create directory " << output_path);
+  CF_EXPECT(EnsureDirectoryExists(output_path));
+  CF_EXPECT(EnsureDirectoryExists(output_path + "/META"));
 
-  std::string output_meta = output_path + "/META";
-  CF_EXPECT(
-      mkdir(output_meta.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) >= 0,
-      "Could not create directory " << output_meta);
+  CF_EXPECTF(Contains(default_target_contents, kMiscInfoPath),
+             "Default target files zip does not contain {}", kMiscInfoPath);
+  CF_EXPECTF(Contains(system_target_contents, kMiscInfoPath),
+             "System target files zip does not contain {}", kMiscInfoPath);
 
-  CF_EXPECT(
-      std::find(default_target_contents.begin(), default_target_contents.end(),
-                kMiscInfoPath) != default_target_contents.end(),
-      "Default target files zip does not have " << kMiscInfoPath);
-
-  CF_EXPECT(
-      std::find(system_target_contents.begin(), system_target_contents.end(),
-                kMiscInfoPath) != system_target_contents.end(),
-      "System target files zip does not have " << kMiscInfoPath);
-
-  const auto default_misc =
-      ParseMiscInfo(default_target_archive.ExtractToMemory(kMiscInfoPath));
-  CF_EXPECT(default_misc.size() != 0,
-            "Could not read the default misc_info.txt file.");
-
-  const auto system_misc =
-      ParseMiscInfo(system_target_archive.ExtractToMemory(kMiscInfoPath));
-  CF_EXPECT(system_misc.size() != 0,
-            "Could not read the system misc_info.txt file.");
+  const MiscInfo default_misc = CF_EXPECT(
+      ParseMiscInfo(default_target_archive.ExtractToMemory(kMiscInfoPath)));
+  const MiscInfo system_misc = CF_EXPECT(
+      ParseMiscInfo(system_target_archive.ExtractToMemory(kMiscInfoPath)));
 
   auto output_misc = default_misc;
   auto system_super_partitions = SuperPartitionComponents(system_misc);
   // Ensure specific skipped partitions end up in the misc_info.txt
   for (auto partition :
        {"odm", "odm_dlkm", "vendor", "vendor_dlkm", "system_dlkm"}) {
-    if (std::find(system_super_partitions.begin(), system_super_partitions.end(),
-                  partition) == system_super_partitions.end()) {
+    if (!Contains(system_super_partitions, partition)) {
       system_super_partitions.push_back(partition);
     }
   }
@@ -192,9 +134,7 @@ Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
                 << misc_output_file->StrError());
 
   for (const auto& name : default_target_contents) {
-    if (!android::base::StartsWith(name, "IMAGES/")) {
-      continue;
-    } else if (!android::base::EndsWith(name, ".img")) {
+    if (!IsTargetFilesImage(name)) {
       continue;
     } else if (!Contains(kVendorTargetImages, name)) {
       continue;
@@ -204,7 +144,7 @@ Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
               "Failed to extract " << name << " from the default target zip");
   }
   for (const auto& name : default_target_contents) {
-    if (!android::base::EndsWith(name, "build.prop")) {
+    if (!IsTargetFilesBuildProp(name)) {
       continue;
     } else if (!Contains(kVendorTargetBuildProps, name)) {
       continue;
@@ -216,9 +156,7 @@ Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
   }
 
   for (const auto& name : system_target_contents) {
-    if (!android::base::StartsWith(name, "IMAGES/")) {
-      continue;
-    } else if (!android::base::EndsWith(name, ".img")) {
+    if (!IsTargetFilesImage(name)) {
       continue;
     } else if (Contains(kVendorTargetImages, name)) {
       continue;
@@ -228,7 +166,7 @@ Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
               "Failed to extract " << name << " from the system target zip");
   }
   for (const auto& name : system_target_contents) {
-    if (!android::base::EndsWith(name, "build.prop")) {
+    if (!IsTargetFilesBuildProp(name)) {
       continue;
     } else if (Contains(kVendorTargetBuildProps, name)) {
       continue;
@@ -256,6 +194,22 @@ bool BuildSuperImage(const std::string& combined_target_zip,
              combined_target_zip,
              output_path,
          }) == 0;
+}
+
+std::string TargetFilesZip(const FetcherConfig& fetcher_config,
+                           FileSource source) {
+  for (const auto& file_iter : fetcher_config.get_cvd_files()) {
+    const auto& file_path = file_iter.first;
+    const auto& file_info = file_iter.second;
+    if (file_info.source != source) {
+      continue;
+    }
+    std::string expected_filename = "target_files-" + file_iter.second.build_id;
+    if (file_path.find(expected_filename) != std::string::npos) {
+      return file_path;
+    }
+  }
+  return "";
 }
 
 Result<void> RebuildSuperImage(const FetcherConfig& fetcher_config,
@@ -319,6 +273,38 @@ class SuperImageRebuilderImpl : public SuperImageRebuilder {
 
 }  // namespace
 
+Result<bool> SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config,
+                                       const std::string& default_target_zip,
+                                       const std::string& system_target_zip) {
+  bool has_default_target_zip = false;
+  bool has_system_target_zip = false;
+  if (default_target_zip != "" && default_target_zip != "unset") {
+    has_default_target_zip = true;
+  }
+  if (system_target_zip != "" && system_target_zip != "unset") {
+    has_system_target_zip = true;
+  }
+  CF_EXPECT(has_default_target_zip == has_system_target_zip,
+            "default_target_zip and system_target_zip "
+            "flags must be specified together");
+  // at this time, both should be the same, either true or false
+  // therefore, I only check one variable
+  if (has_default_target_zip) {
+    return true;
+  }
+
+  bool has_default_build = false;
+  bool has_system_build = false;
+  for (const auto& file_iter : fetcher_config.get_cvd_files()) {
+    if (file_iter.second.source == FileSource::DEFAULT_BUILD) {
+      has_default_build = true;
+    } else if (file_iter.second.source == FileSource::SYSTEM_BUILD) {
+      has_system_build = true;
+    }
+  }
+  return has_default_build && has_system_build;
+}
+
 fruit::Component<fruit::Required<const FetcherConfig, const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>,
                  SuperImageRebuilder>
@@ -328,4 +314,4 @@ SuperImageRebuilderComponent() {
       .addMultibinding<SetupFeature, SuperImageRebuilder>();
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
