@@ -34,10 +34,11 @@ import (
 )
 
 type HTTPHelper struct {
-	Client       *http.Client
-	RootEndpoint string
-	Dumpster     io.Writer
-	AccessToken  string
+	Client            *http.Client
+	RootEndpoint      string
+	Dumpster          io.Writer
+	AccessToken       string
+	HTTPBasicUsername string
 }
 
 func (h *HTTPHelper) NewGetRequest(path string) *HTTPRequestBuilder {
@@ -135,6 +136,13 @@ func (rb *HTTPRequestBuilder) SetHeader(key, value string) {
 	rb.request.Header.Set(key, value)
 }
 
+func (rb *HTTPRequestBuilder) SetBasicAuth() {
+	if rb.request == nil {
+		return
+	}
+	rb.request.SetBasicAuth(rb.helper.HTTPBasicUsername, "")
+}
+
 type RetryOptions struct {
 	StatusCodes []int
 	NumRetries  uint
@@ -161,8 +169,13 @@ func (rb *HTTPRequestBuilder) JSONResDoWithRetries(ret any, retryOpts RetryOptio
 }
 
 func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Response, error) {
+	if rb.helper.AccessToken != "" && rb.helper.HTTPBasicUsername != "" {
+		return nil, fmt.Errorf("cannot set both access token and basic auth")
+	}
 	if rb.helper.AccessToken != "" {
 		rb.AddHeader("Authorization", "Bearer "+rb.helper.AccessToken)
+	} else if rb.helper.HTTPBasicUsername != "" {
+		rb.SetBasicAuth()
 	}
 	if rb.err != nil {
 		return nil, rb.err
