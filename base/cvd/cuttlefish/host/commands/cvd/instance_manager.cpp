@@ -85,11 +85,10 @@ Result<void> InstanceManager::LoadFromJson(const Json::Value& db_json) {
 }
 
 Result<InstanceManager::GroupCreationInfo> InstanceManager::Analyze(
-    const std::string& sub_cmd, const CreationAnalyzerParam& param,
-    const ucred& credential) {
+    const CreationAnalyzerParam& param, const ucred& credential) {
   std::lock_guard lock(instance_db_mutex_);
-  return CF_EXPECT(CreationAnalyzer::Analyze(
-      sub_cmd, param, credential, instance_db_, lock_manager_));
+  return CF_EXPECT(CreationAnalyzer::Analyze(param, credential, instance_db_,
+                                             lock_manager_));
 }
 
 Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(

@@ -38,19 +38,10 @@
 namespace cuttlefish {
 namespace selector {
 
-static bool IsCvdStart(const std::string& cmd) {
-  if (cmd.empty()) {
-    return false;
-  }
-  return cmd == "start" || cmd == "launch_cvd";
-}
-
 Result<GroupCreationInfo> CreationAnalyzer::Analyze(
-    const std::string& cmd, const CreationAnalyzerParam& param,
-    const ucred& credential, const InstanceDatabase& instance_database,
+    const CreationAnalyzerParam& param, const ucred& credential,
+    const InstanceDatabase& instance_database,
     InstanceLockFileManager& instance_lock_file_manager) {
-  CF_EXPECT(IsCvdStart(cmd),
-            "CreationAnalyzer::Analyze() is for cvd start only.");
   auto selector_options_parser =
       CF_EXPECT(StartSelectorParser::ConductSelectFlagsParser(
           param.selector_args, param.cmd_args, param.envs));
