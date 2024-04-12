@@ -217,4 +217,7 @@ type ListUploadDirectoriesResponse struct {
 	Items []*UploadDirectory `json:"items"`
 }
 
-type StopCVDResponse struct{}
+type EmptyResponse struct{}
+
+type StopCVDResponse = EmptyResponse
+
