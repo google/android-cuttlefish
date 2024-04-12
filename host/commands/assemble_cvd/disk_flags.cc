@@ -16,15 +16,18 @@
 
 #include "host/commands/assemble_cvd/disk_flags.h"
 
+#include <sys/statvfs.h>
+
+#include <fstream>
+#include <string>
+#include <vector>
+
 #include <android-base/logging.h>
 #include <android-base/parsebool.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
-#include <sys/statvfs.h>
-
-#include <fstream>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
@@ -40,6 +43,7 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
 #include "host/commands/assemble_cvd/vendor_dlkm_utils.h"
+#include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/inject.h"
@@ -635,15 +639,8 @@ Result<void> VbmetaEnforceMinimumSize(
         instance.vbmeta_system_dlkm_image()}) {
     // In some configurations of cuttlefish, the vendor dlkm vbmeta image does
     // not exist
-    if (FileExists(vbmeta_image) && FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
-      auto fd = SharedFD::Open(vbmeta_image, O_RDWR);
-      CF_EXPECTF(fd->IsOpen(), "Could not open \"{}\": {}", vbmeta_image,
-                 fd->StrError());
-      CF_EXPECTF(fd->Truncate(VBMETA_MAX_SIZE) == 0,
-                 "`truncate --size={} {}` failed: {}", VBMETA_MAX_SIZE,
-                 vbmeta_image, fd->StrError());
-      CF_EXPECTF(fd->Fsync() == 0, "fsync on `{}` failed: {}", vbmeta_image,
-                 fd->StrError());
+    if (FileExists(vbmeta_image)) {
+      CF_EXPECT(EnforceVbMetaSize(vbmeta_image));
     }
   }
   return {};
