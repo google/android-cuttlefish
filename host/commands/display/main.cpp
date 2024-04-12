@@ -37,9 +37,7 @@ static const std::string kAddUsage =
 
 Adds and connects a display to the given virtual device.
 
-usage: cvd display add --width=720 --height=1280
-
-       cvd display add \\
+usage: cvd display add \\
         --display=width=1280,height=800 \\
         --display=width=1920,height=1080,refresh_rate_hz=60
 )";
