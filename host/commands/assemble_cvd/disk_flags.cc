@@ -360,14 +360,18 @@ std::vector<ImagePartition> android_composite_disk_config(
       .image_file_path = AbsolutePath(instance.new_vendor_boot_image()),
       .read_only = FLAGS_use_overlay,
   });
+  auto vbmeta_image = instance.new_vbmeta_image();
+  if (!FileExists(vbmeta_image)) {
+    vbmeta_image = instance.vbmeta_image();
+  }
   partitions.push_back(ImagePartition{
       .label = "vbmeta_a",
-      .image_file_path = AbsolutePath(instance.vbmeta_image()),
+      .image_file_path = AbsolutePath(vbmeta_image),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_b",
-      .image_file_path = AbsolutePath(instance.vbmeta_image()),
+      .image_file_path = AbsolutePath(vbmeta_image),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
@@ -634,8 +638,8 @@ Result<void> VbmetaEnforceMinimumSize(
   // libavb expects to be able to read the maximum vbmeta size, so we must
   // provide a partition which matches this or the read will fail
   for (const auto& vbmeta_image :
-       {instance.vbmeta_image(), instance.vbmeta_system_image(),
-        instance.vbmeta_vendor_dlkm_image(),
+       {instance.vbmeta_image(), instance.new_vbmeta_image(),
+        instance.vbmeta_system_image(), instance.vbmeta_vendor_dlkm_image(),
         instance.vbmeta_system_dlkm_image()}) {
     // In some configurations of cuttlefish, the vendor dlkm vbmeta image does
     // not exist
@@ -968,6 +972,9 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       const std::string new_super_image_path =
           const_instance.PerInstancePath("super.img");
       instance.set_new_super_image(new_super_image_path);
+      const std::string new_vbmeta_image_path =
+          const_instance.PerInstancePath("os_vbmeta.img");
+      instance.set_new_super_image(new_vbmeta_image_path);
     }
 
     instance.set_new_vbmeta_vendor_dlkm_image(
