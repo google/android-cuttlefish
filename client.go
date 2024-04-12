@@ -55,10 +55,15 @@ func (e *ApiCallError) Is(target error) bool {
 
 type AuthnOpts struct {
 	OIDCToken *OIDCToken
+	HTTPBasic *HTTPBasic
 }
 
 type OIDCToken struct {
 	Value string
+}
+
+type HTTPBasic struct {
+	Username string
 }
 
 type ServiceOptions struct {
@@ -104,8 +109,13 @@ func NewService(opts *ServiceOptions) (Service, error) {
 		}
 		helper.Client.Transport = &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
 	}
-	if opts.Authn != nil && opts.Authn.OIDCToken != nil {
-		helper.AccessToken = opts.Authn.OIDCToken.Value
+	if opts.Authn != nil {
+		if opts.Authn.OIDCToken != nil {
+			helper.AccessToken = opts.Authn.OIDCToken.Value
+		}
+		if opts.Authn.HTTPBasic != nil {
+			helper.HTTPBasicUsername = opts.Authn.HTTPBasic.Username
+		}
 	}
 	return &serviceImpl{ServiceOptions: opts, httpHelper: helper}, nil
 }
