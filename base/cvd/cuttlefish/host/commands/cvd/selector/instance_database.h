@@ -51,7 +51,10 @@ class InstanceDatabase {
 
   Result<std::vector<LocalInstanceGroup>> InstanceGroups() const;
   Result<bool> RemoveInstanceGroup(const std::string& group_name);
-  Result<void> Clear();
+  /**
+   * Empties the database and returns the recently deleted instance groups.
+   */
+  Result<std::vector<LocalInstanceGroup>> Clear();
 
   Result<std::vector<LocalInstanceGroup>> FindGroups(const Query& query) const {
     return FindGroups(Queries{query});

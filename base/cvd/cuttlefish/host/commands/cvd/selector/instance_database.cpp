@@ -80,11 +80,12 @@ Result<bool> InstanceDatabase::IsEmpty() const {
       });
 }
 
-Result<void> InstanceDatabase::Clear() {
-  return viewer_.WithExclusiveLock<void>(
-      [](std::vector<LocalInstanceGroup>& groups) -> Result<void> {
+Result<std::vector<LocalInstanceGroup>> InstanceDatabase::Clear() {
+  return viewer_.WithExclusiveLock<std::vector<LocalInstanceGroup>>(
+      [](std::vector<LocalInstanceGroup>& groups) {
+        auto copy = groups;
         groups.clear();
-        return {};
+        return copy;
       });
 }
 
