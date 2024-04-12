@@ -40,14 +40,13 @@ namespace selector {
 
 Result<GroupCreationInfo> CreationAnalyzer::Analyze(
     const CreationAnalyzerParam& param, const ucred& credential,
-    const InstanceDatabase& instance_database,
     InstanceLockFileManager& instance_lock_file_manager) {
   auto selector_options_parser =
       CF_EXPECT(StartSelectorParser::ConductSelectFlagsParser(
           param.selector_args, param.cmd_args, param.envs));
   CreationAnalyzer analyzer(param, credential,
                             std::move(selector_options_parser),
-                            instance_database, instance_lock_file_manager);
+                            instance_lock_file_manager);
   auto result = CF_EXPECT(analyzer.Analyze());
   return result;
 }
@@ -55,14 +54,12 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze(
 CreationAnalyzer::CreationAnalyzer(
     const CreationAnalyzerParam& param, const ucred& credential,
     StartSelectorParser&& selector_options_parser,
-    const InstanceDatabase& instance_database,
     InstanceLockFileManager& instance_file_lock_manager)
     : cmd_args_(param.cmd_args),
       envs_(param.envs),
       selector_args_(param.selector_args),
       credential_(credential),
       selector_options_parser_{std::move(selector_options_parser)},
-      instance_database_{instance_database},
       instance_file_lock_manager_{instance_file_lock_manager} {}
 
 static std::unordered_map<unsigned, InstanceLockFile> ConstructIdLockFileMap(
@@ -76,23 +73,11 @@ static std::unordered_map<unsigned, InstanceLockFile> ConstructIdLockFileMap(
   return mapping;
 }
 
-static Result<bool> IsIdAvailable(const InstanceDatabase& instance_database,
-                                  const unsigned id) {
-  auto subset =
-      CF_EXPECT(instance_database.FindInstances(Query{kInstanceIdField, id}));
-  return subset.empty();
-}
-
 Result<std::vector<PerInstanceInfo>>
 CreationAnalyzer::AnalyzeInstanceIdsInternal(
     const std::vector<unsigned>& requested_instance_ids) {
   CF_EXPECT(!requested_instance_ids.empty(),
             "Instance IDs were specified, so should be one or more.");
-  for (const auto id : requested_instance_ids) {
-    CF_EXPECT(IsIdAvailable(instance_database_, id),
-              "instance ID #" << id << " is requested but not available.");
-  }
-
   std::vector<std::string> per_instance_names;
   if (selector_options_parser_.PerInstanceNames()) {
     per_instance_names = *selector_options_parser_.PerInstanceNames();
@@ -129,21 +114,6 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
   return instance_info;
 }
 
-/*
- * Filters out the ids in id_pool that already exist in instance_database
- */
-static Result<std::vector<unsigned>> CollectUnusedIds(
-    const InstanceDatabase& instance_database,
-    std::vector<unsigned>&& id_pool) {
-  std::vector<unsigned> collected_ids;
-  for (const auto id : id_pool) {
-    if (CF_EXPECT(IsIdAvailable(instance_database, id))) {
-      collected_ids.push_back(id);
-    }
-  }
-  return collected_ids;
-}
-
 struct NameLockFilePair {
   std::string name;
   InstanceLockFile lock_file;
@@ -169,9 +139,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
   for (const auto& [id, _] : id_to_lockfile_map) {
     id_pool.push_back(id);
   }
-  auto unused_id_pool =
-      CF_EXPECT(CollectUnusedIds(instance_database_, std::move(id_pool)));
-  auto unique_id_allocator = IdAllocator::New(unused_id_pool);
+  auto unique_id_allocator = IdAllocator::New(id_pool);
   CF_EXPECT(unique_id_allocator != nullptr,
             "Memory allocation for UniqueResourceAllocator failed.");
 
