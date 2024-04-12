@@ -192,6 +192,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_vbmeta_image(
     const std::string& vbmeta_image) {
   (*Dictionary())[kVbmetaImage] = vbmeta_image;
 }
+static constexpr char kNewVbmetaImage[] = "new_vbmeta_image";
+std::string CuttlefishConfig::InstanceSpecific::new_vbmeta_image() const {
+  return (*Dictionary())[kNewVbmetaImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_new_vbmeta_image(
+    const std::string& new_vbmeta_image) {
+  (*Dictionary())[kNewVbmetaImage] = new_vbmeta_image;
+}
 static constexpr char kVbmetaSystemImage[] = "vbmeta_system_image";
 std::string CuttlefishConfig::InstanceSpecific::vbmeta_system_image() const {
   return (*Dictionary())[kVbmetaSystemImage].asString();
@@ -1247,7 +1255,7 @@ std::string CuttlefishConfig::InstanceSpecific::ap_composite_disk_path()
 }
 
 std::string CuttlefishConfig::InstanceSpecific::vbmeta_path() const {
-  return AbsolutePath(PerInstancePath("vbmeta.img"));
+  return AbsolutePath(PerInstancePath("persistent_vbmeta.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::ap_vbmeta_path() const {
@@ -1693,6 +1701,17 @@ void CuttlefishConfig::MutableInstanceSpecific::set_use_pmem(
 }
 bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
   return (*Dictionary())[kCrosvmUsePmem].asBool();
+}
+
+static constexpr char kSockVsockWaitAdbdStart[] =
+    "sock_vsock_proxy_wait_adbd_start";
+void CuttlefishConfig::MutableInstanceSpecific::
+    set_sock_vsock_proxy_wait_adbd_start(const bool wait_adbd_start) {
+  (*Dictionary())[kSockVsockWaitAdbdStart] = wait_adbd_start;
+}
+bool CuttlefishConfig::InstanceSpecific::sock_vsock_proxy_wait_adbd_start()
+    const {
+  return (*Dictionary())[kSockVsockWaitAdbdStart].asBool();
 }
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(

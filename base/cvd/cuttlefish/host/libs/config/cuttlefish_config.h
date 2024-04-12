@@ -42,7 +42,6 @@ namespace cuttlefish {
 
 enum class SecureHal {
   Unknown,
-  GuestGatekeeperInsecure,
   GuestKeymintInsecure,
   HostKeymintInsecure,
   HostKeymintSecure,
@@ -501,6 +500,14 @@ class CuttlefishConfig {
     bool crosvm_use_balloon() const;
     bool crosvm_use_rng() const;
     bool use_pmem() const;
+    /* fmayle@ found out that when cuttlefish starts from the saved snapshot
+     * that was saved after ADBD start event, the socket_vsock_proxy must not
+     * wait for the AdbdStarted event.
+     *
+     * This instance-specific configuration tells the host sock_vsock_proxy
+     * not to wait for the adbd start event.
+     */
+    bool sock_vsock_proxy_wait_adbd_start() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -509,6 +516,7 @@ class CuttlefishConfig {
 
     std::string persistent_bootconfig_path() const;
 
+    // used for the persistent_composite_disk vbmeta
     std::string vbmeta_path() const;
 
     std::string ap_vbmeta_path() const;
@@ -627,6 +635,7 @@ class CuttlefishConfig {
     std::string vendor_boot_image() const;
     std::string new_vendor_boot_image() const;
     std::string vbmeta_image() const;
+    std::string new_vbmeta_image() const;
     std::string vbmeta_system_image() const;
     std::string vbmeta_vendor_dlkm_image() const;
     std::string new_vbmeta_vendor_dlkm_image() const;
@@ -729,6 +738,7 @@ class CuttlefishConfig {
     void set_crosvm_use_balloon(const bool use_balloon);
     void set_crosvm_use_rng(const bool use_rng);
     void set_use_pmem(const bool use_pmem);
+    void set_sock_vsock_proxy_wait_adbd_start(const bool);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
@@ -828,6 +838,7 @@ class CuttlefishConfig {
     void set_vendor_boot_image(const std::string& vendor_boot_image);
     void set_new_vendor_boot_image(const std::string& new_vendor_boot_image);
     void set_vbmeta_image(const std::string& vbmeta_image);
+    void set_new_vbmeta_image(const std::string& new_vbmeta_image);
     void set_vbmeta_system_image(const std::string& vbmeta_system_image);
     void set_vbmeta_vendor_dlkm_image(
         const std::string& vbmeta_vendor_dlkm_image);
