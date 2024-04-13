@@ -94,7 +94,6 @@ cvd_host_tools = [
     "cvd_internal_stop",
     "cvd_host_bugreport",
     "cvd_status",
-    "cvd_test_gce_driver",
     "cvdremote",
     "e2fsdroid",
     "extract-ikconfig",
@@ -320,8 +319,14 @@ cvd_host_bootloader = [
 ]
 
 prebuilt_etc_host {
-    name: "cvd_avb_testkey",
-    filename: "cvd_avb_testkey.pem",
+    name: "cvd_avb_testkey_rsa2048",
+    filename: "cvd_avb_testkey_rsa2048.pem",
+    src: ":avb_testkey_rsa2048",
+}
+
+prebuilt_etc_host {
+    name: "cvd_avb_testkey_rsa4096",
+    filename: "cvd_avb_testkey_rsa4096.pem",
     src: ":avb_testkey_rsa4096",
 }
 
@@ -330,8 +335,10 @@ automotive_proxy_config = [
 ]
 
 cvd_host_avb_testkey = [
-    "cvd_avb_pubkey",
-    "cvd_avb_testkey",
+    "cvd_avb_pubkey_rsa2048",
+    "cvd_avb_pubkey_rsa4096",
+    "cvd_avb_testkey_rsa2048",
+    "cvd_avb_testkey_rsa4096",
 ]
 
 cvd_host_netsim_gui_assets = [
