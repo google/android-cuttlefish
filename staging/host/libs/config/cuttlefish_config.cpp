@@ -131,6 +131,8 @@ static SecureHal StringToSecureHal(std::string mode) {
       {"keymint", SecureHal::HostKeymintSecure},
       {"host_secure_keymint", SecureHal::HostKeymintSecure},
       {"host_keymint_secure", SecureHal::HostKeymintSecure},
+      {"guest_gatekeeper_insecure", SecureHal::GuestGatekeeperInsecure},
+      {"guest_insecure_gatekeeper", SecureHal::GuestGatekeeperInsecure},
       {"guest_insecure_keymint", SecureHal::GuestKeymintInsecure},
       {"guest_keymint_insecure", SecureHal::GuestKeymintInsecure},
       {"gatekeeper", SecureHal::HostGatekeeperSecure},

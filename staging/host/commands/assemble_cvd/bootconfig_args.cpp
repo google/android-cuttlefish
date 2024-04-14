@@ -196,6 +196,12 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
           ? "com.android.hardware.keymint.rust_nonsecure"
           : "com.android.hardware.keymint.rust_cf_remote";
 
+  // Preemptive for when we set up the HAL to be runtime selectable
+  bootconfig_args["androidboot.vendor.apex.com.android.hardware.gatekeeper"] =
+      config.secure_hals().count(SecureHal::GuestGatekeeperInsecure)
+          ? "com.android.hardware.gatekeeper.nonsecure"
+          : "com.android.hardware.gatekeeper.cf_remote";
+
   std::vector<std::string> args = instance.extra_bootconfig_args();
 
   LOG(DEBUG) << "Parsing extra_bootconfig_args of size:" << args.size()
