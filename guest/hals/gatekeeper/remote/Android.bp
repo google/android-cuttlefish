@@ -69,7 +69,7 @@ prebuilt_etc {
 }
 
 apex {
-    name: "com.google.cf.gatekeeper",
+    name: "com.android.hardware.gatekeeper.cf_remote",
     manifest: "apex_manifest.json",
     file_contexts: "apex_file_contexts",
     key: "com.google.cf.apex.key",
