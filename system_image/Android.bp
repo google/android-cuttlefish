@@ -908,6 +908,7 @@ android_system_image {
                 "com.android.i18n",
                 "com.android.ipsec",
                 "com.android.hardware.gatekeeper.cf_remote",
+                "com.android.hardware.gatekeeper.nonsecure",
                 "com.android.hardware.keymint.rust_cf_remote",
                 "com.android.hardware.keymint.rust_nonsecure",
                 "com.android.location.provider",

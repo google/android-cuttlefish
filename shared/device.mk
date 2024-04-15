@@ -342,6 +342,7 @@ PRODUCT_PACKAGES += $(LOCAL_DUMPSTATE_PRODUCT_PACKAGE)
 #
 PRODUCT_PACKAGES += \
   com.android.hardware.gatekeeper.cf_remote \
+  com.android.hardware.gatekeeper.nonsecure \
 
 #
 # Oemlock
