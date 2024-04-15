@@ -11,3 +11,7 @@ vendor.google.wireless_charger.IWirelessCharger/default                      u:o
 
 # google_battery
 vendor.google.google_battery.IGoogleBattery/default                          u:object_r:hal_googlebattery_service:s0
+
+# shared secret implementation for on-device gatekeeper
+android.hardware.security.sharedsecret.ISharedSecret/gatekeeper u:object_r:hal_gatekeeper_service:s0
+

@@ -228,9 +228,17 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
 
   const std::string crosvm_path = CF_EXPECT(CrosvmPathForVhostUserGpu(config));
 
-  Command gpu_device_cmd(crosvm_path);
-  gpu_device_cmd.AddParameter("device");
-  gpu_device_cmd.AddParameter("gpu");
+  CrosvmBuilder gpu_device_cmd;
+
+  // NOTE: The "main" crosvm process returns a kCrosvmVmResetExitCode when the
+  // guest exits but the "gpu" crosvm just exits cleanly with 0 after the "main"
+  // crosvm disconnects.
+  gpu_device_cmd.ApplyProcessRestarter(crosvm_path,
+                                       /*first_time_argument=*/"",
+                                       /*exit_code=*/0);
+
+  gpu_device_cmd.Cmd().AddParameter("device");
+  gpu_device_cmd.Cmd().AddParameter("gpu");
 
   const auto& gpu_mode = instance.gpu_mode();
   CF_EXPECT(
@@ -298,28 +306,28 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
     }
     gpu_params_json["displays"] = displays;
 
-    gpu_device_cmd.AddParameter("--wayland-sock=",
-                                instance.frames_socket_path());
+    gpu_device_cmd.Cmd().AddParameter("--wayland-sock=",
+                                      instance.frames_socket_path());
   }
 
   // Connect device to main crosvm:
-  gpu_device_cmd.AddParameter("--socket=", gpu_device_socket_path);
+  gpu_device_cmd.Cmd().AddParameter("--socket=", gpu_device_socket_path);
   main_crosvm_cmd->AddParameter(
       "--vhost-user=gpu,pci-address=", gpu_pci_address,
       ",socket=", gpu_device_socket_path);
 
-  gpu_device_cmd.AddParameter("--params");
-  gpu_device_cmd.AddParameter(ToSingleLineString(gpu_params_json));
+  gpu_device_cmd.Cmd().AddParameter("--params");
+  gpu_device_cmd.Cmd().AddParameter(ToSingleLineString(gpu_params_json));
 
-  MaybeConfigureVulkanIcd(config, &gpu_device_cmd);
+  MaybeConfigureVulkanIcd(config, &gpu_device_cmd.Cmd());
 
-  gpu_device_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
-                               gpu_device_logs);
-  gpu_device_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
-                               gpu_device_logs);
+  gpu_device_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+                                     gpu_device_logs);
+  gpu_device_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
+                                     gpu_device_logs);
 
   return VhostUserDeviceCommands{
-      .device_cmd = std::move(gpu_device_cmd),
+      .device_cmd = std::move(gpu_device_cmd.Cmd()),
       .device_logs_cmd = std::move(gpu_device_logs_cmd),
   };
 }

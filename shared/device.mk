@@ -338,11 +338,9 @@ PRODUCT_PACKAGES += $(LOCAL_DUMPSTATE_PRODUCT_PACKAGE)
 #
 # Gatekeeper
 #
-ifeq ($(LOCAL_GATEKEEPER_PRODUCT_PACKAGE),)
-    LOCAL_GATEKEEPER_PRODUCT_PACKAGE := com.google.cf.gatekeeper
-endif
 PRODUCT_PACKAGES += \
-    $(LOCAL_GATEKEEPER_PRODUCT_PACKAGE)
+  com.android.hardware.gatekeeper.cf_remote \
+  com.android.hardware.gatekeeper.nonsecure \
 
 #
 # Oemlock
