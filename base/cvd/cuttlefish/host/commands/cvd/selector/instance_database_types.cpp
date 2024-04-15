@@ -40,7 +40,7 @@ std::string SerializeTimePoint(const TimeStamp& present) {
 Result<TimeStamp> DeserializeTimePoint(const Json::Value& time_point_json) {
   std::string serialized = time_point_json.asString();
 
-  using CountType = decltype(((const CvdTimeDuration*)nullptr)->count());
+  using CountType = decltype(std::declval<CvdTimeDuration>().count());
   CountType count = 0;
   CF_EXPECTF(android::base::ParseInt(serialized, &count),
              "Failed to serialize: {}", serialized);
