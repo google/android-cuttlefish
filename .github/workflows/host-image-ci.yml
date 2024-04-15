@@ -72,7 +72,7 @@ jobs:
     - name: Prepare pbuilder environment
       run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
     - name: Prepare building environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && apt-get install -y sudo && sudo apt-get install -y debconf-utils
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
     - name: Prepare tzdata
       run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
     - name: Prepare pbuilder tool
