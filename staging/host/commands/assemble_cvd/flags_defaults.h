@@ -159,7 +159,7 @@
 // Default network handler
 #define CF_DEFAULTS_NETSIM false
 #define CF_DEFAULTS_NETSIM_BT true
-#define CF_DEFAULTS_NETSIM_UWB false
+#define CF_DEFAULTS_NETSIM_UWB true
 
 // Netsim default parameters
 #define CF_DEFAULTS_NETSIM_ARGS ""
