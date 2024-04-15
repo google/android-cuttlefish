@@ -72,15 +72,15 @@ jobs:
     - name: Prepare pbuilder environment
       run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
     - name: Prepare building environment
-      run: sudo  apt-get update && sudo apt-get upgrade -y && apt-get install -y sudo && apt-get install -y debconf-utils
+      run: sudo apt-get update && sudo apt-get upgrade -y && apt-get install -y sudo && sudo apt-get install -y debconf-utils
     - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata
+      run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
     - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
+      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
-      run: apt-get install -y ubuntu-dev-tools qemu-user-static && apt-get install -y git ca-certificates less && apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && apt-get install -y build-essential autoconf automake && apt-get install -y p7zip-full
+      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
     - name: Building package
-      run: cd cuttlefish-host-image-installer/metapackage-linaro-gigamp && debuild --no-sign
+      run: cd cuttlefish-host-image-installer/metapackage-linaro-gigamp && pdebuild --buildresult .. -- --basetgz ~/pbuilder/stable-arm64-base.tgz
     - name: Create artifact
       run: cd cuttlefish-host-image-installer && 7z a -mx=9 meta_gigamp_packages.7z *.deb
     - name: Publish meta_gigamp_packages.7z
