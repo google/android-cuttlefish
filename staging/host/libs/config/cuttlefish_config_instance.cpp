@@ -1695,17 +1695,6 @@ bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
   return (*Dictionary())[kCrosvmUsePmem].asBool();
 }
 
-static constexpr char kSockVsockWaitAdbdStart[] =
-    "sock_vsock_proxy_wait_adbd_start";
-void CuttlefishConfig::MutableInstanceSpecific::
-    set_sock_vsock_proxy_wait_adbd_start(const bool wait_adbd_start) {
-  (*Dictionary())[kSockVsockWaitAdbdStart] = wait_adbd_start;
-}
-bool CuttlefishConfig::InstanceSpecific::sock_vsock_proxy_wait_adbd_start()
-    const {
-  return (*Dictionary())[kSockVsockWaitAdbdStart].asBool();
-}
-
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
     int touch_dev_idx) const {
   return PerInstanceInternalUdsPath(
