@@ -28,6 +28,17 @@
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
+namespace {
+
+std::string MacCrosvmArgument(std::optional<std::string_view> mac) {
+  return mac.has_value() ? fmt::format(",mac={}", mac.value()) : "";
+}
+
+std::string PciCrosvmArgument(std::optional<pci::Address> pci) {
+  return pci.has_value() ? fmt::format(",pci-address={}", pci.value().Id()) : "";
+}
+
+}
 
 CrosvmBuilder::CrosvmBuilder() : command_("crosvm") {}
 
@@ -104,10 +115,12 @@ void CrosvmBuilder::AddSerial(const std::string& output,
 }
 
 #ifdef __linux__
-SharedFD CrosvmBuilder::AddTap(const std::string& tap_name) {
+SharedFD CrosvmBuilder::AddTap(const std::string& tap_name,
+                               std::optional<std::string_view> mac,
+                               const std::optional<pci::Address>& pci) {
   auto tap_fd = OpenTapInterface(tap_name);
   if (tap_fd->IsOpen()) {
-    command_.AddParameter("--net=tap-fd=", tap_fd);
+    command_.AddParameter("--net=tap-fd=", tap_fd, MacCrosvmArgument(mac), PciCrosvmArgument(pci));
   } else {
     LOG(ERROR) << "Unable to connect to \"" << tap_name
                << "\": " << tap_fd->StrError();
@@ -115,16 +128,6 @@ SharedFD CrosvmBuilder::AddTap(const std::string& tap_name) {
   return tap_fd;
 }
 
-SharedFD CrosvmBuilder::AddTap(const std::string& tap_name, const std::string& mac) {
-  auto tap_fd = OpenTapInterface(tap_name);
-  if (tap_fd->IsOpen()) {
-    command_.AddParameter("--net=tap-fd=", tap_fd, ",mac=\"", mac, "\"");
-  } else {
-    LOG(ERROR) << "Unable to connect to \"" << tap_name
-               << "\": " << tap_fd->StrError();
-  }
-  return tap_fd;
-}
 #endif
 
 int CrosvmBuilder::HvcNum() { return hvc_num_; }
