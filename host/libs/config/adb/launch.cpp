@@ -121,9 +121,11 @@ class AdbConnector : public CommandSource {
 class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
  public:
   INJECT(SocketVsockProxy(const AdbHelper& helper,
+                          const CuttlefishConfig& cuttlefish_config,
                           const CuttlefishConfig::InstanceSpecific& instance,
                           KernelLogPipeProvider& log_pipe_provider))
       : helper_(helper),
+        cuttlefish_config_(cuttlefish_config),
         instance_(instance),
         log_pipe_provider_(log_pipe_provider) {}
 
@@ -145,11 +147,10 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
     adb_tunnel.AddParameter("--start_event_id=", monitor::Event::AdbdStarted);
     adb_tunnel.AddParameter("--stop_event_id=",
                             monitor::Event::FastbootStarted);
-    /* fmayle@ found out that when cuttlefish starts from the saved snapshot
-     * that was saved after ADBD start event, the socket_vsock_proxy must not
-     * wait for the AdbdStarted event.
-     */
-    if (!instance_.sock_vsock_proxy_wait_adbd_start()) {
+    // We assume that snapshots are always taken after ADBD has started. That
+    // means the start event will never come for a restored device, so we pass
+    // a flag to the proxy to allow it to alter its behavior.
+    if (IsRestoring(cuttlefish_config_)) {
       adb_tunnel.AddParameter("--restore=true");
     }
     adb_tunnel.AddParameter("--server_type=tcp");
@@ -210,6 +211,7 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
   }
 
   const AdbHelper& helper_;
+  const CuttlefishConfig& cuttlefish_config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   KernelLogPipeProvider& log_pipe_provider_;
   SharedFD kernel_log_pipe_;
@@ -218,6 +220,7 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
 }  // namespace
 
 fruit::Component<fruit::Required<KernelLogPipeProvider, const AdbConfig,
+                                 const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 LaunchAdbComponent() {
   return fruit::createComponent()
