@@ -28,38 +28,10 @@
 
 namespace cuttlefish {
 
-// names of the flags to start cvd server
 inline constexpr char kInternalServerFd[] = "INTERNAL_server_fd";
-inline constexpr char kInternalCarryoverClientFd[] =
-    "INTERNAL_carryover_client_fd";
-inline constexpr char kInternalMemoryCarryoverFd[] =
-    "INTERNAL_memory_carryover_fd";
-inline constexpr char kInternalAcloudTranslatorOptOut[] =
-    "INTERNAL_acloud_translator_optout";
-inline constexpr char kInternalRestartedInProcess[] =
-    "INTERNAL_restarted_in_process";
-
 bool IsServerModeExpected(const std::string& exec_file);
 
-struct RunServerParam {
-  SharedFD internal_server_fd;
-  SharedFD carryover_client_fd;
-  std::optional<SharedFD> memory_carryover_fd;
-  std::optional<android::base::LogSeverity> verbosity_level;
-  std::optional<bool> acloud_translator_optout;
-  bool restarted_in_process;
-};
-// must move to ensure the clarity of the ownership
-Result<void> RunServer(RunServerParam&& params);
-
-struct ParseResult {
-  SharedFD internal_server_fd;
-  SharedFD carryover_client_fd;
-  std::optional<SharedFD> memory_carryover_fd;
-  std::optional<bool> acloud_translator_optout;
-  std::optional<android::base::LogSeverity> verbosity_level;
-  bool restarted_in_process;
-};
-Result<ParseResult> ParseIfServer(cvd_common::Args& all_args);
+[[noreturn]] void ImportResourcesFromRunningServer(
+    std::vector<std::string> args);
 
 }  // namespace cuttlefish

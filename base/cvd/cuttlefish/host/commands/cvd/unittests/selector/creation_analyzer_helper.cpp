@@ -63,7 +63,6 @@ void CreationInfoGenTest::Init() {
   }
   expected_output_ = input_param.expected_output.output;
   expected_success_ = input_param.expected_output.is_success;
-  credential_ = ucred{.pid = getpid(), .uid = getuid(), .gid = getgid()};
 }
 
 }  // namespace selector

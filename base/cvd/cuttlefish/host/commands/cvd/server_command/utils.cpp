@@ -25,7 +25,6 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server.h"
 #include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
@@ -238,7 +237,7 @@ Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
   cvd::Response response;
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
-  const uid_t uid = CF_EXPECT(request.Credentials()).uid;
+  const uid_t uid = getuid();
   const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
   auto notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
@@ -259,7 +258,7 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
   cvd::Response response;
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
-  const uid_t uid = CF_EXPECT(request.Credentials()).uid;
+  const uid_t uid = getuid();
   const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
   auto notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",

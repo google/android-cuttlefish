@@ -150,7 +150,7 @@ class SerialLaunchCommand : public CvdServerHandler {
   Result<DemoCommandSequence> CreateCommandSequence(
       const RequestWithStdio& request) {
     const auto& client_env = request.Message().command_request().env();
-    const auto client_uid = CF_EXPECT(request.Credentials()).uid;
+    const auto client_uid = getuid();
 
     std::vector<Flag> flags;
 
@@ -361,8 +361,7 @@ class SerialLaunchCommand : public CvdServerHandler {
       ret.instance_locks.emplace_back(std::move(device.ins_lock));
     }
     for (auto& request_proto : req_protos) {
-      ret.requests.emplace_back(request.Client(), request_proto, fds,
-                                request.Credentials());
+      ret.requests.emplace_back(request_proto, fds);
     }
 
     return ret;

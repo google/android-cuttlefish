@@ -33,7 +33,6 @@
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/request_context.h"
-#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -129,8 +128,7 @@ class CvdHelpHandler : public CvdServerHandler {
     lookup_cmd.add_args(arg);
     auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
     CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
-    return RequestWithStdio(dev_null, lookup, {dev_null, dev_null, dev_null},
-                            {});
+    return RequestWithStdio(lookup, {dev_null, dev_null, dev_null});
   }
 
   Result<std::string> TopLevelHelp() {

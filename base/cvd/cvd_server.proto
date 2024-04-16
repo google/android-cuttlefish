@@ -48,6 +48,7 @@ message Response {
     VersionResponse version_response = 2;
     ShutdownResponse shutdown_response = 3;
     CommandResponse command_response = 4;
+    string error_response = 5;
   }
 }
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -34,6 +35,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/client.h"
+#include "host/commands/cvd/cvd.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/flag.h"
@@ -108,6 +110,59 @@ Result<void> EnsureCvdDirectoriesExist() {
   return {};
 }
 
+/**
+ * Persist a running server's instance database to the file.
+ *
+ * It works by asking the server to restart itself using our executable file.
+ */
+void TryInheritServerDatabase() {
+  CvdClient client(kCvdDefaultVerbosity);
+
+  if (!client.ConnectToServer().ok()) {
+    LOG(VERBOSE) << "No server found";
+    // There seems to be no server running
+    return;
+  }
+  LOG(VERBOSE) << "Asking server to restart";
+  auto res = client.RestartServerMatchClient();
+  if (!res.ok()) {
+    std::cerr << res.error().FormatForEnv() << std::endl;
+    std::cerr
+        << "Failed to take over resources of running server.\nSome devices may "
+           "be running outside cvd's control, consider running cvd reset -y"
+        << std::endl;
+  }
+}
+
+/**
+ * Increase the file descriptor limit for this process and its descendants.
+ *
+ * Crosvm tends to use many file descriptors, especially when running in sandbox
+ * mode, sometimes exceeding the default limit.
+ */
+void IncreaseFileLimit() {
+  struct rlimit old_lim;
+  // Get old limits
+  if (getrlimit(RLIMIT_NOFILE, &old_lim) != 0) {
+    auto err = strerror(errno);
+    LOG(WARNING) << "Unable to get file limit (" << err
+                 << "), virtual devices may not work properly if the limit is "
+                    "set too low";
+    return;
+  }
+  LOG(VERBOSE) << "Old limits -> soft limit= " << old_lim.rlim_cur << "\t"
+            << " hard limit= " << old_lim.rlim_max;
+  // Set new value
+  old_lim.rlim_cur = old_lim.rlim_max;
+  // Set limits
+  if (setrlimit(RLIMIT_NOFILE, &old_lim) != 0) {
+    auto err = strerror(errno);
+    LOG(WARNING) << "Unable to set file limit (" << err
+                 << "), virtual devices may not work properly if the limit is "
+                    "set too low";
+  }
+}
+
 Result<void> CvdMain(int argc, char** argv, char** envp,
                      const android::base::LogSeverity verbosity) {
   CF_EXPECT(EnsureCvdDirectoriesExist());
@@ -118,15 +173,20 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   CF_EXPECT(!all_args.empty());
 
   if (IsServerModeExpected(all_args[0])) {
-    auto parsed = CF_EXPECT(ParseIfServer(all_args));
-    return RunServer(
-        {.internal_server_fd = std::move(parsed.internal_server_fd),
-         .carryover_client_fd = std::move(parsed.carryover_client_fd),
-         .memory_carryover_fd = std::move(parsed.memory_carryover_fd),
-         .verbosity_level = parsed.verbosity_level,
-         .acloud_translator_optout = parsed.acloud_translator_optout,
-         .restarted_in_process = parsed.restarted_in_process});
+    // Persist previous server's instance database to file.
+    ImportResourcesFromRunningServer(std::move(all_args));
+    return {};
+  } else {
+    // Calling this while in "server mode" causes a deadlock because it tries to
+    // connect to its own socket that it hasn't called accept() on (and never
+    // will).
+    // We could close that socket file descriptor immediately, but then a
+    // concurrent execution of the command will not find the socket and proceed
+    // as normal without waiting for this process to persist the instance
+    // database.
+    TryInheritServerDatabase();
   }
+
 
   auto env = EnvpToMap(envp);
   // TODO(315772518) Re-enable once metrics send is skipped in a env
@@ -138,21 +198,25 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
     return {};
   }
 
-  CvdClient client(verbosity);
+  IncreaseFileLimit();
+
+  InstanceLockFileManager instance_lockfile_manager;
+  auto host_tool_target_manager = NewHostToolTargetManager();
+  selector::InstanceDatabase instance_db(InstanceDatabasePath());
+  InstanceManager instance_manager(instance_lockfile_manager,
+                                   *host_tool_target_manager, instance_db);
+  Cvd cvd(verbosity, instance_lockfile_manager, instance_manager,
+             *host_tool_target_manager, false /*optout*/);
 
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {
-    return client.HandleAcloud(all_args, env);
+    return cvd.HandleAcloud(all_args, env);
   }
-
   if (android::base::Basename(all_args[0]) == "cvd") {
-    CF_EXPECT(client.HandleCvdCommand(all_args, env));
+    CF_EXPECT(cvd.HandleCvdCommand(all_args, env));
     return {};
   }
-
-  CF_EXPECT(client.ValidateServerVersion(),
-            "Unable to ensure cvd_server is running.");
-  CF_EXPECT(client.HandleCommand(all_args, env, {}));
+  CF_EXPECT(cvd.HandleCommand(all_args, env, {}));
 
   return {};
 }

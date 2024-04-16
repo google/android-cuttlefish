@@ -20,44 +20,162 @@
 #include <sstream>
 
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
+#include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/reset_client_utils.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
 
 namespace cuttlefish {
+namespace {
 
-/*
- * Prints out help message for cvd reset
- *
- * cvd reset is a feature implemented by the client. However, the user may run
- * cvd help reset. The cvd help parsing will be done on the server side, and
- * forwarded to the cvd help handler. The cvd help handler again will forward
- * it to supposedly cvd reset handler. The cvd reset handler will only receive
- * "cvd reset --help."
- *
- * For, say, "cvd reset" or even "cvd reset --help"," the parsing will be done
- * on the client side, and handled by the client.
- *
- */
+static constexpr char kHelpMessage[] = R"(usage: cvd reset <args>
+
+* Warning: Cvd reset is an experimental implementation. When you are in panic,
+cvd reset is the last resort.
+
+args:
+  --help                 Prints this message.
+    help
+
+  --device-by-cvd-only   Terminates devices that a cvd server started
+                         This excludes the devices launched by "launch_cvd"
+                         or "cvd_internal_start" directly (default: false)
+
+  --clean-runtime-dir    Cleans up the runtime directory for the devices
+                         Yet to be implemented. For now, if true, only if
+                         stop_cvd supports --clear_instance_dirs and the
+                         device could be stopped by stop_cvd, the flag takes
+                         effects. (default: true)
+
+  --yes                  Resets without asking the user confirmation.
+   -y
+
+description:
+
+  1. Gracefully stops all devices that the cvd client can reach.
+  2. Forcefully stops all run_cvd processes and their subprocesses.
+  3. Kill the cvd server itself if unresponsive.
+  4. Reset the states of the involved instance lock files
+     -- If cvd reset stops a device, it resets the corresponding lock file.
+  5. Optionally, cleans up the runtime files of the stopped devices.)";
+
+struct ParsedFlags {
+  bool is_help;
+  bool clean_runtime_dir;
+  bool device_by_cvd_only;
+  bool is_confirmed_by_flag;
+  std::optional<android::base::LogSeverity> log_level;
+};
+
+static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
+  if (subcmd_args.size() > 2 && subcmd_args.at(2) == "help") {
+    // unfortunately, {FlagAliasMode::kFlagExact, "help"} is not allowed
+    subcmd_args[2] = "--help";
+  }
+
+  bool is_help = false;
+  bool clean_runtime_dir = true;
+  bool device_by_cvd_only = false;
+  bool is_confirmed_by_flag = false;
+  std::string verbosity_flag_value;
+
+  Flag y_flag =
+      Flag()
+          .Alias({FlagAliasMode::kFlagExact, "-y"})
+          .Alias({FlagAliasMode::kFlagExact, "--yes"})
+          .Setter([&is_confirmed_by_flag](const FlagMatch&) -> Result<void> {
+            is_confirmed_by_flag = true;
+            return {};
+          });
+  Flag help_flag = Flag()
+                       .Alias({FlagAliasMode::kFlagExact, "-h"})
+                       .Alias({FlagAliasMode::kFlagExact, "--help"})
+                       .Setter([&is_help](const FlagMatch&) -> Result<void> {
+                         is_help = true;
+                         return {};
+                       });
+  std::vector<Flag> flags{
+      GflagsCompatFlag("device-by-cvd-only", device_by_cvd_only),
+      y_flag,
+      GflagsCompatFlag("clean-runtime-dir", clean_runtime_dir),
+      help_flag,
+      GflagsCompatFlag("verbosity", verbosity_flag_value),
+      UnexpectedArgumentGuard()};
+  CF_EXPECT(ConsumeFlags(flags, subcmd_args));
+
+  std::optional<android::base::LogSeverity> verbosity;
+  if (!verbosity_flag_value.empty()) {
+    verbosity = CF_EXPECT(EncodeVerbosity(verbosity_flag_value),
+                          "invalid verbosity level");
+  }
+  return ParsedFlags{.is_help = is_help,
+                     .clean_runtime_dir = clean_runtime_dir,
+                     .device_by_cvd_only = device_by_cvd_only,
+                     .is_confirmed_by_flag = is_confirmed_by_flag,
+                     .log_level = verbosity};
+}
+
+static bool GetUserConfirm() {
+  std::cout << "Are you sure to reset all the devices, runtime files, "
+            << "and the cvd server if any [y/n]? ";
+  std::string user_confirm;
+  std::getline(std::cin, user_confirm);
+  std::transform(user_confirm.begin(), user_confirm.end(), user_confirm.begin(),
+                 ::tolower);
+  return (user_confirm == "y" || user_confirm == "yes");
+}
+}  // namespace
+
 class CvdResetCommandHandler : public CvdServerHandler {
  public:
-  CvdResetCommandHandler() {}
+  CvdResetCommandHandler(InstanceManager& instance_manager)
+      : instance_manager_(instance_manager) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const {
+  Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
     return invocation.command == kResetSubcmd;
   }
+
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
+    auto invocation = ParseInvocation(request.Message());
+    auto options = CF_EXPECT(ParseResetFlags(invocation.arguments));
+    if (options.log_level) {
+      SetMinimumVerbosity(options.log_level.value());
+    }
+    if (options.is_help) {
+      std::cout << kHelpMessage << std::endl;
+      return {};
+    }
+
+    // cvd reset. Give one more opportunity
+    if (!options.is_confirmed_by_flag && !GetUserConfirm()) {
+      std::cout << "For more details: " << "  cvd reset --help" << std::endl;
+      return {};
+    }
+
+    instance_manager_.CvdClear(request.Out(), request.Err());
+    // The instance database is obsolete now, clear it.
+    auto instance_db_deleted = RemoveFile(InstanceDatabasePath());
+    if (!instance_db_deleted) {
+      LOG(ERROR) << "Error deleting instance database file";
+    }
+
+    // Any responsive cvd server process was stopped nicely when this process
+    // began, kill any unresponsive ones left.
+    auto server_kill_res = KillCvdServerProcess();
+    if (!server_kill_res.ok()) {
+      LOG(ERROR) << "Error trying to kill unresponsive cvd server: "
+                 << server_kill_res.error().Message();
+    }
+    CF_EXPECT(KillAllCuttlefishInstances(
+        {.cvd_server_children_only = options.device_by_cvd_only,
+         .clear_instance_dirs = options.clean_runtime_dir}));
     cvd::Response response;
     response.mutable_command_response();
     response.mutable_status()->set_code(cvd::Status::OK);
-    std::stringstream guide_message;
-    guide_message << "\"cvd reset\" is implemented on the client side."
-                  << " Try:" << std::endl;
-    guide_message << "  cvd reset --help" << std::endl;
-    const auto guide_message_str = guide_message.str();
-    CF_EXPECT_EQ(WriteAll(request.Err(), guide_message_str),
-                 guide_message_str.size());
     return response;
   }
   Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
@@ -65,10 +183,13 @@ class CvdResetCommandHandler : public CvdServerHandler {
 
  private:
   static constexpr char kResetSubcmd[] = "reset";
+  InstanceManager& instance_manager_;
 };
 
-std::unique_ptr<CvdServerHandler> NewCvdResetCommandHandler() {
-  return std::unique_ptr<CvdServerHandler>(new CvdResetCommandHandler());
+std::unique_ptr<CvdServerHandler> NewCvdResetCommandHandler(
+    InstanceManager& instance_manager) {
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdResetCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

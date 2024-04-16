@@ -33,57 +33,43 @@
 
 namespace cuttlefish {
 
-struct OverrideFd {
-  std::optional<SharedFD> stdin_override_fd;
-  std::optional<SharedFD> stdout_override_fd;
-  std::optional<SharedFD> stderr_override_fd;
-};
-
+/**
+ * Client to the (old) cvd servers.
+ *
+ * Even though cvd doesn't use a server anymore, it could encounter one (after a
+ * package update, for example). This class allows talking to those servers,
+ * mainly to stop them cleanly.
+ */
 class CvdClient {
  public:
   CvdClient(const android::base::LogSeverity verbosity,
             const std::string& server_socket_path = ServerSocketPath());
-  Result<void> ValidateServerVersion(const int num_retries = 1);
+
+  Result<void> ConnectToServer();
+
   Result<void> StopCvdServer(bool clear);
-  Result<void> HandleAcloud(
-      const std::vector<std::string>& args,
-      const std::unordered_map<std::string, std::string>& env);
-  Result<void> HandleCvdCommand(
-      const std::vector<std::string>& args,
-      const std::unordered_map<std::string, std::string>& env);
-  Result<cvd::Response> HandleCommand(
-      const std::vector<std::string>& args,
-      const std::unordered_map<std::string, std::string>& env,
-      const std::vector<std::string>& selector_args,
-      const OverrideFd& control_fds);
-  Result<cvd::Response> HandleCommand(
-      const std::vector<std::string>& args,
-      const std::unordered_map<std::string, std::string>& env,
-      const std::vector<std::string>& selector_args) {
-    auto response = CF_EXPECT(
-        HandleCommand(args, env, selector_args,
-                      OverrideFd{std::nullopt, std::nullopt, std::nullopt}));
-    return response;
-  }
-  Result<std::string> HandleVersion();
-  Result<cvd_common::Args> ValidSubcmdsList(const cvd_common::Envs& envs);
+
+  Result<void> RestartServerMatchClient();
 
  private:
-  std::optional<UnixMessageSocket> server_;
+  struct OverrideFd {
+    std::optional<SharedFD> stdin_override_fd;
+    std::optional<SharedFD> stdout_override_fd;
+    std::optional<SharedFD> stderr_override_fd;
+  };
 
   Result<void> SetServer(const SharedFD& server);
   Result<cvd::Response> SendRequest(const cvd::Request& request,
                                     const OverrideFd& new_control_fds = {},
                                     std::optional<SharedFD> extra_fd = {});
-  Result<void> StartCvdServer();
   Result<void> CheckStatus(const cvd::Status& status, const std::string& rpc);
-  Result<cvd::Version> GetServerVersion();
+  Result<cvd::Response> HandleCommand(
+      const std::vector<std::string>& args,
+      const std::unordered_map<std::string, std::string>& env,
+      const std::vector<std::string>& selector_args,
+      const OverrideFd& control_fds);
 
-  Result<Json::Value> ListSubcommands(const cvd_common::Envs& envs);
-  Result<SharedFD> ConnectToServer();
-
-  Result<void> RestartServer(const cvd::Version& server_version);
-
+  std::optional<UnixMessageSocket> server_;
   std::string server_socket_path_;
   android::base::LogSeverity verbosity_;
 };

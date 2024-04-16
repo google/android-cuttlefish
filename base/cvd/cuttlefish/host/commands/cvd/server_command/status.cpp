@@ -162,8 +162,7 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
       .selector_args = cvd_common::ConvertToArgs(selector_opts.args()),
       .working_dir = request.Message().command_request().working_directory(),
   });
-  return RequestWithStdio(request.Client(), new_message,
-                          request.FileDescriptors(), request.Credentials());
+  return RequestWithStdio(new_message, request.FileDescriptors());
 }
 
 static Result<bool> HasPrint(cvd_common::Args cmd_args) {
@@ -177,7 +176,6 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   std::unique_lock interrupt_lock(interruptible_);
   CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
-  CF_EXPECT(request.Credentials());
 
   auto precondition_verified = VerifyPrecondition(request);
   if (!precondition_verified.ok()) {

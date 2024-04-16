@@ -91,8 +91,7 @@ class CvdServerHandlerProxy : public CvdServerHandler {
         request.Message().command_request().wait_behavior());
 
     RequestWithStdio forwarded_request(
-        request.Client(), std::move(exec_request), request.FileDescriptors(),
-        request.Credentials());
+        std::move(exec_request), request.FileDescriptors());
     interrupt_lock.unlock();
     SharedFD dev_null = SharedFD::Open("/dev/null", O_RDWR);
     CF_EXPECT(dev_null->IsOpen(), "Failed to open /dev/null");
