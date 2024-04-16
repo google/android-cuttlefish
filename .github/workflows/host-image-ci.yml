@@ -78,6 +78,10 @@ jobs:
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
       run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
+    - name: Pbuilder arm64 create
+      run: pbuilder-dist stable arm64 create
+    - name: Pbuilder arm64 update
+      run: pbuilder-dist stable arm64 update
     - name: Building package
       run: cd cuttlefish-host-image-installer/metapackage-linaro-gigamp && pdebuild --buildresult .. -- --basetgz ~/pbuilder/stable-arm64-base.tgz
     - name: Create artifact
@@ -105,14 +109,12 @@ jobs:
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
       run: sudo apt-get install -y git ca-certificates less && sudo apt-get install -y fakeroot && sudo apt-get install -y devscripts equivs && sudo apt-get install -y ubuntu-dev-tools && sudo apt-get install -y build-essential && sudo apt-get install -y p7zip-full && sudo apt-get install -y crossbuild-essential-arm64
-    - name: Install repo package
-      run: cd cuttlefish-host-image-installer && ./utils/install_repo_package.sh
-    - name: Install kernel build dependencies
-      run: cd cuttlefish-host-image-installer && ./kernel_dependencies.sh
-    - name: Download AOSP kernel source code
-      run: cd cuttlefish-host-image-installer && ./kernel_download.sh
+    - name: Pbuilder arm64 create
+      run: pbuilder-dist stable arm64 create
+    - name: Pbuilder arm64 update
+      run: pbuilder-dist stable arm64 update
     - name: Building package
-      run: cd cuttlefish-host-image-installer && ./kernel_build_deb.sh
+      run: cd cuttlefish-host-image-installer && ./kernel_build_deb_qemu.sh
     - name: Create artifact
       run: cd cuttlefish-host-image-installer && cp `ls kernel-build-space/buildresult/linux-image-*.deb | grep -v dbg` . && cp kernel-build-space/buildresult/linux-headers-*.deb . && 7z a -mx=9 aosp_kernel_aosp14_61.7z *.deb
 
