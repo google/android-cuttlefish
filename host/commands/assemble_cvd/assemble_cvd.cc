@@ -132,6 +132,10 @@ Result<void> CreateLegacySymlinks(
   for (const auto& log_file : log_files) {
     auto symlink_location = instance.PerInstancePath(log_file.c_str());
     auto log_target = "logs/" + log_file;  // Relative path
+    if (FileExists(symlink_location, /* follow_symlinks */ false)) {
+      CF_EXPECT(RemoveFile(symlink_location),
+                "Failed to remove symlink " << symlink_location);
+    }
     if (symlink(log_target.c_str(), symlink_location.c_str()) != 0) {
       return CF_ERRNO("symlink(\"" << log_target << ", " << symlink_location
                                    << ") failed");
@@ -244,6 +248,16 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("vbmeta.img");
   preserving.insert("oemlock_secure");
   preserving.insert("oemlock_insecure");
+  // Preserve logs if restoring from a snapshot.
+  if (!snapshot_path.empty()) {
+    preserving.insert("kernel.log");
+    preserving.insert("launcher.log");
+    preserving.insert("logcat");
+    preserving.insert("modem_simulator.log");
+    preserving.insert("crosvm_openwrt.log");
+    preserving.insert("crosvm_openwrt_boot.log");
+    preserving.insert("metrics.log");
+  }
   for (int i = 0; i < modem_simulator_count; i++) {
     std::stringstream ss;
     ss << "iccprofile_for_sim" << i << ".xml";
