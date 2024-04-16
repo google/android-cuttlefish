@@ -914,13 +914,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         snapshot_path + "/assembly/cuttlefish_config.json";
     tmp_config_obj.LoadFromFile(snapshot_path_config.c_str());
     tmp_config_obj.set_snapshot_path(snapshot_path);
-    auto instance_nums =
-        CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
-
-    for (const auto& num : instance_nums) {
-      auto instance = tmp_config_obj.ForInstance(num);
-      instance.set_sock_vsock_proxy_wait_adbd_start(false);
-    }
     return tmp_config_obj;
   }
 
@@ -1168,8 +1161,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_rng));
   std::vector<bool> use_pmem_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_pmem));
   const bool restore_from_snapshot = !std::string(FLAGS_snapshot_path).empty();
-  std::vector<bool> sock_vsock_proxy_wait_adbd_vec(instance_nums.size(),
-                                                   !restore_from_snapshot);
   std::vector<std::string> device_external_network_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(device_external_network));
 
@@ -1305,8 +1296,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_crosvm_use_balloon(use_balloon_vec[instance_index]);
     instance.set_crosvm_use_rng(use_rng_vec[instance_index]);
     instance.set_use_pmem(use_pmem_vec[instance_index]);
-    instance.set_sock_vsock_proxy_wait_adbd_start(
-        sock_vsock_proxy_wait_adbd_vec[instance_index]);
     instance.set_bootconfig_supported(guest_configs[instance_index].bootconfig_supported);
     instance.set_filename_encryption_mode(
       guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
