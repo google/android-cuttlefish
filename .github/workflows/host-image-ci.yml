@@ -94,7 +94,7 @@ jobs:
 
 
   build-kernel-aosp14-61-deb-job:
-    runs-on: ubuntu-latest-large
+    runs-on: ubuntu-22.04-4core
     env:
       KERNEL_MANIFEST_URL: https://android.googlesource.com/kernel/manifest/
       KERNEL_MANIFEST_BRANCH: common-android14-6.1
