@@ -70,8 +70,7 @@ Result<std::optional<RequestWithStdio>> GetRequest(const SharedFD& client) {
     LOG(DEBUG) << "Has credentials, uid=" << creds->uid;
   }
 
-  return RequestWithStdio(client, std::move(request), std::move(fds),
-                          std::move(creds));
+  return RequestWithStdio(std::move(request), std::move(fds));
 }
 
 Result<void> SendResponse(const SharedFD& client,
@@ -88,15 +87,9 @@ Result<void> SendResponse(const SharedFD& client,
   return {};
 }
 
-RequestWithStdio::RequestWithStdio(SharedFD client_fd, cvd::Request message,
-                                   std::vector<SharedFD> fds,
-                                   std::optional<ucred> creds)
-    : client_fd_(client_fd),
-      message_(message),
-      fds_(std::move(fds)),
-      creds_(creds) {}
-
-SharedFD RequestWithStdio::Client() const { return client_fd_; }
+RequestWithStdio::RequestWithStdio(cvd::Request message,
+                                   std::vector<SharedFD> fds)
+    : message_(message), fds_(std::move(fds)) {}
 
 const cvd::Request& RequestWithStdio::Message() const { return message_; }
 
@@ -119,7 +112,5 @@ SharedFD RequestWithStdio::Err() const {
 std::optional<SharedFD> RequestWithStdio::Extra() const {
   return fds_.size() > 3 ? fds_[3] : std::optional<SharedFD>{};
 }
-
-std::optional<ucred> RequestWithStdio::Credentials() const { return creds_; }
 
 }  // namespace cuttlefish

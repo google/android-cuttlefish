@@ -142,9 +142,8 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
          .selector_args = {"--group_name", group_name},
          .working_dir =
              request.Message().command_request().working_directory()});
-    RequestWithStdio group_request{request.Client(), request_message,
-                                   request.FileDescriptors(),
-                                   request.Credentials()};
+    RequestWithStdio group_request{request_message,
+                                   request.FileDescriptors()};
     auto [_, instances_json, group_response] =
         CF_EXPECT(status_fetcher_.FetchStatus(group_request));
     CF_EXPECT_EQ(

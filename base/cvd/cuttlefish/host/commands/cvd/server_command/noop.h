@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,11 @@
 
 #include <memory>
 
-#include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/libs/web/android_build_api.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewCvdRestartHandler(
-    CvdServer& server, InstanceManager& instance_manager);
+std::unique_ptr<CvdServerHandler> NewCvdNoopHandler();
 
-}  // namespace cuttlefish
+}
+

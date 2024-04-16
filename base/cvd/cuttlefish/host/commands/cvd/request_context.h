@@ -31,12 +31,9 @@
 
 namespace cuttlefish {
 
-class CvdServer;
-
 class RequestContext {
  public:
-  RequestContext(CvdServer& cvd_server,
-                 InstanceLockFileManager& instance_lockfile_manager,
+  RequestContext(InstanceLockFileManager& instance_lockfile_manager,
                  InstanceManager& instance_manager,
                  HostToolTargetManager& host_tool_target_manager,
                  std::atomic<bool>& acloud_translator_optout);
@@ -46,7 +43,6 @@ class RequestContext {
  private:
   void InstantiateHandlers();
 
-  CvdServer& cvd_server_;
   std::vector<std::unique_ptr<CvdServerHandler>> request_handlers_;
   InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;

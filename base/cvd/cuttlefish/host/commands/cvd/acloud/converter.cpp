@@ -706,15 +706,13 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
 
   ConvertedAcloudCreateCommand ret{
-      .start_request = RequestWithStdio(request.Client(), start_request, fds,
-                                        request.Credentials()),
+      .start_request = RequestWithStdio(start_request, fds),
       .fetch_command_str = fetch_command_str,
       .fetch_cvd_args_file = fetch_cvd_args_file,
       .verbose = parsed_flags.verbose,
   };
   for (auto& request_proto : request_protos) {
-    ret.prep_requests.emplace_back(request.Client(), request_proto, fds,
-                                   request.Credentials());
+    ret.prep_requests.emplace_back(request_proto, fds);
   }
   return ret;
 }

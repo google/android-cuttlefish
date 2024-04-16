@@ -18,10 +18,12 @@
 
 #include <memory>
 
+#include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewCvdResetCommandHandler();
+std::unique_ptr<CvdServerHandler> NewCvdResetCommandHandler(
+    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

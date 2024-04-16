@@ -66,7 +66,6 @@ class CvdGenericCommandHandler : public CvdServerHandler {
     std::string bin_path;
     std::string home;
     std::string host_artifacts_path;
-    uid_t uid;
     std::vector<std::string> args;
     cvd_common::Envs envs;
   };
@@ -164,7 +163,6 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
   std::unique_lock interrupt_lock(interruptible_);
   CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
-  CF_EXPECT(request.Credentials() != std::nullopt);
 
   cvd::Response response;
   response.mutable_command_response();
@@ -306,10 +304,6 @@ CvdGenericCommandHandler::CvdHelpBinPath(const std::string& subcmd,
  */
 Result<CvdGenericCommandHandler::ExtractedInfo>
 CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
-  auto result_opt = request.Credentials();
-  CF_EXPECT(result_opt != std::nullopt);
-  const uid_t uid = result_opt->uid;
-
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
   CF_EXPECT(Contains(command_to_binary_map_, subcmd));
 
@@ -334,7 +328,6 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
                 .bin_path = bin_path,
                 .home = CF_EXPECT(SystemWideUserHome()),
                 .host_artifacts_path = envs.at(kAndroidHostOut),
-                .uid = uid,
                 .args = cmd_args,
                 .envs = envs},
         .group = std::nullopt,
@@ -429,7 +422,6 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
                                   .bin_path = bin_path,
                                   .home = home,
                                   .host_artifacts_path = android_host_out,
-                                  .uid = uid,
                                   .args = cmd_args,
                                   .envs = envs};
   result.envs["HOME"] = home;

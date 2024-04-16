@@ -163,8 +163,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     std::vector<RequestWithStdio> ret;
 
     for (auto& request_proto : req_protos) {
-      ret.emplace_back(RequestWithStdio(request.Client(), request_proto, fds,
-                                        request.Credentials()));
+      ret.emplace_back(RequestWithStdio(request_proto, fds));
     }
 
     return ret;

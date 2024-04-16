@@ -40,13 +40,12 @@
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/lint.h"
 #include "host/commands/cvd/server_command/load_configs.h"
+#include "host/commands/cvd/server_command/noop.h"
 #include "host/commands/cvd/server_command/power.h"
 #include "host/commands/cvd/server_command/reset.h"
-#include "host/commands/cvd/server_command/restart.h"
 #include "host/commands/cvd/server_command/serial_launch.h"
 #include "host/commands/cvd/server_command/serial_preset.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/shutdown.h"
 #include "host/commands/cvd/server_command/snapshot.h"
 #include "host/commands/cvd/server_command/start.h"
 #include "host/commands/cvd/server_command/status.h"
@@ -59,12 +58,11 @@
 namespace cuttlefish {
 
 RequestContext::RequestContext(
-    CvdServer& cvd_server, InstanceLockFileManager& instance_lockfile_manager,
+    InstanceLockFileManager& instance_lockfile_manager,
     InstanceManager& instance_manager,
     HostToolTargetManager& host_tool_target_manager,
     std::atomic<bool>& acloud_translator_optout)
-    : cvd_server_(cvd_server),
-      instance_lockfile_manager_(instance_lockfile_manager),
+    : instance_lockfile_manager_(instance_lockfile_manager),
       instance_manager_(instance_manager),
       host_tool_target_manager_(host_tool_target_manager),
       command_sequence_executor_(this->request_handlers_),
@@ -93,14 +91,10 @@ RequestContext::RequestContext(
       NewLoadConfigsCommand(command_sequence_executor_));
   request_handlers_.emplace_back(NewCvdDevicePowerCommandHandler(
       host_tool_target_manager_, instance_manager_, subprocess_waiter_));
-  request_handlers_.emplace_back(NewCvdResetCommandHandler());
-  request_handlers_.emplace_back(
-      NewCvdRestartHandler(cvd_server_, instance_manager_));
+  request_handlers_.emplace_back(NewCvdResetCommandHandler(instance_manager_));
   request_handlers_.emplace_back(
       NewSerialLaunchCommand(command_sequence_executor_, lock_file_manager_));
   request_handlers_.emplace_back(NewSerialPreset(command_sequence_executor_));
-  request_handlers_.emplace_back(
-      NewCvdShutdownHandler(cvd_server_, instance_manager_));
   request_handlers_.emplace_back(NewCvdSnapshotCommandHandler(
       instance_manager_, subprocess_waiter_, host_tool_target_manager_));
   request_handlers_.emplace_back(
@@ -111,6 +105,7 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(
       NewTryAcloudCommand(acloud_translator_optout_));
   request_handlers_.emplace_back(NewCvdVersionHandler());
+  request_handlers_.emplace_back(NewCvdNoopHandler());
 }
 
 Result<CvdServerHandler*> RequestContext::Handler(

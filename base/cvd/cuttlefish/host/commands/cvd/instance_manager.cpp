@@ -83,8 +83,8 @@ Result<void> InstanceManager::LoadFromJson(const Json::Value& db_json) {
 }
 
 Result<InstanceManager::GroupCreationInfo> InstanceManager::Analyze(
-    const CreationAnalyzerParam& param, const ucred& credential) {
-  return CF_EXPECT(CreationAnalyzer::Analyze(param, credential, lock_manager_));
+    const CreationAnalyzerParam& param) {
+  return CF_EXPECT(CreationAnalyzer::Analyze(param, lock_manager_));
 }
 
 Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(

@@ -78,8 +78,7 @@ RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
     load_command.add_args(arg);
   }
   load_command.add_args(config_file);
-  return RequestWithStdio(request.Client(), request_proto,
-                          request.FileDescriptors(), request.Credentials());
+  return RequestWithStdio(request_proto, request.FileDescriptors());
 }
 
 // link might be a directory, so we clean that up, and create a link from
@@ -288,8 +287,7 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
   CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
   std::vector<SharedFD> dev_null_fds = {dev_null, dev_null, dev_null};
   for (auto& request_proto : request_protos) {
-    new_requests.emplace_back(request.Client(), request_proto, dev_null_fds,
-                              request.Credentials());
+    new_requests.emplace_back(request_proto, dev_null_fds);
   }
   interrupt_lock.unlock();
   CF_EXPECT(command_executor_.Execute(new_requests, dev_null));
@@ -409,9 +407,8 @@ CvdStartCommandHandler::GetGroupCreationInfo(
   const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
   CreationAnalyzerParam analyzer_param{
       .cmd_args = subcmd_args, .envs = envs, .selector_args = selector_args};
-  auto cred = CF_EXPECT(request.Credentials());
   auto group_creation_info =
-      CF_EXPECT(instance_manager_.Analyze(analyzer_param, cred));
+      CF_EXPECT(instance_manager_.Analyze(analyzer_param));
   auto final_group_creation_info =
       CF_EXPECT(UpdateArgsAndEnvs(std::move(group_creation_info), start_bin));
   return final_group_creation_info;
