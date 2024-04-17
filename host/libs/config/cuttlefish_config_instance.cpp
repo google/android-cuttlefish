@@ -816,6 +816,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_enable_bootanimation(
   (*Dictionary())[kEnableBootAnimation] = enable_bootanimation;
 }
 
+static constexpr char kEnableUsb[] = "enable_usb";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_usb(bool enable) {
+  (*Dictionary())[kEnableUsb] = enable;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_usb() const {
+  return (*Dictionary())[kEnableUsb].asBool();
+}
+
 static constexpr char kExtraBootconfigArgsInstanced[] = "extra_bootconfig_args";
 std::vector<std::string>
 CuttlefishConfig::InstanceSpecific::extra_bootconfig_args() const {

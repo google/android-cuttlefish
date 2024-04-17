@@ -559,6 +559,7 @@ class CuttlefishConfig {
     bool enable_audio() const;
     bool enable_gnss_grpc_proxy() const;
     bool enable_bootanimation() const;
+    bool enable_usb() const;
     std::vector<std::string> extra_bootconfig_args() const;
     bool record_screen() const;
     std::string gem5_debug_file() const;
@@ -761,6 +762,7 @@ class CuttlefishConfig {
     void set_pause_in_bootloader(bool pause_in_bootloader);
     void set_run_as_daemon(bool run_as_daemon);
     void set_enable_audio(bool enable);
+    void set_enable_usb(bool enable);
     void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
     void set_enable_bootanimation(const bool enable_bootanimation);
     void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
