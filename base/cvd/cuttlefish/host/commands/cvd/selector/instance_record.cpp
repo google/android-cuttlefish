@@ -17,7 +17,6 @@
 #include "host/commands/cvd/selector/instance_record.h"
 
 #include "host/commands/cvd/selector/instance_database_utils.h"
-#include "host/commands/cvd/selector/instance_group_record.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -30,10 +29,7 @@ LocalInstance::LocalInstance(const InstanceGroupInfo& parent_group,
       per_instance_name_(instance_name),
       internal_device_name_(
           LocalDeviceNameRule(GenInternalGroupName(), internal_name_)),
-      group_name_(parent_group.group_name),
-      home_dir_(parent_group.home_dir),
-      host_artifacts_path_(parent_group.host_artifacts_path),
-      product_out_path_(parent_group.product_out_path) {}
+      group_info_(parent_group) {}
 
 unsigned LocalInstance::InstanceId() const { return instance_id_; }
 
@@ -42,7 +38,7 @@ const std::string& LocalInstance::InternalName() const {
 }
 
 std::string LocalInstance::DeviceName() const {
-  return LocalDeviceNameRule(group_name_, per_instance_name_);
+  return LocalDeviceNameRule(group_info_.group_name, per_instance_name_);
 }
 
 const std::string& LocalInstance::PerInstanceName() const {

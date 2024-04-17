@@ -20,11 +20,12 @@
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
+#include "host/commands/cvd/selector/instance_group_record.h"
 
 namespace cuttlefish {
 namespace selector {
 
-class InstanceGroupInfo;
+struct InstanceGroupInfo;
 
 /**
  * Needs design changes to support both Remote and Local Instances
@@ -54,19 +55,9 @@ class LocalInstance {
   std::string InternalDeviceName() const {
     return internal_device_name_;
   }
-  std::string GroupName() const {
-    return group_name_;
+  const InstanceGroupInfo& GroupInfo() const {
+    return group_info_;
   }
-  std::string HomeDir() const {
-    return home_dir_;
-  }
-  std::string HostArtifactsPath() const {
-    return host_artifacts_path_;
-  }
-  std::string ProductOutPath() const {
-    return product_out_path_;
-  }
-
  private:
   unsigned instance_id_;
   std::string internal_name_;  ///< for now, it is to_string(instance_id_)
@@ -81,10 +72,7 @@ class LocalInstance {
   // Group specific information, repeated here because sometimes instances are
   // accessed outside of their group
   std::string internal_device_name_;
-  std::string group_name_;
-  std::string home_dir_;
-  std::string host_artifacts_path_;
-  std::string product_out_path_;
+  InstanceGroupInfo group_info_;
 };
 
 }  // namespace selector

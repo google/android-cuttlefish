@@ -23,7 +23,6 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
-#include "host/commands/cvd/selector/instance_record.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -43,6 +42,8 @@ struct InstanceGroupInfo {
   TimeStamp start_time;
 };
 
+class LocalInstance;
+
 class LocalInstanceGroup {
  public:
   static Result<LocalInstanceGroup> Create(const InstanceGroupInfo&,
@@ -56,11 +57,15 @@ class LocalInstanceGroup {
   static Result<LocalInstanceGroup> Deserialize(const Json::Value& group_json);
 
   const std::string& InternalGroupName() const { return internal_group_name_; }
-  const std::string& GroupName() const { return group_name_; }
-  const std::string& HomeDir() const { return home_dir_; }
-  const std::string& HostArtifactsPath() const { return host_artifacts_path_; }
-  const std::string& ProductOutPath() const { return product_out_path_; }
-  auto StartTime() const { return start_time_; }
+  const std::string& GroupName() const { return group_info_.group_name; }
+  const std::string& HomeDir() const { return group_info_.home_dir; }
+  const std::string& HostArtifactsPath() const {
+    return group_info_.host_artifacts_path;
+  }
+  const std::string& ProductOutPath() const {
+    return group_info_.product_out_path;
+  }
+  auto StartTime() const { return group_info_.start_time; }
   const std::vector<LocalInstance>& Instances() const { return instances_; }
 
   std::vector<LocalInstance> FindById(const unsigned id) const;
@@ -84,11 +89,7 @@ class LocalInstanceGroup {
   Json::Value Serialize(const LocalInstance& instance) const;
 
   std::string internal_group_name_;
-  std::string group_name_;
-  std::string home_dir_;
-  std::string host_artifacts_path_;
-  std::string product_out_path_;
-  TimeStamp start_time_;
+  InstanceGroupInfo group_info_;
   std::vector<LocalInstance> instances_;
 };
 
