@@ -36,5 +36,6 @@ java_test_host {
         "cuttlefish_host_test_utils",
         "platform-test-annotations",
         "WmediumdServerProto_java",
+        "libprotobuf-java-util-full",
     ],
 }
