@@ -28,6 +28,7 @@ Depends: cuttlefish-user,
          adduser,
          bash,
          openssl,
+         nginx,
          ${misc:Depends},
          ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}

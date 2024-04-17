@@ -1,3 +1,4 @@
+/.sslcert
 /src/host_orchestrator/host_orchestrator
 /src/cvdserver_bootstrapper/cvdserver_bootstrapper
 /src/operator/operator

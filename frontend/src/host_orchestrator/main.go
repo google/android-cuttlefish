@@ -36,7 +36,6 @@ import (
 )
 
 const (
-	defaultTLSCertDir      = "/etc/cuttlefish-common/host_orchestrator/cert"
 	defaultAndroidBuildURL = "https://androidbuildinternal.googleapis.com"
 	DefaultListenAddress   = "127.0.0.1"
 )
@@ -101,9 +100,7 @@ func newOperatorProxy(port int) *httputil.ReverseProxy {
 }
 
 func main() {
-	httpPort := flag.Int("http_port", 2080, "Port to listen on for HTTP requests.")
-	httpsPort := flag.Int("https_port", -1, "Port to listen on for HTTPS requests.")
-	tlsCertDir := flag.String("tls_cert_dir", defaultTLSCertDir, "Directory with the TLS certificate.")
+	httpPort := flag.Int("http_port", 2081, "Port to listen on for HTTP requests.")
 	cvdUser := flag.String("cvd_user", "", "User to execute cvd as.")
 	cvdCreationTimeoutSecs := flag.Int("cvd_creation_timeout_secs", 420, "CVD creation timeout in seconds")
 	operatorPort := flag.Int("operator_http_port", 1080, "Port where the operator is listening.")
@@ -112,9 +109,6 @@ func main() {
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
 
 	flag.Parse()
-
-	certPath := filepath.Join(*tlsCertDir, "cert.pem")
-	keyPath := filepath.Join(*tlsCertDir, "key.pem")
 
 	if err := os.MkdirAll(*imRootDir, 0774); err != nil {
 		log.Fatalf("Unable to create artifacts directory: %v", err)
@@ -156,11 +150,6 @@ func main() {
 
 	starters := []func() error{
 		func() error { return startHttpServer(*address, *httpPort) },
-	}
-	if *httpsPort > 0 {
-		starters = append(starters, func() error {
-			return startHttpsServer(*address, *httpsPort, certPath, keyPath)
-		})
 	}
 	start(starters)
 }

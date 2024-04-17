@@ -11,6 +11,9 @@ case "$1" in
         # The cvdnetwork group is created by cuttlefish-base
         usermod -a -G cvdnetwork,kvm _cvd-executor
     fi
+
+    # Reload nginx having the orchestration configuration
+    service nginx reload
 esac
 
 #DEBHELPER#

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+service nginx start
 service cuttlefish-host-resources start
 service cuttlefish-operator start
 service cuttlefish-host_orchestrator start
