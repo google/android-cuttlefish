@@ -186,6 +186,7 @@ android_system_image {
         "e2freefrag",
         "e2fsck",
         "e2fsdroid",
+        "etc_hosts",
         "evemu-record",
         "extra_free_kbytes",
         "fastbootd",
