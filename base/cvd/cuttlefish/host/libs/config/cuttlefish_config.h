@@ -509,7 +509,6 @@ class CuttlefishConfig {
 
     std::string persistent_bootconfig_path() const;
 
-    // used for the persistent_composite_disk vbmeta
     std::string vbmeta_path() const;
 
     std::string ap_vbmeta_path() const;
@@ -560,6 +559,7 @@ class CuttlefishConfig {
     bool enable_audio() const;
     bool enable_gnss_grpc_proxy() const;
     bool enable_bootanimation() const;
+    bool enable_usb() const;
     std::vector<std::string> extra_bootconfig_args() const;
     bool record_screen() const;
     std::string gem5_debug_file() const;
@@ -628,7 +628,6 @@ class CuttlefishConfig {
     std::string vendor_boot_image() const;
     std::string new_vendor_boot_image() const;
     std::string vbmeta_image() const;
-    std::string new_vbmeta_image() const;
     std::string vbmeta_system_image() const;
     std::string vbmeta_vendor_dlkm_image() const;
     std::string new_vbmeta_vendor_dlkm_image() const;
@@ -763,6 +762,7 @@ class CuttlefishConfig {
     void set_pause_in_bootloader(bool pause_in_bootloader);
     void set_run_as_daemon(bool run_as_daemon);
     void set_enable_audio(bool enable);
+    void set_enable_usb(bool enable);
     void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
     void set_enable_bootanimation(const bool enable_bootanimation);
     void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
@@ -830,7 +830,6 @@ class CuttlefishConfig {
     void set_vendor_boot_image(const std::string& vendor_boot_image);
     void set_new_vendor_boot_image(const std::string& new_vendor_boot_image);
     void set_vbmeta_image(const std::string& vbmeta_image);
-    void set_new_vbmeta_image(const std::string& new_vbmeta_image);
     void set_vbmeta_system_image(const std::string& vbmeta_system_image);
     void set_vbmeta_vendor_dlkm_image(
         const std::string& vbmeta_vendor_dlkm_image);
