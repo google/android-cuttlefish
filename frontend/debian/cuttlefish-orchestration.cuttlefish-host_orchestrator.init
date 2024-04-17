@@ -35,7 +35,6 @@ if [ -f /etc/default/cuttlefish-host_orchestrator ]; then
     . /etc/default/cuttlefish-host_orchestrator
 fi
 
-orchestrator_tls_cert_dir=${orchestrator_tls_cert_dir:-"/etc/cuttlefish-common/host_orchestrator/cert"}
 orchestrator_cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir:-"/var/lib/cuttlefish-common"}
 
 # Run as the configured user or root if none was specified
@@ -45,27 +44,6 @@ RUN_DIR="/run/cuttlefish"
 ORCHESTRATOR_BIN="/usr/lib/cuttlefish-common/bin/host_orchestrator"
 ORCHESTRATOR_PIDFILE="${RUN_DIR}"/host_orchestrator.pid
 ASSET_DIR="/usr/share/cuttlefish-common/operator"
-
-gen_cert() {
-  CERT_FILE="${orchestrator_tls_cert_dir}/cert.pem"
-  KEY_FILE="${orchestrator_tls_cert_dir}/key.pem"
-  if [ -f "$CERT_FILE" ] && [ -f "$KEY_FILE" ]; then
-    echo "TLS certificate files for https communication already exist."
-  else
-    mkdir -p "${orchestrator_tls_cert_dir}"
-    openssl req \
-      -newkey rsa:4096 \
-      -x509 \
-      -sha256 \
-      -days 36000 \
-      -nodes \
-      -out "${CERT_FILE}" \
-      -keyout "${KEY_FILE}" \
-      -subj "/C=US"
-    chown "${orchestrator_user}":cvdnetwork "${CERT_FILE}"
-    chown "${orchestrator_user}":cvdnetwork "${KEY_FILE}"
-  fi
-}
 
 set_config_expr() {
   echo "\${$2+"export $1=\$$2"}"
@@ -85,12 +63,6 @@ start_orchestrator() {
 
   if [[ -n "${orchestrator_http_port}" ]]; then
     args+=("--http_port=${orchestrator_http_port}")
-  fi
-  if [[ -n "${orchestrator_https_port}" ]]; then
-    args+=("--https_port=${orchestrator_https_port}")
-  fi
-  if [[ -n "${orchestrator_tls_cert_dir}" ]]; then
-    args+=("--tls_cert_dir=${orchestrator_tls_cert_dir}")
   fi
   if [[ -n "${orchestrator_android_build_url}" ]]; then
     args+=("--android_build_url=${orchestrator_android_build_url}")
@@ -121,8 +93,6 @@ start_orchestrator() {
 }
 
 start() {
-  gen_cert
-
   prepare_run_dir
 
   start_orchestrator

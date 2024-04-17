@@ -21,11 +21,14 @@ LIBOPERATOR_SOURCE_DIR := src/liboperator
 ORCHESTRATOR_SOURCE_DIR := src/host_orchestrator
 OPERATOR_SOURCE_DIR := src/operator
 BUILD_WEBUI := ./build-webui.sh
+GEN_SSL_CERT := ./gen_ssl_cert.sh
+GEN_SSL_CERT_OUT_DIR := ./.sslcert
 
 override_dh_auto_build:
 	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) build -v -ldflags="-w"
 	$(GOUTIL) $(OPERATOR_SOURCE_DIR) build -v -ldflags="-w"
 	$(BUILD_WEBUI)
+	$(GEN_SSL_CERT) -o $(GEN_SSL_CERT_OUT_DIR)
 
 override_dh_auto_test:
 	$(GOUTIL) $(LIBOPERATOR_SOURCE_DIR) test ./...
@@ -41,4 +44,5 @@ override_dh_installinit:
 override_dh_auto_clean:
 	rm -f $(ORCHESTRATOR_SOURCE_DIR)/host_orchestrator
 	rm -f $(OPERATOR_SOURCE_DIR)/operator
+	rm -rf $(GEN_SSL_CERT_OUT_DIR)
 	dh_auto_clean

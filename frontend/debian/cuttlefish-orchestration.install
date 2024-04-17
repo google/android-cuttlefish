@@ -1,1 +1,3 @@
 host/packages/cuttlefish-orchestration/* /
+.sslcert/cert.pem /etc/cuttlefish-orchestration/ssl/cert/
+.sslcert/key.pem /etc/cuttlefish-orchestration/ssl/cert/
