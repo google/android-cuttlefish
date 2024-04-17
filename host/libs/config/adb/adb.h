@@ -57,6 +57,7 @@ AdbConfigFlagComponent();
 fruit::Component<fruit::Required<AdbConfig>, AdbConfigFragment>
 AdbConfigFragmentComponent();
 fruit::Component<fruit::Required<KernelLogPipeProvider, const AdbConfig,
+                                 const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 LaunchAdbComponent();
 
