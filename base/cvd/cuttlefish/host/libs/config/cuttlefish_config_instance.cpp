@@ -192,14 +192,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_vbmeta_image(
     const std::string& vbmeta_image) {
   (*Dictionary())[kVbmetaImage] = vbmeta_image;
 }
-static constexpr char kNewVbmetaImage[] = "new_vbmeta_image";
-std::string CuttlefishConfig::InstanceSpecific::new_vbmeta_image() const {
-  return (*Dictionary())[kNewVbmetaImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_new_vbmeta_image(
-    const std::string& new_vbmeta_image) {
-  (*Dictionary())[kNewVbmetaImage] = new_vbmeta_image;
-}
 static constexpr char kVbmetaSystemImage[] = "vbmeta_system_image";
 std::string CuttlefishConfig::InstanceSpecific::vbmeta_system_image() const {
   return (*Dictionary())[kVbmetaSystemImage].asString();
@@ -824,6 +816,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_enable_bootanimation(
   (*Dictionary())[kEnableBootAnimation] = enable_bootanimation;
 }
 
+static constexpr char kEnableUsb[] = "enable_usb";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_usb(bool enable) {
+  (*Dictionary())[kEnableUsb] = enable;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_usb() const {
+  return (*Dictionary())[kEnableUsb].asBool();
+}
+
 static constexpr char kExtraBootconfigArgsInstanced[] = "extra_bootconfig_args";
 std::vector<std::string>
 CuttlefishConfig::InstanceSpecific::extra_bootconfig_args() const {
@@ -1255,7 +1255,7 @@ std::string CuttlefishConfig::InstanceSpecific::ap_composite_disk_path()
 }
 
 std::string CuttlefishConfig::InstanceSpecific::vbmeta_path() const {
-  return AbsolutePath(PerInstancePath("persistent_vbmeta.img"));
+  return AbsolutePath(PerInstancePath("vbmeta.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::ap_vbmeta_path() const {
