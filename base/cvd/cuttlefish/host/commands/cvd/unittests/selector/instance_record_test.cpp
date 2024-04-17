@@ -51,10 +51,10 @@ TEST(CvdInstanceRecordUnitTest, Fields) {
   ASSERT_EQ(instance.PerInstanceName(), "phone");
   ASSERT_EQ(instance.InternalDeviceName(), "cvd-3");
   ASSERT_EQ(instance.DeviceName(), "super-phone");
-  ASSERT_EQ(instance.GroupName(), "super");
-  ASSERT_EQ(instance.HomeDir(), "/home/user");
-  ASSERT_EQ(instance.HostArtifactsPath(), "/home/user/download/bin");
-  ASSERT_EQ(instance.ProductOutPath(), "/home/user/download/bin");
+  ASSERT_EQ(instance.GroupInfo().group_name, "super");
+  ASSERT_EQ(instance.GroupInfo().home_dir, "/home/user");
+  ASSERT_EQ(instance.GroupInfo().host_artifacts_path, "/home/user/download/bin");
+  ASSERT_EQ(instance.GroupInfo().product_out_path, "/home/user/download/bin");
 }
 
 }  // namespace selector

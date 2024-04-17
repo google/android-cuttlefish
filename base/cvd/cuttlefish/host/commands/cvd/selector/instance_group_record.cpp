@@ -24,6 +24,7 @@
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
+#include "host/commands/cvd/selector/instance_record.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -77,11 +78,11 @@ LocalInstanceGroup::LocalInstanceGroup(
     const std::string& host_artifacts_path, const std::string& product_out_path,
     const TimeStamp& start_time, const std::vector<LocalInstance>& instances)
     : internal_group_name_(GenInternalGroupName()),
-      group_name_(group_name),
-      home_dir_(home_dir),
-      host_artifacts_path_(host_artifacts_path),
-      product_out_path_(host_artifacts_path),
-      start_time_(start_time),
+      group_info_{.group_name = group_name,
+                  .home_dir = home_dir,
+                  .host_artifacts_path = host_artifacts_path,
+                  .product_out_path = product_out_path,
+                  .start_time = start_time},
       instances_(instances) {};
 
 std::vector<LocalInstance> LocalInstanceGroup::FindById(
@@ -100,17 +101,17 @@ std::vector<LocalInstance> LocalInstanceGroup::FindByInstanceName(
 
 Json::Value LocalInstanceGroup::Serialize() const {
   Json::Value group_json;
-  group_json[kJsonGroupName] = group_name_;
-  group_json[kJsonHomeDir] = home_dir_;
-  group_json[kJsonHostArtifactPath] = host_artifacts_path_;
-  group_json[kJsonProductOutPath] = product_out_path_;
-  group_json[kJsonStartTime] = SerializeTimePoint(start_time_);
+  group_json[kJsonGroupName] = GroupName();
+  group_json[kJsonHomeDir] = HomeDir();
+  group_json[kJsonHostArtifactPath] = HostArtifactsPath();
+  group_json[kJsonProductOutPath] = ProductOutPath();
+  group_json[kJsonStartTime] = SerializeTimePoint(StartTime());
 
   int i = 0;
   Json::Value instances_array_json;
   for (const auto& instance : instances_) {
     Json::Value instance_json = Serialize(instance);
-    instance_json[kJsonParent] = group_name_;
+    instance_json[kJsonParent] = GroupName();
     instances_array_json[i] = instance_json;
     i++;
   }

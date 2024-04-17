@@ -154,9 +154,9 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
 
     auto instance = CF_EXPECT(
         instance_manager_.SelectInstance(selector_args, envs, extra_queries));
-    const auto& home = instance.HomeDir();
+    const auto& home = instance.GroupInfo().home_dir;
 
-    const auto& android_host_out = instance.HostArtifactsPath();
+    const auto& android_host_out = instance.GroupInfo().host_artifacts_path;
     auto cvd_display_bin_path =
         ConcatToString(android_host_out, "/bin/", kDisplayBin);
 
