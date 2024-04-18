@@ -251,7 +251,9 @@ Result<Json::Value> InstanceDatabase::Serialize() const {
 
 Result<void> InstanceDatabase::LoadFromJson(const Json::Value& db_json) {
   std::vector<LocalInstanceGroup> new_groups;
+  CF_EXPECT(db_json.isMember(kJsonGroups));
   const Json::Value& group_array = db_json[kJsonGroups];
+  CF_EXPECT(group_array.isArray());
   int n_groups = group_array.size();
   for (int i = 0; i < n_groups; i++) {
     new_groups.push_back(
