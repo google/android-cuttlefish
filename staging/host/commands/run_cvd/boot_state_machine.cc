@@ -51,7 +51,7 @@ namespace {
 //     when the boot finishes.
 //   * When restoring from a snapshot, `DaemonizeLauncher` returns an invalid
 //     `SharedFD`. The child is expected to write an arbitrary byte to the
-//     instance's "restore_pipe" and then the child assumes the restore was
+//     instance's "restore_pipe" and then the parent assumes the restore was
 //     successful.
 //
 // We should consider unifying these two types of pipes.
