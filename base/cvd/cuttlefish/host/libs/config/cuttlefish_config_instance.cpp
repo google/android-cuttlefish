@@ -748,6 +748,24 @@ void CuttlefishConfig::MutableInstanceSpecific::set_gpu_renderer_features(
   (*Dictionary())[kGpuRendererFeatures] = transport;
 }
 
+static constexpr char kGpuContextTypes[] = "gpu_context_types";
+std::string CuttlefishConfig::InstanceSpecific::gpu_context_types() const {
+  return (*Dictionary())[kGpuContextTypes].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_gpu_context_types(
+    const std::string& context_types) {
+  (*Dictionary())[kGpuContextTypes] = context_types;
+}
+
+static constexpr char kVulkanDriver[] = "guest_vulkan_driver";
+std::string CuttlefishConfig::InstanceSpecific::guest_vulkan_driver() const {
+  return (*Dictionary())[kVulkanDriver].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_guest_vulkan_driver(
+    const std::string& driver) {
+  (*Dictionary())[kVulkanDriver] = driver;
+}
+
 static constexpr char kRestartSubprocesses[] = "restart_subprocesses";
 bool CuttlefishConfig::InstanceSpecific::restart_subprocesses() const {
   return (*Dictionary())[kRestartSubprocesses].asBool();
