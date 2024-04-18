@@ -171,6 +171,7 @@ android_system_image {
         "DancingScript-Regular.ttf",
         "debuggerd",
         "device_config",
+        "dirty-image-objects",
         "dlkm_loader",
         "dmabuf_dump",
         "dmctl",
