@@ -114,6 +114,17 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.gltransport", gfxstream_transport},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
     };
+  } else if (instance.gpu_mode() == kGpuModeCustom) {
+    bootconfig_args = {
+        {"androidboot.cpuvulkan.version", "0"},
+        {"androidboot.hardware.gralloc", "minigbm"},
+        {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
+        {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
+        {"androidboot.hardware.egl", "angle"},
+        {"androidboot.hardware.vulkan", instance.guest_vulkan_driver()},
+        {"androidboot.hardware.gltransport", "virtio-gpu-asg"},
+        {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
+    };
   } else if (instance.gpu_mode() == kGpuModeNone) {
     return {};
   } else {
@@ -374,6 +385,10 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
     crosvm_cmd->AddParameter(
         "--gpu=context-types=gfxstream-vulkan:gfxstream-composer",
         gpu_common_3d_string);
+  } else if (gpu_mode == kGpuModeCustom) {
+    const std::string gpu_context_types =
+        "--gpu=context-types=" + instance.gpu_context_types();
+    crosvm_cmd->AddParameter(gpu_context_types, gpu_common_string);
   }
 
   MaybeConfigureVulkanIcd(config, crosvm_cmd);
