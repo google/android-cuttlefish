@@ -129,10 +129,14 @@ Json::Value LocalInstanceGroup::Serialize(const LocalInstance& instance) const {
 
 Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
     const Json::Value& group_json) {
+  CF_EXPECT(group_json.isMember(kJsonGroupName));
   const std::string group_name = group_json[kJsonGroupName].asString();
+  CF_EXPECT(group_json.isMember(kJsonHomeDir));
   const std::string home_dir = group_json[kJsonHomeDir].asString();
+  CF_EXPECT(group_json.isMember(kJsonHostArtifactPath));
   const std::string host_artifacts_path =
       group_json[kJsonHostArtifactPath].asString();
+  CF_EXPECT(group_json.isMember(kJsonProductOutPath));
   const std::string product_out_path =
       group_json[kJsonProductOutPath].asString();
   TimeStamp start_time = CvdServerClock::now();
@@ -157,11 +161,15 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
                                 .product_out_path = product_out_path,
                                 .start_time = std::move(start_time)});
   std::vector<InstanceInfo> instance_infos;
+  CF_EXPECT(group_json.isMember(kJsonInstances));
   const Json::Value& instances_json_array = group_json[kJsonInstances];
+  CF_EXPECT(instances_json_array.isArray());
   for (int i = 0; i < instances_json_array.size(); i++) {
     const Json::Value& instance_json = instances_json_array[i];
+    CF_EXPECT(instance_json.isMember(LocalInstance::kJsonInstanceName));
     const std::string instance_name =
         instance_json[LocalInstance::kJsonInstanceName].asString();
+    CF_EXPECT(instance_json.isMember(LocalInstance::kJsonInstanceId));
     const std::string instance_id =
         instance_json[LocalInstance::kJsonInstanceId].asString();
 
