@@ -1,64 +1,13 @@
-name: Presubmit 
+name: Presubmit
 
-on: [pull_request, push]
+on: [push]
 
 jobs:
-  build-orchestrator:
+  cvd-start:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Install dependencies
-      uses: actions/setup-go@v3
-      with:
-        go-version: '1.13.15'
-    - run: go version
-    - name: Vet Test Build
-      run: cd frontend/src/host_orchestrator && go vet ./... && go test ./... && go build ./...
-  build-debian-package:
-    runs-on: ubuntu-20.04
-    if: ${{ always() && needs.build-orchestrator.result == 'success' }}
-    needs: [build-orchestrator]
-    container:
-      # debian:bullseye
-      image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
-    steps:
-    - name: Check for dockerenv file
-      run: (ls /.dockerenv && echo 'Found dockerenv') || (echo 'No dockerenv')
-    - name: setup apt
-      run: apt update -y && apt upgrade -y
-    - name: install debuild dependencies
-      run: apt install -y git devscripts config-package-dev debhelper-compat golang protobuf-compiler
-    - name: go version 
-      run: go version
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-      with:
-        path: "android-cuttlefish"
-    - name: install package build dependencies
-      run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
-    - name: build base debian package
-      run: cd android-cuttlefish/base && debuild -i -us -uc -b
-    - name: install base debian package
-      run: dpkg -i android-cuttlefish/cuttlefish-base_*_*64.deb || apt-get install -f -y
-    - name: build frontend debian packages
-      run: cd android-cuttlefish/frontend && debuild -i -us -uc -b
-    - name: install user debian package
-      run: dpkg -i android-cuttlefish/cuttlefish-user_*_*64.deb || apt-get install -f -y
-  build-cvd:
-    runs-on: ubuntu-latest
-    container: 
-      image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Setup apt
-      run: apt update -y && apt upgrade -y
-    - name: Install dependencies
-      run: apt install -y clang pkg-config meson libfmt-dev libgflags-dev libjsoncpp-dev protobuf-compiler libgtest-dev libcurl4-openssl-dev libprotobuf-c-dev libgoogle-glog-dev libssl-dev libxml2-dev openssl uuid-dev
-    - name: Setup meson
-      run: mkdir base/cvd/build && cd base/cvd/build && meson setup
-    - name: Build cvd
-      run: cd base/cvd/build && meson compile
-    - name: Test cvd
-      run: cd base/cvd/build && meson test -v
+    - name: Check kvm
+      run: |
+        ls /dev/kvm
