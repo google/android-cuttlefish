@@ -37,4 +37,9 @@ function build() {
 #sudo apt-get install --no-install-recommends -y -f ${outdir}/cuttlefish-common_*.deb
 
 build
-[[ $is_mv_debs == "true" ]] && cp -f $cuttlefish_root/*.deb ${outdir}/
+
+mkdir -p /tmp/debs
+
+cp -f $cuttlefish_root/*.deb /tmp/debs/
+
+# [[ $is_mv_debs == "true" ]] && cp -f $cuttlefish_root/*.deb ${outdir}/

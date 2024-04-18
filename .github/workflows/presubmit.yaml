@@ -1,64 +1,41 @@
-name: Presubmit 
+name: ExperimentalCheckKVM
 
 on: [pull_request, push]
 
 jobs:
-  build-orchestrator:
-    runs-on: ubuntu-latest
+  cvd-start:
+    runs-on: ubuntu-22.04
     steps:
+    - name: Check kvm in host 
+      run: |
+        ls /dev/kvm
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Install dependencies
-      uses: actions/setup-go@v3
       with:
-        go-version: '1.13.15'
-    - run: go version
-    - name: Vet Test Build
-      run: cd frontend/src/host_orchestrator && go vet ./... && go test ./... && go build ./...
-  build-debian-package:
-    runs-on: ubuntu-20.04
-    if: ${{ always() && needs.build-orchestrator.result == 'success' }}
-    needs: [build-orchestrator]
-    container:
-      # debian:bullseye
-      image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
-    steps:
-    - name: Check for dockerenv file
-      run: (ls /.dockerenv && echo 'Found dockerenv') || (echo 'No dockerenv')
-    - name: setup apt
-      run: apt update -y && apt upgrade -y
-    - name: install debuild dependencies
-      run: apt install -y git devscripts config-package-dev debhelper-compat golang protobuf-compiler
-    - name: go version 
-      run: go version
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-      with:
-        path: "android-cuttlefish"
-    - name: install package build dependencies
-      run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
-    - name: build base debian package
-      run: cd android-cuttlefish/base && debuild -i -us -uc -b
-    - name: install base debian package
-      run: dpkg -i android-cuttlefish/cuttlefish-base_*_*64.deb || apt-get install -f -y
-    - name: build frontend debian packages
-      run: cd android-cuttlefish/frontend && debuild -i -us -uc -b
-    - name: install user debian package
-      run: dpkg -i android-cuttlefish/cuttlefish-user_*_*64.deb || apt-get install -f -y
-  build-cvd:
-    runs-on: ubuntu-latest
-    container: 
-      image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Setup apt
-      run: apt update -y && apt upgrade -y
-    - name: Install dependencies
-      run: apt install -y clang pkg-config meson libfmt-dev libgflags-dev libjsoncpp-dev protobuf-compiler libgtest-dev libcurl4-openssl-dev libprotobuf-c-dev libgoogle-glog-dev libssl-dev libxml2-dev openssl uuid-dev
-    - name: Setup meson
-      run: mkdir base/cvd/build && cd base/cvd/build && meson setup
-    - name: Build cvd
-      run: cd base/cvd/build && meson compile
-    - name: Test cvd
-      run: cd base/cvd/build && meson test -v
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Build Docker Image
+      run: |
+        cd "${GITHUB_WORKSPACE}/docker/arm-server"
+        bash build.sh
+    - name: Run Test 
+      run: |
+        container=$(docker run --privileged -d -p 12080:2080 -p 11443:1443 -p 12443:2443 -it cuttlefish-arm64)
+        sleep 60
+        docker ps
+        docker container logs "${container}"
+    - name: Make requests
+      run: |
+        docker ps
+        curl http://localhost:12080/_debug/statusz
+        curl http://localhost:12080/cvds
+        curl -d '{"cvd":{"build_source":{"android_ci_build_source":{"main_build":{"branch":"aosp-main","target":"aosp_cf_x86_64_phone-trunk_staging-userdebug"}}}}}' --header "Content-Type: application/json" --request POST http://localhost:12080/cvds
+        sleep 360
+        curl http://localhost:12080/cvds
+        docker ps
+        name=$(docker container ls | awk '{print $1}' | tail -n 1)
+        docker container logs "${name}"
+
+
+
+
+

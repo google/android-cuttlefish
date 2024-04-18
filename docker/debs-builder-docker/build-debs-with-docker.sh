@@ -42,11 +42,13 @@ function build_host_debian_pkg {
   local host_dir_on_guest="$guest_home/host"
   local src_on_guest="$host_dir_on_guest/android-cuttlefish"
   local out_on_guest="$host_dir_on_guest/out"
-  local android_cuttlefish_on_host="$(realpath ..)"
+  # local android_cuttlefish_on_host="$(realpath ..)"
+  local android_cuttlefish_on_host="/usr/local/google/home/sorama/code/github.com/android-cuttlefish"
 
   local container_name="meow_yumi"
   # in case of previous failure, we ensure we restart a new container
   docker rm -f $container_name
+  mkdir $PWD/out
   if ! docker run -d \
        --rm --privileged \
        --user="vsoc-01" -w "$guest_home" \
@@ -73,6 +75,11 @@ function build_host_debian_pkg {
        $container_name $script_on_guest $out_on_guest; then
       >&2 echo "fail to exec/attach to the container, $container_name, running in background"
       exit 3
+  fi
+
+  if ! docker cp $container_name:/tmp/debs/. "$PWD/out" > /dev/null 2>&1; then
+      >&2 echo "fail to copy deb files from container, $container_name"
+      exit 2
   fi
 
   if ! docker rm -f $container_name > /dev/null 2>&1; then
