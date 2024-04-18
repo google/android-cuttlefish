@@ -68,7 +68,9 @@ class ScreenConnector : public ScreenConnectorInfo,
     }
     auto instance = config->ForDefaultInstance();
     std::unordered_set<std::string_view> valid_gpu_modes{
-        cuttlefish::kGpuModeDrmVirgl, cuttlefish::kGpuModeGfxstream,
+        cuttlefish::kGpuModeCustom,
+        cuttlefish::kGpuModeDrmVirgl,
+        cuttlefish::kGpuModeGfxstream,
         cuttlefish::kGpuModeGfxstreamGuestAngle,
         cuttlefish::kGpuModeGfxstreamGuestAngleHostSwiftShader,
         cuttlefish::kGpuModeGuestSwiftshader};
