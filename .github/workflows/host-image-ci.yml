@@ -94,8 +94,7 @@ jobs:
 
 
   build-kernel-aosp15-66-deb-job:
-    timeout-minutes: 1080
-    runs-on: ubuntu-22.04-4core
+    runs-on: ubuntu-22.04-16core
     env:
       KERNEL_MANIFEST_URL: https://android.googlesource.com/kernel/manifest/
       KERNEL_MANIFEST_BRANCH: common-android15-6.6
