@@ -300,6 +300,20 @@ Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
   return {};
 }
 
+Result<std::vector<std::string>> FetchSystemImgZipImages(
+    BuildApi& build_api, const Build& build,
+    const std::string& target_directory, const bool keep_downloaded_archives) {
+  const std::string system_img_zip_name = GetBuildZipName(build, "img");
+  std::string system_img_zip = CF_EXPECTF(
+      build_api.DownloadFile(build, target_directory, system_img_zip_name),
+      "Unable to download {}", system_img_zip_name);
+  return CF_EXPECTF(
+      ExtractImages(system_img_zip, target_directory,
+                    {"system.img", "product.img"}, keep_downloaded_archives),
+      "Unable to extract system and product images from {}",
+      system_img_zip_name);
+}
+
 Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
   auto resolver =
       flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
@@ -498,11 +512,25 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
 
     if (flags.download_img_zip) {
       std::vector<std::string> system_images;
-      std::string extracted_system = CF_EXPECT(ExtractImage(
-          target_files, target_directories.root, "IMAGES/system.img"));
-      const std::string system_path = target_directories.root + "/system.img";
-      CF_EXPECT(RenameFile(extracted_system, system_path));
-      system_images.emplace_back(system_path);
+      Result<std::string> extracted_system = ExtractImage(
+          target_files, target_directories.root, "IMAGES/system.img");
+      if (extracted_system.ok()) {
+        const std::string system_path = target_directories.root + "/system.img";
+        CF_EXPECT(RenameFile(*extracted_system, system_path));
+        system_images.emplace_back(system_path);
+      } else {
+        LOG(INFO) << "Unable to retrieve system.img from target files, falling "
+                     "back to system *-img-*.zip for system image";
+        const auto img_zip_images =
+            CF_EXPECT(FetchSystemImgZipImages(build_api, *builds.system,
+                                              target_directories.root,
+                                              keep_downloaded_archives),
+                      "Unable to retrieve system images from fallback to "
+                      "system *-img-*.zip");
+        for (const auto& image_path : img_zip_images) {
+          system_images.emplace_back(image_path);
+        }
+      }
 
       Result<std::string> extracted_product = ExtractImage(
           target_files, target_directories.root, "IMAGES/product.img");
