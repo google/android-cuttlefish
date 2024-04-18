@@ -50,6 +50,7 @@ const char* const kVhostUserVsockModeTrue = "true";
 const char* const kVhostUserVsockModeFalse = "false";
 
 const char* const kGpuModeAuto = "auto";
+const char* const kGpuModeCustom = "custom";
 const char* const kGpuModeDrmVirgl = "drm_virgl";
 const char* const kGpuModeGfxstream = "gfxstream";
 const char* const kGpuModeGfxstreamGuestAngle = "gfxstream_guest_angle";
