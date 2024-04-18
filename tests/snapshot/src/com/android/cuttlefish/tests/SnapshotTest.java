@@ -44,7 +44,7 @@ public class SnapshotTest extends BaseHostJUnit4Test {
   @Option(
       name = "test-count",
       description = "Number of times to restore the device back to snapshot state.")
-  private int mTestCount = 1;
+  private int mTestCount = 10;
 
   @Test
   public void testSnapshot() throws Exception {
