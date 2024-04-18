@@ -39,6 +39,7 @@ namespace {
 
 enum class RenderingMode {
   kNone,
+  kCustom,
   kGuestSwiftShader,
   kGfxstream,
   kGfxstreamGuestAngle,
@@ -62,6 +63,9 @@ Result<RenderingMode> GetRenderingMode(const std::string& mode) {
   }
   if (mode == std::string(kGpuModeGuestSwiftshader)) {
     return RenderingMode::kGuestSwiftShader;
+  }
+  if (mode == std::string(kGpuModeCustom)) {
+    return RenderingMode::kCustom;
   }
   if (mode == std::string(kGpuModeNone)) {
     return RenderingMode::kNone;
@@ -232,7 +236,7 @@ Result<std::string> SelectGpuMode(
     const GuestConfig& guest_config,
     const gfxstream::proto::GraphicsAvailability& graphics_availability) {
   if (gpu_mode_arg != kGpuModeAuto && gpu_mode_arg != kGpuModeDrmVirgl &&
-      gpu_mode_arg != kGpuModeGfxstream &&
+      gpu_mode_arg != kGpuModeCustom && gpu_mode_arg != kGpuModeGfxstream &&
       gpu_mode_arg != kGpuModeGfxstreamGuestAngle &&
       gpu_mode_arg != kGpuModeGfxstreamGuestAngleHostSwiftShader &&
       gpu_mode_arg != kGpuModeGuestSwiftshader &&
@@ -480,9 +484,13 @@ Result<void> SetGfxstreamFlags(
 
 }  // namespace
 
+static std::unordered_set<std::string> kSupportedGpuContexts{
+    "gfxstream-vulkan", "gfxstream-composer", "cross-domain", "magma"};
+
 Result<std::string> ConfigureGpuSettings(
     const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
-    const std::string& gpu_renderer_features_arg, const std::string& vm_manager,
+    const std::string& gpu_renderer_features_arg,
+    std::string& gpu_context_types_arg, const std::string& vm_manager,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
 #ifdef __APPLE__
@@ -523,6 +531,14 @@ Result<std::string> ConfigureGpuSettings(
       gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
     CF_EXPECT(SetGfxstreamFlags(gpu_mode, gpu_renderer_features_arg,
                                 guest_config, graphics_availability, instance));
+  }
+
+  if (gpu_mode == kGpuModeCustom) {
+    auto requested_types = android::base::Split(gpu_context_types_arg, ":");
+    for (const std::string& requested : requested_types) {
+      CF_EXPECT(kSupportedGpuContexts.count(requested) == 1,
+                "unsupported context type: " + requested);
+    }
   }
 
   const auto angle_features = CF_EXPECT(GetNeededAngleFeatures(

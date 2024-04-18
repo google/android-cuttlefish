@@ -26,7 +26,8 @@ namespace cuttlefish {
 
 Result<std::string> ConfigureGpuSettings(
     const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
-    const std::string& gpu_renderer_features_arg, const std::string& vm_manager,
+    const std::string& gpu_renderer_features_arg,
+    std::string& gpu_context_types_arg, const std::string& vm_manager,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance);
 
