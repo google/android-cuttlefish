@@ -30,7 +30,7 @@ cd ${TDIR}/common
 export ARCH=arm64
 export CROSS_COMPILE=aarch64-linux-gnu-
 KERVER=$(make kernelversion)
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig -j16
 for i in arch/arm64/configs/gki_defconfig ../common-modules/virtual-device/virtual_device_core.fragment ../common-modules/virtual-device/linux_distro.fragment; do 
     ./scripts/kconfig/merge_config.sh -O . .config ${i}
 done
@@ -2253,6 +2253,6 @@ if [ x"${KERNEL_MANIFEST_BRANCH}" != x ]; then
     ANDROIDVERSION=$(echo "${KERNEL_MANIFEST_BRANCH}" | sed 's/.*android\([0-9]*\)-.*/\1/')
 fi
 
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION=".aosp${ANDROIDVERSION}-linaro-gig-1-arm64" KDEB_PKGVERSION="${KERVER}"-"${CI_PIPELINE_ID}" deb-pkg
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION=".aosp${ANDROIDVERSION}-linaro-gig-1-arm64" KDEB_PKGVERSION="${KERVER}"-"${CI_PIPELINE_ID}" deb-pkg -j16
 
 cd -
