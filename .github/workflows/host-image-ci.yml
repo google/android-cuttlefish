@@ -94,8 +94,8 @@ jobs:
 
 
   build-kernel-aosp15-66-deb-job:
-    runs-on: ubuntu-22.04-16core
-    timeout-minutes: 1100
+    timeout-minutes: 1080
+    runs-on: ubuntu-22.04-4core
     env:
       KERNEL_MANIFEST_URL: https://android.googlesource.com/kernel/manifest/
       KERNEL_MANIFEST_BRANCH: common-android15-6.6
@@ -116,7 +116,6 @@ jobs:
       run: pbuilder-dist stable arm64 update
     - name: Building package
       run: cd cuttlefish-host-image-installer && ./kernel_build_deb_qemu.sh
-      timeout-minutes: 1080
     - name: Create artifact
       run: cd cuttlefish-host-image-installer && cp `ls kernel-build-space/buildresult/linux-image-*.deb | grep -v dbg` . && cp kernel-build-space/buildresult/linux-headers-*.deb . && 7z a -mx=9 aosp_kernel_aosp15_66.7z *.deb
     - name: Publish aosp_kernel_aosp15_66.7z
