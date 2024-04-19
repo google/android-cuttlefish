@@ -116,7 +116,7 @@ jobs:
     - name: Building package
       run: cd cuttlefish-host-image-installer && ./kernel_build_deb_qemu.sh
     - name: Create artifact
-      run: cd cuttlefish-host-image-installer && cp `ls kernel-build-space/buildresult/linux-image-*.deb | grep -v dbg` . && cp kernel-build-space/buildresult/linux-headers-*.deb . && 7z a -mx=9 aosp_kernel_aosp15_66.7z *.deb
+      run: cd cuttlefish-host-image-installer && cp `ls kernel-build-space/linux-image-*.deb | grep -v dbg` . && cp kernel-build-space/linux-headers-*.deb . && 7z a -mx=9 aosp_kernel_aosp15_66.7z *.deb
     - name: Publish aosp_kernel_aosp15_66.7z
       uses: actions/upload-artifact@v3
       with:
