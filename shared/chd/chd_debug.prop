@@ -21,3 +21,6 @@
 
 # Disable adb authentication to allow test automation for CHD.
 ro.adb.secure=0
+
+# Allow 'adb root' on user build CHD
+ro.debuggable=1
