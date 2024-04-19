@@ -31,45 +31,24 @@ namespace cuttlefish {
 using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
 
 static bool PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
-  auto avbtool_path = HostBinaryPath("avbtool");
-  Command vbmeta_cmd(avbtool_path);
-  vbmeta_cmd.AddParameter("make_vbmeta_image");
-  vbmeta_cmd.AddParameter("--output");
-  vbmeta_cmd.AddParameter(path);
-  vbmeta_cmd.AddParameter("--algorithm");
-  vbmeta_cmd.AddParameter("SHA256_RSA4096");
-  vbmeta_cmd.AddParameter("--key");
-  vbmeta_cmd.AddParameter(TestKeyRsa4096());
-
-  vbmeta_cmd.AddParameter("--chain_partition");
-  vbmeta_cmd.AddParameter("uboot_env:1:" + TestPubKeyRsa4096());
-
+  std::unique_ptr<Avb> avbtool = GetDefaultAvb();
+  std::vector<ChainPartition> chained_partitions = {ChainPartition{
+      .name = "uboot_env",
+      .rollback_index = "1",
+      .key_path = TestPubKeyRsa4096(),
+  }};
   if (has_boot_config) {
-    vbmeta_cmd.AddParameter("--chain_partition");
-    vbmeta_cmd.AddParameter("bootconfig:2:" + TestPubKeyRsa4096());
+    chained_partitions.emplace_back(ChainPartition{
+        .name = "bootconfig",
+        .rollback_index = "2",
+        .key_path = TestPubKeyRsa4096(),
+    });
   }
-
-  bool success = vbmeta_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to create persistent vbmeta. Exited with status "
-               << success;
+  Result<void> result =
+      avbtool->MakeVbMetaImage(path, chained_partitions, {}, {});
+  if (!result.ok()) {
+    LOG(ERROR) << result.error().Trace();
     return false;
-  }
-
-  const auto vbmeta_size = FileSize(path);
-  if (vbmeta_size > VBMETA_MAX_SIZE) {
-    LOG(ERROR) << "Generated vbmeta - " << path
-               << " is larger than the expected " << VBMETA_MAX_SIZE
-               << ". Stopping.";
-    return false;
-  }
-  if (vbmeta_size != VBMETA_MAX_SIZE) {
-    auto fd = SharedFD::Open(path, O_RDWR);
-    if (!fd->IsOpen() || fd->Truncate(VBMETA_MAX_SIZE) != 0) {
-      LOG(ERROR) << "`truncate --size=" << VBMETA_MAX_SIZE << " " << path
-                 << "` failed: " << fd->StrError();
-      return false;
-    }
   }
   return true;
 }
