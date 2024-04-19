@@ -16,15 +16,18 @@
 
 #include "host/commands/assemble_cvd/disk_flags.h"
 
+#include <sys/statvfs.h>
+
+#include <fstream>
+#include <string>
+#include <vector>
+
 #include <android-base/logging.h>
 #include <android-base/parsebool.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
-#include <sys/statvfs.h>
-
-#include <fstream>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
@@ -40,6 +43,7 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
 #include "host/commands/assemble_cvd/vendor_dlkm_utils.h"
+#include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/inject.h"
@@ -356,14 +360,18 @@ std::vector<ImagePartition> android_composite_disk_config(
       .image_file_path = AbsolutePath(instance.new_vendor_boot_image()),
       .read_only = FLAGS_use_overlay,
   });
+  auto vbmeta_image = instance.new_vbmeta_image();
+  if (!FileExists(vbmeta_image)) {
+    vbmeta_image = instance.vbmeta_image();
+  }
   partitions.push_back(ImagePartition{
       .label = "vbmeta_a",
-      .image_file_path = AbsolutePath(instance.vbmeta_image()),
+      .image_file_path = AbsolutePath(vbmeta_image),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_b",
-      .image_file_path = AbsolutePath(instance.vbmeta_image()),
+      .image_file_path = AbsolutePath(vbmeta_image),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
@@ -630,20 +638,13 @@ Result<void> VbmetaEnforceMinimumSize(
   // libavb expects to be able to read the maximum vbmeta size, so we must
   // provide a partition which matches this or the read will fail
   for (const auto& vbmeta_image :
-       {instance.vbmeta_image(), instance.vbmeta_system_image(),
-        instance.vbmeta_vendor_dlkm_image(),
+       {instance.vbmeta_image(), instance.new_vbmeta_image(),
+        instance.vbmeta_system_image(), instance.vbmeta_vendor_dlkm_image(),
         instance.vbmeta_system_dlkm_image()}) {
     // In some configurations of cuttlefish, the vendor dlkm vbmeta image does
     // not exist
-    if (FileExists(vbmeta_image) && FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
-      auto fd = SharedFD::Open(vbmeta_image, O_RDWR);
-      CF_EXPECTF(fd->IsOpen(), "Could not open \"{}\": {}", vbmeta_image,
-                 fd->StrError());
-      CF_EXPECTF(fd->Truncate(VBMETA_MAX_SIZE) == 0,
-                 "`truncate --size={} {}` failed: {}", VBMETA_MAX_SIZE,
-                 vbmeta_image, fd->StrError());
-      CF_EXPECTF(fd->Fsync() == 0, "fsync on `{}` failed: {}", vbmeta_image,
-                 fd->StrError());
+    if (FileExists(vbmeta_image)) {
+      CF_EXPECT(EnforceVbMetaSize(vbmeta_image));
     }
   }
   return {};
@@ -971,6 +972,9 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       const std::string new_super_image_path =
           const_instance.PerInstancePath("super.img");
       instance.set_new_super_image(new_super_image_path);
+      const std::string new_vbmeta_image_path =
+          const_instance.PerInstancePath("os_vbmeta.img");
+      instance.set_new_super_image(new_vbmeta_image_path);
     }
 
     instance.set_new_vbmeta_vendor_dlkm_image(
