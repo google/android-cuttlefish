@@ -120,7 +120,8 @@ class DataViewer {
    * Utility class to prevent deadlocks due to function reentry.
    *
    * It checks that the current thread doesn't already hold the file lock,
-   * aborting the program when it detects a deadlock could occurr.*/
+   * aborting the program when it detects a deadlock could occur.
+   */
   class DeadlockProtector {
    public:
     DeadlockProtector(const DataViewer<T>& dv)
