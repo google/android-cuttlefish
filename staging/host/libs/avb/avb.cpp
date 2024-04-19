@@ -22,6 +22,7 @@
 
 #include <fruit/fruit.h>
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -32,6 +33,7 @@ namespace {
 
 constexpr char kAddHashFooter[] = "add_hash_footer";
 constexpr char kDefaultAlgorithm[] = "SHA256_RSA4096";
+constexpr char kInfoImage[] = "info_image";
 
 }  // namespace
 
@@ -72,6 +74,28 @@ Result<void> Avb::AddHashFooter(const std::string& image_path,
   int exit_code = command.Start().Wait();
   CF_EXPECTF(exit_code == 0, "Failure running {} {}. Exited with status {}",
              command.Executable(), kAddHashFooter, exit_code);
+  return {};
+}
+
+Command Avb::GenerateInfoImage(const std::string& image_path,
+                               const SharedFD& output_file) const {
+  Command command(avbtool_path_);
+  command.AddParameter(kInfoImage);
+  command.AddParameter("--image");
+  command.AddParameter(image_path);
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
+  return command;
+}
+
+Result<void> Avb::WriteInfoImage(const std::string& image_path,
+                                 const std::string& output_path) const {
+  auto output_file = SharedFD::Creat(output_path, 0666);
+  CF_EXPECTF(output_file->IsOpen(), "Unable to create {} with error - {}",
+             output_path, output_file->StrError());
+  auto command = GenerateInfoImage(image_path, output_file);
+  int exit_code = command.Start().Wait();
+  CF_EXPECTF(exit_code == 0, "Failure running {} {}. Exited with status {}",
+             command.Executable(), kInfoImage, exit_code);
   return {};
 }
 
