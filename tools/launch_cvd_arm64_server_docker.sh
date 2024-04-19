@@ -140,6 +140,19 @@ ssh $server \
    done"
 echo -e "Done"
 
+# extract cvd-host_package.tar.gz with /:extract API if the API exists
+ssh $server \
+  "job_id=\$(curl -s -k -X POST ${host_orchestrator_url}/userartifacts/$user_artifacts_dir/cvd-host_package.tar.gz/:extract | jq -r '.name' 2>/dev/null) && \
+   if [[ \$job_id != \"\" ]]; then \
+     echo Extracting cvd-host_package.tar.gz ... && \
+     job_done=\"false\" && \
+     while [[ \$job_done == \"false\" ]]; do \
+       sleep 1 && \
+       job_done=\$(curl -s -k ${host_orchestrator_url}/operations/\$job_id | jq -r '.done'); \
+     done && \
+     echo Done; \
+   fi"
+
 echo -e "Creating image from root docker container"
 root_image_id=$(ssh $server -t "docker commit $root_container_id cvd_root_image:$root_container_id")
 root_image_id=${root_image_id//$'\r'} # to remove trailing ^M
