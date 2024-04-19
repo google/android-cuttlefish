@@ -15,13 +15,12 @@
  */
 
 #include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "common/libs/fs/shared_fd.h"
-#include "host/libs/config/cuttlefish_config.h"
 
 #include <string.h>
 #include <unistd.h>
 
 #include <fstream>
+#include <memory>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -29,10 +28,12 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/avb/avb.cpp"
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
 const char TMP_EXTENSION[] = ".tmp";
@@ -161,26 +162,13 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
                       << success;
 }
 
-bool GetAvbMetadatFromBootImage(const std::string& boot_image_path,
-                                const std::string& unpack_dir) {
-  auto avbtool_path = HostBinaryPath("avbtool");
-  Command avb_cmd(avbtool_path);
-  avb_cmd.AddParameter("info_image");
-  avb_cmd.AddParameter("--image");
-  avb_cmd.AddParameter(boot_image_path);
-
-  auto output_file = SharedFD::Creat(unpack_dir + "/boot_params", 0666);
-  if (!output_file->IsOpen()) {
-    LOG(ERROR) << "Unable to create intermediate boot params file: "
-               << output_file->StrError();
-    return false;
-  }
-  avb_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
-
-  int success = avb_cmd.Start().Wait();
-
-  if (success != 0) {
-    LOG(ERROR) << "Unable to run avb command. Exited with status " << success;
+bool GetAvbMetadataFromBootImage(const std::string& boot_image_path,
+                                 const std::string& unpack_dir) {
+  std::unique_ptr<Avb> avbtool = GetDefaultAvb();
+  Result<void> result =
+      avbtool->WriteInfoImage(boot_image_path, unpack_dir + "/boot_params");
+  if (!result.ok()) {
+    LOG(ERROR) << result.error().Trace();
     return false;
   }
   return true;
@@ -465,7 +453,7 @@ Result<std::string> ReadAndroidVersionFromBootImage(
   if (!unpack_dir) {
     return CF_ERR("boot image unpack dir could not be created");
   }
-  bool unpack_status = GetAvbMetadatFromBootImage(boot_image_path, unpack_dir);
+  bool unpack_status = GetAvbMetadataFromBootImage(boot_image_path, unpack_dir);
   if (!unpack_status) {
     RecursivelyRemoveDirectory(unpack_dir);
     return CF_ERR("\"" + boot_image_path + "\" boot image unpack into \"" +
