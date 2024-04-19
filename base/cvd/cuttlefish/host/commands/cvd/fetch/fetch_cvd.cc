@@ -494,7 +494,6 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
       CF_EXPECT(config.AddFilesToConfig(
           FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
           {target_files}, target_directories.root));
-      DeAndroidSparse({target_files});
     }
   }
 
@@ -508,7 +507,6 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
     CF_EXPECT(config.AddFilesToConfig(FileSource::SYSTEM_BUILD, system_id,
                                       system_target, {target_files},
                                       target_directories.root));
-    DeAndroidSparse({target_files});
 
     if (flags.download_img_zip) {
       std::vector<std::string> system_images;
