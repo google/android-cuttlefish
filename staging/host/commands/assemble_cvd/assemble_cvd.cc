@@ -223,6 +223,7 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("os_composite_gpt_header.img");
   preserving.insert("os_composite_gpt_footer.img");
   preserving.insert("os_composite.img");
+  preserving.insert("os_vbmeta.img");
   preserving.insert("sdcard.img");
   preserving.insert("sdcard_overlay.img");
   preserving.insert("boot_repacked.img");
@@ -245,7 +246,7 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("factory_reset_protected.img");
   preserving.insert("misc.img");
   preserving.insert("metadata.img");
-  preserving.insert("vbmeta.img");
+  preserving.insert("persistent_vbmeta.img");
   preserving.insert("oemlock_secure");
   preserving.insert("oemlock_insecure");
   // Preserve logs if restoring from a snapshot.

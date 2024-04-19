@@ -409,40 +409,13 @@ bool BuildVbmetaImage(const std::string& image_path,
                       const std::string& vbmeta_path) {
   CHECK(!image_path.empty());
   CHECK(FileExists(image_path));
-  auto avbtool_path = HostBinaryPath("avbtool");
-  Command vbmeta_cmd(avbtool_path);
-  vbmeta_cmd.AddParameter("make_vbmeta_image");
-  vbmeta_cmd.AddParameter("--output");
-  vbmeta_cmd.AddParameter(vbmeta_path);
-  vbmeta_cmd.AddParameter("--algorithm");
-  vbmeta_cmd.AddParameter("SHA256_RSA4096");
-  vbmeta_cmd.AddParameter("--key");
-  vbmeta_cmd.AddParameter(TestKeyRsa4096());
-  vbmeta_cmd.AddParameter("--include_descriptors_from_image");
-  vbmeta_cmd.AddParameter(image_path);
-  vbmeta_cmd.AddParameter("--padding_size");
-  vbmeta_cmd.AddParameter("4096");
 
-  bool success = vbmeta_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to create vbmeta. Exited with status " << success;
+  std::unique_ptr<Avb> avbtool = GetDefaultAvb();
+  Result<void> result = avbtool->MakeVbMetaImage(vbmeta_path, {}, {image_path},
+                                                 {"--padding_size", "4096"});
+  if (!result.ok()) {
+    LOG(ERROR) << result.error().Trace();
     return false;
-  }
-
-  const auto vbmeta_size = FileSize(vbmeta_path);
-  if (vbmeta_size > VBMETA_MAX_SIZE) {
-    LOG(ERROR) << "Generated vbmeta - " << vbmeta_path
-               << " is larger than the expected " << VBMETA_MAX_SIZE
-               << ". Stopping.";
-    return false;
-  }
-  if (vbmeta_size != VBMETA_MAX_SIZE) {
-    auto fd = SharedFD::Open(vbmeta_path, O_RDWR | O_CLOEXEC);
-    if (!fd->IsOpen() || fd->Truncate(VBMETA_MAX_SIZE) != 0) {
-      LOG(ERROR) << "`truncate --size=" << VBMETA_MAX_SIZE << " " << vbmeta_path
-                 << "` failed: " << fd->StrError();
-      return false;
-    }
   }
   return true;
 }
