@@ -4,7 +4,7 @@ SELFPID=$$
 renice 10 -p "$SELFPID"
 ionice -c 3 -p "$SELFPID"
 
-TDIR=/tmp/d19
+TDIR=`pwd`/kernel-build-space
 mkdir -p ${TDIR}
 
 cat <<EOF > ${TDIR}/buildscript1
