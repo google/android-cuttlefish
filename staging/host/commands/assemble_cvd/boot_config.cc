@@ -32,18 +32,15 @@
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/bootconfig_args.h"
+#include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/kernel_args.h"
-#include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
 using cuttlefish::vm_manager::CrosvmManager;
 
 DECLARE_string(vm_manager);
-
-// Taken from external/avb/avbtool.py; this define is not in the headers
-#define MAX_AVB_METADATA_SIZE 69632ul
 
 namespace cuttlefish {
 namespace {
@@ -200,24 +197,11 @@ Result<void> PrepareBootEnvImage(
              "Unable to run mkenvimage_slim. Exited with status {}", success);
 
   const off_t boot_env_size_bytes =
-      AlignToPowerOf2(MAX_AVB_METADATA_SIZE + 4096, PARTITION_SIZE_SHIFT);
+      AlignToPowerOf2(kMaxAvbMetadataSize + 4096, PARTITION_SIZE_SHIFT);
 
-  auto avbtool_path = HostBinaryPath("avbtool");
-  Command boot_env_hash_footer_cmd(avbtool_path);
-  boot_env_hash_footer_cmd.AddParameter("add_hash_footer");
-  boot_env_hash_footer_cmd.AddParameter("--image");
-  boot_env_hash_footer_cmd.AddParameter(tmp_boot_env_image_path);
-  boot_env_hash_footer_cmd.AddParameter("--partition_size");
-  boot_env_hash_footer_cmd.AddParameter(boot_env_size_bytes);
-  boot_env_hash_footer_cmd.AddParameter("--partition_name");
-  boot_env_hash_footer_cmd.AddParameter("uboot_env");
-  boot_env_hash_footer_cmd.AddParameter("--key");
-  boot_env_hash_footer_cmd.AddParameter(TestKeyRsa4096());
-  boot_env_hash_footer_cmd.AddParameter("--algorithm");
-  boot_env_hash_footer_cmd.AddParameter("SHA256_RSA4096");
-  success = boot_env_hash_footer_cmd.Start().Wait();
-  CF_EXPECTF(success == 0,
-             "Unable to append hash footer. Exited with status {}", success);
+  std::unique_ptr<Avb> avbtool = GetDefaultAvb();
+  CF_EXPECT(avbtool->AddHashFooter(tmp_boot_env_image_path, "uboot_env",
+                                   boot_env_size_bytes));
 
   if (!FileExists(image_path) ||
       ReadFile(image_path) != ReadFile(tmp_boot_env_image_path)) {
