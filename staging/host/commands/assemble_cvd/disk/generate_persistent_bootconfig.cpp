@@ -16,6 +16,7 @@
 
 #include "host/commands/assemble_cvd/disk/disk.h"
 
+#include <memory>
 #include <string>
 #include <unordered_set>
 
@@ -27,14 +28,12 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/size_utils.h"
 #include "host/commands/assemble_cvd/bootconfig_args.h"
+#include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/feature.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/gem5_manager.h"
-
-// Taken from external/avb/avbtool.py; this define is not in the headers
-#define MAX_AVB_METADATA_SIZE 69632ul
 
 namespace cuttlefish {
 
@@ -87,25 +86,11 @@ Result<void> GeneratePersistentBootconfig(
   } else {
     bootconfig_fd->Close();
     const off_t bootconfig_size_bytes = AlignToPowerOf2(
-        MAX_AVB_METADATA_SIZE + bootconfig.size(), PARTITION_SIZE_SHIFT);
+        kMaxAvbMetadataSize + bootconfig.size(), PARTITION_SIZE_SHIFT);
 
-    auto avbtool_path = HostBinaryPath("avbtool");
-    Command bootconfig_hash_footer_cmd(avbtool_path);
-    bootconfig_hash_footer_cmd.AddParameter("add_hash_footer");
-    bootconfig_hash_footer_cmd.AddParameter("--image");
-    bootconfig_hash_footer_cmd.AddParameter(bootconfig_path);
-    bootconfig_hash_footer_cmd.AddParameter("--partition_size");
-    bootconfig_hash_footer_cmd.AddParameter(bootconfig_size_bytes);
-    bootconfig_hash_footer_cmd.AddParameter("--partition_name");
-    bootconfig_hash_footer_cmd.AddParameter("bootconfig");
-    bootconfig_hash_footer_cmd.AddParameter("--key");
-    bootconfig_hash_footer_cmd.AddParameter(TestKeyRsa4096());
-    bootconfig_hash_footer_cmd.AddParameter("--algorithm");
-    bootconfig_hash_footer_cmd.AddParameter("SHA256_RSA4096");
-    int success = bootconfig_hash_footer_cmd.Start().Wait();
-    CF_EXPECT(
-        success == 0,
-        "Unable to run append hash footer. Exited with status " << success);
+    std::unique_ptr<Avb> avbtool = GetDefaultAvb();
+    CF_EXPECT(avbtool->AddHashFooter(bootconfig_path, "bootconfig",
+                                     bootconfig_size_bytes));
   }
   return {};
 }

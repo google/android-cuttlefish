@@ -24,6 +24,8 @@ std::string AdbConnectorBinary() {
   return HostBinaryPath("adb_connector");
 }
 
+std::string AvbToolBinary() { return HostBinaryPath("avbtool"); }
+
 std::string CasimirControlServerBinary() {
   return HostBinaryPath("casimir_control_server");
 }

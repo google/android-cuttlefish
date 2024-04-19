@@ -19,12 +19,22 @@
 
 #include <sys/types.h>
 
+#include <cstdint>
+#include <memory>
+#include <string>
+
 #include <fruit/fruit.h>
+
+#include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 
+// Taken from external/avb/avbtool.py; this define is not in the headers
+inline constexpr uint64_t kMaxAvbMetadataSize = 69632ul;
+
 class Avb {
  public:
+  Avb(std::string avbtool_path);
   Avb(std::string avbtool_path, std::string algorithm, std::string key);
 
   /**
@@ -37,13 +47,18 @@ class Avb {
   */
   Result<void> AddHashFooter(const std::string& image_path,
                              const std::string& partition_name,
-                             off_t partition_size_bytes) const;
+                             const off_t partition_size_bytes) const;
 
  private:
+  Command GenerateAddHashFooter(const std::string& image_path,
+                                const std::string& partition_name,
+                                const off_t partition_size_bytes) const;
   std::string avbtool_path_;
   std::string algorithm_;
   std::string key_;
 };
+
+std::unique_ptr<Avb> GetDefaultAvb();
 
 fruit::Component<Avb> CuttlefishKeyAvbComponent();
 
