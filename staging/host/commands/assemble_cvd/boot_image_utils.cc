@@ -24,6 +24,7 @@
 #include <fstream>
 #include <regex>
 #include <sstream>
+#include <string>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -31,6 +32,8 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/libs/avb/avb.cpp"
+#include "host/libs/config/known_paths.h"
 
 const char TMP_EXTENSION[] = ".tmp";
 const char CPIO_EXT[] = ".cpio";
@@ -355,18 +358,12 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
     return false;
   }
 
-  auto avbtool_path = HostBinaryPath("avbtool");
-  Command avb_cmd(avbtool_path);
-  avb_cmd.AddParameter("add_hash_footer");
-  avb_cmd.AddParameter("--image");
-  avb_cmd.AddParameter(tmp_vendor_boot_image_path);
-  avb_cmd.AddParameter("--partition_size");
-  avb_cmd.AddParameter(FileSize(vendor_boot_image_path));
-  avb_cmd.AddParameter("--partition_name");
-  avb_cmd.AddParameter("vendor_boot");
-  success = avb_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to run avbtool. Exited with status " << success;
+  auto avbtool = Avb(AvbToolBinary());
+  Result<void> result =
+      avbtool.AddHashFooter(tmp_vendor_boot_image_path, "vendor_boot",
+                            FileSize(vendor_boot_image_path));
+  if (!result.ok()) {
+    LOG(ERROR) << result.error().Trace();
     return false;
   }
 

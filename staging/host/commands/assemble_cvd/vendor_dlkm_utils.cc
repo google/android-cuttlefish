@@ -291,7 +291,8 @@ bool GenerateFileContexts(const char* output_path,
 
 bool AddVbmetaFooter(const std::string& output_image,
                      const std::string& partition_name) {
-  auto avbtool_path = HostBinaryPath("avbtool");
+  // TODO(b/335742241): update to use Avb
+  auto avbtool_path = AvbToolBinary();
   Command avb_cmd(avbtool_path);
   // Add host binary path to PATH, so that avbtool can locate host util
   // binaries such as 'fec'
