@@ -25,6 +25,7 @@
 
 #include <fruit/fruit.h>
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
@@ -48,11 +49,16 @@ class Avb {
   Result<void> AddHashFooter(const std::string& image_path,
                              const std::string& partition_name,
                              const off_t partition_size_bytes) const;
+  Result<void> WriteInfoImage(const std::string& image_path,
+                              const std::string& output_path) const;
 
  private:
   Command GenerateAddHashFooter(const std::string& image_path,
                                 const std::string& partition_name,
                                 const off_t partition_size_bytes) const;
+  Command GenerateInfoImage(const std::string& image_path,
+                            const SharedFD& output_path) const;
+
   std::string avbtool_path_;
   std::string algorithm_;
   std::string key_;
