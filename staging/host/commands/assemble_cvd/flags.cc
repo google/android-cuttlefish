@@ -166,6 +166,11 @@ DEFINE_vec(
     "this at boot time.  Only valid with --gpu_mode=custom. "
     "For example \"--guest_vulkan_driver=ranchu\"");
 
+DEFINE_vec(
+    frames_socket_path, CF_DEFAULTS_FRAME_SOCKET_PATH,
+    "Frame socket path to use when launching a VM "
+    "For example, \"--frames_socket_path=${XDG_RUNTIME_DIR}/wayland-0\"");
+
 DEFINE_vec(use_allocd, CF_DEFAULTS_USE_ALLOCD?"true":"false",
             "Acquire static resources from the resource allocator daemon.");
 DEFINE_vec(
@@ -1151,6 +1156,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_context_types));
   std::vector<std::string> guest_vulkan_driver_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(guest_vulkan_driver));
+  std::vector<std::string> frames_socket_path_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(frames_socket_path));
 
   std::vector<std::string> gpu_capture_binary_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_capture_binary));
@@ -1580,6 +1587,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_gpu_context_types(gpu_context_types_vec[instance_index]);
     instance.set_guest_vulkan_driver(guest_vulkan_driver_vec[instance_index]);
+
+    if (!frames_socket_path_vec[instance_index].empty()) {
+      instance.set_frames_socket_path(frames_socket_path_vec[instance_index]);
+    } else {
+      instance.set_frames_socket_path(
+          const_instance.PerInstanceInternalUdsPath("frames.sock"));
+    }
 
     // 1. Keep original code order SetCommandLineOptionWithMode("enable_sandbox")
     // then set_enable_sandbox later.

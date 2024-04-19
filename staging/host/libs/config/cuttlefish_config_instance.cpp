@@ -1747,8 +1747,14 @@ std::string CuttlefishConfig::InstanceSpecific::switches_socket_path() const {
   return PerInstanceInternalUdsPath("switches.sock");
 }
 
+static constexpr char kFrameSockPath[] = "frame_sock_path";
+void CuttlefishConfig::MutableInstanceSpecific::set_frames_socket_path(
+    const std::string& frame_socket_path) {
+  (*Dictionary())[kFrameSockPath] = frame_socket_path;
+}
+
 std::string CuttlefishConfig::InstanceSpecific::frames_socket_path() const {
-  return PerInstanceInternalUdsPath("frames.sock");
+  return (*Dictionary())[kFrameSockPath].asString();
 }
 
 static constexpr char kWifiMacPrefix[] = "wifi_mac_prefix";
