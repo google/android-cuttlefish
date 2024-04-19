@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <fruit/fruit.h>
 
@@ -32,6 +33,12 @@ namespace cuttlefish {
 
 // Taken from external/avb/avbtool.py; this define is not in the headers
 inline constexpr uint64_t kMaxAvbMetadataSize = 69632ul;
+
+struct ChainPartition {
+  std::string name;
+  std::string rollback_index;
+  std::string key_path;
+};
 
 class Avb {
  public:
@@ -51,6 +58,11 @@ class Avb {
                              const off_t partition_size_bytes) const;
   Result<void> WriteInfoImage(const std::string& image_path,
                               const std::string& output_path) const;
+  Result<void> MakeVbMetaImage(
+      const std::string& output_path,
+      const std::vector<ChainPartition>& chained_partitions,
+      const std::vector<std::string>& included_partitions,
+      const std::vector<std::string>& extra_arguments);
 
  private:
   Command GenerateAddHashFooter(const std::string& image_path,
@@ -58,11 +70,18 @@ class Avb {
                                 const off_t partition_size_bytes) const;
   Command GenerateInfoImage(const std::string& image_path,
                             const SharedFD& output_path) const;
+  Command GenerateMakeVbMetaImage(
+      const std::string& output_path,
+      const std::vector<ChainPartition>& chained_partitions,
+      const std::vector<std::string>& included_partitions,
+      const std::vector<std::string>& extra_arguments);
 
   std::string avbtool_path_;
   std::string algorithm_;
   std::string key_;
 };
+
+Result<void> EnforceVbMetaSize(const std::string& path);
 
 std::unique_ptr<Avb> GetDefaultAvb();
 
