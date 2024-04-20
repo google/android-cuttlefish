@@ -30,6 +30,7 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/client.h"
 #include "host/commands/cvd/common_utils.h"
@@ -99,6 +100,9 @@ Result<void> KillOldServer() {
 
 Result<void> CvdMain(int argc, char** argv, char** envp,
                      const android::base::LogSeverity verbosity) {
+  // This is where the instance database resides, so make sure it exists.
+  CF_EXPECT(EnsureDirectoryExists(PerUserDir(), 0770));
+
   CF_EXPECT(KillOldServer());
 
   cvd_common::Args all_args = ArgsToVec(argc, argv);
