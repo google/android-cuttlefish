@@ -48,18 +48,14 @@ void CrosvmBuilder::ApplyProcessRestarter(
 
 void CrosvmBuilder::AddControlSocket(const std::string& control_socket,
                                      const std::string& executable_path) {
-  command_.SetStopper([executable_path, control_socket](Subprocess* proc) {
+  auto stopper = [executable_path, control_socket]() {
     Command stop_cmd(executable_path);
     stop_cmd.AddParameter("stop");
     stop_cmd.AddParameter(control_socket);
-    if (stop_cmd.Start().Wait() == 0) {
-      return StopperResult::kStopSuccess;
-    }
-    LOG(WARNING) << "Failed to stop VMM nicely, attempting to KILL";
-    return KillSubprocess(proc) == StopperResult::kStopSuccess
-               ? StopperResult::kStopCrash
-               : StopperResult::kStopFailure;
-  });
+    return stop_cmd.Start().Wait() == 0 ? StopperResult::kStopSuccess
+                                        : StopperResult::kStopFailure;
+  };
+  command_.SetStopper(KillSubprocessFallback(stopper));
   command_.AddParameter("--socket=", control_socket);
 }
 

@@ -250,14 +250,12 @@ class WebRtcServer : public virtual CommandSource,
       commands.emplace_back(std::move(sig_proxy));
     }
 
-    auto stopper = [webrtc_recorder = webrtc_recorder_](Subprocess* proc) {
+    auto stopper = [webrtc_recorder = webrtc_recorder_]() {
       webrtc_recorder.SendStopRecordingCommand();
-      return KillSubprocess(proc) == StopperResult::kStopSuccess
-                 ? StopperResult::kStopCrash
-                 : StopperResult::kStopFailure;
+      return StopperResult::kStopFailure;
     };
 
-    Command webrtc(WebRtcBinary(), stopper);
+    Command webrtc(WebRtcBinary(), KillSubprocessFallback(stopper));
 
     webrtc.AddParameter("-group_id=", instance_.group_id());
 
