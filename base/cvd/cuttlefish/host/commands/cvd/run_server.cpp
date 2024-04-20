@@ -136,6 +136,8 @@ Result<void> ImportResourcesImpl(const ParseResult& param) {
     // TODO(jemoreira): Persist acloud optout too
     LOG(VERBOSE) << "Acloud translation optout: "
                  << param.acloud_translator_optout.value();
+    CF_EXPECT(instance_manager.SetAcloudTranslatorOptout(
+        param.acloud_translator_optout.value()));
   }
   return {};
 }

@@ -48,7 +48,7 @@ bool CheckIfCvdrExist() {
 
 class TryAcloudCommand : public CvdServerHandler {
  public:
-  TryAcloudCommand(const std::atomic<bool>& optout) : optout_(optout) {}
+  TryAcloudCommand(InstanceManager& im) : instance_manager_(im) {}
   ~TryAcloudCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -93,7 +93,7 @@ class TryAcloudCommand : public CvdServerHandler {
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
   SubprocessWaiter waiter_;
-  const std::atomic<bool>& optout_;
+  InstanceManager& instance_manager_;
 };
 
 Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
@@ -128,7 +128,8 @@ Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
   // currently, optout/optin feature only works in local instance
   // remote instance would continue to be done either through `python acloud` or
   // `cvdr` (if enabled).
-  CF_EXPECT(!optout_);
+  auto optout = CF_EXPECT(instance_manager_.GetAcloudTranslatorOptout());
+  CF_EXPECT(!optout);
   cvd::Response response;
   response.mutable_command_response();
   return response;
@@ -191,8 +192,8 @@ Result<std::string> TryAcloudCommand::RunCvdRemoteGetConfig(
 }
 
 std::unique_ptr<CvdServerHandler> NewTryAcloudCommand(
-    std::atomic<bool>& optout) {
-  return std::unique_ptr<CvdServerHandler>(new TryAcloudCommand(optout));
+InstanceManager& instance_manager) {
+  return std::unique_ptr<CvdServerHandler>(new TryAcloudCommand(instance_manager));
 }
 
 }  // namespace cuttlefish

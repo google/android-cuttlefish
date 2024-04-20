@@ -82,6 +82,15 @@ Result<void> InstanceManager::LoadFromJson(const Json::Value& db_json) {
   return {};
 }
 
+Result<void> InstanceManager::SetAcloudTranslatorOptout(bool optout) {
+  CF_EXPECT(instance_db_.SetAcloudTranslatorOptout(optout));
+  return {};
+}
+
+Result<bool> InstanceManager::GetAcloudTranslatorOptout() const {
+  return CF_EXPECT(instance_db_.GetAcloudTranslatorOptout());
+}
+
 Result<InstanceManager::GroupCreationInfo> InstanceManager::Analyze(
     const CreationAnalyzerParam& param) {
   return CF_EXPECT(CreationAnalyzer::Analyze(param, lock_manager_));

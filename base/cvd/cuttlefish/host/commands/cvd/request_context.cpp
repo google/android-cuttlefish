@@ -60,17 +60,14 @@ namespace cuttlefish {
 RequestContext::RequestContext(
     InstanceLockFileManager& instance_lockfile_manager,
     InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager,
-    std::atomic<bool>& acloud_translator_optout)
+    HostToolTargetManager& host_tool_target_manager)
     : instance_lockfile_manager_(instance_lockfile_manager),
       instance_manager_(instance_manager),
       host_tool_target_manager_(host_tool_target_manager),
-      command_sequence_executor_(this->request_handlers_),
-      acloud_translator_optout_(acloud_translator_optout) {
+      command_sequence_executor_(this->request_handlers_) {
   request_handlers_.emplace_back(NewAcloudCommand(command_sequence_executor_));
   request_handlers_.emplace_back(NewAcloudMixSuperImageCommand());
-  request_handlers_.emplace_back(
-      NewAcloudTranslatorCommand(acloud_translator_optout_));
+  request_handlers_.emplace_back(NewAcloudTranslatorCommand(instance_manager_));
   request_handlers_.emplace_back(
       NewCvdCmdlistHandler(command_sequence_executor_));
   request_handlers_.emplace_back(
@@ -103,7 +100,7 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(
       NewCvdStatusCommandHandler(instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(
-      NewTryAcloudCommand(acloud_translator_optout_));
+      NewTryAcloudCommand(instance_manager));
   request_handlers_.emplace_back(NewCvdVersionHandler());
   request_handlers_.emplace_back(NewCvdNoopHandler());
 }

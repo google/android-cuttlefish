@@ -90,6 +90,9 @@ class InstanceManager {
   Result<void> LoadFromJson(const Json::Value&);
   Result<std::vector<std::string>> AllGroupNames() const;
 
+  Result<void> SetAcloudTranslatorOptout(bool optout);
+  Result<bool> GetAcloudTranslatorOptout() const;
+
   struct UserGroupSelectionSummary {
     // Index to group name. This is the index printed in the menu
     // This field offers mapping between the number/index the user

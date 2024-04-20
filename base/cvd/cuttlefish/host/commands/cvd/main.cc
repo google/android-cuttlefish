@@ -206,7 +206,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   InstanceManager instance_manager(instance_lockfile_manager,
                                    *host_tool_target_manager, instance_db);
   Cvd cvd(verbosity, instance_lockfile_manager, instance_manager,
-             *host_tool_target_manager, false /*optout*/);
+          *host_tool_target_manager);
 
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {
