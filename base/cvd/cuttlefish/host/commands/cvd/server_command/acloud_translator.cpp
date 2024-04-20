@@ -42,7 +42,7 @@ Both -opt-out and --opt-in are mutually exclusive.
 
 class AcloudTranslatorCommand : public CvdServerHandler {
  public:
-  AcloudTranslatorCommand(std::atomic<bool>& optout) : optout_(optout) {}
+  AcloudTranslatorCommand(InstanceManager& instance_manager) : instance_manager_(instance_manager) {}
   ~AcloudTranslatorCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -85,18 +85,18 @@ class AcloudTranslatorCommand : public CvdServerHandler {
     }
     CF_EXPECT(flag_optout != flag_optin,
               "Only one of --opt-out or --opt-in should be given.");
-    optout_ = flag_optout;
+    CF_EXPECT(instance_manager_.SetAcloudTranslatorOptout(flag_optout));
     return response;
   }
   Result<void> Interrupt() override { return CF_ERR("Can't be interrupted."); }
 
  private:
-  std::atomic<bool>& optout_;
+  InstanceManager& instance_manager_;
 };
 
 std::unique_ptr<CvdServerHandler> NewAcloudTranslatorCommand(
-    std::atomic<bool>& optout) {
-  return std::unique_ptr<CvdServerHandler>(new AcloudTranslatorCommand(optout));
+InstanceManager& instance_manager) {
+  return std::unique_ptr<CvdServerHandler>(new AcloudTranslatorCommand(instance_manager));
 }
 
 }  // namespace cuttlefish

@@ -31,6 +31,11 @@
 namespace cuttlefish {
 namespace selector {
 
+struct PersistentData {
+  std::vector<LocalInstanceGroup> groups;
+  bool acloud_translator_optout;
+};
+
 class InstanceDatabase {
  public:
   InstanceDatabase(const std::string& backing_file);
@@ -39,6 +44,10 @@ class InstanceDatabase {
 
   Result<Json::Value> Serialize() const;
   Result<void> LoadFromJson(const Json::Value&);
+
+  Result<void> SetAcloudTranslatorOptout(bool optout);
+
+  Result<bool> GetAcloudTranslatorOptout() const;
 
   /** Adds instance group.
    *
@@ -109,7 +118,7 @@ class InstanceDatabase {
   static std::vector<LocalInstance> FindInstances(
       const std::vector<LocalInstanceGroup>& groups, FindParam param);
 
-  DataViewer<std::vector<LocalInstanceGroup>> viewer_;
+  DataViewer<PersistentData> viewer_;
 };
 
 }  // namespace selector

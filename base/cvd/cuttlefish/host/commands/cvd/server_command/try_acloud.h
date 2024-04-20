@@ -20,10 +20,10 @@
 
 #include "host/commands/cvd/server_command/acloud_common.h"
 #include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/instance_manager.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewTryAcloudCommand(
-    std::atomic<bool>& optout);
+std::unique_ptr<CvdServerHandler> NewTryAcloudCommand(InstanceManager&);
 
 }  // namespace cuttlefish

@@ -52,12 +52,11 @@ namespace {
 Cvd::Cvd(const android::base::LogSeverity verbosity,
          InstanceLockFileManager& instance_lockfile_manager,
          InstanceManager& instance_manager,
-         HostToolTargetManager& host_tool_target_manager, bool optout)
+         HostToolTargetManager& host_tool_target_manager)
     : verbosity_(verbosity),
       instance_lockfile_manager_(instance_lockfile_manager),
       instance_manager_(instance_manager),
-      host_tool_target_manager_(host_tool_target_manager),
-      optout_(optout) {}
+      host_tool_target_manager_(host_tool_target_manager) {}
 
 Result<cvd::Response> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
@@ -69,7 +68,7 @@ Result<cvd::Response> Cvd::HandleCommand(
                                      cvd::WAIT_BEHAVIOR_COMPLETE);
 
   RequestContext context(instance_lockfile_manager_, instance_manager_,
-                         host_tool_target_manager_, optout_);
+                         host_tool_target_manager_);
   RequestWithStdio request_with_stdio(
       request, {SharedFD::Dup(0), SharedFD::Dup(1), SharedFD::Dup(2)});
   auto handler = CF_EXPECT(context.Handler(request_with_stdio));

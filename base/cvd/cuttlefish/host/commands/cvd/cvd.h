@@ -30,7 +30,7 @@ class Cvd {
   Cvd(const android::base::LogSeverity verbosity,
       InstanceLockFileManager& instance_lockfile_manager,
       InstanceManager& instance_manager,
-      HostToolTargetManager& host_tool_target_manager, bool optout);
+      HostToolTargetManager& host_tool_target_manager);
 
   Result<cvd::Response> HandleCommand(
       const std::vector<std::string>& cvd_process_args,
@@ -49,7 +49,6 @@ class Cvd {
   InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
   HostToolTargetManager& host_tool_target_manager_;
-  std::atomic<bool> optout_;
   android::base::LogSeverity verbosity_;
 };
 

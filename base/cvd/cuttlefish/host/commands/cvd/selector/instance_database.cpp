@@ -33,58 +33,63 @@ namespace cuttlefish {
 namespace selector {
 
 namespace {
+
 constexpr const char kJsonGroups[] = "Groups";
+constexpr const char kJsonAcloudOptout[] = "AcloudOptOut";
 
-}
+}  // namespace
 
-std::string SerializeGroups(const std::vector<LocalInstanceGroup>& groups) {
+std::string SerializePersistentData(const PersistentData& data) {
   Json::Value instance_db_json;
   Json::Value group_array(Json::ValueType::arrayValue);
-  for (const auto& group : groups) {
+  for (const auto& group : data.groups) {
     group_array.append(group.Serialize());
   }
   instance_db_json[kJsonGroups] = group_array;
+  instance_db_json[kJsonAcloudOptout] = data.acloud_translator_optout;
   return instance_db_json.toStyledString();
 }
 
-Result<std::vector<LocalInstanceGroup>> DeserializeGroups(
-    const std::string& str) {
+Result<PersistentData> DeserializePersistentData(const std::string& str) {
   if (str.empty()) {
     // The backing file was empty or didn't exist.
     return {};
   }
-  std::vector<LocalInstanceGroup> ret;
   auto json_db = CF_EXPECT(ParseJson(str), "Error parsing JSON");
+  PersistentData data;
+  if (json_db.isMember(kJsonAcloudOptout) &&
+      json_db[kJsonAcloudOptout].isBool()) {
+    data.acloud_translator_optout = json_db[kJsonAcloudOptout].asBool();
+  }
   if (!json_db.isMember(kJsonGroups) || json_db[kJsonGroups].isNull()) {
     // Older cvd version may write null to this field when the db is empty.
-    return ret;
+    return data;
   }
   auto group_array = json_db[kJsonGroups];
-  CF_EXPECTF(group_array.isArray(), "Expected '{}' property to be an array",
-             kJsonGroups);
+  CF_EXPECTF(group_array.isArray(), "Expected '{}' property to be an array: {}",
+             kJsonGroups, str);
   int n_groups = group_array.size();
   for (int i = 0; i < n_groups; i++) {
     auto group = CF_EXPECT(LocalInstanceGroup::Deserialize(group_array[i]));
-    ret.push_back(group);
+    data.groups.push_back(group);
   }
-  return ret;
+  return data;
 }
 
 InstanceDatabase::InstanceDatabase(const std::string& backing_file)
-    : viewer_(backing_file, SerializeGroups, DeserializeGroups) {}
+    : viewer_(backing_file, SerializePersistentData,
+              DeserializePersistentData) {}
 
 Result<bool> InstanceDatabase::IsEmpty() const {
   return viewer_.WithSharedLock<bool>(
-      [](const std::vector<LocalInstanceGroup>& groups) {
-        return groups.empty();
-      });
+      [](const PersistentData& data) { return data.groups.empty(); });
 }
 
 Result<std::vector<LocalInstanceGroup>> InstanceDatabase::Clear() {
   return viewer_.WithExclusiveLock<std::vector<LocalInstanceGroup>>(
-      [](std::vector<LocalInstanceGroup>& groups) {
-        auto copy = groups;
-        groups.clear();
+      [](PersistentData& data) {
+        auto copy = data.groups;
+        data.groups.clear();
         return copy;
       });
 }
@@ -105,24 +110,23 @@ Result<void> InstanceDatabase::AddInstanceGroup(
                "instance_name \"{}\" is invalid", instance_info.name);
   }
   auto add_res = viewer_.WithExclusiveLock<void>(
-      [&group_info, &instance_infos](
-          std::vector<LocalInstanceGroup>& groups) -> Result<void> {
+      [&group_info, &instance_infos](PersistentData& data) -> Result<void> {
         auto matching_groups = FindGroups(
-            groups,
+            data.groups,
             {.home = group_info.home_dir, .group_name = group_info.group_name});
         CF_EXPECTF(matching_groups.empty(),
                    "New group conflicts with existing group: {} at {}",
                    matching_groups[0].GroupName(),
                    matching_groups[0].HomeDir());
         for (const auto& info : instance_infos) {
-          auto matching_instances = FindInstances(groups, {.id = info.id});
+          auto matching_instances = FindInstances(data.groups, {.id = info.id});
           CF_EXPECTF(
               matching_instances.empty(),
               "New instance conflicts with existing instance: {} with id {}",
               matching_instances[0].PerInstanceName(),
               matching_instances[0].InstanceId());
         }
-        groups.push_back(
+        data.groups.push_back(
             CF_EXPECT(LocalInstanceGroup::Create(group_info, instance_infos)));
         return {};
       });
@@ -132,16 +136,15 @@ Result<void> InstanceDatabase::AddInstanceGroup(
 
 Result<bool> InstanceDatabase::RemoveInstanceGroup(
     const std::string& group_name) {
-  return viewer_.WithExclusiveLock<bool>(
-      [&group_name](std::vector<LocalInstanceGroup>& groups) {
-        auto pred = [&group_name](const auto& group) {
-          return group.GroupName() == group_name;
-        };
-        auto it = std::remove_if(groups.begin(), groups.end(), pred);
-        bool removed_any = it != groups.end();
-        groups.erase(it, groups.end());
-        return removed_any;
-      });
+  return viewer_.WithExclusiveLock<bool>([&group_name](PersistentData& data) {
+    auto pred = [&group_name](const auto& group) {
+      return group.GroupName() == group_name;
+    };
+    auto it = std::remove_if(data.groups.begin(), data.groups.end(), pred);
+    bool removed_any = it != data.groups.end();
+    data.groups.erase(it, data.groups.end());
+    return removed_any;
+  });
 }
 
 Result<InstanceDatabase::FindParam> InstanceDatabase::ParamFromQueries(
@@ -169,16 +172,16 @@ Result<InstanceDatabase::FindParam> InstanceDatabase::ParamFromQueries(
 Result<std::vector<LocalInstanceGroup>> InstanceDatabase::FindGroups(
     FindParam param) const {
   return viewer_.WithSharedLock<std::vector<LocalInstanceGroup>>(
-      [&param](const std::vector<LocalInstanceGroup>& groups) {
-        return FindGroups(groups, param);
+      [&param](const PersistentData& data) {
+        return FindGroups(data.groups, param);
       });
 }
 
 Result<std::vector<LocalInstance>> InstanceDatabase::FindInstances(
     FindParam param) const {
   return viewer_.WithSharedLock<std::vector<LocalInstance>>(
-      [&param](const std::vector<LocalInstanceGroup>& groups) {
-        return FindInstances(groups, param);
+      [&param](const PersistentData& data) {
+        return FindInstances(data.groups, param);
       });
 }
 
@@ -233,20 +236,19 @@ std::vector<LocalInstance> InstanceDatabase::FindInstances(
 Result<std::vector<LocalInstanceGroup>> InstanceDatabase::InstanceGroups()
     const {
   return viewer_.WithSharedLock<std::vector<LocalInstanceGroup>>(
-      [](const auto& groups) { return groups; });
+      [](const auto& data) { return data.groups; });
 }
 
 Result<Json::Value> InstanceDatabase::Serialize() const {
-  return viewer_.WithSharedLock<Json::Value>(
-      [](const std::vector<LocalInstanceGroup>& groups) {
-        Json::Value instance_db_json;
-        Json::Value group_array;
-        for (const auto& group : groups) {
-          group_array.append(group.Serialize());
-        }
-        instance_db_json[kJsonGroups] = group_array;
-        return instance_db_json;
-      });
+  return viewer_.WithSharedLock<Json::Value>([](const PersistentData& data) {
+    Json::Value instance_db_json;
+    Json::Value group_array;
+    for (const auto& group : data.groups) {
+      group_array.append(group.Serialize());
+    }
+    instance_db_json[kJsonGroups] = group_array;
+    return instance_db_json;
+  });
 }
 
 Result<void> InstanceDatabase::LoadFromJson(const Json::Value& db_json) {
@@ -260,9 +262,24 @@ Result<void> InstanceDatabase::LoadFromJson(const Json::Value& db_json) {
         CF_EXPECT(LocalInstanceGroup::Deserialize(group_array[i])));
   }
   return viewer_.WithExclusiveLock<void>(
-      [&new_groups](std::vector<LocalInstanceGroup>& groups) -> Result<void> {
-        groups = std::move(new_groups);
+      [&new_groups](PersistentData& data) -> Result<void> {
+        data.groups = std::move(new_groups);
         return {};
+      });
+}
+
+Result<void> InstanceDatabase::SetAcloudTranslatorOptout(bool optout) {
+  return viewer_.WithExclusiveLock<void>(
+      [optout](PersistentData& data) -> Result<void> {
+        data.acloud_translator_optout = optout;
+        return {};
+      });
+}
+
+Result<bool> InstanceDatabase::GetAcloudTranslatorOptout() const {
+  return viewer_.WithSharedLock<bool>(
+      [](const PersistentData& data) -> Result<bool> {
+        return data.acloud_translator_optout;
       });
 }
 
