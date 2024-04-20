@@ -230,7 +230,7 @@ int Subprocess::Wait(siginfo_t* infop, int options) {
     return -1;
   }
   *infop = {};
-  auto retval = TEMP_FAILURE_RETRY(waitid(P_PID, pid_, infop, options));
+  auto retval = waitid(P_PID, pid_, infop, options);
   // We don't want to wait twice for the same process
   bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED;
   bool reaped = !(options & WNOWAIT);
@@ -291,6 +291,23 @@ StopperResult KillSubprocess(Subprocess* subprocess) {
     return StopperResult::kStopFailure;
   }
   return StopperResult::kStopSuccess;
+}
+
+SubprocessStopper KillSubprocessFallback(std::function<StopperResult()> nice) {
+  return KillSubprocessFallback([nice](Subprocess*) { return nice(); });
+}
+
+SubprocessStopper KillSubprocessFallback(SubprocessStopper nice_stopper) {
+  return [nice_stopper](Subprocess* proccess) {
+    auto nice_result = nice_stopper(proccess);
+    if (nice_result == StopperResult::kStopFailure) {
+      auto harsh_result = KillSubprocess(proccess);
+      return harsh_result == StopperResult::kStopSuccess
+                 ? StopperResult::kStopCrash
+                 : harsh_result;
+    }
+    return nice_result;
+  };
 }
 
 Command::Command(std::string executable, SubprocessStopper stopper)
