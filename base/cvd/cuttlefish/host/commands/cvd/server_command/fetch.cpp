@@ -37,16 +37,13 @@ class CvdFetchCommandHandler : public CvdServerHandler {
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
-  Result<void> Interrupt() override;
   cvd_common::Args CmdList() const override { return fetch_cmd_list_; }
   Result<std::string> SummaryHelp() const override;
-  virtual bool ShouldInterceptHelp() const { return true; }
+  bool ShouldInterceptHelp() const  override { return true; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
   SubprocessWaiter& subprocess_waiter_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
   std::vector<std::string> fetch_cmd_list_;
 };
 
@@ -58,10 +55,6 @@ Result<bool> CvdFetchCommandHandler::CanHandle(
 
 Result<cvd::Response> CvdFetchCommandHandler::Handle(
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interruptible_);
-  if (interrupted_) {
-    return CF_ERR("Interrupted");
-  }
   CF_EXPECT(CanHandle(request));
 
   Command command("/proc/self/exe");
@@ -99,18 +92,9 @@ Result<cvd::Response> CvdFetchCommandHandler::Handle(
     return response;
   }
 
-  interrupt_lock.unlock();
-
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
 
   return ResponseFromSiginfo(infop);
-}
-
-Result<void> CvdFetchCommandHandler::Interrupt() {
-  std::scoped_lock interrupt_lock(interruptible_);
-  interrupted_ = true;
-  CF_EXPECT(subprocess_waiter_.Interrupt());
-  return {};
 }
 
 Result<std::string> CvdFetchCommandHandler::SummaryHelp() const {

@@ -30,15 +30,6 @@ namespace cuttlefish {
 class InterruptibleTerminal {
  public:
   InterruptibleTerminal(SharedFD stdin_fd);
-  /**
-   * Interrupts ReadLine() and reset the stdin_fd_
-   *
-   * It is guaranteed to return after the on-going ReadLine() returns
-   * either normally or abnormally. It is guaranteed to block the new
-   * ReadLine() call.
-   */
-  Result<void> Interrupt();
-
   /*
    * Returns a line from the stdin_fd, which is the client stdin
    *

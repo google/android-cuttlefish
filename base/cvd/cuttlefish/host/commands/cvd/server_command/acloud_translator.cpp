@@ -88,7 +88,6 @@ class AcloudTranslatorCommand : public CvdServerHandler {
     CF_EXPECT(instance_manager_.SetAcloudTranslatorOptout(flag_optout));
     return response;
   }
-  Result<void> Interrupt() override { return CF_ERR("Can't be interrupted."); }
 
  private:
   InstanceManager& instance_manager_;

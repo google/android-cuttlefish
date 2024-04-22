@@ -39,9 +39,6 @@ class CvdCmdlistHandler : public CvdServerHandler {
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::lock_guard interrupt_lock(interruptible_);
-    CF_EXPECT(!interrupted_, "Interrupted");
-
     cvd::Response response;
     response.mutable_command_response();  // Sets oneof member
     response.mutable_status()->set_code(cvd::Status::OK);
@@ -59,19 +56,10 @@ class CvdCmdlistHandler : public CvdServerHandler {
     return response;
   }
 
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interruptible_);
-    interrupted_ = true;
-    CF_EXPECT(executor_.Interrupt());
-    return {};
-  }
-
   // not intended to be used by the user
   cvd_common::Args CmdList() const override { return {}; }
 
  private:
-  std::mutex interruptible_;
-  bool interrupted_ = false;
   CommandSequenceExecutor& executor_;
 };
 

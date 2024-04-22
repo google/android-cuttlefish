@@ -54,9 +54,8 @@ class CvdGenericCommandHandler : public CvdServerHandler {
                            SubprocessWaiter& subprocess_waiter,
                            HostToolTargetManager& host_tool_target_manager);
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const;
+  Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
-  Result<void> Interrupt() override;
   cvd_common::Args CmdList() const override;
 
  private:
@@ -105,8 +104,6 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
   using BinGeneratorType = std::function<Result<std::string>(
       const std::string& host_artifacts_path)>;
   std::map<std::string, std::string> command_to_binary_map_;
@@ -144,24 +141,8 @@ Result<bool> CvdGenericCommandHandler::CanHandle(
   return Contains(command_to_binary_map_, invocation.command);
 }
 
-Result<void> CvdGenericCommandHandler::Interrupt() {
-  std::scoped_lock interrupt_lock(interruptible_);
-  interrupted_ = true;
-  if (terminal_) {
-    auto terminal_interrupt_result = terminal_->Interrupt();
-    // TODO(b/316202887): utilize the multi-CF_EXPECT feature
-    if (!terminal_interrupt_result.ok()) {
-      LOG(ERROR) << "Failed to interrupt terminal";
-    }
-  }
-  CF_EXPECT(subprocess_waiter_.Interrupt());
-  return {};
-}
-
 Result<cvd::Response> CvdGenericCommandHandler::Handle(
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interruptible_);
-  CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
 
   cvd::Response response;
@@ -175,12 +156,9 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
     return response;
   }
 
-  interrupt_lock.unlock();
   auto [invocation_info, group_opt, is_non_help_cvd, ui_response_type] =
       CF_EXPECT(ExtractInfo(request));
 
-  interrupt_lock.lock();
-  CF_EXPECT(!interrupted_, "Interrupted");
   if (invocation_info.bin == kClearBin) {
     *response.mutable_status() =
         instance_manager_.CvdClear(request.Out(), request.Err());
@@ -242,8 +220,6 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
-
-  interrupt_lock.unlock();
 
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
 
@@ -358,23 +334,18 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
     }
 
     extracted_info.ui_response_type = UiResponseType::kUserSelection;
-    std::unique_lock lock(interruptible_);
-    CF_EXPECT(!interrupted_, "Interrupted");
     // show the menu and let the user choose
     auto group_summaries = CF_EXPECT(instance_manager_.GroupSummaryMenu());
     auto& group_summary_menu = group_summaries.menu;
     CF_EXPECT_EQ(WriteAll(request.Out(), group_summary_menu + "\n"),
                  group_summary_menu.size() + 1);
     terminal_ = std::make_unique<InterruptibleTerminal>(request.In());
-    lock.unlock();
 
     const bool is_tty = request.Err()->IsOpen() && request.Err()->IsATTY();
     while (true) {
-      lock.lock();
       std::string question = fmt::format(
           "For which instance group would you like to run {}? ", subcmd);
       CF_EXPECT_EQ(WriteAll(request.Out(), question), question.size());
-      lock.unlock();
 
       std::string input_line = CF_EXPECT(terminal_->ReadLine());
       int selection = -1;

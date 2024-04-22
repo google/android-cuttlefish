@@ -66,24 +66,14 @@ class LoadConfigsCommand : public CvdServerHandler {
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CF_EXPECT(CanHandle(request)));
 
     auto commands = CF_EXPECT(CreateCommandSequence(request));
-    interrupt_lock.unlock();
     CF_EXPECT(executor_.Execute(commands, request.Err()));
 
     cvd::Response response;
     response.mutable_command_response();
     return response;
-  }
-
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interrupt_mutex_);
-    interrupted_ = true;
-    CF_EXPECT(executor_.Interrupt());
-    return {};
   }
 
   cvd_common::Args CmdList() const override { return {kLoadSubCmd}; }
@@ -173,9 +163,6 @@ class LoadConfigsCommand : public CvdServerHandler {
   static constexpr char kLoadSubCmd[] = "load";
 
   CommandSequenceExecutor& executor_;
-
-  std::mutex interrupt_mutex_;
-  bool interrupted_ = false;
 };
 
 std::unique_ptr<CvdServerHandler> NewLoadConfigsCommand(

@@ -137,7 +137,6 @@ Result<RunOutput> SubprocessWaiter::RunWithManagedStdioInterruptable(
     Command forceDelete = std::move(cmd);
   }
 
-  param.callback_();
   CF_EXPECT(this->Wait());
   for (auto& thread : threads_) {
     if (thread->joinable()) {

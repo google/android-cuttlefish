@@ -29,7 +29,6 @@ struct RunWithManagedIoParam {
   const bool redirect_stdout_ = false;
   const bool redirect_stderr_ = false;
   const std::string* stdin_;
-  std::function<Result<void>(void)> callback_;
   SubprocessOptions options_ = SubprocessOptions();
 };
 

@@ -87,9 +87,8 @@ class CvdStatusCommandHandler : public CvdServerHandler {
   CvdStatusCommandHandler(InstanceManager& instance_manager,
                           HostToolTargetManager& host_tool_target_manager);
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const;
+  Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
-  Result<void> Interrupt() override;
   cvd_common::Args CmdList() const override;
 
  private:
@@ -98,8 +97,6 @@ class CvdStatusCommandHandler : public CvdServerHandler {
   InstanceManager& instance_manager_;
   HostToolTargetManager& host_tool_target_manager_;
   StatusFetcher status_fetcher_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
   std::vector<std::string> supported_subcmds_;
 };
 
@@ -115,13 +112,6 @@ Result<bool> CvdStatusCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
   auto invocation = ParseInvocation(request.Message());
   return Contains(supported_subcmds_, invocation.command);
-}
-
-Result<void> CvdStatusCommandHandler::Interrupt() {
-  std::scoped_lock interrupt_lock(interruptible_);
-  interrupted_ = true;
-  CF_EXPECT(status_fetcher_.Interrupt());
-  return {};
 }
 
 static Result<RequestWithStdio> ProcessInstanceNameFlag(
@@ -173,8 +163,6 @@ static Result<bool> HasPrint(cvd_common::Args cmd_args) {
 
 Result<cvd::Response> CvdStatusCommandHandler::Handle(
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interruptible_);
-  CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
 
   auto precondition_verified = VerifyPrecondition(request);
@@ -190,7 +178,6 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   CF_EXPECT_NE(request.Message().command_request().wait_behavior(),
                cvd::WAIT_BEHAVIOR_START,
                "cvd status shouldn't be cvd::WAIT_BEHAVIOR_START");
-  interrupt_lock.unlock();
 
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
   CF_EXPECT(Contains(supported_subcmds_, subcmd));

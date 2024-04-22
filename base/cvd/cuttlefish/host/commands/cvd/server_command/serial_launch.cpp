@@ -119,14 +119,9 @@ class SerialLaunchCommand : public CvdServerHandler {
            invocation.arguments[0] == "serial_launch";
   }
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
     CF_EXPECT(CF_EXPECT(CanHandle(request)));
 
     auto commands = CF_EXPECT(CreateCommandSequence(request));
-    interrupt_lock.unlock();
     CF_EXPECT(executor_.Execute(commands.requests, request.Err()));
 
     for (auto& lock : commands.instance_locks) {
@@ -136,13 +131,6 @@ class SerialLaunchCommand : public CvdServerHandler {
     cvd::Response response;
     response.mutable_command_response();
     return response;
-  }
-
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interrupt_mutex_);
-    interrupted_ = true;
-    CF_EXPECT(executor_.Interrupt());
-    return {};
   }
 
   cvd_common::Args CmdList() const override { return {"experimental"}; }
@@ -394,9 +382,6 @@ class SerialLaunchCommand : public CvdServerHandler {
 
   CommandSequenceExecutor& executor_;
   InstanceLockFileManager& lock_file_manager_;
-
-  std::mutex interrupt_mutex_;
-  bool interrupted_ = false;
 };
 
 std::unique_ptr<CvdServerHandler> NewSerialLaunchCommand(
