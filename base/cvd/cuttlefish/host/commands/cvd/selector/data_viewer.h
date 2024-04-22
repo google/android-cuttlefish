@@ -77,6 +77,10 @@ class DataViewer {
     auto fd = CF_EXPECT(LockBackingFile(LOCK_SH));
     auto data = CF_EXPECT(LoadData(fd));
     auto res = task(data);
+    if (!res.ok()) {
+      // Don't update if there is an error
+      return res;
+    }
     // Overwrite the file contents, don't append
     CF_EXPECTF(fd->Truncate(0) >= 0, "Failed to truncate fd: {}",
                fd->StrError());
