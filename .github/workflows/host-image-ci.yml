@@ -207,3 +207,151 @@ jobs:
       with:
         name: u-boot
         path: cuttlefish-host-image-installer/u-boot.bin
+
+  test-install-cuttlefish-deb-job:
+    runs-on: ubuntu-latest
+    needs: build-cuttlefish-deb-job
+    steps:
+    - name: Download cuttlefish_packages.7z
+      uses: actions/download-artifact@v3
+      with:
+        name: cuttlefish_packages
+    - name: Prepare pbuilder environment
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
+    - name: Prepare test bed
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
+    - name: Prepare tzdata
+      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
+    - name: Pbuilder arm64 create
+      run: pbuilder-dist stable arm64 create
+    - name: Pbuilder arm64 update
+      run: pbuilder-dist stable arm64 update    
+    - name: Test setup
+      run: sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install git devscripts config-package-dev debhelper-compat golang curl && sudo apt-get install -y p7zip-full && sudo apt-get install -y openssh-server && sudo apt-get install -y --no-install-recommends udev && sudo apt-get install -y ebtables && sudo whoami && sudo usermod -aG kvm,render `whoami`
+    - name: Running installation tests...
+      run: 7z x cuttlefish_packages.7z && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb && sudo usermod -aG cvdnetwork `whoami` && echo "Done"
+
+  test-install-metapackage-deb-job:
+    runs-on: ubuntu-latest
+    needs: build-metapackage-deb-job
+    steps:
+    - name: Download meta_gigamp_packages.7z
+      uses: actions/download-artifact@v3
+      with:
+        name: meta_gigamp_packages
+    - name: Prepare pbuilder environment
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
+    - name: Prepare test bed
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
+    - name: Prepare tzdata
+      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
+    - name: Pbuilder arm64 create
+      run: pbuilder-dist stable arm64 create
+    - name: Pbuilder arm64 update
+      run: pbuilder-dist stable arm64 update    
+    - name: Test setup    
+      run: sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install git devscripts config-package-dev debhelper-compat golang curl && sudo apt-get install -y p7zip-full
+    - name: Running installation tests...
+      run: 7z x meta_gigamp_packages.7z && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb && test -e /etc/security/limits.d/95-linaro-gigamp-nofile.conf && ulimit -n && grep time1.google.com /etc/ntpsec/ntp.conf && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 purge metapackage-linaro-gigamp && test $(grep time1.google.com /etc/ntpsec/ntp.conf | wc -l) -eq 0 && echo "Done"
+
+  test-install-kernel-aosp14-61-deb-job:
+    runs-on: ubuntu-latest
+    needs: build-kernel-aosp14-61-deb-job
+    steps:
+    - name: Download aosp_kernel_aosp14_61.7z
+      uses: actions/download-artifact@v3
+      with:
+        name: aosp_kernel_aosp14_61
+    - name: Prepare pbuilder environment
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
+    - name: Prepare test bed
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
+    - name: Prepare tzdata
+      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
+    - name: Pbuilder arm64 create
+      run: pbuilder-dist stable arm64 create
+    - name: Pbuilder arm64 update
+      run: pbuilder-dist stable arm64 update    
+    - name: Test setup
+      run: sudo apt-get install -y p7zip-full zstd && sudo apt-get install -y initramfs-tools
+    - name: Running installation tests...
+      run: 7z x aosp_kernel_aosp14_61.7z && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb && test -e /boot/vmlinuz-*aosp*-linaro* && test -e /boot/initrd.img-*aosp*-linaro* && grep "CONFIG_FHANDLE=y" /boot/config-*aosp*-linaro* && grep 'CONFIG_MODPROBE_PATH="/sbin/modprobe"' /boot/config-*aosp*-linaro* && echo "Done"
+        
+  test-install-kernel-aosp15-61-deb-job:
+    runs-on: ubuntu-latest
+    needs: build-kernel-aosp15-61-deb-job
+    steps:
+    - name: Download aosp_kernel_aosp15_61.7z
+      uses: actions/download-artifact@v3
+      with:
+        name: aosp_kernel_aosp15_61
+    - name: Prepare pbuilder environment
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
+    - name: Prepare test bed
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
+    - name: Prepare tzdata
+      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
+    - name: Pbuilder arm64 create
+      run: pbuilder-dist stable arm64 create
+    - name: Pbuilder arm64 update
+      run: pbuilder-dist stable arm64 update    
+    - name: Test setup
+      run: sudo apt-get install -y p7zip-full zstd && sudo apt-get install -y initramfs-tools
+    - name: Running installation tests...
+      run: 7z x aosp_kernel_aosp15_61.7z && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb && test -e /boot/vmlinuz-*aosp*-linaro* && test -e /boot/initrd.img-*aosp*-linaro* && grep "CONFIG_FHANDLE=y" /boot/config-*aosp*-linaro* && grep 'CONFIG_MODPROBE_PATH="/sbin/modprobe"' /boot/config-*aosp*-linaro* && echo "Done"
+        
+  test-install-kernel-aosp15-66-deb-job:
+    runs-on: ubuntu-latest
+    needs: build-kernel-aosp15-66-deb-job
+    steps:
+    - name: Download aosp_kernel_aosp15_66.7z
+      uses: actions/download-artifact@v3
+      with:
+        name: aosp_kernel_aosp15_66
+    - name: Prepare pbuilder environment
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
+    - name: Prepare test bed
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
+    - name: Prepare tzdata
+      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
+    - name: Pbuilder arm64 create
+      run: pbuilder-dist stable arm64 create
+    - name: Pbuilder arm64 update
+      run: pbuilder-dist stable arm64 update    
+    - name: Test setup
+      run: sudo apt-get install -y p7zip-full zstd && sudo apt-get install -y initramfs-tools
+    - name: Running installation tests...
+      run: 7z x aosp_kernel_aosp15_66.7z && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb && test -e /boot/vmlinuz-*aosp*-linaro* && test -e /boot/initrd.img-*aosp*-linaro* && grep "CONFIG_FHANDLE=y" /boot/config-*aosp*-linaro* && grep 'CONFIG_MODPROBE_PATH="/sbin/modprobe"' /boot/config-*aosp*-linaro* && echo "Done"
+
+  test-iso-qemu-job:
+    runs-on: ubuntu-22.04-4core
+    container:
+      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Download preseed-mini.iso.xz
+      uses: actions/download-artifact@v3
+      with:
+        name: preseed-mini
+        path: "cuttlefish-host-image-installer"
+    - name: Prepare test bed
+      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y debconf-utils
+    - name: Prepare tzdata
+      run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata
+    - name: Prepare pbuilder environment
+      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
+    - name: Prepare qemu
+      run: apt-get install -y util-linux util-linux-extra && apt-get install -y xz-utils && apt-get install -y qemu-system-arm && apt-get install -y expect && apt-get install -y e2tools && apt-get install -y lvm2 && apt-get install -y ubuntu-dev-tools && apt-get install -y sshpass && apt-get install -y u-boot-qemu && pull-debian-debs u-boot-qemu && apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./u-boot-qemu_*_all.deb
+    - name: Upzip iso
+      run: cd cuttlefish-host-image-installer && xz -d preseed-mini.iso.xz && chmod a-w preseed-mini.iso && cp -f tests/installer-iso-* .
+    - name: Run installer on qemu
+      run: cd cuttlefish-host-image-installer && ./installer-iso-install.expect successful_install sheeFei2
+    - name: Test if installation is successed
+      run: cd cuttlefish-host-image-installer && ./installer-iso-extract-partitions.sh && e2cp rootfs.img:/home/vsoc-01/successful_install successful_install && echo sheeFei2 > successful_install_compare && cmp successful_install successful_install_compare
+    - name: Test if AOSP kernel is installed
+      run: cd cuttlefish-host-image-installer && e2ls -l boot.img:/vmlinuz-*aosp*-linaro* && e2cp boot.img:/$(e2ls boot.img:/vmlinuz-*aosp*-linaro* | tail -1) . && test -e vmlinuz-*aosp*-linaro*
+    - name: Test if Cuttlefish Debian packages are installed
+      run: cd cuttlefish-host-image-installer && e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator && e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator | grep cvd_host_orchestrator | grep root
+    - name: Make sure that we do not have home partitions anymore
+      run: cd cuttlefish-host-image-installer && test '!' -e home.img && echo "Test successful"
