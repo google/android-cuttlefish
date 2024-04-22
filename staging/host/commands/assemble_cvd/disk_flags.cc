@@ -974,7 +974,7 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       instance.set_new_super_image(new_super_image_path);
       const std::string new_vbmeta_image_path =
           const_instance.PerInstancePath("os_vbmeta.img");
-      instance.set_new_super_image(new_vbmeta_image_path);
+      instance.set_new_vbmeta_image(new_vbmeta_image_path);
     }
 
     instance.set_new_vbmeta_vendor_dlkm_image(
