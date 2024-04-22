@@ -90,8 +90,7 @@
 #define CF_DEFAULTS_USE_RANDOM_SERIAL false
 #define CF_DEFAULTS_SERIAL_NUMBER \
   cuttlefish::ForCurrentInstance("CUTTLEFISHCVD")
-#define CF_DEFAULTS_SECURE_HALS \
-  "oemlock,guest_keymint_insecure,guest_gatekeeper_insecure"
+#define CF_DEFAULTS_SECURE_HALS "keymint,gatekeeper,oemlock"
 #define CF_DEFAULTS_PROTECTED_VM false
 #define CF_DEFAULTS_MTE false
 
@@ -160,7 +159,7 @@
 // Default network handler
 #define CF_DEFAULTS_NETSIM false
 #define CF_DEFAULTS_NETSIM_BT true
-#define CF_DEFAULTS_NETSIM_UWB true
+#define CF_DEFAULTS_NETSIM_UWB false
 
 // Netsim default parameters
 #define CF_DEFAULTS_NETSIM_ARGS ""
