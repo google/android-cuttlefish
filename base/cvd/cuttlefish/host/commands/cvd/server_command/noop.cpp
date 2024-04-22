@@ -51,8 +51,6 @@ class CvdNoopHandler : public CvdServerHandler {
     return response;
   }
 
-  Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
-
   cvd_common::Args CmdList() const override {
     return cvd_common::Args{"server-kill", "kill-server", "restart-server"};
   }

@@ -43,10 +43,6 @@ class SerialPreset : public CvdServerHandler {
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
     CF_EXPECT(CF_EXPECT(CanHandle(request)));
 
     auto invocation = ParseInvocation(request.Message());
@@ -72,18 +68,10 @@ class SerialPreset : public CvdServerHandler {
                                    request.FileDescriptors());
 
     CF_EXPECT(executor_.Execute({std::move(inner_request)}, request.Err()));
-    interrupt_lock.unlock();
 
     cvd::Response response;
     response.mutable_command_response();
     return response;
-  }
-
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interrupt_mutex_);
-    interrupted_ = true;
-    CF_EXPECT(executor_.Interrupt());
-    return {};
   }
 
   cvd_common::Args CmdList() const override { return {"experimental"}; }
@@ -100,9 +88,6 @@ class SerialPreset : public CvdServerHandler {
          {"git_master/cf_x86_64_phone-userdebug", "git_master/cf_gwear_x86"}},
     };
   }
-
-  std::mutex interrupt_mutex_;
-  bool interrupted_ = false;
 };
 
 std::unique_ptr<CvdServerHandler> NewSerialPreset(

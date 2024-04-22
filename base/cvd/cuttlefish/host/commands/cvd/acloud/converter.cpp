@@ -64,9 +64,7 @@ struct BranchBuildTargetInfo {
 };
 
 static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
-    const std::string default_branch_str, SubprocessWaiter& waiter,
-    std::function<Result<void>(void)> callback_unlock,
-    std::function<Result<void>(void)> callback_lock) {
+    const std::string default_branch_str, SubprocessWaiter& waiter) {
   // get the default build branch and target from repo info and git remote
   BranchBuildTargetInfo result_info;
   result_info.branch_str = default_branch_str;
@@ -87,7 +85,6 @@ static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
     .redirect_stdout_ = true,
     .redirect_stderr_ = false,
     .stdin_ = nullptr,
-    .callback_ = callback_unlock
   };
   RunOutput output_repo =
       CF_EXPECT(waiter.RunWithManagedStdioInterruptable(std::move(param_repo)));
@@ -102,9 +99,7 @@ static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
     .redirect_stdout_ = true,
     .redirect_stderr_ = false,
     .stdin_ = nullptr,
-    .callback_ = callback_unlock
   };
-  CF_EXPECT(callback_lock());
   RunOutput output_git =
       CF_EXPECT(waiter.RunWithManagedStdioInterruptable(std::move(param_git)));
 
@@ -140,8 +135,7 @@ static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
  * making the split.
  */
 Result<std::vector<std::string>> BashTokenize(
-    const std::string& str, SubprocessWaiter& waiter,
-    std::function<Result<void>(void)> callback_unlock) {
+    const std::string& str, SubprocessWaiter& waiter) {
   Command command("bash");
   command.AddParameter("-c");
   command.AddParameter("printf '%s\n' ", str);
@@ -150,7 +144,6 @@ Result<std::vector<std::string>> BashTokenize(
     .redirect_stdout_ = true,
     .redirect_stderr_ = true,
     .stdin_ = nullptr,
-    .callback_ = callback_unlock
   };
   RunOutput output_bash =
       CF_EXPECT(waiter.RunWithManagedStdioInterruptable(std::move(param_bash)));
@@ -162,9 +155,7 @@ Result<std::vector<std::string>> BashTokenize(
 namespace acloud_impl {
 
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
-    const RequestWithStdio& request, SubprocessWaiter& waiter,
-    std::function<Result<void>(void)> callback_unlock,
-    std::function<Result<void>(void)> callback_lock) {
+    const RequestWithStdio& request, SubprocessWaiter& waiter) {
   auto arguments = ParseInvocation(request.Message()).arguments;
   CF_EXPECT(arguments.size() > 0);
   CF_EXPECT(arguments[0] == "create");
@@ -392,8 +383,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
           parsed_flags.branch.value_or("aosp-main"));
       host_dir += (build + target);
     } else {
-      given_branch_target_info = CF_EXPECT(GetDefaultBranchBuildTarget(
-          "git_", waiter, callback_unlock, callback_lock));
+      given_branch_target_info =
+          CF_EXPECT(GetDefaultBranchBuildTarget("git_", waiter));
       host_dir += (given_branch_target_info->branch_str +
                    given_branch_target_info->build_target_str);
     }
@@ -630,16 +621,13 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
 
   if (launch_args) {
-    CF_EXPECT(callback_lock());
-    for (const auto& arg : CF_EXPECT(BashTokenize(
-             *launch_args, waiter, callback_unlock))) {
+    for (const auto& arg : CF_EXPECT(BashTokenize(*launch_args, waiter))) {
       start_command.add_args(arg);
     }
   }
   if (acloud_config.launch_args != "") {
-    CF_EXPECT(callback_lock());
-    for (const auto& arg : CF_EXPECT(BashTokenize(
-             acloud_config.launch_args, waiter, callback_unlock))) {
+    for (const auto& arg :
+         CF_EXPECT(BashTokenize(acloud_config.launch_args, waiter))) {
       start_command.add_args(arg);
     }
   }

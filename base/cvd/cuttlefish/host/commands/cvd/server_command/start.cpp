@@ -112,9 +112,8 @@ class CvdStartCommandHandler : public CvdServerHandler {
         command_executor_(command_executor),
         sub_action_ended_(false) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const;
+  Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
-  Result<void> Interrupt() override;
   std::vector<std::string> CmdList() const override;
 
  private:
@@ -173,8 +172,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
   SubprocessWaiter subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
   CommandSequenceExecutor& command_executor_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
   /*
    * Used by Interrupt() not to call command_executor_.Interrupt()
    *
@@ -188,8 +185,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
 Result<void> CvdStartCommandHandler::AcloudCompatActions(
     const selector::GroupCreationInfo& group_creation_info,
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interruptible_);
-  CF_EXPECT(!interrupted_, "Interrupted");
   // rm -fr "TempDir()/acloud_cvd_temp/local-instance-<i>"
   std::string acloud_compat_home_prefix =
       TempDir() + "/acloud_cvd_temp/local-instance-";
@@ -289,7 +284,6 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
   for (auto& request_proto : request_protos) {
     new_requests.emplace_back(request_proto, dev_null_fds);
   }
-  interrupt_lock.unlock();
   CF_EXPECT(command_executor_.Execute(new_requests, dev_null));
   return {};
 }
@@ -578,10 +572,6 @@ Result<void> CvdStartCommandHandler::CreateSymlinks(
 
 Result<cvd::Response> CvdStartCommandHandler::Handle(
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interruptible_);
-  if (interrupted_) {
-    return CF_ERR("Interrupted");
-  }
   CF_EXPECT(CanHandle(request));
 
   cvd::Response response;
@@ -591,7 +581,6 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   std::optional<std::string> config_file = GetConfigPath(subcmd_args);
   if (config_file) {
     auto subrequest = CreateLoadCommand(request, subcmd_args, *config_file);
-    interrupt_lock.unlock();
     response =
         CF_EXPECT(command_executor_.ExecuteOne(subrequest, request.Err()));
     sub_action_ended_ = true;
@@ -676,14 +665,12 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   }
 
   CF_EXPECT(FireCommand(std::move(command), /*should_wait*/ true));
-  interrupt_lock.unlock();
 
   if (is_help) {
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());
     return ResponseFromSiginfo(infop);
   }
 
-  // make acquire interrupt_lock inside.
   auto acloud_compat_action_result =
       AcloudCompatActions(*group_creation_info, request);
   sub_action_ended_ = true;
@@ -760,20 +747,6 @@ Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
 
   // group_creation_info is nullopt only if is_help is false
   return FillOutNewInstanceInfo(std::move(final_response), group_creation_info);
-}
-
-Result<void> CvdStartCommandHandler::Interrupt() {
-  std::scoped_lock interrupt_lock(interruptible_);
-  interrupted_ = true;
-  if (!sub_action_ended_) {
-    auto result = command_executor_.Interrupt();
-    if (!result.ok()) {
-      LOG(ERROR) << "Failed to interrupt CommandExecutor"
-                 << result.error().FormatForEnv();
-    }
-  }
-  CF_EXPECT(subprocess_waiter_.Interrupt());
-  return {};
 }
 
 Result<cvd::Response> CvdStartCommandHandler::FillOutNewInstanceInfo(

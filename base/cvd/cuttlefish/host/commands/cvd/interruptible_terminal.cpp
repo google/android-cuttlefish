@@ -27,18 +27,6 @@ namespace cuttlefish {
 InterruptibleTerminal::InterruptibleTerminal(SharedFD stdin_fd)
     : stdin_fd_(std::move(stdin_fd)), interrupt_event_fd_(SharedFD::Event()) {}
 
-Result<void> InterruptibleTerminal::Interrupt() {
-  std::unique_lock lock(terminal_mutex_);
-  interrupted_ = true;
-  if (owner_tid_) {
-    CF_EXPECT_EQ(interrupt_event_fd_->EventfdWrite(1), 0,
-                 interrupt_event_fd_->StrError());
-  }
-  readline_done_.wait(lock, [this]() { return owner_tid_ == std::nullopt; });
-  { SharedFD discard = std::move(stdin_fd_); }
-  return {};
-}
-
 // only up to one thread can call this function
 Result<std::string> InterruptibleTerminal::ReadLine() {
   {

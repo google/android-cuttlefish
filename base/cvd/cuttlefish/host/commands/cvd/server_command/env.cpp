@@ -60,14 +60,12 @@ class CvdEnvCommandHandler : public CvdServerHandler {
         subprocess_waiter_(subprocess_waiter),
         cvd_env_operations_{"env"} {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const {
+  Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
     return Contains(cvd_env_operations_, invocation.command);
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interruptible_);
-    CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(VerifyPrecondition(request));
     cvd_common::Envs envs =
@@ -89,17 +87,9 @@ class CvdEnvCommandHandler : public CvdServerHandler {
         is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, envs))
                 : CF_EXPECT(NonHelpCommand(request, subcmd_args, envs));
     CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
-    interrupt_lock.unlock();
 
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());
     return ResponseFromSiginfo(infop);
-  }
-
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interruptible_);
-    interrupted_ = true;
-    CF_EXPECT(subprocess_waiter_.Interrupt());
-    return {};
   }
 
   cvd_common::Args CmdList() const override {
@@ -156,8 +146,6 @@ class CvdEnvCommandHandler : public CvdServerHandler {
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
   std::vector<std::string> cvd_env_operations_;
 
   static constexpr char kCvdEnvBin[] = "cvd_internal_env";

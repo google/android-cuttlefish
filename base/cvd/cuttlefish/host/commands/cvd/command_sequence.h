@@ -42,7 +42,5 @@ class CommandSequenceExecutor {
  private:
   const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers_;
   std::vector<CvdServerHandler*> handler_stack_;
-  std::mutex interrupt_mutex_;
-  bool interrupted_ = false;
 };
 }  // namespace cuttlefish

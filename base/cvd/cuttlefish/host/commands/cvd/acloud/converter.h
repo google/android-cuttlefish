@@ -49,9 +49,7 @@ namespace acloud_impl {
  *
  */
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
-    const RequestWithStdio& request, SubprocessWaiter& waiter,
-    std::function<Result<void>(void)> callback_unlock,
-    std::function<Result<void>(void)> callback_lock);
+    const RequestWithStdio& request, SubprocessWaiter& waiter);
 
 }  // namespace acloud_impl
 }  // namespace cuttlefish

@@ -178,7 +178,6 @@ class CvdResetCommandHandler : public CvdServerHandler {
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
-  Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
   cvd_common::Args CmdList() const override { return {kResetSubcmd}; }
 
  private:

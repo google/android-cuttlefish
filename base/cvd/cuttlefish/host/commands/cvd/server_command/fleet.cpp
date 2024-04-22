@@ -59,7 +59,6 @@ class CvdFleetCommandHandler : public CvdServerHandler {
 
   Result<bool> CanHandle(const RequestWithStdio& request) const;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
-  Result<void> Interrupt() override;
   cvd_common::Args CmdList() const override { return {kFleetSubcmd}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
@@ -74,8 +73,6 @@ class CvdFleetCommandHandler : public CvdServerHandler {
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   StatusFetcher status_fetcher_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
 
   static constexpr char kFleetSubcmd[] = "fleet";
   Result<cvd::Status> CvdFleetHelp(const SharedFD& out) const;
@@ -88,17 +85,8 @@ Result<bool> CvdFleetCommandHandler::CanHandle(
   return invocation.command == kFleetSubcmd;
 }
 
-Result<void> CvdFleetCommandHandler::Interrupt() {
-  std::scoped_lock interrupt_lock(interruptible_);
-  interrupted_ = true;
-  CF_EXPECT(subprocess_waiter_.Interrupt());
-  return {};
-}
-
 Result<cvd::Response> CvdFleetCommandHandler::Handle(
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interruptible_);
-  CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
 
   cvd::Response ok_response;
@@ -109,7 +97,6 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   auto [sub_cmd, args] = ParseInvocation(request.Message());
   auto envs =
       cvd_common::ConvertToEnvs(request.Message().command_request().env());
-  interrupt_lock.unlock();
 
   if (IsHelp(args)) {
     CF_EXPECT(CvdFleetHelp(request.Out()));

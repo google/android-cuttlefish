@@ -31,7 +31,6 @@ class CvdServerHandler {
 
   virtual Result<bool> CanHandle(const RequestWithStdio&) const = 0;
   virtual Result<cvd::Response> Handle(const RequestWithStdio&) = 0;
-  virtual Result<void> Interrupt() = 0;
   // returns the list of subcommand it can handle
   virtual cvd_common::Args CmdList() const = 0;
   // TODO make pure virtual once every implementation has overrides
