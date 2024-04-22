@@ -211,120 +211,92 @@ jobs:
   test-install-cuttlefish-deb-job:
     runs-on: ubuntu-latest
     needs: build-cuttlefish-deb-job
+    container:
+      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
     steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Download cuttlefish_packages.7z
       uses: actions/download-artifact@v3
       with:
         name: cuttlefish_packages
-    - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
-    - name: Prepare test bed
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update    
-    - name: Test setup
-      run: sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install git devscripts config-package-dev debhelper-compat golang curl && sudo apt-get install -y p7zip-full && sudo apt-get install -y openssh-server && sudo apt-get install -y --no-install-recommends udev && sudo apt-get install -y ebtables && sudo whoami && sudo usermod -aG kvm,render `whoami`
+        path: "cuttlefish-host-image-installer"
     - name: Running installation tests...
-      run: 7z x cuttlefish_packages.7z && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb && sudo usermod -aG cvdnetwork `whoami` && echo "Done"
+      run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-cuttlefish-deb.sh ./cuttlefish_packages.7z
 
   test-install-metapackage-deb-job:
     runs-on: ubuntu-latest
     needs: build-metapackage-deb-job
+    container:
+      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
     steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Download meta_gigamp_packages.7z
       uses: actions/download-artifact@v3
       with:
         name: meta_gigamp_packages
-    - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
-    - name: Prepare test bed
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update    
-    - name: Test setup    
-      run: sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install git devscripts config-package-dev debhelper-compat golang curl && sudo apt-get install -y p7zip-full
+        path: "cuttlefish-host-image-installer"
     - name: Running installation tests...
-      run: 7z x meta_gigamp_packages.7z && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb && test -e /etc/security/limits.d/95-linaro-gigamp-nofile.conf && ulimit -n && grep time1.google.com /etc/ntpsec/ntp.conf && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 purge metapackage-linaro-gigamp && test $(grep time1.google.com /etc/ntpsec/ntp.conf | wc -l) -eq 0 && echo "Done"
+      run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-metapackage-deb.sh ./meta_gigamp_packages.7z
 
   test-install-kernel-aosp14-61-deb-job:
     runs-on: ubuntu-latest
     needs: build-kernel-aosp14-61-deb-job
+    container:
+      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
+    env:
+      KERNEL_PACKAGE: aosp_kernel_aosp14_61.7z
     steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2      
     - name: Download aosp_kernel_aosp14_61.7z
       uses: actions/download-artifact@v3
       with:
         name: aosp_kernel_aosp14_61
-    - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
-    - name: Prepare test bed
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update    
-    - name: Test setup
-      run: sudo apt-get install -y p7zip-full zstd && sudo apt-get install -y initramfs-tools
+        path: "cuttlefish-host-image-installer"
     - name: Running installation tests...
-      run: 7z x aosp_kernel_aosp14_61.7z && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb && test -e /boot/vmlinuz-*aosp*-linaro* && test -e /boot/initrd.img-*aosp*-linaro* && grep "CONFIG_FHANDLE=y" /boot/config-*aosp*-linaro* && grep 'CONFIG_MODPROBE_PATH="/sbin/modprobe"' /boot/config-*aosp*-linaro* && echo "Done"
+      run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-kernel-deb.sh ./aosp_kernel_aosp14_61.7z
         
   test-install-kernel-aosp15-61-deb-job:
     runs-on: ubuntu-latest
     needs: build-kernel-aosp15-61-deb-job
+    container:
+      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
+    env:
+      KERNEL_PACKAGE: aosp_kernel_aosp15_61.7z
     steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2      
     - name: Download aosp_kernel_aosp15_61.7z
       uses: actions/download-artifact@v3
       with:
         name: aosp_kernel_aosp15_61
-    - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
-    - name: Prepare test bed
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update    
-    - name: Test setup
-      run: sudo apt-get install -y p7zip-full zstd && sudo apt-get install -y initramfs-tools
+        path: "cuttlefish-host-image-installer"
     - name: Running installation tests...
-      run: 7z x aosp_kernel_aosp15_61.7z && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb && test -e /boot/vmlinuz-*aosp*-linaro* && test -e /boot/initrd.img-*aosp*-linaro* && grep "CONFIG_FHANDLE=y" /boot/config-*aosp*-linaro* && grep 'CONFIG_MODPROBE_PATH="/sbin/modprobe"' /boot/config-*aosp*-linaro* && echo "Done"
+      run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-kernel-deb.sh ./aosp_kernel_aosp15_61.7z
         
   test-install-kernel-aosp15-66-deb-job:
     runs-on: ubuntu-latest
     needs: build-kernel-aosp15-66-deb-job
+    container:
+      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
+    env:
+      KERNEL_PACKAGE: aosp_kernel_aosp15_66.7z
     steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2      
     - name: Download aosp_kernel_aosp15_66.7z
       uses: actions/download-artifact@v3
       with:
         name: aosp_kernel_aosp15_66
-    - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
-    - name: Prepare test bed
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update    
-    - name: Test setup
-      run: sudo apt-get install -y p7zip-full zstd && sudo apt-get install -y initramfs-tools
+        path: "cuttlefish-host-image-installer"
     - name: Running installation tests...
-      run: 7z x aosp_kernel_aosp15_66.7z && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb && test -e /boot/vmlinuz-*aosp*-linaro* && test -e /boot/initrd.img-*aosp*-linaro* && grep "CONFIG_FHANDLE=y" /boot/config-*aosp*-linaro* && grep 'CONFIG_MODPROBE_PATH="/sbin/modprobe"' /boot/config-*aosp*-linaro* && echo "Done"
+      run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-kernel-deb.sh ./aosp_kernel_aosp15_66.7z
 
   test-iso-qemu-job:
     runs-on: ubuntu-22.04-4core
+    needs: build-installer-iso-job
     container:
       image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
     steps:
