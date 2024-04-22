@@ -692,6 +692,7 @@ android_system_image {
         "preinstalled-packages-platform-handheld-system.xml",
         "preinstalled-packages-platform-telephony-product.xml",
         "preinstalled-packages-platform.xml",
+        "preinstalled-packages-strict-signature.xml",
         "preloads_copy.sh",
         "preloads_copy.sh",
         "preopt2cachename",
