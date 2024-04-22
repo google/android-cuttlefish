@@ -31,33 +31,33 @@
 
 namespace cuttlefish {
 
-static bool StopModemSimulator(int id) {
+static StopperResult StopModemSimulator(int id) {
   std::string socket_name = "modem_simulator" + std::to_string(id);
   auto monitor_sock =
       SharedFD::SocketLocalClient(socket_name, true, SOCK_STREAM);
   if (!monitor_sock->IsOpen()) {
     LOG(ERROR) << "The connection to modem simulator is closed";
-    return false;
+    return StopperResult::kStopFailure;
   }
   std::string msg("STOP");
   if (monitor_sock->Write(msg.data(), msg.size()) < 0) {
     monitor_sock->Close();
     LOG(ERROR) << "Failed to send 'STOP' to modem simulator";
-    return false;
+    return StopperResult::kStopFailure;
   }
   char buf[64] = {0};
   if (monitor_sock->Read(buf, sizeof(buf)) <= 0) {
     monitor_sock->Close();
     LOG(ERROR) << "Failed to read message from modem simulator";
-    return false;
+    return StopperResult::kStopFailure;
   }
   if (strcmp(buf, "OK")) {
     monitor_sock->Close();
     LOG(ERROR) << "Read '" << buf << "' instead of 'OK' from modem simulator";
-    return false;
+    return StopperResult::kStopFailure;
   }
 
-  return true;
+  return StopperResult::kStopSuccess;
 }
 
 Result<std::optional<MonitorCommand>> ModemSimulator(
@@ -89,18 +89,9 @@ Result<std::optional<MonitorCommand>> ModemSimulator(
     sockets.emplace_back(std::move(modem_sim_socket));
   }
 
-  auto host_id = instance.modem_simulator_host_id();
-  Command cmd(ModemSimulatorBinary(), [host_id](Subprocess* proc) {
-    auto stopped = StopModemSimulator(host_id);
-    if (stopped) {
-      return StopperResult::kStopSuccess;
-    }
-    LOG(WARNING) << "Failed to stop modem simulator nicely, "
-                 << "attempting to KILL";
-    return KillSubprocess(proc) == StopperResult::kStopSuccess
-               ? StopperResult::kStopCrash
-               : StopperResult::kStopFailure;
-  });
+  auto id = instance.modem_simulator_host_id();
+  auto nice_stop = [id]() { return StopModemSimulator(id); };
+  Command cmd(ModemSimulatorBinary(), KillSubprocessFallback(nice_stop));
 
   auto sim_type = instance.modem_simulator_sim_type();
   cmd.AddParameter(std::string{"-sim_type="} + std::to_string(sim_type));

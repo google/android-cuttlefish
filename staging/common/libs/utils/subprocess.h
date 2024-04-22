@@ -56,6 +56,10 @@ class Subprocess;
 using SubprocessStopper = std::function<StopperResult(Subprocess*)>;
 // Kills a process by sending it the SIGKILL signal.
 StopperResult KillSubprocess(Subprocess* subprocess);
+/* Creates a `SubprocessStopper` that first tries `nice_stopper` then falls back
+ * to `KillSubprocess` if that fails. */
+SubprocessStopper KillSubprocessFallback(std::function<StopperResult()>);
+SubprocessStopper KillSubprocessFallback(SubprocessStopper nice_stopper);
 
 // Keeps track of a running (sub)process. Allows to wait for its completion.
 // It's an error to wait twice for the same subprocess.
