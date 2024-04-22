@@ -280,11 +280,6 @@ Result<std::vector<MonitorCommand>> Gem5Manager::StartCommands(
     const CuttlefishConfig& config, std::vector<VmmDependencyCommand*>&) {
   auto instance = config.ForDefaultInstance();
 
-  auto stop = [](Subprocess* proc) {
-    return KillSubprocess(proc) == StopperResult::kStopSuccess
-               ? StopperResult::kStopCrash
-               : StopperResult::kStopFailure;
-  };
   std::string gem5_binary = instance.gem5_binary_dir();
   switch (arch_) {
     case Arch::Arm:
@@ -302,7 +297,7 @@ Result<std::vector<MonitorCommand>> Gem5Manager::StartCommands(
   // generate Gem5 starter_fs.py before we execute it
   GenerateGem5File(config, instance);
 
-  Command gem5_cmd(gem5_binary, stop);
+  Command gem5_cmd(gem5_binary);
 
   // Always enable listeners, because auto mode will disable once it detects
   // gem5 is not run interactively

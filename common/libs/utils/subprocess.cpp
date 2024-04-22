@@ -293,6 +293,23 @@ StopperResult KillSubprocess(Subprocess* subprocess) {
   return StopperResult::kStopSuccess;
 }
 
+SubprocessStopper KillSubprocessFallback(std::function<StopperResult()> nice) {
+  return KillSubprocessFallback([nice](Subprocess*) { return nice(); });
+}
+
+SubprocessStopper KillSubprocessFallback(SubprocessStopper nice_stopper) {
+  return [nice_stopper](Subprocess* proccess) {
+    auto nice_result = nice_stopper(proccess);
+    if (nice_result == StopperResult::kStopFailure) {
+      auto harsh_result = KillSubprocess(proccess);
+      return harsh_result == StopperResult::kStopSuccess
+                 ? StopperResult::kStopCrash
+                 : harsh_result;
+    }
+    return nice_result;
+  };
+}
+
 Command::Command(std::string executable, SubprocessStopper stopper)
     : subprocess_stopper_(stopper) {
   for (char** env = environ; *env; env++) {
