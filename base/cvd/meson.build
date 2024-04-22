@@ -23,6 +23,7 @@ common_sources = [
   'cuttlefish/common/libs/utils/proc_file_utils.cpp',
   'cuttlefish/common/libs/utils/result.cpp',
   'cuttlefish/common/libs/utils/shared_fd_flag.cpp',
+  'cuttlefish/common/libs/utils/signals.cpp',
   'cuttlefish/common/libs/utils/subprocess.cpp',
   'cuttlefish/common/libs/utils/tee_logging.cpp',
   'cuttlefish/common/libs/utils/unix_sockets.cpp',
