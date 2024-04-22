@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <signal.h>
+
 #include <functional>
 #include <mutex>
 #include <thread>
@@ -25,6 +27,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/signals.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -81,6 +84,11 @@ class DataViewer {
       // Don't update if there is an error
       return res;
     }
+    // Block signals while writing to the instance database file. This reduces
+    // the chances of corrupting the file.
+    sigset_t all_signals;
+    sigfillset(&all_signals);
+    SignalMasker blocker(all_signals);
     // Overwrite the file contents, don't append
     CF_EXPECTF(fd->Truncate(0) >= 0, "Failed to truncate fd: {}",
                fd->StrError());
