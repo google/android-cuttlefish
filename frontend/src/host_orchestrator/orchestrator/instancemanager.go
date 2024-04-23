@@ -115,12 +115,16 @@ type cvdGroup struct {
 	Instances []*cvdInstance `json:"instances"`
 }
 
-func (g *cvdGroup) toAPIObject() []*apiv1.CVD {
+func (g *cvdGroup) toAPIObject() ([]*apiv1.CVD, error) {
 	result := make([]*apiv1.CVD, len(g.Instances))
 	for i, item := range g.Instances {
-		result[i] = item.toAPIObject(g.Name)
+		instance, err := item.toAPIObject(g.Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get cvdInstance API Object")
+		}
+		result[i] = instance
 	}
-	return result
+	return result, nil
 }
 
 type cvdInstance struct {
@@ -129,9 +133,18 @@ type cvdInstance struct {
 	Displays       []string `json:"displays"`
 	InstanceDir    string   `json:"instance_dir"`
 	WebRTCDeviceID string   `json:"webrtc_device_id"`
+	ADBSerial	   string   `json:"adb_serial"`
 }
 
-func (i *cvdInstance) toAPIObject(group string) *apiv1.CVD {
+func (i *cvdInstance) toAPIObject(group string) (*apiv1.CVD, error) {
+	_, port, err := net.SplitHostPort(i.ADBSerial)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse ADB serial: %w", err)
+	}
+	adbPort, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert ADB port to integer: %w", err)
+	}
 	return &apiv1.CVD{
 		Group: group,
 		Name:  i.InstanceName,
@@ -140,7 +153,8 @@ func (i *cvdInstance) toAPIObject(group string) *apiv1.CVD {
 		Status:         i.Status,
 		Displays:       i.Displays,
 		WebRTCDeviceID: i.WebRTCDeviceID,
-	}
+		ADBPort:        adbPort,
+	}, nil
 }
 
 func cvdFleet(ctx cvd.CVDExecContext) (*cvdFleetOutput, error) {
