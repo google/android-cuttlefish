@@ -221,6 +221,8 @@ jobs:
       with:
         name: cuttlefish_packages
         path: "cuttlefish-host-image-installer"
+    - name: Prepare pbuilder environment
+      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y debconf-utils && apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
     - name: Prepare tzdata
       run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata        
     - name: Prepare pbuilder tool
@@ -241,6 +243,8 @@ jobs:
       with:
         name: meta_gigamp_packages
         path: "cuttlefish-host-image-installer"
+    - name: Prepare pbuilder environment
+      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y debconf-utils && apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
     - name: Prepare tzdata
       run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata        
     - name: Prepare pbuilder tool
@@ -263,6 +267,8 @@ jobs:
       with:
         name: aosp_kernel_aosp14_61
         path: "cuttlefish-host-image-installer"
+    - name: Prepare pbuilder environment
+      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y debconf-utils && apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
     - name: Prepare tzdata
       run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata        
     - name: Prepare pbuilder tool
@@ -285,6 +291,8 @@ jobs:
       with:
         name: aosp_kernel_aosp15_61
         path: "cuttlefish-host-image-installer"
+    - name: Prepare pbuilder environment
+      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y debconf-utils && apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
     - name: Prepare tzdata
       run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata        
     - name: Prepare pbuilder tool
@@ -307,6 +315,8 @@ jobs:
       with:
         name: aosp_kernel_aosp15_66
         path: "cuttlefish-host-image-installer"
+    - name: Prepare pbuilder environment
+      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y debconf-utils && apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
     - name: Prepare tzdata
       run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata        
     - name: Prepare pbuilder tool
@@ -344,8 +354,14 @@ jobs:
       run: cd cuttlefish-host-image-installer && xz -d preseed-mini.iso.xz && chmod a-w preseed-mini.iso && cp -f tests/installer-iso-* .
     - name: Run installer on qemu
       run: cd cuttlefish-host-image-installer && ./installer-iso-install.expect successful_install sheeFei2
-    - name: Test if installation is successed
-      run: cd cuttlefish-host-image-installer && ./installer-iso-extract-partitions.sh && e2cp rootfs.img:/home/vsoc-01/successful_install successful_install && echo sheeFei2 > successful_install_compare && cmp successful_install successful_install_compare
+    - name: Test if installation is successed1
+      run: cd cuttlefish-host-image-installer && ./installer-iso-extract-partitions.sh
+    - name: Test if installation is successed2
+      run: cd cuttlefish-host-image-installer && e2cp rootfs.img:/home/vsoc-01/successful_install successful_install
+    - name: Test if installation is successed3
+      run: cd cuttlefish-host-image-installer && echo sheeFei2 > successful_install_compare
+    - name: Test if installation is successed5
+      run: cd cuttlefish-host-image-installer && cmp successful_install successful_install_compare
     - name: Test if AOSP kernel is installed
       run: cd cuttlefish-host-image-installer && e2ls -l boot.img:/vmlinuz-*aosp*-linaro* && e2cp boot.img:/$(e2ls boot.img:/vmlinuz-*aosp*-linaro* | tail -1) . && test -e vmlinuz-*aosp*-linaro*
     - name: Test if Cuttlefish Debian packages are installed
