@@ -222,7 +222,7 @@ jobs:
         name: cuttlefish_packages
         path: "cuttlefish-host-image-installer"
     - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
+      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Running installation tests...
       run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-cuttlefish-deb.sh ./cuttlefish_packages.7z
 
@@ -240,7 +240,7 @@ jobs:
         name: meta_gigamp_packages
         path: "cuttlefish-host-image-installer"
     - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
+      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Running installation tests...
       run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-metapackage-deb.sh ./meta_gigamp_packages.7z
 
@@ -260,7 +260,7 @@ jobs:
         name: aosp_kernel_aosp14_61
         path: "cuttlefish-host-image-installer"
     - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
+      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Running installation tests...
       run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-kernel-deb.sh ./aosp_kernel_aosp14_61.7z
         
@@ -280,7 +280,7 @@ jobs:
         name: aosp_kernel_aosp15_61
         path: "cuttlefish-host-image-installer"
     - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
+      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Running installation tests...
       run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-kernel-deb.sh ./aosp_kernel_aosp15_61.7z
         
@@ -300,7 +300,7 @@ jobs:
         name: aosp_kernel_aosp15_66
         path: "cuttlefish-host-image-installer"
     - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
+      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Running installation tests...
       run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-kernel-deb.sh ./aosp_kernel_aosp15_66.7z
 
