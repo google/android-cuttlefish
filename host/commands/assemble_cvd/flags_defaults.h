@@ -90,8 +90,7 @@
 #define CF_DEFAULTS_USE_RANDOM_SERIAL false
 #define CF_DEFAULTS_SERIAL_NUMBER \
   cuttlefish::ForCurrentInstance("CUTTLEFISHCVD")
-#define CF_DEFAULTS_SECURE_HALS \
-  "oemlock,guest_keymint_insecure,guest_gatekeeper_insecure"
+#define CF_DEFAULTS_SECURE_HALS "keymint,gatekeeper,oemlock"
 #define CF_DEFAULTS_PROTECTED_VM false
 #define CF_DEFAULTS_MTE false
 
@@ -196,6 +195,9 @@
 
 // Audio default parameters
 #define CF_DEFAULTS_ENABLE_AUDIO true
+
+// USB Passhtrough default parameters
+#define CF_DEFAULTS_ENABLE_USB false
 
 // Streaming default parameters
 #define CF_DEFAULTS_START_WEBRTC false

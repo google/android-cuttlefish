@@ -51,7 +51,7 @@ std::string GetMonitorPath(const CuttlefishConfig& config) {
       "qemu_monitor.sock");
 }
 
-bool Stop() {
+StopperResult Stop() {
   auto config = CuttlefishConfig::Get();
   auto monitor_path = GetMonitorPath(*config);
   auto monitor_sock = SharedFD::SocketLocalClient(
@@ -59,7 +59,7 @@ bool Stop() {
 
   if (!monitor_sock->IsOpen()) {
     LOG(ERROR) << "The connection to qemu is closed, is it still running?";
-    return false;
+    return StopperResult::kStopFailure;
   }
   char msg[] = "{\"execute\":\"qmp_capabilities\"}{\"execute\":\"quit\"}";
   ssize_t len = sizeof(msg) - 1;
@@ -67,7 +67,7 @@ bool Stop() {
     int tmp = monitor_sock->Write(msg, len);
     if (tmp < 0) {
       LOG(ERROR) << "Error writing to socket: " << monitor_sock->StrError();
-      return false;
+      return StopperResult::kStopFailure;
     }
     len -= tmp;
   }
@@ -78,7 +78,7 @@ bool Stop() {
     LOG(INFO) << "From qemu monitor: " << buff;
   }
 
-  return true;
+  return StopperResult::kStopSuccess;
 }
 
 Result<std::pair<int, int>> GetQemuVersion(const std::string& qemu_binary) {
@@ -216,18 +216,6 @@ QemuManager::ConfigureBootDevices(
 Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     const CuttlefishConfig& config, std::vector<VmmDependencyCommand*>&) {
   auto instance = config.ForDefaultInstance();
-
-  auto stop = [](Subprocess* proc) {
-    auto stopped = Stop();
-    if (stopped) {
-      return StopperResult::kStopSuccess;
-    }
-    LOG(WARNING) << "Failed to stop VMM nicely, "
-                  << "attempting to KILL";
-    return KillSubprocess(proc) == StopperResult::kStopSuccess
-               ? StopperResult::kStopCrash
-               : StopperResult::kStopFailure;
-  };
   std::string qemu_binary = instance.qemu_binary_dir();
   switch (arch_) {
     case Arch::Arm:
@@ -248,7 +236,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   }
 
   auto qemu_version = CF_EXPECT(GetQemuVersion(qemu_binary));
-  Command qemu_cmd(qemu_binary, stop);
+  Command qemu_cmd(qemu_binary, KillSubprocessFallback(Stop));
 
   int hvc_num = 0;
   int serial_num = 0;
