@@ -509,6 +509,7 @@ class CuttlefishConfig {
 
     std::string persistent_bootconfig_path() const;
 
+    // used for the persistent_composite_disk vbmeta
     std::string vbmeta_path() const;
 
     std::string ap_vbmeta_path() const;
@@ -628,6 +629,7 @@ class CuttlefishConfig {
     std::string vendor_boot_image() const;
     std::string new_vendor_boot_image() const;
     std::string vbmeta_image() const;
+    std::string new_vbmeta_image() const;
     std::string vbmeta_system_image() const;
     std::string vbmeta_vendor_dlkm_image() const;
     std::string new_vbmeta_vendor_dlkm_image() const;
@@ -830,6 +832,7 @@ class CuttlefishConfig {
     void set_vendor_boot_image(const std::string& vendor_boot_image);
     void set_new_vendor_boot_image(const std::string& new_vendor_boot_image);
     void set_vbmeta_image(const std::string& vbmeta_image);
+    void set_new_vbmeta_image(const std::string& new_vbmeta_image);
     void set_vbmeta_system_image(const std::string& vbmeta_system_image);
     void set_vbmeta_vendor_dlkm_image(
         const std::string& vbmeta_vendor_dlkm_image);
