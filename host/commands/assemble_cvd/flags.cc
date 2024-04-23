@@ -134,7 +134,7 @@ DEFINE_vec(use_random_serial, fmt::format("{}", CF_DEFAULTS_USE_RANDOM_SERIAL),
 DEFINE_vec(vm_manager, CF_DEFAULTS_VM_MANAGER,
               "What virtual machine manager to use, one of {qemu_cli, crosvm}");
 DEFINE_vec(gpu_mode, CF_DEFAULTS_GPU_MODE,
-           "What gpu configuration to use, one of {auto, drm_virgl, "
+           "What gpu configuration to use, one of {auto, custom, drm_virgl, "
            "gfxstream, gfxstream_guest_angle, "
            "gfxstream_guest_angle_host_swiftshader, guest_swiftshader}");
 DEFINE_vec(gpu_vhost_user_mode,
@@ -154,6 +154,17 @@ DEFINE_vec(
     "Renderer specific features to enable. For Gfxstream, this should "
     "be a semicolon separated list of \"<feature name>:[enabled|disabled]\""
     "pairs.");
+
+DEFINE_vec(gpu_context_types, CF_DEFAULTS_GPU_CONTEXT_TYPES,
+           "A colon separated list of virtio-gpu context types.  Only valid "
+           "with --gpu_mode=custom."
+           " For example \"--gpu_context_types=cross_domain:gfxstream\"");
+
+DEFINE_vec(
+    guest_vulkan_driver, CF_DEFAULTS_GUEST_VULKAN_DRIVER,
+    "Vulkan driver to use with Cuttlefish.  Android VMs require specifying "
+    "this at boot time.  Only valid with --gpu_mode=custom. "
+    "For example \"--guest_vulkan_driver=ranchu\"");
 
 DEFINE_vec(use_allocd, CF_DEFAULTS_USE_ALLOCD?"true":"false",
             "Acquire static resources from the resource allocator daemon.");
@@ -1136,6 +1147,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_vhost_user_mode));
   std::vector<std::string> gpu_renderer_features_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_renderer_features));
+  std::vector<std::string> gpu_context_types_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(gpu_context_types));
+  std::vector<std::string> guest_vulkan_driver_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(guest_vulkan_driver));
 
   std::vector<std::string> gpu_capture_binary_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_capture_binary));
@@ -1526,8 +1541,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string gpu_mode = CF_EXPECT(ConfigureGpuSettings(
         gpu_mode_vec[instance_index], gpu_vhost_user_mode_vec[instance_index],
         gpu_renderer_features_vec[instance_index],
-        vm_manager_vec[instance_index], guest_configs[instance_index],
-        instance));
+        gpu_context_types_vec[instance_index], vm_manager_vec[instance_index],
+        guest_configs[instance_index], instance));
     calculated_gpu_mode_vec[instance_index] = gpu_mode_vec[instance_index];
 
     instance.set_restart_subprocesses(restart_subprocesses_vec[instance_index]);
@@ -1562,6 +1577,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     instance.set_enable_gpu_udmabuf(enable_gpu_udmabuf_vec[instance_index]);
+
+    instance.set_gpu_context_types(gpu_context_types_vec[instance_index]);
+    instance.set_guest_vulkan_driver(guest_vulkan_driver_vec[instance_index]);
 
     // 1. Keep original code order SetCommandLineOptionWithMode("enable_sandbox")
     // then set_enable_sandbox later.
