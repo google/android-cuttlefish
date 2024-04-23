@@ -196,6 +196,9 @@
 // Audio default parameters
 #define CF_DEFAULTS_ENABLE_AUDIO true
 
+// USB Passhtrough default parameters
+#define CF_DEFAULTS_ENABLE_USB false
+
 // Streaming default parameters
 #define CF_DEFAULTS_START_WEBRTC false
 #define CF_DEFAULTS_START_WEBRTC_SIG_SERVER true
