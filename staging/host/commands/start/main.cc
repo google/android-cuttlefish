@@ -250,6 +250,7 @@ std::unordered_set<std::string> kBoolFlags = {
     "console",
     "enable_sandbox",
     "enable_virtiofs",
+    "enable_usb",
     "restart_subprocesses",
     "enable_gpu_udmabuf",
     "enable_gpu_vhost_user",
