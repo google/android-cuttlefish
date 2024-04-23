@@ -53,8 +53,6 @@ jobs:
   test-install-metapackage-deb-job:
     runs-on: ubuntu-latest
     needs: build-metapackage-deb-job
-    container:
-      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
     steps:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
@@ -64,8 +62,8 @@ jobs:
         name: meta_gigamp_packages
         path: "cuttlefish-host-image-installer"
     - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata        
+      run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata        
     - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && apt update && apt-get install -y ubuntu-dev-tools && DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
+      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && sudo apt update && sudo apt-get install -y ubuntu-dev-tools && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Running installation tests...
       run: cd cuttlefish-host-image-installer && echo $HOME && pwd && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-metapackage-deb.sh ./meta_gigamp_packages.7z
