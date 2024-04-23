@@ -194,6 +194,7 @@ android_system_image {
         "flags_health_check",
         "font_fallback.xml",
         "fonts.xml",
+        "framework-audio_effects.xml",
         "framework-sysconfig.xml",
         "fsck_msdos",
         "fsck.erofs",
