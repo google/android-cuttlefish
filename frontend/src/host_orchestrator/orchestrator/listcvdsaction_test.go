@@ -98,6 +98,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 			Status:         "Running",
 			Displays:       []string{"720 x 1280 ( 320 )"},
 			WebRTCDeviceID: "cvd-1",
+			ADBPort:        "6520",
 		},
 	}}
 	if diff := cmp.Diff(want, res); diff != "" {

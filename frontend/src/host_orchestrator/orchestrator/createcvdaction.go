@@ -165,7 +165,11 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.CreateCVDResponse{CVDs: group.toAPIObject()}, nil
+	cvds, err := group.toAPIObject()
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.CreateCVDResponse{CVDs: cvds}, nil
 }
 
 func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
@@ -201,7 +205,11 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 		}
 	}
 	group.Instances = relevant
-	res := &apiv1.CreateCVDResponse{CVDs: group.toAPIObject()}
+	cvds, err := group.toAPIObject()
+	if err != nil {
+		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
+	}
+	res := &apiv1.CreateCVDResponse{CVDs: cvds}
 	return &OperationResult{Value: res}
 }
 
