@@ -68,4 +68,4 @@ jobs:
     - name: Prepare pbuilder tool
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && apt update && apt-get install -y ubuntu-dev-tools && DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Running installation tests...
-      run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-metapackage-deb.sh ./meta_gigamp_packages.7z
+      run: cd cuttlefish-host-image-installer && echo $HOME && pwd && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-metapackage-deb.sh ./meta_gigamp_packages.7z
