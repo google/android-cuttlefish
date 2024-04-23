@@ -435,6 +435,9 @@ DEFINE_vec(mte, fmt::format("{}", CF_DEFAULTS_MTE), "Enable MTE");
 DEFINE_vec(enable_audio, fmt::format("{}", CF_DEFAULTS_ENABLE_AUDIO),
            "Whether to play or capture audio");
 
+DEFINE_vec(enable_usb, fmt::format("{}", CF_DEFAULTS_ENABLE_USB),
+           "Whether to allow USB passthrough on the device");
+
 DEFINE_vec(camera_server_port, std::to_string(CF_DEFAULTS_CAMERA_SERVER_PORT),
               "camera vsock port");
 
@@ -885,6 +888,14 @@ Result<void> CheckSnapshotCompatible(
       "--enable_virtiofs=false");
 
   /*
+   * TODO(khei@): delete this block once usb is supported
+   */
+  CF_EXPECTF(gflags::GetCommandLineFlagInfoOrDie("enable_usb").current_value ==
+                 "false",
+             "--enable_usb should be false for snapshot, consider \"{}\"",
+             "--enable_usb=false");
+
+  /*
    * TODO(kwstephenkim@): delete this block once 3D gpu mode snapshots are
    * supported
    */
@@ -1076,6 +1087,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       modem_simulator_sim_type));
   std::vector<bool> console_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(console));
   std::vector<bool> enable_audio_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_audio));
+  std::vector<bool> enable_usb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_usb));
   std::vector<bool> start_gnss_proxy_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       start_gnss_proxy));
   std::vector<bool> enable_bootanimation_vec =
@@ -1301,6 +1313,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
     instance.set_use_allocd(use_allocd_vec[instance_index]);
     instance.set_enable_audio(enable_audio_vec[instance_index]);
+    instance.set_enable_usb(enable_usb_vec[instance_index]);
     instance.set_enable_gnss_grpc_proxy(start_gnss_proxy_vec[instance_index]);
     instance.set_enable_bootanimation(enable_bootanimation_vec[instance_index]);
 
@@ -1775,7 +1788,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
           .ForEnvironment(environment_name);
   CF_EXPECT(CheckSnapshotCompatible(
                 FLAGS_snapshot_compatible &&
-                    (tmp_config_obj.vm_manager() == CrosvmManager::name()),
+                    (tmp_config_obj.vm_manager() == CrosvmManager::name()) &&
+                    instance_nums.size() == 1,
                 calculated_gpu_mode_vec),
             "The set of flags is incompatible with snapshot");
 
