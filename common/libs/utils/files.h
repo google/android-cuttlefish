@@ -84,6 +84,8 @@ Result<void> WalkDirectory(
 #ifdef __linux__
 Result<void> WaitForFile(const std::string& path, int timeoutSec);
 Result<void> WaitForUnixSocket(const std::string& path, int timeoutSec);
+Result<void> WaitForUnixSocketListeningWithoutConnect(const std::string& path,
+                                                      int timeoutSec);
 #endif
 
 // parameter to EmulateAbsolutePath
