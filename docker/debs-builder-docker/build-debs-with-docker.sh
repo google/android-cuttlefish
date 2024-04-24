@@ -50,7 +50,6 @@ function build_host_debian_pkg {
        --rm --privileged \
        --user="vsoc-01" -w "$guest_home" \
        --name=$container_name \
-       -v ${out_dir}:$guest_out_dir \
        -i \
        $builder_tag; then
       >&2 echo "fail to start the docker container, $container_name, to build deb packages"
@@ -72,6 +71,11 @@ function build_host_debian_pkg {
        $container_name $guest_script_path $guest_out_dir; then
       >&2 echo "fail to exec/attach to the container, $container_name, running in background"
       exit 3
+  fi
+
+  if ! docker cp $container_name:$guest_out_dir/. ${out_dir} > /dev/null 2>&1; then
+      >&2 echo "fail to copy deb files from container, $container_name"
+      exit 2
   fi
 
   if ! docker rm -f $container_name > /dev/null 2>&1; then

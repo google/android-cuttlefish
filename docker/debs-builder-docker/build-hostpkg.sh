@@ -18,6 +18,8 @@ function remove_trailing_slash() {
 outdir=$(remove_trailing_slash $1)
 shift 1
 
+mkdir -p $outdir
+
 is_mv_debs="true"
 [[ "$outdir" == "" ]] && is_mv_debs="false"
 
