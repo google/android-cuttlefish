@@ -38,9 +38,9 @@ function build_host_debian_pkg {
   # └── out                (mounted ${out_dir} to save the built deb files)
   #
   local guest_home="/home/vsoc-01"
-  local host_dir_on_guest="$guest_home/host"
-  local src_on_guest="$host_dir_on_guest/android-cuttlefish"
-  local out_on_guest="$host_dir_on_guest/out"
+  local guest_host_dir="$guest_home/host"
+  local guest_repo_dir="$guest_host_dir/android-cuttlefish"
+  local guest_out_dir="$guest_host_dir/out"
   local android_cuttlefish_on_host="$(realpath ..)"
 
   local container_name="meow_yumi"
@@ -50,14 +50,14 @@ function build_host_debian_pkg {
        --rm --privileged \
        --user="vsoc-01" -w "$guest_home" \
        --name=$container_name \
-       -v ${out_dir}:$out_on_guest \
+       -v ${out_dir}:$guest_out_dir \
        -i \
        $builder_tag; then
       >&2 echo "fail to start the docker container, $container_name, to build deb packages"
       exit 1
   fi
 
-  if ! docker cp $android_cuttlefish_on_host/. $container_name:$src_on_guest > /dev/null 2>&1; then
+  if ! docker cp $android_cuttlefish_on_host/. $container_name:$guest_repo_dir > /dev/null 2>&1; then
       >&2 echo "fail to copy android-cuttlefish/* to the container, $container_name"
       exit 2
   fi
@@ -65,11 +65,11 @@ function build_host_debian_pkg {
   # run the script inside the guest
   # the script figures out its location in the guest file system
   # then, it does cd to the location, cd .., and run commands
-  local script_on_guest="$src_on_guest/docker/$resource_subdir/build-hostpkg.sh"
+  local guest_script_path="$guest_repo_dir/docker/$resource_subdir/build-hostpkg.sh"
   if ! docker exec \
        --privileged \
        --user="vsoc-01" -w "$guest_home" \
-       $container_name $script_on_guest $out_on_guest; then
+       $container_name $guest_script_path $guest_out_dir; then
       >&2 echo "fail to exec/attach to the container, $container_name, running in background"
       exit 3
   fi
