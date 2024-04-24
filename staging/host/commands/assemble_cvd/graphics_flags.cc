@@ -260,8 +260,8 @@ Result<std::string> SelectGpuMode(
       LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
                 << "rendering support.";
 
-      if (vm_manager == vm_manager::QemuManager::name() && !UseQemu8()) {
-        LOG(INFO) << "Not using QEMU8: selecting guest swiftshader";
+      if (vm_manager == vm_manager::QemuManager::name() && !UseQemuPrebuilt()) {
+        LOG(INFO) << "Not using QEMU prebuilt (QEMU 8+): selecting guest swiftshader";
         return kGpuModeGuestSwiftshader;
       } else if (!guest_config.gfxstream_supported) {
         LOG(INFO) << "GPU auto mode: guest does not support gfxstream, "
@@ -290,8 +290,8 @@ Result<std::string> SelectGpuMode(
                     "--gpu_mode=auto or --gpu_mode=guest_swiftshader.";
     }
 
-    if (vm_manager == vm_manager::QemuManager::name() && !UseQemu8()) {
-      LOG(INFO) << "Not using QEMU8: selecting guest swiftshader";
+    if (vm_manager == vm_manager::QemuManager::name() && !UseQemuPrebuilt()) {
+      LOG(INFO) << "Not using QEMU prebuilt (QEMU 8+): selecting guest swiftshader";
       return kGpuModeGuestSwiftshader;
     }
   }

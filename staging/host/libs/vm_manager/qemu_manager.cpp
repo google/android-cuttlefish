@@ -807,6 +807,9 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("qemu-xhci,id=xhci");
 
+  qemu_cmd.AddParameter("-L");
+  qemu_cmd.AddParameter(HostQemuBiosPath());
+
   if (is_riscv64) {
     qemu_cmd.AddParameter("-kernel");
   } else {

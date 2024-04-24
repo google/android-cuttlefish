@@ -24,8 +24,10 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "host/libs/config/config_constants.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
@@ -111,19 +113,17 @@ std::string HostBinaryDir() {
   return DefaultHostArtifactsPath("bin");
 }
 
-bool UseQemu8() {
+bool UseQemuPrebuilt() {
   const std::string target_prod_str = StringFromEnv("TARGET_PRODUCT", "");
-  if (HostArch() == Arch::X86_64 &&
-      target_prod_str.find("arm") == std::string::npos) {
+  if (!Contains(target_prod_str, "arm")) {
     return true;
   }
-
   return false;
 }
 
 std::string DefaultQemuBinaryDir() {
-  if (UseQemu8()) {
-    return HostBinaryDir();
+  if (UseQemuPrebuilt()) {
+    return HostBinaryDir() + "/" + HostArchStr() + "-linux-gnu/qemu";
   }
   return "/usr/bin";
 }
@@ -138,6 +138,14 @@ std::string HostBinaryPath(const std::string& binary_name) {
 
 std::string HostUsrSharePath(const std::string& binary_name) {
   return DefaultHostArtifactsPath("usr/share/" + binary_name);
+}
+
+std::string HostQemuBiosPath() {
+  if (UseQemuPrebuilt()) {
+    return DefaultHostArtifactsPath(
+        "usr/share/qemu/" + HostArchStr() + "-linux-gnu");
+  }
+  return "/usr/share/qemu";
 }
 
 std::string DefaultGuestImagePath(const std::string& file_name) {
