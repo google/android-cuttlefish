@@ -212,12 +212,6 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
 
   auto gpu_device_socket_path =
       instance.PerInstanceInternalUdsPath("vhost-user-gpu-socket");
-  auto gpu_device_socket = SharedFD::SocketLocalServer(
-      gpu_device_socket_path.c_str(), false, SOCK_STREAM, 0777);
-  CF_EXPECT(gpu_device_socket->IsOpen(),
-            "Failed to create socket for crosvm vhost user gpu's control"
-                << gpu_device_socket->StrError());
-
   auto gpu_device_logs_path =
       instance.PerInstanceInternalPath("crosvm_vhost_user_gpu.fifo");
   auto gpu_device_logs = CF_EXPECT(SharedFD::Fifo(gpu_device_logs_path, 0666));
@@ -318,6 +312,15 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
 
   // Connect device to main crosvm:
   gpu_device_cmd.Cmd().AddParameter("--socket=", gpu_device_socket_path);
+
+  main_crosvm_cmd->AddPrerequisite([gpu_device_socket_path]() -> Result<void> {
+#ifdef __linux__
+    return WaitForUnixSocketListeningWithoutConnect(gpu_device_socket_path,
+                                                    /*timeoutSec=*/30);
+#else
+    return CF_ERR("Unhandled check if vhost user gpu ready.");
+#endif
+  });
   main_crosvm_cmd->AddParameter(
       "--vhost-user=gpu,pci-address=", gpu_pci_address,
       ",socket=", gpu_device_socket_path);

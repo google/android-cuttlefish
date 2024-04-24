@@ -52,6 +52,7 @@
 #include <numeric>
 #include <ostream>
 #include <ratio>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -655,6 +656,57 @@ Result<void> WaitForUnixSocket(const std::string& path, int timeoutSec) {
         SharedFD::SocketLocalClient(path, false, SOCK_STREAM, timeRemain);
 
     if (testConnect->IsOpen()) {
+      return {};
+    }
+
+    sched_yield();
+  }
+
+  return CF_ERR("This shouldn't be executed");
+}
+
+Result<void> WaitForUnixSocketListeningWithoutConnect(const std::string& path,
+                                                      int timeoutSec) {
+  const auto targetTime =
+      std::chrono::system_clock::now() + std::chrono::seconds(timeoutSec);
+
+  CF_EXPECT(WaitForFile(path, timeoutSec),
+            "Waiting for socket path creation failed");
+  CF_EXPECT(FileIsSocket(path), "Specified path is not a socket");
+
+  std::regex socket_state_regex("TST=(.*)");
+
+  while (true) {
+    const auto currentTime = std::chrono::system_clock::now();
+
+    if (currentTime >= targetTime) {
+      return CF_ERR("Timed out");
+    }
+
+    Command lsof("lsof");
+    lsof.AddParameter(/*"format"*/ "-F", /*"connection state"*/ "TST");
+    lsof.AddParameter(path);
+    std::string lsof_out;
+    std::string lsof_err;
+    int rval =
+        RunWithManagedStdio(std::move(lsof), nullptr, &lsof_out, &lsof_err);
+    if (rval != 0) {
+      return CF_ERR("Failed to run `lsof`, stderr: " << lsof_err);
+    }
+
+    LOG(DEBUG) << "lsof stdout:" << lsof_out;
+
+    std::smatch socket_state_match;
+    if (!std::regex_search(lsof_out, socket_state_match, socket_state_regex)) {
+      return CF_ERR("Failed to find state in `lsof` stdout: " << lsof_out);
+    }
+    if (socket_state_match.size() != 2) {
+      return CF_ERR(
+          "Unexpected number of matches in `lsof` stdout: " << lsof_out);
+    }
+
+    const std::string& socket_state = socket_state_match[1];
+    if (socket_state == "LISTEN") {
       return {};
     }
 
