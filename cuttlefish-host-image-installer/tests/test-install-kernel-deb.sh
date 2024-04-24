@@ -11,11 +11,17 @@ dpkg-reconfigure --frontend noninteractive tzdata
 apt-get install -y p7zip-full zstd
 apt-get install -y initramfs-tools
 
+echo "t0"
 pwd
+echo "t1"
 ls
+echo "t2"
 echo "$KERNEL_PACKAGE"
+echo "t3"
 find . -name "$KERNEL_PACKAGE"
+echo "t5"
 ls tests
+echo "t6"
 
 7z x $KERNEL_PACKAGE
 apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb

@@ -17,6 +17,17 @@ apt-get install -y ebtables
 whoami
 usermod -aG kvm,render `whoami`
 
+echo "t0"
+pwd
+echo "t1"
+ls
+echo "t2"
+echo "t3"
+find . -name "cuttlefish_packages.7z"
+echo "t5"
+ls tests
+echo "t6"
+
 7z x cuttlefish_packages.7z
 
 apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb

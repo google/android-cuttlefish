@@ -35,6 +35,7 @@ extract_image "${disk}" "${boot_partition}" "${boot_partition_tempfile}"
 extract_image "${disk}" "${lvm_partition}" "${lvm_partition_tempfile}"
 /sbin/e2fsck -p -f "${boot_partition_tempfile}" || true
 
+sudo apt-get install kmod
 sudo modprobe loop
 
 LOOPDEV="$(/sbin/losetup -f)"
