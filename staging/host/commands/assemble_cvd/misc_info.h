@@ -19,11 +19,13 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
 using MiscInfo = std::map<std::string, std::string>;
 
-MiscInfo ParseMiscInfo(const std::string& file_contents);
+Result<MiscInfo> ParseMiscInfo(const std::string& file_contents);
 std::string WriteMiscInfo(const MiscInfo& info);
 
 std::vector<std::string> SuperPartitionComponents(const MiscInfo&);

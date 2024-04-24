@@ -16,14 +16,26 @@
 #include "misc_info.h"
 
 #include <algorithm>
+#include <string>
+#include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
-namespace cuttlefish {
+#include "common/libs/utils/contains.h"
+#include "common/libs/utils/result.h"
 
-MiscInfo ParseMiscInfo(const std::string& misc_info_contents) {
+namespace cuttlefish {
+namespace {
+
+constexpr char kDynamicPartitions[] = "dynamic_partition_list";
+constexpr char kGoogleDynamicPartitions[] = "google_dynamic_partitions";
+constexpr char kSuperPartitionGroups[] = "super_partition_groups";
+
+}  // namespace
+
+Result<MiscInfo> ParseMiscInfo(const std::string& misc_info_contents) {
   auto lines = android::base::Split(misc_info_contents, "\n");
   MiscInfo misc_info;
   for (auto& line : lines) {
@@ -37,13 +49,13 @@ MiscInfo ParseMiscInfo(const std::string& misc_info_contents) {
       continue;
     }
     // Not using android::base::Split here to only capture the first =
-    auto key = android::base::Trim(line.substr(0, eq_pos));
-    auto value = android::base::Trim(line.substr(eq_pos + 1));
-    if (misc_info.find(key) != misc_info.end() && misc_info[key] != value) {
-      LOG(ERROR) << "Duplicate key: \"" << key << "\". First value: \""
-                 << misc_info[key] << "\", Second value: \"" << value << "\"";
-      return {};
-    }
+    const auto key = android::base::Trim(line.substr(0, eq_pos));
+    const auto value = android::base::Trim(line.substr(eq_pos + 1));
+    const bool duplicate = Contains(misc_info, key) && misc_info[key] != value;
+    CF_EXPECTF(!duplicate,
+               "Duplicate key with different value. key:\"{}\", previous "
+               "value:\"{}\", this value:\"{}\"",
+               key, misc_info[key], value);
     misc_info[key] = value;
   }
   return misc_info;
@@ -56,8 +68,6 @@ std::string WriteMiscInfo(const MiscInfo& misc_info) {
   }
   return out.str();
 }
-
-static const std::string kDynamicPartitions = "dynamic_partition_list";
 
 std::vector<std::string> SuperPartitionComponents(const MiscInfo& info) {
   auto value_it = info.find(kDynamicPartitions);
@@ -72,10 +82,6 @@ std::vector<std::string> SuperPartitionComponents(const MiscInfo& info) {
                    components.end());
   return components;
 }
-
-static constexpr const char* kGoogleDynamicPartitions =
-    "google_dynamic_partitions";
-static constexpr const char* kSuperPartitionGroups = "super_partition_groups";
 
 bool SetSuperPartitionComponents(const std::vector<std::string>& components,
                                  MiscInfo* misc_info) {
