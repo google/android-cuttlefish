@@ -86,7 +86,6 @@ class InstanceManager {
 
   Result<LocalInstanceGroup> FindGroup(const Query& query) const;
   Result<LocalInstanceGroup> FindGroup(const Queries& queries) const;
-  Result<Json::Value> Serialize();
   Result<void> LoadFromJson(const Json::Value&);
   Result<std::vector<std::string>> AllGroupNames() const;
 

@@ -73,10 +73,6 @@ InstanceManager::InstanceManager(
       host_tool_target_manager_(host_tool_target_manager),
       instance_db_(instance_db) {}
 
-Result<Json::Value> InstanceManager::Serialize() {
-  return CF_EXPECT(instance_db_.Serialize());
-}
-
 Result<void> InstanceManager::LoadFromJson(const Json::Value& db_json) {
   CF_EXPECT(instance_db_.LoadFromJson(db_json));
   return {};
@@ -123,18 +119,19 @@ Result<void> InstanceManager::SetInstanceGroup(
   const auto host_artifacts_path = group_info.host_artifacts_path;
   const auto product_out_path = group_info.product_out_path;
   const auto& per_instance_info = group_info.instances;
-  auto new_group =
-      selector::InstanceGroupInfo{.group_name = group_name,
-                              .home_dir = home_dir,
-                              .host_artifacts_path = host_artifacts_path,
-                              .product_out_path = product_out_path,
-                              .start_time = selector::CvdServerClock::now()};
-  std::vector<selector::InstanceInfo> instances_info;
+  cvd::InstanceGroup new_group;
+  new_group.set_name(group_name);
+  new_group.set_home_directory(home_dir);
+  new_group.set_host_artifacts_path(host_artifacts_path);
+  new_group.set_product_out_path(product_out_path);
+  new_group.set_start_time_sec(
+      selector::CvdServerClock::to_time_t(selector::CvdServerClock::now()));
   for (const auto& instance : per_instance_info) {
-    instances_info.push_back({.id = instance.instance_id_,
-                      .name = instance.per_instance_name_});
+    auto& new_instance = *new_group.add_instances();
+    new_instance.set_id(instance.instance_id_);
+    new_instance.set_name(instance.per_instance_name_);
   }
-  CF_EXPECT(instance_db_.AddInstanceGroup(new_group, instances_info));
+  CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
   return {};
 }
 

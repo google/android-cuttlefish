@@ -51,38 +51,32 @@ std::vector<LocalInstance> Filter(
 }  // namespace
 
 Result<LocalInstanceGroup> LocalInstanceGroup::Create(
-    const InstanceGroupInfo& group_info,
-    const std::vector<InstanceInfo>& instance_infos) {
-  CF_EXPECT(!instance_infos.empty(), "New group can't be empty");
+    const cvd::InstanceGroup& group_proto) {
+  CF_EXPECT(!group_proto.instances().empty(), "New group can't be empty");
   std::vector<LocalInstance> instances;
   std::set<unsigned> ids;
   std::set<std::string> names;
 
-  for (const auto& instance_info : instance_infos) {
-    instances.emplace_back(group_info, instance_info.id, instance_info.name);
-    ids.insert(instance_info.id);
-    names.insert(instance_info.name);
+  for (const auto& instance_proto : group_proto.instances()) {
+    instances.emplace_back(group_proto, instance_proto);
+    ids.insert(instance_proto.id());
+    names.insert(instance_proto.name());
   }
-  CF_EXPECT(ids.size() == instance_infos.size(),
+  CF_EXPECT(ids.size() == group_proto.instances_size(),
             "Instances must have unique ids");
-  CF_EXPECT(names.size() == instance_infos.size(),
+  CF_EXPECT(names.size() == group_proto.instances_size(),
             "Instances must have unique names");
-  return LocalInstanceGroup(group_info.group_name, group_info.home_dir,
-                            group_info.host_artifacts_path,
-                            group_info.host_artifacts_path,
-                            group_info.start_time, instances);
+  return LocalInstanceGroup(group_proto, instances);
+}
+
+TimeStamp LocalInstanceGroup::StartTime() const {
+  return CvdServerClock::from_time_t(group_proto_.start_time_sec());
 }
 
 LocalInstanceGroup::LocalInstanceGroup(
-    const std::string& group_name, const std::string& home_dir,
-    const std::string& host_artifacts_path, const std::string& product_out_path,
-    const TimeStamp& start_time, const std::vector<LocalInstance>& instances)
+    const cvd::InstanceGroup& group_proto, const std::vector<LocalInstance>& instances)
     : internal_group_name_(GenInternalGroupName()),
-      group_info_{.group_name = group_name,
-                  .home_dir = home_dir,
-                  .host_artifacts_path = host_artifacts_path,
-                  .product_out_path = product_out_path,
-                  .start_time = start_time},
+      group_proto_(group_proto),
       instances_(instances) {};
 
 std::vector<LocalInstance> LocalInstanceGroup::FindById(
@@ -97,34 +91,6 @@ std::vector<LocalInstance> LocalInstanceGroup::FindByInstanceName(
   return Filter(instances_, [instance_name](const LocalInstance& instance) {
     return instance.PerInstanceName() == instance_name;
   });
-}
-
-Json::Value LocalInstanceGroup::Serialize() const {
-  Json::Value group_json;
-  group_json[kJsonGroupName] = GroupName();
-  group_json[kJsonHomeDir] = HomeDir();
-  group_json[kJsonHostArtifactPath] = HostArtifactsPath();
-  group_json[kJsonProductOutPath] = ProductOutPath();
-  group_json[kJsonStartTime] = SerializeTimePoint(StartTime());
-
-  int i = 0;
-  Json::Value instances_array_json;
-  for (const auto& instance : instances_) {
-    Json::Value instance_json = Serialize(instance);
-    instance_json[kJsonParent] = GroupName();
-    instances_array_json[i] = instance_json;
-    i++;
-  }
-  group_json[kJsonInstances] = instances_array_json;
-  return group_json;
-}
-
-Json::Value LocalInstanceGroup::Serialize(const LocalInstance& instance) const {
-  Json::Value instance_json;
-  instance_json[LocalInstance::kJsonInstanceName] = instance.PerInstanceName();
-  instance_json[LocalInstance::kJsonInstanceId] =
-      std::to_string(instance.InstanceId());
-  return instance_json;
 }
 
 Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
@@ -155,12 +121,13 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
     }
   }
 
-  InstanceGroupInfo group_info({.group_name = group_name,
-                                .home_dir = home_dir,
-                                .host_artifacts_path = host_artifacts_path,
-                                .product_out_path = product_out_path,
-                                .start_time = std::move(start_time)});
-  std::vector<InstanceInfo> instance_infos;
+  cvd::InstanceGroup group_proto;
+  group_proto.set_name(group_name);
+  group_proto.set_home_directory(home_dir);
+  group_proto.set_host_artifacts_path(host_artifacts_path);
+  group_proto.set_product_out_path(product_out_path);
+  group_proto.set_start_time_sec(CvdServerClock::to_time_t(start_time));
+
   CF_EXPECT(group_json.isMember(kJsonInstances));
   const Json::Value& instances_json_array = group_json[kJsonInstances];
   CF_EXPECT(instances_json_array.isArray());
@@ -176,10 +143,12 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
     int id;
     CF_EXPECTF(android::base::ParseInt(instance_id, std::addressof(id)),
                "Invalid instance ID in instance json: {}", instance_id);
-    instance_infos.push_back({.id = (unsigned)id, .name = instance_name});
+    auto instance = group_proto.add_instances();
+    instance->set_id(id);
+    instance->set_name(instance_name);
   }
 
-  return Create(group_info, instance_infos);
+  return Create(group_proto);
 }
 
 }  // namespace selector

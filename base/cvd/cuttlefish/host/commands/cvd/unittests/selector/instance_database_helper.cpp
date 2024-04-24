@@ -120,19 +120,22 @@ bool CvdInstanceDatabaseTest::InitMockAndroidHostOut() {
 }
 
   bool CvdInstanceDatabaseTest::AddGroup(const std::string& base_name,
-                const std::vector<InstanceInfo>& instances) {
+                const std::vector<cvd::Instance>& instances) {
     const std::string home(Workspace() + "/" + base_name);
     if (!EnsureDirectoryExists(home).ok()) {
       SetErrorCode(ErrorCode::kFileError, home + " directory is not found.");
       return false;
     }
-    InstanceGroupInfo param{
-        .group_name = base_name,
-        .home_dir = home,
-        .host_artifacts_path = android_artifacts_path_,
-        .product_out_path = android_artifacts_path_};
+    cvd::InstanceGroup param;
+    param.set_name(base_name);
+    param.set_home_directory(home);
+    param.set_host_artifacts_path(android_artifacts_path_);
+    param.set_product_out_path(android_artifacts_path_);
+    for (const auto& instance: instances) {
+      *param.add_instances() = instance;
+    }
 
-    if (!db_.AddInstanceGroup(param, instances).ok()) {
+    if (!db_.AddInstanceGroup(param).ok()) {
       SetErrorCode(ErrorCode::kInstanceDabaseError, "Failed to add group");
       return false;
     }

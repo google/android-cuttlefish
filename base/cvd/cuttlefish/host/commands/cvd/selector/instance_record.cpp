@@ -16,33 +16,32 @@
 
 #include "host/commands/cvd/selector/instance_record.h"
 
+#include "cvd_persistent_data.pb.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 
 namespace cuttlefish {
 namespace selector {
 
-LocalInstance::LocalInstance(const InstanceGroupInfo& parent_group,
-                             const unsigned instance_id,
-                             const std::string& instance_name)
-    : instance_id_(instance_id),
-      internal_name_(std::to_string(instance_id_)),
-      per_instance_name_(instance_name),
+LocalInstance::LocalInstance(const cvd::InstanceGroup& parent_group,
+                             const cvd::Instance& instance_proto)
+    : instance_proto_(instance_proto),
+      internal_name_(std::to_string(instance_proto.id())),
       internal_device_name_(
           LocalDeviceNameRule(GenInternalGroupName(), internal_name_)),
-      group_info_(parent_group) {}
+      group_proto_(parent_group) {}
 
-unsigned LocalInstance::InstanceId() const { return instance_id_; }
+unsigned LocalInstance::InstanceId() const { return instance_proto_.id(); }
 
 const std::string& LocalInstance::InternalName() const {
   return internal_name_;
 }
 
 std::string LocalInstance::DeviceName() const {
-  return LocalDeviceNameRule(group_info_.group_name, per_instance_name_);
+  return LocalDeviceNameRule(group_proto_.name(), instance_proto_.name());
 }
 
 const std::string& LocalInstance::PerInstanceName() const {
-  return per_instance_name_;
+  return instance_proto_.name();
 }
 
 }  // namespace selector

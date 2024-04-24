@@ -91,6 +91,7 @@ cvd_sources = [
   'cuttlefish/host/commands/cvd/selector/arguments_lexer.cpp',
   'cuttlefish/host/commands/cvd/selector/arguments_separator.cpp',
   'cuttlefish/host/commands/cvd/selector/creation_analyzer.cpp',
+  'cuttlefish/host/commands/cvd/selector/data_viewer.cpp',
   'cuttlefish/host/commands/cvd/selector/device_selector_utils.cpp',
   'cuttlefish/host/commands/cvd/selector/group_selector.cpp',
   'cuttlefish/host/commands/cvd/selector/instance_database.cpp',
@@ -156,6 +157,9 @@ protoc_generator = generator(protoc,
 server = protoc_generator.process('cvd_server.proto')
 server_dependency = declare_dependency(sources: server)
 
+persistent_data = protoc_generator.process('cvd_persistent_data.proto')
+persistent_data_dependency = declare_dependency(sources: persistent_data)
+
 internal_config = protoc_generator.process('internal_config.proto')
 internal_config_dependency = declare_dependency(sources: internal_config)
 
@@ -196,6 +200,7 @@ dependencies = [
   internal_user_log_proto_dependency,
   launch_cvd_proto_dependency,
   server_dependency,
+  persistent_data_dependency,
   user_config_dependency,
 ]
 
