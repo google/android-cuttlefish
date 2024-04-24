@@ -1,12 +1,13 @@
 #!/bin/bash
 #
 # at /path/to/android-cuttlefish/docker, run like this:
-#  ./debs-builder-docker/build-debs-docker.sh
+#  ./debs-builder-docker/build-debs-docker.sh -o /path/to/dir
 #
 
 source "shflags"
 
 DEFINE_boolean verbose "true" "show the stdout/stderr from the sub-tools" "v"
+DEFINE_string out_dir "${PWD}/out" "indicates where to save the built debs" "o"
 
 FLAGS "$@" || exit 1
 
@@ -15,7 +16,7 @@ if [ ${FLAGS_help} -eq ${FLAGS_TRUE} ]; then
 fi
 
 # 1: host package builder's docker image tag
-# 2: host out dir where debian packages would be stored
+# 2: out dir where debian packages would be stored
 function build_host_debian_pkg {
   local builder_tag="$1"
   local resource_subdir=debs-builder-docker
@@ -27,16 +28,14 @@ function build_host_debian_pkg {
        --build-arg UID="${UID}" \
        --build-arg OEM="${OEM}"
 
-  local out_on_host="$2"
+  local out_dir="$2"
   shift 2
 
-  # in guest:
-  #  host:
-  #   - android-cuttlefish (copy of the host android-cuttlefish)
-  #   - out (mounted host out dir)
-  # host 2 guest maps:
-  #  PWD -> host/androd-cuttlefish
-  #  PWD/out -> host/out
+  # Create the following directories in container
+  #
+  # host/
+  # ├── android-cuttlefish (a copy of `android-cuttlefish` repository)
+  # └── out                (mounted ${out_dir} to save the built deb files)
   #
   local guest_home="/home/vsoc-01"
   local host_dir_on_guest="$guest_home/host"
@@ -51,7 +50,7 @@ function build_host_debian_pkg {
        --rm --privileged \
        --user="vsoc-01" -w "$guest_home" \
        --name=$container_name \
-       -v $PWD/out:$out_on_guest \
+       -v ${out_dir}:$out_on_guest \
        -i \
        $builder_tag; then
       >&2 echo "fail to start the docker container, $container_name, to build deb packages"
@@ -81,11 +80,12 @@ function build_host_debian_pkg {
   fi
 }
 
+mkdir -p ${FLAGS_out_dir}
+
 hostpkg_builder="cuttlefish-deb-builder"
-hostpkg_out_dir="$PWD/out"
 if [ ${FLAGS_verbose} -eq ${FLAGS_TRUE} ]; then
-    build_host_debian_pkg $hostpkg_builder $hostpkg_out_dir
+    build_host_debian_pkg $hostpkg_builder ${FLAGS_out_dir}
 else
-    build_host_debian_pkg $hostpkg_builder $hostpkg_out_dir > /dev/null 2>&1
+    build_host_debian_pkg $hostpkg_builder ${FLAGS_out_dir} > /dev/null 2>&1
 fi
 
