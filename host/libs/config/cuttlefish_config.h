@@ -376,7 +376,6 @@ class CuttlefishConfig {
     std::string rotary_socket_path() const;
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
-    std::string frames_socket_path() const;
 
     std::string access_kregistry_path() const;
 
@@ -603,6 +602,9 @@ class CuttlefishConfig {
     std::string gpu_capture_binary() const;
     std::string gpu_gfxstream_transport() const;
     std::string gpu_renderer_features() const;
+    std::string gpu_context_types() const;
+    std::string guest_vulkan_driver() const;
+    std::string frames_socket_path() const;
 
     std::string gpu_vhost_user_mode() const;
 
@@ -811,6 +813,10 @@ class CuttlefishConfig {
     void set_gpu_capture_binary(const std::string&);
     void set_gpu_gfxstream_transport(const std::string& transport);
     void set_gpu_renderer_features(const std::string& features);
+    void set_gpu_context_types(const std::string& context_types);
+    void set_guest_vulkan_driver(const std::string& driver);
+    void set_frames_socket_path(const std::string& driver);
+
     void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
     void set_enable_gpu_vhost_user(const bool enable_gpu_vhost_user);
     void set_enable_gpu_external_blob(const bool enable_gpu_external_blob);
@@ -974,6 +980,7 @@ extern const char* const kVhostUserVsockModeFalse;
 
 // GPU modes
 extern const char* const kGpuModeAuto;
+extern const char* const kGpuModeCustom;
 extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxstream;
 extern const char* const kGpuModeGfxstreamGuestAngle;
