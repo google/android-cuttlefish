@@ -19,6 +19,7 @@
 #include <string>
 
 #include "common/libs/utils/result.h"
+#include "cvd_persistent_data.pb.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 
@@ -35,8 +36,8 @@ class LocalInstance {
   static constexpr const char kJsonInstanceId[] = "Instance Id";
   static constexpr const char kJsonInstanceName[] = "Per-Instance Name";
 
-  LocalInstance(const InstanceGroupInfo& parent_group,
-                const unsigned instance_id, const std::string& instance_name);
+  LocalInstance(const cvd::InstanceGroup& parent_group,
+                const cvd::Instance& instance_proto);
 
   /* names:
    *
@@ -52,27 +53,16 @@ class LocalInstance {
   unsigned InstanceId() const;
   const std::string& PerInstanceName() const;
   std::string DeviceName() const;
-  std::string InternalDeviceName() const {
-    return internal_device_name_;
-  }
-  const InstanceGroupInfo& GroupInfo() const {
-    return group_info_;
-  }
- private:
-  unsigned instance_id_;
-  std::string internal_name_;  ///< for now, it is to_string(instance_id_)
-  /** the instance specific name to be appended to the group name
-   *
-   * by default, to_string(instance_id_). The default value is decided by
-   * InstanceGroupRecord, as that's the only class that will create this
-   * instance
-   */
-  std::string per_instance_name_;
+  std::string InternalDeviceName() const { return internal_device_name_; }
+  const cvd::InstanceGroup& GroupProto() const { return group_proto_; }
 
+ private:
+  cvd::Instance instance_proto_;
+  std::string internal_name_;  ///< for now, it is to_string(instance_id_)
   // Group specific information, repeated here because sometimes instances are
   // accessed outside of their group
   std::string internal_device_name_;
-  InstanceGroupInfo group_info_;
+  cvd::InstanceGroup group_proto_;
 };
 
 }  // namespace selector

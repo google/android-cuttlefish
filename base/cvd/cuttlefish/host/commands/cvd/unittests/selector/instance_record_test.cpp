@@ -25,11 +25,15 @@ namespace selector {
  * Note that invalid inputs must be tested at the InstanceDatabase level
  */
 TEST(CvdInstanceRecordUnitTest, Fields) {
-  auto parent_group_res = LocalInstanceGroup::Create(
-      {.group_name = "super",
-       .home_dir = "/home/user",
-       .host_artifacts_path = "/home/user/download/bin",
-       .product_out_path = "/home/user/download/bin"}, {{3, "phone"}});
+  cvd::InstanceGroup group_proto;
+  group_proto.set_name("super");
+  group_proto.set_home_directory("/home/user");
+  group_proto.set_host_artifacts_path("/home/user/download/bin");
+  group_proto.set_product_out_path("/home/user/download/bin");
+  auto instance_proto = group_proto.add_instances();
+  instance_proto->set_id(3);
+  instance_proto->set_name("phone");
+  auto parent_group_res = LocalInstanceGroup::Create(group_proto);
   if (!parent_group_res.ok()) {
     /*
      * Here's why we skip the test rather than see it as a failure.
@@ -51,10 +55,10 @@ TEST(CvdInstanceRecordUnitTest, Fields) {
   ASSERT_EQ(instance.PerInstanceName(), "phone");
   ASSERT_EQ(instance.InternalDeviceName(), "cvd-3");
   ASSERT_EQ(instance.DeviceName(), "super-phone");
-  ASSERT_EQ(instance.GroupInfo().group_name, "super");
-  ASSERT_EQ(instance.GroupInfo().home_dir, "/home/user");
-  ASSERT_EQ(instance.GroupInfo().host_artifacts_path, "/home/user/download/bin");
-  ASSERT_EQ(instance.GroupInfo().product_out_path, "/home/user/download/bin");
+  ASSERT_EQ(instance.GroupProto().name(), "super");
+  ASSERT_EQ(instance.GroupProto().home_directory(), "/home/user");
+  ASSERT_EQ(instance.GroupProto().host_artifacts_path(), "/home/user/download/bin");
+  ASSERT_EQ(instance.GroupProto().product_out_path(), "/home/user/download/bin");
 }
 
 }  // namespace selector

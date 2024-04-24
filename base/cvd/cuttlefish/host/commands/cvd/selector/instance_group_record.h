@@ -21,52 +21,39 @@
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "cvd_persistent_data.pb.h"
 #include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 
 namespace cuttlefish {
 namespace selector {
 
-class InstanceDatabase;
-
-struct InstanceInfo {
-  const unsigned id;
-  const std::string name;
-};
-
-struct InstanceGroupInfo {
-  std::string group_name;
-  std::string home_dir;
-  std::string host_artifacts_path;
-  std::string product_out_path;
-  TimeStamp start_time;
-};
-
 class LocalInstance;
 
 class LocalInstanceGroup {
  public:
-  static Result<LocalInstanceGroup> Create(const InstanceGroupInfo&,
-                                           const std::vector<InstanceInfo>&);
+  static Result<LocalInstanceGroup> Create(const cvd::InstanceGroup& group_proto);
 
   LocalInstanceGroup(LocalInstanceGroup&&) = default;
   LocalInstanceGroup(const LocalInstanceGroup&) = default;
   LocalInstanceGroup& operator=(const LocalInstanceGroup&) = default;
 
-  Json::Value Serialize() const;
   static Result<LocalInstanceGroup> Deserialize(const Json::Value& group_json);
 
   const std::string& InternalGroupName() const { return internal_group_name_; }
-  const std::string& GroupName() const { return group_info_.group_name; }
-  const std::string& HomeDir() const { return group_info_.home_dir; }
+  const std::string& GroupName() const { return group_proto_.name(); }
+  const std::string& HomeDir() const { return group_proto_.home_directory(); }
   const std::string& HostArtifactsPath() const {
-    return group_info_.host_artifacts_path;
+    return group_proto_.host_artifacts_path();
   }
   const std::string& ProductOutPath() const {
-    return group_info_.product_out_path;
+    return group_proto_.product_out_path();
   }
-  auto StartTime() const { return group_info_.start_time; }
+  TimeStamp StartTime() const;
   const std::vector<LocalInstance>& Instances() const { return instances_; }
+  const cvd::InstanceGroup& Proto() const {
+    return group_proto_;
+  }
 
   std::vector<LocalInstance> FindById(const unsigned id) const;
   /**
@@ -80,16 +67,11 @@ class LocalInstanceGroup {
       const std::string& instance_name) const;
 
  private:
-  LocalInstanceGroup(const std::string& group_name, const std::string& home_dir,
-                     const std::string& host_artifacts_path,
-                     const std::string& product_out_path,
-                     const TimeStamp& start_time,
+  LocalInstanceGroup(const cvd::InstanceGroup& group_proto,
                      const std::vector<LocalInstance>& instances);
 
-  Json::Value Serialize(const LocalInstance& instance) const;
-
   std::string internal_group_name_;
-  InstanceGroupInfo group_info_;
+  cvd::InstanceGroup group_proto_;
   std::vector<LocalInstance> instances_;
 };
 

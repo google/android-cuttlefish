@@ -172,7 +172,7 @@ std::string PerUserDir() {
 }
 
 std::string InstanceDatabasePath() {
-  return fmt::format("{}/instance_database.json", PerUserDir());
+  return fmt::format("{}/instance_database.binpb", PerUserDir());
 }
 
 }  // namespace cuttlefish

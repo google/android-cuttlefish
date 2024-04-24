@@ -22,6 +22,7 @@
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "cvd_persistent_data.pb.h"
 #include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/data_viewer.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
@@ -31,18 +32,12 @@
 namespace cuttlefish {
 namespace selector {
 
-struct PersistentData {
-  std::vector<LocalInstanceGroup> groups;
-  bool acloud_translator_optout;
-};
-
 class InstanceDatabase {
  public:
   InstanceDatabase(const std::string& backing_file);
 
   Result<bool> IsEmpty() const;
 
-  Result<Json::Value> Serialize() const;
   Result<void> LoadFromJson(const Json::Value&);
 
   Result<void> SetAcloudTranslatorOptout(bool optout);
@@ -54,9 +49,8 @@ class InstanceDatabase {
    * If group_name or home_dir is already taken or host_artifacts_path is
    * not likely an artifacts path, CF_ERR is returned.
    */
-  Result<void> AddInstanceGroup(
-      const InstanceGroupInfo& group_info,
-      const std::vector<InstanceInfo>& instance_infos);
+  Result<LocalInstanceGroup> AddInstanceGroup(
+      const cvd::InstanceGroup& group_proto);
 
   Result<std::vector<LocalInstanceGroup>> InstanceGroups() const;
   Result<bool> RemoveInstanceGroup(const std::string& group_name);
@@ -114,11 +108,11 @@ class InstanceDatabase {
   Result<std::vector<LocalInstanceGroup>> FindGroups(FindParam param) const;
   Result<std::vector<LocalInstance>> FindInstances(FindParam param) const;
   static std::vector<LocalInstanceGroup> FindGroups(
-      const std::vector<LocalInstanceGroup>& groups, FindParam param);
+      const cvd::PersistentData& data, FindParam param);
   static std::vector<LocalInstance> FindInstances(
-      const std::vector<LocalInstanceGroup>& groups, FindParam param);
+      const cvd::PersistentData& data, FindParam param);
 
-  DataViewer<PersistentData> viewer_;
+  DataViewer viewer_;
 };
 
 }  // namespace selector
