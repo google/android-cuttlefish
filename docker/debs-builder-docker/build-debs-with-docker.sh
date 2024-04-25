@@ -8,6 +8,7 @@ source "shflags"
 
 DEFINE_boolean verbose "true" "show the stdout/stderr from the sub-tools" "v"
 DEFINE_string out_dir "${PWD}/out" "indicates where to save the built debs" "o"
+DEFINE_string repo_dir "$(realpath ..)" "path to the `android-cuttlefish` repository"
 
 FLAGS "$@" || exit 1
 
@@ -29,7 +30,8 @@ function build_host_debian_pkg {
        --build-arg OEM="${OEM}"
 
   local out_dir="$2"
-  shift 2
+  local repo_dir="$3"
+  shift 3
 
   # Create the following directories in container
   #
@@ -41,7 +43,6 @@ function build_host_debian_pkg {
   local guest_host_dir="$guest_home/host"
   local guest_repo_dir="$guest_host_dir/android-cuttlefish"
   local guest_out_dir="$guest_host_dir/out"
-  local android_cuttlefish_on_host="$(realpath ..)"
 
   local container_name="meow_yumi"
   # in case of previous failure, we ensure we restart a new container
@@ -56,7 +57,7 @@ function build_host_debian_pkg {
       exit 1
   fi
 
-  if ! docker cp $android_cuttlefish_on_host/. $container_name:$guest_repo_dir > /dev/null 2>&1; then
+  if ! docker cp $repo_dir/. $container_name:$guest_repo_dir > /dev/null 2>&1; then
       >&2 echo "fail to copy android-cuttlefish/* to the container, $container_name"
       exit 2
   fi
@@ -88,8 +89,8 @@ mkdir -p ${FLAGS_out_dir}
 
 hostpkg_builder="cuttlefish-deb-builder"
 if [ ${FLAGS_verbose} -eq ${FLAGS_TRUE} ]; then
-    build_host_debian_pkg $hostpkg_builder ${FLAGS_out_dir}
+    build_host_debian_pkg $hostpkg_builder ${FLAGS_out_dir} ${FLAGS_repo_dir}
 else
-    build_host_debian_pkg $hostpkg_builder ${FLAGS_out_dir} > /dev/null 2>&1
+    build_host_debian_pkg $hostpkg_builder ${FLAGS_out_dir} ${FLAGS_repo_dir} > /dev/null 2>&1
 fi
 
