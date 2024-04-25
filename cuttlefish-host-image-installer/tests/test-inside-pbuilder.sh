@@ -24,18 +24,14 @@ done
 
 SCRIPT1NAME=$(basename "${SCRIPT1}")
 
-echo "${FILE1}"
-
 cat <<EOF > "${TDIR}"/start1.sh
 #!/bin/sh
 
 set -e
 
-echo "${FILE1}"
-
 cd "${TDIR}"
 
-exec "${TDIR}/${SCRIPT1NAME} ${FILE1}"
+exec "${TDIR}/${SCRIPT1NAME}" "${FILE1}"
 
 EOF
 
