@@ -468,6 +468,7 @@ android_system_image {
         "make_f2fs",
         "mapper.minigbm",
         "mdnsd",
+        "media_profiles_V1_0.dtd",
         "mediacodec.policy",
         "mediaextractor",
         "mediametrics",
