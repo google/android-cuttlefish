@@ -30,7 +30,9 @@
 #include <sstream>
 #include <string>
 
+#include <android-base/logging.h>
 #include <android-base/parseint.h>
+#include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -38,6 +40,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/signals.h"
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/command_sequence.h"
@@ -51,6 +54,59 @@
 
 namespace cuttlefish {
 namespace {
+
+static constexpr int CLOSED_FD = -1;
+static constexpr int IN_USE_FD = -2;
+// Write end of the pipe for the signal handler. May hold the following values:
+// CLOSED_FD: Signals should not be sent through the pipe, if the thread that
+// owns the fd encounters this value it must close the fd. IN_USE_FD: A signal
+// was received and the handler is using the fd.
+// >= 0: The write end of the signal pipe.
+std::atomic<int> signal_pipe_write_end(CLOSED_FD);
+
+// Writes the signal number to the pipe if it's still open
+void InterruptHandler(int signal) {
+  auto fd = signal_pipe_write_end.exchange(IN_USE_FD);
+  if (fd >= 0) {
+    // Ignore result
+    write(fd, &signal, sizeof(signal));
+  }
+  fd = signal_pipe_write_end.exchange(fd);
+  if (fd != IN_USE_FD) {
+    // The signal handler was disabled while the handler was executing, need to close the fd.
+    fd = signal_pipe_write_end.exchange(CLOSED_FD);
+    if (fd >= 0) {
+      close(fd);
+    }
+  }
+}
+
+Result<int> HandleInterruptSignals() {
+  int fds[2];
+  CF_EXPECTF(pipe2(fds, O_CLOEXEC) == 0, "Failed to create signals pipe: {}",
+             strerror(errno));
+
+  // Make the write end nonblocking
+  int flags = fcntl(fds[0], F_GETFL, 0);
+  fcntl(fds[0], F_SETFL, flags | O_NONBLOCK);
+
+  auto previous_value = signal_pipe_write_end.exchange(fds[0]);
+  CHECK(previous_value == CLOSED_FD) << "Interrupt handler set twice";
+
+  ChangeSignalHandlers(InterruptHandler, {SIGINT, SIGHUP, SIGTERM});
+  return fds[1];
+}
+
+void StopHandlingInterruptSignals() {
+  ChangeSignalHandlers(SIG_DFL, {SIGINT, SIGHUP, SIGTERM});
+  auto fd = signal_pipe_write_end.exchange(CLOSED_FD);
+  if (fd >= 0) {
+    close(fd);
+  }
+  // If the fd is negative it means the signal handler is executing, it will
+  // close the fd itself when it sees the CLOSED_FD value in the atomic
+  // variable.
+}
 
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
   int initial_size = args.size();
@@ -574,14 +630,11 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     const RequestWithStdio& request) {
   CF_EXPECT(CanHandle(request));
 
-  cvd::Response response;
-  response.mutable_command_response();
-
   auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
   std::optional<std::string> config_file = GetConfigPath(subcmd_args);
   if (config_file) {
     auto subrequest = CreateLoadCommand(request, subcmd_args, *config_file);
-    response =
+    auto response =
         CF_EXPECT(command_executor_.ExecuteOne(subrequest, request.Err()));
     sub_action_ended_ = true;
     return response;
@@ -589,6 +642,8 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
 
   auto precondition_verified = VerifyPrecondition(request);
   if (!precondition_verified.ok()) {
+    cvd::Response response;
+    response.mutable_command_response();
     response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
     response.mutable_status()->set_message(
         precondition_verified.error().Message());
@@ -635,51 +690,63 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   CF_EXPECT(ConsumeDaemonModeFlag(subcmd_args));
   subcmd_args.push_back("--daemon=true");
 
-  std::optional<selector::GroupCreationInfo> group_creation_info;
-  if (!is_help) {
-    group_creation_info = CF_EXPECT(
-        GetGroupCreationInfo(bin, subcmd_args, envs, request));
-    CF_EXPECT(UpdateInstanceDatabase(*group_creation_info));
-    response = CF_EXPECT(
-        FillOutNewInstanceInfo(std::move(response), *group_creation_info));
-  }
-
-  Command command =
-      is_help
-          ? CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request))
-          : CF_EXPECT(
-                ConstructCvdNonHelpCommand(bin, *group_creation_info, request));
-
-  if (!is_help) {
-    CF_EXPECT(
-        group_creation_info != std::nullopt,
-        "group_creation_info should be nullopt only when --help is given.");
-  }
-
   if (is_help) {
+    Command command =
+        CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));
     ShowLaunchCommand(command.Executable(), subcmd_args, envs);
-  } else {
-    ShowLaunchCommand(command.Executable(), *group_creation_info);
-    CF_EXPECT(request.Message().command_request().wait_behavior() !=
-              cvd::WAIT_BEHAVIOR_START);
-  }
 
-  CF_EXPECT(FireCommand(std::move(command), /*should_wait*/ true));
-
-  if (is_help) {
+    CF_EXPECT(FireCommand(std::move(command), /*should_wait*/ true));
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());
     return ResponseFromSiginfo(infop);
   }
 
+  auto group_creation_info =
+      CF_EXPECT(GetGroupCreationInfo(bin, subcmd_args, envs, request));
+  // The instance database needs to be updated if an interrupt is received.
+  auto signals_fd = CF_EXPECT(HandleInterruptSignals());
+  std::thread interrupter_thread([this, signals_fd]() {
+    for (;;) {
+      int signal = 0;
+      auto res = TEMP_FAILURE_RETRY(read(signals_fd, &signal, sizeof(signal)));
+      if (res > 0) {
+        // Interrupt regardless of signal
+        (void)subprocess_waiter_.Interrupt();
+      } else if (res == 0) {
+        // other end closed
+        close(signals_fd);
+        return;
+      } else {
+        auto err = errno;
+        LOG(ERROR) << "Failed to read from signal pipe: " << strerror(err);
+        return;
+      }
+    }
+  });
+
+  // Interrupts must be custom handled until PostStartExecutionActions returns.
+  android::base::ScopeGuard guard([&interrupter_thread]() {
+    StopHandlingInterruptSignals();
+    interrupter_thread.join();
+  });
+  CF_EXPECT(UpdateInstanceDatabase(group_creation_info));
+
+  Command command =
+      CF_EXPECT(ConstructCvdNonHelpCommand(bin, group_creation_info, request));
+
+  ShowLaunchCommand(command.Executable(), group_creation_info);
+  CF_EXPECT(request.Message().command_request().wait_behavior() !=
+            cvd::WAIT_BEHAVIOR_START);
+  CF_EXPECT(FireCommand(std::move(command), /*should_wait*/ true));
+
   auto acloud_compat_action_result =
-      AcloudCompatActions(*group_creation_info, request);
+      AcloudCompatActions(group_creation_info, request);
   sub_action_ended_ = true;
   if (!acloud_compat_action_result.ok()) {
     LOG(ERROR) << acloud_compat_action_result.error().FormatForEnv();
     LOG(ERROR) << "AcloudCompatActions() failed"
                << " but continue as they are minor errors.";
   }
-  return PostStartExecutionActions(*group_creation_info);
+  return PostStartExecutionActions(group_creation_info);
 }
 
 static constexpr char kCollectorFailure[] = R"(
@@ -718,6 +785,7 @@ Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
     selector::GroupCreationInfo& group_creation_info) {
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
+    LOG(INFO) << "Device launch failed, cleaning up";
     // run_cvd processes may be still running in background
     // the order of the following operations should be kept
     auto reset_response = CF_EXPECT(CvdResetGroup(group_creation_info));

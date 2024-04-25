@@ -18,6 +18,8 @@
 
 #include <signal.h>
 
+#include <vector>
+
 namespace cuttlefish {
 
 /**
@@ -40,4 +42,7 @@ class SignalMasker {
  private:
   sigset_t old_mask_;
 };
+
+void ChangeSignalHandlers(void(*handler)(int), std::vector<int> signals);
+
 }  // namespace cuttlefish

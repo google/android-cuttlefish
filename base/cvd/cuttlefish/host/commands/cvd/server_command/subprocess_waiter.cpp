@@ -39,7 +39,7 @@ Result<siginfo_t> SubprocessWaiter::Wait() {
 
   // This blocks until the process exits, but doesn't reap it.
   auto result = subprocess_->Wait(&infop, WEXITED | WNOWAIT);
-  CF_EXPECT(result != -1, "Lost track of subprocess pid");
+  CF_EXPECTF(result != -1, "Lost track of subprocess pid: {}", strerror(errno));
   interrupt_lock.lock();
   // Perform a reaping wait on the process (which should already have exited).
   result = subprocess_->Wait(&infop, WEXITED);
