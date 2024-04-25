@@ -163,6 +163,10 @@ android::base::LogSeverity GetMinimumVerbosity() {
   return android::base::GetMinimumLogSeverity();
 }
 
+std::string CvdDir() {
+  return "/tmp/cvd";
+}
+
 std::string PerUserDir() {
   return fmt::format("/tmp/cvd/{}", getuid());
 }
