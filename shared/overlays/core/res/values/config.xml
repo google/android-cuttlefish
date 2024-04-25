@@ -27,4 +27,10 @@
     <string name="config_extensionFallbackServiceName" translatable="false">
             android.camera.extensions.impl.service.EyesFreeVidService
     </string>
+
+    <!-- Whether the always on display mode is available. -->
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+
+    <!-- Enable doze mode ComponentName of a dream to show whenever the system would otherwise have gone to sleep. -->
+    <string translatable="false" name="config_dozeComponent">com.android.systemui/com.android.systemui.doze.DozeService</string>
 </resources>
