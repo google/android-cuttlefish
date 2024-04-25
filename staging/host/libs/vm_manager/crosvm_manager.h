@@ -46,6 +46,8 @@ class CrosvmManager : public VmManager {
       const CuttlefishConfig& config,
       std::vector<VmmDependencyCommand*>& dependencyCommands) override;
 
+  Result<void> WaitForRestoreComplete() const override;
+
  private:
   static constexpr int kCrosvmVmResetExitCode = 32;
 };
