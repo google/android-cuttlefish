@@ -1174,8 +1174,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   if (FLAGS_casimir_instance_num > 0) {
     casimir_instance_num = FLAGS_casimir_instance_num - 1;
   }
-  tmp_config_obj.set_casimir_nci_port(7100 + casimir_instance_num);
-  tmp_config_obj.set_casimir_rf_port(8100 + casimir_instance_num);
+  tmp_config_obj.set_casimir_nci_port(7800 + casimir_instance_num);
+  tmp_config_obj.set_casimir_rf_port(7900 + casimir_instance_num);
   LOG(DEBUG) << "casimir_instance_num: " << casimir_instance_num;
   LOG(DEBUG) << "launch casimir: " << (FLAGS_casimir_instance_num <= 0);
 
