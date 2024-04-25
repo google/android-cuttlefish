@@ -41,7 +41,6 @@ namespace cuttlefish {
 namespace {
 
 constexpr char kMiscInfoPath[] = "META/misc_info.txt";
-constexpr char kDynamicPartitionsPath[] = "META/dynamic_partitions_info.txt";
 constexpr std::array kVendorTargetImages = {
     "IMAGES/boot.img",
     "IMAGES/dtbo.img",
@@ -108,39 +107,29 @@ Result<TargetFiles> GetTargetFiles(const std::string& vendor_zip_path,
   return result;
 }
 
-Result<MiscInfo> CombineDynamicPartitionsInfo(TargetFiles& target_files) {
-  CF_EXPECTF(Contains(target_files.vendor_contents, kDynamicPartitionsPath),
-             "Vendor target files zip does not contain {}",
-             kDynamicPartitionsPath);
-  CF_EXPECTF(Contains(target_files.system_contents, kDynamicPartitionsPath),
-             "System target files zip does not contain {}",
-             kDynamicPartitionsPath);
-
-  const MiscInfo vendor_dp_info = CF_EXPECT(ParseMiscInfo(
-      target_files.vendor_zip.ExtractToMemory(kDynamicPartitionsPath)));
-  const MiscInfo system_dp_info = CF_EXPECT(ParseMiscInfo(
-      target_files.system_zip.ExtractToMemory(kDynamicPartitionsPath)));
-
-  return CF_EXPECT(
-      GetCombinedDynamicPartitions(vendor_dp_info, system_dp_info));
-}
-
 Result<void> CombineMiscInfo(TargetFiles& target_files,
                              const std::string& misc_output_path) {
   CF_EXPECTF(Contains(target_files.vendor_contents, kMiscInfoPath),
-             "Vendor target files zip does not contain {}", kMiscInfoPath);
+             "Default target files zip does not contain {}", kMiscInfoPath);
   CF_EXPECTF(Contains(target_files.system_contents, kMiscInfoPath),
              "System target files zip does not contain {}", kMiscInfoPath);
 
-  // the combined misc info uses the vendor values as defaults
-  MiscInfo output_misc = CF_EXPECT(
+  const MiscInfo default_misc = CF_EXPECT(
       ParseMiscInfo(target_files.vendor_zip.ExtractToMemory(kMiscInfoPath)));
   const MiscInfo system_misc = CF_EXPECT(
       ParseMiscInfo(target_files.system_zip.ExtractToMemory(kMiscInfoPath)));
 
-  const auto combined_dp_info =
-      CF_EXPECT(CombineDynamicPartitionsInfo(target_files));
-  MergeInKeys(combined_dp_info, output_misc);
+  auto output_misc = default_misc;
+  auto system_super_partitions = SuperPartitionComponents(system_misc);
+  // Ensure specific skipped partitions end up in the misc_info.txt
+  for (auto partition :
+       {"odm", "odm_dlkm", "vendor", "vendor_dlkm", "system_dlkm"}) {
+    if (!Contains(system_super_partitions, partition)) {
+      system_super_partitions.push_back(partition);
+    }
+  }
+  CF_EXPECT(SetSuperPartitionComponents(system_super_partitions, &output_misc),
+            "Failed to update super partitions components for misc_info");
 
   SharedFD misc_output_file = SharedFD::Creat(misc_output_path.c_str(), 0644);
   CF_EXPECT(misc_output_file->IsOpen(), "Failed to open output misc file: "

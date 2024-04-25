@@ -23,14 +23,13 @@
 
 namespace cuttlefish {
 
-// TODO(chadreynolds): rename MiscInfo to more generic KeyValueFile since this
-// logic is processing multiple filetypes now
 using MiscInfo = std::map<std::string, std::string>;
 
 Result<MiscInfo> ParseMiscInfo(const std::string& file_contents);
 std::string WriteMiscInfo(const MiscInfo& info);
-Result<MiscInfo> GetCombinedDynamicPartitions(const MiscInfo& vendor_info,
-                                              const MiscInfo& system_info);
-void MergeInKeys(const MiscInfo& source, MiscInfo& target);
+
+std::vector<std::string> SuperPartitionComponents(const MiscInfo&);
+bool SetSuperPartitionComponents(const std::vector<std::string>& components,
+                                 MiscInfo* misc_info);
 
 } // namespace cuttlefish
