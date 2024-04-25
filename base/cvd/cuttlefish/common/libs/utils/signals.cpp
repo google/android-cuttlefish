@@ -20,6 +20,8 @@
 #include <signal.h>
 #include <string.h>
 
+#include <vector>
+
 #include <android-base/logging.h>
 
 namespace cuttlefish {
@@ -36,6 +38,20 @@ SignalMasker::~SignalMasker() {
   auto err = errno;
   CHECK(res == 0) << "Failed to reset thread's blocked signal mask: "
                   << strerror(err);
+}
+
+void ChangeSignalHandlers(void (*handler)(int), std::vector<int> signals) {
+  struct sigaction act;
+  act.sa_handler = handler;
+  sigemptyset(&act.sa_mask);
+  for (auto signal: signals) {
+    sigaddset(&act.sa_mask, signal);
+  }
+  act.sa_flags = 0;
+
+  for (auto signal : signals) {
+    sigaction(signal, &act, NULL);
+  }
 }
 
 }  // namespace cuttlefish
