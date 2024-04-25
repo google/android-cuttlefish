@@ -16,14 +16,13 @@ pwd
 echo "t1"
 ls
 echo "t2"
-echo "$KERNEL_PACKAGE"
+echo "$1"
 echo "t3"
-find . -name "$KERNEL_PACKAGE"
+find . -name "$1"
 echo "t5"
-ls tests
-echo "t6"
 
-7z x $KERNEL_PACKAGE
+
+7z x $1
 apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb
 test -e /boot/vmlinuz-*aosp*-linaro*
 test -e /boot/initrd.img-*aosp*-linaro*
