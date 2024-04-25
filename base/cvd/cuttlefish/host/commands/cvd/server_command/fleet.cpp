@@ -51,13 +51,11 @@ usage: cvd fleet [--help]
 class CvdFleetCommandHandler : public CvdServerHandler {
  public:
   CvdFleetCommandHandler(InstanceManager& instance_manager,
-                         SubprocessWaiter& subprocess_waiter,
                          HostToolTargetManager& host_tool_target_manager)
       : instance_manager_(instance_manager),
-        subprocess_waiter_(subprocess_waiter),
         status_fetcher_(instance_manager_, host_tool_target_manager) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const;
+  Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
   cvd_common::Args CmdList() const override { return {kFleetSubcmd}; }
 
@@ -71,7 +69,6 @@ class CvdFleetCommandHandler : public CvdServerHandler {
 
  private:
   InstanceManager& instance_manager_;
-  SubprocessWaiter& subprocess_waiter_;
   StatusFetcher status_fetcher_;
 
   static constexpr char kFleetSubcmd[] = "fleet";
@@ -168,10 +165,10 @@ Result<cvd::Status> CvdFleetCommandHandler::CvdFleetHelp(
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdFleetCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+    InstanceManager& instance_manager,
     HostToolTargetManager& host_tool_target_manager) {
-  return std::unique_ptr<CvdServerHandler>(new CvdFleetCommandHandler(
-      instance_manager, subprocess_waiter, host_tool_target_manager));
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdFleetCommandHandler(instance_manager, host_tool_target_manager));
 }
 
 }  // namespace cuttlefish
