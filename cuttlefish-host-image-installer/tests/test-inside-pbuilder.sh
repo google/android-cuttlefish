@@ -11,6 +11,7 @@ ARCH="$1"
 shift
 SCRIPT1="$1"
 shift
+FILE1="$1"
 
 TDIR=$(mktemp -d)
 
@@ -23,18 +24,18 @@ done
 
 SCRIPT1NAME=$(basename "${SCRIPT1}")
 
-echo $1
+echo "${FILE1}"
 
 cat <<EOF > "${TDIR}"/start1.sh
 #!/bin/sh
 
 set -e
 
-echo $1
+echo "${FILE1}"
 
 cd "${TDIR}"
 
-exec "${TDIR}/${SCRIPT1NAME}"
+exec "${TDIR}/${SCRIPT1NAME} ${FILE1}"
 
 EOF
 
