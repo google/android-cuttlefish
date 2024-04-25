@@ -101,6 +101,14 @@ class VmManager {
   virtual Result<std::vector<MonitorCommand>> StartCommands(
       const CuttlefishConfig& config,
       std::vector<VmmDependencyCommand*>& dependencyCommands) = 0;
+
+  // Block until the restore work is finished and the guest is running. Only
+  // called if a snapshot is being restored.
+  //
+  // Must be thread safe.
+  virtual Result<void> WaitForRestoreComplete() const {
+    return CF_ERR("not implemented");
+  }
 };
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
