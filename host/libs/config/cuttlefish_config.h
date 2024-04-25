@@ -398,7 +398,6 @@ class CuttlefishConfig {
     std::string gnss_out_pipe_name() const;
 
     std::string logcat_pipe_name() const;
-    std::string restore_pipe_name() const;
     std::string restore_adbd_pipe_name() const;
 
     std::string launcher_log_path() const;

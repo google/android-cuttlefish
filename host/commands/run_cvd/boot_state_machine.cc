@@ -43,72 +43,47 @@ namespace {
 // Forks run_cvd into a daemonized child process. The current process continues
 // only until the child has signalled that the boot is finished.
 //
-// How the child signals when the boot is finished depends on whether we are
-// restoring from a snapshot.
-//
-//   * When booting normally, `DaemonizeLauncher` returns the write end of a
-//     pipe. The child is expected to write a `RunnerExitCodes` into the pipe
-//     when the boot finishes.
-//   * When restoring from a snapshot, `DaemonizeLauncher` returns an invalid
-//     `SharedFD`. The child is expected to write an arbitrary byte to the
-//     instance's "restore_pipe" and then the parent assumes the restore was
-//     successful.
-//
-// We should consider unifying these two types of pipes.
+// `DaemonizeLauncher` returns the write end of a pipe. The child is expected
+// to write a `RunnerExitCodes` into the pipe when the boot finishes.
 Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
-  SharedFD read_end, write_end, restore_pipe_read;
-  if (IsRestoring(config)) {
-    restore_pipe_read =
-        CF_EXPECT(SharedFD::Fifo(instance.restore_pipe_name(), 0600),
-                  "Unable to create restore fifo");
-  } else {
-    CF_EXPECT(SharedFD::Pipe(&read_end, &write_end), "Unable to create pipe");
-  }
+  SharedFD read_end, write_end;
+  CF_EXPECT(SharedFD::Pipe(&read_end, &write_end), "Unable to create pipe");
   auto pid = fork();
   if (pid) {
     // Explicitly close here, otherwise we may end up reading forever if the
     // child process dies.
     write_end->Close();
     RunnerExitCodes exit_code;
-    if (IsRestoring(config)) {
-      if (!restore_pipe_read->IsOpen()) {
-        LOG(ERROR) << "Error opening restore pipe: "
-                   << restore_pipe_read->StrError();
-        std::exit(RunnerExitCodes::kDaemonizationError);
-      }
-      // Try to read from restore pipe. IF successfully reads, that means logcat
-      // has started, and the VM has resumed. Exit the thread.
-      char buff[1];
-      auto read = restore_pipe_read->Read(buff, 1);
-      if (read <= 0) {
-        LOG(ERROR) << "Could not read restore pipe: "
-                   << restore_pipe_read->StrError();
-        std::exit(RunnerExitCodes::kDaemonizationError);
-      }
-      exit_code = RunnerExitCodes::kSuccess;
-      LOG(INFO) << "Virtual device restored successfully";
-      std::exit(exit_code);
-    }
     auto bytes_read = read_end->Read(&exit_code, sizeof(exit_code));
     if (bytes_read != sizeof(exit_code)) {
       LOG(ERROR) << "Failed to read a complete exit code, read " << bytes_read
                  << " bytes only instead of the expected " << sizeof(exit_code);
       exit_code = RunnerExitCodes::kPipeIOError;
     } else if (exit_code == RunnerExitCodes::kSuccess) {
-      LOG(INFO) << "Virtual device booted successfully";
+      if (IsRestoring(config)) {
+        LOG(INFO) << "Virtual device restored successfully";
+      } else {
+        LOG(INFO) << "Virtual device booted successfully";
+      }
     } else if (exit_code == RunnerExitCodes::kVirtualDeviceBootFailed) {
-      LOG(ERROR) << "Virtual device failed to boot";
+      if (IsRestoring(config)) {
+        LOG(ERROR) << "Virtual device failed to restore";
+      } else {
+        LOG(ERROR) << "Virtual device failed to boot";
+      }
       if (!instance.fail_fast()) {
         LOG(ERROR) << "Device has been left running for debug";
       }
     } else {
       LOG(ERROR) << "Unexpected exit code: " << exit_code;
     }
-    if (exit_code == RunnerExitCodes::kSuccess) {
-      LOG(INFO) << kBootCompletedMessage;
-    } else {
-      LOG(INFO) << kBootFailedMessage;
+    if (!IsRestoring(config)) {
+      if (exit_code == RunnerExitCodes::kSuccess) {
+        LOG(INFO) << kBootCompletedMessage;
+      } else {
+        LOG(INFO) << kBootFailedMessage;
+      }
     }
     std::exit(exit_code);
   } else {
@@ -145,12 +120,8 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
 
-    if (IsRestoring(config)) {
-      return {};
-    } else {
-      read_end->Close();
-      return write_end;
-    }
+    read_end->Close();
+    return write_end;
   }
 }
 
@@ -183,11 +154,15 @@ Result<SharedFD> ProcessLeader(
 class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
  public:
   INJECT(
-      CvdBootStateMachine(AutoSetup<ProcessLeader>::Type& process_leader,
+      CvdBootStateMachine(const CuttlefishConfig& config,
+                          AutoSetup<ProcessLeader>::Type& process_leader,
                           KernelLogPipeProvider& kernel_log_pipe_provider,
+                          const vm_manager::VmManager& vm_manager,
                           const CuttlefishConfig::InstanceSpecific& instance))
-      : process_leader_(process_leader),
+      : config_(config),
+        process_leader_(process_leader),
         kernel_log_pipe_provider_(kernel_log_pipe_provider),
+        vm_manager_(vm_manager),
         instance_(instance),
         state_(kBootStarted) {}
 
@@ -199,6 +174,9 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     }
     if (boot_event_handler_.joinable()) {
       boot_event_handler_.join();
+    }
+    if (restore_complete_handler_.joinable()) {
+      restore_complete_handler_.join();
     }
   }
 
@@ -228,12 +206,48 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     SharedFD boot_events_pipe = kernel_log_pipe_provider_.KernelLogPipe();
     CF_EXPECTF(boot_events_pipe->IsOpen(), "Could not get boot events pipe: {}",
                boot_events_pipe->StrError());
-    boot_event_handler_ = std::thread(
-        [this, boot_events_pipe]() { ThreadLoop(boot_events_pipe); });
+
+    SharedFD restore_complete_pipe, restore_complete_pipe_write;
+    if (IsRestoring(config_)) {
+      CF_EXPECT(
+          SharedFD::Pipe(&restore_complete_pipe, &restore_complete_pipe_write),
+          "unable to create pipe");
+
+      // Unlike `boot_event_handler_`, this doesn't support graceful shutdown,
+      // it blocks until it finishes its work.
+      restore_complete_handler_ =
+          std::thread([this, restore_complete_pipe_write]() {
+            const auto result = vm_manager_.WaitForRestoreComplete();
+            CHECK(result.ok()) << "Failed to wait for restore complete: "
+                               << result.error().FormatForEnv();
+
+            cuttlefish::SharedFD restore_adbd_pipe = cuttlefish::SharedFD::Open(
+                config_.ForDefaultInstance().restore_adbd_pipe_name().c_str(),
+                O_WRONLY);
+            CHECK(restore_adbd_pipe->IsOpen())
+                << "Error opening adbd restore pipe: "
+                << restore_adbd_pipe->StrError();
+            CHECK(cuttlefish::WriteAll(restore_adbd_pipe, "2") == 1)
+                << "Error writing to adbd restore pipe: "
+                << restore_adbd_pipe->StrError() << ". This is unrecoverable.";
+
+            // Done last so that adb is more likely to be ready.
+            CHECK(cuttlefish::WriteAll(restore_complete_pipe_write, "1") == 1)
+                << "Error writing to restore complete pipe: "
+                << restore_complete_pipe_write->StrError()
+                << ". This is unrecoverable.";
+          });
+    }
+
+    boot_event_handler_ =
+        std::thread([this, boot_events_pipe, restore_complete_pipe]() {
+          ThreadLoop(boot_events_pipe, restore_complete_pipe);
+        });
+
     return {};
   }
 
-  void ThreadLoop(SharedFD boot_events_pipe) {
+  void ThreadLoop(SharedFD boot_events_pipe, SharedFD restore_complete_pipe) {
     while (true) {
       std::vector<PollSharedFd> poll_shared_fd = {
           {
@@ -241,17 +255,26 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
               .events = POLLIN | POLLHUP,
           },
           {
+              .fd = restore_complete_pipe,
+              .events = restore_complete_pipe->IsOpen()
+                            ? (short)(POLLIN | POLLHUP)
+                            : (short)0,
+          },
+          {
               .fd = interrupt_fd_read_,
               .events = POLLIN | POLLHUP,
-          }};
+          },
+      };
       int result = SharedFD::Poll(poll_shared_fd, -1);
-      if (poll_shared_fd[1].revents & POLLIN) {
+      // interrupt_fd_read_
+      if (poll_shared_fd[2].revents & POLLIN) {
         return;
       }
       if (result < 0) {
         PLOG(FATAL) << "Failed to call Select";
         return;
       }
+      // boot_events_pipe
       if (poll_shared_fd[0].revents & POLLHUP) {
         LOG(ERROR) << "Failed to read a complete kernel log boot event.";
         state_ |= kGuestBootFailed;
@@ -259,23 +282,46 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
           break;
         }
       }
-      if (!(poll_shared_fd[0].revents & POLLIN)) {
-        continue;
+      if (poll_shared_fd[0].revents & POLLIN) {
+        auto sent_code = OnBootEvtReceived(boot_events_pipe);
+        if (sent_code) {
+          if (!BootCompleted()) {
+            if (!instance_.fail_fast()) {
+              LOG(ERROR) << "Device running, likely in a bad state";
+              break;
+            }
+            auto monitor_res = GetLauncherMonitorFromInstance(instance_, 5);
+            CHECK(monitor_res.ok()) << monitor_res.error().FormatForEnv();
+            auto fail_res = RunLauncherAction(
+                *monitor_res, LauncherAction::kFail, std::optional<int>());
+            CHECK(fail_res.ok()) << fail_res.error().FormatForEnv();
+          }
+          break;
+        }
       }
-      auto sent_code = OnBootEvtReceived(boot_events_pipe);
-      if (sent_code) {
-        if (!BootCompleted()) {
-          if (!instance_.fail_fast()) {
-            LOG(ERROR) << "Device running, likely in a bad state";
+      // restore_complete_pipe
+      if (poll_shared_fd[1].revents & POLLIN) {
+        char buff[1];
+        auto read = restore_complete_pipe->Read(buff, 1);
+        if (read <= 0) {
+          LOG(ERROR) << "Could not read restore pipe: "
+                     << restore_complete_pipe->StrError();
+          state_ |= kGuestBootFailed;
+          if (MaybeWriteNotification()) {
             break;
           }
-          auto monitor_res = GetLauncherMonitorFromInstance(instance_, 5);
-          CHECK(monitor_res.ok()) << monitor_res.error().FormatForEnv();
-          auto fail_res = RunLauncherAction(*monitor_res, LauncherAction::kFail,
-                                            std::optional<int>());
-          CHECK(fail_res.ok()) << fail_res.error().FormatForEnv();
         }
-        break;
+        state_ |= kGuestBootCompleted;
+        if (MaybeWriteNotification()) {
+          break;
+        }
+      }
+      if (poll_shared_fd[1].revents & POLLHUP) {
+        LOG(ERROR) << "restore_complete_pipe closed unexpectedly";
+        state_ |= kGuestBootFailed;
+        if (MaybeWriteNotification()) {
+          break;
+        }
       }
     }
   }
@@ -325,11 +371,14 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     return BootCompleted() || (state_ & kGuestBootFailed);
   }
 
+  const CuttlefishConfig& config_;
   AutoSetup<ProcessLeader>::Type& process_leader_;
   KernelLogPipeProvider& kernel_log_pipe_provider_;
+  const vm_manager::VmManager& vm_manager_;
   const CuttlefishConfig::InstanceSpecific& instance_;
 
   std::thread boot_event_handler_;
+  std::thread restore_complete_handler_;
   SharedFD fg_launcher_pipe_;
   SharedFD reboot_notification_;
   SharedFD interrupt_fd_read_;
@@ -344,6 +393,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
 
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
                                  const CuttlefishConfig::InstanceSpecific,
+                                 const vm_manager::VmManager,
                                  AutoSetup<ValidateTapDevices>::Type>>
 bootStateMachineComponent() {
   return fruit::createComponent()

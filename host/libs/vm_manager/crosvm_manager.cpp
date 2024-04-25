@@ -880,5 +880,32 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   return commands;
 }
 
+Result<void> CrosvmManager::WaitForRestoreComplete() const {
+  auto instance = CF_EXPECT(CuttlefishConfig::Get())->ForDefaultInstance();
+
+  // Wait for the control socket to exist. It is created early in crosvm's
+  // startup sequence, but the process may not even have been exec'd by CF at
+  // this point.
+  while (!FileExists(instance.CrosvmSocketPath())) {
+    usleep(50000);  // 50 ms, arbitrarily chosen
+  }
+
+  // Ask crosvm to resume the VM. crosvm promises to not complete this command
+  // until the vCPUs are started (even if it was never suspended to begin
+  // with).
+  auto infop = CF_EXPECT(Execute(
+      std::vector<std::string>{
+          instance.crosvm_binary(),
+          "resume",
+          instance.CrosvmSocketPath(),
+          "--full",
+      },
+      SubprocessOptions(), WEXITED));
+  CF_EXPECT_EQ(infop.si_code, CLD_EXITED);
+  CF_EXPECTF(infop.si_status == 0, "crosvm resume returns non zero code {}",
+             infop.si_status);
+  return {};
+}
+
 }  // namespace vm_manager
 }  // namespace cuttlefish
