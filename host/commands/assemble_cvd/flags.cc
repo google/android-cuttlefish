@@ -543,7 +543,7 @@ Result<std::string> GetAndroidInfoConfig(
   CF_EXPECT(FileExists(android_info_file_path));
 
   std::string android_info_contents = ReadFile(android_info_file_path);
-  auto android_info_map = ParseMiscInfo(android_info_contents);
+  auto android_info_map = CF_EXPECT(ParseMiscInfo(android_info_contents));
   CF_EXPECT(android_info_map.find(key) != android_info_map.end());
   return android_info_map[key];
 }

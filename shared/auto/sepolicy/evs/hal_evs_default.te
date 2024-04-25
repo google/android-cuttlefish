@@ -45,3 +45,7 @@ binder_call(hal_evs_default, mediaserver)
 # Allow to use OMX service.
 hal_client_domain(hal_evs_default, hal_omx)
 hal_client_domain(hal_evs_default, hal_codec2)
+
+# Allow to interact with mediametrics
+allow hal_evs_default mediametrics_service:service_manager find;
+binder_call(hal_evs_default, mediametrics)
