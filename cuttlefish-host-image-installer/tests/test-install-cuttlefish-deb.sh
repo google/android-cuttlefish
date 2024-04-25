@@ -22,11 +22,10 @@ pwd
 echo "t1"
 ls
 echo "t2"
+echo "$1"
 echo "t3"
 find . -name "cuttlefish_packages.7z"
 echo "t5"
-ls tests
-echo "t6"
 
 7z x cuttlefish_packages.7z
 

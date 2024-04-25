@@ -30,7 +30,7 @@ set -e
 
 cd "${TDIR}"
 
-exec "${TDIR}/${SCRIPT1NAME}"
+exec "${TDIR}/${SCRIPT1NAME} $1"
 
 EOF
 
