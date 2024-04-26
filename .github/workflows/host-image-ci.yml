@@ -42,7 +42,7 @@ jobs:
         name: preseed-mini
         path: cuttlefish-host-image-installer/preseed-mini.iso.xz
     - name: Release preseed-mini.iso.xz
-      uses: google/android-cuttlefish@v1
+      uses: google/android-cuttlefish@v3
       with:
         name: preseed-mini
         path: cuttlefish-host-image-installer/preseed-mini.iso.xz
@@ -71,7 +71,7 @@ jobs:
         name: cuttlefish_packages
         path: cuttlefish-host-image-installer/cuttlefish_packages.7z
     - name: Release cuttlefish_packages.7z
-      uses: google/android-cuttlefish@v1
+      uses: google/android-cuttlefish@v3
       with:
         name: cuttlefish_packages
         path: cuttlefish-host-image-installer/cuttlefish_packages.7z
@@ -108,7 +108,7 @@ jobs:
         name: meta_gigamp_packages
         path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
     - name: Release meta_gigamp_packages.7z
-      uses: google/android-cuttlefish@v1
+      uses: google/android-cuttlefish@v3
       with:
         name: meta_gigamp_packages
         path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
@@ -146,7 +146,7 @@ jobs:
         name: aosp_kernel_aosp14_61
         path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
     - name: Release aosp_kernel_aosp14_61.7z
-      uses: google/android-cuttlefish@v1
+      uses: google/android-cuttlefish@v3
       with:
         name: aosp_kernel_aosp14_61
         path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
@@ -184,7 +184,7 @@ jobs:
         name: aosp_kernel_aosp15_61
         path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
     - name: Release aosp_kernel_aosp15_61.7z
-      uses: google/android-cuttlefish@v1
+      uses: google/android-cuttlefish@v3
       with:
         name: aosp_kernel_aosp15_61
         path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
@@ -222,7 +222,7 @@ jobs:
         name: aosp_kernel_aosp15_66
         path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
     - name: Release aosp_kernel_aosp15_66.7z
-      uses: google/android-cuttlefish@v1
+      uses: google/android-cuttlefish@v3
       with:
         name: aosp_kernel_aosp15_66
         path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
@@ -256,7 +256,7 @@ jobs:
         name: u-boot
         path: cuttlefish-host-image-installer/u-boot.bin
     - name: Release u-boot.bin
-      uses: google/android-cuttlefish@v1
+      uses: google/android-cuttlefish@v3
       with:
         name: u-boot
         path: cuttlefish-host-image-installer/u-boot.bin
