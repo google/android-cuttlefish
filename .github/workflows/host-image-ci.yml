@@ -41,7 +41,14 @@ jobs:
       with:
         name: preseed-mini
         path: cuttlefish-host-image-installer/preseed-mini.iso.xz
+    - name: Release preseed-mini.iso.xz
+      uses: google/android-cuttlefish@v1
+      with:
+        name: preseed-mini
+        path: cuttlefish-host-image-installer/preseed-mini.iso.xz
         tag_name: latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-cuttlefish-deb-job:
     runs-on: ubuntu-latest
@@ -63,7 +70,14 @@ jobs:
       with:
         name: cuttlefish_packages
         path: cuttlefish-host-image-installer/cuttlefish_packages.7z
+    - name: Release cuttlefish_packages.7z
+      uses: google/android-cuttlefish@v1
+      with:
+        name: cuttlefish_packages
+        path: cuttlefish-host-image-installer/cuttlefish_packages.7z
         tag_name: latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-metapackage-deb-job:
     runs-on: ubuntu-latest
@@ -93,7 +107,14 @@ jobs:
       with:
         name: meta_gigamp_packages
         path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
+    - name: Release meta_gigamp_packages.7z
+      uses: google/android-cuttlefish@v1
+      with:
+        name: meta_gigamp_packages
+        path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
         tag_name: latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-kernel-aosp14-61-deb-job:
     runs-on: ubuntu-22.04-32core
@@ -124,7 +145,14 @@ jobs:
       with:
         name: aosp_kernel_aosp14_61
         path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
+    - name: Release aosp_kernel_aosp14_61.7z
+      uses: google/android-cuttlefish@v1
+      with:
+        name: aosp_kernel_aosp14_61
+        path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
         tag_name: latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-kernel-aosp15-61-deb-job:
     runs-on: ubuntu-22.04-32core
@@ -155,7 +183,14 @@ jobs:
       with:
         name: aosp_kernel_aosp15_61
         path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
+    - name: Release aosp_kernel_aosp15_61.7z
+      uses: google/android-cuttlefish@v1
+      with:
+        name: aosp_kernel_aosp15_61
+        path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
         tag_name: latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-kernel-aosp15-66-deb-job:
     runs-on: ubuntu-22.04-32core
@@ -186,7 +221,14 @@ jobs:
       with:
         name: aosp_kernel_aosp15_66
         path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
+    - name: Release aosp_kernel_aosp15_66.7z
+      uses: google/android-cuttlefish@v1
+      with:
+        name: aosp_kernel_aosp15_66
+        path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
         tag_name: latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
   build-uboot-qemu-job:
     runs-on: ubuntu-latest
@@ -213,7 +255,14 @@ jobs:
       with:
         name: u-boot
         path: cuttlefish-host-image-installer/u-boot.bin
+    - name: Release u-boot.bin
+      uses: google/android-cuttlefish@v1
+      with:
+        name: u-boot
+        path: cuttlefish-host-image-installer/u-boot.bin
         tag_name: latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   test-install-cuttlefish-deb-job:
     runs-on: ubuntu-latest
@@ -378,13 +427,13 @@ jobs:
         name: u-boot
         path: "cuttlefish-host-image-installer"
     - name: Prepare test bed
-      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y debconf-utils
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
     - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata
+      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
     - name: Prepare pbuilder environment
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder && dpkg-reconfigure --frontend noninteractive pbuilder
+      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare qemu
-      run: apt-get install -y util-linux util-linux-extra && apt-get install -y xz-utils && apt-get install -y qemu-system-arm && apt-get install -y expect && apt-get install -y e2tools && apt-get install -y lvm2 && apt-get install -y ubuntu-dev-tools && apt-get install -y sshpass && apt-get install -y u-boot-qemu && pull-debian-debs u-boot-qemu && apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./u-boot-qemu_*_all.deb
+      run: sudo apt-get install -y util-linux util-linux-extra && sudo apt-get install -y xz-utils && sudo apt-get install -y qemu-system-arm && sudo apt-get install -y expect && sudo apt-get install -y e2tools && sudo apt-get install -y lvm2 && sudo apt-get install -y ubuntu-dev-tools && sudo apt-get install -y sshpass && sudo apt-get install -y u-boot-qemu && pull-debian-debs u-boot-qemu && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./u-boot-qemu_*_all.deb
     - name: Upzip iso
       run: cd cuttlefish-host-image-installer && xz -d preseed-mini.iso.xz && chmod a-w preseed-mini.iso && cp -f tests/installer-iso-* .
     - name: Run installer on qemu
