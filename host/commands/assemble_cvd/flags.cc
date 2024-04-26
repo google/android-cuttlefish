@@ -979,7 +979,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_vm_manager(vm_manager_vec[0]);
   tmp_config_obj.set_ap_vm_manager(vm_manager_vec[0] + "_openwrt");
 
-  auto secure_hals_strs = android::base::Split(FLAGS_secure_hals, ",");
+  auto secure_hals_strs =
+      android::base::Tokenize(FLAGS_secure_hals, ",:;|/\\+");
   tmp_config_obj.set_secure_hals(
       std::set<std::string>(secure_hals_strs.begin(), secure_hals_strs.end()));
   auto secure_hals = tmp_config_obj.secure_hals();
