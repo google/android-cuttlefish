@@ -46,7 +46,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }}
+        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
         asset_path: cuttlefish-host-image-installer/preseed-mini.iso.xz
         asset_name: preseed-mini
         asset_content_type: application/x-xz
@@ -76,7 +76,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }}
+        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
         asset_path: cuttlefish-host-image-installer/cuttlefish_packages.7z
         asset_name: cuttlefish_packages
         asset_content_type: application/x-7z-compressed
@@ -114,7 +114,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }}
+        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
         asset_path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
         asset_name: meta_gigamp_packages
         asset_content_type: application/x-7z-compressed
@@ -153,7 +153,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }}
+        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
         asset_path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
         asset_name: aosp_kernel_aosp14_61
         asset_content_type: application/x-7z-compressed
@@ -192,7 +192,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }}
+        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
         asset_path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
         asset_name: aosp_kernel_aosp15_61
         asset_content_type: application/x-7z-compressed
@@ -231,7 +231,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }}
+        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
         asset_path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
         asset_name: aosp_kernel_aosp15_66
         asset_content_type: application/x-7z-compressed
@@ -266,7 +266,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }}
+        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
         asset_path: cuttlefish-host-image-installer/u-boot.bin
         asset_name: u-boot
         asset_content_type: application/binary
