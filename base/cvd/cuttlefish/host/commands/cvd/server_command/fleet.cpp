@@ -103,27 +103,18 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   CF_EXPECT(Contains(envs, "ANDROID_HOST_OUT") &&
             DirectoryExists(envs.at("ANDROID_HOST_OUT")));
   Json::Value groups_json(Json::arrayValue);
-  auto all_group_names = CF_EXPECT(instance_manager_.AllGroupNames());
+  auto all_groups = CF_EXPECT(instance_manager_.FindGroups({}));
   envs.erase(kCuttlefishInstanceEnvVarName);
-  for (const auto& group_name : all_group_names) {
-    auto group_obj_copy_result = instance_manager_.SelectGroup(
-        {}, {},
-        InstanceManager::Queries{{selector::kGroupNameField, group_name}});
-    if (!group_obj_copy_result.ok()) {
-      LOG(DEBUG) << "Group \"" << group_name
-                 << "\" has already been removed. Skipped.";
-      continue;
-    }
-
+  for (const auto& group : all_groups) {
     Json::Value group_json(Json::objectValue);
-    group_json["group_name"] = group_name;
+    group_json["group_name"] = group.GroupName();
     group_json["start_time"] =
-        selector::Format(group_obj_copy_result->StartTime());
+        selector::Format(group.StartTime());
 
     auto request_message = MakeRequest(
         {.cmd_args = {"cvd", "status", "--print", "--all_instances"},
          .env = envs,
-         .selector_args = {"--group_name", group_name},
+         .selector_args = {"--group_name", group.GroupName()},
          .working_dir =
              request.Message().command_request().working_directory()});
     RequestWithStdio group_request{request_message,
@@ -134,7 +125,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
         group_response.status().code(), cvd::Status::OK,
         fmt::format(
             "Running cvd status --all_instances for group \"{}\" failed",
-            group_name));
+            group.GroupName()));
     group_json["instances"] = instances_json;
     groups_json.append(group_json);
   }

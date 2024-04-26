@@ -264,16 +264,6 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::FindGroup(
   return *(output.begin());
 }
 
-Result<std::vector<std::string>> InstanceManager::AllGroupNames() const {
-  auto local_instance_groups = CF_EXPECT(instance_db_.InstanceGroups());
-  std::vector<std::string> group_names;
-  group_names.reserve(local_instance_groups.size());
-  for (const auto& group : local_instance_groups) {
-    group_names.push_back(group.GroupName());
-  }
-  return group_names;
-}
-
 Result<InstanceManager::UserGroupSelectionSummary>
 InstanceManager::GroupSummaryMenu() const {
   UserGroupSelectionSummary summary;

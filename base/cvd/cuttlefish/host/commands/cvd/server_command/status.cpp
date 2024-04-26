@@ -187,7 +187,7 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
     return HandleHelp(request);
   }
 
-  if (CF_EXPECT(instance_manager_.AllGroupNames()).empty()) {
+  if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_EXPECT(NoGroupResponse(request));
   }
   RequestWithStdio new_request = CF_EXPECT(ProcessInstanceNameFlag(request));
