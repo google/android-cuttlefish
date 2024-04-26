@@ -62,3 +62,22 @@ jobs:
       run: cd base/cvd/build && meson compile
     - name: Test cvd
       run: cd base/cvd/build && meson test -v
+  e2e-tests-orchestration:
+    runs-on: ubuntu-22.04 
+    steps:
+    - name: Check kvm
+      run: |
+        ls /dev/kvm
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install bazel
+      run: bash tools/installbazel/main.sh
+    - name: bazel version
+      run: bazel version   
+    - name: Run orchestration e2e tests 
+      run: bazel test --sandbox_writable_path=$HOME --test_output=errors e2etests/orchestration/... 
+    - name: Upload test logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: testlogs
+        path: bazel-testlogs
