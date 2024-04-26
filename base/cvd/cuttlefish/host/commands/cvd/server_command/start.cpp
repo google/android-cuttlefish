@@ -175,7 +175,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
  private:
   Result<void> UpdateInstanceDatabase(
       const selector::GroupCreationInfo& group_creation_info);
-  Result<void> FireCommand(Command&& command, const bool wait);
 
   Result<Command> ConstructCvdNonHelpCommand(
       const std::string& bin_file,
@@ -695,7 +694,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
         CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));
     ShowLaunchCommand(command.Executable(), subcmd_args, envs);
 
-    CF_EXPECT(FireCommand(std::move(command), /*should_wait*/ true));
+    CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());
     return ResponseFromSiginfo(infop);
   }
@@ -736,7 +735,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   ShowLaunchCommand(command.Executable(), group_creation_info);
   CF_EXPECT(request.Message().command_request().wait_behavior() !=
             cvd::WAIT_BEHAVIOR_START);
-  CF_EXPECT(FireCommand(std::move(command), /*should_wait*/ true));
+  CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
 
   auto acloud_compat_action_result =
       AcloudCompatActions(group_creation_info, request);
@@ -839,16 +838,6 @@ Result<void> CvdStartCommandHandler::UpdateInstanceDatabase(
   CF_EXPECT(instance_manager_.SetInstanceGroup(group_creation_info),
             group_creation_info.home
                 << " is already taken so can't create new instance.");
-  return {};
-}
-
-Result<void> CvdStartCommandHandler::FireCommand(Command&& command,
-                                                 const bool wait) {
-  SubprocessOptions options;
-  if (!wait) {
-    options.ExitWithParent(false);
-  }
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start(std::move(options))));
   return {};
 }
 
