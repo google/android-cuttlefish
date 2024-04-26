@@ -46,8 +46,10 @@
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/reset_client_utils.h"
+#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
+#include "host/commands/cvd/server_command/status_fetcher.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/config_constants.h"
@@ -163,6 +165,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
                          CommandSequenceExecutor& command_executor)
       : instance_manager_(instance_manager),
         host_tool_target_manager_(host_tool_target_manager),
+        status_fetcher_(instance_manager_, host_tool_target_manager_),
         // TODO: b/300476262 - Migrate to using local instances rather than
         // constructor-injected ones
         command_executor_(command_executor),
@@ -216,7 +219,8 @@ class CvdStartCommandHandler : public CvdServerHandler {
    * response.
    */
   Result<cvd::Response> PostStartExecutionActions(
-      selector::GroupCreationInfo& group_creation_info);
+      selector::GroupCreationInfo& group_creation_info,
+      RequestWithStdio request);
   Result<void> AcloudCompatActions(
       const selector::GroupCreationInfo& group_creation_info,
       const RequestWithStdio& request);
@@ -226,6 +230,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
+  StatusFetcher status_fetcher_;
   CommandSequenceExecutor& command_executor_;
   /*
    * Used by Interrupt() not to call command_executor_.Interrupt()
@@ -438,7 +443,9 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
       .working_dir = request.Message().command_request().working_directory(),
       .command_name = bin_file,
       .in = request.In(),
-      .out = request.Out(),
+      // Print everything to stderr, cvd needs to print JSON to stdout which
+      // would be unparseable with the subcommand's output.
+      .out = request.Err(),
       .err = request.Err()};
   Command non_help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   return non_help_command;
@@ -745,7 +752,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     LOG(ERROR) << "AcloudCompatActions() failed"
                << " but continue as they are minor errors.";
   }
-  return PostStartExecutionActions(group_creation_info);
+  return PostStartExecutionActions(group_creation_info, std::move(request));
 }
 
 static constexpr char kCollectorFailure[] = R"(
@@ -781,7 +788,7 @@ static Result<cvd::Response> CvdResetGroup(
 }
 
 Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
-    selector::GroupCreationInfo& group_creation_info) {
+    selector::GroupCreationInfo& group_creation_info, RequestWithStdio request) {
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
     LOG(INFO) << "Device launch failed, cleaning up";
@@ -811,6 +818,13 @@ Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
   // As the destructor will release the file lock, the instance lock
   // files must be marked as used
   MarkLockfilesInUse(group_creation_info);
+
+  auto group = CF_EXPECT(instance_manager_.FindGroup(InstanceManager::Query(
+      selector::kGroupNameField, group_creation_info.group_name)));
+  auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(group, request));
+  auto serialized_json = group_json.toStyledString();
+  CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
+               serialized_json.size());
 
   // group_creation_info is nullopt only if is_help is false
   return FillOutNewInstanceInfo(std::move(final_response), group_creation_info);
