@@ -87,7 +87,6 @@ class InstanceManager {
   Result<LocalInstanceGroup> FindGroup(const Query& query) const;
   Result<LocalInstanceGroup> FindGroup(const Queries& queries) const;
   Result<void> LoadFromJson(const Json::Value&);
-  Result<std::vector<std::string>> AllGroupNames() const;
 
   Result<void> SetAcloudTranslatorOptout(bool optout);
   Result<bool> GetAcloudTranslatorOptout() const;
