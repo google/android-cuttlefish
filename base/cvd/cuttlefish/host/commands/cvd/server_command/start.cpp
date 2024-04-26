@@ -32,7 +32,6 @@
 
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
-#include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -40,16 +39,16 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/signals.h"
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/signals.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/reset_client_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/status_fetcher.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/config_constants.h"
@@ -75,7 +74,8 @@ void InterruptHandler(int signal) {
   }
   fd = signal_pipe_write_end.exchange(fd);
   if (fd != IN_USE_FD) {
-    // The signal handler was disabled while the handler was executing, need to close the fd.
+    // The signal handler was disabled while the handler was executing, need to
+    // close the fd.
     fd = signal_pipe_write_end.exchange(CLOSED_FD);
     if (fd >= 0) {
       close(fd);
@@ -176,6 +176,14 @@ class CvdStartCommandHandler : public CvdServerHandler {
   std::vector<std::string> CmdList() const override;
 
  private:
+  Result<cvd::Response> LaunchDevice(
+      Command command, selector::GroupCreationInfo& group_creation_info,
+      const RequestWithStdio& request);
+
+  Result<cvd::Response> LaunchDeviceInterruptible(
+      Command command, selector::GroupCreationInfo& group_creation_info,
+      const RequestWithStdio& request);
+
   Result<void> UpdateInstanceDatabase(
       const selector::GroupCreationInfo& group_creation_info);
 
@@ -214,13 +222,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
     MarkLockfiles(group_info, InUseState::kInUse);
   }
 
-  /*
-   * wait, remove the instance group if start failed, filling out the
-   * response.
-   */
-  Result<cvd::Response> PostStartExecutionActions(
-      selector::GroupCreationInfo& group_creation_info,
-      RequestWithStdio request);
   Result<void> AcloudCompatActions(
       const selector::GroupCreationInfo& group_creation_info,
       const RequestWithStdio& request);
@@ -708,6 +709,9 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
 
   auto group_creation_info =
       CF_EXPECT(GetGroupCreationInfo(bin, subcmd_args, envs, request));
+  Command command =
+      CF_EXPECT(ConstructCvdNonHelpCommand(bin, group_creation_info, request));
+
   // The instance database needs to be updated if an interrupt is received.
   auto signals_fd = CF_EXPECT(HandleInterruptSignals());
   std::thread interrupter_thread([this, signals_fd]() {
@@ -728,31 +732,21 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
       }
     }
   });
+  auto launch_res = LaunchDeviceInterruptible(std::move(command),
+                                              group_creation_info, request);
+  StopHandlingInterruptSignals();
+  interrupter_thread.join();
+  auto response = CF_EXPECT(std::move(launch_res));
 
-  // Interrupts must be custom handled until PostStartExecutionActions returns.
-  android::base::ScopeGuard guard([&interrupter_thread]() {
-    StopHandlingInterruptSignals();
-    interrupter_thread.join();
-  });
-  CF_EXPECT(UpdateInstanceDatabase(group_creation_info));
+  // Print new group spec
+  auto group = CF_EXPECT(instance_manager_.FindGroup(InstanceManager::Query(
+      selector::kGroupNameField, group_creation_info.group_name)));
+  auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(group, request));
+  auto serialized_json = group_json.toStyledString();
+  CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
+               serialized_json.size());
 
-  Command command =
-      CF_EXPECT(ConstructCvdNonHelpCommand(bin, group_creation_info, request));
-
-  ShowLaunchCommand(command.Executable(), group_creation_info);
-  CF_EXPECT(request.Message().command_request().wait_behavior() !=
-            cvd::WAIT_BEHAVIOR_START);
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
-
-  auto acloud_compat_action_result =
-      AcloudCompatActions(group_creation_info, request);
-  sub_action_ended_ = true;
-  if (!acloud_compat_action_result.ok()) {
-    LOG(ERROR) << acloud_compat_action_result.error().FormatForEnv();
-    LOG(ERROR) << "AcloudCompatActions() failed"
-               << " but continue as they are minor errors.";
-  }
-  return PostStartExecutionActions(group_creation_info, std::move(request));
+  return FillOutNewInstanceInfo(std::move(response), group_creation_info);
 }
 
 static constexpr char kCollectorFailure[] = R"(
@@ -787,31 +781,64 @@ static Result<cvd::Response> CvdResetGroup(
   return CommandResponse(cvd::Status::OK, "");
 }
 
-Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
-    selector::GroupCreationInfo& group_creation_info, RequestWithStdio request) {
+Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
+    Command launch_command, selector::GroupCreationInfo& group_creation_info,
+    const RequestWithStdio& request) {
+  ShowLaunchCommand(launch_command.Executable(), group_creation_info);
+
+  CF_EXPECT(request.Message().command_request().wait_behavior() !=
+            cvd::WAIT_BEHAVIOR_START);
+
+  CF_EXPECT(subprocess_waiter_.Setup(launch_command.Start()));
+
+  auto acloud_compat_action_result =
+      AcloudCompatActions(group_creation_info, request);
+  sub_action_ended_ = true;
+  if (!acloud_compat_action_result.ok()) {
+    LOG(ERROR) << acloud_compat_action_result.error().FormatForEnv();
+    LOG(ERROR) << "AcloudCompatActions() failed"
+               << " but continue as they are minor errors.";
+  }
+
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
     LOG(INFO) << "Device launch failed, cleaning up";
     // run_cvd processes may be still running in background
     // the order of the following operations should be kept
     auto reset_response = CF_EXPECT(CvdResetGroup(group_creation_info));
-    instance_manager_.RemoveInstanceGroup(group_creation_info.home);
     if (reset_response.status().code() != cvd::Status::OK) {
       return reset_response;
     }
   }
-  auto final_response = ResponseFromSiginfo(infop);
+  return ResponseFromSiginfo(infop);
+}
+
+Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
+    Command command, selector::GroupCreationInfo& group_creation_info,
+    const RequestWithStdio& request) {
+  CF_EXPECT(UpdateInstanceDatabase(group_creation_info));
+  auto start_res =
+      LaunchDevice(std::move(command), group_creation_info, request);
+  if (!start_res.ok() || start_res->status().code() != cvd::Status::OK) {
+    CF_EXPECT(instance_manager_.RemoveInstanceGroup(group_creation_info.home));
+    return start_res;
+  }
+
+  auto& response = *start_res;
+  if (!response.has_status() || response.status().code() != cvd::Status::OK) {
+    return response;
+  }
 
   // For backward compatibility, we add extra symlink in system wide home
   // when HOME is NOT overridden and selector flags are NOT given.
   if (group_creation_info.is_default_group) {
-    CF_EXPECT(CreateSymlinks(group_creation_info));
+    auto symlink_res = CreateSymlinks(group_creation_info);
+    if (!symlink_res.ok()) {
+      LOG(ERROR) << "Failed to create symlinks for default group: "
+                 << symlink_res.error().FormatForEnv();
+    }
   }
 
-  if (!final_response.has_status() ||
-      final_response.status().code() != cvd::Status::OK) {
-    return final_response;
-  }
   // If not daemonized, reaching here means the instance group terminated.
   // Thus, it's enough to release the file lock in the destructor.
   // If daemonized, reaching here means the group started successfully
@@ -819,15 +846,7 @@ Result<cvd::Response> CvdStartCommandHandler::PostStartExecutionActions(
   // files must be marked as used
   MarkLockfilesInUse(group_creation_info);
 
-  auto group = CF_EXPECT(instance_manager_.FindGroup(InstanceManager::Query(
-      selector::kGroupNameField, group_creation_info.group_name)));
-  auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(group, request));
-  auto serialized_json = group_json.toStyledString();
-  CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
-               serialized_json.size());
-
-  // group_creation_info is nullopt only if is_help is false
-  return FillOutNewInstanceInfo(std::move(final_response), group_creation_info);
+  return response;
 }
 
 Result<cvd::Response> CvdStartCommandHandler::FillOutNewInstanceInfo(
