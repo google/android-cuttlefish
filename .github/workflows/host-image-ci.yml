@@ -41,6 +41,7 @@ jobs:
       with:
         name: preseed-mini
         path: cuttlefish-host-image-installer/preseed-mini.iso.xz
+        tag_name: latest
 
   build-cuttlefish-deb-job:
     runs-on: ubuntu-latest
@@ -62,6 +63,7 @@ jobs:
       with:
         name: cuttlefish_packages
         path: cuttlefish-host-image-installer/cuttlefish_packages.7z
+        tag_name: latest
 
   build-metapackage-deb-job:
     runs-on: ubuntu-latest
@@ -91,6 +93,7 @@ jobs:
       with:
         name: meta_gigamp_packages
         path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
+        tag_name: latest
 
   build-kernel-aosp14-61-deb-job:
     runs-on: ubuntu-22.04-32core
@@ -121,6 +124,7 @@ jobs:
       with:
         name: aosp_kernel_aosp14_61
         path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
+        tag_name: latest
 
   build-kernel-aosp15-61-deb-job:
     runs-on: ubuntu-22.04-32core
@@ -151,6 +155,7 @@ jobs:
       with:
         name: aosp_kernel_aosp15_61
         path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
+        tag_name: latest
 
   build-kernel-aosp15-66-deb-job:
     runs-on: ubuntu-22.04-32core
@@ -181,6 +186,7 @@ jobs:
       with:
         name: aosp_kernel_aosp15_66
         path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
+        tag_name: latest
       
   build-uboot-qemu-job:
     runs-on: ubuntu-latest
@@ -207,6 +213,7 @@ jobs:
       with:
         name: u-boot
         path: cuttlefish-host-image-installer/u-boot.bin
+        tag_name: latest
 
   test-install-cuttlefish-deb-job:
     runs-on: ubuntu-latest
@@ -357,8 +364,6 @@ jobs:
   test-iso-qemu-job:
     runs-on: ubuntu-22.04-4core
     needs: [build-installer-iso-job, build-uboot-qemu-job]
-    container:
-      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
     steps:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
