@@ -92,42 +92,17 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   status.set_code(cvd::Status::OK);
 
   auto [sub_cmd, args] = ParseInvocation(request.Message());
-  auto envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
 
   if (IsHelp(args)) {
     CF_EXPECT(CvdFleetHelp(request.Out()));
     return ok_response;
   }
 
-  CF_EXPECT(Contains(envs, "ANDROID_HOST_OUT") &&
-            DirectoryExists(envs.at("ANDROID_HOST_OUT")));
-  Json::Value groups_json(Json::arrayValue);
   auto all_groups = CF_EXPECT(instance_manager_.FindGroups({}));
-  envs.erase(kCuttlefishInstanceEnvVarName);
+  Json::Value groups_json(Json::arrayValue);
   for (const auto& group : all_groups) {
-    Json::Value group_json(Json::objectValue);
-    group_json["group_name"] = group.GroupName();
-    group_json["start_time"] =
-        selector::Format(group.StartTime());
-
-    auto request_message = MakeRequest(
-        {.cmd_args = {"cvd", "status", "--print", "--all_instances"},
-         .env = envs,
-         .selector_args = {"--group_name", group.GroupName()},
-         .working_dir =
-             request.Message().command_request().working_directory()});
-    RequestWithStdio group_request{request_message,
-                                   request.FileDescriptors()};
-    auto [_, instances_json, group_response] =
-        CF_EXPECT(status_fetcher_.FetchStatus(group_request));
-    CF_EXPECT_EQ(
-        group_response.status().code(), cvd::Status::OK,
-        fmt::format(
-            "Running cvd status --all_instances for group \"{}\" failed",
-            group.GroupName()));
-    group_json["instances"] = instances_json;
-    groups_json.append(group_json);
+    groups_json.append(
+        CF_EXPECT(status_fetcher_.FetchGroupStatus(group, request)));
   }
   Json::Value output_json(Json::objectValue);
   output_json["groups"] = groups_json;

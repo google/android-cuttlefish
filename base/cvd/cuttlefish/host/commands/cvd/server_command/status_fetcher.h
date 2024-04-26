@@ -25,6 +25,7 @@
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
@@ -46,6 +47,10 @@ class StatusFetcher {
         host_tool_target_manager_(host_tool_target_manager) {}
   Result<void> Interrupt();
   Result<StatusFetcherOutput> FetchStatus(const RequestWithStdio&);
+
+  Result<Json::Value> FetchGroupStatus(
+      const selector::LocalInstanceGroup& group,
+      const RequestWithStdio& original_request);
 
  private:
   Result<std::string> GetBin(const std::string& host_artifacts_path) const;
