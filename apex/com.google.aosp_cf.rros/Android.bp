@@ -31,5 +31,6 @@ apex {
         "cuttlefish_overlay_frameworks_base_core",
         "cuttlefish_overlay_nfc",
         "cuttlefish_overlay_settings_provider",
+        "cuttlefish_overlay_uwb",
     ],
 }
