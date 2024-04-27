@@ -979,7 +979,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_vm_manager(vm_manager_vec[0]);
   tmp_config_obj.set_ap_vm_manager(vm_manager_vec[0] + "_openwrt");
 
-  auto secure_hals_strs = android::base::Split(FLAGS_secure_hals, ",");
+  auto secure_hals_strs =
+      android::base::Tokenize(FLAGS_secure_hals, ",:;|/\\+");
   tmp_config_obj.set_secure_hals(
       std::set<std::string>(secure_hals_strs.begin(), secure_hals_strs.end()));
   auto secure_hals = tmp_config_obj.secure_hals();
@@ -1226,8 +1227,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   if (FLAGS_casimir_instance_num > 0) {
     casimir_instance_num = FLAGS_casimir_instance_num - 1;
   }
-  tmp_config_obj.set_casimir_nci_port(7100 + casimir_instance_num);
-  tmp_config_obj.set_casimir_rf_port(8100 + casimir_instance_num);
+  tmp_config_obj.set_casimir_nci_port(7800 + casimir_instance_num);
+  tmp_config_obj.set_casimir_rf_port(7900 + casimir_instance_num);
   LOG(DEBUG) << "casimir_instance_num: " << casimir_instance_num;
   LOG(DEBUG) << "launch casimir: " << (FLAGS_casimir_instance_num <= 0);
 
