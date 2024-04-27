@@ -64,7 +64,6 @@ int main(int argc, char** argv) {
   auto logcat_file =
       cuttlefish::SharedFD::Open(path.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
 
-  bool first_iter = true;
   // Server loop
   while (true) {
     char buff[1024];
@@ -74,35 +73,9 @@ int main(int argc, char** argv) {
       break;
     }
     auto written = cuttlefish::WriteAll(logcat_file, buff, read);
-    CHECK(written == read)
-        << "Error writing to log file: " << logcat_file->StrError()
-        << ". This is unrecoverable.";
-    if (first_iter) {
-      first_iter = false;
-      if (cuttlefish::IsRestoring(*config)) {
-        cuttlefish::SharedFD restore_pipe = cuttlefish::SharedFD::Open(
-            instance.restore_pipe_name().c_str(), O_WRONLY);
-        if (!restore_pipe->IsOpen()) {
-          LOG(ERROR) << "Error opening restore pipe: "
-                     << restore_pipe->StrError();
-          return 2;
-        }
-        cuttlefish::SharedFD restore_adbd_pipe = cuttlefish::SharedFD::Open(
-            instance.restore_adbd_pipe_name().c_str(), O_WRONLY);
-        if (!restore_adbd_pipe->IsOpen()) {
-          LOG(ERROR) << "Error opening restore pipe: "
-                     << restore_adbd_pipe->StrError();
-          return 2;
-        }
-
-        CHECK(cuttlefish::WriteAll(restore_pipe, "1") == 1)
-            << "Error writing to restore pipe: " << restore_pipe->StrError()
-            << ". This is unrecoverable.";
-        CHECK(cuttlefish::WriteAll(restore_adbd_pipe, "2") == 1)
-            << "Error writing to adbd restore pipe: "
-            << restore_adbd_pipe->StrError() << ". This is unrecoverable.";
-      }
-    }
+    CHECK(written == read) << "Error writing to log file: "
+                           << logcat_file->StrError()
+                           << ". This is unrecoverable.";
   }
 
   logcat_file->Close();
