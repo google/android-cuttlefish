@@ -126,11 +126,10 @@ void TryInheritServerDatabase() {
   LOG(VERBOSE) << "Asking server to restart";
   auto res = client.RestartServerMatchClient();
   if (!res.ok()) {
-    std::cerr << res.error().FormatForEnv() << std::endl;
-    std::cerr
+    LOG(WARNING) << res.error().FormatForEnv();
+    LOG(WARNING)
         << "Failed to take over resources of running server.\nSome devices may "
-           "be running outside cvd's control, consider running cvd reset -y"
-        << std::endl;
+           "be running outside cvd's control, consider running cvd reset -y";
   }
 }
 
