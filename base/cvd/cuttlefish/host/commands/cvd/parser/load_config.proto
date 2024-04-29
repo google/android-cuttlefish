@@ -78,6 +78,10 @@ message Security {
   optional bool guest_enforce_security = 3;
 }
 
+message Streaming {
+  optional string device_id = 1;
+}
+
 message Vm {
   optional uint32 cpus = 1;
   optional uint32 memory_mb = 2;
