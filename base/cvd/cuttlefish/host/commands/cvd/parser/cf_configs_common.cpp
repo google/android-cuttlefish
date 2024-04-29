@@ -23,49 +23,18 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <google/protobuf/descriptor.h>
-#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+#include <google/protobuf/message.h>
 #include <google/protobuf/util/json_util.h>
-#include <google/protobuf/util/type_resolver.h>
-#include <google/protobuf/util/type_resolver_util.h>
 #include <json/json.h>
 
 #include "common/libs/utils/base64.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 
-using google::protobuf::DescriptorPool;
-using google::protobuf::io::ArrayInputStream;
-using google::protobuf::io::StringOutputStream;
-using google::protobuf::util::JsonParseOptions;
-using google::protobuf::util::NewTypeResolverForDescriptorPool;
-using google::protobuf::util::TypeResolver;
+using google::protobuf::Message;
+using google::protobuf::util::JsonStringToMessage;
 
 namespace cuttlefish {
-namespace {
-
-std::string ToString(const Json::ValueType value_type) {
-  switch (value_type) {
-    case Json::ValueType::nullValue:
-      return "null";
-    case Json::ValueType::intValue:
-      return "int";
-    case Json::ValueType::uintValue:
-      return "uint";
-    case Json::ValueType::realValue:
-      return "real";
-    case Json::ValueType::stringValue:
-      return "string";
-    case Json::ValueType::booleanValue:
-      return "boolean";
-    case Json::ValueType::arrayValue:
-      return "array";
-    case Json::ValueType::objectValue:
-      return "object";
-  }
-}
-
-}  // namespace
 
 void InitIntConfigSubGroupVector(Json::Value& instances,
                                  const std::string& group,
@@ -149,51 +118,13 @@ void MergeTwoJsonObjs(Json::Value& dst, const Json::Value& src) {
   }
 }
 
-// TODO(chadreynolds): collect all Result values under object and array cases to
-// help user make fixes in less runs
-Result<void> Validate(const Json::Value& value, const ConfigNode& node) {
-  if (node.proto_name != "") {
-    std::stringstream json_as_stringstream;
-    json_as_stringstream << value;
-    auto json_str = json_as_stringstream.str();
-    ArrayInputStream json_as_proto_input(json_str.data(), json_str.size());
+Result<void> Validate(const Json::Value& value, Message& proto) {
+  std::stringstream json_as_stringstream;
+  json_as_stringstream << value;
+  auto json_str = json_as_stringstream.str();
 
-    static const char kTypeUrlPrefix[] = "type.googleapis.com";
-    auto url = fmt::format("{}/{}", kTypeUrlPrefix, node.proto_name);
-    auto pool = DescriptorPool::generated_pool();
-    std::unique_ptr<TypeResolver> resolver;
-    resolver.reset(NewTypeResolverForDescriptorPool(kTypeUrlPrefix, pool));
-
-    std::string output;
-    StringOutputStream deser_output(&output);
-
-    auto status = JsonToBinaryStream(resolver.get(), url, &json_as_proto_input,
-                                     &deser_output, JsonParseOptions());
-
-    return status.ok() ? Result<void>() : CF_ERR(status.ToString());
-  } else if (node.type == Json::ValueType::objectValue) {
-    for (const std::string& member : value.getMemberNames()) {
-      const auto lookup_pair = node.children.find(member);
-      CF_EXPECTF(lookup_pair != node.children.end(), "Unexpected node name: {}",
-                 member);
-      CF_EXPECTF(Validate(value[member], lookup_pair->second), "\"{}\" ->",
-                 member);
-    }
-  } else if (node.type == Json::ValueType::arrayValue) {
-    const auto lookup_pair = node.children.find(kArrayValidationSentinel);
-    CF_EXPECTF(lookup_pair != node.children.end(),
-               "Developer error in validation structure definition. A \"{}\" "
-               "node is expected under any array to determine element types.",
-               kArrayValidationSentinel);
-    for (const auto& element : value) {
-      CF_EXPECT(Validate(element, lookup_pair->second), "[array element] ->");
-    }
-  } else {  // is a leaf node
-    CF_EXPECTF(value.isConvertibleTo(node.type),
-               "Failure to convert value \"{}\" to expected JSON type: {}",
-               value.asString(), ToString(node.type));
-  }
-  return {};
+  auto status = JsonStringToMessage(json_str, &proto);
+  return status.ok() ? Result<void>() : CF_ERR(status.ToString());
 }
 
 }  // namespace cuttlefish

@@ -24,20 +24,12 @@
 #include <vector>
 
 #include <json/json.h>
+#include <google/protobuf/message.h>
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-
-// sentinel lookup value for validating arrays to retrieve type of the elements
-inline constexpr char kArrayValidationSentinel[] = "kArrayValidationSentinel";
-
-struct ConfigNode {
-  Json::ValueType type;
-  std::string proto_name;
-  std::map<std::string, ConfigNode> children;
-};
 
 template <typename T>
 Result<void> ValidateConfig(const Json::Value& instance,
@@ -96,6 +88,6 @@ std::vector<std::string> MergeResults(std::vector<std::string> first_list,
 
 void MergeTwoJsonObjs(Json::Value& dst, const Json::Value& src);
 
-Result<void> Validate(const Json::Value& value, const ConfigNode& node);
+Result<void> Validate(const Json::Value& value, google::protobuf::Message& node);
 
 }  // namespace cuttlefish
