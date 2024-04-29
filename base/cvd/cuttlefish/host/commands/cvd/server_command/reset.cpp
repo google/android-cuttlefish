@@ -75,31 +75,28 @@ static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
     subcmd_args[2] = "--help";
   }
 
-  bool is_help = false;
-  bool clean_runtime_dir = true;
-  bool device_by_cvd_only = false;
-  bool is_confirmed_by_flag = false;
+  ParsedFlags parsed_flags;
   std::string verbosity_flag_value;
 
   Flag y_flag =
       Flag()
           .Alias({FlagAliasMode::kFlagExact, "-y"})
           .Alias({FlagAliasMode::kFlagExact, "--yes"})
-          .Setter([&is_confirmed_by_flag](const FlagMatch&) -> Result<void> {
-            is_confirmed_by_flag = true;
+          .Setter([&parsed_flags](const FlagMatch&) -> Result<void> {
+            parsed_flags.is_confirmed_by_flag = true;
             return {};
           });
   Flag help_flag = Flag()
                        .Alias({FlagAliasMode::kFlagExact, "-h"})
                        .Alias({FlagAliasMode::kFlagExact, "--help"})
-                       .Setter([&is_help](const FlagMatch&) -> Result<void> {
-                         is_help = true;
+                       .Setter([&parsed_flags](const FlagMatch&) -> Result<void> {
+                         parsed_flags.is_help = true;
                          return {};
                        });
   std::vector<Flag> flags{
-      GflagsCompatFlag("device-by-cvd-only", device_by_cvd_only),
+      GflagsCompatFlag("device-by-cvd-only", parsed_flags.device_by_cvd_only),
       y_flag,
-      GflagsCompatFlag("clean-runtime-dir", clean_runtime_dir),
+      GflagsCompatFlag("clean-runtime-dir", parsed_flags.clean_runtime_dir),
       help_flag,
       GflagsCompatFlag("verbosity", verbosity_flag_value),
       UnexpectedArgumentGuard()};
@@ -110,11 +107,8 @@ static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
     verbosity = CF_EXPECT(EncodeVerbosity(verbosity_flag_value),
                           "invalid verbosity level");
   }
-  return ParsedFlags{.is_help = is_help,
-                     .clean_runtime_dir = clean_runtime_dir,
-                     .device_by_cvd_only = device_by_cvd_only,
-                     .is_confirmed_by_flag = is_confirmed_by_flag,
-                     .log_level = verbosity};
+  parsed_flags.log_level = verbosity;
+  return parsed_flags;
 }
 
 static bool GetUserConfirm() {
