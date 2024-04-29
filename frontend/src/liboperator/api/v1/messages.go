@@ -188,7 +188,7 @@ type CVD struct {
 	// [Output Only]
 	WebRTCDeviceID string `json:"webrtc_device_id"`
 	// [Output Only]
-	ADBPort int `json:"adb_port"`
+	ADBSerial string `json:"adb_serial"`
 }
 
 // Identifier within the whole fleet. Format: "{group}/{name}".
