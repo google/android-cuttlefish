@@ -45,49 +45,8 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
     {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
         {"@import", ConfigNode{.type = stringValue}},
         {"name", ConfigNode{.type = stringValue}},
-        {"vm", ConfigNode{.type = objectValue, .children = {
-          {"cpus", ConfigNode{.type = uintValue}},
-          {"memory_mb", ConfigNode{.type = uintValue}},
-          {"use_sdcard", ConfigNode{.type = booleanValue}},
-          {"setupwizard_mode", ConfigNode{.type = stringValue}},
-          {"uuid", ConfigNode{.type = stringValue}},
-          {"crosvm", ConfigNode{.proto_name = "cuttlefish.cvd.config.Crosvm"}},
-          {"custom_actions", ConfigNode{.type = arrayValue, .children = {
-            {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-              {"shell_command", ConfigNode{.type = stringValue}},
-              {"button", ConfigNode{.type = objectValue, .children = {
-                {"command", ConfigNode{.type = stringValue}},
-                {"title", ConfigNode{.type = stringValue}},
-                {"icon_name", ConfigNode{.type = stringValue}},
-              }}},
-              {"server", ConfigNode{.type = stringValue}},
-              {"buttons", ConfigNode{.type = arrayValue, .children = {
-                {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-                  {"command", ConfigNode{.type = stringValue}},
-                  {"title", ConfigNode{.type = stringValue}},
-                  {"icon_name", ConfigNode{.type = stringValue}},
-                }}},
-              }}},
-              {"device_states", ConfigNode{.type = arrayValue, .children = {
-                {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-                  {"lid_switch_open", ConfigNode{.type = booleanValue}},
-                  {"hinge_angle_value", ConfigNode{.type = intValue}},
-                }}},
-              }}},
-            }}},
-          }}},
-        }}},
-        {"boot", ConfigNode{.type = objectValue, .children = {
-          {"kernel", ConfigNode{.type = objectValue, .children = {
-            {"build", ConfigNode{.type = stringValue}},
-          }}},
-          {"enable_bootanimation", ConfigNode{.type = booleanValue}},
-          {"extra_bootconfig_args", ConfigNode{.type = stringValue}},
-          {"build", ConfigNode{.type = stringValue}},
-          {"bootloader", ConfigNode{.type = objectValue, .children = {
-            {"build", ConfigNode{.type = stringValue}},
-          }}},
-        }}},
+        {"vm", ConfigNode{.proto_name = "cuttlefish.cvd.config.Vm"}},
+        {"boot", ConfigNode{.proto_name = "cuttlefish.cvd.config.Boot"}},
         {"security", ConfigNode{.proto_name = "cuttlefish.cvd.config.Security"}},
         {"disk", ConfigNode{.type = objectValue, .children = {
           {"default_build", ConfigNode{.type = stringValue}},

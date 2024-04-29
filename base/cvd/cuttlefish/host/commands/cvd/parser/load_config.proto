@@ -18,16 +18,24 @@ syntax = "proto3";
 
 package cuttlefish.cvd.config;
 
+message Boot {
+  optional Build kernel = 1;
+  optional bool enable_bootanimation = 2;
+  optional string extra_bootconfig_args = 3;
+  optional string build = 4;
+  optional Build bootloader = 5;
+}
+
+message Build {
+  optional string build = 1;
+}
+
 message Connectivity {
   optional Vsock vsock = 1;
 }
 
 message Vsock {
   optional string guest_group = 1;
-}
-
-message Crosvm {
-  optional bool enable_sandbox = 1;
 }
 
 message Graphics {
@@ -47,3 +55,37 @@ message Security {
   optional string use_random_serial = 2;
   optional bool guest_enforce_security = 3;
 }
+
+message Vm {
+  optional uint32 cpus = 1;
+  optional uint32 memory_mb = 2;
+  optional bool use_sdcard = 3;
+  optional string setupwizard_mode = 4;
+  optional string uuid = 5;
+  optional Crosvm crosvm = 6;
+  repeated CustomAction custom_actions = 7;
+}
+
+message Crosvm {
+  optional bool enable_sandbox = 1;
+}
+
+message CustomAction {
+  optional string shell_command = 1;
+  optional Button button = 2;
+  optional string server = 3;
+  repeated Button buttons = 4;
+  repeated DeviceState device_states = 5;
+}
+
+message Button {
+  optional string command = 1;
+  optional string title = 2;
+  optional string icon_name = 3;
+}
+
+message DeviceState {
+  optional bool lid_switch_open = 1;
+  optional int32 hinge_angle_value = 2;
+}
+
