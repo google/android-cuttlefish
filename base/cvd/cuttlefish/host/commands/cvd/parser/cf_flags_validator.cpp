@@ -48,16 +48,7 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
         {"vm", ConfigNode{.proto_name = "cuttlefish.cvd.config.Vm"}},
         {"boot", ConfigNode{.proto_name = "cuttlefish.cvd.config.Boot"}},
         {"security", ConfigNode{.proto_name = "cuttlefish.cvd.config.Security"}},
-        {"disk", ConfigNode{.type = objectValue, .children = {
-          {"default_build", ConfigNode{.type = stringValue}},
-          {"super", ConfigNode{.type = objectValue, .children = {
-            {"system", ConfigNode{.type = stringValue}},
-          }}},
-          {"download_img_zip", ConfigNode{.type = booleanValue}},
-          {"download_target_zip_files", ConfigNode{.type = booleanValue}},
-          {"blank_data_image_mb", ConfigNode{.type = uintValue}},
-          {"otatools", ConfigNode{.type = stringValue}},
-        }}},
+        {"disk", ConfigNode{.proto_name = "cuttlefish.cvd.config.Disk"}},
         {"graphics", ConfigNode{.proto_name = "cuttlefish.cvd.config.Graphics"}},
         {"streaming", ConfigNode{.type = objectValue, .children = {
           {"device_id", ConfigNode{.type = stringValue}},
