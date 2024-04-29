@@ -157,8 +157,11 @@ jobs:
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       id: upload-release-asset
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+        #upload_url: https://uploads.github.com/repos/WeiChungHsu/android-cuttlefish/releases/153364837/assets{?name,label}
         asset_path: ./CHANGELOG8.md
         asset_name: CHANGELOG8.md
         asset_content_type: application/zip
