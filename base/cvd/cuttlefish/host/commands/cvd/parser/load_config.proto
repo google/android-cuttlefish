@@ -21,3 +21,9 @@ package cuttlefish.cvd.config;
 message Crosvm {
   optional bool enable_sandbox = 1;
 }
+
+message Security {
+  optional string serial_number = 1;
+  optional string use_random_serial = 2;
+  optional bool guest_enforce_security = 3;
+}
