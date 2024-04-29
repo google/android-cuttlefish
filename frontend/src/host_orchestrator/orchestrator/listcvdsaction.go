@@ -43,9 +43,5 @@ func (a *ListCVDsAction) Run() (*apiv1.ListCVDsResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	cvds, err := group.toAPIObject()
-	if err != nil {
-		return nil, err
-	}
-	return &apiv1.ListCVDsResponse{CVDs: cvds}, nil
+	return &apiv1.ListCVDsResponse{CVDs: group.toAPIObject()}, nil
 }
