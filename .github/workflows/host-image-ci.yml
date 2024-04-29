@@ -21,462 +21,94 @@ name: HostImage
 on: [pull_request, push]
 
 jobs:
-  build-installer-iso-job:
-    runs-on: ubuntu-latest
-    container:
-      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
-    env:
-      DEBIAN_ISO_URL: https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso
-    permissions: write-all
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Prepare building environment
-      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y wget libarchive-tools && apt-get install -y xorriso && apt-get install -y cpio xz-utils && apt-get install -y fdisk
-    - name: Inject name and ID into preseed 
-      run: echo "CI_PROJECT_NAME=${{ github.event.repository.name }}" >> cuttlefish-host-image-installer/preseed/after_install_1.sh && echo "CI_PIPELINE_ID=${{ github.repository}}/${{ github.workflow }}" >> cuttlefish-host-image-installer/preseed//after_install_1.sh
-    - name: Download Debian installer
-      run: cd cuttlefish-host-image-installer && wget -nv -c ${DEBIAN_ISO_URL} && ./addpreseed.sh && xz -9e preseed-mini.iso
-    - name: Publish preseed-mini.iso.xz
-      uses: actions/upload-artifact@v3
-      with:
-        name: preseed-mini
-        path: cuttlefish-host-image-installer/preseed-mini.iso.xz
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        tag_name: latest
-        release_name: latest_host_image
-        body_path: cuttlefish-host-image-installer/preseed-mini.iso.xz
-        draft: false
-        prerelease: false        
-
-  build-cuttlefish-deb-job:
+  test-release1-job:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Prepare building environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Building package
-      run: cd cuttlefish-host-image-installer && ./build_cf_packages.sh
-    - name: Create artifact
-      run: cd cuttlefish-host-image-installer && cp -f cuttlefish-common-buildplace/*.deb . && 7z a -mx=9 cuttlefish_packages.7z *.deb
-    - name: Publish cuttlefish_packages.7z
-      uses: actions/upload-artifact@v3
-      with:
-        name: cuttlefish_packages
-        path: cuttlefish-host-image-installer/cuttlefish_packages.7z
-    - name: Create Release
-      id: create_release
+    - name: build
+      run: echo "test-release1-job" > CHANGELOG1.md
+    - name: version
+      run: echo "test-release1-job"
+      id: version
+    - name: release
       uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+      id: create_release
       with:
-        tag_name: latest
-        release_name: latest_host_image
-        body_path: cuttlefish-host-image-installer/cuttlefish_packages.7z
         draft: false
         prerelease: false
-        
-  build-metapackage-deb-job:
+        release_name: ${{ steps.version.outputs.version }}
+        tag_name: ${{ github.ref }}
+        body_path: CHANGELOG1.md
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+  test-release2-job:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Prepare pbuilder environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
-    - name: Prepare building environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Building package
-      run: cd cuttlefish-host-image-installer/metapackage-linaro-gigamp && pdebuild --buildresult .. -- --basetgz ~/pbuilder/stable-arm64-base.tgz
-    - name: Create artifact
-      run: cd cuttlefish-host-image-installer && 7z a -mx=9 meta_gigamp_packages.7z *.deb
-    - name: Publish meta_gigamp_packages.7z
-      uses: actions/upload-artifact@v3
+    - name: build
+      run: echo "test-release2-job" > CHANGELOG2.md
+    - name: version
+      run: echo "test-release2-job"
+      id: version
+    - name: release
+      uses: actions/create-release@v1
+      id: create_release
       with:
-        name: meta_gigamp_packages
-        path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
+        draft: false
+        prerelease: false
+        release_name: latest_host_image
+        tag_name: latest
+        body_path: CHANGELOG2.md
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+  test-release3-job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: build
+      run: echo "test-release3-job" > CHANGELOG3.md
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: latest
-        release_name: latest_host_image
-        body_path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: CHANGELOG3.md
         draft: false
         prerelease: false        
 
-  build-kernel-aosp14-61-deb-job:
-    runs-on: ubuntu-22.04-32core
-    permissions: write-all
-    env:
-      KERNEL_MANIFEST_URL: https://android.googlesource.com/kernel/manifest/
-      KERNEL_MANIFEST_BRANCH: common-android14-6.1
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare other tools
-      run: sudo apt-get install -y git ca-certificates less && sudo apt-get install -y fakeroot && sudo apt-get install -y devscripts equivs && sudo apt-get install -y ubuntu-dev-tools && sudo apt-get install -y build-essential && sudo apt-get install -y p7zip-full && sudo apt-get install -y crossbuild-essential-arm64
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Building package
-      run: cd cuttlefish-host-image-installer && ./kernel_build_deb_qemu.sh
-    - name: Create artifact
-      run: cd cuttlefish-host-image-installer && cp `ls kernel-build-space/linux-image-*.deb | grep -v dbg` . && cp kernel-build-space/linux-headers-*.deb . && 7z a -mx=9 aosp_kernel_aosp14_61.7z *.deb
-    - name: Publish aosp_kernel_aosp14_61.7z
-      uses: actions/upload-artifact@v3
-      with:
-        name: aosp_kernel_aosp14_61
-        path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        tag_name: latest
-        release_name: latest_host_image
-        body_path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
-        draft: false
-        prerelease: false        
-        
-  build-kernel-aosp15-61-deb-job:
-    runs-on: ubuntu-22.04-32core
-    permissions: write-all
-    env:
-      KERNEL_MANIFEST_URL: https://android.googlesource.com/kernel/manifest/
-      KERNEL_MANIFEST_BRANCH: common-android15-6.1
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare other tools
-      run: sudo apt-get install -y git ca-certificates less && sudo apt-get install -y fakeroot && sudo apt-get install -y devscripts equivs && sudo apt-get install -y ubuntu-dev-tools && sudo apt-get install -y build-essential && sudo apt-get install -y p7zip-full && sudo apt-get install -y crossbuild-essential-arm64
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Building package
-      run: cd cuttlefish-host-image-installer && ./kernel_build_deb_qemu.sh
-    - name: Create artifact
-      run: cd cuttlefish-host-image-installer && cp `ls kernel-build-space/linux-image-*.deb | grep -v dbg` . && cp kernel-build-space/linux-headers-*.deb . && 7z a -mx=9 aosp_kernel_aosp15_61.7z *.deb
-    - name: Publish aosp_kernel_aosp15_61.7z
-      uses: actions/upload-artifact@v3
-      with:
-        name: aosp_kernel_aosp15_61
-        path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        tag_name: latest
-        release_name: latest_host_image
-        body_path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
-        draft: false
-        prerelease: false        
-        
-  build-kernel-aosp15-66-deb-job:
-    runs-on: ubuntu-22.04-32core
-    permissions: write-all
-    env:
-      KERNEL_MANIFEST_URL: https://android.googlesource.com/kernel/manifest/
-      KERNEL_MANIFEST_BRANCH: common-android15-6.6
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare other tools
-      run: sudo apt-get install -y git ca-certificates less && sudo apt-get install -y fakeroot && sudo apt-get install -y devscripts equivs && sudo apt-get install -y ubuntu-dev-tools && sudo apt-get install -y build-essential && sudo apt-get install -y p7zip-full && sudo apt-get install -y crossbuild-essential-arm64
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Building package
-      run: cd cuttlefish-host-image-installer && ./kernel_build_deb_qemu.sh
-    - name: Create artifact
-      run: cd cuttlefish-host-image-installer && cp `ls kernel-build-space/linux-image-*.deb | grep -v dbg` . && cp kernel-build-space/linux-headers-*.deb . && 7z a -mx=9 aosp_kernel_aosp15_66.7z *.deb
-    - name: Publish aosp_kernel_aosp15_66.7z
-      uses: actions/upload-artifact@v3
-      with:
-        name: aosp_kernel_aosp15_66
-        path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        tag_name: latest
-        release_name: latest_host_image
-        body_path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
-        draft: false
-        prerelease: false        
-        
-  build-uboot-qemu-job:
+  test-release5-job:
     runs-on: ubuntu-latest
-    permissions: write-all
-    container:
-      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
-    env:
-      UBOOT_GIT_URL: git://git.denx.de/u-boot.git
-      UBOOT_GIT_BRANCH: v2023.10
     steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Prepare building environment
-      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare building environment continue
-      run: apt-get install -y build-essential && apt-get install -y gcc-aarch64-linux-gnu && apt-get install -y git ca-certificates && apt-get install -y bc flex bison && apt-get install -y coccinelle && apt-get install -y device-tree-compiler dfu-util efitools && apt-get install -y gdisk graphviz imagemagick && apt-get install -y liblz4-tool libgnutls28-dev libguestfs-tools && apt-get install -y libncurses-dev && apt-get install -y libpython3-dev libsdl2-dev libssl-dev && apt-get install -y lz4 lzma lzma-alone openssl && apt-get install -y pkg-config && apt-get install -y python3 python3-asteval python3-coverage && apt-get install -y python3-filelock && apt-get install -y python3-pkg-resources python3-pycryptodome && apt-get install -y python3-pyelftools && apt-get install -y python3-pytest python3-pytest-xdist && apt-get install -y python3-sphinxcontrib.apidoc && apt-get install -y python3-sphinx-rtd-theme python3-subunit && apt-get install -y python3-testtools python3-virtualenv && apt-get install -y swig uuid-dev
-    - name: Downloading
-      run: cd cuttlefish-host-image-installer && ./uboot/download_uboot.sh
-    - name: Building
-      run: cd cuttlefish-host-image-installer/u-boot &&  ../uboot/build_uboot_qemu_aarch64.sh && cd .. && cp uboot_build_place/u-boot.bin .
-    - name: Publish u-boot.bin
-      uses: actions/upload-artifact@v3
-      with:
-        name: u-boot
-        path: cuttlefish-host-image-installer/u-boot.bin
+    - name: build
+      run: echo "test-release5-job" > CHANGELOG5.md
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: latest
         release_name: latest_host_image
-        body_path: cuttlefish-host-image-installer/u-boot.bin
+        body: CHANGELOG5
+        .md
         draft: false
         prerelease: false        
-        
-  test-install-cuttlefish-deb-job:
-    runs-on: ubuntu-latest
-    needs: build-cuttlefish-deb-job
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Download cuttlefish_packages.7z
-      uses: actions/download-artifact@v3
-      with:
-        name: cuttlefish_packages
-        path: "cuttlefish-host-image-installer"
-    - name: Prepare pbuilder environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
-    - name: Prepare building environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Running installation tests...
-      run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-cuttlefish-deb.sh ./cuttlefish_packages.7z
 
-  test-install-metapackage-deb-job:
+  test-release6-job:
     runs-on: ubuntu-latest
-    needs: build-metapackage-deb-job
     steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Download meta_gigamp_packages.7z
-      uses: actions/download-artifact@v3
-      with:
-        name: meta_gigamp_packages
-        path: "cuttlefish-host-image-installer"
-    - name: Prepare pbuilder environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
-    - name: Prepare building environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Running installation tests...
-      run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-metapackage-deb.sh ./meta_gigamp_packages.7z
-
-  test-install-kernel-aosp14-61-deb-job:
-    runs-on: ubuntu-latest
-    needs: build-kernel-aosp14-61-deb-job
-    env:
-      KERNEL_PACKAGE: aosp_kernel_aosp14_61.7z
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2      
-    - name: Download aosp_kernel_aosp14_61.7z
-      uses: actions/download-artifact@v3
-      with:
-        name: aosp_kernel_aosp14_61
-        path: "cuttlefish-host-image-installer"
-    - name: Prepare pbuilder environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
-    - name: Prepare building environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Running installation tests...
-      run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-kernel-deb.sh ./aosp_kernel_aosp14_61.7z
-        
-  test-install-kernel-aosp15-61-deb-job:
-    runs-on: ubuntu-latest
-    needs: build-kernel-aosp15-61-deb-job
-    env:
-      KERNEL_PACKAGE: aosp_kernel_aosp15_61.7z
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2      
-    - name: Download aosp_kernel_aosp15_61.7z
-      uses: actions/download-artifact@v3
-      with:
-        name: aosp_kernel_aosp15_61
-        path: "cuttlefish-host-image-installer"
-    - name: Prepare pbuilder environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
-    - name: Prepare building environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Running installation tests...
-      run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-kernel-deb.sh ./aosp_kernel_aosp15_61.7z
-        
-  test-install-kernel-aosp15-66-deb-job:
-    runs-on: ubuntu-latest
-    needs: build-kernel-aosp15-66-deb-job
-    env:
-      KERNEL_PACKAGE: aosp_kernel_aosp15_66.7z
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2      
-    - name: Download aosp_kernel_aosp15_66.7z
-      uses: actions/download-artifact@v3
-      with:
-        name: aosp_kernel_aosp15_66
-        path: "cuttlefish-host-image-installer"
-    - name: Prepare pbuilder environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
-    - name: Prepare building environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Running installation tests...
-      run: cd cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-kernel-deb.sh ./aosp_kernel_aosp15_66.7z
-
-  test-iso-qemu-job:
-    runs-on: ubuntu-22.04-4core
-    needs: [build-installer-iso-job, build-uboot-qemu-job]
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Download preseed-mini.iso.xz
-      uses: actions/download-artifact@v3
-      with:
-        name: preseed-mini
-        path: "cuttlefish-host-image-installer"
-    - name: Download u-boot.bin
-      uses: actions/download-artifact@v3
-      with:
-        name: u-boot
-        path: "cuttlefish-host-image-installer"
-    - name: Prepare test bed
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder environment
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare qemu
-      run: sudo apt-get install -y util-linux util-linux-extra && sudo apt-get install -y xz-utils && sudo apt-get install -y qemu-system-arm && sudo apt-get install -y expect && sudo apt-get install -y e2tools && sudo apt-get install -y lvm2 && sudo apt-get install -y ubuntu-dev-tools && sudo apt-get install -y sshpass && sudo apt-get install -y u-boot-qemu && pull-debian-debs u-boot-qemu && sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./u-boot-qemu_*_all.deb
-    - name: Upzip iso
-      run: cd cuttlefish-host-image-installer && xz -d preseed-mini.iso.xz && chmod a-w preseed-mini.iso && cp -f tests/installer-iso-* .
-    - name: Run installer on qemu
-      run: cd cuttlefish-host-image-installer && ./installer-iso-install.expect successful_install sheeFei2
-    - name: Test if installation is successed1
-      run: cd cuttlefish-host-image-installer && ./installer-iso-extract-partitions.sh
-    - name: Test if installation is successed2
-      run: cd cuttlefish-host-image-installer && e2cp rootfs.img:/home/vsoc-01/successful_install successful_install
-    - name: Test if installation is successed3
-      run: cd cuttlefish-host-image-installer && echo sheeFei2 > successful_install_compare
-    - name: Test if installation is successed5
-      run: cd cuttlefish-host-image-installer && cmp successful_install successful_install_compare
-    - name: Test if AOSP kernel is installed
-      run: cd cuttlefish-host-image-installer && e2ls -l boot.img:/vmlinuz-*aosp*-linaro* && e2cp boot.img:/$(e2ls boot.img:/vmlinuz-*aosp*-linaro* | tail -1) . && test -e vmlinuz-*aosp*-linaro*
-    - name: Test if Cuttlefish Debian packages are installed
-      run: cd cuttlefish-host-image-installer && e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator && e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator | grep cvd_host_orchestrator | grep root
-    - name: Make sure that we do not have home partitions anymore
-      run: cd cuttlefish-host-image-installer && test '!' -e home.img && echo "Test successful"
+    - name: build
+      run: echo "test-release6-job" > CHANGELOG6.md
+    - name: Create Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref_name }}
+      run: |
+        gh release create "$tag" \
+        --repo="$GITHUB_REPOSITORY" \
+        --title="${GITHUB_REPOSITORY#*/} ${tag#v}" \
+        --generate-notes        
