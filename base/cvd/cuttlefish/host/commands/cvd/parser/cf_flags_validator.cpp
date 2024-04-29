@@ -50,9 +50,7 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
         {"security", ConfigNode{.proto_name = "cuttlefish.cvd.config.Security"}},
         {"disk", ConfigNode{.proto_name = "cuttlefish.cvd.config.Disk"}},
         {"graphics", ConfigNode{.proto_name = "cuttlefish.cvd.config.Graphics"}},
-        {"streaming", ConfigNode{.type = objectValue, .children = {
-          {"device_id", ConfigNode{.type = stringValue}},
-        }}},
+        {"streaming", ConfigNode{.proto_name = "cuttlefish.cvd.config.Streaming"}},
         {"connectivity", ConfigNode{.proto_name = "cuttlefish.cvd.config.Connectivity"}}
       }}},
     }}},
