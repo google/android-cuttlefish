@@ -27,6 +27,7 @@
 #include "common/libs/utils/flags_validator.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 namespace {
@@ -38,9 +39,6 @@ using Json::ValueType::objectValue;
 using Json::ValueType::stringValue;
 using Json::ValueType::uintValue;
 
-const auto& kRoot =
-    *new ConfigNode{.proto_name = "cuttlefish.cvd.config.Launch"};
-
 }  // namespace
 
 Result<void> ValidateCfConfigs(const Json::Value& root) {
@@ -48,7 +46,8 @@ Result<void> ValidateCfConfigs(const Json::Value& root) {
       *new std::unordered_set<std::string>{"phone", "tablet", "tv", "wearable",
                                            "auto",  "slim",   "go", "foldable"};
 
-  CF_EXPECT(Validate(root, kRoot), "Validation failure in [root object] ->");
+  cvd::config::Launch launch_config;
+  CF_EXPECT(Validate(root, launch_config), "Validation failure in [root object] ->");
   for (const auto& instance : root["instances"]) {
     // TODO(chadreynolds): update `ExtractLaunchTemplates` to return a Result
     // and check import values there, then remove this check
