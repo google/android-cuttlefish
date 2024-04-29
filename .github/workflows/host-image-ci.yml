@@ -19,6 +19,8 @@
 name: HostImage
 
 on: [pull_request, push]
+  tags:
+    - 'latest'
 
 jobs:
   build-installer-iso-job:
@@ -41,15 +43,17 @@ jobs:
       with:
         name: preseed-mini
         path: cuttlefish-host-image-installer/preseed-mini.iso.xz
-    - name: Upload to the Github release
-      uses: actions/upload-release-asset@v1
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
-        asset_path: cuttlefish-host-image-installer/preseed-mini.iso.xz
-        asset_name: preseed-mini
-        asset_content_type: application/x-xz
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body_path: cuttlefish-host-image-installer/preseed-mini.iso.xz
+        draft: false
+        prerelease: false
 
   build-cuttlefish-deb-job:
     runs-on: ubuntu-latest
@@ -71,16 +75,18 @@ jobs:
       with:
         name: cuttlefish_packages
         path: cuttlefish-host-image-installer/cuttlefish_packages.7z
-    - name: Upload to the Github release
-      uses: actions/upload-release-asset@v1
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
-        asset_path: cuttlefish-host-image-installer/cuttlefish_packages.7z
-        asset_name: cuttlefish_packages
-        asset_content_type: application/x-7z-compressed
-
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body_path: cuttlefish-host-image-installer/cuttlefish_packages.7z
+        draft: false
+        prerelease: false
+        
   build-metapackage-deb-job:
     runs-on: ubuntu-latest
     steps:
@@ -109,15 +115,17 @@ jobs:
       with:
         name: meta_gigamp_packages
         path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
-    - name: Upload to the Github release
-      uses: actions/upload-release-asset@v1
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
-        asset_path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
-        asset_name: meta_gigamp_packages
-        asset_content_type: application/x-7z-compressed
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body_path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
+        draft: false
+        prerelease: false        
 
   build-kernel-aosp14-61-deb-job:
     runs-on: ubuntu-22.04-32core
@@ -148,16 +156,18 @@ jobs:
       with:
         name: aosp_kernel_aosp14_61
         path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
-    - name: Upload to the Github release
-      uses: actions/upload-release-asset@v1
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
-        asset_path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
-        asset_name: aosp_kernel_aosp14_61
-        asset_content_type: application/x-7z-compressed
-
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body_path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
+        draft: false
+        prerelease: false        
+        
   build-kernel-aosp15-61-deb-job:
     runs-on: ubuntu-22.04-32core
     env:
@@ -187,16 +197,18 @@ jobs:
       with:
         name: aosp_kernel_aosp15_61
         path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
-    - name: Upload to the Github release
-      uses: actions/upload-release-asset@v1
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
-        asset_path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
-        asset_name: aosp_kernel_aosp15_61
-        asset_content_type: application/x-7z-compressed
-
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body_path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
+        draft: false
+        prerelease: false        
+        
   build-kernel-aosp15-66-deb-job:
     runs-on: ubuntu-22.04-32core
     env:
@@ -226,16 +238,18 @@ jobs:
       with:
         name: aosp_kernel_aosp15_66
         path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
-    - name: Upload to the Github release
-      uses: actions/upload-release-asset@v1
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
-        asset_path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
-        asset_name: aosp_kernel_aosp15_66
-        asset_content_type: application/x-7z-compressed
-      
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body_path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
+        draft: false
+        prerelease: false        
+        
   build-uboot-qemu-job:
     runs-on: ubuntu-latest
     container:
@@ -261,16 +275,18 @@ jobs:
       with:
         name: u-boot
         path: cuttlefish-host-image-installer/u-boot.bin
-    - name: Upload to the Github release
-      uses: actions/upload-release-asset@v1
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: github.com/google/android-cuttlefish/releases/tag/latest
-        asset_path: cuttlefish-host-image-installer/u-boot.bin
-        asset_name: u-boot
-        asset_content_type: application/binary
-
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body_path: cuttlefish-host-image-installer/u-boot.bin
+        draft: false
+        prerelease: false        
+        
   test-install-cuttlefish-deb-job:
     runs-on: ubuntu-latest
     needs: build-cuttlefish-deb-job
