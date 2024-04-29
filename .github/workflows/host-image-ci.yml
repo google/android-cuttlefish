@@ -93,8 +93,7 @@ jobs:
       with:
         tag_name: latest
         release_name: latest_host_image
-        body: CHANGELOG5
-        .md
+        body: CHANGELOG5.md
         draft: false
         prerelease: false        
 
