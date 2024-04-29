@@ -99,7 +99,8 @@ jobs:
   #      draft: false
   #      prerelease: false        
 
-  #this job works
+  #this job works but will kill everything.
+  #this job create tag name main and it kills everything
   #test-release6-job:
   #  runs-on: ubuntu-latest
   #  steps:
@@ -115,14 +116,14 @@ jobs:
   #      --title="${GITHUB_REPOSITORY#*/} ${tag#v}" \
   #      --generate-notes        
 
-  test-release6-job:
+  test-release7-job:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
     - name: build
-      run: echo "test-release6-job" > CHANGELOG6.md
+      run: echo "test-release7-job" > CHANGELOG7.md
     - name: version
-      run: echo "test-release6-job"
+      run: echo "test-release7-job"
       id: version
     - name: release
       uses: actions/create-release@v1
@@ -130,9 +131,9 @@ jobs:
       with:
         draft: false
         prerelease: false
-        release_name: latest_host_image6
+        release_name: latest_host_image7
         tag_name: latest
-        body_path: CHANGELOG6.md
+        body_path: CHANGELOG7.md
       env:
         GITHUB_TOKEN: ${{ github.token }}
 
