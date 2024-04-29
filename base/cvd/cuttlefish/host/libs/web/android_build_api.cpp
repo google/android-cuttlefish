@@ -103,15 +103,6 @@ std::ostream& operator<<(std::ostream& out, const Build& build) {
   return out;
 }
 
-BuildApi::BuildApi()
-    : BuildApi(HttpClient::CurlClient(), nullptr, kAndroidBuildServiceUrl) {}
-
-BuildApi::BuildApi(std::unique_ptr<HttpClient> http_client,
-                   std::unique_ptr<CredentialSource> credential_source,
-                   std::string api_base_url)
-    : BuildApi(std::move(http_client), nullptr, std::move(credential_source),
-               "", std::chrono::seconds(0), std::move(api_base_url)) {}
-
 BuildApi::BuildApi(std::unique_ptr<HttpClient> http_client,
                    std::unique_ptr<HttpClient> inner_http_client,
                    std::unique_ptr<CredentialSource> credential_source,
