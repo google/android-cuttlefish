@@ -18,6 +18,11 @@ syntax = "proto3";
 
 package cuttlefish.cvd.config;
 
+message Common {
+  optional string group_name = 1;
+  optional string host_package = 2;
+}
+
 message Fetch {
   optional string api_key = 1;
   optional string credential_source = 2;
