@@ -18,6 +18,14 @@ syntax = "proto3";
 
 package cuttlefish.cvd.config;
 
+message Connectivity {
+  optional Vsock vsock = 1;
+}
+
+message Vsock {
+  optional string guest_group = 1;
+}
+
 message Crosvm {
   optional bool enable_sandbox = 1;
 }
