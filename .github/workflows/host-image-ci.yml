@@ -27,6 +27,9 @@ jobs:
       image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
     env:
       DEBIAN_ISO_URL: https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso
+    permissions:
+      id-token: write
+      contents: write
     steps:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
@@ -55,6 +58,9 @@ jobs:
 
   build-cuttlefish-deb-job:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write    
     steps:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
@@ -87,6 +93,9 @@ jobs:
         
   build-metapackage-deb-job:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write    
     steps:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
@@ -127,6 +136,9 @@ jobs:
 
   build-kernel-aosp14-61-deb-job:
     runs-on: ubuntu-22.04-32core
+    permissions:
+      id-token: write
+      contents: write    
     env:
       KERNEL_MANIFEST_URL: https://android.googlesource.com/kernel/manifest/
       KERNEL_MANIFEST_BRANCH: common-android14-6.1
@@ -168,6 +180,9 @@ jobs:
         
   build-kernel-aosp15-61-deb-job:
     runs-on: ubuntu-22.04-32core
+    permissions:
+      id-token: write
+      contents: write    
     env:
       KERNEL_MANIFEST_URL: https://android.googlesource.com/kernel/manifest/
       KERNEL_MANIFEST_BRANCH: common-android15-6.1
@@ -209,6 +224,9 @@ jobs:
         
   build-kernel-aosp15-66-deb-job:
     runs-on: ubuntu-22.04-32core
+    permissions:
+      id-token: write
+      contents: write    
     env:
       KERNEL_MANIFEST_URL: https://android.googlesource.com/kernel/manifest/
       KERNEL_MANIFEST_BRANCH: common-android15-6.6
@@ -250,6 +268,9 @@ jobs:
         
   build-uboot-qemu-job:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write    
     container:
       image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
     env:
