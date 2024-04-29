@@ -22,6 +22,18 @@ message Crosvm {
   optional bool enable_sandbox = 1;
 }
 
+message Graphics {
+  repeated Display displays = 1;
+  optional bool record_screen = 2;
+}
+
+message Display {
+  optional uint32 width = 1;
+  optional uint32 height = 2;
+  optional uint32 dpi = 3;
+  optional uint32 refresh_rate_hertz = 4;
+}
+
 message Security {
   optional string serial_number = 1;
   optional string use_random_serial = 2;
