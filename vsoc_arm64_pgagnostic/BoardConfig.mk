@@ -53,6 +53,8 @@ HOST_CROSS_2ND_ARCH :=
 -include device/google/cuttlefish/shared/telephony/BoardConfig.mk
 -include device/google/cuttlefish/shared/virgl/BoardConfig.mk
 
+BOARD_16K_OTA_MOVE_VENDOR := true
+
 BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE := erofs
 BOARD_SYSTEMIMAGE_EROFS_BLOCKSIZE := 16384
 BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE := erofs
