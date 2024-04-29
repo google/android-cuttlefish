@@ -145,7 +145,8 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds)
+	execCtx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, creds)
 	opts := FetchArtifactsActionOpts{
 		Request:          &req,
 		Paths:            h.Config.Paths,
@@ -182,7 +183,8 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds)
+	execCtx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, creds)
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
