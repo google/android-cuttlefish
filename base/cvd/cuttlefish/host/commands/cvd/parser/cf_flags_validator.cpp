@@ -38,27 +38,8 @@ using Json::ValueType::objectValue;
 using Json::ValueType::stringValue;
 using Json::ValueType::uintValue;
 
-const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
-  {"netsim_bt", ConfigNode{.type = booleanValue}},
-  {"netsim_uwb", ConfigNode{.type = booleanValue}},
-  {"instances", ConfigNode{.type = arrayValue, .children = {
-    {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-        {"@import", ConfigNode{.type = stringValue}},
-        {"name", ConfigNode{.type = stringValue}},
-        {"vm", ConfigNode{.proto_name = "cuttlefish.cvd.config.Vm"}},
-        {"boot", ConfigNode{.proto_name = "cuttlefish.cvd.config.Boot"}},
-        {"security", ConfigNode{.proto_name = "cuttlefish.cvd.config.Security"}},
-        {"disk", ConfigNode{.proto_name = "cuttlefish.cvd.config.Disk"}},
-        {"graphics", ConfigNode{.proto_name = "cuttlefish.cvd.config.Graphics"}},
-        {"streaming", ConfigNode{.proto_name = "cuttlefish.cvd.config.Streaming"}},
-        {"connectivity", ConfigNode{.proto_name = "cuttlefish.cvd.config.Connectivity"}}
-      }}},
-    }}},
-  {"fetch", ConfigNode{.proto_name = "cuttlefish.cvd.config.Fetch"}},
-  {"metrics", ConfigNode{.proto_name = "cuttlefish.cvd.config.Metrics"}},
-  {"common", ConfigNode{.proto_name = "cuttlefish.cvd.config.Common"}},
-},
-};
+const auto& kRoot =
+    *new ConfigNode{.proto_name = "cuttlefish.cvd.config.Launch"};
 
 }  // namespace
 
