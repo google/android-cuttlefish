@@ -18,6 +18,15 @@ syntax = "proto3";
 
 package cuttlefish.cvd.config;
 
+message Fetch {
+  optional string api_key = 1;
+  optional string credential_source = 2;
+  optional uint32 wait_retry_period = 3;
+  optional bool external_dns_resolver = 4;
+  optional bool keep_downloaded_archives = 5;
+  optional string api_base_url = 6;
+}
+
 message Boot {
   optional Build kernel = 1;
   optional bool enable_bootanimation = 2;
