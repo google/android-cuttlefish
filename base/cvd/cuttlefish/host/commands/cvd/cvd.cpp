@@ -32,7 +32,7 @@ namespace cuttlefish {
 namespace {
 [[noreturn]] void CallPythonAcloud(std::vector<std::string>& args) {
   auto android_top = StringFromEnv("ANDROID_BUILD_TOP", "");
-  CHECK(android_top == "") << "Could not find android environment. Please run "
+  CHECK(android_top != "") << "Could not find android environment. Please run "
                            << "\"source build/envsetup.sh\".";
   // TODO(b/206893146): Detect what the platform actually is.
   auto py_acloud_path =
