@@ -19,8 +19,6 @@
 name: HostImage
 
 on: [pull_request, push]
-  tags:
-    - 'latest'
 
 jobs:
   build-installer-iso-job:
