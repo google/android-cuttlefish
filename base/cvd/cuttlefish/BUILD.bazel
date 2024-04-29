@@ -151,6 +151,16 @@ cc_proto_library(
     deps = [":cvd_persistent_data_proto"],
 )
 
+proto_library(
+    name = "load_config_proto",
+    srcs = ["host/commands/cvd/parser/load_config.proto"],
+)
+
+cc_proto_library(
+    name = "load_config_cc_proto",
+    deps = [":load_config_proto"],
+)
+
 cc_library(
     name = "libcvd",
     srcs = [
@@ -450,6 +460,7 @@ cc_library(
         ":cvd_server_cc_proto",
         ":internal_config_cc_proto",
         ":launch_cvd_cc_proto",
+        ":load_config_cc_proto",
         ":user_config_cc_proto",
         "//:build_version_header",
         "//libbase",
