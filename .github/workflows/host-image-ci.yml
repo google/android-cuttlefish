@@ -116,15 +116,33 @@ jobs:
   #      --title="${GITHUB_REPOSITORY#*/} ${tag#v}" \
   #      --generate-notes        
 
-  test-release7-job:
+  #test-release7-job:
+  #  runs-on: ubuntu-latest
+  #  permissions: write-all
+  #  steps:
+  #  - name: build
+  #    run: echo "test-release7-job" > CHANGELOG7.md
+  #  - name: version
+  #    run: echo "test-release7-job"
+  #    id: version
+  #  - name: release
+  #    uses: actions/create-release@v1
+  #    id: create_release
+  #    with:
+  #      draft: false
+  #      prerelease: false
+  #      release_name: latest_host_image7
+  #      tag_name: latest
+  #      body_path: CHANGELOG7.md
+  #    env:
+  #      GITHUB_TOKEN: ${{ github.token }}
+
+  test-release8-job:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
     - name: build
-      run: echo "test-release7-job" > CHANGELOG7.md
-    - name: version
-      run: echo "test-release7-job"
-      id: version
+      run: echo "test-release8-job" > CHANGELOG8.md
     - name: release
       uses: actions/create-release@v1
       id: create_release
@@ -136,6 +154,11 @@ jobs:
         body_path: CHANGELOG7.md
       env:
         GITHUB_TOKEN: ${{ github.token }}
-
-
-  
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      id: upload-release-asset
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: ./CHANGELOG8.md
+        asset_name: CHANGELOG8.md
+        asset_content_type: application/zip
