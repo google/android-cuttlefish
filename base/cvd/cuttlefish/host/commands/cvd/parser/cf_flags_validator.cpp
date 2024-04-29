@@ -56,14 +56,7 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
         {"connectivity", ConfigNode{.proto_name = "cuttlefish.cvd.config.Connectivity"}}
       }}},
     }}},
-  {"fetch", ConfigNode{.type = objectValue, .children = {
-      {"api_key", ConfigNode{.type = stringValue}},
-      {"credential_source", ConfigNode{.type = stringValue}},
-      {"wait_retry_period", ConfigNode{.type = uintValue}},
-      {"external_dns_resolver", ConfigNode{.type = booleanValue}},
-      {"keep_downloaded_archives", ConfigNode{.type = booleanValue}},
-      {"api_base_url", ConfigNode{.type = stringValue}},
-    }}},
+  {"fetch", ConfigNode{.proto_name = "cuttlefish.cvd.config.Fetch"}},
   {"metrics", ConfigNode{.type = objectValue, .children = {
       {"enable", ConfigNode{.type = booleanValue}},
     }}},
