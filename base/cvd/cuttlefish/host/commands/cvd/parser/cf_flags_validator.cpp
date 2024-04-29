@@ -99,17 +99,7 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
           {"blank_data_image_mb", ConfigNode{.type = uintValue}},
           {"otatools", ConfigNode{.type = stringValue}},
         }}},
-        {"graphics", ConfigNode{.type = objectValue, .children = {
-          {"displays", ConfigNode{.type = arrayValue, .children = {
-            {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children {
-              {"width", ConfigNode{.type = uintValue}},
-              {"height", ConfigNode{.type = uintValue}},
-              {"dpi", ConfigNode{.type = uintValue}},
-              {"refresh_rate_hertz", ConfigNode{.type = uintValue}},
-            }}},
-          }}},
-          {"record_screen", ConfigNode{.type = booleanValue}},
-        }}},
+        {"graphics", ConfigNode{.proto_name = "cuttlefish.cvd.config.Graphics"}},
         {"streaming", ConfigNode{.type = objectValue, .children = {
           {"device_id", ConfigNode{.type = stringValue}},
         }}},
