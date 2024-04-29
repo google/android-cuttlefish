@@ -57,9 +57,7 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
       }}},
     }}},
   {"fetch", ConfigNode{.proto_name = "cuttlefish.cvd.config.Fetch"}},
-  {"metrics", ConfigNode{.type = objectValue, .children = {
-      {"enable", ConfigNode{.type = booleanValue}},
-    }}},
+  {"metrics", ConfigNode{.proto_name = "cuttlefish.cvd.config.Metrics"}},
   {"common", ConfigNode{.type = objectValue, .children = {
     {"group_name", ConfigNode{.type = stringValue}},
     {"host_package", ConfigNode{.type = stringValue}},

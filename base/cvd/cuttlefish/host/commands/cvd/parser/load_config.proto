@@ -111,3 +111,6 @@ message DeviceState {
   optional int32 hinge_angle_value = 2;
 }
 
+message Metrics {
+  optional bool enable = 1;
+}
