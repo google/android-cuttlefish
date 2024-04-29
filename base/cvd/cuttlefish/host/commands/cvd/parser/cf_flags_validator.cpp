@@ -88,11 +88,7 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
             {"build", ConfigNode{.type = stringValue}},
           }}},
         }}},
-        {"security", ConfigNode{.type = objectValue, .children = {
-          {"serial_number", ConfigNode{.type = stringValue}},
-          {"use_random_serial", ConfigNode{.type = stringValue}},
-          {"guest_enforce_security", ConfigNode{.type = booleanValue}},
-        }}},
+        {"security", ConfigNode{.proto_name = "cuttlefish.cvd.config.Security"}},
         {"disk", ConfigNode{.type = objectValue, .children = {
           {"default_build", ConfigNode{.type = stringValue}},
           {"super", ConfigNode{.type = objectValue, .children = {
