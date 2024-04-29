@@ -81,7 +81,7 @@ Result<void> Cvd::HandleCvdCommand(
   const cvd_common::Args new_cmd_args{"cvd", "process"};
   CF_EXPECT(!all_args.empty());
   const cvd_common::Args new_selector_args{all_args.begin(), all_args.end()};
-  // TODO(schuffelen): Deduplicate when calls to setenv are removed.
+  // TODO(schuffelen): Deduplicate cvd process split.
   CF_EXPECT(HandleCommand(new_cmd_args, env, new_selector_args));
   return {};
 }
