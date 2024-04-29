@@ -57,17 +57,17 @@ sudo mkdir ${mount_point}
 # starts and `512` bytes is the sectors size. See `sudo fdisk -l disk.raw`.
 sudo mount -o loop,offset=$((262144 * 512)) ${diskraw} ${mount_point}
 
-cp ${packages_dir}/cuttlefish-base_0.9.28_amd64.deb ${mount_point}/tmp/
-cp ${packages_dir}/cuttlefish-user_0.9.29_amd64.deb ${mount_point}/tmp/
-cp ${packages_dir}/cuttlefish-orchestration_0.9.29_amd64.deb ${mount_point}/tmp/
+cp ${packages_dir}/cuttlefish-base_*_amd64.deb ${mount_point}/tmp/
+cp ${packages_dir}/cuttlefish-user_*_amd64.deb ${mount_point}/tmp/
+cp ${packages_dir}/cuttlefish-orchestration_*_amd64.deb ${mount_point}/tmp/
 
 sudo chroot /mnt/image mkdir /run/resolvconf
 sudo cp /etc/resolv.conf /mnt/image/run/resolvconf/resolv.conf
 
 sudo chroot ${mount_point} apt update
-sudo chroot ${mount_point} apt install -y /tmp/cuttlefish-base_0.9.28_amd64.deb
-sudo chroot ${mount_point} apt install -y /tmp/cuttlefish-user_0.9.29_amd64.deb
-sudo chroot ${mount_point} apt install -y /tmp/cuttlefish-orchestration_0.9.29_amd64.deb
+sudo chroot ${mount_point} bash -c 'apt install -y /tmp/cuttlefish-base_*_amd64.deb'
+sudo chroot ${mount_point} bash -c 'apt install -y /tmp/cuttlefish-user_*_amd64.deb'
+sudo chroot ${mount_point} bash -c 'apt install -y /tmp/cuttlefish-orchestration_*_amd64.deb'
 
 sudo rm -r ${mount_point}/run/resolvconf
 

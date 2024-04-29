@@ -20,24 +20,23 @@
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
+#include "host/commands/cvd/selector/instance_group_record.h"
 
 namespace cuttlefish {
 namespace selector {
 
-class LocalInstanceGroup;
+struct InstanceGroupInfo;
 
 /**
- * TODO(kwstephenkim): add more methods, fields, and abstract out Instance
- *
  * Needs design changes to support both Remote and Local Instances
  */
 class LocalInstance {
-  friend class LocalInstanceGroup;
-  friend class InstanceDatabase;
-
  public:
   static constexpr const char kJsonInstanceId[] = "Instance Id";
   static constexpr const char kJsonInstanceName[] = "Per-Instance Name";
+
+  LocalInstance(const InstanceGroupInfo& parent_group,
+                const unsigned instance_id, const std::string& instance_name);
 
   /* names:
    *
@@ -49,74 +48,17 @@ class LocalInstance {
    *
    */
   const std::string& InternalName() const;
-  std::string InternalDeviceName() const;
 
   unsigned InstanceId() const;
   const std::string& PerInstanceName() const;
   std::string DeviceName() const;
-
-  const LocalInstanceGroup& ParentGroup() const;
-
-  class Copy {
-    friend class LocalInstance;
-    struct MockParentParam {
-      std::string home_dir;
-      std::string host_artifacts_path;
-      std::string internal_group_name;
-      std::string group_name;
-      TimeStamp start_time;
-    };
-
-   public:
-    /* when Copy is used, it is already disconnected from the original parent
-     * group. Thus, it should carry the snapshot of needed information about
-     * the parent group
-     */
-    class MockParent {
-     public:
-      MockParent(const MockParentParam&);
-      const std::string& InternalGroupName() const {
-        return internal_group_name_;
-      }
-      const std::string& GroupName() const { return group_name_; }
-      const std::string& HomeDir() const { return home_dir_; }
-      const std::string& HostArtifactsPath() const {
-        return host_artifacts_path_;
-      }
-      auto StartTime() const { return start_time_; }
-
-     private:
-      std::string home_dir_;
-      std::string host_artifacts_path_;
-      std::string internal_group_name_;
-      std::string group_name_;
-      TimeStamp start_time_;
-    };
-    Copy(const LocalInstance& src);
-    const std::string& InternalName() const { return internal_name_; }
-    const std::string& InternalDeviceName() const {
-      return internal_device_name_;
-    }
-    unsigned InstanceId() const { return instance_id_; }
-    const std::string& PerInstanceName() const { return per_instance_name_; }
-    const std::string& DeviceName() const { return device_name_; }
-    const MockParent& ParentGroup() const { return mock_group_; }
-
-   private:
-    std::string internal_name_;
-    std::string internal_device_name_;
-    unsigned instance_id_;
-    std::string per_instance_name_;
-    std::string device_name_;
-    MockParent mock_group_;
-  };
-  Copy GetCopy() const;
-
+  std::string InternalDeviceName() const {
+    return internal_device_name_;
+  }
+  const InstanceGroupInfo& GroupInfo() const {
+    return group_info_;
+  }
  private:
-  LocalInstance(const LocalInstanceGroup& parent_group,
-                const unsigned instance_id, const std::string& instance_name);
-
-  const LocalInstanceGroup& parent_group_;
   unsigned instance_id_;
   std::string internal_name_;  ///< for now, it is to_string(instance_id_)
   /** the instance specific name to be appended to the group name
@@ -126,6 +68,11 @@ class LocalInstance {
    * instance
    */
   std::string per_instance_name_;
+
+  // Group specific information, repeated here because sometimes instances are
+  // accessed outside of their group
+  std::string internal_device_name_;
+  InstanceGroupInfo group_info_;
 };
 
 }  // namespace selector

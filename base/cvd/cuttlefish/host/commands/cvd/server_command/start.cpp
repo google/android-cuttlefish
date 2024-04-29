@@ -130,9 +130,8 @@ class CvdStartCommandHandler : public CvdServerHandler {
 
   // call this only if !is_help
   Result<selector::GroupCreationInfo> GetGroupCreationInfo(
-      const std::string& start_bin, const std::string& subcmd,
-      const cvd_common::Args& subcmd_args, const cvd_common::Envs& envs,
-      const RequestWithStdio& request);
+      const std::string& start_bin, const cvd_common::Args& subcmd_args,
+      const cvd_common::Envs& envs, const RequestWithStdio& request);
 
   Result<cvd::Response> FillOutNewInstanceInfo(
       cvd::Response&& response,
@@ -401,9 +400,8 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
 // call this only if !is_help
 Result<selector::GroupCreationInfo>
 CvdStartCommandHandler::GetGroupCreationInfo(
-    const std::string& start_bin, const std::string& subcmd,
-    const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
-    const RequestWithStdio& request) {
+    const std::string& start_bin, const std::vector<std::string>& subcmd_args,
+    const cvd_common::Envs& envs, const RequestWithStdio& request) {
   using CreationAnalyzerParam =
       selector::CreationAnalyzer::CreationAnalyzerParam;
   const auto& selector_opts =
@@ -413,7 +411,7 @@ CvdStartCommandHandler::GetGroupCreationInfo(
       .cmd_args = subcmd_args, .envs = envs, .selector_args = selector_args};
   auto cred = CF_EXPECT(request.Credentials());
   auto group_creation_info =
-      CF_EXPECT(instance_manager_.Analyze(subcmd, analyzer_param, cred));
+      CF_EXPECT(instance_manager_.Analyze(analyzer_param, cred));
   auto final_group_creation_info =
       CF_EXPECT(UpdateArgsAndEnvs(std::move(group_creation_info), start_bin));
   return final_group_creation_info;
@@ -654,7 +652,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   std::optional<selector::GroupCreationInfo> group_creation_info;
   if (!is_help) {
     group_creation_info = CF_EXPECT(
-        GetGroupCreationInfo(bin, subcmd, subcmd_args, envs, request));
+        GetGroupCreationInfo(bin, subcmd_args, envs, request));
     CF_EXPECT(UpdateInstanceDatabase(*group_creation_info));
     response = CF_EXPECT(
         FillOutNewInstanceInfo(std::move(response), *group_creation_info));

@@ -43,4 +43,10 @@ cvd_load_boot_test(
   env_file="environment_specs/aosp_main_x64_phone.json",
 )
 
+cvd_load_boot_test(
+  name="load_aosp_main_x64_phone_x2",
+  env_file="environment_specs/aosp_main_x64_phone_x2.json",
+  size="enormous",
+)
+
 # TODO(b/329100411) test loading older branches

@@ -124,36 +124,6 @@ BuildApi::BuildApi(std::unique_ptr<HttpClient> http_client,
       retry_period_(retry_period),
       api_base_url_(std::move(api_base_url)) {}
 
-Result<void> BuildApi::ArtifactToCallback(const DeviceBuild& build,
-                                          const std::string& artifact,
-                                          HttpClient::DataCallback callback) {
-  std::string download_url_endpoint =
-      api_base_url_ + "/builds/" + http_client->UrlEscape(build.id) + "/" +
-      http_client->UrlEscape(build.target) + "/attempts/latest/artifacts/" +
-      http_client->UrlEscape(artifact) + "/url";
-  if (!api_key_.empty()) {
-    download_url_endpoint += "?key=" + http_client->UrlEscape(api_key_);
-  }
-  auto response = CF_EXPECT(
-      http_client->DownloadToJson(download_url_endpoint, CF_EXPECT(Headers())));
-  const auto& json = response.data;
-  CF_EXPECT(response.HttpSuccess() || response.HttpRedirect(),
-            "Error fetching the url of \"" << artifact << "\" for \"" << build
-                                           << "\". The server response was \""
-                                           << json << "\", and code was "
-                                           << response.http_code);
-  CF_EXPECT(!json.isMember("error"),
-            "Response had \"error\" but had http success status. "
-                << "Received \"" << json << "\"");
-  CF_EXPECT(json.isMember("signedUrl"),
-            "URL endpoint did not have json path: " << json);
-  std::string url = json["signedUrl"].asString();
-  auto callback_response =
-      CF_EXPECT(http_client->DownloadToCallback(callback, url));
-  CF_EXPECT(IsHttpSuccess(callback_response.http_code));
-  return {};
-}
-
 Result<Build> BuildApi::GetBuild(const DeviceBuildString& build_string,
                                  const std::string& fallback_target) {
   auto proposed_build = DeviceBuild(

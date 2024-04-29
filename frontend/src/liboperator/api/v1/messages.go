@@ -187,6 +187,8 @@ type CVD struct {
 	Displays []string `json:"displays"`
 	// [Output Only]
 	WebRTCDeviceID string `json:"webrtc_device_id"`
+	// [Output Only]
+	ADBSerial string `json:"adb_serial"`
 }
 
 // Identifier within the whole fleet. Format: "{group}/{name}".
@@ -217,4 +219,7 @@ type ListUploadDirectoriesResponse struct {
 	Items []*UploadDirectory `json:"items"`
 }
 
-type StopCVDResponse struct{}
+type EmptyResponse struct{}
+
+type StopCVDResponse = EmptyResponse
+

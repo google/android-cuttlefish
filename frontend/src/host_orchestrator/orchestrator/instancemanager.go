@@ -129,6 +129,7 @@ type cvdInstance struct {
 	Displays       []string `json:"displays"`
 	InstanceDir    string   `json:"instance_dir"`
 	WebRTCDeviceID string   `json:"webrtc_device_id"`
+	ADBSerial      string   `json:"adb_serial"`
 }
 
 func (i *cvdInstance) toAPIObject(group string) *apiv1.CVD {
@@ -140,6 +141,7 @@ func (i *cvdInstance) toAPIObject(group string) *apiv1.CVD {
 		Status:         i.Status,
 		Displays:       i.Displays,
 		WebRTCDeviceID: i.WebRTCDeviceID,
+		ADBSerial:      i.ADBSerial,
 	}
 }
 

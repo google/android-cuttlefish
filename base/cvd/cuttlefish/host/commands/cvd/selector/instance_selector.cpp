@@ -95,7 +95,7 @@ bool InstanceSelector::IsHomeOverridden(
   return *home_overridden_result;
 }
 
-Result<LocalInstance::Copy> InstanceSelector::FindInstance(
+Result<LocalInstance> InstanceSelector::FindInstance(
     const InstanceDatabase& instance_database) {
   if (queries_.empty()) {
     auto default_instance = CF_EXPECT(FindDefaultInstance(instance_database));
@@ -105,16 +105,16 @@ Result<LocalInstance::Copy> InstanceSelector::FindInstance(
   auto instances = CF_EXPECT(instance_database.FindInstances(queries_));
   CF_EXPECT(instances.size() == 1, "instances.size() = " << instances.size());
   auto& instance = *(instances.cbegin());
-  return instance.Get().GetCopy();
+  return instance;
 }
 
-Result<LocalInstance::Copy> InstanceSelector::FindDefaultInstance(
+Result<LocalInstance> InstanceSelector::FindDefaultInstance(
     const InstanceDatabase& instance_database) {
   auto group = CF_EXPECT(GetDefaultGroup(instance_database));
-  const auto instances = CF_EXPECT(group.FindAllInstances());
+  const auto instances = group.Instances();
   CF_EXPECT_EQ(instances.size(), 1,
                "Default instance is the single instance in the default group.");
-  return instances.cbegin()->Get().GetCopy();
+  return *instances.cbegin();
 }
 
 }  // namespace selector

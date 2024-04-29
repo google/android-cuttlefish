@@ -17,65 +17,33 @@
 #include "host/commands/cvd/selector/instance_record.h"
 
 #include "host/commands/cvd/selector/instance_database_utils.h"
-#include "host/commands/cvd/selector/instance_group_record.h"
 
 namespace cuttlefish {
 namespace selector {
 
-LocalInstance::LocalInstance(const LocalInstanceGroup& parent_group,
+LocalInstance::LocalInstance(const InstanceGroupInfo& parent_group,
                              const unsigned instance_id,
                              const std::string& instance_name)
-    : parent_group_(parent_group),
-      instance_id_(instance_id),
+    : instance_id_(instance_id),
       internal_name_(std::to_string(instance_id_)),
-      per_instance_name_(instance_name) {}
+      per_instance_name_(instance_name),
+      internal_device_name_(
+          LocalDeviceNameRule(GenInternalGroupName(), internal_name_)),
+      group_info_(parent_group) {}
 
 unsigned LocalInstance::InstanceId() const { return instance_id_; }
-
-std::string LocalInstance::InternalDeviceName() const {
-  return LocalDeviceNameRule(parent_group_.InternalGroupName(), internal_name_);
-}
 
 const std::string& LocalInstance::InternalName() const {
   return internal_name_;
 }
 
 std::string LocalInstance::DeviceName() const {
-  return LocalDeviceNameRule(parent_group_.GroupName(), per_instance_name_);
+  return LocalDeviceNameRule(group_info_.group_name, per_instance_name_);
 }
 
 const std::string& LocalInstance::PerInstanceName() const {
   return per_instance_name_;
 }
-
-const LocalInstanceGroup& LocalInstance::ParentGroup() const {
-  return parent_group_;
-}
-
-LocalInstance::Copy LocalInstance::GetCopy() const {
-  Copy copy(*this);
-  return copy;
-}
-
-LocalInstance::Copy::Copy(const LocalInstance& src)
-    : internal_name_{src.InternalName()},
-      internal_device_name_{src.InternalDeviceName()},
-      instance_id_{src.InstanceId()},
-      per_instance_name_{src.PerInstanceName()},
-      device_name_{src.DeviceName()},
-      mock_group_{MockParentParam{
-          .home_dir = src.ParentGroup().HomeDir(),
-          .host_artifacts_path = src.ParentGroup().HostArtifactsPath(),
-          .internal_group_name = src.ParentGroup().InternalGroupName(),
-          .group_name = src.ParentGroup().GroupName(),
-          .start_time = src.ParentGroup().StartTime()}} {}
-
-LocalInstance::Copy::MockParent::MockParent(const MockParentParam& params)
-    : home_dir_{params.home_dir},
-      host_artifacts_path_{params.host_artifacts_path},
-      internal_group_name_{params.internal_group_name},
-      group_name_{params.group_name},
-      start_time_{params.start_time} {}
 
 }  // namespace selector
 }  // namespace cuttlefish

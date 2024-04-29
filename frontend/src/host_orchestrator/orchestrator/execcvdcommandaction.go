@@ -22,7 +22,8 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
-type StopCVDActionOpts struct {
+type ExecCVDCommandActionOpts struct {
+	Command          string
 	Selector         CVDSelector
 	Paths            IMPaths
 	OperationManager OperationManager
@@ -30,15 +31,17 @@ type StopCVDActionOpts struct {
 	CVDUser          string
 }
 
-type StopCVDAction struct {
+type ExecCVDCommandAction struct {
+	command     string
 	selector    CVDSelector
 	paths       IMPaths
 	om          OperationManager
 	execContext cvd.CVDExecContext
 }
 
-func NewStopCVDAction(opts StopCVDActionOpts) *StopCVDAction {
-	return &StopCVDAction{
+func NewExecCVDCommandAction(opts ExecCVDCommandActionOpts) *ExecCVDCommandAction {
+	return &ExecCVDCommandAction{
+		command:     opts.Command,
 		selector:    opts.Selector,
 		paths:       opts.Paths,
 		om:          opts.OperationManager,
@@ -46,7 +49,7 @@ func NewStopCVDAction(opts StopCVDActionOpts) *StopCVDAction {
 	}
 }
 
-func (a *StopCVDAction) Run() (apiv1.Operation, error) {
+func (a *ExecCVDCommandAction) Run() (apiv1.Operation, error) {
 	op := a.om.New()
 	go func(op apiv1.Operation) {
 		result := &OperationResult{}
@@ -58,12 +61,12 @@ func (a *StopCVDAction) Run() (apiv1.Operation, error) {
 	return op, nil
 }
 
-func (a *StopCVDAction) exec(op apiv1.Operation) (*apiv1.StopCVDResponse, error) {
+func (a *ExecCVDCommandAction) exec(op apiv1.Operation) (*apiv1.EmptyResponse, error) {
 	args := a.selector.ToCVDCLI()
-	args = append(args, "stop")
+	args = append(args, a.command)
 	cmd := cvd.NewCommand(a.execContext, args, cvd.CommandOpts{})
 	if err := cmd.Run(); err != nil {
-		return nil, operator.NewInternalError("cvd stop failed", err)
+		return nil, operator.NewInternalError("cvd "+a.command+" failed", err)
 	}
-	return &apiv1.StopCVDResponse{}, nil
+	return &apiv1.EmptyResponse{}, nil
 }

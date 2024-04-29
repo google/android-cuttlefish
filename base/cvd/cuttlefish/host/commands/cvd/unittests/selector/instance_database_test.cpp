@@ -21,6 +21,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
+#include "common/libs/utils/result_matchers.h"
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/unittests/selector/instance_database_helper.h"
@@ -53,8 +54,9 @@ TEST_F(CvdInstanceDatabaseTest, Empty) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  ASSERT_TRUE(db.IsEmpty());
-  ASSERT_TRUE(db.InstanceGroups().empty());
+  ASSERT_THAT(db.IsEmpty(), IsOkAndValue(true));
+  auto group_res = db.InstanceGroups();
+  ASSERT_TRUE(group_res.ok() && (*group_res).empty());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
@@ -80,19 +82,22 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
       db.AddInstanceGroup({.group_name = "meow",
                            .home_dir = home,
                            .host_artifacts_path = "/path/to/never/exists",
-                           .product_out_path = "/path/to/never/exists"});
+                           .product_out_path = "/path/to/never/exists"},
+                          {{.id = 1, .name = "name"}});
   auto result_bad_group_name =
       db.AddInstanceGroup({.group_name = "0invalid_group_name",
                            .home_dir = home,
                            .host_artifacts_path = HostArtifactsPath(),
-                           .product_out_path = HostArtifactsPath()});
+                           .product_out_path = HostArtifactsPath()},
+                          {{.id = 2, .name = "name"}});
   // Everything is correct but one thing: the host artifacts directory does not
   // have host tool files such as launch_cvd
   auto result_non_qualifying_host_tool_dir =
       db.AddInstanceGroup({.group_name = "meow",
                            .home_dir = home,
                            .host_artifacts_path = invalid_host_artifacts_path,
-                           .product_out_path = invalid_host_artifacts_path});
+                           .product_out_path = invalid_host_artifacts_path},
+                          {{.id = 3, .name = "name"}});
 
   ASSERT_FALSE(result_bad_host_bin_dir.ok());
   ASSERT_FALSE(result_bad_group_name.ok());
@@ -116,12 +121,14 @@ TEST_F(CvdInstanceDatabaseTest, AddWithValidGroupInfo) {
   ASSERT_TRUE(db.AddInstanceGroup({.group_name = "meow",
                                    .home_dir = home0,
                                    .host_artifacts_path = HostArtifactsPath(),
-                                   .product_out_path = HostArtifactsPath()})
+                                   .product_out_path = HostArtifactsPath()},
+                                  {{.id = 1, .name = "name"}})
                   .ok());
   ASSERT_TRUE(db.AddInstanceGroup({.group_name = "miaou",
                                    .home_dir = home1,
                                    .host_artifacts_path = HostArtifactsPath(),
-                                   .product_out_path = HostArtifactsPath()})
+                                   .product_out_path = HostArtifactsPath()},
+                                  {{.id = 2, .name = "name"}})
                   .ok());
 }
 
@@ -138,12 +145,14 @@ TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
   ASSERT_TRUE(db.AddInstanceGroup({.group_name = "meow",
                                    .home_dir = home,
                                    .host_artifacts_path = HostArtifactsPath(),
-                                   .product_out_path = HostArtifactsPath()})
+                                   .product_out_path = HostArtifactsPath()},
+                                  {{.id = 1, .name = "name"}})
                   .ok());
   ASSERT_FALSE(db.AddInstanceGroup({.group_name = "meow",
                                     .home_dir = home,
                                     .host_artifacts_path = HostArtifactsPath(),
-                                    .product_out_path = HostArtifactsPath()})
+                                    .product_out_path = HostArtifactsPath()},
+                                   {{.id = 2, .name = "name"}})
                    .ok());
 }
 
@@ -153,28 +162,30 @@ TEST_F(CvdInstanceDatabaseTest, Clear) {
    *   HostArtifactsPath: Workspace() + "/" + "android_host_out"
    *   group_ := LocalInstanceGroup(name, HOME, HostArtifactsPath)
    */
-  if (!SetUpOk() || !AddGroups({"nyah", "yah_ong"})) {
+  if (!SetUpOk() || !AddGroup("nyah", {{.id = 1, .name = "name"}}) ||
+      !AddGroup("yah_ong", {{.id = 2, .name = "name"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
 
   // test Clear()
-  ASSERT_FALSE(db.IsEmpty());
-  db.Clear();
-  ASSERT_TRUE(db.IsEmpty());
+  ASSERT_THAT(db.IsEmpty(), IsOkAndValue(false));
+  ASSERT_TRUE(db.Clear().ok());
+  ASSERT_THAT(db.IsEmpty(), IsOkAndValue(true));
 }
 
 TEST_F(CvdInstanceDatabaseTest, SearchGroups) {
-  if (!SetUpOk() || !AddGroups({"myau", "miau"})) {
+  if (!SetUpOk() || !AddGroup("myau", {{.id = 1, .name = "name"}}) ||
+      !AddGroup("miau", {{.id = 1, .name = "name"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
   const std::string valid_home_search_key{Workspace() + "/" + "myau"};
   const std::string invalid_home_search_key{"/no/such/path"};
 
-  auto valid_groups = db.FindGroups({kHomeField, valid_home_search_key});
+  auto valid_groups = db.FindGroups(Query{kHomeField, valid_home_search_key});
   auto valid_group = db.FindGroup({kHomeField, valid_home_search_key});
-  auto invalid_groups = db.FindGroups({kHomeField, invalid_home_search_key});
+  auto invalid_groups = db.FindGroups(Query{kHomeField, invalid_home_search_key});
   auto invalid_group = db.FindGroup({kHomeField, invalid_home_search_key});
 
   ASSERT_TRUE(valid_groups.ok());
@@ -191,7 +202,9 @@ TEST_F(CvdInstanceDatabaseTest, RemoveGroup) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  if (!AddGroups({"miaaaw", "meow", "mjau"})) {
+  if (!AddGroup("miaaaw", {{.id = 1, .name = "name"}}) ||
+      !AddGroup("meow", {{.id = 2, .name = "name"}}) ||
+      !AddGroup("mjau", {{.id = 3, .name = "name"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto eng_group = db.FindGroup({kHomeField, Workspace() + "/" + "meow"});
@@ -200,45 +213,39 @@ TEST_F(CvdInstanceDatabaseTest, RemoveGroup) {
                  << " group was not found.";
   }
 
-  ASSERT_TRUE(db.RemoveInstanceGroup(*eng_group));
-  ASSERT_FALSE(db.RemoveInstanceGroup(*eng_group));
+  ASSERT_THAT(db.RemoveInstanceGroup(eng_group->GroupName()),
+              IsOkAndValue(true));
+  ASSERT_THAT(db.RemoveInstanceGroup(eng_group->GroupName()),
+              IsOkAndValue(false));
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddInstances) {
-  if (!SetUpOk() || !AddGroups({"yah_ong"})) {
+  if (!SetUpOk()) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  auto kitty_group = db.FindGroup({kHomeField, Workspace() + "/" + "yah_ong"});
+  ASSERT_TRUE(AddGroup({"yah_ong1"}, {{1, "yumi"}, {2, "tiger"}}));
+  ASSERT_FALSE(AddGroup({"yah_ong2"}, {{3, "yumi"}, {4, "yumi"}}));
+  ASSERT_FALSE(AddGroup({"yah_ong3"}, {{5, "yumi"}, {5, "tiger"}}));
+  ASSERT_FALSE(AddGroup({"yah_ong4"}, {{1, "yumi"}, {6, "tiger"}}));
+  auto kitty_group = db.FindGroup({kHomeField, Workspace() + "/" + "yah_ong1"});
   if (!kitty_group.ok()) {
-    GTEST_SKIP() << "yah_ong"
+    GTEST_SKIP() << "yah_ong1"
                  << " group was not found";
   }
-  const auto& instances = kitty_group->Get().Instances();
-
-  ASSERT_TRUE(db.AddInstance("yah_ong", 1, "yumi").ok());
-  ASSERT_FALSE(db.AddInstance("yah_ong", 3, "yumi").ok());
-  ASSERT_FALSE(db.AddInstance("yah_ong", 1, "tiger").ok());
-  ASSERT_TRUE(db.AddInstance("yah_ong", 3, "tiger").ok());
-  for (auto const& instance_unique_ptr : instances) {
-    ASSERT_TRUE(instance_unique_ptr->PerInstanceName() == "yumi" ||
-                instance_unique_ptr->PerInstanceName() == "tiger");
+  const auto& instances = kitty_group->Instances();
+  for (auto const& instance : instances) {
+    ASSERT_TRUE(instance.PerInstanceName() == "yumi" ||
+                instance.PerInstanceName() == "tiger");
   }
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddInstancesInvalid) {
-  if (!SetUpOk() || !AddGroups({"yah_ong"})) {
+  if (!SetUpOk()) {
     GTEST_SKIP() << Error().msg;
   }
-  auto& db = GetDb();
-  auto kitty_group = db.FindGroup({kHomeField, Workspace() + "/" + "yah_ong"});
-  if (!kitty_group.ok()) {
-    GTEST_SKIP() << "yah_ong"
-                 << " group was not found";
-  }
-
-  ASSERT_FALSE(db.AddInstance("yah_ong", 1, "!yumi").ok());
-  ASSERT_FALSE(db.AddInstance("yah_ong", 7, "ti ger").ok());
+  ASSERT_FALSE(AddGroup("yah_ong", {{1, "!yumi"}}));
+  ASSERT_FALSE(AddGroup("yah_ong2", {{2, "ti ger"}}));
 }
 
 TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
@@ -246,24 +253,19 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   if (!SetUpOk()) {
     GTEST_SKIP() << Error().msg;
   }
-  if (!AddGroups({"miau", "nyah"})) {
+  if (!AddGroup("miau", {{1, "8"}, {10, "tv-instance"}})) {
+    GTEST_SKIP() << Error().msg;
+  }
+  if (!AddGroup("nyah",
+                {{7, "my_favorite_phone"}, {11, "tv-instance"}, {3, "3_"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  // per_instance_name could be the same if the parent groups are different.
-  std::vector<InstanceInfo> miau_group_instance_id_name_pairs{
-      {1, "8"}, {10, "tv-instance"}};
-  std::vector<InstanceInfo> nyah_group_instance_id_name_pairs{
-      {7, "my_favorite_phone"}, {11, "tv-instance"}, {3, "3_"}};
   auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
   auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
     GTEST_SKIP() << "miau or nyah group"
                  << " group was not found";
-  }
-  if (!AddInstances("miau", miau_group_instance_id_name_pairs) ||
-      !AddInstances("nyah", nyah_group_instance_id_name_pairs)) {
-    GTEST_SKIP() << Error().msg;
   }
   // The end of set up
 
@@ -279,33 +281,31 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   ASSERT_TRUE(result7.ok());
   ASSERT_TRUE(result11.ok());
   ASSERT_TRUE(result3.ok());
-  ASSERT_EQ(result1->Get().PerInstanceName(), "8");
-  ASSERT_EQ(result10->Get().PerInstanceName(), "tv-instance");
-  ASSERT_EQ(result7->Get().PerInstanceName(), "my_favorite_phone");
-  ASSERT_EQ(result11->Get().PerInstanceName(), "tv-instance");
-  ASSERT_EQ(result3->Get().PerInstanceName(), "3_");
+  ASSERT_EQ(result1->PerInstanceName(), "8");
+  ASSERT_EQ(result10->PerInstanceName(), "tv-instance");
+  ASSERT_EQ(result7->PerInstanceName(), "my_favorite_phone");
+  ASSERT_EQ(result11->PerInstanceName(), "tv-instance");
+  ASSERT_EQ(result3->PerInstanceName(), "3_");
   ASSERT_FALSE(result_invalid.ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   // starting set up
-  if (!SetUpOk() || !AddGroups({"miau", "nyah"})) {
+  if (!SetUpOk()) {
+    GTEST_SKIP() << Error().msg;
+  }
+  if (!AddGroup("miau", {{1, "8"}, {10, "tv_instance"}})) {
+    GTEST_SKIP() << Error().msg;
+  }
+  if (!AddGroup("nyah", {{7, "my_favorite_phone"}, {11, "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  std::vector<InstanceInfo> miau_group_instance_id_name_pairs{
-      {1, "8"}, {10, "tv_instance"}};
-  std::vector<InstanceInfo> nyah_group_instance_id_name_pairs{
-      {7, "my_favorite_phone"}, {11, "tv_instance"}};
   auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
   auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
     GTEST_SKIP() << "miau or nyah "
                  << " group was not found";
-  }
-  if (!AddInstances("miau", miau_group_instance_id_name_pairs) ||
-      !AddInstances("nyah", nyah_group_instance_id_name_pairs)) {
-    GTEST_SKIP() << Error().msg;
   }
   // end of set up
 
@@ -319,25 +319,26 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   ASSERT_TRUE(result10_and_11.ok());
   ASSERT_TRUE(result7.ok());
   ASSERT_EQ(result10_and_11->size(), 2);
-  ASSERT_EQ(result1->Get().InstanceId(), 1);
-  ASSERT_EQ(result7->Get().InstanceId(), 7);
+  ASSERT_EQ(result1->InstanceId(), 1);
+  ASSERT_EQ(result7->InstanceId(), 7);
   ASSERT_FALSE(result_invalid.ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, FindInstancesByGroupName) {
   // starting set up
-  if (!SetUpOk() || !AddGroups({"miau", "nyah"})) {
+  if (!SetUpOk()) {
+    GTEST_SKIP() << Error().msg;
+  }
+  if (!AddGroup("miau", {{1, "one"}})) {
+    GTEST_SKIP() << Error().msg;
+  }
+  if (!AddGroup("nyah", {{7, "my_favorite_phone"}, {11, "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  std::vector<InstanceInfo> nyah_group_instance_id_name_pairs{
-      {7, "my_favorite_phone"}, {11, "tv_instance"}};
   auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
   if (!nyah_group.ok()) {
     GTEST_SKIP() << "nyah group was not found";
-  }
-  if (!AddInstances("nyah", nyah_group_instance_id_name_pairs)) {
-    GTEST_SKIP() << Error().msg;
   }
   // end of set up
 
@@ -347,7 +348,7 @@ TEST_F(CvdInstanceDatabaseTest, FindInstancesByGroupName) {
   ASSERT_TRUE(result_nyah.ok());
   std::set<std::string> nyah_instance_names;
   for (const auto& instance : *result_nyah) {
-    nyah_instance_names.insert(instance.Get().PerInstanceName());
+    nyah_instance_names.insert(instance.PerInstanceName());
   }
   std::set<std::string> expected{"my_favorite_phone", "tv_instance"};
   ASSERT_EQ(nyah_instance_names, expected);
@@ -356,23 +357,21 @@ TEST_F(CvdInstanceDatabaseTest, FindInstancesByGroupName) {
 
 TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
   // starting set up
-  if (!SetUpOk() || !AddGroups({"miau", "nyah"})) {
+  if (!SetUpOk()) {
+    GTEST_SKIP() << Error().msg;
+  }
+  if (!AddGroup("miau", {{1, "8"}, {10, "tv_instance"}})) {
+    GTEST_SKIP() << Error().msg;
+  }
+  if (!AddGroup("nyah", {{7, "my_favorite_phone"}, {11, "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  std::vector<InstanceInfo> miau_group_instance_id_name_pairs{
-      {1, "8"}, {10, "tv_instance"}};
-  std::vector<InstanceInfo> nyah_group_instance_id_name_pairs{
-      {7, "my_favorite_phone"}, {11, "tv_instance"}};
   auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
   auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
     GTEST_SKIP() << "miau or nyah "
                  << " group was not found";
-  }
-  if (!AddInstances("miau", miau_group_instance_id_name_pairs) ||
-      !AddInstances("nyah", nyah_group_instance_id_name_pairs)) {
-    GTEST_SKIP() << Error().msg;
   }
   // end of set up
 
@@ -395,19 +394,12 @@ TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
 
 TEST_F(CvdInstanceDatabaseTest, AddInstancesTogether) {
   // starting set up
-  if (!SetUpOk() || !AddGroups({"miau"})) {
+  if (!SetUpOk()) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  std::vector<InstanceDatabase::InstanceInfo> miau_group_instance_id_name_pairs{
-      {1, "8"}, {10, "tv_instance"}};
-  auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
-  if (!miau_group.ok()) {
-    GTEST_SKIP() << "miau group was not found";
-  }
 
-  auto add_result = db.AddInstances("miau", miau_group_instance_id_name_pairs);
-  ASSERT_TRUE(add_result.ok()) << add_result.error().Trace();
+  ASSERT_TRUE(AddGroup("miau", {{1, "8"}, {10, "tv_instance"}}));
 
   auto result_8 = db.FindInstance(Query(kInstanceNameField, "8"));
   auto result_tv = db.FindInstance(Query(kInstanceNameField, "tv_instance"));
@@ -418,27 +410,28 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesTogether) {
 
 TEST_F(CvdInstanceDatabaseJsonTest, DumpLoadDumpCompare) {
   // starting set up
-  if (!SetUpOk() || !AddGroups({"miau"})) {
+  if (!SetUpOk()) {
+    GTEST_SKIP() << Error().msg;
+  }
+  if (!AddGroup("miau", {{1, "8"}, {10, "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  std::vector<InstanceDatabase::InstanceInfo> miau_group_instance_id_name_pairs{
-      {1, "8"}, {10, "tv_instance"}};
   auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
   if (!miau_group.ok()) {
     GTEST_SKIP() << "miau group was not found";
-  }
-  auto add_result = db.AddInstances("miau", miau_group_instance_id_name_pairs);
-  if (!add_result.ok()) {
-    GTEST_SKIP() << "Adding instances are not being tested in this test case.";
   }
 
   /*
    * Dumping to json, clearing up the DB, loading from the json,
    *
    */
-  auto serialized_db = db.Serialize();
-  if (!db.RemoveInstanceGroup("miau")) {
+  auto serialized_db_res = db.Serialize();
+  ASSERT_THAT(serialized_db_res, IsOk());
+  auto& serialized_db = *serialized_db_res;
+  auto remove_res = db.RemoveInstanceGroup("miau");
+  ASSERT_THAT(remove_res, IsOk());
+  if (!*remove_res) {
     // not testing RemoveInstanceGroup
     GTEST_SKIP() << "miau had to be added.";
   }

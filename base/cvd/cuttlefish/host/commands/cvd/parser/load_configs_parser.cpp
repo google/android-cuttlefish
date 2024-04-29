@@ -34,6 +34,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_flags_validator.h"
@@ -168,9 +169,7 @@ std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
 
 std::string DefaultBaseDir() {
   auto time = std::chrono::system_clock::now().time_since_epoch().count();
-  std::stringstream ss;
-  ss << "/tmp/cvd/" << getuid() << "/" << time;
-  return ss.str();
+  return fmt::format("{}/{}", PerUserDir(), time);
 }
 
 void MakeAbsolute(std::string& path, const std::string& working_dir) {

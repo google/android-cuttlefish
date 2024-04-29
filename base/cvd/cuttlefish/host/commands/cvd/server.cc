@@ -476,7 +476,9 @@ Result<int> CvdServerMain(ServerMainParam&& param) {
   EpollPool epoll_pool;
   auto host_tool_target_manager = NewHostToolTargetManager();
   InstanceLockFileManager lock_manager;
-  InstanceManager instance_manager(lock_manager, *host_tool_target_manager);
+  selector::InstanceDatabase instance_database(InstanceDatabasePath());
+  InstanceManager instance_manager(lock_manager, *host_tool_target_manager,
+                                   instance_database);
   CvdServer server(epoll_pool, lock_manager, instance_manager,
                    *host_tool_target_manager, *server_logger);
 

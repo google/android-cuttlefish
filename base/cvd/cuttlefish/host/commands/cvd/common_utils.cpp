@@ -163,4 +163,16 @@ android::base::LogSeverity GetMinimumVerbosity() {
   return android::base::GetMinimumLogSeverity();
 }
 
+std::string CvdDir() {
+  return "/tmp/cvd";
+}
+
+std::string PerUserDir() {
+  return fmt::format("/tmp/cvd/{}", getuid());
+}
+
+std::string InstanceDatabasePath() {
+  return fmt::format("{}/instance_database.json", PerUserDir());
+}
+
 }  // namespace cuttlefish

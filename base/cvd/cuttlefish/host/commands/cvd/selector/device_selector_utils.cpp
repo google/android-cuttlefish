@@ -24,9 +24,9 @@ namespace selector {
 
 Result<LocalInstanceGroup> GetDefaultGroup(
     const InstanceDatabase& instance_database) {
-  const auto& all_groups = instance_database.InstanceGroups();
+  const auto all_groups = CF_EXPECT(instance_database.InstanceGroups());
   if (all_groups.size() == 1) {
-    return *(all_groups.front());
+    return all_groups.front();
   }
   std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
   auto group =

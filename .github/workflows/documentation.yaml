@@ -1,0 +1,55 @@
+name: Documentation 
+
+on:
+  push:
+    branches:
+      - "main"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  document-cvd:
+    runs-on: ubuntu-latest
+    container:
+      image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Setup apt
+      run: apt update -y && apt upgrade -y
+    - name: Install dependencies
+      run: apt install -y doxygen
+    - name: Run doxygen
+      run: cd base/cvd && doxygen
+    - name: Set up docs folder
+      run: |
+        mv base/cvd/html docs/cvd
+    - name: Fix permissions
+      run: |
+        chmod -c -R +rX "docs" | while read line; do
+          echo "::warning title=Invalid file permissions automatically fixed::$line"
+        done
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # aka v3.0.1
+      with:
+        path: ./docs/
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    container:
+      image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
+    needs: document-cvd
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # aka v4.0.5

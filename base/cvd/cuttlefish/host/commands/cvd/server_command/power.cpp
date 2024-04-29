@@ -176,11 +176,10 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
 
     auto instance = CF_EXPECT(instance_manager_.SelectInstance(
-        selector_args, extra_queries, envs));
-    const auto& instance_group = instance.ParentGroup();
-    const auto& home = instance_group.HomeDir();
+        selector_args, envs, extra_queries));
+    const auto& home = instance.GroupInfo().home_dir;
 
-    const auto& android_host_out = instance_group.HostArtifactsPath();
+    const auto& android_host_out = instance.GroupInfo().host_artifacts_path;
     const auto bin_base = CF_EXPECT(GetBin(op, android_host_out));
     auto cvd_power_bin_path =
         ConcatToString(android_host_out, "/bin/", bin_base);

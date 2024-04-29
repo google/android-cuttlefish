@@ -230,10 +230,10 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
     }
     for (const auto& instance : group_ptr->Instances()) {
       auto lock =
-          instance_lockfile_manager_.RemoveLockFile(instance->InstanceId());
+          instance_lockfile_manager_.RemoveLockFile(instance.InstanceId());
       if (!lock.ok()) {
         LOG(ERROR) << "Deleting instance Lock file for ID #"
-                   << instance->InstanceId()
+                   << instance.InstanceId()
                    << " failed: " << lock.error().Message();
       }
     }
@@ -353,7 +353,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
   };
   std::string chosen_group_name;
   if (!instance_group_result.ok()) {
-    if (!instance_manager_.HasInstanceGroups()) {
+    if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
       extracted_info.ui_response_type = UiResponseType::kNoGroup;
       return extracted_info;
     }
@@ -406,7 +406,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
       InstanceManager::Queries extra_queries{
           {selector::kGroupNameField, chosen_group_name}};
       instance_group_result = instance_manager_.SelectGroup(
-          selector_args, extra_queries, envs);
+          selector_args, envs, extra_queries);
       if (instance_group_result.ok()) {
         break;
       }

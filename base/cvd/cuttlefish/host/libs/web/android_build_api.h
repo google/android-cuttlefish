@@ -81,11 +81,6 @@ class BuildApi {
            std::string api_base_url);
   ~BuildApi() = default;
 
-  // download the artifact from the build and apply the callback
-  Result<void> ArtifactToCallback(const DeviceBuild& build,
-                                  const std::string& artifact,
-                                  HttpClient::DataCallback callback);
-
   Result<Build> GetBuild(const DeviceBuildString& build_string,
                          const std::string& fallback_target);
   Result<Build> GetBuild(const DirectoryBuildString& build_string,
