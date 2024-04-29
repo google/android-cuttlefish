@@ -142,7 +142,7 @@ jobs:
     permissions: write-all
     steps:
     - name: build
-      run: echo "test-release8-job" > CHANGELOG8.md
+      run: echo "test-release7-job" > CHANGELOG7.md && echo "test-release8-job" > CHANGELOG8.md
     - name: release
       uses: actions/create-release@v1
       id: create_release
