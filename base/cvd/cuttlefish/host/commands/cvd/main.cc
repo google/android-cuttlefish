@@ -102,13 +102,6 @@ Result<void> KillOldServer() {
 Result<void> EnsureCvdDirectoriesExist() {
   // This is accessed by all users.
   CF_EXPECT(EnsureDirectoryExists(CvdDir(), 0777));
-  // The process' umask likely prevented the right permissions to be applied
-  // to the cvd directory. Changing the umask before this call would only set
-  // the permissions for a newly created directory, while this approach ensures
-  // the permissions are correct even if the directory already exists.
-  CF_EXPECTF(chmod(CvdDir().c_str(), 0777) == 0,
-             "Failed to set permission on {}: {}", CvdDir(), strerror(errno));
-
   // This is where the instance database resides.
   CF_EXPECT(EnsureDirectoryExists(PerUserDir(), 0750));
 
