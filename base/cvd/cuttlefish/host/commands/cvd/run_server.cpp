@@ -133,7 +133,6 @@ Result<void> ImportResourcesImpl(const ParseResult& param) {
                "Failed to load from: {}", json_string);
   }
   if (param.acloud_translator_optout) {
-    // TODO(jemoreira): Persist acloud optout too
     LOG(VERBOSE) << "Acloud translation optout: "
                  << param.acloud_translator_optout.value();
     CF_EXPECT(instance_manager.SetAcloudTranslatorOptout(
@@ -143,11 +142,6 @@ Result<void> ImportResourcesImpl(const ParseResult& param) {
 }
 
 }  // namespace
-
-SharedFD ServerMainLog() {
-  std::string log_path = "/tmp/cvd_server" + std::to_string(getuid()) + ".log";
-  return SharedFD::Open(log_path, O_CREAT | O_APPEND | O_RDWR, 0644);
-}
 
 bool IsServerModeExpected(const std::string& exec_file) {
   return exec_file == kServerExecPath;
