@@ -52,6 +52,7 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/graphics_flags.h"
 #include "host/commands/assemble_cvd/misc_info.h"
+#include "host/commands/assemble_cvd/network_flags.h"
 #include "host/commands/assemble_cvd/touchpad.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -1363,7 +1364,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_qemu_binary_dir(qemu_binary_dir_vec[instance_index]);
 
     // wifi, bluetooth, connectivity setup
-    instance.set_ril_dns(ril_dns_vec[instance_index]);
 
     instance.set_vhost_net(vhost_net_vec[instance_index]);
 
@@ -1503,6 +1503,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_wifi_bridge_name("cvd-wbr");
     instance.set_ethernet_bridge_name("cvd-ebr");
     instance.set_mobile_tap_name(iface_config.mobile_tap.name);
+
+    CF_EXPECT(ConfigureNetworkSettings(ril_dns_vec[instance_index],
+                                       const_instance, instance));
 
     if (NetworkInterfaceExists(iface_config.non_bridged_wireless_tap.name) &&
         tmp_config_obj.virtio_mac80211_hwsim()) {

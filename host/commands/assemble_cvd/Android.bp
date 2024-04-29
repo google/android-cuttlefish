@@ -40,6 +40,7 @@ cc_binary_host {
         "graphics_flags.cc",
         "kernel_module_parser.cc",
         "misc_info.cc",
+        "network_flags.cpp",
         "super_image_mixer.cc",
         "touchpad.cpp",
         "vendor_dlkm_utils.cc",
