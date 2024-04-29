@@ -21,93 +21,120 @@ name: HostImage
 on: [pull_request, push]
 
 jobs:
-  test-release1-job:
-    runs-on: ubuntu-latest
-    permissions: write-all
-    steps:
-    - name: build
-      run: echo "test-release1-job" > CHANGELOG1.md
-    - name: version
-      run: echo "test-release1-job"
-      id: version
-    - name: release
-      uses: actions/create-release@v1
-      id: create_release
-      with:
-        draft: false
-        prerelease: false
-        release_name: ${{ steps.version.outputs.version }}
-        tag_name: ${{ github.ref }}
-        body_path: CHANGELOG1.md
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+  # failed, branch or tag names starting with 'refs/' are not allowed.
+  #test-release1-job:
+  #  runs-on: ubuntu-latest
+  #  permissions: write-all
+  #  steps:
+  #  - name: build
+  #    run: echo "test-release1-job" > CHANGELOG1.md
+  #  - name: version
+  #    run: echo "test-release1-job"
+  #    id: version
+  #  - name: release
+  #    uses: actions/create-release@v1
+  #    id: create_release
+  #    with:
+  #      draft: false
+  #      prerelease: false
+  #      release_name: ${{ steps.version.outputs.version }}
+  #      tag_name: ${{ github.ref }} # refs/heads/main
+  #      body_path: CHANGELOG1.md
+  #    env:
+  #      GITHUB_TOKEN: ${{ github.token }}
 
-  test-release2-job:
-    runs-on: ubuntu-latest
-    permissions: write-all
-    steps:
-    - name: build
-      run: echo "test-release2-job" > CHANGELOG2.md
-    - name: version
-      run: echo "test-release2-job"
-      id: version
-    - name: release
-      uses: actions/create-release@v1
-      id: create_release
-      with:
-        draft: false
-        prerelease: false
-        release_name: latest_host_image
-        tag_name: latest
-        body_path: CHANGELOG2.md
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+  #this job works
+  #test-release2-job:
+  #  runs-on: ubuntu-latest
+  #  permissions: write-all
+  #  steps:
+  #  - name: build
+  #    run: echo "test-release2-job" > CHANGELOG2.md
+  #  - name: version
+  #    run: echo "test-release2-job"
+  #    id: version
+  #  - name: release
+  #    uses: actions/create-release@v1
+  #    id: create_release
+  #    with:
+  #      draft: false
+  #      prerelease: false
+  #      release_name: latest_host_image
+  #      tag_name: latest
+  #      body_path: CHANGELOG2.md
+  #    env:
+  #      GITHUB_TOKEN: ${{ github.token }}
 
-  test-release3-job:
-    runs-on: ubuntu-latest
-    steps:
-    - name: build
-      run: echo "test-release3-job" > CHANGELOG3.md
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        body: CHANGELOG3.md
-        draft: false
-        prerelease: false        
+  #test-release3-job:
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #  - name: build
+  #    run: echo "test-release3-job" > CHANGELOG3.md
+  #  - name: Create Release
+  #    id: create_release
+  #    uses: actions/create-release@v1
+  #    env:
+  #      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #    with:
+  #      tag_name: ${{ github.ref }}
+  #      release_name: Release ${{ github.ref }}
+  #      body: CHANGELOG3.md
+  #      draft: false
+  #      prerelease: false        
 
-  test-release5-job:
-    runs-on: ubuntu-latest
-    steps:
-    - name: build
-      run: echo "test-release5-job" > CHANGELOG5.md
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: latest
-        release_name: latest_host_image
-        body: CHANGELOG5.md
-        draft: false
-        prerelease: false        
+  #test-release5-job:
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #  - name: build
+  #    run: echo "test-release5-job" > CHANGELOG5.md
+  #  - name: Create Release
+  #    id: create_release
+  #    uses: actions/create-release@v1
+  #    env:
+  #      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #    with:
+  #      tag_name: latest
+  #      release_name: latest_host_image
+  #      body: CHANGELOG5.md
+  #      draft: false
+  #      prerelease: false        
+
+  #this job works
+  #test-release6-job:
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #   - name: build
+  #    run: echo "test-release6-job" > CHANGELOG6.md
+  #  - name: Create Release
+  #    env:
+  #      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #      tag: ${{ github.ref_name }}
+  #    run: |
+  #      gh release create "$tag" \
+  #      --repo="$GITHUB_REPOSITORY" \
+  #      --title="${GITHUB_REPOSITORY#*/} ${tag#v}" \
+  #      --generate-notes        
 
   test-release6-job:
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
     - name: build
       run: echo "test-release6-job" > CHANGELOG6.md
-    - name: Create Release
+    - name: version
+      run: echo "test-release6-job"
+      id: version
+    - name: release
+      uses: actions/create-release@v1
+      id: create_release
+      with:
+        draft: false
+        prerelease: false
+        release_name: latest_host_image6
+        tag_name: latest
+        body_path: CHANGELOG6.md
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ github.ref_name }}
-      run: |
-        gh release create "$tag" \
-        --repo="$GITHUB_REPOSITORY" \
-        --title="${GITHUB_REPOSITORY#*/} ${tag#v}" \
-        --generate-notes        
+        GITHUB_TOKEN: ${{ github.token }}
+
+
+  
