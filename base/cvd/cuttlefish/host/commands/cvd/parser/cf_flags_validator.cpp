@@ -51,9 +51,7 @@ const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
           {"use_sdcard", ConfigNode{.type = booleanValue}},
           {"setupwizard_mode", ConfigNode{.type = stringValue}},
           {"uuid", ConfigNode{.type = stringValue}},
-          {"crosvm", ConfigNode{.type = objectValue, .children = {
-            {"enable_sandbox", ConfigNode{.type = booleanValue}},
-          }}},
+          {"crosvm", ConfigNode{.proto_name = "cuttlefish.cvd.config.Crosvm"}},
           {"custom_actions", ConfigNode{.type = arrayValue, .children = {
             {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
               {"shell_command", ConfigNode{.type = stringValue}},

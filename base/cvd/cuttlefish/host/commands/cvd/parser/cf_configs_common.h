@@ -35,6 +35,7 @@ inline constexpr char kArrayValidationSentinel[] = "kArrayValidationSentinel";
 
 struct ConfigNode {
   Json::ValueType type;
+  std::string proto_name;
   std::map<std::string, ConfigNode> children;
 };
 

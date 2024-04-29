@@ -152,7 +152,7 @@ protoc = find_program('protoc', required : true)
 deps = dependency('protobuf', required : true)
 protoc_generator = generator(protoc,
   output    : ['@BASENAME@.pb.cc', '@BASENAME@.pb.h'],
-  arguments : ['--proto_path=@CURRENT_SOURCE_DIR@', '--cpp_out=@BUILD_DIR@', '@INPUT@'])
+  arguments : ['--proto_path=@CURRENT_SOURCE_DIR@', '--cpp_out=@BUILD_DIR@', '@INPUT@', '--experimental_allow_proto3_optional'])
 
 server = protoc_generator.process('cvd_server.proto')
 server_dependency = declare_dependency(sources: server)
@@ -172,6 +172,9 @@ client_analytics_proto_dependency = declare_dependency(sources: client_analytics
 internal_user_log_proto = protoc_generator.process('internal_user_log.proto')
 internal_user_log_proto_dependency = declare_dependency(sources: internal_user_log_proto)
 
+cvd_load_config_proto = protoc_generator.process('load_config.proto')
+cvd_load_config_proto_dependency = declare_dependency(sources: cvd_load_config_proto)
+
 git_version_h = vcs_tag(
   command : ['git', 'describe'],
   fallback : 'unknown',
@@ -182,6 +185,7 @@ git_version_h_dependency = declare_dependency(sources: git_version_h)
 
 dependencies = [
   client_analytics_proto_dependency,
+  cvd_load_config_proto_dependency,
   dependency('fmt'),
   dependency('gflags'),
   dependency('jsoncpp'),
