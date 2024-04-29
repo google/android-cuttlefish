@@ -48,8 +48,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: latest
+        release_name: latest_host_image
         body_path: cuttlefish-host-image-installer/preseed-mini.iso.xz
         draft: false
         prerelease: false        
@@ -81,8 +81,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: latest
+        release_name: latest_host_image
         body_path: cuttlefish-host-image-installer/cuttlefish_packages.7z
         draft: false
         prerelease: false
@@ -122,8 +122,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: latest
+        release_name: latest_host_image
         body_path: cuttlefish-host-image-installer/meta_gigamp_packages.7z
         draft: false
         prerelease: false        
@@ -164,8 +164,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: latest
+        release_name: latest_host_image
         body_path: cuttlefish-host-image-installer/aosp_kernel_aosp14_61.7z
         draft: false
         prerelease: false        
@@ -206,8 +206,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: latest
+        release_name: latest_host_image
         body_path: cuttlefish-host-image-installer/aosp_kernel_aosp15_61.7z
         draft: false
         prerelease: false        
@@ -248,8 +248,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: latest
+        release_name: latest_host_image
         body_path: cuttlefish-host-image-installer/aosp_kernel_aosp15_66.7z
         draft: false
         prerelease: false        
@@ -286,8 +286,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: latest
+        release_name: latest_host_image
         body_path: cuttlefish-host-image-installer/u-boot.bin
         draft: false
         prerelease: false        
