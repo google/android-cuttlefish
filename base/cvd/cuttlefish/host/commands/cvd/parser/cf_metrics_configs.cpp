@@ -15,15 +15,14 @@
  */
 #include "host/commands/cvd/parser/cf_metrics_configs.h"
 
-#include <sstream>
 #include <string>
 #include <vector>
 
 #include "json/json.h"
 
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 namespace {
@@ -42,12 +41,14 @@ Result<void> InitMetricsConfigs(Json::Value& root) {
 }
 
 Result<std::vector<std::string>> GenerateMetricsFlags(const Json::Value& root) {
-  std::vector<std::string> result;
-  auto report_flag_value = EnabledToReportAnonUsageStats(
-      CF_EXPECT(GetValue<bool>(root, {"metrics", "enable"})));
-  result.emplace_back(
-      GenerateGflag("report_anonymous_usage_stats", {report_flag_value}));
-  return result;
+  cvd::config::Metrics proto;
+  CF_EXPECT(Validate(root["metrics"], proto));
+
+  if (!proto.has_enable()) {
+    return {};
+  }
+  auto value = EnabledToReportAnonUsageStats(proto.enable());
+  return {{GenerateGflag("report_anonymous_usage_stats", {value})}};
 }
 
 }  // namespace cuttlefish
