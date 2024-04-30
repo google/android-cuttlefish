@@ -968,6 +968,8 @@ android_system_image {
                 "PacProcessor",
                 "PartnerBookmarksProvider",
                 "PhotoTable",
+                "platform-bootclasspath",
+                "platform-systemserverclasspath",
                 "PrintRecommendationService",
                 "PrintSpooler",
                 "Provision",
