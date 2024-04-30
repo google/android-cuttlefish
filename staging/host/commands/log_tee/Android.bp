@@ -24,9 +24,7 @@ cc_binary {
     ],
     shared_libs: [
         "libbase",
-	"libcuttlefish_command_util",
-        "libcuttlefish_device_config",
-        "libcuttlefish_device_config_proto",
+        "libcuttlefish_command_util",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libfruit",

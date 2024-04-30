@@ -55,8 +55,6 @@ cc_binary_host {
     ],
     shared_libs: [
         "libbase",
-        "libcuttlefish_device_config",
-        "libcuttlefish_device_config_proto",
         "libcuttlefish_fs",
         "libcuttlefish_kernel_log_monitor_utils",
         "libcuttlefish_run_cvd_proto",

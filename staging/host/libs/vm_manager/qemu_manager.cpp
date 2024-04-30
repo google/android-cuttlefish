@@ -35,7 +35,6 @@
 #include <android-base/logging.h>
 #include <vulkan/vulkan.h>
 
-#include "common/libs/device_config/device_config.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -729,18 +728,9 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       }
       break;
     case cuttlefish::ExternalNetworkMode::kSlirp: {
-      // TODO(schuffelen): Deduplicate with modem_simulator/cf_device_config.cpp
-      // The configuration here needs to match the ip address reported by the
-      // modem simulator, which the guest uses to statically assign an IP
-      // address to its virtio-net ethernet device.
-      std::string net = "10.0.2.15/24";
-      std::string host = "10.0.2.2";
-      auto device_config_helper = DeviceConfigHelper::Get();
-      if (device_config_helper) {
-        const auto& cfg = device_config_helper->GetDeviceConfig().ril_config();
-        net = fmt::format("{}/{}", cfg.ipaddr(), cfg.prefixlen());
-        host = cfg.gateway();
-      }
+      const std::string net =
+          fmt::format("{}/{}", instance.ril_ipaddr(), instance.ril_prefixlen());
+      const std::string& host = instance.ril_gateway();
       qemu_cmd.AddParameter("-netdev");
       // TODO(schuffelen): `dns` needs to match the first `nameserver` in
       // `/etc/resolv.conf`. Implement something that generalizes beyond gLinux.

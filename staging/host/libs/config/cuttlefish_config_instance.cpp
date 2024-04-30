@@ -1054,6 +1054,42 @@ std::string CuttlefishConfig::InstanceSpecific::ril_dns() const {
   return (*Dictionary())[kRilDns].asString();
 }
 
+static constexpr char kRilIpaddr[] = "ril_ipaddr";
+void CuttlefishConfig::MutableInstanceSpecific::set_ril_ipaddr(
+    const std::string& ril_ipaddr) {
+  (*Dictionary())[kRilIpaddr] = ril_ipaddr;
+}
+std::string CuttlefishConfig::InstanceSpecific::ril_ipaddr() const {
+  return (*Dictionary())[kRilIpaddr].asString();
+}
+
+static constexpr char kRilGateway[] = "ril_gateway";
+void CuttlefishConfig::MutableInstanceSpecific::set_ril_gateway(
+    const std::string& ril_gateway) {
+  (*Dictionary())[kRilGateway] = ril_gateway;
+}
+std::string CuttlefishConfig::InstanceSpecific::ril_gateway() const {
+  return (*Dictionary())[kRilGateway].asString();
+}
+
+static constexpr char kRilBroadcast[] = "ril_broadcast";
+void CuttlefishConfig::MutableInstanceSpecific::set_ril_broadcast(
+    const std::string& ril_broadcast) {
+  (*Dictionary())[kRilBroadcast] = ril_broadcast;
+}
+std::string CuttlefishConfig::InstanceSpecific::ril_broadcast() const {
+  return (*Dictionary())[kRilBroadcast].asString();
+}
+
+static constexpr char kRilPrefixlen[] = "ril_prefixlen";
+void CuttlefishConfig::MutableInstanceSpecific::set_ril_prefixlen(
+    uint8_t ril_prefixlen) {
+  (*Dictionary())[kRilPrefixlen] = static_cast<Json::UInt>(ril_prefixlen);
+}
+uint8_t CuttlefishConfig::InstanceSpecific::ril_prefixlen() const {
+  return static_cast<uint8_t>((*Dictionary())[kRilPrefixlen].asUInt());
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";

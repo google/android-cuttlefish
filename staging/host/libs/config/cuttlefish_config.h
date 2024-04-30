@@ -572,8 +572,12 @@ class CuttlefishConfig {
     bool vhost_net() const;
     bool vhost_user_vsock() const;
 
-    // The dns address of mobile network (RIL)
+    // Mobile network info (RIL)
     std::string ril_dns() const;
+    std::string ril_ipaddr() const;
+    std::string ril_gateway() const;
+    std::string ril_broadcast() const;
+    uint8_t ril_prefixlen() const;
 
     bool enable_webrtc() const;
     std::string webrtc_assets_dir() const;
@@ -797,8 +801,12 @@ class CuttlefishConfig {
     void set_vhost_net(bool vhost_net);
     void set_vhost_user_vsock(bool vhost_user_vsock);
 
-    // The dns address of mobile network (RIL)
+    // Mobile network (RIL)
     void set_ril_dns(const std::string& ril_dns);
+    void set_ril_ipaddr(const std::string& ril_ipaddr);
+    void set_ril_gateway(const std::string& ril_gateway);
+    void set_ril_broadcast(const std::string& ril_broadcast);
+    void set_ril_prefixlen(uint8_t ril_prefixlen);
 
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);
