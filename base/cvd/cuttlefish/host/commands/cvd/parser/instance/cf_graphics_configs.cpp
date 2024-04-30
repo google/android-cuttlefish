@@ -80,8 +80,8 @@ Result<std::vector<std::string>> GenerateGraphicsFlags(
     const Json::Value& instances) {
   std::vector<std::string> result;
   result.emplace_back(GenerateDisplayFlag(instances));
-  result.emplace_back(CF_EXPECT(GenerateGflag(instances, "record_screen",
-                                              {"graphics", "record_screen"})));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
+      instances, "record_screen", {"graphics", "record_screen"})));
   return result;
 }
 

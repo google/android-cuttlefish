@@ -41,12 +41,12 @@ Result<void> InitSecurityConfigs(Json::Value& instances) {
 Result<std::vector<std::string>> GenerateSecurityFlags(
     const Json::Value& instances) {
   std::vector<std::string> result;
-  result.emplace_back(CF_EXPECT(GenerateGflag(instances, "serial_number",
-                                              {"security", "serial_number"})));
-  result.emplace_back(CF_EXPECT(GenerateGflag(
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
+      instances, "serial_number", {"security", "serial_number"})));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
       instances, "use_random_serial", {"security", "use_random_serial"})));
-  result.emplace_back(
-      CF_EXPECT(GenerateGflag(instances, "guest_enforce_security",
+  result.emplace_back(CF_EXPECT(
+      GenerateVecFlagFromJson(instances, "guest_enforce_security",
                               {"security", "guest_enforce_security"})));
   return result;
 }

@@ -21,8 +21,8 @@
 #include "json/json.h"
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
+#include "host/commands/cvd/parser/cf_configs_common.h"
 
 namespace cuttlefish {
 namespace {
@@ -48,7 +48,7 @@ Result<std::vector<std::string>> GenerateMetricsFlags(const Json::Value& root) {
     return {};
   }
   auto value = EnabledToReportAnonUsageStats(proto.enable());
-  return {{GenerateGflag("report_anonymous_usage_stats", {value})}};
+  return {{GenerateFlag("report_anonymous_usage_stats", value)}};
 }
 
 }  // namespace cuttlefish

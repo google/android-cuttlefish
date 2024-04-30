@@ -37,8 +37,8 @@ Result<void> InitStreamingConfigs(Json::Value& instances) {
 Result<std::vector<std::string>> GenerateStreamingFlags(
     const Json::Value& root) {
   std::vector<std::string> result;
-  result.emplace_back(CF_EXPECT(
-      GenerateGflag(root, "webrtc_device_id", {"streaming", "device_id"})));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
+      root, "webrtc_device_id", {"streaming", "device_id"})));
   return result;
 }
 

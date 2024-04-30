@@ -42,7 +42,7 @@ Result<std::vector<std::string>> GenerateBootFlags(
   result.emplace_back(
       CF_EXPECT(Base64EncodeGflag(instances, "extra_bootconfig_args_base64",
                                   {"boot", "extra_bootconfig_args"})));
-  result.emplace_back(CF_EXPECT(GenerateGflag(
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
       instances, "enable_bootanimation", {"boot", "enable_bootanimation"})));
   return result;
 }

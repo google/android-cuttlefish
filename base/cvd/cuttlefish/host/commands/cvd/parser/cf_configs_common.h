@@ -17,14 +17,12 @@
 #pragma once
 
 #include <functional>
-#include <iostream>
-#include <map>
-#include <optional>
 #include <string>
 #include <vector>
 
-#include "json/json.h"
+#include <fmt/format.h>
 #include <google/protobuf/message.h>
+#include "json/json.h"
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
@@ -74,11 +72,19 @@ void InitIntConfigSubGroupVector(Json::Value& instances,
                                  const std::string& json_flag,
                                  int default_value);
 
-std::string GenerateGflag(const std::string& gflag_name,
-                          const std::vector<std::string>& values);
-Result<std::string> GenerateGflag(const Json::Value& instances,
-                                  const std::string& gflag_name,
-                                  const std::vector<std::string>& selectors);
+template <typename T>
+std::string GenerateFlag(const std::string& name, const T& value) {
+  return fmt::format("--{}={}", name, value);
+}
+
+template <typename T>
+std::string GenerateVecFlag(const std::string& name, const T& collection) {
+  return fmt::format("--{}={}", name, fmt::join(collection, ","));
+}
+
+Result<std::string> GenerateVecFlagFromJson(
+    const Json::Value& instances, const std::string& flag_name,
+    const std::vector<std::string>& selectors);
 Result<std::string> Base64EncodeGflag(
     const Json::Value& instances, const std::string& gflag_name,
     const std::vector<std::string>& selectors);
