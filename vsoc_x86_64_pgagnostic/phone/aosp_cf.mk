@@ -58,7 +58,7 @@ PRODUCT_NAME := aosp_cf_x86_64_phone_pgagnostic
 PRODUCT_DEVICE := vsoc_x86_64_pgagnostic
 PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish x86_64 phone 64-bit only pgagnostic
-PRODUCT_MAX_PAGE_SIZE_SUPPORTED := 65536
+PRODUCT_MAX_PAGE_SIZE_SUPPORTED := 16384
 PRODUCT_NO_BIONIC_PAGE_SIZE_MACRO := true
 
 # Window Extensions
