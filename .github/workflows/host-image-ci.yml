@@ -18,7 +18,7 @@
 
 name: HostImage
 
-#on: [pull_request, push]
+on: [pull_request, push]
 #on:
 #  release:
 #    types: [published]
