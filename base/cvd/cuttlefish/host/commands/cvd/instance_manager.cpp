@@ -42,7 +42,6 @@
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_utils.h"
-#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {
