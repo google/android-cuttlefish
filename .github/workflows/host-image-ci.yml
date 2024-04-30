@@ -201,7 +201,7 @@ jobs:
     - name: build
       run: echo "test-release10-job" > CHANGELOG10.md
     - name: release
-      uses: actions/delete-tag-and-release@v1.1
+      uses: WeiChungHsu/android-cuttlefish@v1.1
       id: delete_tag_release
       with:
         tag_name: latest #(required) - The name of the tag to delete. This is expected to be solely the tag name, not the name of a git reference.
@@ -210,3 +210,6 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }} # (required) - a GitHub token with write access to the repo where tags and releases will be searched and deleted
 
         
+#https://github.com/WeiChungHsu/android-cuttlefish.git
+
+
