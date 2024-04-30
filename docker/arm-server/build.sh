@@ -5,8 +5,8 @@
 # so it could execute CF instance with API in HO.
 
 # Build debian packages(e.g. cuttlefish-base) with docker.
-pushd ..
-./debs-builder-docker/build-debs-with-docker.sh
+pushd ../debs-builder-docker
+./main.sh
 popd
 mkdir out
 mv ../out/cuttlefish-*.deb ./out

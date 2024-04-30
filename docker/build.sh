@@ -194,7 +194,9 @@ function do_rebuild_debs() {
   if [[ ${FLAGS_rebuild_debs_verbose} -eq ${FLAGS_TRUE} ]]; then
     verbosity="--verbose"
   fi
-  ./debs-builder-docker/build-debs-with-docker.sh "${verbosity}"
+  pushd debs-builder-docker
+  ./main.sh "${verbosity}"
+  popd
 }
 
 function get_google_chrome_deb_name() {

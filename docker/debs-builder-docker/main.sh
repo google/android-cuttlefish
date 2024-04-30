@@ -8,7 +8,7 @@ source "shflags"
 
 DEFINE_boolean verbose "true" "show the stdout/stderr from the sub-tools" "v"
 DEFINE_string out_dir "${PWD}/out" "indicates where to save the built debs" "o"
-DEFINE_string repo_dir "$(realpath ..)" "path to the android-cuttlefish repository"
+DEFINE_string repo_dir "$(realpath ../..)" "path to the android-cuttlefish repository"
 
 FLAGS "$@" || exit 1
 
@@ -20,11 +20,9 @@ fi
 # 2: out dir where debian packages would be stored
 function build_host_debian_pkg {
   local builder_tag="$1"
-  local resource_subdir=debs-builder-docker
   docker build \
       --target "cuttlefish-hostpkg-builder" \
       -t "$builder_tag" \
-      -f $resource_subdir/Dockerfile.debbld \
       $PWD \
        --build-arg UID="${UID}" \
        --build-arg OEM="${OEM}"
@@ -65,7 +63,7 @@ function build_host_debian_pkg {
   # run the script inside the guest
   # the script figures out its location in the guest file system
   # then, it does cd to the location, cd .., and run commands
-  local guest_script_path="$guest_repo_dir/docker/$resource_subdir/build-hostpkg.sh"
+  local guest_script_path="$guest_repo_dir/docker/debs-builder-docker/build-hostpkg.sh"
   if ! docker exec \
        --privileged \
        --user="vsoc-01" -w "$guest_home" \
