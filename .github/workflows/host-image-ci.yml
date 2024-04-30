@@ -110,6 +110,8 @@ jobs:
         #repo: WeiChungHsu/android-cuttlefish
         repo: google/android-cuttlefish
         github_token: ${{ secrets.GITHUB_TOKEN }}
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
 
   deploy-release-job:
     runs-on: ubuntu-latest
@@ -133,6 +135,7 @@ jobs:
         release_name: latest_host_image
         tag_name: latest
         body_path: CHANGELOG.md
+        github_token: ${{ secrets.GITHUB_TOKEN }}
       env:
         GITHUB_TOKEN: ${{ github.token }}
     - name: Download preseed-mini.iso.xz
@@ -159,7 +162,8 @@ jobs:
   #      #https://github.com/WeiChungHsu/android-cuttlefish/releases/download/latest/CHANGELOG8.md
         asset_path: ./CHANGELOG.md
         asset_name: CHANGELOG.md
-        asset_content_type: application/zip        
+        asset_content_type: application/zip
+        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload Release Asset preseed-mini.iso.xz
       uses: actions/upload-release-asset@v1
       env:
@@ -169,6 +173,7 @@ jobs:
         asset_path: ./preseed-mini.iso.xz
         asset_name: preseed-mini.iso.xz
         asset_content_type: application/x-xz
+        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload Release Asset u-boot.bin
       uses: actions/upload-release-asset@v1
       env:
@@ -178,6 +183,7 @@ jobs:
         asset_path: ./u-boot.bin
         asset_name: u-boot.bin
         asset_content_type: application/zip
+        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload Release Asset meta_gigamp_packages.7z
       uses: actions/upload-release-asset@v1
       env:
@@ -187,5 +193,6 @@ jobs:
         asset_path: ./meta_gigamp_packages.7z
         asset_name: meta_gigamp_packages.7z
         asset_content_type: application/x-7z-compressed
+        github_token: ${{ secrets.GITHUB_TOKEN }}
         
         
