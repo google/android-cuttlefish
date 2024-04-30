@@ -43,8 +43,6 @@ cc_defaults {
         "libbase",
         "libjsoncpp",
         "libnl",
-        "libcuttlefish_device_config",
-        "libcuttlefish_device_config_proto",
     ],
     static_libs: [
         "libcuttlefish_host_config",
