@@ -107,8 +107,8 @@ jobs:
       with:
         tag_name: latest
         delete_release: true
-        repo: WeiChungHsu/android-cuttlefish
-        #repo: google/android-cuttlefish
+        #repo: WeiChungHsu/android-cuttlefish
+        repo: google/android-cuttlefish
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-release-job:
