@@ -23,8 +23,10 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <fmt/format.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/users.h"
 
@@ -161,14 +163,6 @@ Result<android::base::LogSeverity> SetMinimumVerbosity(
 android::base::LogSeverity GetMinimumVerbosity() {
   std::lock_guard lock(verbosity_mutex);
   return android::base::GetMinimumLogSeverity();
-}
-
-std::string CvdDir() {
-  return "/tmp/cvd";
-}
-
-std::string PerUserDir() {
-  return fmt::format("/tmp/cvd/{}", getuid());
 }
 
 std::string InstanceDatabasePath() {

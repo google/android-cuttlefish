@@ -29,6 +29,8 @@ enum class Arch {
 
 std::string StringFromEnv(const std::string& varname,
                           const std::string& defval);
+std::string CvdDir();
+std::string PerUserDir();
 
 std::string HostArchStr();
 Arch HostArch();

@@ -94,10 +94,6 @@ Result<android::base::LogSeverity> SetMinimumVerbosity(const std::string&);
 
 android::base::LogSeverity GetMinimumVerbosity();
 
-std::string CvdDir();
-
-std::string PerUserDir();
-
 std::string InstanceDatabasePath();
 
 }  // namespace cuttlefish

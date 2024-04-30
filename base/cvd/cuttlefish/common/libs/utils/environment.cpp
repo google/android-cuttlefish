@@ -16,6 +16,8 @@
 
 #include "common/libs/utils/environment.h"
 
+#include <unistd.h>
+
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
@@ -24,6 +26,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <fmt/format.h>
 
 #include "common/libs/utils/files.h"
 
@@ -37,6 +40,10 @@ std::string StringFromEnv(const std::string& varname,
   }
   return valstr;
 }
+
+std::string CvdDir() { return "/tmp/cvd"; }
+
+std::string PerUserDir() { return fmt::format("{}/{}", CvdDir(), getuid()); }
 
 /**
  * at runtime, return the arch of the host: e.g. aarch64, x86_64, etc
