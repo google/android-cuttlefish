@@ -181,7 +181,12 @@ PRODUCT_PACKAGES += \
     aidl_lazy_cb_test_server \
 
 # Runtime Resource Overlays
-PRODUCT_PACKAGES += com.google.aosp_cf.rros
+PRODUCT_PACKAGES += \
+    cuttlefish_overlay_connectivity \
+    cuttlefish_overlay_frameworks_base_core \
+    cuttlefish_overlay_nfc \
+    cuttlefish_overlay_settings_provider \
+    cuttlefish_overlay_uwb \
 
 #
 # Satellite vendor service for CF
