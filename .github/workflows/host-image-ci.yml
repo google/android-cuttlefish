@@ -206,7 +206,8 @@ jobs:
       with:
         tag_name: latest #(required) - The name of the tag to delete. This is expected to be solely the tag name, not the name of a git reference.
         delete_release: true #(optional) default: true - also delete all releases and their assets that are associated to the tag name
-        repo: WeiChungHsu/android-cuttlefish #(optional) default: repo running this action - the target repository. 
+        #repo: WeiChungHsu/android-cuttlefish #(optional) default: repo running this action - the target repository.
+        repo: google/android-cuttlefish
         github_token: ${{ secrets.GITHUB_TOKEN }} # (required) - a GitHub token with write access to the repo where tags and releases will be searched and deleted
 
 
@@ -222,7 +223,7 @@ jobs:
       with:
         draft: false
         prerelease: false
-        release_name: latest_host_image11
+        release_name: latest_host_image
         tag_name: latest
         body_path: CHANGELOG11.md
       env:
