@@ -19,9 +19,9 @@
 name: HostImage
 
 #on: [pull_request, push]
-on:
-  release:
-    types: [published]
+#on:
+#  release:
+#    types: [published]
 
 jobs:
   # failed, branch or tag names starting with 'refs/' are not allowed.
@@ -172,26 +172,41 @@ jobs:
   #      asset_content_type: application/zip
 
 
-  test-release9-job:
+  #test-release9-job:
+  #  runs-on: ubuntu-latest
+  #  permissions: write-all
+  #  steps:
+  #  - name: build
+  #    run: echo "test-release9-job" > CHANGELOG9.md
+  #  - name: Upload Release Asset
+  #    uses: actions/upload-release-asset@v1
+  #    id: upload-release-asset
+  #    env:
+  #      GITHUB_TOKEN: ${{ github.token }}
+  #    with:
+  #      upload_url: ${{ github.event.release.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+        #upload_url: https://uploads.github.com/repos/WeiChungHsu/android-cuttlefish/releases/153364837/assets{?name,label}
+        #upload_url: https://uploads.github.com/repos/WeiChungHsu/android-cuttlefish/releases/153365569/assets{?name,label}
+        #https://github.com/WeiChungHsu/android-cuttlefish/releases/download/latest/CHANGELOG8.md
+  #      asset_path: ./CHANGELOG9.md
+  #      asset_name: CHANGELOG9.md
+  #      asset_content_type: application/zip
+
+
+
+  test-release10-job:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
     - name: build
-      run: echo "test-release9-job" > CHANGELOG9.md
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      id: upload-release-asset
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+      run: echo "test-release10-job" > CHANGELOG10.md
+    - name: release
+      uses: actions/delete-tag-and-release@v1.1
+      id: delete_tag_release
       with:
-        upload_url: ${{ github.event.release.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-        #upload_url: https://uploads.github.com/repos/WeiChungHsu/android-cuttlefish/releases/153364837/assets{?name,label}
-        #upload_url: https://uploads.github.com/repos/WeiChungHsu/android-cuttlefish/releases/153365569/assets{?name,label}
-        #https://github.com/WeiChungHsu/android-cuttlefish/releases/download/latest/CHANGELOG8.md
-        asset_path: ./CHANGELOG9.md
-        asset_name: CHANGELOG9.md
-        asset_content_type: application/zip
-
-
+        tag_name: latest #(required) - The name of the tag to delete. This is expected to be solely the tag name, not the name of a git reference.
+        delete_release: true #(optional) default: true - also delete all releases and their assets that are associated to the tag name
+        #repo: <owner>/<repoName> #(optional) default: repo running this action - the target repository. 
+        github_token: ${{ secrets.GITHUB_TOKEN }} # (required) - a GitHub token with write access to the repo where tags and releases will be searched and deleted
 
         
