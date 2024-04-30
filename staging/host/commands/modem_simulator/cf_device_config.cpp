@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "common/libs/device_config/device_config.h"
 #include "host/commands/modem_simulator/device_config.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -45,30 +44,21 @@ std::string DeviceConfig::DefaultHostArtifactsPath(const std::string& file) {
 }
 
 std::string DeviceConfig::ril_address_and_prefix() {
-  auto device_config_helper = cuttlefish::DeviceConfigHelper::Get();
-  if (!device_config_helper) {
-      return "10.0.2.15/24";
-  }
-  const auto& ril_config = device_config_helper->GetDeviceConfig().ril_config();
-  return ril_config.ipaddr() + "/" + std::to_string(ril_config.prefixlen());
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto instance = config->ForDefaultInstance();
+  return instance.ril_ipaddr() + "/" + std::to_string(instance.ril_prefixlen());
 };
 
 std::string DeviceConfig::ril_gateway() {
-  auto device_config_helper = cuttlefish::DeviceConfigHelper::Get();
-  if (!device_config_helper) {
-      return "10.0.2.2";
-  }
-  const auto& ril_config = device_config_helper->GetDeviceConfig().ril_config();
-  return ril_config.gateway();
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto instance = config->ForDefaultInstance();
+  return instance.ril_gateway();
 }
 
 std::string DeviceConfig::ril_dns() {
-  auto device_config_helper = cuttlefish::DeviceConfigHelper::Get();
-  if (!device_config_helper) {
-      return "8.8.8.8";
-  }
-  const auto& ril_config = device_config_helper->GetDeviceConfig().ril_config();
-  return ril_config.dns();
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto instance = config->ForDefaultInstance();
+  return instance.ril_dns();
 }
 
 std::ifstream DeviceConfig::open_ifstream_crossplat(const char* filename) {
