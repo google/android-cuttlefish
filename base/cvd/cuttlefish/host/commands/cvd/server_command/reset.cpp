@@ -62,10 +62,10 @@ description:
   5. Optionally, cleans up the runtime files of the stopped devices.)";
 
 struct ParsedFlags {
-  bool is_help;
-  bool clean_runtime_dir;
-  bool device_by_cvd_only;
-  bool is_confirmed_by_flag;
+  bool is_help = false;
+  bool clean_runtime_dir = true;
+  bool device_by_cvd_only = false;
+  bool is_confirmed_by_flag = false;
   std::optional<android::base::LogSeverity> log_level;
 };
 
