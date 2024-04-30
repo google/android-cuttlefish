@@ -54,12 +54,11 @@ std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) 
 
 Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
   std::vector<std::string> result;
-  result.emplace_back(GenerateGflag(
-      "num_instances", {std::to_string(root["instances"].size())}));
-  result.emplace_back(GenerateGflag(
-      "netsim_bt", {CF_EXPECT(GetValue<std::string>(root, {"netsim_bt"}))}));
-  result.emplace_back(GenerateGflag(
-      "netsim_uwb", {CF_EXPECT(GetValue<std::string>(root, {"netsim_uwb"}))}));
+  result.emplace_back(GenerateFlag("num_instances", root["instances"].size()));
+  result.emplace_back(GenerateFlag(
+      "netsim_bt", CF_EXPECT(GetValue<std::string>(root, {"netsim_bt"}))));
+  result.emplace_back(GenerateFlag(
+      "netsim_uwb", CF_EXPECT(GetValue<std::string>(root, {"netsim_uwb"}))));
   result = MergeResults(result, CF_EXPECT(GenerateMetricsFlags(root)));
   result = MergeResults(result,
                         CF_EXPECT(GenerateInstancesFlags(root["instances"])));

@@ -15,14 +15,13 @@
  */
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
-#include <functional>
-#include <map>
-#include <memory>
+#include <cstdint>
 #include <string>
 #include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <fmt/format.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/util/json_util.h>
 #include "json/json.h"
@@ -58,20 +57,12 @@ void InitIntConfigSubGroupVector(Json::Value& instances,
   }
 }
 
-std::string GenerateGflag(const std::string& gflag_name,
-                          const std::vector<std::string>& values) {
-  std::stringstream buff;
-  buff << "--" << gflag_name << "=";
-  buff << android::base::Join(values, ',');
-  return buff.str();
-}
-
-Result<std::string> GenerateGflag(const Json::Value& instances,
-                                  const std::string& gflag_name,
-                                  const std::vector<std::string>& selectors) {
+Result<std::string> GenerateVecFlagFromJson(
+    const Json::Value& instances, const std::string& flag_name,
+    const std::vector<std::string>& selectors) {
   auto values = CF_EXPECTF(GetArrayValues<std::string>(instances, selectors),
-                           "Unable to get values for gflag \"{}\"", gflag_name);
-  return GenerateGflag(gflag_name, values);
+                           "Unable to get values for flag \"{}\"", flag_name);
+  return GenerateVecFlag(flag_name, values);
 }
 
 Result<std::string> Base64EncodeGflag(
@@ -85,7 +76,7 @@ Result<std::string> Base64EncodeGflag(
     CF_EXPECT(EncodeBase64(values[i].c_str(), values[i].size(), &out));
     values[i] = out;
   }
-  return GenerateGflag(gflag_name, values);
+  return GenerateVecFlag(gflag_name, values);
 }
 
 std::vector<std::string> MergeResults(std::vector<std::string> first_list,

@@ -28,16 +28,15 @@
 namespace cuttlefish {
 
 Result<std::vector<std::string>> ParseSelectorConfigs(Json::Value& root) {
-  std::string instance_name_flag =
-      CF_EXPECT(GenerateGflag(root["instances"], "instance_name", {"name"}));
+  std::string instance_name_flag = CF_EXPECT(
+      GenerateVecFlagFromJson(root["instances"], "instance_name", {"name"}));
 
   if (!HasValue(root, {"common", "group_name"})) {
     return {{instance_name_flag}};
   }
 
-  return {{instance_name_flag,
-           GenerateGflag("group_name", {CF_EXPECT(GetValue<std::string>(
-                                           root, {"common", "group_name"}))})}};
+  auto group = CF_EXPECT(GetValue<std::string>(root, {"common", "group_name"}));
+  return {{instance_name_flag, GenerateFlag("group_name", group)}};
 }
 
 }  // namespace cuttlefish

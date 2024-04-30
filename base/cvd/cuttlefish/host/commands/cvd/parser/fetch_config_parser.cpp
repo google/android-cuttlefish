@@ -141,51 +141,55 @@ Result<std::vector<std::string>> GenerateFetchFlags(
     return result;
   }
 
-  result.emplace_back(GenerateGflag("target_directory", {target_directory}));
-  result.emplace_back(GenerateGflag(
-      "api_key",
-      {CF_EXPECT(GetValue<std::string>(root, {"fetch", "api_key"}))}));
-  result.emplace_back(GenerateGflag(
-      "credential_source", {CF_EXPECT(GetValue<std::string>(
-                               root, {"fetch", "credential_source"}))}));
-  result.emplace_back(GenerateGflag(
-      "wait_retry_period", {CF_EXPECT(GetValue<std::string>(
-                               root, {"fetch", "wait_retry_period"}))}));
-  result.emplace_back(
-      GenerateGflag("external_dns_resolver",
-                    {CF_EXPECT(GetValue<std::string>(
-                        root, {"fetch", "external_dns_resolver"}))}));
-  result.emplace_back(
-      GenerateGflag("keep_downloaded_archives",
-                    {CF_EXPECT(GetValue<std::string>(
-                        root, {"fetch", "keep_downloaded_archives"}))}));
-  result.emplace_back(GenerateGflag(
-      "api_base_url",
-      {CF_EXPECT(GetValue<std::string>(root, {"fetch", "api_base_url"}))}));
-  result.emplace_back(
-      GenerateGflag("host_package_build", {host_package_build}));
+  result.emplace_back(GenerateFlag("target_directory", target_directory));
+
+  auto api_key = CF_EXPECT(GetValue<std::string>(root, {"fetch", "api_key"}));
+  result.emplace_back(GenerateFlag("api_key", api_key));
+
+  std::vector<std::string> creds_path = {"fetch", "credential_source"};
+  auto creds = CF_EXPECT(GetValue<std::string>(root, creds_path));
+  result.emplace_back(GenerateFlag("credential_source", creds));
+
+  std::vector<std::string> wait_retry_path = {"fetch", "wait_retry_period"};
+  auto wait_retry = CF_EXPECT(GetValue<std::string>(root, wait_retry_path));
+  result.emplace_back(GenerateFlag("wait_retry_period", wait_retry));
+
+  std::vector<std::string> dns_path = {"fetch", "external_dns_resolver"};
+  auto dns_resolver = CF_EXPECT(GetValue<std::string>(root, dns_path));
+  result.emplace_back(GenerateFlag("external_dns_resolver", dns_resolver));
+
+  std::vector<std::string> keep_path = {"fetch", "keep_downloaded_archives"};
+  auto keep_archives = CF_EXPECT(GetValue<std::string>(root, keep_path));
+  result.emplace_back(GenerateFlag("keep_downloaded_archives", keep_archives));
+
+  std::vector<std::string> api_base_url_path = {"fetch", "api_base_url"};
+  auto api_base_url =
+      CF_EXPECT(GetValue<std::string>(root, {"fetch", "api_base_url"}));
+  result.emplace_back(GenerateFlag("api_base_url", api_base_url));
+
+  result.emplace_back(GenerateFlag("host_package_build", host_package_build));
 
   result.emplace_back(
-      GenerateGflag("target_subdirectory", fetch_subdirectories));
-  result.emplace_back(CF_EXPECT(GenerateGflag(fetch_instances, "default_build",
-                                              {"disk", "default_build"})));
-  result.emplace_back(CF_EXPECT(GenerateGflag(fetch_instances, "system_build",
-                                              {"disk", "super", "system"})));
-  result.emplace_back(CF_EXPECT(GenerateGflag(fetch_instances, "kernel_build",
-                                              {"boot", "kernel", "build"})));
-  result.emplace_back(CF_EXPECT(
-      GenerateGflag(fetch_instances, "boot_build", {"boot", "build"})));
-  result.emplace_back(CF_EXPECT(GenerateGflag(
+      GenerateVecFlag("target_subdirectory", fetch_subdirectories));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
+      fetch_instances, "default_build", {"disk", "default_build"})));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
+      fetch_instances, "system_build", {"disk", "super", "system"})));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
+      fetch_instances, "kernel_build", {"boot", "kernel", "build"})));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
+      fetch_instances, "boot_build", {"boot", "build"})));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
       fetch_instances, "bootloader_build", {"boot", "bootloader", "build"})));
-  result.emplace_back(
-      CF_EXPECT(GenerateGflag(fetch_instances, "android_efi_loader_build",
-                              {"boot", "bootloader", "build"})));
   result.emplace_back(CF_EXPECT(
-      GenerateGflag(fetch_instances, "otatools_build", {"disk", "otatools"})));
-  result.emplace_back(CF_EXPECT(GenerateGflag(
+      GenerateVecFlagFromJson(fetch_instances, "android_efi_loader_build",
+                              {"boot", "bootloader", "build"})));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
+      fetch_instances, "otatools_build", {"disk", "otatools"})));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
       fetch_instances, "download_img_zip", {"disk", "download_img_zip"})));
-  result.emplace_back(
-      CF_EXPECT(GenerateGflag(fetch_instances, "download_target_files_zip",
+  result.emplace_back(CF_EXPECT(
+      GenerateVecFlagFromJson(fetch_instances, "download_target_files_zip",
                               {"disk", "download_target_files_zip"})));
   return result;
 }

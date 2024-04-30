@@ -91,18 +91,18 @@ std::vector<std::string> GenerateCustomConfigsFlags(
 Result<std::vector<std::string>> GenerateVmFlags(const Json::Value& instances) {
   std::vector<std::string> result;
   result.emplace_back(
-      CF_EXPECT(GenerateGflag(instances, "cpus", {"vm", "cpus"})));
+      CF_EXPECT(GenerateVecFlagFromJson(instances, "cpus", {"vm", "cpus"})));
+  result.emplace_back(CF_EXPECT(
+      GenerateVecFlagFromJson(instances, "memory_mb", {"vm", "memory_mb"})));
+  result.emplace_back(CF_EXPECT(
+      GenerateVecFlagFromJson(instances, "use_sdcard", {"vm", "use_sdcard"})));
+  result.emplace_back(CF_EXPECT(
+      GenerateVecFlagFromJson(instances, "vm_manager", {"vm", "vm_manager"})));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
+      instances, "setupwizard_mode", {"vm", "setupwizard_mode"})));
   result.emplace_back(
-      CF_EXPECT(GenerateGflag(instances, "memory_mb", {"vm", "memory_mb"})));
-  result.emplace_back(
-      CF_EXPECT(GenerateGflag(instances, "use_sdcard", {"vm", "use_sdcard"})));
-  result.emplace_back(
-      CF_EXPECT(GenerateGflag(instances, "vm_manager", {"vm", "vm_manager"})));
-  result.emplace_back(CF_EXPECT(GenerateGflag(instances, "setupwizard_mode",
-                                              {"vm", "setupwizard_mode"})));
-  result.emplace_back(
-      CF_EXPECT(GenerateGflag(instances, "uuid", {"vm", "uuid"})));
-  result.emplace_back(CF_EXPECT(GenerateGflag(
+      CF_EXPECT(GenerateVecFlagFromJson(instances, "uuid", {"vm", "uuid"})));
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
       instances, "enable_sandbox", {"vm", "crosvm", "enable_sandbox"})));
 
   result = MergeResults(result, GenerateCustomConfigsFlags(instances));

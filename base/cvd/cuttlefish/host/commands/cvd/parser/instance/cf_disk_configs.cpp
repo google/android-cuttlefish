@@ -38,7 +38,7 @@ Result<void> InitDiskConfigs(Json::Value& instances) {
 Result<std::vector<std::string>> GenerateDiskFlags(
     const Json::Value& instances) {
   std::vector<std::string> result;
-  result.emplace_back(CF_EXPECT(GenerateGflag(
+  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
       instances, "blank_data_image_mb", {"disk", "blank_data_image_mb"})));
   return result;
 }
