@@ -25,6 +25,7 @@
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/libs/web/android_build_api.h"
@@ -141,32 +142,31 @@ Result<std::vector<std::string>> GenerateFetchFlags(
     return result;
   }
 
-  result.emplace_back(GenerateFlag("target_directory", target_directory));
-
-  auto api_key = CF_EXPECT(GetValue<std::string>(root, {"fetch", "api_key"}));
-  result.emplace_back(GenerateFlag("api_key", api_key));
-
-  std::vector<std::string> creds_path = {"fetch", "credential_source"};
-  auto creds = CF_EXPECT(GetValue<std::string>(root, creds_path));
-  result.emplace_back(GenerateFlag("credential_source", creds));
-
-  std::vector<std::string> wait_retry_path = {"fetch", "wait_retry_period"};
-  auto wait_retry = CF_EXPECT(GetValue<std::string>(root, wait_retry_path));
-  result.emplace_back(GenerateFlag("wait_retry_period", wait_retry));
-
-  std::vector<std::string> dns_path = {"fetch", "external_dns_resolver"};
-  auto dns_resolver = CF_EXPECT(GetValue<std::string>(root, dns_path));
-  result.emplace_back(GenerateFlag("external_dns_resolver", dns_resolver));
-
-  std::vector<std::string> keep_path = {"fetch", "keep_downloaded_archives"};
-  auto keep_archives = CF_EXPECT(GetValue<std::string>(root, keep_path));
-  result.emplace_back(GenerateFlag("keep_downloaded_archives", keep_archives));
-
-  std::vector<std::string> api_base_url_path = {"fetch", "api_base_url"};
-  auto api_base_url =
-      CF_EXPECT(GetValue<std::string>(root, {"fetch", "api_base_url"}));
-  result.emplace_back(GenerateFlag("api_base_url", api_base_url));
-
+  cvd::config::Fetch fetch_config;
+  CF_EXPECT(Validate(root["fetch"], fetch_config));
+  if (fetch_config.has_api_key()) {
+    result.emplace_back(GenerateFlag("api_key", fetch_config.api_key()));
+  }
+  if (fetch_config.has_credential_source()) {
+    auto value = fetch_config.credential_source();
+    result.emplace_back(GenerateFlag("credential_source", std::move(value)));
+  }
+  if (fetch_config.has_wait_retry_period()) {
+    auto value = fetch_config.wait_retry_period();
+    result.emplace_back(GenerateFlag("wait_retry_period", std::move(value)));
+  }
+  if (fetch_config.has_external_dns_resolver()) {
+    auto value = fetch_config.external_dns_resolver();
+    result.emplace_back(GenerateFlag("external_dns_resolver", std::move(value)));
+  }
+  if (fetch_config.has_keep_downloaded_archives()) {
+    auto value = fetch_config.keep_downloaded_archives();
+    result.emplace_back(GenerateFlag("keep_downloaded_archives", std::move(value)));
+  }
+  if (fetch_config.has_api_base_url()) {
+    auto value = fetch_config.api_base_url();
+    result.emplace_back(GenerateFlag("api_base_url", std::move(value)));
+  }
   result.emplace_back(GenerateFlag("host_package_build", host_package_build));
 
   result.emplace_back(
