@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include <fmt/format.h>
@@ -97,6 +98,17 @@ std::string GenerateInstanceFlag(const std::string& name,
   std::vector<decltype(callback(config.instances()[0]))> values;
   for (const auto& instance : config.instances()) {
     values.emplace_back(callback(instance));
+  }
+  return GenerateVecFlag(name, values);
+}
+
+template <typename T>
+Result<std::string> ResultInstanceFlag(const std::string& name,
+                                       const cvd::config::Launch& config,
+                                       T callback) {
+  std::vector<std::decay_t<decltype(*callback(config.instances()[0]))>> values;
+  for (const auto& instance : config.instances()) {
+    values.emplace_back(CF_EXPECT(callback(instance)));
   }
   return GenerateVecFlag(name, values);
 }

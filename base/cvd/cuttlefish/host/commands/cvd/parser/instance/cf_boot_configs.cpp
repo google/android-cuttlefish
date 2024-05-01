@@ -20,11 +20,16 @@
 
 #include "json/json.h"
 
+#include "common/libs/utils/base64.h"
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
 namespace cuttlefish {
+
+using cvd::config::Instance;
+using cvd::config::Launch;
 
 Result<void> InitBootConfigs(Json::Value& instances) {
   for (auto& instance : instances) {
@@ -36,15 +41,22 @@ Result<void> InitBootConfigs(Json::Value& instances) {
   return {};
 }
 
-Result<std::vector<std::string>> GenerateBootFlags(
-    const Json::Value& instances) {
-  std::vector<std::string> result;
-  result.emplace_back(
-      CF_EXPECT(Base64EncodeGflag(instances, "extra_bootconfig_args_base64",
-                                  {"boot", "extra_bootconfig_args"})));
-  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
-      instances, "enable_bootanimation", {"boot", "enable_bootanimation"})));
-  return result;
+static bool EnableBootAnimation(const Instance& instance) {
+  return instance.boot().enable_bootanimation();
+}
+
+static Result<std::string> BtCfg(const Instance& instance) {
+  auto args = instance.boot().extra_bootconfig_args();
+  std::string encoded;
+  CF_EXPECT(EncodeBase64(args.data(), args.size(), &encoded));
+  return encoded;
+}
+
+Result<std::vector<std::string>> GenerateBootFlags(const Launch& cfg) {
+  return std::vector<std::string>{
+      GenerateInstanceFlag("enable_bootanimation", cfg, EnableBootAnimation),
+      CF_EXPECT(ResultInstanceFlag("extra_bootconfig_args_base64", cfg, BtCfg)),
+  };
 }
 
 }  // namespace cuttlefish
