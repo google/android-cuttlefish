@@ -133,7 +133,6 @@ jobs:
         release_name: latest_host_image
         tag_name: latest
         body_path: CHANGELOG.md
-        repo: https://github.com/WeiChungHsu/android-cuttlefish
       env:
         GITHUB_TOKEN: ${{ github.token }}
     - name: Download preseed-mini.iso.xz
