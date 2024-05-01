@@ -16,7 +16,7 @@
 
 #include <android-base/logging.h>
 #include <asm-generic/socket.h>
-#include <gflags/gflags.h>
+#include "gflags/gflags.h"
 #include <pwd.h>
 #include <sys/socket.h>
 #include <sys/types.h>

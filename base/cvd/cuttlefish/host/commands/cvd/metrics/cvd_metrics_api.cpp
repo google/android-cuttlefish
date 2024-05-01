@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <uuid.h>
+#include "uuid.h"
 
 #include <internal_user_log.pb.h>
 

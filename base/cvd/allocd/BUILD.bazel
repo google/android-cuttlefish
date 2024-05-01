@@ -1,0 +1,28 @@
+cc_binary(
+    name = "allocd",
+    srcs = [
+        "alloc_utils.cpp",
+        "alloc_utils.h",
+        "allocd.cpp",
+        "request.h",
+        "resource.cpp",
+        "resource.h",
+        "resource_manager.cpp",
+        "resource_manager.h",
+        "utils.cpp",
+        "utils.h",
+    ],
+    copts = [
+        "-Wno-reorder",
+        "-Wno-unknown-pragmas",
+        "-Wno-attributes",
+        "-Wno-sign-compare",
+        "-Wno-write-strings",
+        "-DNODISCARD_EXPECTED=true",
+        "-std=c++17",
+    ],
+    includes = [""],
+    deps = [
+        "//cuttlefish:cuttlefish_common",
+    ],
+)

@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include <json/json.h>
+#include "json/json.h"
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
