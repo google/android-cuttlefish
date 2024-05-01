@@ -1544,8 +1544,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_ethernet_ipv6(Ipv6ToString(ethernet_ipv6));
 
     instance.set_tombstone_receiver_port(calc_vsock_port(6600));
-    instance.set_audiocontrol_server_port(9410);  /* OK to use the same port number across instances */
-    instance.set_config_server_port(calc_vsock_port(6800));
+    instance.set_audiocontrol_server_port(
+        9410); /* OK to use the same port number across instances */
     instance.set_lights_server_port(calc_vsock_port(6900));
 
     // gpu related settings
