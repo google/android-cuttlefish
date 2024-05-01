@@ -52,7 +52,7 @@ Result<std::vector<std::string>> GenerateInstancesFlags(
     const Json::Value& instances, const cvd::config::Launch& config) {
   std::vector<std::string> result = CF_EXPECT(GenerateBootFlags(config));
   result = MergeResults(std::move(result), GenerateDiskFlags(config));
-  result = MergeResults(result, CF_EXPECT(GenerateGraphicsFlags(instances)));
+  result = MergeResults(result, CF_EXPECT(GenerateGraphicsFlags(config)));
   result = MergeResults(std::move(result), GenerateSecurityFlags(config));
   result = MergeResults(result, CF_EXPECT(GenerateStreamingFlags(instances)));
   result = MergeResults(result, CF_EXPECT(GenerateVmFlags(instances)));
