@@ -113,7 +113,7 @@ jobs:
       with:
         name: preseed-mini
     - name: Upload Release Asset preseed-mini.iso.xz
-      run: gh release upload latest preseed-mini.iso.xz
+      run: gh release upload latest preseed-mini.iso.xz -R google/android-cuttlefish
       env:
         GITHUB_TOKEN: ${{ github.token }}
         
