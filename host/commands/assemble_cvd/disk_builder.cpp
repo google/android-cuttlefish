@@ -91,11 +91,11 @@ DiskBuilder DiskBuilder::CrosvmPath(std::string crosvm_path) && {
   return *this;
 }
 
-DiskBuilder& DiskBuilder::VmManager(std::string vm_manager) & {
+DiskBuilder& DiskBuilder::VmManager(VmmMode vm_manager) & {
   vm_manager_ = std::move(vm_manager);
   return *this;
 }
-DiskBuilder DiskBuilder::VmManager(std::string vm_manager) && {
+DiskBuilder DiskBuilder::VmManager(VmmMode vm_manager) && {
   vm_manager_ = std::move(vm_manager);
   return *this;
 }
@@ -139,7 +139,7 @@ DiskBuilder DiskBuilder::ResumeIfPossible(bool resume_if_possible) && {
 Result<std::string> DiskBuilder::TextConfig() {
   std::ostringstream disk_conf;
 
-  CF_EXPECT(!vm_manager_.empty(), "Missing vm_manager");
+  CF_EXPECT(vm_manager_ != VmmMode::kUnknown, "Missing vm_manager");
   disk_conf << vm_manager_ << "\n";
 
   CF_EXPECT(!partitions_.empty() ^ !entire_disk_.empty(),
@@ -195,8 +195,8 @@ Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
     return false;
   }
 
-  CF_EXPECT(!vm_manager_.empty());
-  if (vm_manager_ == vm_manager::CrosvmManager::name()) {
+  CF_EXPECT(vm_manager_ != VmmMode::kUnknown);
+  if (vm_manager_ == VmmMode::kCrosvm) {
     CF_EXPECT(!header_path_.empty(), "No header path");
     CF_EXPECT(!footer_path_.empty(), "No footer path");
     CreateCompositeDisk(partitions_, AbsolutePath(header_path_),
