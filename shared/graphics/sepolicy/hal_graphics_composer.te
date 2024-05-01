@@ -1,7 +1,6 @@
 allow hal_graphics_composer_server hal_graphics_allocator_default_tmpfs:file read;
 allow hal_graphics_composer_server self:{ socket vsock_socket } create_socket_perms_no_ioctl;
 
-get_prop(hal_graphics_composer_server, vendor_cuttlefish_config_server_port_prop)
 get_prop(hal_graphics_composer_server, vendor_hwcomposer_prop)
 
 # Persistent memory for some hwcomposer configuration.

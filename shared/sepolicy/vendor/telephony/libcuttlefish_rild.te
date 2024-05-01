@@ -8,7 +8,6 @@ hal_server_domain(libcuttlefish_rild, hal_telephony)
 # Failing to create these sockets appears to be non-fatal
 net_domain(libcuttlefish_rild)
 
-get_prop(libcuttlefish_rild, vendor_cuttlefish_config_server_port_prop)
 get_prop(libcuttlefish_rild, vendor_modem_simulator_ports_prop)
 
 allow libcuttlefish_rild self:{ socket vsock_socket } { create_socket_perms_no_ioctl getattr };
