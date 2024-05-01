@@ -21,11 +21,15 @@
 #include "json/json.h"
 
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
 #define DEFAULT_BLANK_DATA_IMAGE_SIZE "unset"
 
 namespace cuttlefish {
+
+using cvd::config::Instance;
+using cvd::config::Launch;
 
 Result<void> InitDiskConfigs(Json::Value& instances) {
   for (auto& instance : instances) {
@@ -36,21 +40,19 @@ Result<void> InitDiskConfigs(Json::Value& instances) {
   return {};
 }
 
-Result<std::vector<std::string>> GenerateDiskFlags(
-    const Json::Value& instances) {
+std::vector<std::string> GenerateDiskFlags(const Launch& config) {
   std::vector<std::string> data_image_mbs;
-  for (const auto& instance : instances) {
-    auto disk = instance["disk"];
-    if (disk.isMember("blank_data_image_mb")) {
-      auto str = disk["blank_data_image_mb"].asString();
-      data_image_mbs.emplace_back(str);
+  for (const auto& instance : config.instances()) {
+    const auto& disk = instance.disk();
+    if (disk.has_blank_data_image_mb()) {
+      data_image_mbs.emplace_back(std::to_string(disk.blank_data_image_mb()));
     } else {
-      data_image_mbs.emplace_back("unset");
+      data_image_mbs.emplace_back(DEFAULT_BLANK_DATA_IMAGE_SIZE);
     }
   }
-  std::vector<std::string> result;
-  result.emplace_back(GenerateVecFlag("blank_data_image_mb", data_image_mbs));
-  return result;
+  return std::vector<std::string>{
+      GenerateVecFlag("blank_data_image_mb", data_image_mbs),
+  };
 }
 
 }  // namespace cuttlefish
