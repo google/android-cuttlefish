@@ -126,7 +126,9 @@ jobs:
       id: version
     - name: get_run_id
       run: RUN_ID=$(gh run list -w HostImage -L 1 --json databaseId | jq -r '.[0].databaseId')
-      id: run_id      
+      id: get_run_id
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
     - name: release
       uses: actions/create-release@v1
       id: create_release
@@ -139,11 +141,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
     - name: Download preseed-mini.iso.xz
-      run: echo ${{ steps.get_run_id.outputs.run_id }} && gh run download $RUN_ID -n preseed-mini
+      run: echo ${{ steps.get_run_id.outputs.get_run_id }} && gh run download ${{ steps.get_run_id.outputs.get_run_id }} -n preseed-mini
       env:
         GITHUB_TOKEN: ${{ github.token }}
     - name: Download u-boot.bin
-      run: echo ${{ steps.get_run_id.outputs.run_id }} && gh run download $RUN_ID -n u-boot
+      run: echo ${{ steps.get_run_id.outputs.get_run_id }} && gh run download ${{ steps.get_run_id.outputs.get_run_id }} -n u-boot
       env:
         GITHUB_TOKEN: ${{ github.token }}
     - name: Download meta_gigamp_packages.7z
