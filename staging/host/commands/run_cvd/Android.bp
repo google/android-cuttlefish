@@ -95,7 +95,6 @@ cc_binary_host {
                 "gnss_grpc_proxy",
             ],
             srcs: [
-                "launch/config_server.cpp",
                 "launch/mcu.cpp",
                 "launch/modem.cpp",
                 "launch/open_wrt.cpp",
