@@ -35,6 +35,8 @@ jobs:
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
       with:
         path: "android-cuttlefish"
+    - name: Install bazel
+      run: bash android-cuttlefish/tools/installbazel/main.sh
     - name: install package build dependencies
       run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
     - name: build base debian package
@@ -55,13 +57,18 @@ jobs:
     - name: Setup apt
       run: apt update -y && apt upgrade -y
     - name: Install dependencies
-      run: apt install -y clang pkg-config meson libfmt-dev libgflags-dev libjsoncpp-dev protobuf-compiler libgtest-dev libcurl4-openssl-dev libprotobuf-c-dev libgoogle-glog-dev libssl-dev libxml2-dev openssl uuid-dev
-    - name: Setup meson
-      run: mkdir base/cvd/build && cd base/cvd/build && meson setup
+      run: apt install -y clang libcurl4-openssl-dev
+    - name: Install bazel
+      run: bash tools/installbazel/main.sh
     - name: Build cvd
-      run: cd base/cvd/build && meson compile
+      run: cd base/cvd && bazel build ...
     - name: Test cvd
-      run: cd base/cvd/build && meson test -v
+      run: cd base/cvd && bazel test --sandbox_writable_path=$HOME --test_output=errors ...
+    - name: Upload test logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: testlogs
+        path: bazel-testlogs
   e2e-tests-orchestration:
     runs-on: ubuntu-22.04 
     steps:
@@ -73,9 +80,9 @@ jobs:
     - name: Install bazel
       run: sudo bash tools/installbazel/main.sh
     - name: bazel version
-      run: bazel version   
-    - name: Run orchestration e2e tests 
-      run: bazel test --sandbox_writable_path=$HOME --test_output=errors e2etests/orchestration/... 
+      run: bazel version
+    - name: Run orchestration e2e tests
+      run: bazel test --sandbox_writable_path=$HOME --test_output=errors e2etests/orchestration/...
     - name: Upload test logs
       uses: actions/upload-artifact@v3
       with:

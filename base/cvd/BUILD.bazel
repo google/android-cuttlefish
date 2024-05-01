@@ -1,0 +1,60 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "cvd_server_proto",
+    srcs = ["cvd_server.proto"],
+)
+
+cc_proto_library(
+    name = "cvd_server_cc_proto",
+    deps = [":cvd_server_proto"],
+)
+
+proto_library(
+    name = "internal_config_proto",
+    srcs = ["internal_config.proto"],
+)
+
+cc_proto_library(
+    name = "internal_config_cc_proto",
+    deps = [":internal_config_proto"],
+)
+
+proto_library(
+    name = "user_config_proto",
+    srcs = ["user_config.proto"],
+)
+
+cc_proto_library(
+    name = "user_config_cc_proto",
+    deps = [":user_config_proto"],
+)
+
+proto_library(
+    name = "launch_cvd_proto",
+    srcs = ["launch_cvd.proto"],
+)
+
+cc_proto_library(
+    name = "launch_cvd_cc_proto",
+    deps = [":launch_cvd_proto"],
+)
+
+proto_library(
+    name = "cvd_persistent_data_proto",
+    srcs = ["cvd_persistent_data.proto"],
+)
+
+cc_proto_library(
+    name = "cvd_persistent_data",
+    deps = [":cvd_persistent_data_proto"],
+)
+
+genrule(
+    name = "build_version_header",
+    srcs = ["build_version.h.in"],
+    outs = ["build/version.h"],
+    cmd = "sed -e \"s|@VCS_TAG@|`git describe`|\" $< > $@",
+)

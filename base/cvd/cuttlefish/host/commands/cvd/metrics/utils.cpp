@@ -16,7 +16,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <curl/curl.h>
-#include <gflags/gflags.h>
+#include "gflags/gflags.h"
 #include <net/if.h>
 #include <netinet/in.h>
 #include <string.h>

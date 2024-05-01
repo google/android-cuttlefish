@@ -21,7 +21,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <json/json.h>
+#include "json/json.h"
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flags_validator.h"
