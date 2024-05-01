@@ -62,6 +62,37 @@ Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
   }
 }
 
+std::string ToString(VmmMode mode) {
+  std::stringstream ss;
+  ss << mode;
+  return ss.str();
+}
+
+std::ostream& operator<<(std::ostream& out, VmmMode vmm) {
+  switch (vmm) {
+    case VmmMode::kUnknown:
+      return out << "unknown";
+    case VmmMode::kCrosvm:
+      return out << "crosvm";
+    case VmmMode::kGem5:
+      return out << "gem5";
+    case VmmMode::kQemu:
+      return out << "qemu_cli";
+  }
+}
+
+Result<VmmMode> ParseVmm(std::string_view str) {
+  if (android::base::EqualsIgnoreCase(str, "crosvm")) {
+    return VmmMode::kCrosvm;
+  } else if (android::base::EqualsIgnoreCase(str, "gem5")) {
+    return VmmMode::kGem5;
+  } else if (android::base::EqualsIgnoreCase(str, "qemu_cli")) {
+    return VmmMode::kQemu;
+  } else {
+    return CF_ERRF("\"{}\" is not a valid Vmm.", str);
+  }
+}
+
 static constexpr char kInstanceDir[] = "instance_dir";
 CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
     CuttlefishConfig* config, const std::string& id)
@@ -1199,8 +1230,7 @@ bool CuttlefishConfig::InstanceSpecific::console() const {
 std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
   auto can_use_virtio_console = !kgdb() && !use_bootloader();
   std::string console_dev;
-  if (can_use_virtio_console ||
-      config_->vm_manager() == vm_manager::Gem5Manager::name()) {
+  if (can_use_virtio_console || config_->vm_manager() == VmmMode::kGem5) {
     // If kgdb and the bootloader are disabled, the Android serial console
     // spawns on a virtio-console port. If the bootloader is enabled, virtio
     // console can't be used since uboot doesn't support it.
@@ -1210,7 +1240,7 @@ std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
     // architectures emulate ns16550a/uart8250 instead.
     Arch target = target_arch();
     if ((target == Arch::Arm64 || target == Arch::Arm) &&
-        config_->vm_manager() != vm_manager::CrosvmManager::name()) {
+        config_->vm_manager() != VmmMode::kCrosvm) {
       console_dev = "ttyAMA0";
     } else {
       console_dev = "ttyS0";

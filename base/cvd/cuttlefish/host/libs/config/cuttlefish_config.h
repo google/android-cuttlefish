@@ -52,6 +52,17 @@ enum class SecureHal {
   HostOemlockSecure,
 };
 
+enum class VmmMode {
+  kUnknown,
+  kCrosvm,
+  kGem5,
+  kQemu,
+};
+
+std::ostream& operator<<(std::ostream&, VmmMode);
+std::string ToString(VmmMode mode);
+Result<VmmMode> ParseVmm(std::string_view);
+
 enum class ExternalNetworkMode {
   kUnknown,
   kTap,
@@ -100,8 +111,8 @@ class CuttlefishConfig {
   std::string environments_uds_dir() const;
   std::string EnvironmentsUdsPath(const std::string&) const;
 
-  std::string vm_manager() const;
-  void set_vm_manager(const std::string& name);
+  VmmMode vm_manager() const;
+  void set_vm_manager(VmmMode vmm);
 
   std::string ap_vm_manager() const;
   void set_ap_vm_manager(const std::string& name);
@@ -1010,4 +1021,6 @@ extern const char* const kHwComposerNone;
 #if FMT_VERSION >= 90000
 template <>
 struct fmt::formatter<cuttlefish::ExternalNetworkMode> : ostream_formatter {};
+template <>
+struct fmt::formatter<cuttlefish::VmmMode> : ostream_formatter {};
 #endif
