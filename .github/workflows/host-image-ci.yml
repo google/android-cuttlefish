@@ -140,8 +140,12 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
     - name: Download preseed-mini.iso.xz
       run: echo ${{ steps.get_run_id.outputs.run_id }} && gh run download $RUN_ID -n preseed-mini
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
     - name: Download u-boot.bin
       run: echo ${{ steps.get_run_id.outputs.run_id }} && gh run download $RUN_ID -n u-boot
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
     - name: Download meta_gigamp_packages.7z
       uses: actions/download-artifact@v3
       with:
