@@ -241,8 +241,8 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
                                  original_request.FileDescriptors()};
   auto [_, instances_json, group_response] =
       CF_EXPECT(FetchStatus(group_request));
-  CF_EXPECT_EQ(
-      group_response.status().code(), cvd::Status::OK,
+  CF_EXPECT(
+      group_response.status().code() == cvd::Status::OK,
       fmt::format("Running `cvd status --all_instances` for group \"{}\" failed",
                   group.GroupName()));
   group_json["instances"] = instances_json;
