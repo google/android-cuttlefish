@@ -56,7 +56,7 @@ Result<std::vector<std::string>> GenerateInstancesFlags(
   result = MergeResults(result, GenerateSecurityFlags(config));
   result = MergeResults(result, CF_EXPECT(GenerateStreamingFlags(instances)));
   result = MergeResults(result, CF_EXPECT(GenerateVmFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateConnectivityFlags(instances)));
+  result = MergeResults(result, GenerateConnectivityFlags(config));
 
   return result;
 }

@@ -14,30 +14,25 @@
  * limitations under the License.
  */
 
-#include <fmt/format.h>
-#include "json/json.h"
+#include <string>
+#include <vector>
 
-#include "common/libs/utils/result.h"
+#include "host/commands/cvd/parser/cf_configs_common.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 
-std::string GenerateGroupFlag(const Json::Value& instances_json) {
-  std::vector<std::string> vsock_groups;
+using cvd::config::Instance;
+using cvd::config::Launch;
 
-  for (const auto& instance_json : instances_json) {
-    vsock_groups.emplace_back(
-        instance_json["connectivity"]["vsock"]["guest_group"].asString());
-  }
-
-  std::string args = fmt::format("{}", fmt::join(vsock_groups, ","));
-  return "--vsock_guest_group=" + args;
+static std::string VsockGuestGroup(const Instance& instance) {
+  return instance.connectivity().vsock().guest_group();
 }
 
-Result<std::vector<std::string>> GenerateConnectivityFlags(
-    const Json::Value& instances) {
-  std::vector<std::string> result;
-  result.emplace_back(GenerateGroupFlag(instances));
-  return result;
+std::vector<std::string> GenerateConnectivityFlags(const Launch& cfg) {
+  return std::vector<std::string>{
+      GenerateInstanceFlag("vsock_guest_group", cfg, VsockGuestGroup),
+  };
 }
 
 }  // namespace cuttlefish
