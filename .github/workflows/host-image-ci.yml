@@ -124,6 +124,9 @@ jobs:
     - name: version
       run: date '+%Y-%m-%d_%H:%M:%S'
       id: version
+    - name: get_run_id
+      run: RUN_ID=$(gh run list -w HostImage -L 1 --json databaseId | jq -r '.[0].databaseId')
+      id: run_id      
     - name: release
       uses: actions/create-release@v1
       id: create_release
@@ -136,13 +139,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
     - name: Download preseed-mini.iso.xz
-      uses: actions/download-artifact@v3
-      with:
-        name: preseed-mini
+      run: echo ${{ steps.get_run_id.outputs.run_id }} && gh run download $RUN_ID -n preseed-mini
     - name: Download u-boot.bin
-      uses: actions/download-artifact@v3
-      with:
-        name: u-boot
+      run: echo ${{ steps.get_run_id.outputs.run_id }} && gh run download $RUN_ID -n u-boot
     - name: Download meta_gigamp_packages.7z
       uses: actions/download-artifact@v3
       with:
