@@ -108,12 +108,12 @@ jobs:
     - name: version
       run: date '+%Y-%m-%d_%H:%M:%S'
       id: version
-    - name: Download meta_gigamp_packages.7z
+    - name: Download preseed-mini.iso.xz
       uses: actions/download-artifact@v3
       with:
-        name: meta_gigamp_packages
-    - name: Upload Release Asset meta_gigamp_packages.7z
-      run: gh release upload latest meta_gigamp_packages.7z -R WeiChungHsu/android-cuttlefish
+        name: preseed-mini
+    - name: Upload Release Asset preseed-mini.iso.xz
+      run: gh release upload latest preseed-mini.iso.xz
       env:
         GITHUB_TOKEN: ${{ github.token }}
         
