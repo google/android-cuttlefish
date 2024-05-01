@@ -30,7 +30,7 @@
 namespace cuttlefish {
 namespace {
 
-std::string GetVmManagerDefault(Json::Value& instance_vm) {
+std::string GetVmManagerDefault(const Json::Value& instance_vm) {
   if (instance_vm.isNull()) {
     return "crosvm";
   }
@@ -56,10 +56,6 @@ Result<void> InitVmConfigs(Json::Value& instances) {
     CF_EXPECT(InitConfig(instance, CF_DEFAULTS_SETUPWIZARD_MODE,
                          {"vm", "setupwizard_mode"}));
     CF_EXPECT(InitConfig(instance, CF_DEFAULTS_UUID, {"vm", "uuid"}));
-    CF_EXPECT(InitConfig(instance, GetVmManagerDefault(instance["vm"]),
-                         {"vm", "vm_manager"}));
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_ENABLE_SANDBOX,
-                         {"vm", "crosvm", "enable_sandbox"}));
   }
   return {};
 }
@@ -96,14 +92,27 @@ Result<std::vector<std::string>> GenerateVmFlags(const Json::Value& instances) {
       GenerateVecFlagFromJson(instances, "memory_mb", {"vm", "memory_mb"})));
   result.emplace_back(CF_EXPECT(
       GenerateVecFlagFromJson(instances, "use_sdcard", {"vm", "use_sdcard"})));
-  result.emplace_back(CF_EXPECT(
-      GenerateVecFlagFromJson(instances, "vm_manager", {"vm", "vm_manager"})));
+  std::vector<std::string> vm_managers;
+  for (const auto& instance : instances) {
+    vm_managers.emplace_back(GetVmManagerDefault(instance["vm"]));
+  }
+  result.emplace_back(GenerateVecFlag("vm_manager", vm_managers));
   result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
       instances, "setupwizard_mode", {"vm", "setupwizard_mode"})));
   result.emplace_back(
       CF_EXPECT(GenerateVecFlagFromJson(instances, "uuid", {"vm", "uuid"})));
-  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
-      instances, "enable_sandbox", {"vm", "crosvm", "enable_sandbox"})));
+  std::vector<std::string> enable_sandbox;
+  for (const auto& instance : instances) {
+    const auto& vm = instance["vm"];
+    if (vm.isMember("crosvm") && vm["crosvm"].isMember("enable_sandbox")) {
+      bool enable = vm["crosvm"]["enable_sandbox"].asBool();
+      enable_sandbox.emplace_back(enable ? "true" : "false");
+    } else {
+      bool enable = CF_DEFAULTS_ENABLE_SANDBOX;
+      enable_sandbox.emplace_back(enable ? "true" : "false");
+    }
+  }
+  result.emplace_back(GenerateVecFlag("enable_sandbox", enable_sandbox));
 
   result = MergeResults(result, GenerateCustomConfigsFlags(instances));
 

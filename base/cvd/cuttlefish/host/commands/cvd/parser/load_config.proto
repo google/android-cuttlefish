@@ -101,7 +101,7 @@ message Super {
 
 message Security {
   optional string serial_number = 1;
-  optional string use_random_serial = 2;
+  optional bool use_random_serial = 2;
   optional bool guest_enforce_security = 3;
 }
 
@@ -115,13 +115,21 @@ message Vm {
   optional bool use_sdcard = 3;
   optional string setupwizard_mode = 4;
   optional string uuid = 5;
-  optional Crosvm crosvm = 6;
-  repeated CustomAction custom_actions = 7;
+  oneof vmm {
+    Crosvm crosvm = 6;
+    Gem5 gem5 = 7;
+    Qemu qemu = 8;
+  }
+  repeated CustomAction custom_actions = 9;
 }
 
 message Crosvm {
   optional bool enable_sandbox = 1;
 }
+
+message Gem5 {}
+
+message Qemu {}
 
 message CustomAction {
   optional string shell_command = 1;

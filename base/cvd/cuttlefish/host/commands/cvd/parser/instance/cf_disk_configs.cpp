@@ -29,17 +29,27 @@ namespace cuttlefish {
 
 Result<void> InitDiskConfigs(Json::Value& instances) {
   for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, DEFAULT_BLANK_DATA_IMAGE_SIZE,
-                         {"disk", "blank_data_image_mb"}));
+    if (!instance.isMember("disk")) {
+      instance["disk"] = Json::Value(Json::ValueType::objectValue);
+    }
   }
   return {};
 }
 
 Result<std::vector<std::string>> GenerateDiskFlags(
     const Json::Value& instances) {
+  std::vector<std::string> data_image_mbs;
+  for (const auto& instance : instances) {
+    auto disk = instance["disk"];
+    if (disk.isMember("blank_data_image_mb")) {
+      auto str = disk["blank_data_image_mb"].asString();
+      data_image_mbs.emplace_back(str);
+    } else {
+      data_image_mbs.emplace_back("unset");
+    }
+  }
   std::vector<std::string> result;
-  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
-      instances, "blank_data_image_mb", {"disk", "blank_data_image_mb"})));
+  result.emplace_back(GenerateVecFlag("blank_data_image_mb", data_image_mbs));
   return result;
 }
 

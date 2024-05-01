@@ -26,6 +26,7 @@
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_configs_instances.h"
@@ -53,6 +54,9 @@ std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) 
 }
 
 Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
+  cvd::config::Launch launch_config;
+  CF_EXPECT(Validate(root, launch_config));
+
   std::vector<std::string> result;
   result.emplace_back(GenerateFlag("num_instances", root["instances"].size()));
   result.emplace_back(GenerateFlag(
