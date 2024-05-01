@@ -98,22 +98,6 @@ jobs:
         name: u-boot
         path: cuttlefish-host-image-installer/u-boot.bin
 
-  delete-old-release-job:
-    runs-on: ubuntu-latest
-    permissions: write-all
-    steps:
-    - name: delete_release
-      uses: dev-drprasad/delete-tag-and-release@v1.1
-      id: delete_tag_release
-      with:
-        tag_name: latest
-        delete_release: true
-        repo: WeiChungHsu/android-cuttlefish
-        #repo: google/android-cuttlefish
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-
   deploy-release-job:
     runs-on: ubuntu-latest
     needs: [build-installer-iso-job, build-uboot-qemu-job, build-metapackage-deb-job]
@@ -124,77 +108,13 @@ jobs:
     - name: version
       run: date '+%Y-%m-%d_%H:%M:%S'
       id: version
-    - name: get_run_id
-      run: RUN_ID=$(gh run list -w HostImage -L 1 --json databaseId | jq -r '.[0].databaseId')
-      id: get_run_id
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-    - name: release
-      uses: actions/create-release@v1
-      id: create_release
-      with:
-        draft: false
-        prerelease: false
-        release_name: latest_host_image
-        tag_name: latest
-        body_path: CHANGELOG.md
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-    - name: Download preseed-mini.iso.xz
-      run: echo ${{ steps.get_run_id.outputs.get_run_id }} && gh run download ${{ steps.get_run_id.outputs.get_run_id }} -n preseed-mini
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-    - name: Download u-boot.bin
-      run: echo ${{ steps.get_run_id.outputs.get_run_id }} && gh run download ${{ steps.get_run_id.outputs.get_run_id }} -n u-boot
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
     - name: Download meta_gigamp_packages.7z
       uses: actions/download-artifact@v3
       with:
         name: meta_gigamp_packages
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      id: upload-release-asset
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-  #      #upload_url: https://uploads.github.com/repos/WeiChungHsu/android-cuttlefish/releases/153364837/assets{?name,label}
-  #      #upload_url: https://uploads.github.com/repos/WeiChungHsu/android-cuttlefish/releases/153365569/assets{?name,label}
-  #      #https://github.com/WeiChungHsu/android-cuttlefish/releases/download/latest/CHANGELOG8.md
-        asset_path: ./CHANGELOG.md
-        asset_name: CHANGELOG.md
-        asset_content_type: application/zip
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Upload Release Asset preseed-mini.iso.xz
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./preseed-mini.iso.xz
-        asset_name: preseed-mini.iso.xz
-        asset_content_type: application/x-xz
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Upload Release Asset u-boot.bin
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./u-boot.bin
-        asset_name: u-boot.bin
-        asset_content_type: application/zip
-        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload Release Asset meta_gigamp_packages.7z
-      uses: actions/upload-release-asset@v1
+      run: gh release upload latest meta_gigamp_packages.7z -R WeiChungHsu/android-cuttlefish
       env:
         GITHUB_TOKEN: ${{ github.token }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./meta_gigamp_packages.7z
-        asset_name: meta_gigamp_packages.7z
-        asset_content_type: application/x-7z-compressed
-        github_token: ${{ secrets.GITHUB_TOKEN }}
         
         
