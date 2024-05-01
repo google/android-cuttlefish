@@ -22,8 +22,9 @@
 #include "json/json.h"
 
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 Result<void> InitSecurityConfigs(Json::Value& root);
-Result<std::vector<std::string>> GenerateSecurityFlags(const Json::Value& root);
+std::vector<std::string> GenerateSecurityFlags(const cvd::config::Launch& root);
 };  // namespace cuttlefish

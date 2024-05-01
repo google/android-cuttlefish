@@ -16,7 +16,6 @@
 
 #include "host/commands/cvd/parser/cf_configs_instances.h"
 
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -24,14 +23,15 @@
 #include "json/json.h"
 
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/instance/cf_boot_configs.h"
+#include "host/commands/cvd/parser/instance/cf_connectivity_configs.h"
 #include "host/commands/cvd/parser/instance/cf_disk_configs.h"
 #include "host/commands/cvd/parser/instance/cf_graphics_configs.h"
 #include "host/commands/cvd/parser/instance/cf_security_configs.h"
 #include "host/commands/cvd/parser/instance/cf_streaming_configs.h"
 #include "host/commands/cvd/parser/instance/cf_vm_configs.h"
-#include "host/commands/cvd/parser/instance/cf_connectivity_configs.h"
 
 namespace cuttlefish {
 
@@ -49,11 +49,11 @@ Result<void> InitInstancesConfigs(Json::Value& instances) {
 }
 
 Result<std::vector<std::string>> GenerateInstancesFlags(
-    const Json::Value& instances) {
+    const Json::Value& instances, const cvd::config::Launch& config) {
   std::vector<std::string> result = CF_EXPECT(GenerateBootFlags(instances));
   result = MergeResults(result, CF_EXPECT(GenerateDiskFlags(instances)));
   result = MergeResults(result, CF_EXPECT(GenerateGraphicsFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateSecurityFlags(instances)));
+  result = MergeResults(result, GenerateSecurityFlags(config));
   result = MergeResults(result, CF_EXPECT(GenerateStreamingFlags(instances)));
   result = MergeResults(result, CF_EXPECT(GenerateVmFlags(instances)));
   result = MergeResults(result, CF_EXPECT(GenerateConnectivityFlags(instances)));

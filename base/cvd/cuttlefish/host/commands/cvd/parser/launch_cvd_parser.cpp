@@ -64,8 +64,8 @@ Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
   result.emplace_back(GenerateFlag(
       "netsim_uwb", CF_EXPECT(GetValue<std::string>(root, {"netsim_uwb"}))));
   result = MergeResults(result, CF_EXPECT(GenerateMetricsFlags(root)));
-  result = MergeResults(result,
-                        CF_EXPECT(GenerateInstancesFlags(root["instances"])));
+  result = MergeResults(result, CF_EXPECT(GenerateInstancesFlags(
+                                    root["instances"], launch_config)));
   auto flag_op = GenerateUndefOkFlag(result);
   if (flag_op.has_value()) {
     result.emplace_back(std::move(*flag_op));
