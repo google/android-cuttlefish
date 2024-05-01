@@ -26,6 +26,7 @@
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 
@@ -88,6 +89,17 @@ Result<std::string> GenerateVecFlagFromJson(
 Result<std::string> Base64EncodeGflag(
     const Json::Value& instances, const std::string& gflag_name,
     const std::vector<std::string>& selectors);
+
+template <typename T>
+std::string GenerateInstanceFlag(const std::string& name,
+                                 const cvd::config::Launch& config,
+                                 T callback) {
+  std::vector<decltype(callback(config.instances()[0]))> values;
+  for (const auto& instance : config.instances()) {
+    values.emplace_back(callback(instance));
+  }
+  return GenerateVecFlag(name, values);
+}
 
 std::vector<std::string> MergeResults(std::vector<std::string> first_list,
                                       std::vector<std::string> scond_list);

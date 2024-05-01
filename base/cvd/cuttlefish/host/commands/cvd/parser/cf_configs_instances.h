@@ -22,11 +22,12 @@
 #include "json/json.h"
 
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 
 Result<void> InitInstancesConfigs(Json::Value& root);
 Result<std::vector<std::string>> GenerateInstancesFlags(
-    const Json::Value& root);
+    const Json::Value& root, const cvd::config::Launch& config);
 
 };  // namespace cuttlefish
