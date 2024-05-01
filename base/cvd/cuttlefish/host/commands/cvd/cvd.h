@@ -46,10 +46,10 @@ class Cvd {
     const std::unordered_map<std::string, std::string>& env);
 
  private:
+  android::base::LogSeverity verbosity_;
   InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
   HostToolTargetManager& host_tool_target_manager_;
-  android::base::LogSeverity verbosity_;
 };
 
 }  // namespace cuttlefish
