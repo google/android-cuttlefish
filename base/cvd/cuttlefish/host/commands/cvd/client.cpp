@@ -23,9 +23,9 @@
 #include <sstream>
 
 #include <android-base/file.h>
-#include <build/version.h>
 #include <google/protobuf/text_format.h>
 
+#include "build/version.h"
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
