@@ -116,11 +116,6 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   bootconfig_args["androidboot.enable_confirmationui"] =
       std::to_string(enable_confui);
 
-  if (instance.config_server_port()) {
-    bootconfig_args["androidboot.cuttlefish_config_server_port"] =
-        std::to_string(instance.config_server_port());
-  }
-
   if (instance.audiocontrol_server_port()) {
     bootconfig_args["androidboot.vendor.audiocontrol.server.cid"] =
         std::to_string(instance.vsock_guest_cid());

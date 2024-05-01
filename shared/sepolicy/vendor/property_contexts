@@ -1,5 +1,4 @@
 ro.boot.cpuvulkan.version  u:object_r:vendor_graphics_config_prop:s0 exact int
-ro.boot.cuttlefish_config_server_port  u:object_r:vendor_cuttlefish_config_server_port_prop:s0
 ro.boot.hardware.egl u:object_r:vendor_graphics_config_prop:s0 exact string
 ro.boot.hardware.gralloc u:object_r:vendor_graphics_config_prop:s0 exact string
 ro.boot.hardware.hwcomposer u:object_r:vendor_graphics_config_prop:s0 exact string
