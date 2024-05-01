@@ -65,8 +65,6 @@ Result<std::optional<MonitorCommand>> CasimirControlServer(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
     GrpcSocketCreator&);
 
-Result<MonitorCommand> ConfigServer(const CuttlefishConfig::InstanceSpecific&);
-
 Result<std::optional<MonitorCommand>> ConsoleForwarder(
     const CuttlefishConfig::InstanceSpecific&);
 std::string ConsoleInfo(const CuttlefishConfig::InstanceSpecific&);

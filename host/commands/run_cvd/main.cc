@@ -127,7 +127,6 @@ fruit::Component<> runCvdComponent(
       .bindInstance(*environment)
 #ifdef __linux__
       .install(AutoCmd<AutomotiveProxyService>::Component)
-      .install(AutoCmd<ConfigServer>::Component)
       .install(AutoCmd<ModemSimulator>::Component)
       .install(AutoCmd<TombstoneReceiver>::Component)
       .install(McuComponent)

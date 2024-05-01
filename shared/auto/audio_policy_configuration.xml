@@ -37,7 +37,7 @@
                 <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
                     samplingRates="44100" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
             </mixPort>
-            <mixPort name="primary input" role="sink">
+            <mixPort name="primary input" role="sink" maxActiveCount="1" maxOpenCount="1">
                 <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
                     samplingRates="8000 16000" channelMasks="AUDIO_CHANNEL_IN_MONO"/>
             </mixPort>

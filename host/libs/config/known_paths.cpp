@@ -30,10 +30,6 @@ std::string CasimirControlServerBinary() {
   return HostBinaryPath("casimir_control_server");
 }
 
-std::string ConfigServerBinary() {
-  return HostBinaryPath("config_server");
-}
-
 std::string ConsoleForwarderBinary() {
   return HostBinaryPath("console_forwarder");
 }
