@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <cvd_server.pb.h>
+#include "cvd_server.pb.h"
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/arguments_lexer.h"
