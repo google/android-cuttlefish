@@ -24,7 +24,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
-#include <gflags/gflags.h>
+#include "gflags/gflags.h"
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"

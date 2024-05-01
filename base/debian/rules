@@ -21,5 +21,6 @@ override_dh_installinit:
 	dh_installinit
 
 override_dh_auto_build:
-	mkdir -p cvd/build && rm -rf cvd/build/* && cd cvd/build && meson setup && ninja
+	cd cvd && bazel build cuttlefish:cvd
 	dh_auto_build
+

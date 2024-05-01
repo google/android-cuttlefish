@@ -19,7 +19,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
-#include <json/json.h>
+#include "json/json.h"
 
 #include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"

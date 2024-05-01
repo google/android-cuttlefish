@@ -16,7 +16,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <json/json.h>
+#include "json/json.h"
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/result_matchers.h"

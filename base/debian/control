@@ -6,7 +6,6 @@ Build-Depends: config-package-dev,
                debhelper-compat (= 12),
                clang,
                pkg-config,
-               meson,
                libfmt-dev,
                libgflags-dev,
                libjsoncpp-dev,
@@ -19,7 +18,10 @@ Build-Depends: config-package-dev,
                libprotobuf-dev,
                libprotobuf-c-dev,
                protobuf-compiler,
-               libz3-dev
+               libz3-dev,
+               sed,
+               git,
+               bazel
 Standards-Version: 4.5.0
 
 Package: cuttlefish-base

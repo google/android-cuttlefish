@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include <json/json.h>
+#include "json/json.h"
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/fetch_config_parser.h"
