@@ -18,8 +18,6 @@
 #include <string>
 #include <vector>
 
-#include "json/json.h"
-
 #include "common/libs/utils/base64.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
@@ -31,22 +29,23 @@ namespace cuttlefish {
 using cvd::config::Instance;
 using cvd::config::Launch;
 
-Result<void> InitBootConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_ENABLE_BOOTANIMATION,
-                         {"boot", "enable_bootanimation"}));
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
-                         {"boot", "extra_bootconfig_args"}));
-  }
-  return {};
-}
-
 static bool EnableBootAnimation(const Instance& instance) {
-  return instance.boot().enable_bootanimation();
+  const auto& boot = instance.boot();
+  if (boot.has_enable_bootanimation()) {
+    return instance.boot().enable_bootanimation();
+  } else {
+    return CF_DEFAULTS_ENABLE_BOOTANIMATION;
+  }
 }
 
 static Result<std::string> BtCfg(const Instance& instance) {
-  auto args = instance.boot().extra_bootconfig_args();
+  const auto& boot = instance.boot();
+  std::string args;
+  if (boot.has_extra_bootconfig_args()) {
+    args = instance.boot().extra_bootconfig_args();
+  } else {
+    args = CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS;
+  }
   std::string encoded;
   CF_EXPECT(EncodeBase64(args.data(), args.size(), &encoded));
   return encoded;
