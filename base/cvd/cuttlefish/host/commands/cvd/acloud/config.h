@@ -19,8 +19,8 @@
 #include <optional>
 #include <vector>
 
-#include "internal_config.pb.h"
-#include "user_config.pb.h"
+#include "cuttlefish/host/commands/cvd/acloud/internal_config.pb.h"
+#include "cuttlefish/host/commands/cvd/acloud/user_config.pb.h"
 
 #include "common/libs/utils/result.h"
 

@@ -22,7 +22,7 @@
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
-#include "cvd_persistent_data.pb.h"
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/data_viewer.h"
 #include "host/commands/cvd/selector/instance_database_types.h"

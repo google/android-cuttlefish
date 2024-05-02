@@ -27,7 +27,7 @@
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/commands/cvd/types.h"
 
