@@ -29,37 +29,44 @@
 
 namespace cuttlefish {
 
+using cvd::config::Display;
 using cvd::config::Instance;
 using cvd::config::Launch;
-
-Result<void> InitGraphicsConfigs(Json::Value& instances) {
-  InitIntConfigSubGroupVector(instances, "graphics", "displays", "width",
-                              CF_DEFAULTS_DISPLAY_WIDTH);
-  InitIntConfigSubGroupVector(instances, "graphics", "displays", "height",
-                              CF_DEFAULTS_DISPLAY_HEIGHT);
-  InitIntConfigSubGroupVector(instances, "graphics", "displays", "dpi",
-                              CF_DEFAULTS_DISPLAY_DPI);
-  InitIntConfigSubGroupVector(instances, "graphics", "displays",
-                              "refresh_rate_hertz",
-                              CF_DEFAULTS_DISPLAY_REFRESH_RATE);
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_RECORD_SCREEN,
-                         {"graphics", "record_screen"}));
-  }
-  return {};
-}
 
 Result<std::string> GenerateDisplayFlag(const Launch& cfg) {
   cuttlefish::InstancesDisplays all_instances_displays;
 
   for (const auto& in_instance : cfg.instances()) {
     auto& out_instance = *all_instances_displays.add_instances();
-    for (const auto& in_display : in_instance.graphics().displays()) {
+
+    auto& in_disp_raw = in_instance.graphics().displays();
+    std::vector<Display> in_displays(in_disp_raw.begin(), in_disp_raw.end());
+    if (in_displays.empty()) {
+      in_displays.emplace_back();  // At least one display, with default values
+    }
+
+    for (const auto& in_display : in_displays) {
       auto& out_display = *out_instance.add_displays();
-      out_display.set_width(in_display.width());
-      out_display.set_height(in_display.height());
-      out_display.set_dpi(in_display.dpi());
-      out_display.set_refresh_rate_hertz(in_display.refresh_rate_hertz());
+      if (in_display.has_width()) {
+        out_display.set_width(in_display.width());
+      } else {
+        out_display.set_width(CF_DEFAULTS_DISPLAY_WIDTH);
+      }
+      if (in_display.has_height()) {
+        out_display.set_height(in_display.height());
+      } else {
+        out_display.set_height(CF_DEFAULTS_DISPLAY_HEIGHT);
+      }
+      if (in_display.has_dpi()) {
+        out_display.set_dpi(in_display.dpi());
+      } else {
+        out_display.set_dpi(CF_DEFAULTS_DISPLAY_DPI);
+      }
+      if (in_display.has_refresh_rate_hertz()) {
+        out_display.set_refresh_rate_hertz(in_display.refresh_rate_hertz());
+      } else {
+        out_display.set_refresh_rate_hertz(CF_DEFAULTS_DISPLAY_REFRESH_RATE);
+      }
     }
   }
 
@@ -75,7 +82,11 @@ Result<std::string> GenerateDisplayFlag(const Launch& cfg) {
 }
 
 bool RecordScreen(const Instance& instance) {
-  return instance.graphics().record_screen();
+  if (instance.graphics().has_record_screen()) {
+    return instance.graphics().record_screen();
+  } else {
+    return CF_DEFAULTS_RECORD_SCREEN;
+  }
 }
 
 Result<std::vector<std::string>> GenerateGraphicsFlags(const Launch& cfg) {

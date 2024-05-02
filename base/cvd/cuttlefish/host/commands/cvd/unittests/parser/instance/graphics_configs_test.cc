@@ -44,7 +44,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyJson) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
-      << "extra_bootconfig_args flag is missing or wrongly formatted";
+      << "displays_binproto flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyGraphics) {
@@ -75,7 +75,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyGraphics) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
-      << "extra_bootconfig_args flag is missing or wrongly formatted";
+      << "displays_binproto flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyDisplays) {
@@ -116,7 +116,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyDisplays) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
-      << "extra_bootconfig_args flag is missing or wrongly formatted";
+      << "displays_binproto flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesAutoTabletDisplaysFlag) {
@@ -169,7 +169,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesAutoTabletDisplaysFlag) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
-      << "extra_bootconfig_args flag is missing or wrongly formatted";
+      << "displays_binproto flag is missing or wrongly formatted";
 }
 
 }  // namespace cuttlefish
