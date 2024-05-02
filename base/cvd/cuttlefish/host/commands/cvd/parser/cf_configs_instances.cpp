@@ -41,7 +41,6 @@ Result<void> InitInstancesConfigs(Json::Value& instances) {
   for (auto& instance : instances) {
     CF_EXPECT(InitConfig(instance, "", {"name"}));
   }
-  CF_EXPECT(InitDiskConfigs(instances));
   CF_EXPECT(InitGraphicsConfigs(instances));
   CF_EXPECT(InitSecurityConfigs(instances));
   CF_EXPECT(InitStreamingConfigs(instances));
