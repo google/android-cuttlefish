@@ -54,23 +54,22 @@ std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) 
 }
 
 Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
-  cvd::config::Launch launch_config;
-  CF_EXPECT(Validate(root, launch_config));
+  cvd::config::Launch launch;
+  CF_EXPECT(Validate(root, launch));
 
-  std::vector<std::string> result;
-  result.emplace_back(GenerateFlag("num_instances", root["instances"].size()));
-  result.emplace_back(GenerateFlag(
+  std::vector<std::string> ret;
+  ret.emplace_back(GenerateFlag("num_instances", root["instances"].size()));
+  ret.emplace_back(GenerateFlag(
       "netsim_bt", CF_EXPECT(GetValue<std::string>(root, {"netsim_bt"}))));
-  result.emplace_back(GenerateFlag(
+  ret.emplace_back(GenerateFlag(
       "netsim_uwb", CF_EXPECT(GetValue<std::string>(root, {"netsim_uwb"}))));
-  result = MergeResults(result, CF_EXPECT(GenerateMetricsFlags(root)));
-  result = MergeResults(result, CF_EXPECT(GenerateInstancesFlags(
-                                    root["instances"], launch_config)));
-  auto flag_op = GenerateUndefOkFlag(result);
+  ret = MergeResults(std::move(ret), CF_EXPECT(GenerateMetricsFlags(root)));
+  ret = MergeResults(std::move(ret), CF_EXPECT(GenerateInstancesFlags(launch)));
+  auto flag_op = GenerateUndefOkFlag(ret);
   if (flag_op.has_value()) {
-    result.emplace_back(std::move(*flag_op));
+    ret.emplace_back(std::move(*flag_op));
   }
-  return result;
+  return ret;
 }
 
 Result<void> InitCvdConfigs(Json::Value& root) {

@@ -35,6 +35,8 @@
 
 namespace cuttlefish {
 
+using cvd::config::Launch;
+
 Result<void> InitInstancesConfigs(Json::Value& instances) {
   for (auto& instance : instances) {
     CF_EXPECT(InitConfig(instance, "", {"name"}));
@@ -48,17 +50,15 @@ Result<void> InitInstancesConfigs(Json::Value& instances) {
   return {};
 }
 
-Result<std::vector<std::string>> GenerateInstancesFlags(
-    const Json::Value& instances, const cvd::config::Launch& config) {
-  std::vector<std::string> result = CF_EXPECT(GenerateBootFlags(config));
-  result = MergeResults(std::move(result), GenerateDiskFlags(config));
-  result = MergeResults(result, CF_EXPECT(GenerateGraphicsFlags(config)));
-  result = MergeResults(std::move(result), GenerateSecurityFlags(config));
-  result = MergeResults(std::move(result), GenerateStreamingFlags(config));
-  result = MergeResults(result, CF_EXPECT(GenerateVmFlags(config)));
-  result = MergeResults(std::move(result), GenerateConnectivityFlags(config));
-
-  return result;
+Result<std::vector<std::string>> GenerateInstancesFlags(const Launch& cfg) {
+  std::vector<std::string> res = CF_EXPECT(GenerateBootFlags(cfg));
+  res = MergeResults(std::move(res), GenerateDiskFlags(cfg));
+  res = MergeResults(std::move(res), CF_EXPECT(GenerateGraphicsFlags(cfg)));
+  res = MergeResults(std::move(res), GenerateSecurityFlags(cfg));
+  res = MergeResults(std::move(res), GenerateStreamingFlags(cfg));
+  res = MergeResults(std::move(res), CF_EXPECT(GenerateVmFlags(cfg)));
+  res = MergeResults(std::move(res), GenerateConnectivityFlags(cfg));
+  return res;
 }
 
 }  // namespace cuttlefish
