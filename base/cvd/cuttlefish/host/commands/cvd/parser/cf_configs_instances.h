@@ -27,7 +27,8 @@
 namespace cuttlefish {
 
 Result<void> InitInstancesConfigs(Json::Value& root);
+
 Result<std::vector<std::string>> GenerateInstancesFlags(
-    const Json::Value& root, const cvd::config::Launch& config);
+    const cvd::config::Launch& config);
 
 };  // namespace cuttlefish
