@@ -18,9 +18,6 @@
 #include <string>
 #include <vector>
 
-#include "json/json.h"
-
-#include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
@@ -30,15 +27,6 @@ namespace cuttlefish {
 
 using cvd::config::Instance;
 using cvd::config::Launch;
-
-Result<void> InitDiskConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    if (!instance.isMember("disk")) {
-      instance["disk"] = Json::Value(Json::ValueType::objectValue);
-    }
-  }
-  return {};
-}
 
 std::vector<std::string> GenerateDiskFlags(const Launch& config) {
   std::vector<std::string> data_image_mbs;
