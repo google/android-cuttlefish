@@ -969,6 +969,8 @@ android_system_image {
                 "PacProcessor",
                 "PartnerBookmarksProvider",
                 "PhotoTable",
+                "platform-bootclasspath",
+                "platform-systemserverclasspath",
                 "PrintRecommendationService",
                 "PrintSpooler",
                 "Provision",
@@ -1048,6 +1050,11 @@ android_system_image {
                     ],
                 },
             },
+        },
+    },
+    product_variables: {
+        debuggable: {
+            deps: ["su"],
         },
     },
     fsverity: {
