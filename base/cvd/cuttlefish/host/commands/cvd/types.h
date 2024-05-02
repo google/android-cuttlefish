@@ -19,7 +19,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
 namespace cuttlefish {
 namespace cvd_common {

@@ -17,7 +17,7 @@
 #include "host/commands/cvd/server_command/version.h"
 
 #include "build/version.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/proto.h"

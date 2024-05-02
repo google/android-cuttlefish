@@ -101,6 +101,56 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+proto_library(
+    name = "cvd_server_proto",
+    srcs = ["host/commands/cvd/cvd_server.proto"],
+)
+
+cc_proto_library(
+    name = "cvd_server_cc_proto",
+    deps = [":cvd_server_proto"],
+)
+
+proto_library(
+    name = "internal_config_proto",
+    srcs = ["host/commands/cvd/acloud/internal_config.proto"],
+)
+
+cc_proto_library(
+    name = "internal_config_cc_proto",
+    deps = [":internal_config_proto"],
+)
+
+proto_library(
+    name = "user_config_proto",
+    srcs = ["host/commands/cvd/acloud/user_config.proto"],
+)
+
+cc_proto_library(
+    name = "user_config_cc_proto",
+    deps = [":user_config_proto"],
+)
+
+proto_library(
+    name = "launch_cvd_proto",
+    srcs = ["host/commands/cvd/parser/instance/launch_cvd.proto"],
+)
+
+cc_proto_library(
+    name = "launch_cvd_cc_proto",
+    deps = [":launch_cvd_proto"],
+)
+
+proto_library(
+    name = "cvd_persistent_data_proto",
+    srcs = ["host/commands/cvd/selector/cvd_persistent_data.proto"],
+)
+
+cc_proto_library(
+    name = "cvd_persistent_data",
+    deps = [":cvd_persistent_data_proto"],
+)
+
 cc_library(
     name = "libcvd",
     srcs = [
@@ -395,12 +445,12 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         ":cuttlefish_common",
+        ":cvd_persistent_data",
+        ":cvd_server_cc_proto",
+        ":internal_config_cc_proto",
+        ":launch_cvd_cc_proto",
+        ":user_config_cc_proto",
         "//:build_version_header",
-        "//:cvd_persistent_data",
-        "//:cvd_server_cc_proto",
-        "//:internal_config_cc_proto",
-        "//:launch_cvd_cc_proto",
-        "//:user_config_cc_proto",
         "//libbase",
         "//libsparse",
         "@fmt",
@@ -478,11 +528,11 @@ cc_test(
         "-Ithird_party/android_cuttlefish/base/cvd/cuttlefish",
         "-std=c++17",
     ],
+    includes = [""],
     deps = [
         ":cuttlefish_common",
         ":libcvd",
         "@googletest//:gtest",
         "@jsoncpp",
     ],
-    includes = [""],
 )

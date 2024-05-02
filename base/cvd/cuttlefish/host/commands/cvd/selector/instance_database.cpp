@@ -25,7 +25,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
-#include "cvd_persistent_data.pb.h"
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/instance_group_record.h"

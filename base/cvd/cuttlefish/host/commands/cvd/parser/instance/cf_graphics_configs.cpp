@@ -19,7 +19,7 @@
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
 
-#include "launch_cvd.pb.h"
+#include "cuttlefish/host/commands/cvd/parser/instance/launch_cvd.pb.h"
 
 #include "common/libs/utils/base64.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
