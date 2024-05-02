@@ -19,14 +19,10 @@
 #include <string>
 #include <vector>
 
-#include "json/json.h"
-
-#include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 
-Result<void> InitStreamingConfigs(Json::Value& root);
 std::vector<std::string> GenerateStreamingFlags(const cvd::config::Launch&);
 
 };  // namespace cuttlefish

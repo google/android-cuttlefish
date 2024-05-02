@@ -18,9 +18,6 @@
 #include <string>
 #include <vector>
 
-#include "json/json.h"
-
-#include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
@@ -30,16 +27,12 @@ namespace cuttlefish {
 using cvd::config::Instance;
 using cvd::config::Launch;
 
-Result<void> InitStreamingConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_WEBRTC_DEVICE_ID,
-                         {"streaming", "device_id"}));
-  }
-  return {};
-}
-
 std::string DeviceId(const Instance& instance) {
-  return instance.streaming().device_id();
+  if (instance.streaming().has_device_id()) {
+    return instance.streaming().device_id();
+  } else {
+    return CF_DEFAULTS_WEBRTC_DEVICE_ID;
+  }
 }
 
 std::vector<std::string> GenerateStreamingFlags(const Launch& cfg) {
