@@ -1052,6 +1052,11 @@ android_system_image {
             },
         },
     },
+    product_variables: {
+        debuggable: {
+            deps: ["su"],
+        },
+    },
     fsverity: {
         inputs: [
             "etc/boot-image.prof",
