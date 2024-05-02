@@ -274,8 +274,10 @@ Result<LoadDirectories> GenerateLoadDirectories(
 Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
                                  const LoadDirectories& load_directories) {
   CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
+  cvd::config::Launch launch;
+  CF_EXPECT(Validate(root, launch));
   return CvdFlags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(root)),
-                  .selector_flags = CF_EXPECT(ParseSelectorConfigs(root)),
+                  .selector_flags = ParseSelectorConfigs(launch),
                   .fetch_cvd_flags = CF_EXPECT(ParseFetchCvdConfigs(
                       root, load_directories.target_directory,
                       load_directories.target_subdirectories)),
