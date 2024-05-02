@@ -15,37 +15,29 @@
  */
 #include "host/commands/cvd/parser/instance/cf_vm_configs.h"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
 #include <android-base/strings.h>
+#include <google/protobuf/util/json_util.h>
 #include "json/json.h"
 
 #include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 #define UI_DEFAULTS_MEMORY_MB 2048
 
 namespace cuttlefish {
-namespace {
 
-std::string GetVmManagerDefault(const Json::Value& instance_vm) {
-  if (instance_vm.isNull()) {
-    return "crosvm";
-  }
-  if (instance_vm.isMember("crosvm")) {
-    return "crosvm";
-  } else if (instance_vm.isMember("qemu")) {
-    return "qemu_cli";
-  } else if (instance_vm.isMember("gem5")) {
-    return "gem5";
-  } else {
-    return "crosvm";
-  }
-}
-
-}  // namespace
+using android::base::StringReplace;
+using cvd::config::Instance;
+using cvd::config::Launch;
+using cvd::config::Vm;
+using google::protobuf::util::JsonPrintOptions;
+using google::protobuf::util::MessageToJsonString;
 
 Result<void> InitVmConfigs(Json::Value& instances) {
   for (auto& instance : instances) {
@@ -60,63 +52,81 @@ Result<void> InitVmConfigs(Json::Value& instances) {
   return {};
 }
 
-std::vector<std::string> GenerateCustomConfigsFlags(
-    const Json::Value& instances) {
-  std::vector<std::string> result;
-  for (auto& instance : instances) {
-    if (instance.isMember("vm") && instance["vm"].isMember("custom_actions")) {
-      Json::StreamWriterBuilder factory;
-      std::string mapped_text =
-          Json::writeString(factory, instance["vm"]["custom_actions"]);
-      // format json string string to match aosp/2374890 input format
-      mapped_text = android::base::StringReplace(mapped_text, "\n", "", true);
-      mapped_text = android::base::StringReplace(mapped_text, "\r", "", true);
-      mapped_text =
-          android::base::StringReplace(mapped_text, "\"", "\\\"", true);
-      std::stringstream buff;
-      buff << "--custom_actions=" << mapped_text;
-      result.emplace_back(buff.str());
-    } else {
-      // custom_actions parameter doesn't exist in the configuration file
-      result.emplace_back("--custom_actions=unset");
-    }
+static std::string VmManager(const Instance& instance) {
+  const auto& vm = instance.vm();
+  switch (vm.vmm_case()) {
+    case Vm::VmmCase::kCrosvm:
+    default:
+      return "crosvm";
+    case Vm::VmmCase::kGem5:
+      return "gem5";
+    case Vm::VmmCase::kQemu:
+      return "qemu_cli";
   }
-  return result;
 }
 
-Result<std::vector<std::string>> GenerateVmFlags(const Json::Value& instances) {
-  std::vector<std::string> result;
-  result.emplace_back(
-      CF_EXPECT(GenerateVecFlagFromJson(instances, "cpus", {"vm", "cpus"})));
-  result.emplace_back(CF_EXPECT(
-      GenerateVecFlagFromJson(instances, "memory_mb", {"vm", "memory_mb"})));
-  result.emplace_back(CF_EXPECT(
-      GenerateVecFlagFromJson(instances, "use_sdcard", {"vm", "use_sdcard"})));
-  std::vector<std::string> vm_managers;
-  for (const auto& instance : instances) {
-    vm_managers.emplace_back(GetVmManagerDefault(instance["vm"]));
-  }
-  result.emplace_back(GenerateVecFlag("vm_manager", vm_managers));
-  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
-      instances, "setupwizard_mode", {"vm", "setupwizard_mode"})));
-  result.emplace_back(
-      CF_EXPECT(GenerateVecFlagFromJson(instances, "uuid", {"vm", "uuid"})));
-  std::vector<std::string> enable_sandbox;
-  for (const auto& instance : instances) {
-    const auto& vm = instance["vm"];
-    if (vm.isMember("crosvm") && vm["crosvm"].isMember("enable_sandbox")) {
-      bool enable = vm["crosvm"]["enable_sandbox"].asBool();
-      enable_sandbox.emplace_back(enable ? "true" : "false");
-    } else {
-      bool enable = CF_DEFAULTS_ENABLE_SANDBOX;
-      enable_sandbox.emplace_back(enable ? "true" : "false");
-    }
-  }
-  result.emplace_back(GenerateVecFlag("enable_sandbox", enable_sandbox));
+static std::uint32_t Cpus(const Instance& instance) {
+  return instance.vm().cpus();
+}
 
-  result = MergeResults(result, GenerateCustomConfigsFlags(instances));
+static std::uint32_t MemoryMb(const Instance& instance) {
+  return instance.vm().memory_mb();
+}
 
-  return result;
+static bool UseSdcard(const Instance& instance) {
+  return instance.vm().use_sdcard();
+}
+
+static std::string SetupWizardMode(const Instance& instance) {
+  return instance.vm().setupwizard_mode();
+}
+
+static std::string Uuid(const Instance& instance) {
+  return instance.vm().uuid();
+}
+
+static bool EnableSandbox(const Instance& instance) {
+  const auto& crosvm = instance.vm().crosvm();
+  const auto& default_val = CF_DEFAULTS_ENABLE_SANDBOX;
+  return crosvm.has_enable_sandbox() ? crosvm.enable_sandbox() : default_val;
+}
+
+static Result<std::string> CustomConfigsFlagValue(const Instance& instance) {
+  if (instance.vm().custom_actions().empty()) {
+    return "unset";
+  }
+  std::vector<std::string> json_entries;
+  for (const auto& action : instance.vm().custom_actions()) {
+    std::string json;
+    JsonPrintOptions print_opts;
+    print_opts.preserve_proto_field_names = true;
+    auto to_json_res = MessageToJsonString(action, &json, print_opts);
+    CF_EXPECTF(to_json_res.ok(), "{}", to_json_res.ToString());
+    json_entries.emplace_back(std::move(json));
+  }
+  return fmt::format("[{}]", fmt::join(json_entries, ","));
+}
+
+static Result<std::vector<std::string>> CustomConfigsFlags(const Launch& cfg) {
+  std::vector<std::string> ret;
+  for (const auto& instance : cfg.instances()) {
+    auto value = CF_EXPECT(CustomConfigsFlagValue(instance));
+    ret.emplace_back(fmt::format("--custom_actions={}", value));
+  }
+  return ret;
+}
+
+Result<std::vector<std::string>> GenerateVmFlags(const Launch& cfg) {
+  std::vector<std::string> flags = {
+      GenerateInstanceFlag("vm_manager", cfg, VmManager),
+      GenerateInstanceFlag("cpus", cfg, Cpus),
+      GenerateInstanceFlag("memory_mb", cfg, MemoryMb),
+      GenerateInstanceFlag("use_sdcard", cfg, UseSdcard),
+      GenerateInstanceFlag("setupwizard_mode", cfg, SetupWizardMode),
+      GenerateInstanceFlag("uuid", cfg, Uuid),
+      GenerateInstanceFlag("enable_sandbox", cfg, EnableSandbox),
+  };
+  return MergeResults(std::move(flags), CF_EXPECT(CustomConfigsFlags(cfg)));
 }
 
 }  // namespace cuttlefish
