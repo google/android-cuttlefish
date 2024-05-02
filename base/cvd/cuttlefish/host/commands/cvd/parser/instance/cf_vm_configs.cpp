@@ -39,19 +39,6 @@ using cvd::config::Vm;
 using google::protobuf::util::JsonPrintOptions;
 using google::protobuf::util::MessageToJsonString;
 
-Result<void> InitVmConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_CPUS, {"vm", "cpus"}));
-    CF_EXPECT(InitConfig(instance, UI_DEFAULTS_MEMORY_MB, {"vm", "memory_mb"}));
-    CF_EXPECT(
-        InitConfig(instance, CF_DEFAULTS_USE_SDCARD, {"vm", "use_sdcard"}));
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_SETUPWIZARD_MODE,
-                         {"vm", "setupwizard_mode"}));
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_UUID, {"vm", "uuid"}));
-  }
-  return {};
-}
-
 static std::string VmManager(const Instance& instance) {
   const auto& vm = instance.vm();
   switch (vm.vmm_case()) {
@@ -66,23 +53,43 @@ static std::string VmManager(const Instance& instance) {
 }
 
 static std::uint32_t Cpus(const Instance& instance) {
-  return instance.vm().cpus();
+  if (instance.vm().has_cpus()) {
+    return instance.vm().cpus();
+  } else {
+    return CF_DEFAULTS_CPUS;
+  }
 }
 
 static std::uint32_t MemoryMb(const Instance& instance) {
-  return instance.vm().memory_mb();
+  if (instance.vm().has_memory_mb()) {
+    return instance.vm().memory_mb();
+  } else {
+    return UI_DEFAULTS_MEMORY_MB;
+  }
 }
 
 static bool UseSdcard(const Instance& instance) {
-  return instance.vm().use_sdcard();
+  if (instance.vm().has_use_sdcard()) {
+    return instance.vm().use_sdcard();
+  } else {
+    return CF_DEFAULTS_USE_SDCARD;
+  }
 }
 
 static std::string SetupWizardMode(const Instance& instance) {
-  return instance.vm().setupwizard_mode();
+  if (instance.vm().has_setupwizard_mode()) {
+    return instance.vm().setupwizard_mode();
+  } else {
+    return CF_DEFAULTS_SETUPWIZARD_MODE;
+  }
 }
 
 static std::string Uuid(const Instance& instance) {
-  return instance.vm().uuid();
+  if (instance.vm().has_uuid()) {
+    return instance.vm().uuid();
+  } else {
+    return CF_DEFAULTS_UUID;
+  }
 }
 
 static bool EnableSandbox(const Instance& instance) {
