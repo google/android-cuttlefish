@@ -16,26 +16,18 @@
 
 #include "host/commands/cvd/server_command/flags_collector.h"
 
+#include <memory>
+
 #include <android-base/logging.h>
-#include <libxml/parser.h>
+#include "tinyxml2.h"
 
 #include "common/libs/utils/contains.h"
 
+using tinyxml2::XMLDocument;
+using tinyxml2::XMLElement;
+
 namespace cuttlefish {
 namespace {
-
-struct XmlDocDeleter {
-  void operator()(struct _xmlDoc* doc);
-};
-
-using XmlDocPtr = std::unique_ptr<struct _xmlDoc, XmlDocDeleter>;
-
-void XmlDocDeleter::operator()(struct _xmlDoc* doc) {
-  if (!doc) {
-    return;
-  }
-  xmlFree(doc);
-}
 
 /*
  * Each "flag" xmlNode has child nodes such as file, name, meaning,
@@ -48,24 +40,20 @@ void XmlDocDeleter::operator()(struct _xmlDoc* doc) {
  * to retrieve the string value:
  *  xmlNodeListGetString(doc, grandchild, 1);
  */
-FlagInfoPtr ParseFlagNode(struct _xmlDoc* doc, xmlNode& flag) {
+FlagInfoPtr ParseFlagNode(const XMLDocument& doc, XMLElement& flag) {
   std::unordered_map<std::string, std::string> field_value_map;
-  for (xmlNode* child = flag.xmlChildrenNode; child != nullptr;
-       child = child->next) {
-    if (!child->name) {
+  for (XMLElement* child = flag.FirstChildElement(); child != nullptr;
+       child = child->NextSiblingElement()) {
+    if (!child->Name()) {
       continue;
     }
-    std::string field_name = reinterpret_cast<const char*>(child->name);
-    if (!child->xmlChildrenNode) {
-      field_value_map[field_name] = "";
-      continue;
-    }
-    auto* xml_node_text = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
+    std::string field_name(child->Name());
+    auto* xml_node_text = child->GetText();
     if (!xml_node_text) {
       field_value_map[field_name] = "";
       continue;
     }
-    field_value_map[field_name] = reinterpret_cast<const char*>(xml_node_text);
+    field_value_map[field_name] = xml_node_text;
   }
   if (field_value_map.empty()) {
     return nullptr;
@@ -73,15 +61,14 @@ FlagInfoPtr ParseFlagNode(struct _xmlDoc* doc, xmlNode& flag) {
   return FlagInfo::Create(field_value_map);
 }
 
-std::vector<FlagInfoPtr> ParseXml(struct _xmlDoc* doc, xmlNode* node) {
+std::vector<FlagInfoPtr> ParseXml(const XMLDocument& doc, XMLElement* node) {
   if (!node) {
     return {};
   }
 
   std::vector<FlagInfoPtr> flags;
   // if it is <flag> node
-  if (node->name &&
-      xmlStrcmp(node->name, reinterpret_cast<const xmlChar*>("flag")) == 0) {
+  if (node->Name() && node->Name() == std::string("flag")) {
     auto flag_info = ParseFlagNode(doc, *node);
     // we don't assume that a flag node is nested.
     if (flag_info) {
@@ -91,12 +78,12 @@ std::vector<FlagInfoPtr> ParseXml(struct _xmlDoc* doc, xmlNode* node) {
     return {};
   }
 
-  if (!node->xmlChildrenNode) {
+  if (node->NoChildren()) {
     return {};
   }
 
-  for (xmlNode* child_node = node->xmlChildrenNode; child_node != nullptr;
-       child_node = child_node->next) {
+  for (XMLElement* child_node = node->FirstChildElement();
+       child_node != nullptr; child_node = child_node->NextSiblingElement()) {
     auto child_flags = ParseXml(doc, child_node);
     if (child_flags.empty()) {
       continue;
@@ -108,26 +95,24 @@ std::vector<FlagInfoPtr> ParseXml(struct _xmlDoc* doc, xmlNode* node) {
   return flags;
 }
 
-XmlDocPtr BuildXmlDocFromString(const std::string& xml_str) {
-  struct _xmlDoc* doc =
-      xmlReadMemory(xml_str.data(), xml_str.size(), NULL, NULL, 0);
-  XmlDocPtr doc_uniq_ptr = XmlDocPtr(doc, XmlDocDeleter());
-  if (!doc) {
+std::unique_ptr<XMLDocument> BuildXmlDocFromString(const std::string& xml_str) {
+  auto doc = std::make_unique<XMLDocument>();
+  doc->Parse(xml_str.c_str());
+  if (doc->ErrorID() != tinyxml2::XML_SUCCESS) {
     LOG(ERROR) << "helpxml parsing failed: " << xml_str;
     return nullptr;
   }
-  return doc_uniq_ptr;
+  return doc;
 }
 
-std::optional<std::vector<FlagInfoPtr>> LoadFromXml(XmlDocPtr&& doc) {
+std::optional<std::vector<FlagInfoPtr>> LoadFromXml(std::unique_ptr<XMLDocument> doc) {
   std::vector<FlagInfoPtr> flags;
-  XmlDocPtr moved_doc = std::move(doc);
-  xmlNode* root = xmlDocGetRootElement(moved_doc.get());
+  auto* root = doc->RootElement();
   if (!root) {
     LOG(ERROR) << "Failed to get the root element from XML doc.";
     return std::nullopt;
   }
-  flags = ParseXml(moved_doc.get(), root);
+  flags = ParseXml(*doc, root);
   return flags;
 }
 
