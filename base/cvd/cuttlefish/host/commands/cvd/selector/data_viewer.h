@@ -28,7 +28,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/signals.h"
-#include "cvd_persistent_data.pb.h"
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 
 namespace cuttlefish {
 namespace selector {

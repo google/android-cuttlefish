@@ -23,7 +23,7 @@
 #include <optional>
 #include <vector>
 
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"

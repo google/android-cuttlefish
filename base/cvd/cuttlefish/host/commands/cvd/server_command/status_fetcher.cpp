@@ -25,7 +25,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/selector_constants.h"

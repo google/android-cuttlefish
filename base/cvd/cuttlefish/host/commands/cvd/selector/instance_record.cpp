@@ -16,7 +16,7 @@
 
 #include "host/commands/cvd/selector/instance_record.h"
 
-#include "cvd_persistent_data.pb.h"
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 
 namespace cuttlefish {
