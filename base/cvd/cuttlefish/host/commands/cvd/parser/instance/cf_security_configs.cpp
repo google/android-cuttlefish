@@ -18,9 +18,6 @@
 #include <string>
 #include <vector>
 
-#include "json/json.h"
-
-#include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
@@ -30,28 +27,28 @@ namespace cuttlefish {
 using cvd::config::Instance;
 using cvd::config::Launch;
 
-Result<void> InitSecurityConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_SERIAL_NUMBER,
-                         {"security", "serial_number"}));
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_USE_RANDOM_SERIAL,
-                         {"security", "use_random_serial"}));
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_GUEST_ENFORCE_SECURITY,
-                         {"security", "guest_enforce_security"}));
-  }
-  return {};
-}
-
 static std::string SerialNumber(const Instance& instance) {
-  return instance.security().serial_number();
+  if (instance.security().has_serial_number()) {
+    return instance.security().serial_number();
+  } else {
+    return CF_DEFAULTS_SERIAL_NUMBER;
+  }
 }
 
 static bool UseRandomSerial(const Instance& instance) {
-  return instance.security().use_random_serial();
+  if (instance.security().has_use_random_serial()) {
+    return instance.security().use_random_serial();
+  } else {
+    return CF_DEFAULTS_USE_RANDOM_SERIAL;
+  }
 }
 
 static bool GuestEnforceSecurity(const Instance& instance) {
-  return instance.security().guest_enforce_security();
+  if (instance.security().has_guest_enforce_security()) {
+    return instance.security().guest_enforce_security();
+  } else {
+    return CF_DEFAULTS_GUEST_ENFORCE_SECURITY;
+  }
 }
 
 std::vector<std::string> GenerateSecurityFlags(const Launch& cfg) {
