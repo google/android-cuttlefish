@@ -144,6 +144,7 @@ Result<std::vector<std::string>> GenerateFetchFlags(
 
   cvd::config::Fetch fetch_config;
   CF_EXPECT(Validate(root["fetch"], fetch_config));
+  result.emplace_back(GenerateFlag("target_directory", target_directory));
   if (fetch_config.has_api_key()) {
     result.emplace_back(GenerateFlag("api_key", fetch_config.api_key()));
   }
