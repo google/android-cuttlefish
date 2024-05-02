@@ -21,6 +21,7 @@
 #include <memory>
 #include <thread>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
@@ -231,6 +232,34 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
                 << "Error writing to adbd restore pipe: "
                 << restore_adbd_pipe->StrError() << ". This is unrecoverable.";
 
+            auto SubtoolPath = [](const std::string& subtool_name) {
+              auto my_own_dir = android::base::GetExecutableDirectory();
+              std::stringstream subtool_path_stream;
+              subtool_path_stream << my_own_dir << "/" << subtool_name;
+              auto subtool_path = subtool_path_stream.str();
+              if (my_own_dir.empty() || !FileExists(subtool_path)) {
+                return HostBinaryPath(subtool_name);
+              }
+              return subtool_path;
+            };
+            const auto adb_bin_path = SubtoolPath("adb");
+            CHECK(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(),
+                           "wait-for-device"},
+                          SubprocessOptions(), WEXITED)
+                      .ok())
+                << "Failed to suspend bluetooth manager.";
+            CHECK(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(),
+                           "shell", "cmd", "bluetooth_manager", "enable"},
+                          SubprocessOptions(), WEXITED)
+                      .ok());
+            CHECK(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(),
+                           "shell", "svc", "wifi", "enable"},
+                          SubprocessOptions(), WEXITED)
+                      .ok());
+            CHECK(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(),
+                           "shell", "cmd", "uwb", "enable-uwb"},
+                          SubprocessOptions(), WEXITED)
+                      .ok());
             // Done last so that adb is more likely to be ready.
             CHECK(cuttlefish::WriteAll(restore_complete_pipe_write, "1") == 1)
                 << "Error writing to restore complete pipe: "
