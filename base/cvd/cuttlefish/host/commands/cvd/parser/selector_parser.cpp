@@ -20,23 +20,25 @@
 
 #include "json/json.h"
 
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
-#include "host/commands/cvd/selector/selector_constants.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 
-Result<std::vector<std::string>> ParseSelectorConfigs(Json::Value& root) {
-  std::string instance_name_flag = CF_EXPECT(
-      GenerateVecFlagFromJson(root["instances"], "instance_name", {"name"}));
+using cvd::config::Instance;
+using cvd::config::Launch;
 
-  if (!HasValue(root, {"common", "group_name"})) {
-    return {{instance_name_flag}};
+std::string InsName(const Instance& instance) { return instance.name(); }
+
+std::vector<std::string> ParseSelectorConfigs(const Launch& config) {
+  auto ins_name_flag = GenerateInstanceFlag("instance_name", config, InsName);
+
+  if (!config.common().has_group_name()) {
+    return {ins_name_flag};
   }
 
-  auto group = CF_EXPECT(GetValue<std::string>(root, {"common", "group_name"}));
-  return {{instance_name_flag, GenerateFlag("group_name", group)}};
+  auto group_flag = GenerateFlag("group_name", config.common().group_name());
+  return {ins_name_flag, group_flag};
 }
 
 }  // namespace cuttlefish
