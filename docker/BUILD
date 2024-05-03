@@ -1,0 +1,28 @@
+# Copyright (C) 2024 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+genrule(
+    name = "orchestration_image_tar",
+    visibility = ["//visibility:public"],
+    outs = ["orchestration-image.tar"],
+    cmd = "$(location :orchestration_image_builder) -o $@",
+    tools = [":orchestration_image_builder"],
+)
+
+sh_binary(
+    name = "orchestration_image_builder",
+    srcs = ["orchestration-image-builder.sh"],
+    data = ["//docker/debs-builder-docker:debs_tar"],
+    deps = [ "@bazel_tools//tools/bash/runfiles"],
+)

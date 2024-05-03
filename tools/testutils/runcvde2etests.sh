@@ -8,7 +8,7 @@ OUTPUT_DIR="$(pwd)"
 function gather_test_results() {
   # Don't immediately exit on error anymore
   set +e
-  for d in "${REPO_DIR}"/e2etests/bazel-testlogs/*; do
+  for d in "${REPO_DIR}"/bazel-testlogs/e2etests/cvd/*; do
     dir="${OUTPUT_DIR}/$(basename "$d")"
     mkdir -p "${dir}"
     cp "${d}/test.log" "${dir}/sponge_log.log"
@@ -21,7 +21,7 @@ function gather_test_results() {
   done
 }
 
-cd "${REPO_DIR}/e2etests"
+cd "${REPO_DIR}"
 
 # Gather test results regardless of status, but still return the exit code from
 # those tests
