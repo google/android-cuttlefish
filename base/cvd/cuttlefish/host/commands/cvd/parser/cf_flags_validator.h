@@ -19,9 +19,10 @@
 #include "json/json.h"
 
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 
-Result<void> ValidateCfConfigs(const Json::Value& root);
+Result<cvd::config::Launch> ValidateCfConfigs(const Json::Value& root);
 
 }  // namespace cuttlefish
