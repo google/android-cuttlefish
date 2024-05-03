@@ -76,7 +76,6 @@ Result<void> InitCvdConfigs(Json::Value& root) {
   CF_EXPECT(InitConfig(root, CF_DEFAULTS_NETSIM_BT, {"netsim_bt"}));
   CF_EXPECT(InitConfig(root, CF_DEFAULTS_NETSIM_UWB, {"netsim_uwb"}));
   CF_EXPECT(InitMetricsConfigs(root));
-  CF_EXPECT(InitInstancesConfigs(root["instances"]));
   return {};
 }
 
