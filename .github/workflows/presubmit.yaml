@@ -71,7 +71,7 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Install bazel
-      run: bash tools/installbazel/main.sh
+      run: sudo bash tools/installbazel/main.sh
     - name: bazel version
       run: bazel version   
     - name: Run orchestration e2e tests 
