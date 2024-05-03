@@ -23,7 +23,6 @@
 #include <android-base/strings.h>
 #include "json/json.h"
 
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
@@ -31,6 +30,11 @@
 #include "host/libs/web/android_build_api.h"
 
 namespace cuttlefish {
+
+using cvd::config::Fetch;
+using cvd::config::Instance;
+using cvd::config::Launch;
+
 namespace {
 
 constexpr std::string_view kFetchPrefix = "@ab/";
@@ -72,14 +76,16 @@ Result<void> InitFetchCvdConfigs(Json::Value& root) {
   return {};
 }
 
-bool ShouldFetch(const Json::Value& instance) {
+bool ShouldFetch(const Instance& instance) {
+  const auto& boot = instance.boot();
+  const auto& disk = instance.disk();
+
   for (const auto& value :
-       {instance["disk"]["default_build"], instance["disk"]["super"]["system"],
-        instance["boot"]["kernel"]["build"], instance["boot"]["build"],
-        instance["boot"]["bootloader"]["build"],
-        instance["disk"]["otatools"]}) {
+       {disk.default_build(), disk.super().system(), boot.kernel().build(),
+        boot.kernel().build(), boot.build(), boot.bootloader().build(),
+        disk.otatools()}) {
     // expects non-prefixed build strings already converted to empty strings
-    if (!value.asString().empty()) {
+    if (!value.empty()) {
       return true;
     }
   }
@@ -100,50 +106,88 @@ Result<std::string> GetFetchBuildString(const Json::Value& value) {
   return std::string(view);
 }
 
-Result<Json::Value> RemoveNonPrefixedBuildStrings(const Json::Value& instance) {
-  auto result = Json::Value(instance);
-  result["disk"]["default_build"] =
-      CF_EXPECT(GetFetchBuildString(result["disk"]["default_build"]));
-  result["disk"]["super"]["system"] =
-      CF_EXPECT(GetFetchBuildString(result["disk"]["super"]["system"]));
-  result["boot"]["kernel"]["build"] =
-      CF_EXPECT(GetFetchBuildString(result["boot"]["kernel"]["build"]));
-  result["boot"]["build"] =
-      CF_EXPECT(GetFetchBuildString(result["boot"]["build"]));
-  result["boot"]["bootloader"]["build"] =
-      CF_EXPECT(GetFetchBuildString(result["boot"]["bootloader"]["build"]));
-  result["disk"]["otatools"] =
-      CF_EXPECT(GetFetchBuildString(result["disk"]["otatools"]));
+Result<Instance> RemoveNonPrefixedBuildStrings(const Instance& instance) {
+  Instance result = instance;
+
+  auto& disk = *result.mutable_disk();
+  disk.set_default_build(CF_EXPECT(GetFetchBuildString(disk.default_build())));
+  disk.set_otatools(CF_EXPECT(GetFetchBuildString(disk.otatools())));
+
+  auto& system = *disk.mutable_super()->mutable_system();
+  system = CF_EXPECT(GetFetchBuildString(system));
+
+  auto& boot = *result.mutable_boot();
+  boot.set_build(CF_EXPECT(GetFetchBuildString(boot.build())));
+
+  auto& kernel = *boot.mutable_kernel()->mutable_build();
+  kernel = CF_EXPECT(GetFetchBuildString(kernel));
+
+  auto& bootloader = *boot.mutable_bootloader()->mutable_build();
+  bootloader = CF_EXPECT(GetFetchBuildString(bootloader));
+
   return result;
+}
+
+static std::string DefaultBuild(const Instance& instance) {
+  return instance.disk().default_build();
+}
+
+static std::string SystemBuild(const Instance& instance) {
+  return instance.disk().super().system();
+}
+
+static std::string KernelBuild(const Instance& instance) {
+  return instance.boot().kernel().build();
+}
+
+static std::string BootBuild(const Instance& instance) {
+  return instance.boot().build();
+}
+
+static std::string BootloaderBuild(const Instance& instance) {
+  return instance.boot().bootloader().build();
+}
+
+static std::string OtaToolsBuild(const Instance& instance) {
+  return instance.disk().otatools();
+}
+
+static bool DownloadImgZip(const Instance& instance) {
+  return instance.disk().download_img_zip();
+}
+
+static bool DownloadTargetFilesZip(const Instance& instance) {
+  return instance.disk().download_target_files_zip();
 }
 
 Result<std::vector<std::string>> GenerateFetchFlags(
     const Json::Value& root, const std::string& target_directory,
     const std::vector<std::string>& target_subdirectories) {
-  Json::Value fetch_instances = Json::Value(Json::ValueType::arrayValue);
+  Launch config;
+  CF_EXPECT(Validate(root, config));
+
+  Launch fetch_instances;
   std::vector<std::string> fetch_subdirectories;
-  const auto& instances = root["instances"];
-  CF_EXPECT_EQ(instances.size(), target_subdirectories.size(),
+  CF_EXPECT_EQ(config.instances().size(), (int) target_subdirectories.size(),
                "Mismatched sizes between number of subdirectories and number "
                "of instances");
-  for (int i = 0; i < (int)instances.size(); i++) {
+  for (int i = 0; i < config.instances().size(); i++) {
     const auto prefix_filtered =
-        CF_EXPECT(RemoveNonPrefixedBuildStrings(instances[i]));
+        CF_EXPECT(RemoveNonPrefixedBuildStrings(config.instances()[i]));
     if (ShouldFetch(prefix_filtered)) {
-      fetch_instances.append(prefix_filtered);
+      fetch_instances.add_instances()->CopyFrom(prefix_filtered);
       fetch_subdirectories.emplace_back(target_subdirectories[i]);
     }
   }
 
   const std::string host_package_build =
-      CF_EXPECT(GetFetchBuildString(root["common"]["host_package"]));
-  std::vector<std::string> result;
+      CF_EXPECT(GetFetchBuildString(config.common().host_package()));
   if (fetch_subdirectories.empty() && host_package_build.empty()) {
-    return result;
+    return {};
   }
 
-  cvd::config::Fetch fetch_config;
-  CF_EXPECT(Validate(root["fetch"], fetch_config));
+  std::vector<std::string> result;
+  const Fetch& fetch_config = config.fetch();
   result.emplace_back(GenerateFlag("target_directory", target_directory));
   if (fetch_config.has_api_key()) {
     result.emplace_back(GenerateFlag("api_key", fetch_config.api_key()));
@@ -172,26 +216,27 @@ Result<std::vector<std::string>> GenerateFetchFlags(
 
   result.emplace_back(
       GenerateVecFlag("target_subdirectory", fetch_subdirectories));
-  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
-      fetch_instances, "default_build", {"disk", "default_build"})));
-  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
-      fetch_instances, "system_build", {"disk", "super", "system"})));
-  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
-      fetch_instances, "kernel_build", {"boot", "kernel", "build"})));
-  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
-      fetch_instances, "boot_build", {"boot", "build"})));
-  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
-      fetch_instances, "bootloader_build", {"boot", "bootloader", "build"})));
-  result.emplace_back(CF_EXPECT(
-      GenerateVecFlagFromJson(fetch_instances, "android_efi_loader_build",
-                              {"boot", "bootloader", "build"})));
-  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
-      fetch_instances, "otatools_build", {"disk", "otatools"})));
-  result.emplace_back(CF_EXPECT(GenerateVecFlagFromJson(
-      fetch_instances, "download_img_zip", {"disk", "download_img_zip"})));
-  result.emplace_back(CF_EXPECT(
-      GenerateVecFlagFromJson(fetch_instances, "download_target_files_zip",
-                              {"disk", "download_target_files_zip"})));
+  result.emplace_back(
+      GenerateInstanceFlag("default_build", fetch_instances, DefaultBuild));
+  result.emplace_back(
+      GenerateInstanceFlag("system_build", fetch_instances, SystemBuild));
+  result.emplace_back(
+      GenerateInstanceFlag("kernel_build", fetch_instances, KernelBuild));
+  result.emplace_back(
+      GenerateInstanceFlag("boot_build", fetch_instances, BootBuild));
+  result.emplace_back(GenerateInstanceFlag("bootloader_build", fetch_instances,
+                                           BootloaderBuild));
+  // TODO: schuffelen - should android_efi_loader_build come from a separate
+  // setting?
+  result.emplace_back(GenerateInstanceFlag("android_efi_loader_build",
+                                           fetch_instances, BootloaderBuild));
+  result.emplace_back(
+      GenerateInstanceFlag("otatools_build", fetch_instances, OtaToolsBuild));
+  result.emplace_back(GenerateInstanceFlag("download_img_zip", fetch_instances,
+                                           DownloadImgZip));
+  result.emplace_back(GenerateInstanceFlag(
+      "download_target_files_zip", fetch_instances, DownloadTargetFilesZip));
+
   return result;
 }
 
