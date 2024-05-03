@@ -279,7 +279,7 @@ Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
   return CvdFlags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(launch)),
                   .selector_flags = ParseSelectorConfigs(launch),
                   .fetch_cvd_flags = CF_EXPECT(ParseFetchCvdConfigs(
-                      root, load_directories.target_directory,
+                      launch, load_directories.target_directory,
                       load_directories.target_subdirectories)),
                   .load_directories = load_directories};
 }

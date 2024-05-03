@@ -131,12 +131,11 @@ static bool DownloadTargetFilesZip(const Instance& instance) {
   }
 }
 
-Result<std::vector<std::string>> GenerateFetchFlags(
-    const Json::Value& root, const std::string& target_directory,
-    const std::vector<std::string>& target_subdirectories) {
-  Launch config;
-  CF_EXPECT(Validate(root, config));
+}  // namespace
 
+Result<std::vector<std::string>> ParseFetchCvdConfigs(
+    const Launch& config, const std::string& target_directory,
+    const std::vector<std::string>& target_subdirectories) {
   Launch fetch_instances;
   std::vector<std::string> fetch_subdirectories;
   CF_EXPECT_EQ(config.instances().size(), (int) target_subdirectories.size(),
@@ -209,15 +208,6 @@ Result<std::vector<std::string>> GenerateFetchFlags(
       "download_target_files_zip", fetch_instances, DownloadTargetFilesZip));
 
   return result;
-}
-
-}  // namespace
-
-Result<std::vector<std::string>> ParseFetchCvdConfigs(
-    Json::Value& root, const std::string& target_directory,
-    const std::vector<std::string>& target_subdirectories) {
-  return CF_EXPECT(
-      GenerateFetchFlags(root, target_directory, target_subdirectories));
 }
 
 }  // namespace cuttlefish
