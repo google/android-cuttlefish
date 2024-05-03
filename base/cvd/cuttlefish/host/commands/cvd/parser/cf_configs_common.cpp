@@ -15,7 +15,6 @@
  */
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
-#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -26,58 +25,12 @@
 #include <google/protobuf/util/json_util.h>
 #include "json/json.h"
 
-#include "common/libs/utils/base64.h"
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 
 using google::protobuf::Message;
 using google::protobuf::util::JsonStringToMessage;
 
 namespace cuttlefish {
-
-void InitIntConfigSubGroupVector(Json::Value& instances,
-                                 const std::string& group,
-                                 const std::string& subgroup,
-                                 const std::string& json_flag,
-                                 int default_value) {
-  // Allocate and initialize with default values
-  for (auto& instance : instances) {
-    if (!instance.isMember(group) || (!instance[group].isMember(subgroup)) ||
-        (instance[group][subgroup].size() == 0)) {
-      instance[group][subgroup][0][json_flag] = default_value;
-
-    } else {
-      // Check the whole array
-      for (auto& subgroup_member : instance[group][subgroup]) {
-        if (!subgroup_member.isMember(json_flag)) {
-          subgroup_member[json_flag] = default_value;
-        }
-      }
-    }
-  }
-}
-
-Result<std::string> GenerateVecFlagFromJson(
-    const Json::Value& instances, const std::string& flag_name,
-    const std::vector<std::string>& selectors) {
-  auto values = CF_EXPECTF(GetArrayValues<std::string>(instances, selectors),
-                           "Unable to get values for flag \"{}\"", flag_name);
-  return GenerateVecFlag(flag_name, values);
-}
-
-Result<std::string> Base64EncodeGflag(
-    const Json::Value& instances, const std::string& gflag_name,
-    const std::vector<std::string>& selectors) {
-  auto values =
-      CF_EXPECTF(GetArrayValues<std::string>(instances, selectors),
-                 "Unable to produce values for gflag \"{}\"", gflag_name);
-  for (std::size_t i = 0; i < values.size(); i++) {
-    std::string out;
-    CF_EXPECT(EncodeBase64(values[i].c_str(), values[i].size(), &out));
-    values[i] = out;
-  }
-  return GenerateVecFlag(gflag_name, values);
-}
 
 std::vector<std::string> MergeResults(std::vector<std::string> first_list,
                                       std::vector<std::string> scond_list) {
