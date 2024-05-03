@@ -19,14 +19,13 @@
 #include <string>
 #include <vector>
 
-#include "json/json.h"
-
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 
 Result<std::vector<std::string>> ParseFetchCvdConfigs(
-    Json::Value& root, const std::string& target_directory,
+    const cvd::config::Launch&, const std::string& target_directory,
     const std::vector<std::string>& target_subdirectories);
 
 };  // namespace cuttlefish
