@@ -230,7 +230,7 @@ int Subprocess::Wait(siginfo_t* infop, int options) {
     return -1;
   }
   *infop = {};
-  auto retval = waitid(P_PID, pid_, infop, options);
+  auto retval = TEMP_FAILURE_RETRY(waitid(P_PID, pid_, infop, options));
   // We don't want to wait twice for the same process
   bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED;
   bool reaped = !(options & WNOWAIT);
