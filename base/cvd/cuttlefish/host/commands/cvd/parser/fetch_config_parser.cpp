@@ -40,16 +40,6 @@ namespace {
 constexpr std::string_view kFetchPrefix = "@ab/";
 
 Result<void> InitFetchInstanceConfigs(Json::Value& instance) {
-  CF_EXPECT(
-      InitConfig(instance, kDefaultBuildString, {"disk", "default_build"}));
-  CF_EXPECT(
-      InitConfig(instance, kDefaultBuildString, {"disk", "super", "system"}));
-  CF_EXPECT(
-      InitConfig(instance, kDefaultBuildString, {"boot", "kernel", "build"}));
-  CF_EXPECT(InitConfig(instance, kDefaultBuildString, {"boot", "build"}));
-  CF_EXPECT(InitConfig(instance, kDefaultBuildString,
-                       {"boot", "bootloader", "build"}));
-  CF_EXPECT(InitConfig(instance, kDefaultBuildString, {"disk", "otatools"}));
   CF_EXPECT(InitConfig(instance, kDefaultDownloadImgZip,
                        {"disk", "download_img_zip"}));
   CF_EXPECT(InitConfig(instance, kDefaultDownloadTargetFilesZip,
@@ -58,9 +48,6 @@ Result<void> InitFetchInstanceConfigs(Json::Value& instance) {
 }
 
 Result<void> InitFetchCvdConfigs(Json::Value& root) {
-  CF_EXPECT(InitConfig(root, kDefaultApiKey, {"fetch", "api_key"}));
-  CF_EXPECT(InitConfig(root, kDefaultCredentialSource,
-                       {"fetch", "credential_source"}));
   CF_EXPECT(InitConfig(root, static_cast<int>(kDefaultWaitRetryPeriod.count()),
                        {"fetch", "wait_retry_period"}));
   CF_EXPECT(InitConfig(root, kDefaultExternalDnsResolver,
@@ -69,7 +56,6 @@ Result<void> InitFetchCvdConfigs(Json::Value& root) {
                        {"fetch", "keep_downloaded_archives"}));
   CF_EXPECT(
       InitConfig(root, kAndroidBuildServiceUrl, {"fetch", "api_base_url"}));
-  CF_EXPECT(InitConfig(root, kDefaultBuildString, {"common", "host_package"}));
   for (auto& instance : root["instances"]) {
     CF_EXPECT(InitFetchInstanceConfigs(instance));
   }
