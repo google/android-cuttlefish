@@ -20,7 +20,6 @@
 #include <vector>
 
 #include <android-base/logging.h>
-#include "json/json.h"
 
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
@@ -36,13 +35,6 @@
 namespace cuttlefish {
 
 using cvd::config::Launch;
-
-Result<void> InitInstancesConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, "", {"name"}));
-  }
-  return {};
-}
 
 Result<std::vector<std::string>> GenerateInstancesFlags(const Launch& cfg) {
   std::vector<std::string> res = CF_EXPECT(GenerateBootFlags(cfg));
