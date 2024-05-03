@@ -16,6 +16,7 @@
 #include "host/commands/cvd/parser/launch_cvd_templates.h"
 
 #include <string>
+#include <string_view>
 
 #include <google/protobuf/util/json_util.h>
 
@@ -29,26 +30,8 @@ namespace cuttlefish {
 using cvd::config::Instance;
 using cvd::config::Launch;
 
-enum class ConfigTemplate {
-  PHONE,
-  TABLET,
-  TV,
-  WEARABLE,
-  AUTO,
-  SLIM,
-  GO,
-  FOLDABLE,
-  UNKNOWN,
-};
-
-static std::map<std::string, ConfigTemplate> kSupportedTemplatesKeyMap = {
-    {"phone", ConfigTemplate::PHONE}, {"tablet", ConfigTemplate::TABLET},
-    {"tv", ConfigTemplate::TV},       {"wearable", ConfigTemplate::WEARABLE},
-    {"auto", ConfigTemplate::AUTO},   {"slim", ConfigTemplate::SLIM},
-    {"go", ConfigTemplate::GO},       {"foldable", ConfigTemplate::FOLDABLE}};
-
 // Definition of phone instance template in Json format
-static const char* kPhoneInstanceTemplate = R""""(
+static constexpr std::string_view kPhoneInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 4096
@@ -66,7 +49,7 @@ static const char* kPhoneInstanceTemplate = R""""(
   )"""";
 
 // Definition of tablet instance template in Json format
-static const char* kTabletInstanceTemplate = R""""(
+static constexpr std::string_view kTabletInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 4096
@@ -84,7 +67,7 @@ static const char* kTabletInstanceTemplate = R""""(
   )"""";
 
 // Definition of tablet instance template in Json format
-static const char* kTvInstanceTemplate = R""""(
+static constexpr std::string_view kTvInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 2048
@@ -102,7 +85,7 @@ static const char* kTvInstanceTemplate = R""""(
   )"""";
 
 // Definition of tablet instance template in Json format
-static const char* kWearableInstanceTemplate = R""""(
+static constexpr std::string_view kWearableInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 1536,
@@ -121,7 +104,7 @@ static const char* kWearableInstanceTemplate = R""""(
   )"""";
 
 // Definition of auto instance template in Json format
-static const char* kAutoInstanceTemplate = R""""(
+static constexpr std::string_view kAutoInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 4096
@@ -144,7 +127,7 @@ static const char* kAutoInstanceTemplate = R""""(
   )"""";
 
 // Definition of auto instance template in Json format
-static const char* kSlimInstanceTemplate = R""""(
+static constexpr std::string_view kSlimInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 2048,
@@ -163,7 +146,7 @@ static const char* kSlimInstanceTemplate = R""""(
   )"""";
 
 // Definition of go instance template in Json format
-static const char* kGoInstanceTemplate = R""""(
+static constexpr std::string_view kGoInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 2048
@@ -180,7 +163,7 @@ static const char* kGoInstanceTemplate = R""""(
 }
   )"""";
 
-static const char* kFoldableInstanceTemplate = R""""(
+static constexpr std::string_view kFoldableInstanceTemplate = R""""(
 {
     "vm": {
             "memory_mb": 4096,
@@ -243,39 +226,26 @@ static const char* kFoldableInstanceTemplate = R""""(
 }
   )"""";
 
-static Result<Instance> LoadRawTemplate(std::string_view template_string) {
-  Instance out;
-
-  auto status = JsonStringToMessage(template_string, &out);
-  CF_EXPECTF(status.ok(), "{}", status.ToString());
-
-  return out;
-}
-
 static Result<Instance> LoadTemplateByName(const std::string& template_name) {
-  auto template_it = kSupportedTemplatesKeyMap.find(template_name);
-  CF_EXPECT(template_it != kSupportedTemplatesKeyMap.end());
+  static auto* kSupportedTemplatesKeyMap =
+      new std::map<std::string_view, std::string_view>{
+          {"phone", kPhoneInstanceTemplate},
+          {"tablet", kTabletInstanceTemplate},
+          {"tv", kTvInstanceTemplate},
+          {"wearable", kWearableInstanceTemplate},
+          {"auto", kAutoInstanceTemplate},
+          {"slim", kSlimInstanceTemplate},
+          {"go", kGoInstanceTemplate},
+          {"foldable", kFoldableInstanceTemplate}};
 
-  switch (template_it->second) {
-    case ConfigTemplate::PHONE:
-      return LoadRawTemplate(kPhoneInstanceTemplate);
-    case ConfigTemplate::TABLET:
-      return LoadRawTemplate(kTabletInstanceTemplate);
-    case ConfigTemplate::TV:
-      return LoadRawTemplate(kTvInstanceTemplate);
-    case ConfigTemplate::WEARABLE:
-      return LoadRawTemplate(kWearableInstanceTemplate);
-    case ConfigTemplate::AUTO:
-      return LoadRawTemplate(kAutoInstanceTemplate);
-    case ConfigTemplate::SLIM:
-      return LoadRawTemplate(kSlimInstanceTemplate);
-    case ConfigTemplate::GO:
-      return LoadRawTemplate(kGoInstanceTemplate);
-    case ConfigTemplate::FOLDABLE:
-      return LoadRawTemplate(kFoldableInstanceTemplate);
-    default:
-      return CF_ERRF("Unknown @import value: {}", template_name);
-  }
+  auto template_it = kSupportedTemplatesKeyMap->find(template_name);
+  CF_EXPECTF(template_it != kSupportedTemplatesKeyMap->end(),
+             "Unknown import value '{}'", template_name);
+
+  Instance out;
+  auto status = JsonStringToMessage(template_it->second, &out);
+  CF_EXPECTF(status.ok(), "{}", status.ToString());
+  return out;
 }
 
 Result<Launch> ExtractLaunchTemplates(Launch config) {
