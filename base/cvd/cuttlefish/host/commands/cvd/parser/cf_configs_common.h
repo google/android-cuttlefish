@@ -66,6 +66,4 @@ std::vector<std::string> MergeResults(std::vector<std::string> first_list,
 
 void MergeTwoJsonObjs(Json::Value& dst, const Json::Value& src);
 
-Result<void> Validate(const Json::Value& value, google::protobuf::Message& node);
-
 }  // namespace cuttlefish

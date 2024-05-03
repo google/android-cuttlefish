@@ -21,14 +21,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
-#include <google/protobuf/message.h>
-#include <google/protobuf/util/json_util.h>
 #include "json/json.h"
-
-#include "common/libs/utils/result.h"
-
-using google::protobuf::Message;
-using google::protobuf::util::JsonStringToMessage;
 
 namespace cuttlefish {
 
@@ -60,15 +53,6 @@ void MergeTwoJsonObjs(Json::Value& dst, const Json::Value& src) {
       dst[key] = src[key];
     }
   }
-}
-
-Result<void> Validate(const Json::Value& value, Message& proto) {
-  std::stringstream json_as_stringstream;
-  json_as_stringstream << value;
-  auto json_str = json_as_stringstream.str();
-
-  auto status = JsonStringToMessage(json_str, &proto);
-  return status.ok() ? Result<void>() : CF_ERR(status.ToString());
 }
 
 }  // namespace cuttlefish

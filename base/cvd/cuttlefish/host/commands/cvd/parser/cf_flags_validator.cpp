@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/parser/cf_flags_validator.h"
 
+#include <google/protobuf/util/json_util.h>
 #include "json/json.h"
 
 #include "common/libs/utils/result.h"
@@ -25,10 +26,17 @@
 namespace cuttlefish {
 
 using cvd::config::Launch;
+using google::protobuf::util::JsonStringToMessage;
 
 Result<Launch> ValidateCfConfigs(const Json::Value& root) {
+  std::stringstream json_as_stringstream;
+  json_as_stringstream << root;
+  auto json_str = json_as_stringstream.str();
+
   Launch launch_config;
-  CF_EXPECT(Validate(root, launch_config), "Validation failure in [root object] ->");
+  auto status = JsonStringToMessage(json_str, &launch_config);
+  CF_EXPECTF(status.ok(), "{}", status.ToString());
+
   return launch_config;
 }
 
