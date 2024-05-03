@@ -63,7 +63,7 @@ Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
       "netsim_bt", CF_EXPECT(GetValue<std::string>(root, {"netsim_bt"}))));
   ret.emplace_back(GenerateFlag(
       "netsim_uwb", CF_EXPECT(GetValue<std::string>(root, {"netsim_uwb"}))));
-  ret = MergeResults(std::move(ret), CF_EXPECT(GenerateMetricsFlags(root)));
+  ret = MergeResults(std::move(ret), GenerateMetricsFlags(launch));
   ret = MergeResults(std::move(ret), CF_EXPECT(GenerateInstancesFlags(launch)));
   auto flag_op = GenerateUndefOkFlag(ret);
   if (flag_op.has_value()) {
@@ -75,7 +75,6 @@ Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
 Result<void> InitCvdConfigs(Json::Value& root) {
   CF_EXPECT(InitConfig(root, CF_DEFAULTS_NETSIM_BT, {"netsim_bt"}));
   CF_EXPECT(InitConfig(root, CF_DEFAULTS_NETSIM_UWB, {"netsim_uwb"}));
-  CF_EXPECT(InitMetricsConfigs(root));
   return {};
 }
 
