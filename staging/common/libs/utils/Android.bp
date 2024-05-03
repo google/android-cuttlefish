@@ -30,6 +30,7 @@ cc_library {
         "network.cpp",
         "proc_file_utils.cpp",
         "shared_fd_flag.cpp",
+        "signals.cpp",
         "subprocess.cpp",
         "tcp_socket.cpp",
         "tee_logging.cpp",
