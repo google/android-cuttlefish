@@ -252,6 +252,7 @@ Result<Launch> ExtractLaunchTemplates(Launch config) {
   for (auto& ins : *config.mutable_instances()) {
     if (ins.has_import_template() && ins.import_template() != "") {
       auto tmpl_proto = CF_EXPECT(LoadTemplateByName(ins.import_template()));
+      // TODO: b/337089452 - make repeated field handling merge, not concatenate
       tmpl_proto.MergeFrom(ins);
       ins.CopyFrom(tmpl_proto);
     }
