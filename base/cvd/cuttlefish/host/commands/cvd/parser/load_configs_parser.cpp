@@ -20,7 +20,6 @@
 
 #include <chrono>
 #include <cstdio>
-#include <fstream>
 #include <string>
 #include <vector>
 
@@ -43,6 +42,9 @@
 #include "host/commands/cvd/parser/selector_parser.h"
 
 namespace cuttlefish {
+
+using cvd::config::Launch;
+
 namespace {
 
 constexpr std::string_view kOverrideSeparator = ":";
@@ -271,11 +273,8 @@ Result<LoadDirectories> GenerateLoadDirectories(
   return result;
 }
 
-Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
+Result<CvdFlags> ParseCvdConfigs(const Launch& launch,
                                  const LoadDirectories& load_directories) {
-  CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
-  cvd::config::Launch launch;
-  CF_EXPECT(Validate(root, launch));
   return CvdFlags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(launch)),
                   .selector_flags = ParseSelectorConfigs(launch),
                   .fetch_cvd_flags = CF_EXPECT(ParseFetchCvdConfigs(
@@ -332,10 +331,13 @@ Result<CvdFlags> GetCvdFlags(const LoadFlags& flags) {
   std::optional<std::string> host_package_dir =
       GetConfiguredSystemHostPath(json_configs);
 
-  const auto load_directories = CF_EXPECT(GenerateLoadDirectories(
-      flags.base_dir, system_image_path_configs, host_package_dir,
-      json_configs["instances"].size()));
-  return CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
+  auto launch = CF_EXPECT(ValidateCfConfigs(json_configs));
+
+  const auto load_directories = CF_EXPECT(
+      GenerateLoadDirectories(flags.base_dir, system_image_path_configs,
+                              host_package_dir, launch.instances().size()));
+
+  return CF_EXPECT(ParseCvdConfigs(launch, load_directories),
                    "Parsing json configs failed");
 }
 
