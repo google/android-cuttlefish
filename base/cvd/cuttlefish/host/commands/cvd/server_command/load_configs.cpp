@@ -66,7 +66,8 @@ class LoadConfigsCommand : public CvdServerHandler {
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    CF_EXPECT(CF_EXPECT(CanHandle(request)));
+    bool can_handle_request = CF_EXPECT(CanHandle(request));
+    CF_EXPECT_EQ(can_handle_request, true);
 
     auto commands = CF_EXPECT(CreateCommandSequence(request));
     CF_EXPECT(executor_.Execute(commands, request.Err()));
