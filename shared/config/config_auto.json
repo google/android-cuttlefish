@@ -1,6 +1,5 @@
 {
 	"display0": "width=1080,height=600,dpi=120",
 	"display1": "width=400,height=600,dpi=120",
-	"gpu_mode": "gfxstream_guest_angle_host_swiftshader",
 	"memory_mb" : 4096
 }
