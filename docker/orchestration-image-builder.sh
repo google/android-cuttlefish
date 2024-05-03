@@ -65,8 +65,14 @@ while getopts ":ho:" opt; do
   esac
 done
 
-debstar="$(rlocation _main/docker/debs-builder-docker/debs.tar)"
-rlocation="$(rlocation _main/docker/orchestration-image-builder.sh)"
+rlocation_base="_main"
+
+if [[ $(runfiles_current_repository) ]]; then
+  rlocation_base="_main/external/$(runfiles_current_repository)"
+fi
+
+debstar="$(rlocation ${rlocation_base}/docker/debs-builder-docker/debs.tar)"
+rlocation="$(rlocation ${rlocation_base}/docker/orchestration-image-builder.sh)"
 repo_root_dir=$(dirname $(dirname $(readlink ${rlocation})))
 
 mkdir out && tar -xf ${debstar} -C out

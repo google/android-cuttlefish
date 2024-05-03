@@ -15,7 +15,7 @@ def launch_cvd_boot_test(name, branch, target, credential_source = ""):
     )
 
 def cvd_load_boot_test(name, env_file, size = "medium", credential_source = ""):
-    args = ["-e", "e2etests/cvd/" + env_file]
+    args = ["-e", "cvd/" + env_file]
     if credential_source:
         args += ["-c", credential_source]
     native.sh_test(
