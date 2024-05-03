@@ -276,7 +276,7 @@ Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
   CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
   cvd::config::Launch launch;
   CF_EXPECT(Validate(root, launch));
-  return CvdFlags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(root)),
+  return CvdFlags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(launch)),
                   .selector_flags = ParseSelectorConfigs(launch),
                   .fetch_cvd_flags = CF_EXPECT(ParseFetchCvdConfigs(
                       root, load_directories.target_directory,

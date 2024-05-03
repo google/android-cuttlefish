@@ -32,6 +32,6 @@ bool FindConfig(const std::vector<std::string>& vec,
 
 bool FindConfigIgnoreSpaces(const std::vector<std::string>& vec,
                             const std::string& str);
-Result<std::vector<std::string>> LaunchCvdParserTester(Json::Value& root);
+Result<std::vector<std::string>> LaunchCvdParserTester(const Json::Value&);
 
 }  // namespace cuttlefish

@@ -23,6 +23,7 @@
 #include <google/protobuf/util/json_util.h>
 #include "json/json.h"
 
+#include "common/libs/utils/flags_validator.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
@@ -76,8 +77,9 @@ static bool UseSdcard(const Instance& instance) {
   }
 }
 
-static std::string SetupWizardMode(const Instance& instance) {
+static Result<std::string> SetupWizardMode(const Instance& instance) {
   if (instance.vm().has_setupwizard_mode()) {
+    CF_EXPECT(ValidateSetupWizardMode(instance.vm().setupwizard_mode()));
     return instance.vm().setupwizard_mode();
   } else {
     return CF_DEFAULTS_SETUPWIZARD_MODE;
@@ -129,7 +131,7 @@ Result<std::vector<std::string>> GenerateVmFlags(const Launch& cfg) {
       GenerateInstanceFlag("cpus", cfg, Cpus),
       GenerateInstanceFlag("memory_mb", cfg, MemoryMb),
       GenerateInstanceFlag("use_sdcard", cfg, UseSdcard),
-      GenerateInstanceFlag("setupwizard_mode", cfg, SetupWizardMode),
+      CF_EXPECT(ResultInstanceFlag("setupwizard_mode", cfg, SetupWizardMode)),
       GenerateInstanceFlag("uuid", cfg, Uuid),
       GenerateInstanceFlag("enable_sandbox", cfg, EnableSandbox),
   };

@@ -82,11 +82,8 @@ Result<std::vector<std::string>> GenerateCfFlags(const Launch& launch) {
 
 }  // namespace
 
-Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root) {
-  cvd::config::Launch launch;
-  CF_EXPECT(Validate(root, launch));
-
-  launch = CF_EXPECT(ExtractLaunchTemplates(launch));
+Result<std::vector<std::string>> ParseLaunchCvdConfigs(Launch launch) {
+  launch = CF_EXPECT(ExtractLaunchTemplates(std::move(launch)));
 
   return GenerateCfFlags(launch);
 }
