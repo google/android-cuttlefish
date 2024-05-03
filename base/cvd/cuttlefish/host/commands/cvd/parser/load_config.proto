@@ -90,7 +90,7 @@ message Disk {
   optional string default_build = 1;
   optional Super super = 2;
   optional bool download_img_zip = 3;
-  optional bool download_target_zip_files = 4;
+  optional bool download_target_files_zip = 4;
   optional uint32 blank_data_image_mb = 5;
   optional string otatools = 6;
 }
