@@ -336,9 +336,8 @@ Result<std::unordered_set<std::string>> BuildApi::Artifacts(
   return CF_EXPECT(std::move(res));
 }
 
-Result<void> BuildApi::ArtifactToFile(const DeviceBuild& build,
-                                      const std::string& artifact,
-                                      const std::string& path) {
+Result<std::string> BuildApi::GetArtifactDownloadUrl(
+    const DeviceBuild& build, const std::string& artifact) {
   std::string download_url_endpoint =
       api_base_url_ + "/builds/" + http_client->UrlEscape(build.id) + "/" +
       http_client->UrlEscape(build.target) + "/attempts/latest/artifacts/" +
@@ -359,7 +358,13 @@ Result<void> BuildApi::ArtifactToFile(const DeviceBuild& build,
                 << "Received \"" << json << "\"");
   CF_EXPECT(json.isMember("signedUrl"),
             "URL endpoint did not have json path: " << json);
-  std::string url = json["signedUrl"].asString();
+  return json["signedUrl"].asString();
+}
+
+Result<void> BuildApi::ArtifactToFile(const DeviceBuild& build,
+                                      const std::string& artifact,
+                                      const std::string& path) {
+  const auto url = CF_EXPECT(GetArtifactDownloadUrl(build, artifact));
   CF_EXPECT(CF_EXPECT(http_client->DownloadToFile(url, path)).HttpSuccess());
   return {};
 }
