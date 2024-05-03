@@ -43,7 +43,8 @@ class SerialPreset : public CvdServerHandler {
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    CF_EXPECT(CF_EXPECT(CanHandle(request)));
+    bool can_handle_request = CF_EXPECT(CanHandle(request));
+    CF_EXPECT_EQ(can_handle_request, true);
 
     auto invocation = ParseInvocation(request.Message());
     CF_EXPECT(invocation.arguments.size() >= 1);
