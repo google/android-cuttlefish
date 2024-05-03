@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("orchestration.bzl", "create_single_instance_test")
+load("@bazel_gazelle//:def.bzl", "gazelle")
 
-create_single_instance_test(
-  name="create_fixed_build_id_and_target",
-  build_id="11510808",
-  build_target="aosp_cf_x86_64_phone-trunk_staging-userdebug",
-)
+gazelle(name = "gazelle")

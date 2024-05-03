@@ -82,9 +82,11 @@ jobs:
     - name: bazel version
       run: bazel version
     - name: Run orchestration e2e tests
-      run: bazel test --sandbox_writable_path=$HOME --test_output=errors e2etests/orchestration/...
+      run: |
+        cd e2etests
+        bazel test --sandbox_writable_path=$HOME --test_output=errors orchestration/...
     - name: Upload test logs
       uses: actions/upload-artifact@v3
       with:
         name: testlogs
-        path: bazel-testlogs
+        path: e2etests/bazel-testlogs

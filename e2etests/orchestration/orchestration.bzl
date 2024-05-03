@@ -12,18 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def create_single_instance_test(name, build_id, target):
-    args = ["-d", build_id, "-t", target]
-    native.sh_test(
-        name = name,
-        size = "medium",
-        srcs = ["create-single-instance-test.sh"],
-        args = args,
-        data = ["//docker:orchestration_image_tar"],
-        tags = [
-            "exclusive",
-            "external",
-            "no-sandbox",
-        ],
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
 
+def create_single_instance_test(name, build_id, build_target):
+    go_test(
+        name = name,
+        srcs = ["createsingleinstance_test.go"],
+        data = ["@images//docker:orchestration_image_tar"],
+        env = {
+          "BUILD_ID": build_id,
+          "BUILD_TARGET": build_target,
+        },
+        deps = [
+            "@com_github_docker_docker//api/types",
+            "@com_github_docker_docker//api/types/container",
+            "@com_github_docker_docker//client",
+            "@com_github_docker_go_connections//nat",
+            "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
+            "@com_github_google_cloud_android_orchestration//pkg/client",
+            "@com_github_google_go_cmp//cmp",
+        ],
     )

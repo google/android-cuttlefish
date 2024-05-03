@@ -65,8 +65,14 @@ while getopts ":ho:" opt; do
   esac
 done
 
+rlocation_base="_main"
+
+if [[ $(runfiles_current_repository) ]]; then
+  rlocation_base="_main/external/$(runfiles_current_repository)"
+fi
+
 debs_out_dir="${PWD}/debs"
-rlocation="$(rlocation _main/docker/debs-builder-docker/debs-tar-builder.sh)"
+rlocation="$(rlocation ${rlocation_base}/docker/debs-builder-docker/debs-tar-builder.sh)"
 repo_root_dir=$(dirname $(dirname $(dirname $(readlink ${rlocation}))))
 
 pushd ${repo_root_dir}/docker/debs-builder-docker
