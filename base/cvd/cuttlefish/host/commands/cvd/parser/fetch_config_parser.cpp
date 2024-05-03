@@ -21,13 +21,11 @@
 #include <vector>
 
 #include <android-base/strings.h>
-#include "json/json.h"
 
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
-#include "host/libs/web/android_build_api.h"
 
 namespace cuttlefish {
 
@@ -55,8 +53,7 @@ bool ShouldFetch(const Instance& instance) {
   return false;
 }
 
-Result<std::string> GetFetchBuildString(const Json::Value& value) {
-  std::string strVal = value.asString();
+Result<std::string> GetFetchBuildString(const std::string& strVal) {
   std::string_view view = strVal;
   if (!android::base::ConsumePrefix(&view, kFetchPrefix)) {
     // intentionally return an empty string when there are local, non-prefixed

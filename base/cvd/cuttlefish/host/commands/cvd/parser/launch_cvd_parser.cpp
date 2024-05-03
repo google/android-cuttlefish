@@ -20,8 +20,6 @@
 #include <string>
 #include <vector>
 
-#include "json/json.h"
-
 #include "android-base/strings.h"
 
 #include "common/libs/utils/result.h"

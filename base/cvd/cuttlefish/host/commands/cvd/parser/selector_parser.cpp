@@ -18,8 +18,6 @@
 #include <string>
 #include <vector>
 
-#include "json/json.h"
-
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
