@@ -1069,6 +1069,7 @@ android_system_image {
         ],
         libs: [":framework-res{.export-package.apk}"],
     },
+    build_logtags: true,
 }
 
 prebuilt_etc {
