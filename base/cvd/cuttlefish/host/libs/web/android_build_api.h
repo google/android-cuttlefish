@@ -111,6 +111,8 @@ class BuildApi {
   Result<std::unordered_set<std::string>> Artifacts(
       const Build& build, const std::vector<std::string>& artifact_filenames);
 
+  Result<std::string> GetArtifactDownloadUrl(const DeviceBuild& build,
+                                             const std::string& artifact);
   Result<void> ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
                               const std::string& path);
