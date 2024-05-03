@@ -39,29 +39,6 @@ namespace {
 
 constexpr std::string_view kFetchPrefix = "@ab/";
 
-Result<void> InitFetchInstanceConfigs(Json::Value& instance) {
-  CF_EXPECT(InitConfig(instance, kDefaultDownloadImgZip,
-                       {"disk", "download_img_zip"}));
-  CF_EXPECT(InitConfig(instance, kDefaultDownloadTargetFilesZip,
-                       {"disk", "download_target_files_zip"}));
-  return {};
-}
-
-Result<void> InitFetchCvdConfigs(Json::Value& root) {
-  CF_EXPECT(InitConfig(root, static_cast<int>(kDefaultWaitRetryPeriod.count()),
-                       {"fetch", "wait_retry_period"}));
-  CF_EXPECT(InitConfig(root, kDefaultExternalDnsResolver,
-                       {"fetch", "external_dns_resolver"}));
-  CF_EXPECT(InitConfig(root, kDefaultKeepDownloadedArchives,
-                       {"fetch", "keep_downloaded_archives"}));
-  CF_EXPECT(
-      InitConfig(root, kAndroidBuildServiceUrl, {"fetch", "api_base_url"}));
-  for (auto& instance : root["instances"]) {
-    CF_EXPECT(InitFetchInstanceConfigs(instance));
-  }
-  return {};
-}
-
 bool ShouldFetch(const Instance& instance) {
   const auto& boot = instance.boot();
   const auto& disk = instance.disk();
@@ -139,11 +116,19 @@ static std::string OtaToolsBuild(const Instance& instance) {
 }
 
 static bool DownloadImgZip(const Instance& instance) {
-  return instance.disk().download_img_zip();
+  if (instance.disk().has_download_img_zip()) {
+    return instance.disk().download_img_zip();
+  } else {
+    return kDefaultDownloadImgZip;
+  }
 }
 
 static bool DownloadTargetFilesZip(const Instance& instance) {
-  return instance.disk().download_target_files_zip();
+  if (instance.disk().has_download_target_files_zip()) {
+    return instance.disk().download_target_files_zip();
+  } else {
+    return kDefaultDownloadTargetFilesZip;
+  }
 }
 
 Result<std::vector<std::string>> GenerateFetchFlags(
@@ -231,7 +216,6 @@ Result<std::vector<std::string>> GenerateFetchFlags(
 Result<std::vector<std::string>> ParseFetchCvdConfigs(
     Json::Value& root, const std::string& target_directory,
     const std::vector<std::string>& target_subdirectories) {
-  CF_EXPECT(InitFetchCvdConfigs(root));
   return CF_EXPECT(
       GenerateFetchFlags(root, target_directory, target_subdirectories));
 }
