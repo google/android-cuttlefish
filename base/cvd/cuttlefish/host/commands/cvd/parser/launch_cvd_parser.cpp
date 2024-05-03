@@ -24,7 +24,6 @@
 
 #include "android-base/strings.h"
 
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
@@ -34,6 +33,9 @@
 #include "host/commands/cvd/parser/launch_cvd_templates.h"
 
 namespace cuttlefish {
+
+using cvd::config::Launch;
+
 namespace {
 
 std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) {
@@ -53,16 +55,22 @@ std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) 
   return "--undefok=" + android::base::Join(flag_names, ',');
 }
 
-Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
-  cvd::config::Launch launch;
-  CF_EXPECT(Validate(root, launch));
-
+Result<std::vector<std::string>> GenerateCfFlags(const Launch& launch) {
   std::vector<std::string> ret;
-  ret.emplace_back(GenerateFlag("num_instances", root["instances"].size()));
-  ret.emplace_back(GenerateFlag(
-      "netsim_bt", CF_EXPECT(GetValue<std::string>(root, {"netsim_bt"}))));
-  ret.emplace_back(GenerateFlag(
-      "netsim_uwb", CF_EXPECT(GetValue<std::string>(root, {"netsim_uwb"}))));
+  ret.emplace_back(GenerateFlag("num_instances", launch.instances().size()));
+
+  bool netsim_bt = CF_DEFAULTS_NETSIM_BT;
+  if (launch.has_netsim_bt()) {
+    netsim_bt = launch.netsim_bt();
+  }
+  ret.emplace_back(GenerateFlag("netsim_bt", netsim_bt));
+
+  bool netsim_uwb = CF_DEFAULTS_NETSIM_UWB;
+  if (launch.has_netsim_uwb()) {
+    netsim_uwb = launch.netsim_uwb();
+  }
+  ret.emplace_back(GenerateFlag("netsim_uwb", netsim_uwb));
+
   ret = MergeResults(std::move(ret), GenerateMetricsFlags(launch));
   ret = MergeResults(std::move(ret), CF_EXPECT(GenerateInstancesFlags(launch)));
   auto flag_op = GenerateUndefOkFlag(ret);
@@ -72,18 +80,15 @@ Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
   return ret;
 }
 
-Result<void> InitCvdConfigs(Json::Value& root) {
-  CF_EXPECT(InitConfig(root, CF_DEFAULTS_NETSIM_BT, {"netsim_bt"}));
-  CF_EXPECT(InitConfig(root, CF_DEFAULTS_NETSIM_UWB, {"netsim_uwb"}));
-  return {};
-}
-
 }  // namespace
 
 Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root) {
   ExtractLaunchTemplates(root["instances"]);
-  CF_EXPECT(InitCvdConfigs(root));
-  return GenerateCfFlags(root);
+
+  cvd::config::Launch launch;
+  CF_EXPECT(Validate(root, launch));
+
+  return GenerateCfFlags(launch);
 }
 
 }  // namespace cuttlefish
