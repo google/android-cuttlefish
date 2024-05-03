@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <android-base/file.h>
+#include "host/commands/cvd/parser/launch_cvd_templates.h"
 
-#include <stdio.h>
 #include <string>
 
-#include "common/libs/utils/json.h"
-#include "host/commands/cvd/parser/cf_configs_common.h"
+#include <google/protobuf/util/json_util.h>
+
+#include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
+
+using google::protobuf::util::JsonStringToMessage;
 
 namespace cuttlefish {
+
+using cvd::config::Instance;
+using cvd::config::Launch;
 
 enum class ConfigTemplate {
   PHONE,
@@ -237,77 +243,48 @@ static const char* kFoldableInstanceTemplate = R""""(
 }
   )"""";
 
-Json::Value ExtractJsonTemplate(const Json::Value& instance,
-                                const char* template_string) {
-  std::string json_text(template_string);
-  Json::Value result;
+static Result<Instance> LoadRawTemplate(std::string_view template_string) {
+  Instance out;
 
-  Json::Reader reader;
-  reader.parse(json_text, result);
-  MergeTwoJsonObjs(result, instance);
-  return result;
+  auto status = JsonStringToMessage(template_string, &out);
+  CF_EXPECTF(status.ok(), "{}", status.ToString());
+
+  return out;
 }
 
-Json::Value ExtractInstaneTemplate(const Json::Value& instance) {
-  std::string instance_template = instance["@import"].asString();
-  ConfigTemplate selected_template =
-      kSupportedTemplatesKeyMap.at(instance_template);
+static Result<Instance> LoadTemplateByName(const std::string& template_name) {
+  auto template_it = kSupportedTemplatesKeyMap.find(template_name);
+  CF_EXPECT(template_it != kSupportedTemplatesKeyMap.end());
 
-  Json::Value result;
-
-  switch (selected_template) {
+  switch (template_it->second) {
     case ConfigTemplate::PHONE:
-      // Extract phone instance configs from input template
-      result = ExtractJsonTemplate(instance, kPhoneInstanceTemplate);
-      break;
+      return LoadRawTemplate(kPhoneInstanceTemplate);
     case ConfigTemplate::TABLET:
-      // Extract tablet instance configs from input template
-      result = ExtractJsonTemplate(instance, kTabletInstanceTemplate);
-      break;
+      return LoadRawTemplate(kTabletInstanceTemplate);
     case ConfigTemplate::TV:
-      // Extract tv instance configs from input template
-      result = ExtractJsonTemplate(instance, kTvInstanceTemplate);
-      break;
+      return LoadRawTemplate(kTvInstanceTemplate);
     case ConfigTemplate::WEARABLE:
-      // Extract wearable instance configs from input template
-      result = ExtractJsonTemplate(instance, kWearableInstanceTemplate);
-      break;
+      return LoadRawTemplate(kWearableInstanceTemplate);
     case ConfigTemplate::AUTO:
-      // Extract auto instance configs from input template
-      result = ExtractJsonTemplate(instance, kAutoInstanceTemplate);
-      break;
+      return LoadRawTemplate(kAutoInstanceTemplate);
     case ConfigTemplate::SLIM:
-      // Extract slim instance configs from input template
-      result = ExtractJsonTemplate(instance, kSlimInstanceTemplate);
-      break;
+      return LoadRawTemplate(kSlimInstanceTemplate);
     case ConfigTemplate::GO:
-      // Extract go instance configs from input template
-      result = ExtractJsonTemplate(instance, kGoInstanceTemplate);
-      break;
+      return LoadRawTemplate(kGoInstanceTemplate);
     case ConfigTemplate::FOLDABLE:
-      // Extract foldable instance configs from input template
-      result = ExtractJsonTemplate(instance, kFoldableInstanceTemplate);
-      break;
-
+      return LoadRawTemplate(kFoldableInstanceTemplate);
     default:
-      // handle unsupported @import flag values
-      result = instance;
-      break;
+      return CF_ERRF("Unknown @import value: {}", template_name);
   }
-
-  return result;
 }
 
-void ExtractLaunchTemplates(Json::Value& root) {
-  std::size_t num_instances = root.size();
-  for (unsigned int i = 0; i < num_instances; i++) {
-    // Validate @import flag values are supported or not
-    if (root[i].isMember("@import")) {
-      // Extract instance configs from input template and override current
-      // instance
-      root[i] = ExtractInstaneTemplate(root[i]);
+Result<Launch> ExtractLaunchTemplates(Launch config) {
+  for (auto& ins : *config.mutable_instances()) {
+    if (ins.has_import_template() && ins.import_template() != "") {
+      ins.MergeFrom(CF_EXPECT(LoadTemplateByName(ins.import_template())));
     }
   }
+  return config;
 }
 
 }  // namespace cuttlefish
