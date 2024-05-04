@@ -56,7 +56,7 @@ func TestDownloadArtifact(t *testing.T) {
 		} else if reqURI == downloadRequestURI {
 			res.Body = newResponseBody(binContent)
 		} else {
-			t.Fatalf("invalide request URI: %q\n", reqURI)
+			t.Fatalf("invalid request URI: %q\n", reqURI)
 		}
 		return res, nil
 	})

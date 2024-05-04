@@ -130,7 +130,7 @@ func (c *Command) startCVDServer() error {
 	cmd := c.execContext(context.TODO(), cvdEnv(""), c.cvdBin)
 	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
 	// file descriptor to the null device (os.DevNull).
-	// Otherwhise, `Run` will never complete. Why? a pipe will be created to handle
+	// Otherwise, `Run` will never complete. Why? a pipe will be created to handle
 	// the data of the new process, this pipe will be passed over to `cvd_server`,
 	// which is a daemon, hence the pipe will never reach EOF and Run will never
 	// complete. Read more about it here: https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/os/exec/exec.go;l=108-111

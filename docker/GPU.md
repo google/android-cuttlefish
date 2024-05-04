@@ -2,7 +2,7 @@
 
 When running Cuttlefish directly on a host machine, you can now take advantage
 of physical GPUs by some vendors. For example, to use NVIDIA GPUs, you can
-launch Cuttlefish by pasing the -gpu_mode=drm_virgl command-line option.
+launch Cuttlefish by passing the -gpu_mode=drm_virgl command-line option.
 
 We want this ability when running Cuttlefish inside a docker container.  This is
 made possible by the fact that docker containers for Cuttlefish are meant to be

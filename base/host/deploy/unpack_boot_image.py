@@ -18,7 +18,7 @@
 
 Most Android devices have boot roms that interpret the boot.img file. The
 VMs that Cuttlefish uses don't handle Android's format. This breaks the
-kernel image, ram disk, and kernel command line into indivdual files.
+kernel image, ram disk, and kernel command line into individual files.
 """
 
 import argparse

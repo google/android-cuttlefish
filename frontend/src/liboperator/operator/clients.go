@@ -24,7 +24,7 @@ import (
 type Client interface {
 	// Send a message to the device
 	Send(msg interface{}) error
-	// Provides an oportunity for the client to react to the device being disconnected
+	// Provides an opportunity for the client to react to the device being disconnected
 	OnDeviceDisconnected()
 }
 
