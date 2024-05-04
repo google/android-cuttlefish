@@ -16,10 +16,12 @@
 #include "host/libs/web/http_client/http_client.h"
 
 #include <stdio.h>
+#include <ext/stdio_filebuf.h>
 
-#include <fstream>
 #include <functional>
+#include <memory>
 #include <mutex>
+#include <ostream>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -31,6 +33,7 @@
 #include <curl/curl.h>
 #include <json/json.h>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/web/http_client/http_client_util.h"
@@ -168,16 +171,18 @@ class CurlClient : public HttpClient {
       const std::string& url, const std::string& path,
       const std::vector<std::string>& headers) {
     LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
-    std::fstream stream;
-    auto callback = [&stream, path](char* data, size_t size) -> bool {
+
+    auto [fbuf, temp_path] = CF_EXPECT(MakeTempFileBuf(path));
+    std::ostream stream(&fbuf);
+    auto callback = [&stream](char* data, size_t size) -> bool {
       if (data == nullptr) {
-        stream.open(path, std::ios::out | std::ios::binary | std::ios::trunc);
         return !stream.fail();
       }
       stream.write(data, size);
       return !stream.fail();
     };
     auto http_response = CF_EXPECT(DownloadToCallback(callback, url, headers));
+    CF_EXPECT(RenameFile(temp_path, path));
     return HttpResponse<std::string>{path, http_response.http_code};
   }
 
