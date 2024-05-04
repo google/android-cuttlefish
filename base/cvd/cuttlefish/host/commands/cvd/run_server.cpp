@@ -150,7 +150,7 @@ bool IsServerModeExpected(const std::string& exec_file) {
 [[noreturn]] void ImportResourcesFromRunningServer(std::vector<std::string> args) {
   auto parsed_res = ParseIfServer(args);
   if (!parsed_res.ok()) {
-    LOG(ERROR) << "Failed to parse argumets: " << parsed_res.error().FormatForEnv();
+    LOG(ERROR) << "Failed to parse arguments: " << parsed_res.error().FormatForEnv();
     std::exit(1);
   }
   auto parsed = *parsed_res;

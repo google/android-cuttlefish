@@ -185,7 +185,7 @@ INSTANTIATE_TEST_SUITE_P(CvdCreationInfo, ValidSubCmdTest,
 
 /*
  * Tries to run Cuttlefish with default group two times, so the second
- * run should fail as the default group_name is registed in the Instance-
+ * run should fail as the default group_name is registered in the Instance-
  * Database.
  */
 TEST(AutoHomeTest, DefaultFailAtSecondTrialTest) {

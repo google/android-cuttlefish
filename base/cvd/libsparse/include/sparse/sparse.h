@@ -29,7 +29,7 @@ struct sparse_file;
 
 // The callbacks in sparse_file_callback() and sparse_file_foreach_chunk() take
 // size_t as the length type (was `int` in past). This allows clients to keep
-// their codes compatibile with both versions as needed.
+// their codes compatible with both versions as needed.
 #define	SPARSE_CALLBACK_USES_SIZE_T
 
 /**

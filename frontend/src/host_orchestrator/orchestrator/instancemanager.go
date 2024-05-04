@@ -154,13 +154,13 @@ func cvdFleet(ctx cvd.CVDExecContext) (*cvdFleetOutput, error) {
 	}
 	output := &cvdFleetOutput{}
 	if err := json.Unmarshal(stdout.Bytes(), output); err != nil {
-		log.Printf("Failed parsing `cvd fleet` ouput. Output: \n\n%s\n", cvd.OutputLogMessage(stdout.String()))
+		log.Printf("Failed parsing `cvd fleet` output. Output: \n\n%s\n", cvd.OutputLogMessage(stdout.String()))
 		return nil, fmt.Errorf("failed parsing `cvd fleet` output: %w", err)
 	}
 	return output, nil
 }
 
-// Helper for listing first group instances only. Legacy flows didn't have a multi-group environment hence unsing
+// Helper for listing first group instances only. Legacy flows didn't have a multi-group environment hence using
 // the first group only.
 func cvdFleetFirstGroup(ctx cvd.CVDExecContext) (*cvdGroup, error) {
 	fleet, err := cvdFleet(ctx)

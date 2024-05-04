@@ -11,7 +11,7 @@ set -u
 # Given the name of a package in $1, discover the name and version of each of
 # its direct dependencies.  For each direct dependency, invoke a script in $2
 # with the name and version of that dependency.  If the script result tests
-# true, we invoke a seond script in $3 (with the same arguments as the script in
+# true, we invoke a second script in $3 (with the same arguments as the script in
 # $2.
 
 source utils.sh

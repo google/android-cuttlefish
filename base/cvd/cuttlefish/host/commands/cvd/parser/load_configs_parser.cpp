@@ -86,7 +86,7 @@ Flag GflagsCompatFlagOverride(const std::string& name,
 }
 
 // TODO(moelsherif): expand this enum in the future to support more types (
-// double , float , etc) if neeeded
+// double , float , etc) if needed
 enum ArgValueType { UINTEGER, BOOLEAN, TEXT };
 
 bool IsUnsignedInteger(const std::string& str) {

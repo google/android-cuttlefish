@@ -25,7 +25,7 @@ extern "C" {
 typedef struct sparse_header {
   __le32 magic;          /* 0xed26ff3a */
   __le16 major_version;  /* (0x1) - reject images with higher major versions */
-  __le16 minor_version;  /* (0x0) - allow images with higer minor versions */
+  __le16 minor_version;  /* (0x0) - allow images with higher minor versions */
   __le16 file_hdr_sz;    /* 28 bytes for first revision of the file format */
   __le16 chunk_hdr_sz;   /* 12 bytes for first revision of the file format */
   __le32 blk_sz;         /* block size in bytes, must be a multiple of 4 (4096) */

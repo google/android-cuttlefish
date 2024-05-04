@@ -51,7 +51,7 @@ function collect_logs_and_cleanup() {
     done
   fi
 
-  # Be nice, dont' leave a server or devices behind.
+  # Be nice, don't leave a server or devices behind.
   cvd reset -y
 }
 
