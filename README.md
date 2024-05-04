@@ -52,7 +52,7 @@ to obtain the script.
 
 ## Docker
 
-The Debian packages can also be built in a the docker container. Dockerfile and
+The Debian packages can also be built in a docker container. Dockerfile and
 build scripts are included in this repository, just run:
 
 ```
