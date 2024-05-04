@@ -98,6 +98,9 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(
       GflagsCompatFlag("api_base_url", build_api_flags.api_base_url)
           .Help("The base url for API requests to download artifacts from"));
+  flags.emplace_back(
+      GflagsCompatFlag("enable_caching", build_api_flags.enable_caching)
+          .Help("Whether to enable local fetch file caching or not"));
 
   CredentialFlags& credential_flags = build_api_flags.credential_flags;
   flags.emplace_back(

@@ -42,6 +42,7 @@ inline constexpr bool kDefaultExternalDnsResolver =
 #else
     false;
 #endif
+inline constexpr bool kDefaultEnableCaching = true;
 inline constexpr char kDefaultBuildString[] = "";
 inline constexpr bool kDefaultDownloadImgZip = true;
 inline constexpr bool kDefaultDownloadTargetFilesZip = false;
@@ -64,6 +65,7 @@ struct BuildApiFlags {
   std::chrono::seconds wait_retry_period = kDefaultWaitRetryPeriod;
   bool external_dns_resolver = kDefaultExternalDnsResolver;
   std::string api_base_url = kAndroidBuildServiceUrl;
+  bool enable_caching = kDefaultEnableCaching;
 };
 
 struct VectorFlags {
