@@ -406,7 +406,8 @@ Result<void> BuildApi::ArtifactToFile(const Build& build,
 Result<std::string> BuildApi::DownloadTargetFile(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name) {
-  std::string target_filepath = target_directory + "/" + artifact_name;
+  std::string target_filepath =
+      ConstructTargetFilepath(target_directory, artifact_name);
   CF_EXPECT(ArtifactToFile(build, artifact_name, target_filepath),
             "Unable to download " << build << ":" << artifact_name << " to "
                                   << target_filepath);
@@ -433,6 +434,11 @@ std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build) {
 
 std::optional<std::string> GetFilepath(const Build& build) {
   return std::visit([](auto&& arg) { return arg.filepath; }, build);
+}
+
+std::string ConstructTargetFilepath(const std::string& directory,
+                                    const std::string& filename) {
+  return directory + "/" + filename;
 }
 
 }  // namespace cuttlefish

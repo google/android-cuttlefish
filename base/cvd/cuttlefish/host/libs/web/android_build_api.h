@@ -70,8 +70,8 @@ std::ostream& operator<<(std::ostream&, const Build&);
 class BuildApi {
  public:
   BuildApi() = delete;
-  BuildApi(BuildApi&&) = default;
-  ~BuildApi() = default;
+  BuildApi(BuildApi&&) = delete;
+  virtual ~BuildApi() = default;
   BuildApi(std::unique_ptr<HttpClient> http_client,
            std::unique_ptr<HttpClient> inner_http_client,
            std::unique_ptr<CredentialSource> credential_source,
@@ -81,11 +81,11 @@ class BuildApi {
   Result<Build> GetBuild(const BuildString& build_string,
                          const std::string& fallback_target);
 
-  Result<std::string> DownloadFile(const Build& build,
-                                   const std::string& target_directory,
-                                   const std::string& artifact_name);
+  virtual Result<std::string> DownloadFile(const Build& build,
+                                           const std::string& target_directory,
+                                           const std::string& artifact_name);
 
-  Result<std::string> DownloadFileWithBackup(
+  virtual Result<std::string> DownloadFileWithBackup(
       const Build& build, const std::string& target_directory,
       const std::string& artifact_name,
       const std::string& backup_artifact_name);
@@ -146,5 +146,8 @@ std::string GetBuildZipName(const Build& build, const std::string& name);
 std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);
 
 std::optional<std::string> GetFilepath(const Build& build);
+
+std::string ConstructTargetFilepath(const std::string& directory,
+                                    const std::string& filename);
 
 }  // namespace cuttlefish
