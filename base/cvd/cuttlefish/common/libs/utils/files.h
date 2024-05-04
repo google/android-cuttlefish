@@ -19,8 +19,10 @@
 #include <sys/types.h>
 
 #include <chrono>
+#include <fstream>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "common/libs/utils/result.h"
@@ -121,5 +123,8 @@ struct InputPathForm {
  *  but SystemWideUserHome() call fails.
  */
 Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info);
+
+Result<std::pair<std::filebuf, std::string>> MakeTempFileBuf(
+    const std::string& path);
 
 }  // namespace cuttlefish
