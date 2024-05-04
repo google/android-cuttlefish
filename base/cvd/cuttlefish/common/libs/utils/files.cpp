@@ -28,6 +28,7 @@
 #include <ftw.h>
 #include <libgen.h>
 #include <sched.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -53,6 +54,7 @@
 #include <ostream>
 #include <ratio>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <android-base/file.h>
@@ -739,6 +741,16 @@ Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info) {
                "Failed to effectively conduct readpath -f {}", processed_path);
   }
   return real_path;
+}
+
+Result<std::pair<int, std::string>> MakeTempFd(const std::string& path) {
+  auto temp_path = path + "XXXXXX";
+  const int fd = mkstemp(temp_path.data());
+  CF_EXPECTF(fd != -1, "Error creating temporary file: {}", strerror(errno));
+  CF_EXPECTF(fcntl(fd, F_SETFD, FD_CLOEXEC) == 0,
+             "Error setting FD_CLOEXEC on fd \"{}\": {}", fd, strerror(errno));
+  std::pair<int, std::string> p = std::make_pair(fd, temp_path);
+  return p;
 }
 
 }  // namespace cuttlefish

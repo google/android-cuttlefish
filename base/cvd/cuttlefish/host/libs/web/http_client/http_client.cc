@@ -16,10 +16,12 @@
 #include "host/libs/web/http_client/http_client.h"
 
 #include <stdio.h>
+#include <ext/stdio_filebuf.h>
 
-#include <fstream>
 #include <functional>
+#include <memory>
 #include <mutex>
+#include <ostream>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -171,14 +173,19 @@ class CurlClient : public HttpClient {
       const std::string& url, const std::string& path,
       const std::vector<std::string>& headers) {
     LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
-    std::string temp_path = path + "XXXXXX";
-    SharedFD fd;
-    auto callback = [&fd, &temp_path](char* data, size_t size) -> bool {
+
+    const auto [fd, temp_path] = CF_EXPECT(MakeTempFd(path));
+    __gnu_cxx::stdio_filebuf<char> file_buffer(
+        fd, std::ios::out | std::ios::binary | std::ios::trunc);
+    std::ostream stream(&file_buffer);
+    auto callback = [&stream, &temp_path](char* data, size_t size) -> bool {
       if (data == nullptr) {
-        fd = SharedFD::Mkstemp(&temp_path);
-        return fd->IsOpen();
+        return !stream.fail();
       }
-      return WriteAll(fd, data, size) == size;
+      // TODO CJR: SIGSEGV (11) on this
+      // I assume there is some kind of scope issue
+      stream.write(data, size);
+      return !stream.fail();
     };
     auto http_response = CF_EXPECT(DownloadToCallback(callback, url, headers));
     CF_EXPECT(RenameFile(temp_path, path));
