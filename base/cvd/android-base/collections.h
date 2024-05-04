@@ -22,7 +22,7 @@ namespace android {
 namespace base {
 
 // Helpers for converting a variadic template parameter pack to a homogeneous collection.
-// Parameters must be implictly convertible to the contained type (including via move/copy ctors).
+// Parameters must be implicitly convertible to the contained type (including via move/copy ctors).
 //
 // Use as follows:
 //

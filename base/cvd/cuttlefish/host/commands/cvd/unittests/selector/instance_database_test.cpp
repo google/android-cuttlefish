@@ -40,7 +40,7 @@
  *  class Suite : public testing::Test;
  *  class Suite_Test : public Suite;
  *
- * Thus, the set up is done inside the constructur of the Suite base class.
+ * Thus, the set up is done inside the constructor of the Suite base class.
  * Also, cleaning up the directories and files are done inside the destructor.
  * If creating files/directories fails, the "Test" is skipped.
  *

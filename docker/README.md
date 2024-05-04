@@ -139,7 +139,7 @@ In summary, a docker_run_opts looks like:
 ```
 
 Although the command will build Android and Cuttlefish, the docker
-contaienr does not automatically detect the directory. To provision
+container does not automatically detect the directory. To provision
 the docker container with the freshly built Android and Cuttlefish, we
 must give -C and -A options to specify the location of
 cvd-host_package.tar.gz and the ANDROID_PRODUCT_OUT directory,
@@ -240,7 +240,7 @@ variable $ip_cf1.
 
 # Connecting to Cuttlefish
 
-We recommend that each docker container should be assigned an ip address and that the users should access the contaienr via the ip. 
+We recommend that each docker container should be assigned an ip address and that the users should access the container via the ip. 
 
 If assigning a public IP is not feasible, we offer a environment variable, ```ip_${name}``` and a bash function, ```cf_get_ip```.
 Those returns the internal IP valid on the docker host. 

@@ -44,7 +44,7 @@ function collect_logs_and_cleanup() {
     cp "${workdir}"/cuttlefish_runtime/cuttlefish_config.json "${TEST_UNDECLARED_OUTPUTS_DIR}"
   fi
   rm -rf "${workdir}"
-  # Be nice, dont' leave a server or devices behind.
+  # Be nice, don't leave a server or devices behind.
   cvd reset -y
 }
 

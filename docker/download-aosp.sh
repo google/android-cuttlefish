@@ -37,7 +37,7 @@ function parse_opts() {
 							THROTTLED='-throttled'
 							;;
 						*)
-							echo "Uknown architecture ${ARCH}" 1>&2
+							echo "Unknown architecture ${ARCH}" 1>&2
 							help=1
 							;;
 					esac

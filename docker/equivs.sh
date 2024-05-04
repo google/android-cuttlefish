@@ -2,7 +2,7 @@
 
 set -o errexit
 
-# $1: packae name
+# $1: package name
 # $2: package version (defaults to 9999)
 # $3: relationship (<<, <=, =, >=, >>)
 function generate_empty_package {

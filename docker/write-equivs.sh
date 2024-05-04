@@ -35,7 +35,7 @@ function write_equivs {
         exit 1
       fi
     else
-      # The depencency did not specify a version; we use the installed version
+      # The dependency did not specify a version; we use the installed version
       # and the eq operator
       op=eq
     fi

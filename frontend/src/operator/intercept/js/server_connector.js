@@ -48,7 +48,7 @@ export async function createConnector() {
 
 // A connector object provides high level functions for communicating with the
 // signaling server, while hiding away implementation details.
-// This class is an interface and shouldn't be instantiated direclty.
+// This class is an interface and shouldn't be instantiated directly.
 // Only the public methods present in this class form part of the Server
 // Connector Interface, any implementations of the interface are considered
 // internal and not accessible to client code.
