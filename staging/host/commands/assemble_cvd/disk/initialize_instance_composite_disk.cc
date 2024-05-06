@@ -84,7 +84,7 @@ std::vector<ImagePartition> PersistentAPCompositeDiskConfig(
 }  // namespace
 
 bool IsVmManagerQemu(const CuttlefishConfig& config) {
-  return config.vm_manager() == vm_manager::QemuManager::name();
+  return config.vm_manager() == VmmMode::kQemu;
 }
 Result<void> InitializeInstanceCompositeDisk(
     const CuttlefishConfig& config,

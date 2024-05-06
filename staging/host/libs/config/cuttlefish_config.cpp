@@ -111,11 +111,12 @@ void CuttlefishConfig::set_root_dir(const std::string& root_dir) {
 }
 
 static constexpr char kVmManager[] = "vm_manager";
-std::string CuttlefishConfig::vm_manager() const {
-  return (*dictionary_)[kVmManager].asString();
+VmmMode CuttlefishConfig::vm_manager() const {
+  auto str = (*dictionary_)[kVmManager].asString();
+  return ParseVmm(str).value_or(VmmMode::kUnknown);
 }
-void CuttlefishConfig::set_vm_manager(const std::string& name) {
-  (*dictionary_)[kVmManager] = name;
+void CuttlefishConfig::set_vm_manager(VmmMode vmm) {
+  (*dictionary_)[kVmManager] = fmt::format("{}", vmm);
 }
 
 static constexpr char kApVmManager[] = "ap_vm_manager";
@@ -173,7 +174,9 @@ void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
   (*dictionary_)[kCrosvmBinary] = crosvm_binary;
 }
 
-bool CuttlefishConfig::IsCrosvm() const { return vm_manager() == "crosvm"; }
+bool CuttlefishConfig::IsCrosvm() const {
+  return vm_manager() == VmmMode::kCrosvm;
+}
 
 static constexpr char kGem5DebugFlags[] = "gem5_debug_flags";
 std::string CuttlefishConfig::gem5_debug_flags() const {
