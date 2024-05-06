@@ -42,8 +42,8 @@ class DiskBuilder {
   DiskBuilder& CrosvmPath(std::string crosvm_path) &;
   DiskBuilder CrosvmPath(std::string crosvm_path) &&;
 
-  DiskBuilder& VmManager(std::string vm_manager) &;
-  DiskBuilder VmManager(std::string vm_manager) &&;
+  DiskBuilder& VmManager(VmmMode vm_manager) &;
+  DiskBuilder VmManager(VmmMode vm_manager) &&;
 
   DiskBuilder& ConfigPath(std::string config_path) &;
   DiskBuilder ConfigPath(std::string config_path) &&;
@@ -70,7 +70,7 @@ class DiskBuilder {
   std::string entire_disk_;
   std::string header_path_;
   std::string footer_path_;
-  std::string vm_manager_;
+  VmmMode vm_manager_ = VmmMode::kUnknown;
   std::string crosvm_path_;
   std::string config_path_;
   std::string composite_disk_path_;

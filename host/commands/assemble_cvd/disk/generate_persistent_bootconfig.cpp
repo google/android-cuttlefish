@@ -78,7 +78,7 @@ Result<void> GeneratePersistentBootconfig(
                                 << bootconfig_path
                                 << "` failed:" << bootconfig_fd->StrError());
 
-  if (config.vm_manager() == vm_manager::Gem5Manager::name()) {
+  if (config.vm_manager() == VmmMode::kGem5) {
     const off_t bootconfig_size_bytes_gem5 =
         AlignToPowerOf2(bytesWritten, PARTITION_SIZE_SHIFT);
     CF_EXPECT(bootconfig_fd->Truncate(bootconfig_size_bytes_gem5) == 0);
