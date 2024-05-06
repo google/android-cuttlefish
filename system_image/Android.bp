@@ -309,7 +309,6 @@ android_system_image {
         "bu",
         "bugreport",
         "bugreportz",
-        "cacerts",
         "cameraserver",
         "cgroups.json",
         "checkpoint_gc",
