@@ -307,7 +307,6 @@ android_system_image {
         "boringssl_self_test",
         "bpfloader",
         "bu",
-        "bugreport_procdump",
         "bugreport",
         "bugreportz",
         "cacerts",
