@@ -93,7 +93,7 @@ class ServerLoopImpl : public ServerLoop,
   static std::unordered_map<std::string, std::string>
   InitializeVmToControlSockPath(const CuttlefishConfig::InstanceSpecific&);
   Result<std::string> VmControlSocket() const;
-  Result<void> TakeGuestSnapshot(const std::string&, const std::string&);
+  Result<void> TakeGuestSnapshot(VmmMode, const std::string&);
   Result<void> TakeCrosvmGuestSnapshot(const Json::Value&);
 
   const CuttlefishConfig& config_;

@@ -116,7 +116,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
                  VmManager>
 VmManagerComponent();
 
-std::unique_ptr<VmManager> GetVmManager(const std::string&, Arch arch);
+std::unique_ptr<VmManager> GetVmManager(VmmMode vmm, Arch arch);
 
 Result<std::unordered_map<std::string, std::string>>
 ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
