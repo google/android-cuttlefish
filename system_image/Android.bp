@@ -729,8 +729,6 @@ android_system_image {
                 "com.android.cellbroadcast",
                 "com.android.compos",
                 "com.android.future.usb.accessory",
-                "com.android.i18n",
-                "com.android.ipsec",
                 "com.android.location.provider",
                 "com.android.media.remotedisplay.xml",
                 "com.android.media.remotedisplay",
@@ -848,26 +846,6 @@ android_system_image {
                 "libgsi",
                 "servicemanager",
             ],
-        },
-    },
-    arch: {
-        x86: {
-            multilib: {
-                common: {
-                    deps: [
-                        "com.android.wifi",
-                    ],
-                },
-            },
-        },
-        x86_64: {
-            multilib: {
-                common: {
-                    deps: [
-                        "com.android.wifi",
-                    ],
-                },
-            },
         },
     },
     product_variables: {
