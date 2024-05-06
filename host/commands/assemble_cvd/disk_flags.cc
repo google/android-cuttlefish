@@ -625,7 +625,7 @@ Result<void> InitializeSdCard(
   CF_EXPECT(CreateBlankImage(instance.sdcard_path(),
                              instance.blank_sdcard_image_mb(), "sdcard"),
             "Failed to create \"" << instance.sdcard_path() << "\"");
-  if (config.vm_manager() == "qemu_cli") {
+  if (config.vm_manager() == VmmMode::kQemu) {
     const std::string crosvm_path = instance.crosvm_binary();
     CreateQcowOverlay(crosvm_path, instance.sdcard_path(),
                       instance.sdcard_overlay_path());
@@ -927,8 +927,7 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
     // Repacking a boot.img changes boot_image and vendor_boot_image paths
     const CuttlefishConfig& const_config = const_cast<const CuttlefishConfig&>(config);
     const CuttlefishConfig::InstanceSpecific const_instance = const_config.ForInstance(num);
-    if (cur_kernel_path.size() &&
-        config.vm_manager() != Gem5Manager::name()) {
+    if (cur_kernel_path.size() && config.vm_manager() != VmmMode::kGem5) {
       const std::string new_boot_image_path =
           const_instance.PerInstancePath("boot_repacked.img");
       // change the new flag value to corresponding instance
@@ -1078,7 +1077,7 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     }
     // Gem5 Simulate per-instance what the bootloader would usually do
     // Since on other devices this runs every time, just do it here every time
-    if (config.vm_manager() == Gem5Manager::name()) {
+    if (config.vm_manager() == VmmMode::kGem5) {
       RepackGem5BootImage(instance.PerInstancePath("initrd.img"),
                           instance.persistent_bootconfig_path(),
                           config.assembly_dir(), instance.initramfs_path());

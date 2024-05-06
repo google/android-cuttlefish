@@ -123,7 +123,7 @@ class OpenWrt : public CommandSource {
     auto openwrt_args = OpenwrtArgsFromConfig(instance_);
     switch (instance_.ap_boot_flow()) {
       case APBootFlow::Grub:
-        if (config_.vm_manager() == "qemu_cli") {
+        if (config_.vm_manager() == VmmMode::kQemu) {
           ap_cmd.AddReadWriteDisk(
               instance_.persistent_ap_composite_overlay_path());
         } else {
@@ -156,7 +156,7 @@ class OpenWrt : public CommandSource {
   std::string Name() const override { return "OpenWrt"; }
   bool Enabled() const override {
     return instance_.ap_boot_flow() != APBootFlow::None &&
-           config_.vm_manager() == vm_manager::CrosvmManager::name();
+           config_.vm_manager() == VmmMode::kCrosvm;
   }
 
  private:
