@@ -136,7 +136,8 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
     // large to be repacked. Skip repack of boot.img on Gem5, as we need to be
     // able to extract the ramdisk.img in a later stage and so this step must
     // not fail (..and the repacked kernel wouldn't be used anyway).
-    if (instance_.kernel_path().size() && config_.vm_manager() != Gem5Manager::name()) {
+    if (instance_.kernel_path().size() &&
+        config_.vm_manager() != VmmMode::kGem5) {
       CF_EXPECT(RepackBootImage(avb_, instance_.kernel_path(), instance_.boot_image(),
                                 instance_.new_boot_image(), instance_.instance_dir()),
                 "Failed to regenerate the boot image with the new kernel");
