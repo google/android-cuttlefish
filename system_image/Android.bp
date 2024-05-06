@@ -71,7 +71,6 @@ android_system_image {
     partition_name: "system",
     deps: [
         "abx",
-        "abx2xml",
         "aconfigd",
         "adevice_fingerprint",
         "aflags",
@@ -762,7 +761,6 @@ android_system_image {
         "wifi.rc",
         "wificond",
         "wm",
-        "xml2abx",
         "xtables.lock",
     ],
     multilib: {
