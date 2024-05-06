@@ -918,6 +918,10 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
             continue;
 
         i = ncid - 1;
+
+        if (i >= n || i < 0)
+            goto error;
+
         // Assume no error
         responses[i].status = 0;
 
@@ -1054,14 +1058,21 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
         &input, (responses) ? &responses[i].dnses : &sskip);  // dns_prim_addr
     if (err < 0) goto error;
 
+    size_t response_size = 0;
+    RIL_Data_Call_Response_v11 *presponse = NULL;
+    if (responses) {
+        if (i >= n || i < 0)
+            goto error;
+        presponse = &responses[i];
+        response_size = sizeof(*presponse);
+    }
+
     if (t != NULL)
       RIL_onRequestComplete(*t, RIL_E_SUCCESS,
-                            (responses != NULL) ? (responses + i) : responses,
-                            sizeof(RIL_Data_Call_Response_v11));
+                            presponse, response_size);
     else
         RIL_onUnsolicitedResponse(RIL_UNSOL_DATA_CALL_LIST_CHANGED,
-                                  responses,
-                                  n * sizeof(RIL_Data_Call_Response_v11));
+                                  responses, n * response_size);
 
     at_response_free(p_response);
     return;
