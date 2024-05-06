@@ -271,7 +271,7 @@ class InitializeEspImageImpl : public InitializeEspImage {
       LOG(DEBUG) << "creating esp_image: " << instance_.ap_esp_image_path();
       CF_EXPECT(BuildAPImage());
     }
-    const auto is_not_gem5 = config_.vm_manager() != vm_manager::Gem5Manager::name();
+    const auto is_not_gem5 = config_.vm_manager() != VmmMode::kGem5;
     const auto esp_required_for_boot_flow = EspRequiredForBootFlow();
     if (is_not_gem5 && esp_required_for_boot_flow) {
       LOG(DEBUG) << "creating esp_image: " << instance_.esp_image_path();

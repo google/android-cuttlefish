@@ -973,11 +973,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // TODO(weihsu), b/250988697: moved bootconfig_supported and hctr2_supported
   // into each instance, but target_arch is still in todo
   // target_arch should be in instance later
-  auto vmm = GetVmManager(vm_manager_vec[0], guest_configs[0].target_arch);
+  auto vmm_mode = CF_EXPECT(ParseVmm(vm_manager_vec[0]));
+  auto vmm = GetVmManager(vmm_mode, guest_configs[0].target_arch);
   if (!vmm) {
     LOG(FATAL) << "Invalid vm_manager: " << vm_manager_vec[0];
   }
-  tmp_config_obj.set_vm_manager(vm_manager_vec[0]);
+  tmp_config_obj.set_vm_manager(vmm_mode);
   tmp_config_obj.set_ap_vm_manager(vm_manager_vec[0] + "_openwrt");
 
   auto secure_hals_strs =
@@ -1373,7 +1374,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       std::set<Arch> default_on_arch = {Arch::Arm64};
       if (guest_configs[instance_index].vhost_user_vsock) {
         instance.set_vhost_user_vsock(true);
-      } else if (tmp_config_obj.vm_manager() == CrosvmManager::name() &&
+      } else if (tmp_config_obj.vm_manager() == VmmMode::kCrosvm &&
                  default_on_arch.find(
                      guest_configs[instance_index].target_arch) !=
                      default_on_arch.end()) {
@@ -1383,7 +1384,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       }
     } else if (vhost_user_vsock_vec[instance_index] ==
                kVhostUserVsockModeTrue) {
-      CHECK(tmp_config_obj.vm_manager() == CrosvmManager::name())
+      CHECK(tmp_config_obj.vm_manager() == VmmMode::kCrosvm)
           << "For now, only crosvm supports vhost_user_vsock";
       instance.set_vhost_user_vsock(true);
     } else if (vhost_user_vsock_vec[instance_index] ==
@@ -1552,7 +1553,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string gpu_mode = CF_EXPECT(ConfigureGpuSettings(
         gpu_mode_vec[instance_index], gpu_vhost_user_mode_vec[instance_index],
         gpu_renderer_features_vec[instance_index],
-        gpu_context_types_vec[instance_index], vm_manager_vec[instance_index],
+        gpu_context_types_vec[instance_index], vmm_mode,
         guest_configs[instance_index], instance));
     calculated_gpu_mode_vec[instance_index] = gpu_mode_vec[instance_index];
 
@@ -1633,7 +1634,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     bool os_overlay = true;
     os_overlay &= !protected_vm_vec[instance_index];
     // Gem5 already uses CoW wrappers around disk images
-    os_overlay &= vm_manager_vec[0] != Gem5Manager::name();
+    os_overlay &= vmm_mode != VmmMode::kGem5;
     os_overlay &= FLAGS_use_overlay;
     if (os_overlay) {
       auto path = const_instance.PerInstancePath("overlay.img");
@@ -1644,13 +1645,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     bool persistent_disk = true;
     persistent_disk &= !protected_vm_vec[instance_index];
-    persistent_disk &= vm_manager_vec[0] != Gem5Manager::name();
+    persistent_disk &= vmm_mode != VmmMode::kGem5;
     if (persistent_disk) {
 #ifdef __APPLE__
       const std::string persistent_composite_img_base =
           "persistent_composite.img";
 #else
-      const bool is_vm_qemu_cli = (tmp_config_obj.vm_manager() == "qemu_cli");
+      const bool is_vm_qemu_cli =
+          (tmp_config_obj.vm_manager() == VmmMode::kQemu);
       const std::string persistent_composite_img_base =
           is_vm_qemu_cli ? "persistent_composite_overlay.img"
                          : "persistent_composite.img";
@@ -1666,7 +1668,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     sdcard &= use_sdcard_vec[instance_index];
     sdcard &= !protected_vm_vec[instance_index];
     if (sdcard) {
-      if (tmp_config_obj.vm_manager() == "qemu_cli") {
+      if (tmp_config_obj.vm_manager() == VmmMode::kQemu) {
         virtual_disk_paths.push_back(const_instance.sdcard_overlay_path());
       } else {
         virtual_disk_paths.push_back(const_instance.sdcard_path());
@@ -1765,7 +1767,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto external_network_mode = CF_EXPECT(
         ParseExternalNetworkMode(device_external_network_vec[instance_index]));
     CF_EXPECT(external_network_mode == ExternalNetworkMode::kTap ||
-                  vm_manager_vec[instance_index] == QemuManager::name(),
+                  vmm_mode == VmmMode::kQemu,
               "TODO(b/286284441): slirp only works on QEMU");
     instance.set_external_network_mode(external_network_mode);
 
@@ -1824,7 +1826,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
           .ForEnvironment(environment_name);
   CF_EXPECT(CheckSnapshotCompatible(
                 FLAGS_snapshot_compatible &&
-                    (tmp_config_obj.vm_manager() == CrosvmManager::name()) &&
+                    (tmp_config_obj.vm_manager() == VmmMode::kCrosvm) &&
                     instance_nums.size() == 1,
                 calculated_gpu_mode_vec),
             "The set of flags is incompatible with snapshot");
@@ -2057,23 +2059,27 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
   }
   if (FLAGS_vm_manager == "") {
     if (IsHostCompatible(guest_configs[0].target_arch)) {
-      FLAGS_vm_manager = CrosvmManager::name();
+      FLAGS_vm_manager = ToString(VmmMode::kCrosvm);
     } else {
-      FLAGS_vm_manager = QemuManager::name();
+      FLAGS_vm_manager = ToString(VmmMode::kQemu);
     }
   }
-  // TODO(weihsu), b/250988697:
-  // Currently, all instances should use same vmm
+
   std::vector<std::string> vm_manager_vec =
       android::base::Split(FLAGS_vm_manager, ",");
+
+  // TODO(weihsu), b/250988697:
+  // Currently, all instances should use same vmm
+  auto vmm = CF_EXPECT(ParseVmm(vm_manager_vec[0]));
+
   // get flag default values and store into map
   auto name_to_default_value = CurrentFlagsToDefaultValue();
 
-  if (vm_manager_vec[0] == QemuManager::name()) {
+  if (vmm == VmmMode::kQemu) {
     CF_EXPECT(SetDefaultFlagsForQemu(guest_configs[0].target_arch, name_to_default_value));
-  } else if (vm_manager_vec[0] == CrosvmManager::name()) {
+  } else if (vmm == VmmMode::kCrosvm) {
     CF_EXPECT(SetDefaultFlagsForCrosvm(guest_configs, name_to_default_value));
-  } else if (vm_manager_vec[0] == Gem5Manager::name()) {
+  } else if (vmm == VmmMode::kGem5) {
     // TODO: Get the other architectures working
     if (guest_configs[0].target_arch != Arch::Arm64) {
       return CF_ERR("Gem5 only supports ARM64");
@@ -2082,7 +2088,7 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
   } else {
     return CF_ERR("Unknown Virtual Machine Manager: " << FLAGS_vm_manager);
   }
-  if (vm_manager_vec[0] != Gem5Manager::name()) {
+  if (vmm != VmmMode::kGem5) {
     // After SetCommandLineOptionWithMode in SetDefaultFlagsForCrosvm/Qemu,
     // default flag values changed, need recalculate name_to_default_value
     name_to_default_value = CurrentFlagsToDefaultValue();

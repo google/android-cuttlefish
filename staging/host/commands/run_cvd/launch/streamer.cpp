@@ -94,7 +94,7 @@ class StreamerSockets : public virtual SetupFeature {
       : config_(config), instance_(instance) {}
 
   void AppendCommandArguments(Command& cmd) {
-    if (config_.vm_manager() == vm_manager::QemuManager::name()) {
+    if (config_.vm_manager() == VmmMode::kQemu) {
       cmd.AddParameter("-write_virtio_input");
     }
     if (!touch_servers_.empty()) {
@@ -126,7 +126,7 @@ class StreamerSockets : public virtual SetupFeature {
   // SetupFeature
   std::string Name() const override { return "StreamerSockets"; }
   bool Enabled() const override {
-    bool is_qemu = config_.vm_manager() == vm_manager::QemuManager::name();
+    bool is_qemu = config_.vm_manager() == VmmMode::kQemu;
     bool is_accelerated = instance_.gpu_mode() != kGpuModeGuestSwiftshader;
     return !(is_qemu && is_accelerated);
   }
@@ -261,7 +261,7 @@ class WebRtcServer : public virtual CommandSource,
 
     webrtc.UnsetFromEnvironment("http_proxy");
     sockets_.AppendCommandArguments(webrtc);
-    if (config_.vm_manager() == vm_manager::CrosvmManager::name()) {
+    if (config_.vm_manager() == VmmMode::kCrosvm) {
       webrtc.AddParameter("-switches_fd=", switches_server_);
     }
     // Currently there is no way to ensure the signaling server will already
@@ -300,7 +300,7 @@ class WebRtcServer : public virtual CommandSource,
   }
 
   Result<void> ResultSetup() override {
-    if (config_.vm_manager() == vm_manager::CrosvmManager::name()) {
+    if (config_.vm_manager() == VmmMode::kCrosvm) {
       switches_server_ =
           CreateUnixInputServer(instance_.switches_socket_path());
       CF_EXPECT(switches_server_->IsOpen(), switches_server_->StrError());

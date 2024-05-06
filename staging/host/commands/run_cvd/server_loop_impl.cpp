@@ -414,7 +414,7 @@ void ServerLoopImpl::RestartRunCvd(int notification_fd) {
 }
 
 Result<std::string> ServerLoopImpl::VmControlSocket() const {
-  CF_EXPECT_EQ(config_.vm_manager(), "crosvm",
+  CF_EXPECT_EQ(config_.vm_manager(), VmmMode::kCrosvm,
                "Other VMs but crosvm is not yet supported.");
   return instance_.CrosvmSocketPath();
 }

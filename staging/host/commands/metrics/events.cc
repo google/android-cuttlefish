@@ -94,10 +94,10 @@ cuttlefish::MetricsEvent::VmmType GetVmmManager() {
   auto config = cuttlefish::CuttlefishConfig::Get();
   CHECK(config) << "Could not open cuttlefish config";
   auto vmm = config->vm_manager();
-  if (vmm == cuttlefish::vm_manager::CrosvmManager::name()) {
+  if (vmm == cuttlefish::VmmMode::kCrosvm) {
     return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_CROSVM;
   }
-  if (vmm == cuttlefish::vm_manager::QemuManager::name()) {
+  if (vmm == cuttlefish::VmmMode::kQemu) {
     return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_QEMU;
   }
   return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_UNSPECIFIED;
