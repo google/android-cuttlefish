@@ -298,7 +298,6 @@ android_system_image {
         "atrace",
         "audio.primary.default",
         "audioserver",
-        "av-audio-types-aidl-V1-ndk",
         "bcc",
         "blank_screen",
         "blkid",
