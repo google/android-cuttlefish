@@ -80,6 +80,8 @@ class VmManager {
   // the persistent disk
   static const int kDefaultNumBootDevices = 2;
 
+  static constexpr const int kNetPciDeviceNum = 1;
+
   // LINT.IfChange(virtio_gpu_pci_address)
   static constexpr const int kGpuPciSlotNum = 2;
   // LINT.ThenChange(../../../shared/sepolicy/vendor/genfs_contexts:virtio_gpu_pci_address)
@@ -116,7 +118,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
                  VmManager>
 VmManagerComponent();
 
-std::unique_ptr<VmManager> GetVmManager(const std::string&, Arch arch);
+std::unique_ptr<VmManager> GetVmManager(VmmMode vmm, Arch arch);
 
 Result<std::unordered_map<std::string, std::string>>
 ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,

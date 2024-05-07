@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,27 @@
  */
 #pragma once
 
-#include <string>
-
-#include "common/libs/utils/result.h"
-#include "host/commands/assemble_cvd/flags.h"
-#include "host/libs/config/config_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include <fmt/core.h>
 
 namespace cuttlefish {
+namespace pci {
 
-Result<std::string> ConfigureGpuSettings(
-    const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
-    const std::string& gpu_renderer_features_arg,
-    std::string& gpu_context_types_arg, VmmMode vmm,
-    const GuestConfig& guest_config,
-    CuttlefishConfig::MutableInstanceSpecific& instance);
+class Address {
+ public:
+  Address(unsigned int bus, unsigned int device, unsigned int function);
 
+  unsigned int Bus() const { return bus_; };
+  unsigned int Device() const { return device_; }
+  unsigned int Function() const { return function_; }
+  std::string Id() const {
+    return fmt::format("{:02x}:{:02x}.{:01x}", bus_, device_, function_);
+  }
+
+ private:
+  unsigned int bus_;
+  unsigned int device_;
+  unsigned int function_;
+};
+
+}  // namespace pci
 }  // namespace cuttlefish
