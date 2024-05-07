@@ -160,18 +160,15 @@ void NetworkService::InitializeNetworkOperator() {
     current_operator_numeric_ = operator_list_.begin()->numeric;
     operator_list_.begin()->operator_state = NetworkOperator::OPER_STATE_CURRENT;
   } else if (oper_selection_mode_ == OperatorSelectionMode::OPER_SELECTION_MANUAL_AUTOMATIC) {
-    auto iter = operator_list_.begin();
-    for (; iter != operator_list_.end(); ++iter) {
-      if (iter->numeric == current_operator_numeric_) {
-        break;
+    for (auto& iter : operator_list_) {
+      if (iter.numeric == current_operator_numeric_) {
+        iter.operator_state = NetworkOperator::OPER_STATE_CURRENT;
+        return;
       }
     }
-    if (iter == operator_list_.end()) {
-      current_operator_numeric_ = operator_list_.begin()->numeric;
-      operator_list_.begin()->operator_state = NetworkOperator::OPER_STATE_CURRENT;
-    } else {
-      iter->operator_state = NetworkOperator::OPER_STATE_CURRENT;
-    }
+    current_operator_numeric_ = operator_list_.begin()->numeric;
+    operator_list_.begin()->operator_state =
+        NetworkOperator::OPER_STATE_CURRENT;
   }
 }
 
