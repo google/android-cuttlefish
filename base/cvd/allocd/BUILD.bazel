@@ -24,5 +24,7 @@ cc_binary(
     includes = [""],
     deps = [
         "//cuttlefish:cuttlefish_common",
+        "@jsoncpp",
+        "//libbase",
     ],
 )
