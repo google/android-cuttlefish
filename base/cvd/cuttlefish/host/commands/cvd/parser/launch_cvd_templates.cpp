@@ -19,11 +19,15 @@
 #include <string_view>
 
 #include <google/protobuf/util/json_util.h>
+#include "json/json.h"
 
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
+#include "host/commands/cvd/parser/cf_configs_common.h"
 
 using google::protobuf::util::JsonStringToMessage;
+using google::protobuf::util::MessageToJsonString;
 
 namespace cuttlefish {
 
@@ -226,7 +230,7 @@ static constexpr std::string_view kFoldableInstanceTemplate = R""""(
 }
   )"""";
 
-static Result<Instance> LoadTemplateByName(const std::string& template_name) {
+static Result<Json::Value> LoadTemplateByName(const std::string& template_name) {
   static auto* kSupportedTemplatesKeyMap =
       new std::map<std::string_view, std::string_view>{
           {"phone", kPhoneInstanceTemplate},
@@ -242,19 +246,28 @@ static Result<Instance> LoadTemplateByName(const std::string& template_name) {
   CF_EXPECTF(template_it != kSupportedTemplatesKeyMap->end(),
              "Unknown import value '{}'", template_name);
 
-  Instance out;
-  auto status = JsonStringToMessage(template_it->second, &out);
-  CF_EXPECTF(status.ok(), "{}", status.ToString());
-  return out;
+  return CF_EXPECT(ParseJson(template_it->second));
 }
 
 Result<Launch> ExtractLaunchTemplates(Launch config) {
   for (auto& ins : *config.mutable_instances()) {
     if (ins.has_import_template() && ins.import_template() != "") {
-      auto tmpl_proto = CF_EXPECT(LoadTemplateByName(ins.import_template()));
-      // TODO: b/337089452 - make repeated field handling merge, not concatenate
-      tmpl_proto.MergeFrom(ins);
-      ins.CopyFrom(tmpl_proto);
+      auto tmpl_json = CF_EXPECT(LoadTemplateByName(ins.import_template()));
+      // TODO: b/337089452 - handle repeated merges within protos
+      // `proto.MergeFrom` concatenates repeated fields, but we want index-wise
+      // merging of repeated fields.
+      std::string ins_json_str;
+      auto status = MessageToJsonString(ins, &ins_json_str);
+      CF_EXPECTF(status.ok(), "{}", status.ToString());
+      auto ins_json = CF_EXPECT(ParseJson(ins_json_str));
+
+      MergeTwoJsonObjs(ins_json, tmpl_json);
+      std::stringstream combined_json_sstream;
+      combined_json_sstream << ins_json;
+      const auto& combined_json_str = combined_json_sstream.str();
+
+      //status = JsonStringToMessage(combined_json_str, &ins);
+      CF_EXPECTF(status.ok(), "{}", status.ToString());
     }
   }
   return config;
