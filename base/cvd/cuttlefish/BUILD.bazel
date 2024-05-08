@@ -89,6 +89,7 @@ cc_library(
     ],
     linkopts = ["-lcurl"],
     strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
     deps = [
         "//libbase",
         "//libsparse",
@@ -98,7 +99,6 @@ cc_library(
         "@jsoncpp",
         "@zlib",
     ],
-    visibility = ["//visibility:public"],
 )
 
 proto_library(
@@ -532,6 +532,7 @@ cc_test(
     deps = [
         ":cuttlefish_common",
         ":libcvd",
+        "//libbase",
         "@googletest//:gtest",
         "@jsoncpp",
     ],
