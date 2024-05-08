@@ -9,7 +9,8 @@ pushd ../debs-builder-docker
 ./main.sh
 popd
 mkdir out
-mv ../out/cuttlefish-*.deb ./out
+mv ../debs-builder-docker/out/cuttlefish-*.deb ./out
+rm -rf ../debs-builder-docker/out
 
 # Build docker image
 docker build --no-cache -t cuttlefish-arm64 $PWD
