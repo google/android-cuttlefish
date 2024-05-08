@@ -45,11 +45,9 @@ static constexpr bool kDefaultEmergencyMode = false;
  * Returns nullptr if there was an error loading from file
  */
 NvramConfig* NvramConfig::BuildConfigImpl(size_t num_instances, int sim_type) {
-  auto nvram_config_path =
-      cuttlefish::modem::DeviceConfig::PerInstancePath("modem_nvram.json");
-
   auto ret = new NvramConfig(num_instances, sim_type);
   if (ret) {
+    const auto nvram_config_path = ConfigFileLocation();
     if (!cuttlefish::FileExists(nvram_config_path) ||
         !cuttlefish::FileHasContent(nvram_config_path.c_str())) {
       ret->InitDefaultNvramConfig();
@@ -82,7 +80,7 @@ void NvramConfig::InitNvramConfigService(size_t num_instances, int sim_type) {
 
 void NvramConfig::SaveToFile() {
   auto nvram_config = Get();
-  auto nvram_config_file = nvram_config->ConfigFileLocation();
+  const auto nvram_config_file = ConfigFileLocation();
   nvram_config->SaveToFile(nvram_config_file);
 }
 
@@ -101,7 +99,7 @@ NvramConfig::InstanceSpecific NvramConfig::ForInstance(int num) const {
   return InstanceSpecific(this, std::to_string(num));
 }
 
-std::string NvramConfig::ConfigFileLocation() const {
+/* static */ std::string NvramConfig::ConfigFileLocation() {
   return cuttlefish::AbsolutePath(
       cuttlefish::modem::DeviceConfig::PerInstancePath("modem_nvram.json"));
 }
