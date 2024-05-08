@@ -26,7 +26,7 @@
 #include "host/commands/run_cvd/launch/auto_cmd.h"
 #include "host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
-#include "host/commands/run_cvd/launch/secure_env_files.h"
+#include "host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "host/commands/run_cvd/launch/webrtc_recorder.h"
 #include "host/commands/run_cvd/launch/wmediumd_server.h"
 #include "host/libs/config/command_source.h"
@@ -111,7 +111,7 @@ Result<std::optional<MonitorCommand>> ScreenRecordingServer(GrpcSocketCreator&);
 
 Result<MonitorCommand> SecureEnv(const CuttlefishConfig&,
                                  const CuttlefishConfig::InstanceSpecific&,
-                                 AutoSecureEnvFiles::Type&,
+                                 AutoSnapshotControlFiles::Type&,
                                  KernelLogPipeProvider&);
 
 Result<MonitorCommand> TombstoneReceiver(

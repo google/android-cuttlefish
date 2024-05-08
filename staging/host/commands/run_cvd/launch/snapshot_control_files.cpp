@@ -13,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/run_cvd/launch/secure_env_files.h"
+#include "host/commands/run_cvd/launch/snapshot_control_files.h"
 
 #include <unistd.h>
 
 namespace cuttlefish {
 
-Result<SecureEnvFiles> SecureEnvFiles::Create(
+Result<SnapshotControlFiles> SnapshotControlFiles::Create(
     const CuttlefishConfig::InstanceSpecific& instance) {
   auto confui_socket_path =
       instance.PerInstanceInternalUdsPath("confui_sign.sock");
@@ -34,7 +34,7 @@ Result<SecureEnvFiles> SecureEnvFiles::Create(
   CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0, &snapshot_control_fd,
                                  &run_cvd_to_secure_env_fd));
 
-  return SecureEnvFiles{
+  return SnapshotControlFiles{
       confui_server_fd,
       snapshot_control_fd,
       run_cvd_to_secure_env_fd,
