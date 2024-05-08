@@ -32,7 +32,7 @@ class NvramConfig {
   ~NvramConfig();
   NvramConfig& operator=(NvramConfig&&);
 
-  std::string ConfigFileLocation() const;
+  static std::string ConfigFileLocation();
   // Saves the configuration object in a file
   bool SaveToFile(const std::string& file) const;
 
