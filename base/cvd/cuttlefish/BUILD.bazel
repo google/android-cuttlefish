@@ -531,6 +531,7 @@ cc_test(
     includes = [""],
     deps = [
         ":cuttlefish_common",
+        ":cvd_persistent_data",
         ":libcvd",
         "//libbase",
         "@googletest//:gtest",
