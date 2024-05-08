@@ -248,7 +248,8 @@ Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
       TerminalColor(is_tty, TerminalColors::kReset),
       TerminalColor(is_tty, TerminalColors::kCyan), uid,
       TerminalColor(is_tty, TerminalColors::kReset));
-  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"), notice.size() + 1);
+  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"),
+               (ssize_t)notice.size() + 1);
 
   response.mutable_status()->set_message(notice);
   return response;
@@ -270,7 +271,8 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
       TerminalColor(is_tty, TerminalColors::kReset),
       TerminalColor(is_tty, TerminalColors::kCyan), uid,
       TerminalColor(is_tty, TerminalColors::kReset));
-  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"), notice.size() + 1);
+  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"),
+               (ssize_t)notice.size() + 1);
   response.mutable_status()->set_message(notice);
   return response;
 }
@@ -278,7 +280,7 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
 Result<cvd::Response> WriteToFd(SharedFD fd, const std::string& output) {
   cvd::Response response;
   auto written_size = WriteAll(fd, output);
-  CF_EXPECT_EQ(output.size(), written_size, fd->StrError());
+  CF_EXPECT_EQ((ssize_t)output.size(), written_size, fd->StrError());
   response.mutable_command_response();  // Sets oneof member
   response.mutable_status()->set_code(cvd::Status::OK);
   return response;

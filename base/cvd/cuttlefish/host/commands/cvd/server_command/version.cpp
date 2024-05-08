@@ -53,7 +53,7 @@ class CvdVersionHandler : public CvdServerHandler {
     version.set_crc32(FileCrc(kServerExecPath));
     auto version_str = fmt::format("{}", version);
     auto write_len = WriteAll(request.Out(), version_str);
-    CF_EXPECTF(write_len == version_str.size(),
+    CF_EXPECTF(write_len == (ssize_t)version_str.size(),
                "Failed to write version output: {}", request.Out()->StrError());
     cvd::Response response;
     response.mutable_status()->set_code(cvd::Status::OK);

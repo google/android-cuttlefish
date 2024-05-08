@@ -43,7 +43,7 @@ class CvdNoopHandler : public CvdServerHandler {
     auto msg = fmt::format("DEPRECATED: The {} command is a no-op",
                            invocation.command);
     auto write_len = WriteAll(request.Out(), msg);
-    CF_EXPECTF(write_len == msg.size(),
+    CF_EXPECTF(write_len == (ssize_t)msg.size(),
                "Failed to write deprecation message: {}",
                request.Out()->StrError());
     cvd::Response response;

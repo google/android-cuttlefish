@@ -200,10 +200,10 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
 
   std::string serialized_group_json = instances_json.toStyledString();
   CF_EXPECT_EQ(WriteAll(request.Err(), entire_stderr_msg),
-               entire_stderr_msg.size());
+               (ssize_t)entire_stderr_msg.size());
   if (has_print) {
     CF_EXPECT_EQ(WriteAll(request.Out(), serialized_group_json),
-                 serialized_group_json.size());
+                 (ssize_t)serialized_group_json.size());
   }
   return response;
 }
@@ -218,7 +218,7 @@ Result<cvd::Response> CvdStatusCommandHandler::HandleHelp(
   response.mutable_command_response();  // Sets oneof member
   response.mutable_status()->set_code(cvd::Status::OK);
   CF_EXPECT_EQ(WriteAll(request.Out(), kHelpMessage),
-               strnlen(kHelpMessage, sizeof(kHelpMessage) - 1));
+               (ssize_t)strnlen(kHelpMessage, sizeof(kHelpMessage) - 1));
   return response;
 }
 

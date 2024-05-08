@@ -85,7 +85,7 @@ class CvdFlag {
   // returns CF_ERR if parsing error,
   // returns std::nullopt if parsing was okay but the flag wasn't given
   Result<std::optional<T>> FilterFlag(cvd_common::Args& args) const {
-    const int args_initial_size = args.size();
+    const std::size_t args_initial_size = args.size();
     if (args_initial_size == 0) {
       return std::nullopt;
     }

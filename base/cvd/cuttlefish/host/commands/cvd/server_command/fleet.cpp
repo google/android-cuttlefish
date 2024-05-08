@@ -108,7 +108,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   output_json["groups"] = groups_json;
   auto serialized_json = output_json.toStyledString();
   CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
-               serialized_json.size());
+               (ssize_t)serialized_json.size());
   return ok_response;
 }
 
@@ -124,7 +124,7 @@ bool CvdFleetCommandHandler::IsHelp(const cvd_common::Args& args) const {
 Result<cvd::Status> CvdFleetCommandHandler::CvdFleetHelp(
     const SharedFD& out) const {
   const std::string help_message(kHelpMessage);
-  CF_EXPECT_EQ(WriteAll(out, help_message), help_message.size());
+  CF_EXPECT_EQ(WriteAll(out, help_message), (ssize_t)help_message.size());
   cvd::Status status;
   status.set_code(cvd::Status::OK);
   return status;

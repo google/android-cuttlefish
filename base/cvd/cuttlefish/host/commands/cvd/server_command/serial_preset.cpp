@@ -61,7 +61,7 @@ class SerialPreset : public CvdServerHandler {
     for (const auto& device : devices->second) {
       cmd.add_args("--device=" + device);
     }
-    for (int i = 1; i < invocation.arguments.size(); i++) {
+    for (std::size_t i = 1; i < invocation.arguments.size(); i++) {
       cmd.add_args(invocation.arguments[i]);
     }
 

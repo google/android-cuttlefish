@@ -95,7 +95,7 @@ class InstanceDatabase {
   template <typename T>
   Result<T> ExactlyOne(Result<std::vector<T>>&& container_result) const {
     auto container = CF_EXPECT(std::move(container_result));
-    CF_EXPECT_EQ(container.size(), 1, "Expected unique result");
+    CF_EXPECT_EQ(container.size(), (std::size_t)1, "Expected unique result");
     return {*container.begin()};
   }
   struct FindParam {

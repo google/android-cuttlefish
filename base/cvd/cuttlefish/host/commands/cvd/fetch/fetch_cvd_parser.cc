@@ -162,7 +162,7 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
 Result<int> GetNumberOfBuilds(
     const VectorFlags& flags,
     const std::vector<std::string>& subdirectory_flag) {
-  std::optional<int> number_of_builds;
+  std::optional<std::size_t> number_of_builds;
   for (const auto& flag_size :
        {flags.default_build.size(), flags.system_build.size(),
         flags.kernel_build.size(), flags.boot_build.size(),
