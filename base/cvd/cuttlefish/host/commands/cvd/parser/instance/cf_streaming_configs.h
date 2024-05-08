@@ -23,6 +23,7 @@
 
 namespace cuttlefish {
 
-std::vector<std::string> GenerateStreamingFlags(const cvd::config::Launch&);
+std::vector<std::string> GenerateStreamingFlags(
+    const cvd::config::EnvironmentSpecification&);
 
 };  // namespace cuttlefish

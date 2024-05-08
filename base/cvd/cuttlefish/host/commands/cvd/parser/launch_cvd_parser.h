@@ -24,6 +24,7 @@
 
 namespace cuttlefish {
 
-Result<std::vector<std::string>> ParseLaunchCvdConfigs(cvd::config::Launch);
+Result<std::vector<std::string>> ParseLaunchCvdConfigs(
+    cvd::config::EnvironmentSpecification);
 
 };  // namespace cuttlefish

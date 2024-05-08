@@ -25,7 +25,8 @@
 namespace cuttlefish {
 
 Result<std::vector<std::string>> ParseFetchCvdConfigs(
-    const cvd::config::Launch&, const std::string& target_directory,
+    const cvd::config::EnvironmentSpecification&,
+    const std::string& target_directory,
     const std::vector<std::string>& target_subdirectories);
 
 };  // namespace cuttlefish

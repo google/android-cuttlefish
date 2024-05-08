@@ -25,10 +25,11 @@
 
 namespace cuttlefish {
 
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
-using cvd::config::Launch;
 
-std::vector<std::string> GenerateDiskFlags(const Launch& config) {
+std::vector<std::string> GenerateDiskFlags(
+    const EnvironmentSpecification& config) {
   std::vector<std::string> data_image_mbs;
   for (const auto& instance : config.instances()) {
     const auto& disk = instance.disk();

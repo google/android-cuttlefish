@@ -26,8 +26,8 @@
 
 namespace cuttlefish {
 
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
-using cvd::config::Launch;
 
 static bool EnableBootAnimation(const Instance& instance) {
   const auto& boot = instance.boot();
@@ -51,7 +51,8 @@ static Result<std::string> BtCfg(const Instance& instance) {
   return encoded;
 }
 
-Result<std::vector<std::string>> GenerateBootFlags(const Launch& cfg) {
+Result<std::vector<std::string>> GenerateBootFlags(
+    const EnvironmentSpecification& cfg) {
   return std::vector<std::string>{
       GenerateInstanceFlag("enable_bootanimation", cfg, EnableBootAnimation),
       CF_EXPECT(ResultInstanceFlag("extra_bootconfig_args_base64", cfg, BtCfg)),

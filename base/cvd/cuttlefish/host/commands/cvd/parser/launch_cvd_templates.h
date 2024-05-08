@@ -21,6 +21,7 @@
 
 namespace cuttlefish {
 
-Result<cvd::config::Launch> ExtractLaunchTemplates(cvd::config::Launch config);
+Result<cvd::config::EnvironmentSpecification> ExtractLaunchTemplates(
+    cvd::config::EnvironmentSpecification config);
 
 };  // namespace cuttlefish

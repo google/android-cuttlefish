@@ -22,14 +22,15 @@
 
 namespace cuttlefish {
 
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
-using cvd::config::Launch;
 
 static std::string VsockGuestGroup(const Instance& instance) {
   return instance.connectivity().vsock().guest_group();
 }
 
-std::vector<std::string> GenerateConnectivityFlags(const Launch& cfg) {
+std::vector<std::string> GenerateConnectivityFlags(
+    const EnvironmentSpecification& cfg) {
   return std::vector<std::string>{
       GenerateInstanceFlag("vsock_guest_group", cfg, VsockGuestGroup),
   };

@@ -25,6 +25,6 @@
 namespace cuttlefish {
 
 Result<std::vector<std::string>> GenerateInstancesFlags(
-    const cvd::config::Launch& config);
+    const cvd::config::EnvironmentSpecification& config);
 
 };  // namespace cuttlefish

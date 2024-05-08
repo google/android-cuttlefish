@@ -23,7 +23,8 @@
 
 namespace cuttlefish {
 
-std::vector<std::string> ParseSelectorConfigs(const cvd::config::Launch&);
+std::vector<std::string> ParseSelectorConfigs(
+    const cvd::config::EnvironmentSpecification&);
 
 };  // namespace cuttlefish
 

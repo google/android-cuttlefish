@@ -23,6 +23,7 @@
 
 namespace cuttlefish {
 
-std::vector<std::string> GenerateDiskFlags(const cvd::config::Launch&);
+std::vector<std::string> GenerateDiskFlags(
+    const cvd::config::EnvironmentSpecification&);
 
 };  // namespace cuttlefish

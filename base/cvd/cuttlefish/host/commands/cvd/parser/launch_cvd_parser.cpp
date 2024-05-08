@@ -32,7 +32,7 @@
 
 namespace cuttlefish {
 
-using cvd::config::Launch;
+using cvd::config::EnvironmentSpecification;
 
 namespace {
 
@@ -53,7 +53,8 @@ std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) 
   return "--undefok=" + android::base::Join(flag_names, ',');
 }
 
-Result<std::vector<std::string>> GenerateCfFlags(const Launch& launch) {
+Result<std::vector<std::string>> GenerateCfFlags(
+    const EnvironmentSpecification& launch) {
   std::vector<std::string> ret;
   ret.emplace_back(GenerateFlag("num_instances", launch.instances().size()));
 
@@ -80,7 +81,8 @@ Result<std::vector<std::string>> GenerateCfFlags(const Launch& launch) {
 
 }  // namespace
 
-Result<std::vector<std::string>> ParseLaunchCvdConfigs(Launch launch) {
+Result<std::vector<std::string>> ParseLaunchCvdConfigs(
+    EnvironmentSpecification launch) {
   launch = CF_EXPECT(ExtractLaunchTemplates(std::move(launch)));
 
   return GenerateCfFlags(launch);

@@ -24,8 +24,8 @@
 
 namespace cuttlefish {
 
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
-using cvd::config::Launch;
 
 static std::string SerialNumber(const Instance& instance) {
   if (instance.security().has_serial_number()) {
@@ -51,7 +51,8 @@ static bool GuestEnforceSecurity(const Instance& instance) {
   }
 }
 
-std::vector<std::string> GenerateSecurityFlags(const Launch& cfg) {
+std::vector<std::string> GenerateSecurityFlags(
+    const EnvironmentSpecification& cfg) {
   return std::vector<std::string>{
       GenerateInstanceFlag("serial_number", cfg, SerialNumber),
       GenerateInstanceFlag("use_random_serial", cfg, UseRandomSerial),

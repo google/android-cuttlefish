@@ -23,12 +23,13 @@
 
 namespace cuttlefish {
 
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
-using cvd::config::Launch;
 
 std::string InsName(const Instance& instance) { return instance.name(); }
 
-std::vector<std::string> ParseSelectorConfigs(const Launch& config) {
+std::vector<std::string> ParseSelectorConfigs(
+    const EnvironmentSpecification& config) {
   auto ins_name_flag = GenerateInstanceFlag("instance_name", config, InsName);
 
   if (!config.common().has_group_name()) {

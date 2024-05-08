@@ -24,6 +24,7 @@
 
 namespace cuttlefish {
 
-Result<std::vector<std::string>> GenerateBootFlags(const cvd::config::Launch&);
+Result<std::vector<std::string>> GenerateBootFlags(
+    const cvd::config::EnvironmentSpecification&);
 
 };  // namespace cuttlefish

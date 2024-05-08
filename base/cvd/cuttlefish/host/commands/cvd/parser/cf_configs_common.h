@@ -40,9 +40,9 @@ std::string GenerateVecFlag(const std::string& name, const T& collection) {
 }
 
 template <typename T>
-std::string GenerateInstanceFlag(const std::string& name,
-                                 const cvd::config::Launch& config,
-                                 T callback) {
+std::string GenerateInstanceFlag(
+    const std::string& name,
+    const cvd::config::EnvironmentSpecification& config, T callback) {
   std::vector<decltype(callback(config.instances()[0]))> values;
   for (const auto& instance : config.instances()) {
     values.emplace_back(callback(instance));
@@ -51,9 +51,9 @@ std::string GenerateInstanceFlag(const std::string& name,
 }
 
 template <typename T>
-Result<std::string> ResultInstanceFlag(const std::string& name,
-                                       const cvd::config::Launch& config,
-                                       T callback) {
+Result<std::string> ResultInstanceFlag(
+    const std::string& name,
+    const cvd::config::EnvironmentSpecification& config, T callback) {
   std::vector<std::decay_t<decltype(*callback(config.instances()[0]))>> values;
   for (const auto& instance : config.instances()) {
     values.emplace_back(CF_EXPECT(callback(instance)));
