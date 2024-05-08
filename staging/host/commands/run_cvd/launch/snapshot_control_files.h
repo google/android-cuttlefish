@@ -24,15 +24,15 @@
 
 namespace cuttlefish {
 
-struct SecureEnvFiles {
+struct SnapshotControlFiles {
   SharedFD confui_server_fd;
-  SharedFD snapshot_control_fd;
+  SharedFD secure_env_snapshot_control_fd;
   SharedFD run_cvd_to_secure_env_fd;
 
-  static Result<SecureEnvFiles> Create(
+  static Result<SnapshotControlFiles> Create(
       const CuttlefishConfig::InstanceSpecific&);
 };
 
-using AutoSecureEnvFiles = AutoSetup<SecureEnvFiles::Create>;
+using AutoSnapshotControlFiles = AutoSetup<SnapshotControlFiles::Create>;
 
 }  // namespace cuttlefish
