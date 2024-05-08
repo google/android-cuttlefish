@@ -72,7 +72,7 @@ class LintCommandHandler : public CvdServerHandler {
     message_stream << "Lint of flags and config \"" << config_path
                    << "\" succeeded\n";
     const auto message = message_stream.str();
-    CF_EXPECT_EQ(WriteAll(request.Out(), message), message.size(),
+    CF_EXPECT_EQ(WriteAll(request.Out(), message), (ssize_t)message.size(),
                  "Error writing message");
     cvd::Response response;
     response.mutable_command_response();

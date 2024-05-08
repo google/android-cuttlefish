@@ -237,7 +237,7 @@ Result<LoadDirectories> GenerateLoadDirectories(
   int num_remote = 0;
   for (int i = 0; i < num_instances; i++) {
     const std::string instance_build_path = system_image_path_configs[i];
-    CF_EXPECT_EQ(system_image_path_configs.size(), num_instances,
+    CF_EXPECT_EQ((int)system_image_path_configs.size(), num_instances,
                  "Number of instances is inconsistent");
 
     auto target_subdirectory = std::to_string(i);

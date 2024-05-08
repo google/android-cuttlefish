@@ -259,7 +259,7 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::FindGroup(
 Result<InstanceManager::LocalInstanceGroup> InstanceManager::FindGroup(
     const Queries& queries) const {
   auto output = CF_EXPECT(instance_db_.FindGroups(queries));
-  CF_EXPECT_EQ(output.size(), 1);
+  CF_EXPECT_EQ(output.size(), 1ul);
   return *(output.begin());
 }
 

@@ -438,6 +438,7 @@ cc_library(
         "host/commands/metrics/metrics_defs.h",
     ],
     copts = [
+        "-Werror=sign-compare",
         "-Wno-ctad-maybe-unsupported",
         "-std=c++17",
     ],

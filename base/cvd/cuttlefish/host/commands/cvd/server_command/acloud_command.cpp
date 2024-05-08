@@ -160,7 +160,7 @@ Result<void> AcloudCommand::PrintBriefSummary(
   ss << std::endl
      << "acloud list or cvd fleet for more information." << std::endl;
   auto n_write = WriteAll(*stream_fd, ss.str());
-  CF_EXPECT_EQ(n_write, ss.str().size());
+  CF_EXPECT_EQ(n_write, (ssize_t)ss.str().size());
   return {};
 }
 

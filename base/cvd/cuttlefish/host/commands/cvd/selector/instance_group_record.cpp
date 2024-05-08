@@ -62,9 +62,9 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Create(
     ids.insert(instance_proto.id());
     names.insert(instance_proto.name());
   }
-  CF_EXPECT(ids.size() == group_proto.instances_size(),
+  CF_EXPECT(ids.size() == (size_t)group_proto.instances_size(),
             "Instances must have unique ids");
-  CF_EXPECT(names.size() == group_proto.instances_size(),
+  CF_EXPECT(names.size() == (size_t)group_proto.instances_size(),
             "Instances must have unique names");
   return LocalInstanceGroup(group_proto, instances);
 }
@@ -131,7 +131,7 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
   CF_EXPECT(group_json.isMember(kJsonInstances));
   const Json::Value& instances_json_array = group_json[kJsonInstances];
   CF_EXPECT(instances_json_array.isArray());
-  for (int i = 0; i < instances_json_array.size(); i++) {
+  for (int i = 0; i < (int)instances_json_array.size(); i++) {
     const Json::Value& instance_json = instances_json_array[i];
     CF_EXPECT(instance_json.isMember(LocalInstance::kJsonInstanceName));
     const std::string instance_name =

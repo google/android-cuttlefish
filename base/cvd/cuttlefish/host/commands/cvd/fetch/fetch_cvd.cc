@@ -109,7 +109,7 @@ bool ShouldAppendSubdirectory(const FetchFlags& flags) {
 }
 
 template <typename T>
-T AccessOrDefault(const std::vector<T>& vector, const int i,
+T AccessOrDefault(const std::vector<T>& vector, const std::size_t i,
                   const T& default_value) {
   if (i < vector.size()) {
     return vector[i];
@@ -249,7 +249,7 @@ void DeAndroidSparse(const std::vector<std::string>& image_files) {
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
                                     const bool append_subdirectory) {
   std::vector<Target> result(flags.number_of_builds);
-  for (int i = 0; i < result.size(); ++i) {
+  for (std::size_t i = 0; i < result.size(); ++i) {
     result[i] = Target{
         .build_strings = GetBuildStrings(flags.vector_flags, i),
         .download_flags = GetDownloadFlags(flags.vector_flags, i),

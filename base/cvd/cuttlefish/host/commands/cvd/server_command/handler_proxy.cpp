@@ -49,8 +49,8 @@ class CvdServerHandlerProxy : public CvdServerHandler {
     const auto& selector_opts =
         request.Message().command_request().selector_opts();
     auto all_args = cvd_common::ConvertToArgs(selector_opts.args());
-    CF_EXPECT_GE(all_args.size(), 1);
-    if (all_args.size() == 1) {
+    CF_EXPECT_GE(all_args.size(), 1ul);
+    if (all_args.size() == 1ul) {
       all_args = cvd_common::Args{"cvd", "help"};
     }
 

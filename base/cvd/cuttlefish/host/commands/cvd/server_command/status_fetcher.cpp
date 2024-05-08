@@ -123,7 +123,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   CF_EXPECT_GE(ReadAll(redirect_stderr_fd, &status_stderr), 0);
 
   auto instance_status_json = CF_EXPECT(ParseJson(serialized_json));
-  CF_EXPECT_EQ(instance_status_json.size(), 1);
+  CF_EXPECT_EQ(instance_status_json.size(), 1ul);
   instance_status_json = instance_status_json[0];
   static constexpr auto kWebrtcProp = "webrtc_device_id";
   static constexpr auto kNameProp = "instance_name";

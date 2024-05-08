@@ -33,7 +33,7 @@ Result<void> FilterSelectorFlag(std::vector<std::string>& args,
                                 const std::string& flag_name,
                                 std::optional<T>& value_opt) {
   value_opt = std::nullopt;
-  const int args_initial_size = args.size();
+  const std::size_t args_initial_size = args.size();
   if (args_initial_size == 0) {
     return {};
   }

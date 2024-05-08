@@ -123,8 +123,9 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
   Result<cvd::Response> HandleHelp(const SharedFD& client_stderr) {
     std::string help_message(kSnapshot);
     help_message.append("\n");
-    CF_EXPECT(WriteAll(client_stderr, help_message) == help_message.size(),
-              "Failed to write the help message");
+    CF_EXPECT(
+        WriteAll(client_stderr, help_message) == (ssize_t)help_message.size(),
+        "Failed to write the help message");
     cvd::Response response;
     response.mutable_command_response();
     response.mutable_status()->set_code(cvd::Status::OK);

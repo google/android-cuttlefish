@@ -60,7 +60,7 @@ Result<InstanceSelector> InstanceSelector::GetSelector(
   }
   if (common_parser.PerInstanceNames()) {
     const auto per_instance_names = common_parser.PerInstanceNames().value();
-    CF_EXPECT_LE(per_instance_names.size(), 1,
+    CF_EXPECT_LE(per_instance_names.size(), 1ul,
                  "Instance Selector only picks up to 1 instance and thus "
                  "only take up to 1 instance_name");
     if (!per_instance_names.empty()) {
@@ -112,7 +112,7 @@ Result<LocalInstance> InstanceSelector::FindDefaultInstance(
     const InstanceDatabase& instance_database) {
   auto group = CF_EXPECT(GetDefaultGroup(instance_database));
   const auto instances = group.Instances();
-  CF_EXPECT_EQ(instances.size(), 1,
+  CF_EXPECT_EQ(instances.size(), 1ul,
                "Default instance is the single instance in the default group.");
   return *instances.cbegin();
 }

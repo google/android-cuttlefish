@@ -158,7 +158,7 @@ static Result<TypeAndId> ParseMatchedLine(
     const std::smatch& device_string_match) {
   std::string device_string = *device_string_match.begin();
   auto tokens = android::base::Tokenize(device_string, "-");
-  CF_EXPECT_GE(tokens.size(), 3);
+  CF_EXPECT_GE(tokens.size(), 3ul);
   const auto cvd = tokens.front();
   int id = 0;
   CF_EXPECT(android::base::ParseInt(tokens.back(), &id));

@@ -211,7 +211,7 @@ class SerialLaunchCommand : public CvdServerHandler {
     auto args = ParseInvocation(request.Message()).arguments;
     for (const auto& arg : args) {
       std::string message = "argument: \"" + arg + "\"\n";
-      CF_EXPECT(WriteAll(request.Err(), message) == message.size());
+      CF_EXPECT(WriteAll(request.Err(), message) == (ssize_t)message.size());
     }
 
     CF_EXPECT(ConsumeFlags(flags, args));
@@ -258,7 +258,7 @@ class SerialLaunchCommand : public CvdServerHandler {
 
     bool is_first = true;
 
-    int index = 0;
+    size_t index = 0;
     for (const auto& device : devices) {
       auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
       *mkdir_cmd.mutable_env() = client_env;
@@ -370,7 +370,7 @@ class SerialLaunchCommand : public CvdServerHandler {
     std::vector<std::string> tokens =
         android::base::Tokenize(path_exclude_root, "/");
     std::string current_dir = "/";
-    for (int i = 0; i < tokens.size(); i++) {
+    for (std::size_t i = 0; i < tokens.size(); i++) {
       current_dir.append(tokens[i]);
       if (!DirectoryExists(current_dir)) {
         output.emplace_back(

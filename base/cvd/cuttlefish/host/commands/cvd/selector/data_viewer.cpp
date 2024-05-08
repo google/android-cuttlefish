@@ -42,8 +42,8 @@ Result<void> DataViewer::StoreData(SharedFD fd, cvd::PersistentData data) {
   std::string str;
   CF_EXPECT(data.SerializeToString(&str), "Failed to serialize data");
   auto write_size = WriteAll(fd, str);
-  CF_EXPECTF(write_size == str.size(), "Failed to write to backing file: {}",
-             fd->StrError());
+  CF_EXPECTF(write_size == (ssize_t)str.size(),
+             "Failed to write to backing file: {}", fd->StrError());
   return {};
 }
 

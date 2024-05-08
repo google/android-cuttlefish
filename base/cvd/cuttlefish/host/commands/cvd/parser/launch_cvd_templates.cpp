@@ -299,7 +299,7 @@ Json::Value ExtractInstaneTemplate(const Json::Value& instance) {
 }
 
 void ExtractLaunchTemplates(Json::Value& root) {
-  int num_instances = root.size();
+  std::size_t num_instances = root.size();
   for (unsigned int i = 0; i < num_instances; i++) {
     // Validate @import flag values are supported or not
     if (root[i].isMember("@import")) {

@@ -111,7 +111,7 @@ void StopHandlingInterruptSignals() {
 }
 
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
-  int initial_size = args.size();
+  std::size_t initial_size = args.size();
   std::string config_file;
   std::vector<Flag> config_flags = {
       GflagsCompatFlag("config_file", config_file)};
@@ -515,7 +515,7 @@ static std::ostream& operator<<(std::ostream& out, const cvd_common::Args& v) {
   if (v.empty()) {
     return out;
   }
-  for (int i = 0; i < v.size() - 1; i++) {
+  for (std::size_t i = 0; i < v.size() - 1; i++) {
     out << v.at(i) << " ";
   }
   out << v.back();
@@ -744,7 +744,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(group, request));
   auto serialized_json = group_json.toStyledString();
   CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
-               serialized_json.size());
+               (ssize_t)serialized_json.size());
 
   return FillOutNewInstanceInfo(std::move(response), group_creation_info);
 }
