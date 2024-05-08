@@ -1,7 +1,0 @@
-equivs.txt
-deps.txt
-ignore-depends-for-*.txt
-*/*/driver-deps
-*/*/driver.txt
-
-!out/.gitkeep
