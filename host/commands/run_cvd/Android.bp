@@ -41,7 +41,7 @@ cc_binary_host {
         "launch/pica.cpp",
         "launch/screen_recording_server.cpp",
         "launch/secure_env.cpp",
-        "launch/secure_env_files.cpp",
+        "launch/snapshot_control_files.cpp",
         "launch/webrtc_recorder.cpp",
         "launch/streamer.cpp",
         "launch/netsim_server.cpp",
