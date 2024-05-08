@@ -92,7 +92,7 @@ int ModemSimulatorMain(int argc, char** argv) {
   }
 
   auto nvram_config = NvramConfig::Get();
-  auto nvram_config_file = nvram_config->ConfigFileLocation();
+  const auto nvram_config_file = nvram_config->ConfigFileLocation();
 
   // Start channel monitor, wait for RIL to connect
   int32_t modem_id = 0;
