@@ -46,7 +46,7 @@ class ServerLoopImpl : public ServerLoop,
  public:
   INJECT(ServerLoopImpl(const CuttlefishConfig& config,
                         const CuttlefishConfig::InstanceSpecific& instance,
-                        AutoSecureEnvFiles::Type& secure_env_files,
+                        AutoSnapshotControlFiles::Type& snapshot_control_files,
                         WebRtcRecorder& webrtc_recorder));
 
   Result<void> LateInject(fruit::Injector<>& injector) override;
@@ -66,7 +66,7 @@ class ServerLoopImpl : public ServerLoop,
  private:
   bool Enabled() const override { return true; }
   std::unordered_set<SetupFeature*> Dependencies() const override {
-    return {&secure_env_files_};
+    return {&snapshot_control_files_};
   }
   Result<void> ResultSetup() override;
   Result<void> HandleExtended(const LauncherActionInfo& action_info,
@@ -104,7 +104,7 @@ class ServerLoopImpl : public ServerLoop,
    * secure_env. The socket pairs are used to send suspend/resume to
    * secure_env, and get the responses.
    */
-  AutoSecureEnvFiles::Type& secure_env_files_;
+  AutoSnapshotControlFiles::Type& snapshot_control_files_;
   WebRtcRecorder& webrtc_recorder_;
   std::vector<CommandSource*> command_sources_;
   SharedFD server_;

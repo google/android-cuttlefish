@@ -24,7 +24,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/launch/secure_env_files.h"
+#include "host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
@@ -33,13 +33,13 @@ namespace cuttlefish {
 Result<MonitorCommand> SecureEnv(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    AutoSecureEnvFiles::Type& secure_env_files,
+    AutoSnapshotControlFiles::Type& snapshot_control_files,
     KernelLogPipeProvider& kernel_log_pipe_provider) {
   Command command(SecureEnvBinary());
   command.AddParameter("-confui_server_fd=",
-                       secure_env_files->confui_server_fd);
+                       snapshot_control_files->confui_server_fd);
   command.AddParameter("-snapshot_control_fd=",
-                       secure_env_files->snapshot_control_fd);
+                       snapshot_control_files->secure_env_snapshot_control_fd);
 
   std::vector<std::string> fifo_paths = {
       instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
