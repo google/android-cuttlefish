@@ -34,9 +34,10 @@
 
 namespace cuttlefish {
 
-using cvd::config::Launch;
+using cvd::config::EnvironmentSpecification;
 
-Result<std::vector<std::string>> GenerateInstancesFlags(const Launch& cfg) {
+Result<std::vector<std::string>> GenerateInstancesFlags(
+    const EnvironmentSpecification& cfg) {
   std::vector<std::string> res = CF_EXPECT(GenerateBootFlags(cfg));
   res = MergeResults(std::move(res), GenerateDiskFlags(cfg));
   res = MergeResults(std::move(res), CF_EXPECT(GenerateGraphicsFlags(cfg)));

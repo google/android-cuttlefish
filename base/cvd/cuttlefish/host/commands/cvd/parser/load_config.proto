@@ -18,7 +18,7 @@ syntax = "proto3";
 
 package cuttlefish.cvd.config;
 
-message Launch {
+message EnvironmentSpecification {
   repeated Instance instances = 1;
   optional Fetch fetch = 2;
   optional Metrics metrics = 3;

@@ -23,6 +23,7 @@
 
 namespace cuttlefish {
 
-std::vector<std::string> GenerateMetricsFlags(const cvd::config::Launch&);
+std::vector<std::string> GenerateMetricsFlags(
+    const cvd::config::EnvironmentSpecification&);
 
 };  // namespace cuttlefish

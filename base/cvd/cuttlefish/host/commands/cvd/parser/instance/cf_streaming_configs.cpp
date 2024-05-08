@@ -24,8 +24,8 @@
 
 namespace cuttlefish {
 
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
-using cvd::config::Launch;
 
 std::string DeviceId(const Instance& instance) {
   if (instance.streaming().has_device_id()) {
@@ -35,7 +35,8 @@ std::string DeviceId(const Instance& instance) {
   }
 }
 
-std::vector<std::string> GenerateStreamingFlags(const Launch& cfg) {
+std::vector<std::string> GenerateStreamingFlags(
+    const EnvironmentSpecification& cfg) {
   return std::vector<std::string>{
       GenerateInstanceFlag("webrtc_device_id", cfg, DeviceId),
   };

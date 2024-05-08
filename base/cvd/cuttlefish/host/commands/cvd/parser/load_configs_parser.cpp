@@ -43,8 +43,8 @@
 
 namespace cuttlefish {
 
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
-using cvd::config::Launch;
 
 namespace {
 
@@ -197,7 +197,7 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path) {
 }
 
 Result<std::vector<std::string>> GetConfiguredSystemImagePaths(
-    const Launch& config) {
+    const EnvironmentSpecification& config) {
   std::vector<std::string> system_image_paths;
   for (const auto& instance : config.instances()) {
     CF_EXPECT(instance.disk().has_default_build());
@@ -206,7 +206,8 @@ Result<std::vector<std::string>> GetConfiguredSystemImagePaths(
   return system_image_paths;
 }
 
-std::optional<std::string> GetConfiguredSystemHostPath(const Launch& config) {
+std::optional<std::string> GetConfiguredSystemHostPath(
+    const EnvironmentSpecification& config) {
   if (config.common().has_host_package()) {
     return config.common().host_package();
   } else {
@@ -277,7 +278,7 @@ Result<LoadDirectories> GenerateLoadDirectories(
   return result;
 }
 
-Result<CvdFlags> ParseCvdConfigs(const Launch& launch,
+Result<CvdFlags> ParseCvdConfigs(const EnvironmentSpecification& launch,
                                  const LoadDirectories& load_directories) {
   return CvdFlags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(launch)),
                   .selector_flags = ParseSelectorConfigs(launch),

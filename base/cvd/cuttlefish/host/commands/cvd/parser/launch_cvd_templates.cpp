@@ -31,8 +31,8 @@ using google::protobuf::util::MessageToJsonString;
 
 namespace cuttlefish {
 
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
-using cvd::config::Launch;
 
 // Definition of phone instance template in Json format
 static constexpr std::string_view kPhoneInstanceTemplate = R""""(
@@ -249,7 +249,8 @@ static Result<Json::Value> LoadTemplateByName(const std::string& template_name) 
   return CF_EXPECT(ParseJson(template_it->second));
 }
 
-Result<Launch> ExtractLaunchTemplates(Launch config) {
+Result<EnvironmentSpecification> ExtractLaunchTemplates(
+    EnvironmentSpecification config) {
   for (auto& ins : *config.mutable_instances()) {
     if (ins.has_import_template() && ins.import_template() != "") {
       auto tmpl_json = CF_EXPECT(LoadTemplateByName(ins.import_template()));

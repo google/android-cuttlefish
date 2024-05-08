@@ -23,8 +23,8 @@
 
 namespace cuttlefish {
 
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
-using cvd::config::Launch;
 
 namespace {
 
@@ -36,7 +36,8 @@ std::string EnabledToReportAnonUsageStats(const bool enabled) {
 
 }  // namespace
 
-std::vector<std::string> GenerateMetricsFlags(const Launch& config) {
+std::vector<std::string> GenerateMetricsFlags(
+    const EnvironmentSpecification& config) {
   bool enable = kEnableMetricsDefault;
   if (config.metrics().has_enable()) {
     enable = config.metrics().enable();

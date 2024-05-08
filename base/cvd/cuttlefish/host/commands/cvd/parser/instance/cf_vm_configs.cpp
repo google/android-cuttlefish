@@ -34,8 +34,8 @@
 namespace cuttlefish {
 
 using android::base::StringReplace;
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
-using cvd::config::Launch;
 using cvd::config::Vm;
 using google::protobuf::util::JsonPrintOptions;
 using google::protobuf::util::MessageToJsonString;
@@ -116,7 +116,8 @@ static Result<std::string> CustomConfigsFlagValue(const Instance& instance) {
   return fmt::format("[{}]", fmt::join(json_entries, ","));
 }
 
-static Result<std::vector<std::string>> CustomConfigsFlags(const Launch& cfg) {
+static Result<std::vector<std::string>> CustomConfigsFlags(
+    const EnvironmentSpecification& cfg) {
   std::vector<std::string> ret;
   for (const auto& instance : cfg.instances()) {
     auto value = CF_EXPECT(CustomConfigsFlagValue(instance));
@@ -125,7 +126,8 @@ static Result<std::vector<std::string>> CustomConfigsFlags(const Launch& cfg) {
   return ret;
 }
 
-Result<std::vector<std::string>> GenerateVmFlags(const Launch& cfg) {
+Result<std::vector<std::string>> GenerateVmFlags(
+    const EnvironmentSpecification& cfg) {
   std::vector<std::string> flags = {
       GenerateInstanceFlag("vm_manager", cfg, VmManager),
       GenerateInstanceFlag("cpus", cfg, Cpus),

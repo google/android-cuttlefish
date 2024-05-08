@@ -25,15 +25,15 @@
 
 namespace cuttlefish {
 
-using cvd::config::Launch;
+using cvd::config::EnvironmentSpecification;
 using google::protobuf::util::JsonStringToMessage;
 
-Result<Launch> ValidateCfConfigs(const Json::Value& root) {
+Result<EnvironmentSpecification> ValidateCfConfigs(const Json::Value& root) {
   std::stringstream json_as_stringstream;
   json_as_stringstream << root;
   auto json_str = json_as_stringstream.str();
 
-  Launch launch_config;
+  EnvironmentSpecification launch_config;
   auto status = JsonStringToMessage(json_str, &launch_config);
   CF_EXPECTF(status.ok(), "{}", status.ToString());
 

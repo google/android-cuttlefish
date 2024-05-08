@@ -29,9 +29,9 @@
 
 namespace cuttlefish {
 
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Fetch;
 using cvd::config::Instance;
-using cvd::config::Launch;
 
 namespace {
 
@@ -131,9 +131,9 @@ static bool DownloadTargetFilesZip(const Instance& instance) {
 }  // namespace
 
 Result<std::vector<std::string>> ParseFetchCvdConfigs(
-    const Launch& config, const std::string& target_directory,
+    const EnvironmentSpecification& config, const std::string& target_directory,
     const std::vector<std::string>& target_subdirectories) {
-  Launch fetch_instances;
+  EnvironmentSpecification fetch_instances;
   std::vector<std::string> fetch_subdirectories;
   CF_EXPECT_EQ(config.instances().size(), (int) target_subdirectories.size(),
                "Mismatched sizes between number of subdirectories and number "

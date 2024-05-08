@@ -30,10 +30,10 @@
 namespace cuttlefish {
 
 using cvd::config::Display;
+using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
-using cvd::config::Launch;
 
-Result<std::string> GenerateDisplayFlag(const Launch& cfg) {
+Result<std::string> GenerateDisplayFlag(const EnvironmentSpecification& cfg) {
   cuttlefish::InstancesDisplays all_instances_displays;
 
   for (const auto& in_instance : cfg.instances()) {
@@ -89,7 +89,8 @@ bool RecordScreen(const Instance& instance) {
   }
 }
 
-Result<std::vector<std::string>> GenerateGraphicsFlags(const Launch& cfg) {
+Result<std::vector<std::string>> GenerateGraphicsFlags(
+    const EnvironmentSpecification& cfg) {
   return std::vector<std::string>{
       CF_EXPECT(GenerateDisplayFlag(cfg)),
       GenerateInstanceFlag("record_screen", cfg, RecordScreen),

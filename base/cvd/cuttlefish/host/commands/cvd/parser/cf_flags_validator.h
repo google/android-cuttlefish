@@ -23,6 +23,7 @@
 
 namespace cuttlefish {
 
-Result<cvd::config::Launch> ValidateCfConfigs(const Json::Value& root);
+Result<cvd::config::EnvironmentSpecification> ValidateCfConfigs(
+    const Json::Value& root);
 
 }  // namespace cuttlefish
