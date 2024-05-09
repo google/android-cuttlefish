@@ -24,7 +24,7 @@ The packages can be built with the following command:
 
 ```bash
 sudo apt install devscripts equivs
-sudo tools/installbazel/main.sh
+sudo tools/buildutils/installbazel.sh
 for dir in base frontend; do
     pushd $dir
     # Install build dependencies
