@@ -50,3 +50,33 @@ The following script can be used to build a host image for Google Compute Engine
 
 [Check out the AOSP tree](https://source.android.com/setup/build/downloading)
 to obtain the script.
+
+## Docker
+
+We also provide the docker image which installed cuttlefish debian packages
+inside; including `cuttlefish-base`, `cuttlefish-user`, and
+`cuttlefish-orchestration`.
+Currently it's available for ARM64 architecture.
+
+### Build docker image manually
+
+Please run below command to build manually.
+
+```bash
+cd /path/to/android-cuttlefish
+cd docker/arm-server
+./build.sh
+```
+
+You can validate if the docker image is successfully built by checking
+`cuttlefish-arm64` in `docker image list` like below.
+```
+$ docker image list
+REPOSITORY               TAG               IMAGE ID       CREATED          SIZE
+cuttlefish-arm64         latest            0123456789ab   2 minutes ago    690MB
+...
+```
+
+### Download prebuilt image
+
+Sorry for inconvenience, currently it's not supported yet.
