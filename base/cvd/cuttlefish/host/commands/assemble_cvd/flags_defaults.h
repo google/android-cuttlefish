@@ -142,6 +142,10 @@
 #define CF_DEFAULTS_RECORD_SCREEN false
 #define CF_DEFAULTS_GPU_CAPTURE_BINARY CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_GPU_RENDERER_FEATURES ""
+#define CF_DEFAULTS_GPU_CONTEXT_TYPES \
+  "gfxstream-vulkan:cross-domain:gfxstream-composer"
+#define CF_DEFAULTS_GUEST_VULKAN_DRIVER "ranchu"
+#define CF_DEFAULTS_FRAME_SOCKET_PATH ""
 #define CF_DEFAULTS_ENABLE_GPU_UDMABUF false
 #define CF_DEFAULTS_ENABLE_GPU_VHOST_USER false
 #define CF_DEFAULTS_DISPLAY0 CF_DEFAULTS_DYNAMIC_STRING
@@ -160,7 +164,7 @@
 // Default network handler
 #define CF_DEFAULTS_NETSIM false
 #define CF_DEFAULTS_NETSIM_BT true
-#define CF_DEFAULTS_NETSIM_UWB false
+#define CF_DEFAULTS_NETSIM_UWB true
 
 // Netsim default parameters
 #define CF_DEFAULTS_NETSIM_ARGS ""
@@ -196,6 +200,9 @@
 
 // Audio default parameters
 #define CF_DEFAULTS_ENABLE_AUDIO true
+
+// USB Passhtrough default parameters
+#define CF_DEFAULTS_ENABLE_USB false
 
 // Streaming default parameters
 #define CF_DEFAULTS_START_WEBRTC false
