@@ -18,7 +18,7 @@
 
 set -e
 
-function install_bazel() {
+function install_bazel_x86_64() {
   echo "Installing bazel"
   apt install apt-transport-https curl gnupg -y
   curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor >bazel-archive-keyring.gpg
@@ -28,4 +28,16 @@ function install_bazel() {
   apt-get update && apt-get install -y bazel zip unzip
 }
 
-install_bazel
+function install_bazel_aarch64() {
+  BAZELISK_VERSION=v1.19.0
+  apt install wget
+  tmpdir="$(mktemp -t -d bazel_installer_XXXXXX)"
+  trap "rm -rf $tmpdir" EXIT
+  pushd "${tmpdir}"
+  wget "https://github.com/bazelbuild/bazelisk/releases/download/${BAZELISK_VERSION}/bazelisk-linux-arm64"
+  mv bazelisk-linux-arm64 /usr/local/bin/bazel
+  chmod 0755 /usr/local/bin/bazel
+  popd
+}
+
+install_bazel_$(uname -m)
