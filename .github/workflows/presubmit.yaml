@@ -62,3 +62,23 @@ jobs:
       run: cd base/cvd/build && meson compile
     - name: Test cvd
       run: cd base/cvd/build && meson test -v
+  build-arm64-cuttlefish-deb-job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Prepare building environment
+      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
+    - name: Pbuilder arm64 create
+      run: pbuilder-dist stable arm64 create
+    - name: Pbuilder arm64 update
+      run: pbuilder-dist stable arm64 update
+    - name: Building package
+      run: cd cuttlefish-host-image-installer && ./build_cf_packages.sh
+    - name: Create artifact
+      run: cd cuttlefish-host-image-installer && cp -f cuttlefish-common-buildplace/*.deb . && 7z a -mx=9 cuttlefish_packages.7z *.deb
+    - name: Publish cuttlefish_packages.7z
+      uses: actions/upload-artifact@v3
+      with:
+        name: cuttlefish_packages
+        path: cuttlefish-host-image-installer/cuttlefish_packages.7z
