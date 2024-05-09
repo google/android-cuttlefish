@@ -338,7 +338,6 @@ android_system_image {
         "debuggerd",
         "device_config",
         "dirty-image-objects",
-        "dmabuf_dump",
         "dmctl",
         "dmesgd",
         "dnsmasq",
