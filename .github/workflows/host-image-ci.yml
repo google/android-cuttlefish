@@ -21,6 +21,7 @@ name: HostImage
 on: [push]
 
 jobs:
+<<<<<<< HEAD
   build-installer-iso-job:
     runs-on: ubuntu-latest
     container:
@@ -221,3 +222,7 @@ jobs:
       run: pbuilder-dist stable arm64 update
     - name: Running installation tests...
       run: cd tools/cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-kernel-deb.sh ./aosp_kernel_aosp${{ matrix.version }}.7z
+=======
+  build-cuttlefish-deb-job:
+    uses: google/android-cuttlefish/.github/workflows/presubmit.yaml@main
+>>>>>>> e9c035dbc (Testing reuse workflow.)
