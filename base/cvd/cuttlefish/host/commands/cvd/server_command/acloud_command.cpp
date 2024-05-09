@@ -28,7 +28,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/result.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/acloud/create_converter_parser.h"
 #include "host/commands/cvd/command_sequence.h"
@@ -102,14 +102,6 @@ class AcloudCommand : public CvdServerHandler {
     return {};
   }
 
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interrupt_mutex_);
-    interrupted_ = true;
-    CF_EXPECT(waiter_.Interrupt());
-    CF_EXPECT(executor_.Interrupt());
-    return {};
-  }
-
  private:
   Result<cvd::InstanceGroupInfo> HandleStartResponse(
       const cvd::Response& start_response);
@@ -125,8 +117,6 @@ class AcloudCommand : public CvdServerHandler {
                                 const std::string& hostname);
 
   CommandSequenceExecutor& executor_;
-  std::mutex interrupt_mutex_;
-  bool interrupted_ = false;
   SubprocessWaiter waiter_;
 };
 
@@ -170,36 +160,18 @@ Result<void> AcloudCommand::PrintBriefSummary(
   ss << std::endl
      << "acloud list or cvd fleet for more information." << std::endl;
   auto n_write = WriteAll(*stream_fd, ss.str());
-  CF_EXPECT_EQ(n_write, ss.str().size());
+  CF_EXPECT_EQ(n_write, (ssize_t)ss.str().size());
   return {};
 }
 
 Result<ConvertedAcloudCreateCommand> AcloudCommand::ValidateLocal(
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interrupt_mutex_);
-  bool lock_released = false;
-  CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
   CF_EXPECT(IsSubOperationSupported(request));
-  // ConvertAcloudCreate may lock and unlock the lock
-  auto cb_unlock = [&lock_released, &interrupt_lock](void) -> Result<void> {
-    if (!lock_released) {
-      interrupt_lock.unlock();
-      lock_released = true;
-    }
-    return {};
-  };
-  auto cb_lock = [&lock_released, &interrupt_lock](void) -> Result<void> {
-    if (lock_released) {
-      interrupt_lock.lock();
-      lock_released = true;
-    }
-    return {};
-  };
   // ConvertAcloudCreate converts acloud to cvd commands.
   // The input parameters waiter_, cb_unlock, cb_lock are.used to
   // support interrupt which have locking and unlocking functions
-  return acloud_impl::ConvertAcloudCreate(request, waiter_, cb_unlock, cb_lock);
+  return acloud_impl::ConvertAcloudCreate(request, waiter_);
 }
 
 bool AcloudCommand::ValidateRemoteArgs(const RequestWithStdio& request) {
@@ -270,13 +242,9 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
   WriteAll(request.Err(),
            "UPDATE! Try the new `cvdr` tool directly. Run `cvdr --help` to get "
            "started.\n");
-  {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    CF_EXPECT(!interrupted_, "Interrupted");
-    auto subprocess = cmd.Start();
-    CF_EXPECT(subprocess.Started());
-    CF_EXPECT(waiter_.Setup(std::move(subprocess)));
-  }
+  auto subprocess = cmd.Start();
+  CF_EXPECT(subprocess.Started());
+  CF_EXPECT(waiter_.Setup(std::move(subprocess)));
   siginfo_t siginfo = CF_EXPECT(waiter_.Wait());
   {
     // Force the destructor to run by moving it into a smaller scope.
@@ -310,13 +278,9 @@ Result<void> AcloudCommand::RunAcloudConnect(const RequestWithStdio& request,
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, request.In());
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, request.Out());
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.Err());
-  {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    CF_EXPECT(!interrupted_, "Interrupted");
-    auto subprocess = cmd.Start();
-    CF_EXPECT(subprocess.Started());
-    CF_EXPECT(waiter_.Setup(std::move(subprocess)));
-  }
+  auto subprocess = cmd.Start();
+  CF_EXPECT(subprocess.Started());
+  CF_EXPECT(waiter_.Setup(std::move(subprocess)));
   CF_EXPECT(waiter_.Wait());
   return {};
 }

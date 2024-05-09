@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/run_server.h"
 
+#include <signal.h>
 #include <sys/resource.h>
 #include <unistd.h>
 
@@ -24,77 +25,36 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/instance_lock.h"
+#include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/metrics/metrics_notice.h"
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/selector/instance_database.h"
+#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_constants.h"
 
 namespace cuttlefish {
 
-SharedFD ServerMainLog() {
-  std::string log_path = "/tmp/cvd_server" + std::to_string(getuid()) + ".log";
-  return SharedFD::Open(log_path, O_CREAT | O_APPEND | O_RDWR, 0644);
-}
+namespace {
 
-bool IsServerModeExpected(const std::string& exec_file) {
-  return exec_file == kServerExecPath;
-}
+inline constexpr char kInternalCarryoverClientFd[] =
+    "INTERNAL_carryover_client_fd";
+inline constexpr char kInternalMemoryCarryoverFd[] =
+    "INTERNAL_memory_carryover_fd";
+inline constexpr char kInternalAcloudTranslatorOptOut[] =
+    "INTERNAL_acloud_translator_optout";
+inline constexpr char kInternalRestartedInProcess[] =
+    "INTERNAL_restarted_in_process";
 
-Result<void> RunServer(RunServerParam&& params) {
-  CF_EXPECTF(params.internal_server_fd->IsOpen(),
-             "Expected to be in server mode, but didn't get a server fd: {}",
-             params.internal_server_fd->StrError());
-
-  struct rlimit old_lim;
-  // Get old limits
-  if (getrlimit(RLIMIT_NOFILE, &old_lim) == 0) {
-    LOG(INFO) << "Old limits -> soft limit= " << old_lim.rlim_cur << "\t"
-              << " hard limit= " << old_lim.rlim_max;
-  } else {
-    PLOG(FATAL) << "CVD Server getrlimit error";
-  }
-  // Set new value
-  old_lim.rlim_cur = old_lim.rlim_max;
-  // Set limits
-  CF_EXPECTF(setrlimit(RLIMIT_NOFILE, &old_lim) == 0,
-             "CVD Server setrlimit error, {}", strerror(errno));
-
-  std::unique_ptr<ServerLogger> server_logger =
-      std::make_unique<ServerLogger>();
-  CF_EXPECT(server_logger != nullptr, "ServerLogger memory allocation failed.");
-
-  const auto verbosity_level = params.verbosity_level;
-  // TODO(kwstephenkim): for cvd restart-server, it should print the LOG(ERROR)
-  // of the server codes outside handlers into the file descriptor eventually
-  // passed from the cvd restart client. However, the testing frameworks are
-  // waiting for the client's stderr to be closed. Thus, it should not be the
-  // client's stderr. See b/293191537.
-  SharedFD stderr_fd = ServerMainLog();
-  std::unique_ptr<ServerLogger::ScopedLogger> run_server_logger;
-  if (stderr_fd->IsOpen()) {
-    ServerLogger::ScopedLogger tmp_logger =
-        (verbosity_level ? server_logger->LogThreadToFd(std::move(stderr_fd),
-                                                        *verbosity_level)
-                         : server_logger->LogThreadToFd(std::move(stderr_fd)));
-    run_server_logger =
-        std::make_unique<ServerLogger::ScopedLogger>(std::move(tmp_logger));
-  }
-
-  // run_server_logger will be destroyed only if CvdServerMain terminates, which
-  // normally does not. And, CvdServerMain does not refer its .scoped_logger.
-  if (params.memory_carryover_fd && !(*params.memory_carryover_fd)->IsOpen()) {
-    LOG(ERROR) << "Memory carryover file is supposed to be open but is not.";
-  }
-  CF_EXPECT(CvdServerMain(
-      {.internal_server_fd = std::move(params.internal_server_fd),
-       .carryover_client_fd = std::move(params.carryover_client_fd),
-       .memory_carryover_fd = std::move(params.memory_carryover_fd),
-       .acloud_translator_optout = params.acloud_translator_optout,
-       .server_logger = std::move(server_logger),
-       .scoped_logger = std::move(run_server_logger),
-       .restarted_in_process = params.restarted_in_process}));
-  return {};
-}
+struct ParseResult {
+  SharedFD internal_server_fd;
+  SharedFD carryover_client_fd;
+  std::optional<SharedFD> memory_carryover_fd;
+  std::optional<bool> acloud_translator_optout;
+  std::optional<android::base::LogSeverity> verbosity_level;
+  bool restarted_in_process;
+};
 
 Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   ParseResult result;
@@ -105,7 +65,7 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
       SharedFDFlag(kInternalCarryoverClientFd, result.carryover_client_fd));
   SharedFD memory_carryover_fd;
   flags.emplace_back(
-      SharedFDFlag("INTERNAL_memory_carryover_fd", memory_carryover_fd));
+      SharedFDFlag(kInternalMemoryCarryoverFd, memory_carryover_fd));
   // the server's default verbosity must be VERBOSE, the least LogSeverity
   // the LogSeverity control will be done later on by the server by masking
   std::string verbosity = "VERBOSE";
@@ -121,9 +81,9 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   const auto all_args_size_before = all_args.size();
   bool acloud_translator_optout_value = false;
   PrintDataCollectionNotice();
-  flags.emplace_back(GflagsCompatFlag("INTERNAL_acloud_translator_optout",
+  flags.emplace_back(GflagsCompatFlag(kInternalAcloudTranslatorOptOut,
                                       acloud_translator_optout_value));
-  CF_EXPECT(ConsumeFlags({GflagsCompatFlag("INTERNAL_acloud_translator_optout",
+  CF_EXPECT(ConsumeFlags({GflagsCompatFlag(kInternalAcloudTranslatorOptOut,
                                            acloud_translator_optout_value)},
                          all_args));
   if (all_args.size() != all_args_size_before) {
@@ -139,6 +99,79 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   }
 
   return result;
+}
+
+Result<std::string> ReadAllFromMemFd(const SharedFD& mem_fd) {
+  const auto n_message_size = mem_fd->LSeek(0, SEEK_END);
+  CF_EXPECT_NE(n_message_size, -1, "LSeek on the memory file failed.");
+  std::vector<char> buffer(n_message_size);
+  CF_EXPECT_EQ(mem_fd->LSeek(0, SEEK_SET), 0, mem_fd->StrError());
+  auto n_read = ReadExact(mem_fd, buffer.data(), n_message_size);
+  CF_EXPECT(n_read == n_message_size,
+            "Expected to read " << n_message_size << " bytes but actually read "
+                                << n_read << " bytes.");
+  std::string message(buffer.begin(), buffer.end());
+  return message;
+}
+
+Result<void> ImportResourcesImpl(const ParseResult& param) {
+  SetMinimumVerbosity(android::base::VERBOSE);
+  LOG(INFO) << "Starting server";
+  signal(SIGPIPE, SIG_IGN);
+  auto host_tool_target_manager = NewHostToolTargetManager();
+  InstanceLockFileManager lock_manager;
+  selector::InstanceDatabase instance_database(InstanceDatabasePath());
+  InstanceManager instance_manager(lock_manager, *host_tool_target_manager,
+                                   instance_database);
+  cvd::Response response;
+  if (param.memory_carryover_fd) {
+    SharedFD memory_carryover_fd = std::move(*param.memory_carryover_fd);
+    auto json_string = CF_EXPECT(ReadAllFromMemFd(memory_carryover_fd),
+                                 "Failed to parse JSON from mem fd");
+    auto json = CF_EXPECT(ParseJson(json_string));
+    CF_EXPECTF(instance_manager.LoadFromJson(json),
+               "Failed to load from: {}", json_string);
+  }
+  if (param.acloud_translator_optout) {
+    LOG(VERBOSE) << "Acloud translation optout: "
+                 << param.acloud_translator_optout.value();
+    CF_EXPECT(instance_manager.SetAcloudTranslatorOptout(
+        param.acloud_translator_optout.value()));
+  }
+  return {};
+}
+
+}  // namespace
+
+bool IsServerModeExpected(const std::string& exec_file) {
+  return exec_file == kServerExecPath;
+}
+
+[[noreturn]] void ImportResourcesFromRunningServer(std::vector<std::string> args) {
+  auto parsed_res = ParseIfServer(args);
+  if (!parsed_res.ok()) {
+    LOG(ERROR) << "Failed to parse arguments: " << parsed_res.error().FormatForEnv();
+    std::exit(1);
+  }
+  auto parsed = *parsed_res;
+  auto import_res = ImportResourcesImpl(parsed);
+  cvd::Response response;
+  if (import_res.ok()) {
+    response.mutable_status()->set_code(cvd::Status::OK);
+    response.mutable_command_response();
+  } else {
+    response.mutable_status()->set_code(cvd::Status::INTERNAL);
+    *response.mutable_error_response() = import_res.error().FormatForEnv();
+  }
+  if (parsed.carryover_client_fd->IsOpen()) {
+    auto send_res = 
+        SendResponse(std::move(parsed.carryover_client_fd), response);
+    if (!send_res.ok()) {
+      LOG(ERROR) << "Failed to send command response: " << send_res.error().FormatForEnv();
+      std::exit(1);
+    }
+  }
+  std::exit(import_res.ok()? 0: 1);
 }
 
 }  // namespace cuttlefish

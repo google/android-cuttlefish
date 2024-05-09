@@ -25,7 +25,7 @@
 #include <android-base/file.h>
 #include <android-base/scopeguard.h>
 #include <fmt/format.h>
-#include <json/json.h>
+#include "json/json.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -34,7 +34,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
@@ -42,7 +42,6 @@
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_utils.h"
-#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {
@@ -73,18 +72,23 @@ InstanceManager::InstanceManager(
       host_tool_target_manager_(host_tool_target_manager),
       instance_db_(instance_db) {}
 
-Result<Json::Value> InstanceManager::Serialize() {
-  return CF_EXPECT(instance_db_.Serialize());
-}
-
 Result<void> InstanceManager::LoadFromJson(const Json::Value& db_json) {
   CF_EXPECT(instance_db_.LoadFromJson(db_json));
   return {};
 }
 
+Result<void> InstanceManager::SetAcloudTranslatorOptout(bool optout) {
+  CF_EXPECT(instance_db_.SetAcloudTranslatorOptout(optout));
+  return {};
+}
+
+Result<bool> InstanceManager::GetAcloudTranslatorOptout() const {
+  return CF_EXPECT(instance_db_.GetAcloudTranslatorOptout());
+}
+
 Result<InstanceManager::GroupCreationInfo> InstanceManager::Analyze(
-    const CreationAnalyzerParam& param, const ucred& credential) {
-  return CF_EXPECT(CreationAnalyzer::Analyze(param, credential, lock_manager_));
+    const CreationAnalyzerParam& param) {
+  return CF_EXPECT(CreationAnalyzer::Analyze(param, lock_manager_));
 }
 
 Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(
@@ -114,18 +118,19 @@ Result<void> InstanceManager::SetInstanceGroup(
   const auto host_artifacts_path = group_info.host_artifacts_path;
   const auto product_out_path = group_info.product_out_path;
   const auto& per_instance_info = group_info.instances;
-  auto new_group =
-      selector::InstanceGroupInfo{.group_name = group_name,
-                              .home_dir = home_dir,
-                              .host_artifacts_path = host_artifacts_path,
-                              .product_out_path = product_out_path,
-                              .start_time = selector::CvdServerClock::now()};
-  std::vector<selector::InstanceInfo> instances_info;
+  cvd::InstanceGroup new_group;
+  new_group.set_name(group_name);
+  new_group.set_home_directory(home_dir);
+  new_group.set_host_artifacts_path(host_artifacts_path);
+  new_group.set_product_out_path(product_out_path);
+  new_group.set_start_time_sec(
+      selector::CvdServerClock::to_time_t(selector::CvdServerClock::now()));
   for (const auto& instance : per_instance_info) {
-    instances_info.push_back({.id = instance.instance_id_,
-                      .name = instance.per_instance_name_});
+    auto& new_instance = *new_group.add_instances();
+    new_instance.set_id(instance.instance_id_);
+    new_instance.set_name(instance.per_instance_name_);
   }
-  CF_EXPECT(instance_db_.AddInstanceGroup(new_group, instances_info));
+  CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
   return {};
 }
 
@@ -254,18 +259,8 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::FindGroup(
 Result<InstanceManager::LocalInstanceGroup> InstanceManager::FindGroup(
     const Queries& queries) const {
   auto output = CF_EXPECT(instance_db_.FindGroups(queries));
-  CF_EXPECT_EQ(output.size(), 1);
+  CF_EXPECT_EQ(output.size(), 1ul);
   return *(output.begin());
-}
-
-Result<std::vector<std::string>> InstanceManager::AllGroupNames() const {
-  auto local_instance_groups = CF_EXPECT(instance_db_.InstanceGroups());
-  std::vector<std::string> group_names;
-  group_names.reserve(local_instance_groups.size());
-  for (const auto& group : local_instance_groups) {
-    group_names.push_back(group.GroupName());
-  }
-  return group_names;
 }
 
 Result<InstanceManager::UserGroupSelectionSummary>

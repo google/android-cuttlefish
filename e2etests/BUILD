@@ -1,52 +1,17 @@
-load("boot_tests.bzl", "launch_cvd_boot_test", "cvd_load_boot_test")
+# Copyright (C) 2024 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-# cvd fetch + launch_cvd tests
-launch_cvd_boot_test(
-  name="fetch_and_launch_aosp_main_x64_phone",
-  branch="aosp-main",
-  target="aosp_cf_x86_64_phone-trunk_staging-userdebug"
-)
+load("@bazel_gazelle//:def.bzl", "gazelle")
 
-launch_cvd_boot_test(
-  name="fetch_and_launch_aosp_android14_phone",
-  branch="aosp-android14-gsi",
-  target="aosp_cf_x86_64_phone-userdebug"
-)
-
-launch_cvd_boot_test(
-  name="fetch_and_launch_aosp_android13_phone",
-  branch="aosp-android13-gsi",
-  target="aosp_cf_x86_64_phone-userdebug"
-)
-
-launch_cvd_boot_test(
-  name="fetch_and_launch_aosp_android12_phone",
-  branch="aosp-android12-gsi",
-  target="aosp_cf_x86_64_phone-userdebug"
-)
-
-launch_cvd_boot_test(
-  name="fetch_and_launch_aosp_android11_phone",
-  branch="aosp-android11-gsi",
-  target="aosp_cf_x86_64_phone-userdebug"
-)
-
-launch_cvd_boot_test(
-  name="fetch_and_launch_aosp_android10_phone",
-  branch="aosp-android10-gsi",
-  target="aosp_cf_x86_64_phone-userdebug"
-)
-
-# cvd load tests
-cvd_load_boot_test(
-  name="load_aosp_main_x64_phone",
-  env_file="environment_specs/aosp_main_x64_phone.json",
-)
-
-cvd_load_boot_test(
-  name="load_aosp_main_x64_phone_x2",
-  env_file="environment_specs/aosp_main_x64_phone_x2.json",
-  size="enormous",
-)
-
-# TODO(b/329100411) test loading older branches
+gazelle(name = "gazelle")

@@ -25,8 +25,9 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/flag.h"
+#include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/libs/config/config_constants.h"
@@ -122,7 +123,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   CF_EXPECT_GE(ReadAll(redirect_stderr_fd, &status_stderr), 0);
 
   auto instance_status_json = CF_EXPECT(ParseJson(serialized_json));
-  CF_EXPECT_EQ(instance_status_json.size(), 1);
+  CF_EXPECT_EQ(instance_status_json.size(), 1ul);
   instance_status_json = instance_status_json[0];
   static constexpr auto kWebrtcProp = "webrtc_device_id";
   static constexpr auto kNameProp = "instance_name";
@@ -220,6 +221,32 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
       .json_from_stdout = instances_json,
       .response = response,
   };
+}
+
+Result<Json::Value> StatusFetcher::FetchGroupStatus(
+    const selector::LocalInstanceGroup& group,
+    const RequestWithStdio& original_request) {
+  Json::Value group_json(Json::objectValue);
+  group_json["group_name"] = group.GroupName();
+  group_json["start_time"] = selector::Format(group.StartTime());
+
+  auto request_message = MakeRequest(
+      {.cmd_args = {"cvd", "status", "--print", "--all_instances"},
+       .env = cvd_common::ConvertToEnvs(
+           original_request.Message().command_request().env()),
+       .selector_args = {"--group_name", group.GroupName()},
+       .working_dir =
+           original_request.Message().command_request().working_directory()});
+  RequestWithStdio group_request{request_message,
+                                 original_request.FileDescriptors()};
+  auto [_, instances_json, group_response] =
+      CF_EXPECT(FetchStatus(group_request));
+  CF_EXPECT(
+      group_response.status().code() == cvd::Status::OK,
+      fmt::format("Running `cvd status --all_instances` for group \"{}\" failed",
+                  group.GroupName()));
+  group_json["instances"] = instances_json;
+  return group_json;
 }
 
 Result<std::string> StatusFetcher::GetBin(

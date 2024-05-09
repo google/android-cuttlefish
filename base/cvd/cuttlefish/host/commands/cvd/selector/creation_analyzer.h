@@ -17,7 +17,6 @@
 #pragma once
 
 #include <sys/types.h>
-#include <sys/socket.h>  // for ucred
 
 #include <memory>
 #include <optional>
@@ -108,13 +107,13 @@ class CreationAnalyzer {
   };
 
   static Result<GroupCreationInfo> Analyze(
-      const CreationAnalyzerParam& param, const ucred& credential,
+      const CreationAnalyzerParam& param,
       InstanceLockFileManager& instance_lock_file_manager);
 
  private:
   using IdAllocator = UniqueResourceAllocator<unsigned>;
 
-  CreationAnalyzer(const CreationAnalyzerParam& param, const ucred& credential,
+  CreationAnalyzer(const CreationAnalyzerParam& param,
                    StartSelectorParser&& selector_options_parser,
                    InstanceLockFileManager& instance_lock_file_manager);
 
@@ -163,7 +162,6 @@ class CreationAnalyzer {
   std::vector<std::string> cmd_args_;
   std::unordered_map<std::string, std::string> envs_;
   std::vector<std::string> selector_args_;
-  const ucred credential_;
 
   // information to return later
   std::string home_;

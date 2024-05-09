@@ -27,7 +27,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/creation_analyzer.h"
@@ -57,8 +57,7 @@ class InstanceManager {
                   selector::InstanceDatabase& instance_db);
 
   // For cvd start
-  Result<GroupCreationInfo> Analyze(const CreationAnalyzerParam& param,
-                                    const ucred& credential);
+  Result<GroupCreationInfo> Analyze(const CreationAnalyzerParam& param);
 
   Result<LocalInstanceGroup> SelectGroup(const cvd_common::Args& selector_args,
                                          const cvd_common::Envs& envs,
@@ -87,9 +86,10 @@ class InstanceManager {
 
   Result<LocalInstanceGroup> FindGroup(const Query& query) const;
   Result<LocalInstanceGroup> FindGroup(const Queries& queries) const;
-  Result<Json::Value> Serialize();
   Result<void> LoadFromJson(const Json::Value&);
-  Result<std::vector<std::string>> AllGroupNames() const;
+
+  Result<void> SetAcloudTranslatorOptout(bool optout);
+  Result<bool> GetAcloudTranslatorOptout() const;
 
   struct UserGroupSelectionSummary {
     // Index to group name. This is the index printed in the menu

@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/instance_record.h"
 
@@ -30,30 +31,40 @@ static std::string TestBinDir() { return "/opt/android11"; }
 
 class CvdInstanceGroupUnitTest : public testing::Test {
  protected:
-  CvdInstanceGroupUnitTest()
-      : group_info({.group_name = GroupName(),
-                    .home_dir = HomeDir(),
-                    .host_artifacts_path = TestBinDir(),
-                    .product_out_path = TestBinDir()}) {}
+  CvdInstanceGroupUnitTest() {
+    group_proto.set_name(GroupName());
+    group_proto.set_home_directory(HomeDir());
+    group_proto.set_host_artifacts_path(TestBinDir());
+    group_proto.set_product_out_path(TestBinDir());
+  }
   Result<LocalInstanceGroup> Get() {
-    return WithInstances({
-        {1, "tv_instance"},
-        {2, "2"},
-        {3, "phone"},
-        {7, "tv_instances"},
-    });
+    std::vector<cvd::Instance> instances(4);
+    instances[0].set_id(1);
+    instances[0].set_name("tv_instance");
+    instances[1].set_id(2);
+    instances[1].set_name("2");
+    instances[2].set_id(3);
+    instances[2].set_name("phone");
+    instances[3].set_id(7);
+    instances[3].set_name("tv_instances");
+
+    return WithInstances(instances);
   }
   Result<LocalInstanceGroup> WithInstances(
-      const std::vector<InstanceInfo>& instances) {
-    return LocalInstanceGroup::Create(group_info, instances);
+      const std::vector<cvd::Instance>& instances) {
+    for (const auto& instance : instances) {
+      *group_proto.add_instances() = instance;
+    }
+    return LocalInstanceGroup::Create(group_proto);
   }
-  InstanceGroupInfo group_info;
+  cvd::InstanceGroup group_proto;
 };
 
 TEST_F(CvdInstanceGroupUnitTest, AddInstancesAndListAll) {
   auto group_res = Get();
   auto instances = group_res->Instances();
 
+  cvd::InstanceGroup group;
   ASSERT_EQ(instances.size(), 4);
 }
 

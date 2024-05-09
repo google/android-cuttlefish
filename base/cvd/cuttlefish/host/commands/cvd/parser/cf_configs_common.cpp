@@ -22,7 +22,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <json/json.h>
+#include "json/json.h"
 
 #include "common/libs/utils/base64.h"
 #include "common/libs/utils/json.h"
@@ -98,7 +98,7 @@ Result<std::string> Base64EncodeGflag(
   auto values =
       CF_EXPECTF(GetArrayValues<std::string>(instances, selectors),
                  "Unable to produce values for gflag \"{}\"", gflag_name);
-  for (int i = 0; i < values.size(); i++) {
+  for (std::size_t i = 0; i < values.size(); i++) {
     std::string out;
     CF_EXPECT(EncodeBase64(values[i].c_str(), values[i].size(), &out));
     values[i] = out;
@@ -125,7 +125,7 @@ std::vector<std::string> MergeResults(std::vector<std::string> first_list,
 void MergeTwoJsonObjs(Json::Value& dst, const Json::Value& src) {
   for (const auto& key : src.getMemberNames()) {
     if (src[key].type() == Json::arrayValue) {
-      for (int i = 0; i < src[key].size(); i++) {
+      for (int i = 0; i < (int)src[key].size(); i++) {
         MergeTwoJsonObjs(dst[key][i], src[key][i]);
       }
     } else if (src[key].type() == Json::objectValue) {

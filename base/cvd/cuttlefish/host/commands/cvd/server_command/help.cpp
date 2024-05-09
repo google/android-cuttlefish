@@ -30,10 +30,9 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/request_context.h"
-#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -87,10 +86,6 @@ class CvdHelpHandler : public CvdServerHandler {
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interruptible_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
     CF_EXPECT(CanHandle(request));
 
     std::string output;
@@ -101,14 +96,7 @@ class CvdHelpHandler : public CvdServerHandler {
       output = CF_EXPECT(SubCommandHelp(args));
     }
     auto response = CF_EXPECT(WriteToFd(request.Out(), output));
-    interrupt_lock.unlock();
     return response;
-  }
-
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interruptible_);
-    interrupted_ = true;
-    return {};
   }
 
   cvd_common::Args CmdList() const override { return {"help"}; }
@@ -129,8 +117,7 @@ class CvdHelpHandler : public CvdServerHandler {
     lookup_cmd.add_args(arg);
     auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
     CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
-    return RequestWithStdio(dev_null, lookup, {dev_null, dev_null, dev_null},
-                            {});
+    return RequestWithStdio(lookup, {dev_null, dev_null, dev_null});
   }
 
   Result<std::string> TopLevelHelp() {
@@ -161,8 +148,6 @@ class CvdHelpHandler : public CvdServerHandler {
     return help_message.str();
   }
 
-  std::mutex interruptible_;
-  bool interrupted_ = false;
   const std::vector<std::unique_ptr<CvdServerHandler>>& request_handlers_;
 };
 

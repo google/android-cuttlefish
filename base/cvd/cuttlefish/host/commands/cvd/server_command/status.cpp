@@ -28,7 +28,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/instance_manager.h"
@@ -87,9 +87,8 @@ class CvdStatusCommandHandler : public CvdServerHandler {
   CvdStatusCommandHandler(InstanceManager& instance_manager,
                           HostToolTargetManager& host_tool_target_manager);
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const;
+  Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
-  Result<void> Interrupt() override;
   cvd_common::Args CmdList() const override;
 
  private:
@@ -98,8 +97,6 @@ class CvdStatusCommandHandler : public CvdServerHandler {
   InstanceManager& instance_manager_;
   HostToolTargetManager& host_tool_target_manager_;
   StatusFetcher status_fetcher_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
   std::vector<std::string> supported_subcmds_;
 };
 
@@ -115,13 +112,6 @@ Result<bool> CvdStatusCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
   auto invocation = ParseInvocation(request.Message());
   return Contains(supported_subcmds_, invocation.command);
-}
-
-Result<void> CvdStatusCommandHandler::Interrupt() {
-  std::scoped_lock interrupt_lock(interruptible_);
-  interrupted_ = true;
-  CF_EXPECT(status_fetcher_.Interrupt());
-  return {};
 }
 
 static Result<RequestWithStdio> ProcessInstanceNameFlag(
@@ -162,8 +152,7 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
       .selector_args = cvd_common::ConvertToArgs(selector_opts.args()),
       .working_dir = request.Message().command_request().working_directory(),
   });
-  return RequestWithStdio(request.Client(), new_message,
-                          request.FileDescriptors(), request.Credentials());
+  return RequestWithStdio(new_message, request.FileDescriptors());
 }
 
 static Result<bool> HasPrint(cvd_common::Args cmd_args) {
@@ -174,10 +163,7 @@ static Result<bool> HasPrint(cvd_common::Args cmd_args) {
 
 Result<cvd::Response> CvdStatusCommandHandler::Handle(
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interruptible_);
-  CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
-  CF_EXPECT(request.Credentials());
 
   auto precondition_verified = VerifyPrecondition(request);
   if (!precondition_verified.ok()) {
@@ -192,7 +178,6 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   CF_EXPECT_NE(request.Message().command_request().wait_behavior(),
                cvd::WAIT_BEHAVIOR_START,
                "cvd status shouldn't be cvd::WAIT_BEHAVIOR_START");
-  interrupt_lock.unlock();
 
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
   CF_EXPECT(Contains(supported_subcmds_, subcmd));
@@ -202,7 +187,7 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
     return HandleHelp(request);
   }
 
-  if (CF_EXPECT(instance_manager_.AllGroupNames()).empty()) {
+  if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_EXPECT(NoGroupResponse(request));
   }
   RequestWithStdio new_request = CF_EXPECT(ProcessInstanceNameFlag(request));
@@ -215,10 +200,10 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
 
   std::string serialized_group_json = instances_json.toStyledString();
   CF_EXPECT_EQ(WriteAll(request.Err(), entire_stderr_msg),
-               entire_stderr_msg.size());
+               (ssize_t)entire_stderr_msg.size());
   if (has_print) {
     CF_EXPECT_EQ(WriteAll(request.Out(), serialized_group_json),
-                 serialized_group_json.size());
+                 (ssize_t)serialized_group_json.size());
   }
   return response;
 }
@@ -233,7 +218,7 @@ Result<cvd::Response> CvdStatusCommandHandler::HandleHelp(
   response.mutable_command_response();  // Sets oneof member
   response.mutable_status()->set_code(cvd::Status::OK);
   CF_EXPECT_EQ(WriteAll(request.Out(), kHelpMessage),
-               strnlen(kHelpMessage, sizeof(kHelpMessage) - 1));
+               (ssize_t)strnlen(kHelpMessage, sizeof(kHelpMessage) - 1));
   return response;
 }
 

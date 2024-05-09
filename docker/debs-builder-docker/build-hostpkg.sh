@@ -18,12 +18,21 @@ function remove_trailing_slash() {
 outdir=$(remove_trailing_slash $1)
 shift 1
 
+mkdir -p $outdir
+
 is_mv_debs="true"
 [[ "$outdir" == "" ]] && is_mv_debs="false"
 
 #end of preparation
 
 function build() {
+    # Add the bazel PPA
+    sudo apt install apt-transport-https curl gnupg zip unzip -y
+    curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor >bazel-archive-keyring.gpg
+    sudo mv bazel-archive-keyring.gpg /usr/share/keyrings
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/bazel-archive-keyring.gpg] https://storage.googleapis.com/bazel-apt stable jdk1.8" | \
+      sudo tee /etc/apt/sources.list.d/bazel.list
+    sudo apt update
     local pkg_dirs=( base frontend )
     for dir in "${pkg_dirs[@]}"; do
         pushd $cuttlefish_root/$dir > /dev/null 2>&1

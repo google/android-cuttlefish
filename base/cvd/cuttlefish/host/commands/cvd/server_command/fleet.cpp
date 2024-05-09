@@ -51,15 +51,12 @@ usage: cvd fleet [--help]
 class CvdFleetCommandHandler : public CvdServerHandler {
  public:
   CvdFleetCommandHandler(InstanceManager& instance_manager,
-                         SubprocessWaiter& subprocess_waiter,
                          HostToolTargetManager& host_tool_target_manager)
       : instance_manager_(instance_manager),
-        subprocess_waiter_(subprocess_waiter),
         status_fetcher_(instance_manager_, host_tool_target_manager) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const;
+  Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
-  Result<void> Interrupt() override;
   cvd_common::Args CmdList() const override { return {kFleetSubcmd}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
@@ -72,10 +69,7 @@ class CvdFleetCommandHandler : public CvdServerHandler {
 
  private:
   InstanceManager& instance_manager_;
-  SubprocessWaiter& subprocess_waiter_;
   StatusFetcher status_fetcher_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
 
   static constexpr char kFleetSubcmd[] = "fleet";
   Result<cvd::Status> CvdFleetHelp(const SharedFD& out) const;
@@ -88,17 +82,8 @@ Result<bool> CvdFleetCommandHandler::CanHandle(
   return invocation.command == kFleetSubcmd;
 }
 
-Result<void> CvdFleetCommandHandler::Interrupt() {
-  std::scoped_lock interrupt_lock(interruptible_);
-  interrupted_ = true;
-  CF_EXPECT(subprocess_waiter_.Interrupt());
-  return {};
-}
-
 Result<cvd::Response> CvdFleetCommandHandler::Handle(
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interruptible_);
-  CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
 
   cvd::Response ok_response;
@@ -107,59 +92,23 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   status.set_code(cvd::Status::OK);
 
   auto [sub_cmd, args] = ParseInvocation(request.Message());
-  auto envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
-  interrupt_lock.unlock();
 
   if (IsHelp(args)) {
     CF_EXPECT(CvdFleetHelp(request.Out()));
     return ok_response;
   }
 
-  CF_EXPECT(Contains(envs, "ANDROID_HOST_OUT") &&
-            DirectoryExists(envs.at("ANDROID_HOST_OUT")));
+  auto all_groups = CF_EXPECT(instance_manager_.FindGroups({}));
   Json::Value groups_json(Json::arrayValue);
-  auto all_group_names = CF_EXPECT(instance_manager_.AllGroupNames());
-  envs.erase(kCuttlefishInstanceEnvVarName);
-  for (const auto& group_name : all_group_names) {
-    auto group_obj_copy_result = instance_manager_.SelectGroup(
-        {}, {},
-        InstanceManager::Queries{{selector::kGroupNameField, group_name}});
-    if (!group_obj_copy_result.ok()) {
-      LOG(DEBUG) << "Group \"" << group_name
-                 << "\" has already been removed. Skipped.";
-      continue;
-    }
-
-    Json::Value group_json(Json::objectValue);
-    group_json["group_name"] = group_name;
-    group_json["start_time"] =
-        selector::Format(group_obj_copy_result->StartTime());
-
-    auto request_message = MakeRequest(
-        {.cmd_args = {"cvd", "status", "--print", "--all_instances"},
-         .env = envs,
-         .selector_args = {"--group_name", group_name},
-         .working_dir =
-             request.Message().command_request().working_directory()});
-    RequestWithStdio group_request{request.Client(), request_message,
-                                   request.FileDescriptors(),
-                                   request.Credentials()};
-    auto [_, instances_json, group_response] =
-        CF_EXPECT(status_fetcher_.FetchStatus(group_request));
-    CF_EXPECT_EQ(
-        group_response.status().code(), cvd::Status::OK,
-        fmt::format(
-            "Running cvd status --all_instances for group \"{}\" failed",
-            group_name));
-    group_json["instances"] = instances_json;
-    groups_json.append(group_json);
+  for (const auto& group : all_groups) {
+    groups_json.append(
+        CF_EXPECT(status_fetcher_.FetchGroupStatus(group, request)));
   }
   Json::Value output_json(Json::objectValue);
   output_json["groups"] = groups_json;
   auto serialized_json = output_json.toStyledString();
   CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
-               serialized_json.size());
+               (ssize_t)serialized_json.size());
   return ok_response;
 }
 
@@ -175,17 +124,17 @@ bool CvdFleetCommandHandler::IsHelp(const cvd_common::Args& args) const {
 Result<cvd::Status> CvdFleetCommandHandler::CvdFleetHelp(
     const SharedFD& out) const {
   const std::string help_message(kHelpMessage);
-  CF_EXPECT_EQ(WriteAll(out, help_message), help_message.size());
+  CF_EXPECT_EQ(WriteAll(out, help_message), (ssize_t)help_message.size());
   cvd::Status status;
   status.set_code(cvd::Status::OK);
   return status;
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdFleetCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+    InstanceManager& instance_manager,
     HostToolTargetManager& host_tool_target_manager) {
-  return std::unique_ptr<CvdServerHandler>(new CvdFleetCommandHandler(
-      instance_manager, subprocess_waiter, host_tool_target_manager));
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdFleetCommandHandler(instance_manager, host_tool_target_manager));
 }
 
 }  // namespace cuttlefish

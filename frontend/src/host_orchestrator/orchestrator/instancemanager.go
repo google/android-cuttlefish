@@ -154,13 +154,13 @@ func cvdFleet(ctx cvd.CVDExecContext) (*cvdFleetOutput, error) {
 	}
 	output := &cvdFleetOutput{}
 	if err := json.Unmarshal(stdout.Bytes(), output); err != nil {
-		log.Printf("Failed parsing `cvd fleet` ouput. Output: \n\n%s\n", cvd.OutputLogMessage(stdout.String()))
+		log.Printf("Failed parsing `cvd fleet` output. Output: \n\n%s\n", cvd.OutputLogMessage(stdout.String()))
 		return nil, fmt.Errorf("failed parsing `cvd fleet` output: %w", err)
 	}
 	return output, nil
 }
 
-// Helper for listing first group instances only. Legacy flows didn't have a multi-group environment hence unsing
+// Helper for listing first group instances only. Legacy flows didn't have a multi-group environment hence using
 // the first group only.
 func cvdFleetFirstGroup(ctx cvd.CVDExecContext) (*cvdGroup, error) {
 	fleet, err := cvdFleet(ctx)
@@ -208,11 +208,11 @@ func defaultMainBuild() *apiv1.AndroidCIBuild {
 }
 
 type fetchCVDCommandArtifactsFetcher struct {
-	execContext ExecContext
+	execContext cvd.CVDExecContext
 	credentials string
 }
 
-func newFetchCVDCommandArtifactsFetcher(execContext ExecContext, credentials string) *fetchCVDCommandArtifactsFetcher {
+func newFetchCVDCommandArtifactsFetcher(execContext cvd.CVDExecContext, credentials string) *fetchCVDCommandArtifactsFetcher {
 	return &fetchCVDCommandArtifactsFetcher{
 		execContext: execContext,
 		credentials: credentials,
@@ -232,7 +232,7 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 	}
 	var file *os.File
 	var err error
-	fetchCmd := f.execContext(context.TODO(), cvd.FetchCVDBin, args...)
+	fetchCmd := f.execContext(context.TODO(), []string{}, cvd.FetchCVDBin, args...)
 	if f.credentials != "" {
 		if file, err = createCredentialsFile(f.credentials); err != nil {
 			return err
@@ -256,7 +256,7 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 		return fmt.Errorf("`fetch_cvd` failed: %w. \n\nCombined Output:\n%s", err, string(out))
 	}
 	// TODO(b/286466643): Remove this hack once cuttlefish is capable of booting from read-only artifacts again.
-	chmodCmd := f.execContext(context.TODO(), "chmod", "-R", "g+rw", outDir)
+	chmodCmd := f.execContext(context.TODO(), []string{}, "chmod", "-R", "g+rw", outDir)
 	chmodOut, err := chmodCmd.CombinedOutput()
 	if err != nil {
 		cvd.LogCombinedStdoutStderr(chmodCmd, string(chmodOut))

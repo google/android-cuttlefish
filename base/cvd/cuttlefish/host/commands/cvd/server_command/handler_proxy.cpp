@@ -44,15 +44,13 @@ class CvdServerHandlerProxy : public CvdServerHandler {
   //   cmd_args:      cvd cmdline-parser
   //   selector_args: [command args to parse]
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interruptible_);
-    CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CanHandle(request));
 
     const auto& selector_opts =
         request.Message().command_request().selector_opts();
     auto all_args = cvd_common::ConvertToArgs(selector_opts.args());
-    CF_EXPECT_GE(all_args.size(), 1);
-    if (all_args.size() == 1) {
+    CF_EXPECT_GE(all_args.size(), 1ul);
+    if (all_args.size() == 1ul) {
       all_args = cvd_common::Args{"cvd", "help"};
     }
 
@@ -91,9 +89,7 @@ class CvdServerHandlerProxy : public CvdServerHandler {
         request.Message().command_request().wait_behavior());
 
     RequestWithStdio forwarded_request(
-        request.Client(), std::move(exec_request), request.FileDescriptors(),
-        request.Credentials());
-    interrupt_lock.unlock();
+        std::move(exec_request), request.FileDescriptors());
     SharedFD dev_null = SharedFD::Open("/dev/null", O_RDWR);
     CF_EXPECT(dev_null->IsOpen(), "Failed to open /dev/null");
 
@@ -112,19 +108,10 @@ class CvdServerHandlerProxy : public CvdServerHandler {
     return response;
   }
 
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interruptible_);
-    interrupted_ = true;
-    CF_EXPECT(executor_.Interrupt());
-    return {};
-  }
-
   // not intended to be used by the user
   cvd_common::Args CmdList() const override { return {}; }
 
  private:
-  std::mutex interruptible_;
-  bool interrupted_ = false;
   CommandSequenceExecutor& executor_;
 };
 

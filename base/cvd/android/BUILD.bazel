@@ -1,0 +1,10 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+cc_library(
+  name = "log_header",
+  hdrs = ["android/log.h"],
+  includes = [""],
+)
+

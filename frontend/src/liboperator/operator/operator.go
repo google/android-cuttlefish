@@ -57,7 +57,7 @@ func createUnixSocketEndpoint(path string) (*net.UnixListener, error) {
 }
 
 // Sets up a unix socket for devices to connect to and returns a function that listens on the
-// socket until an error occurrs.
+// socket until an error occurs.
 func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string) (func() error, error) {
 	sock, err := createUnixSocketEndpoint(path)
 	if err != nil {
@@ -78,7 +78,7 @@ func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string
 }
 
 // Sets up a unix socket for server control and returns a function that listens on the socket
-// until an error occurrs.
+// until an error occurs.
 func SetupControlEndpoint(pool *DevicePool, path string) (func() error, error) {
 	sock, err := createUnixSocketEndpoint(path)
 	if err != nil {
@@ -206,7 +206,7 @@ func controlEndpoint(c *JSONUnix, pool *DevicePool) {
 func PreRegister(c *JSONUnix, pool *DevicePool, msg *apiv1.PreRegisterMsg) {
 	var ret apiv1.PreRegistrationResponse
 	idSet := make(map[string]bool)
-	// Lenght ensures no writers will block on this channel
+	// Length ensures no writers will block on this channel
 	devCh := make(chan string, len(msg.Devices))
 	for _, d := range msg.Devices {
 		regCh := make(chan bool, 1)

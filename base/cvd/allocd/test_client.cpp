@@ -15,8 +15,8 @@
  */
 
 #include <android-base/logging.h>
-#include <gflags/gflags.h>
-#include <json/json.h>
+#include "gflags/gflags.h"
+#include "json/json.h"
 #include <unistd.h>
 
 #include <iostream>

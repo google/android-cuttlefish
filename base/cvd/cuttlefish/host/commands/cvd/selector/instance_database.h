@@ -22,6 +22,7 @@
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/data_viewer.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
@@ -37,17 +38,19 @@ class InstanceDatabase {
 
   Result<bool> IsEmpty() const;
 
-  Result<Json::Value> Serialize() const;
   Result<void> LoadFromJson(const Json::Value&);
+
+  Result<void> SetAcloudTranslatorOptout(bool optout);
+
+  Result<bool> GetAcloudTranslatorOptout() const;
 
   /** Adds instance group.
    *
    * If group_name or home_dir is already taken or host_artifacts_path is
    * not likely an artifacts path, CF_ERR is returned.
    */
-  Result<void> AddInstanceGroup(
-      const InstanceGroupInfo& group_info,
-      const std::vector<InstanceInfo>& instance_infos);
+  Result<LocalInstanceGroup> AddInstanceGroup(
+      const cvd::InstanceGroup& group_proto);
 
   Result<std::vector<LocalInstanceGroup>> InstanceGroups() const;
   Result<bool> RemoveInstanceGroup(const std::string& group_name);
@@ -92,7 +95,7 @@ class InstanceDatabase {
   template <typename T>
   Result<T> ExactlyOne(Result<std::vector<T>>&& container_result) const {
     auto container = CF_EXPECT(std::move(container_result));
-    CF_EXPECT_EQ(container.size(), 1, "Expected unique result");
+    CF_EXPECT_EQ(container.size(), (std::size_t)1, "Expected unique result");
     return {*container.begin()};
   }
   struct FindParam {
@@ -105,11 +108,11 @@ class InstanceDatabase {
   Result<std::vector<LocalInstanceGroup>> FindGroups(FindParam param) const;
   Result<std::vector<LocalInstance>> FindInstances(FindParam param) const;
   static std::vector<LocalInstanceGroup> FindGroups(
-      const std::vector<LocalInstanceGroup>& groups, FindParam param);
+      const cvd::PersistentData& data, FindParam param);
   static std::vector<LocalInstance> FindInstances(
-      const std::vector<LocalInstanceGroup>& groups, FindParam param);
+      const cvd::PersistentData& data, FindParam param);
 
-  DataViewer<std::vector<LocalInstanceGroup>> viewer_;
+  DataViewer viewer_;
 };
 
 }  // namespace selector

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <signal.h>
+
 #include <functional>
 #include <mutex>
 #include <thread>
@@ -25,6 +27,8 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/signals.h"
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -32,31 +36,23 @@ namespace selector {
 /**
  * Synchronizes loading and storing the instance database from and to a file.
  *
- * Guarantees "atomic" access to the information stored in the backing file at
+ * Guarantees atomic access to the information stored in the backing file at
  * the cost of high lock contention.
  * */
-template <typename T>
 class DataViewer {
-  using SerializeFn = std::function<std::string(const T&)>;
-  using DeserializeFn = std::function<Result<T>(const std::string&)>;
-
  public:
-  DataViewer(const std::string& backing_file, SerializeFn serialize,
-             DeserializeFn deserialize)
-      : backing_file_(backing_file),
-        serialize_(serialize),
-        deserialize_(deserialize) {}
+  DataViewer(const std::string& backing_file) : backing_file_(backing_file) {}
 
   /**
    * Provides read-only access to the data while holding a shared lock.
    *
    * This function may block until the lock can be acquired. Others can access
    * the data in read-only mode concurrently, but write access is blocked at
-   * least until this function returns. It's guaranteed that the contents of the
-   * backing file won't change until this function returns.
+   * least until this function returns.
    * */
   template <typename R>
-  Result<R> WithSharedLock(std::function<Result<R>(const T&)> task) const {
+  Result<R> WithSharedLock(
+      std::function<Result<R>(const cvd::PersistentData&)> task) const {
     DeadlockProtector dp(*this);
     auto fd = CF_EXPECT(LockBackingFile(LOCK_SH));
     auto data = CF_EXPECT(LoadData(fd));
@@ -69,14 +65,24 @@ class DataViewer {
    * This function may block until the lock can be acquired. Others can't access
    * the data concurrently with this one. Any changes to the data will be
    * persisted to the file when the task functor returns successfully, no
-   * changes to the backing data occur if it retuns an error.
+   * changes to the backed data occur if an error is returned.
    * */
   template <typename R>
-  Result<R> WithExclusiveLock(std::function<Result<R>(T&)> task) {
+  Result<R> WithExclusiveLock(
+      std::function<Result<R>(cvd::PersistentData&)> task) {
     DeadlockProtector dp(*this);
     auto fd = CF_EXPECT(LockBackingFile(LOCK_SH));
     auto data = CF_EXPECT(LoadData(fd));
     auto res = task(data);
+    if (!res.ok()) {
+      // Don't update if there is an error
+      return res;
+    }
+    // Block signals while writing to the instance database file. This reduces
+    // the chances of corrupting the file.
+    sigset_t all_signals;
+    sigfillset(&all_signals);
+    SignalMasker blocker(all_signals);
     // Overwrite the file contents, don't append
     CF_EXPECTF(fd->Truncate(0) >= 0, "Failed to truncate fd: {}",
                fd->StrError());
@@ -89,32 +95,11 @@ class DataViewer {
  private:
   // Opens and locks the backing file. The lock will be dropped when the file
   // descriptor closes.
-  Result<SharedFD> LockBackingFile(int op) const {
-    auto fd = SharedFD::Open(backing_file_, O_CREAT | O_RDWR, 0640);
-    CF_EXPECTF(fd->IsOpen(),
-               "Failed to open instance database backing file: {}",
-               fd->StrError());
-    CF_EXPECTF(fd->Flock(op),
-               "Failed to acquire lock for instance database backing file: {}",
-               fd->StrError());
-    return fd;
-  }
+  Result<SharedFD> LockBackingFile(int op) const;
 
-  Result<T> LoadData(SharedFD fd) const {
-    std::string str;
-    auto read_size = ReadAll(fd, &str);
-    CF_EXPECTF(read_size >= 0, "Failed to read from backing file: {}",
-               fd->StrError());
-    return deserialize_(str);
-  }
+  Result<cvd::PersistentData> LoadData(SharedFD fd) const;
 
-  Result<void> StoreData(SharedFD fd, T data) {
-    auto str = serialize_(data);
-    auto write_size = WriteAll(fd, str);
-    CF_EXPECTF(write_size == str.size(), "Failed to write to backing file: {}",
-               fd->StrError());
-    return {};
-  }
+  Result<void> StoreData(SharedFD fd, cvd::PersistentData data);
 
   /**
    * Utility class to prevent deadlocks due to function reentry.
@@ -124,17 +109,8 @@ class DataViewer {
    */
   class DeadlockProtector {
    public:
-    DeadlockProtector(const DataViewer<T>& dv)
-        : mtx_(dv.lock_map_mtx_), map_(dv.lock_held_by_) {
-      std::lock_guard lock(mtx_);
-      CHECK(!map_[std::this_thread::get_id()])
-          << "Detected deadlock due to method reentry";
-      map_[std::this_thread::get_id()] = true;
-    }
-    ~DeadlockProtector() {
-      std::lock_guard lock(mtx_);
-      map_[std::this_thread::get_id()] = false;
-    }
+    DeadlockProtector(const DataViewer& dv);
+    ~DeadlockProtector();
     DeadlockProtector(const DeadlockProtector&) = delete;
     DeadlockProtector(DeadlockProtector&&) = delete;
 
@@ -146,8 +122,6 @@ class DataViewer {
   mutable std::unordered_map<std::thread::id, bool> lock_held_by_;
 
   std::string backing_file_;
-  SerializeFn serialize_;
-  DeserializeFn deserialize_;
 };
 
 }  // namespace selector

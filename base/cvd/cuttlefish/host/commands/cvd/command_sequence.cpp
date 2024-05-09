@@ -80,38 +80,23 @@ CommandSequenceExecutor::CommandSequenceExecutor(
     const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers)
     : server_handlers_(server_handlers) {}
 
-Result<void> CommandSequenceExecutor::Interrupt() {
-  std::unique_lock interrupt_lock(interrupt_mutex_);
-  interrupted_ = true;
-  if (handler_stack_.empty()) {
-    return {};
-  }
-  CF_EXPECT(handler_stack_.back()->Interrupt());
-  return {};
-}
-
 Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
     const std::vector<RequestWithStdio>& requests, SharedFD report) {
-  std::unique_lock interrupt_lock(interrupt_mutex_);
-  CF_EXPECT(!interrupted_, "Interrupted");
-
   std::vector<cvd::Response> responses;
   for (const auto& request : requests) {
     auto& inner_proto = request.Message();
     if (inner_proto.has_command_request()) {
       auto& command = inner_proto.command_request();
       std::string str = FormattedCommand(command);
-      CF_EXPECT(WriteAll(report, str) == str.size(), report->StrError());
+      CF_EXPECT(WriteAll(report, str) == (ssize_t)str.size(),
+                report->StrError());
     }
 
     auto handler = CF_EXPECT(RequestHandler(request, server_handlers_));
     handler_stack_.push_back(handler);
-    interrupt_lock.unlock();
     auto response = CF_EXPECT(handler->Handle(request));
-    interrupt_lock.lock();
     handler_stack_.pop_back();
 
-    CF_EXPECT(interrupted_ == false, "Interrupted");
     CF_EXPECT(response.status().code() == cvd::Status::OK,
               "Reason: \"" << response.status().message() << "\"");
 
@@ -123,7 +108,7 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
 Result<cvd::Response> CommandSequenceExecutor::ExecuteOne(
     const RequestWithStdio& request, SharedFD report) {
   auto response_in_vector = CF_EXPECT(Execute({request}, report));
-  CF_EXPECT_EQ(response_in_vector.size(), 1);
+  CF_EXPECT_EQ(response_in_vector.size(), 1ul);
   return response_in_vector.front();
 }
 

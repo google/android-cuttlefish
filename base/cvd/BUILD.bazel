@@ -1,0 +1,10 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "build_version_header",
+    srcs = ["build_version.h.in"],
+    outs = ["build/version.h"],
+    cmd = "sed -e \"s|@VCS_TAG@|`git describe`|\" $< > $@",
+)

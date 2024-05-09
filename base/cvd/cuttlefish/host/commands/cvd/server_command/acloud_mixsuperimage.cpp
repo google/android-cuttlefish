@@ -24,7 +24,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/acloud_mixsuperimage.h"
 #include "host/commands/cvd/server_command/server_handler.h"
@@ -174,8 +174,6 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
   cvd_common::Args CmdList() const override { return {}; }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CanHandle(request));
     auto invocation = ParseInvocation(request.Message());
     if (invocation.arguments.empty() || invocation.arguments.size() < 2) {
@@ -198,28 +196,16 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
       return response;
     }
 
-    auto cb_unlock = [&interrupt_lock](void) -> Result<void> {
-      interrupt_lock.unlock();
-      return {};
-    };
-    CF_EXPECT(MixSuperImage(flag_paths , cb_unlock),
+    CF_EXPECT(MixSuperImage(flag_paths),
               "Build mixed super image failed");
     return response;
   }
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interrupt_mutex_);
-    interrupted_ = true;
-    CF_EXPECT(waiter_.Interrupt());
-    return {};
-  }
-
  private:
   /*
    * Use build_super_image to create a super image.
    */
   Result<void> BuildSuperImage(
       const std::string& output_path, const std::string& misc_info_path,
-      const std::function<Result<void>(void)>& callback_unlock,
       const std::function<Result<std::string>(const std::string&)>& get_image) {
     std::string build_super_image_binary;
     std::string lpmake_binary;
@@ -251,14 +237,11 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     auto subprocess = command.Start();
     CF_EXPECT(subprocess.Started());
     CF_EXPECT(waiter_.Setup(std::move(subprocess)));
-    CF_EXPECT(callback_unlock());
     CF_EXPECT(waiter_.Wait());
     return {};
   }
 
-  Result<void> MixSuperImage(
-      const std::string& paths,
-      const std::function<Result<void>(void)>& callback_unlock) {
+  Result<void> MixSuperImage(const std::string& paths) {
     std::string super_image = "";
     std::string local_system_image = "";
     std::string system_image_path = "";
@@ -295,7 +278,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
         FindImage(local_system_image, {_PRODUCT_IMAGE_NAME_PATTERN});
 
     return BuildSuperImage(
-        super_image, misc_info, callback_unlock,
+        super_image, misc_info,
         [&](const std::string& partition) -> Result<std::string> {
           return GetImageForPartition(partition, image_dir,
                                       {
@@ -306,8 +289,6 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
         });
   }
 
-  std::mutex interrupt_mutex_;
-  bool interrupted_ = false;
   SubprocessWaiter waiter_;
 };
 

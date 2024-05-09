@@ -6,6 +6,7 @@
 *.deb
 *.dsc
 *.pyc
+*.lock
 
 cuttlefish-*_*.*.*.tar.xz
 
@@ -22,3 +23,4 @@ cuttlefish-*_*.*.*.tar.xz
 
 frontend/src/operator/webui/src/environments/version.ts
 
+/bazel-*

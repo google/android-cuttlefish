@@ -30,6 +30,31 @@
 
 namespace cuttlefish {
 
+namespace {
+/*
+ * Most branches read the kAndroidHostOut environment variable, but a few read
+ * kAndroidSoongHostOut instead. Cvd will set both variables for the subtools
+ * to the first value it finds:
+ * - envs[kAndroidHostOut] if variable is set
+ * - envs[kAndroidSoongHostOut] if variable is set
+ * - envs["HOME"] if envs["HOME"] + "/bin/cvd_internal_start" exists.
+ * - current working directory
+ */
+std::string GetNewAndroidHostOut(const cvd_common::Envs& envs) {
+  if (Contains(envs, kAndroidHostOut)) {
+    return envs.at(kAndroidHostOut);
+  }
+  if (Contains(envs, kAndroidSoongHostOut)) {
+    return envs.at(kAndroidSoongHostOut);
+  }
+  if (Contains(envs, "HOME") &&
+      FileExists(envs.at("HOME") + "/bin/cvd_internal_start")) {
+    return envs.at("HOME");
+  }
+  return CurrentDirectory();
+}
+}  // namespace
+
 cvd::Request MakeRequest(const MakeRequestForm& request_form) {
   return MakeRequest(request_form, cvd::WAIT_BEHAVIOR_COMPLETE);
 }
@@ -53,27 +78,14 @@ cvd::Request MakeRequest(const MakeRequestForm& request_form,
     (*command_request->mutable_env())[key] = value;
   }
 
-  /*
-   * the client must set the kAndroidHostOut environment variable. There were,
-   * however, a few branches where kAndroidSoongHostOut replaced
-   * kAndroidHostOut. Cvd server eventually read kAndroidHostOut only and set
-   * both for the subtools.
-   *
-   * If none of the two are set, cvd server tries to use the parent directory of
-   * the client cvd executable as env[kAndroidHostOut].
-   *
-   */
   if (!Contains(command_request->env(), kAndroidHostOut)) {
     const std::string new_android_host_out =
-        Contains(command_request->env(), kAndroidSoongHostOut)
-            ? (*command_request->mutable_env())[kAndroidSoongHostOut]
-            : android::base::Dirname(android::base::GetExecutableDirectory());
+        GetNewAndroidHostOut(request_form.env);
     (*command_request->mutable_env())[kAndroidHostOut] = new_android_host_out;
   }
 
   if (!request_form.working_dir) {
-    std::unique_ptr<char, void (*)(void*)> cwd(getcwd(nullptr, 0), &free);
-    command_request->set_working_directory(cwd.get());
+    command_request->set_working_directory(CurrentDirectory());
   } else {
     command_request->set_working_directory(request_form.working_dir.value());
   }
@@ -172,7 +184,7 @@ std::string PerUserDir() {
 }
 
 std::string InstanceDatabasePath() {
-  return fmt::format("{}/instance_database.json", PerUserDir());
+  return fmt::format("{}/instance_database.binpb", PerUserDir());
 }
 
 }  // namespace cuttlefish

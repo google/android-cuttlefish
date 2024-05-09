@@ -23,7 +23,7 @@
 #include <string_view>
 #include <vector>
 
-#include <json/json.h>
+#include "json/json.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/result.h"
@@ -72,15 +72,13 @@ class LintCommandHandler : public CvdServerHandler {
     message_stream << "Lint of flags and config \"" << config_path
                    << "\" succeeded\n";
     const auto message = message_stream.str();
-    CF_EXPECT_EQ(WriteAll(request.Out(), message), message.size(),
+    CF_EXPECT_EQ(WriteAll(request.Out(), message), (ssize_t)message.size(),
                  "Error writing message");
     cvd::Response response;
     response.mutable_command_response();
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
-
-  Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
 
   cvd_common::Args CmdList() const override { return {kLintSubCmd}; }
 

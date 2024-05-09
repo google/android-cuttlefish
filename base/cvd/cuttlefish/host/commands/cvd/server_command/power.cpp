@@ -62,14 +62,12 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     };
   }
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const {
+  Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
     return Contains(cvd_power_operations_, invocation.command);
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interruptible_);
-    CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(VerifyPrecondition(request));
     cvd_common::Envs envs =
@@ -84,17 +82,9 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
             ? CF_EXPECT(HelpCommand(request, op, subcmd_args, envs))
             : CF_EXPECT(NonHelpCommand(request, op, subcmd_args, envs));
     CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
-    interrupt_lock.unlock();
 
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());
     return ResponseFromSiginfo(infop);
-  }
-
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interruptible_);
-    interrupted_ = true;
-    CF_EXPECT(subprocess_waiter_.Interrupt());
-    return {};
   }
 
   cvd_common::Args CmdList() const override {
@@ -177,9 +167,9 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
 
     auto instance = CF_EXPECT(instance_manager_.SelectInstance(
         selector_args, envs, extra_queries));
-    const auto& home = instance.GroupInfo().home_dir;
+    const auto& home = instance.GroupProto().home_directory();
 
-    const auto& android_host_out = instance.GroupInfo().host_artifacts_path;
+    const auto& android_host_out = instance.GroupProto().host_artifacts_path();
     const auto bin_base = CF_EXPECT(GetBin(op, android_host_out));
     auto cvd_power_bin_path =
         ConcatToString(android_host_out, "/bin/", bin_base);
@@ -237,8 +227,6 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
   HostToolTargetManager& host_tool_target_manager_;
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
   using BinGetter = std::function<Result<std::string>(const std::string&)>;
   std::unordered_map<std::string, BinGetter> cvd_power_operations_;
 };

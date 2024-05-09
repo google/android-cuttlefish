@@ -69,22 +69,15 @@ std::ostream& operator<<(std::ostream&, const Build&);
 
 class BuildApi {
  public:
-  BuildApi();
+  BuildApi() = delete;
   BuildApi(BuildApi&&) = default;
-  BuildApi(std::unique_ptr<HttpClient> http_client,
-           std::unique_ptr<CredentialSource> credential_source,
-           std::string api_base_url);
+  ~BuildApi() = default;
   BuildApi(std::unique_ptr<HttpClient> http_client,
            std::unique_ptr<HttpClient> inner_http_client,
            std::unique_ptr<CredentialSource> credential_source,
            std::string api_key, const std::chrono::seconds retry_period,
            std::string api_base_url);
-  ~BuildApi() = default;
 
-  Result<Build> GetBuild(const DeviceBuildString& build_string,
-                         const std::string& fallback_target);
-  Result<Build> GetBuild(const DirectoryBuildString& build_string,
-                         const std::string& fallback_target);
   Result<Build> GetBuild(const BuildString& build_string,
                          const std::string& fallback_target);
 
@@ -118,6 +111,8 @@ class BuildApi {
   Result<std::unordered_set<std::string>> Artifacts(
       const Build& build, const std::vector<std::string>& artifact_filenames);
 
+  Result<std::string> GetArtifactDownloadUrl(const DeviceBuild& build,
+                                             const std::string& artifact);
   Result<void> ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
                               const std::string& path);
@@ -132,6 +127,11 @@ class BuildApi {
   Result<std::string> DownloadTargetFile(const Build& build,
                                          const std::string& target_directory,
                                          const std::string& artifact_name);
+
+  Result<Build> GetBuild(const DeviceBuildString& build_string,
+                         const std::string& fallback_target);
+  Result<Build> GetBuild(const DirectoryBuildString& build_string,
+                         const std::string& fallback_target);
 
   std::unique_ptr<HttpClient> http_client;
   std::unique_ptr<HttpClient> inner_http_client;

@@ -24,6 +24,7 @@ The packages can be built with the following command:
 
 ```bash
 sudo apt install devscripts equivs
+sudo tools/installbazel/main.sh
 for dir in base frontend; do
     pushd $dir
     # Install build dependencies
@@ -52,19 +53,30 @@ to obtain the script.
 
 ## Docker
 
-The Debian packages can also be built in a the docker container. Dockerfile and
-build scripts are included in this repository, just run:
+We also provide the docker image which installed cuttlefish debian packages
+inside; including `cuttlefish-base`, `cuttlefish-user`, and
+`cuttlefish-orchestration`.
+Currently it's available for x86_64 and ARM64 architecture.
 
-```
-    docker/build.sh --build_debs_only --rebuild_debs_verbose
+### Build docker image manually
+
+Please run below command to build manually.
+
+```bash
+cd /path/to/android-cuttlefish
+cd docker/orchestration
+./build.sh
 ```
 
-The command will build the container, if needed, that builds the Debian packages,
-and builds the Debian packages within the container. The resultant packages will
-be located under the ```docker/out``` directory.
- 
-This repository also contains a Dockerfile that can be used to construct an
-image for a privileged Docker container, which in turn can boot the cuttlefish
-device.  Such an image allows one to develop for Cuttlefish without having to
-install a number of packages directly on the host machine. For more details,
-read the [docker instructions](docker/README.md).
+You can validate if the docker image is successfully built by checking
+`cuttlefish-orchestration` in `docker image list` like below.
+```
+$ docker image list
+REPOSITORY               TAG    IMAGE ID       CREATED          SIZE
+cuttlefish-orchestration latest 0123456789ab   2 minutes ago    690MB
+...
+```
+
+### Download prebuilt image
+
+Sorry for inconvenience, currently it's not supported yet.

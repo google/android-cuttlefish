@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "common/libs/fs/shared_fd.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 
@@ -42,7 +42,5 @@ class CommandSequenceExecutor {
  private:
   const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers_;
   std::vector<CvdServerHandler*> handler_stack_;
-  std::mutex interrupt_mutex_;
-  bool interrupted_ = false;
 };
 }  // namespace cuttlefish

@@ -21,7 +21,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/result.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/acloud/config.h"
 #include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/acloud/create_converter_parser.h"
@@ -48,7 +48,7 @@ bool CheckIfCvdrExist() {
 
 class TryAcloudCommand : public CvdServerHandler {
  public:
-  TryAcloudCommand(const std::atomic<bool>& optout) : optout_(optout) {}
+  TryAcloudCommand(InstanceManager& im) : instance_manager_(im) {}
   ~TryAcloudCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -78,57 +78,29 @@ class TryAcloudCommand : public CvdServerHandler {
     return VerifyWithCvd(request);
   }
 
-  Result<void> Interrupt() override {
-    std::lock_guard interrupt_lock(interrupt_mutex_);
-    interrupted_ = true;
-    CF_EXPECT(waiter_.Interrupt());
-    return {};
-  }
-
  private:
   Result<cvd::Response> VerifyWithCvd(const RequestWithStdio& request);
   Result<cvd::Response> VerifyWithCvdRemote(const RequestWithStdio& request);
   Result<std::string> RunCvdRemoteGetConfig(const std::string& name);
 
-  std::mutex interrupt_mutex_;
-  bool interrupted_ = false;
   SubprocessWaiter waiter_;
-  const std::atomic<bool>& optout_;
+  InstanceManager& instance_manager_;
 };
 
 Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interrupt_mutex_);
-  bool lock_released = false;
-  CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(CanHandle(request));
   CF_EXPECT(IsSubOperationSupported(request));
-  auto cb_unlock = [&lock_released, &interrupt_lock](void) -> Result<void> {
-    if (!lock_released) {
-      interrupt_lock.unlock();
-      lock_released = true;
-    }
-    return {};
-  };
-  auto cb_lock = [&lock_released, &interrupt_lock](void) -> Result<void> {
-    if (lock_released) {
-      interrupt_lock.lock();
-      lock_released = true;
-    }
-    return {};
-  };
   // ConvertAcloudCreate converts acloud to cvd commands.
   // The input parameters waiter_, cb_unlock, cb_lock are.used to
   // support interrupt which have locking and unlocking functions
   auto converted = CF_EXPECT(
-      acloud_impl::ConvertAcloudCreate(request, waiter_, cb_unlock, cb_lock));
-  if (lock_released) {
-    interrupt_lock.lock();
-  }
+      acloud_impl::ConvertAcloudCreate(request, waiter_));
   // currently, optout/optin feature only works in local instance
   // remote instance would continue to be done either through `python acloud` or
   // `cvdr` (if enabled).
-  CF_EXPECT(!optout_);
+  auto optout = CF_EXPECT(instance_manager_.GetAcloudTranslatorOptout());
+  CF_EXPECT(!optout);
   cvd::Response response;
   response.mutable_command_response();
   return response;
@@ -170,13 +142,9 @@ Result<std::string> TryAcloudCommand::RunCvdRemoteGetConfig(
       LOG(ERROR) << "Error in reading stdout from process";
     }
   });
-  {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    CF_EXPECT(!interrupted_, "Interrupted");
-    auto subprocess = cmd.Start();
-    CF_EXPECT(subprocess.Started());
-    CF_EXPECT(waiter_.Setup(std::move(subprocess)));
-  }
+  auto subprocess = cmd.Start();
+  CF_EXPECT(subprocess.Started());
+  CF_EXPECT(waiter_.Setup(std::move(subprocess)));
   siginfo_t siginfo = CF_EXPECT(waiter_.Wait());
   {
     // Force the destructor to run by moving it into a smaller scope.
@@ -191,8 +159,8 @@ Result<std::string> TryAcloudCommand::RunCvdRemoteGetConfig(
 }
 
 std::unique_ptr<CvdServerHandler> NewTryAcloudCommand(
-    std::atomic<bool>& optout) {
-  return std::unique_ptr<CvdServerHandler>(new TryAcloudCommand(optout));
+InstanceManager& instance_manager) {
+  return std::unique_ptr<CvdServerHandler>(new TryAcloudCommand(instance_manager));
 }
 
 }  // namespace cuttlefish

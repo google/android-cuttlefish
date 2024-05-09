@@ -28,7 +28,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
-#include <json/json.h>
+#include "json/json.h"
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
@@ -86,7 +86,7 @@ Flag GflagsCompatFlagOverride(const std::string& name,
 }
 
 // TODO(moelsherif): expand this enum in the future to support more types (
-// double , float , etc) if neeeded
+// double , float , etc) if needed
 enum ArgValueType { UINTEGER, BOOLEAN, TEXT };
 
 bool IsUnsignedInteger(const std::string& str) {
@@ -237,7 +237,7 @@ Result<LoadDirectories> GenerateLoadDirectories(
   int num_remote = 0;
   for (int i = 0; i < num_instances; i++) {
     const std::string instance_build_path = system_image_path_configs[i];
-    CF_EXPECT_EQ(system_image_path_configs.size(), num_instances,
+    CF_EXPECT_EQ((int)system_image_path_configs.size(), num_instances,
                  "Number of instances is inconsistent");
 
     auto target_subdirectory = std::to_string(i);

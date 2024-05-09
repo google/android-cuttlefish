@@ -1,0 +1,63 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# This file needs to change the signature of strerror_r exposed
+# by a system header by defining a feature macro, which requires
+# header modules to be disabled.
+cc_library(
+    name = "libbase_posix_strerror",
+    srcs = [
+        "posix_strerror_r.cpp",
+    ],
+    copts = ["-D_POSIX_C_SOURCE=200112"],
+    features = ["-use_header_modules"],
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    name = "libbase",
+    srcs = [
+        "file.cpp",
+        "logging.cpp",
+        "include/logging_splitters.h",
+        "mapped_file.cpp",
+        "parsebool.cpp",
+        "stringprintf.cpp",
+        "strings.cpp",
+        "threads.cpp",
+    ],
+    hdrs = [
+        "include/android-base/cmsg.h",
+        "include/android-base/collections.h",
+        "include/android-base/errno_restorer.h",
+        "include/android-base/errors.h",
+        "include/android-base/expected.h",
+        "include/android-base/file.h",
+        "include/android-base/format.h",
+        "include/android-base/logging.h",
+        "include/android-base/macros.h",
+        "include/android-base/mapped_file.h",
+        "include/android-base/off64_t.h",
+        "include/android-base/parsebool.h",
+        "include/android-base/parseint.h",
+        "include/android-base/result.h",
+        "include/android-base/scopeguard.h",
+        "include/android-base/stringprintf.h",
+        "include/android-base/strings.h",
+        "include/android-base/threads.h",
+        "include/android-base/unique_fd.h",
+        "include/android-base/utf8.h",
+    ],
+    copts = [
+        "-Wno-vla-cxx-extension",
+        "-Wno-c99-designator",
+        "-std=c++17",
+    ],
+    includes = ["include"],
+    deps = [
+        ":libbase_posix_strerror",
+        "//android:log_header",
+        "@fmt",
+    ],
+)

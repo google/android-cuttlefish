@@ -1,0 +1,34 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "libsparse",
+    srcs = [
+        "backed_block.cpp",
+        "output_file.cpp",
+        "sparse.cpp",
+        "sparse_crc32.cpp",
+        "sparse_err.cpp",
+        "sparse_read.cpp",
+    ],
+    hdrs = [
+        "backed_block.h",
+        "defs.h",
+        "include/sparse/sparse.h",
+        "output_file.h",
+        "sparse_crc32.h",
+        "sparse_defs.h",
+        "sparse_file.h",
+        "sparse_format.h",
+    ],
+    copts = [
+        "-Wno-vla-cxx-extension",
+        "-Wno-c99-designator",
+    ],
+    includes = ["include"],
+    deps = [
+        "//libbase",
+        "@zlib",
+    ],
+)

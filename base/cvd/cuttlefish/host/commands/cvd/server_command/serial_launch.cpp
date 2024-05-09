@@ -31,7 +31,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_client.h"
@@ -119,14 +119,10 @@ class SerialLaunchCommand : public CvdServerHandler {
            invocation.arguments[0] == "serial_launch";
   }
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
-    CF_EXPECT(CF_EXPECT(CanHandle(request)));
+    bool can_handle_request = CF_EXPECT(CanHandle(request));
+    CF_EXPECT_EQ(can_handle_request, true);
 
     auto commands = CF_EXPECT(CreateCommandSequence(request));
-    interrupt_lock.unlock();
     CF_EXPECT(executor_.Execute(commands.requests, request.Err()));
 
     for (auto& lock : commands.instance_locks) {
@@ -138,19 +134,12 @@ class SerialLaunchCommand : public CvdServerHandler {
     return response;
   }
 
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interrupt_mutex_);
-    interrupted_ = true;
-    CF_EXPECT(executor_.Interrupt());
-    return {};
-  }
-
   cvd_common::Args CmdList() const override { return {"experimental"}; }
 
   Result<DemoCommandSequence> CreateCommandSequence(
       const RequestWithStdio& request) {
     const auto& client_env = request.Message().command_request().env();
-    const auto client_uid = CF_EXPECT(request.Credentials()).uid;
+    const auto client_uid = getuid();
 
     std::vector<Flag> flags;
 
@@ -222,7 +211,7 @@ class SerialLaunchCommand : public CvdServerHandler {
     auto args = ParseInvocation(request.Message()).arguments;
     for (const auto& arg : args) {
       std::string message = "argument: \"" + arg + "\"\n";
-      CF_EXPECT(WriteAll(request.Err(), message) == message.size());
+      CF_EXPECT(WriteAll(request.Err(), message) == (ssize_t)message.size());
     }
 
     CF_EXPECT(ConsumeFlags(flags, args));
@@ -269,7 +258,7 @@ class SerialLaunchCommand : public CvdServerHandler {
 
     bool is_first = true;
 
-    int index = 0;
+    size_t index = 0;
     for (const auto& device : devices) {
       auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
       *mkdir_cmd.mutable_env() = client_env;
@@ -361,8 +350,7 @@ class SerialLaunchCommand : public CvdServerHandler {
       ret.instance_locks.emplace_back(std::move(device.ins_lock));
     }
     for (auto& request_proto : req_protos) {
-      ret.requests.emplace_back(request.Client(), request_proto, fds,
-                                request.Credentials());
+      ret.requests.emplace_back(request_proto, fds);
     }
 
     return ret;
@@ -382,7 +370,7 @@ class SerialLaunchCommand : public CvdServerHandler {
     std::vector<std::string> tokens =
         android::base::Tokenize(path_exclude_root, "/");
     std::string current_dir = "/";
-    for (int i = 0; i < tokens.size(); i++) {
+    for (std::size_t i = 0; i < tokens.size(); i++) {
       current_dir.append(tokens[i]);
       if (!DirectoryExists(current_dir)) {
         output.emplace_back(
@@ -395,9 +383,6 @@ class SerialLaunchCommand : public CvdServerHandler {
 
   CommandSequenceExecutor& executor_;
   InstanceLockFileManager& lock_file_manager_;
-
-  std::mutex interrupt_mutex_;
-  bool interrupted_ = false;
 };
 
 std::unique_ptr<CvdServerHandler> NewSerialLaunchCommand(

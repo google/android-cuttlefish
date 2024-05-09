@@ -19,11 +19,11 @@
 #include <atomic>
 #include <memory>
 
+#include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/acloud_common.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewAcloudTranslatorCommand(
-    std::atomic<bool>& optout);
+std::unique_ptr<CvdServerHandler> NewAcloudTranslatorCommand(InstanceManager&);
 }

@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/server_command/version.h"
 
-#include <build/version.h>
-#include <cvd_server.pb.h>
+#include "build/version.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/proto.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/host_tools_version.h"
@@ -36,33 +40,29 @@ class CvdVersionHandler : public CvdServerHandler {
   CvdVersionHandler() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    return request.Message().contents_case() ==
-           cvd::Request::ContentsCase::kVersionRequest;
+    auto invocation = ParseInvocation(request.Message());
+    return "version" == invocation.command;
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
-    cvd::Response response;
-    auto& version = *response.mutable_version_response()->mutable_version();
+    cvd::Version version;
     version.set_major(cvd::kVersionMajor);
     version.set_minor(cvd::kVersionMinor);
     version.set_build(android::build::GetBuildNumber());
     version.set_crc32(FileCrc(kServerExecPath));
+    auto version_str = fmt::format("{}", version);
+    auto write_len = WriteAll(request.Out(), version_str);
+    CF_EXPECTF(write_len == (ssize_t)version_str.size(),
+               "Failed to write version output: {}", request.Out()->StrError());
+    cvd::Response response;
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
 
-  Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
-
   cvd_common::Args CmdList() const override { return {"version"}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
-
-  // TODO(315027339) - version is captured at the client caller level and
-  // consequently doesn't need a handler. This means if cvd help version is
-  // called - it errors out when the help handler checks for a version subcall
-  // handler even if implemented here by overriding ShouldInterceptHelp and
-  // DetailedHelp. Resolve this by making the version call a special case.
 };
 
 }  // namespace

@@ -21,7 +21,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
-#include <json/json.h>
+#include "json/json.h"
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
@@ -125,7 +125,7 @@ Result<std::vector<std::string>> GenerateFetchFlags(
   CF_EXPECT_EQ(instances.size(), target_subdirectories.size(),
                "Mismatched sizes between number of subdirectories and number "
                "of instances");
-  for (int i = 0; i < instances.size(); i++) {
+  for (int i = 0; i < (int)instances.size(); i++) {
     const auto prefix_filtered =
         CF_EXPECT(RemoveNonPrefixedBuildStrings(instances[i]));
     if (ShouldFetch(prefix_filtered)) {

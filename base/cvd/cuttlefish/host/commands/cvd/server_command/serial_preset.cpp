@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "common/libs/utils/result.h"
-#include "cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -43,11 +43,8 @@ class SerialPreset : public CvdServerHandler {
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
-    CF_EXPECT(CF_EXPECT(CanHandle(request)));
+    bool can_handle_request = CF_EXPECT(CanHandle(request));
+    CF_EXPECT_EQ(can_handle_request, true);
 
     auto invocation = ParseInvocation(request.Message());
     CF_EXPECT(invocation.arguments.size() >= 1);
@@ -64,27 +61,18 @@ class SerialPreset : public CvdServerHandler {
     for (const auto& device : devices->second) {
       cmd.add_args("--device=" + device);
     }
-    for (int i = 1; i < invocation.arguments.size(); i++) {
+    for (std::size_t i = 1; i < invocation.arguments.size(); i++) {
       cmd.add_args(invocation.arguments[i]);
     }
 
-    RequestWithStdio inner_request(request.Client(), std::move(inner_req_proto),
-                                   request.FileDescriptors(),
-                                   request.Credentials());
+    RequestWithStdio inner_request(std::move(inner_req_proto),
+                                   request.FileDescriptors());
 
     CF_EXPECT(executor_.Execute({std::move(inner_request)}, request.Err()));
-    interrupt_lock.unlock();
 
     cvd::Response response;
     response.mutable_command_response();
     return response;
-  }
-
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interrupt_mutex_);
-    interrupted_ = true;
-    CF_EXPECT(executor_.Interrupt());
-    return {};
   }
 
   cvd_common::Args CmdList() const override { return {"experimental"}; }
@@ -101,9 +89,6 @@ class SerialPreset : public CvdServerHandler {
          {"git_master/cf_x86_64_phone-userdebug", "git_master/cf_gwear_x86"}},
     };
   }
-
-  std::mutex interrupt_mutex_;
-  bool interrupted_ = false;
 };
 
 std::unique_ptr<CvdServerHandler> NewSerialPreset(

@@ -20,7 +20,7 @@
 #include <string>
 #include <unordered_set>
 
-#include <cvd_server.pb.h>
+#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
 #include "common/libs/utils/result.h"
 

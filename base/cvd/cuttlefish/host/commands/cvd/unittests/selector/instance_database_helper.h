@@ -24,6 +24,7 @@
 
 #include <gtest/gtest.h>
 
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/instance_database.h"
 
@@ -77,7 +78,7 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
   //    "mkdir" : Workspace() + "/" + base_name, HostArtifactsPath()
   //    db_.AddInstanceGroup()
   bool AddGroup(const std::string& base_name,
-                const std::vector<InstanceInfo>& instances);
+                const std::vector<cvd::Instance>& instances);
   InstanceDatabase& GetDb() { return db_; }
   const SetupError& Error() const { return error_; }
 
