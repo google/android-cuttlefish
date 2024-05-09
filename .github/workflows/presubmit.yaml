@@ -1,6 +1,6 @@
 name: Presubmit 
 
-on: [pull_request, push, workflow_call]
+on: [pull_request, push]
 
 jobs:
   build-orchestrator:
