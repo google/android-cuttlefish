@@ -304,6 +304,32 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     const std::string snapshot_path = FLAGS_snapshot_path;
     if (!snapshot_path.empty()) {
       CF_EXPECT(RestoreHostFiles(config.root_dir(), snapshot_path));
+
+      // Add a delimiter to each log file so that we can clearly tell what
+      // happened before vs after the restore.
+      const std::string snapshot_delimiter =
+          "\n\n\n"
+          "============ SNAPSHOT RESTORE POINT ============\n"
+          "Lines above are pre-snapshot.\n"
+          "Lines below are post-restore.\n"
+          "================================================\n"
+          "\n\n\n";
+      for (const auto& instance : config.Instances()) {
+        const auto log_files =
+            CF_EXPECT(DirectoryContents(instance.PerInstanceLogPath("")));
+        for (const auto& filename : log_files) {
+          if (filename == "." || filename == "..") {
+            continue;
+          }
+          const std::string path = instance.PerInstanceLogPath(filename);
+          auto fd = SharedFD::Open(path, O_WRONLY | O_APPEND);
+          CF_EXPECT(fd->IsOpen(),
+                    "failed to open " << path << ": " << fd->StrError());
+          const ssize_t n = WriteAll(fd, snapshot_delimiter);
+          CF_EXPECT(n == snapshot_delimiter.size(),
+                    "failed to write to " << path << ": " << fd->StrError());
+        }
+      }
     }
 
     // take the max value of modem_simulator_instance_number in each instance
