@@ -76,8 +76,8 @@ rlocation="$(rlocation ${rlocation_base}/docker/orchestration-image-builder.sh)"
 repo_root_dir=$(dirname $(dirname $(readlink ${rlocation})))
 
 mkdir out && tar -xf ${debstar} -C out
-cp ${repo_root_dir}/docker/arm-server/Dockerfile .
-cp ${repo_root_dir}/docker/arm-server/run_services.sh .
+cp ${repo_root_dir}/docker/orchestration/Dockerfile .
+cp ${repo_root_dir}/docker/orchestration/run_services.sh .
 
 tag="BUILD$(date +%+4Y%m%d)-$RANDOM"
 name="cuttlefish-orchestration:${tag}"
