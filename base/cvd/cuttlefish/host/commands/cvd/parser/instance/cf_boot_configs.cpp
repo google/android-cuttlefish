@@ -38,7 +38,7 @@ static bool EnableBootAnimation(const Instance& instance) {
   }
 }
 
-static Result<std::string> BtCfg(const Instance& instance) {
+static Result<std::string> BootCfgArgs(const Instance& instance) {
   const auto& boot = instance.boot();
   std::string args;
   if (boot.has_extra_bootconfig_args()) {
@@ -55,7 +55,8 @@ Result<std::vector<std::string>> GenerateBootFlags(
     const EnvironmentSpecification& cfg) {
   return std::vector<std::string>{
       GenerateInstanceFlag("enable_bootanimation", cfg, EnableBootAnimation),
-      CF_EXPECT(ResultInstanceFlag("extra_bootconfig_args_base64", cfg, BtCfg)),
+      CF_EXPECT(
+          ResultInstanceFlag("extra_bootconfig_args_base64", cfg, BootCfgArgs)),
   };
 }
 
