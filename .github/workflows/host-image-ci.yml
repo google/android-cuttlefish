@@ -22,4 +22,4 @@ on: [pull_request, push]
 
 jobs:
   build-cuttlefish-deb-job:
-    uses: google/android-cuttlefish/.github/workflows/presubmit.yaml@main
+    uses: google/android-cuttlefish/.github/workflows/presubmit.yaml
