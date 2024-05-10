@@ -52,9 +52,9 @@ pub struct VsockServer {
 }
 
 impl VsockServer {
-    pub fn new(port: u32, cid: u32) -> anyhow::Result<Self> {
+    pub fn new(port: u32) -> anyhow::Result<Self> {
         let (sender, receiver) = mpsc::channel::<Vec<u8>>();
-        let server = VsockListener::bind_with_cid_port(cid, port)?;
+        let server = VsockListener::bind_with_cid_port(vsock::VMADDR_CID_ANY, port)?;
         let running_atomic = Arc::new(AtomicBool::new(true));
 
         Ok(Self {
