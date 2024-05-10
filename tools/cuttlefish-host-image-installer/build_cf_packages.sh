@@ -10,6 +10,16 @@ apt-get install -y git ca-certificates less
 apt-get install -y build-essential
 apt-get install -y devscripts equivs fakeroot dpkg-dev
 
+BAZELISK_VERSION=v1.19.0
+apt install wget
+tmpdir="$(mktemp -t -d bazel_installer_XXXXXX)"
+trap "rm -rf $tmpdir" EXIT
+pushd "${tmpdir}"
+wget "https://github.com/bazelbuild/bazelisk/releases/download/${BAZELISK_VERSION}/bazelisk-linux-arm64"
+mv bazelisk-linux-arm64 /usr/local/bin/bazel
+chmod 0755 /usr/local/bin/bazel
+popd
+
 mkdir -p /tmp/b1
 
 cd /tmp/b1
