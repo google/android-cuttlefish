@@ -20,18 +20,10 @@ Google Compute Engine
 * `cuttlefish-common` - [DEPRECATED] Provided for compatibility only, it's a
 metapackage that depends on `cuttlefish-base` and `cuttlefish-user`
 
-The packages can be built with the following command:
+The packages can be built with the following script:
 
 ```bash
-sudo apt install devscripts equivs
-sudo tools/installbazel/main.sh
-for dir in base frontend; do
-    pushd $dir
-    # Install build dependencies
-    sudo mk-build-deps -i
-    dpkg-buildpackage -uc -us
-    popd
-done
+tools/buildutils/build_packages.sh
 ```
 
 Cuttlefish requires only `cuttlefish-base` to be installed, but `cuttlefish-user`

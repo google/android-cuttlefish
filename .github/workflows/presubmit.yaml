@@ -36,7 +36,7 @@ jobs:
       with:
         path: "android-cuttlefish"
     - name: Install bazel
-      run: bash android-cuttlefish/tools/installbazel/main.sh
+      run: bash android-cuttlefish/tools/buildutils/installbazel.sh
     - name: install package build dependencies
       run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
     - name: build base debian package
@@ -59,7 +59,7 @@ jobs:
     - name: Install dependencies
       run: apt install -y clang libcurl4-openssl-dev
     - name: Install bazel
-      run: bash tools/installbazel/main.sh
+      run: bash tools/buildutils/installbazel.sh
     - name: Build cvd
       run: cd base/cvd && bazel build ...
     - name: Test cvd
@@ -78,7 +78,7 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Install bazel
-      run: sudo bash tools/installbazel/main.sh
+      run: sudo bash tools/buildutils/installbazel.sh
     - name: bazel version
       run: bazel version
     - name: Run orchestration e2e tests
