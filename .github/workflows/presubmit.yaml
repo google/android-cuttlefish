@@ -102,11 +102,11 @@ jobs:
     - name: Pbuilder arm64 update
       run: pbuilder-dist stable arm64 update
     - name: Building package
-      run: cd cuttlefish-host-image-installer && ./build_cf_packages.sh
+      run: cd tools/cuttlefish-host-image-installer && ./build_cf_packages.sh
     - name: Create artifact
-      run: cd cuttlefish-host-image-installer && cp -f cuttlefish-common-buildplace/*.deb . && 7z a -mx=9 cuttlefish_packages.7z *.deb
+      run: cd tools/cuttlefish-host-image-installer && cp -f cuttlefish-common-buildplace/*.deb . && 7z a -mx=9 cuttlefish_packages.7z *.deb
     - name: Publish cuttlefish_packages.7z
       uses: actions/upload-artifact@v3
       with:
         name: cuttlefish_packages_arm64
-        path: cuttlefish-host-image-installer/cuttlefish_packages.7z
+        path: tools/cuttlefish-host-image-installer/cuttlefish_packages.7z
