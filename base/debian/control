@@ -21,7 +21,7 @@ Build-Depends: config-package-dev,
                libz3-dev,
                sed,
                git,
-               bazel
+               bazel [amd64]
 Standards-Version: 4.5.0
 
 Package: cuttlefish-base
