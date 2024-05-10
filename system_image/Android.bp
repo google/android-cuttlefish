@@ -347,16 +347,12 @@ android_system_image {
         "dumpsys",
         "e2fsck",
         "etc_hosts",
-        "extra_free_kbytes", // required by init_second_stage
-        "fastbootd", // in recovery
         "flags_health_check",
         "framework-audio_effects.xml", // for handheld // handheld_system
         "framework-sysconfig.xml",
         "fsck_msdos",
         "fsck.erofs",
         "fsck.f2fs", // for media_system
-        "fstab.postinstall", // required by cppreopts.sh
-        "fsverity_init", // required by init.rc
         "fsverity-release-cert-der",
         "fs_config_files_system",
         "fs_config_dirs_system",
@@ -381,8 +377,6 @@ android_system_image {
         "incident",
         "incidentd",
         "init_first_stage", // for boot partition
-        "init.boringssl.zygote64_32.rc", // required from init.rc
-        "init.boringssl.zygote64.rc", // required from init.rc
         // "init.environ.rc", // TODO: move to soong
         "init.rc",
         "init.usb.configfs.rc",
@@ -390,7 +384,6 @@ android_system_image {
         "init.zygote32.rc",
         "init.zygote64_32.rc",
         "init.zygote64.rc",
-        "initial-package-stopped-states-aosp.xml", // installed to product
         "initial-package-stopped-states.xml",
         "input",
         "installd",
@@ -399,7 +392,6 @@ android_system_image {
         "kcmdlinectrl",
         "keychars_data",
         "keylayout_data",
-        "keystore_cli_v2", // required from keystore2
         "keystore2",
         "ld.mc",
         "libaaudio",
@@ -410,33 +402,18 @@ android_system_image {
         "libandroid",
         "libandroidfw",
         "libartpalette-system",
-        "libasyncio", // installed bya shared lib dep
         "libaudio-resampler", // generic-system
         "libaudioeffect_jni",
-        "libaudiohal_deathhandler", // installed via shared lib dep from libaudiohal
         "libaudiohal", // generic-system
         "libaudiopolicyengineconfigurable", // generic-system
-        "libaudiopreprocessing", // installed via shared lib dep from audioserver
-        "libaudioutils", // installed via shared lib deps from ???
         "libbinder_ndk",
         "libbinder_rpc_unstable",
         "libbinder",
-        "libblas", // installed via shared lib deps from libRSCpuRef
-        "libbootloader_message", // installed via shared_lib deps from misctrl
-        "libbundlewrapper", // vendor
         "libcamera2ndk",
         "libclang_rt.asan",
-        "libclcore_debug_g.bc", // required from libRS_internal
-        "libclcore_debug.bc", // required from libRS_internal
-        "libclcore_g.bc", // required from libRS_internal
-        "libclcore.bc", // required from libRS_internal
-        "libclearkeycasplugin", // vendor
         "libcompiler_rt",
-        "libcrypto_utils", // installed via shared_lib deps from liblp and many more
-        "libcups", // installed via jni_libs deps from BuiltInPrintService
         "libcutils", // used by many libs
         "libdmabufheap", // used by many libs
-        "libdownmix", // vendor
         "libdrm", // used by many libs // generic_system
         "libdrmclearkeyplugin",
         "libdrmframework_jni", // base_system
@@ -466,7 +443,6 @@ android_system_image {
         "libGLESv2", // base_system
         "libGLESv3", // base_system
         "libgralloctypes",
-        "libgsi", // installed via shared lib dep
         "libgui", // base_system
         "libhapticgenerator",
         "libhardware_legacy", // base_system
@@ -515,12 +491,6 @@ android_system_image {
         "librank",
         "libresourcemanagerservice",
         "libreverbwrapper",
-        "libRS_internal", // required from libRS
-        "libRS", // installed via librs_jni
-        "librs_jni", // installed from handheld_system
-        "libRSCacheDir", .. required from libRS
-        "libRSCpuRef", // installed via libRSDriver
-        "libRSDriver", // required from libRS
         "librtp_jni", // base_system
         "libsensorservice", // base_system
         "libsfplugin_ccodec", // base_system
@@ -604,10 +574,6 @@ android_system_image {
         "preinstalled-packages-platform.xml", // base_system
         "preinstalled-packages-strict-signature.xml", // base_system
         "preloaded-classes",
-        "preloads_copy.sh",  // required by cppreopts.sh 
-        "preloads_copy.sh",  // required by cppreopts.sh
-        "preopt2cachename",  // required by cppreopts.sh
-        "preopt2cachename",  // required by cppreopts.sh
         "printflags", // base_system
         "privapp-permissions-platform.xml", // base_system
         "prng_seeder", // base_system
@@ -635,16 +601,12 @@ android_system_image {
         "snapshotctl", // base_system
         "snapuserd_ramdisk",
         "snapuserd", // base_system
-        "socket_vsock_proxy", // vendor, cuttlefish
         "storaged", // base_system
         "surfaceflinger", // base_system
-        "suspend_blocker", // vendor, cuttlefish
         "svc", // base_system
         "task_profiles.json", // base_system
         "tc", // base_system
         "telecom", // base_system
-        "tombstone_producer", // vendor, cuttlefish
-        "tombstone_transmit", // vendor, cuttlefish
         "tombstoned", // base_system
         "toolbox",
         "traced_perf",
@@ -675,7 +637,6 @@ android_system_image {
     multilib: {
         common: {
             deps: [
-                "AccessibilityMenu", // handheld_system_ext
                 "adbd_system_api",
                 "android.hardware.drm@latest-service.clearkey",
                 "android.hidl.base-V1.0-java",
@@ -695,12 +656,9 @@ android_system_image {
                 "bpfMemEvents.o",
                 "bpfMemEventsTest.o",
                 "bpfRingbufProg.o",
-                "Browser2", // handheld_product
                 "BuiltInPrintService",
-                "Calendar", // handheld_product
                 "CalendarProvider", // handheld_system
                 "CallLogBackup",
-                "Camera2", // handheld_product
                 "CameraExtensionsProxy", // handheld_system
                 "CaptivePortalLogin", // handheld_system
                 "CarrierConfig",
@@ -720,13 +678,10 @@ android_system_image {
                 "com.android.nfc_extras",
                 "com.android.runtime",
                 "CompanionDeviceManager", // media_system
-                "Contacts", // handheld_product
                 "ContactsProvider",
                 "CredentialManager", // handheld_system
-                "CuttlefishService", // vendor
                 "CuttlefishTetheringOverlay",
                 "CuttlefishWifiOverlay",
-                "DeskClock", // handheld_product
                 "DeviceAsWebcam", // handheld_system
                 "DocumentsUI", // handheld_system
                 "DownloadProvider", // base_system
@@ -745,7 +700,6 @@ android_system_image {
                 "framework-res",
                 "FusedLocation", // handheld_system
                 "fuseMedia.o",
-                "Gallery2", // handheld_product
                 "gpuMem.o",
                 "gpuWork.o",
                 "HTMLViewer", // media_system
@@ -757,8 +711,6 @@ android_system_image {
                 "IntentResolver",
                 "javax.obex",
                 "KeyChain", // handheld_system
-                "LatinIME", // handheld_product
-                "Launcher3QuickStep", // handheld_system_ext
                 "LiveWallpapersPicker", // generic_system, full_base
                 "llndk.libraries.txt",
                 "LocalTransport", // base_system
@@ -769,7 +721,6 @@ android_system_image {
                 "MmsService", // handheld_system
                 "ModuleMetadata",
                 "MtpService", // handheld_system
-                "Music", // handheld_product
                 "MusicFX", // handheld_system
                 "NetworkStack",
                 "NfcNci", // base_system
@@ -779,19 +730,14 @@ android_system_image {
                 "PacProcessor", // handheld_system
                 "PartnerBookmarksProvider", // generic_system
                 "PhotoTable", // full_base
-                "platform-bootclasspath", // required from init.rc
                 "platform-systemserverclasspath",
                 "PrintRecommendationService", // handheld_system
                 "PrintSpooler", // handheld_system
-                "Provision", // handheld_system_ext
                 "ProxyHandler", // handheld_system
                 "QualifiedNetworksService",
-                "QuickSearchBox", // handheld_product
                 "SecureElement", // handheld_system
                 "selinux_policy_system_soong",
                 "services",
-                "Settings", // handheld_system_ext
-                "SettingsIntelligence", // handheld_product
                 "SettingsProvider",
                 "SharedStorageBackup", // handheld_system
                 "shell_and_utilities_system",
@@ -800,8 +746,6 @@ android_system_image {
                 "SoundPicker", // not installed by anyone
                 "StatementService", // media_system
                 "Stk", // generic_system
-                "StorageManager", // handheld_system_ext
-                "SystemUI", // handheld_system_ext
                 "Tag", // generic_system
                 "Telecom", // handheld_system
                 "telephony-common", // libs from TeleService
@@ -813,8 +757,6 @@ android_system_image {
                 "voip-common", // base_system
                 "VpnDialogs", // handheld_system
                 "WallpaperBackup", // base_system
-                "WallpaperCropper", // handheld_system_ext
-                "webview", // media_product
             ],
         },
         lib32: {
