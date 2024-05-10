@@ -12,4 +12,4 @@ TOOL_DIR="${REPO_DIR}/tools"
 "${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro
 
 # Run as different user without sudo privileges
-sudo -u testrunner "${TOOL_DIR}/testutils/runcvde2etests.sh" cvd/...
+sudo -u testrunner "${TOOL_DIR}/testutils/runcvde2etests.sh"
