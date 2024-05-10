@@ -78,33 +78,40 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     SendLastFrameAsync(/*all displays*/ std::nullopt);
   }
 
-  void OnTouchEvent(const std::string &device_label, int x, int y,
-                    bool down) override {
-    input_events_sink_->SendTouchEvent(device_label, x, y, down);
+  Result<void> OnTouchEvent(const std::string &device_label, int x, int y,
+                            bool down) override {
+    CF_EXPECT(input_events_sink_->SendTouchEvent(device_label, x, y, down));
+    return {};
   }
 
-  void OnMultiTouchEvent(const std::string &device_label, Json::Value id,
-                         Json::Value slot, Json::Value x, Json::Value y,
-                         bool down, int size) {
+  Result<void> OnMultiTouchEvent(const std::string &device_label,
+                                 Json::Value id, Json::Value slot,
+                                 Json::Value x, Json::Value y, bool down,
+                                 int size) {
     std::vector<MultitouchSlot> slots(size);
     for (int i = 0; i < size; i++) {
       slots[i].id = id[i].asInt();
       slots[i].x = x[i].asInt();
       slots[i].y = y[i].asInt();
     }
-    input_events_sink_->SendMultiTouchEvent(device_label, slots, down);
+    CF_EXPECT(
+        input_events_sink_->SendMultiTouchEvent(device_label, slots, down));
+    return {};
   }
 
-  void OnKeyboardEvent(uint16_t code, bool down) override {
-    input_events_sink_->SendKeyboardEvent(code, down);
+  Result<void> OnKeyboardEvent(uint16_t code, bool down) override {
+    CF_EXPECT(input_events_sink_->SendKeyboardEvent(code, down));
+    return {};
   }
 
-  void OnWheelEvent(int pixels) {
-    input_events_sink_->SendRotaryEvent(pixels);
+  Result<void> OnWheelEvent(int pixels) {
+    CF_EXPECT(input_events_sink_->SendRotaryEvent(pixels));
+    return {};
   }
 
-  void OnSwitchEvent(uint16_t code, bool state) {
-    input_events_sink_->SendSwitchesEvent(code, state);
+  Result<void> OnSwitchEvent(uint16_t code, bool state) {
+    CF_EXPECT(input_events_sink_->SendSwitchesEvent(code, state));
+    return {};
   }
 
   void OnAdbChannelOpen(std::function<bool(const uint8_t *, size_t)>
@@ -127,32 +134,39 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
         kernel_log_events_handler_->AddSubscriber(control_message_sender);
   }
 
-  void OnLidStateChange(bool lid_open) override {
+  Result<void> OnLidStateChange(bool lid_open) override {
     // InputManagerService treats a value of 0 as open and 1 as closed, so
     // invert the lid_switch_open value that is sent to the input device.
-    OnSwitchEvent(SW_LID, !lid_open);
+    CF_EXPECT(OnSwitchEvent(SW_LID, !lid_open));
+    return {};
   }
   void OnHingeAngleChange(int /*hinge_angle*/) override {
     // TODO(b/181157794) Propagate hinge angle sensor data using a custom
     // Sensor HAL.
   }
-  void OnPowerButton(bool button_down) override {
-    OnKeyboardEvent(KEY_POWER, button_down);
+  Result<void> OnPowerButton(bool button_down) override {
+    CF_EXPECT(OnKeyboardEvent(KEY_POWER, button_down));
+    return {};
   }
-  void OnBackButton(bool button_down) override {
-    OnKeyboardEvent(KEY_BACK, button_down);
+  Result<void> OnBackButton(bool button_down) override {
+    CF_EXPECT(OnKeyboardEvent(KEY_BACK, button_down));
+    return {};
   }
-  void OnHomeButton(bool button_down) override {
-    OnKeyboardEvent(KEY_HOMEPAGE, button_down);
+  Result<void> OnHomeButton(bool button_down) override {
+    CF_EXPECT(OnKeyboardEvent(KEY_HOMEPAGE, button_down));
+    return {};
   }
-  void OnMenuButton(bool button_down) override {
-    OnKeyboardEvent(KEY_MENU, button_down);
+  Result<void> OnMenuButton(bool button_down) override {
+    CF_EXPECT(OnKeyboardEvent(KEY_MENU, button_down));
+    return {};
   }
-  void OnVolumeDownButton(bool button_down) override {
-    OnKeyboardEvent(KEY_VOLUMEDOWN, button_down);
+  Result<void> OnVolumeDownButton(bool button_down) override {
+    CF_EXPECT(OnKeyboardEvent(KEY_VOLUMEDOWN, button_down));
+    return {};
   }
-  void OnVolumeUpButton(bool button_down) override {
-    OnKeyboardEvent(KEY_VOLUMEUP, button_down);
+  Result<void> OnVolumeUpButton(bool button_down) override {
+    CF_EXPECT(OnKeyboardEvent(KEY_VOLUMEUP, button_down));
+    return {};
   }
   void OnCustomActionButton(const std::string &command,
                             const std::string &button_state) override {
