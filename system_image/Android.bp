@@ -378,7 +378,7 @@ android_system_image {
         "incidentd",
         "init_first_stage", // for boot partition
         // "init.environ.rc", // TODO: move to soong
-        "init.rc",
+        "init.rc", // required by init_second_stage
         "init.usb.configfs.rc",
         "init.usb.rc",
         "init.zygote32.rc",
@@ -415,64 +415,64 @@ android_system_image {
         "libcutils", // used by many libs
         "libdmabufheap", // used by many libs
         "libdrm", // used by many libs // generic_system
-        "libdrmclearkeyplugin",
+        "libdrmclearkeyplugin", // base_vendor
         "libdrmframework_jni", // base_system
         "libdrmframework", // base_system
-        "libdynproc",
-        "libeffectproxy",
-        "libeffects",
-        "libeffectsconfig",
+        "libdynproc", // base_vendor
+        "libeffectproxy", // base_vendor
+        "libeffects", // base_vendor
+        "libeffectsconfig", // shared_lib deps from libeffects
         "libEGL_angle", // base_system
         "libEGL", // base_system
-        "libepoxy",
+        "libepoxy", // not used
         "libETC1", // base_system
-        "libext4_utils",
+        "libext4_utils", // shared_lib deps from liblp
         "libfdtrack", // base_system
-        "libfec",
+        "libfec", // shared_lib deps from libfs_mgr
         "libFFTEm", // base_system
         "libfilterfw", // base_system
         "libfilterpack_imageproc", // media_system
-        "libfmq",
-        "libfs_mgr",
+        "libfmq", // shared_lib dep from ???
+        "libfs_mgr", // shared_lib deps from init
         "libfwdlockengine", // generic_system
         "libgatekeeper", // base_system
-        "libgbm",
+        "libgbm", // statically linked
         "libGLESv1_CM_angle", // base_system
         "libGLESv1_CM", // base_system
         "libGLESv2_angle", // base_system
         "libGLESv2", // base_system
         "libGLESv3", // base_system
-        "libgralloctypes",
+        "libgralloctypes", // shared_lib deps
         "libgui", // base_system
-        "libhapticgenerator",
+        "libhapticgenerator", // base_vendor
         "libhardware_legacy", // base_system
         "libhardware", // base_system
-        "libhidcommand_jni",
-        "libhidlmemory",
+        "libhidcommand_jni", // required from hid
+        "libhidlmemory", // shared_lib deps from many
         "libhidltransport", // generic_system
         "libhwbinder", // generic_system
-        "libincident",
+        "libincident", // shared_lib deps from libperfetto_android_internal
         "libinput", // base_system
         "libinputflinger", // base_system
         "libiprouteutil", // base_system
-        "libjni_deviceAsWebcam",
+        "libjni_deviceAsWebcam", // jni_lib deps from DeviceAsWebcam
         "libjnigraphics", // base_system
         "libjpeg", // base_system
-        "libldnhncr",
-        "liblockagent",
+        "libldnhncr", // base_vendor
+        "liblockagent", // required by start_with_lockagent
         "liblog", // base_system
         "liblogwrap", // generic_system
-        "liblp",
+        "liblp", // shared_lib deps from snapshotctl
         "liblz4", // generic_system
-        "libmedia_helper",
+        "libmedia_helper", // shared_lib deps from libaudioclient
         "libmedia_jni", // base_system
         "libmedia", // base_system
         "libmediandk", // base_system
-        "libmediaplayerservice",
-        "libmediautils_delayed",
+        "libmediaplayerservice", // shared_lib deps from mediaservice
+        "libmediautils_delayed", // required deps from libmediautils
         "libminui", // generic_system
         "libmtp", // base_system
-        "libnativewindow",
+        "libnativewindow", // shared_lib deps from many
         "libnetd_client", // base_system
         "libnetlink", // base_system
         "libnetutils", // base_system
@@ -481,16 +481,16 @@ android_system_image {
         "libOpenMAXAL", // base_system
         "libOpenSLES", // base_system
         "libpdfium", // base_system
-        "libperfetto_android_internal",
+        "libperfetto_android_internal", // required by perfetto-extras
         "libpolicy-subsystem", // generic_system
         "libpower", // base_system
         "libpowermanager", // base_system
-        "libprocessgroup_setup",
+        "libprocessgroup_setup", //  shared_lib deps from init
         "libprotobuf-cpp-full", // generic_system
         "libradio_metadata", // base_system
-        "librank",
-        "libresourcemanagerservice",
-        "libreverbwrapper",
+        "librank", // required from dumpstate
+        "libresourcemanagerservice", // shared_lib deps from mediaserver
+        "libreverbwrapper", // base_vendor
         "librtp_jni", // base_system
         "libsensorservice", // base_system
         "libsfplugin_ccodec", // base_system
@@ -500,44 +500,44 @@ android_system_image {
         "libsoundpool", // base_system
         "libspeexresampler", // base_system
         "libsqlite", // base_system
-        "libsquashfs_utils",
-        "libssl",
+        "libsquashfs_utils", // shared_lib deps from libfec
+        "libssl", // shared_lib deps from many
         "libstagefright_foundation", // base_system
-        "libstagefright_httplive",
+        "libstagefright_httplive", // shared_lib deps from libmediaplayerservice
         "libstagefright_omx", // base_system
         "libstagefright", // base_system
         "libstdc++", // base_system
-        "libsync",
+        "libsync", // shared_lib deps from many
         "libsysutils", // base_system
-        "libtinyxml2",
-        "libtombstoned_client",
-        "libtracingproxy",
+        "libtinyxml2", // shared_lib deps from many
+        "libtombstoned_client", // shared_lib deps from libartpalette-system
+        "libtracingproxy", // shared_lib deps from libperfetto_android_internal
         "libui", // base_system
-        "libuinputcommand_jni",
-        "libukey2_jni_shared",
+        "libuinputcommand_jni", // required from uinput
+        "libukey2_jni_shared", // required from service
         "libusbhost", // base_system
         "libutils", // base_system
-        "libvendorsupport",
+        "libvendorsupport", // shared_lib dep from init
         "libvintf_jni", // base_system
-        "libvirglrenderer",
-        "libvisualizer",
+        "libvirglrenderer", // shared_lib from crosvm
+        "libvisualizer", // base_vendor
         "libvulkan", // base_system
         "libwebviewchromium_loader", // media_system
         "libwebviewchromium_plat_support", // media_system
-        "libwfds",
+        "libwfds", // jni_lib from BuiltInPrintService
         "libwilhelm", // base_system
-        "libxml2",
-        "linker",
+        "libxml2", // shared_lib deps from many
+        "linker", // ok
         "llkd", // base_system
         "lmkd", // base_system
-        "local_time.default",
-        "lockagent_crasher",
+        "local_time.default", // handheld_vendo
+        "lockagent_crasher", // required by start_with_lockagent
         "locksettings", // base_system
         "logcat", // base_system
-        "logcatd",
+        "logcatd", // required from logpersist.start
         "logd", // base_system
         "lpdump", // base_system
-        "lpdumpd",
+        "lpdumpd", // required from dumpstate
         "lshal", // base_system
         "make_f2fs", // media_system
         "mdnsd", // base_system
@@ -545,21 +545,21 @@ android_system_image {
         "mediacodec.policy", // base_system
         "mediaextractor", // base_system
         "mediametrics", // base_system
-        "migrate_legacy_obb_data",
+        "migrate_legacy_obb_data", // required from installd
         "misctrl", // from base_system
         "mke2fs", // base_system
         "mkfs.erofs", // base_system
-        "mm_events",
+        "mm_events", // required by perfetto-extras
         "monkey", // base_system
         "mtectrl", // base_system
         "ndc", // base_system
         "netd", // base_system
         "netutils-wrapper-1.0", // full_base
-        "odsign",
-        "otapreopt_chroot",
+        "odsign", // base_system
+        "otapreopt_chroot", // required by otapreopt_script
         "otapreopt_script", // generic_system
-        "otapreopt_slot",
-        "otapreopt",
+        "otapreopt_slot", // required by otapreopt_script
+        "otapreopt", // required by otapreopt_script
         "passwd_system", // base_system
         "perfetto", // base_system
         "ping", // base_system
@@ -567,13 +567,13 @@ android_system_image {
         "pintool", // base_system
         "platform.xml", // base_system
         "pm", // base_system
-        "power.default",
+        "power.default", // handheld_vendor
         "preinstalled-packages-asl-files.xml", // base_system
         "preinstalled-packages-platform-generic-system.xml", // generic_system
-        "preinstalled-packages-platform-handheld-system.xml",
+        "preinstalled-packages-platform-handheld-system.xml", // handheld_system
         "preinstalled-packages-platform.xml", // base_system
         "preinstalled-packages-strict-signature.xml", // base_system
-        "preloaded-classes",
+        "preloaded-classes", // ok
         "printflags", // base_system
         "privapp-permissions-platform.xml", // base_system
         "prng_seeder", // base_system
@@ -583,23 +583,23 @@ android_system_image {
         "resize2fs", // base_system
         "rss_hwm_reset", // base_system
         "run-as", // base_system
-        "sample_camera_extensions.xml",
+        "sample_camera_extensions.xml", // vendor
         "schedtest", // base_system
         "screencap", // base_system
         "screenrecord", // handheld_system
         "sdcard", // base_system
         "secdiscard", // base_system
         "sensorservice", // base_system
-        "server_configurable_flags",
+        "server_configurable_flags", // shared_lib deps from many
         "service", // base_system
         "servicemanager", // base_system
         "settings", // base_system
         "sfdo", // base_system
         "sgdisk", // base_system
-        "sload_f2fs",
+        "sload_f2fs", // base_vendor
         "sm", // base_system
         "snapshotctl", // base_system
-        "snapuserd_ramdisk",
+        "snapuserd_ramdisk", // ramdisk
         "snapuserd", // base_system
         "storaged", // base_system
         "surfaceflinger", // base_system
@@ -608,87 +608,87 @@ android_system_image {
         "tc", // base_system
         "telecom", // base_system
         "tombstoned", // base_system
-        "toolbox",
-        "traced_perf",
+        "toolbox", // required by shell_and_utilities
+        "traced_perf", // required by perfetto-extras
         "traced_probes", // base_system
         "traced", // base_system
-        "trigger_perfetto",
+        "trigger_perfetto", // required by perfetto-extras
         "tune2fs", // base_system
-        "ueventd.rc",
+        "ueventd.rc", // required by init_second_stage
         "uiautomator", // base_system
         "uinput", // base_system
         "uncrypt", // base_system
-        "update_engine_sideload",
+        "update_engine_sideload", // recovery
         "update_engine", // generic_system
         "update_verifier", // generic_system
         "usbd", // base_system
         "vdc", // base_system
-        "vibrator.default",
-        "virtual_camera",
-        "vold_prepare_subdirs",
+        "vibrator.default", // handheld_vendor
+        "virtual_camera", // handheld_system // release_package_virtual_camera
+        "vold_prepare_subdirs", // required by vold
         "vold", // base_system
         "vr", // handheld_system
         "watchdogd", // base_system
         "wifi.rc", // base_system
         "wificond", // base_system
         "wm", // base_system
-        "xtables.lock",
+        "xtables.lock", // required by iptables
     ],
     multilib: {
         common: {
             deps: [
-                "adbd_system_api",
-                "android.hardware.drm@latest-service.clearkey",
-                "android.hidl.base-V1.0-java",
-                "android.hidl.manager-V1.0-java",
+                "adbd_system_api", // base_system
+                "android.hardware.drm@latest-service.clearkey", // vendor
+                "android.hidl.base-V1.0-java", // base_system
+                "android.hidl.manager-V1.0-java", // base_system
                 "android.test.base", // from runtime_libart
-                "android.test.mock",
-                "android.test.runner",
-                "androidx.camera.extensions.impl",
-                "androidx.window.extensions",
-                "androidx.window.sidecar",
-                "aosp_mainline_modules",
-                "BackupRestoreConfirmation",
+                "android.test.mock", // base_system
+                "android.test.runner", // base_system
+                "androidx.camera.extensions.impl", // vendor
+                "androidx.window.extensions", // system_ext
+                "androidx.window.sidecar", // system_ext
+                "aosp_mainline_modules", // ok
+                "BackupRestoreConfirmation", // base_system
                 "BasicDreams", // handheld_system
                 "BlockedNumberProvider", // handheld_system
                 "BluetoothMidiService", // handheld_system
                 "BookmarkProvider", // handheld_system
-                "bpfMemEvents.o",
-                "bpfMemEventsTest.o",
-                "bpfRingbufProg.o",
-                "BuiltInPrintService",
+                "bpfMemEvents.o", // required by libmemevents
+                "bpfMemEventsTest.o", // required by libmemevents
+                "bpfRingbufProg.o", // required by bpfloader
+                "BuiltInPrintService", // handheld_system
                 "CalendarProvider", // handheld_system
-                "CallLogBackup",
+                "CallLogBackup", // telephony_system
                 "CameraExtensionsProxy", // handheld_system
                 "CaptivePortalLogin", // handheld_system
-                "CarrierConfig",
-                "CarrierDefaultApp",
-                "CellBroadcastLegacyApp",
+                "CarrierConfig", // telephony_system_ext
+                "CarrierDefaultApp", // telephony_system
+                "CellBroadcastLegacyApp", // telephony_system
                 "CertInstaller", // handheld_system
                 "CFSatelliteService", // cuttlefish
-                "charger_res_images",
-                "com.android.apex.cts.shim.v1_prebuilt",
-                "com.android.cellbroadcast",
-                "com.android.compos",
+                "charger_res_images", // generic_system
+                "com.android.apex.cts.shim.v1_prebuilt", // ok
+                "com.android.cellbroadcast", // telephony_system
+                "com.android.compos", // system_ext
                 "com.android.future.usb.accessory", // media_system
-                "com.android.location.provider",
+                "com.android.location.provider", // base_system
                 "com.android.media.remotedisplay.xml", // media_system
                 "com.android.media.remotedisplay", // media_system
                 "com.android.mediadrm.signer", // media_system
-                "com.android.nfc_extras",
-                "com.android.runtime",
+                "com.android.nfc_extras", // ok
+                "com.android.runtime", // ok
                 "CompanionDeviceManager", // media_system
-                "ContactsProvider",
+                "ContactsProvider", // base_system
                 "CredentialManager", // handheld_system
-                "CuttlefishTetheringOverlay",
-                "CuttlefishWifiOverlay",
+                "CuttlefishTetheringOverlay", // cuttlefish
+                "CuttlefishWifiOverlay", // cuttlefish
                 "DeviceAsWebcam", // handheld_system
                 "DocumentsUI", // handheld_system
                 "DownloadProvider", // base_system
                 "DownloadProviderUi", // handheld_system
-                "DynamicSystemInstallationService",
+                "DynamicSystemInstallationService", // base_system
                 "EasterEgg", // handheld_system
-                "EmergencyInfo",
+                "EmergencyInfo", // telephony_system_ext
                 "ext", // from runtime_libart
                 "ExternalStorageProvider", // handheld_system
                 "ExtShared", // base_system
@@ -697,50 +697,51 @@ android_system_image {
                 "framework-location", // base_system
                 "framework-minus-apex-install-dependencies", // base_system
                 "framework-nfc", // base_system
-                "framework-res",
+                "framework-res", // required by framework
                 "FusedLocation", // handheld_system
-                "fuseMedia.o",
-                "gpuMem.o",
-                "gpuWork.o",
+                "fuseMedia.o", // required by vold
+                "gpuMem.o", // required by gpuservice
+                "gpuWork.o", // required by libgpuwork
                 "HTMLViewer", // media_system
                 "hwservicemanager_compat_symlink_module", // base_system
-                "ims-common",
-                "ImsServiceEntitlement",
-                "init_system",
+                "ims-common", // base_system
+                "ImsServiceEntitlement", // telephony_product
+                "init_system", // base_system
                 "InputDevices", // handheld_system
-                "IntentResolver",
-                "javax.obex",
+                "IntentResolver", // base_system
+                "javax.obex", // base_system
                 "KeyChain", // handheld_system
                 "LiveWallpapersPicker", // generic_system, full_base
-                "llndk.libraries.txt",
+                "llndk.libraries.txt", //ok
                 "LocalTransport", // base_system
-                "lockagent",
+                "lockagent", // required by start_with_lockagent
                 "ManagedProvisioning", // handheld_system
                 "MediaProviderLegacy", // base_system
-                "messaging",
+                "messaging", // product
                 "MmsService", // handheld_system
-                "ModuleMetadata",
+                "ModuleMetadata", // base_product
                 "MtpService", // handheld_system
                 "MusicFX", // handheld_system
-                "NetworkStack",
+                "NetworkStack", // base_system
                 "NfcNci", // base_system
-                "ONS",
-                "org.apache.http.legacy",
-                "PackageInstaller",
+                "ONS", // telephony_system
+                "org.apache.http.legacy", // base_system
+                "perfetto-extras", // system
+                "PackageInstaller", // base_system
                 "PacProcessor", // handheld_system
                 "PartnerBookmarksProvider", // generic_system
                 "PhotoTable", // full_base
-                "platform-systemserverclasspath",
+                "platform-systemserverclasspath", // required from platform-bootclasspath.. from init.rc
                 "PrintRecommendationService", // handheld_system
                 "PrintSpooler", // handheld_system
                 "ProxyHandler", // handheld_system
-                "QualifiedNetworksService",
+                "QualifiedNetworksService", // cuttlefish
                 "SecureElement", // handheld_system
-                "selinux_policy_system_soong",
-                "services",
-                "SettingsProvider",
+                "selinux_policy_system_soong", // ok
+                "services", // base_system
+                "SettingsProvider", // base_system
                 "SharedStorageBackup", // handheld_system
-                "shell_and_utilities_system",
+                "shell_and_utilities_system", // ok
                 "Shell", // base_system
                 "SimAppDialog", // handheld_system
                 "SoundPicker", // not installed by anyone
@@ -751,7 +752,7 @@ android_system_image {
                 "telephony-common", // libs from TeleService
                 "TelephonyProvider", // handheld_system
                 "TeleService", // handheld_system
-                "timeInState.o",
+                "timeInState.o", // required by bpfloader
                 "Traceur", // handheld_system
                 "UserDictionaryProvider", // handheld_system
                 "voip-common", // base_system
