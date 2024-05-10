@@ -41,7 +41,10 @@ class CreateSessionDescriptionObserverIntermediate
       : controller_(controller) {}
 
   void OnSuccess(webrtc::SessionDescriptionInterface* desc) override {
-    controller_.OnCreateSDPSuccess(desc);
+    auto res = controller_.OnCreateSDPSuccess(desc);
+    if (!res.ok()) {
+      LOG(ERROR) << res.error().FormatForEnv();
+    }
   }
   void OnFailure(webrtc::RTCError error) override {
     controller_.OnCreateSDPFailure(error);
@@ -114,7 +117,10 @@ void ConnectionController::FailConnection(const std::string& message) {
   Json::Value reply;
   reply["type"] = "error";
   reply["error"] = message;
-  sig_handler_.SendMessage(reply);
+  auto res = sig_handler_.SendMessage(reply);
+  if (!res.ok()) {
+    LOG(ERROR) << res.error().FormatForEnv();
+  }
   observer_.OnConnectionStateChange(CF_ERR(message));
 }
 
@@ -181,7 +187,7 @@ Result<void> ConnectionController::OnErrorMsg(const std::string& msg) {
   return {};
 }
 
-void ConnectionController::OnCreateSDPSuccess(
+Result<void> ConnectionController::OnCreateSDPSuccess(
     webrtc::SessionDescriptionInterface* desc) {
   std::string offer_str;
   desc->ToString(&offer_str);
@@ -195,7 +201,8 @@ void ConnectionController::OnCreateSDPSuccess(
   reply["type"] = sdp_type;
   reply["sdp"] = offer_str;
 
-  sig_handler_.SendMessage(reply);
+  CF_EXPECT(sig_handler_.SendMessage(reply));
+  return {};
 }
 
 void ConnectionController::OnCreateSDPFailure(const webrtc::RTCError& error) {
@@ -395,7 +402,10 @@ void ConnectionController::OnIceCandidate(
   reply["mLineIndex"] = static_cast<Json::UInt64>(line_index);
   reply["candidate"] = candidate_sdp;
 
-  sig_handler_.SendMessage(reply);
+  auto res = sig_handler_.SendMessage(reply);
+  if (!res.ok()) {
+    LOG(ERROR) << res.error().FormatForEnv();
+  }
 }
 
 // Gathering of an ICE candidate failed.

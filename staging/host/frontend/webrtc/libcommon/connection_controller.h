@@ -155,7 +155,7 @@ class ConnectionController : public webrtc::PeerConnectionObserver {
   rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>
   ThisAsSetRemoteSDPObserver();
 
-  void OnCreateSDPSuccess(webrtc::SessionDescriptionInterface* desc);
+  Result<void> OnCreateSDPSuccess(webrtc::SessionDescriptionInterface* desc);
   void OnCreateSDPFailure(const webrtc::RTCError& error);
   void OnSetLocalDescriptionSuccess();
   void OnSetLocalDescriptionFailure(const webrtc::RTCError& error);
