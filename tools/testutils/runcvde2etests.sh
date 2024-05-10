@@ -26,5 +26,5 @@ cd "${REPO_DIR}/e2etests"
 # Gather test results regardless of status, but still return the exit code from
 # those tests
 trap gather_test_results EXIT
-bazel test "$@"
+bazel test cvd/...
 
