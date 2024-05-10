@@ -333,12 +333,11 @@ android_system_image {
         "cgroups.json",
         "cmd",
         "content",
-        "cppreopts.sh",
+        "cppreopts.sh", // TODO: move this to product-specific part?
         "credstore",
         "debuggerd",
         "device_config",
         "dirty-image-objects",
-        "dlkm_loader",
         "dmabuf_dump",
         "dmctl",
         "dmesgd",
