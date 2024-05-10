@@ -68,6 +68,7 @@ if [[ "${PKG_DIR}" == "" ]] || ! [[ -d "${PKG_DIR}" ]]; then
   exit 1
 fi
 
+sudo apt-get update
 install_pkgs "${PKG_DIR}" cuttlefish-base cuttlefish-user
 
 check_service_started cuttlefish-host-resources
