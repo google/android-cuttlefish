@@ -38,6 +38,9 @@ fi
 orchestrator_tls_cert_dir=${orchestrator_tls_cert_dir:-"/etc/cuttlefish-common/host_orchestrator/cert"}
 orchestrator_cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir:-"/var/lib/cuttlefish-common"}
 
+# Run as the configured user or root if none was specified
+orchestrator_user="${orchestrator_user:-root}"
+
 RUN_DIR="/run/cuttlefish"
 ORCHESTRATOR_BIN="/usr/lib/cuttlefish-common/bin/host_orchestrator"
 ORCHESTRATOR_PIDFILE="${RUN_DIR}"/host_orchestrator.pid
@@ -59,8 +62,8 @@ gen_cert() {
       -out "${CERT_FILE}" \
       -keyout "${KEY_FILE}" \
       -subj "/C=US"
-    chown _cutf-operator:cvdnetwork "${CERT_FILE}"
-    chown _cutf-operator:cvdnetwork "${KEY_FILE}"
+    chown "${orchestrator_user}":cvdnetwork "${CERT_FILE}"
+    chown "${orchestrator_user}":cvdnetwork "${KEY_FILE}"
   fi
 }
 
@@ -70,13 +73,13 @@ set_config_expr() {
 
 prepare_run_dir() {
   mkdir -p "${RUN_DIR}"
-  chown _cutf-operator:cvdnetwork "${RUN_DIR}"
+  chown "${orchestrator_user}":cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
 }
 
 start_orchestrator() {
   mkdir -p  "${orchestrator_cvd_artifacts_dir}"
-  chown _cutf-operator:cvdnetwork "${orchestrator_cvd_artifacts_dir}"
+  chown "${orchestrator_user}":cvdnetwork "${orchestrator_cvd_artifacts_dir}"
 
   args=()
 
@@ -104,11 +107,13 @@ start_orchestrator() {
   if [[ -n "${orchestrator_listen_address}" ]]; then
     args+=("--listen_addr=${orchestrator_listen_address}")
   fi
-  args+=("--cvd_user=_cvd-executor")
+  if [[ -n "${orchestrator_cvd_user}" ]]; then
+    args+=("--cvd_user=${orchestrator_cvd_user}")
+  fi
 
   start-stop-daemon --start \
     --pidfile "${ORCHESTRATOR_PIDFILE}" \
-    --chuid _cutf-operator:cvdnetwork \
+    --chuid "${orchestrator_user}":cvdnetwork \
     --chdir "${ASSET_DIR}" \
     --background --no-close \
     --make-pidfile \

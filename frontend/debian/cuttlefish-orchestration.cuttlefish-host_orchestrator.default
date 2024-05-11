@@ -37,3 +37,9 @@ orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common
 # The port where the operator is to listen on.
 # Defaults to 1080.
 # operator_http_port=
+#
+# The user the host orchestrator runs as
+orchestrator_user=_cutf-operator
+#
+# The user to create and run cvd as
+orchestrator_cvd_user=_cvd-executor
