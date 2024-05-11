@@ -1,6 +1,7 @@
 cuttlefish-frontend (0.9.29) UNRELEASED; urgency=medium
 
   * Make cuttlefish-orchestration depend on cuttlefish-user
+  * Make host orchestrator users configurable
 
  -- Jorge Moreira <jemoreira@google.com>  Thu, 12 Oct 2023 18:12:35 -0700
 
