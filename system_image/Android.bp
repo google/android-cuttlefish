@@ -416,7 +416,6 @@ android_system_image {
         "libdrmframework", // base_system
         "libEGL_angle", // base_system
         "libEGL", // base_system
-        "libepoxy", // not used
         "libETC1", // base_system
         "libfdtrack", // base_system
         "libFFTEm", // base_system
@@ -424,7 +423,6 @@ android_system_image {
         "libfilterpack_imageproc", // media_system
         "libfwdlockengine", // generic_system
         "libgatekeeper", // base_system
-        "libgbm", // statically linked
         "libGLESv1_CM_angle", // base_system
         "libGLESv1_CM", // base_system
         "libGLESv2_angle", // base_system
@@ -461,6 +459,7 @@ android_system_image {
         "libpowermanager", // base_system
         "libprotobuf-cpp-full", // generic_system
         "libradio_metadata", // base_system
+        "librs_jni", // handheld_system
         "librtp_jni", // base_system
         "libsensorservice", // base_system
         "libsfplugin_ccodec", // base_system

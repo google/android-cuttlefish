@@ -1,0 +1,6 @@
+# Allow dumpstate to talk to automotive_display_service over binder.
+binder_call(dumpstate, automotive_display_service_server)
+
+# Allow dumpstate to signal processes to dump.
+allow dumpstate hal_can_socketcan:process signal;
+allow dumpstate hal_occupant_awareness_default:process signal;
