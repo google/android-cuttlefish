@@ -1,0 +1,42 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+prebuilt_etc {
+    name: "com.google.cf.wpa_supplicant.rc",
+    src: "com.google.cf.wpa_supplicant.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "wpa_supplicant.conf.cf",
+    src: ":wpa_supplicant_template.conf",
+    filename: "wpa_supplicant.conf",
+    relative_install_path: "wifi",
+    installable: false,
+}
+
+apex {
+    name: "com.google.cf.wpa_supplicant",
+    manifest: "manifest.json",
+    file_contexts: "file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "//external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant:wpa_supplicant",
+        "//external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant:hostapd",
+    ],
+    prebuilts: [
+        "com.google.cf.wpa_supplicant.rc",
+        "wpa_supplicant.conf.cf",
+        "wpa_supplicant_overlay.conf.cf",
+        "p2p_supplicant.conf.cf",
+    ],
+    vintf_fragments: [
+        ":android.hardware.wifi.supplicant.xml",
+        ":android.hardware.wifi.hostapd.xml",
+    ],
+}
