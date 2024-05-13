@@ -459,6 +459,7 @@ android_system_image {
         "libpowermanager", // base_system
         "libprotobuf-cpp-full", // generic_system
         "libradio_metadata", // base_system
+        "librs_jni", // handheld_system
         "librtp_jni", // base_system
         "libsensorservice", // base_system
         "libsfplugin_ccodec", // base_system
