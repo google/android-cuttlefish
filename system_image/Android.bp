@@ -56,10 +56,6 @@ android_symlinks = [
         target: "/system_dlkm/lib/modules",
         name: "system/lib/modules",
     },
-    {
-        target: "/apex/com.android.tethering/bin/ethtool",
-        name: "system/bin/ethtool",
-    },
 ]
 
 phony {
