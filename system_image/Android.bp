@@ -339,7 +339,7 @@ android_system_image {
         "cgroups.json",
         "cmd",
         "content",
-        "cppreopts.sh",  // generic_system
+        "cppreopts.sh", // generic_system
         "credstore",
         "debuggerd",
         "device_config",
