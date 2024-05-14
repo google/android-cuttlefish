@@ -298,6 +298,7 @@ android_system_image {
         libs: [":framework-res{.export-package.apk}"],
     },
     build_logtags: true,
+    gen_aconfig_flags_pb: true,
 
     use_avb: true,
     avb_private_key: ":microdroid_sign_key",
