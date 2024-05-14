@@ -16,49 +16,36 @@
 
 #include "host/commands/cvd/parser/cf_configs_instances.h"
 
-#include <iostream>
 #include <string>
 #include <vector>
 
 #include <android-base/logging.h>
-#include "json/json.h"
 
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/instance/cf_boot_configs.h"
+#include "host/commands/cvd/parser/instance/cf_connectivity_configs.h"
 #include "host/commands/cvd/parser/instance/cf_disk_configs.h"
 #include "host/commands/cvd/parser/instance/cf_graphics_configs.h"
 #include "host/commands/cvd/parser/instance/cf_security_configs.h"
 #include "host/commands/cvd/parser/instance/cf_streaming_configs.h"
 #include "host/commands/cvd/parser/instance/cf_vm_configs.h"
-#include "host/commands/cvd/parser/instance/cf_connectivity_configs.h"
 
 namespace cuttlefish {
 
-Result<void> InitInstancesConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, "", {"name"}));
-  }
-  CF_EXPECT(InitBootConfigs(instances));
-  CF_EXPECT(InitDiskConfigs(instances));
-  CF_EXPECT(InitGraphicsConfigs(instances));
-  CF_EXPECT(InitSecurityConfigs(instances));
-  CF_EXPECT(InitStreamingConfigs(instances));
-  CF_EXPECT(InitVmConfigs(instances));
-  return {};
-}
+using cvd::config::EnvironmentSpecification;
 
 Result<std::vector<std::string>> GenerateInstancesFlags(
-    const Json::Value& instances) {
-  std::vector<std::string> result = CF_EXPECT(GenerateBootFlags(instances));
-  result = MergeResults(result, CF_EXPECT(GenerateDiskFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateGraphicsFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateSecurityFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateStreamingFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateVmFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateConnectivityFlags(instances)));
-
-  return result;
+    const EnvironmentSpecification& cfg) {
+  std::vector<std::string> res = CF_EXPECT(GenerateBootFlags(cfg));
+  res = MergeResults(std::move(res), GenerateDiskFlags(cfg));
+  res = MergeResults(std::move(res), CF_EXPECT(GenerateGraphicsFlags(cfg)));
+  res = MergeResults(std::move(res), GenerateSecurityFlags(cfg));
+  res = MergeResults(std::move(res), GenerateStreamingFlags(cfg));
+  res = MergeResults(std::move(res), CF_EXPECT(GenerateVmFlags(cfg)));
+  res = MergeResults(std::move(res), GenerateConnectivityFlags(cfg));
+  return res;
 }
 
 }  // namespace cuttlefish

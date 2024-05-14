@@ -15,11 +15,16 @@
  */
 
 #pragma once
-#include "json/json.h"
+
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
+
 namespace cuttlefish {
-Result<void> InitGraphicsConfigs(Json::Value& root);
-Result<std::vector<std::string>> GenerateGraphicsFlags(const Json::Value& root);
+
+Result<std::vector<std::string>> GenerateGraphicsFlags(
+    const cvd::config::EnvironmentSpecification&);
+
 };  // namespace cuttlefish

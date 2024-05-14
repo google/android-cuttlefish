@@ -1,0 +1,155 @@
+/*
+ * Copyright (C) 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package cuttlefish.cvd.config;
+
+message EnvironmentSpecification {
+  repeated Instance instances = 1;
+  optional Fetch fetch = 2;
+  optional Metrics metrics = 3;
+  optional Common common = 4;
+  optional bool netsim_bt = 5;
+  optional bool netsim_uwb = 6;
+}
+
+message Common {
+  optional string group_name = 1;
+  optional string host_package = 2;
+}
+
+message Fetch {
+  optional string api_key = 1;
+  optional string credential_source = 2;
+  optional uint32 wait_retry_period_seconds = 3 [json_name="wait_retry_period"];
+  optional bool external_dns_resolver = 4;
+  optional bool keep_downloaded_archives = 5;
+  optional string api_base_url = 6;
+}
+
+message Instance {
+  optional string name = 1;
+  optional Vm vm = 2;
+  optional Boot boot = 3;
+  optional Security security = 4;
+  optional Disk disk = 5;
+  optional Graphics graphics = 6;
+  optional Streaming streaming = 7;
+  optional Connectivity connectivity = 8;
+  // TODO: b/337089452 - handle outside of proto logic
+  optional string import_template = 9 [json_name="@import"];
+}
+
+message Boot {
+  optional Build kernel = 1;
+  optional bool enable_bootanimation = 2;
+  optional string extra_bootconfig_args = 3;
+  optional string build = 4;
+  optional Build bootloader = 5;
+}
+
+message Build {
+  optional string build = 1;
+}
+
+message Connectivity {
+  optional Vsock vsock = 1;
+}
+
+message Vsock {
+  optional string guest_group = 1;
+}
+
+message Graphics {
+  repeated Display displays = 1;
+  optional bool record_screen = 2;
+}
+
+message Display {
+  optional uint32 width = 1;
+  optional uint32 height = 2;
+  optional uint32 dpi = 3;
+  optional uint32 refresh_rate_hertz = 4;
+}
+
+message Disk {
+  optional string default_build = 1;
+  optional Super super_partition = 2 [json_name="super"];
+  optional bool download_img_zip = 3;
+  optional bool download_target_files_zip = 4;
+  optional uint32 blank_data_image_mb = 5;
+  optional string otatools = 6;
+}
+
+message Super {
+  optional string system = 1;
+}
+
+message Security {
+  optional string serial_number = 1;
+  optional bool use_random_serial = 2;
+  optional bool guest_enforce_security = 3;
+}
+
+message Streaming {
+  optional string device_id = 1;
+}
+
+message Vm {
+  optional uint32 cpus = 1;
+  optional uint32 memory_mb = 2;
+  optional bool use_sdcard = 3;
+  optional string setupwizard_mode = 4;
+  optional string uuid = 5;
+  oneof vmm {
+    Crosvm crosvm = 6;
+    Gem5 gem5 = 7;
+    Qemu qemu = 8;
+  }
+  repeated CustomAction custom_actions = 9;
+}
+
+message Crosvm {
+  optional bool enable_sandbox = 1;
+}
+
+message Gem5 {}
+
+message Qemu {}
+
+message CustomAction {
+  optional string shell_command = 1;
+  optional Button button = 2;
+  optional string server = 3;
+  repeated Button buttons = 4;
+  repeated DeviceState device_states = 5;
+}
+
+message Button {
+  optional string command = 1;
+  optional string title = 2;
+  optional string icon_name = 3;
+}
+
+message DeviceState {
+  optional bool lid_switch_open = 1;
+  optional int32 hinge_angle_value = 2;
+}
+
+message Metrics {
+  optional bool enable = 1;
+}

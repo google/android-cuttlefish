@@ -13,36 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <android-base/file.h>
+#include "host/commands/cvd/parser/launch_cvd_templates.h"
 
-#include <stdio.h>
 #include <string>
+#include <string_view>
+
+#include <google/protobuf/util/json_util.h>
+#include "json/json.h"
 
 #include "common/libs/utils/json.h"
+#include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
+
+using google::protobuf::util::JsonStringToMessage;
+using google::protobuf::util::MessageToJsonString;
 
 namespace cuttlefish {
 
-enum class ConfigTemplate {
-  PHONE,
-  TABLET,
-  TV,
-  WEARABLE,
-  AUTO,
-  SLIM,
-  GO,
-  FOLDABLE,
-  UNKNOWN,
-};
-
-static std::map<std::string, ConfigTemplate> kSupportedTemplatesKeyMap = {
-    {"phone", ConfigTemplate::PHONE}, {"tablet", ConfigTemplate::TABLET},
-    {"tv", ConfigTemplate::TV},       {"wearable", ConfigTemplate::WEARABLE},
-    {"auto", ConfigTemplate::AUTO},   {"slim", ConfigTemplate::SLIM},
-    {"go", ConfigTemplate::GO},       {"foldable", ConfigTemplate::FOLDABLE}};
+using cvd::config::EnvironmentSpecification;
+using cvd::config::Instance;
 
 // Definition of phone instance template in Json format
-static const char* kPhoneInstanceTemplate = R""""(
+static constexpr std::string_view kPhoneInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 4096
@@ -60,7 +53,7 @@ static const char* kPhoneInstanceTemplate = R""""(
   )"""";
 
 // Definition of tablet instance template in Json format
-static const char* kTabletInstanceTemplate = R""""(
+static constexpr std::string_view kTabletInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 4096
@@ -78,7 +71,7 @@ static const char* kTabletInstanceTemplate = R""""(
   )"""";
 
 // Definition of tablet instance template in Json format
-static const char* kTvInstanceTemplate = R""""(
+static constexpr std::string_view kTvInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 2048
@@ -96,7 +89,7 @@ static const char* kTvInstanceTemplate = R""""(
   )"""";
 
 // Definition of tablet instance template in Json format
-static const char* kWearableInstanceTemplate = R""""(
+static constexpr std::string_view kWearableInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 1536,
@@ -115,7 +108,7 @@ static const char* kWearableInstanceTemplate = R""""(
   )"""";
 
 // Definition of auto instance template in Json format
-static const char* kAutoInstanceTemplate = R""""(
+static constexpr std::string_view kAutoInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 4096
@@ -138,7 +131,7 @@ static const char* kAutoInstanceTemplate = R""""(
   )"""";
 
 // Definition of auto instance template in Json format
-static const char* kSlimInstanceTemplate = R""""(
+static constexpr std::string_view kSlimInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 2048,
@@ -157,7 +150,7 @@ static const char* kSlimInstanceTemplate = R""""(
   )"""";
 
 // Definition of go instance template in Json format
-static const char* kGoInstanceTemplate = R""""(
+static constexpr std::string_view kGoInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 2048
@@ -174,7 +167,7 @@ static const char* kGoInstanceTemplate = R""""(
 }
   )"""";
 
-static const char* kFoldableInstanceTemplate = R""""(
+static constexpr std::string_view kFoldableInstanceTemplate = R""""(
 {
     "vm": {
             "memory_mb": 4096,
@@ -237,77 +230,48 @@ static const char* kFoldableInstanceTemplate = R""""(
 }
   )"""";
 
-Json::Value ExtractJsonTemplate(const Json::Value& instance,
-                                const char* template_string) {
-  std::string json_text(template_string);
-  Json::Value result;
+static Result<Json::Value> LoadTemplateByName(const std::string& template_name) {
+  static auto* kSupportedTemplatesKeyMap =
+      new std::map<std::string_view, std::string_view>{
+          {"phone", kPhoneInstanceTemplate},
+          {"tablet", kTabletInstanceTemplate},
+          {"tv", kTvInstanceTemplate},
+          {"wearable", kWearableInstanceTemplate},
+          {"auto", kAutoInstanceTemplate},
+          {"slim", kSlimInstanceTemplate},
+          {"go", kGoInstanceTemplate},
+          {"foldable", kFoldableInstanceTemplate}};
 
-  Json::Reader reader;
-  reader.parse(json_text, result);
-  MergeTwoJsonObjs(result, instance);
-  return result;
+  auto template_it = kSupportedTemplatesKeyMap->find(template_name);
+  CF_EXPECTF(template_it != kSupportedTemplatesKeyMap->end(),
+             "Unknown import value '{}'", template_name);
+
+  return CF_EXPECT(ParseJson(template_it->second));
 }
 
-Json::Value ExtractInstaneTemplate(const Json::Value& instance) {
-  std::string instance_template = instance["@import"].asString();
-  ConfigTemplate selected_template =
-      kSupportedTemplatesKeyMap.at(instance_template);
+Result<EnvironmentSpecification> ExtractLaunchTemplates(
+    EnvironmentSpecification config) {
+  for (auto& ins : *config.mutable_instances()) {
+    if (ins.has_import_template() && ins.import_template() != "") {
+      auto tmpl_json = CF_EXPECT(LoadTemplateByName(ins.import_template()));
+      // TODO: b/337089452 - handle repeated merges within protos
+      // `proto.MergeFrom` concatenates repeated fields, but we want index-wise
+      // merging of repeated fields.
+      std::string ins_json_str;
+      auto status = MessageToJsonString(ins, &ins_json_str);
+      CF_EXPECTF(status.ok(), "{}", status.ToString());
+      auto ins_json = CF_EXPECT(ParseJson(ins_json_str));
 
-  Json::Value result;
+      MergeTwoJsonObjs(ins_json, tmpl_json);
+      std::stringstream combined_json_sstream;
+      combined_json_sstream << ins_json;
+      const auto& combined_json_str = combined_json_sstream.str();
 
-  switch (selected_template) {
-    case ConfigTemplate::PHONE:
-      // Extract phone instance configs from input template
-      result = ExtractJsonTemplate(instance, kPhoneInstanceTemplate);
-      break;
-    case ConfigTemplate::TABLET:
-      // Extract tablet instance configs from input template
-      result = ExtractJsonTemplate(instance, kTabletInstanceTemplate);
-      break;
-    case ConfigTemplate::TV:
-      // Extract tv instance configs from input template
-      result = ExtractJsonTemplate(instance, kTvInstanceTemplate);
-      break;
-    case ConfigTemplate::WEARABLE:
-      // Extract wearable instance configs from input template
-      result = ExtractJsonTemplate(instance, kWearableInstanceTemplate);
-      break;
-    case ConfigTemplate::AUTO:
-      // Extract auto instance configs from input template
-      result = ExtractJsonTemplate(instance, kAutoInstanceTemplate);
-      break;
-    case ConfigTemplate::SLIM:
-      // Extract slim instance configs from input template
-      result = ExtractJsonTemplate(instance, kSlimInstanceTemplate);
-      break;
-    case ConfigTemplate::GO:
-      // Extract go instance configs from input template
-      result = ExtractJsonTemplate(instance, kGoInstanceTemplate);
-      break;
-    case ConfigTemplate::FOLDABLE:
-      // Extract foldable instance configs from input template
-      result = ExtractJsonTemplate(instance, kFoldableInstanceTemplate);
-      break;
-
-    default:
-      // handle unsupported @import flag values
-      result = instance;
-      break;
-  }
-
-  return result;
-}
-
-void ExtractLaunchTemplates(Json::Value& root) {
-  std::size_t num_instances = root.size();
-  for (unsigned int i = 0; i < num_instances; i++) {
-    // Validate @import flag values are supported or not
-    if (root[i].isMember("@import")) {
-      // Extract instance configs from input template and override current
-      // instance
-      root[i] = ExtractInstaneTemplate(root[i]);
+      //status = JsonStringToMessage(combined_json_str, &ins);
+      CF_EXPECTF(status.ok(), "{}", status.ToString());
     }
   }
+  return config;
 }
 
 }  // namespace cuttlefish

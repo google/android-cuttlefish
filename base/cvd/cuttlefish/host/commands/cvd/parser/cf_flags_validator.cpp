@@ -16,156 +16,28 @@
 
 #include "host/commands/cvd/parser/cf_flags_validator.h"
 
-#include <map>
-#include <string>
-#include <unordered_set>
-#include <vector>
-
+#include <google/protobuf/util/json_util.h>
 #include "json/json.h"
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flags_validator.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
-namespace {
 
-using Json::ValueType::arrayValue;
-using Json::ValueType::booleanValue;
-using Json::ValueType::intValue;
-using Json::ValueType::objectValue;
-using Json::ValueType::stringValue;
-using Json::ValueType::uintValue;
+using cvd::config::EnvironmentSpecification;
+using google::protobuf::util::JsonStringToMessage;
 
-const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
-  {"netsim_bt", ConfigNode{.type = booleanValue}},
-  {"netsim_uwb", ConfigNode{.type = booleanValue}},
-  {"instances", ConfigNode{.type = arrayValue, .children = {
-    {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-        {"@import", ConfigNode{.type = stringValue}},
-        {"name", ConfigNode{.type = stringValue}},
-        {"vm", ConfigNode{.type = objectValue, .children = {
-          {"cpus", ConfigNode{.type = uintValue}},
-          {"memory_mb", ConfigNode{.type = uintValue}},
-          {"use_sdcard", ConfigNode{.type = booleanValue}},
-          {"setupwizard_mode", ConfigNode{.type = stringValue}},
-          {"uuid", ConfigNode{.type = stringValue}},
-          {"crosvm", ConfigNode{.type = objectValue, .children = {
-            {"enable_sandbox", ConfigNode{.type = booleanValue}},
-          }}},
-          {"custom_actions", ConfigNode{.type = arrayValue, .children = {
-            {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-              {"shell_command", ConfigNode{.type = stringValue}},
-              {"button", ConfigNode{.type = objectValue, .children = {
-                {"command", ConfigNode{.type = stringValue}},
-                {"title", ConfigNode{.type = stringValue}},
-                {"icon_name", ConfigNode{.type = stringValue}},
-              }}},
-              {"server", ConfigNode{.type = stringValue}},
-              {"buttons", ConfigNode{.type = arrayValue, .children = {
-                {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-                  {"command", ConfigNode{.type = stringValue}},
-                  {"title", ConfigNode{.type = stringValue}},
-                  {"icon_name", ConfigNode{.type = stringValue}},
-                }}},
-              }}},
-              {"device_states", ConfigNode{.type = arrayValue, .children = {
-                {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-                  {"lid_switch_open", ConfigNode{.type = booleanValue}},
-                  {"hinge_angle_value", ConfigNode{.type = intValue}},
-                }}},
-              }}},
-            }}},
-          }}},
-        }}},
-        {"boot", ConfigNode{.type = objectValue, .children = {
-          {"kernel", ConfigNode{.type = objectValue, .children = {
-            {"build", ConfigNode{.type = stringValue}},
-          }}},
-          {"enable_bootanimation", ConfigNode{.type = booleanValue}},
-          {"extra_bootconfig_args", ConfigNode{.type = stringValue}},
-          {"build", ConfigNode{.type = stringValue}},
-          {"bootloader", ConfigNode{.type = objectValue, .children = {
-            {"build", ConfigNode{.type = stringValue}},
-          }}},
-        }}},
-        {"security", ConfigNode{.type = objectValue, .children = {
-          {"serial_number", ConfigNode{.type = stringValue}},
-          {"use_random_serial", ConfigNode{.type = stringValue}},
-          {"guest_enforce_security", ConfigNode{.type = booleanValue}},
-        }}},
-        {"disk", ConfigNode{.type = objectValue, .children = {
-          {"default_build", ConfigNode{.type = stringValue}},
-          {"super", ConfigNode{.type = objectValue, .children = {
-            {"system", ConfigNode{.type = stringValue}},
-          }}},
-          {"download_img_zip", ConfigNode{.type = booleanValue}},
-          {"download_target_zip_files", ConfigNode{.type = booleanValue}},
-          {"blank_data_image_mb", ConfigNode{.type = uintValue}},
-          {"otatools", ConfigNode{.type = stringValue}},
-        }}},
-        {"graphics", ConfigNode{.type = objectValue, .children = {
-          {"displays", ConfigNode{.type = arrayValue, .children = {
-            {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children {
-              {"width", ConfigNode{.type = uintValue}},
-              {"height", ConfigNode{.type = uintValue}},
-              {"dpi", ConfigNode{.type = uintValue}},
-              {"refresh_rate_hertz", ConfigNode{.type = uintValue}},
-            }}},
-          }}},
-          {"record_screen", ConfigNode{.type = booleanValue}},
-        }}},
-        {"streaming", ConfigNode{.type = objectValue, .children = {
-          {"device_id", ConfigNode{.type = stringValue}},
-        }}},
-        {"connectivity", ConfigNode{.type = objectValue, .children = {
-          {"vsock", ConfigNode{.type = objectValue, .children = {
-            {"guest_group", ConfigNode{.type = stringValue}},
-          }}}
-        }}}
-      }}},
-    }}},
-  {"fetch", ConfigNode{.type = objectValue, .children = {
-      {"api_key", ConfigNode{.type = stringValue}},
-      {"credential_source", ConfigNode{.type = stringValue}},
-      {"wait_retry_period", ConfigNode{.type = uintValue}},
-      {"external_dns_resolver", ConfigNode{.type = booleanValue}},
-      {"keep_downloaded_archives", ConfigNode{.type = booleanValue}},
-      {"api_base_url", ConfigNode{.type = stringValue}},
-    }}},
-  {"metrics", ConfigNode{.type = objectValue, .children = {
-      {"enable", ConfigNode{.type = booleanValue}},
-    }}},
-  {"common", ConfigNode{.type = objectValue, .children = {
-    {"group_name", ConfigNode{.type = stringValue}},
-    {"host_package", ConfigNode{.type = stringValue}},
-  }}},
-},
-};
+Result<EnvironmentSpecification> ValidateCfConfigs(const Json::Value& root) {
+  std::stringstream json_as_stringstream;
+  json_as_stringstream << root;
+  auto json_str = json_as_stringstream.str();
 
-}  // namespace
+  EnvironmentSpecification launch_config;
+  auto status = JsonStringToMessage(json_str, &launch_config);
+  CF_EXPECTF(status.ok(), "{}", status.ToString());
 
-Result<void> ValidateCfConfigs(const Json::Value& root) {
-  static const auto& kSupportedImportValues =
-      *new std::unordered_set<std::string>{"phone", "tablet", "tv", "wearable",
-                                           "auto",  "slim",   "go", "foldable"};
-
-  CF_EXPECT(Validate(root, kRoot), "Validation failure in [root object] ->");
-  for (const auto& instance : root["instances"]) {
-    // TODO(chadreynolds): update `ExtractLaunchTemplates` to return a Result
-    // and check import values there, then remove this check
-    if (instance.isMember("@import")) {
-      const std::string import_value = instance["@import"].asString();
-      CF_EXPECTF(kSupportedImportValues.find(import_value) !=
-                     kSupportedImportValues.end(),
-                 "import value of \"{}\" is not supported", import_value);
-    }
-    CF_EXPECT(ValidateConfig<std::string>(instance, ValidateSetupWizardMode,
-                                          {"vm", "setupwizard_mode"}),
-              "Invalid value for setupwizard_mode flag");
-  }
-  return {};
+  return launch_config;
 }
 
 }  // namespace cuttlefish

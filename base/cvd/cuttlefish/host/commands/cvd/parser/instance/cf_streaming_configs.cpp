@@ -18,28 +18,28 @@
 #include <string>
 #include <vector>
 
-#include "json/json.h"
-
-#include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
 namespace cuttlefish {
 
-Result<void> InitStreamingConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_WEBRTC_DEVICE_ID,
-                         {"streaming", "device_id"}));
+using cvd::config::EnvironmentSpecification;
+using cvd::config::Instance;
+
+std::string DeviceId(const Instance& instance) {
+  if (instance.streaming().has_device_id()) {
+    return instance.streaming().device_id();
+  } else {
+    return CF_DEFAULTS_WEBRTC_DEVICE_ID;
   }
-  return {};
 }
 
-Result<std::vector<std::string>> GenerateStreamingFlags(
-    const Json::Value& root) {
-  std::vector<std::string> result;
-  result.emplace_back(CF_EXPECT(
-      GenerateGflag(root, "webrtc_device_id", {"streaming", "device_id"})));
-  return result;
+std::vector<std::string> GenerateStreamingFlags(
+    const EnvironmentSpecification& cfg) {
+  return std::vector<std::string>{
+      GenerateInstanceFlag("webrtc_device_id", cfg, DeviceId),
+  };
 }
 
 };  // namespace cuttlefish

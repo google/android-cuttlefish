@@ -151,6 +151,16 @@ cc_proto_library(
     deps = [":cvd_persistent_data_proto"],
 )
 
+proto_library(
+    name = "load_config_proto",
+    srcs = ["host/commands/cvd/parser/load_config.proto"],
+)
+
+cc_proto_library(
+    name = "load_config_cc_proto",
+    deps = [":load_config_proto"],
+)
+
 cc_library(
     name = "libcvd",
     srcs = [
@@ -208,7 +218,6 @@ cc_library(
         "host/commands/cvd/parser/cf_metrics_configs.h",
         "host/commands/cvd/parser/fetch_config_parser.cpp",
         "host/commands/cvd/parser/fetch_config_parser.h",
-        "host/commands/cvd/parser/fetch_cvd_parser.h",
         "host/commands/cvd/parser/instance/cf_boot_configs.cpp",
         "host/commands/cvd/parser/instance/cf_connectivity_configs.cpp",
         "host/commands/cvd/parser/instance/cf_connectivity_configs.h",
@@ -366,7 +375,6 @@ cc_library(
         "host/commands/cvd/parser/cf_flags_validator.h",
         "host/commands/cvd/parser/cf_metrics_configs.h",
         "host/commands/cvd/parser/fetch_config_parser.h",
-        "host/commands/cvd/parser/fetch_cvd_parser.h",
         "host/commands/cvd/parser/instance/cf_boot_configs.h",
         "host/commands/cvd/parser/instance/cf_connectivity_configs.h",
         "host/commands/cvd/parser/instance/cf_disk_configs.h",
@@ -450,6 +458,7 @@ cc_library(
         ":cvd_server_cc_proto",
         ":internal_config_cc_proto",
         ":launch_cvd_cc_proto",
+        ":load_config_cc_proto",
         ":user_config_cc_proto",
         "//:build_version_header",
         "//libbase",
@@ -495,7 +504,7 @@ cc_test(
         "host/commands/cvd/unittests/parser/flags_parser_test.cc",
         "host/commands/cvd/unittests/parser/instance/boot_configs_test.cc",
         "host/commands/cvd/unittests/parser/instance/disk_configs_test.cc",
-        # "host/commands/cvd/unittests/parser/instance/graphics_configs_test.cc",
+        "host/commands/cvd/unittests/parser/instance/graphics_configs_test.cc",
         "host/commands/cvd/unittests/parser/instance/vm_configs_test.cc",
         "host/commands/cvd/unittests/parser/metrics_configs_test.cc",
         "host/commands/cvd/unittests/parser/test_common.h",

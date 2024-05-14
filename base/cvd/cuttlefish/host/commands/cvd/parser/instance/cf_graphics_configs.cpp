@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/parser/instance/cf_boot_configs.h"
+#include "host/commands/cvd/parser/instance/cf_graphics_configs.h"
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -22,67 +22,79 @@
 #include "cuttlefish/host/commands/cvd/parser/instance/launch_cvd.pb.h"
 
 #include "common/libs/utils/base64.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
-#include "host/libs/config/config_utils.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 
-Result<void> InitGraphicsConfigs(Json::Value& instances) {
-  InitIntConfigSubGroupVector(instances, "graphics", "displays", "width",
-                              CF_DEFAULTS_DISPLAY_WIDTH);
-  InitIntConfigSubGroupVector(instances, "graphics", "displays", "height",
-                              CF_DEFAULTS_DISPLAY_HEIGHT);
-  InitIntConfigSubGroupVector(instances, "graphics", "displays", "dpi",
-                              CF_DEFAULTS_DISPLAY_DPI);
-  InitIntConfigSubGroupVector(instances, "graphics", "displays",
-                              "refresh_rate_hertz",
-                              CF_DEFAULTS_DISPLAY_REFRESH_RATE);
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_RECORD_SCREEN,
-                         {"graphics", "record_screen"}));
-  }
-  return {};
-}
+using cvd::config::Display;
+using cvd::config::EnvironmentSpecification;
+using cvd::config::Instance;
 
-std::string GenerateDisplayFlag(const Json::Value& instances_json) {
-  using google::protobuf::TextFormat;
+Result<std::string> GenerateDisplayFlag(const EnvironmentSpecification& cfg) {
   cuttlefish::InstancesDisplays all_instances_displays;
 
-  for (const auto& instance_json : instances_json) {
-    auto* instance = all_instances_displays.add_instances();
-    for (const auto& display_json : instance_json["graphics"]["displays"]) {
-      auto* display = instance->add_displays();
-      display->set_width(display_json["width"].asInt());
-      display->set_height(display_json["height"].asInt());
-      display->set_dpi(display_json["dpi"].asInt());
-      display->set_refresh_rate_hertz(
-          display_json["refresh_rate_hertz"].asInt());
+  for (const auto& in_instance : cfg.instances()) {
+    auto& out_instance = *all_instances_displays.add_instances();
+
+    auto& in_disp_raw = in_instance.graphics().displays();
+    std::vector<Display> in_displays(in_disp_raw.begin(), in_disp_raw.end());
+    if (in_displays.empty()) {
+      in_displays.emplace_back();  // At least one display, with default values
+    }
+
+    for (const auto& in_display : in_displays) {
+      auto& out_display = *out_instance.add_displays();
+      if (in_display.has_width()) {
+        out_display.set_width(in_display.width());
+      } else {
+        out_display.set_width(CF_DEFAULTS_DISPLAY_WIDTH);
+      }
+      if (in_display.has_height()) {
+        out_display.set_height(in_display.height());
+      } else {
+        out_display.set_height(CF_DEFAULTS_DISPLAY_HEIGHT);
+      }
+      if (in_display.has_dpi()) {
+        out_display.set_dpi(in_display.dpi());
+      } else {
+        out_display.set_dpi(CF_DEFAULTS_DISPLAY_DPI);
+      }
+      if (in_display.has_refresh_rate_hertz()) {
+        out_display.set_refresh_rate_hertz(in_display.refresh_rate_hertz());
+      } else {
+        out_display.set_refresh_rate_hertz(CF_DEFAULTS_DISPLAY_REFRESH_RATE);
+      }
     }
   }
 
   std::string bin_output;
-  if (!all_instances_displays.SerializeToString(&bin_output)) {
-    LOG(ERROR) << "Failed to convert display proto to binary string ";
-    return std::string();
-  }
+  CF_EXPECT(all_instances_displays.SerializeToString(&bin_output),
+            "Failed to convert display proto to binary string ");
 
   std::string base64_output;
-  if (!cuttlefish::EncodeBase64((void*)bin_output.c_str(), bin_output.size(),
-                                &base64_output)) {
-    LOG(ERROR) << "Failed to apply EncodeBase64 to binary string ";
-    return std::string();
-  }
+  CF_EXPECT(EncodeBase64(bin_output.data(), bin_output.size(), &base64_output),
+            "Failed to apply EncodeBase64 to binary string ");
+
   return "--displays_binproto=" + base64_output;
 }
 
+bool RecordScreen(const Instance& instance) {
+  if (instance.graphics().has_record_screen()) {
+    return instance.graphics().record_screen();
+  } else {
+    return CF_DEFAULTS_RECORD_SCREEN;
+  }
+}
+
 Result<std::vector<std::string>> GenerateGraphicsFlags(
-    const Json::Value& instances) {
-  std::vector<std::string> result;
-  result.emplace_back(GenerateDisplayFlag(instances));
-  result.emplace_back(CF_EXPECT(GenerateGflag(instances, "record_screen",
-                                              {"graphics", "record_screen"})));
-  return result;
+    const EnvironmentSpecification& cfg) {
+  return std::vector<std::string>{
+      CF_EXPECT(GenerateDisplayFlag(cfg)),
+      GenerateInstanceFlag("record_screen", cfg, RecordScreen),
+  };
 }
 
 }  // namespace cuttlefish

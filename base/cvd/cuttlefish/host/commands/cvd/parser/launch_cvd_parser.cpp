@@ -20,12 +20,10 @@
 #include <string>
 #include <vector>
 
-#include "json/json.h"
-
 #include "android-base/strings.h"
 
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_configs_instances.h"
@@ -33,6 +31,9 @@
 #include "host/commands/cvd/parser/launch_cvd_templates.h"
 
 namespace cuttlefish {
+
+using cvd::config::EnvironmentSpecification;
+
 namespace {
 
 std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) {
@@ -52,38 +53,39 @@ std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) 
   return "--undefok=" + android::base::Join(flag_names, ',');
 }
 
-Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
-  std::vector<std::string> result;
-  result.emplace_back(GenerateGflag(
-      "num_instances", {std::to_string(root["instances"].size())}));
-  result.emplace_back(GenerateGflag(
-      "netsim_bt", {CF_EXPECT(GetValue<std::string>(root, {"netsim_bt"}))}));
-  result.emplace_back(GenerateGflag(
-      "netsim_uwb", {CF_EXPECT(GetValue<std::string>(root, {"netsim_uwb"}))}));
-  result = MergeResults(result, CF_EXPECT(GenerateMetricsFlags(root)));
-  result = MergeResults(result,
-                        CF_EXPECT(GenerateInstancesFlags(root["instances"])));
-  auto flag_op = GenerateUndefOkFlag(result);
-  if (flag_op.has_value()) {
-    result.emplace_back(std::move(*flag_op));
-  }
-  return result;
-}
+Result<std::vector<std::string>> GenerateCfFlags(
+    const EnvironmentSpecification& launch) {
+  std::vector<std::string> ret;
+  ret.emplace_back(GenerateFlag("num_instances", launch.instances().size()));
 
-Result<void> InitCvdConfigs(Json::Value& root) {
-  CF_EXPECT(InitConfig(root, CF_DEFAULTS_NETSIM_BT, {"netsim_bt"}));
-  CF_EXPECT(InitConfig(root, CF_DEFAULTS_NETSIM_UWB, {"netsim_uwb"}));
-  CF_EXPECT(InitMetricsConfigs(root));
-  CF_EXPECT(InitInstancesConfigs(root["instances"]));
-  return {};
+  bool netsim_bt = CF_DEFAULTS_NETSIM_BT;
+  if (launch.has_netsim_bt()) {
+    netsim_bt = launch.netsim_bt();
+  }
+  ret.emplace_back(GenerateFlag("netsim_bt", netsim_bt));
+
+  bool netsim_uwb = CF_DEFAULTS_NETSIM_UWB;
+  if (launch.has_netsim_uwb()) {
+    netsim_uwb = launch.netsim_uwb();
+  }
+  ret.emplace_back(GenerateFlag("netsim_uwb", netsim_uwb));
+
+  ret = MergeResults(std::move(ret), GenerateMetricsFlags(launch));
+  ret = MergeResults(std::move(ret), CF_EXPECT(GenerateInstancesFlags(launch)));
+  auto flag_op = GenerateUndefOkFlag(ret);
+  if (flag_op.has_value()) {
+    ret.emplace_back(std::move(*flag_op));
+  }
+  return ret;
 }
 
 }  // namespace
 
-Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root) {
-  ExtractLaunchTemplates(root["instances"]);
-  CF_EXPECT(InitCvdConfigs(root));
-  return GenerateCfFlags(root);
+Result<std::vector<std::string>> ParseLaunchCvdConfigs(
+    EnvironmentSpecification launch) {
+  launch = CF_EXPECT(ExtractLaunchTemplates(std::move(launch)));
+
+  return GenerateCfFlags(launch);
 }
 
 }  // namespace cuttlefish

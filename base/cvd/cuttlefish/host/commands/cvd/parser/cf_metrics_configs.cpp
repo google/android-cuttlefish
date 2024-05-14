@@ -15,17 +15,17 @@
  */
 #include "host/commands/cvd/parser/cf_metrics_configs.h"
 
-#include <sstream>
 #include <string>
 #include <vector>
 
-#include "json/json.h"
-
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
 namespace cuttlefish {
+
+using cvd::config::EnvironmentSpecification;
+using cvd::config::Instance;
+
 namespace {
 
 constexpr bool kEnableMetricsDefault = false;
@@ -36,18 +36,14 @@ std::string EnabledToReportAnonUsageStats(const bool enabled) {
 
 }  // namespace
 
-Result<void> InitMetricsConfigs(Json::Value& root) {
-  CF_EXPECT(InitConfig(root, kEnableMetricsDefault, {"metrics", "enable"}));
-  return {};
-}
-
-Result<std::vector<std::string>> GenerateMetricsFlags(const Json::Value& root) {
-  std::vector<std::string> result;
-  auto report_flag_value = EnabledToReportAnonUsageStats(
-      CF_EXPECT(GetValue<bool>(root, {"metrics", "enable"})));
-  result.emplace_back(
-      GenerateGflag("report_anonymous_usage_stats", {report_flag_value}));
-  return result;
+std::vector<std::string> GenerateMetricsFlags(
+    const EnvironmentSpecification& config) {
+  bool enable = kEnableMetricsDefault;
+  if (config.metrics().has_enable()) {
+    enable = config.metrics().enable();
+  }
+  auto flag_value = EnabledToReportAnonUsageStats(enable);
+  return {GenerateFlag("report_anonymous_usage_stats", flag_value)};
 }
 
 }  // namespace cuttlefish

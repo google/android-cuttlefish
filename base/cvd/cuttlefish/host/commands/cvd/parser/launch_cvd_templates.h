@@ -15,10 +15,13 @@
  */
 
 #pragma once
-#include "json/json.h"
+
+#include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/parser/load_config.pb.h"
 
 namespace cuttlefish {
 
-void ExtractLaunchTemplates(Json::Value& root);
+Result<cvd::config::EnvironmentSpecification> ExtractLaunchTemplates(
+    cvd::config::EnvironmentSpecification config);
 
 };  // namespace cuttlefish

@@ -15,14 +15,13 @@
  */
 
 #include <algorithm>
-#include <fstream>
-#include <iostream>
 
 #include <android-base/file.h>
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/parser/launch_cvd_parser.h"
+#include "common/libs/utils/json.h"
+#include "common/libs/utils/result_matchers.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
@@ -90,6 +89,38 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagPartialJson) {
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, "--cpus=2,4"))
       << "cpus flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseTwoInstancesQemu) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "qemu":{
+                }
+            }
+        },
+        {
+            "vm": {
+                "qemu":{
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, "--vm_manager=qemu_cli,qemu_cli"))
+      << "vm_manager flag is missing or wrongly formatted";
 }
 
 TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagFullJson) {
@@ -743,19 +774,28 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCustomActionsFlagPartialJson) {
 
   Json::Value json_configs;
   std::string json_text(test_string);
-  std::string expected_custom_actions =
-      R"""(--custom_actions=[{\"device_states\":[{\"hinge_angle_value\":0,\"lid_switch_open\":false}]}])""";
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(
-      FindConfigIgnoreSpaces(*serialized_data, R"(--custom_actions=unset)"))
-      << "custom_actions flag is missing or wrongly formatted";
 
-  EXPECT_TRUE(FindConfigIgnoreSpaces(*serialized_data, expected_custom_actions))
-      << "custom_actions flag is missing or wrongly formatted";
+  std::vector<std::string> custom_actions;
+  for (const auto& flag : *serialized_data) {
+    static constexpr char kPrefix[] = "--custom_actions=";
+    if (flag.find(kPrefix) == 0) {
+      custom_actions.emplace_back(flag.substr(sizeof(kPrefix) - 1));
+    }
+  }
+  std::sort(custom_actions.begin(), custom_actions.end());
+
+  EXPECT_EQ(custom_actions.size(), 2);
+  EXPECT_EQ(custom_actions[1], "unset");
+
+  Json::Value expected_actions;
+  expected_actions[0]["device_states"][0]["lid_switch_open"] = false;
+  expected_actions[0]["device_states"][0]["hinge_angle_value"] = 0;
+  EXPECT_THAT(ParseJson(custom_actions[0]), IsOkAndValue(expected_actions));
 }
 
 }  // namespace cuttlefish

@@ -20,7 +20,6 @@
 
 #include <chrono>
 #include <cstdio>
-#include <fstream>
 #include <string>
 #include <vector>
 
@@ -43,6 +42,10 @@
 #include "host/commands/cvd/parser/selector_parser.h"
 
 namespace cuttlefish {
+
+using cvd::config::EnvironmentSpecification;
+using cvd::config::Instance;
+
 namespace {
 
 constexpr std::string_view kOverrideSeparator = ":";
@@ -194,18 +197,22 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path) {
 }
 
 Result<std::vector<std::string>> GetConfiguredSystemImagePaths(
-    Json::Value& root) {
-  return CF_EXPECTF(
-      GetArrayValues<std::string>(root["instances"], {"disk", "default_build"}),
-      "Instance is missing required Image path", "");
+    const EnvironmentSpecification& config) {
+  std::vector<std::string> system_image_paths;
+  for (const auto& instance : config.instances()) {
+    CF_EXPECT(instance.disk().has_default_build());
+    system_image_paths.emplace_back(instance.disk().default_build());
+  }
+  return system_image_paths;
 }
 
-std::optional<std::string> GetConfiguredSystemHostPath(Json::Value& root) {
-  auto result = GetValue<std::string>(root, {"common", "host_package"});
-  if (result.ok()) {
-    return std::optional<std::string>{*result};
+std::optional<std::string> GetConfiguredSystemHostPath(
+    const EnvironmentSpecification& config) {
+  if (config.common().has_host_package()) {
+    return config.common().host_package();
+  } else {
+    return std::nullopt;
   }
-  return std::nullopt;
 }
 
 Result<Json::Value> GetOverriddenConfig(
@@ -271,13 +278,12 @@ Result<LoadDirectories> GenerateLoadDirectories(
   return result;
 }
 
-Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
+Result<CvdFlags> ParseCvdConfigs(const EnvironmentSpecification& launch,
                                  const LoadDirectories& load_directories) {
-  CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
-  return CvdFlags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(root)),
-                  .selector_flags = CF_EXPECT(ParseSelectorConfigs(root)),
+  return CvdFlags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(launch)),
+                  .selector_flags = ParseSelectorConfigs(launch),
                   .fetch_cvd_flags = CF_EXPECT(ParseFetchCvdConfigs(
-                      root, load_directories.target_directory,
+                      launch, load_directories.target_directory,
                       load_directories.target_subdirectories)),
                   .load_directories = load_directories};
 }
@@ -325,15 +331,18 @@ Result<CvdFlags> GetCvdFlags(const LoadFlags& flags) {
   Json::Value json_configs =
       CF_EXPECT(GetOverriddenConfig(flags.config_path, flags.overrides));
 
-  std::vector<std::string> system_image_path_configs =
-      CF_EXPECT(GetConfiguredSystemImagePaths(json_configs));
-  std::optional<std::string> host_package_dir =
-      GetConfiguredSystemHostPath(json_configs);
+  auto launch = CF_EXPECT(ValidateCfConfigs(json_configs));
 
-  const auto load_directories = CF_EXPECT(GenerateLoadDirectories(
-      flags.base_dir, system_image_path_configs, host_package_dir,
-      json_configs["instances"].size()));
-  return CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
+  std::vector<std::string> system_image_path_configs =
+      CF_EXPECT(GetConfiguredSystemImagePaths(launch));
+  std::optional<std::string> host_package_dir =
+      GetConfiguredSystemHostPath(launch);
+
+  const auto load_directories = CF_EXPECT(
+      GenerateLoadDirectories(flags.base_dir, system_image_path_configs,
+                              host_package_dir, launch.instances().size()));
+
+  return CF_EXPECT(ParseCvdConfigs(launch, load_directories),
                    "Parsing json configs failed");
 }
 
