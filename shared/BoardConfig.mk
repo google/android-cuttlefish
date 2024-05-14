@@ -64,7 +64,7 @@ BOARD_VENDOR_RAMDISK_KERNEL_MODULES += \
 	$(wildcard $(KERNEL_MODULES_PATH)/vsock.ko)
 
 
-# TODO(b/176860479) once virt_wifi is deprecated we can stop loading mac80211 in
+# TODO(b/294888357) once virt_wifi is deprecated we can stop loading mac80211 in
 # first stage init. To minimize scope of modules options to first stage init,
 # mac80211_hwsim.radios=0 has to be specified in the modules options file (which we
 # only read in first stage) and mac80211_hwsim has to be loaded in first stage consequently..
