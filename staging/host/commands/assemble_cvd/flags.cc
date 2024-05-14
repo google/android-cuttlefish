@@ -981,6 +981,17 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_vm_manager(vmm_mode);
   tmp_config_obj.set_ap_vm_manager(vm_manager_vec[0] + "_openwrt");
 
+  // TODO: schuffelen - fix behavior on riscv64
+  if (guest_configs[0].target_arch == Arch::RiscV64) {
+    static constexpr char kRiscv64Secure[] = "keymint,gatekeeper,oemlock";
+    SetCommandLineOptionWithMode("secure_hals", kRiscv64Secure,
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  } else {
+    static constexpr char kDefaultSecure[] =
+        "oemlock,guest_keymint_insecure,guest_gatekeeper_insecure";
+    SetCommandLineOptionWithMode("secure_hals", kDefaultSecure,
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  }
   auto secure_hals_strs =
       android::base::Tokenize(FLAGS_secure_hals, ",:;|/\\+");
   tmp_config_obj.set_secure_hals(
