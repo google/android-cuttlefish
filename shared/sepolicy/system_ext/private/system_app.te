@@ -1,1 +1,2 @@
 get_prop(system_app, vendor_aware_available_prop)
+set_prop(system_app, logpersistd_logging_prop)
