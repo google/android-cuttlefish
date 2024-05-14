@@ -82,6 +82,16 @@ ifeq ($(TARGET_BUILD_VARIANT),user)
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.adb.secure=0 \
     ro.debuggable=1
+
+PRODUCT_PACKAGES += \
+    logpersist.start
+
+PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
+    $(TARGET_COPY_OUT_SYSTEM)/bin/logcatd \
+    $(TARGET_COPY_OUT_SYSTEM)/bin/logpersist.cat \
+    $(TARGET_COPY_OUT_SYSTEM)/bin/logpersist.start \
+    $(TARGET_COPY_OUT_SYSTEM)/bin/logpersist.stop \
+    $(TARGET_COPY_OUT_SYSTEM)/etc/init/logcatd.rc
 endif
 
 # Use AIDL for media.c2 HAL
