@@ -14,14 +14,61 @@
  * limitations under the License.
  */
 
+#include <google/protobuf/message.h>
+#include <google/protobuf/util/message_differencer.h>
 #include <gtest/gtest.h>
+
+#include "common/libs/utils/base64.h"
+#include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/json.h"
+#include "common/libs/utils/result_matchers.h"
+#include "cuttlefish/host/commands/cvd/parser/instance/launch_cvd.pb.h"
 #include "host/commands/cvd/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
+using google::protobuf::Message;
+using google::protobuf::util::MessageDifferencer;
+
 namespace cuttlefish {
 
+// TODO: schuffelen - make this into a matcher
+static void AssertProtoEquals(const Message& expected, const Message& actual) {
+  MessageDifferencer diff;
+  std::string diff_str;
+  diff.ReportDifferencesToString(&diff_str);
+  EXPECT_TRUE(diff.Compare(expected, actual)) << diff_str;
+}
+
+InstanceDisplays DefaultDisplays() {
+  InstanceDisplays displays;
+  auto& display = *displays.add_displays();
+  display.set_width(720);
+  display.set_height(1280);
+  display.set_dpi(320);
+  display.set_refresh_rate_hertz(60);
+  return displays;
+}
+
+Result<InstancesDisplays> DisplaysFlag(std::vector<std::string> args) {
+  std::optional<std::string> flag_str_opt;
+  auto flag = GflagsCompatFlag("displays_binproto")
+                  .Setter([&flag_str_opt](const FlagMatch& m) -> Result<void> {
+                    flag_str_opt = m.value;
+                    return {};
+                  });
+  CF_EXPECT(ConsumeFlags({flag}, args));
+  auto flag_str = CF_EXPECT(std::move(flag_str_opt));
+
+  std::vector<std::uint8_t> decoded;
+  CF_EXPECT(DecodeBase64(flag_str, &decoded));
+
+  InstancesDisplays ret;
+  CF_EXPECT(ret.ParseFromArray(decoded.data(), decoded.size()));
+  return ret;
+}
+
 TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyJson) {
-  const char* test_string = R""""(
+  static constexpr char kTestString[] = R""""(
 {
     "instances" :
     [
@@ -33,22 +80,24 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyJson) {
 }
 )"""";
 
-  const char* expected_string =
-      R""""(--displays_binproto=Cg0KCwjQBRCAChjAAiA8Cg0KCwjQBRCAChjAAiA8)"""";
+  auto json_configs = ParseJson(kTestString);
+  EXPECT_THAT(json_configs, IsOk());
 
-  Json::Value json_configs;
-  std::string json_text(test_string);
+  auto serialized_data = LaunchCvdParserTester(*json_configs);
+  EXPECT_THAT(serialized_data, IsOk());
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
-      << "Invalid Json string";
-  auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
-      << "displays_binproto flag is missing or wrongly formatted";
+  auto display = DisplaysFlag(*serialized_data);
+  EXPECT_THAT(display, IsOk());
+
+  InstancesDisplays expected;
+  expected.add_instances()->CopyFrom(DefaultDisplays());
+  expected.add_instances()->CopyFrom(DefaultDisplays());
+
+  AssertProtoEquals(expected, *display);
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyGraphics) {
-  const char* test_string = R""""(
+  static constexpr char kTestString[] = R""""(
 {
     "instances" :
     [
@@ -64,22 +113,24 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyGraphics) {
 }
   )"""";
 
-  const char* expected_string =
-      R""""(--displays_binproto=Cg0KCwjQBRCAChjAAiA8Cg0KCwjQBRCAChjAAiA8)"""";
+  auto json_configs = ParseJson(kTestString);
+  EXPECT_THAT(json_configs, IsOk());
 
-  Json::Value json_configs;
-  std::string json_text(test_string);
+  auto serialized_data = LaunchCvdParserTester(*json_configs);
+  EXPECT_THAT(serialized_data, IsOk());
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
-      << "Invalid Json string";
-  auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
-      << "displays_binproto flag is missing or wrongly formatted";
+  auto display = DisplaysFlag(*serialized_data);
+  EXPECT_THAT(display, IsOk());
+
+  InstancesDisplays expected;
+  expected.add_instances()->CopyFrom(DefaultDisplays());
+  expected.add_instances()->CopyFrom(DefaultDisplays());
+
+  AssertProtoEquals(expected, *display);
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyDisplays) {
-  const char* test_string = R""""(
+  static constexpr char kTestString[] = R""""(
 {
     "instances" :
     [
@@ -105,22 +156,26 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyDisplays) {
 }
 )"""";
 
-  const char* expected_string =
-      R""""(--displays_binproto=Cg0KCwjQBRCAChjAAiA8ChoKCwjQBRCAChjAAiA8CgsI0AUQgAoYwAIgPA==)"""";
+  auto json_configs = ParseJson(kTestString);
+  EXPECT_THAT(json_configs, IsOk());
 
-  Json::Value json_configs;
-  std::string json_text(test_string);
+  auto serialized_data = LaunchCvdParserTester(*json_configs);
+  EXPECT_THAT(serialized_data, IsOk());
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
-      << "Invalid Json string";
-  auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
-      << "displays_binproto flag is missing or wrongly formatted";
+  auto display = DisplaysFlag(*serialized_data);
+  EXPECT_THAT(display, IsOk());
+
+  InstancesDisplays expected;
+  expected.add_instances()->CopyFrom(DefaultDisplays());
+  auto& ins2 = *expected.add_instances();
+  ins2.CopyFrom(DefaultDisplays());
+  ins2.add_displays()->CopyFrom(ins2.displays()[0]);
+
+  AssertProtoEquals(expected, *display);
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesAutoTabletDisplaysFlag) {
-  const char* test_string = R""""(
+  static constexpr char kTestString[] = R""""(
 {
     "instances" :
     [
@@ -158,18 +213,37 @@ TEST(BootFlagsParserTest, ParseTwoInstancesAutoTabletDisplaysFlag) {
 }
   )"""";
 
-  const char* expected_string =
-      R""""(--displays_binproto=ChgKCgi4CBDYBBh4IDwKCgiQAxDYBBh4IDwKDQoLCIAUEIgOGMACIDw=)"""";
+  auto json_configs = ParseJson(kTestString);
+  EXPECT_THAT(json_configs, IsOk());
 
-  Json::Value json_configs;
-  std::string json_text(test_string);
+  auto serialized_data = LaunchCvdParserTester(*json_configs);
+  EXPECT_THAT(serialized_data, IsOk());
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
-      << "Invalid Json string";
-  auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
-      << "displays_binproto flag is missing or wrongly formatted";
+  auto display = DisplaysFlag(*serialized_data);
+  EXPECT_THAT(display, IsOk());
+
+  InstancesDisplays expected;
+
+  auto& instance1 = *expected.add_instances();
+  auto& ins1_display1 = *instance1.add_displays();
+  ins1_display1.set_width(1080);
+  ins1_display1.set_height(600);
+  ins1_display1.set_dpi(120);
+  ins1_display1.set_refresh_rate_hertz(60);
+  auto& ins1_display2 = *instance1.add_displays();
+  ins1_display2.set_width(400);
+  ins1_display2.set_height(600);
+  ins1_display2.set_dpi(120);
+  ins1_display2.set_refresh_rate_hertz(60);
+
+  auto& instance2 = *expected.add_instances();
+  auto& ins2_display1 = *instance2.add_displays();
+  ins2_display1.set_width(2560);
+  ins2_display1.set_height(1800);
+  ins2_display1.set_dpi(320);
+  ins2_display1.set_refresh_rate_hertz(60);
+
+  AssertProtoEquals(expected, *display);
 }
 
 }  // namespace cuttlefish
