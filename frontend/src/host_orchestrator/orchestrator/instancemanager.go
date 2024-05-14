@@ -56,6 +56,7 @@ type AndroidBuild struct {
 type IMPaths struct {
 	RootDir          string
 	ArtifactsRootDir string
+	SnapshotsRootDir string
 }
 
 type CVDSelector struct {

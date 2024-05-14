@@ -66,6 +66,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "powerwash"))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:suspend",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "suspend"))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/:snapshot",
+		httpHandler(newCreateSnapshotHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/operations/{name}", httpHandler(&getOperationHandler{om: c.OperationManager})).Methods("GET")
 	// The expected response of the operation in case of success.  If the original method returns no data on
 	// success, such as `Delete`, response will be empty. If the original method is standard
@@ -243,6 +245,29 @@ func (h *execCVDCommandHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDUser:          h.Config.CVDUser,
 	}
 	return NewExecCVDCommandAction(opts).Run()
+}
+
+type createSnapshotHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newCreateSnapshotHandler(c Config, om OperationManager) *createSnapshotHandler {
+	return &createSnapshotHandler{Config: c, OM: om}
+}
+
+func (h *createSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	opts := CreateSnapshotActionOpts{
+		Selector:         CVDSelector{Group: group, Name: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+		CVDUser:          h.Config.CVDUser,
+	}
+	return NewCreateSnapshotAction(opts).Run()
 }
 
 type getCVDLogsHandler struct {

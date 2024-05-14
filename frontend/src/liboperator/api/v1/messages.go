@@ -219,6 +219,10 @@ type ListUploadDirectoriesResponse struct {
 	Items []*UploadDirectory `json:"items"`
 }
 
+type CreateSnapshotResponse struct {
+	SnapshotID string `json:"snapshot_id"`
+}
+
 type EmptyResponse struct{}
 
 type StopCVDResponse = EmptyResponse
