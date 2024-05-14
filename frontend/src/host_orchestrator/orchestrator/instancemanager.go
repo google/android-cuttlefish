@@ -58,6 +58,7 @@ type IMPaths struct {
 	RootDir          string
 	ArtifactsRootDir string
 	CVDBugReportsDir string
+	SnapshotsRootDir string
 }
 
 type CVDSelector struct {
