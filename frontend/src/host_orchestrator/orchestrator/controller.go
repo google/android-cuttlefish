@@ -64,6 +64,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "powerwash"))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/:suspend",
+		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "suspend"))).Methods("POST")
 	router.Handle("/operations/{name}", httpHandler(&getOperationHandler{om: c.OperationManager})).Methods("GET")
 	// The expected response of the operation in case of success.  If the original method returns no data on
 	// success, such as `Delete`, response will be empty. If the original method is standard
