@@ -56,10 +56,6 @@ android_symlinks = [
         target: "/system_dlkm/lib/modules",
         name: "system/lib/modules",
     },
-    {
-        target: "/apex/com.android.tethering/bin/ethtool",
-        name: "system/bin/ethtool",
-    },
 ]
 
 phony {
@@ -298,6 +294,7 @@ android_system_image {
         libs: [":framework-res{.export-package.apk}"],
     },
     build_logtags: true,
+    gen_aconfig_flags_pb: true,
 
     use_avb: true,
     avb_private_key: ":microdroid_sign_key",

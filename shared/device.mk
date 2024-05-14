@@ -40,7 +40,7 @@ PRODUCT_SOONG_NAMESPACES += device/generic/goldfish # for audio, wifi and sensor
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 DISABLE_RILD_OEM_HOOK := true
 
-# TODO(b/205788876) remove this condition when openwrt has an image for arm.
+# TODO(b/294888357) Remove this condition when OpenWRT is supported for RISC-V.
 ifndef PRODUCT_ENFORCE_MAC80211_HWSIM
 PRODUCT_ENFORCE_MAC80211_HWSIM := true
 endif
@@ -82,6 +82,16 @@ ifeq ($(TARGET_BUILD_VARIANT),user)
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.adb.secure=0 \
     ro.debuggable=1
+
+PRODUCT_PACKAGES += \
+    logpersist.start
+
+PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
+    $(TARGET_COPY_OUT_SYSTEM)/bin/logcatd \
+    $(TARGET_COPY_OUT_SYSTEM)/bin/logpersist.cat \
+    $(TARGET_COPY_OUT_SYSTEM)/bin/logpersist.start \
+    $(TARGET_COPY_OUT_SYSTEM)/bin/logpersist.stop \
+    $(TARGET_COPY_OUT_SYSTEM)/etc/init/logcatd.rc
 endif
 
 # Use AIDL for media.c2 HAL
@@ -528,7 +538,7 @@ PRODUCT_PACKAGES += \
     CuttlefishWifiOverlay
 
 ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
-PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=mac8011_hwsim_virtio
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=mac80211_hwsim_virtio
 $(call soong_config_append,cvdhost,enforce_mac80211_hwsim,true)
 else
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=virt_wifi
