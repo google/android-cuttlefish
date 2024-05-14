@@ -18,14 +18,7 @@
 # Common BoardConfig for all supported architectures.
 #
 
-# Wear 32 bit is currently supported and 6.6 kernels don't support
-# 32 bit devices
-ifneq (,$(findstring gwear_x86,$(PRODUCT_NAME)))
 TARGET_KERNEL_USE ?= 6.1
-else
-TARGET_KERNEL_USE ?= 6.6
-endif
-
 TARGET_KERNEL_ARCH ?= $(TARGET_ARCH)
 SYSTEM_DLKM_SRC ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)
 TARGET_KERNEL_PATH ?= $(SYSTEM_DLKM_SRC)/kernel-$(TARGET_KERNEL_USE)
