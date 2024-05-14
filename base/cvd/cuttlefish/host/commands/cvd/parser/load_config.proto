@@ -35,7 +35,7 @@ message Common {
 message Fetch {
   optional string api_key = 1;
   optional string credential_source = 2;
-  optional uint32 wait_retry_period = 3;
+  optional uint32 wait_retry_period_seconds = 3 [json_name="wait_retry_period"];
   optional bool external_dns_resolver = 4;
   optional bool keep_downloaded_archives = 5;
   optional string api_base_url = 6;
@@ -88,7 +88,7 @@ message Display {
 
 message Disk {
   optional string default_build = 1;
-  optional Super super = 2;
+  optional Super super_partition = 2 [json_name="super"];
   optional bool download_img_zip = 3;
   optional bool download_target_files_zip = 4;
   optional uint32 blank_data_image_mb = 5;

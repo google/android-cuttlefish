@@ -542,6 +542,7 @@ cc_test(
     deps = [
         ":cuttlefish_common",
         ":cvd_persistent_data",
+        ":launch_cvd_cc_proto",
         ":libcvd",
         "//libbase",
         "@googletest//:gtest",

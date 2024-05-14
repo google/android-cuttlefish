@@ -42,7 +42,7 @@ bool ShouldFetch(const Instance& instance) {
   const auto& disk = instance.disk();
 
   for (const auto& value :
-       {disk.default_build(), disk.super().system(), boot.kernel().build(),
+       {disk.default_build(), disk.super_partition().system(), boot.kernel().build(),
         boot.kernel().build(), boot.build(), boot.bootloader().build(),
         disk.otatools()}) {
     // expects non-prefixed build strings already converted to empty strings
@@ -73,7 +73,7 @@ Result<Instance> RemoveNonPrefixedBuildStrings(const Instance& instance) {
   disk.set_default_build(CF_EXPECT(GetFetchBuildString(disk.default_build())));
   disk.set_otatools(CF_EXPECT(GetFetchBuildString(disk.otatools())));
 
-  auto& system = *disk.mutable_super()->mutable_system();
+  auto& system = *disk.mutable_super_partition()->mutable_system();
   system = CF_EXPECT(GetFetchBuildString(system));
 
   auto& boot = *result.mutable_boot();
@@ -93,7 +93,7 @@ static std::string DefaultBuild(const Instance& instance) {
 }
 
 static std::string SystemBuild(const Instance& instance) {
-  return instance.disk().super().system();
+  return instance.disk().super_partition().system();
 }
 
 static std::string KernelBuild(const Instance& instance) {
@@ -163,8 +163,8 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
     auto value = fetch_config.credential_source();
     result.emplace_back(GenerateFlag("credential_source", std::move(value)));
   }
-  if (fetch_config.has_wait_retry_period()) {
-    auto value = fetch_config.wait_retry_period();
+  if (fetch_config.has_wait_retry_period_seconds()) {
+    auto value = fetch_config.wait_retry_period_seconds();
     result.emplace_back(GenerateFlag("wait_retry_period", std::move(value)));
   }
   if (fetch_config.has_external_dns_resolver()) {
