@@ -155,9 +155,6 @@ Result<void> ServerLoopImpl::HandleSuspend(ProcessMonitor& process_monitor) {
                      "cmd", "bluetooth_manager", "wait-for-state:STATE_OFF"},
                     SubprocessOptions(), WEXITED));
   CF_EXPECT(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(), "shell",
-                     "svc", "wifi", "disable"},
-                    SubprocessOptions(), WEXITED));
-  CF_EXPECT(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(), "shell",
                      "cmd", "uwb", "disable-uwb"},
                     SubprocessOptions(), WEXITED));
   // right order: guest -> host
@@ -180,9 +177,6 @@ Result<void> ServerLoopImpl::HandleResume(ProcessMonitor& process_monitor) {
   const auto adb_bin_path = SubtoolPath("adb");
   CF_EXPECT(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(), "shell",
                      "cmd", "bluetooth_manager", "enable"},
-                    SubprocessOptions(), WEXITED));
-  CF_EXPECT(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(), "shell",
-                     "svc", "wifi", "enable"},
                     SubprocessOptions(), WEXITED));
   CF_EXPECT(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(), "shell",
                      "cmd", "uwb", "enable-uwb"},
