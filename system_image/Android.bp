@@ -330,7 +330,7 @@ android_system_image {
         "cgroups.json",
         "cmd",
         "content",
-        "cppreopts.sh",  // generic_system
+        "cppreopts.sh", // generic_system
         "credstore",
         "debuggerd",
         "device_config",
@@ -620,6 +620,7 @@ android_system_image {
                 "FusedLocation", // handheld_system
                 "HTMLViewer", // media_system
                 "hwservicemanager_compat_symlink_module", // base_system
+                "hyph-data",
                 "ims-common", // base_system
                 "init_system", // base_system
                 "InputDevices", // handheld_system
