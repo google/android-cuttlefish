@@ -397,7 +397,11 @@ SharedFD SharedFD::Dup(int unmanaged_fd) {
 
 bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   int fds[2];
+#ifdef __linux__
+  int rval = pipe2(fds, O_CLOEXEC);
+#else
   int rval = pipe(fds);
+#endif
   if (rval != -1) {
     (*fd0) = std::shared_ptr<FileInstance>(new FileInstance(fds[0], errno));
     (*fd1) = std::shared_ptr<FileInstance>(new FileInstance(fds[1], errno));
