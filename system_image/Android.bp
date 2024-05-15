@@ -302,6 +302,15 @@ android_system_image {
     avb_hash_algorithm: "sha256",
 
     deps: [
+        "android.hardware.biometrics.fingerprint@2.1", // generic_system
+        "android.hardware.radio@1.0", // generic_system
+        "android.hardware.radio@1.1", // generic_system
+        "android.hardware.radio@1.2", // generic_system
+        "android.hardware.radio@1.3", // generic_system
+        "android.hardware.radio@1.4", // generic_system
+        "android.hardware.radio.config@1.0", // generic_system
+        "android.hardware.radio.deprecated@1.0", // generic_system
+        "android.hardware.secure_element@1.0", // generic_system
         "abx",
         "aconfigd",
         "aflags",
@@ -330,7 +339,7 @@ android_system_image {
         "cgroups.json",
         "cmd",
         "content",
-        "cppreopts.sh",  // generic_system
+        "cppreopts.sh", // generic_system
         "credstore",
         "debuggerd",
         "device_config",
