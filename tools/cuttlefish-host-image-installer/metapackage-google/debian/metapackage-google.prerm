@@ -1,5 +1,5 @@
 #!/bin/sh
-# prerm script for metapackage-linaro-gigamp.
+# prerm script for metapackage-google.
 #
 # See: dh_installdeb(1).
 
@@ -19,16 +19,16 @@ set -e
 
 case "$1" in
     remove)
-	if [ -e /var/lib/metapackage-linaro-gigamp/backup/ntp.conf ]; then
+	if [ -e /var/lib/metapackage-google/backup/ntp.conf ]; then
 	    TEMPFILE=$(mktemp)
-	    cp -f /var/lib/metapackage-linaro-gigamp/backup/ntp.conf "${TEMPFILE}"
+	    cp -f /var/lib/metapackage-google/backup/ntp.conf "${TEMPFILE}"
 	    sed -i 's/^\(# Specify one or more NTP servers.\)/\1\nserver time1.google.com iburst\nserver time2.google.com iburst\nserver time3.google.com iburst\nserver time4.google.com iburst\n/' "${TEMPFILE}"
 
 	    if cmp /etc/ntpsec/ntp.conf "${TEMPFILE}"; then
-		cp -f -a /var/lib/metapackage-linaro-gigamp/backup/ntp.conf /etc/ntpsec/ntp.conf
+		cp -f -a /var/lib/metapackage-google/backup/ntp.conf /etc/ntpsec/ntp.conf
 	    fi
 
-	    rm -f /var/lib/metapackage-linaro-gigamp/backup/ntp.conf
+	    rm -f /var/lib/metapackage-google/backup/ntp.conf
 	    rm -f "${TEMPFILE}"
 	fi
     ;;

@@ -12,8 +12,8 @@ if grep time1.google.com /etc/ntpsec/ntp.conf; then
 fi
 
 if [ -e /etc/ntpsec/ntp.conf ]; then
-    if [ ! -e /var/lib/metapackage-linaro-gigamp/backup/ntp.conf ]; then
-	cp -f -a /etc/ntpsec/ntp.conf /var/lib/metapackage-linaro-gigamp/backup
+    if [ ! -e /var/lib/metapackage-google/backup/ntp.conf ]; then
+	cp -f -a /etc/ntpsec/ntp.conf /var/lib/metapackage-google/backup
     fi
 fi
 

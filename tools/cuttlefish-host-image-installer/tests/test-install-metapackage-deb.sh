@@ -16,11 +16,11 @@ apt-get install -y p7zip-full
 
 apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install ./*.deb
 
-test -e /etc/security/limits.d/95-linaro-gigamp-nofile.conf
+test -e /etc/security/limits.d/95-google-nofile.conf
 ulimit -n
 
 grep time1.google.com /etc/ntpsec/ntp.conf
 
-apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 purge metapackage-linaro-gigamp
+apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 purge metapackage-google
 
 test $(grep time1.google.com /etc/ntpsec/ntp.conf | wc -l) -eq 0

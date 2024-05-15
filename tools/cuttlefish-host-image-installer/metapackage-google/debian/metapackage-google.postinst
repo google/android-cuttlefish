@@ -1,5 +1,5 @@
 #!/bin/sh
-# postinst script for metapackage-linaro-gigamp.
+# postinst script for metapackage-google.
 #
 # See: dh_installdeb(1).
 
@@ -20,7 +20,7 @@ set -e
 
 case "$1" in
     configure)
-	/usr/share/metapackage-linaro-gigamp/linaro-gigamp-use-google-ntp
+	/usr/share/metapackage-google/linaro-gigamp-use-google-ntp
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
