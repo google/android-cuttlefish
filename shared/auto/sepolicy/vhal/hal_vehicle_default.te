@@ -1,3 +1,5 @@
 # Configuration for register VHAL to car watchdog
 carwatchdog_client_domain(hal_vehicle_default)
 binder_use(hal_vehicle_default)
+
+allow hal_vehicle_default self:vsock_socket { create connect getopt getattr read write shutdown };
