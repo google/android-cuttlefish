@@ -253,10 +253,6 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
                           SubprocessOptions(), WEXITED)
                       .ok());
             CHECK(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(),
-                           "shell", "svc", "wifi", "enable"},
-                          SubprocessOptions(), WEXITED)
-                      .ok());
-            CHECK(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(),
                            "shell", "cmd", "uwb", "enable-uwb"},
                           SubprocessOptions(), WEXITED)
                       .ok());
