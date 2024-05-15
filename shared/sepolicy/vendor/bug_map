@@ -5,3 +5,5 @@ rs privapp_data_file file b/291029681
 rs priv_app unix_stream_socket b/291029681
 rs priv_app udp_socket b/291029681
 mediashell_app rootfs dir b/293075059
+init debugfs_bootreceiver_tracing dir b/340399580
+init debugfs_wifi_tracing dir b/340399580
