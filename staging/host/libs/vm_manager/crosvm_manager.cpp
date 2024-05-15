@@ -819,9 +819,18 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   // This needs to be the last parameter
   crosvm_cmd.Cmd().AddParameter("--bios=", instance.bootloader());
 
+  std::vector<MonitorCommand> commands;
+
+  if (vhost_user_gpu) {
+    // The vhost user gpu crosvm command should be added before the main
+    // crosvm command so that the main crosvm command can use a prerequisite
+    // to wait for the communication socket to be ready.
+    commands.emplace_back(std::move(vhost_user_gpu->device_cmd));
+    commands.emplace_back(std::move(vhost_user_gpu->device_logs_cmd));
+  }
+
   // log_tee must be added before crosvm_cmd to ensure all of crosvm's logs are
   // captured during shutdown. Processes are stopped in reverse order.
-  std::vector<MonitorCommand> commands;
   commands.emplace_back(std::move(crosvm_log_tee_cmd));
 
   if (gpu_capture_enabled) {
@@ -876,11 +885,6 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
                                    crosvm_logs);
     commands.emplace_back(std::move(crosvm_cmd.Cmd()), true);
-  }
-
-  if (vhost_user_gpu) {
-    commands.emplace_back(std::move(vhost_user_gpu->device_cmd));
-    commands.emplace_back(std::move(vhost_user_gpu->device_logs_cmd));
   }
 
   return commands;
