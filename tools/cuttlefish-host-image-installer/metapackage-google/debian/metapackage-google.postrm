@@ -1,5 +1,5 @@
 #!/bin/sh
-# postrm script for metapackage-linaro-gigamp.
+# postrm script for metapackage-google.
 #
 # See: dh_installdeb(1).
 

@@ -65,7 +65,7 @@ jobs:
     - name: Pbuilder arm64 update
       run: pbuilder-dist stable arm64 update
     - name: Building package
-      run: cd tools/cuttlefish-host-image-installer/metapackage-linaro-gigamp && pdebuild --buildresult .. -- --basetgz ~/pbuilder/stable-arm64-base.tgz
+      run: cd tools/cuttlefish-host-image-installer/metapackage-google && pdebuild --buildresult .. -- --basetgz ~/pbuilder/stable-arm64-base.tgz
     - name: Create artifact
       run: cd tools/cuttlefish-host-image-installer && 7z a -mx=9 meta_gigamp_packages.7z *.deb
     - name: Publish meta_gigamp_packages.7z

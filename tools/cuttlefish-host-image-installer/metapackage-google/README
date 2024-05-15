@@ -1,7 +1,8 @@
-The Debian Package metapackage-linaro-gigamp
+The Debian Package metapackage-google
 ----------------------------
 
-This is the metapackage for Linaro's Gigabyte Ampere project.
+This is the metapackage for Google Android Cuttlefish project.
+In this project, Google works with Linaro to build an ARM64 Debian stable host image on Gigabyte Ampere.
 
 Please note that this package is usually not installed manually.
 It should be installed by Debian installer through preseed.
@@ -18,7 +19,7 @@ After modification, run wrap-and-sort to keep the list sorted.
 ## Install files.
 
 Put the file into this metapackage. And modify
-debian/metapackage-linaro-gigamp.install to install it to the its place.
+debian/metapackage-google.install to install it to the its place.
 
 ## Add more customization script.
 
@@ -26,9 +27,9 @@ For developers who wants to add more scripts to run after installation.
 Please follow the instructions.
 
 1. Add a script in ./usr/share. Make sure it is executable.
-2. Run the script in ./debian/metapackage-linaro-gigamp.postinst. In configure
+2. Run the script in ./debian/metapackage-google.postinst. In configure
    case.
-3. Install the script into Debian package. Please modify ./debian/metapackage-linaro-gigamp.install
+3. Install the script into Debian package. Please modify ./debian/metapackage-google.install
 
 Please refer ./usr/share/linaro-gigamp-use-google-ntp as an example.
 It modifies the ntp.conf to add Google's NTP servers.

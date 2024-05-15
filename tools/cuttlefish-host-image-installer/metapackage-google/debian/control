@@ -1,4 +1,4 @@
-Source: metapackage-linaro-gigamp
+Source: metapackage-google
 Section: misc
 Priority: optional
 Maintainer: Ying-Chun Liu (PaulLiu) <paul.liu@linaro.org>
@@ -8,7 +8,7 @@ Build-Depends: debhelper-compat (= 13)
 Standards-Version: 4.6.2
 Homepage: https://git.codelinaro.org/linaro/googlelt/gigabyte-ampere-cuttlefish-installer
 
-Package: metapackage-linaro-gigamp
+Package: metapackage-google
 Architecture: any
 Multi-Arch: foreign
 Depends: dkms,
