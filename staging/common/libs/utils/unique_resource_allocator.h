@@ -163,7 +163,7 @@ class UniqueResourceAllocator {
 
   template <typename V = T>
   std::enable_if_t<std::is_integral<V>::value, std::optional<ReservationSet>>
-  UniqueConsecutiveItems(const int n) {
+  UniqueConsecutiveItems(const std::size_t n) {
     static_assert(std::is_same<T, V>::value);
     std::lock_guard<std::mutex> lock(mutex_);
     if (n <= 0 || available_resources_.size() < n) {
