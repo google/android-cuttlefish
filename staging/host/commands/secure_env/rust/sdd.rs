@@ -14,7 +14,7 @@
 
 //! Secure deletion data manager for Cuttlefish.
 //! This implementetation is "secure" in the sense that the underlying storage can not be accessed
-//! by Android. However, it is does not provide any protections agains the host, i.e. anyone with
+//! by Android. However, it is does not provide any protections against the host, i.e. anyone with
 //! access to the host can read and alter the contents of deletion data.
 
 use kmr_common::{crypto, keyblob, km_err, Error};

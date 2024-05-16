@@ -979,7 +979,7 @@ void NetworkService::HandleQuerySupportedTechs(const Client& client) {
  * byte #:  |3  |2  |1  |0
  *
  * Higher byte order give higher priority. Thus, a value of 0x0000000f represents
- * a preferred mode of GSM, WCDMA, CDMA, and EvDo in which all are equally preferrable, whereas
+ * a preferred mode of GSM, WCDMA, CDMA, and EvDo in which all are equally preferable, whereas
  * 0x00000201 represents a mode with GSM and WCDMA, in which WCDMA is preferred over GSM
  */
 int NetworkService::getModemTechFromPrefer(int preferred_mask) {
@@ -1294,8 +1294,8 @@ void NetworkService::KeepSignalStrengthChangingLoop::
     network_service_.signal_strength_percent_ -= 5;
     // With "close to 0" values, the signal strength bar on the Android UI will
     // be shown empty, this also represents that theres's no connectivity which
-    // is missleading as the connectivity continues, so a lower bound of 10 will
-    // be used so the signal strenght bar is never emptied
+    // is misleading as the connectivity continues, so a lower bound of 10 will
+    // be used so the signal strength bar is never emptied
     if (network_service_.signal_strength_percent_ <= 10) {
       network_service_.signal_strength_percent_ = 100;
     }

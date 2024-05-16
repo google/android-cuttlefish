@@ -28,14 +28,14 @@ message CuttlefishLogEvent {
   // Next index: 3
   enum DeviceType {
     // The log event was sourced from an unspecified device type.
-    //TODO(moelsherif) : This event is not coverted yet in the code
+    //TODO(moelsherif) : This event is not converted yet in the code
     CUTTLEFISH_DEVICE_TYPE_UNSPECIFIED = 0;
 
     // A log event that was sourced from a Cuttlefish host device.
     CUTTLEFISH_DEVICE_TYPE_HOST = 1;
 
     // A log event that was sent by an Cuttlefish guest device.
-    //TODO(moelsherif) : This event is not coverted yet in the code
+    //TODO(moelsherif) : This event is not converted yet in the code
     CUTTLEFISH_DEVICE_TYPE_GUEST = 2;
   }
 

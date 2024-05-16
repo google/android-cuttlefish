@@ -170,7 +170,7 @@ Result<void> CopyDirectoryRecursively(
              src_dir_path);
   if (verify_dest_dir_empty) {
     CF_EXPECTF(!FileExists(dest_dir_path, /* follow symlink */ false),
-               "Delete the destination directiory \"{}\" first", dest_dir_path);
+               "Delete the destination directory \"{}\" first", dest_dir_path);
   }
 
   std::string dest_final_target = RealpathOrSelf(dest_dir_path);

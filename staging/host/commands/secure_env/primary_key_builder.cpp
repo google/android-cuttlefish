@@ -58,7 +58,7 @@ void PrimaryKeyBuilder::UniqueData(const std::string& data) {
   /* The unique field normally has a precise size to go with the type of the
    * object. During primary key creation the unique field accepts any short byte
    * string to let the user introduce variability into the primary key creation
-   * process which is otherwise determinstic relative to secret TPM state. */
+   * process which is otherwise deterministic relative to secret TPM state. */
   public_area_.unique.sym.size = data.size();
   memcpy(&public_area_.unique.sym.buffer, data.data(), data.size());
 }

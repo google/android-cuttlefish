@@ -15,7 +15,7 @@ The signaling server MUST expose two (different) websocket endpoints:
 
 Additional endpoints are allowed and are up to the specific applications.
 Extending the messages below with additional fields should be done with extreme
-care, prefixing the field names with an applciation specific word is strongly
+care, prefixing the field names with an application specific word is strongly
 recommended. The same holds true for creating new message types.
 
 Devices connect to the *register_device* endpoint and send these types of
