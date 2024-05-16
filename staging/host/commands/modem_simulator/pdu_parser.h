@@ -40,7 +40,7 @@ class PDUParser {
   int HexCharToInt(char c);
   std::string IntToHexString(int value);
 
-  // special handling for time zone differance (to GMT)
+  // special handling for time zone difference (to GMT)
   std::string IntToHexStringTimeZoneDiff(int value);
   std::string GetCurrentTimeStamp();
 

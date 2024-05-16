@@ -81,7 +81,7 @@ void ProcessSubscriptions(
     if (action == monitor::SubscriptionAction::ContinueSubscription) {
       ++idx;
     } else {
-      // Cancel the subscription by swaping it with the last active subscription
+      // Cancel the subscription by swapping it with the last active subscription
       // and decreasing the active subscription count
       --active_subscription_count;
       std::swap((*subscribers)[idx], (*subscribers)[active_subscription_count]);

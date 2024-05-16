@@ -62,7 +62,7 @@ CrosvmManager::ConfigureGraphics(
     const CuttlefishConfig::InstanceSpecific& instance) {
   // Override the default HAL search paths in all cases. We do this because
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
-  // with properities lead to non-deterministic behavior while loading the
+  // with properties lead to non-deterministic behavior while loading the
   // HALs.
 
   std::unordered_map<std::string, std::string> bootconfig_args;

@@ -48,7 +48,7 @@ class ClientId {
  * Client object managed by ChannelMonitor, contains two types, the RIL client
  * and the remote client of other cuttlefish instance.
  * Due to std::mutex does not implement its copy and operate= constructors, it
- * cann't be stored in standard contains (vector, map), so use the point instead.
+ * can't be stored in standard contains (vector, map), so use the point instead.
  */
 class Client {
  public:

@@ -72,7 +72,7 @@ void Flag::ValidateAlias(const FlagAlias& alias) {
 
   CHECK(StartsWith(alias.name, "-")) << "Flags should start with \"-\"";
   if (alias.mode == FlagAliasMode::kFlagPrefix) {
-    CHECK(EndsWith(alias.name, "=")) << "Prefix flags shold end with \"=\"";
+    CHECK(EndsWith(alias.name, "=")) << "Prefix flags should end with \"=\"";
   }
 
   CHECK(!HasAlias(alias)) << "Duplicate flag alias: " << alias.name;
