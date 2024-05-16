@@ -55,8 +55,8 @@ static std::string Gsm7bitEncode(const std::string& input) {
   icu::UCharCharacterIterator iter(unicode_str.getTerminatedBuffer(),
                                    unicode_str.length());
   size_t octects_size = unicode_str.length() - (unicode_str.length() / 8);
-  std::byte octects[octects_size];
-  std::byte* octects_index = octects;
+  std::byte octets[octects_size];
+  std::byte* octects_index = octets;
   int bits_to_write_in_prev_octect = 0;
   for (; iter.hasNext(); iter.next()) {
     UChar uchar = iter.current();
@@ -80,25 +80,25 @@ static std::string Gsm7bitEncode(const std::string& input) {
         (std::byte)std::distance(kGSM7BitDefaultAlphabet.begin(), found_it);
     if (iter.hasPrevious()) {
       std::byte prev_octect_value = *(octects_index - 1);
-      // Writes the corresponding lowest part in the previous octect.
+      // Writes the corresponding lowest part in the previous octet.
       *(octects_index - 1) =
           code << (8 - bits_to_write_in_prev_octect) | prev_octect_value;
     }
     if (bits_to_write_in_prev_octect < 7) {
-      // Writes the remaining highest part in the current octect.
+      // Writes the remaining highest part in the current octet.
       *octects_index = code >> bits_to_write_in_prev_octect;
       bits_to_write_in_prev_octect++;
       octects_index++;
     } else {  // bits_to_write_in_prev_octect == 7
       // The 7 bits of the current character were fully packed into the
-      // previous octect.
+      // previous octet.
       bits_to_write_in_prev_octect = 0;
     }
   }
   std::stringstream result;
   for (int i = 0; i < octects_size; i++) {
     result << std::setfill('0') << std::setw(2) << std::hex
-           << std::to_integer<int>(octects[i]);
+           << std::to_integer<int>(octets[i]);
   }
   return result.str();
 }

@@ -30,7 +30,7 @@
 
 DEFINE_int32(fifo_in, -1, "A pipe for incoming communication");
 DEFINE_int32(fifo_out, -1, "A pipe for outgoing communication");
-DEFINE_int32(data_port, -1, "A port for datas");
+DEFINE_int32(data_port, -1, "A port for data");
 DEFINE_int32(buffer_size, -1, "The buffer size");
 DEFINE_int32(dump_packet_size, -1,
              "Dump incoming/outgoing packets up to given size");

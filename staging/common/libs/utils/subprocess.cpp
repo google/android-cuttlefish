@@ -298,10 +298,10 @@ SubprocessStopper KillSubprocessFallback(std::function<StopperResult()> nice) {
 }
 
 SubprocessStopper KillSubprocessFallback(SubprocessStopper nice_stopper) {
-  return [nice_stopper](Subprocess* proccess) {
-    auto nice_result = nice_stopper(proccess);
+  return [nice_stopper](Subprocess* process) {
+    auto nice_result = nice_stopper(process);
     if (nice_result == StopperResult::kStopFailure) {
-      auto harsh_result = KillSubprocess(proccess);
+      auto harsh_result = KillSubprocess(process);
       return harsh_result == StopperResult::kStopSuccess
                  ? StopperResult::kStopCrash
                  : harsh_result;

@@ -41,7 +41,7 @@
  *  2. type_: the type of command/response. E.g. start, stop, ack, abort, etc
  *  3. additional_info_: all the other additional information
  *
- * The binary represenation of each packet is as follows:
+ * The binary representation of each packet is as follows:
  *  n:L[1]:L[2]:...:L[n]:data[1]data[2]data[3]...data[n]
  *
  * The additional_info_ is in general a variable number of items, each

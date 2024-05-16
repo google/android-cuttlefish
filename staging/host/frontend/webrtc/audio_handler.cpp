@@ -418,7 +418,7 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
       return;
     }
     // A buffer may be received for an inactive stream if we were slow to
-    // process it and the other side stopped the stream. Quitely ignore it in
+    // process it and the other side stopped the stream. Quietly ignore it in
     // that case
     if (!stream_desc.active) {
       buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
@@ -478,7 +478,7 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
       return;
     }
     // A buffer may be received for an inactive stream if we were slow to
-    // process it and the other side stopped the stream. Quitely ignore it in
+    // process it and the other side stopped the stream. Quietly ignore it in
     // that case
     if (!stream_desc.active) {
       buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());

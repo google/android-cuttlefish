@@ -591,7 +591,7 @@ TEST_F(ModemServiceTest, SendSMS) {
   //command += '\032';
   SendCommand(command);
   ReadCommandResponse(response);
-  // TODO (bohu) for some reason the follwoing asserts fail, fix them
+  // TODO (bohu) for some reason the following asserts fail, fix them
   // ASSERT_EQ(response.size(), 3);
   // ASSERT_STREQ(response[response.size() - 1].c_str(),
   // kFinalResponseSuccess[0].c_str());

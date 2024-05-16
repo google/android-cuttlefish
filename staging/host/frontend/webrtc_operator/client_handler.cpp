@@ -110,7 +110,7 @@ void ClientWSHandler::handleConnectionRequest(const Json::Value& message) {
 
 void ClientWSHandler::handleForward(const Json::Value& message) {
   if (client_id_ == 0) {
-    LogAndReplyError("Forward failed: No device asociated to client");
+    LogAndReplyError("Forward failed: No device associated to client");
     Close();
     return;
   }

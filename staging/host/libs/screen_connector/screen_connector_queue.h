@@ -70,7 +70,7 @@ class ScreenConnectorQueue {
    * much faster than the consumer, WebRTC consumes.
    * Therefore, when the small buffer is full -- which means
    * WebRTC would not call OnNextFrame --, the producer
-   * should stop adding itmes to the queue.
+   * should stop adding items to the queue.
    *
    */
   void Push(T&& item) {

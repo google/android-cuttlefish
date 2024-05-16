@@ -323,17 +323,17 @@ std::string FormatBoolString(const std::string& name_str, bool value) {
 }
 
 bool OverrideBoolArg(std::vector<std::string>& args) {
-  bool overrided = false;
+  bool overridden = false;
   for (int index = 0; index < args.size(); index++) {
     const std::string curr_arg = args[index];
     BooleanFlag value = IsBoolArg(curr_arg);
     if (value.is_bool_flag) {
       // Override the value
       args[index] = FormatBoolString(value.name, value.bool_flag_value);
-      overrided = true;
+      overridden = true;
     }
   }
-  return overrided;
+  return overridden;
 }
 
 } // namespace
