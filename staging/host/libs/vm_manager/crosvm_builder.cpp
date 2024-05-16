@@ -70,19 +70,21 @@ void CrosvmBuilder::AddControlSocket(const std::string& control_socket,
   command_.AddParameter("--socket=", control_socket);
 }
 
+// TODO: b/243198718 - switch to virtio-console
 void CrosvmBuilder::AddHvcSink() {
-  command_.AddParameter("--serial=hardware=virtio-console,num=", ++hvc_num_,
-                        ",type=sink");
+  command_.AddParameter(
+      "--serial=hardware=legacy-virtio-console,num=", ++hvc_num_, ",type=sink");
 }
 void CrosvmBuilder::AddHvcReadOnly(const std::string& output, bool console) {
-  command_.AddParameter("--serial=hardware=virtio-console,num=", ++hvc_num_,
-                        ",type=file,path=", output,
-                        console ? ",console=true" : "");
+  command_.AddParameter(
+      "--serial=hardware=legacy-virtio-console,num=", ++hvc_num_,
+      ",type=file,path=", output, console ? ",console=true" : "");
 }
 void CrosvmBuilder::AddHvcReadWrite(const std::string& output,
                                     const std::string& input) {
-  command_.AddParameter("--serial=hardware=virtio-console,num=", ++hvc_num_,
-                        ",type=file,path=", output, ",input=", input);
+  command_.AddParameter(
+      "--serial=hardware=legacy-virtio-console,num=", ++hvc_num_,
+      ",type=file,path=", output, ",input=", input);
 }
 
 void CrosvmBuilder::AddReadOnlyDisk(const std::string& path) {
