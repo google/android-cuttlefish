@@ -104,7 +104,7 @@ ServerSocket::ServerSocket(int port)
 ClientSocket ServerSocket::Accept() {
   SharedFD client = SharedFD::Accept(*fd_);
   if (!client->IsOpen()) {
-    LOG(FATAL) << "Error attemping to accept: " << strerror(errno);
+    LOG(FATAL) << "Error attempting to accept: " << strerror(errno);
   }
   return ClientSocket{client};
 }

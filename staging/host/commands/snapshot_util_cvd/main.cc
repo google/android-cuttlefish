@@ -95,10 +95,10 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
                   "Failed to delete preexisting snapshot dir");
       }
       CF_EXPECTF(!FileExists(parsed.snapshot_path, /* follow symlink */ false),
-                 "Delete the destination directiory \"{}\" first",
+                 "Delete the destination directory \"{}\" first",
                  parsed.snapshot_path);
 
-      // Automically suspend and resume if requested.
+      // Automatically suspend and resume if requested.
       if (parsed.auto_suspend) {
         run_cvd::ExtendedLauncherAction extended_action;
         extended_action.mutable_suspend();

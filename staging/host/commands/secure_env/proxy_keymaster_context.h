@@ -36,7 +36,7 @@ class TpmRemoteProvisioningContext;
  * Implementation of KeymasterContext that proxies to another implementation.
  *
  * Because AndroidKeymaster wraps a KeymasterContext and puts it into a unique
- * pointer, it doesn't let the implementor manage the lifetime of the
+ * pointer, it doesn't let the implementer manage the lifetime of the
  * KeymasterContext implementation. This proxy breaks that relationship, and
  * allows the lifetimes to be distinct as long as the KeymasterContext instance
  * outlives the AndroidKeymaster instance.
