@@ -86,11 +86,12 @@ class OpenWrt : public CommandSource {
       wifi_tap = ap_cmd.AddTap(instance_.wifi_tap_name());
     }
 
-    if (IsRestoring(config_)) {
-      const std::string snapshot_dir = config_.snapshot_path();
-      CF_EXPECT(ap_cmd.SetToRestoreFromSnapshot(snapshot_dir, instance_.id(),
-                                                "_openwrt"));
-    }
+    // TODO(khei): Enable restore once open_wrt instance restoring is fixed
+    // if (IsRestoring(config_)) {
+    //  const std::string snapshot_dir = config_.snapshot_path();
+    //  CF_EXPECT(ap_cmd.SetToRestoreFromSnapshot(snapshot_dir, instance_.id(),
+    //                                            "_openwrt"));
+    //}
 
     /* TODO(kwstephenkim): delete this code when Minidroid completely disables
      * the AP VM itself
