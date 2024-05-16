@@ -22,7 +22,7 @@
   See also packages/services/Car/service/res/values/config.xml
 -->
 <audioPolicyConfiguration version="7.0" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <!-- Global configuration Decalaration -->
+    <!-- Global configuration Declaration -->
     <globalConfiguration speaker_drc_enabled="true"/>
     <modules>
       <module name="primary" halVersion="2.0">

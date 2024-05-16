@@ -241,7 +241,7 @@ bool eicPresentationValidateRequestMessage(
   eicCborAppendStringZ(&cbor, "Signature1");
 
   // The COSE Encoded protected headers is just a single field with
-  // COSE_LABEL_ALG (1) -> coseSignAlg (e.g. -7). For simplicitly we just
+  // COSE_LABEL_ALG (1) -> coseSignAlg (e.g. -7). For simplicity we just
   // hard-code the CBOR encoding:
   static const uint8_t coseEncodedProtectedHeaders[] = {0xa1, 0x01, 0x26};
   eicCborAppendByteString(&cbor, coseEncodedProtectedHeaders,
@@ -567,7 +567,7 @@ bool eicPresentationCalcMacKey(
   eicCborAppendStringZ(&ctx->cbor, "MAC0");
 
   // The COSE Encoded protected headers is just a single field with
-  // COSE_LABEL_ALG (1) -> COSE_ALG_HMAC_256_256 (5). For simplicitly we just
+  // COSE_LABEL_ALG (1) -> COSE_ALG_HMAC_256_256 (5). For simplicity we just
   // hard-code the CBOR encoding:
   static const uint8_t coseEncodedProtectedHeaders[] = {0xa1, 0x01, 0x05};
   eicCborAppendByteString(&ctx->cbor, coseEncodedProtectedHeaders,
@@ -820,7 +820,7 @@ bool eicPresentationDeleteCredential(
   eicCborAppendStringZ(&cbor, "Signature1");
 
   // The COSE Encoded protected headers is just a single field with
-  // COSE_LABEL_ALG (1) -> COSE_ALG_ECSDA_256 (-7). For simplicitly we just
+  // COSE_LABEL_ALG (1) -> COSE_ALG_ECSDA_256 (-7). For simplicity we just
   // hard-code the CBOR encoding:
   static const uint8_t coseEncodedProtectedHeaders[] = {0xa1, 0x01, 0x26};
   eicCborAppendByteString(&cbor, coseEncodedProtectedHeaders,
@@ -880,7 +880,7 @@ bool eicPresentationProveOwnership(
   eicCborAppendStringZ(&cbor, "Signature1");
 
   // The COSE Encoded protected headers is just a single field with
-  // COSE_LABEL_ALG (1) -> COSE_ALG_ECSDA_256 (-7). For simplicitly we just
+  // COSE_LABEL_ALG (1) -> COSE_ALG_ECSDA_256 (-7). For simplicity we just
   // hard-code the CBOR encoding:
   static const uint8_t coseEncodedProtectedHeaders[] = {0xa1, 0x01, 0x26};
   eicCborAppendByteString(&cbor, coseEncodedProtectedHeaders,

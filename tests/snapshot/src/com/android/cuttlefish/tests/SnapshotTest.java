@@ -62,7 +62,7 @@ public class SnapshotTest extends BaseHostJUnit4Test {
     final String tmpFile = "/data/local/tmp/snapshot_tmp";
     getDevice().executeShellCommand("touch " + tmpFile);
 
-    // Reboot the device to make sure the file persits.
+    // Reboot the device to make sure the file persists.
     getDevice().reboot();
     File file = getDevice().pullFile(tmpFile);
     if (file == null) {

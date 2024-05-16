@@ -111,7 +111,7 @@ typedef struct {
     // byte #:  |3  |2  |1  |0
     //
     // Higher byte order give higher priority. Thus, a value of 0x0000000f represents
-    // a preferred mode of GSM, WCDMA, CDMA, and EvDo in which all are equally preferrable, whereas
+    // a preferred mode of GSM, WCDMA, CDMA, and EvDo in which all are equally preferable, whereas
     // 0x00000201 represents a mode with GSM and WCDMA, in which WCDMA is preferred over GSM
     int32_t preferredNetworkMode;
     int subscription_source;
@@ -6081,7 +6081,7 @@ static void onUnsolicited (const char *s, const char *sms_pdu)
             sms_pdu, strlen(sms_pdu));
     } else if (strStartsWith(s, "+CGEV:")) {
         /* Really, we can ignore NW CLASS and ME CLASS events here,
-         * but right now we don't since extranous
+         * but right now we don't since extraneous
          * RIL_UNSOL_DATA_CALL_LIST_CHANGED calls are tolerated
          */
         /* can't issue AT commands here -- call on main thread */

@@ -796,7 +796,7 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
         pURI = &(s_configUnsolResponses[unsolResponseIndex]);
     }
 
-    // Grab a wake lock if needed for this reponse,
+    // Grab a wake lock if needed for this response,
     // as we exit we'll either release it immediately
     // or set a timer to release it later.
     switch (s_unsolResponses[unsolResponseIndex].wakeType) {
@@ -807,7 +807,7 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
 
         case DONT_WAKE:
         default:
-            // No wake lock is grabed so don't set timeout
+            // No wake lock is grabbed so don't set timeout
             shouldScheduleTimeout = false;
             break;
     }
