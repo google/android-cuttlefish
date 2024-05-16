@@ -47,6 +47,13 @@ jobs:
       run: cd android-cuttlefish/frontend && debuild -i -us -uc -b
     - name: install user debian package
       run: dpkg -i android-cuttlefish/cuttlefish-user_*_*64.deb || apt-get install -f -y
+    - name: Create artifact
+      run: cd android-cuttlefish && 7z a -mx=9 cuttlefish_packages_x86.7z *.deb
+    - name: Publish cuttlefish_packages_x86.7z
+      uses: actions/upload-artifact@v3
+      with:
+        name: cuttlefish_packages_x86
+        path: android-cuttlefish/cuttlefish_packages_x86.7z
   build-cvd:
     runs-on: ubuntu-latest
     container: 
