@@ -86,7 +86,7 @@ struct VsockCid;
  * Counted reference to a FileInstance.
  *
  * This is also the place where most new FileInstances are created. The creation
- * mehtods correspond to the underlying POSIX calls.
+ * methods correspond to the underlying POSIX calls.
  *
  * SharedFDs can be compared and stored in STL containers. The semantics are
  * slightly different from POSIX file descriptors:
@@ -97,7 +97,7 @@ struct VsockCid;
  *    SharedFD a, b;
  *    assert (a != b);
  *    a = b;
- *    asssert(a == b);
+ *    assert(a == b);
  *
  * o The identity of the FileInstance is not affected by closing the file:
  *   SharedFD a, b;
