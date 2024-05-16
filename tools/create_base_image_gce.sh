@@ -115,7 +115,7 @@ sudo rm /mnt/image/install_nvidia.sh
 # Vulkan loader
 sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1 -t bullseye-backports
 
-# Wayland-server needed to have Nvidia driver fail gracefully when attemping to
+# Wayland-server needed to have Nvidia driver fail gracefully when attempting to
 # use the EGL API on GCE instances without a GPU.
 sudo chroot /mnt/image /usr/bin/apt install -y libwayland-server0 -t bullseye-backports
 
