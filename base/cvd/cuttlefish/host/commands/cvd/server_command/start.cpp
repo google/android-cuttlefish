@@ -271,7 +271,7 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
         // rm -fr isn't supporetd by TreeHugger, so if we fork-and-exec to
         // literally run "rm -fr", the presubmit testing may fail if ever this
         // code is tested in the future.
-        result_deleted = RecursivelyRemoveDirectory(acloud_compat_home);
+        result_deleted = RecursivelyRemoveDirectory(acloud_compat_home).ok();
       }
     }
     if (!result_deleted) {
