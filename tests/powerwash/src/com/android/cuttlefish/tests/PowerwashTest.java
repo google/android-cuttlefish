@@ -67,7 +67,7 @@ public class PowerwashTest extends BaseHostJUnit4Test {
         final String tmpFile = "/data/local/tmp/powerwash_tmp";
         getDevice().executeShellCommand("touch " + tmpFile);
 
-        // Reboot the device to make sure the file persits.
+        // Reboot the device to make sure the file persists.
         getDevice().reboot();
         File file = getDevice().pullFile(tmpFile);
         if (file == null) {
@@ -87,7 +87,7 @@ public class PowerwashTest extends BaseHostJUnit4Test {
             } catch (DeviceNotAvailableException e) {
                 CLog.e(e);
             }
-            assertTrue(String.format("Powerwash reset failed during attemt #%d", i), success);
+            assertTrue(String.format("Powerwash reset failed during attempt #%d", i), success);
             long duration = System.currentTimeMillis() - start;
             CLog.d("Powerwash took %dms to finish", duration);
         }

@@ -28,7 +28,7 @@ for file_name in $all_file_names
 do
    #extract file creation date
    creation_date=`git log --follow --format=%as --date default $file_name | tail -1`
-   # extract file creation year fron the date
+   # extract file creation year from the date
    year=`echo $creation_date | awk -F\- '{print $1}'`
    echo $file_name   $year
 

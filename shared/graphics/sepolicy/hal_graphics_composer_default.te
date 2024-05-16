@@ -7,6 +7,6 @@ allow hal_graphics_composer_default kmsg_device:chr_file w_file_perms;
 
 allow hal_graphics_composer_default hal_graphics_mapper_service:service_manager find;
 
-# Supress warnings for drm_hwcomposer trying to read some vendor.hwc.*
+# Suppress warnings for drm_hwcomposer trying to read some vendor.hwc.*
 # properties as Cuttlefish never configures these properties.
 dontaudit hal_graphics_composer_default default_prop:file read;

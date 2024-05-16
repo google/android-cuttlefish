@@ -151,7 +151,7 @@ cc_defaults {
 
 // Defaults for cuttlefish modules that are available only in the host-side OS. Here "host" includes
 // both (1) non-Android OS like gLinux or Ubuntu, and (2) Android OS that is capable of running
-// guest VM(s) in it. Note that, in the context of the Android build systm - Soong - (1) is called
+// guest VM(s) in it. Note that, in the context of the Android build system - Soong - (1) is called
 // as "host" and (2) is called as "target". But here, the term "host" is in the context of VMs. If a
 // module is for the host-side VM (either Android or non-Android), "cuttlefish_host" shall be used.
 cc_defaults {

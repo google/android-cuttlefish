@@ -220,7 +220,7 @@
 #define CF_DEFAULTS_UDP_PORT_RANGE "15550:15599"
 
 // Adb default parameters
-// TODO : Replaceconstants with these flags, they're currently defined throug
+// TODO : Replaceconstants with these flags, they're currently defined through
 // GflagsCompatFlag
 #define CF_DEFAULTS_RUN_ADB_CONNECTOR true
 #define CF_DEFAULTS_ADB_MODE "vsock_half_tunnel"

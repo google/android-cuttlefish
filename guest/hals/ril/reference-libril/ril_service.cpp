@@ -3715,7 +3715,7 @@ Return<void> RadioImpl_1_6::setAllowedCarriers_1_4(int32_t  serial,
         return Void();
     }
 
-    // Prepare legacy structure (defined in IRadio 1.0) to re-use existing code.
+    // Prepare legacy structure (defined in IRadio 1.0) to reuse existing code.
     RIL_CarrierRestrictions cr = {};
     if (prepareCarrierRestrictions(cr, false, carriers.allowedCarriers, carriers.excludedCarriers,
             pRI) < 0) {
@@ -5901,7 +5901,7 @@ int convertResponseHexStringEntryToInt(char **response, int index, int numString
 }
 
 /* Fill Cell Identity info from Voice Registration State Response.
- * This fucntion is applicable only for RIL Version < 15.
+ * This function is applicable only for RIL Version < 15.
  * Response is a  "char **".
  * First and Second entries are in hex string format
  * and rest are integers represented in ascii format. */
@@ -6126,7 +6126,7 @@ void fillCellIdentityFromVoiceRegStateResponseString_1_2(V1_2::CellIdentity &cel
 }
 
 /* Fill Cell Identity info from Data Registration State Response.
- * This fucntion is applicable only for RIL Version < 15.
+ * This function is applicable only for RIL Version < 15.
  * Response is a  "char **".
  * First and Second entries are in hex string format
  * and rest are integers represented in ascii format. */
@@ -9738,7 +9738,7 @@ int radio_1_6::getAllowedCarriersResponse(int slotId,
             RIL_CarrierRestrictionsWithPriority *pCrExt =
                     (RIL_CarrierRestrictionsWithPriority *)response;
 
-            // Convert into the structure used in IRadio 1.0 to re-use existing code
+            // Convert into the structure used in IRadio 1.0 to reuse existing code
             RIL_CarrierRestrictions cr = {};
             cr.len_allowed_carriers = pCrExt->len_allowed_carriers;
             cr.len_excluded_carriers = pCrExt->len_excluded_carriers;

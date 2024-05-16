@@ -306,7 +306,7 @@ bool eicOpsSignEcKey(const uint8_t publicKey[EIC_P256_PUB_KEY_SIZE],
                      const char* subjectName, time_t validityNotBefore,
                      time_t validityNotAfter, const uint8_t* proofOfBinding,
                      size_t proofOfBindingSize, uint8_t* cert,
-                     size_t* certSize) {  // inout
+                     size_t* certSize) {  // in out
   vector<uint8_t> signingKeyVec(EIC_P256_PRIV_KEY_SIZE);
   memcpy(signingKeyVec.data(), signingKey, EIC_P256_PRIV_KEY_SIZE);
 
@@ -457,7 +457,7 @@ bool eicOpsEcDsaVerifyWithPublicKey(const uint8_t* digest, size_t digestSize,
   vector<uint8_t> derSignature;
   if (!android::hardware::identity::support::ecdsaSignatureCoseToDer(
           signatureVec, derSignature)) {
-    LOG(ERROR) << "Error convering signature to DER format";
+    LOG(ERROR) << "Error converting signature to DER format";
     return false;
   }
 

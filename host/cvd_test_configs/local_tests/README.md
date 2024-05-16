@@ -7,7 +7,7 @@ instances with remotely fetched ones as well, but in all cases
 at least one local image is needed. Hence some steps are needed
 to create these artifacts locally.
 
-In particular - there needs to be the following artifacts lcoal:
+In particular - there needs to be the following artifacts local:
 
 1. A folder containing Cuttlefish 'host tools' -
 which contains the `cvd` binary (among others) that are

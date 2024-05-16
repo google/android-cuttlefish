@@ -205,7 +205,7 @@ bool eicOpsCreateCredentialKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE],
                                const uint8_t* applicationId,
                                size_t applicationIdSize, bool testCredential,
                                uint8_t* cert,
-                               size_t* certSize);  // inout
+                               size_t* certSize);  // in out
 
 // Generate an X.509 certificate for the key identified by |publicKey| which
 // must be of the form returned by eicOpsCreateEcKey().
@@ -222,7 +222,7 @@ bool eicOpsSignEcKey(const uint8_t publicKey[EIC_P256_PUB_KEY_SIZE],
                      const char* subjectName, time_t validityNotBefore,
                      time_t validityNotAfter, const uint8_t* proofOfBinding,
                      size_t proofOfBindingSize, uint8_t* cert,
-                     size_t* certSize);  // inout
+                     size_t* certSize);  // in out
 
 // Uses |privateKey| to create an ECDSA signature of some data (the SHA-256 must
 // be given by |digestOfData|). Returns the signature in |signature|.

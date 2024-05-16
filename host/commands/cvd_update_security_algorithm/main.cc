@@ -28,7 +28,7 @@ DEFINE_int32(instance_num, cuttlefish::GetInstance(),
              "Which instance to read the configs from");
 DEFINE_int32(modem_num, 0, "Which modem to send command to");
 DEFINE_int32(connection_event, 0,
-             "The tyoe if connection event. See "
+             "The type if connection event. See "
              "android.hardware.radio.network.ConnectionEvent");
 DEFINE_int32(encryption, 0,
              "The encryption algorithm being used. See "
