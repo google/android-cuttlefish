@@ -52,7 +52,7 @@ public class TombstoneTransmitTest extends BaseHostJUnit4Test {
     private static final int NUM_TOMBSTONES_IN_TEST = 1000;
 
     /**
-     * Creates 15 tombstones on the virtual device of varying lenghts.
+     * Creates 15 tombstones on the virtual device of varying lengths.
      * Each tombstone is expected to be sync'd to the host and checked for integrity.
      */
     @Test

@@ -45,9 +45,9 @@ def lookup_addr(args, object_path, address):
   try:
     if object_path[0] == os.path.sep:
       object_path = object_path[1:]
-    parms = [args.addr2line, '-e',
+    params = [args.addr2line, '-e',
              os.path.join(args.symbols, object_path), address]
-    details = subprocess.check_output(parms).strip().split(':')
+    details = subprocess.check_output(params).strip().split(':')
     return LookupInfo(
         line_number=details[-1],
         details=details,

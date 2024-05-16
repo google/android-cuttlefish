@@ -37,7 +37,7 @@
 class RilSapSocket : public RilSocket {
     /**
      * Place holder for the radio functions returned by the initialization
-     * function. Currenty only onRequest handler is being used.
+     * function. Currently only onRequest handler is being used.
      */
     const RIL_RadioFunctions* uimFuncs;
 

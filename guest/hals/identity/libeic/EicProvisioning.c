@@ -164,7 +164,7 @@ bool eicProvisioningStartPersonalization(
   eicCborAppendStringZ(&ctx->cbor, "Signature1");
 
   // The COSE Encoded protected headers is just a single field with
-  // COSE_LABEL_ALG (1) -> COSE_ALG_ECSDA_256 (-7). For simplicitly we just
+  // COSE_LABEL_ALG (1) -> COSE_ALG_ECSDA_256 (-7). For simplicity we just
   // hard-code the CBOR encoding:
   static const uint8_t coseEncodedProtectedHeaders[] = {0xa1, 0x01, 0x26};
   eicCborAppendByteString(&ctx->cbor, coseEncodedProtectedHeaders,

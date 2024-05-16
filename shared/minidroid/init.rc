@@ -40,7 +40,7 @@ on init
     chmod 0666 /dev/binderfs/binder
     chmod 0666 /dev/binderfs/vndbinder
 
-    # create an empty ld.config.txt before running any non-static exectuables
+    # create an empty ld.config.txt before running any non-static executables
     # (apexd and linkerconfig) to suppress "ld.config.txt not found" warnings.
     write /linkerconfig/ld.config.txt \#
     chmod 644 /linkerconfig/ld.config.txt
