@@ -86,7 +86,7 @@ class ConfUiRendererImpl {
     auto box = e.bounds_;
     Boundary b;
     // (x,y) is left top. so floor() makes sense
-    // w, h are witdh and height in float. perhaps ceiling makes more
+    // w, h are width and height in float. perhaps ceiling makes more
     // sense
     b.x = static_cast<std::uint32_t>(box.x().floor().count());
     b.y = static_cast<std::uint32_t>(box.y().floor().count());
@@ -338,7 +338,7 @@ void ConfUiRendererImpl::UpdateColorScheme(const bool is_inverted) {
 }
 
 std::unique_ptr<TeeUiFrameWrapper>& ConfUiRendererImpl::RenderRawFrame() {
-  /* we repaint only if one or more of the followng meet:
+  /* we repaint only if one or more of the following meet:
    *
    *  1. raw_frame_ is empty
    *  2. the current_width_ and current_height_ is out of date

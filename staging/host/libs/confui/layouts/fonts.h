@@ -23,7 +23,7 @@
  *    extern unsigned char <name>[];
  *    extern unsigned int <name>_length;
  * The first one pointing to a raw ttf font file in the .rodata section, and the
- * second beeing the size of the buffer.
+ * second being the size of the buffer.
  */
 TEEUI_INCFONT(RobotoMedium);
 TEEUI_INCFONT(RobotoRegular);

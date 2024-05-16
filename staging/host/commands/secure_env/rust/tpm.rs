@@ -156,7 +156,7 @@ impl kmr_common::crypto::Hkdf for KeyDerivation {
         // HKDF normally performs an initial extract step to create a pseudo-random key (PRK) for
         // use in the HKDF expand processing.  This implementation uses a TPM HMAC key for HKDF
         // expand processing instead, and so we cannot do a full HKDF call.
-        Err(km_err!(UnknownError, "unexpected call to full hkdf opearation"))
+        Err(km_err!(UnknownError, "unexpected call to full hkdf operation"))
     }
 
     fn extract(
