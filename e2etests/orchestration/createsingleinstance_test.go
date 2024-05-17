@@ -119,9 +119,9 @@ func waitUntilServiceIsUp(url string) error {
 	waitSecs := 4 * time.Second
 	for tries := 0; tries < 3; tries++ {
 		time.Sleep(waitSecs)
-		if _, err := http.Get(url + "/debug/statusz"); err == nil {
-			return nil
-		}
+		if res, err := http.Get(url + "/_debug/statusz"); err == nil && res.StatusCode == http.StatusOK {
+      return nil
+		} 
 		waitSecs *= 2
 	}
 	return errors.New("timeout waiting for service to start")
