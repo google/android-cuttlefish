@@ -48,7 +48,7 @@ int LoggingCurlDebugFunction(CURL*, curl_infotype type, char* data, size_t size,
   switch (type) {
     case CURLINFO_TEXT:
       LOG(VERBOSE) << "CURLINFO_TEXT ";
-      LOG(INFO) << TrimWhitespace(data, size);
+      LOG(INFO) << ScrubSecrets(TrimWhitespace(data, size));
       break;
     case CURLINFO_HEADER_IN:
       LOG(VERBOSE) << "CURLINFO_HEADER_IN ";
