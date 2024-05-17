@@ -37,7 +37,7 @@ jobs:
     - name: Download Debian installer
       run: cd tools/cuttlefish-host-image-installer && wget -nv -c ${DEBIAN_ISO_URL} && ./addpreseed.sh && xz -9e preseed-mini.iso
     - name: Publish preseed-mini.iso.xz
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
       with:
         name: preseed-mini
         path: tools/cuttlefish-host-image-installer/preseed-mini.iso.xz
@@ -69,7 +69,7 @@ jobs:
     - name: Create artifact
       run: cd tools/cuttlefish-host-image-installer && 7z a -mx=9 meta_gigamp_packages.7z *.deb
     - name: Publish meta_gigamp_packages.7z
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
       with:
         name: meta_gigamp_packages
         path: tools/cuttlefish-host-image-installer/meta_gigamp_packages.7z
@@ -103,7 +103,7 @@ jobs:
     - name: Create artifact
       run: cd tools/cuttlefish-host-image-installer && cp `ls kernel-build-space/linux-image-*.deb | grep -v dbg` . && cp kernel-build-space/linux-headers-*.deb . && 7z a -mx=9 $OUTPUT_FILE.7z *.deb
     - name: Publish aosp_kernel_aosp${{ matrix.version }}.7z
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
       with:
         name: aosp_kernel_aosp${{ matrix.version }}
         path: tools/cuttlefish-host-image-installer/$OUTPUT_FILE.7z
@@ -129,7 +129,7 @@ jobs:
     - name: Building
       run: cd tools/cuttlefish-host-image-installer/u-boot &&  ../uboot/build_uboot_qemu_aarch64.sh && cd .. && cp uboot_build_place/u-boot.bin .
     - name: Publish u-boot.bin
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
       with:
         name: u-boot
         path: tools/cuttlefish-host-image-installer/u-boot.bin
@@ -141,7 +141,7 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Download cuttlefish_packages.7z
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
       with:
         name: cuttlefish_packages_arm64
         path: "tools/cuttlefish-host-image-installer"
@@ -169,7 +169,7 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Download meta_gigamp_packages.7z
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
       with:
         name: meta_gigamp_packages
         path: "tools/cuttlefish-host-image-installer"
@@ -202,7 +202,7 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2      
     - name: Download aosp_kernel_aosp${{ matrix.version }}.7z
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
       with:
         name: aosp_kernel_aosp${{ matrix.version }}
         path: "tools/cuttlefish-host-image-installer"

@@ -19,7 +19,7 @@ jobs:
     - name: Create artifact
       run: cd tools/cuttlefish-host-image-installer && cp -f cuttlefish-common-buildplace/*.deb . && 7z a -mx=9 cuttlefish_packages.7z *.deb
     - name: Publish cuttlefish_packages.7z
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
       with:
         name: cuttlefish_packages_arm64
         path: tools/cuttlefish-host-image-installer/cuttlefish_packages.7z
