@@ -1068,6 +1068,14 @@ bool CuttlefishConfig::InstanceSpecific::vhost_net() const {
   return (*Dictionary())[kVhostNet].asBool();
 }
 
+static constexpr char kOpenThreadNodeId[] = "openthread_node_id";
+void CuttlefishConfig::MutableInstanceSpecific::set_openthread_node_id(int node_id) {
+  (*Dictionary())[kOpenThreadNodeId] = node_id;
+}
+int CuttlefishConfig::InstanceSpecific::openthread_node_id() const {
+  return (*Dictionary())[kOpenThreadNodeId].asInt();
+}
+
 static constexpr char kVhostUserVsock[] = "vhost_user_vsock";
 void CuttlefishConfig::MutableInstanceSpecific::set_vhost_user_vsock(
     bool vhost_user_vsock) {

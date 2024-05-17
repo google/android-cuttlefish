@@ -582,6 +582,7 @@ class CuttlefishConfig {
     bool enable_kernel_log() const;
     bool vhost_net() const;
     bool vhost_user_vsock() const;
+    int openthread_node_id() const;
 
     // Mobile network info (RIL)
     std::string ril_dns() const;
@@ -811,6 +812,8 @@ class CuttlefishConfig {
 
     void set_vhost_net(bool vhost_net);
     void set_vhost_user_vsock(bool vhost_user_vsock);
+
+    void set_openthread_node_id(int node_id);
 
     // Mobile network (RIL)
     void set_ril_dns(const std::string& ril_dns);
