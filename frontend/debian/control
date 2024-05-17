@@ -29,6 +29,7 @@ Depends: cuttlefish-user,
          bash,
          openssl,
          nginx,
+         systemd-journal-remote,
          ${misc:Depends},
          ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
