@@ -400,94 +400,6 @@ android_system_image {
         "libaaudio",
         "libalarm_jni",
         "libamidi",
-        "libandroid_runtime",
-        "libandroid_servers",
-        "libandroid",
-        "libandroidfw",
-        "libartpalette-system",
-        "libaudio-resampler", // generic-system
-        "libaudioeffect_jni",
-        "libaudiohal", // generic-system
-        "libaudiopolicyengineconfigurable", // generic-system
-        "libbinder_ndk",
-        "libbinder_rpc_unstable",
-        "libbinder",
-        "libcamera2ndk",
-        "libclang_rt.asan",
-        "libcompiler_rt",
-        "libcutils", // used by many libs
-        "libdmabufheap", // used by many libs
-        "libdrm", // used by many libs // generic_system
-        "libdrmframework_jni", // base_system
-        "libdrmframework", // base_system
-        "libEGL_angle", // base_system
-        "libEGL", // base_system
-        "libETC1", // base_system
-        "libfdtrack", // base_system
-        "libFFTEm", // base_system
-        "libfilterfw", // base_system
-        "libfilterpack_imageproc", // media_system
-        "libfwdlockengine", // generic_system
-        "libgatekeeper", // base_system
-        "libGLESv1_CM_angle", // base_system
-        "libGLESv1_CM", // base_system
-        "libGLESv2_angle", // base_system
-        "libGLESv2", // base_system
-        "libGLESv3", // base_system
-        "libgui", // base_system
-        "libhardware_legacy", // base_system
-        "libhardware", // base_system
-        "libhidltransport", // generic_system
-        "libhwbinder", // generic_system
-        "libinput", // base_system
-        "libinputflinger", // base_system
-        "libiprouteutil", // base_system
-        "libjnigraphics", // base_system
-        "libjpeg", // base_system
-        "liblog", // base_system
-        "liblogwrap", // generic_system
-        "liblz4", // generic_system
-        "libmedia_jni", // base_system
-        "libmedia", // base_system
-        "libmediandk", // base_system
-        "libminui", // generic_system
-        "libmtp", // base_system
-        "libnetd_client", // base_system
-        "libnetlink", // base_system
-        "libnetutils", // base_system
-        "libneuralnetworks_packageinfo", // base_system
-        "libnl", // generic_system
-        "libOpenMAXAL", // base_system
-        "libOpenSLES", // base_system
-        "libpdfium", // base_system
-        "libpolicy-subsystem", // generic_system
-        "libpower", // base_system
-        "libpowermanager", // base_system
-        "libprotobuf-cpp-full", // generic_system
-        "libradio_metadata", // base_system
-        "librs_jni", // handheld_system
-        "librtp_jni", // base_system
-        "libsensorservice", // base_system
-        "libsfplugin_ccodec", // base_system
-        "libskia", // base_system
-        "libsonic", // base_system
-        "libsonivox", // base_system
-        "libsoundpool", // base_system
-        "libspeexresampler", // base_system
-        "libsqlite", // base_system
-        "libstagefright_foundation", // base_system
-        "libstagefright_omx", // base_system
-        "libstagefright", // base_system
-        "libstdc++", // base_system
-        "libsysutils", // base_system
-        "libui", // base_system
-        "libusbhost", // base_system
-        "libutils", // base_system
-        "libvintf_jni", // base_system
-        "libvulkan", // base_system
-        "libwebviewchromium_loader", // media_system
-        "libwebviewchromium_plat_support", // media_system
-        "libwilhelm", // base_system
         "linker", // ok
         "llkd", // base_system
         "lmkd", // base_system
@@ -575,7 +487,52 @@ android_system_image {
         "wifi.rc", // base_system
         "wificond", // base_system
         "wm", // base_system
-    ],
+    ] + select(product_variable("debuggable"), {
+        true: [
+            "adevice_fingerprint",
+            "arping",
+            "avbctl",
+            "bootctl",
+            "dmuserd",
+            "evemu-record",
+            "idlcli",
+            "init-debug.rc",
+            "iotop",
+            "iperf3",
+            "iw",
+            "layertracegenerator",
+            "logpersist.start",
+            "logtagd.rc",
+            "ot-cli-ftd",
+            "ot-ctl",
+            "procrank",
+            "profcollectctl",
+            "profcollectd",
+            "record_binder",
+            "sanitizer-status",
+            "servicedispatcher",
+            "showmap",
+            "sqlite3",
+            "ss",
+            "start_with_lockagent",
+            "strace",
+            "su",
+            "tinycap",
+            "tinyhostless",
+            "tinymix",
+            "tinypcminfo",
+            "tinyplay", // host
+            "tracepath",
+            "tracepath6",
+            "traceroute6",
+            "unwind_info",
+            "unwind_reg_info",
+            "unwind_symbols",
+            "update_engine_client",
+        ],
+
+        default: [],
+    }),
     multilib: {
         common: {
             deps: [
@@ -693,50 +650,96 @@ android_system_image {
                 "servicemanager",
             ],
         },
-    },
-    product_variables: {
-        debuggable: {
+        both: {
             deps: [
-                "adevice_fingerprint",
-                "arping",
-                "avbctl",
-                "bootctl",
-                "dmuserd",
-                "evemu-record",
-                "idlcli",
-                "init-debug.rc",
-                "iotop",
-                "iperf3",
-                "iw",
-                "layertracegenerator",
-                "logpersist.start",
-                "logtagd.rc",
-                "ot-cli-ftd",
-                "ot-ctl",
-                "procrank",
-                "profcollectctl",
-                "profcollectd",
-                "record_binder",
-                "sanitizer-status",
-                "servicedispatcher",
-                "showmap",
-                "sqlite3",
-                "ss",
-                "start_with_lockagent",
-                "strace",
-                "su",
-                "tinycap",
-                "tinyhostless",
-                "tinymix",
-                "tinypcminfo",
-                "tinyplay", // host
-                "tracepath",
-                "tracepath6",
-                "traceroute6",
-                "unwind_info",
-                "unwind_reg_info",
-                "unwind_symbols",
-                "update_engine_client",
+                "libandroid_runtime",
+                "libandroid_servers",
+                "libandroid",
+                "libandroidfw",
+                "libartpalette-system",
+                "libaudio-resampler", // generic-system
+                "libaudioeffect_jni",
+                "libaudiohal", // generic-system
+                "libaudiopolicyengineconfigurable", // generic-system
+                "libbinder_ndk",
+                "libbinder_rpc_unstable",
+                "libbinder",
+                "libcamera2ndk",
+                "libclang_rt.asan",
+                "libcompiler_rt",
+                "libcutils", // used by many libs
+                "libdmabufheap", // used by many libs
+                "libdrm", // used by many libs // generic_system
+                "libdrmframework_jni", // base_system
+                "libdrmframework", // base_system
+                "libEGL_angle", // base_system
+                "libEGL", // base_system
+                "libETC1", // base_system
+                "libfdtrack", // base_system
+                "libFFTEm", // base_system
+                "libfilterfw", // base_system
+                "libfilterpack_imageproc", // media_system
+                "libfwdlockengine", // generic_system
+                "libgatekeeper", // base_system
+                "libGLESv1_CM_angle", // base_system
+                "libGLESv1_CM", // base_system
+                "libGLESv2_angle", // base_system
+                "libGLESv2", // base_system
+                "libGLESv3", // base_system
+                "libgui", // base_system
+                "libhardware_legacy", // base_system
+                "libhardware", // base_system
+                "libhidltransport", // generic_system
+                "libhwbinder", // generic_system
+                "libinput", // base_system
+                "libinputflinger", // base_system
+                "libiprouteutil", // base_system
+                "libjnigraphics", // base_system
+                "libjpeg", // base_system
+                "liblog", // base_system
+                "liblogwrap", // generic_system
+                "liblz4", // generic_system
+                "libmedia_jni", // base_system
+                "libmedia", // base_system
+                "libmediandk", // base_system
+                "libminui", // generic_system
+                "libmtp", // base_system
+                "libnetd_client", // base_system
+                "libnetlink", // base_system
+                "libnetutils", // base_system
+                "libneuralnetworks_packageinfo", // base_system
+                "libnl", // generic_system
+                "libOpenMAXAL", // base_system
+                "libOpenSLES", // base_system
+                "libpdfium", // base_system
+                "libpolicy-subsystem", // generic_system
+                "libpower", // base_system
+                "libpowermanager", // base_system
+                "libprotobuf-cpp-full", // generic_system
+                "libradio_metadata", // base_system
+                "librs_jni", // handheld_system
+                "librtp_jni", // base_system
+                "libsensorservice", // base_system
+                "libsfplugin_ccodec", // base_system
+                "libskia", // base_system
+                "libsonic", // base_system
+                "libsonivox", // base_system
+                "libsoundpool", // base_system
+                "libspeexresampler", // base_system
+                "libsqlite", // base_system
+                "libstagefright_foundation", // base_system
+                "libstagefright_omx", // base_system
+                "libstagefright", // base_system
+                "libstdc++", // base_system
+                "libsysutils", // base_system
+                "libui", // base_system
+                "libusbhost", // base_system
+                "libutils", // base_system
+                "libvintf_jni", // base_system
+                "libvulkan", // base_system
+                "libwebviewchromium_loader", // media_system
+                "libwebviewchromium_plat_support", // media_system
+                "libwilhelm", // base_system
             ],
         },
     },
