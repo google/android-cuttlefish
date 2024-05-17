@@ -225,7 +225,7 @@ func (c *HostOrchestratorServiceImpl) createPolledConnection(device string) (*ho
 func (c *HostOrchestratorServiceImpl) WaitForOperation(name string, res any) error {
 	path := "/operations/" + name + "/:wait"
 	retryOpts := RetryOptions{
-		StatusCodes: []int{http.StatusServiceUnavailable},
+		StatusCodes: []int{http.StatusServiceUnavailable, http.StatusGatewayTimeout},
 		NumRetries:  c.WaitRetries,
 		RetryDelay:  c.WaitRetryDelay,
 	}
