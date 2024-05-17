@@ -1,6 +1,6 @@
 name: Presubmit 
 
-on: [pull_request, push]
+on: [pull_request, push, workflow_call]
 
 jobs:
   build-orchestrator:
@@ -47,6 +47,13 @@ jobs:
       run: cd android-cuttlefish/frontend && debuild -i -us -uc -b
     - name: install user debian package
       run: dpkg -i android-cuttlefish/cuttlefish-user_*_*64.deb || apt-get install -f -y
+    - name: Create artifact
+      run: cd android-cuttlefish && apt-get install -y p7zip-full && 7z a -mx=9 cuttlefish_packages_x86.7z *.deb
+    - name: Publish cuttlefish_packages_x86.7z
+      uses: actions/upload-artifact@v3
+      with:
+        name: cuttlefish_packages_x86
+        path: android-cuttlefish/cuttlefish_packages_x86.7z
   build-cvd:
     runs-on: ubuntu-latest
     container: 
@@ -91,4 +98,22 @@ jobs:
         name: testlogs
         path: e2etests/bazel-testlogs
   build-arm64-cuttlefish-deb-job:
-    uses: ./.github/workflows/reusable-build.yaml
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Prepare building environment
+      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
+    - name: Pbuilder arm64 create
+      run: pbuilder-dist stable arm64 create
+    - name: Pbuilder arm64 update
+      run: pbuilder-dist stable arm64 update
+    - name: Building package
+      run: cd tools/cuttlefish-host-image-installer && ./build_cf_packages.sh
+    - name: Create artifact
+      run: cd tools/cuttlefish-host-image-installer && cp -f cuttlefish-common-buildplace/*.deb . && 7z a -mx=9 cuttlefish_packages.7z *.deb
+    - name: Publish cuttlefish_packages.7z
+      uses: actions/upload-artifact@v3
+      with:
+        name: cuttlefish_packages_arm64
+        path: tools/cuttlefish-host-image-installer/cuttlefish_packages.7z
