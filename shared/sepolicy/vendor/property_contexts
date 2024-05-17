@@ -16,3 +16,4 @@ ro.vendor.uwb.dev              u:object_r:vendor_uwb_prop:s0 exact string
 vendor.wlan.firmware.version   u:object_r:vendor_wlan_versions_prop:s0 exact string
 vendor.wlan.driver.version     u:object_r:vendor_wlan_versions_prop:s0 exact string
 vendor.dlkm.modules.ready      u:object_r:vendor_device_prop:s0 exact bool
+persist.vendor.otsim.local_interface    u:object_r:vendor_otsim_local_interface_prop:s0 exact string
