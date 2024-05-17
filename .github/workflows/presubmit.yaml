@@ -86,6 +86,7 @@ jobs:
         cd e2etests
         bazel test --sandbox_writable_path=$HOME --test_output=errors orchestration/...
     - name: Upload test logs
+      if: always()
       uses: actions/upload-artifact@v3
       with:
         name: testlogs
