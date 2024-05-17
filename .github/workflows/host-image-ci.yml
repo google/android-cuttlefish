@@ -33,7 +33,7 @@ jobs:
     steps:
     - name: Building package
       run: echo $KERNEL_MANIFEST_BRANCH && echo $KERNEL_MANIFEST_URL && echo $OUTPUT_FILE.7z *.deb && echo "testing"
-    - name: Publish $OUTPUT_FILE.7z
+    - name: Publish aosp_kernel_aosp${{ matrix.version }}.7z
       run: echo tools/cuttlefish-host-image-installer/$OUTPUT_FILE.7z
 
       
