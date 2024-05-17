@@ -111,6 +111,11 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         std::to_string(instance.tombstone_receiver_port());
   }
 
+  if (instance.openthread_node_id()) {
+    bootconfig_args["androidboot.openthread_node_id"] =
+        std::to_string(instance.openthread_node_id());
+  }
+
   const auto enable_confui = (config.vm_manager() == VmmMode::kQemu ? 0 : 1);
   bootconfig_args["androidboot.enable_confirmationui"] =
       std::to_string(enable_confui);
