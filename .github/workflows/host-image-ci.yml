@@ -43,7 +43,7 @@ jobs:
         path: tools/cuttlefish-host-image-installer/preseed-mini.iso.xz
 
   build-cuttlefish-deb-job:
-    uses: ./.github/workflows/presubmit.yaml
+    uses: ./.github/workflows/reusable-build.yaml
 
   build-metapackage-deb-job:
     runs-on: ubuntu-latest
