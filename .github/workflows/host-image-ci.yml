@@ -23,7 +23,8 @@ on: [pull_request, push]
 jobs:
   build-kernel-aosp-deb-job:
     runs-on: ubuntu-latest
-    matrix:
+    strategy:
+      matrix:
         version: [14-6.1, 15-6.1, 15-6.6]
         
     env:
