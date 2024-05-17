@@ -25,8 +25,8 @@ std::string ScrubSecrets(const std::string& data) {
   // eg [<head>]Authorization: Bearer token_text[<tail>] ->
   //    [<head>]Authorization: Bearer token_...[<tail>]
   result = std::regex_replace(
-      result, std::regex("(Authorization:[ ]+\\S+[ ]+)(\\S{6})\\S*"),
-      "$1$2...");
+      result, std::regex("(.*)([Aa]uthorization:[ ]+\\S+[ ]+)(\\S{6})\\S*"),
+      "$1$2$3...");
   // eg [<head>]client_secret=token_text[<tail>] ->
   //    [<head>]client_secret=token_...[<tail>]
   result = std::regex_replace(
