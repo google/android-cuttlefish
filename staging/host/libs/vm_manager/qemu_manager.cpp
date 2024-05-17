@@ -211,7 +211,8 @@ QemuManager::ConfigureBootDevices(
     case Arch::X86_64: {
       // QEMU has additional PCI devices for an ISA bridge and PIIX4
       // virtio_gpu precedes the first console or disk
-      int pci_offset = 2 + num_gpu - VmManager::kDefaultNumHvcs;
+      // TODO(schuffelen): Simplify this logic when crosvm uses multiport
+      int pci_offset = 3 + num_gpu - VmManager::kDefaultNumHvcs;
       return ConfigureMultipleBootDevices("pci0000:00/0000:00:", pci_offset,
                                           num_disks);
     }
@@ -249,12 +250,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-chardev");
     qemu_cmd.AddParameter("null,id=hvc", hvc_num);
     qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter(
-        "virtio-serial-pci-non-transitional,max_ports=1,id=virtio-serial",
-        hvc_num, ",bus=hvc-bridge,addr=", fmt::format("{:0>2x}", hvc_num + 1));
-    qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter("virtconsole,bus=virtio-serial", hvc_num,
-                          ".0,chardev=hvc", hvc_num);
+    qemu_cmd.AddParameter("virtconsole,bus=virtio-serial.0,chardev=hvc",
+                          hvc_num);
     hvc_num++;
   };
   auto add_serial_sink = [&qemu_cmd, &serial_num]() {
@@ -286,36 +283,24 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("file,id=hvc", hvc_num, ",path=", output,
                           ",append=on");
     qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter(
-        "virtio-serial-pci-non-transitional,max_ports=1,id=virtio-serial",
-        hvc_num, ",bus=hvc-bridge,addr=", fmt::format("{:0>2x}", hvc_num + 1));
-    qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter("virtconsole,bus=virtio-serial", hvc_num,
-                          ".0,chardev=hvc", hvc_num);
+    qemu_cmd.AddParameter("virtconsole,bus=virtio-serial.0,chardev=hvc",
+                          hvc_num);
     hvc_num++;
   };
   auto add_hvc = [&qemu_cmd, &hvc_num](const std::string& prefix) {
     qemu_cmd.AddParameter("-chardev");
     qemu_cmd.AddParameter("pipe,id=hvc", hvc_num, ",path=", prefix);
     qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter(
-        "virtio-serial-pci-non-transitional,max_ports=1,id=virtio-serial",
-        hvc_num, ",bus=hvc-bridge,addr=", fmt::format("{:0>2x}", hvc_num + 1));
-    qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter("virtconsole,bus=virtio-serial", hvc_num,
-                          ".0,chardev=hvc", hvc_num);
+    qemu_cmd.AddParameter("virtconsole,bus=virtio-serial.0,chardev=hvc",
+                          hvc_num);
     hvc_num++;
   };
   auto add_hvc_serial = [&qemu_cmd, &hvc_num](const std::string& prefix) {
     qemu_cmd.AddParameter("-chardev");
     qemu_cmd.AddParameter("serial,id=hvc", hvc_num, ",path=", prefix);
     qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter(
-        "virtio-serial-pci-non-transitional,max_ports=1,id=virtio-serial",
-        hvc_num, ",bus=hvc-bridge,addr=", fmt::format("{:0>2x}", hvc_num + 1));
-    qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter("virtconsole,bus=virtio-serial", hvc_num,
-                          ".0,chardev=hvc", hvc_num);
+    qemu_cmd.AddParameter("virtconsole,bus=virtio-serial.0,chardev=hvc",
+                          hvc_num);
     hvc_num++;
   };
 
@@ -440,13 +425,6 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("none");
   }
 
-  qemu_cmd.AddParameter("-device");
-  if (is_x86) {
-    qemu_cmd.AddParameter("pcie-pci-bridge,id=hvc-bridge,addr=01.2");
-  } else {
-    qemu_cmd.AddParameter("pcie-pci-bridge,id=hvc-bridge");
-  }
-
   if (instance.hwcomposer() != kHwComposerNone) {
     auto display_configs = instance.display_configs();
     CF_EXPECT(display_configs.size() >= 1);
@@ -496,6 +474,10 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       add_serial_console_ro(instance.kernel_log_pipe_name());
     }
   }
+
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter(
+      "virtio-serial-pci-non-transitional,max_ports=31,id=virtio-serial");
 
   // /dev/hvc0 = kernel console
   // If kernel log is enabled, the virtio-console port will be specified as
