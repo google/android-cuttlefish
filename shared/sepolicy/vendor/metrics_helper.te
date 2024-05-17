@@ -5,7 +5,7 @@ init_daemon_domain(metrics_helper)
 
 # set sys.powerctl
 # TODO(b/241398817) powerctl_prop is probably not the best domain for this
-# purpose. Keep it as a workaroung and check later if it's worth creating a new
+# purpose. Keep it as a workaround and check later if it's worth creating a new
 # one.
 set_prop(metrics_helper, powerctl_prop)
 

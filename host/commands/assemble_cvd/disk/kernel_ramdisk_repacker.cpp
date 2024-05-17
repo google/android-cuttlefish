@@ -57,7 +57,7 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
                                    const std::string& output_image,
                                    const std::string& vbmeta_image) {
     // TODO(b/149866755) For now, we assume that vendor_dlkm is ext4. Add
-    // logic to handle EROFS once the feature stablizes.
+    // logic to handle EROFS once the feature stabilizes.
     const auto tmp_output_image = output_image + ".tmp";
     if (!BuildDlkmImage(build_dir, false, partition_name, tmp_output_image)) {
       LOG(ERROR) << "Failed to build `" << partition_name << "` image from "

@@ -225,8 +225,8 @@ typedef enum {
     RIL_E_INVALID_SMSC_ADDRESS = 58,            /* SMSC address specified is invalid */
     RIL_E_NO_SUCH_ENTRY = 59,                   /* No such entry present to perform the request */
     RIL_E_NETWORK_NOT_READY = 60,               /* Network is not ready to perform the request */
-    RIL_E_NOT_PROVISIONED = 61,                 /* Device doesnot have this value provisioned */
-    RIL_E_NO_SUBSCRIPTION = 62,                 /* Device doesnot have subscription */
+    RIL_E_NOT_PROVISIONED = 61,                 /* Device does not have this value provisioned */
+    RIL_E_NO_SUBSCRIPTION = 62,                 /* Device does not have subscription */
     RIL_E_NO_NETWORK_FOUND = 63,                /* Network cannot be found */
     RIL_E_DEVICE_IN_USE = 64,                   /* Operation cannot be performed because the device
                                                    is currently in use */
@@ -271,7 +271,7 @@ typedef enum {
 } RIL_CallState;
 
 typedef enum {
-    RADIO_STATE_OFF = 0,                   /* Radio explictly powered off (eg CFUN=0) */
+    RADIO_STATE_OFF = 0,                   /* Radio explicitly powered off (eg CFUN=0) */
     RADIO_STATE_UNAVAILABLE = 1,           /* Radio unavailable (eg, resetting or not booted) */
     RADIO_STATE_ON = 10                    /* Radio is on */
 } RIL_RadioState;
@@ -432,7 +432,7 @@ typedef enum {
     RIL_UUS_DCS_USP = 0,          /* User specified protocol */
     RIL_UUS_DCS_OSIHLP = 1,       /* OSI higher layer protocol */
     RIL_UUS_DCS_X244 = 2,         /* X.244 */
-    RIL_UUS_DCS_RMCF = 3,         /* Reserved for system mangement
+    RIL_UUS_DCS_RMCF = 3,         /* Reserved for system management
                                      convergence function */
     RIL_UUS_DCS_IA5c = 4          /* IA5 characters */
 } RIL_UUS_DCS;
@@ -491,7 +491,7 @@ typedef struct {
     int             suggestedRetryTime; /* If status != 0, this fields indicates the suggested retry
                                            back-off timer value RIL wants to override the one
                                            pre-configured in FW.
-                                           The unit is miliseconds.
+                                           The unit is milliseconds.
                                            The value < 0 means no value is suggested.
                                            The value 0 means retry should be done ASAP.
                                            The value of INT_MAX(0x7fffffff) means no retry. */
@@ -522,7 +522,7 @@ typedef struct {
     int             suggestedRetryTime; /* If status != 0, this fields indicates the suggested retry
                                            back-off timer value RIL wants to override the one
                                            pre-configured in FW.
-                                           The unit is miliseconds.
+                                           The unit is milliseconds.
                                            The value < 0 means no value is suggested.
                                            The value 0 means retry should be done ASAP.
                                            The value of INT_MAX(0x7fffffff) means no retry. */
@@ -555,7 +555,7 @@ typedef struct {
     int             suggestedRetryTime; /* If status != 0, this fields indicates the suggested retry
                                            back-off timer value RIL wants to override the one
                                            pre-configured in FW.
-                                           The unit is miliseconds.
+                                           The unit is milliseconds.
                                            The value < 0 means no value is suggested.
                                            The value 0 means retry should be done ASAP.
                                            The value of INT_MAX(0x7fffffff) means no retry. */
@@ -678,7 +678,7 @@ typedef struct {
 typedef struct {
     char * address;
     int clir;
-            /* (same as 'n' paremeter in TS 27.007 7.7 "+CLIR"
+            /* (same as 'n' parameter in TS 27.007 7.7 "+CLIR"
              * clir == 0 on "use subscription default value"
              * clir == 1 on "CLIR invocation" (restrict CLI presentation)
              * clir == 2 on "CLIR suppression" (allow CLI presentation)
@@ -750,7 +750,7 @@ typedef struct {
                                  * 0 = disable
                                  * 1 = enable
                                  * 2 = interrogate
-                                 * 3 = registeration
+                                 * 3 = registration
                                  * 4 = erasure
                                  */
 
@@ -1509,7 +1509,7 @@ typedef struct {
 
 typedef struct {
     int signalStrength;  /* Valid values are (0-31, 99) as defined in TS 27.007 8.5 */
-    int rsrp;            /* The current Reference Signal Receive Power in dBm multipled by -1.
+    int rsrp;            /* The current Reference Signal Receive Power in dBm multiplied by -1.
                           * Range: 44 to 140 dBm
                           * INT_MAX: 0x7FFFFFFF denotes invalid value.
                           * Reference: 3GPP TS 36.133 9.1.4 */
@@ -1529,7 +1529,7 @@ typedef struct {
 
 typedef struct {
     int signalStrength;  /* Valid values are (0-31, 99) as defined in TS 27.007 8.5 */
-    int rsrp;            /* The current Reference Signal Receive Power in dBm multipled by -1.
+    int rsrp;            /* The current Reference Signal Receive Power in dBm multiplied by -1.
                           * Range: 44 to 140 dBm
                           * INT_MAX: 0x7FFFFFFF denotes invalid value.
                           * Reference: 3GPP TS 36.133 9.1.4 */
@@ -1554,7 +1554,7 @@ typedef struct {
 } RIL_LTE_SignalStrength_v8;
 
 typedef struct {
-    int rscp;    /* The Received Signal Code Power in dBm multipled by -1.
+    int rscp;    /* The Received Signal Code Power in dBm multiplied by -1.
                   * Range : 25 to 120
                   * INT_MAX: 0x7FFFFFFF denotes invalid value.
                   * Reference: 3GPP TS 25.123, section 9.1.1.1 */
@@ -2963,7 +2963,7 @@ typedef enum {
     DATA_REQ_REASOPN_NORMAL    = 0x01,  // The reason of the data request is normal
     DATA_REQ_REASOPN_SHUTDOWN  = 0x02,  // The reason of the data request is device shutdown
     DATA_REQ_REASOPN_HANDOVER  = 0x03,  // The reason of the data request is IWLAN data handover
-                                        // to another transport (e.g. from cellular to wifi or vise versa)
+                                        // to another transport (e.g. from cellular to wifi or vice versa)
 } RIL_DataRequestReason;
 
 /**
@@ -3790,7 +3790,7 @@ typedef enum {
  *                          for values above 2 this is RIL_RadioTechnology + 2.
  * ((const char **)data)[1] is a RIL_DataProfile (support is optional)
  * ((const char **)data)[2] is the APN to connect to if radio technology is GSM/UMTS. This APN will
- *                          override the one in the profile. NULL indicates no APN overrride.
+ *                          override the one in the profile. NULL indicates no APN override.
  * ((const char **)data)[3] is the username for APN, or NULL
  * ((const char **)data)[4] is the password for APN, or NULL
  * ((const char **)data)[5] is the PAP / CHAP auth type. Values:
@@ -4384,7 +4384,7 @@ typedef enum {
 /**
  * RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE
  *
- * Query current network selectin mode
+ * Query current network selection mode
  *
  * "data" is NULL
  *
@@ -4829,7 +4829,7 @@ typedef enum {
  * invokeOemRilRequestStrings()
  *
  * "response" is a const char **, representing an array of null-terminated UTF-8
- * stings that will be returned via the caller's response message here:
+ * strings that will be returned via the caller's response message here:
  *
  * (String[])(((AsyncResult)response.obj).result)
  *
@@ -5205,7 +5205,7 @@ typedef enum {
  * "data" is NULL
  *
  * "response" is int *
- * ((int *)reponse)[0] is == RIL_PreferredNetworkType
+ * ((int *)response)[0] is == RIL_PreferredNetworkType
  *
  * Valid errors:
  *  SUCCESS
@@ -6713,7 +6713,7 @@ typedef enum {
 /**
  * RIL_REQUEST_GET_RADIO_CAPABILITY
  *
- * Used to get phone radio capablility.
+ * Used to get phone radio capability.
  *
  * "data" is the RIL_RadioCapability structure
  *
@@ -6997,7 +6997,7 @@ typedef enum {
  *
  * Provide Carrier specific information to the modem that will be used to
  * encrypt the IMSI and IMPI. Sent by the framework during boot, carrier
- * switch and everytime we receive a new certificate.
+ * switch and every time we receive a new certificate.
  *
  * "data" is the RIL_CarrierInfoForImsiEncryption * structure.
  *
@@ -7706,7 +7706,7 @@ typedef enum {
  * "RING", "BUSY", "NO CARRIER", and also call state
  * transitions (DIALING->ALERTING ALERTING->ACTIVE)
  *
- * Redundent or extraneous invocations are tolerated
+ * Redundant or extraneous invocations are tolerated
  */
 #define RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED 1001
 
@@ -7738,7 +7738,7 @@ typedef enum {
  * as an ascii string of hex digits. The PDU starts with the SMSC address
  * per TS 27.005 (+CMT:)
  *
- * Callee will subsequently confirm the receipt of thei SMS with a
+ * Callee will subsequently confirm the receipt of the SMS with a
  * RIL_REQUEST_SMS_ACKNOWLEDGE
  *
  * No new RIL_UNSOL_RESPONSE_NEW_SMS
@@ -7880,7 +7880,7 @@ typedef enum {
 /**
  * RIL_UNSOL_STK_EVENT_NOTIFY
  *
- * Indicate when SIM notifies applcations some event happens.
+ * Indicate when SIM notifies applications some event happens.
  * Generally, application does not need to have any feedback to
  * SIM but shall be able to indicate appropriate messages to users.
  *
@@ -8076,7 +8076,7 @@ typedef enum {
 /**
  * RIL_UNSOL_RINGBACK_TONE
  *
- * Indicates that nework doesn't have in-band information,  need to
+ * Indicates that network doesn't have in-band information,  need to
  * play out-band tone.
  *
  * "data" is an int *
@@ -8632,23 +8632,23 @@ struct RIL_Env {
  *
  * @param env is environment point defined as RIL_Env
  * @param argc number of arguments
- * @param argv list fo arguments
+ * @param argv list of arguments
  *
  */
 const RIL_RadioFunctions *RIL_Init(const struct RIL_Env *env, int argc, char **argv);
 
 /**
  *  If BT SAP(SIM Access Profile) is supported, then RIL implementations must define RIL_SAP_Init
- *  for initializing RIL_RadioFunctions used for BT SAP communcations. It is called whenever RILD
+ *  for initializing RIL_RadioFunctions used for BT SAP communications. It is called whenever RILD
  *  starts or modem restarts. Returns handlers for SAP related request that are made on SAP
- *  sepecific socket, analogous to the RIL_RadioFunctions returned by the call to RIL_Init
+ *  specific socket, analogous to the RIL_RadioFunctions returned by the call to RIL_Init
  *  and used on the general RIL socket.
  *  argc and argv will be command line arguments intended for the RIL implementation
  *  Return NULL on error.
  *
  * @param env is environment point defined as RIL_Env
  * @param argc number of arguments
- * @param argv list fo arguments
+ * @param argv list of arguments
  *
  */
 const RIL_RadioFunctions *RIL_SAP_Init(const struct RIL_Env *env, int argc, char **argv);
