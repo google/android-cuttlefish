@@ -18,7 +18,7 @@
 
 name: HostImage
 
-on: [push]
+on: [pull_request, push]
 
 jobs:
   build-installer-iso-job:
@@ -31,7 +31,7 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Prepare building environment
-      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y wget libarchive-tools && apt-get install -y xorriso && apt-get install -y cpio xz-utils && apt-get install -y fdisk
+      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo wget libarchive-tools xorriso cpio xz-utils fdisk
     - name: Inject name and ID into preseed 
       run: echo "CI_PROJECT_NAME=${{ github.event.repository.name }}" >> tools/cuttlefish-host-image-installer/preseed/after_install_1.sh && echo "CI_PIPELINE_ID=${{ github.repository}}/${{ github.workflow }}" >> tools/cuttlefish-host-image-installer/preseed//after_install_1.sh
     - name: Download Debian installer
@@ -59,7 +59,7 @@ jobs:
     - name: Prepare pbuilder tool
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
+      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static git ca-certificates less debhelper devscripts cdbs dpkg-dev equivs fakeroot build-essential autoconf automake p7zip-full
     - name: Pbuilder arm64 create
       run: pbuilder-dist stable arm64 create
     - name: Pbuilder arm64 update
@@ -83,13 +83,13 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
     - name: Prepare tzdata
       run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
     - name: Prepare pbuilder tool
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
-      run: sudo apt-get install -y git ca-certificates less && sudo apt-get install -y fakeroot && sudo apt-get install -y devscripts equivs && sudo apt-get install -y ubuntu-dev-tools && sudo apt-get install -y build-essential && sudo apt-get install -y p7zip-full && sudo apt-get install -y crossbuild-essential-arm64
+      run: sudo apt-get install -y git ca-certificates less fakeroot devscripts equivs ubuntu-dev-tools build-essential p7zip-full crossbuild-essential-arm64
     - name: Pbuilder arm64 create
       run: pbuilder-dist stable arm64 create
     - name: Pbuilder arm64 update
@@ -113,13 +113,13 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
     - name: Prepare tzdata
       run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
     - name: Prepare pbuilder tool
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
-      run: sudo apt-get install -y git ca-certificates less && sudo apt-get install -y fakeroot && sudo apt-get install -y devscripts equivs && sudo apt-get install -y ubuntu-dev-tools && sudo apt-get install -y build-essential && sudo apt-get install -y p7zip-full && sudo apt-get install -y crossbuild-essential-arm64
+      run: sudo apt-get install -y git ca-certificates less fakeroot devscripts equivs ubuntu-dev-tools build-essential p7zip-full crossbuild-essential-arm64
     - name: Pbuilder arm64 create
       run: pbuilder-dist stable arm64 create
     - name: Pbuilder arm64 update
@@ -143,13 +143,13 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
+      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
     - name: Prepare tzdata
       run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
     - name: Prepare pbuilder tool
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
-      run: sudo apt-get install -y git ca-certificates less && sudo apt-get install -y fakeroot && sudo apt-get install -y devscripts equivs && sudo apt-get install -y ubuntu-dev-tools && sudo apt-get install -y build-essential && sudo apt-get install -y p7zip-full && sudo apt-get install -y crossbuild-essential-arm64
+      run: sudo apt-get install -y git ca-certificates less fakeroot devscripts equivs ubuntu-dev-tools build-essential p7zip-full crossbuild-essential-arm64
     - name: Pbuilder arm64 create
       run: pbuilder-dist stable arm64 create
     - name: Pbuilder arm64 update
@@ -175,11 +175,11 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Prepare building environment
-      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo && apt-get install -y debconf-utils
+      run: apt-get update && apt-get upgrade -y && apt-get install -y sudo debconf-utils
     - name: Prepare tzdata
       run: echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata
     - name: Prepare building environment continue
-      run: apt-get install -y build-essential && apt-get install -y gcc-aarch64-linux-gnu && apt-get install -y git ca-certificates && apt-get install -y bc flex bison && apt-get install -y coccinelle && apt-get install -y device-tree-compiler dfu-util efitools && apt-get install -y gdisk graphviz imagemagick && apt-get install -y liblz4-tool libgnutls28-dev libguestfs-tools && apt-get install -y libncurses-dev && apt-get install -y libpython3-dev libsdl2-dev libssl-dev && apt-get install -y lz4 lzma lzma-alone openssl && apt-get install -y pkg-config && apt-get install -y python3 python3-asteval python3-coverage && apt-get install -y python3-filelock && apt-get install -y python3-pkg-resources python3-pycryptodome && apt-get install -y python3-pyelftools && apt-get install -y python3-pytest python3-pytest-xdist && apt-get install -y python3-sphinxcontrib.apidoc && apt-get install -y python3-sphinx-rtd-theme python3-subunit && apt-get install -y python3-testtools python3-virtualenv && apt-get install -y swig uuid-dev
+      run: apt-get install -y build-essential gcc-aarch64-linux-gnu git ca-certificates bc flex bison coccinelle device-tree-compiler dfu-util efitools gdisk graphviz imagemagick liblz4-tool libgnutls28-dev libguestfs-tools libncurses-dev libpython3-dev libsdl2-dev libssl-dev lz4 lzma lzma-alone openssl pkg-config python3 python3-asteval python3-coverage python3-filelock python3-pkg-resources python3-pycryptodome python3-pyelftools python3-pytest python3-pytest-xdist python3-sphinxcontrib.apidoc python3-sphinx-rtd-theme python3-subunit python3-testtools python3-virtualenv swig uuid-dev
     - name: Downloading
       run: cd tools/cuttlefish-host-image-installer && ./uboot/download_uboot.sh
     - name: Building
