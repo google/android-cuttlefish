@@ -66,6 +66,7 @@
 --map=common/libs/utils/vsock_connection.cpp:base/cvd/cuttlefish/common/libs/utils/vsock_connection.cpp
 --map=common/libs/utils/vsock_connection.h:base/cvd/cuttlefish/common/libs/utils/vsock_connection.h
 --map=host/commands/assemble_cvd/flags_defaults.h:base/cvd/cuttlefish/host/commands/assemble_cvd/flags_defaults.h
+--map=host/commands/assemble_cvd/proto/launch_cvd.proto:base/cvd/cuttlefish/host/commands/cvd/parser/instance/launch_cvd.proto
 --map=host/commands/metrics/metrics_defs.h:base/cvd/cuttlefish/host/commands/metrics/metrics_defs.h
 --map=host/libs/adb_connection_maintainer/adb_connection_maintainer.h:base/cvd/cuttlefish/common/libs/utils/users.h
 --map=host/libs/config/config_constants.h:base/cvd/cuttlefish/host/libs/config/config_constants.h
@@ -93,12 +94,3 @@
 --map=host/libs/web/http_client/http_client_util.h:base/cvd/cuttlefish/host/libs/web/http_client/http_client_util.h
 --map=host/libs/web/http_client/unittest/http_client_util_test.cc:base/cvd/cuttlefish/host/libs/web/http_client/unittest/http_client_util_test.cc
 --map=host/libs/web/http_client/unittest/main_test.cc:base/cvd/cuttlefish/host/libs/web/http_client/unittest/main_test.cc
-
-# Protos go to the top directory
---map=host/commands/assemble_cvd/proto/launch_cvd.proto:base/cvd/launch_cvd.proto
---map=host/commands/cvd/metrics/proto/clientanalytics.proto:base/cvd/clientanalytics.proto
---map=host/commands/cvd/metrics/proto/internal_user_log.proto:base/cvd/internal_user_log.proto
---map=host/commands/cvd/proto/cvd_server.proto:base/cvd/cvd_server.proto
---map=host/commands/cvd/proto/internal_config.proto:base/cvd/internal_config.proto
---map=host/commands/cvd/proto/user_config.proto:base/cvd/user_config.proto
-

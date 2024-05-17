@@ -29,7 +29,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <curl/curl.h>
-#include "json/json.h"
+#include <json/json.h>
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/subprocess.h"
@@ -48,7 +48,7 @@ int LoggingCurlDebugFunction(CURL*, curl_infotype type, char* data, size_t size,
   switch (type) {
     case CURLINFO_TEXT:
       LOG(VERBOSE) << "CURLINFO_TEXT ";
-      LOG(INFO) << TrimWhitespace(data, size);
+      LOG(INFO) << ScrubSecrets(TrimWhitespace(data, size));
       break;
     case CURLINFO_HEADER_IN:
       LOG(VERBOSE) << "CURLINFO_HEADER_IN ";

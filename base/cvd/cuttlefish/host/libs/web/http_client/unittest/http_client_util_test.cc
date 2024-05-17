@@ -35,6 +35,8 @@ TEST(HttpClientUtilTest, ScrubSecretsAuthorizationMatch) {
             "Authorization: Bearer 123456... \nnext_line");
   EXPECT_EQ(ScrubSecrets("Authorization: Bearer 1234567890  \nnext_line"),
             "Authorization: Bearer 123456...  \nnext_line");
+  EXPECT_EQ(ScrubSecrets("[text] [authorization: Bearer 1234567890]"),
+            "[text] [authorization: Bearer 123456...");
 }
 
 TEST(HttpClientUtilTest, ScrubSecretsAuthorizationNoMatch) {

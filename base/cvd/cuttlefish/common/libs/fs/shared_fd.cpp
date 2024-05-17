@@ -397,7 +397,11 @@ SharedFD SharedFD::Dup(int unmanaged_fd) {
 
 bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   int fds[2];
+#ifdef __linux__
+  int rval = pipe2(fds, O_CLOEXEC);
+#else
   int rval = pipe(fds);
+#endif
   if (rval != -1) {
     (*fd0) = std::shared_ptr<FileInstance>(new FileInstance(fds[0], errno));
     (*fd1) = std::shared_ptr<FileInstance>(new FileInstance(fds[1], errno));
@@ -648,7 +652,9 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
                                      int in_type, mode_t mode) {
   // DO NOT UNLINK addr.sun_path. It does NOT have to be null-terminated.
   // See man 7 unix for more details.
-  if (!abstract) (void)unlink(name.c_str());
+  if (!abstract) {
+    (void)unlink(name.c_str());
+  }
 
   struct sockaddr_un addr;
   socklen_t addrlen;

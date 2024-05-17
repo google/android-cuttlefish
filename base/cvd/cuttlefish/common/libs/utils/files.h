@@ -27,6 +27,13 @@
 
 namespace cuttlefish {
 bool FileExists(const std::string& path, bool follow_symlinks = true);
+Result<dev_t> FileDeviceId(const std::string& path);
+Result<bool> CanHardLink(const std::string& path1, const std::string& path2);
+Result<ino_t> FileInodeNumber(const std::string& path);
+Result<bool> AreHardLinked(const std::string& path1, const std::string& path2);
+Result<std::string> CreateHardLink(const std::string& target,
+                                   const std::string& hardlink,
+                                   const bool overwrite_existing = false);
 bool FileHasContent(const std::string& path);
 Result<std::vector<std::string>> DirectoryContents(const std::string& path);
 bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
@@ -38,7 +45,7 @@ Result<void> ChangeGroup(const std::string& path,
                          const std::string& group_name);
 bool CanAccess(const std::string& path, const int mode);
 bool IsDirectoryEmpty(const std::string& path);
-bool RecursivelyRemoveDirectory(const std::string& path);
+Result<void> RecursivelyRemoveDirectory(const std::string& path);
 bool Copy(const std::string& from, const std::string& to);
 off_t FileSize(const std::string& path);
 bool RemoveFile(const std::string& file);
@@ -84,6 +91,8 @@ Result<void> WalkDirectory(
 #ifdef __linux__
 Result<void> WaitForFile(const std::string& path, int timeoutSec);
 Result<void> WaitForUnixSocket(const std::string& path, int timeoutSec);
+Result<void> WaitForUnixSocketListeningWithoutConnect(const std::string& path,
+                                                      int timeoutSec);
 #endif
 
 // parameter to EmulateAbsolutePath

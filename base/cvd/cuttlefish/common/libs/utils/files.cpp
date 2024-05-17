@@ -52,6 +52,7 @@
 #include <numeric>
 #include <ostream>
 #include <ratio>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -79,6 +80,66 @@ namespace cuttlefish {
 bool FileExists(const std::string& path, bool follow_symlinks) {
   struct stat st {};
   return (follow_symlinks ? stat : lstat)(path.c_str(), &st) == 0;
+}
+
+Result<dev_t> FileDeviceId(const std::string& path) {
+  struct stat out;
+  CF_EXPECTF(
+      stat(path.c_str(), &out) == 0,
+      "stat() failed trying to retrieve device ID information for \"{}\" "
+      "with error: {}",
+      path, strerror(errno));
+  return out.st_dev;
+}
+
+Result<bool> CanHardLink(const std::string& source,
+                         const std::string& destination) {
+  return CF_EXPECT(FileDeviceId(source)) ==
+         CF_EXPECT(FileDeviceId(destination));
+}
+
+Result<ino_t> FileInodeNumber(const std::string& path) {
+  struct stat out;
+  CF_EXPECTF(
+      stat(path.c_str(), &out) == 0,
+      "stat() failed trying to retrieve inode num information for \"{}\" "
+      "with error: {}",
+      path, strerror(errno));
+  return out.st_ino;
+}
+
+Result<bool> AreHardLinked(const std::string& source,
+                           const std::string& destination) {
+  return (CF_EXPECT(FileDeviceId(source)) ==
+          CF_EXPECT(FileDeviceId(destination))) &&
+         (CF_EXPECT(FileInodeNumber(source)) ==
+          CF_EXPECT(FileInodeNumber(destination)));
+}
+
+Result<std::string> CreateHardLink(const std::string& target,
+                                   const std::string& hardlink,
+                                   const bool overwrite_existing) {
+  if (FileExists(hardlink)) {
+    if (CF_EXPECT(AreHardLinked(target, hardlink))) {
+      return hardlink;
+    }
+    if (!overwrite_existing) {
+      return CF_ERRF(
+          "Cannot hardlink from \"{}\" to \"{}\", the second file already "
+          "exists and is not hardlinked to the first",
+          target, hardlink);
+    }
+    LOG(WARNING) << "Overwriting existing file \"" << hardlink << "\" with \""
+                 << target << "\" from the cache";
+    CF_EXPECTF(unlink(hardlink.c_str()) == 0,
+               "Failed to unlink \"{}\" with error: {}", hardlink,
+               strerror(errno));
+  }
+  CF_EXPECTF(link(target.c_str(), hardlink.c_str()) == 0,
+             "link() failed trying to create hardlink from \"{}\" to \"{}\" "
+             "with error: {}",
+             target, hardlink, strerror(errno));
+  return hardlink;
 }
 
 bool FileHasContent(const std::string& path) {
@@ -130,7 +191,8 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
   }
 
   CF_EXPECTF(chmod(directory_path.c_str(), mode) == 0,
-            "Failed to set permission on {}: {}", directory_path, strerror(errno));
+             "Failed to set permission on {}: {}", directory_path,
+             strerror(errno));
 
   if (group_name != "") {
     CF_EXPECT(ChangeGroup(directory_path, group_name));
@@ -180,7 +242,7 @@ bool IsDirectoryEmpty(const std::string& path) {
   return true;
 }
 
-bool RecursivelyRemoveDirectory(const std::string& path) {
+Result<void> RecursivelyRemoveDirectory(const std::string& path) {
   // Copied from libbase TemporaryDir destructor.
   auto callback = [](const char* child, const struct stat*, int file_type,
                      struct FTW*) -> int {
@@ -190,6 +252,7 @@ bool RecursivelyRemoveDirectory(const std::string& path) {
       case FTW_DNR:
         if (rmdir(child) == -1) {
           PLOG(ERROR) << "rmdir " << child;
+          return -1;
         }
         break;
       case FTW_NS:
@@ -204,14 +267,18 @@ bool RecursivelyRemoveDirectory(const std::string& path) {
       case FTW_SLN:
         if (unlink(child) == -1) {
           PLOG(ERROR) << "unlink " << child;
+          return -1;
         }
         break;
     }
     return 0;
   };
 
-  return nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) ==
-         0;
+  if (nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) < 0) {
+    return CF_ERRNO("Failed to remove directory \""
+                    << path << "\": " << strerror(errno));
+  }
+  return {};
 }
 
 namespace {
@@ -654,6 +721,54 @@ Result<void> WaitForUnixSocket(const std::string& path, int timeoutSec) {
 
     if (testConnect->IsOpen()) {
       return {};
+    }
+
+    sched_yield();
+  }
+
+  return CF_ERR("This shouldn't be executed");
+}
+
+Result<void> WaitForUnixSocketListeningWithoutConnect(const std::string& path,
+                                                      int timeoutSec) {
+  const auto targetTime =
+      std::chrono::system_clock::now() + std::chrono::seconds(timeoutSec);
+
+  CF_EXPECT(WaitForFile(path, timeoutSec),
+            "Waiting for socket path creation failed");
+  CF_EXPECT(FileIsSocket(path), "Specified path is not a socket");
+
+  std::regex socket_state_regex("TST=(.*)");
+
+  while (true) {
+    const auto currentTime = std::chrono::system_clock::now();
+
+    if (currentTime >= targetTime) {
+      return CF_ERR("Timed out");
+    }
+
+    Command lsof("lsof");
+    lsof.AddParameter(/*"format"*/ "-F", /*"connection state"*/ "TST");
+    lsof.AddParameter(path);
+    std::string lsof_out;
+    std::string lsof_err;
+    int rval =
+        RunWithManagedStdio(std::move(lsof), nullptr, &lsof_out, &lsof_err);
+    if (rval != 0) {
+      return CF_ERR("Failed to run `lsof`, stderr: " << lsof_err);
+    }
+
+    LOG(DEBUG) << "lsof stdout:|" << lsof_out << "|";
+    LOG(DEBUG) << "lsof stderr:|" << lsof_err << "|";
+
+    std::smatch socket_state_match;
+    if (std::regex_search(lsof_out, socket_state_match, socket_state_regex)) {
+      if (socket_state_match.size() == 2) {
+        const std::string& socket_state = socket_state_match[1];
+        if (socket_state == "LISTEN") {
+          return {};
+        }
+      }
     }
 
     sched_yield();

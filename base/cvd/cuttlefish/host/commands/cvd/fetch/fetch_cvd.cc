@@ -40,11 +40,13 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/tee_logging.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/image_aggregator/sparse_image_utils.h"
 #include "host/libs/web/android_build_api.h"
 #include "host/libs/web/android_build_string.h"
+#include "host/libs/web/caching_build_api.h"
 #include "host/libs/web/chrome_os_build_string.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
@@ -314,7 +316,7 @@ Result<std::vector<std::string>> FetchSystemImgZipImages(
       system_img_zip_name);
 }
 
-Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
+Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   auto resolver =
       flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
   const bool use_logging_debug_function = true;
@@ -332,9 +334,11 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
           flags.credential_flags.credential_filepath,
           flags.credential_flags.service_account_filepath));
 
-  return BuildApi(std::move(retrying_http_client), std::move(curl),
-                  std::move(credential_source), flags.api_key,
-                  flags.wait_retry_period, flags.api_base_url);
+  const auto cache_base_path = PerUserDir() + "/cache";
+  return CreateBuildApi(std::move(retrying_http_client), std::move(curl),
+                        std::move(credential_source), std::move(flags.api_key),
+                        flags.wait_retry_period, std::move(flags.api_base_url),
+                        flags.enable_caching, std::move(cache_base_path));
 }
 
 Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {
@@ -711,26 +715,27 @@ Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
-    BuildApi build_api = CF_EXPECT(GetBuildApi(flags.build_api_flags));
+    std::unique_ptr<BuildApi> build_api =
+        CF_EXPECT(GetBuildApi(flags.build_api_flags));
     LuciBuildApi luci_build_api =
         CF_EXPECT(GetLuciBuildApi(flags.build_api_flags));
-    CF_EXPECT(UpdateTargetsWithBuilds(build_api, targets));
+    CF_EXPECT(UpdateTargetsWithBuilds(*build_api, targets));
     std::optional<Build> fallback_host_build = std::nullopt;
     if (!targets.empty()) {
       fallback_host_build = targets[0].builds.default_build;
     }
     const auto host_target_build =
-        CF_EXPECT(GetHostBuild(build_api, host_target, fallback_host_build));
+        CF_EXPECT(GetHostBuild(*build_api, host_target, fallback_host_build));
 
     auto host_package_future =
-        std::async(std::launch::async, FetchHostPackage, std::ref(build_api),
+        std::async(std::launch::async, FetchHostPackage, std::ref(*build_api),
                    std::cref(host_target_build),
                    std::cref(host_target.host_tools_directory),
                    std::cref(flags.keep_downloaded_archives));
     for (const auto& target : targets) {
       LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
       FetcherConfig config;
-      CF_EXPECT(FetchTarget(build_api, luci_build_api, target.builds,
+      CF_EXPECT(FetchTarget(*build_api, luci_build_api, target.builds,
                             target.directories, target.download_flags,
                             flags.keep_downloaded_archives, config));
       CF_EXPECT(SaveConfig(config, target.directories.root));

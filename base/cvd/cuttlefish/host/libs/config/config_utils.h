@@ -51,6 +51,7 @@ std::string DefaultHostArtifactsPath(const std::string& file);
 std::string DefaultQemuBinaryDir();
 std::string HostBinaryPath(const std::string& file);
 std::string HostUsrSharePath(const std::string& file);
+std::string HostQemuBiosPath();
 std::string DefaultGuestImagePath(const std::string& file);
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
@@ -59,6 +60,6 @@ std::string DefaultEnvironmentPath(const char* environment_key,
 // Whether the host supports qemu
 bool HostSupportsQemuCli();
 
-// Whether to use QEMU8
-bool UseQemu8();
+// Whether to use our local QEMU prebuilt
+bool UseQemuPrebuilt();
 }

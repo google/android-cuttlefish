@@ -137,7 +137,7 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEmptyJson) {
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=true)"))
       << "netsim_bt flag is missing or wrongly formatted";
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_uwb=false)"))
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_uwb=true)"))
       << "netsim_uwb flag is missing or wrongly formatted";
 }
 

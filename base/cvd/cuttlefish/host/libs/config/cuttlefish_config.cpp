@@ -30,7 +30,7 @@
 
 #include <android-base/strings.h>
 #include <android-base/logging.h>
-#include "json/json.h"
+#include <json/json.h>
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
@@ -50,6 +50,7 @@ const char* const kVhostUserVsockModeTrue = "true";
 const char* const kVhostUserVsockModeFalse = "false";
 
 const char* const kGpuModeAuto = "auto";
+const char* const kGpuModeCustom = "custom";
 const char* const kGpuModeDrmVirgl = "drm_virgl";
 const char* const kGpuModeGfxstream = "gfxstream";
 const char* const kGpuModeGfxstreamGuestAngle = "gfxstream_guest_angle";
@@ -110,11 +111,12 @@ void CuttlefishConfig::set_root_dir(const std::string& root_dir) {
 }
 
 static constexpr char kVmManager[] = "vm_manager";
-std::string CuttlefishConfig::vm_manager() const {
-  return (*dictionary_)[kVmManager].asString();
+VmmMode CuttlefishConfig::vm_manager() const {
+  auto str = (*dictionary_)[kVmManager].asString();
+  return ParseVmm(str).value_or(VmmMode::kUnknown);
 }
-void CuttlefishConfig::set_vm_manager(const std::string& name) {
-  (*dictionary_)[kVmManager] = name;
+void CuttlefishConfig::set_vm_manager(VmmMode vmm) {
+  (*dictionary_)[kVmManager] = fmt::format("{}", vmm);
 }
 
 static constexpr char kApVmManager[] = "ap_vm_manager";
@@ -127,15 +129,25 @@ void CuttlefishConfig::set_ap_vm_manager(const std::string& name) {
 
 static SecureHal StringToSecureHal(std::string mode) {
   std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
-  if (mode == "keymint") {
-    return SecureHal::Keymint;
-  } else if (mode == "gatekeeper") {
-    return SecureHal::Gatekeeper;
-  } else if (mode == "oemlock") {
-    return SecureHal::Oemlock;
-  } else {
-    return SecureHal::Unknown;
-  }
+  std::unordered_map<std::string, SecureHal> mapping = {
+      {"keymint", SecureHal::HostKeymintSecure},
+      {"host_secure_keymint", SecureHal::HostKeymintSecure},
+      {"host_keymint_secure", SecureHal::HostKeymintSecure},
+      {"guest_gatekeeper_insecure", SecureHal::GuestGatekeeperInsecure},
+      {"guest_insecure_gatekeeper", SecureHal::GuestGatekeeperInsecure},
+      {"guest_insecure_keymint", SecureHal::GuestKeymintInsecure},
+      {"guest_keymint_insecure", SecureHal::GuestKeymintInsecure},
+      {"gatekeeper", SecureHal::HostGatekeeperSecure},
+      {"host_gatekeeper_secure", SecureHal::HostGatekeeperSecure},
+      {"host_secure_gatekeeper", SecureHal::HostGatekeeperSecure},
+      {"host_gatekeeper_insecure", SecureHal::HostGatekeeperInsecure},
+      {"host_insecure_gatekeeper", SecureHal::HostGatekeeperInsecure},
+      {"oemlock", SecureHal::HostOemlockSecure},
+      {"host_oemlock_secure", SecureHal::HostOemlockSecure},
+      {"host_secure_oemlock", SecureHal::HostOemlockSecure},
+  };
+  auto it = mapping.find(mode);
+  return it == mapping.end() ? SecureHal::Unknown : it->second;
 }
 
 static constexpr char kSecureHals[] = "secure_hals";
@@ -162,7 +174,9 @@ void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
   (*dictionary_)[kCrosvmBinary] = crosvm_binary;
 }
 
-bool CuttlefishConfig::IsCrosvm() const { return vm_manager() == "crosvm"; }
+bool CuttlefishConfig::IsCrosvm() const {
+  return vm_manager() == VmmMode::kCrosvm;
+}
 
 static constexpr char kGem5DebugFlags[] = "gem5_debug_flags";
 std::string CuttlefishConfig::gem5_debug_flags() const {
@@ -348,14 +362,6 @@ void CuttlefishConfig::set_casimir_rf_port(int port) {
 }
 int CuttlefishConfig::casimir_rf_port() const {
   return (*dictionary_)[kCasimirRfPort].asInt();
-}
-
-static constexpr char kEnableWifi[] = "enable_wifi";
-void CuttlefishConfig::set_enable_wifi(bool enable_wifi) {
-  (*dictionary_)[kEnableWifi] = enable_wifi;
-}
-bool CuttlefishConfig::enable_wifi() const {
-  return (*dictionary_)[kEnableWifi].asBool();
 }
 
 static constexpr char kNetsimRadios[] = "netsim_radios";
