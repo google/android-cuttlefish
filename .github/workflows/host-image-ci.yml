@@ -210,7 +210,7 @@ jobs:
     - name: Prepare pbuilder tool
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
+      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static git ca-certificates less debhelper devscripts cdbs dpkg-dev equivs fakeroot build-essential autoconf automake p7zip-full
     - name: Pbuilder arm64 create
       run: pbuilder-dist stable arm64 create
     - name: Pbuilder arm64 update
@@ -238,7 +238,7 @@ jobs:
     - name: Prepare pbuilder tool
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
+      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static git ca-certificates less debhelper devscripts cdbs dpkg-dev equivs fakeroot build-essential autoconf automake p7zip-full
     - name: Pbuilder arm64 create
       run: pbuilder-dist stable arm64 create
     - name: Pbuilder arm64 update
@@ -268,7 +268,7 @@ jobs:
     - name: Prepare pbuilder tool
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
+      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static git ca-certificates less debhelper devscripts cdbs dpkg-dev equivs fakeroot build-essential autoconf automake p7zip-full
     - name: Pbuilder arm64 create
       run: pbuilder-dist stable arm64 create
     - name: Pbuilder arm64 update
@@ -298,7 +298,7 @@ jobs:
     - name: Prepare pbuilder tool
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
+      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static git ca-certificates less debhelper devscripts cdbs dpkg-dev equivs fakeroot build-essential autoconf automake p7zip-full
     - name: Pbuilder arm64 create
       run: pbuilder-dist stable arm64 create
     - name: Pbuilder arm64 update
@@ -328,7 +328,7 @@ jobs:
     - name: Prepare pbuilder tool
       run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
     - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static && sudo apt-get install -y git ca-certificates less && sudo apt-get install -y debhelper devscripts cdbs dpkg-dev equivs fakeroot && sudo apt-get install -y build-essential autoconf automake && sudo apt-get install -y p7zip-full
+      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static git ca-certificates less debhelper devscripts cdbs dpkg-dev equivs fakeroot build-essential autoconf automake p7zip-full
     - name: Pbuilder arm64 create
       run: pbuilder-dist stable arm64 create
     - name: Pbuilder arm64 update
