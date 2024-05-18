@@ -41,7 +41,7 @@ for dsc in *.dsc; do
   dir="$(basename "${dsc}" .dsc)"
   dir="${dir/_/-}"
   pushd "${dir}/"
-  debuild -uc -us
+  debuild --prepend-path /usr/local/bin -uc -us
   popd
 done
 
