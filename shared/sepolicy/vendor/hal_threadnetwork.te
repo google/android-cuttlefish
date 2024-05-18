@@ -1,1 +1,1 @@
-allow hal_threadnetwork_default vendor_otsim_local_interface_prop:file { open read };
+get_prop(hal_threadnetwork_default, vendor_otsim_local_interface_prop)
