@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 # Start build by executing:
-# $ debuild --no-tgz-check -us -uc
+# $ debuild --prepend-path /usr/local/bin --no-tgz-check -us -uc
 
 # Uncomment this line out to make installation process more chatty.
 # Keep it on until we know there's no outstanding problems with installation.
