@@ -1375,11 +1375,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_seccomp_policy_dir(seccomp_policy_dir_vec[instance_index]);
     instance.set_qemu_binary_dir(qemu_binary_dir_vec[instance_index]);
 
-    // wifi, bluetooth, connectivity setup
+    // wifi, bluetooth, Thread, connectivity setup
 
     instance.set_vhost_net(vhost_net_vec[instance_index]);
+    instance.set_openthread_node_id(num);
 
-    // end of wifi, bluetooth, connectivity setup
+    // end of wifi, bluetooth, Thread, connectivity setup
 
     if (vhost_user_vsock_vec[instance_index] == kVhostUserVsockModeAuto) {
       std::set<Arch> default_on_arch = {Arch::Arm64};
