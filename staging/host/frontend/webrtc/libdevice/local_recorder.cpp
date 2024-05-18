@@ -257,6 +257,7 @@ void LocalRecorder::Display::EncoderLoop() {
 }
 
 void LocalRecorder::Display::Stop() {
+  source_->RemoveSink(this);
   encoder_running_ = false;
   encoder_queue_signal_.notify_all();
   if (encoder_thread_.joinable()) {
