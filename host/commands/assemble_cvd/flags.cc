@@ -669,6 +669,11 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     guest_config.gfxstream_supported =
         res.ok() && res.value() == "supported";
 
+    auto res_bgra_support = GetAndroidInfoConfig(instance_android_info_txt,
+                                                 "supports_bgra_framebuffers");
+    guest_config.supports_bgra_framebuffers =
+        res_bgra_support.value_or("") == "true";
+
     auto res_vhost_user_vsock =
         GetAndroidInfoConfig(instance_android_info_txt, "vhost_user_vsock");
     guest_config.vhost_user_vsock = res_vhost_user_vsock.value_or("") == "true";
@@ -1604,6 +1609,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_gpu_context_types(gpu_context_types_vec[instance_index]);
     instance.set_guest_vulkan_driver(guest_vulkan_driver_vec[instance_index]);
+
+    instance.set_guest_uses_bgra_framebuffers(
+        guest_configs[instance_index].supports_bgra_framebuffers);
 
     if (!frames_socket_path_vec[instance_index].empty()) {
       instance.set_frames_socket_path(frames_socket_path_vec[instance_index]);

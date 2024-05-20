@@ -621,6 +621,7 @@ class CuttlefishConfig {
     std::string gpu_renderer_features() const;
     std::string gpu_context_types() const;
     std::string guest_vulkan_driver() const;
+    bool guest_uses_bgra_framebuffers() const;
     std::string frames_socket_path() const;
 
     std::string gpu_vhost_user_mode() const;
@@ -838,6 +839,7 @@ class CuttlefishConfig {
     void set_gpu_renderer_features(const std::string& features);
     void set_gpu_context_types(const std::string& context_types);
     void set_guest_vulkan_driver(const std::string& driver);
+    void set_guest_uses_bgra_framebuffers(bool uses_bgra);
     void set_frames_socket_path(const std::string& driver);
 
     void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
