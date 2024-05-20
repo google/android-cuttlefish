@@ -12,7 +12,7 @@ require (
 	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/android-cuttlefish/frontend/src/liboperator v0.0.0-20231215232042-8c95f6b070a9 // indirect
-	github.com/google/cloud-android-orchestration v0.0.0-20240425005453-3164ea0a2540 // indirect
+	github.com/google/cloud-android-orchestration v0.0.0-20240520012156-1e7a0d0c6857 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
