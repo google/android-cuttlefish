@@ -36,12 +36,13 @@ void Surfaces::SetDisplayEventCallback(DisplayEventCallback callback) {
 void Surfaces::HandleSurfaceFrame(std::uint32_t display_number,
                                   std::uint32_t frame_width,
                                   std::uint32_t frame_height,
+                                  std::uint32_t frame_fourcc_format,
                                   std::uint32_t frame_stride_bytes,
                                   std::uint8_t* frame_bytes) {
   std::unique_lock<std::mutex> lock(callback_mutex_);
   if (callback_) {
     (callback_.value())(display_number, frame_width, frame_height,
-                        frame_stride_bytes, frame_bytes);
+                        frame_fourcc_format, frame_stride_bytes, frame_bytes);
   }
 }
 

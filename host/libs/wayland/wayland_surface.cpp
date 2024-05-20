@@ -17,11 +17,26 @@
 #include "host/libs/wayland/wayland_surface.h"
 
 #include <android-base/logging.h>
+#include <drm/drm_fourcc.h>
 #include <wayland-server-protocol.h>
 
 #include "host/libs/wayland/wayland_surfaces.h"
 
 namespace wayland {
+namespace {
+
+std::uint32_t GetDrmFormat(std::uint32_t wl_shm_format) {
+  switch (wl_shm_format) {
+    case WL_SHM_FORMAT_ARGB8888:
+      return DRM_FORMAT_ARGB8888;
+    case WL_SHM_FORMAT_XRGB8888:
+      return DRM_FORMAT_XRGB8888;
+    default:
+      return wl_shm_format;
+  }
+}
+
+}  // namespace
 
 Surface::Surface(Surfaces& surfaces) : surfaces_(surfaces) {}
 
@@ -64,6 +79,11 @@ void Surface::Commit() {
     const int32_t buffer_h = wl_shm_buffer_get_height(shm_buffer);
     CHECK(buffer_h == state_.region.h);
     const int32_t buffer_stride_bytes = wl_shm_buffer_get_stride(shm_buffer);
+    std::uint32_t buffer_drm_format =
+        GetDrmFormat(wl_shm_buffer_get_format(shm_buffer));
+
+    // TODO(b/341647448): remove after receiving proper format from crosvm.
+    buffer_drm_format = DRM_FORMAT_ABGR8888;
 
     if (!state_.has_notified_surface_create) {
       surfaces_.HandleSurfaceCreated(display_number, buffer_w, buffer_h);
@@ -74,7 +94,8 @@ void Surface::Commit() {
         reinterpret_cast<uint8_t*>(wl_shm_buffer_get_data(shm_buffer));
 
     surfaces_.HandleSurfaceFrame(display_number, buffer_w, buffer_h,
-                                 buffer_stride_bytes, buffer_pixels);
+                                 buffer_drm_format, buffer_stride_bytes,
+                                 buffer_pixels);
 
     wl_shm_buffer_end_access(shm_buffer);
   }

@@ -42,10 +42,11 @@ class Surfaces {
   Surfaces& operator=(Surfaces&& rhs) = delete;
 
   using FrameCallback =
-      std::function<void(std::uint32_t /*display_number*/,      //
-                         std::uint32_t /*frame_width*/,         //
-                         std::uint32_t /*frame_height*/,        //
-                         std::uint32_t /*frame_stride_bytes*/,  //
+      std::function<void(std::uint32_t /*display_number*/,       //
+                         std::uint32_t /*frame_width*/,          //
+                         std::uint32_t /*frame_height*/,         //
+                         std::uint32_t /*frame_fourcc_format*/,  //
+                         std::uint32_t /*frame_stride_bytes*/,   //
                          std::uint8_t* /*frame_bytes*/)>;
 
   void SetFrameCallback(FrameCallback callback);
@@ -54,10 +55,11 @@ class Surfaces {
 
  private:
   friend class Surface;
-  void HandleSurfaceFrame(std::uint32_t display_number,      //
-                          std::uint32_t frame_width,         //
-                          std::uint32_t frame_height,        //
-                          std::uint32_t frame_stride_bytes,  //
+  void HandleSurfaceFrame(std::uint32_t display_number,       //
+                          std::uint32_t frame_width,          //
+                          std::uint32_t frame_height,         //
+                          std::uint32_t frame_fourcc_format,  //
+                          std::uint32_t frame_stride_bytes,   //
                           std::uint8_t* frame_bytes);
 
   void HandleSurfaceCreated(std::uint32_t display_number,
