@@ -1,21 +1,12 @@
 # defaults for cuttlefish-host_orchestrator
 
-# The network address to listen on for both HTTP and HTTPS.
+# The network address to listen on.
 # Defaults to localhost only.
 orchestrator_listen_address=0.0.0.0
 #
 # The port on which the orchestrator server should listen on for plain HTTP.
-# Defaults to 2080.
+# Defaults to 2081.
 # orchestrator_http_port=
-#
-# The port on which the orchestrator server should listen on for HTTPS.
-# The orchestrator won't server over HTTPS if the port is not set.
-orchestrator_https_port=2443
-#
-# The directory where the TLS certificate needed to establish the HTTPS
-# communication lives.
-# Defaults to "/etc/cuttlefish-common/host_orchestrator/cert".
-# orchestrator_tls_cert_dir=
 #
 # Android Build URL. Defaults to "https://androidbuildinternal.googleapis.com"
 # orchestrator_android_build_url=

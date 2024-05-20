@@ -172,8 +172,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_google_cloud_android_orchestration",
         importpath = "github.com/google/cloud-android-orchestration",
-        sum = "h1:vGMGqt5uQDA35TejHN4+LM1fMNDjwWJsRjno+Kubkvc=",
-        version = "v0.0.0-20240425005453-3164ea0a2540",
+        sum = "h1:3tJDtORMVocbfaE7vYu4kLR0DTcaMMAceERubYwhLCc=",
+        version = "v0.0.0-20240520012156-1e7a0d0c6857",
     )
     go_repository(
         name = "com_github_google_go_cmp",

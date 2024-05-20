@@ -20,6 +20,7 @@ RUN set -x
 # Install dependants of CF debian packages.
 RUN apt update
 RUN apt install -y --no-install-recommends \
+    nginx \
     ca-certificates \
     curl \
     sudo
