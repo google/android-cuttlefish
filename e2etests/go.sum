@@ -60,6 +60,8 @@ github.com/google/android-cuttlefish/frontend/src/liboperator v0.0.0-20231215232
 github.com/google/android-cuttlefish/frontend/src/liboperator v0.0.0-20231215232042-8c95f6b070a9/go.mod h1:MQWsd4UGUI1qNTTvDaD1vi5f6oxUDgggUELH3UpBdhY=
 github.com/google/cloud-android-orchestration v0.0.0-20240425005453-3164ea0a2540 h1:vGMGqt5uQDA35TejHN4+LM1fMNDjwWJsRjno+Kubkvc=
 github.com/google/cloud-android-orchestration v0.0.0-20240425005453-3164ea0a2540/go.mod h1:p3sp54UEW9AHEF2rXXxu5NHcfYCx2oBlzcivHRL81OI=
+github.com/google/cloud-android-orchestration v0.0.0-20240520012156-1e7a0d0c6857 h1:3tJDtORMVocbfaE7vYu4kLR0DTcaMMAceERubYwhLCc=
+github.com/google/cloud-android-orchestration v0.0.0-20240520012156-1e7a0d0c6857/go.mod h1:p3sp54UEW9AHEF2rXXxu5NHcfYCx2oBlzcivHRL81OI=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
 github.com/google/go-cmp v0.3.0/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
 github.com/google/go-cmp v0.3.1/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
