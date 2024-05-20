@@ -79,11 +79,8 @@ void Surface::Commit() {
     const int32_t buffer_h = wl_shm_buffer_get_height(shm_buffer);
     CHECK(buffer_h == state_.region.h);
     const int32_t buffer_stride_bytes = wl_shm_buffer_get_stride(shm_buffer);
-    std::uint32_t buffer_drm_format =
+    const std::uint32_t buffer_drm_format =
         GetDrmFormat(wl_shm_buffer_get_format(shm_buffer));
-
-    // TODO(b/341647448): remove after receiving proper format from crosvm.
-    buffer_drm_format = DRM_FORMAT_ABGR8888;
 
     if (!state_.has_notified_surface_create) {
       surfaces_.HandleSurfaceCreated(display_number, buffer_w, buffer_h);

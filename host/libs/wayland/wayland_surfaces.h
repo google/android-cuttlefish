@@ -53,6 +53,8 @@ class Surfaces {
 
   void SetDisplayEventCallback(DisplayEventCallback callback);
 
+  void SetFramesAreRGBA(bool frames_are_rgba);
+
  private:
   friend class Surface;
   void HandleSurfaceFrame(std::uint32_t display_number,       //
@@ -71,6 +73,9 @@ class Surfaces {
   std::mutex callback_mutex_;
   std::optional<FrameCallback> callback_;
   std::optional<DisplayEventCallback> event_callback_;
+  // If true, report that the received frames are RGBA regardless
+  // of the format reported by the wayland client.
+  bool frames_are_rgba_ = false;
 };
 
 }  // namespace wayland
