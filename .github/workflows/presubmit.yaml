@@ -91,3 +91,5 @@ jobs:
       with:
         name: testlogs
         path: e2etests/bazel-testlogs
+  build-arm64-cuttlefish-deb-job:
+    uses: ./.github/workflows/reusable-build.yaml
