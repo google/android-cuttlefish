@@ -18,17 +18,18 @@ package com.android.cuttlefish.tests;
 import static org.junit.Assert.assertTrue;
 
 import com.android.tradefed.config.Option;
-import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.internal.DeviceResetHandler;
 import com.android.tradefed.device.internal.DeviceSnapshotHandler;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
-import java.io.File;
-import java.util.UUID;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.File;
+import java.util.UUID;
 
 /**
  * Test snapshot/restore function.
@@ -42,118 +43,117 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class SnapshotTest extends BaseHostJUnit4Test {
 
-  @Option(
-      name = "test-count",
-      description = "Number of times to restore the device back to snapshot state.")
-  private int mTestCount = 10;
+    @Option(
+            name = "test-count",
+            description = "Number of times to restore the device back to snapshot state.")
+    private int mTestCount = 10;
 
-  @Test
-  public void testSnapshot() throws Exception {
-    String snapshotId = "snapshot_" + UUID.randomUUID().toString();
+    @Test
+    public void testSnapshot() throws Exception {
+        String snapshotId = "snapshot_" + UUID.randomUUID().toString();
 
-    // Snapshot the device
-    boolean snapshotRes = new DeviceSnapshotHandler().snapshotDevice(getDevice(), snapshotId);
-    assertTrue("failed to snapshot.", snapshotRes);
+        // Snapshot the device
+        boolean snapshotRes = new DeviceSnapshotHandler().snapshotDevice(getDevice(), snapshotId);
+        assertTrue("failed to snapshot.", snapshotRes);
 
-    // Create a file in tmp directory
-    final String tmpFile = "/data/local/tmp/snapshot_tmp";
-    getDevice().executeShellCommand("touch " + tmpFile);
+        // Create a file in tmp directory
+        final String tmpFile = "/data/local/tmp/snapshot_tmp";
+        getDevice().executeShellCommand("touch " + tmpFile);
 
-    // Reboot the device to make sure the file persists.
-    getDevice().reboot();
-    File file = getDevice().pullFile(tmpFile);
-    if (file == null) {
-      Assert.fail("Setup failed: tmp file failed to persist after device reboot.");
+        // Reboot the device to make sure the file persists.
+        getDevice().reboot();
+        File file = getDevice().pullFile(tmpFile);
+        if (file == null) {
+            Assert.fail("Setup failed: tmp file failed to persist after device reboot.");
+        }
+
+        long startAllRuns = System.currentTimeMillis();
+        for (int i = 0; i < mTestCount; i++) {
+            CLog.d("Restore snapshot attempt #%d", i);
+            long start = System.currentTimeMillis();
+            boolean restoreRes =
+                    new DeviceSnapshotHandler().restoreSnapshotDevice(getDevice(), snapshotId);
+            assertTrue(
+                    String.format("Restore snapshot for device reset failed during attempt #%d", i),
+                    restoreRes);
+            long duration = System.currentTimeMillis() - start;
+            CLog.d("Restore snapshot took %dms to finish", duration);
+        }
+        CLog.d(
+                "%d Restore snapshot runs finished successfully, with average time of %dms",
+                mTestCount, (System.currentTimeMillis() - startAllRuns) / mTestCount);
+
+        // Verify that the device is back online and pre-existing file is gone.
+        file = getDevice().pullFile(tmpFile);
+        if (file != null) {
+            Assert.fail("Restore snapshot failed: pre-existing file still exists.");
+        }
     }
 
-    long startAllRuns = System.currentTimeMillis();
-    for (int i = 0; i < mTestCount; i++) {
-      CLog.d("Restore snapshot attempt #%d", i);
-      long start = System.currentTimeMillis();
-      boolean restoreRes = new DeviceSnapshotHandler().restoreSnapshotDevice(getDevice(), snapshotId);
-      assertTrue(String.format("Restore snapshot for device reset failed during attempt #%d", i),
-          restoreRes);
-      long duration = System.currentTimeMillis() - start;
-      CLog.d("Restore snapshot took %dms to finish", duration);
+    // Make sure reboots work correctly after a restore.
+    //
+    // There is some overlap between the cuttleifsh's support for restore and
+    // reboot and so it can be easy for change to one to break the other.
+    @Test
+    public void testSnapshotReboot() throws Exception {
+        String snapshotId = "snapshot_" + UUID.randomUUID().toString();
+
+        // Snapshot the device.
+        boolean snapshotRes = new DeviceSnapshotHandler().snapshotDevice(getDevice(), snapshotId);
+        assertTrue("failed to snapshot", snapshotRes);
+        // Restore the device.
+        boolean restoreRes =
+                new DeviceSnapshotHandler().restoreSnapshotDevice(getDevice(), snapshotId);
+        assertTrue("Restore snapshot for device reset failed", restoreRes);
+        // Reboot the device.
+        getDevice().reboot();
+        // Verify that the device is back online.
+        getDevice().executeShellCommand("echo test");
     }
-    CLog.d(
-        "%d Restore snapshot runs finished successfully, with average time of %dms",
-        mTestCount, (System.currentTimeMillis() - startAllRuns) / mTestCount);
 
-    // Verify that the device is back online and pre-existing file is gone.
-    file = getDevice().pullFile(tmpFile);
-    if (file != null) {
-      Assert.fail("Restore snapshot failed: pre-existing file still exists.");
+    // Test powerwash after restoring
+    @Test
+    public void testSnapshotPowerwash() throws Exception {
+        String snapshotId = "snapshot_" + UUID.randomUUID().toString();
+
+        // Snapshot the device>
+        boolean snapshotRes = new DeviceSnapshotHandler().snapshotDevice(getDevice(), snapshotId);
+        assertTrue("failed to snapshot", snapshotRes);
+        // Restore the device.
+        boolean restoreRes =
+                new DeviceSnapshotHandler().restoreSnapshotDevice(getDevice(), snapshotId);
+        assertTrue("Restore snapshot for device reset failed before powerwash", restoreRes);
+        CLog.d("Powerwash attempt after restore");
+        long start = System.currentTimeMillis();
+        boolean success = new DeviceResetHandler(getInvocationContext()).resetDevice(getDevice());
+        assertTrue(String.format("Powerwash reset failed during attempt after restore"), success);
+        long duration = System.currentTimeMillis() - start;
+        CLog.d("Powerwash took %dms to finish", duration);
+        // Verify that the device is back online.
+        getDevice().executeShellCommand("echo test");
     }
-  }
 
-  // Make sure reboots work correctly after a restore.
-  //
-  // There is some overlap between the cuttleifsh's support for restore and
-  // reboot and so it can be easy for change to one to break the other.
-  @Test
-  public void testSnapshotReboot() throws Exception {
-    String snapshotId = "snapshot_" + UUID.randomUUID().toString();
+    // Test powerwash the device, then snapshot and restore
+    @Test
+    public void testPowerwashSnapshot() throws Exception {
+        String snapshotId = "snapshot_" + UUID.randomUUID().toString();
 
-    // Snapshot the device.
-    boolean snapshotRes =
-        new DeviceSnapshotHandler().snapshotDevice(getDevice(), snapshotId);
-    assertTrue("failed to snapshot", snapshotRes);
-    // Restore the device.
-    boolean restoreRes =
-        new DeviceSnapshotHandler().restoreSnapshotDevice(getDevice(), snapshotId);
-    assertTrue("Restore snapshot for device reset failed", restoreRes);
-    // Reboot the device.
-    getDevice().reboot();
-    // Verify that the device is back online.
-    getDevice().executeShellCommand("echo test");
-  }
-
-  // Test powerwash after restoring
-  @Test
-  public void testSnapshotPowerwash() throws Exception {
-    String snapshotId = "snapshot_" + UUID.randomUUID().toString();
-
-    // Snapshot the device>
-    boolean snapshotRes =
-        new DeviceSnapshotHandler().snapshotDevice(getDevice(), snapshotId);
-    assertTrue("failed to snapshot", snapshotRes);
-    // Restore the device.
-    boolean restoreRes =
-        new DeviceSnapshotHandler().restoreSnapshotDevice(getDevice(), snapshotId);
-    assertTrue("Restore snapshot for device reset failed before powerwash", restoreRes);
-    CLog.d("Powerwash attempt after restore");
-    long start = System.currentTimeMillis();
-    boolean success = new DeviceResetHandler(getInvocationContext()).resetDevice(getDevice());
-    assertTrue(String.format("Powerwash reset failed during attempt after restore"), success);
-    long duration = System.currentTimeMillis() - start;
-    CLog.d("Powerwash took %dms to finish", duration);
-    // Verify that the device is back online.
-    getDevice().executeShellCommand("echo test");
-  }
-
-  // Test powerwash the device, then snapshot and restore
-  @Test
-  public void testPowerwashSnapshot() throws Exception {
-    String snapshotId = "snapshot_" + UUID.randomUUID().toString();
-
-    CLog.d("Powerwash attempt before restore");
-    long start = System.currentTimeMillis();
-    boolean success = new DeviceResetHandler(getInvocationContext()).resetDevice(getDevice());
-    assertTrue(String.format("Powerwash reset failed during attempt before snapshot"), success);
-    long duration = System.currentTimeMillis() - start;
-    CLog.d("Powerwash took %dms to finish", duration);
-    // Verify that the device is back online.
-    getDevice().executeShellCommand("echo test");
-    // Snapshot the device>
-    boolean snapshotRes =
-        new DeviceSnapshotHandler().snapshotDevice(getDevice(), snapshotId);
-    assertTrue("failed to snapshot", snapshotRes);
-    // Restore the device.
-    boolean restoreRes =
-        new DeviceSnapshotHandler().restoreSnapshotDevice(getDevice(), snapshotId);
-    assertTrue("Restore snapshot after powerwash for device reset failed", restoreRes);
-    // Verify that the device is back online.
-    getDevice().executeShellCommand("echo test");
-  }
+        CLog.d("Powerwash attempt before restore");
+        long start = System.currentTimeMillis();
+        boolean success = new DeviceResetHandler(getInvocationContext()).resetDevice(getDevice());
+        assertTrue(String.format("Powerwash reset failed during attempt before snapshot"), success);
+        long duration = System.currentTimeMillis() - start;
+        CLog.d("Powerwash took %dms to finish", duration);
+        // Verify that the device is back online.
+        getDevice().executeShellCommand("echo test");
+        // Snapshot the device>
+        boolean snapshotRes = new DeviceSnapshotHandler().snapshotDevice(getDevice(), snapshotId);
+        assertTrue("failed to snapshot", snapshotRes);
+        // Restore the device.
+        boolean restoreRes =
+                new DeviceSnapshotHandler().restoreSnapshotDevice(getDevice(), snapshotId);
+        assertTrue("Restore snapshot after powerwash for device reset failed", restoreRes);
+        // Verify that the device is back online.
+        getDevice().executeShellCommand("echo test");
+    }
 }
