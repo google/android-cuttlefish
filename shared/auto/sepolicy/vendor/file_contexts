@@ -1,2 +1,4 @@
-/vendor/lib(64)?/cuttlefish_auto_resources.so  u:object_r:same_process_hal_file:s0
-/vendor/bin/hw/android\.hardware\.automotive\.vehicle@V[0-9]+-cf-service u:object_r:hal_vehicle_default_exec:s0
+/vendor/lib(64)?/cuttlefish_auto_resources.so                               u:object_r:same_process_hal_file:s0
+/vendor/bin/hw/android\.hardware\.automotive\.vehicle@V[0-9]+-cf-service    u:object_r:hal_vehicle_default_exec:s0
+# Battery Health HAL
+/vendor/bin/hw/android\.hardware\.health-service\.automotive                u:object_r:hal_health_default_exec:s0
