@@ -59,17 +59,12 @@ impl LightsService {
             .unwrap_or("0".to_string())
             .parse()
             .unwrap();
-        let guest_cid: u32 = system_properties::read("ro.boot.vsock_lights_cid")
-            .unwrap_or(None)
-            .unwrap_or("0".to_string())
-            .parse()
-            .unwrap();
 
         // TODO(b/297094647): Add an on_client_connected callback and share it with the
         // vsock_server through a Weak reference.
         Self {
             lights: Mutex::new(lights_map),
-            vsock_server: VsockServer::new(lights_server_port, guest_cid).unwrap(),
+            vsock_server: VsockServer::new(lights_server_port).unwrap(),
         }
     }
 }
