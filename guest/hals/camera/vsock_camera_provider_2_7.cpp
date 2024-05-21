@@ -38,12 +38,9 @@ VsockCameraProvider::VsockCameraProvider(VsockCameraServer* server) {
   if (!server->isRunning()) {
     constexpr static const auto camera_port_property =
         "ro.boot.vsock_camera_port";
-    constexpr static const auto camera_cid_property =
-        "ro.boot.vsock_camera_cid";
     auto port = property_get_int32(camera_port_property, -1);
-    auto cid = property_get_int32(camera_cid_property, -1);
     if (port > 0) {
-      server->start(port, cid);
+      server->start(port, VMADDR_CID_ANY);
     }
   }
 }

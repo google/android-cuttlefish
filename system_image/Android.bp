@@ -296,6 +296,8 @@ android_system_image {
     build_logtags: true,
     gen_aconfig_flags_pb: true,
 
+    compile_multilib: "both",
+
     use_avb: true,
     avb_private_key: ":microdroid_sign_key",
     avb_algorithm: "SHA256_RSA4096",
@@ -636,9 +638,8 @@ android_system_image {
                 "WallpaperBackup", // base_system
             ],
         },
-        lib32: {
+        prefer32: {
             deps: [
-                "android.hardware.audio.service",
                 "drmserver", // media_system
                 "mediaserver", // base_system
             ],
@@ -740,7 +741,13 @@ android_system_image {
                 "libwebviewchromium_loader", // media_system
                 "libwebviewchromium_plat_support", // media_system
                 "libwilhelm", // base_system
-            ],
+            ] + select(soong_config_variable("ANDROID", "TARGET_DYNAMIC_64_32_DRMSERVER"), {
+                "true": ["drmserver"],
+                default: [],
+            }) + select(soong_config_variable("ANDROID", "TARGET_DYNAMIC_64_32_MEDIASERVER"), {
+                "true": ["mediaserver"],
+                default: [],
+            }),
         },
     },
 }
