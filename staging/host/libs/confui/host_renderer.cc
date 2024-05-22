@@ -16,6 +16,8 @@
 
 #include "host/libs/confui/host_renderer.h"
 
+#include <drm/drm_fourcc.h>
+
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -410,7 +412,8 @@ Result<void> ConfUiRenderer::RenderDialog(
   auto frame_stride_bytes = teeui_frame->ScreenStrideBytes();
   auto frame_bytes = reinterpret_cast<std::uint8_t*>(teeui_frame->data());
   CF_EXPECT(screen_connector_.RenderConfirmationUi(
-      display_num, frame_width, frame_height, frame_stride_bytes, frame_bytes));
+      display_num, frame_width, frame_height, DRM_FORMAT_ABGR8888,
+      frame_stride_bytes, frame_bytes));
   return {};
 }
 
