@@ -81,10 +81,10 @@ cc_defaults {
         },
     },
     cflags: [
-        "-Werror",
-        "-Wall",
-        "-D_FILE_OFFSET_BITS=64",
         "-DNODISCARD_EXPECTED=true",
+        "-D_FILE_OFFSET_BITS=64",
+        "-Wall",
+        "-Werror",
         "-Wno-error=unused-result", // TODO(b/314526051): Fix Result<> uses
     ],
     apex_available: [
@@ -99,8 +99,8 @@ soong_config_module_type {
     config_namespace: "cvdhost",
     bool_variables: ["enforce_mac80211_hwsim"],
     value_variables: [
-        "default_userdata_fs_type",
         "board_f2fs_blocksize",
+        "default_userdata_fs_type",
     ],
     properties: ["cflags"],
 }
