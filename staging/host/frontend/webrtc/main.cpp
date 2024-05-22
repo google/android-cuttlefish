@@ -116,13 +116,18 @@ fruit::Component<
     cuttlefish::ScreenConnector<DisplayHandler::WebRtcScProcessedFrame>,
     cuttlefish::confui::HostServer, cuttlefish::confui::HostVirtualInput>
 CreateConfirmationUIComponent(
-    int* frames_fd, cuttlefish::confui::PipeConnectionPair* pipe_io_pair, cuttlefish::InputConnector* input_connector) {
+    int* frames_fd, bool* frames_are_rgba,
+    cuttlefish::confui::PipeConnectionPair* pipe_io_pair,
+    cuttlefish::InputConnector* input_connector) {
   using cuttlefish::ScreenConnectorFrameRenderer;
   using ScreenConnector = cuttlefish::DisplayHandler::ScreenConnector;
   return fruit::createComponent()
       .bindInstance<
           fruit::Annotated<cuttlefish::WaylandScreenConnector::FramesFd, int>>(
           *frames_fd)
+      .bindInstance<fruit::Annotated<
+          cuttlefish::WaylandScreenConnector::FramesAreRgba, bool>>(
+          *frames_are_rgba)
       .bindInstance(*pipe_io_pair)
       .bind<ScreenConnectorFrameRenderer, ScreenConnector>()
       .bindInstance(*input_connector);
@@ -190,11 +195,13 @@ int main(int argc, char** argv) {
   close(FLAGS_confui_out_fd);
 
   int frames_fd = FLAGS_frame_server_fd;
+  bool frames_are_rgba = true;
   fruit::Injector<
       cuttlefish::ScreenConnector<DisplayHandler::WebRtcScProcessedFrame>,
       cuttlefish::confui::HostServer, cuttlefish::confui::HostVirtualInput>
       conf_ui_components_injector(CreateConfirmationUIComponent,
                                   std::addressof(frames_fd),
+                                  std::addressof(frames_are_rgba),
                                   &conf_ui_comm_fd_pair, input_connector.get());
   auto& screen_connector =
       conf_ui_components_injector.get<DisplayHandler::ScreenConnector&>();

@@ -41,12 +41,12 @@ struct WaylandServerState {
 
 }  // namespace internal
 
-WaylandServer::WaylandServer(int wayland_socket_fd) {
+WaylandServer::WaylandServer(int wayland_socket_fd,
+                             bool wayland_frames_are_rgba) {
   server_thread_ =
-      std::thread(
-          [this, wayland_socket_fd]() {
-            ServerLoop(wayland_socket_fd);
-          });
+      std::thread([this, wayland_socket_fd, wayland_frames_are_rgba]() {
+        ServerLoop(wayland_socket_fd, wayland_frames_are_rgba);
+      });
 
   std::unique_lock<std::mutex> lock(server_ready_mutex_);
   server_ready_cv_.wait(lock, [&]{return server_ready_; });
@@ -57,8 +57,10 @@ WaylandServer::~WaylandServer() {
   server_thread_.join();
 }
 
-void WaylandServer::ServerLoop(int fd) {
+void WaylandServer::ServerLoop(int fd, bool frames_are_rgba) {
   server_state_.reset(new internal::WaylandServerState());
+
+  server_state_->surfaces_.SetFramesAreRGBA(frames_are_rgba);
 
   server_state_->display_ = wl_display_create();
   CHECK(server_state_->display_ != nullptr)

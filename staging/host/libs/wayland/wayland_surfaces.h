@@ -42,22 +42,26 @@ class Surfaces {
   Surfaces& operator=(Surfaces&& rhs) = delete;
 
   using FrameCallback =
-      std::function<void(std::uint32_t /*display_number*/,      //
-                         std::uint32_t /*frame_width*/,         //
-                         std::uint32_t /*frame_height*/,        //
-                         std::uint32_t /*frame_stride_bytes*/,  //
+      std::function<void(std::uint32_t /*display_number*/,       //
+                         std::uint32_t /*frame_width*/,          //
+                         std::uint32_t /*frame_height*/,         //
+                         std::uint32_t /*frame_fourcc_format*/,  //
+                         std::uint32_t /*frame_stride_bytes*/,   //
                          std::uint8_t* /*frame_bytes*/)>;
 
   void SetFrameCallback(FrameCallback callback);
 
   void SetDisplayEventCallback(DisplayEventCallback callback);
 
+  void SetFramesAreRGBA(bool frames_are_rgba);
+
  private:
   friend class Surface;
-  void HandleSurfaceFrame(std::uint32_t display_number,      //
-                          std::uint32_t frame_width,         //
-                          std::uint32_t frame_height,        //
-                          std::uint32_t frame_stride_bytes,  //
+  void HandleSurfaceFrame(std::uint32_t display_number,       //
+                          std::uint32_t frame_width,          //
+                          std::uint32_t frame_height,         //
+                          std::uint32_t frame_fourcc_format,  //
+                          std::uint32_t frame_stride_bytes,   //
                           std::uint8_t* frame_bytes);
 
   void HandleSurfaceCreated(std::uint32_t display_number,
@@ -69,6 +73,9 @@ class Surfaces {
   std::mutex callback_mutex_;
   std::optional<FrameCallback> callback_;
   std::optional<DisplayEventCallback> event_callback_;
+  // If true, report that the received frames are RGBA regardless
+  // of the format reported by the wayland client.
+  bool frames_are_rgba_ = false;
 };
 
 }  // namespace wayland
