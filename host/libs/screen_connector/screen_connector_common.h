@@ -35,10 +35,11 @@ struct is_movable {
 
 // this callback type is going directly to socket-based or wayland ScreenConnector
 using GenerateProcessedFrameCallbackImpl =
-    std::function<void(std::uint32_t /*display_number*/,      //
-                       std::uint32_t /*frame_width*/,         //
-                       std::uint32_t /*frame_height*/,        //
-                       std::uint32_t /*frame_stride_bytes*/,  //
+    std::function<void(std::uint32_t /*display_number*/,       //
+                       std::uint32_t /*frame_width*/,          //
+                       std::uint32_t /*frame_height*/,         //
+                       std::uint32_t /*frame_fourcc_format*/,  //
+                       std::uint32_t /*frame_stride_bytes*/,   //
                        std::uint8_t* /*frame_pixels*/)>;
 
 struct ScreenConnectorInfo {
@@ -91,6 +92,7 @@ struct ScreenConnectorFrameRenderer {
   virtual bool RenderConfirmationUi(std::uint32_t display_number,
                                     std::uint32_t frame_width,
                                     std::uint32_t frame_height,
+                                    std::uint32_t frame_fourcc_format,
                                     std::uint32_t frame_stride_bytes,
                                     std::uint8_t* frame_bytes) = 0;
   virtual bool IsCallbackSet() const = 0;
