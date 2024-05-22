@@ -317,7 +317,6 @@ android_system_image {
         "aconfigd",
         "aflags",
         "am",
-        "android_build_prop",
         "android_vintf_manifest",
         "android.system.suspend-service",
         "apexd",
@@ -545,6 +544,7 @@ android_system_image {
                 "android.test.base", // from runtime_libart
                 "android.test.mock", // base_system
                 "android.test.runner", // base_system
+                "aosp_cf_x86_64_system-build.prop",
                 "aosp_mainline_modules", // ok
                 "BackupRestoreConfirmation", // base_system
                 "BasicDreams", // handheld_system
@@ -764,9 +764,9 @@ prebuilt_etc {
     installable: false,
 }
 
-prebuilt_root {
-    name: "android_build_prop",
-    filename: "build.prop",
-    src: "build.prop",
-    installable: false,
+build_prop {
+    name: "aosp_cf_x86_64_system-build.prop",
+    stem: "build.prop",
+    product_config: ":product_config",
+    no_full_install: true,
 }
