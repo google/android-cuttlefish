@@ -86,10 +86,6 @@ func (e *CommandTimeoutErr) Error() string {
 }
 
 func (c *Command) Run() error {
-	// Makes sure cvd server daemon is running before executing the cvd command.
-	if err := c.startCVDServer(); err != nil {
-		return err
-	}
 	// TODO: Use `context.WithTimeout` if upgrading to go 1.19 as `exec.Cmd` adds the `Cancel` function field,
 	// so the cancel logic could be customized to continue sending the SIGINT signal.
 	cmd := c.execContext(context.TODO(), cvdEnv(c.opts.AndroidHostOut), c.cvdBin, c.args...)
@@ -124,19 +120,6 @@ func (c *Command) Run() error {
 		return &CommandExecErr{c.args, stderr.String(), err}
 	}
 	return nil
-}
-
-func (c *Command) startCVDServer() error {
-	cmd := c.execContext(context.TODO(), cvdEnv(""), c.cvdBin)
-	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
-	// file descriptor to the null device (os.DevNull).
-	// Otherwise, `Run` will never complete. Why? a pipe will be created to handle
-	// the data of the new process, this pipe will be passed over to `cvd_server`,
-	// which is a daemon, hence the pipe will never reach EOF and Run will never
-	// complete. Read more about it here: https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/os/exec/exec.go;l=108-111
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-	return cmd.Run()
 }
 
 func cvdEnv(androidHostOut string) []string {
