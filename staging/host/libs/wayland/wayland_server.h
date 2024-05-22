@@ -40,30 +40,31 @@ class WaylandServer {
     // Creates a Wayland compositing server. If specified, uses the given
     // socket file descriptor to connect with clients. If provided, this
     // server will close the file descriptor upon exit.
-    WaylandServer(int wayland_socket_fd = -1);
-    virtual ~WaylandServer();
+   WaylandServer(int wayland_socket_fd = -1,
+                 bool wayland_frames_are_rgba = true);
+   virtual ~WaylandServer();
 
-    WaylandServer(const WaylandServer& rhs) = delete;
-    WaylandServer& operator=(const WaylandServer& rhs) = delete;
+   WaylandServer(const WaylandServer& rhs) = delete;
+   WaylandServer& operator=(const WaylandServer& rhs) = delete;
 
-    WaylandServer(WaylandServer&& rhs) = delete;
-    WaylandServer& operator=(WaylandServer&& rhs) = delete;
+   WaylandServer(WaylandServer&& rhs) = delete;
+   WaylandServer& operator=(WaylandServer&& rhs) = delete;
 
-    // Registers the callback that will be run whenever a new frame is
-    // available.
-    void SetFrameCallback(Surfaces::FrameCallback callback);
+   // Registers the callback that will be run whenever a new frame is
+   // available.
+   void SetFrameCallback(Surfaces::FrameCallback callback);
 
-    void SetDisplayEventCallback(DisplayEventCallback callback);
+   void SetDisplayEventCallback(DisplayEventCallback callback);
 
-   private:
-    void ServerLoop(int wayland_socket_fd);
+  private:
+   void ServerLoop(int wayland_socket_fd, bool wayland_frames_are_rgba);
 
-    bool server_ready_ = false;
-    std::mutex server_ready_mutex_;
-    std::condition_variable server_ready_cv_;
+   bool server_ready_ = false;
+   std::mutex server_ready_mutex_;
+   std::condition_variable server_ready_cv_;
 
-    std::thread server_thread_;
-    std::unique_ptr<internal::WaylandServerState> server_state_;
+   std::thread server_thread_;
+   std::unique_ptr<internal::WaylandServerState> server_state_;
 };
 
 }  // namespace wayland

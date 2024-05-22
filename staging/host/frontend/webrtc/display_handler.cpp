@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 
+#include <drm/drm_fourcc.h>
 #include <libyuv.h>
 
 #include "host/frontend/webrtc/libdevice/streamer.h"
@@ -69,18 +70,31 @@ DisplayHandler::GenerateProcessedFrameCallback DisplayHandler::GetScreenConnecto
     // only to tell the producer how to create a ProcessedFrame to cache into the queue
     DisplayHandler::GenerateProcessedFrameCallback callback =
         [](std::uint32_t display_number, std::uint32_t frame_width,
-           std::uint32_t frame_height, std::uint32_t frame_stride_bytes,
-           std::uint8_t* frame_pixels,
+           std::uint32_t frame_height, std::uint32_t frame_fourcc_format,
+           std::uint32_t frame_stride_bytes, std::uint8_t* frame_pixels,
            WebRtcScProcessedFrame& processed_frame) {
           processed_frame.display_number_ = display_number;
           processed_frame.buf_ =
               std::make_unique<CvdVideoFrameBuffer>(frame_width, frame_height);
-          libyuv::ABGRToI420(
-              frame_pixels, frame_stride_bytes, processed_frame.buf_->DataY(),
-              processed_frame.buf_->StrideY(), processed_frame.buf_->DataU(),
-              processed_frame.buf_->StrideU(), processed_frame.buf_->DataV(),
-              processed_frame.buf_->StrideV(), frame_width, frame_height);
-          processed_frame.is_success_ = true;
+          if (frame_fourcc_format == DRM_FORMAT_ARGB8888 ||
+              frame_fourcc_format == DRM_FORMAT_XRGB8888) {
+            libyuv::ARGBToI420(
+                frame_pixels, frame_stride_bytes, processed_frame.buf_->DataY(),
+                processed_frame.buf_->StrideY(), processed_frame.buf_->DataU(),
+                processed_frame.buf_->StrideU(), processed_frame.buf_->DataV(),
+                processed_frame.buf_->StrideV(), frame_width, frame_height);
+            processed_frame.is_success_ = true;
+          } else if (frame_fourcc_format == DRM_FORMAT_ABGR8888 ||
+                     frame_fourcc_format == DRM_FORMAT_XBGR8888) {
+            libyuv::ABGRToI420(
+                frame_pixels, frame_stride_bytes, processed_frame.buf_->DataY(),
+                processed_frame.buf_->StrideY(), processed_frame.buf_->DataU(),
+                processed_frame.buf_->StrideU(), processed_frame.buf_->DataV(),
+                processed_frame.buf_->StrideV(), frame_width, frame_height);
+            processed_frame.is_success_ = true;
+          } else {
+            processed_frame.is_success_ = false;
+          }
         };
     return callback;
 }

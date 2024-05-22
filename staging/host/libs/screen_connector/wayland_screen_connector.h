@@ -28,7 +28,10 @@ namespace cuttlefish {
 class WaylandScreenConnector {
  public:
   struct FramesFd {};
-  INJECT(WaylandScreenConnector(ANNOTATED(FramesFd, int) frames_fd));
+  struct FramesAreRgba {};
+  INJECT(WaylandScreenConnector(ANNOTATED(FramesFd, int) frames_fd,
+                                ANNOTATED(FramesAreRgba, bool)
+                                    frames_are_rgba));
 
   void SetFrameCallback(GenerateProcessedFrameCallbackImpl frame_callback);
 

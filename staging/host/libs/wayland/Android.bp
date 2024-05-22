@@ -30,6 +30,9 @@ cc_library {
         "wayland_surfaces.cpp",
         "wayland_virtio_gpu_metadata.cpp",
     ],
+    header_libs: [
+        "libdrm_headers",
+    ],
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",

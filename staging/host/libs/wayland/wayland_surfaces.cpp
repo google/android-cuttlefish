@@ -17,6 +17,7 @@
 #include "host/libs/wayland/wayland_surfaces.h"
 
 #include <android-base/logging.h>
+#include <drm/drm_fourcc.h>
 #include <wayland-server-protocol.h>
 
 #include "host/libs/wayland/wayland_surface.h"
@@ -33,15 +34,25 @@ void Surfaces::SetDisplayEventCallback(DisplayEventCallback callback) {
   event_callback_.emplace(std::move(callback));
 }
 
+void Surfaces::SetFramesAreRGBA(bool frames_are_rgba) {
+  frames_are_rgba_ = frames_are_rgba;
+}
+
 void Surfaces::HandleSurfaceFrame(std::uint32_t display_number,
                                   std::uint32_t frame_width,
                                   std::uint32_t frame_height,
+                                  std::uint32_t frame_fourcc_format,
                                   std::uint32_t frame_stride_bytes,
                                   std::uint8_t* frame_bytes) {
+  if (frames_are_rgba_) {
+    frame_fourcc_format = DRM_FORMAT_ABGR8888;
+  }
+
   std::unique_lock<std::mutex> lock(callback_mutex_);
+
   if (callback_) {
     (callback_.value())(display_number, frame_width, frame_height,
-                        frame_stride_bytes, frame_bytes);
+                        frame_fourcc_format, frame_stride_bytes, frame_bytes);
   }
 }
 
