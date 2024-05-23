@@ -150,7 +150,7 @@ Result<void> ChangeGroup(const std::string& path,
   }
 
   if (chown(path.c_str(), -1, groupId) != 0) {
-    return CF_ERRNO("Feailed to set group for path: "
+    return CF_ERRNO("Failed to set group for path: "
                     << path << ", " << group_name << ", " << strerror(errno));
   }
 
