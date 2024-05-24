@@ -27,7 +27,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
@@ -321,7 +320,6 @@ const (
 
 type startCVDHandler struct {
 	ExecContext cvd.CVDExecContext
-	Timeout     time.Duration
 }
 
 type startCVDParams struct {
@@ -359,7 +357,6 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 	opts := cvd.CommandOpts{
 		AndroidHostOut: p.MainArtifactsDir,
 		Home:           p.RuntimeDir,
-		Timeout:        h.Timeout,
 	}
 	cvdCmd := cvd.NewCommand(h.ExecContext, args, opts)
 	err := cvdCmd.Run()

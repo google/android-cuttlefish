@@ -413,40 +413,6 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 	}
 }
 
-func TestCreateCVDFailsDueTimeout(t *testing.T) {
-	dir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, dir)
-	execContext := execCtxCvdSubcmdDelays
-	paths := IMPaths{ArtifactsRootDir: dir + "/artifacts"}
-	om := NewMapOM()
-	buildAPI := &fakeBuildAPI{}
-	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	cvdExecContext := newCVDExecContext(execContext, fakeCVDUser)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(cvdExecContext, "")
-	opts := CreateCVDActionOpts{
-		Request:          &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}},
-		HostValidator:    &AlwaysSucceedsValidator{},
-		Paths:            paths,
-		OperationManager: om,
-		ExecContext:      execContext,
-		BuildAPI:         buildAPI,
-		ArtifactsFetcher: artifactsFetcher,
-		CVDBundleFetcher: cvdBundleFetcher,
-		CVDStartTimeout:  testFakeBinaryDelayMs - (50 * time.Millisecond),
-		CVDUser:          fakeCVDUser,
-	}
-	action := NewCreateCVDAction(opts)
-
-	op, err := action.Run()
-
-	orchtesting.FatalIfNil(t, err)
-	res, err := om.Wait(op.Name, 1*time.Second)
-	orchtesting.FatalIfNil(t, err)
-	if res.Error == nil {
-		t.Error("expected error")
-	}
-}
-
 type AlwaysFailsValidator struct{}
 
 func (AlwaysFailsValidator) Validate() error {
