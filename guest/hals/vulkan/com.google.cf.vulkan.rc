@@ -1,0 +1,5 @@
+# `on init` is normally not available for .rc files in vendor apexes
+# But the vulkan apex is okay because it's bootstrap APEX.
+# For bootstrap APEXes, `on init` is the earliest available trigger.
+on init
+  setprop ro.vulkan.apex com.google.cf.vulkan
