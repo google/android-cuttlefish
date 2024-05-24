@@ -45,7 +45,6 @@ PRODUCT_PACKAGES += \
 # Gfxstream Vulkan implementation (Vulkan streamed to the host).
 ifeq ($(TARGET_VULKAN_SUPPORT),true)
 PRODUCT_PACKAGES += com.google.cf.vulkan
-PRODUCT_VENDOR_PROPERTIES += ro.vulkan.apex=com.google.cf.vulkan
 endif
 
 #

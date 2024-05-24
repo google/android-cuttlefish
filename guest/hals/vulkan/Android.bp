@@ -34,7 +34,7 @@ graphics_apex_defaults {
                 "vulkan.pastel",
             ],
         },
-    }
+    },
 }
 
 apex {
@@ -58,6 +58,7 @@ apex {
         "vulkan.ranchu",
     ],
     prebuilts: [
+        "com.google.cf.vulkan.rc",
         "com.google.cf.vulkan-linker-config",
         "android.hardware.vulkan.level-1.prebuilt.xml",
         "android.hardware.vulkan.compute-0.prebuilt.xml",
@@ -65,6 +66,12 @@ apex {
         "android.software.vulkan.deqp.level-latest.prebuilt.xml",
         "android.software.opengles.deqp.level-latest.prebuilt.xml",
     ],
+}
+
+prebuilt_etc {
+    name: "com.google.cf.vulkan.rc",
+    src: "com.google.cf.vulkan.rc",
+    installable: false,
 }
 
 linker_config {
