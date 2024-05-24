@@ -102,7 +102,6 @@ func newOperatorProxy(port int) *httputil.ReverseProxy {
 func main() {
 	httpPort := flag.Int("http_port", 2081, "Port to listen on for HTTP requests.")
 	cvdUser := flag.String("cvd_user", "", "User to execute cvd as.")
-	cvdCreationTimeoutSecs := flag.Int("cvd_creation_timeout_secs", 420, "CVD creation timeout in seconds")
 	operatorPort := flag.Int("operator_http_port", 1080, "Port where the operator is listening.")
 	abURL := flag.String("android_build_url", defaultAndroidBuildURL, "URL to an Android Build API.")
 	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir(), "Directory where cvd will download android build artifacts to.")
@@ -130,7 +129,6 @@ func main() {
 		Config: orchestrator.Config{
 			Paths:                  imPaths,
 			AndroidBuildServiceURL: *abURL,
-			CVDCreationTimeout:     time.Duration(*cvdCreationTimeoutSecs) * time.Second,
 			CVDUser:                *cvdUser,
 		},
 		OperationManager:      om,

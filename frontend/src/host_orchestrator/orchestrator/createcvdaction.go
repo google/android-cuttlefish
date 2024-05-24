@@ -24,7 +24,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
-	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
@@ -45,7 +44,6 @@ type CreateCVDActionOpts struct {
 	CVDBundleFetcher         artifacts.CVDBundleFetcher
 	UUIDGen                  func() string
 	CVDUser                  string
-	CVDStartTimeout          time.Duration
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	BuildAPICredentials      string
 }
@@ -63,7 +61,6 @@ type CreateCVDAction struct {
 	artifactsMngr            *artifacts.Manager
 	startCVDHandler          *startCVDHandler
 	cvdUser                  string
-	cvdStartTimeout          time.Duration
 	buildAPICredentials      string
 
 	instanceCounter uint32
@@ -81,7 +78,6 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		cvdBundleFetcher:         opts.CVDBundleFetcher,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
 		cvdUser:                  opts.CVDUser,
-		cvdStartTimeout:          opts.CVDStartTimeout,
 		buildAPICredentials:      opts.BuildAPICredentials,
 
 		artifactsMngr: artifacts.NewManager(
@@ -91,7 +87,6 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		execContext: cvdExecContext,
 		startCVDHandler: &startCVDHandler{
 			ExecContext: cvdExecContext,
-			Timeout:     opts.CVDStartTimeout,
 		},
 	}
 }
@@ -154,10 +149,7 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 			args = append(args, "--credential_source=gce")
 		}
 	}
-	opts := cvd.CommandOpts{
-		Timeout: a.cvdStartTimeout,
-	}
-	cmd := cvd.NewCommand(a.execContext, args, opts)
+	cmd := cvd.NewCommand(a.execContext, args, cvd.CommandOpts{})
 	if err := cmd.Run(); err != nil {
 		return nil, operator.NewInternalError(ErrMsgLaunchCVDFailed, err)
 	}

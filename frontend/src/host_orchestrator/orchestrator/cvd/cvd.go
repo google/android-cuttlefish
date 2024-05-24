@@ -22,9 +22,6 @@ import (
 	"log"
 	"os/exec"
 	"strings"
-	"sync/atomic"
-	"syscall"
-	"time"
 )
 
 type CVDExecContext = func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd
@@ -32,8 +29,6 @@ type CVDExecContext = func(ctx context.Context, env []string, name string, arg .
 const (
 	CVDBin      = "/usr/bin/cvd"
 	FetchCVDBin = "/usr/bin/fetch_cvd"
-
-	CVDCommandDefaultTimeout = 30 * time.Second
 )
 
 const (
@@ -44,7 +39,6 @@ type CommandOpts struct {
 	AndroidHostOut string
 	Home           string
 	Stdout         io.Writer
-	Timeout        time.Duration
 }
 
 type Command struct {
@@ -77,17 +71,7 @@ func (e *CommandExecErr) Error() string {
 
 func (e *CommandExecErr) Unwrap() error { return e.err }
 
-type CommandTimeoutErr struct {
-	args []string
-}
-
-func (e *CommandTimeoutErr) Error() string {
-	return fmt.Sprintf("cvd execution with args %q timed out", strings.Join(e.args, " "))
-}
-
 func (c *Command) Run() error {
-	// TODO: Use `context.WithTimeout` if upgrading to go 1.19 as `exec.Cmd` adds the `Cancel` function field,
-	// so the cancel logic could be customized to continue sending the SIGINT signal.
 	cmd := c.execContext(context.TODO(), cvdEnv(c.opts.AndroidHostOut), c.cvdBin, c.args...)
 	stderr := &bytes.Buffer{}
 	cmd.Stdout = c.opts.Stdout
@@ -95,28 +79,8 @@ func (c *Command) Run() error {
 	if err := cmd.Start(); err != nil {
 		return err
 	}
-	var timedOut atomic.Value
-	timedOut.Store(false)
-	timeout := CVDCommandDefaultTimeout
-	if c.opts.Timeout != 0 {
-		timeout = c.opts.Timeout
-	}
-	go func() {
-		select {
-		case <-time.After(timeout):
-			// NOTE: Do not use SIGKILL to terminate cvd commands. cvd commands are run using
-			// `sudo` and contrary to SIGINT, SIGKILL is not relayed to child processes.
-			if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
-				log.Printf("error sending SIGINT signal %+v", err)
-			}
-			timedOut.Store(true)
-		}
-	}()
 	if err := cmd.Wait(); err != nil {
 		LogStderr(cmd, stderr.String())
-		if timedOut.Load().(bool) {
-			return &CommandTimeoutErr{c.args}
-		}
 		return &CommandExecErr{c.args, stderr.String(), err}
 	}
 	return nil
