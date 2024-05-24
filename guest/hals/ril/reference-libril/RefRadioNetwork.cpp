@@ -50,6 +50,9 @@ ScopedAStatus RefRadioNetwork::getUsageSetting(int32_t serial) {
 ScopedAStatus RefRadioNetwork::setEmergencyMode(int32_t serial,
                                                 network::EmergencyMode emergencyMode) {
     network::EmergencyRegResult regState;
+    regState.accessNetwork = AccessNetwork::EUTRAN;
+    regState.regState = network::RegState::REG_HOME;
+    regState.emcDomain = network::Domain(3);  // CS_PS
     respond()->setEmergencyModeResponse(responseInfo(serial), regState);
     return ok();
 }

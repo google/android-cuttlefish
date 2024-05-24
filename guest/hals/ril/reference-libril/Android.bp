@@ -30,6 +30,7 @@ cc_library {
         "RefImsMedia.cpp",
         "RefImsMediaSession.cpp",
         "RefRadioNetwork.cpp",
+        "RefRadioConfig.cpp",
         "ril.cpp",
         "RilSapSocket.cpp",
         "ril_config.cpp",

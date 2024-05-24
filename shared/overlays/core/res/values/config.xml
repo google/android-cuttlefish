@@ -20,4 +20,11 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Show the "Adaptive Brightness" toggle. -->
     <bool name="config_automatic_brightness_available">true</bool>
+
+    <string name="config_extensionFallbackPackageName" translatable="false">
+            android.camera.extensions.impl.service
+    </string>
+    <string name="config_extensionFallbackServiceName" translatable="false">
+            android.camera.extensions.impl.service.EyesFreeVidService
+    </string>
 </resources>
