@@ -13,13 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-# TODO(b/302088370) remove the condition when libapexsupport is available
-ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
 PRODUCT_PACKAGES += \
     com.google.cf.ir
-else
-PRODUCT_PACKAGES += \
-    android.hardware.ir-service.example \
-    consumerir.default
-endif # RELEASE_AIDL_USE_UNFROZEN
