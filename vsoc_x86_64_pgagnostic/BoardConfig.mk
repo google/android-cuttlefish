@@ -52,10 +52,10 @@ AUDIOSERVER_MULTILIB := first
 -include device/google/cuttlefish/shared/identity/BoardConfig.mk
 -include device/google/cuttlefish/shared/reboot_escrow/BoardConfig.mk
 -include device/google/cuttlefish/shared/sensors/BoardConfig.mk
--include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
 -include device/google/cuttlefish/shared/telephony/BoardConfig.mk
 -include device/google/cuttlefish/shared/vibrator/BoardConfig.mk
 
 ifneq ($(BOARD_IS_AUTOMOTIVE), true)
+-include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
 -include device/google/cuttlefish/shared/virgl/BoardConfig.mk
 endif
