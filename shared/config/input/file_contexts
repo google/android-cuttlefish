@@ -1,4 +1,5 @@
 (/.*)?                          u:object_r:vendor_file:s0
+/etc(/.*)?                      u:object_r:vendor_configs_file:s0
 /etc/usr/keylayout(/.*)?\.kl    u:object_r:vendor_keylayout_file:s0
 /etc/usr/keychars(/.*)?\.kcm    u:object_r:vendor_keychars_file:s0
 /etc/usr/idc(/.*)?\.idc         u:object_r:vendor_idc_file:s0
