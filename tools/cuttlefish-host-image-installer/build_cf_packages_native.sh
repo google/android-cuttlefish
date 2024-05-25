@@ -1,7 +1,7 @@
 #!/bin/sh
 
 CUTTLEFISH_GIT_URL_DEFAULT="https://github.com/google/android-cuttlefish.git"
-CUTTLEFISH_GIT_BRANCH_DEFAULT="main"
+CUTTLEFISH_GIT_BRANCH_DEFAULT="stable"
 
 if [ x"$CUTTLEFISH_GIT_URL" = x ]; then
     CUTTLEFISH_GIT_URL="$CUTTLEFISH_GIT_URL_DEFAULT"

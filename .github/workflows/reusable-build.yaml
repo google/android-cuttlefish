@@ -23,3 +23,18 @@ jobs:
       with:
         name: cuttlefish_packages_arm64
         path: tools/cuttlefish-host-image-installer/cuttlefish_packages.7z
+
+  testing-job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Check changelog version
+      run: python tools/cuttlefish-host-image-installer/version_parser.py base/debian/changelog latest && python tools/cuttlefish-host-image-installer/version_parser.py base/debian/changelog stable 
+    - name: Testing gh release
+      run: gh release list --json tagName --jq '.[].tagName'
+    - name: Release delete asset
+      run: gh release delete-asset latest u-boot.bin -y
+
+      
+        
