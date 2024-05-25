@@ -225,9 +225,6 @@ jobs:
   deploy-job:      # This job runs in the deploy stage.
     runs-on: ubuntu-latest
     permissions: write-all
-    strategy:
-      matrix:
-        version: [14-6.1, 15-6.1, 15-6.6]
     needs: [build-metapackage-deb-job, build-cuttlefish-deb-job, build-kernel-aosp-deb-job, build-installer-iso-job, build-uboot-qemu-job]
     steps:
     - name: checkout repository
@@ -247,10 +244,20 @@ jobs:
       with:
         name: meta_gigamp_packages
         path: "tools/cuttlefish-host-image-installer"
-    - name: Download aosp_kernel_aosp${{ matrix.version }}.7z
+    - name: Download aosp_kernel_aosp14-6.1.7z
       uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
       with:
-        name: aosp_kernel_aosp${{ matrix.version }}
+        name: aosp_kernel_aosp14-6.1
+        path: "tools/cuttlefish-host-image-installer"
+    - name: Download aosp_kernel_aosp15-6.1.7z
+      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
+      with:
+        name: aosp_kernel_aosp15-6.1
+        path: "tools/cuttlefish-host-image-installer"
+    - name: Download aosp_kernel_aosp15-6.6.7z
+      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
+      with:
+        name: aosp_kernel_aosp15-6.6
         path: "tools/cuttlefish-host-image-installer"
     - name: Download u-boot.bin
       uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
