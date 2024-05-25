@@ -126,6 +126,7 @@ std::string ReqTyToStr(RequestType req_ty) {
     case RequestType::ID:
       return "id";
   }
+  abort();
 }
 
 RequestType StrToReqTy(const std::string& req) {
@@ -157,6 +158,7 @@ std::string StatusToStr(RequestStatus st) {
     case RequestStatus::Failure:
       return "failure";
   }
+  abort();
 }
 
 std::string IfaceTyToStr(IfaceType iface) {
@@ -176,6 +178,7 @@ std::string IfaceTyToStr(IfaceType iface) {
     case IfaceType::ebr:
       return "ebr";
   }
+  abort();
 }
 
 IfaceType StrToIfaceTy(const std::string& iface) {
