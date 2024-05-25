@@ -32,8 +32,12 @@ jobs:
     - name: Check changelog version
       run: python tools/cuttlefish-host-image-installer/version_parser.py base/debian/changelog latest && python tools/cuttlefish-host-image-installer/version_parser.py base/debian/changelog stable 
     - name: Testing gh release
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: gh release list --json tagName --jq '.[].tagName'
     - name: Release delete asset
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: gh release delete-asset latest u-boot.bin -y
 
       
