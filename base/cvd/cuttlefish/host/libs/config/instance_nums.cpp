@@ -224,7 +224,7 @@ Result<std::vector<std::int32_t>> InstanceNumsCalculator::CalculateFromFlags() {
 
   if (instance_nums_opt) {
     if (num_instances_) {
-      CF_EXPECT(instance_nums_.size() == *num_instances_);
+      CF_EXPECT(instance_nums_.size() == (size_t)*num_instances_);
     }
     CF_EXPECT(instance_nums_.size() > 0, "no instance nums");
     return instance_nums_;

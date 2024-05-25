@@ -205,7 +205,7 @@ Result<void> ChangeGroup(const std::string& path,
                          const std::string& group_name) {
   auto groupId = GroupIdFromName(group_name);
 
-  if (groupId == -1) {
+  if (groupId == (gid_t)-1) {
     return CF_ERR("Failed to get group id: ") << group_name;
   }
 

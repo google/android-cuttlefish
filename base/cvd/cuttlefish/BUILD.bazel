@@ -88,6 +88,7 @@ cc_library(
     ],
     copts = [
         "-std=c++17",
+        "-Werror=sign-compare",
     ],
     linkopts = ["-lcurl"],
     strip_include_prefix = "//cuttlefish",
@@ -537,6 +538,7 @@ cc_test(
     ],
     copts = [
         "-Wno-ctad-maybe-unsupported",
+        "-Werror=sign-compare",
         "-Ithird_party/android_cuttlefish/base/cvd/cuttlefish",
         "-std=c++17",
     ],

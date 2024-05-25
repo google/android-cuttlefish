@@ -228,7 +228,7 @@ Result<RefreshCredentialSource> RefreshCredentialSource::FromOauth2ClientFile(
     auto& cache = json["cache"];
     CF_EXPECT_EQ(cache.type(), Json::ValueType::arrayValue);
 
-    CF_EXPECT_EQ(cache.size(), 1);
+    CF_EXPECT_EQ(cache.size(), 1ul);
     auto& cache_first = cache[0];
     CF_EXPECT_EQ(cache_first.type(), Json::ValueType::objectValue);
 
@@ -324,7 +324,7 @@ ServiceAccountOauthCredentialSource::FromJson(HttpClient& http_client,
   std::unique_ptr<BIO, int (*)(BIO*)> bo(CF_EXPECT(BIO_new(BIO_s_mem())),
                                          BIO_free);
   CF_EXPECT(BIO_write(bo.get(), key_str.c_str(), key_str.size()) ==
-            key_str.size());
+            (ssize_t)key_str.size());
 
   auto pkey = CF_EXPECT(PEM_read_bio_PrivateKey(bo.get(), nullptr, 0, 0),
                         CollectSslErrors());

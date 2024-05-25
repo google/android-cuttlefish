@@ -33,7 +33,7 @@ TEST_P(OneEachTest, GetAnyAvailableOne) {
   using Reservation = UniqueResourceAllocator<unsigned>::Reservation;
 
   std::vector<Reservation> allocated;
-  for (int i = 0; i < resources.size(); i++) {
+  for (size_t i = 0; i < resources.size(); i++) {
     auto id_opt = allocator->UniqueItem();
     ASSERT_TRUE(id_opt);
     ASSERT_TRUE(Contains(expected_ids, id_opt->Get()));
