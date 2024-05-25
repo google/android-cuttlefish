@@ -22,9 +22,7 @@
 namespace android {
 namespace build {
 
-constexpr char* GetBuildNumber() {
-  return "@VCS_TAG@";
-}
+std::string GetBuildNumber();
 
 } // namespace build
 } // namespace android
