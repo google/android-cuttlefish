@@ -54,9 +54,12 @@ echo "step 3: update changelog and descriptions in release"
 RUN_ID=$(gh run list -w HostImage -L 1 --json databaseId | jq -r '.[0].databaseId')
 RUN_NOTE=$(gh run list -w HostImage -L 1 --json displayTitle | jq -r '.[0].displayTitle')
 RUN_DATE=$(gh run list -w HostImage -L 1 --json createdAt | jq -r '.[0].createdAt')
+echo "" >> changelog
+echo "Stable host image changes:" >> changelog
 echo "Cuttlefish version ${STABLE_VERSION}." >> changelog
 echo "${RUN_NOTE}. Artifacts created at ${RUN_DATE}. Run ID ${RUN_ID}" >> changelog
 gh release edit latest --notes-file ./changelog
+gh release edit stable --notes-file ./changelog
 
 # copy result with version name
 echo "step 4: copy result with version name"
