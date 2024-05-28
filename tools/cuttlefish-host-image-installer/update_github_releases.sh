@@ -35,9 +35,9 @@ do
 done
 
 # copy result with version name
+cp cuttlefish_packages.7z cuttlefish_packages"_${STABLE_VERSION}".7z
 cp u-boot.bin u-boot"_${STABLE_VERSION}".bin
 cp preseed-mini.iso.xz preseed-mini"_${STABLE_VERSION}".iso.xz
-cp cuttlefish_packages.7z cuttlefish_packages"_${STABLE_VERSION}".7z
 cp meta_gigamp_packages.7z meta_gigamp_packages"_${STABLE_VERSION}".7z
 cp aosp_kernel_aosp14-6.1.7z aosp_kernel_aosp14-6.1"_${STABLE_VERSION}".7z
 cp aosp_kernel_aosp15-6.1.7z aosp_kernel_aosp15-6.1"_${STABLE_VERSION}".7z
