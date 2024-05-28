@@ -5,6 +5,7 @@ cuttlefish-common (0.9.29) UNRELEASED; urgency=medium
 
   [ Chad Reynolds ]
   * Always attempt to fetch full set of system images
+  * Add `cvd fetch` temporary caching for downloaded artifacts
 
   [ Jorge E. Moreira ]
   * Execute cvd commands in-process, without a cvd server
