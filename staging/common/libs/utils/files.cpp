@@ -82,6 +82,66 @@ bool FileExists(const std::string& path, bool follow_symlinks) {
   return (follow_symlinks ? stat : lstat)(path.c_str(), &st) == 0;
 }
 
+Result<dev_t> FileDeviceId(const std::string& path) {
+  struct stat out;
+  CF_EXPECTF(
+      stat(path.c_str(), &out) == 0,
+      "stat() failed trying to retrieve device ID information for \"{}\" "
+      "with error: {}",
+      path, strerror(errno));
+  return out.st_dev;
+}
+
+Result<bool> CanHardLink(const std::string& source,
+                         const std::string& destination) {
+  return CF_EXPECT(FileDeviceId(source)) ==
+         CF_EXPECT(FileDeviceId(destination));
+}
+
+Result<ino_t> FileInodeNumber(const std::string& path) {
+  struct stat out;
+  CF_EXPECTF(
+      stat(path.c_str(), &out) == 0,
+      "stat() failed trying to retrieve inode num information for \"{}\" "
+      "with error: {}",
+      path, strerror(errno));
+  return out.st_ino;
+}
+
+Result<bool> AreHardLinked(const std::string& source,
+                           const std::string& destination) {
+  return (CF_EXPECT(FileDeviceId(source)) ==
+          CF_EXPECT(FileDeviceId(destination))) &&
+         (CF_EXPECT(FileInodeNumber(source)) ==
+          CF_EXPECT(FileInodeNumber(destination)));
+}
+
+Result<std::string> CreateHardLink(const std::string& target,
+                                   const std::string& hardlink,
+                                   const bool overwrite_existing) {
+  if (FileExists(hardlink)) {
+    if (CF_EXPECT(AreHardLinked(target, hardlink))) {
+      return hardlink;
+    }
+    if (!overwrite_existing) {
+      return CF_ERRF(
+          "Cannot hardlink from \"{}\" to \"{}\", the second file already "
+          "exists and is not hardlinked to the first",
+          target, hardlink);
+    }
+    LOG(WARNING) << "Overwriting existing file \"" << hardlink << "\" with \""
+                 << target << "\" from the cache";
+    CF_EXPECTF(unlink(hardlink.c_str()) == 0,
+               "Failed to unlink \"{}\" with error: {}", hardlink,
+               strerror(errno));
+  }
+  CF_EXPECTF(link(target.c_str(), hardlink.c_str()) == 0,
+             "link() failed trying to create hardlink from \"{}\" to \"{}\" "
+             "with error: {}",
+             target, hardlink, strerror(errno));
+  return hardlink;
+}
+
 bool FileHasContent(const std::string& path) {
   return FileSize(path) > 0;
 }
