@@ -3,8 +3,8 @@
 set -e
 
 # should update tags before do anything
-LATEST_VERSION="v"$(python tools/cuttlefish-host-image-installer/version_parser.py base/debian/changelog latest)
-STABLE_VERSION="v"$(python tools/cuttlefish-host-image-installer/version_parser.py base/debian/changelog stable)
+LATEST_VERSION="v"$(python version_parser.py ../../base/debian/changelog latest)
+STABLE_VERSION="v"$(python version_parser.py ../../base/debian/changelog stable)
 RELEASE_TAG_LIST=$(gh release list --json tagName --jq '.[].tagName')
 stringarray=($RELEASE_TAG_LIST)
 index=0
