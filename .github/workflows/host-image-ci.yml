@@ -227,7 +227,7 @@ jobs:
     strategy:
       matrix:
         version: [14-6.1, 15-6.1, 15-6.6]
-    needs: build-metapackage-deb-job, build-cuttlefish-deb-job, build-kernel-aosp-deb-job, build-installer-iso-job, build-uboot-qemu-job
+    needs: [build-metapackage-deb-job, build-cuttlefish-deb-job, build-kernel-aosp-deb-job, build-installer-iso-job, build-uboot-qemu-job]
     steps:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
