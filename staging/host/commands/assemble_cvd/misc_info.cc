@@ -16,12 +16,13 @@
 #include "misc_info.h"
 
 #include <algorithm>
+#include <set>
 #include <string>
 #include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <fmt/format.h>
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
@@ -31,7 +32,41 @@ namespace {
 
 constexpr char kDynamicPartitions[] = "dynamic_partition_list";
 constexpr char kGoogleDynamicPartitions[] = "google_dynamic_partitions";
+constexpr char kSuperBlockDevices[] = "super_block_devices";
 constexpr char kSuperPartitionGroups[] = "super_partition_groups";
+constexpr char kUseDynamicPartitions[] = "use_dynamic_partitions";
+
+Result<std::string> GetExpected(const MiscInfo& misc_info,
+                                const std::string& key) {
+  auto lookup = misc_info.find(key);
+  CF_EXPECTF(lookup != misc_info.end(),
+             "Unable to retrieve expected value from key: {}", key);
+  return lookup->second;
+}
+
+std::string MergePartitionLists(const std::string& vendor,
+                                const std::string& system,
+                                const std::set<std::string>& extracted_images) {
+  const std::string full_string = fmt::format("{} {}", vendor, system);
+  const std::vector<std::string> full_list =
+      android::base::Tokenize(full_string, " ");
+  // std::set removes duplicates and orders the elements, which we want
+  const std::set<std::string> full_set(full_list.begin(), full_list.end());
+  std::set<std::string> filtered_set;
+  std::set_intersection(full_set.cbegin(), full_set.cend(),
+                        extracted_images.cbegin(), extracted_images.cend(),
+                        std::inserter(filtered_set, filtered_set.begin()));
+  return android::base::Join(filtered_set, " ");
+}
+
+std::string GetPartitionList(const MiscInfo& vendor_info,
+                             const MiscInfo& system_info,
+                             const std::string& key,
+                             const std::set<std::string>& extracted_images) {
+  std::string vendor_list = GetExpected(vendor_info, key).value_or("");
+  std::string system_list = GetExpected(system_info, key).value_or("");
+  return MergePartitionLists(vendor_list, system_list, extracted_images);
+}
 
 }  // namespace
 
@@ -69,65 +104,71 @@ std::string WriteMiscInfo(const MiscInfo& misc_info) {
   return out.str();
 }
 
-std::vector<std::string> SuperPartitionComponents(const MiscInfo& info) {
-  auto value_it = info.find(kDynamicPartitions);
-  if (value_it == info.end()) {
-    return {};
-  }
-  auto components = android::base::Split(value_it->second, " ");
-  for (auto& component : components) {
-    component = android::base::Trim(component);
-  }
-  components.erase(std::remove(components.begin(), components.end(), ""),
-                   components.end());
-  return components;
-}
-
-bool SetSuperPartitionComponents(const std::vector<std::string>& components,
-                                 MiscInfo* misc_info) {
-  auto super_partition_groups = misc_info->find(kSuperPartitionGroups);
-  if (super_partition_groups == misc_info->end()) {
-    LOG(ERROR) << "Failed to find super partition groups in misc_info";
-    return false;
-  }
-
-  // Remove all existing update groups in misc_info
-  auto update_groups =
-      android::base::Split(super_partition_groups->second, " ");
-  for (const auto& group_name : update_groups) {
-    auto partition_list = android::base::StringPrintf("super_%s_partition_list",
-                                                      group_name.c_str());
-    auto partition_size =
-        android::base::StringPrintf("super_%s_group_size", group_name.c_str());
-    for (const auto& key : {partition_list, partition_size}) {
-      auto it = misc_info->find(key);
-      if (it == misc_info->end()) {
-        LOG(ERROR) << "Failed to find " << key << " in misc_info";
-        return false;
-      }
-      misc_info->erase(it);
+// based on build/make/tools/releasetools/merge/merge_target_files.py
+Result<MiscInfo> GetCombinedDynamicPartitions(
+    const MiscInfo& vendor_info, const MiscInfo& system_info,
+    const std::set<std::string>& extracted_images) {
+  auto vendor_use_dp =
+      CF_EXPECT(GetExpected(vendor_info, kUseDynamicPartitions));
+  CF_EXPECTF(vendor_use_dp == "true", "Vendor build must have {}=true",
+             kUseDynamicPartitions);
+  auto system_use_dp =
+      CF_EXPECT(GetExpected(system_info, kUseDynamicPartitions));
+  CF_EXPECTF(system_use_dp == "true", "System build must have {}=true",
+             kUseDynamicPartitions);
+  MiscInfo result;
+  // copy where both files are equal
+  for (const auto& key_val : vendor_info) {
+    const auto value_result = GetExpected(system_info, key_val.first);
+    if (value_result.ok() && *value_result == key_val.second) {
+      result[key_val.first] = key_val.second;
     }
   }
 
-  // For merged target-file, put all dynamic partitions under the
-  // google_dynamic_partitions update group.
-  // TODO(xunchang) use different update groups for system and vendor images.
-  (*misc_info)[kDynamicPartitions] = android::base::Join(components, " ");
-  (*misc_info)[kSuperPartitionGroups] = kGoogleDynamicPartitions;
-  std::string partitions_list_key = android::base::StringPrintf(
-      "super_%s_partition_list", kGoogleDynamicPartitions);
-  (*misc_info)[partitions_list_key] = android::base::Join(components, " ");
+  result[kDynamicPartitions] = GetPartitionList(
+      vendor_info, system_info, kDynamicPartitions, extracted_images);
 
-  // Use the entire super partition as the group size
-  std::string group_size_key = android::base::StringPrintf(
-      "super_%s_group_size", kGoogleDynamicPartitions);
-  auto super_size_it = misc_info->find("super_partition_size");
-  if (super_size_it == misc_info->end()) {
-    LOG(ERROR) << "Failed to find super partition size";
-    return false;
+  const auto block_devices_result =
+      GetExpected(vendor_info, kSuperBlockDevices);
+  if (block_devices_result.ok()) {
+    result[kSuperBlockDevices] = *block_devices_result;
+    for (const auto& block_device :
+         android::base::Tokenize(result[kSuperBlockDevices], " ")) {
+      const auto key = "super_" + block_device + "_device_size";
+      result[key] = CF_EXPECT(GetExpected(vendor_info, key));
+    }
   }
-  (*misc_info)[group_size_key] = super_size_it->second;
-  return true;
+
+  result[kSuperPartitionGroups] =
+      CF_EXPECT(GetExpected(vendor_info, kSuperPartitionGroups));
+  for (const auto& group :
+       android::base::Tokenize(result[kSuperPartitionGroups], " ")) {
+    const auto group_size_key = "super_" + group + "_group_size";
+    result[group_size_key] =
+        CF_EXPECT(GetExpected(vendor_info, group_size_key));
+
+    const auto partition_list_key = "super_" + group + "_partition_list";
+    result[partition_list_key] = GetPartitionList(
+        vendor_info, system_info, partition_list_key, extracted_images);
+  }
+
+  // TODO(chadreynolds): add vabc_cow_version logic if we need to support older
+  // builds
+  for (const auto& key :
+       {"virtual_ab", "virtual_ab_retrofit", "lpmake", "super_metadata_device",
+        "super_partition_error_limit", "super_partition_size"}) {
+    const auto value_result = GetExpected(vendor_info, key);
+    if (value_result.ok()) {
+      result[key] = *value_result;
+    }
+  }
+  return std::move(result);
+}
+
+void MergeInKeys(const MiscInfo& source, MiscInfo& target) {
+  for (const auto& key_val : source) {
+    target[key_val.first] = key_val.second;
+  }
 }
 
 } // namespace cuttlefish
