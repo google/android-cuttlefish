@@ -23,3 +23,15 @@ jobs:
       with:
         name: cuttlefish_packages_arm64
         path: tools/cuttlefish-host-image-installer/cuttlefish_packages.7z
+
+  test-deploy-job:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Releases update
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_ENTERPRISE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: gh release edit stable --tag v0.9.26

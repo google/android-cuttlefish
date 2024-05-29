@@ -18,7 +18,7 @@
 
 name: HostImage
 
-on: [pull_request, push]
+on: [push]
 
 jobs:
   build-installer-iso-job:
@@ -224,10 +224,7 @@ jobs:
 
   deploy-job:      # This job runs in the deploy stage.
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      repository-projects: write
+    permissions: write-all
     strategy:
       matrix:
         version: [14-6.1, 15-6.1, 15-6.6]
