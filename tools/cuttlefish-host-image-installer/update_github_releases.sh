@@ -3,6 +3,8 @@
 set -e
 
 # should update tags before do anything
+echo "step 1: parse changelog to get the versions"
+rm -f ./changelog
 LATEST_VERSION="v"$(python version_parser.py ../../base/debian/changelog latest)
 STABLE_VERSION="v"$(python version_parser.py ../../base/debian/changelog stable)
 RELEASE_TAG_LIST=$(gh release list --json tagName --jq '.[].tagName')
@@ -18,6 +20,7 @@ do
   let index=index+1
 done
 
+echo "step 2: update the stable tag"
 RELEASE_NAME_LIST=$(gh release list --json name --jq '.[].name')
 stringarray=($RELEASE_NAME_LIST)
 index=0
@@ -34,7 +37,18 @@ do
   let index=index+1
 done
 
+# TODO update changelog and descriptions
+echo "step 3: update changelog and descriptions in release"
+RUN_ID=$(gh run list -w HostImage -L 1 --json databaseId | jq -r '.[0].databaseId')
+RUN_NOTE=$(gh run list -w HostImage -L 1 --json displayTitle | jq -r '.[0].displayTitle')
+RUN_DATE=$(gh run list -w HostImage -L 1 --json createdAt | jq -r '.[0].createdAt')
+echo "Cuttlefish version ${STABLE_VERSION}." >> changelog
+echo "${RUN_NOTE}. Artifacts created at ${RUN_DATE}. Run ID ${RUN_ID}" >> changelog
+
+gh release edit latest --notes-file ./changelog
+
 # copy result with version name
+echo "step 4: copy result with version name"
 cp cuttlefish_packages.7z cuttlefish_packages"_${STABLE_VERSION}".7z
 cp u-boot.bin u-boot"_${STABLE_VERSION}".bin
 cp preseed-mini.iso.xz preseed-mini"_${STABLE_VERSION}".iso.xz
@@ -44,6 +58,7 @@ cp aosp_kernel_aosp15-6.1.7z aosp_kernel_aosp15-6.1"_${STABLE_VERSION}".7z
 cp aosp_kernel_aosp15-6.6.7z aosp_kernel_aosp15-6.6"_${STABLE_VERSION}".7z
 
 # upload assets to both latest and stable versions
+echo "step 5: upload assets to both latest and stable versions"
 changed_releases=("latest" "stable")
 for version in "${changed_releases[@]}"
 do
@@ -54,7 +69,6 @@ do
     gh release delete-asset "$version" "$i" -y
   done
 
-  # TODO update changelog ad descriptions
   gh release upload "$version" u-boot"_${STABLE_VERSION}".bin
   gh release upload "$version" preseed-mini"_${STABLE_VERSION}".iso.xz
   gh release upload "$version" cuttlefish_packages"_${STABLE_VERSION}".7z
@@ -69,12 +83,5 @@ do
   gh release upload "$version" meta_gigamp_packages.7z
   gh release upload "$version" aosp_kernel_aosp14-6.1.7z
   gh release upload "$version" aosp_kernel_aosp15-6.1.7z
-  gh release upload "$version" aosp_kernel_aosp15-6.6.7z
-
-  
+  gh release upload "$version" aosp_kernel_aosp15-6.6.7z  
 done
-
-
-
-
-

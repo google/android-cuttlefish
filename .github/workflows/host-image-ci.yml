@@ -224,6 +224,10 @@ jobs:
 
   deploy-job:      # This job runs in the deploy stage.
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
     strategy:
       matrix:
         version: [14-6.1, 15-6.1, 15-6.6]
