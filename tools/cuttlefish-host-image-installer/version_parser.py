@@ -45,18 +45,40 @@ def main():
     stable_version_list = []
     version_list = []
 
+    context = ""
+    previous_version_stable = -1 # 0: unstable, 1: stable, -1: start state, no previous version
     for line in Lines:
+        # by default, parse cuttlefish-common changelog
         token_group = re.search(r'.*cuttlefish-common \((.*)\) ([a-zA-Z]+); .*', line)
+
+        # if can't find cuttlefish-common keyword, then parse cuttlefish-frontend keyword
+        if not token_group:
+            token_group = re.search(r'.*cuttlefish-frontend \((.*)\) ([a-zA-Z]+); .*', line)
         if token_group:
+            if previous_version_stable == 0:
+                last_item = version_list.pop()
+                version_list.append((last_item, context))
+            elif previous_version_stable == 1:
+                last_item = stable_version_list.pop()
+                stable_version_list.append((last_item, context))
             if token_group[2].lower() == 'stable':
                 stable_version_list.append(token_group[1])
+                previous_version_stable = 1
             else:
                 version_list.append(token_group[1])
+                previous_version_stable = 0
+            context = ""
+        context = context + line
 
+    changelog = ""
     if stable_version:
-        print(stable_version_list[0])
+        print(stable_version_list[0][0])
+        changelog = stable_version_list[0][1]
     else:
-        print(version_list[0])
+        print(version_list[0][0])
+        changelog = version_list[0][1]
+    with open("changelog", "a") as myfile:
+        myfile.write(changelog)
 
 
 if __name__ == '__main__':
