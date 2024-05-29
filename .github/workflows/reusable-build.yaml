@@ -38,4 +38,5 @@ jobs:
       run: |
         gh api -X GET /repos/${{ GITHUB.REPOSITORY }}/topics --jq='.names'
     - name: Releases update
-      run: gh release edit stable --tag v0.9.26
+      run: gh release --repo ${{ GITHUB.REPOSITORY }} edit stable --tag v0.9.26
+      
