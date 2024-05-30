@@ -107,8 +107,10 @@ class VmManager {
   // Block until the restore work is finished and the guest is running. Only
   // called if a snapshot is being restored.
   //
+  // If FD becomes readable or closed, gives up and returns false.
+  //
   // Must be thread safe.
-  virtual Result<void> WaitForRestoreComplete() const {
+  virtual Result<bool> WaitForRestoreComplete(SharedFD) const {
     return CF_ERR("not implemented");
   }
 };
