@@ -2,10 +2,6 @@ name: ReusableBuild
 
 on: [workflow_call]
 
-env:
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  GH_ENTERPRISE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 jobs:
   build-arm64-cuttlefish-deb-job:
     runs-on: ubuntu-latest
@@ -30,6 +26,9 @@ jobs:
 
   test-deploy-job:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_ENTERPRISE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     permissions: write-all
     steps:
     - name: checkout repository
