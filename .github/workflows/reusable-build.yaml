@@ -47,5 +47,3 @@ jobs:
         ls -al
         cd tools/cuttlefish-host-image-installer
         ./update_github_releases.sh
-        gh release edit stable --tag v0.9.26 --repo ${{ GITHUB.REPOSITORY }}
-      
