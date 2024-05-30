@@ -12,6 +12,8 @@ case "$1" in
         usermod -a -G cvdnetwork,kvm _cvd-executor
     fi
 
+    # Make sure systemd-journal-gatewayd is running
+    service systemd-journal-gatewayd start
     # Reload nginx having the orchestration configuration
     service nginx reload
 esac
