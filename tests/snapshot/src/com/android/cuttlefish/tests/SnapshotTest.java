@@ -52,6 +52,8 @@ public class SnapshotTest extends BaseHostJUnit4Test {
     public void testSnapshot() throws Exception {
         String snapshotId = "snapshot_" + UUID.randomUUID().toString();
 
+        // Reboot to make sure device isn't dirty from previous tests.
+        getDevice().reboot();
         // Snapshot the device
         boolean snapshotRes = new DeviceSnapshotHandler().snapshotDevice(getDevice(), snapshotId);
         assertTrue("failed to snapshot.", snapshotRes);
@@ -98,6 +100,8 @@ public class SnapshotTest extends BaseHostJUnit4Test {
     public void testSnapshotReboot() throws Exception {
         String snapshotId = "snapshot_" + UUID.randomUUID().toString();
 
+        // Reboot to make sure device isn't dirty from previous tests.
+        getDevice().reboot();
         // Snapshot the device.
         boolean snapshotRes = new DeviceSnapshotHandler().snapshotDevice(getDevice(), snapshotId);
         assertTrue("failed to snapshot", snapshotRes);
@@ -116,7 +120,9 @@ public class SnapshotTest extends BaseHostJUnit4Test {
     public void testSnapshotPowerwash() throws Exception {
         String snapshotId = "snapshot_" + UUID.randomUUID().toString();
 
-        // Snapshot the device>
+        // Reboot to make sure device isn't dirty from previous tests.
+        getDevice().reboot();
+        // Snapshot the device.
         boolean snapshotRes = new DeviceSnapshotHandler().snapshotDevice(getDevice(), snapshotId);
         assertTrue("failed to snapshot", snapshotRes);
         // Restore the device.
