@@ -45,3 +45,4 @@ RUN_DATE=$(gh run list -w HostImage -L 1 --json createdAt | jq -r '.[0].createdA
 echo "Cuttlefish version ${STABLE_VERSION}." >> changelog
 echo "${RUN_NOTE}. Artifacts created at ${RUN_DATE}. Run ID ${RUN_ID}" >> changelog
 gh release edit latest --notes-file ./changelog
+
