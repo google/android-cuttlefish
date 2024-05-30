@@ -33,9 +33,6 @@ jobs:
     steps:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: CLI Auth
-      run: |
-        gh api -X GET /repos/${{ GITHUB.REPOSITORY }}/topics --jq='.names'
     - name: Releases update
       run: |
         echo "About list releases"
