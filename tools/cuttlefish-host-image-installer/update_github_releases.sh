@@ -61,6 +61,7 @@ echo "${RUN_NOTE}. Artifacts created at ${RUN_DATE}. Run ID ${RUN_ID}" >> change
 gh release edit latest --notes-file ./changelog
 gh release edit stable --notes-file ./changelog
 
+'''
 # copy result with version name
 echo "step 4: copy result with version name"
 cp cuttlefish_packages.7z cuttlefish_packages"_${STABLE_VERSION}".7z
@@ -99,3 +100,4 @@ do
   gh release upload "$version" aosp_kernel_aosp15-6.1.7z
   gh release upload "$version" aosp_kernel_aosp15-6.6.7z  
 done
+'''
