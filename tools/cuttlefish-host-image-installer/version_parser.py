@@ -26,7 +26,9 @@ def main():
     stable_version = False
     if len(sys.argv) < 2 or len(sys.argv) > 3:
         # Exit non-zero if input parameter format is wrong
-        print("length is wrong")
+        print("""Input format is wrong.
+usage: version_parser.py <changelog> [latest|stable]
+return the corresponding version and write the corresponding changelog context in current directory""")
         sys.exit(1)
     elif len(sys.argv) == 3:
         # 2nd input parameter is optional
@@ -48,24 +50,24 @@ def main():
     context = ""
     previous_version_stable = -1 # 0: unstable, 1: stable, -1: start state, no previous version
     for line in Lines:
-        # by default, parse cuttlefish-common changelog
-        token_group = re.search(r'.*cuttlefish-common \((.*)\) ([a-zA-Z]+); .*', line)
+        # parse cuttlefish-common/cuttlefish-frontend changelog
+        # sample line with keywords: cuttlefish-frontend (0.9.28) stable; urgency=medium
+        tokens = re.search(r'.*cuttlefish-[a-zA-Z]+ \((?P<version>.*)\) (?P<status>[a-zA-Z]+); .*', line)
 
-        # if can't find cuttlefish-common keyword, then parse cuttlefish-frontend keyword
-        if not token_group:
-            token_group = re.search(r'.*cuttlefish-frontend \((.*)\) ([a-zA-Z]+); .*', line)
-        if token_group:
+        if tokens:
+            version = tokens.group('version')
+            status = tokens.group('status')
             if previous_version_stable == 0:
                 last_item = version_list.pop()
                 version_list.append((last_item, context))
             elif previous_version_stable == 1:
                 last_item = stable_version_list.pop()
                 stable_version_list.append((last_item, context))
-            if token_group[2].lower() == 'stable':
-                stable_version_list.append(token_group[1])
+            if status.lower() == 'stable':
+                stable_version_list.append(version)
                 previous_version_stable = 1
             else:
-                version_list.append(token_group[1])
+                version_list.append(version)
                 previous_version_stable = 0
             context = ""
         context = context + line
