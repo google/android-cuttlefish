@@ -70,9 +70,6 @@ start_orchestrator() {
   if [[ -n "${orchestrator_cvd_artifacts_dir}" ]]; then
     args+=("--cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir}")
   fi
-  if [[ -n "${orchestrator_cvd_creation_timeout_secs}" ]]; then
-    args+=("--cvd_creation_timeout_secs=${orchestrator_cvd_creation_timeout_secs}")
-  fi
   if [[ -n "${operator_http_port}" ]]; then
     args+=("--operator_http_port=${operator_http_port}")
   fi

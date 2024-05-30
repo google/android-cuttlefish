@@ -44,8 +44,6 @@ RUN apt install -y -f \
 
 RUN echo "num_cvd_accounts=100" >> /etc/default/cuttlefish-host-resources
 
-RUN echo "orchestrator_cvd_creation_timeout_secs=1800" >> /etc/default/cuttlefish-host_orchestrator
-
 RUN usermod -aG kvm root
 RUN usermod -aG cvdnetwork root
 
