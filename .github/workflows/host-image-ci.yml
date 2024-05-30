@@ -224,6 +224,9 @@ jobs:
 
   deploy-job:      # This job runs in the deploy stage.
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_ENTERPRISE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     permissions: write-all
     strategy:
       matrix:
@@ -261,4 +264,3 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: cd tools/cuttlefish-host-image-installer && ./update_github_releases.sh && echo "Application successfully deployed."
-
