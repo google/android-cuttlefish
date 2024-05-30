@@ -37,7 +37,7 @@ do
   let index=index+1
 done
 
-# TODO update changelog and descriptions
+# update changelog and descriptions
 echo "step 3: update changelog and descriptions in release"
 RUN_ID=$(gh run list -w HostImage -L 1 --json databaseId | jq -r '.[0].databaseId')
 RUN_NOTE=$(gh run list -w HostImage -L 1 --json displayTitle | jq -r '.[0].displayTitle')
@@ -47,6 +47,7 @@ echo "${RUN_NOTE}. Artifacts created at ${RUN_DATE}. Run ID ${RUN_ID}" >> change
 
 gh release edit latest --notes-file ./changelog
 
+'''
 # copy result with version name
 echo "step 4: copy result with version name"
 cp cuttlefish_packages.7z cuttlefish_packages"_${STABLE_VERSION}".7z
@@ -85,3 +86,4 @@ do
   gh release upload "$version" aosp_kernel_aosp15-6.1.7z
   gh release upload "$version" aosp_kernel_aosp15-6.6.7z  
 done
+'''
