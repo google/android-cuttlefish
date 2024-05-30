@@ -16,20 +16,22 @@
 #pragma once
 
 #include <map>
+#include <set>
 #include <string>
-#include <vector>
 
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
+// TODO(chadreynolds): rename MiscInfo to more generic KeyValueFile since this
+// logic is processing multiple filetypes now
 using MiscInfo = std::map<std::string, std::string>;
 
 Result<MiscInfo> ParseMiscInfo(const std::string& file_contents);
 std::string WriteMiscInfo(const MiscInfo& info);
-
-std::vector<std::string> SuperPartitionComponents(const MiscInfo&);
-bool SetSuperPartitionComponents(const std::vector<std::string>& components,
-                                 MiscInfo* misc_info);
+Result<MiscInfo> GetCombinedDynamicPartitions(
+    const MiscInfo& vendor_info, const MiscInfo& system_info,
+    const std::set<std::string>& extracted_images);
+void MergeInKeys(const MiscInfo& source, MiscInfo& target);
 
 } // namespace cuttlefish
