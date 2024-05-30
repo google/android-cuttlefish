@@ -45,5 +45,7 @@ jobs:
         gh release download stable --repo ${{ GITHUB.REPOSITORY }}
         echo "About to list contents of directory after download"
         ls -al
+        cd tools/cuttlefish-host-image-installer
+        ./update_github_releases.sh
         gh release edit stable --tag v0.9.26 --repo ${{ GITHUB.REPOSITORY }}
       
