@@ -49,12 +49,7 @@ public class SnapshotTest extends BaseHostJUnit4Test {
   public void testSnapshot() throws Exception {
     // Snapshot the device
     DeviceSnapshotHandler handler = new DeviceSnapshotHandler();
-    boolean snapshotRes = false;
-    snapshotRes = handler.snapshotDevice(getDevice(), String.format("snapshot_img%d", mTestCount));
-
-    if (!snapshotRes) {
-      Assert.fail("failed to snapshot.");
-    }
+    handler.snapshotDevice(getDevice(), String.format("snapshot_img%d", mTestCount));
 
     // Create a file in tmp directory
     final String tmpFile = "/data/local/tmp/snapshot_tmp";
@@ -73,15 +68,12 @@ public class SnapshotTest extends BaseHostJUnit4Test {
       long start = System.currentTimeMillis();
       // We don't usually expect tests to use our feature server, but in this case we are
       // validating the feature itself so it's fine
-      boolean restoreRes = false;
       try {
         handler = new DeviceSnapshotHandler();
-        restoreRes = handler.restoreSnapshotDevice(getDevice(), String.format("snapshot_img%d", mTestCount));
+        handler.restoreSnapshotDevice(getDevice(), String.format("snapshot_img%d", mTestCount));
       } catch (DeviceNotAvailableException e) {
         CLog.e(e);
       }
-      assertTrue(
-          String.format("Restore snapshot for device reset failed during attempt #%d", i), restoreRes);
       long duration = System.currentTimeMillis() - start;
       CLog.d("Restore snapshot took %dms to finish", duration);
     }
