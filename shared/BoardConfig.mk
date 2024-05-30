@@ -18,9 +18,13 @@
 # Common BoardConfig for all supported architectures.
 #
 
-# Wear 32 bit is currently supported and 6.6 kernels don't support
-# 32 bit devices
+# Some targets still require 32 bit, and 6.6 kernels don't support
+# 32 bit devices (Wear, Go, Auto)
 ifneq (,$(findstring gwear_x86,$(PRODUCT_NAME)))
+TARGET_KERNEL_USE ?= 6.1
+else ifneq (,$(findstring x86_phone,$(PRODUCT_NAME)))
+TARGET_KERNEL_USE ?= 6.1
+else ifneq (,$(findstring x86_tv,$(PRODUCT_NAME)))
 TARGET_KERNEL_USE ?= 6.1
 else
 TARGET_KERNEL_USE ?= 6.6

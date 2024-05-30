@@ -16,6 +16,7 @@
 
 #include "host/libs/vm_manager/crosvm_manager.h"
 
+#include <poll.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -890,14 +891,21 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   return commands;
 }
 
-Result<void> CrosvmManager::WaitForRestoreComplete() const {
+Result<bool> CrosvmManager::WaitForRestoreComplete(SharedFD stop_fd) const {
   auto instance = CF_EXPECT(CuttlefishConfig::Get())->ForDefaultInstance();
 
   // Wait for the control socket to exist. It is created early in crosvm's
   // startup sequence, but the process may not even have been exec'd by CF at
   // this point.
   while (!FileExists(instance.CrosvmSocketPath())) {
-    usleep(50000);  // 50 ms, arbitrarily chosen
+    std::vector<PollSharedFd> poll = {{.fd = stop_fd, .events = POLLIN}};
+    const int result = SharedFD::Poll(poll, 50 /* ms */);
+    // Check for errors.
+    CF_EXPECT(result >= 0, "failed to wait on stop_fd: " << strerror(errno));
+    // Check if pipe became readable or closed.
+    if (result > 0) {
+      return false;
+    }
   }
 
   // Ask crosvm to resume the VM. crosvm promises to not complete this command
@@ -914,7 +922,7 @@ Result<void> CrosvmManager::WaitForRestoreComplete() const {
   CF_EXPECT_EQ(infop.si_code, CLD_EXITED);
   CF_EXPECTF(infop.si_status == 0, "crosvm resume returns non zero code {}",
              infop.si_status);
-  return {};
+  return true;
 }
 
 }  // namespace vm_manager
