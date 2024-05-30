@@ -31,9 +31,6 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Releases update
-      env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GH_ENTERPRISE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         echo "About list releases"
         gh release list --repo ${{ GITHUB.REPOSITORY }}
@@ -43,3 +40,6 @@ jobs:
         ls -al
         cd tools/cuttlefish-host-image-installer
         ./update_github_releases.sh
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_ENTERPRISE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
