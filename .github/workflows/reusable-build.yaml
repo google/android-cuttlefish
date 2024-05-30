@@ -23,23 +23,3 @@ jobs:
       with:
         name: cuttlefish_packages_arm64
         path: tools/cuttlefish-host-image-installer/cuttlefish_packages.7z
-
-  test-deploy-job:
-    runs-on: ubuntu-latest
-    permissions: write-all
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Releases update
-      run: |
-        echo "About list releases"
-        gh release list --repo ${{ GITHUB.REPOSITORY }}
-        echo "About to download release"
-        gh release download stable --repo ${{ GITHUB.REPOSITORY }}
-        echo "About to list contents of directory after download"
-        ls -al
-        cd tools/cuttlefish-host-image-installer
-        ./update_github_releases.sh
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GH_ENTERPRISE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
