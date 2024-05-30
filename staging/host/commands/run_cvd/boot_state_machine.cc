@@ -176,6 +176,11 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     if (boot_event_handler_.joinable()) {
       boot_event_handler_.join();
     }
+    if (restore_complete_stop_write_->IsOpen()) {
+      char c = 1;
+      CHECK_EQ(restore_complete_stop_write_->Write(&c, 1), 1)
+          << restore_complete_stop_write_->StrError();
+    }
     if (restore_complete_handler_.joinable()) {
       restore_complete_handler_.join();
     }
@@ -208,19 +213,29 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     CF_EXPECTF(boot_events_pipe->IsOpen(), "Could not get boot events pipe: {}",
                boot_events_pipe->StrError());
 
+    // Pipe to tell `ThreadLoop` that the restore is complete.
     SharedFD restore_complete_pipe, restore_complete_pipe_write;
+    // Pipe to tell `restore_complete_handler_` thread to give up.
+    // It isn't perfect, can only break out of the `WaitForRestoreComplete`
+    // step.
+    SharedFD restore_complete_stop_read;
     if (IsRestoring(config_)) {
       CF_EXPECT(
           SharedFD::Pipe(&restore_complete_pipe, &restore_complete_pipe_write),
           "unable to create pipe");
+      CF_EXPECT(SharedFD::Pipe(&restore_complete_stop_read,
+                               &restore_complete_stop_write_),
+                "unable to create pipe");
 
-      // Unlike `boot_event_handler_`, this doesn't support graceful shutdown,
-      // it blocks until it finishes its work.
-      restore_complete_handler_ =
-          std::thread([this, restore_complete_pipe_write]() {
-            const auto result = vm_manager_.WaitForRestoreComplete();
+      restore_complete_handler_ = std::thread(
+          [this, restore_complete_pipe_write, restore_complete_stop_read]() {
+            const auto result =
+                vm_manager_.WaitForRestoreComplete(restore_complete_stop_read);
             CHECK(result.ok()) << "Failed to wait for restore complete: "
                                << result.error().FormatForEnv();
+            if (!result.value()) {
+              return;
+            }
 
             cuttlefish::SharedFD restore_adbd_pipe = cuttlefish::SharedFD::Open(
                 config_.ForDefaultInstance().restore_adbd_pipe_name().c_str(),
@@ -404,6 +419,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
 
   std::thread boot_event_handler_;
   std::thread restore_complete_handler_;
+  SharedFD restore_complete_stop_write_;
   SharedFD fg_launcher_pipe_;
   SharedFD reboot_notification_;
   SharedFD interrupt_fd_read_;
