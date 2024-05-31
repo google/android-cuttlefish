@@ -37,7 +37,6 @@ PRODUCT_PACKAGES += FakeSystemApp
 #
 # All components inherited here go to vendor image
 #
-LOCAL_PREFER_VENDOR_APEX := true
 $(call inherit-product, device/google/cuttlefish/shared/slim/device_vendor.mk)
 
 #
