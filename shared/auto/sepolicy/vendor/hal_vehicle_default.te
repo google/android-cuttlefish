@@ -2,3 +2,4 @@
 typeattribute hal_vehicle_default hal_automotive_socket_exemption;
 
 net_domain(hal_vehicle_default)
+get_prop(hal_vehicle_default, vendor_vhal_proxy_server_port_prop)
