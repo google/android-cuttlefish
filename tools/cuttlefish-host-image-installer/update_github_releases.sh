@@ -4,9 +4,21 @@ set -e
 
 # should update tags before do anything
 echo "step 1: parse changelog to get the versions"
-LATEST_VERSION="v"$(python version_parser.py ../../base/debian/changelog latest)
 rm -f ./changelog
-STABLE_VERSION="v"$(python version_parser.py ../../base/debian/changelog stable)
+index=0
+distribution="latest"
+version=""
+changes=""
+while [ "$distribution" != "" ] && [ "$distribution" != "stable" ]
+do
+  version=$(dpkg-parsechangelog --show-field version -c 1 -o "$index" -l ../../base/debian/changelog)
+  distribution=$(dpkg-parsechangelog --show-field distribution -c 1 -o "$index" -l ../../base/debian/changelog)
+  changes=$(dpkg-parsechangelog -c 1 -o "$index" -l ../../base/debian/changelog)
+  let index=index+1
+done
+echo "$changes" > changelog
+
+STABLE_VERSION="v$version"
 RELEASE_TAG_LIST=$(gh release list --json tagName --jq '.[].tagName')
 stringarray=($RELEASE_TAG_LIST)
 index=0
