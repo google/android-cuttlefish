@@ -38,7 +38,7 @@ return the corresponding version and write the corresponding changelog context i
 
     changelog = sys.argv[1]
     if not os.path.isfile(changelog):
-        print("changelog {} does not exists".format(changelog))
+        print("changelog {} does not exist".format(changelog))
         sys.exit(1)
 
     file1 = open(changelog, 'r')
