@@ -33,6 +33,7 @@ import android.telephony.satellite.stub.SatelliteResult;
 import android.telephony.satellite.stub.SatelliteImplBase;
 import android.telephony.satellite.stub.SatelliteModemState;
 import android.telephony.satellite.stub.SatelliteService;
+import android.telephony.satellite.stub.SystemSelectionSpecifier;
 
 import com.android.internal.util.FunctionalUtils;
 import com.android.telephony.Rlog;
@@ -242,6 +243,22 @@ public class CFSatelliteService extends SatelliteImplBase {
             @NonNull IIntegerConsumer callback) {
         logd("requestTimeForNextSatelliteVisibility");
         runWithExecutor(() -> callback.accept(SATELLITE_ALWAYS_VISIBLE));
+    }
+
+    @Override
+    public void updateSatelliteSubscription(@NonNull String iccId,
+            @NonNull IIntegerConsumer resultCallback) {
+        logd("updateSatelliteSubscription: iccId=" + iccId);
+        runWithExecutor(() -> resultCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
+    }
+
+    @Override
+    public void updateSystemSelectionChannels(
+            @NonNull List<SystemSelectionSpecifier> systemSelectionSpecifiers,
+            @NonNull IIntegerConsumer resultCallback) {
+        logd(" updateSystemSelectionChannels: "
+                        + "systemSelectionSpecifiers=" + systemSelectionSpecifiers);
+        runWithExecutor(() -> resultCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
     }
 
     /**
