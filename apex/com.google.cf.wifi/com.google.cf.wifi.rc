@@ -3,7 +3,7 @@ service rename_eth0 /apex/com.google.cf.wifi/bin/rename_netiface eth0 buried_eth
     oneshot
 
 # For legacy wifi without openwrt
-service setup_wifi /apex/com.google.cf.wifi/bin/setup_wifi
+service setup_wifi /apex/com.google.cf.wifi/bin/setup_wifi --interface=${ro.vendor.virtwifi.port}
     user root
     oneshot
 
