@@ -134,7 +134,6 @@ fruit::Component<> runCvdComponent(
       .install(VhostDeviceVsockComponent)
       .install(WmediumdServerComponent)
       .install(launchStreamerComponent)
-      .install(AutoCmd<VhalProxyServer>::Component)
 #endif
       .install(AdbConfigComponent)
       .install(AdbConfigFragmentComponent)
