@@ -398,6 +398,8 @@ class CuttlefishConfig {
 
     std::string pstore_path() const;
 
+    std::string pflash_path() const;
+
     std::string console_path() const;
 
     std::string logcat_path() const;
