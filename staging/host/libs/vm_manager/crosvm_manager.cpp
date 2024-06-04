@@ -817,6 +817,10 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
         ":shared:type=fs");
   }
 
+  if (instance.target_arch() == Arch::X86_64) {
+    crosvm_cmd.Cmd().AddParameter("--pflash=", instance.pflash_path());
+  }
+
   // This needs to be the last parameter
   crosvm_cmd.Cmd().AddParameter("--bios=", instance.bootloader());
 

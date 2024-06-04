@@ -802,10 +802,14 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   if (is_riscv64) {
     qemu_cmd.AddParameter("-kernel");
+    qemu_cmd.AddParameter(instance.bootloader());
   } else {
-    qemu_cmd.AddParameter("-bios");
+    qemu_cmd.AddParameter("-drive");
+    qemu_cmd.AddParameter("if=pflash,format=raw,readonly=on,file=",
+                          instance.bootloader());
+    qemu_cmd.AddParameter("-drive");
+    qemu_cmd.AddParameter("if=pflash,format=raw,file=", instance.pflash_path());
   }
-  qemu_cmd.AddParameter(instance.bootloader());
 
   if (instance.gdb_port() > 0) {
     qemu_cmd.AddParameter("-S");
