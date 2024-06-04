@@ -36,7 +36,9 @@ using ::android::hardware::automotive::vehicle::virtualization::
 
 const char* SERVICE_NAME =
     "android.hardware.automotive.vehicle.IVehicle/default";
-const char* BOOTCONFIG_PORT = "ro.boot.vhal_proxy_server_port";
+
+// TODO(b/323236247): Read this from boot config.
+constexpr int VHAL_PROXY_SERVER_VSOCK_PORT = 9300;
 
 int main(int /* argc */, char* /* argv */[]) {
   LOG(INFO) << "Starting thread pool...";
@@ -48,11 +50,8 @@ int main(int /* argc */, char* /* argv */[]) {
 
   VsockConnectionInfo vsock = {
       .cid = VMADDR_CID_HOST,
-      .port =
-          static_cast<unsigned int>(property_get_int32(BOOTCONFIG_PORT, -1)),
+      .port = VHAL_PROXY_SERVER_VSOCK_PORT,
   };
-  CHECK(vsock.port >= 0) << "Failed to read port number from: "
-                         << BOOTCONFIG_PORT;
   std::string vsockStr = vsock.str();
 
   LOG(INFO) << "Connecting to vsock server at " << vsockStr;
