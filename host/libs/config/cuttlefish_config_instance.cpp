@@ -1277,6 +1277,10 @@ std::string CuttlefishConfig::InstanceSpecific::pstore_path() const {
   return AbsolutePath(PerInstancePath("pstore"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::pflash_path() const {
+  return AbsolutePath(PerInstancePath("pflash.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::console_path() const {
   return AbsolutePath(PerInstancePath("console"));
 }
