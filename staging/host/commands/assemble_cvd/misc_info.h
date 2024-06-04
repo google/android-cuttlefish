@@ -28,10 +28,14 @@ namespace cuttlefish {
 using MiscInfo = std::map<std::string, std::string>;
 
 Result<MiscInfo> ParseMiscInfo(const std::string& file_contents);
-std::string WriteMiscInfo(const MiscInfo& info);
+Result<void> WriteMiscInfo(const MiscInfo& misc_info,
+                           const std::string& output_path);
 Result<MiscInfo> GetCombinedDynamicPartitions(
     const MiscInfo& vendor_info, const MiscInfo& system_info,
     const std::set<std::string>& extracted_images);
-void MergeInKeys(const MiscInfo& source, MiscInfo& target);
+Result<MiscInfo> MergeMiscInfos(
+    const MiscInfo& vendor_info, const MiscInfo& system_info,
+    const MiscInfo& combined_dp_info,
+    const std::vector<std::string>& system_partitions);
 
 } // namespace cuttlefish
