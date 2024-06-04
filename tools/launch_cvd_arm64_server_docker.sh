@@ -18,9 +18,10 @@ color_plain="\033[0m"
 color_yellow="\033[0;33m"
 
 # validate number of arguments
-if [ "$#" -lt 1 ] || [ "$#" -gt 3 ]; then
-  echo "This script requires 1 mandatory and 2 optional parameters,"
-  echo "server address and optionally cvd instances per docker, and number of docker instances to invoke"
+if [ "$#" -lt 1 ] || [ "$#" -gt 4 ]; then
+  echo "This script requires 1 mandatory and 3 optional parameters,"
+  echo "server address and optionally cvd instances per docker, and number of " \
+       "docker instances to invoke, and vendor_boot image to replace."
   exit 1
 fi
 
@@ -28,6 +29,7 @@ fi
 # $1: ARM server address
 # $2: CVD Instance number per docker (Optional, default is 1)
 # $3: Docker Instance number (Optional, default is 1)
+# $4: Vendor Boot Image path (Optional, default is "")
 server=$1
 
 if [ "$#" -lt 2 ]; then
@@ -40,6 +42,12 @@ if [ "$#" -lt 3 ]; then
  num_dockers=1
 else
  num_dockers=$3
+fi
+
+if [ "$#" -lt 4 ]; then
+ vendor_boot_image=""
+else
+ vendor_boot_image=$4
 fi
 
 # set img_dir and cvd_host_tool_dir
@@ -56,6 +64,10 @@ if [ -f $img_dir/required_images ]; then
 else
   rsync -aSvch --recursive $img_dir/bootloader $img_dir/*.img $server:~/$cvd_home_dir --info=progress2
   cvd_home_files=($(rsync -rzan --recursive $img_dir/bootloader --out-format="%n" $img_dir/*.img $server:~/$cvd_home_dir --info=name2 | awk '{print $1}'))
+fi
+
+if [[ $vendor_boot_image != "" ]]; then
+  scp $vendor_boot_image $server:~/$cvd_home_dir/vendor_boot.img
 fi
 
 # upload cvd-host_package.tar.gz into ARM server
