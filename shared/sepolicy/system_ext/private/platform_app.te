@@ -2,3 +2,6 @@ get_prop(platform_app, vendor_aware_available_prop)
 
 # allow systemui to set boot animation colors
 set_prop(platform_app, bootanim_system_prop);
+
+# allow platform_app/systemui access to fingerprint
+hal_client_domain(platform_app, hal_fingerprint)
