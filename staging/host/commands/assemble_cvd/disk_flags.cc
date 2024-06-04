@@ -613,6 +613,20 @@ Result<void> InitializePstore(
   return {};
 }
 
+Result<void> InitializePflash(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (FileExists(instance.pflash_path())) {
+    return {};
+  }
+
+  auto boot_size_mb = FileSize(instance.bootloader()) / (1 << 20);
+
+  // Pad out bootloader space to 4MB
+  CF_EXPECTF(CreateBlankImage(instance.pflash_path(), 4 - boot_size_mb, "none"),
+             "Failed to create '{}'", instance.pflash_path());
+  return {};
+}
+
 Result<void> InitializeSdCard(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
@@ -693,7 +707,8 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .install(AutoSetup<GeneratePersistentBootconfig>::Component)
       .install(AutoSetup<GeneratePersistentVbmeta>::Component)
       .install(AutoSetup<InitializeInstanceCompositeDisk>::Component)
-      .install(AutoSetup<InitializeDataImage>::Component);
+      .install(AutoSetup<InitializeDataImage>::Component)
+      .install(AutoSetup<InitializePflash>::Component);
 }
 
 Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const FetcherConfig& fetcher_config) {
