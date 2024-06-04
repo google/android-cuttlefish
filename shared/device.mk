@@ -218,6 +218,8 @@ LOCAL_DEVICE_FCM_MANIFEST_FILE ?= device/google/cuttlefish/shared/config/previou
 endif
 DEVICE_MANIFEST_FILE += $(LOCAL_DEVICE_FCM_MANIFEST_FILE)
 
+PRODUCT_CHECK_PREBUILT_MAX_PAGE_SIZE := true
+
 #
 # General files
 #
