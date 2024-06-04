@@ -201,11 +201,6 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
           ? "com.android.hardware.gatekeeper.nonsecure"
           : "com.android.hardware.gatekeeper.cf_remote";
 
-  if (config.vhal_proxy_server_port()) {
-    bootconfig_args["androidboot.vhal_proxy_server_port"] =
-        std::to_string(config.vhal_proxy_server_port());
-  }
-
   std::vector<std::string> args = instance.extra_bootconfig_args();
 
   LOG(DEBUG) << "Parsing extra_bootconfig_args of size:" << args.size()
