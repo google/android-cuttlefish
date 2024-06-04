@@ -1277,6 +1277,10 @@ std::string CuttlefishConfig::InstanceSpecific::pstore_path() const {
   return AbsolutePath(PerInstancePath("pstore"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::pflash_path() const {
+  return AbsolutePath(PerInstancePath("pflash.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::console_path() const {
   return AbsolutePath(PerInstancePath("console"));
 }
@@ -1834,15 +1838,6 @@ int CuttlefishConfig::InstanceSpecific::wifi_mac_prefix() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_wifi_mac_prefix(
     int wifi_mac_prefix) {
   (*Dictionary())[kWifiMacPrefix] = wifi_mac_prefix;
-}
-
-static constexpr char kStartVhalProxyServer[] = "start_vhal_proxy_server";
-void CuttlefishConfig::MutableInstanceSpecific::set_start_vhal_proxy_server(
-    bool start_vhal_proxy_server) {
-  (*Dictionary())[kStartVhalProxyServer] = start_vhal_proxy_server;
-}
-bool CuttlefishConfig::InstanceSpecific::start_vhal_proxy_server() const {
-  return (*Dictionary())[kStartVhalProxyServer].asBool();
 }
 
 std::string CuttlefishConfig::InstanceSpecific::factory_reset_protected_path() const {

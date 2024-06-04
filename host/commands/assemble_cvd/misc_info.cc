@@ -16,14 +16,20 @@
 #include "misc_info.h"
 
 #include <algorithm>
+#include <array>
+#include <memory>
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 
@@ -32,9 +38,12 @@ namespace {
 
 constexpr char kDynamicPartitions[] = "dynamic_partition_list";
 constexpr char kGoogleDynamicPartitions[] = "google_dynamic_partitions";
+constexpr char kRollbackIndexSuffix[] = "_rollback_index_location";
 constexpr char kSuperBlockDevices[] = "super_block_devices";
 constexpr char kSuperPartitionGroups[] = "super_partition_groups";
 constexpr char kUseDynamicPartitions[] = "use_dynamic_partitions";
+constexpr std::array kNonPartitionKeysToMerge = {
+    "ab_update", "default_system_dev_certificate"};
 
 Result<std::string> GetExpected(const MiscInfo& misc_info,
                                 const std::string& key) {
@@ -68,6 +77,38 @@ std::string GetPartitionList(const MiscInfo& vendor_info,
   return MergePartitionLists(vendor_list, system_list, extracted_images);
 }
 
+std::vector<std::string> GeneratePartitionKeys(const std::string& name) {
+  std::vector<std::string> result;
+  result.emplace_back("avb_" + name);
+  result.emplace_back("avb_" + name + "_algorithm");
+  result.emplace_back("avb_" + name + "_key_path");
+  result.emplace_back("avb_" + name + kRollbackIndexSuffix);
+  result.emplace_back("avb_" + name + "_hashtree_enable");
+  result.emplace_back("avb_" + name + "_add_hashtree_footer_args");
+  result.emplace_back(name + "_disable_sparse");
+  result.emplace_back("building_" + name + "_image");
+  auto fs_type_key = name + "_fs_type";
+  if (name == "system") {
+    fs_type_key = "fs_type";
+  }
+  result.emplace_back(fs_type_key);
+  return result;
+}
+
+Result<int> ResolveRollbackIndexConflicts(
+    const std::string& index_string,
+    const std::unordered_set<int> used_indices) {
+  int index;
+  CF_EXPECTF(android::base::ParseInt(index_string, &index),
+             "Unable to parse value {} to string.  Maybe a wrong or bad value "
+             "read for the rollback index?",
+             index_string);
+  while (Contains(used_indices, index)) {
+    ++index;
+  }
+  return index;
+}
+
 }  // namespace
 
 Result<MiscInfo> ParseMiscInfo(const std::string& misc_info_contents) {
@@ -96,12 +137,21 @@ Result<MiscInfo> ParseMiscInfo(const std::string& misc_info_contents) {
   return misc_info;
 }
 
-std::string WriteMiscInfo(const MiscInfo& misc_info) {
-  std::stringstream out;
+Result<void> WriteMiscInfo(const MiscInfo& misc_info,
+                           const std::string& output_path) {
+  std::stringstream file_content;
   for (const auto& entry : misc_info) {
-    out << entry.first << "=" << entry.second << "\n";
+    file_content << entry.first << "=" << entry.second << "\n";
   }
-  return out.str();
+
+  SharedFD output_file = SharedFD::Creat(output_path.c_str(), 0644);
+  CF_EXPECT(output_file->IsOpen(),
+            "Failed to open output misc file: " << output_file->StrError());
+
+  CF_EXPECT(
+      WriteAll(output_file, file_content.str()) >= 0,
+      "Failed to write output misc file contents: " << output_file->StrError());
+  return {};
 }
 
 // based on build/make/tools/releasetools/merge/merge_target_files.py
@@ -165,10 +215,39 @@ Result<MiscInfo> GetCombinedDynamicPartitions(
   return std::move(result);
 }
 
-void MergeInKeys(const MiscInfo& source, MiscInfo& target) {
-  for (const auto& key_val : source) {
-    target[key_val.first] = key_val.second;
+Result<MiscInfo> MergeMiscInfos(
+    const MiscInfo& vendor_info, const MiscInfo& system_info,
+    const MiscInfo& combined_dp_info,
+    const std::vector<std::string>& system_partitions) {
+  // the combined misc info uses the vendor values as defaults
+  MiscInfo result = vendor_info;
+  std::unordered_set<int> used_indices;
+  for (const auto& partition : system_partitions) {
+    for (const auto& key : GeneratePartitionKeys(partition)) {
+      if (!Contains(system_info, key)) {
+        continue;
+      }
+      auto system_value = system_info.find(key)->second;
+      // avb_<partition>_rollback_index_location values can conflict across
+      // different builds
+      if (android::base::EndsWith(key, kRollbackIndexSuffix)) {
+        const auto index = CF_EXPECT(
+            ResolveRollbackIndexConflicts(system_value, used_indices));
+        used_indices.insert(index);
+        system_value = std::to_string(index);
+      }
+      result[key] = system_value;
+    }
   }
+  for (const auto& key : kNonPartitionKeysToMerge) {
+    if (Contains(system_info, key)) {
+      result[key] = system_info.find(key)->second;
+    }
+  }
+  for (const auto& key_val : combined_dp_info) {
+    result[key_val.first] = key_val.second;
+  }
+  return std::move(result);
 }
 
 } // namespace cuttlefish
