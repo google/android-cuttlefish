@@ -45,7 +45,6 @@ cc_binary_host {
         "launch/webrtc_recorder.cpp",
         "launch/streamer.cpp",
         "launch/netsim_server.cpp",
-        "launch/vhal_proxy_server.cpp",
         "main.cc",
         "reporting.cpp",
         "server_loop.cpp",

@@ -306,14 +306,6 @@ bool CuttlefishConfig::enable_automotive_proxy() const {
   return (*dictionary_)[kEnableAutomotiveProxy].asBool();
 }
 
-static constexpr char kVhalProxyServerPort[] = "vhal_proxy_server_port";
-void CuttlefishConfig::set_vhal_proxy_server_port(int port) {
-  (*dictionary_)[kVhalProxyServerPort] = port;
-}
-int CuttlefishConfig::vhal_proxy_server_port() const {
-  return (*dictionary_)[kVhalProxyServerPort].asInt();
-}
-
 static constexpr char kEnableHostNfc[] = "enable_host_nfc";
 void CuttlefishConfig::set_enable_host_nfc(bool enable_host_nfc) {
   (*dictionary_)[kEnableHostNfc] = enable_host_nfc;
