@@ -137,7 +137,4 @@ fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 McuComponent();
-
-std::optional<MonitorCommand> VhalProxyServer(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 }  // namespace cuttlefish

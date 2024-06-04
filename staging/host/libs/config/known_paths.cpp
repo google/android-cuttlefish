@@ -132,12 +132,4 @@ std::string AutomotiveProxyBinary() {
   return HostBinaryPath("automotive_vsock_proxy");
 }
 
-std::string VhalProxyServerBinary() {
-  return HostBinaryPath("vhal_proxy_server");
-}
-
-std::string VhalProxyServerConfig() {
-  return DefaultHostArtifactsPath("etc/automotive/vhalconfig");
-}
-
 } // namespace cuttlefish
