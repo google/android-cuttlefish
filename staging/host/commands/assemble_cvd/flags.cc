@@ -221,16 +221,6 @@ DEFINE_string(netsim_args, CF_DEFAULTS_NETSIM_ARGS,
 DEFINE_bool(enable_automotive_proxy, CF_DEFAULTS_ENABLE_AUTOMOTIVE_PROXY,
             "Enable the automotive proxy service on the host.");
 
-DEFINE_bool(enable_vhal_proxy_server, CF_DEFAULTS_ENABLE_VHAL_PROXY_SERVER,
-            "Enable the vhal proxy service on the host.");
-DEFINE_int32(vhal_proxy_server_instance_num,
-             CF_DEFAULTS_VHAL_PROXY_SERVER_INSTANCE_NUM,
-             "If it is greater than 0, use an existing vhal proxy server "
-             "instance which is "
-             "launched from cuttlefish instance "
-             "with vhal_proxy_server_instance_num. Else, launch a new vhal "
-             "proxy server instance");
-
 /**
  * crosvm sandbox feature requires /var/empty and seccomp directory
  *
@@ -1292,16 +1282,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_host_sandbox(FLAGS_enable_host_sandbox);
 
-  auto vhal_proxy_server_instance_num = *instance_nums.begin() - 1;
-  if (FLAGS_vhal_proxy_server_instance_num > 0) {
-    vhal_proxy_server_instance_num = FLAGS_vhal_proxy_server_instance_num - 1;
-  }
-  tmp_config_obj.set_vhal_proxy_server_port(9300 +
-                                            vhal_proxy_server_instance_num);
-  LOG(DEBUG) << "launch vhal proxy server: "
-             << (FLAGS_enable_vhal_proxy_server &&
-                 vhal_proxy_server_instance_num <= 0);
-
   // Environment specific configs
   // Currently just setting for the default environment
   auto environment_name =
@@ -1759,9 +1739,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_start_pica(is_first_instance && !is_uwb_netsim &&
                             FLAGS_pica_instance_num <= 0);
-    instance.set_start_vhal_proxy_server(
-        is_first_instance && FLAGS_enable_vhal_proxy_server &&
-        FLAGS_vhal_proxy_server_instance_num <= 0);
 
     // TODO(b/288987294) Remove this when separating environment is done
     bool instance_start_wmediumd = is_first_instance && start_wmediumd;
