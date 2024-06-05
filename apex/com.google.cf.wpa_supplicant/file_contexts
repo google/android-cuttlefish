@@ -1,0 +1,4 @@
+(/.*)?                    u:object_r:vendor_file:s0
+/etc(/.*)?                u:object_r:vendor_configs_file:s0
+/bin/hw/wpa_supplicant    u:object_r:hal_wifi_supplicant_default_exec:s0
+/bin/hw/hostapd           u:object_r:hal_wifi_hostapd_default_exec:s0

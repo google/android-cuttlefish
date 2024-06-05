@@ -213,6 +213,8 @@ PRODUCT_SHIPPING_API_LEVEL := 35
 LOCAL_DEVICE_FCM_MANIFEST_FILE ?= device/google/cuttlefish/shared/config/manifest.xml
 DEVICE_MANIFEST_FILE += $(LOCAL_DEVICE_FCM_MANIFEST_FILE)
 
+PRODUCT_CHECK_PREBUILT_MAX_PAGE_SIZE := true
+
 #
 # General files
 #
@@ -491,8 +493,9 @@ endif
 # wifi
 # Add com.android.hardware.wifi for android.hardware.wifi-service
 PRODUCT_PACKAGES += com.android.hardware.wifi
-# Add com.google.cf.wifi for hostapd, wpa_supplicant, etc.
+# Add com.google.cf.wifi and com.google.cf.wpa_supplicant for hostapd and wpa_supplicant
 PRODUCT_PACKAGES += com.google.cf.wifi
+PRODUCT_PACKAGES += com.google.cf.wpa_supplicant
 $(call add_soong_config_namespace, wpa_supplicant)
 $(call add_soong_config_var_value, wpa_supplicant, platform_version, $(PLATFORM_VERSION))
 $(call add_soong_config_var_value, wpa_supplicant, nl80211_driver, CONFIG_DRIVER_NL80211_QCA)
