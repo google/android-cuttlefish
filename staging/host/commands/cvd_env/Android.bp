@@ -32,7 +32,6 @@ cc_binary_host {
     static_libs: [
         "grpc_cli_libs",
         "libabsl_host",
-        "libc++fs",
         "libcuttlefish_control_env",
         "libcuttlefish_host_config",
         "libgflags",

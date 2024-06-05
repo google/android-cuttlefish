@@ -118,7 +118,4 @@ cc_test_host {
         "device/google/cuttlefish/host/commands",
     ],
     defaults: ["cuttlefish_host", "modem_simulator_base"],
-    whole_static_libs: [
-        "libc++fs"
-    ],
 }
