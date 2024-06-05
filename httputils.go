@@ -165,7 +165,25 @@ func (rb *HTTPRequestBuilder) JSONResDoWithRetries(ret any, retryOpts RetryOptio
 		return err
 	}
 	defer res.Body.Close()
-	return rb.parseResponse(res, ret)
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	decoder := json.NewDecoder(bytes.NewReader(b))
+	if res.StatusCode >= 200 && res.StatusCode <= 299 {
+		if ret == nil {
+			return nil
+		}
+		if err := decoder.Decode(ret); err != nil {
+			return fmt.Errorf("failed decoding successful response(%d), body: %s, error: %w", res.StatusCode, string(b), err)
+		}
+		return nil
+	}
+	apiError := &ApiCallError{}
+	if err := decoder.Decode(apiError); err != nil {
+		return fmt.Errorf("failed decoding unsuccessful response(%d), body: %s, error: %w", res.StatusCode, string(b), err)
+	}
+	return apiError
 }
 
 func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Response, error) {
@@ -202,23 +220,6 @@ func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Respo
 		return nil, err
 	}
 	return res, nil
-}
-
-func (rb *HTTPRequestBuilder) parseResponse(res *http.Response, ret any) error {
-	dec := json.NewDecoder(res.Body)
-	if res.StatusCode < 200 || res.StatusCode > 299 {
-		errpl := new(ApiCallError)
-		if err := dec.Decode(errpl); err != nil {
-			return fmt.Errorf("error decoding response: %w", err)
-		}
-		return errpl
-	}
-	if ret != nil {
-		if err := dec.Decode(ret); err != nil {
-			return fmt.Errorf("error decoding response: %w", err)
-		}
-	}
-	return nil
 }
 
 // Ideally this would use slices.Contains, but it needs to build with an older go version.
