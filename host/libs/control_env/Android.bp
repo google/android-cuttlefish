@@ -38,7 +38,6 @@ cc_library {
     cflags: [
         "-Wno-unused-parameter",
     ],
-    cpp_std: "c++17",
     defaults: ["cuttlefish_buildhost_only"],
     target: {
         darwin: {
