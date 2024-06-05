@@ -39,7 +39,6 @@ cc_binary_host {
     cflags: [
         "-Wno-unused-parameter",
     ],
-    cpp_std: "c++17",
     defaults: ["cuttlefish_host"],
     target: {
         darwin: {
