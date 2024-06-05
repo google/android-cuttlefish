@@ -16,17 +16,11 @@
 
 #include "host/commands/cvd/server_client.h"
 
-#include <atomic>
-#include <condition_variable>
-#include <memory>
 #include <optional>
-#include <queue>
-#include <thread>
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
 

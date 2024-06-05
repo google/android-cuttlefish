@@ -16,7 +16,6 @@
 
 #include "host/commands/cvd/run_cvd_proc_collector.h"
 
-#include <algorithm>
 #include <cctype>
 #include <unordered_set>
 

@@ -27,7 +27,6 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
 

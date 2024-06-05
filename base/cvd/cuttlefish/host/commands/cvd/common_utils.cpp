@@ -16,9 +16,8 @@
 
 #include "host/commands/cvd/common_utils.h"
 
-#include <memory>
 #include <mutex>
-#include <sstream>
+#include <ostream>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
@@ -26,7 +25,6 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
-#include "common/libs/utils/users.h"
 
 namespace cuttlefish {
 
