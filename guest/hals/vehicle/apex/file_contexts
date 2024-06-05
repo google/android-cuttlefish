@@ -1,0 +1,2 @@
+(/.*)?	u:object_r:vendor_file:s0
+/bin/hw/android.hardware.automotive.vehicle@V3-cf-service	u:object_r:hal_vehicle_default_exec:s0

@@ -44,3 +44,10 @@ cc_binary_host {
         "-Wno-unused-parameter",
     ],
 }
+
+cc_library_headers {
+    name: "vhal_vsockinfo",
+    host_supported: true,
+    export_include_dirs: ["."],
+    vendor_available: true,
+}
