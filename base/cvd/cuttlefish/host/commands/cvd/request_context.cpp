@@ -16,7 +16,6 @@
 
 #include "host/commands/cvd/request_context.h"
 
-#include <atomic>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -49,11 +48,8 @@
 #include "host/commands/cvd/server_command/snapshot.h"
 #include "host/commands/cvd/server_command/start.h"
 #include "host/commands/cvd/server_command/status.h"
-#include "host/commands/cvd/server_command/subcmd.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/try_acloud.h"
 #include "host/commands/cvd/server_command/version.h"
-#include "host/libs/web/android_build_api.h"
 
 namespace cuttlefish {
 

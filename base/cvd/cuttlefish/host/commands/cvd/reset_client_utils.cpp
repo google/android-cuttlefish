@@ -18,13 +18,8 @@
 
 #include <signal.h>
 
-#include <algorithm>
-#include <cctype>
-#include <iomanip>   // std::setw
 #include <iostream>  // std::endl
-#include <regex>
 #include <sstream>
-#include <unordered_set>
 
 #include <android-base/file.h>
 #include <android-base/parseint.h>
@@ -40,7 +35,6 @@
 #include "host/commands/cvd/reset_client_utils.h"
 #include "host/commands/cvd/run_cvd_proc_collector.h"
 #include "host/commands/cvd/run_server.h"
-#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 

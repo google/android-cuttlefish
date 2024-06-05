@@ -18,25 +18,13 @@
 
 #include <unistd.h>
 
-#include <cstdlib>
-#include <iostream>
-#include <sstream>
-
 #include <android-base/file.h>
 #include <google/protobuf/text_format.h>
 
-#include "build/version.h"
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/environment.h"
 #include "common/libs/utils/proto.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/flag.h"
-#include "host/commands/cvd/frontline_parser.h"
-#include "host/commands/cvd/run_server.h"
-#include "host/libs/config/host_tools_version.h"
 
 namespace cuttlefish {
 namespace {

@@ -18,11 +18,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <cstdio>
 #include <iostream>
-#include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include <android-base/file.h>
@@ -30,7 +27,6 @@
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
@@ -39,12 +35,9 @@
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/flag.h"
-#include "host/commands/cvd/frontline_parser.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "host/commands/cvd/metrics/cvd_metrics_api.h"
 #include "host/commands/cvd/run_server.h"
-#include "host/commands/cvd/server_constants.h"
-#include "host/libs/config/host_tools_version.h"
 
 namespace cuttlefish {
 namespace {
