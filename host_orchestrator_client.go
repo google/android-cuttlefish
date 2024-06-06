@@ -73,16 +73,12 @@ func NewHostOrchestratorService(url string) HostOrchestratorService {
 			Client:       http.DefaultClient,
 			RootEndpoint: url,
 		},
-		WaitRetries:               3,
-		WaitRetryDelay:            5 * time.Second,
 		BuildAPICredentialsHeader: defaultHostOrchestratorCredentialsHeader,
 	}
 }
 
 type HostOrchestratorServiceImpl struct {
 	HTTPHelper                HTTPHelper
-	WaitRetries               uint
-	WaitRetryDelay            time.Duration
 	BuildAPICredentialsHeader string
 }
 
@@ -223,12 +219,16 @@ func (c *HostOrchestratorServiceImpl) createPolledConnection(device string) (*ho
 }
 
 func (c *HostOrchestratorServiceImpl) WaitForOperation(name string, res any) error {
-	path := "/operations/" + name + "/:wait"
 	retryOpts := RetryOptions{
 		StatusCodes: []int{http.StatusServiceUnavailable, http.StatusGatewayTimeout},
-		NumRetries:  c.WaitRetries,
-		RetryDelay:  c.WaitRetryDelay,
+		RetryDelay:  5 * time.Second,
+		MaxWait:     2 * time.Minute,
 	}
+	return c.waitForOperation(name, res, retryOpts)
+}
+
+func (c *HostOrchestratorServiceImpl) waitForOperation(name string, res any, retryOpts RetryOptions) error {
+	path := "/operations/" + name + "/:wait"
 	return c.HTTPHelper.NewPostRequest(path, nil).JSONResDoWithRetries(res, retryOpts)
 }
 
@@ -259,7 +259,12 @@ func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, cre
 		return nil, err
 	}
 	res := &hoapi.CreateCVDResponse{}
-	if err := c.WaitForOperation(op.Name, &res); err != nil {
+	retryOpts := RetryOptions{
+		StatusCodes: []int{http.StatusServiceUnavailable, http.StatusGatewayTimeout},
+		RetryDelay:  30 * time.Second,
+		MaxWait:     10 * time.Minute,
+	}
+	if err := c.waitForOperation(op.Name, &res, retryOpts); err != nil {
 		return nil, err
 	}
 	return res, nil
