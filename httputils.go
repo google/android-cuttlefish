@@ -145,8 +145,9 @@ func (rb *HTTPRequestBuilder) SetBasicAuth() {
 
 type RetryOptions struct {
 	StatusCodes []int
-	NumRetries  uint
 	RetryDelay  time.Duration
+	// Keep retrying until the MaxWait threshold is reached out
+	MaxWait time.Duration
 }
 
 func (rb *HTTPRequestBuilder) Do() (*http.Response, error) {
@@ -205,7 +206,8 @@ func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Respo
 	if err != nil {
 		return nil, fmt.Errorf("error sending request: %w", err)
 	}
-	for i := uint(0); i < retryOpts.NumRetries && isIn(res.StatusCode, retryOpts.StatusCodes); i++ {
+	start := time.Now()
+	for elapsed := 0 * time.Second; elapsed < retryOpts.MaxWait && isIn(res.StatusCode, retryOpts.StatusCodes); elapsed = time.Now().Sub(start) {
 		err = rb.helper.dumpResponse(res)
 		res.Body.Close()
 		if err != nil {
@@ -218,6 +220,9 @@ func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Respo
 	}
 	if err := rb.helper.dumpResponse(res); err != nil {
 		return nil, err
+	}
+	if isIn(res.StatusCode, retryOpts.StatusCodes) {
+		return nil, fmt.Errorf("max wait elapsed: response status code: %d", res.StatusCode)
 	}
 	return res, nil
 }

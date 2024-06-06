@@ -21,57 +21,11 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"testing"
-	"time"
 
 	apiv1 "github.com/google/cloud-android-orchestration/api/v1"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/go-multierror"
 )
-
-func TestRetryLogic(t *testing.T) {
-	failsTotal := 2
-	failsCounter := 0
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		opName := "op-foo"
-		switch ep := r.Method + " " + r.URL.Path; ep {
-		case "POST /hosts":
-			writeOK(w, &apiv1.Operation{Name: opName})
-		case "POST /operations/" + opName + "/:wait":
-			if failsCounter < failsTotal {
-				failsCounter++
-				writeErr(w, 503)
-				return
-			}
-			writeOK(w, &apiv1.HostInstance{Name: "foo"})
-		case "GET /hosts/foo/":
-			writeOK(w, make(map[string]any))
-		default:
-			t.Fatal("unexpected endpoint: " + ep)
-		}
-
-	}))
-	defer ts.Close()
-	opts := &ServiceOptions{
-		RootEndpoint:  ts.URL,
-		DumpOut:       io.Discard,
-		RetryAttempts: 2,
-		RetryDelay:    100 * time.Millisecond,
-	}
-	client, _ := NewService(opts)
-
-	start := time.Now()
-	host, _ := client.CreateHost(&apiv1.CreateHostRequest{})
-	duration := time.Since(start)
-
-	expected := &apiv1.HostInstance{Name: "foo"}
-	if diff := cmp.Diff(expected, host); diff != "" {
-		t.Errorf("host instance mismatch (-want +got):\n%s", diff)
-	}
-	if duration < opts.RetryDelay*2 {
-		t.Error("duration faster than expected")
-	}
-}
 
 func TestDeleteHosts(t *testing.T) {
 	existingNames := map[string]struct{}{"bar": {}, "baz": {}}

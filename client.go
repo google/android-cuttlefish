@@ -71,8 +71,6 @@ type ServiceOptions struct {
 	ProxyURL       string
 	DumpOut        io.Writer
 	ErrOut         io.Writer
-	RetryAttempts  int
-	RetryDelay     time.Duration
 	ChunkSizeBytes int64
 	Authn          *AuthnOpts
 }
@@ -135,8 +133,8 @@ func (c *serviceImpl) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInsta
 	// from the this function.
 	retryOpts := RetryOptions{
 		StatusCodes: []int{http.StatusBadGateway},
-		NumRetries:  3,
 		RetryDelay:  5 * time.Second,
+		MaxWait:     2 * time.Minute,
 	}
 	hostPath := fmt.Sprintf("/hosts/%s/", ins.Name)
 	if err := c.httpHelper.NewGetRequest(hostPath).JSONResDoWithRetries(nil, retryOpts); err != nil {
@@ -177,8 +175,8 @@ func (c *serviceImpl) waitForOperation(op *apiv1.Operation, res any) error {
 	path := "/operations/" + op.Name + "/:wait"
 	retryOpts := RetryOptions{
 		StatusCodes: []int{http.StatusServiceUnavailable},
-		NumRetries:  uint(c.ServiceOptions.RetryAttempts),
-		RetryDelay:  c.RetryDelay,
+		RetryDelay:  5 * time.Second,
+		MaxWait:     2 * time.Minute,
 	}
 	return c.httpHelper.NewPostRequest(path, nil).JSONResDoWithRetries(res, retryOpts)
 }
@@ -189,9 +187,7 @@ func (s *serviceImpl) RootURI() string {
 
 func (s *serviceImpl) HostService(host string) HostOrchestratorService {
 	hs := &HostOrchestratorServiceImpl{
-		HTTPHelper:     s.httpHelper,
-		WaitRetries:    uint(s.ServiceOptions.RetryAttempts),
-		WaitRetryDelay: s.ServiceOptions.RetryDelay,
+		HTTPHelper: s.httpHelper,
 		// Make the cloud orchestrator inject the credentials instead
 		BuildAPICredentialsHeader: headerNameCOInjectBuildAPICreds,
 	}
