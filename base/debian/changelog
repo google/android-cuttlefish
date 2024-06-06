@@ -1,4 +1,10 @@
-cuttlefish-common (0.9.29) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.30) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Chad Reynolds <chadreynolds@google.com>  Thu, 06 Jun 2024 16:40:31 -0700
+
+cuttlefish-common (0.9.29) unstable; urgency=medium
 
   [ A. Cody Schuffelen ]
   * Add capability to `cvd fetch` to download ChromeOS builds
@@ -12,7 +18,7 @@ cuttlefish-common (0.9.29) UNRELEASED; urgency=medium
   * Build cvd with bazel
   * Return group information from cvd start
 
- -- Chad Reynolds <chadreynolds@google.com>  Mon, 22 Apr 2024 15:56:40 -0700
+ -- Chad Reynolds <chadreynolds@google.com>  Thu, 06 Jun 2024 16:38:42 -0700
 
 cuttlefish-common (0.9.28) stable; urgency=medium
 
