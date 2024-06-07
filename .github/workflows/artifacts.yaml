@@ -20,7 +20,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Build debs
-      run: bash build_debs.sh
+      run: |
+        bash tools/buildutils/build_packages.sh
+        ls -la *.deb
     - name: Build debs.tar
       run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs.tar --null --files-from -
     - name: Publish debs.tar
