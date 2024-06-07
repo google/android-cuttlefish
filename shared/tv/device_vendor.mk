@@ -91,3 +91,13 @@ PRODUCT_PACKAGES += \
      CuttlefishTetheringOverlayGoogle \
      CuttlefishWifiOverlayGoogle \
      TvWifiOverlayGoogle
+
+# OEM Key:
+#   ATV00       - Schema identifier.
+#   0           - Voice remote not included.
+#   000         - Not a panel TV.
+#   24          - Year of production.
+#   CUTTLEFISH  - Custom OEM key for future use.
+#   EMU         - Last 3 char for custom targeting.
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.oem.key1=ATV00000024CUTTLEFISHEMU
