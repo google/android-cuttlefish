@@ -35,9 +35,11 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/misc_info.h"
+#include "host/libs/avb/avb.h"
 #include "host/libs/config/config_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
+#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {
@@ -137,7 +139,7 @@ Result<MiscInfo> CombineDynamicPartitionsInfo(
                                                 extracted_images));
 }
 
-Result<void> CombineMiscInfo(
+Result<MiscInfo> CombineMiscInfo(
     TargetFiles& target_files, const std::string& misc_output_path,
     const std::set<std::string>& extracted_images,
     const std::vector<std::string>& system_partitions) {
@@ -157,7 +159,7 @@ Result<void> CombineMiscInfo(
       vendor_misc, system_misc, combined_dp_info, system_partitions));
 
   CF_EXPECT(WriteMiscInfo(output_misc, misc_output_path));
-  return {};
+  return std::move(output_misc);
 }
 
 Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
@@ -217,18 +219,33 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
   return extracted;
 }
 
+Result<void> RegenerateVbmeta(const MiscInfo& misc_info,
+                              const std::string& output_path,
+                              const std::string& image_path) {
+  const VbmetaArgs args = CF_EXPECT(GetVbmetaArgs(misc_info, image_path));
+  auto avbtool = Avb(AvbToolBinary(), args.algorithm, args.key_path);
+  CF_EXPECT(avbtool.MakeVbMetaImage(output_path, args.chained_partitions,
+                                    args.included_partitions,
+                                    args.extra_arguments));
+  return {};
+}
+
 Result<void> CombineTargetZipFiles(const std::string& vendor_zip_path,
                                    const std::string& system_zip_path,
-                                   const std::string& output_path) {
-  CF_EXPECT(EnsureDirectoryExists(output_path));
-  CF_EXPECT(EnsureDirectoryExists(output_path + "/META"));
+                                   const std::string& combined_target_path,
+                                   const std::string& vbmeta_output_path) {
+  CF_EXPECT(EnsureDirectoryExists(combined_target_path));
+  CF_EXPECT(EnsureDirectoryExists(combined_target_path + "/META"));
   auto target_files =
       CF_EXPECT(GetTargetFiles(vendor_zip_path, system_zip_path));
   const auto extracted =
-      CF_EXPECT(ExtractTargetFiles(target_files, output_path));
-  const auto misc_output_path = output_path + "/" + kMiscInfoPath;
-  CF_EXPECT(CombineMiscInfo(target_files, misc_output_path, extracted.images,
-                            extracted.system_partitions));
+      CF_EXPECT(ExtractTargetFiles(target_files, combined_target_path));
+  const auto misc_output_path = combined_target_path + "/" + kMiscInfoPath;
+  const auto combined_info =
+      CF_EXPECT(CombineMiscInfo(target_files, misc_output_path,
+                                extracted.images, extracted.system_partitions));
+  CF_EXPECT(RegenerateVbmeta(combined_info, vbmeta_output_path,
+                             combined_target_path));
   return {};
 }
 
@@ -266,7 +283,8 @@ std::string TargetFilesZip(const FetcherConfig& fetcher_config,
 
 Result<void> RebuildSuperImage(const FetcherConfig& fetcher_config,
                                const CuttlefishConfig& config,
-                               const std::string& output_path) {
+                               const std::string& super_image_output,
+                               const std::string& vbmeta_image_output) {
   auto instance = config.ForDefaultInstance();
   // In SuperImageNeedsRebuilding, it already checked both
   // has_default_target_zip and has_system_target_zip are the same.
@@ -288,10 +306,10 @@ Result<void> RebuildSuperImage(const FetcherConfig& fetcher_config,
   std::string combined_target_path = instance.PerInstanceInternalPath("target_combined");
   // TODO(schuffelen): Use otatools/bin/merge_target_files
   CF_EXPECT(CombineTargetZipFiles(default_target_zip, system_target_zip,
-                                  combined_target_path),
+                                  combined_target_path, vbmeta_image_output),
             "Could not combine target zip files.");
 
-  CF_EXPECT(BuildSuperImage(combined_target_path, output_path),
+  CF_EXPECT(BuildSuperImage(combined_target_path, super_image_output),
             "Could not write the final output super image.");
   return {};
 }
@@ -313,7 +331,8 @@ class SuperImageRebuilderImpl : public SuperImageRebuilder {
                                             instance_.default_target_zip(),
                                             instance_.system_target_zip()))) {
       CF_EXPECT(RebuildSuperImage(fetcher_config_, config_,
-                                  instance_.new_super_image()));
+                                  instance_.new_super_image(),
+                                  instance_.new_vbmeta_image()));
     }
     return {};
   }
