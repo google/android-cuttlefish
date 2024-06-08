@@ -20,6 +20,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <vector>
 
@@ -32,18 +33,35 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
+#include "host/libs/avb/avb.h"
+#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {
 
+constexpr char kAvbVbmetaAlgorithm[] = "avb_vbmeta_algorithm";
+constexpr char kAvbVbmetaArgs[] = "avb_vbmeta_args";
+constexpr char kAvbVbmetaKeyPath[] = "avb_vbmeta_key_path";
 constexpr char kDynamicPartitions[] = "dynamic_partition_list";
 constexpr char kGoogleDynamicPartitions[] = "google_dynamic_partitions";
 constexpr char kRollbackIndexSuffix[] = "_rollback_index_location";
 constexpr char kSuperBlockDevices[] = "super_block_devices";
 constexpr char kSuperPartitionGroups[] = "super_partition_groups";
 constexpr char kUseDynamicPartitions[] = "use_dynamic_partitions";
+constexpr char kRsa2048Algorithm[] = "SHA256_RSA2048";
+constexpr char kRsa4096Algorithm[] = "SHA256_RSA4096";
 constexpr std::array kNonPartitionKeysToMerge = {
     "ab_update", "default_system_dev_certificate"};
+// based on build/make/tools/releasetools/common.py:AVB_PARTITIONS
+constexpr std::array kVbmetaPartitions = {"boot",
+                                          "init_boot",
+                                          "odm",
+                                          "odm_dlkm",
+                                          "vbmeta_system",
+                                          "vbmeta_system_dlkm",
+                                          "vbmeta_vendor_dlkm",
+                                          "vendor",
+                                          "vendor_boot"};
 
 Result<std::string> GetExpected(const MiscInfo& misc_info,
                                 const std::string& key) {
@@ -107,6 +125,26 @@ Result<int> ResolveRollbackIndexConflicts(
     ++index;
   }
   return index;
+}
+
+Result<std::string> GetKeyPath(const std::string_view algorithm) {
+  if (algorithm == kRsa4096Algorithm) {
+    return TestKeyRsa4096();
+  } else if (algorithm == kRsa2048Algorithm) {
+    return TestKeyRsa2048();
+  } else {
+    return CF_ERR("Unexpected algorithm.  No key available.");
+  }
+}
+
+Result<std::string> GetPubKeyPath(const std::string_view algorithm) {
+  if (algorithm == kRsa4096Algorithm) {
+    return TestPubKeyRsa4096();
+  } else if (algorithm == kRsa2048Algorithm) {
+    return TestPubKeyRsa2048();
+  } else {
+    return CF_ERR("Unexpected algorithm.  No key available.");
+  }
 }
 
 }  // namespace
@@ -240,14 +278,55 @@ Result<MiscInfo> MergeMiscInfos(
     }
   }
   for (const auto& key : kNonPartitionKeysToMerge) {
-    if (Contains(system_info, key)) {
-      result[key] = system_info.find(key)->second;
+    const auto value_result = GetExpected(system_info, key);
+    if (value_result.ok()) {
+      result[key] = *value_result;
     }
   }
   for (const auto& key_val : combined_dp_info) {
     result[key_val.first] = key_val.second;
   }
   return std::move(result);
+}
+
+Result<VbmetaArgs> GetVbmetaArgs(const MiscInfo& misc_info,
+                                 const std::string& image_path) {
+  // The key_path value should exist, but it is a build system path
+  // We use a host artifacts relative path instead
+  CF_EXPECT(Contains(misc_info, kAvbVbmetaKeyPath));
+  const auto algorithm = CF_EXPECT(GetExpected(misc_info, kAvbVbmetaAlgorithm));
+  auto result = VbmetaArgs{
+      .algorithm = algorithm,
+      .key_path = CF_EXPECT(GetKeyPath(algorithm)),
+  };
+  // must split and add --<flag> <arg> arguments(non-equals format) separately
+  // due to how Command.AddParameter handles each argument
+  const auto extra_args_result = GetExpected(misc_info, kAvbVbmetaArgs);
+  if (extra_args_result.ok()) {
+    for (const auto& arg : android::base::Tokenize(*extra_args_result, " ")) {
+      result.extra_arguments.emplace_back(arg);
+    }
+  }
+
+  for (const auto& partition : kVbmetaPartitions) {
+    // The key_path value should exist, but it is a build system path
+    // We use a host artifacts relative path instead
+    if (Contains(misc_info, fmt::format("avb_{}_key_path", partition))) {
+      const auto partition_algorithm = CF_EXPECT(
+          GetExpected(misc_info, fmt::format("avb_{}_algorithm", partition)));
+      result.chained_partitions.emplace_back(ChainPartition{
+          .name = partition,
+          .rollback_index = CF_EXPECT(GetExpected(
+              misc_info,
+              fmt::format("avb_{}_rollback_index_location", partition))),
+          .key_path = CF_EXPECT(GetPubKeyPath(partition_algorithm)),
+      });
+    } else {
+      result.included_partitions.emplace_back(
+          fmt::format("{}/IMAGES/{}.img", image_path, partition));
+    }
+  }
+  return result;
 }
 
 } // namespace cuttlefish
