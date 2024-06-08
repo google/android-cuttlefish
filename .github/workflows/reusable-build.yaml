@@ -14,8 +14,6 @@ jobs:
       run: pbuilder-dist stable arm64 create
     - name: Pbuilder arm64 update
       run: pbuilder-dist stable arm64 update
-    - name: Install bazel
-      run: cd tools/cuttlefish-host-image-installer && sudo ./utils/install_bazel_package.sh
     - name: Building package
       run: cd tools/cuttlefish-host-image-installer && ./build_cf_packages.sh
     - name: Create artifact
