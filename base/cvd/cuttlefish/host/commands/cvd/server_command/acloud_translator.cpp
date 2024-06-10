@@ -16,8 +16,6 @@
 
 #include "host/commands/cvd/server_command/acloud_translator.h"
 
-#include <mutex>
-
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"

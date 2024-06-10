@@ -16,7 +16,6 @@
 
 #include "host/commands/cvd/server_command/try_acloud.h"
 
-#include <mutex>
 #include <thread>
 
 #include "common/libs/fs/shared_buf.h"
@@ -25,6 +24,7 @@
 #include "host/commands/cvd/acloud/config.h"
 #include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/acloud/create_converter_parser.h"
+#include "host/commands/cvd/server_command/acloud_common.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"

@@ -16,16 +16,11 @@
 
 #pragma once
 
-#include <functional>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/server_command/flags_collector.h"
-#include "host/commands/cvd/server_command/host_tool_target.h"
 
 namespace cuttlefish {
 

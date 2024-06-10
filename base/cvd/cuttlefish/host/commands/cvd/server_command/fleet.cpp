@@ -18,24 +18,16 @@
 
 #include <sys/types.h>
 
-#include <mutex>
-
 #include <android-base/file.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/selector/instance_database_types.h"
-#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/status_fetcher.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
-#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 

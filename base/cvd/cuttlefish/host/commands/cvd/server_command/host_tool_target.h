@@ -20,7 +20,6 @@
 
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/server_command/flags_collector.h"

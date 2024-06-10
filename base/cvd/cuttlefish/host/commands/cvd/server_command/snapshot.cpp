@@ -19,9 +19,6 @@
 #include <android-base/file.h>
 #include <android-base/strings.h>
 
-#include <iostream>
-#include <mutex>
-#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -30,10 +27,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/flag.h"
-#include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
-#include "host/commands/cvd/selector/instance_record.h"
-#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"

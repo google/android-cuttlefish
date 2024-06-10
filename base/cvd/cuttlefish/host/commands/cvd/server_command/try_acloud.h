@@ -18,7 +18,6 @@
 
 #include <memory>
 
-#include "host/commands/cvd/server_command/acloud_common.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/instance_manager.h"
 
