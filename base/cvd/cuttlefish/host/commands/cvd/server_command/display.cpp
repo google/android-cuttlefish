@@ -18,8 +18,6 @@
 
 #include <android-base/strings.h>
 
-#include <iostream>
-#include <mutex>
 #include <optional>
 #include <sstream>
 #include <string>

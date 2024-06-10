@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include <filesystem>
 #include <fstream>
-#include <iostream>
 
 #include <android-base/file.h>
 
@@ -28,6 +26,7 @@
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/acloud_mixsuperimage.h"
 #include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/config_utils.h"

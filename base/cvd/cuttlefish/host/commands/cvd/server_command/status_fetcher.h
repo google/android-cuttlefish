@@ -21,15 +21,12 @@
 #include <mutex>
 #include <string>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
-#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 

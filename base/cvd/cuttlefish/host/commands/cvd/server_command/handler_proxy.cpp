@@ -16,7 +16,6 @@
 
 #include "host/commands/cvd/server_command/handler_proxy.h"
 
-#include <mutex>
 #include <vector>
 
 #include <android-base/strings.h>

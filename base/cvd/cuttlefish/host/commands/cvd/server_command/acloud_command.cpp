@@ -16,8 +16,6 @@
 
 #include "host/commands/cvd/server_command/acloud_command.h"
 
-#include <atomic>
-#include <mutex>
 #include <thread>
 
 #include <android-base/file.h>
@@ -25,14 +23,12 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/acloud/create_converter_parser.h"
 #include "host/commands/cvd/command_sequence.h"
-#include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server_command/acloud_common.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"

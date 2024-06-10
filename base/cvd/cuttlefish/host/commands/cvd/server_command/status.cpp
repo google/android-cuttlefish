@@ -18,15 +18,11 @@
 
 #include <sys/types.h>
 
-#include <mutex>
-
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/common_utils.h"

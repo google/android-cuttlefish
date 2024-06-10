@@ -21,12 +21,9 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
-#include <cstdint>
 #include <cstdlib>
 #include <iostream>
-#include <mutex>
 #include <optional>
-#include <regex>
 #include <sstream>
 #include <string>
 

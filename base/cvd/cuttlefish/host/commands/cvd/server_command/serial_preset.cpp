@@ -15,7 +15,6 @@
  */
 #include "host/commands/cvd/server_command/serial_preset.h"
 
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>

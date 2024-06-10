@@ -17,9 +17,7 @@
 #include "host/commands/cvd/server_command/reset.h"
 
 #include <iostream>
-#include <sstream>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "host/commands/cvd/instance_manager.h"

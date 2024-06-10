@@ -19,12 +19,9 @@
 #include <android-base/strings.h>
 
 #include <functional>
-#include <iostream>
-#include <mutex>
 #include <optional>
 #include <sstream>
 #include <string>
-#include <vector>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"

@@ -17,10 +17,10 @@
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 #include <memory>
+#include <mutex>
 
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
-#include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/server_command/host_tool_target.h"
 
 namespace cuttlefish {
 

@@ -21,7 +21,6 @@
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 

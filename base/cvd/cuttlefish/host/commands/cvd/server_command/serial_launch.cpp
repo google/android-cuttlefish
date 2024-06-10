@@ -19,7 +19,6 @@
 #include <sys/types.h>
 
 #include <chrono>
-#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>

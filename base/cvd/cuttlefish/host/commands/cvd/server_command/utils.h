@@ -18,9 +18,7 @@
 
 #include <sys/types.h>
 
-#include <optional>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
