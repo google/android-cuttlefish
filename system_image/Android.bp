@@ -443,6 +443,7 @@ android_system_image {
         "printflags", // base_system
         "privapp-permissions-platform.xml", // base_system
         "prng_seeder", // base_system
+        "public.libraries.android.txt",
         "recovery-persist", // base_system
         "recovery-refresh", // generic_system
         "requestsync", // media_system
