@@ -130,6 +130,8 @@ QemuManager::ConfigureGraphics(
         {"androidboot.hardware.gralloc", "minigbm"},
         {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
         {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
+        {"androidboot.hardware.hwcomposer.display_framebuffer_format",
+         instance.guest_uses_bgra_framebuffers() ? "bgra" : "rgba"},
         {"androidboot.hardware.egl", "angle"},
         {"androidboot.hardware.vulkan", "pastel"},
         // OpenGL ES 3.1
@@ -142,6 +144,8 @@ QemuManager::ConfigureGraphics(
         {"androidboot.hardware.hwcomposer", "ranchu"},
         {"androidboot.hardware.hwcomposer.mode", "client"},
         {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
+        {"androidboot.hardware.hwcomposer.display_framebuffer_format",
+         instance.guest_uses_bgra_framebuffers() ? "bgra" : "rgba"},
         {"androidboot.hardware.egl", "mesa"},
         // No "hardware" Vulkan support, yet
         // OpenGL ES 3.0
@@ -162,6 +166,8 @@ QemuManager::ConfigureGraphics(
         {"androidboot.hardware.gralloc", "minigbm"},
         {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
         {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
+        {"androidboot.hardware.hwcomposer.display_framebuffer_format",
+         instance.guest_uses_bgra_framebuffers() ? "bgra" : "rgba"},
         {"androidboot.hardware.egl", gles_impl},
         {"androidboot.hardware.vulkan", "ranchu"},
         {"androidboot.hardware.gltransport", gltransport},
