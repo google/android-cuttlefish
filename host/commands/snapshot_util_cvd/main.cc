@@ -65,13 +65,13 @@ Result<void> BroadcastLauncherAction(
 }
 
 Result<void> SnapshotCvdMain(std::vector<std::string> args) {
-  const CuttlefishConfig* config =
-      CF_EXPECT(CuttlefishConfig::Get(), "Failed to obtain config object");
-
   CF_EXPECT(!args.empty(), "No arguments was given");
   const auto prog_path = args.front();
   args.erase(args.begin());
   auto parsed = CF_EXPECT(Parse(args));
+
+  const CuttlefishConfig* config =
+      CF_EXPECT(CuttlefishConfig::Get(), "Failed to obtain config object");
 
   switch (parsed.cmd) {
     case SnapshotCmd::kSuspend: {
