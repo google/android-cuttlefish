@@ -191,6 +191,7 @@ cvd_host_tools = [
     "vulkan.pastel",
     "automotive_vsock_proxy",
     "vhost_device_vsock",
+    "vhal_proxy_server",
 ]
 
 cvd_openwrt_images = [
