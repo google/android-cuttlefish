@@ -215,7 +215,7 @@ int main(int argc, char** argv) {
   CHECK(streamer) << "Could not create streamer";
 
   int frames_fd = FLAGS_frame_server_fd;
-  bool frames_are_rgba = true;
+  bool frames_are_rgba = !instance.guest_uses_bgra_framebuffers();
   auto display_handler =
       std::make_shared<DisplayHandler>(*streamer, frames_fd, frames_are_rgba);
 
