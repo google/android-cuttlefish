@@ -74,6 +74,8 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.gralloc", "minigbm"},
         {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
         {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
+        {"androidboot.hardware.hwcomposer.display_framebuffer_format",
+         instance.guest_uses_bgra_framebuffers() ? "bgra" : "rgba"},
         {"androidboot.hardware.egl", "angle"},
         {"androidboot.hardware.vulkan", "pastel"},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
@@ -85,6 +87,8 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.hwcomposer", "ranchu"},
         {"androidboot.hardware.hwcomposer.mode", "client"},
         {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
+        {"androidboot.hardware.hwcomposer.display_framebuffer_format",
+         instance.guest_uses_bgra_framebuffers() ? "bgra" : "rgba"},
         {"androidboot.hardware.egl", "mesa"},
         // No "hardware" Vulkan support, yet
         {"androidboot.opengles.version", "196608"},  // OpenGL ES 3.0
@@ -110,6 +114,8 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.gralloc", "minigbm"},
         {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
         {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
+        {"androidboot.hardware.hwcomposer.display_framebuffer_format",
+         instance.guest_uses_bgra_framebuffers() ? "bgra" : "rgba"},
         {"androidboot.hardware.egl", gles_impl},
         {"androidboot.hardware.vulkan", "ranchu"},
         {"androidboot.hardware.gltransport", gfxstream_transport},
@@ -121,6 +127,8 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.gralloc", "minigbm"},
         {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
         {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
+        {"androidboot.hardware.hwcomposer.display_framebuffer_format",
+         instance.guest_uses_bgra_framebuffers() ? "bgra" : "rgba"},
         {"androidboot.hardware.egl", "angle"},
         {"androidboot.hardware.vulkan", instance.guest_vulkan_driver()},
         {"androidboot.hardware.gltransport", "virtio-gpu-asg"},
