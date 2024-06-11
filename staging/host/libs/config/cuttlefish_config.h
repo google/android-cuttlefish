@@ -154,6 +154,10 @@ class CuttlefishConfig {
   void set_enable_automotive_proxy(bool enable_automotive_proxy);
   bool enable_automotive_proxy() const;
 
+  // The vsock port used by vhal_proxy_server
+  void set_vhal_proxy_server_port(int port);
+  int vhal_proxy_server_port() const;
+
   // Bluetooth is enabled by bt_connector and rootcanal
   void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
   bool enable_host_bluetooth_connector() const;
@@ -688,6 +692,8 @@ class CuttlefishConfig {
     bool bootconfig_supported() const;
     std::string filename_encryption_mode() const;
     ExternalNetworkMode external_network_mode() const;
+
+    bool start_vhal_proxy_server() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -894,6 +900,10 @@ class CuttlefishConfig {
     void set_bootconfig_supported(bool bootconfig_supported);
     void set_filename_encryption_mode(const std::string& userdata_format);
     void set_external_network_mode(ExternalNetworkMode network_mode);
+
+    // Whether we should start vhal_proxy_server for the guest-side VHAL to
+    // connect to.
+    void set_start_vhal_proxy_server(bool enable_vhal_proxy_server);
 
    private:
     void SetPath(const std::string& key, const std::string& path);
