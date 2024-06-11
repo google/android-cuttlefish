@@ -270,12 +270,12 @@ USE_OPENGL_RENDERER := true
 
 # Wifi.
 BOARD_WLAN_DEVICE           := emulator
-BOARD_HOSTAPD_PRIVATE_LIB   := lib_driver_cmd_simulated_cf
+BOARD_HOSTAPD_PRIVATE_LIB   := lib_driver_cmd_simulated_cf_bp
 WIFI_HIDL_FEATURE_DUAL_INTERFACE := true
 WIFI_HAL_INTERFACE_COMBINATIONS := {{{STA}, 1}, {{AP}, 1}, {{P2P}, 1}}
 BOARD_HOSTAPD_DRIVER        := NL80211
 BOARD_WPA_SUPPLICANT_DRIVER := NL80211
-BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_simulated_cf
+BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_simulated_cf_bp
 WPA_SUPPLICANT_VERSION      := VER_0_8_X
 WIFI_DRIVER_FW_PATH_PARAM   := "/dev/null"
 WIFI_DRIVER_FW_PATH_STA     := "/dev/null"
