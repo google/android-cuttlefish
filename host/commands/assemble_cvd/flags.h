@@ -35,6 +35,7 @@ struct GuestConfig {
   std::string android_version_number;
   bool gfxstream_supported = false;
   bool vhost_user_vsock = false;
+  bool supports_bgra_framebuffers = false;
 };
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults();
