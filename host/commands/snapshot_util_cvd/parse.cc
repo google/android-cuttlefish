@@ -127,7 +127,14 @@ Result<Parsed> Parse(std::vector<std::string>& args) {
   flags.push_back(HelpFlag(flags));
   flags.push_back(HelpXmlFlag(flags, std::cout, help_xml));
   flags.push_back(UnexpectedArgumentGuard());
-  CF_EXPECT(ConsumeFlags(flags, args), "Flag parsing failed");
+  auto parse_res = ConsumeFlags(flags, args);
+  if (!help_xml && !parse_res.ok()) {
+    // Parse fails if helpxml is passed
+    CF_EXPECT(std::move(parse_res), "Flag parsing failed");
+  }
+  if (help_xml) {
+    std::exit(0);
+  }
   parsed.cmd = CF_EXPECT(ConvertToSnapshotCmd(snapshot_op));
   parsed.snapshot_path = snapshot_path;
   parsed.instance_nums = CF_EXPECT(InstanceNums());
