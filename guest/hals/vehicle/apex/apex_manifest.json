@@ -1,0 +1,5 @@
+{
+  "name": "com.android.hardware.automotive.vehicle",
+  "vendorBootstrap": true,
+  "version": 1
+}
