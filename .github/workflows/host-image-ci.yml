@@ -112,7 +112,7 @@ jobs:
     container:
       image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
     env:
-      UBOOT_GIT_URL: git://git.denx.de/u-boot.git
+      UBOOT_GIT_URL: https://source.denx.de/u-boot/u-boot.git
       UBOOT_GIT_BRANCH: v2023.10
     steps:
     - name: checkout repository
