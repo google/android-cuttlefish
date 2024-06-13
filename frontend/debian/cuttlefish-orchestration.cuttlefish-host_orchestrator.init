@@ -90,6 +90,11 @@ start_orchestrator() {
 }
 
 start() {
+  # Note: Use `Wants=` option when migrating to systemd unit files rather
+  # than starting the systemd-journal-gatewayd service manually.
+  # https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
+  service systemd-journal-gatewayd start
+
   prepare_run_dir
 
   start_orchestrator
