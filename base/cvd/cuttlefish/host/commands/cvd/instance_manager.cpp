@@ -129,6 +129,24 @@ Result<void> InstanceManager::SetInstanceGroup(
   return {};
 }
 
+Result<InstanceManager::LocalInstanceGroup>
+InstanceManager::CreateInstanceGroup(
+    const selector::GroupCreationInfo& group_info) {
+  cvd::InstanceGroup new_group;
+  new_group.set_name(group_info.group_name.empty()
+                         ? selector::GenDefaultGroupName()
+                         : group_info.group_name);
+  new_group.set_home_directory(group_info.home);
+  new_group.set_host_artifacts_path(group_info.host_artifacts_path);
+  new_group.set_product_out_path(group_info.product_out_path);
+  for (const auto& instance : group_info.instances) {
+    auto& new_instance = *new_group.add_instances();
+    new_instance.set_id(instance.instance_id_);
+    new_instance.set_name(instance.per_instance_name_);
+  }
+  return CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
+}
+
 Result<bool> InstanceManager::RemoveInstanceGroup(const std::string& dir) {
   auto group = CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
   return CF_EXPECT(instance_db_.RemoveInstanceGroup(group.GroupName()));
@@ -140,6 +158,11 @@ Result<std::string> InstanceManager::StopBin(
       .artifacts_path = host_android_out,
       .op = "stop",
   }));
+}
+
+Result<void> InstanceManager::UpdateInstanceGroup(const LocalInstanceGroup& group) {
+  CF_EXPECT(instance_db_.UpdateInstanceGroup(group));
+  return {};
 }
 
 Result<void> InstanceManager::IssueStopCommand(

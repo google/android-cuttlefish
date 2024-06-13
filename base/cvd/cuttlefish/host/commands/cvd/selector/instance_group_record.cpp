@@ -59,14 +59,38 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Create(
 
   for (const auto& instance_proto : group_proto.instances()) {
     instances.emplace_back(group_proto, instance_proto);
-    ids.insert(instance_proto.id());
+    auto id = instance_proto.id();
+    if (id != 0) {
+      // Only non-zero ids are checked, zero means no id has been assigned yet.
+      CF_EXPECTF(ids.find(id) == ids.end(),
+                 "Instances must have unique ids, found '{}' repeated", id);
+      ids.insert(id);
+    }
     names.insert(instance_proto.name());
   }
-  CF_EXPECT(ids.size() == (size_t)group_proto.instances_size(),
-            "Instances must have unique ids");
   CF_EXPECT(names.size() == (size_t)group_proto.instances_size(),
             "Instances must have unique names");
   return LocalInstanceGroup(group_proto, instances);
+}
+
+void LocalInstanceGroup::SetHomeDir(const std::string& home_dir) {
+  CHECK(group_proto_.home_directory().empty())
+      << "Home directory can't be changed once set";
+  group_proto_.set_home_directory(home_dir);
+}
+
+void LocalInstanceGroup::SetHostArtifactsPath(
+    const std::string& host_artifacts_path) {
+  CHECK(group_proto_.host_artifacts_path().empty())
+      << "Host artifacts path can't be changed once set";
+  group_proto_.set_host_artifacts_path(host_artifacts_path);
+}
+
+void LocalInstanceGroup::SetProductOutPath(
+    const std::string& product_out_path) {
+  CHECK(group_proto_.product_out_path().empty())
+      << "Product out path can't be changed once set";
+  group_proto_.set_product_out_path(product_out_path);
 }
 
 TimeStamp LocalInstanceGroup::StartTime() const {

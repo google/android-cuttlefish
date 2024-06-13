@@ -51,10 +51,18 @@ class LocalInstance {
   const std::string& InternalName() const;
 
   unsigned InstanceId() const;
+  void SetInstanceId(unsigned id);
+  cvd::InstanceState State() const {
+    return instance_proto_.state();
+  }
+  void SetState(cvd::InstanceState state) {
+    instance_proto_.set_state(state);
+  }
   const std::string& PerInstanceName() const;
   std::string DeviceName() const;
   std::string InternalDeviceName() const { return internal_device_name_; }
   const cvd::InstanceGroup& GroupProto() const { return group_proto_; }
+  const cvd::Instance& Proto() const { return instance_proto_; }
 
  private:
   cvd::Instance instance_proto_;
