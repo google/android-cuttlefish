@@ -574,6 +574,7 @@ android_system_image {
                 "ContactsProvider", // base_system
                 "CredentialManager", // handheld_system
                 "DeviceAsWebcam", // handheld_system
+                "dex_bootjars",
                 "DocumentsUI", // handheld_system
                 "DownloadProvider", // base_system
                 "DownloadProviderUi", // handheld_system
