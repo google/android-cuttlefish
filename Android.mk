@@ -52,8 +52,3 @@ include $(CLEAR_VARS)
 include $(LOCAL_PATH)/host_package.mk
 
 endif
-
-LOCAL_PATH:= $(call my-dir)
-
-include $(CLEAR_VARS)
-include $(call all-makefiles-under,$(LOCAL_PATH))
