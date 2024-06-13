@@ -18,9 +18,22 @@ syntax = "proto3";
 
 package cuttlefish.cvd;
 
+enum InstanceState {
+  INSTANCE_STATE_UNSPECIFIED = 0;
+  INSTANCE_STATE_PREPARING = 1;
+  INSTANCE_STATE_STARTING = 2;
+  INSTANCE_STATE_RUNNING = 3;
+  INSTANCE_STATE_STOPPING = 4;
+  INSTANCE_STATE_STOPPED = 5;
+  INSTANCE_STATE_PREPARE_FAILED = 6;
+  INSTANCE_STATE_BOOT_FAILED = 7;
+  INSTANCE_STATE_UNREACHABLE = 8;
+}
+
 message Instance {
   uint32 id = 1;
   string name = 2;
+  InstanceState state = 3;
 }
 
 message InstanceGroup {

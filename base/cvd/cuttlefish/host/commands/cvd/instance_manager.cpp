@@ -123,6 +123,7 @@ Result<void> InstanceManager::SetInstanceGroup(
     auto& new_instance = *new_group.add_instances();
     new_instance.set_id(instance.instance_id_);
     new_instance.set_name(instance.per_instance_name_);
+    new_instance.set_state(cvd::INSTANCE_STATE_RUNNING);
   }
   CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
   return {};
