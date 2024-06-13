@@ -29,7 +29,6 @@ cc_binary_host {
         "Host_Prebuilt_VehicleHalVendorClusterTestProperties_JSON",
     ],
     static_libs: [
-        "libc++fs",
         "android.hardware.automotive.vehicle@default-grpc-server-lib",
         "FakeVehicleHardware",
     ],
