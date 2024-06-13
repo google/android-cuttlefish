@@ -51,6 +51,7 @@ class InstanceDatabase {
    */
   Result<LocalInstanceGroup> AddInstanceGroup(
       const cvd::InstanceGroup& group_proto);
+  Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
 
   Result<std::vector<LocalInstanceGroup>> InstanceGroups() const;
   Result<bool> RemoveInstanceGroup(const std::string& group_name);

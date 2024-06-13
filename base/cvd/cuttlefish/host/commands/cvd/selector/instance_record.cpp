@@ -32,6 +32,10 @@ LocalInstance::LocalInstance(const cvd::InstanceGroup& parent_group,
 
 unsigned LocalInstance::InstanceId() const { return instance_proto_.id(); }
 
+void LocalInstance::SetInstanceId(unsigned id) {
+  instance_proto_.set_id(id);
+}
+
 const std::string& LocalInstance::InternalName() const {
   return internal_name_;
 }
