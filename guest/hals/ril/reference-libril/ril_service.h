@@ -867,6 +867,19 @@ int getHalDeviceCapabilitiesResponse(int slotId, int responseType, int serial,
 int simSlotsStatusChanged(int slotId, int indicationType, int token,
                           RIL_Errno e, void *response, size_t responseLen);
 
-}   // namespace radio
+}  // namespace radio_1_6
+
+/******************************************************************************/
+/* AIDL-only Radio Indication unsolicited interfaces' handling functions.     */
+/******************************************************************************/
+namespace radio_aidl {
+/* These are not defined in HIDL HALs through version 1.6 but we use the same RIL infrastructure to
+ * coordinate holding a wake lock and invoking these methods. */
+int cellularIdentifierDisclosedInd(int slotId, int indicationType, int token, RIL_Errno e,
+                                   void* response, size_t responselen);
+
+int securityAlgorithmUpdatedInd(int slotId, int indicationType, int token, RIL_Errno e,
+                                void* response, size_t responselen);
+}  // namespace radio_aidl
 
 #endif  // RIL_SERVICE_H
