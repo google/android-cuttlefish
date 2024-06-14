@@ -154,7 +154,7 @@ static Result<void> RunAdbShellCommand(
   adb_command.AddParameter("-s").AddParameter(ins.adb_ip_and_port());
   adb_command.AddParameter("wait-for-device");
 
-  adb_command.AddParameter("shell").AddParameter("cmd");
+  adb_command.AddParameter("shell");
   for (const auto& argument : command_args) {
     adb_command.AddParameter(argument);
   }
@@ -165,11 +165,8 @@ static Result<void> RunAdbShellCommand(
 Result<void> ServerLoopImpl::HandleSuspend(ProcessMonitor& process_monitor) {
   // right order: guest -> host
   LOG(DEBUG) << "Suspending the guest..";
-  CF_EXPECT(RunAdbShellCommand(instance_, {"bluetooth_manager", "disable"}));
-  CF_EXPECT(RunAdbShellCommand(
-      instance_, {"bluetooth_manager", "wait-for-state:STATE_OFF"}));
-  CF_EXPECT(RunAdbShellCommand(instance_, {"uwb", "disable-uwb"}));
-  // right order: guest -> host
+  CF_EXPECT(
+      RunAdbShellCommand(instance_, {"/vendor/bin/snapshot_hook_pre_suspend"}));
   CF_EXPECT(SuspendGuest());
   LOG(DEBUG) << "The guest is suspended.";
   CF_EXPECT(process_monitor.SuspendMonitoredProcesses(),
@@ -185,9 +182,8 @@ Result<void> ServerLoopImpl::HandleResume(ProcessMonitor& process_monitor) {
   LOG(DEBUG) << "The host processes are resumed.";
   LOG(DEBUG) << "Resuming the guest..";
   CF_EXPECT(ResumeGuest());
-  // Resume services after guest has resumed.
-  CF_EXPECT(RunAdbShellCommand(instance_, {"bluetooth_manager", "enable"}));
-  CF_EXPECT(RunAdbShellCommand(instance_, {"uwb", "enable-uwb"}));
+  CF_EXPECT(
+      RunAdbShellCommand(instance_, {"/vendor/bin/snapshot_hook_post_resume"}));
   LOG(DEBUG) << "The guest resumed.";
   return {};
 }
