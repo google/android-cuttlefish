@@ -617,6 +617,7 @@ android_system_image {
                 "PrintRecommendationService", // handheld_system
                 "PrintSpooler", // handheld_system
                 "ProxyHandler", // handheld_system
+                "sanitizer.libraries.txt", // base_system
                 "SecureElement", // handheld_system
                 "selinux_policy_system_soong", // ok
                 "services", // base_system
