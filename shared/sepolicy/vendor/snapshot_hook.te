@@ -1,0 +1,2 @@
+type snapshot_hook_sh, exec_type, vendor_file_type, file_type;
+allow shell snapshot_hook_sh:file { getattr open read execute execute_no_trans };
