@@ -574,6 +574,7 @@ android_system_image {
                 "ContactsProvider", // base_system
                 "CredentialManager", // handheld_system
                 "DeviceAsWebcam", // handheld_system
+                "dex_bootjars",
                 "DocumentsUI", // handheld_system
                 "DownloadProvider", // base_system
                 "DownloadProviderUi", // handheld_system
@@ -617,6 +618,7 @@ android_system_image {
                 "PrintRecommendationService", // handheld_system
                 "PrintSpooler", // handheld_system
                 "ProxyHandler", // handheld_system
+                "sanitizer.libraries.txt", // base_system
                 "SecureElement", // handheld_system
                 "selinux_policy_system_soong", // ok
                 "services", // base_system
