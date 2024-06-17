@@ -46,7 +46,7 @@ class StatusFetcher {
   Result<StatusFetcherOutput> FetchStatus(const RequestWithStdio&);
 
   Result<Json::Value> FetchGroupStatus(
-      const selector::LocalInstanceGroup& group,
+      selector::LocalInstanceGroup& group,
       const RequestWithStdio& original_request);
 
  private:

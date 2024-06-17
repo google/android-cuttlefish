@@ -92,7 +92,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
 
   auto all_groups = CF_EXPECT(instance_manager_.FindGroups({}));
   Json::Value groups_json(Json::arrayValue);
-  for (const auto& group : all_groups) {
+  for (auto& group : all_groups) {
     groups_json.append(
         CF_EXPECT(status_fetcher_.FetchGroupStatus(group, request)));
   }
