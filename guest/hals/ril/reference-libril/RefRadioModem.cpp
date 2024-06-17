@@ -33,19 +33,11 @@ namespace cf::ril {
         };
     }
 
-    hidl_string convertCharPtrToHidlString(const char *ptr) {
-        hidl_string ret;
-        if (ptr != NULL) {
-            ret.setToExternal(ptr, strlen(ptr));
-        }
-        return ret;
-    }
-
     ScopedAStatus RefRadioModem::getImei(int32_t serial) {
         ::aidl::android::hardware::radio::modem::ImeiInfo imeiInfo = {};
         imeiInfo.type = (::aidl::android::hardware::radio::modem::ImeiInfo::ImeiType) 1;
-        imeiInfo.imei = convertCharPtrToHidlString("867400022047199");
-        imeiInfo.svn = convertCharPtrToHidlString("01");
+        imeiInfo.imei = "867400022047199";
+        imeiInfo.svn = "01";
         respond()->getImeiResponse(responseInfo(serial), imeiInfo);
         return ok();
     }

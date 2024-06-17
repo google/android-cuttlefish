@@ -294,6 +294,9 @@ PRODUCT_PACKAGES += \
     com.android.hardware.authsecret
 
 ifndef LOCAL_AUDIO_PRODUCT_PACKAGE
+#
+# Still use HIDL Audio HAL on 'next'
+#
 LOCAL_AUDIO_PRODUCT_PACKAGE += \
     android.hardware.audio.parameter_parser.example_service \
     com.android.hardware.audio
@@ -423,18 +426,14 @@ PRODUCT_COPY_FILES += \
 #
 # Non-secure implementation of AuthGraph HAL for compliance.
 #
-ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
 PRODUCT_PACKAGES += \
     com.android.hardware.security.authgraph
-endif
 
 #
 # Non-secure implementation of Secretkeeper HAL for compliance.
 #
-ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
 PRODUCT_PACKAGES += \
     com.android.hardware.security.secretkeeper
-endif
 
 #
 # Power and PowerStats HALs
@@ -543,6 +542,11 @@ PRODUCT_VENDOR_PROPERTIES += \
 # Enable GPU-intensive background blur support on Cuttlefish when requested by apps
 PRODUCT_VENDOR_PROPERTIES += \
     ro.surface_flinger.supports_background_blur=1
+
+# Set Game Default Frame Rate
+# See b/286084594
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    ro.surface_flinger.game_default_frame_rate_override=60
 
 # Disable GPU-intensive background blur for widget picker
 PRODUCT_SYSTEM_PROPERTIES += \

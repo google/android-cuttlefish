@@ -45,8 +45,10 @@ apex {
         "libcuttlefish-ril-2",
     ],
     prebuilts: [
+        "android.hardware.telephony.carrierlock.prebuilt.xml",
         "android.hardware.telephony.gsm.prebuilt.xml",
         "android.hardware.telephony.ims.prebuilt.xml",
+        "android.hardware.telephony.ims.singlereg.prebuilt.xml",
         "com.google.cf.rild.rc",
         "com.google.cf.rild.xml",
     ],

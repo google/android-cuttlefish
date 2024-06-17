@@ -73,6 +73,8 @@ using PhysicalChannelConfigV1_4 =
     android::hardware::radio::V1_4::PhysicalChannelConfig;
 using RadioTechnologyV1_4 = android::hardware::radio::V1_4::RadioTechnology;
 
+namespace aidl_radio = ::aidl::android::hardware::radio;
+
 #define BOOL_TO_INT(x) (x ? 1 : 0)
 #define ATOI_NULL_HANDLED(x) (x ? atoi(x) : -1)
 #define ATOI_NULL_HANDLED_DEF(x, defaultVal) (x ? atoi(x) : defaultVal)
@@ -202,6 +204,7 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     sp<V1_5::IRadioIndication> mRadioIndicationV1_5;
     sp<V1_6::IRadioResponse> mRadioResponseV1_6;
     sp<V1_6::IRadioIndication> mRadioIndicationV1_6;
+    std::shared_ptr<compat::CallbackManager> mCallbackManager;
 
     Return<void> setResponseFunctions(
             const ::android::sp<IRadioResponse>& radioResponse,
@@ -10659,6 +10662,63 @@ int radio_1_6::networkStateChangedInd(int slotId,
     return 0;
 }
 
+int radio_aidl::cellularIdentifierDisclosedInd(int slotId, int indicationType, int token,
+                                               RIL_Errno e, void* response, size_t responselen) {
+    if (radioService[slotId] == NULL || radioService[slotId]->mCallbackManager == NULL) {
+        RLOGE("cellularIdentifierDisclosedInd: radioService[%d]->mCallbackManager == NULL", slotId);
+        return 0;
+    }
+    auto networkCb = radioService[slotId]->mCallbackManager->indication().networkCb();
+
+    if (!networkCb) {
+        RLOGE("networkCB is null");
+        return 0;
+    }
+
+    RIL_CellularIdentifierDisclosure* rawDisclosure =
+            static_cast<RIL_CellularIdentifierDisclosure*>(response);
+
+    aidl_radio::network::CellularIdentifierDisclosure disclosure;
+    disclosure.identifier =
+            static_cast<aidl_radio::network::CellularIdentifier>(rawDisclosure->identifierType);
+    disclosure.protocolMessage =
+            static_cast<aidl_radio::network::NasProtocolMessage>(rawDisclosure->protocolMessage);
+    disclosure.plmn = rawDisclosure->plmn;
+    disclosure.isEmergency = rawDisclosure->isEmergency;
+
+    networkCb->cellularIdentifierDisclosed(aidl_radio::RadioIndicationType(indicationType),
+                                           disclosure);
+
+    return 0;
+}
+
+int radio_aidl::securityAlgorithmUpdatedInd(int slotId, int indicationType, int token, RIL_Errno e,
+                                            void* response, size_t responselen) {
+    if (radioService[slotId] == NULL || radioService[slotId]->mCallbackManager == NULL) {
+        RLOGE("securityAlgorithmUpdatedInd: radioService[%d]->mCallbackManager == NULL", slotId);
+        return 0;
+    }
+    auto networkCb = radioService[slotId]->mCallbackManager->indication().networkCb();
+
+    if (!networkCb) {
+        RLOGE("networkCB is null");
+        return 0;
+    }
+
+    RIL_SecurityAlgorithmUpdate* rawUpdate = static_cast<RIL_SecurityAlgorithmUpdate*>(response);
+
+    aidl_radio::network::SecurityAlgorithmUpdate update;
+    update.connectionEvent =
+            static_cast<aidl_radio::network::ConnectionEvent>(rawUpdate->connectionEvent);
+    update.encryption = static_cast<aidl_radio::network::SecurityAlgorithm>(rawUpdate->encryption);
+    update.integrity = static_cast<aidl_radio::network::SecurityAlgorithm>(rawUpdate->integrity);
+    update.isUnprotectedEmergency = rawUpdate->isUnprotectedEmergency;
+
+    networkCb->securityAlgorithmsUpdated(aidl_radio::RadioIndicationType(indicationType), update);
+
+    return 0;
+}
+
 extern "C" uint8_t hexCharToInt(uint8_t c) {
     if (c >= '0' && c <= '9') return (c - '0');
     if (c >= 'A' && c <= 'F') return (c - 'A' + 10);
@@ -13439,6 +13499,7 @@ void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
         const auto slot = serviceNames[i];
         auto context = std::make_shared<compat::DriverContext>();
         auto callbackMgr = std::make_shared<compat::CallbackManager>(context, radioHidl);
+        radioService[i]->mCallbackManager = callbackMgr;
         publishRadioHal<compat::RadioData>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<compat::RadioMessaging>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<compat::RadioModem>(context, radioHidl, callbackMgr, slot);
