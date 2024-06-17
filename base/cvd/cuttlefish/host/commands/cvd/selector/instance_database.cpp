@@ -71,11 +71,6 @@ Result<LocalInstanceGroup> InstanceDatabase::AddInstanceGroup(
   CF_EXPECTF(EnsureDirectoryExists(group_proto.home_directory()),
              "HOME dir, \"{}\" neither exists nor can be created.",
              group_proto.home_directory());
-  if (!group_proto.host_artifacts_path().empty()) {
-    CF_EXPECTF(PotentiallyHostArtifactsPath(group_proto.host_artifacts_path()),
-               "ANDROID_HOST_OUT, \"{}\" is not a tool directory",
-               group_proto.host_artifacts_path());
-  }
   for (const auto& instance_proto : group_proto.instances()) {
     CF_EXPECTF(IsValidInstanceName(instance_proto.name()),
                "instance_name \"{}\" is invalid", instance_proto.name());
@@ -110,11 +105,6 @@ Result<LocalInstanceGroup> InstanceDatabase::AddInstanceGroup(
 
 Result<void> InstanceDatabase::UpdateInstanceGroup(
     const LocalInstanceGroup& group) {
-  if (!group.HostArtifactsPath().empty()) {
-    CF_EXPECTF(PotentiallyHostArtifactsPath(group.HostArtifactsPath()),
-               "ANDROID_HOST_OUT, \"{}\" is not a tool directory",
-               group.HostArtifactsPath());
-  }
   auto add_res = viewer_.WithExclusiveLock<void>(
       [&group](cvd::PersistentData& data) -> Result<void> {
         for (auto& group_proto : *data.mutable_instance_groups()) {

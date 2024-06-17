@@ -99,10 +99,6 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
                  << invalid_host_artifacts_path + "/bin";
   }
 
-  auto result_bad_host_bin_dir = db.AddInstanceGroup(
-      GroupProtoWithInstances("meow", home, "/path/to/never/exists",
-                              "/path/to/never/exists", {{1, "name"}}));
-
   auto result_bad_group_name = db.AddInstanceGroup(
       GroupProtoWithInstances("0invalid_group_name", home, HostArtifactsPath(),
                               HostArtifactsPath(), {{2, "name"}}));
@@ -113,7 +109,6 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
       GroupProtoWithInstances("0invalid_group_name", home, HostArtifactsPath(),
                               HostArtifactsPath(), {{2, "name"}}));
 
-  ASSERT_FALSE(result_bad_host_bin_dir.ok());
   ASSERT_FALSE(result_bad_group_name.ok());
   ASSERT_FALSE(result_non_qualifying_host_tool_dir.ok());
 }

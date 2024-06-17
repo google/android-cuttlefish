@@ -55,12 +55,6 @@ struct DeviceName {
 Result<DeviceName> BreakDeviceName(const std::string& device_name);
 
 /**
- * Runs simple tests to see if it could potentially be a host artifacts dir
- *
- */
-bool PotentiallyHostArtifactsPath(const std::string& host_binaries_dir);
-
-/**
  * simply returns:
  *
  * "Only up to n must match" or
