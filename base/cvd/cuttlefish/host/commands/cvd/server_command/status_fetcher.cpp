@@ -224,7 +224,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
 }
 
 Result<Json::Value> StatusFetcher::FetchGroupStatus(
-    const selector::LocalInstanceGroup& group,
+    selector::LocalInstanceGroup& group,
     const RequestWithStdio& original_request) {
   Json::Value group_json(Json::objectValue);
   group_json["group_name"] = group.GroupName();
@@ -241,10 +241,20 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
                                  original_request.FileDescriptors()};
   auto [_, instances_json, group_response] =
       CF_EXPECT(FetchStatus(group_request));
-  CF_EXPECT(
-      group_response.status().code() == cvd::Status::OK,
-      fmt::format("Running `cvd status --all_instances` for group \"{}\" failed",
-                  group.GroupName()));
+  if (group_response.status().code() != cvd::Status::OK) {
+    group.SetAllStates(cvd::INSTANCE_STATE_UNREACHABLE);
+    CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+    instances_json = Json::Value(Json::arrayValue);
+    for (const auto& instance: group.Instances()) {
+      Json::Value instance_json;
+      instance_json["instance_name"] = instance.PerInstanceName();
+      instances_json.append(instance_json);
+    }
+  }
+  for (size_t i = 0; i < group.Instances().size(); ++i) {
+    instances_json[(int)i]["status"] =
+        cvd::InstanceState_Name(group.Instances()[i].State());
+  }
   group_json["instances"] = instances_json;
   return group_json;
 }
