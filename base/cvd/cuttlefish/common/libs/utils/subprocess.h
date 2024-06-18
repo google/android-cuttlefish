@@ -315,6 +315,7 @@ class Command {
   std::string AsBashScript(const std::string& redirected_stdio_path = "") const;
 
  private:
+  friend std::ostream& operator<<(std::ostream& out, const Command& command);
   std::optional<std::string> executable_;  // When unset, use command_[0]
   std::vector<std::string> command_;
   std::vector<std::function<Result<void>()>> prerequisites_;
@@ -324,6 +325,8 @@ class Command {
   SubprocessStopper subprocess_stopper_;
   SharedFD working_directory_;
 };
+std::ostream& operator<<(std::ostream& out, const Command& command);
+
 
 /*
  * Consumes a Command and runs it, optionally managing the stdio channels.
