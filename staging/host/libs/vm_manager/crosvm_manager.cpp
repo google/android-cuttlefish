@@ -44,6 +44,7 @@
 #include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_builder.h"
 #include "host/libs/vm_manager/qemu_manager.h"
+#include "host/libs/vm_manager/vhost_user.h"
 
 namespace cuttlefish {
 namespace vm_manager {
@@ -208,10 +209,6 @@ Result<std::string> CrosvmPathForVhostUserGpu(const CuttlefishConfig& config) {
                                        << " for vhost user gpu crosvm");
 }
 
-struct VhostUserDeviceCommands {
-  Command device_cmd;
-  Command device_logs_cmd;
-};
 Result<VhostUserDeviceCommands> BuildVhostUserGpu(
     const CuttlefishConfig& config, Command* main_crosvm_cmd) {
   const auto& instance = config.ForDefaultInstance();
@@ -347,6 +344,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
   return VhostUserDeviceCommands{
       .device_cmd = std::move(gpu_device_cmd.Cmd()),
       .device_logs_cmd = std::move(gpu_device_logs_cmd),
+      .socket_path = gpu_device_socket_path,
   };
 }
 
@@ -433,6 +431,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     std::vector<VmmDependencyCommand*>& dependencyCommands) {
   auto instance = config.ForDefaultInstance();
   auto environment = config.ForDefaultEnvironment();
+
+  std::vector<MonitorCommand> commands;
 
   CrosvmBuilder crosvm_cmd;
   crosvm_cmd.Cmd().AddPrerequisite([&dependencyCommands]() -> Result<void> {
@@ -540,12 +540,31 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   CF_EXPECT(VmManager::kMaxDisks >= disk_num,
             "Provided too many disks (" << disk_num << "), maximum "
                                         << VmManager::kMaxDisks << "supported");
+  size_t disk_i = 0;
   for (const auto& disk : instance.virtual_disk_paths()) {
     if (instance.protected_vm()) {
       crosvm_cmd.AddReadOnlyDisk(disk);
+    } else if (instance.vhost_user_block() && disk_i == 2) {
+      // TODO: b/346855591 - Run on all devices
+      auto block = CF_EXPECT(VhostUserBlockDevice(config, disk_i, disk));
+      commands.emplace_back(std::move(block.device_cmd));
+      commands.emplace_back(std::move(block.device_logs_cmd));
+      auto socket_path = std::move(block.socket_path);
+      crosvm_cmd.Cmd().AddPrerequisite([socket_path]() -> Result<void> {
+#ifdef __linux__
+        return WaitForUnixSocketListeningWithoutConnect(socket_path,
+                                                        /*timeoutSec=*/30);
+#else
+        return CF_ERR("Unhandled check if vhost user block ready.");
+#endif
+      });
+      auto pci_addr = fmt::format("00:{:0>2x}.0", 0x13 + disk_i);
+      crosvm_cmd.Cmd().AddParameter("--vhost-user=block,socket=", socket_path,
+                                    ",pci-address=", pci_addr);
     } else {
       crosvm_cmd.AddReadWriteDisk(disk);
     }
+    disk_i++;
   }
 
   if (instance.enable_webrtc()) {
@@ -831,8 +850,6 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   // This needs to be the last parameter
   crosvm_cmd.Cmd().AddParameter("--bios=", instance.bootloader());
-
-  std::vector<MonitorCommand> commands;
 
   if (vhost_user_gpu) {
     // The vhost user gpu crosvm command should be added before the main

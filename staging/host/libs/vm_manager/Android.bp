@@ -26,6 +26,7 @@ cc_library {
         "host_configuration.cpp",
         "pci.cpp",
         "qemu_manager.cpp",
+        "vhost_user_block.cpp",
         "vm_manager.cpp",
     ],
     header_libs: [
