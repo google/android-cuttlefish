@@ -968,6 +968,15 @@ bool CuttlefishConfig::InstanceSpecific::fail_fast() const {
   return (*Dictionary())[kFailFast].asBool();
 }
 
+static constexpr char kVhostUserBlock[] = "vhost_user_block";
+void CuttlefishConfig::MutableInstanceSpecific::set_vhost_user_block(
+    bool block) {
+  (*Dictionary())[kVhostUserBlock] = block;
+}
+bool CuttlefishConfig::InstanceSpecific::vhost_user_block() const {
+  return (*Dictionary())[kVhostUserBlock].asBool();
+}
+
 static constexpr char kEnableWebRTC[] = "enable_webrtc";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_webrtc(bool enable_webrtc) {
   (*Dictionary())[kEnableWebRTC] = enable_webrtc;
