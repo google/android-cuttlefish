@@ -40,6 +40,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/vm_manager/vhost_user.h"
 
 namespace cuttlefish {
 namespace vm_manager {
@@ -220,7 +221,9 @@ QemuManager::ConfigureBootDevices(
 }
 
 Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
-    const CuttlefishConfig& config, std::vector<VmmDependencyCommand*>&) {
+    const CuttlefishConfig& config,
+    std::vector<VmmDependencyCommand*>& dependency_commands) {
+  std::vector<MonitorCommand> commands;
   auto instance = config.ForDefaultInstance();
   std::string qemu_binary = instance.qemu_binary_dir();
   switch (arch_) {
@@ -243,6 +246,14 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   auto qemu_version = CF_EXPECT(GetQemuVersion(qemu_binary));
   Command qemu_cmd(qemu_binary, KillSubprocessFallback(Stop));
+
+  qemu_cmd.AddPrerequisite([&dependency_commands]() -> Result<void> {
+    for (auto dependencyCommand : dependency_commands) {
+      CF_EXPECT(dependencyCommand->WaitForAvailability());
+    }
+
+    return {};
+  });
 
   int hvc_num = 0;
   int serial_num = 0;
@@ -621,17 +632,39 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   auto readonly = instance.protected_vm() ? ",readonly" : "";
   size_t i = 0;
   for (const auto& disk : instance.virtual_disk_paths()) {
-    qemu_cmd.AddParameter("-drive");
-    qemu_cmd.AddParameter("file=", disk, ",if=none,id=drive-virtio-disk", i,
-                          ",aio=threads", readonly);
-    qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter(
-#ifdef __APPLE__
-        "virtio-blk-pci-non-transitional,drive=drive-virtio-disk", i,
+    if (instance.vhost_user_block()) {
+      auto block = CF_EXPECT(VhostUserBlockDevice(config, i, disk));
+      commands.emplace_back(std::move(block.device_cmd));
+      commands.emplace_back(std::move(block.device_logs_cmd));
+      auto socket_path = std::move(block.socket_path);
+      qemu_cmd.AddPrerequisite([socket_path]() -> Result<void> {
+#ifdef __linux__
+        return WaitForUnixSocketListeningWithoutConnect(socket_path,
+                                                        /*timeoutSec=*/30);
 #else
-        "virtio-blk-pci-non-transitional,scsi=off,drive=drive-virtio-disk", i,
+        return CF_ERR("Unhandled check if vhost user block ready.");
 #endif
-        ",id=virtio-disk", i, (i == 0 ? ",bootindex=1" : ""));
+      });
+
+      qemu_cmd.AddParameter("-chardev");
+      qemu_cmd.AddParameter("socket,id=vhost-user-block-", i,
+                            ",path=", socket_path);
+      qemu_cmd.AddParameter("-device");
+      qemu_cmd.AddParameter(
+          "vhost-user-blk-pci-non-transitional,chardev=vhost-user-block-", i);
+    } else {
+      qemu_cmd.AddParameter("-drive");
+      qemu_cmd.AddParameter("file=", disk, ",if=none,id=drive-virtio-disk", i,
+                            ",aio=threads", readonly);
+      qemu_cmd.AddParameter("-device");
+      qemu_cmd.AddParameter(
+#ifdef __APPLE__
+          "virtio-blk-pci-non-transitional,drive=drive-virtio-disk", i,
+#else
+          "virtio-blk-pci-non-transitional,scsi=off,drive=drive-virtio-disk", i,
+#endif
+          ",id=virtio-disk", i, (i == 0 ? ",bootindex=1" : ""));
+    }
     ++i;
   }
 
@@ -808,7 +841,6 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("tcp::", instance.gdb_port());
   }
 
-  std::vector<MonitorCommand> commands;
   commands.emplace_back(std::move(qemu_cmd), true);
   return commands;
 }
