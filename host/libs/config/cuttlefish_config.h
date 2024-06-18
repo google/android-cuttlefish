@@ -583,6 +583,7 @@ class CuttlefishConfig {
     bool mte() const;
     std::string boot_slot() const;
     bool fail_fast() const;
+    bool vhost_user_block() const;
 
     // Kernel and bootloader logging
     bool enable_kernel_log() const;
@@ -801,6 +802,7 @@ class CuttlefishConfig {
     void set_boot_slot(const std::string& boot_slot);
     void set_grpc_socket_path(const std::string& sockets);
     void set_fail_fast(bool fail_fast);
+    void set_vhost_user_block(bool qemu_vhost_user_block);
 
     // Kernel and bootloader logging
     void set_enable_kernel_log(bool enable_kernel_log);
