@@ -642,7 +642,12 @@ android_system_image {
                 "voip-common", // base_system
                 "VpnDialogs", // handheld_system
                 "WallpaperBackup", // base_system
-            ],
+            ] + select(soong_config_variable("ANDROID", "release_crashrecovery_module"), {
+                "true": [
+                    "com.android.crashrecovery", // base_system (RELEASE_CRASHRECOVERY_MODULE)
+                ],
+                default: [],
+            }),
         },
         prefer32: {
             deps: [
