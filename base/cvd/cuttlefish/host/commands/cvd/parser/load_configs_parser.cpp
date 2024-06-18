@@ -18,7 +18,6 @@
 
 #include <unistd.h>
 
-#include <chrono>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -168,11 +167,6 @@ std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
                          .Help("Use --override=<config_identifier>:<new_value> "
                                "to override config values"));
   return flags;
-}
-
-std::string DefaultBaseDir() {
-  auto time = std::chrono::system_clock::now().time_since_epoch().count();
-  return fmt::format("{}/{}", PerUserDir(), time);
 }
 
 void MakeAbsolute(std::string& path, const std::string& working_dir) {
