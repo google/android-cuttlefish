@@ -22,13 +22,19 @@
     - Context to audio bus mappings (in each volume group)
   in the car environment.
 -->
-<carAudioConfiguration version="3">
+<carAudioConfiguration version="4">
+    <activationVolumeConfigs>
+        <activationVolumeConfig name="activation_volume_on_boot_config">
+            <activationVolumeConfigEntry minActivationVolumePercentage="20"
+                maxActivationVolumePercentage="90" invocationType="onPlaybackChanged" />
+        </activationVolumeConfig>
+    </activationVolumeConfigs>
     <zones>
         <zone name="Primary zone" isPrimary="true" occupantZoneId="0">
             <zoneConfigs>
                 <zoneConfig name="Config 0" isDefault="true">
                     <volumeGroups>
-                        <group>
+                        <group activationConfig="activation_volume_on_boot_config">
                             <device address="Speaker">
                                 <context context="music"/>
                                 <context context="navigation"/>

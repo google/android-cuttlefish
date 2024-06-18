@@ -20,7 +20,7 @@
 
 # Some targets still require 32 bit, and 6.6 kernels don't support
 # 32 bit devices (Wear, Go, Auto)
-ifneq (,$(findstring gwear_x86,$(PRODUCT_NAME)))
+ifeq (true,$(CLOCKWORK_EMULATOR_PRODUCT))
 TARGET_KERNEL_USE ?= 6.1
 else ifneq (,$(findstring x86_phone,$(PRODUCT_NAME)))
 TARGET_KERNEL_USE ?= 6.1
