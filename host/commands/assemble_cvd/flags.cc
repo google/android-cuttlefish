@@ -518,6 +518,9 @@ DEFINE_vec(
     fail_fast, CF_DEFAULTS_FAIL_FAST ? "true" : "false",
     "Whether to exit when a heuristic predicts the boot will not complete");
 
+DEFINE_vec(vhost_user_block, CF_DEFAULTS_VHOST_USER_BLOCK ? "true" : "false",
+           "(experimental) use crosvm vhost-user block device implementation ");
+
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
@@ -1229,6 +1232,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   std::vector<bool> fail_fast_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(fail_fast));
 
+  std::vector<bool> vhost_user_block_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(vhost_user_block));
+
   std::vector<std::string> mcu_config_vec = CF_EXPECT(GET_FLAG_STR_VALUE(mcu_config_path));
 
   std::string default_enable_sandbox = "";
@@ -1474,6 +1480,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_blank_data_image_mb(blank_data_image_mb_vec[instance_index]);
     instance.set_gdb_port(gdb_port_vec[instance_index]);
     instance.set_fail_fast(fail_fast_vec[instance_index]);
+    if (vhost_user_block_vec[instance_index]) {
+      CF_EXPECT_EQ(tmp_config_obj.vm_manager(), VmmMode::kCrosvm,
+                   "vhost-user block only supported on crosvm");
+    }
+    instance.set_vhost_user_block(vhost_user_block_vec[instance_index]);
 
     std::optional<std::vector<CuttlefishConfig::DisplayConfig>>
         binding_displays_configs;
