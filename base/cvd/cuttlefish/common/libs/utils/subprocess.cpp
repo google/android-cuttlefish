@@ -513,6 +513,10 @@ Subprocess Command::Start(SubprocessOptions options) const {
   return Subprocess(pid, subprocess_stopper_);
 }
 
+std::ostream& operator<<(std::ostream& out, const Command& command) {
+  return out << android::base::Join(command.command_, " ");
+}
+
 std::string Command::AsBashScript(
     const std::string& redirected_stdio_path) const {
   CHECK(inherited_fds_.empty())
