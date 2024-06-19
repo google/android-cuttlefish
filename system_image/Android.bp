@@ -320,7 +320,6 @@ android_system_image {
         "android_vintf_manifest",
         "android.system.suspend-service",
         "apexd",
-        "app_process",
         "appops",
         "appwidget",
         "atrace",
@@ -331,7 +330,6 @@ android_system_image {
         "bmgr",
         "bootanimation",
         "bootstat",
-        "boringssl_self_test",
         "bpfloader",
         "bu",
         "bugreport",
@@ -401,7 +399,6 @@ android_system_image {
         "libaaudio",
         "libalarm_jni",
         "libamidi",
-        "linker", // ok
         "llkd", // base_system
         "lmkd", // base_system
         "local_time.default", // handheld_vendo
@@ -583,6 +580,7 @@ android_system_image {
                 "DownloadProvider", // base_system
                 "DownloadProviderUi", // handheld_system
                 "DynamicSystemInstallationService", // base_system
+                "E2eeContactKeysProvider", // base_system
                 "EasterEgg", // handheld_system
                 "ext", // from runtime_libart
                 "ExternalStorageProvider", // handheld_system
@@ -657,13 +655,14 @@ android_system_image {
         },
         lib64: {
             deps: [
-                "boringssl_self_test",
                 "libgsi",
                 "servicemanager",
             ],
         },
         both: {
             deps: [
+                "app_process", // base_system
+                "boringssl_self_test", // base_system
                 "libandroid_runtime",
                 "libandroid_servers",
                 "libandroid",
@@ -752,6 +751,7 @@ android_system_image {
                 "libwebviewchromium_loader", // media_system
                 "libwebviewchromium_plat_support", // media_system
                 "libwilhelm", // base_system
+                "linker", // base_system
             ] + select(soong_config_variable("ANDROID", "TARGET_DYNAMIC_64_32_DRMSERVER"), {
                 "true": ["drmserver"],
                 default: [],
