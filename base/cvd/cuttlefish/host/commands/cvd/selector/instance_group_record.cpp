@@ -93,8 +93,18 @@ void LocalInstanceGroup::SetProductOutPath(
   group_proto_.set_product_out_path(product_out_path);
 }
 
+void LocalInstanceGroup::SetAllStates(cvd::InstanceState state) {
+  for (auto& instance: Instances()) {
+    instance.SetState(state);
+  }
+}
+
 TimeStamp LocalInstanceGroup::StartTime() const {
   return CvdServerClock::from_time_t(group_proto_.start_time_sec());
+}
+
+void LocalInstanceGroup::SetStartTime(TimeStamp time) {
+  group_proto_.set_start_time_sec(CvdServerClock::to_time_t(time));
 }
 
 LocalInstanceGroup::LocalInstanceGroup(

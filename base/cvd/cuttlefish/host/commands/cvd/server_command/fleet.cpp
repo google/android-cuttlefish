@@ -94,7 +94,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   Json::Value groups_json(Json::arrayValue);
   for (auto& group : all_groups) {
     groups_json.append(
-        CF_EXPECT(status_fetcher_.FetchGroupStatus(group, request)));
+        CF_EXPECT(status_fetcher_.FetchGroupStatus(request, group)));
   }
   Json::Value output_json(Json::objectValue);
   output_json["groups"] = groups_json;

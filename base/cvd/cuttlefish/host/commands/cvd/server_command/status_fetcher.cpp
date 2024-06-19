@@ -16,11 +16,14 @@
 
 #include "host/commands/cvd/server_command/status_fetcher.h"
 
+#include <cctype>
 #include <map>
 #include <mutex>
 #include <sstream>
+#include <string>
 #include <vector>
 
+#include <android-base/strings.h>
 #include <fmt/core.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -43,6 +46,33 @@ struct IdAndPerInstanceName {
   unsigned id;
 };
 
+// The most important thing this function does is turn "INSTANCE_STATE_RUNNING"
+// into "Running". Some external tools (like the host orchestrator) already
+// depend on this string.
+std::string HumanFriendlyStateName(cvd::InstanceState state) {
+  std::string name = cvd::InstanceState_Name(state);
+  // Drop the enum name prefix
+  std::string_view prefix = "INSTANCE_STATE_";
+  if (android::base::StartsWith(name, prefix)) {
+    name = name.substr(prefix.size());
+  }
+
+  for (size_t i = 0; i < name.size(); ++i) {
+    // Replace underscores with spaces
+    if (name[i] == '_') {
+      name[i] = ' ';
+      continue;
+    }
+    // All characters but the first of each word should be lowercase
+    bool first = (i == 0 || name[i-1] == ' ');
+    if (!first) {
+      name[i] = std::tolower(static_cast<unsigned char>(name[i]));
+    }
+  }
+
+  return name;
+}
+
 }  // namespace
 
 Result<void> StatusFetcher::Interrupt() {
@@ -64,9 +94,22 @@ static Result<SharedFD> CreateFileToRedirect(
 }
 
 Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
-    const RequestWithStdio& request,
-    const InstanceManager::LocalInstanceGroup& instance_group,
-    const std::string& per_instance_name, const unsigned id) {
+    const RequestWithStdio& request, InstanceManager::LocalInstance& instance) {
+  // Only running instances are capable of responding to status requests
+  if (instance.State() != cvd::INSTANCE_STATE_RUNNING) {
+    Json::Value instance_json;
+    instance_json["instance_name"] = instance.PerInstanceName();
+    instance_json["status"] = HumanFriendlyStateName(instance.State());
+    cvd::Response response;
+    response.mutable_command_response();  // set oneof field
+    response.mutable_status()->set_code(cvd::Status::OK);
+    return StatusFetcherOutput{
+        .stderr_buf = "",
+        .json_from_stdout = instance_json,
+        .response = response,
+    };
+  }
+
   std::unique_lock interrupt_lock(interruptible_);
   CF_EXPECT(!interrupted_, "Interrupted");
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
@@ -79,8 +122,8 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   const auto working_dir =
       request.Message().command_request().working_directory();
 
-  auto android_host_out = instance_group.HostArtifactsPath();
-  auto home = instance_group.HomeDir();
+  auto android_host_out = instance.GroupProto().host_artifacts_path();
+  auto home = instance.GroupProto().home_directory();
   auto bin = CF_EXPECT(GetBin(android_host_out));
   auto bin_path = fmt::format("{}/bin/{}", android_host_out, bin);
 
@@ -88,7 +131,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
       cvd_common::ConvertToEnvs(request.Message().command_request().env());
   envs["HOME"] = home;
   // old cvd_internal_status expects CUTTLEFISH_INSTANCE=<k>
-  envs[kCuttlefishInstanceEnvVarName] = std::to_string(id);
+  envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.InstanceId());
 
   SharedFD redirect_stdout_fd = CF_EXPECT(CreateFileToRedirect("stdout"));
   SharedFD redirect_stderr_fd = CF_EXPECT(CreateFileToRedirect("stderr"));
@@ -137,11 +180,15 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
     // the instance name.
     instance_status_json[kWebrtcProp] = instance_status_json[kNameProp];
   }
-  instance_status_json[kNameProp] = per_instance_name;
+  instance_status_json[kNameProp] = instance.PerInstanceName();
 
   auto response = ResponseFromSiginfo(infop);
   if (response.status().code() != cvd::Status::OK) {
+    instance.SetState(cvd::INSTANCE_STATE_UNREACHABLE);
+    instance_manager_.UpdateInstance(instance);
     instance_status_json["warning"] = "cvd status failed";
+    instance_status_json["instance_name"] = instance.PerInstanceName();
+    instance_status_json["status"] = HumanFriendlyStateName(instance.State());
   }
 
   return StatusFetcherOutput{
@@ -172,43 +219,35 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
   auto instance_group =
       CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs));
 
-  std::vector<IdAndPerInstanceName> instance_infos;
+  std::vector<InstanceManager::LocalInstance> instances;
   auto instance_record_result =
       instance_manager_.SelectInstance(selector_args, envs);
 
   bool status_the_group_flag = all_instances_opt && *all_instances_opt;
   if (instance_record_result.ok() && !status_the_group_flag) {
-    instance_infos.emplace_back(
-        instance_record_result->PerInstanceName(),
-        static_cast<unsigned>(instance_record_result->InstanceId()));
+    instances.emplace_back(*instance_record_result);
   } else {
-    auto instances = CF_EXPECT(instance_manager_.FindInstances(
+    auto group_instances = CF_EXPECT(instance_manager_.FindInstances(
         {selector::kGroupNameField, instance_group.GroupName()}));
     if (status_the_group_flag) {
-      instance_infos.reserve(instances.size());
-      for (const auto& instance : instances) {
-        instance_infos.emplace_back(
-            instance.PerInstanceName(),
-            static_cast<unsigned>(instance.InstanceId()));
-      }
+      instances = std::move(group_instances);
     } else {
-      std::map<int, std::string> sorted_id_name_map;
-      for (const auto& instance : instances) {
-        sorted_id_name_map[instance.InstanceId()] = instance.PerInstanceName();
+      std::map<int, const InstanceManager::LocalInstance&>
+          sorted_id_instance_map;
+      for (const auto& instance : group_instances) {
+        sorted_id_instance_map.emplace(instance.InstanceId(), instance);
       }
-      auto first_itr = sorted_id_name_map.begin();
-      instance_infos.emplace_back(first_itr->second, first_itr->first);
+      auto first_itr = sorted_id_instance_map.begin();
+      instances.emplace_back(first_itr->second);
     }
   }
   interrupt_lock.unlock();
 
   std::string entire_stderr_msg;
   Json::Value instances_json(Json::arrayValue);
-  for (const auto& instance_info : instance_infos) {
+  for (auto& instance : instances) {
     auto [status_stderr, instance_status_json, response] =
-        CF_EXPECT(FetchOneInstanceStatus(request, instance_group,
-                                         instance_info.per_instance_name,
-                                         instance_info.id));
+        CF_EXPECT(FetchOneInstanceStatus(request, instance));
     instances_json.append(instance_status_json);
     entire_stderr_msg.append(status_stderr);
   }
@@ -224,8 +263,8 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
 }
 
 Result<Json::Value> StatusFetcher::FetchGroupStatus(
-    selector::LocalInstanceGroup& group,
-    const RequestWithStdio& original_request) {
+    const RequestWithStdio& original_request,
+    selector::LocalInstanceGroup& group) {
   Json::Value group_json(Json::objectValue);
   group_json["group_name"] = group.GroupName();
   group_json["start_time"] = selector::Format(group.StartTime());
@@ -241,20 +280,6 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
                                  original_request.FileDescriptors()};
   auto [_, instances_json, group_response] =
       CF_EXPECT(FetchStatus(group_request));
-  if (group_response.status().code() != cvd::Status::OK) {
-    group.SetAllStates(cvd::INSTANCE_STATE_UNREACHABLE);
-    CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
-    instances_json = Json::Value(Json::arrayValue);
-    for (const auto& instance: group.Instances()) {
-      Json::Value instance_json;
-      instance_json["instance_name"] = instance.PerInstanceName();
-      instances_json.append(instance_json);
-    }
-  }
-  for (size_t i = 0; i < group.Instances().size(); ++i) {
-    instances_json[(int)i]["status"] =
-        cvd::InstanceState_Name(group.Instances()[i].State());
-  }
   group_json["instances"] = instances_json;
   return group_json;
 }
