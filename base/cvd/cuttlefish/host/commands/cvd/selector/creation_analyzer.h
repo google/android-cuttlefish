@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 
-#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -26,6 +25,7 @@
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unique_resource_allocator.h"
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/start_selector_parser.h"
 
@@ -35,16 +35,22 @@ namespace selector {
 struct PerInstanceInfo {
   // for the sake of std::vector::emplace_back
   PerInstanceInfo(const unsigned id, const std::string& per_instance_name,
+                  cvd::InstanceState initial_state,
                   InstanceLockFile&& instance_file_lock)
       : instance_id_(id),
         per_instance_name_(per_instance_name),
+        initial_state_(initial_state),
         instance_file_lock_(std::move(instance_file_lock)) {}
 
-  PerInstanceInfo(const unsigned id, const std::string& per_instance_name)
-      : instance_id_(id), per_instance_name_(per_instance_name) {}
+  PerInstanceInfo(const unsigned id, const std::string& per_instance_name,
+                  cvd::InstanceState initial_state)
+      : instance_id_(id),
+        per_instance_name_(per_instance_name),
+        initial_state_(initial_state) {}
 
   const unsigned instance_id_;
   const std::string per_instance_name_;
+  const cvd::InstanceState initial_state_;
   std::optional<InstanceLockFile> instance_file_lock_;
 };
 
@@ -60,9 +66,6 @@ struct GroupCreationInfo {
   std::string product_out_path;
   std::string group_name;
   std::vector<PerInstanceInfo> instances;
-  std::vector<std::string> args;
-  std::unordered_map<std::string, std::string> envs;
-  bool is_default_group { false };
 };
 
 /**
@@ -106,9 +109,11 @@ class CreationAnalyzer {
     const bool default_group;
   };
 
-  static Result<GroupCreationInfo> Analyze(
+  static Result<CreationAnalyzer> Create(
       const CreationAnalyzerParam& param,
       InstanceLockFileManager& instance_lock_file_manager);
+
+  Result<GroupCreationInfo> ExtractGroupInfo();
 
  private:
   using IdAllocator = UniqueResourceAllocator<unsigned>;
@@ -116,8 +121,6 @@ class CreationAnalyzer {
   CreationAnalyzer(const CreationAnalyzerParam& param,
                    StartSelectorParser&& selector_options_parser,
                    InstanceLockFileManager& instance_lock_file_manager);
-
-  Result<GroupCreationInfo> Analyze();
 
   /**
    * calculate n_instances_ and instance_ids_
@@ -151,21 +154,8 @@ class CreationAnalyzer {
   Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal(
       const std::vector<unsigned>& requested_instance_ids);
 
-  /*
-   * Adds --webrtc_device_id when necessary to cmd_args_
-   */
-  Result<std::vector<std::string>> UpdateWebrtcDeviceId(
-      std::vector<std::string>&& args,
-      const std::vector<PerInstanceInfo>& per_instance_info);
-
   // inputs
-  std::vector<std::string> cmd_args_;
   std::unordered_map<std::string, std::string> envs_;
-  std::vector<std::string> selector_args_;
-
-  // information to return later
-  std::string home_;
-  std::string group_name_;
 
   // internal, temporary
   StartSelectorParser selector_options_parser_;

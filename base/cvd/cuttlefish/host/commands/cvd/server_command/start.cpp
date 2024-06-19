@@ -39,10 +39,12 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/signals.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/reset_client_utils.h"
-#include "host/commands/cvd/selector/selector_constants.h"
+#include "host/commands/cvd/selector/creation_analyzer.h"
+#include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/status_fetcher.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
@@ -176,6 +178,82 @@ bool PotentiallyHostArtifactsPath(const std::string& host_artifacts_path) {
                         std::back_inserter(result));
   return !result.empty();
 }
+
+Result<void> UpdateWebrtcDeviceId(cvd_common::Args& args,
+                                  const selector::LocalInstanceGroup& group) {
+  std::string flag_value;
+  std::vector<Flag> webrtc_device_id_flag{
+      GflagsCompatFlag("webrtc_device_id", flag_value)};
+  // ConsumeFlags modifies args, a copy is needed because only the presence
+  // of the flag is being tested.
+  std::vector<std::string> copied_args{args};
+  CF_EXPECT(ConsumeFlags(webrtc_device_id_flag, copied_args));
+
+  if (!flag_value.empty()) {
+    return {};
+  }
+
+  CF_EXPECT(!group.GroupName().empty());
+  std::vector<std::string> device_name_list;
+  for (const auto& instance : group.Instances()) {
+    std::string device_name =
+        group.GroupName() + "-" + instance.PerInstanceName();
+    device_name_list.push_back(device_name);
+  }
+  // take --webrtc_device_id flag away
+  args.push_back("--webrtc_device_id=" +
+                 android::base::Join(device_name_list, ","));
+  return {};
+}
+
+/*
+ * 1. Remove --num_instances, --instance_nums, --base_instance_num if any.
+ * 2. If the ids are consecutive and ordered, add:
+ *   --base_instance_num=min --num_instances=ids.size()
+ * 3. If not, --instance_nums=<ids>
+ *
+ */
+static Result<void> UpdateInstanceArgs(
+    cvd_common::Args& args, const selector::LocalInstanceGroup& group) {
+  CF_EXPECT(!group.Instances().empty());
+
+  std::string old_instance_nums;
+  std::string old_num_instances;
+  std::string old_base_instance_num;
+
+  std::vector<Flag> instance_id_flags{
+      GflagsCompatFlag("instance_nums", old_instance_nums),
+      GflagsCompatFlag("num_instances", old_num_instances),
+      GflagsCompatFlag("base_instance_num", old_base_instance_num)};
+  // discard old ones
+  CF_EXPECT(ConsumeFlags(instance_id_flags, args));
+
+  std::vector<unsigned> ids;
+  for (const auto& instance : group.Instances()) {
+    ids.push_back(instance.InstanceId());
+  }
+  auto first_id = *ids.begin();
+  bool have_consecutive_ids = true;
+  for (size_t i = 1; i < ids.size(); ++i) {
+    if (ids[i] != first_id + i) {
+      have_consecutive_ids = false;
+      break;
+    }
+  }
+
+  if (!have_consecutive_ids) {
+    std::string flag_value = android::base::Join(ids, ",");
+    args.push_back("--instance_nums=" + flag_value);
+    return {};
+  }
+
+  // sorted and consecutive, so let's use old flags
+  // like --num_instances and --base_instance_num
+  args.push_back("--num_instances=" + std::to_string(ids.size()));
+  args.push_back("--base_instance_num=" + std::to_string(first_id));
+  return {};
+}
+
 }  // namespace
 
 class CvdStartCommandHandler : public CvdServerHandler {
@@ -196,57 +274,51 @@ class CvdStartCommandHandler : public CvdServerHandler {
   std::vector<std::string> CmdList() const override;
 
  private:
-  Result<cvd::Response> LaunchDevice(
-      Command command, selector::GroupCreationInfo& group_creation_info,
-      const RequestWithStdio& request);
+  Result<cvd::Response> LaunchDevice(Command command,
+                                     selector::LocalInstanceGroup& group,
+                                     const cvd_common::Envs& envs,
+                                     const RequestWithStdio& request);
 
   Result<cvd::Response> LaunchDeviceInterruptible(
-      Command command, selector::GroupCreationInfo& group_creation_info,
-      const RequestWithStdio& request);
-
-  Result<void> UpdateInstanceDatabase(
-      const selector::GroupCreationInfo& group_creation_info);
+      Command command, selector::LocalInstanceGroup& group,
+      const cvd_common::Envs& envs, const RequestWithStdio& request,
+      std::vector<InstanceLockFile>& lock_files);
 
   Result<Command> ConstructCvdNonHelpCommand(
-      const std::string& bin_file,
-      const selector::GroupCreationInfo& group_info,
+      const std::string& bin_file, const selector::LocalInstanceGroup& group,
+      const cvd_common::Args& args, const cvd_common::Envs& envs,
       const RequestWithStdio& request);
 
+  struct GroupAndLockFiles {
+    selector::LocalInstanceGroup group;
+    std::vector<InstanceLockFile> lock_files;
+  };
   // call this only if !is_help
-  Result<selector::GroupCreationInfo> GetGroupCreationInfo(
-      const std::string& start_bin, const cvd_common::Args& subcmd_args,
-      const cvd_common::Envs& envs, const RequestWithStdio& request);
+  Result<GroupAndLockFiles> GetGroup(const cvd_common::Args& subcmd_args,
+                                     const cvd_common::Envs& envs,
+                                     const RequestWithStdio& request);
 
   Result<cvd::Response> FillOutNewInstanceInfo(
-      cvd::Response&& response,
-      const selector::GroupCreationInfo& group_creation_info);
+      cvd::Response&& response, const selector::LocalInstanceGroup& group);
 
-  struct UpdatedArgsAndEnvs {
-    cvd_common::Args args;
-    cvd_common::Envs envs;
-  };
-  Result<UpdatedArgsAndEnvs> UpdateInstanceArgsAndEnvs(
-      cvd_common::Args&& args, cvd_common::Envs&& envs,
-      const std::vector<selector::PerInstanceInfo>& instances,
-      const std::string& artifacts_path, const std::string& start_bin);
+  Result<void> UpdateArgs(cvd_common::Args& args,
+                          const selector::LocalInstanceGroup& group);
 
-  Result<selector::GroupCreationInfo> UpdateArgsAndEnvs(
-      selector::GroupCreationInfo&& old_group_info,
-      const std::string& start_bin);
+  Result<void> UpdateEnvs(cvd_common::Envs& envs,
+                          const selector::LocalInstanceGroup& group);
 
   Result<std::string> FindStartBin(const std::string& android_host_out);
 
-  static void MarkLockfiles(selector::GroupCreationInfo& group_info,
+  static void MarkLockfiles(std::vector<InstanceLockFile>& lock_files,
                             const InUseState state);
-  static void MarkLockfilesInUse(selector::GroupCreationInfo& group_info) {
-    MarkLockfiles(group_info, InUseState::kInUse);
+  static void MarkLockfilesInUse(std::vector<InstanceLockFile>& lock_files) {
+    MarkLockfiles(lock_files, InUseState::kInUse);
   }
 
-  Result<void> AcloudCompatActions(
-      const selector::GroupCreationInfo& group_creation_info,
-      const RequestWithStdio& request);
-  Result<void> CreateSymlinks(
-      const selector::GroupCreationInfo& group_creation_info);
+  Result<void> AcloudCompatActions(const selector::LocalInstanceGroup& group,
+                                   const cvd_common::Envs& envs,
+                                   const RequestWithStdio& request);
+  Result<void> CreateSymlinks(const selector::LocalInstanceGroup& group);
 
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
@@ -264,16 +336,16 @@ class CvdStartCommandHandler : public CvdServerHandler {
 };
 
 Result<void> CvdStartCommandHandler::AcloudCompatActions(
-    const selector::GroupCreationInfo& group_creation_info,
+    const selector::LocalInstanceGroup& group, const cvd_common::Envs& envs,
     const RequestWithStdio& request) {
   // rm -fr "TempDir()/acloud_cvd_temp/local-instance-<i>"
   std::string acloud_compat_home_prefix =
       TempDir() + "/acloud_cvd_temp/local-instance-";
   std::vector<std::string> acloud_compat_homes;
-  acloud_compat_homes.reserve(group_creation_info.instances.size());
-  for (const auto& instance : group_creation_info.instances) {
+  acloud_compat_homes.reserve(group.Instances().size());
+  for (const auto& instance : group.Instances()) {
     acloud_compat_homes.push_back(
-        ConcatToString(acloud_compat_home_prefix, instance.instance_id_));
+        ConcatToString(acloud_compat_home_prefix, instance.InstanceId()));
   }
   for (const auto& acloud_compat_home : acloud_compat_homes) {
     bool result_deleted = true;
@@ -281,8 +353,8 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
     if (!FileExists(acloud_compat_home)) {
       continue;
     }
-    if (!Contains(group_creation_info.envs, kLaunchedByAcloud) ||
-        group_creation_info.envs.at(kLaunchedByAcloud) != "true") {
+    if (!Contains(envs, kLaunchedByAcloud) ||
+        envs.at(kLaunchedByAcloud) != "true") {
       if (!DirectoryExists(acloud_compat_home, /*follow_symlinks=*/false)) {
         // cvd created a symbolic link
         result_deleted = RemoveFile(acloud_compat_home);
@@ -306,21 +378,20 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
   // 3. for each i in ids,
   //     ln -f -s home /tmp/acloud_cvd_temp/local-instance-<i>
   std::vector<MakeRequestForm> request_forms;
-  const cvd_common::Envs& common_envs = group_creation_info.envs;
 
-  const std::string& home_dir = group_creation_info.home;
+  const std::string& home_dir = group.HomeDir();
   const std::string client_pwd =
       request.Message().command_request().working_directory();
   request_forms.push_back(
       {.cmd_args = cvd_common::Args{"mkdir", "-p", home_dir},
-       .env = common_envs,
+       .env = envs,
        .selector_args = cvd_common::Args{},
        .working_dir = client_pwd});
-  const std::string& android_host_out = group_creation_info.host_artifacts_path;
+  const std::string& android_host_out = group.HostArtifactsPath();
   request_forms.push_back(
       {.cmd_args = cvd_common::Args{"ln", "-T", "-f", "-s", android_host_out,
                                     home_dir + "/host_bins"},
-       .env = common_envs,
+       .env = envs,
        .selector_args = cvd_common::Args{},
        .working_dir = client_pwd});
   /* TODO(weihsu@): cvd acloud delete/list must handle multi-tenancy gracefully
@@ -349,7 +420,7 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
     request_forms.push_back({
         .cmd_args = cvd_common::Args{"ln", "-T", "-f", "-s", home_dir,
                                      acloud_compat_home},
-        .env = common_envs,
+        .env = envs,
         .selector_args = cvd_common::Args{},
         .working_dir = client_pwd,
     });
@@ -370,13 +441,9 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
 }
 
 void CvdStartCommandHandler::MarkLockfiles(
-    selector::GroupCreationInfo& group_info, const InUseState state) {
-  auto& instances = group_info.instances;
-  for (auto& instance : instances) {
-    if (!instance.instance_file_lock_) {
-      continue;
-    }
-    auto result = instance.instance_file_lock_->Status(state);
+    std::vector<InstanceLockFile>& lock_files, const InUseState state) {
+  for (auto& lock_file : lock_files) {
+    auto result = lock_file.Status(state);
     if (!result.ok()) {
       LOG(ERROR) << result.error().FormatForEnv();
     }
@@ -389,80 +456,55 @@ Result<bool> CvdStartCommandHandler::CanHandle(
   return Contains(supported_commands_, invocation.command);
 }
 
-Result<CvdStartCommandHandler::UpdatedArgsAndEnvs>
-CvdStartCommandHandler::UpdateInstanceArgsAndEnvs(
-    cvd_common::Args&& args, cvd_common::Envs&& envs,
-    const std::vector<selector::PerInstanceInfo>& instances,
-    const std::string& artifacts_path, const std::string& start_bin) {
-  std::vector<unsigned> ids;
-  ids.reserve(instances.size());
-  for (const auto& instance : instances) {
-    ids.emplace_back(instance.instance_id_);
+Result<void> CvdStartCommandHandler::UpdateArgs(
+    cvd_common::Args& args, const selector::LocalInstanceGroup& group) {
+  CF_EXPECT(UpdateInstanceArgs(args, group));
+  CF_EXPECT(UpdateWebrtcDeviceId(args, group));
+  // for backward compatibility, older cvd host tools don't accept group_id
+  auto has_group_id_flag =
+      host_tool_target_manager_
+          .ReadFlag({.artifacts_path = group.HostArtifactsPath(),
+                     .op = "start",
+                     .flag_name = "group_id"})
+          .ok();
+  if (has_group_id_flag) {
+    args.emplace_back("--group_id=" + group.GroupName());
   }
+  return {};
+}
 
-  cvd_common::Args new_args{std::move(args)};
-  std::string old_instance_nums;
-  std::string old_num_instances;
-  std::string old_base_instance_num;
+Result<void> CvdStartCommandHandler::UpdateEnvs(
+    cvd_common::Envs& envs, const selector::LocalInstanceGroup& group) {
+  CF_EXPECT(!group.Instances().empty());
+  envs[kCuttlefishInstanceEnvVarName] =
+      std::to_string(group.Instances()[0].InstanceId());
 
-  std::vector<Flag> instance_id_flags{
-      GflagsCompatFlag("instance_nums", old_instance_nums),
-      GflagsCompatFlag("num_instances", old_num_instances),
-      GflagsCompatFlag("base_instance_num", old_base_instance_num)};
-  // discard old ones
-  CF_EXPECT(ConsumeFlags(instance_id_flags, new_args));
-
-  auto check_flag = [artifacts_path, start_bin,
-                     this](const std::string& flag_name) -> Result<void> {
-    CF_EXPECT(
-        host_tool_target_manager_.ReadFlag({.artifacts_path = artifacts_path,
-                                            .op = "start",
-                                            .flag_name = flag_name}));
-    return {};
-  };
-  auto max = *(std::max_element(ids.cbegin(), ids.cend()));
-  auto min = *(std::min_element(ids.cbegin(), ids.cend()));
-
-  const bool is_consecutive = ((max - min) == (ids.size() - 1));
-  const bool is_sorted = std::is_sorted(ids.begin(), ids.end());
-
-  if (!is_consecutive || !is_sorted) {
-    std::string flag_value = android::base::Join(ids, ",");
-    CF_EXPECT(check_flag("instance_nums"));
-    new_args.emplace_back("--instance_nums=" + flag_value);
-    return UpdatedArgsAndEnvs{.args = std::move(new_args),
-                              .envs = std::move(envs)};
-  }
-
-  // sorted and consecutive, so let's use old flags
-  // like --num_instances and --base_instance_num
-  if (ids.size() > 1) {
-    CF_EXPECT(check_flag("num_instances"),
-              "--num_instances is not supported but multi-tenancy requested.");
-    new_args.emplace_back("--num_instances=" + std::to_string(ids.size()));
-  }
-  cvd_common::Envs new_envs{std::move(envs)};
-  if (check_flag("base_instance_num").ok()) {
-    new_args.emplace_back("--base_instance_num=" + std::to_string(min));
-  }
-  new_envs[kCuttlefishInstanceEnvVarName] = std::to_string(min);
-  return UpdatedArgsAndEnvs{.args = std::move(new_args),
-                            .envs = std::move(new_envs)};
+  envs["HOME"] = group.HomeDir();
+  envs[kAndroidHostOut] = group.HostArtifactsPath();
+  envs[kAndroidProductOut] = group.ProductOutPath();
+  /* b/253644566
+   *
+   * Old branches used kAndroidSoongHostOut instead of kAndroidHostOut
+   */
+  envs[kAndroidSoongHostOut] = group.HostArtifactsPath();
+  envs[kCvdMarkEnv] = "true";
+  return {};
 }
 
 Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
-    const std::string& bin_file, const selector::GroupCreationInfo& group_info,
+    const std::string& bin_file, const selector::LocalInstanceGroup& group,
+    const cvd_common::Args& args, const cvd_common::Envs& envs,
     const RequestWithStdio& request) {
-  auto bin_path = group_info.host_artifacts_path;
+  auto bin_path = group.HostArtifactsPath();
   CF_EXPECTF(PotentiallyHostArtifactsPath(bin_path),
              "ANDROID_HOST_OUT, \"{}\" is not a tool directory", bin_path);
   bin_path.append("/bin/").append(bin_file);
-  CF_EXPECT(!group_info.home.empty());
+  CF_EXPECT(!group.HomeDir().empty());
   ConstructCommandParam construct_cmd_param{
       .bin_path = bin_path,
-      .home = group_info.home,
-      .args = group_info.args,
-      .envs = group_info.envs,
+      .home = group.HomeDir(),
+      .args = args,
+      .envs = envs,
       .working_dir = request.Message().command_request().working_directory(),
       .command_name = bin_file,
       .in = request.In(),
@@ -475,10 +517,10 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
 }
 
 // call this only if !is_help
-Result<selector::GroupCreationInfo>
-CvdStartCommandHandler::GetGroupCreationInfo(
-    const std::string& start_bin, const std::vector<std::string>& subcmd_args,
-    const cvd_common::Envs& envs, const RequestWithStdio& request) {
+Result<CvdStartCommandHandler::GroupAndLockFiles>
+CvdStartCommandHandler::GetGroup(const std::vector<std::string>& subcmd_args,
+                                 const cvd_common::Envs& envs,
+                                 const RequestWithStdio& request) {
   using CreationAnalyzerParam =
       selector::CreationAnalyzer::CreationAnalyzerParam;
   const auto& selector_opts =
@@ -486,51 +528,49 @@ CvdStartCommandHandler::GetGroupCreationInfo(
   const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
   CreationAnalyzerParam analyzer_param{
       .cmd_args = subcmd_args, .envs = envs, .selector_args = selector_args};
-  auto group_creation_info =
-      CF_EXPECT(instance_manager_.Analyze(analyzer_param));
-  auto final_group_creation_info =
-      CF_EXPECT(UpdateArgsAndEnvs(std::move(group_creation_info), start_bin));
-  return final_group_creation_info;
-}
 
-Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
-    selector::GroupCreationInfo&& old_group_info,
-    const std::string& start_bin) {
-  selector::GroupCreationInfo group_creation_info = std::move(old_group_info);
-  // update instance related-flags, envs
-  const auto& instances = group_creation_info.instances;
-  const auto& host_artifacts_path = group_creation_info.host_artifacts_path;
-  auto [new_args, new_envs] = CF_EXPECT(UpdateInstanceArgsAndEnvs(
-      std::move(group_creation_info.args), std::move(group_creation_info.envs),
-      instances, host_artifacts_path, start_bin));
-  group_creation_info.args = std::move(new_args);
-  group_creation_info.envs = std::move(new_envs);
+  auto analyzer = CF_EXPECT(instance_manager_.CreationAnalyzer(analyzer_param));
+  auto group_creation_info = CF_EXPECT(analyzer.ExtractGroupInfo());
 
-  // for backward compatibility, older cvd host tools don't accept group_id
-  auto has_group_id_flag =
-      host_tool_target_manager_
-          .ReadFlag({.artifacts_path = group_creation_info.host_artifacts_path,
-                     .op = "start",
-                     .flag_name = "group_id"})
-          .ok();
-  if (has_group_id_flag) {
-    group_creation_info.args.emplace_back("--group_id=" +
-                                          group_creation_info.group_name);
+  std::vector<InstanceLockFile> lock_files;
+  for (auto& instance: group_creation_info.instances) {
+    CHECK(instance.instance_file_lock_.has_value())
+        << "Expected instance lock";
+    lock_files.emplace_back(std::move(*instance.instance_file_lock_));
   }
 
-  group_creation_info.envs["HOME"] = group_creation_info.home;
-  group_creation_info.envs[kAndroidHostOut] =
-      group_creation_info.host_artifacts_path;
-  group_creation_info.envs[kAndroidProductOut] =
-      group_creation_info.product_out_path;
-  /* b/253644566
-   *
-   * Old branches used kAndroidSoongHostOut instead of kAndroidHostOut
-   */
-  group_creation_info.envs[kAndroidSoongHostOut] =
-      group_creation_info.host_artifacts_path;
-  group_creation_info.envs[kCvdMarkEnv] = "true";
-  return group_creation_info;
+  // When loading an environment spec file the group is already in the database.
+  auto groups = CF_EXPECT(instance_manager_.FindGroups(
+      selector::Query("group_name", group_creation_info.group_name)));
+  CHECK(groups.size() <= 1)
+      << "Expected no more than one group with given name: "
+      << group_creation_info.group_name;
+  if (groups.empty()) {
+    auto group =
+        CF_EXPECT(instance_manager_.CreateInstanceGroup(group_creation_info));
+    group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
+    group.SetStartTime(selector::CvdServerClock::now());
+    CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+    return GroupAndLockFiles{
+        .group = group,
+        .lock_files = std::move(lock_files),
+    };
+  }
+  // The instances don't have an id yet and are in PREPARING state
+  auto group = groups[0];
+  CHECK(group.Instances().size() == group_creation_info.instances.size())
+      << "Mismatch in number of instances from analisys: "
+      << group.Instances().size() << " vs "
+      << group_creation_info.instances.size();
+  for (size_t i = 0; i < group.Instances().size(); ++i) {
+    auto& instance = group.Instances()[i];
+    auto& instance_info = group_creation_info.instances[i];
+    instance.SetInstanceId(instance_info.instance_id_);
+  }
+  group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
+  group.SetStartTime(selector::CvdServerClock::now());
+  CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+  return GroupAndLockFiles{group, lock_files};
 }
 
 static std::ostream& operator<<(std::ostream& out, const cvd_common::Args& v) {
@@ -544,8 +584,7 @@ static std::ostream& operator<<(std::ostream& out, const cvd_common::Args& v) {
   return out;
 }
 
-static void ShowLaunchCommand(const std::string& bin,
-                              const cvd_common::Args& args,
+static void ShowLaunchCommand(const Command& command,
                               const cvd_common::Envs& envs) {
   std::stringstream ss;
   std::vector<std::string> interesting_env_names{"HOME",
@@ -560,13 +599,8 @@ static void ShowLaunchCommand(const std::string& bin,
          << "\" ";
     }
   }
-  ss << " " << bin << " " << args;
+  ss << " " << command;
   LOG(INFO) << "launcher command: " << ss.str();
-}
-
-static void ShowLaunchCommand(const std::string& bin,
-                              selector::GroupCreationInfo& group_info) {
-  ShowLaunchCommand(bin, group_info.args, group_info.envs);
 }
 
 Result<std::string> CvdStartCommandHandler::FindStartBin(
@@ -621,28 +655,27 @@ static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
   return {};
 }
 
-// For backward compatibility, we add extra symlink in system wide home
-// when HOME is NOT overridden and selector flags are NOT given.
+// For backward compatibility, we add extra symlink in home dir
 Result<void> CvdStartCommandHandler::CreateSymlinks(
-    const selector::GroupCreationInfo& group_creation_info) {
-  CF_EXPECT(EnsureDirectoryExists(group_creation_info.home));
+    const selector::LocalInstanceGroup& group) {
   auto system_wide_home = CF_EXPECT(SystemWideUserHome());
+  CF_EXPECT(EnsureDirectoryExists(group.HomeDir()));
   auto smallest_id = std::numeric_limits<unsigned>::max();
-  for (const auto& instance : group_creation_info.instances) {
+  for (const auto& instance : group.Instances()) {
     // later on, we link cuttlefish_runtime to cuttlefish_runtime.smallest_id
-    smallest_id = std::min(smallest_id, instance.instance_id_);
+    smallest_id = std::min(smallest_id, instance.InstanceId());
     const std::string instance_home_dir =
-        fmt::format("{}/cuttlefish/instances/cvd-{}", group_creation_info.home,
-                    instance.instance_id_);
+        fmt::format("{}/cuttlefish/instances/cvd-{}", group.HomeDir(),
+                    instance.InstanceId());
     CF_EXPECT(
         EnsureSymlink(instance_home_dir,
                       fmt::format("{}/cuttlefish_runtime.{}", system_wide_home,
-                                  instance.instance_id_)));
-    CF_EXPECT(EnsureSymlink(group_creation_info.home + "/cuttlefish",
+                                  instance.InstanceId())));
+    CF_EXPECT(EnsureSymlink(group.HomeDir() + "/cuttlefish",
                             system_wide_home + "/cuttlefish"));
-    CF_EXPECT(EnsureSymlink(group_creation_info.home +
-                                "/cuttlefish/assembly/cuttlefish_config.json",
-                            system_wide_home + "/.cuttlefish_config.json"));
+    CF_EXPECT(EnsureSymlink(
+        group.HomeDir() + "/cuttlefish/assembly/cuttlefish_config.json",
+        system_wide_home + "/.cuttlefish_config.json"));
   }
 
   // create cuttlefish_runtime to cuttlefish_runtime.id
@@ -722,27 +755,30 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   if (is_help) {
     Command command =
         CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));
-    ShowLaunchCommand(command.Executable(), subcmd_args, envs);
+    ShowLaunchCommand(command, envs);
 
     CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());
     return ResponseFromSiginfo(infop);
   }
 
-  auto group_creation_info =
-      CF_EXPECT(GetGroupCreationInfo(bin, subcmd_args, envs, request));
-  Command command =
-      CF_EXPECT(ConstructCvdNonHelpCommand(bin, group_creation_info, request));
+  auto [group, lock_files] = CF_EXPECT(GetGroup(subcmd_args, envs, request));
+  CF_EXPECT(UpdateArgs(subcmd_args, group));
+  CF_EXPECT(UpdateEnvs(envs, group));
+  Command command = CF_EXPECT(
+      ConstructCvdNonHelpCommand(bin, group, subcmd_args, envs, request));
 
   // The instance database needs to be updated if an interrupt is received.
   auto signals_fd = CF_EXPECT(HandleInterruptSignals());
-  std::thread interrupter_thread([this, signals_fd]() {
+  std::thread interrupter_thread([this, signals_fd, &group = group]() {
     for (;;) {
       int signal = 0;
       auto res = TEMP_FAILURE_RETRY(read(signals_fd, &signal, sizeof(signal)));
       if (res > 0) {
         // Interrupt regardless of signal
         (void)subprocess_waiter_.Interrupt();
+        group.SetAllStates(cvd::INSTANCE_STATE_BOOT_FAILED);
+        instance_manager_.UpdateInstanceGroup(group);
       } else if (res == 0) {
         // other end closed
         close(signals_fd);
@@ -754,21 +790,20 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
       }
     }
   });
-  auto launch_res = LaunchDeviceInterruptible(std::move(command),
-                                              group_creation_info, request);
+  auto launch_res = LaunchDeviceInterruptible(std::move(command), group, envs,
+                                              request, lock_files);
+  group.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
+  CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   StopHandlingInterruptSignals();
   interrupter_thread.join();
   auto response = CF_EXPECT(std::move(launch_res));
 
-  // Print new group spec
-  auto group = CF_EXPECT(instance_manager_.FindGroup(InstanceManager::Query(
-      selector::kGroupNameField, group_creation_info.group_name)));
   auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(request, group));
   auto serialized_json = group_json.toStyledString();
   CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
                (ssize_t)serialized_json.size());
 
-  return FillOutNewInstanceInfo(std::move(response), group_creation_info);
+  return FillOutNewInstanceInfo(std::move(response), group);
 }
 
 static constexpr char kCollectorFailure[] = R"(
@@ -785,18 +820,18 @@ static constexpr char kStopFailure[] = R"(
   cvd start failed, and stopping run_cvd processes failed.
 )";
 static Result<cvd::Response> CvdResetGroup(
-    const selector::GroupCreationInfo& group_creation_info) {
+    const selector::LocalInstanceGroup& group) {
   auto run_cvd_process_manager = RunCvdProcessManager::Get();
   if (!run_cvd_process_manager.ok()) {
     return CommandResponse(cvd::Status::INTERNAL, kCollectorFailure);
   }
   // We can't run stop_cvd here. It may hang forever, and doesn't make sense
   // to interrupt it.
-  const auto& instances = group_creation_info.instances;
+  const auto& instances = group.Instances();
   CF_EXPECT(!instances.empty());
   const auto& first_instance = instances.front();
   auto stop_result = run_cvd_process_manager->ForcefullyStopGroup(
-      /* cvd_server_children_only */ true, first_instance.instance_id_);
+      /* cvd_server_children_only */ true, first_instance.InstanceId());
   if (!stop_result.ok()) {
     return CommandResponse(cvd::Status::INTERNAL, kStopFailure);
   }
@@ -804,17 +839,16 @@ static Result<cvd::Response> CvdResetGroup(
 }
 
 Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
-    Command launch_command, selector::GroupCreationInfo& group_creation_info,
-    const RequestWithStdio& request) {
-  ShowLaunchCommand(launch_command.Executable(), group_creation_info);
+    Command launch_command, selector::LocalInstanceGroup& group,
+    const cvd_common::Envs& envs, const RequestWithStdio& request) {
+  ShowLaunchCommand(launch_command, envs);
 
   CF_EXPECT(request.Message().command_request().wait_behavior() !=
             cvd::WAIT_BEHAVIOR_START);
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command.Start()));
 
-  auto acloud_compat_action_result =
-      AcloudCompatActions(group_creation_info, request);
+  auto acloud_compat_action_result = AcloudCompatActions(group, envs, request);
   sub_action_ended_ = true;
   if (!acloud_compat_action_result.ok()) {
     LOG(ERROR) << acloud_compat_action_result.error().FormatForEnv();
@@ -827,7 +861,7 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
     LOG(INFO) << "Device launch failed, cleaning up";
     // run_cvd processes may be still running in background
     // the order of the following operations should be kept
-    auto reset_response = CF_EXPECT(CvdResetGroup(group_creation_info));
+    auto reset_response = CF_EXPECT(CvdResetGroup(group));
     if (reset_response.status().code() != cvd::Status::OK) {
       return reset_response;
     }
@@ -836,13 +870,12 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
 }
 
 Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
-    Command command, selector::GroupCreationInfo& group_creation_info,
-    const RequestWithStdio& request) {
-  CF_EXPECT(UpdateInstanceDatabase(group_creation_info));
-  auto start_res =
-      LaunchDevice(std::move(command), group_creation_info, request);
+    Command command, selector::LocalInstanceGroup& group,
+    const cvd_common::Envs& envs, const RequestWithStdio& request,
+    std::vector<InstanceLockFile>& lock_files) {
+  auto start_res = LaunchDevice(std::move(command), group, envs, request);
   if (!start_res.ok() || start_res->status().code() != cvd::Status::OK) {
-    CF_EXPECT(instance_manager_.RemoveInstanceGroup(group_creation_info.home));
+    CF_EXPECT(instance_manager_.RemoveInstanceGroup(group.HomeDir()));
     return start_res;
   }
 
@@ -853,8 +886,13 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
 
   // For backward compatibility, we add extra symlink in system wide home
   // when HOME is NOT overridden and selector flags are NOT given.
-  if (group_creation_info.is_default_group) {
-    auto symlink_res = CreateSymlinks(group_creation_info);
+  auto is_default_group =
+      Contains(envs, "HOME") &&
+      envs.at("HOME") == CF_EXPECT(SystemWideUserHome()) &&
+      request.Message().command_request().has_selector_opts();
+
+  if (is_default_group) {
+    auto symlink_res = CreateSymlinks(group);
     if (!symlink_res.ok()) {
       LOG(ERROR) << "Failed to create symlinks for default group: "
                  << symlink_res.error().FormatForEnv();
@@ -866,34 +904,25 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
   // If daemonized, reaching here means the group started successfully
   // As the destructor will release the file lock, the instance lock
   // files must be marked as used
-  MarkLockfilesInUse(group_creation_info);
+  MarkLockfilesInUse(lock_files);
 
   return response;
 }
 
 Result<cvd::Response> CvdStartCommandHandler::FillOutNewInstanceInfo(
-    cvd::Response&& response,
-    const selector::GroupCreationInfo& group_creation_info) {
+    cvd::Response&& response, const selector::LocalInstanceGroup& group) {
   auto new_response = std::move(response);
   auto& command_response = *(new_response.mutable_command_response());
   auto& instance_group_info =
       *(CF_EXPECT(command_response.mutable_instance_group_info()));
-  instance_group_info.set_group_name(group_creation_info.group_name);
-  instance_group_info.add_home_directories(group_creation_info.home);
-  for (const auto& per_instance_info : group_creation_info.instances) {
+  instance_group_info.set_group_name(group.GroupName());
+  instance_group_info.add_home_directories(group.HomeDir());
+  for (const auto& instance : group.Instances()) {
     auto* new_entry = CF_EXPECT(instance_group_info.add_instances());
-    new_entry->set_name(per_instance_info.per_instance_name_);
-    new_entry->set_instance_id(per_instance_info.instance_id_);
+    new_entry->set_name(instance.PerInstanceName());
+    new_entry->set_instance_id(instance.InstanceId());
   }
   return new_response;
-}
-
-Result<void> CvdStartCommandHandler::UpdateInstanceDatabase(
-    const selector::GroupCreationInfo& group_creation_info) {
-  CF_EXPECT(instance_manager_.SetInstanceGroup(group_creation_info),
-            group_creation_info.home
-                << " is already taken so can't create new instance.");
-  return {};
 }
 
 std::vector<std::string> CvdStartCommandHandler::CmdList() const {

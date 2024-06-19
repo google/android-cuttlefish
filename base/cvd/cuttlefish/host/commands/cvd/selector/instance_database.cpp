@@ -30,6 +30,7 @@
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/selector_constants.h"
+#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -258,7 +259,7 @@ std::vector<LocalInstance> InstanceDatabase::FindInstances(
 Result<std::vector<LocalInstanceGroup>> InstanceDatabase::InstanceGroups()
     const {
   return viewer_.WithSharedLock<std::vector<LocalInstanceGroup>>(
-      [](const auto& data) ->Result<std::vector<LocalInstanceGroup>> {
+      [](const auto& data) -> Result<std::vector<LocalInstanceGroup>> {
         std::vector<LocalInstanceGroup> ret;
         for (const auto& group_proto : data.instance_groups()) {
           ret.push_back(CF_EXPECT(LocalInstanceGroup::Create(group_proto)));
@@ -298,6 +299,27 @@ Result<bool> InstanceDatabase::GetAcloudTranslatorOptout() const {
   return viewer_.WithSharedLock<bool>(
       [](const cvd::PersistentData& data) -> Result<bool> {
         return data.acloud_translator_optout();
+      });
+}
+
+Result<std::string> InstanceDatabase::GenUniqueGroupName() const {
+  auto name_prefix = GenDefaultGroupName() + "_";
+  return viewer_.WithSharedLock<std::string>(
+      [name_prefix](const cvd::PersistentData& data) -> Result<std::string> {
+        std::set<std::string> group_names;
+        for (const auto& group : data.instance_groups()) {
+          group_names.insert(group.name());
+        }
+        for (size_t i = 1; i <= group_names.size() + 1; ++i) {
+          auto name = name_prefix + std::to_string(i);
+          if (!Contains(group_names, name)) {
+            return name;
+          }
+        }
+        return CF_ERRF(
+            "Can't generate unique group name: Somehow a set of size {} "
+            "contains {} elements",
+            group_names.size(), group_names.size() + 1);
       });
 }
 

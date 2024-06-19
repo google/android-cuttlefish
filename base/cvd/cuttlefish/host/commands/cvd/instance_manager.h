@@ -42,8 +42,6 @@ namespace cuttlefish {
 
 class InstanceManager {
  public:
-  using CreationAnalyzer = selector::CreationAnalyzer;
-  using CreationAnalyzerParam = CreationAnalyzer::CreationAnalyzerParam;
   using GroupCreationInfo = selector::GroupCreationInfo;
   using LocalInstanceGroup = selector::LocalInstanceGroup;
   using LocalInstance = selector::LocalInstance;
@@ -58,7 +56,8 @@ class InstanceManager {
                   selector::InstanceDatabase& instance_db);
 
   // For cvd start
-  Result<GroupCreationInfo> Analyze(const CreationAnalyzerParam& param);
+  Result<selector::CreationAnalyzer> CreationAnalyzer(
+      const selector::CreationAnalyzer::CreationAnalyzerParam& param);
 
   Result<LocalInstanceGroup> SelectGroup(const cvd_common::Args& selector_args,
                                          const cvd_common::Envs& envs,

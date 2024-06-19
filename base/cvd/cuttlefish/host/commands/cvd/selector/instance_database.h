@@ -44,6 +44,8 @@ class InstanceDatabase {
 
   Result<bool> GetAcloudTranslatorOptout() const;
 
+  Result<std::string> GenUniqueGroupName() const;
+
   /** Adds instance group.
    *
    * If group_name or home_dir is already taken or host_artifacts_path is

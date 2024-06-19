@@ -81,7 +81,7 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(NewCvdHelpHandler(this->request_handlers_));
   request_handlers_.emplace_back(NewLintCommand());
   request_handlers_.emplace_back(
-      NewLoadConfigsCommand(command_sequence_executor_));
+      NewLoadConfigsCommand(command_sequence_executor_, instance_manager_));
   request_handlers_.emplace_back(NewCvdDevicePowerCommandHandler(
       host_tool_target_manager_, instance_manager_, subprocess_waiter_));
   request_handlers_.emplace_back(NewCvdResetCommandHandler(instance_manager_));

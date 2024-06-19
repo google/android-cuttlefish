@@ -18,6 +18,7 @@
 #include <memory>
 
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
@@ -27,6 +28,6 @@ cvd load component is responsible of loading, translation and creation of
 cuttlefish instances based on input json configuration file
 */
 std::unique_ptr<CvdServerHandler> NewLoadConfigsCommand(
-    CommandSequenceExecutor& executor);
+    CommandSequenceExecutor& executor, InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

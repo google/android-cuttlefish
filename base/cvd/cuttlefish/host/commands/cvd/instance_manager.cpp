@@ -80,9 +80,9 @@ Result<bool> InstanceManager::GetAcloudTranslatorOptout() const {
   return CF_EXPECT(instance_db_.GetAcloudTranslatorOptout());
 }
 
-Result<InstanceManager::GroupCreationInfo> InstanceManager::Analyze(
-    const CreationAnalyzerParam& param) {
-  return CF_EXPECT(CreationAnalyzer::Analyze(param, lock_manager_));
+Result<selector::CreationAnalyzer> InstanceManager::CreationAnalyzer(
+    const selector::CreationAnalyzer::CreationAnalyzerParam& param) {
+  return selector::CreationAnalyzer::Create(param, lock_manager_);
 }
 
 Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(
@@ -105,36 +105,12 @@ Result<bool> InstanceManager::HasInstanceGroups() {
   return !CF_EXPECT(instance_db_.IsEmpty());
 }
 
-Result<void> InstanceManager::SetInstanceGroup(
-    const selector::GroupCreationInfo& group_info) {
-  const auto group_name = group_info.group_name;
-  const auto home_dir = group_info.home;
-  const auto host_artifacts_path = group_info.host_artifacts_path;
-  const auto product_out_path = group_info.product_out_path;
-  const auto& per_instance_info = group_info.instances;
-  cvd::InstanceGroup new_group;
-  new_group.set_name(group_name);
-  new_group.set_home_directory(home_dir);
-  new_group.set_host_artifacts_path(host_artifacts_path);
-  new_group.set_product_out_path(product_out_path);
-  new_group.set_start_time_sec(
-      selector::CvdServerClock::to_time_t(selector::CvdServerClock::now()));
-  for (const auto& instance : per_instance_info) {
-    auto& new_instance = *new_group.add_instances();
-    new_instance.set_id(instance.instance_id_);
-    new_instance.set_name(instance.per_instance_name_);
-    new_instance.set_state(cvd::INSTANCE_STATE_RUNNING);
-  }
-  CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
-  return {};
-}
-
 Result<InstanceManager::LocalInstanceGroup>
 InstanceManager::CreateInstanceGroup(
     const selector::GroupCreationInfo& group_info) {
   cvd::InstanceGroup new_group;
   new_group.set_name(group_info.group_name.empty()
-                         ? selector::GenDefaultGroupName()
+                         ? CF_EXPECT(instance_db_.GenUniqueGroupName())
                          : group_info.group_name);
   new_group.set_home_directory(group_info.home);
   new_group.set_host_artifacts_path(group_info.host_artifacts_path);
@@ -143,6 +119,7 @@ InstanceManager::CreateInstanceGroup(
     auto& new_instance = *new_group.add_instances();
     new_instance.set_id(instance.instance_id_);
     new_instance.set_name(instance.per_instance_name_);
+    new_instance.set_state(instance.initial_state_);
   }
   return CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
 }
