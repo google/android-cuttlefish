@@ -165,6 +165,11 @@ Result<void> InstanceManager::UpdateInstanceGroup(const LocalInstanceGroup& grou
   return {};
 }
 
+Result<void> InstanceManager::UpdateInstance(const LocalInstance& instance) {
+  CF_EXPECT(instance_db_.UpdateInstance(instance));
+  return {};
+}
+
 Result<void> InstanceManager::IssueStopCommand(
     const SharedFD& out, const SharedFD& err,
     const std::string& config_file_path,

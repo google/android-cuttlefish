@@ -763,7 +763,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   // Print new group spec
   auto group = CF_EXPECT(instance_manager_.FindGroup(InstanceManager::Query(
       selector::kGroupNameField, group_creation_info.group_name)));
-  auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(group, request));
+  auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(request, group));
   auto serialized_json = group_json.toStyledString();
   CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
                (ssize_t)serialized_json.size());

@@ -125,6 +125,29 @@ Result<void> InstanceDatabase::UpdateInstanceGroup(
   return {};
 }
 
+  Result<void> InstanceDatabase::UpdateInstance(const LocalInstance& instance) {
+  auto add_res = viewer_.WithExclusiveLock<void>(
+      [&instance](cvd::PersistentData& data) -> Result<void> {
+        for (auto& group_proto : *data.mutable_instance_groups()) {
+          if (group_proto.name() != instance.GroupProto().name()) {
+            continue;
+          }
+          for (auto& instance_proto : *group_proto.mutable_instances()) {
+              if (instance_proto.name() != instance.Proto().name()) {
+              continue;
+              }
+              instance_proto = instance.Proto();
+          }
+          return CF_ERRF("Instance not found (name = '{}', group = '{}')",
+                         instance.GroupProto().name(), instance.Proto().name());
+        }
+        return CF_ERRF("Group not found (name = {})",
+                       instance.GroupProto().name());
+      });
+  CF_EXPECT(std::move(add_res));
+  return {};
+  }
+
 Result<bool> InstanceDatabase::RemoveInstanceGroup(
     const std::string& group_name) {
   return viewer_.WithExclusiveLock<bool>([&group_name](
