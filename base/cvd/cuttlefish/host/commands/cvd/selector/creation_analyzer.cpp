@@ -20,8 +20,6 @@
 
 #include <algorithm>
 #include <map>
-#include <regex>
-#include <set>
 #include <string>
 
 #include <android-base/parseint.h>
@@ -29,35 +27,27 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/selector/instance_database_utils.h"
-#include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
 namespace selector {
 
-Result<GroupCreationInfo> CreationAnalyzer::Analyze(
+Result<CreationAnalyzer> CreationAnalyzer::Create(
     const CreationAnalyzerParam& param,
     InstanceLockFileManager& instance_lock_file_manager) {
   auto selector_options_parser =
       CF_EXPECT(StartSelectorParser::ConductSelectFlagsParser(
           param.selector_args, param.cmd_args, param.envs));
-  CreationAnalyzer analyzer(param,
-                            std::move(selector_options_parser),
-                            instance_lock_file_manager);
-  auto result = CF_EXPECT(analyzer.Analyze());
-  return result;
+  return CreationAnalyzer(param, std::move(selector_options_parser),
+                          instance_lock_file_manager);
 }
 
 CreationAnalyzer::CreationAnalyzer(
     const CreationAnalyzerParam& param,
     StartSelectorParser&& selector_options_parser,
     InstanceLockFileManager& instance_file_lock_manager)
-    : cmd_args_(param.cmd_args),
-      envs_(param.envs),
-      selector_args_(param.selector_args),
+    : envs_(param.envs),
       selector_options_parser_{std::move(selector_options_parser)},
       instance_file_lock_manager_{instance_file_lock_manager} {}
 
@@ -96,7 +86,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
   bool must_acquire_file_locks = selector_options_parser_.MustAcquireFileLock();
   if (!must_acquire_file_locks) {
     for (const auto& [id, name] : id_name_pairs) {
-      instance_info.emplace_back(id, name);
+      instance_info.emplace_back(id, name, cvd::INSTANCE_STATE_STARTING);
     }
     return instance_info;
   }
@@ -108,15 +98,12 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
     CF_EXPECT(Contains(id_to_lockfile_map, id),
               "Instance ID " << id << " lock file can't be locked.");
     auto& lock_file = id_to_lockfile_map.at(id);
-    instance_info.emplace_back(id, instance_name, std::move(lock_file));
+    instance_info.emplace_back(id, instance_name, cvd::INSTANCE_STATE_STARTING,
+                               std::move(lock_file));
   }
   return instance_info;
 }
 
-struct NameLockFilePair {
-  std::string name;
-  InstanceLockFile lock_file;
-};
 Result<std::vector<PerInstanceInfo>>
 CreationAnalyzer::AnalyzeInstanceIdsInternal() {
   CF_EXPECT(selector_options_parser_.MustAcquireFileLock(),
@@ -169,7 +156,8 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
     if (per_instance_names_opt && !(*per_instance_names_opt)[i].empty()) {
       name = (*per_instance_names_opt)[i];
     }
-    instance_info.emplace_back(id, name, std::move(id_to_lockfile_map.at(id)));
+    instance_info.emplace_back(id, name, cvd::INSTANCE_STATE_STARTING,
+                               std::move(id_to_lockfile_map.at(id)));
   }
   return instance_info;
 }
@@ -181,137 +169,37 @@ Result<std::vector<PerInstanceInfo>> CreationAnalyzer::AnalyzeInstanceIds() {
              : CF_EXPECT(AnalyzeInstanceIdsInternal());
 }
 
-/*
- * 1. Remove --num_instances, --instance_nums, --base_instance_num if any.
- * 2. If the ids are consecutive and ordered, add:
- *   --base_instance_num=min --num_instances=ids.size()
- * 3. If not, --instance_nums=<ids>
- *
- */
-static Result<std::vector<std::string>> UpdateInstanceArgs(
-    std::vector<std::string>&& args, const std::vector<unsigned>& ids) {
-  CF_EXPECT(ids.empty() == false);
-
-  std::vector<std::string> new_args{std::move(args)};
-  std::string old_instance_nums;
-  std::string old_num_instances;
-  std::string old_base_instance_num;
-
-  std::vector<Flag> instance_id_flags{
-      GflagsCompatFlag("instance_nums", old_instance_nums),
-      GflagsCompatFlag("num_instances", old_num_instances),
-      GflagsCompatFlag("base_instance_num", old_base_instance_num)};
-  // discard old ones
-  CF_EXPECT(ConsumeFlags(instance_id_flags, new_args));
-
-  auto max = *(std::max_element(ids.cbegin(), ids.cend()));
-  auto min = *(std::min_element(ids.cbegin(), ids.cend()));
-
-  const bool is_consecutive = ((max - min) == (ids.size() - 1));
-  const bool is_sorted = std::is_sorted(ids.begin(), ids.end());
-
-  if (!is_consecutive || !is_sorted) {
-    std::string flag_value = android::base::Join(ids, ",");
-    new_args.push_back("--instance_nums=" + flag_value);
-    return new_args;
-  }
-
-  // sorted and consecutive, so let's use old flags
-  // like --num_instances and --base_instance_num
-  new_args.push_back("--num_instances=" + std::to_string(ids.size()));
-  new_args.push_back("--base_instance_num=" + std::to_string(min));
-  return new_args;
-}
-
-Result<std::vector<std::string>> CreationAnalyzer::UpdateWebrtcDeviceId(
-    std::vector<std::string>&& args,
-    const std::vector<PerInstanceInfo>& per_instance_info) {
-  std::vector<std::string> new_args{std::move(args)};
-  std::string flag_value;
-  std::vector<Flag> webrtc_device_id_flag{
-      GflagsCompatFlag("webrtc_device_id", flag_value)};
-  std::vector<std::string> copied_args{new_args};
-  CF_EXPECT(ConsumeFlags(webrtc_device_id_flag, copied_args));
-
-  if (!flag_value.empty()) {
-    return new_args;
-  }
-
-  CF_EXPECT(!group_name_.empty());
-  std::vector<std::string> device_name_list;
-  for (const auto& instance : per_instance_info) {
-    const auto& per_instance_name = instance.per_instance_name_;
-    std::string device_name = group_name_ + "-" + per_instance_name;
-    device_name_list.push_back(device_name);
-  }
-  // take --webrtc_device_id flag away
-  new_args = std::move(copied_args);
-  new_args.push_back("--webrtc_device_id=" +
-                     android::base::Join(device_name_list, ","));
-  return new_args;
-}
-
-Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
+Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo() {
   auto instance_info = CF_EXPECT(AnalyzeInstanceIds());
   std::vector<unsigned> ids;
   ids.reserve(instance_info.size());
   for (const auto& instance : instance_info) {
     ids.push_back(instance.instance_id_);
   }
-  cmd_args_ = CF_EXPECT(UpdateInstanceArgs(std::move(cmd_args_), ids));
-
   auto group_info = CF_EXPECT(ExtractGroup(instance_info));
-  group_name_ = group_info.group_name;
-  cmd_args_ =
-      CF_EXPECT(UpdateWebrtcDeviceId(std::move(cmd_args_), instance_info));
 
-  home_ = CF_EXPECT(AnalyzeHome());
-  envs_["HOME"] = home_;
+  auto home = CF_EXPECT(AnalyzeHome());
 
   CF_EXPECT(Contains(envs_, kAndroidHostOut));
   std::string android_product_out_path = Contains(envs_, kAndroidProductOut)
                                              ? envs_.at(kAndroidProductOut)
                                              : envs_.at(kAndroidHostOut);
-  GroupCreationInfo report = {.home = home_,
-                              .host_artifacts_path = envs_.at(kAndroidHostOut),
-                              .product_out_path = android_product_out_path,
-                              .group_name = group_name_,
-                              .instances = std::move(instance_info),
-                              .args = cmd_args_,
-                              .envs = envs_,
-                              .is_default_group = group_info.default_group};
-  return report;
+  return GroupCreationInfo{
+      .home = home,
+      .host_artifacts_path = envs_.at(kAndroidHostOut),
+      .product_out_path = android_product_out_path,
+      .group_name = group_info.group_name,
+      .instances = std::move(instance_info),
+  };
 }
 
 Result<CreationAnalyzer::GroupInfo> CreationAnalyzer::ExtractGroup(
     const std::vector<PerInstanceInfo>& per_instance_infos) const {
-  if (selector_options_parser_.GroupName()) {
-    CreationAnalyzer::GroupInfo group_name_info = {
-      .group_name = selector_options_parser_.GroupName().value(),
-      .default_group = false
-    };
-    return group_name_info;
-  }
-  // auto-generate group name
-  std::vector<unsigned> ids;
-  ids.reserve(per_instance_infos.size());
-  for (const auto& per_instance_info : per_instance_infos) {
-    ids.push_back(per_instance_info.instance_id_);
-  }
-  std::string base_name = GenDefaultGroupName();
-
-  /* We cannot return simply "cvd" as we do not want duplication in the group
-   * name across the instance groups owned by the user. Note that the set of ids
-   * are expected to be unique to the user, so we use the ids. If ever the end
-   * user happened to have already used the generated name, we did our best, and
-   * cvd start will fail with a proper error message.
-   */
-  auto unique_suffix =
-      std::to_string(*std::min_element(ids.begin(), ids.end()));
   CreationAnalyzer::GroupInfo group_name_info = {
-    .group_name = base_name + "_" + unique_suffix,
-    .default_group = selector_options_parser_.IsMaybeDefaultGroup()
-  };
+      // With an empty group name the instance manager will pick one guaranteed
+      // to be unique.
+      .group_name = selector_options_parser_.GroupName().value_or(""),
+      .default_group = false};
   return group_name_info;
 }
 
@@ -321,14 +209,8 @@ Result<std::string> CreationAnalyzer::AnalyzeHome() const {
     return envs_.at("HOME");
   }
 
-  CF_EXPECT(!group_name_.empty(),
-            "To auto-generate HOME, the group name is a must.");
-  const auto client_uid = getuid();
-  const auto client_gid = getgid();
-  std::string auto_generated_home =
-      CF_EXPECT(ParentOfAutogeneratedHomes(client_uid, client_gid));
-  auto_generated_home.append("/" + std::to_string(client_uid));
-  auto_generated_home.append("/" + group_name_);
+  // TODO(jemoreira): use the group name for this directory
+  std::string auto_generated_home = DefaultBaseDir() + "/home";
   CF_EXPECT(EnsureDirectoryExists(auto_generated_home));
   return auto_generated_home;
 }

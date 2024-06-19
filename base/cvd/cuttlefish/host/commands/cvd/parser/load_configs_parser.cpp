@@ -43,7 +43,6 @@
 namespace cuttlefish {
 
 using cvd::config::EnvironmentSpecification;
-using cvd::config::Instance;
 
 namespace {
 
@@ -274,12 +273,20 @@ Result<LoadDirectories> GenerateLoadDirectories(
 
 Result<CvdFlags> ParseCvdConfigs(const EnvironmentSpecification& launch,
                                  const LoadDirectories& load_directories) {
-  return CvdFlags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(launch)),
+  CvdFlags flags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(launch)),
                   .selector_flags = ParseSelectorConfigs(launch),
                   .fetch_cvd_flags = CF_EXPECT(ParseFetchCvdConfigs(
                       launch, load_directories.target_directory,
                       load_directories.target_subdirectories)),
-                  .load_directories = load_directories};
+                  .load_directories = load_directories,
+  };
+  if (launch.common().has_group_name()) {
+    flags.group_name = launch.common().group_name();
+  }
+  for (const auto& instance: launch.instances()) {
+    flags.instance_names.push_back(instance.name());
+  }
+  return flags;
 }
 
 }  // namespace
