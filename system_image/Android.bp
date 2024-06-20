@@ -351,6 +351,7 @@ android_system_image {
         "dumpstate",
         "dumpsys",
         "e2fsck",
+        "enhanced-confirmation.xml", // base_system
         "etc_hosts",
         "flags_health_check",
         "framework-audio_effects.xml", // for handheld // handheld_system
@@ -423,6 +424,7 @@ android_system_image {
         "netutils-wrapper-1.0", // full_base
         "odsign", // base_system
         "otapreopt_script", // generic_system
+        "package-shareduid-allowlist.xml", // base_system
         "passwd_system", // base_system
         "perfetto", // base_system
         "ping", // base_system
@@ -468,7 +470,6 @@ android_system_image {
         "tc", // base_system
         "telecom", // base_system
         "tombstoned", // base_system
-        "trace_redactor", // base_system (RELEASE_PACKAGE_PROFILING_MODULE)
         "traced_probes", // base_system
         "traced", // base_system
         "tune2fs", // base_system
@@ -487,7 +488,12 @@ android_system_image {
         "wifi.rc", // base_system
         "wificond", // base_system
         "wm", // base_system
-    ] + select(product_variable("debuggable"), {
+    ] + select(soong_config_variable("ANDROID", "release_package_profiling_module"), {
+        "true": [
+            "trace_redactor", // base_system (RELEASE_PACKAGE_PROFILING_MODULE)
+        ],
+        default: [],
+    }) + select(product_variable("debuggable"), {
         true: [
             "adevice_fingerprint",
             "arping",
@@ -569,7 +575,6 @@ android_system_image {
                 "com.android.mediadrm.signer", // media_system
                 "com.android.nfc_extras", // ok
                 "com.android.nfcservices", // base_system (RELEASE_PACKAGE_NFC_STACK != NfcNci)
-                "com.android.profiling", // base_system (RELEASE_PACKAGE_PROFILING_MODULE)
                 "com.android.runtime", // ok
                 "CompanionDeviceManager", // media_system
                 "ContactsProvider", // base_system
@@ -643,6 +648,11 @@ android_system_image {
             ] + select(soong_config_variable("ANDROID", "release_crashrecovery_module"), {
                 "true": [
                     "com.android.crashrecovery", // base_system (RELEASE_CRASHRECOVERY_MODULE)
+                ],
+                default: [],
+            }) + select(soong_config_variable("ANDROID", "release_package_profiling_module"), {
+                "true": [
+                    "com.android.profiling", // base_system (RELEASE_PACKAGE_PROFILING_MODULE)
                 ],
                 default: [],
             }),
