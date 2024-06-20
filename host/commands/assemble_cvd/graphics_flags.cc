@@ -352,25 +352,6 @@ Result<std::string> GraphicsDetectorBinaryPath() {
   return CF_ERR("Graphics detector unavailable for host arch.");
 }
 
-CF_UNUSED_ON_MACOS
-Result<const gfxstream::proto::GraphicsAvailability>
-GetGraphicsAvailabilityWithSubprocessCheck() {
-  Command graphics_detector_cmd(CF_EXPECT(GraphicsDetectorBinaryPath()));
-  std::string graphics_detector_stdout;
-  auto ret = RunWithManagedStdio(std::move(graphics_detector_cmd), nullptr,
-                                 &graphics_detector_stdout, nullptr);
-  CF_EXPECT_EQ(ret, 0, "Failed to run graphics detector, bad return value");
-
-  gfxstream::proto::GraphicsAvailability availability;
-  google::protobuf::TextFormat::Parser parser;
-  if (!parser.ParseFromString(graphics_detector_stdout, &availability)) {
-    return CF_ERR("Failed to parse graphics detector stdout: "
-                  << graphics_detector_stdout);
-  }
-
-  return availability;
-}
-
 bool IsAmdGpu(const gfxstream::proto::GraphicsAvailability& availability) {
   return (availability.has_egl() &&
           ((availability.egl().has_gles2_availability() &&
@@ -481,18 +462,57 @@ Result<void> SetGfxstreamFlags(
   return {};
 }
 
-}  // namespace
-
 static std::unordered_set<std::string> kSupportedGpuContexts{
     "gfxstream-vulkan", "gfxstream-composer", "cross-domain", "magma"};
 
+}  // namespace
+
+gfxstream::proto::GraphicsAvailability
+GetGraphicsAvailabilityWithSubprocessCheck() {
+#ifdef __APPLE__
+  return {};
+#else
+  auto graphics_detector_binary_result = GraphicsDetectorBinaryPath();
+  if (!graphics_detector_binary_result.ok()) {
+    LOG(ERROR) << "Failed to run graphics detector, graphics detector path "
+               << " not available: "
+               << graphics_detector_binary_result.error().FormatForEnv()
+               << ". Assuming no availability.";
+    return {};
+  }
+
+  Command graphics_detector_cmd(graphics_detector_binary_result.value());
+  std::string graphics_detector_stdout;
+  auto ret = RunWithManagedStdio(std::move(graphics_detector_cmd), nullptr,
+                                 &graphics_detector_stdout, nullptr);
+  if (ret != 0) {
+    LOG(ERROR) << "Failed to run graphics detector, bad return value: " << ret
+               << ". Assuming no availability.";
+    return {};
+  }
+
+  gfxstream::proto::GraphicsAvailability availability;
+  google::protobuf::TextFormat::Parser parser;
+  if (!parser.ParseFromString(graphics_detector_stdout, &availability)) {
+    LOG(ERROR) << "Failed to parse graphics detector stdout: "
+               << graphics_detector_stdout << ". Assuming no availability.";
+    return {};
+  }
+
+  LOG(DEBUG) << "Host Graphics Availability:" << availability.DebugString();
+  return availability;
+#endif
+}
+
 Result<std::string> ConfigureGpuSettings(
+    const gfxstream::proto::GraphicsAvailability& graphics_availability,
     const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
     const std::string& gpu_renderer_features_arg,
     std::string& gpu_context_types_arg, VmmMode vmm,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
 #ifdef __APPLE__
+  (void)graphics_availability;
   (void)gpu_vhost_user_mode_arg;
   (void)vmm;
   (void)guest_config;
@@ -506,20 +526,6 @@ Result<std::string> ConfigureGpuSettings(
   instance.set_gpu_mode(gpu_mode);
   instance.set_enable_gpu_vhost_user(false);
 #else
-  gfxstream::proto::GraphicsAvailability graphics_availability;
-
-  auto graphics_availability_result =
-      GetGraphicsAvailabilityWithSubprocessCheck();
-  if (!graphics_availability_result.ok()) {
-    LOG(ERROR) << "Failed to get graphics availability: "
-               << graphics_availability_result.error().Message()
-               << ". Assuming none.";
-  } else {
-    graphics_availability = graphics_availability_result.value();
-    LOG(DEBUG) << "Host Graphics Availability:"
-               << graphics_availability.DebugString();
-  }
-
   const std::string gpu_mode = CF_EXPECT(
       SelectGpuMode(gpu_mode_arg, vmm, guest_config, graphics_availability));
   const bool enable_gpu_vhost_user =
