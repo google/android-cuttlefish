@@ -27,12 +27,18 @@
           false, muting of individual volume groups is disabled, instead muting will toggle master
           mute. If this is set to true, car volume group muting is enabled and each individual
           volume group can be muted separately. -->
-    <bool name="audioUseCarVolumeGroupMuting">false</bool>
+    <bool name="audioUseCarVolumeGroupMuting">true</bool>
     <!--  Configuration to enable IAudioControl#onDevicesToDuckChange API to inform HAL when to
       duck. If this is set to true, the API will receive signals indicating which output devices
       to duck as well as what usages are currently holding focus. If set to false, the API will
       not be called. -->
     <bool name="audioUseHalDuckingSignals">false</bool>
+     <!--  Configuration to enable min/max activation volume. If this is set to true, the volume of
+          the volume group with min/max activation volume setting will be set to min activation
+          volume or max activation volume if volume during activation is lower than min activation
+          volume or higher than max activation volume respectively. If this is set to false, no
+          volume level will be changed during activation.-->
+    <bool name="audioUseMinMaxActivationVolume">true</bool>
 
     <!--
     Lists all occupant (= driver + passenger) zones available in the car.
@@ -85,11 +91,8 @@
     </string-array>
 
     <!-- A name of a camera device that provides the rearview through EVS service -->
-    <string translatable="false" name="config_evsRearviewCameraId">/dev/video10</string>
-
-    <!-- The camera Activity name for EVS, if defined, the Activity will be launched by
-         CarEvsService. -->
-    <string name="config_evsCameraActivity" translatable="false">
-        com.google.android.car.evs/com.google.android.car.evs.CarEvsCameraPreviewActivity
-    </string>
+    <string-array name="config_carEvsService" translatable="false">
+        <item>serviceType=REARVIEW,cameraId=/dev/video10,activityName=com.android.car/com.google.android.car.evs.CarEvsCameraPreviewActivity</item>
+        <item>serviceType=FRONTVIEW,cameraId=/dev/video11</item>
+    </string-array>
 </resources>

@@ -22,30 +22,19 @@ prebuilt_etc {
     installable: false,
 }
 
-prebuilt_etc {
-    name: "wpa_supplicant.conf.cf",
-    src: ":wpa_supplicant_template.conf",
-    filename: "wpa_supplicant.conf",
-    relative_install_path: "wifi",
-    installable: false,
-}
-
 apex {
     name: "com.google.cf.wifi",
     manifest: "apex_manifest.json",
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",
     file_contexts: "file_contexts",
-    use_vndk_as_stable: true,
     updatable: false,
     // Install the apex in /vendor/apex
     soc_specific: true,
     binaries: [
         "rename_netiface",
-        "//external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant:wpa_supplicant",
         "setup_wifi",
         "//device/generic/goldfish:mac80211_create_radios",
-        "hostapd_cf",
     ],
     sh_binaries: ["init.wifi_apex"],
     prebuilts: [
@@ -53,12 +42,5 @@ apex {
         "android.hardware.wifi.passpoint.prebuilt.xml",
         "android.hardware.wifi.prebuilt.xml",
         "com.google.cf.wifi.rc",
-        "wpa_supplicant.conf.cf",
-        "wpa_supplicant_overlay.conf.cf",
-        "p2p_supplicant.conf.cf",
-    ],
-    vintf_fragments: [
-        ":android.hardware.wifi.supplicant.xml",
-        ":android.hardware.wifi.hostapd.xml",
     ],
 }

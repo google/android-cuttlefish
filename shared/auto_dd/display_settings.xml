@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
 <!--
 /*
-** Copyright 2023, The Android Open Source Project.
+** Copyright 2024, The Android Open Source Project
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -16,8 +16,17 @@
 ** limitations under the License.
 */
 -->
-<manifest version="1.0" type="device" target-level="8">
 
-    <!-- DO NOT ADD MORE - use vintf_fragments -->
+<display-settings>
 
-</manifest>
+  <!-- Use physical port number instead of local id -->
+  <config identifier="1" />
+
+  <!-- Display settings for the distant display-->
+  <display
+        name="port:1"
+        forcedWidth="4000"
+        forcedHeight="800"
+        dontMoveToTop="true"/>
+
+</display-settings>
