@@ -23,11 +23,19 @@ using sapi::file::JoinPath;
 
 namespace cuttlefish {
 
-sandbox2::PolicyBuilder HelloWorldPolicy(const HostInfo& host) {
-  auto exe =
-      JoinPath(host.artifacts_path, "testcases", "process_sandboxer_test",
-               "x86_64", "process_sandboxer_test_hello_world");
-  return BaselinePolicy(host, exe);
+sandbox2::PolicyBuilder BaselinePolicy(const HostInfo& host,
+                                       std::string_view exe) {
+  return sandbox2::PolicyBuilder()
+      .AddLibrariesForBinary(exe, JoinPath(host.artifacts_path, "lib64"))
+      // For dynamic linking and memory allocation
+      .AllowDynamicStartup()
+      .AllowExit()
+      .AllowGetPIDs()
+      .AllowGetRandom()
+      .AllowMmap()
+      .AllowReadlink()
+      .AllowRestartableSequences(sandbox2::PolicyBuilder::kAllowSlowFences)
+      .AllowWrite();
 }
 
 }  // namespace cuttlefish
