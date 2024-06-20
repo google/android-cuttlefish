@@ -1350,6 +1350,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     mutable_env_config.set_start_wmediumd(false);
   }
 
+  const auto graphics_availability =
+      GetGraphicsAvailabilityWithSubprocessCheck();
+
   // Instance specific configs
   bool is_first_instance = true;
   int instance_index = 0;
@@ -1599,7 +1602,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     // gpu related settings
     const std::string gpu_mode = CF_EXPECT(ConfigureGpuSettings(
-        gpu_mode_vec[instance_index], gpu_vhost_user_mode_vec[instance_index],
+        graphics_availability, gpu_mode_vec[instance_index],
+        gpu_vhost_user_mode_vec[instance_index],
         gpu_renderer_features_vec[instance_index],
         gpu_context_types_vec[instance_index], vmm_mode,
         guest_configs[instance_index], instance));
