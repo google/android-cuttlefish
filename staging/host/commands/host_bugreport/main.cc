@@ -73,10 +73,21 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
     };
     save("cuttlefish_config.json");
     save("disk_config.txt");
-    save("kernel.log");
-    save("launcher.log");
-    save("logcat");
-    save("metrics.log");
+    if (DirectoryExists(instance.PerInstancePath("logs"))) {
+      auto logs = CF_EXPECT(DirectoryContents(instance.PerInstancePath("logs")),
+                            "Cannot read from logs directory.");
+      for (const auto& log : logs) {
+        if (log == "." || log == "..") {
+          continue;
+        }
+        save("logs/" + log);
+      }
+    } else {
+      save("kernel.log");
+      save("launcher.log");
+      save("logcat");
+      save("metrics.log");
+    }
     auto tombstones =
         CF_EXPECT(DirectoryContents(instance.PerInstancePath("tombstones")),
                   "Cannot read from tombstones directory.");
