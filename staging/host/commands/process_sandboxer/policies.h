@@ -29,9 +29,13 @@ struct HostInfo {
   std::string log_dir;
 };
 
-sandbox2::PolicyBuilder HelloWorldPolicy(const HostInfo&);
+sandbox2::PolicyBuilder BaselinePolicy(const HostInfo&, std::string_view exe);
+
 sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder LogcatReceiverPolicy(const HostInfo&);
+
+// Testing policies
+sandbox2::PolicyBuilder HelloWorldPolicy(const HostInfo&);
 
 std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
     const HostInfo& host_info, std::string_view executable_path);
