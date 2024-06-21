@@ -49,3 +49,6 @@ update-alternatives --set iptables /usr/sbin/iptables-legacy
 
 # Install network manager
 apt-get install -y network-manager
+
+# Network-manager workaround
+rm -f '/etc/NetworkManager/system-connections/Wired connection 1'
