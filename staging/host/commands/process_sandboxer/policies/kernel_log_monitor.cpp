@@ -28,29 +28,15 @@ namespace cuttlefish {
 
 sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo& host) {
   auto exe = JoinPath(host.artifacts_path, "bin", "kernel_log_monitor");
-  auto lib64 = JoinPath(host.artifacts_path, "lib64");
-  return sandbox2::PolicyBuilder()
-      .AddDirectory(lib64)
+  return BaselinePolicy(host, exe)
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
-      .AddLibrariesForBinary(exe, lib64)
-      // For dynamic linking
-      .AddPolicyOnSyscall(__NR_prctl,
-                          {ARG_32(0), JEQ32(PR_CAPBSET_READ, ALLOW)})
-      .AllowDynamicStartup()
-      .AllowGetPIDs()
-      .AllowGetRandom()
       .AllowHandleSignals()
-      .AllowMmap()
       .AllowOpen()
       .AllowRead()
-      .AllowReadlink()
-      .AllowRestartableSequences(sandbox2::PolicyBuilder::kAllowSlowFences)
       .AllowSelect()
       .AllowSafeFcntl()
-      .AllowSyscall(__NR_tgkill)
-      .AllowTCGETS()
-      .AllowWrite();
+      .AllowTCGETS();
 }
 
 }  // namespace cuttlefish
