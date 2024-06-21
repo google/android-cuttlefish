@@ -34,6 +34,14 @@ done
 
 echo "step 2: update the stable tag"
 RELEASE_NAME_LIST=$(gh release list --json name --jq '.[].name')
+
+# if this release doesn't exist yet, create it
+stable_exist=$(echo $RELEASE_NAME_LIST|grep "$STABLE_VERSION")
+if [[ "$stable_exist" == "" ]]
+then
+  gh release create $STABLE_VERSION --latest=false --title "$STABLE_VERSION" --notes "New release placeholder"
+fi
+
 stringarray=($RELEASE_NAME_LIST)
 index=0
 for i in "${stringarray[@]}"
