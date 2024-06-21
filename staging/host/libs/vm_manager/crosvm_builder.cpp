@@ -134,23 +134,6 @@ SharedFD CrosvmBuilder::AddTap(const std::string& tap_name,
 
 int CrosvmBuilder::HvcNum() { return hvc_num_; }
 
-Result<void> CrosvmBuilder::SetToRestoreFromSnapshot(
-    const std::string& snapshot_dir_path, const std::string& instance_id_in_str,
-    const std::string& snapshot_name) {
-  auto meta_info_json = CF_EXPECT(LoadMetaJson(snapshot_dir_path));
-  const std::vector<std::string> selectors{kGuestSnapshotField,
-                                           instance_id_in_str};
-  const auto guest_snapshot_dir_suffix =
-      CF_EXPECT(GetValue<std::string>(meta_info_json, selectors));
-  // guest_snapshot_dir_suffix is a relative to
-  // the snapshot_path
-  const auto restore_path = snapshot_dir_path + "/" +
-                            guest_snapshot_dir_suffix + "/" +
-                            kGuestSnapshotBase + snapshot_name;
-  command_.AddParameter("--restore=", restore_path);
-  return {};
-}
-
 Command& CrosvmBuilder::Cmd() { return command_; }
 
 }  // namespace cuttlefish

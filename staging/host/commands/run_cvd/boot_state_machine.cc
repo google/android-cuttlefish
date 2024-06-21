@@ -24,6 +24,11 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include <grpc/grpc.h>
+#include <grpcpp/channel.h>
+#include <grpcpp/client_context.h>
+#include <grpcpp/create_channel.h>
+#include "common/libs/utils/result.h"
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/tee_logging.h"
@@ -34,6 +39,13 @@
 #include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/feature.h"
+#include "openwrt_control.grpc.pb.h"
+
+using grpc::ClientContext;
+using openwrtcontrolserver::LuciRpcReply;
+using openwrtcontrolserver::LuciRpcRequest;
+using openwrtcontrolserver::OpenwrtControlService;
+using openwrtcontrolserver::OpenwrtIpaddrReply;
 
 DEFINE_int32(reboot_notification_fd, CF_DEFAULTS_REBOOT_NOTIFICATION_FD,
              "A file descriptor to notify when boot completes.");
@@ -247,6 +259,26 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
                 << "Error writing to adbd restore pipe: "
                 << restore_adbd_pipe->StrError() << ". This is unrecoverable.";
 
+            // Restart network service in OpenWRT, broken on restore.
+            CHECK(FileExists(instance_.grpc_socket_path() +
+                             "/OpenwrtControlServer.sock"))
+                << "unable to find grpc socket for OpenwrtControlServer";
+            auto openwrt_channel =
+                grpc::CreateChannel("unix:" + instance_.grpc_socket_path() +
+                                        "/OpenwrtControlServer.sock",
+                                    grpc::InsecureChannelCredentials());
+            auto stub_ = OpenwrtControlService::NewStub(openwrt_channel);
+            LuciRpcRequest request;
+            request.set_subpath("sys");
+            request.set_method("exec");
+            request.add_params("service network restart");
+            LuciRpcReply response;
+            ClientContext context;
+            grpc::Status status = stub_->LuciRpc(&context, request, &response);
+            CHECK(status.ok())
+                << "Failed to send network service reset" << status.error_code()
+                << ": " << status.error_message();
+            LOG(DEBUG) << response.result();
             auto SubtoolPath = [](const std::string& subtool_name) {
               auto my_own_dir = android::base::GetExecutableDirectory();
               std::stringstream subtool_path_stream;
