@@ -57,13 +57,6 @@ class CrosvmBuilder {
 
   int HvcNum();
 
-  /**
-   * Configures the crosvm to start with --restore=<guest snapshot path>
-   */
-  Result<void> SetToRestoreFromSnapshot(const std::string& snapshot_dir_path,
-                                        const std::string& instance_id,
-                                        const std::string& snapshot_name);
-
   Command& Cmd();
 
  private:
