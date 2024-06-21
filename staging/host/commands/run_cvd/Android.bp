@@ -64,6 +64,7 @@ cc_binary_host {
         "libfruit",
         "libjsoncpp",
         "libprotobuf-cpp-full",
+        "libgrpc++_unsecure",
     ],
     static_libs: [
         "libbuildversion",
@@ -76,6 +77,7 @@ cc_binary_host {
         "libcuttlefish_process_monitor",
         "libcuttlefish_utils",
         "libcuttlefish_vm_manager",
+        "libopenwrt_control_server",
         "libgflags",
     ],
     required: [

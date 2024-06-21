@@ -25,8 +25,10 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/result.h"
+#include "host/libs/command_util/snapshot_utils.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/config/openwrt_args.h"
@@ -62,12 +64,27 @@ class OpenWrt : public CommandSource {
       return wmediumd_server_.WaitForAvailability();
     });
 
+    std::string first_time_argument;
+    if (IsRestoring(config_)) {
+      const std::string snapshot_dir_path = config_.snapshot_path();
+      auto meta_info_json = CF_EXPECT(LoadMetaJson(snapshot_dir_path));
+      const std::vector<std::string> selectors{kGuestSnapshotField,
+                                               instance_.id()};
+      const auto guest_snapshot_dir_suffix =
+          CF_EXPECT(GetValue<std::string>(meta_info_json, selectors));
+      // guest_snapshot_dir_suffix is a relative to
+      // the snapshot_path
+      const auto restore_path = snapshot_dir_path + "/" +
+                                guest_snapshot_dir_suffix + "/" +
+                                kGuestSnapshotBase + "_openwrt";
+      first_time_argument = "--restore=" + restore_path;
+    }
+
     /* TODO(b/305102099): Due to hostapd issue of OpenWRT 22.03.X versions,
      * OpenWRT instance should be rebooted.
      */
     LOG(DEBUG) << "Restart OpenWRT due to hostapd issue";
-    ap_cmd.ApplyProcessRestarter(instance_.crosvm_binary(),
-                                 /*first_time_argument=*/"",
+    ap_cmd.ApplyProcessRestarter(instance_.crosvm_binary(), first_time_argument,
                                  kOpenwrtVmResetExitCode);
     ap_cmd.Cmd().AddParameter("run");
     ap_cmd.AddControlSocket(
@@ -85,13 +102,6 @@ class OpenWrt : public CommandSource {
     if (environment_.enable_wifi()) {
       wifi_tap = ap_cmd.AddTap(instance_.wifi_tap_name());
     }
-
-    // TODO(khei): Enable restore once open_wrt instance restoring is fixed
-    // if (IsRestoring(config_)) {
-    //  const std::string snapshot_dir = config_.snapshot_path();
-    //  CF_EXPECT(ap_cmd.SetToRestoreFromSnapshot(snapshot_dir, instance_.id(),
-    //                                            "_openwrt"));
-    //}
 
     /* TODO(kwstephenkim): delete this code when Minidroid completely disables
      * the AP VM itself
