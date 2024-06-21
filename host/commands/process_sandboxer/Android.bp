@@ -26,6 +26,7 @@ cc_binary_host {
     srcs: [
         "main.cpp",
         "policies.cpp",
+        "policies/baseline.cpp",
         "policies/kernel_log_monitor.cpp",
         "policies/logcat_receiver.cpp",
         "policies/process_sandboxer_test_hello_world.cpp",
