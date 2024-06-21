@@ -17,7 +17,9 @@
 #include <stdlib.h>
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/flags/flag.h"
@@ -46,13 +48,19 @@ using sapi::file::JoinPath;
 
 namespace cuttlefish {
 
+static std::optional<std::string_view> FromEnv(const std::string& name) {
+  auto value = getenv(name.c_str());
+  return value == NULL ? std::optional<std::string_view>() : value;
+}
+
 int ProcessSandboxerMain(int argc, char** argv) {
   absl::InitializeLog();
   auto args = absl::ParseCommandLine(argc, argv);
 
   HostInfo host;
   host.artifacts_path = CleanPath(absl::GetFlag(FLAGS_host_artifacts_path));
-  host.cuttlefish_config_path = CleanPath(getenv(kCuttlefishConfigEnvVarName));
+  host.cuttlefish_config_path =
+      CleanPath(FromEnv(kCuttlefishConfigEnvVarName).value_or(""));
   host.log_dir = CleanPath(absl::GetFlag(FLAGS_log_dir));
   setenv("LD_LIBRARY_PATH", JoinPath(host.artifacts_path, "lib64").c_str(), 1);
 
