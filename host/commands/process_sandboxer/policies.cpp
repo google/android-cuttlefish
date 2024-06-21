@@ -37,6 +37,11 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[JoinPath(host.artifacts_path, "bin", "logcat_receiver")] =
       LogcatReceiverPolicy;
 
+  // TODO(schuffelen): Don't include test policies in the production impl
+  builders[JoinPath(host.artifacts_path, "testcases", "process_sandboxer_test",
+                    "x86_64", "process_sandboxer_test_hello_world")] =
+      HelloWorldPolicy;
+
   if (auto it = builders.find(executable); it != builders.end()) {
     return (it->second)(host).BuildOrDie();
   } else {
