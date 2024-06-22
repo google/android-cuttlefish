@@ -425,7 +425,7 @@ SharedFD SharedFD::MemfdCreate(const std::string& name, unsigned int flags) {
 
 SharedFD SharedFD::MemfdCreateWithData(const std::string& name, const std::string& data, unsigned int flags) {
   auto memfd = MemfdCreate(name, flags);
-  if (WriteAll(memfd, data) != data.size()) {
+  if (WriteAll(memfd, data) != (ssize_t)data.size()) {
     return ErrorFD(errno);
   }
   if (memfd->LSeek(0, SEEK_SET) != 0) {
@@ -758,7 +758,7 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
 
     const std::string expected_res = fmt::format("OK {}\n", port);
     std::string actual_res(expected_res.length(), ' ');
-    if (ReadExact(client, &actual_res) != expected_res.length()) {
+    if (ReadExact(client, &actual_res) != (ssize_t)expected_res.length()) {
       client->Close();
       LOG(ERROR) << "cannot connect to " << cid << ":" << port;
       return client;

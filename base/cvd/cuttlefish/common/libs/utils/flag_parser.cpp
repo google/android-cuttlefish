@@ -197,7 +197,7 @@ Result<Flag::FlagProcessResult> Flag::Process(
 }
 
 Result<void> Flag::Parse(std::vector<std::string>& arguments) const {
-  for (int i = 0; i < arguments.size();) {
+  for (size_t i = 0; i < arguments.size();) {
     std::string arg = arguments[i];
     std::optional<std::string> next_arg;
     if (i < arguments.size() - 1) {

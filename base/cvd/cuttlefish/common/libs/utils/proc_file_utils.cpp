@@ -68,7 +68,7 @@ static Result<ProcStatusUids> OwnerUids(const pid_t pid) {
       continue;
     }
     // the line, then 4 uids
-    CF_EXPECT_EQ(matches.size(), 5,
+    CF_EXPECT_EQ(matches.size(), 5ul,
                  fmt::format("Error in the Uid line: \"{}\"", line));
     uids.reserve(4);
     for (int i = 1; i < 5; i++) {
@@ -126,7 +126,7 @@ static std::vector<std::string> TokenizeByNullChar(const std::string& input) {
   }
   std::vector<std::string> tokens;
   std::string token;
-  for (int i = 0; i < input.size(); i++) {
+  for (size_t i = 0; i < input.size(); i++) {
     if (input.at(i) != '\0') {
       token.append(1, input.at(i));
     } else {

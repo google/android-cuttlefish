@@ -42,7 +42,7 @@ ControlMessage ControlMessage::FromRaw(const cmsghdr* cmsg) {
   if (message.IsFileDescriptors()) {
     size_t fdcount =
         static_cast<size_t>(cmsg->cmsg_len - CMSG_LEN(0)) / sizeof(int);
-    for (int i = 0; i < fdcount; i++) {
+    for (size_t i = 0; i < fdcount; i++) {
       // Use memcpy as CMSG_DATA may be unaligned
       int fd = -1;
       memcpy(&fd, CMSG_DATA(cmsg) + (i * sizeof(int)), sizeof(fd));
@@ -59,7 +59,7 @@ Result<ControlMessage> ControlMessage::FromFileDescriptors(
   message.Raw()->cmsg_len = CMSG_LEN(fds.size() * sizeof(int));
   message.Raw()->cmsg_level = SOL_SOCKET;
   message.Raw()->cmsg_type = SCM_RIGHTS;
-  for (int i = 0; i < fds.size(); i++) {
+  for (size_t i = 0; i < fds.size(); i++) {
     int fd_copy = fds[i]->Fcntl(F_DUPFD_CLOEXEC, 3);
     CF_EXPECT(fd_copy >= 0, "Failed to duplicate fd: " << fds[i]->StrError());
     message.fds_.push_back(fd_copy);
@@ -145,7 +145,7 @@ Result<std::vector<SharedFD>> ControlMessage::AsSharedFDs() const {
   size_t fdcount =
       static_cast<size_t>(Raw()->cmsg_len - CMSG_LEN(0)) / sizeof(int);
   std::vector<SharedFD> shared_fds;
-  for (int i = 0; i < fdcount; i++) {
+  for (size_t i = 0; i < fdcount; i++) {
     // Use memcpy as CMSG_DATA may be unaligned
     int fd = -1;
     memcpy(&fd, CMSG_DATA(Raw()) + (i * sizeof(int)), sizeof(fd));
@@ -249,7 +249,7 @@ Result<void> UnixMessageSocket::WriteMessage(const UnixSocketMessage& message) {
 
   auto bytes_sent = socket_->SendMsg(&message_header, MSG_NOSIGNAL);
   CF_EXPECT(bytes_sent >= 0, "Failed to send message: " << socket_->StrError());
-  CF_EXPECT(bytes_sent == message.data.size(),
+  CF_EXPECT(bytes_sent == (ssize_t)message.data.size(),
             "Failed to send entire message. Sent "
                 << bytes_sent << ", excepted to send " << message.data.size());
   return {};
