@@ -62,9 +62,6 @@ Result<void> AddNetsimdLogs(ZipWriter& writer) {
   auto names =
       CF_EXPECTF(DirectoryContents(dir), "Cannot read from {} directory.", dir);
   for (const auto& name : names) {
-    if (name == "." || name == "..") {
-      continue;
-    }
     SaveFile(writer, "netsimd/" + name, dir + "/" + name);
   }
   return {};
@@ -99,9 +96,6 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
       auto logs = CF_EXPECT(DirectoryContents(instance.PerInstancePath("logs")),
                             "Cannot read from logs directory.");
       for (const auto& log : logs) {
-        if (log == "." || log == "..") {
-          continue;
-        }
         save("logs/" + log);
       }
     } else {
@@ -114,18 +108,12 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
         CF_EXPECT(DirectoryContents(instance.PerInstancePath("tombstones")),
                   "Cannot read from tombstones directory.");
     for (const auto& tombstone : tombstones) {
-      if (tombstone == "." || tombstone == "..") {
-        continue;
-      }
       save("tombstones/" + tombstone);
     }
     auto recordings =
         CF_EXPECT(DirectoryContents(instance.PerInstancePath("recording")),
                   "Cannot read from recording directory.");
     for (const auto& recording : recordings) {
-      if (recording == "." || recording == "..") {
-        continue;
-      }
       save("recording/" + recording);
     }
   }
