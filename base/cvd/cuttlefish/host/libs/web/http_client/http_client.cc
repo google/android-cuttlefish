@@ -33,6 +33,8 @@
 #include <curl/curl.h>
 #include <json/json.h>
 
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_fd_stream.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/subprocess.h"
@@ -172,8 +174,8 @@ class CurlClient : public HttpClient {
       const std::vector<std::string>& headers) {
     LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
 
-    auto [fbuf, temp_path] = CF_EXPECT(MakeTempFileBuf(path));
-    std::ostream stream(&fbuf);
+    auto [shared_fd, temp_path] = CF_EXPECT(SharedFD::Mkostemp(path));
+    SharedFDOstream stream(shared_fd);
     auto callback = [&stream](char* data, size_t size) -> bool {
       if (data == nullptr) {
         return !stream.fail();

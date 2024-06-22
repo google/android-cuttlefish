@@ -38,6 +38,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -155,6 +156,8 @@ class SharedFD {
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
   static SharedFD MemfdCreateWithData(const std::string& name, const std::string& data, unsigned int flags = 0);
   static SharedFD Mkstemp(std::string* path);
+  static Result<std::pair<SharedFD, std::string>> Mkostemp(
+      const std::string_view path, const int flags = O_CLOEXEC);
   static int Poll(PollSharedFd* fds, size_t num_fds, int timeout);
   static int Poll(std::vector<PollSharedFd>& fds, int timeout);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,

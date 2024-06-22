@@ -124,7 +124,4 @@ struct InputPathForm {
  */
 Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info);
 
-Result<std::pair<std::filebuf, std::string>> MakeTempFileBuf(
-    const std::string& path);
-
 }  // namespace cuttlefish
