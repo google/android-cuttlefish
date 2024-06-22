@@ -319,9 +319,6 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
         const auto log_files =
             CF_EXPECT(DirectoryContents(instance.PerInstanceLogPath("")));
         for (const auto& filename : log_files) {
-          if (filename == "." || filename == "..") {
-            continue;
-          }
           const std::string path = instance.PerInstanceLogPath(filename);
           auto fd = SharedFD::Open(path, O_WRONLY | O_APPEND);
           CF_EXPECT(fd->IsOpen(),

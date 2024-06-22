@@ -70,10 +70,6 @@ Result<void> CopyDirectoryImpl(
     if (!predicate(src_dir_path + "/" + src_base_path)) {
       continue;
     }
-    if (src_base_path == "." || src_base_path == "..") {
-      LOG(DEBUG) << "Skipping \"" << src_base_path << "\"";
-      continue;
-    }
     std::string src_path = src_dir_path + "/" + src_base_path;
     std::string dest_path = dest_dir_path + "/" + src_base_path;
 
