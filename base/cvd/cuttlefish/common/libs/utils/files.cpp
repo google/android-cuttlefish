@@ -36,7 +36,6 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
-#include <ext/stdio_filebuf.h>
 
 #include <algorithm>
 #include <array>
@@ -857,18 +856,6 @@ Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info) {
                "Failed to effectively conduct readpath -f {}", processed_path);
   }
   return real_path;
-}
-
-Result<std::pair<std::filebuf, std::string>> MakeTempFileBuf(
-    const std::string& path) {
-  // mkstemp replaces the Xs with random selections to make a unique filename
-  auto temp_path = path + "XXXXXX";
-  const int fd = mkostemp(temp_path.data(), O_CLOEXEC);
-  CF_EXPECTF(fd != -1, "Error creating temporary file: {}", strerror(errno));
-  __gnu_cxx::stdio_filebuf<char> file_buffer(
-      fd, std::ios::out | std::ios::binary | std::ios::trunc);
-  return std::make_pair<std::filebuf, std::string>(std::move(file_buffer),
-                                                   std::move(temp_path));
 }
 
 }  // namespace cuttlefish

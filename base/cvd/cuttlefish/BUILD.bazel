@@ -4,6 +4,7 @@ cc_library(
         "common/libs/fs/epoll.cpp",
         "common/libs/fs/shared_buf.cc",
         "common/libs/fs/shared_fd.cpp",
+        "common/libs/fs/shared_fd_stream.cpp",
         "common/libs/utils/archive.cpp",
         "common/libs/utils/base64.cpp",
         "common/libs/utils/environment.cpp",

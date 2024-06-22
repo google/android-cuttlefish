@@ -30,11 +30,16 @@
 #include <cstddef>
 
 #include <algorithm>
+#include <cstdlib>
 #include <sstream>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <fmt/format.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
@@ -522,6 +527,18 @@ SharedFD SharedFD::Mkstemp(std::string* path) {
   } else {
     return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
   }
+}
+
+Result<std::pair<SharedFD, std::string>> SharedFD::Mkostemp(
+    const std::string_view path, const int flags) {
+  // mkostemp replaces the Xs with random selections to make a unique filename
+  auto temp_path = fmt::format("{}XXXXXX", path);
+  const int fd = mkostemp(temp_path.data(), flags);
+  CF_EXPECTF(fd != -1, "Error creating temporary file: {}", strerror(errno));
+  auto shared_fd =
+      SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
+  return std::make_pair<SharedFD, std::string>(std::move(shared_fd),
+                                               std::move(temp_path));
 }
 
 SharedFD SharedFD::ErrorFD(int error) {
