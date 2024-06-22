@@ -48,13 +48,6 @@ static std::map<std::string, uint32_t> DirectoryCrc(const std::string& path) {
   auto files_result = DirectoryContents(full_path);
   CHECK(files_result.ok()) << files_result.error().FormatForEnv();
   std::vector<std::string> files = std::move(*files_result);
-  for (auto it = files.begin(); it != files.end();) {
-    if (*it == "." || *it == "..") {
-      it = files.erase(it);
-    } else {
-      it++;
-    }
-  }
   std::vector<std::future<uint32_t>> calculations;
   calculations.reserve(files.size());
   for (auto& file : files) {

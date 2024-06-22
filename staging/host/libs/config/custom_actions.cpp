@@ -176,11 +176,10 @@ std::string DefaultCustomActionConfig() {
     CHECK(directory_contents_result.ok())
         << directory_contents_result.error().FormatForEnv();
     auto custom_action_configs = std::move(*directory_contents_result);
-    // Two entries are always . and ..
-    if (custom_action_configs.size() > 3) {
+    if (custom_action_configs.size() > 1) {
       LOG(ERROR) << "Expected at most one custom action config in "
                  << custom_action_config_dir << ". Please delete extras.";
-    } else if (custom_action_configs.size() == 3) {
+    } else if (custom_action_configs.size() == 1) {
       for (const auto& config : custom_action_configs) {
         if (android::base::EndsWithIgnoreCase(config, ".json")) {
           return custom_action_config_dir + "/" + config;
