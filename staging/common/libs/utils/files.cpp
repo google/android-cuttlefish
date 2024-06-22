@@ -152,6 +152,9 @@ Result<std::vector<std::string>> DirectoryContents(const std::string& path) {
   CF_EXPECTF(dir != nullptr, "Could not read from dir \"{}\"", path);
   struct dirent* ent{};
   while ((ent = readdir(dir.get()))) {
+    if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+      continue;
+    }
     ret.emplace_back(ent->d_name);
   }
   return ret;
@@ -595,9 +598,6 @@ Result<void> WalkDirectory(
     const std::function<bool(const std::string&)>& callback) {
   const auto files = CF_EXPECT(DirectoryContents(dir));
   for (const auto& filename : files) {
-    if (filename == "." || filename == "..") {
-      continue;
-    }
     auto file_path = dir + "/";
     file_path.append(filename);
     callback(file_path);
