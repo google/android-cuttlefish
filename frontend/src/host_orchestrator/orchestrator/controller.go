@@ -43,7 +43,7 @@ type Config struct {
 	CVDUser                string
 }
 
-type Controller struct {
+type ControllerOpts struct {
 	Config                Config
 	OperationManager      OperationManager
 	WaitOperationDuration time.Duration
@@ -51,41 +51,52 @@ type Controller struct {
 	DebugVariablesManager *debug.VariablesManager
 }
 
+type Controller struct {
+	config         Config
+	om             OperationManager
+	waitOpDuration time.Duration
+	uam            UserArtifactsManager
+	dvm            *debug.VariablesManager
+}
+
+func NewController(opts ControllerOpts) *Controller {
+	return &Controller{
+		config:         opts.Config,
+		om:             opts.OperationManager,
+		waitOpDuration: opts.WaitOperationDuration,
+		uam:            opts.UserArtifactsManager,
+		dvm:            opts.DebugVariablesManager,
+	}
+}
+
 func (c *Controller) AddRoutes(router *mux.Router) {
-	router.Handle("/artifacts",
-		httpHandler(&fetchArtifactsHandler{Config: c.Config, OM: c.OperationManager})).Methods("POST")
-	router.Handle("/cvds",
-		httpHandler(newCreateCVDHandler(c.Config, c.OperationManager, c.UserArtifactsManager))).Methods("POST")
-	router.Handle("/cvds", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
-	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
-	router.Handle("/cvds/{group}",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("DELETE")
+	router.Handle("/artifacts", httpHandler(&fetchArtifactsHandler{Config: c.config, OM: c.om})).Methods("POST")
+	router.Handle("/cvds", httpHandler(newCreateCVDHandler(c.config, c.om, c.uam))).Methods("POST")
+	router.Handle("/cvds", httpHandler(&listCVDsHandler{Config: c.config})).Methods("GET")
+	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{Config: c.config}).Methods("GET")
+	router.Handle("/cvds/{group}", httpHandler(newExecCVDCommandHandler(c.config, c.om, "stop"))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("DELETE")
+		httpHandler(newExecCVDCommandHandler(c.config, c.om, "stop"))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "powerwash"))).Methods("POST")
-	router.Handle("/operations/{name}", httpHandler(&getOperationHandler{om: c.OperationManager})).Methods("GET")
+		httpHandler(newExecCVDCommandHandler(c.config, c.om, "powerwash"))).Methods("POST")
+	router.Handle("/operations/{name}", httpHandler(&getOperationHandler{om: c.om})).Methods("GET")
 	// The expected response of the operation in case of success.  If the original method returns no data on
 	// success, such as `Delete`, response will be empty. If the original method is standard
 	// `Get`/`Create`/`Update`, the response should be the relevant resource encoded in JSON format.
-	router.Handle("/operations/{name}/result",
-		httpHandler(&getOperationResultHandler{om: c.OperationManager})).Methods("GET")
+	router.Handle("/operations/{name}/result", httpHandler(&getOperationResultHandler{om: c.om})).Methods("GET")
 	// Same as `/operations/{name}/result but waits for the specified operation to be DONE or for the request
 	// to approach the specified deadline, `503 Service Unavailable` error will be returned if the deadline is
 	// reached. Be prepared to retry if the deadline was reached.
 	router.Handle("/operations/{name}/:wait",
-		httpHandler(&waitOperationHandler{c.OperationManager, c.WaitOperationDuration})).Methods("POST")
-	router.Handle("/userartifacts",
-		httpHandler(&createUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
-	router.Handle("/userartifacts",
-		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
-	router.Handle("/userartifacts/{name}",
-		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
+		httpHandler(&waitOperationHandler{c.om, c.waitOpDuration})).Methods("POST")
+	router.Handle("/userartifacts", httpHandler(&createUploadDirectoryHandler{c.uam})).Methods("POST")
+	router.Handle("/userartifacts", httpHandler(&listUploadDirectoriesHandler{c.uam})).Methods("GET")
+	router.Handle("/userartifacts/{name}", httpHandler(&createUpdateUserArtifactHandler{c.uam})).Methods("PUT")
 	router.Handle("/userartifacts/{dir}/{name}/:extract",
-		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
-	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{Config: c.Config}).Methods("POST")
+		httpHandler(&extractUserArtifactHandler{c.om, c.uam})).Methods("POST")
+	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{Config: c.config}).Methods("POST")
 	// Debug endpoints.
-	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
+	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.dvm})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
 }
 

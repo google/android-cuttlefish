@@ -125,7 +125,7 @@ func main() {
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	debugStaticVars := debug.StaticVariables{}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
-	imController := orchestrator.Controller{
+	controllerOpts := orchestrator.ControllerOpts{
 		Config: orchestrator.Config{
 			Paths:                  imPaths,
 			AndroidBuildServiceURL: *abURL,
@@ -136,6 +136,7 @@ func main() {
 		UserArtifactsManager:  uam,
 		DebugVariablesManager: debugVarsManager,
 	}
+	imController := orchestrator.NewController(controllerOpts)
 	proxy := newOperatorProxy(*operatorPort)
 
 	r := mux.NewRouter()
