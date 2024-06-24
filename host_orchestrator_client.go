@@ -47,6 +47,7 @@ type HostOrchestratorService interface {
 	// Create a new device with artifacts from the build server or previously uploaded by the user.
 	// If not empty, the provided credentials will be used to download necessary artifacts from the build api.
 	CreateCVD(req *hoapi.CreateCVDRequest, buildAPICredentials string) (*hoapi.CreateCVDResponse, error)
+	CreateCVDOp(req *hoapi.CreateCVDRequest, buildAPICredentials string) (*hoapi.Operation, error)
 
 	// Deletes an existing cvd instance.
 	DeleteCVD(id string) error
@@ -249,13 +250,21 @@ func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRe
 	return res, nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, creds string) (*hoapi.CreateCVDResponse, error) {
-	var op hoapi.Operation
+func (c *HostOrchestratorServiceImpl) CreateCVDOp(req *hoapi.CreateCVDRequest, creds string) (*hoapi.Operation, error) {
+	op := &hoapi.Operation{}
 	rb := c.HTTPHelper.NewPostRequest("/cvds", req)
 	if creds != "" {
 		rb.AddHeader(c.BuildAPICredentialsHeader, creds)
 	}
-	if err := rb.JSONResDo(&op); err != nil {
+	if err := rb.JSONResDo(op); err != nil {
+		return nil, err
+	}
+	return op, nil
+}
+
+func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, creds string) (*hoapi.CreateCVDResponse, error) {
+	op, err := c.CreateCVDOp(req, creds)
+	if err != nil {
 		return nil, err
 	}
 	res := &hoapi.CreateCVDResponse{}
