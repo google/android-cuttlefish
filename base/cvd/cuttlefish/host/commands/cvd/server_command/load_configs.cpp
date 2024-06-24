@@ -24,6 +24,7 @@
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/interrupt_listener.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -75,6 +76,25 @@ class LoadConfigsCommand : public CvdServerHandler {
     CF_EXPECT_EQ(can_handle_request, true);
 
     auto cvd_flags = CF_EXPECT(GetCvdFlags(request));
+    std::string group_home_directory =
+        cvd_flags.load_directories.launch_home_directory;
+    auto push_result =
+        PushInterruptListener([this, &group_home_directory](int) {
+          // Creating the listener before the group exists has a very low chance
+          // that it may run before the group is actually created and fail,
+          // that's fine. The alternative is having a very low chance of being
+          // interrupted before the listener is setup and leaving the group in
+          // the wrong state in the database.
+          LOG(ERROR) << "Interrupt signal received";
+          // There is a race here if the signal arrived just before the
+          // subprocess was created. Hopefully, by aborting fast the
+          // cvd_internal_start subprocess won't have time to complete and
+          // receive the SIGHUP signal, so nothing should be left behind.
+          // TODO(jemoreira): set state to failed instead
+          instance_manager_.RemoveInstanceGroup(group_home_directory);
+          std::abort();
+        });
+    auto listener_handle = CF_EXPECT(std::move(push_result));
 
     auto group = CF_EXPECT(CreateGroup(cvd_flags));
     auto res = LoadGroup(request, group, std::move(cvd_flags));
@@ -82,6 +102,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       instance_manager_.RemoveInstanceGroup(group.GroupName());
       CF_EXPECT(std::move(res));
     }
+    listener_handle.reset();
 
     cvd::Response response;
     response.mutable_command_response();
