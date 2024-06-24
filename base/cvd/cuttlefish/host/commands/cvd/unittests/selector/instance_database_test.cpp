@@ -99,10 +99,6 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
                  << invalid_host_artifacts_path + "/bin";
   }
 
-  auto result_bad_host_bin_dir = db.AddInstanceGroup(
-      GroupProtoWithInstances("meow", home, "/path/to/never/exists",
-                              "/path/to/never/exists", {{1, "name"}}));
-
   auto result_bad_group_name = db.AddInstanceGroup(
       GroupProtoWithInstances("0invalid_group_name", home, HostArtifactsPath(),
                               HostArtifactsPath(), {{2, "name"}}));
@@ -113,7 +109,6 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
       GroupProtoWithInstances("0invalid_group_name", home, HostArtifactsPath(),
                               HostArtifactsPath(), {{2, "name"}}));
 
-  ASSERT_FALSE(result_bad_host_bin_dir.ok());
   ASSERT_FALSE(result_bad_group_name.ok());
   ASSERT_FALSE(result_non_qualifying_host_tool_dir.ok());
 }
@@ -474,6 +469,51 @@ TEST_F(CvdInstanceDatabaseJsonTest, DumpLoadDumpCompare) {
     ASSERT_TRUE(result_8.ok()) << result_8.error().Trace();
     ASSERT_TRUE(result_tv.ok()) << result_tv.error().Trace();
   }
+}
+
+TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
+  if (!SetUpOk()) {
+    GTEST_SKIP() << Error().msg;
+  }
+  auto& db = GetDb();
+
+  cvd::InstanceGroup grp;
+  grp.set_home_directory(Workspace() + "/grp1_home");
+  grp.set_name("grp1");
+  auto ins1 = grp.add_instances();
+  ins1->set_name("ins1");
+  ins1->set_state(cvd::INSTANCE_STATE_PREPARING);
+  auto ins2 = grp.add_instances();
+  ins2->set_name("ins2");
+  ins2->set_state(cvd::INSTANCE_STATE_PREPARING);
+
+  auto add_res = db.AddInstanceGroup(grp);
+  ASSERT_TRUE(add_res.ok())
+      << "Failed to add group to db: " << add_res.error().Message();
+
+  auto instance_group = *(std::move(add_res));
+  ASSERT_TRUE(instance_group.ProductOutPath().empty());
+  instance_group.SetProductOutPath("/path/to/product");
+  auto& instance1 = instance_group.Instances()[0];
+  instance1.SetInstanceId(1);
+  instance1.SetState(cvd::INSTANCE_STATE_STARTING);
+  auto& instance2 = instance_group.Instances()[1];
+  instance2.SetInstanceId(2);
+  instance2.SetState(cvd::INSTANCE_STATE_STARTING);
+
+  auto update_res = db.UpdateInstanceGroup(instance_group);
+  ASSERT_TRUE(update_res.ok())
+      << "Failed to update database: " << update_res.error().Message();
+
+  auto find_res = db.FindGroup(Query("group_name", "grp1"));
+  ASSERT_TRUE(find_res.ok()) << find_res.error().Message();
+
+  EXPECT_EQ(find_res->HomeDir(), Workspace() + "/grp1_home");
+  EXPECT_EQ(find_res->ProductOutPath(), "/path/to/product");
+  EXPECT_EQ(find_res->Instances()[0].InstanceId(), 1);
+  EXPECT_EQ(find_res->Instances()[1].InstanceId(), 2);
+  EXPECT_EQ(find_res->Instances()[0].State(), cvd::INSTANCE_STATE_STARTING);
+  EXPECT_EQ(find_res->Instances()[1].State(), cvd::INSTANCE_STATE_STARTING);
 }
 
 }  // namespace selector

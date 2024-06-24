@@ -97,26 +97,6 @@ bool IsValidDeviceName(const std::string& token) {
   return IsValidGroupName(group_name) && IsValidInstanceName(instance_name);
 }
 
-bool PotentiallyHostArtifactsPath(const std::string& host_artifacts_path) {
-  if (host_artifacts_path.empty() || !DirectoryExists(host_artifacts_path)) {
-    return false;
-  }
-  const auto host_bin_path = host_artifacts_path + "/bin";
-  auto contents_result = DirectoryContents(host_bin_path);
-  if (!contents_result.ok()) {
-    return false;
-  }
-  std::vector<std::string> contents = std::move(*contents_result);
-  std::set<std::string> contents_set{std::move_iterator(contents.begin()),
-                                     std::move_iterator(contents.end())};
-  std::set<std::string> launchers = {"cvd", "launch_cvd"};
-  std::vector<std::string> result;
-  std::set_intersection(launchers.cbegin(), launchers.cend(),
-                        contents_set.cbegin(), contents_set.cend(),
-                        std::back_inserter(result));
-  return !result.empty();
-}
-
 std::string GenerateTooManyInstancesErrorMsg(const int n,
                                              const std::string& field_name) {
   std::stringstream s;

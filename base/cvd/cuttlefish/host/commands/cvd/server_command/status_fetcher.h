@@ -45,15 +45,13 @@ class StatusFetcher {
   Result<void> Interrupt();
   Result<StatusFetcherOutput> FetchStatus(const RequestWithStdio&);
 
-  Result<Json::Value> FetchGroupStatus(
-      const selector::LocalInstanceGroup& group,
-      const RequestWithStdio& original_request);
+  Result<Json::Value> FetchGroupStatus(const RequestWithStdio& original_request,
+                                       selector::LocalInstanceGroup& group);
 
  private:
   Result<std::string> GetBin(const std::string& host_artifacts_path) const;
   Result<StatusFetcherOutput> FetchOneInstanceStatus(
-      const RequestWithStdio&, const InstanceManager::LocalInstanceGroup&,
-      const std::string&, const unsigned);
+      const RequestWithStdio&, InstanceManager::LocalInstance&);
 
   std::mutex interruptible_;
   bool interrupted_ = false;

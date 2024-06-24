@@ -20,8 +20,6 @@
 
 #include <optional>
 #include <sstream>
-#include <unordered_map>
-#include <vector>
 
 #include <android-base/logging.h>
 
@@ -99,5 +97,7 @@ std::string CvdDir();
 std::string PerUserDir();
 
 std::string InstanceDatabasePath();
+
+std::string DefaultBaseDir();
 
 }  // namespace cuttlefish

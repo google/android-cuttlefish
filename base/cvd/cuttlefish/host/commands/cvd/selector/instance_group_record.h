@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/selector/constant_reference.h"
@@ -43,17 +42,23 @@ class LocalInstanceGroup {
   const std::string& InternalGroupName() const { return internal_group_name_; }
   const std::string& GroupName() const { return group_proto_.name(); }
   const std::string& HomeDir() const { return group_proto_.home_directory(); }
+  void SetHomeDir(const std::string& home_dir);
   const std::string& HostArtifactsPath() const {
     return group_proto_.host_artifacts_path();
   }
+  void SetHostArtifactsPath(const std::string& host_artifacts_path);
   const std::string& ProductOutPath() const {
     return group_proto_.product_out_path();
   }
+  void SetProductOutPath(const std::string& product_out_path);
   TimeStamp StartTime() const;
+  void SetStartTime(TimeStamp time);
   const std::vector<LocalInstance>& Instances() const { return instances_; }
+  std::vector<LocalInstance>& Instances() { return instances_; }
   const cvd::InstanceGroup& Proto() const {
     return group_proto_;
   }
+  void SetAllStates(cvd::InstanceState state);
 
   std::vector<LocalInstance> FindById(const unsigned id) const;
   /**

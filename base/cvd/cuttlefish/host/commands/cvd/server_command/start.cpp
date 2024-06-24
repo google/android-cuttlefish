@@ -153,6 +153,29 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
   return {};
 }
 
+/**
+ * Runs simple tests to see if it could potentially be a host artifacts dir
+ *
+ */
+bool PotentiallyHostArtifactsPath(const std::string& host_artifacts_path) {
+  if (host_artifacts_path.empty() || !DirectoryExists(host_artifacts_path)) {
+    return false;
+  }
+  const auto host_bin_path = host_artifacts_path + "/bin";
+  auto contents_result = DirectoryContents(host_bin_path);
+  if (!contents_result.ok()) {
+    return false;
+  }
+  std::vector<std::string> contents = std::move(*contents_result);
+  std::set<std::string> contents_set{std::move_iterator(contents.begin()),
+                                     std::move_iterator(contents.end())};
+  std::set<std::string> launchers = {"cvd_internal_start", "launch_cvd"};
+  std::vector<std::string> result;
+  std::set_intersection(launchers.cbegin(), launchers.cend(),
+                        contents_set.cbegin(), contents_set.cend(),
+                        std::back_inserter(result));
+  return !result.empty();
+}
 }  // namespace
 
 class CvdStartCommandHandler : public CvdServerHandler {
@@ -431,6 +454,8 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
     const std::string& bin_file, const selector::GroupCreationInfo& group_info,
     const RequestWithStdio& request) {
   auto bin_path = group_info.host_artifacts_path;
+  CF_EXPECTF(PotentiallyHostArtifactsPath(bin_path),
+             "ANDROID_HOST_OUT, \"{}\" is not a tool directory", bin_path);
   bin_path.append("/bin/").append(bin_file);
   CF_EXPECT(!group_info.home.empty());
   ConstructCommandParam construct_cmd_param{
@@ -738,7 +763,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   // Print new group spec
   auto group = CF_EXPECT(instance_manager_.FindGroup(InstanceManager::Query(
       selector::kGroupNameField, group_creation_info.group_name)));
-  auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(group, request));
+  auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(request, group));
   auto serialized_json = group_json.toStyledString();
   CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
                (ssize_t)serialized_json.size());

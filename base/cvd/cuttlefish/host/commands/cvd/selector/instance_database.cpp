@@ -38,6 +38,8 @@ namespace {
 
 constexpr const char kJsonGroups[] = "Groups";
 
+constexpr const unsigned UNSET_ID = 0;
+
 }  // namespace
 
 InstanceDatabase::InstanceDatabase(const std::string& backing_file)
@@ -69,9 +71,6 @@ Result<LocalInstanceGroup> InstanceDatabase::AddInstanceGroup(
   CF_EXPECTF(EnsureDirectoryExists(group_proto.home_directory()),
              "HOME dir, \"{}\" neither exists nor can be created.",
              group_proto.home_directory());
-  CF_EXPECTF(PotentiallyHostArtifactsPath(group_proto.host_artifacts_path()),
-             "ANDROID_HOST_OUT, \"{}\" is not a tool directory",
-             group_proto.host_artifacts_path());
   for (const auto& instance_proto : group_proto.instances()) {
     CF_EXPECTF(IsValidInstanceName(instance_proto.name()),
                "instance_name \"{}\" is invalid", instance_proto.name());
@@ -86,6 +85,9 @@ Result<LocalInstanceGroup> InstanceDatabase::AddInstanceGroup(
                    matching_groups[0].GroupName(),
                    matching_groups[0].HomeDir());
         for (const auto& instance_proto : group_proto.instances()) {
+          if (instance_proto.id() == UNSET_ID) {
+            continue;
+          }
           auto matching_instances =
               FindInstances(data, {.id = instance_proto.id()});
           CF_EXPECTF(
@@ -96,10 +98,55 @@ Result<LocalInstanceGroup> InstanceDatabase::AddInstanceGroup(
         }
         auto new_group_proto = data.add_instance_groups();
         *new_group_proto = group_proto;
-        return CF_EXPECT(LocalInstanceGroup::Create(group_proto));
+        return CF_EXPECT(LocalInstanceGroup::Create(*new_group_proto));
       });
   return CF_EXPECT(std::move(add_res));
 }
+
+Result<void> InstanceDatabase::UpdateInstanceGroup(
+    const LocalInstanceGroup& group) {
+  auto add_res = viewer_.WithExclusiveLock<void>(
+      [&group](cvd::PersistentData& data) -> Result<void> {
+        for (auto& group_proto : *data.mutable_instance_groups()) {
+          if (group_proto.name() != group.GroupName()) {
+            continue;
+          }
+          group_proto = group.Proto();
+          // Instance protos may have been updated too
+          group_proto.clear_instances();
+          for (const auto& instance : group.Instances()) {
+            *group_proto.add_instances() = instance.Proto();
+          }
+          return {};
+        }
+        return CF_ERRF("Group not found (name = {})", group.GroupName());
+      });
+  CF_EXPECT(std::move(add_res));
+  return {};
+}
+
+  Result<void> InstanceDatabase::UpdateInstance(const LocalInstance& instance) {
+  auto add_res = viewer_.WithExclusiveLock<void>(
+      [&instance](cvd::PersistentData& data) -> Result<void> {
+        for (auto& group_proto : *data.mutable_instance_groups()) {
+          if (group_proto.name() != instance.GroupProto().name()) {
+            continue;
+          }
+          for (auto& instance_proto : *group_proto.mutable_instances()) {
+              if (instance_proto.name() != instance.Proto().name()) {
+              continue;
+              }
+              instance_proto = instance.Proto();
+          }
+          return CF_ERRF("Instance not found (name = '{}', group = '{}')",
+                         instance.GroupProto().name(), instance.Proto().name());
+        }
+        return CF_ERRF("Group not found (name = {})",
+                       instance.GroupProto().name());
+      });
+  CF_EXPECT(std::move(add_res));
+  return {};
+  }
 
 Result<bool> InstanceDatabase::RemoveInstanceGroup(
     const std::string& group_name) {

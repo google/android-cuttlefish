@@ -185,4 +185,9 @@ std::string InstanceDatabasePath() {
   return fmt::format("{}/instance_database.binpb", PerUserDir());
 }
 
+std::string DefaultBaseDir() {
+  auto time = std::chrono::system_clock::now().time_since_epoch().count();
+  return fmt::format("{}/{}", PerUserDir(), time);
+}
+
 }  // namespace cuttlefish
