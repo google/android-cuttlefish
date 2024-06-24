@@ -18,6 +18,7 @@
 
 #include <array>
 #include <optional>
+#include <sstream>
 #include <string>
 
 namespace android::hardware::automotive::utils {
