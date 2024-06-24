@@ -37,14 +37,23 @@ using ::android::hardware::automotive::vehicle::virtualization::
 int main(int argc, char* argv[]) {
   CHECK(argc >= 3) << "Not enough arguments, require at least 2: config file "
                       "path and vsock port";
-  VsockConnectionInfo vsock = {
-      .cid = VMADDR_CID_HOST, .port = static_cast<unsigned int>(atoi(argv[2]))};
-  LOG(INFO) << "VHAL Server is listening on " << vsock.str();
 
-  auto fakeHardware = std::make_unique<FakeVehicleHardware>(argv[1], "", false);
-  auto proxyServer = std::make_unique<GrpcVehicleProxyServer>(
-      vsock.str(), std::move(fakeHardware));
+  unsigned int port;
+  CHECK(android::base::ParseUint(argv[2], &port))
+      << "Failed to parse port as uint";
+  VsockConnectionInfo vsock = {.cid = VMADDR_CID_HOST, .port = port};
 
-  proxyServer->Start().Wait();
+  auto eth_addr = fmt::format("localhost:{}", port);
+  std::vector<std::string> listen_addrs = {vsock.str(), eth_addr};
+
+  auto fake_hardware =
+      std::make_unique<FakeVehicleHardware>(argv[1], "", false);
+  auto proxy_server = std::make_unique<GrpcVehicleProxyServer>(
+      listen_addrs, std::move(fake_hardware));
+
+  LOG(INFO) << "VHAL Server is listening on " << vsock.str() << ", "
+            << eth_addr;
+
+  proxy_server->Start().Wait();
   return 0;
 }
