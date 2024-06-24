@@ -42,6 +42,7 @@
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/interrupt_listener.h"
 #include "host/commands/cvd/reset_client_utils.h"
 #include "host/commands/cvd/selector/creation_analyzer.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
@@ -54,60 +55,6 @@
 
 namespace cuttlefish {
 namespace {
-
-static constexpr int CLOSED_FD = -1;
-static constexpr int IN_USE_FD = -2;
-// Write end of the pipe for the signal handler. May hold the following values:
-// CLOSED_FD: Signals should not be sent through the pipe, if the thread that
-// owns the fd encounters this value it must close the fd. IN_USE_FD: A signal
-// was received and the handler is using the fd.
-// >= 0: The write end of the signal pipe.
-std::atomic<int> signal_pipe_write_end(CLOSED_FD);
-
-// Writes the signal number to the pipe if it's still open
-void InterruptHandler(int signal) {
-  auto fd = signal_pipe_write_end.exchange(IN_USE_FD);
-  if (fd >= 0) {
-    // Ignore result
-    write(fd, &signal, sizeof(signal));
-  }
-  fd = signal_pipe_write_end.exchange(fd);
-  if (fd != IN_USE_FD) {
-    // The signal handler was disabled while the handler was executing, need to
-    // close the fd.
-    fd = signal_pipe_write_end.exchange(CLOSED_FD);
-    if (fd >= 0) {
-      close(fd);
-    }
-  }
-}
-
-Result<int> HandleInterruptSignals() {
-  int fds[2];
-  CF_EXPECTF(pipe2(fds, O_CLOEXEC) == 0, "Failed to create signals pipe: {}",
-             strerror(errno));
-
-  // Make the write end nonblocking
-  int flags = fcntl(fds[0], F_GETFL, 0);
-  fcntl(fds[0], F_SETFL, flags | O_NONBLOCK);
-
-  auto previous_value = signal_pipe_write_end.exchange(fds[0]);
-  CHECK(previous_value == CLOSED_FD) << "Interrupt handler set twice";
-
-  ChangeSignalHandlers(InterruptHandler, {SIGINT, SIGHUP, SIGTERM});
-  return fds[1];
-}
-
-void StopHandlingInterruptSignals() {
-  ChangeSignalHandlers(SIG_DFL, {SIGINT, SIGHUP, SIGTERM});
-  auto fd = signal_pipe_write_end.exchange(CLOSED_FD);
-  if (fd >= 0) {
-    close(fd);
-  }
-  // If the fd is negative it means the signal handler is executing, it will
-  // close the fd itself when it sees the CLOSED_FD value in the atomic
-  // variable.
-}
 
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
   std::size_t initial_size = args.size();
@@ -200,7 +147,6 @@ Result<void> UpdateWebrtcDeviceId(cvd_common::Args& args,
         group.GroupName() + "-" + instance.PerInstanceName();
     device_name_list.push_back(device_name);
   }
-  // take --webrtc_device_id flag away
   args.push_back("--webrtc_device_id=" +
                  android::base::Join(device_name_list, ","));
   return {};
@@ -769,34 +715,25 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
       ConstructCvdNonHelpCommand(bin, group, subcmd_args, envs, request));
 
   // The instance database needs to be updated if an interrupt is received.
-  auto signals_fd = CF_EXPECT(HandleInterruptSignals());
-  std::thread interrupter_thread([this, signals_fd, &group = group]() {
-    for (;;) {
-      int signal = 0;
-      auto res = TEMP_FAILURE_RETRY(read(signals_fd, &signal, sizeof(signal)));
-      if (res > 0) {
-        // Interrupt regardless of signal
-        (void)subprocess_waiter_.Interrupt();
-        group.SetAllStates(cvd::INSTANCE_STATE_BOOT_FAILED);
-        instance_manager_.UpdateInstanceGroup(group);
-      } else if (res == 0) {
-        // other end closed
-        close(signals_fd);
-        return;
-      } else {
-        auto err = errno;
-        LOG(ERROR) << "Failed to read from signal pipe: " << strerror(err);
-        return;
-      }
-    }
-  });
-  auto launch_res = LaunchDeviceInterruptible(std::move(command), group, envs,
-                                              request, lock_files);
+  auto handle_res =
+      PushInterruptListener([this, home_dir = group.HomeDir()](int signal) {
+        LOG(WARNING) << strsignal(signal) << " signal received, cleanning up";
+        auto interrupt_res = subprocess_waiter_.Interrupt();
+        if (!interrupt_res.ok()) {
+          LOG(ERROR) << "Failed to stop subprocesses: "
+                     << interrupt_res.error().Message();
+          LOG(ERROR) << "Devices may still be executing in the background, run "
+                        "`cvd reset` to ensure a clean state";
+        }
+        instance_manager_.RemoveInstanceGroup(home_dir);
+        std::abort();
+      });
+  auto listener_handle = CF_EXPECT(std::move(handle_res));
+  auto response = CF_EXPECT(LaunchDeviceInterruptible(std::move(command), group, envs,
+                                              request, lock_files));
   group.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
-  StopHandlingInterruptSignals();
-  interrupter_thread.join();
-  auto response = CF_EXPECT(std::move(launch_res));
+  listener_handle.reset();
 
   auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(request, group));
   auto serialized_json = group_json.toStyledString();
