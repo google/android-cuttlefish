@@ -304,6 +304,11 @@ android_system_image {
     avb_hash_algorithm: "sha256",
 
     deps: [
+        "abx",
+        "aconfigd",
+        "aflags",
+        "am",
+        "android_vintf_manifest",
         "android.hardware.biometrics.fingerprint@2.1", // generic_system
         "android.hardware.radio@1.0", // generic_system
         "android.hardware.radio@1.1", // generic_system
@@ -313,11 +318,8 @@ android_system_image {
         "android.hardware.radio.config@1.0", // generic_system
         "android.hardware.radio.deprecated@1.0", // generic_system
         "android.hardware.secure_element@1.0", // generic_system
-        "abx",
-        "aconfigd",
-        "aflags",
-        "am",
-        "android_vintf_manifest",
+        "android.software.webview.prebuilt.xml", // media_system
+        "android.software.window_magnification.prebuilt.xml", // handheld_system
         "android.system.suspend-service",
         "apexd",
         "appops",
@@ -488,7 +490,12 @@ android_system_image {
         "wifi.rc", // base_system
         "wificond", // base_system
         "wm", // base_system
-    ] + select(soong_config_variable("ANDROID", "release_package_profiling_module"), {
+    ] + select(release_flag("RELEASE_PLATFORM_VERSION_CODENAME"), {
+        "REL": [],
+        default: [
+            "android.software.preview_sdk.prebuilt.xml", // media_system
+        ],
+    }) + select(soong_config_variable("ANDROID", "release_package_profiling_module"), {
         "true": [
             "trace_redactor", // base_system (RELEASE_PACKAGE_PROFILING_MODULE)
         ],
