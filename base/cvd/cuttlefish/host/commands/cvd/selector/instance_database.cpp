@@ -16,7 +16,6 @@
 
 #include "host/commands/cvd/selector/instance_database.h"
 
-#include <numeric>  // std::iota
 #include <vector>
 
 #include <android-base/file.h>
@@ -24,13 +23,10 @@
 #include <android-base/scopeguard.h>
 
 #include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/selector_constants.h"
-#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -40,6 +36,25 @@ namespace {
 constexpr const char kJsonGroups[] = "Groups";
 
 constexpr const unsigned UNSET_ID = 0;
+
+Result<std::string> GenUniqueGroupName(const cvd::PersistentData& data) {
+  auto name_prefix = GenDefaultGroupName() + "_";
+  std::set<std::string> group_names;
+  for (const auto& group : data.instance_groups()) {
+    group_names.insert(group.name());
+  }
+  for (size_t i = 1; i <= group_names.size() + 1; ++i) {
+    auto name = name_prefix + std::to_string(i);
+    if (!Contains(group_names, name)) {
+      return name;
+    }
+  }
+  return CF_ERRF(
+      "Can't generate unique group name: Somehow a set of size {} "
+      "contains {} elements",
+      group_names.size(), group_names.size() + 1);
+}
+
 
 }  // namespace
 
@@ -66,18 +81,21 @@ Result<std::vector<LocalInstanceGroup>> InstanceDatabase::Clear() {
 }
 
 Result<LocalInstanceGroup> InstanceDatabase::AddInstanceGroup(
-    const cvd::InstanceGroup& group_proto) {
-  CF_EXPECTF(IsValidGroupName(group_proto.name()),
+    cvd::InstanceGroup& group_proto) {
+  CF_EXPECTF(group_proto.name().empty() || IsValidGroupName(group_proto.name()),
              "GroupName \"{}\" is ill-formed.", group_proto.name());
-  CF_EXPECTF(EnsureDirectoryExists(group_proto.home_directory()),
-             "HOME dir, \"{}\" neither exists nor can be created.",
-             group_proto.home_directory());
   for (const auto& instance_proto : group_proto.instances()) {
     CF_EXPECTF(IsValidInstanceName(instance_proto.name()),
                "instance_name \"{}\" is invalid", instance_proto.name());
   }
   auto add_res = viewer_.WithExclusiveLock<LocalInstanceGroup>(
       [&group_proto](cvd::PersistentData& data) -> Result<LocalInstanceGroup> {
+        if (group_proto.name().empty()) {
+          group_proto.set_name(CF_EXPECT(GenUniqueGroupName(data)));
+        }
+        CF_EXPECTF(EnsureDirectoryExists(group_proto.home_directory()),
+                   "HOME dir, \"{}\" neither exists nor can be created.",
+                   group_proto.home_directory());
         auto matching_groups =
             FindGroups(data, {.home = group_proto.home_directory(),
                               .group_name = group_proto.name()});
@@ -299,27 +317,6 @@ Result<bool> InstanceDatabase::GetAcloudTranslatorOptout() const {
   return viewer_.WithSharedLock<bool>(
       [](const cvd::PersistentData& data) -> Result<bool> {
         return data.acloud_translator_optout();
-      });
-}
-
-Result<std::string> InstanceDatabase::GenUniqueGroupName() const {
-  auto name_prefix = GenDefaultGroupName() + "_";
-  return viewer_.WithSharedLock<std::string>(
-      [name_prefix](const cvd::PersistentData& data) -> Result<std::string> {
-        std::set<std::string> group_names;
-        for (const auto& group : data.instance_groups()) {
-          group_names.insert(group.name());
-        }
-        for (size_t i = 1; i <= group_names.size() + 1; ++i) {
-          auto name = name_prefix + std::to_string(i);
-          if (!Contains(group_names, name)) {
-            return name;
-          }
-        }
-        return CF_ERRF(
-            "Can't generate unique group name: Somehow a set of size {} "
-            "contains {} elements",
-            group_names.size(), group_names.size() + 1);
       });
 }
 

@@ -20,8 +20,6 @@
 #include <string>
 #include <unordered_set>
 
-#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
@@ -113,7 +111,6 @@ class ArgToken {
 
 class ArgumentsLexer {
   friend class ArgumentsLexerBuilder;
-  using CvdProtobufArg = google::protobuf::RepeatedPtrField<std::string>;
 
  public:
   Result<std::vector<ArgToken>> Tokenize(

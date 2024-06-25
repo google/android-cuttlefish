@@ -109,9 +109,7 @@ Result<InstanceManager::LocalInstanceGroup>
 InstanceManager::CreateInstanceGroup(
     const selector::GroupCreationInfo& group_info) {
   cvd::InstanceGroup new_group;
-  new_group.set_name(group_info.group_name.empty()
-                         ? CF_EXPECT(instance_db_.GenUniqueGroupName())
-                         : group_info.group_name);
+  new_group.set_name(group_info.group_name);
   new_group.set_home_directory(group_info.home);
   new_group.set_host_artifacts_path(group_info.host_artifacts_path);
   new_group.set_product_out_path(group_info.product_out_path);

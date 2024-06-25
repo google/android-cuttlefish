@@ -13,9 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
 #include <iostream>
-#include <unordered_set>
 
 #include <gtest/gtest.h>
 
@@ -99,15 +97,17 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
                  << invalid_host_artifacts_path + "/bin";
   }
 
-  auto result_bad_group_name = db.AddInstanceGroup(
+  auto group_proto1 =
       GroupProtoWithInstances("0invalid_group_name", home, HostArtifactsPath(),
-                              HostArtifactsPath(), {{2, "name"}}));
+                              HostArtifactsPath(), {{2, "name"}});
+  auto result_bad_group_name = db.AddInstanceGroup(group_proto1);
 
   // Everything is correct but one thing: the host artifacts directory does not
   // have host tool files such as launch_cvd
-  auto result_non_qualifying_host_tool_dir = db.AddInstanceGroup(
+  auto group_proto2 =
       GroupProtoWithInstances("0invalid_group_name", home, HostArtifactsPath(),
-                              HostArtifactsPath(), {{2, "name"}}));
+                              HostArtifactsPath(), {{2, "name"}});
+  auto result_non_qualifying_host_tool_dir = db.AddInstanceGroup(group_proto2);
 
   ASSERT_FALSE(result_bad_group_name.ok());
   ASSERT_FALSE(result_non_qualifying_host_tool_dir.ok());
@@ -127,15 +127,13 @@ TEST_F(CvdInstanceDatabaseTest, AddWithValidGroupInfo) {
     GTEST_SKIP() << "Failed to find/create " << home1;
   }
 
-  ASSERT_TRUE(db.AddInstanceGroup(
-                    GroupProtoWithInstances("meow", home0, HostArtifactsPath(),
-                                            HostArtifactsPath(), {{1, "name"}}))
-                  .ok());
+  auto group_proto1 = GroupProtoWithInstances(
+      "meow", home0, HostArtifactsPath(), HostArtifactsPath(), {{1, "name"}});
+  ASSERT_TRUE(db.AddInstanceGroup(group_proto1).ok());
 
-  ASSERT_TRUE(db.AddInstanceGroup(
-                    GroupProtoWithInstances("miaou", home1, HostArtifactsPath(),
-                                            HostArtifactsPath(), {{2, "name"}}))
-                  .ok());
+  auto group_proto2 = GroupProtoWithInstances(
+      "miaou", home1, HostArtifactsPath(), HostArtifactsPath(), {{2, "name"}});
+  ASSERT_TRUE(db.AddInstanceGroup(group_proto2).ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
@@ -148,14 +146,12 @@ TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
     GTEST_SKIP() << "Failed to find/create " << home;
   }
 
-  ASSERT_TRUE(db.AddInstanceGroup(
-                    GroupProtoWithInstances("meow", home, HostArtifactsPath(),
-                                            HostArtifactsPath(), {{1, "name"}}))
-                  .ok());
-  ASSERT_FALSE(db.AddInstanceGroup(GroupProtoWithInstances(
-                                       "meow", home, HostArtifactsPath(),
-                                       HostArtifactsPath(), {{2, "name"}}))
-                   .ok());
+  auto group_proto1 = GroupProtoWithInstances(
+      "meow", home, HostArtifactsPath(), HostArtifactsPath(), {{1, "name"}});
+  ASSERT_TRUE(db.AddInstanceGroup(group_proto1).ok());
+  auto group_proto2 = GroupProtoWithInstances(
+      "meow", home, HostArtifactsPath(), HostArtifactsPath(), {{2, "name"}});
+  ASSERT_FALSE(db.AddInstanceGroup(group_proto2).ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, Clear) {
