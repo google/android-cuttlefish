@@ -44,15 +44,15 @@ class InstanceDatabase {
 
   Result<bool> GetAcloudTranslatorOptout() const;
 
-  Result<std::string> GenUniqueGroupName() const;
-
   /** Adds instance group.
+   *
+   * A new group name will be generated one is not provided.
    *
    * If group_name or home_dir is already taken or host_artifacts_path is
    * not likely an artifacts path, CF_ERR is returned.
    */
   Result<LocalInstanceGroup> AddInstanceGroup(
-      const cvd::InstanceGroup& group_proto);
+      cvd::InstanceGroup& group_proto);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
   Result<void> UpdateInstance(const LocalInstance& instance);
 
