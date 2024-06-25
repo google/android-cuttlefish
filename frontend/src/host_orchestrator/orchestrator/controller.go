@@ -95,6 +95,7 @@ type handler interface {
 
 func httpHandler(h handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("request:", r.Method, r.URL.Path)
 		res, err := h.Handle(r)
 		if err != nil {
 			log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
@@ -427,6 +428,7 @@ type pullRuntimeArtifactsHandler struct {
 }
 
 func (h *pullRuntimeArtifactsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Println("request:", r.Method, r.URL.Path)
 	filename := filepath.Join("/tmp/", "hostbugreport"+uuid.New().String())
 	defer func() {
 		if err := os.Remove(filename); err != nil {
