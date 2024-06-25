@@ -71,9 +71,9 @@ func TestGetOperationIsHandled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{OperationManager: NewMapOM()}
+	controller := NewController(ControllerOpts{OperationManager: NewMapOM()})
 
-	makeRequest(rr, req, &controller)
+	makeRequest(rr, req, controller)
 
 	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
 		t.Errorf("request was not handled. This failure implies an API breaking change.")
@@ -89,9 +89,9 @@ func TestGetOperationResultIsHandled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{OperationManager: NewMapOM()}
+	controller := NewController(ControllerOpts{OperationManager: NewMapOM()})
 
-	makeRequest(rr, req, &controller)
+	makeRequest(rr, req, controller)
 
 	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
 		t.Errorf("request was not handled. This failure implies an API breaking change.")
@@ -104,9 +104,9 @@ func TestWaitOperationIsHandled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{OperationManager: NewMapOM()}
+	controller := NewController(ControllerOpts{OperationManager: NewMapOM()})
 
-	makeRequest(rr, req, &controller)
+	makeRequest(rr, req, controller)
 
 	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
 		t.Errorf("request was not handled. This failure implies an API breaking change.")
@@ -119,9 +119,9 @@ func TestWaitOperationNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{OperationManager: NewMapOM()}
+	controller := NewController(ControllerOpts{OperationManager: NewMapOM()})
 
-	makeRequest(rr, req, &controller)
+	makeRequest(rr, req, controller)
 
 	expected := http.StatusNotFound
 	if rr.Code != expected {
@@ -138,10 +138,14 @@ func TestWaitOperationTimeout(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{OperationManager: om, WaitOperationDuration: dt}
+	opts := ControllerOpts{
+		OperationManager:      om,
+		WaitOperationDuration: dt,
+	}
+	controller := NewController(opts)
 
 	start := time.Now()
-	makeRequest(rr, req, &controller)
+	makeRequest(rr, req, controller)
 	duration := time.Since(start)
 
 	expected := http.StatusServiceUnavailable
@@ -162,9 +166,9 @@ func TestWaitOperationOperationIsDone(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{OperationManager: om}
+	controller := NewController(ControllerOpts{OperationManager: om})
 
-	makeRequest(rr, req, &controller)
+	makeRequest(rr, req, controller)
 
 	expected := http.StatusOK
 	if rr.Code != expected {
@@ -200,9 +204,9 @@ func TestCreateUploadDirectoryIsHandled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{UserArtifactsManager: &testUAM{}}
+	controller := NewController(ControllerOpts{UserArtifactsManager: &testUAM{}})
 
-	makeRequest(rr, req, &controller)
+	makeRequest(rr, req, controller)
 
 	if rr.Code != http.StatusOK {
 		t.Errorf("request was not handled. This failure implies an API breaking change.")
@@ -215,9 +219,9 @@ func TestListUploadDirectoriesIsHandled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{UserArtifactsManager: &testUAM{}}
+	controller := NewController(ControllerOpts{UserArtifactsManager: &testUAM{}})
 
-	makeRequest(rr, req, &controller)
+	makeRequest(rr, req, controller)
 
 	if rr.Code != http.StatusOK {
 		t.Errorf("request was not handled. This failure implies an API breaking change.")
@@ -238,10 +242,10 @@ func TestUploadUserArtifactIsHandled(t *testing.T) {
 	writer.Close()
 	req, _ := http.NewRequest("PUT", "/userartifacts/foo", bytes.NewReader(body.Bytes()))
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	controller := Controller{UserArtifactsManager: &testUAM{}}
+	controller := NewController(ControllerOpts{UserArtifactsManager: &testUAM{}})
 	rr := httptest.NewRecorder()
 
-	makeRequest(rr, req, &controller)
+	makeRequest(rr, req, controller)
 
 	if rr.Code != http.StatusOK {
 		t.Errorf("request was not handled. This failure implies an API breaking change.")
@@ -254,9 +258,10 @@ func TestGetDebugVarzIsHandled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{DebugVariablesManager: debug.NewVariablesManager(debug.StaticVariables{})}
+	controller := NewController(
+		ControllerOpts{DebugVariablesManager: debug.NewVariablesManager(debug.StaticVariables{})})
 
-	makeRequest(rr, req, &controller)
+	makeRequest(rr, req, controller)
 
 	if rr.Code != http.StatusOK {
 		t.Errorf("request was not handled. This failure implies an API breaking change.")

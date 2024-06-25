@@ -24,7 +24,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"sync/atomic"
 	"time"
+	"unsafe"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
@@ -43,7 +45,7 @@ type Config struct {
 	CVDUser                string
 }
 
-type Controller struct {
+type ControllerOpts struct {
 	Config                Config
 	OperationManager      OperationManager
 	WaitOperationDuration time.Duration
@@ -51,41 +53,62 @@ type Controller struct {
 	DebugVariablesManager *debug.VariablesManager
 }
 
+type Controller struct {
+	config         Config
+	om             OperationManager
+	waitOpDuration time.Duration
+	uam            UserArtifactsManager
+	dvm            *debug.VariablesManager
+
+	firstCreateCVDOpNamePtr *unsafe.Pointer
+}
+
+func NewController(opts ControllerOpts) *Controller {
+	result := &Controller{
+		config:         opts.Config,
+		om:             opts.OperationManager,
+		waitOpDuration: opts.WaitOperationDuration,
+		uam:            opts.UserArtifactsManager,
+		dvm:            opts.DebugVariablesManager,
+	}
+
+	var p unsafe.Pointer
+	result.firstCreateCVDOpNamePtr = &p
+
+	return result
+}
+
 func (c *Controller) AddRoutes(router *mux.Router) {
-	router.Handle("/artifacts",
-		httpHandler(&fetchArtifactsHandler{Config: c.Config, OM: c.OperationManager})).Methods("POST")
-	router.Handle("/cvds",
-		httpHandler(newCreateCVDHandler(c.Config, c.OperationManager, c.UserArtifactsManager))).Methods("POST")
-	router.Handle("/cvds", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
-	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
-	router.Handle("/cvds/{group}",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("DELETE")
+	router.Handle("/artifacts", httpHandler(&fetchArtifactsHandler{Config: c.config, OM: c.om})).Methods("POST")
+	router.Handle("/cvds", httpHandler(newCreateCVDHandler(c.config, c.om, c.uam, c.firstCreateCVDOpNamePtr))).Methods("POST")
+	router.Handle("/cvds", httpHandler(&listCVDsHandler{Config: c.config})).Methods("GET")
+	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{Config: c.config}).Methods("GET")
+	router.Handle("/cvds/{group}", httpHandler(newExecCVDCommandHandler(c.config, c.om, "stop"))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("DELETE")
+		httpHandler(newExecCVDCommandHandler(c.config, c.om, "stop"))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "powerwash"))).Methods("POST")
-	router.Handle("/operations/{name}", httpHandler(&getOperationHandler{om: c.OperationManager})).Methods("GET")
+		httpHandler(newExecCVDCommandHandler(c.config, c.om, "powerwash"))).Methods("POST")
+	// Operation name: `firstcvdcreate` is an alias for the first operation tracking a cvd create action.
+	router.Handle("/operations/{name}",
+		httpHandler(&getOperationHandler{c.om, c.firstCreateCVDOpNamePtr})).Methods("GET")
 	// The expected response of the operation in case of success.  If the original method returns no data on
 	// success, such as `Delete`, response will be empty. If the original method is standard
 	// `Get`/`Create`/`Update`, the response should be the relevant resource encoded in JSON format.
 	router.Handle("/operations/{name}/result",
-		httpHandler(&getOperationResultHandler{om: c.OperationManager})).Methods("GET")
+		httpHandler(&getOperationResultHandler{c.om, c.firstCreateCVDOpNamePtr})).Methods("GET")
 	// Same as `/operations/{name}/result but waits for the specified operation to be DONE or for the request
 	// to approach the specified deadline, `503 Service Unavailable` error will be returned if the deadline is
 	// reached. Be prepared to retry if the deadline was reached.
 	router.Handle("/operations/{name}/:wait",
-		httpHandler(&waitOperationHandler{c.OperationManager, c.WaitOperationDuration})).Methods("POST")
-	router.Handle("/userartifacts",
-		httpHandler(&createUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
-	router.Handle("/userartifacts",
-		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
-	router.Handle("/userartifacts/{name}",
-		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
+		httpHandler(&waitOperationHandler{c.om, c.waitOpDuration, c.firstCreateCVDOpNamePtr})).Methods("POST")
+	router.Handle("/userartifacts", httpHandler(&createUploadDirectoryHandler{c.uam})).Methods("POST")
+	router.Handle("/userartifacts", httpHandler(&listUploadDirectoriesHandler{c.uam})).Methods("GET")
+	router.Handle("/userartifacts/{name}", httpHandler(&createUpdateUserArtifactHandler{c.uam})).Methods("PUT")
 	router.Handle("/userartifacts/{dir}/{name}/:extract",
-		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
-	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{Config: c.Config}).Methods("POST")
+		httpHandler(&extractUserArtifactHandler{c.om, c.uam})).Methods("POST")
+	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{Config: c.config}).Methods("POST")
 	// Debug endpoints.
-	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
+	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.dvm})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
 }
 
@@ -158,16 +181,22 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 }
 
 type createCVDHandler struct {
-	Config        Config
-	OM            OperationManager
-	UADirResolver UserArtifactsDirResolver
+	Config         Config
+	OM             OperationManager
+	UADirResolver  UserArtifactsDirResolver
+	firstOpNamePtr *unsafe.Pointer
 }
 
-func newCreateCVDHandler(c Config, om OperationManager, uadr UserArtifactsManager) *createCVDHandler {
+func newCreateCVDHandler(
+	c Config,
+	om OperationManager,
+	uadr UserArtifactsManager,
+	firstOpNamePtr *unsafe.Pointer) *createCVDHandler {
 	return &createCVDHandler{
-		Config:        c,
-		OM:            om,
-		UADirResolver: uadr,
+		Config:         c,
+		OM:             om,
+		UADirResolver:  uadr,
+		firstOpNamePtr: firstOpNamePtr,
 	}
 }
 
@@ -198,7 +227,12 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		UserArtifactsDirResolver: h.UADirResolver,
 		BuildAPICredentials:      creds,
 	}
-	return NewCreateCVDAction(opts).Run()
+	op, err := NewCreateCVDAction(opts).Run()
+	if err != nil {
+		return nil, err
+	}
+	atomic.CompareAndSwapPointer(h.firstOpNamePtr, nil, unsafe.Pointer(&op.Name))
+	return op, nil
 }
 
 type listCVDsHandler struct {
@@ -267,14 +301,27 @@ func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handler.ServeHTTP(w, r)
 }
 
+const firstCVDCreateOpAlias = "firstcvdcreate"
+
+func getOperation(r *http.Request, om OperationManager, firstNamePtr *unsafe.Pointer) (apiv1.Operation, error) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+	if name == firstCVDCreateOpAlias {
+		if *firstNamePtr == nil {
+			return apiv1.Operation{}, operator.NewNotFoundError("First create cvd operation not found", nil)
+		}
+		name = *(*string)(atomic.LoadPointer(firstNamePtr))
+	}
+	return om.Get(name)
+}
+
 type getOperationHandler struct {
-	om OperationManager
+	om           OperationManager
+	firstNamePtr *unsafe.Pointer
 }
 
 func (h *getOperationHandler) Handle(r *http.Request) (interface{}, error) {
-	vars := mux.Vars(r)
-	name := vars["name"]
-	op, err := h.om.Get(name)
+	op, err := getOperation(r, h.om, h.firstNamePtr)
 	if err != nil {
 		var resErr error
 		if _, ok := err.(NotFoundOperationError); ok {
@@ -288,13 +335,13 @@ func (h *getOperationHandler) Handle(r *http.Request) (interface{}, error) {
 }
 
 type getOperationResultHandler struct {
-	om OperationManager
+	om           OperationManager
+	firstNamePtr *unsafe.Pointer
 }
 
 func (h *getOperationResultHandler) Handle(r *http.Request) (interface{}, error) {
-	vars := mux.Vars(r)
-	name := vars["name"]
-	res, err := h.om.GetResult(name)
+	op, err := getOperation(r, h.om, h.firstNamePtr)
+	res, err := h.om.GetResult(op.Name)
 	if err != nil {
 		var resErr error
 		if _, ok := err.(NotFoundOperationError); ok {
@@ -315,12 +362,12 @@ func (h *getOperationResultHandler) Handle(r *http.Request) (interface{}, error)
 type waitOperationHandler struct {
 	om           OperationManager
 	waitDuration time.Duration
+	firstNamePtr *unsafe.Pointer
 }
 
 func (h *waitOperationHandler) Handle(r *http.Request) (interface{}, error) {
-	vars := mux.Vars(r)
-	name := vars["name"]
-	res, err := h.om.Wait(name, h.waitDuration)
+	op, err := getOperation(r, h.om, h.firstNamePtr)
+	res, err := h.om.Wait(op.Name, h.waitDuration)
 	if err != nil {
 		var resErr error
 		if _, ok := err.(NotFoundOperationError); ok {
