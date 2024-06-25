@@ -87,7 +87,7 @@ void LogSubprocessExit(const std::string& name, const siginfo_t& infop) {
   }
 }
 
-Result<void> MonitorLoop(const std::atomic_bool& running,
+Result<void> MonitorLoop(std::atomic_bool& running,
                          std::mutex& properties_mutex,
                          const bool restart_subprocesses,
                          std::vector<MonitorEntry>& monitored) {
@@ -121,8 +121,8 @@ Result<void> MonitorLoop(const std::atomic_bool& running,
         if (running.load() && is_critical) {
           LOG(ERROR) << "Stopping all monitored processes due to unexpected "
                         "exit of critical process";
-          Command stop_cmd(StopCvdBinary());
-          stop_cmd.Start();
+          running.store(false);
+          break;
         }
       }
     }
