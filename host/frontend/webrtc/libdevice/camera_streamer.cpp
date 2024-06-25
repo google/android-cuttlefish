@@ -34,7 +34,8 @@ CameraStreamer::~CameraStreamer() { Disconnect(); }
 // We are getting frames from the client so try forwarding those to the CVD
 void CameraStreamer::OnFrame(const webrtc::VideoFrame& client_frame) {
   std::lock_guard<std::mutex> lock(onframe_mutex_);
-  if (!cvd_connection_.IsConnected() && !pending_connection_.valid()) {
+  if (!cvd_connection_.IsConnected_Unguarded() &&
+      !pending_connection_.valid()) {
     // Start new connection
     pending_connection_ =
         cvd_connection_.ConnectAsync(port_, cid_, vhost_user_);
