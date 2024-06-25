@@ -461,8 +461,8 @@ android_system_image {
         "sgdisk", // base_system
         "sm", // base_system
         "snapshotctl", // base_system
-        "snapuserd_ramdisk", // ramdisk
         "snapuserd", // base_system
+        "snapuserd_ramdisk", // ramdisk
         "storaged", // base_system
         "surfaceflinger", // base_system
         "svc", // base_system
@@ -623,18 +623,19 @@ android_system_image {
                 "PrintRecommendationService", // handheld_system
                 "PrintSpooler", // handheld_system
                 "ProxyHandler", // handheld_system
-                "sanitizer.libraries.txt", // base_system
                 "SecureElement", // handheld_system
-                "selinux_policy_system_soong", // ok
-                "services", // base_system
                 "SettingsProvider", // base_system
                 "SharedStorageBackup", // handheld_system
-                "shell_and_utilities_system", // ok
                 "Shell", // base_system
                 "SimAppDialog", // handheld_system
                 "SoundPicker", // not installed by anyone
                 "StatementService", // media_system
                 "Stk", // generic_system
+                "sanitizer.libraries.txt", // base_system
+                "selinux_policy_system_soong", // ok
+                "services", // base_system
+                "shell_and_utilities_system", // ok
+                "system_compatibility_matrix.xml", //base_system
                 "Tag", // generic_system
                 "Telecom", // handheld_system
                 "telephony-common", // libs from TeleService
