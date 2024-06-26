@@ -103,10 +103,13 @@ ScopedAStatus HealthImpl::getChargeStatus(BatteryStatus* out) {
 }
 
 ScopedAStatus HealthImpl::getBatteryHealthData(BatteryHealthData* out) {
-  out->batteryManufacturingDateSeconds = 0;
-  out->batteryFirstUsageSeconds = 0;
+  out->batteryManufacturingDateSeconds =
+      1689787603;  // Wednesday, 19 July 2023 17:26:43
+  out->batteryFirstUsageSeconds =
+      1691256403;  // Saturday, 5 August 2023 17:26:43
   out->batteryStateOfHealth = 99;
-  out->batterySerialNumber = std::nullopt;
+  out->batterySerialNumber =
+      "d1f92fe7591ff096ca3a29c450a5a3d1";  // MD5("battery serial")
   out->batteryPartStatus = BatteryPartStatus::UNSUPPORTED;
   return ScopedAStatus::ok();
 }
