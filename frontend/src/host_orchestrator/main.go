@@ -100,7 +100,7 @@ func newOperatorProxy(port int) *httputil.ReverseProxy {
 }
 
 func main() {
-	httpPort := flag.Int("http_port", 2081, "Port to listen on for HTTP requests.")
+	httpPort := flag.Int("http_port", 2080, "Port to listen on for HTTP requests.")
 	cvdUser := flag.String("cvd_user", "", "User to execute cvd as.")
 	operatorPort := flag.Int("operator_http_port", 1080, "Port where the operator is listening.")
 	abURL := flag.String("android_build_url", defaultAndroidBuildURL, "URL to an Android Build API.")

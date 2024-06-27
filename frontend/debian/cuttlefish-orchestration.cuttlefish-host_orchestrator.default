@@ -5,8 +5,8 @@
 orchestrator_listen_address=0.0.0.0
 #
 # The port on which the orchestrator server should listen on for plain HTTP.
-# Defaults to 2081.
-# orchestrator_http_port=
+# Defaults to 2080.
+orchestrator_http_port=2081
 #
 # Android Build URL. Defaults to "https://androidbuildinternal.googleapis.com"
 # orchestrator_android_build_url=
