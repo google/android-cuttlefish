@@ -16,7 +16,6 @@
 #include "host/libs/web/http_client/http_client.h"
 
 #include <stdio.h>
-#include <ext/stdio_filebuf.h>
 
 #include <functional>
 #include <memory>
