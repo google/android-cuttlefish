@@ -35,8 +35,12 @@
 #include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
+namespace {
 
-static constexpr char kHelpMessage[] = R"(
+constexpr char kSummaryHelpText[] =
+    "Query status of a single instance group.  Use `cvd fleet` for all devices";
+
+constexpr char kDetailedHelpText[] = R"(
 
 usage: cvd <selector/driver options> <command> <args>
 
@@ -78,6 +82,8 @@ Args:
 
 )";
 
+}  // namespace
+
 class CvdStatusCommandHandler : public CvdServerHandler {
  public:
   CvdStatusCommandHandler(InstanceManager& instance_manager,
@@ -87,9 +93,15 @@ class CvdStatusCommandHandler : public CvdServerHandler {
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
   cvd_common::Args CmdList() const override;
 
- private:
-  Result<cvd::Response> HandleHelp(const RequestWithStdio&);
+  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
 
+  bool ShouldInterceptHelp() const override { return true; }
+
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return kDetailedHelpText;
+  }
+
+ private:
   InstanceManager& instance_manager_;
   HostToolTargetManager& host_tool_target_manager_;
   StatusFetcher status_fetcher_;
@@ -179,10 +191,6 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   CF_EXPECT(Contains(supported_subcmds_, subcmd));
   const bool has_print = CF_EXPECT(HasPrint(cmd_args));
 
-  if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
-    return HandleHelp(request);
-  }
-
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_EXPECT(NoGroupResponse(request));
   }
@@ -206,16 +214,6 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
 
 std::vector<std::string> CvdStatusCommandHandler::CmdList() const {
   return supported_subcmds_;
-}
-
-Result<cvd::Response> CvdStatusCommandHandler::HandleHelp(
-    const RequestWithStdio& request) {
-  cvd::Response response;
-  response.mutable_command_response();  // Sets oneof member
-  response.mutable_status()->set_code(cvd::Status::OK);
-  CF_EXPECT_EQ(WriteAll(request.Out(), kHelpMessage),
-               (ssize_t)strnlen(kHelpMessage, sizeof(kHelpMessage) - 1));
-  return response;
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdStatusCommandHandler(
