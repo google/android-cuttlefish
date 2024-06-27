@@ -69,6 +69,8 @@ Example usage:
   cvd help <command> - displays more detailed help for the specific command
 )";
 
+constexpr char kIgnorableHandlerCommand[] = "experimental";
+
 }  // namespace
 
 class CvdHelpHandler : public CvdServerHandler {
@@ -124,7 +126,7 @@ class CvdHelpHandler : public CvdServerHandler {
       std::string command_list = android::base::Join(handler->CmdList(), ", ");
       // exclude commands without any command list values as not intended for
       // use by users or sub-subcommands
-      if (!command_list.empty()) {
+      if (!command_list.empty() && command_list != kIgnorableHandlerCommand) {
         help_message << "\t" << command_list << " - ";
         help_message << CF_EXPECT(handler->SummaryHelp()) << std::endl
                      << std::endl;
