@@ -56,6 +56,12 @@ class CvdNoopHandler : public CvdServerHandler {
   }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+
+  bool ShouldInterceptHelp() const override { return true; }
+
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return "DEPRECATED: This command is a no-op";
+  }
 };
 
 }  // namespace
