@@ -22,6 +22,7 @@
 using sapi::file::JoinPath;
 
 namespace cuttlefish {
+namespace process_sandboxer {
 
 sandbox2::PolicyBuilder HelloWorldPolicy(const HostInfo& host) {
   auto exe =
@@ -30,4 +31,5 @@ sandbox2::PolicyBuilder HelloWorldPolicy(const HostInfo& host) {
   return BaselinePolicy(host, exe);
 }
 
+}  // namespace process_sandboxer
 }  // namespace cuttlefish

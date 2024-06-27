@@ -22,6 +22,7 @@
 #include "sandboxed_api/sandbox2/policybuilder.h"
 
 namespace cuttlefish {
+namespace process_sandboxer {
 
 struct HostInfo {
   std::string artifacts_path;
@@ -40,6 +41,7 @@ sandbox2::PolicyBuilder HelloWorldPolicy(const HostInfo&);
 std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
     const HostInfo& host_info, std::string_view executable_path);
 
+}  // namespace process_sandboxer
 }  // namespace cuttlefish
 
 #endif
