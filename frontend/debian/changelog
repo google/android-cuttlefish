@@ -1,9 +1,21 @@
-cuttlefish-frontend (0.9.29) UNRELEASED; urgency=medium
+cuttlefish-frontend (0.9.29) unstable; urgency=medium
 
-  * Make cuttlefish-orchestration depend on cuttlefish-user
-  * Make host orchestrator users configurable
+  [ Jorge E. Moreira ]
+  * Make cuttlefish-orchestration depend on cuttlefish-user.
+  * Make host orchestrator users configurable.
 
- -- Jorge Moreira <jemoreira@google.com>  Thu, 12 Oct 2023 18:12:35 -0700
+  [ Sergio A. Rodriguez - cuttlefish-user]
+  * Support for `cvd stop`.
+  * User service account credentials if running on GCE.
+  * Use upstream `cvd`. 
+  * Extract ".zip" and ".tar.gz" user artifacts.
+  * Support `cvd powerwash`.
+
+  [ Sergio A. Rodriguez - cuttlefish-orchestration]
+  * Start using nginx as a reverse proxy.
+  * Start using `systemd-journal-gatewayd` to expose host logs.
+
+ -- Sergio Rodriguez <sorama@google.com>  Thu, 27 Jun 2024 18:12:31 -0400
 
 cuttlefish-frontend (0.9.28) stable; urgency=medium
 
