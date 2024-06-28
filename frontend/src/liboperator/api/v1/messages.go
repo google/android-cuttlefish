@@ -166,6 +166,10 @@ type BuildSource struct {
 	UserBuildSource *UserBuildSource `json:"user_build_source,omitempty"`
 }
 
+type ListOperationsResponse struct {
+	Operations []Operation `json:"operations"`
+}
+
 type Operation struct {
 	Name string `json:"name"`
 	// If the value is `false`, it means the operation is still in progress.

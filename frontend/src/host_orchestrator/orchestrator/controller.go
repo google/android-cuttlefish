@@ -64,6 +64,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "powerwash"))).Methods("POST")
+	router.Handle("/operations", httpHandler(&listOperationsHandler{om: c.OperationManager})).Methods("GET")
 	router.Handle("/operations/{name}", httpHandler(&getOperationHandler{om: c.OperationManager})).Methods("GET")
 	// The expected response of the operation in case of success.  If the original method returns no data on
 	// success, such as `Delete`, response will be empty. If the original method is standard
@@ -266,6 +267,18 @@ func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	handler := http.StripPrefix(pathPrefix, http.FileServer(http.Dir(logsDir)))
 	handler.ServeHTTP(w, r)
+}
+
+type listOperationsHandler struct {
+	om OperationManager
+}
+
+func (h *listOperationsHandler) Handle(r *http.Request) (interface{}, error) {
+	operations := h.om.ListRunning()
+	res := &apiv1.ListOperationsResponse{
+		Operations: operations,
+	}
+	return res, nil
 }
 
 type getOperationHandler struct {

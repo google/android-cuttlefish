@@ -80,6 +80,21 @@ func TestGetOperationIsHandled(t *testing.T) {
 	}
 }
 
+func TestGetOperationsIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/operations", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{OperationManager: NewMapOM()}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
 func TestGetOperationResultIsHandled(t *testing.T) {
 	om := NewMapOM()
 	op := om.New()

@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"errors"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -230,4 +231,42 @@ func TestMapOMGetOperationResult(t *testing.T) {
 			t.Errorf("result value (-want +got):\n%s", diff)
 		}
 	})
+}
+
+func TestMapOMListRunningEmpty(t *testing.T) {
+	om := NewMapOM()
+
+	result := om.ListRunning()
+
+	if len(result) != 0 {
+		t.Error("expected empty slice")
+	}
+}
+
+func TestMapOMListRunning(t *testing.T) {
+	om := NewMapOM()
+	op := om.New()
+	om.Complete(op.Name, &OperationResult{})
+	op = om.New()
+	om.Complete(op.Name, &OperationResult{})
+	op1 := om.New()
+	op2 := om.New()
+
+	result := om.ListRunning()
+
+	if len(result) != 2 {
+		t.Error("expected 2 operations")
+	}
+	expected := []string{op1.Name, op2.Name}
+	sort.Strings(expected)
+	names := []string{}
+	for _, s := range result {
+		names = append(names, s.Name)
+	}
+	sort.Strings(names)
+
+	if diff := cmp.Diff(expected, names); diff != "" {
+		t.Errorf("result mismatch (-want +got):\n%s", diff)
+	}
+
 }
