@@ -295,8 +295,9 @@ Result<void> EnsureDirectoriesExist(const std::string& target_directory,
 Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
                               const std::string& target_dir,
                               const bool keep_archives) {
-  std::string host_tools_filepath = CF_EXPECT(
-      build_api.DownloadFile(build, target_dir, "cvd-host_package.tar.gz"));
+  auto host_tools_name = GetFilepath(build).value_or("cvd-host_package.tar.gz");
+  std::string host_tools_filepath =
+      CF_EXPECT(build_api.DownloadFile(build, target_dir, host_tools_name));
   CF_EXPECT(
       ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
   return {};
