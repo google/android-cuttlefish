@@ -318,6 +318,7 @@ android_system_image {
         "android.hardware.radio.config@1.0", // generic_system
         "android.hardware.radio.deprecated@1.0", // generic_system
         "android.hardware.secure_element@1.0", // generic_system
+        "android.software.credentials.prebuilt.xml", // generic_system
         "android.software.webview.prebuilt.xml", // media_system
         "android.software.window_magnification.prebuilt.xml", // handheld_system
         "android.system.suspend-service",
