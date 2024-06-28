@@ -56,6 +56,7 @@ type AndroidBuild struct {
 type IMPaths struct {
 	RootDir          string
 	ArtifactsRootDir string
+	SnapshotsRootDir string
 }
 
 type CVDSelector struct {
@@ -354,6 +355,7 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 	if p.BootloaderDir != "" {
 		args = append(args, fmt.Sprintf("--bootloader=%s/u-boot.rom", p.BootloaderDir))
 	}
+
 	opts := cvd.CommandOpts{
 		AndroidHostOut: p.MainArtifactsDir,
 		Home:           p.RuntimeDir,
