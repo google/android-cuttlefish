@@ -116,6 +116,7 @@ func main() {
 	imPaths := orchestrator.IMPaths{
 		RootDir:          *imRootDir,
 		ArtifactsRootDir: filepath.Join(*imRootDir, "artifacts"),
+		SnapshotsRootDir: filepath.Join(*imRootDir, "snapshots"),
 	}
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
