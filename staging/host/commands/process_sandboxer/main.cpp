@@ -27,6 +27,7 @@
 #include "absl/log/check.h"
 #include "absl/log/globals.h"
 #include "absl/log/initialize.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/numbers.h"
 #include "sandboxed_api/util/path.h"
@@ -118,7 +119,13 @@ Status ProcessSandboxerMain(int argc, char** argv) {
     return status;
   }
 
-  return sandbox_mgr->WaitForExit();
+  while (sandbox_mgr->Running()) {
+    auto iter = sandbox_mgr->Iterate();
+    if (!iter.ok()) {
+      LOG(ERROR) << "Error in SandboxManager::Iterate: " << iter.ToString();
+    }
+  }
+  return OkStatus();
 }
 
 }  // namespace
