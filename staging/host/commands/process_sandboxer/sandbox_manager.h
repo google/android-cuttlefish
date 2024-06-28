@@ -16,16 +16,13 @@
 #ifndef ANDROID_DEVICE_GOOGLE_CUTTLEFISH_HOST_COMMANDS_PROCESS_SANDBOXER_SANDBOX_MANAGER_H
 #define ANDROID_DEVICE_GOOGLE_CUTTLEFISH_HOST_COMMANDS_PROCESS_SANDBOXER_SANDBOX_MANAGER_H
 
-#include <map>
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include <absl/status/status.h>
 #include <absl/status/statusor.h>
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#include "sandboxed_api/sandbox2/sandbox2.h"
-#pragma clang diagnostic pop
 
 #include "host/commands/process_sandboxer/policies.h"
 
@@ -48,13 +45,21 @@ class SandboxManager {
   absl::Status RunProcess(const std::vector<std::string>& argv,
                           const std::map<int, int>& fds);
 
-  absl::Status WaitForExit();
+  /** Block until an event happens, and process all open events. */
+  absl::Status Iterate();
+  bool Running() const;
 
  private:
+  class ManagedProcess;
   SandboxManager() = default;
 
+  absl::Status HandleSignal();
+
   HostInfo host_info_;
-  std::map<pid_t, std::unique_ptr<sandbox2::Sandbox2>> sandboxes_;
+  bool running_ = true;
+  std::string runtime_dir_;
+  std::list<std::unique_ptr<ManagedProcess>> sandboxes_;
+  int signal_fd_ = -1;
 };
 
 }  // namespace process_sandboxer
