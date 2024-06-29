@@ -25,7 +25,6 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
-#include "shared/api_level.h"
 
 namespace cuttlefish {
 
