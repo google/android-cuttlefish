@@ -61,6 +61,9 @@ class ProcessMonitor {
     Properties& SandboxProcesses(bool) &;
     Properties SandboxProcesses(bool) &&;
 
+    Properties& SandboxerWritesToLauncherLog(bool) &;
+    Properties SandboxerWritesToLauncherLog(bool) &&;
+
     template <typename T>
     Properties& AddCommands(T commands) & {
       for (auto& command : commands) {
@@ -80,6 +83,7 @@ class ProcessMonitor {
     std::set<std::string> strace_commands_;
     std::string strace_log_dir_;
     bool sandbox_processes_;
+    bool sandboxer_writes_to_launcher_log_;
 
     friend class ProcessMonitor;
   };
