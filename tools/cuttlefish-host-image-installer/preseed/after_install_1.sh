@@ -25,12 +25,21 @@ adduser vsoc-01 video
 wget -qO- https://artifacts.codelinaro.org/artifactory/linaro-372-googlelt-gigabyte-ampere-cuttlefish-installer/gigabyte-ampere-cuttlefish-installer/latest/debian/linaro-glt-gig-archive-bookworm.asc | tee /etc/apt/trusted.gpg.d/linaro-glt-gig-archive-bookworm.asc
 
 echo "deb https://artifacts.codelinaro.org/linaro-372-googlelt-gigabyte-ampere-cuttlefish-installer/gigabyte-ampere-cuttlefish-installer/latest/debian bookworm main" | tee /etc/apt/sources.list.d/linaro-glt-gig-archive-bookworm.list
+echo "deb http://ftp.debian.org/debian bookworm-backports main" >> /etc/apt/sources.list.d/linaro-glt-gig-archive-bookworm.list
 
 apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 \
     update
 
 # Install kernel
-apt-get install -y '^linux-image-6.1.*aosp14-linaro.*' '^linux-headers-6.1.*aosp14-linaro.*'
+#apt-get install -y '^linux-image-6.1.*aosp14-linaro.*' '^linux-headers-6.1.*aosp14-linaro.*'
+apt install -y -t bookworm-backports linux-headers-arm64
+apt install -y -t bookworm-backports linux-image-arm64
+apt install -y linux-image-6.7.12+bpo-arm64
+
+# Install Nvidia GPU driver
+DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-open-kernel-dkms
+DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-driver
+DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes firmware-misc-nonfree
 
 # Install android cuttlefish packages
 apt-get install -y '^cuttlefish-.*'
@@ -52,3 +61,37 @@ apt-get install -y network-manager
 
 # Network-manager workaround
 rm -f '/etc/NetworkManager/system-connections/Wired connection 1'
+
+# Install Docker container
+# Add Docker's official GPG key:
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y -q ca-certificates curl
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y -q docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+usermod -aG docker vsoc-01
+
+# Inastall nvidia-container-toolkit
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+&& curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y  -q --force-yes nvidia-container-toolkit
+
+# Build docker image
+#mydir=$(pwd)
+#pushd $mydir
+#cd /root
+#git clone https://github.com/google/android-cuttlefish.git
+#cd android-cuttlefish/docker/orchestration
+#./build.sh
+#popd
