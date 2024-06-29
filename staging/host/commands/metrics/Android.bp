@@ -25,6 +25,11 @@ cc_binary {
         "metrics.cc",
         "utils.cc",
     ],
+    product_variables: {
+        shipping_api_level: {
+            cflags: ["-DPRODUCT_SHIPPING_API_LEVEL=%s"],
+        },
+    },
     shared_libs: [
         "cf_metrics_proto",
         "libbase",
