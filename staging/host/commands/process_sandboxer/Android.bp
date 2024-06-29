@@ -24,6 +24,7 @@ cc_binary_host {
     name: "process_sandboxer",
     defaults: ["cuttlefish_buildhost_only"],
     srcs: [
+        "logs.cpp",
         "main.cpp",
         "policies.cpp",
         "policies/baseline.cpp",
