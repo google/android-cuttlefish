@@ -170,7 +170,14 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     return false;
   }
 
+  // not intended to be used by the user
   cvd_common::Args CmdList() const override { return {}; }
+  // not intended to show up in help
+  Result<std::string> SummaryHelp() const override { return ""; }
+  bool ShouldInterceptHelp() const { return false; }
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return "";
+  }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
