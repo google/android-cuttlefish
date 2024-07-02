@@ -56,6 +56,12 @@
 namespace cuttlefish {
 namespace {
 
+constexpr char kSummaryHelpText[] =
+    "Start a Cuttlefish virtual device or environment";
+
+constexpr char kDetailedHelpText[] =
+    "Run cvd start --help for the full help text.";
+
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
   std::size_t initial_size = args.size();
   std::string config_file;
@@ -218,6 +224,9 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
   std::vector<std::string> CmdList() const override;
+  Result<std::string> SummaryHelp() const override;
+  bool ShouldInterceptHelp() const override;
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
   Result<cvd::Response> LaunchDevice(Command command,
@@ -869,6 +878,19 @@ std::vector<std::string> CvdStartCommandHandler::CmdList() const {
     subcmd_list.emplace_back(cmd);
   }
   return subcmd_list;
+}
+
+Result<std::string> CvdStartCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
+
+// TODO(b/315027339): Swap to true.  Will likely need to add `cvd::Request` as a
+// parameter of DetailedHelp to match current implementation
+bool CvdStartCommandHandler::ShouldInterceptHelp() const { return false; }
+
+Result<std::string> CvdStartCommandHandler::DetailedHelp(
+    std::vector<std::string>&) const {
+  return kDetailedHelpText;
 }
 
 const std::array<std::string, 2> CvdStartCommandHandler::supported_commands_{
