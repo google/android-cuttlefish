@@ -42,6 +42,12 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+namespace {
+
+constexpr char kSummaryHelpText[] =
+    "Run cvd <command> --help for command description";
+
+}  // namespace
 
 class CvdGenericCommandHandler : public CvdServerHandler {
  public:
@@ -53,6 +59,9 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
   cvd_common::Args CmdList() const override;
+  Result<std::string> SummaryHelp() const override;
+  bool ShouldInterceptHelp() const override;
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
   struct CommandInvocationInfo {
@@ -233,6 +242,23 @@ std::vector<std::string> CvdGenericCommandHandler::CmdList() const {
     subcmd_list.emplace_back(cmd);
   }
   return subcmd_list;
+}
+
+Result<std::string> CvdGenericCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
+
+bool CvdGenericCommandHandler::ShouldInterceptHelp() const { return false; }
+
+Result<std::string> CvdGenericCommandHandler::DetailedHelp(
+    std::vector<std::string>& arguments) const {
+  static constexpr char kDetailedHelpText[] =
+      "Run cvd {} --help for full help text";
+  std::string replacement = "<command>";
+  if (!arguments.empty()) {
+    replacement = arguments.front();
+  }
+  return fmt::format(kDetailedHelpText, replacement);
 }
 
 Result<CvdGenericCommandHandler::BinPathInfo>
