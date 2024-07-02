@@ -1,0 +1,72 @@
+//
+// Copyright (C) 2021 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// copied from cuttlefish top level Android.bp, cuttlefish_common_headers
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_library_headers {
+    name: "libcuttlefish_confui_host_headers",
+    vendor_available: true,
+    product_available: true,
+    host_supported: true,
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.virt",
+    ],
+}
+
+cc_library {
+    name: "libcuttlefish_confui_host",
+    srcs: [
+        "cbor.cc",
+        "host_renderer.cc",
+        "host_server.cc",
+        "host_utils.cc",
+        "host_virtual_input.cc",
+        "secure_input.cc",
+        "server_common.cc",
+        "session.cc",
+        "sign.cc",
+        "fonts.S",
+    ],
+    shared_libs: [
+        "libcn-cbor",
+        "libcuttlefish_fs",
+        "libbase",
+        "libfruit",
+        "libjsoncpp",
+        "liblog",
+        "libcrypto",
+        "android.hardware.keymaster@4.0",
+    ],
+    header_libs: [
+        "libcuttlefish_confui_host_headers",
+        "libdrm_headers",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libcuttlefish_utils",
+        "libcuttlefish_confui",
+        "libcuttlefish_input_connector",
+        "libcuttlefish_security",
+        "libcuttlefish_wayland_server",
+        "libft2.nodep",
+        "libteeui",
+        "libteeui_localization",
+    ],
+    defaults: ["cuttlefish_buildhost_only"],
+}
