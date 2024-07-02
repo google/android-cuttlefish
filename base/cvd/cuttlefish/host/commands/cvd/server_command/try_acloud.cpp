@@ -37,6 +37,19 @@ namespace {
 
 constexpr char kCvdrBinName[] = "cvdr";
 
+constexpr char kSummaryHelpText[] =
+    "Test whether an `acloud CLI` command could be satisfied using either "
+    "`cvd` or `cvdr`";
+
+constexpr char kDetailedHelpText[] =
+    R"(cvd try-acloud - verifies whether an original `acloud CLI` command
+    could be satisfied using either:
+   
+    - `cvd` for local instance management, determined by flag
+    `--local-instance`.
+   
+    - Or `cvdr` for remote instance management.)";
+
 bool CheckIfCvdrExist() {
   auto cmd = Command("which").AddParameter(kCvdrBinName);
   int ret = RunWithManagedStdio(std::move(cmd), nullptr, nullptr, nullptr,
@@ -58,18 +71,14 @@ class TryAcloudCommand : public CvdServerHandler {
 
   cvd_common::Args CmdList() const override { return {"try-acloud"}; }
 
-  /**
-   * The `try-acloud` command verifies whether an original `acloud CLI` command
-   * could be satisfied using either:
-   *
-   * - `cvd` for local instance management, determined by flag
-   * `--local-instance`.
-   *
-   * - Or `cvdr` for remote instance management (#if ENABLE_CVDR_TRANSLATION).
-   *
-   * If the test fails, the command will be handed to the `python acloud CLI`.
-   *
-   */
+  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+
+  bool ShouldInterceptHelp() const override { return true; }
+
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return kDetailedHelpText;
+  }
+
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
 #if ENABLE_CVDR_TRANSLATION
     auto res = VerifyWithCvdRemote(request);
