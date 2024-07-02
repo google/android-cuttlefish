@@ -11,11 +11,6 @@ apt-get install -y python3
 apt-get install -y p7zip-full unzip
 apt-get install -y iptables ebtables
 
-# Install amd firmware
-apt-get install -y firmware-amd-graphics
-sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 amdgpu.runpm=0 amdgpu.dc=0\"/' /etc/default/grub
-dpkg-reconfigure -fnoninteractive grub-efi-arm64
-
 # Adjust user groups
 adduser vsoc-01 kvm
 adduser vsoc-01 render
@@ -30,16 +25,29 @@ echo "deb http://ftp.debian.org/debian bookworm-backports main" >> /etc/apt/sour
 apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 \
     update
 
-# Install kernel
+# Install latest kernel from bookworm-backports
 #apt-get install -y '^linux-image-6.1.*aosp14-linaro.*' '^linux-headers-6.1.*aosp14-linaro.*'
 apt install -y -t bookworm-backports linux-headers-arm64
 apt install -y -t bookworm-backports linux-image-arm64
-apt install -y linux-image-6.7.12+bpo-arm64
 
-# Install Nvidia GPU driver
-DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-open-kernel-dkms
-DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-driver
-DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes firmware-misc-nonfree
+# Install Nvidia or AMD GPU driver
+nvidia_gpu=$(lspci | grep -i nvidia)
+amd_gpu=$(lspci | grep VGA | grep AMD)
+if [ "$amd_gpu" != "" ]
+then
+  # Install amd firmware
+  apt-get install -y firmware-amd-graphics
+  sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 amdgpu.runpm=0 amdgpu.dc=0\"/' /etc/default/grub
+  dpkg-reconfigure -fnoninteractive grub-efi-arm64
+else
+  if [ "$nvidia_gpu" != "" ]
+  then
+    # Install nvidia driver
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-open-kernel-dkms
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-driver
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes firmware-misc-nonfree
+  fi
+fi
 
 # Install android cuttlefish packages
 apt-get install -y '^cuttlefish-.*'
@@ -90,8 +98,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y  -q --force-yes nvidia-contain
 # Build docker image
 #mydir=$(pwd)
 #pushd $mydir
-#cd /root
-#git clone https://github.com/google/android-cuttlefish.git
+#cd /home/vsoc-01
+#sudo -H -u vsoc-01 sh -c 'git clone https://github.com/google/android-cuttlefish.git'
 #cd android-cuttlefish/docker/orchestration
-#./build.sh
+#sudo -H -u vsoc-01 bash -c '/bin/bash build.sh'
 #popd
