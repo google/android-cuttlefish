@@ -16,12 +16,14 @@
 
 #include "host/commands/cvd/server_command/power.h"
 
-#include <android-base/strings.h>
-
 #include <functional>
 #include <optional>
 #include <sstream>
 #include <string>
+#include <vector>
+
+#include <android-base/strings.h>
+#include <fmt/format.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
@@ -36,6 +38,13 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+namespace {
+
+constexpr char kSummaryHelpText[] =
+    "Trigger power button event on the device, reset device to first boot "
+    "state, restart device";
+
+}  // namespace
 
 class CvdDevicePowerCommandHandler : public CvdServerHandler {
  public:
@@ -91,6 +100,21 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
       valid_ops.push_back(op);
     }
     return valid_ops;
+  }
+
+  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+
+  bool ShouldInterceptHelp() const override { return false; }
+
+  Result<std::string> DetailedHelp(
+      std::vector<std::string>& arguments) const override {
+    static constexpr char kDetailedHelpText[] =
+        "Run cvd {} --help for full help text";
+    std::string replacement = "<command>";
+    if (!arguments.empty()) {
+      replacement = arguments.front();
+    }
+    return fmt::format(kDetailedHelpText, replacement);
   }
 
  private:
