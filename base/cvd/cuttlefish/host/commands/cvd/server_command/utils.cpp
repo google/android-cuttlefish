@@ -182,7 +182,7 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
  *
  */
 constexpr static std::array help_bool_opts{
-    "help", "helpfull", "helpshort", "helppackage", "helpxml", "version"};
+    "help", "helpfull", "helpshort", "helppackage", "helpxml", "version", "h"};
 constexpr static std::array help_str_opts{
     "helpon",
     "helpmatch",

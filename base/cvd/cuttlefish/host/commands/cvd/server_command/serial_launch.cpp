@@ -134,6 +134,12 @@ class SerialLaunchCommand : public CvdServerHandler {
   }
 
   cvd_common::Args CmdList() const override { return {"experimental"}; }
+  // not intended to show up in help
+  Result<std::string> SummaryHelp() const override { return ""; }
+  bool ShouldInterceptHelp() const { return false; }
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return "";
+  }
 
   Result<DemoCommandSequence> CreateCommandSequence(
       const RequestWithStdio& request) {

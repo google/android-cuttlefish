@@ -33,14 +33,10 @@ class CvdServerHandler {
   virtual Result<cvd::Response> Handle(const RequestWithStdio&) = 0;
   // returns the list of subcommand it can handle
   virtual cvd_common::Args CmdList() const = 0;
-  // TODO make pure virtual once every implementation has overrides
-  virtual Result<std::string> SummaryHelp() const {
-    return "Consider contributing a CL with help text if you read this :)";
-  }
-  virtual bool ShouldInterceptHelp() const { return false; }
-  virtual Result<std::string> DetailedHelp(std::vector<std::string>&) const {
-    return "Consider contributing a CL with help text if you read this :)";
-  }
+  // used for command help text
+  virtual Result<std::string> SummaryHelp() const = 0;
+  virtual bool ShouldInterceptHelp() const = 0;
+  virtual Result<std::string> DetailedHelp(std::vector<std::string>&) const = 0;
 };
 
 }  // namespace cuttlefish

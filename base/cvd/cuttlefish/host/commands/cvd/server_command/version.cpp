@@ -63,6 +63,12 @@ class CvdVersionHandler : public CvdServerHandler {
   cvd_common::Args CmdList() const override { return {"version"}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+
+  bool ShouldInterceptHelp() const override { return true; }
+
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return kSummaryHelpText;
+  }
 };
 
 }  // namespace
