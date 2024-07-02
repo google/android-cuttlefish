@@ -34,8 +34,12 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+namespace {
 
-static constexpr char kSnapshot[] =
+constexpr char kSummaryHelpText[] =
+    "Suspend/resume the cuttlefish device, or take snapshot of the device";
+
+constexpr char kDetailedHelpText[] =
     R"(Cuttlefish Virtual Device (CVD) CLI.
 
 Suspend/resume the cuttlefish device, or take snapshot of the device
@@ -47,9 +51,6 @@ Common:
     --group_name=<name>       The name of the instance group
     --snapshot_path=<path>>   Directory that contains saved snapshot files
 
-  Args:
-    --help                    print this message
-
 Crosvm:
   --snapshot_compat           Tells the device to be snapshot-compatible
                               The device to be created is checked if it is
@@ -59,6 +60,8 @@ QEMU:
   No QEMU-specific arguments at the moment
 
 )";
+
+}  // namespace
 
 class CvdSnapshotCommandHandler : public CvdServerHandler {
  public:
@@ -89,19 +92,9 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
     }
     LOG(DEBUG) << "Calling new handler with " << subcmd << ": " << ss.str();
 
-    auto help_flag = CvdFlag("help", false);
-    cvd_common::Args subcmd_args_copy{subcmd_args};
-    auto help_parse_result = help_flag.CalculateFlag(subcmd_args_copy);
-    bool is_help = help_parse_result.ok() && (*help_parse_result);
-
-    if (is_help) {
-      auto help_response = CF_EXPECT(HandleHelp(request.Err()));
-      return help_response;
-    }
-
     // may modify subcmd_args by consuming in parsing
     Command command =
-        CF_EXPECT(NonHelpCommand(request, subcmd, subcmd_args, envs));
+        CF_EXPECT(GenerateCommand(request, subcmd, subcmd_args, envs));
     CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
 
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());
@@ -113,23 +106,19 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
                             cvd_snapshot_operations_.end());
   }
 
- private:
-  Result<cvd::Response> HandleHelp(const SharedFD& client_stderr) {
-    std::string help_message(kSnapshot);
-    help_message.append("\n");
-    CF_EXPECT(
-        WriteAll(client_stderr, help_message) == (ssize_t)help_message.size(),
-        "Failed to write the help message");
-    cvd::Response response;
-    response.mutable_command_response();
-    response.mutable_status()->set_code(cvd::Status::OK);
-    return response;
+  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+
+  bool ShouldInterceptHelp() const override { return true; }
+
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return kDetailedHelpText;
   }
 
-  Result<Command> NonHelpCommand(const RequestWithStdio& request,
-                                 const std::string& subcmd,
-                                 cvd_common::Args& subcmd_args,
-                                 cvd_common::Envs envs) {
+ private:
+  Result<Command> GenerateCommand(const RequestWithStdio& request,
+                                  const std::string& subcmd,
+                                  cvd_common::Args& subcmd_args,
+                                  cvd_common::Envs envs) {
     const auto& selector_opts =
         request.Message().command_request().selector_opts();
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
