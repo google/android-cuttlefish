@@ -33,7 +33,6 @@ apex {
     manifest: "apex_manifest.json",
     key: "com.android.hardware.automotive.vehicle.test.key",
     file_contexts: "file_contexts",
-    use_vndk_as_stable: true,
     updatable: false,
     soc_specific: true,
     binaries: [
