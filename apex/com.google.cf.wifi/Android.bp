@@ -36,7 +36,6 @@ apex {
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",
     file_contexts: "file_contexts",
-    use_vndk_as_stable: true,
     updatable: false,
     // Install the apex in /vendor/apex
     soc_specific: true,
