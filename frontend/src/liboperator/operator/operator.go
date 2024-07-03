@@ -29,6 +29,7 @@ import (
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 
 	gopb "github.com/google/android-cuttlefish/frontend/src/liboperator/protobuf"
 	grpcpb "github.com/google/android-cuttlefish/frontend/src/liboperator/protobuf"
@@ -155,6 +156,9 @@ func CreateHttpHandlers(
 	router.HandleFunc("/devices/{deviceId}/openwrt{path:/.*}", func(w http.ResponseWriter, r *http.Request) {
 		openwrt(w, r, pool)
 	}).Methods("GET", "POST")
+	router.HandleFunc("/devices/{deviceId}/adb", func(w http.ResponseWriter, r *http.Request) {
+		adbProxy(w, r, pool)
+	}).Methods("GET")
 	router.HandleFunc("/polled_connections/{connId}/:forward", func(w http.ResponseWriter, r *http.Request) {
 		forward(w, r, polledSet)
 	}).Methods("POST")
@@ -478,6 +482,111 @@ func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	proxy := httputil.NewSingleHostReverseProxy(url)
 	r.URL.Path = "/devices/" + openwrtDevId + "/openwrt" + path
 	proxy.ServeHTTP(w, r)
+}
+
+// WebSocket endpoint that proxies ADB
+func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	devId := vars["deviceId"]
+	dev := pool.GetDevice(devId)
+
+	if dev == nil {
+		http.Error(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	devInfo := dev.privateData.(map[string]interface{})
+
+	// Find adb port for the device.
+	//   1. If registered device info has adb_port, use it.
+	//   2. If not, get index of the device and 6520 + index would be the adb port.
+	adbPort := 0
+	if adb_port, ok := devInfo["adb_port"]; ok {
+		adbPort = int(adb_port.(float64))
+	} else {
+		for i, id := range pool.DeviceIds() {
+			if id == devId {
+				adbPort = 6520 + i
+				break
+			}
+		}
+	}
+	if adbPort == 0 {
+		http.Error(w, "Cannot find adb port for the device", http.StatusNotFound)
+		return
+	}
+
+	// Prepare WebSocket and TCP socket for ADB
+	upgrader := websocket.Upgrader{}
+	wsConn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Print("Error while upgrading to WebSocket: ", err)
+		return
+	}
+	defer wsConn.Close()
+
+	tcpConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", adbPort))
+	if err != nil {
+		log.Print("Error while connect to ADB: ", err)
+		return
+	}
+	defer tcpConn.Close()
+
+	// Redirect WebSocket to ADB tcp socket
+	redirectWsToTcp(wsConn, tcpConn)
+}
+
+func redirectWsToTcp(wsConn *websocket.Conn, tcpConn net.Conn) {
+	tcpChan := make(chan []byte)
+	wsChan := make(chan []byte)
+
+	go func(tcpConn net.Conn, tcpChan chan []byte) {
+		buf := make([]byte, 4096)
+		for {
+			nRead, err := tcpConn.Read(buf)
+
+			if err != nil {
+				close(tcpChan)
+				return
+			}
+
+			tcpData := make([]byte, nRead)
+			copy(tcpData, buf)
+
+			tcpChan <- tcpData
+		}
+	}(tcpConn, tcpChan)
+
+	go func(wsConn *websocket.Conn, wsChan chan []byte) {
+		for {
+			_, buf, err := wsConn.ReadMessage()
+
+			if err != nil {
+				close(wsChan)
+				return
+			}
+
+			wsData := make([]byte, len(buf))
+			copy(wsData, buf)
+
+			wsChan <- wsData
+		}
+	}(wsConn, wsChan)
+
+	for {
+		select {
+		case tcpData := <-tcpChan:
+			if tcpData == nil {
+				return
+			}
+			wsConn.WriteMessage(websocket.BinaryMessage, tcpData)
+		case wsData := <-wsChan:
+			if wsData == nil {
+				return
+			}
+			tcpConn.Write(wsData)
+		}
+	}
 }
 
 // General client endpoints
