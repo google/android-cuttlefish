@@ -63,6 +63,8 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.model=$(PRODUCT_DEVICE)
 
 # TODO(b/350000347) Enable Soong defined system image from coverage build
+ifneq ($(CLANG_COVERAGE),true)
 ifneq ($(NATIVE_COVERAGE),true)
 PRODUCT_SOONG_DEFINED_SYSTEM_IMAGE := aosp_cf_system_x86_64
-endif
+endif # NATIVE_COVERAGE
+endif # CLANG_COVERAGE
