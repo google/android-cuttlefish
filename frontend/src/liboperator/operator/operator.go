@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -533,60 +534,49 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	defer tcpConn.Close()
 
 	// Redirect WebSocket to ADB tcp socket
-	redirectWsToTcp(wsConn, tcpConn)
+	wsWrapper := &wsIoWrapper{
+		wsConn: wsConn,
+		pos: 0,
+		buf: nil,
+	}
+
+	go io.Copy(wsWrapper, tcpConn)
+	io.Copy(tcpConn, wsWrapper)
 }
 
-func redirectWsToTcp(wsConn *websocket.Conn, tcpConn net.Conn) {
-	tcpChan := make(chan []byte)
-	wsChan := make(chan []byte)
+// Wrapper for implementing io.ReadWriteCloser of websocket.Conn
+type wsIoWrapper struct {
+	wsConn *websocket.Conn
+	pos int
+	buf []byte
+}
 
-	go func(tcpConn net.Conn, tcpChan chan []byte) {
-		buf := make([]byte, 4096)
-		for {
-			nRead, err := tcpConn.Read(buf)
+var _ io.ReadWriteCloser = (*wsIoWrapper)(nil)
 
-			if err != nil {
-				close(tcpChan)
-				return
-			}
-
-			tcpData := make([]byte, nRead)
-			copy(tcpData, buf)
-
-			tcpChan <- tcpData
+func (w *wsIoWrapper) Read(buf []byte) (int, error) {
+	if w.buf == nil || w.pos == len(w.buf) {
+		_, buf, err := w.wsConn.ReadMessage()
+		if err != nil {
+			return 0, err
 		}
-	}(tcpConn, tcpChan)
-
-	go func(wsConn *websocket.Conn, wsChan chan []byte) {
-		for {
-			_, buf, err := wsConn.ReadMessage()
-
-			if err != nil {
-				close(wsChan)
-				return
-			}
-
-			wsData := make([]byte, len(buf))
-			copy(wsData, buf)
-
-			wsChan <- wsData
-		}
-	}(wsConn, wsChan)
-
-	for {
-		select {
-		case tcpData := <-tcpChan:
-			if tcpData == nil {
-				return
-			}
-			wsConn.WriteMessage(websocket.BinaryMessage, tcpData)
-		case wsData := <-wsChan:
-			if wsData == nil {
-				return
-			}
-			tcpConn.Write(wsData)
-		}
+		w.buf = buf
+		w.pos = 0
 	}
+	nRead := copy(buf[:], w.buf[w.pos:])
+	w.pos += nRead
+	return nRead, nil
+}
+
+func (w *wsIoWrapper) Write(buf []byte) (int, error) {
+	err := w.wsConn.WriteMessage(websocket.BinaryMessage, buf)
+	if err != nil {
+		return 0, err
+	}
+	return len(buf), nil
+}
+
+func (w *wsIoWrapper) Close() error {
+	return w.wsConn.Close()
 }
 
 // General client endpoints
