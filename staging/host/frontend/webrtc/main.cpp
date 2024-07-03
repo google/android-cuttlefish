@@ -179,6 +179,7 @@ int main(int argc, char** argv) {
       cvd_config->Instances()[0].webrtc_device_id();
   streamer_config.openwrt_addr = OpenwrtArgsFromConfig(
       cvd_config->Instances()[0])[kOpewnrtWanIpAddressName];
+  streamer_config.adb_port = instance.adb_host_port();
   streamer_config.control_env_proxy_server_path =
       instance.grpc_socket_path() + "/ControlEnvProxyServer.sock";
   streamer_config.operator_server.addr = cvd_config->sig_server_address();
