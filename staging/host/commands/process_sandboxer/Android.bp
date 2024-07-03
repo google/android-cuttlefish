@@ -34,6 +34,7 @@ cc_binary_host {
         "policies/secure_env.cpp",
         "poll_callback.cpp",
         "sandbox_manager.cpp",
+        "unique_fd.cpp",
     ],
     shared_libs: ["sandboxed_api_sandbox2"],
     static_libs: [
