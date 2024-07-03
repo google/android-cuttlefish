@@ -26,17 +26,11 @@
 #include "host/frontend/webrtc/libdevice/streamer.h"
 
 namespace cuttlefish {
-
 DisplayHandler::DisplayHandler(webrtc_streaming::Streamer& streamer,
-                               int wayland_socket_fd,
-                               bool wayland_frames_are_rgba)
-    : streamer_(streamer) {
-  int wayland_fd = fcntl(wayland_socket_fd, F_DUPFD_CLOEXEC, 3);
-  CHECK(wayland_fd != -1) << "Unable to dup server, errno " << errno;
-  close(wayland_socket_fd);
-  wayland_server_ = std::make_unique<wayland::WaylandServer>(
-      wayland_fd, wayland_frames_are_rgba);
-  wayland_server_->SetDisplayEventCallback([this](const DisplayEvent& event) {
+                               ScreenConnector& screen_connector)
+    : streamer_(streamer), screen_connector_(screen_connector) {
+  screen_connector_.SetCallback(std::move(GetScreenConnectorCallback()));
+  screen_connector_.SetDisplayEventCallback([this](const DisplayEvent& event) {
     std::visit(
         [this](auto&& e) {
           using T = std::decay_t<decltype(e)>;
@@ -70,39 +64,60 @@ DisplayHandler::DisplayHandler(webrtc_streaming::Streamer& streamer,
         },
         event);
   });
-  wayland_server_->SetFrameCallback([this](
-                                        std::uint32_t display_number,       //
-                                        std::uint32_t frame_width,          //
-                                        std::uint32_t frame_height,         //
-                                        std::uint32_t frame_fourcc_format,  //
-                                        std::uint32_t frame_stride_bytes,   //
-                                        std::uint8_t* frame_pixels) {
-    auto buf = std::make_shared<CvdVideoFrameBuffer>(frame_width, frame_height);
-    if (frame_fourcc_format == DRM_FORMAT_ARGB8888 ||
-        frame_fourcc_format == DRM_FORMAT_XRGB8888) {
-      libyuv::ARGBToI420(frame_pixels, frame_stride_bytes, buf->DataY(),
-                         buf->StrideY(), buf->DataU(), buf->StrideU(),
-                         buf->DataV(), buf->StrideV(), frame_width,
-                         frame_height);
-    } else if (frame_fourcc_format == DRM_FORMAT_ABGR8888 ||
-               frame_fourcc_format == DRM_FORMAT_XBGR8888) {
-      libyuv::ABGRToI420(frame_pixels, frame_stride_bytes, buf->DataY(),
-                         buf->StrideY(), buf->DataU(), buf->StrideU(),
-                         buf->DataV(), buf->StrideV(), frame_width,
-                         frame_height);
-    } else {
-      LOG(ERROR) << "Unhandled frame format: " << frame_fourcc_format;
-      return;
-    }
+}
 
+DisplayHandler::GenerateProcessedFrameCallback
+DisplayHandler::GetScreenConnectorCallback() {
+  // only to tell the producer how to create a ProcessedFrame to cache into the
+  // queue
+  DisplayHandler::GenerateProcessedFrameCallback callback =
+      [](std::uint32_t display_number, std::uint32_t frame_width,
+         std::uint32_t frame_height, std::uint32_t frame_fourcc_format,
+         std::uint32_t frame_stride_bytes, std::uint8_t* frame_pixels,
+         WebRtcScProcessedFrame& processed_frame) {
+        processed_frame.display_number_ = display_number;
+        processed_frame.buf_ =
+            std::make_unique<CvdVideoFrameBuffer>(frame_width, frame_height);
+        if (frame_fourcc_format == DRM_FORMAT_ARGB8888 ||
+            frame_fourcc_format == DRM_FORMAT_XRGB8888) {
+          libyuv::ARGBToI420(
+              frame_pixels, frame_stride_bytes, processed_frame.buf_->DataY(),
+              processed_frame.buf_->StrideY(), processed_frame.buf_->DataU(),
+              processed_frame.buf_->StrideU(), processed_frame.buf_->DataV(),
+              processed_frame.buf_->StrideV(), frame_width, frame_height);
+          processed_frame.is_success_ = true;
+        } else if (frame_fourcc_format == DRM_FORMAT_ABGR8888 ||
+                   frame_fourcc_format == DRM_FORMAT_XBGR8888) {
+          libyuv::ABGRToI420(
+              frame_pixels, frame_stride_bytes, processed_frame.buf_->DataY(),
+              processed_frame.buf_->StrideY(), processed_frame.buf_->DataU(),
+              processed_frame.buf_->StrideU(), processed_frame.buf_->DataV(),
+              processed_frame.buf_->StrideV(), frame_width, frame_height);
+          processed_frame.is_success_ = true;
+        } else {
+          processed_frame.is_success_ = false;
+        }
+      };
+  return callback;
+}
+
+[[noreturn]] void DisplayHandler::Loop() {
+  for (;;) {
+    auto processed_frame = screen_connector_.OnNextFrame();
+
+    std::shared_ptr<CvdVideoFrameBuffer> buffer =
+        std::move(processed_frame.buf_);
+
+    const uint32_t display_number = processed_frame.display_number_;
     {
       std::lock_guard<std::mutex> lock(last_buffer_mutex_);
       display_last_buffers_[display_number] =
-          std::static_pointer_cast<webrtc_streaming::VideoFrameBuffer>(buf);
+          std::static_pointer_cast<webrtc_streaming::VideoFrameBuffer>(buffer);
     }
-
-    SendLastFrame(display_number);
-  });
+    if (processed_frame.is_success_) {
+      SendLastFrame(display_number);
+    }
+  }
 }
 
 void DisplayHandler::SendLastFrame(std::optional<uint32_t> display_number) {
