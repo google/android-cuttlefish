@@ -40,7 +40,23 @@ cc_binary_host {
     static_libs: [
         "libabsl_host",
         "libcap",
+        "libprocess_sandboxer_proxy_common",
     ],
+    target: {
+        darwin: {
+            enabled: false,
+        },
+        windows: {
+            enabled: false,
+        },
+    },
+}
+
+cc_library_static {
+    name: "libprocess_sandboxer_proxy_common",
+    defaults: ["cuttlefish_buildhost_only"],
+    srcs: ["proxy_common.cpp"],
+    static_libs: ["libabsl_host"],
     target: {
         darwin: {
             enabled: false,
