@@ -23,7 +23,6 @@
 #include <gflags/gflags.h>
 #include <libyuv.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "host/frontend/webrtc/audio_handler.h"
@@ -40,7 +39,10 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
 #include "host/libs/config/openwrt_args.h"
+#include "host/libs/confui/host_mode_ctrl.h"
+#include "host/libs/confui/host_server.h"
 #include "host/libs/input_connector/socket_input_connector.h"
+#include "host/libs/screen_connector/screen_connector.h"
 
 DEFINE_bool(multitouch, true,
             "Whether to send multi-touch or single-touch events");
@@ -110,6 +112,27 @@ fruit::Component<cuttlefish::CustomActionConfigProvider> WebRtcComponent() {
       .install(cuttlefish::CustomActionsComponent);
 };
 
+fruit::Component<
+    cuttlefish::ScreenConnector<DisplayHandler::WebRtcScProcessedFrame>,
+    cuttlefish::confui::HostServer, cuttlefish::confui::HostVirtualInput>
+CreateConfirmationUIComponent(
+    int* frames_fd, bool* frames_are_rgba,
+    cuttlefish::confui::PipeConnectionPair* pipe_io_pair,
+    cuttlefish::InputConnector* input_connector) {
+  using cuttlefish::ScreenConnectorFrameRenderer;
+  using ScreenConnector = cuttlefish::DisplayHandler::ScreenConnector;
+  return fruit::createComponent()
+      .bindInstance<
+          fruit::Annotated<cuttlefish::WaylandScreenConnector::FramesFd, int>>(
+          *frames_fd)
+      .bindInstance<fruit::Annotated<
+          cuttlefish::WaylandScreenConnector::FramesAreRgba, bool>>(
+          *frames_are_rgba)
+      .bindInstance(*pipe_io_pair)
+      .bind<ScreenConnectorFrameRenderer, ScreenConnector>()
+      .bindInstance(*input_connector);
+}
+
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -165,8 +188,30 @@ int main(int argc, char** argv) {
       cuttlefish::SharedFD::Dup(FLAGS_kernel_log_events_fd);
   close(FLAGS_kernel_log_events_fd);
 
+  cuttlefish::confui::PipeConnectionPair conf_ui_comm_fd_pair{
+      .from_guest_ = cuttlefish::SharedFD::Dup(FLAGS_confui_out_fd),
+      .to_guest_ = cuttlefish::SharedFD::Dup(FLAGS_confui_in_fd)};
+  close(FLAGS_confui_in_fd);
+  close(FLAGS_confui_out_fd);
+
+  int frames_fd = FLAGS_frame_server_fd;
+  bool frames_are_rgba = true;
+  fruit::Injector<
+      cuttlefish::ScreenConnector<DisplayHandler::WebRtcScProcessedFrame>,
+      cuttlefish::confui::HostServer, cuttlefish::confui::HostVirtualInput>
+      conf_ui_components_injector(CreateConfirmationUIComponent,
+                                  std::addressof(frames_fd),
+                                  std::addressof(frames_are_rgba),
+                                  &conf_ui_comm_fd_pair, input_connector.get());
+  auto& screen_connector =
+      conf_ui_components_injector.get<DisplayHandler::ScreenConnector&>();
+
   auto client_server = cuttlefish::ClientFilesServer::New(FLAGS_client_dir);
   CHECK(client_server) << "Failed to initialize client files server";
+  auto& host_confui_server =
+      conf_ui_components_injector.get<cuttlefish::confui::HostServer&>();
+  auto& confui_virtual_input =
+      conf_ui_components_injector.get<cuttlefish::confui::HostVirtualInput&>();
 
   StreamerConfig streamer_config;
 
@@ -207,7 +252,7 @@ int main(int argc, char** argv) {
   }
 
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      *input_connector.get(), &kernel_logs_event_handler, lights_observer);
+      confui_virtual_input, &kernel_logs_event_handler, lights_observer);
 
   RecordingManager recording_manager;
 
@@ -215,10 +260,8 @@ int main(int argc, char** argv) {
       Streamer::Create(streamer_config, recording_manager, observer_factory);
   CHECK(streamer) << "Could not create streamer";
 
-  int frames_fd = FLAGS_frame_server_fd;
-  bool frames_are_rgba = !instance.guest_uses_bgra_framebuffers();
   auto display_handler =
-      std::make_shared<DisplayHandler>(*streamer, frames_fd, frames_are_rgba);
+      std::make_shared<DisplayHandler>(*streamer, screen_connector);
 
   if (instance.camera_server_port()) {
     auto camera_controller = streamer->AddCamera(instance.camera_server_port(),
@@ -364,6 +407,7 @@ int main(int argc, char** argv) {
   if (audio_handler) {
     audio_handler->Start();
   }
+  host_confui_server.Start();
 
   if (instance.record_screen()) {
     LOG(VERBOSE) << "Waiting for recording manager initializing.";
@@ -371,7 +415,7 @@ int main(int argc, char** argv) {
     recording_manager.Start();
   }
 
-  control_thread.join();
+  display_handler->Loop();
 
   return 0;
 }

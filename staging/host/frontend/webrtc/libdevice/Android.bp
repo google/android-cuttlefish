@@ -46,6 +46,7 @@ cc_library {
     static_libs: [
         "libsrtp2",
         "libcuttlefish_host_config",
+        "libcuttlefish_screen_connector",
         "libcuttlefish_wayland_server",
         "libcuttlefish_webrtc_common",
         "libgflags",
