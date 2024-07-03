@@ -57,6 +57,8 @@ struct StreamerConfig {
   std::string openwrt_device_id;
   // Openwrt IP address for accessing Luci interface.
   std::string openwrt_addr;
+  // Adb port number of the device.
+  int adb_port;
   // Path of ControlEnvProxyServer for serving Rest API in WebUI.
   std::string control_env_proxy_server_path;
 };
