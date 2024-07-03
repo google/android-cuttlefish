@@ -24,6 +24,7 @@
 
 #include <memory>
 #include <sstream>
+#include <utility>
 
 #include <absl/functional/bind_front.h>
 #include <absl/log/log.h>
@@ -53,12 +54,12 @@ using sapi::file::JoinPath;
 
 class SandboxManager::ManagedProcess {
  public:
-  ManagedProcess(int event_fd, std::unique_ptr<Sandbox2> sandbox)
-      : event_fd_(event_fd), sandbox_(std::move(sandbox)) {
+  ManagedProcess(UniqueFd event_fd, std::unique_ptr<Sandbox2> sandbox)
+      : event_fd_(std::move(event_fd)), sandbox_(std::move(sandbox)) {
     waiter_thread_ = std::thread([this]() {
       sandbox_->AwaitResult().IgnoreResult();
       uint64_t buf = 1;
-      if (write(event_fd_, &buf, sizeof(buf)) < 0) {
+      if (write(event_fd_.Get(), &buf, sizeof(buf)) < 0) {
         PLOG(ERROR) << "Failed to write to eventfd";
       }
     });
@@ -71,41 +72,33 @@ class SandboxManager::ManagedProcess {
     if (!res.ok()) {
       LOG(ERROR) << "Issue in closing sandbox: '" << res.ToString() << "'";
     }
-    if (close(event_fd_) < 0) {
-      PLOG(ERROR) << "`close(event_fd_)` failed";
-    }
   }
 
-  int EventFd() const { return event_fd_; }
+  int EventFd() const { return event_fd_.Get(); }
 
  private:
-  int event_fd_;
+  UniqueFd event_fd_;
   std::thread waiter_thread_;
   std::unique_ptr<Sandbox2> sandbox_;
 };
 
 class SandboxManager::SocketClient {
  public:
-  SocketClient(int client_fd) : client_fd_(client_fd) {}
+  SocketClient(UniqueFd client_fd) : client_fd_(std::move(client_fd)) {}
   SocketClient(SocketClient&) = delete;
-  ~SocketClient() {
-    if (close(client_fd_) < 0) {
-      PLOG(ERROR) << "`close` failed";
-    }
-  }
 
-  int ClientFd() const { return client_fd_; }
+  int ClientFd() const { return client_fd_.Get(); }
 
   absl::Status HandleMessage() {
     char buf;
-    if (read(client_fd_, &buf, sizeof(buf)) < 0) {
+    if (read(client_fd_.Get(), &buf, sizeof(buf)) < 0) {
       return absl::ErrnoToStatus(errno, "`read` failed");
     }
     return absl::UnimplementedError("TODO(schuffelen)");
   }
 
  private:
-  int client_fd_;
+  UniqueFd client_fd_;
 };
 
 absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
@@ -132,14 +125,14 @@ absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
   }
   VLOG(1) << "Blocked signals";
 
-  manager->signal_fd_ = signalfd(-1, &mask, SFD_CLOEXEC | SFD_NONBLOCK);
-  if (manager->signal_fd_ < 0) {
+  manager->signal_fd_.Reset(signalfd(-1, &mask, SFD_CLOEXEC | SFD_NONBLOCK));
+  if (manager->signal_fd_.Get() < 0) {
     return absl::ErrnoToStatus(errno, "signalfd failed");
   }
   VLOG(1) << "Created signalfd";
 
-  manager->server_fd_ = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0);
-  if (manager->server_fd_ < 0) {
+  manager->server_fd_.Reset(socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0));
+  if (manager->server_fd_.Get() < 0) {
     return absl::ErrnoToStatus(errno, "`socket` failed");
   }
   sockaddr_un socket_name = {
@@ -148,10 +141,10 @@ absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
   std::snprintf(socket_name.sun_path, sizeof(socket_name.sun_path), "%s",
                 manager->ServerSocketOutsidePath().c_str());
   auto sockname_ptr = reinterpret_cast<sockaddr*>(&socket_name);
-  if (bind(manager->server_fd_, sockname_ptr, sizeof(socket_name)) < 0) {
+  if (bind(manager->server_fd_.Get(), sockname_ptr, sizeof(socket_name)) < 0) {
     return absl::ErrnoToStatus(errno, "`bind` failed");
   }
-  if (listen(manager->server_fd_, 10) < 0) {
+  if (listen(manager->server_fd_.Get(), 10) < 0) {
     return absl::ErrnoToStatus(errno, "`listen` failed");
   }
 
@@ -168,28 +161,13 @@ SandboxManager::~SandboxManager() {
       PLOG(ERROR) << "Failed to remove '" << runtime_dir_ << "'";
     }
   }
-  if (signal_fd_ >= 0 && close(signal_fd_) < 0) {
-    PLOG(ERROR) << "Failed to close signal fd '" << signal_fd_ << "'";
-  }
-  if (server_fd_ >= 0 && close(server_fd_) < 0) {
-    PLOG(ERROR) << "Failed to close socket fd '" << server_fd_ << "'";
-  }
 }
 
-absl::Status SandboxManager::RunProcess(const std::vector<std::string>& argv,
-                                        const std::map<int, int>& fds) {
+absl::Status SandboxManager::RunProcess(
+    const std::vector<std::string>& argv,
+    std::vector<std::pair<UniqueFd, int>> fds) {
   if (argv.empty()) {
-    for (const auto& [fd_inner, fd_outer] : fds) {
-      if (close(fd_outer) < 0) {
-        LOG(ERROR) << "Failed to close '" << fd_inner << "'";
-      }
-    }
     return absl::InvalidArgumentError("Not enough arguments");
-  }
-
-  int event_fd = eventfd(0, EFD_CLOEXEC);
-  if (event_fd < 0) {
-    return absl::ErrnoToStatus(errno, "`eventfd` failed");
   }
 
   if (VLOG_IS_ON(1)) {
@@ -200,7 +178,7 @@ absl::Status SandboxManager::RunProcess(const std::vector<std::string>& argv,
     }
     process_stream << "] with FD mapping: [\n";
     for (const auto& [fd_in, fd_out] : fds) {
-      process_stream << '\t' << fd_in << " -> " << fd_out << ",\n";
+      process_stream << '\t' << fd_in.Get() << " -> " << fd_out << ",\n";
     }
     process_stream << "]\n";
     VLOG(1) << process_stream.str();
@@ -216,17 +194,19 @@ absl::Status SandboxManager::RunProcess(const std::vector<std::string>& argv,
   // Default is 1024 seconds
   executor->limits()->set_rlimit_cpu(RLIM64_INFINITY);
 
-  for (const auto& [fd_outer, fd_inner] : fds) {
-    executor->ipc()->MapFd(fd_outer,
-                           fd_inner);  // Will close `fd_outer` in this process
+  for (auto& [fd_outer, fd_inner] : fds) {
+    // Will close `fd_outer` in this process
+    executor->ipc()->MapFd(fd_outer.Release(), fd_inner);
+  }
+
+  UniqueFd event_fd(eventfd(0, EFD_CLOEXEC));
+  if (event_fd.Get() < 0) {
+    return absl::ErrnoToStatus(errno, "`eventfd` failed");
   }
 
   std::unique_ptr<Sandbox2> sandbox(
       new Sandbox2(std::move(executor), PolicyForExecutable(host_info_, exe)));
   if (!sandbox->RunAsync()) {
-    if (close(event_fd) < 0) {
-      PLOG(ERROR) << "`close(event_fd)` failed";
-    }
     return sandbox->AwaitResult().ToStatus();
   }
 
@@ -246,7 +226,8 @@ absl::Status SandboxManager::RunProcess(const std::vector<std::string>& argv,
   // that signals the eventfd when sandbox2 says the sandboxed process has
   // exited.
 
-  sandboxes_.emplace_back(new ManagedProcess(event_fd, std::move(sandbox)));
+  sandboxes_.emplace_back(
+      new ManagedProcess(std::move(event_fd), std::move(sandbox)));
 
   return absl::OkStatus();
 }
@@ -256,8 +237,8 @@ bool SandboxManager::Running() const { return running_; }
 absl::Status SandboxManager::Iterate() {
   PollCallback poll_cb;
 
-  poll_cb.Add(signal_fd_, bind_front(&SandboxManager::Signalled, this));
-  poll_cb.Add(server_fd_, bind_front(&SandboxManager::NewClient, this));
+  poll_cb.Add(signal_fd_.Get(), bind_front(&SandboxManager::Signalled, this));
+  poll_cb.Add(server_fd_.Get(), bind_front(&SandboxManager::NewClient, this));
 
   for (auto it = sandboxes_.begin(); it != sandboxes_.end(); it++) {
     int fd = (*it)->EventFd();
@@ -277,7 +258,7 @@ absl::Status SandboxManager::Signalled(short revents) {
     return absl::InternalError("signalfd exited");
   }
   signalfd_siginfo info;
-  auto read_res = read(signal_fd_, &info, sizeof(info));
+  auto read_res = read(signal_fd_.Get(), &info, sizeof(info));
   if (read_res < 0) {
     return absl::ErrnoToStatus(errno, "`read(signal_fd_, ...)` failed");
   } else if (read_res == 0) {
@@ -306,11 +287,11 @@ absl::Status SandboxManager::NewClient(short revents) {
     running_ = false;
     return absl::InternalError("server socket exited");
   }
-  int client = accept4(server_fd_, nullptr, nullptr, SOCK_CLOEXEC);
-  if (client < 0) {
+  UniqueFd client(accept4(server_fd_.Get(), nullptr, nullptr, SOCK_CLOEXEC));
+  if (client.Get() < 0) {
     return absl::ErrnoToStatus(errno, "`accept` failed");
   }
-  clients_.emplace_back(new SocketClient(client));
+  clients_.emplace_back(new SocketClient(std::move(client)));
   return absl::OkStatus();
 }
 

@@ -20,6 +20,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <absl/flags/flag.h>
@@ -36,6 +37,7 @@
 #include "host/commands/process_sandboxer/logs.h"
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/sandbox_manager.h"
+#include "host/commands/process_sandboxer/unique_fd.h"
 
 inline constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 
@@ -102,14 +104,14 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
   }
   std::unique_ptr<SandboxManager> manager = std::move(*sandbox_manager_res);
 
-  std::map<int, int> fds;
+  std::vector<std::pair<UniqueFd, int>> fds;
   for (const std::string& inherited_fd : absl::GetFlag(FLAGS_inherited_fds)) {
     int fd;
     if (!absl::SimpleAtoi(inherited_fd, &fd)) {
       std::string error = absl::StrCat("inherited_fd not int: ", inherited_fd);
       return absl::InvalidArgumentError(error);
     }
-    fds[fd] = fd;  // RunProcess will close these
+    fds.emplace_back(UniqueFd(fd), fd);
   }
 
   absl::Status run = manager->RunProcess(std::move(exe_argv), std::move(fds));
