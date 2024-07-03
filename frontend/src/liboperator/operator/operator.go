@@ -544,22 +544,22 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	io.Copy(tcpConn, wsWrapper)
 }
 
-// Wrapper for implementing io.ReadWriteCloser of websocket.Conn
+// Wrapper for implementing io.ReadWriter of websocket.Conn
 type wsIoWrapper struct {
 	wsConn *websocket.Conn
 	pos int
 	buf []byte
 }
 
-var _ io.ReadWriteCloser = (*wsIoWrapper)(nil)
+var _ io.ReadWriter = (*wsIoWrapper)(nil)
 
 func (w *wsIoWrapper) Read(buf []byte) (int, error) {
-	if w.buf == nil || w.pos == len(w.buf) {
-		_, buf, err := w.wsConn.ReadMessage()
+	if w.buf == nil || w.pos >= len(w.buf) {
+		_, readBuf, err := w.wsConn.ReadMessage()
 		if err != nil {
 			return 0, err
 		}
-		w.buf = buf
+		w.buf = readBuf
 		w.pos = 0
 	}
 	nRead := copy(buf[:], w.buf[w.pos:])
@@ -573,10 +573,6 @@ func (w *wsIoWrapper) Write(buf []byte) (int, error) {
 		return 0, err
 	}
 	return len(buf), nil
-}
-
-func (w *wsIoWrapper) Close() error {
-	return w.wsConn.Close()
 }
 
 // General client endpoints
