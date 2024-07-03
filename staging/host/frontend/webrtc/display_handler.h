@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -24,9 +23,30 @@
 
 #include "host/frontend/webrtc/cvd_video_frame_buffer.h"
 #include "host/frontend/webrtc/libdevice/video_sink.h"
-#include "host/libs/wayland/wayland_server.h"
+#include "host/libs/screen_connector/screen_connector.h"
 
 namespace cuttlefish {
+/**
+ * ScreenConnectorImpl will generate this, and enqueue
+ *
+ * It's basically a (processed) frame, so it:
+ *   must be efficiently std::move-able
+ * Also, for the sake of algorithm simplicity:
+ *   must be default-constructable & assignable
+ *
+ */
+struct WebRtcScProcessedFrame : public ScreenConnectorFrameInfo {
+  // must support move semantic
+  std::unique_ptr<CvdVideoFrameBuffer> buf_;
+  std::unique_ptr<WebRtcScProcessedFrame> Clone() {
+    // copy internal buffer, not move
+    CvdVideoFrameBuffer* new_buffer = new CvdVideoFrameBuffer(*(buf_.get()));
+    auto cloned_frame = std::make_unique<WebRtcScProcessedFrame>();
+    cloned_frame->buf_ =
+        std::move(std::unique_ptr<CvdVideoFrameBuffer>(new_buffer));
+    return std::move(cloned_frame);
+  }
+};
 
 namespace webrtc_streaming {
 class Streamer;
@@ -34,18 +54,26 @@ class Streamer;
 
 class DisplayHandler {
  public:
-  DisplayHandler(webrtc_streaming::Streamer& streamer, int wayland_socket_fd,
-                 bool wayland_frames_are_rgba);
+  using ScreenConnector = cuttlefish::ScreenConnector<WebRtcScProcessedFrame>;
+  using GenerateProcessedFrameCallback =
+      ScreenConnector::GenerateProcessedFrameCallback;
+  using WebRtcScProcessedFrame = cuttlefish::WebRtcScProcessedFrame;
+
+  DisplayHandler(webrtc_streaming::Streamer& streamer,
+                 ScreenConnector& screen_connector);
   ~DisplayHandler() = default;
+
+  [[noreturn]] void Loop();
 
   // If std::nullopt, send last frame for all displays.
   void SendLastFrame(std::optional<uint32_t> display_number);
 
  private:
-  std::unique_ptr<wayland::WaylandServer> wayland_server_;
+  GenerateProcessedFrameCallback GetScreenConnectorCallback();
   std::map<uint32_t, std::shared_ptr<webrtc_streaming::VideoSink>>
       display_sinks_;
   webrtc_streaming::Streamer& streamer_;
+  ScreenConnector& screen_connector_;
   std::map<uint32_t, std::shared_ptr<webrtc_streaming::VideoFrameBuffer>>
       display_last_buffers_;
   std::mutex last_buffer_mutex_;
