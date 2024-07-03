@@ -377,6 +377,7 @@ class CuttlefishConfig {
     std::string instance_internal_uds_dir() const;
 
     std::string touch_socket_path(int touch_dev_idx) const;
+    std::string mouse_socket_path() const;
     std::string rotary_socket_path() const;
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
@@ -564,6 +565,7 @@ class CuttlefishConfig {
     bool pause_in_bootloader() const;
     bool run_as_daemon() const;
     bool enable_audio() const;
+    bool enable_mouse() const;
     bool enable_gnss_grpc_proxy() const;
     bool enable_bootanimation() const;
     bool enable_usb() const;
@@ -786,6 +788,7 @@ class CuttlefishConfig {
     void set_pause_in_bootloader(bool pause_in_bootloader);
     void set_run_as_daemon(bool run_as_daemon);
     void set_enable_audio(bool enable);
+    void set_enable_mouse(bool enable);
     void set_enable_usb(bool enable);
     void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
     void set_enable_bootanimation(const bool enable_bootanimation);

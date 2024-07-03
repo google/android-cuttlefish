@@ -38,6 +38,7 @@ struct GuestConfig {
   bool vhost_user_vsock = false;
   bool supports_bgra_framebuffers = false;
   bool prefer_drm_virgl_when_supported = false;
+  bool mouse_supported = false;
 };
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults();
