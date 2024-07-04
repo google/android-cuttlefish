@@ -210,12 +210,24 @@ done
 echo -e "Starting Cuttlefish"
 ssh $server "for port in ${host_orchestrator_ports[*]}; do \
   host_orchestrator_url=https://localhost:\$port && \
-  curl -s -k -X POST \$host_orchestrator_url/cvds \
-  -H 'Content-Type: application/json' \
-  -d '{\"cvd\": {\"build_source\": {\"user_build_source\": {\"artifacts_dir\": \"$user_artifacts_dir\"}}}, \
-       \"additional_instances_num\": $((num_instances_per_docker - 1))}'; \
+  job_id=\"\" && \
+  while [ -z \"\$job_id\" ]; do \
+    job_id=\$(curl -s -k -X POST \$host_orchestrator_url/cvds \
+      -H 'Content-Type: application/json' \
+      -d '{\"cvd\": {\"build_source\": { \
+      \"user_build_source\": {\"artifacts_dir\": \"$user_artifacts_dir\"}}}, \
+      \"additional_instances_num\": $((num_instances_per_docker - 1))}' \
+        | jq -r '.name') && \
+    if [ -z \"\$job_id\" ]; then \
+      echo \"  Failed to request creating Cuttlefish, retrying\" && \
+      sleep 1; \
+    else \
+      echo \"  Succeeded to request: \$job_id\"; \
+    fi; \
+  done; \
 done
 "
+echo -e "Done"
 
 # Web UI port is 3443 instead 1443 because there could be a running operator or host orchestrator in this machine as well.
 web_ui_port=3443
