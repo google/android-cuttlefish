@@ -309,6 +309,7 @@ android_system_image {
         "aflags",
         "am",
         "android_vintf_manifest",
+        "android_vintf_compatibility_matrix_device",
         "android.hardware.biometrics.fingerprint@2.1", // generic_system
         "android.hardware.radio@1.0", // generic_system
         "android.hardware.radio@1.1", // generic_system
@@ -787,11 +788,19 @@ android_system_image {
 }
 
 prebuilt_etc {
+    name: "android_vintf_compatibility_matrix_device",
+    src: "compatibility_matrix.device.xml",
+    filename: "compatibility_matrix.device.xml",
+    relative_install_path: "vintf",
+    no_full_install: true,
+}
+
+prebuilt_etc {
     name: "android_vintf_manifest",
     src: "manifest.xml",
     filename: "manifest.xml",
     relative_install_path: "vintf",
-    installable: false,
+    no_full_install: true,
 }
 
 build_prop {
