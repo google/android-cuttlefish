@@ -148,13 +148,13 @@ class UniqueResourceAllocator {
   }
 
   // gives n unique integers from the pool, and then remove them from the pool
-  std::optional<ReservationSet> UniqueItems(const int n) {
+  std::optional<ReservationSet> UniqueItems(const size_t n) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (n <= 0 || available_resources_.size() < n) {
       return std::nullopt;
     }
     ReservationSet result;
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
       auto itr = available_resources_.begin();
       result.insert(Reservation{*this, *(RemoveFromPool(itr))});
     }
