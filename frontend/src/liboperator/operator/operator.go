@@ -548,7 +548,7 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	tcpConn.Close()
 }
 
-// Wrapper for implementing io.ReadWriter of websocket.Conn
+// Wrapper for implementing io.ReadWriteCloser of websocket.Conn
 type wsIoWrapper struct {
 	wsConn *websocket.Conn
 	pos int
