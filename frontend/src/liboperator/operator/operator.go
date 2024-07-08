@@ -518,14 +518,6 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	}
 
 	// Prepare WebSocket and TCP socket for ADB
-	upgrader := websocket.Upgrader{}
-	wsConn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Print("Error while upgrading to WebSocket: ", err)
-		return
-	}
-	defer wsConn.Close()
-
 	tcpConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", adbPort))
 	if err != nil {
 		log.Print("Error while connect to ADB: ", err)
@@ -533,19 +525,24 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	}
 	defer tcpConn.Close()
 
-	// Redirect WebSocket to ADB tcp socket
+	upgrader := websocket.Upgrader{}
+	wsConn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Print("Error while upgrading to WebSocket: ", err)
+		return
+	}
 	wsWrapper := &wsIoWrapper{
 		wsConn: wsConn,
 		pos:    0,
 		buf:    nil,
 	}
 
+	// Redirect WebSocket to ADB tcp socket
 	go func() {
+		defer wsWrapper.Close()
 		io.Copy(wsWrapper, tcpConn)
-		wsWrapper.Close()
 	}()
 	io.Copy(tcpConn, wsWrapper)
-	tcpConn.Close()
 }
 
 // Wrapper for implementing io.ReadWriteCloser of websocket.Conn
