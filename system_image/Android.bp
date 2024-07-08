@@ -56,6 +56,22 @@ android_symlinks = [
         target: "/system_dlkm/lib/modules",
         name: "system/lib/modules",
     },
+    {
+        target: "/data/user_de/0/com.android.shell/files/bugreports",
+        name: "bugreports",
+    },
+    {
+        target: "/data/cache",
+        name: "cache",
+    },
+    {
+        target: "/sys/kernel/debug",
+        name: "d",
+    },
+    {
+        target: "/storage/self/primary",
+        name: "sdcard",
+    },
 ]
 
 phony {
