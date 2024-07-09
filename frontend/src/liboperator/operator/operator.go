@@ -499,20 +499,10 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	devInfo := dev.privateData.(map[string]interface{})
 
 	// Find adb port for the device.
-	//   1. If registered device info has adb_port, use it.
-	//   2. If not, get index of the device and 6520 + index would be the adb port.
 	adbPort := 0
 	if adb_port, ok := devInfo["adb_port"]; ok {
 		adbPort = int(adb_port.(float64))
 	} else {
-		for i, id := range pool.DeviceIds() {
-			if id == devId {
-				adbPort = 6520 + i
-				break
-			}
-		}
-	}
-	if adbPort == 0 {
 		http.Error(w, "Cannot find adb port for the device", http.StatusNotFound)
 		return
 	}
