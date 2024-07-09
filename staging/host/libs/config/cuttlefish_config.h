@@ -33,24 +33,13 @@
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_fragment.h"
 #include "host/libs/config/config_utils.h"
+#include "host/libs/config/secure_hals.h"
 
 namespace Json {
 class Value;
 }
 
 namespace cuttlefish {
-
-enum class SecureHal {
-  Unknown,
-  GuestGatekeeperInsecure,
-  GuestKeymintInsecure,
-  HostKeymintInsecure,
-  HostKeymintSecure,
-  HostGatekeeperInsecure,
-  HostGatekeeperSecure,
-  HostOemlockInsecure,
-  HostOemlockSecure,
-};
 
 enum class VmmMode {
   kUnknown,
@@ -133,8 +122,8 @@ class CuttlefishConfig {
     static TouchpadConfig Deserialize(const Json::Value& config_json);
   };
 
-  void set_secure_hals(const std::set<std::string>& hals);
-  std::set<SecureHal> secure_hals() const;
+  void set_secure_hals(const std::set<SecureHal>&);
+  Result<std::set<SecureHal>> secure_hals() const;
 
   void set_crosvm_binary(const std::string& crosvm_binary);
   std::string crosvm_binary() const;
