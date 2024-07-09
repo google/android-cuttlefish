@@ -536,11 +536,12 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		pos:    0,
 		buf:    nil,
 	}
+	defer wsWrapper.Close()
 
 	// Redirect WebSocket to ADB tcp socket
 	go func() {
-		defer wsWrapper.Close()
 		io.Copy(wsWrapper, tcpConn)
+		wsWrapper.Close()
 	}()
 	io.Copy(tcpConn, wsWrapper)
 }
