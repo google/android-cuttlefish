@@ -127,41 +127,18 @@ void CuttlefishConfig::set_ap_vm_manager(const std::string& name) {
   (*dictionary_)[kApVmManager] = name;
 }
 
-static SecureHal StringToSecureHal(std::string mode) {
-  std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
-  std::unordered_map<std::string, SecureHal> mapping = {
-      {"keymint", SecureHal::HostKeymintSecure},
-      {"host_secure_keymint", SecureHal::HostKeymintSecure},
-      {"host_keymint_secure", SecureHal::HostKeymintSecure},
-      {"guest_gatekeeper_insecure", SecureHal::GuestGatekeeperInsecure},
-      {"guest_insecure_gatekeeper", SecureHal::GuestGatekeeperInsecure},
-      {"guest_insecure_keymint", SecureHal::GuestKeymintInsecure},
-      {"guest_keymint_insecure", SecureHal::GuestKeymintInsecure},
-      {"gatekeeper", SecureHal::HostGatekeeperSecure},
-      {"host_gatekeeper_secure", SecureHal::HostGatekeeperSecure},
-      {"host_secure_gatekeeper", SecureHal::HostGatekeeperSecure},
-      {"host_gatekeeper_insecure", SecureHal::HostGatekeeperInsecure},
-      {"host_insecure_gatekeeper", SecureHal::HostGatekeeperInsecure},
-      {"oemlock", SecureHal::HostOemlockSecure},
-      {"host_oemlock_secure", SecureHal::HostOemlockSecure},
-      {"host_secure_oemlock", SecureHal::HostOemlockSecure},
-  };
-  auto it = mapping.find(mode);
-  return it == mapping.end() ? SecureHal::Unknown : it->second;
-}
-
 static constexpr char kSecureHals[] = "secure_hals";
-std::set<SecureHal> CuttlefishConfig::secure_hals() const {
+Result<std::set<SecureHal>> CuttlefishConfig::secure_hals() const {
   std::set<SecureHal> args_set;
   for (auto& hal : (*dictionary_)[kSecureHals]) {
-    args_set.insert(StringToSecureHal(hal.asString()));
+    args_set.insert(CF_EXPECT(ParseSecureHal(hal.asString())));
   }
   return args_set;
 }
-void CuttlefishConfig::set_secure_hals(const std::set<std::string>& hals) {
+void CuttlefishConfig::set_secure_hals(const std::set<SecureHal>& hals) {
   Json::Value hals_json_obj(Json::arrayValue);
   for (const auto& hal : hals) {
-    hals_json_obj.append(hal);
+    hals_json_obj.append(ToString(hal));
   }
   (*dictionary_)[kSecureHals] = hals_json_obj;
 }
