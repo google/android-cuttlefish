@@ -678,8 +678,14 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
       instance_android_info_txt =
           system_image_dir[instance_index] + "/android-info.txt";
     }
+
     auto res = GetAndroidInfoConfig(instance_android_info_txt, "gfxstream");
     guest_config.gfxstream_supported =
+        res.ok() && res.value() == "supported";
+
+    res = GetAndroidInfoConfig(instance_android_info_txt,
+                               "gfxstream_gl_program_binary_link_status");
+    guest_config.gfxstream_gl_program_binary_link_status_supported =
         res.ok() && res.value() == "supported";
 
     auto res_bgra_support = GetAndroidInfoConfig(instance_android_info_txt,
