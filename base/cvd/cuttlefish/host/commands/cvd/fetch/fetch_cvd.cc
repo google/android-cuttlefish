@@ -765,11 +765,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
       LogToStderrAndFiles({flags.target_directory + "/fetch.log"}));
   android::base::SetMinimumLogSeverity(flags.verbosity);
 
-  auto result = Fetch(flags, host_target, targets);
-  if (!result.ok()) {
-    LOG(ERROR) << result.error().FormatForEnv();
-  }
-  return result;
+  CF_EXPECT(Fetch(flags, host_target, targets));
+  return {};
 }
 
 }  // namespace cuttlefish
