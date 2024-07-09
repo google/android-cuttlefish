@@ -25,6 +25,7 @@
 using sapi::file::JoinPath;
 
 namespace cuttlefish {
+namespace process_sandboxer {
 
 sandbox2::PolicyBuilder LogcatReceiverPolicy(const HostInfo& host) {
   auto exe = JoinPath(host.artifacts_path, "bin", "logcat_receiver");
@@ -38,4 +39,5 @@ sandbox2::PolicyBuilder LogcatReceiverPolicy(const HostInfo& host) {
       .AllowWrite();
 }
 
+}  // namespace process_sandboxer
 }  // namespace cuttlefish
