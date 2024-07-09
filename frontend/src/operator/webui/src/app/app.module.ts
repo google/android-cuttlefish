@@ -10,8 +10,10 @@ import {MatButtonModule} from '@angular/material/button';
 import {MatCardModule} from '@angular/material/card';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatIconModule} from '@angular/material/icon';
+import {MatMenuModule} from '@angular/material/menu';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {ViewPaneComponent} from './view-pane/view-pane.component';
 import {SafeDeviceUrlPipe} from './safe-device-url.pipe';
@@ -32,8 +34,10 @@ import {RouterModule} from '@angular/router';
     MatCardModule,
     MatCheckboxModule,
     MatIconModule,
+    MatMenuModule,
     MatSidenavModule,
     MatSlideToggleModule,
+    MatSnackBarModule,
     MatToolbarModule,
     FormsModule,
     HttpClientModule,

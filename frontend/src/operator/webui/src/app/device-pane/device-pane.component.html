@@ -17,7 +17,11 @@
           (change)="displaysService.toggleVisibility(device.device_id)"
           >{{ device.device_id }}</mat-slide-toggle
         >
-        <button mat-icon-button class="menu" title="menu">
+        <button
+          mat-icon-button class="menu" title="menu"
+          [matMenuTriggerFor]="deviceMenu"
+          [matMenuTriggerData]="{device_id: device.device_id}"
+        >
           <mat-icon>more_vert</mat-icon>
         </button>
       </li>
@@ -29,3 +33,9 @@
     Show All
   </button>
 </div>
+
+<mat-menu #deviceMenu="matMenu">
+  <ng-template matMenuContent let-device_id="device_id">
+    <button mat-menu-item (click)="copyAdbCommand(device_id)">Copy ADB connect command</button>
+  </ng-template>
+</mat-menu>
