@@ -26,15 +26,12 @@
 #include "absl/flags/parse.h"
 #include "absl/log/check.h"
 #include "absl/log/initialize.h"
+#include "absl/status/status.h"
 #include "absl/strings/numbers.h"
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#include "sandboxed_api/sandbox2/executor.h"
-#include "sandboxed_api/sandbox2/sandbox2.h"
-#pragma clang diagnostic pop
 #include "sandboxed_api/util/path.h"
 
 #include "host/commands/process_sandboxer/policies.h"
+#include "host/commands/process_sandboxer/sandbox_manager.h"
 
 inline constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 
@@ -43,17 +40,21 @@ ABSL_FLAG(std::string, log_dir, "", "Where to write log files");
 ABSL_FLAG(std::vector<std::string>, inherited_fds, std::vector<std::string>(),
           "File descriptors to keep in the sandbox");
 
+using absl::OkStatus;
+using absl::Status;
 using sapi::file::CleanPath;
 using sapi::file::JoinPath;
 
 namespace cuttlefish {
+namespace process_sandboxer {
+namespace {
 
 static std::optional<std::string_view> FromEnv(const std::string& name) {
   auto value = getenv(name.c_str());
   return value == NULL ? std::optional<std::string_view>() : value;
 }
 
-int ProcessSandboxerMain(int argc, char** argv) {
+Status ProcessSandboxerMain(int argc, char** argv) {
   absl::InitializeLog();
   auto args = absl::ParseCommandLine(argc, argv);
 
@@ -67,29 +68,37 @@ int ProcessSandboxerMain(int argc, char** argv) {
   CHECK_GE(args.size(), 1);
   auto exe = CleanPath(args[1]);
   std::vector<std::string> exe_argv(++args.begin(), args.end());
-  auto executor = std::make_unique<sandbox2::Executor>(exe, exe_argv);
 
-  // https://cs.android.com/android/platform/superproject/main/+/main:external/sandboxed-api/sandboxed_api/sandbox2/limits.h;l=116;drc=d451478e26c0352ecd6912461e867a1ae64b17f5
-  // Default is 120 seconds
-  executor->limits()->set_walltime_limit(absl::InfiniteDuration());
-  // Default is 1024 seconds
-  executor->limits()->set_rlimit_cpu(RLIM64_INFINITY);
+  auto sandbox_manager = SandboxManager::Create(std::move(host));
+  if (!sandbox_manager.ok()) {
+    return sandbox_manager.status();
+  }
 
+  std::map<int, int> fds;
   for (const auto& inherited_fd : absl::GetFlag(FLAGS_inherited_fds)) {
     int fd;
     CHECK(absl::SimpleAtoi(inherited_fd, &fd));
-    executor->ipc()->MapFd(fd, fd);  // Will close `fd` in this process
+    fds[fd] = fd;  // RunProcess will close these
   }
 
-  sandbox2::Sandbox2 sb(std::move(executor), PolicyForExecutable(host, exe));
+  auto status =
+      (*sandbox_manager)->RunProcess(std::move(exe_argv), std::move(fds));
+  if (!status.ok()) {
+    return status;
+  }
 
-  auto res = sb.Run();
-  CHECK_EQ(res.final_status(), sandbox2::Result::OK) << res.ToString();
-  return 0;
+  return (*sandbox_manager)->WaitForExit();
 }
 
+}  // namespace
+}  // namespace process_sandboxer
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  return cuttlefish::ProcessSandboxerMain(argc, argv);
+  auto status = cuttlefish::process_sandboxer::ProcessSandboxerMain(argc, argv);
+  if (status.ok()) {
+    return 0;
+  }
+  std::cerr << status.ToString() << '\n';
+  return status.raw_code();
 }

@@ -26,6 +26,7 @@
 using sapi::file::JoinPath;
 
 namespace cuttlefish {
+namespace process_sandboxer {
 
 std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
     const HostInfo& host, std::string_view executable) {
@@ -53,4 +54,5 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   }
 }
 
+}  // namespace process_sandboxer
 }  // namespace cuttlefish
