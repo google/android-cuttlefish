@@ -22,6 +22,7 @@
 using sapi::file::JoinPath;
 
 namespace cuttlefish {
+namespace process_sandboxer {
 
 sandbox2::PolicyBuilder BaselinePolicy(const HostInfo& host,
                                        std::string_view exe) {
@@ -38,4 +39,5 @@ sandbox2::PolicyBuilder BaselinePolicy(const HostInfo& host,
       .AllowWrite();
 }
 
+}  // namespace process_sandboxer
 }  // namespace cuttlefish
