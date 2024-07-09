@@ -25,6 +25,7 @@
 using sapi::file::JoinPath;
 
 namespace cuttlefish {
+namespace process_sandboxer {
 
 sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo& host) {
   auto exe = JoinPath(host.artifacts_path, "bin", "kernel_log_monitor");
@@ -39,4 +40,5 @@ sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo& host) {
       .AllowTCGETS();
 }
 
+}  // namespace process_sandboxer
 }  // namespace cuttlefish
