@@ -190,14 +190,15 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     bootconfig_args["androidboot.ramdisk_hotswapped"] = "1";
   }
 
+  const auto& secure_hals = CF_EXPECT(config.secure_hals());
   bootconfig_args["androidboot.vendor.apex.com.android.hardware.keymint"] =
-      config.secure_hals().count(SecureHal::GuestKeymintInsecure)
+      secure_hals.count(SecureHal::kGuestKeymintInsecure)
           ? "com.android.hardware.keymint.rust_nonsecure"
           : "com.android.hardware.keymint.rust_cf_remote";
 
   // Preemptive for when we set up the HAL to be runtime selectable
   bootconfig_args["androidboot.vendor.apex.com.android.hardware.gatekeeper"] =
-      config.secure_hals().count(SecureHal::GuestGatekeeperInsecure)
+      secure_hals.count(SecureHal::kGuestGatekeeperInsecure)
           ? "com.android.hardware.gatekeeper.nonsecure"
           : "com.android.hardware.gatekeeper.cf_remote";
 
