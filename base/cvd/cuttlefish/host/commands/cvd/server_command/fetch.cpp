@@ -22,6 +22,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -56,44 +57,24 @@ Result<cvd::Response> CvdFetchCommandHandler::Handle(
     const RequestWithStdio& request) {
   CF_EXPECT(CanHandle(request));
 
-  Command command("/proc/self/exe");
-  command.SetName("fetch_cvd");
-  command.SetExecutable("/proc/self/exe");
+  std::vector<std::string> args;
+  args.emplace_back("fetch_cvd");
 
   for (const auto& argument : ParseInvocation(request.Message()).arguments) {
-    command.AddParameter(argument);
+    args.emplace_back(argument);
   }
 
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, request.In());
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, request.Out());
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.Err());
-  SubprocessOptions options;
-
-  const auto& command_request = request.Message().command_request();
-  if (command_request.wait_behavior() == cvd::WAIT_BEHAVIOR_START) {
-    options.ExitWithParent(false);
+  std::vector<char*> args_data;
+  for (auto& argument : args) {
+    args_data.emplace_back(argument.data());
   }
 
-  const auto& working_dir = command_request.working_directory();
-  if (!working_dir.empty()) {
-    auto fd = SharedFD::Open(working_dir, O_RDONLY | O_PATH | O_DIRECTORY);
-    if (fd->IsOpen()) {
-      command.SetWorkingDirectory(fd);
-    }
-  }
+  CF_EXPECT(FetchCvdMain(args_data.size(), args_data.data()));
 
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start(std::move(options))));
-
-  if (command_request.wait_behavior() == cvd::WAIT_BEHAVIOR_START) {
-    cvd::Response response;
-    response.mutable_command_response();
-    response.mutable_status()->set_code(cvd::Status::OK);
-    return response;
-  }
-
-  auto infop = CF_EXPECT(subprocess_waiter_.Wait());
-
-  return ResponseFromSiginfo(infop);
+  cvd::Response response;
+  response.mutable_command_response();
+  response.mutable_status()->set_code(cvd::Status::OK);
+  return response;
 }
 
 Result<std::string> CvdFetchCommandHandler::SummaryHelp() const {
