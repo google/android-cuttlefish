@@ -428,9 +428,10 @@ Result<Build> GetHostBuild(BuildApi& build_api, HostToolsTarget& host_target,
   auto host_package_build = CF_EXPECT(
       GetBuildHelper(build_api, host_target.build_string, kDefaultBuildTarget));
   CF_EXPECT(host_package_build.has_value() || fallback_host_build.has_value(),
-            "Either the host_package_build or default_build requires a value. "
-            "(previous default_build default was "
-            "aosp-master/aosp_cf_x86_64_phone-userdebug)");
+            "Either `--host_package_build` or `--default_build` needs to be "
+            "specified. Try "
+            "`--default_build=aosp-main/"
+            "aosp_cf_x86_64_phone-trunk_staging-userdebug`");
   return host_package_build.value_or(*fallback_host_build);
 }
 
