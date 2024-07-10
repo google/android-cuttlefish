@@ -23,6 +23,9 @@
     },
     {
       "name": "CarServiceUnitTest"
+    },
+    {
+      "name": "VtsHalAutomotiveVehicle_TargetTest"
     }
   ]
 }
