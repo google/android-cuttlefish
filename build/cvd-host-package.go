@@ -25,11 +25,13 @@ import (
 
 func init() {
 	android.RegisterModuleType("cvd_host_package", cvdHostPackageFactory)
+	android.RegisterParallelSingletonType("cvd_host_package_singleton", cvdHostPackageSingletonFactory)
 }
 
 type cvdHostPackage struct {
 	android.ModuleBase
 	android.PackagingBase
+	tarballFile android.InstallPath
 }
 
 func cvdHostPackageFactory() android.Module {
@@ -40,10 +42,18 @@ func cvdHostPackageFactory() android.Module {
 	return module
 }
 
+type cvdHostPackageSingleton struct {
+	tarballPaths android.Paths
+}
+
+func cvdHostPackageSingletonFactory() android.Singleton {
+	return &cvdHostPackageSingleton{}
+}
+
 type dependencyTag struct {
 	blueprint.BaseDependencyTag
 	android.InstallAlwaysNeededDependencyTag // to force installation of both "deps" and manually added dependencies
-	android.PackagingItemAlwaysDepTag  // to force packaging of both "deps" and manually added dependencies
+	android.PackagingItemAlwaysDepTag        // to force packaging of both "deps" and manually added dependencies
 }
 
 var cvdHostPackageDependencyTag = dependencyTag{}
@@ -122,4 +132,50 @@ func (c *cvdHostPackage) GenerateAndroidBuildActions(ctx android.ModuleContext) 
 		Text(".")
 	tarballBuilder.Build("cvd_host_tarball", fmt.Sprintf("Creating tarball for %s", c.BaseModuleName()))
 	ctx.InstallFile(android.PathForModuleInstall(ctx), c.BaseModuleName()+".tar.gz", tarball)
+	c.tarballFile = android.PathForModuleInstall(ctx, c.BaseModuleName()+".tar.gz")
+}
+
+type cvdHostPackageMetadataProvider interface {
+	tarballMetadata() android.Path
+}
+
+func (p *cvdHostPackage) tarballMetadata() android.Path {
+	return p.tarballFile
+}
+
+// Create "hosttar" phony target with "cvd-host_package.tar.gz" path.
+func (p *cvdHostPackageSingleton) GenerateBuildActions(ctx android.SingletonContext) {
+	var cvdHostPackageTarball android.Paths
+
+	ctx.VisitAllModules(func(module android.Module) {
+		if !module.Enabled(ctx) {
+			return
+		}
+		if c, ok := module.(cvdHostPackageMetadataProvider); ok {
+			if !android.IsModulePreferred(module) {
+				return
+			}
+			cvdHostPackageTarball = append(cvdHostPackageTarball, c.tarballMetadata())
+		}
+	})
+
+	if cvdHostPackageTarball == nil {
+		// nothing to do.
+		return
+	}
+	p.tarballPaths = cvdHostPackageTarball
+	ctx.Phony("hosttar", cvdHostPackageTarball...)
+}
+
+func (p *cvdHostPackageSingleton) MakeVars(ctx android.MakeVarsContext) {
+	if p.tarballPaths != nil {
+		for _, path := range p.tarballPaths {
+			// The riscv64 cuttlefish builds can be run on qemu on an x86_64 or arm64 host. Dist both sets of host packages.
+			if len(p.tarballPaths) > 1 && strings.Contains(path.String(), "linux-x86") {
+				ctx.DistForGoalWithFilename("dist_files", path, "cvd-host_package-x86_64.tar.gz")
+			} else {
+				ctx.DistForGoal("dist_files", path)
+			}
+		}
+	}
 }
