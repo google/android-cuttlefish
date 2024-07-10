@@ -25,7 +25,7 @@ function build_package() {
 REPO_DIR="$(realpath "$(dirname "$0")/../..")"
 INSTALL_BAZEL="$(dirname $0)/installbazel.sh"
 
-sudo "${INSTALL_BAZEL}"
+command -v bazel &> /dev/null || sudo "${INSTALL_BAZEL}"
 install_debuild_dependencies
 
 build_package "${REPO_DIR}/base"
