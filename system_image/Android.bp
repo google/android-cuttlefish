@@ -326,15 +326,6 @@ android_system_image {
         "am",
         "android_vintf_manifest",
         "android_vintf_compatibility_matrix_device",
-        "android.hardware.biometrics.fingerprint@2.1", // generic_system
-        "android.hardware.radio@1.0", // generic_system
-        "android.hardware.radio@1.1", // generic_system
-        "android.hardware.radio@1.2", // generic_system
-        "android.hardware.radio@1.3", // generic_system
-        "android.hardware.radio@1.4", // generic_system
-        "android.hardware.radio.config@1.0", // generic_system
-        "android.hardware.radio.deprecated@1.0", // generic_system
-        "android.hardware.secure_element@1.0", // generic_system
         "android.software.credentials.prebuilt.xml", // generic_system
         "android.software.webview.prebuilt.xml", // media_system
         "android.software.window_magnification.prebuilt.xml", // handheld_system
@@ -388,7 +379,6 @@ android_system_image {
         "group_system",
         "gsi_tool",
         "gsid",
-        "heapprofd_client",
         "heapprofd",
         "hid",
         "hiddenapi-package-whitelist.xml", // from runtime_libart
@@ -417,9 +407,6 @@ android_system_image {
         "keylayout_data",
         "keystore2",
         "ld.mc",
-        "libaaudio",
-        "libalarm_jni",
-        "libamidi",
         "llkd", // base_system
         "lmkd", // base_system
         "local_time.default", // handheld_vendo
@@ -701,8 +688,21 @@ android_system_image {
         },
         both: {
             deps: [
+                "android.hardware.biometrics.fingerprint@2.1", // generic_system
+                "android.hardware.radio@1.0", // generic_system
+                "android.hardware.radio@1.1", // generic_system
+                "android.hardware.radio@1.2", // generic_system
+                "android.hardware.radio@1.3", // generic_system
+                "android.hardware.radio@1.4", // generic_system
+                "android.hardware.radio.config@1.0", // generic_system
+                "android.hardware.radio.deprecated@1.0", // generic_system
+                "android.hardware.secure_element@1.0", // generic_system
                 "app_process", // base_system
                 "boringssl_self_test", // base_system
+                "heapprofd_client", // base_system
+                "libaaudio", // base_system
+                "libalarm_jni", // base_system
+                "libamidi", // base_system
                 "libandroid_runtime",
                 "libandroid_servers",
                 "libandroid",
