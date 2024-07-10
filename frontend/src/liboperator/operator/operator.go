@@ -547,7 +547,7 @@ type wsIoWrapper struct {
 
 var _ io.ReadWriteCloser = (*wsIoWrapper)(nil)
 
-func (w *wsIoWrapper) Read(buf []byte) (int, error) {
+func (w *wsIoWrapper) Read(p []byte) (int, error) {
 	if w.buf == nil || w.pos >= len(w.buf) {
 		_, readBuf, err := w.wsConn.ReadMessage()
 		if err != nil {
@@ -556,7 +556,7 @@ func (w *wsIoWrapper) Read(buf []byte) (int, error) {
 		w.buf = readBuf
 		w.pos = 0
 	}
-	nRead := copy(buf[:], w.buf[w.pos:])
+	nRead := copy(p, w.buf[w.pos:])
 	w.pos += nRead
 	return nRead, nil
 }
