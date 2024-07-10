@@ -438,10 +438,17 @@ Result<void> SetGfxstreamFlags(
   }
 
   std::unordered_map<std::string, bool> features;
+
   // Apply features from host/mode requirements.
   if (gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
     features["VulkanUseDedicatedAhbMemoryType"] = true;
   }
+
+  // Apply features from guest/mode requirements.
+  if (guest_config.gfxstream_gl_program_binary_link_status_supported) {
+    features["GlProgramBinaryLinkStatus"] = true;
+  }
+
   // Apply feature overrides from --gpu_renderer_features.
   const auto feature_overrides =
       CF_EXPECT(ParseGfxstreamRendererFlag(gpu_renderer_features_arg));
@@ -451,6 +458,7 @@ Result<void> SetGfxstreamFlags(
                << " via command line argument.";
     features[feature_name] = feature_enabled;
   }
+
   // Convert features back to a string for passing to the VMM.
   const std::string features_string =
       GetGfxstreamRendererFeaturesString(features);
