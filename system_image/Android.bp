@@ -319,6 +319,7 @@ android_system_image {
         "am",
         "android_build_prop",
         "android_vintf_manifest",
+        "android.software.credentials.prebuilt.xml", // generic_system
         "android.system.suspend-service",
         "apexd",
         "app_process",
