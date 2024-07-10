@@ -1,2 +1,3 @@
 config=minidroid
 gfxstream=supported
+gfxstream_gl_program_binary_link_status=supported
