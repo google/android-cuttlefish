@@ -32,6 +32,8 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/subprocess.h"
 
+namespace cuttlefish {
+
 /**
  * Superclass for a flag loaded from another process.
  *
@@ -241,7 +243,7 @@ FlagForwarder::FlagForwarder(std::set<std::string> subprocesses,
 
   int subprocess_index = 0;
   for (const auto& subprocess : subprocesses_) {
-    cuttlefish::Command cmd(subprocess);
+    Command cmd(subprocess);
     cmd.AddParameter("--helpxml");
 
     if (subprocess_index < args.size()) {
@@ -252,11 +254,11 @@ FlagForwarder::FlagForwarder(std::set<std::string> subprocesses,
     subprocess_index++;
 
     std::string helpxml_input, helpxml_output, helpxml_error;
-    cuttlefish::SubprocessOptions options;
+    SubprocessOptions options;
     options.Verbose(false);
-    int helpxml_ret = cuttlefish::RunWithManagedStdio(
-        std::move(cmd), &helpxml_input, &helpxml_output, &helpxml_error,
-        std::move(options));
+    int helpxml_ret =
+        RunWithManagedStdio(std::move(cmd), &helpxml_input, &helpxml_output,
+                            &helpxml_error, std::move(options));
     if (helpxml_ret != 1) {
       LOG(FATAL) << subprocess << " --helpxml returned unexpected response "
                  << helpxml_ret << ". Stderr was " << helpxml_error;
@@ -288,7 +290,7 @@ FlagForwarder::~FlagForwarder() = default;
 void FlagForwarder::UpdateFlagDefaults() const {
 
   for (const auto& subprocess : subprocesses_) {
-    cuttlefish::Command cmd(subprocess);
+    Command cmd(subprocess);
     std::vector<std::string> invocation = {subprocess};
     for (const auto& flag : ArgvForSubprocess(subprocess)) {
       cmd.AddParameter(flag);
@@ -305,10 +307,10 @@ void FlagForwarder::UpdateFlagDefaults() const {
     // Ensure this is set on by putting it at the end.
     cmd.AddParameter("--helpxml");
     std::string helpxml_input, helpxml_output, helpxml_error;
-    auto options = cuttlefish::SubprocessOptions().Verbose(false);
-    int helpxml_ret = cuttlefish::RunWithManagedStdio(
-        std::move(cmd), &helpxml_input, &helpxml_output, &helpxml_error,
-        std::move(options));
+    auto options = SubprocessOptions().Verbose(false);
+    int helpxml_ret =
+        RunWithManagedStdio(std::move(cmd), &helpxml_input, &helpxml_output,
+                            &helpxml_error, std::move(options));
     if (helpxml_ret != 1) {
       LOG(FATAL) << subprocess << " --helpxml returned unexpected response "
                  << helpxml_ret << ". Stderr was " << helpxml_error;
@@ -345,7 +347,7 @@ std::vector<std::string> FlagForwarder::ArgvForSubprocess(
       if (qual_pos == std::string::npos) {
         // to handle error cases: --flag value and -flag value
         // but it only apply to repeatable flag case
-        if (cuttlefish::Contains(kRepeatableFlags, argument)) {
+        if (Contains(kRepeatableFlags, argument)) {
           // matched
           LOG(FATAL) << subprocess
                      << " has wrong flag input: " << args[index];
@@ -356,9 +358,9 @@ std::vector<std::string> FlagForwarder::ArgvForSubprocess(
       const std::string value(
           argument.substr(qual_pos + 1, argument.length() - qual_pos - 1));
 
-      if (cuttlefish::Contains(kRepeatableFlags, name)) {
+      if (Contains(kRepeatableFlags, name)) {
         // matched
-        if (!cuttlefish::Contains(name_to_value, name)) {
+        if (!Contains(name_to_value, name)) {
           // this flag is new
           std::vector<std::string> values;
           name_to_value[name] = values;
@@ -370,8 +372,8 @@ std::vector<std::string> FlagForwarder::ArgvForSubprocess(
 
   for (const auto& flag : flags_) {
     if (flag->Subprocess() == subprocess) {
-      if (cuttlefish::Contains(kRepeatableFlags, flag->Name()) &&
-          cuttlefish::Contains(name_to_value, flag->Name())) {
+      if (Contains(kRepeatableFlags, flag->Name()) &&
+          Contains(name_to_value, flag->Name())) {
         // this is a repeatable flag with input values
         for (const auto& value : name_to_value[flag->Name()]) {
           subprocess_argv.push_back("--" + flag->Name() + "=" + value);
@@ -389,3 +391,5 @@ std::vector<std::string> FlagForwarder::ArgvForSubprocess(
   }
   return subprocess_argv;
 }
+
+}  // namespace cuttlefish
