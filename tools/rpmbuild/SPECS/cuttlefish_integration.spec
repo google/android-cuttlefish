@@ -45,6 +45,7 @@ install -m 655 %{srcpath}/cuttlefish-integration.udev %{buildroot}/lib/udev/rule
 
 
 %post
+getent group cvdnetwork || groupadd cvdnetwork
 udevadm control --reload-rules && udevadm trigger
 
 
