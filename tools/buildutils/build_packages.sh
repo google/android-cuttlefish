@@ -24,13 +24,13 @@ function build_package() {
 }
 
 function build_spec() {
-  local specfile="$1"
+  local specfile="${REPO_DIR}/tools/rpmbuild/SPECS/$1"
   echo "Installing package dependencies"
-  sudo dnf builddep --skip-unavailable ${REPO_DIR}/tools/rpmbuild/SPECS/$specfile
+  sudo dnf builddep --skip-unavailable $specfile
   echo "Building packages"
   rpmbuild \
     --define "_topdir `pwd`/tools/rpmbuild" \
-    -v -ba ${REPO_DIR}/tools/rpmbuild/SPECS/$specfile
+    -v -ba $specfile
 }
 
 if [[ ! -z ${APT_CMD} ]]; then
