@@ -39,6 +39,8 @@ ABSL_FLAG(std::string, host_artifacts_path, "", "Host exes and libs");
 ABSL_FLAG(std::string, log_dir, "", "Where to write log files");
 ABSL_FLAG(std::vector<std::string>, inherited_fds, std::vector<std::string>(),
           "File descriptors to keep in the sandbox");
+ABSL_FLAG(std::string, runtime_dir, "",
+          "Working directory of host executables");
 
 using absl::OkStatus;
 using absl::Status;
@@ -63,6 +65,7 @@ Status ProcessSandboxerMain(int argc, char** argv) {
   host.cuttlefish_config_path =
       CleanPath(FromEnv(kCuttlefishConfigEnvVarName).value_or(""));
   host.log_dir = CleanPath(absl::GetFlag(FLAGS_log_dir));
+  host.runtime_dir = CleanPath(absl::GetFlag(FLAGS_runtime_dir));
   setenv("LD_LIBRARY_PATH", JoinPath(host.artifacts_path, "lib64").c_str(), 1);
 
   CHECK_GE(args.size(), 1);
