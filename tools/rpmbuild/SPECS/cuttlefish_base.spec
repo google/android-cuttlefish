@@ -11,7 +11,7 @@ BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  curl-devel
-Requires:       bridge-utils, curl, dnsmasq, e2fsprogs, ebtables, iptables, bsdtar, libcurl, libdrm, mesa-libGL, libusb, libXext, redhat-lsb-core, net-tools, openssl, python3, util-linux
+Requires:       bridge-utils, curl, dnsmasq, e2fsprogs, ebtables, iptables, bsdtar, libcurl, libdrm, mesa-libGL, libusb, libXext, lsb_release, net-tools, openssl, python3, util-linux
 Requires:       fmt-devel, gflags-devel, jsoncpp-devel, protobuf-devel, openssl-devel, libxml2-devel
 Requires:       wayland-utils
 #Requires:       f2fs-tools, libfdt1, libx11-6, libz3-4
