@@ -43,6 +43,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/command_util/runner/defs.h"
@@ -248,6 +249,7 @@ Result<void> ProcessMonitor::StartSubprocesses(
       options.SandboxArguments({
           HostBinaryPath("process_sandboxer"),
           "--log_dir=" + properties.strace_log_dir_,
+          "--runtime_dir=" + CurrentDirectory(),
           "--host_artifacts_path=" + DefaultHostArtifactsPath(""),
       });
     }

@@ -65,6 +65,7 @@ Status SandboxManager::RunProcess(const std::vector<std::string>& argv,
   }
   auto exe = CleanPath(argv[0]);
   auto executor = std::make_unique<Executor>(exe, argv);
+  executor->set_cwd(host_info_.runtime_dir);
 
   // https://cs.android.com/android/platform/superproject/main/+/main:external/sandboxed-api/sandboxed_api/sandbox2/limits.h;l=116;drc=d451478e26c0352ecd6912461e867a1ae64b17f5
   // Default is 120 seconds
