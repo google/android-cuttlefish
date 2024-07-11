@@ -7,7 +7,7 @@ License:        Apache License 2.0
 URL:            https://github.com/google/android-cuttlefish      
 #Source0:        cuttlefish_base.tar.gz
 
-BuildArch:      noarch
+BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 #BuildRequires:  
