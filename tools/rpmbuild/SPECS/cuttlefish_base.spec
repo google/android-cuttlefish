@@ -51,6 +51,10 @@ install -m 655 %{srcpath}/capability_query.py %{buildroot}/usr/lib/cuttlefish-co
 install -m 655 %{srcpath}/install_zip.sh %{buildroot}/usr/bin/install_zip.sh
 
 
+%post
+systemctl restart NetworkManager
+
+
 %files
 /etc/default/cuttlefish-host-resources
 /etc/NetworkManager/conf.d/99-cuttlefish.conf

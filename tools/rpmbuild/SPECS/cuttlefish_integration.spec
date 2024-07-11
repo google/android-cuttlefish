@@ -17,31 +17,43 @@ Requires:       qemu-kvm, cuttlefish_base
 
 
 %prep
-#%%autosetup -v
 
 
 %build
 
 
 %install
-%define srcpath ../../../base/host/packages/cuttlefish-integration
-
 rm -rf $RPM_BUILD_ROOT
 mkdir -p %{buildroot}/etc/default
 mkdir -p %{buildroot}/etc/modprobe.d
 mkdir -p %{buildroot}/etc/rsyslog.d
 mkdir -p %{buildroot}/etc/ssh
+mkdir -p %{buildroot}/lib/udev/rules.d
+mkdir -p %{buildroot}/usr/share/doc/cuttlefish-integration
 
+%define srcpath ../../../base/host/packages/cuttlefish-integration
 install -m 655 %{srcpath}/etc/default/instance_configs.cfg.template %{buildroot}/etc/default/instance_configs.cfg.template
 install -m 655 %{srcpath}/etc/modprobe.d/cuttlefish-integration.conf %{buildroot}/etc/modprobe.d/cuttlefish-integration.conf
 install -m 655 %{srcpath}/etc/rsyslog.d/91-cuttlefish.conf %{buildroot}/etc/rsyslog.d/91-cuttlefish.conf
 install -m 655 %{srcpath}/etc/ssh/sshd_config.cuttlefish %{buildroot}/etc/ssh/sshd_config.cuttlefish
+
+%define srcpath ../../../base/debian
+install -m 655 %{srcpath}/cuttlefish-integration.udev %{buildroot}/lib/udev/rules.d/60-cuttlefish-integration.rules
+
+# install -m 655 %{srcpath}/usr/share/doc/cuttlefish-integration/changelog.gz %{buildroot}/usr/share/doc/cuttlefish-integration/changelog.gz
+# install -m 655 %{srcpath}/usr/share/doc/copyright %{buildroot}/usr/share/doc/copyright
+
+
+%post
+udevadm control --reload-rules && udevadm trigger
+
 
 %files
 /etc/default/instance_configs.cfg.template
 /etc/modprobe.d/cuttlefish-integration.conf
 /etc/rsyslog.d/91-cuttlefish.conf
 /etc/ssh/sshd_config.cuttlefish
+/lib/udev/rules.d/60-cuttlefish-integration.rules
 
 #%%license add-license-file-here
 #%%doc add-docs-here
