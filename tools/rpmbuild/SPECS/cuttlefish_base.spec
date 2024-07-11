@@ -29,6 +29,7 @@ bazel build cuttlefish:cvd --spawn_strategy=local
 rm -rf $RPM_BUILD_ROOT
 mkdir -p %{buildroot}/usr/bin
 mkdir -p %{buildroot}/usr/lib/cuttlefish-common/bin
+mkdir -p %{buildroot}/etc/default
 mkdir -p %{buildroot}/etc/NetworkManager/conf.d
 mkdir -p %{buildroot}/etc/modules-load.d
 mkdir -p %{buildroot}/etc/security/limits.d
@@ -37,6 +38,9 @@ mkdir -p %{buildroot}/etc/security/limits.d
 install -m 655 %{srcpath}/etc/NetworkManager/conf.d/99-cuttlefish.conf %{buildroot}/etc/NetworkManager/conf.d/99-cuttlefish.conf
 install -m 655 %{srcpath}/etc/modules-load.d/cuttlefish-common.conf %{buildroot}/etc/modules-load.d/cuttlefish-common.conf
 install -m 655 %{srcpath}/etc/security/limits.d/1_cuttlefish.conf %{buildroot}/etc/security/limits.d/1_cuttlefish.conf
+
+%define srcpath ../../../base/debian
+install -m 655 %{srcpath}/cuttlefish-base.cuttlefish-host-resources.default %{buildroot}/etc/default/cuttlefish-host-resources
 
 %define srcpath ../../../base/cvd/bazel-bin
 install -m 755 %{srcpath}/cuttlefish/cvd %{buildroot}/usr/lib/cuttlefish-common/bin/cvd
@@ -48,6 +52,7 @@ install -m 655 %{srcpath}/install_zip.sh %{buildroot}/usr/bin/install_zip.sh
 
 
 %files
+/etc/default/cuttlefish-host-resources
 /etc/NetworkManager/conf.d/99-cuttlefish.conf
 /etc/modules-load.d/cuttlefish-common.conf
 /etc/security/limits.d/1_cuttlefish.conf
