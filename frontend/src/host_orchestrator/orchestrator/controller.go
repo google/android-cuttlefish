@@ -60,6 +60,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
 	router.Handle("/cvds/{group}",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("DELETE")
+	router.Handle("/cvds/{group}/:bugreport",
+		httpHandler(newCreateCVDBugReportHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
@@ -350,6 +352,30 @@ func (h *waitOperationHandler) Handle(r *http.Request) (interface{}, error) {
 		return nil, res.Error
 	}
 	return res.Value, nil
+}
+
+type createCVDBugReportHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newCreateCVDBugReportHandler(c Config, om OperationManager) *createCVDBugReportHandler {
+	return &createCVDBugReportHandler{
+		Config: c,
+		OM:     om,
+	}
+}
+
+func (h *createCVDBugReportHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	opts := CreateCVDBugReportActionOpts{
+		Group:            vars["group"],
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      newCVDExecContext(exec.CommandContext, h.Config.CVDUser),
+		UUIDGen:          func() string { return uuid.New().String() },
+	}
+	return NewCreateCVDBugReportAction(opts).Run()
 }
 
 type createUploadDirectoryHandler struct {

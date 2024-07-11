@@ -116,7 +116,9 @@ func main() {
 	imPaths := orchestrator.IMPaths{
 		RootDir:          *imRootDir,
 		ArtifactsRootDir: filepath.Join(*imRootDir, "artifacts"),
+		CVDBugReportsDir: filepath.Join(*imRootDir, "cvdbugreports"),
 	}
+
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
 		RootDir:     filepath.Join(*imRootDir, "user_artifacts"),
