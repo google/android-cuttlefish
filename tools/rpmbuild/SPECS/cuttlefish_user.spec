@@ -10,7 +10,7 @@ URL:            https://github.com/google/android-cuttlefish
 BuildArch:      noarch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  systemd-rpm-macros
+#BuildRequires:  
 Requires:       cuttlefish_base
 
 %description
@@ -26,20 +26,20 @@ cd ../../../frontend
 
 
 %install
-%define srcpath ../../../frontend/src/operator/webui/dist/static
-
 rm -rf $RPM_BUILD_ROOT
 mkdir -p %{buildroot}/var/www/local.cuttlefish
 
+%define srcpath ../../../frontend/src/operator/webui/dist/static
 for filename in $(ls %{srcpath}) ; do
   echo "Installing: $filename"
   install -m 655 %{srcpath}/$filename %{buildroot}/var/www/local.cuttlefish/$filename
 done
-rm -f %{buildroot}/%{_infodir}/dir
+
 
 %files
 %define _unpackaged_files_terminate_build 0
 %dir %attr(-, root, root) %{srcpath}/
+
 
 %files
 #%%license add-license-file-here

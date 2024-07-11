@@ -42,6 +42,8 @@ if [[ ! -z ${APT_CMD} ]]; then
 elif [[ ! -z ${DNF_CMD} ]]; then
   build_spec cuttlefish_base.spec
   build_spec cuttlefish_user.spec
+  build_spec cuttlefish_integration.spec
+  build_spec cuttlefish_orchestration.spec
 else
     exit 1;
 fi
