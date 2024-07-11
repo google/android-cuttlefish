@@ -173,6 +173,7 @@ cvd_host_tools = [
     "restart_cvd",
     "root-canal",
     "run_cvd",
+    "sandboxer_proxy",
     "screen_recording_server",
     "secure_env",
     "sefcontext_compile",
