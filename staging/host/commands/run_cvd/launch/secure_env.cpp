@@ -79,7 +79,9 @@ Result<MonitorCommand> SecureEnv(
   command.AddParameter("-kernel_events_fd=",
                        kernel_log_pipe_provider.KernelLogPipe());
 
-  return std::move(command);
+  MonitorCommand monitor(std::move(command));
+  monitor.can_sandbox = true;
+  return monitor;
 }
 
 }  // namespace cuttlefish
