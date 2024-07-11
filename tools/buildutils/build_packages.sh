@@ -1,6 +1,7 @@
 #!/bin/bash
-
-set -e -x
+REPO_DIR="$(realpath "$(dirname "$0")/../..")"
+APT_CMD=$(which apt 2>/dev/null)
+DNF_CMD=$(which dnf 2>/dev/null)
 
 function install_debuild_dependencies() {
   echo "Installing debuild dependencies"
@@ -22,11 +23,26 @@ function build_package() {
   popd
 }
 
-REPO_DIR="$(realpath "$(dirname "$0")/../..")"
-INSTALL_BAZEL="$(dirname $0)/installbazel.sh"
+function build_spec() {
+  local specfile="$1"
+  echo "Installing package dependencies"
+  sudo dnf builddep --skip-unavailable ${REPO_DIR}/tools/rpmbuild/SPECS/$specfile
+  echo "Building packages"
+  rpmbuild \
+    --define "_topdir `pwd`/tools/rpmbuild" \
+    -v -ba ${REPO_DIR}/tools/rpmbuild/SPECS/$specfile
+}
 
-sudo "${INSTALL_BAZEL}"
-install_debuild_dependencies
+if [[ ! -z ${APT_CMD} ]]; then
+  INSTALL_BAZEL="$(dirname $0)/installbazel.sh"
+  sudo "${INSTALL_BAZEL}"
+  install_debuild_dependencies
+  build_package "${REPO_DIR}/base"
+  build_package "${REPO_DIR}/frontend"
+elif [[ ! -z ${DNF_CMD} ]]; then
+  build_spec cuttlefish_base.spec
+  build_spec cuttlefish_user.spec
+else
+    exit 1;
+fi
 
-build_package "${REPO_DIR}/base"
-build_package "${REPO_DIR}/frontend"
