@@ -78,6 +78,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	// reached. Be prepared to retry if the deadline was reached.
 	router.Handle("/operations/{name}/:wait",
 		httpHandler(&waitOperationHandler{c.OperationManager, c.WaitOperationDuration})).Methods("POST")
+	router.Handle("/cvdbugreports/{uuid}", &downloadCVDBugReportHandler{c.Config}).Methods("GET")
 	router.Handle("/userartifacts",
 		httpHandler(&createUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/userartifacts",
@@ -376,6 +377,18 @@ func (h *createCVDBugReportHandler) Handle(r *http.Request) (interface{}, error)
 		UUIDGen:          func() string { return uuid.New().String() },
 	}
 	return NewCreateCVDBugReportAction(opts).Run()
+}
+
+type downloadCVDBugReportHandler struct {
+	Config Config
+}
+
+func (h *downloadCVDBugReportHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Println("request:", r.Method, r.URL.Path)
+	vars := mux.Vars(r)
+	uuid := vars["uuid"]
+	filename := filepath.Join(h.Config.Paths.CVDBugReportsDir, uuid, BugReportZipFileName)
+	http.ServeFile(w, r, filename)
 }
 
 type createUploadDirectoryHandler struct {

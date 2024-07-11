@@ -65,6 +65,8 @@ func (a *CreateCVDBugReportAction) Run() (apiv1.Operation, error) {
 	return op, nil
 }
 
+const BugReportZipFileName = "cvd_bugreport.zip"
+
 func (a *CreateCVDBugReportAction) createBugReport(uuid string, op apiv1.Operation) {
 	result := &OperationResult{}
 	filename := filepath.Join(a.paths.CVDBugReportsDir, uuid, "cvd_bugreport.zip")
