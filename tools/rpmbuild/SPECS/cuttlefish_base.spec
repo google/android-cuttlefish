@@ -52,6 +52,7 @@ install -m 655 %{srcpath}/install_zip.sh %{buildroot}/usr/bin/install_zip.sh
 
 
 %post
+getent group cvdnetwork || groupadd cvdnetwork
 systemctl restart NetworkManager
 
 
