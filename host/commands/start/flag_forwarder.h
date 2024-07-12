@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+namespace cuttlefish {
+
 class SubprocessFlag;
 
 class FlagForwarder {
@@ -40,3 +42,5 @@ public:
      const std::string& subprocess,
      const std::vector<std::string>& args = std::vector<std::string>()) const;
 };
+
+}  // namespace cuttlefish
