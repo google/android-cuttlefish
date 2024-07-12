@@ -1,4 +1,4 @@
-Name:           cuttlefish_orchestration
+Name:           cuttlefish-orchestration
 Version:        0.9.29
 Release:        1%{?dist}
 Summary:        Virtual Device for Android host-side utilities
@@ -10,7 +10,7 @@ BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 #BuildRequires:  
-Requires:       cuttlefish_base  
+Requires:       cuttlefish-base
 
 %description
 
@@ -24,7 +24,7 @@ Requires:       cuttlefish_base
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p %{buildroot}/etc/default
-mkdir -p %{buildroot}/etc/init.d
+mkdir -p %{buildroot}/etc/rc.d/init.d
 mkdir -p %{buildroot}/etc/sudoers.d
 mkdir -p %{buildroot}/usr/bin
 mkdir -p %{buildroot}/usr/share/doc/cuttlefish-orchestration

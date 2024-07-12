@@ -1,4 +1,4 @@
-Name:           cuttlefish_integration
+Name:           cuttlefish-integration
 Version:        0.9.29
 Release:        1%{?dist}
 Summary:        Virtual Device for Android host-side utilities
@@ -11,7 +11,7 @@ BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 #BuildRequires:  
-Requires:       qemu-kvm, cuttlefish_base
+Requires:       qemu-kvm, cuttlefish-base
 
 %description
 
