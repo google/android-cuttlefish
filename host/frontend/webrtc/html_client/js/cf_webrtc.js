@@ -331,8 +331,8 @@ class DeviceConnection {
     this.#controlChannel.send(msg);
   }
 
-  async #useDevice(
-      in_use, senders_arr, device_opt, requestedFn = () => {in_use}, enabledFn = (stream) => {}) {
+  async #useDevice(in_use, senders_arr, device_opt, requestedFn = () => {in_use},
+      enabledFn = (stream) => {}, disabledFn = () => {}) {
     // An empty array means no tracks are currently in use
     if (senders_arr.length > 0 === !!in_use) {
       return in_use;
@@ -368,6 +368,7 @@ class DeviceConnection {
       }
       // Empty the array passed by reference, just assigning [] won't do that.
       senders_arr.length = 0;
+      disabledFn();
     }
     if (renegotiation_needed) {
       await this.#control.renegotiateConnection();
@@ -376,14 +377,18 @@ class DeviceConnection {
     return senders_arr.length > 0;
   }
 
-  async useMic(in_use) {
+  // enabledFn: a callback function that will be called if the mic is successfully enabled.
+  // disabledFn: a callback function that will be called if the mic is successfully disabled.
+  async useMic(in_use, enabledFn = () => {}, disabledFn = () => {}) {
     if (this.#micRequested == !!in_use) {
       return in_use;
     }
     this.#micRequested = !!in_use;
     return this.#useDevice(
         in_use, this.#micSenders, {audio: true, video: false},
-        () => this.#micRequested);
+        () => this.#micRequested,
+        enabledFn,
+        disabledFn);
   }
 
   async useCamera(in_use) {
