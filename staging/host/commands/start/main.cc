@@ -78,6 +78,7 @@ DEFINE_bool(share_sched_core, CF_DEFAULTS_SHARE_SCHED_CORE,
 DEFINE_bool(track_host_tools_crc, CF_DEFAULTS_TRACK_HOST_TOOLS_CRC,
             "Track changes to host executables");
 
+namespace cuttlefish {
 namespace {
 
 #ifdef __linux__
@@ -110,8 +111,8 @@ std::string SubtoolPath(const std::string& subtool_base) {
   std::stringstream subtool_path_stream;
   subtool_path_stream << my_own_dir << "/" << subtool_base;
   auto subtool_path = subtool_path_stream.str();
-  if (my_own_dir.empty() || !cuttlefish::FileExists(subtool_path)) {
-    return cuttlefish::HostBinaryPath(subtool_base);
+  if (my_own_dir.empty() || !FileExists(subtool_path)) {
+    return HostBinaryPath(subtool_base);
   }
   return subtool_path;
 }
@@ -119,37 +120,38 @@ std::string SubtoolPath(const std::string& subtool_base) {
 std::string kAssemblerBin = SubtoolPath("assemble_cvd");
 std::string kRunnerBin = SubtoolPath("run_cvd");
 
-cuttlefish::Subprocess StartAssembler(cuttlefish::SharedFD assembler_stdin,
-                               cuttlefish::SharedFD assembler_stdout,
-                               const std::vector<std::string>& argv) {
-  cuttlefish::Command assemble_cmd(kAssemblerBin);
+Subprocess StartAssembler(SharedFD assembler_stdin, SharedFD assembler_stdout,
+                          const std::vector<std::string>& argv) {
+  Command assemble_cmd(kAssemblerBin);
   for (const auto& arg : argv) {
     assemble_cmd.AddParameter(arg);
   }
   if (assembler_stdin->IsOpen()) {
-    assemble_cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdIn, assembler_stdin);
+    assemble_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn,
+                               assembler_stdin);
   }
-  assemble_cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdOut, assembler_stdout);
+  assemble_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+                             assembler_stdout);
   return assemble_cmd.Start();
 }
 
-cuttlefish::Subprocess StartRunner(cuttlefish::SharedFD runner_stdin,
-                            const std::vector<std::string>& argv) {
-  cuttlefish::Command run_cmd(kRunnerBin);
+Subprocess StartRunner(SharedFD runner_stdin,
+                       const std::vector<std::string>& argv) {
+  Command run_cmd(kRunnerBin);
   for (const auto& arg : argv) {
     run_cmd.AddParameter(arg);
   }
-  run_cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdIn, runner_stdin);
+  run_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, runner_stdin);
   return run_cmd.Start();
 }
 
-void WriteFiles(cuttlefish::FetcherConfig fetcher_config, cuttlefish::SharedFD out) {
+void WriteFiles(FetcherConfig fetcher_config, SharedFD out) {
   std::stringstream output_streambuf;
   for (const auto& file : fetcher_config.get_cvd_files()) {
     output_streambuf << file.first << "\n";
   }
   std::string output_string = output_streambuf.str();
-  int written = cuttlefish::WriteAll(out, output_string);
+  int written = WriteAll(out, output_string);
   if (written < 0) {
     LOG(FATAL) << "Could not write file report (" << strerror(out->GetErrno())
                << ")";
@@ -158,14 +160,12 @@ void WriteFiles(cuttlefish::FetcherConfig fetcher_config, cuttlefish::SharedFD o
 
 std::string ValidateMetricsConfirmation(std::string use_metrics) {
   if (use_metrics == "") {
-    if (cuttlefish::CuttlefishConfig::ConfigExists()) {
-      auto config = cuttlefish::CuttlefishConfig::Get();
+    if (CuttlefishConfig::ConfigExists()) {
+      auto config = CuttlefishConfig::Get();
       if (config) {
-        if (config->enable_metrics() ==
-            cuttlefish::CuttlefishConfig::Answer::kYes) {
+        if (config->enable_metrics() == CuttlefishConfig::Answer::kYes) {
           use_metrics = "y";
-        } else if (config->enable_metrics() ==
-                   cuttlefish::CuttlefishConfig::Answer::kNo) {
+        } else if (config->enable_metrics() == CuttlefishConfig::Answer::kNo) {
           use_metrics = "n";
         }
       }
@@ -223,10 +223,10 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
 }
 
 bool HostToolsUpdated() {
-  if (cuttlefish::CuttlefishConfig::ConfigExists()) {
-    auto config = cuttlefish::CuttlefishConfig::Get();
+  if (CuttlefishConfig::ConfigExists()) {
+    auto config = CuttlefishConfig::Get();
     if (config) {
-      auto current_tools = cuttlefish::HostToolsCrc();
+      auto current_tools = HostToolsCrc();
       auto last_tools = config->host_tools_version();
       return current_tools != last_tools;
     }
@@ -337,9 +337,7 @@ bool OverrideBoolArg(std::vector<std::string>& args) {
   return overridden;
 }
 
-} // namespace
-
-int main(int argc, char** argv) {
+int CvdInternalStartMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
   std::vector<std::string> args(argv + 1, argv + argc);
@@ -347,8 +345,8 @@ int main(int argc, char** argv) {
   std::vector<std::string> assemble_args;
   std::string image_dir;
   std::vector<std::string> args_copy = args;
-  auto parse_res = cuttlefish::ConsumeFlags(
-      {cuttlefish::GflagsCompatFlag("system_image_dir", image_dir)}, args_copy);
+  auto parse_res = ConsumeFlags(
+      {GflagsCompatFlag("system_image_dir", image_dir)}, args_copy);
   LOG(INFO) << "Using system_image_dir of: " << image_dir;
 
   if (!parse_res.ok()) {
@@ -395,24 +393,23 @@ int main(int argc, char** argv) {
     LOG(INFO) << "Host changed from last run: " << HostToolsUpdated();
   }
 
-  cuttlefish::SharedFD assembler_stdout, assembler_stdout_capture;
-  cuttlefish::SharedFD::Pipe(&assembler_stdout_capture, &assembler_stdout);
+  SharedFD assembler_stdout, assembler_stdout_capture;
+  SharedFD::Pipe(&assembler_stdout_capture, &assembler_stdout);
 
-  cuttlefish::SharedFD launcher_report, assembler_stdin;
+  SharedFD launcher_report, assembler_stdin;
   bool should_generate_report = FLAGS_run_file_discovery;
   if (should_generate_report) {
-    cuttlefish::SharedFD::Pipe(&assembler_stdin, &launcher_report);
+    SharedFD::Pipe(&assembler_stdin, &launcher_report);
   }
 
-  auto instance_nums =
-      cuttlefish::InstanceNumsCalculator().FromGlobalGflags().Calculate();
+  auto instance_nums = InstanceNumsCalculator().FromGlobalGflags().Calculate();
   if (!instance_nums.ok()) {
     LOG(ERROR) << instance_nums.error().FormatForEnv();
     abort();
   }
 
-  if (cuttlefish::CuttlefishConfig::ConfigExists()) {
-    auto previous_config = cuttlefish::CuttlefishConfig::Get();
+  if (CuttlefishConfig::ConfigExists()) {
+    auto previous_config = CuttlefishConfig::Get();
     CHECK(previous_config);
     CHECK(!previous_config->Instances().empty());
     auto previous_instance = previous_config->Instances()[0];
@@ -429,15 +426,18 @@ int main(int argc, char** argv) {
 
   CHECK(!instance_nums->empty()) << "Expected at least one instance";
   auto instance_num_str = std::to_string(*instance_nums->begin());
-  setenv(cuttlefish::kCuttlefishInstanceEnvVarName, instance_num_str.c_str(),
+  setenv(kCuttlefishInstanceEnvVarName, instance_num_str.c_str(),
          /* overwrite */ 1);
 
 #if defined(__BIONIC__)
   // These environment variables are needed in case when Bionic is used.
   // b/171754977
-  setenv("ANDROID_DATA", cuttlefish::DefaultHostArtifactsPath("").c_str(), /* overwrite */ 0);
-  setenv("ANDROID_TZDATA_ROOT", cuttlefish::DefaultHostArtifactsPath("").c_str(), /* overwrite */ 0);
-  setenv("ANDROID_ROOT", cuttlefish::DefaultHostArtifactsPath("").c_str(), /* overwrite */ 0);
+  setenv("ANDROID_DATA", DefaultHostArtifactsPath("").c_str(),
+         /* overwrite */ 0);
+  setenv("ANDROID_TZDATA_ROOT", DefaultHostArtifactsPath("").c_str(),
+         /* overwrite */ 0);
+  setenv("ANDROID_ROOT", DefaultHostArtifactsPath("").c_str(),
+         /* overwrite */ 0);
 #endif
 
   // SharedFDs are std::move-d in to avoid dangling references.
@@ -451,7 +451,7 @@ int main(int argc, char** argv) {
   }
 
   std::string assembler_output;
-  if (cuttlefish::ReadAll(assembler_stdout_capture, &assembler_output) < 0) {
+  if (ReadAll(assembler_stdout_capture, &assembler_output) < 0) {
     int error_num = errno;
     LOG(ERROR) << "Read error getting output from assemble_cvd: " << strerror(error_num);
     return -1;
@@ -465,18 +465,18 @@ int main(int argc, char** argv) {
     LOG(DEBUG) << "assemble_cvd exited successfully.";
   }
 
-  std::vector<cuttlefish::Subprocess> runners;
+  std::vector<Subprocess> runners;
   for (const auto& instance_num : *instance_nums) {
-    cuttlefish::SharedFD runner_stdin_in, runner_stdin_out;
-    cuttlefish::SharedFD::Pipe(&runner_stdin_out, &runner_stdin_in);
+    SharedFD runner_stdin_in, runner_stdin_out;
+    SharedFD::Pipe(&runner_stdin_out, &runner_stdin_in);
     std::string instance_num_str = std::to_string(instance_num);
-    setenv(cuttlefish::kCuttlefishInstanceEnvVarName, instance_num_str.c_str(),
+    setenv(kCuttlefishInstanceEnvVarName, instance_num_str.c_str(),
            /* overwrite */ 1);
 
     auto run_proc = StartRunner(std::move(runner_stdin_out),
                                 forwarder.ArgvForSubprocess(kRunnerBin));
     runners.push_back(std::move(run_proc));
-    if (cuttlefish::WriteAll(runner_stdin_in, assembler_output) < 0) {
+    if (WriteAll(runner_stdin_in, assembler_output) < 0) {
       int error_num = errno;
       LOG(ERROR) << "Could not write to run_cvd: " << strerror(error_num);
       return -1;
@@ -494,4 +494,11 @@ int main(int argc, char** argv) {
     }
   }
   return run_cvd_failure ? -1 : 0;
+}
+
+}  // namespace
+}  // namespace cuttlefish
+
+int main(int argc, char** argv) {
+  return cuttlefish::CvdInternalStartMain(argc, argv);
 }
