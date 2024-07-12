@@ -56,10 +56,10 @@ install -m 655 %{srcpath}/capability_query.py %{buildroot}/usr/lib/cuttlefish-co
 install -m 655 %{srcpath}/cuttlefish-integration.udev %{buildroot}/lib/udev/rules.d/60-cuttlefish-integration.rules
 
 %post
-getent group cvdnetwork || groupadd cvdnetwork
+ln -s /usr/lib/cuttlefish-common/bin/cvd /usr/bin/cvd
+getent group cvdnetwork > /dev/null 2>&1 || addgroup --system cvdnetwork
 udevadm control --reload-rules && udevadm trigger
 systemctl restart NetworkManager
-
 
 %files
 /etc/default/cuttlefish-host-resources
