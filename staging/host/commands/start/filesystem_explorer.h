@@ -17,4 +17,8 @@
 
 #include "host/libs/config/fetcher_config.h"
 
-cuttlefish::FetcherConfig AvailableFilesReport();
+namespace cuttlefish {
+
+FetcherConfig AvailableFilesReport();
+
+}

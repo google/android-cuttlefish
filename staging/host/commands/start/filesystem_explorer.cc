@@ -28,22 +28,25 @@
 #include "common/libs/utils/environment.h"
 #include "host/libs/config/fetcher_config.h"
 
-cuttlefish::FetcherConfig AvailableFilesReport() {
-  std::string current_directory = cuttlefish::AbsolutePath(cuttlefish::CurrentDirectory());
-  cuttlefish::FetcherConfig config;
+namespace cuttlefish {
 
-  if (cuttlefish::FileExists(current_directory + "/fetcher_config.json")) {
+FetcherConfig AvailableFilesReport() {
+  std::string current_directory = AbsolutePath(CurrentDirectory());
+  FetcherConfig config;
+
+  if (FileExists(current_directory + "/fetcher_config.json")) {
     config.LoadFromFile(current_directory + "/fetcher_config.json");
     return config;
   }
 
   // If needed check if `fetch_config.json` exists inside the $HOME directory.
   // `assemble_cvd` will perform a similar check.
-  std::string home_directory =
-      cuttlefish::StringFromEnv("HOME", cuttlefish::CurrentDirectory());
+  std::string home_directory = StringFromEnv("HOME", CurrentDirectory());
   std::string fetcher_config_path = home_directory + "/fetcher_config.json";
-  if (cuttlefish::FileExists(fetcher_config_path)) {
+  if (FileExists(fetcher_config_path)) {
     config.LoadFromFile(fetcher_config_path);
   }
   return config;
 }
+
+}  // namespace cuttlefish
