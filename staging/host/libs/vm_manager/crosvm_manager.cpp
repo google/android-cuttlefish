@@ -522,7 +522,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   if (instance.hwcomposer() != kHwComposerNone) {
     const bool pmem_disabled = instance.mte() || !instance.use_pmem();
     if (!pmem_disabled && FileExists(instance.hwcomposer_pmem_path())) {
-      crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
+      crosvm_cmd.Cmd().AddParameter("--pmem=path=",
                                     instance.hwcomposer_pmem_path());
     }
   }
@@ -629,7 +629,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   const bool pmem_disabled = instance.mte() || !instance.use_pmem();
   if (!pmem_disabled && FileExists(instance.access_kregistry_path())) {
-    crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
+    crosvm_cmd.Cmd().AddParameter("--pmem=path=",
                                   instance.access_kregistry_path());
   }
 
