@@ -1048,7 +1048,9 @@ class DeviceControlApp {
       return;
     }
     this.#micActive = nextState;
-    this.#deviceConnection.useMic(nextState);
+    this.#deviceConnection.useMic(nextState,
+      () => document.querySelector('#mic_btn').innerHTML = 'mic',
+      () => document.querySelector('#mic_btn').innerHTML = 'mic_off');
   }
 
   #onCameraCaptureToggle(enabled) {
