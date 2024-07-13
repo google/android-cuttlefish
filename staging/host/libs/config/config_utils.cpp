@@ -92,7 +92,6 @@ std::string ForCurrentInstance(const char* prefix) {
   stream << prefix << std::setfill('0') << std::setw(2) << GetInstance();
   return stream.str();
 }
-int ForCurrentInstance(int base) { return base + GetInstance() - 1; }
 
 std::string RandomSerialNumber(const std::string& prefix) {
   const char hex_characters[] = "0123456789ABCDEF";
