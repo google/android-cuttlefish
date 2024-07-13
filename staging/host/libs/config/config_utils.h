@@ -36,11 +36,10 @@ int GetVsockServerPort(const int base,
 // it easily discoverable regardless of what vm manager is in use
 std::string GetGlobalConfigFileLink();
 
-// These functions modify a given base value to make it different across
+// This function modifies a given base value to make it different across
 // different instances by appending the instance id in case of strings or adding
 // it in case of integers.
 std::string ForCurrentInstance(const char* prefix);
-int ForCurrentInstance(int base);
 
 int InstanceFromString(std::string instance_str);
 
