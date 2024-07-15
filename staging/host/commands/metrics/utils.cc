@@ -31,9 +31,7 @@
 #include "host/commands/metrics/metrics_defs.h"
 #include "host/commands/metrics/utils.h"
 
-using cuttlefish::MetricsExitCodes;
-
-namespace metrics {
+namespace cuttlefish::metrics {
 
 static std::string Hashing(const std::string& input) {
   const std::hash<std::string> hasher;
@@ -165,7 +163,7 @@ MetricsExitCodes PostRequest(const std::string& output,
   std::unique_ptr<CURLU, void (*)(CURLU*)> url(curl_url(), curl_url_cleanup);
   if (!url) {
     LOG(ERROR) << "Failed to initialize CURLU.";
-    return cuttlefish::kMetricsError;
+    return kMetricsError;
   }
 
   CURLUcode urc =
@@ -173,7 +171,7 @@ MetricsExitCodes PostRequest(const std::string& output,
   if (urc != 0) {
     LOG(ERROR) << "Failed to set url to " << url.get() << clearcut_url
                << "': " << curl_url_strerror(urc) << "'";
-    return cuttlefish::kMetricsError;
+    return kMetricsError;
   }
   curl_global_init(CURL_GLOBAL_ALL);
 
@@ -182,7 +180,7 @@ MetricsExitCodes PostRequest(const std::string& output,
 
   if (!curl) {
     LOG(ERROR) << "Failed to initialize CURL.";
-    return cuttlefish::kMetricsError;
+    return kMetricsError;
   }
 
   curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, &curl_out_writer);
@@ -198,10 +196,11 @@ MetricsExitCodes PostRequest(const std::string& output,
     LOG(ERROR) << "Metrics message failed: [" << output << "]";
     LOG(ERROR) << "http error code: " << http_code;
     LOG(ERROR) << "curl error code: " << rc << " | " << curl_easy_strerror(rc);
-    return cuttlefish::kMetricsError;
+    return kMetricsError;
   }
   LOG(INFO) << "Metrics posted to ClearCut";
   curl_global_cleanup();
-  return cuttlefish::kSuccess;
+  return kSuccess;
 }
-}  // namespace metrics
+
+}  // namespace cuttlefish::metrics
