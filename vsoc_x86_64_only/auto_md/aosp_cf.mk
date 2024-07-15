@@ -37,12 +37,16 @@ PRODUCT_PACKAGES += \
     CarServiceOverlayEmulatorOsDouble \
     CarServiceOverlayMdEmulatorOsDouble \
     MultiDisplaySecondaryHomeTestLauncher \
-    MultiDisplayTest
+    MultiDisplayTest \
+    AAECarControlCenterApp
 
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     com.android.car.internal.debug.num_auto_populated_users=1 # 1 passenger only (so 2nd display shows user picker)
 # TODO(b/233370174): add audio multi-zone
 #   ro.vendor.simulateMultiZoneAudio=true \
+
+# enables the rro package for passenger(secondary) user.
+ENABLE_PASSENGER_SYSTEMUI_RRO := true
 
 # Enable per-display power management
 PRODUCT_COPY_FILES += \
