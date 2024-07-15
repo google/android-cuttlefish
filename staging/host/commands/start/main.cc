@@ -465,22 +465,27 @@ int CvdInternalStartMain(int argc, char** argv) {
     LOG(DEBUG) << "assemble_cvd exited successfully.";
   }
 
+  std::string conf_path;
+  for (const auto& line : android::base::Tokenize(assembler_output, "\n")) {
+    if (android::base::EndsWith(line, "cuttlefish_config.json")) {
+      conf_path = line;
+    }
+  }
+  CHECK(!conf_path.empty()) << "could not find config";
+  auto config = CuttlefishConfig::GetFromFile(conf_path);
+  CHECK(config) << "Could not load config object";
+  setenv(kCuttlefishConfigEnvVarName, conf_path.c_str(), /* overwrite */ true);
+
   std::vector<Subprocess> runners;
   for (const auto& instance_num : *instance_nums) {
-    SharedFD runner_stdin_in, runner_stdin_out;
-    SharedFD::Pipe(&runner_stdin_out, &runner_stdin_in);
+    SharedFD runner_stdin = SharedFD::Open("/dev/null", O_RDONLY);
     std::string instance_num_str = std::to_string(instance_num);
     setenv(kCuttlefishInstanceEnvVarName, instance_num_str.c_str(),
            /* overwrite */ 1);
 
-    auto run_proc = StartRunner(std::move(runner_stdin_out),
+    auto run_proc = StartRunner(std::move(runner_stdin),
                                 forwarder.ArgvForSubprocess(kRunnerBin));
     runners.push_back(std::move(run_proc));
-    if (WriteAll(runner_stdin_in, assembler_output) < 0) {
-      int error_num = errno;
-      LOG(ERROR) << "Could not write to run_cvd: " << strerror(error_num);
-      return -1;
-    }
   }
 
   bool run_cvd_failure = false;
