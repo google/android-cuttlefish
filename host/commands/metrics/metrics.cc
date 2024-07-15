@@ -21,32 +21,32 @@
 #include "host/commands/metrics/metrics_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 
-using cuttlefish::MetricsExitCodes;
+namespace cuttlefish {
+namespace {
 
-int main(int argc, char** argv) {
+int MetricsMain(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto config = CuttlefishConfig::Get();
   CHECK(config) << "Could not open cuttlefish config";
   auto instance = config->ForDefaultInstance();
   auto metrics_log_path = instance.PerInstanceLogPath("metrics.log");
   if (instance.run_as_daemon()) {
     android::base::SetLogger(
-        cuttlefish::LogToFiles({metrics_log_path, instance.launcher_log_path()}));
+        LogToFiles({metrics_log_path, instance.launcher_log_path()}));
   } else {
     android::base::SetLogger(
-        cuttlefish::LogToStderrAndFiles(
-            {metrics_log_path, instance.launcher_log_path()}));
+        LogToStderrAndFiles({metrics_log_path, instance.launcher_log_path()}));
   }
-  if (config->enable_metrics() != cuttlefish::CuttlefishConfig::Answer::kYes) {
+  if (config->enable_metrics() != CuttlefishConfig::Answer::kYes) {
     LOG(ERROR) << "metrics not enabled, but metrics were launched.";
     return MetricsExitCodes::kInvalidHostConfiguration;
   }
 
   bool is_metrics_enabled =
-      cuttlefish::CuttlefishConfig::Answer::kYes == config->enable_metrics();
-  cuttlefish::MetricsHostReceiver host_receiver(is_metrics_enabled);
-  if (!host_receiver.Initialize(cuttlefish::kCfMetricsQueueName)) {
+      CuttlefishConfig::Answer::kYes == config->enable_metrics();
+  MetricsHostReceiver host_receiver(is_metrics_enabled);
+  if (!host_receiver.Initialize(kCfMetricsQueueName)) {
     LOG(ERROR) << "metrics host_receiver failed to init";
     return MetricsExitCodes::kMetricsError;
   }
@@ -54,3 +54,8 @@ int main(int argc, char** argv) {
   host_receiver.Join();
   return MetricsExitCodes::kMetricsError;
 }
+
+}  // namespace
+}  // namespace cuttlefish
+
+int main(int argc, char** argv) { return cuttlefish::MetricsMain(argc, argv); }
