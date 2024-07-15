@@ -23,8 +23,6 @@
 #include "host/libs/metrics/metrics_receiver.h"
 #include "host/libs/msg_queue/msg_queue.h"
 
-using cuttlefish::MetricsExitCodes;
-
 namespace cuttlefish {
 
 MetricsHostReceiver::MetricsHostReceiver(bool is_metrics_enabled)
@@ -70,7 +68,7 @@ bool MetricsHostReceiver::Initialize(const std::string& metrics_queue_name) {
 }
 
 void MetricsHostReceiver::ProcessMessage(const std::string& text) {
-  auto hostDev = cuttlefish::CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST;
+  auto hostDev = CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST;
 
   int rc = MetricsExitCodes::kSuccess;
 

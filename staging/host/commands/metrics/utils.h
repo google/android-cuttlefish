@@ -15,12 +15,11 @@
  */
 #pragma once
 
-#include <string.h>
-
 #include <clientanalytics.pb.h>
 #include "host/commands/metrics/metrics_defs.h"
 
-namespace metrics {
+namespace cuttlefish::metrics {
+
 enum ClearcutServer : int {
   kLocal = 0,
   kStaging = 1,
@@ -36,7 +35,6 @@ std::string GetCompany();
 std::string GetVmmVersion();
 uint64_t GetEpochTimeMs();
 std::string ProtoToString(LogEvent* event);
-cuttlefish::MetricsExitCodes PostRequest(const std::string& output,
-                                         ClearcutServer server);
+MetricsExitCodes PostRequest(const std::string& output, ClearcutServer server);
 
-}  // namespace metrics
+}  // namespace cuttlefish::metrics
