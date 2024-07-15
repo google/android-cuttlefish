@@ -62,44 +62,44 @@ std::unique_ptr<CuttlefishLogEvent> BuildCfLogEvent(
   return cfEvent;
 }
 
-cuttlefish::MetricsEvent::OsType GetOsType() {
+MetricsEvent::OsType GetOsType() {
   struct utsname buf;
   if (uname(&buf) != 0) {
     LOG(ERROR) << "failed to retrieve system information";
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
+    return MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
   }
   std::string sysname(buf.sysname);
   std::string machine(buf.machine);
 
   if (sysname != "Linux") {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
+    return MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
   }
   if (machine == "x86_64") {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_X86_64;
+    return MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_X86_64;
   }
   if (machine == "x86") {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_X86;
+    return MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_X86;
   }
   if (machine == "aarch64" || machine == "arm64") {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_AARCH64;
+    return MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_AARCH64;
   }
   if (machine[0] == 'a') {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_AARCH32;
+    return MetricsEvent::CUTTLEFISH_OS_TYPE_LINUX_AARCH32;
   }
-  return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
+  return MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
 }
 
-cuttlefish::MetricsEvent::VmmType GetVmmManager() {
-  auto config = cuttlefish::CuttlefishConfig::Get();
+MetricsEvent::VmmType GetVmmManager() {
+  auto config = CuttlefishConfig::Get();
   CHECK(config) << "Could not open cuttlefish config";
   auto vmm = config->vm_manager();
-  if (vmm == cuttlefish::VmmMode::kCrosvm) {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_CROSVM;
+  if (vmm == VmmMode::kCrosvm) {
+    return MetricsEvent::CUTTLEFISH_VMM_TYPE_CROSVM;
   }
-  if (vmm == cuttlefish::VmmMode::kQemu) {
-    return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_QEMU;
+  if (vmm == VmmMode::kQemu) {
+    return MetricsEvent::CUTTLEFISH_VMM_TYPE_QEMU;
   }
-  return cuttlefish::MetricsEvent::CUTTLEFISH_VMM_TYPE_UNSPECIFIED;
+  return MetricsEvent::CUTTLEFISH_VMM_TYPE_UNSPECIFIED;
 }
 
 // Builds the 2nd level MetricsEvent.
@@ -108,7 +108,7 @@ void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent* cfEvent,
   auto [now_s, now_ns] = ConvertMillisToTime(now_ms);
 
   // "metrics_event" is the 2nd level MetricsEvent
-  cuttlefish::MetricsEvent* metrics_event = cfEvent->mutable_metrics_event();
+  MetricsEvent* metrics_event = cfEvent->mutable_metrics_event();
   metrics_event->set_event_type(event_type);
   metrics_event->set_os_type(GetOsType());
   metrics_event->set_os_version(metrics::GetOsVersion());
@@ -192,10 +192,9 @@ int Clearcut::SendLockScreen(CuttlefishLogEvent::DeviceType device) {
 }
 
 // TODO (moelsherif@): remove this function in the future since it is not used
-cuttlefish::CuttlefishLogEvent* sampleEvent() {
-  cuttlefish::CuttlefishLogEvent* event = new cuttlefish::CuttlefishLogEvent();
-  event->set_device_type(
-      cuttlefish::CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
+CuttlefishLogEvent* sampleEvent() {
+  CuttlefishLogEvent* event = new CuttlefishLogEvent();
+  event->set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
   return event;
 }
 

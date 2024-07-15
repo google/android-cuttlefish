@@ -21,19 +21,16 @@ namespace cuttlefish {
 
 class Clearcut {
  private:
-  static int SendEvent(cuttlefish::CuttlefishLogEvent::DeviceType device_type,
-                       cuttlefish::MetricsEvent::EventType event_type);
+  static int SendEvent(CuttlefishLogEvent::DeviceType device_type,
+                       MetricsEvent::EventType event_type);
 
  public:
   Clearcut() = default;
   ~Clearcut() = default;
-  static int SendVMStart(
-      cuttlefish::CuttlefishLogEvent::DeviceType device_type);
-  static int SendVMStop(cuttlefish::CuttlefishLogEvent::DeviceType device_type);
-  static int SendDeviceBoot(
-      cuttlefish::CuttlefishLogEvent::DeviceType device_type);
-  static int SendLockScreen(
-      cuttlefish::CuttlefishLogEvent::DeviceType device_type);
+  static int SendVMStart(CuttlefishLogEvent::DeviceType device_type);
+  static int SendVMStop(CuttlefishLogEvent::DeviceType device_type);
+  static int SendDeviceBoot(CuttlefishLogEvent::DeviceType device_type);
+  static int SendLockScreen(CuttlefishLogEvent::DeviceType device_type);
 };
 
 }  // namespace cuttlefish
