@@ -43,9 +43,7 @@ void AppendMapWithReplacement(T* destination, const T& source) {
   }
 }
 
-// TODO(schuffelen): Move more of this into host/libs/vm_manager, as a
-// substitute for the vm_manager comparisons.
-Result<std::unordered_map<std::string, std::string>> VmManagerBootconfig(
+Result<std::unordered_map<std::string, std::string>> ConsoleBootconfig(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::unordered_map<std::string, std::string> bootconfig_args;
   if (instance.console()) {
@@ -76,7 +74,7 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   std::unordered_map<std::string, std::string> bootconfig_args;
 
   AppendMapWithReplacement(&bootconfig_args,
-                           CF_EXPECT(VmManagerBootconfig(instance)));
+                           CF_EXPECT(ConsoleBootconfig(instance)));
 
   auto vmm =
       vm_manager::GetVmManager(config.vm_manager(), instance.target_arch());
