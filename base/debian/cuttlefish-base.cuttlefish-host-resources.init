@@ -55,6 +55,10 @@ ebtables=$(which ebtables-legacy)
 # If there's no ebtables-legacy, it's probably an older distro,
 # and ebtables should support broute directly
 ebtables=${ebtables:-ebtables}
+# Similarly for iptables
+iptables=$(which iptables-legacy)
+iptables=${iptables:-iptables}
+
 
 # Start DHCP server on an interface
 # $1 = interface to bind to
@@ -129,7 +133,7 @@ create_interface() {
     if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
         ip -6 addr add "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}"
     fi
-    iptables-legacy -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+    "${iptables}" -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
 }
 
 # Destroy a tap interface
@@ -146,7 +150,7 @@ destroy_interface() {
     ipv6_prefix="${4}"
     ipv6_prefix_length="${5}"
 
-    iptables-legacy -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
+    "${iptables}" -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
     ip addr del "${gateway}${netmask}" dev "${tap}"
     if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
         ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}"
@@ -198,7 +202,7 @@ create_bridged_interfaces() {
         start_dnsmasq \
           "${2}" "${gateway}" "${dhcp_range}" \
           "${ipv6_prefix}" "${ipv6_prefix_length}"
-        iptables-legacy -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+        "${iptables}" -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
     fi
 }
 
@@ -215,7 +219,7 @@ destroy_bridged_interfaces() {
         network="${1}.0${netmask}"
         ipv6_prefix="${4}"
         ipv6_prefix_length="${5}"
-        iptables-legacy -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
+        "${iptables}" -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
         stop_dnsmasq "${2}"
         if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
             ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_len}" dev "${2}"
