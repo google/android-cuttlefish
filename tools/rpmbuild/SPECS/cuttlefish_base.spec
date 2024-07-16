@@ -21,9 +21,11 @@ Requires:       wayland-utils
 %prep
 %define workdir `pwd`
 
+
 %build
 cd ../../../base/cvd
 bazel build cuttlefish:cvd --spawn_strategy=local
+
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -66,16 +68,19 @@ ln -sf /usr/lib/cuttlefish-common/bin/cvd /usr/bin/cvd
 getent group cvdnetwork > /dev/null 2>&1 || groupadd --system cvdnetwork
 udevadm control --reload-rules && udevadm trigger
 systemctl restart NetworkManager
-# systemctl start cuttlefish
+
 
 %preun
-# systemctl stop cuttlefish
 rm /usr/bin/cvd
+
 
 %postun
 udevadm control --reload-rules && udevadm trigger
 systemctl restart NetworkManager
-groupdel cvdnetwork
+if getent group cvdnetwork > /dev/null 2>&1 ; then
+    groupdel cvdnetwork
+fi
+
 
 %files
 /etc/default/cuttlefish-host-resources

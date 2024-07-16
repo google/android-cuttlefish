@@ -24,9 +24,6 @@ Requires:       openssl, cuttlefish-base
 cd ../../../frontend
 ./build-webui.sh
 
-cd ../base/cvd
-bazel build cuttlefish:cuttlefish_common --spawn_strategy=local
-
 cd ../../frontend/src/host_orchestrator
 go build
 
@@ -79,7 +76,7 @@ done
 %post
 ln -sf /usr/lib/cuttlefish-common/bin/host_orchestrator /usr/bin/cvd_host_orchestrator
 # The cvdnetwork group is created by cuttlefish-base
-if ! getent passwd _cutf-operator > /dev/null 2>&1; then
+if ! getent passwd _cutf-operator > /dev/null 2>&1 ; then
     adduser --system --home /var/empty --no-create-home --gid cvdnetwork _cutf-operator
 fi
 

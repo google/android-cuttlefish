@@ -45,14 +45,13 @@ install -m 655 %{srcpath}/etc/sudoers.d/cuttlefish-orchestration %{buildroot}/et
 
 %post
 # The cvdnetwork group is created by cuttlefish-base
-if ! getent passwd _cvd-executor > /dev/null 2>&1; then
+if ! getent passwd _cvd-executor > /dev/null 2>&1 ; then
     adduser --system --home /var/empty --no-create-home _cvd-executor
-    # getent group _cvd-executor || groupadd _cvd-executor
     usermod -a -G cvdnetwork,kvm _cvd-executor
 fi
 
 # Reload nginx having the orchestration configuration
-# service nginx reload
+systemctl try-reload-or-restart nginx.service
 
 %preun
 
@@ -60,12 +59,10 @@ fi
 %postun
 if getent passwd _cvd-executor > /dev/null 2>&1; then
     userdel _cvd-executor
-    groupdel _cvd-executor
 fi
 
-
 # Reload nginx without the orchestration configuration
-# service nginx reload
+systemctl try-reload-or-restart nginx.service
 
 %changelog
 * Thu Jul 11 2024 Martin Zeitler <?>

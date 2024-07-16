@@ -59,6 +59,16 @@ udevadm control --reload-rules && udevadm trigger
 #%%license add-license-file-here
 #%%doc add-docs-here
 
+%post
+systemctl restart systemd-modules-load.service
+systemctl reload rsyslog.service
+
+%preun
+
+
+%postun
+systemctl restart systemd-modules-load.service
+systemctl reload rsyslog.service
 
 %changelog
 * Thu Jul 11 2024 Martin Zeitler <?>
