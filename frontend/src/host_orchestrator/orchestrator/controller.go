@@ -79,6 +79,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/operations/{name}/:wait",
 		httpHandler(&waitOperationHandler{c.OperationManager, c.WaitOperationDuration})).Methods("POST")
 	router.Handle("/cvdbugreports/{uuid}", &downloadCVDBugReportHandler{c.Config}).Methods("GET")
+	router.Handle("/cvdbugreports/{uuid}", httpHandler(&deleteCVDBugReportHandler{c.Config})).Methods("DELETE")
 	router.Handle("/userartifacts",
 		httpHandler(&createUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/userartifacts",
@@ -389,6 +390,18 @@ func (h *downloadCVDBugReportHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	uuid := vars["uuid"]
 	filename := filepath.Join(h.Config.Paths.CVDBugReportsDir, uuid, BugReportZipFileName)
 	http.ServeFile(w, r, filename)
+}
+
+type deleteCVDBugReportHandler struct {
+	Config Config
+}
+
+func (h *deleteCVDBugReportHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	uuid := vars["uuid"]
+	dirName := filepath.Join(h.Config.Paths.CVDBugReportsDir, uuid)
+	err := os.RemoveAll(dirName)
+	return nil, err
 }
 
 type createUploadDirectoryHandler struct {
