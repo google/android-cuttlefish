@@ -42,8 +42,8 @@ mkdir -p %{buildroot}/usr/share/doc/cuttlefish-user
 
 
 %define srcpath ../../../frontend/src
-install -m 655 %{srcpath}/host_orchestrator/host_orchestrator %{buildroot}/usr/lib/cuttlefish-common/bin/host_orchestrator
-install -m 655 %{srcpath}/operator/operator %{buildroot}/usr/lib/cuttlefish-common/bin/operator
+install -m 755 %{srcpath}/host_orchestrator/host_orchestrator %{buildroot}/usr/lib/cuttlefish-common/bin/host_orchestrator
+install -m 755 %{srcpath}/operator/operator %{buildroot}/usr/lib/cuttlefish-common/bin/operator
 install -m 655 %{srcpath}/operator/intercept/js/server_connector.d.ts %{buildroot}/usr/share/cuttlefish-common/operator/intercept/js/server_connector.d.ts
 install -m 655 %{srcpath}//operator/intercept/js/server_connector.js %{buildroot}/usr/share/cuttlefish-common/operator/intercept/js/server_connector.js
 
@@ -77,7 +77,7 @@ done
 ln -sf /usr/lib/cuttlefish-common/bin/host_orchestrator /usr/bin/cvd_host_orchestrator
 # The cvdnetwork group is created by cuttlefish-base
 if ! getent passwd _cutf-operator > /dev/null 2>&1 ; then
-    adduser --system --home /var/empty --no-create-home --gid cvdnetwork _cutf-operator
+    adduser --system --shell /sbin/nologin --home /var/empty --no-create-home --gid cvdnetwork _cutf-operator
 fi
 
 %preun

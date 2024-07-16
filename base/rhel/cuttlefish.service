@@ -1,7 +1,7 @@
 [Unit]
 Description=Cuttlefish Host Resources
 After=syslog.target network.target
-Requires: libvirtd.service
+Requires=libvirtd.service
 StartLimitIntervalSec=0
 
 [Service]
@@ -9,8 +9,6 @@ Type=simple
 Restart=always
 RestartSec=1
 ExecStart=/etc/rc.d/init.d/cuttlefish-host-resources start
-StandardOutput=/var/log/cuttlefish_output.log
-StandardError=/var/log/cuttlefish_error.log
 
 [Install]
 WantedBy=multi-user.target

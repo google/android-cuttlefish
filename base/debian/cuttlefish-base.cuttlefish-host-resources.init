@@ -363,7 +363,12 @@ case "$1" in
         # Nothing to do; we reread configuration on each invocation
         ;;
     status)
-        rh_status
+        # command `rh_status` may not be available.
+        if command -v rh_status > /dev/null ; then
+            rh_status
+        else
+            systemctl status cuttlefish.service
+        fi
         ;;
     shutdown)
         stop

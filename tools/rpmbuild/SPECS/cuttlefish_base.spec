@@ -68,15 +68,18 @@ ln -sf /usr/lib/cuttlefish-common/bin/cvd /usr/bin/cvd
 getent group cvdnetwork > /dev/null 2>&1 || groupadd --system cvdnetwork
 udevadm control --reload-rules && udevadm trigger
 systemctl restart NetworkManager
-
+systemctl daemon-reload
+systemctl start cuttlefish
 
 %preun
+systemctl stop cuttlefish
 rm /usr/bin/cvd
 
 
 %postun
 udevadm control --reload-rules && udevadm trigger
 systemctl restart NetworkManager
+systemctl daemon-reload
 if getent group cvdnetwork > /dev/null 2>&1 ; then
     groupdel cvdnetwork
 fi
