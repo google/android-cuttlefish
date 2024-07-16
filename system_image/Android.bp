@@ -330,6 +330,7 @@ android_system_image {
         "android.software.webview.prebuilt.xml", // media_system
         "android.software.window_magnification.prebuilt.xml", // handheld_system
         "android.system.suspend-service",
+        "aosp_cf_x86_64_system-init.environ.rc",
         "apexd",
         "appops",
         "appwidget",
@@ -816,6 +817,14 @@ prebuilt_etc {
     src: "manifest.xml",
     filename: "manifest.xml",
     relative_install_path: "vintf",
+    no_full_install: true,
+}
+
+prebuilt_root {
+    name: "aosp_cf_x86_64_system-init.environ.rc",
+    src: "init.environ.rc",
+    filename: "init.environ.rc",
+    install_in_root: true,
     no_full_install: true,
 }
 
