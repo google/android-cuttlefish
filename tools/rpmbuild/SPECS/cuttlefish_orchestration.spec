@@ -10,7 +10,7 @@ BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 #BuildRequires:  
-Requires:       cuttlefish-base
+Requires:       nginx, openssl, bash, systemd-journal-remote, cuttlefish-base, cuttlefish-user
 
 %description
 

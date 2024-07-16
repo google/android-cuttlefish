@@ -9,11 +9,11 @@ URL:            https://github.com/google/android-cuttlefish
 BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  curl-devel
-Requires:       bridge-utils, curl, dnsmasq, e2fsprogs, ebtables, iptables, bsdtar, libcurl, libdrm, mesa-libGL, libusb, libXext, lsb_release, net-tools, openssl, python3, util-linux
+BuildRequires:  curl-devel, openssl-devel, protobuf-devel, protobuf-compiler
+Requires:       redhat-lsb-core, ebtables-legacy, iptables-legacy, bridge-utils, curl, dnsmasq, e2fsprogs, ebtables, iptables, bsdtar, libcurl, libdrm, mesa-libGL, libusb, libXext, net-tools, openssl, python3, util-linux
 Requires:       fmt-devel, gflags-devel, jsoncpp-devel, protobuf-devel, openssl-devel, libxml2-devel
 Requires:       wayland-utils
-#Requires:       f2fs-tools, libfdt1, libx11-6, libz3-4
+#Requires:      f2fs-tools, libfdt1, libx11-6, libz3-4
 
 %description
 
@@ -23,6 +23,7 @@ Requires:       wayland-utils
 
 %build
 cd ../../../base/cvd
+bazel query ...
 bazel build cuttlefish:cvd --spawn_strategy=local
 
 %install
@@ -46,7 +47,6 @@ install -m 655 %{srcpath}/etc/security/limits.d/1_cuttlefish.conf %{buildroot}/e
 install -m 655 %{srcpath}/cuttlefish-base.cuttlefish-host-resources.default %{buildroot}/etc/default/cuttlefish-host-resources
 install -m 655 %{srcpath}/cuttlefish-base.cuttlefish-host-resources.init %{buildroot}/etc/rc.d/init.d/cuttlefish-host-resources
 
-
 %define srcpath ../../../base/cvd/bazel-bin
 install -m 755 %{srcpath}/cuttlefish/cvd %{buildroot}/usr/lib/cuttlefish-common/bin/cvd
 
@@ -57,8 +57,6 @@ install -m 655 %{srcpath}/capability_query.py %{buildroot}/usr/lib/cuttlefish-co
 
 %define srcpath ../../../base/debian
 install -m 655 %{srcpath}/cuttlefish-integration.udev %{buildroot}/lib/udev/rules.d/60-cuttlefish-integration.rules
-install -m 655 %{srcpath}/cuttlefish-integration.udev %{buildroot}/lib/udev/rules.d/60-cuttlefish-integration.rules
-
 
 %post
 ln -sf /usr/lib/cuttlefish-common/bin/cvd /usr/bin/cvd

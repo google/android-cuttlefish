@@ -11,7 +11,7 @@ BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 #BuildRequires:  
-Requires:       cuttlefish-base
+Requires:       openssl, cuttlefish-base
 
 %description
 
@@ -24,6 +24,9 @@ Requires:       cuttlefish-base
 cd ../../../frontend
 ./build-webui.sh
 
+cd ../base/cvd
+bazel query ...
+bazel build cuttlefish:cuttlefish_common --spawn_strategy=local
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -40,14 +43,40 @@ for filename in $(ls %{srcpath}) ; do
   install -m 655 %{srcpath}/$filename %{buildroot}/usr/share/cuttlefish-common/operator/static/$filename
 done
 
+%define srcpath ../../../frontend/src/host_orchestrator/host_orchestrator
+for filename in $(ls %{srcpath}) ; do
+  install -m 655 %{srcpath}/$filename %{buildroot}/usr/lib/cuttlefish-common/bin/$filename
+done
+
+%define srcpath ../../../frontend/src/operator/operator
+for filename in $(ls %{srcpath}) ; do
+  install -m 655 %{srcpath}/$filename %{buildroot}/usr/lib/cuttlefish-common/bin/$filename
+done
+
+%define srcpath ../../../frontend/src/operator/intercept
+for filename in $(ls %{srcpath}) ; do
+  install -m 655 %{srcpath}/$filename %{buildroot}/usr/share/cuttlefish-common/operator/$filename
+done
+
+%define srcpath ../../../frontend/src/operator/webui/dist/static
+for filename in $(ls %{srcpath}) ; do
+  install -m 655 %{srcpath}/$filename %{buildroot}/usr/share/cuttlefish-common/operator/static/$filename
+done
+
 
 %files
+/usr/bin/cvd_host_orchestrator
+/usr/lib/cuttlefish-common/bin/host_orchestrator
+/usr/lib/cuttlefish-common/bin/orchestrator
 /usr/share/cuttlefish-common/operator/static/index.html
 /usr/share/cuttlefish-common/operator/static/3rdpartylicenses.txt
 /usr/share/cuttlefish-common/operator/static/main.*
 /usr/share/cuttlefish-common/operator/static/polyfills.*
 /usr/share/cuttlefish-common/operator/static/runtime.*
 /usr/share/cuttlefish-common/operator/static/styles.*
+
+#/usr/share/doc/cuttlefish-user/changelog.gz
+#/usr/share/doc/cuttlefish-user/copyright
 
 #%%license add-license-file-here
 #%%doc add-docs-here
