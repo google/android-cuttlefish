@@ -32,7 +32,7 @@ mkdir -p %{buildroot}/usr/share/doc/cuttlefish-orchestration
 
 %define srcpath ../../../frontend/host/packages/cuttlefish-orchestration
 install -m 655 %{srcpath}/etc/nginx/conf.d/cuttlefish-orchestration.conf %{buildroot}/etc/nginx/conf.d/cuttlefish-orchestration.conf
-install -m 655 %{srcpath}/etc/sudoers.d/etc/sudoers.d/cuttlefish-orchestration %{buildroot}/etc/sudoers.d/cuttlefish-orchestration
+install -m 655 %{srcpath}/etc/sudoers.d/cuttlefish-orchestration %{buildroot}/etc/sudoers.d/cuttlefish-orchestration
 
 
 %files
@@ -44,26 +44,28 @@ install -m 655 %{srcpath}/etc/sudoers.d/etc/sudoers.d/cuttlefish-orchestration %
 
 
 %post
-if ! getent passwd _cvd-executor > /dev/null 2>&1 then
-    adduser --system --disabled-password --disabled-login --home /var/empty \
-    --no-create-home --quiet --force-badname --group _cvd-executor
-    # The cvdnetwork group is created by cuttlefish-base
+# The cvdnetwork group is created by cuttlefish-base
+if ! getent passwd _cvd-executor > /dev/null 2>&1; then
+    adduser --system --home /var/empty --no-create-home _cvd-executor
+    # getent group _cvd-executor || groupadd _cvd-executor
     usermod -a -G cvdnetwork,kvm _cvd-executor
 fi
 
 # Reload nginx having the orchestration configuration
-service nginx reload
+# service nginx reload
 
 %preun
-systemctl stop cuttlefish
-rm /usr/bin/cvd
+
 
 %postun
-userdel _cvd-executor
-groupdel _cvd-executor
+if getent passwd _cvd-executor > /dev/null 2>&1; then
+    userdel _cvd-executor
+    groupdel _cvd-executor
+fi
+
 
 # Reload nginx without the orchestration configuration
-service nginx reload
+# service nginx reload
 
 %changelog
 * Thu Jul 11 2024 Martin Zeitler <?>

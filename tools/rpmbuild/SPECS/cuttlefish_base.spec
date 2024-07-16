@@ -23,7 +23,6 @@ Requires:       wayland-utils
 
 %build
 cd ../../../base/cvd
-bazel query ...
 bazel build cuttlefish:cvd --spawn_strategy=local
 
 %install
@@ -67,10 +66,10 @@ ln -sf /usr/lib/cuttlefish-common/bin/cvd /usr/bin/cvd
 getent group cvdnetwork > /dev/null 2>&1 || groupadd --system cvdnetwork
 udevadm control --reload-rules && udevadm trigger
 systemctl restart NetworkManager
-systemctl start cuttlefish
+# systemctl start cuttlefish
 
 %preun
-systemctl stop cuttlefish
+# systemctl stop cuttlefish
 rm /usr/bin/cvd
 
 %postun
