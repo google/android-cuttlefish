@@ -2181,10 +2181,6 @@ std::string GetConfigFilePath(const CuttlefishConfig& config) {
   return config.AssemblyPath("cuttlefish_config.json");
 }
 
-std::string GetCuttlefishEnvPath() {
-  return StringFromEnv("HOME", ".") + "/.cuttlefish.sh";
-}
-
 std::string GetSeccompPolicyDir() {
   static const std::string kSeccompDir = std::string("usr/share/crosvm/") +
                                          cuttlefish::HostArchStr() +
