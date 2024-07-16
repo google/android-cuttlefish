@@ -59,6 +59,8 @@ ebtables=${ebtables:-ebtables}
 iptables=$(which iptables-legacy)
 iptables=${iptables:-iptables}
 
+# Make sure these directories exist, since they are used multiple times
+mkdir -p /run /var/run
 
 # Start DHCP server on an interface
 # $1 = interface to bind to
