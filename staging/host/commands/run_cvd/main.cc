@@ -204,18 +204,6 @@ void ConfigureLogs(const CuttlefishConfig& config,
   ::android::base::SetLogger(LogToStderrAndFiles({log_path}, prefix));
 }
 
-Result<void> ChdirIntoRuntimeDir(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  // Change working directory to the instance directory as early as possible to
-  // ensure all host processes have the same working dir. This helps stop_cvd
-  // find the running processes when it can't establish a communication with the
-  // launcher.
-  CF_EXPECT(chdir(instance.instance_dir().c_str()) == 0,
-            "Unable to change dir into instance directory \""
-                << instance.instance_dir() << "\": " << strerror(errno));
-  return {};
-}
-
 }  // namespace
 
 Result<void> RunCvdMain(int argc, char** argv) {
@@ -228,7 +216,6 @@ Result<void> RunCvdMain(int argc, char** argv) {
   auto environment = config->ForDefaultEnvironment();
   auto instance = config->ForDefaultInstance();
   ConfigureLogs(*config, instance);
-  CF_EXPECT(ChdirIntoRuntimeDir(instance));
 
   fruit::Injector<> injector(runCvdComponent, config, &environment, &instance);
 
