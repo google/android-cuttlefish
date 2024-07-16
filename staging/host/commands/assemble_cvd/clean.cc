@@ -133,8 +133,6 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
 Result<void> CleanPriorFiles(const std::set<std::string>& preserving,
                              const std::vector<std::string>& clean_dirs) {
   std::vector<std::string> paths = {
-      // The environment file
-      GetCuttlefishEnvPath(),
       // The global link to the config file
       GetGlobalConfigFileLink(),
   };
