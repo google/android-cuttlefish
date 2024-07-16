@@ -24,7 +24,7 @@ Requires:       openssl, cuttlefish-base
 cd ../../../frontend
 ./build-webui.sh
 
-cd ../../frontend/src/host_orchestrator
+cd src/host_orchestrator
 go build
 
 cd ../operator

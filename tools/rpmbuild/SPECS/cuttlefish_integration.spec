@@ -44,11 +44,6 @@ install -m 655 %{srcpath}/cuttlefish-integration.udev %{buildroot}/lib/udev/rule
 # install -m 655 %{srcpath}/usr/share/doc/copyright %{buildroot}/usr/share/doc/copyright
 
 
-%post
-getent group cvdnetwork || groupadd cvdnetwork
-udevadm control --reload-rules && udevadm trigger
-
-
 %files
 /etc/default/instance_configs.cfg.template
 /etc/modprobe.d/cuttlefish-integration.conf
