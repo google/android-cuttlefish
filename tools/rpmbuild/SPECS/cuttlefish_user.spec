@@ -81,6 +81,15 @@ done
 #%%license add-license-file-here
 #%%doc add-docs-here
 
+%post
+if ! getent passwd _cutf-operator > /dev/null 2>&1 then
+    # The cvdnetwork group is created by cuttlefish-base
+    adduser --system --disabled-password --disabled-login --home /var/empty \
+    --no-create-home --quiet --force-badname --ingroup cvdnetwork _cutf-operator
+fi
+
+%postun
+userdel _cutf-operator
 
 %changelog
 * Thu Jul 11 2024 Martin Zeitler <?>

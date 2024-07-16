@@ -10,10 +10,10 @@ BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  curl-devel, openssl-devel, protobuf-devel, protobuf-compiler
-Requires:       redhat-lsb-core, ebtables-legacy, iptables-legacy, bridge-utils, curl, dnsmasq, e2fsprogs, ebtables, iptables, bsdtar, libcurl, libdrm, mesa-libGL, libusb, libXext, net-tools, openssl, python3, util-linux
+Requires:       redhat-lsb-core, ebtables-legacy, iptables-legacy, bridge-utils, dnsmasq, libfdt, curl, e2fsprogs, ebtables, iptables, bsdtar, libcurl, libdrm, mesa-libGL, libusb, libXext, net-tools, openssl, python3, util-linux
 Requires:       fmt-devel, gflags-devel, jsoncpp-devel, protobuf-devel, openssl-devel, libxml2-devel
 Requires:       wayland-utils
-#Requires:      f2fs-tools, libfdt1, libx11-6, libz3-4
+#Requires:      f2fs-tools, libx11-6, libz3-4
 
 %description
 
@@ -35,6 +35,7 @@ mkdir -p %{buildroot}/etc/rc.d/init.d
 mkdir -p %{buildroot}/etc/NetworkManager/conf.d
 mkdir -p %{buildroot}/etc/modules-load.d
 mkdir -p %{buildroot}/etc/security/limits.d
+mkdir -p %{buildroot}/lib/systemd/system
 mkdir -p %{buildroot}/lib/udev/rules.d/
 mkdir -p %{buildroot}/usr/share/doc/cuttlefish-base
 
@@ -46,6 +47,9 @@ install -m 655 %{srcpath}/etc/security/limits.d/1_cuttlefish.conf %{buildroot}/e
 %define srcpath ../../../base/debian
 install -m 655 %{srcpath}/cuttlefish-base.cuttlefish-host-resources.default %{buildroot}/etc/default/cuttlefish-host-resources
 install -m 655 %{srcpath}/cuttlefish-base.cuttlefish-host-resources.init %{buildroot}/etc/rc.d/init.d/cuttlefish-host-resources
+
+%define srcpath ../../../base/rhel
+install -m 655 %{srcpath}/cuttlefish.service %{buildroot}/lib/systemd/system/cuttlefish.service
 
 %define srcpath ../../../base/cvd/bazel-bin
 install -m 755 %{srcpath}/cuttlefish/cvd %{buildroot}/usr/lib/cuttlefish-common/bin/cvd
@@ -63,8 +67,10 @@ ln -sf /usr/lib/cuttlefish-common/bin/cvd /usr/bin/cvd
 getent group cvdnetwork > /dev/null 2>&1 || groupadd --system cvdnetwork
 udevadm control --reload-rules && udevadm trigger
 systemctl restart NetworkManager
+systemctl start cuttlefish
 
 %preun
+systemctl stop cuttlefish
 rm /usr/bin/cvd
 
 %postun
@@ -78,8 +84,9 @@ groupdel cvdnetwork
 /etc/NetworkManager/conf.d/99-cuttlefish.conf
 /etc/modules-load.d/cuttlefish-common.conf
 /etc/security/limits.d/1_cuttlefish.conf
-/usr/lib/cuttlefish-common/bin/cvd
 /usr/bin/install_zip.sh
+/lib/systemd/system/cuttlefish.service
+/usr/lib/cuttlefish-common/bin/cvd
 /usr/lib/cuttlefish-common/bin/unpack_boot_image.py
 /usr/lib/cuttlefish-common/bin/capability_query.py
 /lib/udev/rules.d/60-cuttlefish-integration.rules
