@@ -121,12 +121,14 @@ int InvokeAssembler(const std::string& assembler_stdin,
 }
 
 Subprocess StartRunner(SharedFD runner_stdin,
+                       const CuttlefishConfig::InstanceSpecific& instance,
                        const std::vector<std::string>& argv) {
   Command run_cmd(kRunnerBin);
   for (const auto& arg : argv) {
     run_cmd.AddParameter(arg);
   }
   run_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, runner_stdin);
+  run_cmd.SetWorkingDirectory(instance.instance_dir());
   return run_cmd.Start();
 }
 
@@ -436,13 +438,12 @@ int CvdInternalStartMain(int argc, char** argv) {
   setenv(kCuttlefishConfigEnvVarName, conf_path.c_str(), /* overwrite */ true);
 
   std::vector<Subprocess> runners;
-  for (const auto& instance_num : *instance_nums) {
+  for (const auto& instance : config->Instances()) {
     SharedFD runner_stdin = SharedFD::Open("/dev/null", O_RDONLY);
-    std::string instance_num_str = std::to_string(instance_num);
-    setenv(kCuttlefishInstanceEnvVarName, instance_num_str.c_str(),
+    setenv(kCuttlefishInstanceEnvVarName, instance.id().c_str(),
            /* overwrite */ 1);
 
-    auto run_proc = StartRunner(std::move(runner_stdin),
+    auto run_proc = StartRunner(std::move(runner_stdin), instance,
                                 forwarder.ArgvForSubprocess(kRunnerBin));
     runners.push_back(std::move(run_proc));
   }
