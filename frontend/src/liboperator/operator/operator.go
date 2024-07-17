@@ -513,7 +513,6 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		log.Print("Error while connect to ADB: ", err)
 		return
 	}
-	defer tcpConn.Close()
 
 	upgrader := websocket.Upgrader{}
 	wsConn, err := upgrader.Upgrade(w, r, nil)
@@ -526,7 +525,6 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		pos:    0,
 		buf:    nil,
 	}
-	defer wsWrapper.Close()
 
 	// Redirect WebSocket to ADB tcp socket
 	go func() {
@@ -534,6 +532,7 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		wsWrapper.Close()
 	}()
 	io.Copy(tcpConn, wsWrapper)
+	tcpConn.Close()
 }
 
 // Wrapper for implementing io.ReadWriteCloser of websocket.Conn
