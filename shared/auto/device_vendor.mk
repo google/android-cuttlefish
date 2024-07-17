@@ -135,8 +135,8 @@ CUSTOMIZE_EVS_SERVICE_PARAMETER := true
 PRODUCT_PACKAGES += android.hardware.automotive.evs-aidl-default-service
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/auto/evs/init.evs.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.evs.rc
-BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/evs
 endif
+BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/evs
 
 ifeq ($(ENABLE_SAMPLE_EVS_APP), true)
 PRODUCT_COPY_FILES += \
