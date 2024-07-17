@@ -34,11 +34,30 @@ using ::android::hardware::automotive::vehicle::DefaultVehicleHal;
 using ::android::hardware::automotive::vehicle::virtualization::
     GRPCVehicleHardware;
 
-const char* SERVICE_NAME =
+const char* kServiceName =
     "android.hardware.automotive.vehicle.IVehicle/default";
-const char* BOOTCONFIG_PORT = "ro.boot.vhal_proxy_server_port";
+const char* kBootConfigPort = "ro.boot.vhal_proxy_server_port";
+const char* kAutoEthNamespaceSetupProp =
+    "android.car.auto_eth_namespace_setup_complete";
+const char* kVsockServiceName = "vendor.vehicle-cf-vsock";
+const char* kEthServerAddr = "192.168.98.1";
 
-int main(int /* argc */, char* /* argv */[]) {
+int main(int argc, char* argv[]) {
+  bool useVsock = false;
+
+  if (argc > 1 && strcmp(argv[1], "vsock") == 0) {
+    if (property_get_bool(kAutoEthNamespaceSetupProp, false)) {
+      LOG(INFO) << "Skip starting VHAL in vsock mode since ethernet is enabled";
+      return 0;
+    }
+
+    // If we are not exiting intentionally, we need to turn off oneshot so that
+    // VHAL will be restarted in case it exits. vendor.vehicle-cf-eth does not
+    // have oneshot in the rc file so nothing to do here.
+    property_set("ctl.oneshot_off", kVsockServiceName);
+    useVsock = true;
+  }
+
   LOG(INFO) << "Starting thread pool...";
   if (!ABinderProcess_setThreadPoolMaxThreadCount(4)) {
     LOG(ERROR) << "Failed to set thread pool max thread count.";
@@ -46,24 +65,30 @@ int main(int /* argc */, char* /* argv */[]) {
   }
   ABinderProcess_startThreadPool();
 
-  VsockConnectionInfo vsock = {
-      .cid = VMADDR_CID_HOST,
-      .port =
-          static_cast<unsigned int>(property_get_int32(BOOTCONFIG_PORT, -1)),
-  };
-  CHECK(vsock.port >= 0) << "Failed to read port number from: "
-                         << BOOTCONFIG_PORT;
-  std::string vsockStr = vsock.str();
+  unsigned int port =
+      static_cast<unsigned int>(property_get_int32(kBootConfigPort, -1));
+  CHECK(port >= 0) << "Failed to read port number from: " << kBootConfigPort;
 
-  LOG(INFO) << "Connecting to vsock server at " << vsockStr;
+  std::string serverAddr;
+  if (useVsock) {
+    VsockConnectionInfo vsock = {
+        .cid = VMADDR_CID_HOST,
+        .port = port,
+    };
+    serverAddr = vsock.str();
+    LOG(INFO) << "Connecting to vsock server at " << serverAddr;
+  } else {
+    serverAddr = fmt::format("{}:{}", kEthServerAddr, port);
+    LOG(INFO) << "Connecting to ethernet server at " << serverAddr;
+  }
 
   constexpr auto maxConnectWaitTime = std::chrono::seconds(5);
-  auto hardware = std::make_unique<GRPCVehicleHardware>(vsockStr);
+  auto hardware = std::make_unique<GRPCVehicleHardware>(serverAddr);
   if (const auto connected = hardware->waitForConnected(maxConnectWaitTime)) {
-    LOG(INFO) << "Connected to vsock server at " << vsockStr;
+    LOG(INFO) << "Connected to GRPC server at " << serverAddr;
   } else {
     LOG(INFO)
-        << "Failed to connect to vsock server at " << vsockStr
+        << "Failed to connect to GRPC server at " << serverAddr
         << ", check if it is working, or maybe the server is coming up late.";
     return 1;
   }
@@ -72,15 +97,15 @@ int main(int /* argc */, char* /* argv */[]) {
       ::ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware));
   LOG(INFO) << "Registering as service...";
   binder_exception_t err =
-      AServiceManager_addService(vhal->asBinder().get(), SERVICE_NAME);
-  CHECK(err == EX_NONE) << "Failed to register " << SERVICE_NAME
+      AServiceManager_addService(vhal->asBinder().get(), kServiceName);
+  CHECK(err == EX_NONE) << "Failed to register " << kServiceName
                         << " service, exception: " << err << ".";
 
   LOG(INFO) << "Vehicle Service Ready.";
 
   ABinderProcess_joinThreadPool();
 
-  LOG(INFO) << "Vehicle Service Exiting.";
+  LOG(INFO) << "Vehicle Service Exiting, must not happen!.";
 
   return 0;
 }

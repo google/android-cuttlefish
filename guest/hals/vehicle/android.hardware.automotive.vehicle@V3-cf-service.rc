@@ -1,4 +1,0 @@
-service vendor.vehicle-hal-trout /vendor/bin/hw/android.hardware.automotive.vehicle@V3-cf-service
-    class early_hal
-    user vehicle_network
-    group system inet
