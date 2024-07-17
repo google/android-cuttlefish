@@ -8,11 +8,12 @@ URL:            https://github.com/google/android-cuttlefish
 
 BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-
 BuildRequires:  curl-devel, openssl-devel, protobuf-devel, protobuf-compiler
 
-Requires:       shadow-utils, redhat-lsb-core, ebtables-legacy, iproute, iptables-legacy, bridge-utils, dnsmasq, libfdt, e2fsprogs, ebtables, iptables, bsdtar
-Requires:       libcurl, libdrm, mesa-libGL, libusb, libXext, net-tools, openssl, python3, util-linux, curl >= 7.63.0, glibc >= 2.34, libgcc >= 3.0, libstdc++ >= 11
+Requires:       shadow-utils, redhat-lsb-core, ebtables-legacy, iproute
+Requires:       iptables-legacy, bridge-utils, dnsmasq, libfdt, e2fsprogs, ebtables, iptables, bsdtar
+Requires:       libcurl, libdrm, mesa-libGL, libusb, libXext, net-tools, openssl, python3, util-linux
+Requires:       curl >= 7.63.0, glibc >= 2.34, libgcc >= 3.0, libstdc++ >= 11
 Requires:       fmt-devel, gflags-devel, jsoncpp-devel, protobuf-devel, openssl-devel, libxml2-devel
 #Requires:      f2fs-tools, libx11-6, libz3-4
 # libwayland-client0, libwayland-server0
@@ -21,7 +22,8 @@ Requires:       wayland-utils
 
 %description
 Cuttlefish Android Virtual Device
-Contains set of tools and binaries required to boot up and manage Cuttlefish Android Virtual Device that are used in all deployments.
+Contains set of tools and binaries required to boot up and manage
+Cuttlefish Android Virtual Device that are used in all deployments.
 
 %prep
 %define workdir `pwd`
