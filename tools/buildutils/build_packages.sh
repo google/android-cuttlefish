@@ -1,13 +1,8 @@
 #!/bin/bash
 
-set -x
+set -e -x
 
 REPO_DIR="$(realpath "$(dirname "$0")/../..")"
-# one `which` statement will always produce an error.
-APT_CMD=`which apt 2> /dev/null`
-DNF_CMD=`which dnf 2> /dev/null`
-
-set -e
 
 function install_debuild_dependencies() {
   echo "Installing debuild dependencies"
@@ -34,23 +29,22 @@ function build_spec() {
   echo "Installing package dependencies"
   sudo dnf builddep --skip-unavailable $specfile
   echo "Building packages"
-  rpmbuild \
-    --define "_topdir `pwd`/tools/rpmbuild" \
-    -v -ba $specfile
+  rpmbuild --define "_topdir `pwd`/tools/rpmbuild" -v -ba $specfile
 }
 
-if [[ ! -z ${APT_CMD} ]]; then
+if [[ -f /bin/dnf ]]; then
+  build_spec cuttlefish_base.spec
+  build_spec cuttlefish_user.spec
+  build_spec cuttlefish_integration.spec
+  build_spec cuttlefish_orchestration.spec
+  exit 0
+else
   INSTALL_BAZEL="$(dirname $0)/installbazel.sh"
   sudo "${INSTALL_BAZEL}"
   install_debuild_dependencies
   build_package "${REPO_DIR}/base"
   build_package "${REPO_DIR}/frontend"
-elif [[ ! -z ${DNF_CMD} ]]; then
-  build_spec cuttlefish_base.spec
-  build_spec cuttlefish_user.spec
-  build_spec cuttlefish_integration.spec
-  build_spec cuttlefish_orchestration.spec
-else
-    exit 1;
+  exit 0
 fi
+exit 1
 
