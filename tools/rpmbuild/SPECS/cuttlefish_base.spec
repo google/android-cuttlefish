@@ -1,7 +1,7 @@
 Name:           cuttlefish-base
 Version:        0.9.29
 Release:        1%{?dist}
-Summary:        Cuttlefish Android Virtual Device companion package
+Summary:        Cuttlefish Android Virtual Device
 
 License:        Apache License 2.0
 URL:            https://github.com/google/android-cuttlefish
@@ -20,7 +20,7 @@ Requires:       wayland-utils
 
 
 %description
-Cuttlefish Android Virtual Device companion package
+Cuttlefish Android Virtual Device
 Contains set of tools and binaries required to boot up and manage Cuttlefish Android Virtual Device that are used in all deployments.
 
 %prep
