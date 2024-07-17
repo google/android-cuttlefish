@@ -245,7 +245,11 @@ Result<void> ProcessMonitor::StartSubprocesses(
     if (Contains(properties_.strace_commands_, short_name)) {
       options.Strace(properties.strace_log_dir_ + "/strace-" + short_name);
     }
-    if (properties.sandbox_processes_ && monitored.can_sandbox) {
+    // TODO(schuffelen): Remove this code.
+    // Since run_cvd is sandboxed higher than this using the sandboxer_proxy
+    // technique to intercept fork/exec calls, this code no longer has to be
+    // sandbox-aware, and should make simpler fork/exec calls when it can.
+    if (false && properties.sandbox_processes_ && monitored.can_sandbox) {
       std::vector<std::string> sandbox_arguments = {
           HostBinaryPath("process_sandboxer"),
           "--log_dir=" + properties.strace_log_dir_,

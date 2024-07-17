@@ -32,6 +32,7 @@ cc_binary_host {
         "policies/kernel_log_monitor.cpp",
         "policies/logcat_receiver.cpp",
         "policies/process_sandboxer_test_hello_world.cpp",
+        "policies/run_cvd.cpp",
         "policies/secure_env.cpp",
         "poll_callback.cpp",
         "sandbox_manager.cpp",
