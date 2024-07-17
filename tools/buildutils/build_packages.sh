@@ -1,7 +1,10 @@
 #!/bin/bash
 REPO_DIR="$(realpath "$(dirname "$0")/../..")"
-APT_CMD=$(which apt 2>/dev/null)
-DNF_CMD=$(which dnf 2>/dev/null)
+# one `which` statements will always produce an error.
+APT_CMD=`which apt 2> /dev/null`
+DNF_CMD=`which dnf 2> /dev/null`
+
+set -e -x
 
 function install_debuild_dependencies() {
   echo "Installing debuild dependencies"
