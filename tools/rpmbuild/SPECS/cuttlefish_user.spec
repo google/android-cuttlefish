@@ -1,32 +1,30 @@
 Name:           cuttlefish-user
 Version:        0.9.29
 Release:        1%{?dist}
-Summary:        Virtual Device for Android host-side utilities
+Summary:        Contains the host signaling server supporting multi-device flows over WebRTC.
 
 License:        Apache License 2.0
-URL:            https://github.com/google/android-cuttlefish      
-#Source0:        cuttlefish_frontend.tar.gz
+URL:            https://github.com/google/android-cuttlefish
 
 BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  golang-bin
-Requires:       openssl, cuttlefish-base
+Requires:       cuttlefish-base, openssl, shadow-utils
 
 %description
+Cuttlefish Android Virtual Device companion package
+Contains the host signaling server supporting multi-device flows over WebRTC.
 
 
 %prep
-#%%autosetup -v
 
 
 %build
 cd ../../../frontend
 ./build-webui.sh
-
 cd src/host_orchestrator
 go build
-
 cd ../operator
 go build
 
@@ -38,7 +36,6 @@ mkdir -p %{buildroot}/usr/bin
 mkdir -p %{buildroot}/usr/lib/cuttlefish-common/bin
 mkdir -p %{buildroot}/usr/share/cuttlefish-common/operator/intercept/js
 mkdir -p %{buildroot}/usr/share/cuttlefish-common/operator/static
-mkdir -p %{buildroot}/usr/share/doc/cuttlefish-user
 
 
 %define srcpath ../../../frontend/src
@@ -67,21 +64,22 @@ done
 /usr/share/cuttlefish-common/operator/static/runtime.*
 /usr/share/cuttlefish-common/operator/static/styles.*
 
-#/usr/share/doc/cuttlefish-user/changelog.gz
-#/usr/share/doc/cuttlefish-user/copyright
-
 #%%license add-license-file-here
 #%%doc add-docs-here
 
 %post
 ln -sf /usr/lib/cuttlefish-common/bin/host_orchestrator /usr/bin/cvd_host_orchestrator
+
 # The cvdnetwork group is created by cuttlefish-base
 if ! getent passwd _cutf-operator > /dev/null 2>&1 ; then
     adduser --system --shell /sbin/nologin --home /var/empty --no-create-home --gid cvdnetwork _cutf-operator
 fi
 
 %preun
-rm /usr/bin/cvd_host_orchestrator
+if [ -f /usr/bin/cvd_host_orchestrator ]; then
+    rm /usr/bin/cvd_host_orchestrator
+fi
+
 
 %postun
 if getent passwd _cutf-operator > /dev/null 2>&1; then

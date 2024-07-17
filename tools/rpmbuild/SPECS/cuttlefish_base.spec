@@ -1,22 +1,27 @@
 Name:           cuttlefish-base
 Version:        0.9.29
 Release:        1%{?dist}
-Summary:        Virtual Device for Android host-side utilities
+Summary:        Cuttlefish Android Virtual Device companion package
 
 License:        Apache License 2.0
-URL:            https://github.com/google/android-cuttlefish      
+URL:            https://github.com/google/android-cuttlefish
 
 BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  curl-devel, openssl-devel, protobuf-devel, protobuf-compiler
-Requires:       redhat-lsb-core, ebtables-legacy, iptables-legacy, bridge-utils, dnsmasq, libfdt, curl, e2fsprogs, ebtables, iptables, bsdtar, libcurl, libdrm, mesa-libGL, libusb, libXext, net-tools, openssl, python3, util-linux
+
+Requires:       shadow-utils, redhat-lsb-core, ebtables-legacy, iproute, iptables-legacy, bridge-utils, dnsmasq, libfdt, e2fsprogs, ebtables, iptables, bsdtar
+Requires:       libcurl, libdrm, mesa-libGL, libusb, libXext, net-tools, openssl, python3, util-linux, curl >= 7.63.0, glibc >= 2.34, libgcc >= 3.0, libstdc++ >= 11
 Requires:       fmt-devel, gflags-devel, jsoncpp-devel, protobuf-devel, openssl-devel, libxml2-devel
-Requires:       wayland-utils
 #Requires:      f2fs-tools, libx11-6, libz3-4
+# libwayland-client0, libwayland-server0
+Requires:       wayland-utils
+
 
 %description
-
+Cuttlefish Android Virtual Device companion package
+Contains set of tools and binaries required to boot up and manage Cuttlefish Android Virtual Device that are used in all deployments.
 
 %prep
 %define workdir `pwd`
@@ -38,7 +43,6 @@ mkdir -p %{buildroot}/etc/modules-load.d
 mkdir -p %{buildroot}/etc/security/limits.d
 mkdir -p %{buildroot}/lib/systemd/system
 mkdir -p %{buildroot}/lib/udev/rules.d/
-mkdir -p %{buildroot}/usr/share/doc/cuttlefish-base
 
 %define srcpath ../../../base/host/packages/cuttlefish-base
 install -m 655 %{srcpath}/etc/NetworkManager/conf.d/99-cuttlefish.conf %{buildroot}/etc/NetworkManager/conf.d/99-cuttlefish.conf
