@@ -57,6 +57,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
 
   builders[host.HostToolExe("kernel_log_monitor")] = KernelLogMonitorPolicy;
   builders[host.HostToolExe("logcat_receiver")] = LogcatReceiverPolicy;
+  builders[host.HostToolExe("run_cvd")] = RunCvdPolicy;
   builders[host.HostToolExe("secure_env")] = SecureEnvPolicy;
 
   // TODO(schuffelen): Don't include test policies in the production impl
