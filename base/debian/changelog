@@ -1,6 +1,14 @@
-cuttlefish-common (0.9.30) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.30) unstable; urgency=medium
 
-  * 
+  [Jorge E. Moreira]
+  * Use iptables when iptables-legacy is not available
+  * Cvd instances stored in databasse during preparation stage
+
+  [A. Cody Schuffelen]
+  * Improvements to fetch_cvd
+
+  [Chad Reynolds]
+  * Download artifacts to temporary file first
 
  -- Chad Reynolds <chadreynolds@google.com>  Tue, 11 Jun 2024 16:02:38 -0700
 
