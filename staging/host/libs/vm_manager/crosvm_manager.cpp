@@ -273,6 +273,9 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
   gpu_params_json["surfaceless"] = true;
   gpu_params_json["external-blob"] = instance.enable_gpu_external_blob();
   gpu_params_json["system-blob"] = instance.enable_gpu_system_blob();
+  if (!instance.gpu_renderer_features().empty()) {
+    gpu_params_json["renderer-features"] = instance.gpu_renderer_features();
+  }
 
   if (instance.hwcomposer() != kHwComposerNone) {
     // "displays": [
