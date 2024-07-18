@@ -19,6 +19,11 @@
 #include <sys/stat.h>
 
 #include <map>
+#include <string>
+#include <vector>
+
+#include <android-base/strings.h>
+#include <fmt/format.h>
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
@@ -66,7 +71,7 @@ Result<HostToolTarget> HostToolTarget::Create(
 
   for (auto& [op, op_impl] : op_to_impl_map) {
     const std::string bin_path =
-        ConcatToString(artifacts_path, "/bin/", op_impl.bin_name_);
+        ConcatToString(bin_dir_path, "/", op_impl.bin_name_);
     Command command(bin_path);
     command.AddParameter("--helpxml");
     // b/276497044
@@ -136,10 +141,14 @@ Result<FlagInfo> HostToolTarget::GetFlagInfo(
 
 Result<std::string> HostToolTarget::GetBinName(
     const std::string& operation) const {
-  CF_EXPECT(Contains(op_to_impl_map_, operation),
-            "Operation \"" << operation << "\" is not supported by "
-                           << "the host tool target object at "
-                           << artifacts_path_);
+  auto binary_find = OpToBinsMap().find(operation);
+  auto binaries = binary_find != OpToBinsMap().end()
+                      ? android::base::Join(binary_find->second, ", ")
+                      : "";
+  CF_EXPECTF(Contains(op_to_impl_map_, operation),
+             "Operation \"{}\" is not supported by the host tool target object "
+             "at \"{}\".  Looked for \"{}\" binaries in \"{}/bin/\"",
+             operation, artifacts_path_, binaries, artifacts_path_);
   return op_to_impl_map_.at(operation).bin_name_;
 }
 
