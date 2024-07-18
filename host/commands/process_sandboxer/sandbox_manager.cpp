@@ -39,7 +39,7 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
-using absl::ErrnoToStatusCode;
+using absl::ErrnoToStatus;
 using absl::OkStatus;
 using absl::Status;
 using absl::StatusCode;
@@ -92,26 +92,26 @@ StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
   manager->runtime_dir_ =
       absl::StrFormat("/tmp/sandbox_manager.%u.XXXXXX", getpid());
   if (mkdtemp(manager->runtime_dir_.data()) == nullptr) {
-    return Status(ErrnoToStatusCode(errno), "mkdtemp failed");
+    return ErrnoToStatus(errno, "mkdtemp failed");
   }
   VLOG(1) << "Created temporary directory '" << manager->runtime_dir_ << "'";
 
   sigset_t mask;
   if (sigfillset(&mask) < 0) {
-    return Status(ErrnoToStatusCode(errno), "sigfillset failed");
+    return ErrnoToStatus(errno, "sigfillset failed");
   }
   // TODO(schuffelen): Explore interaction between catching SIGCHLD and sandbox2
   if (sigdelset(&mask, SIGCHLD) < 0) {
-    return Status(ErrnoToStatusCode(errno), "sigdelset failed");
+    return ErrnoToStatus(errno, "sigdelset failed");
   }
   if (sigprocmask(SIG_SETMASK, &mask, NULL) < 0) {
-    return Status(ErrnoToStatusCode(errno), "sigprocmask failed");
+    return ErrnoToStatus(errno, "sigprocmask failed");
   }
   VLOG(1) << "Blocked signals";
 
   manager->signal_fd_ = signalfd(-1, &mask, SFD_CLOEXEC | SFD_NONBLOCK);
   if (manager->signal_fd_ < 0) {
-    return Status(ErrnoToStatusCode(errno), "signalfd failed");
+    return ErrnoToStatus(errno, "signalfd failed");
   }
   VLOG(1) << "Created signalfd";
   return manager;
@@ -140,7 +140,7 @@ Status SandboxManager::RunProcess(const std::vector<std::string>& argv,
 
   int event_fd = eventfd(0, EFD_CLOEXEC);
   if (event_fd < 0) {
-    return Status(ErrnoToStatusCode(errno), "`eventfd` failed");
+    return ErrnoToStatus(errno, "`eventfd` failed");
   }
 
   if (VLOG_IS_ON(1)) {
@@ -218,7 +218,7 @@ Status SandboxManager::Iterate() {
   }
 
   if (poll(poll_fds.data(), poll_fds.size(), /* timeout = */ 0) < 0) {
-    return Status(ErrnoToStatusCode(errno), "`poll` failed");
+    return ErrnoToStatus(errno, "`poll` failed");
   }
 
   for (const auto& poll_fd : poll_fds) {
@@ -243,7 +243,7 @@ Status SandboxManager::HandleSignal() {
   signalfd_siginfo info;
   auto read_res = read(signal_fd_, &info, sizeof(info));
   if (read_res < 0) {
-    return Status(ErrnoToStatusCode(errno), "`read(signal_fd_, ...)` failed");
+    return ErrnoToStatus(errno, "`read(signal_fd_, ...)` failed");
   } else if (read_res == 0) {
     return Status(StatusCode::kInternal, "read(signal_fd_, ...) returned EOF");
   } else if (read_res != (ssize_t)sizeof(info)) {
