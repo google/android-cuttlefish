@@ -22,6 +22,7 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/request_context.h"

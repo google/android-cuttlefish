@@ -20,7 +20,6 @@
 
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
-#include "host/commands/cvd/selector/instance_record.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -89,8 +88,8 @@ TEST_F(CvdInstanceGroupUnitTest, SearchById) {
   for (auto const& valid_id : valid_ids) {
     auto instances = group_res->FindById(valid_id);
     ASSERT_EQ(instances.size(), 1);
-    const LocalInstance& instance = *instances.cbegin();
-    ASSERT_EQ(instance.InstanceId(), valid_id);
+    auto& instance = *instances.cbegin();
+    ASSERT_EQ(instance.id(), valid_id);
   }
 
   // invalid search

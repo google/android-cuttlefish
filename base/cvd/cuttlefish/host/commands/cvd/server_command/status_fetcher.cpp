@@ -29,6 +29,8 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/selector_constants.h"
@@ -94,12 +96,13 @@ static Result<SharedFD> CreateFileToRedirect(
 }
 
 Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
-    const RequestWithStdio& request, InstanceManager::LocalInstance& instance) {
+    const RequestWithStdio& request,
+    const InstanceManager::LocalInstanceGroup& group, cvd::Instance& instance) {
   // Only running instances are capable of responding to status requests
-  if (instance.State() != cvd::INSTANCE_STATE_RUNNING) {
+  if (instance.state() != cvd::INSTANCE_STATE_RUNNING) {
     Json::Value instance_json;
-    instance_json["instance_name"] = instance.PerInstanceName();
-    instance_json["status"] = HumanFriendlyStateName(instance.State());
+    instance_json["instance_name"] = instance.name();
+    instance_json["status"] = HumanFriendlyStateName(instance.state());
     cvd::Response response;
     response.mutable_command_response();  // set oneof field
     response.mutable_status()->set_code(cvd::Status::OK);
@@ -122,8 +125,8 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   const auto working_dir =
       request.Message().command_request().working_directory();
 
-  auto android_host_out = instance.GroupProto().host_artifacts_path();
-  auto home = instance.GroupProto().home_directory();
+  auto android_host_out = group.Proto().host_artifacts_path();
+  auto home = group.Proto().home_directory();
   auto bin = CF_EXPECT(GetBin(android_host_out));
   auto bin_path = fmt::format("{}/bin/{}", android_host_out, bin);
 
@@ -131,7 +134,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
       cvd_common::ConvertToEnvs(request.Message().command_request().env());
   envs["HOME"] = home;
   // old cvd_internal_status expects CUTTLEFISH_INSTANCE=<k>
-  envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.InstanceId());
+  envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.id());
 
   SharedFD redirect_stdout_fd = CF_EXPECT(CreateFileToRedirect("stdout"));
   SharedFD redirect_stderr_fd = CF_EXPECT(CreateFileToRedirect("stderr"));
@@ -180,15 +183,15 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
     // the instance name.
     instance_status_json[kWebrtcProp] = instance_status_json[kNameProp];
   }
-  instance_status_json[kNameProp] = instance.PerInstanceName();
+  instance_status_json[kNameProp] = instance.name();
 
   auto response = ResponseFromSiginfo(infop);
   if (response.status().code() != cvd::Status::OK) {
-    instance.SetState(cvd::INSTANCE_STATE_UNREACHABLE);
-    instance_manager_.UpdateInstance(instance);
+    instance.set_state(cvd::INSTANCE_STATE_UNREACHABLE);
+    instance_manager_.UpdateInstance(group, instance);
     instance_status_json["warning"] = "cvd status failed";
-    instance_status_json["instance_name"] = instance.PerInstanceName();
-    instance_status_json["status"] = HumanFriendlyStateName(instance.State());
+    instance_status_json["instance_name"] = instance.name();
+    instance_status_json["status"] = HumanFriendlyStateName(instance.state());
   }
 
   return StatusFetcherOutput{
@@ -219,7 +222,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
   auto instance_group =
       CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs));
 
-  std::vector<InstanceManager::LocalInstance> instances;
+  std::vector<cvd::Instance> instances;
   auto instance_record_result =
       instance_manager_.SelectInstance(selector_args, envs);
 
@@ -227,15 +230,12 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
   if (instance_record_result.ok() && !status_the_group_flag) {
     instances.emplace_back(*instance_record_result);
   } else {
-    auto group_instances = CF_EXPECT(instance_manager_.FindInstances(
-        {selector::kGroupNameField, instance_group.GroupName()}));
     if (status_the_group_flag) {
-      instances = std::move(group_instances);
+      instances = instance_group.Instances();
     } else {
-      std::map<int, const InstanceManager::LocalInstance&>
-          sorted_id_instance_map;
-      for (const auto& instance : group_instances) {
-        sorted_id_instance_map.emplace(instance.InstanceId(), instance);
+      std::map<int, const cvd::Instance&> sorted_id_instance_map;
+      for (const auto& instance : instance_group.Instances()) {
+        sorted_id_instance_map.emplace(instance.id(), instance);
       }
       auto first_itr = sorted_id_instance_map.begin();
       instances.emplace_back(first_itr->second);
@@ -247,7 +247,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
   Json::Value instances_json(Json::arrayValue);
   for (auto& instance : instances) {
     auto [status_stderr, instance_status_json, response] =
-        CF_EXPECT(FetchOneInstanceStatus(request, instance));
+        CF_EXPECT(FetchOneInstanceStatus(request, instance_group, instance));
     instances_json.append(instance_status_json);
     entire_stderr_msg.append(status_stderr);
   }

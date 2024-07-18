@@ -17,16 +17,12 @@
 #include "host/commands/cvd/selector/instance_database_utils.h"
 
 #include <regex>
-#include <set>
 #include <sstream>
-#include <string_view>
-#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
 
 #include "common/libs/utils/files.h"
-#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -40,14 +36,6 @@ Result<std::string> GetCuttlefishConfigPath(const std::string& home) {
   CF_EXPECT(FileExists(config_path), "No config file exists");
   return {config_path};
 }
-
-std::string GenInternalGroupName() {
-  std::string_view internal_name{kCvdNamePrefix};  // "cvd-"
-  internal_name.remove_suffix(1);                  // "cvd"
-  return std::string(internal_name);
-}
-
-std::string GenDefaultGroupName() { return GenInternalGroupName(); }
 
 std::string LocalDeviceNameRule(const std::string& group_name,
                                 const std::string& instance_name) {

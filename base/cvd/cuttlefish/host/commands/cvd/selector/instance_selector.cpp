@@ -95,7 +95,7 @@ bool InstanceSelector::IsHomeOverridden(
   return *home_overridden_result;
 }
 
-Result<LocalInstance> InstanceSelector::FindInstance(
+Result<cvd::Instance> InstanceSelector::FindInstance(
     const InstanceDatabase& instance_database) {
   if (queries_.empty()) {
     auto default_instance = CF_EXPECT(FindDefaultInstance(instance_database));
@@ -108,7 +108,7 @@ Result<LocalInstance> InstanceSelector::FindInstance(
   return instance;
 }
 
-Result<LocalInstance> InstanceSelector::FindDefaultInstance(
+Result<cvd::Instance> InstanceSelector::FindDefaultInstance(
     const InstanceDatabase& instance_database) {
   auto group = CF_EXPECT(GetDefaultGroup(instance_database));
   const auto instances = group.Instances();

@@ -211,10 +211,9 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
     }
     for (const auto& instance : group_ptr->Instances()) {
       auto lock =
-          instance_lockfile_manager_.RemoveLockFile(instance.InstanceId());
+          instance_lockfile_manager_.RemoveLockFile(instance.id());
       if (!lock.ok()) {
-        LOG(ERROR) << "Deleting instance Lock file for ID #"
-                   << instance.InstanceId()
+        LOG(ERROR) << "Deleting instance Lock file for ID #" << instance.id()
                    << " failed: " << lock.error().Message();
       }
     }

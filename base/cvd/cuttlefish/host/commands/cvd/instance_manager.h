@@ -26,7 +26,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-#include "host/commands/cvd/common_utils.h"
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/creation_analyzer.h"
 #include "host/commands/cvd/selector/group_selector.h"
@@ -41,7 +41,6 @@ class InstanceManager {
  public:
   using GroupCreationInfo = selector::GroupCreationInfo;
   using LocalInstanceGroup = selector::LocalInstanceGroup;
-  using LocalInstance = selector::LocalInstance;
   using GroupSelector = selector::GroupSelector;
   using InstanceSelector = selector::InstanceSelector;
   using Queries = selector::Queries;
@@ -60,7 +59,7 @@ class InstanceManager {
                                          const cvd_common::Envs& envs,
                                          const Queries& extra_queries = {});
 
-  Result<LocalInstance> SelectInstance(
+  Result<cvd::Instance> SelectInstance(
       const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
       const Queries& extra_queries = {});
 
@@ -68,7 +67,8 @@ class InstanceManager {
   Result<LocalInstanceGroup> CreateInstanceGroup(
       const selector::GroupCreationInfo& group_info);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
-  Result<void> UpdateInstance(const LocalInstance& instance);
+  Result<void> UpdateInstance(const LocalInstanceGroup& group,
+                              const cvd::Instance& instance);
   Result<bool> RemoveInstanceGroup(const std::string&);
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
@@ -79,11 +79,6 @@ class InstanceManager {
   Result<std::vector<LocalInstanceGroup>> FindGroups(const Query& query) const;
   Result<std::vector<LocalInstanceGroup>> FindGroups(
       const Queries& queries) const;
-  Result<std::vector<LocalInstance>> FindInstances(
-      const Query& query) const;
-  Result<std::vector<LocalInstance>> FindInstances(
-      const Queries& queries) const;
-
   Result<LocalInstanceGroup> FindGroup(const Query& query) const;
   Result<LocalInstanceGroup> FindGroup(const Queries& queries) const;
   Result<void> LoadFromJson(const Json::Value&);
