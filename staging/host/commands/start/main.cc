@@ -109,19 +109,15 @@ std::string SubtoolPath(const std::string& subtool_base) {
 std::string kAssemblerBin = SubtoolPath("assemble_cvd");
 std::string kRunnerBin = SubtoolPath("run_cvd");
 
-Subprocess StartAssembler(SharedFD assembler_stdin, SharedFD assembler_stdout,
-                          const std::vector<std::string>& argv) {
+int InvokeAssembler(const std::string& assembler_stdin,
+                    std::string& assembler_stdout,
+                    const std::vector<std::string>& argv) {
   Command assemble_cmd(kAssemblerBin);
   for (const auto& arg : argv) {
     assemble_cmd.AddParameter(arg);
   }
-  if (assembler_stdin->IsOpen()) {
-    assemble_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn,
-                               assembler_stdin);
-  }
-  assemble_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
-                             assembler_stdout);
-  return assemble_cmd.Start();
+  return RunWithManagedStdio(std::move(assemble_cmd), &assembler_stdin,
+                             &assembler_stdout, nullptr);
 }
 
 Subprocess StartRunner(SharedFD runner_stdin,
@@ -134,17 +130,12 @@ Subprocess StartRunner(SharedFD runner_stdin,
   return run_cmd.Start();
 }
 
-void WriteFiles(FetcherConfig fetcher_config, SharedFD out) {
+std::string WriteFiles(FetcherConfig fetcher_config) {
   std::stringstream output_streambuf;
   for (const auto& file : fetcher_config.get_cvd_files()) {
     output_streambuf << file.first << "\n";
   }
-  std::string output_string = output_streambuf.str();
-  int written = WriteAll(out, output_string);
-  if (written < 0) {
-    LOG(FATAL) << "Could not write file report (" << strerror(out->GetErrno())
-               << ")";
-  }
+  return output_streambuf.str();
 }
 
 std::string ValidateMetricsConfirmation(std::string use_metrics) {
@@ -382,12 +373,6 @@ int CvdInternalStartMain(int argc, char** argv) {
     LOG(INFO) << "Host changed from last run: " << HostToolsUpdated();
   }
 
-  SharedFD assembler_stdout, assembler_stdout_capture;
-  SharedFD::Pipe(&assembler_stdout_capture, &assembler_stdout);
-
-  SharedFD launcher_report, assembler_stdin;
-  SharedFD::Pipe(&assembler_stdin, &launcher_report);
-
   auto instance_nums = InstanceNumsCalculator().FromGlobalGflags().Calculate();
   if (!instance_nums.ok()) {
     LOG(ERROR) << instance_nums.error().FormatForEnv();
@@ -426,22 +411,12 @@ int CvdInternalStartMain(int argc, char** argv) {
          /* overwrite */ 0);
 #endif
 
-  // SharedFDs are std::move-d in to avoid dangling references.
-  // Removing the std::move will probably make run_cvd hang as its stdin never closes.
-  auto assemble_proc =
-      StartAssembler(std::move(assembler_stdin), std::move(assembler_stdout),
-                     forwarder.ArgvForSubprocess(kAssemblerBin, args));
-
-  WriteFiles(AvailableFilesReport(), std::move(launcher_report));
-
+  auto assembler_input = WriteFiles(AvailableFilesReport());
   std::string assembler_output;
-  if (ReadAll(assembler_stdout_capture, &assembler_output) < 0) {
-    int error_num = errno;
-    LOG(ERROR) << "Read error getting output from assemble_cvd: " << strerror(error_num);
-    return -1;
-  }
+  auto assemble_ret =
+      InvokeAssembler(assembler_input, assembler_output,
+                      forwarder.ArgvForSubprocess(kAssemblerBin, args));
 
-  auto assemble_ret = assemble_proc.Wait();
   if (assemble_ret != 0) {
     LOG(ERROR) << "assemble_cvd returned " << assemble_ret;
     return assemble_ret;
