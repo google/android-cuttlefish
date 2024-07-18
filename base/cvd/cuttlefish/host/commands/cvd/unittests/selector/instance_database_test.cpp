@@ -237,8 +237,8 @@ TEST_F(CvdInstanceDatabaseTest, AddInstances) {
   }
   const auto& instances = kitty_group->Instances();
   for (auto const& instance : instances) {
-    ASSERT_TRUE(instance.PerInstanceName() == "yumi" ||
-                instance.PerInstanceName() == "tiger");
+    ASSERT_TRUE(instance.name() == "yumi" ||
+                instance.name() == "tiger");
   }
 }
 
@@ -285,11 +285,11 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   ASSERT_TRUE(result7.ok());
   ASSERT_TRUE(result11.ok());
   ASSERT_TRUE(result3.ok());
-  ASSERT_EQ(result1->PerInstanceName(), "8");
-  ASSERT_EQ(result10->PerInstanceName(), "tv-instance");
-  ASSERT_EQ(result7->PerInstanceName(), "my_favorite_phone");
-  ASSERT_EQ(result11->PerInstanceName(), "tv-instance");
-  ASSERT_EQ(result3->PerInstanceName(), "3_");
+  ASSERT_EQ(result1->name(), "8");
+  ASSERT_EQ(result10->name(), "tv-instance");
+  ASSERT_EQ(result7->name(), "my_favorite_phone");
+  ASSERT_EQ(result11->name(), "tv-instance");
+  ASSERT_EQ(result3->name(), "3_");
   ASSERT_FALSE(result_invalid.ok());
 }
 
@@ -325,8 +325,8 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   ASSERT_TRUE(result10_and_11.ok());
   ASSERT_TRUE(result7.ok());
   ASSERT_EQ(result10_and_11->size(), 2);
-  ASSERT_EQ(result1->InstanceId(), 1);
-  ASSERT_EQ(result7->InstanceId(), 7);
+  ASSERT_EQ(result1->id(), 1);
+  ASSERT_EQ(result7->id(), 7);
   ASSERT_FALSE(result_invalid.ok());
 }
 
@@ -355,7 +355,7 @@ TEST_F(CvdInstanceDatabaseTest, FindInstancesByGroupName) {
   ASSERT_TRUE(result_nyah.ok());
   std::set<std::string> nyah_instance_names;
   for (const auto& instance : *result_nyah) {
-    nyah_instance_names.insert(instance.PerInstanceName());
+    nyah_instance_names.insert(instance.name());
   }
   std::set<std::string> expected{"my_favorite_phone", "tv_instance"};
   ASSERT_EQ(nyah_instance_names, expected);
@@ -491,11 +491,11 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
   ASSERT_TRUE(instance_group.ProductOutPath().empty());
   instance_group.SetProductOutPath("/path/to/product");
   auto& instance1 = instance_group.Instances()[0];
-  instance1.SetInstanceId(1);
-  instance1.SetState(cvd::INSTANCE_STATE_STARTING);
+  instance1.set_id(1);
+  instance1.set_state(cvd::INSTANCE_STATE_STARTING);
   auto& instance2 = instance_group.Instances()[1];
-  instance2.SetInstanceId(2);
-  instance2.SetState(cvd::INSTANCE_STATE_STARTING);
+  instance2.set_id(2);
+  instance2.set_state(cvd::INSTANCE_STATE_STARTING);
 
   auto update_res = db.UpdateInstanceGroup(instance_group);
   ASSERT_TRUE(update_res.ok())
@@ -506,10 +506,10 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
 
   EXPECT_EQ(find_res->HomeDir(), Workspace() + "/grp1_home");
   EXPECT_EQ(find_res->ProductOutPath(), "/path/to/product");
-  EXPECT_EQ(find_res->Instances()[0].InstanceId(), 1);
-  EXPECT_EQ(find_res->Instances()[1].InstanceId(), 2);
-  EXPECT_EQ(find_res->Instances()[0].State(), cvd::INSTANCE_STATE_STARTING);
-  EXPECT_EQ(find_res->Instances()[1].State(), cvd::INSTANCE_STATE_STARTING);
+  EXPECT_EQ(find_res->Instances()[0].id(), 1);
+  EXPECT_EQ(find_res->Instances()[1].id(), 2);
+  EXPECT_EQ(find_res->Instances()[0].state(), cvd::INSTANCE_STATE_STARTING);
+  EXPECT_EQ(find_res->Instances()[1].state(), cvd::INSTANCE_STATE_STARTING);
 }
 
 }  // namespace selector

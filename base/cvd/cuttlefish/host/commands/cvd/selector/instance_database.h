@@ -16,18 +16,14 @@
 
 #pragma once
 
-#include <functional>
-#include <memory>
 #include <vector>
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/data_viewer.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
-#include "host/commands/cvd/selector/instance_record.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -54,7 +50,8 @@ class InstanceDatabase {
   Result<LocalInstanceGroup> AddInstanceGroup(
       cvd::InstanceGroup& group_proto);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
-  Result<void> UpdateInstance(const LocalInstance& instance);
+  Result<void> UpdateInstance(const LocalInstanceGroup& group,
+                              const cvd::Instance& instance);
 
   Result<std::vector<LocalInstanceGroup>> InstanceGroups() const;
   Result<bool> RemoveInstanceGroup(const std::string& group_name);
@@ -70,10 +67,10 @@ class InstanceDatabase {
       const Queries& queries) const {
     return FindGroups(CF_EXPECT(ParamFromQueries(queries)));
   }
-  Result<std::vector<LocalInstance>> FindInstances(const Query& query) const {
+  Result<std::vector<cvd::Instance>> FindInstances(const Query& query) const {
     return FindInstances(Queries{query});
   }
-  Result<std::vector<LocalInstance>> FindInstances(
+  Result<std::vector<cvd::Instance>> FindInstances(
       const Queries& queries) const {
     return FindInstances(CF_EXPECT(ParamFromQueries(queries)));
   }
@@ -88,10 +85,10 @@ class InstanceDatabase {
   Result<LocalInstanceGroup> FindGroup(const Queries& queries) const {
     return ExactlyOne(FindGroups(queries));
   }
-  Result<LocalInstance> FindInstance(const Query& query) const {
+  Result<cvd::Instance> FindInstance(const Query& query) const {
     return ExactlyOne(FindInstances(query));
   }
-  Result<LocalInstance> FindInstance(const Queries& queries) const {
+  Result<cvd::Instance> FindInstance(const Queries& queries) const {
     return ExactlyOne(FindInstances(queries));
   }
 
@@ -110,10 +107,10 @@ class InstanceDatabase {
   };
   Result<FindParam> ParamFromQueries(const Queries&) const;
   Result<std::vector<LocalInstanceGroup>> FindGroups(FindParam param) const;
-  Result<std::vector<LocalInstance>> FindInstances(FindParam param) const;
+  Result<std::vector<cvd::Instance>> FindInstances(FindParam param) const;
   static std::vector<LocalInstanceGroup> FindGroups(
       const cvd::PersistentData& data, FindParam param);
-  static std::vector<LocalInstance> FindInstances(
+  static std::vector<cvd::Instance> FindInstances(
       const cvd::PersistentData& data, FindParam param);
 
   DataViewer viewer_;

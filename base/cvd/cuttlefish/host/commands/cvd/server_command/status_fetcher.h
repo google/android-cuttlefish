@@ -22,6 +22,7 @@
 #include <string>
 
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_client.h"
@@ -51,7 +52,8 @@ class StatusFetcher {
  private:
   Result<std::string> GetBin(const std::string& host_artifacts_path) const;
   Result<StatusFetcherOutput> FetchOneInstanceStatus(
-      const RequestWithStdio&, InstanceManager::LocalInstance&);
+      const RequestWithStdio&, const InstanceManager::LocalInstanceGroup& group,
+      cvd::Instance&);
 
   std::mutex interruptible_;
   bool interrupted_ = false;

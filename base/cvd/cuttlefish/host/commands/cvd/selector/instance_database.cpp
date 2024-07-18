@@ -39,7 +39,7 @@ constexpr const char kJsonGroups[] = "Groups";
 constexpr const unsigned UNSET_ID = 0;
 
 Result<std::string> GenUniqueGroupName(const cvd::PersistentData& data) {
-  auto name_prefix = GenDefaultGroupName() + "_";
+  auto name_prefix = std::string(kInternalGroupName) + "_";
   std::set<std::string> group_names;
   for (const auto& group : data.instance_groups()) {
     group_names.insert(group.name());
@@ -113,8 +113,8 @@ Result<LocalInstanceGroup> InstanceDatabase::AddInstanceGroup(
           CF_EXPECTF(
               matching_instances.empty(),
               "New instance conflicts with existing instance: {} with id {}",
-              matching_instances[0].PerInstanceName(),
-              matching_instances[0].InstanceId());
+              matching_instances[0].name(),
+              matching_instances[0].id());
         }
         auto new_group_proto = data.add_instance_groups();
         *new_group_proto = group_proto;
@@ -135,7 +135,7 @@ Result<void> InstanceDatabase::UpdateInstanceGroup(
           // Instance protos may have been updated too
           group_proto.clear_instances();
           for (const auto& instance : group.Instances()) {
-            *group_proto.add_instances() = instance.Proto();
+            *group_proto.add_instances() = instance;
           }
           return {};
         }
@@ -145,28 +145,28 @@ Result<void> InstanceDatabase::UpdateInstanceGroup(
   return {};
 }
 
-  Result<void> InstanceDatabase::UpdateInstance(const LocalInstance& instance) {
+Result<void> InstanceDatabase::UpdateInstance(const LocalInstanceGroup& group,
+                                              const cvd::Instance& instance) {
   auto add_res = viewer_.WithExclusiveLock<void>(
-      [&instance](cvd::PersistentData& data) -> Result<void> {
+      [&instance, &group](cvd::PersistentData& data) -> Result<void> {
         for (auto& group_proto : *data.mutable_instance_groups()) {
-          if (group_proto.name() != instance.GroupProto().name()) {
+          if (group_proto.name() != group.Proto().name()) {
             continue;
           }
           for (auto& instance_proto : *group_proto.mutable_instances()) {
-              if (instance_proto.name() != instance.Proto().name()) {
+              if (instance_proto.name() != instance.name()) {
               continue;
               }
-              instance_proto = instance.Proto();
+              instance_proto = instance;
           }
           return CF_ERRF("Instance not found (name = '{}', group = '{}')",
-                         instance.GroupProto().name(), instance.Proto().name());
+                         group.Proto().name(), instance.name());
         }
-        return CF_ERRF("Group not found (name = {})",
-                       instance.GroupProto().name());
+        return CF_ERRF("Group not found (name = {})", group.Proto().name());
       });
   CF_EXPECT(std::move(add_res));
   return {};
-  }
+}
 
 Result<bool> InstanceDatabase::RemoveInstanceGroup(
     const std::string& group_name) {
@@ -213,9 +213,9 @@ Result<std::vector<LocalInstanceGroup>> InstanceDatabase::FindGroups(
       });
 }
 
-Result<std::vector<LocalInstance>> InstanceDatabase::FindInstances(
+Result<std::vector<cvd::Instance>> InstanceDatabase::FindInstances(
     FindParam param) const {
-  return viewer_.WithSharedLock<std::vector<LocalInstance>>(
+  return viewer_.WithSharedLock<std::vector<cvd::Instance>>(
       [&param](const cvd::PersistentData& data) {
         return FindInstances(data, param);
       });
@@ -248,9 +248,9 @@ std::vector<LocalInstanceGroup> InstanceDatabase::FindGroups(
   return ret;
 }
 
-std::vector<LocalInstance> InstanceDatabase::FindInstances(
+std::vector<cvd::Instance> InstanceDatabase::FindInstances(
     const cvd::PersistentData& data, FindParam param) {
-  std::vector<LocalInstance> ret;
+  std::vector<cvd::Instance> ret;
   for (const auto& group : data.instance_groups()) {
     if (param.group_name && param.group_name != group.name()) {
       continue;
@@ -262,11 +262,11 @@ std::vector<LocalInstance> InstanceDatabase::FindInstances(
     CHECK(group_res.ok()) << "Instance group from database fails validation: "
                           << group_res.error().FormatForEnv();
     for (const auto& instance : group_res->Instances()) {
-      if (param.id && *param.id != instance.InstanceId()) {
+      if (param.id && *param.id != instance.id()) {
         continue;
       }
       if (param.instance_name &&
-          param.instance_name != instance.PerInstanceName()) {
+          param.instance_name != instance.name()) {
         continue;
       }
       ret.push_back(instance);
