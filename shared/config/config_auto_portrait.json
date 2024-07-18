@@ -1,4 +1,5 @@
 {
 	"display0": "width=1224,height=2175,dpi=140",
-	"memory_mb" : 4096
+	"memory_mb" : 4096,
+	"enable_vhal_proxy_server": true
 }
