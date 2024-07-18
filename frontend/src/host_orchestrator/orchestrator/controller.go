@@ -57,7 +57,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds",
 		httpHandler(newCreateCVDHandler(c.Config, c.OperationManager, c.UserArtifactsManager))).Methods("POST")
 	router.Handle("/cvds", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
-	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
+	router.PathPrefix("/cvds/{group}/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
 	router.Handle("/cvds/{group}",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("DELETE")
 	router.Handle("/cvds/{group}/:bugreport",
@@ -254,11 +254,12 @@ type getCVDLogsHandler struct {
 }
 
 func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Println("request:", r.Method, r.URL.Path)
 	vars := mux.Vars(r)
+	group := vars["group"]
 	name := vars["name"]
-	pathPrefix := "/cvds/" + name + "/logs"
 	ctx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
-	logsDir, err := CVDLogsDir(ctx, name)
+	logsDir, err := CVDLogsDir(ctx, group, name)
 	if err != nil {
 		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
 		appErr, ok := err.(*operator.AppError)
@@ -269,7 +270,8 @@ func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	handler := http.StripPrefix(pathPrefix, http.FileServer(http.Dir(logsDir)))
+	sp := fmt.Sprintf("/cvds/%s/%s/logs", group, name)
+	handler := http.StripPrefix(sp, http.FileServer(http.Dir(logsDir)))
 	handler.ServeHTTP(w, r)
 }
 

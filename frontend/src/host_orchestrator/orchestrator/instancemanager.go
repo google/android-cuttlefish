@@ -110,6 +110,15 @@ type cvdFleetOutput struct {
 	Groups []*cvdGroup `json:"groups"`
 }
 
+func (o *cvdFleetOutput) findGroup(name string) (bool, *cvdGroup) {
+	for _, e := range o.Groups {
+		if e.Name == name {
+			return true, e
+		}
+	}
+	return false, nil
+}
+
 type cvdGroup struct {
 	Name      string         `json:"group_name"`
 	Instances []*cvdInstance `json:"instances"`
@@ -173,10 +182,14 @@ func cvdFleetFirstGroup(ctx cvd.CVDExecContext) (*cvdGroup, error) {
 	return fleet.Groups[0], nil
 }
 
-func CVDLogsDir(ctx cvd.CVDExecContext, name string) (string, error) {
-	group, err := cvdFleetFirstGroup(ctx)
+func CVDLogsDir(ctx cvd.CVDExecContext, groupName, name string) (string, error) {
+	fleet, err := cvdFleet(ctx)
 	if err != nil {
 		return "", err
+	}
+	ok, group := fleet.findGroup(groupName)
+	if !ok {
+		return "", operator.NewNotFoundError(fmt.Sprintf("Group %q not found", groupName), nil)
 	}
 	ok, ins := cvdInstances(group.Instances).findByName(name)
 	if !ok {
