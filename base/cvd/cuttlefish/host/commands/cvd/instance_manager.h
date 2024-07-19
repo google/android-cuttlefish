@@ -69,7 +69,6 @@ class InstanceManager {
       const selector::GroupCreationInfo& group_info);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
   Result<void> UpdateInstance(const LocalInstance& instance);
-  Result<void> SetInstanceGroup(const selector::GroupCreationInfo& group_info);
   Result<bool> RemoveInstanceGroup(const std::string&);
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
