@@ -57,6 +57,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds",
 		httpHandler(newCreateCVDHandler(c.Config, c.OperationManager, c.UserArtifactsManager))).Methods("POST")
 	router.Handle("/cvds", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
+	router.Handle("/cvds/{group}", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
 	router.PathPrefix("/cvds/{group}/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
 	router.Handle("/cvds/{group}",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("DELETE")
@@ -212,7 +213,9 @@ type listCVDsHandler struct {
 }
 
 func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
 	opts := ListCVDsActionOpts{
+		Group:       vars["group"],
 		Paths:       h.Config.Paths,
 		ExecContext: exec.CommandContext,
 		CVDUser:     h.Config.CVDUser,
