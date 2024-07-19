@@ -39,9 +39,13 @@ func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {
 }
 
 func (a *ListCVDsAction) Run() (*apiv1.ListCVDsResponse, error) {
-	group, err := cvdFleetFirstGroup(a.execContext)
+	fleet, err := cvdFleet(a.execContext)
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.ListCVDsResponse{CVDs: group.toAPIObject()}, nil
+	cvds := []*apiv1.CVD{}
+	for _, g := range fleet.Groups {
+		cvds = append(cvds, g.toAPIObject()...)
+	}
+	return &apiv1.ListCVDsResponse{CVDs: cvds}, nil
 }
