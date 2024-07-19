@@ -27,6 +27,7 @@
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/selector_constants.h"
+#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace selector {
