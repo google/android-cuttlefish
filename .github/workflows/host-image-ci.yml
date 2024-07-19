@@ -75,39 +75,6 @@ jobs:
       with:
         name: meta_gigamp_packages
         path: tools/cuttlefish-host-image-installer/meta_gigamp_packages.7z
-  
-  build-kernel-aosp-deb-job:
-    runs-on: ubuntu-22.04-32core
-    strategy:
-      matrix:
-        version: [15-6.6]
-    env:
-      KERNEL_MANIFEST_URL: https://android.googlesource.com/kernel/manifest/
-      KERNEL_MANIFEST_BRANCH: common-android${{ matrix.version }}
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Prepare pbuilder environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare other tools
-      run: sudo apt-get install -y git ca-certificates less fakeroot devscripts equivs ubuntu-dev-tools build-essential p7zip-full crossbuild-essential-arm64
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Building package
-      run: cd tools/cuttlefish-host-image-installer && ./kernel_build_deb_qemu.sh
-    - name: Create artifact
-      run: cd tools/cuttlefish-host-image-installer && cp `ls kernel-build-space/linux-image-*.deb | grep -v dbg` . && cp kernel-build-space/linux-headers-*.deb . && 7z a -mx=9 aosp_kernel_aosp${{ matrix.version }}.7z *.deb
-    - name: Publish aosp_kernel_aosp${{ matrix.version }}.7z
-      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
-      with:
-        name: aosp_kernel_aosp${{ matrix.version }}
-        path: tools/cuttlefish-host-image-installer/aosp_kernel_aosp${{ matrix.version }}.7z
       
   build-uboot-qemu-job:
     runs-on: ubuntu-latest
@@ -191,39 +158,6 @@ jobs:
     - name: Running installation tests...
       run: cd tools/cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-metapackage-deb.sh ./meta_gigamp_packages.7z
 
-  test-install-kernel-aosp-deb-job:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        version: [15-6.6]
-    needs: build-kernel-aosp-deb-job
-    env:
-      KERNEL_PACKAGE: aosp_kernel_aosp${{ matrix.version }}.7z
-    steps:
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2      
-    - name: Download aosp_kernel_aosp${{ matrix.version }}.7z
-      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
-      with:
-        name: aosp_kernel_aosp${{ matrix.version }}
-        path: "tools/cuttlefish-host-image-installer"
-    - name: Prepare pbuilder environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
-    - name: Prepare building environment
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
-    - name: Prepare tzdata
-      run: echo "tzdata tzdata/Areas select Etc" | sudo debconf-set-selections -v && echo "tzdata tzdata/Zones/Etc select UTC" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
-    - name: Prepare pbuilder tool
-      run: echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | sudo debconf-set-selections -v && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pbuilder && sudo dpkg-reconfigure --frontend noninteractive pbuilder
-    - name: Prepare other tools
-      run: sudo apt-get install -y ubuntu-dev-tools qemu-user-static git ca-certificates less debhelper devscripts cdbs dpkg-dev equivs fakeroot build-essential autoconf automake p7zip-full
-    - name: Pbuilder arm64 create
-      run: pbuilder-dist stable arm64 create
-    - name: Pbuilder arm64 update
-      run: pbuilder-dist stable arm64 update
-    - name: Running installation tests...
-      run: cd tools/cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-kernel-deb.sh ./aosp_kernel_aosp${{ matrix.version }}.7z
-
   deploy-job:      # This job runs in the deploy stage.
     runs-on: ubuntu-latest
     permissions: write-all
@@ -245,11 +179,6 @@ jobs:
       uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
       with:
         name: meta_gigamp_packages
-        path: "tools/cuttlefish-host-image-installer"
-    - name: Download aosp_kernel_aosp15-6.6.7z
-      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
-      with:
-        name: aosp_kernel_aosp15-6.6
         path: "tools/cuttlefish-host-image-installer"
     - name: Download u-boot.bin
       uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
