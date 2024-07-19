@@ -100,6 +100,15 @@ func TestListCVDsSucceeds(t *testing.T) {
 			WebRTCDeviceID: "cvd-1",
 			ADBSerial:      "0.0.0.0:6520",
 		},
+		{
+			Group:          "bar",
+			Name:           "1",
+			BuildSource:    &apiv1.BuildSource{},
+			Status:         "Running",
+			Displays:       []string{"720 x 1280 ( 320 )"},
+			WebRTCDeviceID: "cvd-1",
+			ADBSerial:      "0.0.0.0:6520",
+		},
 	}}
 	if diff := cmp.Diff(want, res); diff != "" {
 		t.Errorf("response mismatch (-want +got):\n%s", diff)
