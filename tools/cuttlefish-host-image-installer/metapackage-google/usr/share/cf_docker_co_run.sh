@@ -6,7 +6,7 @@ if [ "$cf_image" == "" ]; then
   # Build CF docker image
   cd /home/vsoc-01
   if [ ! -d "/home/vsoc-01/android-cuttlefish" ]; then
-    echo "git  clone https://github.com/google/android-cuttlefish.git" > android-cuttlefish.log
+    echo "wget https://github.com/google/android-cuttlefish/archive/refs/tags/stable.zip" > android-cuttlefish.log
     wget https://github.com/google/android-cuttlefish/archive/refs/tags/stable.zip
     unzip stable.zip
   fi
@@ -15,11 +15,13 @@ if [ "$cf_image" == "" ]; then
 fi
 
 # Step 2. Run CO server
+# use the fixed version instead of HEAD, makes it easier to triage problems when they arise
+CO_VERSION="0.1.0-alpha"
 cd /home/vsoc-01
 if [ ! -d "/home/vsoc-01/cloud-android-orchestration" ]; then
-  echo "git clone https://github.com/google/cloud-android-orchestration.git" > cloud-android-orchestration.log
-  wget https://github.com/google/cloud-android-orchestration/archive/refs/heads/main.zip
-  unzip main.zip
+  echo "wget https://github.com/google/cloud-android-orchestration/archive/refs/tags/v$CO_VERSION.zip" > cloud-android-orchestration.log
+  wget https://github.com/google/cloud-android-orchestration/archive/refs/tags/v$CO_VERSION.zip
+  unzip v$CO_VERSION.zip
 fi
-cd cloud-android-orchestration-main # Root directory of this repository
+cd cloud-android-orchestration-$CO_VERSION # Root directory of this repository
 /bin/bash scripts/docker/run.sh &> run.log
