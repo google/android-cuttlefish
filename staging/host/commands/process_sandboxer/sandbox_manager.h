@@ -51,15 +51,19 @@ class SandboxManager {
 
  private:
   class ManagedProcess;
+  class SocketClient;
   SandboxManager() = default;
 
   absl::Status HandleSignal();
+  std::string ServerSocketOutsidePath() const;
 
   HostInfo host_info_;
   bool running_ = true;
   std::string runtime_dir_;
   std::list<std::unique_ptr<ManagedProcess>> sandboxes_;
+  std::list<std::unique_ptr<SocketClient>> clients_;
   int signal_fd_ = -1;
+  int server_socket_fd_ = -1;
 };
 
 }  // namespace process_sandboxer
