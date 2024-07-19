@@ -18,7 +18,7 @@
 
 name: HostImage
 
-on: [push]
+on: [pull_request, push]
 
 jobs:
   build-installer-iso-job:
@@ -64,6 +64,8 @@ jobs:
       run: pbuilder-dist stable arm64 create
     - name: Pbuilder arm64 update
       run: pbuilder-dist stable arm64 update
+    - name: Add changelog and build info
+      run: cd tools/cuttlefish-host-image-installer && ./update_version_info.sh
     - name: Building package
       run: cd tools/cuttlefish-host-image-installer/metapackage-google && pdebuild --buildresult .. -- --basetgz ~/pbuilder/stable-arm64-base.tgz
     - name: Create artifact
@@ -78,7 +80,7 @@ jobs:
     runs-on: ubuntu-22.04-32core
     strategy:
       matrix:
-        version: [14-6.1, 15-6.1, 15-6.6]
+        version: [15-6.6]
     env:
       KERNEL_MANIFEST_URL: https://android.googlesource.com/kernel/manifest/
       KERNEL_MANIFEST_BRANCH: common-android${{ matrix.version }}
@@ -193,7 +195,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [14-6.1, 15-6.1, 15-6.6]
+        version: [15-6.6]
     needs: build-kernel-aosp-deb-job
     env:
       KERNEL_PACKAGE: aosp_kernel_aosp${{ matrix.version }}.7z
@@ -243,16 +245,6 @@ jobs:
       uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
       with:
         name: meta_gigamp_packages
-        path: "tools/cuttlefish-host-image-installer"
-    - name: Download aosp_kernel_aosp14-6.1.7z
-      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
-      with:
-        name: aosp_kernel_aosp14-6.1
-        path: "tools/cuttlefish-host-image-installer"
-    - name: Download aosp_kernel_aosp15-6.1.7z
-      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
-      with:
-        name: aosp_kernel_aosp15-6.1
         path: "tools/cuttlefish-host-image-installer"
     - name: Download aosp_kernel_aosp15-6.6.7z
       uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
