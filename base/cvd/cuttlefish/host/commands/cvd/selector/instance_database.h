@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <utility>
 #include <vector>
 
 #include "common/libs/utils/json.h"
@@ -65,14 +66,14 @@ class InstanceDatabase {
   }
   Result<std::vector<LocalInstanceGroup>> FindGroups(
       const Queries& queries) const {
-    return FindGroups(CF_EXPECT(ParamFromQueries(queries)));
+    return FindGroups(CF_EXPECT(FindParam::FromQueries(queries)));
   }
   Result<std::vector<cvd::Instance>> FindInstances(const Query& query) const {
     return FindInstances(Queries{query});
   }
   Result<std::vector<cvd::Instance>> FindInstances(
       const Queries& queries) const {
-    return FindInstances(CF_EXPECT(ParamFromQueries(queries)));
+    return FindInstances(CF_EXPECT(FindParam::FromQueries(queries)));
   }
 
   /*
@@ -85,12 +86,12 @@ class InstanceDatabase {
   Result<LocalInstanceGroup> FindGroup(const Queries& queries) const {
     return ExactlyOne(FindGroups(queries));
   }
-  Result<cvd::Instance> FindInstance(const Query& query) const {
-    return ExactlyOne(FindInstances(query));
+  Result<std::pair<cvd::Instance, LocalInstanceGroup>> FindInstanceWithGroup(
+      const Query& query) const {
+    return FindInstanceWithGroup(Queries{query});
   }
-  Result<cvd::Instance> FindInstance(const Queries& queries) const {
-    return ExactlyOne(FindInstances(queries));
-  }
+  Result<std::pair<cvd::Instance, LocalInstanceGroup>> FindInstanceWithGroup(
+      const Queries& queries) const;
 
  private:
   template <typename T>
@@ -104,8 +105,11 @@ class InstanceDatabase {
     std::optional<unsigned> id;
     std::optional<Value> group_name;
     std::optional<Value> instance_name;
+    bool Matches(const cvd::Instance&) const;
+    bool Matches(const cvd::InstanceGroup&) const;
+    static Result<FindParam> FromQueries(const Queries&);
   };
-  Result<FindParam> ParamFromQueries(const Queries&) const;
+
   Result<std::vector<LocalInstanceGroup>> FindGroups(FindParam param) const;
   Result<std::vector<cvd::Instance>> FindInstances(FindParam param) const;
   static std::vector<LocalInstanceGroup> FindGroups(

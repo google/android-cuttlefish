@@ -186,9 +186,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
         request.Message().command_request().selector_opts();
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
 
-    auto group = CF_EXPECT(instance_manager_.SelectGroup(
-        selector_args, envs, extra_queries));
-    auto instance = CF_EXPECT(instance_manager_.SelectInstance(
+    auto [instance, group] = CF_EXPECT(instance_manager_.SelectInstance(
         selector_args, envs, extra_queries));
     const auto& home = group.Proto().home_directory();
 

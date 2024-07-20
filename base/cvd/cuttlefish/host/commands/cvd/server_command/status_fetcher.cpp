@@ -228,7 +228,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
 
   bool status_the_group_flag = all_instances_opt && *all_instances_opt;
   if (instance_record_result.ok() && !status_the_group_flag) {
-    instances.emplace_back(*instance_record_result);
+    instances.emplace_back(instance_record_result->first);
   } else {
     if (status_the_group_flag) {
       instances = instance_group.Instances();

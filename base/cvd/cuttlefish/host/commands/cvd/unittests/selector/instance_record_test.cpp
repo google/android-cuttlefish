@@ -49,12 +49,13 @@ TEST(CvdInstanceRecordUnitTest, Fields) {
   const auto& instances = parent_group.Instances();
   auto& instance = *instances.cbegin();
 
-  ASSERT_EQ(instance.id(), 3);
-  ASSERT_EQ(instance.name(), "phone");
-  ASSERT_EQ(parent_group.Proto().name(), "super");
-  ASSERT_EQ(parent_group.Proto().home_directory(), "/home/user");
-  ASSERT_EQ(parent_group.Proto().host_artifacts_path(), "/home/user/download/bin");
-  ASSERT_EQ(parent_group.Proto().product_out_path(), "/home/user/download/bin");
+  EXPECT_EQ(instance.id(), 3);
+  EXPECT_EQ(instance.name(), "phone");
+  EXPECT_EQ(parent_group.Proto().name(), "super");
+  EXPECT_EQ(parent_group.Proto().home_directory(), "/home/user");
+  EXPECT_EQ(parent_group.Proto().host_artifacts_path(),
+            "/home/user/download/bin");
+  EXPECT_EQ(parent_group.Proto().product_out_path(), "/home/user/download/bin");
 }
 
 }  // namespace selector

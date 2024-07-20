@@ -18,6 +18,8 @@
 
 #include <sys/types.h>
 
+#include <utility>
+
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/selector_common_parser.h"
@@ -39,7 +41,7 @@ class InstanceSelector {
    *
    * If group not given, not yet supported. Will be in next CLs
    */
-  Result<cvd::Instance> FindInstance(
+  Result<std::pair<cvd::Instance, LocalInstanceGroup>> FindInstanceWithGroup(
       const InstanceDatabase& instance_database);
 
  private:
@@ -47,7 +49,7 @@ class InstanceSelector {
       : queries_(queries) {}
   static bool IsHomeOverridden(const SelectorCommonParser& common_parser);
 
-  Result<cvd::Instance> FindDefaultInstance(
+  Result<std::pair<cvd::Instance, LocalInstanceGroup>> FindDefaultInstance(
       const InstanceDatabase& instance_database);
 
   const Queries queries_;
