@@ -52,9 +52,18 @@ class SandboxManager {
  private:
   class ManagedProcess;
   class SocketClient;
+
+  using ClientIter = std::list<std::unique_ptr<SocketClient>>::iterator;
+  using SboxIter = std::list<std::unique_ptr<ManagedProcess>>::iterator;
+
   SandboxManager() = default;
 
-  absl::Status HandleSignal();
+  // Callbacks for the Iterate() `poll` loop.
+  absl::Status ClientMessage(ClientIter it, short revents);
+  absl::Status NewClient(short revents);
+  absl::Status ProcessExit(SboxIter it, short revents);
+  absl::Status Signalled(short revents);
+
   std::string ServerSocketOutsidePath() const;
 
   HostInfo host_info_;
@@ -63,7 +72,7 @@ class SandboxManager {
   std::list<std::unique_ptr<ManagedProcess>> sandboxes_;
   std::list<std::unique_ptr<SocketClient>> clients_;
   int signal_fd_ = -1;
-  int server_socket_fd_ = -1;
+  int server_fd_ = -1;
 };
 
 }  // namespace process_sandboxer
