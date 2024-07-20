@@ -15,7 +15,6 @@
  */
 #include "host/commands/process_sandboxer/sandbox_manager.h"
 
-#include <poll.h>
 #include <signal.h>
 #include <sys/eventfd.h>
 #include <sys/signalfd.h>
@@ -23,9 +22,11 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <memory>
 #include <sstream>
 
+#include <absl/functional/bind_front.h>
 #include <absl/log/log.h>
 #include <absl/log/vlog_is_on.h>
 #include <absl/status/status.h>
@@ -40,6 +41,7 @@
 #pragma clang diagnostic pop
 
 #include "host/commands/process_sandboxer/policies.h"
+#include "host/commands/process_sandboxer/poll_callback.h"
 
 using absl::ErrnoToStatus;
 using absl::OkStatus;
@@ -142,9 +144,8 @@ StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
   }
   VLOG(1) << "Created signalfd";
 
-  manager->server_socket_fd_ =
-      socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0);
-  if (manager->server_socket_fd_ < 0) {
+  manager->server_fd_ = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0);
+  if (manager->server_fd_ < 0) {
     return ErrnoToStatus(errno, "`socket` failed");
   }
   sockaddr_un socket_name = {
@@ -153,10 +154,10 @@ StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
   std::snprintf(socket_name.sun_path, sizeof(socket_name.sun_path), "%s",
                 manager->ServerSocketOutsidePath().c_str());
   auto sockname_ptr = reinterpret_cast<sockaddr*>(&socket_name);
-  if (bind(manager->server_socket_fd_, sockname_ptr, sizeof(socket_name)) < 0) {
+  if (bind(manager->server_fd_, sockname_ptr, sizeof(socket_name)) < 0) {
     return ErrnoToStatus(errno, "`bind` failed");
   }
-  if (listen(manager->server_socket_fd_, 10) < 0) {
+  if (listen(manager->server_fd_, 10) < 0) {
     return ErrnoToStatus(errno, "`listen` failed");
   }
 
@@ -176,8 +177,8 @@ SandboxManager::~SandboxManager() {
   if (signal_fd_ >= 0 && close(signal_fd_) < 0) {
     PLOG(ERROR) << "Failed to close signal fd '" << signal_fd_ << "'";
   }
-  if (server_socket_fd_ >= 0 && close(server_socket_fd_) < 0) {
-    PLOG(ERROR) << "Failed to close socket fd '" << server_socket_fd_ << "'";
+  if (server_fd_ >= 0 && close(server_fd_) < 0) {
+    PLOG(ERROR) << "Failed to close socket fd '" << server_fd_ << "'";
   }
 }
 
@@ -259,70 +260,28 @@ Status SandboxManager::RunProcess(const std::vector<std::string>& argv,
 bool SandboxManager::Running() const { return running_; }
 
 Status SandboxManager::Iterate() {
-  std::vector<pollfd> poll_fds = {pollfd{
-                                      .fd = signal_fd_,
-                                      .events = POLLIN,
-                                  },
-                                  pollfd{
-                                      .fd = server_socket_fd_,
-                                      .events = POLLIN,
-                                  }};
-  for (const auto& managed : sandboxes_) {
-    poll_fds.emplace_back(pollfd{
-        .fd = managed->EventFd(),
-        .events = POLLIN,
-    });
+  PollCallback poll_cb;
+
+  poll_cb.Add(signal_fd_, bind_front(&SandboxManager::Signalled, this));
+  poll_cb.Add(server_fd_, bind_front(&SandboxManager::NewClient, this));
+
+  for (auto it = sandboxes_.begin(); it != sandboxes_.end(); it++) {
+    int fd = (*it)->EventFd();
+    poll_cb.Add(fd, bind_front(&SandboxManager::ProcessExit, this, it));
   }
-  for (const auto& client : clients_) {
-    poll_fds.emplace_back(pollfd{
-        .fd = client->ClientFd(),
-        .events = POLLIN,
-    });
+  for (auto it = clients_.begin(); it != clients_.end(); it++) {
+    int fd = (*it)->ClientFd();
+    poll_cb.Add(fd, bind_front(&SandboxManager::ClientMessage, this, it));
   }
 
-  if (poll(poll_fds.data(), poll_fds.size(), /* timeout = */ 0) < 0) {
-    return ErrnoToStatus(errno, "`poll` failed");
-  }
-
-  for (const auto& poll_fd : poll_fds) {
-    if (poll_fd.revents == 0) {
-      continue;
-    }
-    if (poll_fd.fd == signal_fd_) {
-      auto status = HandleSignal();
-      if (!status.ok()) {
-        return status;
-      }
-      continue;
-    }
-    if (poll_fd.fd == server_socket_fd_) {
-      int client = accept4(server_socket_fd_, nullptr, nullptr, SOCK_CLOEXEC);
-      if (client < 0) {
-        return ErrnoToStatus(errno, "`accept` failed");
-      }
-      clients_.emplace_back(new SocketClient(client));
-      continue;
-    }
-    for (auto it = clients_.begin(); it != clients_.end();) {
-      if (poll_fd.fd != (*it)->ClientFd()) {
-        it++;
-        continue;
-      }
-      if (poll_fd.revents & POLLERR || poll_fd.revents & POLLHUP ||
-          poll_fd.revents & POLLNVAL) {
-        it = clients_.erase(it);
-        continue;
-      }
-    }
-    for (auto it = sandboxes_.begin(); it != sandboxes_.end();) {
-      it = poll_fd.fd == (*it)->EventFd() ? sandboxes_.erase(it) : ++it;
-    }
-  }
-
-  return OkStatus();
+  return poll_cb.Poll();
 }
 
-Status SandboxManager::HandleSignal() {
+Status SandboxManager::Signalled(short revents) {
+  if (revents != POLLIN) {
+    running_ = false;
+    return Status(StatusCode::kInternal, "signalfd exited");
+  }
   signalfd_siginfo info;
   auto read_res = read(signal_fd_, &info, sizeof(info));
   if (read_res < 0) {
@@ -344,6 +303,33 @@ Status SandboxManager::HandleSignal() {
     default:
       return Status(StatusCode::kInternal, "Received unexpected signal");
   }
+}
+
+Status SandboxManager::NewClient(short revents) {
+  if (revents != POLLIN) {
+    running_ = false;
+    return Status(StatusCode::kInternal, "server socket exited");
+  }
+  int client = accept4(server_fd_, nullptr, nullptr, SOCK_CLOEXEC);
+  if (client < 0) {
+    return ErrnoToStatus(errno, "`accept` failed");
+  }
+  clients_.emplace_back(new SocketClient(client));
+  return OkStatus();
+}
+
+Status SandboxManager::ProcessExit(SandboxManager::SboxIter it, short revents) {
+  sandboxes_.erase(it);
+  static const constexpr char kErr[] = "eventfd exited";
+  return revents == POLLIN ? OkStatus() : Status(StatusCode::kInternal, kErr);
+}
+
+Status SandboxManager::ClientMessage(SandboxManager::ClientIter it, short rev) {
+  if (rev == POLLIN) {
+    return (*it)->HandleMessage();
+  }
+  clients_.erase(it);
+  return Status(StatusCode::kInternal, "client dropped file descriptor");
 }
 
 std::string SandboxManager::ServerSocketOutsidePath() const {
