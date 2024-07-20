@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/selector/instance_selector.h"
 
+#include <utility>
+
 #include <android-base/parseint.h>
 
 #include "host/commands/cvd/selector/device_selector_utils.h"
@@ -95,26 +97,23 @@ bool InstanceSelector::IsHomeOverridden(
   return *home_overridden_result;
 }
 
-Result<cvd::Instance> InstanceSelector::FindInstance(
+Result<std::pair<cvd::Instance, LocalInstanceGroup>>
+InstanceSelector::FindInstanceWithGroup(
     const InstanceDatabase& instance_database) {
   if (queries_.empty()) {
-    auto default_instance = CF_EXPECT(FindDefaultInstance(instance_database));
-    return default_instance;
+    return CF_EXPECT(FindDefaultInstance(instance_database));
   }
 
-  auto instances = CF_EXPECT(instance_database.FindInstances(queries_));
-  CF_EXPECT(instances.size() == 1, "instances.size() = " << instances.size());
-  auto& instance = *(instances.cbegin());
-  return instance;
+  return CF_EXPECT(instance_database.FindInstanceWithGroup(queries_));
 }
 
-Result<cvd::Instance> InstanceSelector::FindDefaultInstance(
+Result<std::pair<cvd::Instance, LocalInstanceGroup>> InstanceSelector::FindDefaultInstance(
     const InstanceDatabase& instance_database) {
   auto group = CF_EXPECT(GetDefaultGroup(instance_database));
   const auto instances = group.Instances();
   CF_EXPECT_EQ(instances.size(), 1ul,
                "Default instance is the single instance in the default group.");
-  return *instances.cbegin();
+  return std::make_pair(*instances.cbegin(), group);
 }
 
 }  // namespace selector

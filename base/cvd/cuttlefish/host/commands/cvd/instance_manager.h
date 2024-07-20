@@ -21,6 +21,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "common/libs/fs/shared_fd.h"
@@ -59,7 +60,7 @@ class InstanceManager {
                                          const cvd_common::Envs& envs,
                                          const Queries& extra_queries = {});
 
-  Result<cvd::Instance> SelectInstance(
+  Result<std::pair<cvd::Instance, LocalInstanceGroup>> SelectInstance(
       const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
       const Queries& extra_queries = {});
 

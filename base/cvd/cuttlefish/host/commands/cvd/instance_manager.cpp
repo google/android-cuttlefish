@@ -93,12 +93,13 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(
   return CF_EXPECT(group_selector.FindGroup(instance_db_));
 }
 
-Result<cvd::Instance> InstanceManager::SelectInstance(
-    const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
-    const Queries& extra_queries) {
+Result<std::pair<cvd::Instance, selector::LocalInstanceGroup>>
+InstanceManager::SelectInstance(const cvd_common::Args& selector_args,
+                                const cvd_common::Envs& envs,
+                                const Queries& extra_queries) {
   auto instance_selector = CF_EXPECT(
       InstanceSelector::GetSelector(selector_args, extra_queries, envs));
-  return CF_EXPECT(instance_selector.FindInstance(instance_db_));
+  return CF_EXPECT(instance_selector.FindInstanceWithGroup(instance_db_));
 }
 
 Result<bool> InstanceManager::HasInstanceGroups() {

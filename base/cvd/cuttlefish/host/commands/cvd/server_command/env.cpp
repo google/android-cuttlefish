@@ -115,9 +115,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
         request.Message().command_request().selector_opts();
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
 
-    auto group =
-        CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs));
-    auto instance =
+    auto [instance, group] =
         CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs));
     const auto& home = group.Proto().home_directory();
 
