@@ -527,6 +527,9 @@ DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
 DECLARE_string(snapshot_path);
 
+DEFINE_string(vcpu_config_path, CF_DEFAULTS_VCPU_CONFIG_PATH,
+              "configuration file for Virtual Cpufreq");
+
 namespace cuttlefish {
 using vm_manager::QemuManager;
 using vm_manager::Gem5Manager;
@@ -1650,6 +1653,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       instance.set_frames_socket_path(
           const_instance.PerInstanceInternalUdsPath("frames.sock"));
     }
+
+    instance.set_vcpu_config(FLAGS_vcpu_config_path);
 
     // 1. Keep original code order SetCommandLineOptionWithMode("enable_sandbox")
     // then set_enable_sandbox later.
