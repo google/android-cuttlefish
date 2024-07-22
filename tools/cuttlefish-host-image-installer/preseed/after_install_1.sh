@@ -28,7 +28,7 @@ apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 \
 # Install kernel
 #apt-get install -y '^linux-image-6.1.*aosp14-linaro.*' '^linux-headers-6.1.*aosp14-linaro.*'
 apt install -y -t bookworm-backports linux-headers-arm64
-apt install -y -t bookwork-backports linux-image-arm64
+apt install -y -t bookworm-backports linux-image-arm64
 
 # Install nVidia or AMD GPU driver
 nvidia_gpu=$(lspci | grep -i nvidia)
