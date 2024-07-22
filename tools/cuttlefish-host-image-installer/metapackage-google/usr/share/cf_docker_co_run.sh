@@ -5,7 +5,7 @@ cf_image=$(docker image list | grep "cuttlefish-orchestration")
 if [ "$cf_image" == "" ]; then
   # Build CF docker image
   cd /home/vsoc-01
-  if [ ! -d "/home/vsoc-01/android-cuttlefish" ]; then
+  if [ ! -d "/home/vsoc-01/android-cuttlefish-stable" ]; then
     echo "wget https://github.com/google/android-cuttlefish/archive/refs/tags/stable.zip" > android-cuttlefish.log
     wget https://github.com/google/android-cuttlefish/archive/refs/tags/stable.zip
     unzip stable.zip
@@ -18,7 +18,7 @@ fi
 # use the fixed version instead of HEAD, makes it easier to triage problems when they arise
 CO_VERSION="0.1.0-alpha"
 cd /home/vsoc-01
-if [ ! -d "/home/vsoc-01/cloud-android-orchestration" ]; then
+if [ ! -d "/home/vsoc-01/cloud-android-orchestration-$CO_VERSION" ]; then
   echo "wget https://github.com/google/cloud-android-orchestration/archive/refs/tags/v$CO_VERSION.zip" > cloud-android-orchestration.log
   wget https://github.com/google/cloud-android-orchestration/archive/refs/tags/v$CO_VERSION.zip
   unzip v$CO_VERSION.zip
