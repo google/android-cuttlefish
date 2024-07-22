@@ -300,9 +300,9 @@ android_system_image {
     fsverity: {
         inputs: [
             "etc/boot-image.prof",
+            "etc/classpaths/*.pb",
             "etc/dirty-image-objects",
             "etc/preloaded-classes",
-            "etc/classpaths/*.pb",
             "framework/*",
             "framework/*/*", // framework/{arch}
             "framework/oat/*/*", // framework/oat/{arch}
@@ -324,12 +324,12 @@ android_system_image {
         "aconfigd",
         "aflags",
         "am",
-        "android_vintf_manifest",
-        "android_vintf_compatibility_matrix_device",
         "android.software.credentials.prebuilt.xml", // generic_system
         "android.software.webview.prebuilt.xml", // media_system
         "android.software.window_magnification.prebuilt.xml", // handheld_system
         "android.system.suspend-service",
+        "android_vintf_compatibility_matrix_device",
+        "android_vintf_manifest",
         "aosp_cf_x86_64_system-init.environ.rc",
         "apexd",
         "appops",
@@ -368,12 +368,12 @@ android_system_image {
         "flags_health_check",
         "framework-audio_effects.xml", // for handheld // handheld_system
         "framework-sysconfig.xml",
-        "fsck_msdos",
+        "fs_config_dirs_system",
+        "fs_config_files_system",
         "fsck.erofs",
         "fsck.f2fs", // for media_system
+        "fsck_msdos",
         "fsverity-release-cert-der",
-        "fs_config_files_system",
-        "fs_config_dirs_system",
         "gatekeeperd",
         "gpu_counter_producer",
         "gpuservice",
@@ -387,17 +387,17 @@ android_system_image {
         "idmap2",
         "idmap2d",
         "ime",
-        "incident_helper",
-        "incident-helper-cmd",
         "incident",
+        "incident-helper-cmd",
+        "incident_helper",
         "incidentd",
         "init_first_stage", // for boot partition
         // "init.environ.rc", // TODO: move to soong
         "init.usb.configfs.rc",
         "init.usb.rc",
         "init.zygote32.rc",
-        "init.zygote64_32.rc",
         "init.zygote64.rc",
+        "init.zygote64_32.rc",
         "initial-package-stopped-states.xml",
         "input",
         "installd",
@@ -478,14 +478,14 @@ android_system_image {
         "tc", // base_system
         "telecom", // base_system
         "tombstoned", // base_system
-        "traced_probes", // base_system
         "traced", // base_system
+        "traced_probes", // base_system
         "tune2fs", // base_system
         "uiautomator", // base_system
         "uinput", // base_system
         "uncrypt", // base_system
-        "update_engine_sideload", // recovery
         "update_engine", // generic_system
+        "update_engine_sideload", // recovery
         "update_verifier", // generic_system
         "usbd", // base_system
         "vdc", // base_system
@@ -555,20 +555,11 @@ android_system_image {
     multilib: {
         common: {
             deps: [
-                "adbd_system_api", // base_system
-                "android.hidl.base-V1.0-java", // base_system
-                "android.hidl.manager-V1.0-java", // base_system
-                "android.test.base", // from runtime_libart
-                "android.test.mock", // base_system
-                "android.test.runner", // base_system
-                "aosp_cf_x86_64_system-build.prop",
-                "aosp_mainline_modules", // ok
                 "BackupRestoreConfirmation", // base_system
                 "BasicDreams", // handheld_system
                 "BlockedNumberProvider", // handheld_system
                 "BluetoothMidiService", // handheld_system
                 "BookmarkProvider", // handheld_system
-                "build_flag_system", // base_system
                 "BuiltInPrintService", // handheld_system
                 "CalendarProvider", // handheld_system
                 "CallLogBackup", // telephony_system
@@ -577,47 +568,24 @@ android_system_image {
                 "CarrierDefaultApp", // telephony_system
                 "CellBroadcastLegacyApp", // telephony_system
                 "CertInstaller", // handheld_system
-                "charger_res_images", // generic_system
-                "com.android.apex.cts.shim.v1_prebuilt", // ok
-                "com.android.cellbroadcast", // telephony_system
-                "com.android.future.usb.accessory", // media_system
-                "com.android.location.provider", // base_system
-                "com.android.media.remotedisplay.xml", // media_system
-                "com.android.media.remotedisplay", // media_system
-                "com.android.mediadrm.signer", // media_system
-                "com.android.nfc_extras", // ok
-                "com.android.nfcservices", // base_system (RELEASE_PACKAGE_NFC_STACK != NfcNci)
-                "com.android.runtime", // ok
                 "CompanionDeviceManager", // media_system
                 "ContactsProvider", // base_system
                 "CredentialManager", // handheld_system
                 "DeviceAsWebcam", // handheld_system
-                "dex_bootjars",
                 "DocumentsUI", // handheld_system
                 "DownloadProvider", // base_system
                 "DownloadProviderUi", // handheld_system
                 "DynamicSystemInstallationService", // base_system
                 "E2eeContactKeysProvider", // base_system
                 "EasterEgg", // handheld_system
-                "ext", // from runtime_libart
-                "ExternalStorageProvider", // handheld_system
                 "ExtShared", // base_system
-                "fonts", // ok
-                "framework-graphics", // base_system
-                "framework-location", // base_system
-                "framework-minus-apex-install-dependencies", // base_system
+                "ExternalStorageProvider", // handheld_system
                 "FusedLocation", // handheld_system
                 "HTMLViewer", // media_system
-                "hwservicemanager_compat_symlink_module", // base_system
-                "hyph-data",
-                "ims-common", // base_system
-                "init_system", // base_system
                 "InputDevices", // handheld_system
                 "IntentResolver", // base_system
-                "javax.obex", // base_system
                 "KeyChain", // handheld_system
                 "LiveWallpapersPicker", // generic_system, full_base
-                "llndk.libraries.txt", //ok
                 "LocalTransport", // base_system
                 "ManagedProvisioning", // handheld_system
                 "MediaProviderLegacy", // base_system
@@ -626,10 +594,8 @@ android_system_image {
                 "MusicFX", // handheld_system
                 "NetworkStack", // base_system
                 "ONS", // telephony_system
-                "org.apache.http.legacy", // base_system
-                "perfetto-extras", // system
-                "PackageInstaller", // base_system
                 "PacProcessor", // handheld_system
+                "PackageInstaller", // base_system
                 "PartnerBookmarksProvider", // generic_system
                 "PhotoTable", // full_base
                 "PrintRecommendationService", // handheld_system
@@ -643,21 +609,55 @@ android_system_image {
                 "SoundPicker", // not installed by anyone
                 "StatementService", // media_system
                 "Stk", // generic_system
+                "Tag", // generic_system
+                "TeleService", // handheld_system
+                "Telecom", // handheld_system
+                "TelephonyProvider", // handheld_system
+                "Traceur", // handheld_system
+                "UserDictionaryProvider", // handheld_system
+                "VpnDialogs", // handheld_system
+                "WallpaperBackup", // base_system
+                "adbd_system_api", // base_system
+                "android.hidl.base-V1.0-java", // base_system
+                "android.hidl.manager-V1.0-java", // base_system
+                "android.test.base", // from runtime_libart
+                "android.test.mock", // base_system
+                "android.test.runner", // base_system
+                "aosp_cf_x86_64_system-build.prop",
+                "aosp_mainline_modules", // ok
+                "build_flag_system", // base_system
+                "charger_res_images", // generic_system
+                "com.android.apex.cts.shim.v1_prebuilt", // ok
+                "com.android.cellbroadcast", // telephony_system
+                "com.android.future.usb.accessory", // media_system
+                "com.android.location.provider", // base_system
+                "com.android.media.remotedisplay", // media_system
+                "com.android.media.remotedisplay.xml", // media_system
+                "com.android.mediadrm.signer", // media_system
+                "com.android.nfc_extras", // ok
+                "com.android.nfcservices", // base_system (RELEASE_PACKAGE_NFC_STACK != NfcNci)
+                "com.android.runtime", // ok
+                "dex_bootjars",
+                "ext", // from runtime_libart
+                "fonts", // ok
+                "framework-graphics", // base_system
+                "framework-location", // base_system
+                "framework-minus-apex-install-dependencies", // base_system
+                "hwservicemanager_compat_symlink_module", // base_system
+                "hyph-data",
+                "ims-common", // base_system
+                "init_system", // base_system
+                "javax.obex", // base_system
+                "llndk.libraries.txt", //ok
+                "org.apache.http.legacy", // base_system
+                "perfetto-extras", // system
                 "sanitizer.libraries.txt", // base_system
                 "selinux_policy_system_soong", // ok
                 "services", // base_system
                 "shell_and_utilities_system", // ok
                 "system_compatibility_matrix.xml", //base_system
-                "Tag", // generic_system
-                "Telecom", // handheld_system
                 "telephony-common", // libs from TeleService
-                "TelephonyProvider", // handheld_system
-                "TeleService", // handheld_system
-                "Traceur", // handheld_system
-                "UserDictionaryProvider", // handheld_system
                 "voip-common", // base_system
-                "VpnDialogs", // handheld_system
-                "WallpaperBackup", // base_system
             ] + select(soong_config_variable("ANDROID", "release_crashrecovery_module"), {
                 "true": [
                     "com.android.crashrecovery", // base_system (RELEASE_CRASHRECOVERY_MODULE)
@@ -690,57 +690,59 @@ android_system_image {
         both: {
             deps: [
                 "android.hardware.biometrics.fingerprint@2.1", // generic_system
+                "android.hardware.radio.config@1.0", // generic_system
+                "android.hardware.radio.deprecated@1.0", // generic_system
                 "android.hardware.radio@1.0", // generic_system
                 "android.hardware.radio@1.1", // generic_system
                 "android.hardware.radio@1.2", // generic_system
                 "android.hardware.radio@1.3", // generic_system
                 "android.hardware.radio@1.4", // generic_system
-                "android.hardware.radio.config@1.0", // generic_system
-                "android.hardware.radio.deprecated@1.0", // generic_system
                 "android.hardware.secure_element@1.0", // generic_system
                 "app_process", // base_system
                 "boringssl_self_test", // base_system
                 "heapprofd_client", // base_system
+                "libEGL", // base_system
+                "libEGL_angle", // base_system
+                "libETC1", // base_system
+                "libFFTEm", // base_system
+                "libGLESv1_CM", // base_system
+                "libGLESv1_CM_angle", // base_system
+                "libGLESv2", // base_system
+                "libGLESv2_angle", // base_system
+                "libGLESv3", // base_system
+                "libOpenMAXAL", // base_system
+                "libOpenSLES", // base_system
                 "libaaudio", // base_system
                 "libalarm_jni", // base_system
                 "libamidi", // base_system
+                "libandroid",
                 "libandroid_runtime",
                 "libandroid_servers",
-                "libandroid",
                 "libandroidfw",
                 "libartpalette-system",
                 "libaudio-resampler", // generic-system
                 "libaudioeffect_jni",
                 "libaudiohal", // generic-system
                 "libaudiopolicyengineconfigurable", // generic-system
+                "libbinder",
                 "libbinder_ndk",
                 "libbinder_rpc_unstable",
-                "libbinder",
                 "libcamera2ndk",
                 "libclang_rt.asan",
                 "libcompiler_rt",
                 "libcutils", // used by many libs
                 "libdmabufheap", // used by many libs
                 "libdrm", // used by many libs // generic_system
-                "libdrmframework_jni", // base_system
                 "libdrmframework", // base_system
-                "libEGL_angle", // base_system
-                "libEGL", // base_system
-                "libETC1", // base_system
+                "libdrmframework_jni", // base_system
                 "libfdtrack", // base_system
-                "libFFTEm", // base_system
                 "libfilterfw", // base_system
                 "libfilterpack_imageproc", // media_system
                 "libfwdlockengine", // generic_system
                 "libgatekeeper", // base_system
-                "libGLESv1_CM_angle", // base_system
-                "libGLESv1_CM", // base_system
-                "libGLESv2_angle", // base_system
-                "libGLESv2", // base_system
-                "libGLESv3", // base_system
                 "libgui", // base_system
-                "libhardware_legacy", // base_system
                 "libhardware", // base_system
+                "libhardware_legacy", // base_system
                 "libhidltransport", // generic_system
                 "libhwbinder", // generic_system
                 "libinput", // base_system
@@ -751,8 +753,8 @@ android_system_image {
                 "liblog", // base_system
                 "liblogwrap", // generic_system
                 "liblz4", // generic_system
-                "libmedia_jni", // base_system
                 "libmedia", // base_system
+                "libmedia_jni", // base_system
                 "libmediandk", // base_system
                 "libminui", // generic_system
                 "libmtp", // base_system
@@ -761,8 +763,6 @@ android_system_image {
                 "libnetutils", // base_system
                 "libneuralnetworks_packageinfo", // base_system
                 "libnl", // generic_system
-                "libOpenMAXAL", // base_system
-                "libOpenSLES", // base_system
                 "libpdfium", // base_system
                 "libpolicy-subsystem", // generic_system
                 "libpower", // base_system
@@ -779,9 +779,9 @@ android_system_image {
                 "libsoundpool", // base_system
                 "libspeexresampler", // base_system
                 "libsqlite", // base_system
+                "libstagefright", // base_system
                 "libstagefright_foundation", // base_system
                 "libstagefright_omx", // base_system
-                "libstagefright", // base_system
                 "libstdc++", // base_system
                 "libsysutils", // base_system
                 "libui", // base_system
