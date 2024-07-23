@@ -333,6 +333,7 @@ android_system_image {
         "aosp_cf_x86_64_system-init.environ.rc",
         "apexd",
         "appops",
+        "approved-ogki-builds.xml", // base_system
         "appwidget",
         "atrace",
         "audioserver",
@@ -404,6 +405,7 @@ android_system_image {
         "ip", // base_system
         "iptables",
         "kcmdlinectrl",
+        "kernel-lifetimes.xml", // base_system
         "keychars_data",
         "keylayout_data",
         "keystore2",
