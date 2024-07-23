@@ -24,12 +24,10 @@
 #include <absl/log/log.h>
 #include <absl/status/status.h>
 
-using absl::Status;
-
 namespace cuttlefish {
 namespace process_sandboxer {
 
-void PollCallback::Add(int fd, std::function<Status(short)> cb) {
+void PollCallback::Add(int fd, std::function<absl::Status(short)> cb) {
   pollfds_.emplace_back(pollfd{
       .fd = fd,
       .events = POLLIN,
@@ -37,10 +35,10 @@ void PollCallback::Add(int fd, std::function<Status(short)> cb) {
   callbacks_.emplace_back(std::move(cb));
 }
 
-Status PollCallback::Poll() {
+absl::Status PollCallback::Poll() {
   int poll_ret = poll(pollfds_.data(), pollfds_.size(), 0);
   if (poll_ret < 0) {
-    return Status(absl::ErrnoToStatusCode(errno), "`poll` failed");
+    return absl::Status(absl::ErrnoToStatusCode(errno), "`poll` failed");
   }
 
   VLOG(2) << "`poll` returned " << poll_ret;
