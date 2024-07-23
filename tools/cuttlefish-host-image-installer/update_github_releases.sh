@@ -75,9 +75,6 @@ cp cuttlefish_packages.7z cuttlefish_packages"_${STABLE_VERSION}".7z
 cp u-boot.bin u-boot"_${STABLE_VERSION}".bin
 cp preseed-mini.iso.xz preseed-mini"_${STABLE_VERSION}".iso.xz
 cp meta_gigamp_packages.7z meta_gigamp_packages"_${STABLE_VERSION}".7z
-cp aosp_kernel_aosp14-6.1.7z aosp_kernel_aosp14-6.1"_${STABLE_VERSION}".7z
-cp aosp_kernel_aosp15-6.1.7z aosp_kernel_aosp15-6.1"_${STABLE_VERSION}".7z
-cp aosp_kernel_aosp15-6.6.7z aosp_kernel_aosp15-6.6"_${STABLE_VERSION}".7z
 
 # upload assets to both latest and stable versions
 echo "step 5: upload assets to both latest and stable versions"
@@ -95,15 +92,9 @@ do
   gh release upload "$version" preseed-mini"_${STABLE_VERSION}".iso.xz
   gh release upload "$version" cuttlefish_packages"_${STABLE_VERSION}".7z
   gh release upload "$version" meta_gigamp_packages"_${STABLE_VERSION}".7z
-  gh release upload "$version" aosp_kernel_aosp14-6.1"_${STABLE_VERSION}".7z
-  gh release upload "$version" aosp_kernel_aosp15-6.1"_${STABLE_VERSION}".7z
-  gh release upload "$version" aosp_kernel_aosp15-6.6"_${STABLE_VERSION}".7z
 
   gh release upload "$version" u-boot.bin
   gh release upload "$version" preseed-mini.iso.xz
   gh release upload "$version" cuttlefish_packages.7z
   gh release upload "$version" meta_gigamp_packages.7z
-  gh release upload "$version" aosp_kernel_aosp14-6.1.7z
-  gh release upload "$version" aosp_kernel_aosp15-6.1.7z
-  gh release upload "$version" aosp_kernel_aosp15-6.6.7z  
 done
