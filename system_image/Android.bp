@@ -414,6 +414,7 @@ android_system_image {
         "locksettings", // base_system
         "logcat", // base_system
         "logd", // base_system
+        "logpersist.start",
         "lpdump", // base_system
         "lshal", // base_system
         "make_f2fs", // media_system
@@ -520,7 +521,6 @@ android_system_image {
             "iperf3",
             "iw",
             "layertracegenerator",
-            "logpersist.start",
             "logtagd.rc",
             "ot-cli-ftd",
             "ot-ctl",
@@ -549,7 +549,6 @@ android_system_image {
             "unwind_symbols",
             "update_engine_client",
         ],
-
         default: [],
     }),
     multilib: {
