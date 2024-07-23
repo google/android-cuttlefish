@@ -82,8 +82,6 @@ Result<void> ServerLoopImpl::Run() {
   auto process_monitor_properties =
       ProcessMonitor::Properties()
           .RestartSubprocesses(instance_.restart_subprocesses())
-          .SandboxProcesses(config_.host_sandbox())
-          .SandboxerWritesToLauncherLog(!instance_.run_as_daemon())
           .StraceLogDir(instance_.PerInstanceLogPath(""))
           .StraceCommands(config_.straced_host_executables());
 

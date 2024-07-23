@@ -20,7 +20,6 @@
 #include <mutex>
 #include <set>
 #include <string>
-#include <thread>
 #include <utility>
 #include <vector>
 
@@ -32,7 +31,6 @@ namespace cuttlefish {
 
 struct MonitorEntry {
   std::unique_ptr<Command> cmd;
-  bool can_sandbox;
   std::unique_ptr<Subprocess> proc;
   bool is_critical;
 
@@ -58,12 +56,6 @@ class ProcessMonitor {
     Properties& StraceLogDir(std::string) &;
     Properties StraceLogDir(std::string) &&;
 
-    Properties& SandboxProcesses(bool) &;
-    Properties SandboxProcesses(bool) &&;
-
-    Properties& SandboxerWritesToLauncherLog(bool) &;
-    Properties SandboxerWritesToLauncherLog(bool) &&;
-
     template <typename T>
     Properties& AddCommands(T commands) & {
       for (auto& command : commands) {
@@ -82,8 +74,6 @@ class ProcessMonitor {
     std::vector<MonitorEntry> entries_;
     std::set<std::string> strace_commands_;
     std::string strace_log_dir_;
-    bool sandbox_processes_;
-    bool sandboxer_writes_to_launcher_log_;
 
     friend class ProcessMonitor;
   };
