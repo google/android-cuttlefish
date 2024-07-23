@@ -99,7 +99,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto group = CF_EXPECT(CreateGroup(cvd_flags));
     auto res = LoadGroup(request, group, std::move(cvd_flags));
     if (!res.ok()) {
-      instance_manager_.RemoveInstanceGroup(group.GroupName());
+      instance_manager_.RemoveInstanceGroup(group.HomeDir());
       CF_EXPECT(std::move(res));
     }
     listener_handle.reset();
