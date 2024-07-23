@@ -291,20 +291,18 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
               }
               return subtool_path;
             };
-            const auto adb_bin_path = SubtoolPath("adb");
-            CHECK(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(),
-                           "wait-for-device"},
-                          SubprocessOptions(), WEXITED)
-                      .ok())
-                << "Failed to suspend bluetooth manager.";
-            CHECK(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(),
-                           "shell", "cmd", "bluetooth_manager", "enable"},
-                          SubprocessOptions(), WEXITED)
-                      .ok());
-            CHECK(Execute({adb_bin_path, "-s", instance_.adb_ip_and_port(),
-                           "shell", "cmd", "uwb", "enable-uwb"},
-                          SubprocessOptions(), WEXITED)
-                      .ok());
+            // Run the in-guest post-restore script.
+            Command adb_command(SubtoolPath("adb"));
+            // Avoid the adb server being started in the runtime directory and
+            // looking like a process that is still using the directory.
+            adb_command.SetWorkingDirectory("/");
+            adb_command.AddParameter("-s").AddParameter(
+                instance_.adb_ip_and_port());
+            adb_command.AddParameter("wait-for-device");
+            adb_command.AddParameter("shell");
+            adb_command.AddParameter("/vendor/bin/snapshot_hook_post_resume");
+            CHECK_EQ(adb_command.Start().Wait(), 0)
+                << "Failed to run /vendor/bin/snapshot_hook_post_resume";
             // Done last so that adb is more likely to be ready.
             CHECK(cuttlefish::WriteAll(restore_complete_pipe_write, "1") == 1)
                 << "Error writing to restore complete pipe: "
