@@ -123,7 +123,7 @@ InstanceManager::CreateInstanceGroup(
   return CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
 }
 
-Result<bool> InstanceManager::RemoveInstanceGroup(const std::string& dir) {
+Result<bool> InstanceManager::RemoveInstanceGroupByHome(const std::string& dir) {
   auto group = CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
   return CF_EXPECT(instance_db_.RemoveInstanceGroup(group.GroupName()));
 }

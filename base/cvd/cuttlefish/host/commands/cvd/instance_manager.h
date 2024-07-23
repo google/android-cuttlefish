@@ -70,7 +70,7 @@ class InstanceManager {
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
   Result<void> UpdateInstance(const LocalInstanceGroup& group,
                               const cvd::Instance& instance);
-  Result<bool> RemoveInstanceGroup(const std::string&);
+  Result<bool> RemoveInstanceGroupByHome(const std::string&);
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
   static Result<std::string> GetCuttlefishConfigPath(const std::string& home);
