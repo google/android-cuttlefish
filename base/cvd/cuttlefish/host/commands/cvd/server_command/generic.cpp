@@ -228,7 +228,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
 
   if (infop.si_code == CLD_EXITED && IsStopCommand(invocation_info.command)) {
-    instance_manager_.RemoveInstanceGroup(invocation_info.home);
+    instance_manager_.RemoveInstanceGroupByHome(invocation_info.home);
   }
 
   return ResponseFromSiginfo(infop);

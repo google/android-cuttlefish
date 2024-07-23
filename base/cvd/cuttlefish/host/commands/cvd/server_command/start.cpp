@@ -734,7 +734,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
           LOG(ERROR) << "Devices may still be executing in the background, run "
                         "`cvd reset` to ensure a clean state";
         }
-        instance_manager_.RemoveInstanceGroup(home_dir);
+        instance_manager_.RemoveInstanceGroupByHome(home_dir);
         std::abort();
       });
   auto listener_handle = CF_EXPECT(std::move(handle_res));
@@ -821,7 +821,7 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
     std::vector<InstanceLockFile>& lock_files) {
   auto start_res = LaunchDevice(std::move(command), group, envs, request);
   if (!start_res.ok() || start_res->status().code() != cvd::Status::OK) {
-    CF_EXPECT(instance_manager_.RemoveInstanceGroup(group.HomeDir()));
+    CF_EXPECT(instance_manager_.RemoveInstanceGroupByHome(group.HomeDir()));
     return start_res;
   }
 
