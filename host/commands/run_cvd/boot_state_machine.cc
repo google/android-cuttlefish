@@ -278,7 +278,9 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
             CHECK(status.ok())
                 << "Failed to send network service reset" << status.error_code()
                 << ": " << status.error_message();
-            LOG(DEBUG) << response.result();
+            LOG(DEBUG) << "OpenWRT `service network restart` response: "
+                       << response.result();
+
             auto SubtoolPath = [](const std::string& subtool_name) {
               auto my_own_dir = android::base::GetExecutableDirectory();
               std::stringstream subtool_path_stream;
