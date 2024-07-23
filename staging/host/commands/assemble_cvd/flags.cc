@@ -953,6 +953,24 @@ Result<void> CheckSnapshotCompatible(
   return {};
 }
 
+std::optional<std::string> EnvironmentUdsDir() {
+  auto environments_uds_dir = "/tmp/cf_env_" + std::to_string(getuid());
+  if (DirectoryExists(environments_uds_dir) &&
+      !CanAccess(environments_uds_dir, R_OK | W_OK | X_OK)) {
+    return std::nullopt;
+  }
+  return environments_uds_dir;
+}
+
+std::optional<std::string> InstancesUdsDir() {
+  auto instances_uds_dir = "/tmp/cf_avd_" + std::to_string(getuid());
+  if (DirectoryExists(instances_uds_dir) &&
+      !CanAccess(instances_uds_dir, R_OK | W_OK | X_OK)) {
+    return std::nullopt;
+  }
+  return instances_uds_dir;
+}
+
 } // namespace
 
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
@@ -979,6 +997,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_root_dir(root_dir);
+
+  tmp_config_obj.set_environments_uds_dir(
+      EnvironmentUdsDir().value_or(tmp_config_obj.environments_dir()));
+  tmp_config_obj.set_instances_uds_dir(
+      InstancesUdsDir().value_or(tmp_config_obj.instances_dir()));
 
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
