@@ -22,15 +22,16 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/flags/flag.h"
-#include "absl/flags/parse.h"
-#include "absl/log/check.h"
-#include "absl/log/globals.h"
-#include "absl/log/initialize.h"
-#include "absl/log/log.h"
-#include "absl/status/status.h"
-#include "absl/strings/numbers.h"
-#include "sandboxed_api/util/path.h"
+#include <absl/flags/flag.h>
+#include <absl/flags/parse.h>
+#include <absl/log/check.h>
+#include <absl/log/globals.h>
+#include <absl/log/initialize.h>
+#include <absl/log/log.h>
+#include <absl/status/status.h>
+#include <absl/strings/numbers.h>
+#include <absl/strings/str_cat.h>
+#include <sandboxed_api/util/path.h>
 
 #include "host/commands/process_sandboxer/logs.h"
 #include "host/commands/process_sandboxer/policies.h"
@@ -48,29 +49,24 @@ ABSL_FLAG(std::vector<std::string>, log_files, std::vector<std::string>(),
           "File paths outside the sandbox to write logs to");
 ABSL_FLAG(bool, verbose_stderr, false, "Write debug messages to stderr");
 
-using absl::GetFlag;
-using absl::OkStatus;
-using absl::Status;
-using absl::StatusCode;
+namespace cuttlefish::process_sandboxer {
+namespace {
+
 using sapi::file::CleanPath;
 using sapi::file::JoinPath;
 
-namespace cuttlefish {
-namespace process_sandboxer {
-namespace {
-
 std::optional<std::string_view> FromEnv(const std::string& name) {
-  auto value = getenv(name.c_str());
+  char* value = getenv(name.c_str());
   return value == NULL ? std::optional<std::string_view>() : value;
 }
 
-Status ProcessSandboxerMain(int argc, char** argv) {
-  auto args = absl::ParseCommandLine(argc, argv);
+absl::Status ProcessSandboxerMain(int argc, char** argv) {
+  std::vector<char*> args = absl::ParseCommandLine(argc, argv);
   /* When building in AOSP, the flags in absl/log/flags.cc are missing. This
    * uses the absl/log/globals.h interface to log ERROR severity to stderr, and
    * write all LOG and VLOG(1) messages to log sinks pointing to log files. */
   absl::InitializeLog();
-  if (GetFlag(FLAGS_verbose_stderr)) {
+  if (absl::GetFlag(FLAGS_verbose_stderr)) {
     absl::SetStderrThreshold(absl::LogSeverity::kError);
   } else {
     absl::SetStderrThreshold(absl::LogSeverity::kInfo);
@@ -78,7 +74,7 @@ Status ProcessSandboxerMain(int argc, char** argv) {
   absl::EnableLogPrefix(true);
   absl::SetGlobalVLogLevel(1);
 
-  auto logs_status = LogToFiles(GetFlag(FLAGS_log_files));
+  absl::Status logs_status = LogToFiles(absl::GetFlag(FLAGS_log_files));
   if (!logs_status.ok()) {
     return logs_status;
   }
@@ -86,56 +82,55 @@ Status ProcessSandboxerMain(int argc, char** argv) {
   VLOG(1) << "Entering ProcessSandboxerMain";
 
   HostInfo host;
-  host.artifacts_path = CleanPath(GetFlag(FLAGS_host_artifacts_path));
+  host.artifacts_path = CleanPath(absl::GetFlag(FLAGS_host_artifacts_path));
   host.cuttlefish_config_path =
       CleanPath(FromEnv(kCuttlefishConfigEnvVarName).value_or(""));
-  host.log_dir = CleanPath(GetFlag(FLAGS_log_dir));
-  host.runtime_dir = CleanPath(GetFlag(FLAGS_runtime_dir));
+  host.log_dir = CleanPath(absl::GetFlag(FLAGS_log_dir));
+  host.runtime_dir = CleanPath(absl::GetFlag(FLAGS_runtime_dir));
   setenv("LD_LIBRARY_PATH", JoinPath(host.artifacts_path, "lib64").c_str(), 1);
 
   if (args.size() < 2) {
-    return Status(StatusCode::kInvalidArgument, "Need argv in positional args");
+    std::string err = absl::StrCat("Wanted argv.size() > 1, was ", args.size());
+    return absl::InvalidArgumentError(err);
   }
-  auto exe = CleanPath(args[1]);
+  std::string exe = CleanPath(args[1]);
   std::vector<std::string> exe_argv(++args.begin(), args.end());
 
   auto sandbox_manager_res = SandboxManager::Create(std::move(host));
   if (!sandbox_manager_res.ok()) {
     return sandbox_manager_res.status();
   }
-  auto sandbox_mgr = std::move(*sandbox_manager_res);
+  std::unique_ptr<SandboxManager> manager = std::move(*sandbox_manager_res);
 
   std::map<int, int> fds;
-  for (const auto& inherited_fd : GetFlag(FLAGS_inherited_fds)) {
+  for (const std::string& inherited_fd : absl::GetFlag(FLAGS_inherited_fds)) {
     int fd;
     if (!absl::SimpleAtoi(inherited_fd, &fd)) {
-      return Status(StatusCode::kInvalidArgument, "non-int inherited_fd");
+      std::string error = absl::StrCat("inherited_fd not int: ", inherited_fd);
+      return absl::InvalidArgumentError(error);
     }
     fds[fd] = fd;  // RunProcess will close these
   }
 
-  auto status = sandbox_mgr->RunProcess(std::move(exe_argv), std::move(fds));
-  if (!status.ok()) {
-    return status;
+  absl::Status run = manager->RunProcess(std::move(exe_argv), std::move(fds));
+  if (!run.ok()) {
+    return run;
   }
 
-  while (sandbox_mgr->Running()) {
-    auto iter = sandbox_mgr->Iterate();
+  while (manager->Running()) {
+    absl::Status iter = manager->Iterate();
     if (!iter.ok()) {
       LOG(ERROR) << "Error in SandboxManager::Iterate: " << iter.ToString();
     }
   }
-  return OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
-
-using cuttlefish::process_sandboxer::ProcessSandboxerMain;
+}  // namespace cuttlefish::process_sandboxer
 
 int main(int argc, char** argv) {
-  auto status = ProcessSandboxerMain(argc, argv);
+  auto status = cuttlefish::process_sandboxer::ProcessSandboxerMain(argc, argv);
   if (status.ok()) {
     VLOG(1) << "process_sandboxer exiting normally";
     return 0;
