@@ -22,7 +22,6 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#include <algorithm>
 #include <memory>
 #include <sstream>
 
@@ -31,6 +30,7 @@
 #include <absl/log/vlog_is_on.h>
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
+#include <absl/strings/str_cat.h>
 #include <absl/strings/str_format.h>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -43,19 +43,13 @@
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/poll_callback.h"
 
-using absl::ErrnoToStatus;
-using absl::OkStatus;
-using absl::Status;
-using absl::StatusCode;
-using absl::StatusOr;
+namespace cuttlefish::process_sandboxer {
+
 using sandbox2::Executor;
 using sandbox2::Policy;
 using sandbox2::Sandbox2;
 using sapi::file::CleanPath;
 using sapi::file::JoinPath;
-
-namespace cuttlefish {
-namespace process_sandboxer {
 
 class SandboxManager::ManagedProcess {
  public:
@@ -105,48 +99,48 @@ class SandboxManager::SocketClient {
   absl::Status HandleMessage() {
     char buf;
     if (read(client_fd_, &buf, sizeof(buf)) < 0) {
-      return ErrnoToStatus(errno, "`read` failed");
+      return absl::ErrnoToStatus(errno, "`read` failed");
     }
-    return Status(StatusCode::kUnimplemented, "TODO(schuffelen)");
+    return absl::UnimplementedError("TODO(schuffelen)");
   }
 
  private:
   int client_fd_;
 };
 
-StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
+absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
     HostInfo host_info) {
   std::unique_ptr<SandboxManager> manager(new SandboxManager());
   manager->host_info_ = std::move(host_info);
   manager->runtime_dir_ =
       absl::StrFormat("/tmp/sandbox_manager.%u.XXXXXX", getpid());
   if (mkdtemp(manager->runtime_dir_.data()) == nullptr) {
-    return ErrnoToStatus(errno, "mkdtemp failed");
+    return absl::ErrnoToStatus(errno, "mkdtemp failed");
   }
   VLOG(1) << "Created temporary directory '" << manager->runtime_dir_ << "'";
 
   sigset_t mask;
   if (sigfillset(&mask) < 0) {
-    return ErrnoToStatus(errno, "sigfillset failed");
+    return absl::ErrnoToStatus(errno, "sigfillset failed");
   }
   // TODO(schuffelen): Explore interaction between catching SIGCHLD and sandbox2
   if (sigdelset(&mask, SIGCHLD) < 0) {
-    return ErrnoToStatus(errno, "sigdelset failed");
+    return absl::ErrnoToStatus(errno, "sigdelset failed");
   }
   if (sigprocmask(SIG_SETMASK, &mask, NULL) < 0) {
-    return ErrnoToStatus(errno, "sigprocmask failed");
+    return absl::ErrnoToStatus(errno, "sigprocmask failed");
   }
   VLOG(1) << "Blocked signals";
 
   manager->signal_fd_ = signalfd(-1, &mask, SFD_CLOEXEC | SFD_NONBLOCK);
   if (manager->signal_fd_ < 0) {
-    return ErrnoToStatus(errno, "signalfd failed");
+    return absl::ErrnoToStatus(errno, "signalfd failed");
   }
   VLOG(1) << "Created signalfd";
 
   manager->server_fd_ = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0);
   if (manager->server_fd_ < 0) {
-    return ErrnoToStatus(errno, "`socket` failed");
+    return absl::ErrnoToStatus(errno, "`socket` failed");
   }
   sockaddr_un socket_name = {
       .sun_family = AF_UNIX,
@@ -155,10 +149,10 @@ StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
                 manager->ServerSocketOutsidePath().c_str());
   auto sockname_ptr = reinterpret_cast<sockaddr*>(&socket_name);
   if (bind(manager->server_fd_, sockname_ptr, sizeof(socket_name)) < 0) {
-    return ErrnoToStatus(errno, "`bind` failed");
+    return absl::ErrnoToStatus(errno, "`bind` failed");
   }
   if (listen(manager->server_fd_, 10) < 0) {
-    return ErrnoToStatus(errno, "`listen` failed");
+    return absl::ErrnoToStatus(errno, "`listen` failed");
   }
 
   return manager;
@@ -182,20 +176,20 @@ SandboxManager::~SandboxManager() {
   }
 }
 
-Status SandboxManager::RunProcess(const std::vector<std::string>& argv,
-                                  const std::map<int, int>& fds) {
+absl::Status SandboxManager::RunProcess(const std::vector<std::string>& argv,
+                                        const std::map<int, int>& fds) {
   if (argv.empty()) {
     for (const auto& [fd_inner, fd_outer] : fds) {
       if (close(fd_outer) < 0) {
         LOG(ERROR) << "Failed to close '" << fd_inner << "'";
       }
     }
-    return Status(StatusCode::kInvalidArgument, "Not enough arguments");
+    return absl::InvalidArgumentError("Not enough arguments");
   }
 
   int event_fd = eventfd(0, EFD_CLOEXEC);
   if (event_fd < 0) {
-    return ErrnoToStatus(errno, "`eventfd` failed");
+    return absl::ErrnoToStatus(errno, "`eventfd` failed");
   }
 
   if (VLOG_IS_ON(1)) {
@@ -254,12 +248,12 @@ Status SandboxManager::RunProcess(const std::vector<std::string>& argv,
 
   sandboxes_.emplace_back(new ManagedProcess(event_fd, std::move(sandbox)));
 
-  return OkStatus();
+  return absl::OkStatus();
 }
 
 bool SandboxManager::Running() const { return running_; }
 
-Status SandboxManager::Iterate() {
+absl::Status SandboxManager::Iterate() {
   PollCallback poll_cb;
 
   poll_cb.Add(signal_fd_, bind_front(&SandboxManager::Signalled, this));
@@ -277,19 +271,20 @@ Status SandboxManager::Iterate() {
   return poll_cb.Poll();
 }
 
-Status SandboxManager::Signalled(short revents) {
+absl::Status SandboxManager::Signalled(short revents) {
   if (revents != POLLIN) {
     running_ = false;
-    return Status(StatusCode::kInternal, "signalfd exited");
+    return absl::InternalError("signalfd exited");
   }
   signalfd_siginfo info;
   auto read_res = read(signal_fd_, &info, sizeof(info));
   if (read_res < 0) {
-    return ErrnoToStatus(errno, "`read(signal_fd_, ...)` failed");
+    return absl::ErrnoToStatus(errno, "`read(signal_fd_, ...)` failed");
   } else if (read_res == 0) {
-    return Status(StatusCode::kInternal, "read(signal_fd_, ...) returned EOF");
+    return absl::InternalError("read(signal_fd_, ...) returned EOF");
   } else if (read_res != (ssize_t)sizeof(info)) {
-    return Status(StatusCode::kInternal, "read(signal_fd_, ...) gave bad size");
+    std::string err = absl::StrCat("read(signal_fd_, ...) gave '", read_res);
+    return absl::InternalError(err);
   }
   VLOG(1) << "Received signal with signo '" << info.ssi_signo << "'";
 
@@ -299,42 +294,44 @@ Status SandboxManager::Signalled(short revents) {
     case SIGTERM:
       LOG(INFO) << "Received signal '" << info.ssi_signo << "', exiting";
       running_ = false;
-      return OkStatus();
+      return absl::OkStatus();
     default:
-      return Status(StatusCode::kInternal, "Received unexpected signal");
+      std::string err = absl::StrCat("Unexpected signal ", info.ssi_signo);
+      return absl::InternalError(err);
   }
 }
 
-Status SandboxManager::NewClient(short revents) {
+absl::Status SandboxManager::NewClient(short revents) {
   if (revents != POLLIN) {
     running_ = false;
-    return Status(StatusCode::kInternal, "server socket exited");
+    return absl::InternalError("server socket exited");
   }
   int client = accept4(server_fd_, nullptr, nullptr, SOCK_CLOEXEC);
   if (client < 0) {
-    return ErrnoToStatus(errno, "`accept` failed");
+    return absl::ErrnoToStatus(errno, "`accept` failed");
   }
   clients_.emplace_back(new SocketClient(client));
-  return OkStatus();
+  return absl::OkStatus();
 }
 
-Status SandboxManager::ProcessExit(SandboxManager::SboxIter it, short revents) {
+absl::Status SandboxManager::ProcessExit(SandboxManager::SboxIter it,
+                                         short revents) {
   sandboxes_.erase(it);
-  static const constexpr char kErr[] = "eventfd exited";
-  return revents == POLLIN ? OkStatus() : Status(StatusCode::kInternal, kErr);
+  static constexpr char kErr[] = "eventfd exited";
+  return revents == POLLIN ? absl::OkStatus() : absl::InternalError(kErr);
 }
 
-Status SandboxManager::ClientMessage(SandboxManager::ClientIter it, short rev) {
+absl::Status SandboxManager::ClientMessage(SandboxManager::ClientIter it,
+                                           short rev) {
   if (rev == POLLIN) {
     return (*it)->HandleMessage();
   }
   clients_.erase(it);
-  return Status(StatusCode::kInternal, "client dropped file descriptor");
+  return absl::InternalError("client dropped file descriptor");
 }
 
 std::string SandboxManager::ServerSocketOutsidePath() const {
   return JoinPath(runtime_dir_, "/", "server.sock");
 }
 
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
+}  // namespace cuttlefish::process_sandboxer
