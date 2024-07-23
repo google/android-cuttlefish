@@ -527,6 +527,9 @@ DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
 DECLARE_string(snapshot_path);
 
+DEFINE_vec(vcpu_config_path, CF_DEFAULTS_VCPU_CONFIG_PATH,
+           "configuration file for Virtual Cpufreq");
+
 namespace cuttlefish {
 using vm_manager::QemuManager;
 using vm_manager::Gem5Manager;
@@ -1233,6 +1236,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   std::vector<std::string> mcu_config_vec = CF_EXPECT(GET_FLAG_STR_VALUE(mcu_config_path));
 
+  std::vector<std::string> vcpu_config_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(vcpu_config_path));
+
   std::string default_enable_sandbox = "";
   std::string default_enable_virtiofs = "";
   std::string comma_str = "";
@@ -1834,6 +1840,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                                  /* follow_symlinks */ true),
                 "Failed to read mcu config file");
       instance.set_mcu(CF_EXPECT(ParseJson(file_content), "Failed parsing JSON file"));
+    }
+
+    if (!vcpu_config_vec[instance_index].empty()) {
+      auto vcpu_cfg_path = vcpu_config_vec[instance_index];
+      CF_EXPECT(FileExists(vcpu_cfg_path), "vCPU config file does not exist");
+      instance.set_vcpu_config_path(AbsolutePath(vcpu_cfg_path));
     }
 
     instance_index++;
