@@ -37,7 +37,6 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/signals.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/command_sequence.h"
@@ -203,6 +202,17 @@ static Result<void> UpdateInstanceArgs(
   // like --num_instances and --base_instance_num
   args.push_back("--num_instances=" + std::to_string(ids.size()));
   args.push_back("--base_instance_num=" + std::to_string(first_id));
+  return {};
+}
+
+Result<void> SymlinkPreviousConfig(const std::string& group_home_dir) {
+  auto system_wide_home = CF_EXPECT(SystemWideUserHome());
+  auto config_from_home = system_wide_home + "/.cuttlefish_config.json";
+  if (!FileExists(config_from_home)) {
+    return {};
+  }
+  CF_EXPECT(EnsureSymlink(config_from_home,
+                          group_home_dir + "/.cuttlefish_config.json"));
   return {};
 }
 
@@ -819,6 +829,15 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
     Command command, selector::LocalInstanceGroup& group,
     const cvd_common::Envs& envs, const RequestWithStdio& request,
     std::vector<InstanceLockFile>& lock_files) {
+  // cvd_internal_start uses the config from the previous invocation to
+  // determine the default value for the -report_anonymous_usage_stats flag so
+  // we symlink that to the group's home directory, this link will be
+  // overwritten later by cvd_internal_start itself.
+  auto symlink_config_res = SymlinkPreviousConfig(group.HomeDir());
+  if (!symlink_config_res.ok()) {
+    LOG(ERROR) << "Failed to symlink the config file at system wide home: "
+               << symlink_config_res.error().Message();
+  }
   auto start_res = LaunchDevice(std::move(command), group, envs, request);
   if (!start_res.ok() || start_res->status().code() != cvd::Status::OK) {
     CF_EXPECT(instance_manager_.RemoveInstanceGroupByHome(group.HomeDir()));
@@ -835,7 +854,7 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
   auto is_default_group =
       Contains(envs, "HOME") &&
       envs.at("HOME") == CF_EXPECT(SystemWideUserHome()) &&
-      request.Message().command_request().has_selector_opts();
+      !request.Message().command_request().has_selector_opts();
 
   if (is_default_group) {
     auto symlink_res = CreateSymlinks(group);
