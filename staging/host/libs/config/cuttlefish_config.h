@@ -543,6 +543,8 @@ class CuttlefishConfig {
 
     int cpus() const;
 
+    std::string vcpu_config_path() const;
+
     std::string data_policy() const;
 
     int blank_data_image_mb() const;
@@ -765,6 +767,7 @@ class CuttlefishConfig {
     void set_kgdb(bool kgdb);
     void set_target_arch(Arch target_arch);
     void set_cpus(int cpus);
+    void set_vcpu_config_path(const std::string& vcpu_config_path);
     void set_data_policy(const std::string& data_policy);
     void set_blank_data_image_mb(int blank_data_image_mb);
     void set_gdb_port(int gdb_port);

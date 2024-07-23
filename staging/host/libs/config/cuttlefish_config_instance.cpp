@@ -586,6 +586,15 @@ static constexpr char kCpus[] = "cpus";
 void CuttlefishConfig::MutableInstanceSpecific::set_cpus(int cpus) { (*Dictionary())[kCpus] = cpus; }
 int CuttlefishConfig::InstanceSpecific::cpus() const { return (*Dictionary())[kCpus].asInt(); }
 
+static constexpr char kVcpuInfo[] = "vcpu_config_path";
+void CuttlefishConfig::MutableInstanceSpecific::set_vcpu_config_path(
+    const std::string& vcpu_config_path) {
+  (*Dictionary())[kVcpuInfo] = vcpu_config_path;
+}
+std::string CuttlefishConfig::InstanceSpecific::vcpu_config_path() const {
+  return (*Dictionary())[kVcpuInfo].asString();
+}
+
 static constexpr char kDataPolicy[] = "data_policy";
 void CuttlefishConfig::MutableInstanceSpecific::set_data_policy(
     const std::string& data_policy) {
