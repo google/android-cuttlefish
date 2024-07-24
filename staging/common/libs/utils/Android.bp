@@ -82,7 +82,6 @@ cc_test_host {
         "network_test.cpp",
         "proc_file_utils_test.cpp",
         "result_test.cpp",
-        "unique_resource_allocator_test.cpp",
         "unix_sockets_test.cpp",
     ],
     static_libs: [
