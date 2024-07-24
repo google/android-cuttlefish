@@ -302,11 +302,9 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
         }
 
         List<String> addDisplaysCommand = Lists.newArrayList("display", "add");
-        for (int i = 0; i < params.size(); i++) {
-            AddDisplayParams display = params.get(i);
-
+        for (AddDisplayParams display : params) {
             addDisplaysCommand.add(String.format(
-                "--display%d=width=%d,height=%d", i, display.width(), display.height()));
+                "--display=width=%d,height=%d", display.width(), display.height()));
         }
 
         CommandResult addDisplayResult = runCvdCommand(addDisplaysCommand);
