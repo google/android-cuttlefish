@@ -66,6 +66,12 @@ class SandboxManager::ProcessNoSandbox : public SandboxManager::ManagedProcess {
  public:
   ProcessNoSandbox(int client_fd, PidFd pid_fd)
       : client_fd_(client_fd), pid_fd_(std::move(pid_fd)) {}
+  ~ProcessNoSandbox() {
+    auto halt = pid_fd_.HaltHierarchy();
+    if (!halt.ok()) {
+      LOG(ERROR) << "Failed to halt children: " << halt.ToString();
+    }
+  }
 
   std::optional<int> ClientFd() const override { return client_fd_; }
   int PollFd() const override { return pid_fd_.Get(); }
@@ -73,7 +79,7 @@ class SandboxManager::ProcessNoSandbox : public SandboxManager::ManagedProcess {
   absl::StatusOr<uintptr_t> ExitCode() override {
     siginfo_t infop;
     idtype_t id_type = (idtype_t)3;  // P_PIDFD
-    if (waitid(id_type, pid_fd_.Get(), &infop, WEXITED) < 0) {
+    if (waitid(id_type, pid_fd_.Get(), &infop, WEXITED | WNOWAIT) < 0) {
       return absl::ErrnoToStatus(errno, "`waitid` failed");
     }
     switch (infop.si_code) {

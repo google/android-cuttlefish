@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 
-#include <memory>
 #include <utility>
 #include <vector>
 
@@ -45,7 +44,15 @@ class PidFd {
   absl::StatusOr<std::vector<std::pair<UniqueFd, int>>> AllFds();
   absl::StatusOr<std::vector<std::string>> Argv();
 
+  /** Halt the process and all its descendants. */
+  absl::Status HaltHierarchy();
+  /** Halt all descendants of the process. Only safe to use if the caller
+   * guarantees the process doesn't spawn or reap any children while running. */
+  absl::Status HaltChildHierarchy();
+
  private:
+  absl::Status SendSignal(int signal);
+
   UniqueFd fd_;
   pid_t pid_;
 };
