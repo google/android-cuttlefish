@@ -15,6 +15,7 @@
 package orchestrator
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -123,6 +124,9 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	if err != nil {
 		return nil, err
 	}
+	data = bytes.ReplaceAll(data,
+		[]byte(apiv1.EnvConfigUserArtifactsVar + "/"),
+		[]byte(a.userArtifactsDirResolver.GetDirPath("")))
 	configFile, err := createTempFile("cvdload*.json", data, 0640)
 	if err != nil {
 		return nil, err
