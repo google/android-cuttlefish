@@ -21,14 +21,8 @@
 namespace cuttlefish {
 namespace selector {
 
-class LocalInstanceGroup;
-class LocalInstance;
-
 template <typename T>
 class ConstRef {
-  static_assert(std::is_same<T, LocalInstanceGroup>::value ||
-                std::is_same<T, LocalInstance>::value);
-
  public:
   ConstRef(ConstRef& ref) = default;
   ConstRef(const ConstRef& ref) = default;

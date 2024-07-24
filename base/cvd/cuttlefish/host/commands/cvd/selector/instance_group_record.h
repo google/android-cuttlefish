@@ -21,17 +21,15 @@
 
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 
 namespace cuttlefish {
 namespace selector {
 
-class LocalInstance;
-
 class LocalInstanceGroup {
  public:
-  static Result<LocalInstanceGroup> Create(const cvd::InstanceGroup& group_proto);
+  static Result<LocalInstanceGroup> Create(
+      const cvd::InstanceGroup& group_proto);
 
   LocalInstanceGroup(LocalInstanceGroup&&) = default;
   LocalInstanceGroup(const LocalInstanceGroup&) = default;
@@ -39,7 +37,6 @@ class LocalInstanceGroup {
 
   static Result<LocalInstanceGroup> Deserialize(const Json::Value& group_json);
 
-  const std::string& InternalGroupName() const { return internal_group_name_; }
   const std::string& GroupName() const { return group_proto_.name(); }
   const std::string& HomeDir() const { return group_proto_.home_directory(); }
   void SetHomeDir(const std::string& home_dir);
@@ -53,14 +50,12 @@ class LocalInstanceGroup {
   void SetProductOutPath(const std::string& product_out_path);
   TimeStamp StartTime() const;
   void SetStartTime(TimeStamp time);
-  const std::vector<LocalInstance>& Instances() const { return instances_; }
-  std::vector<LocalInstance>& Instances() { return instances_; }
-  const cvd::InstanceGroup& Proto() const {
-    return group_proto_;
-  }
+  const std::vector<cvd::Instance>& Instances() const { return instances_; }
+  std::vector<cvd::Instance>& Instances() { return instances_; }
+  const cvd::InstanceGroup& Proto() const { return group_proto_; }
   void SetAllStates(cvd::InstanceState state);
 
-  std::vector<LocalInstance> FindById(const unsigned id) const;
+  std::vector<cvd::Instance> FindById(const unsigned id) const;
   /**
    * Find by per-instance name.
    *
@@ -68,16 +63,15 @@ class LocalInstanceGroup {
    * "foo" or "4" is the per-instance names, and "cvd-foo" or "cvd-4" is
    * the device name.
    */
-  std::vector<LocalInstance> FindByInstanceName(
+  std::vector<cvd::Instance> FindByInstanceName(
       const std::string& instance_name) const;
 
  private:
   LocalInstanceGroup(const cvd::InstanceGroup& group_proto,
-                     const std::vector<LocalInstance>& instances);
+                     const std::vector<cvd::Instance>& instances);
 
-  std::string internal_group_name_;
   cvd::InstanceGroup group_proto_;
-  std::vector<LocalInstance> instances_;
+  std::vector<cvd::Instance> instances_;
 };
 
 }  // namespace selector

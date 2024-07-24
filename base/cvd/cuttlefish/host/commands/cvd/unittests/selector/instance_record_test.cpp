@@ -16,7 +16,6 @@
 #include <gtest/gtest.h>
 
 #include "host/commands/cvd/selector/instance_group_record.h"
-#include "host/commands/cvd/selector/instance_record.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -50,15 +49,13 @@ TEST(CvdInstanceRecordUnitTest, Fields) {
   const auto& instances = parent_group.Instances();
   auto& instance = *instances.cbegin();
 
-  ASSERT_EQ(instance.InstanceId(), 3);
-  ASSERT_EQ(instance.InternalName(), "3");
-  ASSERT_EQ(instance.PerInstanceName(), "phone");
-  ASSERT_EQ(instance.InternalDeviceName(), "cvd-3");
-  ASSERT_EQ(instance.DeviceName(), "super-phone");
-  ASSERT_EQ(instance.GroupProto().name(), "super");
-  ASSERT_EQ(instance.GroupProto().home_directory(), "/home/user");
-  ASSERT_EQ(instance.GroupProto().host_artifacts_path(), "/home/user/download/bin");
-  ASSERT_EQ(instance.GroupProto().product_out_path(), "/home/user/download/bin");
+  EXPECT_EQ(instance.id(), 3);
+  EXPECT_EQ(instance.name(), "phone");
+  EXPECT_EQ(parent_group.Proto().name(), "super");
+  EXPECT_EQ(parent_group.Proto().home_directory(), "/home/user");
+  EXPECT_EQ(parent_group.Proto().host_artifacts_path(),
+            "/home/user/download/bin");
+  EXPECT_EQ(parent_group.Proto().product_out_path(), "/home/user/download/bin");
 }
 
 }  // namespace selector

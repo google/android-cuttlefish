@@ -37,7 +37,6 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/signals.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/command_sequence.h"
@@ -150,7 +149,7 @@ Result<void> UpdateWebrtcDeviceId(cvd_common::Args& args,
   std::vector<std::string> device_name_list;
   for (const auto& instance : group.Instances()) {
     std::string device_name =
-        group.GroupName() + "-" + instance.PerInstanceName();
+        group.GroupName() + "-" + instance.name();
     device_name_list.push_back(device_name);
   }
   args.push_back("--webrtc_device_id=" +
@@ -182,7 +181,7 @@ static Result<void> UpdateInstanceArgs(
 
   std::vector<unsigned> ids;
   for (const auto& instance : group.Instances()) {
-    ids.push_back(instance.InstanceId());
+    ids.push_back(instance.id());
   }
   auto first_id = *ids.begin();
   bool have_consecutive_ids = true;
@@ -203,6 +202,17 @@ static Result<void> UpdateInstanceArgs(
   // like --num_instances and --base_instance_num
   args.push_back("--num_instances=" + std::to_string(ids.size()));
   args.push_back("--base_instance_num=" + std::to_string(first_id));
+  return {};
+}
+
+Result<void> SymlinkPreviousConfig(const std::string& group_home_dir) {
+  auto system_wide_home = CF_EXPECT(SystemWideUserHome());
+  auto config_from_home = system_wide_home + "/.cuttlefish_config.json";
+  if (!FileExists(config_from_home)) {
+    return {};
+  }
+  CF_EXPECT(EnsureSymlink(config_from_home,
+                          group_home_dir + "/.cuttlefish_config.json"));
   return {};
 }
 
@@ -300,7 +310,7 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
   acloud_compat_homes.reserve(group.Instances().size());
   for (const auto& instance : group.Instances()) {
     acloud_compat_homes.push_back(
-        ConcatToString(acloud_compat_home_prefix, instance.InstanceId()));
+        ConcatToString(acloud_compat_home_prefix, instance.id()));
   }
   for (const auto& acloud_compat_home : acloud_compat_homes) {
     bool result_deleted = true;
@@ -432,7 +442,7 @@ Result<void> CvdStartCommandHandler::UpdateEnvs(
     cvd_common::Envs& envs, const selector::LocalInstanceGroup& group) {
   CF_EXPECT(!group.Instances().empty());
   envs[kCuttlefishInstanceEnvVarName] =
-      std::to_string(group.Instances()[0].InstanceId());
+      std::to_string(group.Instances()[0].id());
 
   envs["HOME"] = group.HomeDir();
   envs[kAndroidHostOut] = group.HostArtifactsPath();
@@ -520,7 +530,7 @@ CvdStartCommandHandler::GetGroup(const std::vector<std::string>& subcmd_args,
   for (size_t i = 0; i < group.Instances().size(); ++i) {
     auto& instance = group.Instances()[i];
     auto& instance_info = group_creation_info.instances[i];
-    instance.SetInstanceId(instance_info.instance_id_);
+    instance.set_id(instance_info.instance_id_);
   }
   group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
   group.SetStartTime(selector::CvdServerClock::now());
@@ -620,14 +630,12 @@ Result<void> CvdStartCommandHandler::CreateSymlinks(
   auto smallest_id = std::numeric_limits<unsigned>::max();
   for (const auto& instance : group.Instances()) {
     // later on, we link cuttlefish_runtime to cuttlefish_runtime.smallest_id
-    smallest_id = std::min(smallest_id, instance.InstanceId());
-    const std::string instance_home_dir =
-        fmt::format("{}/cuttlefish/instances/cvd-{}", group.HomeDir(),
-                    instance.InstanceId());
-    CF_EXPECT(
-        EnsureSymlink(instance_home_dir,
-                      fmt::format("{}/cuttlefish_runtime.{}", system_wide_home,
-                                  instance.InstanceId())));
+    smallest_id = std::min(smallest_id, instance.id());
+    const std::string instance_home_dir = fmt::format(
+        "{}/cuttlefish/instances/cvd-{}", group.HomeDir(), instance.id());
+    CF_EXPECT(EnsureSymlink(instance_home_dir,
+                            fmt::format("{}/cuttlefish_runtime.{}",
+                                        system_wide_home, instance.id())));
     CF_EXPECT(EnsureSymlink(group.HomeDir() + "/cuttlefish",
                             system_wide_home + "/cuttlefish"));
     CF_EXPECT(EnsureSymlink(
@@ -736,7 +744,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
           LOG(ERROR) << "Devices may still be executing in the background, run "
                         "`cvd reset` to ensure a clean state";
         }
-        instance_manager_.RemoveInstanceGroup(home_dir);
+        instance_manager_.RemoveInstanceGroupByHome(home_dir);
         std::abort();
       });
   auto listener_handle = CF_EXPECT(std::move(handle_res));
@@ -779,7 +787,7 @@ static Result<cvd::Response> CvdResetGroup(
   CF_EXPECT(!instances.empty());
   const auto& first_instance = instances.front();
   auto stop_result = run_cvd_process_manager->ForcefullyStopGroup(
-      /* cvd_server_children_only */ true, first_instance.InstanceId());
+      /* cvd_server_children_only */ true, first_instance.id());
   if (!stop_result.ok()) {
     return CommandResponse(cvd::Status::INTERNAL, kStopFailure);
   }
@@ -821,9 +829,18 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
     Command command, selector::LocalInstanceGroup& group,
     const cvd_common::Envs& envs, const RequestWithStdio& request,
     std::vector<InstanceLockFile>& lock_files) {
+  // cvd_internal_start uses the config from the previous invocation to
+  // determine the default value for the -report_anonymous_usage_stats flag so
+  // we symlink that to the group's home directory, this link will be
+  // overwritten later by cvd_internal_start itself.
+  auto symlink_config_res = SymlinkPreviousConfig(group.HomeDir());
+  if (!symlink_config_res.ok()) {
+    LOG(ERROR) << "Failed to symlink the config file at system wide home: "
+               << symlink_config_res.error().Message();
+  }
   auto start_res = LaunchDevice(std::move(command), group, envs, request);
   if (!start_res.ok() || start_res->status().code() != cvd::Status::OK) {
-    CF_EXPECT(instance_manager_.RemoveInstanceGroup(group.HomeDir()));
+    CF_EXPECT(instance_manager_.RemoveInstanceGroupByHome(group.HomeDir()));
     return start_res;
   }
 
@@ -837,7 +854,7 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
   auto is_default_group =
       Contains(envs, "HOME") &&
       envs.at("HOME") == CF_EXPECT(SystemWideUserHome()) &&
-      request.Message().command_request().has_selector_opts();
+      !request.Message().command_request().has_selector_opts();
 
   if (is_default_group) {
     auto symlink_res = CreateSymlinks(group);
@@ -867,8 +884,8 @@ Result<cvd::Response> CvdStartCommandHandler::FillOutNewInstanceInfo(
   instance_group_info.add_home_directories(group.HomeDir());
   for (const auto& instance : group.Instances()) {
     auto* new_entry = CF_EXPECT(instance_group_info.add_instances());
-    new_entry->set_name(instance.PerInstanceName());
-    new_entry->set_instance_id(instance.InstanceId());
+    new_entry->set_name(instance.name());
+    new_entry->set_instance_id(instance.id());
   }
   return new_response;
 }

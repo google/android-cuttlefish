@@ -20,6 +20,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/reset_client_utils.h"
 #include "host/commands/cvd/server_command/server_handler.h"

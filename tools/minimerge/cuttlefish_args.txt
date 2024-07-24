@@ -55,9 +55,6 @@
 --map=common/libs/utils/tcp_socket.h:base/cvd/cuttlefish/common/libs/utils/tcp_socket.h
 --map=common/libs/utils/tee_logging.cpp:base/cvd/cuttlefish/common/libs/utils/tee_logging.cpp
 --map=common/libs/utils/tee_logging.h:base/cvd/cuttlefish/common/libs/utils/tee_logging.h
---map=common/libs/utils/unique_resource_allocator.h:base/cvd/cuttlefish/common/libs/utils/unique_resource_allocator.h
---map=common/libs/utils/unique_resource_allocator_test.cpp:base/cvd/cuttlefish/common/libs/utils/unique_resource_allocator_test.cpp
---map=common/libs/utils/unique_resource_allocator_test.h:base/cvd/cuttlefish/common/libs/utils/unique_resource_allocator_test.h
 --map=common/libs/utils/unix_sockets.cpp:base/cvd/cuttlefish/common/libs/utils/unix_sockets.cpp
 --map=common/libs/utils/unix_sockets.h:base/cvd/cuttlefish/common/libs/utils/unix_sockets.h
 --map=common/libs/utils/unix_sockets_test.cpp:base/cvd/cuttlefish/common/libs/utils/unix_sockets_test.cpp

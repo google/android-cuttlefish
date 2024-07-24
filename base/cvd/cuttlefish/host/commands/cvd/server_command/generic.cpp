@@ -211,10 +211,9 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
     }
     for (const auto& instance : group_ptr->Instances()) {
       auto lock =
-          instance_lockfile_manager_.RemoveLockFile(instance.InstanceId());
+          instance_lockfile_manager_.RemoveLockFile(instance.id());
       if (!lock.ok()) {
-        LOG(ERROR) << "Deleting instance Lock file for ID #"
-                   << instance.InstanceId()
+        LOG(ERROR) << "Deleting instance Lock file for ID #" << instance.id()
                    << " failed: " << lock.error().Message();
       }
     }
@@ -229,7 +228,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
 
   if (infop.si_code == CLD_EXITED && IsStopCommand(invocation_info.command)) {
-    instance_manager_.RemoveInstanceGroup(invocation_info.home);
+    instance_manager_.RemoveInstanceGroupByHome(invocation_info.home);
   }
 
   return ResponseFromSiginfo(infop);

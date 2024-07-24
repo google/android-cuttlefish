@@ -23,9 +23,9 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
-#include "host/commands/cvd/selector/instance_record.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -115,14 +115,14 @@ class CvdEnvCommandHandler : public CvdServerHandler {
         request.Message().command_request().selector_opts();
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
 
-    auto instance =
+    auto [instance, group] =
         CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs));
-    const auto& home = instance.GroupProto().home_directory();
+    const auto& home = group.Proto().home_directory();
 
-    const auto& android_host_out = instance.GroupProto().host_artifacts_path();
+    const auto& android_host_out = group.Proto().host_artifacts_path();
     auto cvd_env_bin_path =
         ConcatToString(android_host_out, "/bin/", kCvdEnvBin);
-    const auto& internal_device_name = instance.InternalDeviceName();
+    const auto& internal_device_name = fmt::format("cvd-%d", instance.id());
 
     cvd_common::Args cvd_env_args{internal_device_name};
     cvd_env_args.insert(cvd_env_args.end(), subcmd_args.begin(),

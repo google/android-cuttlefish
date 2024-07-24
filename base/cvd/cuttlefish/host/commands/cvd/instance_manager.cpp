@@ -93,12 +93,13 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(
   return CF_EXPECT(group_selector.FindGroup(instance_db_));
 }
 
-Result<InstanceManager::LocalInstance> InstanceManager::SelectInstance(
-    const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
-    const Queries& extra_queries) {
+Result<std::pair<cvd::Instance, selector::LocalInstanceGroup>>
+InstanceManager::SelectInstance(const cvd_common::Args& selector_args,
+                                const cvd_common::Envs& envs,
+                                const Queries& extra_queries) {
   auto instance_selector = CF_EXPECT(
       InstanceSelector::GetSelector(selector_args, extra_queries, envs));
-  return CF_EXPECT(instance_selector.FindInstance(instance_db_));
+  return CF_EXPECT(instance_selector.FindInstanceWithGroup(instance_db_));
 }
 
 Result<bool> InstanceManager::HasInstanceGroups() {
@@ -122,7 +123,7 @@ InstanceManager::CreateInstanceGroup(
   return CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
 }
 
-Result<bool> InstanceManager::RemoveInstanceGroup(const std::string& dir) {
+Result<bool> InstanceManager::RemoveInstanceGroupByHome(const std::string& dir) {
   auto group = CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
   return CF_EXPECT(instance_db_.RemoveInstanceGroup(group.GroupName()));
 }
@@ -140,8 +141,9 @@ Result<void> InstanceManager::UpdateInstanceGroup(const LocalInstanceGroup& grou
   return {};
 }
 
-Result<void> InstanceManager::UpdateInstance(const LocalInstance& instance) {
-  CF_EXPECT(instance_db_.UpdateInstance(instance));
+Result<void> InstanceManager::UpdateInstance(const LocalInstanceGroup& group,
+                                             const cvd::Instance& instance) {
+  CF_EXPECT(instance_db_.UpdateInstance(group, instance));
   return {};
 }
 
@@ -184,7 +186,7 @@ Result<void> InstanceManager::IssueStopCommand(
                  "\".\nThis can happen if instances are already stopped.\n");
   }
   for (const auto& instance : group.Instances()) {
-    auto lock = lock_manager_.TryAcquireLock(instance.InstanceId());
+    auto lock = lock_manager_.TryAcquireLock(instance.id());
     if (lock.ok() && (*lock)) {
       (*lock)->Status(InUseState::kNotInUse);
       continue;
@@ -239,16 +241,6 @@ InstanceManager::FindGroups(const Queries& queries) const {
   return instance_db_.FindGroups(queries);
 }
 
-Result<std::vector<InstanceManager::LocalInstance>>
-InstanceManager::FindInstances(const Query& query) const {
-  return CF_EXPECT(FindInstances(Queries{query}));
-}
-
-Result<std::vector<InstanceManager::LocalInstance>>
-InstanceManager::FindInstances(const Queries& queries) const {
-  return instance_db_.FindInstances(queries);
-}
-
 Result<InstanceManager::LocalInstanceGroup> InstanceManager::FindGroup(
     const Query& query) const {
   return CF_EXPECT(FindGroup(Queries{query}));
@@ -278,8 +270,8 @@ InstanceManager::GroupSummaryMenu() const {
     summary.idx_to_group_name[group_idx] = group.GroupName();
     char instance_idx = 'a';
     for (const auto& instance : group.Instances()) {
-      fmt::print(ss, "    <{}> {} (id : {})\n", instance_idx++,
-                 instance.DeviceName(), instance.InstanceId());
+      fmt::print(ss, "    <{}> {}-{} (id : {})\n", instance_idx++,
+                 group.GroupName(), instance.name(), instance.id());
     }
     group_idx++;
   }

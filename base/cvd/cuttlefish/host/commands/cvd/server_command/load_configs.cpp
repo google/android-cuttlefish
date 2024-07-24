@@ -91,7 +91,7 @@ class LoadConfigsCommand : public CvdServerHandler {
           // cvd_internal_start subprocess won't have time to complete and
           // receive the SIGHUP signal, so nothing should be left behind.
           // TODO(jemoreira): set state to failed instead
-          instance_manager_.RemoveInstanceGroup(group_home_directory);
+          instance_manager_.RemoveInstanceGroupByHome(group_home_directory);
           std::abort();
         });
     auto listener_handle = CF_EXPECT(std::move(push_result));
@@ -99,7 +99,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto group = CF_EXPECT(CreateGroup(cvd_flags));
     auto res = LoadGroup(request, group, std::move(cvd_flags));
     if (!res.ok()) {
-      instance_manager_.RemoveInstanceGroup(group.GroupName());
+      instance_manager_.RemoveInstanceGroupByHome(group.HomeDir());
       CF_EXPECT(std::move(res));
     }
     listener_handle.reset();
