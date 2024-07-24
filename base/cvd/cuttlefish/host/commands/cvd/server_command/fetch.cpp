@@ -18,7 +18,6 @@
 
 #include <android-base/strings.h>
 
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -31,9 +30,8 @@ namespace cuttlefish {
 
 class CvdFetchCommandHandler : public CvdServerHandler {
  public:
-  CvdFetchCommandHandler(SubprocessWaiter& subprocess_waiter)
-      : subprocess_waiter_(subprocess_waiter),
-        fetch_cmd_list_{std::vector<std::string>{"fetch", "fetch_cvd"}} {}
+  CvdFetchCommandHandler()
+      : fetch_cmd_list_{std::vector<std::string>{"fetch", "fetch_cvd"}} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
@@ -43,7 +41,6 @@ class CvdFetchCommandHandler : public CvdServerHandler {
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
-  SubprocessWaiter& subprocess_waiter_;
   std::vector<std::string> fetch_cmd_list_;
 };
 
@@ -93,10 +90,8 @@ Result<std::string> CvdFetchCommandHandler::DetailedHelp(
   return output;
 }
 
-std::unique_ptr<CvdServerHandler> NewCvdFetchCommandHandler(
-    SubprocessWaiter& subprocess_waiter) {
-  return std::unique_ptr<CvdServerHandler>(
-      new CvdFetchCommandHandler(subprocess_waiter));
+std::unique_ptr<CvdServerHandler> NewCvdFetchCommandHandler() {
+  return std::unique_ptr<CvdServerHandler>(new CvdFetchCommandHandler());
 }
 
 }  // namespace cuttlefish

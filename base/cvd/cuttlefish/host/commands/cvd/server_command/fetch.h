@@ -19,11 +19,9 @@
 #include <memory>
 
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewCvdFetchCommandHandler(
-    SubprocessWaiter& subprocess_waiter);
+std::unique_ptr<CvdServerHandler> NewCvdFetchCommandHandler();
 
 }  // namespace cuttlefish

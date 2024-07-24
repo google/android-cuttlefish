@@ -70,7 +70,7 @@ RequestContext::RequestContext(
       NewCvdDisplayCommandHandler(instance_manager_, subprocess_waiter_));
   request_handlers_.emplace_back(
       NewCvdEnvCommandHandler(instance_manager_, subprocess_waiter_));
-  request_handlers_.emplace_back(NewCvdFetchCommandHandler(subprocess_waiter_));
+  request_handlers_.emplace_back(NewCvdFetchCommandHandler());
   request_handlers_.emplace_back(
       NewCvdFleetCommandHandler(instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(NewCvdGenericCommandHandler(
