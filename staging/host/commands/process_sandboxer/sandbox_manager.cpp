@@ -43,6 +43,7 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/poll_callback.h"
+#include "host/commands/process_sandboxer/proxy_common.h"
 
 namespace cuttlefish::process_sandboxer {
 
@@ -90,15 +91,35 @@ class SandboxManager::SocketClient {
   int ClientFd() const { return client_fd_.Get(); }
 
   absl::Status HandleMessage() {
-    char buf;
-    if (read(client_fd_.Get(), &buf, sizeof(buf)) < 0) {
-      return absl::ErrnoToStatus(errno, "`read` failed");
+    auto message_status = Message::RecvFrom(client_fd_.Get());
+    if (!message_status.ok()) {
+      return message_status.status();
+    }
+    auto creds_status = UpdateCredentials(message_status->Credentials());
+    if (!creds_status.ok()) {
+      return creds_status;
     }
     return absl::UnimplementedError("TODO(schuffelen)");
   }
 
  private:
+  absl::Status UpdateCredentials(const std::optional<ucred>& credentials) {
+    if (!credentials) {
+      return absl::InvalidArgumentError("no creds");
+    } else if (!credentials_) {
+      credentials_ = credentials;
+    } else if (credentials_->pid != credentials->pid) {
+      return absl::PermissionDeniedError("pid changed");
+    } else if (credentials_->uid != credentials->uid) {
+      return absl::PermissionDeniedError("uid changed");
+    } else if (credentials_->gid != credentials->gid) {
+      return absl::PermissionDeniedError("gid changed");
+    }
+    return absl::OkStatus();
+  }
+
   UniqueFd client_fd_;
+  std::optional<ucred> credentials_;
 };
 
 absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
