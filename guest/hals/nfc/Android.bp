@@ -31,7 +31,7 @@ rust_binary {
         "liblibc",
         "libnix",
         "libclap",
-        "android.hardware.nfc-V1-rust",
+        "android.hardware.nfc-V2-rust",
         "libanyhow",
         "libthiserror",
         "libbytes",
