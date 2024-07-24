@@ -23,6 +23,7 @@
 #include <atomic>
 #include <cstdlib>
 #include <iostream>
+#include <mutex>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -733,7 +734,9 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     return ResponseFromSiginfo(infop);
   }
 
-  auto [group, lock_files] = CF_EXPECT(GetGroup(subcmd_args, envs, request));
+  auto group_and_lock_files = CF_EXPECT(GetGroup(subcmd_args, envs, request));
+  auto group = group_and_lock_files.group;
+  auto lock_files = group_and_lock_files.lock_files;
   CF_EXPECT(UpdateArgs(subcmd_args, group));
   CF_EXPECT(UpdateEnvs(envs, group));
   Command command = CF_EXPECT(
@@ -741,7 +744,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
 
   // The instance database needs to be updated if an interrupt is received.
   auto handle_res =
-      PushInterruptListener([this, home_dir = group.HomeDir()](int signal) {
+      PushInterruptListener([this, &group](int signal) {
         LOG(WARNING) << strsignal(signal) << " signal received, cleanning up";
         auto interrupt_res = subprocess_waiter_.Interrupt();
         if (!interrupt_res.ok()) {
@@ -750,7 +753,17 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
           LOG(ERROR) << "Devices may still be executing in the background, run "
                         "`cvd reset` to ensure a clean state";
         }
-        instance_manager_.RemoveInstanceGroupByHome(home_dir);
+
+        group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_CANCELLED);
+        auto update_res = instance_manager_.UpdateInstanceGroup(group);
+        if (!update_res.ok()) {
+          LOG(ERROR) << "Failed to update group status: "
+                     << update_res.error().Message();
+        }
+        // It's technically possible for the group's state to be set to
+        // "running" before abort has a chance to run, but that can only happen
+        // if the instances are indeed running, so it's OK.
+
         std::abort();
       });
   auto listener_handle = CF_EXPECT(std::move(handle_res));
@@ -846,7 +859,8 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
   }
   auto start_res = LaunchDevice(std::move(command), group, envs, request);
   if (!start_res.ok() || start_res->status().code() != cvd::Status::OK) {
-    CF_EXPECT(instance_manager_.RemoveInstanceGroupByHome(group.HomeDir()));
+    group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_BOOT_FAILED);
+    CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
     return start_res;
   }
 
