@@ -54,6 +54,7 @@ class LocalInstanceGroup {
   std::vector<cvd::Instance>& Instances() { return instances_; }
   const cvd::InstanceGroup& Proto() const { return group_proto_; }
   void SetAllStates(cvd::InstanceState state);
+  void SetAllStatesAndResetIds(cvd::InstanceState state);
 
   std::vector<cvd::Instance> FindById(const unsigned id) const;
   /**

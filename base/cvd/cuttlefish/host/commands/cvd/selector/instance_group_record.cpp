@@ -97,6 +97,13 @@ void LocalInstanceGroup::SetAllStates(cvd::InstanceState state) {
   }
 }
 
+void LocalInstanceGroup::SetAllStatesAndResetIds(cvd::InstanceState state) {
+  SetAllStates(state);
+  for (auto& instance: Instances()) {
+    instance.set_id(0);
+  }
+}
+
 TimeStamp LocalInstanceGroup::StartTime() const {
   return CvdServerClock::from_time_t(group_proto_.start_time_sec());
 }

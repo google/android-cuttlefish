@@ -15,6 +15,7 @@
  */
 #include "host/commands/cvd/server_command/load_configs.h"
 
+#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
@@ -26,6 +27,7 @@
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/interrupt_listener.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
+#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -78,8 +80,11 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto cvd_flags = CF_EXPECT(GetCvdFlags(request));
     std::string group_home_directory =
         cvd_flags.load_directories.launch_home_directory;
+
+    std::mutex group_creation_mtx;
+
     auto push_result =
-        PushInterruptListener([this, &group_home_directory](int) {
+        PushInterruptListener([this, &group_home_directory, &group_creation_mtx](int) {
           // Creating the listener before the group exists has a very low chance
           // that it may run before the group is actually created and fail,
           // that's fine. The alternative is having a very low chance of being
@@ -90,16 +95,44 @@ class LoadConfigsCommand : public CvdServerHandler {
           // subprocess was created. Hopefully, by aborting fast the
           // cvd_internal_start subprocess won't have time to complete and
           // receive the SIGHUP signal, so nothing should be left behind.
-          // TODO(jemoreira): set state to failed instead
-          instance_manager_.RemoveInstanceGroupByHome(group_home_directory);
-          std::abort();
+          {
+            std::lock_guard lock(group_creation_mtx);
+            auto group_res = instance_manager_.FindGroup(
+                selector::Query(selector::kHomeField, group_home_directory));
+            if (!group_res.ok()) {
+              LOG(ERROR) << "Failed to load group from database: "
+                         << group_res.error().Message();
+              // Abort while holding the lock to prevent the group from being
+              // created if it didn't exist yet
+              std::abort();
+            }
+            auto& group = *group_res;
+            group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_CANCELLED);
+            auto update_res = instance_manager_.UpdateInstanceGroup(group);
+            if (!update_res.ok()) {
+              LOG(ERROR) << "Failed to update groups status: "
+                         << update_res.error().Message();
+            }
+            std::abort();
+          }
         });
     auto listener_handle = CF_EXPECT(std::move(push_result));
 
-    auto group = CF_EXPECT(CreateGroup(cvd_flags));
+    group_creation_mtx.lock();
+    // Don't use CF_EXPECT here or the mutex will be left locked.
+    auto group_res = CreateGroup(cvd_flags);
+    group_creation_mtx.unlock();
+    auto group = CF_EXPECT(std::move(group_res));
+
     auto res = LoadGroup(request, group, std::move(cvd_flags));
     if (!res.ok()) {
-      instance_manager_.RemoveInstanceGroupByHome(group.HomeDir());
+      auto first_instance_state = group.Instances()[0].state();
+      // The failure could have occurred during prepare(fetch) or start
+      auto failed_state = first_instance_state == cvd::INSTANCE_STATE_PREPARING
+                              ? cvd::INSTANCE_STATE_PREPARE_FAILED
+                              : cvd::INSTANCE_STATE_BOOT_FAILED;
+      group.SetAllStatesAndResetIds(failed_state);
+      CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
       CF_EXPECT(std::move(res));
     }
     listener_handle.reset();
@@ -115,7 +148,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto mkdir_cmd = BuildMkdirCmd(request, cvd_flags);
     auto mkdir_res = executor_.ExecuteOne(mkdir_cmd, request.Err());
     if (!mkdir_res.ok()) {
-      group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
+      group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_PREPARE_FAILED);
       instance_manager_.UpdateInstanceGroup(group);
     }
     CF_EXPECT(std::move(mkdir_res));
@@ -124,7 +157,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       auto fetch_cmd = BuildFetchCmd(request, cvd_flags);
       auto fetch_res = executor_.ExecuteOne(fetch_cmd, request.Err());
       if (!fetch_res.ok()) {
-        group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
+        group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_PREPARE_FAILED);
         instance_manager_.UpdateInstanceGroup(group);
       }
       CF_EXPECT(std::move(fetch_res));
