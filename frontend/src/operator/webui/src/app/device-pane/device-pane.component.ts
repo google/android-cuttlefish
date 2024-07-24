@@ -4,6 +4,7 @@ import {DisplaysService} from '../displays.service';
 import {filter, first, mergeMap} from 'rxjs/operators';
 import {GroupService} from '../group.service';
 import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
+import {MatSnackBar} from '@angular/material/snack-bar'
 
 @Component({
   selector: 'app-device-pane',
@@ -19,7 +20,8 @@ export class DevicePaneComponent {
     public displaysService: DisplaysService,
     private groupService: GroupService,
     private activatedRoute: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -48,6 +50,16 @@ export class DevicePaneComponent {
           this.displaysService.toggleVisibility(device.device_id);
         }
       });
+    });
+  }
+
+  copyAdbCommand(deviceId: string) {
+    var currentUrl = window.location.href
+    var command = 'cvdr connect --connect_agent=websocket_agent ' +
+                  `--service_url=${currentUrl} --host=websocket ${deviceId}`
+    navigator.clipboard.writeText(command)
+    this.snackBar.open('ADB connect command copied to the Clipboard', 'OK', {
+      duration: 3000,
     });
   }
 }
