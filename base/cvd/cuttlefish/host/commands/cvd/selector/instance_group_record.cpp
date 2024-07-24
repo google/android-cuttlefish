@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/selector/instance_group_record.h"
 
+#include <algorithm>
 #include <set>
 
 #include <android-base/parseint.h>
@@ -89,6 +90,13 @@ void LocalInstanceGroup::SetProductOutPath(
   CHECK(group_proto_.product_out_path().empty())
       << "Product out path can't be changed once set";
   group_proto_.set_product_out_path(product_out_path);
+}
+
+bool LocalInstanceGroup::HasActiveInstances() const {
+  // Active instances and only active instances have id > 0, no need to look at
+  // instance state.
+  return std::any_of(Instances().begin(), Instances().end(),
+                     [](const auto& instance) { return instance.id() > 0; });
 }
 
 void LocalInstanceGroup::SetAllStates(cvd::InstanceState state) {

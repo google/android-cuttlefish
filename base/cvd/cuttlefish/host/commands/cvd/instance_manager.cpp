@@ -209,6 +209,10 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
   }
   auto instance_groups = *instance_groups_res;
   for (const auto& group : instance_groups) {
+    if (!group.HasActiveInstances()) {
+      // Don't stop already stopped instances.
+      continue;
+    }
     auto config_path = selector::GetCuttlefishConfigPath(group.HomeDir());
     if (config_path.ok()) {
       auto stop_result = IssueStopCommand(out, err, *config_path, group);
