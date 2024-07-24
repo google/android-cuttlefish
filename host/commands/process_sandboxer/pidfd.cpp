@@ -45,6 +45,8 @@ absl::StatusOr<std::unique_ptr<PidFd>> PidFd::Create(pid_t pid) {
 
 PidFd::PidFd(UniqueFd fd, pid_t pid) : fd_(std::move(fd)), pid_(pid) {}
 
+int PidFd::Get() const { return fd_.Get(); }
+
 absl::StatusOr<std::vector<std::pair<UniqueFd, int>>> PidFd::AllFds() {
   std::vector<std::pair<UniqueFd, int>> fds;
 

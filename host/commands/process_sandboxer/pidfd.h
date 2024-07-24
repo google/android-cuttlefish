@@ -31,8 +31,10 @@ namespace process_sandboxer {
 
 class PidFd {
  public:
+  PidFd(UniqueFd, pid_t);
   static absl::StatusOr<std::unique_ptr<PidFd>> Create(pid_t pid);
-  PidFd(PidFd&) = delete;
+
+  int Get() const;
 
   /** Copies file descriptors from the target process, mapping them into the
    * current process.
@@ -44,8 +46,6 @@ class PidFd {
   absl::StatusOr<std::vector<std::string>> Argv();
 
  private:
-  PidFd(UniqueFd, pid_t);
-
   UniqueFd fd_;
   pid_t pid_;
 };
