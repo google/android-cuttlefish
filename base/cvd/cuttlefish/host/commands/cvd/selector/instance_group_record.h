@@ -52,6 +52,7 @@ class LocalInstanceGroup {
   void SetStartTime(TimeStamp time);
   const std::vector<cvd::Instance>& Instances() const { return instances_; }
   std::vector<cvd::Instance>& Instances() { return instances_; }
+  bool HasActiveInstances() const;
   const cvd::InstanceGroup& Proto() const { return group_proto_; }
   void SetAllStates(cvd::InstanceState state);
   void SetAllStatesAndResetIds(cvd::InstanceState state);
