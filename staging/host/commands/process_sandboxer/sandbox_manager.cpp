@@ -15,11 +15,16 @@
  */
 #include "host/commands/process_sandboxer/sandbox_manager.h"
 
+#include <fcntl.h>
+#include <linux/sched.h>
 #include <signal.h>
 #include <sys/eventfd.h>
+#include <sys/prctl.h>
 #include <sys/signalfd.h>
 #include <sys/socket.h>
+#include <sys/syscall.h>
 #include <sys/un.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <memory>
@@ -34,6 +39,8 @@
 #include <absl/strings/numbers.h>
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_format.h>
+#include <absl/strings/str_join.h>
+#include "absl/strings/numbers.h"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #include <sandboxed_api/sandbox2/executor.h>
@@ -57,8 +64,14 @@ using sapi::file::JoinPath;
 
 class SandboxManager::ManagedProcess {
  public:
-  ManagedProcess(UniqueFd event_fd, std::unique_ptr<Sandbox2> sandbox)
-      : event_fd_(std::move(event_fd)), sandbox_(std::move(sandbox)) {
+  ManagedProcess(std::optional<int> client_fd, UniqueFd event_fd,
+                 std::unique_ptr<Sandbox2> sandbox)
+      : client_fd_(client_fd),
+        event_fd_(std::move(event_fd)),
+        sandbox_(std::move(sandbox)) {
+    if (!sandbox_) {
+      return;
+    }
     waiter_thread_ = std::thread([this]() {
       sandbox_->AwaitResult().IgnoreResult();
       uint64_t buf = 1;
@@ -69,6 +82,9 @@ class SandboxManager::ManagedProcess {
   }
   ManagedProcess(ManagedProcess&) = delete;
   ~ManagedProcess() {
+    if (!sandbox_) {
+      return;
+    }
     sandbox_->Kill();
     waiter_thread_.join();
     auto res = sandbox_->AwaitResult().ToStatus();
@@ -77,9 +93,34 @@ class SandboxManager::ManagedProcess {
     }
   }
 
+  const std::optional<int>& ClientFd() const { return client_fd_; }
   int EventFd() const { return event_fd_.Get(); }
 
+  absl::StatusOr<uintptr_t> ExitCode() {
+    if (sandbox_) {
+      return sandbox_->AwaitResult().reason_code();
+    }
+    siginfo_t infop;
+    idtype_t id_type = (idtype_t)3;  // P_PIDFD
+    if (waitid(id_type, event_fd_.Get(), &infop, WEXITED) < 0) {
+      return absl::ErrnoToStatus(errno, "`waitid` failed");
+    }
+    switch (infop.si_code) {
+      case CLD_EXITED:
+        return infop.si_status;
+      case CLD_DUMPED:
+      case CLD_KILLED:
+        LOG(ERROR) << "Child killed by signal " << infop.si_code;
+        return 255;
+      default:
+        LOG(ERROR) << "Unexpected si_code: " << infop.si_code;
+        return 255;
+    }
+  }
+
  private:
+  // TODO(schuffelen): Determine if pid reuse is an issue
+  std::optional<int> client_fd_;
   UniqueFd event_fd_;
   std::thread waiter_thread_;
   std::unique_ptr<Sandbox2> sandbox_;
@@ -158,6 +199,15 @@ class SandboxManager::SocketClient {
     }
   }
 
+  absl::Status SendExitCode(int code) {
+    auto send_exit_status = SendStringMsg(client_fd_.Get(), "exit");
+    if (!send_exit_status.ok()) {
+      return send_exit_status.status();
+    }
+
+    return SendStringMsg(client_fd_.Get(), std::to_string(code)).status();
+  }
+
  private:
   enum class ClientState { kInitial, kIgnoredFd, kPingback, kWaitingForExit };
 
@@ -167,7 +217,9 @@ class SandboxManager::SocketClient {
     } else if (!credentials_) {
       credentials_ = credentials;
     } else if (credentials_->pid != credentials->pid) {
-      return absl::PermissionDeniedError("pid changed");
+      std::string err = absl::StrFormat("pid went from '%d' to '%d'",
+                                        credentials_->pid, credentials->pid);
+      return absl::PermissionDeniedError(err);
     } else if (credentials_->uid != credentials->uid) {
       return absl::PermissionDeniedError("uid changed");
     } else if (credentials_->gid != credentials->gid) {
@@ -199,7 +251,8 @@ class SandboxManager::SocketClient {
     fds->erase(std::remove_if(fds->begin(), fds->end(), [this](auto& arg) {
       return arg.second == ignored_fd_;
     }));
-    return manager_.RunProcess(std::move(*argv), std::move(*fds));
+    return manager_.RunProcess(client_fd_.Get(), std::move(*argv),
+                               std::move(*fds));
   }
 
   SandboxManager& manager_;
@@ -255,6 +308,14 @@ absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
   if (bind(manager->server_fd_.Get(), sockname_ptr, sizeof(socket_name)) < 0) {
     return absl::ErrnoToStatus(errno, "`bind` failed");
   }
+
+  int enable = 1;
+  if (setsockopt(manager->server_fd_.Get(), SOL_SOCKET, SO_PASSCRED, &enable,
+                 sizeof(enable)) < 0) {
+    static constexpr char kErr[] = "`setsockopt(..., SO_PASSCRED, ...)` failed";
+    return absl::ErrnoToStatus(errno, kErr);
+  }
+
   if (listen(manager->server_fd_.Get(), 10) < 0) {
     return absl::ErrnoToStatus(errno, "`listen` failed");
   }
@@ -275,12 +336,43 @@ SandboxManager::~SandboxManager() {
 }
 
 absl::Status SandboxManager::RunProcess(
-    const std::vector<std::string>& argv,
+    std::optional<int> client_fd, const std::vector<std::string>& argv,
     std::vector<std::pair<UniqueFd, int>> fds) {
   if (argv.empty()) {
     return absl::InvalidArgumentError("Not enough arguments");
   }
+  bool stdio_mapped[3] = {false, false, false};
+  for (const auto& [input_fd, target_fd] : fds) {
+    if (0 <= target_fd && target_fd <= 2) {
+      stdio_mapped[target_fd] = true;
+    }
+  }
+  // If stdio is not filled in, file descriptors opened by the target process
+  // may occupy the standard stdio positions. This can cause unexpected
+  for (int i = 0; i <= 2; i++) {
+    if (stdio_mapped[i]) {
+      continue;
+    }
+    auto& [stdio_dup, stdio] = fds.emplace_back(dup(i), i);
+    if (stdio_dup.Get() < 0) {
+      return absl::ErrnoToStatus(errno, "Failed to `dup` stdio descriptor");
+    }
+  }
+  auto exe = CleanPath(argv[0]);
+  // TODO(schuffelen): Introduce an allow-list for executables to run outside
+  // any sandbox.
+  auto policy = PolicyForExecutable(host_info_, ServerSocketOutsidePath(), exe);
+  if (policy) {
+    return RunSandboxedProcess(client_fd, argv, std::move(fds),
+                               std::move(policy));
+  } else {
+    return RunProcessNoSandbox(client_fd, argv, std::move(fds));
+  }
+}
 
+absl::Status SandboxManager::RunSandboxedProcess(
+    std::optional<int> client_fd, const std::vector<std::string>& argv,
+    std::vector<std::pair<UniqueFd, int>> fds, std::unique_ptr<Policy> policy) {
   if (VLOG_IS_ON(1)) {
     std::stringstream process_stream;
     process_stream << "Launching executable with argv: [\n";
@@ -315,10 +407,9 @@ absl::Status SandboxManager::RunProcess(
     return absl::ErrnoToStatus(errno, "`eventfd` failed");
   }
 
-  std::unique_ptr<Sandbox2> sandbox(
-      new Sandbox2(std::move(executor), PolicyForExecutable(host_info_, exe)));
-  if (!sandbox->RunAsync()) {
-    return sandbox->AwaitResult().ToStatus();
+  auto sbx = std::make_unique<Sandbox2>(std::move(executor), std::move(policy));
+  if (!sbx->RunAsync()) {
+    return sbx->AwaitResult().ToStatus();
   }
 
   // A pidfd over the sandbox is another option, but there are two problems:
@@ -338,9 +429,72 @@ absl::Status SandboxManager::RunProcess(
   // exited.
 
   sandboxes_.emplace_back(
-      new ManagedProcess(std::move(event_fd), std::move(sandbox)));
+      new ManagedProcess(client_fd, std::move(event_fd), std::move(sbx)));
 
   return absl::OkStatus();
+}
+
+absl::Status SandboxManager::RunProcessNoSandbox(
+    std::optional<int> client_fd, const std::vector<std::string>& argv,
+    std::vector<std::pair<UniqueFd, int>> fds) {
+  int pidfd;
+  clone_args args_for_clone = clone_args{
+      .flags = CLONE_PIDFD,
+      .pidfd = reinterpret_cast<std::uintptr_t>(&pidfd),
+  };
+
+  long res = syscall(SYS_clone3, &args_for_clone, sizeof(args_for_clone));
+  if (res < 0) {
+    std::string argv_str = absl::StrJoin(argv, "','");
+    std::string error = absl::StrCat("clone3 failed: argv=['", argv_str, "']");
+    return absl::ErrnoToStatus(errno, error);
+  } else if (res > 0) {
+    std::string argv_str = absl::StrJoin(argv, "','");
+    VLOG(1) << res << ": Running w/o sandbox ['" << argv_str << "]";
+    sandboxes_.emplace_back(
+        new ManagedProcess(client_fd, UniqueFd(pidfd), nullptr));
+    return absl::OkStatus();
+  }
+
+  /* Duplicate every input in `fds` into a range higher than the highest output
+   * in `fds`, in case there is any overlap between inputs and outputs. */
+  int minimum_backup_fd = -1;
+  for (const auto& [my_fd, target_fd] : fds) {
+    if (target_fd + 1 > minimum_backup_fd) {
+      minimum_backup_fd = target_fd + 1;
+    }
+  }
+
+  std::unordered_map<int, int> backup_mapping;
+  for (const auto& [my_fd, target_fd] : fds) {
+    int backup = fcntl(my_fd.Get(), F_DUPFD, minimum_backup_fd);
+    PCHECK(backup >= 0) << "fcntl(..., F_DUPFD) failed";
+    int flags = fcntl(backup, F_GETFD);
+    PCHECK(flags >= 0) << "fcntl(..., F_GETFD failed";
+    flags &= FD_CLOEXEC;
+    PCHECK(fcntl(backup, F_SETFD, flags) >= 0) << "fcntl(..., F_SETFD failed";
+    backup_mapping[backup] = target_fd;
+  }
+
+  for (const auto& [backup_fd, target_fd] : backup_mapping) {
+    // dup2 always unsets FD_CLOEXEC
+    PCHECK(dup2(backup_fd, target_fd) >= 0) << "dup2 failed";
+  }
+
+  std::vector<std::string> argv_clone = argv;
+  std::vector<char*> argv_cstr;
+  for (auto& arg : argv_clone) {
+    argv_cstr.emplace_back(arg.data());
+  }
+  argv_cstr.emplace_back(nullptr);
+
+  if (prctl(PR_SET_PDEATHSIG, SIGHUP) < 0) {  // Die when parent dies
+    PLOG(FATAL) << "prctl failed";
+  }
+
+  execv(argv_cstr[0], argv_cstr.data());
+
+  PLOG(FATAL) << "execv failed";
 }
 
 bool SandboxManager::Running() const { return running_; }
@@ -408,6 +562,23 @@ absl::Status SandboxManager::NewClient(short revents) {
 
 absl::Status SandboxManager::ProcessExit(SandboxManager::SboxIter it,
                                          short revents) {
+  if ((*it)->ClientFd()) {
+    int client_fd = *(*it)->ClientFd();
+    for (auto& client : clients_) {
+      if (client->ClientFd() != client_fd) {
+        continue;
+      }
+      auto exit_code = (*it)->ExitCode();
+      if (!exit_code.ok()) {
+        LOG(ERROR) << exit_code.status();
+      }
+      // TODO(schuffelen): Forward more complete exit information
+      auto send_res = client->SendExitCode(exit_code.value_or(254));
+      if (!send_res.ok()) {
+        return send_res;
+      }
+    }
+  }
   sandboxes_.erase(it);
   static constexpr char kErr[] = "eventfd exited";
   return revents == POLLIN ? absl::OkStatus() : absl::InternalError(kErr);
