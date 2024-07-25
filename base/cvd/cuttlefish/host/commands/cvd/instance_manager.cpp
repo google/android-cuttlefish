@@ -244,6 +244,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
     }
     RemoveFile(group.HomeDir() + "/cuttlefish_runtime");
     RemoveFile(group.HomeDir() + config_json_name);
+    RemoveInstanceGroupByHome(group.HomeDir());
   }
   // TODO(kwstephenkim): we need a better mechanism to make sure that
   // we clear all run_cvd processes.
