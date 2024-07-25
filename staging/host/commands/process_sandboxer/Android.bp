@@ -89,3 +89,23 @@ cc_test_host {
         unit_test: false,
     },
 }
+
+cc_binary_host {
+    name: "sandboxer_proxy",
+    defaults: ["cuttlefish_buildhost_only"],
+    srcs: [
+        "sandboxer_proxy.cpp",
+    ],
+    static_libs: [
+        "libabsl_host",
+        "libprocess_sandboxer_proxy_common",
+    ],
+    target: {
+        darwin: {
+            enabled: false,
+        },
+        windows: {
+            enabled: false,
+        },
+    },
+}
