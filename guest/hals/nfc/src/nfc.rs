@@ -336,4 +336,9 @@ impl INfcAsyncServer for NfcService {
         let config = self.config.lock().await;
         Ok(config.dbg_logging)
     }
+
+    async fn controlGranted(&self) -> binder::Result<NfcStatus> {
+        info!("controlGranted");
+        Ok(NfcStatus::OK)
+    }
 }
