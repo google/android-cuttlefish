@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <fstream>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -27,6 +28,7 @@
 #include <absl/status/statusor.h>
 #include <absl/strings/numbers.h>
 #include <absl/strings/str_format.h>
+#include <absl/strings/str_split.h>
 
 #include "host/commands/process_sandboxer/unique_fd.h"
 
@@ -71,6 +73,28 @@ absl::StatusOr<std::vector<std::pair<UniqueFd, int>>> PidFd::AllFds() {
   }
 
   return fds;
+}
+
+absl::StatusOr<std::vector<std::string>> PidFd::Argv() {
+  auto path = absl::StrFormat("/proc/%d/cmdline", pid_);
+  std::ifstream cmdline_file(path, std::ios::binary);
+  if (!cmdline_file) {
+    auto err = absl::StrFormat("Failed to open '%v'", path);
+    return absl::InternalError(err);
+  }
+  std::stringstream buffer;
+  buffer << cmdline_file.rdbuf();
+  if (!cmdline_file) {
+    auto err = absl::StrFormat("Failed to read '%v'", path);
+    return absl::InternalError(err);
+  }
+  std::vector<std::string> argv = absl::StrSplit(buffer.str(), '\0');
+  if (argv.empty()) {
+    return absl::InternalError(absl::StrFormat("no argv in '%v'", path));
+  } else if (argv.back() == "") {
+    argv.pop_back();  // argv ends in an empty string
+  }
+  return argv;
 }
 
 }  // namespace process_sandboxer
