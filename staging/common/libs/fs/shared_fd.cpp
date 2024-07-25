@@ -46,6 +46,21 @@ namespace cuttlefish {
 
 namespace {
 
+class LocalErrno {
+ public:
+  LocalErrno(int& local_errno) : local_errno_(local_errno), preserved_(errno) {
+    errno = 0;
+  }
+  ~LocalErrno() {
+    local_errno_ = errno;
+    errno = preserved_;
+  }
+
+ private:
+  int& local_errno_;
+  int preserved_;
+};
+
 void MarkAll(const SharedFDSet& input, fd_set* dest, int* max_index) {
   for (SharedFDSet::const_iterator it = input.begin(); it != input.end();
        ++it) {
@@ -111,6 +126,7 @@ constexpr size_t kPreferredBufferSize = 8192;
 }  // namespace
 
 bool FileInstance::CopyFrom(FileInstance& in, size_t length, FileInstance* stop) {
+  LocalErrno record_errno(errno_);
   std::vector<char> buffer(kPreferredBufferSize);
   while (length > 0) {
     int nfds = stop == nullptr ? 2 : 3;
@@ -130,9 +146,7 @@ bool FileInstance::CopyFrom(FileInstance& in, size_t length, FileInstance* stop)
       pollfds[STOP].events = POLLIN;
       pollfds[STOP].revents = 0;
     }
-    int res = poll(pollfds, nfds, -1 /* indefinitely */);
-    if (res < 0) {
-      errno_ = errno;
+    if (poll(pollfds, nfds, -1 /* indefinitely */) < 0) {
       return false;
     }
     if (stop && pollfds[STOP].revents & POLLIN) {
@@ -198,13 +212,9 @@ void FileInstance::Close() {
 }
 
 bool FileInstance::Chmod(mode_t mode) {
-  int original_error = errno;
-  int ret = fchmod(fd_, mode);
-  if (ret != 0) {
-    errno_ = errno;
-  }
-  errno = original_error;
-  return ret == 0;
+  LocalErrno record_errno(errno_);
+
+  return fchmod(fd_, mode) == 0;
 }
 
 int FileInstance::ConnectWithTimeout(const struct sockaddr* addr,
@@ -485,10 +495,9 @@ int SharedFD::Fchdir(SharedFD shared_fd) {
   if (!shared_fd.value_) {
     return -1;
   }
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(fchdir(shared_fd->fd_));
-  shared_fd->errno_ = errno;
-  return rval;
+  LocalErrno record_errno(shared_fd->errno_);
+
+  return TEMP_FAILURE_RETRY(fchdir(shared_fd->fd_));
 }
 
 Result<SharedFD> SharedFD::Fifo(const std::string& path, mode_t mode) {
@@ -816,62 +825,52 @@ ScopedMMap::~ScopedMMap() {
 }
 
 int FileInstance::Bind(const struct sockaddr* addr, socklen_t addrlen) {
-  errno = 0;
-  int rval = bind(fd_, addr, addrlen);
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return bind(fd_, addr, addrlen);
 }
 
 int FileInstance::Connect(const struct sockaddr* addr, socklen_t addrlen) {
-  errno = 0;
-  int rval = connect(fd_, addr, addrlen);
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return connect(fd_, addr, addrlen);
 }
 
 int FileInstance::UNMANAGED_Dup() {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(dup(fd_));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(dup(fd_));
 }
 
 int FileInstance::UNMANAGED_Dup2(int newfd) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(dup2(fd_, newfd));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(dup2(fd_, newfd));
 }
 
 int FileInstance::Fcntl(int command, int value) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(fcntl(fd_, command, value));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(fcntl(fd_, command, value));
 }
 
 int FileInstance::Fsync() {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(fsync(fd_));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(fsync(fd_));
 }
 
 Result<void> FileInstance::Flock(int operation) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(flock(fd_, operation));
-  errno_ = errno;
-  CF_EXPECT(rval == 0, StrError());
+  LocalErrno record_errno(errno_);
+
+  CF_EXPECT(TEMP_FAILURE_RETRY(flock(fd_, operation)) == 0, strerror(errno));
   return {};
 }
 
 int FileInstance::GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(getsockname(fd_, addr, addrlen));
-  if (rval == -1) {
-    errno_ = errno;
-  }
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(getsockname(fd_, addr, addrlen));
 }
 
 #ifdef __linux__
@@ -884,131 +883,112 @@ unsigned int FileInstance::VsockServerPort() {
 #endif
 
 int FileInstance::Ioctl(int request, void* val) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(ioctl(fd_, request, val));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(ioctl(fd_, request, val));
 }
 
 int FileInstance::LinkAtCwd(const std::string& path) {
+  LocalErrno record_errno(errno_);
+
   std::string name = "/proc/self/fd/";
   name += std::to_string(fd_);
-  errno = 0;
-  int rval =
-      linkat(-1, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
-  errno_ = errno;
-  return rval;
+  return linkat(-1, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
 }
 
 int FileInstance::Listen(int backlog) {
-  errno = 0;
-  int rval = listen(fd_, backlog);
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return listen(fd_, backlog);
 }
 
 off_t FileInstance::LSeek(off_t offset, int whence) {
-  errno = 0;
-  off_t rval = TEMP_FAILURE_RETRY(lseek(fd_, offset, whence));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(lseek(fd_, offset, whence));
 }
 
 ssize_t FileInstance::Recv(void* buf, size_t len, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(recv(fd_, buf, len, flags));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(recv(fd_, buf, len, flags));
 }
 
 ssize_t FileInstance::RecvMsg(struct msghdr* msg, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(recvmsg(fd_, msg, flags));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(recvmsg(fd_, msg, flags));
 }
 
 ssize_t FileInstance::Read(void* buf, size_t count) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(read(fd_, buf, count));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(read(fd_, buf, count));
 }
 
 #ifdef __linux__
 int FileInstance::EventfdRead(eventfd_t* value) {
-  errno = 0;
-  auto rval = eventfd_read(fd_, value);
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return eventfd_read(fd_, value);
 }
 #endif
 
 ssize_t FileInstance::Send(const void* buf, size_t len, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(send(fd_, buf, len, flags));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(send(fd_, buf, len, flags));
 }
 
 ssize_t FileInstance::SendMsg(const struct msghdr* msg, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(sendmsg(fd_, msg, flags));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(sendmsg(fd_, msg, flags));
 }
 
 int FileInstance::Shutdown(int how) {
-  errno = 0;
-  int rval = shutdown(fd_, how);
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return shutdown(fd_, how);
 }
 
 int FileInstance::SetSockOpt(int level, int optname, const void* optval,
                              socklen_t optlen) {
-  errno = 0;
-  int rval = setsockopt(fd_, level, optname, optval, optlen);
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return setsockopt(fd_, level, optname, optval, optlen);
 }
 
 int FileInstance::GetSockOpt(int level, int optname, void* optval,
                              socklen_t* optlen) {
-  errno = 0;
-  int rval = getsockopt(fd_, level, optname, optval, optlen);
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return getsockopt(fd_, level, optname, optval, optlen);
 }
 
 int FileInstance::SetTerminalRaw() {
-  errno = 0;
+  LocalErrno record_errno(errno_);
+
   termios terminal_settings;
-  int rval = tcgetattr(fd_, &terminal_settings);
-  errno_ = errno;
-  if (rval < 0) {
+  if (int rval = tcgetattr(fd_, &terminal_settings); rval < 0) {
     return rval;
   }
   cfmakeraw(&terminal_settings);
-  rval = tcsetattr(fd_, TCSANOW, &terminal_settings);
-  errno_ = errno;
-  if (rval < 0) {
+  if (int rval = tcsetattr(fd_, TCSANOW, &terminal_settings); rval < 0) {
     return rval;
   }
 
-  // tcsetattr() success if any of the requested change success.
+  // tcsetattr() succeeds if any of the requested change success.
   // So double check whether everything is applied.
   termios raw_settings;
-  rval = tcgetattr(fd_, &raw_settings);
-  errno_ = errno;
-  if (rval < 0) {
+  if (int rval = tcgetattr(fd_, &raw_settings); rval < 0) {
     return rval;
   }
   if (memcmp(&terminal_settings, &raw_settings, sizeof(terminal_settings))) {
-    errno_ = EPROTO;
+    errno = EPROTO;
     return -1;
   }
-  return rval;
+  return 0;
 }
 
 std::string FileInstance::StrError() const {
@@ -1018,50 +998,46 @@ std::string FileInstance::StrError() const {
 
 ScopedMMap FileInstance::MMap(void* addr, size_t length, int prot, int flags,
                               off_t offset) {
-  errno = 0;
+  LocalErrno record_errno(errno_);
+
   auto ptr = mmap(addr, length, prot, flags, fd_, offset);
-  errno_ = errno;
   return ScopedMMap(ptr, length);
 }
 
 ssize_t FileInstance::Truncate(off_t length) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(ftruncate(fd_, length));
 }
 
 ssize_t FileInstance::Write(const void* buf, size_t count) {
   if (count == 0 && !IsRegular()) {
     return 0;
   }
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(write(fd_, buf, count));
-  errno_ = errno;
-  return rval;
+
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(write(fd_, buf, count));
 }
 
 #ifdef __linux__
 int FileInstance::EventfdWrite(eventfd_t value) {
-  errno = 0;
-  int rval = eventfd_write(fd_, value);
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return eventfd_write(fd_, value);
 }
 #endif
 
 bool FileInstance::IsATTY() {
-  errno = 0;
-  int rval = isatty(fd_);
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return isatty(fd_);
 }
 
 int FileInstance::Futimens(const struct timespec times[2]) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(futimens(fd_, times));
-  errno_ = errno;
-  return rval;
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(futimens(fd_, times));
 }
 
 #ifdef __linux__
