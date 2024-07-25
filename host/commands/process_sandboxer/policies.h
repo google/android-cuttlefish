@@ -26,6 +26,8 @@ namespace cuttlefish {
 namespace process_sandboxer {
 
 struct HostInfo {
+  std::string HostToolExe(std::string_view exe) const;
+
   std::string artifacts_path;
   std::string cuttlefish_config_path;
   std::string environments_dir;
