@@ -265,7 +265,8 @@ static std::vector<SeverityTarget> SeverityTargetsForFiles(
         SharedFD::Open(file, O_CREAT | O_WRONLY | O_APPEND,
                        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
     if (!log_file_fd->IsOpen()) {
-      LOG(FATAL) << "Failed to create log file: " << log_file_fd->StrError();
+      LOG(FATAL) << "Failed to create log file '" << file
+                 << "': " << log_file_fd->StrError();
     }
     log_severities.push_back(
         SeverityTarget{LogFileSeverity(), log_file_fd, MetadataLevel::FULL});
