@@ -100,4 +100,6 @@ std::string InstanceDatabasePath();
 
 std::string DefaultBaseDir();
 
+std::string GroupDirFromHome(std::string_view group_home_dir);
+
 }  // namespace cuttlefish
