@@ -190,4 +190,13 @@ std::string DefaultBaseDir() {
   return fmt::format("{}/{}", PerUserDir(), time);
 }
 
+std::string GroupDirFromHome(std::string_view dir) {
+  std::string per_user_dir = PerUserDir();
+  // Just in case it has a / at the end, ignore result
+  while (android::base::ConsumeSuffix(&dir, "/")) {}
+  CHECK(android::base::ConsumeSuffix(&dir, "/home"))
+      << "Unexpected group home directory: " << dir;
+  return std::string(dir);
+}
+
 }  // namespace cuttlefish

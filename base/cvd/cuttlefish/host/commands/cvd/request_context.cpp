@@ -41,6 +41,7 @@
 #include "host/commands/cvd/server_command/load_configs.h"
 #include "host/commands/cvd/server_command/noop.h"
 #include "host/commands/cvd/server_command/power.h"
+#include "host/commands/cvd/server_command/remove.h"
 #include "host/commands/cvd/server_command/reset.h"
 #include "host/commands/cvd/server_command/serial_launch.h"
 #include "host/commands/cvd/server_command/serial_preset.h"
@@ -84,6 +85,7 @@ RequestContext::RequestContext(
       NewLoadConfigsCommand(command_sequence_executor_, instance_manager_));
   request_handlers_.emplace_back(NewCvdDevicePowerCommandHandler(
       host_tool_target_manager_, instance_manager_, subprocess_waiter_));
+  request_handlers_.emplace_back(NewRemoveCvdCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdResetCommandHandler(instance_manager_));
   request_handlers_.emplace_back(
       NewSerialLaunchCommand(command_sequence_executor_, lock_file_manager_));

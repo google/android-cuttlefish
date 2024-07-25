@@ -22,6 +22,7 @@
 
 #include <android-base/file.h>
 #include <android-base/scopeguard.h>
+#include <android-base/strings.h>
 #include <fmt/format.h>
 #include "json/json.h"
 
@@ -36,6 +37,7 @@
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_utils.h"
+#include "host/commands/cvd/common_utils.h"
 
 namespace cuttlefish {
 namespace {
@@ -48,6 +50,19 @@ Result<void> RunCommand(Command&& command) {
   auto result = subprocess.Wait(&infop, WEXITED);
   CF_EXPECT(result != -1, "Lost track of subprocess pid");
   CF_EXPECT(infop.si_code == CLD_EXITED && infop.si_status == 0);
+  return {};
+}
+
+Result<void> RemoveGroupDirectory(const selector::LocalInstanceGroup& group) {
+  std::string per_user_dir = PerUserDir();
+  if (!android::base::StartsWith(group.HomeDir(), per_user_dir)) {
+    LOG(WARNING)
+        << "Instance group home directory not under user specific directory("
+        << per_user_dir << "), artifacts not deleted";
+    return {};
+  }
+  CF_EXPECT(RecursivelyRemoveDirectory(GroupDirFromHome(group.HomeDir())),
+            "Failed to remove group directory");
   return {};
 }
 
@@ -124,7 +139,12 @@ InstanceManager::CreateInstanceGroup(
 }
 
 Result<bool> InstanceManager::RemoveInstanceGroupByHome(const std::string& dir) {
-  auto group = CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
+  LocalInstanceGroup group =
+      CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
+  CF_EXPECT(!group.HasActiveInstances(),
+            "Group still contains active instances");
+  CF_EXPECT(RemoveGroupDirectory(group));
+
   return CF_EXPECT(instance_db_.RemoveInstanceGroup(group.GroupName()));
 }
 
@@ -150,7 +170,7 @@ Result<void> InstanceManager::UpdateInstance(const LocalInstanceGroup& group,
 Result<void> InstanceManager::IssueStopCommand(
     const SharedFD& out, const SharedFD& err,
     const std::string& config_file_path,
-    const selector::LocalInstanceGroup& group) {
+    selector::LocalInstanceGroup& group) {
   const auto stop_bin = CF_EXPECT(StopBin(group.HostArtifactsPath()));
   Command command(group.HostArtifactsPath() + "/bin/" + stop_bin);
   command.AddParameter("--clear_instance_dirs");
@@ -185,6 +205,8 @@ Result<void> InstanceManager::IssueStopCommand(
              "Warning: error stopping instances for dir \"" + group.HomeDir() +
                  "\".\nThis can happen if instances are already stopped.\n");
   }
+  group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_STOPPED);
+  instance_db_.UpdateInstanceGroup(group);
   for (const auto& instance : group.Instances()) {
     auto lock = lock_manager_.TryAcquireLock(instance.id());
     if (lock.ok() && (*lock)) {
@@ -208,7 +230,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
     return status;
   }
   auto instance_groups = *instance_groups_res;
-  for (const auto& group : instance_groups) {
+  for (auto& group : instance_groups) {
     if (!group.HasActiveInstances()) {
       // Don't stop already stopped instances.
       continue;

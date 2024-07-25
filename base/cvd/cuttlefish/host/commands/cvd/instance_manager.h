@@ -96,10 +96,10 @@ class InstanceManager {
   };
   Result<UserGroupSelectionSummary> GroupSummaryMenu() const;
 
- private:
   Result<void> IssueStopCommand(const SharedFD& out, const SharedFD& err,
                                 const std::string& config_file_path,
-                                const selector::LocalInstanceGroup& group);
+                                selector::LocalInstanceGroup& group);
+ private:
   Result<std::string> StopBin(const std::string& host_android_out);
 
   InstanceLockFileManager& lock_manager_;
