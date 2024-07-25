@@ -31,6 +31,7 @@
 #include <absl/log/vlog_is_on.h>
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
+#include <absl/strings/numbers.h>
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_format.h>
 #pragma clang diagnostic push
@@ -41,6 +42,7 @@
 #include <sandboxed_api/util/path.h>
 #pragma clang diagnostic pop
 
+#include "host/commands/process_sandboxer/pidfd.h"
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/poll_callback.h"
 #include "host/commands/process_sandboxer/proxy_common.h"
@@ -85,7 +87,8 @@ class SandboxManager::ManagedProcess {
 
 class SandboxManager::SocketClient {
  public:
-  SocketClient(UniqueFd client_fd) : client_fd_(std::move(client_fd)) {}
+  SocketClient(SandboxManager& manager, UniqueFd client_fd)
+      : manager_(manager), client_fd_(std::move(client_fd)) {}
   SocketClient(SocketClient&) = delete;
 
   int ClientFd() const { return client_fd_.Get(); }
@@ -99,10 +102,65 @@ class SandboxManager::SocketClient {
     if (!creds_status.ok()) {
       return creds_status;
     }
-    return absl::UnimplementedError("TODO(schuffelen)");
+
+    /* This handshake process is to reliably build a `pidfd` based on the pid
+     * supplied in the process `ucreds`, through the following steps:
+     * 1. Proxy process opens a socket and sends an opening message.
+     * 2. Server receives opening message with a kernel-validated `ucreds`
+     *    containing the outside-sandbox pid.
+     * 3. Server opens a pidfd matching this pid.
+     * 4. Server sends a message to the client with some unique data.
+     * 5. Client responds with the unique data.
+     * 6. Server validates the unique data and credentials match.
+     * 7. Server launches a possible sandboxed subprocess based on the pidfd and
+     *    /proc/{pid}/
+     *
+     * Step 5 builds confidence that the pidfd opened in step 3 still
+     * corresponds to the client sending messages on the client socket. The
+     * pidfd and /proc/{pid} data provide everything necessary to launch the
+     * subprocess.
+     */
+    auto& message = message_status->Data();
+    switch (client_state_) {
+      case ClientState::kInitial: {
+        if (message != kHandshakeBegin) {
+          auto err = absl::StrFormat("'%v' != '%v'", kHandshakeBegin, message);
+          return absl::InternalError(err);
+        }
+        pingback_ = std::chrono::steady_clock::now().time_since_epoch().count();
+        auto stat = SendStringMsg(client_fd_.Get(), std::to_string(pingback_));
+        if (stat.ok()) {
+          client_state_ = ClientState::kIgnoredFd;
+        }
+        return stat.status();
+      }
+      case ClientState::kIgnoredFd:
+        if (!absl::SimpleAtoi(message, &ignored_fd_)) {
+          auto error = absl::StrFormat("Expected integer, got '%v'", message);
+          return absl::InternalError(error);
+        }
+        client_state_ = ClientState::kPingback;
+        return absl::OkStatus();
+      case ClientState::kPingback: {
+        size_t comp;
+        if (!absl::SimpleAtoi(message, &comp)) {
+          auto error = absl::StrFormat("Expected integer, got '%v'", message);
+          return absl::InternalError(error);
+        } else if (comp != pingback_) {
+          auto err = absl::StrFormat("Incorrect '%v' != '%v'", comp, pingback_);
+          return absl::InternalError(err);
+        }
+        client_state_ = ClientState::kWaitingForExit;
+        return LaunchProcess();
+      }
+      case ClientState::kWaitingForExit:
+        return absl::InternalError("No messages allowed");
+    }
   }
 
  private:
+  enum class ClientState { kInitial, kIgnoredFd, kPingback, kWaitingForExit };
+
   absl::Status UpdateCredentials(const std::optional<ucred>& credentials) {
     if (!credentials) {
       return absl::InvalidArgumentError("no creds");
@@ -115,11 +173,43 @@ class SandboxManager::SocketClient {
     } else if (credentials_->gid != credentials->gid) {
       return absl::PermissionDeniedError("gid changed");
     }
+    if (!pid_fd_) {
+      auto pid_fd = PidFd::Create(credentials_->pid);
+      if (!pid_fd.ok()) {
+        return pid_fd.status();
+      }
+      pid_fd_ = std::move(*pid_fd);
+    }
     return absl::OkStatus();
   }
 
+  absl::Status LaunchProcess() {
+    if (!pid_fd_) {
+      return absl::InternalError("missing pid_fd_");
+    }
+    absl::StatusOr<std::vector<std::string>> argv = pid_fd_->Argv();
+    if (!argv.ok()) {
+      return argv.status();
+    }
+    absl::StatusOr<std::vector<std::pair<UniqueFd, int>>> fds =
+        pid_fd_->AllFds();
+    if (!fds.ok()) {
+      return fds.status();
+    }
+    fds->erase(std::remove_if(fds->begin(), fds->end(), [this](auto& arg) {
+      return arg.second == ignored_fd_;
+    }));
+    return manager_.RunProcess(std::move(*argv), std::move(*fds));
+  }
+
+  SandboxManager& manager_;
   UniqueFd client_fd_;
   std::optional<ucred> credentials_;
+  std::unique_ptr<PidFd> pid_fd_;
+
+  ClientState client_state_ = ClientState::kInitial;
+  size_t pingback_;
+  int ignored_fd_ = -1;
 };
 
 absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
@@ -312,7 +402,7 @@ absl::Status SandboxManager::NewClient(short revents) {
   if (client.Get() < 0) {
     return absl::ErrnoToStatus(errno, "`accept` failed");
   }
-  clients_.emplace_back(new SocketClient(std::move(client)));
+  clients_.emplace_back(new SocketClient(*this, std::move(client)));
   return absl::OkStatus();
 }
 
