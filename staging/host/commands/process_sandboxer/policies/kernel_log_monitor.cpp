@@ -19,17 +19,12 @@
 #include <sys/prctl.h>
 
 #include "sandboxed_api/sandbox2/policybuilder.h"
-#include "sandboxed_api/sandbox2/util/bpf_helper.h"
-#include "sandboxed_api/util/path.h"
-
-using sapi::file::JoinPath;
 
 namespace cuttlefish {
 namespace process_sandboxer {
 
 sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo& host) {
-  auto exe = JoinPath(host.artifacts_path, "bin", "kernel_log_monitor");
-  return BaselinePolicy(host, exe)
+  return BaselinePolicy(host, host.HostToolExe("kernel_log_monitor"))
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
       .AllowHandleSignals()
