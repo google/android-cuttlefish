@@ -638,10 +638,16 @@ Result<void> CvdStartCommandHandler::CreateSymlinks(
                                         system_wide_home, instance.id())));
     CF_EXPECT(EnsureSymlink(group.HomeDir() + "/cuttlefish",
                             system_wide_home + "/cuttlefish"));
-    CF_EXPECT(EnsureSymlink(
-        group.HomeDir() + "/cuttlefish/assembly/cuttlefish_config.json",
-        system_wide_home + "/.cuttlefish_config.json"));
   }
+  // The config file needs to be copied instead of symlinked because when the
+  // group is removed the original file will be deleted leaving the symlink
+  // dangling. The config file in the home directory is used by
+  // cvd_internal_start to persist the user's choice for
+  // -report_anonymous_usage_stats.
+  CF_EXPECT(
+      Copy(group.HomeDir() + "/cuttlefish/assembly/cuttlefish_config.json",
+           CF_EXPECT(SystemWideUserHome()) + "/.cuttlefish_config.json"),
+      "Failed to copy config file to home directory");
 
   // create cuttlefish_runtime to cuttlefish_runtime.id
   CF_EXPECT_NE(std::numeric_limits<unsigned>::max(), smallest_id,
