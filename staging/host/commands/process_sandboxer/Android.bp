@@ -26,6 +26,7 @@ cc_binary_host {
     srcs: [
         "logs.cpp",
         "main.cpp",
+        "pidfd.cpp",
         "policies.cpp",
         "policies/baseline.cpp",
         "policies/kernel_log_monitor.cpp",
