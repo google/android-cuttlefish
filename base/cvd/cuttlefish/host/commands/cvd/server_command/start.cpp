@@ -35,6 +35,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
@@ -872,9 +873,8 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
   // For backward compatibility, we add extra symlink in system wide home
   // when HOME is NOT overridden and selector flags are NOT given.
   auto is_default_group =
-      Contains(envs, "HOME") &&
-      envs.at("HOME") == CF_EXPECT(SystemWideUserHome()) &&
-      !request.Message().command_request().has_selector_opts();
+      StringFromEnv("HOME", "") == CF_EXPECT(SystemWideUserHome()) &&
+      request.Message().command_request().selector_opts().args().empty();
 
   if (is_default_group) {
     auto symlink_res = CreateSymlinks(group);
