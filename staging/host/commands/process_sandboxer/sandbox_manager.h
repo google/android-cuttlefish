@@ -18,6 +18,7 @@
 
 #include <list>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,6 +28,7 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/unique_fd.h"
+#include "sandboxed_api/sandbox2/policy.h"
 
 namespace cuttlefish {
 namespace process_sandboxer {
@@ -44,7 +46,8 @@ class SandboxManager {
    * For (key, value) pairs in `fds`, `key` on the outside is mapped to `value`
    * in the sandbox, and `key` is `close`d on the outside.
    */
-  absl::Status RunProcess(const std::vector<std::string>& argv,
+  absl::Status RunProcess(std::optional<int> client_fd,
+                          const std::vector<std::string>& argv,
                           std::vector<std::pair<UniqueFd, int>> fds);
 
   /** Block until an event happens, and process all open events. */
@@ -59,6 +62,14 @@ class SandboxManager {
   using SboxIter = std::list<std::unique_ptr<ManagedProcess>>::iterator;
 
   SandboxManager() = default;
+
+  absl::Status RunSandboxedProcess(std::optional<int> client_fd,
+                                   const std::vector<std::string>& argv,
+                                   std::vector<std::pair<UniqueFd, int>> fds,
+                                   std::unique_ptr<sandbox2::Policy> policy);
+  absl::Status RunProcessNoSandbox(std::optional<int> client_fd,
+                                   const std::vector<std::string>& argv,
+                                   std::vector<std::pair<UniqueFd, int>> fds);
 
   // Callbacks for the Iterate() `poll` loop.
   absl::Status ClientMessage(ClientIter it, short revents);
