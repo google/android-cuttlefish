@@ -41,6 +41,7 @@ class PidFd {
    * file descriptors in the current process.
    */
   absl::StatusOr<std::vector<std::pair<UniqueFd, int>>> AllFds();
+  absl::StatusOr<std::vector<std::string>> Argv();
 
  private:
   PidFd(UniqueFd, pid_t);
