@@ -32,6 +32,10 @@ using sapi::file::JoinPath;
 namespace cuttlefish {
 namespace process_sandboxer {
 
+std::string HostInfo::HostToolExe(std::string_view exe) const {
+  return JoinPath(artifacts_path, "bin", exe);
+}
+
 std::ostream& operator<<(std::ostream& out, const HostInfo& host) {
   out << "HostInfo {\n";
   out << "\tartifacts_path: \"" << host.artifacts_path << "\"\n";
@@ -51,12 +55,9 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   using Builder = sandbox2::PolicyBuilder(const HostInfo&);
   absl::flat_hash_map<std::string, Builder*> builders;
 
-  builders[JoinPath(host.artifacts_path, "bin", "kernel_log_monitor")] =
-      KernelLogMonitorPolicy;
-  builders[JoinPath(host.artifacts_path, "bin", "logcat_receiver")] =
-      LogcatReceiverPolicy;
-  builders[JoinPath(host.artifacts_path, "bin", "secure_env")] =
-      SecureEnvPolicy;
+  builders[host.HostToolExe("kernel_log_monitor")] = KernelLogMonitorPolicy;
+  builders[host.HostToolExe("logcat_receiver")] = LogcatReceiverPolicy;
+  builders[host.HostToolExe("secure_env")] = SecureEnvPolicy;
 
   // TODO(schuffelen): Don't include test policies in the production impl
   builders[JoinPath(host.artifacts_path, "testcases", "process_sandboxer_test",
