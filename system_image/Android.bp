@@ -624,7 +624,6 @@ android_system_image {
                 "android.test.base", // from runtime_libart
                 "android.test.mock", // base_system
                 "android.test.runner", // base_system
-                "aosp_cf_x86_64_system-build.prop",
                 "aosp_mainline_modules", // ok
                 "build_flag_system", // base_system
                 "charger_res_images", // generic_system
@@ -656,6 +655,7 @@ android_system_image {
                 "selinux_policy_system_soong", // ok
                 "services", // base_system
                 "shell_and_utilities_system", // ok
+                "system-build.prop",
                 "system_compatibility_matrix.xml", //base_system
                 "telephony-common", // libs from TeleService
                 "voip-common", // base_system
@@ -826,12 +826,5 @@ prebuilt_root {
     src: "init.environ.rc",
     filename: "init.environ.rc",
     install_in_root: true,
-    no_full_install: true,
-}
-
-build_prop {
-    name: "aosp_cf_x86_64_system-build.prop",
-    stem: "build.prop",
-    product_config: ":product_config",
     no_full_install: true,
 }
