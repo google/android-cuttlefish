@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
 cc_binary_host {
     name: "process_restarter",
-    defaults: ["cuttlefish_host"],
-    srcs: [
-        "main.cc",
-        "parser.cc",
-    ],
+    defaults: ["cuttlefish_host",],
+    srcs: ["main.cc", "parser.cc"],
     shared_libs: [
         "libbase",
-        "libcuttlefish_host_config",
         "libcuttlefish_utils",
         "libjsoncpp",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
     ],
 }
