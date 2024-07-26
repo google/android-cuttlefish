@@ -26,7 +26,6 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
-#include "common/libs/utils/subprocess.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -156,10 +155,8 @@ std::string DefaultGuestImagePath(const std::string& file_name) {
 bool HostSupportsQemuCli() {
   static bool supported =
 #ifdef __linux__
-      RunWithManagedStdio(
-          Command("/usr/lib/cuttlefish-common/bin/capability_query.py")
-              .AddParameter("qemu_cli"),
-          nullptr, nullptr, nullptr) == 0;
+      std::system(
+          "/usr/lib/cuttlefish-common/bin/capability_query.py qemu_cli") == 0;
 #else
       true;
 #endif
