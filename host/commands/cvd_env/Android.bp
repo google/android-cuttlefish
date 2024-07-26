@@ -24,7 +24,6 @@ cc_binary_host {
     ],
     shared_libs: [
         "libbase",
-        "libcuttlefish_host_config",
         "libcuttlefish_utils",
         "libgrpc++",
         "libjsoncpp",
@@ -34,6 +33,7 @@ cc_binary_host {
         "grpc_cli_libs",
         "libabsl_host",
         "libcuttlefish_control_env",
+        "libcuttlefish_host_config",
         "libgflags",
     ],
     cflags: [
