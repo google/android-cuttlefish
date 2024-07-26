@@ -160,6 +160,7 @@ Result<void> InstanceDatabase::UpdateInstance(const LocalInstanceGroup& group,
               continue;
               }
               instance_proto = instance;
+              return {};
           }
           return CF_ERRF("Instance not found (name = '{}', group = '{}')",
                          group.Proto().name(), instance.name());
