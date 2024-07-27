@@ -139,6 +139,14 @@ std::vector<cvd::Instance> LocalInstanceGroup::FindByInstanceName(
   });
 }
 
+std::string LocalInstanceGroup::AssemblyDir() const {
+  return HomeDir() + "/cuttlefish/assembly";
+}
+
+std::string LocalInstanceGroup::InstanceDir(const cvd::Instance& instance) const {
+  return fmt::format("{}/cuttlefish/instances/cvd-{}", HomeDir(), instance.id());
+}
+
 Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
     const Json::Value& group_json) {
   CF_EXPECT(group_json.isMember(kJsonGroupName));
