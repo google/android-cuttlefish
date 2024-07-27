@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/core.h>
 
@@ -74,6 +75,50 @@ std::string HumanFriendlyStateName(cvd::InstanceState state) {
   return name;
 }
 
+// Adds more information to the json object returned by cvd_internal_status,
+// including some that cvd_internal_status normally returns but doesn't when the
+// instance is not running.
+void EnrichInstanceJson(const selector::LocalInstanceGroup& group,
+                        const cvd::Instance& instance,
+                        Json::Value& instance_json) {
+  instance_json["instance_name"] = instance.name();
+  instance_json["status"] = HumanFriendlyStateName(instance.state());
+  instance_json["adb_port"] = instance.adb_port();
+  instance_json["assembly_dir"] = group.AssemblyDir();
+  instance_json["instance_dir"] = group.InstanceDir(instance);
+  instance_json["instance_name"] = instance.name();
+  instance_json["webrtc_device_id"] = instance.webrtc_device_id();
+  if (instance.id() > 0) {
+    // Only running instances have id > 0, non running instances are not
+    // accessible via web UI.
+    instance_json["web_access"] =
+        fmt::format("https://localhost:1443/devices/{}/files/client.html",
+                    instance.webrtc_device_id());
+  }
+}
+
+Result<void> UpdateInstanceWithStatusResult(
+    cvd::Instance& instance, const Json::Value& instance_status_json) {
+  // TODO(jemoreira): Make cvd choose the values for these and pass them to
+  // cvd_internal_start so that it doesn't need to parse it from the status
+  // command output.
+  if (instance_status_json.isMember("webrtc_device_id") &&
+      instance_status_json["webrtc_device_id"]) {
+    instance.set_webrtc_device_id(
+        instance_status_json["webrtc_device_id"].asString());
+  }
+  if (instance_status_json.isMember("adb_serial") &&
+      instance_status_json["adb_serial"].isString()) {
+    std::string adb_serial = instance_status_json["adb_serial"].asString();
+    auto port_str = *android::base::Split(adb_serial, ":").rbegin();
+    int port = 0;
+    CF_EXPECT(android::base::ParseInt(port_str, &port));
+    instance.set_adb_port(port);
+  }
+  instance.set_state(cvd::INSTANCE_STATE_RUNNING);
+  return {};
+}
+
 }  // namespace
 
 Result<void> StatusFetcher::Interrupt() {
@@ -97,8 +142,11 @@ static Result<SharedFD> CreateFileToRedirect(
 Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
     const RequestWithStdio& request,
     const InstanceManager::LocalInstanceGroup& group, cvd::Instance& instance) {
-  // Only running instances are capable of responding to status requests
-  if (instance.state() != cvd::INSTANCE_STATE_RUNNING) {
+  // Only running instances are capable of responding to status requests. An
+  // unreachable instance is also considered running, it just didnt't reply last
+  // time.
+  if (instance.state() != cvd::INSTANCE_STATE_RUNNING &&
+      instance.state() != cvd::INSTANCE_STATE_UNREACHABLE) {
     Json::Value instance_json;
     instance_json["instance_name"] = instance.name();
     instance_json["status"] = HumanFriendlyStateName(instance.state());
@@ -185,13 +233,14 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   instance_status_json[kNameProp] = instance.name();
 
   auto response = ResponseFromSiginfo(infop);
-  if (response.status().code() != cvd::Status::OK) {
+  if (response.status().code() == cvd::Status::OK) {
+    CF_EXPECT(UpdateInstanceWithStatusResult(instance, instance_status_json));
+  } else {
     instance.set_state(cvd::INSTANCE_STATE_UNREACHABLE);
-    instance_manager_.UpdateInstance(group, instance);
     instance_status_json["warning"] = "cvd status failed";
-    instance_status_json["instance_name"] = instance.name();
-    instance_status_json["status"] = HumanFriendlyStateName(instance.state());
   }
+  instance_manager_.UpdateInstance(group, instance);
+  EnrichInstanceJson(group, instance, instance_status_json);
 
   return StatusFetcherOutput{
       .stderr_buf = status_stderr,

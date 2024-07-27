@@ -35,6 +35,8 @@ message Instance {
   uint32 id = 1;
   string name = 2;
   InstanceState state = 3;
+  uint32 adb_port = 4;
+  string webrtc_device_id = 5;
 }
 
 message InstanceGroup {

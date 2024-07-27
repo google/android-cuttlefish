@@ -57,6 +57,9 @@ class LocalInstanceGroup {
   void SetAllStates(cvd::InstanceState state);
   void SetAllStatesAndResetIds(cvd::InstanceState state);
 
+  std::string AssemblyDir() const;
+  std::string InstanceDir(const cvd::Instance&) const;
+
   std::vector<cvd::Instance> FindById(const unsigned id) const;
   /**
    * Find by per-instance name.
