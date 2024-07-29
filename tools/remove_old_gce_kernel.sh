@@ -17,4 +17,5 @@
 set -x
 set -o errexit
 
+dpkg --list | grep -v $(uname -r) | grep -E 'linux-image-[0-9]|linux-headers-[0-9]' | awk '{print $2" "$3}' | sort -k2,2 | awk '{print $1}' | xargs sudo apt-get -y purge
 sudo update-grub2

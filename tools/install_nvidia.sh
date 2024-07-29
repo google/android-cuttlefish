@@ -34,7 +34,7 @@ kmodver=$(dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
 
 apt-get install -y wget
 # Install headers from backports, to match the linux-image
-apt-get install -y -t bullseye-backports $(echo linux-headers-${kmodver})
+apt-get install -y -t bookworm-security $(echo linux-headers-${kmodver})
 # Dependencies for nvidia-installer
 apt-get install -y dkms libglvnd-dev libc6-dev pkg-config
 

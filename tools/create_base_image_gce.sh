@@ -120,12 +120,12 @@ sudo chroot /mnt/image /usr/bin/apt install -y aapt
 sudo chroot /mnt/image /usr/bin/apt install -y screen # needed by tradefed
 
 sudo chroot /mnt/image /usr/bin/find /home -ls
-sudo chroot /mnt/image /usr/bin/apt install -t bullseye-backports -y linux-image-cloud-amd64
+sudo chroot /mnt/image /usr/bin/apt install -t bookworm-security -y linux-image-cloud-amd64
 
 # update QEMU version to most recent backport
-sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86 -t bullseye-backports
-sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-arm -t bullseye-backports
-sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-misc -t bullseye-backports
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86 -t bookworm
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-arm -t bookworm
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-misc -t bookworm
 
 # Install GPU driver dependencies
 sudo cp install_nvidia.sh /mnt/image/
@@ -133,11 +133,11 @@ sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh
 sudo rm /mnt/image/install_nvidia.sh
 
 # Vulkan loader
-sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1 -t bullseye-backports
+sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1 -t bookworm
 
 # Wayland-server needed to have Nvidia driver fail gracefully when attempting to
 # use the EGL API on GCE instances without a GPU.
-sudo chroot /mnt/image /usr/bin/apt install -y libwayland-server0 -t bullseye-backports
+sudo chroot /mnt/image /usr/bin/apt install -y libwayland-server0 -t bookworm
 
 # Clean up the builder's version of resolv.conf
 sudo rm /mnt/image/etc/resolv.conf

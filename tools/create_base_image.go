@@ -122,7 +122,7 @@ func init() {
 		"Name of the instance to launch with the new image")
 	flag.StringVar(&arch, "arch", "gce_x86_64",
 		"Which CPU arch, arm/x86_64/gce_x86_64")
-	flag.StringVar(&source_image_family, "source_image_family", "debian-11",
+	flag.StringVar(&source_image_family, "source_image_family", "debian-12",
 		"Image familty to use as the base")
 	flag.StringVar(&source_image_project, "source_image_project", "debian-cloud",
 		"Project holding the base image")
@@ -366,7 +366,7 @@ func main() {
 	// TODO rammuthiah if the instance is clobbered with ssh commands within
 	// 5 seconds of reboot, it becomes inaccessible. Workaround that by sleeping
 	// 50 seconds.
-	time.Sleep(50 * time.Second)
+	time.Sleep(70 * time.Second)
 	gce(ExitOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` "`+build_instance+
 		`"`+` -- `+ssh_flags.AsArgs()+` ./remove_old_gce_kernel.sh`)
 
