@@ -1,4 +1,10 @@
-cuttlefish-frontend (0.9.30) unstable; urgency=medium
+cuttlefish-frontend (0.9.31) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Jorge Moreira <jemoreira@google.com>  Mon, 29 Jul 2024 15:43:33 -0700
+
+cuttlefish-frontend (0.9.30) stable; urgency=medium
 
   [ Sergio A. Rodriguez - cuttlefish-orchestration ]
   * cvd bug reports endpoint
@@ -6,7 +12,7 @@ cuttlefish-frontend (0.9.30) unstable; urgency=medium
   [Jaeman Park - cuttlefish-user]
   * Websocket endpoint for ADB
 
- -- Jorge E. Moreira <jemoreira@google.com>  Wed, 17 Jul 2024 16:36:18 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Mon, 29 Jul 2024 15:43:17 -0700
 
 cuttlefish-frontend (0.9.29) stable; urgency=medium
 
