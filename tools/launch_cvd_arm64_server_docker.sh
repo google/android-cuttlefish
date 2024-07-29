@@ -18,10 +18,11 @@ color_plain="\033[0m"
 color_yellow="\033[0;33m"
 
 # validate number of arguments
-if [ "$#" -lt 1 ] || [ "$#" -gt 4 ]; then
-  echo "This script requires 1 mandatory and 3 optional parameters,"
+if [ "$#" -lt 1 ] || [ "$#" -gt 5 ]; then
+  echo "This script requires 1 mandatory and 4 optional parameters,"
   echo "server address and optionally cvd instances per docker, and number of " \
-       "docker instances to invoke, and vendor_boot image to replace."
+       "docker instances to invoke, vendor_boot image to replace, and config " \
+       "file path for launching configuration."
   exit 1
 fi
 
@@ -49,6 +50,22 @@ if [ "$#" -lt 4 ]; then
 else
  vendor_boot_image=$4
 fi
+
+if [ "$#" -lt 5 ]; then
+ config_path=""
+else
+ config_path=$5
+ if [ ! -f $config_path ]; then
+  echo Config file $config_path does not exist
+  exit 1
+ fi
+
+ if ! cat $config_path | jq > /dev/null ; then
+  echo Failed to parse config file $config_path
+  exit 1
+ fi
+fi
+
 
 # set img_dir and cvd_host_tool_dir
 img_dir=${ANDROID_PRODUCT_OUT:-$PWD}
@@ -205,6 +222,15 @@ for docker_inspect in ${docker_inspects[*]}; do
   host_orchestrator_ports+=($port)
 done
 
+if [[ $config_path != "" ]]; then
+  cvd_creation_data=$(cat $config_path | jq -c)
+else
+  cvd_creation_data="{\"cvd\":{\"build_source\": \
+    {\"user_build_source\":{\"artifacts_dir\":\"$user_artifacts_dir\"}}}, \
+    \"additional_instances_num\":$((num_instances_per_docker - 1))}";
+fi
+cvd_creation_data=$(echo $cvd_creation_data | sed s/\$user_artifact_id/$user_artifacts_dir/g)
+
 # start Cuttlefish instance on top of docker instance
 # TODO(b/317942272): support starting the instance with an optional vendor boot debug image.
 echo -e "Starting Cuttlefish"
@@ -214,9 +240,7 @@ ssh $server "for port in ${host_orchestrator_ports[*]}; do \
   while [ -z \"\$job_id\" ]; do \
     job_id=\$(curl -s -k -X POST \$host_orchestrator_url/cvds \
       -H 'Content-Type: application/json' \
-      -d '{\"cvd\": {\"build_source\": { \
-      \"user_build_source\": {\"artifacts_dir\": \"$user_artifacts_dir\"}}}, \
-      \"additional_instances_num\": $((num_instances_per_docker - 1))}' \
+      -d '$cvd_creation_data' \
         | jq -r '.name') && \
     if [ -z \"\$job_id\" ]; then \
       echo \"  Failed to request creating Cuttlefish, retrying\" && \
