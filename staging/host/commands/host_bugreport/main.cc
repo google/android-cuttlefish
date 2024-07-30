@@ -49,7 +49,7 @@ void SaveFile(ZipWriter& writer, const std::string& zip_path,
   }
 }
 
-Result<void> AddNetsimdLogs(ZipWriter& writer) {
+void AddNetsimdLogs(ZipWriter& writer) {
   // The temp directory name depends on whether the `USER` environment variable
   // is defined.
   // https://source.corp.google.com/h/googleplex-android/platform/superproject/main/+/main:tools/netsim/rust/common/src/system/mod.rs;l=37-57;drc=360ddb57df49472a40275b125bb56af2a65395c7
@@ -58,14 +58,17 @@ Result<void> AddNetsimdLogs(ZipWriter& writer) {
                                  : fmt::format("/tmp/android-{}/netsimd", user);
   if (!DirectoryExists(dir)) {
     LOG(INFO) << "netsimd logs directory: `" << dir << "` does not exist.";
-    return {};
+    return;
   }
-  auto names =
-      CF_EXPECTF(DirectoryContents(dir), "Cannot read from {} directory.", dir);
-  for (const auto& name : names) {
+  auto names = DirectoryContents(dir);
+  if (!names.ok()) {
+    LOG(ERROR) << "Cannot read from netsimd directory `" << dir
+               << "`: " << names.error().FormatForEnv(/* color = */ false);
+    return;
+  }
+  for (const auto& name : names.value()) {
     SaveFile(writer, "netsimd/" + name, dir + "/" + name);
   }
-  return {};
 }
 
 Result<void> CvdHostBugreportMain(int argc, char** argv) {
@@ -104,10 +107,14 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
     save("cuttlefish_config.json");
     save("disk_config.txt");
     if (DirectoryExists(instance.PerInstancePath("logs"))) {
-      auto logs = CF_EXPECT(DirectoryContents(instance.PerInstancePath("logs")),
-                            "Cannot read from logs directory.");
-      for (const auto& log : logs) {
-        save("logs/" + log);
+      auto result = DirectoryContents(instance.PerInstancePath("logs"));
+      if (result.ok()) {
+        for (const auto& log : result.value()) {
+          save("logs/" + log);
+        }
+      } else {
+        LOG(ERROR) << "Cannot read from logs directory: "
+                   << result.error().FormatForEnv(/* color = */ false);
       }
     } else {
       save("kernel.log");
@@ -115,21 +122,33 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
       save("logcat");
       save("metrics.log");
     }
-    auto tombstones =
-        CF_EXPECT(DirectoryContents(instance.PerInstancePath("tombstones")),
-                  "Cannot read from tombstones directory.");
-    for (const auto& tombstone : tombstones) {
-      save("tombstones/" + tombstone);
+
+    {
+      auto result = DirectoryContents(instance.PerInstancePath("tombstones"));
+      if (result.ok()) {
+        for (const auto& tombstone : result.value()) {
+          save("tombstones/" + tombstone);
+        }
+      } else {
+        LOG(ERROR) << "Cannot read from tombstones directory: "
+                   << result.error().FormatForEnv(/* color = */ false);
+      }
     }
-    auto recordings =
-        CF_EXPECT(DirectoryContents(instance.PerInstancePath("recording")),
-                  "Cannot read from recording directory.");
-    for (const auto& recording : recordings) {
-      save("recording/" + recording);
+
+    {
+      auto result = DirectoryContents(instance.PerInstancePath("recording"));
+      if (result.ok()) {
+        for (const auto& recording : result.value()) {
+          save("recording/" + recording);
+        }
+      } else {
+        LOG(ERROR) << "Cannot read from recording directory: "
+                   << result.error().FormatForEnv(/* color = */ false);
+      }
     }
   }
 
-  CF_EXPECT(AddNetsimdLogs(writer));
+  AddNetsimdLogs(writer);
 
   SaveFile(writer, "cvd_host_bugreport.log", log_filename);
 
