@@ -35,6 +35,7 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/start/filesystem_explorer.h"
 #include "host/commands/start/flag_forwarder.h"
+#include "host/libs/config/config_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/config/host_tools_version.h"
@@ -120,7 +121,7 @@ int InvokeAssembler(const std::string& assembler_stdin,
                              &assembler_stdout, nullptr);
 }
 
-Subprocess StartRunner(SharedFD runner_stdin,
+Subprocess StartRunner(SharedFD runner_stdin, const CuttlefishConfig& config,
                        const CuttlefishConfig::InstanceSpecific& instance,
                        const std::vector<std::string>& argv) {
   Command run_cmd(kRunnerBin);
@@ -129,7 +130,26 @@ Subprocess StartRunner(SharedFD runner_stdin,
   }
   run_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, runner_stdin);
   run_cmd.SetWorkingDirectory(instance.instance_dir());
-  return run_cmd.Start();
+
+  SubprocessOptions options;
+  if (config.host_sandbox()) {
+    std::vector<std::string> sandbox_arguments = {
+        HostBinaryPath("process_sandboxer"),
+        "--environments_dir=" + config.environments_dir(),
+        "--environments_uds_dir=" + config.environments_uds_dir(),
+        "--instance_uds_dir=" + instance.instance_uds_dir(),
+        "--log_dir=" + instance.PerInstanceLogPath(""),
+        "--runtime_dir=" + instance.instance_dir(),
+        "--host_artifacts_path=" + DefaultHostArtifactsPath(""),
+    };
+    std::string log_files = instance.PerInstanceLogPath("sandbox.log");
+    if (!instance.run_as_daemon()) {
+      log_files += "," + instance.PerInstanceLogPath("launcher.log");
+    }
+    sandbox_arguments.emplace_back("--log_files=" + log_files);
+    options.SandboxArguments(std::move(sandbox_arguments));
+  }
+  return run_cmd.Start(options);
 }
 
 std::string WriteFiles(FetcherConfig fetcher_config) {
@@ -440,10 +460,11 @@ int CvdInternalStartMain(int argc, char** argv) {
   std::vector<Subprocess> runners;
   for (const auto& instance : config->Instances()) {
     SharedFD runner_stdin = SharedFD::Open("/dev/null", O_RDONLY);
+    CHECK(runner_stdin->IsOpen()) << runner_stdin->StrError();
     setenv(kCuttlefishInstanceEnvVarName, instance.id().c_str(),
            /* overwrite */ 1);
 
-    auto run_proc = StartRunner(std::move(runner_stdin), instance,
+    auto run_proc = StartRunner(std::move(runner_stdin), *config, instance,
                                 forwarder.ArgvForSubprocess(kRunnerBin));
     runners.push_back(std::move(run_proc));
   }
