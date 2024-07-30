@@ -64,6 +64,9 @@ type HostOrchestratorService interface {
 
 	// Wait for an operation, `result` will be populated with the relevant operation's result object.
 	WaitForOperation(name string, result any) error
+
+	// Create cvd bugreport.
+	CreateBugreport(group string, dst io.Writer) error
 }
 
 const defaultHostOrchestratorCredentialsHeader = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
@@ -370,6 +373,39 @@ func (c *HostOrchestratorServiceImpl) ExtractFile(uploadDir string, filename str
 		return nil, err
 	}
 	return result, nil
+}
+
+func (c *HostOrchestratorServiceImpl) CreateBugreport(group string, dst io.Writer) error {
+	op := &hoapi.Operation{}
+	rb := c.HTTPHelper.NewPostRequest("/cvds/"+group+"/:bugreport", nil)
+	if err := rb.JSONResDo(op); err != nil {
+		return err
+	}
+	retryOpts := RetryOptions{
+		StatusCodes: []int{http.StatusServiceUnavailable, http.StatusGatewayTimeout},
+		RetryDelay:  30 * time.Second,
+		MaxWait:     3 * time.Minute,
+	}
+	uuid := ""
+	if err := c.waitForOperation(op.Name, &uuid, retryOpts); err != nil {
+		return err
+	}
+	req, err := http.NewRequest("GET", c.HTTPHelper.RootEndpoint+"/cvdbugreports/"+uuid, nil)
+	if err != nil {
+		return err
+	}
+	res, err := c.HTTPHelper.Client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if _, err := io.Copy(dst, res.Body); err != nil {
+		return err
+	}
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return &ApiCallError{ErrorMsg: res.Status}
+	}
+	return nil
 }
 
 func asWebRTCICEServers(in []hoapi.IceServer) []webrtc.ICEServer {
