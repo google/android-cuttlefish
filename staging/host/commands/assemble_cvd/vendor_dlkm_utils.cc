@@ -306,6 +306,8 @@ bool AddVbmetaFooter(const std::string& output_image,
   // Arbitrary salt to keep output consistent
   avb_cmd.AddParameter("--salt");
   avb_cmd.AddParameter("62BBAAA0", "E4BD99E783AC");
+  avb_cmd.AddParameter("--hash_algorithm");
+  avb_cmd.AddParameter("sha256");
   avb_cmd.AddParameter("--image");
   avb_cmd.AddParameter(output_image);
   avb_cmd.AddParameter("--partition_name");
