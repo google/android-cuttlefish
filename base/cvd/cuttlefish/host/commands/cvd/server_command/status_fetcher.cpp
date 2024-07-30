@@ -78,7 +78,7 @@ std::string HumanFriendlyStateName(cvd::InstanceState state) {
 // Adds more information to the json object returned by cvd_internal_status,
 // including some that cvd_internal_status normally returns but doesn't when the
 // instance is not running.
-void EnrichInstanceJson(const selector::LocalInstanceGroup& group,
+void OverrideInstanceJson(const selector::LocalInstanceGroup& group,
                         const cvd::Instance& instance,
                         Json::Value& instance_json) {
   instance_json["instance_name"] = instance.name();
@@ -240,7 +240,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
     instance_status_json["warning"] = "cvd status failed";
   }
   instance_manager_.UpdateInstance(group, instance);
-  EnrichInstanceJson(group, instance, instance_status_json);
+  OverrideInstanceJson(group, instance, instance_status_json);
 
   return StatusFetcherOutput{
       .stderr_buf = status_stderr,
