@@ -681,7 +681,7 @@ static fruit::Component<> DiskChangesComponent(
       .install(CuttlefishKeyAvbComponent)
       .install(AutoSetup<InitializeMetadataImage>::Component)
       .install(AutoSetup<InitializeChromeOsState>::Component)
-      .install(KernelRamdiskRepackerComponent)
+      .install(AutoSetup<RepackKernelRamdisk>::Component)
       .install(AutoSetup<VbmetaEnforceMinimumSize>::Component)
       .install(AutoSetup<BootloaderPresentCheck>::Component)
       .install(AutoSetup<Gem5ImageUnpacker>::Component)
