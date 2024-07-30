@@ -56,9 +56,6 @@ type HostOrchestratorService interface {
 	// If not empty, the provided credentials will be used by the host orchestrator to access the build api.
 	FetchArtifacts(req *hoapi.FetchArtifactsRequest, buildAPICredentials string) (*hoapi.FetchArtifactsResponse, error)
 
-	// Downloads runtime artifacts tar file into `dst`.
-	DownloadRuntimeArtifacts(dst io.Writer) error
-
 	// Creates a webRTC connection to a device running in this host.
 	ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
 
@@ -301,25 +298,6 @@ func (c *HostOrchestratorServiceImpl) ListCVDs() ([]*hoapi.CVD, error) {
 		return nil, err
 	}
 	return res.CVDs, nil
-}
-
-func (c *HostOrchestratorServiceImpl) DownloadRuntimeArtifacts(dst io.Writer) error {
-	req, err := http.NewRequest("POST", c.HTTPHelper.RootEndpoint+"/runtimeartifacts/:pull", nil)
-	if err != nil {
-		return err
-	}
-	res, err := c.HTTPHelper.Client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	if _, err := io.Copy(dst, res.Body); err != nil {
-		return err
-	}
-	if res.StatusCode < 200 || res.StatusCode > 299 {
-		return &ApiCallError{ErrorMsg: res.Status}
-	}
-	return nil
 }
 
 func (c *HostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
