@@ -106,8 +106,15 @@ if [ ! -f /mnt/image/etc/resolv.conf ]; then
 fi
 sudo chroot /mnt/image /usr/bin/apt update
 sudo chroot /mnt/image /usr/bin/apt install -y "${tmp_debs[@]}"
-# install tools dependencies
+
+# Install JDK.
+#
+# JDK it's not required to launch a CF device. It's required to run
+# some of Tradefed tests that are run from the CF host side like
+# some CF gfx tests, adb tests, etc.
 sudo chroot /mnt/image /usr/bin/apt install -y openjdk-17-jre
+
+# install tools dependencies
 sudo chroot /mnt/image /usr/bin/apt install -y unzip bzip2 lzop
 sudo chroot /mnt/image /usr/bin/apt install -y aapt
 sudo chroot /mnt/image /usr/bin/apt install -y screen # needed by tradefed
