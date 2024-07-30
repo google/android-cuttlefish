@@ -25,6 +25,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/tee_logging.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "ziparchive/zip_writer.h"
 
@@ -70,6 +71,16 @@ Result<void> AddNetsimdLogs(ZipWriter& writer) {
 Result<void> CvdHostBugreportMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
+
+  std::string log_filename = "/tmp/cvd_hbr.log.XXXXXX";
+  {
+    auto fd = SharedFD::Mkstemp(&log_filename);
+    CF_EXPECT(fd->IsOpen(), "Unable to create log file: " << fd->StrError());
+    android::base::SetLogger(TeeLogger({
+        {ConsoleSeverity(), SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE},
+        {LogFileSeverity(), fd, MetadataLevel::FULL},
+    }));
+  }
 
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Unable to find the config";
@@ -120,9 +131,15 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
 
   CF_EXPECT(AddNetsimdLogs(writer));
 
+  SaveFile(writer, "cvd_host_bugreport.log", log_filename);
+
   writer.Finish();
 
   LOG(INFO) << "Saved to \"" << FLAGS_output << "\"";
+
+  if (!RemoveFile(log_filename)) {
+    LOG(INFO) << "Failed to remove host bug report log file: " << log_filename;
+  }
 
   return {};
 }
