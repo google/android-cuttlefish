@@ -174,30 +174,24 @@ bool GetAvbMetadataFromBootImage(const std::string& boot_image_path,
   return true;
 }
 
-bool UnpackBootImage(const std::string& boot_image_path,
-                     const std::string& unpack_dir) {
-  auto unpack_path = HostBinaryPath("unpack_bootimg");
-  Command unpack_cmd(unpack_path);
-  unpack_cmd.AddParameter("--boot_img");
-  unpack_cmd.AddParameter(boot_image_path);
-  unpack_cmd.AddParameter("--out");
-  unpack_cmd.AddParameter(unpack_dir);
+Result<void> UnpackBootImage(const std::string& boot_image_path,
+                             const std::string& unpack_dir) {
+  SharedFD output_file = SharedFD::Creat(unpack_dir + "/boot_params", 0666);
+  CF_EXPECTF(output_file->IsOpen(),
+             "Unable to create intermediate boot params file: '{}'",
+             output_file->StrError());
 
-  auto output_file = SharedFD::Creat(unpack_dir + "/boot_params", 0666);
-  if (!output_file->IsOpen()) {
-    LOG(ERROR) << "Unable to create intermediate boot params file: "
-               << output_file->StrError();
-    return false;
-  }
-  unpack_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
+  Command unpack_cmd =
+      Command(HostBinaryPath("unpack_bootimg"))
+          .AddParameter("--boot_img")
+          .AddParameter(boot_image_path)
+          .AddParameter("--out")
+          .AddParameter(unpack_dir)
+          .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
 
-  int success = unpack_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to run unpack_bootimg. Exited with status "
-               << success;
-    return false;
-  }
-  return true;
+  CF_EXPECT_EQ(unpack_cmd.Start().Wait(), 0, "Unable to run unpack_bootimg.");
+
+  return {};
 }
 
 bool UnpackVendorBootImageIfNotUnpacked(
