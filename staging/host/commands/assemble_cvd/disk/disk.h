@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
-
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -25,18 +23,15 @@
 
 namespace cuttlefish {
 
-class KernelRamdiskRepacker : public SetupFeature {};
-
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific,
-                                 const Avb>,
-                 KernelRamdiskRepacker>
-KernelRamdiskRepackerComponent();
+Result<void> RepackKernelRamdisk(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance, const Avb& avb);
 
 Result<void> GeneratePersistentBootconfig(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 
-Result<void> Gem5ImageUnpacker(const CuttlefishConfig&, KernelRamdiskRepacker&);
+Result<void> Gem5ImageUnpacker(const CuttlefishConfig&,
+                               AutoSetup<RepackKernelRamdisk>::Type&);
 
 Result<void> GeneratePersistentVbmeta(
     const CuttlefishConfig::InstanceSpecific&,
