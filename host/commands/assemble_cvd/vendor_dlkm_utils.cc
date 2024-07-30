@@ -387,32 +387,31 @@ Result<void> BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
   return {};
 }
 
-bool RepackSuperWithPartition(const std::string& superimg_path,
-                              const std::string& image_path,
-                              const std::string& partition_name) {
-  Command lpadd(HostBinaryPath("lpadd"));
-  lpadd.AddParameter("--replace");
-  lpadd.AddParameter(superimg_path);
-  lpadd.AddParameter(partition_name + "_a");
-  lpadd.AddParameter("google_vendor_dynamic_partitions_a");
-  lpadd.AddParameter(image_path);
-  const auto exit_code = lpadd.Start().Wait();
-  return exit_code == 0;
+Result<void> RepackSuperWithPartition(const std::string& superimg_path,
+                                      const std::string& image_path,
+                                      const std::string& partition_name) {
+  int exit_code = Execute({
+      HostBinaryPath("lpadd"),
+      "--replace",
+      superimg_path,
+      partition_name + "_a",
+      "google_vendor_dynamic_partitions_a",
+      image_path,
+  });
+  CF_EXPECT_EQ(exit_code, 0);
+
+  return {};
 }
 
-bool BuildVbmetaImage(const std::string& image_path,
-                      const std::string& vbmeta_path) {
-  CHECK(!image_path.empty());
-  CHECK(FileExists(image_path));
+Result<void> BuildVbmetaImage(const std::string& image_path,
+                              const std::string& vbmeta_path) {
+  CF_EXPECT(!image_path.empty());
+  CF_EXPECTF(FileExists(image_path), "'{}' does not exist", image_path);
 
   std::unique_ptr<Avb> avbtool = GetDefaultAvb();
-  Result<void> result = avbtool->MakeVbMetaImage(vbmeta_path, {}, {image_path},
-                                                 {"--padding_size", "4096"});
-  if (!result.ok()) {
-    LOG(ERROR) << result.error().Trace();
-    return false;
-  }
-  return true;
+  CF_EXPECT(avbtool->MakeVbMetaImage(vbmeta_path, {}, {image_path},
+                                     {"--padding_size", "4096"}));
+  return {};
 }
 
 std::vector<std::string> Dedup(std::vector<std::string>&& vec) {
