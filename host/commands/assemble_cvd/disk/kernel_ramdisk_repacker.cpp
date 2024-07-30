@@ -52,72 +52,63 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
   }
 
  protected:
-  static bool RebuildDlkmAndVbmeta(const std::string& build_dir,
-                                   const std::string& partition_name,
-                                   const std::string& output_image,
-                                   const std::string& vbmeta_image) {
+  static Result<void> RebuildDlkmAndVbmeta(const std::string& build_dir,
+                                           const std::string& partition_name,
+                                           const std::string& output_image,
+                                           const std::string& vbmeta_image) {
     // TODO(b/149866755) For now, we assume that vendor_dlkm is ext4. Add
     // logic to handle EROFS once the feature stabilizes.
     const auto tmp_output_image = output_image + ".tmp";
-    if (!BuildDlkmImage(build_dir, false, partition_name, tmp_output_image)) {
-      LOG(ERROR) << "Failed to build `" << partition_name << "` image from "
-                 << build_dir;
-      return false;
-    }
-    if (!MoveIfChanged(tmp_output_image, output_image)) {
-      return false;
-    }
-    if (!BuildVbmetaImage(output_image, vbmeta_image)) {
-      LOG(ERROR) << "Failed to rebuild vbmeta vendor.";
-      return false;
-    }
-    return true;
+    CF_EXPECTF(
+        BuildDlkmImage(build_dir, false, partition_name, tmp_output_image),
+        "Failed to build `{}' image from '{}'", partition_name, build_dir);
+
+    CF_EXPECT(MoveIfChanged(tmp_output_image, output_image));
+
+    CF_EXPECT(BuildVbmetaImage(output_image, vbmeta_image),
+              "Failed to rebuild vbmeta vendor.");
+
+    return {};
   }
-  bool RepackSuperAndVbmeta(const std::string& superimg_build_dir,
-                            const std::string& vendor_dlkm_build_dir,
-                            const std::string& system_dlkm_build_dir,
-                            const std::string& ramdisk_path) {
+  Result<void> RepackSuperAndVbmeta(const std::string& superimg_build_dir,
+                                    const std::string& vendor_dlkm_build_dir,
+                                    const std::string& system_dlkm_build_dir,
+                                    const std::string& ramdisk_path) {
     const auto ramdisk_stage_dir = instance_.instance_dir() + "/ramdisk_staged";
-    if (!SplitRamdiskModules(ramdisk_path, ramdisk_stage_dir,
-                             vendor_dlkm_build_dir, system_dlkm_build_dir)) {
-      LOG(ERROR) << "Failed to move ramdisk modules to vendor_dlkm";
-      return false;
-    }
+    CF_EXPECT(SplitRamdiskModules(ramdisk_path, ramdisk_stage_dir,
+                                  vendor_dlkm_build_dir, system_dlkm_build_dir),
+              "Failed to move ramdisk modules to vendor_dlkm");
+
     const auto new_vendor_dlkm_img =
         superimg_build_dir + "/vendor_dlkm_repacked.img";
-    if (!RebuildDlkmAndVbmeta(vendor_dlkm_build_dir, "vendor_dlkm",
-                              new_vendor_dlkm_img,
-                              instance_.new_vbmeta_vendor_dlkm_image())) {
-      LOG(ERROR) << "Failed to build vendor_dlkm image from "
-                 << vendor_dlkm_build_dir;
-      return false;
-    }
+    CF_EXPECTF(RebuildDlkmAndVbmeta(vendor_dlkm_build_dir, "vendor_dlkm",
+                                    new_vendor_dlkm_img,
+                                    instance_.new_vbmeta_vendor_dlkm_image()),
+               "Failed to build vendor_dlkm image from '{}'",
+               vendor_dlkm_build_dir);
+
     const auto new_system_dlkm_img =
         superimg_build_dir + "/system_dlkm_repacked.img";
-    if (!RebuildDlkmAndVbmeta(system_dlkm_build_dir, "system_dlkm",
-                              new_system_dlkm_img,
-                              instance_.new_vbmeta_system_dlkm_image())) {
-      LOG(ERROR) << "Failed to build system_dlkm image from "
-                 << system_dlkm_build_dir;
-      return false;
-    }
+    CF_EXPECTF(RebuildDlkmAndVbmeta(system_dlkm_build_dir, "system_dlkm",
+                                    new_system_dlkm_img,
+                                    instance_.new_vbmeta_system_dlkm_image()),
+               "Failed to build system_dlkm image from '{}'",
+               system_dlkm_build_dir);
+
     const auto new_super_img = instance_.new_super_image();
-    if (!Copy(instance_.super_image(), new_super_img)) {
-      PLOG(ERROR) << "Failed to copy super image " << instance_.super_image()
-                  << " to " << new_super_img;
-      return false;
-    }
-    if (!RepackSuperWithPartition(new_super_img, new_vendor_dlkm_img,
-                                  "vendor_dlkm")) {
-      LOG(ERROR) << "Failed to repack super image with new vendor dlkm image.";
-      return false;
-    }
-    if (!RepackSuperWithPartition(new_super_img, new_system_dlkm_img,
-                                  "system_dlkm")) {
-      LOG(ERROR) << "Failed to repack super image with new system dlkm image.";
-      return false;
-    }
-    return true;
+    CF_EXPECTF(Copy(instance_.super_image(), new_super_img),
+               "Failed to copy super image '{}' to '{}': '{}'",
+               instance_.super_image(), new_super_img, strerror(errno));
+
+    CF_EXPECT(RepackSuperWithPartition(new_super_img, new_vendor_dlkm_img,
+                                       "vendor_dlkm"),
+              "Failed to repack super image with new vendor dlkm image.");
+
+    CF_EXPECT(RepackSuperWithPartition(new_super_img, new_system_dlkm_img,
+                                       "system_dlkm"),
+              "Failed to repack super image with new system dlkm image.");
+
+    return {};
   }
   Result<void> ResultSetup() override {
     CF_EXPECTF(FileHasContent(instance_.boot_image()), "File not found: {}",
