@@ -16,16 +16,15 @@
 
 #include "host/commands/assemble_cvd/disk/disk.h"
 
-#include <fruit/fruit.h>
-
 #include "common/libs/utils/files.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/libs/vm_manager/gem5_manager.h"
+#include "host/libs/config/feature.h"
 
 namespace cuttlefish {
 
-Result<void> Gem5ImageUnpacker(const CuttlefishConfig& config,
-                               KernelRamdiskRepacker& /* dependency */) {
+Result<void> Gem5ImageUnpacker(
+    const CuttlefishConfig& config,
+    AutoSetup<RepackKernelRamdisk>::Type& /* dependency */) {
   if (config.vm_manager() != VmmMode::kGem5) {
     return {};
   }

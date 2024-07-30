@@ -20,8 +20,6 @@
 #include <string>
 #include <unordered_set>
 
-#include <fruit/fruit.h>
-
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"

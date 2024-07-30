@@ -18,8 +18,6 @@
 
 #include <string>
 
-#include <fruit/fruit.h>
-
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_config.h"
