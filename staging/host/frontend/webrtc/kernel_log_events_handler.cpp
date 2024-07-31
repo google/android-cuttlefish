@@ -62,34 +62,37 @@ void KernelLogEventsHandler::ReadLoop() {
       }
     }
     if (read_set.IsSet(kernel_log_fd_)) {
-      std::optional<monitor::ReadEventResult> read_result =
+      Result<std::optional<monitor::ReadEventResult>> read_result =
           monitor::ReadEvent(kernel_log_fd_);
       if (!read_result) {
         LOG(ERROR) << "Failed to read kernel log event: "
-                   << kernel_log_fd_->StrError();
+                   << read_result.error().FormatForEnv();
+        break;
+      } else if (!(*read_result)) {
+        LOG(ERROR) << "EOF from kernel_log_monitor";
         break;
       }
 
-      if (read_result->event == monitor::Event::BootStarted) {
+      if ((*read_result)->event == monitor::Event::BootStarted) {
         Json::Value message;
         message["event"] = kBootStartedMessage;
         DeliverEvent(message);
       }
-      if (read_result->event == monitor::Event::BootCompleted) {
+      if ((*read_result)->event == monitor::Event::BootCompleted) {
         Json::Value message;
         message["event"] = kBootCompletedMessage;
         DeliverEvent(message);
       }
-      if (read_result->event == monitor::Event::ScreenChanged) {
+      if ((*read_result)->event == monitor::Event::ScreenChanged) {
         Json::Value message;
         message["event"] = kScreenChangedMessage;
-        message["metadata"] = read_result->metadata;
+        message["metadata"] = (*read_result)->metadata;
         DeliverEvent(message);
       }
-      if (read_result->event == monitor::Event::DisplayPowerModeChanged) {
+      if ((*read_result)->event == monitor::Event::DisplayPowerModeChanged) {
         Json::Value message;
         message["event"] = kDisplayPowerModeChangedMessage;
-        message["metadata"] = read_result->metadata;
+        message["metadata"] = (*read_result)->metadata;
         DeliverEvent(message);
       }
     }
