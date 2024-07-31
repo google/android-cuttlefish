@@ -29,8 +29,7 @@
 
 using sapi::file::JoinPath;
 
-namespace cuttlefish {
-namespace process_sandboxer {
+namespace cuttlefish::process_sandboxer {
 
 std::string HostInfo::HostToolExe(std::string_view exe) const {
   return JoinPath(artifacts_path, "bin", exe);
@@ -57,6 +56,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
 
   builders[host.HostToolExe("kernel_log_monitor")] = KernelLogMonitorPolicy;
   builders[host.HostToolExe("logcat_receiver")] = LogcatReceiverPolicy;
+  builders[host.HostToolExe("process_restarter")] = ProcessRestarterPolicy;
   builders[host.HostToolExe("run_cvd")] = RunCvdPolicy;
   builders[host.HostToolExe("secure_env")] = SecureEnvPolicy;
 
@@ -72,5 +72,4 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   }
 }
 
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
+}  // namespace cuttlefish::process_sandboxer

@@ -44,6 +44,7 @@ sandbox2::PolicyBuilder BaselinePolicy(const HostInfo&, std::string_view exe);
 sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder LogcatReceiverPolicy(const HostInfo&);
 sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo&);
+sandbox2::PolicyBuilder ProcessRestarterPolicy(const HostInfo&);
 sandbox2::PolicyBuilder SecureEnvPolicy(const HostInfo&);
 
 std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
