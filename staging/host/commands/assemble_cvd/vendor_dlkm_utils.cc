@@ -333,30 +333,23 @@ bool AddVbmetaFooter(const std::string& output_image,
 // file_contexts previously generated
 // 5. call avbtool to add hashtree footer, so that init/bootloader can verify
 // AVB chain
-bool BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
-                    const std::string& partition_name,
-                    const std::string& output_image) {
-  if (is_erofs) {
-    LOG(ERROR)
-        << "Building DLKM image in EROFS format is currently not supported!";
-    return false;
-  }
-  const auto mount_point = "/" + partition_name;
-  const auto fs_config = output_image + ".fs_config";
-  if (!WriteFsConfig(fs_config.c_str(), src_dir, mount_point)) {
-    return false;
-  }
-  const auto file_contexts_bin = output_image + ".file_contexts";
+Result<void> BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
+                            const std::string& partition_name,
+                            const std::string& output_image) {
+  CF_EXPECT(!is_erofs,
+            "Building DLKM image in EROFS format is currently not supported!");
+
+  const std::string mount_point = "/" + partition_name;
+  const std::string fs_config = output_image + ".fs_config";
+  CF_EXPECT(WriteFsConfig(fs_config.c_str(), src_dir, mount_point));
+
+  const std::string file_contexts_bin = output_image + ".file_contexts";
   if (partition_name == "system_dlkm") {
-    if (!GenerateFileContexts(file_contexts_bin.c_str(), mount_point,
-                              "system_dlkm_file")) {
-      return false;
-    }
+    CF_EXPECT(GenerateFileContexts(file_contexts_bin.c_str(), mount_point,
+                                   "system_dlkm_file"));
   } else {
-    if (!GenerateFileContexts(file_contexts_bin.c_str(), mount_point,
-                              "vendor_file")) {
-      return false;
-    }
+    CF_EXPECT(GenerateFileContexts(file_contexts_bin.c_str(), mount_point,
+                                   "vendor_file"));
   }
 
   // We are using directory size as an estimate of final image size. To avoid
@@ -364,34 +357,33 @@ bool BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
   const auto fs_size = RoundUp(GetDiskUsage(src_dir) + 16 * 1024 * 1024, 4096);
   LOG(INFO) << mount_point << " src dir " << src_dir << " has size "
             << fs_size / 1024 << " KB";
-  const auto mkfs = HostBinaryPath("mkuserimg_mke2fs");
-  Command mkfs_cmd(mkfs);
-  // Arbitrary UUID/seed, just to keep output consistent between runs
-  mkfs_cmd.AddParameter("--mke2fs_uuid");
-  mkfs_cmd.AddParameter("cb09b942-ed4e-46a1-81dd-7d535bf6c4b1");
-  mkfs_cmd.AddParameter("--mke2fs_hash_seed");
-  mkfs_cmd.AddParameter("765d8aba-d93f-465a-9fcf-14bb794eb7f4");
-  // Arbitrary date, just to keep output consistent
-  mkfs_cmd.AddParameter("-T");
-  mkfs_cmd.AddParameter("900979200000");
 
-  // selinux permission to keep selinux happy
-  mkfs_cmd.AddParameter("--fs_config");
-  mkfs_cmd.AddParameter(fs_config);
+  Command mkfs_cmd =
+      Command(HostBinaryPath("mkuserimg_mke2fs"))
+          // Arbitrary UUID/seed, just to keep output consistent between runs
+          .AddParameter("--mke2fs_uuid")
+          .AddParameter("cb09b942-ed4e-46a1-81dd-7d535bf6c4b1")
+          .AddParameter("--mke2fs_hash_seed")
+          .AddParameter("765d8aba-d93f-465a-9fcf-14bb794eb7f4")
+          // Arbitrary date, just to keep output consistent
+          .AddParameter("-T")
+          .AddParameter(900979200000)
+          // selinux permission to keep selinux happy
+          .AddParameter("--fs_config")
+          .AddParameter(fs_config)
 
-  mkfs_cmd.AddParameter(src_dir);
-  mkfs_cmd.AddParameter(output_image);
-  mkfs_cmd.AddParameter("ext4");
-  mkfs_cmd.AddParameter(mount_point);
-  mkfs_cmd.AddParameter(std::to_string(fs_size));
-  mkfs_cmd.AddParameter(file_contexts_bin);
+          .AddParameter(src_dir)
+          .AddParameter(output_image)
+          .AddParameter("ext4")
+          .AddParameter(mount_point)
+          .AddParameter(fs_size)
+          .AddParameter(file_contexts_bin);
 
-  int exit_code = mkfs_cmd.Start().Wait();
-  if (exit_code != 0) {
-    LOG(ERROR) << "Failed to build vendor_dlkm ext4 image";
-    return false;
-  }
-  return AddVbmetaFooter(output_image, partition_name);
+  CF_EXPECT_EQ(mkfs_cmd.Start().Wait(), 0,
+               "Failed to build vendor_dlkm ext4 image");
+  CF_EXPECT(AddVbmetaFooter(output_image, partition_name));
+
+  return {};
 }
 
 bool RepackSuperWithPartition(const std::string& superimg_path,
