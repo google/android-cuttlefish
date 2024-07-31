@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"sync"
@@ -54,7 +55,11 @@ func newDevice(id string, conn *JSONUnix, port int, privateData interface{}) *De
 		return nil
 	}
 	proxy := httputil.NewSingleHostReverseProxy(url)
-
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		log.Printf("request %q failed: proxy error: %v", r.Method+" "+r.URL.Path, err)
+		w.Header().Add("x-cutf-proxy", "op-device")
+		w.WriteHeader(http.StatusBadGateway)
+	}
 	groupId := groupIdFromPrivateData(privateData)
 	return &Device{
 		conn:        conn,
