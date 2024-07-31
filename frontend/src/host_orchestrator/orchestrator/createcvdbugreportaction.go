@@ -61,19 +61,19 @@ func (a *CreateCVDBugReportAction) Run() (apiv1.Operation, error) {
 		return apiv1.Operation{}, err
 	}
 	op := a.om.New()
-	go a.createBugReport(uuid, op)
+	go a.createBugReport(uuid, a.group, op)
 	return op, nil
 }
 
 const BugReportZipFileName = "cvd_bugreport.zip"
 
-func (a *CreateCVDBugReportAction) createBugReport(uuid string, op apiv1.Operation) {
+func (a *CreateCVDBugReportAction) createBugReport(uuid, group string, op apiv1.Operation) {
 	result := &OperationResult{}
 	filename := filepath.Join(a.paths.CVDBugReportsDir, uuid, "cvd_bugreport.zip")
-	cmd := cvd.NewCommand(
-		a.execContext,
-		[]string{"host_bugreport", "--output=" + filename},
-		cvd.CommandOpts{})
+	sel := &CVDSelector{Group: group}
+	args := sel.ToCVDCLI()
+	args = append(args, []string{"host_bugreport", "--output=" + filename}...)
+	cmd := cvd.NewCommand(a.execContext, args, cvd.CommandOpts{})
 	if err := cmd.Run(); err != nil {
 		result.Error = operator.NewInternalError("`cvd host_bugreport` failed: ", err)
 	} else {
