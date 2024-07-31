@@ -31,6 +31,7 @@ cc_binary_host {
         "policies/baseline.cpp",
         "policies/kernel_log_monitor.cpp",
         "policies/logcat_receiver.cpp",
+        "policies/process_restarter.cpp",
         "policies/run_cvd.cpp",
         "policies/secure_env.cpp",
         "poll_callback.cpp",
