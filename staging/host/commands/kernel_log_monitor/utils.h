@@ -21,7 +21,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 
-namespace monitor {
+namespace cuttlefish::monitor {
 
 struct ReadEventResult {
   Event event;
@@ -29,9 +29,9 @@ struct ReadEventResult {
 };
 
 // Read a kernel log event from fd.
-std::optional<ReadEventResult> ReadEvent(cuttlefish::SharedFD fd);
+std::optional<ReadEventResult> ReadEvent(SharedFD fd);
 
 // Writes a kernel log event to the fd, in a format expected by ReadEvent.
-bool WriteEvent(cuttlefish::SharedFD fd, const Json::Value& event_message);
+bool WriteEvent(SharedFD fd, const Json::Value& event_message);
 
-}  // namespace monitor
+}  // namespace cuttlefish::monitor

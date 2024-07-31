@@ -40,7 +40,10 @@ DEFINE_string(subscriber_fds, "",
              "A comma separated list of file descriptors (most likely pipes) to"
              " send kernel log events to.");
 
-std::vector<cuttlefish::SharedFD> SubscribersFromCmdline() {
+namespace cuttlefish::monitor {
+namespace {
+
+std::vector<SharedFD> SubscribersFromCmdline() {
   // Validate the parameter
   std::string fd_list = FLAGS_subscriber_fds;
   for (auto c: fd_list) {
@@ -51,10 +54,10 @@ std::vector<cuttlefish::SharedFD> SubscribersFromCmdline() {
   }
 
   auto fds = android::base::Split(FLAGS_subscriber_fds, ",");
-  std::vector<cuttlefish::SharedFD> shared_fds;
+  std::vector<SharedFD> shared_fds;
   for (auto& fd_str: fds) {
     auto fd = std::stoi(fd_str);
-    auto shared_fd = cuttlefish::SharedFD::Dup(fd);
+    auto shared_fd = SharedFD::Dup(fd);
     close(fd);
     shared_fds.push_back(shared_fd);
   }
@@ -62,11 +65,11 @@ std::vector<cuttlefish::SharedFD> SubscribersFromCmdline() {
   return shared_fds;
 }
 
-int main(int argc, char** argv) {
-  cuttlefish::DefaultSubprocessLogging(argv);
+int KernelLogMonitorMain(int argc, char** argv) {
+  DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto config = CuttlefishConfig::Get();
 
   CHECK(config) << "Could not open cuttlefish config";
 
@@ -80,12 +83,12 @@ int main(int argc, char** argv) {
   new_action.sa_handler = SIG_IGN;
   sigaction(SIGPIPE, &new_action, &old_action);
 
-  cuttlefish::SharedFD pipe;
+  SharedFD pipe;
   if (FLAGS_log_pipe_fd < 0) {
     auto log_name = instance.kernel_log_pipe_name();
-    pipe = cuttlefish::SharedFD::Open(log_name.c_str(), O_RDONLY);
+    pipe = SharedFD::Open(log_name.c_str(), O_RDONLY);
   } else {
-    pipe = cuttlefish::SharedFD::Dup(FLAGS_log_pipe_fd);
+    pipe = SharedFD::Dup(FLAGS_log_pipe_fd);
     close(FLAGS_log_pipe_fd);
   }
 
@@ -94,21 +97,20 @@ int main(int argc, char** argv) {
     return 2;
   }
 
-  monitor::KernelLogServer klog{pipe,
-                                instance.PerInstanceLogPath("kernel.log")};
+  KernelLogServer klog{pipe, instance.PerInstanceLogPath("kernel.log")};
 
   for (auto subscriber_fd: subscriber_fds) {
     if (subscriber_fd->IsOpen()) {
       klog.SubscribeToEvents([subscriber_fd](Json::Value message) {
-        if (!monitor::WriteEvent(subscriber_fd, message)) {
+        if (!WriteEvent(subscriber_fd, message)) {
           if (subscriber_fd->GetErrno() != EPIPE) {
             LOG(ERROR) << "Error while writing to pipe: "
                        << subscriber_fd->StrError();
           }
           subscriber_fd->Close();
-          return monitor::SubscriptionAction::CancelSubscription;
+          return SubscriptionAction::CancelSubscription;
         }
-        return monitor::SubscriptionAction::ContinueSubscription;
+        return SubscriptionAction::ContinueSubscription;
       });
     } else {
       LOG(ERROR) << "Subscriber fd isn't valid: " << subscriber_fd->StrError();
@@ -117,12 +119,12 @@ int main(int argc, char** argv) {
   }
 
   for (;;) {
-    cuttlefish::SharedFDSet fd_read;
+    SharedFDSet fd_read;
     fd_read.Zero();
 
     klog.BeforeSelect(&fd_read);
 
-    int ret = cuttlefish::Select(&fd_read, nullptr, nullptr, nullptr);
+    int ret = Select(&fd_read, nullptr, nullptr, nullptr);
     if (ret <= 0) {
       continue;
     }
@@ -131,4 +133,11 @@ int main(int argc, char** argv) {
   }
 
   return 0;
+}
+
+}  // namespace
+}  // namespace cuttlefish::monitor
+
+int main(int argc, char** argv) {
+  return cuttlefish::monitor::KernelLogMonitorMain(argc, argv);
 }
