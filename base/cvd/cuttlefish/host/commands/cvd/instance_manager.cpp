@@ -231,20 +231,19 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
   }
   auto instance_groups = *instance_groups_res;
   for (auto& group : instance_groups) {
-    if (!group.HasActiveInstances()) {
-      // Don't stop already stopped instances.
-      continue;
-    }
-    auto config_path = selector::GetCuttlefishConfigPath(group.HomeDir());
-    if (config_path.ok()) {
-      auto stop_result = IssueStopCommand(out, err, *config_path, group);
-      if (!stop_result.ok()) {
-        LOG(ERROR) << stop_result.error().FormatForEnv();
+    // Only stop running instances.
+    if (group.HasActiveInstances()) {
+      auto config_path = selector::GetCuttlefishConfigPath(group.HomeDir());
+      if (config_path.ok()) {
+        auto stop_result = IssueStopCommand(out, err, *config_path, group);
+        if (!stop_result.ok()) {
+          LOG(ERROR) << stop_result.error().FormatForEnv();
+        }
       }
     }
     RemoveFile(group.HomeDir() + "/cuttlefish_runtime");
     RemoveFile(group.HomeDir() + config_json_name);
-    RemoveInstanceGroupByHome(group.HomeDir());
+    RecursivelyRemoveDirectory(GroupDirFromHome(group.HomeDir()));
   }
   // TODO(kwstephenkim): we need a better mechanism to make sure that
   // we clear all run_cvd processes.
