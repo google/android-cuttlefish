@@ -45,8 +45,6 @@ inline constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 ABSL_FLAG(std::string, host_artifacts_path, "", "Host exes and libs");
 ABSL_FLAG(std::string, environments_dir, "", "Cross-instance environment dir");
 ABSL_FLAG(std::string, environments_uds_dir, "", "Environment unix sockets");
-ABSL_FLAG(std::vector<std::string>, inherited_fds, std::vector<std::string>(),
-          "File descriptors to keep in the sandbox");
 ABSL_FLAG(std::string, instance_uds_dir, "", "Instance unix domain sockets");
 ABSL_FLAG(std::string, log_dir, "", "Where to write log files");
 ABSL_FLAG(std::vector<std::string>, log_files, std::vector<std::string>(),
@@ -116,33 +114,8 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
   }
   std::unique_ptr<SandboxManager> manager = std::move(*sandbox_manager_res);
 
-  bool forwards_stdio[3] = {false, false, false};
   std::vector<std::pair<UniqueFd, int>> fds;
-  for (const std::string& inherited_fd : absl::GetFlag(FLAGS_inherited_fds)) {
-    int fd;
-    if (!absl::SimpleAtoi(inherited_fd, &fd)) {
-      std::string error = absl::StrCat("inherited_fd not int: ", inherited_fd);
-      return absl::InvalidArgumentError(error);
-    } else if (fd < 0) {
-      std::string error = absl::StrCat("negative inherited_fd: ", inherited_fd);
-      return absl::InvalidArgumentError(error);
-    }
-    if (fd <= 2) {
-      forwards_stdio[fd] = true;
-      auto duped = fcntl(fd, F_DUPFD_CLOEXEC, 0);
-      if (duped < 0) {
-        std::string error = absl::StrCat("Failed to `dup`:", inherited_fd);
-        return absl::ErrnoToStatus(errno, error);
-      }
-      fds.emplace_back(UniqueFd(duped), fd);
-    } else {
-      fds.emplace_back(UniqueFd(fd), fd);
-    }
-  }
   for (int i = 0; i <= 2; i++) {
-    if (forwards_stdio[i]) {
-      continue;
-    }
     auto duped = fcntl(i, F_DUPFD_CLOEXEC, 0);
     if (duped < 0) {
       static constexpr char kErr[] = "Failed to `dup` stdio file descriptor";

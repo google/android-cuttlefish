@@ -30,12 +30,9 @@ namespace cuttlefish {
 struct MonitorCommand {
   Command command;
   bool is_critical;
-  bool can_sandbox;
 
   MonitorCommand(Command command, bool is_critical = false)
-      : command(std::move(command)),
-        is_critical(is_critical),
-        can_sandbox(false) {}
+      : command(std::move(command)), is_critical(is_critical) {}
 };
 
 class CommandSource : public virtual SetupFeature {

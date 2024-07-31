@@ -245,28 +245,6 @@ Result<void> ProcessMonitor::StartSubprocesses(
     if (Contains(properties_.strace_commands_, short_name)) {
       options.Strace(properties.strace_log_dir_ + "/strace-" + short_name);
     }
-    // TODO(schuffelen): Remove this code.
-    // Since run_cvd is sandboxed higher than this using the sandboxer_proxy
-    // technique to intercept fork/exec calls, this code no longer has to be
-    // sandbox-aware, and should make simpler fork/exec calls when it can.
-    if (false && properties.sandbox_processes_ && monitored.can_sandbox) {
-      std::vector<std::string> sandbox_arguments = {
-          HostBinaryPath("process_sandboxer"),
-          "--log_dir=" + properties.strace_log_dir_,
-          "--runtime_dir=" + CurrentDirectory(),
-          "--host_artifacts_path=" + DefaultHostArtifactsPath(""),
-      };
-      if (properties.sandboxer_writes_to_launcher_log_) {
-        sandbox_arguments.emplace_back(
-            "--log_files=" + properties.strace_log_dir_ + "/sandbox.log," +
-            properties.strace_log_dir_ + "/launcher.log");
-        sandbox_arguments.emplace_back("--verbose_stderr=true");
-      } else {
-        sandbox_arguments.emplace_back(
-            "--log_files=" + properties.strace_log_dir_ + "/sandbox.log");
-      }
-      options.SandboxArguments(std::move(sandbox_arguments));
-    }
     monitored.proc.reset(
         new Subprocess(monitored.cmd->Start(std::move(options))));
     CF_EXPECT(monitored.proc->Started(), "Failed to start subprocess");
@@ -330,8 +308,7 @@ ProcessMonitor::Properties ProcessMonitor::Properties::RestartSubprocesses(
 
 ProcessMonitor::Properties& ProcessMonitor::Properties::AddCommand(
     MonitorCommand cmd) & {
-  auto& entry = entries_.emplace_back(std::move(cmd.command), cmd.is_critical);
-  entry.can_sandbox = cmd.can_sandbox;
+  entries_.emplace_back(std::move(cmd.command), cmd.is_critical);
   return *this;
 }
 
@@ -358,26 +335,6 @@ ProcessMonitor::Properties& ProcessMonitor::Properties::StraceLogDir(
 ProcessMonitor::Properties ProcessMonitor::Properties::StraceLogDir(
     std::string log_dir) && {
   return std::move(StraceLogDir(std::move(log_dir)));
-}
-
-ProcessMonitor::Properties& ProcessMonitor::Properties::SandboxProcesses(
-    bool r) & {
-  sandbox_processes_ = r;
-  return *this;
-}
-ProcessMonitor::Properties ProcessMonitor::Properties::SandboxProcesses(
-    bool r) && {
-  return std::move(SandboxProcesses(r));
-}
-
-ProcessMonitor::Properties&
-ProcessMonitor::Properties::SandboxerWritesToLauncherLog(bool r) & {
-  sandboxer_writes_to_launcher_log_ = r;
-  return *this;
-}
-ProcessMonitor::Properties
-ProcessMonitor::Properties::SandboxerWritesToLauncherLog(bool r) && {
-  return std::move(SandboxerWritesToLauncherLog(r));
 }
 
 ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties,

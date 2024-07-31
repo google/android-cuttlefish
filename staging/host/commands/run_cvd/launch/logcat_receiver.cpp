@@ -40,12 +40,9 @@ Result<MonitorCommand> LogcatReceiver(
   // done and the logcat_receiver crashes for some reason the VMM may get
   // SIGPIPE.
   auto log_name = instance.logcat_pipe_name();
-  auto cmd = Command(LogcatReceiverBinary())
-                 .AddParameter("-log_pipe_fd=",
-                               CF_EXPECT(SharedFD::Fifo(log_name, 0600)));
-  MonitorCommand monitor_cmd = std::move(cmd);
-  monitor_cmd.can_sandbox = true;
-  return monitor_cmd;
+
+  return Command(LogcatReceiverBinary())
+      .AddParameter("-log_pipe_fd=", CF_EXPECT(SharedFD::Fifo(log_name, 0600)));
 }
 
 }  // namespace cuttlefish
