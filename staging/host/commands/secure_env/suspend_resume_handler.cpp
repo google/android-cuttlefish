@@ -76,9 +76,11 @@ Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
   using ActionsCase =
       ::cuttlefish::run_cvd::ExtendedLauncherAction::ActionsCase;
 
-  auto launcher_action =
+  auto launcher_action_opt =
       CF_EXPECT(ReadLauncherActionFromFd(channel_to_run_cvd_),
                 "Failed to read LauncherAction from run_cvd");
+  auto launcher_action = CF_EXPECT(std::move(launcher_action_opt),
+                                   "Channel to run_cvd closed unexpectedly");
   CF_EXPECT(launcher_action.action == LauncherAction::kExtended);
 
   switch (launcher_action.extended_action.actions_case()) {
