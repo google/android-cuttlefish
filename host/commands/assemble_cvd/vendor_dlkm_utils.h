@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
 bool SplitRamdiskModules(const std::string& ramdisk_path,
@@ -36,9 +38,9 @@ bool RepackSuperWithPartition(const std::string& superimg_path,
 
 bool BuildVbmetaImage(const std::string& vendor_dlkm_img,
                       const std::string& vbmeta_path);
-bool BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
-                    const std::string& partition_name,
-                    const std::string& output_image);
+Result<void> BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
+                            const std::string& partition_name,
+                            const std::string& output_image);
 
 // Move file `src` to `dst` if the contents of these files differ.
 // Return true if and only if the move happened.
