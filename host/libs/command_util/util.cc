@@ -19,6 +19,7 @@
 #include "sys/time.h"
 #include "sys/types.h"
 
+#include <optional>
 #include <string>
 
 #include "common/libs/fs/shared_buf.h"
@@ -52,12 +53,17 @@ static Result<void> WriteAllBinaryResult(const SharedFD& fd, const T* t) {
   return {};
 }
 
+// Rerturns true if something was read, false if the file descriptor reached
+// EOF.
 template <typename T>
-static Result<void> ReadExactBinaryResult(const SharedFD& fd, T* t) {
+static Result<bool> ReadExactBinaryResult(const SharedFD& fd, T* t) {
   ssize_t n = ReadExactBinary(fd, t);
+  if (n == 0) {
+    return false;
+  }
   CF_EXPECTF(n > 0, "Read error: {}", fd->StrError());
   CF_EXPECT(n == sizeof(*t), "Unexpected EOF on read");
-  return {};
+  return true;
 }
 
 }  // namespace
@@ -90,10 +96,13 @@ Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
   return GetLauncherMonitorFromInstance(instance_config, timeout_seconds);
 }
 
-Result<LauncherActionInfo> ReadLauncherActionFromFd(SharedFD monitor_socket) {
+Result<std::optional<LauncherActionInfo>> ReadLauncherActionFromFd(SharedFD monitor_socket) {
   LauncherAction action;
-  CF_EXPECT(ReadExactBinaryResult(monitor_socket, &action),
+  auto read_something = CF_EXPECT(ReadExactBinaryResult(monitor_socket, &action),
             "Error reading LauncherAction");
+  if (!read_something) {
+    return std::nullopt;
+  }
   if (IsShortAction(action)) {
     return LauncherActionInfo{
         .action = action,
