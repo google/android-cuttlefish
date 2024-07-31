@@ -16,8 +16,10 @@
 
 #include <stdio.h>
 #include <fstream>
+#include <future>
 #include <string>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
@@ -25,6 +27,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "ziparchive/zip_writer.h"
@@ -71,6 +74,19 @@ void AddNetsimdLogs(ZipWriter& writer) {
   }
 }
 
+Result<void> CreateDeviceBugreport(
+    const CuttlefishConfig::InstanceSpecific& ins, const std::string& out_dir) {
+  Command adb_command(HostBinaryPath("adb"));
+  adb_command.SetWorkingDirectory(
+      "/");  // Use a deterministic working directory
+  adb_command.AddParameter("-s").AddParameter(ins.adb_ip_and_port());
+  adb_command.AddParameter("wait-for-device");
+  adb_command.AddParameter("bugreport");
+  adb_command.AddParameter(out_dir);
+  CF_EXPECT_EQ(adb_command.Start().Wait(), 0);
+  return {};
+}
+
 Result<void> CvdHostBugreportMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
@@ -99,6 +115,14 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
   save("cuttlefish_config.json");
 
   for (const auto& instance : config->Instances()) {
+    std::string device_br_dir = "/tmp/cvd_dbrXXXXXX";
+    CF_EXPECTF(mkdtemp(device_br_dir.data()) != nullptr, "mkdtemp failed: '{}'",
+               strerror(errno));
+    std::future<Result<void>> create_device_br =
+        std::async(std::launch::async, [&instance, &device_br_dir] {
+          return CreateDeviceBugreport(instance, device_br_dir);
+        });
+
     auto save = [&writer, instance](const std::string& path) {
       const auto& zip_name = instance.instance_name() + "/" + path;
       const auto& file_name = instance.PerInstancePath(path.c_str());
@@ -145,6 +169,26 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
         LOG(ERROR) << "Cannot read from recording directory: "
                    << result.error().FormatForEnv(/* color = */ false);
       }
+    }
+
+    {
+      auto result = create_device_br.get();
+      if (result.ok()) {
+        auto names = DirectoryContents(device_br_dir);
+        if (names.ok()) {
+          for (const auto& name : names.value()) {
+            std::string filename = device_br_dir + "/" + name;
+            SaveFile(writer, cpp_basename(filename), filename);
+          }
+        } else {
+          LOG(ERROR) << "Cannot read from device bugreport directory: "
+                     << names.error().FormatForEnv(/* color = */ false);
+        }
+      } else {
+        LOG(ERROR) << "Failed to create device bugreport: "
+                   << result.error().FormatForEnv(/* color = */ false);
+      }
+      static_cast<void>(RecursivelyRemoveDirectory(device_br_dir));
     }
   }
 
