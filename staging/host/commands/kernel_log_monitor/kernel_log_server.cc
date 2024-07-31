@@ -26,10 +26,8 @@
 #include "common/libs/fs/shared_select.h"
 #include "host/libs/config/cuttlefish_config.h"
 
+namespace cuttlefish::monitor {
 namespace {
-
-using cuttlefish::SharedFD;
-using monitor::Event;
 
 constexpr struct {
   std::string_view match;   // Substring to match in the kernel logs
@@ -51,34 +49,31 @@ constexpr struct {
   Event event;             // emitted when the stage is encountered
   EventFormat format;      // how the log message is formatted
 } kStageTable[] = {
-    {cuttlefish::kBootStartedMessage, Event::BootStarted, kBare},
-    {cuttlefish::kBootPendingMessage, Event::BootPending, kPrefix},
-    {cuttlefish::kBootCompletedMessage, Event::BootCompleted, kBare},
-    {cuttlefish::kBootFailedMessage, Event::BootFailed, kPrefix},
-    {cuttlefish::kMobileNetworkConnectedMessage, Event::MobileNetworkConnected,
-     kBare},
-    {cuttlefish::kWifiConnectedMessage, Event::WifiNetworkConnected, kBare},
-    {cuttlefish::kEthernetConnectedMessage, Event::EthernetNetworkConnected,
-     kBare},
-    {cuttlefish::kAdbdStartedMessage, Event::AdbdStarted, kBare},
-    {cuttlefish::kFastbootdStartedMessage, Event::FastbootStarted, kBare},
-    {cuttlefish::kFastbootStartedMessage, Event::FastbootStarted, kBare},
-    {cuttlefish::kScreenChangedMessage, Event::ScreenChanged, kKeyValuePair},
-    {cuttlefish::kBootloaderLoadedMessage, Event::BootloaderLoaded, kBare},
-    {cuttlefish::kKernelLoadedMessage, Event::KernelLoaded, kBare},
-    {cuttlefish::kDisplayPowerModeChangedMessage,
-     monitor::Event::DisplayPowerModeChanged, kKeyValuePair},
+    {kBootStartedMessage, Event::BootStarted, kBare},
+    {kBootPendingMessage, Event::BootPending, kPrefix},
+    {kBootCompletedMessage, Event::BootCompleted, kBare},
+    {kBootFailedMessage, Event::BootFailed, kPrefix},
+    {kMobileNetworkConnectedMessage, Event::MobileNetworkConnected, kBare},
+    {kWifiConnectedMessage, Event::WifiNetworkConnected, kBare},
+    {kEthernetConnectedMessage, Event::EthernetNetworkConnected, kBare},
+    {kAdbdStartedMessage, Event::AdbdStarted, kBare},
+    {kFastbootdStartedMessage, Event::FastbootStarted, kBare},
+    {kFastbootStartedMessage, Event::FastbootStarted, kBare},
+    {kScreenChangedMessage, Event::ScreenChanged, kKeyValuePair},
+    {kBootloaderLoadedMessage, Event::BootloaderLoaded, kBare},
+    {kKernelLoadedMessage, Event::KernelLoaded, kBare},
+    {kDisplayPowerModeChangedMessage, Event::DisplayPowerModeChanged,
+     kKeyValuePair},
 };
 
-void ProcessSubscriptions(
-    Json::Value message,
-    std::vector<monitor::EventCallback>* subscribers) {
+void ProcessSubscriptions(Json::Value message,
+                          std::vector<EventCallback>* subscribers) {
   auto active_subscription_count = subscribers->size();
   std::size_t idx = 0;
   while (idx < active_subscription_count) {
     // Call the callback
     auto action = (*subscribers)[idx](message);
-    if (action == monitor::SubscriptionAction::ContinueSubscription) {
+    if (action == SubscriptionAction::ContinueSubscription) {
       ++idx;
     } else {
       // Cancel the subscription by swapping it with the last active subscription
@@ -92,24 +87,22 @@ void ProcessSubscriptions(
 }
 }  // namespace
 
-namespace monitor {
-KernelLogServer::KernelLogServer(cuttlefish::SharedFD pipe_fd,
-                                 const std::string& log_name)
+KernelLogServer::KernelLogServer(SharedFD pipe_fd, const std::string& log_name)
     : pipe_fd_(pipe_fd),
-      log_fd_(cuttlefish::SharedFD::Open(log_name.c_str(),
-                                         O_CREAT | O_RDWR | O_APPEND, 0666)) {}
+      log_fd_(SharedFD::Open(log_name.c_str(), O_CREAT | O_RDWR | O_APPEND,
+                             0666)) {}
 
-void KernelLogServer::BeforeSelect(cuttlefish::SharedFDSet* fd_read) const {
+void KernelLogServer::BeforeSelect(SharedFDSet* fd_read) const {
   fd_read->Set(pipe_fd_);
 }
 
-void KernelLogServer::AfterSelect(const cuttlefish::SharedFDSet& fd_read) {
+void KernelLogServer::AfterSelect(const SharedFDSet& fd_read) {
   if (fd_read.IsSet(pipe_fd_)) {
     HandleIncomingMessage();
   }
 }
 
-void KernelLogServer::SubscribeToEvents(monitor::EventCallback callback) {
+void KernelLogServer::SubscribeToEvents(EventCallback callback) {
   subscribers_.push_back(callback);
 }
 
@@ -185,4 +178,4 @@ bool KernelLogServer::HandleIncomingMessage() {
   return true;
 }
 
-}  // namespace monitor
+}  // namespace cuttlefish::monitor
