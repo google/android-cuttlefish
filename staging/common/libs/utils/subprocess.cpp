@@ -141,18 +141,6 @@ SubprocessOptions SubprocessOptions::ExitWithParent(bool v) && {
 }
 #endif
 
-SubprocessOptions& SubprocessOptions::SandboxArguments(
-    std::vector<std::string> args) & {
-  sandbox_arguments_ = std::move(args);
-  return *this;
-}
-
-SubprocessOptions SubprocessOptions::SandboxArguments(
-    std::vector<std::string> args) && {
-  sandbox_arguments_ = std::move(args);
-  return *this;
-}
-
 SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
   in_group_ = in_group;
   return *this;
@@ -422,24 +410,6 @@ Subprocess Command::Start(SubprocessOptions options) const {
 
   if (!validate_redirects(redirects_, inherited_fds_)) {
     return Subprocess(-1, {});
-  }
-
-  std::string fds_arg;
-  if (!options.SandboxArguments().empty()) {
-    std::vector<int> fds;
-    for (const auto& redirect : redirects_) {
-      fds.emplace_back(static_cast<int>(redirect.first));
-    }
-    for (const auto& inherited_fd : inherited_fds_) {
-      fds.emplace_back(inherited_fd.second);
-    }
-    fds_arg = "--inherited_fds=" + fmt::format("{}", fmt::join(fds, ","));
-
-    auto forwarding_args = {fds_arg.c_str(), "--"};
-    cmd.insert(cmd.begin(), forwarding_args);
-    auto sbox_ptrs = ToCharPointers(options.SandboxArguments());
-    sbox_ptrs.pop_back();  // Final null pointer will end argv early
-    cmd.insert(cmd.begin(), sbox_ptrs.begin(), sbox_ptrs.end());
   }
 
   pid_t pid = fork();
