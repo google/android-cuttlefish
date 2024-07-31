@@ -481,6 +481,11 @@ func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 
 	url, _ := url.Parse("http://" + openwrtAddr)
 	proxy := httputil.NewSingleHostReverseProxy(url)
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		log.Printf("request %q failed: proxy error: %v", r.Method+" "+r.URL.Path, err)
+		w.Header().Add("x-cutf-proxy", "op-openwrt")
+		w.WriteHeader(http.StatusBadGateway)
+	}
 	r.URL.Path = "/devices/" + openwrtDevId + "/openwrt" + path
 	proxy.ServeHTTP(w, r)
 }
