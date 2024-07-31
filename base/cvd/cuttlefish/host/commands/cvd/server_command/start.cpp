@@ -755,6 +755,14 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
                         "`cvd reset` to ensure a clean state";
         }
 
+        for (const auto& instance: group.Instances()) {
+          InstanceLockFileManager ilfm;
+          if (instance.id() > 0) {
+            // Do this before the id is reset in the next block
+            ilfm.RemoveLockFile(instance.id());
+          }
+        }
+
         group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_CANCELLED);
         auto update_res = instance_manager_.UpdateInstanceGroup(group);
         if (!update_res.ok()) {
