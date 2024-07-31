@@ -512,9 +512,6 @@ DEFINE_string(straced_host_executables, CF_DEFAULTS_STRACED_HOST_EXECUTABLES,
               "Comma-separated list of executable names to run under strace "
               "to collect their system call information.");
 
-DEFINE_bool(enable_host_sandbox, CF_DEFAULTS_HOST_SANDBOX,
-            "Lock down host processes with sandbox2");
-
 DEFINE_vec(
     fail_fast, CF_DEFAULTS_FAIL_FAST ? "true" : "false",
     "Whether to exit when a heuristic predicts the boot will not complete");
@@ -1325,8 +1322,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   auto straced = android::base::Tokenize(FLAGS_straced_host_executables, ",");
   std::set<std::string> straced_set(straced.begin(), straced.end());
   tmp_config_obj.set_straced_host_executables(straced_set);
-
-  tmp_config_obj.set_host_sandbox(FLAGS_enable_host_sandbox);
 
   auto vhal_proxy_server_instance_num = *instance_nums.begin() - 1;
   if (FLAGS_vhal_proxy_server_instance_num > 0) {

@@ -31,7 +31,6 @@ cc_binary_host {
         "policies/baseline.cpp",
         "policies/kernel_log_monitor.cpp",
         "policies/logcat_receiver.cpp",
-        "policies/process_sandboxer_test_hello_world.cpp",
         "policies/run_cvd.cpp",
         "policies/secure_env.cpp",
         "poll_callback.cpp",
@@ -66,29 +65,6 @@ cc_library_static {
         windows: {
             enabled: false,
         },
-    },
-}
-
-cc_test_host {
-    name: "process_sandboxer_test",
-    defaults: ["cuttlefish_buildhost_only"],
-    srcs: ["process_sandboxer_test.cpp"],
-    // When running `atest --host process_sandboxer_test`, these are only
-    // refreshed after running `m installclean`.
-    data_bins: [
-        "process_sandboxer",
-        "process_sandboxer_test_hello_world",
-    ],
-    static_libs: [
-        "libbase",
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "liblog",
-    ],
-    team: "trendy_team_cloud_android",
-    // TODO(schuffelen): See if this is possible to enable on CI
-    test_options: {
-        unit_test: false,
     },
 }
 
