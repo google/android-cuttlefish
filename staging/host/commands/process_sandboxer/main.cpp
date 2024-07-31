@@ -16,6 +16,7 @@
 
 #include <fcntl.h>
 #include <stdlib.h>
+#include <sys/prctl.h>
 
 #include <memory>
 #include <optional>
@@ -36,6 +37,7 @@
 #include <sandboxed_api/util/path.h>
 
 #include "host/commands/process_sandboxer/logs.h"
+#include "host/commands/process_sandboxer/pidfd.h"
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/sandbox_manager.h"
 #include "host/commands/process_sandboxer/unique_fd.h"
@@ -84,6 +86,10 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
   }
 
   VLOG(1) << "Entering ProcessSandboxerMain";
+
+  if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0) {
+    return absl::ErrnoToStatus(errno, "prctl(PR_SET_CHILD_SUBREAPER failed");
+  }
 
   HostInfo host{
       .artifacts_path = CleanPath(absl::GetFlag(FLAGS_host_artifacts_path)),
@@ -136,7 +142,13 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
       LOG(ERROR) << "Error in SandboxManager::Iterate: " << iter.ToString();
     }
   }
-  return absl::OkStatus();
+
+  absl::StatusOr<std::unique_ptr<PidFd>> self_pidfd = PidFd::Create(getpid());
+  if (!self_pidfd.ok()) {
+    return self_pidfd.status();
+  }
+
+  return (*self_pidfd)->HaltChildHierarchy();
 }
 
 }  // namespace

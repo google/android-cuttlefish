@@ -55,7 +55,15 @@ class SandboxManager {
   bool Running() const;
 
  private:
-  class ManagedProcess;
+  class ManagedProcess {
+   public:
+    virtual ~ManagedProcess() = default;
+    virtual std::optional<int> ClientFd() const = 0;
+    virtual int PollFd() const = 0;
+    virtual absl::StatusOr<uintptr_t> ExitCode() = 0;
+  };
+  class ProcessNoSandbox;
+  class SandboxedProcess;
   class SocketClient;
 
   using ClientIter = std::list<std::unique_ptr<SocketClient>>::iterator;
@@ -82,7 +90,7 @@ class SandboxManager {
   HostInfo host_info_;
   bool running_ = true;
   std::string runtime_dir_;
-  std::list<std::unique_ptr<ManagedProcess>> sandboxes_;
+  std::list<std::unique_ptr<ManagedProcess>> subprocesses_;
   std::list<std::unique_ptr<SocketClient>> clients_;
   UniqueFd signal_fd_;
   UniqueFd server_fd_;
