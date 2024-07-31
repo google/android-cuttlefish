@@ -35,6 +35,7 @@ cc_binary_host {
         "policies/process_restarter.cpp",
         "policies/run_cvd.cpp",
         "policies/secure_env.cpp",
+        "policies/socket_vsock_proxy.cpp",
         "policies/tcp_connector.cpp",
         "policies/webrtc.cpp",
         "poll_callback.cpp",
