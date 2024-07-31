@@ -150,6 +150,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
     Json::Value instance_json;
     instance_json["instance_name"] = instance.name();
     instance_json["status"] = HumanFriendlyStateName(instance.state());
+    OverrideInstanceJson(group, instance, instance_json);
     cvd::Response response;
     response.mutable_command_response();  // set oneof field
     response.mutable_status()->set_code(cvd::Status::OK);
