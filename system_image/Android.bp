@@ -330,7 +330,6 @@ android_system_image {
         "android.system.suspend-service",
         "android_vintf_compatibility_matrix_device",
         "android_vintf_manifest",
-        "aosp_cf_x86_64_system-init.environ.rc",
         "apexd",
         "appops",
         "approved-ogki-builds.xml", // base_system
@@ -392,13 +391,13 @@ android_system_image {
         "incident-helper-cmd",
         "incident_helper",
         "incidentd",
-        "init_first_stage", // for boot partition
-        // "init.environ.rc", // TODO: move to soong
+        "init.environ.rc-soong",
         "init.usb.configfs.rc",
         "init.usb.rc",
         "init.zygote32.rc",
         "init.zygote64.rc",
         "init.zygote64_32.rc",
+        "init_first_stage", // for boot partition
         "initial-package-stopped-states.xml",
         "input",
         "installd",
@@ -818,14 +817,6 @@ prebuilt_etc {
     src: "manifest.xml",
     filename: "manifest.xml",
     relative_install_path: "vintf",
-    no_full_install: true,
-}
-
-prebuilt_root {
-    name: "aosp_cf_x86_64_system-init.environ.rc",
-    src: "init.environ.rc",
-    filename: "init.environ.rc",
-    install_in_root: true,
     no_full_install: true,
 }
 
