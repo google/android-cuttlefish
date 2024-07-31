@@ -60,11 +60,6 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("run_cvd")] = RunCvdPolicy;
   builders[host.HostToolExe("secure_env")] = SecureEnvPolicy;
 
-  // TODO(schuffelen): Don't include test policies in the production impl
-  builders[JoinPath(host.artifacts_path, "testcases", "process_sandboxer_test",
-                    "x86_64", "process_sandboxer_test_hello_world")] =
-      HelloWorldPolicy;
-
   if (auto it = builders.find(executable); it != builders.end()) {
     // TODO(schuffelen): Only share this with executables known to launch others
     return (it->second)(host)
