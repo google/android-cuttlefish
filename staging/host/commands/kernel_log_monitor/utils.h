@@ -19,6 +19,7 @@
 #include <optional>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 
 namespace cuttlefish::monitor {
@@ -28,8 +29,11 @@ struct ReadEventResult {
   Json::Value metadata;
 };
 
-// Read a kernel log event from fd.
-std::optional<ReadEventResult> ReadEvent(SharedFD fd);
+// TODO(schuffelen): Remove `std::optional` if `socket_vsock_proxy` doesn't need
+// this distinction.
+/** Read a kernel log event from fd. A failed result indicates an error occurred
+ * while reading the event, while an empty optional indicates EOF. */
+Result<std::optional<ReadEventResult>> ReadEvent(SharedFD fd);
 
 // Writes a kernel log event to the fd, in a format expected by ReadEvent.
 bool WriteEvent(SharedFD fd, const Json::Value& event_message);
