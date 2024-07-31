@@ -83,17 +83,17 @@ void OverrideInstanceJson(const selector::LocalInstanceGroup& group,
                         Json::Value& instance_json) {
   instance_json["instance_name"] = instance.name();
   instance_json["status"] = HumanFriendlyStateName(instance.state());
-  instance_json["adb_port"] = instance.adb_port();
   instance_json["assembly_dir"] = group.AssemblyDir();
   instance_json["instance_dir"] = group.InstanceDir(instance);
   instance_json["instance_name"] = instance.name();
-  instance_json["webrtc_device_id"] = instance.webrtc_device_id();
   if (instance.id() > 0) {
-    // Only running instances have id > 0, non running instances are not
-    // accessible via web UI.
+    // Only running instances have id > 0, this values only make sense for
+    // running instances.
     instance_json["web_access"] =
         fmt::format("https://localhost:1443/devices/{}/files/client.html",
                     instance.webrtc_device_id());
+    instance_json["webrtc_device_id"] = instance.webrtc_device_id();
+    instance_json["adb_port"] = instance.adb_port();
   }
 }
 
