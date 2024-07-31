@@ -26,7 +26,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 
-namespace monitor {
+namespace cuttlefish::monitor {
 
 enum Event : int32_t {
   BootStarted = 0,
@@ -57,17 +57,17 @@ using EventCallback = std::function<SubscriptionAction(Json::Value)>;
 // Only accept one connection.
 class KernelLogServer {
  public:
-  KernelLogServer(cuttlefish::SharedFD pipe_fd, const std::string& log_name);
+  KernelLogServer(SharedFD pipe_fd, const std::string& log_name);
 
   ~KernelLogServer() = default;
 
   // BeforeSelect is Called right before Select() to populate interesting
   // SharedFDs.
-  void BeforeSelect(cuttlefish::SharedFDSet* fd_read) const;
+  void BeforeSelect(SharedFDSet* fd_read) const;
 
   // AfterSelect is Called right after Select() to detect and respond to changes
   // on affected SharedFDs.
-  void AfterSelect(const cuttlefish::SharedFDSet& fd_read);
+  void AfterSelect(const SharedFDSet& fd_read);
 
   void SubscribeToEvents(EventCallback callback);
 
@@ -76,8 +76,8 @@ class KernelLogServer {
   // Returns false, if client disconnected.
   bool HandleIncomingMessage();
 
-  cuttlefish::SharedFD pipe_fd_;
-  cuttlefish::SharedFD log_fd_;
+  SharedFD pipe_fd_;
+  SharedFD log_fd_;
   std::string line_;
   std::vector<EventCallback> subscribers_;
 
@@ -85,4 +85,4 @@ class KernelLogServer {
   KernelLogServer& operator=(const KernelLogServer&) = delete;
 };
 
-}  // namespace monitor
+}  // namespace cuttlefish::monitor
