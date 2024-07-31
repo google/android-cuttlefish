@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "device/google/cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
@@ -38,7 +40,8 @@ struct LauncherActionInfo {
   LauncherAction action;
   run_cvd::ExtendedLauncherAction extended_action;
 };
-Result<LauncherActionInfo> ReadLauncherActionFromFd(SharedFD monitor_socket);
+Result<std::optional<LauncherActionInfo>> ReadLauncherActionFromFd(
+    SharedFD monitor_socket);
 
 Result<void> WaitForRead(SharedFD monitor_socket, const int timeout_seconds);
 
