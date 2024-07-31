@@ -116,6 +116,11 @@ func main() {
 	if *webUiUrlStr != "" {
 		webUiUrl, _ := url.Parse(*webUiUrlStr)
 		proxy := httputil.NewSingleHostReverseProxy(webUiUrl)
+		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+			log.Printf("request %q failed: proxy error: %v", r.Method+" "+r.URL.Path, err)
+			w.Header().Add("x-cutf-proxy", "op-webui")
+			w.WriteHeader(http.StatusBadGateway)
+		}
 		r.PathPrefix("/").Handler(proxy)
 	} else {
 		fs := http.FileServer(http.Dir(DefaultStaticFilesDir))

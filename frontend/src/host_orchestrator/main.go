@@ -96,7 +96,13 @@ func newOperatorProxy(port int) *httputil.ReverseProxy {
 	if err != nil {
 		log.Fatalf("Invalid operator port (%d): %v", port, err)
 	}
-	return httputil.NewSingleHostReverseProxy(operatorURL)
+	proxy := httputil.NewSingleHostReverseProxy(operatorURL)
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		log.Printf("request %q failed: proxy error: %v", r.Method+" "+r.URL.Path, err)
+		w.Header().Add("x-cutf-proxy", "ho-operator")
+		w.WriteHeader(http.StatusBadGateway)
+	}
+	return proxy
 }
 
 func main() {
