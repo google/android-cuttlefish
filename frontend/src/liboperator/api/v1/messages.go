@@ -229,4 +229,3 @@ type ListUploadDirectoriesResponse struct {
 type EmptyResponse struct{}
 
 type StopCVDResponse = EmptyResponse
-
