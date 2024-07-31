@@ -20,7 +20,6 @@
 
 #include <memory>
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -111,7 +110,12 @@ Result<void> ServerLoopImpl::Run() {
                    << launcher_action_with_info_result.error().FormatForEnv();
         break;
       }
-      auto launcher_action = std::move(*launcher_action_with_info_result);
+      auto launcher_action_opt = std::move(*launcher_action_with_info_result);
+      if (!launcher_action_opt.has_value()) {
+        // client disconnected
+        break;
+      }
+      auto launcher_action = *launcher_action_opt;
       if (launcher_action.action != LauncherAction::kExtended) {
         HandleActionWithNoData(launcher_action.action, client, process_monitor);
         continue;
