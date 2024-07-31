@@ -67,6 +67,8 @@ DEFINE_bool(share_sched_core, CF_DEFAULTS_SHARE_SCHED_CORE,
             "Enable sharing cores between Cuttlefish processes.");
 DEFINE_bool(track_host_tools_crc, CF_DEFAULTS_TRACK_HOST_TOOLS_CRC,
             "Track changes to host executables");
+DEFINE_bool(enable_host_sandbox, CF_DEFAULTS_HOST_SANDBOX,
+            "Lock down host processes with sandbox2");
 
 namespace cuttlefish {
 namespace {
@@ -107,13 +109,14 @@ std::string SubtoolPath(const std::string& subtool_base) {
   return subtool_path;
 }
 
-std::string kAssemblerBin = SubtoolPath("assemble_cvd");
-std::string kRunnerBin = SubtoolPath("run_cvd");
+std::string AssemblerPath() { return SubtoolPath("assemble_cvd"); }
+std::string RunnerPath() { return SubtoolPath("run_cvd"); }
+std::string SandboxerPath() { return SubtoolPath("process_sandboxer"); }
 
 int InvokeAssembler(const std::string& assembler_stdin,
                     std::string& assembler_stdout,
                     const std::vector<std::string>& argv) {
-  Command assemble_cmd(kAssemblerBin);
+  Command assemble_cmd(AssemblerPath());
   for (const auto& arg : argv) {
     assemble_cmd.AddParameter(arg);
   }
@@ -124,32 +127,29 @@ int InvokeAssembler(const std::string& assembler_stdin,
 Subprocess StartRunner(SharedFD runner_stdin, const CuttlefishConfig& config,
                        const CuttlefishConfig::InstanceSpecific& instance,
                        const std::vector<std::string>& argv) {
-  Command run_cmd(kRunnerBin);
+  Command run_cmd(FLAGS_enable_host_sandbox ? SandboxerPath() : RunnerPath());
+  if (FLAGS_enable_host_sandbox) {
+    run_cmd.AddParameter("--environments_dir=", config.environments_dir())
+        .AddParameter("--environments_uds_dir=", config.environments_uds_dir())
+        .AddParameter("--instance_uds_dir=", instance.instance_uds_dir())
+        .AddParameter("--log_dir=", instance.PerInstanceLogPath(""))
+        .AddParameter("--runtime_dir=", instance.instance_dir())
+        .AddParameter("--host_artifacts_path=", DefaultHostArtifactsPath(""));
+    std::string log_files = instance.PerInstanceLogPath("sandbox.log");
+    if (!instance.run_as_daemon()) {
+      log_files += "," + instance.PerInstanceLogPath("launcher.log");
+    }
+    run_cmd.AddParameter("--log_files=", log_files);
+    run_cmd.AddParameter("--").AddParameter(RunnerPath());
+  }
+  // Note: Do not pass any SharedFD arguments, they will not work as expected in
+  // sandbox mode.
   for (const auto& arg : argv) {
     run_cmd.AddParameter(arg);
   }
   run_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, runner_stdin);
   run_cmd.SetWorkingDirectory(instance.instance_dir());
-
-  SubprocessOptions options;
-  if (config.host_sandbox()) {
-    std::vector<std::string> sandbox_arguments = {
-        HostBinaryPath("process_sandboxer"),
-        "--environments_dir=" + config.environments_dir(),
-        "--environments_uds_dir=" + config.environments_uds_dir(),
-        "--instance_uds_dir=" + instance.instance_uds_dir(),
-        "--log_dir=" + instance.PerInstanceLogPath(""),
-        "--runtime_dir=" + instance.instance_dir(),
-        "--host_artifacts_path=" + DefaultHostArtifactsPath(""),
-    };
-    std::string log_files = instance.PerInstanceLogPath("sandbox.log");
-    if (!instance.run_as_daemon()) {
-      log_files += "," + instance.PerInstanceLogPath("launcher.log");
-    }
-    sandbox_arguments.emplace_back("--log_files=" + log_files);
-    options.SandboxArguments(std::move(sandbox_arguments));
-  }
-  return run_cmd.Start(options);
+  return run_cmd.Start();
 }
 
 std::string WriteFiles(FetcherConfig fetcher_config) {
@@ -360,7 +360,7 @@ int CvdInternalStartMain(int argc, char** argv) {
   }
 
   std::vector<std::vector<std::string>> spargs = {assemble_args, {}};
-  FlagForwarder forwarder({kAssemblerBin, kRunnerBin}, spargs);
+  FlagForwarder forwarder({AssemblerPath(), RunnerPath()}, spargs);
 
   // Used to find bool flag and convert "flag"/"noflag" to "--flag=value"
   // This is the solution for vectorize bool flags in gFlags
@@ -437,7 +437,7 @@ int CvdInternalStartMain(int argc, char** argv) {
   std::string assembler_output;
   auto assemble_ret =
       InvokeAssembler(assembler_input, assembler_output,
-                      forwarder.ArgvForSubprocess(kAssemblerBin, args));
+                      forwarder.ArgvForSubprocess(AssemblerPath(), args));
 
   if (assemble_ret != 0) {
     LOG(ERROR) << "assemble_cvd returned " << assemble_ret;
@@ -465,7 +465,7 @@ int CvdInternalStartMain(int argc, char** argv) {
            /* overwrite */ 1);
 
     auto run_proc = StartRunner(std::move(runner_stdin), *config, instance,
-                                forwarder.ArgvForSubprocess(kRunnerBin));
+                                forwarder.ArgvForSubprocess(RunnerPath()));
     runners.push_back(std::move(run_proc));
   }
 

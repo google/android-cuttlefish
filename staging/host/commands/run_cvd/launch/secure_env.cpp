@@ -18,7 +18,6 @@
 #include <unistd.h>
 
 #include <string>
-#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
@@ -79,9 +78,7 @@ Result<MonitorCommand> SecureEnv(
   command.AddParameter("-kernel_events_fd=",
                        kernel_log_pipe_provider.KernelLogPipe());
 
-  MonitorCommand monitor(std::move(command));
-  monitor.can_sandbox = true;
-  return monitor;
+  return command;
 }
 
 }  // namespace cuttlefish

@@ -123,16 +123,12 @@ class SubprocessOptions {
 
   bool Verbose() const { return verbose_; }
   bool ExitWithParent() const { return exit_with_parent_; }
-  const std::vector<std::string>& SandboxArguments() const {
-    return sandbox_arguments_;
-  }
   bool InGroup() const { return in_group_; }
   const std::string& Strace() const { return strace_; }
 
  private:
   bool verbose_;
   bool exit_with_parent_;
-  std::vector<std::string> sandbox_arguments_;
   bool in_group_;
   std::string strace_;
 };
