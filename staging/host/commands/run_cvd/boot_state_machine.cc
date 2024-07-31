@@ -400,18 +400,23 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
 
   // Returns true if the machine is left in a final state
   bool OnBootEvtReceived(SharedFD boot_events_pipe) {
-    std::optional<monitor::ReadEventResult> read_result =
+    Result<std::optional<monitor::ReadEventResult>> read_result =
         monitor::ReadEvent(boot_events_pipe);
     if (!read_result) {
-      LOG(ERROR) << "Failed to read a complete kernel log boot event.";
+      LOG(ERROR) << "Failed to read a complete kernel log boot event: "
+                 << read_result.error().FormatForEnv();
+      state_ |= kGuestBootFailed;
+      return MaybeWriteNotification();
+    } else if (!*read_result) {
+      LOG(ERROR) << "EOF from kernel log monitor";
       state_ |= kGuestBootFailed;
       return MaybeWriteNotification();
     }
 
-    if (read_result->event == monitor::Event::BootCompleted) {
+    if ((*read_result)->event == monitor::Event::BootCompleted) {
       LOG(INFO) << "Virtual device booted successfully";
       state_ |= kGuestBootCompleted;
-    } else if (read_result->event == monitor::Event::BootFailed) {
+    } else if ((*read_result)->event == monitor::Event::BootFailed) {
       LOG(ERROR) << "Virtual device failed to boot";
       state_ |= kGuestBootFailed;
     }  // Ignore the other signals

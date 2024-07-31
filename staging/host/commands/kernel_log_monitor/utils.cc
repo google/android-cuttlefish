@@ -19,31 +19,28 @@
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/json.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish::monitor {
 
-std::optional<ReadEventResult> ReadEvent(SharedFD fd) {
+Result<std::optional<ReadEventResult>> ReadEvent(SharedFD fd) {
   size_t length;
   ssize_t bytes_read = ReadExactBinary(fd, &length);
-  if (bytes_read <= 0) {
-    LOG(ERROR) << "Failed to read event buffer size: " << fd->StrError();
-    return std::nullopt;
-  }
-  std::string buf(length, ' ');
-  bytes_read = ReadExact(fd, &buf);
-  if (bytes_read <= 0) {
-    LOG(ERROR) << "Failed to read event buffer: " << fd->StrError();
+
+  CF_EXPECTF(bytes_read >= 0, "Failed reading length: '{}'", fd->StrError());
+  if (bytes_read == 0) {
     return std::nullopt;
   }
 
-  Json::CharReaderBuilder builder;
-  std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-  std::string errorMessage;
-  Json::Value message;
-  if (!reader->parse(&*buf.begin(), &*buf.end(), &message, &errorMessage)) {
-    LOG(ERROR) << "Unable to parse event JSON: " << errorMessage;
+  std::string buf(length, ' ');
+  bytes_read = ReadExact(fd, &buf);
+  CF_EXPECTF(bytes_read >= 0, "Failed reading event: '{}'", fd->StrError());
+  if (bytes_read == 0) {
     return std::nullopt;
   }
+
+  Json::Value message = CF_EXPECT(ParseJson(buf));
 
   ReadEventResult result = {static_cast<Event>(message["event"].asInt()),
                             message["metadata"]};
