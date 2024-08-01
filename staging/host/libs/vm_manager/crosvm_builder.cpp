@@ -117,17 +117,11 @@ void CrosvmBuilder::AddSerial(const std::string& output,
 }
 
 #ifdef __linux__
-SharedFD CrosvmBuilder::AddTap(const std::string& tap_name,
-                               std::optional<std::string_view> mac,
-                               const std::optional<pci::Address>& pci) {
-  auto tap_fd = OpenTapInterface(tap_name);
-  if (tap_fd->IsOpen()) {
-    command_.AddParameter("--net=tap-fd=", tap_fd, MacCrosvmArgument(mac), PciCrosvmArgument(pci));
-  } else {
-    LOG(ERROR) << "Unable to connect to \"" << tap_name
-               << "\": " << tap_fd->StrError();
-  }
-  return tap_fd;
+void CrosvmBuilder::AddTap(const std::string& tap_name,
+                           std::optional<std::string_view> mac,
+                           const std::optional<pci::Address>& pci) {
+  command_.AddParameter("--net=tap-name=", tap_name, MacCrosvmArgument(mac),
+                        PciCrosvmArgument(pci));
 }
 
 #endif
