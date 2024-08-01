@@ -73,20 +73,22 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
   if (credential_source == "gce") {
     result = GceMetadataCredentialSource::Make(http_client);
   } else if (credential_source == "") {
-    LOG(VERBOSE) << "Probing oauth credentials at " << oauth_filepath;
     if (FileExists(oauth_filepath)) {
       std::string oauth_contents = CF_EXPECT(ReadFileContents(oauth_filepath));
       auto attempt_load = RefreshCredentialSource::FromOauth2ClientFile(
           http_client, oauth_contents);
       if (attempt_load.ok()) {
         result.reset(new RefreshCredentialSource(std::move(*attempt_load)));
+        LOG(INFO) << "\"" << oauth_filepath
+                  << "\" was found, using that as credentials";
       } else {
-        LOG(ERROR) << "Failed to load oauth2 credentials: "
-                   << attempt_load.error().FormatForEnv();
+        LOG(ERROR) << "Failed to load oauth credentials from \""
+                   << oauth_filepath
+                   << "\":" << attempt_load.error().FormatForEnv();
       }
     } else {
       LOG(INFO) << "\"" << oauth_filepath
-                << "\" missing, running without credentials";
+                << "\" is missing, running without credentials";
     }
   } else if (!FileExists(credential_source)) {
     // If the parameter doesn't point to an existing file it must be the
@@ -468,7 +470,7 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
     return std::move(service_account_credentials);
   }
   // use the deprecated credential_source or no value
-  // when this helper is removed its `.acloud2_oauth2.dat` processing should be
+  // when this helper is removed its `.acloud_oauth2.dat` processing should be
   // moved here
   return GetCredentialSourceLegacy(http_client, credential_source,
                                    oauth_filepath);
