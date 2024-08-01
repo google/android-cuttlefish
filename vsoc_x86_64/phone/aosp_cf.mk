@@ -63,7 +63,7 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.model=$(PRODUCT_DEVICE)
 
 # Compare target product name directly to avoid this from any product inherits aosp_cf.mk
-ifeq (aosp_cf_x86_64_phone,$(TARGET_PRODUCT))
+ifneq ($(filter aosp_cf_x86_64_phone aosp_cf_x86_64_phone_soong_system,$(TARGET_PRODUCT)),)
 # TODO(b/350000347) Enable Soong defined system image from coverage build
 ifneq ($(CLANG_COVERAGE),true)
 ifneq ($(NATIVE_COVERAGE),true)
