@@ -659,7 +659,6 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
                                   instance.switches_socket_path(), "]");
   }
 
-  SharedFD wifi_tap;
   // GPU capture can only support named files and not file descriptors due to
   // having to pass arguments to crosvm via a wrapper script.
 #ifdef __linux__
@@ -676,7 +675,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac(), ethernet_pci);
 
     if (!config.virtio_mac80211_hwsim() && environment.enable_wifi()) {
-      wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name());
+      crosvm_cmd.AddTap(instance.wifi_tap_name());
     }
   }
 #endif
