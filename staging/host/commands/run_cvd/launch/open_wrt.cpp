@@ -98,9 +98,8 @@ class OpenWrt : public CommandSource {
       ap_cmd.Cmd().AddParameter("--vhost-user=mac80211-hwsim,socket=",
                                 environment_.vhost_user_mac80211_hwsim());
     }
-    SharedFD wifi_tap;
     if (environment_.enable_wifi()) {
-      wifi_tap = ap_cmd.AddTap(instance_.wifi_tap_name());
+      ap_cmd.AddTap(instance_.wifi_tap_name());
     }
 
     /* TODO(kwstephenkim): delete this code when Minidroid completely disables
