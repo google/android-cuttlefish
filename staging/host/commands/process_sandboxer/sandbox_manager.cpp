@@ -40,7 +40,7 @@
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_format.h>
 #include <absl/strings/str_join.h>
-#include "absl/strings/numbers.h"
+#include <absl/types/span.h>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #include <sandboxed_api/sandbox2/executor.h>
@@ -240,7 +240,8 @@ class SandboxManager::SocketClient {
       return absl::PermissionDeniedError("gid changed");
     }
     if (!pid_fd_) {
-      auto pid_fd = PidFd::Create(credentials_->pid);
+      absl::StatusOr<PidFd> pid_fd =
+          PidFd::FromRunningProcess(credentials_->pid);
       if (!pid_fd.ok()) {
         return pid_fd.status();
       }
@@ -272,7 +273,7 @@ class SandboxManager::SocketClient {
   SandboxManager& manager_;
   UniqueFd client_fd_;
   std::optional<ucred> credentials_;
-  std::unique_ptr<PidFd> pid_fd_;
+  std::optional<PidFd> pid_fd_;
 
   ClientState client_state_ = ClientState::kInitial;
   size_t pingback_;
@@ -350,7 +351,7 @@ SandboxManager::~SandboxManager() {
 }
 
 absl::Status SandboxManager::RunProcess(
-    std::optional<int> client_fd, const std::vector<std::string>& argv,
+    std::optional<int> client_fd, absl::Span<const std::string> argv,
     std::vector<std::pair<UniqueFd, int>> fds) {
   if (argv.empty()) {
     return absl::InvalidArgumentError("Not enough arguments");
@@ -385,7 +386,7 @@ absl::Status SandboxManager::RunProcess(
 }
 
 absl::Status SandboxManager::RunSandboxedProcess(
-    std::optional<int> client_fd, const std::vector<std::string>& argv,
+    std::optional<int> client_fd, absl::Span<const std::string> argv,
     std::vector<std::pair<UniqueFd, int>> fds, std::unique_ptr<Policy> policy) {
   if (VLOG_IS_ON(1)) {
     std::stringstream process_stream;
@@ -449,70 +450,19 @@ absl::Status SandboxManager::RunSandboxedProcess(
 }
 
 absl::Status SandboxManager::RunProcessNoSandbox(
-    std::optional<int> client_fd, const std::vector<std::string>& argv,
+    std::optional<int> client_fd, absl::Span<const std::string> argv,
     std::vector<std::pair<UniqueFd, int>> fds) {
   if (!client_fd) {
     return absl::InvalidArgumentError("no client for unsandboxed process");
   }
-  int pidfd;
-  clone_args args_for_clone = clone_args{
-      .flags = CLONE_PIDFD,
-      .pidfd = reinterpret_cast<std::uintptr_t>(&pidfd),
-  };
 
-  pid_t res = syscall(SYS_clone3, &args_for_clone, sizeof(args_for_clone));
-  if (res < 0) {
-    std::string argv_str = absl::StrJoin(argv, "','");
-    std::string error = absl::StrCat("clone3 failed: argv=['", argv_str, "']");
-    return absl::ErrnoToStatus(errno, error);
-  } else if (res > 0) {
-    std::string argv_str = absl::StrJoin(argv, "','");
-    VLOG(1) << res << ": Running w/o sandbox ['" << argv_str << "]";
-
-    PidFd fd(UniqueFd(pidfd), res);
-    subprocesses_.emplace_back(new ProcessNoSandbox(*client_fd, std::move(fd)));
-    return absl::OkStatus();
+  absl::StatusOr<PidFd> fd = PidFd::LaunchSubprocess(argv, std::move(fds));
+  if (!fd.ok()) {
+    return fd.status();
   }
+  subprocesses_.emplace_back(new ProcessNoSandbox(*client_fd, std::move(*fd)));
 
-  /* Duplicate every input in `fds` into a range higher than the highest output
-   * in `fds`, in case there is any overlap between inputs and outputs. */
-  int minimum_backup_fd = -1;
-  for (const auto& [my_fd, target_fd] : fds) {
-    if (target_fd + 1 > minimum_backup_fd) {
-      minimum_backup_fd = target_fd + 1;
-    }
-  }
-
-  std::unordered_map<int, int> backup_mapping;
-  for (const auto& [my_fd, target_fd] : fds) {
-    int backup = fcntl(my_fd.Get(), F_DUPFD, minimum_backup_fd);
-    PCHECK(backup >= 0) << "fcntl(..., F_DUPFD) failed";
-    int flags = fcntl(backup, F_GETFD);
-    PCHECK(flags >= 0) << "fcntl(..., F_GETFD failed";
-    flags &= FD_CLOEXEC;
-    PCHECK(fcntl(backup, F_SETFD, flags) >= 0) << "fcntl(..., F_SETFD failed";
-    backup_mapping[backup] = target_fd;
-  }
-
-  for (const auto& [backup_fd, target_fd] : backup_mapping) {
-    // dup2 always unsets FD_CLOEXEC
-    PCHECK(dup2(backup_fd, target_fd) >= 0) << "dup2 failed";
-  }
-
-  std::vector<std::string> argv_clone = argv;
-  std::vector<char*> argv_cstr;
-  for (auto& arg : argv_clone) {
-    argv_cstr.emplace_back(arg.data());
-  }
-  argv_cstr.emplace_back(nullptr);
-
-  if (prctl(PR_SET_PDEATHSIG, SIGHUP) < 0) {  // Die when parent dies
-    PLOG(FATAL) << "prctl failed";
-  }
-
-  execv(argv_cstr[0], argv_cstr.data());
-
-  PLOG(FATAL) << "execv failed";
+  return absl::OkStatus();
 }
 
 bool SandboxManager::Running() const { return running_; }
