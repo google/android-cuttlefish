@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <absl/status/statusor.h>
+#include <absl/types/span.h>
 
 #include "host/commands/process_sandboxer/unique_fd.h"
 
@@ -30,8 +31,18 @@ namespace process_sandboxer {
 
 class PidFd {
  public:
-  PidFd(UniqueFd, pid_t);
-  static absl::StatusOr<std::unique_ptr<PidFd>> Create(pid_t pid);
+  /** Returns a managed pidfd tracking a previously started process with `pid`.
+   *
+   * Only reliably refers to the process `pid` if the caller can guarantee it
+   * was not reaped while this is executing, otherwise it may refer to an
+   * unknown process. */
+  static absl::StatusOr<PidFd> FromRunningProcess(pid_t pid);
+
+  /** Launches a subprocess and returns a pidfd tracking the newly launched
+   * process. */
+  static absl::StatusOr<PidFd> LaunchSubprocess(
+      absl::Span<const std::string> argv,
+      std::vector<std::pair<UniqueFd, int>> fds);
 
   int Get() const;
 
@@ -51,6 +62,7 @@ class PidFd {
   absl::Status HaltChildHierarchy();
 
  private:
+  PidFd(UniqueFd, pid_t);
   absl::Status SendSignal(int signal);
 
   UniqueFd fd_;
