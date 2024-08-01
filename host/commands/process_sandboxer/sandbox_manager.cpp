@@ -34,6 +34,7 @@
 #include <absl/functional/bind_front.h>
 #include <absl/log/log.h>
 #include <absl/log/vlog_is_on.h>
+#include <absl/memory/memory.h>
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
 #include <absl/strings/numbers.h>
@@ -49,6 +50,7 @@
 #include <sandboxed_api/util/path.h>
 #pragma clang diagnostic pop
 
+#include "host/commands/process_sandboxer/credentialed_unix_server.h"
 #include "host/commands/process_sandboxer/pidfd.h"
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/poll_callback.h"
@@ -289,11 +291,12 @@ class SandboxManager::SocketClient {
 };
 
 SandboxManager::SandboxManager(HostInfo host_info, std::string runtime_dir,
-                               UniqueFd signal_fd, UniqueFd server_fd)
+                               UniqueFd signal_fd,
+                               CredentialedUnixServer server)
     : host_info_(std::move(host_info)),
       runtime_dir_(std::move(runtime_dir)),
       signal_fd_(std::move(signal_fd)),
-      server_fd_(std::move(server_fd)) {}
+      server_(std::move(server)) {}
 
 absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
     HostInfo host_info) {
@@ -323,34 +326,15 @@ absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
   }
   VLOG(1) << "Created signalfd";
 
-  UniqueFd server_fd(socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0));
-  if (server_fd.Get() < 0) {
-    return absl::ErrnoToStatus(errno, "`socket` failed");
-  }
-  sockaddr_un socket_name = {
-      .sun_family = AF_UNIX,
-  };
-  std::snprintf(socket_name.sun_path, sizeof(socket_name.sun_path), "%s",
-                ServerSocketOutsidePath(runtime_dir).c_str());
-  sockaddr* sockname_ptr = reinterpret_cast<sockaddr*>(&socket_name);
-  if (bind(server_fd.Get(), sockname_ptr, sizeof(socket_name)) < 0) {
-    return absl::ErrnoToStatus(errno, "`bind` failed");
-  }
-
-  int enable = 1;
-  if (setsockopt(server_fd.Get(), SOL_SOCKET, SO_PASSCRED, &enable,
-                 sizeof(enable)) < 0) {
-    static constexpr char kErr[] = "`setsockopt(..., SO_PASSCRED, ...)` failed";
-    return absl::ErrnoToStatus(errno, kErr);
-  }
-
-  if (listen(server_fd.Get(), 10) < 0) {
-    return absl::ErrnoToStatus(errno, "`listen` failed");
+  absl::StatusOr<CredentialedUnixServer> server =
+      CredentialedUnixServer::Open(ServerSocketOutsidePath(runtime_dir));
+  if (!server.ok()) {
+    return server.status();
   }
 
   return absl::WrapUnique(
       new SandboxManager(std::move(host_info), std::move(runtime_dir),
-                         std::move(signal_fd), std::move(server_fd)));
+                         std::move(signal_fd), std::move(*server)));
 }
 
 SandboxManager::~SandboxManager() {
@@ -487,7 +471,7 @@ absl::Status SandboxManager::Iterate() {
   PollCallback poll_cb;
 
   poll_cb.Add(signal_fd_.Get(), bind_front(&SandboxManager::Signalled, this));
-  poll_cb.Add(server_fd_.Get(), bind_front(&SandboxManager::NewClient, this));
+  poll_cb.Add(server_.Fd(), bind_front(&SandboxManager::NewClient, this));
 
   for (auto it = subprocesses_.begin(); it != subprocesses_.end(); it++) {
     int fd = (*it)->PollFd();
@@ -536,11 +520,11 @@ absl::Status SandboxManager::NewClient(short revents) {
     running_ = false;
     return absl::InternalError("server socket exited");
   }
-  UniqueFd client(accept4(server_fd_.Get(), nullptr, nullptr, SOCK_CLOEXEC));
-  if (client.Get() < 0) {
-    return absl::ErrnoToStatus(errno, "`accept` failed");
+  absl::StatusOr<UniqueFd> client = server_.AcceptClient();
+  if (!client.ok()) {
+    return client.status();
   }
-  clients_.emplace_back(new SocketClient(*this, std::move(client)));
+  clients_.emplace_back(new SocketClient(*this, std::move(*client)));
   return absl::OkStatus();
 }
 
