@@ -105,40 +105,6 @@ bool NetworkInterfaceExists(const std::string& interface_name) {
 }
 
 #ifdef __linux__
-SharedFD OpenTapInterface(const std::string& interface_name) {
-  constexpr auto TUNTAP_DEV = "/dev/net/tun";
-
-  auto tap_fd = SharedFD::Open(TUNTAP_DEV, O_RDWR | O_NONBLOCK);
-  if (!tap_fd->IsOpen()) {
-    LOG(ERROR) << "Unable to open tun device: " << tap_fd->StrError();
-    return tap_fd;
-  }
-
-  struct ifreq ifr;
-  memset(&ifr, 0, sizeof(ifr));
-  ifr.ifr_flags = IFF_TAP | IFF_NO_PI | IFF_VNET_HDR;
-  strncpy(ifr.ifr_name, interface_name.c_str(), IFNAMSIZ);
-
-  int err = tap_fd->Ioctl(TUNSETIFF, &ifr);
-  if (err < 0) {
-    LOG(ERROR) << "Unable to connect to " << interface_name
-               << " tap interface: " << tap_fd->StrError();
-    tap_fd->Close();
-    return SharedFD();
-  }
-
-  // The interface's configuration may have been modified or just not set
-  // correctly on creation. While qemu checks this and enforces the right
-  // configuration, crosvm does not, so it needs to be set before it's passed to
-  // it.
-  tap_fd->Ioctl(TUNSETOFFLOAD,
-                reinterpret_cast<void*>(TUN_F_CSUM | TUN_F_UFO | TUN_F_TSO4 |
-                                        TUN_F_TSO6));
-  int len = SIZE_OF_VIRTIO_NET_HDR_V1;
-  tap_fd->Ioctl(TUNSETVNETHDRSZ, &len);
-  return tap_fd;
-}
-
 std::set<std::string> TapInterfacesInUse() {
   Command cmd("/bin/bash");
   cmd.AddParameter("-c");
