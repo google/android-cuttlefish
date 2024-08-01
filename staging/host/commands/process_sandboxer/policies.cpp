@@ -59,6 +59,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("modem_simulator")] = ModemSimulatorPolicy;
   builders[host.HostToolExe("process_restarter")] = ProcessRestarterPolicy;
   builders[host.HostToolExe("run_cvd")] = RunCvdPolicy;
+  builders[host.HostToolExe("tcp_connector")] = TcpConnectorPolicy;
   builders[host.HostToolExe("secure_env")] = SecureEnvPolicy;
   builders[host.HostToolExe("webRTC")] = WebRtcPolicy;
 
