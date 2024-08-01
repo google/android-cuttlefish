@@ -60,6 +60,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("process_restarter")] = ProcessRestarterPolicy;
   builders[host.HostToolExe("run_cvd")] = RunCvdPolicy;
   builders[host.HostToolExe("secure_env")] = SecureEnvPolicy;
+  builders[host.HostToolExe("webRTC")] = WebRtcPolicy;
 
   if (auto it = builders.find(executable); it != builders.end()) {
     // TODO(schuffelen): Only share this with executables known to launch others
