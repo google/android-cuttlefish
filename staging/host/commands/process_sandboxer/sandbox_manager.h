@@ -25,13 +25,13 @@
 
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
+#include <absl/types/span.h>
+#include <sandboxed_api/sandbox2/policy.h>
 
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/unique_fd.h"
-#include "sandboxed_api/sandbox2/policy.h"
 
-namespace cuttlefish {
-namespace process_sandboxer {
+namespace cuttlefish::process_sandboxer {
 
 class SandboxManager {
  public:
@@ -44,10 +44,9 @@ class SandboxManager {
   /** Start a process with the given `argv` and file descriptors in `fds`.
    *
    * For (key, value) pairs in `fds`, `key` on the outside is mapped to `value`
-   * in the sandbox, and `key` is `close`d on the outside.
-   */
+   * in the sandbox, and `key` is `close`d on the outside. */
   absl::Status RunProcess(std::optional<int> client_fd,
-                          const std::vector<std::string>& argv,
+                          absl::Span<const std::string> argv,
                           std::vector<std::pair<UniqueFd, int>> fds);
 
   /** Block until an event happens, and process all open events. */
@@ -72,11 +71,11 @@ class SandboxManager {
   SandboxManager() = default;
 
   absl::Status RunSandboxedProcess(std::optional<int> client_fd,
-                                   const std::vector<std::string>& argv,
+                                   absl::Span<const std::string> argv,
                                    std::vector<std::pair<UniqueFd, int>> fds,
                                    std::unique_ptr<sandbox2::Policy> policy);
   absl::Status RunProcessNoSandbox(std::optional<int> client_fd,
-                                   const std::vector<std::string>& argv,
+                                   absl::Span<const std::string> argv,
                                    std::vector<std::pair<UniqueFd, int>> fds);
 
   // Callbacks for the Iterate() `poll` loop.
@@ -96,7 +95,6 @@ class SandboxManager {
   UniqueFd server_fd_;
 };
 
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
+}  // namespace cuttlefish::process_sandboxer
 
 #endif
