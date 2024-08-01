@@ -143,12 +143,12 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
     }
   }
 
-  absl::StatusOr<std::unique_ptr<PidFd>> self_pidfd = PidFd::Create(getpid());
+  absl::StatusOr<PidFd> self_pidfd = PidFd::FromRunningProcess(getpid());
   if (!self_pidfd.ok()) {
     return self_pidfd.status();
   }
 
-  return (*self_pidfd)->HaltChildHierarchy();
+  return self_pidfd->HaltChildHierarchy();
 }
 
 }  // namespace
