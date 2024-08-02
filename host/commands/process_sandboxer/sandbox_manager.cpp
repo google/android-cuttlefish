@@ -62,6 +62,14 @@ using sandbox2::Sandbox2;
 using sapi::file::CleanPath;
 using sapi::file::JoinPath;
 
+namespace {
+
+std::string ServerSocketOutsidePath(std::string_view runtime_dir) {
+  return JoinPath(runtime_dir, "/", "server.sock");
+}
+
+}  // namespace
+
 class SandboxManager::ProcessNoSandbox : public SandboxManager::ManagedProcess {
  public:
   ProcessNoSandbox(int client_fd, PidFd pid_fd)
@@ -280,16 +288,21 @@ class SandboxManager::SocketClient {
   int ignored_fd_ = -1;
 };
 
+SandboxManager::SandboxManager(HostInfo host_info, std::string runtime_dir,
+                               UniqueFd signal_fd, UniqueFd server_fd)
+    : host_info_(std::move(host_info)),
+      runtime_dir_(std::move(runtime_dir)),
+      signal_fd_(std::move(signal_fd)),
+      server_fd_(std::move(server_fd)) {}
+
 absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
     HostInfo host_info) {
-  std::unique_ptr<SandboxManager> manager(new SandboxManager());
-  manager->host_info_ = std::move(host_info);
-  manager->runtime_dir_ =
+  std::string runtime_dir =
       absl::StrFormat("/tmp/sandbox_manager.%u.XXXXXX", getpid());
-  if (mkdtemp(manager->runtime_dir_.data()) == nullptr) {
+  if (mkdtemp(runtime_dir.data()) == nullptr) {
     return absl::ErrnoToStatus(errno, "mkdtemp failed");
   }
-  VLOG(1) << "Created temporary directory '" << manager->runtime_dir_ << "'";
+  VLOG(1) << "Created temporary directory '" << runtime_dir << "'";
 
   sigset_t mask;
   if (sigfillset(&mask) < 0) {
@@ -304,44 +317,46 @@ absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
   }
   VLOG(1) << "Blocked signals";
 
-  manager->signal_fd_.Reset(signalfd(-1, &mask, SFD_CLOEXEC | SFD_NONBLOCK));
-  if (manager->signal_fd_.Get() < 0) {
+  UniqueFd signal_fd(signalfd(-1, &mask, SFD_CLOEXEC | SFD_NONBLOCK));
+  if (signal_fd.Get() < 0) {
     return absl::ErrnoToStatus(errno, "signalfd failed");
   }
   VLOG(1) << "Created signalfd";
 
-  manager->server_fd_.Reset(socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0));
-  if (manager->server_fd_.Get() < 0) {
+  UniqueFd server_fd(socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0));
+  if (server_fd.Get() < 0) {
     return absl::ErrnoToStatus(errno, "`socket` failed");
   }
   sockaddr_un socket_name = {
       .sun_family = AF_UNIX,
   };
   std::snprintf(socket_name.sun_path, sizeof(socket_name.sun_path), "%s",
-                manager->ServerSocketOutsidePath().c_str());
-  auto sockname_ptr = reinterpret_cast<sockaddr*>(&socket_name);
-  if (bind(manager->server_fd_.Get(), sockname_ptr, sizeof(socket_name)) < 0) {
+                ServerSocketOutsidePath(runtime_dir).c_str());
+  sockaddr* sockname_ptr = reinterpret_cast<sockaddr*>(&socket_name);
+  if (bind(server_fd.Get(), sockname_ptr, sizeof(socket_name)) < 0) {
     return absl::ErrnoToStatus(errno, "`bind` failed");
   }
 
   int enable = 1;
-  if (setsockopt(manager->server_fd_.Get(), SOL_SOCKET, SO_PASSCRED, &enable,
+  if (setsockopt(server_fd.Get(), SOL_SOCKET, SO_PASSCRED, &enable,
                  sizeof(enable)) < 0) {
     static constexpr char kErr[] = "`setsockopt(..., SO_PASSCRED, ...)` failed";
     return absl::ErrnoToStatus(errno, kErr);
   }
 
-  if (listen(manager->server_fd_.Get(), 10) < 0) {
+  if (listen(server_fd.Get(), 10) < 0) {
     return absl::ErrnoToStatus(errno, "`listen` failed");
   }
 
-  return manager;
+  return absl::WrapUnique(
+      new SandboxManager(std::move(host_info), std::move(runtime_dir),
+                         std::move(signal_fd), std::move(server_fd)));
 }
 
 SandboxManager::~SandboxManager() {
   VLOG(1) << "Sandbox shutting down";
   if (!runtime_dir_.empty()) {
-    if (unlink(ServerSocketOutsidePath().c_str()) < 0) {
+    if (unlink(ServerSocketOutsidePath(runtime_dir_).c_str()) < 0) {
       PLOG(ERROR) << "`unlink` failed";
     }
     if (rmdir(runtime_dir_.c_str()) < 0) {
@@ -373,10 +388,11 @@ absl::Status SandboxManager::RunProcess(
       return absl::ErrnoToStatus(errno, "Failed to `dup` stdio descriptor");
     }
   }
-  auto exe = CleanPath(argv[0]);
+  std::string exe = CleanPath(argv[0]);
   // TODO(schuffelen): Introduce an allow-list for executables to run outside
   // any sandbox.
-  auto policy = PolicyForExecutable(host_info_, ServerSocketOutsidePath(), exe);
+  std::unique_ptr<Policy> policy = PolicyForExecutable(
+      host_info_, ServerSocketOutsidePath(runtime_dir_), exe);
   if (policy) {
     return RunSandboxedProcess(client_fd, argv, std::move(fds),
                                std::move(policy));
@@ -559,10 +575,6 @@ absl::Status SandboxManager::ClientMessage(SandboxManager::ClientIter it,
   }
   clients_.erase(it);
   return absl::InternalError("client dropped file descriptor");
-}
-
-std::string SandboxManager::ServerSocketOutsidePath() const {
-  return JoinPath(runtime_dir_, "/", "server.sock");
 }
 
 }  // namespace cuttlefish::process_sandboxer
