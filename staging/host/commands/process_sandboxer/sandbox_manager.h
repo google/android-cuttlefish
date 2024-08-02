@@ -28,6 +28,7 @@
 #include <absl/types/span.h>
 #include <sandboxed_api/sandbox2/policy.h>
 
+#include "host/commands/process_sandboxer/credentialed_unix_server.h"
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/unique_fd.h"
 
@@ -69,7 +70,7 @@ class SandboxManager {
   using SboxIter = std::list<std::unique_ptr<ManagedProcess>>::iterator;
 
   SandboxManager(HostInfo, std::string runtime_dir, UniqueFd signal_fd,
-                 UniqueFd server);
+                 CredentialedUnixServer server);
 
   absl::Status RunSandboxedProcess(std::optional<int> client_fd,
                                    absl::Span<const std::string> argv,
@@ -91,7 +92,7 @@ class SandboxManager {
   std::list<std::unique_ptr<ManagedProcess>> subprocesses_;
   std::list<std::unique_ptr<SocketClient>> clients_;
   UniqueFd signal_fd_;
-  UniqueFd server_fd_;
+  CredentialedUnixServer server_;
 };
 
 }  // namespace cuttlefish::process_sandboxer
