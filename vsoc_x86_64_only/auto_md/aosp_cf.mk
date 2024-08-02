@@ -36,7 +36,6 @@ PRODUCT_PACKAGES += \
     ClusterOsDouble \
     CarServiceOverlayEmulatorOsDouble \
     CarServiceOverlayMdEmulatorOsDouble \
-    MultiDisplaySecondaryHomeTestLauncher \
     MultiDisplayTest \
     AAECarControlCenterApp
 

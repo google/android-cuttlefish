@@ -30,12 +30,6 @@
 
     <!-- True if the device supports system decorations on secondary displays. -->
     <bool name="config_supportsSystemDecorsOnSecondaryDisplays">true</bool>
-    <!-- This is the default launcher package with an activity to use on secondary displays that
-         support system decorations.
-         This launcher package must have an activity that supports multiple instances and has
-         corresponding launch mode set in AndroidManifest.
-         {@see android.view.Display#FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS} -->
-    <string name="config_secondaryHomePackage" translatable="false">com.android.car.multidisplay</string>
     <!-- Whether to only install system packages on a user if they're whitelisted for that user
          type. These are flags and can be freely combined.
          0  - disable whitelist (install all system packages; no logging)
