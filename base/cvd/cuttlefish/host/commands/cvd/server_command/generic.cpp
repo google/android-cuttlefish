@@ -32,6 +32,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/group_selector.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/interruptible_terminal.h"
 #include "host/commands/cvd/selector/selector_constants.h"
@@ -323,7 +324,6 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
       .is_non_help_cvd = true,
       .ui_response_type = UiResponseType::kCvdServerPick,
   };
-  std::string chosen_group_name;
   if (!instance_group_result.ok()) {
     if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
       extracted_info.ui_response_type = UiResponseType::kNoGroup;
@@ -338,10 +338,18 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
 
     extracted_info.ui_response_type = UiResponseType::kUserSelection;
     // show the menu and let the user choose
-    auto group_summaries = CF_EXPECT(instance_manager_.GroupSummaryMenu());
-    auto& group_summary_menu = group_summaries.menu;
-    CF_EXPECT_EQ(WriteAll(request.Out(), group_summary_menu + "\n"),
-                 (ssize_t)group_summary_menu.size() + 1);
+    std::vector<selector::LocalInstanceGroup> groups =
+        CF_EXPECT(instance_manager_.FindGroups(selector::Queries{}));
+    groups.erase(std::remove_if(groups.begin(), groups.end(),
+                                [](const auto& group) {
+                                  return !group.HasActiveInstances();
+                                }),
+                 groups.end());
+    GroupSelector selector{.groups = groups};
+    auto menu = selector.Menu();
+
+    CF_EXPECT_EQ(WriteAll(request.Out(), menu + "\n"),
+                 (ssize_t)menu.size() + 1);
     terminal_ = std::make_unique<InterruptibleTerminal>(request.In());
 
     const bool is_tty = request.Err()->IsOpen() && request.Err()->IsATTY();
@@ -352,8 +360,9 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
 
       std::string input_line = CF_EXPECT(terminal_->ReadLine());
       int selection = -1;
+      std::string chosen_group_name;
       if (android::base::ParseInt(input_line, &selection)) {
-        const int n_groups = group_summaries.idx_to_group_name.size();
+        const int n_groups = selector.groups.size();
         if (n_groups <= selection || selection < 0) {
           std::string out_of_range = fmt::format(
               "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
@@ -365,7 +374,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
                        (ssize_t)out_of_range.size());
           continue;
         }
-        chosen_group_name = group_summaries.idx_to_group_name[selection];
+        chosen_group_name = selector.groups[selection].GroupName();
       } else {
         chosen_group_name = android::base::Trim(input_line);
       }
