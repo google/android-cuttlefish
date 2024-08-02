@@ -32,6 +32,7 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/start/filesystem_explorer.h"
 #include "host/commands/start/flag_forwarder.h"
+#include "host/commands/start/override_bool_arg.h"
 #include "host/libs/config/config_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
@@ -246,73 +247,6 @@ const std::unordered_set<std::string>& BoolFlags() {
       "vhost_user_vsock",
   });
   return *bool_flags;
-}
-
-struct BooleanFlag {
-  bool is_bool_flag;
-  bool bool_flag_value;
-  std::string name;
-};
-BooleanFlag IsBoolArg(const std::string& argument,
-                      const std::unordered_set<std::string>& flag_set) {
-  // Validate format
-  // we only deal with special bool case: -flag, --flag, -noflag, --noflag
-  // and convert to -flag=true, --flag=true, -flag=false, --flag=false
-  // others not in this format just return false
-  std::string_view name = argument;
-  if (!android::base::ConsumePrefix(&name, "-")) {
-    return {false, false, ""};
-  }
-  android::base::ConsumePrefix(&name, "-");
-  std::size_t found = name.find('=');
-  if (found != std::string::npos) {
-    // found "=", --flag=value case, it doesn't need convert
-    return {false, false, ""};
-  }
-
-  // Validate it is part of the set
-  std::string result_name(name);
-  std::string_view new_name = result_name;
-  if (result_name.length() == 0) {
-    return {false, false, ""};
-  }
-  if (flag_set.find(result_name) != flag_set.end()) {
-    // matched -flag, --flag
-    return {true, true, result_name};
-  } else if (android::base::ConsumePrefix(&new_name, "no")) {
-    // 2nd chance to check -noflag, --noflag
-    result_name = new_name;
-    if (flag_set.find(result_name) != flag_set.end()) {
-      // matched -noflag, --noflag
-      return {true, false, result_name};
-    }
-  }
-  // return status
-  return {false, false, ""};
-}
-
-std::string FormatBoolString(const std::string& name_str, bool value) {
-  std::string new_flag = "--" + name_str;
-  if (value) {
-    new_flag += "=true";
-  } else {
-    new_flag += "=false";
-  }
-  return new_flag;
-}
-
-std::vector<std::string> OverrideBoolArg(
-    std::vector<std::string> args,
-    const std::unordered_set<std::string>& flag_set) {
-  for (int index = 0; index < args.size(); index++) {
-    const std::string curr_arg = args[index];
-    BooleanFlag value = IsBoolArg(curr_arg, flag_set);
-    if (value.is_bool_flag) {
-      // Override the value
-      args[index] = FormatBoolString(value.name, value.bool_flag_value);
-    }
-  }
-  return args;
 }
 
 int CvdInternalStartMain(int argc, char** argv) {
