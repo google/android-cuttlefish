@@ -86,8 +86,8 @@ void OverrideInstanceJson(const selector::LocalInstanceGroup& group,
   instance_json["assembly_dir"] = group.AssemblyDir();
   instance_json["instance_dir"] = group.InstanceDir(instance);
   instance_json["instance_name"] = instance.name();
-  if (instance.id() > 0) {
-    // Only running instances have id > 0, this values only make sense for
+  if (selector::LocalInstanceGroup::InstanceIsActive(instance)) {
+    // Only running instances have id > 0, these values only make sense for
     // running instances.
     instance_json["web_access"] =
         fmt::format("https://localhost:1443/devices/{}/files/client.html",
