@@ -107,8 +107,7 @@ bool LocalInstanceGroup::InstanceIsActive(const cvd::Instance& instance) {
     case cvd::INSTANCE_STATE_CANCELLED:
       return false;
     // Include these just to avoid the warning
-    case cvd::InstanceState_INT_MIN_SENTINEL_DO_NOT_USE_:
-    case cvd::InstanceState_INT_MAX_SENTINEL_DO_NOT_USE_:
+    default:
       LOG(FATAL) << "Invalid instance state: " << instance.state();
   }
   return false;
