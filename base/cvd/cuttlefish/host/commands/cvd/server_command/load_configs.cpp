@@ -107,7 +107,7 @@ class LoadConfigsCommand : public CvdServerHandler {
               std::abort();
             }
             auto& group = *group_res;
-            group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_CANCELLED);
+            group.SetAllStates(cvd::INSTANCE_STATE_CANCELLED);
             auto update_res = instance_manager_.UpdateInstanceGroup(group);
             if (!update_res.ok()) {
               LOG(ERROR) << "Failed to update groups status: "
@@ -131,7 +131,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       auto failed_state = first_instance_state == cvd::INSTANCE_STATE_PREPARING
                               ? cvd::INSTANCE_STATE_PREPARE_FAILED
                               : cvd::INSTANCE_STATE_BOOT_FAILED;
-      group.SetAllStatesAndResetIds(failed_state);
+      group.SetAllStates(failed_state);
       CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
       CF_EXPECT(std::move(res));
     }
@@ -148,7 +148,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto mkdir_cmd = BuildMkdirCmd(request, cvd_flags);
     auto mkdir_res = executor_.ExecuteOne(mkdir_cmd, request.Err());
     if (!mkdir_res.ok()) {
-      group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_PREPARE_FAILED);
+      group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
       instance_manager_.UpdateInstanceGroup(group);
     }
     CF_EXPECT(std::move(mkdir_res));
@@ -157,7 +157,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       auto fetch_cmd = BuildFetchCmd(request, cvd_flags);
       auto fetch_res = executor_.ExecuteOne(fetch_cmd, request.Err());
       if (!fetch_res.ok()) {
-        group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_PREPARE_FAILED);
+        group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
         instance_manager_.UpdateInstanceGroup(group);
       }
       CF_EXPECT(std::move(fetch_res));

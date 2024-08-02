@@ -197,28 +197,6 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
   }
   CF_EXPECT(subprocess_waiter_.Setup(command.Start(std::move(options))));
 
-  bool is_stop = IsStopCommand(invocation_info.command);
-
-  // captured structured bindings are a C++20 extension
-  // so we need [group_ptr] instead of [&group_opt]
-  auto* group_ptr = (group_opt ? std::addressof(*group_opt) : nullptr);
-  android::base::ScopeGuard exit_action([this, is_stop, group_ptr]() {
-    if (!is_stop) {
-      return;
-    }
-    if (!group_ptr) {
-      return;
-    }
-    for (const auto& instance : group_ptr->Instances()) {
-      auto lock =
-          instance_lockfile_manager_.RemoveLockFile(instance.id());
-      if (!lock.ok()) {
-        LOG(ERROR) << "Deleting instance Lock file for ID #" << instance.id()
-                   << " failed: " << lock.error().Message();
-      }
-    }
-  });
-
   if (request.Message().command_request().wait_behavior() ==
       cvd::WAIT_BEHAVIOR_START) {
     response.mutable_status()->set_code(cvd::Status::OK);
@@ -228,9 +206,9 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
 
   if (infop.si_code == CLD_EXITED && IsStopCommand(invocation_info.command)) {
-    if (group_ptr) {
-      auto& group = *group_ptr;
-      group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_STOPPED);
+    if (group_opt.has_value()) {
+      auto& group = *group_opt;
+      group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
       CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
     }
   }
