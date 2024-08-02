@@ -112,7 +112,9 @@ Result<void> UpdateInstanceWithStatusResult(
     std::string adb_serial = instance_status_json["adb_serial"].asString();
     auto port_str = *android::base::Split(adb_serial, ":").rbegin();
     int port = 0;
-    CF_EXPECT(android::base::ParseInt(port_str, &port));
+    if (!android::base::ParseInt(port_str, &port)) {
+      LOG(ERROR) << "Failed to parse adb port from adb serial";
+    }
     instance.set_adb_port(port);
   }
   instance.set_state(cvd::INSTANCE_STATE_RUNNING);
