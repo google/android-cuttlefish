@@ -36,6 +36,7 @@ class LocalInstanceGroup {
   LocalInstanceGroup& operator=(const LocalInstanceGroup&) = default;
 
   static Result<LocalInstanceGroup> Deserialize(const Json::Value& group_json);
+  static bool InstanceIsActive(const cvd::Instance& instance);
 
   const std::string& GroupName() const { return group_proto_.name(); }
   const std::string& HomeDir() const { return group_proto_.home_directory(); }
@@ -55,7 +56,6 @@ class LocalInstanceGroup {
   bool HasActiveInstances() const;
   const cvd::InstanceGroup& Proto() const { return group_proto_; }
   void SetAllStates(cvd::InstanceState state);
-  void SetAllStatesAndResetIds(cvd::InstanceState state);
 
   std::string AssemblyDir() const;
   std::string InstanceDir(const cvd::Instance&) const;

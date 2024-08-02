@@ -92,23 +92,35 @@ void LocalInstanceGroup::SetProductOutPath(
   group_proto_.set_product_out_path(product_out_path);
 }
 
+bool LocalInstanceGroup::InstanceIsActive(const cvd::Instance& instance) {
+  switch (instance.state()) {
+    case cvd::INSTANCE_STATE_RUNNING:
+    case cvd::INSTANCE_STATE_STARTING:
+    case cvd::INSTANCE_STATE_STOPPING:
+    case cvd::INSTANCE_STATE_PREPARING:
+    case cvd::INSTANCE_STATE_UNREACHABLE:
+      return true;
+    case cvd::INSTANCE_STATE_UNSPECIFIED:
+    case cvd::INSTANCE_STATE_STOPPED:
+    case cvd::INSTANCE_STATE_PREPARE_FAILED:
+    case cvd::INSTANCE_STATE_BOOT_FAILED:
+    case cvd::INSTANCE_STATE_CANCELLED:
+      return false;
+    // Include these just to avoid the warning
+    case cvd::InstanceState_INT_MIN_SENTINEL_DO_NOT_USE_:
+    case cvd::InstanceState_INT_MAX_SENTINEL_DO_NOT_USE_:
+      LOG(FATAL) << "Invalid instance state: " << instance.state();
+  }
+  return false;
+}
+
 bool LocalInstanceGroup::HasActiveInstances() const {
-  // Active instances and only active instances have id > 0, no need to look at
-  // instance state.
-  return std::any_of(Instances().begin(), Instances().end(),
-                     [](const auto& instance) { return instance.id() > 0; });
+  return std::any_of(Instances().begin(), Instances().end(), InstanceIsActive);
 }
 
 void LocalInstanceGroup::SetAllStates(cvd::InstanceState state) {
   for (auto& instance: Instances()) {
     instance.set_state(state);
-  }
-}
-
-void LocalInstanceGroup::SetAllStatesAndResetIds(cvd::InstanceState state) {
-  SetAllStates(state);
-  for (auto& instance: Instances()) {
-    instance.set_id(0);
   }
 }
 

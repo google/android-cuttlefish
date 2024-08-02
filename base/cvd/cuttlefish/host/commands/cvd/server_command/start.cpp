@@ -755,15 +755,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
                         "`cvd reset` to ensure a clean state";
         }
 
-        for (const auto& instance: group.Instances()) {
-          InstanceLockFileManager ilfm;
-          if (instance.id() > 0) {
-            // Do this before the id is reset in the next block
-            ilfm.RemoveLockFile(instance.id());
-          }
-        }
-
-        group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_CANCELLED);
+        group.SetAllStates(cvd::INSTANCE_STATE_CANCELLED);
         auto update_res = instance_manager_.UpdateInstanceGroup(group);
         if (!update_res.ok()) {
           LOG(ERROR) << "Failed to update group status: "
@@ -868,7 +860,7 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
   }
   auto start_res = LaunchDevice(std::move(command), group, envs, request);
   if (!start_res.ok() || start_res->status().code() != cvd::Status::OK) {
-    group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_BOOT_FAILED);
+    group.SetAllStates(cvd::INSTANCE_STATE_BOOT_FAILED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
     return start_res;
   }
