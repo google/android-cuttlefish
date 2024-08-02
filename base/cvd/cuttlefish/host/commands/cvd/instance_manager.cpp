@@ -289,30 +289,4 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::FindGroup(
   return *(output.begin());
 }
 
-Result<InstanceManager::UserGroupSelectionSummary>
-InstanceManager::GroupSummaryMenu() const {
-  UserGroupSelectionSummary summary;
-
-  // List of Cuttlefish Instance Groups:
-  //   [i] : group_name (created: TIME)
-  //      <a> instance0.device_name() (id: instance_id)
-  //      <b> instance1.device_name() (id: instance_id)
-  std::stringstream ss;
-  ss << "List of Cuttlefish Instance Groups:" << std::endl;
-  int group_idx = 0;
-  for (const auto& group : CF_EXPECT(instance_db_.InstanceGroups())) {
-    fmt::print(ss, "  [{}] : {} (created: {})\n", group_idx, group.GroupName(),
-               selector::Format(group.StartTime()));
-    summary.idx_to_group_name[group_idx] = group.GroupName();
-    char instance_idx = 'a';
-    for (const auto& instance : group.Instances()) {
-      fmt::print(ss, "    <{}> {}-{} (id : {})\n", instance_idx++,
-                 group.GroupName(), instance.name(), instance.id());
-    }
-    group_idx++;
-  }
-  summary.menu = ss.str();
-  return summary;
-}
-
 }  // namespace cuttlefish
