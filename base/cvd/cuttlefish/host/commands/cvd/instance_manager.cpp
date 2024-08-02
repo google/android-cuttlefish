@@ -61,8 +61,9 @@ Result<void> RemoveGroupDirectory(const selector::LocalInstanceGroup& group) {
         << per_user_dir << "), artifacts not deleted";
     return {};
   }
-  CF_EXPECT(RecursivelyRemoveDirectory(GroupDirFromHome(group.HomeDir())),
-            "Failed to remove group directory");
+  CF_EXPECT(
+      RecursivelyRemoveDirectory(CF_EXPECT(GroupDirFromHome(group.HomeDir()))),
+      "Failed to remove group directory");
   return {};
 }
 
@@ -253,7 +254,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
     }
     RemoveFile(group.HomeDir() + "/cuttlefish_runtime");
     RemoveFile(group.HomeDir() + config_json_name);
-    RecursivelyRemoveDirectory(GroupDirFromHome(group.HomeDir()));
+    RemoveGroupDirectory(group);
   }
   // TODO(kwstephenkim): we need a better mechanism to make sure that
   // we clear all run_cvd processes.
