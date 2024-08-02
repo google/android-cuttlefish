@@ -23,7 +23,6 @@
 #include <atomic>
 #include <cstdlib>
 #include <iostream>
-#include <mutex>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -248,8 +247,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
 
   Result<cvd::Response> LaunchDeviceInterruptible(
       Command command, selector::LocalInstanceGroup& group,
-      const cvd_common::Envs& envs, const RequestWithStdio& request,
-      std::vector<InstanceLockFile>& lock_files);
+      const cvd_common::Envs& envs, const RequestWithStdio& request);
 
   Result<Command> ConstructCvdNonHelpCommand(
       const std::string& bin_file, const selector::LocalInstanceGroup& group,
@@ -261,9 +259,9 @@ class CvdStartCommandHandler : public CvdServerHandler {
     std::vector<InstanceLockFile> lock_files;
   };
   // call this only if !is_help
-  Result<GroupAndLockFiles> GetGroup(const cvd_common::Args& subcmd_args,
-                                     const cvd_common::Envs& envs,
-                                     const RequestWithStdio& request);
+  Result<selector::LocalInstanceGroup> GetGroup(
+      const cvd_common::Args& subcmd_args, const cvd_common::Envs& envs,
+      const RequestWithStdio& request);
 
   Result<cvd::Response> FillOutNewInstanceInfo(
       cvd::Response&& response, const selector::LocalInstanceGroup& group);
@@ -484,7 +482,7 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
 }
 
 // call this only if !is_help
-Result<CvdStartCommandHandler::GroupAndLockFiles>
+Result<selector::LocalInstanceGroup>
 CvdStartCommandHandler::GetGroup(const std::vector<std::string>& subcmd_args,
                                  const cvd_common::Envs& envs,
                                  const RequestWithStdio& request) {
@@ -513,15 +511,15 @@ CvdStartCommandHandler::GetGroup(const std::vector<std::string>& subcmd_args,
       << "Expected no more than one group with given name: "
       << group_creation_info.group_name;
   if (groups.empty()) {
+    // The lock must be held for as long as the group's instances are in the
+    // database with the id set.
+    MarkLockfilesInUse(lock_files);
     auto group =
         CF_EXPECT(instance_manager_.CreateInstanceGroup(group_creation_info));
     group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
     group.SetStartTime(selector::CvdServerClock::now());
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
-    return GroupAndLockFiles{
-        .group = group,
-        .lock_files = std::move(lock_files),
-    };
+    return group;
   }
   // The instances don't have an id yet and are in PREPARING state
   auto group = groups[0];
@@ -537,7 +535,10 @@ CvdStartCommandHandler::GetGroup(const std::vector<std::string>& subcmd_args,
   group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
   group.SetStartTime(selector::CvdServerClock::now());
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
-  return GroupAndLockFiles{group, lock_files};
+  // The lock must be held for as long as the group's instances are in the
+  // database with the id set.
+  MarkLockfilesInUse(lock_files);
+  return group;
 }
 
 static std::ostream& operator<<(std::ostream& out, const cvd_common::Args& v) {
@@ -735,9 +736,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     return ResponseFromSiginfo(infop);
   }
 
-  auto group_and_lock_files = CF_EXPECT(GetGroup(subcmd_args, envs, request));
-  auto group = group_and_lock_files.group;
-  auto lock_files = group_and_lock_files.lock_files;
+  auto group = CF_EXPECT(GetGroup(subcmd_args, envs, request));
   CF_EXPECT(UpdateArgs(subcmd_args, group));
   CF_EXPECT(UpdateEnvs(envs, group));
   Command command = CF_EXPECT(
@@ -768,8 +767,8 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
         std::abort();
       });
   auto listener_handle = CF_EXPECT(std::move(handle_res));
-  auto response = CF_EXPECT(LaunchDeviceInterruptible(std::move(command), group, envs,
-                                              request, lock_files));
+  auto response = CF_EXPECT(
+      LaunchDeviceInterruptible(std::move(command), group, envs, request));
   group.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   listener_handle.reset();
@@ -847,8 +846,7 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
 
 Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
     Command command, selector::LocalInstanceGroup& group,
-    const cvd_common::Envs& envs, const RequestWithStdio& request,
-    std::vector<InstanceLockFile>& lock_files) {
+    const cvd_common::Envs& envs, const RequestWithStdio& request) {
   // cvd_internal_start uses the config from the previous invocation to
   // determine the default value for the -report_anonymous_usage_stats flag so
   // we symlink that to the group's home directory, this link will be
@@ -883,13 +881,6 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
                  << symlink_res.error().FormatForEnv();
     }
   }
-
-  // If not daemonized, reaching here means the instance group terminated.
-  // Thus, it's enough to release the file lock in the destructor.
-  // If daemonized, reaching here means the group started successfully
-  // As the destructor will release the file lock, the instance lock
-  // files must be marked as used
-  MarkLockfilesInUse(lock_files);
 
   return response;
 }
