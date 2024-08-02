@@ -143,6 +143,16 @@ Result<bool> InstanceManager::RemoveInstanceGroupByHome(const std::string& dir) 
       CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
   CF_EXPECT(!group.HasActiveInstances(),
             "Group still contains active instances");
+  for (auto& instance: group.Instances()) {
+    if (instance.id() == 0) {
+      continue;
+    }
+    auto remove_res = lock_manager_.RemoveLockFile(instance.id());
+    if (!remove_res.ok()) {
+      LOG(ERROR) << "Failed to remove instance id lock: "
+                 << remove_res.error().FormatForEnv();
+    }
+  }
   CF_EXPECT(RemoveGroupDirectory(group));
 
   return CF_EXPECT(instance_db_.RemoveInstanceGroup(group.GroupName()));
@@ -205,7 +215,7 @@ Result<void> InstanceManager::IssueStopCommand(
              "Warning: error stopping instances for dir \"" + group.HomeDir() +
                  "\".\nThis can happen if instances are already stopped.\n");
   }
-  group.SetAllStatesAndResetIds(cvd::INSTANCE_STATE_STOPPED);
+  group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   instance_db_.UpdateInstanceGroup(group);
   for (const auto& instance : group.Instances()) {
     auto lock = lock_manager_.TryAcquireLock(instance.id());
