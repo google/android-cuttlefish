@@ -96,16 +96,17 @@ Result<LocalInstanceGroup> InstanceDatabase::AddInstanceGroup(
         if (group_proto.name().empty()) {
           group_proto.set_name(CF_EXPECT(GenUniqueGroupName(data)));
         }
+        CF_EXPECTF(
+            FindGroups(data, {.group_name = group_proto.name()}).empty(),
+            "An instance group already exists with name: {}",
+            group_proto.name());
+        CF_EXPECTF(
+            FindGroups(data, {.home = group_proto.home_directory()}).empty(),
+            "An instance group already exists with HOME directory: {}",
+            group_proto.home_directory());
         CF_EXPECTF(EnsureDirectoryExists(group_proto.home_directory()),
                    "HOME dir, \"{}\" neither exists nor can be created.",
                    group_proto.home_directory());
-        auto matching_groups =
-            FindGroups(data, {.home = group_proto.home_directory(),
-                              .group_name = group_proto.name()});
-        CF_EXPECTF(matching_groups.empty(),
-                   "New group conflicts with existing group: {} at {}",
-                   matching_groups[0].GroupName(),
-                   matching_groups[0].HomeDir());
         for (const auto& instance_proto : group_proto.instances()) {
           if (instance_proto.id() == UNSET_ID) {
             continue;
