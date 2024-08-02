@@ -68,7 +68,8 @@ class SandboxManager {
   using ClientIter = std::list<std::unique_ptr<SocketClient>>::iterator;
   using SboxIter = std::list<std::unique_ptr<ManagedProcess>>::iterator;
 
-  SandboxManager() = default;
+  SandboxManager(HostInfo, std::string runtime_dir, UniqueFd signal_fd,
+                 UniqueFd server);
 
   absl::Status RunSandboxedProcess(std::optional<int> client_fd,
                                    absl::Span<const std::string> argv,
@@ -83,8 +84,6 @@ class SandboxManager {
   absl::Status NewClient(short revents);
   absl::Status ProcessExit(SboxIter it, short revents);
   absl::Status Signalled(short revents);
-
-  std::string ServerSocketOutsidePath() const;
 
   HostInfo host_info_;
   bool running_ = true;
