@@ -61,8 +61,9 @@ Result<void> RemoveGroupDirectory(const selector::LocalInstanceGroup& group) {
         << per_user_dir << "), artifacts not deleted";
     return {};
   }
-  CF_EXPECT(RecursivelyRemoveDirectory(GroupDirFromHome(group.HomeDir())),
-            "Failed to remove group directory");
+  CF_EXPECT(
+      RecursivelyRemoveDirectory(CF_EXPECT(GroupDirFromHome(group.HomeDir()))),
+      "Failed to remove group directory");
   return {};
 }
 
@@ -253,7 +254,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
     }
     RemoveFile(group.HomeDir() + "/cuttlefish_runtime");
     RemoveFile(group.HomeDir() + config_json_name);
-    RecursivelyRemoveDirectory(GroupDirFromHome(group.HomeDir()));
+    RemoveGroupDirectory(group);
   }
   // TODO(kwstephenkim): we need a better mechanism to make sure that
   // we clear all run_cvd processes.
@@ -287,32 +288,6 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::FindGroup(
   auto output = CF_EXPECT(instance_db_.FindGroups(queries));
   CF_EXPECT_EQ(output.size(), 1ul);
   return *(output.begin());
-}
-
-Result<InstanceManager::UserGroupSelectionSummary>
-InstanceManager::GroupSummaryMenu() const {
-  UserGroupSelectionSummary summary;
-
-  // List of Cuttlefish Instance Groups:
-  //   [i] : group_name (created: TIME)
-  //      <a> instance0.device_name() (id: instance_id)
-  //      <b> instance1.device_name() (id: instance_id)
-  std::stringstream ss;
-  ss << "List of Cuttlefish Instance Groups:" << std::endl;
-  int group_idx = 0;
-  for (const auto& group : CF_EXPECT(instance_db_.InstanceGroups())) {
-    fmt::print(ss, "  [{}] : {} (created: {})\n", group_idx, group.GroupName(),
-               selector::Format(group.StartTime()));
-    summary.idx_to_group_name[group_idx] = group.GroupName();
-    char instance_idx = 'a';
-    for (const auto& instance : group.Instances()) {
-      fmt::print(ss, "    <{}> {}-{} (id : {})\n", instance_idx++,
-                 group.GroupName(), instance.name(), instance.id());
-    }
-    group_idx++;
-  }
-  summary.menu = ss.str();
-  return summary;
 }
 
 }  // namespace cuttlefish

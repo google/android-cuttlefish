@@ -20,7 +20,6 @@
 
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -86,15 +85,6 @@ class InstanceManager {
 
   Result<void> SetAcloudTranslatorOptout(bool optout);
   Result<bool> GetAcloudTranslatorOptout() const;
-
-  struct UserGroupSelectionSummary {
-    // Index to group name. This is the index printed in the menu
-    // This field offers mapping between the number/index the user
-    // selects and the group that is to be chosen
-    std::unordered_map<int, std::string> idx_to_group_name;
-    std::string menu;
-  };
-  Result<UserGroupSelectionSummary> GroupSummaryMenu() const;
 
   Result<void> IssueStopCommand(const SharedFD& out, const SharedFD& err,
                                 const std::string& config_file_path,

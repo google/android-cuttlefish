@@ -25,6 +25,7 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
@@ -190,12 +191,12 @@ std::string DefaultBaseDir() {
   return fmt::format("{}/{}", PerUserDir(), time);
 }
 
-std::string GroupDirFromHome(std::string_view dir) {
+Result<std::string> GroupDirFromHome(std::string_view dir) {
   std::string per_user_dir = PerUserDir();
   // Just in case it has a / at the end, ignore result
   while (android::base::ConsumeSuffix(&dir, "/")) {}
-  CHECK(android::base::ConsumeSuffix(&dir, "/home"))
-      << "Unexpected group home directory: " << dir;
+  CF_EXPECTF(android::base::ConsumeSuffix(&dir, "/home"),
+             "Unexpected group home directory: {}", dir);
   return std::string(dir);
 }
 
