@@ -380,6 +380,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
                                   .args = cmd_args,
                                   .envs = envs};
   result.envs["HOME"] = home;
+  result.envs[kAndroidHostOut] = android_host_out;
   extracted_info.invocation_info = result;
   extracted_info.group = instance_group;
   return extracted_info;
