@@ -36,7 +36,6 @@
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/interruptible_terminal.h"
 #include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -53,8 +52,7 @@ constexpr char kSummaryHelpText[] =
 class CvdGenericCommandHandler : public CvdServerHandler {
  public:
   CvdGenericCommandHandler(InstanceManager& instance_manager,
-                           SubprocessWaiter& subprocess_waiter,
-                           HostToolTargetManager& host_tool_target_manager);
+                           SubprocessWaiter& subprocess_waiter);
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
@@ -89,12 +87,9 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   Result<std::string> GetBin(const std::string& subcmd) const;
   Result<std::string> GetBin(const std::string& subcmd,
                              const std::string& host_artifacts_path) const;
-  bool IsStopCommand(const std::string& subcmd) const {
-    return subcmd == "stop" || subcmd == "stop_cvd";
-  }
-  // whether the "bin" is cvd bins like stop_cvd or not (e.g. ln, ls, mkdir)
-  // The information to fire the command might be different. This information
-  // is about what the executable binary is and how to find it.
+  // whether the "bin" is cvd bins like cvd_host_bugreport or not (e.g. ln, ls,
+  // mkdir) The information to fire the command might be different. This
+  // information is about what the executable binary is and how to find it.
   struct BinPathInfo {
     std::string bin_;
     std::string bin_path_;
@@ -107,7 +102,6 @@ class CvdGenericCommandHandler : public CvdServerHandler {
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
-  HostToolTargetManager& host_tool_target_manager_;
   using BinGeneratorType = std::function<Result<std::string>(
       const std::string& host_artifacts_path)>;
   std::map<std::string, std::string> command_to_binary_map_;
@@ -119,20 +113,14 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   static constexpr char kClearBin[] =
       "clear_placeholder";  // Unused, runs CvdClear()
   // Only indicates that host_tool_target_manager_ should generate at runtime
-  static constexpr char kBinGeneratedAtRuntime[] =
-      "host_tool_manager_generates_at_runtime_placeholder";
 };
 
 CvdGenericCommandHandler::CvdGenericCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
-    HostToolTargetManager& host_tool_target_manager)
+    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter)
     : instance_manager_(instance_manager),
       subprocess_waiter_(subprocess_waiter),
-      host_tool_target_manager_(host_tool_target_manager),
       command_to_binary_map_{{"host_bugreport", kHostBugreportBin},
                              {"cvd_host_bugreport", kHostBugreportBin},
-                             {"stop", kBinGeneratedAtRuntime},
-                             {"stop_cvd", kBinGeneratedAtRuntime},
                              {"clear", kClearBin},
                              {"mkdir", kMkdirBin},
                              {"ln", kLnBin}} {}
@@ -201,14 +189,6 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
   }
 
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
-
-  if (infop.si_code == CLD_EXITED && IsStopCommand(invocation_info.command)) {
-    if (group_opt.has_value()) {
-      auto& group = *group_opt;
-      group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
-      CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
-    }
-  }
 
   return ResponseFromSiginfo(infop);
 }
@@ -377,8 +357,8 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
 
       InstanceManager::Queries extra_queries{
           {selector::kGroupNameField, chosen_group_name}};
-      instance_group_result = instance_manager_.SelectGroup(
-          selector_args, envs, extra_queries);
+      instance_group_result =
+          instance_manager_.SelectGroup(selector_args, envs, extra_queries);
       if (instance_group_result.ok()) {
         break;
       }
@@ -413,29 +393,19 @@ Result<std::string> CvdGenericCommandHandler::GetBin(
     const std::string& subcmd) const {
   CF_EXPECT(Contains(command_to_binary_map_, subcmd));
   const auto& bin_name = command_to_binary_map_.at(subcmd);
-  CF_EXPECT(bin_name != kBinGeneratedAtRuntime);
   return bin_name;
 }
 
 Result<std::string> CvdGenericCommandHandler::GetBin(
     const std::string& subcmd, const std::string& host_artifacts_path) const {
   CF_EXPECT(Contains(command_to_binary_map_, subcmd));
-  const auto& bin_name = command_to_binary_map_.at(subcmd);
-  if (bin_name != kBinGeneratedAtRuntime) {
-    return GetBin(subcmd);
-  }
-  std::string calculated_bin_name =
-      CF_EXPECT(host_tool_target_manager_.ExecBaseName(
-          {.artifacts_path = host_artifacts_path, .op = subcmd}));
-  return calculated_bin_name;
+  return GetBin(subcmd);
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdGenericCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
-    HostToolTargetManager& host_tool_target_manager) {
-  return std::unique_ptr<CvdServerHandler>(new CvdGenericCommandHandler(
-      instance_manager, subprocess_waiter,
-      host_tool_target_manager));
+    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter) {
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdGenericCommandHandler(instance_manager, subprocess_waiter));
 }
 
 }  // namespace cuttlefish
