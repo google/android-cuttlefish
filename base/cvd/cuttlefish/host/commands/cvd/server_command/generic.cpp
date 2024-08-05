@@ -52,8 +52,7 @@ constexpr char kSummaryHelpText[] =
 
 class CvdGenericCommandHandler : public CvdServerHandler {
  public:
-  CvdGenericCommandHandler(InstanceLockFileManager& instance_lockfile_manager,
-                           InstanceManager& instance_manager,
+  CvdGenericCommandHandler(InstanceManager& instance_manager,
                            SubprocessWaiter& subprocess_waiter,
                            HostToolTargetManager& host_tool_target_manager);
 
@@ -106,7 +105,6 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   Result<BinPathInfo> CvdHelpBinPath(const std::string& subcmd,
                                      const cvd_common::Envs& envs) const;
 
-  InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
@@ -126,11 +124,9 @@ class CvdGenericCommandHandler : public CvdServerHandler {
 };
 
 CvdGenericCommandHandler::CvdGenericCommandHandler(
-    InstanceLockFileManager& instance_lockfile_manager,
     InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
     HostToolTargetManager& host_tool_target_manager)
-    : instance_lockfile_manager_(instance_lockfile_manager),
-      instance_manager_(instance_manager),
+    : instance_manager_(instance_manager),
       subprocess_waiter_(subprocess_waiter),
       host_tool_target_manager_(host_tool_target_manager),
       command_to_binary_map_{{"host_bugreport", kHostBugreportBin},
@@ -435,11 +431,10 @@ Result<std::string> CvdGenericCommandHandler::GetBin(
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdGenericCommandHandler(
-    InstanceLockFileManager& instance_lockfile_manager,
     InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
     HostToolTargetManager& host_tool_target_manager) {
   return std::unique_ptr<CvdServerHandler>(new CvdGenericCommandHandler(
-      instance_lockfile_manager, instance_manager, subprocess_waiter,
+      instance_manager, subprocess_waiter,
       host_tool_target_manager));
 }
 

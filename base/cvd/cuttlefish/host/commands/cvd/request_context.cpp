@@ -75,8 +75,7 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(
       NewCvdFleetCommandHandler(instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(NewCvdGenericCommandHandler(
-      instance_lockfile_manager_, instance_manager_, subprocess_waiter_,
-      host_tool_target_manager_));
+      instance_manager_, subprocess_waiter_, host_tool_target_manager_));
   request_handlers_.emplace_back(
       NewCvdServerHandlerProxy(command_sequence_executor_));
   request_handlers_.emplace_back(NewCvdHelpHandler(this->request_handlers_));
