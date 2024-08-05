@@ -18,7 +18,6 @@
 
 #include <memory>
 
-#include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
@@ -26,7 +25,6 @@
 namespace cuttlefish {
 
 std::unique_ptr<CvdServerHandler> NewCvdGenericCommandHandler(
-    InstanceLockFileManager& instance_lockfile_manager,
     InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
     HostToolTargetManager& host_tool_target_manager);
 
