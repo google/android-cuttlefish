@@ -37,7 +37,7 @@ KERNEL_MODULES_PATH ?= \
     kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/$(subst _,-,$(TARGET_KERNEL_ARCH))
 
 # Emulate 16KB page size
-BOARD_KERNEL_CMDLINE += androidboot.page_shift=14
+BOARD_KERNEL_CMDLINE += page_shift=14
 
 TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_RO_FILE_SYSTEM_TYPE := ext4
