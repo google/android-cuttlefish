@@ -1,0 +1,3 @@
+type hal_keymint_system, domain, coredomain;
+type hal_keymint_system_exec, exec_type, system_file_type, file_type;
+init_daemon_domain(hal_keymint_system)
