@@ -49,6 +49,7 @@
 #include "host/commands/cvd/server_command/snapshot.h"
 #include "host/commands/cvd/server_command/start.h"
 #include "host/commands/cvd/server_command/status.h"
+#include "host/commands/cvd/server_command/stop.h"
 #include "host/commands/cvd/server_command/try_acloud.h"
 #include "host/commands/cvd/server_command/version.h"
 
@@ -74,7 +75,9 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(NewCvdFetchCommandHandler());
   request_handlers_.emplace_back(
       NewCvdFleetCommandHandler(instance_manager_, host_tool_target_manager_));
-  request_handlers_.emplace_back(NewCvdGenericCommandHandler(
+  request_handlers_.emplace_back(
+      NewCvdGenericCommandHandler(instance_manager_, subprocess_waiter_));
+  request_handlers_.emplace_back(NewCvdStopCommandHandler(
       instance_manager_, subprocess_waiter_, host_tool_target_manager_));
   request_handlers_.emplace_back(
       NewCvdServerHandlerProxy(command_sequence_executor_));
