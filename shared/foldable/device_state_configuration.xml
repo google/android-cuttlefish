@@ -3,10 +3,10 @@
     <identifier>0</identifier>
     <name>CLOSED</name>
     <properties>
-      <property>PROPERTY_POLICY_CANCEL_OVERRIDE_REQUESTS</property>
-      <property>PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_CLOSED</property>
-      <property>PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_OUTER_PRIMARY</property>
-      <property>PROPERTY_POWER_CONFIGURATION_TRIGGER_SLEEP</property>
+      <property>com.android.server.policy.PROPERTY_POLICY_CANCEL_OVERRIDE_REQUESTS</property>
+      <property>com.android.server.policy.PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_CLOSED</property>
+      <property>com.android.server.policy.PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_OUTER_PRIMARY</property>
+      <property>com.android.server.policy.PROPERTY_POWER_CONFIGURATION_TRIGGER_SLEEP</property>
     </properties>
     <conditions>
       <lid-switch>
@@ -18,9 +18,9 @@
     <identifier>1</identifier>
     <name>HALF_OPENED</name>
     <properties>
-      <property>PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_HALF_OPEN</property>
-      <property>PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_INNER_PRIMARY</property>
-      <property>PROPERTY_POWER_CONFIGURATION_TRIGGER_WAKE</property>
+      <property>com.android.server.policy.PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_HALF_OPEN</property>
+      <property>com.android.server.policy.PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_INNER_PRIMARY</property>
+      <property>com.android.server.policy.PROPERTY_POWER_CONFIGURATION_TRIGGER_WAKE</property>
     </properties>
     <conditions>
       <lid-switch>
@@ -40,9 +40,9 @@
     <identifier>2</identifier>
     <name>OPENED</name>
     <properties>
-      <property>PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_OPEN</property>
-      <property>PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_INNER_PRIMARY</property>
-      <property>PROPERTY_POWER_CONFIGURATION_TRIGGER_WAKE</property>
+      <property>com.android.server.policy.PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_OPEN</property>
+      <property>com.android.server.policy.PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_INNER_PRIMARY</property>
+      <property>com.android.server.policy.PROPERTY_POWER_CONFIGURATION_TRIGGER_WAKE</property>
     </properties>
     <conditions>
       <lid-switch>
@@ -54,10 +54,10 @@
     <identifier>3</identifier>
     <name>REAR_DISPLAY_MODE</name>
     <properties>
-      <property>PROPERTY_EMULATED_ONLY</property>
-      <property>PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_OUTER_PRIMARY</property>
-      <property>PROPERTY_POLICY_AVAILABLE_FOR_APP_REQUEST</property>
-      <property>PROPERTY_FEATURE_REAR_DISPLAY</property>
+      <property>com.android.server.policy.PROPERTY_EMULATED_ONLY</property>
+      <property>com.android.server.policy.PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_OUTER_PRIMARY</property>
+      <property>com.android.server.policy.PROPERTY_POLICY_AVAILABLE_FOR_APP_REQUEST</property>
+      <property>com.android.server.policy.PROPERTY_FEATURE_REAR_DISPLAY</property>
     </properties>
   </device-state>
 </device-state-config>
