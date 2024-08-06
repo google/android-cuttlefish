@@ -21,6 +21,6 @@ override_dh_installinit:
 	dh_installinit
 
 override_dh_auto_build:
-	cd cvd && bazel build cuttlefish:cvd --spawn_strategy=local
+	cd cvd && bazel build --linkopt="-Wl,--build-id=sha1" cuttlefish:cvd --spawn_strategy=local
 	dh_auto_build
 
