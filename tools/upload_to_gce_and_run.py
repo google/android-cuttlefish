@@ -35,7 +35,7 @@ def upload_artifacts(args):
   try:
     os.chdir(args.image_dir)
     artifacts = []
-    artifact_patterns = ['*.img', 'bootloader']
+    artifact_patterns = ['*.img', 'bootloader', 'android-info.txt']
     for artifact_pattern in artifact_patterns:
       artifacts.extend(glob.glob(artifact_pattern))
     if len(artifacts) == 0:
