@@ -53,7 +53,6 @@ constexpr char kSummaryHelpText[] =
 class CvdStopCommandHandler : public CvdServerHandler {
  public:
   CvdStopCommandHandler(InstanceManager& instance_manager,
-                        SubprocessWaiter& subprocess_waiter,
                         HostToolTargetManager& host_tool_target_manager);
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override;
@@ -80,17 +79,16 @@ class CvdStopCommandHandler : public CvdServerHandler {
                                      const cvd_common::Envs& envs) const;
 
   InstanceManager& instance_manager_;
-  SubprocessWaiter& subprocess_waiter_;
+  SubprocessWaiter subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
   using BinGeneratorType = std::function<Result<std::string>(
       const std::string& host_artifacts_path)>;
 };
 
 CvdStopCommandHandler::CvdStopCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+    InstanceManager& instance_manager,
     HostToolTargetManager& host_tool_target_manager)
     : instance_manager_(instance_manager),
-      subprocess_waiter_(subprocess_waiter),
       host_tool_target_manager_(host_tool_target_manager) {}
 
 Result<bool> CvdStopCommandHandler::CanHandle(
@@ -294,10 +292,10 @@ Result<std::string> CvdStopCommandHandler::GetBin(
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdStopCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+    InstanceManager& instance_manager,
     HostToolTargetManager& host_tool_target_manager) {
-  return std::unique_ptr<CvdServerHandler>(new CvdStopCommandHandler(
-      instance_manager, subprocess_waiter, host_tool_target_manager));
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdStopCommandHandler(instance_manager, host_tool_target_manager));
 }
 
 }  // namespace cuttlefish

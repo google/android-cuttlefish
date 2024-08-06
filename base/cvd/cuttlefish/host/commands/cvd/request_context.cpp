@@ -69,16 +69,15 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(
       NewCvdCmdlistHandler(command_sequence_executor_));
   request_handlers_.emplace_back(
-      NewCvdDisplayCommandHandler(instance_manager_, subprocess_waiter_));
-  request_handlers_.emplace_back(
-      NewCvdEnvCommandHandler(instance_manager_, subprocess_waiter_));
+      NewCvdDisplayCommandHandler(instance_manager_));
+  request_handlers_.emplace_back(NewCvdEnvCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdFetchCommandHandler());
   request_handlers_.emplace_back(
       NewCvdFleetCommandHandler(instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(
-      NewCvdGenericCommandHandler(instance_manager_, subprocess_waiter_));
-  request_handlers_.emplace_back(NewCvdStopCommandHandler(
-      instance_manager_, subprocess_waiter_, host_tool_target_manager_));
+      NewCvdGenericCommandHandler(instance_manager_));
+  request_handlers_.emplace_back(
+      NewCvdStopCommandHandler(instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(
       NewCvdServerHandlerProxy(command_sequence_executor_));
   request_handlers_.emplace_back(NewCvdHelpHandler(this->request_handlers_));
@@ -86,14 +85,14 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(
       NewLoadConfigsCommand(command_sequence_executor_, instance_manager_));
   request_handlers_.emplace_back(NewCvdDevicePowerCommandHandler(
-      host_tool_target_manager_, instance_manager_, subprocess_waiter_));
+      host_tool_target_manager_, instance_manager_));
   request_handlers_.emplace_back(NewRemoveCvdCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdResetCommandHandler(instance_manager_));
   request_handlers_.emplace_back(
       NewSerialLaunchCommand(command_sequence_executor_, lock_file_manager_));
   request_handlers_.emplace_back(NewSerialPreset(command_sequence_executor_));
   request_handlers_.emplace_back(NewCvdSnapshotCommandHandler(
-      instance_manager_, subprocess_waiter_, host_tool_target_manager_));
+      instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(
       NewCvdStartCommandHandler(instance_manager_, host_tool_target_manager_,
                                 command_sequence_executor_));

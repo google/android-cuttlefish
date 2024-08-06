@@ -27,6 +27,7 @@
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -44,15 +45,10 @@ cvd env ls $SERVICE_NAME $METHOD_NAME - list information on input + output messa
 cvd env type $SERVICE_NAME $REQUEST_MESSAGE_TYPE - outputs the proto the specified request message type
 )";
 
-}  // namespace
-
 class CvdEnvCommandHandler : public CvdServerHandler {
  public:
-  CvdEnvCommandHandler(InstanceManager& instance_manager,
-                       SubprocessWaiter& subprocess_waiter)
-      : instance_manager_{instance_manager},
-        subprocess_waiter_(subprocess_waiter),
-        cvd_env_operations_{"env"} {}
+  CvdEnvCommandHandler(InstanceManager& instance_manager)
+      : instance_manager_{instance_manager}, cvd_env_operations_{"env"} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
@@ -139,16 +135,17 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   }
 
   InstanceManager& instance_manager_;
-  SubprocessWaiter& subprocess_waiter_;
+  SubprocessWaiter subprocess_waiter_;
   std::vector<std::string> cvd_env_operations_;
 
   static constexpr char kCvdEnvBin[] = "cvd_internal_env";
 };
 
-std::unique_ptr<CvdServerHandler> NewCvdEnvCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter) {
-  return std::unique_ptr<CvdServerHandler>(
-      new CvdEnvCommandHandler(instance_manager, subprocess_waiter));
-}
+}  // namespace
 
+std::unique_ptr<CvdServerHandler> NewCvdEnvCommandHandler(
+    InstanceManager& instance_manager) {
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdEnvCommandHandler(instance_manager));
+}
 }  // namespace cuttlefish

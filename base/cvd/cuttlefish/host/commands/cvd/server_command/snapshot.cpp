@@ -62,15 +62,11 @@ QEMU:
 
 )";
 
-}  // namespace
-
 class CvdSnapshotCommandHandler : public CvdServerHandler {
  public:
   CvdSnapshotCommandHandler(InstanceManager& instance_manager,
-                            SubprocessWaiter& subprocess_waiter,
                             HostToolTargetManager& host_tool_target_manager)
       : instance_manager_{instance_manager},
-        subprocess_waiter_(subprocess_waiter),
         host_tool_target_manager_(host_tool_target_manager),
         cvd_snapshot_operations_{"suspend", "resume", "snapshot_take"} {}
 
@@ -175,16 +171,18 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
   }
 
   InstanceManager& instance_manager_;
-  SubprocessWaiter& subprocess_waiter_;
+  SubprocessWaiter subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
   std::vector<std::string> cvd_snapshot_operations_;
 };
 
+}  // namespace
+
 std::unique_ptr<CvdServerHandler> NewCvdSnapshotCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+    InstanceManager& instance_manager,
     HostToolTargetManager& host_tool_target_manager) {
   return std::unique_ptr<CvdServerHandler>(new CvdSnapshotCommandHandler(
-      instance_manager, subprocess_waiter, host_tool_target_manager));
+      instance_manager, host_tool_target_manager));
 }
 
 }  // namespace cuttlefish
