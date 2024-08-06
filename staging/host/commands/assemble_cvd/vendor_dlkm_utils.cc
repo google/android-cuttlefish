@@ -28,12 +28,15 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/kernel_module_parser.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/config_utils.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -263,30 +266,28 @@ std::set<std::string> ComputeTransitiveClosure(
 
 // Generate a file_context.bin file which can be used by selinux tools to assign
 // selinux labels to files
-bool GenerateFileContexts(const char* output_path,
-                          const std::string& mount_point,
-                          std::string_view file_label) {
-  const auto file_contexts_txt = std::string(output_path) + ".txt";
-  android::base::unique_fd fd(open(file_contexts_txt.c_str(),
-                                   O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
-                                   0644));
-  if (!fd.ok()) {
-    PLOG(ERROR) << "Failed to open " << output_path;
-    return false;
-  }
+Result<void> GenerateFileContexts(const std::string& output_path,
+                                  std::string_view mount_point,
+                                  std::string_view file_label) {
+  const std::string file_contexts_txt = output_path + ".txt";
+  SharedFD fd = SharedFD::Open(file_contexts_txt,
+                               O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
+  CF_EXPECTF(fd->IsOpen(), "Can't open '{}': {}", output_path, fd->StrError());
 
-  if (!android::base::WriteStringToFd(
-          fmt::format("{}(/.*)?         u:object_r:{}:s0\n", mount_point,
-                      file_label),
-          fd)) {
-    return false;
-  }
-  Command cmd(HostBinaryPath("sefcontext_compile"));
-  cmd.AddParameter("-o");
-  cmd.AddParameter(output_path);
-  cmd.AddParameter(file_contexts_txt);
-  const auto exit_code = cmd.Start().Wait();
-  return exit_code == 0;
+  std::string line = fmt::format("{}(/.*)?         u:object_r:{}:s0\n",
+                                 mount_point, file_label);
+  CF_EXPECT_EQ(WriteAll(fd, line), line.size(), fd->StrError());
+
+  int exit_code = Execute({
+      HostBinaryPath("sefcontext_compile"),
+      "-o",
+      output_path,
+      file_contexts_txt,
+  });
+
+  CF_EXPECT_EQ(exit_code, 0);
+
+  return {};
 }
 
 bool AddVbmetaFooter(const std::string& output_image,
