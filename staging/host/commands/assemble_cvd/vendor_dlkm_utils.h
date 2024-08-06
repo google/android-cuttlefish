@@ -29,12 +29,13 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
 bool WriteFsConfig(const char* output_path, const std::string& fs_root,
                    const std::string& mount_point);
 
-bool RepackSuperWithPartition(const std::string& superimg_path,
-                              const std::string& image_path,
-                              const std::string& partition_name);
+Result<void> RepackSuperWithPartition(const std::string& superimg_path,
+                                      const std::string& image_path,
+                                      const std::string& partition_name);
 
-bool BuildVbmetaImage(const std::string& vendor_dlkm_img,
-                      const std::string& vbmeta_path);
+Result<void> BuildVbmetaImage(const std::string& vendor_dlkm_img,
+                              const std::string& vbmeta_path);
+
 Result<void> BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
                             const std::string& partition_name,
                             const std::string& output_image);
