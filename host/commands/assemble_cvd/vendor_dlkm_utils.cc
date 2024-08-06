@@ -290,37 +290,34 @@ Result<void> GenerateFileContexts(const std::string& output_path,
   return {};
 }
 
-bool AddVbmetaFooter(const std::string& output_image,
-                     const std::string& partition_name) {
+Result<void> AddVbmetaFooter(const std::string& output_image,
+                             const std::string& partition_name) {
   // TODO(b/335742241): update to use Avb
-  auto avbtool_path = AvbToolBinary();
-  Command avb_cmd(avbtool_path);
-  // Add host binary path to PATH, so that avbtool can locate host util
-  // binaries such as 'fec'
-  auto PATH =
-      StringFromEnv("PATH", "") + ":" + cpp_dirname(avb_cmd.Executable());
-  // Must unset an existing environment variable in order to modify it
-  avb_cmd.UnsetFromEnvironment("PATH");
-  avb_cmd.AddEnvironmentVariable("PATH", PATH);
+  std::string avbtool_path = AvbToolBinary();
+  // Add host binary path to PATH, so that avbtool can locate host util binaries
+  // such as 'fec'
+  std::string env_path =
+      StringFromEnv("PATH", "") + ":" + cpp_dirname(avbtool_path);
+  Command avb_cmd =
+      Command(AvbToolBinary())
+          // Must unset an existing environment variable in order to modify it
+          .UnsetFromEnvironment("PATH")
+          .AddEnvironmentVariable("PATH", env_path)
+          .AddParameter("add_hashtree_footer")
+          // Arbitrary salt to keep output consistent
+          .AddParameter("--salt")
+          .AddParameter("62BBAAA0", "E4BD99E783AC")
+          .AddParameter("--hash_algorithm")
+          .AddParameter("sha256")
+          .AddParameter("--image")
+          .AddParameter(output_image)
+          .AddParameter("--partition_name")
+          .AddParameter(partition_name);
 
-  avb_cmd.AddParameter("add_hashtree_footer");
-  // Arbitrary salt to keep output consistent
-  avb_cmd.AddParameter("--salt");
-  avb_cmd.AddParameter("62BBAAA0", "E4BD99E783AC");
-  avb_cmd.AddParameter("--hash_algorithm");
-  avb_cmd.AddParameter("sha256");
-  avb_cmd.AddParameter("--image");
-  avb_cmd.AddParameter(output_image);
-  avb_cmd.AddParameter("--partition_name");
-  avb_cmd.AddParameter(partition_name);
+  CF_EXPECT_EQ(avb_cmd.Start().Wait(), 0,
+               "Failed to add avb footer to image " << output_image);
 
-  auto exit_code = avb_cmd.Start().Wait();
-  if (exit_code != 0) {
-    LOG(ERROR) << "Failed to add avb footer to image " << output_image;
-    return false;
-  }
-
-  return true;
+  return {};
 }
 
 }  // namespace
@@ -387,32 +384,31 @@ Result<void> BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
   return {};
 }
 
-bool RepackSuperWithPartition(const std::string& superimg_path,
-                              const std::string& image_path,
-                              const std::string& partition_name) {
-  Command lpadd(HostBinaryPath("lpadd"));
-  lpadd.AddParameter("--replace");
-  lpadd.AddParameter(superimg_path);
-  lpadd.AddParameter(partition_name + "_a");
-  lpadd.AddParameter("google_vendor_dynamic_partitions_a");
-  lpadd.AddParameter(image_path);
-  const auto exit_code = lpadd.Start().Wait();
-  return exit_code == 0;
+Result<void> RepackSuperWithPartition(const std::string& superimg_path,
+                                      const std::string& image_path,
+                                      const std::string& partition_name) {
+  int exit_code = Execute({
+      HostBinaryPath("lpadd"),
+      "--replace",
+      superimg_path,
+      partition_name + "_a",
+      "google_vendor_dynamic_partitions_a",
+      image_path,
+  });
+  CF_EXPECT_EQ(exit_code, 0);
+
+  return {};
 }
 
-bool BuildVbmetaImage(const std::string& image_path,
-                      const std::string& vbmeta_path) {
-  CHECK(!image_path.empty());
-  CHECK(FileExists(image_path));
+Result<void> BuildVbmetaImage(const std::string& image_path,
+                              const std::string& vbmeta_path) {
+  CF_EXPECT(!image_path.empty());
+  CF_EXPECTF(FileExists(image_path), "'{}' does not exist", image_path);
 
   std::unique_ptr<Avb> avbtool = GetDefaultAvb();
-  Result<void> result = avbtool->MakeVbMetaImage(vbmeta_path, {}, {image_path},
-                                                 {"--padding_size", "4096"});
-  if (!result.ok()) {
-    LOG(ERROR) << result.error().Trace();
-    return false;
-  }
-  return true;
+  CF_EXPECT(avbtool->MakeVbMetaImage(vbmeta_path, {}, {image_path},
+                                     {"--padding_size", "4096"}));
+  return {};
 }
 
 std::vector<std::string> Dedup(std::vector<std::string>&& vec) {
