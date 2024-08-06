@@ -130,7 +130,7 @@ func init() {
 		"https://github.com/google/android-cuttlefish.git",
 		"URL to the repository with host changes")
 	flag.StringVar(&repository_branch, "repository_branch",
-		"main", "Branch to check out")
+		"v0.9.30", "Branch to check out")
 	flag.StringVar(&version, "version", "", "cuttlefish-common version")
 	flag.StringVar(&internal_ip_flag, "INTERNAL_IP", "",
 		"INTERNAL_IP can be set to --internal-ip run on a GCE instance."+

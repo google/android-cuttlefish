@@ -40,7 +40,7 @@ DEFINE_string source_image_project debian-cloud \
 DEFINE_string repository_url \
   "https://github.com/google/android-cuttlefish.git" \
   "URL to the repository with host changes" "u"
-DEFINE_string repository_branch main \
+DEFINE_string repository_branch v0.9.30 \
   "Branch to check out" "b"
 
 
