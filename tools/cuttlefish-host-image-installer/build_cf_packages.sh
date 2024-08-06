@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CUTTLEFISH_GIT_BRANCH=$(python3 version_parser.py ../../base/debian/changelog stable)
+CUTTLEFISH_GIT_BRANCH=v$(python3 version_parser.py ../../base/debian/changelog stable)
 
 TDIR=`pwd`/cuttlefish-common-buildplace
 mkdir -p "${TDIR}"
