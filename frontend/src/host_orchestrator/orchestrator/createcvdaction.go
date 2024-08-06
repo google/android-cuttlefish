@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -44,7 +45,7 @@ type CreateCVDActionOpts struct {
 	ArtifactsFetcher         artifacts.Fetcher
 	CVDBundleFetcher         artifacts.CVDBundleFetcher
 	UUIDGen                  func() string
-	CVDUser                  string
+	CVDUser                  *user.User
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	BuildAPICredentials      string
 }
@@ -61,7 +62,7 @@ type CreateCVDAction struct {
 	userArtifactsDirResolver UserArtifactsDirResolver
 	artifactsMngr            *artifacts.Manager
 	startCVDHandler          *startCVDHandler
-	cvdUser                  string
+	cvdUser                  *user.User
 	buildAPICredentials      string
 
 	instanceCounter uint32

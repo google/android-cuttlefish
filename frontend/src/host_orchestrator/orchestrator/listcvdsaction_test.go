@@ -117,7 +117,6 @@ func TestListCVDsSucceeds(t *testing.T) {
 		opts := ListCVDsActionOpts{
 			Group:       test.group,
 			ExecContext: execContext,
-			CVDUser:     fakeCVDUser,
 		}
 		action := NewListCVDsAction(opts)
 
