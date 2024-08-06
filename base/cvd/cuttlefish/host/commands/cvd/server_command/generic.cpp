@@ -171,18 +171,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
       .err = request.Err()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
-  SubprocessOptions options;
-  if (request.Message().command_request().wait_behavior() ==
-      cvd::WAIT_BEHAVIOR_START) {
-    options.ExitWithParent(false);
-  }
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start(std::move(options))));
-
-  if (request.Message().command_request().wait_behavior() ==
-      cvd::WAIT_BEHAVIOR_START) {
-    response.mutable_status()->set_code(cvd::Status::OK);
-    return response;
-  }
+  CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
 
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
 

@@ -183,10 +183,6 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
     return response;
   }
 
-  CF_EXPECT_NE(request.Message().command_request().wait_behavior(),
-               cvd::WAIT_BEHAVIOR_START,
-               "cvd status shouldn't be cvd::WAIT_BEHAVIOR_START");
-
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
   CF_EXPECT(Contains(supported_subcmds_, subcmd));
   const bool has_print = CF_EXPECT(HasPrint(cmd_args));
