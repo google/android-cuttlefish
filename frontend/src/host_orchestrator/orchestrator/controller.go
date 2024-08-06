@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -40,7 +41,7 @@ const HeaderBuildAPICreds = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
 type Config struct {
 	Paths                  IMPaths
 	AndroidBuildServiceURL string
-	CVDUser                string
+	CVDUser                *user.User
 }
 
 type Controller struct {

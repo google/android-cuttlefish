@@ -91,7 +91,6 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 		Paths:            paths,
 		OperationManager: om,
 		ExecContext:      execContext,
-		CVDUser:          fakeCVDUser,
 	}
 	action := NewCreateCVDAction(opts)
 

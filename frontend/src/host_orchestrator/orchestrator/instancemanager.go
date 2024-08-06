@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -76,11 +77,11 @@ func (s *CVDSelector) ToCVDCLI() []string {
 }
 
 // Creates a CVD execution context from a regular execution context.
-// If a non-empty user name is provided the returned execution context executes commands as that user.
-func newCVDExecContext(execContext ExecContext, user string) cvd.CVDExecContext {
-	if user != "" {
+// If a non-nil user is provided the returned execution context executes commands as that user.
+func newCVDExecContext(execContext ExecContext, usr *user.User) cvd.CVDExecContext {
+	if usr != nil {
 		return func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd {
-			newArgs := []string{"-u", user}
+			newArgs := []string{"-u", usr.Username}
 			if env != nil {
 				newArgs = append(newArgs, env...)
 			}

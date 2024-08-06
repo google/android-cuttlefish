@@ -36,8 +36,6 @@ func (AlwaysSucceedsValidator) Validate() error {
 
 const fakeLatesGreenBuildID = "9551522"
 
-const fakeCVDUser = "fakecvduser"
-
 type fakeBuildAPI struct{}
 
 func (fakeBuildAPI) GetLatestGreenBuildID(string, string) (string, error) {
