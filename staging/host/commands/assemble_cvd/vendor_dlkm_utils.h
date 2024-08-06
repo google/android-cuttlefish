@@ -29,9 +29,6 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
 bool WriteFsConfig(const char* output_path, const std::string& fs_root,
                    const std::string& mount_point);
 
-bool GenerateFileContexts(const char* output_path,
-                          const std::string& mount_point);
-
 bool RepackSuperWithPartition(const std::string& superimg_path,
                               const std::string& image_path,
                               const std::string& partition_name);
