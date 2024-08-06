@@ -1,5 +1,7 @@
 #!/bin/sh
 
+CUTTLEFISH_GIT_BRANCH=v$(python3 version_parser.py ../../base/debian/changelog stable)
+
 TDIR=`pwd`/cuttlefish-common-buildplace
 mkdir -p "${TDIR}"
 
@@ -15,6 +17,7 @@ wget "https://github.com/bazelbuild/bazelisk/releases/download/v1.19.0/bazelisk-
 mv bazelisk-linux-arm64 /usr/local/bin/bazel
 chmod 0755 /usr/local/bin/bazel
 export PATH=$PATH:/usr/local/bin
+export CUTTLEFISH_GIT_BRANCH="${CUTTLEFISH_GIT_BRANCH}"
 
 mkdir -p /tmp/b1
 
