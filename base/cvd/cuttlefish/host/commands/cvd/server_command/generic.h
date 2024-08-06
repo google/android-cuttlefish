@@ -25,6 +25,6 @@
 namespace cuttlefish {
 
 std::unique_ptr<CvdServerHandler> NewCvdGenericCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter);
+    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

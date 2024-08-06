@@ -47,12 +47,9 @@ namespace {
 constexpr char kSummaryHelpText[] =
     "Run cvd <command> --help for command description";
 
-}  // namespace
-
 class CvdGenericCommandHandler : public CvdServerHandler {
  public:
-  CvdGenericCommandHandler(InstanceManager& instance_manager,
-                           SubprocessWaiter& subprocess_waiter);
+  CvdGenericCommandHandler(InstanceManager& instance_manager);
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
@@ -101,7 +98,7 @@ class CvdGenericCommandHandler : public CvdServerHandler {
                                      const cvd_common::Envs& envs) const;
 
   InstanceManager& instance_manager_;
-  SubprocessWaiter& subprocess_waiter_;
+  SubprocessWaiter subprocess_waiter_;
   using BinGeneratorType = std::function<Result<std::string>(
       const std::string& host_artifacts_path)>;
   std::map<std::string, std::string> command_to_binary_map_;
@@ -116,9 +113,8 @@ class CvdGenericCommandHandler : public CvdServerHandler {
 };
 
 CvdGenericCommandHandler::CvdGenericCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter)
+    InstanceManager& instance_manager)
     : instance_manager_(instance_manager),
-      subprocess_waiter_(subprocess_waiter),
       command_to_binary_map_{{"host_bugreport", kHostBugreportBin},
                              {"cvd_host_bugreport", kHostBugreportBin},
                              {"clear", kClearBin},
@@ -402,10 +398,12 @@ Result<std::string> CvdGenericCommandHandler::GetBin(
   return GetBin(subcmd);
 }
 
+}  // namespace
+
 std::unique_ptr<CvdServerHandler> NewCvdGenericCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter) {
+    InstanceManager& instance_manager) {
   return std::unique_ptr<CvdServerHandler>(
-      new CvdGenericCommandHandler(instance_manager, subprocess_waiter));
+      new CvdGenericCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

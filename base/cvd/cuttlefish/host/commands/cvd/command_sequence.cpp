@@ -17,6 +17,8 @@
 
 #include <memory>
 
+#include <android-base/strings.h>
+
 #include "common/libs/fs/shared_buf.h"
 #include "host/commands/cvd/request_context.h"
 #include "host/commands/cvd/server_client.h"

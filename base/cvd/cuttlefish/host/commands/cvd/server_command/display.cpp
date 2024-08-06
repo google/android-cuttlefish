@@ -32,6 +32,7 @@
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -51,14 +52,11 @@ Commands:
     list                Prints the currently connected displays.
     remove              Removes a display from a given device.
 )";
-}
 
 class CvdDisplayCommandHandler : public CvdServerHandler {
  public:
-  CvdDisplayCommandHandler(InstanceManager& instance_manager,
-                           SubprocessWaiter& subprocess_waiter)
+  CvdDisplayCommandHandler(InstanceManager& instance_manager)
       : instance_manager_{instance_manager},
-        subprocess_waiter_(subprocess_waiter),
         cvd_display_operations_{"display"} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
@@ -188,15 +186,17 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
   }
 
   InstanceManager& instance_manager_;
-  SubprocessWaiter& subprocess_waiter_;
+  SubprocessWaiter subprocess_waiter_;
   std::vector<std::string> cvd_display_operations_;
   static constexpr char kDisplayBin[] = "cvd_internal_display";
 };
 
+}  // namespace
+
 std::unique_ptr<CvdServerHandler> NewCvdDisplayCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter) {
+    InstanceManager& instance_manager) {
   return std::unique_ptr<CvdServerHandler>(
-      new CvdDisplayCommandHandler(instance_manager, subprocess_waiter));
+      new CvdDisplayCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

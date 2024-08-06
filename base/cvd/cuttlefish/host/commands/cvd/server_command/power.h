@@ -28,6 +28,6 @@ namespace cuttlefish {
 // restart, powerwash, powerbtn
 std::unique_ptr<CvdServerHandler> NewCvdDevicePowerCommandHandler(
     HostToolTargetManager& host_tool_target_manager,
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter);
+    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

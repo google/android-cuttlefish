@@ -43,16 +43,12 @@ constexpr char kSummaryHelpText[] =
     "Trigger power button event on the device, reset device to first boot "
     "state, restart device";
 
-}  // namespace
-
 class CvdDevicePowerCommandHandler : public CvdServerHandler {
  public:
   CvdDevicePowerCommandHandler(HostToolTargetManager& host_tool_target_manager,
-                               InstanceManager& instance_manager,
-                               SubprocessWaiter& subprocess_waiter)
+                               InstanceManager& instance_manager)
       : host_tool_target_manager_(host_tool_target_manager),
-        instance_manager_{instance_manager},
-        subprocess_waiter_(subprocess_waiter) {
+        instance_manager_{instance_manager} {
     cvd_power_operations_["restart"] =
         [this](const std::string& android_host_out) -> Result<std::string> {
       return CF_EXPECT(RestartDeviceBin(android_host_out));
@@ -246,16 +242,18 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
 
   HostToolTargetManager& host_tool_target_manager_;
   InstanceManager& instance_manager_;
-  SubprocessWaiter& subprocess_waiter_;
+  SubprocessWaiter subprocess_waiter_;
   using BinGetter = std::function<Result<std::string>(const std::string&)>;
   std::unordered_map<std::string, BinGetter> cvd_power_operations_;
 };
 
+}  // namespace
+
 std::unique_ptr<CvdServerHandler> NewCvdDevicePowerCommandHandler(
     HostToolTargetManager& host_tool_target_manager,
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter) {
+    InstanceManager& instance_manager) {
   return std::unique_ptr<CvdServerHandler>(new CvdDevicePowerCommandHandler(
-      host_tool_target_manager, instance_manager, subprocess_waiter));
+      host_tool_target_manager, instance_manager));
 }
 
 }  // namespace cuttlefish

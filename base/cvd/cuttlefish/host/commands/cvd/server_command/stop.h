@@ -20,12 +20,11 @@
 
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
 std::unique_ptr<CvdServerHandler> NewCvdStopCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+    InstanceManager& instance_manager,
     HostToolTargetManager& host_tool_target_manager);
 
 }  // namespace cuttlefish
