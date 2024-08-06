@@ -84,8 +84,7 @@ class CvdServerHandlerProxy : public CvdServerHandler {
          .env = envs,
          .selector_args = selector_args,
          .working_dir =
-             request.Message().command_request().working_directory()},
-        request.Message().command_request().wait_behavior());
+             request.Message().command_request().working_directory()});
 
     RequestWithStdio forwarded_request(
         std::move(exec_request), request.FileDescriptors());

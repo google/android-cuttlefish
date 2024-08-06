@@ -818,9 +818,6 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
     const cvd_common::Envs& envs, const RequestWithStdio& request) {
   ShowLaunchCommand(launch_command, envs);
 
-  CF_EXPECT(request.Message().command_request().wait_behavior() !=
-            cvd::WAIT_BEHAVIOR_START);
-
   CF_EXPECT(subprocess_waiter_.Setup(launch_command.Start()));
 
   auto acloud_compat_action_result = AcloudCompatActions(group, envs, request);

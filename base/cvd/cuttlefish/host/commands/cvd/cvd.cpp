@@ -65,8 +65,7 @@ Result<cvd::Response> Cvd::HandleCommand(
     const std::vector<std::string>& selector_args) {
   cvd::Request request = MakeRequest({.cmd_args = cvd_process_args,
                                       .env = env,
-                                      .selector_args = selector_args},
-                                     cvd::WAIT_BEHAVIOR_COMPLETE);
+                                      .selector_args = selector_args});
 
   RequestContext context(instance_lockfile_manager_, instance_manager_,
                          host_tool_target_manager_);
