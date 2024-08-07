@@ -291,11 +291,10 @@ class SandboxManager::SocketClient {
 };
 
 SandboxManager::SandboxManager(HostInfo host_info, std::string runtime_dir,
-                               UniqueFd signal_fd,
-                               CredentialedUnixServer server)
+                               SignalFd signals, CredentialedUnixServer server)
     : host_info_(std::move(host_info)),
       runtime_dir_(std::move(runtime_dir)),
-      signal_fd_(std::move(signal_fd)),
+      signals_(std::move(signals)),
       server_(std::move(server)) {}
 
 absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
@@ -307,24 +306,10 @@ absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
   }
   VLOG(1) << "Created temporary directory '" << runtime_dir << "'";
 
-  sigset_t mask;
-  if (sigfillset(&mask) < 0) {
-    return absl::ErrnoToStatus(errno, "sigfillset failed");
+  absl::StatusOr<SignalFd> signals = SignalFd::AllExceptSigChld();
+  if (!signals.ok()) {
+    return signals.status();
   }
-  // TODO(schuffelen): Explore interaction between catching SIGCHLD and sandbox2
-  if (sigdelset(&mask, SIGCHLD) < 0) {
-    return absl::ErrnoToStatus(errno, "sigdelset failed");
-  }
-  if (sigprocmask(SIG_SETMASK, &mask, NULL) < 0) {
-    return absl::ErrnoToStatus(errno, "sigprocmask failed");
-  }
-  VLOG(1) << "Blocked signals";
-
-  UniqueFd signal_fd(signalfd(-1, &mask, SFD_CLOEXEC | SFD_NONBLOCK));
-  if (signal_fd.Get() < 0) {
-    return absl::ErrnoToStatus(errno, "signalfd failed");
-  }
-  VLOG(1) << "Created signalfd";
 
   absl::StatusOr<CredentialedUnixServer> server =
       CredentialedUnixServer::Open(ServerSocketOutsidePath(runtime_dir));
@@ -334,7 +319,7 @@ absl::StatusOr<std::unique_ptr<SandboxManager>> SandboxManager::Create(
 
   return absl::WrapUnique(
       new SandboxManager(std::move(host_info), std::move(runtime_dir),
-                         std::move(signal_fd), std::move(*server)));
+                         std::move(*signals), std::move(*server)));
 }
 
 SandboxManager::~SandboxManager() {
@@ -470,7 +455,7 @@ bool SandboxManager::Running() const { return running_; }
 absl::Status SandboxManager::Iterate() {
   PollCallback poll_cb;
 
-  poll_cb.Add(signal_fd_.Get(), bind_front(&SandboxManager::Signalled, this));
+  poll_cb.Add(signals_.Fd(), bind_front(&SandboxManager::Signalled, this));
   poll_cb.Add(server_.Fd(), bind_front(&SandboxManager::NewClient, this));
 
   for (auto it = subprocesses_.begin(); it != subprocesses_.end(); it++) {
@@ -490,27 +475,22 @@ absl::Status SandboxManager::Signalled(short revents) {
     running_ = false;
     return absl::InternalError("signalfd exited");
   }
-  signalfd_siginfo info;
-  auto read_res = read(signal_fd_.Get(), &info, sizeof(info));
-  if (read_res < 0) {
-    return absl::ErrnoToStatus(errno, "`read(signal_fd_, ...)` failed");
-  } else if (read_res == 0) {
-    return absl::InternalError("read(signal_fd_, ...) returned EOF");
-  } else if (read_res != (ssize_t)sizeof(info)) {
-    std::string err = absl::StrCat("read(signal_fd_, ...) gave '", read_res);
-    return absl::InternalError(err);
-  }
-  VLOG(1) << "Received signal with signo '" << info.ssi_signo << "'";
 
-  switch (info.ssi_signo) {
+  absl::StatusOr<signalfd_siginfo> info = signals_.ReadSignal();
+  if (!info.ok()) {
+    return info.status();
+  }
+  VLOG(1) << "Received signal with signo '" << info->ssi_signo << "'";
+
+  switch (info->ssi_signo) {
     case SIGHUP:
     case SIGINT:
     case SIGTERM:
-      LOG(INFO) << "Received signal '" << info.ssi_signo << "', exiting";
+      LOG(INFO) << "Received signal '" << info->ssi_signo << "', exiting";
       running_ = false;
       return absl::OkStatus();
     default:
-      std::string err = absl::StrCat("Unexpected signal ", info.ssi_signo);
+      std::string err = absl::StrCat("Unexpected signal ", info->ssi_signo);
       return absl::InternalError(err);
   }
 }
