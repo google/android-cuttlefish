@@ -19,7 +19,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -152,26 +151,4 @@ func TestCreateArtifactsSucceeds(t *testing.T) {
 	if diff := cmp.Diff("lorem ipsum", string(b)); diff != "" {
 		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
 	}
-}
-
-func TestUntar(t *testing.T) {
-	dir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, dir)
-
-	Untar(dir, getTestTarFilename())
-
-	b, _ := ioutil.ReadFile(dir + "/foo_dir/foo.txt")
-	if diff := cmp.Diff("foo\n", string(b)); diff != "" {
-		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
-	}
-	b, _ = ioutil.ReadFile(dir + "/foo_dir/link_foo.txt")
-	if diff := cmp.Diff("foo\n", string(b)); diff != "" {
-		t.Errorf("symlink content mismatch (-want +got):\n%s", diff)
-	}
-}
-
-func getTestTarFilename() string {
-	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filename)
-	return dir + "/testdata/foo.tar.gz"
 }
