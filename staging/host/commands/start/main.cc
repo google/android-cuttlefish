@@ -13,10 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifdef __linux__
-#include <sys/prctl.h>
-#endif
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -63,8 +59,6 @@ DEFINE_string(file_verbosity, CF_DEFAULTS_FILE_VERBOSITY,
 DEFINE_bool(use_overlay, CF_DEFAULTS_USE_OVERLAY,
             "Capture disk writes an overlay. This is a "
             "prerequisite for powerwash_cvd or multiple instances.");
-DEFINE_bool(share_sched_core, CF_DEFAULTS_SHARE_SCHED_CORE,
-            "Enable sharing cores between Cuttlefish processes.");
 DEFINE_bool(track_host_tools_crc, CF_DEFAULTS_TRACK_HOST_TOOLS_CRC,
             "Track changes to host executables");
 DEFINE_bool(enable_host_sandbox, CF_DEFAULTS_HOST_SANDBOX,
@@ -72,31 +66,6 @@ DEFINE_bool(enable_host_sandbox, CF_DEFAULTS_HOST_SANDBOX,
 
 namespace cuttlefish {
 namespace {
-
-#ifdef __linux__
-void ShareSchedCore() {
-  // Address ~32% performance penalty introduced with CONFIG_SCHED_CORE=y.
-  // Allowing co-scheduling reduces the performance penalty to ~16% on
-  // n2-standard-4 instances at best.
-#ifndef PR_SCHED_CORE
-#define PR_SCHED_CORE 62
-#endif
-#ifndef PR_SCHED_CORE_CREATE
-#define PR_SCHED_CORE_CREATE 1
-#endif
-#ifndef PR_SCHED_CORE_SCOPE_PROCESS_GROUP
-#define PR_SCHED_CORE_SCOPE_PROCESS_GROUP 2
-#endif
-  int sched = prctl(PR_SCHED_CORE, PR_SCHED_CORE_CREATE, getpid(),
-                    PR_SCHED_CORE_SCOPE_PROCESS_GROUP, 0);
-  if (sched != 0) {
-    PLOG(VERBOSE) << "Failed to apply co-scheduling policy. If the kernel has"
-                  << " CONFIG_SCHED_CORE=y, may be performance penalties.";
-  } else {
-    LOG(VERBOSE) << "Applied PR_SCHED_CORE co-scheduling policy";
-  }
-}
-#endif
 
 std::string SubtoolPath(const std::string& subtool_base) {
   auto my_own_dir = android::base::GetExecutableDirectory();
@@ -371,14 +340,6 @@ int CvdInternalStartMain(int argc, char** argv) {
   }
 
   gflags::ParseCommandLineNonHelpFlags(&argc, &argv, false);
-
-  if (FLAGS_share_sched_core) {
-#ifdef __linux__
-    ShareSchedCore();
-#else
-    LOG(ERROR) << "--shared_sched_core is unsupported on this platform";
-#endif
-  }
 
   forwarder.UpdateFlagDefaults();
 
