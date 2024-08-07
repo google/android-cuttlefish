@@ -15,9 +15,7 @@
 package orchestrator
 
 import (
-	"archive/tar"
 	"archive/zip"
-	"compress/gzip"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -27,7 +25,6 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
@@ -168,7 +165,7 @@ func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
 		return operator.NewBadRequestError(fmt.Sprintf("artifact %q does not exist", name), nil)
 	}
 	if strings.HasSuffix(filename, ".tar.gz") {
-		if err := Untar(dir, filename); err != nil {
+		if err := Untar(dir, filename, m.Owner); err != nil {
 			return fmt.Errorf("failed extracting %q: %w", name, err)
 		}
 	} else if strings.HasSuffix(filename, ".zip") {
@@ -181,55 +178,13 @@ func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
 	return nil
 }
 
-func Untar(dst string, src string) error {
-	r, err := os.Open(src)
+func Untar(dst string, src string, owner *user.User) error {
+	ctx := newCVDExecContext(exec.CommandContext, owner)
+	_, err := cvd.Exec(ctx, "tar", "-xf", src, "-C", dst)
 	if err != nil {
 		return err
 	}
-	defer r.Close()
-	gzr, err := gzip.NewReader(r)
-	if err != nil {
-		return err
-	}
-	defer gzr.Close()
-	tr := tar.NewReader(gzr)
-	for {
-		header, err := tr.Next()
-		if err == io.EOF {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		if header == nil {
-			continue
-		}
-		target := filepath.Join(dst, header.Name)
-		switch header.Typeflag {
-		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				oldmask := syscall.Umask(0)
-				err := os.MkdirAll(target, 0774)
-				syscall.Umask(oldmask)
-				if err != nil {
-					return err
-				}
-			}
-		case tar.TypeReg:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-			if err != nil {
-				return err
-			}
-			if _, err := io.Copy(f, tr); err != nil {
-				return err
-			}
-			f.Close()
-		case tar.TypeSymlink:
-			if err := os.Symlink(header.Linkname, target); err != nil {
-				return err
-			}
-		}
-	}
+	return nil
 }
 
 func Unzip(dstDir string, src string) error {
