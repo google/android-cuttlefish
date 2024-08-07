@@ -115,14 +115,14 @@ func LogCombinedStdoutStderr(cmd *exec.Cmd, val string) {
 	log.Printf(msg, strings.Join(cmd.Args, " "), OutputLogMessage(val))
 }
 
-func Exec(ctx CVDExecContext, name string, args ...string) error {
+func Exec(ctx CVDExecContext, name string, args ...string) (string, error) {
 	cmd := ctx(context.TODO(), nil, name, args...)
-	var b bytes.Buffer
-	cmd.Stdout = nil
-	cmd.Stderr = &b
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		return &CommandExecErr{args, b.String(), err}
+		return "", &CommandExecErr{args, stderr.String(), err}
 	}
-	return nil
+	return stdout.String(), nil
 }
