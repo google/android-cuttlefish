@@ -55,7 +55,6 @@
 #define CF_DEFAULTS_FILE_VERBOSITY "DEBUG"
 #define CF_DEFAULTS_VERBOSITY "INFO"
 #define CF_DEFAULTS_MEMORY_MB CF_DEFAULTS_DYNAMIC_INT
-#define CF_DEFAULTS_SHARE_SCHED_CORE false
 #define CF_DEFAULTS_TRACK_HOST_TOOLS_CRC false
 // TODO: defined twice, please remove redundant definitions
 #define CF_DEFAULTS_USE_OVERLAY true
