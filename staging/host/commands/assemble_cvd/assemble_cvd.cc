@@ -184,7 +184,8 @@ Result<void> RestoreHostFiles(const std::string& cuttlefish_root_dir,
       CF_EXPECT(GuestSnapshotDirectories(snapshot_dir_path));
   auto filter_guest_dir =
       [&guest_snapshot_dirs](const std::string& src_dir) -> bool {
-    return !Contains(guest_snapshot_dirs, src_dir);
+    return !(Contains(guest_snapshot_dirs, src_dir) ||
+             src_dir.ends_with("logs"));
   };
   // cp -r snapshot_dir_path HOME
   CF_EXPECT(CopyDirectoryRecursively(snapshot_dir_path, cuttlefish_root_dir,
