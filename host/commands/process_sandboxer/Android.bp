@@ -41,6 +41,7 @@ cc_binary_host {
         "policies/webrtc.cpp",
         "poll_callback.cpp",
         "sandbox_manager.cpp",
+        "signal_fd.cpp",
         "unique_fd.cpp",
     ],
     shared_libs: ["sandboxed_api_sandbox2"],
