@@ -30,6 +30,7 @@
 
 #include "host/commands/process_sandboxer/credentialed_unix_server.h"
 #include "host/commands/process_sandboxer/policies.h"
+#include "host/commands/process_sandboxer/signal_fd.h"
 #include "host/commands/process_sandboxer/unique_fd.h"
 
 namespace cuttlefish::process_sandboxer {
@@ -69,8 +70,8 @@ class SandboxManager {
   using ClientIter = std::list<std::unique_ptr<SocketClient>>::iterator;
   using SboxIter = std::list<std::unique_ptr<ManagedProcess>>::iterator;
 
-  SandboxManager(HostInfo, std::string runtime_dir, UniqueFd signal_fd,
-                 CredentialedUnixServer server);
+  SandboxManager(HostInfo, std::string runtime_dir, SignalFd,
+                 CredentialedUnixServer);
 
   absl::Status RunSandboxedProcess(std::optional<int> client_fd,
                                    absl::Span<const std::string> argv,
@@ -91,7 +92,7 @@ class SandboxManager {
   std::string runtime_dir_;
   std::list<std::unique_ptr<ManagedProcess>> subprocesses_;
   std::list<std::unique_ptr<SocketClient>> clients_;
-  UniqueFd signal_fd_;
+  SignalFd signals_;
   CredentialedUnixServer server_;
 };
 
