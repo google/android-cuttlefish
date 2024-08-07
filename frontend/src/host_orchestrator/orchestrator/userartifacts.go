@@ -22,10 +22,12 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
 
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
@@ -61,8 +63,6 @@ type UserArtifactsManager interface {
 type UserArtifactsManagerOpts struct {
 	// The root directory where to store the artifacts.
 	RootDir string
-	// Factory of name values
-	NameFactory func() string
 }
 
 // An implementation of the UserArtifactsManager interface.
@@ -81,11 +81,11 @@ func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
 	if err := createDir(m.RootDir); err != nil {
 		return nil, err
 	}
-	name := m.NameFactory()
-	if err := createNewDir(m.RootDir + "/" + name); err != nil {
+	dir, err := createNewUADir(m.RootDir)
+	if err != nil {
 		return nil, err
 	}
-	return &apiv1.UploadDirectory{Name: name}, nil
+	return &apiv1.UploadDirectory{Name: filepath.Base(dir)}, nil
 }
 
 func (m *UserArtifactsManagerImpl) ListDirs() (*apiv1.ListUploadDirectoriesResponse, error) {
@@ -258,4 +258,13 @@ func Unzip(dstDir string, src string) error {
 		}
 	}
 	return nil
+}
+
+func createNewUADir(parent string) (string, error) {
+	ctx := newCVDExecContext(exec.CommandContext, nil)
+	stdout, err := cvd.Exec(ctx, "mktemp", "--directory", "-p", parent)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimRight(stdout, "\n"), nil
 }
