@@ -31,8 +31,6 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
 	"github.com/gorilla/mux"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -135,8 +133,7 @@ func main() {
 	}
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
-		RootDir:     filepath.Join(*imRootDir, "user_artifacts"),
-		NameFactory: func() string { return uuid.New().String() },
+		RootDir: filepath.Join(*imRootDir, "user_artifacts"),
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	debugStaticVars := debug.StaticVariables{}
