@@ -21,8 +21,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -63,6 +65,8 @@ type UserArtifactsManager interface {
 type UserArtifactsManagerOpts struct {
 	// The root directory where to store the artifacts.
 	RootDir string
+	// Artifact owner. If nil, the owner will be the process's owner.
+	Owner *user.User
 }
 
 // An implementation of the UserArtifactsManager interface.
@@ -81,10 +85,11 @@ func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
 	if err := createDir(m.RootDir); err != nil {
 		return nil, err
 	}
-	dir, err := createNewUADir(m.RootDir)
+	dir, err := createNewUADir(m.RootDir, m.Owner)
 	if err != nil {
 		return nil, err
 	}
+	log.Println("created new user artifact directory", dir)
 	return &apiv1.UploadDirectory{Name: filepath.Base(dir)}, nil
 }
 
@@ -260,11 +265,16 @@ func Unzip(dstDir string, src string) error {
 	return nil
 }
 
-func createNewUADir(parent string) (string, error) {
-	ctx := newCVDExecContext(exec.CommandContext, nil)
+func createNewUADir(parent string, owner *user.User) (string, error) {
+	ctx := newCVDExecContext(exec.CommandContext, owner)
 	stdout, err := cvd.Exec(ctx, "mktemp", "--directory", "-p", parent)
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimRight(stdout, "\n"), nil
+	name := strings.TrimRight(stdout, "\n")
+	// Sets permission regardless of umask.
+	if _, err := cvd.Exec(ctx, "chmod", "u=rwx,g=rwx,o=r", name); err != nil {
+		return "", err
+	}
+	return name, nil
 }

@@ -134,6 +134,7 @@ func main() {
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
 		RootDir: filepath.Join(*imRootDir, "user_artifacts"),
+		Owner:   cvdUser,
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	debugStaticVars := debug.StaticVariables{}
