@@ -129,15 +129,18 @@ func (m *UserArtifactsManagerImpl) UpdateArtifact(dir string, chunk UserArtifact
 	} else if !ok {
 		return operator.NewBadRequestError("upload directory %q does not exist", err)
 	}
-	if err := writeChunk(dir, chunk); err != nil {
+	filename := filepath.Join(dir, chunk.Name)
+	if err := createUAFile(filename, m.Owner); err != nil {
+		return err
+	}
+	if err := writeChunk(filename, chunk); err != nil {
 		return err
 	}
 	return nil
 }
 
-func writeChunk(dir string, chunk UserArtifactChunk) error {
-	filename := dir + "/" + chunk.Name
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0664)
+func writeChunk(filename string, chunk UserArtifactChunk) error {
+	f, err := os.OpenFile(filename, os.O_WRONLY, 0664)
 	if err != nil {
 		return err
 	}
@@ -148,8 +151,7 @@ func writeChunk(dir string, chunk UserArtifactChunk) error {
 	if _, err = io.Copy(f, chunk.File); err != nil {
 		return err
 	}
-	// Sets permission regardless of umask.
-	return os.Chmod(filename, 0664)
+	return nil
 }
 
 func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
@@ -277,4 +279,17 @@ func createNewUADir(parent string, owner *user.User) (string, error) {
 		return "", err
 	}
 	return name, nil
+}
+
+func createUAFile(filename string, owner *user.User) error {
+	ctx := newCVDExecContext(exec.CommandContext, owner)
+	_, err := cvd.Exec(ctx, "touch", filename)
+	if err != nil {
+		return err
+	}
+	// Sets permission regardless of umask.
+	if _, err := cvd.Exec(ctx, "chmod", "u=rwx,g=rw,o=r", filename); err != nil {
+		return err
+	}
+	return nil
 }
