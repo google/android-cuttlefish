@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 
-#include <mutex>
 #include <string>
 
 #include "common/libs/utils/result.h"
@@ -27,7 +26,6 @@
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
@@ -43,7 +41,6 @@ class StatusFetcher {
                 HostToolTargetManager& host_tool_target_manager)
       : instance_manager_(instance_manager),
         host_tool_target_manager_(host_tool_target_manager) {}
-  Result<void> Interrupt();
   Result<StatusFetcherOutput> FetchStatus(const RequestWithStdio&);
 
   Result<Json::Value> FetchGroupStatus(const RequestWithStdio& original_request,
@@ -55,13 +52,8 @@ class StatusFetcher {
       const RequestWithStdio&, const InstanceManager::LocalInstanceGroup& group,
       cvd::Instance&);
 
-  std::mutex interruptible_;
-  bool interrupted_ = false;
-
   InstanceManager& instance_manager_;
   HostToolTargetManager& host_tool_target_manager_;
-  // needs to be exclusively owned by StatusFetcher
-  SubprocessWaiter subprocess_waiter_;
 };
 
 }  // namespace cuttlefish

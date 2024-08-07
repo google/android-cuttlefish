@@ -37,7 +37,6 @@
 #include "host/commands/cvd/interruptible_terminal.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -98,7 +97,6 @@ class CvdGenericCommandHandler : public CvdServerHandler {
                                      const cvd_common::Envs& envs) const;
 
   InstanceManager& instance_manager_;
-  SubprocessWaiter subprocess_waiter_;
   using BinGeneratorType = std::function<Result<std::string>(
       const std::string& host_artifacts_path)>;
   std::map<std::string, std::string> command_to_binary_map_;
@@ -171,9 +169,8 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
       .err = request.Err()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
-
-  auto infop = CF_EXPECT(subprocess_waiter_.Wait());
+  siginfo_t infop;
+  command.Start().Wait(&infop, WEXITED);
 
   return ResponseFromSiginfo(infop);
 }

@@ -64,7 +64,7 @@ struct BranchBuildTargetInfo {
 };
 
 static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
-    const std::string default_branch_str, SubprocessWaiter& waiter) {
+    const std::string default_branch_str) {
   // get the default build branch and target from repo info and git remote
   BranchBuildTargetInfo result_info;
   result_info.branch_str = default_branch_str;
@@ -80,39 +80,33 @@ static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
   } else {
     repo_cmd.SetWorkingDirectory(fd_top);
   }
-  RunWithManagedIoParam param_repo {
-    .cmd_ = std::move(repo_cmd),
-    .redirect_stdout_ = true,
-    .redirect_stderr_ = false,
-    .stdin_ = nullptr,
-  };
-  RunOutput output_repo =
-      CF_EXPECT(waiter.RunWithManagedStdioInterruptable(std::move(param_repo)));
+
+  std::string repo_stdout;
+  CF_EXPECT_EQ(
+      RunWithManagedStdio(std::move(repo_cmd), nullptr, &repo_stdout, nullptr),
+      0);
 
   Command git_cmd("git");
   git_cmd.AddParameter("remote");
   if (fd_top->IsOpen()) {
     git_cmd.SetWorkingDirectory(fd_top);
   }
-  RunWithManagedIoParam param_git {
-    .cmd_ = std::move(git_cmd),
-    .redirect_stdout_ = true,
-    .redirect_stderr_ = false,
-    .stdin_ = nullptr,
-  };
-  RunOutput output_git =
-      CF_EXPECT(waiter.RunWithManagedStdioInterruptable(std::move(param_git)));
 
-  output_git.stdout_.erase(std::remove(
-      output_git.stdout_.begin(), output_git.stdout_.end(), '\n'), output_git.stdout_.cend());
+  std::string git_stdout;
+  CF_EXPECT_EQ(
+      RunWithManagedStdio(std::move(git_cmd), nullptr, &git_stdout, nullptr),
+      0);
+
+  git_stdout.erase(std::remove(git_stdout.begin(), git_stdout.end(), '\n'),
+                   git_stdout.cend());
 
   static const std::regex repo_rgx("^Manifest branch: (.+)");
   std::smatch repo_matched;
-  CHECK(std::regex_search(output_repo.stdout_, repo_matched, repo_rgx))
-      << "Manifest branch line is not found from: " << output_repo.stdout_;
+  CHECK(std::regex_search(repo_stdout, repo_matched, repo_rgx))
+      << "Manifest branch line is not found from: " << repo_stdout;
   // master or ...
   std::string repo_matched_str = repo_matched[1].str();
-  if (output_git.stdout_ == "aosp") {
+  if (git_stdout == "aosp") {
     result_info.branch_str = "aosp-";
     result_info.build_target_str = "aosp_";
   }
@@ -134,20 +128,17 @@ static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
  * function effectively removes one level of quoting from its inputs while
  * making the split.
  */
-Result<std::vector<std::string>> BashTokenize(
-    const std::string& str, SubprocessWaiter& waiter) {
+Result<std::vector<std::string>> BashTokenize(const std::string& str) {
   Command command("bash");
   command.AddParameter("-c");
   command.AddParameter("printf '%s\n' ", str);
-  RunWithManagedIoParam param_bash {
-    .cmd_ = std::move(command),
-    .redirect_stdout_ = true,
-    .redirect_stderr_ = true,
-    .stdin_ = nullptr,
-  };
-  RunOutput output_bash =
-      CF_EXPECT(waiter.RunWithManagedStdioInterruptable(std::move(param_bash)));
-  return android::base::Split(output_bash.stdout_, "\n");
+
+  std::string bash_stdout;
+  CF_EXPECT(
+      RunWithManagedStdio(std::move(command), nullptr, &bash_stdout, nullptr),
+      0);
+
+  return android::base::Split(bash_stdout, "\n");
 }
 
 }  // namespace
@@ -155,7 +146,7 @@ Result<std::vector<std::string>> BashTokenize(
 namespace acloud_impl {
 
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
-    const RequestWithStdio& request, SubprocessWaiter& waiter) {
+    const RequestWithStdio& request) {
   auto arguments = ParseInvocation(request.Message()).arguments;
   CF_EXPECT(arguments.size() > 0);
   CF_EXPECT(arguments[0] == "create");
@@ -383,8 +374,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
           parsed_flags.branch.value_or("aosp-main"));
       host_dir += (build + target);
     } else {
-      given_branch_target_info =
-          CF_EXPECT(GetDefaultBranchBuildTarget("git_", waiter));
+      given_branch_target_info = CF_EXPECT(GetDefaultBranchBuildTarget("git_"));
       host_dir += (given_branch_target_info->branch_str +
                    given_branch_target_info->build_target_str);
     }
@@ -621,13 +611,12 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
 
   if (launch_args) {
-    for (const auto& arg : CF_EXPECT(BashTokenize(*launch_args, waiter))) {
+    for (const auto& arg : CF_EXPECT(BashTokenize(*launch_args))) {
       start_command.add_args(arg);
     }
   }
   if (acloud_config.launch_args != "") {
-    for (const auto& arg :
-         CF_EXPECT(BashTokenize(acloud_config.launch_args, waiter))) {
+    for (const auto& arg : CF_EXPECT(BashTokenize(acloud_config.launch_args))) {
       start_command.add_args(arg);
     }
   }

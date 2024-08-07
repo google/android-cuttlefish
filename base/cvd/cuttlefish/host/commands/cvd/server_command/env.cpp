@@ -27,7 +27,6 @@
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -76,9 +75,10 @@ class CvdEnvCommandHandler : public CvdServerHandler {
     Command command =
         is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, envs))
                 : CF_EXPECT(NonHelpCommand(request, subcmd_args, envs));
-    CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
 
-    auto infop = CF_EXPECT(subprocess_waiter_.Wait());
+    siginfo_t infop;
+    command.Start().Wait(&infop, WEXITED);
+
     return ResponseFromSiginfo(infop);
   }
 
@@ -135,7 +135,6 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   }
 
   InstanceManager& instance_manager_;
-  SubprocessWaiter subprocess_waiter_;
   std::vector<std::string> cvd_env_operations_;
 
   static constexpr char kCvdEnvBin[] = "cvd_internal_env";

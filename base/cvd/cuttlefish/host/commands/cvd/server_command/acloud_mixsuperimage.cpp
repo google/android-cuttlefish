@@ -26,7 +26,6 @@
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/acloud_mixsuperimage.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/config_utils.h"
@@ -237,13 +236,13 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     CF_EXPECT(_RewriteMiscInfo(new_misc_info_path, misc_info_path,
                                lpmake_binary, get_image));
 
-    Command command(build_super_image_binary);
-    command.AddParameter(new_misc_info_path);
-    command.AddParameter(output_path);
-    auto subprocess = command.Start();
-    CF_EXPECT(subprocess.Started());
-    CF_EXPECT(waiter_.Setup(std::move(subprocess)));
-    CF_EXPECT(waiter_.Wait());
+    Subprocess subprocess = Command(build_super_image_binary)
+                                .AddParameter(new_misc_info_path)
+                                .AddParameter(output_path)
+                                .Start();
+
+    CF_EXPECT(subprocess.Wait() == 0);
+
     return {};
   }
 
@@ -294,8 +293,6 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
                                       });
         });
   }
-
-  SubprocessWaiter waiter_;
 };
 
 std::unique_ptr<CvdServerHandler> NewAcloudMixSuperImageCommand() {

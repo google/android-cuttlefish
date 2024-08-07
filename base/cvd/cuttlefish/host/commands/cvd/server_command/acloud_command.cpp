@@ -113,7 +113,6 @@ class AcloudCommand : public CvdServerHandler {
                                 const std::string& hostname);
 
   CommandSequenceExecutor& executor_;
-  SubprocessWaiter waiter_;
 };
 
 Result<cvd::InstanceGroupInfo> AcloudCommand::HandleStartResponse(
@@ -165,9 +164,7 @@ Result<ConvertedAcloudCreateCommand> AcloudCommand::ValidateLocal(
   CF_EXPECT(CanHandle(request));
   CF_EXPECT(IsSubOperationSupported(request));
   // ConvertAcloudCreate converts acloud to cvd commands.
-  // The input parameters waiter_, cb_unlock, cb_lock are.used to
-  // support interrupt which have locking and unlocking functions
-  return acloud_impl::ConvertAcloudCreate(request, waiter_);
+  return acloud_impl::ConvertAcloudCreate(request);
 }
 
 bool AcloudCommand::ValidateRemoteArgs(const RequestWithStdio& request) {
@@ -238,10 +235,10 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
   WriteAll(request.Err(),
            "UPDATE! Try the new `cvdr` tool directly. Run `cvdr --help` to get "
            "started.\n");
-  auto subprocess = cmd.Start();
-  CF_EXPECT(subprocess.Started());
-  CF_EXPECT(waiter_.Setup(std::move(subprocess)));
-  siginfo_t siginfo = CF_EXPECT(waiter_.Wait());
+
+  siginfo_t siginfo;
+
+  cmd.Start().Wait(&siginfo, WEXITED);
   {
     // Force the destructor to run by moving it into a smaller scope.
     // This is necessary to close the write end of the pipe.
@@ -274,10 +271,9 @@ Result<void> AcloudCommand::RunAcloudConnect(const RequestWithStdio& request,
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, request.In());
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, request.Out());
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.Err());
-  auto subprocess = cmd.Start();
-  CF_EXPECT(subprocess.Started());
-  CF_EXPECT(waiter_.Setup(std::move(subprocess)));
-  CF_EXPECT(waiter_.Wait());
+
+  cmd.Start().Wait();
+
   return {};
 }
 
