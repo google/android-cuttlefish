@@ -18,7 +18,6 @@
 
 #include <cctype>
 #include <map>
-#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -123,13 +122,6 @@ Result<void> UpdateInstanceWithStatusResult(
 
 }  // namespace
 
-Result<void> StatusFetcher::Interrupt() {
-  std::lock_guard interrupt_lock(interruptible_);
-  interrupted_ = true;
-  CF_EXPECT(subprocess_waiter_.Interrupt());
-  return {};
-}
-
 static Result<SharedFD> CreateFileToRedirect(
     const std::string& stderr_or_stdout) {
   auto thread_id = std::this_thread::get_id();
@@ -163,8 +155,6 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
     };
   }
 
-  std::unique_lock interrupt_lock(interruptible_);
-  CF_EXPECT(!interrupted_, "Interrupted");
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
 
   // remove --all_instances if there is
@@ -199,10 +189,8 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
                                             .err = redirect_stderr_fd};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
-
-  interrupt_lock.unlock();
-  auto infop = CF_EXPECT(subprocess_waiter_.Wait());
+  siginfo_t infop;
+  command.Start().Wait(&infop, WEXITED);
 
   CF_EXPECT_EQ(redirect_stdout_fd->LSeek(0, SEEK_SET), 0);
   CF_EXPECT_EQ(redirect_stderr_fd->LSeek(0, SEEK_SET), 0);
@@ -254,8 +242,6 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
 
 Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
     const RequestWithStdio& request) {
-  std::unique_lock interrupt_lock(interruptible_);
-  CF_EXPECT(!interrupted_, "Interrupted");
   cvd_common::Envs envs =
       cvd_common::ConvertToEnvs(request.Message().command_request().env());
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
@@ -292,7 +278,6 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
       instances.emplace_back(first_itr->second);
     }
   }
-  interrupt_lock.unlock();
 
   std::string entire_stderr_msg;
   Json::Value instances_json(Json::arrayValue);

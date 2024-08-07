@@ -38,7 +38,6 @@
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -79,7 +78,6 @@ class CvdStopCommandHandler : public CvdServerHandler {
                                      const cvd_common::Envs& envs) const;
 
   InstanceManager& instance_manager_;
-  SubprocessWaiter subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
   using BinGeneratorType = std::function<Result<std::string>(
       const std::string& host_artifacts_path)>;
@@ -117,9 +115,8 @@ Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
       .err = request.Err()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
-
-  auto infop = CF_EXPECT(subprocess_waiter_.Wait());
+  siginfo_t infop;
+  command.Start().Wait(&infop, WEXITED);
 
   return ResponseFromSiginfo(infop);
 }
@@ -240,9 +237,8 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
       .err = request.Err()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
-  CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
-
-  auto infop = CF_EXPECT(subprocess_waiter_.Wait());
+  siginfo_t infop;
+  command.Start().Wait(&infop, WEXITED);
   auto response = ResponseFromSiginfo(infop);
 
   if (response.status().code() == cvd::Status::OK) {

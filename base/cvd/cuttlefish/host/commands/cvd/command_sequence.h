@@ -31,7 +31,6 @@ class CommandSequenceExecutor {
   CommandSequenceExecutor(
       const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers);
 
-  Result<void> Interrupt();
   Result<std::vector<cvd::Response>> Execute(
       const std::vector<RequestWithStdio>&, SharedFD report);
   Result<cvd::Response> ExecuteOne(const RequestWithStdio&, SharedFD report);

@@ -26,7 +26,6 @@
 #include "host/commands/cvd/acloud/create_converter_parser.h"
 #include "host/commands/cvd/server_command/acloud_common.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -92,7 +91,6 @@ class TryAcloudCommand : public CvdServerHandler {
   Result<cvd::Response> VerifyWithCvdRemote(const RequestWithStdio& request);
   Result<std::string> RunCvdRemoteGetConfig(const std::string& name);
 
-  SubprocessWaiter waiter_;
   InstanceManager& instance_manager_;
 };
 
@@ -101,10 +99,7 @@ Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
   CF_EXPECT(CanHandle(request));
   CF_EXPECT(IsSubOperationSupported(request));
   // ConvertAcloudCreate converts acloud to cvd commands.
-  // The input parameters waiter_, cb_unlock, cb_lock are.used to
-  // support interrupt which have locking and unlocking functions
-  auto converted = CF_EXPECT(
-      acloud_impl::ConvertAcloudCreate(request, waiter_));
+  auto converted = CF_EXPECT(acloud_impl::ConvertAcloudCreate(request));
   // currently, optout/optin feature only works in local instance
   // remote instance would continue to be done either through `python acloud` or
   // `cvdr` (if enabled).
@@ -151,10 +146,9 @@ Result<std::string> TryAcloudCommand::RunCvdRemoteGetConfig(
       LOG(ERROR) << "Error in reading stdout from process";
     }
   });
-  auto subprocess = cmd.Start();
-  CF_EXPECT(subprocess.Started());
-  CF_EXPECT(waiter_.Setup(std::move(subprocess)));
-  siginfo_t siginfo = CF_EXPECT(waiter_.Wait());
+
+  siginfo_t siginfo;
+  cmd.Start().Wait(&siginfo, WEXITED);
   {
     // Force the destructor to run by moving it into a smaller scope.
     // This is necessary to close the write end of the pipe.

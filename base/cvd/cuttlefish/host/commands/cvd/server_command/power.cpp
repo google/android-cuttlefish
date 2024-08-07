@@ -79,12 +79,12 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
 
     // may modify subcmd_args by consuming in parsing
     Command command =
-        is_help
-            ? CF_EXPECT(HelpCommand(request, op, subcmd_args, envs))
-            : CF_EXPECT(NonHelpCommand(request, op, subcmd_args, envs));
-    CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
+        is_help ? CF_EXPECT(HelpCommand(request, op, subcmd_args, envs))
+                : CF_EXPECT(NonHelpCommand(request, op, subcmd_args, envs));
 
-    auto infop = CF_EXPECT(subprocess_waiter_.Wait());
+    siginfo_t infop;
+    command.Start().Wait(&infop, WEXITED);
+
     return ResponseFromSiginfo(infop);
   }
 
@@ -242,7 +242,6 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
 
   HostToolTargetManager& host_tool_target_manager_;
   InstanceManager& instance_manager_;
-  SubprocessWaiter subprocess_waiter_;
   using BinGetter = std::function<Result<std::string>(const std::string&)>;
   std::unordered_map<std::string, BinGetter> cvd_power_operations_;
 };

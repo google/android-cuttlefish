@@ -92,9 +92,10 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
     // may modify subcmd_args by consuming in parsing
     Command command =
         CF_EXPECT(GenerateCommand(request, subcmd, subcmd_args, envs));
-    CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
 
-    auto infop = CF_EXPECT(subprocess_waiter_.Wait());
+    siginfo_t infop;
+    command.Start().Wait(&infop, WEXITED);
+
     return ResponseFromSiginfo(infop);
   }
 
@@ -171,7 +172,6 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
   }
 
   InstanceManager& instance_manager_;
-  SubprocessWaiter subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
   std::vector<std::string> cvd_snapshot_operations_;
 };
