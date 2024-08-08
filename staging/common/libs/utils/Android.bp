@@ -26,6 +26,7 @@ cc_library {
         "files.cpp",
         "flag_parser.cpp",
         "flags_validator.cpp",
+        "in_sandbox.cpp",
         "json.cpp",
         "network.cpp",
         "proc_file_utils.cpp",
@@ -40,8 +41,8 @@ cc_library {
     shared: {
         shared_libs: [
             "libbase",
-            "libcuttlefish_fs",
             "libcrypto",
+            "libcuttlefish_fs",
             "libjsoncpp",
         ],
     },
@@ -52,7 +53,7 @@ cc_library {
             "libjsoncpp",
         ],
         shared_libs: [
-          "libcrypto", // libcrypto_static is not accessible from all targets
+            "libcrypto", // libcrypto_static is not accessible from all targets
         ],
     },
     target: {
@@ -64,7 +65,7 @@ cc_library {
                 "inotify.cpp",
                 "socket2socket_proxy.cpp", // TODO(b/285989475): Find eventfd alternative
                 "vsock_connection.cpp",
-            ]
+            ],
         },
     },
     whole_static_libs: ["libcuttlefish_utils_result"],
@@ -104,7 +105,12 @@ cc_test_host {
 cc_library {
     name: "libvsock_utils",
     srcs: ["vsock_connection.cpp"],
-    shared_libs: ["libbase", "libcuttlefish_fs", "liblog", "libjsoncpp"],
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_fs",
+        "libjsoncpp",
+        "liblog",
+    ],
     defaults: ["cuttlefish_guest_only"],
     include_dirs: ["device/google/cuttlefish"],
     export_include_dirs: ["."],
@@ -125,4 +131,3 @@ cc_library {
     },
     defaults: ["cuttlefish_host"],
 }
-
