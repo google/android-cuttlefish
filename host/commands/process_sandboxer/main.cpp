@@ -44,10 +44,12 @@
 
 inline constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 
+ABSL_FLAG(std::string, assembly_dir, "", "cuttlefish/assembly build dir");
 ABSL_FLAG(std::string, host_artifacts_path, "", "Host exes and libs");
 ABSL_FLAG(std::string, environments_dir, "", "Cross-instance environment dir");
 ABSL_FLAG(std::string, environments_uds_dir, "", "Environment unix sockets");
 ABSL_FLAG(std::string, instance_uds_dir, "", "Instance unix domain sockets");
+ABSL_FLAG(std::string, guest_image_path, "", "Directory with `system.img`");
 ABSL_FLAG(std::string, log_dir, "", "Where to write log files");
 ABSL_FLAG(std::vector<std::string>, log_files, std::vector<std::string>(),
           "File paths outside the sandbox to write logs to");
@@ -92,12 +94,15 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
   }
 
   HostInfo host{
-      .artifacts_path = CleanPath(absl::GetFlag(FLAGS_host_artifacts_path)),
+      .assembly_dir = CleanPath(absl::GetFlag(FLAGS_assembly_dir)),
       .cuttlefish_config_path =
           CleanPath(FromEnv(kCuttlefishConfigEnvVarName).value_or("")),
       .environments_dir = CleanPath(absl::GetFlag(FLAGS_environments_dir)),
       .environments_uds_dir =
           CleanPath(absl::GetFlag(FLAGS_environments_uds_dir)),
+      .guest_image_path = CleanPath(absl::GetFlag(FLAGS_guest_image_path)),
+      .host_artifacts_path =
+          CleanPath(absl::GetFlag(FLAGS_host_artifacts_path)),
       .instance_uds_dir = CleanPath(absl::GetFlag(FLAGS_instance_uds_dir)),
       .log_dir = CleanPath(absl::GetFlag(FLAGS_log_dir)),
       .runtime_dir = CleanPath(absl::GetFlag(FLAGS_runtime_dir)),
@@ -105,7 +110,8 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
 
   VLOG(1) << host;
 
-  setenv("LD_LIBRARY_PATH", JoinPath(host.artifacts_path, "lib64").c_str(), 1);
+  setenv("LD_LIBRARY_PATH", JoinPath(host.host_artifacts_path, "lib64").c_str(),
+         1);
 
   if (args.size() < 2) {
     std::string err = absl::StrCat("Wanted argv.size() > 1, was ", args.size());
@@ -130,8 +136,13 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
     fds.emplace_back(UniqueFd(duped), i);
   }
 
-  absl::Status status =
-      manager->RunProcess(std::nullopt, std::move(exe_argv), std::move(fds));
+  std::vector<std::string> this_env;
+  for (size_t i = 0; environ[i] != nullptr; i++) {
+    this_env.emplace_back(environ[i]);
+  }
+
+  absl::Status status = manager->RunProcess(std::nullopt, std::move(exe_argv),
+                                            std::move(fds), this_env);
   if (!status.ok()) {
     return status;
   }
