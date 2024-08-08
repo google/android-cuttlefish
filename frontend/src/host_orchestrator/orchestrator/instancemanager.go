@@ -347,8 +347,8 @@ type startCVDParams struct {
 	BootloaderDir string
 }
 
-func (h *startCVDHandler) Start(p startCVDParams) error {
-	args := []string{groupNameArg, "start", daemonArg, reportAnonymousUsageStatsArg}
+func (h *startCVDHandler) Create(p startCVDParams) error {
+	args := []string{groupNameArg, "create", daemonArg, reportAnonymousUsageStatsArg}
 	if len(p.InstanceNumbers) == 1 {
 		// Use legacy `--base_instance_num` when multi-vd is not requested.
 		args = append(args, fmt.Sprintf("--base_instance_num=%d", p.InstanceNumbers[0]))
