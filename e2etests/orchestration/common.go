@@ -27,7 +27,7 @@ type TestContext struct {
 }
 
 // Starts the HO service within a docker container.
-func Setup() (*TestContext, error) {
+func Setup(port int) (*TestContext, error) {
 	result := &TestContext{}
 	dockerHelper, err := NewDockerHelper()
 	if err != nil {
@@ -38,7 +38,6 @@ func Setup() (*TestContext, error) {
 		return nil, err
 	}
 	result.DockerImageName = img
-	const port = 61000
 	id, err := dockerHelper.RunContainer(img, port)
 	if err != nil {
 		return nil, err
