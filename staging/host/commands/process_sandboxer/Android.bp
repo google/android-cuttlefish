@@ -29,6 +29,7 @@ cc_binary_host {
         "main.cpp",
         "pidfd.cpp",
         "policies.cpp",
+        "policies/assemble_cvd.cpp",
         "policies/baseline.cpp",
         "policies/kernel_log_monitor.cpp",
         "policies/logcat_receiver.cpp",

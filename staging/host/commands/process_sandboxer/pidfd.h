@@ -42,7 +42,8 @@ class PidFd {
    * process. */
   static absl::StatusOr<PidFd> LaunchSubprocess(
       absl::Span<const std::string> argv,
-      std::vector<std::pair<UniqueFd, int>> fds);
+      std::vector<std::pair<UniqueFd, int>> fds,
+      absl::Span<const std::string> env);
 
   int Get() const;
 
@@ -54,6 +55,7 @@ class PidFd {
    */
   absl::StatusOr<std::vector<std::pair<UniqueFd, int>>> AllFds();
   absl::StatusOr<std::vector<std::string>> Argv();
+  absl::StatusOr<std::vector<std::string>> Env();
 
   /** Halt the process and all its descendants. */
   absl::Status HaltHierarchy();

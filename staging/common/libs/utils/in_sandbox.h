@@ -13,24 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#include "host/commands/process_sandboxer/policies.h"
+namespace cuttlefish {
 
-#include <sys/prctl.h>
+bool InSandbox();
 
-#include <sandboxed_api/sandbox2/policybuilder.h>
-
-namespace cuttlefish::process_sandboxer {
-
-sandbox2::PolicyBuilder LogcatReceiverPolicy(const HostInfo& host) {
-  return BaselinePolicy(host, host.HostToolExe("logcat_receiver"))
-      .AddDirectory(host.log_dir, /* is_ro= */ false)
-      .AddFile(host.cuttlefish_config_path)
-      .AllowHandleSignals()
-      .AllowOpen()
-      .AllowRead()
-      .AllowSafeFcntl()
-      .AllowWrite();
 }
-
-}  // namespace cuttlefish::process_sandboxer
