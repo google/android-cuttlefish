@@ -228,7 +228,9 @@ class LoadConfigsCommand : public CvdServerHandler {
      without question during launch)
      */
     launch_cmd.add_args("cvd");
-    launch_cmd.add_args("start");
+    // The newly created instances don't have an id yet, create will allocate
+    // those
+    launch_cmd.add_args("create");
     launch_cmd.add_args("--daemon");
 
     for (const auto& parsed_flag : cvd_flags.launch_cvd_flags) {
