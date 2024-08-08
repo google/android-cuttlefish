@@ -30,7 +30,7 @@ enum class Arch {
 std::string StringFromEnv(const std::string& varname,
                           const std::string& defval);
 
-std::string HostArchStr();
+const std::string& HostArchStr();
 Arch HostArch();
 bool IsHostCompatible(Arch arch);
 

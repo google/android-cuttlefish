@@ -18,10 +18,9 @@
 
 #include <sys/prctl.h>
 
-#include "sandboxed_api/sandbox2/policybuilder.h"
+#include <sandboxed_api/sandbox2/policybuilder.h>
 
-namespace cuttlefish {
-namespace process_sandboxer {
+namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("kernel_log_monitor"))
@@ -35,5 +34,4 @@ sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo& host) {
       .AllowTCGETS();
 }
 
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
+}  // namespace cuttlefish::process_sandboxer

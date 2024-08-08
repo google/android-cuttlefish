@@ -25,39 +25,35 @@ namespace cuttlefish::process_sandboxer {
 
 using sapi::file::JoinPath;
 
-sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo& host) {
+sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo& host) {
   std::string sandboxer_proxy = host.HostToolExe("sandboxer_proxy");
-  return BaselinePolicy(host, host.HostToolExe("run_cvd"))
+  return BaselinePolicy(host, host.HostToolExe("assemble_cvd"))
+      .AddDirectory(host.assembly_dir, /* is_ro= */ false)
+      // TODO(schuffelen): Don't resize vbmeta in-place
+      .AddDirectory(host.guest_image_path, /* is_ro= */ false)
+      .AddDirectory(JoinPath(host.host_artifacts_path, "etc", "cvd_config"))
+      // TODO(schuffelen): Copy these files before modifying them
+      .AddDirectory(JoinPath(host.host_artifacts_path, "etc", "openwrt"),
+                    /* is_ro= */ false)
+      // TODO(schuffelen): Premake the directory for extract-ikconfig outputs
+      .AddDirectory("/tmp", /* is_ro= */ false)
+      .AddDirectory(host.environments_dir, /* is_ro= */ false)
+      .AddDirectory(host.environments_uds_dir, /* is_ro= */ false)
+      .AddDirectory(host.instance_uds_dir, /* is_ro= */ false)
       .AddDirectory(host.runtime_dir, /* is_ro= */ false)
-      .AddFile(host.cuttlefish_config_path)
-      .AddFile("/dev/net/tun", /* is_ro= */ false)
       .AddFileAt(sandboxer_proxy,
                  "/usr/lib/cuttlefish-common/bin/capability_query.py")
       .AddFileAt(sandboxer_proxy, "/bin/bash")
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("adb_connector"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("casimir_control_server"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("control_env_proxy_server"))
+      .AddFileAt(sandboxer_proxy, host.HostToolExe("avbtool"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("crosvm"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("echo_server"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("gnss_grpc_proxy"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("kernel_log_monitor"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("log_tee"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("logcat_receiver"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("metrics"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("modem_simulator"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("netsimd"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("openwrt_control_server"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("operator_proxy"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("process_restarter"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("screen_recording_server"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("secure_env"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("socket_vsock_proxy"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("tcp_connector"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("tombstone_receiver"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("webRTC"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("webrtc_operator"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("wmediumd"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("wmediumd_gen_config"))
+      .AddFileAt(sandboxer_proxy, host.HostToolExe("extract-ikconfig"))
+      .AddFileAt(sandboxer_proxy, host.HostToolExe("mkenvimage_slim"))
+      .AddFileAt(sandboxer_proxy, host.HostToolExe("newfs_msdos"))
+      // TODO(schuffelen): Do this in-process?
+      .AddFileAt(sandboxer_proxy, host.HostToolExe("simg2img"))
+      // TODO(schuffelen): Do this in-process?
+      .AddFileAt(sandboxer_proxy, "/bin/mv")
+      .AddFileAt(sandboxer_proxy, "/usr/bin/lsof")
       .AddDirectory(host.environments_dir)
       .AddDirectory(host.environments_uds_dir, false)
       .AddDirectory(host.instance_uds_dir, false)

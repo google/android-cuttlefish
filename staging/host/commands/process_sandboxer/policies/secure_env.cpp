@@ -18,10 +18,9 @@
 
 #include <syscall.h>
 
-#include "sandboxed_api/sandbox2/policybuilder.h"
+#include <sandboxed_api/sandbox2/policybuilder.h>
 
-namespace cuttlefish {
-namespace process_sandboxer {
+namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder SecureEnvPolicy(const HostInfo& host) {
   std::string exe = host.HostToolExe("secure_env");
@@ -50,5 +49,4 @@ sandbox2::PolicyBuilder SecureEnvPolicy(const HostInfo& host) {
       .AllowTime();
 }
 
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
+}  // namespace cuttlefish::process_sandboxer
