@@ -24,12 +24,9 @@ def create_single_instance_test(name, build_id, build_target):
           "BUILD_TARGET": build_target,
         },
         deps = [
-            "@com_github_docker_docker//api/types",
-            "@com_github_docker_docker//api/types/container",
-            "@com_github_docker_docker//client",
-            "@com_github_docker_go_connections//nat",
-            "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
+            ":e2etesting",
             "@com_github_google_cloud_android_orchestration//pkg/client",
+            "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
             "@com_github_google_go_cmp//cmp",
         ],
     )
