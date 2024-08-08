@@ -77,8 +77,12 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
 
     auto group = CF_EXPECT(SelectGroup(request));
 
-    CF_EXPECT(StopGroup(group, request),
-              "Unable to stop devices first, try running `cvd reset`.");
+    auto stop_res = StopGroup(group, request);
+    if (!stop_res.ok()) {
+      LOG(ERROR) << stop_res.error().FormatForEnv();
+      LOG(ERROR) << "Unable to stop devices first, run `cvd reset` to forcibly "
+                    "kill any remaining device processes.";
+    }
 
     CF_EXPECT(instance_manager_.RemoveInstanceGroupByHome(group.HomeDir()));
 
