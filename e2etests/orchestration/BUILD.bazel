@@ -12,8 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-load("orchestration.bzl", "create_single_instance_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("orchestration.bzl", "create_single_instance_test", "aosp_artifact")
+
+sh_binary(
+    name = "fetch_aosp_artifact",
+    srcs = ["fetch_aosp_artifact.sh"],
+)
 
 go_library(
     name = "e2etesting",
@@ -34,3 +39,36 @@ create_single_instance_test(
   build_id="11510808",
   build_target="aosp_cf_x86_64_phone-trunk_staging-userdebug",
 )
+
+aosp_artifact(
+  name = "cvd_host_package",
+  build_id = "12198634",
+  build_target="aosp_cf_x86_64_phone-trunk_staging-userdebug",
+  artifact_name = "cvd-host_package.tar.gz",
+  out_name = "cvd-host_package.tar.gz",
+)
+
+aosp_artifact(
+  name = "images_zip",
+  build_id = "12198634",
+  build_target="aosp_cf_x86_64_phone-trunk_staging-userdebug",
+  artifact_name = "aosp_cf_x86_64_phone-img-12198634.zip",
+  out_name = "images.zip",
+)
+
+go_test(
+    name = "create_local_image",
+    srcs = ["createlocalimage_test.go"],
+    data = [
+      ":images_zip",
+      ":cvd_host_package",
+      "@images//docker:orchestration_image_tar",
+    ],
+    deps = [
+      ":e2etesting",
+      "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
+      "@com_github_google_cloud_android_orchestration//pkg/client",
+      "@com_github_google_go_cmp//cmp",
+    ],
+)
+
