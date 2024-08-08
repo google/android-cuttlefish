@@ -20,6 +20,7 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/no_destructor.h>
 #include <android-base/parseint.h>
 #include <gflags/gflags.h>
 
@@ -66,6 +67,8 @@ DEFINE_bool(enable_host_sandbox, CF_DEFAULTS_HOST_SANDBOX,
 
 namespace cuttlefish {
 namespace {
+
+using android::base::NoDestructor;
 
 std::string SubtoolPath(const std::string& subtool_base) {
   auto my_own_dir = android::base::GetExecutableDirectory();
@@ -209,45 +212,49 @@ bool HostToolsUpdated() {
 // Used to find bool flag and convert "flag"/"noflag" to "--flag=value"
 // This is the solution for vectorize bool flags in gFlags
 
-std::unordered_set<std::string> kBoolFlags = {
-    "guest_enforce_security",
-    "use_random_serial",
-    "use_allocd",
-    "use_sdcard",
-    "pause_in_bootloader",
-    "daemon",
-    "enable_minimal_mode",
-    "enable_modem_simulator",
-    "console",
-    "enable_sandbox",
-    "enable_virtiofs",
-    "enable_usb",
-    "restart_subprocesses",
-    "enable_gpu_udmabuf",
-    "enable_gpu_vhost_user",
-    "enable_audio",
-    "start_gnss_proxy",
-    "enable_bootanimation",
-    "record_screen",
-    "protected_vm",
-    "enable_kernel_log",
-    "kgdb",
-    "start_webrtc",
-    "smt",
-    "vhost_net",
-    "vhost_user_vsock",
-    "chromeos_boot",
-    "enable_host_sandbox",
-    "fail_fast",
-    "vhost_user_block",
-};
+const std::unordered_set<std::string>& BoolFlags() {
+  static const NoDestructor<std::unordered_set<std::string>> bool_flags({
+      "chromeos_boot",
+      "console",
+      "daemon",
+      "enable_audio",
+      "enable_bootanimation",
+      "enable_gpu_udmabuf",
+      "enable_gpu_vhost_user",
+      "enable_host_sandbox",
+      "enable_kernel_log",
+      "enable_minimal_mode",
+      "enable_modem_simulator",
+      "enable_sandbox",
+      "enable_usb",
+      "enable_virtiofs",
+      "fail_fast",
+      "guest_enforce_security",
+      "kgdb",
+      "pause_in_bootloader",
+      "protected_vm",
+      "record_screen",
+      "restart_subprocesses",
+      "smt",
+      "start_gnss_proxy",
+      "start_webrtc",
+      "use_allocd",
+      "use_random_serial",
+      "use_sdcard",
+      "vhost_net",
+      "vhost_user_block",
+      "vhost_user_vsock",
+  });
+  return *bool_flags;
+}
 
 struct BooleanFlag {
   bool is_bool_flag;
   bool bool_flag_value;
   std::string name;
 };
-BooleanFlag IsBoolArg(const std::string& argument) {
+BooleanFlag IsBoolArg(const std::string& argument,
+                      const std::unordered_set<std::string>& flag_set) {
   // Validate format
   // we only deal with special bool case: -flag, --flag, -noflag, --noflag
   // and convert to -flag=true, --flag=true, -flag=false, --flag=false
@@ -269,13 +276,13 @@ BooleanFlag IsBoolArg(const std::string& argument) {
   if (result_name.length() == 0) {
     return {false, false, ""};
   }
-  if (kBoolFlags.find(result_name) != kBoolFlags.end()) {
+  if (flag_set.find(result_name) != flag_set.end()) {
     // matched -flag, --flag
     return {true, true, result_name};
   } else if (android::base::ConsumePrefix(&new_name, "no")) {
     // 2nd chance to check -noflag, --noflag
     result_name = new_name;
-    if (kBoolFlags.find(result_name) != kBoolFlags.end()) {
+    if (flag_set.find(result_name) != flag_set.end()) {
       // matched -noflag, --noflag
       return {true, false, result_name};
     }
@@ -294,18 +301,18 @@ std::string FormatBoolString(const std::string& name_str, bool value) {
   return new_flag;
 }
 
-bool OverrideBoolArg(std::vector<std::string>& args) {
-  bool overridden = false;
+std::vector<std::string> OverrideBoolArg(
+    std::vector<std::string> args,
+    const std::unordered_set<std::string>& flag_set) {
   for (int index = 0; index < args.size(); index++) {
     const std::string curr_arg = args[index];
-    BooleanFlag value = IsBoolArg(curr_arg);
+    BooleanFlag value = IsBoolArg(curr_arg, flag_set);
     if (value.is_bool_flag) {
       // Override the value
       args[index] = FormatBoolString(value.name, value.bool_flag_value);
-      overridden = true;
     }
   }
-  return overridden;
+  return args;
 }
 
 int CvdInternalStartMain(int argc, char** argv) {
@@ -333,10 +340,9 @@ int CvdInternalStartMain(int argc, char** argv) {
 
   // Used to find bool flag and convert "flag"/"noflag" to "--flag=value"
   // This is the solution for vectorize bool flags in gFlags
-  if (OverrideBoolArg(args)) {
-    for (int i = 1; i < argc; i++) {
-      argv[i] = &args[i-1][0]; // args[] start from 0
-    }
+  args = OverrideBoolArg(std::move(args), BoolFlags());
+  for (int i = 1; i < argc; i++) {
+    argv[i] = args[i - 1].data();  // args[] start from 0
   }
 
   gflags::ParseCommandLineNonHelpFlags(&argc, &argv, false);
