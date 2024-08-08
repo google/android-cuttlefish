@@ -16,9 +16,9 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
-#include "sandboxed_api/sandbox2/allow_all_syscalls.h"
-#include "sandboxed_api/sandbox2/allow_unrestricted_networking.h"
-#include "sandboxed_api/sandbox2/policybuilder.h"
+#include <sandboxed_api/sandbox2/allow_all_syscalls.h>
+#include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
+#include <sandboxed_api/sandbox2/policybuilder.h>
 
 namespace cuttlefish::process_sandboxer {
 
@@ -26,7 +26,7 @@ sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo& host) {
   // TODO: b/318609110 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("webRTC"))
       .AddDirectory(host.log_dir, /* is_ro= */ false)
-      .AddDirectory(host.artifacts_path + "/usr/share/webrtc/assets")
+      .AddDirectory(host.host_artifacts_path + "/usr/share/webrtc/assets")
       .AddFile(host.cuttlefish_config_path)
       .AddFile("/dev/urandom")
       .AddFile("/run/cuttlefish/operator")

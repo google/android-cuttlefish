@@ -49,7 +49,8 @@ class SandboxManager {
    * in the sandbox, and `key` is `close`d on the outside. */
   absl::Status RunProcess(std::optional<int> client_fd,
                           absl::Span<const std::string> argv,
-                          std::vector<std::pair<UniqueFd, int>> fds);
+                          std::vector<std::pair<UniqueFd, int>> fds,
+                          absl::Span<const std::string> env);
 
   /** Block until an event happens, and process all open events. */
   absl::Status Iterate();
@@ -76,10 +77,12 @@ class SandboxManager {
   absl::Status RunSandboxedProcess(std::optional<int> client_fd,
                                    absl::Span<const std::string> argv,
                                    std::vector<std::pair<UniqueFd, int>> fds,
+                                   absl::Span<const std::string> env,
                                    std::unique_ptr<sandbox2::Policy> policy);
   absl::Status RunProcessNoSandbox(std::optional<int> client_fd,
                                    absl::Span<const std::string> argv,
-                                   std::vector<std::pair<UniqueFd, int>> fds);
+                                   std::vector<std::pair<UniqueFd, int>> fds,
+                                   absl::Span<const std::string> env);
 
   // Callbacks for the Iterate() `poll` loop.
   absl::Status ClientMessage(ClientIter it, short revents);
