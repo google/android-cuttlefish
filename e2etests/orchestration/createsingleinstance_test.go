@@ -75,6 +75,7 @@ func TestCreateSingleInstance(t *testing.T) {
 				Status:         "Running",
 				Displays:       []string{"720 x 1280 ( 320 )"},
 				WebRTCDeviceID: "cvd-1",
+				ADBSerial:      "0.0.0.0:6520",
 			},
 		},
 	}
@@ -140,7 +141,7 @@ func DownloadHostBugReport(ctx *TestContext) error {
 		return err
 	}
 	srv := orchclient.NewHostOrchestratorService(ctx.ServiceURL)
-	if err := srv.DownloadRuntimeArtifacts(f); err != nil {
+	if err := srv.CreateBugreport("cvd", f); err != nil {
 		return err
 	}
 	if err := f.Close(); err != nil {

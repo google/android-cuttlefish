@@ -166,14 +166,14 @@ def go_dependencies():
     go_repository(
         name = "com_github_google_android_cuttlefish_frontend_src_liboperator",
         importpath = "github.com/google/android-cuttlefish/frontend/src/liboperator",
-        sum = "h1:RR8hSPf8yGLh5ELz5kkpWuCek2Afg9cTbYTBYKXy1/o=",
-        version = "v0.0.0-20231215232042-8c95f6b070a9",
+        sum = "h1:5ph/60ouIJj+YvXVeob5FU8rPCyjzWgjb8+x7k9QcKU=",
+        version = "v0.0.0-20240502215314-3182038fb7ea",
     )
     go_repository(
         name = "com_github_google_cloud_android_orchestration",
         importpath = "github.com/google/cloud-android-orchestration",
-        sum = "h1:3tJDtORMVocbfaE7vYu4kLR0DTcaMMAceERubYwhLCc=",
-        version = "v0.0.0-20240520012156-1e7a0d0c6857",
+        sum = "h1:xjbFWQtTP+fSJo+SyY/YhWCeQocv/aGlSQAqjexVUa4=",
+        version = "v0.1.0-alpha.0.20240808173224-3579213f3c5c",
     )
     go_repository(
         name = "com_github_google_go_cmp",
