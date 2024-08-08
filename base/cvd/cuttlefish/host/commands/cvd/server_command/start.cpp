@@ -44,8 +44,6 @@
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/interrupt_listener.h"
 #include "host/commands/cvd/reset_client_utils.h"
-#include "host/commands/cvd/selector/creation_analyzer.h"
-#include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/status_fetcher.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
@@ -72,23 +70,6 @@ std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
     return std::nullopt;
   }
   return config_file;
-}
-
-RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
-                                   cvd_common::Args& args,
-                                   const std::string& config_file) {
-  cvd::Request request_proto;
-  auto& load_command = *request_proto.mutable_command_request();
-  *load_command.mutable_env() = request.Message().command_request().env();
-  load_command.set_working_directory(
-      request.Message().command_request().working_directory());
-  load_command.add_args("cvd");
-  load_command.add_args("load");
-  for (const auto& arg : args) {
-    load_command.add_args(arg);
-  }
-  load_command.add_args(config_file);
-  return RequestWithStdio(request_proto, request.FileDescriptors());
 }
 
 // link might be a directory, so we clean that up, and create a link from
@@ -258,10 +239,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
     selector::LocalInstanceGroup group;
     std::vector<InstanceLockFile> lock_files;
   };
-  // call this only if !is_help
-  Result<selector::LocalInstanceGroup> GetGroup(
-      const cvd_common::Args& subcmd_args, const cvd_common::Envs& envs,
-      const RequestWithStdio& request);
 
   Result<cvd::Response> FillOutNewInstanceInfo(
       cvd::Response&& response, const selector::LocalInstanceGroup& group);
@@ -273,12 +250,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
                           const selector::LocalInstanceGroup& group);
 
   Result<std::string> FindStartBin(const std::string& android_host_out);
-
-  static void MarkLockfiles(std::vector<InstanceLockFile>& lock_files,
-                            const InUseState state);
-  static void MarkLockfilesInUse(std::vector<InstanceLockFile>& lock_files) {
-    MarkLockfiles(lock_files, InUseState::kInUse);
-  }
 
   Result<void> AcloudCompatActions(const selector::LocalInstanceGroup& group,
                                    const cvd_common::Envs& envs,
@@ -405,16 +376,6 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
   return {};
 }
 
-void CvdStartCommandHandler::MarkLockfiles(
-    std::vector<InstanceLockFile>& lock_files, const InUseState state) {
-  for (auto& lock_file : lock_files) {
-    auto result = lock_file.Status(state);
-    if (!result.ok()) {
-      LOG(ERROR) << result.error().FormatForEnv();
-    }
-  }
-}
-
 Result<bool> CvdStartCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
   auto invocation = ParseInvocation(request.Message());
@@ -479,66 +440,6 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
       .err = request.Err()};
   Command non_help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   return non_help_command;
-}
-
-// call this only if !is_help
-Result<selector::LocalInstanceGroup>
-CvdStartCommandHandler::GetGroup(const std::vector<std::string>& subcmd_args,
-                                 const cvd_common::Envs& envs,
-                                 const RequestWithStdio& request) {
-  using CreationAnalyzerParam =
-      selector::CreationAnalyzer::CreationAnalyzerParam;
-  const auto& selector_opts =
-      request.Message().command_request().selector_opts();
-  const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
-  CreationAnalyzerParam analyzer_param{
-      .cmd_args = subcmd_args, .envs = envs, .selector_args = selector_args};
-
-  auto analyzer = CF_EXPECT(instance_manager_.CreationAnalyzer(analyzer_param));
-  auto group_creation_info = CF_EXPECT(analyzer.ExtractGroupInfo());
-
-  std::vector<InstanceLockFile> lock_files;
-  for (auto& instance: group_creation_info.instances) {
-    CHECK(instance.instance_file_lock_.has_value())
-        << "Expected instance lock";
-    lock_files.emplace_back(std::move(*instance.instance_file_lock_));
-  }
-
-  // When loading an environment spec file the group is already in the database.
-  auto groups = CF_EXPECT(instance_manager_.FindGroups(
-      selector::Query("group_name", group_creation_info.group_name)));
-  CHECK(groups.size() <= 1)
-      << "Expected no more than one group with given name: "
-      << group_creation_info.group_name;
-  if (groups.empty()) {
-    // The lock must be held for as long as the group's instances are in the
-    // database with the id set.
-    MarkLockfilesInUse(lock_files);
-    auto group =
-        CF_EXPECT(instance_manager_.CreateInstanceGroup(group_creation_info));
-    group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
-    group.SetStartTime(selector::CvdServerClock::now());
-    CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
-    return group;
-  }
-  // The instances don't have an id yet and are in PREPARING state
-  auto group = groups[0];
-  CHECK(group.Instances().size() == group_creation_info.instances.size())
-      << "Mismatch in number of instances from analisys: "
-      << group.Instances().size() << " vs "
-      << group_creation_info.instances.size();
-  for (size_t i = 0; i < group.Instances().size(); ++i) {
-    auto& instance = group.Instances()[i];
-    auto& instance_info = group_creation_info.instances[i];
-    instance.set_id(instance_info.instance_id_);
-  }
-  group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
-  group.SetStartTime(selector::CvdServerClock::now());
-  CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
-  // The lock must be held for as long as the group's instances are in the
-  // database with the id set.
-  MarkLockfilesInUse(lock_files);
-  return group;
 }
 
 static std::ostream& operator<<(std::ostream& out, const cvd_common::Args& v) {
@@ -667,14 +568,9 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   CF_EXPECT(CanHandle(request));
 
   auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
-  std::optional<std::string> config_file = GetConfigPath(subcmd_args);
-  if (config_file) {
-    auto subrequest = CreateLoadCommand(request, subcmd_args, *config_file);
-    auto response =
-        CF_EXPECT(command_executor_.ExecuteOne(subrequest, request.Err()));
-    sub_action_ended_ = true;
-    return response;
-  }
+  CF_EXPECT(!GetConfigPath(subcmd_args).has_value(),
+            "The 'start' command doesn't accept --config_file, did you mean "
+            "'create'?");
 
   auto precondition_verified = VerifyPrecondition(request);
   if (!precondition_verified.ok()) {
@@ -736,7 +632,15 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     return ResponseFromSiginfo(infop);
   }
 
-  auto group = CF_EXPECT(GetGroup(subcmd_args, envs, request));
+  auto group = CF_EXPECT(instance_manager_.SelectGroup(
+      cvd_common::ConvertToArgs(
+          request.Message().command_request().selector_opts().args()),
+      envs), "Failed to select group to start, did you mean 'cvd create'?");
+
+  CF_EXPECT(!group.HasActiveInstances(),
+            "Selected instance group is already started, use `cvd create` to "
+            "create a new one.");
+
   CF_EXPECT(UpdateArgs(subcmd_args, group));
   CF_EXPECT(UpdateEnvs(envs, group));
   Command command = CF_EXPECT(
@@ -767,6 +671,8 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
         std::abort();
       });
   auto listener_handle = CF_EXPECT(std::move(handle_res));
+  group.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
+  CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   auto response = CF_EXPECT(
       LaunchDeviceInterruptible(std::move(command), group, envs, request));
   group.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
