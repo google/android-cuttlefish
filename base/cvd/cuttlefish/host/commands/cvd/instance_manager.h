@@ -23,7 +23,6 @@
 #include <utility>
 #include <vector>
 
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
@@ -71,7 +70,7 @@ class InstanceManager {
                               const cvd::Instance& instance);
   Result<bool> RemoveInstanceGroupByHome(const std::string&);
 
-  cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
+  cvd::Status CvdClear();
   static Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
   Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
@@ -86,9 +85,9 @@ class InstanceManager {
   Result<void> SetAcloudTranslatorOptout(bool optout);
   Result<bool> GetAcloudTranslatorOptout() const;
 
-  Result<void> IssueStopCommand(const SharedFD& out, const SharedFD& err,
-                                const std::string& config_file_path,
+  Result<void> IssueStopCommand(const std::string& config_file_path,
                                 selector::LocalInstanceGroup& group);
+
  private:
   Result<std::string> StopBin(const std::string& host_android_out);
 

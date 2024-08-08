@@ -93,8 +93,7 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
     }
     auto config_path =
         CF_EXPECT(selector::GetCuttlefishConfigPath(group.HomeDir()));
-    CF_EXPECT(instance_manager_.IssueStopCommand(request.Out(), request.Err(),
-                                                 config_path, group));
+    CF_EXPECT(instance_manager_.IssueStopCommand(config_path, group));
     return {};
   }
 
@@ -113,8 +112,7 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
 
   Result<void> HelpCommand(const RequestWithStdio& request) const {
     std::vector<std::string> unused;
-    std::string msg = CF_EXPECT(DetailedHelp(unused));
-    CF_EXPECT_EQ(WriteAll(request.Out(), msg), (ssize_t)msg.size());
+    std::cout << CF_EXPECT(DetailedHelp(unused));
     return {};
   }
 

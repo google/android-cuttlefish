@@ -69,8 +69,7 @@ Result<cvd::Response> Cvd::HandleCommand(
 
   RequestContext context(instance_lockfile_manager_, instance_manager_,
                          host_tool_target_manager_);
-  RequestWithStdio request_with_stdio(
-      request, {SharedFD::Dup(0), SharedFD::Dup(1), SharedFD::Dup(2)});
+  RequestWithStdio request_with_stdio(request);
   auto handler = CF_EXPECT(context.Handler(request_with_stdio));
   return handler->Handle(request_with_stdio);
 }

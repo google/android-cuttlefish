@@ -16,8 +16,8 @@
 
 #include "host/commands/cvd/server_command/lint.h"
 
+#include <iostream>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -61,12 +61,9 @@ class LintCommandHandler : public CvdServerHandler {
         request.Message().command_request().working_directory();
     const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
 
-    std::stringstream message_stream;
-    message_stream << "Lint of flags and config \"" << config_path
-                   << "\" succeeded\n";
-    const auto message = message_stream.str();
-    CF_EXPECT_EQ(WriteAll(request.Out(), message), (ssize_t)message.size(),
-                 "Error writing message");
+    std::cout << "Lint of flags and config \"" << config_path
+              << "\" succeeded\n";
+
     cvd::Response response;
     response.mutable_command_response();
     response.mutable_status()->set_code(cvd::Status::OK);

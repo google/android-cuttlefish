@@ -100,7 +100,6 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
     command.AddEnvironmentVariable(it.first, it.second);
   }
   // Redirect stdin, stdout, stderr back to the cvd client
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, param.in);
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, param.out);
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, param.err);
 
@@ -130,10 +129,7 @@ Result<Command> ConstructCvdHelpCommand(
                                             .args = subcmd_args,
                                             .envs = std::move(envs_copy),
                                             .working_dir = client_pwd,
-                                            .command_name = bin_file,
-                                            .in = request.In(),
-                                            .out = request.Out(),
-                                            .err = request.Err()};
+                                            .command_name = bin_file};
   Command help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   return help_command;
 }
@@ -162,7 +158,7 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
       verbose_stream.seekp(-1, std::ios_base::end);
       verbose_stream << std::endl;
     }
-    WriteAll(request.Err(), verbose_stream.str());
+    std::cerr << verbose_stream.str();
   }
   ConstructCommandParam construct_cmd_param{
       .bin_path = bin_path,
@@ -170,10 +166,7 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
       .args = request_form.cmd_args,
       .envs = envs,
       .working_dir = request.Message().command_request().working_directory(),
-      .command_name = request_form.bin_file,
-      .in = request.In(),
-      .out = request.Out(),
-      .err = request.Err()};
+      .command_name = request_form.bin_file};
   return CF_EXPECT(ConstructCommand(construct_cmd_param));
 }
 
@@ -238,20 +231,16 @@ Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   const uid_t uid = getuid();
-  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
-  auto notice = fmt::format(
-      "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      TerminalColor(is_tty, TerminalColors::kRed),
-      fmt::join(request.Message().command_request().args(), " "),
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kBoldRed), "no device",
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kCyan), uid,
-      TerminalColor(is_tty, TerminalColors::kReset));
-  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"),
-               (ssize_t)notice.size() + 1);
-
-  response.mutable_status()->set_message(notice);
+  const bool is_tty = isatty(1);
+  fmt::print(std::cout,
+             "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
+             TerminalColor(is_tty, TerminalColors::kRed),
+             fmt::join(request.Message().command_request().args(), " "),
+             TerminalColor(is_tty, TerminalColors::kReset),
+             TerminalColor(is_tty, TerminalColors::kBoldRed), "no device",
+             TerminalColor(is_tty, TerminalColors::kReset),
+             TerminalColor(is_tty, TerminalColors::kCyan), uid,
+             TerminalColor(is_tty, TerminalColors::kReset));
   return response;
 }
 
@@ -260,29 +249,18 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   const uid_t uid = getuid();
-  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
-  auto notice = fmt::format(
-      "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      TerminalColor(is_tty, TerminalColors::kRed),
-      fmt::join(request.Message().command_request().args(), " "),
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kBoldRed),
-      "No terminal/tty for selecting one of multiple Cuttlefish groups",
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kCyan), uid,
-      TerminalColor(is_tty, TerminalColors::kReset));
-  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"),
-               (ssize_t)notice.size() + 1);
-  response.mutable_status()->set_message(notice);
-  return response;
-}
-
-Result<cvd::Response> WriteToFd(SharedFD fd, const std::string& output) {
-  cvd::Response response;
-  auto written_size = WriteAll(fd, output);
-  CF_EXPECT_EQ((ssize_t)output.size(), written_size, fd->StrError());
-  response.mutable_command_response();  // Sets oneof member
-  response.mutable_status()->set_code(cvd::Status::OK);
+  const bool is_tty = isatty(1);
+  fmt::print(std::cout,
+             "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
+             TerminalColor(is_tty, TerminalColors::kRed),
+             fmt::join(request.Message().command_request().args(), " "),
+             TerminalColor(is_tty, TerminalColors::kReset),
+             TerminalColor(is_tty, TerminalColors::kBoldRed));
+  fmt::print(std::cout,
+             "No terminal/tty for selecting one of multiple Cuttlefish groups",
+             TerminalColor(is_tty, TerminalColors::kReset),
+             TerminalColor(is_tty, TerminalColors::kCyan), uid,
+             TerminalColor(is_tty, TerminalColors::kReset));
   return response;
 }
 

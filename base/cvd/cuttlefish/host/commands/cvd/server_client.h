@@ -19,9 +19,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include <memory>
 #include <optional>
-#include <vector>
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
@@ -31,21 +29,15 @@
 
 namespace cuttlefish {
 
+// TODO(schuffelen): Rename or replace now that stdio is not included.
 class RequestWithStdio {
  public:
-  RequestWithStdio(cvd::Request, std::vector<SharedFD>);
+  RequestWithStdio(cvd::Request);
 
-  SharedFD Client() const;
   const cvd::Request& Message() const;
-  const std::vector<SharedFD>& FileDescriptors() const;
-  SharedFD In() const;
-  SharedFD Out() const;
-  SharedFD Err() const;
-  std::optional<SharedFD> Extra() const;
 
  private:
   cvd::Request message_;
-  std::vector<SharedFD> fds_;
 };
 
 Result<UnixMessageSocket> GetClient(const SharedFD& client);

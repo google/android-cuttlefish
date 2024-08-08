@@ -144,8 +144,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
       CF_EXPECT(ExtractInfo(request));
 
   if (invocation_info.bin == kClearBin) {
-    *response.mutable_status() =
-        instance_manager_.CvdClear(request.Out(), request.Err());
+    *response.mutable_status() = instance_manager_.CvdClear();
     return response;
   }
 
@@ -163,10 +162,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
       .args = invocation_info.args,
       .envs = invocation_info.envs,
       .working_dir = request.Message().command_request().working_directory(),
-      .command_name = invocation_info.bin,
-      .in = request.In(),
-      .out = request.Out(),
-      .err = request.Err()};
+      .command_name = invocation_info.bin};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   siginfo_t infop;
@@ -288,7 +284,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
       return extracted_info;
     }
 
-    if (!request.In()->IsOpen() || !request.In()->IsATTY()) {
+    if (isatty(0)) {
       // can't take the user input
       extracted_info.ui_response_type = UiResponseType::kNoTTY;
       return extracted_info;
@@ -304,17 +300,14 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
                                 }),
                  groups.end());
     GroupSelector selector{.groups = groups};
-    auto menu = selector.Menu();
+    std::cout << selector.Menu();
 
-    CF_EXPECT_EQ(WriteAll(request.Out(), menu + "\n"),
-                 (ssize_t)menu.size() + 1);
-    terminal_ = std::make_unique<InterruptibleTerminal>(request.In());
+    terminal_ = std::make_unique<InterruptibleTerminal>();
 
-    const bool is_tty = request.Err()->IsOpen() && request.Err()->IsATTY();
+    const bool is_tty = isatty(2);
     while (true) {
-      std::string question = fmt::format(
-          "For which instance group would you like to run {}? ", subcmd);
-      CF_EXPECT_EQ(WriteAll(request.Out(), question), (ssize_t)question.size());
+      fmt::print(std::cout,
+                 "For which instance group would you like to run {}? ", subcmd);
 
       std::string input_line = CF_EXPECT(terminal_->ReadLine());
       int selection = -1;
@@ -322,14 +315,12 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
       if (android::base::ParseInt(input_line, &selection)) {
         const int n_groups = selector.groups.size();
         if (n_groups <= selection || selection < 0) {
-          std::string out_of_range = fmt::format(
-              "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
-              TerminalColor(is_tty, TerminalColors::kBoldRed), selection,
-              TerminalColor(is_tty, TerminalColors::kReset),
-              TerminalColor(is_tty, TerminalColors::kCyan), n_groups - 1,
-              TerminalColor(is_tty, TerminalColors::kReset));
-          CF_EXPECT_EQ(WriteAll(request.Err(), out_of_range),
-                       (ssize_t)out_of_range.size());
+          fmt::print(std::cerr,
+                     "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
+                     TerminalColor(is_tty, TerminalColors::kBoldRed), selection,
+                     TerminalColor(is_tty, TerminalColors::kReset),
+                     TerminalColor(is_tty, TerminalColors::kCyan), n_groups - 1,
+                     TerminalColor(is_tty, TerminalColors::kReset));
           continue;
         }
         chosen_group_name = selector.groups[selection].GroupName();
@@ -344,12 +335,10 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
       if (instance_group_result.ok()) {
         break;
       }
-      std::string cannot_find_group_name = fmt::format(
-          "\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
+      fmt::print(
+          std::cerr, "\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
           TerminalColor(is_tty, TerminalColors::kBoldRed), chosen_group_name,
           TerminalColor(is_tty, TerminalColors::kReset));
-      CF_EXPECT_EQ(WriteAll(request.Err(), cannot_find_group_name),
-                   (ssize_t)cannot_find_group_name.size());
     }
   }
 

@@ -19,7 +19,6 @@
 
 #include <android-base/strings.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "host/commands/cvd/request_context.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/types.h"
@@ -83,15 +82,13 @@ CommandSequenceExecutor::CommandSequenceExecutor(
     : server_handlers_(server_handlers) {}
 
 Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
-    const std::vector<RequestWithStdio>& requests, SharedFD report) {
+    const std::vector<RequestWithStdio>& requests) {
   std::vector<cvd::Response> responses;
   for (const auto& request : requests) {
     auto& inner_proto = request.Message();
     if (inner_proto.has_command_request()) {
       auto& command = inner_proto.command_request();
-      std::string str = FormattedCommand(command);
-      CF_EXPECT(WriteAll(report, str) == (ssize_t)str.size(),
-                report->StrError());
+      std::cerr << FormattedCommand(command);
     }
 
     auto handler = CF_EXPECT(RequestHandler(request, server_handlers_));
@@ -108,8 +105,8 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
 }
 
 Result<cvd::Response> CommandSequenceExecutor::ExecuteOne(
-    const RequestWithStdio& request, SharedFD report) {
-  auto response_in_vector = CF_EXPECT(Execute({request}, report));
+    const RequestWithStdio& request) {
+  auto response_in_vector = CF_EXPECT(Execute({request}));
   CF_EXPECT_EQ(response_in_vector.size(), 1ul);
   return response_in_vector.front();
 }

@@ -101,8 +101,8 @@ class AcloudCommand : public CvdServerHandler {
  private:
   Result<cvd::InstanceGroupInfo> HandleStartResponse(
       const cvd::Response& start_response);
-  Result<void> PrintBriefSummary(const cvd::InstanceGroupInfo& group_info,
-                                 std::optional<SharedFD> stream_fd) const;
+  Result<void> PrintBriefSummary(
+      const cvd::InstanceGroupInfo& group_info) const;
   Result<ConvertedAcloudCreateCommand> ValidateLocal(
       const RequestWithStdio& request);
   bool ValidateRemoteArgs(const RequestWithStdio& request);
@@ -128,13 +128,7 @@ Result<cvd::InstanceGroupInfo> AcloudCommand::HandleStartResponse(
 }
 
 Result<void> AcloudCommand::PrintBriefSummary(
-    const cvd::InstanceGroupInfo& group_info,
-    std::optional<SharedFD> stream_fd) const {
-  if (!stream_fd) {
-    return {};
-  }
-  SharedFD fd = *stream_fd;
-  std::stringstream ss;
+    const cvd::InstanceGroupInfo& group_info) const {
   const std::string& group_name = group_info.group_name();
   CF_EXPECT_EQ(group_info.home_directories().size(), 1);
   const std::string home_dir = (group_info.home_directories())[0];
@@ -146,16 +140,15 @@ Result<void> AcloudCommand::PrintBriefSummary(
     instance_names.push_back(instance.name());
     instance_ids.push_back(instance.instance_id());
   }
-  ss << std::endl << "Created instance group: " << group_name << std::endl;
+  std::cerr << std::endl
+            << "Created instance group: " << group_name << std::endl;
   for (size_t i = 0; i != instance_ids.size(); i++) {
     std::string device_name = group_name + "-" + instance_names[i];
-    ss << "  " << device_name << " (local-instance-" << instance_ids[i] << ")"
-       << std::endl;
+    std::cerr << "  " << device_name << " (local-instance-" << instance_ids[i]
+              << ")" << std::endl;
   }
-  ss << std::endl
-     << "acloud list or cvd fleet for more information." << std::endl;
-  auto n_write = WriteAll(*stream_fd, ss.str());
-  CF_EXPECT_EQ(n_write, (ssize_t)ss.str().size());
+  std::cerr << std::endl
+            << "acloud list or cvd fleet for more information." << std::endl;
   return {};
 }
 
@@ -175,9 +168,8 @@ bool AcloudCommand::ValidateRemoteArgs(const RequestWithStdio& request) {
 Result<cvd::Response> AcloudCommand::HandleLocal(
     const ConvertedAcloudCreateCommand& command,
     const RequestWithStdio& request) {
-  CF_EXPECT(executor_.Execute(command.prep_requests, request.Err()));
-  auto start_response =
-      CF_EXPECT(executor_.ExecuteOne(command.start_request, request.Err()));
+  CF_EXPECT(executor_.Execute(command.prep_requests));
+  auto start_response = CF_EXPECT(executor_.ExecuteOne(command.start_request));
 
   if (!command.fetch_command_str.empty()) {
     // has cvd fetch command, update the fetch cvd command file
@@ -190,13 +182,8 @@ Result<cvd::Response> AcloudCommand::HandleLocal(
   auto handle_response_result = HandleStartResponse(start_response);
   if (handle_response_result.ok()) {
     // print
-    std::optional<SharedFD> fd_opt;
     if (command.verbose) {
-      fd_opt = request.Err();
-    }
-    auto write_result = PrintBriefSummary(*handle_response_result, fd_opt);
-    if (!write_result.ok()) {
-      LOG(ERROR) << "Failed to write the start response report.";
+      CF_EXPECT(PrintBriefSummary(*handle_response_result));
     }
   } else {
     LOG(ERROR) << "Failed to analyze the cvd start response.";
@@ -219,8 +206,6 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
   if (args[0] == "create") {
     cmd.AddParameter("--auto_connect=false");
   }
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, request.In());
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.Err());
   std::string stdout_;
   SharedFD stdout_pipe_read, stdout_pipe_write;
   CF_EXPECT(SharedFD::Pipe(&stdout_pipe_read, &stdout_pipe_write),
@@ -232,9 +217,9 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
       LOG(ERROR) << "Error in reading stdout from process";
     }
   });
-  WriteAll(request.Err(),
-           "UPDATE! Try the new `cvdr` tool directly. Run `cvdr --help` to get "
-           "started.\n");
+  std::cerr
+      << "UPDATE! Try the new `cvdr` tool directly. Run `cvdr --help` to get "
+         "started.\n";
 
   siginfo_t siginfo;
 
@@ -246,7 +231,7 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
   }
   stdout_pipe_write->Close();
   stdout_thread.join();
-  WriteAll(request.Out(), stdout_);
+  std::cout << stdout_;
   if (args[0] == "create" && siginfo.si_status == EXIT_SUCCESS) {
     std::string hostname = stdout_.substr(0, stdout_.find(" "));
     CF_EXPECT(RunAcloudConnect(request, hostname));
@@ -268,9 +253,6 @@ Result<void> AcloudCommand::RunAcloudConnect(const RequestWithStdio& request,
   cmd.AddParameter("reconnect");
   cmd.AddParameter("--instance-names");
   cmd.AddParameter(hostname);
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, request.In());
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, request.Out());
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.Err());
 
   cmd.Start().Wait();
 

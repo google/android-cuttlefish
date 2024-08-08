@@ -139,7 +139,7 @@ class CvdResetCommandHandler : public CvdServerHandler {
       return {};
     }
 
-    instance_manager_.CvdClear(request.Out(), request.Err());
+    instance_manager_.CvdClear();
     // The instance database is obsolete now, clear it.
     auto instance_db_deleted = RemoveFile(InstanceDatabasePath());
     if (!instance_db_deleted) {

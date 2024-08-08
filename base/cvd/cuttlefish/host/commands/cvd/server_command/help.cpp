@@ -94,7 +94,11 @@ class CvdHelpHandler : public CvdServerHandler {
     } else {
       output = CF_EXPECT(SubCommandHelp(args));
     }
-    auto response = CF_EXPECT(WriteToFd(request.Out(), output));
+    std::cout << output;
+
+    cvd::Response response;
+    response.mutable_command_response();  // Sets oneof member
+    response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
 
@@ -116,7 +120,8 @@ class CvdHelpHandler : public CvdServerHandler {
     lookup_cmd.add_args(arg);
     auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
     CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
-    return RequestWithStdio(lookup, {dev_null, dev_null, dev_null});
+    // TODO(schuffelen): Find alternative to hide output.
+    return RequestWithStdio(lookup);
   }
 
   Result<std::string> TopLevelHelp() {

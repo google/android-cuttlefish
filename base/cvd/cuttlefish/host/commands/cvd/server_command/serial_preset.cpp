@@ -64,10 +64,9 @@ class SerialPreset : public CvdServerHandler {
       cmd.add_args(invocation.arguments[i]);
     }
 
-    RequestWithStdio inner_request(std::move(inner_req_proto),
-                                   request.FileDescriptors());
+    RequestWithStdio inner_request(std::move(inner_req_proto));
 
-    CF_EXPECT(executor_.Execute({std::move(inner_request)}, request.Err()));
+    CF_EXPECT(executor_.Execute({std::move(inner_request)}));
 
     cvd::Response response;
     response.mutable_command_response();

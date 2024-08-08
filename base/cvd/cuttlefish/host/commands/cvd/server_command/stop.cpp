@@ -109,10 +109,7 @@ Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
       .args = cmd_args,
       .envs = envs,
       .working_dir = request.Message().command_request().working_directory(),
-      .command_name = bin,
-      .in = request.In(),
-      .out = request.Out(),
-      .err = request.Err()};
+      .command_name = bin};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   siginfo_t infop;
@@ -133,16 +130,14 @@ Result<selector::LocalInstanceGroup> CvdStopCommandHandler::PromptUserForGroup(
                               }),
                groups.end());
   GroupSelector selector{.groups = groups};
-  auto menu = selector.Menu();
+  std::cout << selector.Menu();
 
-  CF_EXPECT_EQ(WriteAll(request.Out(), menu + "\n"), (ssize_t)menu.size() + 1);
   std::unique_ptr<InterruptibleTerminal> terminal_ =
-      std::make_unique<InterruptibleTerminal>(request.In());
+      std::make_unique<InterruptibleTerminal>();
 
-  const bool is_tty = request.Err()->IsOpen() && request.Err()->IsATTY();
+  const bool is_tty = isatty(2);
   while (true) {
-    std::string question = "Which instance group would you like to stop?";
-    CF_EXPECT_EQ(WriteAll(request.Out(), question), (ssize_t)question.size());
+    std::cout << "Which instance group would you like to stop?";
 
     std::string input_line = CF_EXPECT(terminal_->ReadLine());
     int selection = -1;
@@ -150,14 +145,12 @@ Result<selector::LocalInstanceGroup> CvdStopCommandHandler::PromptUserForGroup(
     if (android::base::ParseInt(input_line, &selection)) {
       const int n_groups = selector.groups.size();
       if (n_groups <= selection || selection < 0) {
-        std::string out_of_range = fmt::format(
-            "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
-            TerminalColor(is_tty, TerminalColors::kBoldRed), selection,
-            TerminalColor(is_tty, TerminalColors::kReset),
-            TerminalColor(is_tty, TerminalColors::kCyan), n_groups - 1,
-            TerminalColor(is_tty, TerminalColors::kReset));
-        CF_EXPECT_EQ(WriteAll(request.Err(), out_of_range),
-                     (ssize_t)out_of_range.size());
+        fmt::print(std::cerr,
+                   "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
+                   TerminalColor(is_tty, TerminalColors::kBoldRed), selection,
+                   TerminalColor(is_tty, TerminalColors::kReset),
+                   TerminalColor(is_tty, TerminalColors::kCyan), n_groups - 1,
+                   TerminalColor(is_tty, TerminalColors::kReset));
         continue;
       }
       chosen_group_name = selector.groups[selection].GroupName();
@@ -172,12 +165,10 @@ Result<selector::LocalInstanceGroup> CvdStopCommandHandler::PromptUserForGroup(
     if (instance_group_result.ok()) {
       return instance_group_result;
     }
-    std::string cannot_find_group_name = fmt::format(
-        "\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
+    fmt::print(
+        std::cerr, "\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
         TerminalColor(is_tty, TerminalColors::kBoldRed), chosen_group_name,
         TerminalColor(is_tty, TerminalColors::kReset));
-    CF_EXPECT_EQ(WriteAll(request.Err(), cannot_find_group_name),
-                 (ssize_t)cannot_find_group_name.size());
   }
 }
 
@@ -214,7 +205,7 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
   auto group_selection_result =
       instance_manager_.SelectGroup(selector_args, envs);
   if (!group_selection_result.ok()) {
-    if (!request.In()->IsOpen() || !request.In()->IsATTY()) {
+    if (!isatty(0)) {
       return CF_EXPECT(NoTTYResponse(request));
     }
     group_selection_result = PromptUserForGroup(request, envs, selector_args);
@@ -231,10 +222,7 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
       .args = cmd_args,
       .envs = envs,
       .working_dir = request.Message().command_request().working_directory(),
-      .command_name = bin,
-      .in = request.In(),
-      .out = request.Out(),
-      .err = request.Err()};
+      .command_name = bin};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   siginfo_t infop;

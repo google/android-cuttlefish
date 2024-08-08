@@ -49,7 +49,6 @@ struct ConstructCommandParam {
   const cvd_common::Envs& envs;
   const std::string& working_dir;
   const std::string& command_name;
-  SharedFD in;
   SharedFD out;
   SharedFD err;
 };
@@ -92,7 +91,5 @@ enum class TerminalColors : int {
 };
 
 std::string TerminalColor(const bool is_tty, TerminalColors color);
-
-Result<cvd::Response> WriteToFd(SharedFD fd, const std::string& output);
 
 }  // namespace cuttlefish

@@ -146,7 +146,7 @@ class LoadConfigsCommand : public CvdServerHandler {
                          selector::LocalInstanceGroup& group,
                          CvdFlags cvd_flags) {
     auto mkdir_cmd = BuildMkdirCmd(request, cvd_flags);
-    auto mkdir_res = executor_.ExecuteOne(mkdir_cmd, request.Err());
+    auto mkdir_res = executor_.ExecuteOne(mkdir_cmd);
     if (!mkdir_res.ok()) {
       group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
       instance_manager_.UpdateInstanceGroup(group);
@@ -155,7 +155,7 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     if (!cvd_flags.fetch_cvd_flags.empty()) {
       auto fetch_cmd = BuildFetchCmd(request, cvd_flags);
-      auto fetch_res = executor_.ExecuteOne(fetch_cmd, request.Err());
+      auto fetch_res = executor_.ExecuteOne(fetch_cmd);
       if (!fetch_res.ok()) {
         group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
         instance_manager_.UpdateInstanceGroup(group);
@@ -164,7 +164,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     }
 
     auto launch_cmd = BuildLaunchCmd(request, cvd_flags, group);
-    CF_EXPECT(executor_.ExecuteOne(launch_cmd, request.Err()));
+    CF_EXPECT(executor_.ExecuteOne(launch_cmd));
     return {};
   }
 
@@ -188,8 +188,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     for (const auto& flag : cvd_flags.fetch_cvd_flags) {
       fetch_cmd.add_args(flag);
     }
-    return RequestWithStdio(fetch_req,
-                            {request.In(), request.Out(), request.Err()});
+    return RequestWithStdio(fetch_req);
   }
 
   RequestWithStdio BuildMkdirCmd(const RequestWithStdio& request,
@@ -201,8 +200,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     mkdir_cmd.add_args("mkdir");
     mkdir_cmd.add_args("-p");
     mkdir_cmd.add_args(cvd_flags.load_directories.launch_home_directory);
-    return RequestWithStdio(mkdir_req,
-                            {request.In(), request.Out(), request.Err()});
+    return RequestWithStdio(mkdir_req);
   }
 
   RequestWithStdio BuildLaunchCmd(const RequestWithStdio& request,
@@ -247,8 +245,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     launch_cmd.mutable_selector_opts()->add_args("--group_name");
     launch_cmd.mutable_selector_opts()->add_args(group.GroupName());
 
-    return RequestWithStdio(launch_req,
-                            {request.In(), request.Out(), request.Err()});
+    return RequestWithStdio(launch_req);
   }
 
  private:

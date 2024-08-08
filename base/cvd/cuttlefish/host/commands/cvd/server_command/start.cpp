@@ -88,7 +88,7 @@ RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
     load_command.add_args(arg);
   }
   load_command.add_args(config_file);
-  return RequestWithStdio(request_proto, request.FileDescriptors());
+  return RequestWithStdio(request_proto);
 }
 
 // link might be a directory, so we clean that up, and create a link from
@@ -394,14 +394,12 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
   for (const auto& request_form : request_forms) {
     request_protos.emplace_back(MakeRequest(request_form));
   }
+  // TODO(schuffelen): Hide command output here
   std::vector<RequestWithStdio> new_requests;
-  auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
-  CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
-  std::vector<SharedFD> dev_null_fds = {dev_null, dev_null, dev_null};
   for (auto& request_proto : request_protos) {
-    new_requests.emplace_back(request_proto, dev_null_fds);
+    new_requests.emplace_back(request_proto);
   }
-  CF_EXPECT(command_executor_.Execute(new_requests, dev_null));
+  CF_EXPECT(command_executor_.Execute(new_requests));
   return {};
 }
 
@@ -471,13 +469,12 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
       .args = args,
       .envs = envs,
       .working_dir = request.Message().command_request().working_directory(),
-      .command_name = bin_file,
-      .in = request.In(),
-      // Print everything to stderr, cvd needs to print JSON to stdout which
-      // would be unparseable with the subcommand's output.
-      .out = request.Err(),
-      .err = request.Err()};
+      .command_name = bin_file};
   Command non_help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
+  // Print everything to stderr, cvd needs to print JSON to stdout which
+  // would be unparseable with the subcommand's output.
+  non_help_command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+                                 Subprocess::StdIOChannel::kStdErr);
   return non_help_command;
 }
 
@@ -670,8 +667,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   std::optional<std::string> config_file = GetConfigPath(subcmd_args);
   if (config_file) {
     auto subrequest = CreateLoadCommand(request, subcmd_args, *config_file);
-    auto response =
-        CF_EXPECT(command_executor_.ExecuteOne(subrequest, request.Err()));
+    auto response = CF_EXPECT(command_executor_.ExecuteOne(subrequest));
     sub_action_ended_ = true;
     return response;
   }
@@ -774,9 +770,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   listener_handle.reset();
 
   auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(request, group));
-  auto serialized_json = group_json.toStyledString();
-  CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
-               (ssize_t)serialized_json.size());
+  std::cout << group_json.toStyledString();
 
   return FillOutNewInstanceInfo(std::move(response), group);
 }

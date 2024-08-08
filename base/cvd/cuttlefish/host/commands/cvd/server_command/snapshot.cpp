@@ -139,14 +139,12 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
     envs[kAndroidHostOut] = android_host_out;
     envs[kAndroidSoongHostOut] = android_host_out;
 
-    std::stringstream command_to_issue;
-    command_to_issue << "HOME=" << home << " " << kAndroidHostOut << "="
-                     << android_host_out << " " << kAndroidSoongHostOut << "="
-                     << android_host_out << " " << cvd_snapshot_bin_path << " ";
+    std::cerr << "HOME=" << home << " " << kAndroidHostOut << "="
+              << android_host_out << " " << kAndroidSoongHostOut << "="
+              << android_host_out << " " << cvd_snapshot_bin_path << " ";
     for (const auto& arg : cvd_snapshot_args) {
-      command_to_issue << arg << " ";
+      std::cerr << arg << " ";
     }
-    WriteAll(request.Err(), command_to_issue.str());
 
     ConstructCommandParam construct_cmd_param{
         .bin_path = cvd_snapshot_bin_path,
@@ -154,10 +152,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
         .args = cvd_snapshot_args,
         .envs = envs,
         .working_dir = request.Message().command_request().working_directory(),
-        .command_name = android::base::Basename(cvd_snapshot_bin_path),
-        .in = request.In(),
-        .out = request.Out(),
-        .err = request.Err()};
+        .command_name = android::base::Basename(cvd_snapshot_bin_path)};
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
     return command;
   }

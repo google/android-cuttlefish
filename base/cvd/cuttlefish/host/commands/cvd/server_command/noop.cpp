@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/server_command/noop.h"
 
+#include <iostream>
 #include <memory>
 
 #include "common/libs/fs/shared_buf.h"
@@ -40,12 +41,8 @@ class CvdNoopHandler : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     auto invocation = ParseInvocation(request.Message());
-    auto msg = fmt::format("DEPRECATED: The {} command is a no-op",
-                           invocation.command);
-    auto write_len = WriteAll(request.Out(), msg);
-    CF_EXPECTF(write_len == (ssize_t)msg.size(),
-               "Failed to write deprecation message: {}",
-               request.Out()->StrError());
+    fmt::print(std::cout, "DEPRECATED: The {} command is a no-op",
+               invocation.command);
     cvd::Response response;
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;

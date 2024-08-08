@@ -173,7 +173,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
   cvd_common::Args CmdList() const override { return {}; }
   // not intended to show up in help
   Result<std::string> SummaryHelp() const override { return ""; }
-  bool ShouldInterceptHelp() const { return false; }
+  bool ShouldInterceptHelp() const override { return false; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
     return "";
   }
@@ -197,7 +197,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     CF_EXPECT(ConsumeFlags(mixsuperimage_flags, invocation.arguments),
               "Failed to process mix-super-image flag.");
     if (help) {
-      WriteAll(request.Out(), kMixSuperImageHelpMessage);
+      std::cout << kMixSuperImageHelpMessage;
       return response;
     }
 

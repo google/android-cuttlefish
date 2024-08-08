@@ -20,8 +20,6 @@
 
 #include <android-base/file.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/server_handler.h"
@@ -64,7 +62,7 @@ class CvdFleetCommandHandler : public CvdServerHandler {
   StatusFetcher status_fetcher_;
 
   static constexpr char kFleetSubcmd[] = "fleet";
-  Result<cvd::Status> CvdFleetHelp(const SharedFD& out) const;
+  cvd::Status CvdFleetHelp() const;
   bool IsHelp(const cvd_common::Args& cmd_args) const;
 };
 
@@ -86,7 +84,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   auto [sub_cmd, args] = ParseInvocation(request.Message());
 
   if (IsHelp(args)) {
-    CF_EXPECT(CvdFleetHelp(request.Out()));
+    std::cout << kHelpMessage;
     return ok_response;
   }
 
@@ -98,9 +96,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   }
   Json::Value output_json(Json::objectValue);
   output_json["groups"] = groups_json;
-  auto serialized_json = output_json.toStyledString();
-  CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
-               (ssize_t)serialized_json.size());
+  std::cout << output_json.toStyledString();
   return ok_response;
 }
 
@@ -111,15 +107,6 @@ bool CvdFleetCommandHandler::IsHelp(const cvd_common::Args& args) const {
     }
   }
   return false;
-}
-
-Result<cvd::Status> CvdFleetCommandHandler::CvdFleetHelp(
-    const SharedFD& out) const {
-  const std::string help_message(kHelpMessage);
-  CF_EXPECT_EQ(WriteAll(out, help_message), (ssize_t)help_message.size());
-  cvd::Status status;
-  status.set_code(cvd::Status::OK);
-  return status;
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdFleetCommandHandler(

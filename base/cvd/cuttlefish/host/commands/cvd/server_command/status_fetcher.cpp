@@ -183,11 +183,10 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
                                             .args = cmd_args,
                                             .envs = envs,
                                             .working_dir = working_dir,
-                                            .command_name = bin,
-                                            .in = request.In(),
-                                            .out = redirect_stdout_fd,
-                                            .err = redirect_stderr_fd};
+                                            .command_name = bin};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, redirect_stdout_fd);
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, redirect_stderr_fd);
 
   siginfo_t infop;
   command.Start().Wait(&infop, WEXITED);
@@ -312,8 +311,7 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
        .selector_args = {"--group_name", group.GroupName()},
        .working_dir =
            original_request.Message().command_request().working_directory()});
-  RequestWithStdio group_request{request_message,
-                                 original_request.FileDescriptors()};
+  RequestWithStdio group_request(request_message);
   auto [_, instances_json, group_response] =
       CF_EXPECT(FetchStatus(group_request));
   group_json["instances"] = instances_json;

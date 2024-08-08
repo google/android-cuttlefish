@@ -85,7 +85,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
     CF_EXPECT(ConsumeFlags(translator_flags, invocation.arguments),
               "Failed to process translator flag.");
     if (help) {
-      WriteAll(request.Out(), kTranslatorHelpMessage);
+      std::cout << kTranslatorHelpMessage;
       return response;
     }
     CF_EXPECT(flag_optout != flag_optin,
