@@ -19,6 +19,7 @@
 #include <sys/socket.h>
 #include <syscall.h>
 
+#include <absl/log/log.h>
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_replace.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
@@ -42,6 +43,7 @@ sandbox2::PolicyBuilder ProcessRestarterPolicy(const HostInfo& host) {
       .AllowSafeFcntl()
       .AllowSyscall(SYS_execve)  // To enter sandboxer_proxy
       .AllowSyscall(SYS_waitid)
+      .AllowTCGETS()
       // For sandboxer_proxy
       .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW)})
       .AllowExit()

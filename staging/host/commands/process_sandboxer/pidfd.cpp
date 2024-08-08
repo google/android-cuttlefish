@@ -54,7 +54,8 @@ absl::StatusOr<PidFd> PidFd::FromRunningProcess(pid_t pid) {
 
 absl::StatusOr<PidFd> PidFd::LaunchSubprocess(
     absl::Span<const std::string> argv,
-    std::vector<std::pair<UniqueFd, int>> fds) {
+    std::vector<std::pair<UniqueFd, int>> fds,
+    absl::Span<const std::string> env) {
   int pidfd;
   clone_args args_for_clone = clone_args{
       .flags = CLONE_PIDFD,
@@ -106,11 +107,18 @@ absl::StatusOr<PidFd> PidFd::LaunchSubprocess(
   }
   argv_cstr.emplace_back(nullptr);
 
+  std::vector<std::string> env_clone(env.begin(), env.end());
+  std::vector<char*> env_cstr;
+  for (std::string& env_member : env_clone) {
+    env_cstr.emplace_back(env_member.data());
+  }
+  env_cstr.emplace_back(nullptr);
+
   if (prctl(PR_SET_PDEATHSIG, SIGHUP) < 0) {  // Die when parent dies
     PLOG(FATAL) << "prctl failed";
   }
 
-  execv(argv_cstr[0], argv_cstr.data());
+  execve(argv_cstr[0], argv_cstr.data(), env_cstr.data());
 
   PLOG(FATAL) << "execv failed";
 }
@@ -149,8 +157,8 @@ absl::StatusOr<std::vector<std::pair<UniqueFd, int>>> PidFd::AllFds() {
   return fds;
 }
 
-absl::StatusOr<std::vector<std::string>> PidFd::Argv() {
-  auto path = absl::StrFormat("/proc/%d/cmdline", pid_);
+static absl::StatusOr<std::vector<std::string>> ReadNullSepFile(
+    const std::string& path) {
   std::ifstream cmdline_file(path, std::ios::binary);
   if (!cmdline_file) {
     auto err = absl::StrFormat("Failed to open '%v'", path);
@@ -162,13 +170,22 @@ absl::StatusOr<std::vector<std::string>> PidFd::Argv() {
     auto err = absl::StrFormat("Failed to read '%v'", path);
     return absl::InternalError(err);
   }
-  std::vector<std::string> argv = absl::StrSplit(buffer.str(), '\0');
-  if (argv.empty()) {
-    return absl::InternalError(absl::StrFormat("no argv in '%v'", path));
-  } else if (argv.back() == "") {
-    argv.pop_back();  // argv ends in an empty string
+
+  std::vector<std::string> members = absl::StrSplit(buffer.str(), '\0');
+  if (members.empty()) {
+    return absl::InternalError(absl::StrFormat("'%v' is empty", path));
+  } else if (members.back() == "") {
+    members.pop_back();  // may end in a null terminator
   }
-  return argv;
+  return members;
+}
+
+absl::StatusOr<std::vector<std::string>> PidFd::Argv() {
+  return ReadNullSepFile(absl::StrFormat("/proc/%d/cmdline", pid_));
+}
+
+absl::StatusOr<std::vector<std::string>> PidFd::Env() {
+  return ReadNullSepFile(absl::StrFormat("/proc/%d/environ", pid_));
 }
 
 absl::Status PidFd::HaltHierarchy() {

@@ -71,9 +71,11 @@ Result<void> CleanPriorFiles(const std::string& path,
                   << "\"");
   }
   if (rmdir(path.c_str()) < 0) {
-    if (!(errno == EEXIST || errno == ENOTEMPTY)) {
-      // If EEXIST or ENOTEMPTY, probably because a file was preserved
-      return CF_ERRNO("Could not rmdir \"" << path << "\"");
+    if (!(errno == EEXIST || errno == ENOTEMPTY || errno == EROFS ||
+          errno == EBUSY)) {
+      // If EEXIST or ENOTEMPTY, probably because a file was preserved. EROFS
+      // or EBUSY likely means a bind mount for host-sandboxing mode.
+      return CF_ERRF("Could not rmdir '{}': '{}'", path, strerror(errno));
     }
   }
   return {};
@@ -98,6 +100,10 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
   LOG(DEBUG) << fmt::format("Prior files: {}", fmt::join(prior_files, ", "));
 
   if (prior_dirs.size() > 0 || prior_files.size() > 0) {
+    // TODO(schuffelen): Fix logic for host-sandboxing mode.
+    // Host-sandboxing mode doesn't currently search PATH for executables, but
+    // this has a conflict with host-sandboxing mode anyway, so it's left in an
+    // incompatible state rather than set to /usr/bin/lsof.
     Command lsof("lsof");
     lsof.AddParameter("-t");
     for (const auto& prior_dir : prior_dirs) {
