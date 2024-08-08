@@ -277,7 +277,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 		KernelDir:        kernelBuildDir,
 		BootloaderDir:    bootloaderBuildDir,
 	}
-	if err := a.startCVDHandler.Start(startParams); err != nil {
+	if err := a.startCVDHandler.Create(startParams); err != nil {
 		return nil, err
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
@@ -297,7 +297,7 @@ func (a *CreateCVDAction) launchFromUserBuild(
 		InstanceNumbers:  a.newInstanceNumbers(instancesCount),
 		MainArtifactsDir: artifactsDir,
 	}
-	if err := a.startCVDHandler.Start(startParams); err != nil {
+	if err := a.startCVDHandler.Create(startParams); err != nil {
 		return nil, err
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
