@@ -16,9 +16,9 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
-#include "sandboxed_api/sandbox2/allow_all_syscalls.h"
-#include "sandboxed_api/sandbox2/allow_unrestricted_networking.h"
-#include "sandboxed_api/sandbox2/policybuilder.h"
+#include <sandboxed_api/sandbox2/allow_all_syscalls.h>
+#include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
+#include <sandboxed_api/sandbox2/policybuilder.h>
 
 namespace cuttlefish::process_sandboxer {
 

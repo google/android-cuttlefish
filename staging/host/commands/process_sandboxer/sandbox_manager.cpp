@@ -273,11 +273,15 @@ class SandboxManager::SocketClient {
     if (!fds.ok()) {
       return fds.status();
     }
+    absl::StatusOr<std::vector<std::string>> env = pid_fd_->Env();
+    if (!env.ok()) {
+      return env.status();
+    }
     fds->erase(std::remove_if(fds->begin(), fds->end(), [this](auto& arg) {
       return arg.second == ignored_fd_;
     }));
     return manager_.RunProcess(client_fd_.Get(), std::move(*argv),
-                               std::move(*fds));
+                               std::move(*fds), *env);
   }
 
   SandboxManager& manager_;
@@ -336,7 +340,8 @@ SandboxManager::~SandboxManager() {
 
 absl::Status SandboxManager::RunProcess(
     std::optional<int> client_fd, absl::Span<const std::string> argv,
-    std::vector<std::pair<UniqueFd, int>> fds) {
+    std::vector<std::pair<UniqueFd, int>> fds,
+    absl::Span<const std::string> env) {
   if (argv.empty()) {
     return absl::InvalidArgumentError("Not enough arguments");
   }
@@ -363,16 +368,17 @@ absl::Status SandboxManager::RunProcess(
   std::unique_ptr<Policy> policy = PolicyForExecutable(
       host_info_, ServerSocketOutsidePath(runtime_dir_), exe);
   if (policy) {
-    return RunSandboxedProcess(client_fd, argv, std::move(fds),
+    return RunSandboxedProcess(client_fd, argv, std::move(fds), env,
                                std::move(policy));
   } else {
-    return RunProcessNoSandbox(client_fd, argv, std::move(fds));
+    return RunProcessNoSandbox(client_fd, argv, std::move(fds), env);
   }
 }
 
 absl::Status SandboxManager::RunSandboxedProcess(
     std::optional<int> client_fd, absl::Span<const std::string> argv,
-    std::vector<std::pair<UniqueFd, int>> fds, std::unique_ptr<Policy> policy) {
+    std::vector<std::pair<UniqueFd, int>> fds,
+    absl::Span<const std::string> env, std::unique_ptr<Policy> policy) {
   if (VLOG_IS_ON(1)) {
     std::stringstream process_stream;
     process_stream << "Launching executable with argv: [\n";
@@ -388,7 +394,7 @@ absl::Status SandboxManager::RunSandboxedProcess(
   }
 
   auto exe = CleanPath(argv[0]);
-  auto executor = std::make_unique<Executor>(exe, argv);
+  auto executor = std::make_unique<Executor>(exe, argv, env);
   executor->set_cwd(host_info_.runtime_dir);
 
   // https://cs.android.com/android/platform/superproject/main/+/main:external/sandboxed-api/sandboxed_api/sandbox2/limits.h;l=116;drc=d451478e26c0352ecd6912461e867a1ae64b17f5
@@ -436,12 +442,13 @@ absl::Status SandboxManager::RunSandboxedProcess(
 
 absl::Status SandboxManager::RunProcessNoSandbox(
     std::optional<int> client_fd, absl::Span<const std::string> argv,
-    std::vector<std::pair<UniqueFd, int>> fds) {
+    std::vector<std::pair<UniqueFd, int>> fds,
+    absl::Span<const std::string> env) {
   if (!client_fd) {
     return absl::InvalidArgumentError("no client for unsandboxed process");
   }
 
-  absl::StatusOr<PidFd> fd = PidFd::LaunchSubprocess(argv, std::move(fds));
+  absl::StatusOr<PidFd> fd = PidFd::LaunchSubprocess(argv, std::move(fds), env);
   if (!fd.ok()) {
     return fd.status();
   }
@@ -528,6 +535,9 @@ absl::Status SandboxManager::ProcessExit(SandboxManager::SboxIter it,
     }
   }
   subprocesses_.erase(it);
+  if (subprocesses_.empty()) {
+    running_ = false;
+  }
   static constexpr char kErr[] = "eventfd exited";
   return revents == POLLIN ? absl::OkStatus() : absl::InternalError(kErr);
 }

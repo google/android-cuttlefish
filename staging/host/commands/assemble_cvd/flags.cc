@@ -622,7 +622,8 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
 
     Command ikconfig_cmd(HostBinaryPath("extract-ikconfig"));
     ikconfig_cmd.AddParameter(kernel_image_path);
-    ikconfig_cmd.SetEnvironment({new_path});
+    ikconfig_cmd.UnsetFromEnvironment("PATH").AddEnvironmentVariable("PATH",
+                                                                     new_path);
 
     std::string ikconfig_path =
         StringFromEnv("TEMP", "/tmp") + "/ikconfig.XXXXXX";

@@ -27,7 +27,7 @@ namespace process_sandboxer {
 sandbox2::PolicyBuilder BaselinePolicy(const HostInfo& host,
                                        std::string_view exe) {
   return sandbox2::PolicyBuilder()
-      .AddLibrariesForBinary(exe, JoinPath(host.artifacts_path, "lib64"))
+      .AddLibrariesForBinary(exe, JoinPath(host.host_artifacts_path, "lib64"))
       // For dynamic linking and memory allocation
       .AllowDynamicStartup()
       .AllowExit()

@@ -16,6 +16,8 @@
 
 #include "common/libs/utils/environment.h"
 
+#include <sys/utsname.h>
+
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
@@ -23,6 +25,7 @@
 #include <string>
 
 #include <android-base/logging.h>
+#include <android-base/no_destructor.h>
 #include <android-base/strings.h>
 
 #include "common/libs/utils/files.h"
@@ -38,49 +41,14 @@ std::string StringFromEnv(const std::string& varname,
   return valstr;
 }
 
-/**
- * at runtime, return the arch of the host: e.g. aarch64, x86_64, etc
- *
- * uses "`which uname` -m"
- *
- * @return arch string on success, "" on failure
- */
-std::string HostArchStr() {
-  static std::string arch;
-  if (!arch.empty()) {
-    return arch;
-  }
-
-  // good to check if uname exists and is executable
-  // or, guarantee uname is available by dependency list
-  FILE* pip = popen("uname -m", "r");
-  if (!pip) {
-    return std::string{};
-  }
-
-  auto read_from_file =
-      [](FILE* fp, size_t len) {
-        /*
-         * to see if input is longer than len,
-         * we read up to len+1. If the length is len+1,
-         * then the input is too long
-         */
-        decltype(len) upper = len + 1;
-        std::string format("%");
-        format.append(std::to_string(upper)).append("s");
-        // 1 extra character needed for the terminating null
-        // character added by fscanf.
-        std::shared_ptr<char> buf(new char[upper + 1],
-                                  std::default_delete<char[]>());
-        if (fscanf(fp, format.c_str(), buf.get()) == EOF) {
-          return std::string{};
-        }
-        std::string result(buf.get());
-        return (result.length() < upper) ? result : std::string{};
-      };
-  arch = android::base::Trim(std::string_view{read_from_file(pip, 20)});
-  pclose(pip);
-  return arch;
+/** Returns e.g. aarch64, x86_64, etc */
+const std::string& HostArchStr() {
+  static android::base::NoDestructor<std::string> arch([] {
+    utsname buf;
+    CHECK_EQ(uname(&buf), 0) << strerror(errno);
+    return std::string(buf.machine);
+  }());
+  return *arch;
 }
 
 Arch HostArch() {
