@@ -24,19 +24,6 @@
 
 namespace cuttlefish {
 
-struct RunWithManagedIoParam {
-  Command cmd_;
-  const bool redirect_stdout_ = false;
-  const bool redirect_stderr_ = false;
-  const std::string* stdin_;
-  SubprocessOptions options_ = SubprocessOptions();
-};
-
-struct RunOutput { // a better name please
-  std::string stdout_;
-  std::string stderr_;
-};
-
 class SubprocessWaiter {
  public:
   SubprocessWaiter() {}
@@ -44,9 +31,6 @@ class SubprocessWaiter {
   Result<void> Setup(Subprocess subprocess);
   Result<siginfo_t> Wait();
   Result<void> Interrupt();
-
-  Result<RunOutput> RunWithManagedStdioInterruptable(
-      RunWithManagedIoParam param);
 
  private:
   std::optional<Subprocess> subprocess_;
