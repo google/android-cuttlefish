@@ -24,6 +24,7 @@ cc_binary {
         "filesystem_explorer.cc",
         "flag_forwarder.cc",
         "main.cc",
+        "override_bool_arg.cpp",
     ],
     shared_libs: [
         "libbase",
