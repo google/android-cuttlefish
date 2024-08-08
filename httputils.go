@@ -336,14 +336,7 @@ func (u *FilesUploader) startWorkers(ctx context.Context, jobsChan <-chan upload
 	wg := sync.WaitGroup{}
 	for i := 0; i < u.NumWorkers; i++ {
 		wg.Add(1)
-		w := uploadChunkWorker{
-			Context:       ctx,
-			HTTPHelper:    u.HTTPHelper,
-			UploadDir:     u.UploadDir,
-			DumpOut:       u.DumpOut,
-			JobsChan:      jobsChan,
-			UploadOptions: u.UploadOptions,
-		}
+		w := newUploadChunkWorker(ctx, u.HTTPHelper, u.UploadDir, u.DumpOut, jobsChan, u.UploadOptions)
 		go func() {
 			defer wg.Done()
 			ch := w.Start()
@@ -369,12 +362,33 @@ type uploadChunkJob struct {
 }
 
 type uploadChunkWorker struct {
-	Context    context.Context
-	HTTPHelper HTTPHelper
-	UploadDir  string
-	DumpOut    io.Writer
-	JobsChan   <-chan uploadChunkJob
 	UploadOptions
+	ctx        context.Context
+	httpHelper HTTPHelper
+	uploadDir  string
+	dumpOut    io.Writer
+	jobsChan   <-chan uploadChunkJob
+	uploadOpts UploadOptions
+}
+
+func newUploadChunkWorker(
+	ctx context.Context,
+	httpHelper HTTPHelper,
+	uploadDir string,
+	dumpOut io.Writer,
+	jobsChan <-chan uploadChunkJob,
+	opts UploadOptions) *uploadChunkWorker {
+	if dumpOut == nil {
+		dumpOut = io.Discard
+	}
+	return &uploadChunkWorker{
+		ctx:           ctx,
+		httpHelper:    httpHelper,
+		uploadDir:     uploadDir,
+		dumpOut:       dumpOut,
+		jobsChan:      jobsChan,
+		UploadOptions: opts,
+	}
 }
 
 // Returns a channel that will return the result for each of the handled `uploadChunkJob` instances.
@@ -388,7 +402,7 @@ func (w *uploadChunkWorker) Start() <-chan error {
 	b.Reset()
 	go func() {
 		defer close(ch)
-		for job := range w.JobsChan {
+		for job := range w.jobsChan {
 			var err error
 			for {
 				err = w.upload(job)
@@ -410,14 +424,14 @@ func (w *uploadChunkWorker) Start() <-chan error {
 }
 
 func (w *uploadChunkWorker) upload(job uploadChunkJob) error {
-	ctx, cancel := context.WithCancel(w.Context)
+	ctx, cancel := context.WithCancel(w.ctx)
 	pipeReader, pipeWriter := io.Pipe()
 	writer := multipart.NewWriter(pipeWriter)
 	go func() {
 		defer pipeWriter.Close()
 		defer writer.Close()
 		if err := writeMultipartRequest(writer, job); err != nil {
-			fmt.Fprintf(w.DumpOut, "Error writing multipart request %v", err)
+			fmt.Fprintf(w.dumpOut, "Error writing multipart request %v", err)
 			cancel()
 		}
 	}()
@@ -427,15 +441,15 @@ func (w *uploadChunkWorker) upload(job uploadChunkJob) error {
 			if !info.Reused {
 				const msg = "tcp connection was not reused uploading file chunk: %q," +
 					"chunk number: %d, chunk total: %d\n"
-				fmt.Fprintf(w.DumpOut, msg,
+				fmt.Fprintf(w.dumpOut, msg,
 					filepath.Base(job.Filename), job.ChunkNumber, job.TotalChunks)
 			}
 		},
 	}
 	traceCtx := httptrace.WithClientTrace(ctx, clientTrace)
-	res, err := w.HTTPHelper.NewUploadFileRequest(
+	res, err := w.httpHelper.NewUploadFileRequest(
 		traceCtx,
-		"/userartifacts/"+w.UploadDir,
+		"/userartifacts/"+w.uploadDir,
 		pipeReader,
 		writer.FormDataContentType()).
 		Do()
