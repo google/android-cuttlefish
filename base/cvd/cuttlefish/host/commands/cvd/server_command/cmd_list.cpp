@@ -19,9 +19,8 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include <json/value.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/json.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -51,7 +50,7 @@ class CvdCmdlistHandler : public CvdServerHandler {
     const auto subcmds_str = android::base::Join(subcmds_vec, ",");
     Json::Value subcmd_info;
     subcmd_info["subcmd"] = subcmds_str;
-    WriteAll(request.Out(), subcmd_info.toStyledString());
+    request.Out() << subcmd_info.toStyledString();
     return response;
   }
 

@@ -395,12 +395,11 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
     request_protos.emplace_back(MakeRequest(request_form));
   }
   std::vector<RequestWithStdio> new_requests;
-  auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
-  CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
-  std::vector<SharedFD> dev_null_fds = {dev_null, dev_null, dev_null};
   for (auto& request_proto : request_protos) {
-    new_requests.emplace_back(request_proto, dev_null_fds);
+    new_requests.emplace_back(
+        RequestWithStdio::NullIo(std::move(request_proto)));
   }
+  std::ofstream dev_null("/dev/null");
   CF_EXPECT(command_executor_.Execute(new_requests, dev_null));
   return {};
 }
@@ -462,12 +461,12 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
       .envs = envs,
       .working_dir = request.Message().command_request().working_directory(),
       .command_name = bin_file,
-      .in = request.In(),
-      // Print everything to stderr, cvd needs to print JSON to stdout which
-      // would be unparseable with the subcommand's output.
-      .out = request.Err(),
-      .err = request.Err()};
+      .null_stdio = false};
   Command non_help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
+  // Print everything to stderr, cvd needs to print JSON to stdout which
+  // would be unparseable with the subcommand's output.
+  non_help_command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+                                 Subprocess::StdIOChannel::kStdErr);
   return non_help_command;
 }
 
@@ -696,9 +695,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   listener_handle.reset();
 
   auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(request, group));
-  auto serialized_json = group_json.toStyledString();
-  CF_EXPECT_EQ(WriteAll(request.Out(), serialized_json),
-               (ssize_t)serialized_json.size());
+  request.Out() << group_json.toStyledString();
 
   return FillOutNewInstanceInfo(std::move(response), group);
 }

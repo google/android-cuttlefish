@@ -142,8 +142,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
       CF_EXPECT(ExtractInfo(request));
 
   if (invocation_info.bin == kClearBin) {
-    *response.mutable_status() =
-        instance_manager_.CvdClear(request.Out(), request.Err());
+    *response.mutable_status() = instance_manager_.CvdClear(request);
     return response;
   }
 
@@ -162,9 +161,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
       .envs = invocation_info.envs,
       .working_dir = request.Message().command_request().working_directory(),
       .command_name = invocation_info.bin,
-      .in = request.In(),
-      .out = request.Out(),
-      .err = request.Err()};
+      .null_stdio = request.IsNullIo()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   siginfo_t infop;

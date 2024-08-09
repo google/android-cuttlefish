@@ -179,14 +179,18 @@ Result<void> InstanceManager::UpdateInstance(const LocalInstanceGroup& group,
 }
 
 Result<void> InstanceManager::IssueStopCommand(
-    const SharedFD& out, const SharedFD& err,
-    const std::string& config_file_path,
+    const RequestWithStdio& request, const std::string& config_file_path,
     selector::LocalInstanceGroup& group) {
+  SharedFD null_fd = SharedFD::Open("/dev/null", O_RDWR);
+
   const auto stop_bin = CF_EXPECT(StopBin(group.HostArtifactsPath()));
   Command command(group.HostArtifactsPath() + "/bin/" + stop_bin);
   command.AddParameter("--clear_instance_dirs");
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
+  if (request.IsNullIo()) {
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, null_fd);
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, null_fd);
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, null_fd);
+  }
   command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, config_file_path);
   auto wait_result = RunCommand(std::move(command));
   /**
@@ -196,25 +200,29 @@ Result<void> InstanceManager::IssueStopCommand(
    */
   if (!wait_result.ok()) {
     std::stringstream error_msg;
-    error_msg << stop_bin << " was executed internally, and failed. It might "
-              << "be failing to parse the new --clear_instance_dirs. Will try "
-              << "without the flag.\n";
-    WriteAll(err, error_msg.str());
+    request.Out()
+        << stop_bin << " was executed internally, and failed. It might "
+        << "be failing to parse the new --clear_instance_dirs. Will try "
+        << "without the flag.\n";
     Command no_clear_instance_dir_command(group.HostArtifactsPath() + "/bin/" +
                                           stop_bin);
-    no_clear_instance_dir_command.RedirectStdIO(
-        Subprocess::StdIOChannel::kStdOut, out);
-    no_clear_instance_dir_command.RedirectStdIO(
-        Subprocess::StdIOChannel::kStdErr, err);
-    no_clear_instance_dir_command.AddEnvironmentVariable(
-        kCuttlefishConfigEnvVarName, config_file_path);
+    if (request.IsNullIo()) {
+      no_clear_instance_dir_command.RedirectStdIO(
+          Subprocess::StdIOChannel::kStdIn, null_fd);
+      no_clear_instance_dir_command.RedirectStdIO(
+          Subprocess::StdIOChannel::kStdOut, null_fd);
+      no_clear_instance_dir_command.RedirectStdIO(
+          Subprocess::StdIOChannel::kStdErr, null_fd);
+      no_clear_instance_dir_command.AddEnvironmentVariable(
+          kCuttlefishConfigEnvVarName, config_file_path);
+    }
     wait_result = RunCommand(std::move(no_clear_instance_dir_command));
   }
 
   if (!wait_result.ok()) {
-    WriteAll(err,
-             "Warning: error stopping instances for dir \"" + group.HomeDir() +
-                 "\".\nThis can happen if instances are already stopped.\n");
+    request.Err()
+        << "Warning: error stopping instances for dir \"" + group.HomeDir() +
+               "\".\nThis can happen if instances are already stopped.\n";
   }
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   instance_db_.UpdateInstanceGroup(group);
@@ -224,19 +232,18 @@ Result<void> InstanceManager::IssueStopCommand(
       (*lock)->Status(InUseState::kNotInUse);
       continue;
     }
-    WriteAll(err, "InstanceLockFileManager failed to acquire lock");
+    request.Err() << "InstanceLockFileManager failed to acquire lock";
   }
   return {};
 }
 
-cvd::Status InstanceManager::CvdClear(const SharedFD& out,
-                                      const SharedFD& err) {
+cvd::Status InstanceManager::CvdClear(const RequestWithStdio& request) {
   cvd::Status status;
   const std::string config_json_name = cpp_basename(GetGlobalConfigFileLink());
   auto instance_groups_res = instance_db_.Clear();
   if (!instance_groups_res.ok()) {
-    WriteAll(err, fmt::format("Failed to clear instance database: {}",
-                              instance_groups_res.error().Message()));
+    fmt::print(request.Err(), "Failed to clear instance database: {}",
+               instance_groups_res.error().Message());
     status.set_code(cvd::Status::INTERNAL);
     return status;
   }
@@ -246,7 +253,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
     if (group.HasActiveInstances()) {
       auto config_path = selector::GetCuttlefishConfigPath(group.HomeDir());
       if (config_path.ok()) {
-        auto stop_result = IssueStopCommand(out, err, *config_path, group);
+        auto stop_result = IssueStopCommand(request, *config_path, group);
         if (!stop_result.ok()) {
           LOG(ERROR) << stop_result.error().FormatForEnv();
         }
@@ -268,7 +275,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
   }
   // TODO(kwstephenkim): we need a better mechanism to make sure that
   // we clear all run_cvd processes.
-  WriteAll(err, "Stopped all known instances\n");
+  request.Err() << "Stopped all known instances\n";
   status.set_code(cvd::Status::OK);
   return status;
 }

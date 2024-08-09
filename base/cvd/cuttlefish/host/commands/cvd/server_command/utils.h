@@ -50,9 +50,7 @@ struct ConstructCommandParam {
   const cvd_common::Envs& envs;
   const std::string& working_dir;
   const std::string& command_name;
-  SharedFD in;
-  SharedFD out;
-  SharedFD err;
+  bool null_stdio;
 };
 Result<Command> ConstructCommand(const ConstructCommandParam& cmd_param);
 

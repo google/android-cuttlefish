@@ -59,28 +59,22 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
       CF_EXPECT(instance_manager.FindGroups(selector::Queries{}));
   auto menu = SelectionMenu(groups);
 
-  CF_EXPECT_EQ(WriteAll(request.Out(), menu + "\n"), (ssize_t)menu.size() + 1);
+  request.Out() << menu << "\n";
   std::unique_ptr<InterruptibleTerminal> terminal_ =
-      std::make_unique<InterruptibleTerminal>(request.In());
+      std::make_unique<InterruptibleTerminal>();
 
-  bool err_is_tty = request.Err()->IsOpen() && request.Err()->IsATTY();
-  TerminalColors colors(err_is_tty);
+  TerminalColors colors(isatty(2));
   while (true) {
-    std::string question = "";
-    CF_EXPECT_EQ(WriteAll(request.Out(), question), (ssize_t)question.size());
-
     std::string input_line = CF_EXPECT(terminal_->ReadLine());
     int selection = -1;
     std::string chosen_group_name;
     if (android::base::ParseInt(input_line, &selection)) {
       const int n_groups = groups.size();
       if (n_groups <= selection || selection < 0) {
-        std::string out_of_range = fmt::format(
-            "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
-            colors.BoldRed(), selection, colors.Reset(), colors.Cyan(),
-            n_groups - 1, colors.Reset());
-        CF_EXPECT_EQ(WriteAll(request.Err(), out_of_range),
-                     (ssize_t)out_of_range.size());
+        fmt::print(request.Err(),
+                   "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
+                   colors.BoldRed(), selection, colors.Reset(), colors.Cyan(),
+                   n_groups - 1, colors.Reset());
         continue;
       }
       chosen_group_name = groups[selection].GroupName();
@@ -95,11 +89,9 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
     if (instance_group_result.ok()) {
       return instance_group_result;
     }
-    std::string cannot_find_group_name =
-        fmt::format("\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
-                    colors.BoldRed(), chosen_group_name, colors.Reset());
-    CF_EXPECT_EQ(WriteAll(request.Err(), cannot_find_group_name),
-                 (ssize_t)cannot_find_group_name.size());
+    fmt::print(request.Err(),
+               "\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
+               colors.BoldRed(), chosen_group_name, colors.Reset());
   }
 }
 
@@ -119,7 +111,7 @@ Result<selector::LocalInstanceGroup> SelectGroup(
   if (group_selection_result.ok()) {
     return CF_EXPECT(std::move(group_selection_result));
   }
-  CF_EXPECT(request.In()->IsOpen() && request.In()->IsATTY(),
+  CF_EXPECT(isatty(0),
             "Multiple groups found. Narrow the selection with selector "
             "arguments or run in an interactive terminal.");
   return CF_EXPECT(

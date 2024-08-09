@@ -83,15 +83,13 @@ CommandSequenceExecutor::CommandSequenceExecutor(
     : server_handlers_(server_handlers) {}
 
 Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
-    const std::vector<RequestWithStdio>& requests, SharedFD report) {
+    const std::vector<RequestWithStdio>& requests, std::ostream& report) {
   std::vector<cvd::Response> responses;
   for (const auto& request : requests) {
     auto& inner_proto = request.Message();
     if (inner_proto.has_command_request()) {
       auto& command = inner_proto.command_request();
-      std::string str = FormattedCommand(command);
-      CF_EXPECT(WriteAll(report, str) == (ssize_t)str.size(),
-                report->StrError());
+      report << FormattedCommand(command);
     }
 
     auto handler = CF_EXPECT(RequestHandler(request, server_handlers_));
@@ -108,7 +106,7 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
 }
 
 Result<cvd::Response> CommandSequenceExecutor::ExecuteOne(
-    const RequestWithStdio& request, SharedFD report) {
+    const RequestWithStdio& request, std::ostream& report) {
   auto response_in_vector = CF_EXPECT(Execute({request}, report));
   CF_EXPECT_EQ(response_in_vector.size(), 1ul);
   return response_in_vector.front();

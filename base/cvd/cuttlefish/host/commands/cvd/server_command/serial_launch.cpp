@@ -215,8 +215,7 @@ class SerialLaunchCommand : public CvdServerHandler {
 
     auto args = ParseInvocation(request.Message()).arguments;
     for (const auto& arg : args) {
-      std::string message = "argument: \"" + arg + "\"\n";
-      CF_EXPECT(WriteAll(request.Err(), message) == (ssize_t)message.size());
+      request.Err() << "argument: \"" + arg + "\"\n";
     }
 
     CF_EXPECT(ConsumeFlags(flags, args));
@@ -225,7 +224,7 @@ class SerialLaunchCommand : public CvdServerHandler {
       static constexpr char kHelp[] =
           "Usage: cvd experimental serial_launch [--verbose] --credentials=XYZ "
           "--device=build/target --device=build/target";
-      CF_EXPECT(WriteAll(request.Out(), kHelp, sizeof(kHelp)) == sizeof(kHelp));
+      request.Err() << kHelp;
       return {};
     }
 
@@ -341,21 +340,18 @@ class SerialLaunchCommand : public CvdServerHandler {
       launch_cmd.add_args("--rootcanal_instance_num=" + first_instance_num);
     }
 
-    std::vector<SharedFD> fds;
-    if (verbose) {
-      fds = request.FileDescriptors();
-    } else {
-      auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
-      CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
-      fds = {dev_null, dev_null, dev_null};
-    }
-
     DemoCommandSequence ret;
     for (auto& device : devices) {
       ret.instance_locks.emplace_back(std::move(device.ins_lock));
     }
     for (auto& request_proto : req_protos) {
-      ret.requests.emplace_back(request_proto, fds);
+      if (verbose) {
+        ret.requests.emplace_back(
+            RequestWithStdio::InheritIo(std::move(request_proto), request));
+      } else {
+        ret.requests.emplace_back(
+            RequestWithStdio::NullIo(std::move(request_proto)));
+      }
     }
 
     return ret;
