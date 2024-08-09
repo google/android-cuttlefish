@@ -23,6 +23,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/group_selector.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
@@ -75,7 +76,7 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
       return Success();
     }
 
-    auto group = CF_EXPECT(SelectGroup(request));
+    auto group = CF_EXPECT(SelectGroup(instance_manager_, request));
 
     auto stop_res = StopGroup(group, request);
     if (!stop_res.ok()) {
@@ -100,15 +101,6 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
     CF_EXPECT(instance_manager_.IssueStopCommand(request.Out(), request.Err(),
                                                  config_path, group));
     return {};
-  }
-
-  Result<selector::LocalInstanceGroup> SelectGroup(
-      const RequestWithStdio& request) const {
-    cvd_common::Envs envs = request.Envs();
-
-    const auto selector_args = request.SelectorArgs();
-
-    return CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs));
   }
 
   Result<void> HelpCommand(const RequestWithStdio& request) const {
