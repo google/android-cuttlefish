@@ -211,26 +211,20 @@ static constexpr char kTerminalCyan[] = "\033[0;36m";
 static constexpr char kTerminalRed[] = "\033[0;31m";
 static constexpr char kTerminalReset[] = "\033[0m";
 
-std::string TerminalColor(const bool is_tty, TerminalColors color) {
-  if (!is_tty) {
-    return "";
-  }
-  switch (color) {
-    case TerminalColors::kReset: {
-      return kTerminalReset;
-    }
-    case TerminalColors::kBoldRed: {
-      return kTerminalBoldRed;
-    }
-    case TerminalColors::kCyan: {
-      return kTerminalCyan;
-    }
-    case TerminalColors::kRed: {
-      return kTerminalRed;
-    }
-    default:
-      return kTerminalReset;
-  }
+std::string_view TerminalColors::Reset() const {
+  return is_tty_ ? kTerminalReset : "";
+}
+
+std::string_view TerminalColors::BoldRed() const {
+  return is_tty_ ? kTerminalBoldRed : "";
+}
+
+std::string_view TerminalColors::Red() const {
+  return is_tty_ ? kTerminalRed : "";
+}
+
+std::string_view TerminalColors::Cyan() const {
+  return is_tty_ ? kTerminalCyan : "";
 }
 
 Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
@@ -238,16 +232,12 @@ Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   const uid_t uid = getuid();
-  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
+  TerminalColors colors(request.Out()->IsOpen() && request.Out()->IsATTY());
   auto notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      TerminalColor(is_tty, TerminalColors::kRed),
-      fmt::join(request.Message().command_request().args(), " "),
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kBoldRed), "no device",
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kCyan), uid,
-      TerminalColor(is_tty, TerminalColors::kReset));
+      colors.Red(), fmt::join(request.Message().command_request().args(), " "),
+      colors.Reset(), colors.BoldRed(), "no device", colors.Reset(),
+      colors.Cyan(), uid, colors.Reset());
   CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"),
                (ssize_t)notice.size() + 1);
 
@@ -260,17 +250,14 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   const uid_t uid = getuid();
-  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
+  bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
+  TerminalColors colors(is_tty);
   auto notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      TerminalColor(is_tty, TerminalColors::kRed),
-      fmt::join(request.Message().command_request().args(), " "),
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kBoldRed),
+      colors.Red(), fmt::join(request.Message().command_request().args(), " "),
+      colors.Reset(), colors.BoldRed(),
       "No terminal/tty for selecting one of multiple Cuttlefish groups",
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kCyan), uid,
-      TerminalColor(is_tty, TerminalColors::kReset));
+      colors.Reset(), colors.Cyan(), uid, colors.Reset());
   CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"),
                (ssize_t)notice.size() + 1);
   response.mutable_status()->set_message(notice);
