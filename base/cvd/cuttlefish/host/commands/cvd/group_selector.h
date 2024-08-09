@@ -16,15 +16,13 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-
+#include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
+#include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
-struct GroupSelector {
-  std::vector<selector::LocalInstanceGroup> groups;
-  std::string Menu();
-};
+Result<selector::LocalInstanceGroup> SelectGroup(InstanceManager&,
+                                                 const RequestWithStdio&);
 
 }  // namespace cuttlefish

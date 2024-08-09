@@ -24,8 +24,6 @@
 #include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
@@ -35,8 +33,6 @@
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/group_selector.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/interruptible_terminal.h"
-#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -64,9 +60,6 @@ class CvdStopCommandHandler : public CvdServerHandler {
 
  private:
   Result<cvd::Response> HandleHelpCmd(const RequestWithStdio& request);
-  Result<selector::LocalInstanceGroup> PromptUserForGroup(
-      const RequestWithStdio& request, const cvd_common::Envs& envs,
-      const cvd_common::Args& selector_args);
   Result<std::string> GetBin(const std::string& host_artifacts_path) const;
   // whether the "bin" is cvd bins like stop_cvd or not (e.g. ln, ls, mkdir)
   // The information to fire the command might be different. This information
@@ -121,66 +114,6 @@ Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
   return ResponseFromSiginfo(infop);
 }
 
-Result<selector::LocalInstanceGroup> CvdStopCommandHandler::PromptUserForGroup(
-    const RequestWithStdio& request, const cvd_common::Envs& envs,
-    const cvd_common::Args& selector_args) {
-  // show the menu and let the user choose
-  std::vector<selector::LocalInstanceGroup> groups =
-      CF_EXPECT(instance_manager_.FindGroups(selector::Queries{}));
-  groups.erase(std::remove_if(groups.begin(), groups.end(),
-                              [](const auto& group) {
-                                return !group.HasActiveInstances();
-                              }),
-               groups.end());
-  GroupSelector selector{.groups = groups};
-  auto menu = selector.Menu();
-
-  CF_EXPECT_EQ(WriteAll(request.Out(), menu + "\n"), (ssize_t)menu.size() + 1);
-  std::unique_ptr<InterruptibleTerminal> terminal_ =
-      std::make_unique<InterruptibleTerminal>(request.In());
-
-  const bool is_tty = request.Err()->IsOpen() && request.Err()->IsATTY();
-  while (true) {
-    std::string question = "Which instance group would you like to stop?";
-    CF_EXPECT_EQ(WriteAll(request.Out(), question), (ssize_t)question.size());
-
-    std::string input_line = CF_EXPECT(terminal_->ReadLine());
-    int selection = -1;
-    std::string chosen_group_name;
-    if (android::base::ParseInt(input_line, &selection)) {
-      const int n_groups = selector.groups.size();
-      if (n_groups <= selection || selection < 0) {
-        std::string out_of_range = fmt::format(
-            "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
-            TerminalColor(is_tty, TerminalColors::kBoldRed), selection,
-            TerminalColor(is_tty, TerminalColors::kReset),
-            TerminalColor(is_tty, TerminalColors::kCyan), n_groups - 1,
-            TerminalColor(is_tty, TerminalColors::kReset));
-        CF_EXPECT_EQ(WriteAll(request.Err(), out_of_range),
-                     (ssize_t)out_of_range.size());
-        continue;
-      }
-      chosen_group_name = selector.groups[selection].GroupName();
-    } else {
-      chosen_group_name = android::base::Trim(input_line);
-    }
-
-    InstanceManager::Queries extra_queries{
-        {selector::kGroupNameField, chosen_group_name}};
-    auto instance_group_result =
-        instance_manager_.SelectGroup(selector_args, envs, extra_queries);
-    if (instance_group_result.ok()) {
-      return instance_group_result;
-    }
-    std::string cannot_find_group_name = fmt::format(
-        "\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
-        TerminalColor(is_tty, TerminalColors::kBoldRed), chosen_group_name,
-        TerminalColor(is_tty, TerminalColors::kReset));
-    CF_EXPECT_EQ(WriteAll(request.Err(), cannot_find_group_name),
-                 (ssize_t)cannot_find_group_name.size());
-  }
-}
-
 Result<cvd::Response> CvdStopCommandHandler::Handle(
     const RequestWithStdio& request) {
   CF_EXPECT(CanHandle(request));
@@ -208,16 +141,8 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
   CF_EXPECT(Contains(envs, kAndroidHostOut) &&
             DirectoryExists(envs.at(kAndroidHostOut)));
 
-  auto group_selection_result =
-      instance_manager_.SelectGroup(selector_args, envs);
-  if (!group_selection_result.ok()) {
-    if (!request.In()->IsOpen() || !request.In()->IsATTY()) {
-      return CF_EXPECT(NoTTYResponse(request));
-    }
-    group_selection_result = PromptUserForGroup(request, envs, selector_args);
-  }
-
-  auto group = CF_EXPECT(std::move(group_selection_result));
+  auto group = CF_EXPECT(SelectGroup(instance_manager_, request));
+  CF_EXPECT(group.HasActiveInstances(), "Selected group is not running");
 
   auto android_host_out = group.HostArtifactsPath();
   auto bin = CF_EXPECT(GetBin(android_host_out));
