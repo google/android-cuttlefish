@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
@@ -84,14 +85,16 @@ Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request);
 // not sufficients to choose one from. The function does not verify that.
 Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request);
 
-enum class TerminalColors : int {
-  kReset = 0,
-  kBoldRed = 1,
-  kCyan = 2,
-  kRed = 3,
+class TerminalColors {
+ public:
+  TerminalColors(bool is_tty): is_tty_(is_tty){}
+  std::string_view Reset() const;
+  std::string_view BoldRed() const;
+  std::string_view Red() const;
+  std::string_view Cyan() const;
+ private:
+  bool is_tty_;
 };
-
-std::string TerminalColor(const bool is_tty, TerminalColors color);
 
 Result<cvd::Response> WriteToFd(SharedFD fd, const std::string& output);
 

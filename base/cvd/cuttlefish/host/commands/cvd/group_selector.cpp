@@ -63,7 +63,8 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
   std::unique_ptr<InterruptibleTerminal> terminal_ =
       std::make_unique<InterruptibleTerminal>(request.In());
 
-  const bool err_is_tty = request.Err()->IsOpen() && request.Err()->IsATTY();
+  bool err_is_tty = request.Err()->IsOpen() && request.Err()->IsATTY();
+  TerminalColors colors(err_is_tty);
   while (true) {
     std::string question = "";
     CF_EXPECT_EQ(WriteAll(request.Out(), question), (ssize_t)question.size());
@@ -76,10 +77,8 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
       if (n_groups <= selection || selection < 0) {
         std::string out_of_range = fmt::format(
             "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
-            TerminalColor(err_is_tty, TerminalColors::kBoldRed), selection,
-            TerminalColor(err_is_tty, TerminalColors::kReset),
-            TerminalColor(err_is_tty, TerminalColors::kCyan), n_groups - 1,
-            TerminalColor(err_is_tty, TerminalColors::kReset));
+            colors.BoldRed(), selection, colors.Reset(), colors.Cyan(),
+            n_groups - 1, colors.Reset());
         CF_EXPECT_EQ(WriteAll(request.Err(), out_of_range),
                      (ssize_t)out_of_range.size());
         continue;
@@ -96,10 +95,9 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
     if (instance_group_result.ok()) {
       return instance_group_result;
     }
-    std::string cannot_find_group_name = fmt::format(
-        "\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
-        TerminalColor(err_is_tty, TerminalColors::kBoldRed), chosen_group_name,
-        TerminalColor(err_is_tty, TerminalColors::kReset));
+    std::string cannot_find_group_name =
+        fmt::format("\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
+                    colors.BoldRed(), chosen_group_name, colors.Reset());
     CF_EXPECT_EQ(WriteAll(request.Err(), cannot_find_group_name),
                  (ssize_t)cannot_find_group_name.size());
   }
