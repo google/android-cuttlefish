@@ -30,6 +30,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/group_selector.h"

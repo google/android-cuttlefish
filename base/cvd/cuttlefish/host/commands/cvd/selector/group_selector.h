@@ -19,7 +19,6 @@
 #include <sys/types.h>
 
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/users.h"
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/selector_common_parser.h"
