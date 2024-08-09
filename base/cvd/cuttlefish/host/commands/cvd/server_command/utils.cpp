@@ -99,10 +99,12 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
     command.UnsetFromEnvironment(it.first);
     command.AddEnvironmentVariable(it.first, it.second);
   }
-  // Redirect stdin, stdout, stderr back to the cvd client
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, param.in);
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, param.out);
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, param.err);
+  if (param.null_stdio) {
+    SharedFD null_fd = SharedFD::Open("/dev/null", O_RDWR);
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, null_fd);
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, null_fd);
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, null_fd);
+  }
 
   if (!param.working_dir.empty()) {
     auto fd =
@@ -131,9 +133,7 @@ Result<Command> ConstructCvdHelpCommand(
                                             .envs = std::move(envs_copy),
                                             .working_dir = client_pwd,
                                             .command_name = bin_file,
-                                            .in = request.In(),
-                                            .out = request.Out(),
-                                            .err = request.Err()};
+                                            .null_stdio = request.IsNullIo()};
   Command help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   return help_command;
 }
@@ -162,7 +162,7 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
       verbose_stream.seekp(-1, std::ios_base::end);
       verbose_stream << std::endl;
     }
-    WriteAll(request.Err(), verbose_stream.str());
+    request.Err() << verbose_stream.rdbuf();
   }
   ConstructCommandParam construct_cmd_param{
       .bin_path = bin_path,
@@ -171,9 +171,7 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
       .envs = envs,
       .working_dir = request.Message().command_request().working_directory(),
       .command_name = request_form.bin_file,
-      .in = request.In(),
-      .out = request.Out(),
-      .err = request.Err()};
+      .null_stdio = request.IsNullIo()};
   return CF_EXPECT(ConstructCommand(construct_cmd_param));
 }
 
@@ -232,14 +230,13 @@ Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   const uid_t uid = getuid();
-  TerminalColors colors(request.Out()->IsOpen() && request.Out()->IsATTY());
-  auto notice = fmt::format(
+  TerminalColors colors(isatty(1));
+  std::string notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
       colors.Red(), fmt::join(request.Message().command_request().args(), " "),
       colors.Reset(), colors.BoldRed(), "no device", colors.Reset(),
       colors.Cyan(), uid, colors.Reset());
-  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"),
-               (ssize_t)notice.size() + 1);
+  request.Out() << notice << "\n";
 
   response.mutable_status()->set_message(notice);
   return response;
@@ -250,26 +247,15 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   const uid_t uid = getuid();
-  bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
-  TerminalColors colors(is_tty);
+  TerminalColors colors(isatty(1));
   auto notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
       colors.Red(), fmt::join(request.Message().command_request().args(), " "),
       colors.Reset(), colors.BoldRed(),
       "No terminal/tty for selecting one of multiple Cuttlefish groups",
       colors.Reset(), colors.Cyan(), uid, colors.Reset());
-  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"),
-               (ssize_t)notice.size() + 1);
+  request.Out() << notice << "\n";
   response.mutable_status()->set_message(notice);
-  return response;
-}
-
-Result<cvd::Response> WriteToFd(SharedFD fd, const std::string& output) {
-  cvd::Response response;
-  auto written_size = WriteAll(fd, output);
-  CF_EXPECT_EQ((ssize_t)output.size(), written_size, fd->StrError());
-  response.mutable_command_response();  // Sets oneof member
-  response.mutable_status()->set_code(cvd::Status::OK);
   return response;
 }
 

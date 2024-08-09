@@ -157,7 +157,7 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
       .selector_args = request.SelectorArgs(),
       .working_dir = request.Message().command_request().working_directory(),
   });
-  return RequestWithStdio(new_message, request.FileDescriptors());
+  return RequestWithStdio::InheritIo(std::move(new_message), (request));
 }
 
 static Result<bool> HasPrint(cvd_common::Args cmd_args) {
@@ -196,11 +196,9 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   }
 
   std::string serialized_group_json = instances_json.toStyledString();
-  CF_EXPECT_EQ(WriteAll(request.Err(), entire_stderr_msg),
-               (ssize_t)entire_stderr_msg.size());
+  request.Err() << serialized_group_json;
   if (has_print) {
-    CF_EXPECT_EQ(WriteAll(request.Out(), serialized_group_json),
-                 (ssize_t)serialized_group_json.size());
+    request.Out() << serialized_group_json;
   }
   return response;
 }

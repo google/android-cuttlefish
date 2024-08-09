@@ -33,6 +33,7 @@
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_selector.h"
+#include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
@@ -71,7 +72,7 @@ class InstanceManager {
                               const cvd::Instance& instance);
   Result<bool> RemoveInstanceGroupByHome(const std::string&);
 
-  cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
+  cvd::Status CvdClear(const RequestWithStdio&);
   static Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
   Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
@@ -86,9 +87,10 @@ class InstanceManager {
   Result<void> SetAcloudTranslatorOptout(bool optout);
   Result<bool> GetAcloudTranslatorOptout() const;
 
-  Result<void> IssueStopCommand(const SharedFD& out, const SharedFD& err,
+  Result<void> IssueStopCommand(const RequestWithStdio& request,
                                 const std::string& config_file_path,
                                 selector::LocalInstanceGroup& group);
+
  private:
   Result<std::string> StopBin(const std::string& host_android_out);
 

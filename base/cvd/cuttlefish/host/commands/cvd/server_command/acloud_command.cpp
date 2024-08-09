@@ -103,7 +103,7 @@ class AcloudCommand : public CvdServerHandler {
   Result<cvd::InstanceGroupInfo> ParseStartResponse(
       const cvd::Response& start_response);
   Result<void> PrintBriefSummary(const cvd::InstanceGroupInfo& group_info,
-                                 std::optional<SharedFD> stream_fd) const;
+                                 std::ostream& out) const;
   Result<ConvertedAcloudCreateCommand> ValidateLocal(
       const RequestWithStdio& request);
   bool ValidateRemoteArgs(const RequestWithStdio& request);
@@ -130,13 +130,7 @@ Result<cvd::InstanceGroupInfo> AcloudCommand::ParseStartResponse(
 }
 
 Result<void> AcloudCommand::PrintBriefSummary(
-    const cvd::InstanceGroupInfo& group_info,
-    std::optional<SharedFD> stream_fd) const {
-  if (!stream_fd) {
-    return {};
-  }
-  SharedFD fd = *stream_fd;
-  std::stringstream ss;
+    const cvd::InstanceGroupInfo& group_info, std::ostream& out) const {
   const std::string& group_name = group_info.group_name();
   CF_EXPECT_EQ(group_info.home_directories().size(), 1);
   const std::string home_dir = (group_info.home_directories())[0];
@@ -148,16 +142,14 @@ Result<void> AcloudCommand::PrintBriefSummary(
     instance_names.push_back(instance.name());
     instance_ids.push_back(instance.instance_id());
   }
-  ss << std::endl << "Created instance group: " << group_name << std::endl;
+  out << std::endl << "Created instance group: " << group_name << std::endl;
   for (size_t i = 0; i != instance_ids.size(); i++) {
     std::string device_name = group_name + "-" + instance_names[i];
-    ss << "  " << device_name << " (local-instance-" << instance_ids[i] << ")"
-       << std::endl;
+    out << "  " << device_name << " (local-instance-" << instance_ids[i] << ")"
+        << std::endl;
   }
-  ss << std::endl
-     << "acloud list or cvd fleet for more information." << std::endl;
-  auto n_write = WriteAll(*stream_fd, ss.str());
-  CF_EXPECT_EQ(n_write, (ssize_t)ss.str().size());
+  out << std::endl
+      << "acloud list or cvd fleet for more information." << std::endl;
   return {};
 }
 
@@ -205,11 +197,7 @@ Result<cvd::Response> AcloudCommand::HandleLocal(
   // print
   std::optional<SharedFD> fd_opt;
   if (command.verbose) {
-    fd_opt = request.Err();
-  }
-  auto write_result = PrintBriefSummary(*group_info_result, fd_opt);
-  if (!write_result.ok()) {
-    LOG(ERROR) << "Failed to write the start response report.";
+    PrintBriefSummary(*group_info_result, request.Err());
   }
   return response;
 }
@@ -259,8 +247,12 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
   if (args[0] == "create") {
     cmd.AddParameter("--auto_connect=false");
   }
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, request.In());
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.Err());
+  if (request.IsNullIo()) {
+    SharedFD null_fd = SharedFD::Open("/dev/null", O_RDWR, 0644);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, null_fd);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, null_fd);
+  }
+
   std::string stdout_;
   SharedFD stdout_pipe_read, stdout_pipe_write;
   CF_EXPECT(SharedFD::Pipe(&stdout_pipe_read, &stdout_pipe_write),
@@ -272,9 +264,9 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
       LOG(ERROR) << "Error in reading stdout from process";
     }
   });
-  WriteAll(request.Err(),
-           "UPDATE! Try the new `cvdr` tool directly. Run `cvdr --help` to get "
-           "started.\n");
+  request.Err()
+      << "UPDATE! Try the new `cvdr` tool directly. Run `cvdr --help` to get "
+         "started.\n";
 
   siginfo_t siginfo;
 
@@ -286,7 +278,7 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
   }
   stdout_pipe_write->Close();
   stdout_thread.join();
-  WriteAll(request.Out(), stdout_);
+  request.Out() << stdout_;
   if (args[0] == "create" && siginfo.si_status == EXIT_SUCCESS) {
     std::string hostname = stdout_.substr(0, stdout_.find(" "));
     CF_EXPECT(RunAcloudConnect(request, hostname));
@@ -308,9 +300,13 @@ Result<void> AcloudCommand::RunAcloudConnect(const RequestWithStdio& request,
   cmd.AddParameter("reconnect");
   cmd.AddParameter("--instance-names");
   cmd.AddParameter(hostname);
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, request.In());
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, request.Out());
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.Err());
+
+  if (request.IsNullIo()) {
+    SharedFD null_fd = SharedFD::Open("/dev/null", O_RDWR, 0644);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, null_fd);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, null_fd);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, null_fd);
+  }
 
   cmd.Start().Wait();
 

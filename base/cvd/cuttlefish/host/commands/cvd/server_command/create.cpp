@@ -131,7 +131,7 @@ RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
     command.add_args(arg);
   }
   command.add_args(config_file);
-  return RequestWithStdio(request_proto, request.FileDescriptors());
+  return RequestWithStdio::InheritIo(request_proto, request);
 }
 
 RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
@@ -153,7 +153,7 @@ RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
   for (const auto& arg : args) {
     command.add_args(arg);
   }
-  return RequestWithStdio(request_proto, request.FileDescriptors());
+  return RequestWithStdio::InheritIo(request_proto, request);
 }
 
 Result<cvd_common::Envs> GetEnvs(const RequestWithStdio& request) {
