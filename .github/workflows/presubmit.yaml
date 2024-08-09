@@ -84,7 +84,18 @@ jobs:
     - name: Run orchestration e2e tests
       run: |
         cd e2etests
-        bazel test --sandbox_writable_path=$HOME --test_output=errors orchestration/...
+        # Run orchestration e2e tests serially due lack of space in Github standard runners.
+        #
+        # Overall action timing breakdown:
+        #
+        # [614 / 616] Executing genrule @@images//docker/debs-builder-docker:debs_tar [for tool]; 608s linux-sandbox
+        # [615 / 616] Executing genrule @@images//docker:orchestration_image_tar; 11s linux-sandbox
+        # //orchestration:create_fixed_build_id_and_target                         PASSED in 99.9s
+        # //orchestration:create_local_image                                       PASSED in 92.4s
+        # 
+        # The tests are running under 2 min, it's ok for now to execute them serially. The action's
+        # bottleneck is building the debian packages: `@@images//docker/debs-builder-docker:debs_tar`.
+        bazel test --sandbox_writable_path=$HOME --test_output=errors --local_test_jobs=1 orchestration/...
     - name: Upload test logs
       if: always()
       uses: actions/upload-artifact@v3

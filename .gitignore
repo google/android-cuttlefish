@@ -24,3 +24,4 @@ cuttlefish-*_*.*.*.tar.xz
 frontend/src/operator/webui/src/environments/version.ts
 
 /bazel-*
+/e2etests/bazel-*

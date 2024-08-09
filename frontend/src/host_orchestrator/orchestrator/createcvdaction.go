@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -44,7 +45,7 @@ type CreateCVDActionOpts struct {
 	ArtifactsFetcher         artifacts.Fetcher
 	CVDBundleFetcher         artifacts.CVDBundleFetcher
 	UUIDGen                  func() string
-	CVDUser                  string
+	CVDUser                  *user.User
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	BuildAPICredentials      string
 }
@@ -61,7 +62,7 @@ type CreateCVDAction struct {
 	userArtifactsDirResolver UserArtifactsDirResolver
 	artifactsMngr            *artifacts.Manager
 	startCVDHandler          *startCVDHandler
-	cvdUser                  string
+	cvdUser                  *user.User
 	buildAPICredentials      string
 
 	instanceCounter uint32
@@ -361,10 +362,10 @@ func createCredsFile(ctx cvd.CVDExecContext) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if err := cvd.Exec(ctx, "touch", name); err != nil {
+	if _, err := cvd.Exec(ctx, "touch", name); err != nil {
 		return "", err
 	}
-	if err := cvd.Exec(ctx, "chmod", "0600", name); err != nil {
+	if _, err := cvd.Exec(ctx, "chmod", "0600", name); err != nil {
 		return "", err
 	}
 	return name, nil
@@ -385,18 +386,18 @@ func writeCredsFile(ctx cvd.CVDExecContext, name string, data []byte) error {
 	}
 	defer func() {
 		// Reverts the write permission.
-		if err := cvd.Exec(ctx, "chgrp", strconv.Itoa(int(gid)), name); err != nil {
+		if _, err := cvd.Exec(ctx, "chgrp", strconv.Itoa(int(gid)), name); err != nil {
 			log.Println(err)
 		}
-		if err := cvd.Exec(ctx, "chmod", "0600", name); err != nil {
+		if _, err := cvd.Exec(ctx, "chmod", "0600", name); err != nil {
 			log.Println(err)
 		}
 	}()
 	// Grants temporal write permission to `cvdnetwork`, so this process can write the file.
-	if err := cvd.Exec(ctx, "chgrp", "cvdnetwork", name); err != nil {
+	if _, err := cvd.Exec(ctx, "chgrp", "cvdnetwork", name); err != nil {
 		return err
 	}
-	if err := cvd.Exec(ctx, "chmod", "0620", name); err != nil {
+	if _, err := cvd.Exec(ctx, "chmod", "0620", name); err != nil {
 		return err
 	}
 	file, err := os.OpenFile(name, os.O_WRONLY, 0)
@@ -414,7 +415,8 @@ func writeCredsFile(ctx cvd.CVDExecContext, name string, data []byte) error {
 }
 
 func removeCredsFile(ctx cvd.CVDExecContext, name string) error {
-	return cvd.Exec(ctx, "rm", name)
+	_, err := cvd.Exec(ctx, "rm", name)
+	return err
 }
 
 // Returns a random name for a file in the /tmp directory given a pattern.

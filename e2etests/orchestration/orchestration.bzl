@@ -14,22 +14,32 @@
 
 load("@io_bazel_rules_go//go:def.bzl", "go_test")
 
+
+
+def aosp_artifact(name, build_id, build_target, artifact_name, out_name):
+    native.genrule(
+        name = name,
+        outs = [out_name],
+        cmd = "$(location :fetch_aosp_artifact) -b "+build_id+" -t "+build_target+" -a "+artifact_name+" -o $@",
+        tools = [":fetch_aosp_artifact"],
+    )
+
 def create_single_instance_test(name, build_id, build_target):
     go_test(
         name = name,
         srcs = ["createsingleinstance_test.go"],
-        data = ["@images//docker:orchestration_image_tar"],
+        data = [
+          "@images//docker:orchestration_image_tar", 
+        ],
         env = {
           "BUILD_ID": build_id,
           "BUILD_TARGET": build_target,
         },
         deps = [
-            "@com_github_docker_docker//api/types",
-            "@com_github_docker_docker//api/types/container",
-            "@com_github_docker_docker//client",
-            "@com_github_docker_go_connections//nat",
-            "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
+            ":e2etesting",
             "@com_github_google_cloud_android_orchestration//pkg/client",
+            "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
             "@com_github_google_go_cmp//cmp",
         ],
     )
+
