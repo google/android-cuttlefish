@@ -23,6 +23,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
+#include "cuttlefish/host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
 
@@ -64,7 +65,7 @@ Result<std::optional<RequestWithStdio>> GetRequest(const SharedFD& client) {
     LOG(DEBUG) << "Has credentials, uid=" << creds->uid;
   }
 
-  return RequestWithStdio(std::move(request), std::move(fds));
+  return RequestWithStdio::StdIo(std::move(request));
 }
 
 Result<void> SendResponse(const SharedFD& client,
@@ -81,30 +82,44 @@ Result<void> SendResponse(const SharedFD& client,
   return {};
 }
 
-RequestWithStdio::RequestWithStdio(cvd::Request message,
-                                   std::vector<SharedFD> fds)
-    : message_(message), fds_(std::move(fds)) {}
+RequestWithStdio RequestWithStdio::StdIo(cvd::Request message) {
+  return RequestWithStdio(std::move(message), std::cin, std::cout, std::cerr);
+}
+
+static std::istream& NullIn() {
+  static std::ifstream* in = new std::ifstream("/dev/null");
+  return *in;
+}
+
+static std::ostream& NullOut() {
+  static std::ofstream* out = new std::ofstream("/dev/null");
+  return *out;
+}
+
+RequestWithStdio RequestWithStdio::NullIo(cvd::Request message) {
+  return RequestWithStdio(std::move(message), NullIn(), NullOut(), NullOut());
+}
+
+RequestWithStdio RequestWithStdio::InheritIo(cvd::Request message,
+                                             const RequestWithStdio& other) {
+  return RequestWithStdio(std::move(message), other.in_, other.out_,
+                          other.err_);
+}
+
+RequestWithStdio::RequestWithStdio(cvd::Request message, std::istream& in,
+                                   std::ostream& out, std::ostream& err)
+    : message_(std::move(message)), in_(in), out_(out), err_(err) {}
 
 const cvd::Request& RequestWithStdio::Message() const { return message_; }
 
-const std::vector<SharedFD>& RequestWithStdio::FileDescriptors() const {
-  return fds_;
-}
+std::istream& RequestWithStdio::In() const { return in_; }
 
-SharedFD RequestWithStdio::In() const {
-  return fds_.size() > 0 ? fds_[0] : SharedFD();
-}
+std::ostream& RequestWithStdio::Out() const { return out_; }
 
-SharedFD RequestWithStdio::Out() const {
-  return fds_.size() > 1 ? fds_[1] : SharedFD();
-}
+std::ostream& RequestWithStdio::Err() const { return err_; }
 
-SharedFD RequestWithStdio::Err() const {
-  return fds_.size() > 2 ? fds_[2] : SharedFD();
-}
-
-std::optional<SharedFD> RequestWithStdio::Extra() const {
-  return fds_.size() > 3 ? fds_[3] : std::optional<SharedFD>{};
+bool RequestWithStdio::IsNullIo() const {
+  return &in_ == &NullIn() && &out_ == &NullOut() && &err_ == &NullOut();
 }
 
 }  // namespace cuttlefish

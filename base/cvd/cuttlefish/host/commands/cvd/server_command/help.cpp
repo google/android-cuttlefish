@@ -87,14 +87,16 @@ class CvdHelpHandler : public CvdServerHandler {
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
 
-    std::string output;
     auto args = ParseInvocation(request.Message()).arguments;
     if (args.empty()) {
-      output = CF_EXPECT(TopLevelHelp());
+      request.Out() << CF_EXPECT(TopLevelHelp());
     } else {
-      output = CF_EXPECT(SubCommandHelp(args));
+      request.Out() << CF_EXPECT(SubCommandHelp(args));
     }
-    auto response = CF_EXPECT(WriteToFd(request.Out(), output));
+
+    cvd::Response response;
+    response.mutable_command_response();  // Sets oneof member
+    response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
 
@@ -114,9 +116,7 @@ class CvdHelpHandler : public CvdServerHandler {
     auto& lookup_cmd = *lookup.mutable_command_request();
     lookup_cmd.add_args("cvd");
     lookup_cmd.add_args(arg);
-    auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
-    CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
-    return RequestWithStdio(lookup, {dev_null, dev_null, dev_null});
+    return RequestWithStdio::NullIo(std::move(lookup));
   }
 
   Result<std::string> TopLevelHelp() {

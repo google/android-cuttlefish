@@ -64,8 +64,8 @@ class SerialPreset : public CvdServerHandler {
       cmd.add_args(invocation.arguments[i]);
     }
 
-    RequestWithStdio inner_request(std::move(inner_req_proto),
-                                   request.FileDescriptors());
+    RequestWithStdio inner_request =
+        RequestWithStdio::InheritIo(std::move(inner_req_proto), request);
 
     CF_EXPECT(executor_.Execute({std::move(inner_request)}, request.Err()));
 
@@ -77,7 +77,7 @@ class SerialPreset : public CvdServerHandler {
   cvd_common::Args CmdList() const override { return {"experimental"}; }
   // not intended to show up in help
   Result<std::string> SummaryHelp() const override { return ""; }
-  bool ShouldInterceptHelp() const { return false; }
+  bool ShouldInterceptHelp() const override { return false; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
     return "";
   }

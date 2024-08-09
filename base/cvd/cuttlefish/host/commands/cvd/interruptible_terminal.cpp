@@ -24,18 +24,19 @@
 
 namespace cuttlefish {
 
-InterruptibleTerminal::InterruptibleTerminal(SharedFD stdin_fd)
-    : stdin_fd_(std::move(stdin_fd)), interrupt_event_fd_(SharedFD::Event()) {}
+InterruptibleTerminal::InterruptibleTerminal()
+    : interrupt_event_fd_(SharedFD::Event()) {}
 
 // only up to one thread can call this function
 Result<std::string> InterruptibleTerminal::ReadLine() {
+  SharedFD stdin_fd = SharedFD::Dup(0);
   {
     std::lock_guard lock(terminal_mutex_);
     CF_EXPECT(interrupted_ == false, "Interrupted");
     CF_EXPECT(owner_tid_ == std::nullopt,
               "This InterruptibleTerminal is already owned by "
                   << owner_tid_.value());
-    CF_EXPECT(stdin_fd_->IsOpen(),
+    CF_EXPECT(stdin_fd->IsOpen(),
               "The copy of client stdin fd has been already closed.");
     owner_tid_ = std::this_thread::get_id();
   }
@@ -43,7 +44,7 @@ Result<std::string> InterruptibleTerminal::ReadLine() {
   std::string line_buf;
   while (true) {
     read_set.Set(interrupt_event_fd_);
-    read_set.Set(stdin_fd_);
+    read_set.Set(stdin_fd);
     int num_fds = Select(&read_set, nullptr, nullptr, nullptr);
 
     std::lock_guard lock(terminal_mutex_);
@@ -61,12 +62,12 @@ Result<std::string> InterruptibleTerminal::ReadLine() {
       CF_EXPECT_EQ(interrupt_event_fd_->EventfdRead(&val), 0);
       return CF_ERR("Terminal input interrupted.");
     }
-    CF_EXPECT(read_set.IsSet(stdin_fd_));
+    CF_EXPECT(read_set.IsSet(stdin_fd));
     char c = 0;
     const char end_of_transmission = 4;
-    auto n_read = stdin_fd_->Read(&c, sizeof(c));
+    auto n_read = stdin_fd->Read(&c, sizeof(c));
     CF_EXPECT(n_read >= 0,
-              "Read from stdin returned an error: " << stdin_fd_->StrError());
+              "Read from stdin returned an error: " << stdin_fd->StrError());
     if (n_read > 0) {
       CF_EXPECTF(n_read == 1, "Expected to read 1 byte but read: {} bytes",
                  n_read);

@@ -70,8 +70,10 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
     auto [op, subcmd_args] = ParseInvocation(request.Message());
+
     if (CF_EXPECT(IsHelpSubcmd(subcmd_args))) {
-      CF_EXPECT(HelpCommand(request));
+      std::vector<std::string> unused;
+      request.Out() << CF_EXPECT(DetailedHelp(unused));
       return Success();
     }
 
@@ -93,8 +95,7 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
     }
     auto config_path =
         CF_EXPECT(selector::GetCuttlefishConfigPath(group.HomeDir()));
-    CF_EXPECT(instance_manager_.IssueStopCommand(request.Out(), request.Err(),
-                                                 config_path, group));
+    CF_EXPECT(instance_manager_.IssueStopCommand(request, config_path, group));
     return {};
   }
 
@@ -109,13 +110,6 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
 
     return CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs));
-  }
-
-  Result<void> HelpCommand(const RequestWithStdio& request) const {
-    std::vector<std::string> unused;
-    std::string msg = CF_EXPECT(DetailedHelp(unused));
-    CF_EXPECT_EQ(WriteAll(request.Out(), msg), (ssize_t)msg.size());
-    return {};
   }
 
   InstanceManager& instance_manager_;

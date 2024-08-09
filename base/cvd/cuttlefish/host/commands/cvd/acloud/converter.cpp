@@ -673,23 +673,21 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   // cvd server does not rely on the working directory for cvd start
   *start_command.mutable_working_directory() =
       request_command.working_directory();
-  std::vector<SharedFD> fds;
-  if (parsed_flags.verbose) {
-    fds = request.FileDescriptors();
-  } else {
-    auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
-    CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
-    fds = {dev_null, dev_null, dev_null};
-  }
+
+  RequestWithStdio child_request =
+      parsed_flags.verbose
+          ? RequestWithStdio::InheritIo(std::move(start_request), request)
+          : RequestWithStdio::NullIo(std::move(start_request));
 
   ConvertedAcloudCreateCommand ret{
-      .start_request = RequestWithStdio(start_request, fds),
+      .start_request = child_request,
       .fetch_command_str = fetch_command_str,
       .fetch_cvd_args_file = fetch_cvd_args_file,
       .verbose = parsed_flags.verbose,
   };
   for (auto& request_proto : request_protos) {
-    ret.prep_requests.emplace_back(request_proto, fds);
+    ret.prep_requests.emplace_back(
+        RequestWithStdio::InheritIo(std::move(request_proto), request));
   }
   return ret;
 }

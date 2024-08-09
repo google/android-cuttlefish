@@ -58,7 +58,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
   cvd_common::Args CmdList() const override { return {}; }
   // not intended to show up in help
   Result<std::string> SummaryHelp() const override { return ""; }
-  bool ShouldInterceptHelp() const { return false; }
+  bool ShouldInterceptHelp() const override { return false; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
     return "";
   }
@@ -85,7 +85,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
     CF_EXPECT(ConsumeFlags(translator_flags, invocation.arguments),
               "Failed to process translator flag.");
     if (help) {
-      WriteAll(request.Out(), kTranslatorHelpMessage);
+      request.Out() << kTranslatorHelpMessage;
       return response;
     }
     CF_EXPECT(flag_optout != flag_optin,
