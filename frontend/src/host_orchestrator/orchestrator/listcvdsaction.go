@@ -40,7 +40,7 @@ func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {
 	return &ListCVDsAction{
 		group:       opts.Group,
 		paths:       opts.Paths,
-		execContext: newCVDExecContext(opts.ExecContext, opts.CVDUser),
+		execContext: newCVDExecContextWithUser(opts.ExecContext, opts.CVDUser),
 	}
 }
 

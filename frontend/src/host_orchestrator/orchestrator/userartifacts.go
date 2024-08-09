@@ -179,7 +179,7 @@ func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
 }
 
 func Untar(dst string, src string, owner *user.User) error {
-	ctx := newCVDExecContext(exec.CommandContext, owner)
+	ctx := newCVDExecContextWithUser(exec.CommandContext, owner)
 	_, err := cvd.Exec(ctx, "tar", "-xf", src, "-C", dst)
 	if err != nil {
 		return err
@@ -223,7 +223,7 @@ func Unzip(dstDir string, src string) error {
 }
 
 func createNewUADir(parent string, owner *user.User) (string, error) {
-	ctx := newCVDExecContext(exec.CommandContext, owner)
+	ctx := newCVDExecContextWithUser(exec.CommandContext, owner)
 	stdout, err := cvd.Exec(ctx, "mktemp", "--directory", "-p", parent)
 	if err != nil {
 		return "", err
@@ -237,7 +237,7 @@ func createNewUADir(parent string, owner *user.User) (string, error) {
 }
 
 func createUAFile(filename string, owner *user.User) error {
-	ctx := newCVDExecContext(exec.CommandContext, owner)
+	ctx := newCVDExecContextWithUser(exec.CommandContext, owner)
 	_, err := cvd.Exec(ctx, "touch", filename)
 	if err != nil {
 		return err

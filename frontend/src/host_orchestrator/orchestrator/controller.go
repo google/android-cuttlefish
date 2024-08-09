@@ -152,7 +152,7 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	execCtx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
+	execCtx := newCVDExecContextWithUser(exec.CommandContext, h.Config.CVDUser)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, creds)
 	opts := FetchArtifactsActionOpts{
 		Request:          &req,
@@ -190,7 +190,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	execCtx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
+	execCtx := newCVDExecContextWithUser(exec.CommandContext, h.Config.CVDUser)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, creds)
 	opts := CreateCVDActionOpts{
 		Request:                  req,
@@ -262,7 +262,7 @@ func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	group := vars["group"]
 	name := vars["name"]
-	ctx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
+	ctx := newCVDExecContextWithUser(exec.CommandContext, h.Config.CVDUser)
 	logsDir, err := CVDLogsDir(ctx, group, name)
 	if err != nil {
 		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
@@ -380,7 +380,7 @@ func (h *createCVDBugReportHandler) Handle(r *http.Request) (interface{}, error)
 		Group:            vars["group"],
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
-		ExecContext:      newCVDExecContext(exec.CommandContext, h.Config.CVDUser),
+		ExecContext:      newCVDExecContextWithUser(exec.CommandContext, h.Config.CVDUser),
 		UUIDGen:          func() string { return uuid.New().String() },
 	}
 	return NewCreateCVDBugReportAction(opts).Run()
@@ -506,7 +506,7 @@ func (h *pullRuntimeArtifactsHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			log.Printf("error removing host bug report file %q: %v\n", filename, err)
 		}
 	}()
-	ctx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
+	ctx := newCVDExecContextWithUser(exec.CommandContext, h.Config.CVDUser)
 	if err := HostBugReport(ctx, h.Config.Paths, filename); err != nil {
 		replyJSONErr(w, err)
 		return

@@ -77,25 +77,30 @@ func (s *CVDSelector) ToCVDCLI() []string {
 }
 
 // Creates a CVD execution context from a regular execution context.
-// If a non-nil user is provided the returned execution context executes commands as that user.
-func newCVDExecContext(execContext ExecContext, usr *user.User) cvd.CVDExecContext {
-	if usr != nil {
-		return func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd {
-			newArgs := []string{"-u", usr.Username}
-			if env != nil {
-				newArgs = append(newArgs, env...)
-			}
-			newArgs = append(newArgs, name)
-			newArgs = append(newArgs, arg...)
-			return execContext(ctx, "sudo", newArgs...)
-		}
-	}
+func newCVDExecContext(execContext ExecContext) cvd.CVDExecContext {
 	return func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd {
 		cmd := execContext(ctx, name, arg...)
 		if cmd != nil {
 			cmd.Env = env
 		}
 		return cmd
+	}
+}
+
+// Creates a CVD execution context from a regular execution context
+// for a given user. If user is nil, the running process's user will be used.
+func newCVDExecContextWithUser(execContext ExecContext, usr *user.User) cvd.CVDExecContext {
+	if usr == nil {
+		return newCVDExecContext(execContext)
+	}
+	return func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd {
+		newArgs := []string{"-u", usr.Username}
+		if env != nil {
+			newArgs = append(newArgs, env...)
+		}
+		newArgs = append(newArgs, name)
+		newArgs = append(newArgs, arg...)
+		return execContext(ctx, "sudo", newArgs...)
 	}
 }
 

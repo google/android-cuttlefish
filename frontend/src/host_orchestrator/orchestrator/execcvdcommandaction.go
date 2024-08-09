@@ -46,7 +46,7 @@ func NewExecCVDCommandAction(opts ExecCVDCommandActionOpts) *ExecCVDCommandActio
 		selector:    opts.Selector,
 		paths:       opts.Paths,
 		om:          opts.OperationManager,
-		execContext: newCVDExecContext(opts.ExecContext, opts.CVDUser),
+		execContext: newCVDExecContextWithUser(opts.ExecContext, opts.CVDUser),
 	}
 }
 

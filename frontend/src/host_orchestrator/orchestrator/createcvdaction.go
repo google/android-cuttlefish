@@ -69,7 +69,7 @@ type CreateCVDAction struct {
 }
 
 func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
-	cvdExecContext := newCVDExecContext(opts.ExecContext, opts.CVDUser)
+	cvdExecContext := newCVDExecContextWithUser(opts.ExecContext, opts.CVDUser)
 	return &CreateCVDAction{
 		req:                      opts.Request,
 		hostValidator:            opts.HostValidator,
