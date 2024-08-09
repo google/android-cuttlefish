@@ -582,8 +582,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     return response;
   }
 
-  cvd_common::Envs envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
+  cvd_common::Envs envs = request.Envs();
   if (Contains(envs, "HOME")) {
     if (envs.at("HOME").empty()) {
       envs.erase("HOME");
@@ -632,10 +631,9 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     return ResponseFromSiginfo(infop);
   }
 
-  auto group = CF_EXPECT(instance_manager_.SelectGroup(
-      cvd_common::ConvertToArgs(
-          request.Message().command_request().selector_opts().args()),
-      envs), "Failed to select group to start, did you mean 'cvd create'?");
+  auto group =
+      CF_EXPECT(instance_manager_.SelectGroup(request.SelectorArgs(), envs),
+                "Failed to select group to start, did you mean 'cvd create'?");
 
   CF_EXPECT(!group.HasActiveInstances(),
             "Selected instance group is already started, use `cvd create` to "

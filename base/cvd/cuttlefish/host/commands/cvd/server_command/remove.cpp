@@ -104,13 +104,9 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
 
   Result<selector::LocalInstanceGroup> SelectGroup(
       const RequestWithStdio& request) const {
-    cvd_common::Envs envs =
-        cvd_common::ConvertToEnvs(request.Message().command_request().env());
+    cvd_common::Envs envs = request.Envs();
 
-    const auto& selector_opts =
-        request.Message().command_request().selector_opts();
-
-    const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
+    const auto selector_args = request.SelectorArgs();
 
     return CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs));
   }

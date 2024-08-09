@@ -124,8 +124,7 @@ Result<bool> CvdStatusCommandHandler::CanHandle(
 
 static Result<RequestWithStdio> ProcessInstanceNameFlag(
     const RequestWithStdio& request) {
-  cvd_common::Envs envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
+  cvd_common::Envs envs = request.Envs();
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
 
   CvdFlag<std::string> instance_name_flag("instance_name");
@@ -152,12 +151,10 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
 
   cvd_common::Args new_cmd_args{"cvd", "status"};
   new_cmd_args.insert(new_cmd_args.end(), cmd_args.begin(), cmd_args.end());
-  const auto& selector_opts =
-      request.Message().command_request().selector_opts();
   cvd::Request new_message = MakeRequest({
       .cmd_args = new_cmd_args,
       .env = envs,
-      .selector_args = cvd_common::ConvertToArgs(selector_opts.args()),
+      .selector_args = request.SelectorArgs(),
       .working_dir = request.Message().command_request().working_directory(),
   });
   return RequestWithStdio(new_message, request.FileDescriptors());
