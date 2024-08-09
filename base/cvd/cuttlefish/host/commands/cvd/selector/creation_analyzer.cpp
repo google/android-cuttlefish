@@ -98,7 +98,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
     CF_EXPECT(Contains(id_to_lockfile_map, id),
               "Instance ID " << id << " lock file can't be locked.");
     auto& lock_file = id_to_lockfile_map.at(id);
-    instance_info.emplace_back(id, instance_name, cvd::INSTANCE_STATE_STARTING,
+    instance_info.emplace_back(id, instance_name, cvd::INSTANCE_STATE_PREPARING,
                                std::move(lock_file));
   }
   return instance_info;
@@ -156,7 +156,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
     if (per_instance_names_opt && !(*per_instance_names_opt)[i].empty()) {
       name = (*per_instance_names_opt)[i];
     }
-    instance_info.emplace_back(id, name, cvd::INSTANCE_STATE_STARTING,
+    instance_info.emplace_back(id, name, cvd::INSTANCE_STATE_PREPARING,
                                std::move(id_to_lockfile_map.at(id)));
   }
   return instance_info;
