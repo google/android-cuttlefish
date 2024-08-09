@@ -24,6 +24,7 @@ import {
   ktdTrackById,
 } from '@katoid/angular-grid-layout';
 import {DOCUMENT} from '@angular/common';
+import {DisplayInfo} from '../../../../intercept/js/server_connector'
 
 interface DeviceGridItem extends KtdGridLayoutItem {
   id: string;
@@ -33,6 +34,7 @@ interface DeviceGridItem extends KtdGridLayoutItem {
   h: number;
   display_width: number | null;
   display_height: number | null;
+  display_count: number;
   zoom: number;
   visible: boolean;
   placed: boolean;
@@ -70,8 +72,32 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly defaultDisplayHeight = 1280;
   private readonly defaultDisplayZoom = 0.5;
 
-  private readonly iconPanelWidth = 58;
-  private readonly panelTitleHeight = 40;
+  // 10px (20 for left+right, 20 for top+bottom) on all four sides of each
+  // display.
+  private readonly displayMargin = 20;
+
+  // Does not include vertical margins of display device (displayMargin)
+  private readonly panelTitleHeight = 53;
+  private readonly displayTitleHeight = 48;
+
+  // Note this is constant because displays appear on a single horizontal row.
+  private readonly totalVerticalSpacing
+      = this.panelTitleHeight
+      + this.displayTitleHeight
+      + this.displayMargin;
+
+  private totalHorizontalSpacing(item: DeviceGridItem): number {
+    const iconPanelWidth = 58;
+    const cnt = item.display_count || 1;
+
+    // Separate displays are shown in a row left-to-right, so each new devices
+    // adds more margin space.
+    // Note we assume control-panel-custom-buttons are not visible. The risk is
+    // that they really are, in which case the zoom will be over-calculated and
+    // extra vertical space will appear below the displays. Ideally the device
+    // would report how much spacing is required in each direction.
+    return cnt * this.displayMargin + iconPanelWidth;
+  }
 
   private readonly freeScale = 0;
 
@@ -129,11 +155,24 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
         const overwrites = [];
 
         if (displayInfo.displays.length !== 0) {
-          updateValues.display_width = displayInfo.displays[0].width;
-          updateValues.display_height = displayInfo.displays[0].height;
+          let w = 0, h = 0;
+          displayInfo.displays.forEach((d : DisplayInfo)=> {
+            w += d.width;
+            h = Math.max(d.height, h);
+          });
+
+          updateValues.display_width = w;
+          updateValues.display_height = h;
 
           overwrites.push('display_width');
           overwrites.push('display_height');
+
+          // Display service occasionally sends a dummy update - do not
+          // overwrite display count in that case.
+          if (displayInfo.displays[0].width !== 0) {
+            updateValues.display_count = displayInfo.displays.length;
+            overwrites.push('display_count');
+          }
         }
 
         return [
@@ -178,17 +217,17 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
       return item;
 
     const zoom = Math.min(
-      (item.w - this.iconPanelWidth) / item.display_width,
-      (item.h - this.panelTitleHeight) / item.display_height
+      (item.w - this.totalHorizontalSpacing(item)) / item.display_width,
+      (item.h - this.totalVerticalSpacing) / item.display_height
     );
 
     item.w = Math.max(
       this.minPanelWidth,
-      zoom * item.display_width + this.iconPanelWidth
+      zoom * item.display_width + this.totalHorizontalSpacing(item)
     );
     item.h = Math.max(
       this.minPanelHeight,
-      zoom * item.display_height + this.panelTitleHeight
+      zoom * item.display_height + this.totalVerticalSpacing
     );
     item.zoom = zoom;
 
@@ -210,11 +249,11 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
 
       item.w = Math.max(
         this.minPanelWidth,
-        zoom * item.display_width + this.iconPanelWidth
+        zoom * item.display_width + this.totalHorizontalSpacing(item)
       );
       item.h = Math.max(
         this.minPanelHeight,
-        zoom * item.display_height + this.panelTitleHeight
+        zoom * item.display_height + this.totalVerticalSpacing
       );
     }
 
@@ -313,7 +352,7 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
           display_id: '0',
           width: this.freeScale,
           height: this.freeScale,
-        },
+        } as DisplayInfo,
       ],
     });
   }
@@ -331,6 +370,7 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
       h: this.minPanelHeight,
       display_width: null,
       display_height: null,
+      display_count: 0,
       zoom: this.defaultDisplayZoom,
       visible: false,
       placed: false,
