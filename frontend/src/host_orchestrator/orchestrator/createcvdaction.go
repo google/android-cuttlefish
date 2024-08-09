@@ -61,7 +61,6 @@ type CreateCVDAction struct {
 	cvdBundleFetcher         artifacts.CVDBundleFetcher
 	userArtifactsDirResolver UserArtifactsDirResolver
 	artifactsMngr            *artifacts.Manager
-	startCVDHandler          *startCVDHandler
 	cvdUser                  *user.User
 	buildAPICredentials      string
 
@@ -69,7 +68,6 @@ type CreateCVDAction struct {
 }
 
 func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
-	cvdExecContext := newCVDExecContext(opts.ExecContext, opts.CVDUser)
 	return &CreateCVDAction{
 		req:                      opts.Request,
 		hostValidator:            opts.HostValidator,
@@ -86,10 +84,7 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 			opts.Paths.ArtifactsRootDir,
 			opts.UUIDGen,
 		),
-		execContext: cvdExecContext,
-		startCVDHandler: &startCVDHandler{
-			ExecContext: cvdExecContext,
-		},
+		execContext: newCVDExecContext(opts.ExecContext, opts.CVDUser),
 	}
 }
 
@@ -277,7 +272,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 		KernelDir:        kernelBuildDir,
 		BootloaderDir:    bootloaderBuildDir,
 	}
-	if err := a.startCVDHandler.Create(startParams); err != nil {
+	if err := CreateCVD(a.execContext, startParams); err != nil {
 		return nil, err
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
@@ -297,7 +292,7 @@ func (a *CreateCVDAction) launchFromUserBuild(
 		InstanceNumbers:  a.newInstanceNumbers(instancesCount),
 		MainArtifactsDir: artifactsDir,
 	}
-	if err := a.startCVDHandler.Create(startParams); err != nil {
+	if err := CreateCVD(a.execContext, startParams); err != nil {
 		return nil, err
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.

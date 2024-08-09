@@ -333,10 +333,6 @@ const (
 	groupNameArg                 = "--group_name=cvd"
 )
 
-type startCVDHandler struct {
-	ExecContext cvd.CVDExecContext
-}
-
 type startCVDParams struct {
 	InstanceNumbers  []uint32
 	MainArtifactsDir string
@@ -347,7 +343,7 @@ type startCVDParams struct {
 	BootloaderDir string
 }
 
-func (h *startCVDHandler) Create(p startCVDParams) error {
+func CreateCVD(ctx cvd.CVDExecContext, p startCVDParams) error {
 	args := []string{groupNameArg, "create", daemonArg, reportAnonymousUsageStatsArg}
 	if len(p.InstanceNumbers) == 1 {
 		// Use legacy `--base_instance_num` when multi-vd is not requested.
@@ -373,7 +369,7 @@ func (h *startCVDHandler) Create(p startCVDParams) error {
 		AndroidHostOut: p.MainArtifactsDir,
 		Home:           p.RuntimeDir,
 	}
-	cvdCmd := cvd.NewCommand(h.ExecContext, args, opts)
+	cvdCmd := cvd.NewCommand(ctx, args, opts)
 	err := cvdCmd.Run()
 	if err != nil {
 		return fmt.Errorf("launch cvd stage failed: %w", err)
