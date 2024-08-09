@@ -71,8 +71,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(VerifyPrecondition(request));
-    cvd_common::Envs envs =
-        cvd_common::ConvertToEnvs(request.Message().command_request().env());
+    cvd_common::Envs envs = request.Envs();
 
     auto [op, subcmd_args] = ParseInvocation(request.Message());
     bool is_help = CF_EXPECT(IsHelp(subcmd_args));
@@ -177,9 +176,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     if (instance_num_opt) {
       extra_queries.emplace_back(selector::kInstanceIdField, *instance_num_opt);
     }
-    const auto& selector_opts =
-        request.Message().command_request().selector_opts();
-    const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
+    const auto selector_args = request.SelectorArgs();
 
     auto [instance, group] = CF_EXPECT(instance_manager_.SelectInstance(
         selector_args, envs, extra_queries));

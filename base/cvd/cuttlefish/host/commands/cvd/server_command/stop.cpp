@@ -98,8 +98,7 @@ Result<bool> CvdStopCommandHandler::CanHandle(
 Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
     const RequestWithStdio& request) {
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
-  cvd_common::Envs envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
+  cvd_common::Envs envs = request.Envs();
 
   const auto [bin, bin_path] = CF_EXPECT(CvdHelpBinPath(subcmd, envs));
 
@@ -203,11 +202,8 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_EXPECT(NoGroupResponse(request));
   }
-  cvd_common::Envs envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
-  const auto& selector_opts =
-      request.Message().command_request().selector_opts();
-  const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
+  cvd_common::Envs envs = request.Envs();
+  const auto selector_args = request.SelectorArgs();
   CF_EXPECT(Contains(envs, kAndroidHostOut) &&
             DirectoryExists(envs.at(kAndroidHostOut)));
 

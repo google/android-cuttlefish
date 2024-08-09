@@ -29,7 +29,6 @@
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
-#include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -58,7 +57,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
       : instance_manager_{instance_manager},
         cvd_display_operations_{"display"} {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const {
+  Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
     return Contains(cvd_display_operations_, invocation.command);
   }
@@ -66,8 +65,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(VerifyPrecondition(request));
-    cvd_common::Envs envs =
-        cvd_common::ConvertToEnvs(request.Message().command_request().env());
+    cvd_common::Envs envs = request.Envs();
 
     auto [_, subcmd_args] = ParseInvocation(request.Message());
 
@@ -134,9 +132,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
       extra_queries.emplace_back(selector::kInstanceIdField, *instance_num_opt);
     }
 
-    const auto& selector_opts =
-        request.Message().command_request().selector_opts();
-    const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
+    const auto selector_args = request.SelectorArgs();
 
     auto [instance, group] = CF_EXPECT(
         instance_manager_.SelectInstance(selector_args, envs, extra_queries));

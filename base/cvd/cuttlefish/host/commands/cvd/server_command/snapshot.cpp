@@ -78,8 +78,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(VerifyPrecondition(request));
-    cvd_common::Envs envs =
-        cvd_common::ConvertToEnvs(request.Message().command_request().env());
+    cvd_common::Envs envs = request.Envs();
 
     auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
 
@@ -117,9 +116,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
                                   const std::string& subcmd,
                                   cvd_common::Args& subcmd_args,
                                   cvd_common::Envs envs) {
-    const auto& selector_opts =
-        request.Message().command_request().selector_opts();
-    const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
+    const auto selector_args = request.SelectorArgs();
 
     // create a string that is comma-separated instance IDs
     auto instance_group =

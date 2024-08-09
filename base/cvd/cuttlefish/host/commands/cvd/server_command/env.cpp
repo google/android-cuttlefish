@@ -25,7 +25,6 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/flag.h"
-#include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -57,8 +56,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(VerifyPrecondition(request));
-    cvd_common::Envs envs =
-        cvd_common::ConvertToEnvs(request.Message().command_request().env());
+    cvd_common::Envs envs = request.Envs();
 
     auto [_, subcmd_args] = ParseInvocation(request.Message());
 
@@ -107,9 +105,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   Result<Command> NonHelpCommand(const RequestWithStdio& request,
                                  const cvd_common::Args& subcmd_args,
                                  const cvd_common::Envs& envs) {
-    const auto& selector_opts =
-        request.Message().command_request().selector_opts();
-    const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
+    const auto selector_args = request.SelectorArgs();
 
     auto [instance, group] =
         CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs));

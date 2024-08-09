@@ -45,16 +45,13 @@ class CvdServerHandlerProxy : public CvdServerHandler {
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
 
-    const auto& selector_opts =
-        request.Message().command_request().selector_opts();
-    auto all_args = cvd_common::ConvertToArgs(selector_opts.args());
+    auto all_args = request.SelectorArgs();
     CF_EXPECT_GE(all_args.size(), 1ul);
     if (all_args.size() == 1ul) {
       all_args = cvd_common::Args{"cvd", "help"};
     }
 
-    cvd_common::Envs envs =
-        cvd_common::ConvertToEnvs(request.Message().command_request().env());
+    cvd_common::Envs envs = request.Envs();
 
     auto subcmds = executor_.CmdList();
     auto selector_flag_collection =

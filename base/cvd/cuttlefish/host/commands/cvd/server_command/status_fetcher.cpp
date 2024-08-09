@@ -170,8 +170,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   auto bin = CF_EXPECT(GetBin(android_host_out));
   auto bin_path = fmt::format("{}/bin/{}", android_host_out, bin);
 
-  cvd_common::Envs envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
+  cvd_common::Envs envs = request.Envs();
   envs["HOME"] = home;
   // old cvd_internal_status expects CUTTLEFISH_INSTANCE=<k>
   envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.id());
@@ -242,14 +241,11 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
 
 Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
     const RequestWithStdio& request) {
-  cvd_common::Envs envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
+  cvd_common::Envs envs = request.Envs();
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
 
   // find group
-  const auto& selector_opts =
-      request.Message().command_request().selector_opts();
-  const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
+  const auto selector_args = request.SelectorArgs();
   CF_EXPECT(Contains(envs, kAndroidHostOut) &&
             DirectoryExists(envs.at(kAndroidHostOut)));
 
@@ -307,8 +303,7 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
 
   auto request_message = MakeRequest(
       {.cmd_args = {"cvd", "status", "--print", "--all_instances"},
-       .env = cvd_common::ConvertToEnvs(
-           original_request.Message().command_request().env()),
+       .env = original_request.Envs(),
        .selector_args = {"--group_name", group.GroupName()},
        .working_dir =
            original_request.Message().command_request().working_directory()});

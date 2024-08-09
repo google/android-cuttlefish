@@ -16,10 +16,9 @@
 
 #pragma once
 
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
-#include <memory>
 #include <optional>
 #include <vector>
 
@@ -28,6 +27,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 
@@ -42,6 +42,18 @@ class RequestWithStdio {
   SharedFD Out() const;
   SharedFD Err() const;
   std::optional<SharedFD> Extra() const;
+
+  // Convenient accessors to commonly used properties in the underlying message
+  cvd_common::Args Args() const {
+    return cvd_common::ConvertToArgs(Message().command_request().args());
+  }
+  cvd_common::Args SelectorArgs() const {
+    return cvd_common::ConvertToArgs(
+        Message().command_request().selector_opts().args());
+  }
+  cvd_common::Envs Envs() const {
+    return cvd_common::ConvertToEnvs(Message().command_request().env());
+  }
 
  private:
   cvd::Request message_;
