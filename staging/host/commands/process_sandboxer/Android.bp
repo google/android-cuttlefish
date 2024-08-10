@@ -43,6 +43,7 @@ cc_binary_host {
         "policies/secure_env.cpp",
         "policies/socket_vsock_proxy.cpp",
         "policies/tcp_connector.cpp",
+        "policies/tombstone_receiver.cpp",
         "policies/webrtc.cpp",
         "poll_callback.cpp",
         "sandbox_manager.cpp",
