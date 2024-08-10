@@ -69,6 +69,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("secure_env")] = SecureEnvPolicy;
   builders[host.HostToolExe("socket_vsock_proxy")] = SocketVsockProxyPolicy;
   builders[host.HostToolExe("tcp_connector")] = TcpConnectorPolicy;
+  builders[host.HostToolExe("tombstone_receiver")] = TombstoneReceiverPolicy;
   builders[host.HostToolExe("webRTC")] = WebRtcPolicy;
 
   std::set<std::string> no_policy_set = NoPolicy(host);
