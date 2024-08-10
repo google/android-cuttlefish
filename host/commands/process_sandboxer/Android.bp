@@ -38,6 +38,7 @@ cc_binary_host {
         "policies/modem_simulator.cpp",
         "policies/process_restarter.cpp",
         "policies/run_cvd.cpp",
+        "policies/screen_recording_server.cpp",
         "policies/secure_env.cpp",
         "policies/socket_vsock_proxy.cpp",
         "policies/tcp_connector.cpp",
