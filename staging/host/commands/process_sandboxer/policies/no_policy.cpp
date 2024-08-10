@@ -46,7 +46,6 @@ std::set<std::string> NoPolicy(const HostInfo& host) {
       host.HostToolExe("operator_proxy"),          // TODO: b/359312147
       host.HostToolExe("root-canal"),              // TODO: b/359312761
       host.HostToolExe("simg2img"),                // TODO: b/359312017
-      host.HostToolExe("tombstone_receiver"),      // TODO: b/318609742
       host.HostToolExe("vhost_device_vsock"),      // TODO: b/318613691
       host.HostToolExe("webrtc_operator"),         // TODO: b/359312626
       host.HostToolExe("wmediumd"),                // TODO: b//318610207
