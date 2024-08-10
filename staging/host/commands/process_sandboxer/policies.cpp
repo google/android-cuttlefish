@@ -71,15 +71,22 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("tcp_connector")] = TcpConnectorPolicy;
   builders[host.HostToolExe("webRTC")] = WebRtcPolicy;
 
+  std::set<std::string> no_policy_set = NoPolicy(host);
+  for (const auto& [exe, policy_builder] : builders) {
+    if (no_policy_set.count(exe)) {
+      LOG(FATAL) << "Overlap in policy map and no-policy set: '" << exe << "'";
+    }
+  }
+
   if (auto it = builders.find(executable); it != builders.end()) {
     // TODO(schuffelen): Only share this with executables known to launch others
     return (it->second)(host)
         .AddFileAt(server_socket_outside_path, kManagerSocketPath, false)
         .BuildOrDie();
-  } else {
-    // TODO(schuffelen): Explicitly cover which executables need policies
-    LOG(WARNING) << "No policy defined for '" << executable << "'";
+  } else if (no_policy_set.count(std::string(executable))) {
     return nullptr;
+  } else {
+    LOG(FATAL) << "Unknown executable '" << executable << "'";
   }
 }
 
