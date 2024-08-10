@@ -56,6 +56,7 @@ sandbox2::PolicyBuilder ScreenRecordingServerPolicy(const HostInfo&);
 sandbox2::PolicyBuilder SecureEnvPolicy(const HostInfo&);
 sandbox2::PolicyBuilder SocketVsockProxyPolicy(const HostInfo&);
 sandbox2::PolicyBuilder TcpConnectorPolicy(const HostInfo&);
+sandbox2::PolicyBuilder TombstoneReceiverPolicy(const HostInfo&);
 sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo&);
 
 std::set<std::string> NoPolicy(const HostInfo&);
