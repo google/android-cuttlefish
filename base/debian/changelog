@@ -1,8 +1,15 @@
-cuttlefish-common (0.9.31) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.31) unstable; urgency=medium
 
-  * 
+  [ Chad Reynolds ]
+  * Help command improvements
 
- -- Jorge Moreira <jemoreira@google.com>  Mon, 29 Jul 2024 15:44:14 -0700
+  [ Jorge E. Moreira ]
+  * cvd continues to track instances after stop or failure
+  * Split cvd start into create and start
+  * Introduce cvd remove command
+  * cvd start and remove use group selection menu
+
+ -- Jorge Moreira <jemoreira@google.com>  Mon, 12 Aug 2024 16:47:44 -0700
 
 cuttlefish-common (0.9.30) stable; urgency=medium
 

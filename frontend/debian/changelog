@@ -1,8 +1,14 @@
-cuttlefish-frontend (0.9.31) UNRELEASED; urgency=medium
+cuttlefish-frontend (0.9.31) unstable; urgency=medium
 
-  * 
+  [ Sergio A. Rodriguez ]
+  * Fix /logs endpoint permissions
+  * Return all devices on /cvds endpoint
 
- -- Jorge Moreira <jemoreira@google.com>  Mon, 29 Jul 2024 15:43:33 -0700
+  [ Jorge E. Moreira ]
+  * Host Orchestrator uses the new cvd commands create and remove
+  * New Host Orchestrator endpoints for cvd start and stop
+
+ -- Jorge Moreira <jemoreira@google.com>  Mon, 12 Aug 2024 16:53:19 -0700
 
 cuttlefish-frontend (0.9.30) stable; urgency=medium
 
