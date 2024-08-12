@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -87,11 +88,12 @@ func (c *Command) Run() error {
 }
 
 func cvdEnv(androidHostOut string) []string {
-	env := []string{}
-	if androidHostOut != "" {
-		env = append(env, envVarAndroidHostOut+"="+androidHostOut)
+	if androidHostOut == "" {
+		return nil
 	}
-	return env
+	// Make sure the current process' environment is inherited by cvd, some cvd subcommands, like
+	// start, expect the PATH environment variable to be defined.
+	return append(os.Environ(), envVarAndroidHostOut+"="+androidHostOut)
 }
 
 func OutputLogMessage(output string) string {
