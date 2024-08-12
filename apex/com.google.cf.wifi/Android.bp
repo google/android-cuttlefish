@@ -56,8 +56,8 @@ apex {
         "wpa_supplicant.conf.cf",
         "wpa_supplicant_overlay.conf.cf",
     ],
-    vintf_fragments: [
-        ":android.hardware.wifi.hostapd.xml",
-        ":android.hardware.wifi.supplicant.xml",
+    vintf_fragment_modules: [
+        "android.hardware.wifi.hostapd.xml",
+        "android.hardware.wifi.supplicant.xml",
     ],
 }

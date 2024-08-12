@@ -16,9 +16,10 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-filegroup {
+vintf_fragment {
     name: "android.hardware.automotive.vehicle@V3-cf-service.xml",
-    srcs: ["android.hardware.automotive.vehicle@V3-cf-service.xml"],
+    src: "android.hardware.automotive.vehicle@V3-cf-service.xml",
+    vendor: true,
 }
 
 cc_binary {
@@ -49,5 +50,5 @@ cc_binary {
     cflags: [
         "-Wno-unused-parameter",
     ],
-    vintf_fragments: ["android.hardware.automotive.vehicle@V3-cf-service.xml"],
+    vintf_fragment_modules: ["android.hardware.automotive.vehicle@V3-cf-service.xml"],
 }
