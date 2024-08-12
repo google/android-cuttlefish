@@ -26,17 +26,17 @@ apex {
     vendor: true,
 
     binaries: [
-        "//external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant:wpa_supplicant",
         "//external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant:hostapd",
+        "//external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant:wpa_supplicant",
     ],
     prebuilts: [
         "com.google.cf.wpa_supplicant.rc",
+        "p2p_supplicant.conf.cf",
         "wpa_supplicant.conf.cf",
         "wpa_supplicant_overlay.conf.cf",
-        "p2p_supplicant.conf.cf",
     ],
-    vintf_fragments: [
-        ":android.hardware.wifi.supplicant.xml",
-        ":android.hardware.wifi.hostapd.xml",
+    vintf_fragment_modules: [
+        "android.hardware.wifi.hostapd.xml",
+        "android.hardware.wifi.supplicant.xml",
     ],
 }
