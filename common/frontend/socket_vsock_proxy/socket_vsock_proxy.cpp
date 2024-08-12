@@ -181,7 +181,7 @@ static Result<void> ListenEventsAndProxy(int events_fd,
           "Could not read restore pipe: " << restore_pipe_read->StrError());
     }
     LOG(INFO) << "restoring proxy on CUTTLEFISH_HOST - success";
-    proxy = std::move(CF_EXPECT(StartProxyAsync(server, client)));
+    proxy = CF_EXPECT(StartProxyAsync(server, client));
   }
 #endif
 
@@ -206,7 +206,7 @@ static Result<void> ListenEventsAndProxy(int events_fd,
     if (start != -1 && (*received_event)->event == start) {
       if (!proxy) {
         LOG(INFO) << "Start event (" << start << ") received. Starting proxy";
-        proxy = std::move(CF_EXPECT(StartProxyAsync(server, client)));
+        proxy = CF_EXPECT(StartProxyAsync(server, client));
       }
       continue;
     }
