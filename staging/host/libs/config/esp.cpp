@@ -300,7 +300,7 @@ EspBuilder PrepareESP(const std::string& image_path, Arch arch) {
     }
   }
 
-  return std::move(builder);
+  return builder;
 }
 
 // TODO(b/260338443, b/260337906) remove ubuntu and debian variations
