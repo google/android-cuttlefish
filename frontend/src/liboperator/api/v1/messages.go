@@ -186,8 +186,8 @@ type CVD struct {
 	Group string `json:"group"`
 	// [Output Only] Identifier within a group.
 	Name string `json:"name"`
-	// [REQUIRED]
-	BuildSource *BuildSource `json:"build_source"`
+	// [Input Only]
+	BuildSource *BuildSource `json:"build_source,omitempty"`
 	// [Output Only]
 	Status string `json:"status"`
 	// [Output Only]
