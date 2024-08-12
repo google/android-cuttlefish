@@ -100,7 +100,7 @@ Result<std::shared_ptr<std::vector<uint8_t>>> CasimirController::SendApdu(
   if (rf_packet.IsValid()) {
     auto data = DataView::Create(rf_packet);
     if (data.IsValid() && rf_packet.GetSender() == receiver_id) {
-      return std::make_shared<std::vector<uint8_t>>(std::move(data.GetData()));
+      return std::make_shared<std::vector<uint8_t>>(data.GetData());
     }
   }
   return CF_ERR("Invalid APDU response");
