@@ -612,18 +612,17 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
                                .follow_symlink = false}));
     }
   }
-  CF_EXPECT(Contains(envs, kAndroidHostOut));
-  const auto bin = CF_EXPECT(FindStartBin(envs.at(kAndroidHostOut)));
-
   // update DB if not help
   // collect group creation infos
   CF_EXPECT(Contains(supported_commands_, subcmd),
             "subcmd should be start but is " << subcmd);
   const bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));
-  CF_EXPECT(ConsumeDaemonModeFlag(subcmd_args));
-  subcmd_args.push_back("--daemon=true");
 
   if (is_help) {
+    auto it = envs.find(kAndroidHostOut);
+    CF_EXPECT(it != envs.end());
+    const auto bin = CF_EXPECT(FindStartBin(it->second));
+
     Command command =
         CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));
     ShowLaunchCommand(command, envs);
@@ -632,6 +631,9 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());
     return ResponseFromSiginfo(infop);
   }
+
+  CF_EXPECT(ConsumeDaemonModeFlag(subcmd_args));
+  subcmd_args.push_back("--daemon=true");
 
   auto group =
       CF_EXPECT(SelectGroup(instance_manager_, request),
@@ -643,6 +645,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
 
   CF_EXPECT(UpdateArgs(subcmd_args, group));
   CF_EXPECT(UpdateEnvs(envs, group));
+  const auto bin = CF_EXPECT(FindStartBin(group.HostArtifactsPath()));
   Command command = CF_EXPECT(
       ConstructCvdNonHelpCommand(bin, group, subcmd_args, envs, request));
 
