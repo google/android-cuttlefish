@@ -69,8 +69,9 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(NewAcloudTranslatorCommand(instance_manager_));
   request_handlers_.emplace_back(
       NewCvdCmdlistHandler(command_sequence_executor_));
-  request_handlers_.emplace_back(NewCvdCreateCommandHandler(
-      instance_manager_, command_sequence_executor_));
+  request_handlers_.emplace_back(
+      NewCvdCreateCommandHandler(instance_manager_, host_tool_target_manager_,
+                                 command_sequence_executor_));
   request_handlers_.emplace_back(
       NewCvdDisplayCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdEnvCommandHandler(instance_manager_));
