@@ -42,9 +42,8 @@ struct WebRtcScProcessedFrame : public ScreenConnectorFrameInfo {
     // copy internal buffer, not move
     CvdVideoFrameBuffer* new_buffer = new CvdVideoFrameBuffer(*(buf_.get()));
     auto cloned_frame = std::make_unique<WebRtcScProcessedFrame>();
-    cloned_frame->buf_ =
-        std::move(std::unique_ptr<CvdVideoFrameBuffer>(new_buffer));
-    return std::move(cloned_frame);
+    cloned_frame->buf_ = std::unique_ptr<CvdVideoFrameBuffer>(new_buffer);
+    return cloned_frame;
   }
 };
 

@@ -192,7 +192,7 @@ bool Session::HandleInit(SharedFD hal_cli, const FsmInput fsm_input,
     ReportErrorToHal(hal_cli, HostError::kUIError);
     return false;
   }
-  start_time_ = std::make_unique<TimePoint>(std::move(Clock::now()));
+  start_time_ = std::make_unique<TimePoint>(Clock::now());
   if (!SendAck(hal_cli, session_id_, true, "started")) {
     ConfUiLog(ERROR) << "Ack to kStart failed in I/O";
     return false;
