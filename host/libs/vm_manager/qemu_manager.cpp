@@ -658,11 +658,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
                             ",aio=threads", readonly);
       qemu_cmd.AddParameter("-device");
       qemu_cmd.AddParameter(
-#ifdef __APPLE__
           "virtio-blk-pci-non-transitional,drive=drive-virtio-disk", i,
-#else
-          "virtio-blk-pci-non-transitional,scsi=off,drive=drive-virtio-disk", i,
-#endif
           ",id=virtio-disk", i, (i == 0 ? ",bootindex=1" : ""));
     }
     ++i;
