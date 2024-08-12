@@ -40,11 +40,11 @@ apex {
     // Install the apex in /vendor/apex
     soc_specific: true,
     binaries: [
-        "rename_netiface",
-        "//external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant:wpa_supplicant",
-        "setup_wifi",
         "//device/generic/goldfish:mac80211_create_radios",
+        "//external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant:wpa_supplicant",
         "hostapd_cf",
+        "rename_netiface",
+        "setup_wifi",
     ],
     sh_binaries: ["init.wifi_apex"],
     prebuilts: [
@@ -52,12 +52,12 @@ apex {
         "android.hardware.wifi.passpoint.prebuilt.xml",
         "android.hardware.wifi.prebuilt.xml",
         "com.google.cf.wifi.rc",
+        "p2p_supplicant.conf.cf",
         "wpa_supplicant.conf.cf",
         "wpa_supplicant_overlay.conf.cf",
-        "p2p_supplicant.conf.cf",
     ],
     vintf_fragments: [
-        ":android.hardware.wifi.supplicant.xml",
         ":android.hardware.wifi.hostapd.xml",
+        ":android.hardware.wifi.supplicant.xml",
     ],
 }

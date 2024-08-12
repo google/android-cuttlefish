@@ -35,9 +35,9 @@ cc_binary {
         "vhal_vsockinfo",
     ],
     static_libs: [
-        "android.hardware.automotive.vehicle@default-grpc-hardware-lib",
         "DefaultVehicleHal",
         "VehicleHalUtils",
+        "android.hardware.automotive.vehicle@default-grpc-hardware-lib",
     ],
     shared_libs: [
         "libbase",
