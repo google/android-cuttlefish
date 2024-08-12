@@ -70,7 +70,7 @@ Command Avb::GenerateAddHashFooter(const std::string& image_path,
   command.AddParameter(partition_name);
   command.AddParameter("--partition_size");
   command.AddParameter(partition_size_bytes);
-  return std::move(command);
+  return command;
 }
 
 Result<void> Avb::AddHashFooter(const std::string& image_path,
@@ -177,4 +177,4 @@ fruit::Component<Avb> CuttlefishKeyAvbComponent() {
       []() -> Avb* { return GetDefaultAvb().release(); });
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
