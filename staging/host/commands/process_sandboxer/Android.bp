@@ -32,6 +32,7 @@ cc_binary_host {
         "policies/adb_connector.cpp",
         "policies/assemble_cvd.cpp",
         "policies/baseline.cpp",
+        "policies/echo_server.cpp",
         "policies/kernel_log_monitor.cpp",
         "policies/log_tee.cpp",
         "policies/logcat_receiver.cpp",
