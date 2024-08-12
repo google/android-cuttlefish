@@ -477,11 +477,9 @@ static void ShowLaunchCommand(const Command& command,
 Result<std::string> CvdStartCommandHandler::FindStartBin(
     const std::string& android_host_out) {
   auto start_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
-                                 .artifacts_path = android_host_out,
-                                 .op = "start",
-                             }),
-                             "\nMaybe try `cvd fetch` or running `lunch "
-                             "<target>` to enable starting a CF device?");
+      .artifacts_path = android_host_out,
+      .op = "start",
+  }));
   return start_bin;
 }
 

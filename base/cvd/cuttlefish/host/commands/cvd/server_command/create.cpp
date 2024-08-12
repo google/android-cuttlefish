@@ -186,8 +186,10 @@ Result<cvd_common::Envs> GetEnvs(const RequestWithStdio& request) {
 class CvdCreateCommandHandler : public CvdServerHandler {
  public:
   CvdCreateCommandHandler(InstanceManager& instance_manager,
+                          HostToolTargetManager& host_tool_target_manager,
                           CommandSequenceExecutor& command_executor)
       : instance_manager_(instance_manager),
+        host_tool_target_manager_(host_tool_target_manager),
         command_executor_(command_executor) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override;
@@ -209,6 +211,7 @@ class CvdCreateCommandHandler : public CvdServerHandler {
   }
 
   InstanceManager& instance_manager_;
+  HostToolTargetManager& host_tool_target_manager_;
   CommandSequenceExecutor& command_executor_;
 };
 
@@ -294,6 +297,13 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
     return CF_EXPECT(command_executor_.ExecuteOne(subrequest, request.Err()));
   }
 
+  // Validate the host artifacts path before proceeding
+  (void)CF_EXPECT(host_tool_target_manager_.ExecBaseName({
+                      .artifacts_path = flags.host_path,
+                      .op = "start",
+                  }),
+                  "\nMaybe try `cvd fetch` or running `lunch "
+                  "<target>` to enable starting a CF device?");
   // CreationAnalyzer needs these to be set in the environment
   envs[kAndroidHostOut] = flags.host_path;
   envs[kAndroidProductOut] = flags.product_path;
@@ -329,9 +339,11 @@ Result<std::string> CvdCreateCommandHandler::DetailedHelp(
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdCreateCommandHandler(
-    InstanceManager& instance_manager, CommandSequenceExecutor& executor) {
-  return std::unique_ptr<CvdServerHandler>(
-      new CvdCreateCommandHandler(instance_manager, executor));
+    InstanceManager& instance_manager,
+    HostToolTargetManager& host_tool_target_manager,
+    CommandSequenceExecutor& executor) {
+  return std::unique_ptr<CvdServerHandler>(new CvdCreateCommandHandler(
+      instance_manager, host_tool_target_manager, executor));
 }
 
 }  // namespace cuttlefish
