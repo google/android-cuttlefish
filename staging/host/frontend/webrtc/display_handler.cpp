@@ -29,7 +29,7 @@ namespace cuttlefish {
 DisplayHandler::DisplayHandler(webrtc_streaming::Streamer& streamer,
                                ScreenConnector& screen_connector)
     : streamer_(streamer), screen_connector_(screen_connector) {
-  screen_connector_.SetCallback(std::move(GetScreenConnectorCallback()));
+  screen_connector_.SetCallback(GetScreenConnectorCallback());
   screen_connector_.SetDisplayEventCallback([this](const DisplayEvent& event) {
     std::visit(
         [this](auto&& e) {
