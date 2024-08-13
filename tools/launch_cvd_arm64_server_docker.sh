@@ -234,7 +234,8 @@ cvd_creation_data=$(echo $cvd_creation_data | sed s/\$user_artifact_id/$user_art
 # start Cuttlefish instance on top of docker instance
 # TODO(b/317942272): support starting the instance with an optional vendor boot debug image.
 echo -e "Starting Cuttlefish"
-ssh $server "for port in ${host_orchestrator_ports[*]}; do \
+ssh $server "job_ids=() && \
+for port in ${host_orchestrator_ports[*]}; do \
   host_orchestrator_url=https://localhost:\$port && \
   job_id=\"\" && \
   while [ -z \"\$job_id\" ]; do \
@@ -246,10 +247,25 @@ ssh $server "for port in ${host_orchestrator_ports[*]}; do \
       echo \"  Failed to request creating Cuttlefish, retrying\" && \
       sleep 1; \
     else \
-      echo \"  Succeeded to request: \$job_id\"; \
+      echo \"  Succeeded to request: \$job_id\" && \
+      job_ids+=(\${job_id}); \
     fi; \
   done; \
-done
+done \
+
+echo \"Waiting Cuttlefish instances to be booted\" && \
+i=0 && \
+for port in ${host_orchestrator_ports[*]}; do \
+  job_id=\${job_ids[\$i]} && \
+  i=\$((i+1)) && \
+  host_orchestrator_url=https://localhost:\$port && \
+  job_done=\"false\" && \
+  while [[ \$job_done == \"false\" ]]; do \
+    sleep 1 && \
+    job_done=\$(curl -s -k \${host_orchestrator_url}/operations/\$job_id | jq -r '.done'); \
+  done && \
+  echo \"  Boot completed: \$job_id\"; \
+done \
 "
 echo -e "Done"
 
