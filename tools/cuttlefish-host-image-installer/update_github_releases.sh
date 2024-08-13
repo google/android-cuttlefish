@@ -20,6 +20,19 @@ echo "$changes" > changelog
 
 STABLE_VERSION="v$version"
 
+echo "step 2: move stable release to new commit id"
+commit_id=$(git  rev-list -n 1 $STABLE_VERSION )
+stable_commit_id=$(git  rev-list -n 1 stable )
+if [[ "$commit_id" == "$stable_commit_id" ]]; then
+  echo "same commit, no need to change code base"
+else
+  git tag -d stable
+  git push -d origin stable
+  git push origin :refs/tags/stable
+  git tag stable $commit_id
+  git push origin stable
+fi
+
 # update changelog and descriptions
 echo "step 3: update changelog and descriptions in release"
 RUN_ID=$(gh run list -w HostImage -L 1 --json databaseId | jq -r '.[0].databaseId')
