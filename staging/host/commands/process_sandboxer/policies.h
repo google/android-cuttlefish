@@ -61,6 +61,7 @@ sandbox2::PolicyBuilder TcpConnectorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder TombstoneReceiverPolicy(const HostInfo&);
 sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo&);
 sandbox2::PolicyBuilder WmediumdPolicy(const HostInfo&);
+sandbox2::PolicyBuilder WmediumdGenConfigPolicy(const HostInfo&);
 
 std::set<std::string> NoPolicy(const HostInfo&);
 

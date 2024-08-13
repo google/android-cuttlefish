@@ -46,7 +46,6 @@ std::set<std::string> NoPolicy(const HostInfo& host) {
       host.HostToolExe("simg2img"),                // TODO: b/359312017
       host.HostToolExe("vhost_device_vsock"),      // TODO: b/318613691
       host.HostToolExe("webrtc_operator"),         // TODO: b/359312626
-      host.HostToolExe("wmediumd_gen_config"),     // TODO: b/359313561
   };
 }
 
