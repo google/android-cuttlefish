@@ -51,6 +51,7 @@ sandbox2::PolicyBuilder GnssGrpcProxyPolicy(const HostInfo&);
 sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder LogTeePolicy(const HostInfo&);
 sandbox2::PolicyBuilder LogcatReceiverPolicy(const HostInfo&);
+sandbox2::PolicyBuilder MkEnvImgSlimPolicy(const HostInfo& host);
 sandbox2::PolicyBuilder ModemSimulatorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder ProcessRestarterPolicy(const HostInfo&);
 sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo&);
