@@ -16,7 +16,6 @@
 
 #include <stdio.h>
 #include <fstream>
-#include <future>
 #include <string>
 
 #include <android-base/file.h>
@@ -115,14 +114,6 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
   save("cuttlefish_config.json");
 
   for (const auto& instance : config->Instances()) {
-    std::string device_br_dir = "/tmp/cvd_dbrXXXXXX";
-    CF_EXPECTF(mkdtemp(device_br_dir.data()) != nullptr, "mkdtemp failed: '{}'",
-               strerror(errno));
-    std::future<Result<void>> create_device_br =
-        std::async(std::launch::async, [&instance, &device_br_dir] {
-          return CreateDeviceBugreport(instance, device_br_dir);
-        });
-
     auto save = [&writer, instance](const std::string& path) {
       const auto& zip_name = instance.instance_name() + "/" + path;
       const auto& file_name = instance.PerInstancePath(path.c_str());
@@ -172,7 +163,11 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
     }
 
     {
-      auto result = create_device_br.get();
+      // TODO(b/359657254) Create the `adb bugreport` asynchronously.
+      std::string device_br_dir = "/tmp/cvd_dbrXXXXXX";
+      CF_EXPECTF(mkdtemp(device_br_dir.data()) != nullptr,
+                 "mkdtemp failed: '{}'", strerror(errno));
+      auto result = CreateDeviceBugreport(instance, device_br_dir);
       if (result.ok()) {
         auto names = DirectoryContents(device_br_dir);
         if (names.ok()) {
