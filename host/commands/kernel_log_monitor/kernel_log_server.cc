@@ -64,6 +64,8 @@ constexpr struct {
     {kKernelLoadedMessage, Event::KernelLoaded, kBare},
     {kDisplayPowerModeChangedMessage, Event::DisplayPowerModeChanged,
      kKeyValuePair},
+    {kHibernationExitMessage, Event::HibernationExited, kBare},
+    {kHibernationExitMessage, Event::AdbdStarted, kBare},
 };
 
 void ProcessSubscriptions(Json::Value message,
