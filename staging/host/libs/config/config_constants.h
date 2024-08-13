@@ -41,6 +41,8 @@ inline constexpr char kAdbdStartedMessage[] =
     "init: starting service 'adbd'...";
 inline constexpr char kFastbootdStartedMessage[] =
     "init: starting service 'fastbootd'...";
+inline constexpr char kHibernationExitMessage[] =
+    "PM: hibernation: hibernation exit";
 inline constexpr char kFastbootStartedMessage[] =
     "Listening for fastboot command on tcp";
 inline constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";

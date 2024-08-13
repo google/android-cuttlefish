@@ -44,6 +44,7 @@ enum Event : int32_t {
   DisplayPowerModeChanged = 10,
   FastbootStarted = 11,
   BootPending = 12,
+  HibernationExited = 13,
 };
 
 enum class SubscriptionAction {
