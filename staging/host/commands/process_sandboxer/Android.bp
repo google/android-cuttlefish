@@ -37,6 +37,7 @@ cc_binary_host {
         "policies/kernel_log_monitor.cpp",
         "policies/log_tee.cpp",
         "policies/logcat_receiver.cpp",
+        "policies/mkenvimage_slim.cpp",
         "policies/modem_simulator.cpp",
         "policies/no_policy.cpp",
         "policies/process_restarter.cpp",
