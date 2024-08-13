@@ -24,9 +24,10 @@ namespace cuttlefish::process_sandboxer {
 sandbox2::PolicyBuilder ModemSimulatorPolicy(const HostInfo& host) {
   // TODO: b/318601112 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("modem_simulator"))
-      .AddDirectory(host.log_dir, /* is_ro= */ false)
-      .AddFile(host.cuttlefish_config_path)
       .AddDirectory(host.host_artifacts_path + "/etc/modem_simulator")
+      .AddDirectory(host.log_dir, /* is_ro= */ false)
+      .AddDirectory(host.runtime_dir, /* is_ro= */ false)  // modem_nvram.json
+      .AddFile(host.cuttlefish_config_path)
       .DefaultAction(sandbox2::AllowAllSyscalls());
 }
 
