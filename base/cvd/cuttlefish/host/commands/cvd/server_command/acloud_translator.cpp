@@ -58,7 +58,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
   cvd_common::Args CmdList() const override { return {}; }
   // not intended to show up in help
   Result<std::string> SummaryHelp() const override { return ""; }
-  bool ShouldInterceptHelp() const { return false; }
+  bool ShouldInterceptHelp() const override { return false; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
     return "";
   }
