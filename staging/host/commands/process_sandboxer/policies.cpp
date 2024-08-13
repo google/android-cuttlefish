@@ -58,13 +58,14 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
 
   builders[host.HostToolExe("assemble_cvd")] = AssembleCvdPolicy;
   builders[host.HostToolExe("kernel_log_monitor")] = KernelLogMonitorPolicy;
+  builders[host.HostToolExe("log_tee")] = LogTeePolicy;
   builders[host.HostToolExe("logcat_receiver")] = LogcatReceiverPolicy;
   builders[host.HostToolExe("modem_simulator")] = ModemSimulatorPolicy;
   builders[host.HostToolExe("process_restarter")] = ProcessRestarterPolicy;
   builders[host.HostToolExe("run_cvd")] = RunCvdPolicy;
-  builders[host.HostToolExe("tcp_connector")] = TcpConnectorPolicy;
   builders[host.HostToolExe("secure_env")] = SecureEnvPolicy;
   builders[host.HostToolExe("socket_vsock_proxy")] = SocketVsockProxyPolicy;
+  builders[host.HostToolExe("tcp_connector")] = TcpConnectorPolicy;
   builders[host.HostToolExe("webRTC")] = WebRtcPolicy;
 
   if (auto it = builders.find(executable); it != builders.end()) {
