@@ -23,12 +23,14 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
+#include "run_cvd.pb.h"
+#include "screen_recording.grpc.pb.h"
+
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "run_cvd.pb.h"
-#include "screen_recording.grpc.pb.h"
+#include "host/libs/config/logging.h"
 
 using google::protobuf::Empty;
 using grpc::Server;
@@ -101,7 +103,10 @@ class ScreenRecordingServiceImpl final
   }
 };
 
-void RunScreenRecordingServer() {
+void RunScreenRecordingServer(int argc, char** argv) {
+  ::gflags::ParseCommandLineFlags(&argc, &argv, true);
+  DefaultSubprocessLogging(argv);
+
   std::string server_address("unix:" + FLAGS_grpc_uds_path);
   ScreenRecordingServiceImpl service;
 
@@ -115,7 +120,7 @@ void RunScreenRecordingServer() {
   builder.RegisterService(&service);
   // Finally assemble the server.
   std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << server_address << std::endl;
+  LOG(DEBUG) << "Server listening on " << server_address;
 
   // Wait for the server to shutdown. Note that some other thread must be
   // responsible for shutting down the server for this call to ever return.
@@ -126,8 +131,7 @@ void RunScreenRecordingServer() {
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  ::gflags::ParseCommandLineFlags(&argc, &argv, true);
-  cuttlefish::RunScreenRecordingServer();
+  cuttlefish::RunScreenRecordingServer(argc, argv);
 
   return 0;
 }
