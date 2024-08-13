@@ -30,10 +30,8 @@ sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("run_cvd"))
       .AddDirectory(host.runtime_dir, /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
-      .AddFile("/dev/net/tun", /* is_ro= */ false)
       .AddFileAt(sandboxer_proxy,
                  "/usr/lib/cuttlefish-common/bin/capability_query.py")
-      .AddFileAt(sandboxer_proxy, "/bin/bash")
       .AddFileAt(sandboxer_proxy, host.HostToolExe("adb_connector"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("casimir_control_server"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("control_env_proxy_server"))
