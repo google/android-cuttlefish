@@ -712,8 +712,8 @@ static Result<cvd::Response> CvdResetGroup(
   const auto& instances = group.Instances();
   CF_EXPECT(!instances.empty());
   const auto& first_instance = instances.front();
-  auto stop_result = run_cvd_process_manager->ForcefullyStopGroup(
-      /* cvd_server_children_only */ true, first_instance.id());
+  auto stop_result =
+      run_cvd_process_manager->ForcefullyStopGroup(first_instance.id());
   if (!stop_result.ok()) {
     return CommandResponse(cvd::Status::INTERNAL, kStopFailure);
   }
