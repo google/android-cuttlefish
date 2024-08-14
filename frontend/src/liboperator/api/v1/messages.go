@@ -203,11 +203,11 @@ type CVD struct {
 func (c *CVD) ID() string { return c.Group + "/" + c.Name }
 
 type DeviceDescriptor struct {
-	DeviceId string `json:"device_id"`
-	GroupId  string `json:"group_id"`
-	Owner    string `json:"owner,omitempty"`
-	Name     string `json:"name,omitempty"`
-	ADBPort  int    `json:"adb_port"`
+	DeviceId  string `json:"device_id"`
+	GroupName string `json:"group_name"`
+	Owner     string `json:"owner,omitempty"`
+	Name      string `json:"name,omitempty"`
+	ADBPort   int    `json:"adb_port"`
 }
 
 type DeviceInfoReply struct {
