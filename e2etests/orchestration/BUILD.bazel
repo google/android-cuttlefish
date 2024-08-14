@@ -72,3 +72,19 @@ go_test(
     ],
 )
 
+go_test(
+    name = "create_from_images_zip",
+    srcs = ["createfromimageszip_test.go"],
+    data = [
+      ":images_zip",
+      ":cvd_host_package",
+      "@images//docker:orchestration_image_tar",
+    ],
+    deps = [
+      ":e2etesting",
+      "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
+      "@com_github_google_cloud_android_orchestration//pkg/client",
+      "@com_github_google_go_cmp//cmp",
+    ],
+)
+

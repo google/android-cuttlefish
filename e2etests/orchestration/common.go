@@ -176,3 +176,17 @@ func DownloadHostBugReport(ctx *TestContext) error {
 	}
 	return nil
 }
+
+func UploadAndExtract(srv orchclient.HostOrchestratorService, remoteDir, src string) error {
+	if err := srv.UploadFile(remoteDir, src); err != nil {
+		return err
+	}
+	op, err := srv.ExtractFile(remoteDir, filepath.Base(src))
+	if err != nil {
+		return err
+	}
+	if err := srv.WaitForOperation(op.Name, nil); err != nil {
+		return err
+	}
+	return nil
+}
