@@ -535,7 +535,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   cvd::Request start_request;
   auto& start_command = *start_request.mutable_command_request();
   start_command.add_args("cvd");
-  start_command.add_args("start");
+  start_command.add_args("create");
   start_command.add_args("--daemon");
   start_command.add_args("--undefok");
   start_command.add_args("report_anonymous_usage_stats");
