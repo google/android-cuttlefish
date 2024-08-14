@@ -283,15 +283,18 @@ Result<void> RunCvdProcessManager::ForcefullyStopGroup(const uid_t id) {
 
 Result<void> RunCvdProcessManager::ForcefullyStopGroup(
     const GroupProcInfo& group) {
-CF_EXPECTF(SendSignal(group),
-           "Tried SIGKILL to a group of run_cvd processes rooted at "
-           "HOME={} but failed",
-           group.home_);
-CF_EXPECTF(DeleteLockFile(group),
-           "Tried to delete instance lock file for the group rooted at "
-           "HOME={} but failed.",
-           group.home_);
-return {};
+  auto signal_res = SendSignal(group);
+  auto delete_res = DeleteLockFile(group);
+  if (!delete_res.ok()) {
+    LOG(ERROR) << "Tried to delete instance lock file for the group rooted at "
+                  "HOME="
+               << group.home_ << " but failed.";
+  }
+  CF_EXPECTF(std::move(signal_res),
+             "Tried SIGKILL to a group of run_cvd processes rooted at "
+             "HOME={} but failed",
+             group.home_);
+  return {};
 }
 
 }  // namespace cuttlefish
