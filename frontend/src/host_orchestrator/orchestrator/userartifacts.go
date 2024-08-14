@@ -169,7 +169,7 @@ func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
 			return fmt.Errorf("failed extracting %q: %w", name, err)
 		}
 	} else if strings.HasSuffix(filename, ".zip") {
-		if err := Unzip(dir, filename); err != nil {
+		if err := Unzip(dir, filename, m.Owner); err != nil {
 			return fmt.Errorf("failed extracting %q: %w", name, err)
 		}
 	} else {
@@ -187,7 +187,7 @@ func Untar(dst string, src string, owner *user.User) error {
 	return nil
 }
 
-func Unzip(dstDir string, src string) error {
+func Unzip(dstDir string, src string, owner *user.User) error {
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
@@ -199,7 +199,10 @@ func Unzip(dstDir string, src string) error {
 			return err
 		}
 		defer rc.Close()
-		dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_RDWR, os.FileMode(src.Mode()))
+		if err := createUAFile(dst, owner); err != nil {
+			return err
+		}
+		dstFile, err := os.OpenFile(dst, os.O_WRONLY, 0664)
 		if err != nil {
 			return err
 		}
