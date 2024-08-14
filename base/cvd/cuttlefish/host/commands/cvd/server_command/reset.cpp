@@ -66,7 +66,6 @@ description:
 
 struct ParsedFlags {
   bool clean_runtime_dir = true;
-  bool device_by_cvd_only = false;
   bool is_confirmed_by_flag = false;
   std::optional<android::base::LogSeverity> log_level;
 };
@@ -88,7 +87,6 @@ static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
                       return {};
                     });
   std::vector<Flag> flags{
-      GflagsCompatFlag("device-by-cvd-only", parsed_flags.device_by_cvd_only),
       y_flag,
       GflagsCompatFlag("clean-runtime-dir", parsed_flags.clean_runtime_dir),
       GflagsCompatFlag("verbosity", verbosity_flag_value),
@@ -154,8 +152,7 @@ class CvdResetCommandHandler : public CvdServerHandler {
                  << server_kill_res.error().Message();
     }
     CF_EXPECT(KillAllCuttlefishInstances(
-        {.cvd_server_children_only = options.device_by_cvd_only,
-         .clear_instance_dirs = options.clean_runtime_dir}));
+        /* clear_instance_dirs*/ options.clean_runtime_dir));
     cvd::Response response;
     response.mutable_command_response();
     response.mutable_status()->set_code(cvd::Status::OK);
