@@ -51,8 +51,6 @@ sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo& host) {
       .AddFileAt(sandboxer_proxy, host.HostToolExe("newfs_msdos"))
       // TODO(schuffelen): Do this in-process?
       .AddFileAt(sandboxer_proxy, host.HostToolExe("simg2img"))
-      // TODO(schuffelen): Do this in-process?
-      .AddFileAt(sandboxer_proxy, "/bin/mv")
       .AddFileAt(sandboxer_proxy, "/usr/bin/lsof")
       .AddDirectory(host.environments_dir)
       .AddDirectory(host.environments_uds_dir, false)
