@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (C) 2024 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<!-- Default Primary Audio HAL Module Audio Policy Configuration include file -->
+<module name="primary" halVersion="3.0">
+    <attachedDevices>
+        <item>Speaker</item>
+        <item>Built-In Mic</item>
+        <item>Telephony Tx</item>
+        <item>Telephony Rx</item>
+        <item>FM Tuner</item>
+    </attachedDevices>
+    <defaultOutputDevice>Speaker</defaultOutputDevice>
+    <mixPorts>
+        <mixPort name="primary output" role="source" flags="AUDIO_OUTPUT_FLAG_PRIMARY">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
+                     samplingRates="8000 11025 16000 32000 44100 48000"
+                     channelMasks="AUDIO_CHANNEL_OUT_MONO AUDIO_CHANNEL_OUT_STEREO"/>
+        </mixPort>
+        <mixPort name="primary input" role="sink">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
+                     samplingRates="8000 11025 16000 32000 44100 48000"
+                     channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO"/>
+        </mixPort>
+
+        <mixPort name="telephony_tx" role="source">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
+                     samplingRates="8000 11025 16000 32000 44100 48000"
+                     channelMasks="AUDIO_CHANNEL_OUT_MONO AUDIO_CHANNEL_OUT_STEREO"/>
+        </mixPort>
+        <mixPort name="telephony_rx" role="sink">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
+                     samplingRates="8000 11025 16000 32000 44100 48000"
+                     channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO"/>
+        </mixPort>
+
+        <mixPort name="fm_tuner" role="sink">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
+                     samplingRates="8000 11025 16000 32000 44100 48000"
+                     channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO"/>
+        </mixPort>
+   </mixPorts>
+   <devicePorts>
+        <devicePort tagName="Speaker" type="AUDIO_DEVICE_OUT_SPEAKER" role="sink">
+        </devicePort>
+        <devicePort tagName="Telephony Tx" type="AUDIO_DEVICE_OUT_TELEPHONY_TX" role="sink">
+        </devicePort>
+
+        <devicePort tagName="Built-In Mic" type="AUDIO_DEVICE_IN_BUILTIN_MIC" role="source">
+        </devicePort>
+        <devicePort tagName="Telephony Rx" type="AUDIO_DEVICE_IN_TELEPHONY_RX" role="source">
+        </devicePort>
+
+        <devicePort tagName="FM Tuner" type="AUDIO_DEVICE_IN_FM_TUNER" role="source">
+        </devicePort>
+    </devicePorts>
+    <routes>
+        <route type="mix" sink="Speaker"
+               sources="primary output"/>
+        <route type="mix" sink="primary input"
+               sources="Built-In Mic"/>
+
+        <route type="mix" sink="telephony_rx"
+               sources="Telephony Rx"/>
+        <route type="mix" sink="Telephony Tx"
+               sources="telephony_tx"/>
+
+        <route type="mix" sink="fm_tuner"
+               sources="FM Tuner"/>
+    </routes>
+</module>
