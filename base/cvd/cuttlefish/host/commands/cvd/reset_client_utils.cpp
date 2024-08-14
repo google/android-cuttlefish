@@ -121,12 +121,8 @@ Result<void> RunCvdProcessManager::RunStopCvd(const GroupProcInfo& group_info,
   return {};
 }
 
-Result<void> RunCvdProcessManager::RunStopCvdAll(bool cvd_server_children_only,
-                                                 bool clear_instance_dirs) {
+Result<void> RunCvdProcessManager::RunStopCvdAll(bool clear_instance_dirs) {
   for (const auto& group_info : run_cvd_process_collector_.CfGroups()) {
-    if (cvd_server_children_only && !group_info.is_cvd_server_started_) {
-      continue;
-    }
     auto stop_cvd_result = RunStopCvd(group_info, clear_instance_dirs);
     if (!stop_cvd_result.ok()) {
       LOG(ERROR) << stop_cvd_result.error().FormatForEnv();
@@ -153,12 +149,8 @@ static bool IsStillRunCvd(const pid_t pid) {
           "run_cvd");
 }
 
-Result<void> RunCvdProcessManager::SendSignal(bool cvd_server_children_only,
-                                              const GroupProcInfo& group_info) {
+Result<void> RunCvdProcessManager::SendSignal(const GroupProcInfo& group_info) {
   std::vector<pid_t> failed_pids;
-  if (cvd_server_children_only && !group_info.is_cvd_server_started_) {
-    return {};
-  }
   for (const auto& [unused, instance] : group_info.instances_) {
     for (const auto parent_run_cvd_pid : instance.parent_run_cvd_pids_) {
       if (!IsStillRunCvd(parent_run_cvd_pid)) {
@@ -178,14 +170,11 @@ Result<void> RunCvdProcessManager::SendSignal(bool cvd_server_children_only,
 }
 
 Result<void> RunCvdProcessManager::DeleteLockFile(
-    bool cvd_server_children_only, const GroupProcInfo& group_info) {
+    const GroupProcInfo& group_info) {
   const std::string lock_dir = "/tmp/acloud_cvd_temp";
   std::string lock_file_prefix = lock_dir;
   lock_file_prefix.append("/local-instance-");
 
-  if (cvd_server_children_only && !group_info.is_cvd_server_started_) {
-    return {};
-  }
   bool all_success = true;
   const auto& instances = group_info.instances_;
   for (const auto& [id, _] : instances) {
@@ -205,10 +194,9 @@ Result<void> RunCvdProcessManager::DeleteLockFile(
   return {};
 }
 
-Result<void> KillAllCuttlefishInstances(const DeviceClearOptions& options) {
+Result<void> KillAllCuttlefishInstances(bool clear_instance_dirs) {
   RunCvdProcessManager manager = CF_EXPECT(RunCvdProcessManager::Get());
-  CF_EXPECT(manager.KillAllCuttlefishInstances(options.cvd_server_children_only,
-                                               options.clear_instance_dirs));
+  CF_EXPECT(manager.KillAllCuttlefishInstances(clear_instance_dirs));
   return {};
 }
 
@@ -267,14 +255,13 @@ Result<void> KillCvdServerProcess() {
 }
 
 Result<void> RunCvdProcessManager::KillAllCuttlefishInstances(
-    bool cvd_server_children_only, bool clear_runtime_dirs) {
-  auto stop_cvd_result =
-      RunStopCvdAll(cvd_server_children_only, clear_runtime_dirs);
+    bool clear_runtime_dirs) {
+  auto stop_cvd_result = RunStopCvdAll(clear_runtime_dirs);
   if (!stop_cvd_result.ok()) {
     LOG(ERROR) << stop_cvd_result.error().FormatForEnv();
   }
   for (const auto& group_info : run_cvd_process_collector_.CfGroups()) {
-    auto result = ForcefullyStopGroup(cvd_server_children_only, group_info);
+    auto result = ForcefullyStopGroup(group_info);
     if (!result.ok()) {
       LOG(ERROR) << result.error().FormatForEnv();
     }
@@ -282,31 +269,30 @@ Result<void> RunCvdProcessManager::KillAllCuttlefishInstances(
   return {};
 }
 
-Result<void> RunCvdProcessManager::ForcefullyStopGroup(
-    bool cvd_server_children_only, const uid_t id) {
+Result<void> RunCvdProcessManager::ForcefullyStopGroup(const uid_t id) {
   auto groups_info = run_cvd_process_collector_.CfGroups();
   for (const auto& group_info : groups_info) {
     if (!Contains(group_info.instances_, static_cast<unsigned>(id))) {
       continue;
     }
-    CF_EXPECT(ForcefullyStopGroup(cvd_server_children_only, group_info));
+    CF_EXPECT(ForcefullyStopGroup(group_info));
   }
   // run_cvd is not created yet as.. ctrl+C was in assembly phase, etc
   return {};
 }
 
 Result<void> RunCvdProcessManager::ForcefullyStopGroup(
-    bool cvd_server_children_only, const GroupProcInfo& group) {
-  if (cvd_server_children_only && !group.is_cvd_server_started_) {
-    return {};
+    const GroupProcInfo& group) {
+  auto signal_res = SendSignal(group);
+  auto delete_res = DeleteLockFile(group);
+  if (!delete_res.ok()) {
+    LOG(ERROR) << "Tried to delete instance lock file for the group rooted at "
+                  "HOME="
+               << group.home_ << " but failed.";
   }
-  CF_EXPECTF(SendSignal(cvd_server_children_only, group),
+  CF_EXPECTF(std::move(signal_res),
              "Tried SIGKILL to a group of run_cvd processes rooted at "
              "HOME={} but failed",
-             group.home_);
-  CF_EXPECTF(DeleteLockFile(cvd_server_children_only, group),
-             "Tried to delete instance lock file for the group rooted at "
-             "HOME={} but failed.",
              group.home_);
   return {};
 }

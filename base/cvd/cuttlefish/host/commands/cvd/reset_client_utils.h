@@ -18,11 +18,6 @@
 
 #include <sys/types.h>
 
-#include <memory>
-#include <mutex>
-#include <string>
-#include <vector>
-
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/run_cvd_proc_collector.h"
 
@@ -34,41 +29,28 @@ class RunCvdProcessManager {
 
   static Result<RunCvdProcessManager> Get();
   // called by cvd reset handler
-  Result<void> KillAllCuttlefishInstances(bool cvd_server_children_only,
-                                          bool clear_runtime_dirs);
+  Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs);
   // called by cvd start
-  Result<void> ForcefullyStopGroup(bool cvd_server_children_only,
-                                   uid_t any_id_in_group);
+  Result<void> ForcefullyStopGroup(uid_t any_id_in_group);
 
  private:
   RunCvdProcessManager() = delete;
   RunCvdProcessManager(RunCvdProcessCollector&&);
   static Result<void> RunStopCvd(const GroupProcInfo& run_cvd_info,
                                  bool clear_runtime_dirs);
-  Result<void> RunStopCvdAll(bool cvd_server_children_only,
-                             bool clear_runtime_dirs);
-  Result<void> SendSignal(bool cvd_server_children_only, const GroupProcInfo&);
-  Result<void> DeleteLockFile(bool cvd_server_children_only,
-                              const GroupProcInfo&);
-  Result<void> ForcefullyStopGroup(bool cvd_server_children_only,
-                                   const GroupProcInfo& group);
+  Result<void> RunStopCvdAll(bool clear_runtime_dirs);
+  Result<void> SendSignal(const GroupProcInfo&);
+  Result<void> DeleteLockFile(const GroupProcInfo&);
+  Result<void> ForcefullyStopGroup(const GroupProcInfo& group);
 
   RunCvdProcessCollector run_cvd_process_collector_;
-};
-
-struct DeviceClearOptions {
-  bool cvd_server_children_only;
-  bool clear_instance_dirs;
 };
 
 /*
  * Runs stop_cvd for all cuttlefish instances found based on run_cvd processes,
  * and send SIGKILL to the run_cvd processes.
- *
- * If cvd_server_children_only is set, it kills the run_cvd processes that were
- * started by a cvd server process.
  */
-Result<void> KillAllCuttlefishInstances(const DeviceClearOptions& options);
+Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs);
 
 Result<void> KillCvdServerProcess();
 

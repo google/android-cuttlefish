@@ -252,6 +252,16 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
         }
       }
     }
+    for (auto instance: group.Instances()) {
+      if (instance.id() <= 0) {
+        continue;
+      }
+      auto res = lock_manager_.RemoveLockFile(instance.id());
+      if (!res.ok()) {
+        LOG(ERROR) << "Failed to remove lock file for instance: "
+                   << res.error().FormatForEnv();
+      }
+    }
     RemoveFile(group.HomeDir() + "/cuttlefish_runtime");
     RemoveFile(group.HomeDir() + config_json_name);
     RemoveGroupDirectory(group);
