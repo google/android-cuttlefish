@@ -15,17 +15,16 @@
  */
 
 #include "host/frontend/webrtc/location_handler.h"
-#include <android-base/logging.h>
+
 #include <unistd.h>
+
+#include <android-base/logging.h>
+#include <fmt/format.h>
+
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/location/GnssClient.h"
 
-#include <sstream>
-#include <vector>
-using namespace std;
-
-namespace cuttlefish {
-namespace webrtc_streaming {
+namespace cuttlefish::webrtc_streaming {
 
 LocationHandler::LocationHandler(
     std::function<void(const uint8_t *, size_t)> send_to_client) {}
@@ -41,23 +40,24 @@ void LocationHandler::HandleMessage(const float longitude,
     return;
   }
   auto instance = config->ForDefaultInstance();
-  auto server_port = instance.gnss_grpc_proxy_server_port();
   std::string socket_name =
-      std::string("localhost:") + std::to_string(server_port);
+      fmt::format("unix:{}.sock",
+                  instance.PerInstanceGrpcSocketPath("GnssGrpcProxyServer"));
   GnssClient gpsclient(
       grpc::CreateChannel(socket_name, grpc::InsecureChannelCredentials()));
 
-  GpsFixArray coordinates;
   GpsFix location;
-  location.longitude=longitude;
-  location.latitude=latitude;
-  location.elevation=elevation;
+  location.longitude = longitude;
+  location.latitude = latitude;
+  location.elevation = elevation;
+
+  GpsFixArray coordinates;
   coordinates.push_back(location);
 
-  auto reply = gpsclient.SendGpsLocations(1000,coordinates);
-  LOG(INFO) << "Server port: " << server_port << " socket: " << socket_name
-            << std::endl;
+  Result<void> reply = gpsclient.SendGpsLocations(1000, coordinates);
+  if (!reply.ok()) {
+    LOG(ERROR) << reply.error().FormatForEnv();
+  }
 }
 
-}  // namespace webrtc_streaming
-}  // namespace cuttlefish
+}  // namespace cuttlefish::webrtc_streaming
