@@ -16,7 +16,9 @@
 #ifndef ANDROID_DEVICE_GOOGLE_CUTTLEFISH_HOST_COMMANDS_SANDBOX_PROCESS_POLICIES_H
 #define ANDROID_DEVICE_GOOGLE_CUTTLEFISH_HOST_COMMANDS_SANDBOX_PROCESS_POLICIES_H
 
+#include <memory>
 #include <ostream>
+#include <set>
 #include <string>
 #include <string_view>
 
@@ -55,6 +57,8 @@ sandbox2::PolicyBuilder SecureEnvPolicy(const HostInfo&);
 sandbox2::PolicyBuilder SocketVsockProxyPolicy(const HostInfo&);
 sandbox2::PolicyBuilder TcpConnectorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo&);
+
+std::set<std::string> NoPolicy(const HostInfo&);
 
 std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
     const HostInfo& host_info, std::string_view server_socket_outside_path,
