@@ -36,6 +36,7 @@ cc_binary_host {
         "policies/log_tee.cpp",
         "policies/logcat_receiver.cpp",
         "policies/modem_simulator.cpp",
+        "policies/no_policy.cpp",
         "policies/process_restarter.cpp",
         "policies/run_cvd.cpp",
         "policies/screen_recording_server.cpp",

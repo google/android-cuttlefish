@@ -26,6 +26,7 @@
 #include <android-base/strings.h>
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/in_sandbox.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/flags.h"
@@ -99,11 +100,8 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
   LOG(DEBUG) << fmt::format("Prior dirs: {}", fmt::join(prior_dirs, ", "));
   LOG(DEBUG) << fmt::format("Prior files: {}", fmt::join(prior_files, ", "));
 
-  if (prior_dirs.size() > 0 || prior_files.size() > 0) {
-    // TODO(schuffelen): Fix logic for host-sandboxing mode.
-    // Host-sandboxing mode doesn't currently search PATH for executables, but
-    // this has a conflict with host-sandboxing mode anyway, so it's left in an
-    // incompatible state rather than set to /usr/bin/lsof.
+  // TODO(schuffelen): Fix logic for host-sandboxing mode.
+  if (!InSandbox() && (prior_dirs.size() > 0 || prior_files.size() > 0)) {
     Command lsof("lsof");
     lsof.AddParameter("-t");
     for (const auto& prior_dir : prior_dirs) {
