@@ -36,7 +36,6 @@ std::set<std::string> NoPolicy(const HostInfo& host) {
       host.HostToolExe("control_env_proxy_server"),  // TODO: b/318592219
       host.HostToolExe("crosvm"),
       host.HostToolExe("extract-ikconfig"),        // TODO: b/359309462
-      host.HostToolExe("gnss_grpc_proxy"),         // TODO: b/318591948
       host.HostToolExe("metrics"),                 // TODO: b/318594189
       host.HostToolExe("mkenvimage_slim"),         // TODO: b/318610408
       host.HostToolExe("netsimd"),                 // TODO: b/318603863

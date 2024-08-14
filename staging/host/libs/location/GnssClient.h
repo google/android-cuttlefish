@@ -13,25 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
+
+#include <memory>
+
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
-#include "common/libs/utils/result.h"
+
 #include "gnss_grpc_proxy.grpc.pb.h"
+
+#include "common/libs/utils/result.h"
 #include "host/libs/location/GpsFix.h"
 
 namespace cuttlefish {
+
 class GnssClient {
  public:
   GnssClient(const std::shared_ptr<grpc::Channel>& channel);
 
-  Result<grpc::Status> SendGpsLocations(
-      int delay, const GpsFixArray& coordinates);
+  Result<void> SendGpsLocations(int delay, const GpsFixArray& coordinates);
 
  private:
   std::unique_ptr<gnss_grpc_proxy::GnssGrpcProxy::Stub> stub_;
 };
+
 }  // namespace cuttlefish
