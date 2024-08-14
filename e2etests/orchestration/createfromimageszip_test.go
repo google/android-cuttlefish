@@ -15,13 +15,7 @@
 package orchestration
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
-	"errors"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"testing"
 
 	"orchestration/e2etesting"
@@ -32,7 +26,7 @@ import (
 )
 
 func TestInstance(t *testing.T) {
-	ctx, err := e2etesting.Setup(61001)
+	ctx, err := e2etesting.Setup(61002)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +38,7 @@ func TestInstance(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := uploadImages(srv, uploadDir, "images.zip"); err != nil {
+	if err := e2etesting.UploadAndExtract(srv, uploadDir, "images.zip"); err != nil {
 		t.Fatal(err)
 	}
 	if err := e2etesting.UploadAndExtract(srv, uploadDir, "cvd-host_package.tar.gz"); err != nil {
@@ -99,34 +93,4 @@ func TestInstance(t *testing.T) {
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("response mismatch (-want +got):\n%s", diff)
 	}
-}
-
-func uploadImages(srv client.HostOrchestratorService, remoteDir, imgsZipSrc string) error {
-	outDir := "/tmp/aosp_cf_x86_64_phone-img-12198634"
-	if err := runCmd("unzip", "-d", outDir, imgsZipSrc); err != nil {
-		return err
-	}
-	defer os.Remove(outDir)
-	entries, err := os.ReadDir(outDir)
-	if err != nil {
-		return err
-	}
-	for _, e := range entries {
-		if err := srv.UploadFile(remoteDir, filepath.Join(outDir, e.Name())); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func runCmd(name string, args ...string) error {
-	cmd := exec.CommandContext(context.TODO(), name, args...)
-	var stderr bytes.Buffer
-	cmd.Stdout = nil
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	if err != nil {
-		return errors.New(stderr.String())
-	}
-	return nil
 }
