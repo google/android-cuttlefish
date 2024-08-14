@@ -25,7 +25,6 @@ namespace cuttlefish::process_sandboxer {
 // all.
 std::set<std::string> NoPolicy(const HostInfo& host) {
   return {
-      "/bin/bash",      // TODO: b/359316164
       "/usr/bin/lsof",  // TODO: b/359314623
                         // TODO: b/359309808
       "/usr/lib/cuttlefish-common/bin/capability_query.py",
