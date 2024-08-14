@@ -47,6 +47,7 @@ cc_binary_host {
         "policies/tcp_connector.cpp",
         "policies/tombstone_receiver.cpp",
         "policies/webrtc.cpp",
+        "policies/wmediumd.cpp",
         "poll_callback.cpp",
         "sandbox_manager.cpp",
         "signal_fd.cpp",
