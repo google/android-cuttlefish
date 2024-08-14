@@ -41,6 +41,7 @@ sandbox2::PolicyBuilder SocketVsockProxyPolicy(const HostInfo& host) {
       .AllowSyscall(__NR_connect)
       .AllowSyscall(__NR_listen)
       .AllowSyscall(__NR_setsockopt)
+      .AllowSyscall(__NR_shutdown)
       .AllowSyscalls({__NR_accept, __NR_accept4})
       .AllowTCGETS();
 }
