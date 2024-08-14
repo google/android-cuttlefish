@@ -101,11 +101,6 @@ Result<void> UpdateInstanceWithStatusResult(
   // TODO(jemoreira): Make cvd choose the values for these and pass them to
   // cvd_internal_start so that it doesn't need to parse it from the status
   // command output.
-  if (instance_status_json.isMember("webrtc_device_id") &&
-      instance_status_json["webrtc_device_id"]) {
-    instance.set_webrtc_device_id(
-        instance_status_json["webrtc_device_id"].asString());
-  }
   if (instance_status_json.isMember("adb_serial") &&
       instance_status_json["adb_serial"].isString()) {
     std::string adb_serial = instance_status_json["adb_serial"].asString();

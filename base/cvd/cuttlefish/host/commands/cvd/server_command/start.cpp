@@ -45,6 +45,7 @@
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/group_selector.h"
 #include "host/commands/cvd/interrupt_listener.h"
+#include "host/commands/cvd/operator_client.h"
 #include "host/commands/cvd/reset_client_utils.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/status_fetcher.h"
@@ -115,29 +116,45 @@ bool PotentiallyHostArtifactsPath(const std::string& host_artifacts_path) {
   return !result.empty();
 }
 
-Result<void> UpdateWebrtcDeviceId(cvd_common::Args& args,
-                                  const selector::LocalInstanceGroup& group) {
+Result<std::vector<std::string>> ExtractWebRTCDeviceIds(
+    cvd_common::Args& args) {
   std::string flag_value;
   std::vector<Flag> webrtc_device_id_flag{
       GflagsCompatFlag("webrtc_device_id", flag_value)};
-  // ConsumeFlags modifies args, a copy is needed because only the presence
-  // of the flag is being tested.
-  std::vector<std::string> copied_args{args};
-  CF_EXPECT(ConsumeFlags(webrtc_device_id_flag, copied_args));
+  CF_EXPECT(ConsumeFlags(webrtc_device_id_flag, args));
 
-  if (!flag_value.empty()) {
+  if (flag_value.empty()) {
     return {};
   }
+  return android::base::Split(flag_value, ",");
+}
 
-  CF_EXPECT(!group.GroupName().empty());
-  std::vector<std::string> device_name_list;
+std::vector<std::string> GenerateUniqueWebRTCDeviceIds(
+    const selector::LocalInstanceGroup& group) {
+  std::vector<std::string> ids;
+  ids.reserve(group.Instances().size());
   for (const auto& instance : group.Instances()) {
-    std::string device_name =
-        group.GroupName() + "-" + instance.name();
-    device_name_list.push_back(device_name);
+    // Including the instance id is enough to guarantee uniqueness
+    ids.emplace_back(fmt::format("{}-{}-{}", group.GroupName(), instance.name(),
+                                 instance.id()));
   }
-  args.push_back("--webrtc_device_id=" +
-                 android::base::Join(device_name_list, ","));
+  return ids;
+}
+
+Result<void> UpdateWebrtcDeviceIds(cvd_common::Args& args,
+                                   selector::LocalInstanceGroup& group) {
+  std::vector<std::string> webrtc_ids = CF_EXPECT(ExtractWebRTCDeviceIds(args));
+  if (webrtc_ids.empty()) {
+    webrtc_ids = GenerateUniqueWebRTCDeviceIds(group);
+  }
+  CF_EXPECT_EQ(
+      webrtc_ids.size(), group.Instances().size(),
+      "The number of webrtc device ids doesn't match the number of instances");
+  args.push_back("--webrtc_device_id=" + android::base::Join(webrtc_ids, ","));
+
+  for (size_t i = 0; i < webrtc_ids.size(); ++i) {
+    group.Instances()[i].set_webrtc_device_id(webrtc_ids[i]);
+  }
   return {};
 }
 
@@ -200,6 +217,14 @@ Result<void> SymlinkPreviousConfig(const std::string& group_home_dir) {
   return {};
 }
 
+Result<std::unique_ptr<OperatorControlConn>> PreregisterGroup(
+    const selector::LocalInstanceGroup& group) {
+  std::unique_ptr<OperatorControlConn> operator_conn =
+      CF_EXPECT(OperatorControlConn::Create());
+  CF_EXPECT(operator_conn->Preregister(group));
+  return operator_conn;
+}
+
 }  // namespace
 
 class CvdStartCommandHandler : public CvdServerHandler {
@@ -246,7 +271,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
       cvd::Response&& response, const selector::LocalInstanceGroup& group);
 
   Result<void> UpdateArgs(cvd_common::Args& args,
-                          const selector::LocalInstanceGroup& group);
+                          selector::LocalInstanceGroup& group);
 
   Result<void> UpdateEnvs(cvd_common::Envs& envs,
                           const selector::LocalInstanceGroup& group);
@@ -385,9 +410,9 @@ Result<bool> CvdStartCommandHandler::CanHandle(
 }
 
 Result<void> CvdStartCommandHandler::UpdateArgs(
-    cvd_common::Args& args, const selector::LocalInstanceGroup& group) {
+    cvd_common::Args& args, selector::LocalInstanceGroup& group) {
   CF_EXPECT(UpdateInstanceArgs(args, group));
-  CF_EXPECT(UpdateWebrtcDeviceId(args, group));
+  CF_EXPECT(UpdateWebrtcDeviceIds(args, group));
   // for backward compatibility, older cvd host tools don't accept group_id
   auto has_group_id_flag =
       host_tool_target_manager_
@@ -648,29 +673,28 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
       ConstructCvdNonHelpCommand(bin, group, subcmd_args, envs, request));
 
   // The instance database needs to be updated if an interrupt is received.
-  auto handle_res =
-      PushInterruptListener([this, &group](int signal) {
-        LOG(WARNING) << strsignal(signal) << " signal received, cleanning up";
-        auto interrupt_res = subprocess_waiter_.Interrupt();
-        if (!interrupt_res.ok()) {
-          LOG(ERROR) << "Failed to stop subprocesses: "
-                     << interrupt_res.error().Message();
-          LOG(ERROR) << "Devices may still be executing in the background, run "
-                        "`cvd reset` to ensure a clean state";
-        }
+  auto handle_res = PushInterruptListener([this, &group](int signal) {
+    LOG(WARNING) << strsignal(signal) << " signal received, cleanning up";
+    auto interrupt_res = subprocess_waiter_.Interrupt();
+    if (!interrupt_res.ok()) {
+      LOG(ERROR) << "Failed to stop subprocesses: "
+                 << interrupt_res.error().FormatForEnv();
+      LOG(ERROR) << "Devices may still be executing in the background, run "
+                    "`cvd reset` to ensure a clean state";
+    }
 
-        group.SetAllStates(cvd::INSTANCE_STATE_CANCELLED);
-        auto update_res = instance_manager_.UpdateInstanceGroup(group);
-        if (!update_res.ok()) {
-          LOG(ERROR) << "Failed to update group status: "
-                     << update_res.error().Message();
-        }
-        // It's technically possible for the group's state to be set to
-        // "running" before abort has a chance to run, but that can only happen
-        // if the instances are indeed running, so it's OK.
+    group.SetAllStates(cvd::INSTANCE_STATE_CANCELLED);
+    auto update_res = instance_manager_.UpdateInstanceGroup(group);
+    if (!update_res.ok()) {
+      LOG(ERROR) << "Failed to update group status: "
+                 << update_res.error().FormatForEnv();
+    }
+    // It's technically possible for the group's state to be set to
+    // "running" before abort has a chance to run, but that can only happen
+    // if the instances are indeed running, so it's OK.
 
-        std::abort();
-      });
+    std::abort();
+  });
   auto listener_handle = CF_EXPECT(std::move(handle_res));
   group.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
@@ -723,6 +747,17 @@ static Result<cvd::Response> CvdResetGroup(
 Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
     Command launch_command, selector::LocalInstanceGroup& group,
     const cvd_common::Envs& envs, const RequestWithStdio& request) {
+  // Don't destroy the returned object until after the devices have started, it
+  // holds a connection to the orchestrator that ensures the devices remain
+  // pre-registered there. If the connection is lost before the devices register
+  // themselves the pre-registration is lost and group information won't be
+  // shown in the UI.
+  auto conn_res = PreregisterGroup(group);
+  if (!conn_res.ok()) {
+    LOG(ERROR) << "Failed to pre-register devices with operator, group "
+                  "information won't show in the UI: "
+               << conn_res.error().FormatForEnv();
+  }
   ShowLaunchCommand(launch_command, envs);
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command.Start()));
@@ -758,7 +793,7 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
   auto symlink_config_res = SymlinkPreviousConfig(group.HomeDir());
   if (!symlink_config_res.ok()) {
     LOG(ERROR) << "Failed to symlink the config file at system wide home: "
-               << symlink_config_res.error().Message();
+               << symlink_config_res.error().FormatForEnv();
   }
   auto start_res = LaunchDevice(std::move(command), group, envs, request);
   if (!start_res.ok() || start_res->status().code() != cvd::Status::OK) {
