@@ -33,6 +33,7 @@ cc_binary_host {
         "policies/assemble_cvd.cpp",
         "policies/baseline.cpp",
         "policies/echo_server.cpp",
+        "policies/gnss_grpc_proxy.cpp",
         "policies/kernel_log_monitor.cpp",
         "policies/log_tee.cpp",
         "policies/logcat_receiver.cpp",
