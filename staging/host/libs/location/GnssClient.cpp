@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-#include "GnssClient.h"
+#include "host/libs/location/GnssClient.h"
+
+#include <memory>
+
 #include <android-base/logging.h>
-#include <host/libs/config/logging.h>
-#include <cassert>
-#include <string>
+#include <grpcpp/channel.h>
+#include <grpcpp/support/status.h>
+
+#include "common/libs/utils/result.h"
 
 using gnss_grpc_proxy::GnssGrpcProxy;
 using gnss_grpc_proxy::GpsCoordinates;
@@ -31,8 +35,8 @@ namespace cuttlefish {
 GnssClient::GnssClient(const std::shared_ptr<grpc::Channel>& channel)
     : stub_(GnssGrpcProxy::NewStub(channel)) {}
 
-Result<grpc::Status> GnssClient::SendGpsLocations(
-    int delay, const GpsFixArray& coordinates) {
+Result<void> GnssClient::SendGpsLocations(int delay,
+                                          const GpsFixArray& coordinates) {
   // Data we are sending to the server.
   SendGpsCoordinatesRequest request;
   request.set_delay(delay);
@@ -51,13 +55,13 @@ Result<grpc::Status> GnssClient::SendGpsLocations(
   // The actual RPC.
   grpc::Status status = stub_->SendGpsVector(&context, request, &reply);
   // Act upon its status.
-  CF_EXPECT(status.ok(), "GPS data sending failed" << status.error_code()
-                                                   << ": "
-                                                   << status.error_message());
+  CF_EXPECTF(status.ok(), "GPS data sending failed: {} ({})",
+             status.error_message(),
+             static_cast<std::uint32_t>(status.error_code()));
 
   LOG(DEBUG) << reply.status();
 
-  return status;
+  return {};
 }
 
 }  // namespace cuttlefish
