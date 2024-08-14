@@ -217,11 +217,11 @@ func PreRegister(c *JSONUnix, pool *DevicePool, msg *apiv1.PreRegisterMsg) {
 		regCh := make(chan bool, 1)
 		err := pool.PreRegister(
 			&apiv1.DeviceDescriptor{
-				DeviceId: d.Id,
-				GroupId:  msg.GroupName,
-				Owner:    msg.Owner,
-				Name:     d.Name,
-				ADBPort:  d.ADBPort,
+				DeviceId:  d.Id,
+				GroupName: msg.GroupName,
+				Owner:     msg.Owner,
+				Name:      d.Name,
+				ADBPort:   d.ADBPort,
 			},
 			regCh,
 		)
