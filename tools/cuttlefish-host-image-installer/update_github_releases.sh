@@ -21,16 +21,13 @@ echo "$changes" > changelog
 STABLE_VERSION="v$version"
 
 echo "step 2: move stable release to new commit id"
-commit_id=$(git  rev-list -n 1 $STABLE_VERSION )
-stable_commit_id=$(git  rev-list -n 1 stable )
+commit_id=$(git rev-list -n 1 $STABLE_VERSION )
+stable_commit_id=$(git rev-list -n 1 stable )
 if [[ "$commit_id" == "$stable_commit_id" ]]; then
   echo "same commit, no need to change code base"
 else
-  git tag -d stable
-  git push -d origin stable
-  git push origin :refs/tags/stable
-  git tag stable $commit_id
-  git push origin stable
+  git tag -f stable $commit_id
+  git push -f origin stable
 fi
 
 # update changelog and descriptions
