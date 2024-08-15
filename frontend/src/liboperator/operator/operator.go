@@ -221,6 +221,7 @@ func PreRegister(c *JSONUnix, pool *DevicePool, msg *apiv1.PreRegisterMsg) {
 				GroupId:  msg.GroupName,
 				Owner:    msg.Owner,
 				Name:     d.Name,
+				ADBPort:  d.ADBPort,
 			},
 			regCh,
 		)
