@@ -891,10 +891,12 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   if (instance.enable_virtiofs()) {
     CF_EXPECT(instance.enable_sandbox(),
               "virtiofs is currently not supported without sandboxing");
-    // Set up directory shared with virtiofs
+    // Set up directory shared with virtiofs, setting security_ctx option to
+    // false prevents host error when unable to write data in the
+    // /proc/thread-self/attr/fscreate file.
     crosvm_cmd.Cmd().AddParameter(
         "--shared-dir=", instance.PerInstancePath(kSharedDirName),
-        ":shared:type=fs");
+        ":shared:type=fs:security_ctx=false");
   }
 
   if (instance.target_arch() == Arch::X86_64) {
