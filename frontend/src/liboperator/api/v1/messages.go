@@ -26,8 +26,9 @@ type PreRegisterMsg struct {
 	GroupName string `json:"group_name"`
 	Owner     string `json:"owner"`
 	Devices   []struct {
-		Id   string `json:"id"`
-		Name string `json:"name"`
+		Id      string `json:"id"`
+		Name    string `json:"name"`
+		ADBPort int    `json:"adb_port"`
 	} `json:"devices"`
 }
 
@@ -206,6 +207,7 @@ type DeviceDescriptor struct {
 	GroupId  string `json:"group_id"`
 	Owner    string `json:"owner,omitempty"`
 	Name     string `json:"name,omitempty"`
+	ADBPort  int    `json:"adb_port"`
 }
 
 type DeviceInfoReply struct {
