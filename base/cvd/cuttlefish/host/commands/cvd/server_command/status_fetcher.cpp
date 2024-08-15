@@ -92,27 +92,8 @@ void OverrideInstanceJson(const selector::LocalInstanceGroup& group,
         fmt::format("https://localhost:1443/devices/{}/files/client.html",
                     instance.webrtc_device_id());
     instance_json["webrtc_device_id"] = instance.webrtc_device_id();
-    instance_json["adb_port"] = instance.adb_port();
+    instance_json["adb_port"] = selector::AdbPort(instance);
   }
-}
-
-Result<void> UpdateInstanceWithStatusResult(
-    cvd::Instance& instance, const Json::Value& instance_status_json) {
-  // TODO(jemoreira): Make cvd choose the values for these and pass them to
-  // cvd_internal_start so that it doesn't need to parse it from the status
-  // command output.
-  if (instance_status_json.isMember("adb_serial") &&
-      instance_status_json["adb_serial"].isString()) {
-    std::string adb_serial = instance_status_json["adb_serial"].asString();
-    auto port_str = *android::base::Split(adb_serial, ":").rbegin();
-    int port = 0;
-    if (!android::base::ParseInt(port_str, &port)) {
-      LOG(ERROR) << "Failed to parse adb port from adb serial";
-    }
-    instance.set_adb_port(port);
-  }
-  instance.set_state(cvd::INSTANCE_STATE_RUNNING);
-  return {};
 }
 
 }  // namespace
@@ -218,9 +199,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   instance_status_json[kNameProp] = instance.name();
 
   auto response = ResponseFromSiginfo(infop);
-  if (response.status().code() == cvd::Status::OK) {
-    CF_EXPECT(UpdateInstanceWithStatusResult(instance, instance_status_json));
-  } else {
+  if (response.status().code() != cvd::Status::OK) {
     instance.set_state(cvd::INSTANCE_STATE_UNREACHABLE);
     instance_status_json["warning"] = "cvd status failed";
   }

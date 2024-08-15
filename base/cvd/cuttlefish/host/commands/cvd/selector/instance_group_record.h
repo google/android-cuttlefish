@@ -79,5 +79,7 @@ class LocalInstanceGroup {
   std::vector<cvd::Instance> instances_;
 };
 
+int AdbPort(const cvd::Instance& instance);
+
 }  // namespace selector
 }  // namespace cuttlefish
