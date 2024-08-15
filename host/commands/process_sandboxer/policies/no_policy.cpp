@@ -35,7 +35,6 @@ std::set<std::string> NoPolicy(const HostInfo& host) {
       host.HostToolExe("crosvm"),
       host.HostToolExe("extract-ikconfig"),    // TODO: b/359309462
       host.HostToolExe("metrics"),             // TODO: b/318594189
-      host.HostToolExe("netsimd"),             // TODO: b/318603863
       host.HostToolExe("root-canal"),          // TODO: b/359312761
       host.HostToolExe("vhost_device_vsock"),  // TODO: b/318613691
       host.HostToolExe("webrtc_operator"),     // TODO: b/359312626
