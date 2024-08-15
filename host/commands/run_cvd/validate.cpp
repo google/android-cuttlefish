@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
+#include "common/libs/utils/in_sandbox.h"
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -31,6 +32,9 @@ namespace cuttlefish {
 static Result<void> TestTapDevices(
     const CuttlefishConfig::InstanceSpecific& instance) {
 #ifdef __linux__
+  if (InSandbox()) {
+    return {};
+  }
   auto taps = TapInterfacesInUse();
   auto wifi = instance.wifi_tap_name();
   CF_EXPECTF(taps.count(wifi) == 0, "Device \"{}\" in use", wifi);
