@@ -62,7 +62,7 @@ func TestCreateSingleInstance(t *testing.T) {
 				BuildSource:    &hoapi.BuildSource{},
 				Status:         "Running",
 				Displays:       []string{"720 x 1280 ( 320 )"},
-				WebRTCDeviceID: "cvd-1",
+				WebRTCDeviceID: "cvd-1-1",
 				ADBSerial:      "0.0.0.0:6520",
 			},
 		},

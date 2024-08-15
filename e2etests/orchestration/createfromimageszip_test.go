@@ -60,6 +60,9 @@ func TestInstance(t *testing.T) {
         },
         "disk": {
           "default_build": "@user_artifacts/` + uploadDir + `"
+        },
+        "streaming": {
+          "device_id": "cvd-1"
         }
       }
     ]
