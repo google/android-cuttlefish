@@ -49,6 +49,7 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
@@ -106,11 +107,38 @@ bool NetworkInterfaceExists(const std::string& interface_name) {
 
 #ifdef __linux__
 std::set<std::string> TapInterfacesInUse() {
-  Command cmd("/bin/bash");
-  cmd.AddParameter("-c");
-  cmd.AddParameter("egrep -h -e \"^iff:.*\" /proc/*/fdinfo/*");
-  std::string stdin_str, stdout_str, stderr_str;
-  RunWithManagedStdio(std::move(cmd), &stdin_str, &stdout_str, &stderr_str);
+  std::vector<std::string> fdinfo_list;
+
+  Result<std::vector<std::string>> processes = DirectoryContents("/proc");
+  if (!processes.ok()) {
+    LOG(ERROR) << "Failed to get contents of `/proc/`";
+    return {};
+  }
+  for (const std::string& process : *processes) {
+    std::string fdinfo_path = fmt::format("/proc/{}/fdinfo", process);
+    Result<std::vector<std::string>> fdinfos = DirectoryContents(fdinfo_path);
+    if (!fdinfos.ok()) {
+      LOG(VERBOSE) << "Failed to get contents of '" << fdinfo_path << "'";
+      continue;
+    }
+    for (const std::string& fdinfo : *fdinfos) {
+      std::string path = fmt::format("/proc/{}/fdinfo/{}", process, fdinfo);
+      fdinfo_list.emplace_back(std::move(path));
+    }
+  }
+
+  Command cmd = Command("/usr/bin/egrep")
+                    .AddParameter("-h")
+                    .AddParameter("-e")
+                    .AddParameter("^iff:.*");
+
+  for (const std::string& fdinfo : fdinfo_list) {
+    cmd.AddParameter(fdinfo);
+  }
+
+  std::string stdout_str;
+  RunWithManagedStdio(std::move(cmd), nullptr, &stdout_str, nullptr);
+
   auto lines = android::base::Split(stdout_str, "\n");
   std::set<std::string> tap_interfaces;
   for (const auto& line : lines) {
