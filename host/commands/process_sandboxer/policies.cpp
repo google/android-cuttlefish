@@ -74,6 +74,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("tombstone_receiver")] = TombstoneReceiverPolicy;
   builders[host.HostToolExe("webRTC")] = WebRtcPolicy;
   builders[host.HostToolExe("wmediumd")] = WmediumdPolicy;
+  builders[host.HostToolExe("wmediumd_gen_config")] = WmediumdGenConfigPolicy;
 
   std::set<std::string> no_policy_set = NoPolicy(host);
   for (const auto& [exe, policy_builder] : builders) {
