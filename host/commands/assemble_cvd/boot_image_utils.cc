@@ -22,7 +22,6 @@
 #include <fstream>
 #include <memory>
 #include <regex>
-#include <sstream>
 #include <string>
 
 #include <android-base/logging.h>
@@ -33,16 +32,47 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/avb/avb.cpp"
+#include "host/libs/config/config_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
-const char TMP_EXTENSION[] = ".tmp";
-const char CPIO_EXT[] = ".cpio";
-const char TMP_RD_DIR[] = "stripped_ramdisk_dir";
-const char STRIPPED_RD[] = "stripped_ramdisk";
-const char CONCATENATED_VENDOR_RAMDISK[] = "concatenated_vendor_ramdisk";
 namespace cuttlefish {
 namespace {
+
+constexpr char TMP_EXTENSION[] = ".tmp";
+constexpr char kCpioExt[] = ".cpio";
+constexpr char TMP_RD_DIR[] = "stripped_ramdisk_dir";
+constexpr char STRIPPED_RD[] = "stripped_ramdisk";
+constexpr char CONCATENATED_VENDOR_RAMDISK[] = "concatenated_vendor_ramdisk";
+
+void RunMkBootFs(const std::string& input_dir, const std::string& output) {
+  SharedFD output_fd = SharedFD::Open(output, O_CREAT | O_RDWR | O_TRUNC, 0644);
+  CHECK(output_fd->IsOpen()) << output_fd->StrError();
+
+  int success = Command(HostBinaryPath("mkbootfs"))
+                    .AddParameter(input_dir)
+                    .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_fd)
+                    .Start()
+                    .Wait();
+  CHECK_EQ(success, 0) << "`mkbootfs` failed.";
+}
+
+void RunLz4(const std::string& input, const std::string& output) {
+  SharedFD output_fd = SharedFD::Open(output, O_CREAT | O_RDWR | O_TRUNC, 0644);
+  CHECK(output_fd->IsOpen()) << output_fd->StrError();
+  int success = Command(HostBinaryPath("lz4"))
+                    .AddParameter("-c")
+                    .AddParameter("-l")
+                    .AddParameter("-12")
+                    .AddParameter("--favor-decSpeed")
+                    .AddParameter(input)
+                    .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_fd)
+                    .Start()
+                    .Wait();
+  CHECK_EQ(success, 0) << "`lz4` failed to transform '" << input << "' to '"
+                       << output << "'";
+}
+
 std::string ExtractValue(const std::string& dictionary, const std::string& key) {
   std::size_t index = dictionary.find(key);
   if (index != std::string::npos) {
@@ -91,17 +121,8 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
                       << "Exited with status " << success;
 
   const std::string stripped_ramdisk_path = build_dir + "/" + STRIPPED_RD;
-  success = Execute({"/bin/bash", "-c",
-                     HostBinaryPath("mkbootfs") + " " + ramdisk_stage_dir +
-                         " > " + stripped_ramdisk_path + CPIO_EXT});
-  CHECK(success == 0) << "Unable to run cd or cpio. Exited with status "
-                      << success;
 
-  success = Execute({"/bin/bash", "-c",
-                     HostBinaryPath("lz4") + " -c -l -12 --favor-decSpeed " +
-                         stripped_ramdisk_path + CPIO_EXT + " > " +
-                         stripped_ramdisk_path});
-  CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
+  PackRamdisk(ramdisk_stage_dir, stripped_ramdisk_path);
 
   // Concatenates the stripped ramdisk and input ramdisk and places the result at new_ramdisk_path
   std::ofstream final_rd(new_ramdisk_path, std::ios_base::binary | std::ios_base::trunc);
@@ -124,32 +145,32 @@ bool IsCpioArchive(const std::string& path) {
 
 void PackRamdisk(const std::string& ramdisk_stage_dir,
                  const std::string& output_ramdisk) {
-  int success = Execute({"/bin/bash", "-c",
-                         HostBinaryPath("mkbootfs") + " " + ramdisk_stage_dir +
-                             " > " + output_ramdisk + CPIO_EXT});
-  CHECK(success == 0) << "Unable to run cd or cpio. Exited with status "
-                      << success;
-
-  success = Execute({"/bin/bash", "-c",
-                     HostBinaryPath("lz4") + " -c -l -12 --favor-decSpeed " +
-                         output_ramdisk + CPIO_EXT + " > " + output_ramdisk});
-  CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
+  RunMkBootFs(ramdisk_stage_dir, output_ramdisk + kCpioExt);
+  RunLz4(output_ramdisk + kCpioExt, output_ramdisk);
 }
 
 void UnpackRamdisk(const std::string& original_ramdisk_path,
                    const std::string& ramdisk_stage_dir) {
   int success = 0;
   if (IsCpioArchive(original_ramdisk_path)) {
-    CHECK(Copy(original_ramdisk_path, original_ramdisk_path + CPIO_EXT))
+    CHECK(Copy(original_ramdisk_path, original_ramdisk_path + kCpioExt))
         << "failed to copy " << original_ramdisk_path << " to "
-        << original_ramdisk_path + CPIO_EXT;
+        << original_ramdisk_path + kCpioExt;
   } else {
-    success =
-        Execute({"/bin/bash", "-c",
-                 HostBinaryPath("lz4") + " -c -d -l " + original_ramdisk_path +
-                     " > " + original_ramdisk_path + CPIO_EXT});
-    CHECK(success == 0) << "Unable to run lz4 on file " << original_ramdisk_path
-                        << " . Exited with status " << success;
+    SharedFD output_fd = SharedFD::Open(original_ramdisk_path + kCpioExt,
+                                        O_CREAT | O_RDWR | O_TRUNC, 0644);
+    CHECK(output_fd->IsOpen()) << output_fd->StrError();
+
+    success = Command(HostBinaryPath("lz4"))
+                  .AddParameter("-c")
+                  .AddParameter("-d")
+                  .AddParameter("-l")
+                  .AddParameter(original_ramdisk_path)
+                  .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_fd)
+                  .Start()
+                  .Wait();
+    CHECK_EQ(success, 0) << "Unable to run lz4 on file '"
+                         << original_ramdisk_path << "'.";
   }
   const auto ret = EnsureDirectoryExists(ramdisk_stage_dir);
   CHECK(ret.ok()) << ret.error().FormatForEnv();
@@ -157,7 +178,7 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
   success = Execute(
       {"/bin/bash", "-c",
        "(cd " + ramdisk_stage_dir + " && while " + HostBinaryPath("toybox") +
-           " cpio -idu; do :; done) < " + original_ramdisk_path + CPIO_EXT});
+           " cpio -idu; do :; done) < " + original_ramdisk_path + kCpioExt});
   CHECK(success == 0) << "Unable to run cd or cpio. Exited with status "
                       << success;
 }
