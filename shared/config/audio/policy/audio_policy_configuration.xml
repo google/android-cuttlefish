@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Copyright (C) 2024 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<audioPolicyConfiguration version="7.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <!-- version section contains a “version” tag in the form “major.minor” e.g. version=”1.0” -->
+
+    <!-- Global configuration Decalaration -->
+    <globalConfiguration speaker_drc_enabled="false"/>
+
+    <modules>
+        <!-- Primary Audio HAL -->
+        <xi:include href="primary_audio_policy_configuration.xml"/>
+
+        <!-- Remote Submix Audio HAL -->
+        <xi:include href="r_submix_audio_policy_configuration.xml"/>
+
+        <!-- Bluetooth Audio HAL -->
+        <xi:include href="bluetooth_audio_policy_configuration_7_0.xml"/>
+    </modules>
+    <!-- End of Modules section -->
+
+    <!-- Volume section:
+        IMPORTANT NOTE: Volume tables have been moved to engine configuration.
+                        Keep it here for legacy.
+                        Engine will fallback on these files if none are provided by engine.
+     -->
+
+    <xi:include href="audio_policy_volumes.xml"/>
+    <xi:include href="default_volume_tables.xml"/>
+
+    <!-- End of Volume section -->
+
+</audioPolicyConfiguration>
