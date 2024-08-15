@@ -21,7 +21,6 @@
 #include <memory>
 #include <mutex>
 #include <ostream>
-#include <regex>
 #include <sstream>
 #include <string>
 #include <thread>
