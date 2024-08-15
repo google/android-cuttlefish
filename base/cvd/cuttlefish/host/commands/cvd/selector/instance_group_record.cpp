@@ -215,5 +215,11 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
   return Create(group_proto);
 }
 
+int AdbPort(const cvd::Instance& instance) {
+  // run_cvd picks this port from the instance id and doesn't provide a flag
+  // to change in cvd_internal_flag
+  return instance.id() > 0 ? instance.id() + 6520 - 1 : 0;
+}
+
 }  // namespace selector
 }  // namespace cuttlefish
