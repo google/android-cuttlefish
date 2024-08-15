@@ -505,12 +505,17 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	devInfo := dev.privateData.(map[string]interface{})
 
 	// Find adb port for the device.
-	adbPort := 0
-	if adb_port, ok := devInfo["adb_port"]; ok {
-		adbPort = int(adb_port.(float64))
-	} else {
-		http.Error(w, "Cannot find adb port for the device", http.StatusNotFound)
-		return
+	adbPort := dev.Descriptor.ADBPort
+	if adbPort == 0 {
+		// ADB port might not be set if the device isn't started by cvd,
+		// some newer versions set it in the device info, make one last
+		// ditch attempt at finding it.
+		if adb_port, ok := devInfo["adb_port"]; ok {
+			adbPort = int(adb_port.(float64))
+		} else {
+			http.Error(w, "Cannot find adb port for the device", http.StatusNotFound)
+			return
+		}
 	}
 
 	// Prepare WebSocket and TCP socket for ADB
