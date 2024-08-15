@@ -163,13 +163,13 @@ class CurlClient : public HttpClient {
 
   Result<HttpResponse<void>> DownloadToCallback(
       DataCallback callback, const std::string& url,
-      const std::vector<std::string>& headers) {
+      const std::vector<std::string>& headers) override {
     return DownloadToCallback(HttpMethod::kGet, callback, url, headers);
   }
 
   Result<HttpResponse<std::string>> DownloadToFile(
       const std::string& url, const std::string& path,
-      const std::vector<std::string>& headers) {
+      const std::vector<std::string>& headers) override {
     LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
 
     auto [shared_fd, temp_path] = CF_EXPECT(SharedFD::Mkostemp(path));
@@ -187,7 +187,7 @@ class CurlClient : public HttpClient {
   }
 
   Result<HttpResponse<Json::Value>> DownloadToJson(
-      const std::string& url, const std::vector<std::string>& headers) {
+      const std::string& url, const std::vector<std::string>& headers) override {
     return DownloadToJson(HttpMethod::kGet, url, headers);
   }
 
@@ -321,7 +321,7 @@ class ServerErrorRetryClient : public HttpClient {
         retry_delay_(retry_delay) {}
 
   Result<HttpResponse<std::string>> GetToString(
-      const std::string& url, const std::vector<std::string>& headers) {
+      const std::string& url, const std::vector<std::string>& headers) override {
     auto fn = [&, this]() { return inner_client_.GetToString(url, headers); };
     return CF_EXPECT(RetryImpl<std::string>(fn));
   }
@@ -336,7 +336,7 @@ class ServerErrorRetryClient : public HttpClient {
   }
 
   Result<HttpResponse<std::string>> DeleteToString(
-      const std::string& url, const std::vector<std::string>& headers) {
+      const std::string& url, const std::vector<std::string>& headers) override {
     auto fn = [&, this]() {
       return inner_client_.DeleteToString(url, headers);
     };
@@ -363,7 +363,7 @@ class ServerErrorRetryClient : public HttpClient {
 
   Result<HttpResponse<std::string>> DownloadToFile(
       const std::string& url, const std::string& path,
-      const std::vector<std::string>& headers) {
+      const std::vector<std::string>& headers) override {
     auto fn = [&, this]() {
       return inner_client_.DownloadToFile(url, path, headers);
     };
@@ -371,7 +371,7 @@ class ServerErrorRetryClient : public HttpClient {
   }
 
   Result<HttpResponse<Json::Value>> DownloadToJson(
-      const std::string& url, const std::vector<std::string>& headers) {
+      const std::string& url, const std::vector<std::string>& headers) override {
     auto fn = [&, this]() {
       return inner_client_.DownloadToJson(url, headers);
     };
