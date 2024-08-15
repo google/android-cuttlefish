@@ -365,7 +365,6 @@ Result<void> BuildApi::ArtifactToFile(const DeviceBuild& build,
                                       const std::string& artifact,
                                       const std::string& path) {
   const auto url = CF_EXPECT(GetArtifactDownloadUrl(build, artifact));
-  CF_EXPECT(CF_EXPECT(http_client->DownloadToFile(url, path)).HttpSuccess());
   bool is_successful_download =
       CF_EXPECT(http_client->DownloadToFile(url, path)).HttpSuccess();
   CF_EXPECT_EQ(is_successful_download, true);
