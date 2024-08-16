@@ -16,10 +16,10 @@
 
 #include <string>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
-bool IsSparseImage(const std::string& image_path);
-
-bool ConvertToRawImage(const std::string& image_path);
+Result<void> ForceRawImage(const std::string& image_path);
 
 }  // namespace cuttlefish
