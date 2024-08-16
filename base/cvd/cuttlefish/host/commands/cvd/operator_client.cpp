@@ -21,8 +21,10 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include <json/json.h>
+#include <fmt/format.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
