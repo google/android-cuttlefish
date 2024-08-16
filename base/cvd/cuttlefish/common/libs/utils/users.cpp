@@ -21,9 +21,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <algorithm>
 #include <cerrno>
-#include <cstdlib>
 #include <cstring>
 #include <mutex>
 #include <ostream>
@@ -34,6 +32,7 @@
 #include <android-base/logging.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 namespace {
