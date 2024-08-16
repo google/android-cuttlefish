@@ -469,17 +469,6 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
   return non_help_command;
 }
 
-static std::ostream& operator<<(std::ostream& out, const cvd_common::Args& v) {
-  if (v.empty()) {
-    return out;
-  }
-  for (std::size_t i = 0; i < v.size() - 1; i++) {
-    out << v.at(i) << " ";
-  }
-  out << v.back();
-  return out;
-}
-
 static void ShowLaunchCommand(const Command& command,
                               const cvd_common::Envs& envs) {
   std::stringstream ss;
