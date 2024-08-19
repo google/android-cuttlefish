@@ -285,7 +285,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 func (a *CreateCVDAction) launchFromUserBuild(
 	buildSource *apiv1.UserBuildSource, instancesCount uint32, op apiv1.Operation) ([]uint32, error) {
 	artifactsDir := a.userArtifactsDirResolver.GetDirPath(buildSource.ArtifactsDir)
-	if err := setWritePermissionOnVbmetaImgs(artifactsDir); err != nil {
+	if err := setWritePermissionOnVbmetaImgs(artifactsDir, a.cvdUser); err != nil {
 		return nil, err
 	}
 	startParams := startCVDParams{
@@ -432,7 +432,7 @@ func tempFilename(pattern string) (string, error) {
 // cvd user (user running the cvd commands).
 // `assemble_cvd` needs writer permission over vbmeta images to enforce minimum size:
 // https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/host/commands/assemble_cvd/disk_flags.cc;l=628-650;drc=1a50803842a9e4f815f2f206f9fcdb924e1ec14d
-func setWritePermissionOnVbmetaImgs(dir string) error {
+func setWritePermissionOnVbmetaImgs(dir string, owner *user.User) error {
 	vbmetaImgs := []string{
 		"vbmeta.img",
 		"vbmeta_system.img",
@@ -442,7 +442,7 @@ func setWritePermissionOnVbmetaImgs(dir string) error {
 	for _, name := range vbmetaImgs {
 		filename := filepath.Join(dir, name)
 		if exist, _ := fileExist(filename); exist {
-			if err := os.Chmod(filename, 0664); err != nil {
+			if err := createUAFile(filename, owner); err != nil {
 				return err
 			}
 		}
