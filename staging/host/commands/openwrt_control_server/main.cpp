@@ -59,6 +59,12 @@ constexpr char kErrorMessageRpcAuth[] = "Luci authentication request failed";
 
 namespace cuttlefish {
 
+static Status ErrorResultToStatus(const std::string_view prefix,
+                                  const StackTraceError& error) {
+  std::string msg = fmt::format("{}:\n\n{}", prefix, error.FormatForEnv(false));
+  return Status(StatusCode::UNAVAILABLE, msg);
+}
+
 class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
  public:
   OpenwrtControlServiceImpl(HttpClient& http_client)
@@ -68,8 +74,9 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
                  LuciRpcReply* response) override {
     // Update authentication key when it's empty.
     if (auth_key_.empty()) {
-      if (!TypeIsSuccess(UpdateLuciRpcAuthKey())) {
-        return Status(StatusCode::UNAVAILABLE, kErrorMessageRpcAuth);
+      Result<void> auth_res = UpdateLuciRpcAuthKey();
+      if (!auth_res.ok()) {
+        return ErrorResultToStatus(kErrorMessageRpcAuth, auth_res.error());
       }
     }
 
@@ -77,14 +84,15 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
                                 ToVector(request->params()));
 
     // When RPC request fails, update authentication key and retry once.
-    if (!TypeIsSuccess(reply)) {
-      if (!TypeIsSuccess(UpdateLuciRpcAuthKey())) {
-        return Status(StatusCode::UNAVAILABLE, kErrorMessageRpcAuth);
+    if (!reply.ok()) {
+      Result<void> auth_res = UpdateLuciRpcAuthKey();
+      if (!auth_res.ok()) {
+        return ErrorResultToStatus(kErrorMessageRpcAuth, auth_res.error());
       }
       reply = RequestLuciRpc(request->subpath(), request->method(),
                              ToVector(request->params()));
-      if (!TypeIsSuccess(reply)) {
-        return Status(StatusCode::UNAVAILABLE, kErrorMessageRpc);
+      if (!reply.ok()) {
+        return ErrorResultToStatus(kErrorMessageRpc, reply.error());
       }
     }
 
@@ -100,10 +108,10 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
                        OpenwrtIpaddrReply* response) override {
     // TODO(seungjaeyoo) : Find IP address from crosvm_openwrt.log when using
     // cvd-wtap-XX after disabling DHCP inside OpenWRT in bridged_wifi_tap mode.
-    auto ipaddr = FindIpaddrLauncherLog();
-    if (!TypeIsSuccess(ipaddr)) {
-      return Status(StatusCode::FAILED_PRECONDITION,
-                    "Failed to get Openwrt IP address");
+    Result<std::string> ipaddr = FindIpaddrLauncherLog();
+    if (!ipaddr.ok()) {
+      return ErrorResultToStatus("Failed to get Openwrt IP address",
+                                 ipaddr.error());
     }
     response->set_ipaddr(*ipaddr);
     return Status::OK;
