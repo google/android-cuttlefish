@@ -20,10 +20,10 @@
 #include <ostream>
 #include <string_view>
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/log/log.h"
-#include "sandboxed_api/sandbox2/policybuilder.h"
-#include "sandboxed_api/util/path.h"
+#include <absl/container/flat_hash_map.h>
+#include <absl/log/log.h>
+#include <sandboxed_api/sandbox2/policybuilder.h>
+#include <sandboxed_api/util/path.h>
 
 #include "host/commands/process_sandboxer/proxy_common.h"
 
@@ -60,6 +60,8 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("assemble_cvd")] = AssembleCvdPolicy;
   builders[host.HostToolExe("casimir_control_server")] =
       CasimirControlServerPolicy;
+  builders[host.HostToolExe("control_env_proxy_server")] =
+      ControlEnvProxyServerPolicy;
   builders[host.HostToolExe("echo_server")] = EchoServerPolicy;
   builders[host.HostToolExe("gnss_grpc_proxy")] = GnssGrpcProxyPolicy;
   builders[host.HostToolExe("kernel_log_monitor")] = KernelLogMonitorPolicy;
