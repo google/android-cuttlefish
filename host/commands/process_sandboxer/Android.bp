@@ -41,6 +41,7 @@ cc_binary_host {
         "policies/modem_simulator.cpp",
         "policies/newfs_msdos.cpp",
         "policies/no_policy.cpp",
+        "policies/openwrt_control_server.cpp",
         "policies/process_restarter.cpp",
         "policies/run_cvd.cpp",
         "policies/screen_recording_server.cpp",
