@@ -123,6 +123,10 @@ DEFINE_string(custom_partition_path, CF_DEFAULTS_CUSTOM_PARTITION_PATH,
               "Location of custom image that will be passed as a \"custom\" partition"
               "to rootfs and can be used by /dev/block/by-name/custom");
 
+DEFINE_string(
+    hibernation_image, CF_DEFAULTS_HIBERNATION_IMAGE,
+    "Location of the hibernation path that will be used when hibernating.");
+
 DEFINE_string(blank_metadata_image_mb, CF_DEFAULTS_BLANK_METADATA_IMAGE_MB,
               "The size of the blank metadata image to generate, MB.");
 DEFINE_string(
@@ -177,6 +181,7 @@ Result<void> ResolveInstanceFiles() {
   std::string default_vbmeta_system_dlkm_image = "";
   std::string default_16k_kernel_image = "";
   std::string default_16k_ramdisk_image = "";
+  std::string default_hibernation_image = "";
 
   std::string cur_system_image_dir;
   std::string comma_str = "";
@@ -208,6 +213,8 @@ Result<void> ResolveInstanceFiles() {
         comma_str + cur_system_image_dir + "/vbmeta_vendor_dlkm.img";
     default_vbmeta_system_dlkm_image +=
         comma_str + cur_system_image_dir + "/vbmeta_system_dlkm.img";
+    default_hibernation_image +=
+        comma_str + cur_system_image_dir + "/hibernation_swap.img";
     if (FLAGS_use_16k) {
       const auto kernel_16k = cur_system_image_dir + "/kernel_16k";
       const auto ramdisk_16k = cur_system_image_dir + "/ramdisk_16k.img";
@@ -254,6 +261,9 @@ Result<void> ResolveInstanceFiles() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("vbmeta_system_dlkm_image",
                                default_vbmeta_system_dlkm_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("hibernation_image",
+                               default_hibernation_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return {};
@@ -439,6 +449,15 @@ std::vector<ImagePartition> android_composite_disk_config(
       .image_file_path = AbsolutePath(instance.metadata_image()),
       .read_only = FLAGS_use_overlay,
   });
+  const auto hibernation_partition_image =
+      instance.hibernation_partition_image();
+  if (FileExists(hibernation_partition_image)) {
+    partitions.push_back(ImagePartition{
+        .label = "hibernation",
+        .image_file_path = AbsolutePath(hibernation_partition_image),
+        .read_only = FLAGS_use_overlay,
+    });
+  }
   const auto custom_partition_path = instance.custom_partition_path();
   if (!custom_partition_path.empty()) {
     partitions.push_back(ImagePartition{
@@ -764,6 +783,8 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
 
   std::vector<std::string> custom_partition_path =
       android::base::Split(FLAGS_custom_partition_path, ",");
+  std::vector<std::string> hibernation_image =
+      android::base::Split(FLAGS_hibernation_image, ",");
 
   std::vector<std::string> bootloader =
       android::base::Split(FLAGS_bootloader, ",");
@@ -901,6 +922,12 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       instance.set_custom_partition_path(custom_partition_path[0]);
     } else {
       instance.set_custom_partition_path(custom_partition_path[instance_index]);
+    }
+    if (instance_index >= hibernation_image.size()) {
+      instance.set_hibernation_partition_image(hibernation_image[0]);
+    } else {
+      instance.set_hibernation_partition_image(
+          hibernation_image[instance_index]);
     }
     if (instance_index >= bootloader.size()) {
       instance.set_bootloader(bootloader[0]);
