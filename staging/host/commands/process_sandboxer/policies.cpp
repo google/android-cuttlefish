@@ -65,6 +65,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("logcat_receiver")] = LogcatReceiverPolicy;
   builders[host.HostToolExe("mkenvimage_slim")] = MkEnvImgSlimPolicy;
   builders[host.HostToolExe("modem_simulator")] = ModemSimulatorPolicy;
+  builders[host.HostToolExe("newfs_msdos")] = NewFsMsDosPolicy;
   builders[host.HostToolExe("process_restarter")] = ProcessRestarterPolicy;
   builders[host.HostToolExe("run_cvd")] = RunCvdPolicy;
   builders[host.HostToolExe("screen_recording_server")] =
