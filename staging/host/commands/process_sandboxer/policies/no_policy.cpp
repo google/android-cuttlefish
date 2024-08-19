@@ -28,9 +28,8 @@ std::set<std::string> NoPolicy(const HostInfo& host) {
       "/usr/bin/lsof",  // TODO: b/359314623
                         // TODO: b/359309808
       "/usr/lib/cuttlefish-common/bin/capability_query.py",
-      host.HostToolExe("avbtool"),                   // TODO: b/318610573
-      host.HostToolExe("casimir"),                   // TODO: b/318613687
-      host.HostToolExe("control_env_proxy_server"),  // TODO: b/318592219
+      host.HostToolExe("avbtool"),  // TODO: b/318610573
+      host.HostToolExe("casimir"),  // TODO: b/318613687
       host.HostToolExe("crosvm"),
       host.HostToolExe("extract-ikconfig"),    // TODO: b/359309462
       host.HostToolExe("metrics"),             // TODO: b/318594189
