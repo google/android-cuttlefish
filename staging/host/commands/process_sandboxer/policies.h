@@ -54,6 +54,7 @@ sandbox2::PolicyBuilder LogcatReceiverPolicy(const HostInfo&);
 sandbox2::PolicyBuilder MkEnvImgSlimPolicy(const HostInfo& host);
 sandbox2::PolicyBuilder ModemSimulatorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder NewFsMsDosPolicy(const HostInfo&);
+sandbox2::PolicyBuilder OpenWrtControlServerPolicy(const HostInfo& host);
 sandbox2::PolicyBuilder ProcessRestarterPolicy(const HostInfo&);
 sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo&);
 sandbox2::PolicyBuilder ScreenRecordingServerPolicy(const HostInfo&);
