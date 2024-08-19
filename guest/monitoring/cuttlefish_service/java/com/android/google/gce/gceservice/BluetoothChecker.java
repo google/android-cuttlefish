@@ -30,6 +30,9 @@ public class BluetoothChecker extends JobBase {
     private static final String LOG_TAG = "GceBluetoothChecker";
     private final GceFuture<Boolean> mEnabled = new GceFuture<Boolean>("Bluetooth");
 
+    /* Delay in seconds before rechecking if Bluetooth is enabled. */
+    private static final int BLUETOOTH_RETRY_TIMEOUT_SECONDS = 5;
+
 
     public BluetoothChecker(Context context) {
         super(LOG_TAG);
@@ -55,11 +58,12 @@ public class BluetoothChecker extends JobBase {
             if (bluetoothAdapter.isEnabled()) {
                 Log.i(LOG_TAG, "Bluetooth enabled with name: " + bluetoothAdapter.getName());
                 mEnabled.set(true);
+                return 0;
             } else {
                 Log.i(LOG_TAG, "Bluetooth disabled with name: " + bluetoothAdapter.getName());
             }
         }
-        return 0;
+        return BLUETOOTH_RETRY_TIMEOUT_SECONDS;
     }
 
 
