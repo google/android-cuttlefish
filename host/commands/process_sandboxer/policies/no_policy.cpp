@@ -39,7 +39,6 @@ std::set<std::string> NoPolicy(const HostInfo& host) {
       host.HostToolExe("netsimd"),             // TODO: b/318603863
       host.HostToolExe("operator_proxy"),      // TODO: b/359312147
       host.HostToolExe("root-canal"),          // TODO: b/359312761
-      host.HostToolExe("simg2img"),            // TODO: b/359312017
       host.HostToolExe("vhost_device_vsock"),  // TODO: b/318613691
       host.HostToolExe("webrtc_operator"),     // TODO: b/359312626
   };

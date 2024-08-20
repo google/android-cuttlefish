@@ -73,6 +73,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("screen_recording_server")] =
       ScreenRecordingServerPolicy;
   builders[host.HostToolExe("secure_env")] = SecureEnvPolicy;
+  builders[host.HostToolExe("simg2img")] = Simg2ImgPolicy;
   builders[host.HostToolExe("socket_vsock_proxy")] = SocketVsockProxyPolicy;
   builders[host.HostToolExe("tcp_connector")] = TcpConnectorPolicy;
   builders[host.HostToolExe("tombstone_receiver")] = TombstoneReceiverPolicy;
