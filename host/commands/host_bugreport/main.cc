@@ -173,7 +173,7 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
         if (names.ok()) {
           for (const auto& name : names.value()) {
             std::string filename = device_br_dir + "/" + name;
-            SaveFile(writer, cpp_basename(filename), filename);
+            SaveFile(writer, android::base::Basename(filename), filename);
           }
         } else {
           LOG(ERROR) << "Cannot read from device bugreport directory: "

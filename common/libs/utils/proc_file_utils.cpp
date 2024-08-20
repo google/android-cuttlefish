@@ -211,7 +211,7 @@ static Result<void> CheckExecNameFromStatus(const std::string& exec_name,
 
 Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
                                                  const uid_t uid) {
-  CF_EXPECT(cpp_basename(exec_name) == exec_name);
+  CF_EXPECT_EQ(android::base::Basename(exec_name), exec_name);
   auto input_pids = CF_EXPECT(CollectPids(uid));
   std::vector<pid_t> output_pids;
   for (const auto pid : input_pids) {
