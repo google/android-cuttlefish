@@ -483,8 +483,9 @@ Result<std::string> ReadAndroidVersionFromBootImage(
   RecursivelyRemoveDirectory(unpack_dir);
   std::string os_version =
       ExtractValue(boot_params, "Prop: com.android.build.boot.os_version -> ");
-  // if the OS version is "None", it wasn't set when the boot image was made.
-  if (os_version == "None") {
+  // if the OS version is "None", or the prop does not exist, it wasn't set
+  // when the boot image was made.
+  if (os_version == "None" || os_version.empty()) {
     LOG(INFO) << "Could not extract os version from " << boot_image_path
               << ". Defaulting to 0.0.0.";
     return "0.0.0";
