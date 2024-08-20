@@ -377,6 +377,7 @@ class CuttlefishConfig {
     std::string instance_internal_uds_dir() const;
 
     std::string touch_socket_path(int touch_dev_idx) const;
+    std::string mouse_socket_path() const;
     std::string rotary_socket_path() const;
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
