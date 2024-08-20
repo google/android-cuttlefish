@@ -97,19 +97,22 @@ class InputChannelHandler : public DataChannelHandler {
                evt.toStyledString());
     auto event_type = evt["type"].asString();
 
-    if (event_type == "mouse") {
-      CF_EXPECT(ValidateJsonObject(
-          evt, "mouse",
-          {{"down", Json::ValueType::intValue},
-           {"x", Json::ValueType::intValue},
-           {"y", Json::ValueType::intValue},
-           {"display_label", Json::ValueType::stringValue}}));
-      auto label = evt["device_label"].asString();
-      int32_t down = evt["down"].asInt();
+    if (event_type == "mouseMove") {
+      CF_EXPECT(ValidateJsonObject(evt, "mouseMove",
+                                   {{"x", Json::ValueType::intValue},
+                                    {"y", Json::ValueType::intValue}}));
       int32_t x = evt["x"].asInt();
       int32_t y = evt["y"].asInt();
 
-      CF_EXPECT(observer()->OnTouchEvent(label, x, y, down));
+      CF_EXPECT(observer()->OnMouseMoveEvent(x, y));
+    } else if (event_type == "mouseButton") {
+      CF_EXPECT(ValidateJsonObject(evt, "mouseButton",
+                                   {{"button", Json::ValueType::intValue},
+                                    {"down", Json::ValueType::intValue}}));
+      int32_t button = evt["button"].asInt();
+      int32_t down = evt["down"].asInt();
+
+      CF_EXPECT(observer()->OnMouseButtonEvent(button, down));
     } else if (event_type == "multi-touch") {
       CF_EXPECT(
           ValidateJsonObject(evt, "multi-touch",

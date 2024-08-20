@@ -276,13 +276,19 @@ class DeviceConnection {
     this.#inputChannel.send(JSON.stringify(evt));
   }
 
-  sendMousePosition({x, y, down, display_label}) {
+  sendMouseMove({x, y}) {
     this.#sendJsonInput({
-      type: 'mouse',
-      down: down ? 1 : 0,
+      type: 'mouseMove',
       x,
       y,
-      display_label,
+    });
+  }
+
+  sendMouseButton({button, down}) {
+    this.#sendJsonInput({
+      type: 'mouseButton',
+      button: button,
+      down: down ? 1 : 0,
     });
   }
 
