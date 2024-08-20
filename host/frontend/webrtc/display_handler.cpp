@@ -26,9 +26,22 @@
 #include "host/frontend/webrtc/libdevice/streamer.h"
 
 namespace cuttlefish {
+
+namespace {
+
+int64_t CurrentTimeStamp() {
+  return std::chrono::duration_cast<std::chrono::microseconds>(
+             std::chrono::system_clock::now().time_since_epoch())
+      .count();
+}
+
+}
+
 DisplayHandler::DisplayHandler(webrtc_streaming::Streamer& streamer,
                                ScreenConnector& screen_connector)
-    : streamer_(streamer), screen_connector_(screen_connector) {
+    : streamer_(streamer),
+      screen_connector_(screen_connector),
+      frame_repeater_([this]() { RepeatFramesPeriodically(); }) {
   screen_connector_.SetCallback(GetScreenConnectorCallback());
   screen_connector_.SetDisplayEventCallback([this](const DisplayEvent& event) {
     std::visit(
@@ -64,6 +77,11 @@ DisplayHandler::DisplayHandler(webrtc_streaming::Streamer& streamer,
         },
         event);
   });
+}
+
+DisplayHandler::~DisplayHandler() {
+  repeater_running_ = false;
+  frame_repeater_.join();
 }
 
 DisplayHandler::GenerateProcessedFrameCallback
@@ -110,9 +128,14 @@ DisplayHandler::GetScreenConnectorCallback() {
 
     const uint32_t display_number = processed_frame.display_number_;
     {
-      std::lock_guard<std::mutex> lock(last_buffer_mutex_);
+      std::lock_guard<std::mutex> lock(last_buffers_mutex_);
       display_last_buffers_[display_number] =
-          std::static_pointer_cast<webrtc_streaming::VideoFrameBuffer>(buffer);
+          std::make_shared<BufferInfo>(BufferInfo{
+              .last_sent_time_stamp = CurrentTimeStamp(),
+              .buffer =
+                  std::static_pointer_cast<webrtc_streaming::VideoFrameBuffer>(
+                      buffer),
+          });
     }
     if (processed_frame.is_success_) {
       SendLastFrame(display_number);
@@ -121,21 +144,24 @@ DisplayHandler::GetScreenConnectorCallback() {
 }
 
 void DisplayHandler::SendLastFrame(std::optional<uint32_t> display_number) {
-  std::map<uint32_t, std::shared_ptr<webrtc_streaming::VideoFrameBuffer>>
-      buffers;
+  std::map<uint32_t, std::shared_ptr<BufferInfo>> buffers;
   {
-    std::lock_guard<std::mutex> lock(last_buffer_mutex_);
+    std::lock_guard<std::mutex> lock(last_buffers_mutex_);
     if (display_number) {
       // Resend the last buffer for a single display.
       auto last_buffer_it = display_last_buffers_.find(*display_number);
       if (last_buffer_it == display_last_buffers_.end()) {
         return;
       }
-      auto& last_buffer = last_buffer_it->second;
+      auto& last_buffer_info = last_buffer_it->second;
+      if (!last_buffer_info) {
+        return;
+      }
+      auto& last_buffer = last_buffer_info->buffer;
       if (!last_buffer) {
         return;
       }
-      buffers[*display_number] = last_buffer;
+      buffers[*display_number] = last_buffer_info;
     } else {
       // Resend the last buffer for all displays.
       buffers = display_last_buffers_;
@@ -146,19 +172,55 @@ void DisplayHandler::SendLastFrame(std::optional<uint32_t> display_number) {
     // send any frame.
     return;
   }
-  {
-    // SendLastFrame can be called from multiple threads simultaneously, locking
-    // here avoids injecting frames with the timestamps in the wrong order.
-    std::lock_guard<std::mutex> lock(next_frame_mutex_);
-    int64_t time_stamp =
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-            .count();
+  SendBuffers(buffers);
+}
 
-    for (const auto& [display_number, buffer] : buffers) {
-      auto it = display_sinks_.find(display_number);
-      if (it != display_sinks_.end()) {
-        it->second->OnFrame(buffer, time_stamp);
+void DisplayHandler::SendBuffers(std::map<uint32_t, std::shared_ptr<BufferInfo>> buffers) {
+  // SendBuffers can be called from multiple threads simultaneously, locking
+  // here avoids injecting frames with the timestamps in the wrong order and protects writing the BufferInfo timestamps.
+  std::lock_guard<std::mutex> lock(send_mutex_);
+  int64_t time_stamp =
+    std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::system_clock::now().time_since_epoch())
+    .count();
+
+  for (const auto& [display_number, buffer_info] : buffers) {
+    auto it = display_sinks_.find(display_number);
+    if (it != display_sinks_.end()) {
+    it->second->OnFrame(buffer_info->buffer, time_stamp);
+    buffer_info->last_sent_time_stamp = time_stamp;
+    }
+  }
+}
+
+void DisplayHandler::RepeatFramesPeriodically() {
+  // Prevent the jitter buffer size in chrome from growing too much by
+  // repeatedly sending still frames at close to 60 FPS. Keep it slightly
+  // below 60 FPS to avoid repeating frames right before they come out from
+  // the VM.
+  constexpr int64_t kMaxSendDelayUs = 20000;
+  int64_t next_awaking = CurrentTimeStamp() + kMaxSendDelayUs;
+  while (repeater_running_) {
+    std::this_thread::sleep_until(std::chrono::system_clock::time_point(
+        std::chrono::duration<int64_t, std::micro>(next_awaking)));
+
+    std::map<uint32_t, std::shared_ptr<BufferInfo>> buffers;
+    {
+      std::lock_guard last_buffers_lock(last_buffers_mutex_);
+      int64_t time_stamp = CurrentTimeStamp();
+
+      for (auto& [display_number, buffer_info] : display_last_buffers_) {
+        if (time_stamp > buffer_info->last_sent_time_stamp + kMaxSendDelayUs) {
+          buffers[display_number] = buffer_info;
+        }
+      }
+    }
+    SendBuffers(buffers);
+    {
+      std::lock_guard last_buffers_lock(last_buffers_mutex_);
+      for (const auto& [_, buffer_info] : display_last_buffers_) {
+        next_awaking = std::min(
+            next_awaking, buffer_info->last_sent_time_stamp + kMaxSendDelayUs);
       }
     }
   }
