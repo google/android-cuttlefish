@@ -651,6 +651,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
           ",height=", touchpad_config.height,
           ",name=", kTouchpadDefaultPrefix, i, "]");
     }
+    crosvm_cmd.Cmd().AddParameter(
+        "--input=mouse[path=", instance.mouse_socket_path(), "]");
     crosvm_cmd.Cmd().AddParameter("--input=rotary[path=",
                                   instance.rotary_socket_path(), "]");
     crosvm_cmd.Cmd().AddParameter("--input=keyboard[path=",
