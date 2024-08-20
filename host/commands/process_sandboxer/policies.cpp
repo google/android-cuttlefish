@@ -68,6 +68,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("newfs_msdos")] = NewFsMsDosPolicy;
   builders[host.HostToolExe("openwrt_control_server")] =
       OpenWrtControlServerPolicy;
+  builders[host.HostToolExe("operator_proxy")] = OperatorProxyPolicy;
   builders[host.HostToolExe("process_restarter")] = ProcessRestarterPolicy;
   builders[host.HostToolExe("run_cvd")] = RunCvdPolicy;
   builders[host.HostToolExe("screen_recording_server")] =
