@@ -53,6 +53,7 @@ sandbox2::PolicyBuilder LogTeePolicy(const HostInfo&);
 sandbox2::PolicyBuilder LogcatReceiverPolicy(const HostInfo&);
 sandbox2::PolicyBuilder MkEnvImgSlimPolicy(const HostInfo& host);
 sandbox2::PolicyBuilder ModemSimulatorPolicy(const HostInfo&);
+sandbox2::PolicyBuilder NetsimdPolicy(const HostInfo&);
 sandbox2::PolicyBuilder NewFsMsDosPolicy(const HostInfo&);
 sandbox2::PolicyBuilder OpenWrtControlServerPolicy(const HostInfo& host);
 sandbox2::PolicyBuilder OperatorProxyPolicy(const HostInfo& host);
