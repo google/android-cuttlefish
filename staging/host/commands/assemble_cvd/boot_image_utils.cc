@@ -43,7 +43,7 @@ constexpr char TMP_EXTENSION[] = ".tmp";
 constexpr char kCpioExt[] = ".cpio";
 constexpr char TMP_RD_DIR[] = "stripped_ramdisk_dir";
 constexpr char STRIPPED_RD[] = "stripped_ramdisk";
-constexpr char CONCATENATED_VENDOR_RAMDISK[] = "concatenated_vendor_ramdisk";
+constexpr char kConcatenatedVendorRamdisk[] = "concatenated_vendor_ramdisk";
 
 void RunMkBootFs(const std::string& input_dir, const std::string& output) {
   SharedFD output_fd = SharedFD::Open(output, O_CREAT | O_RDWR | O_TRUNC, 0644);
@@ -175,12 +175,18 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
   const auto ret = EnsureDirectoryExists(ramdisk_stage_dir);
   CHECK(ret.ok()) << ret.error().FormatForEnv();
 
-  success = Execute(
-      {"/bin/bash", "-c",
-       "(cd " + ramdisk_stage_dir + " && while " + HostBinaryPath("toybox") +
-           " cpio -idu; do :; done) < " + original_ramdisk_path + kCpioExt});
-  CHECK(success == 0) << "Unable to run cd or cpio. Exited with status "
-                      << success;
+  SharedFD input = SharedFD::Open(original_ramdisk_path + kCpioExt, O_RDONLY);
+  int cpio_status;
+  do {
+    LOG(ERROR) << "Running";
+    cpio_status = Command(HostBinaryPath("toybox"))
+                      .AddParameter("cpio")
+                      .AddParameter("-idu")
+                      .SetWorkingDirectory(ramdisk_stage_dir)
+                      .RedirectStdIO(Subprocess::StdIOChannel::kStdIn, input)
+                      .Start()
+                      .Wait();
+  } while (cpio_status == 0);
 }
 
 bool GetAvbMetadataFromBootImage(const std::string& boot_image_path,
@@ -244,21 +250,36 @@ bool UnpackVendorBootImageIfNotUnpacked(
   }
 
   // Concatenates all vendor ramdisk into one single ramdisk.
-  Command concat_cmd("/bin/bash");
-  concat_cmd.AddParameter("-c");
-  concat_cmd.AddParameter("cat " + unpack_dir + "/vendor_ramdisk*");
-  auto concat_file =
-      SharedFD::Creat(unpack_dir + "/" + CONCATENATED_VENDOR_RAMDISK, 0666);
+  std::string concat_file_path = unpack_dir + "/" + kConcatenatedVendorRamdisk;
+  SharedFD concat_file = SharedFD::Creat(concat_file_path, 0666);
   if (!concat_file->IsOpen()) {
     LOG(ERROR) << "Unable to create concatenated vendor ramdisk file: "
                << concat_file->StrError();
     return false;
   }
-  concat_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, concat_file);
-  success = concat_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to run cat. Exited with status " << success;
+
+  Result<std::vector<std::string>> unpack_files = DirectoryContents(unpack_dir);
+  if (!unpack_files.ok()) {
+    LOG(ERROR) << "No unpacked files: " << unpack_files.error().FormatForEnv();
     return false;
+  }
+  for (const std::string& unpacked : *unpack_files) {
+    LOG(ERROR) << "acs: " << unpacked;
+    if (!android::base::StartsWith(unpacked, "vendor_ramdisk")) {
+      continue;
+    }
+    std::string input_path = unpack_dir + "/" + unpacked;
+    SharedFD input = SharedFD::Open(input_path, O_RDONLY);
+    if (!input->IsOpen()) {
+      LOG(ERROR) << "Failed to open '" << input_path << ": "
+                 << input->StrError();
+      return false;
+    }
+    if (!concat_file->CopyAllFrom(*input)) {
+      LOG(ERROR) << "Failed to copy from '" << input_path << "' to '"
+                 << concat_file_path << "'";
+      return false;
+    }
   }
   return true;
 }
@@ -311,11 +332,11 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
     ramdisk_path = unpack_dir + "/vendor_ramdisk_repacked";
     if (!FileExists(ramdisk_path)) {
       RepackVendorRamdisk(new_ramdisk,
-                          unpack_dir + "/" + CONCATENATED_VENDOR_RAMDISK,
+                          unpack_dir + "/" + kConcatenatedVendorRamdisk,
                           ramdisk_path, unpack_dir);
     }
   } else {
-    ramdisk_path = unpack_dir + "/" + CONCATENATED_VENDOR_RAMDISK;
+    ramdisk_path = unpack_dir + "/" + kConcatenatedVendorRamdisk;
   }
 
   std::string bootconfig = ReadFile(unpack_dir + "/bootconfig");
@@ -399,7 +420,7 @@ void RepackGem5BootImage(const std::string& initrd_path,
   // Test to make sure new ramdisk hasn't already been repacked if input ramdisk is provided
   if (FileExists(input_ramdisk_path) && !FileExists(new_ramdisk_path)) {
     RepackVendorRamdisk(input_ramdisk_path,
-                        unpack_dir + "/" + CONCATENATED_VENDOR_RAMDISK,
+                        unpack_dir + "/" + kConcatenatedVendorRamdisk,
                         new_ramdisk_path, unpack_dir);
   }
   std::ifstream vendor_boot_ramdisk(FileExists(new_ramdisk_path) ? new_ramdisk_path : unpack_dir +
