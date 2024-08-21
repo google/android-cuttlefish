@@ -19,24 +19,23 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-#include <regex>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/in_sandbox.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/assemble_cvd/flags.h"
+#include "host/libs/config/config_utils.h"
 
 namespace cuttlefish {
 namespace {
 
 Result<void> CleanPriorFiles(const std::string& path,
                              const std::set<std::string>& preserving) {
-  if (preserving.count(cpp_basename(path))) {
+  if (preserving.count(android::base::Basename(path))) {
     LOG(DEBUG) << "Preserving: " << path;
     return {};
   }
