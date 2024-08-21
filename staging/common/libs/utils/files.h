@@ -56,9 +56,8 @@ Result<std::string> RenameFile(const std::string& current_filepath,
 std::string ReadFile(const std::string& file);
 Result<std::string> ReadFileContents(const std::string& filepath);
 bool MakeFileExecutable(const std::string& path);
-std::chrono::system_clock::time_point FileModificationTime(const std::string& path);
-std::string cpp_dirname(const std::string& str);
-std::string cpp_basename(const std::string& str);
+std::chrono::system_clock::time_point FileModificationTime(
+    const std::string& path);
 // Whether a file exists and is a unix socket
 bool FileIsSocket(const std::string& path);
 // Get disk usage of a path. If this path is a directory, disk usage will
