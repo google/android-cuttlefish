@@ -43,7 +43,6 @@ sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo& host) {
       .AddDirectory(host.runtime_dir, /* is_ro= */ false)
       .AddFileAt(sandboxer_proxy,
                  "/usr/lib/cuttlefish-common/bin/capability_query.py")
-      .AddFileAt(sandboxer_proxy, "/bin/bash")
       .AddFileAt(sandboxer_proxy, host.HostToolExe("avbtool"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("crosvm"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("extract-ikconfig"))
