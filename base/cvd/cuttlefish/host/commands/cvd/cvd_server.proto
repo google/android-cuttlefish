@@ -102,6 +102,7 @@ message InstanceGroupInfo {
   }
   repeated PerInstanceInfo instances = 2;
   repeated string home_directories = 3;
+  string host_artifacts_path = 4;
 }
 
 message CommandResponse {

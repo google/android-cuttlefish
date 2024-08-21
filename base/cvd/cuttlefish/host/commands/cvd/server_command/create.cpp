@@ -181,6 +181,21 @@ Result<cvd_common::Envs> GetEnvs(const RequestWithStdio& request) {
   return envs;
 }
 
+cvd::InstanceGroupInfo GroupInfoFromGroup(
+    const selector::LocalInstanceGroup& group) {
+  cvd::InstanceGroupInfo info;
+  info.set_group_name(group.GroupName());
+  for (const auto& instance : group.Instances()) {
+    cvd::InstanceGroupInfo::PerInstanceInfo instance_info;
+    instance_info.set_name(instance.name());
+    instance_info.set_instance_id(instance.id());
+    *info.add_instances() = instance_info;
+  }
+  info.add_home_directories(group.HomeDir());
+  info.set_host_artifacts_path(group.HostArtifactsPath());
+  return info;
+}
+
 }  // namespace
 
 class CvdCreateCommandHandler : public CvdServerHandler {
@@ -312,14 +327,16 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   instance_manager_.UpdateInstanceGroup(group);
 
+  cvd::Response response;
+  response.mutable_status()->set_code(cvd::Status::OK);
+
   if (flags.start) {
     auto start_cmd = CreateStartCommand(request, group, subcmd_args, envs);
-    return CF_EXPECT(command_executor_.ExecuteOne(start_cmd, request.Err()));
+    response = CF_EXPECT(command_executor_.ExecuteOne(start_cmd, request.Err()));
   }
 
-  cvd::Response response;
-  response.mutable_command_response();  // set oneof field
-  response.mutable_status()->set_code(cvd::Status::OK);
+  *response.mutable_command_response()->mutable_instance_group_info() =
+      GroupInfoFromGroup(group);
   return response;
 }
 
