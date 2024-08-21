@@ -21,7 +21,32 @@
 #include <android-base/file.h>
 #include <android-base/strings.h>
 
+#include "host/commands/cvd/flag.h"
+#include "host/commands/cvd/selector/selector_constants.h"
+#include "host/commands/cvd/types.h"
+
 namespace cuttlefish {
+
+Result<cvd_common::Args> ExtractCvdArgs(cvd_common::Args& args) {
+  FrontlineParser::ParserParam server_param{
+      .server_supported_subcmds = {"*"},
+      .all_args = args
+  };
+  auto frontline_parser = CF_EXPECT(FrontlineParser::Parse(server_param));
+  CF_EXPECT(frontline_parser != nullptr);
+
+  const auto prog_path = frontline_parser->ProgPath();
+  const auto new_sub_cmd = frontline_parser->SubCmd();
+  cvd_common::Args cmd_args{frontline_parser->SubCmdArgs()};
+
+  cvd_common::Args new_exec_args{prog_path};
+  if (new_sub_cmd) {
+    new_exec_args.push_back(*new_sub_cmd);
+  }
+  new_exec_args.insert(new_exec_args.end(), cmd_args.begin(), cmd_args.end());
+  args = new_exec_args;
+  return frontline_parser->CvdArgs();
+}
 
 Result<std::unique_ptr<FrontlineParser>> FrontlineParser::Parse(
     ParserParam param) {
@@ -35,9 +60,7 @@ Result<std::unique_ptr<FrontlineParser>> FrontlineParser::Parse(
 
 FrontlineParser::FrontlineParser(const ParserParam& param)
     : server_supported_subcmds_{param.server_supported_subcmds},
-      all_args_(param.all_args),
-      internal_cmds_(param.internal_cmds),
-      cvd_flags_(param.cvd_flags) {}
+      all_args_(param.all_args) {}
 
 Result<void> FrontlineParser::Separate() {
   arguments_separator_ = CF_EXPECT(CallSeparator());
@@ -46,8 +69,6 @@ Result<void> FrontlineParser::Separate() {
 
 Result<cvd_common::Args> FrontlineParser::ValidSubcmdsList() {
   cvd_common::Args valid_subcmds(server_supported_subcmds_);
-  std::copy(internal_cmds_.cbegin(), internal_cmds_.cend(),
-            std::back_inserter(valid_subcmds));
   return valid_subcmds;
 }
 
@@ -79,7 +100,7 @@ FrontlineParser::CallSeparator() {
   auto valid_subcmds_vector = CF_EXPECT(ValidSubcmdsList());
   std::unordered_set<std::string> valid_subcmds{valid_subcmds_vector.begin(),
                                                 valid_subcmds_vector.end()};
-  auto cvd_flags = cvd_flags_.Flags();
+  auto cvd_flags = CF_EXPECT(selector::SelectorFlags::New()).Flags();
 
   auto known_bool_flags = CF_EXPECT(BoolFlagNames(cvd_flags));
   auto known_value_flags = CF_EXPECT(ValueFlagNames(cvd_flags));

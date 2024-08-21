@@ -23,6 +23,7 @@
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/request_context.h"
@@ -78,11 +79,14 @@ Result<cvd::Response> Cvd::HandleCommand(
 Result<void> Cvd::HandleCvdCommand(
     const std::vector<std::string>& all_args,
     const std::unordered_map<std::string, std::string>& env) {
-  const cvd_common::Args new_cmd_args{"cvd", "process"};
   CF_EXPECT(!all_args.empty());
-  const cvd_common::Args new_selector_args{all_args.begin(), all_args.end()};
+  std::vector<std::string> args = all_args;
+  if (args.size() == 1ul) {
+    args = cvd_common::Args{"cvd", "help"};
+  }
+  std::vector<std::string> selector_args = CF_EXPECT(ExtractCvdArgs(args));
   // TODO(schuffelen): Deduplicate cvd process split.
-  CF_EXPECT(HandleCommand(new_cmd_args, env, new_selector_args));
+  CF_EXPECT(HandleCommand(args, env, selector_args));
   return {};
 }
 
