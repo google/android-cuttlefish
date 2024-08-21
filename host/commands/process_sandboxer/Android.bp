@@ -39,6 +39,7 @@ cc_binary_host {
         "policies/logcat_receiver.cpp",
         "policies/mkenvimage_slim.cpp",
         "policies/modem_simulator.cpp",
+        "policies/netsimd.cpp",
         "policies/newfs_msdos.cpp",
         "policies/no_policy.cpp",
         "policies/openwrt_control_server.cpp",
