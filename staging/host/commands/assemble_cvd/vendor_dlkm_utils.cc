@@ -297,7 +297,7 @@ Result<void> AddVbmetaFooter(const std::string& output_image,
   // Add host binary path to PATH, so that avbtool can locate host util binaries
   // such as 'fec'
   std::string env_path =
-      StringFromEnv("PATH", "") + ":" + cpp_dirname(avbtool_path);
+      StringFromEnv("PATH", "") + ":" + android::base::Dirname(avbtool_path);
   Command avb_cmd =
       Command(AvbToolBinary())
           // Must unset an existing environment variable in order to modify it
@@ -437,7 +437,7 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
   LOG(INFO) << "modules.load location " << module_load_file;
   const auto module_list =
       Dedup(android::base::Tokenize(ReadFile(module_load_file), "\n"));
-  const auto module_base_dir = cpp_dirname(module_load_file);
+  const auto module_base_dir = android::base::Dirname(module_load_file);
   const auto deps = LoadModuleDeps(module_base_dir + "/modules.dep");
   const auto ramdisk_modules =
       ComputeTransitiveClosure(GetRamdiskModules(module_list), deps);
@@ -458,13 +458,15 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
     if (IsKernelModuleSigned(module_location)) {
       const auto system_dlkm_module_location =
           fmt::format("{}/{}", system_modules_dir, module_path);
-      EnsureDirectoryExists(cpp_dirname(system_dlkm_module_location));
+      EnsureDirectoryExists(
+          android::base::Dirname(system_dlkm_module_location));
       RenameFile(module_location, system_dlkm_module_location);
       system_dlkm_modules.emplace(module_path);
     } else {
       const auto vendor_dlkm_module_location =
           fmt::format("{}/{}", vendor_modules_dir, module_path);
-      EnsureDirectoryExists(cpp_dirname(vendor_dlkm_module_location));
+      EnsureDirectoryExists(
+          android::base::Dirname(vendor_dlkm_module_location));
       RenameFile(module_location, vendor_dlkm_module_location);
       vendor_dlkm_modules.emplace(module_path);
     }
