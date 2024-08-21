@@ -37,22 +37,18 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-#include <algorithm>
 #include <array>
 #include <cerrno>
 #include <chrono>
-#include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <ios>
 #include <iosfwd>
-#include <istream>
 #include <memory>
 #include <numeric>
 #include <ostream>
-#include <ratio>
 #include <regex>
 #include <string>
 #include <utility>

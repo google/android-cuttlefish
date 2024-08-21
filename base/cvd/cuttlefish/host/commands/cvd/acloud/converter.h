@@ -29,7 +29,6 @@ struct ConvertedAcloudCreateCommand {
   std::string fetch_command_str;
   std::string fetch_cvd_args_file;
   bool verbose;
-  bool interrupt_lock_released;
 };
 
 namespace acloud_impl {
