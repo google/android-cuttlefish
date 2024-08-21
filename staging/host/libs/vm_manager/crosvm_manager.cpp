@@ -916,7 +916,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   if (gpu_capture_enabled) {
     const std::string gpu_capture_basename =
-        cpp_basename(instance.gpu_capture_binary());
+        android::base::Basename(instance.gpu_capture_binary());
 
     auto gpu_capture_logs_path =
         instance.PerInstanceInternalPath("gpu_capture.fifo");
