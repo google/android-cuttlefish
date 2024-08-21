@@ -58,6 +58,8 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
 
   builders[host.HostToolExe("adb_connector")] = AdbConnectorPolicy;
   builders[host.HostToolExe("assemble_cvd")] = AssembleCvdPolicy;
+  builders[host.HostToolExe("casimir_control_server")] =
+      CasimirControlServerPolicy;
   builders[host.HostToolExe("echo_server")] = EchoServerPolicy;
   builders[host.HostToolExe("gnss_grpc_proxy")] = GnssGrpcProxyPolicy;
   builders[host.HostToolExe("kernel_log_monitor")] = KernelLogMonitorPolicy;

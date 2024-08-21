@@ -46,6 +46,7 @@ sandbox2::PolicyBuilder BaselinePolicy(const HostInfo&, std::string_view exe);
 
 sandbox2::PolicyBuilder AdbConnectorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo&);
+sandbox2::PolicyBuilder CasimirControlServerPolicy(const HostInfo&);
 sandbox2::PolicyBuilder EchoServerPolicy(const HostInfo&);
 sandbox2::PolicyBuilder GnssGrpcProxyPolicy(const HostInfo&);
 sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo&);

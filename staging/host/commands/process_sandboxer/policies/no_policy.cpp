@@ -30,7 +30,6 @@ std::set<std::string> NoPolicy(const HostInfo& host) {
       "/usr/lib/cuttlefish-common/bin/capability_query.py",
       host.HostToolExe("avbtool"),                   // TODO: b/318610573
       host.HostToolExe("casimir"),                   // TODO: b/318613687
-      host.HostToolExe("casimir_control_server"),    // TODO: b/318587667
       host.HostToolExe("control_env_proxy_server"),  // TODO: b/318592219
       host.HostToolExe("crosvm"),
       host.HostToolExe("extract-ikconfig"),    // TODO: b/359309462
