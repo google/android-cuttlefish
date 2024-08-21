@@ -532,17 +532,6 @@ FileSizes SparseFileSizes(const std::string& path) {
   return (FileSizes) { .sparse_size = farthest_seek, .disk_size = data_bytes };
 }
 
-std::string cpp_basename(const std::string& str) {
-  char* copy = strdup(str.c_str()); // basename may modify its argument
-  std::string ret(basename(copy));
-  free(copy);
-  return ret;
-}
-
-std::string cpp_dirname(const std::string& str) {
-  return android::base::Dirname(str);
-}
-
 bool FileIsSocket(const std::string& path) {
   struct stat st {};
   return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
@@ -588,7 +577,7 @@ std::string FindFile(const std::string& path, const std::string& target_name) {
   std::string ret;
   WalkDirectory(path,
                 [&ret, &target_name](const std::string& filename) mutable {
-                  if (cpp_basename(filename) == target_name) {
+                  if (android::base::Basename(filename) == target_name) {
                     ret = filename;
                   }
                   return true;
@@ -638,8 +627,8 @@ static Result<void> WaitForFileInternal(const std::string& path, int timeoutSec,
   const auto targetTime =
       std::chrono::system_clock::now() + std::chrono::seconds(timeoutSec);
 
-  const auto parentPath = cpp_dirname(path);
-  const auto filename = cpp_basename(path);
+  const std::string parentPath = android::base::Dirname(path);
+  const std::string filename = android::base::Basename(path);
 
   CF_EXPECT(WaitForFile(parentPath, timeoutSec),
             "Error while waiting for parent directory creation");

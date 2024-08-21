@@ -50,7 +50,7 @@ Result<std::vector<pid_t>> CollectPids(const uid_t uid = getuid());
 /* collects all pids that meet the following:
  *
  * 1. Belongs to the uid
- * 2. cpp_basename(readlink(/proc/<pid>/exe)) == exec_name
+ * 2. Basename(readlink(/proc/<pid>/exe)) == exec_name
  *
  */
 Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
