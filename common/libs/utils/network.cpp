@@ -136,8 +136,8 @@ std::set<std::string> TapInterfacesInUse() {
     cmd.AddParameter(fdinfo);
   }
 
-  std::string stdout_str;
-  RunWithManagedStdio(std::move(cmd), nullptr, &stdout_str, nullptr);
+  std::string stdout_str, stderr_str;
+  RunWithManagedStdio(std::move(cmd), nullptr, &stdout_str, &stderr_str);
 
   auto lines = android::base::Split(stdout_str, "\n");
   std::set<std::string> tap_interfaces;
