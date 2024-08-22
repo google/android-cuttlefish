@@ -22,7 +22,6 @@ genrule(
 
 sh_binary(
     name = "orchestration_image_builder",
-    srcs = ["orchestration-image-builder.sh"],
-    data = ["//docker/debs-builder-docker:debs_tar"],
-    deps = [ "@bazel_tools//tools/bash/runfiles"],
+    srcs = ["image-build-bazel-wrapper.sh"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )

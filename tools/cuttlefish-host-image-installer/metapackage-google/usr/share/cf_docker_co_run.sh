@@ -10,8 +10,8 @@ if [ "$cf_image" == "" ]; then
     wget https://github.com/google/android-cuttlefish/archive/refs/tags/stable.zip
     unzip stable.zip
   fi
-  cd android-cuttlefish-stable/docker/orchestration
-  /bin/bash build.sh &> build.log
+  cd android-cuttlefish-stable/docker
+  /bin/bash image-builder.sh &> build.log
 fi
 
 # Step 2. Run CO server

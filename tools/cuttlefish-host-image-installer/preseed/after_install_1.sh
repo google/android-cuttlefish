@@ -96,6 +96,6 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes golang
 #pushd $mydir
 #cd /home/vsoc-01
 #sudo -H -u vsoc-01 sh -c 'git clone https://github.com/google/android-cuttlefish.git'
-#cd android-cuttlefish/docker/orchestration
-#sudo -H -u vsoc-01 bash -c '/bin/bash build.sh'
+#cd android-cuttlefish/docker
+#sudo -H -u vsoc-01 bash -c '/bin/bash image-builder.sh'
 #popd

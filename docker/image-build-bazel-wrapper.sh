@@ -38,7 +38,7 @@ fi
 # --- end runfiles.bash initialization ---
 
 usage() {
-  echo "usage: $0 -o /path/to/debs.tar"
+  echo "usage: $0 -o /path/to/image.tar"
 }
 
 output=
@@ -71,12 +71,19 @@ if [[ $(runfiles_current_repository) ]]; then
   rlocation_base="_main/external/$(runfiles_current_repository)"
 fi
 
-debs_out_dir="${PWD}/debs"
-rlocation="$(rlocation ${rlocation_base}/docker/debs-builder-docker/debs-tar-builder.sh)"
-repo_root_dir=$(dirname $(dirname $(dirname $(readlink ${rlocation}))))
+script_location="$(rlocation ${rlocation_base}/docker/image-build-bazel-wrapper.sh)"
+repo_root_dir=$(dirname $(dirname $(readlink -f ${script_location})))
 
-pushd ${repo_root_dir}/docker/debs-builder-docker
-./main.sh -o ${debs_out_dir} --repo_dir ${repo_root_dir}
-popd
+tag="BUILD$(date +%+4Y%m%d)-$RANDOM"
+name="cuttlefish-orchestration:${tag}"
 
-tar -cvf ${output} -C "${debs_out_dir}" . 
+function remove_image() {
+  docker rmi ${name} 
+}
+
+trap remove_image EXIT
+
+# Build docker image
+${repo_root_dir}/docker/image-builder.sh "${name}"
+
+docker save --output ${output} ${name} 
