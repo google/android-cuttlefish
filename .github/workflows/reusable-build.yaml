@@ -23,3 +23,5 @@ jobs:
       with:
         name: cuttlefish_packages_arm64
         path: tools/cuttlefish-host-image-installer/cuttlefish_packages.7z
+  build-docker-image-job:
+    uses: ./.github/workflows/docker.yaml
