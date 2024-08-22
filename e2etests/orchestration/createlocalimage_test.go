@@ -55,7 +55,6 @@ func TestInstance(t *testing.T) {
     "common": {
       "group_name": "foo",
       "host_package": "@user_artifacts/` + uploadDir + `"
-
     },
     "instances": [
       {
