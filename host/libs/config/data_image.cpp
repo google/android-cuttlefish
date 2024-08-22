@@ -61,7 +61,7 @@ Result<void> ForceFsckImage(
 Result<void> ResizeImage(const std::string& data_image, int data_image_mb,
                          const CuttlefishConfig::InstanceSpecific& instance) {
   auto file_mb = FileSize(data_image) >> 20;
-  CF_EXPECTF(data_image_mb <= file_mb, "'{}' is already {} MB, won't downsize",
+  CF_EXPECTF(data_image_mb >= file_mb, "'{}' is already {} MB, won't downsize",
              data_image, file_mb);
   if (file_mb == data_image_mb) {
     LOG(INFO) << data_image << " is already the right size";
