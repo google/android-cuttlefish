@@ -21,6 +21,8 @@
 
 #include "host/commands/cvd/server_client.h"
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
 struct ConvertedAcloudCreateCommand {

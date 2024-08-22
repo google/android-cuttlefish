@@ -16,15 +16,10 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 #include <vector>
 
 #include <android-base/logging.h>
-
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 
