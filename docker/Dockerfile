@@ -2,7 +2,7 @@
 # Docker image includes HO(Host Orchestrator) inside,
 # so it could execute CF instance with API in HO.
 
-FROM debian:stable-20211011 AS cuttlefish-hostpkg-builder
+FROM debian:12 AS cuttlefish-hostpkg-builder
 
 USER root
 WORKDIR /root
@@ -19,7 +19,7 @@ RUN apt install -y --no-install-recommends \
 COPY . /root/android-cuttlefish
 RUN ["/bin/bash", "-c", "/root/android-cuttlefish/tools/buildutils/build_packages.sh"]
 
-FROM debian:stable-20211011 AS cuttlefish-orchestration
+FROM debian:12 AS cuttlefish-orchestration
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443

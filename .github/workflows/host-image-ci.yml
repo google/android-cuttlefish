@@ -195,6 +195,11 @@ jobs:
       with:
         name: docker-image-x86_64
         path: "tools/cuttlefish-host-image-installer"
+    - name: Download orchestration-image-arm64.tar
+      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
+      with:
+        name: docker-image-arm64
+        path: "tools/cuttlefish-host-image-installer"
     - name: Releases update
       run: cd tools/cuttlefish-host-image-installer && ./update_github_releases.sh && echo "Application successfully deployed."
       env:
