@@ -137,9 +137,6 @@ func (h *DockerHelper) RemoveContainer(id string) error {
 }
 
 func Cleanup(ctx *TestContext) {
-	if err := DownloadHostBugReport(ctx); err != nil {
-		log.Printf("cleanup: failed downloading host_bugreport.zip: %s\n", err)
-	}
 	dockerHelper, err := NewDockerHelper()
 	if err != nil {
 		log.Printf("cleanup: failed creating docker helper: %s\n", err)
@@ -155,7 +152,7 @@ func Cleanup(ctx *TestContext) {
 	}
 }
 
-func DownloadHostBugReport(ctx *TestContext) error {
+func DownloadHostBugReport(srv orchclient.HostOrchestratorService, group string) error {
 	// `TEST_UNDECLARED_OUTPUTS_DIR` env var is defined by bazel
 	// https://bazel.build/reference/test-encyclopedia#initial-conditions
 	val, ok := os.LookupEnv("TEST_UNDECLARED_OUTPUTS_DIR")
@@ -167,8 +164,7 @@ func DownloadHostBugReport(ctx *TestContext) error {
 	if err != nil {
 		return err
 	}
-	srv := orchclient.NewHostOrchestratorService(ctx.ServiceURL)
-	if err := srv.CreateBugreport("cvd", f); err != nil {
+	if err := srv.CreateBugreport(group, f); err != nil {
 		return err
 	}
 	if err := f.Close(); err != nil {

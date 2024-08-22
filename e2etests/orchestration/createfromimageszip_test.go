@@ -44,10 +44,11 @@ func TestInstance(t *testing.T) {
 	if err := e2etesting.UploadAndExtract(srv, uploadDir, "cvd-host_package.tar.gz"); err != nil {
 		t.Fatal(err)
 	}
+	const group_name = "foo"
 	config := `
   {
     "common": {
-      "group_name": "foo",
+      "group_name": "` + group_name + `",
       "host_package": "@user_artifacts/` + uploadDir + `"
 
     },
@@ -76,9 +77,12 @@ func TestInstance(t *testing.T) {
 		EnvConfig: envConfig,
 	}
 
-	got, err := srv.CreateCVD(createReq /* buildAPICredentials */, "")
+	got, createErr := srv.CreateCVD(createReq /* buildAPICredentials */, "")
 
-	if err != nil {
+	if err := e2etesting.DownloadHostBugReport(srv, group_name); err != nil {
+		t.Errorf("failed creating bugreport: %s\n", err)
+	}
+	if createErr != nil {
 		t.Fatal(err)
 	}
 	want := &hoapi.CreateCVDResponse{
