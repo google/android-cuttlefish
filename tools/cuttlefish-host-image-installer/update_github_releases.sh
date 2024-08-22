@@ -21,7 +21,6 @@ echo "$changes" > changelog
 STABLE_VERSION="v$version"
 
 echo "step 2: move stable release to new commit id"
-git show-ref --tags
 commit_id=$(git rev-list -n 1 --tags refs/tags/"$STABLE_VERSION")
 stable_commit_id=$(git rev-list -n 1 --tags refs/tags/stable)
 if [[ "$commit_id" == "$stable_commit_id" ]]; then
