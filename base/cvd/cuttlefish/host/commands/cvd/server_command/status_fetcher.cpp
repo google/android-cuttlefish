@@ -98,17 +98,6 @@ void OverrideInstanceJson(const selector::LocalInstanceGroup& group,
 
 }  // namespace
 
-static Result<SharedFD> CreateFileToRedirect(
-    const std::string& stderr_or_stdout) {
-  auto thread_id = std::this_thread::get_id();
-  std::stringstream ss;
-  ss << "cvd.status." << stderr_or_stdout << "." << thread_id;
-  auto mem_fd_name = ss.str();
-  SharedFD fd = SharedFD::MemfdCreate(mem_fd_name);
-  CF_EXPECT(fd->IsOpen());
-  return fd;
-}
-
 Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
     const RequestWithStdio& request,
     const InstanceManager::LocalInstanceGroup& group, cvd::Instance& instance) {
@@ -151,35 +140,25 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   // old cvd_internal_status expects CUTTLEFISH_INSTANCE=<k>
   envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.id());
 
-  SharedFD redirect_stdout_fd = CF_EXPECT(CreateFileToRedirect("stdout"));
-  SharedFD redirect_stderr_fd = CF_EXPECT(CreateFileToRedirect("stderr"));
   ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
                                             .home = home,
                                             .args = cmd_args,
                                             .envs = envs,
                                             .working_dir = working_dir,
                                             .command_name = bin,
-                                            .in = request.In(),
-                                            .out = redirect_stdout_fd,
-                                            .err = redirect_stderr_fd};
+                                            .null_stdio = request.IsNullIo()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
-  siginfo_t infop;
-  command.Start().Wait(&infop, WEXITED);
-
-  CF_EXPECT_EQ(redirect_stdout_fd->LSeek(0, SEEK_SET), 0);
-  CF_EXPECT_EQ(redirect_stderr_fd->LSeek(0, SEEK_SET), 0);
-
   std::string serialized_json;
-  CF_EXPECT_GE(ReadAll(redirect_stdout_fd, &serialized_json), 0);
+  std::string status_stderr;
+
+  int res = RunWithManagedStdio(std::move(command), nullptr, &serialized_json,
+                                &status_stderr);
 
   // old branches will print nothing
   if (serialized_json.empty()) {
     serialized_json = "[{\"warning\" : \"cvd-status-unsupported device\"}]";
   }
-
-  std::string status_stderr;
-  CF_EXPECT_GE(ReadAll(redirect_stderr_fd, &status_stderr), 0);
 
   auto instance_status_json = CF_EXPECT(ParseJson(serialized_json));
   CF_EXPECT_EQ(instance_status_json.size(), 1ul);
@@ -198,8 +177,12 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   }
   instance_status_json[kNameProp] = instance.name();
 
-  auto response = ResponseFromSiginfo(infop);
-  if (response.status().code() != cvd::Status::OK) {
+  cvd::Response response;
+  response.mutable_command_response();
+  if (res != 0) {
+    response.mutable_status()->set_code(cvd::Status::INTERNAL);
+    response.mutable_status()->set_message(
+        fmt::format("Exited with code {}", res));
     instance.set_state(cvd::INSTANCE_STATE_UNREACHABLE);
     instance_status_json["warning"] = "cvd status failed";
   }
@@ -281,8 +264,8 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
        .selector_args = {"--group_name", group.GroupName()},
        .working_dir =
            original_request.Message().command_request().working_directory()});
-  RequestWithStdio group_request{request_message,
-                                 original_request.FileDescriptors()};
+  RequestWithStdio group_request =
+      RequestWithStdio::InheritIo(std::move(request_message), original_request);
   auto [_, instances_json, group_response] =
       CF_EXPECT(FetchStatus(group_request));
   group_json["instances"] = instances_json;

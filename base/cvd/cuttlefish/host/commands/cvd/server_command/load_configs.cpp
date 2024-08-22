@@ -188,8 +188,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     for (const auto& flag : cvd_flags.fetch_cvd_flags) {
       fetch_cmd.add_args(flag);
     }
-    return RequestWithStdio(fetch_req,
-                            {request.In(), request.Out(), request.Err()});
+    return RequestWithStdio::InheritIo(std::move(fetch_req), request);
   }
 
   RequestWithStdio BuildMkdirCmd(const RequestWithStdio& request,
@@ -201,8 +200,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     mkdir_cmd.add_args("mkdir");
     mkdir_cmd.add_args("-p");
     mkdir_cmd.add_args(cvd_flags.load_directories.launch_home_directory);
-    return RequestWithStdio(mkdir_req,
-                            {request.In(), request.Out(), request.Err()});
+    return RequestWithStdio::InheritIo(std::move(mkdir_req), request);
   }
 
   RequestWithStdio BuildLaunchCmd(const RequestWithStdio& request,
@@ -249,8 +247,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     launch_cmd.mutable_selector_opts()->add_args("--group_name");
     launch_cmd.mutable_selector_opts()->add_args(group.GroupName());
 
-    return RequestWithStdio(launch_req,
-                            {request.In(), request.Out(), request.Err()});
+    return RequestWithStdio::InheritIo(std::move(launch_req), request);
   }
 
  private:

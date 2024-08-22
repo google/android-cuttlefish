@@ -18,7 +18,6 @@
 
 #include <android-base/file.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
@@ -197,7 +196,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     CF_EXPECT(ConsumeFlags(mixsuperimage_flags, invocation.arguments),
               "Failed to process mix-super-image flag.");
     if (help) {
-      WriteAll(request.Out(), kMixSuperImageHelpMessage);
+      request.Out() << kMixSuperImageHelpMessage;
       return response;
     }
 

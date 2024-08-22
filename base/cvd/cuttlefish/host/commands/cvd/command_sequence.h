@@ -16,10 +16,9 @@
 #pragma once
 
 #include <memory>
-#include <mutex>
+#include <ostream>
 #include <vector>
 
-#include "common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/server_handler.h"
@@ -32,8 +31,9 @@ class CommandSequenceExecutor {
       const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers);
 
   Result<std::vector<cvd::Response>> Execute(
-      const std::vector<RequestWithStdio>&, SharedFD report);
-  Result<cvd::Response> ExecuteOne(const RequestWithStdio&, SharedFD report);
+      const std::vector<RequestWithStdio>&, std::ostream& report);
+  Result<cvd::Response> ExecuteOne(const RequestWithStdio&,
+                                   std::ostream& report);
 
   std::vector<std::string> CmdList() const;
   Result<CvdServerHandler*> GetHandler(const RequestWithStdio& request);

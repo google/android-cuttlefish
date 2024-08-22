@@ -83,10 +83,10 @@ class CvdServerHandlerProxy : public CvdServerHandler {
          .working_dir =
              request.Message().command_request().working_directory()});
 
-    RequestWithStdio forwarded_request(
-        std::move(exec_request), request.FileDescriptors());
-    SharedFD dev_null = SharedFD::Open("/dev/null", O_RDWR);
-    CF_EXPECT(dev_null->IsOpen(), "Failed to open /dev/null");
+    RequestWithStdio forwarded_request =
+        RequestWithStdio::InheritIo(std::move(exec_request), request);
+
+    std::ofstream dev_null("/dev/null");
 
     cvd::Response response;
     auto invocation_args =
@@ -94,9 +94,10 @@ class CvdServerHandlerProxy : public CvdServerHandler {
     auto handler = CF_EXPECT(executor_.GetHandler(forwarded_request));
     if (CF_EXPECT(IsHelpSubcmd(invocation_args)) &&
         handler->ShouldInterceptHelp()) {
-      std::string output =
-          CF_EXPECT(handler->DetailedHelp(invocation_args)) + "\n";
-      response = CF_EXPECT(WriteToFd(forwarded_request.Out(), output));
+      request.Out() << CF_EXPECT(handler->DetailedHelp(invocation_args)) + "\n";
+
+      response.mutable_command_response();  // Sets oneof member
+      response.mutable_status()->set_code(cvd::Status::OK);
     } else {
       response = CF_EXPECT(executor_.ExecuteOne(forwarded_request, dev_null));
     }
