@@ -1,0 +1,21 @@
+name: DockerImage 
+
+on: [workflow_call]
+
+jobs:
+  build-docker-image-x86_64-job:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install bazel
+      run: sudo bash tools/buildutils/installbazel.sh
+    - name: bazel version
+      run: bazel version
+    - name: Build docker image
+      run: bazel build --sandbox_writable_path=$HOME //docker:orchestration_image_tar
+    - name: Publish docker image
+      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
+      with:
+        name: docker-image-x86_64
+        path: bazel-bin/docker/orchestration-image.tar
