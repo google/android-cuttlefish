@@ -49,6 +49,7 @@ cp u-boot.bin u-boot"_${STABLE_VERSION}".bin
 cp preseed-mini.iso.xz preseed-mini"_${STABLE_VERSION}".iso.xz
 cp meta_gigamp_packages.7z meta_gigamp_packages"_${STABLE_VERSION}".7z
 cp orchestration-image-x86_64.tar orchestration-image-x86_64"_${STABLE_VERSION}".tar
+cp orchestration-image-arm64.tar orchestration-image-arm64"_${STABLE_VERSION}".tar
 
 # upload assets to both latest and stable versions
 echo "step 5: upload assets to both latest and stable versions"
@@ -67,10 +68,12 @@ do
   gh release upload "$version" cuttlefish_packages"_${STABLE_VERSION}".7z
   gh release upload "$version" meta_gigamp_packages"_${STABLE_VERSION}".7z
   gh release upload "$version" orchestration-image-x86_64"_${STABLE_VERSION}".tar
+  gh release upload "$version" orchestration-image-arm64"_${STABLE_VERSION}".tar
 
   gh release upload "$version" u-boot.bin
   gh release upload "$version" preseed-mini.iso.xz
   gh release upload "$version" cuttlefish_packages.7z
   gh release upload "$version" meta_gigamp_packages.7z
   gh release upload "$version" orchestration-image-x86_64.tar
+  gh release upload "$version" orchestration-image-arm64.tar
 done
