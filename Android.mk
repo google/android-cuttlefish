@@ -49,9 +49,6 @@ ifneq ($(filter vsoc_arm vsoc_arm64 vsoc_x86 vsoc_x86_64, $(TARGET_BOARD_PLATFOR
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-include $(LOCAL_PATH)/fetcher.mk
-
-include $(CLEAR_VARS)
 include $(LOCAL_PATH)/host_package.mk
 
 endif
