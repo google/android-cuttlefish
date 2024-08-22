@@ -22,6 +22,7 @@
 #include <array>
 #include <atomic>
 #include <cstdlib>
+#include <fstream>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -32,8 +33,6 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"

@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/server_client.h"
 
+#include <fstream>
 #include <optional>
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
