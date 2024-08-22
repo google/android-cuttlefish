@@ -19,16 +19,14 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/client.h"
-#include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/arguments_separator.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+
+Result<cvd_common::Args> ExtractCvdArgs(cvd_common::Args& args);
 
 /* the very first command line parser
  *
@@ -52,10 +50,7 @@ class FrontlineParser {
   struct ParserParam {
     // commands supported by the server
     std::vector<std::string> server_supported_subcmds;
-    // commands supported by the client itself
-    std::vector<std::string> internal_cmds;
     cvd_common::Args all_args;
-    FlagCollection cvd_flags;
   };
 
   // This call must guarantee all public methods will be valid
@@ -83,7 +78,6 @@ class FrontlineParser {
   cvd_common::Args server_supported_subcmds_;
   const cvd_common::Args all_args_;
   const std::vector<std::string> internal_cmds_;
-  FlagCollection cvd_flags_;
   std::unique_ptr<ArgumentsSeparator> arguments_separator_;
 };
 

@@ -23,7 +23,6 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
-#include "cuttlefish/host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
 
