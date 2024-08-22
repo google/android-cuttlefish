@@ -21,7 +21,6 @@ import (
 	"log"
 	"os"
 	"os/user"
-	"path/filepath"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -167,8 +166,6 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 	switch {
 	case a.req.CVD.BuildSource.AndroidCIBuildSource != nil:
 		instanceNumbers, err = a.launchFromAndroidCI(a.req.CVD.BuildSource.AndroidCIBuildSource, instancesCount, op)
-	case a.req.CVD.BuildSource.UserBuildSource != nil:
-		instanceNumbers, err = a.launchFromUserBuild(a.req.CVD.BuildSource.UserBuildSource, instancesCount, op)
 	default:
 		return &OperationResult{
 			Error: operator.NewBadRequestError(
@@ -282,26 +279,6 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 	return startParams.InstanceNumbers, nil
 }
 
-func (a *CreateCVDAction) launchFromUserBuild(
-	buildSource *apiv1.UserBuildSource, instancesCount uint32, op apiv1.Operation) ([]uint32, error) {
-	artifactsDir := a.userArtifactsDirResolver.GetDirPath(buildSource.ArtifactsDir)
-	if err := setWritePermissionOnVbmetaImgs(artifactsDir); err != nil {
-		return nil, err
-	}
-	startParams := startCVDParams{
-		InstanceNumbers:  a.newInstanceNumbers(instancesCount),
-		MainArtifactsDir: artifactsDir,
-	}
-	if err := CreateCVD(a.execContext, startParams); err != nil {
-		return nil, err
-	}
-	// TODO: Remove once `acloud CLI` gets deprecated.
-	if contains(startParams.InstanceNumbers, 1) {
-		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, artifactsDir)
-	}
-	return startParams.InstanceNumbers, nil
-}
-
 func (a *CreateCVDAction) newInstanceNumbers(n uint32) []uint32 {
 	result := []uint32{}
 	for i := 0; i < int(n); i++ {
@@ -321,13 +298,8 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	if r.CVD.BuildSource == nil {
 		return EmptyFieldError("BuildSource")
 	}
-	if r.CVD.BuildSource.AndroidCIBuildSource == nil && r.CVD.BuildSource.UserBuildSource == nil {
+	if r.CVD.BuildSource.AndroidCIBuildSource == nil {
 		return EmptyFieldError("BuildSource")
-	}
-	if r.CVD.BuildSource.UserBuildSource != nil {
-		if r.CVD.BuildSource.UserBuildSource.ArtifactsDir == "" {
-			return EmptyFieldError("BuildSource.UserBuild.ArtifactsDir")
-		}
 	}
 	return nil
 }
@@ -426,26 +398,4 @@ func tempFilename(pattern string) (string, error) {
 		return "", err
 	}
 	return name, nil
-}
-
-// Set group Write permission on vbmeta images granting write permissions to the
-// cvd user (user running the cvd commands).
-// `assemble_cvd` needs writer permission over vbmeta images to enforce minimum size:
-// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/host/commands/assemble_cvd/disk_flags.cc;l=628-650;drc=1a50803842a9e4f815f2f206f9fcdb924e1ec14d
-func setWritePermissionOnVbmetaImgs(dir string) error {
-	vbmetaImgs := []string{
-		"vbmeta.img",
-		"vbmeta_system.img",
-		"vbmeta_vendor_dlkm.img",
-		"vbmeta_system_dlkm.img",
-	}
-	for _, name := range vbmetaImgs {
-		filename := filepath.Join(dir, name)
-		if exist, _ := fileExist(filename); exist {
-			if err := os.Chmod(filename, 0664); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }

@@ -49,7 +49,6 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource.AndroidCIBuildSource = nil }},
 		{func(r *apiv1.CreateCVDRequest) {
 			r.CVD.BuildSource.AndroidCIBuildSource = nil
-			r.CVD.BuildSource.UserBuildSource = &apiv1.UserBuildSource{ArtifactsDir: ""}
 		}},
 	}
 	for _, test := range tests {

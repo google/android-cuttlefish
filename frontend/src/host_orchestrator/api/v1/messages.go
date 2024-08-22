@@ -83,18 +83,10 @@ type AndroidCIBuildSource struct {
 	SystemImageBuild *AndroidCIBuild `json:"system_image_build,omitempty"`
 }
 
-// Represents a user build.
-type UserBuildSource struct {
-	// [REQUIRED] Name of the directory where the user artifacts are stored.
-	ArtifactsDir string `json:"artifacts_dir"`
-}
-
 // Represents the artifacts source to build the CVD.
 type BuildSource struct {
 	// A build from ci.android.com
 	AndroidCIBuildSource *AndroidCIBuildSource `json:"android_ci_build_source,omitempty"`
-	// A user build.
-	UserBuildSource *UserBuildSource `json:"user_build_source,omitempty"`
 }
 
 type ListOperationsResponse struct {
