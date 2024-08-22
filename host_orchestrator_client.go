@@ -21,7 +21,8 @@ import (
 
 	wclient "github.com/google/cloud-android-orchestration/pkg/webrtcclient"
 
-	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
+	opapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -83,8 +84,8 @@ type HostOrchestratorServiceImpl struct {
 	BuildAPICredentialsHeader string
 }
 
-func (c *HostOrchestratorServiceImpl) getInfraConfig() (*hoapi.InfraConfig, error) {
-	var res hoapi.InfraConfig
+func (c *HostOrchestratorServiceImpl) getInfraConfig() (*opapi.InfraConfig, error) {
+	var res opapi.InfraConfig
 	if err := c.HTTPHelper.NewGetRequest("/infra_config").JSONResDo(&res); err != nil {
 		return nil, err
 	}
@@ -191,7 +192,7 @@ func (c *HostOrchestratorServiceImpl) webRTCForward(srcCh chan any, connID strin
 			close(stopPollCh)
 			break
 		}
-		forwardMsg := hoapi.ForwardMsg{Payload: msg}
+		forwardMsg := opapi.ForwardMsg{Payload: msg}
 		path := fmt.Sprintf("/polled_connections/%s/:forward", connID)
 		i := 0
 		for ; i < maxConsecutiveErrors; i++ {
@@ -210,9 +211,9 @@ func (c *HostOrchestratorServiceImpl) webRTCForward(srcCh chan any, connID strin
 	}
 }
 
-func (c *HostOrchestratorServiceImpl) createPolledConnection(device string) (*hoapi.NewConnReply, error) {
-	var res hoapi.NewConnReply
-	rb := c.HTTPHelper.NewPostRequest("/polled_connections", &hoapi.NewConnMsg{DeviceId: device})
+func (c *HostOrchestratorServiceImpl) createPolledConnection(device string) (*opapi.NewConnReply, error) {
+	var res opapi.NewConnReply
+	rb := c.HTTPHelper.NewPostRequest("/polled_connections", &opapi.NewConnMsg{DeviceId: device})
 	if err := rb.JSONResDo(&res); err != nil {
 		return nil, err
 	}
@@ -386,7 +387,7 @@ func (c *HostOrchestratorServiceImpl) CreateBugreport(group string, dst io.Write
 	return nil
 }
 
-func asWebRTCICEServers(in []hoapi.IceServer) []webrtc.ICEServer {
+func asWebRTCICEServers(in []opapi.IceServer) []webrtc.ICEServer {
 	out := []webrtc.ICEServer{}
 	for _, s := range in {
 		out = append(out, webrtc.ICEServer{
