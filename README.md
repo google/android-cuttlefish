@@ -56,8 +56,8 @@ Please run below command to build manually.
 
 ```bash
 cd /path/to/android-cuttlefish
-cd docker/orchestration
-./build.sh
+cd docker
+./image-builder.sh
 ```
 
 You can validate if the docker image is successfully built by checking
