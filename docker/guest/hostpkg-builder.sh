@@ -22,8 +22,7 @@ mkdir -p $outdir
 
 is_mv_debs="true"
 [[ "$outdir" == "" ]] && is_mv_debs="false"
-
-#end of preparation
+# end of preparation
 
 function build() {
     # Install bazel
@@ -37,8 +36,6 @@ function build() {
         popd > /dev/null 2>&1
     done
 }
-#sudo apt-get install --no-install-recommends -y -f ${outdir}/cuttlefish-base_*.deb
-#sudo apt-get install --no-install-recommends -y -f ${outdir}/cuttlefish-common_*.deb
 
 build
 [[ $is_mv_debs == "true" ]] && cp -f $cuttlefish_root/*.deb ${outdir}/
