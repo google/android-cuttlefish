@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/google/blueprint"
+	"github.com/google/blueprint/proptools"
 
 	"android/soong/android"
 )
@@ -173,9 +174,13 @@ func (p *cvdHostPackageSingleton) GenerateBuildActions(ctx android.SingletonCont
 		// nothing to do.
 		return
 	}
-	p.tarballPaths = cvdHostPackageTarball
-	ctx.Phony("hosttar", cvdHostPackageTarball...)
-	ctx.Phony("droidcore", cvdHostPackageStamp...)
+
+	board_platform := proptools.String(ctx.Config().ProductVariables().BoardPlatform)
+	if (board_platform == "vsoc_arm") || (board_platform == "vsoc_arm64") || (board_platform == "vsoc_riscv64") || (board_platform == "vsoc_x86") || (board_platform == "vsoc_x86_64") {
+		p.tarballPaths = cvdHostPackageTarball
+		ctx.Phony("hosttar", cvdHostPackageTarball...)
+		ctx.Phony("droidcore", cvdHostPackageStamp...)
+	}
 }
 
 func (p *cvdHostPackageSingleton) MakeVars(ctx android.MakeVarsContext) {
