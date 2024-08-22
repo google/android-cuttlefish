@@ -8,6 +8,7 @@ cuttlefish-common (0.9.31) unstable; urgency=medium
   * Split cvd start into create and start
   * Introduce cvd remove command
   * cvd start and remove use group selection menu
+  * cvd pre-registers devices with operator
 
  -- Jorge Moreira <jemoreira@google.com>  Mon, 12 Aug 2024 16:47:44 -0700
 
