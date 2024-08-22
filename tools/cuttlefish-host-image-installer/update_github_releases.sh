@@ -22,8 +22,8 @@ STABLE_VERSION="v$version"
 
 echo "step 2: move stable release to new commit id"
 git show-ref --tags
-commit_id=$(git rev-list -n 1 --tags --tags refs/tags/"$STABLE_VERSION")
-stable_commit_id=$(git rev-list -n 1 --tags --tags refs/tags/stable)
+commit_id=$(git rev-list -n 1 --tags refs/tags/"$STABLE_VERSION")
+stable_commit_id=$(git rev-list -n 1 --tags refs/tags/stable)
 if [[ "$commit_id" == "$stable_commit_id" ]]; then
   echo "same commit, no need to change code base"
 else
