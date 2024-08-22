@@ -57,7 +57,6 @@ cvd_host_tools = [
     "config_server",
     "console_forwarder",
     "crosvm",
-    "cvd",
     "cvd_internal_display",
     "cvd_internal_env",
     "echo_server",
