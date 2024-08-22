@@ -22,7 +22,6 @@ java_test_host {
         "src/com/android/cuttlefish/tests/CuttlefishDisplayHotplugTest.java",
     ],
     data_native_bins: [
-        "cvd",
         "cvd_internal_display",
     ],
     test_options: {
