@@ -75,14 +75,29 @@ void AddNetsimdLogs(ZipWriter& writer) {
 
 Result<void> CreateDeviceBugreport(
     const CuttlefishConfig::InstanceSpecific& ins, const std::string& out_dir) {
-  Command adb_command(HostBinaryPath("adb"));
-  adb_command.SetWorkingDirectory(
+  std::string adb_bin_path = HostBinaryPath("adb");
+  CF_EXPECT(FileExists(adb_bin_path),
+            "adb binary not found at: " << adb_bin_path);
+  Command wait_for_device_cmd("timeout");
+  wait_for_device_cmd.SetWorkingDirectory(
       "/");  // Use a deterministic working directory
-  adb_command.AddParameter("-s").AddParameter(ins.adb_ip_and_port());
-  adb_command.AddParameter("wait-for-device");
-  adb_command.AddParameter("bugreport");
-  adb_command.AddParameter(out_dir);
-  CF_EXPECT_EQ(adb_command.Start().Wait(), 0);
+  wait_for_device_cmd.AddParameter("30s")
+      .AddParameter(adb_bin_path)
+      .AddParameter("-s")
+      .AddParameter(ins.adb_ip_and_port())
+      .AddParameter("wait-for-device");
+  CF_EXPECT_EQ(wait_for_device_cmd.Start().Wait(), 0,
+               "adb wait-for-device failed");
+  Command bugreport_cmd("timeout");
+  bugreport_cmd.SetWorkingDirectory(
+      "/");  // Use a deterministic working directory
+  bugreport_cmd.AddParameter("300s")
+      .AddParameter(adb_bin_path)
+      .AddParameter("-s")
+      .AddParameter(ins.adb_ip_and_port())
+      .AddParameter("bugreport")
+      .AddParameter(out_dir);
+  CF_EXPECT_EQ(bugreport_cmd.Start().Wait(), 0, "adb bugreport failed");
   return {};
 }
 
