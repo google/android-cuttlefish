@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/gorilla/mux"
@@ -540,10 +541,17 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 
 	// Redirect WebSocket to ADB tcp socket
 	go func() {
-		io.Copy(wsWrapper, tcpConn)
-		wsWrapper.Close()
+		// TODO: Replace with checking net.ErrClosed after Go 1.16
+		if _, err := io.Copy(wsWrapper, tcpConn); err != nil && !strings.Contains(err.Error(), "use of closed network connection") {
+			log.Print("Error while io.Copy from ADB to WebSocket: ", err)
+		}
+		if err = wsWrapper.Close(); err != nil {
+			log.Print("Error while closing WebSocket: ", err)
+		}
 	}()
-	io.Copy(tcpConn, wsWrapper)
+	if _, err = io.Copy(tcpConn, wsWrapper); err != nil {
+		log.Print("Error while io.Copy from WebSocket to ADB: ", err)
+	}
 }
 
 // Wrapper for implementing io.ReadWriteCloser of websocket.Conn
@@ -561,6 +569,9 @@ func (w *wsIoWrapper) Read(p []byte) (int, error) {
 	if w.buf == nil || w.pos >= len(w.buf) {
 		_, readBuf, err := w.wsConn.ReadMessage()
 		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+				return 0, io.EOF
+			}
 			return 0, err
 		}
 		w.buf = readBuf
