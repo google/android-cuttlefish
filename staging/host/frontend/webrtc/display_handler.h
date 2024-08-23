@@ -16,10 +16,11 @@
 
 #pragma once
 
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <vector>
+#include <thread>
 
 #include "host/frontend/webrtc/cvd_video_frame_buffer.h"
 #include "host/frontend/webrtc/libdevice/video_sink.h"
@@ -60,22 +61,42 @@ class DisplayHandler {
 
   DisplayHandler(webrtc_streaming::Streamer& streamer,
                  ScreenConnector& screen_connector);
-  ~DisplayHandler() = default;
+  ~DisplayHandler();
 
   [[noreturn]] void Loop();
 
   // If std::nullopt, send last frame for all displays.
   void SendLastFrame(std::optional<uint32_t> display_number);
 
+  void AddDisplayClient();
+  void RemoveDisplayClient();
+
  private:
+  struct BufferInfo {
+    std::chrono::system_clock::time_point last_sent_time_stamp;
+    std::shared_ptr<webrtc_streaming::VideoFrameBuffer> buffer;
+  };
+  enum class RepeaterState: int {
+    PAUSED = 0,
+    REPEATING = 1,
+    STOPPED = 2,
+  };
+
   GenerateProcessedFrameCallback GetScreenConnectorCallback();
+  void SendBuffers(std::map<uint32_t, std::shared_ptr<BufferInfo>> buffers);
+  void RepeatFramesPeriodically();
+
   std::map<uint32_t, std::shared_ptr<webrtc_streaming::VideoSink>>
       display_sinks_;
   webrtc_streaming::Streamer& streamer_;
   ScreenConnector& screen_connector_;
-  std::map<uint32_t, std::shared_ptr<webrtc_streaming::VideoFrameBuffer>>
-      display_last_buffers_;
-  std::mutex last_buffer_mutex_;
-  std::mutex next_frame_mutex_;
+  std::map<uint32_t, std::shared_ptr<BufferInfo>> display_last_buffers_;
+  std::mutex last_buffers_mutex_;
+  std::mutex send_mutex_;
+  std::thread frame_repeater_;
+  RepeaterState repeater_state_ = RepeaterState::PAUSED;
+  int num_active_clients_ = 0;
+  std::mutex repeater_state_mutex_;
+  std::condition_variable repeater_state_condvar_;
 };
 }  // namespace cuttlefish
