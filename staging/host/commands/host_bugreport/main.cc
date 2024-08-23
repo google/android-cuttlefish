@@ -78,6 +78,14 @@ Result<void> CreateDeviceBugreport(
   std::string adb_bin_path = HostBinaryPath("adb");
   CF_EXPECT(FileExists(adb_bin_path),
             "adb binary not found at: " << adb_bin_path);
+  Command connect_cmd("timeout");
+  connect_cmd.SetWorkingDirectory(
+      "/");  // Use a deterministic working directory
+  connect_cmd.AddParameter("30s")
+      .AddParameter(adb_bin_path)
+      .AddParameter("connect")
+      .AddParameter(ins.adb_ip_and_port());
+  CF_EXPECT_EQ(connect_cmd.Start().Wait(), 0, "adb connect failed");
   Command wait_for_device_cmd("timeout");
   wait_for_device_cmd.SetWorkingDirectory(
       "/");  // Use a deterministic working directory
