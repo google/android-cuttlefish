@@ -16,13 +16,15 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
-#include "sandboxed_api/sandbox2/policybuilder.h"
-#include "sandboxed_api/util/path.h"
+#include <sys/mman.h>
+
+#include <sandboxed_api/sandbox2/policybuilder.h>
+#include <sandboxed_api/sandbox2/util/bpf_helper.h>
+#include <sandboxed_api/util/path.h>
+
+namespace cuttlefish::process_sandboxer {
 
 using sapi::file::JoinPath;
-
-namespace cuttlefish {
-namespace process_sandboxer {
 
 sandbox2::PolicyBuilder BaselinePolicy(const HostInfo& host,
                                        std::string_view exe) {
@@ -33,11 +35,44 @@ sandbox2::PolicyBuilder BaselinePolicy(const HostInfo& host,
       .AllowExit()
       .AllowGetPIDs()
       .AllowGetRandom()
-      .AllowMmap()
+      // Observed by `strace` on `socket_vsock_proxy` with x86_64 AOSP `glibc`.
+      .AddPolicyOnMmap([](bpf_labels& labels) -> std::vector<sock_filter> {
+        return {
+            ARG_32(2),  // prot
+            JEQ32(PROT_NONE, JUMP(&labels, cf_mmap_prot_none)),
+            JEQ32(PROT_READ, JUMP(&labels, cf_mmap_prot_read)),
+            JEQ32(PROT_READ | PROT_EXEC, JUMP(&labels, cf_mmap_prot_read_exec)),
+            JNE32(PROT_READ | PROT_WRITE, JUMP(&labels, cf_mmap_prot_end)),
+            // PROT_READ | PROT_WRITE
+            ARG_32(3),  // flags
+            JEQ32(MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, ALLOW),
+            JUMP(&labels, cf_mmap_prot_end),
+            // PROT_READ | PROT_EXEC
+            LABEL(&labels, cf_mmap_prot_read_exec),
+            ARG_32(3),  // flags
+            JEQ32(MAP_PRIVATE | MAP_DENYWRITE, ALLOW),
+            JEQ32(MAP_PRIVATE | MAP_FIXED | MAP_DENYWRITE, ALLOW),
+            JUMP(&labels, cf_mmap_prot_end),
+            // PROT_READ
+            LABEL(&labels, cf_mmap_prot_read),
+            ARG_32(3),  // flags
+            JEQ32(MAP_PRIVATE | MAP_ANONYMOUS, ALLOW),
+            JEQ32(MAP_PRIVATE | MAP_DENYWRITE, ALLOW),
+            JEQ32(MAP_PRIVATE | MAP_FIXED | MAP_DENYWRITE, ALLOW),
+            JEQ32(MAP_PRIVATE, ALLOW),
+            JUMP(&labels, cf_mmap_prot_end),
+            // PROT_NONE
+            LABEL(&labels, cf_mmap_prot_none),
+            ARG_32(3),  // flags
+            JEQ32(MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, ALLOW),
+            JEQ32(MAP_PRIVATE | MAP_ANONYMOUS, ALLOW),
+
+            LABEL(&labels, cf_mmap_prot_end),
+        };
+      })
       .AllowReadlink()
       .AllowRestartableSequences(sandbox2::PolicyBuilder::kAllowSlowFences)
       .AllowWrite();
 }
 
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
+}  // namespace cuttlefish::process_sandboxer
