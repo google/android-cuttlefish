@@ -49,9 +49,12 @@ func TestCreateSingleInstance(t *testing.T) {
 		},
 	}
 
-	got, err := srv.CreateCVD(createReq, "")
+	got, createErr := srv.CreateCVD(createReq, "")
 
-	if err != nil {
+	if err := e2etesting.DownloadHostBugReport(srv, "cvd"); err != nil {
+		t.Errorf("failed creating bugreport: %s\n", err)
+	}
+	if createErr != nil {
 		t.Fatal(err)
 	}
 	want := &hoapi.CreateCVDResponse{
