@@ -69,12 +69,19 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
         lights_observer_(lights_observer) {}
   virtual ~ConnectionObserverImpl() {
     auto display_handler = weak_display_handler_.lock();
+    if (display_handler) {
+      display_handler->RemoveDisplayClient();
+    }
     if (kernel_log_subscription_id_ != -1) {
       kernel_log_events_handler_->Unsubscribe(kernel_log_subscription_id_);
     }
   }
 
   void OnConnected() override {
+    auto display_handler = weak_display_handler_.lock();
+    if (display_handler) {
+      display_handler->AddDisplayClient();
+    }
     SendLastFrameAsync(/*all displays*/ std::nullopt);
   }
 
