@@ -71,4 +71,18 @@ cuttlefish-orchestration latest 0123456789ab   2 minutes ago    690MB
 
 ### Download prebuilt image
 
-Sorry for inconvenience, currently it's not supported yet.
+Downloading latest image is available
+[here](https://github.com/google/android-cuttlefish/releases/tag/latest).
+
+After downloading image, please load the image and verify with
+`docker image list`.
+
+```bash
+docker load --input ${PATH_TO_PREBUILT_DOCKER_IMAGE}
+```
+
+Registering the tag of loaded image as `latest` is available with below script.
+
+```bash
+docker tag cuttlefish-orchestration:${PREBUILT_DOCKER_IMAGE_TAG} cuttlefish-orchestration:latest
+```
