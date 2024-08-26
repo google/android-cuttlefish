@@ -21,6 +21,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/in_sandbox.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
@@ -50,10 +51,12 @@ Result<std::optional<MonitorCommand>> GnssGrpcProxyServer(
           .AddParameter("--gnss_out_fd=", fifos[1])
           .AddParameter("--fixed_location_in_fd=", fifos[2])
           .AddParameter("--fixed_location_out_fd=", fifos[3])
-          .AddParameter("--gnss_grpc_port=",
-                        instance.gnss_grpc_proxy_server_port())
           .AddParameter("--gnss_grpc_socket=",
                         grpc_socket.CreateGrpcSocket("GnssGrpcProxyServer"));
+  if (!InSandbox()) {
+    gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_port=",
+                                     instance.gnss_grpc_proxy_server_port());
+  }
   if (!instance.gnss_file_path().empty()) {
     // If path is provided, proxy will start as local mode.
     gnss_grpc_proxy_cmd.AddParameter("--gnss_file_path=",
