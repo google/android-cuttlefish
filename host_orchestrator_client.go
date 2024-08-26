@@ -67,7 +67,7 @@ type HostOrchestratorService interface {
 	CreateBugreport(group string, dst io.Writer) error
 }
 
-const defaultHostOrchestratorCredentialsHeader = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
+const DefaultHostOrchestratorCredentialsHeader = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
 
 func NewHostOrchestratorService(url string) HostOrchestratorService {
 	return &HostOrchestratorServiceImpl{
@@ -75,7 +75,7 @@ func NewHostOrchestratorService(url string) HostOrchestratorService {
 			Client:       http.DefaultClient,
 			RootEndpoint: url,
 		},
-		BuildAPICredentialsHeader: defaultHostOrchestratorCredentialsHeader,
+		BuildAPICredentialsHeader: DefaultHostOrchestratorCredentialsHeader,
 	}
 }
 

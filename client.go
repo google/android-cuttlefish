@@ -67,12 +67,13 @@ type HTTPBasic struct {
 }
 
 type ServiceOptions struct {
-	RootEndpoint   string
-	ProxyURL       string
-	DumpOut        io.Writer
-	ErrOut         io.Writer
-	ChunkSizeBytes int64
-	Authn          *AuthnOpts
+	RootEndpoint        string
+	ProxyURL            string
+	DumpOut             io.Writer
+	ErrOut              io.Writer
+	ChunkSizeBytes      int64
+	Authn               *AuthnOpts
+	InjectBuildAPICreds bool
 }
 
 type Service interface {
@@ -189,7 +190,10 @@ func (s *serviceImpl) HostService(host string) HostOrchestratorService {
 	hs := &HostOrchestratorServiceImpl{
 		HTTPHelper: s.httpHelper,
 		// Make the cloud orchestrator inject the credentials instead
-		BuildAPICredentialsHeader: headerNameCOInjectBuildAPICreds,
+		BuildAPICredentialsHeader: DefaultHostOrchestratorCredentialsHeader,
+	}
+	if s.InjectBuildAPICreds {
+		hs.BuildAPICredentialsHeader = headerNameCOInjectBuildAPICreds
 	}
 	hs.HTTPHelper.RootEndpoint = s.httpHelper.RootEndpoint + "/hosts/" + host
 	return hs
