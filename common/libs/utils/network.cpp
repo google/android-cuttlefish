@@ -33,14 +33,8 @@
 
 #include <cstdint>
 #include <cstring>
-#include <functional>
-#include <iomanip>
-#include <ios>
-#include <memory>
 #include <ostream>
 #include <set>
-#include <sstream>
-#include <streambuf>
 #include <string>
 #include <utility>
 #include <vector>
@@ -106,6 +100,16 @@ bool NetworkInterfaceExists(const std::string& interface_name) {
 }
 
 #ifdef __linux__
+static std::optional<Command> EgrepCommand() {
+  if (FileExists("/usr/bin/egrep")) {
+    return Command("/usr/bin/egrep");
+  } else if (FileExists("/bin/egrep")) {
+    return Command("/bin/egrep");
+  } else {
+    return {};
+  }
+}
+
 std::set<std::string> TapInterfacesInUse() {
   std::vector<std::string> fdinfo_list;
 
@@ -127,17 +131,19 @@ std::set<std::string> TapInterfacesInUse() {
     }
   }
 
-  Command cmd = Command("/usr/bin/egrep")
-                    .AddParameter("-h")
-                    .AddParameter("-e")
-                    .AddParameter("^iff:.*");
+  std::optional<Command> cmd = EgrepCommand();
+  if (!cmd) {
+    LOG(WARNING) << "Unable to test TAP interface usage";
+    return {};
+  }
+  cmd->AddParameter("-h").AddParameter("-e").AddParameter("^iff:.*");
 
   for (const std::string& fdinfo : fdinfo_list) {
-    cmd.AddParameter(fdinfo);
+    cmd->AddParameter(fdinfo);
   }
 
   std::string stdout_str, stderr_str;
-  RunWithManagedStdio(std::move(cmd), nullptr, &stdout_str, &stderr_str);
+  RunWithManagedStdio(std::move(*cmd), nullptr, &stdout_str, &stderr_str);
 
   auto lines = android::base::Split(stdout_str, "\n");
   std::set<std::string> tap_interfaces;
