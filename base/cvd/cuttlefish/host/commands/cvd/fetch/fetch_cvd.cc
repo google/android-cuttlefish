@@ -338,8 +338,9 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   const auto cache_base_path = PerUserDir() + "/cache";
   return CreateBuildApi(std::move(retrying_http_client), std::move(curl),
                         std::move(credential_source), std::move(flags.api_key),
-                        flags.wait_retry_period, std::move(flags.api_base_url),
-                        flags.enable_caching, std::move(cache_base_path));
+                        flags.wait_retry_period, std::move(flags.api_base_url), 
+                        std::move(flags.project_id), flags.enable_caching, 
+                        std::move(cache_base_path));
 }
 
 Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {

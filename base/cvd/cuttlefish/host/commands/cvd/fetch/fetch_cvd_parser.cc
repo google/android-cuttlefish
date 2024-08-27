@@ -87,6 +87,9 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(
       GflagsCompatFlag("credential_source", build_api_flags.credential_source)
           .Help("Build API credential source"));
+  flags.emplace_back(
+      GflagsCompatFlag("project_id", build_api_flags.project_id)
+          .Help("Project ID used to access the Build API"));
   flags.emplace_back(GflagsCompatFlagSeconds("wait_retry_period",
                                              build_api_flags.wait_retry_period)
                          .Help("Retry period for pending builds given in "

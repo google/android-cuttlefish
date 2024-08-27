@@ -76,7 +76,7 @@ class BuildApi {
            std::unique_ptr<HttpClient> inner_http_client,
            std::unique_ptr<CredentialSource> credential_source,
            std::string api_key, const std::chrono::seconds retry_period,
-           std::string api_base_url);
+           std::string api_base_url, std::string project_id);
 
   Result<Build> GetBuild(const BuildString& build_string,
                          const std::string& fallback_target);
@@ -139,6 +139,7 @@ class BuildApi {
   std::string api_key_;
   std::chrono::seconds retry_period_;
   std::string api_base_url_;
+  std::string project_id_;
 };
 
 std::string GetBuildZipName(const Build& build, const std::string& name);
