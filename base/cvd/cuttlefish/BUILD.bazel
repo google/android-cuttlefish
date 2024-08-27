@@ -87,6 +87,7 @@ cc_library(
     ],
     copts = [
         "-std=c++17",
+        "-Werror=sign-compare",
     ],
     linkopts = ["-lcurl"],
     strip_include_prefix = "//cuttlefish",
@@ -165,7 +166,6 @@ cc_proto_library(
 cc_library(
     name = "libcvd",
     srcs = [
-        "//:build_version_header",
         "host/commands/assemble_cvd/flags_defaults.h",
         "host/commands/cvd/acloud/config.cpp",
         "host/commands/cvd/acloud/config.h",
@@ -357,6 +357,7 @@ cc_library(
         "host/commands/cvd/selector/data_viewer.cpp",
     ],
     hdrs = [
+        "build/version.h",
         "host/commands/assemble_cvd/flags_defaults.h",
         "host/commands/cvd/acloud/config.h",
         "host/commands/cvd/acloud/converter.h",
@@ -470,7 +471,6 @@ cc_library(
         ":launch_cvd_cc_proto",
         ":load_config_cc_proto",
         ":user_config_cc_proto",
-        "//:build_version_header",
         "//libbase",
         "//libsparse",
         "@fmt",
@@ -478,6 +478,7 @@ cc_library(
         "@jsoncpp",
         "@tinyxml2",
     ],
+    linkstamp = "build/version.cpp",
 )
 
 cc_binary(
@@ -545,6 +546,7 @@ cc_test(
     ],
     copts = [
         "-Wno-ctad-maybe-unsupported",
+        "-Werror=sign-compare",
         "-Ithird_party/android_cuttlefish/base/cvd/cuttlefish",
         "-std=c++17",
     ],

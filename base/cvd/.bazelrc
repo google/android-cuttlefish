@@ -1,1 +1,3 @@
 build --copt=-fdiagnostics-color=always
+# hide warning from protobuf code
+build --output_filter='^//(allocd|cuttlefish):'

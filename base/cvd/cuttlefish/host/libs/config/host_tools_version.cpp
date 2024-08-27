@@ -63,7 +63,7 @@ static std::map<std::string, uint32_t> DirectoryCrc(const std::string& path) {
         std::async(FileCrc, DefaultHostArtifactsPath(file)));
   }
   std::map<std::string, uint32_t> crcs;
-  for (int i = 0; i < files.size(); i++) {
+  for (size_t i = 0; i < files.size(); i++) {
     crcs[files[i]] = calculations[i].get();
   }
   return crcs;
