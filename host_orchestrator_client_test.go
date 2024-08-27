@@ -219,7 +219,41 @@ func TestCreateCVD(t *testing.T) {
 	srv := NewHostOrchestratorService(ts.URL)
 	req := &hoapi.CreateCVDRequest{EnvConfig: map[string]interface{}{}}
 
-	res, err := srv.CreateCVD(req, "")
+	res, err := srv.CreateCVD(req, BuildAPICredential{})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(fakeRes, res); diff != "" {
+		t.Fatalf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestCreateCVDWithUserProjectOverride(t *testing.T) {
+	fakeRes := &hoapi.CreateCVDResponse{CVDs: []*hoapi.CVD{{Name: "1"}}}
+	token := "foo"
+	projectID := "fake-project"
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "POST /cvds":
+			if r.Header.Get(DefaultHostOrchestratorCredentialsHeader) != token {
+				t.Fatal("unexpected access token: " + r.Header.Get(DefaultHostOrchestratorCredentialsHeader))
+			}
+			if r.Header.Get(BuildAPICredsUserProjectIDHeader) != projectID {
+				t.Fatal("unexpected user project id: " + r.Header.Get(BuildAPICredsUserProjectIDHeader))
+			}
+			writeOK(w, hoapi.Operation{Name: "foo"})
+		case "POST /operations/foo/:wait":
+			writeOK(w, fakeRes)
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	srv := NewHostOrchestratorService(ts.URL)
+	req := &hoapi.CreateCVDRequest{EnvConfig: map[string]interface{}{}}
+
+	res, err := srv.CreateCVD(req, BuildAPICredential{AccessToken: token, UserProjectID: projectID})
 
 	if err != nil {
 		t.Fatal(err)
