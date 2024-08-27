@@ -33,6 +33,11 @@ type ConnectWebRTCOpts struct {
 	LocalICEConfig *wclient.ICEConfig
 }
 
+type BuildAPICredential struct {
+	AccessToken   string
+	UserProjectID string
+}
+
 // A client to the host orchestrator service running in a remote host.
 type HostOrchestratorService interface {
 	// Lists currently running devices.
@@ -50,15 +55,15 @@ type HostOrchestratorService interface {
 
 	// Create a new device with artifacts from the build server or previously uploaded by the user.
 	// If not empty, the provided credentials will be used to download necessary artifacts from the build api.
-	CreateCVD(req *hoapi.CreateCVDRequest, buildAPICredentials string) (*hoapi.CreateCVDResponse, error)
-	CreateCVDOp(req *hoapi.CreateCVDRequest, buildAPICredentials string) (*hoapi.Operation, error)
+	CreateCVD(req *hoapi.CreateCVDRequest, buildAPICredentials BuildAPICredential) (*hoapi.CreateCVDResponse, error)
+	CreateCVDOp(req *hoapi.CreateCVDRequest, buildAPICredentials BuildAPICredential) (*hoapi.Operation, error)
 
 	// Deletes an existing cvd instance.
 	DeleteCVD(id string) error
 
 	// Calls cvd fetch in the remote host, the downloaded artifacts can be used to create a CVD later.
 	// If not empty, the provided credentials will be used by the host orchestrator to access the build api.
-	FetchArtifacts(req *hoapi.FetchArtifactsRequest, buildAPICredentials string) (*hoapi.FetchArtifactsResponse, error)
+	FetchArtifacts(req *hoapi.FetchArtifactsRequest, buildAPICredentials BuildAPICredential) (*hoapi.FetchArtifactsResponse, error)
 
 	// Creates a webRTC connection to a device running in this host.
 	ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
@@ -74,6 +79,7 @@ type HostOrchestratorService interface {
 }
 
 const DefaultHostOrchestratorCredentialsHeader = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
+const BuildAPICredsUserProjectIDHeader = "X-Cutf-Host-Orchestrator-BuildAPI-Creds-User-Project-ID"
 
 func NewHostOrchestratorService(url string) HostOrchestratorService {
 	return &HostOrchestratorServiceImpl{
@@ -284,12 +290,10 @@ func (c *HostOrchestratorServiceImpl) waitForOperation(name string, res any, ret
 	return c.HTTPHelper.NewPostRequest(path, nil).JSONResDoWithRetries(res, retryOpts)
 }
 
-func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds string) (*hoapi.FetchArtifactsResponse, error) {
+func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICredential) (*hoapi.FetchArtifactsResponse, error) {
 	var op hoapi.Operation
 	rb := c.HTTPHelper.NewPostRequest("/artifacts", req)
-	if creds != "" {
-		rb.AddHeader(c.BuildAPICredentialsHeader, creds)
-	}
+	addBuildAPICredsHeaders(rb, creds)
 	if err := rb.JSONResDo(&op); err != nil {
 		return nil, err
 	}
@@ -301,19 +305,17 @@ func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRe
 	return res, nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateCVDOp(req *hoapi.CreateCVDRequest, creds string) (*hoapi.Operation, error) {
+func (c *HostOrchestratorServiceImpl) CreateCVDOp(req *hoapi.CreateCVDRequest, creds BuildAPICredential) (*hoapi.Operation, error) {
 	op := &hoapi.Operation{}
 	rb := c.HTTPHelper.NewPostRequest("/cvds", req)
-	if creds != "" {
-		rb.AddHeader(c.BuildAPICredentialsHeader, creds)
-	}
+	addBuildAPICredsHeaders(rb, creds)
 	if err := rb.JSONResDo(op); err != nil {
 		return nil, err
 	}
 	return op, nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, creds string) (*hoapi.CreateCVDResponse, error) {
+func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, creds BuildAPICredential) (*hoapi.CreateCVDResponse, error) {
 	op, err := c.CreateCVDOp(req, creds)
 	if err != nil {
 		return nil, err
@@ -445,4 +447,13 @@ func asWebRTCICEServers(in []opapi.IceServer) []webrtc.ICEServer {
 		})
 	}
 	return out
+}
+
+func addBuildAPICredsHeaders(rb *HTTPRequestBuilder, creds BuildAPICredential) {
+	if creds.AccessToken != "" {
+		rb.AddHeader(DefaultHostOrchestratorCredentialsHeader, creds.AccessToken)
+		if creds.UserProjectID != "" {
+			rb.AddHeader(BuildAPICredsUserProjectIDHeader, creds.UserProjectID)
+		}
+	}
 }
