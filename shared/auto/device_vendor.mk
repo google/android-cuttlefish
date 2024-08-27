@@ -150,3 +150,4 @@ PRODUCT_PACKAGES += ConnectivityOverlayCuttleFish
 GOOGLE_CAR_SERVICE_OVERLAY += ConnectivityOverlayCuttleFishGoogle
 
 TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/auto/android-info.txt
+BOARD_BOOTCONFIG += androidboot.hibernation_resume_device=259:3
