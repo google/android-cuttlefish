@@ -39,8 +39,6 @@ class InputConnector {
   class EventSink {
    public:
     virtual ~EventSink() = default;
-    virtual Result<void> SendMouseMoveEvent(int x, int y) = 0;
-    virtual Result<void> SendMouseButtonEvent(int button, bool down) = 0;
     virtual Result<void> SendTouchEvent(const std::string& display, int x,
                                         int y, bool down) = 0;
     virtual Result<void> SendMultiTouchEvent(
