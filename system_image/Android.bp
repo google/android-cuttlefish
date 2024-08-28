@@ -757,6 +757,7 @@ android_system_image {
                 "libmedia_jni", // base_system
                 "libmediandk", // base_system
                 "libminui", // generic_system
+                "libmonkey_jni", // base_system
                 "libmtp", // base_system
                 "libnetd_client", // base_system
                 "libnetlink", // base_system
