@@ -45,8 +45,10 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #include <sandboxed_api/sandbox2/executor.h>
+#include <sandboxed_api/sandbox2/notify.h>
 #include <sandboxed_api/sandbox2/policy.h>
 #include <sandboxed_api/sandbox2/sandbox2.h>
+#include <sandboxed_api/sandbox2/util.h>
 #include <sandboxed_api/util/path.h>
 #pragma clang diagnostic pop
 
@@ -61,6 +63,8 @@ namespace cuttlefish::process_sandboxer {
 using sandbox2::Executor;
 using sandbox2::Policy;
 using sandbox2::Sandbox2;
+using sandbox2::Syscall;
+using sandbox2::util::GetProgName;
 using sapi::file::CleanPath;
 using sapi::file::JoinPath;
 
@@ -375,6 +379,17 @@ absl::Status SandboxManager::RunProcess(
   }
 }
 
+class TraceAndAllow : public sandbox2::Notify {
+ public:
+  TraceAction EventSyscallTrace(const Syscall& syscall) override {
+    std::string prog_name = GetProgName(syscall.pid());
+    LOG(WARNING) << "[PERMITTED]: SYSCALL ::: PID: " << syscall.pid()
+                 << ", PROG: '" << prog_name
+                 << "' : " << syscall.GetDescription();
+    return TraceAction::kAllow;
+  }
+};
+
 absl::Status SandboxManager::RunSandboxedProcess(
     std::optional<int> client_fd, absl::Span<const std::string> argv,
     std::vector<std::pair<UniqueFd, int>> fds,
@@ -413,7 +428,11 @@ absl::Status SandboxManager::RunSandboxedProcess(
     return absl::ErrnoToStatus(errno, "`eventfd` failed");
   }
 
-  auto sbx = std::make_unique<Sandbox2>(std::move(executor), std::move(policy));
+  // TODO: b/318576505 - Don't allow unknown system calls.
+  std::unique_ptr<sandbox2::Notify> notify(new TraceAndAllow());
+
+  auto sbx = std::make_unique<Sandbox2>(std::move(executor), std::move(policy),
+                                        std::move(notify));
   if (!sbx->RunAsync()) {
     return sbx->AwaitResult().ToStatus();
   }

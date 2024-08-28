@@ -17,8 +17,8 @@
 
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_replace.h>
-#include <sandboxed_api/sandbox2/allow_all_syscalls.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
+#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 #include <sandboxed_api/util/path.h>
 
 namespace cuttlefish::process_sandboxer {
@@ -73,7 +73,7 @@ sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo& host) {
       // TODO(schuffelen): Write a system call policy. As written, this only
       // uses the namespacing features of sandbox2, ignoring the seccomp
       // features.
-      .DefaultAction(sandbox2::AllowAllSyscalls{});
+      .DefaultAction(sandbox2::TraceAllSyscalls{});
 }
 
 }  // namespace cuttlefish::process_sandboxer

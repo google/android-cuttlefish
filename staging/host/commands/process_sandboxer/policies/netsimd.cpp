@@ -16,9 +16,9 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
-#include <sandboxed_api/sandbox2/allow_all_syscalls.h>
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
+#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 #include <sandboxed_api/util/path.h>
 
 namespace cuttlefish::process_sandboxer {
@@ -33,7 +33,7 @@ sandbox2::PolicyBuilder NetsimdPolicy(const HostInfo& host) {
       .AddDirectory(JoinPath(host.runtime_dir, "internal"), /* is_ro= */ false)
       .AddFile("/dev/urandom")  // For gRPC
       .Allow(sandbox2::UnrestrictedNetworking())
-      .DefaultAction(sandbox2::AllowAllSyscalls());
+      .DefaultAction(sandbox2::TraceAllSyscalls());
 }
 
 }  // namespace cuttlefish::process_sandboxer
