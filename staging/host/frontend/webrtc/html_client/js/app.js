@@ -184,7 +184,6 @@ class DeviceControlApp {
     this.#showDeviceUI();
   }
 
-
   #showDeviceUI() {
     // Set up control panel buttons
     addMouseListeners(
@@ -299,8 +298,6 @@ class DeviceControlApp {
 
     createSliderListener('rotation-slider', () => this.#onMotionChanged(this.#deviceConnection));
 
-    trackMouseEvents(this.#deviceConnection, document.getElementById('mouse_btn'));
-
     if (this.#deviceConnection.description.custom_control_panel_buttons.length >
         0) {
       document.getElementById('control-panel-custom-buttons').style.display =
@@ -354,13 +351,8 @@ class DeviceControlApp {
     }
 
     // Set up keyboard and wheel capture
-    // Since when pointer lock to the mouse_btn, keyboard events will
-    // be sent to the button instead of displays. So the button should also
-    // be able to handle the keyboard events.
-    this.#startKeyboardCapture(document.querySelector('#device-displays'));
-    this.#startKeyboardCapture(document.getElementById('mouse_btn'));
-    this.#startWheelCapture(document.querySelector('#device-displays'));
-    this.#startWheelCapture(document.getElementById('mouse_btn'));
+    this.#startKeyboardCapture();
+    this.#startWheelCapture();
 
     this.#updateDeviceHardwareDetails(
         this.#deviceConnection.description.hardware);
@@ -984,9 +976,10 @@ class DeviceControlApp {
     }));
   }
 
-  #startKeyboardCapture(elem) {
-    elem.addEventListener('keydown', evt => this.#onKeyEvent(evt));
-    elem.addEventListener('keyup', evt => this.#onKeyEvent(evt));
+  #startKeyboardCapture() {
+    const deviceArea = document.querySelector('#device-displays');
+    deviceArea.addEventListener('keydown', evt => this.#onKeyEvent(evt));
+    deviceArea.addEventListener('keyup', evt => this.#onKeyEvent(evt));
   }
 
   #onKeyEvent(e) {
@@ -998,8 +991,9 @@ class DeviceControlApp {
     this.#deviceConnection.sendKeyEvent(e.code, e.type);
   }
 
-  #startWheelCapture(elm) {
-    elm.addEventListener('wheel', evt => this.#onWheelEvent(evt),
+  #startWheelCapture() {
+    const deviceArea = document.querySelector('#device-displays');
+    deviceArea.addEventListener('wheel', evt => this.#onWheelEvent(evt),
                                 { passive: false });
   }
 
@@ -1218,4 +1212,3 @@ function getStyleAfterRotation(rotationDeg, ar) {
 
   return {transform, maxWidth, maxHeight};
 }
-
