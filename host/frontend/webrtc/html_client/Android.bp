@@ -93,10 +93,3 @@ prebuilt_usr_share_host {
     filename: "touch.js",
     sub_dir: "webrtc/assets/js",
 }
-
-prebuilt_usr_share_host {
-    name: "webrtc_mouse.js",
-    src: "js/mouse.js",
-    filename: "mouse.js",
-    sub_dir: "webrtc/assets/js",
-}
