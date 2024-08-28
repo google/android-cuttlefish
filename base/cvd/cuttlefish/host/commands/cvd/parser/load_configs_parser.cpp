@@ -19,6 +19,8 @@
 #include <unistd.h>
 
 #include <cstdio>
+#include <set>
+#include <string_view>
 #include <string>
 #include <vector>
 
@@ -271,6 +273,29 @@ Result<LoadDirectories> GenerateLoadDirectories(
   return result;
 }
 
+std::vector<std::string> FillEmptyInstanceNames(
+    std::vector<std::string> instance_names) {
+  std::set<std::string_view> used;
+  for (const auto& name : instance_names) {
+    if (name.empty()) {
+      continue;
+    }
+    used.insert(name);
+  }
+  int index = 1;
+  for (auto& name : instance_names) {
+    if (!name.empty()) {
+      continue;
+    }
+    while (used.find(std::to_string(index)) != used.end()) {
+      ++index;
+    }
+    name = std::to_string(index++);
+    used.insert(name);
+  }
+  return instance_names;
+}
+
 Result<CvdFlags> ParseCvdConfigs(const EnvironmentSpecification& launch,
                                  const LoadDirectories& load_directories) {
   CvdFlags flags{.launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(launch)),
@@ -286,6 +311,8 @@ Result<CvdFlags> ParseCvdConfigs(const EnvironmentSpecification& launch,
   for (const auto& instance: launch.instances()) {
     flags.instance_names.push_back(instance.name());
   }
+  flags.instance_names =
+      FillEmptyInstanceNames(std::move(flags.instance_names));
   return flags;
 }
 
