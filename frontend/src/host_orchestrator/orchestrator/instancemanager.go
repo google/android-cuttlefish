@@ -345,10 +345,7 @@ type startCVDParams struct {
 
 func CreateCVD(ctx cvd.CVDExecContext, p startCVDParams) error {
 	args := []string{groupNameArg, "create", daemonArg, reportAnonymousUsageStatsArg}
-	if len(p.InstanceNumbers) == 1 {
-		// Use legacy `--base_instance_num` when multi-vd is not requested.
-		args = append(args, fmt.Sprintf("--base_instance_num=%d", p.InstanceNumbers[0]))
-	} else {
+	if len(p.InstanceNumbers) > 1 {
 		args = append(args, fmt.Sprintf("--instance_nums=%s", strings.Join(SliceItoa(p.InstanceNumbers), ",")))
 	}
 	args = append(args, fmt.Sprintf("--system_image_dir=%s", p.MainArtifactsDir))
