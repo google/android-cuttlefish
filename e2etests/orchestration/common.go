@@ -1,10 +1,12 @@
 package e2etesting
 
 import (
+	"archive/zip"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -170,6 +172,9 @@ func DownloadHostBugReport(srv orchclient.HostOrchestratorService, group string)
 	if err := f.Close(); err != nil {
 		return err
 	}
+	if err := verifyZipFile(filename); err != nil {
+		return fmt.Errorf("invalid bugreport zip file %s: %w", filename, err)
+	}
 	return nil
 }
 
@@ -183,6 +188,28 @@ func UploadAndExtract(srv orchclient.HostOrchestratorService, remoteDir, src str
 	}
 	if err := srv.WaitForOperation(op.Name, nil); err != nil {
 		return err
+	}
+	return nil
+}
+
+// The zip file is verified checking for errors extracting
+// each file in the archive.
+func verifyZipFile(filename string) error {
+	r, err := zip.OpenReader(filename)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+	for _, f := range r.File {
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		_, readErr := io.Copy(io.Discard, rc)
+		rc.Close()
+		if readErr != nil {
+			return readErr
+		}
 	}
 	return nil
 }
