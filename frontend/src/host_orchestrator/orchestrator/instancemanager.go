@@ -222,14 +222,14 @@ func defaultMainBuild() *apiv1.AndroidCIBuild {
 }
 
 type fetchCVDCommandArtifactsFetcher struct {
-	execContext cvd.CVDExecContext
-	credentials string
+	execContext         cvd.CVDExecContext
+	buildAPICredentials BuildAPICredentials
 }
 
-func newFetchCVDCommandArtifactsFetcher(execContext cvd.CVDExecContext, credentials string) *fetchCVDCommandArtifactsFetcher {
+func newFetchCVDCommandArtifactsFetcher(execContext cvd.CVDExecContext, buildAPICredentials BuildAPICredentials) *fetchCVDCommandArtifactsFetcher {
 	return &fetchCVDCommandArtifactsFetcher{
-		execContext: execContext,
-		credentials: credentials,
+		execContext:         execContext,
+		buildAPICredentials: buildAPICredentials,
 	}
 }
 
@@ -247,8 +247,8 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 	var file *os.File
 	var err error
 	fetchCmd := f.execContext(context.TODO(), []string{}, cvd.FetchCVDBin, args...)
-	if f.credentials != "" {
-		if file, err = createCredentialsFile(f.credentials); err != nil {
+	if f.buildAPICredentials.AccessToken != "" {
+		if file, err = createCredentialsFile(f.buildAPICredentials.AccessToken); err != nil {
 			return err
 		}
 		defer file.Close()
@@ -257,6 +257,10 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 		// The actual fd number is not retained, the lowest available number is used instead.
 		fd := 3 + len(fetchCmd.ExtraFiles) - 1
 		fetchCmd.Args = append(fetchCmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
+
+		if f.buildAPICredentials.UserProjectID != "" {
+			fetchCmd.Args = append(fetchCmd.Args, "--project_id="+f.buildAPICredentials.UserProjectID)
+		}
 	} else if isRunningOnGCE() {
 		if ok, err := hasServiceAccountAccessToken(); err != nil {
 			log.Printf("service account token check failed: %s", err)

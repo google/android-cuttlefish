@@ -34,6 +34,15 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
+type BuildAPICredentials struct {
+	AccessToken string
+	// The credential for exchanging access tokens should be generated from a GCP project that
+	// has the Build API enabled. If it isn't, UserProjectID is required for successful API usage.
+	// The value of UserProjectID is expected to be the project ID of a GCP project that has the
+	// Build API enabled. This project ID can differ from the one used to generate OAuth credentials.
+	UserProjectID string
+}
+
 type CreateCVDActionOpts struct {
 	Request                  *apiv1.CreateCVDRequest
 	HostValidator            Validator
@@ -46,7 +55,7 @@ type CreateCVDActionOpts struct {
 	UUIDGen                  func() string
 	CVDUser                  *user.User
 	UserArtifactsDirResolver UserArtifactsDirResolver
-	BuildAPICredentials      string
+	BuildAPICredentials      BuildAPICredentials
 }
 
 type CreateCVDAction struct {
@@ -61,7 +70,7 @@ type CreateCVDAction struct {
 	userArtifactsDirResolver UserArtifactsDirResolver
 	artifactsMngr            *artifacts.Manager
 	cvdUser                  *user.User
-	buildAPICredentials      string
+	buildAPICredentials      BuildAPICredentials
 
 	instanceCounter uint32
 }
@@ -127,12 +136,12 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 		return nil, err
 	}
 	args := []string{"load", configFile.Name()}
-	if a.buildAPICredentials != "" {
+	if a.buildAPICredentials.AccessToken != "" {
 		filename, err := createCredsFile(a.execContext)
 		if err != nil {
 			return nil, err
 		}
-		if err := writeCredsFile(a.execContext, filename, []byte(a.buildAPICredentials)); err != nil {
+		if err := writeCredsFile(a.execContext, filename, []byte(a.buildAPICredentials.AccessToken)); err != nil {
 			return nil, err
 		}
 		defer func() {
@@ -141,6 +150,10 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 			}
 		}()
 		args = append(args, "--credential_source="+filename)
+
+		if a.buildAPICredentials.UserProjectID != "" {
+			args = append(args, "--project_id="+a.buildAPICredentials.UserProjectID)
+		}
 	} else if isRunningOnGCE() {
 		if ok, err := hasServiceAccountAccessToken(); err != nil {
 			log.Printf("service account token check failed: %s", err)
