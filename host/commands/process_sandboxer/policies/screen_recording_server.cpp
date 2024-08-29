@@ -16,6 +16,8 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <syscall.h>
+
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 
@@ -28,6 +30,7 @@ sandbox2::PolicyBuilder ScreenRecordingServerPolicy(const HostInfo& host) {
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddFile("/dev/urandom")  // For gRPC
       .AddFile(host.cuttlefish_config_path)
+      .AllowSleep()
       .DefaultAction(sandbox2::TraceAllSyscalls());
 }
 
