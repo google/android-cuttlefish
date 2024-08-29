@@ -26,6 +26,7 @@ sandbox2::PolicyBuilder LogTeePolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("log_tee"))
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
+      .AllowTCGETS()
       .DefaultAction(sandbox2::TraceAllSyscalls());
 }
 
