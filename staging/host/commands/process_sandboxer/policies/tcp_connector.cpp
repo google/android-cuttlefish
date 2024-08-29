@@ -28,6 +28,7 @@ sandbox2::PolicyBuilder TcpConnectorPolicy(const HostInfo& host) {
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
       .Allow(sandbox2::UnrestrictedNetworking())
+      .AllowTCGETS()
       .DefaultAction(sandbox2::TraceAllSyscalls());
 }
 
