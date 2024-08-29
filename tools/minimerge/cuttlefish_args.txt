@@ -16,7 +16,6 @@
 --map=common/libs/utils/base64.cpp:base/cvd/cuttlefish/common/libs/utils/base64.cpp
 --map=common/libs/utils/base64.h:base/cvd/cuttlefish/common/libs/utils/base64.h
 --map=common/libs/utils/cf_endian.h:base/cvd/cuttlefish/common/libs/utils/cf_endian.h
---map=common/libs/utils/collect.h:base/cvd/cuttlefish/common/libs/utils/collect.h
 --map=common/libs/utils/contains.h:base/cvd/cuttlefish/common/libs/utils/contains.h
 --map=common/libs/utils/environment.cpp:base/cvd/cuttlefish/common/libs/utils/environment.cpp
 --map=common/libs/utils/environment.h:base/cvd/cuttlefish/common/libs/utils/environment.h
