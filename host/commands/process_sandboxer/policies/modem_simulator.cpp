@@ -28,6 +28,8 @@ sandbox2::PolicyBuilder ModemSimulatorPolicy(const HostInfo& host) {
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddDirectory(host.runtime_dir, /* is_ro= */ false)  // modem_nvram.json
       .AddFile(host.cuttlefish_config_path)
+      .AllowSafeFcntl()
+      .AllowSelect()
       .DefaultAction(sandbox2::TraceAllSyscalls());
 }
 
