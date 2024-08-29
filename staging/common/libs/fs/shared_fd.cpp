@@ -715,11 +715,8 @@ SharedFD SharedFD::VsockServer(
          "guest";
 #endif
   if (vhost_user_vsock_listening_cid) {
-    // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock_{}
     return SharedFD::SocketLocalServer(
-        fmt::format("/tmp/vsock_{}_{}/vm.vsock_{}",
-                    *vhost_user_vsock_listening_cid, std::to_string(getuid()),
-                    port),
+        GetVhostUserVsockServerAddr(port, *vhost_user_vsock_listening_cid),
         false /* abstract */, type, 0666 /* mode */);
   }
 
@@ -752,6 +749,20 @@ SharedFD SharedFD::VsockServer(
   return VsockServer(VMADDR_PORT_ANY, type, vhost_user_vsock_listening_cid);
 }
 
+std::string SharedFD::GetVhostUserVsockServerAddr(
+    unsigned int port, int vhost_user_vsock_listening_cid) {
+  // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock_{}
+  return fmt::format(
+      "{}_{}", GetVhostUserVsockClientAddr(vhost_user_vsock_listening_cid),
+      port);
+}
+
+std::string SharedFD::GetVhostUserVsockClientAddr(int cid) {
+  // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock_{}
+  return fmt::format("/tmp/vsock_{}_{}/vm.vsock", cid,
+                     std::to_string(getuid()));
+}
+
 SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
                                bool vhost_user) {
 #ifndef CUTTLEFISH_HOST
@@ -759,9 +770,8 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
 #endif
   if (vhost_user) {
     // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock
-    auto client = SharedFD::SocketLocalClient(
-        fmt::format("/tmp/vsock_{}_{}/vm.vsock", cid, std::to_string(getuid())),
-        false /* abstract */, type);
+    auto client = SharedFD::SocketLocalClient(GetVhostUserVsockClientAddr(cid),
+                                              false /* abstract */, type);
     const std::string msg = fmt::format("connect {}\n", port);
     SendAll(client, msg);
 
