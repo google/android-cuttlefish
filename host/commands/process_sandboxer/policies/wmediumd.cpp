@@ -36,7 +36,11 @@ sandbox2::PolicyBuilder WmediumdPolicy(const HostInfo& host) {
       .AddFile(JoinPath(host.environments_dir, "env-1", "wmediumd.cfg"),
                /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
+      .AllowSelect()
       .AllowSleep()
+      .AllowSyscall(__NR_timerfd_settime)
+      .AllowSyscall(__NR_recvmsg)
+      .AllowSyscall(__NR_sendmsg)
       .DefaultAction(sandbox2::TraceAllSyscalls());
 }
 
