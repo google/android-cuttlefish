@@ -89,6 +89,7 @@ func TestInstance(t *testing.T) {
 		CVDs: []*hoapi.CVD{
 			&hoapi.CVD{
 				Group:          "foo",
+				Name:           "1",
 				BuildSource:    &hoapi.BuildSource{},
 				Status:         "Running",
 				Displays:       []string{"720 x 1280 ( 320 )"},
