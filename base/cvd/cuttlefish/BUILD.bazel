@@ -43,7 +43,6 @@ cc_library(
         "common/libs/fs/shared_select.h",
         "common/libs/utils/archive.h",
         "common/libs/utils/base64.h",
-        "common/libs/utils/collect.h",
         "common/libs/utils/contains.h",
         "common/libs/utils/environment.h",
         "common/libs/utils/files.h",
