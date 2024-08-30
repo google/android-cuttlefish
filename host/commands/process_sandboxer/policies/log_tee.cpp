@@ -16,18 +16,21 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <syscall.h>
+
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 
 namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder LogTeePolicy(const HostInfo& host) {
-  // TODO: b/318592149 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("log_tee"))
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
-      .AllowTCGETS()
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+      .AllowPoll()
+      .AllowSafeFcntl()
+      .AllowSyscall(__NR_signalfd4)
+      .AllowTCGETS();
 }
 
 }  // namespace cuttlefish::process_sandboxer
