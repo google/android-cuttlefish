@@ -75,6 +75,10 @@ cvd_host_tool_dir=${cvd_host_tool_dir:-$PWD}
 # upload artifacts into ARM server
 cvd_home_dir=cvd_home
 ssh $server -t "mkdir -p ~/.cvd_artifact; mkdir -p ~/$cvd_home_dir"
+
+# android-info.txt is required for cvd launcher to pick up the correct config file.
+rsync -avch $img_dir/android-info.txt $server:~/$cvd_home_dir --info=progress2
+
 if [ -f $img_dir/required_images ]; then
   rsync -aSvch --recursive $img_dir --files-from=$img_dir/required_images $server:~/$cvd_home_dir --info=progress2
   cvd_home_files=($(rsync -rzan --recursive $img_dir --out-format="%n" --files-from=$img_dir/required_images $server:~/$cvd_home_dir --info=name2 | awk '{print $1}'))

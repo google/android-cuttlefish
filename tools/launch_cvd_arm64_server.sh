@@ -55,6 +55,10 @@ mkdir -p $temp_dir
 # copy and compress the artifacts to the temp directory
 cvd_home_dir=cvd_home
 ssh $server -t "mkdir -p ~/.cvd_artifact; mkdir -p ~/$cvd_home_dir"
+
+# android-info.txt is required for cvd launcher to pick up the correct config file.
+rsync -avch $img_dir/android-info.txt $server:~/$cvd_home_dir --info=progress2
+
 if [ -f $img_dir/required_images ]; then
   rsync -aSvch --recursive $img_dir --files-from=$img_dir/required_images $server:~/$cvd_home_dir --info=progress2
 else

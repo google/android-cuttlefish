@@ -20,8 +20,6 @@
 
 #include <android-base/logging.h>
 #include <cutils/properties.h>
-#include <linux/vm_sockets.h>
-#include <sys/socket.h>
 
 #include <memory>
 
@@ -33,25 +31,22 @@ using ::android::hardware::automotive::vehicle::virtualization::
 // A GRPC server for VHAL running on the guest Android.
 // argv[1]: Config directory path containing property config file (e.g.
 // DefaultProperties.json).
-// argv[2]: The vsock port number used by this server.
+// argv[2]: The IP address for this server.
+// argv[3]: The vsock address for this server.
 int main(int argc, char* argv[]) {
-  CHECK(argc >= 3) << "Not enough arguments, require at least 2: config file "
-                      "path and vsock port";
+  CHECK(argc >= 4) << "Not enough arguments, require at least 3: config file "
+                      "path, IP address, vsock address";
 
-  unsigned int port;
-  CHECK(android::base::ParseUint(argv[2], &port))
-      << "Failed to parse port as uint";
-  VsockConnectionInfo vsock = {.cid = VMADDR_CID_HOST, .port = port};
-
-  auto eth_addr = fmt::format("localhost:{}", port);
-  std::vector<std::string> listen_addrs = {vsock.str(), eth_addr};
+  std::string eth_addr = argv[2];
+  std::string grpc_server_addr = argv[3];
+  std::vector<std::string> listen_addrs = {grpc_server_addr, eth_addr};
 
   auto fake_hardware =
       std::make_unique<FakeVehicleHardware>(argv[1], "", false);
   auto proxy_server = std::make_unique<GrpcVehicleProxyServer>(
       listen_addrs, std::move(fake_hardware));
 
-  LOG(INFO) << "VHAL Server is listening on " << vsock.str() << ", "
+  LOG(INFO) << "VHAL Server is listening on " << grpc_server_addr << ", "
             << eth_addr;
 
   proxy_server->Start().Wait();
