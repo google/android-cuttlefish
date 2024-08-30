@@ -112,16 +112,6 @@ cc_proto_library(
 )
 
 proto_library(
-    name = "internal_config_proto",
-    srcs = ["host/commands/cvd/acloud/internal_config.proto"],
-)
-
-cc_proto_library(
-    name = "internal_config_cc_proto",
-    deps = [":internal_config_proto"],
-)
-
-proto_library(
     name = "user_config_proto",
     srcs = ["host/commands/cvd/acloud/user_config.proto"],
 )
@@ -465,7 +455,6 @@ cc_library(
         ":cuttlefish_common",
         ":cvd_persistent_data",
         ":cvd_server_cc_proto",
-        ":internal_config_cc_proto",
         ":launch_cvd_cc_proto",
         ":load_config_cc_proto",
         ":user_config_cc_proto",
