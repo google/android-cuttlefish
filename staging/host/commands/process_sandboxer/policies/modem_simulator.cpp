@@ -16,21 +16,41 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <syscall.h>
+
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/trace_all_syscalls.h>
+#include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
 namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder ModemSimulatorPolicy(const HostInfo& host) {
-  // TODO: b/318601112 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("modem_simulator"))
       .AddDirectory(host.host_artifacts_path + "/etc/modem_simulator")
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddDirectory(host.runtime_dir, /* is_ro= */ false)  // modem_nvram.json
       .AddFile(host.cuttlefish_config_path)
+      .AddPolicyOnSyscall(
+          __NR_setsockopt,
+          [](bpf_labels& labels) -> std::vector<sock_filter> {
+            return {
+                ARG_32(1),
+                JNE32(SOL_SOCKET, JUMP(&labels, cf_setsockopt_end)),
+                ARG_32(2),
+                JEQ32(SO_REUSEADDR, ALLOW),
+                LABEL(&labels, cf_setsockopt_end),
+            };
+          })
+      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW)})
+      .AllowHandleSignals()
+      .AllowPipe()
       .AllowSafeFcntl()
       .AllowSelect()
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+      .AllowSyscall(__NR_accept)
+      .AllowSyscall(__NR_bind)
+      .AllowSyscall(__NR_clone)  // multithreading
+      .AllowSyscall(__NR_listen)
+      .AllowTCGETS();
 }
 
 }  // namespace cuttlefish::process_sandboxer
