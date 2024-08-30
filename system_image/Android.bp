@@ -72,6 +72,10 @@ android_symlinks = [
         target: "/storage/self/primary",
         name: "sdcard",
     },
+    {
+        target: "/product/etc/security/adb_keys",
+        name: "adb_keys",
+    },
 ]
 
 phony {
