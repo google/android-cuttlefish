@@ -16,9 +16,17 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/mman.h>
+#include <sys/prctl.h>
+#include <sys/socket.h>
+#include <syscall.h>
+
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/trace_all_syscalls.h>
+#include <sandboxed_api/sandbox2/util/bpf_helper.h>
 #include <sandboxed_api/util/path.h>
 
 namespace cuttlefish::process_sandboxer {
@@ -26,14 +34,67 @@ namespace cuttlefish::process_sandboxer {
 using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder NetsimdPolicy(const HostInfo& host) {
+  static_assert(IPPROTO_IPV6 == 41);
   // TODO: b/318603863 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("netsimd"))
       .AddDirectory(JoinPath(host.host_artifacts_path, "bin", "netsim-ui"))
       .AddDirectory("/tmp", /* is_ro= */ false)  // to create new directories
       .AddDirectory(JoinPath(host.runtime_dir, "internal"), /* is_ro= */ false)
       .AddFile("/dev/urandom")  // For gRPC
+      .AddPolicyOnSyscalls(
+          {__NR_getsockopt, __NR_setsockopt},
+          [](bpf_labels& labels) -> std::vector<sock_filter> {
+            return {
+                ARG_32(1),  // level
+                JEQ32(IPPROTO_TCP, JUMP(&labels, cf_netsimd_getsockopt_tcp)),
+                JEQ32(IPPROTO_IPV6, JUMP(&labels, cf_netsimd_getsockopt_ipv6)),
+                JNE32(SOL_SOCKET, JUMP(&labels, cf_netsimd_getsockopt_end)),
+                // SOL_SOCKET
+                ARG_32(2),  // optname
+                JEQ32(SO_REUSEADDR, ALLOW),
+                JEQ32(SO_REUSEPORT, ALLOW),
+                JUMP(&labels, cf_netsimd_getsockopt_end),
+                // IPPROTO_TCP
+                LABEL(&labels, cf_netsimd_getsockopt_tcp),
+                ARG_32(2),  // optname
+                JEQ32(TCP_NODELAY, ALLOW),
+                JEQ32(TCP_USER_TIMEOUT, ALLOW),
+                JUMP(&labels, cf_netsimd_getsockopt_end),
+                // IPPROTO_IPV6
+                LABEL(&labels, cf_netsimd_getsockopt_ipv6),
+                ARG_32(2),  // optname
+                JEQ32(IPV6_V6ONLY, ALLOW),
+                LABEL(&labels, cf_netsimd_getsockopt_end),
+            };
+          })
+      .AddPolicyOnSyscall(__NR_madvise,
+                          {ARG_32(2), JEQ32(MADV_DONTNEED, ALLOW)})
+      .AddPolicyOnSyscall(__NR_prctl,
+                          {ARG_32(0), JEQ32(PR_CAPBSET_READ, ALLOW)})
+      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_INET, ALLOW),
+                                        JEQ32(AF_INET6, ALLOW)})
       .Allow(sandbox2::UnrestrictedNetworking())
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+      .AllowDup()
+      .AllowEpoll()
+      .AllowEpollWait()
+      .AllowEventFd()
+      .AllowHandleSignals()
+      .AllowPipe()
+      .AllowPrctlSetName()
+      .AllowReaddir()
+      .AllowSafeFcntl()
+      .AllowSelect()
+      .AllowSleep()
+      .AllowSyscall(__NR_accept4)
+      .AllowSyscall(__NR_bind)
+      .AllowSyscall(__NR_clone)
+      .AllowSyscall(__NR_getcwd)
+      .AllowSyscall(__NR_getrandom)
+      .AllowSyscall(__NR_getsockname)
+      .AllowSyscall(__NR_listen)
+      .AllowSyscall(__NR_sched_getparam)
+      .AllowSyscall(__NR_sched_getscheduler)
+      .AllowSyscall(__NR_statx);  // Not covered by AllowStat
 }
 
 }  // namespace cuttlefish::process_sandboxer
