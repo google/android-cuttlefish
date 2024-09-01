@@ -45,7 +45,7 @@ to obtain the script.
 
 ## Docker
 
-We also provide the docker image which installed cuttlefish debian packages
+We also provide the docker image with installed cuttlefish debian packages
 inside; including `cuttlefish-base`, `cuttlefish-user`, and
 `cuttlefish-orchestration`.
 Currently it's available for x86_64 and ARM64 architecture.
