@@ -140,6 +140,25 @@ Result<std::string> CreateHardLink(const std::string& target,
   return hardlink;
 }
 
+Result<void> CreateSymLink(const std::string& target, const std::string& link,
+                           const bool overwrite_existing) {
+  if (FileExists(link), /* follow_symlink */ false) {
+    if (!overwrite_existing) {
+      return CF_ERRF(
+          "Cannot symlink from \"{}\" to \"{}\", the second file already "
+          "exists",
+          target, link);
+    }
+    CF_EXPECTF(unlink(link.c_str()) == 0,
+               "Failed to unlink \"{}\" with error: {}", link, strerror(errno));
+  }
+  CF_EXPECTF(symlink(target.c_str(), link.c_str()) == 0,
+             "link() failed trying to create symlink from \"{}\" to \"{}\" "
+             "with error: {}",
+             target, link, strerror(errno));
+  return {};
+}
+
 bool FileHasContent(const std::string& path) {
   return FileSize(path) > 0;
 }

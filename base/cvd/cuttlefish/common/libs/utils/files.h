@@ -34,6 +34,8 @@ Result<bool> AreHardLinked(const std::string& path1, const std::string& path2);
 Result<std::string> CreateHardLink(const std::string& target,
                                    const std::string& hardlink,
                                    const bool overwrite_existing = false);
+Result<void> CreateSymLink(const std::string& target, const std::string& link,
+                           const bool overwrite_existing = false);
 bool FileHasContent(const std::string& path);
 Result<std::vector<std::string>> DirectoryContents(const std::string& path);
 bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
