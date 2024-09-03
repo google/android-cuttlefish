@@ -112,7 +112,7 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Download cuttlefish_packages.7z
-      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
+      uses: actions/download-artifact@v4.1.7 # aka v4.0.0
       with:
         name: cuttlefish_packages_arm64
         path: "tools/cuttlefish-host-image-installer"
@@ -140,7 +140,7 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Download meta_gigamp_packages.7z
-      uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # aka v4.0.0
+      uses: actions/download-artifact@v4.1.7 # aka v4.0.0
       with:
         name: meta_gigamp_packages
         path: "tools/cuttlefish-host-image-installer"
