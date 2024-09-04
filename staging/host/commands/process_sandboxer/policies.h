@@ -22,11 +22,14 @@
 #include <string>
 #include <string_view>
 
+#include <absl/status/status.h>
+
 #include "sandboxed_api/sandbox2/policybuilder.h"
 
 namespace cuttlefish::process_sandboxer {
 
 struct HostInfo {
+  absl::Status EnsureOutputDirectoriesExist();
   std::string HostToolExe(std::string_view exe) const;
 
   std::string assembly_dir;
@@ -48,6 +51,7 @@ sandbox2::PolicyBuilder AdbConnectorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo&);
 sandbox2::PolicyBuilder CasimirControlServerPolicy(const HostInfo&);
 sandbox2::PolicyBuilder ControlEnvProxyServerPolicy(const HostInfo&);
+sandbox2::PolicyBuilder CvdInternalStartPolicy(const HostInfo&);
 sandbox2::PolicyBuilder EchoServerPolicy(const HostInfo&);
 sandbox2::PolicyBuilder GnssGrpcProxyPolicy(const HostInfo&);
 sandbox2::PolicyBuilder KernelLogMonitorPolicy(const HostInfo&);
