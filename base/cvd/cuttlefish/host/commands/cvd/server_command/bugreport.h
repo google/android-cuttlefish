@@ -23,7 +23,7 @@
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewCvdGenericCommandHandler(
+std::unique_ptr<CvdServerHandler> NewCvdBugreportCommandHandler(
     InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

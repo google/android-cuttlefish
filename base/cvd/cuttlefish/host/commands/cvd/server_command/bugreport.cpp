@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command/generic.h"
+#include "host/commands/cvd/server_command/bugreport.h"
 
 #include <sys/types.h>
 
@@ -44,9 +44,9 @@ namespace {
 constexpr char kSummaryHelpText[] =
     "Run cvd bugreport --help for command description";
 
-class CvdGenericCommandHandler : public CvdServerHandler {
+class CvdBugreportCommandHandler : public CvdServerHandler {
  public:
-  CvdGenericCommandHandler(InstanceManager& instance_manager);
+  CvdBugreportCommandHandler(InstanceManager& instance_manager);
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
@@ -65,18 +65,18 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
 };
 
-CvdGenericCommandHandler::CvdGenericCommandHandler(
+CvdBugreportCommandHandler::CvdBugreportCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager),
       commands_{{"bugreport", "host_bugreport", "cvd_host_bugreport"}} {}
 
-Result<bool> CvdGenericCommandHandler::CanHandle(
+Result<bool> CvdBugreportCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
   auto invocation = ParseInvocation(request.Message());
   return Contains(commands_, invocation.command);
 }
 
-Result<cvd::Response> CvdGenericCommandHandler::Handle(
+Result<cvd::Response> CvdBugreportCommandHandler::Handle(
     const RequestWithStdio& request) {
   CF_EXPECT(CanHandle(request));
 
@@ -123,7 +123,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
   return ResponseFromSiginfo(infop);
 }
 
-std::vector<std::string> CvdGenericCommandHandler::CmdList() const {
+std::vector<std::string> CvdBugreportCommandHandler::CmdList() const {
   std::vector<std::string> subcmd_list;
   subcmd_list.reserve(commands_.size());
   for (const auto& cmd : commands_) {
@@ -132,13 +132,13 @@ std::vector<std::string> CvdGenericCommandHandler::CmdList() const {
   return subcmd_list;
 }
 
-Result<std::string> CvdGenericCommandHandler::SummaryHelp() const {
+Result<std::string> CvdBugreportCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-bool CvdGenericCommandHandler::ShouldInterceptHelp() const { return false; }
+bool CvdBugreportCommandHandler::ShouldInterceptHelp() const { return false; }
 
-Result<std::string> CvdGenericCommandHandler::DetailedHelp(
+Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
     std::vector<std::string>& arguments) const {
   static constexpr char kDetailedHelpText[] =
       "Run cvd {} --help for full help text";
@@ -151,10 +151,10 @@ Result<std::string> CvdGenericCommandHandler::DetailedHelp(
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdGenericCommandHandler(
+std::unique_ptr<CvdServerHandler> NewCvdBugreportCommandHandler(
     InstanceManager& instance_manager) {
   return std::unique_ptr<CvdServerHandler>(
-      new CvdGenericCommandHandler(instance_manager));
+      new CvdBugreportCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish
