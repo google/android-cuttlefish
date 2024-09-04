@@ -45,8 +45,7 @@ Result<MonitorCommand> NfcConnector(
       .AddParameter("-fifo_out=", fifos[0])
       .AddParameter("-fifo_in=", fifos[1])
       .AddParameter("-data_port=", config.casimir_nci_port())
-      .AddParameter("-buffer_size=", kBufferSize)
-      .AddParameter("-dump_packet_size=", 10);
+      .AddParameter("-buffer_size=", kBufferSize);
 }
 
 }  // namespace cuttlefish
