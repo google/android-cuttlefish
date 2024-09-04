@@ -35,7 +35,7 @@
 #include "host/commands/cvd/server_command/env.h"
 #include "host/commands/cvd/server_command/fetch.h"
 #include "host/commands/cvd/server_command/fleet.h"
-#include "host/commands/cvd/server_command/generic.h"
+#include "host/commands/cvd/server_command/bugreport.h"
 #include "host/commands/cvd/server_command/help.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/lint.h"
@@ -81,7 +81,7 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(
       NewCvdClearCommandHandler(instance_manager_));
   request_handlers_.emplace_back(
-      NewCvdGenericCommandHandler(instance_manager_));
+      NewCvdBugreportCommandHandler(instance_manager_));
   request_handlers_.emplace_back(
       NewCvdStopCommandHandler(instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(NewCvdHelpHandler(this->request_handlers_));
