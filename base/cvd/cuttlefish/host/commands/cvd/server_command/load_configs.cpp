@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
@@ -145,8 +146,9 @@ class LoadConfigsCommand : public CvdServerHandler {
   Result<void> LoadGroup(const RequestWithStdio& request,
                          selector::LocalInstanceGroup& group,
                          CvdFlags cvd_flags) {
-    auto mkdir_cmd = BuildMkdirCmd(request, cvd_flags);
-    auto mkdir_res = executor_.ExecuteOne(mkdir_cmd, request.Err());
+    auto mkdir_res =
+        EnsureDirectoryExists(cvd_flags.load_directories.launch_home_directory,
+                              0775, /* group_name */ "");
     if (!mkdir_res.ok()) {
       group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
       instance_manager_.UpdateInstanceGroup(group);
@@ -189,18 +191,6 @@ class LoadConfigsCommand : public CvdServerHandler {
       fetch_cmd.add_args(flag);
     }
     return RequestWithStdio::InheritIo(std::move(fetch_req), request);
-  }
-
-  RequestWithStdio BuildMkdirCmd(const RequestWithStdio& request,
-                                 const CvdFlags& cvd_flags) {
-    cvd::Request mkdir_req;
-    auto& mkdir_cmd = *mkdir_req.mutable_command_request();
-    *mkdir_cmd.mutable_env() = request.Message().command_request().env();
-    mkdir_cmd.add_args("cvd");
-    mkdir_cmd.add_args("mkdir");
-    mkdir_cmd.add_args("-p");
-    mkdir_cmd.add_args(cvd_flags.load_directories.launch_home_directory);
-    return RequestWithStdio::InheritIo(std::move(mkdir_req), request);
   }
 
   RequestWithStdio BuildLaunchCmd(const RequestWithStdio& request,

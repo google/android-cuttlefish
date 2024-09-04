@@ -354,17 +354,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     CF_EXPECT(!(ota_branch || ota_build_target || ota_build_id),
               "--local-image incompatible with --ota-* flags");
   } else {
-    if (!DirectoryExists(host_dir)) {
-      // fetch/download directory doesn't exist, create directory
-      cvd::Request& mkdir_request = request_protos.emplace_back();
-      auto& mkdir_command = *mkdir_request.mutable_command_request();
-      mkdir_command.add_args("cvd");
-      mkdir_command.add_args("mkdir");
-      mkdir_command.add_args("-p");
-      mkdir_command.add_args(host_dir);
-      auto& mkdir_env = *mkdir_command.mutable_env();
-      mkdir_env[kAndroidHostOut] = host_artifacts_path->second;
-    }
+    CF_EXPECT(EnsureDirectoryExists(host_dir, 0775, /* group_name */ ""));
+
     // used for default branch and target when there is no input
     std::optional<BranchBuildTargetInfo> given_branch_target_info;
     if (parsed_flags.branch || parsed_flags.build_id ||

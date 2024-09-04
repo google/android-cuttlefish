@@ -264,11 +264,7 @@ class SerialLaunchCommand : public CvdServerHandler {
 
     size_t index = 0;
     for (const auto& device : devices) {
-      auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
-      *mkdir_cmd.mutable_env() = client_env;
-      mkdir_cmd.add_args("cvd");
-      mkdir_cmd.add_args("mkdir");
-      mkdir_cmd.add_args(device.home_dir);
+      CF_EXPECT(EnsureDirectoryExists(device.home_dir, 0775, ""));
 
       auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
       *fetch_cmd.mutable_env() = client_env;
@@ -373,10 +369,7 @@ class SerialLaunchCommand : public CvdServerHandler {
     std::string current_dir = "/";
     for (std::size_t i = 0; i < tokens.size(); i++) {
       current_dir.append(tokens[i]);
-      if (!DirectoryExists(current_dir)) {
-        output.emplace_back(
-            CreateCommandRequest(client_env, "cvd", "mkdir", current_dir));
-      }
+      CF_EXPECT(EnsureDirectoryExists(current_dir, 0755, ""));
       current_dir.append("/");
     }
     return output;
