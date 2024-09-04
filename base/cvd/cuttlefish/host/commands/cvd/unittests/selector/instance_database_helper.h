@@ -15,17 +15,12 @@
 
 #pragma once
 
-#include <optional>
-#include <set>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include <gtest/gtest.h>
 
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/instance_database.h"
 
 namespace cuttlefish {

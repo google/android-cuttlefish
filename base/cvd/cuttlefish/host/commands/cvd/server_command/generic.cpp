@@ -99,7 +99,6 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   std::unique_ptr<InterruptibleTerminal> terminal_ = nullptr;
 
   static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
-  static constexpr char kMkdirBin[] = "mkdir";
   static constexpr char kClearBin[] =
       "clear_placeholder";  // Unused, runs CvdClear()
   // Only indicates that host_tool_target_manager_ should generate at runtime
@@ -110,8 +109,7 @@ CvdGenericCommandHandler::CvdGenericCommandHandler(
     : instance_manager_(instance_manager),
       command_to_binary_map_{{"host_bugreport", kHostBugreportBin},
                              {"cvd_host_bugreport", kHostBugreportBin},
-                             {"clear", kClearBin},
-                             {"mkdir", kMkdirBin}} {}
+                             {"clear", kClearBin}} {}
 
 Result<bool> CvdGenericCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
@@ -197,7 +195,6 @@ CvdGenericCommandHandler::NonCvdBinPath(const std::string& subcmd,
                                         const cvd_common::Envs& envs) const {
   auto bin_path_base = CF_EXPECT(GetBin(subcmd));
   // no need of executable directory. Will look up by PATH
-  // bin_path_base is like mkdir, etc.
   return BinPathInfo{.bin_ = bin_path_base,
                      .bin_path_ = bin_path_base,
                      .host_artifacts_path_ = envs.at(kAndroidHostOut)};
@@ -212,8 +209,6 @@ CvdGenericCommandHandler::CvdHelpBinPath(const std::string& subcmd,
         android::base::Dirname(android::base::GetExecutableDirectory());
   }
   auto bin_path_base = CF_EXPECT(GetBin(subcmd));
-  // no need of executable directory. Will look up by PATH
-  // bin_path_base is like mkdir, etc.
   return BinPathInfo{
       .bin_ = bin_path_base,
       .bin_path_ = tool_dir_path.append("/bin/").append(bin_path_base),
@@ -221,7 +216,7 @@ CvdGenericCommandHandler::CvdHelpBinPath(const std::string& subcmd,
 }
 
 /*
- * commands like mkdir, clear
+ * commands like clear
  *  -> bin, bin, system_wide_home, N/A, cmd_args, envs
  *
  * help command
@@ -241,10 +236,9 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
   CF_EXPECT(Contains(envs, kAndroidHostOut) &&
             DirectoryExists(envs.at(kAndroidHostOut)));
 
-  std::unordered_set<std::string> non_cvd_op{"clear", "mkdir"};
-  if (Contains(non_cvd_op, subcmd) || CF_EXPECT(IsHelpSubcmd(cmd_args))) {
+  if (subcmd == "clear" || CF_EXPECT(IsHelpSubcmd(cmd_args))) {
     const auto [bin, bin_path, host_artifacts_path] =
-        Contains(non_cvd_op, subcmd) ? CF_EXPECT(NonCvdBinPath(subcmd, envs))
+        (subcmd == "clear") ? CF_EXPECT(NonCvdBinPath(subcmd, envs))
                                      : CF_EXPECT(CvdHelpBinPath(subcmd, envs));
     return ExtractedInfo{
         .invocation_info =

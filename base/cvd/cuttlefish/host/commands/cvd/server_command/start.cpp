@@ -20,9 +20,7 @@
 
 #include <algorithm>
 #include <array>
-#include <atomic>
 #include <cstdlib>
-#include <fstream>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -231,15 +229,10 @@ Result<std::unique_ptr<OperatorControlConn>> PreregisterGroup(
 class CvdStartCommandHandler : public CvdServerHandler {
  public:
   CvdStartCommandHandler(InstanceManager& instance_manager,
-                         HostToolTargetManager& host_tool_target_manager,
-                         CommandSequenceExecutor& command_executor)
+                         HostToolTargetManager& host_tool_target_manager)
       : instance_manager_(instance_manager),
         host_tool_target_manager_(host_tool_target_manager),
-        status_fetcher_(instance_manager_, host_tool_target_manager_),
-        // TODO: b/300476262 - Migrate to using local instances rather than
-        // constructor-injected ones
-        command_executor_(command_executor),
-        sub_action_ended_(false) {}
+        status_fetcher_(instance_manager_, host_tool_target_manager_) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
@@ -288,14 +281,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
   SubprocessWaiter subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
   StatusFetcher status_fetcher_;
-  CommandSequenceExecutor& command_executor_;
-  /*
-   * Used by Interrupt() not to call command_executor_.Interrupt()
-   *
-   * If true, it is guaranteed that the command_executor_ ended the execution.
-   * If false, it may or may not be after the command_executor_.Execute()
-   */
-  std::atomic<bool> sub_action_ended_;
   static const std::array<std::string, 2> supported_commands_;
 };
 
@@ -336,17 +321,11 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
     }
   }
 
-  // 1. mkdir -p home
-  std::vector<MakeRequestForm> request_forms;
-
   const std::string& home_dir = group.HomeDir();
   const std::string client_pwd =
       request.Message().command_request().working_directory();
-  request_forms.push_back(
-      {.cmd_args = cvd_common::Args{"mkdir", "-p", home_dir},
-       .env = envs,
-       .selector_args = cvd_common::Args{},
-       .working_dir = client_pwd});
+  CF_EXPECT(EnsureDirectoryExists(home_dir, 0775, /* group_name */ ""),
+            "Failed to create group's home directory");
   const std::string& android_host_out = group.HostArtifactsPath();
   CF_EXPECT(CreateSymLink(android_host_out, home_dir + "/host_bins",
                           /* override_existing*/ true),
@@ -381,17 +360,6 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
                     "compatible location";
     }
   }
-  std::vector<cvd::Request> request_protos;
-  for (const auto& request_form : request_forms) {
-    request_protos.emplace_back(MakeRequest(request_form));
-  }
-  std::vector<RequestWithStdio> new_requests;
-  for (auto& request_proto : request_protos) {
-    new_requests.emplace_back(
-        RequestWithStdio::NullIo(std::move(request_proto)));
-  }
-  std::ofstream dev_null("/dev/null");
-  CF_EXPECT(command_executor_.Execute(new_requests, dev_null));
   return {};
 }
 
@@ -742,7 +710,6 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
   CF_EXPECT(subprocess_waiter_.Setup(launch_command.Start()));
 
   auto acloud_compat_action_result = AcloudCompatActions(group, envs, request);
-  sub_action_ended_ = true;
   if (!acloud_compat_action_result.ok()) {
     LOG(ERROR) << acloud_compat_action_result.error().FormatForEnv();
     LOG(ERROR) << "AcloudCompatActions() failed"
@@ -846,10 +813,9 @@ const std::array<std::string, 2> CvdStartCommandHandler::supported_commands_{
 
 std::unique_ptr<CvdServerHandler> NewCvdStartCommandHandler(
     InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager,
-    CommandSequenceExecutor& executor) {
-  return std::unique_ptr<CvdServerHandler>(new CvdStartCommandHandler(
-      instance_manager, host_tool_target_manager, executor));
+    HostToolTargetManager& host_tool_target_manager) {
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdStartCommandHandler(instance_manager, host_tool_target_manager));
 }
 
 }  // namespace cuttlefish

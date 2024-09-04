@@ -95,8 +95,7 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(NewCvdSnapshotCommandHandler(
       instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(
-      NewCvdStartCommandHandler(instance_manager_, host_tool_target_manager_,
-                                command_sequence_executor_));
+      NewCvdStartCommandHandler(instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(
       NewCvdStatusCommandHandler(instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(
