@@ -64,8 +64,6 @@ DEFINE_bool(use_overlay, CF_DEFAULTS_USE_OVERLAY,
             "prerequisite for powerwash_cvd or multiple instances.");
 DEFINE_bool(track_host_tools_crc, CF_DEFAULTS_TRACK_HOST_TOOLS_CRC,
             "Track changes to host executables");
-DEFINE_bool(enable_host_sandbox, CF_DEFAULTS_HOST_SANDBOX,
-            "Lock down host processes with sandbox2");
 
 namespace cuttlefish {
 namespace {
@@ -85,46 +83,11 @@ std::string SubtoolPath(const std::string& subtool_base) {
 
 std::string AssemblerPath() { return SubtoolPath("assemble_cvd"); }
 std::string RunnerPath() { return SubtoolPath("run_cvd"); }
-std::string SandboxerPath() { return SubtoolPath("process_sandboxer"); }
 
 int InvokeAssembler(const std::string& assembler_stdin,
                     std::string& assembler_stdout,
                     const std::vector<std::string>& argv) {
-  Command assemble_cmd(FLAGS_enable_host_sandbox ? SandboxerPath()
-                                                 : AssemblerPath());
-  if (FLAGS_enable_host_sandbox) {
-    // sandbox2 always has uid 1000
-    std::string environments_uds_dir = "/tmp/cf_env_1000";
-    std::string instance_uds_dir = "/tmp/cf_avd_1000/cvd-1";
-
-    std::string root_dir = StringFromEnv("HOME", "");
-    CHECK(!root_dir.empty()) << "No `HOME` env var";
-    root_dir += "/cuttlefish";
-    std::string assembly_dir = root_dir + "/assembly";
-    std::string environments_dir = root_dir + "/environments";
-    std::string runtime_dir = root_dir + "/instances/cvd-1";
-    std::string logs_dir = runtime_dir + "/logs";
-
-    std::vector<std::string> make_dirs = {environments_uds_dir,
-                                          instance_uds_dir, assembly_dir,
-                                          runtime_dir, logs_dir};
-
-    for (const std::string& dir : make_dirs) {
-      auto res = EnsureDirectoryExists(dir);
-      CHECK(res.ok()) << res.error().FormatForEnv();
-    }
-
-    assemble_cmd.AddParameter("--assembly_dir=", assembly_dir)
-        .AddParameter("--environments_dir=", environments_dir)
-        .AddParameter("--environments_uds_dir=", environments_uds_dir)
-        .AddParameter("--instance_uds_dir=", instance_uds_dir)
-        .AddParameter("--runtime_dir=", runtime_dir)
-        .AddParameter("--host_artifacts_path=", DefaultHostArtifactsPath(""))
-        .AddParameter("--guest_image_path=", DefaultGuestImagePath(""))
-        .AddParameter("--log_dir=", logs_dir);
-
-    assemble_cmd.AddParameter("--").AddParameter(AssemblerPath());
-  }
+  Command assemble_cmd(AssemblerPath());
   for (const auto& arg : argv) {
     assemble_cmd.AddParameter(arg);
   }
@@ -132,28 +95,10 @@ int InvokeAssembler(const std::string& assembler_stdin,
                              &assembler_stdout, nullptr);
 }
 
-Subprocess StartRunner(SharedFD runner_stdin, const CuttlefishConfig& config,
+Subprocess StartRunner(SharedFD runner_stdin,
                        const CuttlefishConfig::InstanceSpecific& instance,
                        const std::vector<std::string>& argv) {
-  Command run_cmd(FLAGS_enable_host_sandbox ? SandboxerPath() : RunnerPath());
-  if (FLAGS_enable_host_sandbox) {
-    run_cmd.AddParameter("--assembly_dir=", config.assembly_dir())
-        .AddParameter("--environments_dir=", config.environments_dir())
-        .AddParameter("--environments_uds_dir=", config.environments_uds_dir())
-        .AddParameter("--instance_uds_dir=", instance.instance_uds_dir())
-        .AddParameter("--log_dir=", instance.PerInstanceLogPath(""))
-        .AddParameter("--runtime_dir=", instance.instance_dir())
-        .AddParameter("--host_artifacts_path=", DefaultHostArtifactsPath(""))
-        .AddParameter("--guest_image_path=", DefaultGuestImagePath(""));
-    std::string log_files = instance.PerInstanceLogPath("sandbox.log");
-    if (!instance.run_as_daemon()) {
-      log_files += "," + instance.PerInstanceLogPath("launcher.log");
-    }
-    run_cmd.AddParameter("--log_files=", log_files);
-    run_cmd.AddParameter("--").AddParameter(RunnerPath());
-  }
-  // Note: Do not pass any SharedFD arguments, they will not work as expected in
-  // sandbox mode.
+  Command run_cmd(RunnerPath());
   for (const auto& arg : argv) {
     run_cmd.AddParameter(arg);
   }
@@ -195,7 +140,6 @@ const std::unordered_set<std::string>& BoolFlags() {
       "enable_bootanimation",
       "enable_gpu_udmabuf",
       "enable_gpu_vhost_user",
-      "enable_host_sandbox",
       "enable_kernel_log",
       "enable_minimal_mode",
       "enable_modem_simulator",
@@ -276,10 +220,6 @@ int CvdInternalStartMain(int argc, char** argv) {
   }
 
   // TODO(schuffelen): Lift instance id assumptions in sandboxing
-  if (FLAGS_enable_host_sandbox) {
-    CHECK_EQ(instance_nums->size(), 1) << "At most one host-sandboxed device";
-    CHECK_EQ((*instance_nums)[0], 1) << "Host-sandboxed device needs id=1";
-  }
 
   if (CuttlefishConfig::ConfigExists()) {
     auto previous_config = CuttlefishConfig::Get();
@@ -344,7 +284,7 @@ int CvdInternalStartMain(int argc, char** argv) {
     setenv(kCuttlefishInstanceEnvVarName, instance.id().c_str(),
            /* overwrite */ 1);
 
-    auto run_proc = StartRunner(std::move(runner_stdin), *config, instance,
+    auto run_proc = StartRunner(std::move(runner_stdin), instance,
                                 forwarder.ArgvForSubprocess(RunnerPath()));
     runners.push_back(std::move(run_proc));
   }
