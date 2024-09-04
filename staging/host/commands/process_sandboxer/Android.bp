@@ -34,6 +34,7 @@ cc_binary_host {
         "policies/baseline.cpp",
         "policies/casimir_control_server.cpp",
         "policies/control_env_proxy_server.cpp",
+        "policies/cvd_internal_start.cpp",
         "policies/echo_server.cpp",
         "policies/gnss_grpc_proxy.cpp",
         "policies/kernel_log_monitor.cpp",
