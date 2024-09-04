@@ -336,11 +336,7 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
     }
   }
 
-  // ln -f -s  [target] [symlink]
   // 1. mkdir -p home
-  // 2. ln -f -s android_host_out home/host_bins
-  // 3. for each i in ids,
-  //     ln -f -s home /tmp/acloud_cvd_temp/local-instance-<i>
   std::vector<MakeRequestForm> request_forms;
 
   const std::string& home_dir = group.HomeDir();
@@ -352,12 +348,9 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
        .selector_args = cvd_common::Args{},
        .working_dir = client_pwd});
   const std::string& android_host_out = group.HostArtifactsPath();
-  request_forms.push_back(
-      {.cmd_args = cvd_common::Args{"ln", "-T", "-f", "-s", android_host_out,
-                                    home_dir + "/host_bins"},
-       .env = envs,
-       .selector_args = cvd_common::Args{},
-       .working_dir = client_pwd});
+  CF_EXPECT(CreateSymLink(android_host_out, home_dir + "/host_bins",
+                          /* override_existing*/ true),
+            "Failed to symlink host artifacts path to group's HOME directory");
   /* TODO(weihsu@): cvd acloud delete/list must handle multi-tenancy gracefully
    *
    * acloud delete just calls, for all instances in a group,
@@ -381,13 +374,12 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
                  << " same directory being \"HOME\"";
       continue;
     }
-    request_forms.push_back({
-        .cmd_args = cvd_common::Args{"ln", "-T", "-f", "-s", home_dir,
-                                     acloud_compat_home},
-        .env = envs,
-        .selector_args = cvd_common::Args{},
-        .working_dir = client_pwd,
-    });
+    auto link_res = CreateSymLink(home_dir, acloud_compat_home,
+                      /* override_existing*/ true);
+    if (!link_res.ok()) {
+      LOG(ERROR) << "Failed to symlink group's HOME directory to acloud "
+                    "compatible location";
+    }
   }
   std::vector<cvd::Request> request_protos;
   for (const auto& request_form : request_forms) {

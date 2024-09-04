@@ -79,9 +79,7 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   };
   Result<ExtractedInfo> ExtractInfo(const RequestWithStdio& request);
   Result<std::string> GetBin(const std::string& subcmd) const;
-  Result<std::string> GetBin(const std::string& subcmd,
-                             const std::string& host_artifacts_path) const;
-  // whether the "bin" is cvd bins like cvd_host_bugreport or not (e.g. ln, ls,
+  // whether the "bin" is cvd bins like cvd_host_bugreport or not (e.g. ls,
   // mkdir) The information to fire the command might be different. This
   // information is about what the executable binary is and how to find it.
   struct BinPathInfo {
@@ -101,7 +99,6 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   std::unique_ptr<InterruptibleTerminal> terminal_ = nullptr;
 
   static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
-  static constexpr char kLnBin[] = "ln";
   static constexpr char kMkdirBin[] = "mkdir";
   static constexpr char kClearBin[] =
       "clear_placeholder";  // Unused, runs CvdClear()
@@ -114,8 +111,7 @@ CvdGenericCommandHandler::CvdGenericCommandHandler(
       command_to_binary_map_{{"host_bugreport", kHostBugreportBin},
                              {"cvd_host_bugreport", kHostBugreportBin},
                              {"clear", kClearBin},
-                             {"mkdir", kMkdirBin},
-                             {"ln", kLnBin}} {}
+                             {"mkdir", kMkdirBin}} {}
 
 Result<bool> CvdGenericCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
@@ -201,7 +197,7 @@ CvdGenericCommandHandler::NonCvdBinPath(const std::string& subcmd,
                                         const cvd_common::Envs& envs) const {
   auto bin_path_base = CF_EXPECT(GetBin(subcmd));
   // no need of executable directory. Will look up by PATH
-  // bin_path_base is like ln, mkdir, etc.
+  // bin_path_base is like mkdir, etc.
   return BinPathInfo{.bin_ = bin_path_base,
                      .bin_path_ = bin_path_base,
                      .host_artifacts_path_ = envs.at(kAndroidHostOut)};
@@ -215,9 +211,9 @@ CvdGenericCommandHandler::CvdHelpBinPath(const std::string& subcmd,
     tool_dir_path =
         android::base::Dirname(android::base::GetExecutableDirectory());
   }
-  auto bin_path_base = CF_EXPECT(GetBin(subcmd, tool_dir_path));
+  auto bin_path_base = CF_EXPECT(GetBin(subcmd));
   // no need of executable directory. Will look up by PATH
-  // bin_path_base is like ln, mkdir, etc.
+  // bin_path_base is like mkdir, etc.
   return BinPathInfo{
       .bin_ = bin_path_base,
       .bin_path_ = tool_dir_path.append("/bin/").append(bin_path_base),
@@ -225,7 +221,7 @@ CvdGenericCommandHandler::CvdHelpBinPath(const std::string& subcmd,
 }
 
 /*
- * commands like ln, mkdir, clear
+ * commands like mkdir, clear
  *  -> bin, bin, system_wide_home, N/A, cmd_args, envs
  *
  * help command
@@ -245,7 +241,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
   CF_EXPECT(Contains(envs, kAndroidHostOut) &&
             DirectoryExists(envs.at(kAndroidHostOut)));
 
-  std::unordered_set<std::string> non_cvd_op{"clear", "mkdir", "ln"};
+  std::unordered_set<std::string> non_cvd_op{"clear", "mkdir"};
   if (Contains(non_cvd_op, subcmd) || CF_EXPECT(IsHelpSubcmd(cmd_args))) {
     const auto [bin, bin_path, host_artifacts_path] =
         Contains(non_cvd_op, subcmd) ? CF_EXPECT(NonCvdBinPath(subcmd, envs))
@@ -269,7 +265,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
   auto instance_group = CF_EXPECT(SelectGroup(instance_manager_, request));
   auto android_host_out = instance_group.HostArtifactsPath();
   auto home = instance_group.HomeDir();
-  auto bin = CF_EXPECT(GetBin(subcmd, android_host_out));
+  auto bin = CF_EXPECT(GetBin(subcmd));
   auto bin_path = ConcatToString(android_host_out, "/bin/", bin);
   CommandInvocationInfo result = {.command = subcmd,
                                   .bin = bin,
@@ -292,14 +288,7 @@ CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) {
 Result<std::string> CvdGenericCommandHandler::GetBin(
     const std::string& subcmd) const {
   CF_EXPECT(Contains(command_to_binary_map_, subcmd));
-  const auto& bin_name = command_to_binary_map_.at(subcmd);
-  return bin_name;
-}
-
-Result<std::string> CvdGenericCommandHandler::GetBin(
-    const std::string& subcmd, const std::string& host_artifacts_path) const {
-  CF_EXPECT(Contains(command_to_binary_map_, subcmd));
-  return GetBin(subcmd);
+  return command_to_binary_map_.at(subcmd);
 }
 
 }  // namespace
