@@ -28,6 +28,7 @@
 #include "host/commands/cvd/server_command/acloud_command.h"
 #include "host/commands/cvd/server_command/acloud_mixsuperimage.h"
 #include "host/commands/cvd/server_command/acloud_translator.h"
+#include "host/commands/cvd/server_command/clear.h"
 #include "host/commands/cvd/server_command/cmd_list.h"
 #include "host/commands/cvd/server_command/create.h"
 #include "host/commands/cvd/server_command/display.h"
@@ -77,6 +78,8 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(NewCvdFetchCommandHandler());
   request_handlers_.emplace_back(
       NewCvdFleetCommandHandler(instance_manager_, host_tool_target_manager_));
+  request_handlers_.emplace_back(
+      NewCvdClearCommandHandler(instance_manager_));
   request_handlers_.emplace_back(
       NewCvdGenericCommandHandler(instance_manager_));
   request_handlers_.emplace_back(
