@@ -413,11 +413,21 @@ PRODUCT_PACKAGES += \
 endif
 
 #
+# Trusty VM for Keymint and Gatekeeper HAL
+#
+TRUSTY_KEYMINT_IMPL ?= rust
+TRUSTY_SYSTEM_VM ?= nonsecure
+ifeq ($(TRUSTY_SYSTEM_VM),nonsecure)
+    $(call inherit-product, system/core/trusty/keymint/trusty-keymint.mk)
+endif
+
+#
 # KeyMint HAL
 #
 PRODUCT_PACKAGES += \
 	com.android.hardware.keymint.rust_cf_remote \
 	com.android.hardware.keymint.rust_nonsecure \
+	com.android.hardware.keymint.rust_cf_guest_trusty_nonsecure \
 
 # Indicate that KeyMint includes support for the ATTEST_KEY key purpose.
 PRODUCT_COPY_FILES += \
