@@ -44,8 +44,6 @@
 #include "host/commands/cvd/server_command/power.h"
 #include "host/commands/cvd/server_command/remove.h"
 #include "host/commands/cvd/server_command/reset.h"
-#include "host/commands/cvd/server_command/serial_launch.h"
-#include "host/commands/cvd/server_command/serial_preset.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/snapshot.h"
 #include "host/commands/cvd/server_command/start.h"
@@ -92,9 +90,6 @@ RequestContext::RequestContext(
       host_tool_target_manager_, instance_manager_));
   request_handlers_.emplace_back(NewRemoveCvdCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdResetCommandHandler(instance_manager_));
-  request_handlers_.emplace_back(
-      NewSerialLaunchCommand(command_sequence_executor_, lock_file_manager_));
-  request_handlers_.emplace_back(NewSerialPreset(command_sequence_executor_));
   request_handlers_.emplace_back(NewCvdSnapshotCommandHandler(
       instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(
