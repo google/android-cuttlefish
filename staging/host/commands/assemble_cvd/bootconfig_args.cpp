@@ -189,10 +189,16 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   }
 
   const auto& secure_hals = CF_EXPECT(config.secure_hals());
-  bootconfig_args["androidboot.vendor.apex.com.android.hardware.keymint"] =
-      secure_hals.count(SecureHal::kGuestKeymintInsecure)
-          ? "com.android.hardware.keymint.rust_nonsecure"
-          : "com.android.hardware.keymint.rust_cf_remote";
+  if (secure_hals.count(SecureHal::kGuestKeymintInsecure)) {
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.keymint"] =
+        "com.android.hardware.keymint.rust_nonsecure";
+  } else if (secure_hals.count(SecureHal::kGuestKeymintTrustyInsecure)) {
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.keymint"] =
+        "com.android.hardware.keymint.rust_cf_guest_trusty_nonsecure";
+  } else {
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.keymint"] =
+        "com.android.hardware.keymint.rust_cf_remote";
+  }
 
   // Preemptive for when we set up the HAL to be runtime selectable
   bootconfig_args["androidboot.vendor.apex.com.android.hardware.gatekeeper"] =
