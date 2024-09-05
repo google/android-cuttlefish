@@ -37,7 +37,7 @@ class FileLogSink final : absl::LogSink {
   static absl::StatusOr<std::unique_ptr<FileLogSink>> FromPath(
       const std::string& path) {
     std::unique_ptr<FileLogSink> sink(new FileLogSink());
-    sink->fd_ = open(path.c_str(), O_APPEND | O_CREAT | O_WRONLY, 0644);
+    sink->fd_ = open(path.c_str(), O_APPEND | O_CREAT | O_WRONLY, 0666);
     if (sink->fd_ < 0) {
       return absl::ErrnoToStatus(errno, "open failed");
     }

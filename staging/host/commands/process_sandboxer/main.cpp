@@ -82,13 +82,6 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
   absl::EnableLogPrefix(true);
   absl::SetGlobalVLogLevel(1);
 
-  absl::Status logs_status = LogToFiles(absl::GetFlag(FLAGS_log_files));
-  if (!logs_status.ok()) {
-    return logs_status;
-  }
-
-  VLOG(1) << "Entering ProcessSandboxerMain";
-
   if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0) {
     return absl::ErrnoToStatus(errno, "prctl(PR_SET_CHILD_SUBREAPER failed");
   }
@@ -162,6 +155,21 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
   absl::Status dir_creation = host.EnsureOutputDirectoriesExist();
   if (!dir_creation.ok()) {
     return dir_creation;
+  }
+
+  absl::Status logs_status;
+  if (absl::GetFlag(FLAGS_log_files).empty()) {
+    std::string default_log_path = JoinPath(host.log_dir, "launcher.log");
+    unlink(default_log_path.c_str());  // Clean from previous run
+    logs_status = LogToFiles({default_log_path});
+  } else {
+    logs_status = LogToFiles(absl::GetFlag(FLAGS_log_files));
+    if (!logs_status.ok()) {
+      return logs_status;
+    }
+  }
+  if (!logs_status.ok()) {
+    return logs_status;
   }
 
   VLOG(1) << host;
