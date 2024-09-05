@@ -15,6 +15,11 @@
  */
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <sys/mman.h>
+#include <sys/prctl.h>
+#include <sys/syscall.h>
+#include <sys/un.h>
+
 #include <absl/log/log.h>
 
 #include <sandboxed_api/sandbox2/policybuilder.h>
@@ -34,7 +39,23 @@ sandbox2::PolicyBuilder CvdInternalStartPolicy(const HostInfo& host) {
       .AddFile("/dev/null")
       .AddFileAt(sandboxer_proxy, host.HostToolExe("assemble_cvd"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("run_cvd"))
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+      .AddPolicyOnSyscall(__NR_madvise,
+                          {ARG_32(2), JEQ32(MADV_DONTNEED, ALLOW)})
+      .AddPolicyOnSyscall(__NR_prctl,
+                          {ARG_32(0), JEQ32(PR_SET_PDEATHSIG, ALLOW)})
+      .AllowDup()
+      .AllowPipe()
+      .AllowFork()
+      .AllowSafeFcntl()
+      .AllowSyscall(__NR_execve)
+      .AllowSyscall(__NR_getcwd)
+      .AllowSyscall(__NR_fchdir)
+      .AllowWait()
+      // sandboxer_proxy
+      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW)})
+      .AllowSyscall(__NR_connect)
+      .AllowSyscall(__NR_recvmsg)
+      .AllowSyscall(__NR_sendmsg);
 }
 
 }  // namespace cuttlefish::process_sandboxer
