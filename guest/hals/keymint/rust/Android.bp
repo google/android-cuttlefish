@@ -26,9 +26,9 @@ rust_binary {
         "libandroid_logger",
         "libbinder_rs",
         "libhex",
-        "libkmr_wire",
         "libkmr_hal",
         "libkmr_hal_nonsecure",
+        "libkmr_wire",
         "liblibc",
         "liblog_rust",
     ],
@@ -72,20 +72,14 @@ prebuilt_etc {
     src: "android.hardware.hardware_keystore.rust-keymint.xml",
 }
 
-apex {
-    name: "com.android.hardware.keymint.rust_cf_remote",
+apex_defaults {
+    name: "com.android.hardware.keymint.rust_defaults",
     manifest: "manifest.json",
-    file_contexts: "file_contexts",
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",
     soc_specific: true,
     updatable: false,
-    binaries: [
-        "android.hardware.security.keymint-service.rust",
-    ],
     prebuilts: [
-        // init_rc
-        "android.hardware.security.keymint-service.rust.rc",
         // vintf_fragments
         "android.hardware.security.keymint-service.rust.xml",
         "android.hardware.security.secureclock-service.rust.xml",
@@ -93,4 +87,23 @@ apex {
         // permissions
         "android.hardware.hardware_keystore.rust-keymint.xml",
     ],
+}
+
+apex {
+    name: "com.android.hardware.keymint.rust_cf_remote",
+    defaults: ["com.android.hardware.keymint.rust_defaults"],
+    file_contexts: "file_contexts",
+    binaries: [
+        "android.hardware.security.keymint-service.rust",
+    ],
+    prebuilts: [
+        // init_rc
+        "android.hardware.security.keymint-service.rust.rc",
+    ],
+}
+
+apex {
+    name: "com.android.hardware.keymint.rust_cf_guest_trusty_nonsecure",
+    defaults: ["com.android.hardware.keymint.rust_defaults"],
+    file_contexts: "file_contexts_trusty",
 }
