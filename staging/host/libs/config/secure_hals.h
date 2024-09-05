@@ -25,6 +25,7 @@ namespace cuttlefish {
 enum class SecureHal {
   kGuestGatekeeperInsecure,
   kGuestKeymintInsecure,
+  kGuestKeymintTrustyInsecure,
   kHostKeymintInsecure,
   kHostKeymintSecure,
   kHostGatekeeperInsecure,

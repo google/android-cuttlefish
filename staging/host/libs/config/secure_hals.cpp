@@ -36,6 +36,8 @@ NoDestructor<std::unordered_map<std::string_view, SecureHal>> kMapping([] {
       {"keymint", SecureHal::kHostKeymintSecure},
       {"host_secure_keymint", SecureHal::kHostKeymintSecure},
       {"host_keymint_secure", SecureHal::kHostKeymintSecure},
+      {"guest_keymint_trusty_insecure", SecureHal::kGuestKeymintTrustyInsecure},
+      {"guest_keymint_insecure_trusty", SecureHal::kGuestKeymintTrustyInsecure},
       {"guest_gatekeeper_insecure", SecureHal::kGuestGatekeeperInsecure},
       {"guest_insecure_gatekeeper", SecureHal::kGuestGatekeeperInsecure},
       {"guest_insecure_keymint", SecureHal::kGuestKeymintInsecure},
@@ -71,9 +73,11 @@ Result<std::set<SecureHal>> ParseSecureHals(const std::string& hals) {
 }
 
 Result<void> ValidateSecureHals(const std::set<SecureHal>& secure_hals) {
-  auto keymint_impls = secure_hals.count(SecureHal::kGuestKeymintInsecure) +
-                       secure_hals.count(SecureHal::kHostKeymintInsecure) +
-                       secure_hals.count(SecureHal::kHostKeymintSecure);
+  auto keymint_impls =
+      secure_hals.count(SecureHal::kGuestKeymintInsecure) +
+      secure_hals.count(SecureHal::kGuestKeymintTrustyInsecure) +
+      secure_hals.count(SecureHal::kHostKeymintInsecure) +
+      secure_hals.count(SecureHal::kHostKeymintSecure);
   CF_EXPECT_LE(keymint_impls, 1, "Choose at most one keymint implementation");
 
   auto gatekeeper_impls =
@@ -96,6 +100,8 @@ std::string ToString(SecureHal hal_in) {
       return "guest_gatekeeper_insecure";
     case SecureHal::kGuestKeymintInsecure:
       return "guest_keymint_insecure";
+    case SecureHal::kGuestKeymintTrustyInsecure:
+      return "guest_keymint_trusty_insecure";
     case SecureHal::kHostKeymintInsecure:
       return "host_keymint_insecure";
     case SecureHal::kHostKeymintSecure:
