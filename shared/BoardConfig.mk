@@ -95,10 +95,12 @@ BOARD_VENDOR_KERNEL_MODULES := \
     $(filter-out $(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),\
                  $(wildcard $(KERNEL_MODULES_PATH)/*.ko))
 
+ifeq ($(TARGET_KERNEL_ARCH),arm64)
 ifeq (true,$(PRODUCT_16K_DEVELOPER_OPTION))
 BOARD_KERNEL_PATH_16K := kernel/prebuilts/mainline/$(TARGET_KERNEL_ARCH)/16k/kernel-mainline
 BOARD_KERNEL_MODULES_16K += $(wildcard kernel/prebuilts/mainline/$(TARGET_KERNEL_ARCH)/16k/*.ko)
 BOARD_KERNEL_MODULES_16K += $(wildcard kernel/prebuilts/common-modules/virtual-device/mainline/$(TARGET_KERNEL_ARCH)/16k/*.ko)
+endif
 endif
 
 # TODO(b/170639028): Back up TARGET_NO_BOOTLOADER
