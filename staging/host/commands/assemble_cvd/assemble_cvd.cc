@@ -208,7 +208,11 @@ Result<std::set<std::string>> PreservingOnResume(
   const auto snapshot_path = FLAGS_snapshot_path;
   const bool resume_requested = FLAGS_resume || !snapshot_path.empty();
   if (!resume_requested) {
-    return std::set<std::string>{};
+    if (InSandbox()) {
+      return {{"launcher.log"}};
+    } else {
+      return {};
+    }
   }
   CF_EXPECT(snapshot_path.empty() || !creating_os_disk,
             "Restoring from snapshot requires not creating OS disks");
@@ -217,7 +221,11 @@ Result<std::set<std::string>> PreservingOnResume(
     LOG(INFO) << "Requested resuming a previous session (the default behavior) "
               << "but the base images have changed under the overlay, making "
               << "the overlay incompatible. Wiping the overlay files.";
-    return std::set<std::string>{};
+    if (InSandbox()) {
+      return {{"launcher.log"}};
+    } else {
+      return {};
+    }
   }
 
   // either --resume && !creating_os_disk, or restoring from a snapshot
@@ -269,6 +277,9 @@ Result<std::set<std::string>> PreservingOnResume(
     preserving.insert("crosvm_openwrt_boot.log");
     preserving.insert("metrics.log");
   }
+  if (InSandbox()) {
+    preserving.insert("launcher.log");  // Created before `assemble_cvd` runs
+  }
   for (int i = 0; i < modem_simulator_count; i++) {
     std::stringstream ss;
     ss << "iccprofile_for_sim" << i << ".xml";
@@ -278,24 +289,30 @@ Result<std::set<std::string>> PreservingOnResume(
 }
 
 Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
-  while (runtime_dir_parent[runtime_dir_parent.size() - 1] == '/') {
+  SharedFD log_file;
+  if (InSandbox()) {
+    log_file = SharedFD::Open(
+        runtime_dir_parent + "/instances/cvd-1/logs/launcher.log",
+        O_WRONLY | O_APPEND);
+  } else {
+    while (runtime_dir_parent[runtime_dir_parent.size() - 1] == '/') {
+      runtime_dir_parent =
+          runtime_dir_parent.substr(0, FLAGS_instance_dir.rfind('/'));
+    }
     runtime_dir_parent =
         runtime_dir_parent.substr(0, FLAGS_instance_dir.rfind('/'));
+    log_file = SharedFD::Open(runtime_dir_parent, O_WRONLY | O_TMPFILE,
+                              S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
   }
-  runtime_dir_parent =
-      runtime_dir_parent.substr(0, FLAGS_instance_dir.rfind('/'));
-  auto log = SharedFD::Open(runtime_dir_parent, O_WRONLY | O_TMPFILE,
-                            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-  if (!log->IsOpen()) {
-    LOG(ERROR) << "Could not open O_TMPFILE precursor to assemble_cvd.log: "
-               << log->StrError();
+  if (!log_file->IsOpen()) {
+    LOG(ERROR) << "Could not open initial log file: " << log_file->StrError();
   } else {
     android::base::SetLogger(TeeLogger({
         {ConsoleSeverity(), SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE},
-        {LogFileSeverity(), log, MetadataLevel::FULL},
+        {LogFileSeverity(), log_file, MetadataLevel::FULL},
     }));
   }
-  return log;
+  return log_file;
 }
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
