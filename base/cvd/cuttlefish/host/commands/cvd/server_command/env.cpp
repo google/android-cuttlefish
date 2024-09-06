@@ -114,7 +114,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
     const auto& android_host_out = group.Proto().host_artifacts_path();
     auto cvd_env_bin_path =
         ConcatToString(android_host_out, "/bin/", kCvdEnvBin);
-    const auto& internal_device_name = fmt::format("cvd-%d", instance.id());
+    const auto& internal_device_name = fmt::format("cvd-{}", instance.id());
 
     cvd_common::Args cvd_env_args{internal_device_name};
     cvd_env_args.insert(cvd_env_args.end(), subcmd_args.begin(),
