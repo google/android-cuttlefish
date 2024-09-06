@@ -419,6 +419,9 @@ TRUSTY_KEYMINT_IMPL ?= rust
 TRUSTY_SYSTEM_VM ?= nonsecure
 ifeq ($(TRUSTY_SYSTEM_VM),nonsecure)
     $(call inherit-product, system/core/trusty/keymint/trusty-keymint.mk)
+    PRODUCT_PACKAGES += \
+        trusty_vm_nonsecure \
+
 endif
 
 #
