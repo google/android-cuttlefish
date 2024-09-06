@@ -20,6 +20,6 @@
     <item target="bool/audioUseHalDuckingSignals" value="@bool/audioUseHalDuckingSignals" />
     <item target="array/config_occupant_zones" value="@array/config_occupant_zones" />
     <item target="array/config_occupant_display_mapping" value="@array/config_occupant_display_mapping" />
-    <item target="string/config_evsRearviewCameraId" value="@string/config_evsRearviewCameraId" />
-    <item target="string/config_evsCameraActivity" value="@string/config_evsCameraActivity" />
+    <item target="array/config_carEvsService" value="@array/config_carEvsService" />
+    <item target="bool/audioUseMinMaxActivationVolume" value="@bool/audioUseMinMaxActivationVolume" />
 </overlay>

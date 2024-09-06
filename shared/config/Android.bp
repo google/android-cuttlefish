@@ -43,6 +43,12 @@ prebuilt_etc_host {
 }
 
 prebuilt_etc_host {
+    name: "cvd_config_auto_dd.json",
+    src: "config_auto_dd.json",
+    sub_dir: "cvd_config",
+}
+
+prebuilt_etc_host {
     name: "cvd_config_auto_portrait.json",
     src: "config_auto_portrait.json",
     sub_dir: "cvd_config",

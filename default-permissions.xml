@@ -42,6 +42,11 @@
     -->
 
     <exception
+            package="android.camera.extensions.impl.service">
+        <permission name="android.permission.CAMERA" fixed="false"/>
+    </exception>
+
+    <exception
             package="com.google.android.apps.restore"
             sha256-cert-digest="56:BE:13:2B:78:06:56:FE:24:44:CD:34:32:6E:B5:D7:AA:C9:1D:20:96:AB:F0:FE:67:3A:99:27:06:22:EC:87">
         <!-- External storage -->
