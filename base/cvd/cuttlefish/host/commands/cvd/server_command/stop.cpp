@@ -25,7 +25,6 @@
 #include <android-base/scopeguard.h>
 
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
@@ -117,16 +116,6 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
   CF_EXPECT(CanHandle(request));
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
 
-  auto precondition_verified = VerifyPrecondition(request);
-  if (!precondition_verified.ok()) {
-    cvd::Response response;
-    response.mutable_command_response();
-    response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
-    response.mutable_status()->set_message(
-        precondition_verified.error().Message());
-    return response;
-  }
-
   if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
     return CF_EXPECT(HandleHelpCmd(request));
   }
@@ -136,8 +125,6 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
   }
   cvd_common::Envs envs = request.Envs();
   const auto selector_args = request.SelectorArgs();
-  CF_EXPECT(Contains(envs, kAndroidHostOut) &&
-            DirectoryExists(envs.at(kAndroidHostOut)));
 
   auto group = CF_EXPECT(SelectGroup(instance_manager_, request));
   CF_EXPECT(group.HasActiveInstances(), "Selected group is not running");
@@ -185,9 +172,7 @@ Result<std::string> CvdStopCommandHandler::DetailedHelp(
 Result<CvdStopCommandHandler::BinPathInfo>
 CvdStopCommandHandler::CvdHelpBinPath(const std::string& subcmd,
                                       const cvd_common::Envs& envs) const {
-  CF_EXPECT(Contains(envs, kAndroidHostOut) &&
-            DirectoryExists(envs.at(kAndroidHostOut)));
-  auto tool_dir_path = envs.at(kAndroidHostOut);
+  auto tool_dir_path = CF_EXPECT(AndroidHostPath(envs));
   auto bin_path_base = CF_EXPECT(GetBin(tool_dir_path));
   // no need of executable directory. Will look up by PATH
   // bin_path_base is like ln, mkdir, etc.

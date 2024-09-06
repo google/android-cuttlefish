@@ -102,4 +102,10 @@ std::string DefaultBaseDir();
 
 Result<std::string> GroupDirFromHome(std::string_view group_home_dir);
 
+// Returns the path to the directory containing the host binaries, shared
+// libraries and other files built with the Android build system. It searches,
+// in order, the ANDROID_HOST_OUT, ANDROID_SOONG_HOST_OUT and HOME environment
+// variables followed by the current directory.
+Result<std::string> AndroidHostPath(const cvd_common::Envs& env);
+
 }  // namespace cuttlefish

@@ -354,7 +354,7 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
       continue;
     }
     auto link_res = CreateSymLink(home_dir, acloud_compat_home,
-                      /* override_existing*/ true);
+                                  /* override_existing*/ true);
     if (!link_res.ok()) {
       LOG(ERROR) << "Failed to symlink group's HOME directory to acloud "
                     "compatible location";
@@ -546,16 +546,6 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
             "The 'start' command doesn't accept --config_file, did you mean "
             "'create'?");
 
-  auto precondition_verified = VerifyPrecondition(request);
-  if (!precondition_verified.ok()) {
-    cvd::Response response;
-    response.mutable_command_response();
-    response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
-    response.mutable_status()->set_message(
-        precondition_verified.error().Message());
-    return response;
-  }
-
   cvd_common::Envs envs = request.Envs();
   if (Contains(envs, "HOME")) {
     if (envs.at("HOME").empty()) {
@@ -591,9 +581,8 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   const bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));
 
   if (is_help) {
-    auto it = envs.find(kAndroidHostOut);
-    CF_EXPECT(it != envs.end());
-    const auto bin = CF_EXPECT(FindStartBin(it->second));
+    auto android_host_out = CF_EXPECT(AndroidHostPath(envs));
+    const auto bin = CF_EXPECT(FindStartBin(android_host_out));
 
     Command command =
         CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));

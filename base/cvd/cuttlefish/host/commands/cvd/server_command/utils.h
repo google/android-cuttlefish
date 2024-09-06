@@ -41,8 +41,6 @@ CommandInvocation ParseInvocation(const cvd::Request& request);
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
 
-Result<void> VerifyPrecondition(const RequestWithStdio& request);
-
 struct ConstructCommandParam {
   const std::string& bin_path;
   const std::string& home;

@@ -18,8 +18,6 @@
 
 #include <sys/stat.h>
 
-#include <cstdio>
-#include <fstream>
 #include <optional>
 #include <regex>
 #include <vector>
@@ -72,8 +70,10 @@ static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
   repo_cmd.AddParameter("info");
   repo_cmd.AddParameter("platform/tools/acloud");
 
-  auto cuttlefish_source = StringFromEnv("ANDROID_BUILD_TOP", "") + "/tools/acloud";
-  auto fd_top = SharedFD::Open(cuttlefish_source, O_RDONLY | O_PATH | O_DIRECTORY);
+  auto cuttlefish_source =
+      StringFromEnv("ANDROID_BUILD_TOP", "") + "/tools/acloud";
+  auto fd_top =
+      SharedFD::Open(cuttlefish_source, O_RDONLY | O_PATH | O_DIRECTORY);
   if (!fd_top->IsOpen()) {
     LOG(ERROR) << "Couldn't open \"" << cuttlefish_source
                << "\": " << fd_top->StrError();
@@ -327,16 +327,15 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
 
   const auto& request_command = request.Message().command_request();
-  auto host_artifacts_path = request_command.env().find(kAndroidHostOut);
-  CF_EXPECT(host_artifacts_path != request_command.env().end(),
-            "Missing " << kAndroidHostOut);
+  auto host_artifacts_path = CF_EXPECT(
+      AndroidHostPath(cvd_common::ConvertToEnvs(request_command.env())),
+      "Missing host artifacts path");
 
   std::vector<cvd::Request> request_protos;
   const std::string user_config_path =
       parsed_flags.config_file.value_or(CF_EXPECT(GetDefaultConfigFile()));
 
-  AcloudConfig acloud_config =
-      CF_EXPECT(LoadAcloudConfig(user_config_path));
+  AcloudConfig acloud_config = CF_EXPECT(LoadAcloudConfig(user_config_path));
 
   std::string fetch_command_str;
   std::string fetch_cvd_args_file;
@@ -464,7 +463,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       fetch_command_str += (build + "/" + target);
     }
     auto& fetch_env = *fetch_command.mutable_env();
-    fetch_env[kAndroidHostOut] = host_artifacts_path->second;
+    fetch_env[kAndroidHostOut] = host_artifacts_path;
 
     fetch_cvd_args_file = host_dir + "/fetch-cvd-args.txt";
     if (FileExists(fetch_cvd_args_file)) {
@@ -509,7 +508,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       // added image_dir to required_paths for MixSuperImage use if there is
       required_paths.append(",").append(
           parsed_flags.local_image.path.value_or(""));
-      mixsuperimage_env[kAndroidHostOut] = host_artifacts_path->second;
+      mixsuperimage_env[kAndroidHostOut] = host_artifacts_path;
 
       auto product_out = request_command.env().find(kAndroidProductOut);
       CF_EXPECT(product_out != request_command.env().end(),
@@ -641,7 +640,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       start_command.add_args(local_image_path_str);
     }
 
-    start_env[kAndroidHostOut] = host_artifacts_path->second;
+    start_env[kAndroidHostOut] = host_artifacts_path;
 
     auto product_out = request_command.env().find(kAndroidProductOut);
     CF_EXPECT(product_out != request_command.env().end(),

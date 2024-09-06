@@ -21,7 +21,6 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
@@ -169,16 +168,6 @@ static Result<bool> HasPrint(cvd_common::Args cmd_args) {
 Result<cvd::Response> CvdStatusCommandHandler::Handle(
     const RequestWithStdio& request) {
   CF_EXPECT(CanHandle(request));
-
-  auto precondition_verified = VerifyPrecondition(request);
-  if (!precondition_verified.ok()) {
-    cvd::Response response;
-    response.mutable_command_response();
-    response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
-    response.mutable_status()->set_message(
-        precondition_verified.error().Message());
-    return response;
-  }
 
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
   CF_EXPECT(Contains(supported_subcmds_, subcmd));
