@@ -55,7 +55,6 @@ class CvdEnvCommandHandler : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
-    CF_EXPECT(VerifyPrecondition(request));
     cvd_common::Envs envs = request.Envs();
 
     auto [_, subcmd_args] = ParseInvocation(request.Message());
@@ -97,9 +96,10 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   Result<Command> HelpCommand(const RequestWithStdio& request,
                               const cvd_common::Args& subcmd_args,
                               const cvd_common::Envs& envs) {
-    CF_EXPECT(Contains(envs, kAndroidHostOut));
+    cvd_common::Envs envs_copy = envs;
+    envs_copy[kAndroidHostOut] = CF_EXPECT(AndroidHostPath(envs));
     return CF_EXPECT(
-        ConstructCvdHelpCommand(kCvdEnvBin, envs, subcmd_args, request));
+        ConstructCvdHelpCommand(kCvdEnvBin, envs_copy, subcmd_args, request));
   }
 
   Result<Command> NonHelpCommand(const RequestWithStdio& request,

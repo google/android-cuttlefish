@@ -203,9 +203,6 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
 
   // find group
   const auto selector_args = request.SelectorArgs();
-  CF_EXPECT(Contains(envs, kAndroidHostOut) &&
-            DirectoryExists(envs.at(kAndroidHostOut)));
-
   CvdFlag<bool> all_instances_flag("all_instances");
   auto all_instances_opt = CF_EXPECT(all_instances_flag.FilterFlag(cmd_args));
 

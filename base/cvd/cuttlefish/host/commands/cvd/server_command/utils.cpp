@@ -18,7 +18,6 @@
 
 #include <fmt/core.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
@@ -50,13 +49,6 @@ CommandInvocation ParseInvocation(const cvd::Request& request) {
     invocation.arguments.erase(invocation.arguments.begin());
   }
   return invocation;
-}
-
-Result<void> VerifyPrecondition(const RequestWithStdio& request) {
-  CF_EXPECT(
-      Contains(request.Message().command_request().env(), kAndroidHostOut),
-      "ANDROID_HOST_OUT in client environment is invalid.");
-  return {};
 }
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop) {
@@ -126,7 +118,9 @@ Result<Command> ConstructCvdHelpCommand(
   const auto home = (Contains(envs, "HOME") ? envs.at("HOME") : client_pwd);
   cvd_common::Envs envs_copy{envs};
   envs_copy["HOME"] = AbsolutePath(home);
-  envs[kAndroidSoongHostOut] = envs.at(kAndroidHostOut);
+  auto android_host_out = CF_EXPECT(AndroidHostPath(envs));
+  envs[kAndroidHostOut] = android_host_out;
+  envs[kAndroidSoongHostOut] = android_host_out;
   ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
                                             .home = home,
                                             .args = subcmd_args,

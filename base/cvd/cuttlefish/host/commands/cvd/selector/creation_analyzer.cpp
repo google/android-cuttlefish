@@ -180,13 +180,13 @@ Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo() {
 
   auto home = CF_EXPECT(AnalyzeHome());
 
-  CF_EXPECT(Contains(envs_, kAndroidHostOut));
+  auto android_host_out = CF_EXPECT(AndroidHostPath(envs_));
   std::string android_product_out_path = Contains(envs_, kAndroidProductOut)
                                              ? envs_.at(kAndroidProductOut)
-                                             : envs_.at(kAndroidHostOut);
+                                             : android_host_out;
   return GroupCreationInfo{
       .home = home,
-      .host_artifacts_path = envs_.at(kAndroidHostOut),
+      .host_artifacts_path = android_host_out,
       .product_out_path = android_product_out_path,
       .group_name = group_info.group_name,
       .instances = std::move(instance_info),

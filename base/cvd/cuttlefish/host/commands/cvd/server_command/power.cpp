@@ -25,7 +25,6 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
@@ -71,7 +70,6 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
-    CF_EXPECT(VerifyPrecondition(request));
     cvd_common::Envs envs = request.Envs();
 
     auto [op, subcmd_args] = ParseInvocation(request.Message());
@@ -142,15 +140,15 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
                               const std::string& op,
                               const cvd_common::Args& subcmd_args,
                               cvd_common::Envs envs) {
-    CF_EXPECT(Contains(envs, kAndroidHostOut));
-    const auto bin_base = CF_EXPECT(GetBin(op, envs.at(kAndroidHostOut)));
+    auto android_host_out = CF_EXPECT(AndroidHostPath(envs));
+    const auto bin_base = CF_EXPECT(GetBin(op, android_host_out));
     auto cvd_power_bin_path =
-        ConcatToString(envs.at(kAndroidHostOut), "/bin/", bin_base);
-    std::string home = Contains(envs, "HOME")
-                           ? envs.at("HOME")
-                           : CF_EXPECT(SystemWideUserHome());
+        ConcatToString(android_host_out, "/bin/", bin_base);
+    std::string home = Contains(envs, "HOME") ? envs.at("HOME")
+                                              : CF_EXPECT(SystemWideUserHome());
     envs["HOME"] = home;
-    envs[kAndroidSoongHostOut] = envs.at(kAndroidHostOut);
+    envs[kAndroidHostOut] = android_host_out;
+    envs[kAndroidSoongHostOut] = android_host_out;
     ConstructCommandParam construct_cmd_param{
         .bin_path = cvd_power_bin_path,
         .home = home,
@@ -177,8 +175,8 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     }
     const auto selector_args = request.SelectorArgs();
 
-    auto [instance, group] = CF_EXPECT(instance_manager_.SelectInstance(
-        selector_args, envs, extra_queries));
+    auto [instance, group] = CF_EXPECT(
+        instance_manager_.SelectInstance(selector_args, envs, extra_queries));
     const auto& home = group.Proto().home_directory();
 
     const auto& android_host_out = group.Proto().host_artifacts_path();
@@ -187,8 +185,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
         ConcatToString(android_host_out, "/bin/", bin_base);
 
     cvd_common::Args cvd_env_args{subcmd_args};
-    cvd_env_args.push_back(
-        ConcatToString("--instance_num=", instance.id()));
+    cvd_env_args.push_back(ConcatToString("--instance_num=", instance.id()));
     envs["HOME"] = home;
     envs[kAndroidHostOut] = android_host_out;
     envs[kAndroidSoongHostOut] = android_host_out;

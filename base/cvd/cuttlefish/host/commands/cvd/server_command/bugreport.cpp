@@ -25,7 +25,6 @@
 #include <android-base/scopeguard.h>
 
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
@@ -83,20 +82,10 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
   cvd::Response response;
   response.mutable_command_response();
 
-  auto precondition_verified = VerifyPrecondition(request);
-  if (!precondition_verified.ok()) {
-    response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
-    response.mutable_status()->set_message(
-        precondition_verified.error().Message());
-    return response;
-  }
-
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
   cvd_common::Envs envs = request.Envs();
-  CF_EXPECT(Contains(envs, kAndroidHostOut) &&
-            DirectoryExists(envs.at(kAndroidHostOut)));
 
-  std::string android_host_out = envs.at(kAndroidHostOut);
+  std::string android_host_out;
   std::string home = CF_EXPECT(SystemWideUserHome());
   if (!CF_EXPECT(IsHelpSubcmd(cmd_args))) {
     auto instance_group = CF_EXPECT(SelectGroup(instance_manager_, request));
@@ -104,6 +93,8 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
     home = instance_group.HomeDir();
     envs["HOME"] = home;
     envs[kAndroidHostOut] = android_host_out;
+  } else {
+    android_host_out = CF_EXPECT(AndroidHostPath(envs));
   }
   auto bin_path = ConcatToString(android_host_out, "/bin/", kHostBugreportBin);
 

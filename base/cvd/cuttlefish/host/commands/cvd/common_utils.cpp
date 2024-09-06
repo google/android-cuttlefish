@@ -30,6 +30,14 @@
 namespace cuttlefish {
 
 namespace {
+
+bool IsValidAndroidHostOutPath(const std::string& path) {
+  std::string start_bin_path = path + "/bin/cvd_internal_start";
+  return FileExists(start_bin_path);
+}
+
+}  // namespace
+
 /*
  * Most branches read the kAndroidHostOut environment variable, but a few read
  * kAndroidSoongHostOut instead. Cvd will set both variables for the subtools
@@ -39,20 +47,23 @@ namespace {
  * - envs["HOME"] if envs["HOME"] + "/bin/cvd_internal_start" exists.
  * - current working directory
  */
-std::string GetNewAndroidHostOut(const cvd_common::Envs& envs) {
-  if (Contains(envs, kAndroidHostOut)) {
-    return envs.at(kAndroidHostOut);
+Result<std::string> AndroidHostPath(const cvd_common::Envs& envs) {
+  auto it = envs.find(kAndroidHostOut);
+  if (it != envs.end() && IsValidAndroidHostOutPath(it->second)) {
+    return it->second;
   }
-  if (Contains(envs, kAndroidSoongHostOut)) {
-    return envs.at(kAndroidSoongHostOut);
+  it = envs.find(kAndroidSoongHostOut);
+  if (it != envs.end() && IsValidAndroidHostOutPath(it->second)) {
+    return it->second;
   }
-  if (Contains(envs, "HOME") &&
-      FileExists(envs.at("HOME") + "/bin/cvd_internal_start")) {
-    return envs.at("HOME");
+  it = envs.find("HOME");
+  if (it != envs.end() && IsValidAndroidHostOutPath(it->second)) {
+    return it->second;
   }
-  return CurrentDirectory();
+  auto current_dir = CurrentDirectory();
+  CF_EXPECT(IsValidAndroidHostOutPath(current_dir));
+  return current_dir;
 }
-}  // namespace
 
 cvd::Request MakeRequest(const MakeRequestForm& request_form) {
   return MakeRequest(request_form, cvd::WAIT_BEHAVIOR_COMPLETE);
@@ -75,12 +86,6 @@ cvd::Request MakeRequest(const MakeRequestForm& request_form,
 
   for (const auto& [key, value] : env) {
     (*command_request->mutable_env())[key] = value;
-  }
-
-  if (!Contains(command_request->env(), kAndroidHostOut)) {
-    const std::string new_android_host_out =
-        GetNewAndroidHostOut(request_form.env);
-    (*command_request->mutable_env())[kAndroidHostOut] = new_android_host_out;
   }
 
   if (!request_form.working_dir) {

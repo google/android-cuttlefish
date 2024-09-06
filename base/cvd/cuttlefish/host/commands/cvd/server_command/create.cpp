@@ -332,7 +332,8 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
 
   if (flags.start) {
     auto start_cmd = CreateStartCommand(request, group, subcmd_args, envs);
-    response = CF_EXPECT(command_executor_.ExecuteOne(start_cmd, request.Err()));
+    response =
+        CF_EXPECT(command_executor_.ExecuteOne(start_cmd, request.Err()));
   }
 
   *response.mutable_command_response()->mutable_instance_group_info() =

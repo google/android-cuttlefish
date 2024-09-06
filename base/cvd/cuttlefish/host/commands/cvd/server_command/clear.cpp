@@ -68,14 +68,6 @@ Result<cvd::Response> CvdClearCommandHandler::Handle(
   cvd::Response response;
   response.mutable_command_response();
 
-  auto precondition_verified = VerifyPrecondition(request);
-  if (!precondition_verified.ok()) {
-    response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
-    response.mutable_status()->set_message(
-        precondition_verified.error().Message());
-    return response;
-  }
-
   auto [subcmd, cmd_args] = ParseInvocation(request.Message());
 
   if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
