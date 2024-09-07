@@ -563,6 +563,15 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
         system_images.emplace_back(vbmeta_system_path);
       }
 
+      Result<std::string> extracted_init_boot = ExtractImage(
+          target_files, target_directories.root, "IMAGES/init_boot.img");
+      if (extracted_init_boot.ok()) {
+        const std::string init_boot_path =
+            target_directories.root + "/init_boot.img";
+        CF_EXPECT(RenameFile(*extracted_init_boot, init_boot_path));
+        system_images.emplace_back(init_boot_path);
+      }
+
       CF_EXPECT(config.AddFilesToConfig(
           FileSource::SYSTEM_BUILD, system_id, system_target, system_images,
           target_directories.root, kOverrideEntries));
