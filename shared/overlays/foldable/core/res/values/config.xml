@@ -86,4 +86,6 @@
   <!-- Device state that corresponds to rear display mode, feature provided
          through Jetpack WindowManager -->
   <integer name="config_deviceStateRearDisplay">3</integer>
+
+  <string name="config_rearDisplayPhysicalAddress">4619827353912518657</string>
 </resources>

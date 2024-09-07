@@ -1,0 +1,2 @@
+config=auto_dd
+gfxstream=supported
