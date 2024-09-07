@@ -23,6 +23,7 @@ while getopts "c:b:t:" opt; do
       exit 1
   esac
 done
+shift $((OPTIND-1))
 
 if [[ "${BRANCH}" == "" ]]; then
   echo "Missing required -b argument"
@@ -32,7 +33,7 @@ if [[ "${TARGET}" == "" ]]; then
   echo "Missing required -t argument"
 fi
 
-workdir="$(mktemp -d -t cvd_boot_test.XXXXXX)"
+workdir="$(mktemp -d -t cvd_command_test.XXXXXX)"
 
 function collect_logs_and_cleanup() {
   # Don't immediately exit on failure anymore
@@ -61,6 +62,7 @@ cvd fetch \
 
 (
   cd "${workdir}"
-  HOME=$(pwd) bin/launch_cvd --daemon --report_anonymous_usage_stats=y --undefok=report_anonymous_usage_stats
-  HOME=$(pwd) bin/stop_cvd
+  cvd create --report_anonymous_usage_stats=y --undefok=report_anonymous_usage_stats
+  cvd "$@"
+  cvd rm
 )
