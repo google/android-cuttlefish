@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 . ./setup-nodejs-env.sh
 install_nodejs
 package_version=$(head -1 debian/changelog | sed s/.*\(\\\(.*\\\)\).*/\\1/)

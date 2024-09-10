@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This shell script exists for building docker image.
 # Docker image includes HO(Host Orchestrator) inside,

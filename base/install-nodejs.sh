@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 . setup-nodejs-env.sh
 
 rm -rf $NODE_ROOT
