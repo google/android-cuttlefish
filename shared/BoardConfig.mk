@@ -22,8 +22,6 @@
 # 32 bit devices (Wear, Go, Auto)
 ifeq (true,$(CLOCKWORK_EMULATOR_PRODUCT))
 TARGET_KERNEL_USE ?= 6.1
-else ifneq (,$(findstring x86_phone,$(PRODUCT_NAME)))
-TARGET_KERNEL_USE ?= 6.1
 else ifneq (,$(findstring x86_tv,$(PRODUCT_NAME)))
 TARGET_KERNEL_USE ?= 6.1
 else
