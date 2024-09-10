@@ -524,7 +524,7 @@ std::string Command::AsBashScript(
   CHECK(redirects_.empty()) << "Bash wrapper will not have redirected stdio.";
 
   std::string contents =
-      "#!/bin/bash\n\n" + android::base::Join(command_, " \\\n");
+      "#!/usr/bin/env bash\n\n" + android::base::Join(command_, " \\\n");
   if (!redirected_stdio_path.empty()) {
     contents += " &> " + AbsolutePath(redirected_stdio_path);
   }
