@@ -74,8 +74,8 @@ fi
 script_location="$(rlocation ${rlocation_base}/docker/image-build-bazel-wrapper.sh)"
 repo_root_dir=$(dirname $(dirname $(readlink -f ${script_location})))
 
-tag="BUILD$(date +%+4Y%m%d)-$RANDOM"
-name="cuttlefish-orchestration:${tag}"
+head_commit_sha=$(git -C ${repo_root_dir} rev-parse HEAD | cut -c1-8)
+name="cuttlefish-orchestration:${head_commit_sha}"
 
 function remove_image() {
   docker rmi ${name} 
