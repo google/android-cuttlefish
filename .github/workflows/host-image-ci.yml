@@ -102,9 +102,6 @@ jobs:
         name: u-boot
         path: tools/cuttlefish-host-image-installer/u-boot.bin
 
-  build-docker-image-job:
-    uses: ./.github/workflows/docker.yaml
-
   test-install-cuttlefish-deb-job:
     runs-on: ubuntu-latest
     needs: build-cuttlefish-deb-job

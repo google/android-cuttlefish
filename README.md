@@ -72,7 +72,7 @@ cuttlefish-orchestration latest 0123456789ab   2 minutes ago    690MB
 ### Download prebuilt image
 
 Downloading latest image is available
-[here](https://github.com/google/android-cuttlefish/releases/tag/latest).
+[here](https://github.com/google/android-cuttlefish/actions/workflows/artifacts.yaml?query=event%3Apush).
 
 After downloading image, please load the image and verify with
 `docker image list`.
