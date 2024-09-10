@@ -48,7 +48,6 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_x86_64_only_phone_hsum:$(LOCAL_DIR)/vsoc_x86_64_only/phone/aosp_cf_hsum.mk \
 	aosp_cf_x86_64_slim:$(LOCAL_DIR)/vsoc_x86_64_only/slim/aosp_cf.mk \
 	aosp_cf_x86_64_wear:$(LOCAL_DIR)/vsoc_x86_64_only/wear/aosp_cf.mk \
-	aosp_cf_x86_phone:$(LOCAL_DIR)/vsoc_x86/phone/aosp_cf.mk \
 	aosp_cf_x86_only_phone:$(LOCAL_DIR)/vsoc_x86_only/phone/aosp_cf.mk \
 	aosp_cf_x86_go_phone:$(LOCAL_DIR)/vsoc_x86/go/aosp_cf.mk \
 	aosp_cf_x86_tv:$(LOCAL_DIR)/vsoc_x86/tv/aosp_cf.mk \
@@ -64,6 +63,5 @@ COMMON_LUNCH_CHOICES := \
 	aosp_cf_x86_64_foldable-trunk_staging-userdebug \
 	aosp_cf_x86_64_auto-trunk_staging-userdebug \
 	aosp_cf_x86_64_auto_mdnd-trunk_staging-userdebug \
-	aosp_cf_x86_phone-trunk_staging-userdebug \
 	aosp_cf_x86_tv-trunk_staging-userdebug \
 	aosp_cf_x86_64_tv-trunk_staging-userdebug
