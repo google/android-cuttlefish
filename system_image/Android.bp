@@ -300,7 +300,6 @@ android_system_image {
     dirs: android_rootdirs,
     symlinks: android_symlinks,
     file_contexts: ":plat_file_contexts",
-    update_product_out: true,
     linker_config_src: "linker.config.json",
     fsverity: {
         inputs: [
