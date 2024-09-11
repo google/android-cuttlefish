@@ -40,7 +40,7 @@ CommandInvocation ParseInvocation(const cvd::Request& request) {
     invocation.arguments.push_back(arg);
   }
   invocation.arguments[0] = cpp_basename(invocation.arguments[0]);
-  if (invocation.arguments[0] == "cvd") {
+  if (invocation.arguments[0] == "cvd" && invocation.arguments.size() > 1) {
     invocation.command = invocation.arguments[1];
     invocation.arguments.erase(invocation.arguments.begin());
     invocation.arguments.erase(invocation.arguments.begin());
