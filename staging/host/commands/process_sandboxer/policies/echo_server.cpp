@@ -51,6 +51,7 @@ sandbox2::PolicyBuilder EchoServerPolicy(const HostInfo& host) {
       .AllowSyscall(__NR_sendmsg)
       .AllowSyscall(__NR_sched_getparam)
       .AllowSyscall(__NR_sched_getscheduler)
+      .AllowSyscall(__NR_sched_yield)
       .AllowSyscall(__NR_shutdown);
 }
 
