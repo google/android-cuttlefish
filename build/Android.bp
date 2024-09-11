@@ -262,6 +262,11 @@ cvd_host_aarch64_graphics_detector = [
     "aarch64_linux_gnu_gfxstream_graphics_detector_for_crosvm",
 ]
 
+cvd_host_aarch64_swiftshader = [
+    "aarch64_linux_gnu_libvk_swiftshader.so",
+    "aarch64_linux_gnu_vk_swiftshader_icd.json",
+]
+
 cvd_host_x86_64 = cvd_host_x86_64_graphics_detector + cvd_host_x86_64_crosvm + qemu_x86_64_linux_gnu_binary
 
 cvd_host_aarch64_crosvm = [
@@ -276,7 +281,7 @@ cvd_host_aarch64_crosvm = [
     "aarch64_linux_gnu_libwayland_client.so.0_for_crosvm",
 ]
 
-cvd_host_aarch64 = cvd_host_aarch64_crosvm + cvd_host_aarch64_graphics_detector + qemu_aarch64_linux_gnu_binary
+cvd_host_aarch64 = cvd_host_aarch64_crosvm + cvd_host_aarch64_graphics_detector + qemu_aarch64_linux_gnu_binary + cvd_host_aarch64_swiftshader
 
 cvd_host_seccomp_policy_x86_64 = [
     "9p_device.policy_x86_64",
