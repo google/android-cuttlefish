@@ -64,6 +64,27 @@ prebuilt_etc {
     src: "android.hardware.security.secureclock-service.rust.xml",
 }
 
+prebuilt_etc {
+    name: "android.hardware.security.keymint-service.trusty.system.xml",
+    sub_dir: "vintf",
+    vendor: true,
+    src: "android.hardware.security.keymint-service.trusty.system.xml",
+}
+
+prebuilt_etc {
+    name: "android.hardware.security.sharedsecret-service.trusty.system.xml",
+    sub_dir: "vintf",
+    vendor: true,
+    src: "android.hardware.security.sharedsecret-service.trusty.system.xml",
+}
+
+prebuilt_etc {
+    name: "android.hardware.security.secureclock-service.trusty.system.xml",
+    sub_dir: "vintf",
+    vendor: true,
+    src: "android.hardware.security.secureclock-service.trusty.system.xml",
+}
+
 // permissions
 prebuilt_etc {
     name: "android.hardware.hardware_keystore.rust-keymint.xml",
@@ -80,10 +101,6 @@ apex_defaults {
     soc_specific: true,
     updatable: false,
     prebuilts: [
-        // vintf_fragments
-        "android.hardware.security.keymint-service.rust.xml",
-        "android.hardware.security.secureclock-service.rust.xml",
-        "android.hardware.security.sharedsecret-service.rust.xml",
         // permissions
         "android.hardware.hardware_keystore.rust-keymint.xml",
     ],
@@ -99,6 +116,10 @@ apex {
     prebuilts: [
         // init_rc
         "android.hardware.security.keymint-service.rust.rc",
+        // vintf_fragments
+        "android.hardware.security.keymint-service.rust.xml",
+        "android.hardware.security.secureclock-service.rust.xml",
+        "android.hardware.security.sharedsecret-service.rust.xml",
     ],
 }
 
@@ -106,4 +127,10 @@ apex {
     name: "com.android.hardware.keymint.rust_cf_guest_trusty_nonsecure",
     defaults: ["com.android.hardware.keymint.rust_defaults"],
     file_contexts: "file_contexts_trusty",
+    prebuilts: [
+        // vintf_fragments
+        "android.hardware.security.keymint-service.trusty.system.xml",
+        "android.hardware.security.secureclock-service.trusty.system.xml",
+        "android.hardware.security.sharedsecret-service.trusty.system.xml",
+    ],
 }
