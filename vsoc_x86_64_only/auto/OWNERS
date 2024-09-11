@@ -1,4 +1,1 @@
-# Android Auto leads
-include platform/packages/services/Car:/OWNERS
-ankitarora@google.com
-egranata@google.com
+include device/google/cuttlefish:/shared/auto/OWNERS
