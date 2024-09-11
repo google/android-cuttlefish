@@ -16,16 +16,28 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <sys/mman.h>
+#include <syscall.h>
+
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/trace_all_syscalls.h>
+#include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
 namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder Simg2ImgPolicy(const HostInfo& host) {
-  // TODO: b/359312017 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("simg2img"))
       .AddDirectory(host.guest_image_path, /* is_ro= */ false)
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+      .AddPolicyOnMmap([](bpf_labels& labels) -> std::vector<sock_filter> {
+        return {
+            ARG_32(2),  // prot
+            JNE32(PROT_READ, JUMP(&labels, cf_simg2img_mmap_end)),
+            ARG_32(3),  // flags
+            JEQ32(MAP_SHARED, ALLOW),
+            LABEL(&labels, cf_simg2img_mmap_end),
+        };
+      })
+      .AllowSyscall(__NR_ftruncate);
 }
 
 }  // namespace cuttlefish::process_sandboxer
