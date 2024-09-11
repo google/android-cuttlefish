@@ -325,6 +325,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   auto group = CF_EXPECT(GetOrCreateGroup(subcmd_args, envs, request));
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
+  group.SetStartTime(selector::CvdServerClock::now());
   instance_manager_.UpdateInstanceGroup(group);
 
   cvd::Response response;
