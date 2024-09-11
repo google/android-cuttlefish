@@ -23,3 +23,9 @@ prebuilt_etc {
     relative_install_path: "permissions",
     soc_specific: true,
 }
+
+prebuilt_etc_host {
+    name: "cvd_config_slim.json",
+    src: "config_slim.json",
+    sub_dir: "cvd_config",
+}
