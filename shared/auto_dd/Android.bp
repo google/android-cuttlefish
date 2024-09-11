@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2023 The Android Open Source Project
+// Copyright (C) 2024 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,15 +17,8 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-prebuilt_etc {
-    name: "tv_excluded_hardware.prebuilt.xml",
-    src: "tv_excluded_hardware.xml",
-    relative_install_path: "permissions",
-    soc_specific: true,
-}
-
 prebuilt_etc_host {
-    name: "cvd_config_tv.json",
-    src: "config_tv.json",
+    name: "cvd_config_auto_dd.json",
+    src: "config_auto_dd.json",
     sub_dir: "cvd_config",
 }
