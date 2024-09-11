@@ -79,6 +79,7 @@ sandbox2::PolicyBuilder NetsimdPolicy(const HostInfo& host) {
       .AllowEpollWait()
       .AllowEventFd()
       .AllowHandleSignals()
+      .AllowMkdir()
       .AllowPipe()
       .AllowPrctlSetName()
       .AllowReaddir()
