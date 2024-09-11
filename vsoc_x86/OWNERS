@@ -1,0 +1,3 @@
+include device/google/cuttlefish:/shared/go/OWNERS
+include device/google/cuttlefish:/shared/tv/OWNERS
+include device/google/cuttlefish:/shared/wear/OWNERS
