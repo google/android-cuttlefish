@@ -16,20 +16,25 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <sys/syscall.h>
+
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
+#include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
 namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder TcpConnectorPolicy(const HostInfo& host) {
-  // TODO: b/318586626 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("tcp_connector"))
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
+      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_INET, ALLOW)})
       .Allow(sandbox2::UnrestrictedNetworking())
-      .AllowTCGETS()
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+      .AllowSafeFcntl()
+      .AllowSleep()
+      .AllowSyscall(__NR_clone)  // Multithreading
+      .AllowSyscall(__NR_connect)
+      .AllowTCGETS();
 }
 
 }  // namespace cuttlefish::process_sandboxer
