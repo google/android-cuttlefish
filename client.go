@@ -191,6 +191,7 @@ func (s *serviceImpl) HostService(host string) HostOrchestratorService {
 		HTTPHelper: s.httpHelper,
 		// Make the cloud orchestrator inject the credentials instead
 		BuildAPICredentialsHeader: DefaultHostOrchestratorCredentialsHeader,
+		ProxyURL:                  s.ProxyURL,
 	}
 	if s.InjectBuildAPICreds {
 		hs.BuildAPICredentialsHeader = headerNameCOInjectBuildAPICreds
