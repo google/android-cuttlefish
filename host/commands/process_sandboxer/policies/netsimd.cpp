@@ -33,8 +33,6 @@ namespace cuttlefish::process_sandboxer {
 using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder NetsimdPolicy(const HostInfo& host) {
-  static_assert(IPPROTO_IPV6 == 41);
-  // TODO: b/318603863 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("netsimd"))
       .AddDirectory(JoinPath(host.host_artifacts_path, "bin", "netsim-ui"))
       .AddDirectory("/tmp", /* is_ro= */ false)  // to create new directories
@@ -94,6 +92,7 @@ sandbox2::PolicyBuilder NetsimdPolicy(const HostInfo& host) {
       .AllowSyscall(__NR_listen)
       .AllowSyscall(__NR_sched_getparam)
       .AllowSyscall(__NR_sched_getscheduler)
+      .AllowSyscall(__NR_sched_yield)
       .AllowSyscall(__NR_statx);  // Not covered by AllowStat
 }
 

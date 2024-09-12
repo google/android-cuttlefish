@@ -24,7 +24,6 @@ namespace cuttlefish::process_sandboxer {
 using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder WmediumdGenConfigPolicy(const HostInfo& host) {
-  // TODO: b/359313561 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("wmediumd_gen_config"))
       .AddDirectory(JoinPath(host.environments_dir, "env-1"),
                     /* is_ro= */ false);
