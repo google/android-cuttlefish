@@ -141,3 +141,8 @@ type CreateSnapshotResponse struct {
 type EmptyResponse struct{}
 
 type StopCVDResponse = EmptyResponse
+
+type StartCVDRequest struct {
+	// Start from the relevant snaphost if not empty.
+	SnapshotID string `json:"snapshot_id,omitempty"`
+}

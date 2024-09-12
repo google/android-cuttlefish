@@ -71,6 +71,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newCreateCVDBugReportHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "remove"))).Methods("DELETE")
+	router.Handle("/cvds/{group}/{name}/:start",
+		httpHandler(newStartCVDHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:stop",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
@@ -293,6 +295,35 @@ func (h *createSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDUser:          h.Config.CVDUser,
 	}
 	return NewCreateSnapshotAction(opts).Run()
+}
+
+type startCVDHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newStartCVDHandler(c Config, om OperationManager) *startCVDHandler {
+	return &startCVDHandler{Config: c, OM: om}
+}
+
+func (h *startCVDHandler) Handle(r *http.Request) (interface{}, error) {
+	req := &apiv1.StartCVDRequest{}
+	err := json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
+	}
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	opts := StartCVDActionOpts{
+		Request:          req,
+		Selector:         CVDSelector{Group: group, Name: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+		CVDUser:          h.Config.CVDUser,
+	}
+	return NewStartCVDAction(opts).Run()
 }
 
 type getCVDLogsHandler struct {
