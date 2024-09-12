@@ -37,15 +37,15 @@ DEFINE_int32(dump_packet_size, -1,
 namespace cuttlefish {
 namespace {
 
-void OpenSocket(SharedFD* fd, int port) {
+SharedFD OpenSocket(int port) {
   static std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
   for (;;) {
-    *fd = SharedFD::SocketLocalClient(port, SOCK_STREAM);
-    if ((*fd)->IsOpen()) {
-      return;
+    SharedFD fd = SharedFD::SocketLocalClient(port, SOCK_STREAM);
+    if (fd->IsOpen()) {
+      return fd;
     }
-    LOG(ERROR) << "Failed to open socket: " << (*fd)->StrError();
+    LOG(ERROR) << "Failed to open socket: " << fd->StrError();
     // Wait a little and try again
     sleep(1);
   }
@@ -91,8 +91,7 @@ int TcpConnectorMain(int argc, char** argv) {
     return 1;
   }
   close(FLAGS_fifo_out);
-  SharedFD sock;
-  OpenSocket(&sock, FLAGS_data_port);
+  SharedFD sock = OpenSocket(FLAGS_data_port);
 
   auto guest_to_host = std::thread([&]() {
     while (true) {
@@ -109,7 +108,7 @@ int TcpConnectorMain(int argc, char** argv) {
                      << sock->StrError();
         // Wait for the host process to be ready
         sleep(1);
-        OpenSocket(&sock, FLAGS_data_port);
+        sock = OpenSocket(FLAGS_data_port);
       }
     }
   });
@@ -124,7 +123,7 @@ int TcpConnectorMain(int argc, char** argv) {
                      << sock->StrError();
         // Wait for the host process to be ready
         sleep(1);
-        OpenSocket(&sock, FLAGS_data_port);
+        sock = OpenSocket(FLAGS_data_port);
         continue;
       }
       auto wrote = WriteAll(fifo_out, buf, read);
