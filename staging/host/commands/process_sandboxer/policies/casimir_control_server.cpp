@@ -16,22 +16,54 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <sys/mman.h>
+#include <sys/socket.h>
 #include <syscall.h>
 
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
+#include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
 namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder CasimirControlServerPolicy(const HostInfo& host) {
-  // TODO: b/318587667 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("casimir_control_server"))
       .AddDirectory(host.instance_uds_dir, /* is_ro= */ false)
       .AddFile("/dev/urandom")                    // For gRPC
       .Allow(sandbox2::UnrestrictedNetworking())  // Communicate with casimir
+      .AddPolicyOnSyscall(__NR_madvise,
+                          {ARG_32(2), JEQ32(MADV_DONTNEED, ALLOW)})
+      .AddPolicyOnSyscall(
+          __NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW), JEQ32(AF_INET, ALLOW),
+                        JEQ32(AF_INET6, ALLOW)})
+      .AddPolicyOnSyscalls(
+          {__NR_getsockopt, __NR_setsockopt},
+          [](bpf_labels& labels) -> std::vector<sock_filter> {
+            return {
+                ARG_32(1),  // level
+                JNE32(SOL_SOCKET,
+                      JUMP(&labels, cf_control_env_proxy_server_sockopt_end)),
+                ARG_32(2),  // optname
+                JEQ32(SO_REUSEPORT, ALLOW),
+                LABEL(&labels, cf_control_env_proxy_server_sockopt_end),
+            };
+          })
+      .AllowEventFd()
+      .AllowSafeFcntl()
       .AllowSleep()
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+      .AllowSyscall(__NR_accept)
+      .AllowSyscall(__NR_bind)
+      .AllowSyscall(__NR_clone)  // Multithreading
+      .AllowSyscall(__NR_connect)
+      .AllowSyscall(__NR_getpeername)
+      .AllowSyscall(__NR_getsockname)
+      .AllowSyscall(__NR_listen)
+      .AllowSyscall(__NR_recvmsg)
+      .AllowSyscall(__NR_sched_getparam)
+      .AllowSyscall(__NR_sched_getscheduler)
+      .AllowSyscall(__NR_sched_yield)
+      .AllowSyscall(__NR_sendmsg)
+      .AllowSyscall(__NR_shutdown);
 }
 
 }  // namespace cuttlefish::process_sandboxer
