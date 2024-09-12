@@ -16,16 +16,15 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
-#include <ios>
+
 #include <mutex>
+#include <thread>
 
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
-#include <thread>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
-#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
 
 DEFINE_int32(fifo_in, -1, "A pipe for incoming communication");
@@ -35,11 +34,14 @@ DEFINE_int32(buffer_size, -1, "The buffer size");
 DEFINE_int32(dump_packet_size, -1,
              "Dump incoming/outgoing packets up to given size");
 
-void OpenSocket(cuttlefish::SharedFD* fd, int port) {
+namespace cuttlefish {
+namespace {
+
+void OpenSocket(SharedFD* fd, int port) {
   static std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
   for (;;) {
-    *fd = cuttlefish::SharedFD::SocketLocalClient(port, SOCK_STREAM);
+    *fd = SharedFD::SocketLocalClient(port, SOCK_STREAM);
     if ((*fd)->IsOpen()) {
       return;
     }
@@ -71,10 +73,10 @@ void DumpPackets(const char* prefix, char* buf, int size) {
   }
 }
 
-int main(int argc, char** argv) {
-  cuttlefish::DefaultSubprocessLogging(argv);
+int TcpConnectorMain(int argc, char** argv) {
+  DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  auto fifo_in = cuttlefish::SharedFD::Dup(FLAGS_fifo_in);
+  auto fifo_in = SharedFD::Dup(FLAGS_fifo_in);
   if (!fifo_in->IsOpen()) {
     LOG(ERROR) << "Error dupping fd " << FLAGS_fifo_in << ": "
                << fifo_in->StrError();
@@ -82,14 +84,14 @@ int main(int argc, char** argv) {
   }
   close(FLAGS_fifo_in);
 
-  auto fifo_out = cuttlefish::SharedFD::Dup(FLAGS_fifo_out);
+  auto fifo_out = SharedFD::Dup(FLAGS_fifo_out);
   if (!fifo_out->IsOpen()) {
     LOG(ERROR) << "Error dupping fd " << FLAGS_fifo_out << ": "
                << fifo_out->StrError();
     return 1;
   }
   close(FLAGS_fifo_out);
-  cuttlefish::SharedFD sock;
+  SharedFD sock;
   OpenSocket(&sock, FLAGS_data_port);
 
   auto guest_to_host = std::thread([&]() {
@@ -102,7 +104,7 @@ int main(int argc, char** argv) {
         continue;
       }
       DumpPackets("Read from FIFO", buf, read);
-      while (cuttlefish::WriteAll(sock, buf, read) == -1) {
+      while (WriteAll(sock, buf, read) == -1) {
         LOG(WARNING) << "Failed to write to host socket (will retry): "
                      << sock->StrError();
         // Wait for the host process to be ready
@@ -125,7 +127,7 @@ int main(int argc, char** argv) {
         OpenSocket(&sock, FLAGS_data_port);
         continue;
       }
-      auto wrote = cuttlefish::WriteAll(fifo_out, buf, read);
+      auto wrote = WriteAll(fifo_out, buf, read);
       if (wrote < 0) {
         LOG(WARNING) << "Failed to write to guest: " << fifo_out->StrError();
         sleep(1);
@@ -135,4 +137,13 @@ int main(int argc, char** argv) {
   });
   guest_to_host.join();
   host_to_guest.join();
+
+  return 0;
+}
+
+}  // namespace
+}  // namespace cuttlefish
+
+int main(int argc, char** argv) {
+  return cuttlefish::TcpConnectorMain(argc, argv);
 }
