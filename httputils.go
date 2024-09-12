@@ -187,9 +187,9 @@ func (rb *HTTPRequestBuilder) JSONResDoWithRetries(ret any, retryOpts RetryOptio
 	return apiError
 }
 
-func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Response, error) {
+func (rb *HTTPRequestBuilder) setAuthz() error {
 	if rb.helper.AccessToken != "" && rb.helper.HTTPBasicUsername != "" {
-		return nil, fmt.Errorf("cannot set both access token and basic auth")
+		return fmt.Errorf("cannot set both access token and basic auth")
 	}
 	if rb.helper.AccessToken != "" {
 		rb.AddHeader("Authorization", "Bearer "+rb.helper.AccessToken)
@@ -197,7 +197,14 @@ func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Respo
 		rb.SetBasicAuth()
 	}
 	if rb.err != nil {
-		return nil, rb.err
+		return rb.err
+	}
+	return nil
+}
+
+func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Response, error) {
+	if err := rb.setAuthz(); err != nil {
+		return nil, err
 	}
 	if err := rb.helper.dumpRequest(rb.request); err != nil {
 		return nil, err

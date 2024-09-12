@@ -14,15 +14,18 @@
 package client
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	wclient "github.com/google/cloud-android-orchestration/pkg/webrtcclient"
 
 	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	opapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	"github.com/gorilla/websocket"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -60,6 +63,9 @@ type HostOrchestratorService interface {
 	// Creates a webRTC connection to a device running in this host.
 	ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
 
+	// Connect to ADB WebSocket endpoint.
+	ConnectADBWebSocket(device string) (*websocket.Conn, error)
+
 	// Wait for an operation, `result` will be populated with the relevant operation's result object.
 	WaitForOperation(name string, result any) error
 
@@ -82,6 +88,7 @@ func NewHostOrchestratorService(url string) HostOrchestratorService {
 type HostOrchestratorServiceImpl struct {
 	HTTPHelper                HTTPHelper
 	BuildAPICredentialsHeader string
+	ProxyURL                  string
 }
 
 func (c *HostOrchestratorServiceImpl) getInfraConfig() (*opapi.InfraConfig, error) {
@@ -112,6 +119,49 @@ func (c *HostOrchestratorServiceImpl) ConnectWebRTC(device string, observer wcli
 		return nil, fmt.Errorf("failed to connect to device over webrtc: %w", err)
 	}
 	return conn, nil
+}
+
+func (c *HostOrchestratorServiceImpl) ConnectADBWebSocket(device string) (*websocket.Conn, error) {
+	// Connect to the ADB proxy WebSocket endpoint for the device under the host.
+	//   wss://127.0.0.1:8080/v1/zones/local/hosts/.../devices/cvd-1-1/adb
+	dialer := websocket.Dialer{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	if c.ProxyURL != "" {
+		proxyURL, err := url.Parse(c.ProxyURL)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse proxy %s: %w", c.ProxyURL, err)
+		}
+		dialer.Proxy = http.ProxyURL(proxyURL)
+	}
+
+	url, err := url.Parse(c.HTTPHelper.RootEndpoint)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse URL %s: %w", c.HTTPHelper.RootEndpoint, err)
+	}
+	switch p := &url.Scheme; *p {
+	case "https":
+		*p = "wss"
+	case "http":
+		*p = "ws"
+	default:
+		return nil, fmt.Errorf("Unknown scheme %s", *p)
+	}
+	url = url.JoinPath("devices", device, "adb")
+
+	// Get auth header for WebSocket connection
+	rb := c.HTTPHelper.NewGetRequest("")
+	if err := rb.setAuthz(); err != nil {
+		return nil, fmt.Errorf("Failed to set authorization header: %w", err)
+	}
+	// Connect to the WebSocket
+	wsConn, _, err := dialer.Dial(url.String(), rb.request.Header)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to connect WebSocket %s: %w", url.String(), err)
+	}
+	return wsConn, nil
 }
 
 func (c *HostOrchestratorServiceImpl) initHandling(connID string, iceServers []webrtc.ICEServer, logger io.Writer) wclient.Signaling {
