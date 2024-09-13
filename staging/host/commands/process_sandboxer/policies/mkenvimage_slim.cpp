@@ -17,15 +17,13 @@
 #include "host/commands/process_sandboxer/policies.h"
 
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 
 namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder MkEnvImgSlimPolicy(const HostInfo& host) {
-  // TODO: b/318610408 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("mkenvimage_slim"))
       .AddDirectory(host.runtime_dir, /* is_ro= */ false)
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+      .AllowSafeFcntl();
 }
 
 }  // namespace cuttlefish::process_sandboxer
