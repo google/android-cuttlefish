@@ -21,7 +21,6 @@
 #include <syscall.h>
 
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 #include <sandboxed_api/util/path.h>
 

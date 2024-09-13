@@ -19,7 +19,6 @@
 #include <syscall.h>
 
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 
 namespace cuttlefish::process_sandboxer {
 
