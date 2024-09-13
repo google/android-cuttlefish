@@ -25,6 +25,7 @@ cc_binary_host {
     defaults: ["cuttlefish_buildhost_only"],
     srcs: [
         "credentialed_unix_server.cpp",
+        "filesystem.cpp",
         "logs.cpp",
         "main.cpp",
         "pidfd.cpp",
