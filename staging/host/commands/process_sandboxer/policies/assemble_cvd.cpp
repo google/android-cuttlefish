@@ -38,7 +38,7 @@ sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo& host) {
       // TODO(schuffelen): Copy these files before modifying them
       .AddDirectory(JoinPath(host.host_artifacts_path, "etc", "openwrt"),
                     /* is_ro= */ false)
-      // TODO(schuffelen): Premake the directory for extract-ikconfig outputs
+      // TODO(schuffelen): Premake the directory for boot image unpack outputs
       .AddDirectory("/tmp", /* is_ro= */ false)
       .AddDirectory(host.environments_dir, /* is_ro= */ false)
       .AddDirectory(host.environments_uds_dir, /* is_ro= */ false)
@@ -48,12 +48,9 @@ sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo& host) {
                  "/usr/lib/cuttlefish-common/bin/capability_query.py")
       .AddFileAt(sandboxer_proxy, host.HostToolExe("avbtool"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("crosvm"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("extract-ikconfig"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("mkenvimage_slim"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("newfs_msdos"))
-      // TODO(schuffelen): Do this in-process?
       .AddFileAt(sandboxer_proxy, host.HostToolExe("simg2img"))
-      .AddFileAt(sandboxer_proxy, "/usr/bin/lsof")
       .AddDirectory(host.environments_dir)
       .AddDirectory(host.environments_uds_dir, false)
       .AddDirectory(host.instance_uds_dir, false)
