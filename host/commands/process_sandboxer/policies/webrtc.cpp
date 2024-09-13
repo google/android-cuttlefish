@@ -25,7 +25,6 @@
 
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 #include <sandboxed_api/util/path.h>
 
@@ -34,7 +33,6 @@ namespace cuttlefish::process_sandboxer {
 using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo& host) {
-  // TODO: b/318609110 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("webRTC"))
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddDirectory(host.host_artifacts_path + "/usr/share/webrtc/assets")
