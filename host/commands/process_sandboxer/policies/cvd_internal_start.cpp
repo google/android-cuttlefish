@@ -24,11 +24,8 @@
 
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
-#include <sandboxed_api/util/path.h>
 
 namespace cuttlefish::process_sandboxer {
-
-using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder CvdInternalStartPolicy(const HostInfo& host) {
   std::string sandboxer_proxy = host.HostToolExe("sandboxer_proxy");
