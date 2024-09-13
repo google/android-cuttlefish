@@ -17,6 +17,7 @@
 #include "host/commands/process_sandboxer/policies.h"
 
 #include <errno.h>
+#include <sys/mman.h>
 #include <sys/syscall.h>
 
 #include <sandboxed_api/sandbox2/policybuilder.h>
@@ -30,8 +31,9 @@ sandbox2::PolicyBuilder GnssGrpcProxyPolicy(const HostInfo& host) {
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddFile("/dev/urandom")  // For gRPC
       .AddFile(host.cuttlefish_config_path)
-      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW)})
-      .AllowSyscall(__NR_socket)
+      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW),
+                                        JEQ32(AF_INET, ERRNO(EACCES)),
+                                        JEQ32(AF_INET6, ERRNO(EACCES))})
       .AllowEventFd()
       .AllowSafeFcntl()
       .AllowSleep()
@@ -39,16 +41,15 @@ sandbox2::PolicyBuilder GnssGrpcProxyPolicy(const HostInfo& host) {
       .AllowSyscall(__NR_clone)  // multithreading
       .AllowSyscall(__NR_getpeername)
       .AllowSyscall(__NR_getsockname)
-      .AllowSyscall(__NR_getsockopt)  // TODO: restrict
       .AllowSyscall(__NR_listen)
-      .AllowSyscall(__NR_madvise)  // TODO: b/318591948 - restrict or remove
+      .AddPolicyOnSyscall(__NR_madvise,
+                          {ARG_32(2), JEQ32(MADV_DONTNEED, ALLOW)})
       .AllowSyscall(__NR_recvmsg)
       .AllowSyscall(__NR_sched_getparam)
       .AllowSyscall(__NR_sched_getscheduler)
       .AllowSyscall(__NR_sched_yield)
       .AllowSyscall(__NR_shutdown)
       .AllowSyscall(__NR_sendmsg)
-      .AllowSyscall(__NR_setsockopt)  // TODO: restrict
       .AllowSyscalls({__NR_accept, __NR_accept4})
       .AllowTCGETS();
 }

@@ -18,16 +18,13 @@
 
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 
 namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder OperatorProxyPolicy(const HostInfo& host) {
-  // TODO: b/359312147 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("openwrt_control_server"))
       .AddDirectory(host.log_dir, /* is_ro= */ false)
-      .Allow(sandbox2::UnrestrictedNetworking())  // Public HTTP server
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+      .Allow(sandbox2::UnrestrictedNetworking());  // Public HTTP server
 }
 
 }  // namespace cuttlefish::process_sandboxer
