@@ -17,7 +17,6 @@
 #include "host/commands/process_sandboxer/policies.h"
 
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 #include <sandboxed_api/util/path.h>
 
 namespace cuttlefish::process_sandboxer {
@@ -25,11 +24,9 @@ namespace cuttlefish::process_sandboxer {
 using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder WmediumdGenConfigPolicy(const HostInfo& host) {
-  // TODO: b/359313561 - Add system call policy. This only applies namespaces.
   return BaselinePolicy(host, host.HostToolExe("wmediumd_gen_config"))
       .AddDirectory(JoinPath(host.environments_dir, "env-1"),
-                    /* is_ro= */ false)
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+                    /* is_ro= */ false);
 }
 
 }  // namespace cuttlefish::process_sandboxer
