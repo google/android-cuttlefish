@@ -24,16 +24,9 @@
 #include <absl/log/log.h>
 #include <absl/status/status.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/util/fileops.h>
-#include <sandboxed_api/util/path.h>
 
+#include "host/commands/process_sandboxer/filesystem.h"
 #include "host/commands/process_sandboxer/proxy_common.h"
-
-// TODO: schuffelen - copy or rewrite these utilities, they're not normally
-// public from sandbox2
-
-using sapi::file::JoinPath;
-using sapi::file_util::fileops::CreateDirectoryRecursively;
 
 namespace cuttlefish::process_sandboxer {
 
