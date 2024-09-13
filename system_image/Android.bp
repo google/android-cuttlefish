@@ -687,6 +687,8 @@ android_system_image {
         },
         lib64: {
             deps: [
+                "android.system.virtualizationcommon-ndk",
+                "android.system.virtualizationservice-ndk",
                 "libgsi",
                 "servicemanager",
             ],
