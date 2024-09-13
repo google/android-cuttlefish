@@ -34,8 +34,8 @@
 #include <absl/status/status.h>
 #include <absl/strings/numbers.h>
 #include <absl/strings/str_cat.h>
-#include <sandboxed_api/util/path.h>
 
+#include "host/commands/process_sandboxer/filesystem.h"
 #include "host/commands/process_sandboxer/logs.h"
 #include "host/commands/process_sandboxer/pidfd.h"
 #include "host/commands/process_sandboxer/policies.h"
@@ -59,9 +59,6 @@ ABSL_FLAG(bool, verbose_stderr, false, "Write debug messages to stderr");
 
 namespace cuttlefish::process_sandboxer {
 namespace {
-
-using sapi::file::CleanPath;
-using sapi::file::JoinPath;
 
 std::optional<std::string_view> FromEnv(const std::string& name) {
   char* value = getenv(name.c_str());
