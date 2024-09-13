@@ -42,6 +42,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/in_sandbox.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/network.h"
 #include "host/commands/assemble_cvd/alloc.h"
@@ -620,56 +621,63 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
       kernel_image_path = cur_boot_image;
     }
 
-    Command ikconfig_cmd(HostBinaryPath("extract-ikconfig"));
-    ikconfig_cmd.AddParameter(kernel_image_path);
-    ikconfig_cmd.UnsetFromEnvironment("PATH").AddEnvironmentVariable("PATH",
-                                                                     new_path);
-
-    std::string ikconfig_path =
-        StringFromEnv("TEMP", "/tmp") + "/ikconfig.XXXXXX";
-    auto ikconfig_fd = SharedFD::Mkstemp(&ikconfig_path);
-    CF_EXPECT(ikconfig_fd->IsOpen(),
-              "Unable to create ikconfig file: " << ikconfig_fd->StrError());
-    ikconfig_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, ikconfig_fd);
-
-    auto ikconfig_proc = ikconfig_cmd.Start();
-    CF_EXPECT(ikconfig_proc.Started() && ikconfig_proc.Wait() == 0,
-              "Failed to extract ikconfig from " << kernel_image_path);
-
-    std::string config = ReadFile(ikconfig_path);
-
     GuestConfig guest_config;
     guest_config.android_version_number =
         CF_EXPECT(ReadAndroidVersionFromBootImage(cur_boot_image),
                   "Failed to read guest's android version");
 
-    if (config.find("\nCONFIG_ARM=y") != std::string::npos) {
-      guest_config.target_arch = Arch::Arm;
-    } else if (config.find("\nCONFIG_ARM64=y") != std::string::npos) {
-      guest_config.target_arch = Arch::Arm64;
-    } else if (config.find("\nCONFIG_ARCH_RV64I=y") != std::string::npos) {
-      guest_config.target_arch = Arch::RiscV64;
-    } else if (config.find("\nCONFIG_X86_64=y") != std::string::npos) {
-      guest_config.target_arch = Arch::X86_64;
-    } else if (config.find("\nCONFIG_X86=y") != std::string::npos) {
-      guest_config.target_arch = Arch::X86;
+    if (InSandbox()) {
+      // TODO: b/359309462 - real sandboxing for extract-ikconfig
+      guest_config.target_arch = HostArch();
+      guest_config.bootconfig_supported = true;
+      guest_config.hctr2_supported = true;
     } else {
-      return CF_ERR("Unknown target architecture");
-    }
-    guest_config.bootconfig_supported =
-        config.find("\nCONFIG_BOOT_CONFIG=y") != std::string::npos;
-    // Once all Cuttlefish kernel versions are at least 5.15, this code can be
-    // removed. CONFIG_CRYPTO_HCTR2=y will always be set.
-    // Note there's also a platform dep for hctr2 introduced in Android 14.
-    // Hence the version check.
-    guest_config.hctr2_supported =
-        (config.find("\nCONFIG_CRYPTO_HCTR2=y") != std::string::npos) &&
-        (guest_config.android_version_number != "11.0.0") &&
-        (guest_config.android_version_number != "13.0.0") &&
-        (guest_config.android_version_number != "11") &&
-        (guest_config.android_version_number != "13");
+      Command ikconfig_cmd(HostBinaryPath("extract-ikconfig"));
+      ikconfig_cmd.AddParameter(kernel_image_path);
+      ikconfig_cmd.UnsetFromEnvironment("PATH").AddEnvironmentVariable(
+          "PATH", new_path);
+      std::string ikconfig_path =
+          StringFromEnv("TEMP", "/tmp") + "/ikconfig.XXXXXX";
+      auto ikconfig_fd = SharedFD::Mkstemp(&ikconfig_path);
+      CF_EXPECT(ikconfig_fd->IsOpen(),
+                "Unable to create ikconfig file: " << ikconfig_fd->StrError());
+      ikconfig_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+                                 ikconfig_fd);
 
-    unlink(ikconfig_path.c_str());
+      auto ikconfig_proc = ikconfig_cmd.Start();
+      CF_EXPECT(ikconfig_proc.Started() && ikconfig_proc.Wait() == 0,
+                "Failed to extract ikconfig from " << kernel_image_path);
+
+      std::string config = ReadFile(ikconfig_path);
+
+      if (config.find("\nCONFIG_ARM=y") != std::string::npos) {
+        guest_config.target_arch = Arch::Arm;
+      } else if (config.find("\nCONFIG_ARM64=y") != std::string::npos) {
+        guest_config.target_arch = Arch::Arm64;
+      } else if (config.find("\nCONFIG_ARCH_RV64I=y") != std::string::npos) {
+        guest_config.target_arch = Arch::RiscV64;
+      } else if (config.find("\nCONFIG_X86_64=y") != std::string::npos) {
+        guest_config.target_arch = Arch::X86_64;
+      } else if (config.find("\nCONFIG_X86=y") != std::string::npos) {
+        guest_config.target_arch = Arch::X86;
+      } else {
+        return CF_ERR("Unknown target architecture");
+      }
+      guest_config.bootconfig_supported =
+          config.find("\nCONFIG_BOOT_CONFIG=y") != std::string::npos;
+      // Once all Cuttlefish kernel versions are at least 5.15, this code can be
+      // removed. CONFIG_CRYPTO_HCTR2=y will always be set.
+      // Note there's also a platform dep for hctr2 introduced in Android 14.
+      // Hence the version check.
+      guest_config.hctr2_supported =
+          (config.find("\nCONFIG_CRYPTO_HCTR2=y") != std::string::npos) &&
+          (guest_config.android_version_number != "11.0.0") &&
+          (guest_config.android_version_number != "13.0.0") &&
+          (guest_config.android_version_number != "11") &&
+          (guest_config.android_version_number != "13");
+
+      unlink(ikconfig_path.c_str());
+    }
 
     std::string instance_android_info_txt;
     if (instance_index >= system_image_dir.size()) {
