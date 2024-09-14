@@ -17,11 +17,10 @@
 #include "host/commands/process_sandboxer/policies.h"
 
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/util/path.h>
+
+#include "host/commands/process_sandboxer/filesystem.h"
 
 namespace cuttlefish::process_sandboxer {
-
-using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder WmediumdGenConfigPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("wmediumd_gen_config"))
