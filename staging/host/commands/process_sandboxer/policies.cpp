@@ -90,6 +90,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("kernel_log_monitor")] = KernelLogMonitorPolicy;
   builders[host.HostToolExe("log_tee")] = LogTeePolicy;
   builders[host.HostToolExe("logcat_receiver")] = LogcatReceiverPolicy;
+  builders[host.HostToolExe("metrics")] = MetricsPolicy;
   builders[host.HostToolExe("mkenvimage_slim")] = MkEnvImgSlimPolicy;
   builders[host.HostToolExe("modem_simulator")] = ModemSimulatorPolicy;
   builders[host.HostToolExe("netsimd")] = NetsimdPolicy;
