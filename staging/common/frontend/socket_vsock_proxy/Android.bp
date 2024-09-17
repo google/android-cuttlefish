@@ -34,18 +34,8 @@ cc_binary {
     ],
     static_libs: [
         "libgflags",
+        "libcuttlefish_host_config",
         "libcuttlefish_utils",
     ],
-    target: {
-        host: {
-            static_libs: [
-                "libcuttlefish_host_config",
-            ],
-        },
-    },
-    // Don't inherit from cuttlefish_host because it is with `vendor_available: true` which isn't
-    // compatible with `vendor: true`.
-    defaults: ["cuttlefish_base"],
-    host_supported: true,
-    vendor: true,
+    defaults: ["cuttlefish_host"],
 }
