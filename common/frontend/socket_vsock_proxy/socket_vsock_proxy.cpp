@@ -30,10 +30,8 @@
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 
-#ifdef CUTTLEFISH_HOST
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
-#endif // CUTTLEFISH_HOST
 
 constexpr int TCP_SERVER_START_RETRIES_COUNT = 10;
 constexpr std::chrono::milliseconds TCP_SERVER_RETRIES_DELAY(1250);
@@ -63,22 +61,13 @@ DEFINE_uint32(start_event_id, -1, "Kernel event id (cuttlefish::monitor::Event f
                                   "kernel_log_server.h) that we will listen to start proxy");
 DEFINE_uint32(stop_event_id, -1, "Kernel event id (cuttlefish::monitor::Event from "
                                   "kernel_log_server.h) that we will listen to stop proxy");
-#ifdef CUTTLEFISH_HOST
 DEFINE_bool(restore, false,
             "Wait on the restore_adbd_pipe instead of the initial start event");
-#endif
 DEFINE_bool(vhost_user_vsock, false, "A flag to user vhost_user_vsock");
 
 namespace cuttlefish {
 namespace socket_proxy {
 namespace {
-static bool use_vhost_vsock() {
-#ifdef CUTTLEFISH_HOST
-  return FLAGS_vhost_user_vsock;
-#else
-  return false;
-#endif
-}
 static std::unique_ptr<Server> BuildServer() {
   if (FLAGS_server_fd >= 0) {
     return std::make_unique<DupServer>(FLAGS_server_fd);
@@ -94,7 +83,7 @@ static std::unique_ptr<Server> BuildServer() {
   if (FLAGS_server_type == TRANSPORT_VSOCK) {
     CHECK(FLAGS_server_vsock_port != 0)
         << "Must specify -server_vsock_port or -server_fd with -server_type=vsock flag";
-    if (use_vhost_vsock()) {
+    if (FLAGS_vhost_user_vsock) {
       CHECK(FLAGS_server_vsock_id > VMADDR_CID_HOST)
           << "Must specify --server_vsock_id with --vhost_user_vsock=true flag";
     }
@@ -107,7 +96,7 @@ static std::unique_ptr<Server> BuildServer() {
                                          TCP_SERVER_RETRIES_DELAY);
   } else if (FLAGS_server_type == TRANSPORT_VSOCK) {
     server = std::make_unique<VsockServer>(
-        FLAGS_server_vsock_port, use_vhost_vsock()
+        FLAGS_server_vsock_port, FLAGS_vhost_user_vsock
                                      ? std::make_optional(FLAGS_server_vsock_id)
                                      : std::nullopt);
   } else {
@@ -137,7 +126,7 @@ static std::unique_ptr<Client> BuildClient() {
                                          TCP_CLIENT_TIMEOUT);
   } else if (FLAGS_client_type == TRANSPORT_VSOCK) {
     client = std::make_unique<VsockClient>(
-        FLAGS_client_vsock_id, FLAGS_client_vsock_port, use_vhost_vsock());
+        FLAGS_client_vsock_id, FLAGS_client_vsock_port, FLAGS_vhost_user_vsock);
   } else {
     LOG(FATAL) << "Unknown client type: " << FLAGS_client_type;
   }
@@ -159,10 +148,9 @@ static Result<void> ListenEventsAndProxy(int events_fd,
 
   std::unique_ptr<ProxyServer> proxy;
 
-#ifdef CUTTLEFISH_HOST
   if (FLAGS_restore) {
-    LOG(INFO) << "restoring proxy on CUTTLEFISH_HOST - wait for adbd to come "
-                 "online before starting proxy";
+    LOG(INFO) << "restoring proxy - wait for adbd to come online before "
+                 "starting proxy";
     auto config = CF_EXPECT(CuttlefishConfig::Get());
     auto instance = config->ForDefaultInstance();
     SharedFD restore_pipe_read =
@@ -180,10 +168,9 @@ static Result<void> ListenEventsAndProxy(int events_fd,
       return CF_ERR(
           "Could not read restore pipe: " << restore_pipe_read->StrError());
     }
-    LOG(INFO) << "restoring proxy on CUTTLEFISH_HOST - success";
+    LOG(INFO) << "restoring proxy - success";
     proxy = CF_EXPECT(StartProxyAsync(server, client));
   }
-#endif
 
   LOG(DEBUG) << "Start reading events to start/stop proxying";
   while (events->IsOpen()) {
@@ -248,7 +235,7 @@ Result<void> Main() {
 int main(int argc, char* argv[]) {
   signal(SIGPIPE, SIG_IGN);
 
-#ifdef CUTTLEFISH_HOST
+#ifndef __ANDROID__
   cuttlefish::DefaultSubprocessLogging(argv, cuttlefish::MetadataLevel::TAG_AND_MESSAGE);
 #else
   ::android::base::InitLogging(argv, android::base::LogdLogger(android::base::SYSTEM));
