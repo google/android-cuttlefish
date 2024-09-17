@@ -26,6 +26,7 @@
 
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
+#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
 #include "host/commands/process_sandboxer/filesystem.h"
@@ -129,6 +130,7 @@ sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo& host) {
       .AllowSyscall(__NR_clone)  // Multithreading
       .AllowSyscall(__NR_connect)
       .AllowSyscall(__NR_ftruncate)
+      .AllowSyscall(__NR_getpeername)
       .AllowSyscall(__NR_getsockname)
       .AllowSyscall(__NR_listen)
       .AllowSyscall(__NR_memfd_create)
@@ -145,7 +147,8 @@ sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo& host) {
       .AllowSyscall(__NR_sendto)
       .AllowSyscall(__NR_shutdown)
       .AllowSyscall(__NR_socketpair)
-      .AllowTCGETS();
+      .AllowTCGETS()
+      .DefaultAction(sandbox2::TraceAllSyscalls());
 }
 
 }  // namespace cuttlefish::process_sandboxer
