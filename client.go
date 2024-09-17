@@ -212,6 +212,6 @@ func BuilHostIndexURL(rootEndpoint, host string) string {
 	return fmt.Sprintf("%s/hosts/%s/", rootEndpoint, host)
 }
 
-func BuildCVDLogsURL(rootEndpoint, host, cvd string) string {
-	return fmt.Sprintf("%s/hosts/%s/cvds/%s/logs/", rootEndpoint, host, cvd)
+func BuildCVDLogsURL(rootEndpoint, host, id string) string {
+	return fmt.Sprintf("%s/hosts/%s/cvds/%s/logs/", rootEndpoint, host, id)
 }
