@@ -19,11 +19,13 @@
 #include <ostream>
 
 #include <GraphicsDetector.pb.h>
+#include <android-base/file.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <google/protobuf/text_format.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -494,7 +496,11 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
     return {};
   }
 
+  TemporaryFile graphics_availability_file;
+
   Command graphics_detector_cmd(graphics_detector_binary_result.value());
+  graphics_detector_cmd.AddParameter(graphics_availability_file.path);
+
   std::string graphics_detector_stdout;
   auto ret = RunWithManagedStdio(std::move(graphics_detector_cmd), nullptr,
                                  &graphics_detector_stdout, nullptr);
@@ -503,12 +509,26 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
                << ". Assuming no availability.";
     return {};
   }
+  LOG(DEBUG) << graphics_detector_stdout;
+
+  auto graphics_availability_content_result =
+      ReadFileContents(graphics_availability_file.path);
+  if (!graphics_availability_content_result.ok()) {
+    LOG(ERROR) << "Failed to read graphics availability from file "
+               << graphics_availability_file.path << ":"
+               << graphics_availability_content_result.error().FormatForEnv()
+               << ". Assuming no availability.";
+    return {};
+  }
+  const std::string& graphics_availability_content =
+      graphics_availability_content_result.value();
 
   gfxstream::proto::GraphicsAvailability availability;
   google::protobuf::TextFormat::Parser parser;
-  if (!parser.ParseFromString(graphics_detector_stdout, &availability)) {
-    LOG(ERROR) << "Failed to parse graphics detector stdout: "
-               << graphics_detector_stdout << ". Assuming no availability.";
+  if (!parser.ParseFromString(graphics_availability_content, &availability)) {
+    LOG(ERROR) << "Failed to parse graphics detector output: "
+               << graphics_availability_content
+               << ". Assuming no availability.";
     return {};
   }
 
