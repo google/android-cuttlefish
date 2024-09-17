@@ -365,8 +365,6 @@ absl::Status SandboxManager::RunProcess(
     }
   }
   std::string exe = CleanPath(argv[0]);
-  // TODO(schuffelen): Introduce an allow-list for executables to run outside
-  // any sandbox.
   std::unique_ptr<Policy> policy = PolicyForExecutable(
       host_info_, ServerSocketOutsidePath(runtime_dir_), exe);
   if (policy) {

@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "host/commands/process_sandboxer/policies.h"
 
-#include <set>
-#include <string>
+#include <syscall.h>
+
+#include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
+#include <sandboxed_api/sandbox2/policybuilder.h>
 
 namespace cuttlefish::process_sandboxer {
 
-// TODO(schuffelen): Reduce this list down to only `crosvm`
-// Note that executables launched by executables listed here won't be tracked at
-// all.
-std::set<std::string> NoPolicy(const HostInfo& host) {
-  return {
-      "/usr/bin/lsof",  // TODO: b/359314623
-                        // TODO: b/359309808
-      "/usr/lib/cuttlefish-common/bin/capability_query.py",
-      host.HostToolExe("avbtool"),  // TODO: b/318610573
-      host.HostToolExe("casimir"),  // TODO: b/318613687
-      host.HostToolExe("crosvm"),
-      host.HostToolExe("root-canal"),          // TODO: b/359312761
-      host.HostToolExe("vhost_device_vsock"),  // TODO: b/318613691
-      host.HostToolExe("webrtc_operator"),     // TODO: b/359312626
-  };
+sandbox2::PolicyBuilder MetricsPolicy(const HostInfo& host) {
+  return BaselinePolicy(host, host.HostToolExe("metrics"))
+      .AddDirectory(host.log_dir, /* is_ro= */ false)
+      .AddFile(host.cuttlefish_config_path)
+      .Allow(sandbox2::UnrestrictedNetworking())
+      .AllowSafeFcntl()
+      .AllowSyscall(__NR_clone)  // Multithreading
+      // TODO: b/367481626 - Switch `metrics` from System V IPC to another
+      // mechanism that is easier to share in isolation with another sandbox.
+      .AllowSyscall(__NR_msgget)
+      .AllowSyscall(__NR_msgrcv)
+      .AllowTCGETS();
 }
 
 }  // namespace cuttlefish::process_sandboxer
