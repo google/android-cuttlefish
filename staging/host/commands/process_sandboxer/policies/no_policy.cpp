@@ -25,14 +25,11 @@ namespace cuttlefish::process_sandboxer {
 // all.
 std::set<std::string> NoPolicy(const HostInfo& host) {
   return {
-      "/usr/bin/lsof",  // TODO: b/359314623
-                        // TODO: b/359309808
+      // TODO: b/359309808
       "/usr/lib/cuttlefish-common/bin/capability_query.py",
       host.HostToolExe("avbtool"),  // TODO: b/318610573
       host.HostToolExe("casimir"),  // TODO: b/318613687
       host.HostToolExe("crosvm"),
-      host.HostToolExe("root-canal"),          // TODO: b/359312761
-      host.HostToolExe("vhost_device_vsock"),  // TODO: b/318613691
   };
 }
 
