@@ -183,15 +183,35 @@ std::string ToSingleLineString(const Json::Value& value) {
   return Json::writeString(builder, value);
 }
 
-void MaybeConfigureVulkanIcd(const CuttlefishConfig& config, Command* command) {
+Result<std::string> HostSwiftShaderIcdPathForArch() {
+  switch (HostArch()) {
+    case Arch::Arm64:
+      return HostBinaryPath("aarch64-linux-gnu/vk_swiftshader_icd.json");
+    case Arch::X86:
+    case Arch::X86_64:
+      return HostUsrSharePath("vulkan/icd.d/vk_swiftshader_icd.json");
+    default:
+      break;
+  }
+  return CF_ERR("Unhandled host arch " << HostArchStr()
+                                       << " for finding SwiftShader ICD.");
+}
+
+Result<void> MaybeConfigureVulkanIcd(const CuttlefishConfig& config,
+                                     Command* command) {
   const auto& gpu_mode = config.ForDefaultInstance().gpu_mode();
   if (gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+    const std::string swiftshader_icd_json_path =
+        CF_EXPECT(HostSwiftShaderIcdPathForArch());
+
     // See https://github.com/KhronosGroup/Vulkan-Loader.
-    const std::string swiftshader_icd_json =
-        HostUsrSharePath("vulkan/icd.d/vk_swiftshader_icd.json");
-    command->AddEnvironmentVariable("VK_DRIVER_FILES", swiftshader_icd_json);
-    command->AddEnvironmentVariable("VK_ICD_FILENAMES", swiftshader_icd_json);
+    command->AddEnvironmentVariable("VK_DRIVER_FILES",
+                                    swiftshader_icd_json_path);
+    command->AddEnvironmentVariable("VK_ICD_FILENAMES",
+                                    swiftshader_icd_json_path);
   }
+
+  return {};
 }
 
 Result<std::string> CrosvmPathForVhostUserGpu(const CuttlefishConfig& config) {
@@ -329,7 +349,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
   gpu_device_cmd.Cmd().AddParameter("--params");
   gpu_device_cmd.Cmd().AddParameter(ToSingleLineString(gpu_params_json));
 
-  MaybeConfigureVulkanIcd(config, &gpu_device_cmd.Cmd());
+  CF_EXPECT(MaybeConfigureVulkanIcd(config, &gpu_device_cmd.Cmd()));
 
   gpu_device_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
                                      gpu_device_logs);
@@ -421,7 +441,7 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
                              gpu_common_string);
   }
 
-  MaybeConfigureVulkanIcd(config, crosvm_cmd);
+  CF_EXPECT(MaybeConfigureVulkanIcd(config, crosvm_cmd));
 
   return {};
 }
