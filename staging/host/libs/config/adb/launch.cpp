@@ -50,19 +50,13 @@ class AdbHelper {
     return "vsock:" + std::to_string(instance_.vsock_guest_cid()) + ":5555";
   }
 
-  bool VsockTunnelEnabled() const {
-    return instance_.vsock_guest_cid() > 2 && ModeEnabled(AdbMode::VsockTunnel);
-  }
-
   bool VsockHalfTunnelEnabled() const {
     return instance_.vsock_guest_cid() > 2 &&
            ModeEnabled(AdbMode::VsockHalfTunnel);
   }
 
   bool TcpConnectorEnabled() const {
-    bool vsock_tunnel = VsockTunnelEnabled();
-    bool vsock_half_tunnel = VsockHalfTunnelEnabled();
-    return config_.RunConnector() && (vsock_tunnel || vsock_half_tunnel);
+    return config_.RunConnector() && VsockHalfTunnelEnabled();
   }
 
   bool VsockConnectorEnabled() const {
@@ -132,11 +126,7 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
     std::vector<MonitorCommand> commands;
-    const auto vsock_tunnel_enabled = helper_.VsockTunnelEnabled();
-    const auto vsock_half_tunnel_enabled = helper_.VsockHalfTunnelEnabled();
-    CF_EXPECT(!vsock_half_tunnel_enabled || !vsock_tunnel_enabled,
-              "Up to one of vsock_tunnel or vsock_half_tunnel is allowed.");
-    if (!vsock_half_tunnel_enabled && !vsock_tunnel_enabled) {
+    if (!helper_.VsockHalfTunnelEnabled()) {
       return commands;
     }
 
@@ -156,37 +146,18 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
     adb_tunnel.AddParameter("--server_type=tcp");
     adb_tunnel.AddParameter("--server_tcp_port=", instance_.adb_host_port());
 
-    if (vsock_tunnel_enabled) {
-      /**
-       * This socket_vsock_proxy (a.k.a. sv proxy) runs on the host. It assumes
-       * that another sv proxy runs inside the guest. see:
-       * shared/config/init.vendor.rc The sv proxy in the guest exposes
-       * vsock:cid:6520 across the cuttlefish instances in multi-tenancy. cid is
-       * different per instance.
-       *
-       * This host sv proxy should cooperate with the guest sv proxy. Thus, one
-       * end of the tunnel is vsock:cid:6520 regardless of instance number.
-       * Another end faces the host adb daemon via tcp. Thus, the server type is
-       * tcp here. The tcp port differs from instance to instance, and is
-       * instance.adb_host_port()
-       *
-       */
-      adb_tunnel.AddParameter("--client_type=vsock");
-      adb_tunnel.AddParameter("--client_vsock_port=6520");
-    } else {
-      /*
-       * This socket_vsock_proxy (a.k.a. sv proxy) runs on the host, and
-       * cooperates with the adbd inside the guest. See this file:
-       *  shared/device.mk, especially the line says "persist.adb.tcp.port="
-       *
-       * The guest adbd is listening on vsock:cid:5555 across cuttlefish
-       * instances. Sv proxy faces the host adb daemon via tcp. The server type
-       * should be therefore tcp, and the port should differ from instance to
-       * instance and be equal to instance.adb_host_port()
-       */
-      adb_tunnel.AddParameter("--client_type=vsock");
-      adb_tunnel.AddParameter("--client_vsock_port=", 5555);
-    }
+    /*
+     * This socket_vsock_proxy (a.k.a. sv proxy) runs on the host, and
+     * cooperates with the adbd inside the guest. See this file:
+     *  shared/device.mk, especially the line says "persist.adb.tcp.port="
+     *
+     * The guest adbd is listening on vsock:cid:5555 across cuttlefish
+     * instances. Sv proxy faces the host adb daemon via tcp. The server type
+     * should be therefore tcp, and the port should differ from instance to
+     * instance and be equal to instance.adb_host_port()
+     */
+    adb_tunnel.AddParameter("--client_type=vsock");
+    adb_tunnel.AddParameter("--client_vsock_port=", 5555);
 
     adb_tunnel.AddParameter("--client_vsock_id=", instance_.vsock_guest_cid());
     adb_tunnel.AddParameter("--label=", "adb");
@@ -197,7 +168,7 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
   // SetupFeature
   std::string Name() const override { return "SocketVsockProxy"; }
   bool Enabled() const override {
-    return helper_.VsockTunnelEnabled() || helper_.VsockHalfTunnelEnabled();
+    return helper_.VsockHalfTunnelEnabled();
   }
 
  private:
