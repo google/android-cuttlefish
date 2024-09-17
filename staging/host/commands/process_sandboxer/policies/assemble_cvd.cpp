@@ -47,8 +47,6 @@ sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo& host) {
       // `webRTC` actually uses this file, but `assemble_cvd` first checks
       // whether it exists in order to decide whether to connect to it.
       .AddFile("/run/cuttlefish/operator")
-      .AddFileAt(sandboxer_proxy,
-                 "/usr/lib/cuttlefish-common/bin/capability_query.py")
       .AddFileAt(sandboxer_proxy, host.HostToolExe("avbtool"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("crosvm"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("mkenvimage_slim"))

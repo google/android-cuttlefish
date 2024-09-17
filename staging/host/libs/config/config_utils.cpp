@@ -26,9 +26,9 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/in_sandbox.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/config_constants.h"
-#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
@@ -153,9 +153,13 @@ std::string DefaultGuestImagePath(const std::string& file_name) {
          file_name;
 }
 
+// In practice this is mostly validating that the `cuttlefish-base` debian
+// package is installed, which implies that more things are present like the
+// predefined network setup.
 bool HostSupportsQemuCli() {
   static bool supported =
 #ifdef __linux__
+      InSandbox() ||
       RunWithManagedStdio(
           Command("/usr/lib/cuttlefish-common/bin/capability_query.py")
               .AddParameter("qemu_cli"),

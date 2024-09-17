@@ -25,8 +25,6 @@ namespace cuttlefish::process_sandboxer {
 // all.
 std::set<std::string> NoPolicy(const HostInfo& host) {
   return {
-      // TODO: b/359309808
-      "/usr/lib/cuttlefish-common/bin/capability_query.py",
       host.HostToolExe("avbtool"),  // TODO: b/318610573
       host.HostToolExe("casimir"),  // TODO: b/318613687
       host.HostToolExe("crosvm"),
