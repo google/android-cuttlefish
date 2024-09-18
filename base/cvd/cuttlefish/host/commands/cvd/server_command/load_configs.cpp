@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
@@ -84,8 +83,8 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     std::mutex group_creation_mtx;
 
-    auto push_result =
-        PushInterruptListener([this, &group_home_directory, &group_creation_mtx](int) {
+    auto push_result = PushInterruptListener(
+        [this, &group_home_directory, &group_creation_mtx](int) {
           // Creating the listener before the group exists has a very low chance
           // that it may run before the group is actually created and fail,
           // that's fine. The alternative is having a very low chance of being
@@ -225,7 +224,9 @@ class LoadConfigsCommand : public CvdServerHandler {
       launch_cmd.add_args(parsed_flag);
     }
     // Add system flag for multi-build scenario
-    launch_cmd.add_args(cvd_flags.load_directories.system_image_directory_flag);
+    launch_cmd.add_args(fmt::format(
+        "--system_image_dir={}",
+        cvd_flags.load_directories.system_image_directory_flag_value));
 
     auto selector_opts = launch_cmd.mutable_selector_opts();
 
@@ -233,7 +234,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       selector_opts->add_args(flag);
     }
 
-    // Make sure the newly created group is used by cvd start
+    // Make sure the newly created group is used by cvd create
     launch_cmd.mutable_selector_opts()->add_args("--group_name");
     launch_cmd.mutable_selector_opts()->add_args(group.GroupName());
 
@@ -244,8 +245,11 @@ class LoadConfigsCommand : public CvdServerHandler {
   Result<selector::LocalInstanceGroup> CreateGroup(const CvdFlags& cvd_flags) {
     selector::GroupCreationInfo group_info{
         .home = cvd_flags.load_directories.launch_home_directory,
-        .host_artifacts_path = cvd_flags.load_directories.host_package_directory,
-        .group_name = cvd_flags.group_name? *cvd_flags.group_name: "",
+        .host_artifacts_path =
+            cvd_flags.load_directories.host_package_directory,
+        .product_out_path =
+            cvd_flags.load_directories.system_image_directory_flag_value,
+        .group_name = cvd_flags.group_name ? *cvd_flags.group_name : "",
     };
     for (const auto& instance_name : cvd_flags.instance_names) {
       group_info.instances.emplace_back(0, instance_name,
