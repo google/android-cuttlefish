@@ -39,7 +39,6 @@
 #include "common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/group_selector.h"
 #include "host/commands/cvd/interrupt_listener.h"

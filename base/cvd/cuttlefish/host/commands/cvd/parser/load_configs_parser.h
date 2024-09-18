@@ -29,7 +29,7 @@ struct LoadDirectories {
   std::vector<std::string> target_subdirectories;
   std::string launch_home_directory;
   std::string host_package_directory;
-  std::string system_image_directory_flag;
+  std::string system_image_directory_flag_value;
 };
 
 struct CvdFlags {
