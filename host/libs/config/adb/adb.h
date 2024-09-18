@@ -28,6 +28,7 @@
 namespace cuttlefish {
 
 enum class AdbMode {
+  VsockTunnel,
   VsockHalfTunnel,
   NativeVsock,
   Unknown,
