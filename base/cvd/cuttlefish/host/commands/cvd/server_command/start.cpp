@@ -142,12 +142,19 @@ std::vector<std::string> GenerateUniqueWebRTCDeviceIds(
 Result<void> UpdateWebrtcDeviceIds(cvd_common::Args& args,
                                    selector::LocalInstanceGroup& group) {
   std::vector<std::string> webrtc_ids = CF_EXPECT(ExtractWebRTCDeviceIds(args));
+  std::vector<std::string> generated_webrtc_ids =
+      GenerateUniqueWebRTCDeviceIds(group);
   if (webrtc_ids.empty()) {
-    webrtc_ids = GenerateUniqueWebRTCDeviceIds(group);
+    webrtc_ids = generated_webrtc_ids;
   }
   CF_EXPECT_EQ(
       webrtc_ids.size(), group.Instances().size(),
       "The number of webrtc device ids doesn't match the number of instances");
+  for (size_t i = 0; i < webrtc_ids.size(); ++i) {
+    if (webrtc_ids[i].empty()) {
+      webrtc_ids[i] = generated_webrtc_ids[i];
+    }
+  }
   args.push_back("--webrtc_device_id=" + android::base::Join(webrtc_ids, ","));
 
   for (size_t i = 0; i < webrtc_ids.size(); ++i) {

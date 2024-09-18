@@ -206,7 +206,7 @@
 // Streaming default parameters
 #define CF_DEFAULTS_START_WEBRTC false
 #define CF_DEFAULTS_START_WEBRTC_SIG_SERVER true
-#define CF_DEFAULTS_WEBRTC_DEVICE_ID "cvd-{num}"
+#define CF_DEFAULTS_WEBRTC_DEVICE_ID ""
 #define CF_DEFAULTS_VERIFY_SIG_SERVER_CERTIFICATE false
 #define CF_DEFAULTS_WEBRTC_ASSETS_DIR \
   DefaultHostArtifactsPath("usr/share/webrtc/assets")
