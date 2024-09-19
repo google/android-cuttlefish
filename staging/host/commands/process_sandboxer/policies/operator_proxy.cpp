@@ -16,6 +16,8 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <syscall.h>
+
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
 
@@ -24,6 +26,7 @@ namespace cuttlefish::process_sandboxer {
 sandbox2::PolicyBuilder OperatorProxyPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("openwrt_control_server"))
       .AddDirectory(host.log_dir, /* is_ro= */ false)
+      .AllowSyscall(__NR_tgkill)
       .Allow(sandbox2::UnrestrictedNetworking());  // Public HTTP server
 }
 

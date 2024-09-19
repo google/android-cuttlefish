@@ -26,7 +26,6 @@
 
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
 #include "host/commands/process_sandboxer/filesystem.h"
@@ -38,6 +37,7 @@ sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo& host) {
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddDirectory(host.host_artifacts_path + "/usr/share/webrtc/assets")
       .AddDirectory(host.instance_uds_dir, /* is_ro= */ false)
+      .AddDirectory(host.vsock_device_dir, /* is_ro= */ false)
       .AddDirectory(JoinPath(host.runtime_dir, "recording"), /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
       .AddFile("/dev/urandom")
@@ -147,8 +147,7 @@ sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo& host) {
       .AllowSyscall(__NR_sendto)
       .AllowSyscall(__NR_shutdown)
       .AllowSyscall(__NR_socketpair)
-      .AllowTCGETS()
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+      .AllowTCGETS();
 }
 
 }  // namespace cuttlefish::process_sandboxer
