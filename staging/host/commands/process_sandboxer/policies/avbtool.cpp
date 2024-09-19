@@ -16,9 +16,12 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <sys/ioctl.h>
+#include <syscall.h>
+
 #include <absl/log/check.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
+#include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
 #include "host/commands/process_sandboxer/filesystem.h"
 
@@ -75,7 +78,22 @@ sandbox2::PolicyBuilder AvbToolPolicy(const HostInfo& host) {
       .AddFile(executable)
       .AddLibrariesForBinary(host.HostToolExe("sandboxer_proxy"),
                              JoinPath(host.host_artifacts_path, "lib64"))
-      .DefaultAction(sandbox2::TraceAllSyscalls());
+      .AddPolicyOnSyscall(__NR_ioctl, {ARG_32(1), JEQ32(TIOCGWINSZ, ALLOW)})
+      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW)})
+      .AllowDup()
+      .AllowEpoll()
+      .AllowFork()
+      .AllowHandleSignals()
+      .AllowPipe()
+      .AllowSafeFcntl()
+      .AllowSyscall(__NR_connect)
+      .AllowSyscall(__NR_execve)
+      .AllowSyscall(__NR_ftruncate)
+      .AllowSyscall(__NR_recvmsg)
+      .AllowSyscall(__NR_sendmsg)
+      .AllowSyscall(__NR_sysinfo)
+      .AllowTCGETS()
+      .AllowWait();
 }
 
 }  // namespace cuttlefish::process_sandboxer
