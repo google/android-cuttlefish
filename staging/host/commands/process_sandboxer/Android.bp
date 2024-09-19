@@ -32,6 +32,7 @@ cc_binary_host {
         "policies.cpp",
         "policies/adb_connector.cpp",
         "policies/assemble_cvd.cpp",
+        "policies/avbtool.cpp",
         "policies/baseline.cpp",
         "policies/casimir.cpp",
         "policies/casimir_control_server.cpp",
