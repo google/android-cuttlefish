@@ -24,7 +24,6 @@
 
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/trace_all_syscalls.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
 #include "host/commands/process_sandboxer/filesystem.h"

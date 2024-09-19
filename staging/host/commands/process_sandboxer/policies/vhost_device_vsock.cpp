@@ -16,38 +16,47 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
-#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <syscall.h>
 
-#include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
 namespace cuttlefish::process_sandboxer {
 
-sandbox2::PolicyBuilder SocketVsockProxyPolicy(const HostInfo& host) {
-  return BaselinePolicy(host, host.HostToolExe("socket_vsock_proxy"))
-      .AddDirectory(host.log_dir, /* is_ro= */ false)
+sandbox2::PolicyBuilder VhostDeviceVsockPolicy(const HostInfo& host) {
+  return BaselinePolicy(host, host.HostToolExe("vhost_device_vsock"))
       .AddDirectory(host.vsock_device_dir, /* is_ro= */ false)
-      .AddFile(host.cuttlefish_config_path)
-      .AddPolicyOnSyscall(
-          __NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW), JEQ32(AF_INET, ALLOW),
-                        JEQ32(AF_INET6, ALLOW), JEQ32(AF_VSOCK, ALLOW)})
-      .Allow(sandbox2::UnrestrictedNetworking())
+      .AddPolicyOnMmap([](bpf_labels& labels) -> std::vector<sock_filter> {
+        return {
+            ARG_32(2),  // prot
+            JNE32(PROT_READ | PROT_WRITE, JUMP(&labels, cf_webrtc_mmap_end)),
+            ARG_32(3),  // flags
+            JEQ32(MAP_STACK | MAP_PRIVATE | MAP_ANONYMOUS, ALLOW),
+            JEQ32(MAP_NORESERVE | MAP_SHARED, ALLOW),
+            LABEL(&labels, cf_webrtc_mmap_end),
+        };
+      })
+      .AddPolicyOnSyscall(__NR_ioctl, {ARG_32(1), JEQ32(FIONBIO, ALLOW)})
+      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW)})
+      .AllowDup()
+      .AllowEpoll()
+      .AllowEpollWait()
       .AllowEventFd()
-      .AllowFork()  // `clone` for multithreading
-      .AllowGetIDs()
       .AllowHandleSignals()
+      .AllowPrctlSetName()
       .AllowSafeFcntl()
+      .AllowSyscall(__NR_accept4)
       .AllowSyscall(__NR_bind)
+      .AllowSyscall(__NR_clone)
       .AllowSyscall(__NR_connect)
+      .AllowSyscall(__NR_getrandom)  // AllowGetRandom won't take GRND_INSECURE
       .AllowSyscall(__NR_listen)
-      .AllowSyscall(__NR_madvise)
-      .AllowSyscall(__NR_sendto)
-      .AllowSyscall(__NR_setsockopt)
-      .AllowSyscall(__NR_shutdown)
-      .AllowSyscalls({__NR_accept, __NR_accept4})
-      .AllowTCGETS();
+      .AllowSyscall(__NR_recvfrom)
+      .AllowSyscall(__NR_recvmsg)
+      .AllowSyscall(__NR_sendmsg)
+      .AllowUnlink();
 }
 
 }  // namespace cuttlefish::process_sandboxer

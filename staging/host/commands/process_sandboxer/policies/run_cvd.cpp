@@ -58,8 +58,9 @@ sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo& host) {
       .AddFileAt(sandboxer_proxy, host.HostToolExe("wmediumd"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("wmediumd_gen_config"))
       .AddDirectory(host.environments_dir)
-      .AddDirectory(host.environments_uds_dir, false)
-      .AddDirectory(host.instance_uds_dir, false)
+      .AddDirectory(host.environments_uds_dir, /* is_ro= */ false)
+      .AddDirectory(host.instance_uds_dir, /* is_ro= */ false)
+      .AddDirectory(host.vsock_device_dir, /* is_ro= */ false)
       // The UID inside the sandbox2 namespaces is always 1000.
       .AddDirectoryAt(host.environments_uds_dir,
                       absl::StrReplaceAll(
@@ -109,6 +110,7 @@ sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo& host) {
       .AllowDup()
       .AllowEventFd()
       .AllowFork()  // Multithreading, sandboxer_proxy, process monitor
+      .AllowGetIDs()
       .AllowInotifyInit()
       .AllowMkdir()
       .AllowPipe()
