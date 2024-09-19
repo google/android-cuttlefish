@@ -435,7 +435,6 @@ android_system_image {
         "ndc", // base_system
         "netd", // base_system
         "netutils-wrapper-1.0", // full_base
-        "notice_xml_system",
         "odsign", // base_system
         "otapreopt_script", // generic_system
         "package-shareduid-allowlist.xml", // base_system
