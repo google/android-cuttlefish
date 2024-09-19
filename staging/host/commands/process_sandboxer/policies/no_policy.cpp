@@ -25,8 +25,8 @@ namespace cuttlefish::process_sandboxer {
 // all.
 std::set<std::string> NoPolicy(const HostInfo& host) {
   return {
-      host.HostToolExe("avbtool"),  // TODO: b/318610573
       host.HostToolExe("crosvm"),
+      "/usr/bin/openssl",  // TODO
   };
 }
 
