@@ -109,6 +109,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("socket_vsock_proxy")] = SocketVsockProxyPolicy;
   builders[host.HostToolExe("tcp_connector")] = TcpConnectorPolicy;
   builders[host.HostToolExe("tombstone_receiver")] = TombstoneReceiverPolicy;
+  builders[host.HostToolExe("vhost_device_vsock")] = VhostDeviceVsockPolicy;
   builders[host.HostToolExe("webRTC")] = WebRtcPolicy;
   builders[host.HostToolExe("webrtc_operator")] = WebRtcOperatorPolicy;
   builders[host.HostToolExe("wmediumd")] = WmediumdPolicy;
