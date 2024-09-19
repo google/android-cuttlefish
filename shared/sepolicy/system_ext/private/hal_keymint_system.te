@@ -5,3 +5,9 @@ type hal_keymint_system_exec, exec_type, system_file_type, file_type;
 init_daemon_domain(hal_keymint_system)
 
 allow hal_keymint_system self:vsock_socket { create_socket_perms_no_ioctl };
+
+# Read device's serial number from system properties
+get_prop(hal_keymint_system, serialno_prop)
+
+# Read the OS patch level from system properties
+get_prop(hal_keymint_system, vendor_security_patch_level_prop)
