@@ -59,6 +59,7 @@ cc_binary_host {
         "policies/socket_vsock_proxy.cpp",
         "policies/tcp_connector.cpp",
         "policies/tombstone_receiver.cpp",
+        "policies/vhost_device_vsock.cpp",
         "policies/webrtc.cpp",
         "policies/webrtc_operator.cpp",
         "policies/wmediumd.cpp",

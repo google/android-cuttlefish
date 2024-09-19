@@ -41,6 +41,7 @@ struct HostInfo {
   std::string instance_uds_dir;
   std::string log_dir;
   std::string runtime_dir;
+  std::string vsock_device_dir;
 };
 
 std::ostream& operator<<(std::ostream&, const HostInfo&);
@@ -74,6 +75,7 @@ sandbox2::PolicyBuilder Simg2ImgPolicy(const HostInfo&);
 sandbox2::PolicyBuilder SocketVsockProxyPolicy(const HostInfo&);
 sandbox2::PolicyBuilder TcpConnectorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder TombstoneReceiverPolicy(const HostInfo&);
+sandbox2::PolicyBuilder VhostDeviceVsockPolicy(const HostInfo&);
 sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo&);
 sandbox2::PolicyBuilder WebRtcOperatorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder WmediumdPolicy(const HostInfo&);
