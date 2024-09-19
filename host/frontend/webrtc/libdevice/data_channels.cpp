@@ -113,6 +113,11 @@ class InputChannelHandler : public DataChannelHandler {
       int32_t down = evt["down"].asInt();
 
       CF_EXPECT(observer()->OnMouseButtonEvent(button, down));
+    } else if (event_type == "mouseWheel") {
+      CF_EXPECT(ValidateJsonObject(evt, "mouseWheel",
+                                   {{"pixels", Json::ValueType::intValue}}));
+      auto pixels = evt["pixels"].asInt();
+      CF_EXPECT(observer()->OnMouseWheelEvent(pixels));
     } else if (event_type == "multi-touch") {
       CF_EXPECT(
           ValidateJsonObject(evt, "multi-touch",
@@ -144,7 +149,7 @@ class InputChannelHandler : public DataChannelHandler {
       CF_EXPECT(ValidateJsonObject(evt, "wheel",
                                    {{"pixels", Json::ValueType::intValue}}));
       auto pixels = evt["pixels"].asInt();
-      CF_EXPECT(observer()->OnWheelEvent(pixels));
+      CF_EXPECT(observer()->OnRotaryWheelEvent(pixels));
     } else {
       return CF_ERRF("Unrecognized event type: '{}'", event_type);
     }
