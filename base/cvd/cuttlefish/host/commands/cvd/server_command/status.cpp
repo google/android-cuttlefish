@@ -174,7 +174,7 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   const bool has_print = CF_EXPECT(HasPrint(cmd_args));
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
-    return CF_EXPECT(NoGroupResponse(request));
+    return NoGroupResponse(request);
   }
   RequestWithStdio new_request = CF_EXPECT(ProcessInstanceNameFlag(request));
 

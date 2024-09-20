@@ -599,6 +599,10 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     return ResponseFromSiginfo(infop);
   }
 
+  if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
+    return NoGroupResponse(request);
+  }
+
   CF_EXPECT(ConsumeDaemonModeFlag(subcmd_args));
   subcmd_args.push_back("--daemon=true");
 

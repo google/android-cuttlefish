@@ -88,6 +88,9 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
   std::string android_host_out;
   std::string home = CF_EXPECT(SystemWideUserHome());
   if (!CF_EXPECT(IsHelpSubcmd(cmd_args))) {
+    if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
+      return NoGroupResponse(request);
+    }
     auto instance_group = CF_EXPECT(SelectGroup(instance_manager_, request));
     android_host_out = instance_group.HostArtifactsPath();
     home = instance_group.HomeDir();

@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/group_selector.h"
@@ -78,6 +77,9 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
       return Success();
     }
 
+    if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
+      return NoGroupResponse(request);
+    }
     auto group = CF_EXPECT(SelectGroup(instance_manager_, request));
 
     auto stop_res = StopGroup(group, request);
