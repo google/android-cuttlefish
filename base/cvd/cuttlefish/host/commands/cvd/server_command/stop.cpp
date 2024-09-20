@@ -121,7 +121,7 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
   }
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
-    return CF_EXPECT(NoGroupResponse(request));
+    return NoGroupResponse(request);
   }
   cvd_common::Envs envs = request.Envs();
   const auto selector_args = request.SelectorArgs();
