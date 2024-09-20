@@ -1,0 +1,13 @@
+service trusty_vm_launcher /system_ext/bin/trusty_vm_launcher
+    disabled
+    user system
+    group system virtualmachine
+    capabilities IPC_LOCK NET_BIND_SERVICE SYS_RESOURCE SYS_NICE
+    stdio_to_kmsg
+
+# Starts the non-secure Trusty VM in /system_ext when the feature is enabled through
+# the system property set in vendor init.
+on init && property:ro.hardware.security.trusty_vm.system=1
+    setprop trusty_vm_system_nonsecure.ready 1
+    setprop trusty_vm_system.vm_cid 200
+    start trusty_vm_launcher
