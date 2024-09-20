@@ -1,3 +1,6 @@
 /data/vendor/radio(/.*)?               u:object_r:radio_vendor_data_file:s0
 /(system_ext|system/system_ext)/bin/hw/android\.hardware\.audio\.parameter_parser\.example_service u:object_r:audio_vendor_parameter_parser_exec:s0
 /(system_ext|system/system_ext)/bin/hw/android\.hardware\.security\.keymint-service\.rust\.trusty\.system\.nonsecure  u:object_r:hal_keymint_system_exec:s0
+is_flag_enabled(RELEASE_AVF_ENABLE_EARLY_VM, `
+    /(system_ext|system/system_ext)/bin/trusty_vm_launcher u:object_r:trusty_vm_launcher_exec:s0
+')
