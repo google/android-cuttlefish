@@ -213,3 +213,22 @@ func verifyZipFile(filename string) error {
 	}
 	return nil
 }
+
+func VerifyLogsEndpoint(srvURL, group, name string) error {
+	base := fmt.Sprintf("%s/cvds/%s/%s/logs/", srvURL, group, name)
+	urls := []string{
+		base,
+		base + "launcher.log",
+		base + "kernel.log",
+	}
+	for _, v := range urls {
+		res, err := http.Get(v)
+		if err != nil {
+			return err
+		}
+		if res.StatusCode != http.StatusOK {
+			return fmt.Errorf("get %q failed with status code: %d", v, res.StatusCode)
+		}
+	}
+	return nil
+}
