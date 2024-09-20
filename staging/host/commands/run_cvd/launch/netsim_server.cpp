@@ -35,9 +35,13 @@ namespace {
 //
 // netsimd -s '{devices:[
 //  {"name":"0.0.0.0:5000", "chips":[
-//    {"kind":"BLUETOOTH", "fdIn":10, "fdOut":11}]},
+//    {"kind":"BLUETOOTH", "fdIn":10, "fdOut":11}],
+//   "device_kind": {
+//     "name":"0.0.0.0:5000", "kind":"CUTTLEFISH"}},
 //  {"name":"0.0.0.0:5010", "chips":[
-//    {"kind":"BLUETOOTH", "fdIn":14, "fdOut":15}]}]}
+//    {"kind":"BLUETOOTH", "fdIn":14, "fdOut":15}],
+//   "device_kind": {
+//     "name":"0.0.0.0:5010", "kind":"CUTTLEFISH"}}]}
 
 // Chip and Device classes pass SharedFD fifos between ResultSetup and Commands
 // and format the netsim json command line.
@@ -71,7 +75,8 @@ class Device {
         c.AppendToLastParameter(",");
       }
     }
-    c.AppendToLastParameter("]}");
+    c.AppendToLastParameter(R"(],"device_info":{"name":")", name_,
+                            R"(", "kind":"CUTTLEFISH"}})");
   }
 
   std::vector<Chip> chips;
