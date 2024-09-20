@@ -103,7 +103,7 @@ Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
   // currently, optout/optin feature only works in local instance
   // remote instance would continue to be done either through `python acloud` or
   // `cvdr` (if enabled).
-  auto optout = CF_EXPECT(instance_manager_.GetAcloudTranslatorOptout());
+  auto optout = true; // CF_EXPECT(instance_manager_.GetAcloudTranslatorOptout());
   CF_EXPECT(!optout);
   cvd::Response response;
   response.mutable_command_response();

@@ -77,7 +77,7 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   // For now, the default value of acloud_translator_optout is false
   // In the future, it might be determined by the server if not given.
   const auto all_args_size_before = all_args.size();
-  bool acloud_translator_optout_value = false;
+  bool acloud_translator_optout_value = true;
   PrintDataCollectionNotice();
   flags.emplace_back(GflagsCompatFlag(kInternalAcloudTranslatorOptOut,
                                       acloud_translator_optout_value));
