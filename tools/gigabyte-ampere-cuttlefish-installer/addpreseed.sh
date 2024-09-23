@@ -14,9 +14,9 @@ AFTERINSTALLSCRIPT=$(realpath "${BASEDIR}"/preseed/after_install_1.sh)
 
 part_img_ready=1
 if test "$auto_extract_efi" = 1; then
-  start_block=$(/sbin/fdisk -l "$orig_iso" | fgrep "$orig_iso"2 | \
+  start_block=$(/sbin/fdisk -l "$orig_iso" | grep -F "$orig_iso"2 | \
                 awk '{print $2}')
-  block_count=$(/sbin/fdisk -l "$orig_iso" | fgrep "$orig_iso"2 | \
+  block_count=$(/sbin/fdisk -l "$orig_iso" | grep -F "$orig_iso"2 | \
                 awk '{print $4}')
   if test "$start_block" -gt 0 -a "$block_count" -gt 0 2>/dev/null
   then
