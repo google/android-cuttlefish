@@ -27,6 +27,7 @@
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
@@ -196,6 +197,23 @@ cvd::InstanceGroupInfo GroupInfoFromGroup(
   return info;
 }
 
+// link might be a directory, so we clean that up, and create a link from
+// target to link
+Result<void> EnsureSymlink(const std::string& target, const std::string link) {
+  if (DirectoryExists(link, /* follow_symlinks */ false)) {
+    CF_EXPECTF(RecursivelyRemoveDirectory(link),
+               "Failed to remove legacy directory \"{}\"", link);
+  }
+  if (FileExists(link, /* follow_symlinks */ false)) {
+    CF_EXPECTF(RemoveFile(link), "Failed to remove file \"{}\": {}", link,
+               std::strerror(errno));
+  }
+  CF_EXPECTF(symlink(target.c_str(), link.c_str()) == 0,
+             "symlink(\"{}\", \"{}\") failed: {}", target, link,
+             std::strerror(errno));
+  return {};
+}
+
 }  // namespace
 
 class CvdCreateCommandHandler : public CvdServerHandler {
@@ -218,6 +236,7 @@ class CvdCreateCommandHandler : public CvdServerHandler {
   Result<selector::LocalInstanceGroup> GetOrCreateGroup(
       const cvd_common::Args& subcmd_args, const cvd_common::Envs& envs,
       const RequestWithStdio& request);
+  Result<void> CreateSymlinks(const selector::LocalInstanceGroup& group);
 
   static void MarkLockfiles(std::vector<InstanceLockFile>& lock_files,
                             const InUseState state);
@@ -296,6 +315,44 @@ Result<selector::LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
   return groups[0];
 }
 
+// For backward compatibility, we add extra symlink in home dir
+Result<void> CvdCreateCommandHandler::CreateSymlinks(
+    const selector::LocalInstanceGroup& group) {
+  auto system_wide_home = CF_EXPECT(SystemWideUserHome());
+  CF_EXPECT(EnsureDirectoryExists(group.HomeDir()));
+  auto smallest_id = std::numeric_limits<unsigned>::max();
+  for (const auto& instance : group.Instances()) {
+    // later on, we link cuttlefish_runtime to cuttlefish_runtime.smallest_id
+    smallest_id = std::min(smallest_id, instance.id());
+    const std::string instance_home_dir = fmt::format(
+        "{}/cuttlefish/instances/cvd-{}", group.HomeDir(), instance.id());
+    CF_EXPECT(EnsureSymlink(instance_home_dir,
+                            fmt::format("{}/cuttlefish_runtime.{}",
+                                        system_wide_home, instance.id())));
+    CF_EXPECT(EnsureSymlink(group.HomeDir() + "/cuttlefish",
+                            system_wide_home + "/cuttlefish"));
+  }
+  // create cuttlefish_runtime to cuttlefish_runtime.id
+  CF_EXPECT_NE(std::numeric_limits<unsigned>::max(), smallest_id,
+               "The group did not have any instance, which is not expected.");
+
+  // The config file needs to be copied instead of symlinked because when the
+  // group is removed the original file will be deleted leaving the symlink
+  // dangling. The config file in the home directory is used by
+  // cvd_internal_start to persist the user's choice for
+  // -report_anonymous_usage_stats.
+  CF_EXPECT(
+      Copy(group.InstanceDir(group.Instances()[0]) + "/cuttlefish_config.json",
+           CF_EXPECT(SystemWideUserHome()) + "/.cuttlefish_config.json"),
+      "Failed to copy config file to home directory");
+
+  const std::string instance_runtime_dir =
+      fmt::format("{}/cuttlefish_runtime.{}", system_wide_home, smallest_id);
+  const std::string runtime_dir_link = system_wide_home + "/cuttlefish_runtime";
+  CF_EXPECT(EnsureSymlink(instance_runtime_dir, runtime_dir_link));
+  return {};
+}
+
 Result<cvd::Response> CvdCreateCommandHandler::Handle(
     const RequestWithStdio& request) {
   CF_EXPECT(CanHandle(request));
@@ -335,6 +392,19 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
     auto start_cmd = CreateStartCommand(request, group, subcmd_args, envs);
     response =
         CF_EXPECT(command_executor_.ExecuteOne(start_cmd, request.Err()));
+    // For backward compatibility, we add extra symlink in system wide home
+    // when HOME is NOT overridden and selector flags are NOT given.
+    auto is_default_group =
+        StringFromEnv("HOME", "") == CF_EXPECT(SystemWideUserHome()) &&
+        request.Message().command_request().selector_opts().args().empty();
+
+    if (is_default_group) {
+      auto symlink_res = CreateSymlinks(group);
+      if (!symlink_res.ok()) {
+        LOG(ERROR) << "Failed to create symlinks for default group: "
+                   << symlink_res.error().FormatForEnv();
+      }
+    }
   }
 
   *response.mutable_command_response()->mutable_instance_group_info() =
