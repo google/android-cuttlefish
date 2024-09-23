@@ -18,12 +18,17 @@
 #include "GRPCVehicleProxyServer.h"
 #include "vsockinfo.h"
 
+#include <VehicleUtils.h>
+#include <aidl/android/hardware/automotive/vehicle/VehicleApPowerStateConfigFlag.h>
 #include <android-base/logging.h>
 #include <cutils/properties.h>
 
 #include <memory>
 
+using ::aidl::android::hardware::automotive::vehicle::
+    VehicleApPowerStateConfigFlag;
 using ::android::hardware::automotive::utils::VsockConnectionInfo;
+using ::android::hardware::automotive::vehicle::toInt;
 using ::android::hardware::automotive::vehicle::fake::FakeVehicleHardware;
 using ::android::hardware::automotive::vehicle::virtualization::
     GrpcVehicleProxyServer;
@@ -41,8 +46,12 @@ int main(int argc, char* argv[]) {
   std::string grpc_server_addr = argv[3];
   std::vector<std::string> listen_addrs = {grpc_server_addr, eth_addr};
 
+  // For cuttlefish we support S2R and S2D.
+  int32_t s2rS2dConfig =
+      toInt(VehicleApPowerStateConfigFlag::ENABLE_DEEP_SLEEP_FLAG) |
+      toInt(VehicleApPowerStateConfigFlag::ENABLE_HIBERNATION_FLAG);
   auto fake_hardware =
-      std::make_unique<FakeVehicleHardware>(argv[1], "", false);
+      std::make_unique<FakeVehicleHardware>(argv[1], "", false, s2rS2dConfig);
   auto proxy_server = std::make_unique<GrpcVehicleProxyServer>(
       listen_addrs, std::move(fake_hardware));
 
