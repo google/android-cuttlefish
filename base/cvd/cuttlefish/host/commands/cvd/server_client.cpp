@@ -110,6 +110,8 @@ RequestWithStdio::RequestWithStdio(cvd::Request message, std::istream& in,
                                    std::ostream& out, std::ostream& err)
     : message_(std::move(message)), in_(in), out_(out), err_(err) {}
 
+cvd::Request& RequestWithStdio::Message() { return message_; }
+
 const cvd::Request& RequestWithStdio::Message() const { return message_; }
 
 std::istream& RequestWithStdio::In() const { return in_; }
