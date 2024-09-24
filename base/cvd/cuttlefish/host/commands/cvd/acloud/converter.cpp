@@ -331,7 +331,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       AndroidHostPath(cvd_common::ConvertToEnvs(request_command.env())),
       "Missing host artifacts path");
 
-  std::vector<cvd::Request> request_protos;
+  std::vector<RequestWithStdio> inner_requests;
   const std::string user_config_path =
       parsed_flags.config_file.value_or(CF_EXPECT(GetDefaultConfigFile()));
 
@@ -375,7 +375,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     // the same method by using Android build api to get build ID,
     // but it is not easy in C++.
 
-    cvd::Request& fetch_request = request_protos.emplace_back();
+    cvd::Request& fetch_request =
+        inner_requests.emplace_back(RequestWithStdio::InheritIo({}, request))
+            .Message();
     auto& fetch_command = *fetch_request.mutable_command_request();
     fetch_command.add_args("cvd");
     fetch_command.add_args("fetch");
@@ -475,7 +477,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       if (read_str == fetch_command_str) {
         // same fetch cvd command, reuse original dir
         fetch_command_str = "";
-        request_protos.pop_back();
+        inner_requests.pop_back();
       }
     }
   }
@@ -495,7 +497,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     required_paths = super_image_path;
     required_paths += ("," + parsed_flags.local_system_image.value());
 
-    cvd::Request& mixsuperimage_request = request_protos.emplace_back();
+    cvd::Request& mixsuperimage_request =
+        inner_requests.emplace_back(RequestWithStdio::InheritIo({}, request))
+            .Message();
     auto& mixsuperimage_command =
         *mixsuperimage_request.mutable_command_request();
     mixsuperimage_command.add_args("cvd");
@@ -669,15 +673,12 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
           : RequestWithStdio::NullIo(std::move(start_request));
 
   ConvertedAcloudCreateCommand ret{
+      .prep_requests = std::move(inner_requests),
       .start_request = child_request,
       .fetch_command_str = fetch_command_str,
       .fetch_cvd_args_file = fetch_cvd_args_file,
       .verbose = parsed_flags.verbose,
   };
-  for (auto& request_proto : request_protos) {
-    ret.prep_requests.emplace_back(
-        RequestWithStdio::InheritIo(std::move(request_proto), request));
-  }
   return ret;
 }
 
