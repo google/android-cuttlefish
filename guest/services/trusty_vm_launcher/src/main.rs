@@ -55,6 +55,7 @@ fn main() -> Result<()> {
         None, // console_in
         None, // console_out
         None, // log
+        None, // dump_dt
         None, // callback
     )
     .context("Failed to create VM")?;
