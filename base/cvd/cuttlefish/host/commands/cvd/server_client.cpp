@@ -18,6 +18,9 @@
 
 #include <fstream>
 #include <optional>
+#include <string>
+
+#include "google/protobuf/map.h"
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
@@ -144,6 +147,28 @@ RequestWithStdio& RequestWithStdio::AddArgument(std::string argument) & {
 
 RequestWithStdio RequestWithStdio::AddArgument(std::string argument) && {
   message_.mutable_command_request()->mutable_args()->Add(std::move(argument));
+  return *this;
+}
+
+google::protobuf::Map<std::string, std::string>&
+RequestWithStdio::EnvsProtoMap() {
+  return *message_.mutable_command_request()->mutable_env();
+}
+
+const google::protobuf::Map<std::string, std::string>&
+RequestWithStdio::EnvsProtoMap() const {
+  return message_.command_request().env();
+}
+
+RequestWithStdio& RequestWithStdio::SetEnvsProtoMap(
+    google::protobuf::Map<std::string, std::string> map) & {
+  *message_.mutable_command_request()->mutable_env() = map;
+  return *this;
+}
+
+RequestWithStdio RequestWithStdio::SetEnvsProtoMap(
+    google::protobuf::Map<std::string, std::string> map) && {
+  *message_.mutable_command_request()->mutable_env() = map;
   return *this;
 }
 
