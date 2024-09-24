@@ -45,7 +45,9 @@ class RequestWithStdio {
 
   bool IsNullIo() const;
 
-  // Convenient accessors to commonly used properties in the underlying message
+  // Convenient getters/setters to properties in the underlying message
+  void AddArgument(std::string);
+
   cvd_common::Args Args() const {
     return cvd_common::ConvertToArgs(Message().command_request().args());
   }
@@ -58,6 +60,7 @@ class RequestWithStdio {
   }
 
   const std::string& WorkingDirectory() const;
+  void SetWorkingDirectory(std::string);
 
  private:
   RequestWithStdio(cvd::Request, std::istream&, std::ostream&, std::ostream&);
