@@ -180,64 +180,48 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   RequestWithStdio BuildFetchCmd(const RequestWithStdio& request,
                                  const CvdFlags& cvd_flags) {
-    cvd::Request fetch_req;
-    auto& fetch_cmd = *fetch_req.mutable_command_request();
-    *fetch_cmd.mutable_env() = request.Message().command_request().env();
-    fetch_cmd.add_args("cvd");
-    fetch_cmd.add_args("fetch");
-    for (const auto& flag : cvd_flags.fetch_cvd_flags) {
-      fetch_cmd.add_args(flag);
-    }
-    return RequestWithStdio::InheritIo(std::move(fetch_req), request);
+    return RequestWithStdio::InheritIo(request)
+        .SetEnvsProtoMap(request.EnvsProtoMap())
+        .AddArgument("cvd")
+        .AddArgument("fetch")
+        .AddArguments(cvd_flags.fetch_cvd_flags);
   }
 
   RequestWithStdio BuildLaunchCmd(const RequestWithStdio& request,
                                   const CvdFlags& cvd_flags,
                                   const selector::LocalInstanceGroup& group) {
-    cvd::Request launch_req;
-    auto& launch_cmd = *launch_req.mutable_command_request();
-    launch_cmd.set_working_directory(
-        cvd_flags.load_directories.host_package_directory);
-    *launch_cmd.mutable_env() = request.Message().command_request().env();
-    (*launch_cmd.mutable_env())["HOME"] =
-        cvd_flags.load_directories.launch_home_directory;
-    (*launch_cmd.mutable_env())[kAndroidHostOut] =
+    RequestWithStdio launch_req =
+        RequestWithStdio::InheritIo(request)
+            .SetWorkingDirectory(
+                cvd_flags.load_directories.host_package_directory)
+            .AddArgument("cvd")
+            // The newly created instances don't have an id yet, create will
+            // allocate those
+            .AddArgument("create")
+            /* cvd load will always create instances in daemon mode (to be
+             independent of terminal) and will enable reporting automatically
+             (to run automatically without question during launch)
+             */
+            .AddArgument("--daemon")
+            .AddArguments(cvd_flags.launch_cvd_flags)
+            // Add system flag for multi-build scenario
+            .AddArgument(fmt::format(
+                "--system_image_dir={}",
+                cvd_flags.load_directories.system_image_directory_flag_value))
+            .AddSelectorArguments(cvd_flags.selector_flags)
+            .AddSelectorArgument("--group_name")
+            .AddSelectorArgument(group.GroupName());
+
+    auto& env = launch_req.EnvsProtoMap() = request.EnvsProtoMap();
+    env["HOME"] = cvd_flags.load_directories.launch_home_directory;
+    env[kAndroidHostOut] = cvd_flags.load_directories.host_package_directory;
+    env[kAndroidSoongHostOut] =
         cvd_flags.load_directories.host_package_directory;
-    (*launch_cmd.mutable_env())[kAndroidSoongHostOut] =
-        cvd_flags.load_directories.host_package_directory;
-    if (Contains(*launch_cmd.mutable_env(), kAndroidProductOut)) {
-      (*launch_cmd.mutable_env()).erase(kAndroidProductOut);
+    if (Contains(env, kAndroidProductOut)) {
+      env.erase(kAndroidProductOut);
     }
 
-    /* cvd load will always create instances in daemon mode (to be independent
-     of terminal) and will enable reporting automatically (to run automatically
-     without question during launch)
-     */
-    launch_cmd.add_args("cvd");
-    // The newly created instances don't have an id yet, create will allocate
-    // those
-    launch_cmd.add_args("create");
-    launch_cmd.add_args("--daemon");
-
-    for (const auto& parsed_flag : cvd_flags.launch_cvd_flags) {
-      launch_cmd.add_args(parsed_flag);
-    }
-    // Add system flag for multi-build scenario
-    launch_cmd.add_args(fmt::format(
-        "--system_image_dir={}",
-        cvd_flags.load_directories.system_image_directory_flag_value));
-
-    auto selector_opts = launch_cmd.mutable_selector_opts();
-
-    for (const auto& flag : cvd_flags.selector_flags) {
-      selector_opts->add_args(flag);
-    }
-
-    // Make sure the newly created group is used by cvd create
-    launch_cmd.mutable_selector_opts()->add_args("--group_name");
-    launch_cmd.mutable_selector_opts()->add_args(group.GroupName());
-
-    return RequestWithStdio::InheritIo(std::move(launch_req), request);
+    return launch_req;
   }
 
  private:
