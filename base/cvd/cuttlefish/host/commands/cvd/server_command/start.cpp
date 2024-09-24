@@ -595,6 +595,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   });
   auto listener_handle = CF_EXPECT(std::move(handle_res));
   group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
+  group.SetStartTime(selector::CvdServerClock::now());
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   auto response = CF_EXPECT(
       LaunchDeviceInterruptible(std::move(command), group, envs, request));
