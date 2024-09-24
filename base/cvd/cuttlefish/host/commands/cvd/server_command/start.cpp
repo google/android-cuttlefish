@@ -594,7 +594,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     std::abort();
   });
   auto listener_handle = CF_EXPECT(std::move(handle_res));
-  group.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
+  group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   auto response = CF_EXPECT(
       LaunchDeviceInterruptible(std::move(command), group, envs, request));
