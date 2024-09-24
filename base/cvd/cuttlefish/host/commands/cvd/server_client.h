@@ -55,6 +55,22 @@ class RequestWithStdio {
   RequestWithStdio& AddArgument(std::string) &;
   RequestWithStdio AddArgument(std::string) &&;
 
+  template <typename T>
+  RequestWithStdio& AddArguments(const T& args) & {
+    for (const std::string& arg : args) {
+      AddArgument(arg);
+    }
+    return *this;
+  }
+
+  template <typename T>
+  RequestWithStdio AddArguments(const T& args) {
+    for (const std::string& arg : args) {
+      AddArgument(arg);
+    }
+    return *this;
+  }
+
   cvd_common::Args Args() const {
     return cvd_common::ConvertToArgs(Message().command_request().args());
   }
