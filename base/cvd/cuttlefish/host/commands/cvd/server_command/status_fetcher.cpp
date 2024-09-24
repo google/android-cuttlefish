@@ -120,7 +120,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
     };
   }
 
-  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+  auto [subcmd, cmd_args] = ParseInvocation(request);
 
   // remove --all_instances if there is
   bool all_instances = false;
@@ -198,7 +198,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
 Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
     const RequestWithStdio& request) {
   cvd_common::Envs envs = request.Envs();
-  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+  auto [subcmd, cmd_args] = ParseInvocation(request);
 
   // find group
   const auto selector_args = request.SelectorArgs();

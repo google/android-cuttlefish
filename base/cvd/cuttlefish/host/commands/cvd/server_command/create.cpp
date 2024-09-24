@@ -259,7 +259,7 @@ void CvdCreateCommandHandler::MarkLockfiles(
 
 Result<bool> CvdCreateCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
-  auto invocation = ParseInvocation(request.Message());
+  auto invocation = ParseInvocation(request);
   return Contains(CmdList(), invocation.command);
 }
 
@@ -354,7 +354,7 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
 Result<cvd::Response> CvdCreateCommandHandler::Handle(
     const RequestWithStdio& request) {
   CF_EXPECT(CanHandle(request));
-  auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
+  auto [subcmd, subcmd_args] = ParseInvocation(request);
   bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));
   CF_EXPECT(!is_help);
 

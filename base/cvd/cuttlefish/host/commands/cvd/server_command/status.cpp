@@ -117,14 +117,14 @@ CvdStatusCommandHandler::CvdStatusCommandHandler(
 
 Result<bool> CvdStatusCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
-  auto invocation = ParseInvocation(request.Message());
+  auto invocation = ParseInvocation(request);
   return Contains(supported_subcmds_, invocation.command);
 }
 
 static Result<RequestWithStdio> ProcessInstanceNameFlag(
     const RequestWithStdio& request) {
   cvd_common::Envs envs = request.Envs();
-  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+  auto [subcmd, cmd_args] = ParseInvocation(request);
 
   CvdFlag<std::string> instance_name_flag("instance_name");
   auto instance_name_flag_opt =
@@ -169,7 +169,7 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
     const RequestWithStdio& request) {
   CF_EXPECT(CanHandle(request));
 
-  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+  auto [subcmd, cmd_args] = ParseInvocation(request);
   CF_EXPECT(Contains(supported_subcmds_, subcmd));
   const bool has_print = CF_EXPECT(HasPrint(cmd_args));
 

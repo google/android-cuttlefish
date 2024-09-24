@@ -47,14 +47,14 @@ class LintCommandHandler : public CvdServerHandler {
   LintCommandHandler() {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     return invocation.command == kLintSubCmd;
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
 
-    auto args = ParseInvocation(request.Message()).arguments;
+    auto args = ParseInvocation(request).arguments;
     auto working_directory = request.WorkingDirectory();
     const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
 

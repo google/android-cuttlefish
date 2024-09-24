@@ -67,7 +67,7 @@ class CvdFleetCommandHandler : public CvdServerHandler {
 
 Result<bool> CvdFleetCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
-  auto invocation = ParseInvocation(request.Message());
+  auto invocation = ParseInvocation(request);
   return invocation.command == kFleetSubcmd;
 }
 
@@ -80,7 +80,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   auto& status = *ok_response.mutable_status();
   status.set_code(cvd::Status::OK);
 
-  auto [sub_cmd, args] = ParseInvocation(request.Message());
+  auto [sub_cmd, args] = ParseInvocation(request);
 
   if (IsHelp(args)) {
     request.Out() << kHelpMessage;

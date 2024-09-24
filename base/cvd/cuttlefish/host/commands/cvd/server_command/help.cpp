@@ -80,14 +80,14 @@ class CvdHelpHandler : public CvdServerHandler {
       : request_handlers_(request_handlers) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     return (invocation.command == "help");
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
 
-    auto args = ParseInvocation(request.Message()).arguments;
+    auto args = ParseInvocation(request).arguments;
     if (args.empty()) {
       request.Out() << CF_EXPECT(TopLevelHelp());
     } else {

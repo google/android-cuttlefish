@@ -71,7 +71,7 @@ CvdBugreportCommandHandler::CvdBugreportCommandHandler(
 
 Result<bool> CvdBugreportCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
-  auto invocation = ParseInvocation(request.Message());
+  auto invocation = ParseInvocation(request);
   return Contains(commands_, invocation.command);
 }
 
@@ -82,7 +82,7 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
   cvd::Response response;
   response.mutable_command_response();
 
-  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+  auto [subcmd, cmd_args] = ParseInvocation(request);
   cvd_common::Envs envs = request.Envs();
 
   std::string android_host_out;

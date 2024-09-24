@@ -119,13 +119,13 @@ class CvdResetCommandHandler : public CvdServerHandler {
       : instance_manager_(instance_manager) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     return invocation.command == kResetSubcmd;
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     auto options = CF_EXPECT(ParseResetFlags(invocation.arguments));
     if (options.log_level) {
       SetMinimumVerbosity(options.log_level.value());

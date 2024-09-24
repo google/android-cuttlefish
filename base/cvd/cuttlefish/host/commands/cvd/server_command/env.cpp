@@ -49,7 +49,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
       : instance_manager_{instance_manager}, cvd_env_operations_{"env"} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     return Contains(cvd_env_operations_, invocation.command);
   }
 
@@ -57,7 +57,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
     CF_EXPECT(CanHandle(request));
     cvd_common::Envs envs = request.Envs();
 
-    auto [_, subcmd_args] = ParseInvocation(request.Message());
+    auto [_, subcmd_args] = ParseInvocation(request);
 
     /*
      * cvd_env --help only. Not --helpxml, etc.
