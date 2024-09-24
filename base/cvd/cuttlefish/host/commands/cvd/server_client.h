@@ -20,7 +20,10 @@
 #include <sys/types.h>
 
 #include <optional>
+#include <string>
 #include <vector>
+
+#include <google/protobuf/map.h>
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
@@ -62,6 +65,13 @@ class RequestWithStdio {
   cvd_common::Envs Envs() const {
     return cvd_common::ConvertToEnvs(Message().command_request().env());
   }
+
+  google::protobuf::Map<std::string, std::string>& EnvsProtoMap();
+  const google::protobuf::Map<std::string, std::string>& EnvsProtoMap() const;
+  RequestWithStdio& SetEnvsProtoMap(
+      google::protobuf::Map<std::string, std::string>) &;
+  RequestWithStdio SetEnvsProtoMap(
+      google::protobuf::Map<std::string, std::string>) &&;
 
   const std::string& WorkingDirectory() const;
   RequestWithStdio& SetWorkingDirectory(std::string) &;
