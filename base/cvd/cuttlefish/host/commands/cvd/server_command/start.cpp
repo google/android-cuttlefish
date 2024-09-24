@@ -315,8 +315,7 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
   }
 
   const std::string& home_dir = group.HomeDir();
-  const std::string client_pwd =
-      request.Message().command_request().working_directory();
+  const std::string client_pwd = request.WorkingDirectory();
   CF_EXPECT(EnsureDirectoryExists(home_dir, 0775, /* group_name */ ""),
             "Failed to create group's home directory");
   const std::string& android_host_out = group.HostArtifactsPath();
@@ -411,7 +410,7 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
       .home = group.HomeDir(),
       .args = args,
       .envs = envs,
-      .working_dir = request.Message().command_request().working_directory(),
+      .working_dir = request.WorkingDirectory(),
       .command_name = bin_file,
       .null_stdio = false};
   Command non_help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
@@ -510,7 +509,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
       // As the end-user may override HOME, this could be a relative path
       // to client's pwd, or may include "~" which is the client's actual
       // home directory.
-      auto client_pwd = request.Message().command_request().working_directory();
+      auto client_pwd = request.WorkingDirectory();
       const auto given_home_dir = envs.at("HOME");
       /*
        * Imagine this scenario:

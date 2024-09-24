@@ -100,7 +100,7 @@ Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
       .home = CF_EXPECT(SystemWideUserHome()),
       .args = cmd_args,
       .envs = envs,
-      .working_dir = request.Message().command_request().working_directory(),
+      .working_dir = request.WorkingDirectory(),
       .command_name = bin,
       .null_stdio = request.IsNullIo()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
@@ -137,7 +137,7 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
       .home = group.HomeDir(),
       .args = cmd_args,
       .envs = envs,
-      .working_dir = request.Message().command_request().working_directory(),
+      .working_dir = request.WorkingDirectory(),
       .command_name = bin,
       .null_stdio = request.IsNullIo()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));

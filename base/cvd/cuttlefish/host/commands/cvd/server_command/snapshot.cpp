@@ -147,7 +147,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
         .home = home,
         .args = cvd_snapshot_args,
         .envs = envs,
-        .working_dir = request.Message().command_request().working_directory(),
+        .working_dir = request.WorkingDirectory(),
         .command_name = android::base::Basename(cvd_snapshot_bin_path),
         .null_stdio = request.IsNullIo()};
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
