@@ -28,15 +28,16 @@
 
 namespace cuttlefish {
 
-CommandInvocation ParseInvocation(const cvd::Request& request) {
+CommandInvocation ParseInvocation(const RequestWithStdio& request) {
+  const cvd::Request& message = request.Message();
   CommandInvocation invocation;
-  if (request.contents_case() != cvd::Request::ContentsCase::kCommandRequest) {
+  if (message.contents_case() != cvd::Request::ContentsCase::kCommandRequest) {
     return invocation;
   }
-  if (request.command_request().args_size() == 0) {
+  if (message.command_request().args_size() == 0) {
     return invocation;
   }
-  for (const std::string& arg : request.command_request().args()) {
+  for (const std::string& arg : message.command_request().args()) {
     invocation.arguments.push_back(arg);
   }
   invocation.arguments[0] = cpp_basename(invocation.arguments[0]);

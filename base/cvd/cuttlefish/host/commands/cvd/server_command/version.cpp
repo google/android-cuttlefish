@@ -39,7 +39,7 @@ class CvdVersionHandler : public CvdServerHandler {
   CvdVersionHandler() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     return "version" == invocation.command;
   }
 

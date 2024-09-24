@@ -34,12 +34,12 @@ class CvdNoopHandler : public CvdServerHandler {
   CvdNoopHandler() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     return Contains(CmdList(), invocation.command);
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     fmt::print(request.Out(), "DEPRECATED: The {} command is a no-op",
                invocation.command);
     cvd::Response response;

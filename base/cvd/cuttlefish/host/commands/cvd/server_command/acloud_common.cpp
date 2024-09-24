@@ -21,7 +21,7 @@
 namespace cuttlefish {
 
 bool IsSubOperationSupported(const RequestWithStdio& request) {
-  auto invocation = ParseInvocation(request.Message());
+  auto invocation = ParseInvocation(request);
   if (invocation.arguments.empty()) {
     return false;
   }

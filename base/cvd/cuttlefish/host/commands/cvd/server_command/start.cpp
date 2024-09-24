@@ -357,7 +357,7 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
 
 Result<bool> CvdStartCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
-  auto invocation = ParseInvocation(request.Message());
+  auto invocation = ParseInvocation(request);
   return Contains(supported_commands_, invocation.command);
 }
 
@@ -496,7 +496,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     const RequestWithStdio& request) {
   CF_EXPECT(CanHandle(request));
 
-  auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
+  auto [subcmd, subcmd_args] = ParseInvocation(request);
   CF_EXPECT(!GetConfigPath(subcmd_args).has_value(),
             "The 'start' command doesn't accept --config_file, did you mean "
             "'create'?");

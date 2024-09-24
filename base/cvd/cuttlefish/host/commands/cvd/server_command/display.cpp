@@ -58,7 +58,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
         cvd_display_operations_{"display"} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     return Contains(cvd_display_operations_, invocation.command);
   }
 
@@ -66,7 +66,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
     CF_EXPECT(CanHandle(request));
     cvd_common::Envs envs = request.Envs();
 
-    auto [_, subcmd_args] = ParseInvocation(request.Message());
+    auto [_, subcmd_args] = ParseInvocation(request);
 
     bool is_help = CF_EXPECT(IsHelp(subcmd_args));
     // may modify subcmd_args by consuming in parsing
