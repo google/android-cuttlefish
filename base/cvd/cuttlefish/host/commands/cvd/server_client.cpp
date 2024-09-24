@@ -24,6 +24,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
+#include "cuttlefish/host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
 
@@ -124,8 +125,17 @@ bool RequestWithStdio::IsNullIo() const {
   return &in_ == &NullIn() && &out_ == &NullOut() && &err_ == &NullOut();
 }
 
+void RequestWithStdio::AddArgument(std::string argument) {
+  message_.mutable_command_request()->mutable_args()->Add(std::move(argument));
+}
+
 const std::string& RequestWithStdio::WorkingDirectory() const {
   return Message().command_request().working_directory();
+}
+
+void RequestWithStdio::SetWorkingDirectory(std::string working_directory) {
+  *message_.mutable_command_request()->mutable_working_directory() =
+      std::move(working_directory);
 }
 
 }  // namespace cuttlefish
