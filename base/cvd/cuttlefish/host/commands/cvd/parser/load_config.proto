@@ -122,6 +122,7 @@ message Vm {
     Qemu qemu = 8;
   }
   repeated CustomAction custom_actions = 9;
+  optional bool enable_virtiofs = 10;
 }
 
 message Crosvm {
