@@ -48,6 +48,7 @@ interface DeviceGridItemUpdate {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-view-pane',
   templateUrl: './view-pane.component.html',
   styleUrls: ['./view-pane.component.scss'],
