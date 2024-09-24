@@ -56,6 +56,8 @@ class RequestWithStdio {
     return cvd_common::ConvertToEnvs(Message().command_request().env());
   }
 
+  const std::string& WorkingDirectory() const;
+
  private:
   RequestWithStdio(cvd::Request, std::istream&, std::ostream&, std::ostream&);
 

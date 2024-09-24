@@ -53,8 +53,7 @@ The --override flag can be used to give new values for properties in the config 
 
 Result<CvdFlags> GetCvdFlags(const RequestWithStdio& request) {
   auto args = ParseInvocation(request.Message()).arguments;
-  auto working_directory =
-      request.Message().command_request().working_directory();
+  auto working_directory = request.WorkingDirectory();
   const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
   return CF_EXPECT(GetCvdFlags(flags));
 }

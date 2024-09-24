@@ -122,4 +122,8 @@ bool RequestWithStdio::IsNullIo() const {
   return &in_ == &NullIn() && &out_ == &NullOut() && &err_ == &NullOut();
 }
 
+const std::string& RequestWithStdio::WorkingDirectory() const {
+  return Message().command_request().working_directory();
+}
+
 }  // namespace cuttlefish

@@ -154,7 +154,7 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
       .cmd_args = new_cmd_args,
       .env = envs,
       .selector_args = request.SelectorArgs(),
-      .working_dir = request.Message().command_request().working_directory(),
+      .working_dir = request.WorkingDirectory(),
   });
   return RequestWithStdio::InheritIo(std::move(new_message), (request));
 }

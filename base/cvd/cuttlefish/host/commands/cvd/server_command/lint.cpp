@@ -55,8 +55,7 @@ class LintCommandHandler : public CvdServerHandler {
     CF_EXPECT(CanHandle(request));
 
     auto args = ParseInvocation(request.Message()).arguments;
-    auto working_directory =
-        request.Message().command_request().working_directory();
+    auto working_directory = request.WorkingDirectory();
     const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
 
     request.Out() << "Lint of flags and config \"" << config_path

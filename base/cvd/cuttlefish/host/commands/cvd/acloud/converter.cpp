@@ -661,8 +661,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
   // we don't know which HOME is assigned by cvd start.
   // cvd server does not rely on the working directory for cvd start
-  *start_command.mutable_working_directory() =
-      request_command.working_directory();
+  *start_command.mutable_working_directory() = request.WorkingDirectory();
 
   RequestWithStdio child_request =
       parsed_flags.verbose

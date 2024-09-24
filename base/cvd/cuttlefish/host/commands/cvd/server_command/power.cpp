@@ -154,7 +154,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
         .home = home,
         .args = subcmd_args,
         .envs = envs,
-        .working_dir = request.Message().command_request().working_directory(),
+        .working_dir = request.WorkingDirectory(),
         .command_name = bin_base,
         .null_stdio = request.IsNullIo()};
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
@@ -204,7 +204,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
         .home = home,
         .args = cvd_env_args,
         .envs = envs,
-        .working_dir = request.Message().command_request().working_directory(),
+        .working_dir = request.WorkingDirectory(),
         .command_name = bin_base,
         .null_stdio = request.IsNullIo()};
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));

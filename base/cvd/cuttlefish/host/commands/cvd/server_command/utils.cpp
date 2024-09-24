@@ -114,7 +114,7 @@ Result<Command> ConstructCvdHelpCommand(
     const RequestWithStdio& request) {
   const auto host_artifacts_path = envs.at("ANDROID_HOST_OUT");
   const auto bin_path = host_artifacts_path + "/bin/" + bin_file;
-  auto client_pwd = request.Message().command_request().working_directory();
+  auto client_pwd = request.WorkingDirectory();
   const auto home = (Contains(envs, "HOME") ? envs.at("HOME") : client_pwd);
   cvd_common::Envs envs_copy{envs};
   envs_copy["HOME"] = AbsolutePath(home);
@@ -163,7 +163,7 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
       .home = request_form.home,
       .args = request_form.cmd_args,
       .envs = envs,
-      .working_dir = request.Message().command_request().working_directory(),
+      .working_dir = request.WorkingDirectory(),
       .command_name = request_form.bin_file,
       .null_stdio = request.IsNullIo()};
   return CF_EXPECT(ConstructCommand(construct_cmd_param));

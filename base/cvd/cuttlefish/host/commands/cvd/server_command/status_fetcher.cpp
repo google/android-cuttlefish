@@ -127,8 +127,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   CF_EXPECT(ConsumeFlags({GflagsCompatFlag("all_instances", all_instances)},
                          cmd_args));
 
-  const auto working_dir =
-      request.Message().command_request().working_directory();
+  const auto working_dir = request.WorkingDirectory();
 
   auto android_host_out = group.Proto().host_artifacts_path();
   auto home = group.Proto().home_directory();
@@ -255,12 +254,12 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
   group_json["group_name"] = group.GroupName();
   group_json["start_time"] = selector::Format(group.StartTime());
 
-  auto request_message = MakeRequest(
-      {.cmd_args = {"cvd", "status", "--print", "--all_instances"},
-       .env = original_request.Envs(),
-       .selector_args = {"--group_name", group.GroupName()},
-       .working_dir =
-           original_request.Message().command_request().working_directory()});
+  auto request_message = MakeRequest({
+      .cmd_args = {"cvd", "status", "--print", "--all_instances"},
+      .env = original_request.Envs(),
+      .selector_args = {"--group_name", group.GroupName()},
+      .working_dir = original_request.WorkingDirectory(),
+  });
   RequestWithStdio group_request =
       RequestWithStdio::InheritIo(std::move(request_message), original_request);
   auto [_, instances_json, group_response] =

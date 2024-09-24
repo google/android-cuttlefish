@@ -106,7 +106,7 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
       .home = home,
       .args = cmd_args,
       .envs = envs,
-      .working_dir = request.Message().command_request().working_directory(),
+      .working_dir = request.WorkingDirectory(),
       .command_name = kHostBugreportBin,
       .null_stdio = request.IsNullIo()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));

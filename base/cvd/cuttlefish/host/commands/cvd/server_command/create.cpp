@@ -124,8 +124,7 @@ RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
   cvd::Request request_proto;
   auto& command = *request_proto.mutable_command_request();
   *command.mutable_env() = request.Message().command_request().env();
-  command.set_working_directory(
-      request.Message().command_request().working_directory());
+  command.set_working_directory(request.WorkingDirectory());
   command.add_args("cvd");
   command.add_args("load");
   for (const auto& arg : args) {
@@ -144,8 +143,7 @@ RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
   for (const auto& [key, value] : envs) {
     (*command.mutable_env())[key] = value;
   }
-  command.set_working_directory(
-      request.Message().command_request().working_directory());
+  command.set_working_directory(request.WorkingDirectory());
   command.mutable_selector_opts()->clear_args();
   command.mutable_selector_opts()->add_args("--group_name");
   command.mutable_selector_opts()->add_args(group.GroupName());
@@ -167,7 +165,7 @@ Result<cvd_common::Envs> GetEnvs(const RequestWithStdio& request) {
     // As the end-user may override HOME, this could be a relative path
     // to client's pwd, or may include "~" which is the client's actual
     // home directory.
-    auto client_pwd = request.Message().command_request().working_directory();
+    auto client_pwd = request.WorkingDirectory();
     const auto given_home_dir = envs.at("HOME");
     // Substituting ~ is not supported by cvd
     CF_EXPECT(!android::base::StartsWith(given_home_dir, "~") &&
