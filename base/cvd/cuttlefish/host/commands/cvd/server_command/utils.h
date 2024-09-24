@@ -37,7 +37,7 @@ struct CommandInvocation {
   std::vector<std::string> arguments;
 };
 
-CommandInvocation ParseInvocation(const cvd::Request& request);
+CommandInvocation ParseInvocation(const RequestWithStdio& request);
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
 

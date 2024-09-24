@@ -58,7 +58,7 @@ class AcloudCommand : public CvdServerHandler {
   ~AcloudCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     if (invocation.arguments.size() >= 2) {
       if (invocation.command == "acloud" &&
           (invocation.arguments[0] == "translator" ||
@@ -162,7 +162,7 @@ Result<ConvertedAcloudCreateCommand> AcloudCommand::ValidateLocal(
 }
 
 bool AcloudCommand::ValidateRemoteArgs(const RequestWithStdio& request) {
-  auto args = ParseInvocation(request.Message()).arguments;
+  auto args = ParseInvocation(request).arguments;
   return acloud_impl::CompileFromAcloudToCvdr(args).ok();
 }
 
@@ -236,7 +236,7 @@ Result<void> AcloudCommand::PrepareForDeleteCommand(
 
 Result<cvd::Response> AcloudCommand::HandleRemote(
     const RequestWithStdio& request) {
-  auto args = ParseInvocation(request.Message()).arguments;
+  auto args = ParseInvocation(request).arguments;
   args = CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
   Command cmd = Command("cvdr");
   for (auto a : args) {

@@ -147,7 +147,7 @@ namespace acloud_impl {
 
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     const RequestWithStdio& request) {
-  auto arguments = ParseInvocation(request.Message()).arguments;
+  auto arguments = ParseInvocation(request).arguments;
   CF_EXPECT(arguments.size() > 0);
   CF_EXPECT(arguments[0] == "create");
   arguments.erase(arguments.begin());

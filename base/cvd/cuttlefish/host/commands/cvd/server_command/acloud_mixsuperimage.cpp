@@ -158,7 +158,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
   ~AcloudMixSuperImageCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     if (invocation.arguments.size() >= 2) {
       if (invocation.command == "acloud" &&
           invocation.arguments[0] == "mix-super-image") {
@@ -179,7 +179,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     if (invocation.arguments.empty() || invocation.arguments.size() < 2) {
       return CF_ERR("Acloud mix-super-image command not support");
     }
