@@ -150,6 +150,24 @@ RequestWithStdio RequestWithStdio::AddArgument(std::string argument) && {
   return *this;
 }
 
+RequestWithStdio& RequestWithStdio::AddSelectorArgument(
+    std::string argument) & {
+  message_.mutable_command_request()
+      ->mutable_selector_opts()
+      ->mutable_args()
+      ->Add(std::move(argument));
+  return *this;
+}
+
+RequestWithStdio RequestWithStdio::AddSelectorArgument(
+    std::string argument) && {
+  message_.mutable_command_request()
+      ->mutable_selector_opts()
+      ->mutable_args()
+      ->Add(std::move(argument));
+  return *this;
+}
+
 google::protobuf::Map<std::string, std::string>&
 RequestWithStdio::EnvsProtoMap() {
   return *message_.mutable_command_request()->mutable_env();
