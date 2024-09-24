@@ -83,6 +83,18 @@ Result<void> SendResponse(const SharedFD& client,
   return {};
 }
 
+RequestWithStdio RequestWithStdio::StdIo() {
+  return RequestWithStdio::StdIo({});
+}
+
+RequestWithStdio RequestWithStdio::NullIo() {
+  return RequestWithStdio::NullIo({});
+}
+
+RequestWithStdio RequestWithStdio::InheritIo(const RequestWithStdio& other) {
+  return RequestWithStdio::InheritIo({}, other);
+}
+
 RequestWithStdio RequestWithStdio::StdIo(cvd::Request message) {
   return RequestWithStdio(std::move(message), std::cin, std::cout, std::cerr);
 }
@@ -125,17 +137,32 @@ bool RequestWithStdio::IsNullIo() const {
   return &in_ == &NullIn() && &out_ == &NullOut() && &err_ == &NullOut();
 }
 
-void RequestWithStdio::AddArgument(std::string argument) {
+RequestWithStdio& RequestWithStdio::AddArgument(std::string argument) & {
   message_.mutable_command_request()->mutable_args()->Add(std::move(argument));
+  return *this;
+}
+
+RequestWithStdio RequestWithStdio::AddArgument(std::string argument) && {
+  message_.mutable_command_request()->mutable_args()->Add(std::move(argument));
+  return *this;
 }
 
 const std::string& RequestWithStdio::WorkingDirectory() const {
   return Message().command_request().working_directory();
 }
 
-void RequestWithStdio::SetWorkingDirectory(std::string working_directory) {
+RequestWithStdio& RequestWithStdio::SetWorkingDirectory(
+    std::string working_directory) & {
   *message_.mutable_command_request()->mutable_working_directory() =
       std::move(working_directory);
+  return *this;
+}
+
+RequestWithStdio RequestWithStdio::SetWorkingDirectory(
+    std::string working_directory) && {
+  *message_.mutable_command_request()->mutable_working_directory() =
+      std::move(working_directory);
+  return *this;
 }
 
 }  // namespace cuttlefish
