@@ -37,6 +37,7 @@ class RequestWithStdio {
   static RequestWithStdio NullIo(cvd::Request);
   static RequestWithStdio InheritIo(cvd::Request, const RequestWithStdio&);
 
+  cvd::Request& Message();
   const cvd::Request& Message() const;
   std::istream& In() const;
   std::ostream& Out() const;
