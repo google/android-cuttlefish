@@ -33,6 +33,9 @@ namespace cuttlefish {
 
 class RequestWithStdio {
  public:
+  static RequestWithStdio StdIo();
+  static RequestWithStdio NullIo();
+  static RequestWithStdio InheritIo(const RequestWithStdio&);
   static RequestWithStdio StdIo(cvd::Request);
   static RequestWithStdio NullIo(cvd::Request);
   static RequestWithStdio InheritIo(cvd::Request, const RequestWithStdio&);
@@ -46,7 +49,8 @@ class RequestWithStdio {
   bool IsNullIo() const;
 
   // Convenient getters/setters to properties in the underlying message
-  void AddArgument(std::string);
+  RequestWithStdio& AddArgument(std::string) &;
+  RequestWithStdio AddArgument(std::string) &&;
 
   cvd_common::Args Args() const {
     return cvd_common::ConvertToArgs(Message().command_request().args());
@@ -60,7 +64,8 @@ class RequestWithStdio {
   }
 
   const std::string& WorkingDirectory() const;
-  void SetWorkingDirectory(std::string);
+  RequestWithStdio& SetWorkingDirectory(std::string) &;
+  RequestWithStdio SetWorkingDirectory(std::string) &&;
 
  private:
   RequestWithStdio(cvd::Request, std::istream&, std::ostream&, std::ostream&);
