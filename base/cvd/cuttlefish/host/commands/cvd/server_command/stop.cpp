@@ -91,15 +91,15 @@ Result<bool> CvdStopCommandHandler::CanHandle(
 Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
     const RequestWithStdio& request) {
   auto [subcmd, cmd_args] = ParseInvocation(request);
-  cvd_common::Envs envs = request.Envs();
+  const cvd_common::Envs& env = request.Env();
 
-  const auto [bin, bin_path] = CF_EXPECT(CvdHelpBinPath(subcmd, envs));
+  const auto [bin, bin_path] = CF_EXPECT(CvdHelpBinPath(subcmd, env));
 
   ConstructCommandParam construct_cmd_param{
       .bin_path = bin_path,
       .home = CF_EXPECT(SystemWideUserHome()),
       .args = cmd_args,
-      .envs = envs,
+      .envs = env,
       .working_dir = request.WorkingDirectory(),
       .command_name = bin,
       .null_stdio = request.IsNullIo()};
@@ -123,7 +123,6 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return NoGroupResponse(request);
   }
-  cvd_common::Envs envs = request.Envs();
   const auto selector_args = request.SelectorArgs();
 
   auto group = CF_EXPECT(SelectGroup(instance_manager_, request));
@@ -136,7 +135,7 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
       .bin_path = ConcatToString(android_host_out, "/bin/", bin),
       .home = group.HomeDir(),
       .args = cmd_args,
-      .envs = envs,
+      .envs = request.Env(),
       .working_dir = request.WorkingDirectory(),
       .command_name = bin,
       .null_stdio = request.IsNullIo()};

@@ -92,14 +92,11 @@ class RequestWithStdio {
   RequestWithStdio& ImportEnv(const cvd_common::Envs&) &;
   RequestWithStdio ImportEnv(const cvd_common::Envs&) &&;
 
-  cvd_common::Envs Envs() const;
+  const cvd_common::Envs& Env() const;
+  cvd_common::Envs& Env();
 
-  google::protobuf::Map<std::string, std::string>& EnvsProtoMap();
-  const google::protobuf::Map<std::string, std::string>& EnvsProtoMap() const;
-  RequestWithStdio& SetEnvsProtoMap(
-      google::protobuf::Map<std::string, std::string>) &;
-  RequestWithStdio SetEnvsProtoMap(
-      google::protobuf::Map<std::string, std::string>) &&;
+  RequestWithStdio& SetEnv(cvd_common::Envs) &;
+  RequestWithStdio SetEnv(cvd_common::Envs) &&;
 
   RequestWithStdio& SetWaitBehavior(cvd::WaitBehavior) &;
   RequestWithStdio SetWaitBehavior(cvd::WaitBehavior) &&;
@@ -111,7 +108,7 @@ class RequestWithStdio {
  private:
   RequestWithStdio(std::istream&, std::ostream&, std::ostream&);
   cvd_common::Args args_;
-  google::protobuf::Map<std::string, std::string> env_;
+  cvd_common::Envs env_;
   cvd_common::Args selector_args_;
   cvd::WaitBehavior wait_behavior_;
   std::string working_directory_;

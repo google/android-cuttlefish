@@ -77,7 +77,6 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
-    cvd_common::Envs envs = request.Envs();
 
     auto [subcmd, subcmd_args] = ParseInvocation(request);
 
@@ -89,7 +88,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
 
     // may modify subcmd_args by consuming in parsing
     Command command =
-        CF_EXPECT(GenerateCommand(request, subcmd, subcmd_args, envs));
+        CF_EXPECT(GenerateCommand(request, subcmd, subcmd_args, request.Env()));
 
     siginfo_t infop;
     command.Start().Wait(&infop, WEXITED);
