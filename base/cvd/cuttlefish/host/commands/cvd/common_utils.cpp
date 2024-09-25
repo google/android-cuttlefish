@@ -66,15 +66,6 @@ Result<std::string> AndroidHostPath(const cvd_common::Envs& envs) {
   return current_dir;
 }
 
-RequestWithStdio MakeRequest(const MakeRequestForm& request_form) {
-  return RequestWithStdio::StdIo()
-      .AddArguments(request_form.cmd_args)
-      .AddSelectorArguments(request_form.selector_args)
-      .ImportEnv(request_form.env)
-      .SetWorkingDirectory(
-          request_form.working_dir.value_or(CurrentDirectory()));
-}
-
 cvd::Response CommandResponse(const cvd::Status_Code code,
                               const std::string message) {
   cvd::Response response;
