@@ -1,0 +1,30 @@
+cc_library(
+    name = "config",
+    srcs = [
+        "config_utils.cpp",
+        "fetcher_config.cpp",
+        "host_tools_version.cpp",
+        "instance_nums.cpp",
+    ],
+    hdrs = [
+        "config_constants.h",
+        "config_fragment.h",
+        "config_utils.h",
+        "cuttlefish_config.h",
+        "fetcher_config.h",
+        "host_tools_version.h",
+        "instance_nums.h",
+        "logging.h",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "@jsoncpp",
+    ],
+)
+
+

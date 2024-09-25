@@ -1,0 +1,54 @@
+cc_library(
+    name = "web",
+    srcs = [
+        "android_build_api.cpp",
+        "android_build_string.cpp",
+        "caching_build_api.cpp",
+        "chrome_os_build_string.cpp",
+        "credential_source.cc",
+        "http_client/http_client.cc",
+        "http_client/http_client_util.cc",
+        "luci_build_api.cpp",
+    ],
+    hdrs = [
+        "android_build_api.h",
+        "android_build_string.h",
+        "caching_build_api.h",
+        "chrome_os_build_string.h",
+        "credential_source.h",
+        "http_client/http_client.h",
+        "http_client/http_client_util.h",
+        "luci_build_api.h",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    linkopts = ["-lcurl"],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "@fmt",
+        "@jsoncpp",
+    ],
+)
+
+cc_test(
+    name = "web_test",
+    srcs = [
+        "android_build_string_tests.cpp",
+        "http_client/unittest/http_client_util_test.cc",
+    ],
+    copts = [
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+    ],
+    includes = [""],
+    deps = [
+        ":web",
+        "//libsparse",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
