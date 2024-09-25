@@ -208,6 +208,18 @@ const std::string& RequestWithStdio::WorkingDirectory() const {
   return Message().command_request().working_directory();
 }
 
+RequestWithStdio& RequestWithStdio::SetWaitBehavior(
+    cvd::WaitBehavior wait_behavior) & {
+  message_.mutable_command_request()->set_wait_behavior(wait_behavior);
+  return *this;
+}
+
+RequestWithStdio RequestWithStdio::SetWaitBehavior(
+    cvd::WaitBehavior wait_behavior) && {
+  message_.mutable_command_request()->set_wait_behavior(wait_behavior);
+  return *this;
+}
+
 RequestWithStdio& RequestWithStdio::SetWorkingDirectory(
     std::string working_directory) & {
   *message_.mutable_command_request()->mutable_working_directory() =
