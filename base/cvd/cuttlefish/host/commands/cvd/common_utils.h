@@ -18,14 +18,12 @@
 
 #include <sys/types.h>
 
-#include <optional>
 #include <sstream>
 
 #include <android-base/logging.h>
 
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-#include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -38,15 +36,6 @@ struct Overload : Ts... {
 
 template <typename... Ts>
 Overload(Ts...) -> Overload<Ts...>;
-
-struct MakeRequestForm {
-  cvd_common::Args cmd_args;
-  cvd_common::Envs env;
-  cvd_common::Args selector_args;
-  std::optional<std::string> working_dir;
-};
-
-RequestWithStdio MakeRequest(const MakeRequestForm& request_form);
 
 cvd::Response CommandResponse(const cvd::Status_Code,
                               const std::string message = "");
