@@ -87,22 +87,6 @@ bool RequestWithStdio::IsNullIo() const {
   return &in_ == &NullIn() && &out_ == &NullOut() && &err_ == &NullOut();
 }
 
-RequestWithStdio& RequestWithStdio::OverrideRequest(RequestWithStdio other) & {
-  args_ = std::move(other.args_);
-  env_ = std::move(other.env_);
-  selector_args_ = std::move(other.selector_args_);
-  working_directory_ = std::move(other.working_directory_);
-  return *this;
-}
-
-RequestWithStdio RequestWithStdio::OverrideRequest(RequestWithStdio other) && {
-  args_ = std::move(other.args_);
-  env_ = std::move(other.env_);
-  selector_args_ = std::move(other.selector_args_);
-  working_directory_ = std::move(other.working_directory_);
-  return *this;
-}
-
 const cvd_common::Args& RequestWithStdio::Args() const { return args_; }
 
 RequestWithStdio& RequestWithStdio::AddArgument(std::string argument) & {
