@@ -122,7 +122,7 @@ RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
                                    cvd_common::Args& args,
                                    const std::string& config_file) {
   return RequestWithStdio::InheritIo(request)
-      .SetEnvsProtoMap(request.EnvsProtoMap())
+      .SetEnv(request.Env())
       .SetWorkingDirectory(request.WorkingDirectory())
       .AddArgument("cvd")
       .AddArgument("load")
@@ -145,7 +145,7 @@ RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
 }
 
 Result<cvd_common::Envs> GetEnvs(const RequestWithStdio& request) {
-  cvd_common::Envs envs = request.Envs();
+  cvd_common::Envs envs = request.Env();
   if (auto it = envs.find("HOME"); it != envs.end() && it->second.empty()) {
     envs.erase(it);
   }
@@ -154,7 +154,7 @@ Result<cvd_common::Envs> GetEnvs(const RequestWithStdio& request) {
     // to client's pwd, or may include "~" which is the client's actual
     // home directory.
     auto client_pwd = request.WorkingDirectory();
-    const auto given_home_dir = envs.at("HOME");
+    const auto given_home_dir = envs["HOME"];
     // Substituting ~ is not supported by cvd
     CF_EXPECT(!android::base::StartsWith(given_home_dir, "~") &&
                   !android::base::StartsWith(given_home_dir, "~/"),
