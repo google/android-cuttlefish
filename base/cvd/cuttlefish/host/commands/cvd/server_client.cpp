@@ -140,6 +140,16 @@ bool RequestWithStdio::IsNullIo() const {
   return &in_ == &NullIn() && &out_ == &NullOut() && &err_ == &NullOut();
 }
 
+RequestWithStdio& RequestWithStdio::OverrideRequest(RequestWithStdio other) & {
+  message_ = std::move(other.message_);
+  return *this;
+}
+
+RequestWithStdio RequestWithStdio::OverrideRequest(RequestWithStdio other) && {
+  message_ = std::move(other.message_);
+  return *this;
+}
+
 RequestWithStdio& RequestWithStdio::AddArgument(std::string argument) & {
   message_.mutable_command_request()->mutable_args()->Add(std::move(argument));
   return *this;

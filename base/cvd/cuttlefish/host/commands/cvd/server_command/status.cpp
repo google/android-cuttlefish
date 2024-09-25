@@ -156,7 +156,8 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
       .selector_args = request.SelectorArgs(),
       .working_dir = request.WorkingDirectory(),
   });
-  return RequestWithStdio::InheritIo(std::move(new_message.Message()), request);
+  return RequestWithStdio::InheritIo(request).OverrideRequest(
+      std::move(new_message));
 }
 
 static Result<bool> HasPrint(cvd_common::Args cmd_args) {
