@@ -45,22 +45,18 @@ class RequestWithStdio {
 
   bool IsNullIo() const;
 
-  // Convenient getters/setters to properties in the underlying message
-  RequestWithStdio& AddArgument(std::string) &;
-  RequestWithStdio AddArgument(std::string) &&;
-
   template <typename T>
-  RequestWithStdio& AddArguments(const T& args) & {
-    for (const std::string& arg : args) {
-      AddArgument(arg);
+  RequestWithStdio& AddArguments(T&& args) & {
+    for (auto&& arg : args) {
+      args_.emplace_back(arg);
     }
     return *this;
   }
 
   template <typename T>
-  RequestWithStdio AddArguments(const T& args) && {
-    for (const std::string& arg : args) {
-      AddArgument(arg);
+  RequestWithStdio AddArguments(T&& args) && {
+    for (auto&& arg : args) {
+      args_.emplace_back(arg);
     }
     return *this;
   }
@@ -74,17 +70,17 @@ class RequestWithStdio {
   RequestWithStdio AddSelectorArgument(std::string) &&;
 
   template <typename T>
-  RequestWithStdio& AddSelectorArguments(const T& args) & {
-    for (const std::string& arg : args) {
-      AddArgument(arg);
+  RequestWithStdio& AddSelectorArguments(T&& args) & {
+    for (auto&& arg : args) {
+      selector_args_.emplace_back(arg);
     }
     return *this;
   }
 
   template <typename T>
-  RequestWithStdio AddSelectorArguments(const T& args) && {
-    for (const std::string& arg : args) {
-      AddArgument(arg);
+  RequestWithStdio AddSelectorArguments(T&& args) && {
+    for (auto&& arg : args) {
+      selector_args_.emplace_back(arg);
     }
     return *this;
   }
