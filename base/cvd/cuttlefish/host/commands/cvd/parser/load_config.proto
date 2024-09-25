@@ -78,6 +78,7 @@ message Vsock {
 message Graphics {
   repeated Display displays = 1;
   optional bool record_screen = 2;
+  optional string gpu_mode=3;
 }
 
 message Display {

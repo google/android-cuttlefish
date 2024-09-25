@@ -89,11 +89,17 @@ bool RecordScreen(const Instance& instance) {
   }
 }
 
+static std::string GpuMode(const Instance& instance) {
+  const auto& graphics = instance.graphics();
+  return graphics.has_gpu_mode() ? graphics.gpu_mode() : /* CF_DEFAULTS_GPU_MODE */ "auto";
+}
+
 Result<std::vector<std::string>> GenerateGraphicsFlags(
     const EnvironmentSpecification& cfg) {
   return std::vector<std::string>{
       CF_EXPECT(GenerateDisplayFlag(cfg)),
       GenerateInstanceFlag("record_screen", cfg, RecordScreen),
+      GenerateInstanceFlag("gpu_mode", cfg, GpuMode),
   };
 }
 
