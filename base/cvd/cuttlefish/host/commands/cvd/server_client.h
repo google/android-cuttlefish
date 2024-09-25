@@ -113,6 +113,9 @@ class RequestWithStdio {
   RequestWithStdio SetEnvsProtoMap(
       google::protobuf::Map<std::string, std::string>) &&;
 
+  RequestWithStdio& SetWaitBehavior(cvd::WaitBehavior) &;
+  RequestWithStdio SetWaitBehavior(cvd::WaitBehavior) &&;
+
   const std::string& WorkingDirectory() const;
   RequestWithStdio& SetWorkingDirectory(std::string) &;
   RequestWithStdio SetWorkingDirectory(std::string) &&;

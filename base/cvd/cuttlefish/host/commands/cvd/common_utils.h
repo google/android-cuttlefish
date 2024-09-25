@@ -25,6 +25,7 @@
 
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
+#include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -45,10 +46,10 @@ struct MakeRequestForm {
   std::optional<std::string> working_dir;
 };
 
-cvd::Request MakeRequest(const MakeRequestForm& request_form,
-                         const cvd::WaitBehavior wait_behavior);
+RequestWithStdio MakeRequest(const MakeRequestForm& request_form,
+                             const cvd::WaitBehavior wait_behavior);
 
-cvd::Request MakeRequest(const MakeRequestForm& request_form);
+RequestWithStdio MakeRequest(const MakeRequestForm& request_form);
 
 cvd::Response CommandResponse(const cvd::Status_Code,
                               const std::string message = "");

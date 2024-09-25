@@ -150,13 +150,13 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
 
   cvd_common::Args new_cmd_args{"cvd", "status"};
   new_cmd_args.insert(new_cmd_args.end(), cmd_args.begin(), cmd_args.end());
-  cvd::Request new_message = MakeRequest({
+  RequestWithStdio new_message = MakeRequest({
       .cmd_args = new_cmd_args,
       .env = envs,
       .selector_args = request.SelectorArgs(),
       .working_dir = request.WorkingDirectory(),
   });
-  return RequestWithStdio::InheritIo(std::move(new_message), (request));
+  return RequestWithStdio::InheritIo(std::move(new_message.Message()), request);
 }
 
 static Result<bool> HasPrint(cvd_common::Args cmd_args) {

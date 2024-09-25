@@ -254,14 +254,14 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
   group_json["group_name"] = group.GroupName();
   group_json["start_time"] = selector::Format(group.StartTime());
 
-  auto request_message = MakeRequest({
+  RequestWithStdio request_message = MakeRequest({
       .cmd_args = {"cvd", "status", "--print", "--all_instances"},
       .env = original_request.Envs(),
       .selector_args = {"--group_name", group.GroupName()},
       .working_dir = original_request.WorkingDirectory(),
   });
-  RequestWithStdio group_request =
-      RequestWithStdio::InheritIo(std::move(request_message), original_request);
+  RequestWithStdio group_request = RequestWithStdio::InheritIo(
+      std::move(request_message.Message()), original_request);
   auto [_, instances_json, group_response] =
       CF_EXPECT(FetchStatus(group_request));
   group_json["instances"] = instances_json;
