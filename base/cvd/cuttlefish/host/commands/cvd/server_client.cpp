@@ -17,7 +17,6 @@
 #include "host/commands/cvd/server_client.h"
 
 #include <fstream>
-#include <optional>
 #include <string>
 
 #include "google/protobuf/map.h"
@@ -53,7 +52,7 @@ Result<void> SendResponse(const SharedFD& client,
 }
 
 RequestWithStdio RequestWithStdio::StdIo() {
-  return RequestWithStdio({}, std::cin, std::cout, std::cerr);
+  return RequestWithStdio(std::cin, std::cout, std::cerr);
 }
 
 static std::istream& NullIn() {
@@ -67,20 +66,16 @@ static std::ostream& NullOut() {
 }
 
 RequestWithStdio RequestWithStdio::NullIo() {
-  return RequestWithStdio({}, NullIn(), NullOut(), NullOut());
+  return RequestWithStdio(NullIn(), NullOut(), NullOut());
 }
 
 RequestWithStdio RequestWithStdio::InheritIo(const RequestWithStdio& other) {
-  return RequestWithStdio({}, other.in_, other.out_, other.err_);
+  return RequestWithStdio(other.in_, other.out_, other.err_);
 }
 
-RequestWithStdio::RequestWithStdio(cvd::Request message, std::istream& in,
-                                   std::ostream& out, std::ostream& err)
-    : message_(std::move(message)), in_(in), out_(out), err_(err) {}
-
-cvd::Request& RequestWithStdio::Message() { return message_; }
-
-const cvd::Request& RequestWithStdio::Message() const { return message_; }
+RequestWithStdio::RequestWithStdio(std::istream& in, std::ostream& out,
+                                   std::ostream& err)
+    : in_(in), out_(out), err_(err) {}
 
 std::istream& RequestWithStdio::In() const { return in_; }
 
@@ -93,40 +88,48 @@ bool RequestWithStdio::IsNullIo() const {
 }
 
 RequestWithStdio& RequestWithStdio::OverrideRequest(RequestWithStdio other) & {
-  message_ = std::move(other.message_);
+  args_ = std::move(other.args_);
+  env_ = std::move(other.env_);
+  selector_args_ = std::move(other.selector_args_);
+  wait_behavior_ = std::move(other.wait_behavior_);
+  working_directory_ = std::move(other.working_directory_);
   return *this;
 }
 
 RequestWithStdio RequestWithStdio::OverrideRequest(RequestWithStdio other) && {
-  message_ = std::move(other.message_);
+  args_ = std::move(other.args_);
+  env_ = std::move(other.env_);
+  selector_args_ = std::move(other.selector_args_);
+  wait_behavior_ = std::move(other.wait_behavior_);
+  working_directory_ = std::move(other.working_directory_);
   return *this;
 }
 
+const cvd_common::Args& RequestWithStdio::Args() const { return args_; }
+
 RequestWithStdio& RequestWithStdio::AddArgument(std::string argument) & {
-  message_.mutable_command_request()->mutable_args()->Add(std::move(argument));
+  args_.emplace_back(std::move(argument));
   return *this;
 }
 
 RequestWithStdio RequestWithStdio::AddArgument(std::string argument) && {
-  message_.mutable_command_request()->mutable_args()->Add(std::move(argument));
+  args_.emplace_back(std::move(argument));
   return *this;
+}
+
+const cvd_common::Args& RequestWithStdio::SelectorArgs() const {
+  return selector_args_;
 }
 
 RequestWithStdio& RequestWithStdio::AddSelectorArgument(
     std::string argument) & {
-  message_.mutable_command_request()
-      ->mutable_selector_opts()
-      ->mutable_args()
-      ->Add(std::move(argument));
+  selector_args_.emplace_back(std::move(argument));
   return *this;
 }
 
 RequestWithStdio RequestWithStdio::AddSelectorArgument(
     std::string argument) && {
-  message_.mutable_command_request()
-      ->mutable_selector_opts()
-      ->mutable_args()
-      ->Add(std::move(argument));
+  selector_args_.emplace_back(std::move(argument));
   return *this;
 }
 
@@ -146,53 +149,55 @@ RequestWithStdio RequestWithStdio::ImportEnv(const cvd_common::Envs& env) && {
 
 google::protobuf::Map<std::string, std::string>&
 RequestWithStdio::EnvsProtoMap() {
-  return *message_.mutable_command_request()->mutable_env();
+  return env_;
 }
 
 const google::protobuf::Map<std::string, std::string>&
 RequestWithStdio::EnvsProtoMap() const {
-  return message_.command_request().env();
+  return env_;
 }
 
 RequestWithStdio& RequestWithStdio::SetEnvsProtoMap(
     google::protobuf::Map<std::string, std::string> map) & {
-  *message_.mutable_command_request()->mutable_env() = map;
+  env_ = std::move(map);
   return *this;
 }
 
 RequestWithStdio RequestWithStdio::SetEnvsProtoMap(
     google::protobuf::Map<std::string, std::string> map) && {
-  *message_.mutable_command_request()->mutable_env() = map;
+  env_ = std::move(map);
   return *this;
 }
 
+cvd_common::Envs RequestWithStdio::Envs() const {
+  return cvd_common::ConvertToEnvs(env_);
+}
+
 const std::string& RequestWithStdio::WorkingDirectory() const {
-  return Message().command_request().working_directory();
+  return working_directory_;
 }
 
 RequestWithStdio& RequestWithStdio::SetWaitBehavior(
     cvd::WaitBehavior wait_behavior) & {
-  message_.mutable_command_request()->set_wait_behavior(wait_behavior);
+  wait_behavior_ = std::move(wait_behavior);
   return *this;
 }
 
 RequestWithStdio RequestWithStdio::SetWaitBehavior(
     cvd::WaitBehavior wait_behavior) && {
-  message_.mutable_command_request()->set_wait_behavior(wait_behavior);
+  wait_behavior_ = std::move(wait_behavior);
   return *this;
 }
 
 RequestWithStdio& RequestWithStdio::SetWorkingDirectory(
     std::string working_directory) & {
-  *message_.mutable_command_request()->mutable_working_directory() =
-      std::move(working_directory);
+  working_directory_ = std::move(working_directory);
   return *this;
 }
 
 RequestWithStdio RequestWithStdio::SetWorkingDirectory(
     std::string working_directory) && {
-  *message_.mutable_command_request()->mutable_working_directory() =
-      std::move(working_directory);
+  working_directory_ = std::move(working_directory);
   return *this;
 }
 
