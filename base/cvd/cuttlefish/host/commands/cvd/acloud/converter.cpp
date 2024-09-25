@@ -375,19 +375,17 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     // the same method by using Android build api to get build ID,
     // but it is not easy in C++.
 
-    cvd::Request& fetch_request =
-        inner_requests.emplace_back(RequestWithStdio::InheritIo({}, request))
-            .Message();
-    auto& fetch_command = *fetch_request.mutable_command_request();
-    fetch_command.add_args("cvd");
-    fetch_command.add_args("fetch");
-    fetch_command.add_args("--directory");
-    fetch_command.add_args(host_dir);
-    fetch_command.add_args("--default_build");
+    RequestWithStdio& fetch_request =
+        inner_requests.emplace_back(RequestWithStdio::InheritIo(request))
+            .AddArgument("cvd")
+            .AddArgument("fetch")
+            .AddArgument("--directory")
+            .AddArgument(host_dir)
+            .AddArgument("--default_build");
     fetch_command_str += "--default_build=";
     if (given_branch_target_info) {
-      fetch_command.add_args(given_branch_target_info->branch_str + "/" +
-                             given_branch_target_info->build_target_str);
+      fetch_request.AddArgument(given_branch_target_info->branch_str + "/" +
+                                given_branch_target_info->build_target_str);
       fetch_command_str += (given_branch_target_info->branch_str + "/" +
                             given_branch_target_info->build_target_str);
     } else {
@@ -395,11 +393,11 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
           parsed_flags.build_target ? "/" + *parsed_flags.build_target : "";
       auto build = parsed_flags.build_id.value_or(
           parsed_flags.branch.value_or("aosp-main"));
-      fetch_command.add_args(build + target);
+      fetch_request.AddArgument(build + target);
       fetch_command_str += (build + target);
     }
     if (system_branch || system_build_id || system_build_target) {
-      fetch_command.add_args("--system_build");
+      fetch_request.AddArgument("--system_build");
       fetch_command_str += " --system_build=";
       auto target =
           system_build_target.value_or(parsed_flags.build_target.value_or(""));
@@ -408,12 +406,12 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       }
       auto build =
           system_build_id.value_or(system_branch.value_or("aosp-main"));
-      fetch_command.add_args(build + target);
+      fetch_request.AddArgument(build + target);
       fetch_command_str += (build + target);
     }
     if (parsed_flags.bootloader.branch || parsed_flags.bootloader.build_id ||
         parsed_flags.bootloader.build_target) {
-      fetch_command.add_args("--bootloader_build");
+      fetch_request.AddArgument("--bootloader_build");
       fetch_command_str += " --bootloader_build=";
       auto target = parsed_flags.bootloader.build_target.value_or("");
       if (target != "") {
@@ -421,55 +419,53 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       }
       auto build = parsed_flags.bootloader.build_id.value_or(
           parsed_flags.bootloader.branch.value_or("aosp_u-boot-mainline"));
-      fetch_command.add_args(build + target);
+      fetch_request.AddArgument(build + target);
       fetch_command_str += (build + target);
     }
     if (boot_branch || boot_build_id || boot_build_target) {
-      fetch_command.add_args("--boot_build");
+      fetch_request.AddArgument("--boot_build");
       fetch_command_str += " --boot_build=";
       auto target = boot_build_target.value_or("");
       if (target != "") {
         target = "/" + target;
       }
       auto build = boot_build_id.value_or(boot_branch.value_or("aosp-main"));
-      fetch_command.add_args(build + target);
+      fetch_request.AddArgument(build + target);
       fetch_command_str += (build + target);
     }
     if (boot_artifact) {
       CF_EXPECT(boot_branch || boot_build_target || boot_build_id,
                 "--boot-artifact must combine with other --boot-* flags");
-      fetch_command.add_args("--boot_artifact");
+      fetch_request.AddArgument("--boot_artifact");
       fetch_command_str += " --boot_artifact=";
       auto target = boot_artifact.value_or("");
-      fetch_command.add_args(target);
+      fetch_request.AddArgument(target);
       fetch_command_str += (target);
     }
     if (ota_branch || ota_build_id || ota_build_target) {
-      fetch_command.add_args("--otatools_build");
+      fetch_request.AddArgument("--otatools_build");
       fetch_command_str += " --otatools_build=";
       auto target = ota_build_target.value_or("");
       if (target != "") {
         target = "/" + target;
       }
       auto build = ota_build_id.value_or(ota_branch.value_or(""));
-      fetch_command.add_args(build + target);
+      fetch_request.AddArgument(build + target);
       fetch_command_str += (build + target);
     }
     if (kernel_branch || kernel_build_id || kernel_build_target) {
-      fetch_command.add_args("--kernel_build");
+      fetch_request.AddArgument("--kernel_build");
       fetch_command_str += " --kernel_build=";
       auto target = kernel_build_target.value_or("kernel_virt_x86_64");
       auto build = kernel_build_id.value_or(
           kernel_branch.value_or("aosp_kernel-common-android-mainline"));
-      fetch_command.add_args(build + "/" + target);
+      fetch_request.AddArgument(build + "/" + target);
       fetch_command_str += (build + "/" + target);
     }
-    auto& fetch_env = *fetch_command.mutable_env();
-    fetch_env[kAndroidHostOut] = host_artifacts_path;
+    fetch_request.EnvsProtoMap()[kAndroidHostOut] = host_artifacts_path;
 
     fetch_cvd_args_file = host_dir + "/fetch-cvd-args.txt";
     if (FileExists(fetch_cvd_args_file)) {
-      // file exists
       std::string read_str;
       using android::base::ReadFileToString;
       CF_EXPECT(ReadFileToString(fetch_cvd_args_file.c_str(), &read_str,
