@@ -168,6 +168,20 @@ RequestWithStdio RequestWithStdio::AddSelectorArgument(
   return *this;
 }
 
+RequestWithStdio& RequestWithStdio::ImportEnv(const cvd_common::Envs& env) & {
+  for (const auto& [key, value] : env) {
+    EnvsProtoMap()[key] = value;
+  }
+  return *this;
+}
+
+RequestWithStdio RequestWithStdio::ImportEnv(const cvd_common::Envs& env) && {
+  for (const auto& [key, value] : env) {
+    EnvsProtoMap()[key] = value;
+  }
+  return *this;
+}
+
 google::protobuf::Map<std::string, std::string>&
 RequestWithStdio::EnvsProtoMap() {
   return *message_.mutable_command_request()->mutable_env();

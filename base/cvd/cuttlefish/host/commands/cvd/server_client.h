@@ -98,6 +98,10 @@ class RequestWithStdio {
     return cvd_common::ConvertToArgs(
         Message().command_request().selector_opts().args());
   }
+
+  RequestWithStdio& ImportEnv(const cvd_common::Envs&) &;
+  RequestWithStdio ImportEnv(const cvd_common::Envs&) &&;
+
   cvd_common::Envs Envs() const {
     return cvd_common::ConvertToEnvs(Message().command_request().env());
   }
