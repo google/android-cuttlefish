@@ -256,10 +256,7 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
 
   RequestWithStdio group_request =
       RequestWithStdio::InheritIo(original_request)
-          .AddArgument("cvd")
-          .AddArgument("status")
-          .AddArgument("--print")
-          .AddArgument("--all_instances")
+          .AddArguments({"cvd", "status", "--print", "--all_instances"})
           .SetEnv(original_request.Env())
           .AddSelectorArgument("--group_name")
           .AddSelectorArgument(group.GroupName())

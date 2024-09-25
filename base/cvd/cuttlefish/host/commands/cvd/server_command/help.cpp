@@ -112,7 +112,7 @@ class CvdHelpHandler : public CvdServerHandler {
 
  private:
   RequestWithStdio GetLookupRequest(const std::string& arg) {
-    return RequestWithStdio::NullIo().AddArgument("cvd").AddArgument(arg);
+    return RequestWithStdio::NullIo().AddArguments({"cvd", arg});
   }
 
   Result<std::string> TopLevelHelp() {

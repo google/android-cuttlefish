@@ -182,33 +182,30 @@ class LoadConfigsCommand : public CvdServerHandler {
                                  const CvdFlags& cvd_flags) {
     return RequestWithStdio::InheritIo(request)
         .SetEnv(request.Env())
-        .AddArgument("cvd")
-        .AddArgument("fetch")
+        .AddArguments({"cvd", "fetch"})
         .AddArguments(cvd_flags.fetch_cvd_flags);
   }
 
   RequestWithStdio BuildLaunchCmd(const RequestWithStdio& request,
                                   const CvdFlags& cvd_flags,
                                   const selector::LocalInstanceGroup& group) {
+    // Add system flag for multi-build scenario
+    std::string system_build_arg = fmt::format(
+        "--system_image_dir={}",
+        cvd_flags.load_directories.system_image_directory_flag_value);
     RequestWithStdio launch_req =
         RequestWithStdio::InheritIo(request)
             .SetEnv(request.Env())
             .SetWorkingDirectory(
                 cvd_flags.load_directories.host_package_directory)
-            .AddArgument("cvd")
             // The newly created instances don't have an id yet, create will
-            // allocate those
-            .AddArgument("create")
+            // allocate those.
             /* cvd load will always create instances in daemon mode (to be
              independent of terminal) and will enable reporting automatically
              (to run automatically without question during launch)
              */
-            .AddArgument("--daemon")
+            .AddArguments({"cvd", "create", "--daemon", system_build_arg})
             .AddArguments(cvd_flags.launch_cvd_flags)
-            // Add system flag for multi-build scenario
-            .AddArgument(fmt::format(
-                "--system_image_dir={}",
-                cvd_flags.load_directories.system_image_directory_flag_value))
             .AddSelectorArguments(cvd_flags.selector_flags)
             .AddSelectorArgument("--group_name")
             .AddSelectorArgument(group.GroupName());
