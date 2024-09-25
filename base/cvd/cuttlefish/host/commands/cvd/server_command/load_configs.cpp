@@ -181,7 +181,7 @@ class LoadConfigsCommand : public CvdServerHandler {
   RequestWithStdio BuildFetchCmd(const RequestWithStdio& request,
                                  const CvdFlags& cvd_flags) {
     return RequestWithStdio::InheritIo(request)
-        .SetEnvsProtoMap(request.EnvsProtoMap())
+        .SetEnv(request.Env())
         .AddArgument("cvd")
         .AddArgument("fetch")
         .AddArguments(cvd_flags.fetch_cvd_flags);
@@ -192,6 +192,7 @@ class LoadConfigsCommand : public CvdServerHandler {
                                   const selector::LocalInstanceGroup& group) {
     RequestWithStdio launch_req =
         RequestWithStdio::InheritIo(request)
+            .SetEnv(request.Env())
             .SetWorkingDirectory(
                 cvd_flags.load_directories.host_package_directory)
             .AddArgument("cvd")
@@ -212,7 +213,7 @@ class LoadConfigsCommand : public CvdServerHandler {
             .AddSelectorArgument("--group_name")
             .AddSelectorArgument(group.GroupName());
 
-    auto& env = launch_req.EnvsProtoMap() = request.EnvsProtoMap();
+    auto& env = launch_req.Env();
     env["HOME"] = cvd_flags.load_directories.launch_home_directory;
     env[kAndroidHostOut] = cvd_flags.load_directories.host_package_directory;
     env[kAndroidSoongHostOut] =

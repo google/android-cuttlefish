@@ -83,7 +83,7 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
   response.mutable_command_response();
 
   auto [subcmd, cmd_args] = ParseInvocation(request);
-  cvd_common::Envs envs = request.Envs();
+  cvd_common::Envs env = request.Env();
 
   std::string android_host_out;
   std::string home = CF_EXPECT(SystemWideUserHome());
@@ -94,10 +94,10 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
     auto instance_group = CF_EXPECT(SelectGroup(instance_manager_, request));
     android_host_out = instance_group.HostArtifactsPath();
     home = instance_group.HomeDir();
-    envs["HOME"] = home;
-    envs[kAndroidHostOut] = android_host_out;
+    env["HOME"] = home;
+    env[kAndroidHostOut] = android_host_out;
   } else {
-    android_host_out = CF_EXPECT(AndroidHostPath(envs));
+    android_host_out = CF_EXPECT(AndroidHostPath(env));
   }
   auto bin_path = ConcatToString(android_host_out, "/bin/", kHostBugreportBin);
 
@@ -105,7 +105,7 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
       .bin_path = bin_path,
       .home = home,
       .args = cmd_args,
-      .envs = envs,
+      .envs = env,
       .working_dir = request.WorkingDirectory(),
       .command_name = kHostBugreportBin,
       .null_stdio = request.IsNullIo()};

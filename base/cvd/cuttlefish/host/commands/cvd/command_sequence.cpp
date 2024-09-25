@@ -53,7 +53,7 @@ std::string FormattedCommand(const RequestWithStdio& command) {
   effective_command << "*******************************************************"
                        "*************************\n";
   effective_command << "Executing `";
-  for (const auto& [name, val] : command.Envs()) {
+  for (const auto& [name, val] : command.Env()) {
     effective_command << BashEscape(name) << "=" << BashEscape(val) << " ";
   }
   auto args = command.Args();

@@ -135,42 +135,30 @@ RequestWithStdio RequestWithStdio::AddSelectorArgument(
 
 RequestWithStdio& RequestWithStdio::ImportEnv(const cvd_common::Envs& env) & {
   for (const auto& [key, value] : env) {
-    EnvsProtoMap()[key] = value;
+    env_[key] = value;
   }
   return *this;
 }
 
 RequestWithStdio RequestWithStdio::ImportEnv(const cvd_common::Envs& env) && {
   for (const auto& [key, value] : env) {
-    EnvsProtoMap()[key] = value;
+    env_[key] = value;
   }
   return *this;
 }
 
-google::protobuf::Map<std::string, std::string>&
-RequestWithStdio::EnvsProtoMap() {
-  return env_;
-}
+const cvd_common::Envs& RequestWithStdio::Env() const { return env_; }
 
-const google::protobuf::Map<std::string, std::string>&
-RequestWithStdio::EnvsProtoMap() const {
-  return env_;
-}
+cvd_common::Envs& RequestWithStdio::Env() { return env_; }
 
-RequestWithStdio& RequestWithStdio::SetEnvsProtoMap(
-    google::protobuf::Map<std::string, std::string> map) & {
-  env_ = std::move(map);
+RequestWithStdio& RequestWithStdio::SetEnv(cvd_common::Envs env) & {
+  env_ = std::move(env);
   return *this;
 }
 
-RequestWithStdio RequestWithStdio::SetEnvsProtoMap(
-    google::protobuf::Map<std::string, std::string> map) && {
-  env_ = std::move(map);
+RequestWithStdio RequestWithStdio::SetEnv(cvd_common::Envs env) && {
+  env_ = std::move(env);
   return *this;
-}
-
-cvd_common::Envs RequestWithStdio::Envs() const {
-  return cvd_common::ConvertToEnvs(env_);
 }
 
 const std::string& RequestWithStdio::WorkingDirectory() const {

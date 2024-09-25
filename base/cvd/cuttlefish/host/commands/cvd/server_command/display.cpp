@@ -64,15 +64,15 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
-    cvd_common::Envs envs = request.Envs();
+    const cvd_common::Envs& env = request.Env();
 
     auto [_, subcmd_args] = ParseInvocation(request);
 
     bool is_help = CF_EXPECT(IsHelp(subcmd_args));
     // may modify subcmd_args by consuming in parsing
     Command command =
-        is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, envs))
-                : CF_EXPECT(NonHelpCommand(request, subcmd_args, envs));
+        is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, env))
+                : CF_EXPECT(NonHelpCommand(request, subcmd_args, env));
 
     siginfo_t infop;
     command.Start().Wait(&infop, WEXITED);
@@ -109,7 +109,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
         .bin_path = cvd_display_bin_path,
         .home = home,
         .args = subcmd_args,
-        .envs = envs,
+        .envs = std::move(envs),
         .working_dir = request.WorkingDirectory(),
         .command_name = kDisplayBin,
         .null_stdio = request.IsNullIo()};
@@ -157,7 +157,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
         .bin_path = cvd_display_bin_path,
         .home = home,
         .args = cvd_env_args,
-        .envs = envs,
+        .envs = std::move(envs),
         .working_dir = request.WorkingDirectory(),
         .command_name = kDisplayBin,
         .null_stdio = request.IsNullIo()};

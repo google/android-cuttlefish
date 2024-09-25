@@ -327,7 +327,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
 
   auto host_artifacts_path =
-      CF_EXPECT(AndroidHostPath(request.Envs()), "Missing host artifacts path");
+      CF_EXPECT(AndroidHostPath(request.Env()), "Missing host artifacts path");
 
   std::vector<RequestWithStdio> inner_requests;
   const std::string user_config_path =
@@ -460,7 +460,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       fetch_request.AddArgument(build + "/" + target);
       fetch_command_str += (build + "/" + target);
     }
-    fetch_request.EnvsProtoMap()[kAndroidHostOut] = host_artifacts_path;
+    fetch_request.Env()[kAndroidHostOut] = host_artifacts_path;
 
     fetch_cvd_args_file = host_dir + "/fetch-cvd-args.txt";
     if (FileExists(fetch_cvd_args_file)) {
@@ -498,14 +498,14 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
             .AddArgument("mix-super-image")
             .AddArgument("--super_image");
 
-    auto& mix_env = mixsuperimage_request.EnvsProtoMap();
+    auto& mix_env = mixsuperimage_request.Env();
     if (parsed_flags.local_image.given) {
       // added image_dir to required_paths for MixSuperImage use if there is
       required_paths.append(",").append(
           parsed_flags.local_image.path.value_or(""));
       mix_env[kAndroidHostOut] = host_artifacts_path;
 
-      const auto& env = request.Envs();
+      const auto& env = request.Env();
       auto product_out = env.find(kAndroidProductOut);
       CF_EXPECT(product_out != env.end(), "Missing " << kAndroidProductOut);
       mix_env[kAndroidProductOut] = product_out->second;
@@ -621,7 +621,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     start_request.AddArgument("--use_16k");
   }
 
-  auto& start_env = start_request.EnvsProtoMap();
+  auto& start_env = start_request.Env();
   if (parsed_flags.local_image.given) {
     if (parsed_flags.local_image.path) {
       std::string local_image_path_str = parsed_flags.local_image.path.value();
@@ -633,7 +633,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
     start_env[kAndroidHostOut] = host_artifacts_path;
 
-    const auto& env = request.Envs();
+    const auto& env = request.Env();
     auto product_out = env.find(kAndroidProductOut);
     CF_EXPECT(product_out != env.end(), "Missing " << kAndroidProductOut);
     start_env[kAndroidProductOut] = product_out->second;

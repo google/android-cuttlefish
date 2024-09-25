@@ -55,7 +55,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
-    cvd_common::Envs envs = request.Envs();
+    const cvd_common::Envs& env = request.Env();
 
     auto [_, subcmd_args] = ParseInvocation(request);
 
@@ -70,8 +70,8 @@ class CvdEnvCommandHandler : public CvdServerHandler {
     bool is_help = help_parse_result.ok() && (*help_parse_result);
 
     Command command =
-        is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, envs))
-                : CF_EXPECT(NonHelpCommand(request, subcmd_args, envs));
+        is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, env))
+                : CF_EXPECT(NonHelpCommand(request, subcmd_args, env));
 
     siginfo_t infop;
     command.Start().Wait(&infop, WEXITED);

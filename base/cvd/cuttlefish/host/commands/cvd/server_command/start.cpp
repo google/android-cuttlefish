@@ -501,9 +501,9 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
             "The 'start' command doesn't accept --config_file, did you mean "
             "'create'?");
 
-  cvd_common::Envs envs = request.Envs();
+  cvd_common::Envs envs = request.Env();
   if (Contains(envs, "HOME")) {
-    if (envs.at("HOME").empty()) {
+    if (envs["HOME"].empty()) {
       envs.erase("HOME");
     } else {
       // As the end-user may override HOME, this could be a relative path
