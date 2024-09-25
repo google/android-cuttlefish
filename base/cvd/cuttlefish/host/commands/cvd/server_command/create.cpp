@@ -121,38 +121,27 @@ Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
 RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
                                    cvd_common::Args& args,
                                    const std::string& config_file) {
-  cvd::Request request_proto;
-  auto& command = *request_proto.mutable_command_request();
-  *command.mutable_env() = request.Message().command_request().env();
-  command.set_working_directory(request.WorkingDirectory());
-  command.add_args("cvd");
-  command.add_args("load");
-  for (const auto& arg : args) {
-    command.add_args(arg);
-  }
-  command.add_args(config_file);
-  return RequestWithStdio::InheritIo(request_proto, request);
+  return RequestWithStdio::InheritIo(request)
+      .SetEnvsProtoMap(request.EnvsProtoMap())
+      .SetWorkingDirectory(request.WorkingDirectory())
+      .AddArgument("cvd")
+      .AddArgument("load")
+      .AddArguments(args)
+      .AddArgument(config_file);
 }
 
 RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
                                     const selector::LocalInstanceGroup& group,
                                     const cvd_common::Args& args,
                                     const cvd_common::Envs& envs) {
-  cvd::Request request_proto;
-  auto& command = *request_proto.mutable_command_request();
-  for (const auto& [key, value] : envs) {
-    (*command.mutable_env())[key] = value;
-  }
-  command.set_working_directory(request.WorkingDirectory());
-  command.mutable_selector_opts()->clear_args();
-  command.mutable_selector_opts()->add_args("--group_name");
-  command.mutable_selector_opts()->add_args(group.GroupName());
-  command.add_args("cvd");
-  command.add_args("start");
-  for (const auto& arg : args) {
-    command.add_args(arg);
-  }
-  return RequestWithStdio::InheritIo(request_proto, request);
+  return RequestWithStdio::InheritIo(request)
+      .SetWorkingDirectory(request.WorkingDirectory())
+      .ImportEnv(envs)
+      .AddArgument("cvd")
+      .AddArgument("start")
+      .AddArguments(args)
+      .AddSelectorArgument("--group_name")
+      .AddSelectorArgument(group.GroupName());
 }
 
 Result<cvd_common::Envs> GetEnvs(const RequestWithStdio& request) {
