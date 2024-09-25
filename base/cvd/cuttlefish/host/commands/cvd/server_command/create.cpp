@@ -124,10 +124,9 @@ RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
   return RequestWithStdio::InheritIo(request)
       .SetEnv(request.Env())
       .SetWorkingDirectory(request.WorkingDirectory())
-      .AddArgument("cvd")
-      .AddArgument("load")
+      .AddArguments({"cvd", "load"})
       .AddArguments(args)
-      .AddArgument(config_file);
+      .AddArguments({config_file});
 }
 
 RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
@@ -137,8 +136,7 @@ RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
   return RequestWithStdio::InheritIo(request)
       .SetWorkingDirectory(request.WorkingDirectory())
       .SetEnv(envs)
-      .AddArgument("cvd")
-      .AddArgument("start")
+      .AddArguments({"cvd", "start"})
       .AddArguments(args)
       .AddSelectorArgument("--group_name")
       .AddSelectorArgument(group.GroupName());

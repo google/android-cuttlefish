@@ -375,15 +375,12 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
     RequestWithStdio& fetch_request =
         inner_requests.emplace_back(RequestWithStdio::InheritIo(request))
-            .AddArgument("cvd")
-            .AddArgument("fetch")
-            .AddArgument("--directory")
-            .AddArgument(host_dir)
-            .AddArgument("--default_build");
+            .AddArguments(
+                {"cvd", "fetch", "--directory", host_dir, "--default_build"});
     fetch_command_str += "--default_build=";
     if (given_branch_target_info) {
-      fetch_request.AddArgument(given_branch_target_info->branch_str + "/" +
-                                given_branch_target_info->build_target_str);
+      fetch_request.AddArguments({given_branch_target_info->branch_str + "/" +
+                                  given_branch_target_info->build_target_str});
       fetch_command_str += (given_branch_target_info->branch_str + "/" +
                             given_branch_target_info->build_target_str);
     } else {
@@ -391,12 +388,10 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
           parsed_flags.build_target ? "/" + *parsed_flags.build_target : "";
       auto build = parsed_flags.build_id.value_or(
           parsed_flags.branch.value_or("aosp-main"));
-      fetch_request.AddArgument(build + target);
+      fetch_request.AddArguments({build + target});
       fetch_command_str += (build + target);
     }
     if (system_branch || system_build_id || system_build_target) {
-      fetch_request.AddArgument("--system_build");
-      fetch_command_str += " --system_build=";
       auto target =
           system_build_target.value_or(parsed_flags.build_target.value_or(""));
       if (target != "") {
@@ -404,61 +399,51 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       }
       auto build =
           system_build_id.value_or(system_branch.value_or("aosp-main"));
-      fetch_request.AddArgument(build + target);
-      fetch_command_str += (build + target);
+      fetch_request.AddArguments({"--system_build", build + target});
+      fetch_command_str += " --system_build=" + build + target;
     }
     if (parsed_flags.bootloader.branch || parsed_flags.bootloader.build_id ||
         parsed_flags.bootloader.build_target) {
-      fetch_request.AddArgument("--bootloader_build");
-      fetch_command_str += " --bootloader_build=";
       auto target = parsed_flags.bootloader.build_target.value_or("");
       if (target != "") {
         target = "/" + target;
       }
       auto build = parsed_flags.bootloader.build_id.value_or(
           parsed_flags.bootloader.branch.value_or("aosp_u-boot-mainline"));
-      fetch_request.AddArgument(build + target);
-      fetch_command_str += (build + target);
+      fetch_request.AddArguments({"--bootloader_build", build + target});
+      fetch_command_str += " --bootloader_build=" + build + target;
     }
     if (boot_branch || boot_build_id || boot_build_target) {
-      fetch_request.AddArgument("--boot_build");
-      fetch_command_str += " --boot_build=";
       auto target = boot_build_target.value_or("");
       if (target != "") {
         target = "/" + target;
       }
       auto build = boot_build_id.value_or(boot_branch.value_or("aosp-main"));
-      fetch_request.AddArgument(build + target);
-      fetch_command_str += (build + target);
+      fetch_request.AddArguments({"--boot_build", build + target});
+      fetch_command_str += " --boot_build=" + build + target;
     }
     if (boot_artifact) {
       CF_EXPECT(boot_branch || boot_build_target || boot_build_id,
                 "--boot-artifact must combine with other --boot-* flags");
-      fetch_request.AddArgument("--boot_artifact");
-      fetch_command_str += " --boot_artifact=";
       auto target = boot_artifact.value_or("");
-      fetch_request.AddArgument(target);
-      fetch_command_str += (target);
+      fetch_request.AddArguments({"--boot_artifact", target});
+      fetch_command_str += " --boot_artifact=" + target;
     }
     if (ota_branch || ota_build_id || ota_build_target) {
-      fetch_request.AddArgument("--otatools_build");
-      fetch_command_str += " --otatools_build=";
       auto target = ota_build_target.value_or("");
       if (target != "") {
         target = "/" + target;
       }
       auto build = ota_build_id.value_or(ota_branch.value_or(""));
-      fetch_request.AddArgument(build + target);
-      fetch_command_str += (build + target);
+      fetch_request.AddArguments({"--otatools_build", build + target});
+      fetch_command_str += " --otatools_build=" + build + target;
     }
     if (kernel_branch || kernel_build_id || kernel_build_target) {
-      fetch_request.AddArgument("--kernel_build");
-      fetch_command_str += " --kernel_build=";
       auto target = kernel_build_target.value_or("kernel_virt_x86_64");
       auto build = kernel_build_id.value_or(
           kernel_branch.value_or("aosp_kernel-common-android-mainline"));
-      fetch_request.AddArgument(build + "/" + target);
-      fetch_command_str += (build + "/" + target);
+      fetch_request.AddArguments({"--kernel_build", build + "/" + target});
+      fetch_command_str += " --kernel_build=" + build + "/" + target;
     }
     fetch_request.Env()[kAndroidHostOut] = host_artifacts_path;
 
@@ -493,10 +478,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
     RequestWithStdio& mixsuperimage_request =
         inner_requests.emplace_back(RequestWithStdio::InheritIo(request))
-            .AddArgument("cvd")
-            .AddArgument("acloud")
-            .AddArgument("mix-super-image")
-            .AddArgument("--super_image");
+            .AddArguments(
+                {"cvd", "acloud", "mix-super-image", "--super_image"});
 
     auto& mix_env = mixsuperimage_request.Env();
     if (parsed_flags.local_image.given) {
@@ -514,26 +497,20 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       mix_env[kAndroidProductOut] = host_dir;
     }
 
-    mixsuperimage_request.AddArgument(required_paths);
+    mixsuperimage_request.AddArguments({required_paths});
   }
 
   RequestWithStdio start_request = parsed_flags.verbose
                                        ? RequestWithStdio::InheritIo(request)
                                        : RequestWithStdio::NullIo();
-  start_request.AddArgument("cvd")
-      .AddArgument("create")
-      .AddArgument("--daemon")
-      .AddArgument("--undefok")
-      .AddArgument("report_anonymous_usage_stats")
-      .AddArgument("--report_anonymous_usage_stats")
-      .AddArgument("y");
+  start_request.AddArguments({"cvd", "create", "--daemon", "--undefok",
+                              "report_anonymous_usage_stats", "y"});
   if (parsed_flags.flavor) {
-    start_request.AddArgument("-config").AddArgument(
-        parsed_flags.flavor.value());
+    start_request.AddArguments({"-config", *parsed_flags.flavor});
   }
 
   if (parsed_flags.local_system_image) {
-    start_request.AddArgument("-super_image").AddArgument(super_image_path);
+    start_request.AddArguments({"-super_image", super_image_path});
   }
 
   if (parsed_flags.local_kernel_image) {
@@ -556,10 +533,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         // an initramfs.img file,
         // e.g. aosp_kernel-common-android-4.14-stable
         if (kernel_image != "" && initramfs_image != "") {
-          start_request.AddArgument("-kernel_path")
-              .AddArgument(kernel_image)
-              .AddArgument("-initramfs_path")
-              .AddArgument(initramfs_image);
+          start_request.AddArguments({"-kernel_path", kernel_image,
+                                      "-initramfs_path", initramfs_image});
         } else {
           // boot.img case
           // adding boot.img and vendor_boot.img to the path
@@ -567,18 +542,17 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
                                        kBootImageName);
           vendor_boot_image = FindImage(parsed_flags.local_kernel_image.value(),
                                         kVendorBootImageName);
-          start_request.AddArgument("-boot_image")
-              .AddArgument(local_boot_image);
+          start_request.AddArguments({"-boot_image", local_boot_image});
           // vendor boot image may not exist
           if (vendor_boot_image != "") {
-            start_request.AddArgument("-vendor_boot_image")
-                .AddArgument(vendor_boot_image);
+            start_request.AddArguments(
+                {"-vendor_boot_image", vendor_boot_image});
           }
         }
       } else if (statbuf.st_mode & S_IFREG) {
         // it's a file which directly points to boot.img
         local_boot_image = parsed_flags.local_kernel_image.value();
-        start_request.AddArgument("-boot_image").AddArgument(local_boot_image);
+        start_request.AddArguments({"-boot_image", local_boot_image});
       }
     }
   } else if (kernel_branch || kernel_build_id || kernel_build_target) {
@@ -588,10 +562,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     // even if initramfs doesn't exist, launch_cvd will still handle it
     // correctly. We push the initramfs handler to launch_cvd stage.
     std::string initramfs_image = host_dir + "/initramfs.img";
-    start_request.AddArgument("-kernel_path")
-        .AddArgument(kernel_image)
-        .AddArgument("-initramfs_path")
-        .AddArgument(initramfs_image);
+    start_request.AddArguments(
+        {"-kernel_path", kernel_image, "-initramfs_path", initramfs_image});
   }
 
   if (launch_args) {
@@ -618,7 +590,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         .AddSelectorArgument(instance_name_arg);
   }
   if (use_16k) {
-    start_request.AddArgument("--use_16k");
+    start_request.AddArguments({"--use_16k"});
   }
 
   auto& start_env = start_request.Env();
@@ -627,8 +599,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       std::string local_image_path_str = parsed_flags.local_image.path.value();
       // Python acloud source: local_image_local_instance.py;l=81
       // this acloud flag is equal to launch_cvd flag system_image_dir
-      start_request.AddArgument("-system_image_dir")
-          .AddArgument(local_image_path_str);
+      start_request.AddArguments({"-system_image_dir", local_image_path_str});
     }
 
     start_env[kAndroidHostOut] = host_artifacts_path;
