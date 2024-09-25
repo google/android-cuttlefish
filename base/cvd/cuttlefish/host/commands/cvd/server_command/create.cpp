@@ -136,7 +136,7 @@ RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
                                     const cvd_common::Envs& envs) {
   return RequestWithStdio::InheritIo(request)
       .SetWorkingDirectory(request.WorkingDirectory())
-      .ImportEnv(envs)
+      .SetEnv(envs)
       .AddArgument("cvd")
       .AddArgument("start")
       .AddArguments(args)
