@@ -522,23 +522,23 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     mixsuperimage_command.add_args(required_paths);
   }
 
-  cvd::Request start_request;
-  auto& start_command = *start_request.mutable_command_request();
-  start_command.add_args("cvd");
-  start_command.add_args("create");
-  start_command.add_args("--daemon");
-  start_command.add_args("--undefok");
-  start_command.add_args("report_anonymous_usage_stats");
-  start_command.add_args("--report_anonymous_usage_stats");
-  start_command.add_args("y");
+  RequestWithStdio start_request = parsed_flags.verbose
+                                       ? RequestWithStdio::InheritIo(request)
+                                       : RequestWithStdio::NullIo();
+  start_request.AddArgument("cvd")
+      .AddArgument("create")
+      .AddArgument("--daemon")
+      .AddArgument("--undefok")
+      .AddArgument("report_anonymous_usage_stats")
+      .AddArgument("--report_anonymous_usage_stats")
+      .AddArgument("y");
   if (parsed_flags.flavor) {
-    start_command.add_args("-config");
-    start_command.add_args(parsed_flags.flavor.value());
+    start_request.AddArgument("-config").AddArgument(
+        parsed_flags.flavor.value());
   }
 
   if (parsed_flags.local_system_image) {
-    start_command.add_args("-super_image");
-    start_command.add_args(super_image_path);
+    start_request.AddArgument("-super_image").AddArgument(super_image_path);
   }
 
   if (parsed_flags.local_kernel_image) {
@@ -561,10 +561,10 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         // an initramfs.img file,
         // e.g. aosp_kernel-common-android-4.14-stable
         if (kernel_image != "" && initramfs_image != "") {
-          start_command.add_args("-kernel_path");
-          start_command.add_args(kernel_image);
-          start_command.add_args("-initramfs_path");
-          start_command.add_args(initramfs_image);
+          start_request.AddArgument("-kernel_path")
+              .AddArgument(kernel_image)
+              .AddArgument("-initramfs_path")
+              .AddArgument(initramfs_image);
         } else {
           // boot.img case
           // adding boot.img and vendor_boot.img to the path
@@ -572,19 +572,18 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
                                        kBootImageName);
           vendor_boot_image = FindImage(parsed_flags.local_kernel_image.value(),
                                         kVendorBootImageName);
-          start_command.add_args("-boot_image");
-          start_command.add_args(local_boot_image);
+          start_request.AddArgument("-boot_image")
+              .AddArgument(local_boot_image);
           // vendor boot image may not exist
           if (vendor_boot_image != "") {
-            start_command.add_args("-vendor_boot_image");
-            start_command.add_args(vendor_boot_image);
+            start_request.AddArgument("-vendor_boot_image")
+                .AddArgument(vendor_boot_image);
           }
         }
       } else if (statbuf.st_mode & S_IFREG) {
         // it's a file which directly points to boot.img
         local_boot_image = parsed_flags.local_kernel_image.value();
-        start_command.add_args("-boot_image");
-        start_command.add_args(local_boot_image);
+        start_request.AddArgument("-boot_image").AddArgument(local_boot_image);
       }
     }
   } else if (kernel_branch || kernel_build_id || kernel_build_target) {
@@ -594,21 +593,18 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     // even if initramfs doesn't exist, launch_cvd will still handle it
     // correctly. We push the initramfs handler to launch_cvd stage.
     std::string initramfs_image = host_dir + "/initramfs.img";
-    start_command.add_args("-kernel_path");
-    start_command.add_args(kernel_image);
-    start_command.add_args("-initramfs_path");
-    start_command.add_args(initramfs_image);
+    start_request.AddArgument("-kernel_path")
+        .AddArgument(kernel_image)
+        .AddArgument("-initramfs_path")
+        .AddArgument(initramfs_image);
   }
 
   if (launch_args) {
-    for (const auto& arg : CF_EXPECT(BashTokenize(*launch_args))) {
-      start_command.add_args(arg);
-    }
+    start_request.AddArguments(CF_EXPECT(BashTokenize(*launch_args)));
   }
   if (acloud_config.launch_args != "") {
-    for (const auto& arg : CF_EXPECT(BashTokenize(acloud_config.launch_args))) {
-      start_command.add_args(arg);
-    }
+    start_request.AddArguments(
+        CF_EXPECT(BashTokenize(acloud_config.launch_args)));
   }
   if (pet_name) {
     const auto [group_name, instance_name] =
@@ -623,21 +619,21 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     instance_name_arg.append(selector::SelectorFlags::kInstanceName)
         .append("=")
         .append(instance_name);
-    start_command.mutable_selector_opts()->add_args(group_name_arg);
-    start_command.mutable_selector_opts()->add_args(instance_name_arg);
+    start_request.AddSelectorArgument(group_name_arg)
+        .AddSelectorArgument(instance_name_arg);
   }
   if (use_16k) {
-    start_command.add_args("--use_16k");
+    start_request.AddArgument("--use_16k");
   }
 
-  auto& start_env = *start_command.mutable_env();
+  auto& start_env = start_request.EnvsProtoMap();
   if (parsed_flags.local_image.given) {
     if (parsed_flags.local_image.path) {
       std::string local_image_path_str = parsed_flags.local_image.path.value();
       // Python acloud source: local_image_local_instance.py;l=81
       // this acloud flag is equal to launch_cvd flag system_image_dir
-      start_command.add_args("-system_image_dir");
-      start_command.add_args(local_image_path_str);
+      start_request.AddArgument("-system_image_dir")
+          .AddArgument(local_image_path_str);
     }
 
     start_env[kAndroidHostOut] = host_artifacts_path;
@@ -661,16 +657,11 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
   // we don't know which HOME is assigned by cvd start.
   // cvd server does not rely on the working directory for cvd start
-  *start_command.mutable_working_directory() = request.WorkingDirectory();
-
-  RequestWithStdio child_request =
-      parsed_flags.verbose
-          ? RequestWithStdio::InheritIo(std::move(start_request), request)
-          : RequestWithStdio::NullIo(std::move(start_request));
+  start_request.SetWorkingDirectory(request.WorkingDirectory());
 
   ConvertedAcloudCreateCommand ret{
       .prep_requests = std::move(inner_requests),
-      .start_request = child_request,
+      .start_request = std::move(start_request),
       .fetch_command_str = fetch_command_str,
       .fetch_cvd_args_file = fetch_cvd_args_file,
       .verbose = parsed_flags.verbose,
