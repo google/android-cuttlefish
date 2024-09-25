@@ -66,9 +66,7 @@ class RequestWithStdio {
     return *this;
   }
 
-  cvd_common::Args Args() const {
-    return cvd_common::ConvertToArgs(Message().command_request().args());
-  }
+  const cvd_common::Args& Args() const;
 
   RequestWithStdio& AddSelectorArgument(std::string) &;
   RequestWithStdio AddSelectorArgument(std::string) &&;
@@ -89,17 +87,12 @@ class RequestWithStdio {
     return *this;
   }
 
-  cvd_common::Args SelectorArgs() const {
-    return cvd_common::ConvertToArgs(
-        Message().command_request().selector_opts().args());
-  }
+  const cvd_common::Args& SelectorArgs() const;
 
   RequestWithStdio& ImportEnv(const cvd_common::Envs&) &;
   RequestWithStdio ImportEnv(const cvd_common::Envs&) &&;
 
-  cvd_common::Envs Envs() const {
-    return cvd_common::ConvertToEnvs(Message().command_request().env());
-  }
+  cvd_common::Envs Envs() const;
 
   google::protobuf::Map<std::string, std::string>& EnvsProtoMap();
   const google::protobuf::Map<std::string, std::string>& EnvsProtoMap() const;
@@ -116,11 +109,13 @@ class RequestWithStdio {
   RequestWithStdio SetWorkingDirectory(std::string) &&;
 
  private:
-  RequestWithStdio(cvd::Request, std::istream&, std::ostream&, std::ostream&);
-  cvd::Request& Message();
-  const cvd::Request& Message() const;
+  RequestWithStdio(std::istream&, std::ostream&, std::ostream&);
+  cvd_common::Args args_;
+  google::protobuf::Map<std::string, std::string> env_;
+  cvd_common::Args selector_args_;
+  cvd::WaitBehavior wait_behavior_;
+  std::string working_directory_;
 
-  cvd::Request message_;
   std::istream& in_;
   std::ostream& out_;
   std::ostream& err_;
