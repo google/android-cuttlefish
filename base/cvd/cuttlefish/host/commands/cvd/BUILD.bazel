@@ -234,7 +234,6 @@ cc_library(
         "server_command/version.h",
         "server_constants.cpp",
         "server_constants.h",
-        "types.cpp",
         "types.h",
         "selector/data_viewer.cpp",
     ],
