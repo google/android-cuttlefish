@@ -504,7 +504,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
                                        ? RequestWithStdio::InheritIo(request)
                                        : RequestWithStdio::NullIo();
   start_request.AddArguments({"cvd", "create", "--daemon", "--undefok",
-                              "report_anonymous_usage_stats", "y"});
+                              "report_anonymous_usage_stats",
+                              "--report_anonymous_usage_stats", "y"});
   if (parsed_flags.flavor) {
     start_request.AddArguments({"-config", *parsed_flags.flavor});
   }
