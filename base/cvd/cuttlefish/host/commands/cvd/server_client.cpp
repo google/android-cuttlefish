@@ -99,6 +99,22 @@ RequestWithStdio RequestWithStdio::AddArgument(std::string argument) && {
   return *this;
 }
 
+RequestWithStdio& RequestWithStdio::AddArguments(
+    std::initializer_list<std::string_view> args) & {
+  for (const std::string_view& arg : args) {
+    args_.emplace_back(arg);
+  }
+  return *this;
+}
+
+RequestWithStdio RequestWithStdio::AddArguments(
+    std::initializer_list<std::string_view> args) && {
+  for (const std::string_view& arg : args) {
+    args_.emplace_back(arg);
+  }
+  return *this;
+}
+
 const cvd_common::Args& RequestWithStdio::SelectorArgs() const {
   return selector_args_;
 }
