@@ -19,7 +19,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include <initializer_list>
 #include <string>
+#include <string_view>
 
 #include <google/protobuf/map.h>
 
@@ -62,6 +64,9 @@ class RequestWithStdio {
     }
     return *this;
   }
+
+  RequestWithStdio& AddArguments(std::initializer_list<std::string_view>) &;
+  RequestWithStdio AddArguments(std::initializer_list<std::string_view>) &&;
 
   const cvd_common::Args& Args() const;
 
