@@ -115,20 +115,6 @@ RequestWithStdio RequestWithStdio::AddSelectorArgument(
   return *this;
 }
 
-RequestWithStdio& RequestWithStdio::ImportEnv(const cvd_common::Envs& env) & {
-  for (const auto& [key, value] : env) {
-    env_[key] = value;
-  }
-  return *this;
-}
-
-RequestWithStdio RequestWithStdio::ImportEnv(const cvd_common::Envs& env) && {
-  for (const auto& [key, value] : env) {
-    env_[key] = value;
-  }
-  return *this;
-}
-
 const cvd_common::Envs& RequestWithStdio::Env() const { return env_; }
 
 cvd_common::Envs& RequestWithStdio::Env() { return env_; }

@@ -86,9 +86,6 @@ class RequestWithStdio {
 
   const cvd_common::Args& SelectorArgs() const;
 
-  RequestWithStdio& ImportEnv(const cvd_common::Envs&) &;
-  RequestWithStdio ImportEnv(const cvd_common::Envs&) &&;
-
   const cvd_common::Envs& Env() const;
   cvd_common::Envs& Env();
 
