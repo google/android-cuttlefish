@@ -104,41 +104,31 @@ Result<void> CvdClient::StopCvdServer(bool clear) {
 }
 
 Result<void> CvdClient::RestartServerMatchClient() {
-  auto res = CF_EXPECT(HandleCommand({"cvd", "process"}, {},
-                                     {"cvd", "restart-server", "match-client"},
-                                     OverrideFd{
-                                         SharedFD::Dup(0),
-                                         SharedFD::Dup(1),
-                                         SharedFD::Dup(2),
-                                     }));
+  cvd::Request request;
+  cvd::CommandRequest& cmd = *request.mutable_command_request();
+
+  std::vector<std::string> args = {"cvd", "process"};
+  cmd.mutable_args()->Add(args.begin(), args.end());
+
+  args = {"cvd", "restart-server", "match-client"};
+  cmd.mutable_selector_opts()->mutable_args()->Add(args.begin(), args.end());
+
+  OverrideFd override_fd = OverrideFd{
+      SharedFD::Dup(0),
+      SharedFD::Dup(1),
+      SharedFD::Dup(2),
+  };
+  SharedFD exe_fd = SharedFD::Open(kServerExecPath, O_RDONLY);
+  CF_EXPECT(exe_fd->IsOpen(), "Failed to open \"" << kServerExecPath << "\": \""
+                                                  << exe_fd->StrError()
+                                                  << "\"");
+
+  auto res = CF_EXPECT(SendRequest(request, override_fd, exe_fd));
+
   if (res.status().code() != cvd::Status::OK) {
     return CF_ERRF("CVD server returned error: {}", res.error_response());
   }
   return {};
-}
-
-Result<cvd::Response> CvdClient::HandleCommand(
-    const std::vector<std::string>& cvd_process_args,
-    const std::unordered_map<std::string, std::string>& env,
-    const std::vector<std::string>& selector_args,
-    const OverrideFd& new_control_fd) {
-  std::optional<SharedFD> exe_fd;
-  // actual commandline arguments are packed in selector_args
-  if (selector_args.size() > 2 &&
-      android::base::Basename(selector_args[0]) == "cvd" &&
-      selector_args[1] == "restart-server" &&
-      selector_args[2] == "match-client") {
-    exe_fd = SharedFD::Open(kServerExecPath, O_RDONLY);
-    CF_EXPECT((*exe_fd)->IsOpen(), "Failed to open \""
-                                       << kServerExecPath << "\": \""
-                                       << (*exe_fd)->StrError() << "\"");
-  }
-  cvd::Request request = MakeRequest({.cmd_args = cvd_process_args,
-                                      .env = env,
-                                      .selector_args = selector_args},
-                                     cvd::WAIT_BEHAVIOR_COMPLETE)
-                             .Message();
-  return CF_EXPECT(SendRequest(request, new_control_fd, exe_fd));
 }
 
 Result<void> CvdClient::SetServer(const SharedFD& server) {

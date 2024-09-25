@@ -491,33 +491,30 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     required_paths = super_image_path;
     required_paths += ("," + parsed_flags.local_system_image.value());
 
-    cvd::Request& mixsuperimage_request =
-        inner_requests.emplace_back(RequestWithStdio::InheritIo({}, request))
-            .Message();
-    auto& mixsuperimage_command =
-        *mixsuperimage_request.mutable_command_request();
-    mixsuperimage_command.add_args("cvd");
-    mixsuperimage_command.add_args("acloud");
-    mixsuperimage_command.add_args("mix-super-image");
-    mixsuperimage_command.add_args("--super_image");
+    RequestWithStdio& mixsuperimage_request =
+        inner_requests.emplace_back(RequestWithStdio::InheritIo(request))
+            .AddArgument("cvd")
+            .AddArgument("acloud")
+            .AddArgument("mix-super-image")
+            .AddArgument("--super_image");
 
-    auto& mixsuperimage_env = *mixsuperimage_command.mutable_env();
+    auto& mix_env = mixsuperimage_request.EnvsProtoMap();
     if (parsed_flags.local_image.given) {
       // added image_dir to required_paths for MixSuperImage use if there is
       required_paths.append(",").append(
           parsed_flags.local_image.path.value_or(""));
-      mixsuperimage_env[kAndroidHostOut] = host_artifacts_path;
+      mix_env[kAndroidHostOut] = host_artifacts_path;
 
       const auto& env = request.Envs();
       auto product_out = env.find(kAndroidProductOut);
       CF_EXPECT(product_out != env.end(), "Missing " << kAndroidProductOut);
-      mixsuperimage_env[kAndroidProductOut] = product_out->second;
+      mix_env[kAndroidProductOut] = product_out->second;
     } else {
-      mixsuperimage_env[kAndroidHostOut] = host_dir;
-      mixsuperimage_env[kAndroidProductOut] = host_dir;
+      mix_env[kAndroidHostOut] = host_dir;
+      mix_env[kAndroidProductOut] = host_dir;
     }
 
-    mixsuperimage_command.add_args(required_paths);
+    mixsuperimage_request.AddArgument(required_paths);
   }
 
   RequestWithStdio start_request = parsed_flags.verbose
