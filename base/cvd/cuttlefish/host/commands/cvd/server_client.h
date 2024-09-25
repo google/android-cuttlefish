@@ -19,9 +19,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include <optional>
 #include <string>
-#include <vector>
 
 #include <google/protobuf/map.h>
 
@@ -29,7 +27,6 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -39,9 +36,6 @@ class RequestWithStdio {
   static RequestWithStdio StdIo();
   static RequestWithStdio NullIo();
   static RequestWithStdio InheritIo(const RequestWithStdio&);
-  static RequestWithStdio StdIo(cvd::Request);
-  static RequestWithStdio NullIo(cvd::Request);
-  static RequestWithStdio InheritIo(cvd::Request, const RequestWithStdio&);
 
   std::istream& In() const;
   std::ostream& Out() const;
@@ -132,8 +126,6 @@ class RequestWithStdio {
   std::ostream& err_;
 };
 
-Result<UnixMessageSocket> GetClient(const SharedFD& client);
-Result<std::optional<RequestWithStdio>> GetRequest(const SharedFD& client);
 Result<void> SendResponse(const SharedFD& client,
                           const cvd::Response& response);
 
