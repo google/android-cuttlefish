@@ -1,0 +1,42 @@
+cc_library(
+    name = "fs",
+    srcs = [
+        "epoll.cpp",
+        "shared_buf.cc",
+        "shared_fd.cpp",
+        "shared_fd_stream.cpp",
+    ],
+    hdrs = [
+        "epoll.h",
+        "shared_buf.h",
+        "shared_fd.h",
+        "shared_fd_stream.h",
+        "shared_select.h",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+    ],
+)
+
+cc_test(
+    name = "fs_test",
+    srcs = [
+        "shared_fd_test.cpp",
+    ],
+    copts = [
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+    ],
+    includes = [""],
+    deps = [
+        ":fs",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+

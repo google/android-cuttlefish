@@ -1,0 +1,18 @@
+cc_library(
+    name = "libassemble_cvd",
+    hdrs = [
+        "flags_defaults.h",
+    ],
+    copts = [
+        "-Werror=sign-compare",
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+
