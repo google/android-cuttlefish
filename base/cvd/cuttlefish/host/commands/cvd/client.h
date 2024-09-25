@@ -63,11 +63,6 @@ class CvdClient {
                                     const OverrideFd& new_control_fds = {},
                                     std::optional<SharedFD> extra_fd = {});
   Result<void> CheckStatus(const cvd::Status& status, const std::string& rpc);
-  Result<cvd::Response> HandleCommand(
-      const std::vector<std::string>& args,
-      const std::unordered_map<std::string, std::string>& env,
-      const std::vector<std::string>& selector_args,
-      const OverrideFd& control_fds);
 
   std::optional<UnixMessageSocket> server_;
   std::string server_socket_path_;

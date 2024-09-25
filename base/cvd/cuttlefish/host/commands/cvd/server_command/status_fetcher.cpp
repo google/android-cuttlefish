@@ -260,8 +260,9 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
       .selector_args = {"--group_name", group.GroupName()},
       .working_dir = original_request.WorkingDirectory(),
   });
-  RequestWithStdio group_request = RequestWithStdio::InheritIo(
-      std::move(request_message.Message()), original_request);
+  RequestWithStdio group_request =
+      RequestWithStdio::InheritIo(original_request)
+          .OverrideRequest(std::move(request_message));
   auto [_, instances_json, group_response] =
       CF_EXPECT(FetchStatus(group_request));
   group_json["instances"] = instances_json;

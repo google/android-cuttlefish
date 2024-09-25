@@ -43,8 +43,6 @@ class RequestWithStdio {
   static RequestWithStdio NullIo(cvd::Request);
   static RequestWithStdio InheritIo(cvd::Request, const RequestWithStdio&);
 
-  cvd::Request& Message();
-  const cvd::Request& Message() const;
   std::istream& In() const;
   std::ostream& Out() const;
   std::ostream& Err() const;
@@ -52,6 +50,9 @@ class RequestWithStdio {
   bool IsNullIo() const;
 
   // Convenient getters/setters to properties in the underlying message
+  RequestWithStdio& OverrideRequest(RequestWithStdio) &;
+  RequestWithStdio OverrideRequest(RequestWithStdio) &&;
+
   RequestWithStdio& AddArgument(std::string) &;
   RequestWithStdio AddArgument(std::string) &&;
 
@@ -122,6 +123,8 @@ class RequestWithStdio {
 
  private:
   RequestWithStdio(cvd::Request, std::istream&, std::ostream&, std::ostream&);
+  cvd::Request& Message();
+  const cvd::Request& Message() const;
 
   cvd::Request message_;
   std::istream& in_;
