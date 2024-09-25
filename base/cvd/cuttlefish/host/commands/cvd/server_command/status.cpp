@@ -149,8 +149,7 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
   }
 
   return RequestWithStdio::InheritIo(request)
-      .AddArgument("cvd")
-      .AddArgument("status")
+      .AddArguments({"cvd", "status"})
       .AddArguments(cmd_args)
       .SetEnv(std::move(env))
       .AddSelectorArguments(request.SelectorArgs())
