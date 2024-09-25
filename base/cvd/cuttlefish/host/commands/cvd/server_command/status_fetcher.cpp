@@ -144,8 +144,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
                                             .args = cmd_args,
                                             .envs = envs,
                                             .working_dir = working_dir,
-                                            .command_name = bin,
-                                            .null_stdio = request.IsNullIo()};
+                                            .command_name = bin};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   std::string serialized_json;
