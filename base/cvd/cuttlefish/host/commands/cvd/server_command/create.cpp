@@ -138,8 +138,7 @@ RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
       .SetEnv(envs)
       .AddArguments({"cvd", "start"})
       .AddArguments(args)
-      .AddSelectorArgument("--group_name")
-      .AddSelectorArgument(group.GroupName());
+      .AddSelectorArguments({"--group_name", group.GroupName()});
 }
 
 Result<cvd_common::Envs> GetEnvs(const RequestWithStdio& request) {

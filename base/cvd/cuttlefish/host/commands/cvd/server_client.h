@@ -66,9 +66,6 @@ class RequestWithStdio {
 
   const cvd_common::Args& Args() const;
 
-  RequestWithStdio& AddSelectorArgument(std::string) &;
-  RequestWithStdio AddSelectorArgument(std::string) &&;
-
   template <typename T>
   RequestWithStdio& AddSelectorArguments(T&& args) & {
     for (auto&& arg : args) {
@@ -84,6 +81,11 @@ class RequestWithStdio {
     }
     return *this;
   }
+
+  RequestWithStdio& AddSelectorArguments(
+      std::initializer_list<std::string_view>) &;
+  RequestWithStdio AddSelectorArguments(
+      std::initializer_list<std::string_view>) &&;
 
   const cvd_common::Args& SelectorArgs() const;
 

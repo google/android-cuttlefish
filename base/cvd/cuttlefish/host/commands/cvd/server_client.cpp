@@ -19,8 +19,6 @@
 #include <fstream>
 #include <string>
 
-#include "google/protobuf/map.h"
-
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
 #include "common/libs/fs/shared_fd.h"
@@ -91,34 +89,26 @@ const cvd_common::Args& RequestWithStdio::Args() const { return args_; }
 
 RequestWithStdio& RequestWithStdio::AddArguments(
     std::initializer_list<std::string_view> args) & {
-  for (const std::string_view& arg : args) {
-    args_.emplace_back(arg);
-  }
-  return *this;
+  return AddArguments(std::vector<std::string_view>(args));
 }
 
 RequestWithStdio RequestWithStdio::AddArguments(
     std::initializer_list<std::string_view> args) && {
-  for (const std::string_view& arg : args) {
-    args_.emplace_back(arg);
-  }
-  return *this;
+  return AddArguments(std::vector<std::string_view>(args));
 }
 
 const cvd_common::Args& RequestWithStdio::SelectorArgs() const {
   return selector_args_;
 }
 
-RequestWithStdio& RequestWithStdio::AddSelectorArgument(
-    std::string argument) & {
-  selector_args_.emplace_back(std::move(argument));
-  return *this;
+RequestWithStdio& RequestWithStdio::AddSelectorArguments(
+    std::initializer_list<std::string_view> args) & {
+  return AddSelectorArguments(std::vector<std::string_view>(args));
 }
 
-RequestWithStdio RequestWithStdio::AddSelectorArgument(
-    std::string argument) && {
-  selector_args_.emplace_back(std::move(argument));
-  return *this;
+RequestWithStdio RequestWithStdio::AddSelectorArguments(
+    std::initializer_list<std::string_view> args) && {
+  return AddSelectorArguments(std::vector<std::string_view>(args));
 }
 
 const cvd_common::Envs& RequestWithStdio::Env() const { return env_; }
