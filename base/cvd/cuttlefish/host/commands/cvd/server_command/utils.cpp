@@ -29,16 +29,10 @@
 namespace cuttlefish {
 
 CommandInvocation ParseInvocation(const RequestWithStdio& request) {
-  const cvd::Request& message = request.Message();
   CommandInvocation invocation;
-  if (message.contents_case() != cvd::Request::ContentsCase::kCommandRequest) {
+  invocation.arguments = request.Args();
+  if (invocation.arguments.size() == 0) {
     return invocation;
-  }
-  if (message.command_request().args_size() == 0) {
-    return invocation;
-  }
-  for (const std::string& arg : message.command_request().args()) {
-    invocation.arguments.push_back(arg);
   }
   invocation.arguments[0] = cpp_basename(invocation.arguments[0]);
   if (invocation.arguments[0] == "cvd" && invocation.arguments.size() > 1) {
@@ -225,10 +219,10 @@ cvd::Response NoGroupResponse(const RequestWithStdio& request) {
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
   TerminalColors colors(isatty(1));
-  std::string notice = fmt::format(
-      "Command `{}{}{}` is not applicable: {}{}{}", colors.Red(),
-      fmt::join(request.Message().command_request().args(), " "),
-      colors.Reset(), colors.BoldRed(), "no device", colors.Reset());
+  std::string notice =
+      fmt::format("Command `{}{}{}` is not applicable: {}{}{}", colors.Red(),
+                  fmt::join(request.Args(), " "), colors.Reset(),
+                  colors.BoldRed(), "no device", colors.Reset());
   request.Out() << notice << "\n";
 
   response.mutable_status()->set_message(notice);
@@ -243,8 +237,8 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
   TerminalColors colors(isatty(1));
   auto notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      colors.Red(), fmt::join(request.Message().command_request().args(), " "),
-      colors.Reset(), colors.BoldRed(),
+      colors.Red(), fmt::join(request.Args(), " "), colors.Reset(),
+      colors.BoldRed(),
       "No terminal/tty for selecting one of multiple Cuttlefish groups",
       colors.Reset(), colors.Cyan(), uid, colors.Reset());
   request.Out() << notice << "\n";
