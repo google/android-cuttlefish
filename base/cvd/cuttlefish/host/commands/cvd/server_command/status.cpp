@@ -148,16 +148,13 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
     env[kCuttlefishInstanceEnvVarName] = std::to_string(id);
   }
 
-  cvd_common::Args new_cmd_args{"cvd", "status"};
-  new_cmd_args.insert(new_cmd_args.end(), cmd_args.begin(), cmd_args.end());
-  RequestWithStdio new_message = MakeRequest({
-      .cmd_args = new_cmd_args,
-      .env = std::move(env),
-      .selector_args = request.SelectorArgs(),
-      .working_dir = request.WorkingDirectory(),
-  });
-  return RequestWithStdio::InheritIo(request).OverrideRequest(
-      std::move(new_message));
+  return RequestWithStdio::InheritIo(request)
+      .AddArgument("cvd")
+      .AddArgument("status")
+      .AddArguments(cmd_args)
+      .SetEnv(std::move(env))
+      .AddSelectorArguments(request.SelectorArgs())
+      .SetWorkingDirectory(request.WorkingDirectory());
 }
 
 static Result<bool> HasPrint(cvd_common::Args cmd_args) {
