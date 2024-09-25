@@ -89,16 +89,6 @@ bool RequestWithStdio::IsNullIo() const {
 
 const cvd_common::Args& RequestWithStdio::Args() const { return args_; }
 
-RequestWithStdio& RequestWithStdio::AddArgument(std::string argument) & {
-  args_.emplace_back(std::move(argument));
-  return *this;
-}
-
-RequestWithStdio RequestWithStdio::AddArgument(std::string argument) && {
-  args_.emplace_back(std::move(argument));
-  return *this;
-}
-
 RequestWithStdio& RequestWithStdio::AddArguments(
     std::initializer_list<std::string_view> args) & {
   for (const std::string_view& arg : args) {
