@@ -145,8 +145,7 @@ RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
 }
 
 Result<cvd_common::Envs> GetEnvs(const RequestWithStdio& request) {
-  cvd_common::Envs envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
+  cvd_common::Envs envs = request.Envs();
   if (auto it = envs.find("HOME"); it != envs.end() && it->second.empty()) {
     envs.erase(it);
   }
@@ -257,9 +256,7 @@ Result<selector::LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
     const RequestWithStdio& request) {
   using CreationAnalyzerParam =
       selector::CreationAnalyzer::CreationAnalyzerParam;
-  const auto& selector_opts =
-      request.Message().command_request().selector_opts();
-  const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
+  const auto& selector_args = request.SelectorArgs();
   CreationAnalyzerParam analyzer_param{
       .cmd_args = subcmd_args, .envs = envs, .selector_args = selector_args};
 
@@ -383,7 +380,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
     // when HOME is NOT overridden and selector flags are NOT given.
     auto is_default_group =
         StringFromEnv("HOME", "") == CF_EXPECT(SystemWideUserHome()) &&
-        request.Message().command_request().selector_opts().args().empty();
+        request.SelectorArgs().empty();
 
     if (is_default_group) {
       auto symlink_res = CreateSymlinks(group);
