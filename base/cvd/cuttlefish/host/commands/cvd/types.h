@@ -19,19 +19,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-
 namespace cuttlefish {
 namespace cvd_common {
 
 using Args = std::vector<std::string>;
 using Envs = std::unordered_map<std::string, std::string>;
-
-Envs ConvertToEnvs(
-    const google::protobuf::Map<std::string, std::string>& proto_map);
-
-Args ConvertToArgs(
-    const google::protobuf::RepeatedPtrField<std::string>& proto_args);
 
 }  // namespace cvd_common
 }  // namespace cuttlefish
