@@ -258,8 +258,7 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
       RequestWithStdio::InheritIo(original_request)
           .AddArguments({"cvd", "status", "--print", "--all_instances"})
           .SetEnv(original_request.Env())
-          .AddSelectorArgument("--group_name")
-          .AddSelectorArgument(group.GroupName())
+          .AddSelectorArguments({"--group_name", group.GroupName()})
           .SetWorkingDirectory(original_request.WorkingDirectory());
 
   auto [_, instances_json, group_response] =

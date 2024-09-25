@@ -207,8 +207,7 @@ class LoadConfigsCommand : public CvdServerHandler {
             .AddArguments({"cvd", "create", "--daemon", system_build_arg})
             .AddArguments(cvd_flags.launch_cvd_flags)
             .AddSelectorArguments(cvd_flags.selector_flags)
-            .AddSelectorArgument("--group_name")
-            .AddSelectorArgument(group.GroupName());
+            .AddSelectorArguments({"--group_name", group.GroupName()});
 
     auto& env = launch_req.Env();
     env["HOME"] = cvd_flags.load_directories.launch_home_directory;
