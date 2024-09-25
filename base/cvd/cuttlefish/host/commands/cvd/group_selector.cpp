@@ -101,11 +101,8 @@ Result<selector::LocalInstanceGroup> SelectGroup(
     InstanceManager& instance_manager, const RequestWithStdio& request) {
   auto has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
   CF_EXPECT(std::move(has_groups), "No instance groups available");
-  cvd_common::Envs envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
-  const auto& selector_opts =
-      request.Message().command_request().selector_opts();
-  const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
+  cvd_common::Envs envs = request.Envs();
+  const auto& selector_args = request.SelectorArgs();
   auto group_selection_result =
       instance_manager.SelectGroup(selector_args, envs);
   if (group_selection_result.ok()) {
