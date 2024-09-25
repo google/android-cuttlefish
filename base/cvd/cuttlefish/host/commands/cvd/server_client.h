@@ -64,7 +64,7 @@ class RequestWithStdio {
   }
 
   template <typename T>
-  RequestWithStdio AddArguments(const T& args) {
+  RequestWithStdio AddArguments(const T& args) && {
     for (const std::string& arg : args) {
       AddArgument(arg);
     }
@@ -87,7 +87,7 @@ class RequestWithStdio {
   }
 
   template <typename T>
-  RequestWithStdio AddSelectorArguments(const T& args) {
+  RequestWithStdio AddSelectorArguments(const T& args) && {
     for (const std::string& arg : args) {
       AddArgument(arg);
     }
