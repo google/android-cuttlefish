@@ -587,8 +587,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     instance_name_arg.append(selector::SelectorFlags::kInstanceName)
         .append("=")
         .append(instance_name);
-    start_request.AddSelectorArgument(group_name_arg)
-        .AddSelectorArgument(instance_name_arg);
+    start_request.AddSelectorArguments({group_name_arg, instance_name_arg});
   }
   if (use_16k) {
     start_request.AddArguments({"--use_16k"});
