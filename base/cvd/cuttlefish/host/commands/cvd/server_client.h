@@ -44,9 +44,6 @@ class RequestWithStdio {
   bool IsNullIo() const;
 
   // Convenient getters/setters to properties in the underlying message
-  RequestWithStdio& OverrideRequest(RequestWithStdio) &;
-  RequestWithStdio OverrideRequest(RequestWithStdio) &&;
-
   RequestWithStdio& AddArgument(std::string) &;
   RequestWithStdio AddArgument(std::string) &&;
 
