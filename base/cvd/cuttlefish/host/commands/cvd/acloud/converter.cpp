@@ -326,10 +326,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         parsed_flags.image_download_dir.value() + "/acloud_image_artifacts/";
   }
 
-  const auto& request_command = request.Message().command_request();
-  auto host_artifacts_path = CF_EXPECT(
-      AndroidHostPath(cvd_common::ConvertToEnvs(request_command.env())),
-      "Missing host artifacts path");
+  auto host_artifacts_path =
+      CF_EXPECT(AndroidHostPath(request.Envs()), "Missing host artifacts path");
 
   std::vector<RequestWithStdio> inner_requests;
   const std::string user_config_path =
@@ -510,9 +508,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
           parsed_flags.local_image.path.value_or(""));
       mixsuperimage_env[kAndroidHostOut] = host_artifacts_path;
 
-      auto product_out = request_command.env().find(kAndroidProductOut);
-      CF_EXPECT(product_out != request_command.env().end(),
-                "Missing " << kAndroidProductOut);
+      const auto& env = request.Envs();
+      auto product_out = env.find(kAndroidProductOut);
+      CF_EXPECT(product_out != env.end(), "Missing " << kAndroidProductOut);
       mixsuperimage_env[kAndroidProductOut] = product_out->second;
     } else {
       mixsuperimage_env[kAndroidHostOut] = host_dir;
@@ -638,9 +636,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
     start_env[kAndroidHostOut] = host_artifacts_path;
 
-    auto product_out = request_command.env().find(kAndroidProductOut);
-    CF_EXPECT(product_out != request_command.env().end(),
-              "Missing " << kAndroidProductOut);
+    const auto& env = request.Envs();
+    auto product_out = env.find(kAndroidProductOut);
+    CF_EXPECT(product_out != env.end(), "Missing " << kAndroidProductOut);
     start_env[kAndroidProductOut] = product_out->second;
   } else {
     start_env[kAndroidHostOut] = host_dir;
