@@ -91,7 +91,6 @@ RequestWithStdio& RequestWithStdio::OverrideRequest(RequestWithStdio other) & {
   args_ = std::move(other.args_);
   env_ = std::move(other.env_);
   selector_args_ = std::move(other.selector_args_);
-  wait_behavior_ = std::move(other.wait_behavior_);
   working_directory_ = std::move(other.working_directory_);
   return *this;
 }
@@ -100,7 +99,6 @@ RequestWithStdio RequestWithStdio::OverrideRequest(RequestWithStdio other) && {
   args_ = std::move(other.args_);
   env_ = std::move(other.env_);
   selector_args_ = std::move(other.selector_args_);
-  wait_behavior_ = std::move(other.wait_behavior_);
   working_directory_ = std::move(other.working_directory_);
   return *this;
 }
@@ -163,18 +161,6 @@ RequestWithStdio RequestWithStdio::SetEnv(cvd_common::Envs env) && {
 
 const std::string& RequestWithStdio::WorkingDirectory() const {
   return working_directory_;
-}
-
-RequestWithStdio& RequestWithStdio::SetWaitBehavior(
-    cvd::WaitBehavior wait_behavior) & {
-  wait_behavior_ = std::move(wait_behavior);
-  return *this;
-}
-
-RequestWithStdio RequestWithStdio::SetWaitBehavior(
-    cvd::WaitBehavior wait_behavior) && {
-  wait_behavior_ = std::move(wait_behavior);
-  return *this;
 }
 
 RequestWithStdio& RequestWithStdio::SetWorkingDirectory(

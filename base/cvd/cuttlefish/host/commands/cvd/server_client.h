@@ -98,9 +98,6 @@ class RequestWithStdio {
   RequestWithStdio& SetEnv(cvd_common::Envs) &;
   RequestWithStdio SetEnv(cvd_common::Envs) &&;
 
-  RequestWithStdio& SetWaitBehavior(cvd::WaitBehavior) &;
-  RequestWithStdio SetWaitBehavior(cvd::WaitBehavior) &&;
-
   const std::string& WorkingDirectory() const;
   RequestWithStdio& SetWorkingDirectory(std::string) &;
   RequestWithStdio SetWorkingDirectory(std::string) &&;
@@ -110,7 +107,6 @@ class RequestWithStdio {
   cvd_common::Args args_;
   cvd_common::Envs env_;
   cvd_common::Args selector_args_;
-  cvd::WaitBehavior wait_behavior_;
   std::string working_directory_;
 
   std::istream& in_;

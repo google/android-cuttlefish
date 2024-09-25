@@ -46,9 +46,6 @@ struct MakeRequestForm {
   std::optional<std::string> working_dir;
 };
 
-RequestWithStdio MakeRequest(const MakeRequestForm& request_form,
-                             const cvd::WaitBehavior wait_behavior);
-
 RequestWithStdio MakeRequest(const MakeRequestForm& request_form);
 
 cvd::Response CommandResponse(const cvd::Status_Code,

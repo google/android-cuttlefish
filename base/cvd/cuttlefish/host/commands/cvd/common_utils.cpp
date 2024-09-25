@@ -67,18 +67,12 @@ Result<std::string> AndroidHostPath(const cvd_common::Envs& envs) {
 }
 
 RequestWithStdio MakeRequest(const MakeRequestForm& request_form) {
-  return MakeRequest(request_form, cvd::WAIT_BEHAVIOR_COMPLETE);
-}
-
-RequestWithStdio MakeRequest(const MakeRequestForm& request_form,
-                             cvd::WaitBehavior wait_behavior) {
   return RequestWithStdio::StdIo()
       .AddArguments(request_form.cmd_args)
       .AddSelectorArguments(request_form.selector_args)
       .ImportEnv(request_form.env)
       .SetWorkingDirectory(
-          request_form.working_dir.value_or(CurrentDirectory()))
-      .SetWaitBehavior(wait_behavior);
+          request_form.working_dir.value_or(CurrentDirectory()));
 }
 
 cvd::Response CommandResponse(const cvd::Status_Code code,
