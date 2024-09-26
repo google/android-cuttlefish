@@ -335,8 +335,8 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   const auto cache_base_path = PerUserDir() + "/cache";
   return CreateBuildApi(std::move(retrying_http_client), std::move(curl),
                         std::move(credential_source), std::move(flags.api_key),
-                        flags.wait_retry_period, std::move(flags.api_base_url), 
-                        std::move(flags.project_id), flags.enable_caching, 
+                        flags.wait_retry_period, std::move(flags.api_base_url),
+                        std::move(flags.project_id), flags.enable_caching,
                         std::move(cache_base_path));
 }
 
@@ -774,7 +774,8 @@ Result<void> FetchCvdMain(int argc, char** argv, bool log_to_stderr) {
                                    host_target.host_tools_directory, targets));
   std::string log_file = GetFetchLogsFileName(flags.target_directory);
   auto old_logger = android::base::SetLogger(
-      log_to_stderr ? LogToStderrAndFiles({log_file}) : LogToFiles({log_file}));
+      log_to_stderr ? LogToStderrAndFiles({log_file}, "", MetadataLevel::FULL)
+                    : LogToFiles({log_file}));
   android::base::SetMinimumLogSeverity(flags.verbosity);
 
   auto fetch_res = Fetch(flags, host_target, targets);
