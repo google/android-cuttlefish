@@ -83,7 +83,7 @@ func TestInstance(t *testing.T) {
 		t.Errorf("failed creating bugreport: %s\n", err)
 	}
 	if createErr != nil {
-		t.Fatal(err)
+		t.Fatal(createErr)
 	}
 	want := &hoapi.CreateCVDResponse{
 		CVDs: []*hoapi.CVD{
