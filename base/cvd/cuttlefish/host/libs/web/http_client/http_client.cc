@@ -175,6 +175,7 @@ class CurlClient : public HttpClient {
     auto [shared_fd, temp_path] = CF_EXPECT(SharedFD::Mkostemp(path));
     SharedFDOstream stream(shared_fd);
     auto callback = [&stream](char* data, size_t size) -> bool {
+      LOG(INFO) << "Downloaded chunk of " << size << " bytes";
       if (data == nullptr) {
         return !stream.fail();
       }
