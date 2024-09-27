@@ -32,6 +32,7 @@ cc_library(
         ":result",
         "@googletest//:gtest",
     ],
+    testonly = 1,
 )
 
 cc_library(
