@@ -27,10 +27,13 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     visibility = ["//visibility:public"],
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//libbase",
         "@fmt",
         "@jsoncpp",
+        "@boringssl//:crypto",
     ],
 )
 
@@ -47,6 +50,8 @@ cc_test(
     includes = [""],
     deps = [
         ":web",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
         "//libsparse",
         "@googletest//:gtest",

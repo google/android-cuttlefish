@@ -28,6 +28,7 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     visibility = ["//visibility:public"],
     deps = [
+        "//libbase",
         ":result",
         "@googletest//:gtest",
     ],
@@ -126,6 +127,8 @@ cc_test(
         "-Icuttlefish",
     ],
     deps = [
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
         ":result",
         ":result_matchers",
         ":utils",

@@ -23,7 +23,11 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@fmt",
         "@jsoncpp",
+        "@zlib",
     ],
 )
 
