@@ -72,6 +72,19 @@ jobs:
   e2e-tests-orchestration:
     runs-on: ubuntu-22.04 
     steps:
+    - name: Free space
+      run: |
+        echo "disk space before cleanup:"
+        df -h
+        sudo rm -rf /usr/local/.ghcup
+        sudo rm -rf /usr/local/lib/android/sdk/ndk
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/hostedtoolcache
+        sudo rm -rf /opt/ghc
+        sudo apt-get clean
+        echo "disk space after cleanup:"
+        df -h
     - name: Check kvm
       run: |
         ls /dev/kvm
@@ -95,7 +108,7 @@ jobs:
         # 
         # The tests are running under 2 min, it's ok for now to execute them serially. The action's
         # bottleneck is building the debian packages: `@@images//docker/debs-builder-docker:debs_tar`.
-        bazel test --sandbox_writable_path=$HOME --test_output=errors --local_test_jobs=1 orchestration/...
+        bazel test --sandbox_writable_path=$HOME --test_output=errors --local_test_jobs=1 --test_timeout=480 orchestration/...
     - name: Upload test logs
       if: always()
       uses: actions/upload-artifact@v3
