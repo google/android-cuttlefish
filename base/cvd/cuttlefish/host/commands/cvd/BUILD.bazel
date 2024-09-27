@@ -425,6 +425,7 @@ cc_test(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
         "//libbase",
         ":cvd_persistent_data",
         ":launch_cvd_cc_proto",

@@ -5,7 +5,6 @@ cc_library(
     ],
     hdrs = [
         "result.h",
-        "result_matchers.h",
     ],
     copts = [
         "-std=c++17",
@@ -15,6 +14,22 @@ cc_library(
     deps = [
         "//libbase",
         "@fmt",
+    ],
+)
+
+cc_library(
+    name = "result_matchers",
+    hdrs = [
+        "result_matchers.h",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":result",
+        "@googletest//:gtest",
     ],
 )
 
@@ -88,6 +103,7 @@ cc_test(
     ],
     deps = [
         ":result",
+        ":result_matchers",
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -111,6 +127,7 @@ cc_test(
     ],
     deps = [
         ":result",
+        ":result_matchers",
         ":utils",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
