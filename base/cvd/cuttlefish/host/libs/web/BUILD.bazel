@@ -47,6 +47,7 @@ cc_test(
     includes = [""],
     deps = [
         ":web",
+        "//cuttlefish/common/libs/utils:result_matchers",
         "//libsparse",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
