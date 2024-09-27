@@ -147,18 +147,24 @@ Result<void> ServerLoopImpl::ResumeGuest() {
 static Result<void> RunAdbShellCommand(
     const CuttlefishConfig::InstanceSpecific& ins,
     const std::vector<std::string>& command_args) {
-  Command adb_command(SubtoolPath("adb"));
+  // Make sure device is connected, otherwise the following `adb -s SERIAL
+  // wait-for-device shell ...` would get stuck.
+  Command connect_cmd(SubtoolPath("adb"));
   // Avoid the adb server being started in the runtime directory and looking
   // like a process that is still using the directory.
-  adb_command.SetWorkingDirectory("/");
-  adb_command.AddParameter("-s").AddParameter(ins.adb_ip_and_port());
-  adb_command.AddParameter("wait-for-device");
+  connect_cmd.SetWorkingDirectory("/");
+  connect_cmd.AddParameter("connect");
+  connect_cmd.AddParameter(ins.adb_ip_and_port());
+  CF_EXPECT_EQ(connect_cmd.Start().Wait(), 0);
 
-  adb_command.AddParameter("shell");
+  // Run the shell commands.
+  Command shell_cmd(SubtoolPath("adb"));
+  shell_cmd.AddParameter("-s").AddParameter(ins.adb_ip_and_port());
+  shell_cmd.AddParameter("shell");
   for (const auto& argument : command_args) {
-    adb_command.AddParameter(argument);
+    shell_cmd.AddParameter(argument);
   }
-  CF_EXPECT_EQ(adb_command.Start().Wait(), 0);
+  CF_EXPECT_EQ(shell_cmd.Start().Wait(), 0);
   return {};
 }
 
