@@ -338,6 +338,7 @@ cc_library(
         "-Werror=sign-compare",
         "-Wno-ctad-maybe-unsupported",
         "-std=c++17",
+        "-lcurl",
     ],
     strip_include_prefix = "//cuttlefish",
     deps = [
@@ -377,6 +378,7 @@ cc_binary(
     visibility = ["//visibility:public"],
     deps = [
         ":libcvd",
+        "//cuttlefish/common/libs/utils",
         "//libbase",
         "//libsparse",
         "@fmt",
@@ -426,6 +428,7 @@ cc_test(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/config",
         "//libbase",
         ":cvd_persistent_data",
         ":launch_cvd_cc_proto",
