@@ -18,7 +18,6 @@
 
 #include <cctype>
 #include <map>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -26,11 +25,8 @@
 #include <android-base/strings.h>
 #include <fmt/core.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -144,7 +140,8 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
                                             .args = cmd_args,
                                             .envs = envs,
                                             .working_dir = working_dir,
-                                            .command_name = bin};
+                                            .command_name = bin,
+                                            .null_stdio = request.IsNullIo()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   std::string serialized_json;
