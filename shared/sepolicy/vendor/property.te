@@ -6,3 +6,7 @@ vendor_internal_prop(vendor_device_prop)
 vendor_internal_prop(vendor_uwb_prop)
 vendor_internal_prop(vendor_otsim_local_interface_prop)
 vendor_internal_prop(vendor_vhal_proxy_server_port_prop)
+
+# Ignore KeyMint VM HAL's access to vendor_boot_security_patch_level_prop
+# See b/366132108 for more context.
+dontaudit coredomain vendor_boot_security_patch_level_prop:file read;
