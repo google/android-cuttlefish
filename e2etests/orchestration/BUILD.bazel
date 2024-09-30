@@ -42,7 +42,7 @@ create_single_instance_test(
 
 aosp_artifact(
   name = "cvd_host_package",
-  build_id = "12266267",
+  build_id = "12432601",
   build_target="aosp_cf_x86_64_phone-trunk_staging-userdebug",
   artifact_name = "cvd-host_package.tar.gz",
   out_name = "cvd-host_package.tar.gz",
@@ -50,9 +50,9 @@ aosp_artifact(
 
 aosp_artifact(
   name = "images_zip",
-  build_id = "12266267",
+  build_id = "12432601",
   build_target="aosp_cf_x86_64_phone-trunk_staging-userdebug",
-  artifact_name = "aosp_cf_x86_64_phone-img-12266267.zip",
+  artifact_name = "aosp_cf_x86_64_phone-img-12432601.zip",
   out_name = "images.zip",
 )
 
