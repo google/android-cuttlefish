@@ -221,6 +221,7 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     "android.hardware.camera.metadata",
     "android.hardware.common",
     "android.hardware.common.fmq",
+    "android.hardware.drm.common",
     "android.hardware.graphics.common",
     "android.hardware.input.common",
     "android.media.audio.common.types",
