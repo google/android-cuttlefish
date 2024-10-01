@@ -37,7 +37,7 @@ class CvdFetchCommandHandler : public CvdServerHandler {
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
   cvd_common::Args CmdList() const override { return fetch_cmd_list_; }
   Result<std::string> SummaryHelp() const override;
-  bool ShouldInterceptHelp() const  override { return true; }
+  bool ShouldInterceptHelp() const override { return true; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
@@ -66,7 +66,8 @@ Result<cvd::Response> CvdFetchCommandHandler::Handle(
     args_data.emplace_back(argument.data());
   }
 
-  CF_EXPECT(FetchCvdMain(args_data.size(), args_data.data()));
+  CF_EXPECT(FetchCvdMain(args_data.size(), args_data.data(),
+                         /*log_to_stderr*/ !request.IsNullIo()));
 
   cvd::Response response;
   response.mutable_command_response();
