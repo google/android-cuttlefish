@@ -186,7 +186,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   // CvdMetrics::SendCvdMetrics(all_args);
 
   if (android::base::Basename(all_args[0]) == "fetch_cvd") {
-    CF_EXPECT(FetchCvdMain(argc, argv));
+    CF_EXPECT(FetchCvdMain(argc, argv, /*log_to_stderr*/ true));
     return {};
   }
 
