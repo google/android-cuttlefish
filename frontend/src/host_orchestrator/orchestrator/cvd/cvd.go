@@ -74,15 +74,15 @@ func (e *CommandExecErr) Unwrap() error { return e.err }
 
 func (c *Command) Run() error {
 	cmd := c.execContext(context.TODO(), cvdEnv(c.opts.AndroidHostOut), c.cvdBin, c.args...)
-	stderr := &bytes.Buffer{}
+	stderrBuff := &bytes.Buffer{}
+	stderrMw := io.MultiWriter(stderrBuff, log.Writer())
 	cmd.Stdout = c.opts.Stdout
-	cmd.Stderr = stderr
+	cmd.Stderr = stderrMw
 	if err := cmd.Start(); err != nil {
 		return err
 	}
 	if err := cmd.Wait(); err != nil {
-		LogStderr(cmd, stderr.String())
-		return &CommandExecErr{c.args, stderr.String(), err}
+		return &CommandExecErr{c.args, stderrBuff.String(), err}
 	}
 	return nil
 }
