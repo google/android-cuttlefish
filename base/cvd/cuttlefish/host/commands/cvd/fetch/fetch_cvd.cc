@@ -760,7 +760,7 @@ Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
 
 }  // namespace
 
-std::string FetchLogs(const std::string& target_directory) {
+std::string GetFetchLogsFileName(const std::string& target_directory) {
   return target_directory + "/fetch.log";
 }
 
@@ -772,12 +772,17 @@ Result<void> FetchCvdMain(int argc, char** argv, bool log_to_stderr) {
   HostToolsTarget host_target = GetHostToolsTarget(flags, append_subdirectory);
   CF_EXPECT(EnsureDirectoriesExist(flags.target_directory,
                                    host_target.host_tools_directory, targets));
-  std::string log_file = FetchLogs(flags.target_directory);
-  android::base::SetLogger(log_to_stderr ? LogToStderrAndFiles({log_file})
-                                         : LogToFiles({log_file}));
+  std::string log_file = GetFetchLogsFileName(flags.target_directory);
+  auto old_logger = android::base::SetLogger(
+      log_to_stderr ? LogToStderrAndFiles({log_file}) : LogToFiles({log_file}));
   android::base::SetMinimumLogSeverity(flags.verbosity);
 
-  CF_EXPECT(Fetch(flags, host_target, targets));
+  auto fetch_res = Fetch(flags, host_target, targets);
+  // This function is no longer only called direcly from a main function, so the
+  // previous logger must be restored. This also ensures logs from other
+  // components don't land in fetch.log.
+  android::base::SetLogger(std::move(old_logger));
+  CF_EXPECT(std::move(fetch_res));
   return {};
 }
 

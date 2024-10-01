@@ -161,9 +161,10 @@ class LoadConfigsCommand : public CvdServerHandler {
         group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
         instance_manager_.UpdateInstanceGroup(group);
       }
-      CF_EXPECTF(std::move(fetch_res),
-                 "Failed to fetch build artifacts, check {} for details",
-                 FetchLogs(cvd_flags.load_directories.target_directory));
+      CF_EXPECTF(
+          std::move(fetch_res),
+          "Failed to fetch build artifacts, check {} for details",
+          GetFetchLogsFileName(cvd_flags.load_directories.target_directory));
     }
 
     auto launch_cmd = BuildLaunchCmd(request, cvd_flags, group);
