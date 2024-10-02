@@ -51,6 +51,7 @@ namespace {
 constexpr std::string_view kOverrideSeparator = ":";
 constexpr std::string_view kCredentialSourceOverride =
     "fetch.credential_source";
+constexpr std::string_view kProjectIDOverride = "fetch.project_id";
 
 bool IsLocalBuild(std::string path) {
   return android::base::StartsWith(path, "/");
@@ -160,6 +161,8 @@ std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
   std::vector<Flag> flags;
   flags.emplace_back(
       GflagsCompatFlag("credential_source", load_flags.credential_source));
+  flags.emplace_back(
+      GflagsCompatFlag("project_id", load_flags.project_id));
   flags.emplace_back(
       GflagsCompatFlag("base_directory", load_flags.base_dir)
           .Help("Parent directory for artifacts and runtime files. Defaults to "
@@ -351,6 +354,17 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
     load_flags.overrides.emplace_back(
         Override{.config_path = std::string(kCredentialSourceOverride),
                  .new_value = load_flags.credential_source});
+  }
+  if (!load_flags.project_id.empty()){
+    for (const auto& flag : load_flags.overrides) {
+      CF_EXPECT(!android::base::StartsWith(flag.config_path,
+                                           kProjectIDOverride),
+                "Specifying both --override=fetch.project_id and the "
+                "--project_id flag is not allowed.");
+    }
+    load_flags.overrides.emplace_back(
+        Override{.config_path = std::string(kProjectIDOverride),
+                 .new_value = load_flags.project_id});
   }
   return load_flags;
 }

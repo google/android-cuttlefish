@@ -107,13 +107,14 @@ BuildApi::BuildApi(std::unique_ptr<HttpClient> http_client,
                    std::unique_ptr<HttpClient> inner_http_client,
                    std::unique_ptr<CredentialSource> credential_source,
                    std::string api_key, const std::chrono::seconds retry_period,
-                   std::string api_base_url)
+                   std::string api_base_url, std::string project_id)
     : http_client(std::move(http_client)),
       inner_http_client(std::move(inner_http_client)),
       credential_source(std::move(credential_source)),
       api_key_(std::move(api_key)),
       retry_period_(retry_period),
-      api_base_url_(std::move(api_base_url)) {}
+      api_base_url_(std::move(api_base_url)),
+      project_id_(std::move(project_id)) {}
 
 Result<Build> BuildApi::GetBuild(const DeviceBuildString& build_string,
                                  const std::string& fallback_target) {
@@ -202,6 +203,9 @@ Result<std::optional<std::string>> BuildApi::LatestBuildId(
   if (!api_key_.empty()) {
     url += "&key=" + http_client->UrlEscape(api_key_);
   }
+  if(!project_id_.empty()){
+    url += "&$userProject=" + http_client->UrlEscape(project_id_);
+  }
   auto response =
       CF_EXPECT(http_client->DownloadToJson(url, CF_EXPECT(Headers())));
   const auto& json = response.data;
@@ -232,8 +236,15 @@ Result<std::string> BuildApi::BuildStatus(const DeviceBuild& build) {
   std::string url = api_base_url_ + "/builds/" +
                     http_client->UrlEscape(build.id) + "/" +
                     http_client->UrlEscape(build.target);
+  std::vector<std::string> params;
   if (!api_key_.empty()) {
-    url += "?key=" + http_client->UrlEscape(api_key_);
+    params.push_back("key=" + http_client->UrlEscape(api_key_));
+  }
+  if(!project_id_.empty()){
+    params.push_back("$userProject=" + http_client->UrlEscape(project_id_));
+  }
+  if (!params.empty()) {
+    url += "?" + android::base::Join(params, "&");
   }
   auto response =
       CF_EXPECT(http_client->DownloadToJson(url, CF_EXPECT(Headers())));
@@ -253,8 +264,15 @@ Result<std::string> BuildApi::ProductName(const DeviceBuild& build) {
   std::string url = api_base_url_ + "/builds/" +
                     http_client->UrlEscape(build.id) + "/" +
                     http_client->UrlEscape(build.target);
+  std::vector<std::string> params;
   if (!api_key_.empty()) {
-    url += "?key=" + http_client->UrlEscape(api_key_);
+    params.push_back("key=" + http_client->UrlEscape(api_key_));
+  }
+  if(!project_id_.empty()){
+    params.push_back("$userProject=" + http_client->UrlEscape(project_id_));
+  }
+  if (!params.empty()) {
+    url += "?" + android::base::Join(params, "&");
   }
   auto response =
       CF_EXPECT(http_client->DownloadToJson(url, CF_EXPECT(Headers())));
@@ -290,6 +308,9 @@ Result<std::unordered_set<std::string>> BuildApi::Artifacts(
     }
     if (!api_key_.empty()) {
       url += "&key=" + http_client->UrlEscape(api_key_);
+    }
+    if(!project_id_.empty()){
+      url += "&$userProject=" + http_client->UrlEscape(project_id_);
     }
     auto response =
         CF_EXPECT(http_client->DownloadToJson(url, CF_EXPECT(Headers())));
@@ -342,8 +363,15 @@ Result<std::string> BuildApi::GetArtifactDownloadUrl(
       api_base_url_ + "/builds/" + http_client->UrlEscape(build.id) + "/" +
       http_client->UrlEscape(build.target) + "/attempts/latest/artifacts/" +
       http_client->UrlEscape(artifact) + "/url";
+  std::vector<std::string> params;
   if (!api_key_.empty()) {
-    download_url_endpoint += "?key=" + http_client->UrlEscape(api_key_);
+    params.push_back("key=" + http_client->UrlEscape(api_key_));
+  }
+  if(!project_id_.empty()){
+    params.push_back("$userProject=" + http_client->UrlEscape(project_id_));
+  }
+  if (!params.empty()) {
+    download_url_endpoint += "?" + android::base::Join(params, "&");
   }
   auto response = CF_EXPECT(
       http_client->DownloadToJson(download_url_endpoint, CF_EXPECT(Headers())));

@@ -37,6 +37,7 @@ import (
 )
 
 const HeaderBuildAPICreds = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
+const HeaderUserProject = "X-Cutf-Host-Orchestrator-BuildAPI-Creds-User-Project-ID"
 
 type Config struct {
 	Paths                  IMPaths
@@ -154,12 +155,17 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
 	creds := r.Header.Get(HeaderBuildAPICreds)
+	userProjectID := r.Header.Get(HeaderUserProject)
+	buildAPICredentials := BuildAPICredentials{
+		AccessToken:   creds,
+		UserProjectID: userProjectID,
+	}
 	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Credentials: creds}
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
 	execCtx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, creds)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, buildAPICredentials)
 	opts := FetchArtifactsActionOpts{
 		Request:          &req,
 		Paths:            h.Config.Paths,
@@ -192,12 +198,17 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
 	creds := r.Header.Get(HeaderBuildAPICreds)
+	userProjectID := r.Header.Get(HeaderUserProject)
+	buildAPICredentials := BuildAPICredentials{
+		AccessToken:   creds,
+		UserProjectID: userProjectID,
+	}
 	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Credentials: creds}
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
 	execCtx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, creds)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, buildAPICredentials)
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
@@ -210,7 +221,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		UUIDGen:                  func() string { return uuid.New().String() },
 		CVDUser:                  h.Config.CVDUser,
 		UserArtifactsDirResolver: h.UADirResolver,
-		BuildAPICredentials:      creds,
+		BuildAPICredentials:      buildAPICredentials,
 	}
 	return NewCreateCVDAction(opts).Run()
 }

@@ -163,6 +163,10 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
     auto value = fetch_config.credential_source();
     result.emplace_back(GenerateFlag("credential_source", std::move(value)));
   }
+  if (fetch_config.has_project_id()) {
+    auto value = fetch_config.project_id();
+    result.emplace_back(GenerateFlag("project_id", std::move(value)));
+  }
   if (fetch_config.has_wait_retry_period_seconds()) {
     auto value = fetch_config.wait_retry_period_seconds();
     result.emplace_back(GenerateFlag("wait_retry_period", std::move(value)));

@@ -79,11 +79,11 @@ CachingBuildApi::CachingBuildApi(
     std::unique_ptr<HttpClient> http_client,
     std::unique_ptr<HttpClient> inner_http_client,
     std::unique_ptr<CredentialSource> credential_source, std::string api_key,
-    const std::chrono::seconds retry_period, std::string api_base_url,
+    const std::chrono::seconds retry_period, std::string api_base_url, std::string project_id,
     const std::string cache_base_path)
     : BuildApi(std::move(http_client), std::move(inner_http_client),
                std::move(credential_source), std::move(api_key), retry_period,
-               std::move(api_base_url)),
+               std::move(api_base_url), std::move(project_id)),
       cache_base_path_(std::move(cache_base_path)) {};
 
 Result<bool> CachingBuildApi::CanCache(const std::string& target_directory) {
@@ -149,18 +149,18 @@ std::unique_ptr<BuildApi> CreateBuildApi(
     std::unique_ptr<HttpClient> http_client,
     std::unique_ptr<HttpClient> inner_http_client,
     std::unique_ptr<CredentialSource> credential_source, std::string api_key,
-    const std::chrono::seconds retry_period, std::string api_base_url,
+    const std::chrono::seconds retry_period, std::string api_base_url, std::string project_id,
     const bool enable_caching, const std::string cache_base_path) {
   if (enable_caching && EnsureCacheDirectory(cache_base_path)) {
     return std::make_unique<CachingBuildApi>(
         std::move(http_client), std::move(inner_http_client),
         std::move(credential_source), std::move(api_key), retry_period,
-        std::move(api_base_url), std::move(cache_base_path));
+        std::move(api_base_url), std::move(project_id), std::move(cache_base_path));
   }
   return std::make_unique<BuildApi>(
       std::move(http_client), std::move(inner_http_client),
       std::move(credential_source), std::move(api_key), retry_period,
-      std::move(api_base_url));
+      std::move(api_base_url), std::move(project_id));
 }
 
 }  // namespace cuttlefish
