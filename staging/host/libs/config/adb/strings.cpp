@@ -23,7 +23,9 @@ namespace cuttlefish {
 AdbMode StringToAdbMode(const std::string& mode_cased) {
   std::string mode = mode_cased;
   std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
-  if (mode == "vsock_half_tunnel") {
+  if (mode == "vsock_tunnel") {
+    return AdbMode::VsockTunnel;
+  } else if (mode == "vsock_half_tunnel") {
     return AdbMode::VsockHalfTunnel;
   } else if (mode == "native_vsock") {
     return AdbMode::NativeVsock;
@@ -34,6 +36,8 @@ AdbMode StringToAdbMode(const std::string& mode_cased) {
 
 std::string AdbModeToString(AdbMode mode) {
   switch (mode) {
+    case AdbMode::VsockTunnel:
+      return "vsock_tunnel";
     case AdbMode::VsockHalfTunnel:
       return "vsock_half_tunnel";
     case AdbMode::NativeVsock:
