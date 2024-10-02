@@ -155,7 +155,6 @@ PRODUCT_VENDOR_PROPERTIES += ro.crypto.metadata_init_delete_all_keys.enabled=tru
 #
 PRODUCT_PACKAGES += \
     CuttlefishService \
-    socket_vsock_proxy \
     tombstone_transmit \
     tombstone_producer \
     suspend_blocker \
