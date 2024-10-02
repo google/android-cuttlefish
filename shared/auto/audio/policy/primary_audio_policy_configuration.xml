@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Copyright (C) 2025 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<module name="primary" halVersion="7.0">
+  <attachedDevices>
+    <item>bus0_usage_main</item>
+    <!-- todo: b/377752500 enable complex topoloby once multi audio backend supported on virtual target -->
+    <!--item>bus1_usage_nav_guidance</item>
+    <item>bus2_usage_notification</item>
+    <item>bus3_usage_voice</item>
+    <item>bus4_usage_assistant</item>
+    <item>bus5_usage_system</item>
+    <item>speaker</item>
+    <item>3rdPartyVr</item-->
+    <item>builtin_mic</item>
+    <item>fm_tuner</item>
+    <item>telephony_tx</item>
+    <item>telephony_rx</item>
+  </attachedDevices>
+
+    <defaultOutputDevice>bus0_usage_main</defaultOutputDevice>
+    <mixPorts>
+        <mixPort name="primary_input" role="sink">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="8000 11025 16000 44100 48000"
+                channelMasks="AUDIO_CHANNEL_IN_STEREO AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_FRONT_BACK" />
+        </mixPort>
+        <mixPort name="radio_input" role="sink">
+           <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO" />
+        </mixPort>
+        <mixPort name="mixport_bus0_usage_main_output" role="source" flags="AUDIO_OUTPUT_FLAG_PRIMARY">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+        </mixPort>
+        <mixPort name="hfp_tx_mix" role="source">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+        </mixPort>
+        <mixPort name="hfp_rx_mix" role="sink" flags="AUDIO_INPUT_FLAG_PRIMARY">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO" />
+        </mixPort>
+    </mixPorts>
+
+    <devicePorts>
+        <devicePort tagName="builtin_mic" type="AUDIO_DEVICE_IN_BUILTIN_MIC" role="source" address="bottom_CARD_0_DEV_0">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="16000 48000" channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO" />
+        </devicePort>
+        <devicePort tagName="fm_tuner" type="AUDIO_DEVICE_IN_FM_TUNER" role="source" address="tuner0">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO" />
+            <gains>
+                <gain name="" mode="AUDIO_GAIN_MODE_JOINT" minValueMB="-3200" maxValueMB="600" defaultValueMB="0" stepValueMB="100" />
+            </gains>
+        </devicePort>
+        <devicePort tagName="bus0_usage_main" type="AUDIO_DEVICE_OUT_BUS" role="sink" address="BUS00_MEDIA_CARD_0_DEV_0">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+            <gains>
+                <gain useForVolume="true" name="volume_bus0_usage_main" mode="AUDIO_GAIN_MODE_JOINT" minValueMB="-8800" maxValueMB="1200" defaultValueMB="-4550" stepValueMB="250" />
+            </gains>
+        </devicePort>
+        <devicePort tagName="telephony_tx" type="AUDIO_DEVICE_OUT_TELEPHONY_TX" role="sink" address="hfp_client_out">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+            <gains>
+                <gain defaultValueMB="0" maxValueMB="4000" minValueMB="-8800" mode="AUDIO_GAIN_MODE_JOINT" name="" stepValueMB="100" useForVolume="false" />
+            </gains>
+        </devicePort>
+        <devicePort tagName="telephony_rx" type="AUDIO_DEVICE_IN_TELEPHONY_RX" role="source" address="hfp_client_in">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO" />
+            <gains>
+                <gain defaultValueMB="0" maxValueMB="4000" minValueMB="-8400" mode="AUDIO_GAIN_MODE_JOINT" name="" stepValueMB="100" useForVolume="false" />
+            </gains>
+        </devicePort>
+    </devicePorts>
+
+    <routes>
+        <route type="mix" sink="primary_input" sources="builtin_mic" />
+        <route type="mix" sink="radio_input" sources="fm_tuner" />
+        <route type="mix" sink="bus0_usage_main" sources="mixport_bus0_usage_main_output" />
+        <route type="mix" sink="telephony_tx" sources="builtin_mic,hfp_tx_mix" />
+        <route type="mix" sink="hfp_rx_mix" sources="telephony_rx" />
+    </routes>
+    </module>

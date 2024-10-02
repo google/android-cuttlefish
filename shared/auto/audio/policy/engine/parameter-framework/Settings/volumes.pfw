@@ -1,0 +1,29 @@
+supDomain: VolumeProfilesForStream
+	domain: Calibration
+		conf: Calibration
+			/Policy/policy/streams/voice_call/applicable_volume_profile/volume_profile = voice_call
+			/Policy/policy/streams/system/applicable_volume_profile/volume_profile = system
+			/Policy/policy/streams/ring/applicable_volume_profile/volume_profile = ring
+			/Policy/policy/streams/music/applicable_volume_profile/volume_profile = music
+			/Policy/policy/streams/alarm/applicable_volume_profile/volume_profile = alarm
+			/Policy/policy/streams/notification/applicable_volume_profile/volume_profile = notification
+			/Policy/policy/streams/bluetooth_sco/applicable_volume_profile/volume_profile = bluetooth_sco
+			/Policy/policy/streams/enforced_audible/applicable_volume_profile/volume_profile = enforced_audible
+			/Policy/policy/streams/tts/applicable_volume_profile/volume_profile = tts
+			/Policy/policy/streams/accessibility/applicable_volume_profile/volume_profile = accessibility
+			/Policy/policy/streams/assistant/applicable_volume_profile/volume_profile = assistant
+			/Policy/policy/streams/rerouting/applicable_volume_profile/volume_profile = rerouting
+			/Policy/policy/streams/patch/applicable_volume_profile/volume_profile = patch
+
+	domain: Dtmf
+		conf: InCall
+			ANY
+				TelephonyMode Is IN_CALL
+				TelephonyMode Is IN_COMMUNICATION
+
+			/Policy/policy/streams/dtmf/applicable_volume_profile/volume_profile = voice_call
+
+		conf: OutOfCall
+			/Policy/policy/streams/dtmf/applicable_volume_profile/volume_profile = dtmf
+
+
