@@ -44,7 +44,7 @@ TEST(AdbConfigTest, SetFromFlags) {
   fruit::Injector<TestData> injector(TestComponent);
   TestData& data = injector.get<TestData&>();
   std::vector<std::string> args = {
-      "--adb_mode=vsock_half_tunnel,native_vsock,unknown",
+      "--adb_mode=vsock_tunnel,vsock_half_tunnel,native_vsock,unknown",
       "--run_adb_connector=false",
   };
   auto flags = injector.getMultibindings<FlagFeature>();
@@ -52,7 +52,7 @@ TEST(AdbConfigTest, SetFromFlags) {
   ASSERT_TRUE(processed.ok()) << processed.error().Trace();
   ASSERT_TRUE(args.empty());
 
-  std::set<AdbMode> modes = {AdbMode::VsockHalfTunnel,
+  std::set<AdbMode> modes = {AdbMode::VsockTunnel, AdbMode::VsockHalfTunnel,
                              AdbMode::NativeVsock, AdbMode::Unknown};
   ASSERT_EQ(data.config.Modes(), modes);
   ASSERT_FALSE(data.config.RunConnector());
@@ -62,7 +62,7 @@ TEST(AdbConfigTest, SerializeDeserialize) {
   fruit::Injector<TestData> injector1(TestComponent);
   TestData& data1 = injector1.get<TestData&>();
   ASSERT_TRUE(
-      data1.config.SetModes({AdbMode::VsockHalfTunnel,
+      data1.config.SetModes({AdbMode::VsockTunnel, AdbMode::VsockHalfTunnel,
                              AdbMode::NativeVsock, AdbMode::Unknown}));
   ASSERT_TRUE(data1.config.SetRunConnector(false));
 
