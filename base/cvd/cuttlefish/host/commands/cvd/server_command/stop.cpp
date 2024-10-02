@@ -84,23 +84,23 @@ CvdStopCommandHandler::CvdStopCommandHandler(
 
 Result<bool> CvdStopCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
-  auto invocation = ParseInvocation(request.Message());
+  auto invocation = ParseInvocation(request);
   return Contains(CmdList(), invocation.command);
 }
 
 Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
     const RequestWithStdio& request) {
-  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
-  cvd_common::Envs envs = request.Envs();
+  auto [subcmd, cmd_args] = ParseInvocation(request);
+  const cvd_common::Envs& env = request.Env();
 
-  const auto [bin, bin_path] = CF_EXPECT(CvdHelpBinPath(subcmd, envs));
+  const auto [bin, bin_path] = CF_EXPECT(CvdHelpBinPath(subcmd, env));
 
   ConstructCommandParam construct_cmd_param{
       .bin_path = bin_path,
       .home = CF_EXPECT(SystemWideUserHome()),
       .args = cmd_args,
-      .envs = envs,
-      .working_dir = request.Message().command_request().working_directory(),
+      .envs = env,
+      .working_dir = request.WorkingDirectory(),
       .command_name = bin,
       .null_stdio = request.IsNullIo()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
@@ -114,16 +114,15 @@ Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
 Result<cvd::Response> CvdStopCommandHandler::Handle(
     const RequestWithStdio& request) {
   CF_EXPECT(CanHandle(request));
-  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+  auto [subcmd, cmd_args] = ParseInvocation(request);
 
   if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
     return CF_EXPECT(HandleHelpCmd(request));
   }
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
-    return CF_EXPECT(NoGroupResponse(request));
+    return NoGroupResponse(request);
   }
-  cvd_common::Envs envs = request.Envs();
   const auto selector_args = request.SelectorArgs();
 
   auto group = CF_EXPECT(SelectGroup(instance_manager_, request));
@@ -136,8 +135,8 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
       .bin_path = ConcatToString(android_host_out, "/bin/", bin),
       .home = group.HomeDir(),
       .args = cmd_args,
-      .envs = envs,
-      .working_dir = request.Message().command_request().working_directory(),
+      .envs = request.Env(),
+      .working_dir = request.WorkingDirectory(),
       .command_name = bin,
       .null_stdio = request.IsNullIo()};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));

@@ -17,55 +17,22 @@
 #include "host/commands/cvd/server_client.h"
 
 #include <fstream>
-#include <optional>
+#include <string>
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
+#include "host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
 
-Result<UnixMessageSocket> GetClient(const SharedFD& client) {
+static Result<UnixMessageSocket> GetClient(const SharedFD& client) {
   UnixMessageSocket result(client);
   CF_EXPECT(result.EnableCredentials(true),
             "Unable to enable UnixMessageSocket credentials.");
   return result;
-}
-
-Result<std::optional<RequestWithStdio>> GetRequest(const SharedFD& client) {
-  UnixMessageSocket reader =
-      CF_EXPECT(GetClient(client), "Couldn't get client");
-  auto read_result = CF_EXPECT(reader.ReadMessage(), "Couldn't read message");
-
-  if (read_result.data.empty()) {
-    LOG(VERBOSE) << "Read empty packet, so the client has probably closed the "
-                    "connection.";
-    return {};
-  };
-
-  std::string serialized(read_result.data.begin(), read_result.data.end());
-  cvd::Request request;
-  CF_EXPECT(request.ParseFromString(serialized),
-            "Unable to parse serialized request proto.");
-
-  CF_EXPECT(read_result.HasFileDescriptors(),
-            "Missing stdio fds from request.");
-  auto fds = CF_EXPECT(read_result.FileDescriptors(),
-                       "Error reading stdio fds from request");
-  CF_EXPECT(fds.size() == 3 || fds.size() == 4, "Wrong number of FDs, received "
-                                                    << fds.size()
-                                                    << ", wanted 3 or 4");
-
-  std::optional<ucred> creds;
-  if (read_result.HasCredentials()) {
-    // TODO(b/198453477): Use Credentials to control command access.
-    creds = CF_EXPECT(read_result.Credentials(), "Failed to get credentials");
-    LOG(DEBUG) << "Has credentials, uid=" << creds->uid;
-  }
-
-  return RequestWithStdio::StdIo(std::move(request));
 }
 
 Result<void> SendResponse(const SharedFD& client,
@@ -82,8 +49,8 @@ Result<void> SendResponse(const SharedFD& client,
   return {};
 }
 
-RequestWithStdio RequestWithStdio::StdIo(cvd::Request message) {
-  return RequestWithStdio(std::move(message), std::cin, std::cout, std::cerr);
+RequestWithStdio RequestWithStdio::StdIo() {
+  return RequestWithStdio(std::cin, std::cout, std::cerr);
 }
 
 static std::istream& NullIn() {
@@ -96,21 +63,17 @@ static std::ostream& NullOut() {
   return *out;
 }
 
-RequestWithStdio RequestWithStdio::NullIo(cvd::Request message) {
-  return RequestWithStdio(std::move(message), NullIn(), NullOut(), NullOut());
+RequestWithStdio RequestWithStdio::NullIo() {
+  return RequestWithStdio(NullIn(), NullOut(), NullOut());
 }
 
-RequestWithStdio RequestWithStdio::InheritIo(cvd::Request message,
-                                             const RequestWithStdio& other) {
-  return RequestWithStdio(std::move(message), other.in_, other.out_,
-                          other.err_);
+RequestWithStdio RequestWithStdio::InheritIo(const RequestWithStdio& other) {
+  return RequestWithStdio(other.in_, other.out_, other.err_);
 }
 
-RequestWithStdio::RequestWithStdio(cvd::Request message, std::istream& in,
-                                   std::ostream& out, std::ostream& err)
-    : message_(std::move(message)), in_(in), out_(out), err_(err) {}
-
-const cvd::Request& RequestWithStdio::Message() const { return message_; }
+RequestWithStdio::RequestWithStdio(std::istream& in, std::ostream& out,
+                                   std::ostream& err)
+    : in_(in), out_(out), err_(err) {}
 
 std::istream& RequestWithStdio::In() const { return in_; }
 
@@ -120,6 +83,62 @@ std::ostream& RequestWithStdio::Err() const { return err_; }
 
 bool RequestWithStdio::IsNullIo() const {
   return &in_ == &NullIn() && &out_ == &NullOut() && &err_ == &NullOut();
+}
+
+const cvd_common::Args& RequestWithStdio::Args() const { return args_; }
+
+RequestWithStdio& RequestWithStdio::AddArguments(
+    std::initializer_list<std::string_view> args) & {
+  return AddArguments(std::vector<std::string_view>(args));
+}
+
+RequestWithStdio RequestWithStdio::AddArguments(
+    std::initializer_list<std::string_view> args) && {
+  return AddArguments(std::vector<std::string_view>(args));
+}
+
+const cvd_common::Args& RequestWithStdio::SelectorArgs() const {
+  return selector_args_;
+}
+
+RequestWithStdio& RequestWithStdio::AddSelectorArguments(
+    std::initializer_list<std::string_view> args) & {
+  return AddSelectorArguments(std::vector<std::string_view>(args));
+}
+
+RequestWithStdio RequestWithStdio::AddSelectorArguments(
+    std::initializer_list<std::string_view> args) && {
+  return AddSelectorArguments(std::vector<std::string_view>(args));
+}
+
+const cvd_common::Envs& RequestWithStdio::Env() const { return env_; }
+
+cvd_common::Envs& RequestWithStdio::Env() { return env_; }
+
+RequestWithStdio& RequestWithStdio::SetEnv(cvd_common::Envs env) & {
+  env_ = std::move(env);
+  return *this;
+}
+
+RequestWithStdio RequestWithStdio::SetEnv(cvd_common::Envs env) && {
+  env_ = std::move(env);
+  return *this;
+}
+
+const std::string& RequestWithStdio::WorkingDirectory() const {
+  return working_directory_;
+}
+
+RequestWithStdio& RequestWithStdio::SetWorkingDirectory(
+    std::string working_directory) & {
+  working_directory_ = std::move(working_directory);
+  return *this;
+}
+
+RequestWithStdio RequestWithStdio::SetWorkingDirectory(
+    std::string working_directory) && {
+  working_directory_ = std::move(working_directory);
+  return *this;
 }
 
 }  // namespace cuttlefish

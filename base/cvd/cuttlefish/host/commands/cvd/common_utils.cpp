@@ -26,6 +26,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
 
@@ -63,39 +64,6 @@ Result<std::string> AndroidHostPath(const cvd_common::Envs& envs) {
   auto current_dir = CurrentDirectory();
   CF_EXPECT(IsValidAndroidHostOutPath(current_dir));
   return current_dir;
-}
-
-cvd::Request MakeRequest(const MakeRequestForm& request_form) {
-  return MakeRequest(request_form, cvd::WAIT_BEHAVIOR_COMPLETE);
-}
-
-cvd::Request MakeRequest(const MakeRequestForm& request_form,
-                         cvd::WaitBehavior wait_behavior) {
-  const auto& args = request_form.cmd_args;
-  const auto& env = request_form.env;
-  const auto& selector_args = request_form.selector_args;
-  cvd::Request request;
-  auto command_request = request.mutable_command_request();
-  for (const std::string& arg : args) {
-    command_request->add_args(arg);
-  }
-  auto selector_opts = command_request->mutable_selector_opts();
-  for (const std::string& selector_arg : selector_args) {
-    selector_opts->add_args(selector_arg);
-  }
-
-  for (const auto& [key, value] : env) {
-    (*command_request->mutable_env())[key] = value;
-  }
-
-  if (!request_form.working_dir) {
-    command_request->set_working_directory(CurrentDirectory());
-  } else {
-    command_request->set_working_directory(request_form.working_dir.value());
-  }
-  command_request->set_wait_behavior(wait_behavior);
-
-  return request;
 }
 
 cvd::Response CommandResponse(const cvd::Status_Code code,

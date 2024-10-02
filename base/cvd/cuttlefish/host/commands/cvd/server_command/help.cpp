@@ -80,14 +80,14 @@ class CvdHelpHandler : public CvdServerHandler {
       : request_handlers_(request_handlers) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     return (invocation.command == "help");
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
 
-    auto args = ParseInvocation(request.Message()).arguments;
+    auto args = ParseInvocation(request).arguments;
     if (args.empty()) {
       request.Out() << CF_EXPECT(TopLevelHelp());
     } else {
@@ -111,12 +111,8 @@ class CvdHelpHandler : public CvdServerHandler {
   }
 
  private:
-  Result<RequestWithStdio> GetLookupRequest(const std::string& arg) {
-    cvd::Request lookup;
-    auto& lookup_cmd = *lookup.mutable_command_request();
-    lookup_cmd.add_args("cvd");
-    lookup_cmd.add_args(arg);
-    return RequestWithStdio::NullIo(std::move(lookup));
+  RequestWithStdio GetLookupRequest(const std::string& arg) {
+    return RequestWithStdio::NullIo().AddArguments({"cvd", arg});
   }
 
   Result<std::string> TopLevelHelp() {
@@ -139,7 +135,7 @@ class CvdHelpHandler : public CvdServerHandler {
     CF_EXPECT(
         !args.empty(),
         "Cannot process subcommand help without valid subcommand argument");
-    auto lookup_request = CF_EXPECT(GetLookupRequest(args.front()));
+    auto lookup_request = GetLookupRequest(args.front());
     auto handler = CF_EXPECT(RequestHandler(lookup_request, request_handlers_));
 
     std::stringstream help_message;

@@ -71,15 +71,14 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
         cvd_snapshot_operations_{"suspend", "resume", "snapshot_take"} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     return Contains(cvd_snapshot_operations_, invocation.command);
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
-    cvd_common::Envs envs = request.Envs();
 
-    auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
+    auto [subcmd, subcmd_args] = ParseInvocation(request);
 
     std::stringstream ss;
     for (const auto& arg : subcmd_args) {
@@ -89,7 +88,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
 
     // may modify subcmd_args by consuming in parsing
     Command command =
-        CF_EXPECT(GenerateCommand(request, subcmd, subcmd_args, envs));
+        CF_EXPECT(GenerateCommand(request, subcmd, subcmd_args, request.Env()));
 
     siginfo_t infop;
     command.Start().Wait(&infop, WEXITED);
@@ -147,7 +146,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
         .home = home,
         .args = cvd_snapshot_args,
         .envs = envs,
-        .working_dir = request.Message().command_request().working_directory(),
+        .working_dir = request.WorkingDirectory(),
         .command_name = android::base::Basename(cvd_snapshot_bin_path),
         .null_stdio = request.IsNullIo()};
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));

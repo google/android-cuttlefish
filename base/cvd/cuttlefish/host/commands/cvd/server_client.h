@@ -19,54 +19,98 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include <optional>
-#include <vector>
+#include <initializer_list>
+#include <string>
+#include <string_view>
+
+#include <google/protobuf/map.h>
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 
 class RequestWithStdio {
  public:
-  static RequestWithStdio StdIo(cvd::Request);
-  static RequestWithStdio NullIo(cvd::Request);
-  static RequestWithStdio InheritIo(cvd::Request, const RequestWithStdio&);
+  static RequestWithStdio StdIo();
+  static RequestWithStdio NullIo();
+  static RequestWithStdio InheritIo(const RequestWithStdio&);
 
-  const cvd::Request& Message() const;
   std::istream& In() const;
   std::ostream& Out() const;
   std::ostream& Err() const;
 
   bool IsNullIo() const;
 
-  // Convenient accessors to commonly used properties in the underlying message
-  cvd_common::Args Args() const {
-    return cvd_common::ConvertToArgs(Message().command_request().args());
+  template <typename T>
+  RequestWithStdio& AddArguments(T&& args) & {
+    for (auto&& arg : args) {
+      args_.emplace_back(arg);
+    }
+    return *this;
   }
-  cvd_common::Args SelectorArgs() const {
-    return cvd_common::ConvertToArgs(
-        Message().command_request().selector_opts().args());
+
+  template <typename T>
+  RequestWithStdio AddArguments(T&& args) && {
+    for (auto&& arg : args) {
+      args_.emplace_back(arg);
+    }
+    return *this;
   }
-  cvd_common::Envs Envs() const {
-    return cvd_common::ConvertToEnvs(Message().command_request().env());
+
+  RequestWithStdio& AddArguments(std::initializer_list<std::string_view>) &;
+  RequestWithStdio AddArguments(std::initializer_list<std::string_view>) &&;
+
+  const cvd_common::Args& Args() const;
+
+  template <typename T>
+  RequestWithStdio& AddSelectorArguments(T&& args) & {
+    for (auto&& arg : args) {
+      selector_args_.emplace_back(arg);
+    }
+    return *this;
   }
+
+  template <typename T>
+  RequestWithStdio AddSelectorArguments(T&& args) && {
+    for (auto&& arg : args) {
+      selector_args_.emplace_back(arg);
+    }
+    return *this;
+  }
+
+  RequestWithStdio& AddSelectorArguments(
+      std::initializer_list<std::string_view>) &;
+  RequestWithStdio AddSelectorArguments(
+      std::initializer_list<std::string_view>) &&;
+
+  const cvd_common::Args& SelectorArgs() const;
+
+  const cvd_common::Envs& Env() const;
+  cvd_common::Envs& Env();
+
+  RequestWithStdio& SetEnv(cvd_common::Envs) &;
+  RequestWithStdio SetEnv(cvd_common::Envs) &&;
+
+  const std::string& WorkingDirectory() const;
+  RequestWithStdio& SetWorkingDirectory(std::string) &;
+  RequestWithStdio SetWorkingDirectory(std::string) &&;
 
  private:
-  RequestWithStdio(cvd::Request, std::istream&, std::ostream&, std::ostream&);
+  RequestWithStdio(std::istream&, std::ostream&, std::ostream&);
+  cvd_common::Args args_;
+  cvd_common::Envs env_;
+  cvd_common::Args selector_args_;
+  std::string working_directory_;
 
-  cvd::Request message_;
   std::istream& in_;
   std::ostream& out_;
   std::ostream& err_;
 };
 
-Result<UnixMessageSocket> GetClient(const SharedFD& client);
-Result<std::optional<RequestWithStdio>> GetRequest(const SharedFD& client);
 Result<void> SendResponse(const SharedFD& client,
                           const cvd::Response& response);
 

@@ -28,16 +28,11 @@
 
 namespace cuttlefish {
 
-CommandInvocation ParseInvocation(const cvd::Request& request) {
+CommandInvocation ParseInvocation(const RequestWithStdio& request) {
   CommandInvocation invocation;
-  if (request.contents_case() != cvd::Request::ContentsCase::kCommandRequest) {
+  invocation.arguments = request.Args();
+  if (invocation.arguments.size() == 0) {
     return invocation;
-  }
-  if (request.command_request().args_size() == 0) {
-    return invocation;
-  }
-  for (const std::string& arg : request.command_request().args()) {
-    invocation.arguments.push_back(arg);
   }
   invocation.arguments[0] = cpp_basename(invocation.arguments[0]);
   if (invocation.arguments[0] == "cvd" && invocation.arguments.size() > 1) {
@@ -114,7 +109,7 @@ Result<Command> ConstructCvdHelpCommand(
     const RequestWithStdio& request) {
   const auto host_artifacts_path = envs.at("ANDROID_HOST_OUT");
   const auto bin_path = host_artifacts_path + "/bin/" + bin_file;
-  auto client_pwd = request.Message().command_request().working_directory();
+  auto client_pwd = request.WorkingDirectory();
   const auto home = (Contains(envs, "HOME") ? envs.at("HOME") : client_pwd);
   cvd_common::Envs envs_copy{envs};
   envs_copy["HOME"] = AbsolutePath(home);
@@ -163,7 +158,7 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
       .home = request_form.home,
       .args = request_form.cmd_args,
       .envs = envs,
-      .working_dir = request.Message().command_request().working_directory(),
+      .working_dir = request.WorkingDirectory(),
       .command_name = request_form.bin_file,
       .null_stdio = request.IsNullIo()};
   return CF_EXPECT(ConstructCommand(construct_cmd_param));
@@ -219,17 +214,15 @@ std::string_view TerminalColors::Cyan() const {
   return is_tty_ ? kTerminalCyan : "";
 }
 
-Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
+cvd::Response NoGroupResponse(const RequestWithStdio& request) {
   cvd::Response response;
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
-  const uid_t uid = getuid();
   TerminalColors colors(isatty(1));
-  std::string notice = fmt::format(
-      "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      colors.Red(), fmt::join(request.Message().command_request().args(), " "),
-      colors.Reset(), colors.BoldRed(), "no device", colors.Reset(),
-      colors.Cyan(), uid, colors.Reset());
+  std::string notice =
+      fmt::format("Command `{}{}{}` is not applicable: {}{}{}", colors.Red(),
+                  fmt::join(request.Args(), " "), colors.Reset(),
+                  colors.BoldRed(), "no device", colors.Reset());
   request.Out() << notice << "\n";
 
   response.mutable_status()->set_message(notice);
@@ -244,8 +237,8 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
   TerminalColors colors(isatty(1));
   auto notice = fmt::format(
       "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      colors.Red(), fmt::join(request.Message().command_request().args(), " "),
-      colors.Reset(), colors.BoldRed(),
+      colors.Red(), fmt::join(request.Args(), " "), colors.Reset(),
+      colors.BoldRed(),
       "No terminal/tty for selecting one of multiple Cuttlefish groups",
       colors.Reset(), colors.Cyan(), uid, colors.Reset());
   request.Out() << notice << "\n";

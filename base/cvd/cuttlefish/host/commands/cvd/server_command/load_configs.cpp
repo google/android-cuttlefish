@@ -52,9 +52,8 @@ The --override flag can be used to give new values for properties in the config 
 )";
 
 Result<CvdFlags> GetCvdFlags(const RequestWithStdio& request) {
-  auto args = ParseInvocation(request.Message()).arguments;
-  auto working_directory =
-      request.Message().command_request().working_directory();
+  auto args = ParseInvocation(request).arguments;
+  auto working_directory = request.WorkingDirectory();
   const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
   return CF_EXPECT(GetCvdFlags(flags));
 }
@@ -69,7 +68,7 @@ class LoadConfigsCommand : public CvdServerHandler {
   ~LoadConfigsCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     return invocation.command == kLoadSubCmd;
   }
 
@@ -181,64 +180,45 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   RequestWithStdio BuildFetchCmd(const RequestWithStdio& request,
                                  const CvdFlags& cvd_flags) {
-    cvd::Request fetch_req;
-    auto& fetch_cmd = *fetch_req.mutable_command_request();
-    *fetch_cmd.mutable_env() = request.Message().command_request().env();
-    fetch_cmd.add_args("cvd");
-    fetch_cmd.add_args("fetch");
-    for (const auto& flag : cvd_flags.fetch_cvd_flags) {
-      fetch_cmd.add_args(flag);
-    }
-    return RequestWithStdio::InheritIo(std::move(fetch_req), request);
+    return RequestWithStdio::InheritIo(request)
+        .SetEnv(request.Env())
+        .AddArguments({"cvd", "fetch"})
+        .AddArguments(cvd_flags.fetch_cvd_flags);
   }
 
   RequestWithStdio BuildLaunchCmd(const RequestWithStdio& request,
                                   const CvdFlags& cvd_flags,
                                   const selector::LocalInstanceGroup& group) {
-    cvd::Request launch_req;
-    auto& launch_cmd = *launch_req.mutable_command_request();
-    launch_cmd.set_working_directory(
-        cvd_flags.load_directories.host_package_directory);
-    *launch_cmd.mutable_env() = request.Message().command_request().env();
-    (*launch_cmd.mutable_env())["HOME"] =
-        cvd_flags.load_directories.launch_home_directory;
-    (*launch_cmd.mutable_env())[kAndroidHostOut] =
-        cvd_flags.load_directories.host_package_directory;
-    (*launch_cmd.mutable_env())[kAndroidSoongHostOut] =
-        cvd_flags.load_directories.host_package_directory;
-    if (Contains(*launch_cmd.mutable_env(), kAndroidProductOut)) {
-      (*launch_cmd.mutable_env()).erase(kAndroidProductOut);
-    }
-
-    /* cvd load will always create instances in daemon mode (to be independent
-     of terminal) and will enable reporting automatically (to run automatically
-     without question during launch)
-     */
-    launch_cmd.add_args("cvd");
-    // The newly created instances don't have an id yet, create will allocate
-    // those
-    launch_cmd.add_args("create");
-    launch_cmd.add_args("--daemon");
-
-    for (const auto& parsed_flag : cvd_flags.launch_cvd_flags) {
-      launch_cmd.add_args(parsed_flag);
-    }
     // Add system flag for multi-build scenario
-    launch_cmd.add_args(fmt::format(
+    std::string system_build_arg = fmt::format(
         "--system_image_dir={}",
-        cvd_flags.load_directories.system_image_directory_flag_value));
+        cvd_flags.load_directories.system_image_directory_flag_value);
+    RequestWithStdio launch_req =
+        RequestWithStdio::InheritIo(request)
+            .SetEnv(request.Env())
+            .SetWorkingDirectory(
+                cvd_flags.load_directories.host_package_directory)
+            // The newly created instances don't have an id yet, create will
+            // allocate those.
+            /* cvd load will always create instances in daemon mode (to be
+             independent of terminal) and will enable reporting automatically
+             (to run automatically without question during launch)
+             */
+            .AddArguments({"cvd", "create", "--daemon", system_build_arg})
+            .AddArguments(cvd_flags.launch_cvd_flags)
+            .AddSelectorArguments(cvd_flags.selector_flags)
+            .AddSelectorArguments({"--group_name", group.GroupName()});
 
-    auto selector_opts = launch_cmd.mutable_selector_opts();
-
-    for (const auto& flag : cvd_flags.selector_flags) {
-      selector_opts->add_args(flag);
+    auto& env = launch_req.Env();
+    env["HOME"] = cvd_flags.load_directories.launch_home_directory;
+    env[kAndroidHostOut] = cvd_flags.load_directories.host_package_directory;
+    env[kAndroidSoongHostOut] =
+        cvd_flags.load_directories.host_package_directory;
+    if (Contains(env, kAndroidProductOut)) {
+      env.erase(kAndroidProductOut);
     }
 
-    // Make sure the newly created group is used by cvd create
-    launch_cmd.mutable_selector_opts()->add_args("--group_name");
-    launch_cmd.mutable_selector_opts()->add_args(group.GroupName());
-
-    return RequestWithStdio::InheritIo(std::move(launch_req), request);
+    return launch_req;
   }
 
  private:

@@ -117,14 +117,14 @@ CvdStatusCommandHandler::CvdStatusCommandHandler(
 
 Result<bool> CvdStatusCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
-  auto invocation = ParseInvocation(request.Message());
+  auto invocation = ParseInvocation(request);
   return Contains(supported_subcmds_, invocation.command);
 }
 
 static Result<RequestWithStdio> ProcessInstanceNameFlag(
     const RequestWithStdio& request) {
-  cvd_common::Envs envs = request.Envs();
-  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+  cvd_common::Envs env = request.Env();
+  auto [subcmd, cmd_args] = ParseInvocation(request);
 
   CvdFlag<std::string> instance_name_flag("instance_name");
   auto instance_name_flag_opt =
@@ -137,7 +137,7 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
   std::string internal_name_or_id = *instance_name_flag_opt;
   int id;
   if (android::base::ParseInt(internal_name_or_id, &id)) {
-    envs[kCuttlefishInstanceEnvVarName] = std::to_string(id);
+    env[kCuttlefishInstanceEnvVarName] = std::to_string(id);
   } else {
     CF_EXPECT(android::base::StartsWith(internal_name_or_id, kCvdNamePrefix),
               "--instance_name should be either cvd-<id> or id");
@@ -145,18 +145,15 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
         internal_name_or_id.substr(std::string(kCvdNamePrefix).size());
     CF_EXPECT(android::base::ParseInt(id_part, &id),
               "--instance_name should be either cvd-<id> or id");
-    envs[kCuttlefishInstanceEnvVarName] = std::to_string(id);
+    env[kCuttlefishInstanceEnvVarName] = std::to_string(id);
   }
 
-  cvd_common::Args new_cmd_args{"cvd", "status"};
-  new_cmd_args.insert(new_cmd_args.end(), cmd_args.begin(), cmd_args.end());
-  cvd::Request new_message = MakeRequest({
-      .cmd_args = new_cmd_args,
-      .env = envs,
-      .selector_args = request.SelectorArgs(),
-      .working_dir = request.Message().command_request().working_directory(),
-  });
-  return RequestWithStdio::InheritIo(std::move(new_message), (request));
+  return RequestWithStdio::InheritIo(request)
+      .AddArguments({"cvd", "status"})
+      .AddArguments(cmd_args)
+      .SetEnv(std::move(env))
+      .AddSelectorArguments(request.SelectorArgs())
+      .SetWorkingDirectory(request.WorkingDirectory());
 }
 
 static Result<bool> HasPrint(cvd_common::Args cmd_args) {
@@ -169,12 +166,12 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
     const RequestWithStdio& request) {
   CF_EXPECT(CanHandle(request));
 
-  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+  auto [subcmd, cmd_args] = ParseInvocation(request);
   CF_EXPECT(Contains(supported_subcmds_, subcmd));
   const bool has_print = CF_EXPECT(HasPrint(cmd_args));
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
-    return CF_EXPECT(NoGroupResponse(request));
+    return NoGroupResponse(request);
   }
   RequestWithStdio new_request = CF_EXPECT(ProcessInstanceNameFlag(request));
 

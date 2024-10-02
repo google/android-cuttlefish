@@ -32,7 +32,7 @@ class CvdCmdlistHandler : public CvdServerHandler {
   CvdCmdlistHandler(CommandSequenceExecutor& executor) : executor_(executor) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     return (invocation.command == "cmd-list");
   }
 
@@ -43,7 +43,7 @@ class CvdCmdlistHandler : public CvdServerHandler {
 
     CF_EXPECT(CanHandle(request));
 
-    auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
+    auto [subcmd, subcmd_args] = ParseInvocation(request);
     const auto subcmds = executor_.CmdList();
 
     std::vector<std::string> subcmds_vec{subcmds.begin(), subcmds.end()};

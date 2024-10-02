@@ -1,0 +1,22 @@
+cc_library(
+    name = "image_aggregator",
+    srcs = [
+        "sparse_image_utils.cc",
+    ],
+    hdrs = [
+        "sparse_image_utils.h",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+    ],
+)
+
+

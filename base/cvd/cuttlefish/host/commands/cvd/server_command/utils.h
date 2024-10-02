@@ -37,7 +37,7 @@ struct CommandInvocation {
   std::vector<std::string> arguments;
 };
 
-CommandInvocation ParseInvocation(const cvd::Request& request);
+CommandInvocation ParseInvocation(const RequestWithStdio& request);
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
 
@@ -75,7 +75,7 @@ Result<bool> IsHelpSubcmd(const std::vector<std::string>& args);
 
 // Call this when there is no instance group is running
 // The function does not verify that.
-Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request);
+cvd::Response NoGroupResponse(const RequestWithStdio& request);
 
 // Call this when there is more than one group, which the selector flags are
 // not sufficients to choose one from. The function does not verify that.

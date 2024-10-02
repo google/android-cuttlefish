@@ -88,7 +88,10 @@ func TestInstance(t *testing.T) {
 		t.Errorf("failed creating bugreport: %s\n", err)
 	}
 	if createErr != nil {
-		t.Fatal(err)
+		t.Fatal(createErr)
+	}
+	if err := e2etesting.VerifyLogsEndpoint(ctx.ServiceURL, group_name, "1"); err != nil {
+		t.Fatalf("failed verifying /logs endpoint: %s", err)
 	}
 	want := &hoapi.CreateCVDResponse{
 		CVDs: []*hoapi.CVD{

@@ -44,7 +44,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
   ~AcloudTranslatorCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     if (invocation.arguments.size() >= 2) {
       if (invocation.command == "acloud" &&
           invocation.arguments[0] == "translator") {
@@ -65,7 +65,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
-    auto invocation = ParseInvocation(request.Message());
+    auto invocation = ParseInvocation(request);
     if (invocation.arguments.empty() || invocation.arguments.size() < 2) {
       return CF_ERR("Translator command not support");
     }

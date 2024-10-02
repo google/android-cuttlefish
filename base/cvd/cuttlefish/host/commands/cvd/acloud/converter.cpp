@@ -147,7 +147,7 @@ namespace acloud_impl {
 
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     const RequestWithStdio& request) {
-  auto arguments = ParseInvocation(request.Message()).arguments;
+  auto arguments = ParseInvocation(request).arguments;
   CF_EXPECT(arguments.size() > 0);
   CF_EXPECT(arguments[0] == "create");
   arguments.erase(arguments.begin());
@@ -326,12 +326,10 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         parsed_flags.image_download_dir.value() + "/acloud_image_artifacts/";
   }
 
-  const auto& request_command = request.Message().command_request();
-  auto host_artifacts_path = CF_EXPECT(
-      AndroidHostPath(cvd_common::ConvertToEnvs(request_command.env())),
-      "Missing host artifacts path");
+  auto host_artifacts_path =
+      CF_EXPECT(AndroidHostPath(request.Env()), "Missing host artifacts path");
 
-  std::vector<cvd::Request> request_protos;
+  std::vector<RequestWithStdio> inner_requests;
   const std::string user_config_path =
       parsed_flags.config_file.value_or(CF_EXPECT(GetDefaultConfigFile()));
 
@@ -375,17 +373,14 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     // the same method by using Android build api to get build ID,
     // but it is not easy in C++.
 
-    cvd::Request& fetch_request = request_protos.emplace_back();
-    auto& fetch_command = *fetch_request.mutable_command_request();
-    fetch_command.add_args("cvd");
-    fetch_command.add_args("fetch");
-    fetch_command.add_args("--directory");
-    fetch_command.add_args(host_dir);
-    fetch_command.add_args("--default_build");
+    RequestWithStdio& fetch_request =
+        inner_requests.emplace_back(RequestWithStdio::InheritIo(request))
+            .AddArguments(
+                {"cvd", "fetch", "--directory", host_dir, "--default_build"});
     fetch_command_str += "--default_build=";
     if (given_branch_target_info) {
-      fetch_command.add_args(given_branch_target_info->branch_str + "/" +
-                             given_branch_target_info->build_target_str);
+      fetch_request.AddArguments({given_branch_target_info->branch_str + "/" +
+                                  given_branch_target_info->build_target_str});
       fetch_command_str += (given_branch_target_info->branch_str + "/" +
                             given_branch_target_info->build_target_str);
     } else {
@@ -393,12 +388,10 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
           parsed_flags.build_target ? "/" + *parsed_flags.build_target : "";
       auto build = parsed_flags.build_id.value_or(
           parsed_flags.branch.value_or("aosp-main"));
-      fetch_command.add_args(build + target);
+      fetch_request.AddArguments({build + target});
       fetch_command_str += (build + target);
     }
     if (system_branch || system_build_id || system_build_target) {
-      fetch_command.add_args("--system_build");
-      fetch_command_str += " --system_build=";
       auto target =
           system_build_target.value_or(parsed_flags.build_target.value_or(""));
       if (target != "") {
@@ -406,68 +399,56 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       }
       auto build =
           system_build_id.value_or(system_branch.value_or("aosp-main"));
-      fetch_command.add_args(build + target);
-      fetch_command_str += (build + target);
+      fetch_request.AddArguments({"--system_build", build + target});
+      fetch_command_str += " --system_build=" + build + target;
     }
     if (parsed_flags.bootloader.branch || parsed_flags.bootloader.build_id ||
         parsed_flags.bootloader.build_target) {
-      fetch_command.add_args("--bootloader_build");
-      fetch_command_str += " --bootloader_build=";
       auto target = parsed_flags.bootloader.build_target.value_or("");
       if (target != "") {
         target = "/" + target;
       }
       auto build = parsed_flags.bootloader.build_id.value_or(
           parsed_flags.bootloader.branch.value_or("aosp_u-boot-mainline"));
-      fetch_command.add_args(build + target);
-      fetch_command_str += (build + target);
+      fetch_request.AddArguments({"--bootloader_build", build + target});
+      fetch_command_str += " --bootloader_build=" + build + target;
     }
     if (boot_branch || boot_build_id || boot_build_target) {
-      fetch_command.add_args("--boot_build");
-      fetch_command_str += " --boot_build=";
       auto target = boot_build_target.value_or("");
       if (target != "") {
         target = "/" + target;
       }
       auto build = boot_build_id.value_or(boot_branch.value_or("aosp-main"));
-      fetch_command.add_args(build + target);
-      fetch_command_str += (build + target);
+      fetch_request.AddArguments({"--boot_build", build + target});
+      fetch_command_str += " --boot_build=" + build + target;
     }
     if (boot_artifact) {
       CF_EXPECT(boot_branch || boot_build_target || boot_build_id,
                 "--boot-artifact must combine with other --boot-* flags");
-      fetch_command.add_args("--boot_artifact");
-      fetch_command_str += " --boot_artifact=";
       auto target = boot_artifact.value_or("");
-      fetch_command.add_args(target);
-      fetch_command_str += (target);
+      fetch_request.AddArguments({"--boot_artifact", target});
+      fetch_command_str += " --boot_artifact=" + target;
     }
     if (ota_branch || ota_build_id || ota_build_target) {
-      fetch_command.add_args("--otatools_build");
-      fetch_command_str += " --otatools_build=";
       auto target = ota_build_target.value_or("");
       if (target != "") {
         target = "/" + target;
       }
       auto build = ota_build_id.value_or(ota_branch.value_or(""));
-      fetch_command.add_args(build + target);
-      fetch_command_str += (build + target);
+      fetch_request.AddArguments({"--otatools_build", build + target});
+      fetch_command_str += " --otatools_build=" + build + target;
     }
     if (kernel_branch || kernel_build_id || kernel_build_target) {
-      fetch_command.add_args("--kernel_build");
-      fetch_command_str += " --kernel_build=";
       auto target = kernel_build_target.value_or("kernel_virt_x86_64");
       auto build = kernel_build_id.value_or(
           kernel_branch.value_or("aosp_kernel-common-android-mainline"));
-      fetch_command.add_args(build + "/" + target);
-      fetch_command_str += (build + "/" + target);
+      fetch_request.AddArguments({"--kernel_build", build + "/" + target});
+      fetch_command_str += " --kernel_build=" + build + "/" + target;
     }
-    auto& fetch_env = *fetch_command.mutable_env();
-    fetch_env[kAndroidHostOut] = host_artifacts_path;
+    fetch_request.Env()[kAndroidHostOut] = host_artifacts_path;
 
     fetch_cvd_args_file = host_dir + "/fetch-cvd-args.txt";
     if (FileExists(fetch_cvd_args_file)) {
-      // file exists
       std::string read_str;
       using android::base::ReadFileToString;
       CF_EXPECT(ReadFileToString(fetch_cvd_args_file.c_str(), &read_str,
@@ -475,7 +456,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       if (read_str == fetch_command_str) {
         // same fetch cvd command, reuse original dir
         fetch_command_str = "";
-        request_protos.pop_back();
+        inner_requests.pop_back();
       }
     }
   }
@@ -495,50 +476,42 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     required_paths = super_image_path;
     required_paths += ("," + parsed_flags.local_system_image.value());
 
-    cvd::Request& mixsuperimage_request = request_protos.emplace_back();
-    auto& mixsuperimage_command =
-        *mixsuperimage_request.mutable_command_request();
-    mixsuperimage_command.add_args("cvd");
-    mixsuperimage_command.add_args("acloud");
-    mixsuperimage_command.add_args("mix-super-image");
-    mixsuperimage_command.add_args("--super_image");
+    RequestWithStdio& mixsuperimage_request =
+        inner_requests.emplace_back(RequestWithStdio::InheritIo(request))
+            .AddArguments(
+                {"cvd", "acloud", "mix-super-image", "--super_image"});
 
-    auto& mixsuperimage_env = *mixsuperimage_command.mutable_env();
+    auto& mix_env = mixsuperimage_request.Env();
     if (parsed_flags.local_image.given) {
       // added image_dir to required_paths for MixSuperImage use if there is
       required_paths.append(",").append(
           parsed_flags.local_image.path.value_or(""));
-      mixsuperimage_env[kAndroidHostOut] = host_artifacts_path;
+      mix_env[kAndroidHostOut] = host_artifacts_path;
 
-      auto product_out = request_command.env().find(kAndroidProductOut);
-      CF_EXPECT(product_out != request_command.env().end(),
-                "Missing " << kAndroidProductOut);
-      mixsuperimage_env[kAndroidProductOut] = product_out->second;
+      const auto& env = request.Env();
+      auto product_out = env.find(kAndroidProductOut);
+      CF_EXPECT(product_out != env.end(), "Missing " << kAndroidProductOut);
+      mix_env[kAndroidProductOut] = product_out->second;
     } else {
-      mixsuperimage_env[kAndroidHostOut] = host_dir;
-      mixsuperimage_env[kAndroidProductOut] = host_dir;
+      mix_env[kAndroidHostOut] = host_dir;
+      mix_env[kAndroidProductOut] = host_dir;
     }
 
-    mixsuperimage_command.add_args(required_paths);
+    mixsuperimage_request.AddArguments({required_paths});
   }
 
-  cvd::Request start_request;
-  auto& start_command = *start_request.mutable_command_request();
-  start_command.add_args("cvd");
-  start_command.add_args("create");
-  start_command.add_args("--daemon");
-  start_command.add_args("--undefok");
-  start_command.add_args("report_anonymous_usage_stats");
-  start_command.add_args("--report_anonymous_usage_stats");
-  start_command.add_args("y");
+  RequestWithStdio start_request = parsed_flags.verbose
+                                       ? RequestWithStdio::InheritIo(request)
+                                       : RequestWithStdio::NullIo();
+  start_request.AddArguments({"cvd", "create", "--daemon", "--undefok",
+                              "report_anonymous_usage_stats",
+                              "--report_anonymous_usage_stats", "y"});
   if (parsed_flags.flavor) {
-    start_command.add_args("-config");
-    start_command.add_args(parsed_flags.flavor.value());
+    start_request.AddArguments({"-config", *parsed_flags.flavor});
   }
 
   if (parsed_flags.local_system_image) {
-    start_command.add_args("-super_image");
-    start_command.add_args(super_image_path);
+    start_request.AddArguments({"-super_image", super_image_path});
   }
 
   if (parsed_flags.local_kernel_image) {
@@ -561,10 +534,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         // an initramfs.img file,
         // e.g. aosp_kernel-common-android-4.14-stable
         if (kernel_image != "" && initramfs_image != "") {
-          start_command.add_args("-kernel_path");
-          start_command.add_args(kernel_image);
-          start_command.add_args("-initramfs_path");
-          start_command.add_args(initramfs_image);
+          start_request.AddArguments({"-kernel_path", kernel_image,
+                                      "-initramfs_path", initramfs_image});
         } else {
           // boot.img case
           // adding boot.img and vendor_boot.img to the path
@@ -572,19 +543,17 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
                                        kBootImageName);
           vendor_boot_image = FindImage(parsed_flags.local_kernel_image.value(),
                                         kVendorBootImageName);
-          start_command.add_args("-boot_image");
-          start_command.add_args(local_boot_image);
+          start_request.AddArguments({"-boot_image", local_boot_image});
           // vendor boot image may not exist
           if (vendor_boot_image != "") {
-            start_command.add_args("-vendor_boot_image");
-            start_command.add_args(vendor_boot_image);
+            start_request.AddArguments(
+                {"-vendor_boot_image", vendor_boot_image});
           }
         }
       } else if (statbuf.st_mode & S_IFREG) {
         // it's a file which directly points to boot.img
         local_boot_image = parsed_flags.local_kernel_image.value();
-        start_command.add_args("-boot_image");
-        start_command.add_args(local_boot_image);
+        start_request.AddArguments({"-boot_image", local_boot_image});
       }
     }
   } else if (kernel_branch || kernel_build_id || kernel_build_target) {
@@ -594,21 +563,16 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     // even if initramfs doesn't exist, launch_cvd will still handle it
     // correctly. We push the initramfs handler to launch_cvd stage.
     std::string initramfs_image = host_dir + "/initramfs.img";
-    start_command.add_args("-kernel_path");
-    start_command.add_args(kernel_image);
-    start_command.add_args("-initramfs_path");
-    start_command.add_args(initramfs_image);
+    start_request.AddArguments(
+        {"-kernel_path", kernel_image, "-initramfs_path", initramfs_image});
   }
 
   if (launch_args) {
-    for (const auto& arg : CF_EXPECT(BashTokenize(*launch_args))) {
-      start_command.add_args(arg);
-    }
+    start_request.AddArguments(CF_EXPECT(BashTokenize(*launch_args)));
   }
   if (acloud_config.launch_args != "") {
-    for (const auto& arg : CF_EXPECT(BashTokenize(acloud_config.launch_args))) {
-      start_command.add_args(arg);
-    }
+    start_request.AddArguments(
+        CF_EXPECT(BashTokenize(acloud_config.launch_args)));
   }
   if (pet_name) {
     const auto [group_name, instance_name] =
@@ -623,28 +587,26 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     instance_name_arg.append(selector::SelectorFlags::kInstanceName)
         .append("=")
         .append(instance_name);
-    start_command.mutable_selector_opts()->add_args(group_name_arg);
-    start_command.mutable_selector_opts()->add_args(instance_name_arg);
+    start_request.AddSelectorArguments({group_name_arg, instance_name_arg});
   }
   if (use_16k) {
-    start_command.add_args("--use_16k");
+    start_request.AddArguments({"--use_16k"});
   }
 
-  auto& start_env = *start_command.mutable_env();
+  auto& start_env = start_request.Env();
   if (parsed_flags.local_image.given) {
     if (parsed_flags.local_image.path) {
       std::string local_image_path_str = parsed_flags.local_image.path.value();
       // Python acloud source: local_image_local_instance.py;l=81
       // this acloud flag is equal to launch_cvd flag system_image_dir
-      start_command.add_args("-system_image_dir");
-      start_command.add_args(local_image_path_str);
+      start_request.AddArguments({"-system_image_dir", local_image_path_str});
     }
 
     start_env[kAndroidHostOut] = host_artifacts_path;
 
-    auto product_out = request_command.env().find(kAndroidProductOut);
-    CF_EXPECT(product_out != request_command.env().end(),
-              "Missing " << kAndroidProductOut);
+    const auto& env = request.Env();
+    auto product_out = env.find(kAndroidProductOut);
+    CF_EXPECT(product_out != env.end(), "Missing " << kAndroidProductOut);
     start_env[kAndroidProductOut] = product_out->second;
   } else {
     start_env[kAndroidHostOut] = host_dir;
@@ -661,24 +623,15 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
   // we don't know which HOME is assigned by cvd start.
   // cvd server does not rely on the working directory for cvd start
-  *start_command.mutable_working_directory() =
-      request_command.working_directory();
-
-  RequestWithStdio child_request =
-      parsed_flags.verbose
-          ? RequestWithStdio::InheritIo(std::move(start_request), request)
-          : RequestWithStdio::NullIo(std::move(start_request));
+  start_request.SetWorkingDirectory(request.WorkingDirectory());
 
   ConvertedAcloudCreateCommand ret{
-      .start_request = child_request,
+      .prep_requests = std::move(inner_requests),
+      .start_request = std::move(start_request),
       .fetch_command_str = fetch_command_str,
       .fetch_cvd_args_file = fetch_cvd_args_file,
       .verbose = parsed_flags.verbose,
   };
-  for (auto& request_proto : request_protos) {
-    ret.prep_requests.emplace_back(
-        RequestWithStdio::InheritIo(std::move(request_proto), request));
-  }
   return ret;
 }
 

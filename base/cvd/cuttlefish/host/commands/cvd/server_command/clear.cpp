@@ -57,7 +57,7 @@ CvdClearCommandHandler::CvdClearCommandHandler(
 
 Result<bool> CvdClearCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
-  auto invocation = ParseInvocation(request.Message());
+  auto invocation = ParseInvocation(request);
   return invocation.command == clearCmd;
 }
 
@@ -68,7 +68,7 @@ Result<cvd::Response> CvdClearCommandHandler::Handle(
   cvd::Response response;
   response.mutable_command_response();
 
-  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+  auto [subcmd, cmd_args] = ParseInvocation(request);
 
   if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
     request.Out() << kSummaryHelpText << std::endl;
