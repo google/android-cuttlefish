@@ -124,6 +124,7 @@ message Vm {
   }
   repeated CustomAction custom_actions = 9;
   optional bool enable_virtiofs = 10;
+  optional bool netsim_bt = 11;
 }
 
 message Crosvm {
