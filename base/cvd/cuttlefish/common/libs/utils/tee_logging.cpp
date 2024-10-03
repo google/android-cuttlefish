@@ -24,7 +24,6 @@
 #include <cinttypes>
 #include <cstring>
 #include <ctime>
-#include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>

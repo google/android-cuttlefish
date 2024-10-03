@@ -70,6 +70,8 @@ int LoggingCurlDebugFunction(CURL*, curl_infotype type, char* data, size_t size,
     case CURLINFO_SSL_DATA_OUT:
       break;
     case CURLINFO_END:
+      LOG(VERBOSE) << "CURLINFO_END ";
+      LOG(DEBUG) << ScrubSecrets(TrimWhitespace(data, size));
       break;
     default:
       LOG(ERROR) << "Unexpected cURL output type: " << type;
