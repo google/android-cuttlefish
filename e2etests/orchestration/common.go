@@ -131,6 +131,33 @@ func (h *DockerHelper) RunContainer(img string, hostPort int) (string, error) {
 	return createRes.ID, nil
 }
 
+func (h *DockerHelper) PullLogs(id string) error {
+	// `TEST_UNDECLARED_OUTPUTS_DIR` env var is defined by bazel
+	// https://bazel.build/reference/test-encyclopedia#initial-conditions
+	val, ok := os.LookupEnv("TEST_UNDECLARED_OUTPUTS_DIR")
+	if !ok {
+		return errors.New("`TEST_UNDECLARED_OUTPUTS_DIR` was not found")
+	}
+	filename := filepath.Join(val, "container.log")
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	opts := types.ContainerLogsOptions{ShowStdout: true}
+	reader, err := h.client.ContainerLogs(ctx, id, opts)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(f, reader)
+	if err != nil && err != io.EOF {
+		return err
+	}
+	return nil
+}
+
 func (h *DockerHelper) RemoveContainer(id string) error {
 	if err := h.client.ContainerRemove(context.TODO(), id, types.ContainerRemoveOptions{Force: true}); err != nil {
 		return err
@@ -143,6 +170,9 @@ func Cleanup(ctx *TestContext) {
 	if err != nil {
 		log.Printf("cleanup: failed creating docker helper: %s\n", err)
 		return
+	}
+	if err := dockerHelper.PullLogs(ctx.DockerContainerID); err != nil {
+		log.Printf("cleanup: failed pulling container logs: %s\n", err)
 	}
 	if err := dockerHelper.RemoveContainer(ctx.DockerContainerID); err != nil {
 		log.Printf("cleanup: failed removing container: %s\n", err)

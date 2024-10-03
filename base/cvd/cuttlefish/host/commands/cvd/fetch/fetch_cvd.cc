@@ -18,10 +18,8 @@
 #include <sys/stat.h>
 
 #include <chrono>
-#include <fstream>
 #include <future>
 #include <iostream>
-#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
@@ -32,8 +30,6 @@
 #include <curl/curl.h>
 #include <sparse/sparse.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/archive.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
@@ -186,9 +182,10 @@ bool ConvertToRawImageNoBinary(const std::string& image_path) {
 
   std::string tmp_raw_image_path = image_path + ".raw";
 
-  //simg2img logic to convert sparse image to raw image.
+  // simg2img logic to convert sparse image to raw image.
   struct sparse_file* s;
-  int out = open(tmp_raw_image_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0664);
+  int out = open(tmp_raw_image_path.c_str(),
+                 O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0664);
   int in = open(image_path.c_str(), O_RDONLY | O_BINARY);
   if (in < 0) {
     LOG(FATAL) << "Cannot open input file " << image_path;
@@ -338,8 +335,9 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   const auto cache_base_path = PerUserDir() + "/cache";
   return CreateBuildApi(std::move(retrying_http_client), std::move(curl),
                         std::move(credential_source), std::move(flags.api_key),
-                        flags.wait_retry_period, std::move(flags.api_base_url),
-                        flags.enable_caching, std::move(cache_base_path));
+                        flags.wait_retry_period, std::move(flags.api_base_url), 
+                        std::move(flags.project_id), flags.enable_caching, 
+                        std::move(cache_base_path));
 }
 
 Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {
@@ -762,7 +760,11 @@ Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
 
 }  // namespace
 
-Result<void> FetchCvdMain(int argc, char** argv) {
+std::string GetFetchLogsFileName(const std::string& target_directory) {
+  return target_directory + "/fetch.log";
+}
+
+Result<void> FetchCvdMain(int argc, char** argv, bool log_to_stderr) {
   android::base::InitLogging(argv, android::base::StderrLogger);
   const FetchFlags flags = CF_EXPECT(GetFlagValues(argc, argv));
   const bool append_subdirectory = ShouldAppendSubdirectory(flags);
@@ -770,11 +772,17 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   HostToolsTarget host_target = GetHostToolsTarget(flags, append_subdirectory);
   CF_EXPECT(EnsureDirectoriesExist(flags.target_directory,
                                    host_target.host_tools_directory, targets));
-  android::base::SetLogger(
-      LogToStderrAndFiles({flags.target_directory + "/fetch.log"}));
+  std::string log_file = GetFetchLogsFileName(flags.target_directory);
+  auto old_logger = android::base::SetLogger(
+      log_to_stderr ? LogToStderrAndFiles({log_file}) : LogToFiles({log_file}));
   android::base::SetMinimumLogSeverity(flags.verbosity);
 
-  CF_EXPECT(Fetch(flags, host_target, targets));
+  auto fetch_res = Fetch(flags, host_target, targets);
+  // This function is no longer only called direcly from a main function, so the
+  // previous logger must be restored. This also ensures logs from other
+  // components don't land in fetch.log.
+  android::base::SetLogger(std::move(old_logger));
+  CF_EXPECT(std::move(fetch_res));
   return {};
 }
 

@@ -52,6 +52,7 @@ struct LoadFlags {
   std::vector<Override> overrides;
   std::string config_path;
   std::string credential_source;
+  std::string project_id;
   std::string base_dir;
 };
 

@@ -24,6 +24,7 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/interrupt_listener.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
@@ -160,7 +161,10 @@ class LoadConfigsCommand : public CvdServerHandler {
         group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
         instance_manager_.UpdateInstanceGroup(group);
       }
-      CF_EXPECT(std::move(fetch_res));
+      CF_EXPECTF(
+          std::move(fetch_res),
+          "Failed to fetch build artifacts, check {} for details",
+          GetFetchLogsFileName(cvd_flags.load_directories.target_directory));
     }
 
     auto launch_cmd = BuildLaunchCmd(request, cvd_flags, group);
@@ -180,7 +184,7 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   RequestWithStdio BuildFetchCmd(const RequestWithStdio& request,
                                  const CvdFlags& cvd_flags) {
-    return RequestWithStdio::InheritIo(request)
+    return RequestWithStdio::NullIo()
         .SetEnv(request.Env())
         .AddArguments({"cvd", "fetch"})
         .AddArguments(cvd_flags.fetch_cvd_flags);

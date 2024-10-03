@@ -39,6 +39,7 @@ message Fetch {
   optional bool external_dns_resolver = 4;
   optional bool keep_downloaded_archives = 5;
   optional string api_base_url = 6;
+  optional string project_id = 7;
 }
 
 message Instance {
