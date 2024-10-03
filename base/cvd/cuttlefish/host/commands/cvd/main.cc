@@ -31,10 +31,9 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/client.h"
-#include "host/commands/cvd/cvd.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/fetch/fetch_cvd.h"
-#include "host/commands/cvd/flag.h"
+#include "host/commands/cvd/cvd.h"
+#include "common/libs/utils/flag_parser.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "host/commands/cvd/metrics/cvd_metrics_api.h"
 #include "host/commands/cvd/run_server.h"
@@ -143,7 +142,7 @@ void IncreaseFileLimit() {
     return;
   }
   LOG(VERBOSE) << "Old limits -> soft limit= " << old_lim.rlim_cur << "\t"
-            << " hard limit= " << old_lim.rlim_max;
+               << " hard limit= " << old_lim.rlim_max;
   // Set new value
   old_lim.rlim_cur = old_lim.rlim_max;
   // Set limits
@@ -179,15 +178,15 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
     TryInheritServerDatabase();
   }
 
-
   auto env = EnvpToMap(envp);
   // TODO(315772518) Re-enable once metrics send is skipped in a env
   // without network support
   // CvdMetrics::SendCvdMetrics(all_args);
 
   if (android::base::Basename(all_args[0]) == "fetch_cvd") {
-    CF_EXPECT(FetchCvdMain(argc, argv, /*log_to_stderr*/ true));
-    return {};
+    // Convert `fetch_cvd args...` into `cvd fetch args...`
+    all_args[0] = "fetch";
+    all_args.insert(all_args.begin(), "cvd");
   }
 
   IncreaseFileLimit();
