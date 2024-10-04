@@ -134,15 +134,15 @@ Result<Build> BuildApi::GetBuild(const DeviceBuildString& build_string,
   std::string status = CF_EXPECT(BuildStatus(proposed_build));
   CF_EXPECT(status != "",
             proposed_build << " is not a valid branch or build id.");
-  LOG(INFO) << "Status for build " << proposed_build << " is " << status;
+  LOG(DEBUG) << "Status for build " << proposed_build << " is " << status;
   while (retry_period_ != std::chrono::seconds::zero() &&
          !StatusIsTerminal(status)) {
-    LOG(INFO) << "Status is \"" << status << "\". Waiting for "
+    LOG(DEBUG) << "Status is \"" << status << "\". Waiting for "
               << retry_period_.count() << " seconds.";
     std::this_thread::sleep_for(retry_period_);
     status = CF_EXPECT(BuildStatus(proposed_build));
   }
-  LOG(INFO) << "Status for build " << proposed_build << " is " << status;
+  LOG(DEBUG) << "Status for build " << proposed_build << " is " << status;
   proposed_build.product = CF_EXPECT(ProductName(proposed_build));
   return proposed_build;
 }
