@@ -24,6 +24,6 @@ inline constexpr char kHostToolsSubdirectory[] = "host_tools";
 
 std::string GetFetchLogsFileName(const std::string& target_directory);
 
-Result<void> FetchCvdMain(int argc, char** argv, bool log_to_stderr);
+Result<void> FetchCvdMain(int argc, char** argv);
 
 }  // namespace cuttlefish

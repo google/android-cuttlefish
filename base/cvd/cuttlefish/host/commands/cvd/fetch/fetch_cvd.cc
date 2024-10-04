@@ -764,7 +764,7 @@ std::string GetFetchLogsFileName(const std::string& target_directory) {
   return target_directory + "/fetch.log";
 }
 
-Result<void> FetchCvdMain(int argc, char** argv, bool log_to_stderr) {
+Result<void> FetchCvdMain(int argc, char** argv) {
   android::base::InitLogging(argv, android::base::StderrLogger);
   const FetchFlags flags = CF_EXPECT(GetFlagValues(argc, argv));
   const bool append_subdirectory = ShouldAppendSubdirectory(flags);
@@ -773,16 +773,21 @@ Result<void> FetchCvdMain(int argc, char** argv, bool log_to_stderr) {
   CF_EXPECT(EnsureDirectoriesExist(flags.target_directory,
                                    host_target.host_tools_directory, targets));
   std::string log_file = GetFetchLogsFileName(flags.target_directory);
-  auto old_logger = android::base::SetLogger(
-      log_to_stderr ? LogToStderrAndFiles({log_file}, "", MetadataLevel::FULL)
-                    : LogToFiles({log_file}));
-  android::base::SetMinimumLogSeverity(flags.verbosity);
+  auto old_logger = android::base::SetLogger(LogToStderrAndFiles(
+      {log_file}, "", MetadataLevel::FULL, flags.verbosity));
+  // Set the android logger to full verbosity, the tee logger will choose
+  // whether to write each line.
+  auto old_severity =
+      android::base::SetMinimumLogSeverity(android::base::VERBOSE);
 
   auto fetch_res = Fetch(flags, host_target, targets);
+
   // This function is no longer only called direcly from a main function, so the
   // previous logger must be restored. This also ensures logs from other
   // components don't land in fetch.log.
   android::base::SetLogger(std::move(old_logger));
+  android::base::SetMinimumLogSeverity(old_severity);
+
   CF_EXPECT(std::move(fetch_res));
   return {};
 }
