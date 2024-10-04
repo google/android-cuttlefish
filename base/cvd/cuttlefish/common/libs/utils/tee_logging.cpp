@@ -43,8 +43,8 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/result.h"
 
-using android::base::GetThreadId;
 using android::base::FATAL;
+using android::base::GetThreadId;
 using android::base::LogSeverity;
 using android::base::StringPrintf;
 
@@ -148,10 +148,12 @@ static std::pair<int, int> CountSizeAndNewLines(const char* message) {
 }
 
 // Copied from system/libbase/logging_splitters.h
-// This splits the message up line by line, by calling log_function with a pointer to the start of
-// each line and the size up to the newline character.  It sends size = -1 for the final line.
+// This splits the message up line by line, by calling log_function with a
+// pointer to the start of each line and the size up to the newline character.
+// It sends size = -1 for the final line.
 template <typename F, typename... Args>
-static void SplitByLines(const char* msg, const F& log_function, Args&&... args) {
+static void SplitByLines(const char* msg, const F& log_function,
+                         Args&&... args) {
   const char* newline = strchr(msg, '\n');
   while (newline != nullptr) {
     log_function(msg, newline - msg, args...);
@@ -163,8 +165,8 @@ static void SplitByLines(const char* msg, const F& log_function, Args&&... args)
 }
 
 // Copied from system/libbase/logging_splitters.h
-// This adds the log header to each line of message and returns it as a string intended to be
-// written to stderr.
+// This adds the log header to each line of message and returns it as a string
+// intended to be written to stderr.
 std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
                                   LogSeverity severity, const char* tag,
                                   const char* file, unsigned int line,
@@ -178,11 +180,13 @@ std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
   char severity_char = log_characters[severity];
   std::string line_prefix;
   if (file != nullptr) {
-    line_prefix = StringPrintf("%s %c %s %5d %5" PRIu64 " %s:%u] ", tag ? tag : "nullptr",
-                               severity_char, timestamp, pid, tid, file, line);
+    line_prefix =
+        StringPrintf("%s %c %s %5d %5" PRIu64 " %s:%u] ", tag ? tag : "nullptr",
+                     severity_char, timestamp, pid, tid, file, line);
   } else {
-    line_prefix = StringPrintf("%s %c %s %5d %5" PRIu64 " ", tag ? tag : "nullptr", severity_char,
-                               timestamp, pid, tid);
+    line_prefix =
+        StringPrintf("%s %c %s %5d %5" PRIu64 " ", tag ? tag : "nullptr",
+                     severity_char, timestamp, pid, tid);
   }
 
   auto [size, new_lines] = CountSizeAndNewLines(message);
@@ -220,13 +224,10 @@ std::string StripColorCodes(const std::string& str) {
   return sstream.str();
 }
 
-void TeeLogger::operator()(
-    android::base::LogId,
-    android::base::LogSeverity severity,
-    const char* tag,
-    const char* file,
-    unsigned int line,
-    const char* message) {
+void TeeLogger::operator()(android::base::LogId,
+                           android::base::LogSeverity severity, const char* tag,
+                           const char* file, unsigned int line,
+                           const char* message) {
   for (const auto& destination : destinations_) {
     std::string msg_with_prefix = prefix_ + message;
     std::string output_string;
@@ -277,14 +278,15 @@ TeeLogger LogToFiles(const std::vector<std::string>& files,
   return TeeLogger(SeverityTargetsForFiles(files), prefix);
 }
 
-TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files,
-                              const std::string& prefix,
-                              MetadataLevel stderr_level) {
+TeeLogger LogToStderrAndFiles(
+    const std::vector<std::string>& files, const std::string& prefix,
+    MetadataLevel stderr_level,
+    std::optional<android::base::LogSeverity> stderr_severity) {
   std::vector<SeverityTarget> log_severities = SeverityTargetsForFiles(files);
-  log_severities.push_back(SeverityTarget{ConsoleSeverity(),
-                                          SharedFD::Dup(/* stderr */ 2),
-                                          stderr_level});
+  log_severities.push_back(
+      SeverityTarget{stderr_severity ? *stderr_severity : ConsoleSeverity(),
+                     SharedFD::Dup(/* stderr */ 2), stderr_level});
   return TeeLogger(log_severities, prefix);
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
