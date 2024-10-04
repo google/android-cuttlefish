@@ -423,6 +423,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_kernel_path(
     const std::string& kernel_path) {
   (*Dictionary())[kKernelPath] = kernel_path;
 }
+static constexpr char kVvmtruststorePath[] = "vvmtruststore_path";
+void CuttlefishConfig::MutableInstanceSpecific::set_vvmtruststore_path(
+    const std::string& vvmtruststore_path) {
+  (*Dictionary())[kVvmtruststorePath] = vvmtruststore_path;
+}
+std::string CuttlefishConfig::InstanceSpecific::vvmtruststore_path() const {
+  return (*Dictionary())[kVvmtruststorePath].asString();
+}
 // end of system image files
 
 static constexpr char kDefaultTargetZip[] = "default_target_zip";
