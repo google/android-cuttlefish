@@ -184,9 +184,11 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   RequestWithStdio BuildFetchCmd(const RequestWithStdio& request,
                                  const CvdFlags& cvd_flags) {
-    return RequestWithStdio::NullIo()
+    return RequestWithStdio::InheritIo(request)
         .SetEnv(request.Env())
-        .AddArguments({"cvd", "fetch"})
+        // The fetch operation is too verbose by default, set it to WARNING
+        // unconditionally, the full logs are available in fetch.log anyways.
+        .AddArguments({"cvd", "fetch", "-verbosity", "WARNING"})
         .AddArguments(cvd_flags.fetch_cvd_flags);
   }
 

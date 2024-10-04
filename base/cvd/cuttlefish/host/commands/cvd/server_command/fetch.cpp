@@ -66,8 +66,7 @@ Result<cvd::Response> CvdFetchCommandHandler::Handle(
     args_data.emplace_back(argument.data());
   }
 
-  CF_EXPECT(FetchCvdMain(args_data.size(), args_data.data(),
-                         /*log_to_stderr*/ !request.IsNullIo()));
+  CF_EXPECT(FetchCvdMain(args_data.size(), args_data.data()));
 
   cvd::Response response;
   response.mutable_command_response();
