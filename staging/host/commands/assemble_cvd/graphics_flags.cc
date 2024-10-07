@@ -270,6 +270,9 @@ Result<std::string> SelectGpuMode(
       if (vmm == VmmMode::kQemu && !UseQemuPrebuilt()) {
         LOG(INFO) << "Not using QEMU prebuilt (QEMU 8+): selecting guest swiftshader";
         return kGpuModeGuestSwiftshader;
+      } else if (guest_config.prefer_drm_virgl_when_supported) {
+        LOG(INFO) << "GPU mode from guest config: drm_virgl";
+        return kGpuModeDrmVirgl;
       } else if (!guest_config.gfxstream_supported) {
         LOG(INFO) << "GPU auto mode: guest does not support gfxstream, "
                      "enabling --gpu_mode=guest_swiftshader";

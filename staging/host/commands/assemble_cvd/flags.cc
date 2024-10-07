@@ -707,6 +707,11 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
         GetAndroidInfoConfig(instance_android_info_txt, "vhost_user_vsock");
     guest_config.vhost_user_vsock = res_vhost_user_vsock.value_or("") == "true";
 
+    auto res_prefer_drm_virgl_when_supported = GetAndroidInfoConfig(
+        instance_android_info_txt, "prefer_drm_virgl_when_supported");
+    guest_config.prefer_drm_virgl_when_supported =
+        res_prefer_drm_virgl_when_supported.value_or("") == "true";
+
     guest_configs.push_back(guest_config);
   }
   return guest_configs;
