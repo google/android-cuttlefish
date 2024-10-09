@@ -29,10 +29,19 @@ TARGET_KERNEL_USE ?= 6.6
 endif
 
 TARGET_KERNEL_ARCH ?= $(TARGET_ARCH)
+
+ifneq (, $(filter $(PRODUCT_NAME),cf_x86_64_al cf_x86_64_desktop))
+# TODO: b/357660371 - cf_arm64_desktop should use the desktop kernel, too
+# TODO: b/371116818 - Stop matching soon-to-be-deleted cf_x86_64_al target.
+SYSTEM_DLKM_SRC ?= device/google/cuttlefish_prebuilts/kernel/6.6-x86_64-desktop/system_dlkm
+KERNEL_MODULES_PATH ?= device/google/cuttlefish_prebuilts/kernel/6.6-x86_64-desktop/vendor_dlkm
+else
 SYSTEM_DLKM_SRC ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)
-TARGET_KERNEL_PATH ?= $(SYSTEM_DLKM_SRC)/kernel-$(TARGET_KERNEL_USE)
 KERNEL_MODULES_PATH ?= \
     kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/$(subst _,-,$(TARGET_KERNEL_ARCH))
+endif
+
+TARGET_KERNEL_PATH ?= $(SYSTEM_DLKM_SRC)/kernel-$(TARGET_KERNEL_USE)
 PRODUCT_COPY_FILES += $(TARGET_KERNEL_PATH):kernel
 
 BOARD_KERNEL_VERSION := $(word 1,$(subst vermagic=,,$(shell egrep -h -ao -m 1 'vermagic=.*' $(KERNEL_MODULES_PATH)/nd_virtio.ko)))
