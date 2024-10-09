@@ -500,9 +500,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     mixsuperimage_request.AddArguments({required_paths});
   }
 
-  RequestWithStdio start_request = parsed_flags.verbose
-                                       ? RequestWithStdio::InheritIo(request)
-                                       : RequestWithStdio::NullIo();
+  RequestWithStdio start_request = RequestWithStdio::InheritIo(request);
   start_request.AddArguments({"cvd", "create", "--daemon", "--undefok",
                               "report_anonymous_usage_stats",
                               "--report_anonymous_usage_stats", "y"});
