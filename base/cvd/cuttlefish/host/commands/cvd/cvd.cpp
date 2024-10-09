@@ -64,7 +64,7 @@ Result<cvd::Response> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
     const std::unordered_map<std::string, std::string>& env,
     const std::vector<std::string>& selector_args) {
-  RequestWithStdio request = RequestWithStdio::StdIo()
+  RequestWithStdio request = RequestWithStdio()
                                  .AddArguments(cvd_process_args)
                                  .SetEnv(env)
                                  .AddSelectorArguments(selector_args)

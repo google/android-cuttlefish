@@ -35,15 +35,12 @@ namespace cuttlefish {
 
 class RequestWithStdio {
  public:
-  static RequestWithStdio StdIo();
-  static RequestWithStdio NullIo();
-  static RequestWithStdio InheritIo(const RequestWithStdio&);
+  RequestWithStdio();
 
-  std::istream& In() const;
-  std::ostream& Out() const;
-  std::ostream& Err() const;
+  std::istream& In() const { return in_; }
+  std::ostream& Out() const { return out_; }
+  std::ostream& Err() const { return err_; }
 
-  bool IsNullIo() const;
 
   template <typename T>
   RequestWithStdio& AddArguments(T&& args) & {

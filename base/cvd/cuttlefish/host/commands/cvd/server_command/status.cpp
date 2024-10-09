@@ -148,7 +148,7 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
     env[kCuttlefishInstanceEnvVarName] = std::to_string(id);
   }
 
-  return RequestWithStdio::InheritIo(request)
+  return RequestWithStdio()
       .AddArguments({"cvd", "status"})
       .AddArguments(cmd_args)
       .SetEnv(std::move(env))

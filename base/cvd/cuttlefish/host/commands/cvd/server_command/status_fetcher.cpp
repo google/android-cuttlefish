@@ -140,8 +140,8 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
                                             .args = cmd_args,
                                             .envs = envs,
                                             .working_dir = working_dir,
-                                            .command_name = bin,
-                                            .null_stdio = request.IsNullIo()};
+                                            .command_name = bin
+  };
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   std::string serialized_json;
@@ -251,7 +251,7 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
   group_json["start_time"] = selector::Format(group.StartTime());
 
   RequestWithStdio group_request =
-      RequestWithStdio::InheritIo(original_request)
+      RequestWithStdio()
           .AddArguments({"cvd", "status", "--print", "--all_instances"})
           .SetEnv(original_request.Env())
           .AddSelectorArguments({"--group_name", group.GroupName()})

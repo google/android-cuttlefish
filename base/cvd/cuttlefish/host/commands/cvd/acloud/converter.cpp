@@ -374,7 +374,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     // but it is not easy in C++.
 
     RequestWithStdio& fetch_request =
-        inner_requests.emplace_back(RequestWithStdio::InheritIo(request))
+        inner_requests.emplace_back(RequestWithStdio())
             .AddArguments(
                 {"cvd", "fetch", "--directory", host_dir, "--default_build"});
     fetch_command_str += "--default_build=";
@@ -477,7 +477,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     required_paths += ("," + parsed_flags.local_system_image.value());
 
     RequestWithStdio& mixsuperimage_request =
-        inner_requests.emplace_back(RequestWithStdio::InheritIo(request))
+        inner_requests.emplace_back(RequestWithStdio())
             .AddArguments(
                 {"cvd", "acloud", "mix-super-image", "--super_image"});
 
@@ -500,7 +500,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     mixsuperimage_request.AddArguments({required_paths});
   }
 
-  RequestWithStdio start_request = RequestWithStdio::InheritIo(request);
+  RequestWithStdio start_request = RequestWithStdio();
   start_request.AddArguments({"cvd", "create", "--daemon", "--undefok",
                               "report_anonymous_usage_stats",
                               "--report_anonymous_usage_stats", "y"});

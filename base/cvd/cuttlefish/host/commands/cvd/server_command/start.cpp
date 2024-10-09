@@ -411,8 +411,8 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
       .args = args,
       .envs = envs,
       .working_dir = request.WorkingDirectory(),
-      .command_name = bin_file,
-      .null_stdio = false};
+      .command_name = bin_file
+  };
   Command non_help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   // Print everything to stderr, cvd needs to print JSON to stdout which
   // would be unparseable with the subcommand's output.

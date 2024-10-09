@@ -155,8 +155,8 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
         .args = subcmd_args,
         .envs = std::move(envs),
         .working_dir = request.WorkingDirectory(),
-        .command_name = bin_base,
-        .null_stdio = request.IsNullIo()};
+        .command_name = bin_base
+    };
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
     return command;
   }
@@ -205,8 +205,8 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
         .args = cvd_env_args,
         .envs = std::move(envs),
         .working_dir = request.WorkingDirectory(),
-        .command_name = bin_base,
-        .null_stdio = request.IsNullIo()};
+        .command_name = bin_base
+    };
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
     return command;
   }

@@ -86,12 +86,6 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
     command.UnsetFromEnvironment(it.first);
     command.AddEnvironmentVariable(it.first, it.second);
   }
-  if (param.null_stdio) {
-    SharedFD null_fd = SharedFD::Open("/dev/null", O_RDWR);
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, null_fd);
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, null_fd);
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, null_fd);
-  }
 
   if (!param.working_dir.empty()) {
     auto fd =
@@ -121,8 +115,8 @@ Result<Command> ConstructCvdHelpCommand(
                                             .args = subcmd_args,
                                             .envs = std::move(envs_copy),
                                             .working_dir = client_pwd,
-                                            .command_name = bin_file,
-                                            .null_stdio = request.IsNullIo()};
+                                            .command_name = bin_file
+  };
   Command help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   return help_command;
 }
@@ -159,8 +153,8 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
       .args = request_form.cmd_args,
       .envs = envs,
       .working_dir = request.WorkingDirectory(),
-      .command_name = request_form.bin_file,
-      .null_stdio = request.IsNullIo()};
+      .command_name = request_form.bin_file
+  };
   return CF_EXPECT(ConstructCommand(construct_cmd_param));
 }
 

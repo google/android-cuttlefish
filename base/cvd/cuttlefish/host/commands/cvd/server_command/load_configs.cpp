@@ -184,7 +184,7 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   RequestWithStdio BuildFetchCmd(const RequestWithStdio& request,
                                  const CvdFlags& cvd_flags) {
-    return RequestWithStdio::InheritIo(request)
+    return RequestWithStdio()
         .SetEnv(request.Env())
         // The fetch operation is too verbose by default, set it to WARNING
         // unconditionally, the full logs are available in fetch.log anyways.
@@ -200,7 +200,7 @@ class LoadConfigsCommand : public CvdServerHandler {
         "--system_image_dir={}",
         cvd_flags.load_directories.system_image_directory_flag_value);
     RequestWithStdio launch_req =
-        RequestWithStdio::InheritIo(request)
+        RequestWithStdio()
             .SetEnv(request.Env())
             .SetWorkingDirectory(
                 cvd_flags.load_directories.host_package_directory)

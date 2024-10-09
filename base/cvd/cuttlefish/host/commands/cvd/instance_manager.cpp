@@ -181,16 +181,10 @@ Result<void> InstanceManager::UpdateInstance(const LocalInstanceGroup& group,
 Result<void> InstanceManager::IssueStopCommand(
     const RequestWithStdio& request, const std::string& config_file_path,
     selector::LocalInstanceGroup& group) {
-  SharedFD null_fd = SharedFD::Open("/dev/null", O_RDWR);
 
   const auto stop_bin = CF_EXPECT(StopBin(group.HostArtifactsPath()));
   Command command(group.HostArtifactsPath() + "/bin/" + stop_bin);
   command.AddParameter("--clear_instance_dirs");
-  if (request.IsNullIo()) {
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, null_fd);
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, null_fd);
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, null_fd);
-  }
   command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, config_file_path);
   auto wait_result = RunCommand(std::move(command));
   /**
@@ -206,16 +200,6 @@ Result<void> InstanceManager::IssueStopCommand(
         << "without the flag.\n";
     Command no_clear_instance_dir_command(group.HostArtifactsPath() + "/bin/" +
                                           stop_bin);
-    if (request.IsNullIo()) {
-      no_clear_instance_dir_command.RedirectStdIO(
-          Subprocess::StdIOChannel::kStdIn, null_fd);
-      no_clear_instance_dir_command.RedirectStdIO(
-          Subprocess::StdIOChannel::kStdOut, null_fd);
-      no_clear_instance_dir_command.RedirectStdIO(
-          Subprocess::StdIOChannel::kStdErr, null_fd);
-      no_clear_instance_dir_command.AddEnvironmentVariable(
-          kCuttlefishConfigEnvVarName, config_file_path);
-    }
     wait_result = RunCommand(std::move(no_clear_instance_dir_command));
   }
 

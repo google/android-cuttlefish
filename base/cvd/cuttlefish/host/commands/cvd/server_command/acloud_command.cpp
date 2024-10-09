@@ -247,11 +247,6 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
   if (args[0] == "create") {
     cmd.AddParameter("--auto_connect=false");
   }
-  if (request.IsNullIo()) {
-    SharedFD null_fd = SharedFD::Open("/dev/null", O_RDWR, 0644);
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, null_fd);
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, null_fd);
-  }
 
   std::string stdout_;
   SharedFD stdout_pipe_read, stdout_pipe_write;
@@ -300,13 +295,6 @@ Result<void> AcloudCommand::RunAcloudConnect(const RequestWithStdio& request,
   cmd.AddParameter("reconnect");
   cmd.AddParameter("--instance-names");
   cmd.AddParameter(hostname);
-
-  if (request.IsNullIo()) {
-    SharedFD null_fd = SharedFD::Open("/dev/null", O_RDWR, 0644);
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, null_fd);
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, null_fd);
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, null_fd);
-  }
 
   cmd.Start().Wait();
 

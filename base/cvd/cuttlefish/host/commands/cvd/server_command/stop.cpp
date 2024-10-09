@@ -101,8 +101,8 @@ Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
       .args = cmd_args,
       .envs = env,
       .working_dir = request.WorkingDirectory(),
-      .command_name = bin,
-      .null_stdio = request.IsNullIo()};
+      .command_name = bin
+  };
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   siginfo_t infop;
@@ -137,8 +137,8 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
       .args = cmd_args,
       .envs = request.Env(),
       .working_dir = request.WorkingDirectory(),
-      .command_name = bin,
-      .null_stdio = request.IsNullIo()};
+      .command_name = bin
+  };
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   siginfo_t infop;
