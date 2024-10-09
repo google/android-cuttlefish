@@ -16,7 +16,6 @@
 
 #include "host/commands/cvd/server_client.h"
 
-#include <fstream>
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
@@ -49,41 +48,12 @@ Result<void> SendResponse(const SharedFD& client,
   return {};
 }
 
-RequestWithStdio RequestWithStdio::StdIo() {
-  return RequestWithStdio(std::cin, std::cout, std::cerr);
-}
-
-static std::istream& NullIn() {
-  static std::ifstream* in = new std::ifstream("/dev/null");
-  return *in;
-}
-
-static std::ostream& NullOut() {
-  static std::ofstream* out = new std::ofstream("/dev/null");
-  return *out;
-}
-
-RequestWithStdio RequestWithStdio::NullIo() {
-  return RequestWithStdio(NullIn(), NullOut(), NullOut());
-}
-
-RequestWithStdio RequestWithStdio::InheritIo(const RequestWithStdio& other) {
-  return RequestWithStdio(other.in_, other.out_, other.err_);
-}
+RequestWithStdio::RequestWithStdio()
+    : RequestWithStdio(std::cin, std::cout, std::cerr) {}
 
 RequestWithStdio::RequestWithStdio(std::istream& in, std::ostream& out,
                                    std::ostream& err)
     : in_(in), out_(out), err_(err) {}
-
-std::istream& RequestWithStdio::In() const { return in_; }
-
-std::ostream& RequestWithStdio::Out() const { return out_; }
-
-std::ostream& RequestWithStdio::Err() const { return err_; }
-
-bool RequestWithStdio::IsNullIo() const {
-  return &in_ == &NullIn() && &out_ == &NullOut() && &err_ == &NullOut();
-}
 
 const cvd_common::Args& RequestWithStdio::Args() const { return args_; }
 

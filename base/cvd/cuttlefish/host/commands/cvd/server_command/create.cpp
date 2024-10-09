@@ -121,7 +121,7 @@ Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
 RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
                                    cvd_common::Args& args,
                                    const std::string& config_file) {
-  return RequestWithStdio::InheritIo(request)
+  return RequestWithStdio()
       .SetEnv(request.Env())
       .SetWorkingDirectory(request.WorkingDirectory())
       .AddArguments({"cvd", "load"})
@@ -133,7 +133,7 @@ RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
                                     const selector::LocalInstanceGroup& group,
                                     const cvd_common::Args& args,
                                     const cvd_common::Envs& envs) {
-  return RequestWithStdio::InheritIo(request)
+  return RequestWithStdio()
       .SetWorkingDirectory(request.WorkingDirectory())
       .SetEnv(envs)
       .AddArguments({"cvd", "start"})
