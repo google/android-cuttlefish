@@ -36,7 +36,7 @@
 #include <android-base/parsebool.h>
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
-#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/tee_logging.h"
