@@ -41,7 +41,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
