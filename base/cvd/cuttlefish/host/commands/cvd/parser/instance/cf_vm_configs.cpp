@@ -126,6 +126,16 @@ static Result<std::vector<std::string>> CustomConfigsFlags(
   return ret;
 }
 
+static bool EnableVirtioFs(const Instance& instance) {
+  const auto& vm = instance.vm();
+  return vm.has_enable_virtiofs() ? vm.enable_virtiofs() : CF_DEFAULTS_ENABLE_VIRTIOFS;
+}
+
+static bool NetsimBt(const Instance& instance) {
+  const auto& vm = instance.vm();
+  return vm.has_netsim_bt() ? vm.netsim_bt() : CF_DEFAULTS_NETSIM_BT;
+}
+
 Result<std::vector<std::string>> GenerateVmFlags(
     const EnvironmentSpecification& cfg) {
   std::vector<std::string> flags = {
@@ -136,6 +146,8 @@ Result<std::vector<std::string>> GenerateVmFlags(
       CF_EXPECT(ResultInstanceFlag("setupwizard_mode", cfg, SetupWizardMode)),
       GenerateInstanceFlag("uuid", cfg, Uuid),
       GenerateInstanceFlag("enable_sandbox", cfg, EnableSandbox),
+      GenerateInstanceFlag("enable_virtiofs", cfg, EnableVirtioFs),
+      GenerateInstanceFlag("netsim_bt", cfg, NetsimBt),
   };
   return MergeResults(std::move(flags), CF_EXPECT(CustomConfigsFlags(cfg)));
 }

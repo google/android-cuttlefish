@@ -165,6 +165,69 @@ func (h *DockerHelper) RemoveContainer(id string) error {
 	return nil
 }
 
+func (h *DockerHelper) StartADBServer(id, adbBin string) error {
+	return h.exec(id, []string{adbBin, "start-server"})
+}
+
+func (h *DockerHelper) ConnectADB(id, adbBin, serial string) error {
+	return h.exec(id, []string{adbBin, "connect", serial})
+}
+
+func (h *DockerHelper) ExecADBShellCommand(id, adbBin, serial string, cmd []string) error {
+	return h.exec(id, append([]string{adbBin, "-s", serial, "shell"}, cmd...))
+}
+
+type DockerExecExitCodeError struct {
+	ExitCode int
+}
+
+func (e DockerExecExitCodeError) Error() string {
+	return fmt.Sprintf("exit code: %d", e.ExitCode)
+}
+
+func (h *DockerHelper) exec(id string, cmd []string) error {
+	if err := h.runExec(id, cmd); err != nil {
+		return fmt.Errorf("docker exec %v failed: %w", cmd, err)
+	}
+	return nil
+}
+
+func (h *DockerHelper) runExec(id string, cmd []string) error {
+	ctx := context.TODO()
+	config := types.ExecConfig{
+		User:       "root",
+		Privileged: true,
+		Cmd:        cmd,
+	}
+	cExec, err := h.client.ContainerExecCreate(ctx, id, config)
+	if err != nil {
+		return err
+	}
+	if err = h.client.ContainerExecStart(ctx, cExec.ID, types.ExecStartCheck{}); err != nil {
+		return err
+	}
+	// ContainerExecStart does not block, short poll process status for 60 seconds to
+	// check when it has been completed. return a time out error otherwise.
+	cExecStatus := types.ContainerExecInspect{}
+	for i := 0; i < 30; i++ {
+		time.Sleep(500 * time.Millisecond)
+		cExecStatus, err = h.client.ContainerExecInspect(ctx, cExec.ID)
+		if err != nil {
+			return err
+		}
+		if !cExecStatus.Running {
+			break
+		}
+	}
+	if cExecStatus.Running {
+		return fmt.Errorf("command %v timed out", cmd)
+	}
+	if cExecStatus.ExitCode != 0 {
+		return &DockerExecExitCodeError{ExitCode: cExecStatus.ExitCode}
+	}
+	return nil
+}
+
 func Cleanup(ctx *TestContext) {
 	dockerHelper, err := NewDockerHelper()
 	if err != nil {

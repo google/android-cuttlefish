@@ -71,10 +71,14 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newCreateCVDBugReportHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "remove"))).Methods("DELETE")
+	router.Handle("/cvds/{group}/{name}/:start",
+		httpHandler(newStartCVDHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:stop",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "powerwash"))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/snapshots",
+		httpHandler(newCreateSnapshotHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/operations", httpHandler(&listOperationsHandler{om: c.OperationManager})).Methods("GET")
 	router.Handle("/operations/{name}", httpHandler(&getOperationHandler{om: c.OperationManager})).Methods("GET")
 	// The expected response of the operation in case of success.  If the original method returns no data on
@@ -268,6 +272,58 @@ func (h *execCVDCommandHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDUser:          h.Config.CVDUser,
 	}
 	return NewExecCVDCommandAction(opts).Run()
+}
+
+type createSnapshotHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newCreateSnapshotHandler(c Config, om OperationManager) *createSnapshotHandler {
+	return &createSnapshotHandler{Config: c, OM: om}
+}
+
+func (h *createSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	opts := CreateSnapshotActionOpts{
+		Selector:         CVDSelector{Group: group, Name: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+		CVDUser:          h.Config.CVDUser,
+	}
+	return NewCreateSnapshotAction(opts).Run()
+}
+
+type startCVDHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newStartCVDHandler(c Config, om OperationManager) *startCVDHandler {
+	return &startCVDHandler{Config: c, OM: om}
+}
+
+func (h *startCVDHandler) Handle(r *http.Request) (interface{}, error) {
+	req := &apiv1.StartCVDRequest{}
+	err := json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
+	}
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	opts := StartCVDActionOpts{
+		Request:          req,
+		Selector:         CVDSelector{Group: group, Name: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+		CVDUser:          h.Config.CVDUser,
+	}
+	return NewStartCVDAction(opts).Run()
 }
 
 type getCVDLogsHandler struct {

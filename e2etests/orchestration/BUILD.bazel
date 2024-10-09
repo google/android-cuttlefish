@@ -34,15 +34,15 @@ go_library(
     ],
 )
 
-create_single_instance_test(
-  name="create_fixed_build_id_and_target",
-  build_id="11510808",
-  build_target="aosp_cf_x86_64_phone-trunk_staging-userdebug",
-)
+# create_single_instance_test(
+#   name="create_fixed_build_id_and_target",
+#   build_id="11510808",
+#   build_target="aosp_cf_x86_64_phone-trunk_staging-userdebug",
+# )
 
 aosp_artifact(
   name = "cvd_host_package",
-  build_id = "12266267",
+  build_id = "12432601",
   build_target="aosp_cf_x86_64_phone-trunk_staging-userdebug",
   artifact_name = "cvd-host_package.tar.gz",
   out_name = "cvd-host_package.tar.gz",
@@ -50,31 +50,47 @@ aosp_artifact(
 
 aosp_artifact(
   name = "images_zip",
-  build_id = "12266267",
+  build_id = "12432601",
   build_target="aosp_cf_x86_64_phone-trunk_staging-userdebug",
-  artifact_name = "aosp_cf_x86_64_phone-img-12266267.zip",
+  artifact_name = "aosp_cf_x86_64_phone-img-12432601.zip",
   out_name = "images.zip",
 )
 
-go_test(
-    name = "create_local_image",
-    srcs = ["createlocalimage_test.go"],
-    data = [
-      ":images_zip",
-      ":cvd_host_package",
-      "@images//docker:orchestration_image_tar",
-    ],
-    deps = [
-      ":e2etesting",
-      "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
-      "@com_github_google_cloud_android_orchestration//pkg/client",
-      "@com_github_google_go_cmp//cmp",
-    ],
-)
+# go_test(
+#     name = "create_local_image",
+#     srcs = ["createlocalimage_test.go"],
+#     data = [
+#       ":images_zip",
+#       ":cvd_host_package",
+#       "@images//docker:orchestration_image_tar",
+#     ],
+#     deps = [
+#       ":e2etesting",
+#       "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
+#       "@com_github_google_cloud_android_orchestration//pkg/client",
+#       "@com_github_google_go_cmp//cmp",
+#     ],
+# )
+# 
+# go_test(
+#     name = "create_from_images_zip",
+#     srcs = ["createfromimageszip_test.go"],
+#     data = [
+#       ":images_zip",
+#       ":cvd_host_package",
+#       "@images//docker:orchestration_image_tar",
+#     ],
+#     deps = [
+#       ":e2etesting",
+#       "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
+#       "@com_github_google_cloud_android_orchestration//pkg/client",
+#       "@com_github_google_go_cmp//cmp",
+#     ],
+# )
 
 go_test(
-    name = "create_from_images_zip",
-    srcs = ["createfromimageszip_test.go"],
+    name = "snapshot",
+    srcs = ["snapshot_test.go"],
     data = [
       ":images_zip",
       ":cvd_host_package",

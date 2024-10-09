@@ -121,6 +121,7 @@ func main() {
 		RootDir:          *imRootDir,
 		ArtifactsRootDir: filepath.Join(*imRootDir, "artifacts"),
 		CVDBugReportsDir: filepath.Join(*imRootDir, "cvdbugreports"),
+		SnapshotsRootDir: filepath.Join(*imRootDir, "snapshots"),
 	}
 
 	var cvdUser *user.User
