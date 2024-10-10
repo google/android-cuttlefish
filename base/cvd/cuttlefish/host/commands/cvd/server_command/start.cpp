@@ -229,8 +229,8 @@ class CvdStartCommandHandler : public CvdServerHandler {
         host_tool_target_manager_(host_tool_target_manager),
         status_fetcher_(instance_manager_, host_tool_target_manager_) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override;
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override;
+  Result<bool> CanHandle(const CommandRequest& request) const override;
+  Result<cvd::Response> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override;
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
@@ -240,16 +240,16 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<cvd::Response> LaunchDevice(Command command,
                                      selector::LocalInstanceGroup& group,
                                      const cvd_common::Envs& envs,
-                                     const RequestWithStdio& request);
+                                     const CommandRequest& request);
 
   Result<cvd::Response> LaunchDeviceInterruptible(
       Command command, selector::LocalInstanceGroup& group,
-      const cvd_common::Envs& envs, const RequestWithStdio& request);
+      const cvd_common::Envs& envs, const CommandRequest& request);
 
   Result<Command> ConstructCvdNonHelpCommand(
       const std::string& bin_file, const selector::LocalInstanceGroup& group,
       const cvd_common::Args& args, const cvd_common::Envs& envs,
-      const RequestWithStdio& request);
+      const CommandRequest& request);
 
   struct GroupAndLockFiles {
     selector::LocalInstanceGroup group;
@@ -269,7 +269,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
 
   Result<void> AcloudCompatActions(const selector::LocalInstanceGroup& group,
                                    const cvd_common::Envs& envs,
-                                   const RequestWithStdio& request);
+                                   const CommandRequest& request);
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
@@ -279,7 +279,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
 
 Result<void> CvdStartCommandHandler::AcloudCompatActions(
     const selector::LocalInstanceGroup& group, const cvd_common::Envs& envs,
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   // rm -fr "TempDir()/acloud_cvd_temp/local-instance-<i>"
   std::string acloud_compat_home_prefix =
       TempDir() + "/acloud_cvd_temp/local-instance-";
@@ -355,7 +355,7 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
 }
 
 Result<bool> CvdStartCommandHandler::CanHandle(
-    const RequestWithStdio& request) const {
+    const CommandRequest& request) const {
   auto invocation = ParseInvocation(request);
   return Contains(supported_commands_, invocation.command);
 }
@@ -398,7 +398,7 @@ Result<void> CvdStartCommandHandler::UpdateEnvs(
 Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
     const std::string& bin_file, const selector::LocalInstanceGroup& group,
     const cvd_common::Args& args, const cvd_common::Envs& envs,
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   auto bin_path = group.HostArtifactsPath();
   CF_EXPECTF(PotentiallyHostArtifactsPath(bin_path),
              "ANDROID_HOST_OUT, \"{}\" is not a tool directory", bin_path);
@@ -492,7 +492,7 @@ static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
 }
 
 Result<cvd::Response> CvdStartCommandHandler::Handle(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   auto [subcmd, subcmd_args] = ParseInvocation(request);
@@ -641,7 +641,7 @@ static Result<cvd::Response> CvdResetGroup(
 
 Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
     Command launch_command, selector::LocalInstanceGroup& group,
-    const cvd_common::Envs& envs, const RequestWithStdio& request) {
+    const cvd_common::Envs& envs, const CommandRequest& request) {
   // Don't destroy the returned object until after the devices have started, it
   // holds a connection to the orchestrator that ensures the devices remain
   // pre-registered there. If the connection is lost before the devices register
@@ -679,7 +679,7 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
 
 Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
     Command command, selector::LocalInstanceGroup& group,
-    const cvd_common::Envs& envs, const RequestWithStdio& request) {
+    const cvd_common::Envs& envs, const CommandRequest& request) {
   // cvd_internal_start uses the config from the previous invocation to
   // determine the default value for the -report_anonymous_usage_stats flag so
   // we symlink that to the group's home directory, this link will be

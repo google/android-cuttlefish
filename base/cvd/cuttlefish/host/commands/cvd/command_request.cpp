@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 
 #include <string>
 
@@ -23,7 +23,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 
 namespace cuttlefish {
 
@@ -48,42 +48,42 @@ Result<void> SendResponse(const SharedFD& client,
   return {};
 }
 
-const cvd_common::Args& RequestWithStdio::Args() const { return args_; }
+const cvd_common::Args& CommandRequest::Args() const { return args_; }
 
-RequestWithStdio& RequestWithStdio::AddArguments(
+CommandRequest& CommandRequest::AddArguments(
     std::initializer_list<std::string_view> args) & {
   return AddArguments(std::vector<std::string_view>(args));
 }
 
-RequestWithStdio RequestWithStdio::AddArguments(
+CommandRequest CommandRequest::AddArguments(
     std::initializer_list<std::string_view> args) && {
   return AddArguments(std::vector<std::string_view>(args));
 }
 
-const cvd_common::Args& RequestWithStdio::SelectorArgs() const {
+const cvd_common::Args& CommandRequest::SelectorArgs() const {
   return selector_args_;
 }
 
-RequestWithStdio& RequestWithStdio::AddSelectorArguments(
+CommandRequest& CommandRequest::AddSelectorArguments(
     std::initializer_list<std::string_view> args) & {
   return AddSelectorArguments(std::vector<std::string_view>(args));
 }
 
-RequestWithStdio RequestWithStdio::AddSelectorArguments(
+CommandRequest CommandRequest::AddSelectorArguments(
     std::initializer_list<std::string_view> args) && {
   return AddSelectorArguments(std::vector<std::string_view>(args));
 }
 
-const cvd_common::Envs& RequestWithStdio::Env() const { return env_; }
+const cvd_common::Envs& CommandRequest::Env() const { return env_; }
 
-cvd_common::Envs& RequestWithStdio::Env() { return env_; }
+cvd_common::Envs& CommandRequest::Env() { return env_; }
 
-RequestWithStdio& RequestWithStdio::SetEnv(cvd_common::Envs env) & {
+CommandRequest& CommandRequest::SetEnv(cvd_common::Envs env) & {
   env_ = std::move(env);
   return *this;
 }
 
-RequestWithStdio RequestWithStdio::SetEnv(cvd_common::Envs env) && {
+CommandRequest CommandRequest::SetEnv(cvd_common::Envs env) && {
   env_ = std::move(env);
   return *this;
 }

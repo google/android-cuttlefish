@@ -40,7 +40,7 @@
 #include "host/commands/cvd/lock_file.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/config_constants.h"
@@ -146,7 +146,7 @@ Result<std::vector<std::string>> BashTokenize(const std::string& str) {
 namespace acloud_impl {
 
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   auto arguments = ParseInvocation(request).arguments;
   CF_EXPECT(arguments.size() > 0);
   CF_EXPECT(arguments[0] == "create");
@@ -329,7 +329,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   auto host_artifacts_path =
       CF_EXPECT(AndroidHostPath(request.Env()), "Missing host artifacts path");
 
-  std::vector<RequestWithStdio> inner_requests;
+  std::vector<CommandRequest> inner_requests;
   const std::string user_config_path =
       parsed_flags.config_file.value_or(CF_EXPECT(GetDefaultConfigFile()));
 
@@ -373,8 +373,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     // the same method by using Android build api to get build ID,
     // but it is not easy in C++.
 
-    RequestWithStdio& fetch_request =
-        inner_requests.emplace_back(RequestWithStdio())
+    CommandRequest& fetch_request =
+        inner_requests.emplace_back(CommandRequest())
             .AddArguments(
                 {"cvd", "fetch", "--directory", host_dir, "--default_build"});
     fetch_command_str += "--default_build=";
@@ -476,8 +476,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     required_paths = super_image_path;
     required_paths += ("," + parsed_flags.local_system_image.value());
 
-    RequestWithStdio& mixsuperimage_request =
-        inner_requests.emplace_back(RequestWithStdio())
+    CommandRequest& mixsuperimage_request =
+        inner_requests.emplace_back(CommandRequest())
             .AddArguments(
                 {"cvd", "acloud", "mix-super-image", "--super_image"});
 
@@ -500,7 +500,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     mixsuperimage_request.AddArguments({required_paths});
   }
 
-  RequestWithStdio start_request = RequestWithStdio();
+  CommandRequest start_request = CommandRequest();
   start_request.AddArguments({"cvd", "create", "--daemon", "--undefok",
                               "report_anonymous_usage_stats",
                               "--report_anonymous_usage_stats", "y"});

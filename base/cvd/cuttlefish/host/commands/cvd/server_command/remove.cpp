@@ -62,12 +62,12 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
 
   bool ShouldInterceptHelp() const override { return false; }
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return Contains(CmdList(), invocation.command);
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     auto [op, subcmd_args] = ParseInvocation(request);
 
@@ -96,7 +96,7 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
 
  private:
   Result<void> StopGroup(selector::LocalInstanceGroup& group,
-                         const RequestWithStdio& request) const {
+                         const CommandRequest& request) const {
     if (!group.HasActiveInstances()) {
       return {};
     }
@@ -106,7 +106,7 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
     return {};
   }
 
-  Result<void> HelpCommand(const RequestWithStdio& request) const {
+  Result<void> HelpCommand(const CommandRequest& request) const {
     std::vector<std::string> unused;
     std::string msg = CF_EXPECT(DetailedHelp(unused));
     std::cout << msg;

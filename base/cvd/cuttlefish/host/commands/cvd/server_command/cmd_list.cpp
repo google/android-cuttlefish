@@ -31,12 +31,12 @@ class CvdCmdlistHandler : public CvdServerHandler {
  public:
   CvdCmdlistHandler(CommandSequenceExecutor& executor) : executor_(executor) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return (invocation.command == "cmd-list");
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     cvd::Response response;
     response.mutable_command_response();  // Sets oneof member
     response.mutable_status()->set_code(cvd::Status::OK);

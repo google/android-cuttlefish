@@ -118,12 +118,12 @@ class CvdResetCommandHandler : public CvdServerHandler {
   CvdResetCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return invocation.command == kResetSubcmd;
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     auto invocation = ParseInvocation(request);
     auto options = CF_EXPECT(ParseResetFlags(invocation.arguments));

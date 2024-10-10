@@ -64,12 +64,12 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     };
   }
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return Contains(cvd_power_operations_, invocation.command);
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     const cvd_common::Envs& env = request.Env();
 
@@ -137,7 +137,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     return powerbtn_bin;
   }
 
-  Result<Command> HelpCommand(const RequestWithStdio& request,
+  Result<Command> HelpCommand(const CommandRequest& request,
                               const std::string& op,
                               const cvd_common::Args& subcmd_args,
                               cvd_common::Envs envs) {
@@ -162,7 +162,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     return command;
   }
 
-  Result<Command> NonHelpCommand(const RequestWithStdio& request,
+  Result<Command> NonHelpCommand(const CommandRequest& request,
                                  const std::string& op,
                                  cvd_common::Args& subcmd_args,
                                  cvd_common::Envs envs) {

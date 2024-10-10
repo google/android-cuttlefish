@@ -57,7 +57,7 @@ class AcloudCommand : public CvdServerHandler {
   AcloudCommand(CommandSequenceExecutor& executor) : executor_(executor) {}
   ~AcloudCommand() = default;
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     if (invocation.arguments.size() >= 2) {
       if (invocation.command == "acloud" &&
@@ -88,7 +88,7 @@ class AcloudCommand : public CvdServerHandler {
    * 2. Or `cvdr` for remote instance management.
    *
    */
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     auto result = ValidateLocal(request);
     if (result.ok()) {
       return CF_EXPECT(HandleLocal(*result, request));
@@ -105,13 +105,13 @@ class AcloudCommand : public CvdServerHandler {
   Result<void> PrintBriefSummary(const cvd::InstanceGroupInfo& group_info,
                                  std::ostream& out) const;
   Result<ConvertedAcloudCreateCommand> ValidateLocal(
-      const RequestWithStdio& request);
-  bool ValidateRemoteArgs(const RequestWithStdio& request);
+      const CommandRequest& request);
+  bool ValidateRemoteArgs(const CommandRequest& request);
   Result<cvd::Response> HandleLocal(const ConvertedAcloudCreateCommand& command,
-                                    const RequestWithStdio& request);
+                                    const CommandRequest& request);
   Result<void> PrepareForDeleteCommand(const cvd::InstanceGroupInfo&);
-  Result<cvd::Response> HandleRemote(const RequestWithStdio& request);
-  Result<void> RunAcloudConnect(const RequestWithStdio& request,
+  Result<cvd::Response> HandleRemote(const CommandRequest& request);
+  Result<void> RunAcloudConnect(const CommandRequest& request,
                                 const std::string& hostname);
 
   CommandSequenceExecutor& executor_;
@@ -154,21 +154,21 @@ Result<void> AcloudCommand::PrintBriefSummary(
 }
 
 Result<ConvertedAcloudCreateCommand> AcloudCommand::ValidateLocal(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   CF_EXPECT(IsSubOperationSupported(request));
   // ConvertAcloudCreate converts acloud to cvd commands.
   return acloud_impl::ConvertAcloudCreate(request);
 }
 
-bool AcloudCommand::ValidateRemoteArgs(const RequestWithStdio& request) {
+bool AcloudCommand::ValidateRemoteArgs(const CommandRequest& request) {
   auto args = ParseInvocation(request).arguments;
   return acloud_impl::CompileFromAcloudToCvdr(args).ok();
 }
 
 Result<cvd::Response> AcloudCommand::HandleLocal(
     const ConvertedAcloudCreateCommand& command,
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   CF_EXPECT(executor_.Execute(command.prep_requests, std::cerr));
   auto start_response =
       CF_EXPECT(executor_.ExecuteOne(command.start_request, std::cerr));
@@ -235,7 +235,7 @@ Result<void> AcloudCommand::PrepareForDeleteCommand(
 }
 
 Result<cvd::Response> AcloudCommand::HandleRemote(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   auto args = ParseInvocation(request).arguments;
   args = CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
   Command cmd = Command("cvdr");
@@ -283,7 +283,7 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
   return response;
 }
 
-Result<void> AcloudCommand::RunAcloudConnect(const RequestWithStdio& request,
+Result<void> AcloudCommand::RunAcloudConnect(const CommandRequest& request,
                                              const std::string& hostname) {
   auto build_top = StringFromEnv("ANDROID_BUILD_TOP", "");
   CF_EXPECT(

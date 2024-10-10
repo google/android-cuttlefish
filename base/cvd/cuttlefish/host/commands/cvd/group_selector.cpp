@@ -52,7 +52,7 @@ std::string SelectionMenu(
 }
 
 Result<selector::LocalInstanceGroup> PromptUserForGroup(
-    InstanceManager& instance_manager, const RequestWithStdio& request,
+    InstanceManager& instance_manager, const CommandRequest& request,
     const cvd_common::Envs& envs, const cvd_common::Args& selector_args) {
   // show the menu and let the user choose
   std::vector<selector::LocalInstanceGroup> groups =
@@ -98,7 +98,7 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
 }  // namespace
 
 Result<selector::LocalInstanceGroup> SelectGroup(
-    InstanceManager& instance_manager, const RequestWithStdio& request) {
+    InstanceManager& instance_manager, const CommandRequest& request) {
   auto has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
   CF_EXPECT(std::move(has_groups), "No instance groups available");
   const cvd_common::Envs& env = request.Env();

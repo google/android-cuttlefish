@@ -58,12 +58,12 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
       : instance_manager_{instance_manager},
         cvd_display_operations_{"display"} {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return Contains(cvd_display_operations_, invocation.command);
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     const cvd_common::Envs& env = request.Env();
 
@@ -95,7 +95,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
   }
 
  private:
-  Result<Command> HelpCommand(const RequestWithStdio& request,
+  Result<Command> HelpCommand(const CommandRequest& request,
                               const cvd_common::Args& subcmd_args,
                               cvd_common::Envs envs) {
     auto android_host_out = CF_EXPECT(AndroidHostPath(envs));
@@ -118,7 +118,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
     return command;
   }
 
-  Result<Command> NonHelpCommand(const RequestWithStdio& request,
+  Result<Command> NonHelpCommand(const CommandRequest& request,
                                  cvd_common::Args& subcmd_args,
                                  cvd_common::Envs envs) {
     // test if there is --instance_num flag

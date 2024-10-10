@@ -32,12 +32,12 @@
 
 namespace cuttlefish {
 
-class RequestWithStdio {
+class CommandRequest {
  public:
-  RequestWithStdio() = default;
+  CommandRequest() = default;
 
   template <typename T>
-  RequestWithStdio& AddArguments(T&& args) & {
+  CommandRequest& AddArguments(T&& args) & {
     for (auto&& arg : args) {
       args_.emplace_back(arg);
     }
@@ -45,20 +45,20 @@ class RequestWithStdio {
   }
 
   template <typename T>
-  RequestWithStdio AddArguments(T&& args) && {
+  CommandRequest AddArguments(T&& args) && {
     for (auto&& arg : args) {
       args_.emplace_back(arg);
     }
     return *this;
   }
 
-  RequestWithStdio& AddArguments(std::initializer_list<std::string_view>) &;
-  RequestWithStdio AddArguments(std::initializer_list<std::string_view>) &&;
+  CommandRequest& AddArguments(std::initializer_list<std::string_view>) &;
+  CommandRequest AddArguments(std::initializer_list<std::string_view>) &&;
 
   const cvd_common::Args& Args() const;
 
   template <typename T>
-  RequestWithStdio& AddSelectorArguments(T&& args) & {
+  CommandRequest& AddSelectorArguments(T&& args) & {
     for (auto&& arg : args) {
       selector_args_.emplace_back(arg);
     }
@@ -66,16 +66,16 @@ class RequestWithStdio {
   }
 
   template <typename T>
-  RequestWithStdio AddSelectorArguments(T&& args) && {
+  CommandRequest AddSelectorArguments(T&& args) && {
     for (auto&& arg : args) {
       selector_args_.emplace_back(arg);
     }
     return *this;
   }
 
-  RequestWithStdio& AddSelectorArguments(
+  CommandRequest& AddSelectorArguments(
       std::initializer_list<std::string_view>) &;
-  RequestWithStdio AddSelectorArguments(
+  CommandRequest AddSelectorArguments(
       std::initializer_list<std::string_view>) &&;
 
   const cvd_common::Args& SelectorArgs() const;
@@ -83,8 +83,8 @@ class RequestWithStdio {
   const cvd_common::Envs& Env() const;
   cvd_common::Envs& Env();
 
-  RequestWithStdio& SetEnv(cvd_common::Envs) &;
-  RequestWithStdio SetEnv(cvd_common::Envs) &&;
+  CommandRequest& SetEnv(cvd_common::Envs) &;
+  CommandRequest SetEnv(cvd_common::Envs) &&;
 
  private:
   cvd_common::Args args_;

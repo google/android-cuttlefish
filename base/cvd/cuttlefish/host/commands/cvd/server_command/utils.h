@@ -27,7 +27,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -37,7 +37,7 @@ struct CommandInvocation {
   std::vector<std::string> arguments;
 };
 
-CommandInvocation ParseInvocation(const RequestWithStdio& request);
+CommandInvocation ParseInvocation(const CommandRequest& request);
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
 
@@ -55,7 +55,7 @@ Result<Command> ConstructCommand(const ConstructCommandParam& cmd_param);
 Result<Command> ConstructCvdHelpCommand(const std::string& bin_file,
                                         cvd_common::Envs envs,
                                         const cvd_common::Args& _args,
-                                        const RequestWithStdio& request);
+                                        const CommandRequest& request);
 
 // Constructs a command for cvd non-start-op
 struct ConstructNonHelpForm {
@@ -67,18 +67,18 @@ struct ConstructNonHelpForm {
   bool verbose;
 };
 Result<Command> ConstructCvdGenericNonHelpCommand(
-    const ConstructNonHelpForm& request_form, const RequestWithStdio& request);
+    const ConstructNonHelpForm& request_form, const CommandRequest& request);
 
 // e.g. cvd start --help, cvd stop --help
 Result<bool> IsHelpSubcmd(const std::vector<std::string>& args);
 
 // Call this when there is no instance group is running
 // The function does not verify that.
-cvd::Response NoGroupResponse(const RequestWithStdio& request);
+cvd::Response NoGroupResponse(const CommandRequest& request);
 
 // Call this when there is more than one group, which the selector flags are
 // not sufficients to choose one from. The function does not verify that.
-Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request);
+Result<cvd::Response> NoTTYResponse(const CommandRequest& request);
 
 class TerminalColors {
  public:

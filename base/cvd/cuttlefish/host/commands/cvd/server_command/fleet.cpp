@@ -21,7 +21,7 @@
 #include <android-base/file.h>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/status_fetcher.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -45,8 +45,8 @@ class CvdFleetCommandHandler : public CvdServerHandler {
       : instance_manager_(instance_manager),
         status_fetcher_(instance_manager_, host_tool_target_manager) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override;
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override;
+  Result<bool> CanHandle(const CommandRequest& request) const override;
+  Result<cvd::Response> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {kFleetSubcmd}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
@@ -66,13 +66,13 @@ class CvdFleetCommandHandler : public CvdServerHandler {
 };
 
 Result<bool> CvdFleetCommandHandler::CanHandle(
-    const RequestWithStdio& request) const {
+    const CommandRequest& request) const {
   auto invocation = ParseInvocation(request);
   return invocation.command == kFleetSubcmd;
 }
 
 Result<cvd::Response> CvdFleetCommandHandler::Handle(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   cvd::Response ok_response;
