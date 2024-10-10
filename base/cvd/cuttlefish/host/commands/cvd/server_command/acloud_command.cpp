@@ -169,9 +169,9 @@ bool AcloudCommand::ValidateRemoteArgs(const RequestWithStdio& request) {
 Result<cvd::Response> AcloudCommand::HandleLocal(
     const ConvertedAcloudCreateCommand& command,
     const RequestWithStdio& request) {
-  CF_EXPECT(executor_.Execute(command.prep_requests, request.Err()));
+  CF_EXPECT(executor_.Execute(command.prep_requests, std::cerr));
   auto start_response =
-      CF_EXPECT(executor_.ExecuteOne(command.start_request, request.Err()));
+      CF_EXPECT(executor_.ExecuteOne(command.start_request, std::cerr));
 
   if (!command.fetch_command_str.empty()) {
     // has cvd fetch command, update the fetch cvd command file
@@ -197,7 +197,7 @@ Result<cvd::Response> AcloudCommand::HandleLocal(
   // print
   std::optional<SharedFD> fd_opt;
   if (command.verbose) {
-    PrintBriefSummary(*group_info_result, request.Err());
+    PrintBriefSummary(*group_info_result, std::cerr);
   }
   return response;
 }
@@ -259,7 +259,7 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
       LOG(ERROR) << "Error in reading stdout from process";
     }
   });
-  request.Err()
+  std::cerr
       << "UPDATE! Try the new `cvdr` tool directly. Run `cvdr --help` to get "
          "started.\n";
 
@@ -273,7 +273,7 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
   }
   stdout_pipe_write->Close();
   stdout_thread.join();
-  request.Out() << stdout_;
+  std::cout << stdout_;
   if (args[0] == "create" && siginfo.si_status == EXIT_SUCCESS) {
     std::string hostname = stdout_.substr(0, stdout_.find(" "));
     CF_EXPECT(RunAcloudConnect(request, hostname));

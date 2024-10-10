@@ -18,7 +18,6 @@
 
 #include <memory>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -40,7 +39,7 @@ class CvdNoopHandler : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     auto invocation = ParseInvocation(request);
-    fmt::print(request.Out(), "DEPRECATED: The {} command is a no-op",
+    fmt::print(std::cout, "DEPRECATED: The {} command is a no-op",
                invocation.command);
     cvd::Response response;
     response.mutable_status()->set_code(cvd::Status::OK);

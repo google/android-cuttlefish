@@ -73,7 +73,7 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
 
     if (CF_EXPECT(IsHelpSubcmd(subcmd_args))) {
       std::vector<std::string> unused;
-      request.Out() << CF_EXPECT(DetailedHelp(unused));
+      std::cout << CF_EXPECT(DetailedHelp(unused));
       return Success();
     }
 
@@ -109,7 +109,7 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
   Result<void> HelpCommand(const RequestWithStdio& request) const {
     std::vector<std::string> unused;
     std::string msg = CF_EXPECT(DetailedHelp(unused));
-    request.Out() << msg;
+    std::cout << msg;
     return {};
   }
 

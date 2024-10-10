@@ -88,9 +88,9 @@ class CvdHelpHandler : public CvdServerHandler {
 
     auto args = ParseInvocation(request).arguments;
     if (args.empty()) {
-      request.Out() << CF_EXPECT(TopLevelHelp());
+      std::cout << CF_EXPECT(TopLevelHelp());
     } else {
-      request.Out() << CF_EXPECT(SubCommandHelp(args));
+      std::cout << CF_EXPECT(SubCommandHelp(args));
     }
 
     cvd::Response response;

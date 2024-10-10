@@ -196,7 +196,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     CF_EXPECT(ConsumeFlags(mixsuperimage_flags, invocation.arguments),
               "Failed to process mix-super-image flag.");
     if (help) {
-      request.Out() << kMixSuperImageHelpMessage;
+      std::cout << kMixSuperImageHelpMessage;
       return response;
     }
 

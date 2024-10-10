@@ -16,7 +16,6 @@
 
 #include "host/commands/cvd/server_command/acloud_translator.h"
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
@@ -85,7 +84,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
     CF_EXPECT(ConsumeFlags(translator_flags, invocation.arguments),
               "Failed to process translator flag.");
     if (help) {
-      request.Out() << kTranslatorHelpMessage;
+      std::cout << kTranslatorHelpMessage;
       return response;
     }
     CF_EXPECT(flag_optout != flag_optin,

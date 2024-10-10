@@ -602,7 +602,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   listener_handle.reset();
 
   auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(request, group));
-  request.Out() << group_json.toStyledString();
+  std::cout << group_json.toStyledString();
 
   return FillOutNewInstanceInfo(std::move(response), group);
 }

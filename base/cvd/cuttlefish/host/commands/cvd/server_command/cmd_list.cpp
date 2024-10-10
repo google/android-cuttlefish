@@ -50,7 +50,7 @@ class CvdCmdlistHandler : public CvdServerHandler {
     const auto subcmds_str = android::base::Join(subcmds_vec, ",");
     Json::Value subcmd_info;
     subcmd_info["subcmd"] = subcmds_str;
-    request.Out() << subcmd_info.toStyledString();
+    std::cout << subcmd_info.toStyledString();
     return response;
   }
 

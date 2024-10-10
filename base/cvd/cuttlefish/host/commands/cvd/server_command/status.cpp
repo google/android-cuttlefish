@@ -180,9 +180,9 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   }
 
   std::string serialized_group_json = instances_json.toStyledString();
-  request.Err() << serialized_group_json;
+  std::cerr << serialized_group_json;
   if (has_print) {
-    request.Out() << serialized_group_json;
+    std::cout << serialized_group_json;
   }
   return response;
 }

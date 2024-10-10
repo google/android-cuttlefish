@@ -48,13 +48,6 @@ Result<void> SendResponse(const SharedFD& client,
   return {};
 }
 
-RequestWithStdio::RequestWithStdio()
-    : RequestWithStdio(std::cin, std::cout, std::cerr) {}
-
-RequestWithStdio::RequestWithStdio(std::istream& in, std::ostream& out,
-                                   std::ostream& err)
-    : in_(in), out_(out), err_(err) {}
-
 const cvd_common::Args& RequestWithStdio::Args() const { return args_; }
 
 RequestWithStdio& RequestWithStdio::AddArguments(

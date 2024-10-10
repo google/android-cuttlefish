@@ -198,7 +198,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     for (const auto& arg : cvd_env_args) {
       command_to_issue << arg << " ";
     }
-    request.Err() << command_to_issue.str();
+    std::cerr << command_to_issue.str();
 
     ConstructCommandParam construct_cmd_param{
         .bin_path = cvd_power_bin_path,
