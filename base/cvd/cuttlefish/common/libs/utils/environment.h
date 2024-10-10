@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <optional>
 #include <string>
 
 namespace cuttlefish {
@@ -26,6 +27,8 @@ enum class Arch {
   X86,
   X86_64,
 };
+
+std::optional<std::string> StringFromEnv(const std::string& varname);
 
 std::string StringFromEnv(const std::string& varname,
                           const std::string& defval);
