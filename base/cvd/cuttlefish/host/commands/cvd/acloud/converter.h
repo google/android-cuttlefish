@@ -19,15 +19,15 @@
 #include <string>
 #include <vector>
 
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
 struct ConvertedAcloudCreateCommand {
-  std::vector<RequestWithStdio> prep_requests;
-  RequestWithStdio start_request;
+  std::vector<CommandRequest> prep_requests;
+  CommandRequest start_request;
   std::string fetch_command_str;
   std::string fetch_cvd_args_file;
   bool verbose;
@@ -36,7 +36,7 @@ struct ConvertedAcloudCreateCommand {
 namespace acloud_impl {
 
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
-    const RequestWithStdio& request);
+    const CommandRequest& request);
 
 }  // namespace acloud_impl
 }  // namespace cuttlefish

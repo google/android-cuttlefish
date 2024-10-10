@@ -26,7 +26,7 @@
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/request_context.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 
 namespace cuttlefish {
 
@@ -63,7 +63,7 @@ Result<cvd::Response> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
     const std::unordered_map<std::string, std::string>& env,
     const std::vector<std::string>& selector_args) {
-  RequestWithStdio request = RequestWithStdio()
+  CommandRequest request = CommandRequest()
                                  .AddArguments(cvd_process_args)
                                  .SetEnv(env)
                                  .AddSelectorArguments(selector_args);

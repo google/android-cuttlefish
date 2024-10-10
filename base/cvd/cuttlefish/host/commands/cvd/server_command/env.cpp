@@ -48,12 +48,12 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   CvdEnvCommandHandler(InstanceManager& instance_manager)
       : instance_manager_{instance_manager}, cvd_env_operations_{"env"} {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return Contains(cvd_env_operations_, invocation.command);
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     const cvd_common::Envs& env = request.Env();
 
@@ -93,7 +93,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   }
 
  private:
-  Result<Command> HelpCommand(const RequestWithStdio& request,
+  Result<Command> HelpCommand(const CommandRequest& request,
                               const cvd_common::Args& subcmd_args,
                               const cvd_common::Envs& envs) {
     cvd_common::Envs envs_copy = envs;
@@ -102,7 +102,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
         ConstructCvdHelpCommand(kCvdEnvBin, envs_copy, subcmd_args, request));
   }
 
-  Result<Command> NonHelpCommand(const RequestWithStdio& request,
+  Result<Command> NonHelpCommand(const CommandRequest& request,
                                  const cvd_common::Args& subcmd_args,
                                  const cvd_common::Envs& envs) {
     const auto selector_args = request.SelectorArgs();

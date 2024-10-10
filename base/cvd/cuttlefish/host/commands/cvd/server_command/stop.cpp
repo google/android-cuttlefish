@@ -51,15 +51,15 @@ class CvdStopCommandHandler : public CvdServerHandler {
   CvdStopCommandHandler(InstanceManager& instance_manager,
                         HostToolTargetManager& host_tool_target_manager);
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override;
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override;
+  Result<bool> CanHandle(const CommandRequest& request) const override;
+  Result<cvd::Response> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override;
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
-  Result<cvd::Response> HandleHelpCmd(const RequestWithStdio& request);
+  Result<cvd::Response> HandleHelpCmd(const CommandRequest& request);
   Result<std::string> GetBin(const std::string& host_artifacts_path) const;
   // whether the "bin" is cvd bins like stop_cvd or not (e.g. ln, ls, mkdir)
   // The information to fire the command might be different. This information
@@ -84,13 +84,13 @@ CvdStopCommandHandler::CvdStopCommandHandler(
       host_tool_target_manager_(host_tool_target_manager) {}
 
 Result<bool> CvdStopCommandHandler::CanHandle(
-    const RequestWithStdio& request) const {
+    const CommandRequest& request) const {
   auto invocation = ParseInvocation(request);
   return Contains(CmdList(), invocation.command);
 }
 
 Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   auto [subcmd, cmd_args] = ParseInvocation(request);
   const cvd_common::Envs& env = request.Env();
 
@@ -113,7 +113,7 @@ Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
 }
 
 Result<cvd::Response> CvdStopCommandHandler::Handle(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   auto [subcmd, cmd_args] = ParseInvocation(request);
 

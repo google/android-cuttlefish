@@ -28,7 +28,7 @@
 
 namespace cuttlefish {
 
-CommandInvocation ParseInvocation(const RequestWithStdio& request) {
+CommandInvocation ParseInvocation(const CommandRequest& request) {
   CommandInvocation invocation;
   invocation.arguments = request.Args();
   if (invocation.arguments.size() == 0) {
@@ -100,7 +100,7 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
 Result<Command> ConstructCvdHelpCommand(
     const std::string& bin_file, cvd_common::Envs envs,
     const std::vector<std::string>& subcmd_args,
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   const auto host_artifacts_path = envs.at("ANDROID_HOST_OUT");
   const auto bin_path = host_artifacts_path + "/bin/" + bin_file;
   auto client_pwd = CurrentDirectory();
@@ -122,7 +122,7 @@ Result<Command> ConstructCvdHelpCommand(
 }
 
 Result<Command> ConstructCvdGenericNonHelpCommand(
-    const ConstructNonHelpForm& request_form, const RequestWithStdio& request) {
+    const ConstructNonHelpForm& request_form, const CommandRequest& request) {
   cvd_common::Envs envs{request_form.envs};
   envs["HOME"] = request_form.home;
   envs[kAndroidHostOut] = request_form.android_host_out;
@@ -208,7 +208,7 @@ std::string_view TerminalColors::Cyan() const {
   return is_tty_ ? kTerminalCyan : "";
 }
 
-cvd::Response NoGroupResponse(const RequestWithStdio& request) {
+cvd::Response NoGroupResponse(const CommandRequest& request) {
   cvd::Response response;
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
@@ -223,7 +223,7 @@ cvd::Response NoGroupResponse(const RequestWithStdio& request) {
   return response;
 }
 
-Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
+Result<cvd::Response> NoTTYResponse(const CommandRequest& request) {
   cvd::Response response;
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);

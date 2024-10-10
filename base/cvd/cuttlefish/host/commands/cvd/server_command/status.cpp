@@ -87,8 +87,8 @@ class CvdStatusCommandHandler : public CvdServerHandler {
   CvdStatusCommandHandler(InstanceManager& instance_manager,
                           HostToolTargetManager& host_tool_target_manager);
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override;
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override;
+  Result<bool> CanHandle(const CommandRequest& request) const override;
+  Result<cvd::Response> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override;
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
@@ -115,13 +115,13 @@ CvdStatusCommandHandler::CvdStatusCommandHandler(
       supported_subcmds_{"status", "cvd_status"} {}
 
 Result<bool> CvdStatusCommandHandler::CanHandle(
-    const RequestWithStdio& request) const {
+    const CommandRequest& request) const {
   auto invocation = ParseInvocation(request);
   return Contains(supported_subcmds_, invocation.command);
 }
 
-static Result<RequestWithStdio> ProcessInstanceNameFlag(
-    const RequestWithStdio& request) {
+static Result<CommandRequest> ProcessInstanceNameFlag(
+    const CommandRequest& request) {
   cvd_common::Envs env = request.Env();
   auto [subcmd, cmd_args] = ParseInvocation(request);
 
@@ -147,7 +147,7 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
     env[kCuttlefishInstanceEnvVarName] = std::to_string(id);
   }
 
-  return RequestWithStdio()
+  return CommandRequest()
       .AddArguments({"cvd", "status"})
       .AddArguments(cmd_args)
       .SetEnv(std::move(env))
@@ -161,7 +161,7 @@ static Result<bool> HasPrint(cvd_common::Args cmd_args) {
 }
 
 Result<cvd::Response> CvdStatusCommandHandler::Handle(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   auto [subcmd, cmd_args] = ParseInvocation(request);
@@ -171,7 +171,7 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return NoGroupResponse(request);
   }
-  RequestWithStdio new_request = CF_EXPECT(ProcessInstanceNameFlag(request));
+  CommandRequest new_request = CF_EXPECT(ProcessInstanceNameFlag(request));
 
   auto [entire_stderr_msg, instances_json, response] =
       CF_EXPECT(status_fetcher_.FetchStatus(new_request));

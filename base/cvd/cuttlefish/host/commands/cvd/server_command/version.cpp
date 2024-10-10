@@ -38,12 +38,12 @@ class CvdVersionHandler : public CvdServerHandler {
  public:
   CvdVersionHandler() = default;
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return "version" == invocation.command;
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     fmt::print(std::cout, "major: {}\n", cvd::kVersionMajor);

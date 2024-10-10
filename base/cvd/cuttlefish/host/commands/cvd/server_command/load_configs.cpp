@@ -29,7 +29,7 @@
 #include "host/commands/cvd/interrupt_listener.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -52,7 +52,7 @@ Optionally fetches remote artifacts prior to launching the cuttlefish environmen
 The --override flag can be used to give new values for properties in the config file without needing to edit the file directly.  Convenient for one-off invocations.
 )";
 
-Result<CvdFlags> GetCvdFlags(const RequestWithStdio& request) {
+Result<CvdFlags> GetCvdFlags(const CommandRequest& request) {
   auto args = ParseInvocation(request).arguments;
   auto working_directory = CurrentDirectory();
   const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
@@ -68,12 +68,12 @@ class LoadConfigsCommand : public CvdServerHandler {
       : executor_(executor), instance_manager_(instance_manager) {}
   ~LoadConfigsCommand() = default;
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return invocation.command == kLoadSubCmd;
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     bool can_handle_request = CF_EXPECT(CanHandle(request));
     CF_EXPECT_EQ(can_handle_request, true);
 
@@ -142,7 +142,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     return response;
   }
 
-  Result<void> LoadGroup(const RequestWithStdio& request,
+  Result<void> LoadGroup(const CommandRequest& request,
                          selector::LocalInstanceGroup& group,
                          CvdFlags cvd_flags) {
     auto mkdir_res =
@@ -182,9 +182,9 @@ class LoadConfigsCommand : public CvdServerHandler {
     return kDetailedHelpText;
   }
 
-  RequestWithStdio BuildFetchCmd(const RequestWithStdio& request,
+  CommandRequest BuildFetchCmd(const CommandRequest& request,
                                  const CvdFlags& cvd_flags) {
-    return RequestWithStdio()
+    return CommandRequest()
         .SetEnv(request.Env())
         // The fetch operation is too verbose by default, set it to WARNING
         // unconditionally, the full logs are available in fetch.log anyways.
@@ -192,15 +192,15 @@ class LoadConfigsCommand : public CvdServerHandler {
         .AddArguments(cvd_flags.fetch_cvd_flags);
   }
 
-  RequestWithStdio BuildLaunchCmd(const RequestWithStdio& request,
+  CommandRequest BuildLaunchCmd(const CommandRequest& request,
                                   const CvdFlags& cvd_flags,
                                   const selector::LocalInstanceGroup& group) {
     // Add system flag for multi-build scenario
     std::string system_build_arg = fmt::format(
         "--system_image_dir={}",
         cvd_flags.load_directories.system_image_directory_flag_value);
-    RequestWithStdio launch_req =
-        RequestWithStdio()
+    CommandRequest launch_req =
+        CommandRequest()
             .SetEnv(request.Env())
             // The newly created instances don't have an id yet, create will
             // allocate those.

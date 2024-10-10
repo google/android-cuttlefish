@@ -69,12 +69,12 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
         host_tool_target_manager_(host_tool_target_manager),
         cvd_snapshot_operations_{"suspend", "resume", "snapshot_take"} {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return Contains(cvd_snapshot_operations_, invocation.command);
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     auto [subcmd, subcmd_args] = ParseInvocation(request);
@@ -109,7 +109,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
   }
 
  private:
-  Result<Command> GenerateCommand(const RequestWithStdio& request,
+  Result<Command> GenerateCommand(const CommandRequest& request,
                                   const std::string& subcmd,
                                   cvd_common::Args& subcmd_args,
                                   cvd_common::Envs envs) {

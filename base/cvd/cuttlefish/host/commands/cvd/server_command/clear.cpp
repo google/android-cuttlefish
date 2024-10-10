@@ -40,8 +40,8 @@ class CvdClearCommandHandler : public CvdServerHandler {
  public:
   CvdClearCommandHandler(InstanceManager& instance_manager);
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override;
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override;
+  Result<bool> CanHandle(const CommandRequest& request) const override;
+  Result<cvd::Response> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override;
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
@@ -56,13 +56,13 @@ CvdClearCommandHandler::CvdClearCommandHandler(
     : instance_manager_(instance_manager) {}
 
 Result<bool> CvdClearCommandHandler::CanHandle(
-    const RequestWithStdio& request) const {
+    const CommandRequest& request) const {
   auto invocation = ParseInvocation(request);
   return invocation.command == clearCmd;
 }
 
 Result<cvd::Response> CvdClearCommandHandler::Handle(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   cvd::Response response;

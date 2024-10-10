@@ -19,7 +19,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -42,7 +42,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
   AcloudTranslatorCommand(InstanceManager& instance_manager) : instance_manager_(instance_manager) {}
   ~AcloudTranslatorCommand() = default;
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     if (invocation.arguments.size() >= 2) {
       if (invocation.command == "acloud" &&
@@ -62,7 +62,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
     return "";
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     auto invocation = ParseInvocation(request);
     if (invocation.arguments.empty() || invocation.arguments.size() < 2) {

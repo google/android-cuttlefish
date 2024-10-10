@@ -22,7 +22,7 @@
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 
@@ -34,7 +34,7 @@ class RequestContext {
                  InstanceManager& instance_manager,
                  HostToolTargetManager& host_tool_target_manager);
 
-  Result<CvdServerHandler*> Handler(const RequestWithStdio& request);
+  Result<CvdServerHandler*> Handler(const CommandRequest& request);
 
  private:
   void InstantiateHandlers();
@@ -48,7 +48,7 @@ class RequestContext {
 };
 
 Result<CvdServerHandler*> RequestHandler(
-    const RequestWithStdio& request,
+    const CommandRequest& request,
     const std::vector<std::unique_ptr<CvdServerHandler>>& handlers);
 
 }  // namespace cuttlefish

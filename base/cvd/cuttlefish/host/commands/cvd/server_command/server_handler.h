@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -29,8 +29,8 @@ class CvdServerHandler {
  public:
   virtual ~CvdServerHandler() = default;
 
-  virtual Result<bool> CanHandle(const RequestWithStdio&) const = 0;
-  virtual Result<cvd::Response> Handle(const RequestWithStdio&) = 0;
+  virtual Result<bool> CanHandle(const CommandRequest&) const = 0;
+  virtual Result<cvd::Response> Handle(const CommandRequest&) = 0;
   // returns the list of subcommand it can handle
   virtual cvd_common::Args CmdList() const = 0;
   // used for command help text

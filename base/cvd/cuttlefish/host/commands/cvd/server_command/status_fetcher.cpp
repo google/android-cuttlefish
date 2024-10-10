@@ -96,7 +96,7 @@ void OverrideInstanceJson(const selector::LocalInstanceGroup& group,
 }  // namespace
 
 Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
-    const RequestWithStdio& request,
+    const CommandRequest& request,
     const InstanceManager::LocalInstanceGroup& group, cvd::Instance& instance) {
   // Only running instances are capable of responding to status requests. An
   // unreachable instance is also considered running, it just didnt't reply last
@@ -193,7 +193,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
 }
 
 Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   const cvd_common::Envs& env = request.Env();
   auto [subcmd, cmd_args] = ParseInvocation(request);
 
@@ -245,14 +245,14 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
 }
 
 Result<Json::Value> StatusFetcher::FetchGroupStatus(
-    const RequestWithStdio& original_request,
+    const CommandRequest& original_request,
     selector::LocalInstanceGroup& group) {
   Json::Value group_json(Json::objectValue);
   group_json["group_name"] = group.GroupName();
   group_json["start_time"] = selector::Format(group.StartTime());
 
-  RequestWithStdio group_request =
-      RequestWithStdio()
+  CommandRequest group_request =
+      CommandRequest()
           .AddArguments({"cvd", "status", "--print", "--all_instances"})
           .SetEnv(original_request.Env())
           .AddSelectorArguments({"--group_name", group.GroupName()});

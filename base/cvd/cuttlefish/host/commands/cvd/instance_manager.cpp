@@ -179,7 +179,7 @@ Result<void> InstanceManager::UpdateInstance(const LocalInstanceGroup& group,
 }
 
 Result<void> InstanceManager::IssueStopCommand(
-    const RequestWithStdio& request, const std::string& config_file_path,
+    const CommandRequest& request, const std::string& config_file_path,
     selector::LocalInstanceGroup& group) {
 
   const auto stop_bin = CF_EXPECT(StopBin(group.HostArtifactsPath()));
@@ -221,7 +221,7 @@ Result<void> InstanceManager::IssueStopCommand(
   return {};
 }
 
-cvd::Status InstanceManager::CvdClear(const RequestWithStdio& request) {
+cvd::Status InstanceManager::CvdClear(const CommandRequest& request) {
   cvd::Status status;
   const std::string config_json_name = cpp_basename(GetGlobalConfigFileLink());
   auto instance_groups_res = instance_db_.Clear();
