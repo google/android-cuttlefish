@@ -46,14 +46,14 @@ class CvdVersionHandler : public CvdServerHandler {
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
 
-    fmt::print(request.Out(), "major: {}\n", cvd::kVersionMajor);
-    fmt::print(request.Out(), "minor: {}\n", cvd::kVersionMinor);
+    fmt::print(std::cout, "major: {}\n", cvd::kVersionMajor);
+    fmt::print(std::cout, "minor: {}\n", cvd::kVersionMinor);
 
     std::string build = android::build::GetBuildNumber();
     if (!build.empty()) {
-      fmt::print(request.Out(), "build: {}\n", build);
+      fmt::print(std::cout, "build: {}\n", build);
     }
-    fmt::print(request.Out(), "crc32: {}\n", FileCrc(kServerExecPath));
+    fmt::print(std::cout, "crc32: {}\n", FileCrc(kServerExecPath));
 
     cvd::Response response;
     response.mutable_status()->set_code(cvd::Status::OK);

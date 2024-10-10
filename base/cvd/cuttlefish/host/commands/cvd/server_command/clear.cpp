@@ -71,7 +71,7 @@ Result<cvd::Response> CvdClearCommandHandler::Handle(
   auto [subcmd, cmd_args] = ParseInvocation(request);
 
   if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
-    request.Out() << kSummaryHelpText << std::endl;
+    std::cout << kSummaryHelpText << std::endl;
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }

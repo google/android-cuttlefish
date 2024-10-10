@@ -59,7 +59,7 @@ class LintCommandHandler : public CvdServerHandler {
     auto working_directory = CurrentDirectory();
     const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
 
-    request.Out() << "Lint of flags and config \"" << config_path
+    std::cout << "Lint of flags and config \"" << config_path
                   << "\" succeeded\n";
 
     cvd::Response response;

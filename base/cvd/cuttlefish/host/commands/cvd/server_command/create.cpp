@@ -345,7 +345,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   if (!flags.config_file.empty()) {
     auto subrequest =
         CreateLoadCommand(request, subcmd_args, flags.config_file);
-    return CF_EXPECT(command_executor_.ExecuteOne(subrequest, request.Err()));
+    return CF_EXPECT(command_executor_.ExecuteOne(subrequest, std::cerr));
   }
 
   // Validate the host artifacts path before proceeding
@@ -370,7 +370,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   if (flags.start) {
     auto start_cmd = CreateStartCommand(request, group, subcmd_args, envs);
     response =
-        CF_EXPECT(command_executor_.ExecuteOne(start_cmd, request.Err()));
+        CF_EXPECT(command_executor_.ExecuteOne(start_cmd, std::cerr));
     // For backward compatibility, we add extra symlink in system wide home
     // when HOME is NOT overridden and selector flags are NOT given.
     auto is_default_group =

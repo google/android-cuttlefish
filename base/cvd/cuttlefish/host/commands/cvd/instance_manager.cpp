@@ -194,7 +194,7 @@ Result<void> InstanceManager::IssueStopCommand(
    */
   if (!wait_result.ok()) {
     std::stringstream error_msg;
-    request.Out()
+    std::cout
         << stop_bin << " was executed internally, and failed. It might "
         << "be failing to parse the new --clear_instance_dirs. Will try "
         << "without the flag.\n";
@@ -204,7 +204,7 @@ Result<void> InstanceManager::IssueStopCommand(
   }
 
   if (!wait_result.ok()) {
-    request.Err()
+    std::cerr
         << "Warning: error stopping instances for dir \"" + group.HomeDir() +
                "\".\nThis can happen if instances are already stopped.\n";
   }
@@ -216,7 +216,7 @@ Result<void> InstanceManager::IssueStopCommand(
       (*lock)->Status(InUseState::kNotInUse);
       continue;
     }
-    request.Err() << "InstanceLockFileManager failed to acquire lock";
+    std::cerr << "InstanceLockFileManager failed to acquire lock";
   }
   return {};
 }
@@ -226,7 +226,7 @@ cvd::Status InstanceManager::CvdClear(const RequestWithStdio& request) {
   const std::string config_json_name = cpp_basename(GetGlobalConfigFileLink());
   auto instance_groups_res = instance_db_.Clear();
   if (!instance_groups_res.ok()) {
-    fmt::print(request.Err(), "Failed to clear instance database: {}",
+    fmt::print(std::cerr, "Failed to clear instance database: {}",
                instance_groups_res.error().Message());
     status.set_code(cvd::Status::INTERNAL);
     return status;
@@ -259,7 +259,7 @@ cvd::Status InstanceManager::CvdClear(const RequestWithStdio& request) {
   }
   // TODO(kwstephenkim): we need a better mechanism to make sure that
   // we clear all run_cvd processes.
-  request.Err() << "Stopped all known instances\n";
+  std::cerr << "Stopped all known instances\n";
   status.set_code(cvd::Status::OK);
   return status;
 }

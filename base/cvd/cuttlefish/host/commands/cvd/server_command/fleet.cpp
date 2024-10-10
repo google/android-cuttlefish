@@ -83,7 +83,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   auto [sub_cmd, args] = ParseInvocation(request);
 
   if (IsHelp(args)) {
-    request.Out() << kHelpMessage;
+    std::cout << kHelpMessage;
     return ok_response;
   }
 
@@ -96,7 +96,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   Json::Value output_json(Json::objectValue);
   output_json["groups"] = groups_json;
 
-  request.Out() << output_json.toStyledString();
+  std::cout << output_json.toStyledString();
 
   return ok_response;
 }

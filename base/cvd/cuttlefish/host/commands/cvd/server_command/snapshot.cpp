@@ -133,11 +133,11 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
     envs[kAndroidHostOut] = android_host_out;
     envs[kAndroidSoongHostOut] = android_host_out;
 
-    request.Err() << "HOME=" << home << " " << kAndroidHostOut << "="
+    std::cerr << "HOME=" << home << " " << kAndroidHostOut << "="
                   << android_host_out << " " << kAndroidSoongHostOut << "="
                   << android_host_out << " " << cvd_snapshot_bin_path << " ";
     for (const auto& arg : cvd_snapshot_args) {
-      request.Err() << arg << " ";
+      std::cerr << arg << " ";
     }
 
     ConstructCommandParam construct_cmd_param{

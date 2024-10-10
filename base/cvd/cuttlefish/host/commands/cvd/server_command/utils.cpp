@@ -145,7 +145,7 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
       verbose_stream.seekp(-1, std::ios_base::end);
       verbose_stream << std::endl;
     }
-    request.Err() << verbose_stream.rdbuf();
+    std::cerr << verbose_stream.rdbuf();
   }
   ConstructCommandParam construct_cmd_param{
       .bin_path = bin_path,
@@ -217,7 +217,7 @@ cvd::Response NoGroupResponse(const RequestWithStdio& request) {
       fmt::format("Command `{}{}{}` is not applicable: {}{}{}", colors.Red(),
                   fmt::join(request.Args(), " "), colors.Reset(),
                   colors.BoldRed(), "no device", colors.Reset());
-  request.Out() << notice << "\n";
+  std::cout << notice << "\n";
 
   response.mutable_status()->set_message(notice);
   return response;
@@ -235,7 +235,7 @@ Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
       colors.BoldRed(),
       "No terminal/tty for selecting one of multiple Cuttlefish groups",
       colors.Reset(), colors.Cyan(), uid, colors.Reset());
-  request.Out() << notice << "\n";
+  std::cout << notice << "\n";
   response.mutable_status()->set_message(notice);
   return response;
 }

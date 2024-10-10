@@ -147,11 +147,11 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
     envs[kAndroidSoongHostOut] = android_host_out;
 
     std::stringstream command_to_issue;
-    request.Err() << "HOME=" << home << " " << kAndroidHostOut << "="
+    std::cerr << "HOME=" << home << " " << kAndroidHostOut << "="
                   << android_host_out << " " << kAndroidSoongHostOut << "="
                   << android_host_out << " " << cvd_display_bin_path << " ";
     for (const auto& arg : cvd_env_args) {
-      request.Err() << arg << " ";
+      std::cerr << arg << " ";
     }
 
     ConstructCommandParam construct_cmd_param{

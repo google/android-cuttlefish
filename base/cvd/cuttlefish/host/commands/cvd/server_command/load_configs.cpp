@@ -156,7 +156,7 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     if (!cvd_flags.fetch_cvd_flags.empty()) {
       auto fetch_cmd = BuildFetchCmd(request, cvd_flags);
-      auto fetch_res = executor_.ExecuteOne(fetch_cmd, request.Err());
+      auto fetch_res = executor_.ExecuteOne(fetch_cmd, std::cerr);
       if (!fetch_res.ok()) {
         group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
         instance_manager_.UpdateInstanceGroup(group);
@@ -168,7 +168,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     }
 
     auto launch_cmd = BuildLaunchCmd(request, cvd_flags, group);
-    CF_EXPECT(executor_.ExecuteOne(launch_cmd, request.Err()));
+    CF_EXPECT(executor_.ExecuteOne(launch_cmd, std::cerr));
     return {};
   }
 

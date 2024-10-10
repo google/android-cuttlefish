@@ -34,12 +34,7 @@ namespace cuttlefish {
 
 class RequestWithStdio {
  public:
-  RequestWithStdio();
-
-  std::istream& In() const { return in_; }
-  std::ostream& Out() const { return out_; }
-  std::ostream& Err() const { return err_; }
-
+  RequestWithStdio() = default;
 
   template <typename T>
   RequestWithStdio& AddArguments(T&& args) & {
@@ -92,14 +87,9 @@ class RequestWithStdio {
   RequestWithStdio SetEnv(cvd_common::Envs) &&;
 
  private:
-  RequestWithStdio(std::istream&, std::ostream&, std::ostream&);
   cvd_common::Args args_;
   cvd_common::Envs env_;
   cvd_common::Args selector_args_;
-
-  std::istream& in_;
-  std::ostream& out_;
-  std::ostream& err_;
 };
 
 Result<void> SendResponse(const SharedFD& client,
