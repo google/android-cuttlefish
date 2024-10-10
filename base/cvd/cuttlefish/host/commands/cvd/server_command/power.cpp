@@ -26,6 +26,7 @@
 #include <fmt/format.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/common_utils.h"
@@ -154,7 +155,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
         .home = home,
         .args = subcmd_args,
         .envs = std::move(envs),
-        .working_dir = request.WorkingDirectory(),
+        .working_dir = CurrentDirectory(),
         .command_name = bin_base
     };
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
@@ -204,7 +205,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
         .home = home,
         .args = cvd_env_args,
         .envs = std::move(envs),
-        .working_dir = request.WorkingDirectory(),
+        .working_dir = CurrentDirectory(),
         .command_name = bin_base
     };
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));

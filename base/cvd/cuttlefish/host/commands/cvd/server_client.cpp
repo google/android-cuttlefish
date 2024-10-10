@@ -95,20 +95,4 @@ RequestWithStdio RequestWithStdio::SetEnv(cvd_common::Envs env) && {
   return *this;
 }
 
-const std::string& RequestWithStdio::WorkingDirectory() const {
-  return working_directory_;
-}
-
-RequestWithStdio& RequestWithStdio::SetWorkingDirectory(
-    std::string working_directory) & {
-  working_directory_ = std::move(working_directory);
-  return *this;
-}
-
-RequestWithStdio RequestWithStdio::SetWorkingDirectory(
-    std::string working_directory) && {
-  working_directory_ = std::move(working_directory);
-  return *this;
-}
-
 }  // namespace cuttlefish

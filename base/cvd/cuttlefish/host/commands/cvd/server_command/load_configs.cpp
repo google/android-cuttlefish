@@ -54,7 +54,7 @@ The --override flag can be used to give new values for properties in the config 
 
 Result<CvdFlags> GetCvdFlags(const RequestWithStdio& request) {
   auto args = ParseInvocation(request).arguments;
-  auto working_directory = request.WorkingDirectory();
+  auto working_directory = CurrentDirectory();
   const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
   return CF_EXPECT(GetCvdFlags(flags));
 }
@@ -202,8 +202,6 @@ class LoadConfigsCommand : public CvdServerHandler {
     RequestWithStdio launch_req =
         RequestWithStdio()
             .SetEnv(request.Env())
-            .SetWorkingDirectory(
-                cvd_flags.load_directories.host_package_directory)
             // The newly created instances don't have an id yet, create will
             // allocate those.
             /* cvd load will always create instances in daemon mode (to be

@@ -20,7 +20,6 @@
 #include <sys/types.h>
 
 #include <initializer_list>
-#include <string>
 #include <string_view>
 
 #include <google/protobuf/map.h>
@@ -92,16 +91,11 @@ class RequestWithStdio {
   RequestWithStdio& SetEnv(cvd_common::Envs) &;
   RequestWithStdio SetEnv(cvd_common::Envs) &&;
 
-  const std::string& WorkingDirectory() const;
-  RequestWithStdio& SetWorkingDirectory(std::string) &;
-  RequestWithStdio SetWorkingDirectory(std::string) &&;
-
  private:
   RequestWithStdio(std::istream&, std::ostream&, std::ostream&);
   cvd_common::Args args_;
   cvd_common::Envs env_;
   cvd_common::Args selector_args_;
-  std::string working_directory_;
 
   std::istream& in_;
   std::ostream& out_;

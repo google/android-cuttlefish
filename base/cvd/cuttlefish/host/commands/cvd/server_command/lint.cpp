@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/server_client.h"
@@ -55,7 +56,7 @@ class LintCommandHandler : public CvdServerHandler {
     CF_EXPECT(CanHandle(request));
 
     auto args = ParseInvocation(request).arguments;
-    auto working_directory = request.WorkingDirectory();
+    auto working_directory = CurrentDirectory();
     const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
 
     request.Out() << "Lint of flags and config \"" << config_path

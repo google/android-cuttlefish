@@ -20,7 +20,6 @@
 #include <android-base/logging.h>
 
 #include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/frontline_parser.h"
@@ -67,8 +66,7 @@ Result<cvd::Response> Cvd::HandleCommand(
   RequestWithStdio request = RequestWithStdio()
                                  .AddArguments(cvd_process_args)
                                  .SetEnv(env)
-                                 .AddSelectorArguments(selector_args)
-                                 .SetWorkingDirectory(CurrentDirectory());
+                                 .AddSelectorArguments(selector_args);
 
   RequestContext context(instance_lockfile_manager_, instance_manager_,
                          host_tool_target_manager_);
