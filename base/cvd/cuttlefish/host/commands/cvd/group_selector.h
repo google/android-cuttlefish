@@ -19,10 +19,10 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 
 namespace cuttlefish {
 Result<selector::LocalInstanceGroup> SelectGroup(InstanceManager&,
-                                                 const RequestWithStdio&);
+                                                 const CommandRequest&);
 
 }  // namespace cuttlefish

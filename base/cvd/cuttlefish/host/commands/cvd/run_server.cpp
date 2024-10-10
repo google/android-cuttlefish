@@ -29,7 +29,7 @@
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/metrics/metrics_notice.h"
 #include "host/commands/cvd/selector/instance_database.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {

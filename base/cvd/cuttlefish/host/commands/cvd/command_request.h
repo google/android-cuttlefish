@@ -20,7 +20,6 @@
 #include <sys/types.h>
 
 #include <initializer_list>
-#include <string>
 #include <string_view>
 
 #include <google/protobuf/map.h>
@@ -33,20 +32,12 @@
 
 namespace cuttlefish {
 
-class RequestWithStdio {
+class CommandRequest {
  public:
-  static RequestWithStdio StdIo();
-  static RequestWithStdio NullIo();
-  static RequestWithStdio InheritIo(const RequestWithStdio&);
-
-  std::istream& In() const;
-  std::ostream& Out() const;
-  std::ostream& Err() const;
-
-  bool IsNullIo() const;
+  CommandRequest() = default;
 
   template <typename T>
-  RequestWithStdio& AddArguments(T&& args) & {
+  CommandRequest& AddArguments(T&& args) & {
     for (auto&& arg : args) {
       args_.emplace_back(arg);
     }
@@ -54,20 +45,20 @@ class RequestWithStdio {
   }
 
   template <typename T>
-  RequestWithStdio AddArguments(T&& args) && {
+  CommandRequest AddArguments(T&& args) && {
     for (auto&& arg : args) {
       args_.emplace_back(arg);
     }
     return *this;
   }
 
-  RequestWithStdio& AddArguments(std::initializer_list<std::string_view>) &;
-  RequestWithStdio AddArguments(std::initializer_list<std::string_view>) &&;
+  CommandRequest& AddArguments(std::initializer_list<std::string_view>) &;
+  CommandRequest AddArguments(std::initializer_list<std::string_view>) &&;
 
   const cvd_common::Args& Args() const;
 
   template <typename T>
-  RequestWithStdio& AddSelectorArguments(T&& args) & {
+  CommandRequest& AddSelectorArguments(T&& args) & {
     for (auto&& arg : args) {
       selector_args_.emplace_back(arg);
     }
@@ -75,16 +66,16 @@ class RequestWithStdio {
   }
 
   template <typename T>
-  RequestWithStdio AddSelectorArguments(T&& args) && {
+  CommandRequest AddSelectorArguments(T&& args) && {
     for (auto&& arg : args) {
       selector_args_.emplace_back(arg);
     }
     return *this;
   }
 
-  RequestWithStdio& AddSelectorArguments(
+  CommandRequest& AddSelectorArguments(
       std::initializer_list<std::string_view>) &;
-  RequestWithStdio AddSelectorArguments(
+  CommandRequest AddSelectorArguments(
       std::initializer_list<std::string_view>) &&;
 
   const cvd_common::Args& SelectorArgs() const;
@@ -92,23 +83,13 @@ class RequestWithStdio {
   const cvd_common::Envs& Env() const;
   cvd_common::Envs& Env();
 
-  RequestWithStdio& SetEnv(cvd_common::Envs) &;
-  RequestWithStdio SetEnv(cvd_common::Envs) &&;
-
-  const std::string& WorkingDirectory() const;
-  RequestWithStdio& SetWorkingDirectory(std::string) &;
-  RequestWithStdio SetWorkingDirectory(std::string) &&;
+  CommandRequest& SetEnv(cvd_common::Envs) &;
+  CommandRequest SetEnv(cvd_common::Envs) &&;
 
  private:
-  RequestWithStdio(std::istream&, std::ostream&, std::ostream&);
   cvd_common::Args args_;
   cvd_common::Envs env_;
   cvd_common::Args selector_args_;
-  std::string working_directory_;
-
-  std::istream& in_;
-  std::ostream& out_;
-  std::ostream& err_;
 };
 
 Result<void> SendResponse(const SharedFD& client,

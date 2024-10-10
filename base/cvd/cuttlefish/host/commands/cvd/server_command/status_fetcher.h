@@ -24,7 +24,7 @@
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
@@ -41,15 +41,15 @@ class StatusFetcher {
                 HostToolTargetManager& host_tool_target_manager)
       : instance_manager_(instance_manager),
         host_tool_target_manager_(host_tool_target_manager) {}
-  Result<StatusFetcherOutput> FetchStatus(const RequestWithStdio&);
+  Result<StatusFetcherOutput> FetchStatus(const CommandRequest&);
 
-  Result<Json::Value> FetchGroupStatus(const RequestWithStdio& original_request,
+  Result<Json::Value> FetchGroupStatus(const CommandRequest& original_request,
                                        selector::LocalInstanceGroup& group);
 
  private:
   Result<std::string> GetBin(const std::string& host_artifacts_path) const;
   Result<StatusFetcherOutput> FetchOneInstanceStatus(
-      const RequestWithStdio&, const InstanceManager::LocalInstanceGroup& group,
+      const CommandRequest&, const InstanceManager::LocalInstanceGroup& group,
       cvd::Instance&);
 
   InstanceManager& instance_manager_;

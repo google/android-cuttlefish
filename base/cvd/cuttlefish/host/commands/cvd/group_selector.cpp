@@ -52,14 +52,14 @@ std::string SelectionMenu(
 }
 
 Result<selector::LocalInstanceGroup> PromptUserForGroup(
-    InstanceManager& instance_manager, const RequestWithStdio& request,
+    InstanceManager& instance_manager, const CommandRequest& request,
     const cvd_common::Envs& envs, const cvd_common::Args& selector_args) {
   // show the menu and let the user choose
   std::vector<selector::LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups(selector::Queries{}));
   auto menu = SelectionMenu(groups);
 
-  request.Out() << menu << "\n";
+  std::cout << menu << "\n";
   std::unique_ptr<InterruptibleTerminal> terminal_ =
       std::make_unique<InterruptibleTerminal>();
 
@@ -71,7 +71,7 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
     if (android::base::ParseInt(input_line, &selection)) {
       const int n_groups = groups.size();
       if (n_groups <= selection || selection < 0) {
-        fmt::print(request.Err(),
+        fmt::print(std::cerr,
                    "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
                    colors.BoldRed(), selection, colors.Reset(), colors.Cyan(),
                    n_groups - 1, colors.Reset());
@@ -89,7 +89,7 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
     if (instance_group_result.ok()) {
       return instance_group_result;
     }
-    fmt::print(request.Err(),
+    fmt::print(std::cerr,
                "\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
                colors.BoldRed(), chosen_group_name, colors.Reset());
   }
@@ -98,7 +98,7 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
 }  // namespace
 
 Result<selector::LocalInstanceGroup> SelectGroup(
-    InstanceManager& instance_manager, const RequestWithStdio& request) {
+    InstanceManager& instance_manager, const CommandRequest& request) {
   auto has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
   CF_EXPECT(std::move(has_groups), "No instance groups available");
   const cvd_common::Envs& env = request.Env();

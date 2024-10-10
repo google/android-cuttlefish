@@ -20,9 +20,10 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -46,19 +47,19 @@ class LintCommandHandler : public CvdServerHandler {
  public:
   LintCommandHandler() {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return invocation.command == kLintSubCmd;
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     auto args = ParseInvocation(request).arguments;
-    auto working_directory = request.WorkingDirectory();
+    auto working_directory = CurrentDirectory();
     const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
 
-    request.Out() << "Lint of flags and config \"" << config_path
+    std::cout << "Lint of flags and config \"" << config_path
                   << "\" succeeded\n";
 
     cvd::Response response;

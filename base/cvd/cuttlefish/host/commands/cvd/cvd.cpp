@@ -20,14 +20,13 @@
 #include <android-base/logging.h>
 
 #include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/request_context.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 
 namespace cuttlefish {
 
@@ -64,11 +63,10 @@ Result<cvd::Response> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
     const std::unordered_map<std::string, std::string>& env,
     const std::vector<std::string>& selector_args) {
-  RequestWithStdio request = RequestWithStdio::StdIo()
+  CommandRequest request = CommandRequest()
                                  .AddArguments(cvd_process_args)
                                  .SetEnv(env)
-                                 .AddSelectorArguments(selector_args)
-                                 .SetWorkingDirectory(CurrentDirectory());
+                                 .AddSelectorArguments(selector_args);
 
   RequestContext context(instance_lockfile_manager_, instance_manager_,
                          host_tool_target_manager_);

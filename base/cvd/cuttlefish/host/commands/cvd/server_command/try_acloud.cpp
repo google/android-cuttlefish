@@ -63,7 +63,7 @@ class TryAcloudCommand : public CvdServerHandler {
   TryAcloudCommand(InstanceManager& im) : instance_manager_(im) {}
   ~TryAcloudCommand() = default;
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return invocation.command == "try-acloud";
   }
@@ -78,7 +78,7 @@ class TryAcloudCommand : public CvdServerHandler {
     return kDetailedHelpText;
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
 #if ENABLE_CVDR_TRANSLATION
     auto res = VerifyWithCvdRemote(request);
     return res.ok() ? res : VerifyWithCvd(request);
@@ -87,15 +87,15 @@ class TryAcloudCommand : public CvdServerHandler {
   }
 
  private:
-  Result<cvd::Response> VerifyWithCvd(const RequestWithStdio& request);
-  Result<cvd::Response> VerifyWithCvdRemote(const RequestWithStdio& request);
+  Result<cvd::Response> VerifyWithCvd(const CommandRequest& request);
+  Result<cvd::Response> VerifyWithCvdRemote(const CommandRequest& request);
   Result<std::string> RunCvdRemoteGetConfig(const std::string& name);
 
   InstanceManager& instance_manager_;
 };
 
 Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   CF_EXPECT(IsSubOperationSupported(request));
   // ConvertAcloudCreate converts acloud to cvd commands.
@@ -111,7 +111,7 @@ Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
 }
 
 Result<cvd::Response> TryAcloudCommand::VerifyWithCvdRemote(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   auto filename = CF_EXPECT(GetDefaultConfigFile());
   auto config = CF_EXPECT(LoadAcloudConfig(filename));
   CF_EXPECT(config.use_legacy_acloud == false);

@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 
 namespace cuttlefish {
 
 struct AcloudTranslatorOptOut {};
 
-bool IsSubOperationSupported(const RequestWithStdio& request);
+bool IsSubOperationSupported(const CommandRequest& request);
 
 }  // namespace cuttlefish

@@ -118,30 +118,28 @@ Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
   return flag_values;
 }
 
-RequestWithStdio CreateLoadCommand(const RequestWithStdio& request,
+CommandRequest CreateLoadCommand(const CommandRequest& request,
                                    cvd_common::Args& args,
                                    const std::string& config_file) {
-  return RequestWithStdio::InheritIo(request)
+  return CommandRequest()
       .SetEnv(request.Env())
-      .SetWorkingDirectory(request.WorkingDirectory())
       .AddArguments({"cvd", "load"})
       .AddArguments(args)
       .AddArguments({config_file});
 }
 
-RequestWithStdio CreateStartCommand(const RequestWithStdio& request,
+CommandRequest CreateStartCommand(const CommandRequest& request,
                                     const selector::LocalInstanceGroup& group,
                                     const cvd_common::Args& args,
                                     const cvd_common::Envs& envs) {
-  return RequestWithStdio::InheritIo(request)
-      .SetWorkingDirectory(request.WorkingDirectory())
+  return CommandRequest()
       .SetEnv(envs)
       .AddArguments({"cvd", "start"})
       .AddArguments(args)
       .AddSelectorArguments({"--group_name", group.GroupName()});
 }
 
-Result<cvd_common::Envs> GetEnvs(const RequestWithStdio& request) {
+Result<cvd_common::Envs> GetEnvs(const CommandRequest& request) {
   cvd_common::Envs envs = request.Env();
   if (auto it = envs.find("HOME"); it != envs.end() && it->second.empty()) {
     envs.erase(it);
@@ -150,7 +148,7 @@ Result<cvd_common::Envs> GetEnvs(const RequestWithStdio& request) {
     // As the end-user may override HOME, this could be a relative path
     // to client's pwd, or may include "~" which is the client's actual
     // home directory.
-    auto client_pwd = request.WorkingDirectory();
+    auto client_pwd = CurrentDirectory();
     const auto given_home_dir = envs["HOME"];
     // Substituting ~ is not supported by cvd
     CF_EXPECT(!android::base::StartsWith(given_home_dir, "~") &&
@@ -208,8 +206,8 @@ class CvdCreateCommandHandler : public CvdServerHandler {
         host_tool_target_manager_(host_tool_target_manager),
         command_executor_(command_executor) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override;
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override;
+  Result<bool> CanHandle(const CommandRequest& request) const override;
+  Result<cvd::Response> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override;
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
@@ -218,7 +216,7 @@ class CvdCreateCommandHandler : public CvdServerHandler {
  private:
   Result<selector::LocalInstanceGroup> GetOrCreateGroup(
       const cvd_common::Args& subcmd_args, const cvd_common::Envs& envs,
-      const RequestWithStdio& request);
+      const CommandRequest& request);
   Result<void> CreateSymlinks(const selector::LocalInstanceGroup& group);
 
   static void MarkLockfiles(std::vector<InstanceLockFile>& lock_files,
@@ -243,14 +241,14 @@ void CvdCreateCommandHandler::MarkLockfiles(
 }
 
 Result<bool> CvdCreateCommandHandler::CanHandle(
-    const RequestWithStdio& request) const {
+    const CommandRequest& request) const {
   auto invocation = ParseInvocation(request);
   return Contains(CmdList(), invocation.command);
 }
 
 Result<selector::LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
     const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   using CreationAnalyzerParam =
       selector::CreationAnalyzer::CreationAnalyzerParam;
   const auto& selector_args = request.SelectorArgs();
@@ -335,7 +333,7 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
 }
 
 Result<cvd::Response> CvdCreateCommandHandler::Handle(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   auto [subcmd, subcmd_args] = ParseInvocation(request);
   bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));
@@ -347,7 +345,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   if (!flags.config_file.empty()) {
     auto subrequest =
         CreateLoadCommand(request, subcmd_args, flags.config_file);
-    return CF_EXPECT(command_executor_.ExecuteOne(subrequest, request.Err()));
+    return CF_EXPECT(command_executor_.ExecuteOne(subrequest, std::cerr));
   }
 
   // Validate the host artifacts path before proceeding
@@ -372,7 +370,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   if (flags.start) {
     auto start_cmd = CreateStartCommand(request, group, subcmd_args, envs);
     response =
-        CF_EXPECT(command_executor_.ExecuteOne(start_cmd, request.Err()));
+        CF_EXPECT(command_executor_.ExecuteOne(start_cmd, std::cerr));
     // For backward compatibility, we add extra symlink in system wide home
     // when HOME is NOT overridden and selector flags are NOT given.
     auto is_default_group =

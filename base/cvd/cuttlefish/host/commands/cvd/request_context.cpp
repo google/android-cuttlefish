@@ -24,7 +24,7 @@
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/acloud_command.h"
 #include "host/commands/cvd/server_command/acloud_mixsuperimage.h"
 #include "host/commands/cvd/server_command/acloud_translator.h"
@@ -103,12 +103,12 @@ RequestContext::RequestContext(
 }
 
 Result<CvdServerHandler*> RequestContext::Handler(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   return RequestHandler(request, request_handlers_);
 }
 
 Result<CvdServerHandler*> RequestHandler(
-    const RequestWithStdio& request,
+    const CommandRequest& request,
     const std::vector<std::unique_ptr<CvdServerHandler>>& handlers) {
   Result<cvd::Response> response;
   std::vector<CvdServerHandler*> compatible_handlers;

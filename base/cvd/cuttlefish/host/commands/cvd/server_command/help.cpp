@@ -78,19 +78,19 @@ class CvdHelpHandler : public CvdServerHandler {
       const std::vector<std::unique_ptr<CvdServerHandler>>& request_handlers)
       : request_handlers_(request_handlers) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return (invocation.command == "help");
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     auto args = ParseInvocation(request).arguments;
     if (args.empty()) {
-      request.Out() << CF_EXPECT(TopLevelHelp());
+      std::cout << CF_EXPECT(TopLevelHelp());
     } else {
-      request.Out() << CF_EXPECT(SubCommandHelp(args));
+      std::cout << CF_EXPECT(SubCommandHelp(args));
     }
 
     cvd::Response response;
@@ -110,8 +110,8 @@ class CvdHelpHandler : public CvdServerHandler {
   }
 
  private:
-  RequestWithStdio GetLookupRequest(const std::string& arg) {
-    return RequestWithStdio::NullIo().AddArguments({"cvd", arg});
+  CommandRequest GetLookupRequest(const std::string& arg) {
+    return CommandRequest().AddArguments({"cvd", arg});
   }
 
   Result<std::string> TopLevelHelp() {

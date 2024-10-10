@@ -21,7 +21,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "host/commands/cvd/request_context.h"
-#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -48,7 +48,7 @@ std::string BashEscape(const std::string& input) {
   return safe ? input : "'" + StringReplace(input, "'", "\\'", true) + "'";
 }
 
-std::string FormattedCommand(const RequestWithStdio& command) {
+std::string FormattedCommand(const CommandRequest& command) {
   std::stringstream effective_command;
   effective_command << "*******************************************************"
                        "*************************\n";
@@ -82,7 +82,7 @@ CommandSequenceExecutor::CommandSequenceExecutor(
     : server_handlers_(server_handlers) {}
 
 Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
-    const std::vector<RequestWithStdio>& requests, std::ostream& report) {
+    const std::vector<CommandRequest>& requests, std::ostream& report) {
   std::vector<cvd::Response> responses;
   for (const auto& request : requests) {
     report << FormattedCommand(request);
@@ -101,7 +101,7 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
 }
 
 Result<cvd::Response> CommandSequenceExecutor::ExecuteOne(
-    const RequestWithStdio& request, std::ostream& report) {
+    const CommandRequest& request, std::ostream& report) {
   auto response_in_vector = CF_EXPECT(Execute({request}, report));
   CF_EXPECT_EQ(response_in_vector.size(), 1ul);
   return response_in_vector.front();
@@ -120,7 +120,7 @@ std::vector<std::string> CommandSequenceExecutor::CmdList() const {
 }
 
 Result<CvdServerHandler*> CommandSequenceExecutor::GetHandler(
-    const RequestWithStdio& request) {
+    const CommandRequest& request) {
   return CF_EXPECT(RequestHandler(request, server_handlers_));
 }
 

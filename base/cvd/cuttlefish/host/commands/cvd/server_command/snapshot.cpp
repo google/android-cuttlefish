@@ -23,11 +23,10 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
@@ -70,12 +69,12 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
         host_tool_target_manager_(host_tool_target_manager),
         cvd_snapshot_operations_{"suspend", "resume", "snapshot_take"} {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return Contains(cvd_snapshot_operations_, invocation.command);
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     auto [subcmd, subcmd_args] = ParseInvocation(request);
@@ -110,7 +109,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
   }
 
  private:
-  Result<Command> GenerateCommand(const RequestWithStdio& request,
+  Result<Command> GenerateCommand(const CommandRequest& request,
                                   const std::string& subcmd,
                                   cvd_common::Args& subcmd_args,
                                   cvd_common::Envs envs) {
@@ -134,11 +133,11 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
     envs[kAndroidHostOut] = android_host_out;
     envs[kAndroidSoongHostOut] = android_host_out;
 
-    request.Err() << "HOME=" << home << " " << kAndroidHostOut << "="
+    std::cerr << "HOME=" << home << " " << kAndroidHostOut << "="
                   << android_host_out << " " << kAndroidSoongHostOut << "="
                   << android_host_out << " " << cvd_snapshot_bin_path << " ";
     for (const auto& arg : cvd_snapshot_args) {
-      request.Err() << arg << " ";
+      std::cerr << arg << " ";
     }
 
     ConstructCommandParam construct_cmd_param{
@@ -146,9 +145,9 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
         .home = home,
         .args = cvd_snapshot_args,
         .envs = envs,
-        .working_dir = request.WorkingDirectory(),
-        .command_name = android::base::Basename(cvd_snapshot_bin_path),
-        .null_stdio = request.IsNullIo()};
+        .working_dir = CurrentDirectory(),
+        .command_name = android::base::Basename(cvd_snapshot_bin_path)
+    };
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
     return command;
   }

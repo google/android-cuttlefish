@@ -26,6 +26,7 @@
 #include <fmt/format.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/common_utils.h"
@@ -63,12 +64,12 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     };
   }
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+  Result<bool> CanHandle(const CommandRequest& request) const override {
     auto invocation = ParseInvocation(request);
     return Contains(cvd_power_operations_, invocation.command);
   }
 
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+  Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     const cvd_common::Envs& env = request.Env();
 
@@ -136,7 +137,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     return powerbtn_bin;
   }
 
-  Result<Command> HelpCommand(const RequestWithStdio& request,
+  Result<Command> HelpCommand(const CommandRequest& request,
                               const std::string& op,
                               const cvd_common::Args& subcmd_args,
                               cvd_common::Envs envs) {
@@ -154,14 +155,14 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
         .home = home,
         .args = subcmd_args,
         .envs = std::move(envs),
-        .working_dir = request.WorkingDirectory(),
-        .command_name = bin_base,
-        .null_stdio = request.IsNullIo()};
+        .working_dir = CurrentDirectory(),
+        .command_name = bin_base
+    };
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
     return command;
   }
 
-  Result<Command> NonHelpCommand(const RequestWithStdio& request,
+  Result<Command> NonHelpCommand(const CommandRequest& request,
                                  const std::string& op,
                                  cvd_common::Args& subcmd_args,
                                  cvd_common::Envs envs) {
@@ -197,16 +198,16 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     for (const auto& arg : cvd_env_args) {
       command_to_issue << arg << " ";
     }
-    request.Err() << command_to_issue.str();
+    std::cerr << command_to_issue.str();
 
     ConstructCommandParam construct_cmd_param{
         .bin_path = cvd_power_bin_path,
         .home = home,
         .args = cvd_env_args,
         .envs = std::move(envs),
-        .working_dir = request.WorkingDirectory(),
-        .command_name = bin_base,
-        .null_stdio = request.IsNullIo()};
+        .working_dir = CurrentDirectory(),
+        .command_name = bin_base
+    };
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
     return command;
   }
