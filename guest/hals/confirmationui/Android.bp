@@ -25,7 +25,10 @@ package {
 
 cc_binary {
     name: "android.hardware.confirmationui-service.cuttlefish",
-    defaults: ["cuttlefish_guest_only"],
+    defaults: [
+        "cuttlefish_guest_only",
+        "keymint_use_latest_hal_aidl_ndk_static",
+    ],
     relative_install_path: "hw",
     vendor: true,
 
@@ -37,17 +40,16 @@ cc_binary {
     ],
 
     static_libs: [
-        "android.hardware.confirmationui-lib.cuttlefish",
         "android.hardware.confirmationui-V1-ndk",
-        "android.hardware.security.keymint-V3-ndk",
+        "android.hardware.confirmationui-lib.cuttlefish",
         "android.hardware.security.secureclock-V1-ndk",
         "libbase",
         "libcutils",
         "libcuttlefish_confui",
-        "libteeui_hal_support",
-        "libutils",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libteeui_hal_support",
+        "libutils",
     ],
 
     srcs: [
@@ -55,9 +57,9 @@ cc_binary {
     ],
 
     cflags: [
+        "-DTEEUI_USE_STD_VECTOR",
         "-Wall",
         "-Werror",
-        "-DTEEUI_USE_STD_VECTOR",
     ],
 
     installable: false, // installed in APEX
@@ -93,9 +95,9 @@ cc_library {
         "libcuttlefish_utils",
     ],
     cflags: [
+        "-DTEEUI_USE_STD_VECTOR",
         "-Wall",
         "-Werror",
-        "-DTEEUI_USE_STD_VECTOR",
     ],
 }
 
