@@ -619,10 +619,6 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     start_env[kCuttlefishInstanceEnvVarName] =
         std::to_string(*parsed_flags.local_instance.id);
   }
-  // we don't know which HOME is assigned by cvd start.
-  // cvd server does not rely on the working directory for cvd start
-  start_request.SetWorkingDirectory(request.WorkingDirectory());
-
   ConvertedAcloudCreateCommand ret{
       .prep_requests = std::move(inner_requests),
       .start_request = std::move(start_request),

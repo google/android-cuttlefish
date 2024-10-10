@@ -23,11 +23,10 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
@@ -146,7 +145,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
         .home = home,
         .args = cvd_snapshot_args,
         .envs = envs,
-        .working_dir = request.WorkingDirectory(),
+        .working_dir = CurrentDirectory(),
         .command_name = android::base::Basename(cvd_snapshot_bin_path)
     };
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));

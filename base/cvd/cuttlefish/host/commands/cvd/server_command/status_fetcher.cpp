@@ -27,6 +27,7 @@
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
+#include "common/libs/utils/files.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -123,7 +124,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   CF_EXPECT(ConsumeFlags({GflagsCompatFlag("all_instances", all_instances)},
                          cmd_args));
 
-  const auto working_dir = request.WorkingDirectory();
+  const auto working_dir = CurrentDirectory();
 
   auto android_host_out = group.Proto().host_artifacts_path();
   auto home = group.Proto().home_directory();
@@ -254,8 +255,7 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
       RequestWithStdio()
           .AddArguments({"cvd", "status", "--print", "--all_instances"})
           .SetEnv(original_request.Env())
-          .AddSelectorArguments({"--group_name", group.GroupName()})
-          .SetWorkingDirectory(original_request.WorkingDirectory());
+          .AddSelectorArguments({"--group_name", group.GroupName()});
 
   auto [_, instances_json, group_response] =
       CF_EXPECT(FetchStatus(group_request));

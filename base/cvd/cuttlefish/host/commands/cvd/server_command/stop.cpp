@@ -25,6 +25,7 @@
 #include <android-base/scopeguard.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
@@ -100,7 +101,7 @@ Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
       .home = CF_EXPECT(SystemWideUserHome()),
       .args = cmd_args,
       .envs = env,
-      .working_dir = request.WorkingDirectory(),
+      .working_dir = CurrentDirectory(),
       .command_name = bin
   };
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
@@ -136,7 +137,7 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
       .home = group.HomeDir(),
       .args = cmd_args,
       .envs = request.Env(),
-      .working_dir = request.WorkingDirectory(),
+      .working_dir = CurrentDirectory(),
       .command_name = bin
   };
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));

@@ -24,7 +24,6 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
@@ -152,8 +151,7 @@ static Result<RequestWithStdio> ProcessInstanceNameFlag(
       .AddArguments({"cvd", "status"})
       .AddArguments(cmd_args)
       .SetEnv(std::move(env))
-      .AddSelectorArguments(request.SelectorArgs())
-      .SetWorkingDirectory(request.WorkingDirectory());
+      .AddSelectorArguments(request.SelectorArgs());
 }
 
 static Result<bool> HasPrint(cvd_common::Args cmd_args) {
