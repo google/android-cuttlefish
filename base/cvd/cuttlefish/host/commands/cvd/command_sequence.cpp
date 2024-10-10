@@ -19,7 +19,7 @@
 
 #include <android-base/strings.h>
 
-#include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/environment.h"
 #include "host/commands/cvd/request_context.h"
 #include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/types.h"
@@ -54,7 +54,10 @@ std::string FormattedCommand(const CommandRequest& command) {
                        "*************************\n";
   effective_command << "Executing `";
   for (const auto& [name, val] : command.Env()) {
-    effective_command << BashEscape(name) << "=" << BashEscape(val) << " ";
+    // Print only those variables that differ from the current environment
+    if (StringFromEnv(name) != val) {
+      effective_command << BashEscape(name) << "=" << BashEscape(val) << " ";
+    }
   }
   auto args = command.Args();
   auto selector_args = command.SelectorArgs();
