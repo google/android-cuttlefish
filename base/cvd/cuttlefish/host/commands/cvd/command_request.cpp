@@ -48,44 +48,65 @@ Result<void> SendResponse(const SharedFD& client,
   return {};
 }
 
+CommandRequest::CommandRequest(cvd_common::Args args, cvd_common::Envs env,
+                               cvd_common::Args selector_args)
+    : args_(std::move(args)),
+      env_(std::move(env)),
+      selector_args_(std::move(selector_args)) {}
+
 const cvd_common::Args& CommandRequest::Args() const { return args_; }
-
-CommandRequest& CommandRequest::AddArguments(
-    std::initializer_list<std::string_view> args) & {
-  return AddArguments(std::vector<std::string_view>(args));
-}
-
-CommandRequest CommandRequest::AddArguments(
-    std::initializer_list<std::string_view> args) && {
-  return AddArguments(std::vector<std::string_view>(args));
-}
 
 const cvd_common::Args& CommandRequest::SelectorArgs() const {
   return selector_args_;
 }
 
-CommandRequest& CommandRequest::AddSelectorArguments(
+const cvd_common::Envs& CommandRequest::Env() const { return env_; }
+
+CommandRequestBuilder& CommandRequestBuilder::AddArguments(
+    std::initializer_list<std::string_view> args) & {
+  return AddArguments(std::vector<std::string_view>(args));
+}
+
+CommandRequestBuilder CommandRequestBuilder::AddArguments(
+    std::initializer_list<std::string_view> args) && {
+  return AddArguments(std::vector<std::string_view>(args));
+}
+
+CommandRequestBuilder& CommandRequestBuilder::AddSelectorArguments(
     std::initializer_list<std::string_view> args) & {
   return AddSelectorArguments(std::vector<std::string_view>(args));
 }
 
-CommandRequest CommandRequest::AddSelectorArguments(
+CommandRequestBuilder CommandRequestBuilder::AddSelectorArguments(
     std::initializer_list<std::string_view> args) && {
   return AddSelectorArguments(std::vector<std::string_view>(args));
 }
 
-const cvd_common::Envs& CommandRequest::Env() const { return env_; }
-
-cvd_common::Envs& CommandRequest::Env() { return env_; }
-
-CommandRequest& CommandRequest::SetEnv(cvd_common::Envs env) & {
+CommandRequestBuilder& CommandRequestBuilder::SetEnv(cvd_common::Envs env) & {
   env_ = std::move(env);
   return *this;
 }
 
-CommandRequest CommandRequest::SetEnv(cvd_common::Envs env) && {
+CommandRequestBuilder CommandRequestBuilder::SetEnv(cvd_common::Envs env) && {
   env_ = std::move(env);
   return *this;
+}
+
+CommandRequestBuilder& CommandRequestBuilder::AddEnvVar(std::string key,
+                                                        std::string val) & {
+  env_[key] = val;
+  return *this;
+}
+
+CommandRequestBuilder CommandRequestBuilder::AddEnvVar(std::string key,
+                                                       std::string val) && {
+  env_[key] = val;
+  return *this;
+}
+
+CommandRequest CommandRequestBuilder::Build() && {
+  return CommandRequest(std::move(args_), std::move(env_),
+                        std::move(selector_args_));
 }
 
 }  // namespace cuttlefish

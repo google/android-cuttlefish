@@ -63,10 +63,11 @@ Result<cvd::Response> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
     const std::unordered_map<std::string, std::string>& env,
     const std::vector<std::string>& selector_args) {
-  CommandRequest request = CommandRequest()
-                                 .AddArguments(cvd_process_args)
-                                 .SetEnv(env)
-                                 .AddSelectorArguments(selector_args);
+  CommandRequest request = CommandRequestBuilder()
+                               .AddArguments(cvd_process_args)
+                               .SetEnv(env)
+                               .AddSelectorArguments(selector_args)
+                               .Build();
 
   RequestContext context(instance_lockfile_manager_, instance_manager_,
                          host_tool_target_manager_);

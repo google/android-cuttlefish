@@ -34,57 +34,74 @@ namespace cuttlefish {
 
 class CommandRequest {
  public:
-  CommandRequest() = default;
-
-  template <typename T>
-  CommandRequest& AddArguments(T&& args) & {
-    for (auto&& arg : args) {
-      args_.emplace_back(arg);
-    }
-    return *this;
-  }
-
-  template <typename T>
-  CommandRequest AddArguments(T&& args) && {
-    for (auto&& arg : args) {
-      args_.emplace_back(arg);
-    }
-    return *this;
-  }
-
-  CommandRequest& AddArguments(std::initializer_list<std::string_view>) &;
-  CommandRequest AddArguments(std::initializer_list<std::string_view>) &&;
-
   const cvd_common::Args& Args() const;
-
-  template <typename T>
-  CommandRequest& AddSelectorArguments(T&& args) & {
-    for (auto&& arg : args) {
-      selector_args_.emplace_back(arg);
-    }
-    return *this;
-  }
-
-  template <typename T>
-  CommandRequest AddSelectorArguments(T&& args) && {
-    for (auto&& arg : args) {
-      selector_args_.emplace_back(arg);
-    }
-    return *this;
-  }
-
-  CommandRequest& AddSelectorArguments(
-      std::initializer_list<std::string_view>) &;
-  CommandRequest AddSelectorArguments(
-      std::initializer_list<std::string_view>) &&;
-
   const cvd_common::Args& SelectorArgs() const;
 
   const cvd_common::Envs& Env() const;
-  cvd_common::Envs& Env();
 
-  CommandRequest& SetEnv(cvd_common::Envs) &;
-  CommandRequest SetEnv(cvd_common::Envs) &&;
+ private:
+  friend class CommandRequestBuilder;
+  CommandRequest(cvd_common::Args args, cvd_common::Envs env,
+                 cvd_common::Args selector_args);
+
+  cvd_common::Args args_;
+  cvd_common::Envs env_;
+  cvd_common::Args selector_args_;
+};
+
+class CommandRequestBuilder {
+ public:
+  CommandRequestBuilder() = default;
+
+  template <typename T>
+  CommandRequestBuilder& AddArguments(T&& args) & {
+    for (auto&& arg : args) {
+      args_.emplace_back(arg);
+    }
+    return *this;
+  }
+
+  template <typename T>
+  CommandRequestBuilder AddArguments(T&& args) && {
+    for (auto&& arg : args) {
+      args_.emplace_back(arg);
+    }
+    return *this;
+  }
+
+  CommandRequestBuilder& AddArguments(
+      std::initializer_list<std::string_view>) &;
+  CommandRequestBuilder AddArguments(
+      std::initializer_list<std::string_view>) &&;
+
+  template <typename T>
+  CommandRequestBuilder& AddSelectorArguments(T&& args) & {
+    for (auto&& arg : args) {
+      selector_args_.emplace_back(arg);
+    }
+    return *this;
+  }
+
+  template <typename T>
+  CommandRequestBuilder AddSelectorArguments(T&& args) && {
+    for (auto&& arg : args) {
+      selector_args_.emplace_back(arg);
+    }
+    return *this;
+  }
+
+  CommandRequestBuilder& AddSelectorArguments(
+      std::initializer_list<std::string_view>) &;
+  CommandRequestBuilder AddSelectorArguments(
+      std::initializer_list<std::string_view>) &&;
+
+  CommandRequestBuilder& SetEnv(cvd_common::Envs) &;
+  CommandRequestBuilder SetEnv(cvd_common::Envs) &&;
+
+  CommandRequestBuilder& AddEnvVar(std::string key, std::string val) &;
+  CommandRequestBuilder AddEnvVar(std::string key, std::string val) &&;
+
+  CommandRequest Build() &&;
 
  private:
   cvd_common::Args args_;

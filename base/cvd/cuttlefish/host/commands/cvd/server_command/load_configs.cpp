@@ -184,12 +184,12 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   CommandRequest BuildFetchCmd(const CommandRequest& request,
                                  const CvdFlags& cvd_flags) {
-    return CommandRequest()
+    return CommandRequestBuilder()
         .SetEnv(request.Env())
         // The fetch operation is too verbose by default, set it to WARNING
         // unconditionally, the full logs are available in fetch.log anyways.
         .AddArguments({"cvd", "fetch", "-verbosity", "WARNING"})
-        .AddArguments(cvd_flags.fetch_cvd_flags);
+        .AddArguments(cvd_flags.fetch_cvd_flags).Build();
   }
 
   CommandRequest BuildLaunchCmd(const CommandRequest& request,
@@ -199,21 +199,8 @@ class LoadConfigsCommand : public CvdServerHandler {
     std::string system_build_arg = fmt::format(
         "--system_image_dir={}",
         cvd_flags.load_directories.system_image_directory_flag_value);
-    CommandRequest launch_req =
-        CommandRequest()
-            .SetEnv(request.Env())
-            // The newly created instances don't have an id yet, create will
-            // allocate those.
-            /* cvd load will always create instances in daemon mode (to be
-             independent of terminal) and will enable reporting automatically
-             (to run automatically without question during launch)
-             */
-            .AddArguments({"cvd", "create", "--daemon", system_build_arg})
-            .AddArguments(cvd_flags.launch_cvd_flags)
-            .AddSelectorArguments(cvd_flags.selector_flags)
-            .AddSelectorArguments({"--group_name", group.GroupName()});
 
-    auto& env = launch_req.Env();
+    auto env = request.Env();
     env["HOME"] = cvd_flags.load_directories.launch_home_directory;
     env[kAndroidHostOut] = cvd_flags.load_directories.host_package_directory;
     env[kAndroidSoongHostOut] =
@@ -222,7 +209,18 @@ class LoadConfigsCommand : public CvdServerHandler {
       env.erase(kAndroidProductOut);
     }
 
-    return launch_req;
+    return CommandRequestBuilder()
+            .SetEnv(env)
+            // The newly created instances don't have an id yet, create will
+            // allocate those.
+            /* cvd load will always create instances in daemon mode (to be
+             independent of terminal) and will enable reporting automatically
+             (to run automatically without question during launch)
+             */
+            .AddArguments({"cvd", "create", "--daemon", system_build_arg})
+            .AddArguments(cvd_flags.launch_cvd_flags)
+            .AddSelectorArguments({"--group_name", group.GroupName()})
+            .Build();
   }
 
  private:

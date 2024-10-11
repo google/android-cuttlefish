@@ -121,22 +121,22 @@ Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
 CommandRequest CreateLoadCommand(const CommandRequest& request,
                                    cvd_common::Args& args,
                                    const std::string& config_file) {
-  return CommandRequest()
+  return CommandRequestBuilder()
       .SetEnv(request.Env())
       .AddArguments({"cvd", "load"})
       .AddArguments(args)
-      .AddArguments({config_file});
+      .AddArguments({config_file}).Build();
 }
 
 CommandRequest CreateStartCommand(const CommandRequest& request,
                                     const selector::LocalInstanceGroup& group,
                                     const cvd_common::Args& args,
                                     const cvd_common::Envs& envs) {
-  return CommandRequest()
+  return CommandRequestBuilder()
       .SetEnv(envs)
       .AddArguments({"cvd", "start"})
       .AddArguments(args)
-      .AddSelectorArguments({"--group_name", group.GroupName()});
+      .AddSelectorArguments({"--group_name", group.GroupName()}).Build();
 }
 
 Result<cvd_common::Envs> GetEnvs(const CommandRequest& request) {

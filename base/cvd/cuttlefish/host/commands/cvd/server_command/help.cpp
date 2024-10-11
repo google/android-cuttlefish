@@ -111,7 +111,7 @@ class CvdHelpHandler : public CvdServerHandler {
 
  private:
   CommandRequest GetLookupRequest(const std::string& arg) {
-    return CommandRequest().AddArguments({"cvd", arg});
+    return CommandRequestBuilder().AddArguments({"cvd", arg}).Build();
   }
 
   Result<std::string> TopLevelHelp() {
