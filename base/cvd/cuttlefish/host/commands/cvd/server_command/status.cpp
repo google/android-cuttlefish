@@ -147,11 +147,11 @@ static Result<CommandRequest> ProcessInstanceNameFlag(
     env[kCuttlefishInstanceEnvVarName] = std::to_string(id);
   }
 
-  return CommandRequest()
+  return CommandRequestBuilder()
       .AddArguments({"cvd", "status"})
       .AddArguments(cmd_args)
       .SetEnv(std::move(env))
-      .AddSelectorArguments(request.SelectorArgs());
+      .AddSelectorArguments(request.SelectorArgs()).Build();
 }
 
 static Result<bool> HasPrint(cvd_common::Args cmd_args) {

@@ -18,17 +18,14 @@
 
 #include <unistd.h>
 
-#include <iostream>
-#include <sstream>
-#include <string_view>
+#include <unordered_map>
+#include <unordered_set>
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/users.h"
-#include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/selector/selector_option_parser_utils.h"
 #include "host/commands/cvd/types.h"
