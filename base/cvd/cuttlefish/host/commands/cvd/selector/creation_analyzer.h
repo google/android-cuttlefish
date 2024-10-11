@@ -113,7 +113,7 @@ class CreationAnalyzer {
       const CreationAnalyzerParam& param,
       InstanceLockFileManager& instance_lock_file_manager);
 
-  Result<GroupCreationInfo> ExtractGroupInfo();
+  Result<GroupCreationInfo> ExtractGroupInfo(bool acquire_file_locks);
 
  private:
   using IdAllocator = UniqueResourceAllocator<unsigned>;
@@ -125,7 +125,8 @@ class CreationAnalyzer {
   /**
    * calculate n_instances_ and instance_ids_
    */
-  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIds();
+  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIds(
+      bool acquire_file_locks);
 
   /*
    * When group name is nil, it is auto-generated using instance ids
@@ -133,8 +134,7 @@ class CreationAnalyzer {
    * If the instanc group is the default one, the group name is cvd. Otherwise,
    * for given instance ids, {i}, the group name will be cvd_i.
    */
-  Result<GroupInfo> ExtractGroup(
-      const std::vector<PerInstanceInfo>&) const;
+  Result<GroupInfo> ExtractGroup(const std::vector<PerInstanceInfo>&) const;
 
   /**
    * Figures out the HOME directory
@@ -150,9 +150,11 @@ class CreationAnalyzer {
    */
   Result<std::string> AnalyzeHome() const;
 
-  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal();
   Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal(
-      const std::vector<unsigned>& requested_instance_ids);
+      bool acquire_file_locks);
+  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal(
+      const std::vector<unsigned>& requested_instance_ids,
+      bool acquire_file_locks);
 
   // inputs
   std::unordered_map<std::string, std::string> envs_;

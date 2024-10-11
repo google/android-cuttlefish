@@ -51,8 +51,6 @@ Driver Options:
   -help                  Print this message
   -verbosity=<LEVEL>     Adjust Cvd verbosity level. LEVEL is Android log
                          severity. (Required: cvd >= v1.3)
-  -acquire_file_lock     If the flag is given, the cvd server attempts to
-                         acquire the instance lock file lock. (default: true)
 
 Commands (cvd help <command> for more information):)";
 
