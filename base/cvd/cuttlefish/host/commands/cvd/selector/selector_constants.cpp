@@ -24,8 +24,6 @@
 
 #include <android-base/errors.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/users.h"
@@ -146,16 +144,6 @@ CvdFlag<std::string> SelectorFlags::InstanceNameFlag(const std::string& name) {
   return instance_name;
 }
 
-CvdFlag<bool> SelectorFlags::AcquireFileLockFlag(const std::string& name,
-                                                 const bool default_val) {
-  CvdFlag<bool> acquire_file_lock(name, default_val);
-  std::stringstream help;
-  help << "--" << name
-       << "=false for cvd server not to acquire lock file locks.";
-  acquire_file_lock.SetHelpMessage(help.str());
-  return acquire_file_lock;
-}
-
 const SelectorFlags& SelectorFlags::Get() {
   static Result<SelectorFlags> singleton = New();
   CHECK(singleton.ok()) << singleton.error().FormatForEnv();
@@ -166,8 +154,6 @@ Result<SelectorFlags> SelectorFlags::New() {
   SelectorFlags selector_flags;
   CF_EXPECT(selector_flags.flags_.EnrollFlag(GroupNameFlag(kGroupName)));
   CF_EXPECT(selector_flags.flags_.EnrollFlag(InstanceNameFlag(kInstanceName)));
-  CF_EXPECT(selector_flags.flags_.EnrollFlag(
-      AcquireFileLockFlag(kAcquireFileLock, true)));
   CF_EXPECT(selector_flags.flags_.EnrollFlag(VerbosityFlag(kVerbosity)));
   return selector_flags;
 }

@@ -66,8 +66,6 @@ class SelectorFlags {
  public:
   static constexpr char kGroupName[] = "group_name";
   static constexpr char kInstanceName[] = "instance_name";
-  static constexpr char kAcquireFileLock[] = "acquire_file_lock";
-  static constexpr char kAcquireFileLockEnv[] = "CVD_ACQUIRE_FILE_LOCK";
   static constexpr char kVerbosity[] = "verbosity";
   static const SelectorFlags& Get();
   static Result<SelectorFlags> New();
@@ -85,8 +83,6 @@ class SelectorFlags {
 
   static CvdFlag<std::string> GroupNameFlag(const std::string& name);
   static CvdFlag<std::string> InstanceNameFlag(const std::string& name);
-  static CvdFlag<bool> AcquireFileLockFlag(const std::string& name,
-                                           const bool default_val);
   static CvdFlag<std::string> VerbosityFlag(const std::string& name);
 
   FlagCollection flags_;
