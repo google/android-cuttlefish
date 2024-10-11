@@ -111,7 +111,10 @@ class CvdHelpHandler : public CvdServerHandler {
 
  private:
   CommandRequest GetLookupRequest(const std::string& arg) {
-    return CommandRequestBuilder().AddArguments({"cvd", arg}).Build();
+    auto result = CommandRequestBuilder().AddArguments({"cvd", arg}).Build();
+    CHECK(result.ok()) << "Failed to build cvd command request"
+                       << result.error().FormatForEnv();
+    return result.value();
   }
 
   Result<std::string> TopLevelHelp() {

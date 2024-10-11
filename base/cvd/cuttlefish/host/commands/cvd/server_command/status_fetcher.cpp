@@ -251,11 +251,12 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
   group_json["group_name"] = group.GroupName();
   group_json["start_time"] = selector::Format(group.StartTime());
 
-  CommandRequest group_request =
+  CommandRequest group_request = CF_EXPECT(
       CommandRequestBuilder()
           .AddArguments({"cvd", "status", "--print", "--all_instances"})
           .SetEnv(original_request.Env())
-          .AddSelectorArguments({"--group_name", group.GroupName()}).Build();
+          .AddSelectorArguments({"--group_name", group.GroupName()})
+          .Build());
 
   auto [_, instances_json, group_response] =
       CF_EXPECT(FetchStatus(group_request));

@@ -118,25 +118,27 @@ Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
   return flag_values;
 }
 
-CommandRequest CreateLoadCommand(const CommandRequest& request,
-                                   cvd_common::Args& args,
-                                   const std::string& config_file) {
-  return CommandRequestBuilder()
-      .SetEnv(request.Env())
-      .AddArguments({"cvd", "load"})
-      .AddArguments(args)
-      .AddArguments({config_file}).Build();
+Result<CommandRequest> CreateLoadCommand(const CommandRequest& request,
+                                         cvd_common::Args& args,
+                                         const std::string& config_file) {
+  return CF_EXPECT(CommandRequestBuilder()
+                       .SetEnv(request.Env())
+                       .AddArguments({"cvd", "load"})
+                       .AddArguments(args)
+                       .AddArguments({config_file})
+                       .Build());
 }
 
-CommandRequest CreateStartCommand(const CommandRequest& request,
-                                    const selector::LocalInstanceGroup& group,
-                                    const cvd_common::Args& args,
-                                    const cvd_common::Envs& envs) {
-  return CommandRequestBuilder()
-      .SetEnv(envs)
-      .AddArguments({"cvd", "start"})
-      .AddArguments(args)
-      .AddSelectorArguments({"--group_name", group.GroupName()}).Build();
+Result<CommandRequest> CreateStartCommand(
+    const CommandRequest& request, const selector::LocalInstanceGroup& group,
+    const cvd_common::Args& args, const cvd_common::Envs& envs) {
+  return CF_EXPECT(
+      CommandRequestBuilder()
+          .SetEnv(envs)
+          .AddArguments({"cvd", "start"})
+          .AddArguments(args)
+          .AddSelectorArguments({"--group_name", group.GroupName()})
+          .Build());
 }
 
 Result<cvd_common::Envs> GetEnvs(const CommandRequest& request) {
@@ -344,7 +346,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
 
   if (!flags.config_file.empty()) {
     auto subrequest =
-        CreateLoadCommand(request, subcmd_args, flags.config_file);
+        CF_EXPECT(CreateLoadCommand(request, subcmd_args, flags.config_file));
     return CF_EXPECT(command_executor_.ExecuteOne(subrequest, std::cerr));
   }
 
@@ -368,9 +370,9 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   response.mutable_status()->set_code(cvd::Status::OK);
 
   if (flags.start) {
-    auto start_cmd = CreateStartCommand(request, group, subcmd_args, envs);
-    response =
-        CF_EXPECT(command_executor_.ExecuteOne(start_cmd, std::cerr));
+    auto start_cmd =
+        CF_EXPECT(CreateStartCommand(request, group, subcmd_args, envs));
+    response = CF_EXPECT(command_executor_.ExecuteOne(start_cmd, std::cerr));
     // For backward compatibility, we add extra symlink in system wide home
     // when HOME is NOT overridden and selector flags are NOT given.
     auto is_default_group =
