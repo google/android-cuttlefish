@@ -40,10 +40,6 @@ class SelectorCommonParser {
     return instance_names_;
   }
 
-  // CF_ERR --> unknown, true --> overridden, false --> not overridden.
-  Result<bool> HomeOverridden() const;
-  std::optional<std::string> Home() const;
-
   /*
    * returns if selector flags has device select options: e.g. --group_name
    *
@@ -52,8 +48,7 @@ class SelectorCommonParser {
   bool HasDeviceSelectOption() const { return group_name_ || instance_names_; }
 
  private:
-  SelectorCommonParser(const std::string& client_user_home,
-                       const cvd_common::Envs& envs);
+  SelectorCommonParser(const cvd_common::Envs& envs);
 
   Result<void> ParseOptions(cvd_common::Args& selector_args);
   struct ParsedNameFlags {
@@ -73,7 +68,6 @@ class SelectorCommonParser {
 
   // temporarily keeps the leftover of the input cmd_args
   // Will be never used after parsing is done
-  std::string client_user_home_;
   const cvd_common::Envs& envs_;
 
   // processed result

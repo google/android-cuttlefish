@@ -123,7 +123,7 @@ class StartSelectorParser {
   Result<unsigned> VerifyNumOfInstances(
       const VerifyNumOfInstancesParam& params,
       const unsigned default_n_instances = 1) const;
-  Result<bool> CalcMayBeDefaultGroup();
+  bool CalcMayBeDefaultGroup();
 
   /**
    * The following are considered, and left empty if can't be figured out.

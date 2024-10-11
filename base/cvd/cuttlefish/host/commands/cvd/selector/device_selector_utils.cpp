@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/selector/device_selector_utils.h"
 
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
@@ -32,6 +33,17 @@ Result<LocalInstanceGroup> GetDefaultGroup(
   auto group =
       CF_EXPECT(instance_database.FindGroup({kHomeField, system_wide_home}));
   return group;
+}
+
+std::optional<std::string> OverridenHomeDirectory(
+    const cvd_common::Envs& env) {
+  Result<std::string> user_home_res = SystemWideUserHome();
+  auto home_it = env.find("HOME");
+  if (!user_home_res.ok() || home_it == env.end() ||
+      home_it->second == *user_home_res) {
+    return std::nullopt;
+  }
+  return home_it->second;
 }
 
 }  // namespace selector

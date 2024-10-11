@@ -18,13 +18,11 @@
 
 #include <unistd.h>
 
-#include <unordered_map>
 #include <unordered_set>
 
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/users.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
@@ -33,26 +31,13 @@ namespace selector {
 
 Result<SelectorCommonParser> SelectorCommonParser::Parse(
     cvd_common::Args& selector_args, const cvd_common::Envs& envs) {
-  std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
-  SelectorCommonParser parser(system_wide_home, envs);
+  SelectorCommonParser parser(envs);
   CF_EXPECT(parser.ParseOptions(selector_args));
   return std::move(parser);
 }
 
-SelectorCommonParser::SelectorCommonParser(const std::string& client_user_home,
-                                           const cvd_common::Envs& envs)
-    : client_user_home_(client_user_home), envs_{envs} {}
-
-Result<bool> SelectorCommonParser::HomeOverridden() const {
-  return Contains(envs_, "HOME") && (client_user_home_ != envs_.at("HOME"));
-}
-
-std::optional<std::string> SelectorCommonParser::Home() const {
-  if (Contains(envs_, "HOME")) {
-    return envs_.at("HOME");
-  }
-  return std::nullopt;
-}
+SelectorCommonParser::SelectorCommonParser(const cvd_common::Envs& envs)
+    : envs_{envs} {}
 
 Result<void> SelectorCommonParser::ParseOptions(
     cvd_common::Args& selector_args) {

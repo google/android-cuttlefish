@@ -22,7 +22,6 @@
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/instance_database.h"
-#include "host/commands/cvd/selector/selector_common_parser.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -47,7 +46,6 @@ class InstanceSelector {
  private:
   InstanceSelector( Queries& queries)
       : queries_(queries) {}
-  static bool IsHomeOverridden(const SelectorCommonParser& common_parser);
 
   Result<std::pair<cvd::Instance, LocalInstanceGroup>> FindDefaultInstance(
       const InstanceDatabase& instance_database);
