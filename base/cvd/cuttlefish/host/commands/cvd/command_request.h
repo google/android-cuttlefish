@@ -101,7 +101,7 @@ class CommandRequestBuilder {
   CommandRequestBuilder& AddEnvVar(std::string key, std::string val) &;
   CommandRequestBuilder AddEnvVar(std::string key, std::string val) &&;
 
-  CommandRequest Build() &&;
+  Result<CommandRequest> Build() &&;
 
  private:
   cvd_common::Args args_;

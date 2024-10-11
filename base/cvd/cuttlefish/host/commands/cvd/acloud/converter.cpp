@@ -443,7 +443,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       fetch_command_str += " --kernel_build=" + build + "/" + target;
     }
     fetch_request_builder.AddEnvVar(kAndroidHostOut, host_artifacts_path);
-    inner_requests.push_back(std::move(fetch_request_builder).Build());
+    inner_requests.push_back(
+        CF_EXPECT(std::move(fetch_request_builder).Build()));
 
     fetch_cvd_args_file = host_dir + "/fetch-cvd-args.txt";
     if (FileExists(fetch_cvd_args_file)) {
@@ -495,7 +496,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
     mixsuperimage_request_builder.AddArguments({required_paths});
     inner_requests.emplace_back(
-        std::move(mixsuperimage_request_builder).Build());
+        CF_EXPECT(std::move(mixsuperimage_request_builder).Build()));
   }
 
   CommandRequestBuilder start_request_builder;
@@ -613,7 +614,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
   ConvertedAcloudCreateCommand ret{
       .prep_requests = std::move(inner_requests),
-      .start_request = std::move(start_request_builder).Build(),
+      .start_request = CF_EXPECT(std::move(start_request_builder).Build()),
       .fetch_command_str = fetch_command_str,
       .fetch_cvd_args_file = fetch_cvd_args_file,
       .verbose = parsed_flags.verbose,

@@ -104,7 +104,7 @@ CommandRequestBuilder CommandRequestBuilder::AddEnvVar(std::string key,
   return *this;
 }
 
-CommandRequest CommandRequestBuilder::Build() && {
+Result<CommandRequest> CommandRequestBuilder::Build() && {
   return CommandRequest(std::move(args_), std::move(env_),
                         std::move(selector_args_));
 }
