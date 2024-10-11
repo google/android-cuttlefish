@@ -26,6 +26,7 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/users.h"
+#include "host/commands/cvd/selector/device_selector_utils.h"
 #include "host/commands/cvd/selector/selector_option_parser_utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/config_constants.h"
@@ -228,7 +229,7 @@ StartSelectorParser::HandleInstanceIds(
   return ParsedInstanceIdsOpt{instance_ids_vector};
 }
 
-Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
+bool StartSelectorParser::CalcMayBeDefaultGroup() {
   /*
    * the logic to determine whether this group is the default one or not:
    *  If HOME is not overridden and no selector options, then
@@ -236,14 +237,14 @@ Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
    *  Or, not a default group
    *
    */
-  if (CF_EXPECT(common_parser_.HomeOverridden())) {
+  if (OverridenHomeDirectory(envs_).has_value()) {
     return false;
   }
   return !common_parser_.HasDeviceSelectOption();
 }
 
 Result<void> StartSelectorParser::ParseOptions() {
-  may_be_default_group_ = CF_EXPECT(CalcMayBeDefaultGroup());
+  may_be_default_group_ = CalcMayBeDefaultGroup();
 
   group_name_ = common_parser_.GroupName();
   per_instance_names_ = common_parser_.PerInstanceNames();

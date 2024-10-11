@@ -21,7 +21,6 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
-#include "host/commands/cvd/selector/selector_common_parser.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -46,9 +45,6 @@ class GroupSelector {
  private:
   GroupSelector(const Queries& queries)
       : queries_{queries} {}
-
-  // used by Select()
-  static bool IsHomeOverridden(const SelectorCommonParser& common_parser);
 
   Result<LocalInstanceGroup> FindDefaultGroup(
       const InstanceDatabase& instance_database);

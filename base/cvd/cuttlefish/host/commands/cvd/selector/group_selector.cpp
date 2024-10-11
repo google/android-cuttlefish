@@ -20,6 +20,7 @@
 
 #include "common/libs/utils/contains.h"
 #include "host/commands/cvd/selector/device_selector_utils.h"
+#include "host/commands/cvd/selector/selector_common_parser.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/libs/config/config_constants.h"
 
@@ -51,9 +52,9 @@ Result<GroupSelector> GroupSelector::GetSelector(
   // search by group and instances
   // search by HOME if overridden
   Queries queries;
-  if (IsHomeOverridden(common_parser)) {
-    CF_EXPECT(common_parser.Home());
-    queries.emplace_back(kHomeField, common_parser.Home().value());
+  auto overriden_home = OverridenHomeDirectory(envs);
+  if (overriden_home.has_value()) {
+    queries.emplace_back(kHomeField, overriden_home.value());
   }
   if (common_parser.GroupName()) {
     queries.emplace_back(kGroupNameField, common_parser.GroupName().value());
@@ -81,15 +82,6 @@ Result<GroupSelector> GroupSelector::GetSelector(
 
   GroupSelector group_selector(queries);
   return group_selector;
-}
-
-bool GroupSelector::IsHomeOverridden(
-    const SelectorCommonParser& common_parser) {
-  auto home_overridden_result = common_parser.HomeOverridden();
-  if (!home_overridden_result.ok()) {
-    return false;
-  }
-  return *home_overridden_result;
 }
 
 Result<LocalInstanceGroup> GroupSelector::FindGroup(
