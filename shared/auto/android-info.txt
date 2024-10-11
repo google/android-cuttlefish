@@ -1,6 +1,4 @@
 config=auto
 gfxstream=supported
 gfxstream_gl_program_binary_link_status=supported
-# TOOD(b/339688542): Find a way to enable vhost_user_vsock with s2d enabled
-# vhost_user_vsock is needed for a camera emulation
-# vhost_user_vsock=true
+vhost_user_vsock=true
