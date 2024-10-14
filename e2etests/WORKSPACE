@@ -29,27 +29,23 @@ http_archive(
 )
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
-load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
-load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
-
-############################################################
-# Define your own dependencies here using go_repository.
-# Else, dependencies declared by rules_go/gazelle will be used.
-# The first declaration of an external repository "wins".
-############################################################
-
-load("//:deps.bzl", "go_dependencies")
-
-# gazelle:repository_macro deps.bzl%go_dependencies
-go_dependencies()
 
 go_rules_dependencies()
 
 go_register_toolchains(version = "1.20.7")
 
-gazelle_dependencies()
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
+
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+
+load("//:go_repositories.bzl", "repos")
+
+# gazelle:repository_macro go_repositories.bzl%repos
+repos()
+
+gazelle_dependencies()
 
 local_repository(
     name = "images",

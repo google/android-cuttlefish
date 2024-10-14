@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package orchestration
+package main
 
 import (
 	"encoding/json"
@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"testing"
 
-	"orchestration/e2etesting"
+	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
 
 	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/cloud-android-orchestration/pkg/client"
@@ -30,14 +30,14 @@ import (
 )
 
 func TestSnapshot(t *testing.T) {
-	ctx, err := e2etesting.Setup(61003)
+	ctx, err := common.Setup(61003)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		e2etesting.Cleanup(ctx)
+		common.Cleanup(ctx)
 	})
-	dh, err := e2etesting.NewDockerHelper()
+	dh, err := common.NewDockerHelper()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +76,7 @@ func TestSnapshot(t *testing.T) {
 	}
 	// Verifies temporary file does not exist.
 	err = dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"stat", tmpFile})
-	var exitCodeErr *e2etesting.DockerExecExitCodeError
+	var exitCodeErr *common.DockerExecExitCodeError
 	if !errors.As(err, &exitCodeErr) {
 		t.Fatal(err)
 	}
@@ -86,7 +86,7 @@ func TestSnapshot(t *testing.T) {
 	}
 	// Restore the device from the snapshot.
 	if err := startDevice(ctx.ServiceURL, groupName, cvd.Name, createSnapshotRes.SnapshotID); err != nil {
-		if err := e2etesting.DownloadHostBugReport(srv, groupName); err != nil {
+		if err := common.DownloadHostBugReport(srv, groupName); err != nil {
 			t.Errorf("failed creating bugreport: %s", err)
 		}
 		t.Fatal(err)
@@ -96,7 +96,7 @@ func TestSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	if diff := cmp.Diff("Running", cvd.Status); diff != "" {
-		if err := e2etesting.DownloadHostBugReport(srv, groupName); err != nil {
+		if err := common.DownloadHostBugReport(srv, groupName); err != nil {
 			t.Errorf("failed creating bugreport: %s", err)
 		}
 		t.Fatalf("status mismatch (-want +got):\n%s", diff)
@@ -114,10 +114,10 @@ func uploadArtifacts(srv client.HostOrchestratorService) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if err := e2etesting.UploadAndExtract(srv, uploadDir, "images.zip"); err != nil {
+	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/images.zip"); err != nil {
 		return "", err
 	}
-	if err := e2etesting.UploadAndExtract(srv, uploadDir, "cvd-host_package.tar.gz"); err != nil {
+	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/cvd-host_package.tar.gz"); err != nil {
 		return "", err
 	}
 	return uploadDir, nil
@@ -154,7 +154,7 @@ func createDevice(srv client.HostOrchestratorService, group_name, artifactsDir s
 	createReq := &hoapi.CreateCVDRequest{EnvConfig: envConfig}
 	res, createErr := srv.CreateCVD(createReq /* buildAPICredentials */, "")
 	if createErr != nil {
-		if err := e2etesting.DownloadHostBugReport(srv, group_name); err != nil {
+		if err := common.DownloadHostBugReport(srv, group_name); err != nil {
 			log.Printf("error downloading cvd bugreport: %v", err)
 		}
 		return nil, createErr

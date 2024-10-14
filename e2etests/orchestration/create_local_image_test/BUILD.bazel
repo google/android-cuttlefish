@@ -12,12 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
 
-GO_PREFIX = "github.com/google/android-cuttlefish/e2etests"
-
-gazelle(
-    name = "gazelle",
-    external = "external",
-    prefix = GO_PREFIX,
+go_test(
+    name = "create_local_image_test_test",
+    srcs = ["main_test.go"],
+    data = [
+        "//orchestration/artifacts:cvd_host_package",
+        "//orchestration/artifacts:images_zip",
+        "@images//docker:orchestration_image_tar",
+    ],
+    deps = [
+        "//orchestration/common",
+        "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
+        "@com_github_google_cloud_android_orchestration//pkg/client",
+        "@com_github_google_go_cmp//cmp",
+    ],
 )

@@ -12,12 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@bazel_gazelle//:def.bzl", "gazelle")
+load("def.bzl", "aosp_artifact")
 
-GO_PREFIX = "github.com/google/android-cuttlefish/e2etests"
+sh_binary(
+    name = "fetch_aosp_artifact",
+    srcs = ["fetch_aosp_artifact.sh"],
+)
 
-gazelle(
-    name = "gazelle",
-    external = "external",
-    prefix = GO_PREFIX,
+aosp_artifact(
+    name = "cvd_host_package",
+    artifact_name = "cvd-host_package.tar.gz",
+    build_id = "12432601",
+    build_target = "aosp_cf_x86_64_phone-trunk_staging-userdebug",
+    out_name = "cvd-host_package.tar.gz",
+)
+
+aosp_artifact(
+    name = "images_zip",
+    artifact_name = "aosp_cf_x86_64_phone-img-12432601.zip",
+    build_id = "12432601",
+    build_target = "aosp_cf_x86_64_phone-trunk_staging-userdebug",
+    out_name = "images.zip",
 )
