@@ -164,6 +164,12 @@ def repos():
         version = "v1.1.1",
     )
     go_repository(
+        name = "com_github_google_android_cuttlefish_frontend_src_host_orchestrator",
+        importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator",
+        sum = "h1:GyA/c0U7dGi1oWoMSmGF00UcsBJxv+eZAiO5qirM9Ak=",
+        version = "v0.0.0-20241011194822-c22ea981e7da",
+    )
+    go_repository(
         name = "com_github_google_android_cuttlefish_frontend_src_liboperator",
         importpath = "github.com/google/android-cuttlefish/frontend/src/liboperator",
         sum = "h1:5ph/60ouIJj+YvXVeob5FU8rPCyjzWgjb8+x7k9QcKU=",
@@ -172,8 +178,7 @@ def repos():
     go_repository(
         name = "com_github_google_cloud_android_orchestration",
         importpath = "github.com/google/cloud-android-orchestration",
-        sum = "h1:xjbFWQtTP+fSJo+SyY/YhWCeQocv/aGlSQAqjexVUa4=",
-        version = "v0.1.0-alpha.0.20240808173224-3579213f3c5c",
+        commit = "659cfda81568b44ccb1cdded948c64a1fc6e1b6e",
     )
     go_repository(
         name = "com_github_google_go_cmp",
@@ -210,6 +215,12 @@ def repos():
         importpath = "github.com/gorilla/mux",
         sum = "h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=",
         version = "v1.8.0",
+    )
+    go_repository(
+        name = "com_github_gorilla_websocket",
+        importpath = "github.com/gorilla/websocket",
+        sum = "h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=",
+        version = "v1.5.3",
     )
     go_repository(
         name = "com_github_grpc_ecosystem_grpc_gateway",
