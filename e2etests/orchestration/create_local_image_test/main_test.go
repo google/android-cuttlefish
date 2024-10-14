@@ -12,13 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package orchestration
+package main
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
 
-	"orchestration/e2etesting"
+	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
 
 	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/cloud-android-orchestration/pkg/client"
@@ -26,22 +32,22 @@ import (
 )
 
 func TestInstance(t *testing.T) {
-	ctx, err := e2etesting.Setup(61002)
+	ctx, err := common.Setup(61001)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		e2etesting.Cleanup(ctx)
+		common.Cleanup(ctx)
 	})
 	srv := client.NewHostOrchestratorService(ctx.ServiceURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := e2etesting.UploadAndExtract(srv, uploadDir, "images.zip"); err != nil {
+	if err := uploadImages(srv, uploadDir, "../artifacts/images.zip"); err != nil {
 		t.Fatal(err)
 	}
-	if err := e2etesting.UploadAndExtract(srv, uploadDir, "cvd-host_package.tar.gz"); err != nil {
+	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/cvd-host_package.tar.gz"); err != nil {
 		t.Fatal(err)
 	}
 	const group_name = "foo"
@@ -50,7 +56,6 @@ func TestInstance(t *testing.T) {
     "common": {
       "group_name": "` + group_name + `",
       "host_package": "@user_artifacts/` + uploadDir + `"
-
     },
     "instances": [
       {
@@ -79,16 +84,19 @@ func TestInstance(t *testing.T) {
 
 	got, createErr := srv.CreateCVD(createReq /* buildAPICredentials */, "")
 
-	if err := e2etesting.DownloadHostBugReport(srv, group_name); err != nil {
+	if err := common.DownloadHostBugReport(srv, group_name); err != nil {
 		t.Errorf("failed creating bugreport: %s\n", err)
 	}
 	if createErr != nil {
 		t.Fatal(createErr)
 	}
+	if err := common.VerifyLogsEndpoint(ctx.ServiceURL, group_name, "1"); err != nil {
+		t.Fatalf("failed verifying /logs endpoint: %s", err)
+	}
 	want := &hoapi.CreateCVDResponse{
 		CVDs: []*hoapi.CVD{
 			&hoapi.CVD{
-				Group:          "foo",
+				Group:          group_name,
 				Name:           "1",
 				BuildSource:    &hoapi.BuildSource{},
 				Status:         "Running",
@@ -101,4 +109,34 @@ func TestInstance(t *testing.T) {
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("response mismatch (-want +got):\n%s", diff)
 	}
+}
+
+func uploadImages(srv client.HostOrchestratorService, remoteDir, imgsZipSrc string) error {
+	outDir := "/tmp/aosp_cf_x86_64_phone-img-12198634"
+	if err := runCmd("unzip", "-d", outDir, imgsZipSrc); err != nil {
+		return err
+	}
+	defer os.Remove(outDir)
+	entries, err := os.ReadDir(outDir)
+	if err != nil {
+		return err
+	}
+	for _, e := range entries {
+		if err := srv.UploadFile(remoteDir, filepath.Join(outDir, e.Name())); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func runCmd(name string, args ...string) error {
+	cmd := exec.CommandContext(context.TODO(), name, args...)
+	var stderr bytes.Buffer
+	cmd.Stdout = nil
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		return errors.New(stderr.String())
+	}
+	return nil
 }

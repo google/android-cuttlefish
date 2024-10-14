@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package orchestration
+package main
 
 import (
 	"os"
 	"testing"
 
-	"orchestration/e2etesting"
+	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
 
 	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	orchclient "github.com/google/cloud-android-orchestration/pkg/client"
@@ -26,12 +26,12 @@ import (
 )
 
 func TestCreateSingleInstance(t *testing.T) {
-	ctx, err := e2etesting.Setup(61000)
+	ctx, err := common.Setup(61000)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		e2etesting.Cleanup(ctx)
+		common.Cleanup(ctx)
 	})
 	buildID := os.Getenv("BUILD_ID")
 	buildTarget := os.Getenv("BUILD_TARGET")
@@ -51,13 +51,13 @@ func TestCreateSingleInstance(t *testing.T) {
 
 	got, createErr := srv.CreateCVD(createReq, "")
 
-	if err := e2etesting.DownloadHostBugReport(srv, "cvd"); err != nil {
+	if err := common.DownloadHostBugReport(srv, "cvd"); err != nil {
 		t.Errorf("failed creating bugreport: %s\n", err)
 	}
 	if createErr != nil {
 		t.Fatal(err)
 	}
-	if err := e2etesting.VerifyLogsEndpoint(ctx.ServiceURL, "cvd", "1"); err != nil {
+	if err := common.VerifyLogsEndpoint(ctx.ServiceURL, "cvd", "1"); err != nil {
 		t.Fatalf("failed verifying /logs endpoint: %s", err)
 	}
 	want := &hoapi.CreateCVDResponse{

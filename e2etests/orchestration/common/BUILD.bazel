@@ -12,12 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
-GO_PREFIX = "github.com/google/android-cuttlefish/e2etests"
-
-gazelle(
-    name = "gazelle",
-    external = "external",
-    prefix = GO_PREFIX,
+go_library(
+    name = "common",
+    srcs = ["common.go"],
+    importpath = "github.com/google/android-cuttlefish/e2etests/orchestration/common",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_docker_docker//api/types",
+        "@com_github_docker_docker//api/types/container",
+        "@com_github_docker_docker//client",
+        "@com_github_docker_go_connections//nat",
+        "@com_github_google_cloud_android_orchestration//pkg/client",
+    ],
 )
