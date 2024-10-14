@@ -206,6 +206,12 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
           ? "com.android.hardware.gatekeeper.nonsecure"
           : "com.android.hardware.gatekeeper.cf_remote";
 
+  bootconfig_args
+      ["androidboot.vendor.apex.com.android.hardware.graphics.composer"] =
+          instance.hwcomposer() == "drm_hwcomposer"
+              ? "com.android.hardware.graphics.composer.drm_hwcomposer"
+              : "com.android.hardware.graphics.composer.ranchu";
+
   if (config.vhal_proxy_server_port()) {
     bootconfig_args["androidboot.vhal_proxy_server_port"] =
         std::to_string(config.vhal_proxy_server_port());
