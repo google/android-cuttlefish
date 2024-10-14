@@ -19,36 +19,11 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/selector/selector_common_parser.h"
 
 namespace cuttlefish {
-
-static Result<UnixMessageSocket> GetClient(const SharedFD& client) {
-  UnixMessageSocket result(client);
-  CF_EXPECT(result.EnableCredentials(true),
-            "Unable to enable UnixMessageSocket credentials.");
-  return result;
-}
-
-Result<void> SendResponse(const SharedFD& client,
-                          const cvd::Response& response) {
-  std::string serialized;
-  CF_EXPECT(response.SerializeToString(&serialized),
-            "Unable to serialize response proto.");
-  UnixSocketMessage message;
-  message.data = std::vector<char>(serialized.begin(), serialized.end());
-
-  UnixMessageSocket writer =
-      CF_EXPECT(GetClient(client), "Couldn't get client");
-  CF_EXPECT(writer.WriteMessage(message));
-  return {};
-}
 
 CommandRequest::CommandRequest(cvd_common::Args args, cvd_common::Envs env,
                                selector::SelectorOptions selectors)

@@ -112,7 +112,4 @@ class CommandRequestBuilder {
   cvd_common::Args selector_args_;
 };
 
-Result<void> SendResponse(const SharedFD& client,
-                          const cvd::Response& response);
-
 }  // namespace cuttlefish
