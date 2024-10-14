@@ -124,7 +124,6 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return NoGroupResponse(request);
   }
-  const auto selector_args = request.SelectorArgs();
 
   auto group = CF_EXPECT(SelectGroup(instance_manager_, request));
   CF_EXPECT(group.HasActiveInstances(), "Selected group is not running");

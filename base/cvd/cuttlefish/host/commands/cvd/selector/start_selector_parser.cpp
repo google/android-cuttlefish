@@ -27,6 +27,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/selector/device_selector_utils.h"
+#include "host/commands/cvd/selector/selector_common_parser.h"
 #include "host/commands/cvd/selector/selector_option_parser_utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/config_constants.h"
@@ -48,34 +49,31 @@ static Result<unsigned> ParseNaturalNumber(const std::string& token) {
 }
 
 Result<StartSelectorParser> StartSelectorParser::ConductSelectFlagsParser(
-    const cvd_common::Args& selector_args,
-    const cvd_common::Args& cmd_args, const cvd_common::Envs& envs) {
+    const SelectorOptions& selector_options, const cvd_common::Args& cmd_args,
+    const cvd_common::Envs& envs) {
   const std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
-  cvd_common::Args selector_args_copied{selector_args};
-  StartSelectorParser parser(
-      system_wide_home, selector_args_copied, cmd_args, envs,
-      CF_EXPECT(SelectorCommonParser::Parse(selector_args_copied, envs)));
+  StartSelectorParser parser(system_wide_home, selector_options, cmd_args,
+                             envs);
   CF_EXPECT(parser.ParseOptions(), "selector option flag parsing failed.");
   return {std::move(parser)};
 }
 
 StartSelectorParser::StartSelectorParser(
     const std::string& system_wide_user_home,
-    const cvd_common::Args& selector_args, const cvd_common::Args& cmd_args,
-    const cvd_common::Envs& envs, SelectorCommonParser&& common_parser)
+    const SelectorOptions& selector_options, const cvd_common::Args& cmd_args,
+    const cvd_common::Envs& envs)
     : client_user_home_{system_wide_user_home},
-      selector_args_(selector_args),
+      selector_options_(selector_options),
       cmd_args_(cmd_args),
-      envs_(envs),
-      common_parser_(std::move(common_parser)) {}
+      envs_(envs) {}
 
 std::optional<std::string> StartSelectorParser::GroupName() const {
-  return group_name_;
+  return selector_options_.group_name;
 }
 
 std::optional<std::vector<std::string>> StartSelectorParser::PerInstanceNames()
     const {
-  return per_instance_names_;
+  return selector_options_.instance_names;
 }
 
 namespace {
@@ -240,14 +238,11 @@ bool StartSelectorParser::CalcMayBeDefaultGroup() {
   if (OverridenHomeDirectory(envs_).has_value()) {
     return false;
   }
-  return !common_parser_.HasDeviceSelectOption();
+  return !selector_options_.HasOptions();
 }
 
 Result<void> StartSelectorParser::ParseOptions() {
   may_be_default_group_ = CalcMayBeDefaultGroup();
-
-  group_name_ = common_parser_.GroupName();
-  per_instance_names_ = common_parser_.PerInstanceNames();
 
   std::optional<std::string> num_instances;
   std::optional<std::string> instance_nums;

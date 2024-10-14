@@ -17,6 +17,7 @@
 #include "host/commands/cvd/command_request.h"
 
 #include <string>
+#include <vector>
 
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 
@@ -24,6 +25,7 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/command_request.h"
+#include "host/commands/cvd/selector/selector_common_parser.h"
 
 namespace cuttlefish {
 
@@ -49,15 +51,15 @@ Result<void> SendResponse(const SharedFD& client,
 }
 
 CommandRequest::CommandRequest(cvd_common::Args args, cvd_common::Envs env,
-                               cvd_common::Args selector_args)
+                               selector::SelectorOptions selectors)
     : args_(std::move(args)),
       env_(std::move(env)),
-      selector_args_(std::move(selector_args)) {}
+      selectors_(std::move(selectors)) {}
 
 const cvd_common::Args& CommandRequest::Args() const { return args_; }
 
-const cvd_common::Args& CommandRequest::SelectorArgs() const {
-  return selector_args_;
+const selector::SelectorOptions& CommandRequest::Selectors() const {
+  return selectors_;
 }
 
 const cvd_common::Envs& CommandRequest::Env() const { return env_; }
@@ -105,8 +107,10 @@ CommandRequestBuilder CommandRequestBuilder::AddEnvVar(std::string key,
 }
 
 Result<CommandRequest> CommandRequestBuilder::Build() && {
-  return CommandRequest(std::move(args_), std::move(env_),
-                        std::move(selector_args_));
+  return CommandRequest(
+      std::move(args_), std::move(env_),
+      CF_EXPECT(selector::ParseCommonSelectorArguments(selector_args_),
+                "Failed to parse selector arguments"));
 }
 
 }  // namespace cuttlefish

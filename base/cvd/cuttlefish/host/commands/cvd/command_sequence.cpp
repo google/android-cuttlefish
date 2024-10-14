@@ -60,7 +60,7 @@ std::string FormattedCommand(const CommandRequest& command) {
     }
   }
   auto args = command.Args();
-  auto selector_args = command.SelectorArgs();
+  auto selector_args = command.Selectors().AsArgs();
   if (args.empty()) {
     return effective_command.str();
   }

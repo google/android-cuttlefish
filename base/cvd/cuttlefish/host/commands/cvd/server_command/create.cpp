@@ -279,9 +279,8 @@ Result<selector::LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
     const CommandRequest& request, bool acquire_file_locks) {
   using CreationAnalyzerParam =
       selector::CreationAnalyzer::CreationAnalyzerParam;
-  const auto& selector_args = request.SelectorArgs();
   CreationAnalyzerParam analyzer_param{
-      .cmd_args = subcmd_args, .envs = envs, .selector_args = selector_args};
+      .cmd_args = subcmd_args, .envs = envs, .selectors = request.Selectors()};
 
   auto analyzer = CF_EXPECT(instance_manager_.CreationAnalyzer(analyzer_param));
   auto group_creation_info =
@@ -405,7 +404,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
     // when HOME is NOT overridden and selector flags are NOT given.
     auto is_default_group =
         StringFromEnv("HOME", "") == CF_EXPECT(SystemWideUserHome()) &&
-        request.SelectorArgs().empty();
+        !request.Selectors().HasOptions();
 
     if (is_default_group) {
       auto symlink_res = CreateSymlinks(group);

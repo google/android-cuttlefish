@@ -26,18 +26,16 @@
 #include <fmt/format.h>
 #include "json/json.h"
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_utils.h"
-#include "host/commands/cvd/common_utils.h"
 
 namespace cuttlefish {
 namespace {
@@ -102,19 +100,19 @@ Result<selector::CreationAnalyzer> InstanceManager::CreationAnalyzer(
 }
 
 Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(
-    const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
+    const selector::SelectorOptions& selectors, const cvd_common::Envs& envs,
     const Queries& extra_queries) {
   auto group_selector =
-      CF_EXPECT(GroupSelector::GetSelector(selector_args, extra_queries, envs));
+      CF_EXPECT(GroupSelector::GetSelector(selectors, extra_queries, envs));
   return CF_EXPECT(group_selector.FindGroup(instance_db_));
 }
 
 Result<std::pair<cvd::Instance, selector::LocalInstanceGroup>>
-InstanceManager::SelectInstance(const cvd_common::Args& selector_args,
-                                const cvd_common::Envs& envs,
-                                const Queries& extra_queries) {
+InstanceManager::SelectInstance(
+    const selector::SelectorOptions& selector_options,
+    const cvd_common::Envs& envs, const Queries& extra_queries) {
   auto instance_selector = CF_EXPECT(
-      InstanceSelector::GetSelector(selector_args, extra_queries, envs));
+      InstanceSelector::GetSelector(selector_options, extra_queries, envs));
   return CF_EXPECT(instance_selector.FindInstanceWithGroup(instance_db_));
 }
 
@@ -139,12 +137,13 @@ InstanceManager::CreateInstanceGroup(
   return CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
 }
 
-Result<bool> InstanceManager::RemoveInstanceGroupByHome(const std::string& dir) {
+Result<bool> InstanceManager::RemoveInstanceGroupByHome(
+    const std::string& dir) {
   LocalInstanceGroup group =
       CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
   CF_EXPECT(!group.HasActiveInstances(),
             "Group still contains active instances");
-  for (auto& instance: group.Instances()) {
+  for (auto& instance : group.Instances()) {
     if (instance.id() == 0) {
       continue;
     }
@@ -167,7 +166,8 @@ Result<std::string> InstanceManager::StopBin(
   }));
 }
 
-Result<void> InstanceManager::UpdateInstanceGroup(const LocalInstanceGroup& group) {
+Result<void> InstanceManager::UpdateInstanceGroup(
+    const LocalInstanceGroup& group) {
   CF_EXPECT(instance_db_.UpdateInstanceGroup(group));
   return {};
 }
@@ -181,7 +181,6 @@ Result<void> InstanceManager::UpdateInstance(const LocalInstanceGroup& group,
 Result<void> InstanceManager::IssueStopCommand(
     const CommandRequest& request, const std::string& config_file_path,
     selector::LocalInstanceGroup& group) {
-
   const auto stop_bin = CF_EXPECT(StopBin(group.HostArtifactsPath()));
   Command command(group.HostArtifactsPath() + "/bin/" + stop_bin);
   command.AddParameter("--clear_instance_dirs");
@@ -194,19 +193,18 @@ Result<void> InstanceManager::IssueStopCommand(
    */
   if (!wait_result.ok()) {
     std::stringstream error_msg;
-    std::cout
-        << stop_bin << " was executed internally, and failed. It might "
-        << "be failing to parse the new --clear_instance_dirs. Will try "
-        << "without the flag.\n";
+    std::cout << stop_bin << " was executed internally, and failed. It might "
+              << "be failing to parse the new --clear_instance_dirs. Will try "
+              << "without the flag.\n";
     Command no_clear_instance_dir_command(group.HostArtifactsPath() + "/bin/" +
                                           stop_bin);
     wait_result = RunCommand(std::move(no_clear_instance_dir_command));
   }
 
   if (!wait_result.ok()) {
-    std::cerr
-        << "Warning: error stopping instances for dir \"" + group.HomeDir() +
-               "\".\nThis can happen if instances are already stopped.\n";
+    std::cerr << "Warning: error stopping instances for dir \"" +
+                     group.HomeDir() +
+                     "\".\nThis can happen if instances are already stopped.\n";
   }
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   instance_db_.UpdateInstanceGroup(group);
@@ -243,7 +241,7 @@ cvd::Status InstanceManager::CvdClear(const CommandRequest& request) {
         }
       }
     }
-    for (auto instance: group.Instances()) {
+    for (auto instance : group.Instances()) {
       if (instance.id() <= 0) {
         continue;
       }
