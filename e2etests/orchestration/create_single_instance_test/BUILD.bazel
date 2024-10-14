@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@bazel_gazelle//:def.bzl", "gazelle")
+load("def.bzl", "create_single_instance_test")
 
-GO_PREFIX = "github.com/google/android-cuttlefish/e2etests"
-
-gazelle(
-    name = "gazelle",
-    external = "external",
-    prefix = GO_PREFIX,
+create_single_instance_test(
+    name = "create_single_instance_test_test",
+    build_id = "11510808",
+    build_target = "aosp_cf_x86_64_phone-trunk_staging-userdebug",
 )

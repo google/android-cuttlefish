@@ -1,4 +1,4 @@
-package e2etesting
+package common
 
 import (
 	"archive/zip"
@@ -79,7 +79,7 @@ func NewDockerHelper() (*DockerHelper, error) {
 }
 
 func (h *DockerHelper) LoadImage() (string, error) {
-	imgFile, err := os.Open("../external/images/docker/orchestration-image.tar")
+	imgFile, err := os.Open("../../external/images/docker/orchestration-image.tar")
 	if err != nil {
 		return "", err
 	}
