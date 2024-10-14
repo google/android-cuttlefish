@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 service nginx start
 service cuttlefish-host-resources start
