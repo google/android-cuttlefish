@@ -24,7 +24,7 @@ import (
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
 
-	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/cloud-android-orchestration/pkg/client"
 	"github.com/google/go-cmp/cmp"
 )
@@ -152,7 +152,7 @@ func createDevice(srv client.HostOrchestratorService, group_name, artifactsDir s
 		return nil, err
 	}
 	createReq := &hoapi.CreateCVDRequest{EnvConfig: envConfig}
-	res, createErr := srv.CreateCVD(createReq /* buildAPICredentials */, "")
+	res, createErr := srv.CreateCVD(createReq, client.BuildAPICredential{})
 	if createErr != nil {
 		if err := common.DownloadHostBugReport(srv, group_name); err != nil {
 			log.Printf("error downloading cvd bugreport: %v", err)
