@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include <sys/types.h>
-
 #include <optional>
 #include <string>
 #include <vector>
@@ -28,52 +26,18 @@
 namespace cuttlefish {
 namespace selector {
 
-class SelectorCommonParser {
- public:
-  // parses common selector options, and drop the used selector_args
-  static Result<SelectorCommonParser> Parse(cvd_common::Args& selector_args,
-                                            const cvd_common::Envs& envs);
-
-  std::optional<std::string> GroupName() const { return group_name_; }
-
-  std::optional<std::vector<std::string>> PerInstanceNames() const {
-    return instance_names_;
+struct SelectorOptions {
+  std::optional<std::string> group_name;
+  std::optional<std::vector<std::string>> instance_names;
+  bool HasOptions() const {
+    return group_name.has_value() || instance_names.has_value();
   }
-
-  /*
-   * returns if selector flags has device select options: e.g. --group_name
-   *
-   * this is mainly to see if cvd start is about the default instance.
-   */
-  bool HasDeviceSelectOption() const { return group_name_ || instance_names_; }
-
- private:
-  SelectorCommonParser(const cvd_common::Envs& envs);
-
-  Result<void> ParseOptions(cvd_common::Args& selector_args);
-  struct ParsedNameFlags {
-    std::optional<std::string> group_name;
-    std::optional<std::vector<std::string>> instance_names;
-  };
-  struct NameFlagsParam {
-    std::optional<std::string> group_name;
-    std::optional<std::string> instance_names;
-  };
-  Result<ParsedNameFlags> HandleNameOpts(
-      const NameFlagsParam& name_flags) const;
-  Result<std::string> HandleGroupName(
-      const std::optional<std::string>& group_name) const;
-  Result<std::vector<std::string>> HandleInstanceNames(
-      const std::optional<std::string>& per_instance_names) const;
-
-  // temporarily keeps the leftover of the input cmd_args
-  // Will be never used after parsing is done
-  const cvd_common::Envs& envs_;
-
-  // processed result
-  std::optional<std::string> group_name_;
-  std::optional<std::vector<std::string>> instance_names_;
+  std::vector<std::string> AsArgs() const;
 };
+
+// Parses and consumes the selector arguments from the given argument list
+Result<SelectorOptions> ParseCommonSelectorArguments(
+    cvd_common::Args& args);
 
 }  // namespace selector
 }  // namespace cuttlefish

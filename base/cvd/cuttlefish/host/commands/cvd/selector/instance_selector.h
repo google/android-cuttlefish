@@ -22,6 +22,7 @@
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/instance_database.h"
+#include "host/commands/cvd/selector/selector_common_parser.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -30,7 +31,7 @@ namespace selector {
 class InstanceSelector {
  public:
   static Result<InstanceSelector> GetSelector(
-      const cvd_common::Args& selector_args, const Queries& extra_queries,
+      const SelectorOptions& selector_options, const Queries& extra_queries,
       const cvd_common::Envs& envs);
   /*
    * If default, try running single instance group. If multiple, try to find
@@ -44,8 +45,7 @@ class InstanceSelector {
       const InstanceDatabase& instance_database);
 
  private:
-  InstanceSelector( Queries& queries)
-      : queries_(queries) {}
+  InstanceSelector(Queries& queries) : queries_(queries) {}
 
   Result<std::pair<cvd::Instance, LocalInstanceGroup>> FindDefaultInstance(
       const InstanceDatabase& instance_database);

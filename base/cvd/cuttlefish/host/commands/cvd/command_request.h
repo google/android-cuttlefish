@@ -20,6 +20,7 @@
 #include <sys/types.h>
 
 #include <initializer_list>
+#include <string>
 #include <string_view>
 
 #include <google/protobuf/map.h>
@@ -28,6 +29,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/selector/selector_common_parser.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -35,18 +37,19 @@ namespace cuttlefish {
 class CommandRequest {
  public:
   const cvd_common::Args& Args() const;
-  const cvd_common::Args& SelectorArgs() const;
 
   const cvd_common::Envs& Env() const;
+
+  const selector::SelectorOptions& Selectors() const;
 
  private:
   friend class CommandRequestBuilder;
   CommandRequest(cvd_common::Args args, cvd_common::Envs env,
-                 cvd_common::Args selector_args);
+                 selector::SelectorOptions cvd_args);
 
   cvd_common::Args args_;
   cvd_common::Envs env_;
-  cvd_common::Args selector_args_;
+  selector::SelectorOptions selectors_;
 };
 
 class CommandRequestBuilder {

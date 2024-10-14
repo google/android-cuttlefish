@@ -50,6 +50,7 @@ class SelectorFlags {
   static constexpr char kGroupName[] = "group_name";
   static constexpr char kInstanceName[] = "instance_name";
   static constexpr char kVerbosity[] = "verbosity";
+
   static const SelectorFlags& Get();
   static Result<SelectorFlags> New();
 

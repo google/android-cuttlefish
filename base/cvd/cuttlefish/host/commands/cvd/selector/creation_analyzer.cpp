@@ -38,7 +38,7 @@ Result<CreationAnalyzer> CreationAnalyzer::Create(
     InstanceLockFileManager& instance_lock_file_manager) {
   auto selector_options_parser =
       CF_EXPECT(StartSelectorParser::ConductSelectFlagsParser(
-          param.selector_args, param.cmd_args, param.envs));
+          param.selectors, param.cmd_args, param.envs));
   return CreationAnalyzer(param, std::move(selector_options_parser),
                           instance_lock_file_manager);
 }

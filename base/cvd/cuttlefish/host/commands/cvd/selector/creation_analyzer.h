@@ -101,7 +101,7 @@ class CreationAnalyzer {
   struct CreationAnalyzerParam {
     const std::vector<std::string>& cmd_args;
     const std::unordered_map<std::string, std::string>& envs;
-    const std::vector<std::string>& selector_args;
+    const SelectorOptions& selectors;
   };
 
   struct GroupInfo {

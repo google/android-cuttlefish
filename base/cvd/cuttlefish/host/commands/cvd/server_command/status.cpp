@@ -151,7 +151,7 @@ static Result<CommandRequest> ProcessInstanceNameFlag(
                        .AddArguments({"cvd", "status"})
                        .AddArguments(cmd_args)
                        .SetEnv(std::move(env))
-                       .AddSelectorArguments(request.SelectorArgs())
+                       .AddSelectorArguments(request.Selectors().AsArgs())
                        .Build());
 }
 

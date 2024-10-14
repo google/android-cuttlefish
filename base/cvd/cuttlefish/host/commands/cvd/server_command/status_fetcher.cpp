@@ -198,16 +198,15 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
   auto [subcmd, cmd_args] = ParseInvocation(request);
 
   // find group
-  const auto selector_args = request.SelectorArgs();
   CvdFlag<bool> all_instances_flag("all_instances");
   auto all_instances_opt = CF_EXPECT(all_instances_flag.FilterFlag(cmd_args));
 
   auto instance_group =
-      CF_EXPECT(instance_manager_.SelectGroup(selector_args, env));
+      CF_EXPECT(instance_manager_.SelectGroup(request.Selectors(), env));
 
   std::vector<cvd::Instance> instances;
   auto instance_record_result =
-      instance_manager_.SelectInstance(selector_args, env);
+      instance_manager_.SelectInstance(request.Selectors(), env);
 
   bool status_the_group_flag = all_instances_opt && *all_instances_opt;
   if (instance_record_result.ok() && !status_the_group_flag) {
