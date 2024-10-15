@@ -305,11 +305,12 @@ Result<selector::LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
         CF_EXPECT(instance_manager_.CreateInstanceGroup(group_creation_info)));
   } else {
     auto& group = groups[0];
-    CF_EXPECTF(group.Instances().size() == group_creation_info.instances.size(),
+    CF_EXPECTF((std::size_t)group.Instances().size() ==
+                   group_creation_info.instances.size(),
                "Mismatch in number of instances from analisys: {} vs {}",
                group.Instances().size(), group_creation_info.instances.size());
     // The instances don't have an id yet
-    for (size_t i = 0; i < group.Instances().size(); ++i) {
+    for (int i = 0; i < group.Instances().size(); ++i) {
       auto& instance = group.Instances()[i];
       auto& instance_info = group_creation_info.instances[i];
       instance.set_id(instance_info.instance_id_);
