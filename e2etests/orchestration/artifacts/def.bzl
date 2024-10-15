@@ -17,6 +17,6 @@ def aosp_artifact(name, build_id, build_target, artifact_name, out_name):
         name = name,
         outs = [out_name],
         visibility = ["//visibility:public"],
-        cmd = "$(location :fetch_aosp_artifact) -b "+build_id+" -t "+build_target+" -a "+artifact_name+" -o $@",
+        cmd = "$(location :fetch_aosp_artifact) -b " + build_id + " -t " + build_target + " -a " + artifact_name + " -o $@",
         tools = [":fetch_aosp_artifact"],
     )

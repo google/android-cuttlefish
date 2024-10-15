@@ -19,11 +19,11 @@ def create_single_instance_test(name, build_id, build_target):
         name = name,
         srcs = ["main_test.go"],
         data = [
-          "@images//docker:orchestration_image_tar", 
+            "@images//docker:orchestration_image_tar",
         ],
         env = {
-          "BUILD_ID": build_id,
-          "BUILD_TARGET": build_target,
+            "BUILD_ID": build_id,
+            "BUILD_TARGET": build_target,
         },
         deps = [
             "//orchestration/common",
