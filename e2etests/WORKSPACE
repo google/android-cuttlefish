@@ -59,3 +59,8 @@ local_repository(
     name = "images",
     path = "..",
 )
+
+local_repository(
+    name = "libhoclient",
+    path = "../frontend/src/libhoclient",
+)

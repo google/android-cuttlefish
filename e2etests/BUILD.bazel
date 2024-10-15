@@ -17,6 +17,7 @@ load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
 
 GO_PREFIX = "github.com/google/android-cuttlefish/e2etests"
 
+# gazelle:resolve_regexp go github.com/google/android-cuttlefish/frontend/src/libhoclient/* @libhoclient
 gazelle(
     name = "gazelle",
     external = "external",

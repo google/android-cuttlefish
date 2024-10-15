@@ -19,7 +19,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	clientpkg "github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	orchclient "github.com/google/cloud-android-orchestration/pkg/client"
+	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 )
 
 type TestContext struct {
@@ -247,7 +247,7 @@ func Cleanup(ctx *TestContext) {
 	}
 }
 
-func DownloadHostBugReport(srv orchclient.HostOrchestratorService, group string) error {
+func DownloadHostBugReport(srv hoclient.HostOrchestratorService, group string) error {
 	// `TEST_UNDECLARED_OUTPUTS_DIR` env var is defined by bazel
 	// https://bazel.build/reference/test-encyclopedia#initial-conditions
 	val, ok := os.LookupEnv("TEST_UNDECLARED_OUTPUTS_DIR")
@@ -271,7 +271,7 @@ func DownloadHostBugReport(srv orchclient.HostOrchestratorService, group string)
 	return nil
 }
 
-func UploadAndExtract(srv orchclient.HostOrchestratorService, remoteDir, src string) error {
+func UploadAndExtract(srv hoclient.HostOrchestratorService, remoteDir, src string) error {
 	if err := srv.UploadFile(remoteDir, src); err != nil {
 		return err
 	}
