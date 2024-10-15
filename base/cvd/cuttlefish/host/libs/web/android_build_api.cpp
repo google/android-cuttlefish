@@ -126,9 +126,9 @@ Result<Build> BuildApi::GetBuild(const DeviceBuildString& build_string,
                               build_string.target.value_or(fallback_target)));
   if (latest_build_id) {
     proposed_build.id = *latest_build_id;
-    LOG(INFO) << "Latest build id for branch" << build_string.branch_or_id
-              << " and target " << proposed_build.target << " is "
-              << proposed_build.id;
+    LOG(INFO) << "Latest build id for branch '" << build_string.branch_or_id
+              << "' and target '" << proposed_build.target << "' is '"
+              << proposed_build.id << "'";
   }
 
   std::string status = CF_EXPECT(BuildStatus(proposed_build));

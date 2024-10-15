@@ -176,11 +176,6 @@ TargetDirectories GetTargetDirectories(
 #endif
 
 bool ConvertToRawImageNoBinary(const std::string& image_path) {
-  if (!IsSparseImage(image_path)) {
-    LOG(DEBUG) << "Skip non-sparse image " << image_path;
-    return false;
-  }
-
   std::string tmp_raw_image_path = image_path + ".raw";
 
   // simg2img logic to convert sparse image to raw image.
@@ -240,8 +235,13 @@ bool ConvertToRawImageNoBinary(const std::string& image_path) {
  */
 void DeAndroidSparse(const std::vector<std::string>& image_files) {
   for (const auto& file : image_files) {
-    if (!ConvertToRawImageNoBinary(file)) {
-      LOG(DEBUG) << "Failed to desparse " << file;
+    if (!IsSparseImage(file)) {
+      continue;
+    }
+    if (ConvertToRawImageNoBinary(file)) {
+      LOG(DEBUG) << "De-sparsed '" << file << "'";
+    } else {
+      LOG(ERROR) << "Failed to de-sparse '" << file << "'";
     }
   }
 }
@@ -294,6 +294,7 @@ Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
                               const std::string& target_dir,
                               const bool keep_archives,
                               FetchTracer::Trace trace) {
+  LOG(INFO) << "Preparing host package for " << build;
   // This function is called asynchronously, so it may take a while to start.
   // Complete a phase here to ensure that delay is not counted in the download
   // time.
@@ -313,6 +314,7 @@ Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
 Result<std::vector<std::string>> FetchSystemImgZipImages(
     BuildApi& build_api, const Build& build,
     const std::string& target_directory, const bool keep_downloaded_archives) {
+  LOG(INFO) << "Downloading system image zip for " << build;
   const std::string system_img_zip_name = GetBuildZipName(build, "img");
   std::string system_img_zip = CF_EXPECTF(
       build_api.DownloadFile(build, target_directory, system_img_zip_name),
@@ -481,6 +483,7 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
   }
 
   if (flags.download_img_zip) {
+    LOG(INFO) << "Downloading image zip for " << *builds.default_build;
     std::string img_zip_name = GetBuildZipName(*builds.default_build, "img");
     std::string default_img_zip_filepath = CF_EXPECT(build_api.DownloadFile(
         *builds.default_build, target_directories.root, img_zip_name));
@@ -490,7 +493,7 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
         default_img_zip_filepath, target_directories.root,
         keep_downloaded_archives));
     trace.CompletePhase("Extract image zip contents");
-    LOG(INFO) << "Adding img-zip files for default build";
+    LOG(DEBUG) << "Adding img-zip files for default build";
     for (auto& file : image_files) {
       LOG(VERBOSE) << file;
     }
@@ -502,6 +505,7 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
   }
 
   if (builds.system || flags.download_target_files_zip) {
+    LOG(INFO) << "Downloading target files zip for " << *builds.default_build;
     std::string target_files_name =
         GetBuildZipName(*builds.default_build, "target_files");
     std::string target_files = CF_EXPECT(build_api.DownloadFile(
@@ -532,6 +536,7 @@ Result<void> FetchSystemTarget(BuildApi& build_api, const Build& system_build,
                                     target_directories.root));
 
   if (download_img_zip) {
+    LOG(INFO) << "Downloading system image zip for " << system_build;
     std::vector<std::string> system_images;
     Result<std::string> extracted_system = ExtractImage(
         target_files, target_directories.root, "IMAGES/system.img");
@@ -875,6 +880,7 @@ Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
                    std::cref(host_target.host_tools_directory),
                    std::cref(flags.keep_downloaded_archives),
                    tracer.NewTrace("Host Package"));
+    size_t count = 1;
     for (const auto& target : targets) {
       LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
       FetcherConfig config;
@@ -882,8 +888,11 @@ Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
                             target.directories, target.download_flags,
                             flags.keep_downloaded_archives, config, tracer));
       CF_EXPECT(SaveConfig(config, target.directories.root));
-      LOG(INFO) << "Completed fetch to \"" << target.directories.root << "\"";
+      LOG(INFO) << "Completed target fetch to '" << target.directories.root
+                << "' (" << count << " out of " << targets.size() << ")";
+      count++;
     }
+    LOG(DEBUG) << "Waiting for host package fetch";
     CF_EXPECT(host_package_future.get());
     LOG(DEBUG) << "Performance stats:\n" << tracer.ToStyledString();
   }
@@ -908,8 +917,12 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   CF_EXPECT(EnsureDirectoriesExist(flags.target_directory,
                                    host_target.host_tools_directory, targets));
   std::string log_file = GetFetchLogsFileName(flags.target_directory);
-  auto old_logger = android::base::SetLogger(LogToStderrAndFiles(
-      {log_file}, "", MetadataLevel::FULL, flags.verbosity));
+
+  MetadataLevel metadata_level =
+      isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
+
+  auto old_logger = android::base::SetLogger(
+      LogToStderrAndFiles({log_file}, "", metadata_level, flags.verbosity));
   // Set the android logger to full verbosity, the tee logger will choose
   // whether to write each line.
   auto old_severity =
