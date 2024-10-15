@@ -21,7 +21,7 @@ import (
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
 
 	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
-	client "github.com/google/cloud-android-orchestration/pkg/client"
+	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -35,7 +35,7 @@ func TestCreateSingleInstance(t *testing.T) {
 	})
 	buildID := os.Getenv("BUILD_ID")
 	buildTarget := os.Getenv("BUILD_TARGET")
-	srv := client.NewHostOrchestratorService(ctx.ServiceURL)
+	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
 	createReq := &hoapi.CreateCVDRequest{
 		CVD: &hoapi.CVD{
 			BuildSource: &hoapi.BuildSource{
@@ -49,7 +49,7 @@ func TestCreateSingleInstance(t *testing.T) {
 		},
 	}
 
-	got, createErr := srv.CreateCVD(createReq, client.BuildAPICredential{})
+	got, createErr := srv.CreateCVD(createReq, hoclient.BuildAPICredential{})
 
 	if err := common.DownloadHostBugReport(srv, "cvd"); err != nil {
 		t.Errorf("failed creating bugreport: %s\n", err)
