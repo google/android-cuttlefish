@@ -31,12 +31,11 @@ LuciBuildApi::LuciBuildApi() : http_client_(HttpClient::CurlClient()) {}
 LuciBuildApi::LuciBuildApi(
     std::unique_ptr<HttpClient> http_client,
     std::unique_ptr<HttpClient> inner_http_client,
-    std::unique_ptr<CredentialSource> buildbucket_credential_source,
-    std::unique_ptr<CredentialSource> storage_credential_source)
+    CredentialSources& credential_sources)
     : http_client_(std::move(http_client)),
       inner_http_client_(std::move(inner_http_client)),
-      buildbucket_credential_source_(std::move(buildbucket_credential_source)),
-      storage_credential_source_(std::move(storage_credential_source)) {}
+      buildbucket_credential_source_(std::move(credential_sources[CredentialSourceId::kLuci])),
+      storage_credential_source_(std::move(credential_sources[CredentialSourceId::kLuciStorage])) {}
 
 Result<std::vector<std::string>> LuciBuildApi::BuildBucketHeaders() {
   std::vector<std::string> headers;

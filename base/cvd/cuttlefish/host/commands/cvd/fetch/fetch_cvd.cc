@@ -24,6 +24,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -326,6 +327,16 @@ Result<std::vector<std::string>> FetchSystemImgZipImages(
       system_img_zip_name);
 }
 
+Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
+      HttpClient& http_client,
+      const BuildApiFlags& flags,
+      const std::string& oauth_filepath) {
+      return CF_EXPECT(GetCredentialSource(
+          http_client, flags.credential_source, oauth_filepath,
+          flags.credential_flags.use_gce_metadata,
+          flags.credential_flags.credential_filepath,
+          flags.credential_flags.service_account_filepath));
+      }
 Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   auto resolver =
       flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
@@ -335,18 +346,14 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   std::unique_ptr<HttpClient> retrying_http_client =
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
-  std::string oauth_filepath =
-      StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
+  CredentialSources credential_sources;
   std::unique_ptr<CredentialSource> credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
-
+      CF_EXPECT(GetCredentialSourceFromFlags(*retrying_http_client, flags,
+              StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat"));
+  credential_sources.emplace(CredentialSourceId::kAcloud, std::move(credential_source));
   const auto cache_base_path = PerUserDir() + "/cache";
   return CreateBuildApi(std::move(retrying_http_client), std::move(curl),
-                        std::move(credential_source), std::move(flags.api_key),
+                        credential_sources, std::move(flags.api_key),
                         flags.wait_retry_period, std::move(flags.api_base_url),
                         std::move(flags.project_id), flags.enable_caching,
                         std::move(cache_base_path));
@@ -361,26 +368,18 @@ Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {
   std::unique_ptr<HttpClient> retrying_http_client =
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
-  std::string luci_oauth_filepath =
-      StringFromEnv("HOME", ".") + "/.config/chrome_infra/auth/tokens.json";
+  CredentialSources credential_sources;
   std::unique_ptr<CredentialSource> luci_credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, luci_oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
-
-  std::string gsutil_oauth_filepath = StringFromEnv("HOME", ".") + "/.boto";
+      CF_EXPECT(GetCredentialSourceFromFlags(*retrying_http_client, flags,
+                   StringFromEnv("HOME", ".") + "/.config/chrome_infra/auth/tokens.json"));
+  credential_sources.emplace(CredentialSourceId::kLuci, std::move(luci_credential_source));
   std::unique_ptr<CredentialSource> gsutil_credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, gsutil_oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
+      CF_EXPECT(GetCredentialSourceFromFlags(*retrying_http_client, flags,
+                                StringFromEnv("HOME", ".") + "/.boto" ));
+  credential_sources.emplace(CredentialSourceId::kLuciStorage, std::move(gsutil_credential_source));
 
   return LuciBuildApi(std::move(retrying_http_client), std::move(curl),
-                      std::move(luci_credential_source),
-                      std::move(gsutil_credential_source));
+                      credential_sources);
 }
 
 Result<std::optional<Build>> GetBuildHelper(
