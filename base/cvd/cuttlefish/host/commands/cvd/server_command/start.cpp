@@ -130,7 +130,7 @@ Result<void> UpdateWebrtcDeviceIds(cvd_common::Args& args,
     webrtc_ids = generated_webrtc_ids;
   }
   CF_EXPECT_EQ(
-      webrtc_ids.size(), group.Instances().size(),
+      webrtc_ids.size(), (std::size_t)group.Instances().size(),
       "The number of webrtc device ids doesn't match the number of instances");
   for (size_t i = 0; i < webrtc_ids.size(); ++i) {
     if (webrtc_ids[i].empty()) {
@@ -630,7 +630,7 @@ static Result<cvd::Response> CvdResetGroup(
   // to interrupt it.
   const auto& instances = group.Instances();
   CF_EXPECT(!instances.empty());
-  const auto& first_instance = instances.front();
+  const auto& first_instance = *instances.begin();
   auto stop_result =
       run_cvd_process_manager->ForcefullyStopGroup(first_instance.id());
   if (!stop_result.ok()) {
