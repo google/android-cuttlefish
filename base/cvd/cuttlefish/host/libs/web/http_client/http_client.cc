@@ -172,12 +172,19 @@ class CurlClient : public HttpClient {
   Result<HttpResponse<std::string>> DownloadToFile(
       const std::string& url, const std::string& path,
       const std::vector<std::string>& headers) override {
-    LOG(DEBUG) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
+    LOG(DEBUG) << "Saving '" << url << "' to '" << path << "'";
 
     auto [shared_fd, temp_path] = CF_EXPECT(SharedFD::Mkostemp(path));
     SharedFDOstream stream(shared_fd);
-    auto callback = [&stream](char* data, size_t size) -> bool {
-      LOG(DEBUG) << "Downloaded chunk of " << size << " bytes";
+    uint64_t total_dl = 0;
+    uint64_t last_log = 0;
+    auto callback = [&stream, &total_dl, &last_log](char* data,
+                                                    size_t size) -> bool {
+      total_dl += size;
+      if (total_dl / 2 >= last_log) {
+        LOG(DEBUG) << "Downloaded " << total_dl << " bytes";
+        last_log = total_dl;
+      }
       if (data == nullptr) {
         return !stream.fail();
       }
@@ -185,6 +192,10 @@ class CurlClient : public HttpClient {
       return !stream.fail();
     };
     auto http_response = CF_EXPECT(DownloadToCallback(callback, url, headers));
+
+    LOG(DEBUG) << "Downloaded '" << total_dl << "' total bytes from '" << url
+               << "' to '" << path << "'.";
+
     CF_EXPECT(RenameFile(temp_path, path));
     return HttpResponse<std::string>{path, http_response.http_code};
   }
@@ -270,7 +281,7 @@ class CurlClient : public HttpClient {
     std::lock_guard<std::mutex> lock(mutex_);
     auto extra_cache_entries = CF_EXPECT(ManuallyResolveUrl(url));
     curl_easy_setopt(curl_, CURLOPT_RESOLVE, extra_cache_entries.get());
-    LOG(INFO) << "Attempting to download \"" << url << "\"";
+    LOG(DEBUG) << "Downloading '" << url << "'";
     CF_EXPECT(data_to_write.empty() || method == HttpMethod::kPost,
               "data must be empty for non POST requests");
     CF_EXPECT(curl_ != nullptr, "curl was not initialized");

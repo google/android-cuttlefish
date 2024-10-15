@@ -22,6 +22,8 @@
 #include <sstream>
 #include <vector>
 
+#include <fmt/format.h>
+
 namespace cuttlefish {
 namespace {
 
@@ -43,13 +45,33 @@ struct FetchTracer::TraceImpl {
 
 namespace {
 
+std::string FormatByteSize(uint64_t size) {
+  if (size < 10240) {
+    return fmt::format("{} B", size);
+  }
+  size /= 1024;
+  if (size < 10240) {
+    return fmt::format("{} KiB", size);
+  }
+  size /= 1024;
+  if (size < 10240) {
+    return fmt::format("{} MiB", size);
+  }
+  size /= 1024;
+  if (size < 10240) {
+    return fmt::format("{} GiB", size);
+  }
+  size /= 1024;
+  return fmt::format("{} TiB", size);
+}
+
 std::string ToStyledString(const FetchTracer::TraceImpl& trace,
                            std::string indent_prefix) {
   std::stringstream ss;
   for (const Phase& phase : trace.phases) {
     ss << indent_prefix << phase.name << ": " << phase.duration.count() << "s";
     if (phase.size_bytes) {
-      ss << ", " << *phase.size_bytes / 1024 << "MB";
+      ss << ", " << FormatByteSize(*phase.size_bytes);
     }
     ss << '\n';
   }

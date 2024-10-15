@@ -77,8 +77,7 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
           http_client, oauth_contents);
       if (attempt_load.ok()) {
         result.reset(new RefreshCredentialSource(std::move(*attempt_load)));
-        LOG(INFO) << "\"" << oauth_filepath
-                  << "\" was found, using that as credentials";
+        LOG(DEBUG) << "Loaded credentials from '" << oauth_filepath << "'";
       } else {
         LOG(ERROR) << "Failed to load oauth credentials from \""
                    << oauth_filepath
