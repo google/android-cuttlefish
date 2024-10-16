@@ -75,22 +75,25 @@ CachingPaths ConstructCachePaths(const std::string& cache_base,
 
 }  // namespace
 
-CachingBuildApi::CachingBuildApi(
+template<typename BaseBuildApi>
+CachingBuildApi<BaseBuildApi>::CachingBuildApi(
     std::unique_ptr<HttpClient> http_client,
     std::unique_ptr<HttpClient> inner_http_client,
     CredentialSources& credential_sources, std::string api_key,
     const std::chrono::seconds retry_period, std::string api_base_url, std::string project_id,
     const std::string cache_base_path)
-    : BuildApi(std::move(http_client), std::move(inner_http_client),
+    : BaseBuildApi(std::move(http_client), std::move(inner_http_client),
                credential_sources, std::move(api_key), retry_period,
                std::move(api_base_url), std::move(project_id)),
                cache_base_path_(std::move(cache_base_path)) {};
 
-Result<bool> CachingBuildApi::CanCache(const std::string& target_directory) {
+template<class BaseBuildApi>
+Result<bool> CachingBuildApi<BaseBuildApi>::CanCache(const std::string& target_directory) {
   return CF_EXPECT(CanHardLink(target_directory, cache_base_path_));
 }
 
-Result<std::string> CachingBuildApi::DownloadFile(
+template<class BaseBuildApi>
+Result<std::string> CachingBuildApi<BaseBuildApi>::DownloadFile(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name) {
   if (!CF_EXPECT(CanCache(target_directory))) {
@@ -105,13 +108,14 @@ Result<std::string> CachingBuildApi::DownloadFile(
                                          target_directory, artifact_name);
   CF_EXPECT(EnsureDirectoryExists(paths.build_cache));
   if (!FileExists(paths.cache_artifact)) {
-    CF_EXPECT(BuildApi::DownloadFile(build, paths.build_cache, artifact_name));
+    CF_EXPECT(BaseBuildApi::DownloadFile(build, paths.build_cache, artifact_name));
   }
   return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                   kOverwriteExistingFile));
 }
 
-Result<std::string> CachingBuildApi::DownloadFileWithBackup(
+template<class BaseBuildApi>
+Result<std::string> CachingBuildApi<BaseBuildApi>::DownloadFileWithBackup(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name, const std::string& backup_artifact_name) {
   if (!CF_EXPECT(CanCache(target_directory))) {
@@ -119,7 +123,7 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
         << "Caching disabled, unable to hard link between fetch directory \""
         << target_directory << "\" and cache directory \"" << cache_base_path_
         << "\"";
-    return CF_EXPECT(BuildApi::DownloadFileWithBackup(
+    return CF_EXPECT(BaseBuildApi::DownloadFileWithBackup(
         build, target_directory, artifact_name, backup_artifact_name));
   }
   const auto paths =
@@ -135,7 +139,7 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
                                     paths.target_backup_artifact,
                                     kOverwriteExistingFile));
   }
-  const auto artifact_filepath = CF_EXPECT(BuildApi::DownloadFileWithBackup(
+  const auto artifact_filepath = CF_EXPECT(BaseBuildApi::DownloadFileWithBackup(
       build, paths.build_cache, artifact_name, backup_artifact_name));
   if (android::base::EndsWith(artifact_filepath, artifact_name)) {
     return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
@@ -152,7 +156,7 @@ std::unique_ptr<BuildApi> CreateBuildApi(
     const std::chrono::seconds retry_period, std::string api_base_url, std::string project_id,
     const bool enable_caching, const std::string cache_base_path) {
   if (enable_caching && EnsureCacheDirectory(cache_base_path)) {
-    return std::make_unique<CachingBuildApi>(
+    return std::make_unique<CachingBuildApi<BuildApi>>(
         std::move(http_client), std::move(inner_http_client),
         credential_sources, std::move(api_key), retry_period,
         std::move(api_base_url), std::move(project_id), std::move(cache_base_path));

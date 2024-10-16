@@ -340,7 +340,7 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
 Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   auto resolver =
       flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
-  const bool use_logging_debug_function = true;
+  const bool use_logging_debug_function = false;
   std::unique_ptr<HttpClient> curl =
       HttpClient::CurlClient(resolver, use_logging_debug_function);
   std::unique_ptr<HttpClient> retrying_http_client =

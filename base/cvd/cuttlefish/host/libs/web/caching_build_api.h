@@ -26,7 +26,8 @@
 
 namespace cuttlefish {
 
-class CachingBuildApi : public BuildApi {
+template<class BaseBuildApi>
+class CachingBuildApi : public BaseBuildApi {
  public:
   CachingBuildApi() = delete;
   CachingBuildApi(CachingBuildApi&&) = delete;
