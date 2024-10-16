@@ -74,12 +74,13 @@ std::vector<std::string> Archive::Contents() {
       : std::vector<std::string>();
 }
 
-bool Archive::ExtractAll(const std::string& target_directory) {
-  return ExtractFiles({}, target_directory);
+Result<void> Archive::ExtractAll(const std::string& target_directory) {
+  CF_EXPECT(ExtractFiles({}, target_directory));
+  return {};
 }
 
-bool Archive::ExtractFiles(const std::vector<std::string>& to_extract,
-                           const std::string& target_directory) {
+Result<void> Archive::ExtractFiles(const std::vector<std::string>& to_extract,
+                                   const std::string& target_directory) {
   Command bsdtar_cmd("/usr/bin/bsdtar");
   bsdtar_cmd.AddParameter("-x");
   bsdtar_cmd.AddParameter("-v");
@@ -97,11 +98,9 @@ bool Archive::ExtractFiles(const std::vector<std::string>& to_extract,
   int bsdtar_ret = RunWithManagedStdio(std::move(bsdtar_cmd), nullptr, nullptr,
                                        &bsdtar_output);
   LOG(DEBUG) << bsdtar_output;
-  if (bsdtar_ret != 0) {
-    LOG(ERROR) << "bsdtar extraction on \"" << file_ << "\" returned "
-               << bsdtar_ret;
-  }
-  return bsdtar_ret == 0;
+  CF_EXPECTF(bsdtar_ret == 0, "bsdtar extraction failed on '{}', '''{}'''",
+             file_, bsdtar_output);
+  return {};
 }
 
 Result<std::vector<std::string>> ExtractImages(
