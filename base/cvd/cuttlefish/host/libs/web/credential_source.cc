@@ -19,6 +19,7 @@
 
 #include <chrono>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -55,11 +56,12 @@ class GceMetadataCredentialSource : public CredentialSource {
   static std::unique_ptr<CredentialSource> Make(HttpClient&);
 
  private:
+  Result<void> RefreshCredential();
+
   HttpClient& http_client_;
   std::string latest_credential_;
+  std::mutex latest_credential_mutex_;
   std::chrono::steady_clock::time_point expiration_;
-
-  Result<void> RefreshCredential();
 };
 
 class FixedCredentialSource : public CredentialSource {
@@ -94,6 +96,7 @@ class RefreshCredentialSource : public CredentialSource {
   std::string refresh_token_;
 
   std::string latest_credential_;
+  std::mutex latest_credential_mutex_;
   std::chrono::steady_clock::time_point expiration_;
 };
 
@@ -115,6 +118,7 @@ class ServiceAccountOauthCredentialSource : public CredentialSource {
   std::unique_ptr<EVP_PKEY, void (*)(EVP_PKEY*)> private_key_;
 
   std::string latest_credential_;
+  std::mutex latest_credential_mutex_;
   std::chrono::steady_clock::time_point expiration_;
 };
 
@@ -190,6 +194,7 @@ GceMetadataCredentialSource::GceMetadataCredentialSource(
 }
 
 Result<std::string> GceMetadataCredentialSource::Credential() {
+  std::lock_guard lock(latest_credential_mutex_);
   if (expiration_ - std::chrono::steady_clock::now() < kRefreshWindow) {
     CF_EXPECT(RefreshCredential());
   }
@@ -335,6 +340,7 @@ RefreshCredentialSource::RefreshCredentialSource(
       refresh_token_(refresh_token) {}
 
 Result<std::string> RefreshCredentialSource::Credential() {
+  std::lock_guard lock(latest_credential_mutex_);
   if (expiration_ - std::chrono::steady_clock::now() < kRefreshWindow) {
     CF_EXPECT(UpdateLatestCredential());
   }
@@ -500,6 +506,7 @@ Result<void> ServiceAccountOauthCredentialSource::RefreshCredential() {
 }
 
 Result<std::string> ServiceAccountOauthCredentialSource::Credential() {
+  std::lock_guard lock(latest_credential_mutex_);
   if (expiration_ - std::chrono::steady_clock::now() < kRefreshWindow) {
     CF_EXPECT(RefreshCredential());
   }
