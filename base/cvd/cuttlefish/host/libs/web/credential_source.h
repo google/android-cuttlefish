@@ -45,9 +45,9 @@ class GceMetadataCredentialSource : public CredentialSource {
   static std::unique_ptr<CredentialSource> Make(HttpClient&);
 
  private:
-  HttpClient& http_client;
-  std::string latest_credential;
-  std::chrono::steady_clock::time_point expiration;
+  HttpClient& http_client_;
+  std::string latest_credential_;
+  std::chrono::steady_clock::time_point expiration_;
 
   Result<void> RefreshCredential();
 };
@@ -61,7 +61,7 @@ class FixedCredentialSource : public CredentialSource {
   static std::unique_ptr<CredentialSource> Make(const std::string& credential);
 
  private:
-  std::string credential;
+  std::string credential_;
 };
 
 class RefreshCredentialSource : public CredentialSource {

@@ -112,16 +112,16 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
 
 GceMetadataCredentialSource::GceMetadataCredentialSource(
     HttpClient& http_client)
-    : http_client(http_client) {
-  latest_credential = "";
-  expiration = std::chrono::steady_clock::now();
+    : http_client_(http_client) {
+  latest_credential_ = "";
+  expiration_ = std::chrono::steady_clock::now();
 }
 
 Result<std::string> GceMetadataCredentialSource::Credential() {
-  if (expiration - std::chrono::steady_clock::now() < kRefreshWindow) {
+  if (expiration_ - std::chrono::steady_clock::now() < kRefreshWindow) {
     CF_EXPECT(RefreshCredential());
   }
-  return latest_credential;
+  return latest_credential_;
 }
 
 Result<void> GceMetadataCredentialSource::RefreshCredential() {
@@ -129,7 +129,7 @@ Result<void> GceMetadataCredentialSource::RefreshCredential() {
       "http://metadata.google.internal/computeMetadata/v1/instance/"
       "service-accounts/default/token";
   auto response = CF_EXPECT(
-      http_client.DownloadToJson(kRefreshUrl, {"Metadata-Flavor: Google"}));
+      http_client_.DownloadToJson(kRefreshUrl, {"Metadata-Flavor: Google"}));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess(),
             "Error fetching credentials. The server response was \""
@@ -142,9 +142,9 @@ Result<void> GceMetadataCredentialSource::RefreshCredential() {
             "GCE credential was missing access_token or expires_in. "
                 << "Full response was " << json << "");
 
-  expiration = std::chrono::steady_clock::now() +
-               std::chrono::seconds(json["expires_in"].asInt());
-  latest_credential = json["access_token"].asString();
+  expiration_ = std::chrono::steady_clock::now() +
+                std::chrono::seconds(json["expires_in"].asInt());
+  latest_credential_ = json["access_token"].asString();
   return {};
 }
 
@@ -155,10 +155,10 @@ std::unique_ptr<CredentialSource> GceMetadataCredentialSource::Make(
 }
 
 FixedCredentialSource::FixedCredentialSource(const std::string& credential) {
-  this->credential = credential;
+  this->credential_ = credential;
 }
 
-Result<std::string> FixedCredentialSource::Credential() { return credential; }
+Result<std::string> FixedCredentialSource::Credential() { return credential_; }
 
 std::unique_ptr<CredentialSource> FixedCredentialSource::Make(
     const std::string& credential) {
