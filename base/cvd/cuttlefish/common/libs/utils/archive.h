@@ -30,10 +30,11 @@ class Archive {
   Archive(const std::string& file);
   ~Archive();
 
-  std::vector<std::string> Contents();
-  Result<void> ExtractAll(const std::string& target_directory);
-  Result<void> ExtractFiles(const std::vector<std::string>& files,
-                            const std::string& target_directory);
+  Result<std::vector<std::string>> ExtractAll(
+      const std::string& target_directory);
+  Result<std::vector<std::string>> ExtractFiles(
+      const std::vector<std::string>& files,
+      const std::string& target_directory);
 };
 
 Result<std::vector<std::string>> ExtractImages(
