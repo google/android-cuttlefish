@@ -16,11 +16,9 @@
 #pragma once
 
 #include <chrono>
-#include <istream>
 #include <memory>
 #include <string>
 
-#include "json/json.h"
 #include "openssl/evp.h"
 
 #include "common/libs/utils/result.h"
@@ -32,18 +30,12 @@ inline constexpr char kBuildScope[] =
     "https://www.googleapis.com/auth/androidbuild.internal";
 
 class CredentialSource {
-public:
+ public:
   virtual ~CredentialSource() = default;
   virtual Result<std::string> Credential() = 0;
 };
 
 class GceMetadataCredentialSource : public CredentialSource {
-  HttpClient& http_client;
-  std::string latest_credential;
-  std::chrono::steady_clock::time_point expiration;
-
-  Result<void> RefreshCredential();
-
  public:
   GceMetadataCredentialSource(HttpClient&);
   GceMetadataCredentialSource(GceMetadataCredentialSource&&) = default;
@@ -51,16 +43,25 @@ class GceMetadataCredentialSource : public CredentialSource {
   Result<std::string> Credential() override;
 
   static std::unique_ptr<CredentialSource> Make(HttpClient&);
+
+ private:
+  HttpClient& http_client;
+  std::string latest_credential;
+  std::chrono::steady_clock::time_point expiration;
+
+  Result<void> RefreshCredential();
 };
 
 class FixedCredentialSource : public CredentialSource {
-  std::string credential;
-public:
+ public:
   FixedCredentialSource(const std::string& credential);
 
   Result<std::string> Credential() override;
 
   static std::unique_ptr<CredentialSource> Make(const std::string& credential);
+
+ private:
+  std::string credential;
 };
 
 class RefreshCredentialSource : public CredentialSource {
