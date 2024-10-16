@@ -22,21 +22,6 @@
 
 namespace cuttlefish {
 
-// Operations on archive files
-class Archive {
-  std::string file_;
-
- public:
-  Archive(const std::string& file);
-  ~Archive();
-
-  Result<std::vector<std::string>> ExtractAll(
-      const std::string& target_directory);
-  Result<std::vector<std::string>> ExtractFiles(
-      const std::vector<std::string>& files,
-      const std::string& target_directory);
-};
-
 Result<std::vector<std::string>> ExtractImages(
     const std::string& archive_filepath, const std::string& target_directory,
     const std::vector<std::string>& images, bool keep_archive);
