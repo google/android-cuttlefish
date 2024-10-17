@@ -47,21 +47,39 @@ constexpr char kBuildScope[] =
 
 constexpr auto kRefreshWindow = std::chrono::minutes(2);
 
-class GceMetadataCredentialSource : public CredentialSource {
+class RefreshingCredentialSource : public CredentialSource {
+ public:
+  RefreshingCredentialSource()
+      : expiration_(std::chrono::steady_clock::time_point::min()) {}
+
+  virtual Result<std::string> Credential() final override {
+    std::lock_guard lock(latest_credential_mutex_);
+    if (expiration_ + kRefreshWindow < std::chrono::steady_clock::now()) {
+      const auto& [credential, expiration] = CF_EXPECT(Refresh());
+      latest_credential_ = credential;
+      expiration_ = std::chrono::steady_clock::now() + expiration;
+    }
+    return latest_credential_;
+  }
+
+ private:
+  virtual Result<std::pair<std::string, std::chrono::seconds>> Refresh() = 0;
+
+  std::string latest_credential_;
+  std::mutex latest_credential_mutex_;
+  std::chrono::steady_clock::time_point expiration_;
+};
+
+class GceMetadataCredentialSource : public RefreshingCredentialSource {
  public:
   GceMetadataCredentialSource(HttpClient&);
-
-  Result<std::string> Credential() override;
 
   static std::unique_ptr<CredentialSource> Make(HttpClient&);
 
  private:
-  Result<void> RefreshCredential();
+  Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
 
   HttpClient& http_client_;
-  std::string latest_credential_;
-  std::mutex latest_credential_mutex_;
-  std::chrono::steady_clock::time_point expiration_;
 };
 
 class FixedCredentialSource : public CredentialSource {
@@ -76,7 +94,7 @@ class FixedCredentialSource : public CredentialSource {
   std::string credential_;
 };
 
-class RefreshCredentialSource : public CredentialSource {
+class RefreshCredentialSource : public RefreshingCredentialSource {
  public:
   static Result<std::unique_ptr<RefreshCredentialSource>> FromOauth2ClientFile(
       HttpClient& http_client, const std::string& oauthcontents);
@@ -85,41 +103,30 @@ class RefreshCredentialSource : public CredentialSource {
                           const std::string& client_secret,
                           const std::string& refresh_token);
 
-  Result<std::string> Credential() override;
-
  private:
-  Result<void> UpdateLatestCredential();
+  Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
 
   HttpClient& http_client_;
   std::string client_id_;
   std::string client_secret_;
   std::string refresh_token_;
-
-  std::string latest_credential_;
-  std::mutex latest_credential_mutex_;
-  std::chrono::steady_clock::time_point expiration_;
 };
 
-class ServiceAccountOauthCredentialSource : public CredentialSource {
+class ServiceAccountOauthCredentialSource : public RefreshingCredentialSource {
  public:
   static Result<std::unique_ptr<ServiceAccountOauthCredentialSource>> FromJson(
       HttpClient& http_client, const Json::Value& service_account_json,
       const std::string& scope);
 
-  Result<std::string> Credential() override;
-
  private:
   ServiceAccountOauthCredentialSource(HttpClient& http_client);
-  Result<void> RefreshCredential();
+
+  Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
 
   HttpClient& http_client_;
   std::string email_;
   std::string scope_;
   std::unique_ptr<EVP_PKEY, void (*)(EVP_PKEY*)> private_key_;
-
-  std::string latest_credential_;
-  std::mutex latest_credential_mutex_;
-  std::chrono::steady_clock::time_point expiration_;
 };
 
 std::unique_ptr<CredentialSource> TryParseServiceAccount(
@@ -188,20 +195,10 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
 
 GceMetadataCredentialSource::GceMetadataCredentialSource(
     HttpClient& http_client)
-    : http_client_(http_client) {
-  latest_credential_ = "";
-  expiration_ = std::chrono::steady_clock::now();
-}
+    : http_client_(http_client) {}
 
-Result<std::string> GceMetadataCredentialSource::Credential() {
-  std::lock_guard lock(latest_credential_mutex_);
-  if (expiration_ - std::chrono::steady_clock::now() < kRefreshWindow) {
-    CF_EXPECT(RefreshCredential());
-  }
-  return latest_credential_;
-}
-
-Result<void> GceMetadataCredentialSource::RefreshCredential() {
+Result<std::pair<std::string, std::chrono::seconds>>
+GceMetadataCredentialSource::Refresh() {
   static constexpr char kRefreshUrl[] =
       "http://metadata.google.internal/computeMetadata/v1/instance/"
       "service-accounts/default/token";
@@ -219,10 +216,8 @@ Result<void> GceMetadataCredentialSource::RefreshCredential() {
             "GCE credential was missing access_token or expires_in. "
                 << "Full response was " << json << "");
 
-  expiration_ = std::chrono::steady_clock::now() +
-                std::chrono::seconds(json["expires_in"].asInt());
-  latest_credential_ = json["access_token"].asString();
-  return {};
+  return {{json["access_token"].asString(),
+           std::chrono::seconds(json["expires_in"].asInt())}};
 }
 
 std::unique_ptr<CredentialSource> GceMetadataCredentialSource::Make(
@@ -339,15 +334,8 @@ RefreshCredentialSource::RefreshCredentialSource(
       client_secret_(client_secret),
       refresh_token_(refresh_token) {}
 
-Result<std::string> RefreshCredentialSource::Credential() {
-  std::lock_guard lock(latest_credential_mutex_);
-  if (expiration_ - std::chrono::steady_clock::now() < kRefreshWindow) {
-    CF_EXPECT(UpdateLatestCredential());
-  }
-  return latest_credential_;
-}
-
-Result<void> RefreshCredentialSource::UpdateLatestCredential() {
+Result<std::pair<std::string, std::chrono::seconds>>
+RefreshCredentialSource::Refresh() {
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
   std::stringstream data;
@@ -369,10 +357,10 @@ Result<void> RefreshCredentialSource::UpdateLatestCredential() {
             "Refresh credential was missing access_token or expires_in."
                 << " Full response was " << json << "");
 
-  expiration_ = std::chrono::steady_clock::now() +
-                std::chrono::seconds(json["expires_in"].asInt());
-  latest_credential_ = json["access_token"].asString();
-  return {};
+  return {{
+      json["access_token"].asString(),
+      std::chrono::seconds(json["expires_in"].asInt()),
+  }};
 }
 
 static std::string CollectSslErrors() {
@@ -475,7 +463,8 @@ static Result<std::string> CreateJwt(const std::string& email,
   return jwt_to_sign + "." + signature;
 }
 
-Result<void> ServiceAccountOauthCredentialSource::RefreshCredential() {
+Result<std::pair<std::string, std::chrono::seconds>>
+ServiceAccountOauthCredentialSource::Refresh() {
   static constexpr char URL[] = "https://oauth2.googleapis.com/token";
   static constexpr char GRANT[] = "urn:ietf:params:oauth:grant-type:jwt-bearer";
   std::stringstream content;
@@ -499,18 +488,10 @@ Result<void> ServiceAccountOauthCredentialSource::RefreshCredential() {
             "Service account credential was missing access_token or expires_in."
                 << " Full response was " << json << "");
 
-  expiration_ = std::chrono::steady_clock::now() +
-                std::chrono::seconds(json["expires_in"].asInt());
-  latest_credential_ = json["access_token"].asString();
-  return {};
-}
-
-Result<std::string> ServiceAccountOauthCredentialSource::Credential() {
-  std::lock_guard lock(latest_credential_mutex_);
-  if (expiration_ - std::chrono::steady_clock::now() < kRefreshWindow) {
-    CF_EXPECT(RefreshCredential());
-  }
-  return latest_credential_;
+  return {{
+      json["access_token"].asString(),
+      std::chrono::seconds(json["expires_in"].asInt()),
+  }};
 }
 
 }  // namespace
