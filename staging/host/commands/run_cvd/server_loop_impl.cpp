@@ -333,6 +333,7 @@ bool ServerLoopImpl::PowerwashFiles() {
 
   // TODO(b/269669405): Figure out why this file is not being deleted
   unlink(instance_.CrosvmSocketPath().c_str());
+  unlink(instance_.OpenwrtCrosvmSocketPath().c_str());
 
   // TODO(schuffelen): Clean up duplication with assemble_cvd
   unlink(instance_.PerInstancePath("NVChip").c_str());
