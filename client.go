@@ -40,6 +40,7 @@ type Controller struct {
 	observer       Observer
 	sendMtx        sync.Mutex
 	sendChClosed   bool
+	logger         wlog.LeveledLogger
 }
 
 func (c *Controller) connect(onComplete func(error)) {
@@ -65,6 +66,7 @@ func (c *Controller) connect(onComplete func(error)) {
 		if candidate == nil {
 			return
 		}
+		c.logger.Debugf("Local ICE Candidate: %v", candidate)
 		c.sendICECandidate(candidate.ToJSON())
 	})
 
@@ -99,6 +101,7 @@ func (c *Controller) recvLoop() error {
 				// msg was obtained from a JSON string so Reshape shouldn't fail
 				panic(fmt.Sprintf("Failed to reshape json: %v", err))
 			}
+			c.logger.Debugf("Offer (Remote SD): %v", offer)
 			if err := c.onOffer(offer); err != nil {
 				return fmt.Errorf("error handling offer: %w", err)
 			}
@@ -108,6 +111,7 @@ func (c *Controller) recvLoop() error {
 				// msg was obtained from a JSON string so Reshape shouldn't fail
 				panic(fmt.Sprintf("Failed to reshape json: %v", err))
 			}
+			c.logger.Debugf("Remote ICE Candidate: %v", candidate)
 			if err := c.onICECandidate(candidate); err != nil {
 				return fmt.Errorf("error handling ICE candidate: %w", err)
 			}
@@ -117,6 +121,7 @@ func (c *Controller) recvLoop() error {
 				// msg was obtained from a JSON string so Reshape shouldn't fail
 				panic(fmt.Sprintf("Failed to reshape json: %v", err))
 			}
+			c.logger.Debugf("Answer (Remote SD): %v", answer)
 			if err := c.onAnswer(answer); err != nil {
 				return fmt.Errorf("error handling answer: %w", err)
 			}
@@ -166,6 +171,7 @@ func (c *Controller) onOffer(offer *webrtc.SessionDescription) error {
 	if err != nil {
 		return fmt.Errorf("failed to create answer: %w", err)
 	}
+	c.logger.Debugf("Answer (Local SD): %v", answer)
 	if err = c.peerConnection.SetLocalDescription(answer); err != nil {
 		return fmt.Errorf("failed to set local description: %w", err)
 	}
@@ -218,6 +224,7 @@ func NewConnection(signaling *Signaling, observer Observer) (*Connection, error)
 func NewConnectionWithLogger(signaling *Signaling, observer Observer, logger io.Writer) (*Connection, error) {
 	lf := wlog.NewDefaultLoggerFactory()
 	lf.Writer = logger
+	lf.DefaultLogLevel = wlog.LogLevelDebug
 	api := webrtc.NewAPI(webrtc.WithSettingEngine(webrtc.SettingEngine{
 		LoggerFactory: lf,
 	}))
@@ -248,6 +255,7 @@ func NewConnectionWithLogger(signaling *Signaling, observer Observer, logger io.
 			signaling:      signaling,
 			peerConnection: pc,
 			observer:       observer,
+			logger:         lf.NewLogger("cvdr_webrtc_controller"),
 		},
 	}
 
