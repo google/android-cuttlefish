@@ -353,6 +353,11 @@ cvd_host_bootloader = [
     "bootloader_qemu_x86_64",
 ]
 
+cvd_host_ti50_emulator = [
+    "ti50_emulator_x86_64_bin",
+    "ti50_emulator_x86_64_lib",
+]
+
 prebuilt_etc_host {
     name: "cvd_avb_testkey_rsa2048",
     filename: "cvd_avb_testkey_rsa2048.pem",
@@ -449,6 +454,7 @@ cvd_host_package_customization {
                 cvd_host_model_simulator_files +
                 cvd_host_acloud_data +
                 cvd_host_bootloader +
+                cvd_host_ti50_emulator +
                 cvd_host_swiftshader_files +
                 cvd_openwrt_images +
                 cvd_host_netsim_gui_assets +

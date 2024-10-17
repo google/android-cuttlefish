@@ -9,3 +9,4 @@ allow ueventd keymint_device:chr_file { rw_file_perms create setattr };
 allow ueventd sensors_device:chr_file { rw_file_perms create setattr };
 allow ueventd mcu_control_device:chr_file { rw_file_perms create setattr };
 allow ueventd mcu_uart_device:chr_file { rw_file_perms create setattr };
+allow ueventd ti50_char_device:chr_file { rw_file_perms create setattr };
