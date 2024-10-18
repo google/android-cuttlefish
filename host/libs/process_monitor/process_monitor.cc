@@ -301,20 +301,10 @@ ProcessMonitor::Properties& ProcessMonitor::Properties::RestartSubprocesses(
   return *this;
 }
 
-ProcessMonitor::Properties ProcessMonitor::Properties::RestartSubprocesses(
-    bool r) && {
-  return std::move(RestartSubprocesses(r));
-}
-
 ProcessMonitor::Properties& ProcessMonitor::Properties::AddCommand(
     MonitorCommand cmd) & {
   entries_.emplace_back(std::move(cmd.command), cmd.is_critical);
   return *this;
-}
-
-ProcessMonitor::Properties ProcessMonitor::Properties::AddCommand(
-    MonitorCommand cmd) && {
-  return std::move(AddCommand(std::move(cmd)));
 }
 
 ProcessMonitor::Properties& ProcessMonitor::Properties::StraceCommands(
@@ -322,19 +312,11 @@ ProcessMonitor::Properties& ProcessMonitor::Properties::StraceCommands(
   strace_commands_ = std::move(strace);
   return *this;
 }
-ProcessMonitor::Properties ProcessMonitor::Properties::StraceCommands(
-    std::set<std::string> strace) && {
-  return std::move(StraceCommands(std::move(strace)));
-}
 
 ProcessMonitor::Properties& ProcessMonitor::Properties::StraceLogDir(
     std::string log_dir) & {
   strace_log_dir_ = std::move(log_dir);
   return *this;
-}
-ProcessMonitor::Properties ProcessMonitor::Properties::StraceLogDir(
-    std::string log_dir) && {
-  return std::move(StraceLogDir(std::move(log_dir)));
 }
 
 ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties,
