@@ -19,14 +19,12 @@
 #include <memory>
 
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
 
 // restart, powerwash, powerbtn
 std::unique_ptr<CvdServerHandler> NewCvdDevicePowerCommandHandler(
-    HostToolTargetManager& host_tool_target_manager,
     InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

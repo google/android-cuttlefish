@@ -33,7 +33,7 @@
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/group_selector.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server_command/host_tool_target_manager.h"
+#include "host/commands/cvd/server_command/host_tool_target.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -48,8 +48,7 @@ constexpr char kSummaryHelpText[] =
 
 class CvdStopCommandHandler : public CvdServerHandler {
  public:
-  CvdStopCommandHandler(InstanceManager& instance_manager,
-                        HostToolTargetManager& host_tool_target_manager);
+  CvdStopCommandHandler(InstanceManager& instance_manager);
 
   Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
@@ -72,16 +71,12 @@ class CvdStopCommandHandler : public CvdServerHandler {
                                      const cvd_common::Envs& envs) const;
 
   InstanceManager& instance_manager_;
-  HostToolTargetManager& host_tool_target_manager_;
   using BinGeneratorType = std::function<Result<std::string>(
       const std::string& host_artifacts_path)>;
 };
 
-CvdStopCommandHandler::CvdStopCommandHandler(
-    InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager)
-    : instance_manager_(instance_manager),
-      host_tool_target_manager_(host_tool_target_manager) {}
+CvdStopCommandHandler::CvdStopCommandHandler(InstanceManager& instance_manager)
+    : instance_manager_(instance_manager) {}
 
 Result<bool> CvdStopCommandHandler::CanHandle(
     const CommandRequest& request) const {
@@ -102,8 +97,7 @@ Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
       .args = cmd_args,
       .envs = env,
       .working_dir = CurrentDirectory(),
-      .command_name = bin
-  };
+      .command_name = bin};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   siginfo_t infop;
@@ -137,8 +131,7 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
       .args = cmd_args,
       .envs = request.Env(),
       .working_dir = CurrentDirectory(),
-      .command_name = bin
-  };
+      .command_name = bin};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   siginfo_t infop;
@@ -183,17 +176,15 @@ CvdStopCommandHandler::CvdHelpBinPath(const std::string& subcmd,
 
 Result<std::string> CvdStopCommandHandler::GetBin(
     const std::string& host_artifacts_path) const {
-  std::string calculated_bin_name =
-      CF_EXPECT(host_tool_target_manager_.ExecBaseName(
-          {.artifacts_path = host_artifacts_path, .op = "stop"}));
-  return calculated_bin_name;
+  HostToolTarget host_tool_target =
+      CF_EXPECT(HostToolTarget::Create(host_artifacts_path));
+  return CF_EXPECT(host_tool_target.GetBinName("stop"));
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdStopCommandHandler(
-    InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager) {
+    InstanceManager& instance_manager) {
   return std::unique_ptr<CvdServerHandler>(
-      new CvdStopCommandHandler(instance_manager, host_tool_target_manager));
+      new CvdStopCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

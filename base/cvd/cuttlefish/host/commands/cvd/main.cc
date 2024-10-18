@@ -29,11 +29,11 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/client.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/cvd.h"
-#include "common/libs/utils/flag_parser.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "host/commands/cvd/metrics/cvd_metrics_api.h"
 #include "host/commands/cvd/run_server.h"
@@ -192,12 +192,9 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   IncreaseFileLimit();
 
   InstanceLockFileManager instance_lockfile_manager;
-  auto host_tool_target_manager = NewHostToolTargetManager();
   selector::InstanceDatabase instance_db(InstanceDatabasePath());
-  InstanceManager instance_manager(instance_lockfile_manager,
-                                   *host_tool_target_manager, instance_db);
-  Cvd cvd(verbosity, instance_lockfile_manager, instance_manager,
-          *host_tool_target_manager);
+  InstanceManager instance_manager(instance_lockfile_manager, instance_db);
+  Cvd cvd(verbosity, instance_lockfile_manager, instance_manager);
 
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {

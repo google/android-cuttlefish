@@ -84,8 +84,7 @@ Args:
 
 class CvdStatusCommandHandler : public CvdServerHandler {
  public:
-  CvdStatusCommandHandler(InstanceManager& instance_manager,
-                          HostToolTargetManager& host_tool_target_manager);
+  CvdStatusCommandHandler(InstanceManager& instance_manager);
 
   Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
@@ -101,17 +100,14 @@ class CvdStatusCommandHandler : public CvdServerHandler {
 
  private:
   InstanceManager& instance_manager_;
-  HostToolTargetManager& host_tool_target_manager_;
   StatusFetcher status_fetcher_;
   std::vector<std::string> supported_subcmds_;
 };
 
 CvdStatusCommandHandler::CvdStatusCommandHandler(
-    InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager)
+    InstanceManager& instance_manager)
     : instance_manager_(instance_manager),
-      host_tool_target_manager_(host_tool_target_manager),
-      status_fetcher_(instance_manager_, host_tool_target_manager_),
+      status_fetcher_(instance_manager_),
       supported_subcmds_{"status", "cvd_status"} {}
 
 Result<bool> CvdStatusCommandHandler::CanHandle(
@@ -193,10 +189,9 @@ std::vector<std::string> CvdStatusCommandHandler::CmdList() const {
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdStatusCommandHandler(
-    InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager) {
+    InstanceManager& instance_manager) {
   return std::unique_ptr<CvdServerHandler>(
-      new CvdStatusCommandHandler(instance_manager, host_tool_target_manager));
+      new CvdStatusCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

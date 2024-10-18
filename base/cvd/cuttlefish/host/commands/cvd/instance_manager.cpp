@@ -33,6 +33,7 @@
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
+#include "host/commands/cvd/server_command/host_tool_target.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_utils.h"
 
@@ -71,13 +72,9 @@ Result<std::string> InstanceManager::GetCuttlefishConfigPath(
   return CF_EXPECT(selector::GetCuttlefishConfigPath(home));
 }
 
-InstanceManager::InstanceManager(
-    InstanceLockFileManager& lock_manager,
-    HostToolTargetManager& host_tool_target_manager,
-    selector::InstanceDatabase& instance_db)
-    : lock_manager_(lock_manager),
-      host_tool_target_manager_(host_tool_target_manager),
-      instance_db_(instance_db) {}
+InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager,
+                                 selector::InstanceDatabase& instance_db)
+    : lock_manager_(lock_manager), instance_db_(instance_db) {}
 
 Result<void> InstanceManager::SetAcloudTranslatorOptout(bool optout) {
   CF_EXPECT(instance_db_.SetAcloudTranslatorOptout(optout));
@@ -154,10 +151,9 @@ Result<bool> InstanceManager::RemoveInstanceGroupByHome(
 
 Result<std::string> InstanceManager::StopBin(
     const std::string& host_android_out) {
-  return CF_EXPECT(host_tool_target_manager_.ExecBaseName({
-      .artifacts_path = host_android_out,
-      .op = "stop",
-  }));
+  HostToolTarget host_tool_target =
+      CF_EXPECT(HostToolTarget::Create(host_android_out));
+  return CF_EXPECT(host_tool_target.GetBinName("stop"));
 }
 
 Result<void> InstanceManager::UpdateInstanceGroup(

@@ -22,10 +22,9 @@
 
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
-#include "host/commands/cvd/command_request.h"
-#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
 
@@ -37,10 +36,8 @@ struct StatusFetcherOutput {
 
 class StatusFetcher {
  public:
-  StatusFetcher(InstanceManager& instance_manager,
-                HostToolTargetManager& host_tool_target_manager)
-      : instance_manager_(instance_manager),
-        host_tool_target_manager_(host_tool_target_manager) {}
+  StatusFetcher(InstanceManager& instance_manager)
+      : instance_manager_(instance_manager) {}
   Result<StatusFetcherOutput> FetchStatus(const CommandRequest&);
 
   Result<Json::Value> FetchGroupStatus(const CommandRequest& original_request,
@@ -53,7 +50,6 @@ class StatusFetcher {
       cvd::Instance&);
 
   InstanceManager& instance_manager_;
-  HostToolTargetManager& host_tool_target_manager_;
 };
 
 }  // namespace cuttlefish

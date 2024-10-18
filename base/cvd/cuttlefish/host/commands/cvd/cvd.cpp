@@ -52,12 +52,10 @@ namespace {
 
 Cvd::Cvd(const android::base::LogSeverity verbosity,
          InstanceLockFileManager& instance_lockfile_manager,
-         InstanceManager& instance_manager,
-         HostToolTargetManager& host_tool_target_manager)
+         InstanceManager& instance_manager)
     : verbosity_(verbosity),
       instance_lockfile_manager_(instance_lockfile_manager),
-      instance_manager_(instance_manager),
-      host_tool_target_manager_(host_tool_target_manager) {}
+      instance_manager_(instance_manager) {}
 
 Result<cvd::Response> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
@@ -69,8 +67,7 @@ Result<cvd::Response> Cvd::HandleCommand(
                                          .AddSelectorArguments(selector_args)
                                          .Build());
 
-  RequestContext context(instance_lockfile_manager_, instance_manager_,
-                         host_tool_target_manager_);
+  RequestContext context(instance_lockfile_manager_, instance_manager_);
   auto handler = CF_EXPECT(context.Handler(request));
   return handler->Handle(request);
 }

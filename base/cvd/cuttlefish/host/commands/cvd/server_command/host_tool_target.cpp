@@ -115,26 +115,13 @@ HostToolTarget::HostToolTarget(
       dir_time_stamp_(dir_time_stamp),
       op_to_impl_map_(std::move(op_to_impl_map)) {}
 
-bool HostToolTarget::IsDirty() const {
-  std::string bin_path = ConcatToString(artifacts_path_, "/bin");
-  if (!DirectoryExists(bin_path)) {
-    return true;
-  }
-  struct stat for_dir_time_stamp;
-  if (::stat(bin_path.data(), &for_dir_time_stamp) != 0) {
-    return true;
-  }
-  return dir_time_stamp_ != for_dir_time_stamp.st_mtime;
-}
-
 Result<FlagInfo> HostToolTarget::GetFlagInfo(
-    const FlagInfoRequest& request) const {
-  CF_EXPECT(Contains(op_to_impl_map_, request.operation_),
-            "Operation \"" << request.operation_ << "\" is not supported.");
-  auto& supported_flags =
-      op_to_impl_map_.at(request.operation_).supported_flags_;
-  CF_EXPECT(Contains(supported_flags, request.flag_name_));
-  const auto& flag_uniq_ptr = supported_flags.at(request.flag_name_);
+    const std::string& operation, const std::string& flag_name) const {
+  CF_EXPECT(Contains(op_to_impl_map_, operation),
+            "Operation \"" << operation << "\" is not supported.");
+  auto& supported_flags = op_to_impl_map_.at(operation).supported_flags_;
+  CF_EXPECT(Contains(supported_flags, flag_name));
+  const auto& flag_uniq_ptr = supported_flags.at(flag_name);
   FlagInfo copied(*flag_uniq_ptr);
   return copied;
 }
