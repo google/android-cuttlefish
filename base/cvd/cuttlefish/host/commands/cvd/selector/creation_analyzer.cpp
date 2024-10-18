@@ -38,7 +38,7 @@ Result<CreationAnalyzer> CreationAnalyzer::Create(
     InstanceLockFileManager& instance_lock_file_manager) {
   auto selector_options_parser =
       CF_EXPECT(StartSelectorParser::ConductSelectFlagsParser(
-          param.selector_args, param.cmd_args, param.envs));
+          param.selectors, param.cmd_args, param.envs));
   return CreationAnalyzer(param, std::move(selector_options_parser),
                           instance_lock_file_manager);
 }
@@ -64,7 +64,8 @@ static std::unordered_map<unsigned, InstanceLockFile> ConstructIdLockFileMap(
 
 Result<std::vector<PerInstanceInfo>>
 CreationAnalyzer::AnalyzeInstanceIdsInternal(
-    const std::vector<unsigned>& requested_instance_ids) {
+    const std::vector<unsigned>& requested_instance_ids,
+    bool acquire_file_locks) {
   CF_EXPECT(!requested_instance_ids.empty(),
             "Instance IDs were specified, so should be one or more.");
   std::vector<std::string> per_instance_names;
@@ -83,8 +84,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
   }
 
   std::vector<PerInstanceInfo> instance_info;
-  bool must_acquire_file_locks = selector_options_parser_.MustAcquireFileLock();
-  if (!must_acquire_file_locks) {
+  if (!acquire_file_locks) {
     for (const auto& [id, name] : id_name_pairs) {
       instance_info.emplace_back(id, name, cvd::INSTANCE_STATE_STARTING);
     }
@@ -105,8 +105,8 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
 }
 
 Result<std::vector<PerInstanceInfo>>
-CreationAnalyzer::AnalyzeInstanceIdsInternal() {
-  CF_EXPECT(selector_options_parser_.MustAcquireFileLock(),
+CreationAnalyzer::AnalyzeInstanceIdsInternal(bool acquire_file_locks) {
+  CF_EXPECT(!!acquire_file_locks,  // !! because CF_EXPECT expects rvalue
             "For now, cvd server always acquire the file locks "
                 << "when IDs are automatically allocated.");
 
@@ -162,15 +162,18 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
   return instance_info;
 }
 
-Result<std::vector<PerInstanceInfo>> CreationAnalyzer::AnalyzeInstanceIds() {
+Result<std::vector<PerInstanceInfo>> CreationAnalyzer::AnalyzeInstanceIds(
+    bool acquire_file_locks) {
   auto requested_instance_ids = selector_options_parser_.InstanceIds();
   return requested_instance_ids
-             ? CF_EXPECT(AnalyzeInstanceIdsInternal(*requested_instance_ids))
-             : CF_EXPECT(AnalyzeInstanceIdsInternal());
+             ? CF_EXPECT(AnalyzeInstanceIdsInternal(*requested_instance_ids,
+                                                    acquire_file_locks))
+             : CF_EXPECT(AnalyzeInstanceIdsInternal(acquire_file_locks));
 }
 
-Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo() {
-  auto instance_info = CF_EXPECT(AnalyzeInstanceIds());
+Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo(
+    bool acquire_file_locks) {
+  auto instance_info = CF_EXPECT(AnalyzeInstanceIds(acquire_file_locks));
   std::vector<unsigned> ids;
   ids.reserve(instance_info.size());
   for (const auto& instance : instance_info) {

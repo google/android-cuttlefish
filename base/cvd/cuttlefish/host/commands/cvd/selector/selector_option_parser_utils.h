@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/flag_parser.h"
 
 namespace cuttlefish {
 namespace selector {

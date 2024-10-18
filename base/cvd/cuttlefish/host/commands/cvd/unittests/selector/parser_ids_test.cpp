@@ -23,8 +23,13 @@ namespace cuttlefish {
 namespace selector {
 
 TEST_P(InstanceIdTest, InstanceIdCalculation) {
-  auto parser = StartSelectorParser::ConductSelectFlagsParser(selector_args_,
-                                                              cmd_args_, envs_);
+  auto selector_options_res = ParseCommonSelectorArguments(selector_args_);
+  ASSERT_TRUE(selector_options_res.ok());
+  if (!expected_result_) {
+    return;
+  }
+  auto parser = StartSelectorParser::ConductSelectFlagsParser(
+      *selector_options_res, cmd_args_, envs_);
 
   ASSERT_EQ(parser.ok(), expected_result_);
   if (!expected_result_) {

@@ -130,10 +130,8 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
       extra_queries.emplace_back(selector::kInstanceIdField, *instance_num_opt);
     }
 
-    const auto selector_args = request.SelectorArgs();
-
     auto [instance, group] = CF_EXPECT(
-        instance_manager_.SelectInstance(selector_args, envs, extra_queries));
+        instance_manager_.SelectInstance(request.Selectors(), envs, extra_queries));
     const auto& home = group.Proto().home_directory();
 
     const auto& android_host_out = group.Proto().host_artifacts_path();

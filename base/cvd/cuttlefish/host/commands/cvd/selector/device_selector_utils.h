@@ -23,14 +23,23 @@
 
 #include <sys/types.h>
 
+#include <optional>
+
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/instance_database.h"
+#include "host/commands/cvd/selector/selector_common_parser.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace selector {
 
 Result<LocalInstanceGroup> GetDefaultGroup(
     const InstanceDatabase& instance_database);
+
+std::optional<std::string> OverridenHomeDirectory(const cvd_common::Envs& env);
+
+Result<Queries> BuildQueriesFromSelectors(const SelectorOptions& selectors,
+                                          const cvd_common::Envs& env);
 
 }  // namespace selector
 }  // namespace cuttlefish

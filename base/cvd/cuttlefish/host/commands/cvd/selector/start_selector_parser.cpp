@@ -18,18 +18,16 @@
 
 #include <unistd.h>
 
-#include <iostream>
-#include <sstream>
-#include <string_view>
+#include <unordered_map>
+#include <unordered_set>
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/users.h"
-#include "host/commands/cvd/selector/instance_database_utils.h"
-#include "host/commands/cvd/selector/selector_constants.h"
+#include "host/commands/cvd/selector/device_selector_utils.h"
+#include "host/commands/cvd/selector/selector_common_parser.h"
 #include "host/commands/cvd/selector/selector_option_parser_utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/config_constants.h"
@@ -51,34 +49,31 @@ static Result<unsigned> ParseNaturalNumber(const std::string& token) {
 }
 
 Result<StartSelectorParser> StartSelectorParser::ConductSelectFlagsParser(
-    const cvd_common::Args& selector_args,
-    const cvd_common::Args& cmd_args, const cvd_common::Envs& envs) {
+    const SelectorOptions& selector_options, const cvd_common::Args& cmd_args,
+    const cvd_common::Envs& envs) {
   const std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
-  cvd_common::Args selector_args_copied{selector_args};
-  StartSelectorParser parser(
-      system_wide_home, selector_args_copied, cmd_args, envs,
-      CF_EXPECT(SelectorCommonParser::Parse(selector_args_copied, envs)));
+  StartSelectorParser parser(system_wide_home, selector_options, cmd_args,
+                             envs);
   CF_EXPECT(parser.ParseOptions(), "selector option flag parsing failed.");
   return {std::move(parser)};
 }
 
 StartSelectorParser::StartSelectorParser(
     const std::string& system_wide_user_home,
-    const cvd_common::Args& selector_args, const cvd_common::Args& cmd_args,
-    const cvd_common::Envs& envs, SelectorCommonParser&& common_parser)
+    const SelectorOptions& selector_options, const cvd_common::Args& cmd_args,
+    const cvd_common::Envs& envs)
     : client_user_home_{system_wide_user_home},
-      selector_args_(selector_args),
+      selector_options_(selector_options),
       cmd_args_(cmd_args),
-      envs_(envs),
-      common_parser_(std::move(common_parser)) {}
+      envs_(envs) {}
 
 std::optional<std::string> StartSelectorParser::GroupName() const {
-  return group_name_;
+  return selector_options_.group_name;
 }
 
 std::optional<std::vector<std::string>> StartSelectorParser::PerInstanceNames()
     const {
-  return per_instance_names_;
+  return selector_options_.instance_names;
 }
 
 namespace {
@@ -232,7 +227,7 @@ StartSelectorParser::HandleInstanceIds(
   return ParsedInstanceIdsOpt{instance_ids_vector};
 }
 
-Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
+bool StartSelectorParser::CalcMayBeDefaultGroup() {
   /*
    * the logic to determine whether this group is the default one or not:
    *  If HOME is not overridden and no selector options, then
@@ -240,87 +235,14 @@ Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
    *  Or, not a default group
    *
    */
-  if (CF_EXPECT(common_parser_.HomeOverridden())) {
+  if (OverridenHomeDirectory(envs_).has_value()) {
     return false;
   }
-  return !common_parser_.HasDeviceSelectOption();
-}
-
-static bool IsTrue(const std::string& value) {
-  std::unordered_set<std::string> true_strings = {"y", "yes", "true"};
-  std::string value_in_lower_case = value;
-  /*
-   * https://en.cppreference.com/w/cpp/string/byte/tolower
-   *
-   * char should be converted to unsigned char first.
-   */
-  std::transform(value_in_lower_case.begin(), value_in_lower_case.end(),
-                 value_in_lower_case.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  return Contains(true_strings, value_in_lower_case);
-}
-
-static bool IsFalse(const std::string& value) {
-  std::unordered_set<std::string> false_strings = {"n", "no", "false"};
-  std::string value_in_lower_case = value;
-  /*
-   * https://en.cppreference.com/w/cpp/string/byte/tolower
-   *
-   * char should be converted to unsigned char first.
-   */
-  std::transform(value_in_lower_case.begin(), value_in_lower_case.end(),
-                 value_in_lower_case.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  return Contains(false_strings, value_in_lower_case);
-}
-
-static std::optional<std::string> GetAcquireFileLockEnvValue(
-    const cvd_common::Envs& envs) {
-  if (!Contains(envs, SelectorFlags::kAcquireFileLockEnv)) {
-    return std::nullopt;
-  }
-  auto env_value = envs.at(SelectorFlags::kAcquireFileLockEnv);
-  if (env_value.empty()) {
-    return std::nullopt;
-  }
-  return env_value;
-}
-
-Result<bool> StartSelectorParser::CalcAcquireFileLock() {
-  // if the flag is set, flag has the highest priority
-  auto must_acquire_file_lock_flag =
-      CF_EXPECT(SelectorFlags::Get().GetFlag(SelectorFlags::kAcquireFileLock));
-  std::optional<bool> value_opt =
-      CF_EXPECT(must_acquire_file_lock_flag.FilterFlag<bool>(selector_args_));
-  if (value_opt) {
-    return *value_opt;
-  }
-  // flag is not set. see if there is the environment variable set
-  auto env_value_opt = GetAcquireFileLockEnvValue(envs_);
-  if (env_value_opt) {
-    auto value_string = *env_value_opt;
-    if (IsTrue(value_string)) {
-      return true;
-    }
-    if (IsFalse(value_string)) {
-      return false;
-    }
-    return CF_ERR("In \"" << SelectorFlags::kAcquireFileLockEnv << "="
-                          << value_string << ",\" \"" << value_string
-                          << "\" is an invalid value. Try true or false.");
-  }
-  // nothing set, falls back to the default value of the flag
-  auto default_value =
-      CF_EXPECT(must_acquire_file_lock_flag.DefaultValue<bool>());
-  return default_value;
+  return !selector_options_.HasOptions();
 }
 
 Result<void> StartSelectorParser::ParseOptions() {
-  may_be_default_group_ = CF_EXPECT(CalcMayBeDefaultGroup());
-  must_acquire_file_lock_ = CF_EXPECT(CalcAcquireFileLock());
-
-  group_name_ = common_parser_.GroupName();
-  per_instance_names_ = common_parser_.PerInstanceNames();
+  may_be_default_group_ = CalcMayBeDefaultGroup();
 
   std::optional<std::string> num_instances;
   std::optional<std::string> instance_nums;

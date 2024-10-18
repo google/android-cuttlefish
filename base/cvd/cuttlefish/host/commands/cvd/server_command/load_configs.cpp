@@ -22,6 +22,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
@@ -29,7 +30,6 @@
 #include "host/commands/cvd/interrupt_listener.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -45,7 +45,7 @@ Warning: This command is deprecated, use cvd start --config_file instead.
 Usage:
 cvd load <config_filepath> [--override=<key>:<value>]
 
-Reads the fields in the JSON configuration file and translates them to corresponding start command and flags.  
+Reads the fields in the JSON configuration file and translates them to corresponding start command and flags.
 
 Optionally fetches remote artifacts prior to launching the cuttlefish environment.
 
@@ -155,7 +155,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     CF_EXPECT(std::move(mkdir_res));
 
     if (!cvd_flags.fetch_cvd_flags.empty()) {
-      auto fetch_cmd = BuildFetchCmd(request, cvd_flags);
+      auto fetch_cmd = CF_EXPECT(BuildFetchCmd(request, cvd_flags));
       auto fetch_res = executor_.ExecuteOne(fetch_cmd, std::cerr);
       if (!fetch_res.ok()) {
         group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
@@ -167,7 +167,7 @@ class LoadConfigsCommand : public CvdServerHandler {
           GetFetchLogsFileName(cvd_flags.load_directories.target_directory));
     }
 
-    auto launch_cmd = BuildLaunchCmd(request, cvd_flags, group);
+    auto launch_cmd = CF_EXPECT(BuildLaunchCmd(request, cvd_flags, group));
     CF_EXPECT(executor_.ExecuteOne(launch_cmd, std::cerr));
     return {};
   }
@@ -182,26 +182,38 @@ class LoadConfigsCommand : public CvdServerHandler {
     return kDetailedHelpText;
   }
 
-  CommandRequest BuildFetchCmd(const CommandRequest& request,
-                                 const CvdFlags& cvd_flags) {
-    return CommandRequest()
-        .SetEnv(request.Env())
-        // The fetch operation is too verbose by default, set it to WARNING
-        // unconditionally, the full logs are available in fetch.log anyways.
-        .AddArguments({"cvd", "fetch", "-verbosity", "WARNING"})
-        .AddArguments(cvd_flags.fetch_cvd_flags);
+  Result<CommandRequest> BuildFetchCmd(const CommandRequest& request,
+                                       const CvdFlags& cvd_flags) {
+    return CF_EXPECT(
+        CommandRequestBuilder()
+            .SetEnv(request.Env())
+            // The fetch operation is too verbose by default, set it to WARNING
+            // unconditionally, the full logs are available in fetch.log
+            // anyways.
+            .AddArguments({"cvd", "fetch", "-verbosity", "WARNING"})
+            .AddArguments(cvd_flags.fetch_cvd_flags)
+            .Build());
   }
 
-  CommandRequest BuildLaunchCmd(const CommandRequest& request,
-                                  const CvdFlags& cvd_flags,
-                                  const selector::LocalInstanceGroup& group) {
+  Result<CommandRequest> BuildLaunchCmd(
+      const CommandRequest& request, const CvdFlags& cvd_flags,
+      const selector::LocalInstanceGroup& group) {
     // Add system flag for multi-build scenario
     std::string system_build_arg = fmt::format(
         "--system_image_dir={}",
         cvd_flags.load_directories.system_image_directory_flag_value);
-    CommandRequest launch_req =
-        CommandRequest()
-            .SetEnv(request.Env())
+    auto env = request.Env();
+    env["HOME"] = cvd_flags.load_directories.launch_home_directory;
+    env[kAndroidHostOut] = cvd_flags.load_directories.host_package_directory;
+    env[kAndroidSoongHostOut] =
+        cvd_flags.load_directories.host_package_directory;
+    if (Contains(env, kAndroidProductOut)) {
+      env.erase(kAndroidProductOut);
+    }
+
+    return CF_EXPECT(
+        CommandRequestBuilder()
+            .SetEnv(env)
             // The newly created instances don't have an id yet, create will
             // allocate those.
             /* cvd load will always create instances in daemon mode (to be
@@ -211,18 +223,8 @@ class LoadConfigsCommand : public CvdServerHandler {
             .AddArguments({"cvd", "create", "--daemon", system_build_arg})
             .AddArguments(cvd_flags.launch_cvd_flags)
             .AddSelectorArguments(cvd_flags.selector_flags)
-            .AddSelectorArguments({"--group_name", group.GroupName()});
-
-    auto& env = launch_req.Env();
-    env["HOME"] = cvd_flags.load_directories.launch_home_directory;
-    env[kAndroidHostOut] = cvd_flags.load_directories.host_package_directory;
-    env[kAndroidSoongHostOut] =
-        cvd_flags.load_directories.host_package_directory;
-    if (Contains(env, kAndroidProductOut)) {
-      env.erase(kAndroidProductOut);
-    }
-
-    return launch_req;
+            .AddSelectorArguments({"--group_name", group.GroupName()})
+            .Build());
   }
 
  private:

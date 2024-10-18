@@ -30,7 +30,7 @@ namespace selector {
 class GroupSelector {
  public:
   static Result<GroupSelector> GetSelector(
-      const cvd_common::Args& selector_args, const Queries& extra_queries,
+      const SelectorOptions& selector_options, const Queries& extra_queries,
       const cvd_common::Envs& envs);
   /*
    * If default, try running single instance group. If multiple, try to find
@@ -44,11 +44,7 @@ class GroupSelector {
       const InstanceDatabase& instance_database);
 
  private:
-  GroupSelector(const Queries& queries)
-      : queries_{queries} {}
-
-  // used by Select()
-  static bool IsHomeOverridden(const SelectorCommonParser& common_parser);
+  GroupSelector(const Queries& queries) : queries_{queries} {}
 
   Result<LocalInstanceGroup> FindDefaultGroup(
       const InstanceDatabase& instance_database);

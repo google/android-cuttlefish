@@ -39,7 +39,7 @@ static constexpr const char kJsonInstanceId[] = "Instance Id";
 static constexpr const char kJsonInstanceName[] = "Per-Instance Name";
 
 std::vector<cvd::Instance> Filter(
-    const std::vector<cvd::Instance>& instances,
+    const google::protobuf::RepeatedPtrField<cvd::Instance>& instances,
     std::function<bool(const cvd::Instance&)> predicate) {
   std::vector<cvd::Instance> ret;
   std::copy_if(instances.begin(), instances.end(), std::back_inserter(ret),
@@ -52,24 +52,23 @@ std::vector<cvd::Instance> Filter(
 Result<LocalInstanceGroup> LocalInstanceGroup::Create(
     const cvd::InstanceGroup& group_proto) {
   CF_EXPECT(!group_proto.instances().empty(), "New group can't be empty");
-  std::vector<cvd::Instance> instances;
   std::set<unsigned> ids;
   std::set<std::string> names;
 
-  for (const auto& instance_proto : group_proto.instances()) {
-    instances.push_back(instance_proto);
-    auto id = instance_proto.id();
+  for (const auto& instances : group_proto.instances()) {
+    auto id = instances.id();
     if (id != 0) {
       // Only non-zero ids are checked, zero means no id has been assigned yet.
       CF_EXPECTF(ids.find(id) == ids.end(),
                  "Instances must have unique ids, found '{}' repeated", id);
       ids.insert(id);
     }
-    names.insert(instance_proto.name());
+    auto name = instances.name();
+    CF_EXPECTF(names.find(name) == names.end(),
+               "Instances must have unique names, found '{}' repeated", name);
+    names.insert(name);
   }
-  CF_EXPECT(names.size() == (size_t)group_proto.instances_size(),
-            "Instances must have unique names");
-  return LocalInstanceGroup(group_proto, instances);
+  return LocalInstanceGroup(group_proto);
 }
 
 void LocalInstanceGroup::SetHomeDir(const std::string& home_dir) {
@@ -118,7 +117,7 @@ bool LocalInstanceGroup::HasActiveInstances() const {
 }
 
 void LocalInstanceGroup::SetAllStates(cvd::InstanceState state) {
-  for (auto& instance: Instances()) {
+  for (auto& instance : Instances()) {
     instance.set_state(state);
   }
 }
@@ -131,21 +130,19 @@ void LocalInstanceGroup::SetStartTime(TimeStamp time) {
   group_proto_.set_start_time_sec(CvdServerClock::to_time_t(time));
 }
 
-LocalInstanceGroup::LocalInstanceGroup(
-    const cvd::InstanceGroup& group_proto, const std::vector<cvd::Instance>& instances)
-    : group_proto_(group_proto),
-      instances_(instances) {};
+LocalInstanceGroup::LocalInstanceGroup(const cvd::InstanceGroup& group_proto)
+    : group_proto_(group_proto) {};
 
 std::vector<cvd::Instance> LocalInstanceGroup::FindById(
     const unsigned id) const {
-  return Filter(instances_, [id](const cvd::Instance& instance) {
+  return Filter(Instances(), [id](const cvd::Instance& instance) {
     return id == instance.id();
   });
 }
 
 std::vector<cvd::Instance> LocalInstanceGroup::FindByInstanceName(
     const std::string& instance_name) const {
-  return Filter(instances_, [instance_name](const cvd::Instance& instance) {
+  return Filter(Instances(), [instance_name](const cvd::Instance& instance) {
     return instance.name() == instance_name;
   });
 }
@@ -154,8 +151,10 @@ std::string LocalInstanceGroup::AssemblyDir() const {
   return HomeDir() + "/cuttlefish/assembly";
 }
 
-std::string LocalInstanceGroup::InstanceDir(const cvd::Instance& instance) const {
-  return fmt::format("{}/cuttlefish/instances/cvd-{}", HomeDir(), instance.id());
+std::string LocalInstanceGroup::InstanceDir(
+    const cvd::Instance& instance) const {
+  return fmt::format("{}/cuttlefish/instances/cvd-{}", HomeDir(),
+                     instance.id());
 }
 
 Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(

@@ -16,8 +16,12 @@
 
 #include "host/commands/cvd/selector/device_selector_utils.h"
 
+#include <android-base/parseint.h>
+
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/selector/selector_constants.h"
+#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -32,6 +36,43 @@ Result<LocalInstanceGroup> GetDefaultGroup(
   auto group =
       CF_EXPECT(instance_database.FindGroup({kHomeField, system_wide_home}));
   return group;
+}
+
+std::optional<std::string> OverridenHomeDirectory(const cvd_common::Envs& env) {
+  Result<std::string> user_home_res = SystemWideUserHome();
+  auto home_it = env.find("HOME");
+  if (!user_home_res.ok() || home_it == env.end() ||
+      home_it->second == *user_home_res) {
+    return std::nullopt;
+  }
+  return home_it->second;
+}
+
+Result<Queries> BuildQueriesFromSelectors(const SelectorOptions& selectors,
+                                          const cvd_common::Envs& env) {
+  selector::Queries queries;
+  auto overriden_home = OverridenHomeDirectory(env);
+  if (overriden_home.has_value()) {
+    queries.emplace_back(kHomeField, overriden_home.value());
+  }
+  if (selectors.group_name) {
+    queries.emplace_back(kGroupNameField, selectors.group_name.value());
+  }
+  if (selectors.instance_names) {
+    const auto per_instance_names = selectors.instance_names.value();
+    for (const auto& per_instance_name : per_instance_names) {
+      queries.emplace_back(kInstanceNameField, per_instance_name);
+    }
+  }
+  auto it = env.find(kCuttlefishInstanceEnvVarName);
+  if (it != env.end()) {
+    int id;
+    auto cuttlefish_instance = it->second;
+    CF_EXPECT(android::base::ParseInt(cuttlefish_instance, &id));
+    queries.emplace_back(kInstanceIdField, cuttlefish_instance);
+  }
+
+  return queries;
 }
 
 }  // namespace selector
