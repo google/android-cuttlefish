@@ -1,0 +1,1 @@
+get_prop(hal_keymint_default, serialno_prop)
