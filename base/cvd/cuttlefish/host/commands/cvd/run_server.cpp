@@ -20,17 +20,12 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-#include <memory>
-
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/shared_fd_flag.h"
-#include "host/commands/cvd/client.h"
+#include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/instance_lock.h"
-#include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/metrics/metrics_notice.h"
 #include "host/commands/cvd/selector/instance_database.h"
-#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
 
@@ -116,24 +111,20 @@ Result<void> ImportResourcesImpl(const ParseResult& param) {
   SetMinimumVerbosity(android::base::VERBOSE);
   LOG(INFO) << "Starting server";
   signal(SIGPIPE, SIG_IGN);
-  auto host_tool_target_manager = NewHostToolTargetManager();
-  InstanceLockFileManager lock_manager;
   selector::InstanceDatabase instance_database(InstanceDatabasePath());
-  InstanceManager instance_manager(lock_manager, *host_tool_target_manager,
-                                   instance_database);
   cvd::Response response;
   if (param.memory_carryover_fd) {
     SharedFD memory_carryover_fd = std::move(*param.memory_carryover_fd);
     auto json_string = CF_EXPECT(ReadAllFromMemFd(memory_carryover_fd),
                                  "Failed to parse JSON from mem fd");
     auto json = CF_EXPECT(ParseJson(json_string));
-    CF_EXPECTF(instance_manager.LoadFromJson(json), "Failed to load from: {}",
+    CF_EXPECTF(instance_database.LoadFromJson(json), "Failed to load from: {}",
                json_string);
   }
   if (param.acloud_translator_optout) {
     LOG(VERBOSE) << "Acloud translation optout: "
                  << param.acloud_translator_optout.value();
-    CF_EXPECT(instance_manager.SetAcloudTranslatorOptout(
+    CF_EXPECT(instance_database.SetAcloudTranslatorOptout(
         param.acloud_translator_optout.value()));
   }
   return {};
