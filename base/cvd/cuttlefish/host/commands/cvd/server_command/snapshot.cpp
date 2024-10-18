@@ -28,7 +28,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
-#include "host/commands/cvd/server_command/host_tool_target_manager.h"
+#include "host/commands/cvd/server_command/host_tool_target.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -63,10 +63,8 @@ QEMU:
 
 class CvdSnapshotCommandHandler : public CvdServerHandler {
  public:
-  CvdSnapshotCommandHandler(InstanceManager& instance_manager,
-                            HostToolTargetManager& host_tool_target_manager)
+  CvdSnapshotCommandHandler(InstanceManager& instance_manager)
       : instance_manager_{instance_manager},
-        host_tool_target_manager_(host_tool_target_manager),
         cvd_snapshot_operations_{"suspend", "resume", "snapshot_take"} {}
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
@@ -152,25 +150,21 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
 
   Result<std::string> GetBin(const std::string& host_artifacts_path,
                              const std::string& op) const {
-    auto snapshot_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
-        .artifacts_path = host_artifacts_path,
-        .op = op,
-    }));
-    return snapshot_bin;
+    HostToolTarget host_tool_target =
+        CF_EXPECT(HostToolTarget::Create(host_artifacts_path));
+    return CF_EXPECT(host_tool_target.GetBinName(op));
   }
 
   InstanceManager& instance_manager_;
-  HostToolTargetManager& host_tool_target_manager_;
   std::vector<std::string> cvd_snapshot_operations_;
 };
 
 }  // namespace
 
 std::unique_ptr<CvdServerHandler> NewCvdSnapshotCommandHandler(
-    InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager) {
-  return std::unique_ptr<CvdServerHandler>(new CvdSnapshotCommandHandler(
-      instance_manager, host_tool_target_manager));
+    InstanceManager& instance_manager) {
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdSnapshotCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

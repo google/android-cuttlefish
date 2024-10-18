@@ -40,10 +40,9 @@ usage: cvd fleet [--help]
 
 class CvdFleetCommandHandler : public CvdServerHandler {
  public:
-  CvdFleetCommandHandler(InstanceManager& instance_manager,
-                         HostToolTargetManager& host_tool_target_manager)
+  CvdFleetCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager),
-        status_fetcher_(instance_manager_, host_tool_target_manager) {}
+        status_fetcher_(instance_manager_) {}
 
   Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
@@ -111,10 +110,9 @@ bool CvdFleetCommandHandler::IsHelp(const cvd_common::Args& args) const {
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdFleetCommandHandler(
-    InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager) {
+    InstanceManager& instance_manager) {
   return std::unique_ptr<CvdServerHandler>(
-      new CvdFleetCommandHandler(instance_manager, host_tool_target_manager));
+      new CvdFleetCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

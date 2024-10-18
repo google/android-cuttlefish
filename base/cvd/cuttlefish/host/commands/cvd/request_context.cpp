@@ -21,13 +21,14 @@
 #include <android-base/logging.h>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/acloud_command.h"
 #include "host/commands/cvd/server_command/acloud_mixsuperimage.h"
 #include "host/commands/cvd/server_command/acloud_translator.h"
+#include "host/commands/cvd/server_command/bugreport.h"
 #include "host/commands/cvd/server_command/clear.h"
 #include "host/commands/cvd/server_command/cmd_list.h"
 #include "host/commands/cvd/server_command/create.h"
@@ -35,9 +36,7 @@
 #include "host/commands/cvd/server_command/env.h"
 #include "host/commands/cvd/server_command/fetch.h"
 #include "host/commands/cvd/server_command/fleet.h"
-#include "host/commands/cvd/server_command/bugreport.h"
 #include "host/commands/cvd/server_command/help.h"
-#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/lint.h"
 #include "host/commands/cvd/server_command/load_configs.h"
 #include "host/commands/cvd/server_command/noop.h"
@@ -56,48 +55,39 @@ namespace cuttlefish {
 
 RequestContext::RequestContext(
     InstanceLockFileManager& instance_lockfile_manager,
-    InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager)
+    InstanceManager& instance_manager)
     : instance_lockfile_manager_(instance_lockfile_manager),
       instance_manager_(instance_manager),
-      host_tool_target_manager_(host_tool_target_manager),
       command_sequence_executor_(this->request_handlers_) {
   request_handlers_.emplace_back(NewAcloudCommand(command_sequence_executor_));
   request_handlers_.emplace_back(NewAcloudMixSuperImageCommand());
   request_handlers_.emplace_back(NewAcloudTranslatorCommand(instance_manager_));
   request_handlers_.emplace_back(
       NewCvdCmdlistHandler(command_sequence_executor_));
-  request_handlers_.emplace_back(
-      NewCvdCreateCommandHandler(instance_manager_, host_tool_target_manager_,
-                                 command_sequence_executor_));
+  request_handlers_.emplace_back(NewCvdCreateCommandHandler(
+      instance_manager_, command_sequence_executor_));
   request_handlers_.emplace_back(
       NewCvdDisplayCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdEnvCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdFetchCommandHandler());
-  request_handlers_.emplace_back(
-      NewCvdFleetCommandHandler(instance_manager_, host_tool_target_manager_));
-  request_handlers_.emplace_back(
-      NewCvdClearCommandHandler(instance_manager_));
+  request_handlers_.emplace_back(NewCvdFleetCommandHandler(instance_manager_));
+  request_handlers_.emplace_back(NewCvdClearCommandHandler(instance_manager_));
   request_handlers_.emplace_back(
       NewCvdBugreportCommandHandler(instance_manager_));
-  request_handlers_.emplace_back(
-      NewCvdStopCommandHandler(instance_manager_, host_tool_target_manager_));
+  request_handlers_.emplace_back(NewCvdStopCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdHelpHandler(this->request_handlers_));
   request_handlers_.emplace_back(NewLintCommand());
   request_handlers_.emplace_back(
       NewLoadConfigsCommand(command_sequence_executor_, instance_manager_));
-  request_handlers_.emplace_back(NewCvdDevicePowerCommandHandler(
-      host_tool_target_manager_, instance_manager_));
+  request_handlers_.emplace_back(
+      NewCvdDevicePowerCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewRemoveCvdCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdResetCommandHandler(instance_manager_));
-  request_handlers_.emplace_back(NewCvdSnapshotCommandHandler(
-      instance_manager_, host_tool_target_manager_));
   request_handlers_.emplace_back(
-      NewCvdStartCommandHandler(instance_manager_, host_tool_target_manager_));
-  request_handlers_.emplace_back(
-      NewCvdStatusCommandHandler(instance_manager_, host_tool_target_manager_));
-  request_handlers_.emplace_back(
-      NewTryAcloudCommand(instance_manager));
+      NewCvdSnapshotCommandHandler(instance_manager_));
+  request_handlers_.emplace_back(NewCvdStartCommandHandler(instance_manager_));
+  request_handlers_.emplace_back(NewCvdStatusCommandHandler(instance_manager_));
+  request_handlers_.emplace_back(NewTryAcloudCommand(instance_manager));
   request_handlers_.emplace_back(NewCvdVersionHandler());
   request_handlers_.emplace_back(NewCvdNoopHandler());
 }

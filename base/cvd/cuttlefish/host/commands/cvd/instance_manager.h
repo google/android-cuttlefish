@@ -34,7 +34,6 @@
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_selector.h"
 #include "host/commands/cvd/selector/selector_common_parser.h"
-#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
 
@@ -49,7 +48,7 @@ class InstanceManager {
   template <typename T>
   using Set = selector::Set<T>;
 
-  InstanceManager(InstanceLockFileManager&, HostToolTargetManager&,
+  InstanceManager(InstanceLockFileManager&,
                   selector::InstanceDatabase& instance_db);
 
   // For cvd start
@@ -94,7 +93,6 @@ class InstanceManager {
   Result<std::string> StopBin(const std::string& host_android_out);
 
   InstanceLockFileManager& lock_manager_;
-  HostToolTargetManager& host_tool_target_manager_;
   selector::InstanceDatabase& instance_db_;
 };
 

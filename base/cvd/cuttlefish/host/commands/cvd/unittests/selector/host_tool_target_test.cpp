@@ -20,7 +20,6 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/result_matchers.h"
 #include "host/commands/cvd/server_command/host_tool_target.h"
-#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
 
@@ -33,38 +32,9 @@ TEST(HostToolTarget, KnownFlags) {
   auto host_tool_target = HostToolTarget::Create(android_host_out);
   EXPECT_THAT(host_tool_target, IsOk());
 
-  auto daemon_flag =
-      host_tool_target->GetFlagInfo(HostToolTarget::FlagInfoRequest{
-          .operation_ = "start",
-          .flag_name_ = "daemon",
-      });
+  auto daemon_flag = host_tool_target->GetFlagInfo("start", "daemon");
 
-  auto bad_flag = host_tool_target->GetFlagInfo(HostToolTarget::FlagInfoRequest{
-      .operation_ = "start",
-      .flag_name_ = "@never_exist@",
-  });
-
-  EXPECT_THAT(daemon_flag, IsOk());
-  ASSERT_EQ(daemon_flag->Name(), "daemon");
-  ASSERT_TRUE(daemon_flag->Type() == "string" || daemon_flag->Type() == "bool");
-  EXPECT_THAT(bad_flag, IsError());
-}
-
-TEST(HostToolManager, KnownFlags) {
-  std::string android_host_out = StringFromEnv("ANDROID_HOST_OUT", "");
-  if (android_host_out.empty()) {
-    GTEST_SKIP() << "Set ANDROID_HOST_OUT";
-  }
-  auto host_tool_manager = NewHostToolTargetManager();
-
-  auto daemon_flag =
-      host_tool_manager->ReadFlag({.artifacts_path = android_host_out,
-                                   .op = "start",
-                                   .flag_name = "daemon"});
-  auto bad_flag =
-      host_tool_manager->ReadFlag({.artifacts_path = android_host_out,
-                                   .op = "start",
-                                   .flag_name = "@never_exist@"});
+  auto bad_flag = host_tool_target->GetFlagInfo("start", "@never_exist@");
 
   EXPECT_THAT(daemon_flag, IsOk());
   ASSERT_EQ(daemon_flag->Name(), "daemon");
@@ -77,14 +47,13 @@ TEST(HostToolManager, KnownBins) {
   if (android_host_out.empty()) {
     GTEST_SKIP() << "Set ANDROID_HOST_OUT";
   }
-  auto host_tool_manager = NewHostToolTargetManager();
+  auto host_tool_target_res = HostToolTarget::Create(android_host_out);
+  EXPECT_THAT(host_tool_target_res, IsOk());
+  auto& host_tool_target = *host_tool_target_res;
 
-  auto start_bin = host_tool_manager->ExecBaseName(
-      {.artifacts_path = android_host_out, .op = "start"});
-  auto stop_bin = host_tool_manager->ExecBaseName(
-      {.artifacts_path = android_host_out, .op = "stop"});
-  auto bad_bin = host_tool_manager->ExecBaseName(
-      {.artifacts_path = android_host_out, .op = "bad"});
+  auto start_bin = host_tool_target.GetBinName("stat");
+  auto stop_bin = host_tool_target.GetBinName("stop");
+  auto bad_bin = host_tool_target.GetBinName("bad");
 
   EXPECT_THAT(start_bin, IsOk());
   EXPECT_THAT(stop_bin, IsOk());

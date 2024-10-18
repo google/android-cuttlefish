@@ -24,8 +24,7 @@
 namespace cuttlefish {
 
 std::unique_ptr<CvdServerHandler> NewCvdStopCommandHandler(
-    InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager);
+    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish
 

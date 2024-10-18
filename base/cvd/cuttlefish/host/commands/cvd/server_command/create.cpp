@@ -40,6 +40,7 @@
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/selector_constants.h"
+#include "host/commands/cvd/server_command/host_tool_target.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -228,10 +229,8 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
 class CvdCreateCommandHandler : public CvdServerHandler {
  public:
   CvdCreateCommandHandler(InstanceManager& instance_manager,
-                          HostToolTargetManager& host_tool_target_manager,
                           CommandSequenceExecutor& command_executor)
       : instance_manager_(instance_manager),
-        host_tool_target_manager_(host_tool_target_manager),
         command_executor_(command_executor) {}
 
   Result<bool> CanHandle(const CommandRequest& request) const override;
@@ -254,7 +253,6 @@ class CvdCreateCommandHandler : public CvdServerHandler {
   }
 
   InstanceManager& instance_manager_;
-  HostToolTargetManager& host_tool_target_manager_;
   CommandSequenceExecutor& command_executor_;
 };
 
@@ -378,10 +376,9 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   }
 
   // Validate the host artifacts path before proceeding
-  (void)CF_EXPECT(host_tool_target_manager_.ExecBaseName({
-                      .artifacts_path = flags.host_path,
-                      .op = "start",
-                  }),
+  HostToolTarget host_tool_target =
+      CF_EXPECT(HostToolTarget::Create(flags.host_path));
+  (void)CF_EXPECT(host_tool_target.GetBinName("start"),
                   "\nMaybe try `cvd fetch` or running `lunch "
                   "<target>` to enable starting a CF device?");
   // CreationAnalyzer needs these to be set in the environment
@@ -437,11 +434,9 @@ Result<std::string> CvdCreateCommandHandler::DetailedHelp(
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdCreateCommandHandler(
-    InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager,
-    CommandSequenceExecutor& executor) {
-  return std::unique_ptr<CvdServerHandler>(new CvdCreateCommandHandler(
-      instance_manager, host_tool_target_manager, executor));
+    InstanceManager& instance_manager, CommandSequenceExecutor& executor) {
+  return std::unique_ptr<CvdServerHandler>(
+      new CvdCreateCommandHandler(instance_manager, executor));
 }
 
 }  // namespace cuttlefish

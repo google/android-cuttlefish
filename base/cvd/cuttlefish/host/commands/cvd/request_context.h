@@ -19,11 +19,10 @@
 #include <vector>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/command_request.h"
-#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
@@ -31,8 +30,7 @@ namespace cuttlefish {
 class RequestContext {
  public:
   RequestContext(InstanceLockFileManager& instance_lockfile_manager,
-                 InstanceManager& instance_manager,
-                 HostToolTargetManager& host_tool_target_manager);
+                 InstanceManager& instance_manager);
 
   Result<CvdServerHandler*> Handler(const CommandRequest& request);
 
@@ -43,7 +41,6 @@ class RequestContext {
   InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
   InstanceLockFileManager lock_file_manager_;
-  HostToolTargetManager& host_tool_target_manager_;
   CommandSequenceExecutor command_sequence_executor_;
 };
 

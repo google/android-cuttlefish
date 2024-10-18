@@ -35,11 +35,9 @@ class HostToolTarget {
   // artifacts_path: ANDROID_HOST_OUT, or so
   static Result<HostToolTarget> Create(const std::string& artifacts_path);
 
-  bool IsDirty() const;
-  Result<FlagInfo> GetFlagInfo(const FlagInfoRequest& request) const;
-  bool HasField(const FlagInfoRequest& request) const {
-    return GetFlagInfo(request).ok();
-  }
+  Result<FlagInfo> GetFlagInfo(const std::string& operation,
+                               const std::string& flag_name) const;
+
   Result<std::string> GetBinName(const std::string& operation) const;
 
  private:

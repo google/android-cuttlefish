@@ -30,6 +30,7 @@
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
+#include "host/commands/cvd/server_command/host_tool_target.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/libs/config/config_constants.h"
 
@@ -268,10 +269,9 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
 
 Result<std::string> StatusFetcher::GetBin(
     const std::string& host_artifacts_path) const {
-  return CF_EXPECT(host_tool_target_manager_.ExecBaseName({
-      .artifacts_path = host_artifacts_path,
-      .op = "status",
-  }));
+  HostToolTarget host_tool_target =
+      CF_EXPECT(HostToolTarget::Create(host_artifacts_path));
+  return CF_EXPECT(host_tool_target.GetBinName("status"));
 }
 
 }  // namespace cuttlefish

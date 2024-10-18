@@ -25,9 +25,7 @@
 namespace cuttlefish {
 
 std::unique_ptr<CvdServerHandler> NewCvdCreateCommandHandler(
-    InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager,
-    CommandSequenceExecutor& executor);
+    InstanceManager& instance_manager, CommandSequenceExecutor& executor);
 
 }  // namespace cuttlefish
 

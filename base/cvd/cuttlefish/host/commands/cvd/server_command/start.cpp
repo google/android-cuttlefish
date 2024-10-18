@@ -44,6 +44,7 @@
 #include "host/commands/cvd/operator_client.h"
 #include "host/commands/cvd/reset_client_utils.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
+#include "host/commands/cvd/server_command/host_tool_target.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/status_fetcher.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
@@ -223,11 +224,9 @@ Result<std::unique_ptr<OperatorControlConn>> PreregisterGroup(
 
 class CvdStartCommandHandler : public CvdServerHandler {
  public:
-  CvdStartCommandHandler(InstanceManager& instance_manager,
-                         HostToolTargetManager& host_tool_target_manager)
+  CvdStartCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager),
-        host_tool_target_manager_(host_tool_target_manager),
-        status_fetcher_(instance_manager_, host_tool_target_manager_) {}
+        status_fetcher_(instance_manager_) {}
 
   Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
@@ -272,7 +271,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
                                    const CommandRequest& request);
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
-  HostToolTargetManager& host_tool_target_manager_;
   StatusFetcher status_fetcher_;
   static const std::array<std::string, 2> supported_commands_;
 };
@@ -365,12 +363,10 @@ Result<void> CvdStartCommandHandler::UpdateArgs(
   CF_EXPECT(UpdateInstanceArgs(args, group));
   CF_EXPECT(UpdateWebrtcDeviceIds(args, group));
   // for backward compatibility, older cvd host tools don't accept group_id
+  HostToolTarget host_tool_target =
+      CF_EXPECT(HostToolTarget::Create(group.HostArtifactsPath()));
   auto has_group_id_flag =
-      host_tool_target_manager_
-          .ReadFlag({.artifacts_path = group.HostArtifactsPath(),
-                     .op = "start",
-                     .flag_name = "group_id"})
-          .ok();
+      host_tool_target.GetFlagInfo("start", "group_id").ok();
   if (has_group_id_flag) {
     args.emplace_back("--group_id=" + group.GroupName());
   }
@@ -404,14 +400,12 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
              "ANDROID_HOST_OUT, \"{}\" is not a tool directory", bin_path);
   bin_path.append("/bin/").append(bin_file);
   CF_EXPECT(!group.HomeDir().empty());
-  ConstructCommandParam construct_cmd_param{
-      .bin_path = bin_path,
-      .home = group.HomeDir(),
-      .args = args,
-      .envs = envs,
-      .working_dir = CurrentDirectory(),
-      .command_name = bin_file
-  };
+  ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
+                                            .home = group.HomeDir(),
+                                            .args = args,
+                                            .envs = envs,
+                                            .working_dir = CurrentDirectory(),
+                                            .command_name = bin_file};
   Command non_help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   // Print everything to stderr, cvd needs to print JSON to stdout which
   // would be unparseable with the subcommand's output.
@@ -441,11 +435,9 @@ static void ShowLaunchCommand(const Command& command,
 
 Result<std::string> CvdStartCommandHandler::FindStartBin(
     const std::string& android_host_out) {
-  auto start_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
-      .artifacts_path = android_host_out,
-      .op = "start",
-  }));
-  return start_bin;
+  HostToolTarget host_tool_target =
+      CF_EXPECT(HostToolTarget::Create(android_host_out));
+  return host_tool_target.GetBinName("start");
 }
 
 static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
@@ -746,10 +738,9 @@ const std::array<std::string, 2> CvdStartCommandHandler::supported_commands_{
     "start", "launch_cvd"};
 
 std::unique_ptr<CvdServerHandler> NewCvdStartCommandHandler(
-    InstanceManager& instance_manager,
-    HostToolTargetManager& host_tool_target_manager) {
+    InstanceManager& instance_manager) {
   return std::unique_ptr<CvdServerHandler>(
-      new CvdStartCommandHandler(instance_manager, host_tool_target_manager));
+      new CvdStartCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish
