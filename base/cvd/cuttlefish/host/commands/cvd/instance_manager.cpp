@@ -24,7 +24,6 @@
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
-#include "json/json.h"
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
@@ -79,11 +78,6 @@ InstanceManager::InstanceManager(
     : lock_manager_(lock_manager),
       host_tool_target_manager_(host_tool_target_manager),
       instance_db_(instance_db) {}
-
-Result<void> InstanceManager::LoadFromJson(const Json::Value& db_json) {
-  CF_EXPECT(instance_db_.LoadFromJson(db_json));
-  return {};
-}
 
 Result<void> InstanceManager::SetAcloudTranslatorOptout(bool optout) {
   CF_EXPECT(instance_db_.SetAcloudTranslatorOptout(optout));
