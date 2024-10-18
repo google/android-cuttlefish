@@ -86,3 +86,8 @@ Registering the tag of loaded image as `latest` is available with below script.
 ```bash
 docker tag cuttlefish-orchestration:${PREBUILT_DOCKER_IMAGE_TAG} cuttlefish-orchestration:latest
 ```
+
+### Use docker image with Cloud Orchestrator
+
+Please refer to
+[here](https://github.com/google/cloud-android-orchestration/blob/main/docs/cloud_orchestrator.md).
