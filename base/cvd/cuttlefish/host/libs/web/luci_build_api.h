@@ -37,8 +37,7 @@ class LuciBuildApi {
   LuciBuildApi();
   LuciBuildApi(std::unique_ptr<HttpClient> http_client,
                std::unique_ptr<HttpClient> inner_http_client,
-               std::unique_ptr<CredentialSource> buildbucket_credential_source,
-               std::unique_ptr<CredentialSource> storage_credential_source);
+               CredentialSources& credential_sources);
 
   Result<std::optional<ChromeOsBuildArtifacts>> GetBuildArtifacts(
       const ChromeOsBuildString&);

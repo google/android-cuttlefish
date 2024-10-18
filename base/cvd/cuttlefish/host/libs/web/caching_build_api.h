@@ -26,14 +26,15 @@
 
 namespace cuttlefish {
 
-class CachingBuildApi : public BuildApi {
+template<class BaseBuildApi>
+class CachingBuildApi : public BaseBuildApi {
  public:
   CachingBuildApi() = delete;
   CachingBuildApi(CachingBuildApi&&) = delete;
   ~CachingBuildApi() override = default;
   CachingBuildApi(std::unique_ptr<HttpClient> http_client,
                   std::unique_ptr<HttpClient> inner_http_client,
-                  std::unique_ptr<CredentialSource> credential_source,
+                  CredentialSources& credential_sources,
                   std::string api_key, const std::chrono::seconds retry_period,
                   std::string api_base_url, std::string project_id,
                   const std::string cache_base_path);
@@ -55,7 +56,7 @@ class CachingBuildApi : public BuildApi {
 std::unique_ptr<BuildApi> CreateBuildApi(
     std::unique_ptr<HttpClient> http_client,
     std::unique_ptr<HttpClient> inner_http_client,
-    std::unique_ptr<CredentialSource> credential_source, std::string api_key,
+    CredentialSources& credential_sources, std::string api_key,
     const std::chrono::seconds retry_period, std::string api_base_url, std::string project_id,
     const bool enable_caching, const std::string cache_base_path);
 

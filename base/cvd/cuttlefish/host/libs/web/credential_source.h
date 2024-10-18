@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include "common/libs/utils/result.h"
 #include "host/libs/web/http_client/http_client.h"
@@ -28,6 +29,13 @@ class CredentialSource {
   virtual ~CredentialSource() = default;
   virtual Result<std::string> Credential() = 0;
 };
+
+enum class CredentialSourceId {
+    kAcloud,
+    kLuci,
+    kLuciStorage,
+};
+using CredentialSources = std::unordered_map<CredentialSourceId, std::unique_ptr<CredentialSource>>;
 
 Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
     HttpClient& http_client, const std::string& credential_source,
