@@ -65,7 +65,7 @@ jobs:
     - name: bazel version
       run: bazel version
     - name: Build docker image
-      run: bazel build --sandbox_writable_path=$HOME //docker:orchestration_image_tar
+      run: bazel build --sandbox_writable_path=$HOME //docker:orchestration_image_tar --action_env=PLATFORM=linux/amd64
     - name: Set filename of docker image
       run: mv bazel-bin/docker/orchestration-image.tar ${{ env.x86_64_image_path }}
     - name: Publish docker image
@@ -76,11 +76,14 @@ jobs:
   export-docker-image-arm64:
     runs-on: arm-ubuntu-arm-22.04-4core
     container:
-      image: arm64v8/ubuntu:22.04  # Specify an arm64 Docker image here
-      options: --security-opt=no-new-privileges  # Optional: Add additional Docker security options
+      image: arm64v8/ubuntu:22.04
+      options: --security-opt=no-new-privileges
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install sudo
+      run: |
+        apt-get update && apt-get install -y sudo
     - name: Get docker image name
       run: |
         short_sha=$(echo ${{ github.sha }} | cut -c1-8)
@@ -90,7 +93,7 @@ jobs:
     - name: bazel version
       run: bazel version
     - name: Build docker image
-      run: bazel build --sandbox_writable_path=$HOME //docker:orchestration_image_tar
+      run: bazel build --sandbox_writable_path=$HOME //docker:orchestration_image_tar --action_env=PLATFORM=linux/arm64
     - name: Set filename of docker image
       run: mv bazel-bin/docker/orchestration-image.tar ${{ env.arm64_image_path }}
     - name: Publish docker image
