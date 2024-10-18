@@ -14,10 +14,10 @@
 
 genrule(
     name = "orchestration_image_tar",
-    visibility = ["//visibility:public"],
     outs = ["orchestration-image.tar"],
     cmd = "$(location :orchestration_image_builder) -o $@",
     tools = [":orchestration_image_builder"],
+    visibility = ["//visibility:public"],
 )
 
 sh_binary(

@@ -20,6 +20,7 @@
 #include <sys/types.h>
 
 #include <initializer_list>
+#include <string>
 #include <string_view>
 
 #include <google/protobuf/map.h>
@@ -28,71 +29,87 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/selector/selector_common_parser.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 
 class CommandRequest {
  public:
-  CommandRequest() = default;
-
-  template <typename T>
-  CommandRequest& AddArguments(T&& args) & {
-    for (auto&& arg : args) {
-      args_.emplace_back(arg);
-    }
-    return *this;
-  }
-
-  template <typename T>
-  CommandRequest AddArguments(T&& args) && {
-    for (auto&& arg : args) {
-      args_.emplace_back(arg);
-    }
-    return *this;
-  }
-
-  CommandRequest& AddArguments(std::initializer_list<std::string_view>) &;
-  CommandRequest AddArguments(std::initializer_list<std::string_view>) &&;
-
   const cvd_common::Args& Args() const;
 
+  const cvd_common::Envs& Env() const;
+
+  const selector::SelectorOptions& Selectors() const;
+
+ private:
+  friend class CommandRequestBuilder;
+  CommandRequest(cvd_common::Args args, cvd_common::Envs env,
+                 selector::SelectorOptions cvd_args);
+
+  cvd_common::Args args_;
+  cvd_common::Envs env_;
+  selector::SelectorOptions selectors_;
+};
+
+class CommandRequestBuilder {
+ public:
+  CommandRequestBuilder() = default;
+
   template <typename T>
-  CommandRequest& AddSelectorArguments(T&& args) & {
+  CommandRequestBuilder& AddArguments(T&& args) & {
     for (auto&& arg : args) {
-      selector_args_.emplace_back(arg);
+      args_.emplace_back(arg);
     }
     return *this;
   }
 
   template <typename T>
-  CommandRequest AddSelectorArguments(T&& args) && {
+  CommandRequestBuilder AddArguments(T&& args) && {
     for (auto&& arg : args) {
-      selector_args_.emplace_back(arg);
+      args_.emplace_back(arg);
     }
     return *this;
   }
 
-  CommandRequest& AddSelectorArguments(
+  CommandRequestBuilder& AddArguments(
       std::initializer_list<std::string_view>) &;
-  CommandRequest AddSelectorArguments(
+  CommandRequestBuilder AddArguments(
       std::initializer_list<std::string_view>) &&;
 
-  const cvd_common::Args& SelectorArgs() const;
+  template <typename T>
+  CommandRequestBuilder& AddSelectorArguments(T&& args) & {
+    for (auto&& arg : args) {
+      selector_args_.emplace_back(arg);
+    }
+    return *this;
+  }
 
-  const cvd_common::Envs& Env() const;
-  cvd_common::Envs& Env();
+  template <typename T>
+  CommandRequestBuilder AddSelectorArguments(T&& args) && {
+    for (auto&& arg : args) {
+      selector_args_.emplace_back(arg);
+    }
+    return *this;
+  }
 
-  CommandRequest& SetEnv(cvd_common::Envs) &;
-  CommandRequest SetEnv(cvd_common::Envs) &&;
+  CommandRequestBuilder& AddSelectorArguments(
+      std::initializer_list<std::string_view>) &;
+  CommandRequestBuilder AddSelectorArguments(
+      std::initializer_list<std::string_view>) &&;
+
+  CommandRequestBuilder& SetEnv(cvd_common::Envs) &;
+  CommandRequestBuilder SetEnv(cvd_common::Envs) &&;
+
+  CommandRequestBuilder& AddEnvVar(std::string key, std::string val) &;
+  CommandRequestBuilder AddEnvVar(std::string key, std::string val) &&;
+
+  Result<CommandRequest> Build() &&;
 
  private:
   cvd_common::Args args_;
   cvd_common::Envs env_;
   cvd_common::Args selector_args_;
 };
-
-Result<void> SendResponse(const SharedFD& client,
-                          const cvd::Response& response);
 
 }  // namespace cuttlefish

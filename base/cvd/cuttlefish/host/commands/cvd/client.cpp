@@ -27,9 +27,6 @@
 #include "host/commands/cvd/common_utils.h"
 
 namespace cuttlefish {
-namespace {
-
-}  // end of namespace
 
 Result<void> CvdClient::ConnectToServer() {
   if (server_) {

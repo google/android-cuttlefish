@@ -18,99 +18,80 @@
 
 #include <unistd.h>
 
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/users.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/selector/selector_option_parser_utils.h"
 
 namespace cuttlefish {
 namespace selector {
 
-Result<SelectorCommonParser> SelectorCommonParser::Parse(
-    cvd_common::Args& selector_args, const cvd_common::Envs& envs) {
-  std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
-  SelectorCommonParser parser(system_wide_home, envs);
-  CF_EXPECT(parser.ParseOptions(selector_args));
-  return std::move(parser);
-}
-
-SelectorCommonParser::SelectorCommonParser(const std::string& client_user_home,
-                                           const cvd_common::Envs& envs)
-    : client_user_home_(client_user_home), envs_{envs} {}
-
-Result<bool> SelectorCommonParser::HomeOverridden() const {
-  return Contains(envs_, "HOME") && (client_user_home_ != envs_.at("HOME"));
-}
-
-std::optional<std::string> SelectorCommonParser::Home() const {
-  if (Contains(envs_, "HOME")) {
-    return envs_.at("HOME");
+std::vector<std::string> SelectorOptions::AsArgs() const {
+  std::vector<std::string> ret;
+  if (group_name) {
+    ret.push_back(
+        fmt::format("--{}={}", SelectorFlags::kGroupName, *group_name));
   }
-  return std::nullopt;
+  if (instance_names) {
+    ret.push_back(fmt::format("--{}={}", SelectorFlags::kInstanceName,
+                              android::base::Join(*instance_names, ",")));
+  }
+  return ret;
 }
 
-Result<void> SelectorCommonParser::ParseOptions(
-    cvd_common::Args& selector_args) {
+Result<std::string> HandleGroupName(const std::string& group_name) {
+  CF_EXPECTF(IsValidGroupName(group_name), "Invalid group name: {}",
+             group_name);
+  return group_name;
+}
+
+Result<std::vector<std::string>> HandleInstanceNames(
+    const std::string& per_instance_names) {
+  auto instance_names = android::base::Split(per_instance_names, ",");
+  std::unordered_set<std::string> duplication_check;
+  for (const auto& instance_name : instance_names) {
+    CF_EXPECT(IsValidInstanceName(instance_name));
+    // Check that provided non-empty instance names are unique. Empty names will
+    // be replaced later with defaults guaranteed to be unique.
+    CF_EXPECT(instance_name.empty() ||
+              !Contains(duplication_check, instance_name));
+    duplication_check.insert(instance_name);
+  }
+  return instance_names;
+}
+
+Result<SelectorOptions> HandleNameOpts(
+    const std::optional<std::string>& group_name,
+    const std::optional<std::string>& instance_names) {
+  SelectorOptions ret;
+  if (group_name) {
+    ret.group_name = CF_EXPECT(HandleGroupName(*group_name));
+  }
+
+  if (instance_names) {
+    ret.instance_names = CF_EXPECT(HandleInstanceNames(*instance_names));
+  }
+  return ret;
+}
+
+Result<SelectorOptions> ParseCommonSelectorArguments(
+    cvd_common::Args& args) {
   // Handling name-related options
   auto group_name_flag =
       CF_EXPECT(SelectorFlags::Get().GetFlag(SelectorFlags::kGroupName));
   auto instance_name_flag =
       CF_EXPECT(SelectorFlags::Get().GetFlag(SelectorFlags::kInstanceName));
   std::optional<std::string> group_name_opt =
-      CF_EXPECT(group_name_flag.FilterFlag<std::string>(selector_args));
+      CF_EXPECT(group_name_flag.FilterFlag<std::string>(args));
   std::optional<std::string> instance_name_opt =
-      CF_EXPECT(instance_name_flag.FilterFlag<std::string>(selector_args));
+      CF_EXPECT(instance_name_flag.FilterFlag<std::string>(args));
 
-  NameFlagsParam name_flags_param{.group_name = group_name_opt,
-                                  .instance_names = instance_name_opt};
-  auto parsed_name_flags = CF_EXPECT(HandleNameOpts(name_flags_param));
-  group_name_ = parsed_name_flags.group_name;
-  instance_names_ = parsed_name_flags.instance_names;
-  return {};
-}
-
-Result<SelectorCommonParser::ParsedNameFlags>
-SelectorCommonParser::HandleNameOpts(const NameFlagsParam& name_flags) const {
-  std::optional<std::string> group_name_output;
-  std::optional<std::vector<std::string>> instance_names_output;
-  if (name_flags.group_name) {
-    group_name_output = CF_EXPECT(HandleGroupName(name_flags.group_name));
-  }
-
-  if (name_flags.instance_names) {
-    instance_names_output =
-        CF_EXPECT(HandleInstanceNames(name_flags.instance_names));
-  }
-  return {ParsedNameFlags{.group_name = std::move(group_name_output),
-                          .instance_names = std::move(instance_names_output)}};
-}
-
-Result<std::vector<std::string>> SelectorCommonParser::HandleInstanceNames(
-    const std::optional<std::string>& per_instance_names) const {
-  CF_EXPECT(per_instance_names.has_value());
-
-  auto instance_names = android::base::Split(per_instance_names.value(), ",");
-  std::unordered_set<std::string> duplication_check;
-  for (const auto& instance_name : instance_names) {
-    CF_EXPECT(IsValidInstanceName(instance_name));
-    // Check that provided non-empty instance names are unique. Empty names will
-    // be replaced later with defaults guaranteed to be unique.
-    CF_EXPECT(instance_name.empty() || !Contains(duplication_check, instance_name));
-    duplication_check.insert(instance_name);
-  }
-  return instance_names;
-}
-
-Result<std::string> SelectorCommonParser::HandleGroupName(
-    const std::optional<std::string>& group_name) const {
-  CF_EXPECT(group_name && !group_name.value().empty());
-  CF_EXPECT(IsValidGroupName(group_name.value()), group_name.value()
-                                                      << " failed");
-  return {group_name.value()};
+  return CF_EXPECT(HandleNameOpts(group_name_opt, instance_name_opt));
 }
 
 }  // namespace selector

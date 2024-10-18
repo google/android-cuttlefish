@@ -24,12 +24,12 @@
 
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/shared_fd_flag.h"
+#include "host/commands/cvd/client.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/metrics/metrics_notice.h"
 #include "host/commands/cvd/selector/instance_database.h"
-#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
@@ -127,8 +127,8 @@ Result<void> ImportResourcesImpl(const ParseResult& param) {
     auto json_string = CF_EXPECT(ReadAllFromMemFd(memory_carryover_fd),
                                  "Failed to parse JSON from mem fd");
     auto json = CF_EXPECT(ParseJson(json_string));
-    CF_EXPECTF(instance_manager.LoadFromJson(json),
-               "Failed to load from: {}", json_string);
+    CF_EXPECTF(instance_manager.LoadFromJson(json), "Failed to load from: {}",
+               json_string);
   }
   if (param.acloud_translator_optout) {
     LOG(VERBOSE) << "Acloud translation optout: "
@@ -139,16 +139,39 @@ Result<void> ImportResourcesImpl(const ParseResult& param) {
   return {};
 }
 
+static Result<UnixMessageSocket> GetClient(const SharedFD& client) {
+  UnixMessageSocket result(client);
+  CF_EXPECT(result.EnableCredentials(true),
+            "Unable to enable UnixMessageSocket credentials.");
+  return result;
+}
+
+Result<void> SendResponse(const SharedFD& client,
+                          const cvd::Response& response) {
+  std::string serialized;
+  CF_EXPECT(response.SerializeToString(&serialized),
+            "Unable to serialize response proto.");
+  UnixSocketMessage message;
+  message.data = std::vector<char>(serialized.begin(), serialized.end());
+
+  UnixMessageSocket writer =
+      CF_EXPECT(GetClient(client), "Couldn't get client");
+  CF_EXPECT(writer.WriteMessage(message));
+  return {};
+}
+
 }  // namespace
 
 bool IsServerModeExpected(const std::string& exec_file) {
   return exec_file == kServerExecPath;
 }
 
-[[noreturn]] void ImportResourcesFromRunningServer(std::vector<std::string> args) {
+[[noreturn]] void ImportResourcesFromRunningServer(
+    std::vector<std::string> args) {
   auto parsed_res = ParseIfServer(args);
   if (!parsed_res.ok()) {
-    LOG(ERROR) << "Failed to parse arguments: " << parsed_res.error().FormatForEnv();
+    LOG(ERROR) << "Failed to parse arguments: "
+               << parsed_res.error().FormatForEnv();
     std::exit(1);
   }
   auto parsed = *parsed_res;
@@ -162,14 +185,15 @@ bool IsServerModeExpected(const std::string& exec_file) {
     *response.mutable_error_response() = import_res.error().FormatForEnv();
   }
   if (parsed.carryover_client_fd->IsOpen()) {
-    auto send_res = 
+    auto send_res =
         SendResponse(std::move(parsed.carryover_client_fd), response);
     if (!send_res.ok()) {
-      LOG(ERROR) << "Failed to send command response: " << send_res.error().FormatForEnv();
+      LOG(ERROR) << "Failed to send command response: "
+                 << send_res.error().FormatForEnv();
       std::exit(1);
     }
   }
-  std::exit(import_res.ok()? 0: 1);
+  std::exit(import_res.ok() ? 0 : 1);
 }
 
 }  // namespace cuttlefish

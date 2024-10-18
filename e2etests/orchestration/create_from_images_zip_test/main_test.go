@@ -20,8 +20,8 @@ import (
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
 
-	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
-	"github.com/google/cloud-android-orchestration/pkg/client"
+	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
+	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -33,7 +33,7 @@ func TestInstance(t *testing.T) {
 	t.Cleanup(func() {
 		common.Cleanup(ctx)
 	})
-	srv := client.NewHostOrchestratorService(ctx.ServiceURL)
+	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
@@ -77,7 +77,7 @@ func TestInstance(t *testing.T) {
 		EnvConfig: envConfig,
 	}
 
-	got, createErr := srv.CreateCVD(createReq /* buildAPICredentials */, "")
+	got, createErr := srv.CreateCVD(createReq, hoclient.BuildAPICredential{})
 
 	if err := common.DownloadHostBugReport(srv, group_name); err != nil {
 		t.Errorf("failed creating bugreport: %s\n", err)

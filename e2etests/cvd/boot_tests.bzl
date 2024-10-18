@@ -47,4 +47,3 @@ def cvd_command_boot_test(name, branch, target, cvd_command, credential_source =
             "no-sandbox",
         ],
     )
-

@@ -51,8 +51,6 @@ Driver Options:
   -help                  Print this message
   -verbosity=<LEVEL>     Adjust Cvd verbosity level. LEVEL is Android log
                          severity. (Required: cvd >= v1.3)
-  -acquire_file_lock     If the flag is given, the cvd server attempts to
-                         acquire the instance lock file lock. (default: true)
 
 Commands (cvd help <command> for more information):)";
 
@@ -111,7 +109,10 @@ class CvdHelpHandler : public CvdServerHandler {
 
  private:
   CommandRequest GetLookupRequest(const std::string& arg) {
-    return CommandRequest().AddArguments({"cvd", arg});
+    auto result = CommandRequestBuilder().AddArguments({"cvd", arg}).Build();
+    CHECK(result.ok()) << "Failed to build cvd command request"
+                       << result.error().FormatForEnv();
+    return result.value();
   }
 
   Result<std::string> TopLevelHelp() {

@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/frontline_parser.h"
 
+#include <memory>
 #include <vector>
 
 #include <android-base/file.h>
@@ -51,11 +52,11 @@ Result<cvd_common::Args> ExtractCvdArgs(cvd_common::Args& args) {
 Result<std::unique_ptr<FrontlineParser>> FrontlineParser::Parse(
     ParserParam param) {
   CF_EXPECT(!param.all_args.empty());
-  FrontlineParser* frontline_parser = new FrontlineParser(param);
+  std::unique_ptr<FrontlineParser> frontline_parser(new FrontlineParser(param));
   CF_EXPECT(frontline_parser != nullptr,
             "Memory allocation for FrontlineParser failed.");
   CF_EXPECT(frontline_parser->Separate());
-  return std::unique_ptr<FrontlineParser>(frontline_parser);
+  return frontline_parser;
 }
 
 FrontlineParser::FrontlineParser(const ParserParam& param)

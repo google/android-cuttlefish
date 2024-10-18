@@ -25,9 +25,9 @@
 #include <android-base/strings.h>
 #include <fmt/core.h>
 
+#include "common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
-#include "common/libs/utils/files.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -62,7 +62,7 @@ std::string HumanFriendlyStateName(cvd::InstanceState state) {
       continue;
     }
     // All characters but the first of each word should be lowercase
-    bool first = (i == 0 || name[i-1] == ' ');
+    bool first = (i == 0 || name[i - 1] == ' ');
     if (!first) {
       name[i] = std::tolower(static_cast<unsigned char>(name[i]));
     }
@@ -75,8 +75,8 @@ std::string HumanFriendlyStateName(cvd::InstanceState state) {
 // including some that cvd_internal_status normally returns but doesn't when the
 // instance is not running.
 void OverrideInstanceJson(const selector::LocalInstanceGroup& group,
-                        const cvd::Instance& instance,
-                        Json::Value& instance_json) {
+                          const cvd::Instance& instance,
+                          Json::Value& instance_json) {
   instance_json["instance_name"] = instance.name();
   instance_json["status"] = HumanFriendlyStateName(instance.state());
   instance_json["assembly_dir"] = group.AssemblyDir();
@@ -136,12 +136,13 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   // old cvd_internal_status expects CUTTLEFISH_INSTANCE=<k>
   envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.id());
 
-  ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
-                                            .home = home,
-                                            .args = cmd_args,
-                                            .envs = envs,
-                                            .working_dir = working_dir,
-                                            .command_name = bin
+  ConstructCommandParam construct_cmd_param{
+      .bin_path = bin_path,
+      .home = home,
+      .args = cmd_args,
+      .envs = envs,
+      .working_dir = working_dir,
+      .command_name = bin,
   };
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
@@ -198,23 +199,24 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
   auto [subcmd, cmd_args] = ParseInvocation(request);
 
   // find group
-  const auto selector_args = request.SelectorArgs();
   CvdFlag<bool> all_instances_flag("all_instances");
   auto all_instances_opt = CF_EXPECT(all_instances_flag.FilterFlag(cmd_args));
 
   auto instance_group =
-      CF_EXPECT(instance_manager_.SelectGroup(selector_args, env));
+      CF_EXPECT(instance_manager_.SelectGroup(request.Selectors(), env));
 
   std::vector<cvd::Instance> instances;
   auto instance_record_result =
-      instance_manager_.SelectInstance(selector_args, env);
+      instance_manager_.SelectInstance(request.Selectors(), env);
 
   bool status_the_group_flag = all_instances_opt && *all_instances_opt;
   if (instance_record_result.ok() && !status_the_group_flag) {
     instances.emplace_back(instance_record_result->first);
   } else {
     if (status_the_group_flag) {
-      instances = instance_group.Instances();
+      const auto& instance_list = instance_group.Instances();
+      instances = std::vector<cvd::Instance>(instance_list.begin(),
+                                             instance_list.end());
     } else {
       std::map<int, const cvd::Instance&> sorted_id_instance_map;
       for (const auto& instance : instance_group.Instances()) {
@@ -251,11 +253,12 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
   group_json["group_name"] = group.GroupName();
   group_json["start_time"] = selector::Format(group.StartTime());
 
-  CommandRequest group_request =
-      CommandRequest()
+  CommandRequest group_request = CF_EXPECT(
+      CommandRequestBuilder()
           .AddArguments({"cvd", "status", "--print", "--all_instances"})
           .SetEnv(original_request.Env())
-          .AddSelectorArguments({"--group_name", group.GroupName()});
+          .AddSelectorArguments({"--group_name", group.GroupName()})
+          .Build());
 
   auto [_, instances_json, group_response] =
       CF_EXPECT(FetchStatus(group_request));

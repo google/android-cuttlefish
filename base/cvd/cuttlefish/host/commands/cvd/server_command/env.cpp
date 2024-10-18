@@ -105,10 +105,8 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   Result<Command> NonHelpCommand(const CommandRequest& request,
                                  const cvd_common::Args& subcmd_args,
                                  const cvd_common::Envs& envs) {
-    const auto selector_args = request.SelectorArgs();
-
     auto [instance, group] =
-        CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs));
+        CF_EXPECT(instance_manager_.SelectInstance(request.Selectors(), envs));
     const auto& home = group.Proto().home_directory();
 
     const auto& android_host_out = group.Proto().host_artifacts_path();

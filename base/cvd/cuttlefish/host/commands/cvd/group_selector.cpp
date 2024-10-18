@@ -53,7 +53,8 @@ std::string SelectionMenu(
 
 Result<selector::LocalInstanceGroup> PromptUserForGroup(
     InstanceManager& instance_manager, const CommandRequest& request,
-    const cvd_common::Envs& envs, const cvd_common::Args& selector_args) {
+    const cvd_common::Envs& envs,
+    const selector::SelectorOptions& selector_options) {
   // show the menu and let the user choose
   std::vector<selector::LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups(selector::Queries{}));
@@ -85,7 +86,7 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
     InstanceManager::Queries extra_queries{
         {selector::kGroupNameField, chosen_group_name}};
     auto instance_group_result =
-        instance_manager.SelectGroup(selector_args, envs, extra_queries);
+        instance_manager.SelectGroup(selector_options, envs, extra_queries);
     if (instance_group_result.ok()) {
       return instance_group_result;
     }
@@ -102,9 +103,9 @@ Result<selector::LocalInstanceGroup> SelectGroup(
   auto has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
   CF_EXPECT(std::move(has_groups), "No instance groups available");
   const cvd_common::Envs& env = request.Env();
-  const auto& selector_args = request.SelectorArgs();
+  const auto& selector_options = request.Selectors();
   auto group_selection_result =
-      instance_manager.SelectGroup(selector_args, env);
+      instance_manager.SelectGroup(selector_options, env);
   if (group_selection_result.ok()) {
     return CF_EXPECT(std::move(group_selection_result));
   }
@@ -112,7 +113,7 @@ Result<selector::LocalInstanceGroup> SelectGroup(
             "Multiple groups found. Narrow the selection with selector "
             "arguments or run in an interactive terminal.");
   return CF_EXPECT(
-      PromptUserForGroup(instance_manager, request, env, selector_args));
+      PromptUserForGroup(instance_manager, request, env, selector_options));
 }
 
 }  // namespace cuttlefish

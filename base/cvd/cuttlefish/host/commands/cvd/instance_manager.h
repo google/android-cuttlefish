@@ -23,17 +23,17 @@
 #include <utility>
 #include <vector>
 
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
+#include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/creation_analyzer.h"
 #include "host/commands/cvd/selector/group_selector.h"
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_selector.h"
-#include "host/commands/cvd/command_request.h"
+#include "host/commands/cvd/selector/selector_common_parser.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
@@ -56,13 +56,13 @@ class InstanceManager {
   Result<selector::CreationAnalyzer> CreationAnalyzer(
       const selector::CreationAnalyzer::CreationAnalyzerParam& param);
 
-  Result<LocalInstanceGroup> SelectGroup(const cvd_common::Args& selector_args,
-                                         const cvd_common::Envs& envs,
-                                         const Queries& extra_queries = {});
+  Result<LocalInstanceGroup> SelectGroup(
+      const selector::SelectorOptions& selector_options,
+      const cvd_common::Envs& envs, const Queries& extra_queries = {});
 
   Result<std::pair<cvd::Instance, LocalInstanceGroup>> SelectInstance(
-      const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
-      const Queries& extra_queries = {});
+      const selector::SelectorOptions& selector_options,
+      const cvd_common::Envs& envs, const Queries& extra_queries = {});
 
   Result<bool> HasInstanceGroups();
   Result<LocalInstanceGroup> CreateInstanceGroup(

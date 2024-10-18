@@ -39,14 +39,12 @@ namespace selector {
  *  1. If the numeric instance id is duplicated
  *  2. If the group name is already taken
  *
- * How it works is, it parses the selector options that are common
- * across operations with SelectorCommonParser first. Following that,
- * StartSelectorParser parses start-specific selector options.
+ * Extends the common selector options with start specific ones.
  */
 class StartSelectorParser {
  public:
   static Result<StartSelectorParser> ConductSelectFlagsParser(
-      const cvd_common::Args& selector_args, const cvd_common::Args& cmd_args,
+      const SelectorOptions& selector_options, const cvd_common::Args& cmd_args,
       const cvd_common::Envs& envs);
   std::optional<std::string> GroupName() const;
   std::optional<std::vector<std::string>> PerInstanceNames() const;
@@ -55,14 +53,12 @@ class StartSelectorParser {
   }
   unsigned RequestedNumInstances() const { return requested_num_instances_; }
   bool IsMaybeDefaultGroup() const { return may_be_default_group_; }
-  bool MustAcquireFileLock() const { return must_acquire_file_lock_; }
 
  private:
   StartSelectorParser(const std::string& system_wide_user_home,
-                      const cvd_common::Args& selector_args,
+                      const SelectorOptions& selector_options,
                       const cvd_common::Args& cmd_args,
-                      const cvd_common::Envs& envs,
-                      SelectorCommonParser&& common_parser);
+                      const cvd_common::Envs& envs);
 
   Result<void> ParseOptions();
 
@@ -124,8 +120,7 @@ class StartSelectorParser {
   Result<unsigned> VerifyNumOfInstances(
       const VerifyNumOfInstancesParam& params,
       const unsigned default_n_instances = 1) const;
-  Result<bool> CalcMayBeDefaultGroup();
-  Result<bool> CalcAcquireFileLock();
+  bool CalcMayBeDefaultGroup();
 
   /**
    * The following are considered, and left empty if can't be figured out.
@@ -143,16 +138,12 @@ class StartSelectorParser {
   std::optional<std::vector<unsigned>> instance_ids_;
   unsigned requested_num_instances_;
   bool may_be_default_group_;
-  bool must_acquire_file_lock_;
-  std::optional<std::string> group_name_;
-  std::optional<std::vector<std::string>> per_instance_names_;
 
   // temporarily keeps the leftover of the input cmd_args
   const std::string client_user_home_;
-  cvd_common::Args selector_args_;
+  SelectorOptions selector_options_;
   cvd_common::Args cmd_args_;
   cvd_common::Envs envs_;
-  SelectorCommonParser common_parser_;
 };
 
 }  // namespace selector

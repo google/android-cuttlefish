@@ -69,6 +69,9 @@ Creates and starts a new cuttlefish instance group.
 --[no]start          Whether to start the instance group. True by default.
 --config_file=PATH   Path to an environment config file to be loaded.
 
+--acquire_file_lock  If the flag is given, the cvd server attempts to acquire
+                     the instance lock file lock. (default: true)
+
 All other arguments are passed verbatim to cvd start, for a list of supported
 arguments run `cvd start --help`.
 )""";
@@ -93,11 +96,32 @@ std::string DefaultProductPath(const cvd_common::Envs& envs) {
   return CurrentDirectory();
 }
 
+static constexpr char kAcquireFileLock[] = "acquire_file_lock";
+static constexpr char kAcquireFileLockEnv[] = "CVD_ACQUIRE_FILE_LOCK";
+
+static std::optional<bool> GetAcquireFileLockEnvValue(
+    const cvd_common::Envs& env) {
+  auto it = env.find(kAcquireFileLockEnv);
+  if (it == env.end()) {
+    return std::nullopt;
+  }
+  auto env_value = it->second;
+  if (env_value.empty()) {
+    return std::nullopt;
+  }
+  // Convert env_value to lower case.
+  std::transform(env_value.begin(), env_value.end(), env_value.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  const std::unordered_set<std::string> true_strings = {"y", "yes", "true"};
+  return Contains(true_strings, env_value);
+}
+
 struct CreateFlags {
   std::string host_path;
   std::string product_path;
   bool start;
   std::string config_file;
+  bool acquire_file_locks;
 };
 
 Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
@@ -107,36 +131,40 @@ Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
       .product_path = DefaultProductPath(envs),
       .start = true,
       .config_file = "",
+      .acquire_file_locks = GetAcquireFileLockEnvValue(envs).value_or(true),
   };
   std::vector<Flag> flags = {
       GflagsCompatFlag("host_path", flag_values.host_path),
       GflagsCompatFlag("product_path", flag_values.product_path),
       GflagsCompatFlag("start", flag_values.start),
       GflagsCompatFlag("config_file", flag_values.config_file),
+      GflagsCompatFlag(kAcquireFileLock, flag_values.acquire_file_locks),
   };
   CF_EXPECT(ConsumeFlags(flags, args));
   return flag_values;
 }
 
-CommandRequest CreateLoadCommand(const CommandRequest& request,
-                                   cvd_common::Args& args,
-                                   const std::string& config_file) {
-  return CommandRequest()
-      .SetEnv(request.Env())
-      .AddArguments({"cvd", "load"})
-      .AddArguments(args)
-      .AddArguments({config_file});
+Result<CommandRequest> CreateLoadCommand(const CommandRequest& request,
+                                         cvd_common::Args& args,
+                                         const std::string& config_file) {
+  return CF_EXPECT(CommandRequestBuilder()
+                       .SetEnv(request.Env())
+                       .AddArguments({"cvd", "load"})
+                       .AddArguments(args)
+                       .AddArguments({config_file})
+                       .Build());
 }
 
-CommandRequest CreateStartCommand(const CommandRequest& request,
-                                    const selector::LocalInstanceGroup& group,
-                                    const cvd_common::Args& args,
-                                    const cvd_common::Envs& envs) {
-  return CommandRequest()
-      .SetEnv(envs)
-      .AddArguments({"cvd", "start"})
-      .AddArguments(args)
-      .AddSelectorArguments({"--group_name", group.GroupName()});
+Result<CommandRequest> CreateStartCommand(
+    const CommandRequest& request, const selector::LocalInstanceGroup& group,
+    const cvd_common::Args& args, const cvd_common::Envs& envs) {
+  return CF_EXPECT(
+      CommandRequestBuilder()
+          .SetEnv(envs)
+          .AddArguments({"cvd", "start"})
+          .AddArguments(args)
+          .AddSelectorArguments({"--group_name", group.GroupName()})
+          .Build());
 }
 
 Result<cvd_common::Envs> GetEnvs(const CommandRequest& request) {
@@ -216,7 +244,7 @@ class CvdCreateCommandHandler : public CvdServerHandler {
  private:
   Result<selector::LocalInstanceGroup> GetOrCreateGroup(
       const cvd_common::Args& subcmd_args, const cvd_common::Envs& envs,
-      const CommandRequest& request);
+      const CommandRequest& request, bool acquire_file_locks);
   Result<void> CreateSymlinks(const selector::LocalInstanceGroup& group);
 
   static void MarkLockfiles(std::vector<InstanceLockFile>& lock_files,
@@ -248,15 +276,15 @@ Result<bool> CvdCreateCommandHandler::CanHandle(
 
 Result<selector::LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
     const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
-    const CommandRequest& request) {
+    const CommandRequest& request, bool acquire_file_locks) {
   using CreationAnalyzerParam =
       selector::CreationAnalyzer::CreationAnalyzerParam;
-  const auto& selector_args = request.SelectorArgs();
   CreationAnalyzerParam analyzer_param{
-      .cmd_args = subcmd_args, .envs = envs, .selector_args = selector_args};
+      .cmd_args = subcmd_args, .envs = envs, .selectors = request.Selectors()};
 
   auto analyzer = CF_EXPECT(instance_manager_.CreationAnalyzer(analyzer_param));
-  auto group_creation_info = CF_EXPECT(analyzer.ExtractGroupInfo());
+  auto group_creation_info =
+      CF_EXPECT(analyzer.ExtractGroupInfo(acquire_file_locks));
 
   std::vector<InstanceLockFile> lock_files;
   for (auto& instance : group_creation_info.instances) {
@@ -277,11 +305,12 @@ Result<selector::LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
         CF_EXPECT(instance_manager_.CreateInstanceGroup(group_creation_info)));
   } else {
     auto& group = groups[0];
-    CF_EXPECTF(group.Instances().size() == group_creation_info.instances.size(),
+    CF_EXPECTF((std::size_t)group.Instances().size() ==
+                   group_creation_info.instances.size(),
                "Mismatch in number of instances from analisys: {} vs {}",
                group.Instances().size(), group_creation_info.instances.size());
     // The instances don't have an id yet
-    for (size_t i = 0; i < group.Instances().size(); ++i) {
+    for (int i = 0; i < group.Instances().size(); ++i) {
       auto& instance = group.Instances()[i];
       auto& instance_info = group_creation_info.instances[i];
       instance.set_id(instance_info.instance_id_);
@@ -344,7 +373,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
 
   if (!flags.config_file.empty()) {
     auto subrequest =
-        CreateLoadCommand(request, subcmd_args, flags.config_file);
+        CF_EXPECT(CreateLoadCommand(request, subcmd_args, flags.config_file));
     return CF_EXPECT(command_executor_.ExecuteOne(subrequest, std::cerr));
   }
 
@@ -358,7 +387,8 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   // CreationAnalyzer needs these to be set in the environment
   envs[kAndroidHostOut] = flags.host_path;
   envs[kAndroidProductOut] = flags.product_path;
-  auto group = CF_EXPECT(GetOrCreateGroup(subcmd_args, envs, request));
+  auto group = CF_EXPECT(
+      GetOrCreateGroup(subcmd_args, envs, request, flags.acquire_file_locks));
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   group.SetStartTime(selector::CvdServerClock::now());
@@ -368,14 +398,14 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   response.mutable_status()->set_code(cvd::Status::OK);
 
   if (flags.start) {
-    auto start_cmd = CreateStartCommand(request, group, subcmd_args, envs);
-    response =
-        CF_EXPECT(command_executor_.ExecuteOne(start_cmd, std::cerr));
+    auto start_cmd =
+        CF_EXPECT(CreateStartCommand(request, group, subcmd_args, envs));
+    response = CF_EXPECT(command_executor_.ExecuteOne(start_cmd, std::cerr));
     // For backward compatibility, we add extra symlink in system wide home
     // when HOME is NOT overridden and selector flags are NOT given.
     auto is_default_group =
         StringFromEnv("HOME", "") == CF_EXPECT(SystemWideUserHome()) &&
-        request.SelectorArgs().empty();
+        !request.Selectors().HasOptions();
 
     if (is_default_group) {
       auto symlink_res = CreateSymlinks(group);

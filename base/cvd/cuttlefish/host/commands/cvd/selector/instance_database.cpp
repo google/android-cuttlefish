@@ -135,11 +135,6 @@ Result<void> InstanceDatabase::UpdateInstanceGroup(
             continue;
           }
           group_proto = group.Proto();
-          // Instance protos may have been updated too
-          group_proto.clear_instances();
-          for (const auto& instance : group.Instances()) {
-            *group_proto.add_instances() = instance;
-          }
           return {};
         }
         return CF_ERRF("Group not found (name = {})", group.GroupName());

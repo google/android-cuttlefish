@@ -17,75 +17,75 @@
 #include "host/commands/cvd/command_request.h"
 
 #include <string>
+#include <vector>
 
-#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/command_request.h"
+#include "host/commands/cvd/selector/selector_common_parser.h"
 
 namespace cuttlefish {
 
-static Result<UnixMessageSocket> GetClient(const SharedFD& client) {
-  UnixMessageSocket result(client);
-  CF_EXPECT(result.EnableCredentials(true),
-            "Unable to enable UnixMessageSocket credentials.");
-  return result;
-}
-
-Result<void> SendResponse(const SharedFD& client,
-                          const cvd::Response& response) {
-  std::string serialized;
-  CF_EXPECT(response.SerializeToString(&serialized),
-            "Unable to serialize response proto.");
-  UnixSocketMessage message;
-  message.data = std::vector<char>(serialized.begin(), serialized.end());
-
-  UnixMessageSocket writer =
-      CF_EXPECT(GetClient(client), "Couldn't get client");
-  CF_EXPECT(writer.WriteMessage(message));
-  return {};
-}
+CommandRequest::CommandRequest(cvd_common::Args args, cvd_common::Envs env,
+                               selector::SelectorOptions selectors)
+    : args_(std::move(args)),
+      env_(std::move(env)),
+      selectors_(std::move(selectors)) {}
 
 const cvd_common::Args& CommandRequest::Args() const { return args_; }
 
-CommandRequest& CommandRequest::AddArguments(
-    std::initializer_list<std::string_view> args) & {
-  return AddArguments(std::vector<std::string_view>(args));
-}
-
-CommandRequest CommandRequest::AddArguments(
-    std::initializer_list<std::string_view> args) && {
-  return AddArguments(std::vector<std::string_view>(args));
-}
-
-const cvd_common::Args& CommandRequest::SelectorArgs() const {
-  return selector_args_;
-}
-
-CommandRequest& CommandRequest::AddSelectorArguments(
-    std::initializer_list<std::string_view> args) & {
-  return AddSelectorArguments(std::vector<std::string_view>(args));
-}
-
-CommandRequest CommandRequest::AddSelectorArguments(
-    std::initializer_list<std::string_view> args) && {
-  return AddSelectorArguments(std::vector<std::string_view>(args));
+const selector::SelectorOptions& CommandRequest::Selectors() const {
+  return selectors_;
 }
 
 const cvd_common::Envs& CommandRequest::Env() const { return env_; }
 
-cvd_common::Envs& CommandRequest::Env() { return env_; }
+CommandRequestBuilder& CommandRequestBuilder::AddArguments(
+    std::initializer_list<std::string_view> args) & {
+  return AddArguments(std::vector<std::string_view>(args));
+}
 
-CommandRequest& CommandRequest::SetEnv(cvd_common::Envs env) & {
+CommandRequestBuilder CommandRequestBuilder::AddArguments(
+    std::initializer_list<std::string_view> args) && {
+  return AddArguments(std::vector<std::string_view>(args));
+}
+
+CommandRequestBuilder& CommandRequestBuilder::AddSelectorArguments(
+    std::initializer_list<std::string_view> args) & {
+  return AddSelectorArguments(std::vector<std::string_view>(args));
+}
+
+CommandRequestBuilder CommandRequestBuilder::AddSelectorArguments(
+    std::initializer_list<std::string_view> args) && {
+  return AddSelectorArguments(std::vector<std::string_view>(args));
+}
+
+CommandRequestBuilder& CommandRequestBuilder::SetEnv(cvd_common::Envs env) & {
   env_ = std::move(env);
   return *this;
 }
 
-CommandRequest CommandRequest::SetEnv(cvd_common::Envs env) && {
+CommandRequestBuilder CommandRequestBuilder::SetEnv(cvd_common::Envs env) && {
   env_ = std::move(env);
   return *this;
+}
+
+CommandRequestBuilder& CommandRequestBuilder::AddEnvVar(std::string key,
+                                                        std::string val) & {
+  env_[key] = val;
+  return *this;
+}
+
+CommandRequestBuilder CommandRequestBuilder::AddEnvVar(std::string key,
+                                                       std::string val) && {
+  env_[key] = val;
+  return *this;
+}
+
+Result<CommandRequest> CommandRequestBuilder::Build() && {
+  return CommandRequest(
+      std::move(args_), std::move(env_),
+      CF_EXPECT(selector::ParseCommonSelectorArguments(selector_args_),
+                "Failed to parse selector arguments"));
 }
 
 }  // namespace cuttlefish

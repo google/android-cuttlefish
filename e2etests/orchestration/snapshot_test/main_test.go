@@ -24,8 +24,8 @@ import (
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
 
-	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
-	"github.com/google/cloud-android-orchestration/pkg/client"
+	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
+	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -41,7 +41,7 @@ func TestSnapshot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv := client.NewHostOrchestratorService(ctx.ServiceURL)
+	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
 	uploadDir, err := uploadArtifacts(srv)
 	if err != nil {
 		t.Fatal(err)
@@ -109,7 +109,7 @@ func TestSnapshot(t *testing.T) {
 	}
 }
 
-func uploadArtifacts(srv client.HostOrchestratorService) (string, error) {
+func uploadArtifacts(srv hoclient.HostOrchestratorService) (string, error) {
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		return "", err
@@ -123,7 +123,7 @@ func uploadArtifacts(srv client.HostOrchestratorService) (string, error) {
 	return uploadDir, nil
 }
 
-func createDevice(srv client.HostOrchestratorService, group_name, artifactsDir string) (*hoapi.CVD, error) {
+func createDevice(srv hoclient.HostOrchestratorService, group_name, artifactsDir string) (*hoapi.CVD, error) {
 	config := `
   {
     "common": {
@@ -152,7 +152,7 @@ func createDevice(srv client.HostOrchestratorService, group_name, artifactsDir s
 		return nil, err
 	}
 	createReq := &hoapi.CreateCVDRequest{EnvConfig: envConfig}
-	res, createErr := srv.CreateCVD(createReq /* buildAPICredentials */, "")
+	res, createErr := srv.CreateCVD(createReq, hoclient.BuildAPICredential{})
 	if createErr != nil {
 		if err := common.DownloadHostBugReport(srv, group_name); err != nil {
 			log.Printf("error downloading cvd bugreport: %v", err)
@@ -175,7 +175,7 @@ type StartCVDRequest struct {
 
 // TODO(b/370550070) Remove once this method is added to the client implementation.
 func createSnapshot(srvURL, group, name string) (*CreateSnapshotResponse, error) {
-	helper := client.HTTPHelper{
+	helper := hoclient.HTTPHelper{
 		Client:       http.DefaultClient,
 		RootEndpoint: srvURL,
 	}
@@ -185,7 +185,7 @@ func createSnapshot(srvURL, group, name string) (*CreateSnapshotResponse, error)
 	if err := rb.JSONResDo(op); err != nil {
 		return nil, err
 	}
-	srv := client.NewHostOrchestratorService(srvURL)
+	srv := hoclient.NewHostOrchestratorService(srvURL)
 	res := &CreateSnapshotResponse{}
 	if err := srv.WaitForOperation(op.Name, res); err != nil {
 		return nil, err
@@ -207,7 +207,7 @@ func startDevice(srvURL, group, name, snapshotID string) error {
 }
 
 func doRequest(srvURL, group, name, oper string, body any) error {
-	helper := client.HTTPHelper{
+	helper := hoclient.HTTPHelper{
 		Client:       http.DefaultClient,
 		RootEndpoint: srvURL,
 	}
@@ -217,7 +217,7 @@ func doRequest(srvURL, group, name, oper string, body any) error {
 	if err := rb.JSONResDo(op); err != nil {
 		return err
 	}
-	srv := client.NewHostOrchestratorService(srvURL)
+	srv := hoclient.NewHostOrchestratorService(srvURL)
 	res := &hoapi.EmptyResponse{}
 	if err := srv.WaitForOperation(op.Name, &res); err != nil {
 		return err
@@ -225,7 +225,7 @@ func doRequest(srvURL, group, name, oper string, body any) error {
 	return nil
 }
 
-func getCVD(srv client.HostOrchestratorService) (*hoapi.CVD, error) {
+func getCVD(srv hoclient.HostOrchestratorService) (*hoapi.CVD, error) {
 	cvds, err := srv.ListCVDs()
 	if err != nil {
 		return nil, err

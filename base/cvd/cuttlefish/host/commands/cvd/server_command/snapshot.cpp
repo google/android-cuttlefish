@@ -113,11 +113,9 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
                                   const std::string& subcmd,
                                   cvd_common::Args& subcmd_args,
                                   cvd_common::Envs envs) {
-    const auto selector_args = request.SelectorArgs();
-
     // create a string that is comma-separated instance IDs
     auto instance_group =
-        CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs));
+        CF_EXPECT(instance_manager_.SelectGroup(request.Selectors(), envs));
 
     const auto& home = instance_group.HomeDir();
     const auto& android_host_out = instance_group.HostArtifactsPath();
@@ -134,8 +132,8 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
     envs[kAndroidSoongHostOut] = android_host_out;
 
     std::cerr << "HOME=" << home << " " << kAndroidHostOut << "="
-                  << android_host_out << " " << kAndroidSoongHostOut << "="
-                  << android_host_out << " " << cvd_snapshot_bin_path << " ";
+              << android_host_out << " " << kAndroidSoongHostOut << "="
+              << android_host_out << " " << cvd_snapshot_bin_path << " ";
     for (const auto& arg : cvd_snapshot_args) {
       std::cerr << arg << " ";
     }
@@ -146,7 +144,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
         .args = cvd_snapshot_args,
         .envs = envs,
         .working_dir = CurrentDirectory(),
-        .command_name = android::base::Basename(cvd_snapshot_bin_path)
+        .command_name = android::base::Basename(cvd_snapshot_bin_path),
     };
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
     return command;

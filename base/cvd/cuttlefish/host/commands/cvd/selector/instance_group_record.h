@@ -51,8 +51,12 @@ class LocalInstanceGroup {
   void SetProductOutPath(const std::string& product_out_path);
   TimeStamp StartTime() const;
   void SetStartTime(TimeStamp time);
-  const std::vector<cvd::Instance>& Instances() const { return instances_; }
-  std::vector<cvd::Instance>& Instances() { return instances_; }
+  const google::protobuf::RepeatedPtrField<cvd::Instance>& Instances() const {
+    return group_proto_.instances();
+  };
+  google::protobuf::RepeatedPtrField<cvd::Instance>& Instances() {
+    return *group_proto_.mutable_instances();
+  };
   bool HasActiveInstances() const;
   const cvd::InstanceGroup& Proto() const { return group_proto_; }
   void SetAllStates(cvd::InstanceState state);
@@ -72,11 +76,9 @@ class LocalInstanceGroup {
       const std::string& instance_name) const;
 
  private:
-  LocalInstanceGroup(const cvd::InstanceGroup& group_proto,
-                     const std::vector<cvd::Instance>& instances);
+  LocalInstanceGroup(const cvd::InstanceGroup& group_proto);
 
   cvd::InstanceGroup group_proto_;
-  std::vector<cvd::Instance> instances_;
 };
 
 int AdbPort(const cvd::Instance& instance);
