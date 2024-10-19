@@ -269,9 +269,7 @@ Result<Json::Value> StatusFetcher::FetchGroupStatus(
 
 Result<std::string> StatusFetcher::GetBin(
     const std::string& host_artifacts_path) const {
-  HostToolTarget host_tool_target =
-      CF_EXPECT(HostToolTarget::Create(host_artifacts_path));
-  return CF_EXPECT(host_tool_target.GetBinName("status"));
+  return CF_EXPECT(HostToolTarget(host_artifacts_path).GetBinName("status"));
 }
 
 }  // namespace cuttlefish

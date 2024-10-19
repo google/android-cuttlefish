@@ -25,7 +25,6 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -53,90 +52,62 @@ const std::map<std::string, std::vector<std::string>>& OpToBinsMap() {
   return map;
 }
 
-}  // namespace
+Result<std::vector<FlagInfoPtr>> GetSupportedFlags(
+    const std::string& artifacts_path, const std::string bin_name) {
+  auto bin_path = fmt::format("{}/{}", artifacts_path, bin_name);
+  Command command(bin_path);
+  command.AddParameter("--helpxml");
+  // b/276497044
+  command.UnsetFromEnvironment(kAndroidHostOut);
+  command.AddEnvironmentVariable(kAndroidHostOut, artifacts_path);
+  command.UnsetFromEnvironment(kAndroidSoongHostOut);
+  command.AddEnvironmentVariable(kAndroidSoongHostOut, artifacts_path);
 
-Result<HostToolTarget> HostToolTarget::Create(
-    const std::string& artifacts_path) {
-  std::string bin_dir_path = ConcatToString(artifacts_path, "/bin");
-  std::unordered_map<std::string, OperationImplementation> op_to_impl_map;
-  for (const auto& [op, candidates] : OpToBinsMap()) {
-    for (const auto& bin_name : candidates) {
-      const auto bin_path = ConcatToString(bin_dir_path, "/", bin_name);
-      if (FileExists(bin_path)) {
-        op_to_impl_map[op] = OperationImplementation{.bin_name_ = bin_name};
-        break;
-      }
-    }
-  }
-
-  for (auto& [op, op_impl] : op_to_impl_map) {
-    const std::string bin_path =
-        ConcatToString(bin_dir_path, "/", op_impl.bin_name_);
-    Command command(bin_path);
-    command.AddParameter("--helpxml");
-    // b/276497044
-    command.UnsetFromEnvironment(kAndroidHostOut);
-    command.AddEnvironmentVariable(kAndroidHostOut, artifacts_path);
-    command.UnsetFromEnvironment(kAndroidSoongHostOut);
-    command.AddEnvironmentVariable(kAndroidSoongHostOut, artifacts_path);
-
-    std::string xml_str;
-    std::string err_out;
-    RunWithManagedStdio(std::move(command), nullptr, std::addressof(xml_str),
-                        std::addressof(err_out));
-    auto flags_opt = CollectFlagsFromHelpxml(xml_str);
-    if (!flags_opt) {
-      LOG(ERROR) << bin_path << " --helpxml failed.";
-      LOG(ERROR) << err_out;
-      continue;
-    }
-    auto flags = std::move(*flags_opt);
-    for (auto& flag : flags) {
-      op_impl.supported_flags_[flag->Name()] = std::move(flag);
-    }
-  }
-
-  struct stat for_dir_time_stamp;
-  time_t dir_time_stamp = 0;
-  // we get dir time stamp, as the runtime libraries might be updated
-  if (::stat(bin_dir_path.data(), &for_dir_time_stamp) == 0) {
-    // if stat failed, use the smallest possible value, which is 0
-    // in that way, the HostTool entry will be always updated on read request.
-    dir_time_stamp = for_dir_time_stamp.st_mtime;
-  }
-  return HostToolTarget(artifacts_path, dir_time_stamp,
-                        std::move(op_to_impl_map));
+  std::string xml_str;
+  std::string err_out;
+  RunWithManagedStdio(std::move(command), nullptr, std::addressof(xml_str),
+                      std::addressof(err_out));
+  auto flags_opt = CollectFlagsFromHelpxml(xml_str);
+  CF_EXPECTF(flags_opt.has_value(), " --helpxml failed: {}", err_out);
+  return std::move(*flags_opt);
 }
 
-HostToolTarget::HostToolTarget(
-    const std::string& artifacts_path, const time_t dir_time_stamp,
-    std::unordered_map<std::string, OperationImplementation>&& op_to_impl_map)
-    : artifacts_path_(artifacts_path),
-      dir_time_stamp_(dir_time_stamp),
-      op_to_impl_map_(std::move(op_to_impl_map)) {}
+}  // namespace
+
+HostToolTarget::HostToolTarget(const std::string& artifacts_path)
+    : artifacts_path_(artifacts_path) {}
 
 Result<FlagInfo> HostToolTarget::GetFlagInfo(
     const std::string& operation, const std::string& flag_name) const {
-  CF_EXPECT(Contains(op_to_impl_map_, operation),
-            "Operation \"" << operation << "\" is not supported.");
-  auto& supported_flags = op_to_impl_map_.at(operation).supported_flags_;
-  CF_EXPECT(Contains(supported_flags, flag_name));
-  const auto& flag_uniq_ptr = supported_flags.at(flag_name);
-  FlagInfo copied(*flag_uniq_ptr);
-  return copied;
+  std::string bin_name = CF_EXPECTF(GetBinName(operation),
+                                    "Operation '{}' not supported", operation);
+  std::vector<FlagInfoPtr> flags = CF_EXPECTF(
+      GetSupportedFlags(artifacts_path_, bin_name),
+      "Failed to obtain supported flags for the '{}' tool", bin_name);
+  for (auto& flag : flags) {
+    if (flag->Name() == flag_name) {
+      return *flag.release();
+    }
+  }
+  return CF_ERRF("Flag '{}' not supported by the '{}' tool", flag_name,
+                 bin_name);
 }
 
 Result<std::string> HostToolTarget::GetBinName(
     const std::string& operation) const {
-  auto binary_find = OpToBinsMap().find(operation);
-  auto binaries = binary_find != OpToBinsMap().end()
-                      ? android::base::Join(binary_find->second, ", ")
-                      : "";
-  CF_EXPECTF(Contains(op_to_impl_map_, operation),
-             "Operation \"{}\" is not supported by the host tool target object "
-             "at \"{}\".  Looked for \"{}\" binaries in \"{}/bin/\"",
-             operation, artifacts_path_, binaries, artifacts_path_);
-  return op_to_impl_map_.at(operation).bin_name_;
+  auto operation_find = OpToBinsMap().find(operation);
+  CF_EXPECTF(operation_find != OpToBinsMap().end(),
+             "Operation '{}' not supported", operation);
+  auto& candidates = operation_find->second;
+  for (const auto& bin_name : candidates) {
+    const auto bin_path = fmt::format("{}/bin/{}", artifacts_path_, bin_name);
+    if (FileExists(bin_path)) {
+      return bin_name;
+    }
+  }
+  return CF_ERRF(
+      "No suitable binary found for operation '{}' in '{}'. Looked for '{}'.",
+      operation, artifacts_path_, android::base::Join(candidates, ", "));
 }
 
 }  // namespace cuttlefish

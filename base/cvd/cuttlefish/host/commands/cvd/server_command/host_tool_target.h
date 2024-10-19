@@ -19,7 +19,6 @@
 #include <sys/types.h>
 
 #include <string>
-#include <unordered_map>
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/server_command/flags_collector.h"
@@ -28,12 +27,8 @@ namespace cuttlefish {
 
 class HostToolTarget {
  public:
-  struct FlagInfoRequest {
-    std::string operation_;
-    std::string flag_name_;
-  };
   // artifacts_path: ANDROID_HOST_OUT, or so
-  static Result<HostToolTarget> Create(const std::string& artifacts_path);
+  HostToolTarget(const std::string& artifacts_path);
 
   Result<FlagInfo> GetFlagInfo(const std::string& operation,
                                const std::string& flag_name) const;
@@ -41,21 +36,7 @@ class HostToolTarget {
   Result<std::string> GetBinName(const std::string& operation) const;
 
  private:
-  using SupportedFlagMap = std::unordered_map<std::string, FlagInfoPtr>;
-  struct OperationImplementation {
-    std::string bin_name_;
-    SupportedFlagMap supported_flags_;
-  };
-  HostToolTarget(const std::string& artifacts_path, const time_t dir_time_stamp,
-                 std::unordered_map<std::string, OperationImplementation>&&
-                     op_to_impl_map);
-
-  // time stamp on creation
   const std::string artifacts_path_;
-  const time_t dir_time_stamp_;
-  // map from "start", "stop", etc, to "cvd_internal_start", "stop_cvd", etc
-  // with the supported flags if those implementation offers --helpxml.
-  std::unordered_map<std::string, OperationImplementation> op_to_impl_map_;
 };
 
 }  // namespace cuttlefish
