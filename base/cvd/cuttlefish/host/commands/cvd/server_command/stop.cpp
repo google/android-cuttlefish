@@ -176,7 +176,7 @@ CvdStopCommandHandler::CvdHelpBinPath(const std::string& subcmd,
 
 Result<std::string> CvdStopCommandHandler::GetBin(
     const std::string& host_artifacts_path) const {
-  return CF_EXPECT(HostToolTarget(host_artifacts_path).GetBinName("stop"));
+  return CF_EXPECT(HostToolTarget(host_artifacts_path).GetStopBinName());
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdStopCommandHandler(

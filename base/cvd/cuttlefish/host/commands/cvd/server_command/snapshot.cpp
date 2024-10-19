@@ -117,8 +117,8 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
 
     const auto& home = instance_group.HomeDir();
     const auto& android_host_out = instance_group.HostArtifactsPath();
-    auto cvd_snapshot_bin_path = android_host_out + "/bin/" +
-                                 CF_EXPECT(GetBin(android_host_out, subcmd));
+    auto cvd_snapshot_bin_path =
+        android_host_out + "/bin/" + CF_EXPECT(GetBin(android_host_out));
     const std::string& snapshot_util_cmd = subcmd;
     cvd_common::Args cvd_snapshot_args{"--subcmd=" + snapshot_util_cmd};
     cvd_snapshot_args.insert(cvd_snapshot_args.end(), subcmd_args.begin(),
@@ -148,9 +148,8 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
     return command;
   }
 
-  Result<std::string> GetBin(const std::string& host_artifacts_path,
-                             const std::string& op) const {
-    return CF_EXPECT(HostToolTarget(host_artifacts_path).GetBinName(op));
+  Result<std::string> GetBin(const std::string& host_artifacts_path) const {
+    return CF_EXPECT(HostToolTarget(host_artifacts_path).GetSnapshotBinName());
   }
 
   InstanceManager& instance_manager_;

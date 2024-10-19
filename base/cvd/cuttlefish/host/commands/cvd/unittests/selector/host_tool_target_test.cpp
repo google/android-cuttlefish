@@ -30,8 +30,9 @@ TEST(HostToolTarget, KnownFlags) {
   }
 
   HostToolTarget host_tool_target(android_host_out);
-
-  auto daemon_flag = host_tool_target.GetFlagInfo("start", "daemon");
+  auto start_bin_name = host_tool_target.GetStartBinName();
+  ASSERT_THAT(start_bin_name, IsOk());
+  auto daemon_flag = host_tool_target.GetFlagInfo(*start_bin_name, "daemon");
 
   auto bad_flag = host_tool_target.GetFlagInfo("start", "@never_exist@");
 
@@ -48,13 +49,11 @@ TEST(HostToolManager, KnownBins) {
   }
   HostToolTarget host_tool_target(android_host_out);
 
-  auto start_bin = host_tool_target.GetBinName("stat");
-  auto stop_bin = host_tool_target.GetBinName("stop");
-  auto bad_bin = host_tool_target.GetBinName("bad");
+  auto start_bin = host_tool_target.GetStartBinName();
+  auto stop_bin = host_tool_target.GetStopBinName();
 
   EXPECT_THAT(start_bin, IsOk());
   EXPECT_THAT(stop_bin, IsOk());
-  EXPECT_THAT(bad_bin, IsError());
   ASSERT_TRUE(*start_bin == "cvd_internal_start" || *start_bin == "launch_cvd")
       << "start_bin was " << *start_bin;
   ASSERT_TRUE(*stop_bin == "cvd_internal_stop" || *stop_bin == "stop_cvd")

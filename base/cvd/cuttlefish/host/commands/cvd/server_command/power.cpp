@@ -113,15 +113,15 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
  private:
   Result<std::string> RestartDeviceBin(
       const std::string& android_host_out) const {
-    return CF_EXPECT(HostToolTarget(android_host_out).GetBinName("restart"));
+    return CF_EXPECT(HostToolTarget(android_host_out).GetRestartBinName());
   }
 
   Result<std::string> PowerwashBin(const std::string& android_host_out) const {
-    return CF_EXPECT(HostToolTarget(android_host_out).GetBinName("powerwash"));
+    return CF_EXPECT(HostToolTarget(android_host_out).GetPowerwashBinName());
   }
 
   Result<std::string> PowerbtnBin(const std::string& android_host_out) const {
-    return CF_EXPECT(HostToolTarget(android_host_out).GetBinName("powerbtn"));
+    return CF_EXPECT(HostToolTarget(android_host_out).GetPowerBtnBinName());
   }
 
   Result<Command> HelpCommand(const CommandRequest& request,

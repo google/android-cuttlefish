@@ -34,24 +34,6 @@
 namespace cuttlefish {
 namespace {
 
-const std::map<std::string, std::vector<std::string>>& OpToBinsMap() {
-  static const auto& map = *new std::map<std::string, std::vector<std::string>>{
-      {"stop", {"cvd_internal_stop", "stop_cvd"}},
-      {"stop_cvd", {"cvd_internal_stop", "stop_cvd"}},
-      {"start", {"cvd_internal_start", "launch_cvd"}},
-      {"launch_cvd", {"cvd_internal_start", "launch_cvd"}},
-      {"status", {"cvd_internal_status", "cvd_status"}},
-      {"cvd_status", {"cvd_internal_status", "cvd_status"}},
-      {"restart", {"restart_cvd"}},
-      {"powerwash", {"powerwash_cvd"}},
-      {"powerbtn", {"powerbtn_cvd"}},
-      {"suspend", {"snapshot_util_cvd"}},
-      {"resume", {"snapshot_util_cvd"}},
-      {"snapshot_take", {"snapshot_util_cvd"}},
-  };
-  return map;
-}
-
 Result<std::vector<FlagInfoPtr>> GetSupportedFlags(
     const std::string& artifacts_path, const std::string bin_name) {
   auto bin_path = fmt::format("{}/{}", artifacts_path, bin_name);
@@ -78,9 +60,7 @@ HostToolTarget::HostToolTarget(const std::string& artifacts_path)
     : artifacts_path_(artifacts_path) {}
 
 Result<FlagInfo> HostToolTarget::GetFlagInfo(
-    const std::string& operation, const std::string& flag_name) const {
-  std::string bin_name = CF_EXPECTF(GetBinName(operation),
-                                    "Operation '{}' not supported", operation);
+    const std::string& bin_name, const std::string& flag_name) const {
   std::vector<FlagInfoPtr> flags = CF_EXPECTF(
       GetSupportedFlags(artifacts_path_, bin_name),
       "Failed to obtain supported flags for the '{}' tool", bin_name);
@@ -93,21 +73,44 @@ Result<FlagInfo> HostToolTarget::GetFlagInfo(
                  bin_name);
 }
 
+Result<std::string> HostToolTarget::GetStartBinName() const {
+  return CF_EXPECT(GetBinName({"cvd_internal_start", "launch_cvd"}));
+}
+
+Result<std::string> HostToolTarget::GetStopBinName() const {
+  return CF_EXPECT(GetBinName({"cvd_internal_stop", "stop_cvd"}));
+}
+
+Result<std::string> HostToolTarget::GetStatusBinName() const {
+  return CF_EXPECT(GetBinName({"cvd_internal_status", "cvd_status"}));
+}
+
+Result<std::string> HostToolTarget::GetRestartBinName() const {
+  return CF_EXPECT(GetBinName({"restart_cvd"}));
+}
+
+Result<std::string> HostToolTarget::GetPowerwashBinName() const {
+  return CF_EXPECT(GetBinName({"powerwash_cvd"}));
+}
+
+Result<std::string> HostToolTarget::GetPowerBtnBinName() const {
+  return CF_EXPECT(GetBinName({"powerbtn_cvd"}));
+}
+
+Result<std::string> HostToolTarget::GetSnapshotBinName() const {
+  return CF_EXPECT(GetBinName({"snapshot_util_cvd"}));
+}
+
 Result<std::string> HostToolTarget::GetBinName(
-    const std::string& operation) const {
-  auto operation_find = OpToBinsMap().find(operation);
-  CF_EXPECTF(operation_find != OpToBinsMap().end(),
-             "Operation '{}' not supported", operation);
-  auto& candidates = operation_find->second;
-  for (const auto& bin_name : candidates) {
+    const std::vector<std::string>& alternatives) const {
+  for (const auto& bin_name : alternatives) {
     const auto bin_path = fmt::format("{}/bin/{}", artifacts_path_, bin_name);
     if (FileExists(bin_path)) {
       return bin_name;
     }
   }
-  return CF_ERRF(
-      "No suitable binary found for operation '{}' in '{}'. Looked for '{}'.",
-      operation, artifacts_path_, android::base::Join(candidates, ", "));
+  return CF_ERRF("'{}' does not contain any of '[{}]'.", artifacts_path_,
+                 android::base::Join(alternatives, ", "));
 }
 
 }  // namespace cuttlefish
