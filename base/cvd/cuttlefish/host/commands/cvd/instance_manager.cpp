@@ -151,7 +151,7 @@ Result<bool> InstanceManager::RemoveInstanceGroupByHome(
 
 Result<std::string> InstanceManager::StopBin(
     const std::string& host_android_out) {
-  return CF_EXPECT(HostToolTarget(host_android_out).GetBinName("stop"));
+  return CF_EXPECT(HostToolTarget(host_android_out).GetStopBinName());
 }
 
 Result<void> InstanceManager::UpdateInstanceGroup(

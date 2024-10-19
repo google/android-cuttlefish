@@ -363,9 +363,12 @@ Result<void> CvdStartCommandHandler::UpdateArgs(
   CF_EXPECT(UpdateInstanceArgs(args, group));
   CF_EXPECT(UpdateWebrtcDeviceIds(args, group));
   // for backward compatibility, older cvd host tools don't accept group_id
-  auto has_group_id_flag = HostToolTarget(group.HostArtifactsPath())
-                               .GetFlagInfo("start", "group_id")
-                               .ok();
+  HostToolTarget host_tool_target(group.HostArtifactsPath());
+  auto has_group_id_flag =
+      HostToolTarget(group.HostArtifactsPath())
+          .GetFlagInfo(CF_EXPECT(host_tool_target.GetStartBinName()),
+                       "group_id")
+          .ok();
   if (has_group_id_flag) {
     args.emplace_back("--group_id=" + group.GroupName());
   }
@@ -434,7 +437,7 @@ static void ShowLaunchCommand(const Command& command,
 
 Result<std::string> CvdStartCommandHandler::FindStartBin(
     const std::string& android_host_out) {
-  return CF_EXPECT(HostToolTarget(android_host_out).GetBinName("start"));
+  return CF_EXPECT(HostToolTarget(android_host_out).GetStartBinName());
 }
 
 static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {

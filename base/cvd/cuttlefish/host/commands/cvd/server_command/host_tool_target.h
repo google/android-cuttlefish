@@ -30,12 +30,20 @@ class HostToolTarget {
   // artifacts_path: ANDROID_HOST_OUT, or so
   HostToolTarget(const std::string& artifacts_path);
 
-  Result<FlagInfo> GetFlagInfo(const std::string& operation,
+  Result<FlagInfo> GetFlagInfo(const std::string& bin_name,
                                const std::string& flag_name) const;
 
-  Result<std::string> GetBinName(const std::string& operation) const;
+  Result<std::string> GetStartBinName() const;
+  Result<std::string> GetStopBinName() const;
+  Result<std::string> GetStatusBinName() const;
+  Result<std::string> GetRestartBinName() const;
+  Result<std::string> GetPowerwashBinName() const;
+  Result<std::string> GetPowerBtnBinName() const;
+  Result<std::string> GetSnapshotBinName() const;
 
  private:
+  Result<std::string> GetBinName(
+      const std::vector<std::string>& alternatives) const;
   const std::string artifacts_path_;
 };
 

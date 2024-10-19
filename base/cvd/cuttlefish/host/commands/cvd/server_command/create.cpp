@@ -376,7 +376,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   }
 
   // Validate the host artifacts path before proceeding
-  (void)CF_EXPECT(HostToolTarget(flags.host_path).GetBinName("start"),
+  (void)CF_EXPECT(HostToolTarget(flags.host_path).GetStartBinName(),
                   "\nMaybe try `cvd fetch` or running `lunch "
                   "<target>` to enable starting a CF device?");
   // CreationAnalyzer needs these to be set in the environment
