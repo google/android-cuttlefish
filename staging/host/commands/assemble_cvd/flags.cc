@@ -698,6 +698,11 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     guest_config.gfxstream_gl_program_binary_link_status_supported =
         res.ok() && res.value() == "supported";
 
+    auto res_mouse_support =
+        GetAndroidInfoConfig(instance_android_info_txt, "mouse");
+    guest_config.mouse_supported =
+        res_mouse_support.ok() && res_mouse_support.value() == "supported";
+
     auto res_bgra_support = GetAndroidInfoConfig(instance_android_info_txt,
                                                  "supports_bgra_framebuffers");
     guest_config.supports_bgra_framebuffers =
@@ -1413,6 +1418,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_crosvm_use_rng(use_rng_vec[instance_index]);
     instance.set_use_pmem(use_pmem_vec[instance_index]);
     instance.set_bootconfig_supported(guest_configs[instance_index].bootconfig_supported);
+    instance.set_enable_mouse(guest_configs[instance_index].mouse_supported);
     instance.set_filename_encryption_mode(
       guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
     instance.set_use_allocd(use_allocd_vec[instance_index]);

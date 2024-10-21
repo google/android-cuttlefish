@@ -71,6 +71,7 @@ constexpr auto kControlPanelButtonDeviceStates = "device_states";
 constexpr auto kControlPanelButtonLidSwitchOpen = "lid_switch_open";
 constexpr auto kControlPanelButtonHingeAngleValue = "hinge_angle_value";
 constexpr auto kCustomControlPanelButtonsField = "custom_control_panel_buttons";
+constexpr auto kMouseEnabled = "mouse_enabled";
 constexpr auto kGroupIdField = "group_id";
 
 constexpr int kRegistrationRetries = 3;
@@ -482,6 +483,9 @@ void Streamer::Impl::OnOpen() {
       }
       custom_control_panel_buttons.append(button_entry);
     }
+    // Add mouse button conditionally.
+    device_info[kMouseEnabled] = config_.enable_mouse;
+
     device_info[kCustomControlPanelButtonsField] = custom_control_panel_buttons;
     register_obj[cuttlefish::webrtc_signaling::kDeviceInfoField] = device_info;
     server_connection_->Send(register_obj);
