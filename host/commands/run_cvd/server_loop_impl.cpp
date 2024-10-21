@@ -78,16 +78,18 @@ Result<void> ServerLoopImpl::LateInject(fruit::Injector<>& injector) {
 
 Result<void> ServerLoopImpl::Run() {
   // Monitor and restart host processes supporting the CVD
-  auto process_monitor_properties =
-      ProcessMonitor::Properties()
-          .RestartSubprocesses(instance_.restart_subprocesses())
-          .StraceLogDir(instance_.PerInstanceLogPath(""))
-          .StraceCommands(config_.straced_host_executables());
+  auto process_monitor_properties = ProcessMonitor::Properties();
+  process_monitor_properties.RestartSubprocesses(
+      instance_.restart_subprocesses());
+  process_monitor_properties.StraceLogDir(instance_.PerInstanceLogPath(""));
+  process_monitor_properties.StraceCommands(config_.straced_host_executables());
 
   for (auto& command_source : command_sources_) {
     if (command_source->Enabled()) {
       auto commands = CF_EXPECT(command_source->Commands());
-      process_monitor_properties.AddCommands(std::move(commands));
+      for (auto& command : commands) {
+        process_monitor_properties.AddCommand(std::move(command));
+      }
     }
   }
   const auto& channel_to_secure_env =
