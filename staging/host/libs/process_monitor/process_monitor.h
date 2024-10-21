@@ -45,29 +45,9 @@ class ProcessMonitor {
   class Properties {
    public:
     Properties& RestartSubprocesses(bool) &;
-    Properties RestartSubprocesses(bool) &&;
-
     Properties& AddCommand(MonitorCommand) &;
-    Properties AddCommand(MonitorCommand) &&;
-
     Properties& StraceCommands(std::set<std::string>) &;
-    Properties StraceCommands(std::set<std::string>) &&;
-
     Properties& StraceLogDir(std::string) &;
-    Properties StraceLogDir(std::string) &&;
-
-    template <typename T>
-    Properties& AddCommands(T commands) & {
-      for (auto& command : commands) {
-        AddCommand(std::move(command));
-      }
-      return *this;
-    }
-
-    template <typename T>
-    Properties AddCommands(T commands) && {
-      return std::move(AddCommands(std::move(commands)));
-    }
 
    private:
     bool restart_subprocesses_;
