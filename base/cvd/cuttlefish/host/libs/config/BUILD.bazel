@@ -31,5 +31,3 @@ cc_library(
         "@zlib",
     ],
 )
-
-

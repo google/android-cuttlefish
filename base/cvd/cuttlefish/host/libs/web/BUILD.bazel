@@ -31,9 +31,9 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
+        "@boringssl//:crypto",
         "@fmt",
         "@jsoncpp",
-        "@boringssl//:crypto",
     ],
 )
 
