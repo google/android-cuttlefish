@@ -118,6 +118,11 @@ fruit::Component<> runCvdComponent(
     const CuttlefishConfig* config,
     const CuttlefishConfig::EnvironmentSpecific* environment,
     const CuttlefishConfig::InstanceSpecific* instance) {
+  // WARNING: The install order indirectly controls the order that processes
+  // are started and stopped. The start order shouldn't matter, but if the stop
+  // order is inccorect, then some processes may crash on shutdown. For
+  // example, vhost-user processes must be stopped *after* VMM processes (so,
+  // sort vhost-user before VMM in this list).
   return fruit::createComponent()
       .addMultibinding<DiagnosticInformation, CuttlefishEnvironment>()
       .addMultibinding<InstanceLifecycle, InstanceLifecycle>()
@@ -130,7 +135,6 @@ fruit::Component<> runCvdComponent(
       .install(AutoCmd<ModemSimulator>::Component)
       .install(AutoCmd<TombstoneReceiver>::Component)
       .install(McuComponent)
-      .install(OpenWrtComponent)
       .install(VhostDeviceVsockComponent)
       .install(WmediumdServerComponent)
       .install(launchStreamerComponent)
@@ -171,6 +175,11 @@ fruit::Component<> runCvdComponent(
       .install(AutoSetup<ValidateTapDevices>::Component)
       .install(AutoSetup<ValidateHostConfiguration>::Component)
       .install(AutoSetup<ValidateHostKernel>::Component)
+#ifdef __linux__
+      // OpenWrtComponent spawns a VMM and so has similar install order
+      // requirements to VmManagerComponent.
+      .install(OpenWrtComponent)
+#endif
       .install(vm_manager::VmManagerComponent);
 }
 
