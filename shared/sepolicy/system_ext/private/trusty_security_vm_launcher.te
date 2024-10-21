@@ -1,0 +1,18 @@
+is_flag_enabled(RELEASE_AVF_ENABLE_EARLY_VM, `
+    type trusty_security_vm_launcher, domain, coredomain;
+    type trusty_security_vm_launcher_exec, system_file_type, exec_type, file_type;
+    type trusty_security_vm_launcher_tmpfs, file_type;
+
+    init_daemon_domain(trusty_security_vm_launcher)
+    domain_auto_trans(init, trusty_security_vm_launcher_exec, trusty_security_vm_launcher)
+
+    early_virtmgr_use(trusty_security_vm_launcher)
+    binder_use(trusty_security_vm_launcher)
+
+    allow trusty_security_vm_launcher kmsg_debug_device:chr_file rw_file_perms;
+    use_bootstrap_libs(trusty_security_vm_launcher)
+
+    allow trusty_security_vm_launcher self:global_capability_class_set { net_bind_service ipc_lock sys_resource };
+
+    tmpfs_domain(trusty_security_vm_launcher)
+')
