@@ -36,10 +36,9 @@ cc_test(
     ],
     includes = [""],
     deps = [
-        "//libbase",
         ":fs",
+        "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
 )
-

@@ -14,5 +14,3 @@ cc_library(
         "//cuttlefish/host/libs/config",
     ],
 )
-
-

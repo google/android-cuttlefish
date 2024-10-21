@@ -18,5 +18,3 @@ cc_library(
         "//libbase",
     ],
 )
-
-

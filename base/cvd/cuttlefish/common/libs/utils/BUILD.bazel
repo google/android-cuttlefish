@@ -19,6 +19,7 @@ cc_library(
 
 cc_library(
     name = "result_matchers",
+    testonly = 1,
     hdrs = [
         "result_matchers.h",
     ],
@@ -28,11 +29,10 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     visibility = ["//visibility:public"],
     deps = [
-        "//libbase",
         ":result",
+        "//libbase",
         "@googletest//:gtest",
     ],
-    testonly = 1,
 )
 
 cc_library(
@@ -83,9 +83,9 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     visibility = ["//visibility:public"],
     deps = [
+        ":result",
         "//cuttlefish/common/libs/fs",
         "//libbase",
-        ":result",
         "@boringssl//:crypto",
         "@fmt",
         "@gflags",
@@ -128,11 +128,11 @@ cc_test(
         "-Icuttlefish",
     ],
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//libbase",
         ":result",
         ":result_matchers",
         ":utils",
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
