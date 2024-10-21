@@ -218,6 +218,7 @@ struct InputDevices {
   std::unique_ptr<InputSocket> keyboard;
   std::unique_ptr<InputSocket> switches;
   std::unique_ptr<InputSocket> rotary;
+  std::unique_ptr<InputSocket> mouse;
 };
 
 // Implements the InputConnector::EventSink interface using unix socket based
@@ -227,6 +228,8 @@ class InputSocketsEventSink : public InputConnector::EventSink {
   InputSocketsEventSink(InputDevices&, std::atomic<int>&);
   ~InputSocketsEventSink() override;
 
+  Result<void> SendMouseMoveEvent(int x, int y) override;
+  Result<void> SendMouseButtonEvent(int button, bool down) override;
   Result<void> SendTouchEvent(const std::string& device_label, int x, int y,
                               bool down) override;
   Result<void> SendMultiTouchEvent(const std::string& device_label,
@@ -255,6 +258,33 @@ InputSocketsEventSink::~InputSocketsEventSink() {
     it.second.OnDisconnectedSource(this);
   }
   --sinks_count_;
+}
+
+Result<void> InputSocketsEventSink::SendMouseMoveEvent(int x, int y) {
+  CF_EXPECT(input_devices_.mouse != nullptr, "No mouse device setup");
+  auto buffer = CreateBuffer(input_devices_.event_type, 2);
+  CF_EXPECT(buffer != nullptr,
+            "Failed to allocate input events buffer for mouse move event !");
+  buffer->AddEvent(EV_REL, REL_X, x);
+  buffer->AddEvent(EV_REL, REL_Y, y);
+  input_devices_.mouse->WriteEvents(std::move(buffer));
+  return {};
+}
+
+Result<void> InputSocketsEventSink::SendMouseButtonEvent(int button,
+                                                         bool down) {
+  CF_EXPECT(input_devices_.mouse != nullptr, "No mouse device setup");
+  auto buffer = CreateBuffer(input_devices_.event_type, 2);
+  CF_EXPECT(buffer != nullptr,
+            "Failed to allocate input events buffer for mouse button event !");
+  std::vector<int> buttons = {BTN_LEFT, BTN_MIDDLE, BTN_RIGHT, BTN_BACK,
+                              BTN_FORWARD};
+  CF_EXPECT(button < (int)buttons.size(),
+            "Unknown mouse event button: " << button);
+  buffer->AddEvent(EV_KEY, buttons[button], down);
+  buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
+  input_devices_.mouse->WriteEvents(std::move(buffer));
+  return {};
 }
 
 Result<void> InputSocketsEventSink::SendTouchEvent(
@@ -422,6 +452,11 @@ void InputSocketsConnectorBuilder::WithSwitches(SharedFD server) {
 void InputSocketsConnectorBuilder::WithRotary(SharedFD server) {
   CHECK(!connector_->devices_.rotary) << "Rotary already specified";
   connector_->devices_.rotary.reset(new InputSocket(server));
+}
+
+void InputSocketsConnectorBuilder::WithMouse(SharedFD server) {
+  CHECK(!connector_->devices_.mouse) << "Mouse already specified";
+  connector_->devices_.mouse.reset(new InputSocket(server));
 }
 
 std::unique_ptr<InputConnector> InputSocketsConnectorBuilder::Build() && {
