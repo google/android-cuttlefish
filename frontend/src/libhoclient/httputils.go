@@ -291,7 +291,9 @@ func (u *FilesUploader) Upload(files []string) error {
 	var returnErr error
 	for err := range resultsChan {
 		if err != nil {
-			fmt.Fprintf(u.DumpOut, "Error uploading file chunk: %v\n", err)
+			if u.DumpOut != nil {
+				fmt.Fprintf(u.DumpOut, "Error uploading file chunk: %v\n", err)
+			}
 			if returnErr == nil {
 				returnErr = err
 				safeCancel()

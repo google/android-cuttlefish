@@ -15,6 +15,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -35,17 +36,13 @@ func TestUploadFileChunkSizeBytesIsZeroPanic(t *testing.T) {
 			t.Errorf("did not panic")
 		}
 	}()
-	opts := &ServiceOptions{
-		RootEndpoint: "https://test.com",
-		DumpOut:      io.Discard,
-	}
-	srv, _ := NewService(opts)
 
-	srv.HostService("foo").UploadFileWithOptions("dir", "baz", UploadOptions{ChunkSizeBytes: 0})
+	srv := NewHostOrchestratorService("https://test.com")
+
+	srv.UploadFileWithOptions("dir", "baz", UploadOptions{ChunkSizeBytes: 0})
 }
 
 func TestUploadFileSucceeds(t *testing.T) {
-	host := "foo"
 	uploadDir := "bar"
 	tempDir := createTempDir(t)
 	defer os.RemoveAll(tempDir)
@@ -70,7 +67,7 @@ func TestUploadFileSucceeds(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		switch ep := r.Method + " " + r.URL.Path; ep {
-		case "PUT /hosts/" + host + "/userartifacts/" + uploadDir:
+		case "PUT /userartifacts/" + uploadDir:
 			chunkNumber := r.PostFormValue("chunk_number")
 			chunkTotal := r.PostFormValue("chunk_total")
 			f, fheader, err := r.FormFile("file")
@@ -97,15 +94,11 @@ func TestUploadFileSucceeds(t *testing.T) {
 		}
 	}))
 	defer ts.Close()
-	opts := &ServiceOptions{
-		RootEndpoint:   ts.URL,
-		DumpOut:        io.Discard,
-		ChunkSizeBytes: 2,
-	}
-	srv, _ := NewService(opts)
+
+	srv := NewHostOrchestratorService(ts.URL)
 
 	for _, f := range []string{quxFile, waldoFile, xyzzyFile} {
-		err := srv.HostService(host).UploadFileWithOptions(uploadDir, f,
+		err := srv.UploadFileWithOptions(uploadDir, f,
 			UploadOptions{
 				BackOffOpts: ExpBackOffOptions{
 					InitialDuration: 100 * time.Millisecond,
@@ -139,14 +132,10 @@ func TestUploadFileExponentialBackoff(t *testing.T) {
 		writeOK(w, struct{}{})
 	}))
 	defer ts.Close()
-	opts := &ServiceOptions{
-		RootEndpoint:   ts.URL,
-		DumpOut:        io.Discard,
-		ChunkSizeBytes: 2,
-	}
-	srv, _ := NewService(opts)
 
-	err := srv.HostService("foo").UploadFileWithOptions("dir", waldoFile, UploadOptions{
+	srv := NewHostOrchestratorService(ts.URL)
+
+	err := srv.UploadFileWithOptions("dir", waldoFile, UploadOptions{
 		BackOffOpts: ExpBackOffOptions{
 			InitialDuration: 100 * time.Millisecond,
 			Multiplier:      2,
@@ -177,14 +166,10 @@ func TestUploadFileExponentialBackoffReachedElapsedTime(t *testing.T) {
 		writeErr(w, 500)
 	}))
 	defer ts.Close()
-	opts := &ServiceOptions{
-		RootEndpoint:   ts.URL,
-		DumpOut:        io.Discard,
-		ChunkSizeBytes: 2,
-	}
-	srv, _ := NewService(opts)
 
-	err := srv.HostService("foo").UploadFileWithOptions("dir", waldoFile, UploadOptions{
+	srv := NewHostOrchestratorService(ts.URL)
+
+	err := srv.UploadFileWithOptions("dir", waldoFile, UploadOptions{
 		BackOffOpts: ExpBackOffOptions{
 			InitialDuration:     100 * time.Millisecond,
 			RandomizationFactor: 0.5,
@@ -277,4 +262,19 @@ func createTempFile(t *testing.T, dir, name string, content []byte) string {
 		t.Fatal(err)
 	}
 	return file
+}
+
+func writeErr(w http.ResponseWriter, statusCode int) {
+	write(w, &struct{ StatusCode int }{StatusCode: statusCode}, statusCode)
+}
+
+func writeOK(w http.ResponseWriter, data any) {
+	write(w, data, http.StatusOK)
+}
+
+func write(w http.ResponseWriter, data any, statusCode int) {
+	w.WriteHeader(statusCode)
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	encoder.Encode(data)
 }
