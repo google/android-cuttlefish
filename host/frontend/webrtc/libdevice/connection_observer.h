@@ -44,6 +44,8 @@ class ConnectionObserver {
 
   virtual void OnConnected() = 0;
 
+  virtual Result<void> OnMouseMoveEvent(int x, int y) = 0;
+  virtual Result<void> OnMouseButtonEvent(int button, bool down) = 0;
   virtual Result<void> OnTouchEvent(const std::string& device_label, int x,
                                     int y, bool down) = 0;
   virtual Result<void> OnMultiTouchEvent(const std::string& label,
