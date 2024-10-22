@@ -6,16 +6,21 @@ is_flag_enabled(RELEASE_AVF_ENABLE_EARLY_VM, `
 ')
 /(system_ext|system/system_ext)/bin/rpmb_dev\.system   u:object_r:rpmb_dev_system_exec:s0
 /(system_ext|system/system_ext)/bin/storageproxyd\.system     u:object_r:storageproxyd_system_exec:s0
+/(system_ext|system/system_ext)/bin/rpmb_dev\.wv\.system   u:object_r:rpmb_dev_wv_system_exec:s0
 
 #############################
 # sockets
 /dev/socket/rpmb_mock_system  u:object_r:rpmb_dev_system_socket:s0
+/dev/socket/rpmb_mock_wv_system  u:object_r:rpmb_dev_system_socket:s0
 
 #############################
 # persist files
 /mnt/secure_storage_rpmb_system(/.*)?  u:object_r:secure_storage_rpmb_system_file:s0
 /mnt/secure_storage_persist_system(/.*)?  u:object_r:secure_storage_persist_system_file:s0
+/mnt/secure_storage_rpmb_wv_system(/.*)?  u:object_r:secure_storage_rpmb_system_file:s0
+/mnt/secure_storage_persist_wv_system(/.*)?  u:object_r:secure_storage_persist_system_file:s0
 
 #############################
 # data files
 /data/secure_storage_system(/.*)?        u:object_r:secure_storage_system_file:s0
+/data/secure_storage_wv_system(/.*)?        u:object_r:secure_storage_system_file:s0
