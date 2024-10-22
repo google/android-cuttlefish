@@ -19,7 +19,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/cenkalti/backoff/v4"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -31,6 +30,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cenkalti/backoff/v4"
 )
 
 type HTTPHelper struct {
