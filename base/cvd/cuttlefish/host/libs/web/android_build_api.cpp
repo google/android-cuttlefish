@@ -103,11 +103,12 @@ std::ostream& operator<<(std::ostream& out, const Build& build) {
   return out;
 }
 
-BuildApi::BuildApi(std::unique_ptr<HttpClient> http_client,
-                   std::unique_ptr<HttpClient> inner_http_client,
-                   std::unique_ptr<CredentialSource> credential_source,
-                   std::string api_key, const std::chrono::seconds retry_period,
-                   std::string api_base_url, std::string project_id)
+AndroidBuildApi::AndroidBuildApi(
+    std::unique_ptr<HttpClient> http_client,
+    std::unique_ptr<HttpClient> inner_http_client,
+    std::unique_ptr<CredentialSource> credential_source, std::string api_key,
+    const std::chrono::seconds retry_period, std::string api_base_url,
+    std::string project_id)
     : http_client(std::move(http_client)),
       inner_http_client(std::move(inner_http_client)),
       credential_source(std::move(credential_source)),
@@ -116,8 +117,8 @@ BuildApi::BuildApi(std::unique_ptr<HttpClient> http_client,
       api_base_url_(std::move(api_base_url)),
       project_id_(std::move(project_id)) {}
 
-Result<Build> BuildApi::GetBuild(const DeviceBuildString& build_string,
-                                 const std::string& fallback_target) {
+Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string,
+                                        const std::string& fallback_target) {
   auto proposed_build = DeviceBuild(
       build_string.branch_or_id, build_string.target.value_or(fallback_target),
       build_string.filepath);
@@ -147,14 +148,14 @@ Result<Build> BuildApi::GetBuild(const DeviceBuildString& build_string,
   return proposed_build;
 }
 
-Result<Build> BuildApi::GetBuild(const DirectoryBuildString& build_string,
-                                 const std::string&) {
+Result<Build> AndroidBuildApi::GetBuild(
+    const DirectoryBuildString& build_string, const std::string&) {
   return DirectoryBuild(build_string.paths, build_string.target,
                         build_string.filepath);
 }
 
-Result<Build> BuildApi::GetBuild(const BuildString& build_string,
-                                 const std::string& fallback_target) {
+Result<Build> AndroidBuildApi::GetBuild(const BuildString& build_string,
+                                        const std::string& fallback_target) {
   auto result =
       std::visit([this, &fallback_target](
                      auto&& arg) { return GetBuild(arg, fallback_target); },
@@ -162,9 +163,9 @@ Result<Build> BuildApi::GetBuild(const BuildString& build_string,
   return CF_EXPECT(std::move(result));
 }
 
-Result<std::string> BuildApi::DownloadFile(const Build& build,
-                                           const std::string& target_directory,
-                                           const std::string& artifact_name) {
+Result<std::string> AndroidBuildApi::DownloadFile(
+    const Build& build, const std::string& target_directory,
+    const std::string& artifact_name) {
   std::unordered_set<std::string> artifacts =
       CF_EXPECT(Artifacts(build, {artifact_name}));
   CF_EXPECT(Contains(artifacts, artifact_name),
@@ -172,7 +173,7 @@ Result<std::string> BuildApi::DownloadFile(const Build& build,
   return DownloadTargetFile(build, target_directory, artifact_name);
 }
 
-Result<std::string> BuildApi::DownloadFileWithBackup(
+Result<std::string> AndroidBuildApi::DownloadFileWithBackup(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name, const std::string& backup_artifact_name) {
   std::unordered_set<std::string> artifacts =
@@ -184,7 +185,7 @@ Result<std::string> BuildApi::DownloadFileWithBackup(
   return DownloadTargetFile(build, target_directory, selected_artifact);
 }
 
-Result<std::vector<std::string>> BuildApi::Headers() {
+Result<std::vector<std::string>> AndroidBuildApi::Headers() {
   std::vector<std::string> headers;
   if (credential_source) {
     headers.push_back("Authorization: Bearer " +
@@ -193,7 +194,7 @@ Result<std::vector<std::string>> BuildApi::Headers() {
   return headers;
 }
 
-Result<std::optional<std::string>> BuildApi::LatestBuildId(
+Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
     const std::string& branch, const std::string& target) {
   std::string url =
       api_base_url_ + "/builds?branch=" + http_client->UrlEscape(branch) +
@@ -232,7 +233,7 @@ Result<std::optional<std::string>> BuildApi::LatestBuildId(
   return json["builds"][0]["buildId"].asString();
 }
 
-Result<std::string> BuildApi::BuildStatus(const DeviceBuild& build) {
+Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
   std::string url = api_base_url_ + "/builds/" +
                     http_client->UrlEscape(build.id) + "/" +
                     http_client->UrlEscape(build.target);
@@ -260,7 +261,7 @@ Result<std::string> BuildApi::BuildStatus(const DeviceBuild& build) {
   return json["buildAttemptStatus"].asString();
 }
 
-Result<std::string> BuildApi::ProductName(const DeviceBuild& build) {
+Result<std::string> AndroidBuildApi::ProductName(const DeviceBuild& build) {
   std::string url = api_base_url_ + "/builds/" +
                     http_client->UrlEscape(build.id) + "/" +
                     http_client->UrlEscape(build.target);
@@ -289,7 +290,7 @@ Result<std::string> BuildApi::ProductName(const DeviceBuild& build) {
   return json["target"]["product"].asString();
 }
 
-Result<std::unordered_set<std::string>> BuildApi::Artifacts(
+Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
     const DeviceBuild& build,
     const std::vector<std::string>& artifact_filenames) {
   std::string page_token = "";
@@ -334,7 +335,7 @@ Result<std::unordered_set<std::string>> BuildApi::Artifacts(
   return artifacts;
 }
 
-Result<std::unordered_set<std::string>> BuildApi::Artifacts(
+Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
     const DirectoryBuild& build, const std::vector<std::string>&) {
   std::unordered_set<std::string> artifacts;
   for (const auto& path : build.paths) {
@@ -348,7 +349,7 @@ Result<std::unordered_set<std::string>> BuildApi::Artifacts(
   return artifacts;
 }
 
-Result<std::unordered_set<std::string>> BuildApi::Artifacts(
+Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
     const Build& build, const std::vector<std::string>& artifact_filenames) {
   auto res =
       std::visit([this, &artifact_filenames](
@@ -357,7 +358,7 @@ Result<std::unordered_set<std::string>> BuildApi::Artifacts(
   return CF_EXPECT(std::move(res));
 }
 
-Result<std::string> BuildApi::GetArtifactDownloadUrl(
+Result<std::string> AndroidBuildApi::GetArtifactDownloadUrl(
     const DeviceBuild& build, const std::string& artifact) {
   std::string download_url_endpoint =
       api_base_url_ + "/builds/" + http_client->UrlEscape(build.id) + "/" +
@@ -389,9 +390,9 @@ Result<std::string> BuildApi::GetArtifactDownloadUrl(
   return json["signedUrl"].asString();
 }
 
-Result<void> BuildApi::ArtifactToFile(const DeviceBuild& build,
-                                      const std::string& artifact,
-                                      const std::string& path) {
+Result<void> AndroidBuildApi::ArtifactToFile(const DeviceBuild& build,
+                                             const std::string& artifact,
+                                             const std::string& path) {
   const auto url = CF_EXPECT(GetArtifactDownloadUrl(build, artifact));
   bool is_successful_download =
       CF_EXPECT(http_client->DownloadToFile(url, path)).HttpSuccess();
@@ -399,9 +400,9 @@ Result<void> BuildApi::ArtifactToFile(const DeviceBuild& build,
   return {};
 }
 
-Result<void> BuildApi::ArtifactToFile(const DirectoryBuild& build,
-                                      const std::string& artifact,
-                                      const std::string& destination) {
+Result<void> AndroidBuildApi::ArtifactToFile(const DirectoryBuild& build,
+                                             const std::string& artifact,
+                                             const std::string& destination) {
   for (const auto& path : build.paths) {
     auto source = path + "/" + artifact;
     if (!FileExists(source)) {
@@ -418,9 +419,9 @@ Result<void> BuildApi::ArtifactToFile(const DirectoryBuild& build,
                                              << build << "\"");
 }
 
-Result<void> BuildApi::ArtifactToFile(const Build& build,
-                                      const std::string& artifact,
-                                      const std::string& path) {
+Result<void> AndroidBuildApi::ArtifactToFile(const Build& build,
+                                             const std::string& artifact,
+                                             const std::string& path) {
   auto res = std::visit(
       [this, &artifact, &path](auto&& arg) {
         return ArtifactToFile(arg, artifact, path);
@@ -430,7 +431,7 @@ Result<void> BuildApi::ArtifactToFile(const Build& build,
   return {};
 }
 
-Result<std::string> BuildApi::DownloadTargetFile(
+Result<std::string> AndroidBuildApi::DownloadTargetFile(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name) {
   std::string target_filepath =
@@ -446,7 +447,8 @@ Result<std::string> BuildApi::DownloadTargetFile(
  * For example, for a target "aosp_cf_x86_phone-userdebug" at a build "5824130",
  * the image zip file would be "aosp_cf_x86_phone-img-5824130.zip"
  */
-std::string GetBuildZipName(const Build& build, const std::string& name) {
+Result<std::string> AndroidBuildApi::GetBuildZipName(const Build& build,
+                                                     const std::string& name) {
   std::string product =
       std::visit([](auto&& arg) { return arg.product; }, build);
   auto id = std::visit([](auto&& arg) { return arg.id; }, build);
