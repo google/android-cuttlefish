@@ -308,10 +308,9 @@ Result<selector::LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
                "Mismatch in number of instances from analisys: {} vs {}",
                group.Instances().size(), group_creation_info.instances.size());
     // The instances don't have an id yet
-    for (int i = 0; i < group.Instances().size(); ++i) {
-      auto& instance = group.Instances()[i];
-      auto& instance_info = group_creation_info.instances[i];
-      instance.set_id(instance_info.instance_id_);
+    for (size_t i = 0; i < group.Instances().size(); ++i) {
+      uint32_t id = group_creation_info.instances[i].instance_id_;
+      group.Instances()[i].set_id(id);
     }
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   }
@@ -348,7 +347,7 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
   // cvd_internal_start to persist the user's choice for
   // -report_anonymous_usage_stats.
   CF_EXPECT(
-      Copy(group.InstanceDir(group.Instances()[0]) + "/cuttlefish_config.json",
+      Copy(group.Instances()[0].instance_dir() + "/cuttlefish_config.json",
            CF_EXPECT(SystemWideUserHome()) + "/.cuttlefish_config.json"),
       "Failed to copy config file to home directory");
 

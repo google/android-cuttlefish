@@ -21,10 +21,10 @@
 #include <string>
 
 #include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
+#include "host/commands/cvd/selector/instance_record.h"
 
 namespace cuttlefish {
 
@@ -47,7 +47,7 @@ class StatusFetcher {
   Result<std::string> GetBin(const std::string& host_artifacts_path) const;
   Result<StatusFetcherOutput> FetchOneInstanceStatus(
       const CommandRequest&, const InstanceManager::LocalInstanceGroup& group,
-      cvd::Instance&);
+      selector::LocalInstance&);
 
   InstanceManager& instance_manager_;
 };

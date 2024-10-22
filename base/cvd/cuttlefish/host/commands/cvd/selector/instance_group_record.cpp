@@ -38,10 +38,10 @@ static constexpr const char kJsonInstances[] = "Instances";
 static constexpr const char kJsonInstanceId[] = "Instance Id";
 static constexpr const char kJsonInstanceName[] = "Per-Instance Name";
 
-std::vector<cvd::Instance> Filter(
-    const google::protobuf::RepeatedPtrField<cvd::Instance>& instances,
-    std::function<bool(const cvd::Instance&)> predicate) {
-  std::vector<cvd::Instance> ret;
+std::vector<LocalInstance> Filter(
+    const std::vector<LocalInstance>& instances,
+    std::function<bool(const LocalInstance&)> predicate) {
+  std::vector<LocalInstance> ret;
   std::copy_if(instances.begin(), instances.end(), std::back_inserter(ret),
                predicate);
   return ret;
@@ -72,48 +72,32 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Create(
 }
 
 void LocalInstanceGroup::SetHomeDir(const std::string& home_dir) {
-  CHECK(group_proto_.home_directory().empty())
+  CHECK(group_proto_->home_directory().empty())
       << "Home directory can't be changed once set";
-  group_proto_.set_home_directory(home_dir);
+  group_proto_->set_home_directory(home_dir);
 }
 
 void LocalInstanceGroup::SetHostArtifactsPath(
     const std::string& host_artifacts_path) {
-  CHECK(group_proto_.host_artifacts_path().empty())
+  CHECK(group_proto_->host_artifacts_path().empty())
       << "Host artifacts path can't be changed once set";
-  group_proto_.set_host_artifacts_path(host_artifacts_path);
+  group_proto_->set_host_artifacts_path(host_artifacts_path);
 }
 
 void LocalInstanceGroup::SetProductOutPath(
     const std::string& product_out_path) {
-  CHECK(group_proto_.product_out_path().empty())
+  CHECK(group_proto_->product_out_path().empty())
       << "Product out path can't be changed once set";
-  group_proto_.set_product_out_path(product_out_path);
-}
-
-bool LocalInstanceGroup::InstanceIsActive(const cvd::Instance& instance) {
-  switch (instance.state()) {
-    case cvd::INSTANCE_STATE_RUNNING:
-    case cvd::INSTANCE_STATE_STARTING:
-    case cvd::INSTANCE_STATE_STOPPING:
-    case cvd::INSTANCE_STATE_PREPARING:
-    case cvd::INSTANCE_STATE_UNREACHABLE:
-      return true;
-    case cvd::INSTANCE_STATE_UNSPECIFIED:
-    case cvd::INSTANCE_STATE_STOPPED:
-    case cvd::INSTANCE_STATE_PREPARE_FAILED:
-    case cvd::INSTANCE_STATE_BOOT_FAILED:
-    case cvd::INSTANCE_STATE_CANCELLED:
-      return false;
-    // Include these just to avoid the warning
-    default:
-      LOG(FATAL) << "Invalid instance state: " << instance.state();
-  }
-  return false;
+  group_proto_->set_product_out_path(product_out_path);
 }
 
 bool LocalInstanceGroup::HasActiveInstances() const {
-  return std::any_of(Instances().begin(), Instances().end(), InstanceIsActive);
+  for (const auto& instance : instances_) {
+    if (instance.IsActive()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void LocalInstanceGroup::SetAllStates(cvd::InstanceState state) {
@@ -123,38 +107,39 @@ void LocalInstanceGroup::SetAllStates(cvd::InstanceState state) {
 }
 
 TimeStamp LocalInstanceGroup::StartTime() const {
-  return CvdServerClock::from_time_t(group_proto_.start_time_sec());
+  return CvdServerClock::from_time_t(group_proto_->start_time_sec());
 }
 
 void LocalInstanceGroup::SetStartTime(TimeStamp time) {
-  group_proto_.set_start_time_sec(CvdServerClock::to_time_t(time));
+  group_proto_->set_start_time_sec(CvdServerClock::to_time_t(time));
 }
 
 LocalInstanceGroup::LocalInstanceGroup(const cvd::InstanceGroup& group_proto)
-    : group_proto_(group_proto) {};
+    : group_proto_(new cvd::InstanceGroup(group_proto)) {
+  for (auto& instance : *group_proto_->mutable_instances()) {
+    instances_.push_back(LocalInstance(group_proto_, &instance));
+  }
+};
 
-std::vector<cvd::Instance> LocalInstanceGroup::FindById(
+Result<LocalInstance> LocalInstanceGroup::FindInstanceById(
     const unsigned id) const {
-  return Filter(Instances(), [id](const cvd::Instance& instance) {
-    return id == instance.id();
-  });
+  for (const auto& instance : instances_) {
+    if (instance.id() == id) {
+      return instance;
+    }
+  }
+  return CF_ERRF("Group {} has no instance with id {}", GroupName(), id);
 }
 
-std::vector<cvd::Instance> LocalInstanceGroup::FindByInstanceName(
+std::vector<LocalInstance> LocalInstanceGroup::FindByInstanceName(
     const std::string& instance_name) const {
-  return Filter(Instances(), [instance_name](const cvd::Instance& instance) {
+  return Filter(Instances(), [instance_name](const LocalInstance& instance) {
     return instance.name() == instance_name;
   });
 }
 
 std::string LocalInstanceGroup::AssemblyDir() const {
   return HomeDir() + "/cuttlefish/assembly";
-}
-
-std::string LocalInstanceGroup::InstanceDir(
-    const cvd::Instance& instance) const {
-  return fmt::format("{}/cuttlefish/instances/cvd-{}", HomeDir(),
-                     instance.id());
 }
 
 Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
@@ -212,12 +197,6 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
   }
 
   return Create(group_proto);
-}
-
-int AdbPort(const cvd::Instance& instance) {
-  // run_cvd picks this port from the instance id and doesn't provide a flag
-  // to change in cvd_internal_flag
-  return instance.id() > 0 ? instance.id() + 6520 - 1 : 0;
 }
 
 }  // namespace selector

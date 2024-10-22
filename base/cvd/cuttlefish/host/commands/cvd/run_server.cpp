@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/common_utils.h"

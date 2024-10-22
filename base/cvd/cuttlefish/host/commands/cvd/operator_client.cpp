@@ -47,7 +47,7 @@ Result<Json::Value> BuildPregistrationMsg(
     Json::Value dev;
     dev["id"] = instance.webrtc_device_id();
     dev["name"] = instance.name();
-    dev["adb_port"] = selector::AdbPort(instance);
+    dev["adb_port"] = instance.adb_port();
     devices.append(dev);
   }
   msg["devices"] = devices;
