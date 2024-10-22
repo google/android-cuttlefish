@@ -98,7 +98,7 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(
   return CF_EXPECT(group_selector.FindGroup(instance_db_));
 }
 
-Result<std::pair<cvd::Instance, selector::LocalInstanceGroup>>
+Result<std::pair<selector::LocalInstance, selector::LocalInstanceGroup>>
 InstanceManager::SelectInstance(
     const selector::SelectorOptions& selector_options,
     const cvd_common::Envs& envs, const Queries& extra_queries) {
@@ -157,12 +157,6 @@ Result<std::string> InstanceManager::StopBin(
 Result<void> InstanceManager::UpdateInstanceGroup(
     const LocalInstanceGroup& group) {
   CF_EXPECT(instance_db_.UpdateInstanceGroup(group));
-  return {};
-}
-
-Result<void> InstanceManager::UpdateInstance(const LocalInstanceGroup& group,
-                                             const cvd::Instance& instance) {
-  CF_EXPECT(instance_db_.UpdateInstance(group, instance));
   return {};
 }
 

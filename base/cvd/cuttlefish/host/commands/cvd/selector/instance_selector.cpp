@@ -40,7 +40,7 @@ Result<InstanceSelector> InstanceSelector::GetSelector(
   return instance_selector;
 }
 
-Result<std::pair<cvd::Instance, LocalInstanceGroup>>
+Result<std::pair<LocalInstance, LocalInstanceGroup>>
 InstanceSelector::FindInstanceWithGroup(
     const InstanceDatabase& instance_database) {
   if (queries_.empty()) {
@@ -50,12 +50,12 @@ InstanceSelector::FindInstanceWithGroup(
   return CF_EXPECT(instance_database.FindInstanceWithGroup(queries_));
 }
 
-Result<std::pair<cvd::Instance, LocalInstanceGroup>>
+Result<std::pair<LocalInstance, LocalInstanceGroup>>
 InstanceSelector::FindDefaultInstance(
     const InstanceDatabase& instance_database) {
   auto group = CF_EXPECT(GetDefaultGroup(instance_database));
   const auto instances = group.Instances();
-  CF_EXPECT_EQ(instances.size(), 1,
+  CF_EXPECT_EQ(instances.size(), 1u,
                "Default instance is the single instance in the default group.");
   return std::make_pair(*instances.cbegin(), group);
 }

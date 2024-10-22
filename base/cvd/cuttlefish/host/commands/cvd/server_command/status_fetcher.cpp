@@ -24,8 +24,10 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/core.h>
+#include <json/json.h>
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/json.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/flag.h"
@@ -76,21 +78,21 @@ std::string HumanFriendlyStateName(cvd::InstanceState state) {
 // including some that cvd_internal_status normally returns but doesn't when the
 // instance is not running.
 void OverrideInstanceJson(const selector::LocalInstanceGroup& group,
-                          const cvd::Instance& instance,
+                          const selector::LocalInstance& instance,
                           Json::Value& instance_json) {
   instance_json["instance_name"] = instance.name();
   instance_json["status"] = HumanFriendlyStateName(instance.state());
   instance_json["assembly_dir"] = group.AssemblyDir();
-  instance_json["instance_dir"] = group.InstanceDir(instance);
+  instance_json["instance_dir"] = instance.instance_dir();
   instance_json["instance_name"] = instance.name();
-  if (selector::LocalInstanceGroup::InstanceIsActive(instance)) {
+  if (instance.IsActive()) {
     // Only running instances have id > 0, these values only make sense for
     // running instances.
     instance_json["web_access"] =
         fmt::format("https://localhost:1443/devices/{}/files/client.html",
                     instance.webrtc_device_id());
     instance_json["webrtc_device_id"] = instance.webrtc_device_id();
-    instance_json["adb_port"] = selector::AdbPort(instance);
+    instance_json["adb_port"] = instance.adb_port();
   }
 }
 
@@ -98,7 +100,8 @@ void OverrideInstanceJson(const selector::LocalInstanceGroup& group,
 
 Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
     const CommandRequest& request,
-    const InstanceManager::LocalInstanceGroup& group, cvd::Instance& instance) {
+    const InstanceManager::LocalInstanceGroup& group,
+    selector::LocalInstance& instance) {
   // Only running instances are capable of responding to status requests. An
   // unreachable instance is also considered running, it just didnt't reply last
   // time.
@@ -184,7 +187,6 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
     instance.set_state(cvd::INSTANCE_STATE_UNREACHABLE);
     instance_status_json["warning"] = "cvd status failed";
   }
-  instance_manager_.UpdateInstance(group, instance);
   OverrideInstanceJson(group, instance, instance_status_json);
 
   return StatusFetcherOutput{
@@ -206,7 +208,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
   auto instance_group =
       CF_EXPECT(instance_manager_.SelectGroup(request.Selectors(), env));
 
-  std::vector<cvd::Instance> instances;
+  std::vector<selector::LocalInstance> instances;
   auto instance_record_result =
       instance_manager_.SelectInstance(request.Selectors(), env);
 
@@ -215,11 +217,9 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
     instances.emplace_back(instance_record_result->first);
   } else {
     if (status_the_group_flag) {
-      const auto& instance_list = instance_group.Instances();
-      instances = std::vector<cvd::Instance>(instance_list.begin(),
-                                             instance_list.end());
+      instances = instance_group.Instances();
     } else {
-      std::map<int, const cvd::Instance&> sorted_id_instance_map;
+      std::map<int, const selector::LocalInstance> sorted_id_instance_map;
       for (const auto& instance : instance_group.Instances()) {
         sorted_id_instance_map.emplace(instance.id(), instance);
       }
@@ -236,6 +236,7 @@ Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
     instances_json.append(instance_status_json);
     entire_stderr_msg.append(status_stderr);
   }
+  instance_manager_.UpdateInstanceGroup(instance_group);
 
   cvd::Response response;
   response.mutable_command_response();

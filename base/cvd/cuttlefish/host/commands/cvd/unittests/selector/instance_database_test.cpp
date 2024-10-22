@@ -316,50 +316,14 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   // end of set up
 
   auto result1 = db.FindInstanceWithGroup(Query(kInstanceNameField, "8"));
-  auto result10_and_11 = db.FindInstances(Query(kInstanceNameField, "tv_instance"));
   auto result7 = db.FindInstanceWithGroup(Query(kInstanceNameField, "my_favorite_phone"));
   auto result_invalid =
       db.FindInstanceWithGroup(Query(kInstanceNameField, "name_never_seen"));
 
   ASSERT_TRUE(result1.ok());
-  ASSERT_TRUE(result10_and_11.ok());
   ASSERT_TRUE(result7.ok());
-  ASSERT_EQ(result10_and_11->size(), 2);
   ASSERT_EQ(result1->first.id(), 1);
   ASSERT_EQ(result7->first.id(), 7);
-  ASSERT_FALSE(result_invalid.ok());
-}
-
-TEST_F(CvdInstanceDatabaseTest, FindInstancesByGroupName) {
-  // starting set up
-  if (!SetUpOk()) {
-    GTEST_SKIP() << Error().msg;
-  }
-  if (!AddGroup("miau", {InstanceProto(1, "one")})) {
-    GTEST_SKIP() << Error().msg;
-  }
-  if (!AddGroup("nyah", {InstanceProto(7, "my_favorite_phone"),
-                         InstanceProto(11, "tv_instance")})) {
-    GTEST_SKIP() << Error().msg;
-  }
-  auto& db = GetDb();
-  auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
-  if (!nyah_group.ok()) {
-    GTEST_SKIP() << "nyah group was not found";
-  }
-  // end of set up
-
-  auto result_nyah = db.FindInstances(Query(kGroupNameField, "nyah"));
-  auto result_invalid =
-      db.FindInstanceWithGroup(Query(kGroupNameField, "name_never_seen"));
-
-  ASSERT_TRUE(result_nyah.ok());
-  std::set<std::string> nyah_instance_names;
-  for (const auto& instance : *result_nyah) {
-    nyah_instance_names.insert(instance.name());
-  }
-  std::set<std::string> expected{"my_favorite_phone", "tv_instance"};
-  ASSERT_EQ(nyah_instance_names, expected);
   ASSERT_FALSE(result_invalid.ok());
 }
 

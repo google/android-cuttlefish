@@ -41,13 +41,13 @@ class InstanceSelector {
    *
    * If group not given, not yet supported. Will be in next CLs
    */
-  Result<std::pair<cvd::Instance, LocalInstanceGroup>> FindInstanceWithGroup(
+  Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
       const InstanceDatabase& instance_database);
 
  private:
   InstanceSelector(Queries& queries) : queries_(queries) {}
 
-  Result<std::pair<cvd::Instance, LocalInstanceGroup>> FindDefaultInstance(
+  Result<std::pair<LocalInstance, LocalInstanceGroup>> FindDefaultInstance(
       const InstanceDatabase& instance_database);
 
   const Queries queries_;

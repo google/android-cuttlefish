@@ -25,13 +25,14 @@
 
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/creation_analyzer.h"
 #include "host/commands/cvd/selector/group_selector.h"
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
+#include "host/commands/cvd/selector/instance_group_record.h"
+#include "host/commands/cvd/selector/instance_record.h"
 #include "host/commands/cvd/selector/instance_selector.h"
 #include "host/commands/cvd/selector/selector_common_parser.h"
 
@@ -40,6 +41,7 @@ namespace cuttlefish {
 class InstanceManager {
  public:
   using GroupCreationInfo = selector::GroupCreationInfo;
+  using LocalInstance = selector::LocalInstance;
   using LocalInstanceGroup = selector::LocalInstanceGroup;
   using GroupSelector = selector::GroupSelector;
   using InstanceSelector = selector::InstanceSelector;
@@ -59,7 +61,7 @@ class InstanceManager {
       const selector::SelectorOptions& selector_options,
       const cvd_common::Envs& envs, const Queries& extra_queries = {});
 
-  Result<std::pair<cvd::Instance, LocalInstanceGroup>> SelectInstance(
+  Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
       const selector::SelectorOptions& selector_options,
       const cvd_common::Envs& envs, const Queries& extra_queries = {});
 
@@ -67,8 +69,6 @@ class InstanceManager {
   Result<LocalInstanceGroup> CreateInstanceGroup(
       const selector::GroupCreationInfo& group_info);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
-  Result<void> UpdateInstance(const LocalInstanceGroup& group,
-                              const cvd::Instance& instance);
   Result<bool> RemoveInstanceGroupByHome(const std::string&);
 
   cvd::Status CvdClear(const CommandRequest&);
@@ -87,7 +87,7 @@ class InstanceManager {
 
   Result<void> IssueStopCommand(const CommandRequest& request,
                                 const std::string& config_file_path,
-                                selector::LocalInstanceGroup& group);
+                                LocalInstanceGroup& group);
 
  private:
   Result<std::string> StopBin(const std::string& host_android_out);
