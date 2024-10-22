@@ -1,0 +1,17 @@
+cc_library(
+    name = "directories",
+    srcs = [
+        "xdg.cpp",
+    ],
+    hdrs = [
+        "xdg.h",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+    ],
+)
