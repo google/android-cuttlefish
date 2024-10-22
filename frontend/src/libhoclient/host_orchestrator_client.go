@@ -11,7 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package client
+
+package libhoclient
 
 import (
 	"crypto/tls"
@@ -28,6 +29,20 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pion/webrtc/v3"
 )
+
+type ApiCallError struct {
+	Code     int    `json:"code,omitempty"`
+	ErrorMsg string `json:"error,omitempty"`
+	Details  string `json:"details,omitempty"`
+}
+
+func (e *ApiCallError) Error() string {
+	str := fmt.Sprintf("api call error %d: %s", e.Code, e.ErrorMsg)
+	if e.Details != "" {
+		str += fmt.Sprintf("\n\nDETAILS: %s", e.Details)
+	}
+	return str
+}
 
 type ConnectWebRTCOpts struct {
 	LocalICEConfig *wclient.ICEConfig

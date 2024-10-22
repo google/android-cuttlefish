@@ -6,7 +6,6 @@ gazelle(name = "gazelle")
 go_library(
     name = "libhoclient",
     srcs = [
-        "client.go",
         "host_orchestrator_client.go",
         "httputils.go",
     ],
@@ -16,7 +15,6 @@ go_library(
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_google_android_cuttlefish_frontend_src_host_orchestrator//api/v1:api",
         "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
-        "@com_github_google_cloud_android_orchestration//api/v1:api",
         "@com_github_google_cloud_android_orchestration//pkg/webrtcclient",
         "@com_github_gorilla_websocket//:websocket",
         "@com_github_hashicorp_go_multierror//:go-multierror",
@@ -27,14 +25,12 @@ go_library(
 go_test(
     name = "libhoclient_test",
     srcs = [
-        "client_test.go",
         "host_orchestrator_client_test.go",
         "httputils_test.go",
     ],
     embed = [":libhoclient"],
     deps = [
         "@com_github_google_android_cuttlefish_frontend_src_host_orchestrator//api/v1:api",
-        "@com_github_google_cloud_android_orchestration//api/v1:api",
         "@com_github_google_go_cmp//cmp",
         "@com_github_hashicorp_go_multierror//:go-multierror",
     ],

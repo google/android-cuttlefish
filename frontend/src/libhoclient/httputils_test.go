@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+package libhoclient
 
 import (
 	"io"
@@ -21,8 +21,7 @@ import (
 	"testing"
 	"time"
 
-	apiv1 "github.com/google/cloud-android-orchestration/api/v1"
-
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -35,7 +34,7 @@ func TestRetryLogic(t *testing.T) {
 			writeErr(w, http.StatusServiceUnavailable)
 			return
 		}
-		writeOK(w, &apiv1.HostInstance{Name: "foo"})
+		writeOK(w, &apiv1.CVD{Name: "foo"})
 		return
 	}))
 	defer ts.Close()
@@ -49,14 +48,14 @@ func TestRetryLogic(t *testing.T) {
 		RetryDelay:  1 * time.Millisecond,
 		MaxWait:     1 * time.Minute,
 	}
-	res := &apiv1.HostInstance{}
+	res := &apiv1.CVD{}
 
 	err := helper.NewPostRequest("", nil).JSONResDoWithRetries(res, retryOpts)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expected := &apiv1.HostInstance{Name: "foo"}
+	expected := &apiv1.CVD{Name: "foo"}
 	if diff := cmp.Diff(expected, res); diff != "" {
 		t.Errorf("host instance mismatch (-want +got):\n%s", diff)
 	}
@@ -77,7 +76,7 @@ func TestRetryLogicMaxWaitElapsed(t *testing.T) {
 		StatusCodes: []int{http.StatusServiceUnavailable},
 		MaxWait:     10 * time.Millisecond,
 	}
-	res := &apiv1.HostInstance{}
+	res := &apiv1.CVD{}
 
 	err := helper.NewPostRequest("", nil).JSONResDoWithRetries(res, retryOpts)
 

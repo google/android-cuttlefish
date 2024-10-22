@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+package libhoclient
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/cenkalti/backoff/v4"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -31,6 +30,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cenkalti/backoff/v4"
 )
 
 type HTTPHelper struct {
@@ -291,7 +292,9 @@ func (u *FilesUploader) Upload(files []string) error {
 	var returnErr error
 	for err := range resultsChan {
 		if err != nil {
-			fmt.Fprintf(u.DumpOut, "Error uploading file chunk: %v\n", err)
+			if u.DumpOut != nil {
+				fmt.Fprintf(u.DumpOut, "Error uploading file chunk: %v\n", err)
+			}
 			if returnErr == nil {
 				returnErr = err
 				safeCancel()
