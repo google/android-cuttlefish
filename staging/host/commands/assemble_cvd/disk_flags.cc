@@ -121,9 +121,13 @@ DEFINE_string(fuchsia_multiboot_bin_path, CF_DEFAULTS_FUCHSIA_MULTIBOOT_BIN_PATH
 DEFINE_string(fuchsia_root_image, CF_DEFAULTS_FUCHSIA_ROOT_IMAGE,
               "Location of fuchsia root filesystem image for cuttlefish otheros flow.");
 
-DEFINE_string(custom_partition_path, CF_DEFAULTS_CUSTOM_PARTITION_PATH,
-              "Location of custom image that will be passed as a \"custom\" partition"
-              "to rootfs and can be used by /dev/block/by-name/custom");
+DEFINE_string(
+    custom_partition_path, CF_DEFAULTS_CUSTOM_PARTITION_PATH,
+    "Location of custom image that will be passed as a \"custom\" partition"
+    "to rootfs and can be used by /dev/block/by-name/custom. Multiple images "
+    "can be passed, separated by semicolons and can be used as "
+    "/dev/block/by-name/custom_1, /dev/block/by-name/custom_2, etc. Example: "
+    "--custom_partition_path=\"/path/to/custom.img;/path/to/other.img\"");
 
 DEFINE_string(
     hibernation_image, CF_DEFAULTS_HIBERNATION_IMAGE,
@@ -472,11 +476,15 @@ std::vector<ImagePartition> android_composite_disk_config(
 
   const auto custom_partition_path = instance.custom_partition_path();
   if (!custom_partition_path.empty()) {
-    partitions.push_back(ImagePartition{
-        .label = "custom",
-        .image_file_path = AbsolutePath(custom_partition_path),
-        .read_only = FLAGS_use_overlay,
-    });
+    auto custom_partition_paths =
+        android::base::Split(custom_partition_path, ";");
+    for (int i = 0; i < custom_partition_paths.size(); i++) {
+      partitions.push_back(ImagePartition{
+          .label = i > 0 ? "custom_" + std::to_string(i) : "custom",
+          .image_file_path = AbsolutePath(custom_partition_paths[i]),
+          .read_only = FLAGS_use_overlay,
+      });
+    }
   }
 
   return partitions;
