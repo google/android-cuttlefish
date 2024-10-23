@@ -46,6 +46,7 @@
 #include "host/libs/web/caching_build_api.h"
 #include "host/libs/web/chrome_os_build_string.h"
 #include "host/libs/web/credential_source.h"
+#include "host/libs/web/http_client/curl_global_init.h"
 #include "host/libs/web/http_client/http_client.h"
 #include "host/libs/web/luci_build_api.h"
 
@@ -857,47 +858,43 @@ Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
   setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
   setenv("ANDROID_ROOT", "/", /* overwrite */ 0);
 #endif
+  CurlGlobalInit curl_init;
 
-  curl_global_init(CURL_GLOBAL_DEFAULT);
-  {
-    std::unique_ptr<BuildApi> build_api =
-        CF_EXPECT(GetBuildApi(flags.build_api_flags));
-    LuciBuildApi luci_build_api =
-        CF_EXPECT(GetLuciBuildApi(flags.build_api_flags));
-    FetchTracer tracer;
-    FetchTracer::Trace prefetch_trace = tracer.NewTrace("PreFetch actions");
-    CF_EXPECT(UpdateTargetsWithBuilds(*build_api, targets));
-    std::optional<Build> fallback_host_build = std::nullopt;
-    if (!targets.empty()) {
-      fallback_host_build = targets[0].builds.default_build;
-    }
-    const auto host_target_build =
-        CF_EXPECT(GetHostBuild(*build_api, host_target, fallback_host_build));
-    prefetch_trace.CompletePhase("GetBuilds");
-
-    auto host_package_future =
-        std::async(std::launch::async, FetchHostPackage, std::ref(*build_api),
-                   std::cref(host_target_build),
-                   std::cref(host_target.host_tools_directory),
-                   std::cref(flags.keep_downloaded_archives),
-                   tracer.NewTrace("Host Package"));
-    size_t count = 1;
-    for (const auto& target : targets) {
-      LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
-      FetcherConfig config;
-      CF_EXPECT(FetchTarget(*build_api, luci_build_api, target.builds,
-                            target.directories, target.download_flags,
-                            flags.keep_downloaded_archives, config, tracer));
-      CF_EXPECT(SaveConfig(config, target.directories.root));
-      LOG(INFO) << "Completed target fetch to '" << target.directories.root
-                << "' (" << count << " out of " << targets.size() << ")";
-      count++;
-    }
-    LOG(DEBUG) << "Waiting for host package fetch";
-    CF_EXPECT(host_package_future.get());
-    LOG(DEBUG) << "Performance stats:\n" << tracer.ToStyledString();
+  std::unique_ptr<BuildApi> build_api =
+      CF_EXPECT(GetBuildApi(flags.build_api_flags));
+  LuciBuildApi luci_build_api =
+      CF_EXPECT(GetLuciBuildApi(flags.build_api_flags));
+  FetchTracer tracer;
+  FetchTracer::Trace prefetch_trace = tracer.NewTrace("PreFetch actions");
+  CF_EXPECT(UpdateTargetsWithBuilds(*build_api, targets));
+  std::optional<Build> fallback_host_build = std::nullopt;
+  if (!targets.empty()) {
+    fallback_host_build = targets[0].builds.default_build;
   }
-  curl_global_cleanup();
+  const auto host_target_build =
+      CF_EXPECT(GetHostBuild(*build_api, host_target, fallback_host_build));
+  prefetch_trace.CompletePhase("GetBuilds");
+
+  auto host_package_future = std::async(
+      std::launch::async, FetchHostPackage, std::ref(*build_api),
+      std::cref(host_target_build), std::cref(host_target.host_tools_directory),
+      std::cref(flags.keep_downloaded_archives),
+      tracer.NewTrace("Host Package"));
+  size_t count = 1;
+  for (const auto& target : targets) {
+    LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
+    FetcherConfig config;
+    CF_EXPECT(FetchTarget(*build_api, luci_build_api, target.builds,
+                          target.directories, target.download_flags,
+                          flags.keep_downloaded_archives, config, tracer));
+    CF_EXPECT(SaveConfig(config, target.directories.root));
+    LOG(INFO) << "Completed target fetch to '" << target.directories.root
+              << "' (" << count << " out of " << targets.size() << ")";
+    count++;
+  }
+  LOG(DEBUG) << "Waiting for host package fetch";
+  CF_EXPECT(host_package_future.get());
+  LOG(DEBUG) << "Performance stats:\n" << tracer.ToStyledString();
 
   LOG(INFO) << "Completed all fetches";
   return {};
