@@ -93,8 +93,13 @@ type HostOrchestratorService interface {
 	CreateBugreport(group string, dst io.Writer) error
 }
 
-const DefaultHostOrchestratorCredentialsHeader = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
-const BuildAPICredsUserProjectIDHeader = "X-Cutf-Host-Orchestrator-BuildAPI-Creds-User-Project-ID"
+const (
+	HTTPHeaderBuildAPICreds              = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
+	HTTPHeaderBuildAPICredsUserProjectID = "X-Cutf-Host-Orchestrator-BuildAPI-Creds-User-Project-ID"
+	// If used, the Cloud Orchestrator proxy would set/override the "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
+	// http header.
+	HTTPHeaderCOInjectBuildAPICreds = "X-Cutf-Cloud-Orchestrator-Inject-BuildAPI-Creds"
+)
 
 func NewHostOrchestratorService(url string) HostOrchestratorService {
 	return &HostOrchestratorServiceImpl{
@@ -102,14 +107,12 @@ func NewHostOrchestratorService(url string) HostOrchestratorService {
 			Client:       http.DefaultClient,
 			RootEndpoint: url,
 		},
-		BuildAPICredentialsHeader: DefaultHostOrchestratorCredentialsHeader,
 	}
 }
 
 type HostOrchestratorServiceImpl struct {
-	HTTPHelper                HTTPHelper
-	BuildAPICredentialsHeader string
-	ProxyURL                  string
+	HTTPHelper HTTPHelper
+	ProxyURL   string
 }
 
 func (c *HostOrchestratorServiceImpl) getInfraConfig() (*opapi.InfraConfig, error) {
@@ -308,7 +311,7 @@ func (c *HostOrchestratorServiceImpl) waitForOperation(name string, res any, ret
 func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICredential) (*hoapi.FetchArtifactsResponse, error) {
 	var op hoapi.Operation
 	rb := c.HTTPHelper.NewPostRequest("/artifacts", req)
-	addBuildAPICredsHeaders(rb, creds)
+	handleBuildAPICredsHeaders(rb, creds)
 	if err := rb.JSONResDo(&op); err != nil {
 		return nil, err
 	}
@@ -323,7 +326,7 @@ func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRe
 func (c *HostOrchestratorServiceImpl) CreateCVDOp(req *hoapi.CreateCVDRequest, creds BuildAPICredential) (*hoapi.Operation, error) {
 	op := &hoapi.Operation{}
 	rb := c.HTTPHelper.NewPostRequest("/cvds", req)
-	addBuildAPICredsHeaders(rb, creds)
+	handleBuildAPICredsHeaders(rb, creds)
 	if err := rb.JSONResDo(op); err != nil {
 		return nil, err
 	}
@@ -464,11 +467,23 @@ func asWebRTCICEServers(in []opapi.IceServer) []webrtc.ICEServer {
 	return out
 }
 
+func handleBuildAPICredsHeaders(rb *HTTPRequestBuilder, creds BuildAPICredential) {
+	if creds.AccessToken == "inject" {
+		addCOBuildAPICredsInjectHeader(rb)
+	} else {
+		addBuildAPICredsHeaders(rb, creds)
+	}
+}
+
 func addBuildAPICredsHeaders(rb *HTTPRequestBuilder, creds BuildAPICredential) {
 	if creds.AccessToken != "" {
-		rb.AddHeader(DefaultHostOrchestratorCredentialsHeader, creds.AccessToken)
+		rb.AddHeader(HTTPHeaderBuildAPICreds, creds.AccessToken)
 		if creds.UserProjectID != "" {
-			rb.AddHeader(BuildAPICredsUserProjectIDHeader, creds.UserProjectID)
+			rb.AddHeader(HTTPHeaderBuildAPICredsUserProjectID, creds.UserProjectID)
 		}
 	}
+}
+
+func addCOBuildAPICredsInjectHeader(rb *HTTPRequestBuilder) {
+	rb.AddHeader(HTTPHeaderCOInjectBuildAPICreds, "inject" /* avoid empty header value */)
 }

@@ -17,7 +17,6 @@ go_library(
         "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
         "@com_github_google_cloud_android_orchestration//pkg/webrtcclient",
         "@com_github_gorilla_websocket//:websocket",
-        "@com_github_hashicorp_go_multierror//:go-multierror",
         "@com_github_pion_webrtc_v3//:webrtc",
     ],
 )
@@ -32,6 +31,5 @@ go_test(
     deps = [
         "@com_github_google_android_cuttlefish_frontend_src_host_orchestrator//api/v1:api",
         "@com_github_google_go_cmp//cmp",
-        "@com_github_hashicorp_go_multierror//:go-multierror",
     ],
 )
