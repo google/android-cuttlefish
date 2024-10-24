@@ -82,7 +82,7 @@ func TestInstance(t *testing.T) {
 		EnvConfig: envConfig,
 	}
 
-	got, createErr := srv.CreateCVD(createReq, hoclient.BuildAPICredential{})
+	got, createErr := srv.CreateCVD(createReq, &hoclient.AccessTokenBuildAPICreds{})
 
 	if err := common.DownloadHostBugReport(srv, group_name); err != nil {
 		t.Errorf("failed creating bugreport: %s\n", err)

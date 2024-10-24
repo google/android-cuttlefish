@@ -49,7 +49,7 @@ func TestCreateSingleInstance(t *testing.T) {
 		},
 	}
 
-	got, createErr := srv.CreateCVD(createReq, hoclient.BuildAPICredential{})
+	got, createErr := srv.CreateCVD(createReq, &hoclient.AccessTokenBuildAPICreds{})
 
 	if err := common.DownloadHostBugReport(srv, "cvd"); err != nil {
 		t.Errorf("failed creating bugreport: %s\n", err)
