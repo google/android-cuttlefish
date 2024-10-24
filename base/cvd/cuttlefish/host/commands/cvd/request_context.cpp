@@ -39,6 +39,7 @@
 #include "host/commands/cvd/server_command/help.h"
 #include "host/commands/cvd/server_command/lint.h"
 #include "host/commands/cvd/server_command/load_configs.h"
+#include "host/commands/cvd/server_command/login.h"
 #include "host/commands/cvd/server_command/noop.h"
 #include "host/commands/cvd/server_command/power.h"
 #include "host/commands/cvd/server_command/remove.h"
@@ -79,6 +80,7 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(NewLintCommand());
   request_handlers_.emplace_back(
       NewLoadConfigsCommand(command_sequence_executor_, instance_manager_));
+  request_handlers_.emplace_back(NewLoginCommand());
   request_handlers_.emplace_back(
       NewCvdDevicePowerCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewRemoveCvdCommandHandler(instance_manager_));

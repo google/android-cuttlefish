@@ -120,7 +120,8 @@ Result<std::string> ReadCvdDataFile(std::string_view path) {
 
 Result<void> WriteCvdDataFile(std::string_view path, std::string contents) {
   std::string full_path = fmt::format("{}/{}", CvdDataHome(), path);
-  CF_EXPECTF(android::base::WriteStringToFile(full_path, std::move(contents)),
+  CF_EXPECT(EnsureDirectoryExists(android::base::Dirname(full_path), 0700));
+  CF_EXPECTF(android::base::WriteStringToFile(std::move(contents), full_path),
              "{}", strerror(errno));
   return {};
 }
