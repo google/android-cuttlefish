@@ -29,6 +29,7 @@
 
 #include "common/libs/utils/result.h"
 #include "host/libs/web/android_build_string.h"
+#include "host/libs/web/build_api.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
 
@@ -37,37 +38,7 @@ namespace cuttlefish {
 inline constexpr char kAndroidBuildServiceUrl[] =
     "https://www.googleapis.com/android/internal/build/v3";
 
-struct DeviceBuild {
-  DeviceBuild(std::string id, std::string target,
-              std::optional<std::string> filepath);
-
-  std::string id;
-  std::string target;
-  std::string product;
-  std::optional<std::string> filepath;
-};
-
-std::ostream& operator<<(std::ostream&, const DeviceBuild&);
-
-struct DirectoryBuild {
-  // TODO(schuffelen): Support local builds other than "eng"
-  DirectoryBuild(std::vector<std::string> paths, std::string target,
-                 std::optional<std::string> filepath);
-
-  std::vector<std::string> paths;
-  std::string target;
-  std::string id;
-  std::string product;
-  std::optional<std::string> filepath;
-};
-
-std::ostream& operator<<(std::ostream&, const DirectoryBuild&);
-
-using Build = std::variant<DeviceBuild, DirectoryBuild>;
-
-std::ostream& operator<<(std::ostream&, const Build&);
-
-class BuildApi {
+class BuildApi : public IBuildApi {
  public:
   BuildApi() = delete;
   BuildApi(BuildApi&&) = delete;
@@ -81,14 +52,16 @@ class BuildApi {
   Result<Build> GetBuild(const BuildString& build_string,
                          const std::string& fallback_target);
 
-  virtual Result<std::string> DownloadFile(const Build& build,
+  Result<std::string> DownloadFile(const Build& build,
                                            const std::string& target_directory,
                                            const std::string& artifact_name);
 
-  virtual Result<std::string> DownloadFileWithBackup(
+  Result<std::string> DownloadFileWithBackup(
       const Build& build, const std::string& target_directory,
       const std::string& artifact_name,
       const std::string& backup_artifact_name);
+
+  Result<std::string> GetBuildZipName(const Build& build, const std::string& name);
 
  private:
   Result<std::vector<std::string>> Headers();
@@ -142,7 +115,6 @@ class BuildApi {
   std::string project_id_;
 };
 
-std::string GetBuildZipName(const Build& build, const std::string& name);
 
 std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);
 

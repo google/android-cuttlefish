@@ -446,7 +446,7 @@ Result<std::string> BuildApi::DownloadTargetFile(
  * For example, for a target "aosp_cf_x86_phone-userdebug" at a build "5824130",
  * the image zip file would be "aosp_cf_x86_phone-img-5824130.zip"
  */
-std::string GetBuildZipName(const Build& build, const std::string& name) {
+Result<std::string> BuildApi::GetBuildZipName(const Build& build, const std::string& name) {
   std::string product =
       std::visit([](auto&& arg) { return arg.product; }, build);
   auto id = std::visit([](auto&& arg) { return arg.id; }, build);

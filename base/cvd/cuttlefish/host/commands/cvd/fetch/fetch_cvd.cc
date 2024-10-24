@@ -290,7 +290,7 @@ Result<void> EnsureDirectoriesExist(const std::string& target_directory,
   return {};
 }
 
-Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
+Result<void> FetchHostPackage(IBuildApi& build_api, const Build& build,
                               const std::string& target_dir,
                               const bool keep_archives,
                               FetchTracer::Trace trace) {
@@ -312,10 +312,10 @@ Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
 }
 
 Result<std::vector<std::string>> FetchSystemImgZipImages(
-    BuildApi& build_api, const Build& build,
+    IBuildApi& build_api, const Build& build,
     const std::string& target_directory, const bool keep_downloaded_archives) {
   LOG(INFO) << "Downloading system image zip for " << build;
-  const std::string system_img_zip_name = GetBuildZipName(build, "img");
+  const std::string system_img_zip_name = CF_EXPECT(build_api.GetBuildZipName(build, "img"));
   std::string system_img_zip = CF_EXPECTF(
       build_api.DownloadFile(build, target_directory, system_img_zip_name),
       "Unable to download {}", system_img_zip_name);
@@ -326,7 +326,17 @@ Result<std::vector<std::string>> FetchSystemImgZipImages(
       system_img_zip_name);
 }
 
-Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
+Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
+      HttpClient& http_client,
+      const BuildApiFlags& flags,
+      const std::string& oauth_filepath) {
+      return CF_EXPECT(GetCredentialSource(
+          http_client, flags.credential_source, oauth_filepath,
+          flags.credential_flags.use_gce_metadata,
+          flags.credential_flags.credential_filepath,
+          flags.credential_flags.service_account_filepath));
+      }
+Result<std::unique_ptr<IBuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   auto resolver =
       flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
   const bool use_logging_debug_function = true;
@@ -335,15 +345,9 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   std::unique_ptr<HttpClient> retrying_http_client =
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
-  std::string oauth_filepath =
-      StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
   std::unique_ptr<CredentialSource> credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
-
+      CF_EXPECT(GetCredentialSourceFromFlags(*retrying_http_client, flags,
+              StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat"));
   const auto cache_base_path = PerUserDir() + "/cache";
   return CreateBuildApi(std::move(retrying_http_client), std::move(curl),
                         std::move(credential_source), std::move(flags.api_key),
@@ -361,22 +365,12 @@ Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {
   std::unique_ptr<HttpClient> retrying_http_client =
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
-  std::string luci_oauth_filepath =
-      StringFromEnv("HOME", ".") + "/.config/chrome_infra/auth/tokens.json";
   std::unique_ptr<CredentialSource> luci_credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, luci_oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
-
-  std::string gsutil_oauth_filepath = StringFromEnv("HOME", ".") + "/.boto";
+      CF_EXPECT(GetCredentialSourceFromFlags(*retrying_http_client, flags,
+                   StringFromEnv("HOME", ".") + "/.config/chrome_infra/auth/tokens.json"));
   std::unique_ptr<CredentialSource> gsutil_credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, gsutil_oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
+      CF_EXPECT(GetCredentialSourceFromFlags(*retrying_http_client, flags,
+                                StringFromEnv("HOME", ".") + "/.boto" ));
 
   return LuciBuildApi(std::move(retrying_http_client), std::move(curl),
                       std::move(luci_credential_source),
@@ -384,7 +378,7 @@ Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {
 }
 
 Result<std::optional<Build>> GetBuildHelper(
-    BuildApi& build_api, const std::optional<BuildString>& build_source,
+    IBuildApi& build_api, const std::optional<BuildString>& build_source,
     const std::string& fallback_target) {
   if (!build_source) {
     return std::nullopt;
@@ -395,7 +389,7 @@ Result<std::optional<Build>> GetBuildHelper(
                        << ")");
 }
 
-Result<Builds> GetBuilds(BuildApi& build_api,
+Result<Builds> GetBuilds(IBuildApi& build_api,
                          const BuildStrings& build_sources) {
   Builds result = Builds{
       .default_build = CF_EXPECT(GetBuildHelper(
@@ -425,7 +419,7 @@ Result<Builds> GetBuilds(BuildApi& build_api,
   return {result};
 }
 
-Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
+Result<void> UpdateTargetsWithBuilds(IBuildApi& build_api,
                                      std::vector<Target>& targets) {
   for (auto& target : targets) {
     target.builds = CF_EXPECT(GetBuilds(build_api, target.build_strings));
@@ -433,7 +427,7 @@ Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
   return {};
 }
 
-Result<Build> GetHostBuild(BuildApi& build_api, HostToolsTarget& host_target,
+Result<Build> GetHostBuild(IBuildApi& build_api, HostToolsTarget& host_target,
                            const std::optional<Build>& fallback_host_build) {
   auto host_package_build = CF_EXPECT(
       GetBuildHelper(build_api, host_target.build_string, kDefaultBuildTarget));
@@ -462,7 +456,7 @@ Result<void> SaveConfig(FetcherConfig& config,
   return {};
 }
 
-Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
+Result<void> FetchDefaultTarget(IBuildApi& build_api, const Builds& builds,
                                 const TargetDirectories& target_directories,
                                 const DownloadFlags& flags,
                                 const bool keep_downloaded_archives,
@@ -484,7 +478,7 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
 
   if (flags.download_img_zip) {
     LOG(INFO) << "Downloading image zip for " << *builds.default_build;
-    std::string img_zip_name = GetBuildZipName(*builds.default_build, "img");
+    std::string img_zip_name = CF_EXPECT(build_api.GetBuildZipName(*builds.default_build, "img"));
     std::string default_img_zip_filepath = CF_EXPECT(build_api.DownloadFile(
         *builds.default_build, target_directories.root, img_zip_name));
     trace.CompletePhase("Download image zip",
@@ -507,7 +501,7 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
   if (builds.system || flags.download_target_files_zip) {
     LOG(INFO) << "Downloading target files zip for " << *builds.default_build;
     std::string target_files_name =
-        GetBuildZipName(*builds.default_build, "target_files");
+        CF_EXPECT(build_api.GetBuildZipName(*builds.default_build, "target_files"));
     std::string target_files = CF_EXPECT(build_api.DownloadFile(
         *builds.default_build, target_directories.default_target_files,
         target_files_name));
@@ -520,13 +514,13 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
   return {};
 }
 
-Result<void> FetchSystemTarget(BuildApi& build_api, const Build& system_build,
+Result<void> FetchSystemTarget(IBuildApi& build_api, const Build& system_build,
                                const TargetDirectories& target_directories,
                                bool download_img_zip,
                                const bool keep_downloaded_archives,
                                FetcherConfig& config,
                                FetchTracer::Trace trace) {
-  std::string target_files_name = GetBuildZipName(system_build, "target_files");
+  std::string target_files_name = CF_EXPECT(build_api.GetBuildZipName(system_build, "target_files"));
   std::string target_files = CF_EXPECT(build_api.DownloadFile(
       system_build, target_directories.system_target_files, target_files_name));
   trace.CompletePhase("Download Target Files", FileSize(target_files_name));
@@ -611,7 +605,7 @@ Result<void> FetchSystemTarget(BuildApi& build_api, const Build& system_build,
   return {};
 }
 
-Result<void> FetchKernelTarget(BuildApi& build_api, const Build& kernel_build,
+Result<void> FetchKernelTarget(IBuildApi& build_api, const Build& kernel_build,
                                const std::string& target_directory,
                                FetcherConfig& config,
                                FetchTracer::Trace trace) {
@@ -644,11 +638,11 @@ Result<void> FetchKernelTarget(BuildApi& build_api, const Build& kernel_build,
   return {};
 }
 
-Result<void> FetchBootTarget(BuildApi& build_api, const Build& boot_build,
+Result<void> FetchBootTarget(IBuildApi& build_api, const Build& boot_build,
                              const std::string& target_directory,
                              const bool keep_downloaded_archives,
                              FetcherConfig& config, FetchTracer::Trace trace) {
-  std::string boot_img_zip_name = GetBuildZipName(boot_build, "img");
+  std::string boot_img_zip_name = CF_EXPECT(build_api.GetBuildZipName(boot_build, "img"));
   std::string downloaded_boot_filepath;
   std::optional<std::string> boot_filepath = GetFilepath(boot_build);
   if (boot_filepath) {
@@ -692,7 +686,7 @@ Result<void> FetchBootTarget(BuildApi& build_api, const Build& boot_build,
   return {};
 }
 
-Result<void> FetchBootloaderTarget(BuildApi& build_api,
+Result<void> FetchBootloaderTarget(IBuildApi& build_api,
                                    const Build& bootloader_build,
                                    const std::string& target_directory,
                                    FetcherConfig& config,
@@ -715,7 +709,7 @@ Result<void> FetchBootloaderTarget(BuildApi& build_api,
   return {};
 }
 
-Result<void> FetchAndroidEfiLoaderTarget(BuildApi& build_api,
+Result<void> FetchAndroidEfiLoaderTarget(IBuildApi& build_api,
                                          const Build& android_efi_loader_build,
                                          const std::string& target_directory,
                                          FetcherConfig& config,
@@ -745,7 +739,7 @@ Result<void> FetchAndroidEfiLoaderTarget(BuildApi& build_api,
   return {};
 }
 
-Result<void> FetchOtaToolsTarget(BuildApi& build_api,
+Result<void> FetchOtaToolsTarget(IBuildApi& build_api,
                                  const Build& otatools_build,
                                  const TargetDirectories& target_directories,
                                  const bool keep_downloaded_archives,
@@ -792,7 +786,7 @@ Result<void> FetchChromeOsTarget(
   return {};
 }
 
-Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
+Result<void> FetchTarget(IBuildApi& build_api, LuciBuildApi& luci_build_api,
                          const Builds& builds,
                          const TargetDirectories& target_directories,
                          const DownloadFlags& flags,
@@ -859,7 +853,7 @@ Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
-    std::unique_ptr<BuildApi> build_api =
+    std::unique_ptr<IBuildApi> build_api =
         CF_EXPECT(GetBuildApi(flags.build_api_flags));
     LuciBuildApi luci_build_api =
         CF_EXPECT(GetLuciBuildApi(flags.build_api_flags));

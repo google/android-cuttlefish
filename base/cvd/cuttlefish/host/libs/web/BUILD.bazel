@@ -13,6 +13,7 @@ cc_library(
     hdrs = [
         "android_build_api.h",
         "android_build_string.h",
+        "build_api.h",
         "caching_build_api.h",
         "chrome_os_build_string.h",
         "credential_source.h",

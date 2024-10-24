@@ -76,36 +76,37 @@ CachingPaths ConstructCachePaths(const std::string& cache_base,
 }  // namespace
 
 CachingBuildApi::CachingBuildApi(
-    std::unique_ptr<HttpClient> http_client,
-    std::unique_ptr<HttpClient> inner_http_client,
-    std::unique_ptr<CredentialSource> credential_source, std::string api_key,
-    const std::chrono::seconds retry_period, std::string api_base_url, std::string project_id,
-    const std::string cache_base_path)
-    : BuildApi(std::move(http_client), std::move(inner_http_client),
-               std::move(credential_source), std::move(api_key), retry_period,
-               std::move(api_base_url), std::move(project_id)),
-      cache_base_path_(std::move(cache_base_path)) {};
+    std::unique_ptr<IBuildApi> build_api, const std::string cache_base_path)
+              : build_api_(std::move(build_api)),
+                cache_base_path_(std::move(cache_base_path)) {};
 
 Result<bool> CachingBuildApi::CanCache(const std::string& target_directory) {
   return CF_EXPECT(CanHardLink(target_directory, cache_base_path_));
 }
 
+Result<Build> CachingBuildApi::GetBuild(const BuildString& build_string,
+                         const std::string& fallback_target) {
+  CF_EXPECT(build_api_ != nullptr);
+  return CF_EXPECT(build_api_->GetBuild(build_string, fallback_target));
+}
+
 Result<std::string> CachingBuildApi::DownloadFile(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name) {
+  CF_EXPECT(build_api_ != nullptr);
   if (!CF_EXPECT(CanCache(target_directory))) {
     LOG(WARNING)
         << "Caching disabled, unable to hard link between fetch directory \""
         << target_directory << "\" and cache directory \"" << cache_base_path_
         << "\"";
     return CF_EXPECT(
-        BuildApi::DownloadFile(build, target_directory, artifact_name));
+        build_api_->DownloadFile(build, target_directory, artifact_name));
   }
   const auto paths = ConstructCachePaths(cache_base_path_, build,
                                          target_directory, artifact_name);
   CF_EXPECT(EnsureDirectoryExists(paths.build_cache));
   if (!FileExists(paths.cache_artifact)) {
-    CF_EXPECT(BuildApi::DownloadFile(build, paths.build_cache, artifact_name));
+    CF_EXPECT(build_api_->DownloadFile(build, paths.build_cache, artifact_name));
   }
   return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                   kOverwriteExistingFile));
@@ -114,12 +115,13 @@ Result<std::string> CachingBuildApi::DownloadFile(
 Result<std::string> CachingBuildApi::DownloadFileWithBackup(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name, const std::string& backup_artifact_name) {
+  CF_EXPECT(build_api_ != nullptr);
   if (!CF_EXPECT(CanCache(target_directory))) {
     LOG(WARNING)
         << "Caching disabled, unable to hard link between fetch directory \""
         << target_directory << "\" and cache directory \"" << cache_base_path_
         << "\"";
-    return CF_EXPECT(BuildApi::DownloadFileWithBackup(
+    return CF_EXPECT(build_api_->DownloadFileWithBackup(
         build, target_directory, artifact_name, backup_artifact_name));
   }
   const auto paths =
@@ -135,7 +137,7 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
                                     paths.target_backup_artifact,
                                     kOverwriteExistingFile));
   }
-  const auto artifact_filepath = CF_EXPECT(BuildApi::DownloadFileWithBackup(
+  const auto artifact_filepath = CF_EXPECT(build_api_->DownloadFileWithBackup(
       build, paths.build_cache, artifact_name, backup_artifact_name));
   if (android::base::EndsWith(artifact_filepath, artifact_name)) {
     return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
@@ -144,23 +146,24 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
   return CF_EXPECT(CreateHardLink(paths.cache_backup_artifact,
                                   paths.target_backup_artifact));
 }
+Result<std::string> CachingBuildApi::GetBuildZipName(const Build& build, const std::string& name) {
+  CF_EXPECT(build_api_ != nullptr);
+  return CF_EXPECT(build_api_->GetBuildZipName(build, name));
+}
 
-std::unique_ptr<BuildApi> CreateBuildApi(
+std::unique_ptr<IBuildApi> CreateBuildApi(
     std::unique_ptr<HttpClient> http_client,
     std::unique_ptr<HttpClient> inner_http_client,
     std::unique_ptr<CredentialSource> credential_source, std::string api_key,
     const std::chrono::seconds retry_period, std::string api_base_url, std::string project_id,
     const bool enable_caching, const std::string cache_base_path) {
-  if (enable_caching && EnsureCacheDirectory(cache_base_path)) {
+   auto build_api = std::make_unique<BuildApi>(std::move(http_client), std::move(inner_http_client),
+                                                std::move(credential_source), std::move(api_key), retry_period,
+                                                std::move(api_base_url), std::move(project_id));
+   if (enable_caching && EnsureCacheDirectory(cache_base_path)) {
     return std::make_unique<CachingBuildApi>(
-        std::move(http_client), std::move(inner_http_client),
-        std::move(credential_source), std::move(api_key), retry_period,
-        std::move(api_base_url), std::move(project_id), std::move(cache_base_path));
+        std::move(build_api), std::move(cache_base_path));
   }
-  return std::make_unique<BuildApi>(
-      std::move(http_client), std::move(inner_http_client),
-      std::move(credential_source), std::move(api_key), retry_period,
-      std::move(api_base_url), std::move(project_id));
+  return std::move(build_api);
 }
-
 }  // namespace cuttlefish
