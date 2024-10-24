@@ -19,6 +19,8 @@
 #include <android-base/logging.h>
 #include <fmt/format.h>
 
+#include "host/commands/cvd/common_utils.h"
+
 namespace cuttlefish {
 namespace selector {
 
@@ -50,6 +52,10 @@ int LocalInstance::adb_port() const {
   // run_cvd picks this port from the instance id and doesn't provide a flag
   // to change in cvd_internal_flag
   return BASE_ADB_PORT + id() - BASE_INSTANCE_ID;
+}
+
+std::string LocalInstance::assembly_dir() const {
+  return AssemblyDirFromHome(home_directory());
 }
 
 bool LocalInstance::IsActive() const {
