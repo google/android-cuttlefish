@@ -42,6 +42,13 @@ class LocalInstance {
   }
   std::string instance_dir() const;
   int adb_port() const;
+  const std::string& home_directory() const {
+    return group_proto_->home_directory();
+  }
+  const std::string& host_artifacts_path() const {
+    return group_proto_->host_artifacts_path();
+  }
+  std::string assembly_dir() const;
 
   bool IsActive() const;
 

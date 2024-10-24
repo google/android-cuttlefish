@@ -22,6 +22,7 @@
 #include <android-base/parseint.h>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 
 namespace cuttlefish {
@@ -139,7 +140,7 @@ std::vector<LocalInstance> LocalInstanceGroup::FindByInstanceName(
 }
 
 std::string LocalInstanceGroup::AssemblyDir() const {
-  return HomeDir() + "/cuttlefish/assembly";
+  return AssemblyDirFromHome(HomeDir());
 }
 
 Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
