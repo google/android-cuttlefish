@@ -27,7 +27,6 @@
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/status_fetcher.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/config_constants.h"
@@ -168,8 +167,8 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
     // No attempt at selecting an instance, get group status instead
     selector::LocalInstanceGroup group = CF_EXPECT(
         instance_manager_.SelectGroup(request.Selectors(), request.Env()));
-    status_array = CF_EXPECT(FetchStatus(
-        group, std::chrono::seconds(flags.wait_for_launcher_seconds)));
+    status_array = CF_EXPECT(group.FetchStatus(
+        std::chrono::seconds(flags.wait_for_launcher_seconds)));
     instance_manager_.UpdateInstanceGroup(group);
   } else {
     std::pair<selector::LocalInstance, selector::LocalInstanceGroup> pair =
@@ -180,8 +179,8 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
                   CF_EXPECT(IdFromInstanceNameFlag(flags.instance_name))));
     selector::LocalInstance instance = pair.first;
     selector::LocalInstanceGroup group = pair.second;
-    status_array.append(CF_EXPECT(FetchStatus(
-        instance, std::chrono::seconds(flags.wait_for_launcher_seconds))));
+    status_array.append(CF_EXPECT(instance.FetchStatus(
+        std::chrono::seconds(flags.wait_for_launcher_seconds))));
     instance_manager_.UpdateInstanceGroup(group);
   }
 

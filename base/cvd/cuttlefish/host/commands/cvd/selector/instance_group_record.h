@@ -71,6 +71,10 @@ class LocalInstanceGroup {
    */
   std::vector<LocalInstance> FindByInstanceName(
       const std::string& instance_name) const;
+  // Fetches status from all instances in the group. Waits for run_cvd to
+  // respond for at most timeout seconds for each instance.
+  Result<Json::Value> FetchStatus(
+      std::chrono::seconds timeout = std::chrono::seconds(5));
 
  private:
   LocalInstanceGroup(const cvd::InstanceGroup& group_proto);

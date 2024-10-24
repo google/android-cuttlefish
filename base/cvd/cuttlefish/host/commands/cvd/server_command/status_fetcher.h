@@ -21,21 +21,13 @@
 #include <chrono>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/instance_record.h"
 
 namespace cuttlefish {
 
-// Fetches status from all instances in the group. Waits for the launcher to
-// respond for at most timeout seconds.
-Result<Json::Value> FetchStatus(
-    selector::LocalInstanceGroup& group,
-    std::chrono::seconds timeout = std::chrono::seconds(5));
-
-// Fetches status from a single instance. Waits for the launcher to respond
-// for at most timeout seconds.
-Result<Json::Value> FetchStatus(
-    selector::LocalInstance& instance,
-    std::chrono::seconds timeout = std::chrono::seconds(5));
+// Fetches status from a single instance. Waits for each run_cvd process to
+// respond within the given timeout.
+Result<Json::Value> FetchInstanceStatus(selector::LocalInstance& instance,
+                                        std::chrono::seconds timeout);
 
 }  // namespace cuttlefish

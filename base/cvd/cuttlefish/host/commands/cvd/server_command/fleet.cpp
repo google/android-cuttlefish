@@ -23,7 +23,6 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_request.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/status_fetcher.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -87,7 +86,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   auto all_groups = CF_EXPECT(instance_manager_.FindGroups({}));
   Json::Value groups_json(Json::arrayValue);
   for (auto& group : all_groups) {
-    groups_json.append(CF_EXPECT(FetchStatus(group)));
+    groups_json.append(CF_EXPECT(group.FetchStatus()));
   }
   Json::Value output_json(Json::objectValue);
   output_json["groups"] = groups_json;

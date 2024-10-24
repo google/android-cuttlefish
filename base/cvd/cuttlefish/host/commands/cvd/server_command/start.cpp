@@ -591,7 +591,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   listener_handle.reset();
 
-  auto group_json = CF_EXPECT(FetchStatus(group));
+  auto group_json = CF_EXPECT(group.FetchStatus());
   std::cout << group_json.toStyledString();
 
   return FillOutNewInstanceInfo(std::move(response), group);
