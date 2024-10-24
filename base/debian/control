@@ -61,6 +61,7 @@ Depends: adduser,
          python3,
          qemu-user-static [arm64],
          util-linux,
+         xdg-utils,
          ${misc:Depends},
          ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
