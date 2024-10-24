@@ -204,7 +204,7 @@ func TestCreateCVD(t *testing.T) {
 	srv := NewHostOrchestratorService(ts.URL)
 	req := &hoapi.CreateCVDRequest{EnvConfig: map[string]interface{}{}}
 
-	res, err := srv.CreateCVD(req, BuildAPICredential{})
+	res, err := srv.CreateCVD(req, &AccessTokenBuildAPICreds{})
 
 	if err != nil {
 		t.Fatal(err)
@@ -238,36 +238,7 @@ func TestCreateCVDWithUserProjectOverride(t *testing.T) {
 	srv := NewHostOrchestratorService(ts.URL)
 	req := &hoapi.CreateCVDRequest{EnvConfig: map[string]interface{}{}}
 
-	res, err := srv.CreateCVD(req, BuildAPICredential{AccessToken: token, UserProjectID: projectID})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	if diff := cmp.Diff(fakeRes, res); diff != "" {
-		t.Fatalf("response mismatch (-want +got):\n%s", diff)
-	}
-}
-
-func TestCreateCVDWithInjectAccessToken(t *testing.T) {
-	fakeRes := &hoapi.CreateCVDResponse{CVDs: []*hoapi.CVD{{Name: "1"}}}
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch ep := r.Method + " " + r.URL.Path; ep {
-		case "POST /cvds":
-			if len(r.Header.Get(HTTPHeaderCOInjectBuildAPICreds)) == 0 {
-				t.Fatalf("missing %s header", HTTPHeaderCOInjectBuildAPICreds)
-			}
-			writeOK(w, hoapi.Operation{Name: "foo"})
-		case "POST /operations/foo/:wait":
-			writeOK(w, fakeRes)
-		default:
-			t.Fatal("unexpected endpoint: " + ep)
-		}
-	}))
-	defer ts.Close()
-	srv := NewHostOrchestratorService(ts.URL)
-	req := &hoapi.CreateCVDRequest{EnvConfig: map[string]interface{}{}}
-
-	res, err := srv.CreateCVD(req, BuildAPICredential{AccessToken: "inject"})
+	res, err := srv.CreateCVD(req, &AccessTokenBuildAPICreds{AccessToken: token, UserProjectID: projectID})
 
 	if err != nil {
 		t.Fatal(err)
