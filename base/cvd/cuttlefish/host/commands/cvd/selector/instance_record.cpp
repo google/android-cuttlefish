@@ -20,6 +20,7 @@
 #include <fmt/format.h>
 
 #include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/server_command/status_fetcher.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -77,6 +78,10 @@ bool LocalInstance::IsActive() const {
       LOG(FATAL) << "Invalid instance state: " << state();
   }
   return false;
+}
+
+Result<Json::Value> LocalInstance::FetchStatus(std::chrono::seconds timeout) {
+  return CF_EXPECT(FetchInstanceStatus(*this, timeout));
 }
 
 }  // namespace selector

@@ -16,8 +16,12 @@
 
 #pragma once
 
+#include <chrono>
 #include <string>
 
+#include <json/json.h>
+
+#include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
 
 namespace cuttlefish {
@@ -51,6 +55,11 @@ class LocalInstance {
   std::string assembly_dir() const;
 
   bool IsActive() const;
+  // Contacts run_cvd to query the instance status. Returns a JSON object with
+  // a description of the instance properties. Waits for run_cvd to respond for
+  // at most timeout seconds.
+  Result<Json::Value> FetchStatus(
+      std::chrono::seconds timeout = std::chrono::seconds(5));
 
  private:
   LocalInstance(std::shared_ptr<cvd::InstanceGroup> group_proto,

@@ -200,5 +200,14 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
   return Create(group_proto);
 }
 
+Result<Json::Value> LocalInstanceGroup::FetchStatus(
+    std::chrono::seconds timeout) {
+  Json::Value instances_json(Json::arrayValue);
+  for (auto& instance : Instances()) {
+    instances_json.append(CF_EXPECT(instance.FetchStatus(timeout)));
+  }
+  return instances_json;
+}
+
 }  // namespace selector
 }  // namespace cuttlefish

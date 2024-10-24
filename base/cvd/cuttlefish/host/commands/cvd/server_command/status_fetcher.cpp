@@ -98,17 +98,7 @@ Result<std::string> GetBin(const std::string& host_artifacts_path) {
 
 }  // namespace
 
-Result<Json::Value> FetchStatus(selector::LocalInstanceGroup& group,
-                                std::chrono::seconds timeout) {
-  Json::Value instances_json(Json::arrayValue);
-  for (auto& instance : group.Instances()) {
-    auto instance_status_json = CF_EXPECT(FetchStatus(instance, timeout));
-    instances_json.append(instance_status_json);
-  }
-  return instances_json;
-}
-
-Result<Json::Value> FetchStatus(selector::LocalInstance& instance,
+Result<Json::Value> FetchInstanceStatus(selector::LocalInstance& instance,
                                 std::chrono::seconds timeout) {
   // Only running instances are capable of responding to status requests. An
   // unreachable instance is also considered running, it just didnt't reply last
