@@ -107,6 +107,13 @@ InstanceManager::SelectInstance(
   return CF_EXPECT(instance_selector.FindInstanceWithGroup(instance_db_));
 }
 
+Result<std::pair<InstanceManager::LocalInstance,
+                 InstanceManager::LocalInstanceGroup>>
+InstanceManager::FindInstanceById(unsigned id) const {
+  return CF_EXPECT(instance_db_.FindInstanceWithGroup(
+      Query(selector::kInstanceIdField, id)));
+}
+
 Result<bool> InstanceManager::HasInstanceGroups() {
   return !CF_EXPECT(instance_db_.IsEmpty());
 }
