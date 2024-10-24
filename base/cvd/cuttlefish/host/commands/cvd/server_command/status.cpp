@@ -22,9 +22,9 @@
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-#include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/status_fetcher.h"
@@ -56,29 +56,54 @@ Driver Options:
 
 Args:
   --wait_for_launcher    How many seconds to wait for the launcher to respond
-                         to the status command. A value of zero means wait
-                         indefinitely
+                         to the status request. A value of zero means wait
+                         indefinitely.
                          (Current value: "5")
 
-  --instance_name        Either instance id (e.g. 1) or internal name (e.g.
-                         cvd-1) If not provided, the smallest id in the given
-                         instance group is selected.
-                         (Current value: "", Required: Android > 12)
+  --instance_name        Deprecated, use selectors instead.
 
   --print                If provided, prints status and instance config
                          information to stdout instead of CHECK.
                          (Current value: "false", Required: Android > 12)
 
-  --all_instances        List, within the given instance group, all instances
-                         status and instance config information.
-                         (Current value: "false", Required: Android > 12)
-
   --help                 List this message
 
-  *                      Only the flags in `-help` are supported. Positional
-                         arguments are not supported.
-
 )";
+
+Result<unsigned> IdFromInstanceNameFlag(std::string_view name_or_id) {
+  android::base::ConsumePrefix(&name_or_id, kCvdNamePrefix);
+  unsigned id;
+  CF_EXPECT(android::base::ParseUint(std::string(name_or_id), &id),
+            "--instance_name should be either cvd-<id> or id. To use it as a "
+            "selector flag it must appear before the subcommand.");
+  return id;
+}
+
+struct StatusCommandOptions {
+  int wait_for_launcher_seconds;
+  std::string instance_name;
+  bool print;
+  bool help;
+};
+
+Result<StatusCommandOptions> ParseFlags(cvd_common::Args& args) {
+  StatusCommandOptions ret{
+      .wait_for_launcher_seconds = 5,
+      .instance_name = "",
+      .print = false,
+      .help = false,
+  };
+  std::vector<Flag> flags = {
+      GflagsCompatFlag("wait_for_launcher", ret.wait_for_launcher_seconds),
+      GflagsCompatFlag("instance_name", ret.instance_name),
+      GflagsCompatFlag("print", ret.print),
+      GflagsCompatFlag("help", ret.help),
+  };
+
+  CF_EXPECT(ConsumeFlags(flags, args));
+
+  return ret;
+}
 
 }  // namespace
 
@@ -100,14 +125,12 @@ class CvdStatusCommandHandler : public CvdServerHandler {
 
  private:
   InstanceManager& instance_manager_;
-  StatusFetcher status_fetcher_;
   std::vector<std::string> supported_subcmds_;
 };
 
 CvdStatusCommandHandler::CvdStatusCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager),
-      status_fetcher_(instance_manager_),
       supported_subcmds_{"status", "cvd_status"} {}
 
 Result<bool> CvdStatusCommandHandler::CanHandle(
@@ -116,72 +139,57 @@ Result<bool> CvdStatusCommandHandler::CanHandle(
   return Contains(supported_subcmds_, invocation.command);
 }
 
-static Result<CommandRequest> ProcessInstanceNameFlag(
-    const CommandRequest& request) {
-  cvd_common::Envs env = request.Env();
-  auto [subcmd, cmd_args] = ParseInvocation(request);
-
-  CvdFlag<std::string> instance_name_flag("instance_name");
-  auto instance_name_flag_opt =
-      CF_EXPECT(instance_name_flag.FilterFlag(cmd_args));
-
-  if (!instance_name_flag_opt) {
-    return request;
-  }
-
-  std::string internal_name_or_id = *instance_name_flag_opt;
-  int id;
-  if (android::base::ParseInt(internal_name_or_id, &id)) {
-    env[kCuttlefishInstanceEnvVarName] = std::to_string(id);
-  } else {
-    CF_EXPECT(android::base::StartsWith(internal_name_or_id, kCvdNamePrefix),
-              "--instance_name should be either cvd-<id> or id");
-    std::string id_part =
-        internal_name_or_id.substr(std::string(kCvdNamePrefix).size());
-    CF_EXPECT(android::base::ParseInt(id_part, &id),
-              "--instance_name should be either cvd-<id> or id");
-    env[kCuttlefishInstanceEnvVarName] = std::to_string(id);
-  }
-
-  return CF_EXPECT(CommandRequestBuilder()
-                       .AddArguments({"cvd", "status"})
-                       .AddArguments(cmd_args)
-                       .SetEnv(std::move(env))
-                       .AddSelectorArguments(request.Selectors().AsArgs())
-                       .Build());
-}
-
-static Result<bool> HasPrint(cvd_common::Args cmd_args) {
-  CvdFlag<bool> print_flag("print");
-  auto print_flag_opt = CF_EXPECT(print_flag.FilterFlag(cmd_args));
-  return print_flag_opt.has_value() && *print_flag_opt;
-}
-
 Result<cvd::Response> CvdStatusCommandHandler::Handle(
     const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   auto [subcmd, cmd_args] = ParseInvocation(request);
   CF_EXPECT(Contains(supported_subcmds_, subcmd));
-  const bool has_print = CF_EXPECT(HasPrint(cmd_args));
+  StatusCommandOptions flags = CF_EXPECT(ParseFlags(cmd_args));
+
+  if (flags.help) {
+    std::cout << kDetailedHelpText << std::endl;
+    return SuccessResponse();
+  }
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return NoGroupResponse(request);
   }
-  CommandRequest new_request = CF_EXPECT(ProcessInstanceNameFlag(request));
 
-  auto [entire_stderr_msg, instances_json, response] =
-      CF_EXPECT(status_fetcher_.FetchStatus(new_request));
-  if (response.status().code() != cvd::Status::OK) {
-    return response;
+  if (request.Selectors().instance_names && !flags.instance_name.empty()) {
+    return CF_ERR(
+        "The subcommand flag '--instance_name' conflicts with the selector "
+        "flag of the same name and can't be used at the same time.");
   }
 
-  std::string serialized_group_json = instances_json.toStyledString();
-  std::cerr << serialized_group_json;
-  if (has_print) {
-    std::cout << serialized_group_json;
+  Json::Value status_array(Json::arrayValue);
+
+  if (!request.Selectors().instance_names && flags.instance_name.empty()) {
+    // No attempt at selecting an instance, get group status instead
+    selector::LocalInstanceGroup group = CF_EXPECT(
+        instance_manager_.SelectGroup(request.Selectors(), request.Env()));
+    status_array = CF_EXPECT(FetchStatus(
+        group, std::chrono::seconds(flags.wait_for_launcher_seconds)));
+    instance_manager_.UpdateInstanceGroup(group);
+  } else {
+    std::pair<selector::LocalInstance, selector::LocalInstanceGroup> pair =
+        flags.instance_name.empty()
+            ? CF_EXPECT(instance_manager_.SelectInstance(request.Selectors(),
+                                                         request.Env()))
+            : CF_EXPECT(instance_manager_.FindInstanceById(
+                  CF_EXPECT(IdFromInstanceNameFlag(flags.instance_name))));
+    selector::LocalInstance instance = pair.first;
+    selector::LocalInstanceGroup group = pair.second;
+    status_array.append(CF_EXPECT(FetchStatus(
+        instance, std::chrono::seconds(flags.wait_for_launcher_seconds))));
+    instance_manager_.UpdateInstanceGroup(group);
   }
-  return response;
+
+  if (flags.print) {
+    std::cout << status_array.toStyledString();
+  }
+
+  return SuccessResponse();
 }
 
 std::vector<std::string> CvdStatusCommandHandler::CmdList() const {

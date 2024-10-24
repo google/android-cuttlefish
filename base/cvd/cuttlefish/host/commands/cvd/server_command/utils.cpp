@@ -240,4 +240,11 @@ Result<cvd::Response> NoTTYResponse(const CommandRequest& request) {
   return response;
 }
 
+cvd::Response SuccessResponse() {
+  cvd::Response response;
+  response.mutable_command_response();
+  response.mutable_status()->set_code(cvd::Status::OK);
+  return response;
+}
+
 }  // namespace cuttlefish
