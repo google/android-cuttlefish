@@ -104,6 +104,9 @@ class RefreshCredentialSource : public RefreshingCredentialSource {
                           const std::string& refresh_token);
 
  private:
+  static Result<std::unique_ptr<RefreshCredentialSource>> FromJson(
+      HttpClient& http_client, const Json::Value& credential);
+
   Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
 
   HttpClient& http_client_;
@@ -238,6 +241,26 @@ std::unique_ptr<CredentialSource> FixedCredentialSource::Make(
 }
 
 Result<std::unique_ptr<RefreshCredentialSource>>
+RefreshCredentialSource::FromJson(HttpClient& http_client,
+                                  const Json::Value& credential) {
+  CF_EXPECT(credential.isMember("client_id"));
+  auto& client_id = credential["client_id"];
+  CF_EXPECT(client_id.type() == Json::ValueType::stringValue);
+
+  CF_EXPECT(credential.isMember("client_secret"));
+  auto& client_secret = credential["client_secret"];
+  CF_EXPECT(client_secret.type() == Json::ValueType::stringValue);
+
+  CF_EXPECT(credential.isMember("refresh_token"));
+  auto& refresh_token = credential["refresh_token"];
+  CF_EXPECT(refresh_token.type() == Json::ValueType::stringValue);
+
+  return std::make_unique<RefreshCredentialSource>(
+      http_client, client_id.asString(), client_secret.asString(),
+      refresh_token.asString());
+}
+
+Result<std::unique_ptr<RefreshCredentialSource>>
 RefreshCredentialSource::FromOauth2ClientFile(
     HttpClient& http_client, const std::string& oauth_contents) {
   if (android::base::StartsWith(oauth_contents, "[OAuth2]")) {  // .boto file
@@ -270,6 +293,9 @@ RefreshCredentialSource::FromOauth2ClientFile(
         CF_EXPECT(std::move(refresh_token)));
   }
   auto json = CF_EXPECT(ParseJson(oauth_contents));
+  if (json.isMember("refresh_token")) {
+    return CF_EXPECT(FromJson(http_client, json));
+  }
   if (json.isMember("data")) {  // acloud style
     auto& data = json["data"];
     CF_EXPECT(data.type() == Json::ValueType::arrayValue);
@@ -282,21 +308,7 @@ RefreshCredentialSource::FromOauth2ClientFile(
     auto& credential = data_first["credential"];
     CF_EXPECT(credential.type() == Json::ValueType::objectValue);
 
-    CF_EXPECT(credential.isMember("client_id"));
-    auto& client_id = credential["client_id"];
-    CF_EXPECT(client_id.type() == Json::ValueType::stringValue);
-
-    CF_EXPECT(credential.isMember("client_secret"));
-    auto& client_secret = credential["client_secret"];
-    CF_EXPECT(client_secret.type() == Json::ValueType::stringValue);
-
-    CF_EXPECT(credential.isMember("refresh_token"));
-    auto& refresh_token = credential["refresh_token"];
-    CF_EXPECT(refresh_token.type() == Json::ValueType::stringValue);
-
-    return std::make_unique<RefreshCredentialSource>(
-        http_client, client_id.asString(), client_secret.asString(),
-        refresh_token.asString());
+    return CF_EXPECT(FromJson(http_client, credential));
   } else if (json.isMember("cache")) {  // luci/chrome style
     auto& cache = json["cache"];
     CF_EXPECT_EQ(cache.type(), Json::ValueType::arrayValue);
