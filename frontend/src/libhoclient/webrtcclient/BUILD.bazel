@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "webrtcclient",
+    srcs = [
+        "client.go",
+        "types.go",
+    ],
+    importpath = "github.com/google/android-cuttlefish/frontend/src/libhoclient/webrtcclient",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_pion_logging//:logging",
+        "@com_github_pion_webrtc_v3//:webrtc",
+    ],
+)
+
+go_test(
+    name = "webrtcclient_test",
+    srcs = ["client_test.go"],
+    embed = [":webrtcclient"],
+    deps = ["@com_github_pion_webrtc_v3//:webrtc"],
+)
