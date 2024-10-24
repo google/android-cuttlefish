@@ -295,15 +295,16 @@ class CvdLoginCommand : public CvdServerHandler {
     LoginFlags flags = {};
     CF_EXPECT(ConsumeFlags(flags.Flags(), args), "Failed to parse arguments");
 
-    Credentials credentials = CF_EXPECT(Credentials::Request(flags));
-
     // TODO: schuffelen - Deduplicate with RefreshCredentialSource
-    Json::Value file_json;
-    file_json["data"] = credentials.ToJson();
+    Credentials credentials = CF_EXPECT(Credentials::Request(flags));
+    Json::Value creds_json = credentials.ToJson();
+    creds_json["client_id"] = flags.client_id;
+    creds_json["client_secret"] = flags.client_secret;
+    std::string creds_file = creds_json.toStyledString();
 
     std::string file_name =
         fmt::format("credentials/{}.json", credentials.ShortName());
-    CF_EXPECT(WriteCvdDataFile(file_name, file_json.toStyledString()));
+    CF_EXPECT(WriteCvdDataFile(file_name, creds_file));
 
     return {};
   }

@@ -34,6 +34,7 @@ Result<std::vector<std::string>> CvdDataDirs();
 Result<std::vector<std::string>> CvdConfigDirs();
 
 Result<std::string> ReadCvdDataFile(std::string_view path);
+Result<std::vector<std::string>> FindCvdDataFiles(std::string_view path);
 Result<void> WriteCvdDataFile(std::string_view path, std::string contents);
 
 // TODO: schuffelen - Decide between merging or overriding for config files
