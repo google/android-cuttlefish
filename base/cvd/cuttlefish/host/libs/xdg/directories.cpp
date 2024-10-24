@@ -15,6 +15,8 @@
 
 #include "host/libs/xdg/directories.h"
 
+#include <dirent.h>
+
 #include <string>
 
 #include <android-base/file.h>
@@ -116,6 +118,33 @@ Result<std::string> ReadCvdDataFile(std::string_view path) {
     }
   }
   return CF_ERRF("Not able to open '{}'", path);
+}
+
+Result<std::vector<std::string>> FindCvdDataFiles(std::string_view path) {
+  std::vector<std::string> results;
+  for (const std::string& dir : CvdDataDirs()) {
+    struct stat statbuf;
+    std::string test_path = fmt::format("{}/{}", dir, path);
+    if (stat(test_path.c_str(), &statbuf) != 0) {
+      continue;
+    }
+    if (!S_ISDIR(statbuf.st_mode)) {
+      results.emplace_back(std::move(test_path));
+      continue;
+    }
+    std::unique_ptr<DIR, int (*)(DIR*)> dir_iter(opendir(test_path.c_str()),
+                                                 closedir);
+    CF_EXPECTF(dir_iter.get(), "Failed to open '{}'", path);
+    dirent* entry;
+    while ((entry = readdir(dir_iter.get())) != nullptr) {
+      std::string entry_name(entry->d_name);
+      if (entry_name == "." || entry_name == "..") {
+        continue;
+      }
+      results.emplace_back(fmt::format("{}/{}", test_path, entry->d_name));
+    }
+  }
+  return results;
 }
 
 Result<void> WriteCvdDataFile(std::string_view path, std::string contents) {

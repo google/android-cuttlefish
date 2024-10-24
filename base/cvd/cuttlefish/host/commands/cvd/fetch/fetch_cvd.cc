@@ -49,6 +49,7 @@
 #include "host/libs/web/http_client/curl_global_init.h"
 #include "host/libs/web/http_client/http_client.h"
 #include "host/libs/web/luci_build_api.h"
+#include "host/libs/xdg/directories.h"
 
 namespace cuttlefish {
 namespace {
@@ -336,8 +337,18 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   std::unique_ptr<HttpClient> retrying_http_client =
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
+
+  std::vector<std::string> cvd_creds =
+      CF_EXPECT(FindCvdDataFiles("credentials"));
+
+  for (const std::string& creds : cvd_creds) {
+    LOG(ERROR) << creds;
+  }
+
   std::string oauth_filepath =
-      StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
+      cvd_creds.empty() ? StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat"
+                        // TODO: schuffelen - test which credential file we want
+                        : cvd_creds[0];
   std::unique_ptr<CredentialSource> credential_source =
       CF_EXPECT(GetCredentialSource(
           *retrying_http_client, flags.credential_source, oauth_filepath,
