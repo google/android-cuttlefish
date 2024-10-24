@@ -82,6 +82,9 @@ class InstanceManager {
   Result<LocalInstanceGroup> FindGroup(const Query& query) const;
   Result<LocalInstanceGroup> FindGroup(const Queries& queries) const;
 
+  Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceById(
+      unsigned id) const;
+
   Result<void> SetAcloudTranslatorOptout(bool optout);
   Result<bool> GetAcloudTranslatorOptout() const;
 

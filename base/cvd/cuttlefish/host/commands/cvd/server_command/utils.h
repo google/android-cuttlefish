@@ -80,6 +80,8 @@ cvd::Response NoGroupResponse(const CommandRequest& request);
 // not sufficients to choose one from. The function does not verify that.
 Result<cvd::Response> NoTTYResponse(const CommandRequest& request);
 
+cvd::Response SuccessResponse();
+
 class TerminalColors {
  public:
   TerminalColors(bool is_tty): is_tty_(is_tty){}

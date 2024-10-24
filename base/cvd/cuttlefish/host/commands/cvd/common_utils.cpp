@@ -173,4 +173,9 @@ Result<std::string> GroupDirFromHome(std::string_view dir) {
   return std::string(dir);
 }
 
+std::string AssemblyDirFromHome(const std::string& group_home_dir) {
+  return group_home_dir + "/cuttlefish/assembly";
+}
+
+
 }  // namespace cuttlefish
