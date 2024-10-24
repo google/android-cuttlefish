@@ -152,7 +152,7 @@ func createDevice(srv hoclient.HostOrchestratorService, group_name, artifactsDir
 		return nil, err
 	}
 	createReq := &hoapi.CreateCVDRequest{EnvConfig: envConfig}
-	res, createErr := srv.CreateCVD(createReq, hoclient.BuildAPICredential{})
+	res, createErr := srv.CreateCVD(createReq, &hoclient.AccessTokenBuildAPICreds{})
 	if createErr != nil {
 		if err := common.DownloadHostBugReport(srv, group_name); err != nil {
 			log.Printf("error downloading cvd bugreport: %v", err)

@@ -48,9 +48,24 @@ type ConnectWebRTCOpts struct {
 	LocalICEConfig *wclient.ICEConfig
 }
 
-type BuildAPICredential struct {
+type BuildAPICreds interface {
+	ApplyToHTTPRequest(rb *HTTPRequestBuilder)
+}
+
+type AccessTokenBuildAPICreds struct {
 	AccessToken   string
 	UserProjectID string
+}
+
+func (c *AccessTokenBuildAPICreds) ApplyToHTTPRequest(rb *HTTPRequestBuilder) {
+	const HTTPHeaderBuildAPICreds = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
+	const HTTPHeaderBuildAPICredsUserProjectID = "X-Cutf-Host-Orchestrator-BuildAPI-Creds-User-Project-ID"
+	if c.AccessToken != "" {
+		rb.AddHeader(HTTPHeaderBuildAPICreds, c.AccessToken)
+		if c.UserProjectID != "" {
+			rb.AddHeader(HTTPHeaderBuildAPICredsUserProjectID, c.UserProjectID)
+		}
+	}
 }
 
 // A client to the host orchestrator service running in a remote host.
@@ -70,15 +85,15 @@ type HostOrchestratorService interface {
 
 	// Create a new device with artifacts from the build server or previously uploaded by the user.
 	// If not empty, the provided credentials will be used to download necessary artifacts from the build api.
-	CreateCVD(req *hoapi.CreateCVDRequest, buildAPICredentials BuildAPICredential) (*hoapi.CreateCVDResponse, error)
-	CreateCVDOp(req *hoapi.CreateCVDRequest, buildAPICredentials BuildAPICredential) (*hoapi.Operation, error)
+	CreateCVD(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.CreateCVDResponse, error)
+	CreateCVDOp(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.Operation, error)
 
 	// Deletes an existing cvd instance.
 	DeleteCVD(id string) error
 
 	// Calls cvd fetch in the remote host, the downloaded artifacts can be used to create a CVD later.
 	// If not empty, the provided credentials will be used by the host orchestrator to access the build api.
-	FetchArtifacts(req *hoapi.FetchArtifactsRequest, buildAPICredentials BuildAPICredential) (*hoapi.FetchArtifactsResponse, error)
+	FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICreds) (*hoapi.FetchArtifactsResponse, error)
 
 	// Creates a webRTC connection to a device running in this host.
 	ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
@@ -308,10 +323,10 @@ func (c *HostOrchestratorServiceImpl) waitForOperation(name string, res any, ret
 	return c.HTTPHelper.NewPostRequest(path, nil).JSONResDoWithRetries(res, retryOpts)
 }
 
-func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICredential) (*hoapi.FetchArtifactsResponse, error) {
+func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICreds) (*hoapi.FetchArtifactsResponse, error) {
 	var op hoapi.Operation
 	rb := c.HTTPHelper.NewPostRequest("/artifacts", req)
-	handleBuildAPICredsHeaders(rb, creds)
+	creds.ApplyToHTTPRequest(rb)
 	if err := rb.JSONResDo(&op); err != nil {
 		return nil, err
 	}
@@ -323,17 +338,17 @@ func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRe
 	return res, nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateCVDOp(req *hoapi.CreateCVDRequest, creds BuildAPICredential) (*hoapi.Operation, error) {
+func (c *HostOrchestratorServiceImpl) CreateCVDOp(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.Operation, error) {
 	op := &hoapi.Operation{}
 	rb := c.HTTPHelper.NewPostRequest("/cvds", req)
-	handleBuildAPICredsHeaders(rb, creds)
+	creds.ApplyToHTTPRequest(rb)
 	if err := rb.JSONResDo(op); err != nil {
 		return nil, err
 	}
 	return op, nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, creds BuildAPICredential) (*hoapi.CreateCVDResponse, error) {
+func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.CreateCVDResponse, error) {
 	op, err := c.CreateCVDOp(req, creds)
 	if err != nil {
 		return nil, err
@@ -465,25 +480,4 @@ func asWebRTCICEServers(in []opapi.IceServer) []webrtc.ICEServer {
 		})
 	}
 	return out
-}
-
-func handleBuildAPICredsHeaders(rb *HTTPRequestBuilder, creds BuildAPICredential) {
-	if creds.AccessToken == "inject" {
-		addCOBuildAPICredsInjectHeader(rb)
-	} else {
-		addBuildAPICredsHeaders(rb, creds)
-	}
-}
-
-func addBuildAPICredsHeaders(rb *HTTPRequestBuilder, creds BuildAPICredential) {
-	if creds.AccessToken != "" {
-		rb.AddHeader(HTTPHeaderBuildAPICreds, creds.AccessToken)
-		if creds.UserProjectID != "" {
-			rb.AddHeader(HTTPHeaderBuildAPICredsUserProjectID, creds.UserProjectID)
-		}
-	}
-}
-
-func addCOBuildAPICredsInjectHeader(rb *HTTPRequestBuilder) {
-	rb.AddHeader(HTTPHeaderCOInjectBuildAPICreds, "inject" /* avoid empty header value */)
 }
