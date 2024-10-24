@@ -225,8 +225,7 @@ Result<std::unique_ptr<OperatorControlConn>> PreregisterGroup(
 class CvdStartCommandHandler : public CvdServerHandler {
  public:
   CvdStartCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_(instance_manager),
-        status_fetcher_(instance_manager_) {}
+      : instance_manager_(instance_manager) {}
 
   Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
@@ -271,7 +270,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
                                    const CommandRequest& request);
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
-  StatusFetcher status_fetcher_;
   static const std::array<std::string, 2> supported_commands_;
 };
 
@@ -593,7 +591,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   listener_handle.reset();
 
-  auto group_json = CF_EXPECT(status_fetcher_.FetchGroupStatus(request, group));
+  auto group_json = CF_EXPECT(FetchStatus(group));
   std::cout << group_json.toStyledString();
 
   return FillOutNewInstanceInfo(std::move(response), group);
