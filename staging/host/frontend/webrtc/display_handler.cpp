@@ -60,8 +60,8 @@ DisplayHandler::DisplayHandler(webrtc_streaming::Streamer& streamer,
             const auto display_id =
                 "display_" + std::to_string(e.display_number);
             std::lock_guard<std::mutex> lock(send_mutex_);
-            streamer_.RemoveDisplay(display_id);
             display_sinks_.erase(display_number);
+            streamer_.RemoveDisplay(display_id);
           } else {
             static_assert("Unhandled display event.");
           }
