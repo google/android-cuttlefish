@@ -71,8 +71,8 @@ cuttlefish-orchestration latest 0123456789ab   2 minutes ago    690MB
 
 ### Download prebuilt image
 
-Downloading latest image is available
-[here](https://github.com/google/android-cuttlefish/actions/workflows/artifacts.yaml?query=event%3Apush).
+Downloading latest image is available on
+[Github action history](https://github.com/google/android-cuttlefish/actions/workflows/artifacts.yaml?query=event%3Apush).
 
 After downloading image, please load the image and verify with
 `docker image list`.
@@ -86,3 +86,8 @@ Registering the tag of loaded image as `latest` is available with below script.
 ```bash
 docker tag cuttlefish-orchestration:${PREBUILT_DOCKER_IMAGE_TAG} cuttlefish-orchestration:latest
 ```
+
+### Use docker image with Cloud Orchestrator
+
+Please refer to
+[Cloud Orchestrator documentation](https://github.com/google/cloud-android-orchestration/blob/main/docs/cloud_orchestrator.md).
