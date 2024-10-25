@@ -225,6 +225,7 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     "android.hardware.graphics.common",
     "android.hardware.input.common",
     "android.media.audio.common.types",
+    "android.media.audio.eraser.types",
     "android.hardware.radio",
     "android.hardware.uwb.fira_android",
     "android.hardware.wifi.common",
