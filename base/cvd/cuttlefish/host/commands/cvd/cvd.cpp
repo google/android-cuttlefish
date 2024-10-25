@@ -21,12 +21,12 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-#include "host/commands/cvd/command_request.h"
-#include "host/commands/cvd/frontline_parser.h"
-#include "host/commands/cvd/instance_lock.h"
-#include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/request_context.h"
+#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
+#include "host/commands/cvd/cli/command_request.h"
+#include "host/commands/cvd/cli/frontline_parser.h"
+#include "host/commands/cvd/instances/instance_lock.h"
+#include "host/commands/cvd/instances/instance_manager.h"
+#include "host/commands/cvd/cli/request_context.h"
 
 namespace cuttlefish {
 

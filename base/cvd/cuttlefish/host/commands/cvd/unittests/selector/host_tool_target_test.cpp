@@ -19,7 +19,7 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/result_matchers.h"
-#include "host/commands/cvd/server_command/host_tool_target.h"
+#include "host/commands/cvd/cli/commands/host_tool_target.h"
 
 namespace cuttlefish {
 

@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/frontline_parser.h"
+#include "host/commands/cvd/cli/frontline_parser.h"
 
 namespace std {
 

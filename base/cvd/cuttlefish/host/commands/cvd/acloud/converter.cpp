@@ -35,12 +35,12 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/acloud/config.h"
 #include "host/commands/cvd/acloud/create_converter_parser.h"
-#include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/lock_file.h"
-#include "host/commands/cvd/selector/instance_database_utils.h"
-#include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/command_request.h"
-#include "host/commands/cvd/server_command/utils.h"
+#include "host/commands/cvd/utils/common.h"
+#include "host/commands/cvd/instances/lock_file.h"
+#include "host/commands/cvd/instances/instance_database_utils.h"
+#include "host/commands/cvd/cli/selector/selector_constants.h"
+#include "host/commands/cvd/cli/command_request.h"
+#include "host/commands/cvd/cli/utils.h"
 #include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {

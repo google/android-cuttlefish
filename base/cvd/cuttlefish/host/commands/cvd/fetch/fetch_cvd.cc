@@ -36,7 +36,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/tee_logging.h"
-#include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/utils/common.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "host/commands/cvd/fetch/fetch_tracer.h"
 #include "host/libs/config/fetcher_config.h"

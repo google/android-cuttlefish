@@ -25,7 +25,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
-#include "host/commands/cvd/selector/selector_constants.h"
+#include "host/commands/cvd/cli/selector/selector_constants.h"
 
 namespace cuttlefish {
 namespace selector {

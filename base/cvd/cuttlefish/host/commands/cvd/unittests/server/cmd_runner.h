@@ -24,7 +24,7 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/types.h"
+#include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 
