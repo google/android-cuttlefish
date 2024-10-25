@@ -142,7 +142,7 @@ SharedFD OpenTapInterface(const std::string& interface_name) {
 std::set<std::string> TapInterfacesInUse() {
   Command cmd("/bin/bash");
   cmd.AddParameter("-c");
-  cmd.AddParameter("egrep -h -e \"^iff:.*\" /proc/*/fdinfo/*");
+  cmd.AddParameter("grep -E -h -e \"^iff:.*\" /proc/*/fdinfo/*");
   std::string stdin_str, stdout_str, stderr_str;
   RunWithManagedStdio(std::move(cmd), &stdin_str, &stdout_str, &stderr_str);
   auto lines = android::base::Split(stdout_str, "\n");
