@@ -1,4 +1,4 @@
-service trusty_vm_launcher /system_ext/bin/trusty_vm_launcher
+service trusty_security_vm_launcher /system_ext/bin/trusty_security_vm_launcher --kernel /system_ext/etc/vm/trusty_vm/lk_trusty.elf
     disabled
     user system
     group system virtualmachine
@@ -10,4 +10,4 @@ service trusty_vm_launcher /system_ext/bin/trusty_vm_launcher
 on init && property:ro.hardware.security.trusty_vm.system=1
     setprop trusty_vm_system_nonsecure.ready 1
     setprop trusty_vm_system.vm_cid 200
-    start trusty_vm_launcher
+    start trusty_security_vm_launcher
