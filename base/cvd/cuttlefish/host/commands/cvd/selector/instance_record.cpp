@@ -19,6 +19,9 @@
 #include <android-base/logging.h>
 #include <fmt/format.h>
 
+#include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/server_command/status_fetcher.h"
+
 namespace cuttlefish {
 namespace selector {
 
@@ -52,6 +55,10 @@ int LocalInstance::adb_port() const {
   return BASE_ADB_PORT + id() - BASE_INSTANCE_ID;
 }
 
+std::string LocalInstance::assembly_dir() const {
+  return AssemblyDirFromHome(home_directory());
+}
+
 bool LocalInstance::IsActive() const {
   switch (state()) {
     case cvd::INSTANCE_STATE_RUNNING:
@@ -71,6 +78,10 @@ bool LocalInstance::IsActive() const {
       LOG(FATAL) << "Invalid instance state: " << state();
   }
   return false;
+}
+
+Result<Json::Value> LocalInstance::FetchStatus(std::chrono::seconds timeout) {
+  return CF_EXPECT(FetchInstanceStatus(*this, timeout));
 }
 
 }  // namespace selector

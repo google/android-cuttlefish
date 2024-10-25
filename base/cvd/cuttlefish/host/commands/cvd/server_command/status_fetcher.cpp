@@ -17,7 +17,6 @@
 #include "host/commands/cvd/server_command/status_fetcher.h"
 
 #include <cctype>
-#include <map>
 #include <string>
 #include <vector>
 
@@ -28,9 +27,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
-#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/server_command/host_tool_target.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -77,12 +74,11 @@ std::string HumanFriendlyStateName(cvd::InstanceState state) {
 // Adds more information to the json object returned by cvd_internal_status,
 // including some that cvd_internal_status normally returns but doesn't when the
 // instance is not running.
-void OverrideInstanceJson(const selector::LocalInstanceGroup& group,
-                          const selector::LocalInstance& instance,
+void OverrideInstanceJson(const selector::LocalInstance& instance,
                           Json::Value& instance_json) {
   instance_json["instance_name"] = instance.name();
   instance_json["status"] = HumanFriendlyStateName(instance.state());
-  instance_json["assembly_dir"] = group.AssemblyDir();
+  instance_json["assembly_dir"] = instance.assembly_dir();
   instance_json["instance_dir"] = instance.instance_dir();
   instance_json["instance_name"] = instance.name();
   if (instance.IsActive()) {
@@ -96,12 +92,14 @@ void OverrideInstanceJson(const selector::LocalInstanceGroup& group,
   }
 }
 
+Result<std::string> GetBin(const std::string& host_artifacts_path) {
+  return CF_EXPECT(HostToolTarget(host_artifacts_path).GetStatusBinName());
+}
+
 }  // namespace
 
-Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
-    const CommandRequest& request,
-    const InstanceManager::LocalInstanceGroup& group,
-    selector::LocalInstance& instance) {
+Result<Json::Value> FetchInstanceStatus(selector::LocalInstance& instance,
+                                        std::chrono::seconds timeout) {
   // Only running instances are capable of responding to status requests. An
   // unreachable instance is also considered running, it just didnt't reply last
   // time.
@@ -110,40 +108,28 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
     Json::Value instance_json;
     instance_json["instance_name"] = instance.name();
     instance_json["status"] = HumanFriendlyStateName(instance.state());
-    OverrideInstanceJson(group, instance, instance_json);
-    cvd::Response response;
-    response.mutable_command_response();  // set oneof field
-    response.mutable_status()->set_code(cvd::Status::OK);
-    return StatusFetcherOutput{
-        .stderr_buf = "",
-        .json_from_stdout = instance_json,
-        .response = response,
-    };
+    OverrideInstanceJson(instance, instance_json);
+    return instance_json;
   }
-
-  auto [subcmd, cmd_args] = ParseInvocation(request);
-
-  // remove --all_instances if there is
-  bool all_instances = false;
-  CF_EXPECT(ConsumeFlags({GflagsCompatFlag("all_instances", all_instances)},
-                         cmd_args));
 
   const auto working_dir = CurrentDirectory();
 
-  auto android_host_out = group.Proto().host_artifacts_path();
-  auto home = group.Proto().home_directory();
+  auto android_host_out = instance.host_artifacts_path();
+  auto home = instance.home_directory();
   auto bin = CF_EXPECT(GetBin(android_host_out));
   auto bin_path = fmt::format("{}/bin/{}", android_host_out, bin);
 
-  cvd_common::Envs envs = request.Env();
+  cvd_common::Envs envs;
   envs["HOME"] = home;
   // old cvd_internal_status expects CUTTLEFISH_INSTANCE=<k>
   envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.id());
+  std::vector<std::string> args{"--print", "--wait_for_launcher",
+                                std::to_string(timeout.count())};
 
   ConstructCommandParam construct_cmd_param{
       .bin_path = bin_path,
       .home = home,
-      .args = cmd_args,
+      .args = args,
       .envs = envs,
       .working_dir = working_dir,
       .command_name = bin,
@@ -151,126 +137,36 @@ Result<StatusFetcherOutput> StatusFetcher::FetchOneInstanceStatus(
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   std::string serialized_json;
-  std::string status_stderr;
 
   int res = RunWithManagedStdio(std::move(command), nullptr, &serialized_json,
-                                &status_stderr);
+                                nullptr /*stderr*/);
 
   // old branches will print nothing
-  if (serialized_json.empty()) {
+  if (serialized_json.empty() && res == 0) {
     serialized_json = "[{\"warning\" : \"cvd-status-unsupported device\"}]";
   }
 
-  auto instance_status_json = CF_EXPECT(ParseJson(serialized_json));
-  CF_EXPECT_EQ(instance_status_json.size(), 1ul);
-  instance_status_json = instance_status_json[0];
-  static constexpr auto kWebrtcProp = "webrtc_device_id";
-  static constexpr auto kNameProp = "instance_name";
-
-  // Check for isObject first, calling isMember on anything else causes a
-  // runtime error
-  if (instance_status_json.isObject() &&
-      !instance_status_json.isMember(kWebrtcProp) &&
-      instance_status_json.isMember(kNameProp)) {
-    // b/296644913 some cuttlefish versions printed the webrtc device id as
-    // the instance name.
-    instance_status_json[kWebrtcProp] = instance_status_json[kNameProp];
+  // Parse only if the command produced output, otherwise just produce data from
+  // the instance database.
+  Json::Value instance_status_json(Json::objectValue);
+  if (!serialized_json.empty()) {
+    Json::Value json_array = CF_EXPECT(ParseJson(serialized_json),
+                                       "Status tool returned invalid JSON");
+    CF_EXPECTF(json_array.isArray(),
+               "Status tool returned unexpected output (not an array): {}",
+               serialized_json);
+    CF_EXPECT_EQ(json_array.size(), 1ul);
+    instance_status_json = json_array[0];
   }
-  instance_status_json[kNameProp] = instance.name();
 
-  cvd::Response response;
-  response.mutable_command_response();
   if (res != 0) {
-    response.mutable_status()->set_code(cvd::Status::INTERNAL);
-    response.mutable_status()->set_message(
-        fmt::format("Exited with code {}", res));
+    LOG(ERROR) << "Status tool exited with code " << res;
     instance.set_state(cvd::INSTANCE_STATE_UNREACHABLE);
     instance_status_json["warning"] = "cvd status failed";
   }
-  OverrideInstanceJson(group, instance, instance_status_json);
+  OverrideInstanceJson(instance, instance_status_json);
 
-  return StatusFetcherOutput{
-      .stderr_buf = status_stderr,
-      .json_from_stdout = instance_status_json,
-      .response = response,
-  };
-}
-
-Result<StatusFetcherOutput> StatusFetcher::FetchStatus(
-    const CommandRequest& request) {
-  const cvd_common::Envs& env = request.Env();
-  auto [subcmd, cmd_args] = ParseInvocation(request);
-
-  // find group
-  CvdFlag<bool> all_instances_flag("all_instances");
-  auto all_instances_opt = CF_EXPECT(all_instances_flag.FilterFlag(cmd_args));
-
-  auto instance_group =
-      CF_EXPECT(instance_manager_.SelectGroup(request.Selectors(), env));
-
-  std::vector<selector::LocalInstance> instances;
-  auto instance_record_result =
-      instance_manager_.SelectInstance(request.Selectors(), env);
-
-  bool status_the_group_flag = all_instances_opt && *all_instances_opt;
-  if (instance_record_result.ok() && !status_the_group_flag) {
-    instances.emplace_back(instance_record_result->first);
-  } else {
-    if (status_the_group_flag) {
-      instances = instance_group.Instances();
-    } else {
-      std::map<int, const selector::LocalInstance> sorted_id_instance_map;
-      for (const auto& instance : instance_group.Instances()) {
-        sorted_id_instance_map.emplace(instance.id(), instance);
-      }
-      auto first_itr = sorted_id_instance_map.begin();
-      instances.emplace_back(first_itr->second);
-    }
-  }
-
-  std::string entire_stderr_msg;
-  Json::Value instances_json(Json::arrayValue);
-  for (auto& instance : instances) {
-    auto [status_stderr, instance_status_json, response] =
-        CF_EXPECT(FetchOneInstanceStatus(request, instance_group, instance));
-    instances_json.append(instance_status_json);
-    entire_stderr_msg.append(status_stderr);
-  }
-  instance_manager_.UpdateInstanceGroup(instance_group);
-
-  cvd::Response response;
-  response.mutable_command_response();
-  response.mutable_status()->set_code(cvd::Status::OK);
-  return StatusFetcherOutput{
-      .stderr_buf = entire_stderr_msg,
-      .json_from_stdout = instances_json,
-      .response = response,
-  };
-}
-
-Result<Json::Value> StatusFetcher::FetchGroupStatus(
-    const CommandRequest& original_request,
-    selector::LocalInstanceGroup& group) {
-  Json::Value group_json(Json::objectValue);
-  group_json["group_name"] = group.GroupName();
-  group_json["start_time"] = selector::Format(group.StartTime());
-
-  CommandRequest group_request = CF_EXPECT(
-      CommandRequestBuilder()
-          .AddArguments({"cvd", "status", "--print", "--all_instances"})
-          .SetEnv(original_request.Env())
-          .AddSelectorArguments({"--group_name", group.GroupName()})
-          .Build());
-
-  auto [_, instances_json, group_response] =
-      CF_EXPECT(FetchStatus(group_request));
-  group_json["instances"] = instances_json;
-  return group_json;
-}
-
-Result<std::string> StatusFetcher::GetBin(
-    const std::string& host_artifacts_path) const {
-  return CF_EXPECT(HostToolTarget(host_artifacts_path).GetStatusBinName());
+  return instance_status_json;
 }
 
 }  // namespace cuttlefish

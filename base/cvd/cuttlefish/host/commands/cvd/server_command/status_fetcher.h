@@ -18,38 +18,16 @@
 
 #include <sys/types.h>
 
-#include <string>
+#include <chrono>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/command_request.h"
-#include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/instance_record.h"
 
 namespace cuttlefish {
 
-struct StatusFetcherOutput {
-  std::string stderr_buf;
-  Json::Value json_from_stdout;
-  cvd::Response response;
-};
-
-class StatusFetcher {
- public:
-  StatusFetcher(InstanceManager& instance_manager)
-      : instance_manager_(instance_manager) {}
-  Result<StatusFetcherOutput> FetchStatus(const CommandRequest&);
-
-  Result<Json::Value> FetchGroupStatus(const CommandRequest& original_request,
-                                       selector::LocalInstanceGroup& group);
-
- private:
-  Result<std::string> GetBin(const std::string& host_artifacts_path) const;
-  Result<StatusFetcherOutput> FetchOneInstanceStatus(
-      const CommandRequest&, const InstanceManager::LocalInstanceGroup& group,
-      selector::LocalInstance&);
-
-  InstanceManager& instance_manager_;
-};
+// Fetches status from a single instance. Waits for each run_cvd process to
+// respond within the given timeout.
+Result<Json::Value> FetchInstanceStatus(selector::LocalInstance& instance,
+                                        std::chrono::seconds timeout);
 
 }  // namespace cuttlefish

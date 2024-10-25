@@ -22,6 +22,7 @@
 #include <android-base/parseint.h>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 
 namespace cuttlefish {
@@ -139,7 +140,7 @@ std::vector<LocalInstance> LocalInstanceGroup::FindByInstanceName(
 }
 
 std::string LocalInstanceGroup::AssemblyDir() const {
-  return HomeDir() + "/cuttlefish/assembly";
+  return AssemblyDirFromHome(HomeDir());
 }
 
 Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
@@ -197,6 +198,20 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
   }
 
   return Create(group_proto);
+}
+
+Result<Json::Value> LocalInstanceGroup::FetchStatus(
+    std::chrono::seconds timeout) {
+  Json::Value instances_json(Json::arrayValue);
+  for (auto& instance : Instances()) {
+    auto instance_status_json = CF_EXPECT(instance.FetchStatus(timeout));
+    instances_json.append(instance_status_json);
+  }
+  Json::Value group_json;
+  group_json["group_name"] = GroupName();
+  group_json["start_time"] = selector::Format(StartTime());
+  group_json["instances"] = instances_json;
+  return group_json;
 }
 
 }  // namespace selector
