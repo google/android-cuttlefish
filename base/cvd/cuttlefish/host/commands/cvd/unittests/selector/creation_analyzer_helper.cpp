@@ -17,7 +17,7 @@
 
 #include <android-base/strings.h>
 
-#include "host/commands/cvd/types.h"
+#include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 namespace selector {

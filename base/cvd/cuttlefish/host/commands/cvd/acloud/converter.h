@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include "host/commands/cvd/command_request.h"
+#include "host/commands/cvd/cli/command_request.h"
 
 #include "common/libs/utils/result.h"
 

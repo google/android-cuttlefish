@@ -16,8 +16,8 @@
 
 #include <algorithm>
 
-#include "host/commands/cvd/parser/cf_flags_validator.h"
-#include "host/commands/cvd/parser/launch_cvd_parser.h"
+#include "host/commands/cvd/cli/parser/cf_flags_validator.h"
+#include "host/commands/cvd/cli/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {

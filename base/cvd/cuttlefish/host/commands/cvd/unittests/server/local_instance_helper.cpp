@@ -15,7 +15,7 @@
 
 #include "host/commands/cvd/unittests/server/local_instance_helper.h"
 
-#include "host/commands/cvd/types.h"
+#include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 namespace acloud {

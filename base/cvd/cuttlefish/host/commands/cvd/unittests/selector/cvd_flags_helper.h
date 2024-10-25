@@ -23,8 +23,8 @@
 #include <gtest/gtest.h>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/flag.h"
-#include "host/commands/cvd/types.h"
+#include "host/commands/cvd/cli/flag.h"
+#include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 

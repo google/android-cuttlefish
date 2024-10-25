@@ -20,9 +20,9 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/users.h"
-#include "host/commands/cvd/selector/instance_database_utils.h"
-#include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/types.h"
+#include "host/commands/cvd/instances/instance_database_utils.h"
+#include "host/commands/cvd/cli/selector/selector_constants.h"
+#include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 namespace selector {

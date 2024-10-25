@@ -25,7 +25,7 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/selector/creation_analyzer.h"
+#include "host/commands/cvd/cli/selector/creation_analyzer.h"
 
 namespace cuttlefish {
 namespace selector {

@@ -19,9 +19,9 @@
 #include <android-base/logging.h>
 
 #include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-#include "host/commands/cvd/instance_lock.h"
-#include "host/commands/cvd/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
+#include "host/commands/cvd/instances/instance_lock.h"
+#include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 

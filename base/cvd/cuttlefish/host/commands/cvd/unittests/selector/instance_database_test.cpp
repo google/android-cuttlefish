@@ -20,8 +20,8 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result_matchers.h"
-#include "host/commands/cvd/selector/instance_database.h"
-#include "host/commands/cvd/selector/selector_constants.h"
+#include "host/commands/cvd/instances/instance_database.h"
+#include "host/commands/cvd/cli/selector/selector_constants.h"
 #include "host/commands/cvd/unittests/selector/instance_database_helper.h"
 
 /*

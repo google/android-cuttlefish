@@ -21,7 +21,7 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/selector/arguments_lexer.h"
+#include "host/commands/cvd/cli/selector/arguments_lexer.h"
 
 namespace cuttlefish {
 namespace selector {
