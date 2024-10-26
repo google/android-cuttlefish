@@ -100,11 +100,11 @@ bool NetworkInterfaceExists(const std::string& interface_name) {
 }
 
 #ifdef __linux__
-static std::optional<Command> EgrepCommand() {
-  if (FileExists("/usr/bin/egrep")) {
-    return Command("/usr/bin/egrep");
-  } else if (FileExists("/bin/egrep")) {
-    return Command("/bin/egrep");
+static std::optional<Command> GrepCommand() {
+  if (FileExists("/usr/bin/grep")) {
+    return Command("/usr/bin/grep");
+  } else if (FileExists("/bin/grep")) {
+    return Command("/bin/grep");
   } else {
     return {};
   }
@@ -131,12 +131,13 @@ std::set<std::string> TapInterfacesInUse() {
     }
   }
 
-  std::optional<Command> cmd = EgrepCommand();
+  std::optional<Command> cmd = GrepCommand();
   if (!cmd) {
     LOG(WARNING) << "Unable to test TAP interface usage";
     return {};
   }
-  cmd->AddParameter("-h").AddParameter("-e").AddParameter("^iff:.*");
+  cmd->AddParameter("-E").AddParameter("-h").AddParameter("-e").AddParameter(
+      "^iff:.*");
 
   for (const std::string& fdinfo : fdinfo_list) {
     cmd->AddParameter(fdinfo);
