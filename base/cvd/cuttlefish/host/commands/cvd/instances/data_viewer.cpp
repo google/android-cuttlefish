@@ -16,8 +16,10 @@
 
 #include "host/commands/cvd/instances/data_viewer.h"
 
+#include "common/libs/fs/shared_buf.h"
+
 namespace cuttlefish {
-namespace selector {
+
 Result<SharedFD> DataViewer::LockBackingFile(int op) const {
   auto fd = SharedFD::Open(backing_file_, O_CREAT | O_RDWR, 0640);
   CF_EXPECTF(fd->IsOpen(), "Failed to open instance database backing file: {}",
@@ -60,5 +62,4 @@ DataViewer::DeadlockProtector::~DeadlockProtector() {
   map_[std::this_thread::get_id()] = false;
 }
 
-}  // namespace selector
 }  // namespace cuttlefish

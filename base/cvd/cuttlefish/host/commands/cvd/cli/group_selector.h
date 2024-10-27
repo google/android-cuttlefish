@@ -17,12 +17,11 @@
 #pragma once
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
 #include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/cli/command_request.h"
 
 namespace cuttlefish {
-Result<selector::LocalInstanceGroup> SelectGroup(InstanceManager&,
-                                                 const CommandRequest&);
+Result<LocalInstanceGroup> SelectGroup(InstanceManager&, const CommandRequest&);
 
 }  // namespace cuttlefish

@@ -28,8 +28,7 @@
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-namespace selector {
-namespace selector_impl {
+namespace database_impl {
 
 template <typename ValueType>
 using ToStringTypeReturnType =
@@ -41,7 +40,7 @@ struct IsToStringOk : std::false_type {};
 template <typename T>
 struct IsToStringOk<T, ToStringTypeReturnType<T>> : std::true_type {};
 
-}  // namespace selector_impl
+}  // namespace database_impl
 
 using FieldName = std::string;
 using Value = std::string;
@@ -50,7 +49,7 @@ using Value = std::string;
 struct Query {
   template <typename ValueType,
             typename = std::enable_if_t<
-                selector_impl::IsToStringOk<ValueType>::value, void>>
+                database_impl::IsToStringOk<ValueType>::value, void>>
   Query(const std::string& field_name, ValueType&& field_value)
       : field_name_(field_name),
         field_value_(std::to_string(std::forward<ValueType>(field_value))) {}
@@ -75,5 +74,4 @@ std::string SerializeTimePoint(const TimeStamp&);
 Result<TimeStamp> DeserializeTimePoint(const Json::Value& group_json);
 std::string Format(const TimeStamp&);
 
-}  // namespace selector
 }  // namespace cuttlefish

@@ -36,20 +36,20 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/users.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/cli/group_selector.h"
-#include "host/commands/cvd/utils/interrupt_listener.h"
-#include "host/commands/cvd/instances/operator_client.h"
-#include "host/commands/cvd/instances/reset_client_utils.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/instances/status_fetcher.h"
-#include "host/commands/cvd/utils/subprocess_waiter.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/cli/group_selector.h"
 #include "host/commands/cvd/cli/types.h"
+#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/instances/instance_group_record.h"
+#include "host/commands/cvd/instances/operator_client.h"
+#include "host/commands/cvd/instances/reset_client_utils.h"
+#include "host/commands/cvd/instances/status_fetcher.h"
+#include "host/commands/cvd/utils/common.h"
+#include "host/commands/cvd/utils/interrupt_listener.h"
+#include "host/commands/cvd/utils/subprocess_waiter.h"
 #include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
@@ -111,7 +111,7 @@ Result<std::vector<std::string>> ExtractWebRTCDeviceIds(
 }
 
 std::vector<std::string> GenerateUniqueWebRTCDeviceIds(
-    const selector::LocalInstanceGroup& group) {
+    const LocalInstanceGroup& group) {
   std::vector<std::string> ids;
   ids.reserve(group.Instances().size());
   for (const auto& instance : group.Instances()) {
@@ -123,7 +123,7 @@ std::vector<std::string> GenerateUniqueWebRTCDeviceIds(
 }
 
 Result<void> UpdateWebrtcDeviceIds(cvd_common::Args& args,
-                                   selector::LocalInstanceGroup& group) {
+                                   LocalInstanceGroup& group) {
   std::vector<std::string> webrtc_ids = CF_EXPECT(ExtractWebRTCDeviceIds(args));
   std::vector<std::string> generated_webrtc_ids =
       GenerateUniqueWebRTCDeviceIds(group);
@@ -153,8 +153,8 @@ Result<void> UpdateWebrtcDeviceIds(cvd_common::Args& args,
  * 3. If not, --instance_nums=<ids>
  *
  */
-static Result<void> UpdateInstanceArgs(
-    cvd_common::Args& args, const selector::LocalInstanceGroup& group) {
+static Result<void> UpdateInstanceArgs(cvd_common::Args& args,
+                                       const LocalInstanceGroup& group) {
   CF_EXPECT(!group.Instances().empty());
 
   std::string old_instance_nums;
@@ -213,7 +213,7 @@ Result<void> SymlinkPreviousConfig(const std::string& group_home_dir) {
 }
 
 Result<std::unique_ptr<OperatorControlConn>> PreregisterGroup(
-    const selector::LocalInstanceGroup& group) {
+    const LocalInstanceGroup& group) {
   std::unique_ptr<OperatorControlConn> operator_conn =
       CF_EXPECT(OperatorControlConn::Create());
   CF_EXPECT(operator_conn->Preregister(group));
@@ -235,37 +235,36 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
-  Result<cvd::Response> LaunchDevice(Command command,
-                                     selector::LocalInstanceGroup& group,
+  Result<cvd::Response> LaunchDevice(Command command, LocalInstanceGroup& group,
                                      const cvd_common::Envs& envs,
                                      const CommandRequest& request);
 
   Result<cvd::Response> LaunchDeviceInterruptible(
-      Command command, selector::LocalInstanceGroup& group,
-      const cvd_common::Envs& envs, const CommandRequest& request);
-
-  Result<Command> ConstructCvdNonHelpCommand(
-      const std::string& bin_file, const selector::LocalInstanceGroup& group,
-      const cvd_common::Args& args, const cvd_common::Envs& envs,
+      Command command, LocalInstanceGroup& group, const cvd_common::Envs& envs,
       const CommandRequest& request);
 
+  Result<Command> ConstructCvdNonHelpCommand(const std::string& bin_file,
+                                             const LocalInstanceGroup& group,
+                                             const cvd_common::Args& args,
+                                             const cvd_common::Envs& envs,
+                                             const CommandRequest& request);
+
   struct GroupAndLockFiles {
-    selector::LocalInstanceGroup group;
+    LocalInstanceGroup group;
     std::vector<InstanceLockFile> lock_files;
   };
 
-  Result<cvd::Response> FillOutNewInstanceInfo(
-      cvd::Response&& response, const selector::LocalInstanceGroup& group);
+  Result<cvd::Response> FillOutNewInstanceInfo(cvd::Response&& response,
+                                               const LocalInstanceGroup& group);
 
-  Result<void> UpdateArgs(cvd_common::Args& args,
-                          selector::LocalInstanceGroup& group);
+  Result<void> UpdateArgs(cvd_common::Args& args, LocalInstanceGroup& group);
 
   Result<void> UpdateEnvs(cvd_common::Envs& envs,
-                          const selector::LocalInstanceGroup& group);
+                          const LocalInstanceGroup& group);
 
   Result<std::string> FindStartBin(const std::string& android_host_out);
 
-  Result<void> AcloudCompatActions(const selector::LocalInstanceGroup& group,
+  Result<void> AcloudCompatActions(const LocalInstanceGroup& group,
                                    const cvd_common::Envs& envs,
                                    const CommandRequest& request);
   InstanceManager& instance_manager_;
@@ -274,7 +273,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
 };
 
 Result<void> CvdStartCommandHandler::AcloudCompatActions(
-    const selector::LocalInstanceGroup& group, const cvd_common::Envs& envs,
+    const LocalInstanceGroup& group, const cvd_common::Envs& envs,
     const CommandRequest& request) {
   // rm -fr "TempDir()/acloud_cvd_temp/local-instance-<i>"
   std::string acloud_compat_home_prefix =
@@ -356,8 +355,8 @@ Result<bool> CvdStartCommandHandler::CanHandle(
   return Contains(supported_commands_, invocation.command);
 }
 
-Result<void> CvdStartCommandHandler::UpdateArgs(
-    cvd_common::Args& args, selector::LocalInstanceGroup& group) {
+Result<void> CvdStartCommandHandler::UpdateArgs(cvd_common::Args& args,
+                                                LocalInstanceGroup& group) {
   CF_EXPECT(UpdateInstanceArgs(args, group));
   CF_EXPECT(UpdateWebrtcDeviceIds(args, group));
   // for backward compatibility, older cvd host tools don't accept group_id
@@ -374,7 +373,7 @@ Result<void> CvdStartCommandHandler::UpdateArgs(
 }
 
 Result<void> CvdStartCommandHandler::UpdateEnvs(
-    cvd_common::Envs& envs, const selector::LocalInstanceGroup& group) {
+    cvd_common::Envs& envs, const LocalInstanceGroup& group) {
   CF_EXPECT(!group.Instances().empty());
   envs[kCuttlefishInstanceEnvVarName] =
       std::to_string(group.Instances()[0].id());
@@ -392,7 +391,7 @@ Result<void> CvdStartCommandHandler::UpdateEnvs(
 }
 
 Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
-    const std::string& bin_file, const selector::LocalInstanceGroup& group,
+    const std::string& bin_file, const LocalInstanceGroup& group,
     const cvd_common::Args& args, const cvd_common::Envs& envs,
     const CommandRequest& request) {
   auto bin_path = group.HostArtifactsPath();
@@ -583,7 +582,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   });
   auto listener_handle = CF_EXPECT(std::move(handle_res));
   group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
-  group.SetStartTime(selector::CvdServerClock::now());
+  group.SetStartTime(CvdServerClock::now());
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   auto response = CF_EXPECT(
       LaunchDeviceInterruptible(std::move(command), group, envs, request));
@@ -610,8 +609,7 @@ static constexpr char kStopFailure[] = R"(
 
   cvd start failed, and stopping run_cvd processes failed.
 )";
-static Result<cvd::Response> CvdResetGroup(
-    const selector::LocalInstanceGroup& group) {
+static Result<cvd::Response> CvdResetGroup(const LocalInstanceGroup& group) {
   auto run_cvd_process_manager = RunCvdProcessManager::Get();
   if (!run_cvd_process_manager.ok()) {
     return CommandResponse(cvd::Status::INTERNAL, kCollectorFailure);
@@ -630,7 +628,7 @@ static Result<cvd::Response> CvdResetGroup(
 }
 
 Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
-    Command launch_command, selector::LocalInstanceGroup& group,
+    Command launch_command, LocalInstanceGroup& group,
     const cvd_common::Envs& envs, const CommandRequest& request) {
   // Don't destroy the returned object until after the devices have started, it
   // holds a connection to the orchestrator that ensures the devices remain
@@ -668,8 +666,8 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
 }
 
 Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
-    Command command, selector::LocalInstanceGroup& group,
-    const cvd_common::Envs& envs, const CommandRequest& request) {
+    Command command, LocalInstanceGroup& group, const cvd_common::Envs& envs,
+    const CommandRequest& request) {
   // cvd_internal_start uses the config from the previous invocation to
   // determine the default value for the -report_anonymous_usage_stats flag so
   // we symlink that to the group's home directory, this link will be
@@ -695,7 +693,7 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
 }
 
 Result<cvd::Response> CvdStartCommandHandler::FillOutNewInstanceInfo(
-    cvd::Response&& response, const selector::LocalInstanceGroup& group) {
+    cvd::Response&& response, const LocalInstanceGroup& group) {
   auto new_response = std::move(response);
   auto& command_response = *(new_response.mutable_command_response());
   auto& instance_group_info =

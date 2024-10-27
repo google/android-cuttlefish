@@ -24,7 +24,6 @@
 #include <fmt/core.h>
 
 namespace cuttlefish {
-namespace selector {
 
 Query::Query(const std::string& field_name, const std::string& field_value)
     : field_name_(field_name), field_value_(field_value) {}
@@ -54,5 +53,4 @@ std::string Format(const TimeStamp& time_point) {
   return ss.str();
 }
 
-}  // namespace selector
 }  // namespace cuttlefish

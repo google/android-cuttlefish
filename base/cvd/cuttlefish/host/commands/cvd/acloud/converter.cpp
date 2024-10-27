@@ -573,7 +573,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
   if (pet_name) {
     const auto [group_name, instance_name] =
-        CF_EXPECT(selector::BreakDeviceName(*pet_name),
+        CF_EXPECT(BreakDeviceName(*pet_name),
                   *pet_name << " must be a group name followed by - "
                             << "followed by an instance name.");
     std::string group_name_arg = "--";

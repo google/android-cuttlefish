@@ -21,16 +21,16 @@
 #include <android-base/parseint.h>
 
 #include "host/commands/cvd/cli/selector/device_selector_utils.h"
-#include "host/commands/cvd/instances/instance_database_types.h"
 #include "host/commands/cvd/cli/selector/selector_common_parser.h"
+#include "host/commands/cvd/instances/instance_database_types.h"
 
 namespace cuttlefish {
-namespace selector {
 
 Result<InstanceSelector> InstanceSelector::GetSelector(
-    const SelectorOptions& selector_options, const Queries& extra_queries,
-    const cvd_common::Envs& envs) {
-  Queries queries = CF_EXPECT(BuildQueriesFromSelectors(selector_options, envs));
+    const selector::SelectorOptions& selector_options,
+    const Queries& extra_queries, const cvd_common::Envs& envs) {
+  Queries queries =
+      CF_EXPECT(BuildQueriesFromSelectors(selector_options, envs));
 
   for (const auto& extra_query : extra_queries) {
     queries.push_back(extra_query);
@@ -53,12 +53,11 @@ InstanceSelector::FindInstanceWithGroup(
 Result<std::pair<LocalInstance, LocalInstanceGroup>>
 InstanceSelector::FindDefaultInstance(
     const InstanceDatabase& instance_database) {
-  auto group = CF_EXPECT(GetDefaultGroup(instance_database));
+  auto group = CF_EXPECT(selector::GetDefaultGroup(instance_database));
   const auto instances = group.Instances();
   CF_EXPECT_EQ(instances.size(), 1u,
                "Default instance is the single instance in the default group.");
   return std::make_pair(*instances.cbegin(), group);
 }
 
-}  // namespace selector
 }  // namespace cuttlefish

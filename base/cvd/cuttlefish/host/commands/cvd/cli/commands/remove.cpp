@@ -95,13 +95,13 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
   }
 
  private:
-  Result<void> StopGroup(selector::LocalInstanceGroup& group,
+  Result<void> StopGroup(LocalInstanceGroup& group,
                          const CommandRequest& request) const {
     if (!group.HasActiveInstances()) {
       return {};
     }
     auto config_path =
-        CF_EXPECT(selector::GetCuttlefishConfigPath(group.HomeDir()));
+        CF_EXPECT(GetCuttlefishConfigPath(group.HomeDir()));
     CF_EXPECT(instance_manager_.IssueStopCommand(request, config_path, group));
     return {};
   }

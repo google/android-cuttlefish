@@ -26,7 +26,6 @@
 #include "host/commands/cvd/instances/instance_database_types.h"
 
 namespace cuttlefish {
-namespace selector {
 
 namespace {
 
@@ -209,10 +208,9 @@ Result<Json::Value> LocalInstanceGroup::FetchStatus(
   }
   Json::Value group_json;
   group_json["group_name"] = GroupName();
-  group_json["start_time"] = selector::Format(StartTime());
+  group_json["start_time"] = Format(StartTime());
   group_json["instances"] = instances_json;
   return group_json;
 }
 
-}  // namespace selector
 }  // namespace cuttlefish

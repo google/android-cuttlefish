@@ -22,15 +22,15 @@
 #include <android-base/parseint.h>
 
 #include "host/commands/cvd/cli/interruptible_terminal.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
 #include "host/commands/cvd/cli/selector/selector_constants.h"
 #include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/instances/instance_database_types.h"
+#include "host/commands/cvd/instances/instance_group_record.h"
 
 namespace cuttlefish {
 namespace {
 
-std::string SelectionMenu(
-    const std::vector<selector::LocalInstanceGroup>& groups) {
+std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
   // Multiple instance groups found, please choose one:
   //   [i] : group_name (created: TIME)
   //      <a> instance0.device_name() (id: instance_id)
@@ -40,7 +40,7 @@ std::string SelectionMenu(
   int group_idx = 0;
   for (const auto& group : groups) {
     fmt::print(ss, "  [{}] : {} (created: {})\n", group_idx, group.GroupName(),
-               selector::Format(group.StartTime()));
+               Format(group.StartTime()));
     char instance_idx = 'a';
     for (const auto& instance : group.Instances()) {
       fmt::print(ss, "    <{}> {}-{} (id : {})\n", instance_idx++,
@@ -51,13 +51,13 @@ std::string SelectionMenu(
   return ss.str();
 }
 
-Result<selector::LocalInstanceGroup> PromptUserForGroup(
+Result<LocalInstanceGroup> PromptUserForGroup(
     InstanceManager& instance_manager, const CommandRequest& request,
     const cvd_common::Envs& envs,
     const selector::SelectorOptions& selector_options) {
   // show the menu and let the user choose
-  std::vector<selector::LocalInstanceGroup> groups =
-      CF_EXPECT(instance_manager.FindGroups(selector::Queries{}));
+  std::vector<LocalInstanceGroup> groups =
+      CF_EXPECT(instance_manager.FindGroups(Queries{}));
   auto menu = SelectionMenu(groups);
 
   std::cout << menu << "\n";
@@ -83,8 +83,7 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
       chosen_group_name = android::base::Trim(input_line);
     }
 
-    InstanceManager::Queries extra_queries{
-        {selector::kGroupNameField, chosen_group_name}};
+    Queries extra_queries{{selector::kGroupNameField, chosen_group_name}};
     auto instance_group_result =
         instance_manager.SelectGroup(selector_options, envs, extra_queries);
     if (instance_group_result.ok()) {
@@ -98,8 +97,8 @@ Result<selector::LocalInstanceGroup> PromptUserForGroup(
 
 }  // namespace
 
-Result<selector::LocalInstanceGroup> SelectGroup(
-    InstanceManager& instance_manager, const CommandRequest& request) {
+Result<LocalInstanceGroup> SelectGroup(InstanceManager& instance_manager,
+                                       const CommandRequest& request) {
   auto has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
   CF_EXPECT(std::move(has_groups), "No instance groups available");
   const cvd_common::Envs& env = request.Env();

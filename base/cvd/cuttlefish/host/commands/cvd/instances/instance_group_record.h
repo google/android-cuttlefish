@@ -27,7 +27,6 @@
 #include "host/commands/cvd/instances/instance_record.h"
 
 namespace cuttlefish {
-namespace selector {
 
 class LocalInstanceGroup {
  public:
@@ -86,5 +85,4 @@ class LocalInstanceGroup {
   std::vector<LocalInstance> instances_;
 };
 
-}  // namespace selector
 }  // namespace cuttlefish

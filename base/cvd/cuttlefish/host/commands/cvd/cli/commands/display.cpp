@@ -125,7 +125,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
     CvdFlag<std::int32_t> instance_num_flag("instance_num");
     auto instance_num_opt =
         CF_EXPECT(instance_num_flag.FilterFlag(subcmd_args));
-    selector::Queries extra_queries;
+    Queries extra_queries;
     if (instance_num_opt) {
       extra_queries.emplace_back(selector::kInstanceIdField, *instance_num_opt);
     }

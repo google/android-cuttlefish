@@ -22,7 +22,6 @@
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-namespace selector {
 
 Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
@@ -80,5 +79,4 @@ RetSet Intersection(const RetSet& u, AnyContainer&& v, Containers&&... s) {
   return Intersection(first, std::forward<Containers>(s)...);
 }
 
-}  // namespace selector
 }  // namespace cuttlefish

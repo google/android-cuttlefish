@@ -34,7 +34,6 @@
 #include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
-namespace selector {
 
 namespace {
 
@@ -179,16 +178,16 @@ Result<InstanceDatabase::FindParam> InstanceDatabase::FindParam::FromQueries(
     const Queries& queries) {
   FindParam param;
   for (const auto& query : queries) {
-    if (query.field_name_ == kHomeField) {
+    if (query.field_name_ == selector::kHomeField) {
       param.home = query.field_value_;
-    } else if (query.field_name_ == kInstanceIdField) {
+    } else if (query.field_name_ == selector::kInstanceIdField) {
       int id;
       CF_EXPECTF(android::base::ParseInt(query.field_value_, &id),
                  "Id is not a number: {}", id);
       param.id = id;
-    } else if (query.field_name_ == kGroupNameField) {
+    } else if (query.field_name_ == selector::kGroupNameField) {
       param.group_name = query.field_value_;
-    } else if (query.field_name_ == kInstanceNameField) {
+    } else if (query.field_name_ == selector::kInstanceNameField) {
       param.instance_name = query.field_value_;
     } else {
       return CF_ERRF("Unrecognized field name: {}", query.field_name_);
@@ -298,5 +297,4 @@ Result<bool> InstanceDatabase::GetAcloudTranslatorOptout() const {
       });
 }
 
-}  // namespace selector
 }  // namespace cuttlefish

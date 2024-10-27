@@ -27,7 +27,7 @@ namespace cuttlefish {
 
 // Fetches status from a single instance. Waits for each run_cvd process to
 // respond within the given timeout.
-Result<Json::Value> FetchInstanceStatus(selector::LocalInstance& instance,
+Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
                                         std::chrono::seconds timeout);
 
 }  // namespace cuttlefish

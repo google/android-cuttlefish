@@ -39,7 +39,7 @@ class OperatorControlConn {
   /**
    * Pre-registers an instance group with the operator
    */
-  Result<void> Preregister(const selector::LocalInstanceGroup& group);
+  Result<void> Preregister(const LocalInstanceGroup& group);
 
  private:
   OperatorControlConn(SharedFD conn) : conn_(conn) {}
