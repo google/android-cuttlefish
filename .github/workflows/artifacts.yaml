@@ -65,7 +65,7 @@ jobs:
     - name: bazel version
       run: bazel version
     - name: Build docker image
-      run: bazel build --sandbox_writable_path=$HOME //docker:orchestration_image_tar --action_env=PLATFORM=linux/amd64
+      run: bazel build --sandbox_writable_path=$HOME //docker:orchestration_image_tar
     - name: Set filename of docker image
       run: mv bazel-bin/docker/orchestration-image.tar ${{ env.x86_64_image_path }}
     - name: Publish docker image
@@ -90,7 +90,7 @@ jobs:
     - name: bazel version
       run: bazel version
     - name: Build docker image
-      run: bazel build --sandbox_writable_path=$HOME //docker:orchestration_image_tar --action_env=PLATFORM=linux/arm64
+      run: bazel build --sandbox_writable_path=$HOME //docker:orchestration_image_tar
     - name: Set filename of docker image
       run: mv bazel-bin/docker/orchestration-image.tar ${{ env.arm64_image_path }}
     - name: Publish docker image
