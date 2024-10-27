@@ -20,13 +20,14 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/unix_sockets.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/metrics/metrics_notice.h"
 #include "host/commands/cvd/instances/instance_database.h"
+#include "host/commands/cvd/metrics/metrics_notice.h"
+#include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 
@@ -112,7 +113,7 @@ Result<void> ImportResourcesImpl(const ParseResult& param) {
   SetMinimumVerbosity(android::base::VERBOSE);
   LOG(INFO) << "Starting server";
   signal(SIGPIPE, SIG_IGN);
-  selector::InstanceDatabase instance_database(InstanceDatabasePath());
+  InstanceDatabase instance_database(InstanceDatabasePath());
   cvd::Response response;
   if (param.memory_carryover_fd) {
     SharedFD memory_carryover_fd = std::move(*param.memory_carryover_fd);

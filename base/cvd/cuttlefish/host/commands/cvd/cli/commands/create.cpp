@@ -32,18 +32,18 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/users.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
+#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/command_sequence.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/cli/selector/creation_analyzer.h"
-#include "host/commands/cvd/instances/instance_database_types.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/cli/selector/creation_analyzer.h"
+#include "host/commands/cvd/cli/selector/selector_constants.h"
 #include "host/commands/cvd/cli/types.h"
+#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/instances/instance_database_types.h"
+#include "host/commands/cvd/instances/instance_group_record.h"
+#include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace {
@@ -156,9 +156,10 @@ Result<CommandRequest> CreateLoadCommand(const CommandRequest& request,
                        .Build());
 }
 
-Result<CommandRequest> CreateStartCommand(
-    const CommandRequest& request, const selector::LocalInstanceGroup& group,
-    const cvd_common::Args& args, const cvd_common::Envs& envs) {
+Result<CommandRequest> CreateStartCommand(const CommandRequest& request,
+                                          const LocalInstanceGroup& group,
+                                          const cvd_common::Args& args,
+                                          const cvd_common::Envs& envs) {
   return CF_EXPECT(
       CommandRequestBuilder()
           .SetEnv(envs)
@@ -192,8 +193,7 @@ Result<cvd_common::Envs> GetEnvs(const CommandRequest& request) {
   return envs;
 }
 
-cvd::InstanceGroupInfo GroupInfoFromGroup(
-    const selector::LocalInstanceGroup& group) {
+cvd::InstanceGroupInfo GroupInfoFromGroup(const LocalInstanceGroup& group) {
   cvd::InstanceGroupInfo info;
   info.set_group_name(group.GroupName());
   for (const auto& instance : group.Instances()) {
@@ -241,10 +241,10 @@ class CvdCreateCommandHandler : public CvdServerHandler {
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
-  Result<selector::LocalInstanceGroup> GetOrCreateGroup(
+  Result<LocalInstanceGroup> GetOrCreateGroup(
       const cvd_common::Args& subcmd_args, const cvd_common::Envs& envs,
       const CommandRequest& request, bool acquire_file_locks);
-  Result<void> CreateSymlinks(const selector::LocalInstanceGroup& group);
+  Result<void> CreateSymlinks(const LocalInstanceGroup& group);
 
   static void MarkLockfiles(std::vector<InstanceLockFile>& lock_files,
                             const InUseState state);
@@ -272,7 +272,7 @@ Result<bool> CvdCreateCommandHandler::CanHandle(
   return Contains(CmdList(), invocation.command);
 }
 
-Result<selector::LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
+Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
     const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
     const CommandRequest& request, bool acquire_file_locks) {
   using CreationAnalyzerParam =
@@ -291,8 +291,8 @@ Result<selector::LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
     lock_files.emplace_back(std::move(*instance.instance_file_lock_));
   }
 
-  auto groups = CF_EXPECT(instance_manager_.FindGroups(selector::Query(
-      selector::kGroupNameField, group_creation_info.group_name)));
+  auto groups = CF_EXPECT(instance_manager_.FindGroups(
+      Query(selector::kGroupNameField, group_creation_info.group_name)));
   CF_EXPECTF(groups.size() <= 1,
              "Expected no more than one group with given name: {}",
              group_creation_info.group_name);
@@ -322,7 +322,7 @@ Result<selector::LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
 
 // For backward compatibility, we add extra symlink in home dir
 Result<void> CvdCreateCommandHandler::CreateSymlinks(
-    const selector::LocalInstanceGroup& group) {
+    const LocalInstanceGroup& group) {
   auto system_wide_home = CF_EXPECT(SystemWideUserHome());
   CF_EXPECT(EnsureDirectoryExists(group.HomeDir()));
   auto smallest_id = std::numeric_limits<unsigned>::max();
@@ -385,7 +385,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
       GetOrCreateGroup(subcmd_args, envs, request, flags.acquire_file_locks));
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
-  group.SetStartTime(selector::CvdServerClock::now());
+  group.SetStartTime(CvdServerClock::now());
   instance_manager_.UpdateInstanceGroup(group);
 
   cvd::Response response;

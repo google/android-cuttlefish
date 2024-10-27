@@ -24,14 +24,14 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/command_sequence.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/fetch/fetch_cvd.h"
-#include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/utils/interrupt_listener.h"
 #include "host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "host/commands/cvd/cli/selector/selector_constants.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/cli/types.h"
+#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/fetch/fetch_cvd.h"
+#include "host/commands/cvd/instances/instance_manager.h"
+#include "host/commands/cvd/utils/common.h"
+#include "host/commands/cvd/utils/interrupt_listener.h"
 
 namespace cuttlefish {
 namespace {
@@ -98,7 +98,7 @@ class LoadConfigsCommand : public CvdServerHandler {
           {
             std::lock_guard lock(group_creation_mtx);
             auto group_res = instance_manager_.FindGroup(
-                selector::Query(selector::kHomeField, group_home_directory));
+                Query(selector::kHomeField, group_home_directory));
             if (!group_res.ok()) {
               LOG(ERROR) << "Failed to load group from database: "
                          << group_res.error().Message();
@@ -143,8 +143,7 @@ class LoadConfigsCommand : public CvdServerHandler {
   }
 
   Result<void> LoadGroup(const CommandRequest& request,
-                         selector::LocalInstanceGroup& group,
-                         CvdFlags cvd_flags) {
+                         LocalInstanceGroup& group, CvdFlags cvd_flags) {
     auto mkdir_res =
         EnsureDirectoryExists(cvd_flags.load_directories.launch_home_directory,
                               0775, /* group_name */ "");
@@ -195,9 +194,9 @@ class LoadConfigsCommand : public CvdServerHandler {
             .Build());
   }
 
-  Result<CommandRequest> BuildLaunchCmd(
-      const CommandRequest& request, const CvdFlags& cvd_flags,
-      const selector::LocalInstanceGroup& group) {
+  Result<CommandRequest> BuildLaunchCmd(const CommandRequest& request,
+                                        const CvdFlags& cvd_flags,
+                                        const LocalInstanceGroup& group) {
     // Add system flag for multi-build scenario
     std::string system_build_arg = fmt::format(
         "--system_image_dir={}",
@@ -228,7 +227,7 @@ class LoadConfigsCommand : public CvdServerHandler {
   }
 
  private:
-  Result<selector::LocalInstanceGroup> CreateGroup(const CvdFlags& cvd_flags) {
+  Result<LocalInstanceGroup> CreateGroup(const CvdFlags& cvd_flags) {
     selector::GroupCreationInfo group_info{
         .home = cvd_flags.load_directories.launch_home_directory,
         .host_artifacts_path =

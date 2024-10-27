@@ -50,7 +50,7 @@ std::optional<std::string> OverridenHomeDirectory(const cvd_common::Envs& env) {
 
 Result<Queries> BuildQueriesFromSelectors(const SelectorOptions& selectors,
                                           const cvd_common::Envs& env) {
-  selector::Queries queries;
+  Queries queries;
   auto overriden_home = OverridenHomeDirectory(env);
   if (overriden_home.has_value()) {
     queries.emplace_back(kHomeField, overriden_home.value());

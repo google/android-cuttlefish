@@ -25,7 +25,6 @@
 #include "common/libs/utils/files.h"
 
 namespace cuttlefish {
-namespace selector {
 
 Result<std::string> GetCuttlefishConfigPath(const std::string& home) {
   std::string home_realpath;
@@ -95,5 +94,4 @@ std::string GenerateTooManyInstancesErrorMsg(const int n,
   return s.str();
 }
 
-}  // namespace selector
 }  // namespace cuttlefish

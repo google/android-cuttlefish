@@ -28,7 +28,6 @@
 #include "host/commands/cvd/instances/instance_group_record.h"
 
 namespace cuttlefish {
-namespace selector {
 
 class InstanceDatabase {
  public:
@@ -108,5 +107,4 @@ class InstanceDatabase {
   DataViewer viewer_;
 };
 
-}  // namespace selector
 }  // namespace cuttlefish

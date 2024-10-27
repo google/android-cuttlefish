@@ -26,32 +26,21 @@
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/instances/instance_lock.h"
 #include "host/commands/cvd/cli/selector/creation_analyzer.h"
-#include "host/commands/cvd/instances/group_selector.h"
+#include "host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "host/commands/cvd/instances/instance_database.h"
 #include "host/commands/cvd/instances/instance_database_types.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
+#include "host/commands/cvd/instances/instance_lock.h"
 #include "host/commands/cvd/instances/instance_record.h"
-#include "host/commands/cvd/instances/instance_selector.h"
-#include "host/commands/cvd/cli/selector/selector_common_parser.h"
 
 namespace cuttlefish {
 
 class InstanceManager {
  public:
   using GroupCreationInfo = selector::GroupCreationInfo;
-  using LocalInstance = selector::LocalInstance;
-  using LocalInstanceGroup = selector::LocalInstanceGroup;
-  using GroupSelector = selector::GroupSelector;
-  using InstanceSelector = selector::InstanceSelector;
-  using Queries = selector::Queries;
-  using Query = selector::Query;
-  template <typename T>
-  using Set = selector::Set<T>;
 
-  InstanceManager(InstanceLockFileManager&,
-                  selector::InstanceDatabase& instance_db);
+  InstanceManager(InstanceLockFileManager&, InstanceDatabase& instance_db);
 
   // For cvd start
   Result<selector::CreationAnalyzer> CreationAnalyzer(
@@ -96,7 +85,7 @@ class InstanceManager {
   Result<std::string> StopBin(const std::string& host_android_out);
 
   InstanceLockFileManager& lock_manager_;
-  selector::InstanceDatabase& instance_db_;
+  InstanceDatabase& instance_db_;
 };
 
 }  // namespace cuttlefish

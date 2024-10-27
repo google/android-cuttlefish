@@ -165,20 +165,20 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
 
   if (!request.Selectors().instance_names && flags.instance_name.empty()) {
     // No attempt at selecting an instance, get group status instead
-    selector::LocalInstanceGroup group = CF_EXPECT(
+    LocalInstanceGroup group = CF_EXPECT(
         instance_manager_.SelectGroup(request.Selectors(), request.Env()));
     status_array = CF_EXPECT(group.FetchStatus(
         std::chrono::seconds(flags.wait_for_launcher_seconds)));
     instance_manager_.UpdateInstanceGroup(group);
   } else {
-    std::pair<selector::LocalInstance, selector::LocalInstanceGroup> pair =
+    std::pair<LocalInstance, LocalInstanceGroup> pair =
         flags.instance_name.empty()
             ? CF_EXPECT(instance_manager_.SelectInstance(request.Selectors(),
                                                          request.Env()))
             : CF_EXPECT(instance_manager_.FindInstanceById(
                   CF_EXPECT(IdFromInstanceNameFlag(flags.instance_name))));
-    selector::LocalInstance instance = pair.first;
-    selector::LocalInstanceGroup group = pair.second;
+    LocalInstance instance = pair.first;
+    LocalInstanceGroup group = pair.second;
     status_array.append(CF_EXPECT(instance.FetchStatus(
         std::chrono::seconds(flags.wait_for_launcher_seconds))));
     instance_manager_.UpdateInstanceGroup(group);

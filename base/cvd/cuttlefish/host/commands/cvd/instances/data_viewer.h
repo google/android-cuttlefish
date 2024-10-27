@@ -22,16 +22,13 @@
 #include <mutex>
 #include <thread>
 #include <unordered_map>
-#include <vector>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/signals.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 
 namespace cuttlefish {
-namespace selector {
 
 /**
  * Synchronizes loading and storing the instance database from and to a file.
@@ -124,6 +121,5 @@ class DataViewer {
   std::string backing_file_;
 };
 
-}  // namespace selector
 }  // namespace cuttlefish
 

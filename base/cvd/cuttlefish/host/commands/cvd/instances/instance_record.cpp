@@ -23,7 +23,6 @@
 #include "host/commands/cvd/instances/status_fetcher.h"
 
 namespace cuttlefish {
-namespace selector {
 
 namespace {
 constexpr int BASE_ADB_PORT = 6520;
@@ -84,5 +83,4 @@ Result<Json::Value> LocalInstance::FetchStatus(std::chrono::seconds timeout) {
   return CF_EXPECT(FetchInstanceStatus(*this, timeout));
 }
 
-}  // namespace selector
 }  // namespace cuttlefish

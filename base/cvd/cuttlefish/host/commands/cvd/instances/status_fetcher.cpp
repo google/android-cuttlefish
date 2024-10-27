@@ -74,7 +74,7 @@ std::string HumanFriendlyStateName(cvd::InstanceState state) {
 // Adds more information to the json object returned by cvd_internal_status,
 // including some that cvd_internal_status normally returns but doesn't when the
 // instance is not running.
-void OverrideInstanceJson(const selector::LocalInstance& instance,
+void OverrideInstanceJson(const LocalInstance& instance,
                           Json::Value& instance_json) {
   instance_json["instance_name"] = instance.name();
   instance_json["status"] = HumanFriendlyStateName(instance.state());
@@ -98,7 +98,7 @@ Result<std::string> GetBin(const std::string& host_artifacts_path) {
 
 }  // namespace
 
-Result<Json::Value> FetchInstanceStatus(selector::LocalInstance& instance,
+Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
                                         std::chrono::seconds timeout) {
   // Only running instances are capable of responding to status requests. An
   // unreachable instance is also considered running, it just didnt't reply last

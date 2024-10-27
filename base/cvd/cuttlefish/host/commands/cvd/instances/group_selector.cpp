@@ -22,12 +22,12 @@
 #include "host/commands/cvd/cli/selector/selector_common_parser.h"
 
 namespace cuttlefish {
-namespace selector {
 
 Result<GroupSelector> GroupSelector::GetSelector(
-    const SelectorOptions& selector_options, const Queries& extra_queries,
-    const cvd_common::Envs& envs) {
-  Queries queries = CF_EXPECT(BuildQueriesFromSelectors(selector_options, envs));
+    const selector::SelectorOptions& selector_options,
+    const Queries& extra_queries, const cvd_common::Envs& envs) {
+  Queries queries =
+      CF_EXPECT(BuildQueriesFromSelectors(selector_options, envs));
 
   for (const auto& extra_query : extra_queries) {
     queries.push_back(extra_query);
@@ -50,9 +50,8 @@ Result<LocalInstanceGroup> GroupSelector::FindGroup(
 
 Result<LocalInstanceGroup> GroupSelector::FindDefaultGroup(
     const InstanceDatabase& instance_database) {
-  auto group = CF_EXPECT(GetDefaultGroup(instance_database));
+  auto group = CF_EXPECT(selector::GetDefaultGroup(instance_database));
   return group;
 }
 
-}  // namespace selector
 }  // namespace cuttlefish

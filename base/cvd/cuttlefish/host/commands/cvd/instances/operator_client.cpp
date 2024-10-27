@@ -23,8 +23,8 @@
 #include <string>
 #include <vector>
 
-#include <json/json.h>
 #include <fmt/format.h>
+#include <json/json.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -36,8 +36,7 @@
 namespace cuttlefish {
 
 namespace {
-Result<Json::Value> BuildPregistrationMsg(
-    const selector::LocalInstanceGroup& group) {
+Result<Json::Value> BuildPregistrationMsg(const LocalInstanceGroup& group) {
   Json::Value msg;
   msg["message_type"] = "pre-register";
   msg["group_name"] = group.GroupName();
@@ -82,8 +81,7 @@ Result<std::unique_ptr<OperatorControlConn>> OperatorControlConn::Create(
 /**
  * Pre-registers an instance group with the operator
  */
-Result<void> OperatorControlConn::Preregister(
-    const selector::LocalInstanceGroup& group) {
+Result<void> OperatorControlConn::Preregister(const LocalInstanceGroup& group) {
   CF_EXPECT(SendMsg(conn_, CF_EXPECT(BuildPregistrationMsg(group))),
             "Failed to send pre-registration message to operator");
   Json::Value response =

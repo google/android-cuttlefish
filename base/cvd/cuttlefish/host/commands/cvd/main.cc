@@ -31,9 +31,9 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/utils/common.h"
 #include "host/commands/cvd/cvd.h"
 #include "host/commands/cvd/legacy/client.h"
+#include "host/commands/cvd/utils/common.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "host/commands/cvd/metrics/cvd_metrics_api.h"
 #include "host/commands/cvd/legacy/run_server.h"
@@ -192,7 +192,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   IncreaseFileLimit();
 
   InstanceLockFileManager instance_lockfile_manager;
-  selector::InstanceDatabase instance_db(InstanceDatabasePath());
+  InstanceDatabase instance_db(InstanceDatabasePath());
   InstanceManager instance_manager(instance_lockfile_manager, instance_db);
   Cvd cvd(verbosity, instance_lockfile_manager, instance_manager);
 

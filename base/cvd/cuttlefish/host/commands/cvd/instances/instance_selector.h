@@ -21,18 +21,17 @@
 #include <utility>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/instances/instance_database.h"
 #include "host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "host/commands/cvd/cli/types.h"
+#include "host/commands/cvd/instances/instance_database.h"
 
 namespace cuttlefish {
-namespace selector {
 
 class InstanceSelector {
  public:
   static Result<InstanceSelector> GetSelector(
-      const SelectorOptions& selector_options, const Queries& extra_queries,
-      const cvd_common::Envs& envs);
+      const selector::SelectorOptions& selector_options,
+      const Queries& extra_queries, const cvd_common::Envs& envs);
   /*
    * If default, try running single instance group. If multiple, try to find
    * HOME == SystemWideUserHome. If not exists, give up.
@@ -53,5 +52,4 @@ class InstanceSelector {
   const Queries queries_;
 };
 
-}  // namespace selector
 }  // namespace cuttlefish

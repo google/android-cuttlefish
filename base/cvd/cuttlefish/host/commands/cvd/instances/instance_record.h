@@ -25,7 +25,6 @@
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 
 namespace cuttlefish {
-namespace selector {
 
 class LocalInstance {
  public:
@@ -72,5 +71,4 @@ class LocalInstance {
   friend class LocalInstanceGroup;
 };
 
-}  // namespace selector
 }  // namespace cuttlefish
