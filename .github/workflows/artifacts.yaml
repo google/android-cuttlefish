@@ -86,7 +86,7 @@ jobs:
         short_sha=$(echo ${{ github.sha }} | cut -c1-8)
         echo "arm64_image_path=orchestration-image-arm64-${short_sha}.tar" >> $GITHUB_ENV
     - name: Install bazel
-      run: sudo bash tools/buildutils/installbazel.sh
+      run: bash tools/buildutils/installbazel.sh
     - name: bazel version
       run: bazel version
     - name: Build docker image

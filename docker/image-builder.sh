@@ -14,8 +14,15 @@ else
     tag="$1"
 fi
 
-# Use the PLATFORM environment variable, defaulting to linux/amd64 if not set
-platforms="${PLATFORM:-linux/amd64}"
+# Use the PLATFORM environment variable, defaulting to the user's architecture if not set
+default_arch="linux/amd64"
+user_arch=$(uname -m)
+
+if [[ "$user_arch" == "aarch64" ]]; then
+    default_arch="linux/arm64"
+fi
+
+platforms="${PLATFORM:-$default_arch}"
 
 # Set up Docker Buildx if not already set up
 docker buildx create --use || true
