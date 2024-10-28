@@ -40,13 +40,12 @@
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/group_selector.h"
+#include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
 #include "host/commands/cvd/instances/operator_client.h"
 #include "host/commands/cvd/instances/reset_client_utils.h"
-#include "host/commands/cvd/instances/status_fetcher.h"
 #include "host/commands/cvd/utils/common.h"
 #include "host/commands/cvd/utils/interrupt_listener.h"
 #include "host/commands/cvd/utils/subprocess_waiter.h"
@@ -544,7 +543,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   subcmd_args.push_back("--daemon=true");
 
   auto group =
-      CF_EXPECT(SelectGroup(instance_manager_, request),
+      CF_EXPECT(selector::SelectGroup(instance_manager_, request),
                 "Failed to select group to start, did you mean 'cvd create'?");
 
   CF_EXPECT(!group.HasActiveInstances(),

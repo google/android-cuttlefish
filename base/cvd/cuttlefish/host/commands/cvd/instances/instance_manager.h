@@ -44,12 +44,7 @@ class InstanceManager {
   Result<selector::CreationAnalyzer> CreationAnalyzer(
       const selector::CreationAnalyzer::CreationAnalyzerParam& param);
 
-  Result<LocalInstanceGroup> SelectGroup(const InstanceDatabase::Filter& filter);
-
-  Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
-      const InstanceDatabase::Filter& filter);
-
-  Result<bool> HasInstanceGroups();
+  Result<bool> HasInstanceGroups() const;
   Result<LocalInstanceGroup> CreateInstanceGroup(
       const selector::GroupCreationInfo& group_info);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
@@ -65,8 +60,8 @@ class InstanceManager {
   Result<LocalInstanceGroup> FindGroup(
       const InstanceDatabase::Filter& filter) const;
 
-  Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceById(
-      unsigned id) const;
+  Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
+      const InstanceDatabase::Filter& filter) const;
 
   Result<void> SetAcloudTranslatorOptout(bool optout);
   Result<bool> GetAcloudTranslatorOptout() const;

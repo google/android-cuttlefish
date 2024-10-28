@@ -26,8 +26,7 @@
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/group_selector.h"
-#include "host/commands/cvd/cli/selector/device_selector_utils.h"
+#include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_manager.h"
@@ -168,18 +167,17 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   if (!request.Selectors().instance_names && flags.instance_name.empty()) {
     // No attempt at selecting an instance, get group status instead
     LocalInstanceGroup group =
-        CF_EXPECT(SelectGroup(instance_manager_, request));
+        CF_EXPECT(selector::SelectGroup(instance_manager_, request));
     status_array = CF_EXPECT(group.FetchStatus(
         std::chrono::seconds(flags.wait_for_launcher_seconds)));
     instance_manager_.UpdateInstanceGroup(group);
   } else {
     std::pair<LocalInstance, LocalInstanceGroup> pair =
         flags.instance_name.empty()
-            ? CF_EXPECT(instance_manager_.SelectInstance(
-                  CF_EXPECT(selector::BuildFilterFromSelectors(
-                      request.Selectors(), request.Env()))))
-            : CF_EXPECT(instance_manager_.FindInstanceById(
-                  CF_EXPECT(IdFromInstanceNameFlag(flags.instance_name))));
+            ? CF_EXPECT(selector::SelectInstance(instance_manager_, request))
+            : CF_EXPECT(instance_manager_.FindInstanceWithGroup(
+                  {.instance_id = CF_EXPECT(
+                       IdFromInstanceNameFlag(flags.instance_name))}));
     LocalInstance instance = pair.first;
     LocalInstanceGroup group = pair.second;
     status_array.append(CF_EXPECT(instance.FetchStatus(

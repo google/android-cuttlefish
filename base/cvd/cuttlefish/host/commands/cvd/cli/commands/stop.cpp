@@ -30,13 +30,13 @@
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/cli/group_selector.h"
-#include "host/commands/cvd/instances/instance_manager.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
+#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/instances/instance_manager.h"
+#include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace {
@@ -119,7 +119,7 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
     return NoGroupResponse(request);
   }
 
-  auto group = CF_EXPECT(SelectGroup(instance_manager_, request));
+  auto group = CF_EXPECT(selector::SelectGroup(instance_manager_, request));
   CF_EXPECT(group.HasActiveInstances(), "Selected group is not running");
 
   auto android_host_out = group.HostArtifactsPath();
