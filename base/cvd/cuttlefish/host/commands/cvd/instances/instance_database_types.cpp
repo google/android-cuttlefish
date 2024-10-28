@@ -25,20 +25,14 @@
 
 namespace cuttlefish {
 
-std::string SerializeTimePoint(const TimeStamp& present) {
-  const auto duration =
-      std::chrono::duration_cast<CvdTimeDuration>(present.time_since_epoch());
-  return fmt::format("{}", duration.count());
-}
-
 Result<TimeStamp> DeserializeTimePoint(const Json::Value& time_point_json) {
   std::string serialized = time_point_json.asString();
 
-  using CountType = decltype(std::declval<CvdTimeDuration>().count());
+  using CountType = decltype(std::declval<std::chrono::milliseconds>().count());
   CountType count = 0;
   CF_EXPECTF(android::base::ParseInt(serialized, &count),
              "Failed to serialize: {}", serialized);
-  CvdTimeDuration duration(count);
+  std::chrono::milliseconds duration(count);
   TimeStamp restored_time(duration);
   return restored_time;
 }

@@ -24,7 +24,6 @@
 #include "host/commands/cvd/cli/interruptible_terminal.h"
 #include "host/commands/cvd/cli/selector/device_selector_utils.h"
 #include "host/commands/cvd/cli/utils.h"
-#include "host/commands/cvd/instances/instance_database_types.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
 
 namespace cuttlefish {
