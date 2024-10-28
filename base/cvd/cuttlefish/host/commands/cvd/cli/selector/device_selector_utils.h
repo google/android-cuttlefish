@@ -26,9 +26,9 @@
 #include <optional>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/instances/instance_database.h"
 #include "host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "host/commands/cvd/cli/types.h"
+#include "host/commands/cvd/instances/instance_database.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -38,8 +38,8 @@ Result<LocalInstanceGroup> GetDefaultGroup(
 
 std::optional<std::string> OverridenHomeDirectory(const cvd_common::Envs& env);
 
-Result<Queries> BuildQueriesFromSelectors(const SelectorOptions& selectors,
-                                          const cvd_common::Envs& env);
+Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
+    const SelectorOptions& selectors, const cvd_common::Envs& env);
 
 }  // namespace selector
 }  // namespace cuttlefish

@@ -27,9 +27,7 @@
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/selector/creation_analyzer.h"
-#include "host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "host/commands/cvd/instances/instance_database.h"
-#include "host/commands/cvd/instances/instance_database_types.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
 #include "host/commands/cvd/instances/instance_lock.h"
 #include "host/commands/cvd/instances/instance_record.h"
@@ -46,13 +44,10 @@ class InstanceManager {
   Result<selector::CreationAnalyzer> CreationAnalyzer(
       const selector::CreationAnalyzer::CreationAnalyzerParam& param);
 
-  Result<LocalInstanceGroup> SelectGroup(
-      const selector::SelectorOptions& selector_options,
-      const cvd_common::Envs& envs, const Queries& extra_queries = {});
+  Result<LocalInstanceGroup> SelectGroup(const InstanceDatabase::Filter& filter);
 
   Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
-      const selector::SelectorOptions& selector_options,
-      const cvd_common::Envs& envs, const Queries& extra_queries = {});
+      const InstanceDatabase::Filter& filter);
 
   Result<bool> HasInstanceGroups();
   Result<LocalInstanceGroup> CreateInstanceGroup(
@@ -65,11 +60,10 @@ class InstanceManager {
 
   Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
 
-  Result<std::vector<LocalInstanceGroup>> FindGroups(const Query& query) const;
   Result<std::vector<LocalInstanceGroup>> FindGroups(
-      const Queries& queries) const;
-  Result<LocalInstanceGroup> FindGroup(const Query& query) const;
-  Result<LocalInstanceGroup> FindGroup(const Queries& queries) const;
+      const InstanceDatabase::Filter& filter) const;
+  Result<LocalInstanceGroup> FindGroup(
+      const InstanceDatabase::Filter& filter) const;
 
   Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceById(
       unsigned id) const;

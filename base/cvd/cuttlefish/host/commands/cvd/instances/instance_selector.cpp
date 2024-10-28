@@ -21,33 +21,18 @@
 #include <android-base/parseint.h>
 
 #include "host/commands/cvd/cli/selector/device_selector_utils.h"
-#include "host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "host/commands/cvd/instances/instance_database_types.h"
+#include "host/commands/cvd/instances/instance_database.h"
 
 namespace cuttlefish {
-
-Result<InstanceSelector> InstanceSelector::GetSelector(
-    const selector::SelectorOptions& selector_options,
-    const Queries& extra_queries, const cvd_common::Envs& envs) {
-  Queries queries =
-      CF_EXPECT(BuildQueriesFromSelectors(selector_options, envs));
-
-  for (const auto& extra_query : extra_queries) {
-    queries.push_back(extra_query);
-  }
-
-  InstanceSelector instance_selector(queries);
-  return instance_selector;
-}
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>>
 InstanceSelector::FindInstanceWithGroup(
     const InstanceDatabase& instance_database) {
-  if (queries_.empty()) {
+  if (filter_.Empty()) {
     return CF_EXPECT(FindDefaultInstance(instance_database));
   }
 
-  return CF_EXPECT(instance_database.FindInstanceWithGroup(queries_));
+  return CF_EXPECT(instance_database.FindInstanceWithGroup(filter_));
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>>

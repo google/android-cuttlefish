@@ -30,9 +30,8 @@
 #include "common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
+#include "host/commands/cvd/cli/selector/device_selector_utils.h"
 #include "host/commands/cvd/instances/group_selector.h"
-#include "host/commands/cvd/instances/instance_database_types.h"
 #include "host/commands/cvd/instances/instance_database_utils.h"
 #include "host/commands/cvd/instances/instance_record.h"
 #include "host/commands/cvd/instances/instance_selector.h"
@@ -94,26 +93,25 @@ Result<selector::CreationAnalyzer> InstanceManager::CreationAnalyzer(
 }
 
 Result<LocalInstanceGroup> InstanceManager::SelectGroup(
-    const selector::SelectorOptions& selectors, const cvd_common::Envs& envs,
-    const Queries& extra_queries) {
-  auto group_selector =
-      CF_EXPECT(GroupSelector::GetSelector(selectors, extra_queries, envs));
+    const InstanceDatabase::Filter& filter) {
+  GroupSelector group_selector(filter);
+  if (filter.Empty()) {
+    return CF_EXPECT(selector::GetDefaultGroup(instance_db_));
+  }
   return CF_EXPECT(group_selector.FindGroup(instance_db_));
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>>
-InstanceManager::SelectInstance(
-    const selector::SelectorOptions& selector_options,
-    const cvd_common::Envs& envs, const Queries& extra_queries) {
-  auto instance_selector = CF_EXPECT(
-      InstanceSelector::GetSelector(selector_options, extra_queries, envs));
+InstanceManager::SelectInstance(const InstanceDatabase::Filter& filter) {
+  InstanceSelector instance_selector(filter);
   return CF_EXPECT(instance_selector.FindInstanceWithGroup(instance_db_));
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>>
 InstanceManager::FindInstanceById(unsigned id) const {
-  return CF_EXPECT(instance_db_.FindInstanceWithGroup(
-      Query(selector::kInstanceIdField, id)));
+  return CF_EXPECT(instance_db_.FindInstanceWithGroup({
+      .instance_id = id,
+  }));
 }
 
 Result<bool> InstanceManager::HasInstanceGroups() {
@@ -138,8 +136,7 @@ Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
 
 Result<bool> InstanceManager::RemoveInstanceGroupByHome(
     const std::string& dir) {
-  LocalInstanceGroup group =
-      CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
+  LocalInstanceGroup group = CF_EXPECT(instance_db_.FindGroup({.home = dir}));
   CF_EXPECT(!group.HasActiveInstances(),
             "Group still contains active instances");
   for (auto& instance : group.Instances()) {
@@ -258,23 +255,13 @@ Result<std::optional<InstanceLockFile>> InstanceManager::TryAcquireLock(
 }
 
 Result<std::vector<LocalInstanceGroup>> InstanceManager::FindGroups(
-    const Query& query) const {
-  return CF_EXPECT(FindGroups(Queries{query}));
-}
-
-Result<std::vector<LocalInstanceGroup>> InstanceManager::FindGroups(
-    const Queries& queries) const {
-  return instance_db_.FindGroups(queries);
+    const InstanceDatabase::Filter& filter) const {
+  return instance_db_.FindGroups(filter);
 }
 
 Result<LocalInstanceGroup> InstanceManager::FindGroup(
-    const Query& query) const {
-  return CF_EXPECT(FindGroup(Queries{query}));
-}
-
-Result<LocalInstanceGroup> InstanceManager::FindGroup(
-    const Queries& queries) const {
-  auto output = CF_EXPECT(instance_db_.FindGroups(queries));
+    const InstanceDatabase::Filter& filter) const {
+  auto output = CF_EXPECT(instance_db_.FindGroups(filter));
   CF_EXPECT_EQ(output.size(), 1ul);
   return *(output.begin());
 }

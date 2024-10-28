@@ -32,10 +32,9 @@
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
 #include "host/commands/cvd/cli/flag.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
+#include "host/commands/cvd/cli/selector/device_selector_utils.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
-#include "host/commands/cvd/instances/instance_database_types.h"
 #include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
@@ -155,12 +154,12 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     CvdFlag<std::int32_t> instance_num_flag("instance_num");
     auto instance_num_opt =
         CF_EXPECT(instance_num_flag.FilterFlag(subcmd_args));
-    Queries extra_queries;
+    InstanceDatabase::Filter filter = CF_EXPECT(
+        selector::BuildFilterFromSelectors(request.Selectors(), request.Env()));
     if (instance_num_opt) {
-      extra_queries.emplace_back(selector::kInstanceIdField, *instance_num_opt);
+      filter.instance_id = *instance_num_opt;
     }
-    auto [instance, group] = CF_EXPECT(instance_manager_.SelectInstance(
-        request.Selectors(), envs, extra_queries));
+    auto [instance, group] = CF_EXPECT(instance_manager_.SelectInstance(filter));
     const auto& home = group.Proto().home_directory();
 
     const auto& android_host_out = group.Proto().host_artifacts_path();

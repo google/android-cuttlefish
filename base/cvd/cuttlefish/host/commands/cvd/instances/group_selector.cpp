@@ -19,31 +19,16 @@
 #include <android-base/parseint.h>
 
 #include "host/commands/cvd/cli/selector/device_selector_utils.h"
-#include "host/commands/cvd/cli/selector/selector_common_parser.h"
 
 namespace cuttlefish {
 
-Result<GroupSelector> GroupSelector::GetSelector(
-    const selector::SelectorOptions& selector_options,
-    const Queries& extra_queries, const cvd_common::Envs& envs) {
-  Queries queries =
-      CF_EXPECT(BuildQueriesFromSelectors(selector_options, envs));
-
-  for (const auto& extra_query : extra_queries) {
-    queries.push_back(extra_query);
-  }
-
-  GroupSelector group_selector(queries);
-  return group_selector;
-}
-
 Result<LocalInstanceGroup> GroupSelector::FindGroup(
     const InstanceDatabase& instance_database) {
-  if (queries_.empty()) {
+  if (filter_.Empty()) {
     auto default_group = CF_EXPECT(FindDefaultGroup(instance_database));
     return default_group;
   }
-  auto groups = CF_EXPECT(instance_database.FindGroups(queries_));
+  auto groups = CF_EXPECT(instance_database.FindGroups(filter_));
   CF_EXPECT(groups.size() == 1, "groups.size() = " << groups.size());
   return *(groups.cbegin());
 }

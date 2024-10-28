@@ -21,7 +21,6 @@
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
 #include <json/json.h>
 
@@ -41,24 +40,6 @@ template <typename T>
 struct IsToStringOk<T, ToStringTypeReturnType<T>> : std::true_type {};
 
 }  // namespace database_impl
-
-using FieldName = std::string;
-using Value = std::string;
-// e.g. if intended to search by --home=/home/vsoc-01,
-// field_name_ is "home" and the field_value_ is "/home/vsoc-01"
-struct Query {
-  template <typename ValueType,
-            typename = std::enable_if_t<
-                database_impl::IsToStringOk<ValueType>::value, void>>
-  Query(const std::string& field_name, ValueType&& field_value)
-      : field_name_(field_name),
-        field_value_(std::to_string(std::forward<ValueType>(field_value))) {}
-  Query(const std::string& field_name, const std::string& field_value);
-
-  FieldName field_name_;
-  Value field_value_;
-};
-using Queries = std::vector<Query>;
 
 template <typename T>
 using Set = std::unordered_set<T>;

@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -24,13 +25,27 @@
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "host/commands/cvd/instances/data_viewer.h"
-#include "host/commands/cvd/instances/instance_database_types.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
 
 namespace cuttlefish {
 
 class InstanceDatabase {
  public:
+  // Filter is used to search for instances or groups based on their properties.
+  // A group/instance matches the filter if it matches all of the specified
+  // properties in the filter (effectively an AND operation, not an OR).
+  struct Filter {
+    std::optional<std::string> home;
+    std::optional<unsigned> instance_id;
+    std::optional<std::string> group_name;
+    // This property matches a group that contains instances with all these
+    // names, even if it has other instances too. It matches an instance if the
+    // instance name is the only element in the set (therefore if more than one
+    // name is given it'll match no instances).
+    std::unordered_set<std::string> instance_names;
+    bool Empty() const;
+  };
+
   InstanceDatabase(const std::string& backing_file);
 
   Result<bool> IsEmpty() const;
@@ -58,30 +73,18 @@ class InstanceDatabase {
    */
   Result<std::vector<LocalInstanceGroup>> Clear();
 
-  Result<std::vector<LocalInstanceGroup>> FindGroups(const Query& query) const {
-    return FindGroups(Queries{query});
-  }
   Result<std::vector<LocalInstanceGroup>> FindGroups(
-      const Queries& queries) const {
-    return FindGroups(CF_EXPECT(FindParam::FromQueries(queries)));
-  }
+      const Filter& filter) const;
 
   /*
    * FindGroup/Instance method must be used when exactly one instance/group
-   * is expected to match the query
+   * is expected to match the filter
    */
-  Result<LocalInstanceGroup> FindGroup(const Query& query) const {
-    return ExactlyOne(FindGroups(query));
-  }
-  Result<LocalInstanceGroup> FindGroup(const Queries& queries) const {
-    return ExactlyOne(FindGroups(queries));
+  Result<LocalInstanceGroup> FindGroup(const Filter& filter) const {
+    return ExactlyOne(FindGroups(filter));
   }
   Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
-      const Query& query) const {
-    return FindInstanceWithGroup(Queries{query});
-  }
-  Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
-      const Queries& queries) const;
+      const Filter& filter) const;
 
  private:
   template <typename T>
@@ -90,19 +93,9 @@ class InstanceDatabase {
     CF_EXPECT_EQ(container.size(), (std::size_t)1, "Expected unique result");
     return *container.begin();
   }
-  struct FindParam {
-    std::optional<Value> home;
-    std::optional<unsigned> id;
-    std::optional<Value> group_name;
-    std::optional<Value> instance_name;
-    bool Matches(const cvd::Instance&) const;
-    bool Matches(const cvd::InstanceGroup&) const;
-    static Result<FindParam> FromQueries(const Queries&);
-  };
 
-  Result<std::vector<LocalInstanceGroup>> FindGroups(FindParam param) const;
   static std::vector<LocalInstanceGroup> FindGroups(
-      const cvd::PersistentData& data, FindParam param);
+      const cvd::PersistentData& data, const Filter& param);
 
   DataViewer viewer_;
 };
