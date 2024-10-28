@@ -19,18 +19,14 @@
 #include <sys/types.h>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/instances/instance_database.h"
-#include "host/commands/cvd/instances/instance_database_types.h"
 
 namespace cuttlefish {
 
 class GroupSelector {
  public:
-  static Result<GroupSelector> GetSelector(
-      const selector::SelectorOptions& selector_options,
-      const Queries& extra_queries, const cvd_common::Envs& envs);
+  GroupSelector(const InstanceDatabase::Filter& filter) : filter_{filter} {}
+
   /*
    * If default, try running single instance group. If multiple, try to find
    * HOME == SystemWideUserHome. If not exists, give up.
@@ -43,12 +39,10 @@ class GroupSelector {
       const InstanceDatabase& instance_database);
 
  private:
-  GroupSelector(const Queries& queries) : queries_{queries} {}
-
   Result<LocalInstanceGroup> FindDefaultGroup(
       const InstanceDatabase& instance_database);
 
-  const Queries queries_;
+  const InstanceDatabase::Filter filter_;
 };
 
 }  // namespace cuttlefish

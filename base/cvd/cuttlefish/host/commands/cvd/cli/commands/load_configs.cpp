@@ -97,8 +97,8 @@ class LoadConfigsCommand : public CvdServerHandler {
           // receive the SIGHUP signal, so nothing should be left behind.
           {
             std::lock_guard lock(group_creation_mtx);
-            auto group_res = instance_manager_.FindGroup(
-                Query(selector::kHomeField, group_home_directory));
+            auto group_res =
+                instance_manager_.FindGroup({.home = group_home_directory});
             if (!group_res.ok()) {
               LOG(ERROR) << "Failed to load group from database: "
                          << group_res.error().Message();

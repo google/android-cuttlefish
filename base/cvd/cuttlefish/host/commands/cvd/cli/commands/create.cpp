@@ -38,7 +38,6 @@
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
 #include "host/commands/cvd/cli/selector/creation_analyzer.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_database_types.h"
@@ -292,10 +291,10 @@ Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
   }
 
   auto groups = CF_EXPECT(instance_manager_.FindGroups(
-      Query(selector::kGroupNameField, group_creation_info.group_name)));
-  CF_EXPECTF(groups.size() <= 1,
-             "Expected no more than one group with given name: {}",
-             group_creation_info.group_name);
+      {.group_name = group_creation_info.group_name}));
+  CF_EXPECT_LE(groups.size(), 1u,
+               "Expected no more than one group with given name: "
+                   << group_creation_info.group_name);
   // When loading an environment spec file the group is already in the database
   // in PREPARING state. Otherwise the group must be created.
   if (groups.empty()) {

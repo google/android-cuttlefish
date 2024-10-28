@@ -21,7 +21,6 @@
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result_matchers.h"
 #include "host/commands/cvd/instances/instance_database.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
 #include "host/commands/cvd/unittests/selector/instance_database_helper.h"
 
 /*
@@ -181,10 +180,10 @@ TEST_F(CvdInstanceDatabaseTest, SearchGroups) {
   const std::string valid_home_search_key{Workspace() + "/" + "myau"};
   const std::string invalid_home_search_key{"/no/such/path"};
 
-  auto valid_groups = db.FindGroups(Query{kHomeField, valid_home_search_key});
-  auto valid_group = db.FindGroup({kHomeField, valid_home_search_key});
-  auto invalid_groups = db.FindGroups(Query{kHomeField, invalid_home_search_key});
-  auto invalid_group = db.FindGroup({kHomeField, invalid_home_search_key});
+  auto valid_groups = db.FindGroups({.home = valid_home_search_key});
+  auto valid_group = db.FindGroup({.home = valid_home_search_key});
+  auto invalid_groups = db.FindGroups({.home = invalid_home_search_key});
+  auto invalid_group = db.FindGroup({.home = invalid_home_search_key});
 
   ASSERT_TRUE(valid_groups.ok());
   ASSERT_EQ(valid_groups->size(), 1);
@@ -205,7 +204,7 @@ TEST_F(CvdInstanceDatabaseTest, RemoveGroup) {
       !AddGroup("mjau", {InstanceProto(3, "name")})) {
     GTEST_SKIP() << Error().msg;
   }
-  auto eng_group = db.FindGroup({kHomeField, Workspace() + "/" + "meow"});
+  auto eng_group = db.FindGroup({.home = Workspace() + "/" + "meow"});
   if (!eng_group.ok()) {
     GTEST_SKIP() << "meow"
                  << " group was not found.";
@@ -230,15 +229,14 @@ TEST_F(CvdInstanceDatabaseTest, AddInstances) {
                         {InstanceProto(5, "yumi"), InstanceProto(5, "tiger")}));
   ASSERT_FALSE(AddGroup({"yah_ong4"},
                         {InstanceProto(1, "yumi"), InstanceProto(6, "tiger")}));
-  auto kitty_group = db.FindGroup({kHomeField, Workspace() + "/" + "yah_ong1"});
+  auto kitty_group = db.FindGroup({.home = Workspace() + "/" + "yah_ong1"});
   if (!kitty_group.ok()) {
     GTEST_SKIP() << "yah_ong1"
                  << " group was not found";
   }
   const auto& instances = kitty_group->Instances();
   for (auto const& instance : instances) {
-    ASSERT_TRUE(instance.name() == "yumi" ||
-                instance.name() == "tiger");
+    ASSERT_TRUE(instance.name() == "yumi" || instance.name() == "tiger");
   }
 }
 
@@ -265,20 +263,20 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
-  auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
+  auto miau_group = db.FindGroup({.home = Workspace() + "/" + "miau"});
+  auto nyah_group = db.FindGroup({.home = Workspace() + "/" + "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
     GTEST_SKIP() << "miau or nyah group"
                  << " group was not found";
   }
   // The end of set up
 
-  auto result1 = db.FindInstanceWithGroup(Query(kInstanceIdField, "1"));
-  auto result10 = db.FindInstanceWithGroup(Query(kInstanceIdField, "10"));
-  auto result7 = db.FindInstanceWithGroup(Query(kInstanceIdField, "7"));
-  auto result11 = db.FindInstanceWithGroup(Query(kInstanceIdField, "11"));
-  auto result3 = db.FindInstanceWithGroup(Query(kInstanceIdField, "3"));
-  auto result_invalid = db.FindInstanceWithGroup(Query(kInstanceIdField, "20"));
+  auto result1 = db.FindInstanceWithGroup({.instance_id = 1});
+  auto result10 = db.FindInstanceWithGroup({.instance_id = 10});
+  auto result7 = db.FindInstanceWithGroup({.instance_id = 7});
+  auto result11 = db.FindInstanceWithGroup({.instance_id = 11});
+  auto result3 = db.FindInstanceWithGroup({.instance_id = 3});
+  auto result_invalid = db.FindInstanceWithGroup({.instance_id = 20});
 
   ASSERT_TRUE(result1.ok());
   ASSERT_TRUE(result10.ok());
@@ -307,18 +305,19 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
-  auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
+  auto miau_group = db.FindGroup({.home = Workspace() + "/" + "miau"});
+  auto nyah_group = db.FindGroup({.home = Workspace() + "/" + "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
     GTEST_SKIP() << "miau or nyah "
                  << " group was not found";
   }
   // end of set up
 
-  auto result1 = db.FindInstanceWithGroup(Query(kInstanceNameField, "8"));
-  auto result7 = db.FindInstanceWithGroup(Query(kInstanceNameField, "my_favorite_phone"));
+  auto result1 = db.FindInstanceWithGroup({.instance_names = {"8"}});
+  auto result7 =
+      db.FindInstanceWithGroup({.instance_names = {"my_favorite_phone"}});
   auto result_invalid =
-      db.FindInstanceWithGroup(Query(kInstanceNameField, "name_never_seen"));
+      db.FindInstanceWithGroup({.instance_names = {"name_never_seen"}});
 
   ASSERT_TRUE(result1.ok());
   ASSERT_TRUE(result7.ok());
@@ -341,18 +340,18 @@ TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
-  auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
+  auto miau_group = db.FindGroup({.home = Workspace() + "/" + "miau"});
+  auto nyah_group = db.FindGroup({.home = Workspace() + "/" + "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
     GTEST_SKIP() << "miau or nyah "
                  << " group was not found";
   }
   // end of set up
 
-  auto result_miau = db.FindGroups(Query(kInstanceNameField, "8"));
-  auto result_both = db.FindGroups(Query(kInstanceNameField, "tv_instance"));
-  auto result_nyah = db.FindGroups(Query(kInstanceNameField, "my_favorite_phone"));
-  auto result_invalid = db.FindGroups(Query(kInstanceNameField, "name_never_seen"));
+  auto result_miau = db.FindGroups({.instance_names = {"8"}});
+  auto result_both = db.FindGroups({.instance_names = {"tv_instance"}});
+  auto result_nyah = db.FindGroups({.instance_names = {"my_favorite_phone"}});
+  auto result_invalid = db.FindGroups({.instance_names = {"name_never_seen"}});
 
   ASSERT_TRUE(result_miau.ok());
   ASSERT_TRUE(result_both.ok());
@@ -373,10 +372,12 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesTogether) {
   }
   auto& db = GetDb();
 
-  ASSERT_TRUE(AddGroup("miau", {InstanceProto(1, "8"), InstanceProto(10, "tv_instance")}));
+  ASSERT_TRUE(AddGroup(
+      "miau", {InstanceProto(1, "8"), InstanceProto(10, "tv_instance")}));
 
-  auto result_8 = db.FindInstanceWithGroup(Query(kInstanceNameField, "8"));
-  auto result_tv = db.FindInstanceWithGroup(Query(kInstanceNameField, "tv_instance"));
+  auto result_8 = db.FindInstanceWithGroup({.instance_names = {"8"}});
+  auto result_tv =
+      db.FindInstanceWithGroup({.instance_names = {"tv_instance"}});
 
   ASSERT_TRUE(result_8.ok()) << result_8.error().Trace();
   ASSERT_TRUE(result_tv.ok()) << result_tv.error().Trace();
@@ -422,10 +423,11 @@ TEST_F(CvdInstanceDatabaseJsonTest, DumpLoadDumpCompare) {
   ASSERT_TRUE(load_result.ok()) << load_result.error().Trace();
   {
     // re-look up the group and the instances
-    auto miau_group = db.FindGroup({kHomeField, std::string("/home/dir")});
+    auto miau_group = db.FindGroup({.home = "/home/dir"});
     ASSERT_TRUE(miau_group.ok()) << miau_group.error().Trace();
-    auto result_8 = db.FindInstanceWithGroup(Query(kInstanceNameField, "8"));
-    auto result_tv = db.FindInstanceWithGroup(Query(kInstanceNameField, "tv_instance"));
+    auto result_8 = db.FindInstanceWithGroup({.instance_names = {"8"}});
+    auto result_tv =
+        db.FindInstanceWithGroup({.instance_names = {"tv_instance"}});
 
     ASSERT_TRUE(result_8.ok()) << result_8.error().Trace();
     ASSERT_TRUE(result_tv.ok()) << result_tv.error().Trace();
@@ -466,7 +468,7 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
   ASSERT_TRUE(update_res.ok())
       << "Failed to update database: " << update_res.error().Message();
 
-  auto find_res = db.FindGroup(Query("group_name", "grp1"));
+  auto find_res = db.FindGroup({.group_name = "grp1"});
   ASSERT_TRUE(find_res.ok()) << find_res.error().Message();
 
   EXPECT_EQ(find_res->HomeDir(), Workspace() + "/grp1_home");

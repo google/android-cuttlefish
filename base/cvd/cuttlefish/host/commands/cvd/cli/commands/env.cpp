@@ -23,11 +23,12 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/cli/flag.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/cli/flag.h"
+#include "host/commands/cvd/cli/selector/device_selector_utils.h"
 #include "host/commands/cvd/cli/types.h"
+#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace {
@@ -106,7 +107,8 @@ class CvdEnvCommandHandler : public CvdServerHandler {
                                  const cvd_common::Args& subcmd_args,
                                  const cvd_common::Envs& envs) {
     auto [instance, group] =
-        CF_EXPECT(instance_manager_.SelectInstance(request.Selectors(), envs));
+        CF_EXPECT(instance_manager_.SelectInstance(CF_EXPECT(
+            selector::BuildFilterFromSelectors(request.Selectors(), envs))));
     const auto& home = group.Proto().home_directory();
 
     const auto& android_host_out = group.Proto().host_artifacts_path();

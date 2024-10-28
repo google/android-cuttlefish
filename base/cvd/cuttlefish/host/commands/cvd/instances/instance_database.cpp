@@ -30,7 +30,6 @@
 #include "host/commands/cvd/instances/instance_database_utils.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
 #include "host/commands/cvd/instances/instance_record.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
 #include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
@@ -58,7 +57,48 @@ Result<std::string> GenUniqueGroupName(const cvd::PersistentData& data) {
       group_names.size(), group_names.size() + 1);
 }
 
+// Whether the instance fields in the filter match the given instance. It
+// doesn't check whether the group the instance belongs to also matches the
+// filter as it's assumed that was checked before.
+bool InstanceMatches(const cvd::Instance& instance,
+                     const InstanceDatabase::Filter& filter) {
+  return (!filter.instance_id || *filter.instance_id == instance.id()) &&
+         (filter.instance_names.empty() ||
+          Contains(filter.instance_names, instance.name()));
+}
+
+// Whether the filter matches a given group, including whether it contains
+// instances matching the instance related fields.
+bool GroupMatches(const cvd::InstanceGroup& group,
+                  const InstanceDatabase::Filter& filter) {
+  if (filter.home && filter.home != group.home_directory()) {
+    return false;
+  }
+  if (filter.group_name && filter.group_name != group.name()) {
+    return false;
+  }
+  std::unordered_set<unsigned> instance_ids;
+  std::unordered_set<std::string> instance_names;
+  for (const auto& instance : group.instances()) {
+    instance_ids.insert(instance.id());
+    instance_names.insert(instance.name());
+  }
+  if (filter.instance_id && !Contains(instance_ids, *filter.instance_id)) {
+    return false;
+  }
+  for (const auto& instance_name : filter.instance_names) {
+    if (!Contains(instance_names, instance_name)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace
+
+bool InstanceDatabase::Filter::Empty() const {
+  return !home && !instance_id && !group_name && instance_names.empty();
+}
 
 InstanceDatabase::InstanceDatabase(const std::string& backing_file)
     : viewer_(backing_file) {}
@@ -163,58 +203,19 @@ Result<bool> InstanceDatabase::RemoveInstanceGroup(
   });
 }
 
-bool InstanceDatabase::FindParam::Matches(
-    const cvd::InstanceGroup& group) const {
-  return (!home || *home == group.home_directory()) &&
-         (!group_name || *group_name == group.name());
-}
-
-bool InstanceDatabase::FindParam::Matches(const cvd::Instance& instance) const {
-  return (!id || *id == instance.id()) &&
-         (!instance_name || *instance_name == instance.name());
-}
-
-Result<InstanceDatabase::FindParam> InstanceDatabase::FindParam::FromQueries(
-    const Queries& queries) {
-  FindParam param;
-  for (const auto& query : queries) {
-    if (query.field_name_ == selector::kHomeField) {
-      param.home = query.field_value_;
-    } else if (query.field_name_ == selector::kInstanceIdField) {
-      int id;
-      CF_EXPECTF(android::base::ParseInt(query.field_value_, &id),
-                 "Id is not a number: {}", id);
-      param.id = id;
-    } else if (query.field_name_ == selector::kGroupNameField) {
-      param.group_name = query.field_value_;
-    } else if (query.field_name_ == selector::kInstanceNameField) {
-      param.instance_name = query.field_value_;
-    } else {
-      return CF_ERRF("Unrecognized field name: {}", query.field_name_);
-    }
-  }
-  return param;
-}
-
 Result<std::vector<LocalInstanceGroup>> InstanceDatabase::FindGroups(
-    FindParam param) const {
+    const Filter& filter) const {
   return viewer_.WithSharedLock<std::vector<LocalInstanceGroup>>(
-      [&param](const cvd::PersistentData& data) {
-        return FindGroups(data, param);
+      [&filter](const cvd::PersistentData& data) {
+        return FindGroups(data, filter);
       });
 }
 
 std::vector<LocalInstanceGroup> InstanceDatabase::FindGroups(
-    const cvd::PersistentData& data, FindParam param) {
+    const cvd::PersistentData& data, const Filter& filter) {
   std::vector<LocalInstanceGroup> ret;
   for (const auto& group : data.instance_groups()) {
-    if (!param.Matches(group)) {
-      continue;
-    }
-    if (std::none_of(group.instances().begin(), group.instances().end(),
-                     [&param](const auto& instance) {
-                       return param.Matches(instance);
-                     })) {
+    if (!GroupMatches(group, filter)) {
       continue;
     }
     auto group_res = LocalInstanceGroup::Create(group);
@@ -226,25 +227,28 @@ std::vector<LocalInstanceGroup> InstanceDatabase::FindGroups(
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>>
-InstanceDatabase::FindInstanceWithGroup(const Queries& queries) const {
-  auto param = CF_EXPECT(FindParam::FromQueries(queries));
+InstanceDatabase::FindInstanceWithGroup(const Filter& filter) const {
+  CF_EXPECT_LE(filter.instance_names.size(), 1u,
+               "Can't find single instance when multiple names specified: "
+                   << filter.instance_names.size());
   return viewer_.WithSharedLock<std::pair<LocalInstance, LocalInstanceGroup>>(
-      [&param](const auto& data)
+      [&filter](const auto& data)
           -> Result<std::pair<LocalInstance, LocalInstanceGroup>> {
         std::optional<std::pair<LocalInstance, LocalInstanceGroup>> result_opt;
         for (const auto& group : data.instance_groups()) {
-          if (!param.Matches(group)) {
+          if (!GroupMatches(group, filter)) {
             continue;
           }
           for (int i = 0; i < group.instances_size(); ++i) {
             const auto& instance = group.instances(i);
-            if (!param.Matches(instance)) {
+            if (!InstanceMatches(instance, filter)) {
               continue;
             }
             CF_EXPECT(!result_opt.has_value(), "Found more than one instance");
             LocalInstanceGroup local_group =
                 CF_EXPECT(LocalInstanceGroup::Create(group));
-            result_opt = std::make_pair(local_group.Instances()[i], local_group);
+            result_opt =
+                std::make_pair(local_group.Instances()[i], local_group);
           }
         }
         return CF_EXPECT(std::move(result_opt), "Found no matches");

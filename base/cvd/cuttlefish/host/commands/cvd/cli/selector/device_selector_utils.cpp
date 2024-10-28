@@ -20,7 +20,7 @@
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/users.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
+#include "host/commands/cvd/instances/instance_database.h"
 #include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
@@ -34,7 +34,7 @@ Result<LocalInstanceGroup> GetDefaultGroup(
   }
   std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
   auto group =
-      CF_EXPECT(instance_database.FindGroup({kHomeField, system_wide_home}));
+      CF_EXPECT(instance_database.FindGroup({.home = system_wide_home}));
   return group;
 }
 
@@ -48,31 +48,25 @@ std::optional<std::string> OverridenHomeDirectory(const cvd_common::Envs& env) {
   return home_it->second;
 }
 
-Result<Queries> BuildQueriesFromSelectors(const SelectorOptions& selectors,
-                                          const cvd_common::Envs& env) {
-  Queries queries;
-  auto overriden_home = OverridenHomeDirectory(env);
-  if (overriden_home.has_value()) {
-    queries.emplace_back(kHomeField, overriden_home.value());
-  }
-  if (selectors.group_name) {
-    queries.emplace_back(kGroupNameField, selectors.group_name.value());
-  }
+Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
+    const SelectorOptions& selectors, const cvd_common::Envs& env) {
+  InstanceDatabase::Filter filter;
+  filter.home = OverridenHomeDirectory(env);
+  filter.group_name = selectors.group_name;
   if (selectors.instance_names) {
     const auto per_instance_names = selectors.instance_names.value();
     for (const auto& per_instance_name : per_instance_names) {
-      queries.emplace_back(kInstanceNameField, per_instance_name);
+      filter.instance_names.insert(per_instance_name);
     }
   }
   auto it = env.find(kCuttlefishInstanceEnvVarName);
   if (it != env.end()) {
-    int id;
+    unsigned id;
     auto cuttlefish_instance = it->second;
-    CF_EXPECT(android::base::ParseInt(cuttlefish_instance, &id));
-    queries.emplace_back(kInstanceIdField, cuttlefish_instance);
+    CF_EXPECT(android::base::ParseUint(cuttlefish_instance, &id));
   }
 
-  return queries;
+  return filter;
 }
 
 }  // namespace selector

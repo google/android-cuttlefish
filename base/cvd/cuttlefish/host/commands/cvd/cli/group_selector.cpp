@@ -22,7 +22,7 @@
 #include <android-base/parseint.h>
 
 #include "host/commands/cvd/cli/interruptible_terminal.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
+#include "host/commands/cvd/cli/selector/device_selector_utils.h"
 #include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_database_types.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
@@ -51,13 +51,13 @@ std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
   return ss.str();
 }
 
-Result<LocalInstanceGroup> PromptUserForGroup(
-    InstanceManager& instance_manager, const CommandRequest& request,
-    const cvd_common::Envs& envs,
-    const selector::SelectorOptions& selector_options) {
+Result<LocalInstanceGroup> PromptUserForGroup(InstanceManager& instance_manager,
+                                              const CommandRequest& request,
+                                              const cvd_common::Envs& envs,
+                                              InstanceDatabase::Filter filter) {
   // show the menu and let the user choose
   std::vector<LocalInstanceGroup> groups =
-      CF_EXPECT(instance_manager.FindGroups(Queries{}));
+      CF_EXPECT(instance_manager.FindGroups({}));
   auto menu = SelectionMenu(groups);
 
   std::cout << menu << "\n";
@@ -83,9 +83,8 @@ Result<LocalInstanceGroup> PromptUserForGroup(
       chosen_group_name = android::base::Trim(input_line);
     }
 
-    Queries extra_queries{{selector::kGroupNameField, chosen_group_name}};
-    auto instance_group_result =
-        instance_manager.SelectGroup(selector_options, envs, extra_queries);
+    filter.group_name = chosen_group_name;
+    auto instance_group_result = instance_manager.SelectGroup(filter);
     if (instance_group_result.ok()) {
       return instance_group_result;
     }
@@ -103,8 +102,9 @@ Result<LocalInstanceGroup> SelectGroup(InstanceManager& instance_manager,
   CF_EXPECT(std::move(has_groups), "No instance groups available");
   const cvd_common::Envs& env = request.Env();
   const auto& selector_options = request.Selectors();
-  auto group_selection_result =
-      instance_manager.SelectGroup(selector_options, env);
+  InstanceDatabase::Filter filter =
+      CF_EXPECT(BuildFilterFromSelectors(selector_options, request.Env()));
+  auto group_selection_result = instance_manager.SelectGroup(filter);
   if (group_selection_result.ok()) {
     return CF_EXPECT(std::move(group_selection_result));
   }
@@ -112,7 +112,7 @@ Result<LocalInstanceGroup> SelectGroup(InstanceManager& instance_manager,
             "Multiple groups found. Narrow the selection with selector "
             "arguments or run in an interactive terminal.");
   return CF_EXPECT(
-      PromptUserForGroup(instance_manager, request, env, selector_options));
+      PromptUserForGroup(instance_manager, request, env, std::move(filter)));
 }
 
 }  // namespace cuttlefish

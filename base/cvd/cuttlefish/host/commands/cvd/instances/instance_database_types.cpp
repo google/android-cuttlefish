@@ -25,9 +25,6 @@
 
 namespace cuttlefish {
 
-Query::Query(const std::string& field_name, const std::string& field_value)
-    : field_name_(field_name), field_value_(field_value) {}
-
 std::string SerializeTimePoint(const TimeStamp& present) {
   const auto duration =
       std::chrono::duration_cast<CvdTimeDuration>(present.time_since_epoch());
