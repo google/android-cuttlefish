@@ -22,12 +22,12 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/group_selector.h"
-#include "host/commands/cvd/instances/instance_manager.h"
+#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/selector/selector.h"
+#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_database_utils.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 namespace {
@@ -80,7 +80,7 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
     if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
       return NoGroupResponse(request);
     }
-    auto group = CF_EXPECT(SelectGroup(instance_manager_, request));
+    auto group = CF_EXPECT(selector::SelectGroup(instance_manager_, request));
 
     auto stop_res = StopGroup(group, request);
     if (!stop_res.ok()) {
@@ -100,8 +100,7 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
     if (!group.HasActiveInstances()) {
       return {};
     }
-    auto config_path =
-        CF_EXPECT(GetCuttlefishConfigPath(group.HomeDir()));
+    auto config_path = CF_EXPECT(GetCuttlefishConfigPath(group.HomeDir()));
     CF_EXPECT(instance_manager_.IssueStopCommand(request, config_path, group));
     return {};
   }

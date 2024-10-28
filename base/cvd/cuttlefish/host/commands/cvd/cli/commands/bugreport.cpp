@@ -30,13 +30,13 @@
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/cli/group_selector.h"
-#include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/cli/interruptible_terminal.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/cli/interruptible_terminal.h"
+#include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
+#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/instances/instance_manager.h"
+#include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace {
@@ -92,7 +92,8 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
     if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
       return NoGroupResponse(request);
     }
-    auto instance_group = CF_EXPECT(SelectGroup(instance_manager_, request));
+    auto instance_group =
+        CF_EXPECT(selector::SelectGroup(instance_manager_, request));
     android_host_out = instance_group.HostArtifactsPath();
     home = instance_group.HomeDir();
     env["HOME"] = home;
@@ -102,14 +103,12 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
   }
   auto bin_path = ConcatToString(android_host_out, "/bin/", kHostBugreportBin);
 
-  ConstructCommandParam construct_cmd_param{
-      .bin_path = bin_path,
-      .home = home,
-      .args = cmd_args,
-      .envs = env,
-      .working_dir = CurrentDirectory(),
-      .command_name = kHostBugreportBin
-  };
+  ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
+                                            .home = home,
+                                            .args = cmd_args,
+                                            .envs = env,
+                                            .working_dir = CurrentDirectory(),
+                                            .command_name = kHostBugreportBin};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   siginfo_t infop;

@@ -30,11 +30,8 @@
 #include "common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/cli/selector/device_selector_utils.h"
-#include "host/commands/cvd/instances/group_selector.h"
 #include "host/commands/cvd/instances/instance_database_utils.h"
 #include "host/commands/cvd/instances/instance_record.h"
-#include "host/commands/cvd/instances/instance_selector.h"
 #include "host/commands/cvd/utils/common.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_utils.h"
@@ -92,29 +89,13 @@ Result<selector::CreationAnalyzer> InstanceManager::CreationAnalyzer(
   return selector::CreationAnalyzer::Create(param, lock_manager_);
 }
 
-Result<LocalInstanceGroup> InstanceManager::SelectGroup(
-    const InstanceDatabase::Filter& filter) {
-  GroupSelector group_selector(filter);
-  if (filter.Empty()) {
-    return CF_EXPECT(selector::GetDefaultGroup(instance_db_));
-  }
-  return CF_EXPECT(group_selector.FindGroup(instance_db_));
-}
-
 Result<std::pair<LocalInstance, LocalInstanceGroup>>
-InstanceManager::SelectInstance(const InstanceDatabase::Filter& filter) {
-  InstanceSelector instance_selector(filter);
-  return CF_EXPECT(instance_selector.FindInstanceWithGroup(instance_db_));
+InstanceManager::FindInstanceWithGroup(
+    const InstanceDatabase::Filter& filter) const {
+  return instance_db_.FindInstanceWithGroup(filter);
 }
 
-Result<std::pair<LocalInstance, LocalInstanceGroup>>
-InstanceManager::FindInstanceById(unsigned id) const {
-  return CF_EXPECT(instance_db_.FindInstanceWithGroup({
-      .instance_id = id,
-  }));
-}
-
-Result<bool> InstanceManager::HasInstanceGroups() {
+Result<bool> InstanceManager::HasInstanceGroups() const {
   return !CF_EXPECT(instance_db_.IsEmpty());
 }
 

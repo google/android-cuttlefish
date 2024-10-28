@@ -16,12 +16,29 @@
 
 #pragma once
 
+#include <utility>
+
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
 #include "host/commands/cvd/instances/instance_manager.h"
+#include "host/commands/cvd/instances/instance_record.h"
 
 namespace cuttlefish {
-Result<LocalInstanceGroup> SelectGroup(InstanceManager&, const CommandRequest&);
+namespace selector {
 
+// Selects a single group based on the request's selector options. Asks the user
+// to manually choose a single group if multiple groups match the selector
+// options and stdin is a terminal.
+Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
+                                       const CommandRequest& request);
+
+// Selects a single instance based on the request's selector options. Unlike
+// SelectGroup it doesn't ask the user to refine the selection in case multiple
+// instances match, it just fails instead. Also returns the group the selected
+// instance belongs to.
+Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
+    const InstanceManager& instance_manager, const CommandRequest& request);
+
+}  // namespace selector
 }  // namespace cuttlefish

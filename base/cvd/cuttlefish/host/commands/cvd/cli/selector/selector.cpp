@@ -14,20 +14,56 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/group_selector.h"
+#include "host/commands/cvd/cli/selector/selector.h"
 
 #include <sstream>
 #include <string>
 
 #include <android-base/parseint.h>
 
+#include "common/libs/utils/users.h"
 #include "host/commands/cvd/cli/interruptible_terminal.h"
 #include "host/commands/cvd/cli/selector/device_selector_utils.h"
 #include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
+#include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
+namespace selector {
 namespace {
+
+Result<LocalInstanceGroup> GetDefaultGroup(
+    const InstanceManager& instance_manager) {
+  const auto all_groups = CF_EXPECT(instance_manager.FindGroups({}));
+  if (all_groups.size() == 1) {
+    return all_groups.front();
+  }
+  std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
+  auto group =
+      CF_EXPECT(instance_manager.FindGroup({.home = system_wide_home}));
+  return group;
+}
+
+Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
+    const SelectorOptions& selectors, const cvd_common::Envs& env) {
+  InstanceDatabase::Filter filter;
+  filter.home = OverridenHomeDirectory(env);
+  filter.group_name = selectors.group_name;
+  if (selectors.instance_names) {
+    const auto per_instance_names = selectors.instance_names.value();
+    for (const auto& per_instance_name : per_instance_names) {
+      filter.instance_names.insert(per_instance_name);
+    }
+  }
+  auto it = env.find(kCuttlefishInstanceEnvVarName);
+  if (it != env.end()) {
+    unsigned id;
+    auto cuttlefish_instance = it->second;
+    CF_EXPECT(android::base::ParseUint(cuttlefish_instance, &id));
+  }
+
+  return filter;
+}
 
 std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
   // Multiple instance groups found, please choose one:
@@ -50,10 +86,9 @@ std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
   return ss.str();
 }
 
-Result<LocalInstanceGroup> PromptUserForGroup(InstanceManager& instance_manager,
-                                              const CommandRequest& request,
-                                              const cvd_common::Envs& envs,
-                                              InstanceDatabase::Filter filter) {
+Result<LocalInstanceGroup> PromptUserForGroup(
+    const InstanceManager& instance_manager, const CommandRequest& request,
+    const cvd_common::Envs& envs, InstanceDatabase::Filter filter) {
   // show the menu and let the user choose
   std::vector<LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups({}));
@@ -83,7 +118,7 @@ Result<LocalInstanceGroup> PromptUserForGroup(InstanceManager& instance_manager,
     }
 
     filter.group_name = chosen_group_name;
-    auto instance_group_result = instance_manager.SelectGroup(filter);
+    auto instance_group_result = instance_manager.FindGroup(filter);
     if (instance_group_result.ok()) {
       return instance_group_result;
     }
@@ -93,9 +128,29 @@ Result<LocalInstanceGroup> PromptUserForGroup(InstanceManager& instance_manager,
   }
 }
 
+Result<LocalInstanceGroup> FindGroupOrDefault(
+    const InstanceDatabase::Filter& filter,
+    const InstanceManager& instance_manager) {
+  if (filter.Empty()) {
+    return CF_EXPECT(GetDefaultGroup(instance_manager));
+  }
+  auto groups = CF_EXPECT(instance_manager.FindGroups(filter));
+  CF_EXPECT_EQ(groups.size(), 1u, "groups.size() = " << groups.size());
+  return *(groups.cbegin());
+}
+
+Result<std::pair<LocalInstance, LocalInstanceGroup>> FindDefaultInstance(
+    const InstanceManager& instance_manager) {
+  auto group = CF_EXPECT(GetDefaultGroup(instance_manager));
+  const auto instances = group.Instances();
+  CF_EXPECT_EQ(instances.size(), 1u,
+               "Default instance is the single instance in the default group.");
+  return std::make_pair(*instances.cbegin(), group);
+}
+
 }  // namespace
 
-Result<LocalInstanceGroup> SelectGroup(InstanceManager& instance_manager,
+Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
                                        const CommandRequest& request) {
   auto has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
   CF_EXPECT(std::move(has_groups), "No instance groups available");
@@ -103,7 +158,7 @@ Result<LocalInstanceGroup> SelectGroup(InstanceManager& instance_manager,
   const auto& selector_options = request.Selectors();
   InstanceDatabase::Filter filter =
       CF_EXPECT(BuildFilterFromSelectors(selector_options, request.Env()));
-  auto group_selection_result = instance_manager.SelectGroup(filter);
+  auto group_selection_result = FindGroupOrDefault(filter, instance_manager);
   if (group_selection_result.ok()) {
     return CF_EXPECT(std::move(group_selection_result));
   }
@@ -114,4 +169,15 @@ Result<LocalInstanceGroup> SelectGroup(InstanceManager& instance_manager,
       PromptUserForGroup(instance_manager, request, env, std::move(filter)));
 }
 
+Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
+    const InstanceManager& instance_manager, const CommandRequest& request) {
+  InstanceDatabase::Filter filter =
+      CF_EXPECT(BuildFilterFromSelectors(request.Selectors(), request.Env()));
+
+  return filter.Empty()
+             ? CF_EXPECT(FindDefaultInstance(instance_manager))
+             : CF_EXPECT(instance_manager.FindInstanceWithGroup(filter));
+}
+
+}  // namespace selector
 }  // namespace cuttlefish

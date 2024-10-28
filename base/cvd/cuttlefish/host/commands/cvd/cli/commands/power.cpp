@@ -17,7 +17,6 @@
 #include "host/commands/cvd/cli/commands/power.h"
 
 #include <functional>
-#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -32,7 +31,7 @@
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
 #include "host/commands/cvd/cli/flag.h"
-#include "host/commands/cvd/cli/selector/device_selector_utils.h"
+#include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/utils/common.h"
@@ -154,12 +153,11 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     CvdFlag<std::int32_t> instance_num_flag("instance_num");
     auto instance_num_opt =
         CF_EXPECT(instance_num_flag.FilterFlag(subcmd_args));
-    InstanceDatabase::Filter filter = CF_EXPECT(
-        selector::BuildFilterFromSelectors(request.Selectors(), request.Env()));
-    if (instance_num_opt) {
-      filter.instance_id = *instance_num_opt;
-    }
-    auto [instance, group] = CF_EXPECT(instance_manager_.SelectInstance(filter));
+    auto [instance, group] =
+        instance_num_opt.has_value()
+            ? CF_EXPECT(instance_manager_.FindInstanceWithGroup(
+                  {.instance_id = *instance_num_opt}))
+            : CF_EXPECT(selector::SelectInstance(instance_manager_, request));
     const auto& home = group.Proto().home_directory();
 
     const auto& android_host_out = group.Proto().host_artifacts_path();

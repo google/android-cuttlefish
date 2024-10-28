@@ -28,7 +28,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/group_selector.h"
+#include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
@@ -113,7 +113,8 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
                                   cvd_common::Args& subcmd_args,
                                   cvd_common::Envs envs) {
     // create a string that is comma-separated instance IDs
-    auto instance_group = CF_EXPECT(SelectGroup(instance_manager_, request));
+    auto instance_group =
+        CF_EXPECT(selector::SelectGroup(instance_manager_, request));
 
     const auto& home = instance_group.HomeDir();
     const auto& android_host_out = instance_group.HostArtifactsPath();
