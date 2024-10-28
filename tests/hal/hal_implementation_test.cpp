@@ -191,7 +191,7 @@ static const std::set<std::string> kTvOnlyAidl = {
      */
     "android.hardware.tv.hdmi.cec",        "android.hardware.tv.hdmi.earc",
     "android.hardware.tv.hdmi.connection", "android.hardware.tv.tuner",
-    "android.hardware.tv.input",           "android.hardware.tv.mediaquality",
+    "android.hardware.tv.input",
 };
 
 static const std::set<std::string> kRadioOnlyAidl = {
