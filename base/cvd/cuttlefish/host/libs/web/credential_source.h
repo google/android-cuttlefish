@@ -34,4 +34,8 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
     const std::string& oauth_filepath, const bool use_gce_metadata,
     const std::string& credential_filepath,
     const std::string& service_account_filepath);
+
+Result<std::unique_ptr<CredentialSource>> CreateRefreshTokenCredentialSource(
+    HttpClient& http_client, const std::string& client_id,
+    const std::string& client_secret, const std::string& refresh_token);
 }

@@ -550,4 +550,11 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
                                    oauth_filepath);
 }
 
+Result<std::unique_ptr<CredentialSource>> CreateRefreshTokenCredentialSource(
+    HttpClient& http_client, const std::string& client_id,
+    const std::string& client_secret, const std::string& refresh_token) {
+  return std::make_unique<RefreshCredentialSource>(
+      http_client, client_id, client_secret, refresh_token);
+}
+
 }  // namespace cuttlefish

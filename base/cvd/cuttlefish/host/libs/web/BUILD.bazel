@@ -10,6 +10,7 @@ cc_library(
         "http_client/http_client.cc",
         "http_client/http_client_util.cc",
         "luci_build_api.cpp",
+        "oauth2_consent.cpp",
     ],
     hdrs = [
         "android_build_api.h",
@@ -22,6 +23,7 @@ cc_library(
         "http_client/http_client.h",
         "http_client/http_client_util.h",
         "luci_build_api.h",
+        "oauth2_consent.h"
     ],
     copts = [
         "-std=c++17",
@@ -33,6 +35,7 @@ cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/directories",
         "//libbase",
         "@boringssl//:crypto",
         "@fmt",
