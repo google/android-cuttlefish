@@ -36,9 +36,9 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/tee_logging.h"
-#include "host/commands/cvd/utils/common.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "host/commands/cvd/fetch/fetch_tracer.h"
+#include "host/commands/cvd/utils/common.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/image_aggregator/sparse_image_utils.h"
 #include "host/libs/web/android_build_api.h"
@@ -49,7 +49,7 @@
 #include "host/libs/web/http_client/curl_global_init.h"
 #include "host/libs/web/http_client/http_client.h"
 #include "host/libs/web/luci_build_api.h"
-#include "host/libs/directories/xdg.h"
+#include "host/libs/web/oauth2_consent.h"
 
 namespace cuttlefish {
 namespace {
@@ -348,22 +348,21 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
 
-  std::vector<std::string> cvd_creds =
-      CF_EXPECT(FindCvdDataFiles("credentials"));
-
-  for (const std::string& creds : cvd_creds) {
-    LOG(ERROR) << creds;
-  }
+  std::vector<std::string> scopes = {
+      "https://www.googleapis.com/auth/androidbuild.internal",
+      "https://www.googleapis.com/auth/userinfo.email",
+  };
+  Result<std::unique_ptr<CredentialSource>> cvd_creds =
+      CredentialForScopes(*curl, scopes);
 
   std::string oauth_filepath =
-      cvd_creds.empty() ? StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat"
-                        // TODO: schuffelen - test which credential file we want
-                        : cvd_creds[0];
+      StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
 
   std::unique_ptr<CredentialSource> credential_source =
-      CF_EXPECT(GetCredentialSourceFromFlags(
-          *retrying_http_client, flags,
-          StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat"));
+      cvd_creds.ok() ? std::move(*cvd_creds)
+                     : CF_EXPECT(GetCredentialSourceFromFlags(
+                           *retrying_http_client, flags, oauth_filepath));
+
   const auto cache_base_path = PerUserDir() + "/cache";
   return CreateBuildApi(std::move(retrying_http_client), std::move(curl),
                         std::move(credential_source), std::move(flags.api_key),
