@@ -35,6 +35,8 @@
 #include <absl/log/log.h>
 #include <absl/log/vlog_is_on.h>
 #include <absl/memory/memory.h>
+#include <absl/random/bit_gen_ref.h>
+#include <absl/random/uniform_int_distribution.h>
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
 #include <absl/strings/numbers.h>
@@ -151,6 +153,15 @@ class SandboxManager::SandboxedProcess : public SandboxManager::ManagedProcess {
   std::unique_ptr<Sandbox2> sandbox_;
 };
 
+std::string RandomString(absl::BitGenRef gen, std::size_t size) {
+  std::stringstream output;
+  absl::uniform_int_distribution<char> distribution;
+  for (std::size_t i = 0; i < size; i++) {
+    output << distribution(gen);
+  }
+  return output.str();
+}
+
 class SandboxManager::SocketClient {
  public:
   SocketClient(SandboxManager& manager, UniqueFd client_fd)
@@ -190,11 +201,13 @@ class SandboxManager::SocketClient {
     switch (client_state_) {
       case ClientState::kInitial: {
         if (message != kHandshakeBegin) {
-          auto err = absl::StrFormat("'%v' != '%v'", kHandshakeBegin, message);
+          std::string err =
+              absl::StrFormat("'%v' != '%v'", kHandshakeBegin, message);
           return absl::InternalError(err);
         }
-        pingback_ = std::chrono::steady_clock::now().time_since_epoch().count();
-        auto stat = SendStringMsg(client_fd_.Get(), std::to_string(pingback_));
+        pingback_ = RandomString(manager_.bit_gen_, 32);
+        absl::StatusOr<std::size_t> stat =
+            SendStringMsg(client_fd_.Get(), pingback_);
         if (stat.ok()) {
           client_state_ = ClientState::kIgnoredFd;
         }
@@ -202,18 +215,16 @@ class SandboxManager::SocketClient {
       }
       case ClientState::kIgnoredFd:
         if (!absl::SimpleAtoi(message, &ignored_fd_)) {
-          auto error = absl::StrFormat("Expected integer, got '%v'", message);
+          std::string error =
+              absl::StrFormat("Expected integer, got '%v'", message);
           return absl::InternalError(error);
         }
         client_state_ = ClientState::kPingback;
         return absl::OkStatus();
       case ClientState::kPingback: {
-        size_t comp;
-        if (!absl::SimpleAtoi(message, &comp)) {
-          auto error = absl::StrFormat("Expected integer, got '%v'", message);
-          return absl::InternalError(error);
-        } else if (comp != pingback_) {
-          auto err = absl::StrFormat("Incorrect '%v' != '%v'", comp, pingback_);
+        if (message != pingback_) {
+          std::string err =
+              absl::StrFormat("Incorrect '%v' != '%v'", message, pingback_);
           return absl::InternalError(err);
         }
         client_state_ = ClientState::kWaitingForExit;
@@ -294,7 +305,7 @@ class SandboxManager::SocketClient {
   std::optional<PidFd> pid_fd_;
 
   ClientState client_state_ = ClientState::kInitial;
-  size_t pingback_;
+  std::string pingback_;
   int ignored_fd_ = -1;
 };
 
