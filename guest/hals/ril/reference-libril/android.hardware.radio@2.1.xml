@@ -6,7 +6,7 @@
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.data</name>
-        <version>3</version>
+        <version>4</version>
         <fqname>IRadioData/slot1</fqname>
     </hal>
     <hal format="aidl">
@@ -16,7 +16,7 @@
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.ims.media</name>
-        <version>2</version>
+        <version>3</version>
         <fqname>IImsMedia/default</fqname>
     </hal>
     <hal format="aidl">
