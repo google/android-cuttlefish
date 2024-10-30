@@ -164,18 +164,6 @@ def repos():
         version = "v1.1.1",
     )
     go_repository(
-        name = "com_github_google_android_cuttlefish_frontend_src_host_orchestrator",
-        importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator",
-        sum = "h1:GyA/c0U7dGi1oWoMSmGF00UcsBJxv+eZAiO5qirM9Ak=",
-        version = "v0.0.0-20241011194822-c22ea981e7da",
-    )
-    go_repository(
-        name = "com_github_google_android_cuttlefish_frontend_src_liboperator",
-        importpath = "github.com/google/android-cuttlefish/frontend/src/liboperator",
-        sum = "h1:5ph/60ouIJj+YvXVeob5FU8rPCyjzWgjb8+x7k9QcKU=",
-        version = "v0.0.0-20240502215314-3182038fb7ea",
-    )
-    go_repository(
         name = "com_github_google_cloud_android_orchestration",
         importpath = "github.com/google/cloud-android-orchestration",
         commit = "659cfda81568b44ccb1cdded948c64a1fc6e1b6e",
