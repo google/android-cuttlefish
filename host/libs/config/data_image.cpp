@@ -32,6 +32,9 @@
 
 namespace cuttlefish {
 
+using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
+using BootFlow = CuttlefishConfig::InstanceSpecific::BootFlow;
+
 namespace {
 
 static constexpr std::string_view kDataPolicyUseExisting = "use_existing";
@@ -250,171 +253,140 @@ Result<void> InitializeMiscImage(
   return {};
 }
 
-class InitializeEspImageImpl : public InitializeEspImage {
- public:
-  INJECT(InitializeEspImageImpl(
-      const CuttlefishConfig& config,
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+static bool EspRequiredForBootFlow(BootFlow flow) {
+  return flow == BootFlow::AndroidEfiLoader || flow == BootFlow::ChromeOs ||
+         flow == BootFlow::Linux || flow == BootFlow::Fuchsia;
+}
 
-  // SetupFeature
-  std::string Name() const override { return "InitializeEspImageImpl"; }
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
+static bool EspRequiredForAPBootFlow(APBootFlow ap_boot_flow) {
+  return ap_boot_flow == APBootFlow::Grub;
+}
 
-  bool Enabled() const override {
-    return EspRequiredForBootFlow() || EspRequiredForAPBootFlow();
+static void InitLinuxArgs(Arch target_arch, LinuxEspBuilder& linux) {
+  linux.Root("/dev/vda2");
+
+  linux.Argument("console", "hvc0").Argument("panic", "-1").Argument("noefi");
+
+  switch (target_arch) {
+    case Arch::Arm:
+    case Arch::Arm64:
+      linux.Argument("console", "ttyAMA0");
+      break;
+    case Arch::RiscV64:
+      linux.Argument("console", "ttyS0");
+      break;
+    case Arch::X86:
+    case Arch::X86_64:
+      linux.Argument("console", "ttyS0")
+          .Argument("pnpacpi", "off")
+          .Argument("acpi", "noirq")
+          .Argument("reboot", "k")
+          .Argument("noexec", "off");
+      break;
+  }
+}
+
+static void InitChromeOsArgs(LinuxEspBuilder& linux) {
+  linux.Root("/dev/vda2")
+      .Argument("console", "ttyS0")
+      .Argument("panic", "-1")
+      .Argument("noefi")
+      .Argument("init=/sbin/init")
+      .Argument("boot=local")
+      .Argument("rootwait")
+      .Argument("noresume")
+      .Argument("noswap")
+      .Argument("loglevel=7")
+      .Argument("noinitrd")
+      .Argument("cros_efi")
+      .Argument("cros_debug")
+      .Argument("earlyprintk=serial,ttyS0,115200")
+      .Argument("earlycon=uart8250,io,0x3f8")
+      .Argument("pnpacpi", "off")
+      .Argument("acpi", "noirq")
+      .Argument("reboot", "k")
+      .Argument("noexec", "off");
+}
+
+static bool BuildAPImage(const CuttlefishConfig& config,
+                         const CuttlefishConfig::InstanceSpecific& instance) {
+  auto linux = LinuxEspBuilder(instance.ap_esp_image_path());
+  InitLinuxArgs(instance.target_arch(), linux);
+
+  auto openwrt_args = OpenwrtArgsFromConfig(instance);
+  for (auto& openwrt_arg : openwrt_args) {
+    linux.Argument(openwrt_arg.first, openwrt_arg.second);
   }
 
- protected:
-  Result<void> ResultSetup() override {
-    if (EspRequiredForAPBootFlow()) {
-      LOG(DEBUG) << "creating esp_image: " << instance_.ap_esp_image_path();
-      CF_EXPECT(BuildAPImage());
+  linux.Root("/dev/vda2")
+      .Architecture(instance.target_arch())
+      .Kernel(config.ap_kernel_image());
+
+  return linux.Build();
+}
+
+static bool BuildOSImage(const CuttlefishConfig::InstanceSpecific& instance) {
+  switch (instance.boot_flow()) {
+    case BootFlow::AndroidEfiLoader: {
+      auto android_efi_loader =
+          AndroidEfiLoaderEspBuilder(instance.esp_image_path());
+      android_efi_loader.EfiLoaderPath(instance.android_efi_loader())
+          .Architecture(instance.target_arch());
+      return android_efi_loader.Build();
     }
-    const auto is_not_gem5 = config_.vm_manager() != VmmMode::kGem5;
-    const auto esp_required_for_boot_flow = EspRequiredForBootFlow();
-    if (is_not_gem5 && esp_required_for_boot_flow) {
-      LOG(DEBUG) << "creating esp_image: " << instance_.esp_image_path();
-      CF_EXPECT(BuildOSImage());
+    case BootFlow::ChromeOs: {
+      auto linux = LinuxEspBuilder(instance.esp_image_path());
+      InitChromeOsArgs(linux);
+
+      linux.Root("/dev/vda3")
+          .Architecture(instance.target_arch())
+          .Kernel(instance.chromeos_kernel_path());
+
+      return linux.Build();
     }
-    return {};
-  }
+    case BootFlow::Linux: {
+      auto linux = LinuxEspBuilder(instance.esp_image_path());
+      InitLinuxArgs(instance.target_arch(), linux);
 
- private:
+      linux.Root("/dev/vda2")
+          .Architecture(instance.target_arch())
+          .Kernel(instance.linux_kernel_path());
 
-  bool EspRequiredForBootFlow() const {
-    const auto flow = instance_.boot_flow();
-    using BootFlow = CuttlefishConfig::InstanceSpecific::BootFlow;
-    return flow == BootFlow::AndroidEfiLoader || flow == BootFlow::ChromeOs ||
-           flow == BootFlow::Linux || flow == BootFlow::Fuchsia;
-  }
-
-  bool EspRequiredForAPBootFlow() const {
-    return instance_.ap_boot_flow() == CuttlefishConfig::InstanceSpecific::APBootFlow::Grub;
-  }
-
-  bool BuildAPImage() {
-    auto linux = LinuxEspBuilder(instance_.ap_esp_image_path());
-    InitLinuxArgs(linux);
-
-    auto openwrt_args = OpenwrtArgsFromConfig(instance_);
-    for (auto& openwrt_arg : openwrt_args) {
-      linux.Argument(openwrt_arg.first, openwrt_arg.second);
-    }
-
-    linux.Root("/dev/vda2")
-         .Architecture(instance_.target_arch())
-         .Kernel(config_.ap_kernel_image());
-
-    return linux.Build();
-  }
-
-  bool BuildOSImage() {
-    switch (instance_.boot_flow()) {
-      case CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader: {
-        auto android_efi_loader =
-            AndroidEfiLoaderEspBuilder(instance_.esp_image_path());
-        android_efi_loader.EfiLoaderPath(instance_.android_efi_loader())
-            .Architecture(instance_.target_arch());
-        return android_efi_loader.Build();
+      if (!instance.linux_initramfs_path().empty()) {
+        linux.Initrd(instance.linux_initramfs_path());
       }
-      case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs: {
-        auto linux = LinuxEspBuilder(instance_.esp_image_path());
-        InitChromeOsArgs(linux);
 
-        linux.Root("/dev/vda3")
-            .Architecture(instance_.target_arch())
-            .Kernel(instance_.chromeos_kernel_path());
-
-        return linux.Build();
-      }
-      case CuttlefishConfig::InstanceSpecific::BootFlow::Linux: {
-        auto linux = LinuxEspBuilder(instance_.esp_image_path());
-        InitLinuxArgs(linux);
-
-        linux.Root("/dev/vda2")
-             .Architecture(instance_.target_arch())
-             .Kernel(instance_.linux_kernel_path());
-
-        if (!instance_.linux_initramfs_path().empty()) {
-          linux.Initrd(instance_.linux_initramfs_path());
-        }
-
-        return linux.Build();
-      }
-      case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia: {
-        auto fuchsia = FuchsiaEspBuilder(instance_.esp_image_path());
-        return fuchsia.Architecture(instance_.target_arch())
-                      .Zedboot(instance_.fuchsia_zedboot_path())
-                      .MultibootBinary(instance_.fuchsia_multiboot_bin_path())
-                      .Build();
-      }
-      default:
-        break;
+      return linux.Build();
     }
-
-    return true;
-  }
-
-  void InitLinuxArgs(LinuxEspBuilder& linux) {
-    linux.Root("/dev/vda2");
-
-    linux.Argument("console", "hvc0")
-         .Argument("panic", "-1")
-         .Argument("noefi");
-
-    switch (instance_.target_arch()) {
-      case Arch::Arm:
-      case Arch::Arm64:
-        linux.Argument("console", "ttyAMA0");
-        break;
-      case Arch::RiscV64:
-        linux.Argument("console", "ttyS0");
-        break;
-      case Arch::X86:
-      case Arch::X86_64:
-        linux.Argument("console", "ttyS0")
-             .Argument("pnpacpi", "off")
-             .Argument("acpi", "noirq")
-             .Argument("reboot", "k")
-             .Argument("noexec", "off");
-        break;
+    case BootFlow::Fuchsia: {
+      auto fuchsia = FuchsiaEspBuilder(instance.esp_image_path());
+      return fuchsia.Architecture(instance.target_arch())
+          .Zedboot(instance.fuchsia_zedboot_path())
+          .MultibootBinary(instance.fuchsia_multiboot_bin_path())
+          .Build();
     }
+    default:
+      break;
   }
 
-  void InitChromeOsArgs(LinuxEspBuilder& linux) {
-    linux.Root("/dev/vda2")
-        .Argument("console", "ttyS0")
-        .Argument("panic", "-1")
-        .Argument("noefi")
-        .Argument("init=/sbin/init")
-        .Argument("boot=local")
-        .Argument("rootwait")
-        .Argument("noresume")
-        .Argument("noswap")
-        .Argument("loglevel=7")
-        .Argument("noinitrd")
-        .Argument("cros_efi")
-        .Argument("cros_debug")
-        .Argument("earlyprintk=serial,ttyS0,115200")
-        .Argument("earlycon=uart8250,io,0x3f8")
-        .Argument("pnpacpi", "off")
-        .Argument("acpi", "noirq")
-        .Argument("reboot", "k")
-        .Argument("noexec", "off");
+  return true;
+}
+
+Result<void> InitializeEspImage(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (EspRequiredForAPBootFlow(instance.ap_boot_flow())) {
+    LOG(DEBUG) << "creating esp_image: " << instance.ap_esp_image_path();
+    CF_EXPECT(BuildAPImage(config, instance));
   }
-
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
-
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
-                 InitializeEspImage>
-InitializeEspImageComponent() {
-  return fruit::createComponent()
-      .addMultibinding<SetupFeature, InitializeEspImage>()
-      .bind<InitializeEspImage, InitializeEspImageImpl>();
+  const auto is_not_gem5 = config.vm_manager() != VmmMode::kGem5;
+  const auto esp_required_for_boot_flow =
+      EspRequiredForBootFlow(instance.boot_flow());
+  if (is_not_gem5 && esp_required_for_boot_flow) {
+    LOG(DEBUG) << "creating esp_image: " << instance.esp_image_path();
+    CF_EXPECT(BuildOSImage(instance));
+  }
+  return {};
 }
 
 } // namespace cuttlefish
