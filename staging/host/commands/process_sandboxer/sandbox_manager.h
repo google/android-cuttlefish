@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include <absl/random/random.h>
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
 #include <absl/types/span.h>
@@ -97,6 +98,7 @@ class SandboxManager {
   std::list<std::unique_ptr<SocketClient>> clients_;
   SignalFd signals_;
   CredentialedUnixServer server_;
+  absl::BitGen bit_gen_;
 };
 
 }  // namespace cuttlefish::process_sandboxer
