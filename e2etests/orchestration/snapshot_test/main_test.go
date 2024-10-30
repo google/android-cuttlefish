@@ -162,19 +162,8 @@ func createDevice(srv hoclient.HostOrchestratorService, group_name, artifactsDir
 	return res.CVDs[0], nil
 }
 
-// TODO(b/370552105): Use HO API objects definitions from HEAD in e2e tests.
-type CreateSnapshotResponse struct {
-	SnapshotID string `json:"snapshot_id"`
-}
-
-// TODO(b/370552105): Use HO API objects definitions from HEAD in e2e tests.
-type StartCVDRequest struct {
-	// Start from the relevant snaphost if not empty.
-	SnapshotID string `json:"snapshot_id,omitempty"`
-}
-
 // TODO(b/370550070) Remove once this method is added to the client implementation.
-func createSnapshot(srvURL, group, name string) (*CreateSnapshotResponse, error) {
+func createSnapshot(srvURL, group, name string) (*hoapi.CreateSnapshotResponse, error) {
 	helper := hoclient.HTTPHelper{
 		Client:       http.DefaultClient,
 		RootEndpoint: srvURL,
@@ -186,7 +175,7 @@ func createSnapshot(srvURL, group, name string) (*CreateSnapshotResponse, error)
 		return nil, err
 	}
 	srv := hoclient.NewHostOrchestratorService(srvURL)
-	res := &CreateSnapshotResponse{}
+	res := &hoapi.CreateSnapshotResponse{}
 	if err := srv.WaitForOperation(op.Name, res); err != nil {
 		return nil, err
 	}
@@ -202,7 +191,7 @@ func stopDevice(srvURL, group, name string) error {
 }
 
 func startDevice(srvURL, group, name, snapshotID string) error {
-	body := &StartCVDRequest{SnapshotID: snapshotID}
+	body := &hoapi.StartCVDRequest{SnapshotID: snapshotID}
 	return doRequest(srvURL, group, name, "start", body)
 }
 
