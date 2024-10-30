@@ -152,18 +152,6 @@ def go_dependencies():
         version = "v1.5.3",
     )
     go_repository(
-        name = "com_github_google_android_cuttlefish_frontend_src_host_orchestrator",
-        importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator",
-        sum = "h1:mIkJP3NTWD9nbs2cGR4FAY5Kbn3c3kQMXwbDy14FMOw=",
-        version = "v0.0.0-20241008171059-6292f0536d3c",
-    )
-    go_repository(
-        name = "com_github_google_android_cuttlefish_frontend_src_liboperator",
-        importpath = "github.com/google/android-cuttlefish/frontend/src/liboperator",
-        sum = "h1:laMjSvqBHvDZ9DB+YaM6I4y5t0a7zYQRorYLM1VJsyM=",
-        version = "v0.0.0-20240822182916-7bea0dafdbde",
-    )
-    go_repository(
         name = "com_github_google_cloud_android_orchestration",
         importpath = "github.com/google/cloud-android-orchestration",
         sum = "h1:Od84sE+n+8M3MoWv35U/+leGnEAKXADR+7GFuVod8L0=",

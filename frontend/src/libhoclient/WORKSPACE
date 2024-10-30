@@ -30,3 +30,14 @@ go_rules_dependencies()
 go_register_toolchains(version = "1.23.1")
 
 gazelle_dependencies()
+
+local_repository(
+    name = "host_orchestrator",
+    path = "../host_orchestrator",
+)
+
+local_repository(
+    name = "liboperator",
+    path = "../liboperator",
+)
+
