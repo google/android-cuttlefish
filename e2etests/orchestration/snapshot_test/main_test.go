@@ -71,7 +71,7 @@ func TestSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Powerwash the device removing the temporary file.
-	if err := powerwash(ctx.ServiceURL, groupName, cvd.Name); err != nil {
+	if err := srv.Powerwash(groupName, cvd.Name); err != nil {
 		t.Fatal(err)
 	}
 	// Verifies temporary file does not exist.
@@ -81,11 +81,12 @@ func TestSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Stop the device.
-	if err := stopDevice(ctx.ServiceURL, groupName, cvd.Name); err != nil {
+	if err := srv.Stop(groupName, cvd.Name); err != nil {
 		t.Fatal(err)
 	}
 	// Restore the device from the snapshot.
-	if err := startDevice(ctx.ServiceURL, groupName, cvd.Name, createSnapshotRes.SnapshotID); err != nil {
+	req := &hoapi.StartCVDRequest{SnapshotID: createSnapshotRes.SnapshotID}
+	if err := srv.Start(groupName, cvd.Name, req); err != nil {
 		if err := common.DownloadHostBugReport(srv, groupName); err != nil {
 			t.Errorf("failed creating bugreport: %s", err)
 		}
@@ -180,38 +181,6 @@ func createSnapshot(srvURL, group, name string) (*hoapi.CreateSnapshotResponse, 
 		return nil, err
 	}
 	return res, nil
-}
-
-func powerwash(srvURL, group, name string) error {
-	return doRequest(srvURL, group, name, "powerwash", nil)
-}
-
-func stopDevice(srvURL, group, name string) error {
-	return doRequest(srvURL, group, name, "stop", nil)
-}
-
-func startDevice(srvURL, group, name, snapshotID string) error {
-	body := &hoapi.StartCVDRequest{SnapshotID: snapshotID}
-	return doRequest(srvURL, group, name, "start", body)
-}
-
-func doRequest(srvURL, group, name, oper string, body any) error {
-	helper := hoclient.HTTPHelper{
-		Client:       http.DefaultClient,
-		RootEndpoint: srvURL,
-	}
-	op := &hoapi.Operation{}
-	path := fmt.Sprintf("/cvds/%s/%s/:%s", group, name, oper)
-	rb := helper.NewPostRequest(path, body)
-	if err := rb.JSONResDo(op); err != nil {
-		return err
-	}
-	srv := hoclient.NewHostOrchestratorService(srvURL)
-	res := &hoapi.EmptyResponse{}
-	if err := srv.WaitForOperation(op.Name, &res); err != nil {
-		return err
-	}
-	return nil
 }
 
 func getCVD(srv hoclient.HostOrchestratorService) (*hoapi.CVD, error) {
