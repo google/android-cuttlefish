@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "operator",
+    srcs = [
+        "clients.go",
+        "devices.go",
+        "errors.go",
+        "jsonservers.go",
+        "operator.go",
+        "utils.go",
+    ],
+    importpath = "github.com/google/android-cuttlefish/frontend/src/liboperator/operator",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//api/v1:api",
+        "//protobuf",
+        "@com_github_gorilla_mux//:mux",
+        "@com_github_gorilla_websocket//:websocket",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_protobuf//types/known/emptypb",
+    ],
+)
+
+go_test(
+    name = "operator_test",
+    srcs = [
+        "clients_test.go",
+        "devices_test.go",
+    ],
+    embed = [":operator"],
+    deps = ["//api/v1:api"],
+)
