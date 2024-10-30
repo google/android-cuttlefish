@@ -1,0 +1,51 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "orchestrator",
+    srcs = [
+        "controller.go",
+        "createcvdaction.go",
+        "createcvdbugreportaction.go",
+        "createsnapshotaction.go",
+        "execcvdcommandaction.go",
+        "fetchartifactsaction.go",
+        "instancemanager.go",
+        "listcvdsaction.go",
+        "operation.go",
+        "startcvdaction.go",
+        "userartifacts.go",
+    ],
+    importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//api/v1:api",
+        "//orchestrator/artifacts",
+        "//orchestrator/cvd",
+        "//orchestrator/debug",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_gorilla_mux//:mux",
+        "@com_github_hashicorp_go_multierror//:go-multierror",
+        "@liboperator//operator",
+    ],
+)
+
+go_test(
+    name = "orchestrator_test",
+    srcs = [
+        "controller_test.go",
+        "createcvdaction_test.go",
+        "instancemanager_test.go",
+        "listcvdsaction_test.go",
+        "operation_test.go",
+        "userartifacts_test.go",
+    ],
+    embed = [":orchestrator"],
+    deps = [
+        "//api/v1:api",
+        "//orchestrator/debug",
+        "//orchestrator/testing",
+        "@com_github_google_go_cmp//cmp",
+        "@com_github_gorilla_mux//:mux",
+        "@liboperator//operator",
+    ],
+)
