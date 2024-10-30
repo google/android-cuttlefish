@@ -35,7 +35,8 @@ namespace cuttlefish::process_sandboxer {
 sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("webRTC"))
       .AddDirectory(host.log_dir, /* is_ro= */ false)
-      .AddDirectory(host.host_artifacts_path + "/usr/share/webrtc/assets")
+      .AddDirectory(
+          JoinPath(host.host_artifacts_path, "/usr/share/webrtc/assets"))
       .AddDirectory(host.instance_uds_dir, /* is_ro= */ false)
       .AddDirectory(host.vsock_device_dir, /* is_ro= */ false)
       .AddDirectory(JoinPath(host.runtime_dir, "recording"), /* is_ro= */ false)
