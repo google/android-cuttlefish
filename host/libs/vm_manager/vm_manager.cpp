@@ -86,7 +86,6 @@ class VmmCommands : public CommandSource, public LateInjected {
 
   // SetupFeature
   std::string Name() const override { return "VirtualMachineManager"; }
-  bool Enabled() const override { return true; }
 
   // LateInjected
   Result<void> LateInject(fruit::Injector<>& injector) override {
