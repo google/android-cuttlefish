@@ -1,6 +1,8 @@
 load("@bazel_gazelle//:def.bzl", "gazelle")
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
+# gazelle:resolve_regexp go github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1 @host_orchestrator//api/v1:api
+# gazelle:resolve_regexp go github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1 @liboperator//api/v1:api
 gazelle(name = "gazelle")
 
 go_library(
@@ -14,10 +16,10 @@ go_library(
     deps = [
         "//webrtcclient",
         "@com_github_cenkalti_backoff_v4//:backoff",
-        "@com_github_google_android_cuttlefish_frontend_src_host_orchestrator//api/v1:api",
-        "@com_github_google_android_cuttlefish_frontend_src_liboperator//api/v1:api",
         "@com_github_gorilla_websocket//:websocket",
         "@com_github_pion_webrtc_v3//:webrtc",
+        "@host_orchestrator//api/v1:api",
+        "@liboperator//api/v1:api",
     ],
 )
 
@@ -29,7 +31,7 @@ go_test(
     ],
     embed = [":libhoclient"],
     deps = [
-        "@com_github_google_android_cuttlefish_frontend_src_host_orchestrator//api/v1:api",
         "@com_github_google_go_cmp//cmp",
+        "@host_orchestrator//api/v1:api",
     ],
 )
