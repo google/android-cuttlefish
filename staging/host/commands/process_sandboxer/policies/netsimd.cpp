@@ -34,7 +34,6 @@ namespace cuttlefish::process_sandboxer {
 sandbox2::PolicyBuilder NetsimdPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("netsimd"))
       .AddDirectory(JoinPath(host.host_artifacts_path, "bin", "netsim-ui"))
-      .AddDirectory("/tmp", /* is_ro= */ false)  // to create new directories
       .AddDirectory(JoinPath(host.runtime_dir, "internal"), /* is_ro= */ false)
       .AddFile("/dev/urandom")  // For gRPC
       .AddPolicyOnSyscalls(
@@ -69,6 +68,7 @@ sandbox2::PolicyBuilder NetsimdPolicy(const HostInfo& host) {
                           {ARG_32(0), JEQ32(PR_CAPBSET_READ, ALLOW)})
       .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_INET, ALLOW),
                                         JEQ32(AF_INET6, ALLOW)})
+      .AddTmpfs("/tmp", 1 << 20)
       .Allow(sandbox2::UnrestrictedNetworking())
       .AllowDup()
       .AllowEpoll()
