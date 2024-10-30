@@ -322,7 +322,6 @@ class SuperImageRebuilderImpl : public SuperImageRebuilder {
       : fetcher_config_(fetcher_config), config_(config), instance_(instance) {}
 
   std::string Name() const override { return "SuperImageRebuilderImpl"; }
-  bool Enabled() const override { return true; }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
