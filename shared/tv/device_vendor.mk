@@ -69,6 +69,9 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PACKAGES += android.hardware.tv.tuner-service.example-lazy
 PRODUCT_VENDOR_PROPERTIES += ro.tuner.lazyhal=true
 
+# Media Quality HAL
+PRODUCT_PACKAGES += android.hardware.tv.mediaquality-service.example
+
 # TV Input HAL
 PRODUCT_PACKAGES += android.hardware.tv.input-service.example
 
