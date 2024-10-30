@@ -23,6 +23,7 @@ message InstanceDisplay {
   int32 height = 2;
   int32 dpi = 3;
   int32 refresh_rate_hertz = 4;
+  optional string overlays = 5;
 }
 message InstanceDisplays {
   repeated InstanceDisplay displays = 1;

@@ -67,6 +67,9 @@ Result<std::string> GenerateDisplayFlag(const EnvironmentSpecification& cfg) {
       } else {
         out_display.set_refresh_rate_hertz(CF_DEFAULTS_DISPLAY_REFRESH_RATE);
       }
+      if (in_display.has_overlays()) {
+        out_display.set_overlays(in_display.overlays());
+      }
     }
   }
 

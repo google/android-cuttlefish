@@ -86,6 +86,7 @@ message Display {
   optional uint32 height = 2;
   optional uint32 dpi = 3;
   optional uint32 refresh_rate_hertz = 4;
+  optional string overlays = 5;
 }
 
 message Disk {
