@@ -18,7 +18,6 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/config/feature.h"
@@ -29,18 +28,15 @@ class WebRtcRecorder : public SetupFeature {
  public:
   INJECT(WebRtcRecorder()) {};
   std::string Name() const override { return "WebRtcRecorder"; }
-  bool Enabled() const override { return true; }
   Result<void> ResultSetup() override;
 
   SharedFD GetClientSocket() const;
   Result<void> SendStartRecordingCommand() const;
   Result<void> SendStopRecordingCommand() const;
 
-
  protected:
   SharedFD client_socket_;
   SharedFD host_socket_;
-
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }

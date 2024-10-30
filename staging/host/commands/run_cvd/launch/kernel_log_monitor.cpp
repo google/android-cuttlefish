@@ -81,7 +81,6 @@ class KernelLogMonitor : public CommandSource,
 
  private:
   // SetupFeature
-  bool Enabled() const override { return true; }
   std::string Name() const override { return "KernelLogMonitor"; }
 
  private:

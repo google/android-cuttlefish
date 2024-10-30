@@ -51,7 +51,7 @@ class SetupFeature : public virtual Feature<SetupFeature> {
 
   static Result<void> RunSetup(const std::vector<SetupFeature*>& features);
 
-  virtual bool Enabled() const = 0;
+  virtual bool Enabled() const { return true; }
 
  private:
   virtual Result<void> ResultSetup() = 0;
