@@ -726,7 +726,7 @@ static fruit::Component<> DiskChangesComponent(
       .install(AutoSetup<Gem5ImageUnpacker>::Component)
       .install(AutoSetup<InitializeMiscImage>::Component)
       // Create esp if necessary
-      .install(InitializeEspImageComponent)
+      .install(AutoSetup<InitializeEspImage>::Component)
       .install(SuperImageRebuilderComponent);
 }
 
