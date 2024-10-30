@@ -17,9 +17,9 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 GO_PREFIX = "github.com/google/android-cuttlefish/e2etests"
 
 # gazelle:resolve_regexp go github.com/google/android-cuttlefish/frontend/src/libhoclient/* @libhoclient
+# gazelle:resolve_regexp go github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1 @host_orchestrator//api/v1:api
 gazelle(
     name = "gazelle",
     external = "external",
     prefix = GO_PREFIX,
 )
-

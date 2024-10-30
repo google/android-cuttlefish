@@ -55,3 +55,13 @@ local_repository(
     name = "libhoclient",
     path = "../frontend/src/libhoclient",
 )
+
+local_repository(
+    name = "host_orchestrator",
+    path = "../frontend/src/host_orchestrator",
+)
+
+local_repository(
+    name = "liboperator",
+    path = "../frontend/src/liboperator",
+)
