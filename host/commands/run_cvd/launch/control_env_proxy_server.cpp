@@ -50,7 +50,6 @@ class ControlEnvProxyServer : public CommandSource {
 
   // SetupFeature
   std::string Name() const override { return "ControlEnvProxyServer"; }
-  bool Enabled() const override { return true; }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
