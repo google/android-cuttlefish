@@ -64,7 +64,6 @@ class ServerLoopImpl : public ServerLoop,
   };
 
  private:
-  bool Enabled() const override { return true; }
   std::unordered_set<SetupFeature*> Dependencies() const override {
     return {&snapshot_control_files_};
   }

@@ -30,6 +30,7 @@
 #include <grpcpp/create_channel.h>
 #include "common/libs/utils/result.h"
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
@@ -200,7 +201,6 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
 
   // SetupFeature
   std::string Name() const override { return "CvdBootStateMachine"; }
-  bool Enabled() const override { return true; }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const {
