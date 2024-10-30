@@ -115,6 +115,9 @@ type HostOrchestratorService interface {
 
 	// Start the device.
 	Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error
+
+	// Create device snapshot.
+	CreateSnapshot(groupName, instanceName string) (*hoapi.CreateSnapshotResponse, error)
 }
 
 const (
@@ -411,6 +414,25 @@ func (c *HostOrchestratorServiceImpl) Start(groupName, instanceName string, req 
 	path := fmt.Sprintf("/cvds/%s/%s/:start", groupName, instanceName)
 	rb := c.HTTPHelper.NewPostRequest(path, req)
 	return c.doEmptyResponseRequest(rb)
+}
+
+func (c *HostOrchestratorServiceImpl) CreateSnapshot(groupName, instanceName string) (*hoapi.CreateSnapshotResponse, error) {
+	path := fmt.Sprintf("/cvds/%s/%s/snapshots", groupName, instanceName)
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
+	op := &hoapi.Operation{}
+	if err := rb.JSONResDo(op); err != nil {
+		return nil, err
+	}
+	res := &hoapi.CreateSnapshotResponse{}
+	retryOpts := RetryOptions{
+		StatusCodes: []int{http.StatusServiceUnavailable, http.StatusGatewayTimeout},
+		RetryDelay:  30 * time.Second,
+		MaxWait:     10 * time.Minute,
+	}
+	if err := c.waitForOperation(op.Name, &res, retryOpts); err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (c *HostOrchestratorServiceImpl) doEmptyResponseRequest(rb *HTTPRequestBuilder) error {
