@@ -21,11 +21,13 @@
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
+#include "host/commands/process_sandboxer/filesystem.h"
+
 namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder ModemSimulatorPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("modem_simulator"))
-      .AddDirectory(host.host_artifacts_path + "/etc/modem_simulator")
+      .AddDirectory(JoinPath(host.host_artifacts_path, "/etc/modem_simulator"))
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddDirectory(host.runtime_dir, /* is_ro= */ false)  // modem_nvram.json
       .AddFile(host.cuttlefish_config_path)
