@@ -25,6 +25,8 @@
 
 #include <memory>
 
+namespace {
+
 using ::aidl::android::hardware::automotive::vehicle::
     VehicleApPowerStateConfigFlag;
 using ::android::hardware::automotive::utils::VsockConnectionInfo;
@@ -32,6 +34,8 @@ using ::android::hardware::automotive::vehicle::toInt;
 using ::android::hardware::automotive::vehicle::fake::FakeVehicleHardware;
 using ::android::hardware::automotive::vehicle::virtualization::
     GrpcVehicleProxyServer;
+
+}  // namespace
 
 // A GRPC server for VHAL running on the guest Android.
 // argv[1]: Config directory path containing property config file (e.g.

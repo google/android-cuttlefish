@@ -16,12 +16,12 @@
 cc_binary_host {
     name: "vhal_proxy_server",
     defaults: [
-        "cuttlefish_host",
         "FakeVehicleHardwareDefaults",
         "VehicleHalDefaults",
+        "cuttlefish_host",
     ],
     srcs: [
-        "VhalProxyServer.cpp",
+        "vhal_proxy_server.cpp",
     ],
     required: [
         "Host_Prebuilt_VehicleHalDefaultProperties_JSON",
@@ -29,8 +29,8 @@ cc_binary_host {
         "Host_Prebuilt_VehicleHalVendorClusterTestProperties_JSON",
     ],
     static_libs: [
-        "android.hardware.automotive.vehicle@default-grpc-server-lib",
         "FakeVehicleHardware",
+        "android.hardware.automotive.vehicle@default-grpc-server-lib",
     ],
     shared_libs: [
         "libbase",
