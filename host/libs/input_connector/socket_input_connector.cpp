@@ -347,10 +347,10 @@ Result<void> InputSocketsEventSink::SendMultiTouchEvent(
       // released touch
       buffer->AddEvent(EV_ABS, ABS_MT_TRACKING_ID, -1);
       ts.ReleaseSlot(this, this_id);
-    }
-    // Send BTN_TOUCH UP when no more contacts are detected
-    if (was_down && ts.NumActiveSlots() == 0) {
-      buffer->AddEvent(EV_KEY, BTN_TOUCH, 0);
+      // Send BTN_TOUCH UP when no more contacts are detected
+      if (was_down && ts.NumActiveSlots() == 0) {
+        buffer->AddEvent(EV_KEY, BTN_TOUCH, 0);
+      }
     }
   }
 
