@@ -1,0 +1,2 @@
+ro.boot.auto_eth_guest_addr  u:object_r:auto_eth_guest_addr_prop:s0
+android.car.auto_eth_namespace_setup_complete  u:object_r:auto_eth_namespace_setup_complete_prop:s0 exact bool

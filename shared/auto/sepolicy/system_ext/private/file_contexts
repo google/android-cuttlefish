@@ -1,0 +1,2 @@
+# The ethernet setup script.
+/(system_ext|system/system_ext)/bin/ethernet/ethernet(.*)\.sh        u:object_r:auto_ethernet_setup_exec:s0

@@ -63,6 +63,7 @@
 #include "host/libs/config/instance_nums.h"
 #include "host/libs/config/secure_hals.h"
 #include "host/libs/config/touchpad.h"
+#include "host/libs/vhal_proxy_server/vhal_proxy_server_eth_addr.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -1346,8 +1347,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   if (FLAGS_vhal_proxy_server_instance_num > 0) {
     vhal_proxy_server_instance_num = FLAGS_vhal_proxy_server_instance_num - 1;
   }
-  tmp_config_obj.set_vhal_proxy_server_port(9300 +
-                                            vhal_proxy_server_instance_num);
+  tmp_config_obj.set_vhal_proxy_server_port(
+      cuttlefish::vhal_proxy_server::kDefaultEthPort +
+      vhal_proxy_server_instance_num);
   LOG(DEBUG) << "launch vhal proxy server: "
              << (FLAGS_enable_vhal_proxy_server &&
                  vhal_proxy_server_instance_num <= 0);
