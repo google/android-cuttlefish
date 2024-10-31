@@ -81,6 +81,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install wget
+      run: |
+        apt-get update && apt-get install -y wget
     - name: Get docker image name
       run: |
         short_sha=$(echo ${{ github.sha }} | cut -c1-8)
