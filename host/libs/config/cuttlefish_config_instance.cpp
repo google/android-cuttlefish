@@ -902,6 +902,39 @@ bool CuttlefishConfig::InstanceSpecific::enable_mouse() const {
   return (*Dictionary())[kEnableMouse].asBool();
 }
 
+static constexpr char kCustomKeyboardConfig[] = "custom_keyboard_config";
+void CuttlefishConfig::MutableInstanceSpecific::set_custom_keyboard_config(
+    const std::string& custom_keyboard_config_json_path) {
+  (*Dictionary())[kCustomKeyboardConfig] = custom_keyboard_config_json_path;
+}
+std::optional<std::string>
+CuttlefishConfig::InstanceSpecific::custom_keyboard_config() const {
+  auto value = (*Dictionary())[kCustomKeyboardConfig];
+  if (value.isNull()) {
+    return std::nullopt;
+  }
+  return value.asString();
+}
+
+static constexpr char kDomkeyMappingConfig[] = "domkey_mapping_config";
+void CuttlefishConfig::MutableInstanceSpecific::set_domkey_mapping_config(
+    const std::string& domkey_mapping_config_json_path) {
+  Json::Value domkey_config_json;
+  Json::CharReaderBuilder builder;
+  std::ifstream ifs(domkey_mapping_config_json_path);
+  std::string error_message;
+  if (!Json::parseFromStream(builder, ifs, &domkey_config_json,
+                             &error_message)) {
+    LOG(ERROR) << "Could not read domkey config file "
+               << domkey_mapping_config_json_path << ": " << error_message;
+  }
+  (*Dictionary())[kDomkeyMappingConfig] = domkey_config_json;
+}
+const Json::Value& CuttlefishConfig::InstanceSpecific::domkey_mapping_config()
+    const {
+  return (*Dictionary())[kDomkeyMappingConfig];
+}
+
 static constexpr char kEnableGnssGrpcProxy[] = "enable_gnss_grpc_proxy";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy) {
   (*Dictionary())[kEnableGnssGrpcProxy] = enable_gnss_grpc_proxy;
