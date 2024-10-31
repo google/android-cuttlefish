@@ -20,6 +20,9 @@
 #include <android-base/logging.h>
 #include <grpc++/grpc++.h>
 #include "common/libs/utils/flag_parser.h"
+#include "host/libs/vhal_proxy_server/vhal_proxy_server_eth_addr.h"
+
+namespace {
 
 using ::android::hardware::automotive::vehicle::proto::DumpOptions;
 using ::android::hardware::automotive::vehicle::proto::DumpResult;
@@ -27,12 +30,14 @@ using ::android::hardware::automotive::vehicle::proto::VehicleServer;
 using ::cuttlefish::Flag;
 using ::cuttlefish::FlagAliasMode;
 using ::cuttlefish::GflagsCompatFlag;
+using ::cuttlefish::vhal_proxy_server::kDefaultEthPort;
+using ::cuttlefish::vhal_proxy_server::kEthAddr;
 using ::grpc::ClientContext;
 using ::grpc::CreateChannel;
 using ::grpc::InsecureChannelCredentials;
 using ::grpc::Status;
 
-static constexpr int DEFAULT_ETH_PORT = 9300;
+}  // namespace
 
 // A GRPC server for VHAL running on the guest Android.
 // argv[1]: Config directory path containing property config file (e.g.
@@ -44,7 +49,7 @@ int main(int argc, char* argv[]) {
     args.push_back(std::string(argv[i]));
   }
 
-  int32_t eth_port = DEFAULT_ETH_PORT;
+  int32_t eth_port = kDefaultEthPort;
   std::vector<Flag> flags{GflagsCompatFlag("port", eth_port)};
   CHECK(cuttlefish::ConsumeFlags(flags, args).ok()) << "Failed to parse flags";
 
@@ -54,7 +59,7 @@ int main(int argc, char* argv[]) {
     dump_options.add_options(arg);
   }
 
-  auto eth_addr = fmt::format("localhost:{}", eth_port);
+  auto eth_addr = fmt::format("{}:{}", kEthAddr, eth_port);
 
   auto channel = CreateChannel(eth_addr, InsecureChannelCredentials());
   auto stub = VehicleServer::NewStub(channel);

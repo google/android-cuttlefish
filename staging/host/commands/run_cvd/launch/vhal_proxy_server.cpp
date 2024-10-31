@@ -19,6 +19,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
+#include "host/libs/vhal_proxy_server/vhal_proxy_server_eth_addr.h"
 
 #include <linux/vm_sockets.h>
 
@@ -33,7 +34,8 @@ std::optional<MonitorCommand> VhalProxyServer(
   int port = config.vhal_proxy_server_port();
   Command command = Command(VhalProxyServerBinary())
                         .AddParameter(VhalProxyServerConfig())
-                        .AddParameter(fmt::format("localhost:{}", port));
+                        .AddParameter(fmt::format(
+                            "{}:{}", vhal_proxy_server::kEthAddr, port));
   if (instance.vhost_user_vsock()) {
     command.AddParameter(
         fmt::format("unix://{}", SharedFD::GetVhostUserVsockServerAddr(
