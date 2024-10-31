@@ -166,6 +166,8 @@ class TouchDevice {
     return slots_by_source_and_id_.size();
   }
 
+  int NewTrackingId() { return ++tracking_id_; }
+
   // The InputConnector holds state of on-going touch contacts. Event sources
   // that can produce multi touch events should call this function when it's
   // known they won't produce any more events (because, for example, the
@@ -206,6 +208,7 @@ class TouchDevice {
   std::mutex slots_mtx_;
   std::map<std::pair<void*, int32_t>, int32_t> slots_by_source_and_id_;
   std::vector<bool> active_slots_;
+  std::atomic<int> tracking_id_ = 0;
 };
 
 struct InputDevices {
@@ -339,7 +342,7 @@ Result<void> InputSocketsEventSink::SendMultiTouchEvent(
       if (is_new_contact) {
         // We already assigned this slot to this source and id combination, we
         // could use any tracking id for the slot as long as it's greater than 0
-        buffer->AddEvent(EV_ABS, ABS_MT_TRACKING_ID, this_id);
+        buffer->AddEvent(EV_ABS, ABS_MT_TRACKING_ID, ts.NewTrackingId());
       }
       buffer->AddEvent(EV_ABS, ABS_MT_POSITION_X, this_x);
       buffer->AddEvent(EV_ABS, ABS_MT_POSITION_Y, this_y);
@@ -435,8 +438,8 @@ void InputSocketsConnectorBuilder::WithTouchDevice(
   CHECK(connector_->devices_.touch_devices.find(device_label) ==
         connector_->devices_.touch_devices.end())
       << "Multiple touch devices with same label: " << device_label;
-  connector_->devices_.touch_devices.emplace(device_label,
-                                     std::make_unique<InputSocket>(server));
+  connector_->devices_.touch_devices.emplace(
+      device_label, std::make_unique<InputSocket>(server));
 }
 
 void InputSocketsConnectorBuilder::WithKeyboard(SharedFD server) {
