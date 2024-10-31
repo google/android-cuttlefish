@@ -1,0 +1,40 @@
+type auto_ethernet_setup, domain;
+typeattribute auto_ethernet_setup coredomain;
+type auto_ethernet_setup_exec, exec_type, system_file_type, file_type;
+
+init_daemon_domain(auto_ethernet_setup)
+
+# Required for `#!/system/bin/sh`
+allow auto_ethernet_setup shell_exec:file rx_file_perms;
+
+# Required for `getprop`
+allow auto_ethernet_setup toolbox_exec:file { execute execute_no_trans getattr map open read };
+get_prop(auto_ethernet_setup, auto_eth_guest_addr_prop)
+
+# Required for logging to /dev/kmsg
+allow auto_ethernet_setup kmsg_device:chr_file w_file_perms;
+
+# Required for `ifconfig eth1 $IP`
+allow auto_ethernet_setup self:capability { net_admin sys_module };
+allow auto_ethernet_setup self:udp_socket create;
+# Allow the application to do ioctl() syscalls on the udp_socket.
+allow auto_ethernet_setup self:udp_socket ioctl;
+# Allow the application to do privileged ioctls on the udp_socket, such as `SIOCSIFADDR`, which is
+# for setting an IP address of an interface.
+# WARNING: `allowxperm` alone will not grant the access: it must be used in combination with
+# `allow`. See `allow auto_ethernet_setup self:udp_socket ioctl` above.
+allowxperm auto_ethernet_setup self:udp_socket ioctl priv_sock_ioctls;
+
+# Required for executing `ip`.
+allow auto_ethernet_setup system_file:file execute_no_trans;
+
+# Required for `ip route` operations.
+allow auto_ethernet_setup self:netlink_route_socket { bind create getattr nlmsg_write read setopt write };
+
+# Required for `ip netns` and move ethernet interface into a particular network namespace operations.
+allow auto_ethernet_setup self:netlink_route_socket nlmsg_read;
+allow auto_ethernet_setup tmpfs:dir { add_name create mounton write };
+allow auto_ethernet_setup tmpfs:file { create mounton open read };
+allow auto_ethernet_setup nsfs:file { open read };
+allow auto_ethernet_setup proc_filesystems:file { getattr open read };
+allow auto_ethernet_setup self:capability sys_admin;

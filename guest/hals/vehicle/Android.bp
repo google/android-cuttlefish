@@ -25,7 +25,6 @@ vintf_fragment {
 cc_binary {
     name: "android.hardware.automotive.vehicle@V3-cf-service",
     defaults: ["VehicleHalDefaults"],
-    init_rc: ["android.hardware.automotive.vehicle@V3-cf-service.rc"],
     vendor: true,
     relative_install_path: "hw",
     srcs: [

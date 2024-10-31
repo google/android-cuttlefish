@@ -1,0 +1,2 @@
+# Need to be read by vendor domain and vendor_init
+system_restricted_prop(auto_eth_namespace_setup_complete_prop)

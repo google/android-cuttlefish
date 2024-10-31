@@ -1,4 +1,27 @@
-service vendor.vehicle-cf /apex/com.android.hardware.automotive.vehicle/bin/hw/android.hardware.automotive.vehicle@V3-cf-service
+# This is the regular VHAL using ethernet. It runs in regular build.
+service vendor.vehicle-cf-eth /apex/com.android.hardware.automotive.vehicle/bin/hw/android.hardware.automotive.vehicle@V3-cf-service eth
     class early_hal
     user vehicle_network
     group system inet
+    enter_namespace net /mnt/run/auto_eth
+    disabled
+
+# This is the VHAL running in vsock mode in case ethernet namespace is not set
+# up, e.g. in GSI build.
+# Set this as one-shot because this service will do nothing and exit if
+# property:android.car.auto_eth_namespace_setup_complete is 1.
+service vendor.vehicle-cf-vsock /apex/com.android.hardware.automotive.vehicle/bin/hw/android.hardware.automotive.vehicle@V3-cf-service vsock
+    class early_hal
+    user vehicle_network
+    group system inet
+    oneshot
+
+# Only enable vendor.vehicle-cf-eth when we know network namespace is set up.
+# Otherwise, enter_namespace will fail.
+# Ideally we should only enable vendor.vehicle-cf when we know network namespace
+# is not set up. However, init does not have a check if a property is unset.
+# As a result, we will run both vendor.vehicle-cf and vendor.vehicle-cf-eth
+# if the network namespace is set up. vendor.vehicle-cf will exit if it detects
+# the network namespace property is set.
+on late-fs && property:android.car.auto_eth_namespace_setup_complete=1
+    enable vendor.vehicle-cf-eth
