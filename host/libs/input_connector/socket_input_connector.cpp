@@ -157,8 +157,8 @@ class TouchDevice {
     if (slot_it == slots_by_source_and_id_.end()) {
       return;
     }
-    slots_by_source_and_id_.erase(slot_it);
     active_slots_[slot_it->second] = false;
+    slots_by_source_and_id_.erase(slot_it);
   }
 
   size_t NumActiveSlots() {
