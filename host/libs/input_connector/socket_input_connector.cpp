@@ -157,8 +157,8 @@ class TouchDevice {
     if (slot_it == slots_by_source_and_id_.end()) {
       return;
     }
-    slots_by_source_and_id_.erase(slot_it);
     active_slots_[slot_it->second] = false;
+    slots_by_source_and_id_.erase(slot_it);
   }
 
   size_t NumActiveSlots() {
@@ -347,10 +347,10 @@ Result<void> InputSocketsEventSink::SendMultiTouchEvent(
       // released touch
       buffer->AddEvent(EV_ABS, ABS_MT_TRACKING_ID, -1);
       ts.ReleaseSlot(this, this_id);
-    }
-    // Send BTN_TOUCH UP when no more contacts are detected
-    if (was_down && ts.NumActiveSlots() == 0) {
-      buffer->AddEvent(EV_KEY, BTN_TOUCH, 0);
+      // Send BTN_TOUCH UP when no more contacts are detected
+      if (was_down && ts.NumActiveSlots() == 0) {
+        buffer->AddEvent(EV_KEY, BTN_TOUCH, 0);
+      }
     }
   }
 
