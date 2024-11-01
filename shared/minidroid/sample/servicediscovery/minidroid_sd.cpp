@@ -26,7 +26,8 @@
 
 void bi::sd::setupRpcServer(ndk::SpAIBinder service, int port) {
   ABinderProcess_startThreadPool();
-  ARpcServer* server = ARpcServer_newVsock(service.get(), VMADDR_CID_ANY, port);
+  ARpcServer* server =
+      ARpcServer_newVsock(service.get(), VMADDR_CID_ANY, port, nullptr);
 
   AServiceManager_addService(service.get(), "TestService");
   printf("Calling join on server!\n");
