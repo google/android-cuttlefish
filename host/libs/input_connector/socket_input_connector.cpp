@@ -327,13 +327,12 @@ Result<void> InputSocketsEventSink::SendMultiTouchEvent(
     auto this_y = f.y;
 
     auto is_new_contact = !ts.HasSlot(this, this_id);
-    auto was_down = ts.NumActiveSlots() > 0;
 
     // Make sure to call HasSlot before this line or it will always return true
     auto this_slot = ts.GetOrAcquireSlot(this, this_id);
 
     // BTN_TOUCH DOWN must be the first event in a series
-    if (down && !was_down) {
+    if (down && is_new_contact) {
       buffer->AddEvent(EV_KEY, BTN_TOUCH, 1);
     }
 
@@ -350,10 +349,7 @@ Result<void> InputSocketsEventSink::SendMultiTouchEvent(
       // released touch
       buffer->AddEvent(EV_ABS, ABS_MT_TRACKING_ID, -1);
       ts.ReleaseSlot(this, this_id);
-      // Send BTN_TOUCH UP when no more contacts are detected
-      if (was_down && ts.NumActiveSlots() == 0) {
-        buffer->AddEvent(EV_KEY, BTN_TOUCH, 0);
-      }
+      buffer->AddEvent(EV_KEY, BTN_TOUCH, 0);
     }
   }
 
