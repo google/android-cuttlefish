@@ -1,10 +1,16 @@
-cuttlefish-common (1.0.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.0.0) unstable; urgency=medium
 
   [ Jorge E. Moreira ]
   * Delete unused experimental commands
 
   [ A. Cody Schuffelen]
   * Reduce logging verbosity
+
+  [ Andrew Wheeler ]
+  * Facilitate using 3rd-party build APIs
+
+  [ Wei-chung Hsu ]
+  * Disable acloud translator
 
  -- Jorge Moreira <jemoreira@google.com>  Thu, 05 Sep 2024 11:05:25 -0700
 
