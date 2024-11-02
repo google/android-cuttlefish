@@ -430,7 +430,8 @@ Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
   return {};
 }
 
-Result<Build> GetHostBuild(BuildApi& build_api, HostToolsTarget& host_target,
+Result<Build> GetHostBuild(BuildApi& build_api,
+                           const HostToolsTarget& host_target,
                            const std::optional<Build>& fallback_host_build) {
   auto host_package_build = CF_EXPECT(
       GetBuildHelper(build_api, host_target.build_string, kDefaultBuildTarget));
@@ -849,7 +850,7 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
   return {};
 }
 
-Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
+Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
                    std::vector<Target>& targets) {
 #ifdef __BIONIC__
   // TODO(schuffelen): Find a better way to deal with tzdata
