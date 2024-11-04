@@ -78,6 +78,7 @@ class CvdLoginCommand : public CvdServerHandler {
     if (ssh) {
       CF_EXPECT(Oauth2LoginSsh(*http_client, oauth2_request));
     } else {
+      std::cout << "Using SSH? Please run this command again with `--ssh`.\n";
       CF_EXPECT(Oauth2LoginLocal(*http_client, oauth2_request));
     }
 
