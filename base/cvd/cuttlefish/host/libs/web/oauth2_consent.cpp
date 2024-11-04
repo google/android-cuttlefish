@@ -39,17 +39,20 @@ namespace {
 using android::base::Join;
 using android::base::Tokenize;
 
-Result<std::string> CodeFromUrl(std::string_view url) {
-  static constexpr std::string_view kCodeEq = "code=";
-  std::size_t code_begin = url.find(kCodeEq);
-  CF_EXPECTF(code_begin != std::string_view::npos, "No '{}'", kCodeEq);
+Result<std::string> AuthorizationCodeFromUrl(const std::string_view url) {
+  std::string_view code = url;
 
-  std::size_t code_end = url.find("&", code_begin + 2);
-  if (code_end != std::string::npos) {
-    code_end = code_end - code_begin - kCodeEq.size();
+  static constexpr std::string_view kCodeEq = "code=";
+  std::size_t code_eq_pos = code.find(kCodeEq);
+  CF_EXPECTF(code_eq_pos != std::string_view::npos, "No '{}'", kCodeEq);
+  code.remove_prefix(code_eq_pos + kCodeEq.size());
+
+  std::size_t code_end_pos = code.find("&");
+  if (code_end_pos != std::string::npos) {
+    code = code.substr(0, code_end_pos);
   }
-  // npos is an acceptable end value for substr
-  return std::string(url.substr(code_begin + kCodeEq.size(), code_end));
+
+  return std::string(code);
 }
 
 class HttpServer {
@@ -85,7 +88,7 @@ class HttpServer {
     std::vector<std::string> request_lines = Tokenize(request.str(), "\r\n");
     CF_EXPECT(!request_lines.empty(), "no lines in input");
 
-    std::string code = CF_EXPECT(CodeFromUrl(request_lines[0]));
+    std::string code = CF_EXPECT(AuthorizationCodeFromUrl(request_lines[0]));
 
     static constexpr std::string_view kResponse = "Please return to the CLI.";
 
@@ -111,8 +114,6 @@ uint32_t ScopeChecksum(const std::vector<std::string>& scopes) {
   return crc32(0, data, scopes_str.size());
 }
 
-static constexpr char kClientId[] = "client_id";
-static constexpr char kClientSecret[] = "client_secret";
 static constexpr char kRefreshToken[] = "refresh_token";
 static constexpr char kScope[] = "scope";
 
@@ -152,10 +153,9 @@ Result<std::string> GetRefreshToken(HttpClient& http_client,
     std::string code_url;
     std::getline(std::cin, code_url);
 
-    code = CF_EXPECT(CodeFromUrl(code_url));
+    code = CF_EXPECT(AuthorizationCodeFromUrl(code_url));
   } else {
     std::cout << "Opening a browser for the consent flow.\n";
-    std::cout << "Using SSH? Please run this command again with `--ssh`.\n";
 
     CF_EXPECT_EQ(Execute({"/usr/bin/xdg-open", consent.str()}), 0);
 
@@ -196,6 +196,8 @@ Result<std::string> GetRefreshToken(HttpClient& http_client,
   return token_json[kRefreshToken].asString();
 }
 
+static constexpr char kClientId[] = "client_id";
+static constexpr char kClientSecret[] = "client_secret";
 static constexpr char kCredentials[] = "credentials";
 
 Result<std::unique_ptr<CredentialSource>> Oauth2Login(
@@ -275,6 +277,9 @@ Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
       CF_EXPECT(FindCvdDataFiles(kCredentials));
 
   for (const std::string& credential_path : credential_paths) {
+    if (!android::base::EndsWith(credential_path, ".json")) {
+      continue;
+    }
     Result<std::unique_ptr<CredentialSource>> credential =
         CredentialForScopes(http_client, scopes, credential_path);
     if (credential.ok() && credential->get() != nullptr) {

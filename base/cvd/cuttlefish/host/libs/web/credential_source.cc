@@ -47,6 +47,8 @@ constexpr char kBuildScope[] =
 
 constexpr auto kRefreshWindow = std::chrono::minutes(2);
 
+// Credentials with known expiration times with behavior to load new
+// credentials.
 class RefreshingCredentialSource : public CredentialSource {
  public:
   RefreshingCredentialSource()
@@ -70,6 +72,11 @@ class RefreshingCredentialSource : public CredentialSource {
   std::chrono::steady_clock::time_point expiration_;
 };
 
+// OAuth2 credentials from the GCE metadata server.
+//
+// -
+// https://cloud.google.com/compute/docs/access/authenticate-workloads#applications
+// - https://cloud.google.com/compute/docs/metadata/overview
 class GceMetadataCredentialSource : public RefreshingCredentialSource {
  public:
   GceMetadataCredentialSource(HttpClient&);
@@ -82,6 +89,7 @@ class GceMetadataCredentialSource : public RefreshingCredentialSource {
   HttpClient& http_client_;
 };
 
+// Pass through a string as an authentication token with unknown expiration.
 class FixedCredentialSource : public CredentialSource {
  public:
   FixedCredentialSource(const std::string& credential);
@@ -94,17 +102,22 @@ class FixedCredentialSource : public CredentialSource {
   std::string credential_;
 };
 
-class RefreshCredentialSource : public RefreshingCredentialSource {
+// OAuth2 tokens from a desktop refresh token.
+//
+// https://developers.google.com/identity/protocols/oauth2/native-app
+class RefreshTokenCredentialSource : public RefreshingCredentialSource {
  public:
-  static Result<std::unique_ptr<RefreshCredentialSource>> FromOauth2ClientFile(
-      HttpClient& http_client, const std::string& oauthcontents);
+  static Result<std::unique_ptr<RefreshTokenCredentialSource>>
+  FromOauth2ClientFile(HttpClient& http_client,
+                       const std::string& oauthcontents);
 
-  RefreshCredentialSource(HttpClient& http_client, const std::string& client_id,
-                          const std::string& client_secret,
-                          const std::string& refresh_token);
+  RefreshTokenCredentialSource(HttpClient& http_client,
+                               const std::string& client_id,
+                               const std::string& client_secret,
+                               const std::string& refresh_token);
 
  private:
-  static Result<std::unique_ptr<RefreshCredentialSource>> FromJson(
+  static Result<std::unique_ptr<RefreshTokenCredentialSource>> FromJson(
       HttpClient& http_client, const Json::Value& credential);
 
   Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
@@ -115,6 +128,9 @@ class RefreshCredentialSource : public RefreshingCredentialSource {
   std::string refresh_token_;
 };
 
+// OAuth2 tokens from service account files.
+//
+// https://developers.google.com/identity/protocols/oauth2/service-account
 class ServiceAccountOauthCredentialSource : public RefreshingCredentialSource {
  public:
   static Result<std::unique_ptr<ServiceAccountOauthCredentialSource>> FromJson(
@@ -161,7 +177,7 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
   } else if (credential_source == "") {
     if (FileExists(oauth_filepath)) {
       std::string oauth_contents = CF_EXPECT(ReadFileContents(oauth_filepath));
-      auto attempt_load = RefreshCredentialSource::FromOauth2ClientFile(
+      auto attempt_load = RefreshTokenCredentialSource::FromOauth2ClientFile(
           http_client, oauth_contents);
       if (attempt_load.ok()) {
         result = std::move(*attempt_load);
@@ -240,9 +256,9 @@ std::unique_ptr<CredentialSource> FixedCredentialSource::Make(
   return std::unique_ptr<CredentialSource>(new FixedCredentialSource(credential));
 }
 
-Result<std::unique_ptr<RefreshCredentialSource>>
-RefreshCredentialSource::FromJson(HttpClient& http_client,
-                                  const Json::Value& credential) {
+Result<std::unique_ptr<RefreshTokenCredentialSource>>
+RefreshTokenCredentialSource::FromJson(HttpClient& http_client,
+                                       const Json::Value& credential) {
   CF_EXPECT(credential.isMember("client_id"));
   auto& client_id = credential["client_id"];
   CF_EXPECT(client_id.type() == Json::ValueType::stringValue);
@@ -255,13 +271,13 @@ RefreshCredentialSource::FromJson(HttpClient& http_client,
   auto& refresh_token = credential["refresh_token"];
   CF_EXPECT(refresh_token.type() == Json::ValueType::stringValue);
 
-  return std::make_unique<RefreshCredentialSource>(
+  return std::make_unique<RefreshTokenCredentialSource>(
       http_client, client_id.asString(), client_secret.asString(),
       refresh_token.asString());
 }
 
-Result<std::unique_ptr<RefreshCredentialSource>>
-RefreshCredentialSource::FromOauth2ClientFile(
+Result<std::unique_ptr<RefreshTokenCredentialSource>>
+RefreshTokenCredentialSource::FromOauth2ClientFile(
     HttpClient& http_client, const std::string& oauth_contents) {
   if (android::base::StartsWith(oauth_contents, "[OAuth2]")) {  // .boto file
     std::optional<std::string> client_id;
@@ -287,7 +303,7 @@ RefreshCredentialSource::FromOauth2ClientFile(
         continue;
       }
     }
-    return std::make_unique<RefreshCredentialSource>(
+    return std::make_unique<RefreshTokenCredentialSource>(
         http_client, CF_EXPECT(std::move(client_id)),
         CF_EXPECT(std::move(client_secret)),
         CF_EXPECT(std::move(refresh_token)));
@@ -332,13 +348,13 @@ RefreshCredentialSource::FromOauth2ClientFile(
     static constexpr char kClientSecret[] =
         "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";
 
-    return std::make_unique<RefreshCredentialSource>(
+    return std::make_unique<RefreshTokenCredentialSource>(
         http_client, kClientId, kClientSecret, refresh_token.asString());
   }
   return CF_ERR("Unknown credential file format");
 }
 
-RefreshCredentialSource::RefreshCredentialSource(
+RefreshTokenCredentialSource::RefreshTokenCredentialSource(
     HttpClient& http_client, const std::string& client_id,
     const std::string& client_secret, const std::string& refresh_token)
     : http_client_(http_client),
@@ -347,7 +363,7 @@ RefreshCredentialSource::RefreshCredentialSource(
       refresh_token_(refresh_token) {}
 
 Result<std::pair<std::string, std::chrono::seconds>>
-RefreshCredentialSource::Refresh() {
+RefreshTokenCredentialSource::Refresh() {
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
   std::stringstream data;
@@ -553,7 +569,7 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
 Result<std::unique_ptr<CredentialSource>> CreateRefreshTokenCredentialSource(
     HttpClient& http_client, const std::string& client_id,
     const std::string& client_secret, const std::string& refresh_token) {
-  return std::make_unique<RefreshCredentialSource>(
+  return std::make_unique<RefreshTokenCredentialSource>(
       http_client, client_id, client_secret, refresh_token);
 }
 
