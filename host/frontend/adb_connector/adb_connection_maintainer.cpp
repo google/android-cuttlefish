@@ -43,6 +43,10 @@ std::string MakeShellUptimeMessage() {
   return MakeMessage("shell,raw:cut -d. -f1 /proc/uptime");
 }
 
+std::string MakeShellTradeInModeGetStatusMessage() {
+  return MakeMessage("shell,raw:tradeinmode getstatus");
+}
+
 std::string MakeTransportMessage(const std::string& address) {
   return MakeMessage("host:transport:" + address);
 }
@@ -78,6 +82,7 @@ bool AdbSendMessage(const SharedFD& sock, const std::string& message) {
     LOG(WARNING) << "failed to send all bytes to adb daemon";
     return false;
   }
+
   return RecvAll(sock, kAdbStatusResponseLength) == kAdbOkayStatusResponse;
 }
 
@@ -146,6 +151,32 @@ int RecvUptimeResult(const SharedFD& sock) {
   return std::stoi(uptime_str);
 }
 
+// Returns a negative value if getstatus result couldn't be read for
+// any reason.
+int RecvGetStatusResult(const SharedFD& sock) {
+  std::vector<char> status_vec{};
+  std::vector<char> just_read(16);
+  do {
+    auto count = sock->Read(just_read.data(), just_read.size());
+    if (count < 0) {
+      LOG(WARNING) << "couldn't receive adb shell output";
+      return -1;
+    }
+    just_read.resize(count);
+    status_vec.insert(status_vec.end(), just_read.begin(), just_read.end());
+  } while (!just_read.empty());
+
+  if (status_vec.empty()) {
+    LOG(WARNING) << "empty adb shell result";
+    return -1;
+  }
+
+  auto status_str = std::string{status_vec.data(), status_vec.size()};
+  LOG(DEBUG) << "Status received " << status_str;
+
+  return 0;
+}
+
 // Check if the connection state is waiting for authorization. This function
 // returns true only when explicitly receiving the unauthorized error message,
 // while returns false for all the other error cases because we need to call
@@ -204,6 +235,7 @@ void WaitForAdbDisconnection(const std::string& address) {
   // sleeps stabilize the communication.
   LOG(DEBUG) << "Watching for disconnect on " << address;
   while (true) {
+    // First try uptime
     auto sock = SharedFD::SocketLocalClient(kAdbDaemonPort, SOCK_STREAM);
     if (!sock->IsOpen()) {
       LOG(ERROR) << "failed to open adb connection: " << sock->StrError();
@@ -214,17 +246,35 @@ void WaitForAdbDisconnection(const std::string& address) {
                    << RecvAdbResponse(sock);
       break;
     }
-    if (!AdbSendMessage(sock, MakeShellUptimeMessage())) {
-      LOG(WARNING) << "adb shell uptime message failed";
-      break;
-    }
 
-    auto uptime = RecvUptimeResult(sock);
-    if (uptime < 0) {
-      LOG(WARNING) << "couldn't read uptime result";
-      break;
+    if (AdbSendMessage(sock, MakeShellUptimeMessage())) {
+      auto uptime = RecvUptimeResult(sock);
+      if (uptime < 0) {
+        LOG(WARNING) << "couldn't read uptime result";
+        break;
+      }
+      LOG(VERBOSE) << "device on " << address << " uptime " << uptime;
+    } else {
+      // If uptime fails, maybe we are in trade-in mode
+      // Try adb shell tradeinmode getstatus
+      auto sock = SharedFD::SocketLocalClient(kAdbDaemonPort, SOCK_STREAM);
+      if (!AdbSendMessage(sock, MakeTransportMessage(address))) {
+        LOG(WARNING) << "transport message failed, response body: "
+                     << RecvAdbResponse(sock);
+        break;
+      }
+      if (!AdbSendMessage(sock, MakeShellTradeInModeGetStatusMessage())) {
+        LOG(WARNING) << "transport message failed, response body: "
+                     << RecvAdbResponse(sock);
+        break;
+      }
+      auto status = RecvGetStatusResult(sock);
+      if (status < 0) {
+        LOG(WARNING) << "transport message failed, response body: "
+                     << RecvAdbResponse(sock);
+        break;
+      }
     }
-    LOG(VERBOSE) << "device on " << address << " uptime " << uptime;
     sleep(kAdbCommandGapTime);
   }
   LOG(DEBUG) << "Sending adb disconnect";
