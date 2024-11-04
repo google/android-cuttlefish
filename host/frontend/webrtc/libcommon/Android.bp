@@ -24,20 +24,18 @@ cc_library {
         "connection_controller.cpp",
         "peer_connection_utils.cpp",
         "port_range_socket_factory.cpp",
-        "vp8only_encoder_factory.cpp",
         "utils.cpp",
+        "vp8only_encoder_factory.cpp",
     ],
     cflags: [
         // libwebrtc headers need this
-        "-Wno-unused-parameter",
-        "-D_XOPEN_SOURCE",
-        "-DWEBRTC_POSIX",
         "-DWEBRTC_LINUX",
-    ],
-    header_libs: [
-        "libwebrtc_absl_headers",
+        "-DWEBRTC_POSIX",
+        "-D_XOPEN_SOURCE",
+        "-Wno-unused-parameter",
     ],
     static_libs: [
+        "libabsl_host",
         "libevent",
         "libopus",
         "libsrtp2",
@@ -47,8 +45,8 @@ cc_library {
     ],
     shared_libs: [
         "libbase",
-        "libcuttlefish_utils",
         "libcrypto",
+        "libcuttlefish_utils",
         "libjsoncpp",
         "libssl",
     ],
