@@ -4396,7 +4396,7 @@ void getConfigSlotStatus(RIL_SimSlotStatus_V1_2 *pSimSlotStatus) {
     pSimSlotStatus->eid = "";
 }
 
-void sendUnsolNetworkScanResult() {
+void sendUnsolNetworkScanResult(void *param __unused) {
     RIL_NetworkScanResult scanr;
     memset(&scanr, 0, sizeof(scanr));
     scanr.status = COMPLETE;
