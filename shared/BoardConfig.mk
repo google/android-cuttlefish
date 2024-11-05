@@ -47,8 +47,10 @@ PRODUCT_COPY_FILES += $(TARGET_KERNEL_PATH):kernel
 BOARD_KERNEL_VERSION := $(word 1,$(subst vermagic=,,$(shell egrep -h -ao -m 1 'vermagic=.*' $(KERNEL_MODULES_PATH)/nd_virtio.ko)))
 
 ifneq (,$(findstring auto, $(PRODUCT_NAME)))
-PRODUCT_COPY_FILES += \
-    $(PRODUCT_OUT)/root/hibernation_swap.img:hibernation_swap.img
+HIB_SWAP_IMAGE_SIZE_GB ?= 4
+ifeq ("$(wildcard $(PRODUCT_OUT)/hibernation_swap.img)", "")
+$(shell dd if=/dev/zero of=$(PRODUCT_OUT)/hibernation_swap.img bs=1K count=$(HIB_SWAP_IMAGE_SIZE_GB)M)
+endif
 endif
 
 # The list of modules strictly/only required either to reach second stage
