@@ -18,6 +18,13 @@
 # arm target for Cuttlefish
 #
 
+TARGET_KERNEL_USE ?= 6.6
+TARGET_KERNEL_ARCH ?= arm64
+SYSTEM_DLKM_SRC ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)
+TARGET_KERNEL_PATH ?= $(SYSTEM_DLKM_SRC)/kernel-$(TARGET_KERNEL_USE)
+KERNEL_MODULES_PATH ?= \
+    kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/$(subst _,-,$(TARGET_KERNEL_ARCH))
+
 -include device/google/cuttlefish/vsoc_arm64/BoardConfig.mk
 
 TARGET_BOARD_PLATFORM := vsoc_arm
@@ -31,10 +38,3 @@ TARGET_2ND_ARCH_VARIANT :=
 TARGET_2ND_CPU_ABI :=
 TARGET_2ND_CPU_ABI2 :=
 TARGET_2ND_CPU_VARIANT :=
-
-TARGET_KERNEL_USE ?= 6.6
-TARGET_KERNEL_ARCH ?= arm64
-SYSTEM_DLKM_SRC ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)
-TARGET_KERNEL_PATH ?= $(SYSTEM_DLKM_SRC)/kernel-$(TARGET_KERNEL_USE)
-KERNEL_MODULES_PATH ?= \
-    kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/$(subst _,-,$(TARGET_KERNEL_ARCH))
