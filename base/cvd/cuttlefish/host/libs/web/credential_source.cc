@@ -42,9 +42,6 @@
 namespace cuttlefish {
 namespace {
 
-constexpr char kBuildScope[] =
-    "https://www.googleapis.com/auth/androidbuild.internal";
-
 constexpr auto kRefreshWindow = std::chrono::minutes(2);
 
 // Credentials with known expiration times with behavior to load new
@@ -159,7 +156,7 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
     return {};
   }
   auto result = ServiceAccountOauthCredentialSource::FromJson(
-      http_client, content, kBuildScope);
+      http_client, content, kAndroidBuildApiScope);
   if (!result.ok()) {
     LOG(DEBUG) << "Failed to load service account json file: \n"
                << result.error().FormatForEnv();
