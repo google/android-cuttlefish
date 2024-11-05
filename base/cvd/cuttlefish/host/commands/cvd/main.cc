@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+#include <stdlib.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <iostream>
@@ -255,6 +257,8 @@ std::string ColoredUrl(const std::string& url) {
 }  // namespace cuttlefish
 
 int main(int argc, char** argv, char** envp) {
+  srand(time(NULL));
+
   android::base::LogSeverity verbosity =
       cuttlefish::CvdVerbosityOption(argc, argv);
   android::base::InitLogging(argv, android::base::StderrLogger);
