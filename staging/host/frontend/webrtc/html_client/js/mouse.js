@@ -42,15 +42,29 @@ function trackMouseEvents(dc, mouseElement) {
   mouseElement.addEventListener('mousemove', onMouseMove);
 }
 
-function enableMouseButton(dc, key_event_listener,
-  wheel_event_listener) {
+function enableMouseButton(dc) {
+  function onMouseKey(evt) {
+    if (evt.cancelable) {
+      // Some keyboard events cause unwanted side effects, like elements losing
+      // focus, if the default behavior is not prevented.
+      evt.preventDefault();
+    }
+    dc.sendKeyEvent(evt.code, evt.type);
+  }
+  function onMouseWheel(evt) {
+    evt.preventDefault();
+    // Vertical wheel pixel events only
+    if (evt.deltaMode == WheelEvent.DOM_DELTA_PIXEL && evt.deltaY != 0.0) {
+      dc.sendMouseWheelEvent(evt.deltaY);
+    }
+  }
   let button = document.getElementById("mouse_btn");
   button.style.display = "";
   button.disabled = false;
   trackMouseEvents(dc, button);
-  button.addEventListener('keydown', key_event_listener);
-  button.addEventListener('keyup', key_event_listener);
-  button.addEventListener('wheel', wheel_event_listener,
+  button.addEventListener('keydown', onMouseKey);
+  button.addEventListener('keyup', onMouseKey);
+  button.addEventListener('wheel', onMouseWheel,
                                 { passive: false });
   return button;
 }
