@@ -44,6 +44,7 @@ class HostVirtualInputEventSink : public InputConnector::EventSink {
   // EventSink implementation
   Result<void> SendMouseMoveEvent(int x, int y) override;
   Result<void> SendMouseButtonEvent(int button, bool down) override;
+  Result<void> SendMouseWheelEvent(int pixels) override;
   Result<void> SendTouchEvent(const std::string& device_label, int x, int y,
                               bool down) override;
   Result<void> SendMultiTouchEvent(const std::string& device_label,
@@ -67,6 +68,11 @@ Result<void> HostVirtualInputEventSink::SendMouseButtonEvent(int button,
                                                              bool down) {
   ConfUiLog(INFO) << "Sending mouse button event: " << button << "," << down;
   return android_mode_input_->SendMouseButtonEvent(button, down);
+}
+
+Result<void> HostVirtualInputEventSink::SendMouseWheelEvent(int pixels) {
+  ConfUiLog(INFO) << "Sending mouse wheel event: " << pixels;
+  return android_mode_input_->SendMouseWheelEvent(pixels);
 }
 
 Result<void> HostVirtualInputEventSink::SendTouchEvent(

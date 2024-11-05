@@ -46,6 +46,7 @@ class ConnectionObserver {
 
   virtual Result<void> OnMouseMoveEvent(int x, int y) = 0;
   virtual Result<void> OnMouseButtonEvent(int button, bool down) = 0;
+  virtual Result<void> OnMouseWheelEvent(int pixels) = 0;
   virtual Result<void> OnTouchEvent(const std::string& device_label, int x,
                                     int y, bool down) = 0;
   virtual Result<void> OnMultiTouchEvent(const std::string& label,
@@ -55,7 +56,7 @@ class ConnectionObserver {
 
   virtual Result<void> OnKeyboardEvent(uint16_t keycode, bool down) = 0;
 
-  virtual Result<void> OnWheelEvent(int pixels) = 0;
+  virtual Result<void> OnRotaryWheelEvent(int pixels) = 0;
 
   virtual void OnAdbChannelOpen(
       std::function<bool(const uint8_t*, size_t)> adb_message_sender) = 0;
