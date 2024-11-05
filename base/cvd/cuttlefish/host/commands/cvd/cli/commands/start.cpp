@@ -34,6 +34,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
@@ -50,6 +51,7 @@
 #include "host/commands/cvd/utils/interrupt_listener.h"
 #include "host/commands/cvd/utils/subprocess_waiter.h"
 #include "host/libs/config/config_constants.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace {
@@ -196,7 +198,8 @@ static Result<void> UpdateInstanceArgs(cvd_common::Args& args,
 Result<void> SymlinkPreviousConfig(const std::string& group_home_dir) {
   auto system_wide_home = CF_EXPECT(SystemWideUserHome());
   auto config_from_home = system_wide_home + "/.cuttlefish_config.json";
-  if (!FileExists(config_from_home)) {
+  if (!FileExists(config_from_home) || !LoadFromFile(config_from_home).ok()) {
+    // Skip if the file doesn't exist or can't be parsed as JSON
     return {};
   }
   auto link = group_home_dir + "/.cuttlefish_config.json";
