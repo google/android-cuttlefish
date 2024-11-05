@@ -98,8 +98,11 @@ endif
 PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 
 # Ethernet setup script for vehicle HAL
-PRODUCT_PACKAGES += auto_ethernet_setup_script
-PRODUCT_PACKAGES += auto_ethernet_config_script
+ENABLE_AUTO_ETHERNET ?= true
+ifeq ($(ENABLE_AUTO_ETHERNET), true)
+    PRODUCT_PACKAGES += auto_ethernet_setup_script
+    PRODUCT_PACKAGES += auto_ethernet_config_script
+endif
 
 # Remote access HAL
 PRODUCT_PACKAGES += android.hardware.automotive.remoteaccess@V2-default-service
