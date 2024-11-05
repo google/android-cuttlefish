@@ -23,6 +23,9 @@
 
 namespace cuttlefish {
 
+constexpr char kAndroidBuildApiScope[] =
+    "https://www.googleapis.com/auth/androidbuild.internal";
+
 class CredentialSource {
  public:
   virtual ~CredentialSource() = default;

@@ -349,7 +349,7 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
                                          std::chrono::milliseconds(5000));
 
   std::vector<std::string> scopes = {
-      "https://www.googleapis.com/auth/androidbuild.internal",
+      kAndroidBuildApiScope,
       "https://www.googleapis.com/auth/userinfo.email",
   };
   Result<std::unique_ptr<CredentialSource>> cvd_creds =
