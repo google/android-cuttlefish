@@ -233,6 +233,7 @@ class InputSocketsEventSink : public InputConnector::EventSink {
 
   Result<void> SendMouseMoveEvent(int x, int y) override;
   Result<void> SendMouseButtonEvent(int button, bool down) override;
+  Result<void> SendMouseWheelEvent(int pixels) override;
   Result<void> SendTouchEvent(const std::string& device_label, int x, int y,
                               bool down) override;
   Result<void> SendMultiTouchEvent(const std::string& device_label,
@@ -285,6 +286,16 @@ Result<void> InputSocketsEventSink::SendMouseButtonEvent(int button,
   CF_EXPECT(button < (int)buttons.size(),
             "Unknown mouse event button: " << button);
   buffer->AddEvent(EV_KEY, buttons[button], down);
+  buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
+  input_devices_.mouse->WriteEvents(std::move(buffer));
+  return {};
+}
+
+Result<void> InputSocketsEventSink::SendMouseWheelEvent(int pixels) {
+  CF_EXPECT(input_devices_.mouse != nullptr, "No mouse device setup");
+  auto buffer = CreateBuffer(input_devices_.event_type, 2);
+  CF_EXPECT(buffer != nullptr, "Failed to allocate input events buffer");
+  buffer->AddEvent(EV_REL, REL_WHEEL, pixels);
   buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
   input_devices_.mouse->WriteEvents(std::move(buffer));
   return {};

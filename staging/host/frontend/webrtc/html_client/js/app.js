@@ -336,8 +336,7 @@ class DeviceControlApp {
 
     if (this.#deviceConnection.description.mouse_enabled) {
       // Enable mouse button conditionally.
-      enableMouseButton(this.#deviceConnection,
-          evt => this.#onKeyEvent(evt), evt => this.#onWheelEvent(evt));
+      enableMouseButton(this.#deviceConnection);
     }
 
     // Set up displays
