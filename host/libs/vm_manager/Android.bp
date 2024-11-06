@@ -21,6 +21,7 @@ cc_library {
     name: "libcuttlefish_vm_manager",
     srcs: [
         "crosvm_builder.cpp",
+        "crosvm_cpu.cpp",
         "crosvm_manager.cpp",
         "gem5_manager.cpp",
         "host_configuration.cpp",
