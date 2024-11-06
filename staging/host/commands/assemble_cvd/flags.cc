@@ -521,6 +521,9 @@ DEFINE_vec(
 DEFINE_vec(vhost_user_block, CF_DEFAULTS_VHOST_USER_BLOCK ? "true" : "false",
            "(experimental) use crosvm vhost-user block device implementation ");
 
+DEFINE_string(early_tmp_dir, cuttlefish::StringFromEnv("TEMP", "/tmp"),
+              "Parent directory to use for temporary files in early startup");
+
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
@@ -623,9 +626,9 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     }
 
     GuestConfig guest_config;
-    guest_config.android_version_number =
-        CF_EXPECT(ReadAndroidVersionFromBootImage(cur_boot_image),
-                  "Failed to read guest's android version");
+    guest_config.android_version_number = CF_EXPECT(
+        ReadAndroidVersionFromBootImage(FLAGS_early_tmp_dir, cur_boot_image),
+        "Failed to read guest's android version");
 
     if (InSandbox()) {
       // TODO: b/359309462 - real sandboxing for extract-ikconfig
@@ -637,8 +640,7 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
       ikconfig_cmd.AddParameter(kernel_image_path);
       ikconfig_cmd.UnsetFromEnvironment("PATH").AddEnvironmentVariable(
           "PATH", new_path);
-      std::string ikconfig_path =
-          StringFromEnv("TEMP", "/tmp") + "/ikconfig.XXXXXX";
+      std::string ikconfig_path = FLAGS_early_tmp_dir + "/ikconfig.XXXXXX";
       auto ikconfig_fd = SharedFD::Mkstemp(&ikconfig_path);
       CF_EXPECT(ikconfig_fd->IsOpen(),
                 "Unable to create ikconfig file: " << ikconfig_fd->StrError());
