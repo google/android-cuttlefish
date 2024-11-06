@@ -26,7 +26,7 @@ jobs:
     - name: Build debs.tar
       run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs.tar --null --files-from -
     - name: Publish debs.tar
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: debs
         path: debs.tar
@@ -39,7 +39,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Download debs.tar
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: debs
     - name: Untar debs.tar
@@ -47,7 +47,7 @@ jobs:
     - name: Build image
       run: bash tools/buildimage/main.sh
     - name: Publish image
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: image_gce_debian11_amd64
         path: image.tar.gz
