@@ -27,6 +27,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "android-base/scopeguard.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
@@ -481,27 +482,25 @@ void RepackGem5BootImage(const std::string& initrd_path,
 // the os version field in the boot image header.
 // https://source.android.com/docs/core/architecture/bootloader/boot-image-header
 Result<std::string> ReadAndroidVersionFromBootImage(
-    const std::string& boot_image_path) {
-  // temp dir path length is chosen to be larger than sun_path_length (108)
-  char tmp_dir[200];
-  sprintf(tmp_dir, "%s/XXXXXX", StringFromEnv("TEMP", "/tmp").c_str());
-  char* unpack_dir = mkdtemp(tmp_dir);
-  if (!unpack_dir) {
+    const std::string& temp_dir_parent, const std::string& boot_image_path) {
+  std::string tmp_dir = temp_dir_parent + "/XXXXXXX";
+  if (!mkdtemp(tmp_dir.data())) {
     return CF_ERR("boot image unpack dir could not be created");
   }
-  bool unpack_status = GetAvbMetadataFromBootImage(boot_image_path, unpack_dir);
-  if (!unpack_status) {
-    RecursivelyRemoveDirectory(unpack_dir);
-    return CF_ERR("\"" + boot_image_path + "\" boot image unpack into \"" +
-                  unpack_dir + "\" failed");
-  }
+  android::base::ScopeGuard delete_dir([tmp_dir]() {
+    Result<void> remove_res = RecursivelyRemoveDirectory(tmp_dir);
+    if (!remove_res.ok()) {
+      LOG(ERROR) << "Failed to delete temp dir '" << tmp_dir << '"';
+      LOG(ERROR) << remove_res.error().FormatForEnv();
+    }
+  });
 
-  // dirty hack to read out boot params
-  size_t dir_path_len = strlen(tmp_dir);
-  std::string boot_params = ReadFile(strcat(unpack_dir, "/boot_params"));
-  unpack_dir[dir_path_len] = '\0';
+  CF_EXPECTF(GetAvbMetadataFromBootImage(boot_image_path, tmp_dir),
+             "'{}' boot image unpack into '{}' failed", boot_image_path,
+             tmp_dir);
 
-  RecursivelyRemoveDirectory(unpack_dir);
+  std::string boot_params = ReadFile(tmp_dir + "/boot_params");
+
   std::string os_version =
       ExtractValue(boot_params, "Prop: com.android.build.boot.os_version -> ");
   // if the OS version is "None", or the prop does not exist, it wasn't set
