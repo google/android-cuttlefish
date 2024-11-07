@@ -106,6 +106,18 @@ type HostOrchestratorService interface {
 
 	// Create cvd bugreport.
 	CreateBugreport(group string, dst io.Writer) error
+
+	// Powerwash the device.
+	Powerwash(groupName, instanceName string) error
+
+	// Stop the device.
+	Stop(groupName, instanceName string) error
+
+	// Start the device.
+	Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error
+
+	// Create device snapshot.
+	CreateSnapshot(groupName, instanceName string) (*hoapi.CreateSnapshotResponse, error)
 }
 
 const (
@@ -384,6 +396,55 @@ func (c *HostOrchestratorServiceImpl) ListCVDs() ([]*hoapi.CVD, error) {
 		return nil, err
 	}
 	return res.CVDs, nil
+}
+
+func (c *HostOrchestratorServiceImpl) Powerwash(groupName, instanceName string) error {
+	path := fmt.Sprintf("/cvds/%s/%s/:powerwash", groupName, instanceName)
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
+	return c.doEmptyResponseRequest(rb)
+}
+
+func (c *HostOrchestratorServiceImpl) Stop(groupName, instanceName string) error {
+	path := fmt.Sprintf("/cvds/%s/%s/:stop", groupName, instanceName)
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
+	return c.doEmptyResponseRequest(rb)
+}
+
+func (c *HostOrchestratorServiceImpl) Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error {
+	path := fmt.Sprintf("/cvds/%s/%s/:start", groupName, instanceName)
+	rb := c.HTTPHelper.NewPostRequest(path, req)
+	return c.doEmptyResponseRequest(rb)
+}
+
+func (c *HostOrchestratorServiceImpl) CreateSnapshot(groupName, instanceName string) (*hoapi.CreateSnapshotResponse, error) {
+	path := fmt.Sprintf("/cvds/%s/%s/snapshots", groupName, instanceName)
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
+	op := &hoapi.Operation{}
+	if err := rb.JSONResDo(op); err != nil {
+		return nil, err
+	}
+	res := &hoapi.CreateSnapshotResponse{}
+	retryOpts := RetryOptions{
+		StatusCodes: []int{http.StatusServiceUnavailable, http.StatusGatewayTimeout},
+		RetryDelay:  30 * time.Second,
+		MaxWait:     10 * time.Minute,
+	}
+	if err := c.waitForOperation(op.Name, &res, retryOpts); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (c *HostOrchestratorServiceImpl) doEmptyResponseRequest(rb *HTTPRequestBuilder) error {
+	op := &hoapi.Operation{}
+	if err := rb.JSONResDo(op); err != nil {
+		return err
+	}
+	res := &hoapi.EmptyResponse{}
+	if err := c.WaitForOperation(op.Name, &res); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *HostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
