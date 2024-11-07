@@ -50,6 +50,9 @@ absl::Status HostInfo::EnsureOutputDirectoriesExist() {
   if (!CreateDirectoryRecursively(runtime_dir, 0700)) {
     return absl::ErrnoToStatus(errno, "Failed to create " + runtime_dir);
   }
+  if (!CreateDirectoryRecursively(vsock_device_dir, 0700)) {
+    return absl::ErrnoToStatus(errno, "Failed to create " + runtime_dir);
+  }
   return absl::OkStatus();
 }
 
@@ -62,6 +65,7 @@ std::ostream& operator<<(std::ostream& out, const HostInfo& host) {
   out << "\tassembly_dir: \"" << host.assembly_dir << "\"\n";
   out << "\tcuttlefish_config_path: \"" << host.cuttlefish_config_path
       << "\"\n";
+  out << "\tearly_tmp_dir: \"" << host.early_tmp_dir << "\"\n";
   out << "\tenvironments_dir: \"" << host.environments_dir << "\"\n";
   out << "\tenvironments_uds_dir: " << host.environments_uds_dir << "\"\n";
   out << "\tguest_image_path: " << host.guest_image_path << "\t\n";
