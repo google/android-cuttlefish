@@ -1,4 +1,4 @@
-cuttlefish-common (0.9.31) unstable; urgency=medium
+cuttlefish-common (0.9.31) stable; urgency=medium
 
   [ Chad Reynolds ]
   * Help command improvements
