@@ -69,9 +69,6 @@ sandbox2::PolicyBuilder AvbToolPolicy(const HostInfo& host) {
       .AddDirectory(host.guest_image_path)
       .AddDirectory(host.runtime_dir, /* is_ro= */ false)
       .AddDirectoryAt(fake_proc_self, "/proc/self")
-      // `assemble_cvd` uses `mkdtemp` in `/tmp` and passes the path to avbtool.
-      // TODO: schuffelen - make this more predictable
-      .AddDirectory("/tmp", /* is_ro= */ false)
       .AddFile("/dev/urandom")  // For Python
       .AddFileAt(host.HostToolExe("sandboxer_proxy"), "/usr/bin/openssl")
       // The executable `open`s itself to load the python files.
