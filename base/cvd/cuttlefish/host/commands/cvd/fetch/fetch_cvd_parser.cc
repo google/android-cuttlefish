@@ -201,7 +201,7 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   CF_EXPECT(ConsumeFlags(flags, args), "Could not process command line flags.");
 
   if (!directory.empty()) {
-    LOG(ERROR) << "Please use --target_directory instead of --directory";
+    LOG(WARNING) << "Please use --target_directory instead of --directory";
     if (fetch_flags.target_directory.empty()) {
       fetch_flags.target_directory = directory;
     }
@@ -213,7 +213,7 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   fetch_flags.target_directory = AbsolutePath(fetch_flags.target_directory);
 
   if (!fetch_flags.vector_flags.boot_artifact.empty()) {
-    LOG(ERROR) << "Please use the build string filepath syntax instead of "
+    LOG(WARNING) << "Please use the build string filepath syntax instead of "
                   "deprecated --boot_artifact";
     for (const auto& build_string : fetch_flags.vector_flags.boot_build) {
       if (build_string) {
@@ -226,7 +226,7 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   }
 
   if (!fetch_flags.build_api_flags.credential_source.empty()) {
-    LOG(ERROR) << "Please use the new, specific credential flags instead of "
+    LOG(WARNING) << "Please use the new, specific credential flags instead of "
                   "the deprecated --credential_source";
   }
   CredentialFlags& credential_flags =
