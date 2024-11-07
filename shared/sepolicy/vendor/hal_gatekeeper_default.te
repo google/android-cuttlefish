@@ -1,3 +1,0 @@
-# Write to kernel log (/dev/kmsg)
-allow hal_gatekeeper_default kmsg_device:chr_file w_file_perms;
-allow hal_gatekeeper_default kmsg_device:chr_file getattr;
