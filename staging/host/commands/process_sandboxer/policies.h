@@ -34,6 +34,7 @@ struct HostInfo {
 
   std::string assembly_dir;
   std::string cuttlefish_config_path;
+  std::string early_tmp_dir;
   std::string environments_dir;
   std::string environments_uds_dir;
   std::string guest_image_path;
