@@ -32,6 +32,7 @@
 #include <absl/log/initialize.h>
 #include <absl/log/log.h>
 #include <absl/status/status.h>
+#include <absl/strings/match.h>
 #include <absl/strings/numbers.h>
 #include <absl/strings/str_cat.h>
 
@@ -85,10 +86,17 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
     return absl::ErrnoToStatus(errno, "prctl(PR_SET_CHILD_SUBREAPER failed");
   }
 
+  std::string early_tmp_dir(FromEnv("TEMP").value_or("/tmp"));
+  early_tmp_dir += "/XXXXXX";
+  if (mkdtemp(early_tmp_dir.data()) == nullptr) {
+    return absl::ErrnoToStatus(errno, "mkdtemp failed");
+  }
+
   HostInfo host{
       .assembly_dir = CleanPath(absl::GetFlag(FLAGS_assembly_dir)),
       .cuttlefish_config_path =
           CleanPath(FromEnv(kCuttlefishConfigEnvVarName).value_or("")),
+      .early_tmp_dir = early_tmp_dir,
       .environments_dir = CleanPath(absl::GetFlag(FLAGS_environments_dir)),
       .environments_uds_dir =
           CleanPath(absl::GetFlag(FLAGS_environments_uds_dir)),
@@ -183,6 +191,10 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
   }
   std::string exe = CleanPath(args[1]);
   std::vector<std::string> exe_argv(++args.begin(), args.end());
+
+  if (absl::EndsWith(exe, "cvd_internal_start")) {
+    exe_argv.emplace_back("--early_tmp_dir=" + host.early_tmp_dir);
+  }
 
   auto sandbox_manager_res = SandboxManager::Create(std::move(host));
   if (!sandbox_manager_res.ok()) {

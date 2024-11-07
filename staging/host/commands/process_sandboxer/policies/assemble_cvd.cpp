@@ -38,12 +38,13 @@ sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo& host) {
       // TODO(schuffelen): Copy these files before modifying them
       .AddDirectory(JoinPath(host.host_artifacts_path, "etc", "openwrt"),
                     /* is_ro= */ false)
-      // TODO(schuffelen): Premake the directory for boot image unpack outputs
-      .AddDirectory("/tmp", /* is_ro= */ false)
+      .AddDirectory(host.early_tmp_dir, /* is_ro= */ false)
       .AddDirectory(host.environments_dir, /* is_ro= */ false)
       .AddDirectory(host.environments_uds_dir, /* is_ro= */ false)
       .AddDirectory(host.instance_uds_dir, /* is_ro= */ false)
+      .AddDirectory("/tmp/cf_avd_1000", /* is_ro= */ false)
       .AddDirectory(host.runtime_dir, /* is_ro= */ false)
+      .AddDirectory(host.vsock_device_dir, /* is_ro= */ false)
       // `webRTC` actually uses this file, but `assemble_cvd` first checks
       // whether it exists in order to decide whether to connect to it.
       .AddFile("/run/cuttlefish/operator")
@@ -52,20 +53,6 @@ sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo& host) {
       .AddFileAt(sandboxer_proxy, host.HostToolExe("mkenvimage_slim"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("newfs_msdos"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("simg2img"))
-      .AddDirectory(host.environments_dir)
-      .AddDirectory(host.environments_uds_dir, false)
-      .AddDirectory(host.instance_uds_dir, false)
-      // The UID inside the sandbox2 namespaces is always 1000.
-      .AddDirectoryAt(host.environments_uds_dir,
-                      absl::StrReplaceAll(
-                          host.environments_uds_dir,
-                          {{absl::StrCat("cf_env_", getuid()), "cf_env_1000"}}),
-                      false)
-      .AddDirectoryAt(host.instance_uds_dir,
-                      absl::StrReplaceAll(
-                          host.instance_uds_dir,
-                          {{absl::StrCat("cf_avd_", getuid()), "cf_avd_1000"}}),
-                      false)
       .AddPolicyOnSyscall(__NR_madvise,
                           {ARG_32(2), JEQ32(MADV_DONTNEED, ALLOW)})
       .AddPolicyOnSyscall(__NR_prctl,
