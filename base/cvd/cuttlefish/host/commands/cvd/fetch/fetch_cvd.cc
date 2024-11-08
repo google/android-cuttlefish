@@ -359,9 +359,10 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
       StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
 
   std::unique_ptr<CredentialSource> credential_source =
-      cvd_creds.ok() ? std::move(*cvd_creds)
-                     : CF_EXPECT(GetCredentialSourceFromFlags(
-                           *retrying_http_client, flags, oauth_filepath));
+      cvd_creds.ok() && cvd_creds->get()
+          ? std::move(*cvd_creds)
+          : CF_EXPECT(GetCredentialSourceFromFlags(*retrying_http_client, flags,
+                                                   oauth_filepath));
 
   const auto cache_base_path = PerUserDir() + "/cache";
   return CreateBuildApi(std::move(retrying_http_client), std::move(curl),
