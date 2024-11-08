@@ -1,7 +1,7 @@
 <manifest version="1.0" type="device">
     <hal format="aidl">
         <name>android.hardware.radio.config</name>
-        <version>3</version>
+        <version>4</version>
         <fqname>IRadioConfig/default</fqname>
     </hal>
     <hal format="aidl">
@@ -11,7 +11,7 @@
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.ims</name>
-        <version>2</version>
+        <version>3</version>
         <fqname>IRadioIms/slot1</fqname>
     </hal>
     <hal format="aidl">
@@ -21,22 +21,22 @@
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.messaging</name>
-        <version>3</version>
+        <version>4</version>
         <fqname>IRadioMessaging/slot1</fqname>
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.modem</name>
-        <version>3</version>
+        <version>4</version>
         <fqname>IRadioModem/slot1</fqname>
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.network</name>
-        <version>3</version>
+        <version>4</version>
         <fqname>IRadioNetwork/slot1</fqname>
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.sim</name>
-        <version>3</version>
+        <version>4</version>
         <fqname>IRadioSim/slot1</fqname>
     </hal>
     <hal format="aidl">
@@ -45,7 +45,7 @@
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.voice</name>
-        <version>3</version>
+        <version>4</version>
         <fqname>IRadioVoice/slot1</fqname>
     </hal>
 </manifest>
