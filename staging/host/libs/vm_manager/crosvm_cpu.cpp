@@ -47,7 +47,7 @@ std::string SerializeFreqDomains(
 }  // namespace
 
 Result<std::vector<std::string>> CrosvmCpuArguments(
-    size_t cpus, const Json::Value& vcpu_config_json) {
+    const Json::Value& vcpu_config_json) {
   std::vector<std::string> cpu_arguments;
 
   std::map<std::string, std::vector<int>> freq_domains;
@@ -61,6 +61,13 @@ Result<std::vector<std::string>> CrosvmCpuArguments(
       CF_EXPECT(GetValue<std::string>(vcpu_config_json, {"cgroup_path"}));
   cgroup_path_arg += parent_cgroup_path;
 
+  const Json::Value cpus_json =
+      CF_EXPECT(GetValue<Json::Value>(vcpu_config_json, {"cpus"}),
+                "Missing vCPUs config!");
+
+  // Get the number of vCPUs from the number of cpu configurations.
+  auto cpus = cpus_json.size();
+
   for (size_t i = 0; i < cpus; i++) {
     if (i != 0) {
       capacity_arg += ",";
@@ -70,9 +77,10 @@ Result<std::vector<std::string>> CrosvmCpuArguments(
 
     std::string cpu_cluster = fmt::format("--cpu-cluster={}", i);
 
+    // Assume that non-contiguous logical CPU ids are malformed.
     std::string cpu = fmt::format("cpu{}", i);
     const Json::Value cpu_json = CF_EXPECT(
-        GetValue<Json::Value>(vcpu_config_json, {cpu}), "Missing vCPU config!");
+        GetValue<Json::Value>(cpus_json, {cpu}), "Missing vCPU config!");
 
     const std::string affinity =
         CF_EXPECT(GetValue<std::string>(cpu_json, {"affinity"}));

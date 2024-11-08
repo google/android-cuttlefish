@@ -76,17 +76,16 @@ Result<void> CrosvmBuilder::AddCpus(size_t cpus,
   if (!vcpu_config_path.empty()) {
     Json::Value vcpu_config_json = CF_EXPECT(LoadFromFile(vcpu_config_path));
 
-    CF_EXPECT(AddCpus(cpus, vcpu_config_json));
+    CF_EXPECT(AddCpus(vcpu_config_json));
   } else {
     AddCpus(cpus);
   }
   return {};
 }
 
-Result<void> CrosvmBuilder::AddCpus(size_t cpus,
-                                    const Json::Value& vcpu_config_json) {
+Result<void> CrosvmBuilder::AddCpus(const Json::Value& vcpu_config_json) {
   std::vector<std::string> cpu_args =
-      CF_EXPECT(CrosvmCpuArguments(cpus, vcpu_config_json));
+      CF_EXPECT(CrosvmCpuArguments(vcpu_config_json));
 
   for (const std::string& cpu_arg : cpu_args) {
     command_.AddParameter(cpu_arg);
