@@ -36,7 +36,7 @@ class CrosvmBuilder {
   void AddControlSocket(const std::string&, const std::string&);
 
   Result<void> AddCpus(size_t cpus, const std::string& freq_domain_file);
-  Result<void> AddCpus(size_t cpus, const Json::Value&);
+  Result<void> AddCpus(const Json::Value&);
   void AddCpus(size_t cpus);
 
   void AddHvcSink();
