@@ -58,6 +58,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.hwcomposer.pmem=/dev/block/pmem1
 
+PRODUCT_SYSTEM_PROPERTIES += \
+    service.sf.prime_shader_cache=0
+
 # Gralloc implementation
 $(call soong_config_set,cvd,RELEASE_SM_OPEN_DECLARED_PASSTHROUGH_HAL,$(RELEASE_SM_OPEN_DECLARED_PASSTHROUGH_HAL))
 PRODUCT_PACKAGES += com.google.cf.gralloc
