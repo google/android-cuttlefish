@@ -64,7 +64,7 @@ const char* const kGpuVhostUserModeOn = "on";
 const char* const kGpuVhostUserModeOff = "off";
 
 const char* const kHwComposerAuto = "auto";
-const char* const kHwComposerDrm = "drm";
+const char* const kHwComposerDrm = "drm_hwcomposer";
 const char* const kHwComposerRanchu = "ranchu";
 const char* const kHwComposerNone = "none";
 

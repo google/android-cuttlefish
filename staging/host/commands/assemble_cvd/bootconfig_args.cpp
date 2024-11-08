@@ -210,7 +210,7 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
 
   bootconfig_args
       ["androidboot.vendor.apex.com.android.hardware.graphics.composer"] =
-          instance.hwcomposer() == "drm_hwcomposer"
+          instance.hwcomposer() == kHwComposerDrm
               ? "com.android.hardware.graphics.composer.drm_hwcomposer"
               : "com.android.hardware.graphics.composer.ranchu";
 
