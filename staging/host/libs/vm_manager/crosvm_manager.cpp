@@ -44,7 +44,6 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_builder.h"
-#include "host/libs/vm_manager/crosvm_cpu.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vhost_user.h"
 
@@ -559,19 +558,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--mte");
   }
 
-  if (!instance.vcpu_config_path().empty()) {
-    std::map<std::string, std::vector<int>> freq_domains;
-    Json::Value vcpu_config_json =
-        CF_EXPECT(LoadFromFile(instance.vcpu_config_path()));
-    std::vector<std::string> cpu_args =
-        CF_EXPECT(CrosvmCpuArguments(instance.cpus(), vcpu_config_json));
-
-    for (const std::string& cpu_arg : cpu_args) {
-      crosvm_cmd.Cmd().AddParameter(cpu_arg);
-    }
-  } else {
-    crosvm_cmd.Cmd().AddParameter("--cpus=", instance.cpus());
-  }
+  CF_EXPECT(crosvm_cmd.AddCpus(instance.cpus(), instance.vcpu_config_path()));
 
   auto disk_num = instance.virtual_disk_paths().size();
   CF_EXPECT(VmManager::kMaxDisks >= disk_num,
