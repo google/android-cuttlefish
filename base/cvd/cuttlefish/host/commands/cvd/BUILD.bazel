@@ -349,6 +349,8 @@ cc_library(
         "@fmt",
         "@gflags",
         "@jsoncpp",
+        "@protobuf//:protobuf",
+        "@protobuf//:protobuf_lite",
         "@tinyxml2",
         "@zlib",
     ],
@@ -370,6 +372,7 @@ cc_binary(
         "//libbase",
         "//libsparse",
         "@fmt",
+        "@protobuf",
     ],
 )
 
@@ -424,5 +427,6 @@ cc_test(
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@jsoncpp",
+        "@protobuf//:protobuf",
     ],
 )

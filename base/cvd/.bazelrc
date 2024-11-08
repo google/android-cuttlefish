@@ -1,1 +1,2 @@
 build --copt=-fdiagnostics-color=always
+build --repo_env=CC=clang
