@@ -286,7 +286,7 @@ Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
       return std::move(*credential);
     }
   }
-  return {};
+  return CF_ERR("No credentials found.");
 }
 
 }  // namespace cuttlefish
