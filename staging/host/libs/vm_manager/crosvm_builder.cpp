@@ -26,6 +26,7 @@
 #include "host/libs/command_util/snapshot_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
+#include "host/libs/vm_manager/crosvm_cpu.h"
 
 namespace cuttlefish {
 namespace {
@@ -68,6 +69,33 @@ void CrosvmBuilder::AddControlSocket(const std::string& control_socket,
   };
   command_.SetStopper(KillSubprocessFallback(stopper));
   command_.AddParameter("--socket=", control_socket);
+}
+
+Result<void> CrosvmBuilder::AddCpus(size_t cpus,
+                                    const std::string& vcpu_config_path) {
+  if (!vcpu_config_path.empty()) {
+    Json::Value vcpu_config_json = CF_EXPECT(LoadFromFile(vcpu_config_path));
+
+    CF_EXPECT(AddCpus(cpus, vcpu_config_json));
+  } else {
+    AddCpus(cpus);
+  }
+  return {};
+}
+
+Result<void> CrosvmBuilder::AddCpus(size_t cpus,
+                                    const Json::Value& vcpu_config_json) {
+  std::vector<std::string> cpu_args =
+      CF_EXPECT(CrosvmCpuArguments(cpus, vcpu_config_json));
+
+  for (const std::string& cpu_arg : cpu_args) {
+    command_.AddParameter(cpu_arg);
+  }
+  return {};
+}
+
+void CrosvmBuilder::AddCpus(size_t cpus) {
+  command_.AddParameter("--cpus=", cpus);
 }
 
 // TODO: b/243198718 - switch to virtio-console

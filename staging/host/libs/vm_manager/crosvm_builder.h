@@ -18,6 +18,9 @@
 #include <optional>
 #include <string>
 
+#include <json/value.h>
+
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/vm_manager/pci.h"
 
@@ -31,6 +34,10 @@ class CrosvmBuilder {
                              const std::string& first_time_argument,
                              int exit_code);
   void AddControlSocket(const std::string&, const std::string&);
+
+  Result<void> AddCpus(size_t cpus, const std::string& freq_domain_file);
+  Result<void> AddCpus(size_t cpus, const Json::Value&);
+  void AddCpus(size_t cpus);
 
   void AddHvcSink();
   void AddHvcReadOnly(const std::string& output, bool console = false);
