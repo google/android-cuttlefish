@@ -25,6 +25,5 @@
 namespace cuttlefish {
 
 Result<std::vector<std::string>> CrosvmCpuArguments(
-    size_t cpus, const Json::Value& vcpu_config);
-
+    const Json::Value& vcpu_config);
 }
