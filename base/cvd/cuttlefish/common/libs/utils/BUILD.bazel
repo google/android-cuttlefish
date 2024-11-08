@@ -90,6 +90,7 @@ cc_library(
         "@fmt",
         "@gflags",
         "@jsoncpp",
+        "@protobuf//:protobuf_lite",
     ],
 )
 
