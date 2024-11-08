@@ -31,6 +31,7 @@ using namespace casimir::rf;
 class CasimirController {
  public:
   Result<void> Init(int casimir_rf_port);
+  Result<void> Close();
 
   /*
    * Poll for NFC-A + ISO-DEP
