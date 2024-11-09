@@ -32,6 +32,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
@@ -53,6 +54,65 @@ DEFINE_int32(reboot_notification_fd, CF_DEFAULTS_REBOOT_NOTIFICATION_FD,
 
 namespace cuttlefish {
 namespace {
+
+Result<void> MoveThreadsToCgroup(const std::string& from_path,
+                                 const std::string& to_path) {
+  std::string file_path = from_path + "/cgroup.threads";
+
+  if (FileExists(file_path)) {
+    Result<std::string> content_result = ReadFileContents(file_path);
+    if (!content_result.ok()) {
+      LOG(INFO) << "Failed to open threads file and assume it is empty: "
+                << file_path;
+      return {};
+    }
+
+    std::istringstream is(content_result.value());
+    std::string each_id;
+    while (std::getline(is, each_id)) {
+      std::string proc_status_path = "/proc/" + each_id;
+      proc_status_path.append("/status");
+      Result<std::string> proc_status = ReadFileContents(proc_status_path);
+      if (!proc_status.ok()) {
+        LOG(INFO) << "Failed to open proc status file and skip: "
+                  << proc_status_path;
+        continue;
+      }
+
+      std::string proc_status_str = proc_status.value();
+      if (proc_status_str.find("crosvm_vcpu") == std::string::npos &&
+          proc_status_str.find("vcpu_throttle") == std::string::npos) {
+        // other proc moved to workers cgroup
+        std::string to_path_file = to_path + "/cgroup.threads";
+        SharedFD fd = SharedFD::Open(to_path_file, O_WRONLY | O_APPEND);
+        CF_EXPECT(fd->IsOpen(),
+                  "failed to open " << to_path_file << ": " << fd->StrError());
+        if (WriteAll(fd, each_id) != each_id.size()) {
+          return CF_ERR("failed to write to" << to_path_file);
+        }
+      }
+    }
+  }
+
+  return {};
+}
+
+// See go/vcpuinheritance for more context on why this Rebalance is
+// required and what the stop gap/longterm solutions are.
+Result<void> WattsonRebalanceThreads(const std::string& id) {
+  auto root_path = "/sys/fs/cgroup/vsoc-" + id + "-cf";
+  const auto files = CF_EXPECT(DirectoryContents(root_path));
+
+  CF_EXPECT(MoveThreadsToCgroup(root_path, root_path + "/workers"));
+
+  for (const auto& filename : files) {
+    if (filename.find("vcpu-domain") != std::string::npos) {
+      CF_EXPECT(MoveThreadsToCgroup(root_path + "/" + filename,
+                                    root_path + "/workers"));
+    }
+  }
+  return {};
+}
 
 // Forks run_cvd into a daemonized child process. The current process continues
 // only until the child has signalled that the boot is finished.
@@ -79,6 +139,9 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
         LOG(INFO) << "Virtual device restored successfully";
       } else {
         LOG(INFO) << "Virtual device booted successfully";
+        if (!instance.vcpu_config_path().empty()) {
+          CF_EXPECT(WattsonRebalanceThreads(instance.id()));
+        }
       }
     } else if (exit_code == RunnerExitCodes::kVirtualDeviceBootFailed) {
       if (IsRestoring(config)) {
@@ -416,6 +479,12 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     if ((*read_result)->event == monitor::Event::BootCompleted) {
       LOG(INFO) << "Virtual device booted successfully";
       state_ |= kGuestBootCompleted;
+      if (!instance_.vcpu_config_path().empty()) {
+        auto res = WattsonRebalanceThreads(instance_.id());
+        if (!res.ok()) {
+          LOG(ERROR) << res.error().FormatForEnv();
+        }
+      }
     } else if ((*read_result)->event == monitor::Event::BootFailed) {
       LOG(ERROR) << "Virtual device failed to boot";
       state_ |= kGuestBootFailed;
