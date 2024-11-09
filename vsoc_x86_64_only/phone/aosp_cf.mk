@@ -61,3 +61,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/window_extensions.mk)
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
     ro.soc.model=$(PRODUCT_DEVICE)
+
+# Ignore all Android.mk files
+PRODUCT_IGNORE_ALL_ANDROIDMK := true
+# Allow the following Android.mk files
+PRODUCT_ALLOWED_ANDROIDMK_FILES := bootable/recovery/Android.mk
+PRODUCT_ANDROIDMK_ALLOWLIST_FILE := vendor/google/build/androidmk/aosp_cf_allowlist.mk
