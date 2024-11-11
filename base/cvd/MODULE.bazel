@@ -24,3 +24,12 @@ git_override(
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
     # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
 )
+
+# clang-tidy
+# https://github.com/erenon/bazel_clang_tidy
+bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
+git_override(
+    module_name = "bazel_clang_tidy",
+    commit = "f23d924918c581c68cd5cda5f12b4f8198ac0c35",
+    remote = "https://github.com/erenon/bazel_clang_tidy.git",
+)

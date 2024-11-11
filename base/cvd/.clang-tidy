@@ -1,0 +1,17 @@
+# Bad interaction with the `parse_headers` bazel feature
+Checks: '-clang-diagnostic-pragma-once-outside-header'
+
+# Using the bazel clang-tidy helper, warnings seem to be ignored entirely.
+# Default warnings are converted to errors here for visibility.
+WarningsAsErrors: >
+  clang-analyzer-*,
+  -clang-analyzer-core.uninitialized.Assign,
+  -clang-analyzer-core.UndefinedBinaryOperatorResult,
+  -clang-analyzer-deadcode.DeadStores,
+  clang-diagnostic-*,
+  -clang-diagnostic-inconsistent-missing-override,
+  -clang-diagnostic-pragma-once-outside-header,
+  -clang-diagnostic-unneeded-internal-declaration,
+  -clang-diagnostic-unused-const-variable,
+  -clang-diagnostic-unused-private-field,
+  -clang-diagnostic-unused-variable,
