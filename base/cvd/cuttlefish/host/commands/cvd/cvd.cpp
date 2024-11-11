@@ -24,9 +24,10 @@
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/frontline_parser.h"
+#include "host/commands/cvd/cli/request_context.h"
+#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_lock.h"
 #include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/cli/request_context.h"
 
 namespace cuttlefish {
 
@@ -69,6 +70,14 @@ Result<cvd::Response> Cvd::HandleCommand(
 
   RequestContext context(instance_lockfile_manager_, instance_manager_);
   auto handler = CF_EXPECT(context.Handler(request));
+  if (handler->ShouldInterceptHelp()) {
+    auto invocation_args = ParseInvocation(request).arguments;
+    if (CF_EXPECT(IsHelpSubcmd(invocation_args))) {
+      std::cout << CF_EXPECT(handler->DetailedHelp(invocation_args))
+                << std::endl;
+      return SuccessResponse();
+    }
+  }
   return handler->Handle(request);
 }
 
