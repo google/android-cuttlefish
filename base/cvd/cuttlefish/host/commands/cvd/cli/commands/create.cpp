@@ -378,8 +378,8 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
                   "\nMaybe try `cvd fetch` or running `lunch "
                   "<target>` to enable starting a CF device?");
   // CreationAnalyzer needs these to be set in the environment
-  envs[kAndroidHostOut] = flags.host_path;
-  envs[kAndroidProductOut] = flags.product_path;
+  envs[kAndroidHostOut] = AbsolutePath(flags.host_path);
+  envs[kAndroidProductOut] = AbsolutePath(flags.product_path);
   auto group = CF_EXPECT(
       GetOrCreateGroup(subcmd_args, envs, request, flags.acquire_file_locks));
 
