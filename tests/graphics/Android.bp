@@ -62,3 +62,24 @@ java_test_host {
         "tradefed",
     ],
 }
+
+java_test_host {
+    name: "CuttlefishVulkanSnapshotTests",
+    srcs: [
+        "src/com/android/cuttlefish/tests/CuttlefishVulkanSnapshotTests.java",
+    ],
+    test_suites: [
+        "device-tests",
+    ],
+    libs: [
+        "tradefed",
+    ],
+    plugins: [
+        "auto_annotation_plugin",
+        "auto_value_plugin",
+    ],
+    device_common_data: [
+        ":CuttlefishVulkanSamplesFullscreenColor",
+        ":CuttlefishVulkanSamplesFullscreenTexture",
+    ],
+}
