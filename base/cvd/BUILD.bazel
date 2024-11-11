@@ -8,3 +8,9 @@ genrule(
     outs = ["build/version.h"],
     cmd = "sed -e \"s|@VCS_TAG@|`git describe`|\" $< > $@",
 )
+
+filegroup(
+   name = "clang_tidy_config",
+   srcs = [".clang-tidy"],
+   visibility = ["//visibility:public"],
+)
