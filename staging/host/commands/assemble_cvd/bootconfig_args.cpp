@@ -25,6 +25,7 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/json.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -223,6 +224,16 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     // The static ethernet IP address assigned for the guest.
     bootconfig_args["androidboot.auto_eth_guest_addr"] =
         fmt::format("192.168.98.{}", instance_id + 2);
+  }
+
+  if (!instance.vcpu_config_path().empty()) {
+    auto vcpu_config_json =
+        CF_EXPECT(LoadFromFile(instance.vcpu_config_path()));
+
+    const auto guest_soc =
+        CF_EXPECT(GetValue<std::string>(vcpu_config_json, {"guest_soc"}));
+
+    bootconfig_args["androidboot.guest_soc.model"] = guest_soc;
   }
 
   std::vector<std::string> args = instance.extra_bootconfig_args();
