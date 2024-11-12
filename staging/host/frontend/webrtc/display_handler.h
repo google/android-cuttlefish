@@ -76,10 +76,9 @@ class DisplayHandler {
     std::chrono::system_clock::time_point last_sent_time_stamp;
     std::shared_ptr<webrtc_streaming::VideoFrameBuffer> buffer;
   };
-  enum class RepeaterState: int {
-    PAUSED = 0,
-    REPEATING = 1,
-    STOPPED = 2,
+  enum class RepeaterState {
+    RUNNING,
+    STOPPED,
   };
 
   GenerateProcessedFrameCallback GetScreenConnectorCallback();
@@ -94,7 +93,9 @@ class DisplayHandler {
   std::mutex last_buffers_mutex_;
   std::mutex send_mutex_;
   std::thread frame_repeater_;
-  RepeaterState repeater_state_ = RepeaterState::PAUSED;
+  // Protected by repeater_state_mutex
+  RepeaterState repeater_state_ = RepeaterState::RUNNING;
+  // Protected by repeater_state_mutex
   int num_active_clients_ = 0;
   std::mutex repeater_state_mutex_;
   std::condition_variable repeater_state_condvar_;
