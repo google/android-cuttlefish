@@ -89,7 +89,7 @@ RequestContext::RequestContext(
       NewCvdSnapshotCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdStartCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdStatusCommandHandler(instance_manager_));
-  request_handlers_.emplace_back(NewTryAcloudCommand(instance_manager));
+  request_handlers_.emplace_back(NewTryAcloudCommand());
   request_handlers_.emplace_back(NewCvdVersionHandler());
   request_handlers_.emplace_back(NewCvdNoopHandler());
 }

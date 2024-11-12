@@ -60,7 +60,6 @@ bool CheckIfCvdrExist() {
 
 class TryAcloudCommand : public CvdServerHandler {
  public:
-  TryAcloudCommand(InstanceManager& im) : instance_manager_(im) {}
   ~TryAcloudCommand() = default;
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
@@ -90,8 +89,6 @@ class TryAcloudCommand : public CvdServerHandler {
   Result<cvd::Response> VerifyWithCvd(const CommandRequest& request);
   Result<cvd::Response> VerifyWithCvdRemote(const CommandRequest& request);
   Result<std::string> RunCvdRemoteGetConfig(const std::string& name);
-
-  InstanceManager& instance_manager_;
 };
 
 Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
@@ -161,9 +158,8 @@ Result<std::string> TryAcloudCommand::RunCvdRemoteGetConfig(
   return stdout_;
 }
 
-std::unique_ptr<CvdServerHandler> NewTryAcloudCommand(
-InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(new TryAcloudCommand(instance_manager));
+std::unique_ptr<CvdServerHandler> NewTryAcloudCommand() {
+  return std::unique_ptr<CvdServerHandler>(new TryAcloudCommand());
 }
 
 }  // namespace cuttlefish
