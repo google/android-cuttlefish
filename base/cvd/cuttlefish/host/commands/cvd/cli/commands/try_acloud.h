@@ -19,10 +19,9 @@
 #include <memory>
 
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewTryAcloudCommand(InstanceManager&);
+std::unique_ptr<CvdServerHandler> NewTryAcloudCommand();
 
 }  // namespace cuttlefish

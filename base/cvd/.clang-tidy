@@ -12,5 +12,4 @@ WarningsAsErrors: >
   -clang-diagnostic-pragma-once-outside-header,
   -clang-diagnostic-unneeded-internal-declaration,
   -clang-diagnostic-unused-const-variable,
-  -clang-diagnostic-unused-private-field,
   -clang-diagnostic-unused-variable,
