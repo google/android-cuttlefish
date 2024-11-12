@@ -35,7 +35,7 @@ class CachingBuildApi : public BuildApi {
                   std::string cache_base_path);
 
   Result<Build> GetBuild(const BuildString& build_string,
-                         const std::string& fallback_target);
+                         const std::string& fallback_target) override;
   Result<std::string> DownloadFile(const Build& build,
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override;
@@ -45,7 +45,7 @@ class CachingBuildApi : public BuildApi {
       const std::string& backup_artifact_name) override;
 
   Result<std::string> GetBuildZipName(const Build& build,
-                                      const std::string& name);
+                                      const std::string& name) override;
 
  private:
   Result<bool> CanCache(const std::string& target_directory);
