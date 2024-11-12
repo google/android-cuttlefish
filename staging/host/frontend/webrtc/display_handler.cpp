@@ -197,15 +197,32 @@ void DisplayHandler::RepeatFramesPeriodically() {
   // protects writing the BufferInfo timestamps.
   const std::chrono::milliseconds kRepeatingInterval(20);
   auto next_send = std::chrono::system_clock::now() + kRepeatingInterval;
-  std::unique_lock lock(repeater_state_mutex_);
-  while (repeater_state_ != RepeaterState::STOPPED) {
-    if (repeater_state_ == RepeaterState::REPEATING) {
-      repeater_state_condvar_.wait_until(lock, next_send);
-    } else {
-      repeater_state_condvar_.wait(lock);
-    }
-    if (repeater_state_ != RepeaterState::REPEATING) {
-      continue;
+  while (true) {
+    {
+      std::unique_lock lock(repeater_state_mutex_);
+      if (repeater_state_ == RepeaterState::STOPPED) {
+        break;
+      }
+      if (num_active_clients_ > 0) {
+        bool stopped =
+            repeater_state_condvar_.wait_until(lock, next_send, [this]() {
+              // Wait until time interval completes or asked to stop. Continue
+              // waiting even if the number of active clients drops to 0.
+              return repeater_state_ == RepeaterState::STOPPED;
+            });
+        if (stopped || num_active_clients_ == 0) {
+          continue;
+        }
+      } else {
+        repeater_state_condvar_.wait(lock, [this]() {
+          // Wait until asked to stop or have clients
+          return repeater_state_ == RepeaterState::STOPPED ||
+                 num_active_clients_ > 0;
+        });
+        // Need to break the loop if stopped or wait for the interval if have
+        // clients.
+        continue;
+      }
     }
 
     std::map<uint32_t, std::shared_ptr<BufferInfo>> buffers;
@@ -233,20 +250,14 @@ void DisplayHandler::RepeatFramesPeriodically() {
 
 void DisplayHandler::AddDisplayClient() {
   std::lock_guard lock(repeater_state_mutex_);
-  ++num_active_clients_;
-  if (num_active_clients_ == 1) {
-    repeater_state_ = RepeaterState::REPEATING;
+  if (++num_active_clients_ == 1) {
     repeater_state_condvar_.notify_one();
-  }
+  };
 }
 
 void DisplayHandler::RemoveDisplayClient() {
   std::lock_guard lock(repeater_state_mutex_);
   --num_active_clients_;
-  if (num_active_clients_ == 0) {
-    repeater_state_ = RepeaterState::PAUSED;
-    repeater_state_condvar_.notify_one();
-  }
 }
 
 }  // namespace cuttlefish
