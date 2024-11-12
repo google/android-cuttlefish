@@ -20,12 +20,22 @@ import "google/protobuf/empty.proto";
 
 service CasimirControlService {
   rpc SendApdu (SendApduRequest) returns (SendApduReply) {}
+  rpc PollA (Void) returns (SenderId) {}
+  rpc Close (Void) returns (Void) {}
 }
 
 message SendApduRequest {
   repeated string apdu_hex_strings = 1;
+  optional uint32 sender_id = 2;
 }
 
 message SendApduReply {
   repeated string response_hex_strings = 1;
+}
+
+message SenderId {
+  uint32 sender_id = 1;
+}
+
+message Void {
 }

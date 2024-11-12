@@ -25,6 +25,14 @@ using namespace casimir::rf;
 using namespace std::literals::chrono_literals;
 using pdl::packet::slice;
 
+Result<void> CasimirController::Close() {
+  if (!sock_->IsOpen()) {
+    return {};
+  }
+  sock_->Close();
+  return {};
+}
+
 Result<void> CasimirController::Init(int casimir_rf_port) {
   CF_EXPECT(!sock_->IsOpen());
 
