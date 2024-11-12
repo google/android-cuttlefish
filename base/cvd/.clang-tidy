@@ -9,7 +9,6 @@ WarningsAsErrors: >
   -clang-analyzer-core.UndefinedBinaryOperatorResult,
   -clang-analyzer-deadcode.DeadStores,
   clang-diagnostic-*,
-  -clang-diagnostic-inconsistent-missing-override,
   -clang-diagnostic-pragma-once-outside-header,
   -clang-diagnostic-unneeded-internal-declaration,
   -clang-diagnostic-unused-const-variable,
