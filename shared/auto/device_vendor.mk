@@ -122,15 +122,6 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/macsec/wpa_supplicant_macsec.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wpa_supplicant_macsec.conf \
     $(LOCAL_PATH)/macsec/init.wpa_supplicant_macsec.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.wpa_supplicant_macsec.rc
 
-
-# Trout uses this .mk file, ignore if it isn't cf build
-ifneq (,$(findstring cf, $(PRODUCT_NAME)))
-PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += $(PRODUCT_OUT)/root/hibernation_swap.img
-
-PRODUCT_PACKAGES += \
-    hibernation_swap-soong
-endif
-
 # Occupant Awareness HAL
 PRODUCT_PACKAGES += android.hardware.automotive.occupant_awareness@1.0-service
 include packages/services/Car/car_product/occupant_awareness/OccupantAwareness.mk
