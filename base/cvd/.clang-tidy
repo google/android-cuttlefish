@@ -10,6 +10,5 @@ WarningsAsErrors: >
   -clang-analyzer-deadcode.DeadStores,
   clang-diagnostic-*,
   -clang-diagnostic-pragma-once-outside-header,
-  -clang-diagnostic-unneeded-internal-declaration,
   -clang-diagnostic-unused-const-variable,
   -clang-diagnostic-unused-variable,
