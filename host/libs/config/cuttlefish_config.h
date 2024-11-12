@@ -703,6 +703,8 @@ class CuttlefishConfig {
     ExternalNetworkMode external_network_mode() const;
 
     bool start_vhal_proxy_server() const;
+
+    int audio_output_streams_count() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -925,6 +927,8 @@ class CuttlefishConfig {
     // Whether we should start vhal_proxy_server for the guest-side VHAL to
     // connect to.
     void set_start_vhal_proxy_server(bool enable_vhal_proxy_server);
+
+    void set_audio_output_streams_count(int count);
 
    private:
     void SetPath(const std::string& key, const std::string& path);

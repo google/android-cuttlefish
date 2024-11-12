@@ -47,84 +47,60 @@ const virtio_snd_chmap_info CHMAPS[] = {{
 }};
 constexpr uint32_t NUM_CHMAPS = sizeof(CHMAPS) / sizeof(CHMAPS[0]);
 
-const virtio_snd_pcm_info STREAMS[] = {{
-    .hdr =
-        {
-            .hda_fn_nid = Le32(0),
-        },
-    .features = Le32(0),
-    // webrtc's api is quite primitive and doesn't allow for many different
-    // formats: It only takes the bits_per_sample as a parameter and assumes
-    // the underlying format to be one of the following:
-    .formats = Le64(
-        (((uint64_t)1) << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S8) |
-        (((uint64_t)1) << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S16) |
-        (((uint64_t)1) << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S24) |
-        (((uint64_t)1) << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S32)),
-    .rates = Le64(
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_5512) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_8000) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_11025) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_16000) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_22050) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_32000) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_44100) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_48000) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_64000) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_88200) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_96000) |
-        (((uint64_t)1) << (uint8_t)
-             AudioStreamRate::VIRTIO_SND_PCM_RATE_176400) |
-        (((uint64_t)1) << (uint8_t)
-             AudioStreamRate::VIRTIO_SND_PCM_RATE_192000) |
-        (((uint64_t)1) << (uint8_t)
-             AudioStreamRate::VIRTIO_SND_PCM_RATE_384000)),
-    .direction = (uint8_t)AudioStreamDirection::VIRTIO_SND_D_OUTPUT,
-    .channels_min = 1,
-    .channels_max = 2,
-}, {
-    .hdr =
-        {
-            .hda_fn_nid = Le32(0),
-        },
-    .features = Le32(0),
-    // webrtc's api is quite primitive and doesn't allow for many different
-    // formats: It only takes the bits_per_sample as a parameter and assumes
-    // the underlying format to be one of the following:
-    .formats = Le64(
-        (((uint64_t)1) << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S8) |
-        (((uint64_t)1) << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S16) |
-        (((uint64_t)1) << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S24) |
-        (((uint64_t)1) << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S32)),
-    .rates = Le64(
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_5512) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_8000) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_11025) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_16000) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_22050) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_32000) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_44100) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_48000) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_64000) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_88200) |
-        (((uint64_t)1) << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_96000) |
-        (((uint64_t)1) << (uint8_t)
-             AudioStreamRate::VIRTIO_SND_PCM_RATE_176400) |
-        (((uint64_t)1) << (uint8_t)
-             AudioStreamRate::VIRTIO_SND_PCM_RATE_192000) |
-        (((uint64_t)1) << (uint8_t)
-             AudioStreamRate::VIRTIO_SND_PCM_RATE_384000)),
-    .direction = (uint8_t)AudioStreamDirection::VIRTIO_SND_D_INPUT,
-    .channels_min = 1,
-    .channels_max = 2,
-}};
-constexpr uint32_t NUM_STREAMS = sizeof(STREAMS) / sizeof(STREAMS[0]);
-
-bool IsCapture(uint32_t stream_id) {
-  CHECK(stream_id < NUM_STREAMS) << "Invalid stream id: " << stream_id;
-  return STREAMS[stream_id].direction ==
-         (uint8_t)AudioStreamDirection::VIRTIO_SND_D_INPUT;
+virtio_snd_pcm_info GetVirtioSndPcmInfo(AudioStreamDirection direction,
+                                        int streamId) {
+  return {
+      .hdr =
+          {
+              .hda_fn_nid = Le32(streamId),
+          },
+      .features = Le32(0),
+      // webrtc's api is quite primitive and doesn't allow for many different
+      // formats: It only takes the bits_per_sample as a parameter and assumes
+      // the underlying format to be one of the following:
+      .formats = Le64((((uint64_t)1)
+                       << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S8) |
+                      (((uint64_t)1)
+                       << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S16) |
+                      (((uint64_t)1)
+                       << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S24) |
+                      (((uint64_t)1)
+                       << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S32)),
+      .rates = Le64((((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_5512) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_8000) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_11025) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_16000) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_22050) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_32000) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_44100) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_48000) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_64000) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_88200) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_96000) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_176400) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_192000) |
+                    (((uint64_t)1)
+                     << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_384000)),
+      .direction = (uint8_t)direction,
+      .channels_min = 1,
+      .channels_max = 2,
+  };
 }
+
+constexpr uint32_t NUM_INPUT_STREAMS = 1;
 
 class CvdAudioFrameBuffer : public webrtc_streaming::AudioFrameBuffer {
  public:
@@ -280,11 +256,21 @@ int SampleRate(uint8_t virtio_rate) {
 AudioHandler::AudioHandler(
     std::unique_ptr<AudioServer> audio_server,
     std::shared_ptr<webrtc_streaming::AudioSink> audio_sink,
-    std::shared_ptr<webrtc_streaming::AudioSource> audio_source)
+    std::shared_ptr<webrtc_streaming::AudioSource> audio_source,
+    int output_streams_count)
     : audio_sink_(audio_sink),
       audio_server_(std::move(audio_server)),
-      stream_descs_(NUM_STREAMS),
-      audio_source_(audio_source) {}
+      stream_descs_(output_streams_count + NUM_INPUT_STREAMS),
+      audio_source_(audio_source) {
+  streams_ = std::vector<virtio_snd_pcm_info>(stream_descs_.size());
+  streams_[0] =
+      GetVirtioSndPcmInfo(AudioStreamDirection::VIRTIO_SND_D_INPUT, 0);
+  for (int i = 0; i < output_streams_count; i++) {
+    int stream_id = NUM_INPUT_STREAMS + i;
+    streams_[stream_id] =
+        GetVirtioSndPcmInfo(AudioStreamDirection::VIRTIO_SND_D_OUTPUT, i);
+  }
+}
 
 void AudioHandler::Start() {
   server_thread_ = std::thread([this]() { Loop(); });
@@ -293,8 +279,8 @@ void AudioHandler::Start() {
 [[noreturn]] void AudioHandler::Loop() {
   for (;;) {
     auto audio_client = audio_server_->AcceptClient(
-        NUM_STREAMS, NUM_JACKS, NUM_CHMAPS,
-        262144 /* tx_shm_len */, 262144 /* rx_shm_len */);
+        streams_.size(), NUM_JACKS, NUM_CHMAPS, 262144 /* tx_shm_len */,
+        262144 /* rx_shm_len */);
     CHECK(audio_client) << "Failed to create audio client connection instance";
 
     std::thread playback_thread([this, &audio_client]() {
@@ -314,22 +300,22 @@ void AudioHandler::Start() {
 }
 
 void AudioHandler::StreamsInfo(StreamInfoCommand& cmd) {
-  if (cmd.start_id() >= NUM_STREAMS ||
-      cmd.start_id() + cmd.count() > NUM_STREAMS) {
+  if (cmd.start_id() >= streams_.size() ||
+      cmd.start_id() + cmd.count() > streams_.size()) {
     cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG, {});
     return;
   }
   std::vector<virtio_snd_pcm_info> stream_info(
-      &STREAMS[cmd.start_id()], &STREAMS[0] + cmd.start_id() + cmd.count());
+      &streams_[cmd.start_id()], &streams_[0] + cmd.start_id() + cmd.count());
   cmd.Reply(AudioStatus::VIRTIO_SND_S_OK, stream_info);
 }
 
 void AudioHandler::SetStreamParameters(StreamSetParamsCommand& cmd) {
-  if (cmd.stream_id() >= NUM_STREAMS) {
+  if (cmd.stream_id() >= streams_.size()) {
     cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG);
     return;
   }
-  const auto& stream_info = STREAMS[cmd.stream_id()];
+  const auto& stream_info = streams_[cmd.stream_id()];
   auto bits_per_sample = BitsPerSample(cmd.format());
   auto sample_rate = SampleRate(cmd.rate());
   auto channels = cmd.channels();
@@ -351,7 +337,7 @@ void AudioHandler::SetStreamParameters(StreamSetParamsCommand& cmd) {
 }
 
 void AudioHandler::PrepareStream(StreamControlCommand& cmd) {
-  if (cmd.stream_id() >= NUM_STREAMS) {
+  if (cmd.stream_id() >= streams_.size()) {
     cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG);
     return;
   }
@@ -359,7 +345,7 @@ void AudioHandler::PrepareStream(StreamControlCommand& cmd) {
 }
 
 void AudioHandler::ReleaseStream(StreamControlCommand& cmd) {
-  if (cmd.stream_id() >= NUM_STREAMS) {
+  if (cmd.stream_id() >= streams_.size()) {
     cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG);
     return;
   }
@@ -367,7 +353,7 @@ void AudioHandler::ReleaseStream(StreamControlCommand& cmd) {
 }
 
 void AudioHandler::StartStream(StreamControlCommand& cmd) {
-  if (cmd.stream_id() >= NUM_STREAMS) {
+  if (cmd.stream_id() >= streams_.size()) {
     cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG);
     return;
   }
@@ -376,7 +362,7 @@ void AudioHandler::StartStream(StreamControlCommand& cmd) {
 }
 
 void AudioHandler::StopStream(StreamControlCommand& cmd) {
-  if (cmd.stream_id() >= NUM_STREAMS) {
+  if (cmd.stream_id() >= streams_.size()) {
     cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG);
     return;
   }
@@ -413,7 +399,7 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
     std::lock_guard<std::mutex> lock(stream_desc.mtx);
     auto& holding_buffer = stream_descs_[stream_id].buffer;
     // Invalid or capture streams shouldn't send tx buffers
-    if (stream_id >= NUM_STREAMS || IsCapture(stream_id)) {
+    if (stream_id >= streams_.size() || IsCapture(stream_id)) {
       buffer.SendStatus(AudioStatus::VIRTIO_SND_S_BAD_MSG, 0, 0);
       return;
     }
@@ -447,6 +433,8 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
             const_cast<const uint8_t*>(&buffer.get()[pos]),
             stream_desc.bits_per_sample, stream_desc.sample_rate,
             stream_desc.channels, frames);
+        // TODO(b/377752500): implement mixer support for multiple output stream
+        // support.
         audio_sink_->OnFrame(audio_frame_buffer, base_time);
         pos += holding_buffer.buffer.size();
       } else {
@@ -472,7 +460,7 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
   {
     std::lock_guard<std::mutex> lock(stream_desc.mtx);
     // Invalid or playback streams shouldn't send rx buffers
-    if (stream_id >= NUM_STREAMS || !IsCapture(stream_id)) {
+    if (stream_id >= streams_.size() || !IsCapture(stream_id)) {
       LOG(ERROR) << "Received capture buffers on playback stream " << stream_id;
       buffer.SendStatus(AudioStatus::VIRTIO_SND_S_BAD_MSG, 0, 0);
       return;
@@ -584,5 +572,11 @@ size_t AudioHandler::HoldingBuffer::freeCapacity() const {
 }
 
 uint8_t* AudioHandler::HoldingBuffer::data() { return buffer.data(); }
+
+bool AudioHandler::IsCapture(uint32_t stream_id) const {
+  CHECK(stream_id < streams_.size()) << "Invalid stream id: " << stream_id;
+  return streams_[stream_id].direction ==
+         (uint8_t)AudioStreamDirection::VIRTIO_SND_D_INPUT;
+}
 
 }  // namespace cuttlefish

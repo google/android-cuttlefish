@@ -366,11 +366,13 @@ int CuttlefishMain() {
 
   std::shared_ptr<AudioHandler> audio_handler;
   if (instance.enable_audio()) {
+    int output_streams_count = instance.audio_output_streams_count();
     auto audio_stream = streamer->AddAudioStream("audio");
     auto audio_server = CreateAudioServer();
     auto audio_source = streamer->GetAudioSource();
-    audio_handler = std::make_shared<AudioHandler>(std::move(audio_server),
-                                                   audio_stream, audio_source);
+    audio_handler =
+        std::make_shared<AudioHandler>(std::move(audio_server), audio_stream,
+                                       audio_source, output_streams_count);
   }
 
   // Parse the -action_servers flag, storing a map of action server name -> fd
