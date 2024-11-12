@@ -7,7 +7,6 @@ WarningsAsErrors: >
   clang-analyzer-*,
   -clang-analyzer-core.uninitialized.Assign,
   -clang-analyzer-core.UndefinedBinaryOperatorResult,
-  -clang-analyzer-deadcode.DeadStores,
   clang-diagnostic-*,
   -clang-diagnostic-pragma-once-outside-header,
   -clang-diagnostic-unused-const-variable,

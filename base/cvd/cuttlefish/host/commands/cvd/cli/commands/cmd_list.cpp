@@ -43,7 +43,6 @@ class CvdCmdlistHandler : public CvdServerHandler {
 
     CF_EXPECT(CanHandle(request));
 
-    auto [subcmd, subcmd_args] = ParseInvocation(request);
     const auto subcmds = executor_.CmdList();
 
     std::vector<std::string> subcmds_vec{subcmds.begin(), subcmds.end()};
