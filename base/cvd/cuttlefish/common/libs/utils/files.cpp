@@ -246,9 +246,8 @@ bool IsDirectoryEmpty(const std::string& path) {
     return false;
   }
 
-  decltype(::readdir(direc)) sub = nullptr;
   int cnt {0};
-  while ( (sub = ::readdir(direc)) ) {
+  while (::readdir(direc)) {
     cnt++;
     if (cnt > 2) {
     LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
