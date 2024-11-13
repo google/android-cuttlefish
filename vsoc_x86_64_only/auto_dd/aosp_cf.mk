@@ -16,9 +16,6 @@
 # AOSP Car UI Distant Display Cuttlefish Target
 TARGET_BOARD_INFO_FILE := device/google/cuttlefish/shared/auto_dd/android-info.txt
 
-# Exclude AAE Car System UI
-DO_NOT_INCLUDE_AAE_CAR_SYSTEM_UI := true
-
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/auto_dd/display_settings.xml:$(TARGET_COPY_OUT_VENDOR)/etc/display_settings.xml
 

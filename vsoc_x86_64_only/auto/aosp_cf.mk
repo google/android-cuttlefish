@@ -55,6 +55,12 @@ $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/bootloader.mk)
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/aosp_excluded_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/aosp_excluded_hardware.xml
 
+# Exclude features that are not available on automotive cuttlefish devices.
+# TODO(b/351896700): Remove this workaround once support for uncalibrated accelerometer and
+# uncalibrated gyroscope are added to automotive cuttlefish.
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/vsoc_x86_64_only/auto/exclude_unavailable_imu_features.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/exclude_unavailable_imu_features.xml
+
 PRODUCT_NAME := aosp_cf_x86_64_only_auto
 PRODUCT_DEVICE := vsoc_x86_64_only
 PRODUCT_MANUFACTURER := Google

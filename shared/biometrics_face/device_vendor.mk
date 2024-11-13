@@ -15,4 +15,5 @@
 #
 
 PRODUCT_PACKAGES += \
-    com.android.hardware.biometrics.face.virtual
+    com.android.hardware.biometrics.face.virtual \
+    android.hardware.biometrics.face-service.default
