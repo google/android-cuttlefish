@@ -104,7 +104,7 @@ jobs:
         # Overall action timing breakdown:
         #
         # [614 / 616] Executing genrule @@images//docker/debs-builder-docker:debs_tar [for tool]; 608s linux-sandbox
-        # [615 / 616] Executing genrule @@images//docker:orchestration_image_tar; 11s linux-sandbox
+        # [615 / 616] Executing genrule @@images//docker:orchestration_image_dev_tar; 11s linux-sandbox
         # //orchestration:create_fixed_build_id_and_target                         PASSED in 99.9s
         # //orchestration:create_local_image                                       PASSED in 92.4s
         # 

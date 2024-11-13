@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/artifacts.yaml'
       - 'tools/buildimage/**'
+      - 'docker/**'
   push:
     branches:
       - main
@@ -60,14 +61,11 @@ jobs:
       run: |
         short_sha=$(echo ${{ github.sha }} | cut -c1-8)
         echo "x86_64_image_path=orchestration-image-x86_64-${short_sha}.tar" >> $GITHUB_ENV
-    - name: Install bazel
-      run: sudo bash tools/buildutils/installbazel.sh
-    - name: bazel version
-      run: bazel version
+        echo "image_name=cuttlefish-orchestration:${short_sha}" >> $GITHUB_ENV
     - name: Build docker image
-      run: bazel build --sandbox_writable_path=$HOME //docker:orchestration_image_tar
-    - name: Set filename of docker image
-      run: mv bazel-bin/docker/orchestration-image.tar ${{ env.x86_64_image_path }}
+      run: docker/image-builder.sh -t ${{ env.image_name }}
+    - name: Save docker image
+      run: docker save --output ${{ env.x86_64_image_path }} ${{ env.image_name }}
     - name: Publish docker image
       uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
       with:
@@ -82,14 +80,11 @@ jobs:
       run: |
         short_sha=$(echo ${{ github.sha }} | cut -c1-8)
         echo "arm64_image_path=orchestration-image-arm64-${short_sha}.tar" >> $GITHUB_ENV
-    - name: Install bazel
-      run: sudo bash tools/buildutils/installbazel.sh
-    - name: bazel version
-      run: bazel version
+        echo "image_name=cuttlefish-orchestration:${short_sha}" >> $GITHUB_ENV
     - name: Build docker image
-      run: bazel build --sandbox_writable_path=$HOME //docker:orchestration_image_tar
-    - name: Set filename of docker image
-      run: mv bazel-bin/docker/orchestration-image.tar ${{ env.arm64_image_path }}
+      run: docker/image-builder.sh -t ${{ env.image_name }}
+    - name: Save docker image
+      run: docker save --output ${{ env.arm64_image_path }} ${{ env.image_name }}
     - name: Publish docker image
       uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
       with:
