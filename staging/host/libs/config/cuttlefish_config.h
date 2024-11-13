@@ -957,6 +957,9 @@ class CuttlefishConfig {
     std::string control_socket_path() const;
     std::string launcher_log_path() const;
 
+    std::string casimir_nci_socket_path() const;
+    std::string casimir_rf_socket_path() const;
+
     // wmediumd related configs
     bool enable_wifi() const;
     bool start_wmediumd() const;
