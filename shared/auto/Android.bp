@@ -22,17 +22,3 @@ prebuilt_etc_host {
     src: "config_auto.json",
     sub_dir: "cvd_config",
 }
-
-genrule {
-    name: "hibernation_swap.gen",
-    out: ["hibernation_swap"],
-    cmd: "dd if=/dev/zero of=$(out) bs=1K count=4M",
-}
-
-prebuilt_root {
-    name: "hibernation_swap-soong",
-    src: ":hibernation_swap.gen",
-    filename: "hibernation_swap.img",
-    install_in_root: true,
-    no_full_install: false,
-}
