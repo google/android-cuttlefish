@@ -31,6 +31,8 @@
 using casimircontrolserver::CasimirControlService;
 using casimircontrolserver::SendApduReply;
 using casimircontrolserver::SendApduRequest;
+using casimircontrolserver::SenderId;
+using casimircontrolserver::Void;
 
 using cuttlefish::CasimirController;
 
@@ -47,6 +49,46 @@ DEFINE_string(grpc_uds_path, "", "grpc_uds_path");
 DEFINE_int32(casimir_rf_port, -1, "RF port to control Casimir");
 
 class CasimirControlServiceImpl final : public CasimirControlService::Service {
+  CasimirController device;
+  bool isInitialized = false;
+  Status Close(ServerContext* context, const Void*, Void* senderId) override {
+    if (!isInitialized) {
+      return Status::OK;
+    }
+    isInitialized = false;
+    if (!device.Close().ok()) {
+      return Status(StatusCode::FAILED_PRECONDITION,
+                    "Failed to connect with casimir");
+    }
+    return Status::OK;
+  }
+
+  Status PollA(ServerContext* context, const Void*,
+               SenderId* senderId) override {
+    if (!isInitialized) {
+      // Step 1: Initialize connection with casimir
+      auto init_res = device.Init(FLAGS_casimir_rf_port);
+      if (!init_res.ok()) {
+        LOG(ERROR) << "Failed to initialize connection to casimir: "
+                   << init_res.error().FormatForEnv();
+        return Status(StatusCode::FAILED_PRECONDITION,
+                      "Failed to connect with casimir");
+      }
+      isInitialized = true;
+    }
+    // Step 2: Poll
+    auto poll_res = device.Poll();
+    if (!poll_res.ok()) {
+      LOG(ERROR) << "Failed to poll(): " << poll_res.error().FormatForEnv();
+      return Status(StatusCode::FAILED_PRECONDITION,
+                    "Failed to poll and select NFC-A and ISO-DEP");
+    }
+    uint16_t id = poll_res.value();
+
+    senderId->set_sender_id(id);
+    return Status::OK;
+  }
+
   Status SendApdu(ServerContext* context, const SendApduRequest* request,
                   SendApduReply* response) override {
     // Step 0: Parse input
@@ -62,25 +104,28 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
       }
       apdu_bytes.push_back(apdu_bytes_res.value());
     }
-
-    // Step 1: Initialize connection with casimir
-    CasimirController device;
-    auto init_res = device.Init(FLAGS_casimir_rf_port);
-    if (!init_res.ok()) {
-      LOG(ERROR) << "Failed to initialize connection to casimir: "
-                 << init_res.error().FormatForEnv();
-      return Status(StatusCode::FAILED_PRECONDITION,
-                    "Failed to connect with casimir");
+    if (!isInitialized) {
+      // Step 1: Initialize connection with casimir
+      auto init_res = device.Init(FLAGS_casimir_rf_port);
+      if (!init_res.ok()) {
+        LOG(ERROR) << "Failed to initialize connection to casimir: "
+                   << init_res.error().FormatForEnv();
+        return Status(StatusCode::FAILED_PRECONDITION,
+                      "Failed to connect with casimir");
+      }
+      isInitialized = true;
     }
 
-    // Step 2: Poll
-    auto poll_res = device.Poll();
-    if (!poll_res.ok()) {
-      LOG(ERROR) << "Failed to poll(): " << poll_res.error().FormatForEnv();
-      return Status(StatusCode::FAILED_PRECONDITION,
-                    "Failed to poll and select NFC-A and ISO-DEP");
+    int16_t id;
+    if (request->has_sender_id()) {
+      id = request->sender_id();
+    } else {
+      // Step 2: Poll
+      Void voidArg;
+      SenderId senderId;
+      PollA(context, &voidArg, &senderId);
+      id = senderId.sender_id();
     }
-    uint16_t id = poll_res.value();
 
     // Step 3: Send APDU bytes
     response->clear_response_hex_strings();
