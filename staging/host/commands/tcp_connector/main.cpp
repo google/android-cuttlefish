@@ -29,7 +29,8 @@
 
 DEFINE_int32(fifo_in, -1, "A pipe for incoming communication");
 DEFINE_int32(fifo_out, -1, "A pipe for outgoing communication");
-DEFINE_int32(data_port, -1, "A port for data");
+DEFINE_int32(data_port, -1, "TCP port to connect to");
+DEFINE_string(data_path, "", "Unix server socket path to connect to");
 DEFINE_int32(buffer_size, -1, "The buffer size");
 DEFINE_int32(dump_packet_size, -1,
              "Dump incoming/outgoing packets up to given size");
@@ -42,6 +43,20 @@ SharedFD OpenSocket(int port) {
   std::unique_lock<std::mutex> lock(mutex);
   for (;;) {
     SharedFD fd = SharedFD::SocketLocalClient(port, SOCK_STREAM);
+    if (fd->IsOpen()) {
+      return fd;
+    }
+    LOG(ERROR) << "Failed to open socket: " << fd->StrError();
+    // Wait a little and try again
+    sleep(1);
+  }
+}
+
+SharedFD OpenSocket(const std::string& path) {
+  static std::mutex mutex;
+  std::unique_lock<std::mutex> lock(mutex);
+  for (;;) {
+    SharedFD fd = SharedFD::SocketLocalClient(path, false, SOCK_STREAM);
     if (fd->IsOpen()) {
       return fd;
     }
@@ -91,7 +106,15 @@ int TcpConnectorMain(int argc, char** argv) {
     return 1;
   }
   close(FLAGS_fifo_out);
-  SharedFD sock = OpenSocket(FLAGS_data_port);
+  SharedFD sock;
+
+  if (FLAGS_data_port >= 0) {
+    sock = OpenSocket(FLAGS_data_port);
+  } else if (!FLAGS_data_path.empty()) {
+    sock = OpenSocket(FLAGS_data_path);
+  } else {
+    LOG(FATAL) << "Need `--data_port` or `--data_path`";
+  }
 
   auto guest_to_host = std::thread([&]() {
     while (true) {
