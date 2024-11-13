@@ -38,11 +38,11 @@ fi
 # --- end runfiles.bash initialization ---
 
 usage() {
-  echo "usage: $0 -o /path/to/image.tar"
+  echo "usage: $0 -o <output>"
+  echo "  -o: path for tar format output"
 }
 
 output=
-
 while getopts ":ho:" opt; do
   case "${opt}" in
     h)
@@ -84,6 +84,6 @@ function remove_image() {
 trap remove_image EXIT
 
 # Build docker image
-${repo_root_dir}/docker/image-builder.sh "${name}"
+${repo_root_dir}/docker/image-builder.sh -t "${name}" -d
 
 docker save --output ${output} ${name} 

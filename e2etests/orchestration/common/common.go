@@ -79,7 +79,7 @@ func NewDockerHelper() (*DockerHelper, error) {
 }
 
 func (h *DockerHelper) LoadImage() (string, error) {
-	imgFile, err := os.Open("../../external/images/docker/orchestration-image.tar")
+	imgFile, err := os.Open("../../external/images/docker/orchestration-image-dev.tar")
 	if err != nil {
 		return "", err
 	}

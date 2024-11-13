@@ -2,7 +2,10 @@
 # Docker image includes HO(Host Orchestrator) inside,
 # so it could execute CF instance with API in HO.
 
-FROM debian:12 AS cuttlefish-hostpkg-builder
+ARG BUILD_OPTION=prod
+
+
+FROM debian:12 AS host-package-builder
 
 USER root
 WORKDIR /root
@@ -15,11 +18,12 @@ RUN apt install -y --no-install-recommends \
     equivs \
     sudo
 
-# Build CF debian packages 
+# Build CF debian packages
 COPY . /root/android-cuttlefish
 RUN ["/bin/bash", "-c", "/root/android-cuttlefish/tools/buildutils/build_packages.sh"]
 
-FROM debian:12 AS cuttlefish-orchestration
+
+FROM debian:12 AS runner-base
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443
@@ -44,19 +48,36 @@ RUN apt install -y --no-install-recommends \
     sudo
 RUN update-ca-certificates
 
+COPY ./docker/guest/run_services.sh /root/
+RUN chmod +x /root/run_services.sh
+
+
+FROM runner-base AS runner-dev
+
 # Install CF debian packages.
-COPY --from=cuttlefish-hostpkg-builder /root/android-cuttlefish/cuttlefish-*.deb /root/debian/
+COPY --from=host-package-builder /root/android-cuttlefish/cuttlefish-*.deb /root/debian/
 RUN apt install -y --no-install-recommends -f \
     /root/debian/cuttlefish-base_*.deb \
     /root/debian/cuttlefish-user_*.deb \
     /root/debian/cuttlefish-orchestration_*.deb
 
-RUN echo "num_cvd_accounts=100" >> /etc/default/cuttlefish-host-resources
 
+FROM runner-base AS runner-prod
+
+RUN apt install -y --no-install-recommends \
+    wget
+RUN wget -qO- https://artifacts.codelinaro.org/artifactory/linaro-372-googlelt-gigabyte-ampere-cuttlefish-installer/gigabyte-ampere-cuttlefish-installer/latest/debian/linaro-glt-gig-archive-bookworm.asc \
+    | tee /etc/apt/trusted.gpg.d/linaro-glt-gig-archive-bookworm.asc
+RUN echo "deb https://artifacts.codelinaro.org/linaro-372-googlelt-gigabyte-ampere-cuttlefish-installer/gigabyte-ampere-cuttlefish-installer/latest/debian bookworm main" \
+    | tee /etc/apt/sources.list.d/linaro-glt-gig-archive-bookworm.list
+RUN apt update
+RUN apt install -y --no-install-recommends \
+    cuttlefish-base cuttlefish-user cuttlefish-orchestration
+
+
+FROM runner-${BUILD_OPTION} AS runner
+
+RUN echo "num_cvd_accounts=100" >> /etc/default/cuttlefish-host-resources
 RUN usermod -aG kvm root
 RUN usermod -aG cvdnetwork root
-
-COPY --from=cuttlefish-hostpkg-builder /root/android-cuttlefish/docker/guest/run_services.sh /root/
-RUN chmod +x /root/run_services.sh
-RUN rm -rf /root/android-cuttlefish
 ENTRYPOINT ["/root/run_services.sh"]
