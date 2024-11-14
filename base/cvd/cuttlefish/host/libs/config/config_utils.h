@@ -48,8 +48,8 @@ std::string RandomSerialNumber(const std::string& prefix);
 
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string DefaultQemuBinaryDir();
-std::string HostBinaryPath(const std::string& file);
-std::string HostUsrSharePath(const std::string& file);
+std::string HostBinaryPath(const std::string& binary_name);
+std::string HostUsrSharePath(const std::string& binary_name);
 std::string HostQemuBiosPath();
 std::string DefaultGuestImagePath(const std::string& file);
 std::string DefaultEnvironmentPath(const char* environment_key,

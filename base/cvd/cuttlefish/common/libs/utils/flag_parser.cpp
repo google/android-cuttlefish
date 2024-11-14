@@ -591,10 +591,11 @@ Flag GflagsCompatFlag(const std::string& name,
 }
 
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
-                      const bool def_val) {
+                      const bool default_value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return fmt::format("{}", fmt::join(value, ",")); })
-      .Setter([&name, &value, def_val](const FlagMatch& match) -> Result<void> {
+      .Setter([&name, &value,
+               default_value](const FlagMatch& match) -> Result<void> {
         if (match.value.empty()) {
           value.clear();
           return {};
@@ -606,7 +607,7 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
         output_vals.reserve(str_vals.size());
         for (const auto& str_val : str_vals) {
           if (str_val.empty()) {
-            output_vals.push_back(def_val);
+            output_vals.push_back(default_value);
           } else {
             output_vals.push_back(CF_EXPECT(ParseBool(str_val, name)));
           }

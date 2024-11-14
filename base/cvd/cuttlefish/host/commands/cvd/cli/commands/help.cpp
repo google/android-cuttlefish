@@ -147,9 +147,8 @@ class CvdHelpHandler : public CvdServerHandler {
 };
 
 std::unique_ptr<CvdServerHandler> NewCvdHelpHandler(
-    const std::vector<std::unique_ptr<CvdServerHandler>>& request_handlers) {
-  return std::unique_ptr<CvdServerHandler>(
-      new CvdHelpHandler(request_handlers));
+    const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers) {
+  return std::unique_ptr<CvdServerHandler>(new CvdHelpHandler(server_handlers));
 }
 
 }  // namespace cuttlefish

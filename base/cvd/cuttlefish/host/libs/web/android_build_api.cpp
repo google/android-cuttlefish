@@ -402,17 +402,16 @@ Result<void> AndroidBuildApi::ArtifactToFile(const DeviceBuild& build,
 
 Result<void> AndroidBuildApi::ArtifactToFile(const DirectoryBuild& build,
                                              const std::string& artifact,
-                                             const std::string& destination) {
+                                             const std::string& path) {
   for (const auto& path : build.paths) {
     auto source = path + "/" + artifact;
     if (!FileExists(source)) {
       continue;
     }
-    unlink(destination.c_str());
-    CF_EXPECT(symlink(source.c_str(), destination.c_str()) == 0,
-              "Could not create symlink from " << source << " to "
-                                               << destination << ": "
-                                               << strerror(errno));
+    unlink(path.c_str());
+    CF_EXPECT(symlink(source.c_str(), path.c_str()) == 0,
+              "Could not create symlink from " << source << " to " << path
+                                               << ": " << strerror(errno));
     return {};
   }
   return CF_ERR("Could not find artifact \"" << artifact << "\" in build \""

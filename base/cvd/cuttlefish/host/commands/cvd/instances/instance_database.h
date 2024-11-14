@@ -95,7 +95,7 @@ class InstanceDatabase {
   }
 
   static std::vector<LocalInstanceGroup> FindGroups(
-      const cvd::PersistentData& data, const Filter& param);
+      const cvd::PersistentData& data, const Filter& filter);
 
   DataViewer viewer_;
 };

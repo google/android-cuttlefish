@@ -106,7 +106,7 @@ class RefreshTokenCredentialSource : public RefreshingCredentialSource {
  public:
   static Result<std::unique_ptr<RefreshTokenCredentialSource>>
   FromOauth2ClientFile(HttpClient& http_client,
-                       const std::string& oauthcontents);
+                       const std::string& oauth_contents);
 
   RefreshTokenCredentialSource(HttpClient& http_client,
                                const std::string& client_id,

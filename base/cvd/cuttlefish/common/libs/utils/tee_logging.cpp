@@ -274,19 +274,19 @@ static std::vector<SeverityTarget> SeverityTargetsForFiles(
 }
 
 TeeLogger LogToFiles(const std::vector<std::string>& files,
-                     const std::string& prefix) {
-  return TeeLogger(SeverityTargetsForFiles(files), prefix);
+                     const std::string& log_prefix) {
+  return TeeLogger(SeverityTargetsForFiles(files), log_prefix);
 }
 
 TeeLogger LogToStderrAndFiles(
-    const std::vector<std::string>& files, const std::string& prefix,
+    const std::vector<std::string>& files, const std::string& log_prefix,
     MetadataLevel stderr_level,
     std::optional<android::base::LogSeverity> stderr_severity) {
   std::vector<SeverityTarget> log_severities = SeverityTargetsForFiles(files);
   log_severities.push_back(
       SeverityTarget{stderr_severity ? *stderr_severity : ConsoleSeverity(),
                      SharedFD::Dup(/* stderr */ 2), stderr_level});
-  return TeeLogger(log_severities, prefix);
+  return TeeLogger(log_severities, log_prefix);
 }
 
 }  // namespace cuttlefish

@@ -121,9 +121,9 @@ Result<void> RunCvdProcessManager::RunStopCvd(const GroupProcInfo& group_info,
   return {};
 }
 
-Result<void> RunCvdProcessManager::RunStopCvdAll(bool clear_instance_dirs) {
+Result<void> RunCvdProcessManager::RunStopCvdAll(bool clear_runtime_dirs) {
   for (const auto& group_info : run_cvd_process_collector_.CfGroups()) {
-    auto stop_cvd_result = RunStopCvd(group_info, clear_instance_dirs);
+    auto stop_cvd_result = RunStopCvd(group_info, clear_runtime_dirs);
     if (!stop_cvd_result.ok()) {
       LOG(ERROR) << stop_cvd_result.error().FormatForEnv();
       continue;
@@ -194,9 +194,9 @@ Result<void> RunCvdProcessManager::DeleteLockFile(
   return {};
 }
 
-Result<void> KillAllCuttlefishInstances(bool clear_instance_dirs) {
+Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs) {
   RunCvdProcessManager manager = CF_EXPECT(RunCvdProcessManager::Get());
-  CF_EXPECT(manager.KillAllCuttlefishInstances(clear_instance_dirs));
+  CF_EXPECT(manager.KillAllCuttlefishInstances(clear_runtime_dirs));
   return {};
 }
 
@@ -269,10 +269,12 @@ Result<void> RunCvdProcessManager::KillAllCuttlefishInstances(
   return {};
 }
 
-Result<void> RunCvdProcessManager::ForcefullyStopGroup(const uid_t id) {
+Result<void> RunCvdProcessManager::ForcefullyStopGroup(
+    const uid_t any_id_in_group) {
   auto groups_info = run_cvd_process_collector_.CfGroups();
   for (const auto& group_info : groups_info) {
-    if (!Contains(group_info.instances_, static_cast<unsigned>(id))) {
+    if (!Contains(group_info.instances_,
+                  static_cast<unsigned>(any_id_in_group))) {
       continue;
     }
     CF_EXPECT(ForcefullyStopGroup(group_info));

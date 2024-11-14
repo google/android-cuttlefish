@@ -28,9 +28,11 @@
 namespace cuttlefish {
 bool FileExists(const std::string& path, bool follow_symlinks = true);
 Result<dev_t> FileDeviceId(const std::string& path);
-Result<bool> CanHardLink(const std::string& path1, const std::string& path2);
+Result<bool> CanHardLink(const std::string& source,
+                         const std::string& destination);
 Result<ino_t> FileInodeNumber(const std::string& path);
-Result<bool> AreHardLinked(const std::string& path1, const std::string& path2);
+Result<bool> AreHardLinked(const std::string& source,
+                           const std::string& destination);
 Result<std::string> CreateHardLink(const std::string& target,
                                    const std::string& hardlink,
                                    bool overwrite_existing = false);

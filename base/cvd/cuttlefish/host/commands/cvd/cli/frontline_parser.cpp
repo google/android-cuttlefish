@@ -59,9 +59,9 @@ Result<std::unique_ptr<FrontlineParser>> FrontlineParser::Parse(
   return frontline_parser;
 }
 
-FrontlineParser::FrontlineParser(const ParserParam& param)
-    : server_supported_subcmds_{param.server_supported_subcmds},
-      all_args_(param.all_args) {}
+FrontlineParser::FrontlineParser(const ParserParam& parser_param)
+    : server_supported_subcmds_{parser_param.server_supported_subcmds},
+      all_args_(parser_param.all_args) {}
 
 Result<void> FrontlineParser::Separate() {
   arguments_separator_ = CF_EXPECT(CallSeparator());

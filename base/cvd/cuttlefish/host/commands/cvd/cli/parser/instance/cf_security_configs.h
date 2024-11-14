@@ -24,6 +24,6 @@
 namespace cuttlefish {
 
 std::vector<std::string> GenerateSecurityFlags(
-    const cvd::config::EnvironmentSpecification& root);
+    const cvd::config::EnvironmentSpecification& cfg);
 
 };  // namespace cuttlefish

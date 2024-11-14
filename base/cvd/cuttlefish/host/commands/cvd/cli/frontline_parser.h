@@ -62,7 +62,7 @@ class FrontlineParser {
   const cvd_common::Args& CvdArgs() const;
 
  private:
-  FrontlineParser(const ParserParam& parser);
+  FrontlineParser(const ParserParam& parser_param);
 
   // internal workers in order
   Result<void> Separate();
