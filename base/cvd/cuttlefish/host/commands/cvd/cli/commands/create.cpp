@@ -246,7 +246,7 @@ class CvdCreateCommandHandler : public CvdServerHandler {
   Result<void> CreateSymlinks(const LocalInstanceGroup& group);
 
   static void MarkLockfiles(std::vector<InstanceLockFile>& lock_files,
-                            const InUseState state);
+                            InUseState state);
   static void MarkLockfilesInUse(std::vector<InstanceLockFile>& lock_files) {
     MarkLockfiles(lock_files, InUseState::kInUse);
   }

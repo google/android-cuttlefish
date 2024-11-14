@@ -176,6 +176,6 @@ bool SendAll(SharedFD sock, const std::string& msg);
  *
  * If a Recv error is encountered, returns the empty string
  */
-std::string RecvAll(SharedFD sock, const size_t count);
+std::string RecvAll(SharedFD sock, size_t count);
 
 } // namespace cuttlefish

@@ -83,10 +83,10 @@ class ServerSocket {
   SharedFD fd_;
 };
 
-void AppendInNetworkByteOrder(Message* msg, const std::uint8_t b);
-void AppendInNetworkByteOrder(Message* msg, const std::uint16_t s);
-void AppendInNetworkByteOrder(Message* msg, const std::uint32_t w);
-void AppendInNetworkByteOrder(Message* msg, const std::int32_t w);
+void AppendInNetworkByteOrder(Message* msg, std::uint8_t b);
+void AppendInNetworkByteOrder(Message* msg, std::uint16_t s);
+void AppendInNetworkByteOrder(Message* msg, std::uint32_t w);
+void AppendInNetworkByteOrder(Message* msg, std::int32_t w);
 void AppendInNetworkByteOrder(Message* msg, const std::string& str);
 
 inline void AppendToMessage(Message*) {}

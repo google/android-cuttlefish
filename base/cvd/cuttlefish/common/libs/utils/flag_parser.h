@@ -137,10 +137,10 @@ Result<bool> ParseBool(const std::string& value, const std::string& name);
  * unmatched arguments. */
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
                           std::vector<std::string>& args,
-                          const bool recognize_end_of_option_mark = false);
+                          bool recognize_end_of_option_mark = false);
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
                           std::vector<std::string>&&,
-                          const bool recognize_end_of_option_mark = false);
+                          bool recognize_end_of_option_mark = false);
 
 bool WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
 
@@ -176,6 +176,6 @@ Flag GflagsCompatFlag(const std::string& name, std::int32_t& value);
 Flag GflagsCompatFlag(const std::string& name, bool& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<std::string>& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
-                      const bool default_value);
+                      bool default_value);
 
 }  // namespace cuttlefish

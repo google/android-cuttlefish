@@ -33,19 +33,19 @@ Result<ino_t> FileInodeNumber(const std::string& path);
 Result<bool> AreHardLinked(const std::string& path1, const std::string& path2);
 Result<std::string> CreateHardLink(const std::string& target,
                                    const std::string& hardlink,
-                                   const bool overwrite_existing = false);
+                                   bool overwrite_existing = false);
 Result<void> CreateSymLink(const std::string& target, const std::string& link,
-                           const bool overwrite_existing = false);
+                           bool overwrite_existing = false);
 bool FileHasContent(const std::string& path);
 Result<std::vector<std::string>> DirectoryContents(const std::string& path);
 bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
 Result<void> EnsureDirectoryExists(const std::string& directory_path,
-                                   const mode_t mode = S_IRWXU | S_IRWXG |
-                                                       S_IROTH | S_IXOTH,
+                                   mode_t mode = S_IRWXU | S_IRWXG | S_IROTH |
+                                                 S_IXOTH,
                                    const std::string& group_name = "");
 Result<void> ChangeGroup(const std::string& path,
                          const std::string& group_name);
-bool CanAccess(const std::string& path, const int mode);
+bool CanAccess(const std::string& path, int mode);
 bool IsDirectoryEmpty(const std::string& path);
 Result<void> RecursivelyRemoveDirectory(const std::string& path);
 bool Copy(const std::string& from, const std::string& to);

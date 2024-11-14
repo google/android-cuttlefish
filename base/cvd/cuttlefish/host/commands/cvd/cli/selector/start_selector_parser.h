@@ -117,9 +117,8 @@ class StartSelectorParser {
     std::optional<std::string> instance_nums_flag;
   };
 
-  Result<unsigned> VerifyNumOfInstances(
-      const VerifyNumOfInstancesParam& params,
-      const unsigned default_n_instances = 1) const;
+  Result<unsigned> VerifyNumOfInstances(const VerifyNumOfInstancesParam& params,
+                                        unsigned default_n_instances = 1) const;
   bool CalcMayBeDefaultGroup();
 
   /**

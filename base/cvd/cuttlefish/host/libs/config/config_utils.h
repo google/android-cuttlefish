@@ -29,8 +29,7 @@ int GetDefaultVsockCid();
 
 // Calculates vsock server port number
 // return base + (vsock_guest_cid - 3)
-int GetVsockServerPort(const int base,
-                       const int vsock_guest_cid);
+int GetVsockServerPort(int base, int vsock_guest_cid);
 
 // Returns a path where the launcher puts a link to the config file which makes
 // it easily discoverable regardless of what vm manager is in use

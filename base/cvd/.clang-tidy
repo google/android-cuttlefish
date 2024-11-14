@@ -5,6 +5,7 @@ Checks: &checks >-
   clang-analyzer-*,
   clang-diagnostic-*,
   -clang-diagnostic-pragma-once-outside-header,
+  readability-avoid-const-params-in-decls,
 
 UseColor: true
 

@@ -67,7 +67,7 @@ Result<std::string> AndroidHostPath(const cvd_common::Envs& envs) {
 }
 
 cvd::Response CommandResponse(const cvd::Status_Code code,
-                              const std::string message) {
+                              const std::string& message) {
   cvd::Response response;
   response.mutable_command_response();  // set oneof field
   auto& status = *response.mutable_status();

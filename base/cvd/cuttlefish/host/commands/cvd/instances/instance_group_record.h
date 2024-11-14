@@ -60,7 +60,7 @@ class LocalInstanceGroup {
 
   std::string AssemblyDir() const;
 
-  Result<LocalInstance> FindInstanceById(const unsigned id) const;
+  Result<LocalInstance> FindInstanceById(unsigned id) const;
   /**
    * Find by per-instance name.
    *

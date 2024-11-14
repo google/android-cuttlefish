@@ -58,7 +58,7 @@ std::unique_ptr<BuildApi> CreateBuildApi(
     std::unique_ptr<HttpClient> http_client,
     std::unique_ptr<HttpClient> inner_http_client,
     std::unique_ptr<CredentialSource> credential_source, std::string api_key,
-    const std::chrono::seconds retry_period, std::string api_base_url, std::string project_id,
-    const bool enable_caching, const std::string cache_base_path);
+    std::chrono::seconds retry_period, std::string api_base_url,
+    std::string project_id, bool enable_caching, std::string cache_base_path);
 
 }  // namespace cuttlefish

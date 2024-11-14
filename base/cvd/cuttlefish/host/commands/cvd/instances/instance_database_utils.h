@@ -53,7 +53,7 @@ Result<DeviceName> BreakDeviceName(const std::string& device_name);
  * "Only up to n must match by field " + FieldName
  *
  */
-std::string GenerateTooManyInstancesErrorMsg(const int n,
+std::string GenerateTooManyInstancesErrorMsg(int n,
                                              const std::string& field_name);
 
 template <typename RetSet, typename AnyContainer>
