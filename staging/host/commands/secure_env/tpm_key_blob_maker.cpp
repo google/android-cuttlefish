@@ -54,7 +54,8 @@ static keymaster_error_t SplitEnforcedProperties(
       case KM_TAG_OS_VERSION:
       case KM_TAG_ROOT_OF_TRUST:
       case KM_TAG_VENDOR_PATCHLEVEL:
-        LOG(DEBUG) << "Root of trust and origin tags may not be specified";
+      case KM_TAG_MODULE_HASH:
+        LOG(DEBUG) << "Tag " << entry.tag << " may not be specified";
         return KM_ERROR_INVALID_TAG;
 
       // These are hidden
