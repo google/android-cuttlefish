@@ -28,7 +28,7 @@ namespace cuttlefish {
 using CvdServerClock = std::chrono::system_clock;
 using TimeStamp = std::chrono::time_point<CvdServerClock>;
 
-Result<TimeStamp> DeserializeTimePoint(const Json::Value& group_json);
+Result<TimeStamp> DeserializeTimePoint(const Json::Value& time_point_json);
 std::string Format(const TimeStamp&);
 
 }  // namespace cuttlefish

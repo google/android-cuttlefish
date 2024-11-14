@@ -89,8 +89,8 @@ class Flag {
   /* Examines a list of arguments, removing any matches from the list and
    * invoking the `Setter` for every match. Returns `false` if the callback ever
    * returns `false`. Non-matches are left in place. */
-  Result<void> Parse(std::vector<std::string>& flags) const;
-  Result<void> Parse(std::vector<std::string>&& flags) const;
+  Result<void> Parse(std::vector<std::string>& arguments) const;
+  Result<void> Parse(std::vector<std::string>&& arguments) const;
 
   /* Write gflags `--helpxml` style output for a string-type flag. */
   bool WriteGflagsCompatXml(std::ostream&) const;

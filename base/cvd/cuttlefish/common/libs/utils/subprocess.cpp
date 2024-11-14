@@ -131,12 +131,12 @@ SubprocessOptions SubprocessOptions::Verbose(bool verbose) && {
 }
 
 #ifdef __linux__
-SubprocessOptions& SubprocessOptions::ExitWithParent(bool v) & {
-  exit_with_parent_ = v;
+SubprocessOptions& SubprocessOptions::ExitWithParent(bool exit_with_parent) & {
+  exit_with_parent_ = exit_with_parent;
   return *this;
 }
-SubprocessOptions SubprocessOptions::ExitWithParent(bool v) && {
-  exit_with_parent_ = v;
+SubprocessOptions SubprocessOptions::ExitWithParent(bool exit_with_parent) && {
+  exit_with_parent_ = exit_with_parent;
   return std::move(*this);
 }
 #endif

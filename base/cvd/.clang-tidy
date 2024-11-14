@@ -8,6 +8,7 @@ Checks: &checks >-
   readability-avoid-const-params-in-decls,
   readability-const-return-type,
   readability-container-size-empty,
+  readability-inconsistent-declaration-parameter-name,
 
 UseColor: true
 

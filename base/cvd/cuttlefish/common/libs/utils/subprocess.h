@@ -340,7 +340,7 @@ std::ostream& operator<<(std::ostream& out, const Command& command);
  * If some setup fails, `command` fails to start, or `command` exits due to a
  * signal, the return value will be negative.
  */
-int RunWithManagedStdio(Command&& command, const std::string* stdin,
+int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
                         std::string* stdout, std::string* stderr,
                         SubprocessOptions options = SubprocessOptions());
 

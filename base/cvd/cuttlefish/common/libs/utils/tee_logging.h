@@ -67,7 +67,7 @@ TeeLogger LogToFiles(const std::vector<std::string>& files,
 TeeLogger LogToStderrAndFiles(
     const std::vector<std::string>& files, const std::string& log_prefix = "",
     MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE,
-    std::optional<android::base::LogSeverity> stderr_serverity = std::nullopt);
+    std::optional<android::base::LogSeverity> stderr_severity = std::nullopt);
 
 std::string StripColorCodes(const std::string& str);
 

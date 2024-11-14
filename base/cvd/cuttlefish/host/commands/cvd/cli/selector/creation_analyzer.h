@@ -161,7 +161,7 @@ class CreationAnalyzer {
 
   // internal, temporary
   StartSelectorParser selector_options_parser_;
-  InstanceLockFileManager& instance_file_lock_manager_;
+  InstanceLockFileManager& instance_lock_file_manager_;
 };
 
 }  // namespace selector

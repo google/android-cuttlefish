@@ -249,7 +249,7 @@ class WeakFD {
 class ScopedMMap {
  public:
   ScopedMMap();
-  ScopedMMap(void* ptr, size_t size);
+  ScopedMMap(void* ptr, size_t len);
   ScopedMMap(const ScopedMMap& other) = delete;
   ScopedMMap& operator=(const ScopedMMap& other) = delete;
   ScopedMMap(ScopedMMap&& other);

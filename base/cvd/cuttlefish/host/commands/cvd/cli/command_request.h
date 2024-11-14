@@ -45,7 +45,7 @@ class CommandRequest {
  private:
   friend class CommandRequestBuilder;
   CommandRequest(cvd_common::Args args, cvd_common::Envs env,
-                 selector::SelectorOptions cvd_args);
+                 selector::SelectorOptions selectors);
 
   cvd_common::Args args_;
   cvd_common::Envs env_;

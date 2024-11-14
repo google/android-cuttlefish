@@ -36,7 +36,7 @@ class RunCvdProcessManager {
  private:
   RunCvdProcessManager() = delete;
   RunCvdProcessManager(RunCvdProcessCollector&&);
-  static Result<void> RunStopCvd(const GroupProcInfo& run_cvd_info,
+  static Result<void> RunStopCvd(const GroupProcInfo& group_info,
                                  bool clear_runtime_dirs);
   Result<void> RunStopCvdAll(bool clear_runtime_dirs);
   Result<void> SendSignal(const GroupProcInfo&);

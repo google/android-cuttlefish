@@ -57,7 +57,7 @@ int SharedFDStreambuf::underflow() {
   return static_cast<int>(*gptr());
 }
 
-std::streamsize SharedFDStreambuf::xsgetn(char* dst, std::streamsize count) {
+std::streamsize SharedFDStreambuf::xsgetn(char* dest, std::streamsize count) {
   std::streamsize bytes_read = 0;
   while (bytes_read < count) {
     if (in_avail() == 0) {
@@ -67,7 +67,7 @@ std::streamsize SharedFDStreambuf::xsgetn(char* dst, std::streamsize count) {
     }
     std::streamsize buffer_count =
         std::min(static_cast<std::streamsize>(in_avail()), count - bytes_read);
-    std::memcpy(dst + bytes_read, gptr(), buffer_count);
+    std::memcpy(dest + bytes_read, gptr(), buffer_count);
     gbump(buffer_count);
     bytes_read += buffer_count;
   }
@@ -84,10 +84,10 @@ int SharedFDStreambuf::overflow(int c) {
   return c;
 }
 
-std::streamsize SharedFDStreambuf::xsputn(const char* src,
+std::streamsize SharedFDStreambuf::xsputn(const char* source,
                                           std::streamsize count) {
   return static_cast<std::streamsize>(
-    WriteAll(shared_fd_, src, static_cast<std::size_t>(count)));
+      WriteAll(shared_fd_, source, static_cast<std::size_t>(count)));
 }
 
 int SharedFDStreambuf::pbackfail(int c) {
@@ -107,4 +107,4 @@ SharedFDOstream::SharedFDOstream(SharedFD shared_fd)
 SharedFDIstream::SharedFDIstream(SharedFD shared_fd)
   : std::istream(nullptr), buf_(shared_fd) { rdbuf(&buf_); }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
