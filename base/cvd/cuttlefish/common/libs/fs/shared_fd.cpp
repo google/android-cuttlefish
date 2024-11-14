@@ -187,13 +187,13 @@ void FileInstance::Close() {
     errno_ = EBADF;
   } else if (close(fd_) == -1) {
     errno_ = errno;
-    if (identity_.size()) {
+    if (!identity_.empty()) {
       message << __FUNCTION__ << ": " << identity_ << " failed (" << StrError() << ")";
       std::string message_str = message.str();
       Log(message_str.c_str());
     }
   } else {
-    if (identity_.size()) {
+    if (!identity_.empty()) {
       message << __FUNCTION__ << ": " << identity_ << "succeeded";
       std::string message_str = message.str();
       Log(message_str.c_str());

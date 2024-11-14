@@ -37,7 +37,7 @@ Result<std::vector<std::string>> ExtractHelper(
 
   auto it = files.begin();
   while (it != files.end()) {
-    if (*it == "" || android::base::EndsWith(*it, "/")) {
+    if (it->empty() || android::base::EndsWith(*it, "/")) {
       it = files.erase(it);
     } else {
       *it = target_directory + "/" + *it;

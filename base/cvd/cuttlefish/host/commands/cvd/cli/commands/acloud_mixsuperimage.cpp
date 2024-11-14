@@ -99,7 +99,7 @@ Result<std::string> GetImageForPartition(
       search != image_paths.end()) {
     result_path = search->second;
   }
-  if (result_path == "") {
+  if (result_path.empty()) {
     result_path = image_dir + partition_name + ".img";
   }
 
@@ -139,7 +139,7 @@ Result<void> _RewriteMiscInfo(
   }
   input_fs.close();
 
-  if (partition_names.size() == 0) {
+  if (partition_names.empty()) {
     LOG(INFO) << "No dynamic partition list in misc info.";
   }
 
@@ -265,7 +265,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
       index++;
     }
     // no specific image directory, use $ANDROID_PRODUCT_OUT
-    if (image_dir == "") {
+    if (image_dir.empty()) {
       image_dir = DefaultGuestImagePath("/");
     }
     if (!android::base::EndsWith(image_dir, "/")) {
@@ -274,7 +274,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     misc_info = CF_EXPECT(FindMiscInfo(image_dir));
     image_dir = CF_EXPECT(FindImageDir(image_dir));
     system_image_path = FindImage(local_system_image, {_SYSTEM_IMAGE_NAME_PATTERN});
-    CF_EXPECT(system_image_path != "",
+    CF_EXPECT(!system_image_path.empty(),
               "Cannot find system.img in " << local_system_image);
     std::string system_ext_image_path =
         FindImage(local_system_image, {_SYSTEM_EXT_IMAGE_NAME_PATTERN});

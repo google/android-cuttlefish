@@ -252,7 +252,7 @@ static Result<Json::Value> LoadTemplateByName(const std::string& template_name) 
 Result<EnvironmentSpecification> ExtractLaunchTemplates(
     EnvironmentSpecification config) {
   for (auto& ins : *config.mutable_instances()) {
-    if (ins.has_import_template() && ins.import_template() != "") {
+    if (ins.has_import_template() && !ins.import_template().empty()) {
       auto tmpl_json = CF_EXPECT(LoadTemplateByName(ins.import_template()));
       // TODO: b/337089452 - handle repeated merges within protos
       // `proto.MergeFrom` concatenates repeated fields, but we want index-wise

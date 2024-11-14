@@ -174,7 +174,7 @@ std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
 }
 
 void MakeAbsolute(std::string& path, const std::string& working_dir) {
-  if (path.size() > 0 && path[0] == '/') {
+  if (!path.empty() && path[0] == '/') {
     return;
   }
   path.insert(0, working_dir + "/");
@@ -218,7 +218,7 @@ Result<Json::Value> GetOverriddenConfig(
     const std::vector<Override>& override_flags) {
   Json::Value result = CF_EXPECT(ParseJsonFile(config_path));
 
-  if (override_flags.size() > 0) {
+  if (!override_flags.empty()) {
     for (const auto& flag : override_flags) {
       MergeTwoJsonObjs(result,
                        OverrideToJson(flag.config_path, flag.new_value));
@@ -333,7 +333,7 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
   auto flags = GetFlagsVector(load_flags);
   CF_EXPECT(ConsumeFlags(flags, args));
   CF_EXPECT(
-      args.size() > 0,
+      !args.empty(),
       "No arguments provided to cvd command, please provide path to json file");
 
   if (load_flags.base_dir.empty()) {

@@ -211,7 +211,7 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
              "Failed to set permission on {}: {}", directory_path,
              strerror(errno));
 
-  if (group_name != "") {
+  if (!group_name.empty()) {
     CF_EXPECT(ChangeGroup(directory_path, group_name));
   }
 
@@ -694,7 +694,7 @@ static Result<void> WaitForFileInternal(const std::string& path, int timeoutSec,
 
     auto names = GetCreatedFileListFromInotifyFd(inotify);
 
-    CF_EXPECT(names.size() > 0,
+    CF_EXPECT(!names.empty(),
               "Failed to get names from inotify " << strerror(errno));
 
     if (Contains(names, filename)) {

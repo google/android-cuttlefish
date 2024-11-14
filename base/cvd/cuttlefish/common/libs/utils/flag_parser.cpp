@@ -150,7 +150,7 @@ Result<Flag::FlagProcessResult> Flag::Process(
     const std::string& arg, const std::optional<std::string>& next_arg) const {
   using android::base::StringReplace;
   auto normalized_arg = StringReplace(arg, "-", "_", true);
-  if (!setter_ && aliases_.size() > 0) {
+  if (!setter_ && !aliases_.empty()) {
     return CF_ERRF("No setter for flag with alias {}", aliases_[0].name);
   }
   for (auto& alias : aliases_) {
@@ -423,7 +423,7 @@ Flag VerbosityFlag(android::base::LogSeverity& value) {
 
 Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
   auto setter = [&flags, text](FlagMatch) -> Result<void> {
-    if (text.size() > 0) {
+    if (!text.empty()) {
       LOG(INFO) << text;
     }
     for (const auto& flag : flags) {
@@ -535,7 +535,7 @@ Flag GflagsCompatFlag(const std::string& name, std::string& value) {
 
 template <typename T>
 std::optional<T> ParseInteger(const std::string& value) {
-  if (value.size() == 0) {
+  if (value.empty()) {
     return {};
   }
   const char* base = value.c_str();

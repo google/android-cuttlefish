@@ -133,7 +133,7 @@ Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string,
   }
 
   std::string status = CF_EXPECT(BuildStatus(proposed_build));
-  CF_EXPECT(status != "",
+  CF_EXPECT(!status.empty(),
             proposed_build << " is not a valid branch or build id.");
   LOG(DEBUG) << "Status for build " << proposed_build << " is " << status;
   while (retry_period_ != std::chrono::seconds::zero() &&
@@ -304,7 +304,7 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
       url += "&nameRegexp=" +
              http_client->UrlEscape(BuildNameRegexp(artifact_filenames));
     }
-    if (page_token != "") {
+    if (!page_token.empty()) {
       url += "&pageToken=" + http_client->UrlEscape(page_token);
     }
     if (!api_key_.empty()) {
@@ -331,7 +331,7 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
     for (const auto& artifact_json : json["artifacts"]) {
       artifacts.emplace(artifact_json["name"].asString());
     }
-  } while (page_token != "");
+  } while (!page_token.empty());
   return artifacts;
 }
 

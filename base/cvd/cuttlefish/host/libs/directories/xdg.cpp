@@ -38,7 +38,7 @@ namespace {
 
 std::optional<std::string> NonEmptyEnv(const std::string& var_name) {
   std::optional<std::string> opt = StringFromEnv(var_name);
-  return opt.has_value() && *opt == "" ? opt : std::optional<std::string>();
+  return opt.has_value() && !opt->empty() ? opt : std::optional<std::string>();
 }
 
 Result<std::string> XdgDataHome() {
