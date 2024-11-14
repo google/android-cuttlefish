@@ -4,7 +4,7 @@ cuttlefish-common (1.1.0) UNRELEASED; urgency=medium
 
  -- Jorge Moreira <jemoreira@google.com>  Fri, 01 Nov 2024 16:02:12 -0700
 
-cuttlefish-common (1.0.0) unstable; urgency=medium
+cuttlefish-common (1.0.0) stable; urgency=medium
 
   [ Jorge E. Moreira ]
   * Delete unused experimental commands
