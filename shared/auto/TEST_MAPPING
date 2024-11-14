@@ -64,7 +64,82 @@
       "name": "CarServiceTelemetryTest"
     },
     {
-      "name": "CarServiceUnitTest"
+      "name": "CarServiceCarUnitTest"
+    },
+    {
+      "name": "CarServiceWifiUnitTest"
+    },
+    {
+      "name": "CarServiceWatchdogUnitTest"
+    },
+    {
+      "name": "CarServiceVmsUnitTest"
+    },
+    {
+      "name": "CarServiceUtilUnitTest"
+    },
+    {
+      "name": "CarServiceUserUnitTest"
+    },
+    {
+      "name": "CarServiceTelemetryUnitTest"
+    },
+    {
+      "name": "CarServiceSystemUiUnitTest"
+    },
+    {
+      "name": "CarServiceSystemInterfaceUnitTest"
+    },
+    {
+      "name": "CarServiceStorageMonitoringUnitTest"
+    },
+    {
+      "name": "CarServiceStatsUnitTest"
+    },
+    {
+      "name": "CarServiceRemoteAccessUnitTest"
+    },
+    {
+      "name": "CarServicePropertyUnitTest"
+    },
+    {
+      "name": "CarServicePowerUnitTest"
+    },
+    {
+      "name": "CarServicePmUnitTest"
+    },
+    {
+      "name": "CarServiceOsUnitTest"
+    },
+    {
+      "name": "CarServiceOemUnitTest"
+    },
+    {
+      "name": "CarServiceOccupantConnectionUnitTest"
+    },
+    {
+      "name": "CarServiceHalUnitTest"
+    },
+    {
+      "name": "CarServiceGarageModeUnitTest"
+    },
+    {
+      "name": "CarServiceEvsUnitTest"
+    },
+    {
+      "name": "CarServiceClusterUnitTest"
+    },
+    {
+      "name": "CarServiceBluetoothUnitTest"
+    },
+    {
+      "name": "CarServiceAudioUnitTest"
+    },
+    {
+      "name": "CarServiceAmUnitTest"
+    },
+    {
+      "name": "CarServiceAdminUnitTest"
     },
     {
       "name": "CarServiceVmsTest"
