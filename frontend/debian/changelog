@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.0.0) unstable; urgency=medium
+cuttlefish-frontend (1.0.0) stable; urgency=medium
 
   [ Sergio A. Rodriguez ]
   * Send build api credentials through the host orchestrator client
