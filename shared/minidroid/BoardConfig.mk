@@ -149,8 +149,8 @@ BOARD_GOOGLE_SYSTEM_DYNAMIC_PARTITIONS_PARTITION_LIST := system vendor
 # reserve 256MiB for dynamic partition metadata
 BOARD_GOOGLE_SYSTEM_DYNAMIC_PARTITIONS_SIZE := 268435456
 
-# 1MiB bigger than the dynamic partition to make build happy...
-BOARD_SUPER_PARTITION_SIZE := 269484032
+# 1MiB bigger than twice the dynamic partition to make build happy...
+BOARD_SUPER_PARTITION_SIZE := 537919488
 BOARD_SUPER_PARTITION_GROUPS := google_system_dynamic_partitions
 BOARD_BUILD_SUPER_IMAGE_BY_DEFAULT := true
 BOARD_SUPER_IMAGE_IN_UPDATE_PACKAGE := true
