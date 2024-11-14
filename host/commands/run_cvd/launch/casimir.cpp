@@ -16,7 +16,6 @@
 #include "host/commands/run_cvd/launch/launch.h"
 
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -38,24 +37,24 @@ Result<std::vector<MonitorCommand>> Casimir(
     return {};
   }
 
-  Command command(ProcessRestarterBinary());
-  command.AddParameter("-when_killed");
-  command.AddParameter("-when_dumped");
-  command.AddParameter("-when_exited_with_failure");
-  command.AddParameter("--");
+  Command casimir = Command(ProcessRestarterBinary())
+                        .AddParameter("-when_killed")
+                        .AddParameter("-when_dumped")
+                        .AddParameter("-when_exited_with_failure")
+                        .AddParameter("--")
+                        .AddParameter(CasimirBinary())
+                        .AddParameter("--nci-port")
+                        .AddParameter(config.casimir_nci_port())
+                        .AddParameter("--rf-port")
+                        .AddParameter(config.casimir_rf_port());
 
-  command.AddParameter(CasimirBinary());
-  command.AddParameter("--nci-port");
-  command.AddParameter(config.casimir_nci_port());
-  command.AddParameter("--rf-port");
-  command.AddParameter(config.casimir_rf_port());
   for (auto const& arg : config.casimir_args()) {
-    command.AddParameter(arg);
+    casimir.AddParameter(arg);
   }
 
   std::vector<MonitorCommand> commands;
-  commands.emplace_back(CF_EXPECT(log_tee.CreateLogTee(command, "casimir")));
-  commands.emplace_back(std::move(command));
+  commands.emplace_back(CF_EXPECT(log_tee.CreateLogTee(casimir, "casimir")));
+  commands.emplace_back(std::move(casimir));
   return commands;
 }
 
