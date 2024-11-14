@@ -6,6 +6,7 @@ Checks: &checks >-
   clang-diagnostic-*,
   -clang-diagnostic-pragma-once-outside-header,
   readability-avoid-const-params-in-decls,
+  readability-const-return-type,
 
 UseColor: true
 
