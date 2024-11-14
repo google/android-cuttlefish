@@ -84,6 +84,16 @@ std::string CuttlefishConfig::EnvironmentSpecific::launcher_log_path() const {
   return AbsolutePath(PerEnvironmentLogPath("launcher.log"));
 }
 
+std::string CuttlefishConfig::EnvironmentSpecific::casimir_nci_socket_path()
+    const {
+  return PerEnvironmentUdsPath("casimir_nci.sock");
+}
+
+std::string CuttlefishConfig::EnvironmentSpecific::casimir_rf_socket_path()
+    const {
+  return PerEnvironmentUdsPath("casimir_rf.sock");
+}
+
 static constexpr char kEnableWifi[] = "enable_wifi";
 void CuttlefishConfig::MutableEnvironmentSpecific::set_enable_wifi(
     bool enable_wifi) {
