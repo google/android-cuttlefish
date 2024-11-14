@@ -287,7 +287,7 @@ Result<void> AcloudCommand::RunAcloudConnect(const CommandRequest& request,
                                              const std::string& hostname) {
   auto build_top = StringFromEnv("ANDROID_BUILD_TOP", "");
   CF_EXPECT(
-      build_top != "",
+      !build_top.empty(),
       "Missing ANDROID_BUILD_TOP environment variable. Please run `source "
       "build/envsetup.sh`");
   Command cmd =

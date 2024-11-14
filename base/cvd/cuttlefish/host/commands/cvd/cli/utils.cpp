@@ -31,7 +31,7 @@ namespace cuttlefish {
 CommandInvocation ParseInvocation(const CommandRequest& request) {
   CommandInvocation invocation;
   invocation.arguments = request.Args();
-  if (invocation.arguments.size() == 0) {
+  if (invocation.arguments.empty()) {
     return invocation;
   }
   invocation.arguments[0] = cpp_basename(invocation.arguments[0]);

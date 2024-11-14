@@ -146,7 +146,7 @@ namespace acloud_impl {
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     const CommandRequest& request) {
   auto arguments = ParseInvocation(request).arguments;
-  CF_EXPECT(arguments.size() > 0);
+  CF_EXPECT(!arguments.empty());
   CF_EXPECT(arguments[0] == "create");
   arguments.erase(arguments.begin());
 
@@ -312,9 +312,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
           }));
 
   CF_EXPECT(ConsumeFlags(flags, arguments));
-  CF_EXPECT(arguments.size() == 0, "Unrecognized arguments:'"
-                                       << android::base::Join(arguments, "', '")
-                                       << "'");
+  CF_EXPECT(arguments.empty(), "Unrecognized arguments:'"
+                                   << android::base::Join(arguments, "', '")
+                                   << "'");
 
   CF_EXPECT_EQ(parsed_flags.local_instance.is_set, true,
                "Only '--local-instance' is supported");
@@ -391,7 +391,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     if (system_branch || system_build_id || system_build_target) {
       auto target =
           system_build_target.value_or(parsed_flags.build_target.value_or(""));
-      if (target != "") {
+      if (!target.empty()) {
         target = "/" + target;
       }
       auto build =
@@ -402,7 +402,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     if (parsed_flags.bootloader.branch || parsed_flags.bootloader.build_id ||
         parsed_flags.bootloader.build_target) {
       auto target = parsed_flags.bootloader.build_target.value_or("");
-      if (target != "") {
+      if (!target.empty()) {
         target = "/" + target;
       }
       auto build = parsed_flags.bootloader.build_id.value_or(
@@ -412,7 +412,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     }
     if (boot_branch || boot_build_id || boot_build_target) {
       auto target = boot_build_target.value_or("");
-      if (target != "") {
+      if (!target.empty()) {
         target = "/" + target;
       }
       auto build = boot_build_id.value_or(boot_branch.value_or("aosp-main"));
@@ -428,7 +428,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     }
     if (ota_branch || ota_build_id || ota_build_target) {
       auto target = ota_build_target.value_or("");
-      if (target != "") {
+      if (!target.empty()) {
         target = "/" + target;
       }
       auto build = ota_build_id.value_or(ota_branch.value_or(""));
@@ -530,7 +530,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         // there are some very old kernels that are built without
         // an initramfs.img file,
         // e.g. aosp_kernel-common-android-4.14-stable
-        if (kernel_image != "" && initramfs_image != "") {
+        if (!kernel_image.empty() && !initramfs_image.empty()) {
           start_request_builder.AddArguments({"-kernel_path", kernel_image,
                                       "-initramfs_path", initramfs_image});
         } else {
@@ -542,7 +542,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
                                         kVendorBootImageName);
           start_request_builder.AddArguments({"-boot_image", local_boot_image});
           // vendor boot image may not exist
-          if (vendor_boot_image != "") {
+          if (!vendor_boot_image.empty()) {
             start_request_builder.AddArguments(
                 {"-vendor_boot_image", vendor_boot_image});
           }
@@ -567,7 +567,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   if (launch_args) {
     start_request_builder.AddArguments(CF_EXPECT(BashTokenize(*launch_args)));
   }
-  if (acloud_config.launch_args != "") {
+  if (!acloud_config.launch_args.empty()) {
     start_request_builder.AddArguments(
         CF_EXPECT(BashTokenize(acloud_config.launch_args)));
   }

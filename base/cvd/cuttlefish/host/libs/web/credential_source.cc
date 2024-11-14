@@ -171,7 +171,7 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
   std::unique_ptr<CredentialSource> result;
   if (credential_source == "gce") {
     result = GceMetadataCredentialSource::Make(http_client);
-  } else if (credential_source == "") {
+  } else if (credential_source.empty()) {
     if (FileExists(oauth_filepath)) {
       std::string oauth_contents = CF_EXPECT(ReadFileContents(oauth_filepath));
       auto attempt_load = RefreshTokenCredentialSource::FromOauth2ClientFile(
