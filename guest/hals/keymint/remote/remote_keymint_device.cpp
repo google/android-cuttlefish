@@ -116,6 +116,7 @@ vector<KeyCharacteristics> convertKeyCharacteristics(
       case KM_TAG_RESET_SINCE_ID_ROTATION:
       case KM_TAG_ROOT_OF_TRUST:
       case KM_TAG_UNIQUE_ID:
+      case KM_TAG_MODULE_HASH:
         break;
 
       /* KeyMint-enforced */
