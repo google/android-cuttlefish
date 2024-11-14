@@ -1,13 +1,20 @@
-# Bad interaction with the `parse_headers` bazel feature
-Checks: '-clang-diagnostic-pragma-once-outside-header'
+# "clang-diagnostic-pragma-once-outside-header" has a bad interaction with the
+# `parse_headers` bazel feature.
 
-# Using the bazel clang-tidy helper, warnings seem to be ignored entirely.
-# Default warnings are converted to errors here for visibility.
-WarningsAsErrors: >
+Checks: &checks >-
   clang-analyzer-*,
+  clang-diagnostic-*,
+  -clang-diagnostic-pragma-once-outside-header,
+
+UseColor: true
+
+# Using the bazel clang-tidy helper, warnings are not shown from files that
+# don't have any errors.  "*" here treats everything from `Checks` as an error,
+# and from there some exclusions are added.
+WarningsAsErrors: >
+  *,
   -clang-analyzer-core.uninitialized.Assign,
   -clang-analyzer-core.UndefinedBinaryOperatorResult,
-  clang-diagnostic-*,
   -clang-diagnostic-pragma-once-outside-header,
   -clang-diagnostic-unused-const-variable,
   -clang-diagnostic-unused-variable,
