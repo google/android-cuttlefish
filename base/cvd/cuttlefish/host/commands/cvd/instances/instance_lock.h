@@ -35,7 +35,7 @@ class InstanceLockFile {
   bool operator<(const InstanceLockFile&) const;
 
  private:
-  InstanceLockFile(LockFile&& lock_file, const int instance_num);
+  InstanceLockFile(LockFile&& lock_file, int instance_num);
   LockFile lock_file_;
   const int instance_num_;
 };

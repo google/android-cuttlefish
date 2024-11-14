@@ -37,8 +37,8 @@ struct Overload : Ts... {
 template <typename... Ts>
 Overload(Ts...) -> Overload<Ts...>;
 
-cvd::Response CommandResponse(const cvd::Status_Code,
-                              const std::string message = "");
+cvd::Response CommandResponse(cvd::Status_Code,
+                              const std::string& message = "");
 
 // name of environment variable to mark the launch_cvd initiated by the cvd
 // server
@@ -70,11 +70,9 @@ constexpr android::base::LogSeverity kCvdDefaultVerbosity = android::base::INFO;
 Result<android::base::LogSeverity> EncodeVerbosity(
     const std::string& verbosity);
 
-Result<std::string> VerbosityToString(
-    const android::base::LogSeverity verbosity);
+Result<std::string> VerbosityToString(android::base::LogSeverity verbosity);
 
-android::base::LogSeverity SetMinimumVerbosity(
-    const android::base::LogSeverity);
+android::base::LogSeverity SetMinimumVerbosity(android::base::LogSeverity);
 Result<android::base::LogSeverity> SetMinimumVerbosity(const std::string&);
 
 android::base::LogSeverity GetMinimumVerbosity();

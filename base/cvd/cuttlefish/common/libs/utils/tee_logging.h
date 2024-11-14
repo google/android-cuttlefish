@@ -26,7 +26,7 @@
 
 namespace cuttlefish {
 
-std::string FromSeverity(const android::base::LogSeverity severity);
+std::string FromSeverity(android::base::LogSeverity severity);
 Result<android::base::LogSeverity> ToSeverity(const std::string& value);
 
 std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,

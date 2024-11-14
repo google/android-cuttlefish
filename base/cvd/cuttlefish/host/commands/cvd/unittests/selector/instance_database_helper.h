@@ -82,7 +82,7 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
   bool InitWorkspace();
   bool InitMockAndroidHostOut();
   // set error_ when there is an error
-  void SetErrorCode(const ErrorCode error_code, const std::string& msg);
+  void SetErrorCode(ErrorCode error_code, const std::string& msg);
 
   std::string android_artifacts_path_;
   std::string workspace_dir_;

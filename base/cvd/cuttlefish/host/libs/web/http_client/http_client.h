@@ -53,7 +53,7 @@ class HttpClient {
 
   static std::unique_ptr<HttpClient> CurlClient(
       NameResolver resolver = NameResolver(),
-      const bool use_logging_debug_function = false);
+      bool use_logging_debug_function = false);
   static std::unique_ptr<HttpClient> ServerErrorRetryClient(
       HttpClient&, int retry_attempts, std::chrono::milliseconds retry_delay);
 

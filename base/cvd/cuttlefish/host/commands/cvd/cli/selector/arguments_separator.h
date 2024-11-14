@@ -82,7 +82,7 @@ class ArgumentsSeparator {
       const CvdProtobufArg& input_args);
   static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
       const FlagsRegistration& flag_registration, const std::string& input_args,
-      const std::string delim = " ");
+      const std::string& delim = " ");
 
   const std::string& ProgPath() const { return prog_path_; }
   const std::vector<std::string>& CvdArgs() const { return cvd_args_; }
@@ -94,7 +94,7 @@ class ArgumentsSeparator {
                      const std::vector<std::string>& input_args,
                      const FlagsRegistration& flag_registration);
 
-  bool IsFlag(const ArgType arg_type) const;
+  bool IsFlag(ArgType arg_type) const;
   struct Output {
     std::string prog_path;
     std::vector<std::string> cvd_args;

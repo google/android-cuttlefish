@@ -38,7 +38,7 @@ namespace cuttlefish {
  */
 class CvdClient {
  public:
-  CvdClient(const android::base::LogSeverity verbosity,
+  CvdClient(android::base::LogSeverity verbosity,
             const std::string& server_socket_path = ServerSocketPath());
 
   Result<void> ConnectToServer();

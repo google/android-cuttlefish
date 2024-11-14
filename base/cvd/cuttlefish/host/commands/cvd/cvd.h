@@ -27,7 +27,7 @@ namespace cuttlefish {
 
 class Cvd {
  public:
-  Cvd(const android::base::LogSeverity verbosity,
+  Cvd(android::base::LogSeverity verbosity,
       InstanceLockFileManager& instance_lockfile_manager,
       InstanceManager& instance_manager);
 

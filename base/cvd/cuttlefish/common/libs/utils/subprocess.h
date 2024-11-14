@@ -90,8 +90,8 @@ class Subprocess {
   pid_t pid() const { return pid_; }
   StopperResult Stop() { return stopper_(this); }
 
-  Result<void> SendSignal(const int signal);
-  Result<void> SendSignalToGroup(const int signal);
+  Result<void> SendSignal(int signal);
+  Result<void> SendSignalToGroup(int signal);
 
  private:
   // Copy is disabled to avoid waiting twice for the same pid (the first wait
