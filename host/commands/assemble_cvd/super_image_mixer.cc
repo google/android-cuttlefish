@@ -89,7 +89,7 @@ void FindImports(Archive* archive, const std::string& build_prop_file) {
   for (const auto& line : lines) {
     auto parts = android::base::Split(line, " ");
     if (parts.size() >= 2 && parts[0] == "import") {
-      LOG(INFO) << build_prop_file << ": " << line;
+      LOG(DEBUG) << build_prop_file << ": " << line;
     }
   }
 }
@@ -179,7 +179,7 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
     } else if (!Contains(kVendorTargetImages, name)) {
       continue;
     }
-    LOG(INFO) << "Writing " << name << " from vendor target";
+    LOG(DEBUG) << "Writing " << name << " from vendor target";
     CF_EXPECT(
         target_files.vendor_zip.ExtractFiles({name}, combined_output_path),
         "Failed to extract " << name << " from the vendor target zip");
@@ -192,11 +192,12 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
       continue;
     }
     FindImports(&target_files.vendor_zip, name);
-    LOG(INFO) << "Writing " << name << " from vendor target";
+    LOG(DEBUG) << "Writing " << name << " from vendor target";
     CF_EXPECT(
         target_files.vendor_zip.ExtractFiles({name}, combined_output_path),
         "Failed to extract " << name << " from the vendor target zip");
   }
+  LOG(INFO) << "Completed extracting images from vendor.";
 
   for (const auto& name : target_files.system_contents) {
     if (!IsTargetFilesImage(name)) {
@@ -204,7 +205,7 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
     } else if (Contains(kVendorTargetImages, name)) {
       continue;
     }
-    LOG(INFO) << "Writing " << name << " from system target";
+    LOG(DEBUG) << "Writing " << name << " from system target";
     CF_EXPECT(
         target_files.system_zip.ExtractFiles({name}, combined_output_path),
         "Failed to extract " << name << " from the system target zip");
@@ -219,11 +220,12 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
       continue;
     }
     FindImports(&target_files.system_zip, name);
-    LOG(INFO) << "Writing " << name << " from system target";
+    LOG(DEBUG) << "Writing " << name << " from system target";
     CF_EXPECT(
         target_files.system_zip.ExtractFiles({name}, combined_output_path),
         "Failed to extract " << name << " from the system target zip");
   }
+  LOG(INFO) << "Completed extracting images from system.";
   return extracted;
 }
 
@@ -343,7 +345,15 @@ class SuperImageRebuilderImpl : public SuperImageRebuilder {
                                             instance_.system_target_zip()))) {
       const RebuildPaths paths =
           CF_EXPECT(GetRebuildPaths(fetcher_config_, instance_));
+      LOG(INFO) << "The super.img is being rebuilt with provided vendor and "
+                   "system target files.";
+      LOG(INFO) << "Vendor target files at: " << paths.vendor_target_zip;
+      LOG(INFO) << "System target files at: " << paths.system_target_zip;
       CF_EXPECT(RebuildSuperImage(paths));
+      LOG(INFO) << "Rebuild complete.";
+      LOG(INFO) << "Combined target files at: " << paths.combined_target_zip;
+      LOG(INFO) << "New super.img at: " << paths.super_image_output;
+      LOG(INFO) << "New vbmeta.img at: " << paths.vbmeta_image_output;
     }
     return {};
   }
