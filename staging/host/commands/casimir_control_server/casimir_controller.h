@@ -31,7 +31,10 @@ using namespace casimir::rf;
 class CasimirController {
  public:
   Result<void> Init(int casimir_rf_port);
+  Result<void> Mute();
+  Result<void> Unmute();
   Result<void> Close();
+  Result<void> SetPowerLevel(uint32_t power_level);
 
   /*
    * Poll for NFC-A + ISO-DEP
@@ -61,6 +64,7 @@ class CasimirController {
 
  private:
   SharedFD sock_;
+  uint8_t power_level;
 };
 
 }  // namespace cuttlefish
