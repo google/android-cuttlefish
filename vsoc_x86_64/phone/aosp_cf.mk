@@ -74,7 +74,7 @@ ifneq ($(filter aosp_cf_x86_64_phone aosp_cf_x86_64_phone_soong_system aosp_cf_x
 ifneq ($(CLANG_COVERAGE),true)
 ifneq ($(NATIVE_COVERAGE),true)
 USE_SOONG_DEFINED_SYSTEM_IMAGE := true
-PRODUCT_SOONG_DEFINED_SYSTEM_IMAGE := generic_system_image
+PRODUCT_SOONG_DEFINED_SYSTEM_IMAGE := aosp_shared_system_image
 endif # NATIVE_COVERAGE
 endif # CLANG_COVERAGE
 endif # aosp_cf_x86_64_phone aosp_cf_x86_64_foldable
