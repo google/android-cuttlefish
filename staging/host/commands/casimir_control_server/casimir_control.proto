@@ -21,7 +21,10 @@ import "google/protobuf/empty.proto";
 service CasimirControlService {
   rpc SendApdu (SendApduRequest) returns (SendApduReply) {}
   rpc PollA (Void) returns (SenderId) {}
-  rpc Close (Void) returns (Void) {}
+  rpc SetRadioState(RadioState) returns (Void) {}
+  rpc SetPowerLevel(PowerLevel) returns (Void) {}
+  rpc Init(Void) returns (Void) {}
+  rpc Close(Void) returns (Void) {}
 }
 
 message SendApduRequest {
@@ -38,4 +41,12 @@ message SenderId {
 }
 
 message Void {
+}
+
+message RadioState {
+  bool radio_on = 1;
+}
+
+message PowerLevel {
+  uint32 power_level = 1;
 }
