@@ -29,6 +29,8 @@
 #include "utils.h"
 
 using casimircontrolserver::CasimirControlService;
+using casimircontrolserver::PowerLevel;
+using casimircontrolserver::RadioState;
 using casimircontrolserver::SendApduReply;
 using casimircontrolserver::SendApduRequest;
 using casimircontrolserver::SenderId;
@@ -48,19 +50,90 @@ using std::vector;
 DEFINE_string(grpc_uds_path, "", "grpc_uds_path");
 DEFINE_int32(casimir_rf_port, -1, "RF port to control Casimir");
 
+#define CHECK_RETURN(call, msg)                          \
+  auto res = call;                                       \
+  if (!res.ok()) {                                       \
+    LOG(ERROR) << msg;                                   \
+    return Status(StatusCode::FAILED_PRECONDITION, msg); \
+  }
+#define ENSURE_INIT()        \
+  {                          \
+    const auto res = Init(); \
+    if (!res.ok()) {         \
+      return res;            \
+    }                        \
+  }
 class CasimirControlServiceImpl final : public CasimirControlService::Service {
   CasimirController device;
   bool isInitialized = false;
-  Status Close(ServerContext* context, const Void*, Void* senderId) override {
+  bool isRadioOn = false;
+
+  Status SetPowerLevel(ServerContext* context, const PowerLevel* power_level,
+                       Void*) override {
+    if (!isInitialized) {
+      return Status::OK;
+    }
+    if (!device.SetPowerLevel(power_level->power_level())) {
+      return Status(StatusCode::FAILED_PRECONDITION,
+                    "Failed to set power level");
+    }
+    return Status::OK;
+  }
+
+  Status Init(ServerContext*, const Void*, Void*) override { return Init(); }
+
+  Status Init() {
+    if (isInitialized) {
+      return Status::OK;
+    }
+    // Step 1: Initialize connection with casimir
+    auto init_res = device.Init(FLAGS_casimir_rf_port);
+    if (!init_res.ok()) {
+      LOG(ERROR) << "Failed to initialize connection to casimir: "
+                 << init_res.error().FormatForEnv();
+      return Status(StatusCode::FAILED_PRECONDITION,
+                    "Failed to initialize connection to casimir");
+    }
+    isInitialized = true;
+    return Status::OK;
+  }
+
+  Status Close(ServerContext* context, const Void*, Void*) override {
     if (!isInitialized) {
       return Status::OK;
     }
     isInitialized = false;
-    if (!device.Close().ok()) {
-      return Status(StatusCode::FAILED_PRECONDITION,
-                    "Failed to connect with casimir");
+    CHECK_RETURN(device.Close(), "Failed to close connection to casimir")
+    return Status::OK;
+  }
+
+  Status Mute() {
+    if (isRadioOn) {
+      CHECK_RETURN(device.Mute(), "Failed to mute radio")
+      isRadioOn = false;
     }
     return Status::OK;
+  }
+
+  Status Unmute() {
+    if (!isRadioOn) {
+      CHECK_RETURN(device.Unmute(), "Failed to unmute radio")
+      isRadioOn = true;
+    }
+    return Status::OK;
+  }
+
+  Status SetRadioState(ServerContext* context, const RadioState* radio_state,
+                       Void*) override {
+    if (radio_state->radio_on()) {
+      ENSURE_INIT()
+      return Unmute();
+    } else {
+      if (!isInitialized) {
+        return Status::OK;
+      }
+      return Mute();
+    }
   }
 
   Status PollA(ServerContext* context, const Void*,
@@ -75,6 +148,7 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
                       "Failed to connect with casimir");
       }
       isInitialized = true;
+      CHECK_RETURN(Unmute(), "failed to unmute the device")
     }
     // Step 2: Poll
     auto poll_res = device.Poll();
@@ -83,8 +157,7 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
       return Status(StatusCode::FAILED_PRECONDITION,
                     "Failed to poll and select NFC-A and ISO-DEP");
     }
-    uint16_t id = poll_res.value();
-
+    uint32_t id = static_cast<uint32_t>(poll_res.value());
     senderId->set_sender_id(id);
     return Status::OK;
   }
@@ -104,17 +177,7 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
       }
       apdu_bytes.push_back(apdu_bytes_res.value());
     }
-    if (!isInitialized) {
-      // Step 1: Initialize connection with casimir
-      auto init_res = device.Init(FLAGS_casimir_rf_port);
-      if (!init_res.ok()) {
-        LOG(ERROR) << "Failed to initialize connection to casimir: "
-                   << init_res.error().FormatForEnv();
-        return Status(StatusCode::FAILED_PRECONDITION,
-                      "Failed to connect with casimir");
-      }
-      isInitialized = true;
-    }
+    ENSURE_INIT()
 
     int16_t id;
     if (request->has_sender_id()) {
