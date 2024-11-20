@@ -28,6 +28,8 @@
 #include "casimir_controller.h"
 #include "utils.h"
 
+#include "common/libs/utils/result.h"
+
 using casimircontrolserver::CasimirControlService;
 using casimircontrolserver::PowerLevel;
 using casimircontrolserver::RadioState;
@@ -49,6 +51,7 @@ using std::vector;
 
 DEFINE_string(grpc_uds_path, "", "grpc_uds_path");
 DEFINE_int32(casimir_rf_port, -1, "RF port to control Casimir");
+DEFINE_string(casimir_rf_path, "", "RF unix server path to control Casimir");
 
 #define CHECK_RETURN(call, msg)                          \
   auto res = call;                                       \
@@ -87,12 +90,22 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
       return Status::OK;
     }
     // Step 1: Initialize connection with casimir
-    auto init_res = device.Init(FLAGS_casimir_rf_port);
+    cuttlefish::Result<void> init_res;
+    if (FLAGS_casimir_rf_port >= 0) {
+      init_res = device.Init(FLAGS_casimir_rf_port);
+    } else if (!FLAGS_casimir_rf_path.empty()) {
+      init_res = device.Init(FLAGS_casimir_rf_path);
+    } else {
+      std::string message =
+          "`--casimir_rf_port` or `--casimir_rf_path` must be set";
+      LOG(ERROR) << message;
+      return Status(StatusCode::FAILED_PRECONDITION, message);
+    }
     if (!init_res.ok()) {
       LOG(ERROR) << "Failed to initialize connection to casimir: "
                  << init_res.error().FormatForEnv();
       return Status(StatusCode::FAILED_PRECONDITION,
-                    "Failed to initialize connection to casimir");
+                    "Failed to connect with casimir");
     }
     isInitialized = true;
     return Status::OK;
@@ -138,9 +151,20 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
 
   Status PollA(ServerContext* context, const Void*,
                SenderId* senderId) override {
+    ENSURE_INIT()
     if (!isInitialized) {
       // Step 1: Initialize connection with casimir
-      auto init_res = device.Init(FLAGS_casimir_rf_port);
+      cuttlefish::Result<void> init_res;
+      if (FLAGS_casimir_rf_port >= 0) {
+        init_res = device.Init(FLAGS_casimir_rf_port);
+      } else if (!FLAGS_casimir_rf_path.empty()) {
+        init_res = device.Init(FLAGS_casimir_rf_path);
+      } else {
+        std::string message =
+            "`--casimir_rf_port` or `--casimir_rf_path` must be set";
+        LOG(ERROR) << message;
+        return Status(StatusCode::FAILED_PRECONDITION, message);
+      }
       if (!init_res.ok()) {
         LOG(ERROR) << "Failed to initialize connection to casimir: "
                    << init_res.error().FormatForEnv();
