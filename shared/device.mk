@@ -425,7 +425,7 @@ ifeq ($(TRUSTY_SYSTEM_VM),nonsecure)
     PRODUCT_PACKAGES += \
         lk_trusty.elf \
         trusty_security_vm_launcher \
-        cf-early_vms.xml \
+        early_vms.xml \
         cf-trusty_security_vm_launcher.rc \
         lk_trusty.elf \
         trusty-ut-ctrl.system \
