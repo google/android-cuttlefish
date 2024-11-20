@@ -24,6 +24,7 @@
 
 #include "common/libs/utils/result.h"
 #include "host/libs/config/command_source.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
 constexpr const size_t kBufferSize = 1024;
@@ -31,7 +32,7 @@ constexpr const size_t kBufferSize = 1024;
 namespace cuttlefish {
 
 Result<MonitorCommand> NfcConnector(
-    const CuttlefishConfig& config,
+    const CuttlefishConfig::EnvironmentSpecific& environment,
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<std::string> fifo_paths = {
       instance.PerInstanceInternalPath("nfc_fifo_vm.in"),
@@ -44,7 +45,7 @@ Result<MonitorCommand> NfcConnector(
   return Command(TcpConnectorBinary())
       .AddParameter("-fifo_out=", fifos[0])
       .AddParameter("-fifo_in=", fifos[1])
-      .AddParameter("-data_port=", config.casimir_nci_port())
+      .AddParameter("-data_path=", environment.casimir_nci_socket_path())
       .AddParameter("-buffer_size=", kBufferSize);
 }
 
