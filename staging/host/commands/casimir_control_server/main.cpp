@@ -66,6 +66,10 @@ DEFINE_string(casimir_rf_path, "", "RF unix server path to control Casimir");
       return res;            \
     }                        \
   }
+
+namespace cuttlefish {
+namespace {
+
 class CasimirControlServiceImpl final : public CasimirControlService::Service {
   CasimirController device;
   bool isInitialized = false;
@@ -191,8 +195,7 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
     // Step 0: Parse input
     std::vector<std::shared_ptr<std::vector<uint8_t>>> apdu_bytes;
     for (int i = 0; i < request->apdu_hex_strings_size(); i++) {
-      auto apdu_bytes_res =
-          cuttlefish::BytesArray(request->apdu_hex_strings(i));
+      auto apdu_bytes_res = BytesArray(request->apdu_hex_strings(i));
       if (!apdu_bytes_res.ok()) {
         LOG(ERROR) << "Failed to parse input " << request->apdu_hex_strings(i)
                    << ", " << apdu_bytes_res.error().FormatForEnv();
@@ -234,7 +237,8 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
   }
 };
 
-void RunServer() {
+void RunServer(int argc, char** argv) {
+  ::gflags::ParseCommandLineFlags(&argc, &argv, true);
   std::string server_address("unix:" + FLAGS_grpc_uds_path);
   CasimirControlServiceImpl service;
 
@@ -255,9 +259,11 @@ void RunServer() {
   server->Wait();
 }
 
+}  // namespace
+}  // namespace cuttlefish
+
 int main(int argc, char** argv) {
-  ::gflags::ParseCommandLineFlags(&argc, &argv, true);
-  RunServer();
+  cuttlefish::RunServer(argc, argv);
 
   return 0;
 }
