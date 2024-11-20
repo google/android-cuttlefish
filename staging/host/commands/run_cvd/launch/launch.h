@@ -50,8 +50,9 @@ VhostDeviceVsockComponent();
 Result<std::optional<MonitorCommand>> BluetoothConnector(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 
-Result<MonitorCommand> NfcConnector(const CuttlefishConfig&,
-                                    const CuttlefishConfig::InstanceSpecific&);
+Result<MonitorCommand> NfcConnector(
+    const CuttlefishConfig::EnvironmentSpecific&,
+    const CuttlefishConfig::InstanceSpecific&);
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
                  KernelLogPipeProvider>
@@ -62,8 +63,8 @@ Result<MonitorCommand> LogcatReceiver(
 std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific&);
 
 Result<std::optional<MonitorCommand>> CasimirControlServer(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
-    GrpcSocketCreator&);
+    const CuttlefishConfig&, const CuttlefishConfig::EnvironmentSpecific&,
+    const CuttlefishConfig::InstanceSpecific&, GrpcSocketCreator&);
 
 Result<std::optional<MonitorCommand>> ConsoleForwarder(
     const CuttlefishConfig::InstanceSpecific&);
@@ -94,8 +95,8 @@ fruit::Component<
 RootCanalComponent();
 
 Result<std::vector<MonitorCommand>> Casimir(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
-    LogTeeCreator&);
+    const CuttlefishConfig&, const CuttlefishConfig::EnvironmentSpecific&,
+    const CuttlefishConfig::InstanceSpecific&, LogTeeCreator&);
 
 Result<std::vector<MonitorCommand>> Pica(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
