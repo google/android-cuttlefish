@@ -19,8 +19,8 @@ package {
 cc_library {
     name: "libcasimir_control_server",
     shared_libs: [
-        "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
+        "libprotobuf-cpp-full",
     ],
     static_libs: [
         "libgflags",
@@ -55,18 +55,19 @@ cc_binary_host {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
+        "libprotobuf-cpp-full",
     ],
     static_libs: [
+        "libcasimir_control_server",
         "libcuttlefish_host_config",
         "libgflags",
-        "libcasimir_control_server",
         "libgrpc++_reflection",
     ],
     header_libs: ["casimir_rf_packets_cxx"],
     srcs: [
         "casimir_controller.cpp",
+        "hex.cpp",
         "main.cpp",
     ],
     cflags: [
@@ -83,8 +84,8 @@ cc_binary_host {
 filegroup {
     name: "CasimirControlServerProto",
     srcs: [
-        "casimir_control.proto",
         ":libprotobuf-internal-protos",
+        "casimir_control.proto",
     ],
 }
 
