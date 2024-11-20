@@ -77,6 +77,21 @@ Result<void> CasimirController::SetPowerLevel(uint32_t power_level) {
   return {};
 }
 
+Result<void> CasimirController::Init(const std::string& casimir_rf_path) {
+  CF_EXPECT(!sock_->IsOpen());
+
+  sock_ = cuttlefish::SharedFD::SocketLocalClient(casimir_rf_path, false,
+                                                  SOCK_STREAM);
+  CF_EXPECT(sock_->IsOpen(),
+            "Failed to connect to casimir with RF path" << casimir_rf_path);
+
+  int flags = sock_->Fcntl(F_GETFL, 0);
+  CF_EXPECT_GE(flags, 0, "Failed to get FD flags of casimir socket");
+  CF_EXPECT_EQ(sock_->Fcntl(F_SETFL, flags | O_NONBLOCK), 0,
+               "Failed to set casimir socket nonblocking");
+  return {};
+}
+
 Result<uint16_t> CasimirController::SelectNfcA() {
   PollCommandBuilder poll_command;
   poll_command.technology_ = Technology::NFC_A;
