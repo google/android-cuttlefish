@@ -1,16 +1,4 @@
 prebuilt_etc {
-    name: "cf-early_vms.xml",
-    src: "early_vms.xml",
-    filename: "early_vms.xml",
-    relative_install_path: "avf",
-    system_ext_specific: true,
-    enabled: select(release_flag("RELEASE_AVF_ENABLE_EARLY_VM"), {
-        true: true,
-        false: false,
-    }),
-}
-
-prebuilt_etc {
     name: "cf-trusty_security_vm_launcher.rc",
     src: "trusty_security_vm_launcher.rc",
     filename: "trusty_security_vm_launcher.rc",
