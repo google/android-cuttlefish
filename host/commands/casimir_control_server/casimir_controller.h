@@ -66,7 +66,6 @@ class CasimirController {
   Result<std::shared_ptr<std::vector<uint8_t>>> ReadRfPacket(
       std::chrono::milliseconds timeout);
 
- private:
   SharedFD sock_;
   uint8_t power_level;
 };
