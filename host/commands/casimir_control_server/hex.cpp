@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "host/commands/casimir_control_server/hex.h"
 
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
+namespace {
 
 static int ByteNumber(char x) {
   x = tolower(x);
@@ -29,6 +30,8 @@ static int ByteNumber(char x) {
   }
   return -1;
 }
+
+}  // namespace
 
 Result<std::shared_ptr<std::vector<uint8_t>>> BytesArray(
     const std::string& hex_string) {
