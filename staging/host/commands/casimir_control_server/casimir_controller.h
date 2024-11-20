@@ -31,9 +31,13 @@ using namespace casimir::rf;
 class CasimirController {
  public:
   Result<void> Init(int casimir_rf_port);
+  Result<void> Init(const std::string& casimir_rf_path);
+
+  Result<void> Close();
+
   Result<void> Mute();
   Result<void> Unmute();
-  Result<void> Close();
+
   Result<void> SetPowerLevel(uint32_t power_level);
 
   /*
