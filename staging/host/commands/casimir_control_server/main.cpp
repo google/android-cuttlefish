@@ -25,10 +25,10 @@
 #include <grpcpp/health_check_service_interface.h>
 
 #include "casimir_control.grpc.pb.h"
-#include "casimir_controller.h"
-#include "utils.h"
 
 #include "common/libs/utils/result.h"
+#include "host/commands/casimir_control_server/casimir_controller.h"
+#include "host/commands/casimir_control_server/hex.h"
 
 using casimircontrolserver::CasimirControlService;
 using casimircontrolserver::PowerLevel;
