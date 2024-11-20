@@ -33,6 +33,7 @@ namespace cuttlefish {
 
 Result<std::optional<MonitorCommand>> CasimirControlServer(
     const CuttlefishConfig& config,
+    const CuttlefishConfig::EnvironmentSpecific& environment,
     const CuttlefishConfig::InstanceSpecific& instance,
     GrpcSocketCreator& grpc_socket) {
   if (!config.enable_host_nfc()) {
@@ -45,8 +46,8 @@ Result<std::optional<MonitorCommand>> CasimirControlServer(
   Command casimir_control_server_cmd(CasimirControlServerBinary());
   casimir_control_server_cmd.AddParameter(
       "-grpc_uds_path=", grpc_socket.CreateGrpcSocket("CasimirControlServer"));
-  casimir_control_server_cmd.AddParameter("-casimir_rf_port=",
-                                          config.casimir_rf_port());
+  casimir_control_server_cmd.AddParameter("-casimir_rf_path=",
+                                          environment.casimir_rf_socket_path());
   return casimir_control_server_cmd;
 }
 
