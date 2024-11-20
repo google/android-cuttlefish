@@ -212,7 +212,9 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
 
   AddNetsimdLogs(writer);
 
-  SaveFile(writer, "cvd_host_bugreport.log", log_filename);
+  LOG(INFO) << "Building cvd bugreport completed";
+
+  SaveFile(writer, "cvd_bugreport_builder.log", log_filename);
 
   writer.Finish();
 
