@@ -20,7 +20,6 @@
 #include <sys/socket.h>
 #include <syscall.h>
 
-#include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
@@ -28,9 +27,9 @@ namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder CasimirControlServerPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("casimir_control_server"))
+      .AddDirectory(host.environments_uds_dir, /* is_ro= */ false)
       .AddDirectory(host.instance_uds_dir, /* is_ro= */ false)
-      .AddFile("/dev/urandom")                    // For gRPC
-      .Allow(sandbox2::UnrestrictedNetworking())  // Communicate with casimir
+      .AddFile("/dev/urandom")  // For gRPC
       .AddPolicyOnSyscall(__NR_madvise,
                           {ARG_32(2), JEQ32(MADV_DONTNEED, ALLOW)})
       .AddPolicyOnSyscall(
@@ -63,7 +62,8 @@ sandbox2::PolicyBuilder CasimirControlServerPolicy(const HostInfo& host) {
       .AllowSyscall(__NR_sched_getscheduler)
       .AllowSyscall(__NR_sched_yield)
       .AllowSyscall(__NR_sendmsg)
-      .AllowSyscall(__NR_shutdown);
+      .AllowSyscall(__NR_shutdown)
+      .AllowTCGETS();
 }
 
 }  // namespace cuttlefish::process_sandboxer

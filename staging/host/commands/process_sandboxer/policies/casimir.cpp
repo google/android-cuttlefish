@@ -17,11 +17,11 @@
 #include "host/commands/process_sandboxer/policies.h"
 
 #include <netinet/ip_icmp.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 
-#include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
@@ -29,6 +29,10 @@ namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder CasimirPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("casimir"))
+      // `librustutils::inherited_fd` scans `/proc/self/fd` for open FDs.
+      // Mounting a subset of `/proc/` is invalid.
+      .AddDirectory("/proc", /* is_ro = */ false)
+      .AddDirectory(host.environments_uds_dir, /* is_ro= */ false)
       .AddPolicyOnMmap([](bpf_labels& labels) -> std::vector<sock_filter> {
         return {
             ARG_32(2),  // prot
@@ -49,13 +53,14 @@ sandbox2::PolicyBuilder CasimirPolicy(const HostInfo& host) {
                 JEQ32(ICMP_REDIR_NETTOS, ALLOW),
                 LABEL(&labels, cf_casimir_setsockopt_end)};
           })
-      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_INET, ALLOW)})
-      .Allow(sandbox2::UnrestrictedNetworking())
+      .AddPolicyOnSyscall(__NR_ioctl, {ARG_32(1), JEQ32(FIONBIO, ALLOW)})
+      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW)})
       .AllowEpoll()
       .AllowEpollWait()
       .AllowEventFd()
       .AllowHandleSignals()
       .AllowPrctlSetName()
+      .AllowReaddir()
       .AllowSafeFcntl()
       .AllowSyscall(__NR_accept4)
       .AllowSyscall(__NR_bind)
