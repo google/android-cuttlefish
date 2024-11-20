@@ -71,10 +71,7 @@ namespace cuttlefish {
 namespace {
 
 class CasimirControlServiceImpl final : public CasimirControlService::Service {
-  CasimirController device;
-  bool isInitialized = false;
-  bool isRadioOn = false;
-
+ private:
   Status SetPowerLevel(ServerContext* context, const PowerLevel* power_level,
                        Void*) override {
     if (!isInitialized) {
@@ -235,6 +232,10 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
     // Returns OK although returned bytes is valids if ends with [0x90, 0x00].
     return Status::OK;
   }
+
+  CasimirController device;
+  bool isInitialized = false;
+  bool isRadioOn = false;
 };
 
 void RunServer(int argc, char** argv) {
