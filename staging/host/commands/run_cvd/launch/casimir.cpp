@@ -21,6 +21,7 @@
 
 #include <fruit/fruit.h>
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
 #include "host/libs/config/command_source.h"
@@ -31,11 +32,20 @@ namespace cuttlefish {
 
 Result<std::vector<MonitorCommand>> Casimir(
     const CuttlefishConfig& config,
+    const CuttlefishConfig::EnvironmentSpecific& environment,
     const CuttlefishConfig::InstanceSpecific& instance,
     LogTeeCreator& log_tee) {
   if (!(config.enable_host_nfc() && instance.start_casimir())) {
     return {};
   }
+
+  SharedFD nci_server = SharedFD::SocketLocalServer(
+      environment.casimir_nci_socket_path(), false, SOCK_STREAM, 0600);
+  CF_EXPECTF(nci_server->IsOpen(), "{}", nci_server->StrError());
+
+  SharedFD rf_server = SharedFD::SocketLocalServer(
+      environment.casimir_rf_socket_path(), false, SOCK_STREAM, 0600);
+  CF_EXPECTF(rf_server->IsOpen(), "{}", rf_server->StrError());
 
   Command casimir = Command(ProcessRestarterBinary())
                         .AddParameter("-when_killed")
@@ -43,10 +53,10 @@ Result<std::vector<MonitorCommand>> Casimir(
                         .AddParameter("-when_exited_with_failure")
                         .AddParameter("--")
                         .AddParameter(CasimirBinary())
-                        .AddParameter("--nci-port")
-                        .AddParameter(config.casimir_nci_port())
-                        .AddParameter("--rf-port")
-                        .AddParameter(config.casimir_rf_port());
+                        .AddParameter("--nci-unix-fd")
+                        .AddParameter(nci_server)
+                        .AddParameter("--rf-unix-fd")
+                        .AddParameter(rf_server);
 
   for (auto const& arg : config.casimir_args()) {
     casimir.AddParameter(arg);
