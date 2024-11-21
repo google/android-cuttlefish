@@ -45,8 +45,8 @@ class CasimirController {
    */
   Result<uint16_t> Poll();
 
-  Result<std::shared_ptr<std::vector<uint8_t>>> SendApdu(
-      uint16_t receiver_id, const std::shared_ptr<std::vector<uint8_t>>& apdu);
+  Result<std::vector<uint8_t>> SendApdu(uint16_t receiver_id,
+                                        std::vector<uint8_t> apdu);
 
  private:
   /*
