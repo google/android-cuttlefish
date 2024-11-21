@@ -1,4 +1,6 @@
-service trusty_security_vm_launcher /system_ext/bin/trusty_security_vm_launcher --kernel /system_ext/etc/vm/trusty_vm/lk_trusty.elf
+service trusty_security_vm_launcher /system_ext/bin/trusty_security_vm_launcher \
+--kernel /system_ext/etc/vm/trusty_vm/lk_trusty.elf \
+--memory-size-mib 16
     disabled
     user system
     group system virtualmachine
