@@ -33,19 +33,18 @@ static int ByteNumber(char x) {
 
 }  // namespace
 
-Result<std::shared_ptr<std::vector<uint8_t>>> BytesArray(
-    const std::string& hex_string) {
+Result<std::vector<uint8_t>> HexToBytes(const std::string& hex_string) {
   CF_EXPECT(hex_string.size() % 2 == 0,
             "Failed to parse input. Must be even size");
 
   int len = hex_string.size() / 2;
-  auto out = std::make_shared<std::vector<uint8_t>>(len);
+  std::vector<uint8_t> out;
   for (int i = 0; i < len; i++) {
     int num_h = ByteNumber(hex_string[i * 2]);
     int num_l = ByteNumber(hex_string[i * 2 + 1]);
     CF_EXPECT(num_h >= 0 && num_l >= 0,
               "Failed to parse input. Must only contain [0-9a-fA-F]");
-    (*out.get())[i] = num_h * 16 + num_l;
+    out[i] = num_h * 16 + num_l;
   }
 
   return out;
