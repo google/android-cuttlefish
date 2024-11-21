@@ -44,7 +44,7 @@ endif
 TARGET_KERNEL_PATH ?= $(SYSTEM_DLKM_SRC)/kernel-$(TARGET_KERNEL_USE)
 PRODUCT_COPY_FILES += $(TARGET_KERNEL_PATH):kernel
 
-BOARD_KERNEL_VERSION := $(word 1,$(subst vermagic=,,$(shell egrep -h -ao -m 1 'vermagic=.*' $(KERNEL_MODULES_PATH)/nd_virtio.ko)))
+BOARD_KERNEL_VERSION := $(word 1,$(subst vermagic=,,$(shell grep -E -h -ao -m 1 'vermagic=.*' $(KERNEL_MODULES_PATH)/nd_virtio.ko)))
 
 ifneq (,$(findstring auto, $(PRODUCT_NAME)))
 HIB_SWAP_IMAGE_SIZE_GB ?= 4

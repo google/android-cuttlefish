@@ -1057,17 +1057,17 @@ callStateToString(RIL_CallState s) {
 
 const char *
 requestToString(int request) {
-/*
- cat guest/hals/ril/reference-libril/ril_commands.h \
- | egrep "^ *{RIL_" \
- | sed -re 's/\{RIL_([^,]+),[^,]+,([^}]+).+/case RIL_\1: return "\1";/'
+    /*
+     cat guest/hals/ril/reference-libril/ril_commands.h \
+     | grep -E "^ *{RIL_" \
+     | sed -re 's/\{RIL_([^,]+),[^,]+,([^}]+).+/case RIL_\1: return "\1";/'
 
 
- cat guest/hals/ril/reference-libril/ril_unsol_commands.h \
- | egrep "^ *{RIL_" \
- | sed -re 's/\{RIL_([^,]+),([^}]+).+/case RIL_\1: return "\1";/'
+     cat guest/hals/ril/reference-libril/ril_unsol_commands.h \
+     | grep -E "^ *{RIL_" \
+     | sed -re 's/\{RIL_([^,]+),([^}]+).+/case RIL_\1: return "\1";/'
 
-*/
+    */
     switch(request) {
         case RIL_REQUEST_GET_SIM_STATUS: return "GET_SIM_STATUS";
         case RIL_REQUEST_ENTER_SIM_PIN: return "ENTER_SIM_PIN";
