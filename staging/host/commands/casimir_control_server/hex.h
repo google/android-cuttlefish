@@ -20,7 +20,6 @@
 
 namespace cuttlefish {
 
-Result<std::shared_ptr<std::vector<uint8_t>>> BytesArray(
-    const std::string& hex_string);
+Result<std::vector<uint8_t>> HexToBytes(const std::string& hex_string);
 
 }  // namespace cuttlefish

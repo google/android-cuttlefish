@@ -136,12 +136,12 @@ Result<uint16_t> CasimirController::Poll() {
   return sender_id;
 }
 
-Result<std::shared_ptr<std::vector<uint8_t>>> CasimirController::SendApdu(
-    uint16_t receiver_id, const std::shared_ptr<std::vector<uint8_t>>& apdu) {
+Result<std::vector<uint8_t>> CasimirController::SendApdu(
+    uint16_t receiver_id, std::vector<uint8_t> apdu) {
   CF_EXPECT(sock_->IsOpen());
 
   DataBuilder data_builder;
-  data_builder.data_ = *apdu.get();
+  data_builder.data_ = std::move(apdu);
   data_builder.receiver_ = receiver_id;
   data_builder.technology_ = Technology::NFC_A;
   data_builder.protocol_ = Protocol::ISO_DEP;
@@ -153,7 +153,7 @@ Result<std::shared_ptr<std::vector<uint8_t>>> CasimirController::SendApdu(
   if (rf_packet.IsValid()) {
     auto data = DataView::Create(rf_packet);
     if (data.IsValid() && rf_packet.GetSender() == receiver_id) {
-      return std::make_shared<std::vector<uint8_t>>(data.GetData());
+      return data.GetData();
     }
   }
   return CF_ERR("Invalid APDU response");

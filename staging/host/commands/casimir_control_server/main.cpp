@@ -190,16 +190,16 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
   Status SendApdu(ServerContext* context, const SendApduRequest* request,
                   SendApduReply* response) override {
     // Step 0: Parse input
-    std::vector<std::shared_ptr<std::vector<uint8_t>>> apdu_bytes;
-    for (int i = 0; i < request->apdu_hex_strings_size(); i++) {
-      auto apdu_bytes_res = BytesArray(request->apdu_hex_strings(i));
+    std::vector<std::vector<uint8_t>> apdu_bytes;
+    for (const std::string& apdu_hex_string : request->apdu_hex_strings()) {
+      Result<std::vector<uint8_t>> apdu_bytes_res = HexToBytes(apdu_hex_string);
       if (!apdu_bytes_res.ok()) {
-        LOG(ERROR) << "Failed to parse input " << request->apdu_hex_strings(i)
-                   << ", " << apdu_bytes_res.error().FormatForEnv();
+        LOG(ERROR) << "Failed to parse input '" << apdu_hex_string << "', "
+                   << apdu_bytes_res.error().FormatForEnv();
         return Status(StatusCode::INVALID_ARGUMENT,
                       "Failed to parse input. Must only contain [0-9a-fA-F]");
       }
-      apdu_bytes.push_back(apdu_bytes_res.value());
+      apdu_bytes.emplace_back(std::move(*apdu_bytes_res));
     }
     ENSURE_INIT()
 
@@ -217,14 +217,15 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
     // Step 3: Send APDU bytes
     response->clear_response_hex_strings();
     for (int i = 0; i < apdu_bytes.size(); i++) {
-      auto send_res = device.SendApdu(id, apdu_bytes[i]);
+      Result<std::vector<uint8_t>> send_res =
+          device.SendApdu(id, std::move(apdu_bytes[i]));
       if (!send_res.ok()) {
         LOG(ERROR) << "Failed to send APDU bytes: "
                    << send_res.error().FormatForEnv();
         return Status(StatusCode::UNKNOWN, "Failed to send APDU bytes");
       }
-      auto bytes = *(send_res.value());
-      auto resp = android::base::HexString(
+      std::vector<uint8_t> bytes = std::move(*send_res);
+      std::string resp = android::base::HexString(
           reinterpret_cast<void*>(bytes.data()), bytes.size());
       response->add_response_hex_strings(resp);
     }
