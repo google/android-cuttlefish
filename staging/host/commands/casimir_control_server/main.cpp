@@ -70,60 +70,62 @@ DEFINE_string(casimir_rf_path, "", "RF unix server path to control Casimir");
 namespace cuttlefish {
 namespace {
 
+Result<CasimirController> ConnectToCasimir() {
+  if (FLAGS_casimir_rf_port >= 0) {
+    return CF_EXPECT(
+        CasimirController::ConnectToTcpPort(FLAGS_casimir_rf_port));
+  } else if (!FLAGS_casimir_rf_path.empty()) {
+    return CF_EXPECT(
+        CasimirController::ConnectToUnixSocket(FLAGS_casimir_rf_path));
+  } else {
+    return CF_ERR("`--casimir_rf_port` or `--casimir_rf_path` must be set");
+  }
+}
+
 class CasimirControlServiceImpl final : public CasimirControlService::Service {
  private:
   Status SetPowerLevel(ServerContext* context, const PowerLevel* power_level,
                        Void*) override {
-    if (!isInitialized) {
+    if (!device_) {
       return Status::OK;
     }
-    if (!device.SetPowerLevel(power_level->power_level())) {
+    if (!device_->SetPowerLevel(power_level->power_level())) {
       return Status(StatusCode::FAILED_PRECONDITION,
                     "Failed to set power level");
     }
     return Status::OK;
   }
 
+  Status Close(ServerContext* context, const Void*, Void* senderId) override {
+    device_ = std::nullopt;
+    return Status::OK;
+  }
+
   Status Init(ServerContext*, const Void*, Void*) override { return Init(); }
 
   Status Init() {
-    if (isInitialized) {
+    if (device_.has_value()) {
       return Status::OK;
     }
     // Step 1: Initialize connection with casimir
-    cuttlefish::Result<void> init_res;
-    if (FLAGS_casimir_rf_port >= 0) {
-      init_res = device.Init(FLAGS_casimir_rf_port);
-    } else if (!FLAGS_casimir_rf_path.empty()) {
-      init_res = device.Init(FLAGS_casimir_rf_path);
-    } else {
-      std::string message =
-          "`--casimir_rf_port` or `--casimir_rf_path` must be set";
-      LOG(ERROR) << message;
-      return Status(StatusCode::FAILED_PRECONDITION, message);
-    }
+    Result<CasimirController> init_res = ConnectToCasimir();
     if (!init_res.ok()) {
       LOG(ERROR) << "Failed to initialize connection to casimir: "
                  << init_res.error().FormatForEnv();
       return Status(StatusCode::FAILED_PRECONDITION,
                     "Failed to connect with casimir");
     }
-    isInitialized = true;
-    return Status::OK;
-  }
-
-  Status Close(ServerContext* context, const Void*, Void*) override {
-    if (!isInitialized) {
-      return Status::OK;
-    }
-    isInitialized = false;
-    CHECK_RETURN(device.Close(), "Failed to close connection to casimir")
+    device_ = std::move(*init_res);
     return Status::OK;
   }
 
   Status Mute() {
+    if (!device_.has_value()) {
+      return Status::OK;
+    }
+
     if (isRadioOn) {
-      CHECK_RETURN(device.Mute(), "Failed to mute radio")
+      CHECK_RETURN(device_->Mute(), "Failed to mute radio")
       isRadioOn = false;
     }
     return Status::OK;
@@ -131,7 +133,7 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
 
   Status Unmute() {
     if (!isRadioOn) {
-      CHECK_RETURN(device.Unmute(), "Failed to unmute radio")
+      CHECK_RETURN(device_->Unmute(), "Failed to unmute radio")
       isRadioOn = true;
     }
     return Status::OK;
@@ -143,7 +145,7 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
       ENSURE_INIT()
       return Unmute();
     } else {
-      if (!isInitialized) {
+      if (!device_.has_value()) {
         return Status::OK;
       }
       return Mute();
@@ -152,31 +154,13 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
 
   Status PollA(ServerContext* context, const Void*,
                SenderId* senderId) override {
+    bool initializing = device_.has_value();
     ENSURE_INIT()
-    if (!isInitialized) {
-      // Step 1: Initialize connection with casimir
-      cuttlefish::Result<void> init_res;
-      if (FLAGS_casimir_rf_port >= 0) {
-        init_res = device.Init(FLAGS_casimir_rf_port);
-      } else if (!FLAGS_casimir_rf_path.empty()) {
-        init_res = device.Init(FLAGS_casimir_rf_path);
-      } else {
-        std::string message =
-            "`--casimir_rf_port` or `--casimir_rf_path` must be set";
-        LOG(ERROR) << message;
-        return Status(StatusCode::FAILED_PRECONDITION, message);
-      }
-      if (!init_res.ok()) {
-        LOG(ERROR) << "Failed to initialize connection to casimir: "
-                   << init_res.error().FormatForEnv();
-        return Status(StatusCode::FAILED_PRECONDITION,
-                      "Failed to connect with casimir");
-      }
-      isInitialized = true;
+    if (initializing) {
       CHECK_RETURN(Unmute(), "failed to unmute the device")
     }
     // Step 2: Poll
-    auto poll_res = device.Poll();
+    auto poll_res = device_->Poll();
     if (!poll_res.ok()) {
       LOG(ERROR) << "Failed to poll(): " << poll_res.error().FormatForEnv();
       return Status(StatusCode::FAILED_PRECONDITION,
@@ -218,7 +202,7 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
     response->clear_response_hex_strings();
     for (int i = 0; i < apdu_bytes.size(); i++) {
       Result<std::vector<uint8_t>> send_res =
-          device.SendApdu(id, std::move(apdu_bytes[i]));
+          device_->SendApdu(id, std::move(apdu_bytes[i]));
       if (!send_res.ok()) {
         LOG(ERROR) << "Failed to send APDU bytes: "
                    << send_res.error().FormatForEnv();
@@ -234,8 +218,7 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
     return Status::OK;
   }
 
-  CasimirController device;
-  bool isInitialized = false;
+  std::optional<CasimirController> device_;
   bool isRadioOn = false;
 };
 
