@@ -23,16 +23,19 @@ KERNEL_MODULES_PATH ?= \
     kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/$(subst _,-,$(TARGET_KERNEL_ARCH))
 PRODUCT_COPY_FILES += $(TARGET_KERNEL_PATH):kernel
 
-SYSTEM_DLKM_SRC ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)
-
 # The list of modules strictly/only required either to reach second stage
 # init, OR for recovery. Do not use this list to workaround second stage
 # issues.
 RAMDISK_KERNEL_MODULES := \
     failover.ko \
     net_failover.ko \
+    virtio_blk.ko \
+    virtio_console.ko \
     virtio_net.ko \
+    virtio_pci.ko \
+    virtio_pci_modern_dev.ko \
     virtio-rng.ko \
+    vmw_vsock_virtio_transport.ko \
 
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES := \
     $(patsubst %,$(KERNEL_MODULES_PATH)/%,$(RAMDISK_KERNEL_MODULES))
@@ -43,12 +46,6 @@ BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(KERNEL_MODULES_PATH)/virtio_
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += \
 	$(wildcard $(KERNEL_MODULES_PATH)/vmw_vsock_virtio_transport_common.ko) \
 	$(wildcard $(KERNEL_MODULES_PATH)/vsock.ko)
-
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_DLKM_SRC)/virtio_blk.ko
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_DLKM_SRC)/virtio_console.ko
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_DLKM_SRC)/virtio_pci.ko
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_DLKM_SRC)/virtio_pci_modern_dev.ko
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_DLKM_SRC)/vmw_vsock_virtio_transport.ko
 
 TARGET_NO_RECOVERY := true
 
