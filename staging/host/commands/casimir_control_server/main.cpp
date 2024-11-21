@@ -53,20 +53,6 @@ DEFINE_string(grpc_uds_path, "", "grpc_uds_path");
 DEFINE_int32(casimir_rf_port, -1, "RF port to control Casimir");
 DEFINE_string(casimir_rf_path, "", "RF unix server path to control Casimir");
 
-#define CHECK_RETURN(call, msg)                          \
-  auto res = call;                                       \
-  if (!res.ok()) {                                       \
-    LOG(ERROR) << msg;                                   \
-    return Status(StatusCode::FAILED_PRECONDITION, msg); \
-  }
-#define ENSURE_INIT()        \
-  {                          \
-    const auto res = Init(); \
-    if (!res.ok()) {         \
-      return res;            \
-    }                        \
-  }
-
 namespace cuttlefish {
 namespace {
 
@@ -82,18 +68,30 @@ Result<CasimirController> ConnectToCasimir() {
   }
 }
 
+Status ResultToStatus(Result<void> res) {
+  if (res.ok()) {
+    return Status::OK;
+  } else {
+    LOG(ERROR) << "RPC failed: " << res.error().FormatForEnv();
+    return Status(StatusCode::INTERNAL,
+                  res.error().FormatForEnv(/* color = */ false));
+  }
+}
+
 class CasimirControlServiceImpl final : public CasimirControlService::Service {
  private:
   Status SetPowerLevel(ServerContext* context, const PowerLevel* power_level,
                        Void*) override {
+    return ResultToStatus(SetPowerLevelResult(power_level));
+  }
+
+  Result<void> SetPowerLevelResult(const PowerLevel* power_level) {
     if (!device_) {
-      return Status::OK;
+      return {};
     }
-    if (!device_->SetPowerLevel(power_level->power_level())) {
-      return Status(StatusCode::FAILED_PRECONDITION,
-                    "Failed to set power level");
-    }
-    return Status::OK;
+    CF_EXPECT(device_->SetPowerLevel(power_level->power_level()),
+              "Failed to set power level");
+    return {};
   }
 
   Status Close(ServerContext* context, const Void*, Void* senderId) override {
@@ -101,125 +99,118 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
     return Status::OK;
   }
 
-  Status Init(ServerContext*, const Void*, Void*) override { return Init(); }
+  Status Init(ServerContext*, const Void*, Void*) override {
+    return ResultToStatus(Init());
+  }
 
-  Status Init() {
+  Result<void> Init() {
     if (device_.has_value()) {
-      return Status::OK;
+      return {};
     }
     // Step 1: Initialize connection with casimir
-    Result<CasimirController> init_res = ConnectToCasimir();
-    if (!init_res.ok()) {
-      LOG(ERROR) << "Failed to initialize connection to casimir: "
-                 << init_res.error().FormatForEnv();
-      return Status(StatusCode::FAILED_PRECONDITION,
-                    "Failed to connect with casimir");
-    }
-    device_ = std::move(*init_res);
-    return Status::OK;
+    device_ = CF_EXPECT(ConnectToCasimir());
+    return {};
   }
 
-  Status Mute() {
+  Result<void> Mute() {
     if (!device_.has_value()) {
-      return Status::OK;
+      return {};
     }
 
-    if (isRadioOn) {
-      CHECK_RETURN(device_->Mute(), "Failed to mute radio")
-      isRadioOn = false;
+    if (is_radio_on_) {
+      CF_EXPECT(device_->Mute(), "Failed to mute radio");
+      is_radio_on_ = false;
     }
-    return Status::OK;
+    return {};
   }
 
-  Status Unmute() {
-    if (!isRadioOn) {
-      CHECK_RETURN(device_->Unmute(), "Failed to unmute radio")
-      isRadioOn = true;
+  Result<void> Unmute() {
+    if (!is_radio_on_) {
+      CF_EXPECT(device_->Unmute(), "Failed to unmute radio");
+      is_radio_on_ = true;
     }
-    return Status::OK;
+    return {};
   }
 
   Status SetRadioState(ServerContext* context, const RadioState* radio_state,
                        Void*) override {
+    return ResultToStatus(SetRadioStateResult(radio_state));
+  }
+
+  Result<void> SetRadioStateResult(const RadioState* radio_state) {
     if (radio_state->radio_on()) {
-      ENSURE_INIT()
-      return Unmute();
+      CF_EXPECT(Init());
+      CF_EXPECT(Unmute());
+      return {};
     } else {
       if (!device_.has_value()) {
-        return Status::OK;
+        return {};
       }
-      return Mute();
+      CF_EXPECT(Mute());
+      return {};
     }
   }
 
-  Status PollA(ServerContext* context, const Void*,
-               SenderId* senderId) override {
-    bool initializing = device_.has_value();
-    ENSURE_INIT()
-    if (initializing) {
-      CHECK_RETURN(Unmute(), "failed to unmute the device")
+  Result<void> PollAResult(SenderId* sender_id) {
+    // Step 1: Initialize connection with casimir
+    if (!device_.has_value()) {
+      device_ = CF_EXPECT(ConnectToCasimir(), "Failed to connect with casimir");
+      CF_EXPECT(Unmute(), "failed to unmute the device");
     }
     // Step 2: Poll
-    auto poll_res = device_->Poll();
-    if (!poll_res.ok()) {
-      LOG(ERROR) << "Failed to poll(): " << poll_res.error().FormatForEnv();
-      return Status(StatusCode::FAILED_PRECONDITION,
-                    "Failed to poll and select NFC-A and ISO-DEP");
-    }
-    uint32_t id = static_cast<uint32_t>(poll_res.value());
-    senderId->set_sender_id(id);
-    return Status::OK;
+    sender_id->set_sender_id(CF_EXPECT(
+        device_->Poll(), "Failed to poll and select NFC-A and ISO-DEP"));
+    return {};
   }
 
-  Status SendApdu(ServerContext* context, const SendApduRequest* request,
-                  SendApduReply* response) override {
+  Status PollA(ServerContext*, const Void*, SenderId* sender_id) override {
+    return ResultToStatus(PollAResult(sender_id));
+  }
+
+  Result<void> SendApduResult(const SendApduRequest* request,
+                              SendApduReply* response) {
     // Step 0: Parse input
     std::vector<std::vector<uint8_t>> apdu_bytes;
     for (const std::string& apdu_hex_string : request->apdu_hex_strings()) {
-      Result<std::vector<uint8_t>> apdu_bytes_res = HexToBytes(apdu_hex_string);
-      if (!apdu_bytes_res.ok()) {
-        LOG(ERROR) << "Failed to parse input '" << apdu_hex_string << "', "
-                   << apdu_bytes_res.error().FormatForEnv();
-        return Status(StatusCode::INVALID_ARGUMENT,
-                      "Failed to parse input. Must only contain [0-9a-fA-F]");
-      }
-      apdu_bytes.emplace_back(std::move(*apdu_bytes_res));
+      apdu_bytes.emplace_back(
+          CF_EXPECT(HexToBytes(apdu_hex_string),
+                    "Failed to parse input. Must only contain [0-9a-fA-F]"));
     }
-    ENSURE_INIT()
+    // Step 1: Initialize connection with casimir
+    CF_EXPECT(Init());
 
     int16_t id;
     if (request->has_sender_id()) {
       id = request->sender_id();
     } else {
       // Step 2: Poll
-      Void voidArg;
-      SenderId senderId;
-      PollA(context, &voidArg, &senderId);
-      id = senderId.sender_id();
+      SenderId sender_id;
+      CF_EXPECT(PollAResult(&sender_id));
+      id = sender_id.sender_id();
     }
 
     // Step 3: Send APDU bytes
     response->clear_response_hex_strings();
     for (int i = 0; i < apdu_bytes.size(); i++) {
-      Result<std::vector<uint8_t>> send_res =
-          device_->SendApdu(id, std::move(apdu_bytes[i]));
-      if (!send_res.ok()) {
-        LOG(ERROR) << "Failed to send APDU bytes: "
-                   << send_res.error().FormatForEnv();
-        return Status(StatusCode::UNKNOWN, "Failed to send APDU bytes");
-      }
-      std::vector<uint8_t> bytes = std::move(*send_res);
+      std::vector<uint8_t> bytes =
+          CF_EXPECT(device_->SendApdu(id, std::move(apdu_bytes[i])),
+                    "Failed to send APDU bytes");
       std::string resp = android::base::HexString(
           reinterpret_cast<void*>(bytes.data()), bytes.size());
-      response->add_response_hex_strings(resp);
+      response->add_response_hex_strings(std::move(resp));
     }
 
     // Returns OK although returned bytes is valids if ends with [0x90, 0x00].
-    return Status::OK;
+    return {};
+  }
+
+  Status SendApdu(ServerContext*, const SendApduRequest* request,
+                  SendApduReply* response) override {
+    return ResultToStatus(SendApduResult(request, response));
   }
 
   std::optional<CasimirController> device_;
-  bool isRadioOn = false;
+  bool is_radio_on_ = false;
 };
 
 void RunServer(int argc, char** argv) {
