@@ -7,7 +7,7 @@
 /base/cvd @Databean @rmuthiah @jemoreira @ser-io
 
 # github workflows
-/.github/workflows/ @jemoreira @ser-io
+/.github/workflows/ @jemoreira @ser-io @Databean @cjreynol
 
 # docker TLs
 /docker/ @jemoreira @ikicha @0405ysj @Databean
