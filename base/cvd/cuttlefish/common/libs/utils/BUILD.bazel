@@ -116,6 +116,7 @@ cc_test(
 cc_test(
     name = "utils_test",
     srcs = [
+        "archive_test.cpp",
         #"flag_parser_test.cpp",
         "proc_file_utils_test.cpp",
         "result_test.cpp",

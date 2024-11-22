@@ -25,6 +25,8 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
@@ -115,9 +117,72 @@ Result<std::string> ExtractImage(const std::string& archive_filepath,
   return {result.front()};
 }
 
+namespace {
+
+Result<std::string> hardlinkRecursively(const std::string& src_dir,
+                                        const std::string& dst_dir,
+                                        std::vector<std::string>& files) {
+  DIR* dir = opendir(src_dir.c_str());
+  if (!dir) {
+    return CF_ERRF("Failed to open directory: '{}'", src_dir);
+  }
+
+  struct dirent* entry;
+  while ((entry = readdir(dir)) != nullptr) {
+    std::string entry_name = entry->d_name;
+    if (entry_name == "." || entry_name == "..") {
+      continue;
+    }
+
+    std::string src_path = src_dir + "/" + entry_name;
+    std::string dst_path = dst_dir + "/" + entry_name;
+    struct stat st;
+    if (stat(src_path.c_str(), &st) == -1) {
+      closedir(dir);
+      CF_ERRF("Failed to stat: '{}'", src_path);
+    }
+
+    if (S_ISDIR(st.st_mode)) {
+      if (mkdir(dst_path.c_str(), st.st_mode) != 0) {
+        closedir(dir);
+        CF_ERRF("Failed to create directory: '{}'", dst_path);
+      }
+      Result<std::string> result =
+          hardlinkRecursively(src_path, dst_path, files);
+      if (!result.ok()) {
+        closedir(dir);
+        return result;
+      }
+    } else if (S_ISREG(st.st_mode)) {
+      Result<std::string> result = CreateHardLink(src_path, dst_path, true);
+      if (!result.ok()) {
+        closedir(dir);
+        return result;
+      }
+      files.push_back(dst_path);
+    }
+  }
+  closedir(dir);
+  return "";
+}
+
+}  // namespace
+
 Result<std::vector<std::string>> ExtractArchiveContents(
     const std::string& archive_filepath, const std::string& target_directory,
     const bool keep_archive) {
+  struct stat path_stat;
+  if (stat(archive_filepath.c_str(), &path_stat) == 0 &&
+      S_ISDIR(path_stat.st_mode)) {
+    std::vector<std::string> files;
+    CF_EXPECTF(hardlinkRecursively(archive_filepath, target_directory, files),
+               "Cound not recursively hard link files from '{}' to '{}'",
+               archive_filepath, target_directory);
+    if (!keep_archive) {
+      RecursivelyRemoveDirectory(archive_filepath);
+    }
+    return files;
+  }
   std::vector<std::string> files =
       CF_EXPECT(ExtractAll(archive_filepath, target_directory),
                 "Could not extract \"" << archive_filepath << "\" to \""
