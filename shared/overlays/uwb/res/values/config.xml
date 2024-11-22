@@ -15,4 +15,8 @@
 -->
 <resources>
   <bool name="is_multicast_list_update_ntf_v2_supported">true</bool>
+
+  <!-- Whether multicast list update response v2 is supported or not.
+  If enabled, the response will be parsed into version 2 if uci major version is 2.0. -->
+  <bool name = "is_multicast_list_update_rsp_v2_supported">true</bool>
 </resources>
