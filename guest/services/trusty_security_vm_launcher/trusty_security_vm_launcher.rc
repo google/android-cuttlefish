@@ -9,7 +9,7 @@ service trusty_security_vm_launcher /system_ext/bin/trusty_security_vm_launcher 
 
 # Starts the non-secure Trusty VM in /system_ext when the feature is enabled through
 # the system property set in vendor init.
-on init && property:ro.hardware.trusty.security_vm.enabled=1
+on init && property:trusty.security_vm.enabled=1
     setprop trusty.security_vm.nonsecure_vm_ready 1
     setprop trusty.security_vm.vm_cid 200
     start trusty_security_vm_launcher

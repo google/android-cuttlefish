@@ -13,9 +13,9 @@ on early-init
 on early-init && property:ro.boot.vendor.apex.com.android.hardware.keymint=\
 com.android.hardware.keymint.rust_cf_guest_trusty_nonsecure
     # Enable the Trusty Security VM
-    setprop ro.hardware.trusty.security_vm.enabled 1
+    setprop trusty.security_vm.enabled 1
     # Enable KeyMint that connects to the Trusty Security VM
-    setprop ro.hardware.trusty.security_vm.keymint.enabled 1
+    setprop trusty.security_vm.keymint.enabled 1
 
 on init
     # ZRAM setup
