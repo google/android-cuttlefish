@@ -1,6 +1,10 @@
 name: Presubmit 
 
-on: [pull_request, push]
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main  # push events to main branch occur after PRs are merged, when the same checks were run
 
 jobs:
   build-orchestrator:
