@@ -53,20 +53,20 @@ TEST_P(EmulateAbsolutePathWithPwd, NoHomeYesPwd) {
 
 INSTANTIATE_TEST_SUITE_P(
     CommonUtilsTest, EmulateAbsolutePathWithPwd,
-    testing::Values(InputOutput{.working_dir_ = "/x/y/z",
-                                .path_to_convert_ = "",
+    testing::Values(InputOutput{.path_to_convert_ = "",
+                                .working_dir_ = "/x/y/z",
                                 .expected_ = ""},
-                    InputOutput{.working_dir_ = "/x/y/z",
-                                .path_to_convert_ = "a",
+                    InputOutput{.path_to_convert_ = "a",
+                                .working_dir_ = "/x/y/z",
                                 .expected_ = "/x/y/z/a"},
-                    InputOutput{.working_dir_ = "/x/y/z",
-                                .path_to_convert_ = ".",
+                    InputOutput{.path_to_convert_ = ".",
+                                .working_dir_ = "/x/y/z",
                                 .expected_ = "/x/y/z"},
-                    InputOutput{.working_dir_ = "/x/y/z",
-                                .path_to_convert_ = "..",
+                    InputOutput{.path_to_convert_ = "..",
+                                .working_dir_ = "/x/y/z",
                                 .expected_ = "/x/y"},
-                    InputOutput{.working_dir_ = "/x/y/z",
-                                .path_to_convert_ = "./k/../../t/./q",
+                    InputOutput{.path_to_convert_ = "./k/../../t/./q",
+                                .working_dir_ = "/x/y/z",
                                 .expected_ = "/x/y/t/q"}));
 
 TEST_P(EmulateAbsolutePathWithHome, YesHomeNoPwd) {
@@ -84,20 +84,20 @@ TEST_P(EmulateAbsolutePathWithHome, YesHomeNoPwd) {
 
 INSTANTIATE_TEST_SUITE_P(
     CommonUtilsTest, EmulateAbsolutePathWithHome,
-    testing::Values(InputOutput{.home_dir_ = "/x/y/z",
-                                .path_to_convert_ = "~",
+    testing::Values(InputOutput{.path_to_convert_ = "~",
+                                .home_dir_ = "/x/y/z",
                                 .expected_ = "/x/y/z"},
-                    InputOutput{.home_dir_ = "/x/y/z",
-                                .path_to_convert_ = "~/a",
+                    InputOutput{.path_to_convert_ = "~/a",
+                                .home_dir_ = "/x/y/z",
                                 .expected_ = "/x/y/z/a"},
-                    InputOutput{.home_dir_ = "/x/y/z",
-                                .path_to_convert_ = "~/.",
+                    InputOutput{.path_to_convert_ = "~/.",
+                                .home_dir_ = "/x/y/z",
                                 .expected_ = "/x/y/z"},
-                    InputOutput{.home_dir_ = "/x/y/z",
-                                .path_to_convert_ = "~/..",
+                    InputOutput{.path_to_convert_ = "~/..",
+                                .home_dir_ = "/x/y/z",
                                 .expected_ = "/x/y"},
-                    InputOutput{.home_dir_ = "/x/y/z",
-                                .path_to_convert_ = "~/k/../../t/./q",
+                    InputOutput{.path_to_convert_ = "~/k/../../t/./q",
+                                .home_dir_ = "/x/y/z",
                                 .expected_ = "/x/y/t/q"}));
 
 }  // namespace cuttlefish
