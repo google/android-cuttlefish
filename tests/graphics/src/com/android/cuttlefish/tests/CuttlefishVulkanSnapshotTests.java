@@ -90,7 +90,8 @@ public class CuttlefishVulkanSnapshotTests extends BaseHostJUnit4Test {
             return new Statement() {
                 @Override
                 public void evaluate() throws Throwable {
-                    getDevice().unlockDevice();
+                    getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+                    getDevice().executeShellCommand("input keyevent KEYCODE_MENU");
 
                     base.evaluate();
                 }
