@@ -88,6 +88,12 @@ struct AngleFeatures {
   // b/264575911: Nvidia seems to have issues with YUV samplers with
   // 'lowp' and 'mediump' precision qualifiers.
   bool ignore_precision_qualifiers = false;
+
+  // ANGLE has a feature to expose 3.2 early even if the device does
+  // not fully support all of the 3.2 features. This should be
+  // disabled for Cuttlefish as SwiftShader does not have geometry
+  // shader nor tesselation shader support.
+  bool disable_expose_opengles_3_2_for_testing = false;
 };
 
 std::ostream& operator<<(std::ostream& stream, const AngleFeatures& features) {
@@ -116,6 +122,12 @@ Result<AngleFeatures> GetNeededAngleFeaturesBasedOnQuirks(
       features.ignore_precision_qualifiers = true;
     }
   }
+
+  if (mode == RenderingMode::kGuestSwiftShader ||
+      mode == RenderingMode::kGfxstreamGuestAngleHostSwiftshader) {
+    features.disable_expose_opengles_3_2_for_testing = true;
+  }
+
   return features;
 }
 
@@ -173,6 +185,9 @@ Result<AngleFeatureOverrides> GetNeededAngleFeatures(
   }
   if (features.ignore_precision_qualifiers) {
     disable_feature_strings.push_back("enablePrecisionQualifiers");
+  }
+  if (features.disable_expose_opengles_3_2_for_testing) {
+    disable_feature_strings.push_back("exposeES32ForTesting");
   }
 
   return AngleFeatureOverrides{
