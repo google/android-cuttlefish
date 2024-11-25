@@ -27,7 +27,10 @@ filegroup {
 
 cc_library_headers {
     name: "libcuttlefish_vulkan_samples_default_headers",
-    export_include_dirs: ["."],
+    export_include_dirs: [
+        ".",
+        "include",
+    ],
     min_sdk_version: "34",
     sdk_version: "current",
 }
