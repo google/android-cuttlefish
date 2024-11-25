@@ -271,6 +271,7 @@ static const std::vector<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.automotive.computepipe.registry.", 2, 273549907},
     {"android.automotive.computepipe.runner.", 2, 273549907},
     {"android.hardware.automotive.evs.", 2, 274162534},
+    {"android.hardware.security.see.authmgr.", 1, 379940224},
 };
 
 // android.hardware.foo.IFoo -> android.hardware.foo.
