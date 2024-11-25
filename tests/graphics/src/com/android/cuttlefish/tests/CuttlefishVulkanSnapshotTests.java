@@ -42,7 +42,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
+import org.junit.runners.model.Statement;
 
 /**
  * Test snapshot/restore function.
@@ -78,6 +81,22 @@ public class CuttlefishVulkanSnapshotTests extends BaseHostJUnit4Test {
 
     @Rule
     public TestLogData mLogs = new TestLogData();
+
+    // TODO: Move this into `device/google/cuttlefish/tests/utils` if it works?
+    @Rule
+    public final TestRule mUnlockScreenRule = new TestRule() {
+        @Override
+        public Statement apply(Statement base, Description description) {
+            return new Statement() {
+                @Override
+                public void evaluate() throws Throwable {
+                    getDevice().unlockDevice();
+
+                    base.evaluate();
+                }
+            };
+        }
+    };
 
     @Before
     public void setUp() throws Exception {
