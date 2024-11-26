@@ -163,6 +163,57 @@ bool FileHasContent(const std::string& path) {
   return FileSize(path) > 0;
 }
 
+Result<void> HardLinkDirecoryContentsRecursively(
+    const std::string& source, const std::string& destination) {
+  CF_EXPECTF(IsDirectory(source), "Source '{}' is not a directory", source);
+  EnsureDirectoryExists(destination, 0755);
+
+  const std::function<bool(const std::string&)> linker =
+      [&source, &destination](const std::string& filepath) mutable {
+        std::string src_path = filepath;
+        std::string dst_path =
+            destination + "/" + filepath.substr(source.size() + 1);
+        if (IsDirectory(src_path)) {
+          EnsureDirectoryExists(dst_path);
+          return true;
+        }
+        bool overwrite_existing = true;
+        Result<std::string> result =
+            CreateHardLink(src_path, dst_path, overwrite_existing);
+        return result.ok();
+      };
+  CF_EXPECT(WalkDirectory(source, linker));
+
+  return {};
+}
+
+Result<void> MoveDirectoryContents(const std::string& source,
+                                   const std::string& destination) {
+  CF_EXPECTF(IsDirectory(source), "Source '{}' is not a directory", source);
+  CF_EXPECT(EnsureDirectoryExists(destination));
+
+  bool should_rename = CF_EXPECT(CanRename(source, destination));
+  std::vector<std::string> contents = CF_EXPECT(DirectoryContents(source));
+  for (const std::string& filepath : contents) {
+    if (filepath == "." || filepath == "..") {
+      continue;
+    }
+    std::string src_filepath = source + "/" + filepath;
+    std::string dst_filepath = destination + "/" + filepath;
+    if (should_rename) {
+      CF_EXPECT(rename(src_filepath.c_str(), dst_filepath.c_str()) == 0,
+                "rename " << src_filepath << " to " << dst_filepath
+                          << " failed: " << strerror(errno));
+    } else {
+      CF_EXPECT(
+          Copy(src_filepath, dst_filepath),
+          "copy " << src_filepath << " to " << dst_filepath << " failed.");
+    }
+  }
+
+  return {};
+}
+
 Result<std::vector<std::string>> DirectoryContents(const std::string& path) {
   std::vector<std::string> ret;
   std::unique_ptr<DIR, int(*)(DIR*)> dir(opendir(path.c_str()), closedir);
@@ -239,7 +290,7 @@ bool CanAccess(const std::string& path, const int mode) {
 }
 
 bool IsDirectoryEmpty(const std::string& path) {
-  auto direc = ::opendir(path.c_str());
+  std::unique_ptr<DIR, int (*)(DIR*)> direc(opendir(path.c_str()), closedir);
   if (!direc) {
     LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
                << " as it failed to be open" << std::endl;
@@ -247,7 +298,7 @@ bool IsDirectoryEmpty(const std::string& path) {
   }
 
   int cnt {0};
-  while (::readdir(direc)) {
+  while (::readdir(direc.get())) {
     cnt++;
     if (cnt > 2) {
     LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
