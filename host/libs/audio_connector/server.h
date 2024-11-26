@@ -17,7 +17,9 @@
 #include <cinttypes>
 
 #include <functional>
+#include <map>
 #include <memory>
+#include <utility>
 
 #include "common/libs/fs/shared_fd.h"
 #include "host/libs/audio_connector/buffers.h"
@@ -94,6 +96,8 @@ class AudioClientConnection {
   SharedFD event_socket_;
   SharedFD tx_socket_;
   SharedFD rx_socket_;
+  // Hold the number of frames since START and when to log it for each stream.
+  std::map<uint32_t, std::pair<uint64_t, uint64_t>> frame_counters_;
 };
 
 class AudioServer {
