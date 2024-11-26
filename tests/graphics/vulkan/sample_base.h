@@ -27,8 +27,8 @@
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_ASSERT_ON_RESULT
-#include <cuttlefish/vulkan/vulkan.hpp>
-#include <cuttlefish/vulkan/vulkan_to_string.hpp>
+#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_to_string.hpp>
 
 #include "common.h"
 
