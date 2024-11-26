@@ -1,6 +1,6 @@
 name: Artifacts
 on:
-  pull_request: &reusable_block_anchor
+  pull_request:
     paths:
       - '.github/workflows/artifacts.yaml'
       - 'tools/buildimage/**'
@@ -90,5 +90,3 @@ jobs:
       with:
         name: docker-image-arm64
         path: ${{ env.arm64_image_path }}
-  # identical to the `pull_request` block above using YAML anchor there and alias here
-  merge_group: *reusable_block_anchor
