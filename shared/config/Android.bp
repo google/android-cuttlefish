@@ -50,7 +50,10 @@ genrule {
     name: "gen_fstab_cf_f2fs_hctr2",
     srcs: ["fstab.in"],
     out: ["fstab.cf.f2fs.hctr2"],
-    tool_files: [ "sed.f2fs", "sed.hctr2" ],
+    tool_files: [
+        "sed.f2fs",
+        "sed.hctr2",
+    ],
     cmd: "sed -f $(location sed.f2fs) -f $(location sed.hctr2) $(in) > $(out)",
 }
 
@@ -58,7 +61,10 @@ genrule {
     name: "gen_fstab_cf_f2fs_cts",
     srcs: ["fstab.in"],
     out: ["fstab.cf.f2fs.cts"],
-    tool_files: [ "sed.f2fs", "sed.cts" ],
+    tool_files: [
+        "sed.cts",
+        "sed.f2fs",
+    ],
     cmd: "sed -f $(location sed.f2fs) -f $(location sed.cts) $(in) > $(out)",
 }
 
@@ -66,7 +72,10 @@ genrule {
     name: "gen_fstab_cf_ext4_hctr2",
     srcs: ["fstab.in"],
     out: ["fstab.cf.ext4.hctr2"],
-    tool_files: [ "sed.ext4", "sed.hctr2" ],
+    tool_files: [
+        "sed.ext4",
+        "sed.hctr2",
+    ],
     cmd: "sed -f $(location sed.ext4) -f $(location sed.hctr2) $(in) > $(out)",
 }
 
@@ -74,7 +83,10 @@ genrule {
     name: "gen_fstab_cf_ext4_cts",
     srcs: ["fstab.in"],
     out: ["fstab.cf.ext4.cts"],
-    tool_files: [ "sed.ext4", "sed.cts" ],
+    tool_files: [
+        "sed.cts",
+        "sed.ext4",
+    ],
     cmd: "sed -f $(location sed.ext4) -f $(location sed.cts) $(in) > $(out)",
 }
 
