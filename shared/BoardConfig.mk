@@ -69,15 +69,6 @@ RAMDISK_KERNEL_MODULES ?= \
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES := \
     $(patsubst %,$(KERNEL_MODULES_PATH)/%,$(RAMDISK_KERNEL_MODULES))
 
-# GKI >5.15 will have and require virtio_pci_legacy_dev.ko
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(KERNEL_MODULES_PATH)/virtio_pci_legacy_dev.ko)
-# GKI >5.10 will have and require virtio_pci_modern_dev.ko
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(KERNEL_MODULES_PATH)/virtio_pci_modern_dev.ko)
-# GKI >6.4 will have an required vmw_vsock_virtio_transport_common.ko and vsock.ko
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += \
-	$(wildcard $(KERNEL_MODULES_PATH)/vmw_vsock_virtio_transport_common.ko) \
-	$(wildcard $(KERNEL_MODULES_PATH)/vsock.ko)
-
 # TODO(b/294888357) once virt_wifi is deprecated we can stop loading mac80211 in
 # first stage init. To minimize scope of modules options to first stage init,
 # mac80211_hwsim.radios=0 has to be specified in the modules options file (which we
@@ -104,6 +95,15 @@ BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_VIRTIO_PREBUILTS_PATH)/virtio_bl
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_VIRTIO_PREBUILTS_PATH)/virtio_console.ko
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_VIRTIO_PREBUILTS_PATH)/virtio_pci.ko
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_VIRTIO_PREBUILTS_PATH)/vmw_vsock_virtio_transport.ko
+
+# GKI >5.15 will have and require virtio_pci_legacy_dev.ko
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(SYSTEM_VIRTIO_PREBUILTS_PATH)/virtio_pci_legacy_dev.ko)
+# GKI >5.10 will have and require virtio_pci_modern_dev.ko
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(SYSTEM_VIRTIO_PREBUILTS_PATH)/virtio_pci_modern_dev.ko)
+# GKI >6.4 will have an required vmw_vsock_virtio_transport_common.ko and vsock.ko
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES += \
+	$(wildcard $(SYSTEM_VIRTIO_PREBUILTS_PATH)/vmw_vsock_virtio_transport_common.ko) \
+	$(wildcard $(SYSTEM_VIRTIO_PREBUILTS_PATH)/vsock.ko)
 
 BOARD_DO_NOT_STRIP_VENDOR_RAMDISK_MODULES := true
 BOARD_VENDOR_KERNEL_MODULES := \
