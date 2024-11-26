@@ -157,8 +157,8 @@ std::unique_ptr<AudioClientConnection> AudioClientConnection::Create(
   }
 
   return std::unique_ptr<AudioClientConnection>(new AudioClientConnection(
-      std::move(tx_shm), std::move(rx_shm), client_socket,
-      event_socket, tx_socket, rx_socket));
+      std::move(tx_shm), std::move(rx_shm), client_socket, event_socket,
+      tx_socket, rx_socket));
 }
 
 bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
@@ -187,12 +187,14 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       std::unique_ptr<virtio_snd_pcm_info[]> reply(
           new virtio_snd_pcm_info[info_count]);
       StreamInfoCommand cmd(start_id, info_count, reply.get());
+      LOG(DEBUG) << "VIRTIO_SND_PCM_INFO: start=" << start_id
+                 << ", count=" << info_count;
 
       executor.StreamsInfo(cmd);
-      return CmdReply(cmd.status(), reply.get(),
-                      info_count * sizeof(reply[0]));
+      return CmdReply(cmd.status(), reply.get(), info_count * sizeof(reply[0]));
     }
     case AudioCommandType::VIRTIO_SND_R_PCM_SET_PARAMS: {
+      LOG(DEBUG) << "IVRTIO_SND_R_PCM_SET_PARAM";
       if (recv_size < sizeof(virtio_snd_pcm_set_params)) {
         LOG(ERROR) << "Received SET_PARAMS message is too small: " << recv_size;
         return false;
@@ -216,6 +218,8 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       auto pcm_op_msg = reinterpret_cast<const virtio_snd_pcm_hdr*>(cmd_hdr);
       StreamControlCommand cmd(AudioCommandType::VIRTIO_SND_R_PCM_PREPARE,
                                pcm_op_msg->stream_id.as_uint32_t());
+      LOG(DEBUG) << "VRTIO_SND_R_PCM_PREPARE: stream_id="
+                 << pcm_op_msg->stream_id.as_uint32_t();
       executor.PrepareStream(cmd);
       return CmdReply(cmd.status());
     }
@@ -227,6 +231,8 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       auto pcm_op_msg = reinterpret_cast<const virtio_snd_pcm_hdr*>(cmd_hdr);
       StreamControlCommand cmd(AudioCommandType::VIRTIO_SND_R_PCM_RELEASE,
                                pcm_op_msg->stream_id.as_uint32_t());
+      LOG(DEBUG) << "VRTIO_SND_R_PCM_RELEASE: stream_id="
+                 << pcm_op_msg->stream_id.as_uint32_t();
       executor.ReleaseStream(cmd);
       return CmdReply(cmd.status());
     }
@@ -236,8 +242,11 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
         return false;
       }
       auto pcm_op_msg = reinterpret_cast<const virtio_snd_pcm_hdr*>(cmd_hdr);
+      uint32_t stream_id = pcm_op_msg->stream_id.as_uint32_t();
       StreamControlCommand cmd(AudioCommandType::VIRTIO_SND_R_PCM_START,
-                               pcm_op_msg->stream_id.as_uint32_t());
+                               stream_id);
+      LOG(DEBUG) << "VRTIO_SND_R_PCM_START: stream_id=" << stream_id;
+      frame_counters_[stream_id] = {0, 1};
       executor.StartStream(cmd);
       return CmdReply(cmd.status());
     }
@@ -249,6 +258,8 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       auto pcm_op_msg = reinterpret_cast<const virtio_snd_pcm_hdr*>(cmd_hdr);
       StreamControlCommand cmd(AudioCommandType::VIRTIO_SND_R_PCM_STOP,
                                pcm_op_msg->stream_id.as_uint32_t());
+      LOG(DEBUG) << "VRTIO_SND_R_PCM_STOP: stream_id="
+                 << pcm_op_msg->stream_id.as_uint32_t();
       executor.StopStream(cmd);
       return CmdReply(cmd.status());
     }
@@ -263,10 +274,11 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       std::unique_ptr<virtio_snd_chmap_info[]> reply(
           new virtio_snd_chmap_info[info_count]);
       ChmapInfoCommand cmd(start_id, info_count, reply.get());
+      LOG(DEBUG) << "VRTIO_SND_R_CHMAP_INFO: start_id=" << start_id
+                 << ", count=" << info_count;
 
       executor.ChmapsInfo(cmd);
-      return CmdReply(cmd.status(), reply.get(),
-                      info_count * sizeof(reply[0]));
+      return CmdReply(cmd.status(), reply.get(), info_count * sizeof(reply[0]));
     }
     case AudioCommandType::VIRTIO_SND_R_JACK_INFO: {
       if (recv_size < sizeof(virtio_snd_query_info)) {
@@ -279,10 +291,11 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       std::unique_ptr<virtio_snd_jack_info[]> reply(
           new virtio_snd_jack_info[info_count]);
       JackInfoCommand cmd(start_id, info_count, reply.get());
+      LOG(DEBUG) << "VRTIO_SND_R_JACK_INFO: start_id=" << start_id
+                 << ", count=" << info_count;
 
       executor.JacksInfo(cmd);
-      return CmdReply(cmd.status(), reply.get(),
-                      info_count * sizeof(reply[0]));
+      return CmdReply(cmd.status(), reply.get(), info_count * sizeof(reply[0]));
     }
     case AudioCommandType::VIRTIO_SND_R_JACK_REMAP:
       LOG(ERROR) << "Unsupported command type: " << cmd_hdr->code.as_uint32_t();
@@ -308,6 +321,12 @@ bool AudioClientConnection::ReceivePlayback(AudioServerExecutor& executor) {
     LOG(ERROR) << "Received PCM_XFER message is too small: " << recv_size;
     return false;
   }
+  const uint32_t stream_id = msg_hdr->io_xfer.stream_id.as_uint32_t();
+  auto& [frame_count, log_at] = frame_counters_[stream_id];
+  if (++frame_count >= log_at) {
+    LOG(DEBUG) << "Stream id=" << stream_id << ": " << frame_count << " frames";
+    log_at *= 16;
+  }
   TxBuffer buffer(
       msg_hdr->io_xfer,
       BufferAt(tx_shm_, msg_hdr->buffer_offset, msg_hdr->buffer_len),
@@ -327,6 +346,12 @@ bool AudioClientConnection::ReceiveCapture(AudioServerExecutor& executor) {
   if (recv_size < sizeof(IoTransferMsg)) {
     LOG(ERROR) << "Received PCM_XFER message is too small: " << recv_size;
     return false;
+  }
+  const uint32_t stream_id = msg_hdr->io_xfer.stream_id.as_uint32_t();
+  auto& [frame_count, log_at] = frame_counters_[stream_id];
+  if (++frame_count >= log_at) {
+    LOG(DEBUG) << "Stream id=" << stream_id << ": " << frame_count << " frames";
+    log_at *= 16;
   }
   RxBuffer buffer(
       msg_hdr->io_xfer,
