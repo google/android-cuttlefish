@@ -45,7 +45,7 @@
 namespace cuttlefish::process_sandboxer {
 
 absl::StatusOr<PidFd> PidFd::FromRunningProcess(pid_t pid) {
-  UniqueFd fd(syscall(SYS_pidfd_open, pid, 0));  // Always CLOEXEC
+  UniqueFd fd(syscall(__NR_pidfd_open, pid, 0));  // Always CLOEXEC
   if (fd.Get() < 0) {
     return absl::ErrnoToStatus(errno, "`pidfd_open` failed");
   }
@@ -62,7 +62,7 @@ absl::StatusOr<PidFd> PidFd::LaunchSubprocess(
       .pidfd = reinterpret_cast<std::uintptr_t>(&pidfd),
   };
 
-  pid_t res = syscall(SYS_clone3, &args_for_clone, sizeof(args_for_clone));
+  pid_t res = syscall(__NR_clone3, &args_for_clone, sizeof(args_for_clone));
   if (res < 0) {
     std::string argv_str = absl::StrJoin(argv, "','");
     std::string error = absl::StrCat("clone3 failed: argv=['", argv_str, "']");
@@ -147,7 +147,7 @@ absl::StatusOr<std::vector<std::pair<UniqueFd, int>>> PidFd::AllFds() {
       return absl::InternalError(error);
     }
     // Always CLOEXEC
-    UniqueFd our_fd(syscall(SYS_pidfd_getfd, fd_.Get(), other_fd, 0));
+    UniqueFd our_fd(syscall(__NR_pidfd_getfd, fd_.Get(), other_fd, 0));
     if (our_fd.Get() < 0) {
       return absl::ErrnoToStatus(errno, "`pidfd_getfd` failed");
     }
@@ -262,7 +262,7 @@ absl::Status PidFd::HaltChildHierarchy() {
 }
 
 absl::Status PidFd::SendSignal(int signal) {
-  if (syscall(SYS_pidfd_send_signal, fd_.Get(), signal, nullptr, 0) < 0) {
+  if (syscall(__NR_pidfd_send_signal, fd_.Get(), signal, nullptr, 0) < 0) {
     return absl::ErrnoToStatus(errno, "pidfd_send_signal failed");
   }
   return absl::OkStatus();

@@ -29,6 +29,7 @@
 
 #include <memory>
 #include <sstream>
+#include <thread>
 #include <utility>
 
 #include <absl/functional/bind_front.h>
