@@ -45,7 +45,7 @@ cc_binary {
         "libcuttlefish_security",
         "libhardware",
         "libkeymaster_messages",
-        "libkeymasterconfig",
+        "libkeymasterconfig_V3",
         "liblog",
         "libutils",
     ],
