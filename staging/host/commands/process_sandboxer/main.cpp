@@ -51,7 +51,7 @@ ABSL_FLAG(std::string, environments_dir, "", "Cross-instance environment dir");
 ABSL_FLAG(std::string, environments_uds_dir, "", "Environment unix sockets");
 ABSL_FLAG(std::string, instance_uds_dir, "", "Instance unix domain sockets");
 ABSL_FLAG(std::string, guest_image_path, "", "Directory with `system.img`");
-ABSL_FLAG(std::string, log_dir, "", "Where to write log files");
+ABSL_FLAG(std::string, sandboxer_log_dir, "", "Where to write log files");
 ABSL_FLAG(std::vector<std::string>, log_files, std::vector<std::string>(),
           "File paths outside the sandbox to write logs to");
 ABSL_FLAG(std::string, runtime_dir, "",
@@ -104,7 +104,7 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
       .host_artifacts_path =
           CleanPath(absl::GetFlag(FLAGS_host_artifacts_path)),
       .instance_uds_dir = CleanPath(absl::GetFlag(FLAGS_instance_uds_dir)),
-      .log_dir = CleanPath(absl::GetFlag(FLAGS_log_dir)),
+      .log_dir = CleanPath(absl::GetFlag(FLAGS_sandboxer_log_dir)),
       .runtime_dir = CleanPath(absl::GetFlag(FLAGS_runtime_dir)),
       .vsock_device_dir = CleanPath(absl::GetFlag(FLAGS_vsock_device_dir)),
   };
