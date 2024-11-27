@@ -22,9 +22,9 @@ cc_defaults {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
+        "libgrpc++_unsecure",
         "liblog",
         "libprotobuf-cpp-full",
-        "libgrpc++_unsecure",
     ],
     defaults: ["cuttlefish_buildhost_only"],
 }
@@ -35,23 +35,23 @@ cc_binary {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libgrpc++_unsecure",
         "libjsoncpp",
         "libprotobuf-cpp-full",
-        "libgrpc++_unsecure",
         "libxml2",
     ],
     static_libs: [
         "libcuttlefish_host_config",
-        "libgflags",
         "libcvd_gnss_grpc_proxy",
+        "libgflags",
         "liblocation",
     ],
     srcs: [
         "main.cc",
     ],
     cflags: [
-        "-Wno-unused-parameter",
         "-D_XOPEN_SOURCE",
+        "-Wno-unused-parameter",
     ],
     defaults: ["cvd_import_locations_defaults"],
     target: {
@@ -70,17 +70,17 @@ cc_test_host {
         "libxml2",
     ],
     static_libs: [
-        "liblocation",
         "libgmock",
+        "liblocation",
     ],
     srcs: [
-        "unittest/main_test.cc",
-        "unittest/kml_parser_test.cc",
         "unittest/gpx_parser_test.cc",
+        "unittest/kml_parser_test.cc",
+        "unittest/main_test.cc",
     ],
     cflags: [
-        "-Wno-unused-parameter",
         "-D_XOPEN_SOURCE",
+        "-Wno-unused-parameter",
     ],
     defaults: ["cvd_import_locations_defaults"],
     target: {

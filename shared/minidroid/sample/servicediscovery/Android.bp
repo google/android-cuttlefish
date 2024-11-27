@@ -11,16 +11,16 @@ cc_library {
     name: "minidroid_sd",
     srcs: ["minidroid_sd.cpp"],
     shared_libs: [
+        "libbase",
         "libbinder_ndk",
         "libbinder_rpc_unstable",
-        "libbase",
     ],
     static_libs: [
         "libprotobuf-cpp-lite-ndk",
     ],
 
     export_include_dirs: [
-    	"include",
+        "include",
     ],
 
     apex_available: [

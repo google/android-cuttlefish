@@ -21,9 +21,9 @@ cc_defaults {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
-        "liblog",
         "libcuttlefish_utils",
         "libjsoncpp",
+        "liblog",
     ],
     defaults: ["cuttlefish_buildhost_only"],
 }
@@ -57,5 +57,8 @@ cc_test_host {
     shared_libs: [
         "libcvd_update_security_algorithm_builder",
     ],
-    defaults: ["cuttlefish_host", "cvd_update_security_algorithm_defaults"],
+    defaults: [
+        "cuttlefish_host",
+        "cvd_update_security_algorithm_defaults",
+    ],
 }

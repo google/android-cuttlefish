@@ -24,9 +24,9 @@ cc_binary {
     ],
     shared_libs: [
         "libbase",
-        "libjsoncpp",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libjsoncpp",
     ],
     static_libs: [
         "libcuttlefish_host_config",

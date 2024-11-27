@@ -24,9 +24,9 @@ cc_binary_host {
     ],
     static_libs: [
         "libbase",
-        "liblog",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "liblog",
     ],
     symlinks: ["acloud"],
     defaults: [

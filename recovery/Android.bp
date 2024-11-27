@@ -23,8 +23,8 @@ cc_library {
     owner: "google",
     cflags: [
         "-Wall",
-        "-Wextra",
         "-Werror",
+        "-Wextra",
         "-pedantic",
     ],
     srcs: [

@@ -32,9 +32,9 @@ apex {
     // Install the apex in /vendor/apex
     soc_specific: true,
     binaries: [
+        "//device/generic/goldfish:mac80211_create_radios",
         "rename_netiface",
         "setup_wifi",
-        "//device/generic/goldfish:mac80211_create_radios",
     ],
     sh_binaries: ["init.wifi_apex"],
     prebuilts: [
