@@ -4,6 +4,7 @@ cc_library(
         "android_build_api.cpp",
         "android_build_string.cpp",
         "caching_build_api.cpp",
+        "cas/cas_downloader.cpp",
         "chrome_os_build_string.cpp",
         "credential_source.cc",
         "http_client/curl_global_init.cpp",
@@ -17,6 +18,7 @@ cc_library(
         "android_build_string.h",
         "build_api.h",
         "caching_build_api.h",
+        "cas/cas_downloader.h",
         "chrome_os_build_string.h",
         "credential_source.h",
         "http_client/curl_global_init.h",
@@ -48,6 +50,7 @@ cc_test(
     name = "web_test",
     srcs = [
         "android_build_string_tests.cpp",
+        "cas/cas_downloader_test.cpp",
         "http_client/unittest/http_client_util_test.cc",
     ],
     copts = [
@@ -60,8 +63,11 @@ cc_test(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
+        "//libbase",
         "//libsparse",
+        "@fmt",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
+        "@jsoncpp",
     ],
 )

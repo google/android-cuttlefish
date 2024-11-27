@@ -30,6 +30,7 @@
 #include "common/libs/utils/result.h"
 #include "host/libs/web/android_build_string.h"
 #include "host/libs/web/build_api.h"
+#include "host/libs/web/cas/cas_downloader.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
 
@@ -47,7 +48,8 @@ class AndroidBuildApi : public BuildApi {
                   std::unique_ptr<HttpClient> inner_http_client,
                   std::unique_ptr<CredentialSource> credential_source,
                   std::string api_key, std::chrono::seconds retry_period,
-                  std::string api_base_url, std::string project_id);
+                  std::string api_base_url, std::string project_id,
+                  std::unique_ptr<CasDownloader> cas_downloader = nullptr);
 
   Result<Build> GetBuild(const BuildString& build_string,
                          const std::string& fallback_target);
@@ -101,6 +103,9 @@ class AndroidBuildApi : public BuildApi {
   Result<std::string> DownloadTargetFile(const Build& build,
                                          const std::string& target_directory,
                                          const std::string& artifact_name);
+  Result<std::string> DownloadTargetFileFromCas(
+      const Build& build, const std::string& target_directory,
+      const std::string& artifact_name);
 
   Result<Build> GetBuild(const DeviceBuildString& build_string,
                          const std::string& fallback_target);
@@ -114,6 +119,7 @@ class AndroidBuildApi : public BuildApi {
   std::chrono::seconds retry_period_;
   std::string api_base_url_;
   std::string project_id_;
+  std::unique_ptr<CasDownloader> cas_downloader_;
 };
 
 std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);
