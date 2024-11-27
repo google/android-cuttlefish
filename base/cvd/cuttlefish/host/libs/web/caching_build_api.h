@@ -21,6 +21,8 @@
 
 #include "common/libs/utils/result.h"
 #include "host/libs/web/android_build_api.h"
+#include "host/libs/web/build_api.h"
+#include "host/libs/web/cas/cas_downloader.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
 
@@ -59,6 +61,7 @@ std::unique_ptr<BuildApi> CreateBuildApi(
     std::unique_ptr<HttpClient> inner_http_client,
     std::unique_ptr<CredentialSource> credential_source, std::string api_key,
     std::chrono::seconds retry_period, std::string api_base_url,
-    std::string project_id, bool enable_caching, std::string cache_base_path);
+    std::string project_id, bool enable_caching, std::string cache_base_path,
+    std::unique_ptr<CasDownloader> cas_downloader = nullptr);
 
 }  // namespace cuttlefish
