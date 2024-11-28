@@ -16,6 +16,7 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <linux/sockios.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/ioctl.h>
