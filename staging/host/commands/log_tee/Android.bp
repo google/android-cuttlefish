@@ -31,9 +31,9 @@ cc_binary {
         "libjsoncpp",
     ],
     static_libs: [
-        "libgflags",
         "libcuttlefish_host_config",
         "libcuttlefish_vm_manager",
+        "libgflags",
     ],
     target: {
         darwin: {
