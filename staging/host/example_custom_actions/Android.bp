@@ -25,11 +25,11 @@ cc_binary_host {
     ],
     shared_libs: [
         "libbase",
-        "liblog",
-        "libutils",
-        "libjsoncpp",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libjsoncpp",
+        "liblog",
+        "libutils",
     ],
     static_libs: [
         "libcuttlefish_host_config",

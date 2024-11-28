@@ -19,8 +19,8 @@ package {
 cc_library {
     name: "libopenwrt_control_server",
     shared_libs: [
-        "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
+        "libprotobuf-cpp-full",
     ],
     static_libs: [
         "libgflags",
@@ -50,15 +50,15 @@ cc_binary_host {
         "libbase",
         "libcuttlefish_utils",
         "libcuttlefish_web",
-        "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
+        "libprotobuf-cpp-full",
     ],
     static_libs: [
         "libcuttlefish_host_config",
         "libgflags",
+        "libgrpc++_reflection",
         "libjsoncpp",
         "libopenwrt_control_server",
-        "libgrpc++_reflection",
     ],
     srcs: [
         "main.cpp",
@@ -72,8 +72,8 @@ cc_binary_host {
 filegroup {
     name: "OpenwrtControlServerProto",
     srcs: [
-        "openwrt_control.proto",
         ":libprotobuf-internal-protos",
+        "openwrt_control.proto",
     ],
 }
 
