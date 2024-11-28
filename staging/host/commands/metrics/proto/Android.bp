@@ -21,10 +21,10 @@ cc_library_shared {
     vendor_available: true,
 
     srcs: [
-        "common.proto",
         "cf_log.proto",
         "cf_metrics_event.proto",
         "clientanalytics.proto",
+        "common.proto",
     ],
 
     shared_libs: [
@@ -40,16 +40,16 @@ cc_library_shared {
 
     cppflags: [
         "-Werror",
-        "-Wno-unused-parameter",
-        "-Wno-format",
         "-Wno-c++98-compat-pedantic",
-        "-Wno-float-conversion",
         "-Wno-disabled-macro-expansion",
+        "-Wno-float-conversion",
         "-Wno-float-equal",
-        "-Wno-sign-conversion",
-        "-Wno-padded",
+        "-Wno-format",
         "-Wno-old-style-cast",
+        "-Wno-padded",
+        "-Wno-sign-conversion",
         "-Wno-undef",
+        "-Wno-unused-parameter",
     ],
 
     defaults: ["cuttlefish_host"],

@@ -19,7 +19,10 @@ package {
 
 cc_library {
     name: "libcuttlefish_security",
-    defaults: ["hidl_defaults", "cuttlefish_host"],
+    defaults: [
+        "cuttlefish_host",
+        "hidl_defaults",
+    ],
     srcs: [
         "keymaster_channel.cpp",
     ],
@@ -72,8 +75,8 @@ cc_test {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
-        "libcuttlefish_utils_result",
         "libcuttlefish_security",
+        "libcuttlefish_utils_result",
         "libgatekeeper",
         "libkeymaster_messages",
         "liblog",

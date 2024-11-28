@@ -24,11 +24,11 @@ cc_library {
         "util.cc",
     ],
     shared_libs: [
-        "liblog",
         "libcuttlefish_fs",
-        "libcuttlefish_utils",
         "libcuttlefish_run_cvd_proto",
+        "libcuttlefish_utils",
         "libjsoncpp",
+        "liblog",
         "libprotobuf-cpp-full",
     ],
     export_shared_lib_headers: [

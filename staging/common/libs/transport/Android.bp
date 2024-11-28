@@ -30,12 +30,12 @@ cc_library {
     target: {
         linux: {
             srcs: ["channel_sharedfd.cpp"],
-            shared_libs: ["libcuttlefish_fs"]
+            shared_libs: ["libcuttlefish_fs"],
         },
         darwin: {
             enabled: true,
             srcs: ["channel_sharedfd.cpp"],
-            shared_libs: ["libcuttlefish_fs"]
+            shared_libs: ["libcuttlefish_fs"],
         },
         windows: {
             enabled: true,

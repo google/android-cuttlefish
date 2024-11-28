@@ -19,8 +19,8 @@ package {
 cc_library {
     name: "libscreen_recording_server",
     shared_libs: [
-        "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
+        "libprotobuf-cpp-full",
     ],
     static_libs: [
         "libgflags",
@@ -53,20 +53,20 @@ cc_binary_host {
     name: "screen_recording_server",
     shared_libs: [
         "libbase",
-        "libprotobuf-cpp-full",
-        "libgrpc++_unsecure",
         "libcuttlefish_fs",
         "libcuttlefish_run_cvd_proto",
         "libcuttlefish_utils",
+        "libgrpc++_unsecure",
         "libjsoncpp",
+        "libprotobuf-cpp-full",
         "libprotobuf-cpp-full",
     ],
     static_libs: [
         "libcuttlefish_command_util",
         "libcuttlefish_host_config",
         "libgflags",
-        "libscreen_recording_server",
         "libgrpc++_reflection",
+        "libscreen_recording_server",
     ],
     srcs: [
         "main.cpp",
@@ -85,8 +85,8 @@ cc_binary_host {
 filegroup {
     name: "ScreenRecordingServerProto",
     srcs: [
-        "screen_recording.proto",
         ":libprotobuf-internal-protos",
+        "screen_recording.proto",
     ],
 }
 

@@ -20,27 +20,27 @@ package {
 cc_defaults {
     name: "modem_simulator_base",
     srcs: [
-        "channel_monitor.cpp",
-        "thread_looper.cpp",
-        "command_parser.cpp",
-        "modem_simulator.cpp",
-        "modem_service.cpp",
-        "sim_service.cpp",
-        "network_service.cpp",
-        "misc_service.cpp",
         "call_service.cpp",
-        "data_service.cpp",
-        "sms_service.cpp",
-        "sup_service.cpp",
-        "stk_service.cpp",
-        "pdu_parser.cpp",
         "cf_device_config.cpp",
-        "nvram_config.cpp"
+        "channel_monitor.cpp",
+        "command_parser.cpp",
+        "data_service.cpp",
+        "misc_service.cpp",
+        "modem_service.cpp",
+        "modem_simulator.cpp",
+        "network_service.cpp",
+        "nvram_config.cpp",
+        "pdu_parser.cpp",
+        "sim_service.cpp",
+        "sms_service.cpp",
+        "stk_service.cpp",
+        "sup_service.cpp",
+        "thread_looper.cpp",
     ],
     shared_libs: [
+        "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libbase",
         "libjsoncpp",
         "libnl",
     ],
@@ -49,16 +49,23 @@ cc_defaults {
         "libgflags",
         "libtinyxml2",
     ],
-    cflags: ["-Werror", "-Wall", "-fexceptions"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-fexceptions",
+    ],
     defaults: ["cuttlefish_host"],
 }
 
 cc_binary {
     name: "modem_simulator",
     srcs: [
-        "main.cpp"
+        "main.cpp",
     ],
-    defaults: ["cuttlefish_host", "modem_simulator_base"],
+    defaults: [
+        "cuttlefish_host",
+        "modem_simulator_base",
+    ],
 }
 
 prebuilt_etc {
@@ -109,13 +116,16 @@ prebuilt_etc_host {
 cc_test_host {
     name: "modem_simulator_test",
     srcs: [
-        "unittest/main_test.cpp",
-        "unittest/service_test.cpp",
         "unittest/command_parser_test.cpp",
+        "unittest/main_test.cpp",
         "unittest/pdu_parser_test.cpp",
+        "unittest/service_test.cpp",
     ],
     include_dirs: [
         "device/google/cuttlefish/host/commands",
     ],
-    defaults: ["cuttlefish_host", "modem_simulator_base"],
+    defaults: [
+        "cuttlefish_host",
+        "modem_simulator_base",
+    ],
 }

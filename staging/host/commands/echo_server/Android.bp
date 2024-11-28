@@ -19,8 +19,8 @@ package {
 cc_library {
     name: "libecho_server",
     shared_libs: [
-        "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
+        "libprotobuf-cpp-full",
     ],
     static_libs: [
         "libgflags",
@@ -52,13 +52,13 @@ cc_library {
 cc_binary_host {
     name: "echo_server",
     shared_libs: [
-        "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
+        "libprotobuf-cpp-full",
     ],
     static_libs: [
         "libcuttlefish_host_config",
-        "libgflags",
         "libecho_server",
+        "libgflags",
         "libgrpc++_reflection",
     ],
     srcs: [

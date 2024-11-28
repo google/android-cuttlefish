@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
@@ -23,17 +22,17 @@ cc_library {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libgrpc++_unsecure",
         "libjsoncpp",
         "libprotobuf-cpp-full",
-        "libgrpc++_unsecure",
     ],
     static_libs: [
         "libcuttlefish_host_config",
         "libgflags",
     ],
     cflags: [
-        "-Wno-unused-parameter",
         "-D_XOPEN_SOURCE",
+        "-Wno-unused-parameter",
     ],
     generated_headers: [
         "GnssGrpcProxyStub_h",
@@ -62,22 +61,22 @@ cc_binary_host {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libgrpc++_unsecure",
         "libjsoncpp",
         "libprotobuf-cpp-full",
-        "libgrpc++_unsecure",
     ],
     static_libs: [
         "libcuttlefish_host_config",
-        "libgflags",
         "libcvd_gnss_grpc_proxy",
+        "libgflags",
         "libgrpc++_reflection",
     ],
     srcs: [
         "gnss_grpc_proxy.cpp",
     ],
     cflags: [
-        "-Wno-unused-parameter",
         "-D_XOPEN_SOURCE",
+        "-Wno-unused-parameter",
     ],
     defaults: ["cuttlefish_host"],
     target: {

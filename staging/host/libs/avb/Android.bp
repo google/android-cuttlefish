@@ -20,7 +20,7 @@ package {
 cc_library {
     name: "libcuttlefish_avb",
     srcs: [
-        "avb.cpp"
+        "avb.cpp",
     ],
     shared_libs: [
         "libcuttlefish_fs",
@@ -31,7 +31,7 @@ cc_library {
     ],
     static_libs: [
         "libbase",
-        "libcuttlefish_host_config"
+        "libcuttlefish_host_config",
     ],
     defaults: ["cuttlefish_host"],
     target: {

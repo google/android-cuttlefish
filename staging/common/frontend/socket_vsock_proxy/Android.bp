@@ -27,14 +27,14 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
-        "libcuttlefish_utils",
         "libcuttlefish_kernel_log_monitor_utils",
+        "libcuttlefish_utils",
         "libjsoncpp",
         "liblog",
     ],
     static_libs: [
-        "libgflags",
         "libcuttlefish_utils",
+        "libgflags",
     ],
     target: {
         host: {
