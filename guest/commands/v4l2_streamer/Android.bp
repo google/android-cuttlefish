@@ -22,21 +22,21 @@ cc_binary {
     srcs: [
         "main.cpp",
         "v4l2_helpers.cpp",
-        "yuv2rgb.cpp",
         "vsock_frame_source.cpp",
+        "yuv2rgb.cpp",
     ],
     shared_libs: [
         "libbase",
         "libbinder_ndk",
+        "libcuttlefish_fs",
+        "libjsoncpp",
         "liblog",
         "libutils",
         "libvsock_utils",
-        "libjsoncpp",
-        "libcuttlefish_fs",
     ],
     static_libs: [
-        "libgflags",
         "libcuttlefish_utils",
+        "libgflags",
     ],
     defaults: ["cuttlefish_guest_only"],
 }

@@ -20,10 +20,10 @@ package {
 cc_library {
     name: "libcuttlefish_confui",
     srcs: [
-        "packet_types.cpp",
         "packet.cpp",
-        "protocol_types.cpp",
+        "packet_types.cpp",
         "protocol.cpp",
+        "protocol_types.cpp",
     ],
     static_libs: [
         "libteeui",

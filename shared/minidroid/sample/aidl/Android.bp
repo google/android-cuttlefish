@@ -15,6 +15,6 @@ aidl_interface {
         },
         rust: {
             enabled: true,
-        }
+        },
     },
 }

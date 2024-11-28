@@ -25,9 +25,9 @@ cc_library {
     shared_libs: [
         "libbase",
         "libcuttlefish_utils",
-        "libprotobuf-cpp-full",
         "libgrpc++",
         "libjsoncpp",
+        "libprotobuf-cpp-full",
     ],
     static_libs: [
         "grpc_cli_libs",

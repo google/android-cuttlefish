@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
@@ -27,5 +26,5 @@ cc_binary {
     shared_libs: [
         "cuttlefish_net",
     ],
-    defaults: ["cuttlefish_guest_only"]
+    defaults: ["cuttlefish_guest_only"],
 }

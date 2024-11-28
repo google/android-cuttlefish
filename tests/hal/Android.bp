@@ -22,14 +22,14 @@ cc_test {
     srcs: ["hal_implementation_test.cpp"],
     static_libs: [
         "libaidlmetadata",
-        "libhidlmetadata",
         "libhidl-gen-utils",
+        "libhidlmetadata",
     ],
     shared_libs: [
         "libbase",
         "libbinder",
-        "libvintf",
         "libutils",
+        "libvintf",
         "packagemanager_aidl-cpp",
     ],
     product_variables: {
@@ -42,7 +42,7 @@ cc_test {
         "-Werror",
     ],
     test_suites: [
-        "device-tests",
         "automotive-tests",
+        "device-tests",
     ],
 }
