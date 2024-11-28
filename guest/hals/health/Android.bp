@@ -115,16 +115,16 @@ cc_library_shared {
     static_libs: [
         "android.hardware.health@1.0-convert",
         "libbatterymonitor",
-        "libhealthloop",
         "libhealth2impl",
+        "libhealthloop",
     ],
 
     shared_libs: [
+        "android.hardware.health@2.0",
+        "android.hardware.health@2.1",
         "libbase",
         "libcutils",
         "libhidlbase",
         "libutils",
-        "android.hardware.health@2.0",
-        "android.hardware.health@2.1",
     ],
 }

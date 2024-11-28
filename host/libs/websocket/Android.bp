@@ -25,10 +25,10 @@ cc_library {
     ],
     shared_libs: [
         "libbase",
-        "liblog",
-        "libssl",
         "libcrypto",
         "libcuttlefish_utils",
+        "liblog",
+        "libssl",
     ],
     static_libs: [
         "libcap",

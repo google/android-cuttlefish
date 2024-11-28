@@ -21,5 +21,8 @@ runtime_resource_overlay {
     name: "aosp_cuttlefish_foldable_overlay_frameworks_base",
     soc_specific: true,
     sdk_version: "current",
-    aaptflags: ["--auto-add-overlay", "--keep-raw-values"],
+    aaptflags: [
+        "--auto-add-overlay",
+        "--keep-raw-values",
+    ],
 }

@@ -23,7 +23,7 @@ runtime_resource_overlay {
     resource_dirs: ["res"],
     manifest: "AndroidManifest.xml",
     sdk_version: "current",
-    product_specific: true
+    product_specific: true,
 }
 
 override_runtime_resource_overlay {
@@ -32,4 +32,3 @@ override_runtime_resource_overlay {
     package_name: "com.google.android.connectivity.resources.cuttlefish",
     target_package_name: "com.google.android.connectivity.resources",
 }
-

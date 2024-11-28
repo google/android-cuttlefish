@@ -53,8 +53,8 @@ apex {
         "com.google.cf.rild.xml",
     ],
     overrides: [
-        "libril",
         "libreference-ril",
+        "libril",
         "rild",
     ],
 }

@@ -29,5 +29,5 @@ cc_binary {
     shared_libs: [
         "liblog",
     ],
-    defaults: ["cuttlefish_guest_only"]
+    defaults: ["cuttlefish_guest_only"],
 }

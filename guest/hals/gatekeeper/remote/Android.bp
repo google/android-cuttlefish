@@ -29,9 +29,9 @@ cc_binary {
     ],
 
     cflags: [
-        "-fvisibility=hidden",
         "-Wall",
         "-Werror",
+        "-fvisibility=hidden",
     ],
 
     static_libs: [
@@ -40,18 +40,18 @@ cc_binary {
 
     shared_libs: [
         "android.hardware.gatekeeper-V1-ndk",
-        "libbinder_ndk",
-        "libhardware",
         "libbase",
+        "libbinder_ndk",
+        "libcutils",
         "libcuttlefish_fs",
         "libcuttlefish_security",
         "libcuttlefish_transport",
-        "libhidlbase",
         "libgatekeeper",
-        "libutils",
+        "libhardware",
+        "libhidlbase",
         "liblog",
-        "libcutils",
         "libtrusty",
+        "libutils",
     ],
 }
 
@@ -81,7 +81,7 @@ apex {
         "android.hardware.gatekeeper-service.remote",
     ],
     prebuilts: [
-        "android.hardware.gatekeeper-service.remote.xml",
         "android.hardware.gatekeeper-service.remote.rc",
+        "android.hardware.gatekeeper-service.remote.xml",
     ],
 }

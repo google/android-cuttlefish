@@ -12,8 +12,8 @@ cc_binary {
     srcs: ["server.cpp"],
     shared_libs: [
         "libbinder_ndk",
-        "minidroid_sd",
         "liblog",
+        "minidroid_sd",
     ],
     static_libs: [
         "com.android.minidroid.testservice-ndk",
@@ -29,8 +29,8 @@ cc_binary {
     srcs: ["client.cpp"],
     shared_libs: [
         "libbinder_ndk",
-        "minidroid_sd",
         "liblog",
+        "minidroid_sd",
     ],
     static_libs: [
         "com.android.minidroid.testservice-ndk",

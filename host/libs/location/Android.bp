@@ -20,32 +20,32 @@ package {
 cc_library {
     name: "liblocation",
     srcs: [
-        "StringParse.cpp",
+        "GnssClient.cpp",
         "GpxParser.cpp",
         "KmlParser.cpp",
-        "GnssClient.cpp",
+        "StringParse.cpp",
     ],
     export_include_dirs: ["."],
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libgrpc++_unsecure",
         "libjsoncpp",
         "liblog",
         "libprotobuf-cpp-full",
-        "libgrpc++_unsecure",
         "libxml2",
     ],
     static_libs: [
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libjsoncpp",
         "libcvd_gnss_grpc_proxy",
+        "libjsoncpp",
     ],
     cflags: [
-        "-Wno-unused-parameter",
         "-D_XOPEN_SOURCE",
+        "-Wno-unused-parameter",
     ],
     defaults: ["cuttlefish_host"],
     include_dirs: [

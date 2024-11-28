@@ -23,19 +23,19 @@ rust_binary {
     vendor: true,
     prefer_rlib: true,
     rustlibs: [
+        "android.hardware.nfc-V2-rust",
         "libandroid_logger",
-        "liblog_rust",
+        "libanyhow",
         "libbinder_rs",
         "libbinder_tokio_rs",
-        "libtokio",
-        "liblibc",
-        "libnix",
-        "libclap",
-        "android.hardware.nfc-V2-rust",
-        "libanyhow",
-        "libthiserror",
         "libbytes",
+        "libclap",
+        "liblibc",
+        "liblog_rust",
+        "libnix",
         "libpdl_runtime",
+        "libthiserror",
+        "libtokio",
     ],
     proc_macros: [
         "libasync_trait",
@@ -43,6 +43,7 @@ rust_binary {
     features: ["rt"],
     srcs: [
         "src/main.rs",
+        // TODO(b/381337280): src/main.rs must come first but bpfmt breaks this order without this comment.
         ":casimir_nci_packets_rust_gen",
     ],
 }
@@ -71,10 +72,10 @@ apex {
 
     binaries: ["android.hardware.nfc-service.cuttlefish"],
     prebuilts: [
+        "android.hardware.nfc.hce.prebuilt.xml", // permission
+        "android.hardware.nfc.prebuilt.xml", // permission
+        "libnfc-hal-cf.conf-default", // conf
         "nfc-service-cuttlefish.rc", // init_rc
         "nfc-service-cuttlefish.xml", // vintf_fragments
-        "android.hardware.nfc.prebuilt.xml", // permission
-        "android.hardware.nfc.hce.prebuilt.xml", // permission
-        "libnfc-hal-cf.conf-default", // conf
     ],
 }
