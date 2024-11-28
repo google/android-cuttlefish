@@ -45,9 +45,9 @@ cc_library {
     ],
     export_include_dirs: ["."],
     shared_libs: [
+        "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libbase",
         "libjsoncpp",
         "libprotobuf-cpp-lite",
         "libz",

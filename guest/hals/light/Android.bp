@@ -8,18 +8,18 @@ rust_binary {
     vendor: true,
     prefer_rlib: true,
     rustlibs: [
-        "liblogger",
-        "liblog_rust",
-        "libbinder_rs",
         "android.hardware.light-V2-rust",
-        "libvsock",
-        "librustutils",
-        "libserde_json",
         "libanyhow",
-        "libserde",
+        "libbinder_rs",
+        "liblog_rust",
+        "liblogger",
         "libnix",
+        "librustutils",
+        "libserde",
+        "libserde_json",
+        "libvsock",
     ],
-    srcs: [ "main.rs" ],
+    srcs: ["main.rs"],
     installable: false, // installed in APEX
 }
 

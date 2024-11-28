@@ -23,15 +23,15 @@ cc_library {
         "metrics_receiver.cc",
     ],
     shared_libs: [
+        "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libjsoncpp",
-        "libbase",
         "libfruit",
+        "libjsoncpp",
     ],
     static_libs: [
-        "libcuttlefish_msg_queue",
         "libcuttlefish_host_config",
+        "libcuttlefish_msg_queue",
         "libgflags",
     ],
     target: {

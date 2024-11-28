@@ -30,11 +30,11 @@ apex {
         "//external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant:wpa_supplicant",
     ],
     prebuilts: [
+        "android.hardware.wifi.hostapd.xml.prebuilt",
+        "android.hardware.wifi.supplicant.xml.prebuilt",
         "com.google.cf.wpa_supplicant.rc",
         "p2p_supplicant.conf.cf",
         "wpa_supplicant.conf.cf",
         "wpa_supplicant_overlay.conf.cf",
-        "android.hardware.wifi.supplicant.xml.prebuilt",
-        "android.hardware.wifi.hostapd.xml.prebuilt",
     ],
 }

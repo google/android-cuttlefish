@@ -20,14 +20,14 @@ package {
 cc_binary {
     name: "kernel_log_monitor",
     srcs: [
-        "main.cc",
         "kernel_log_server.cc",
+        "main.cc",
     ],
     shared_libs: [
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "libcuttlefish_kernel_log_monitor_utils",
         "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_kernel_log_monitor_utils",
+        "libcuttlefish_utils",
         "libjsoncpp",
     ],
     static_libs: [
@@ -48,9 +48,9 @@ cc_library {
         "utils.cc",
     ],
     shared_libs: [
+        "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libbase",
         "libjsoncpp",
     ],
     target: {

@@ -62,19 +62,19 @@ apex {
     binaries: [
         "android.hardware.bluetooth-service.default",
         "android.hardware.bluetooth.finder-service.default",
-        "android.hardware.bluetooth.ranging-service.default",
         "android.hardware.bluetooth.lmp_event-service.default",
+        "android.hardware.bluetooth.ranging-service.default",
         "bt_vhci_forwarder",
     ],
     prebuilts: [
         // permissions
-        "android.hardware.bluetooth_le.prebuilt.xml",
         "android.hardware.bluetooth.prebuilt.xml",
+        "android.hardware.bluetooth_le.prebuilt.xml",
         // vintf
         "android.hardware.bluetooth-service.default.xml",
         "android.hardware.bluetooth.finder-service.default.xml",
-        "android.hardware.bluetooth.ranging-service.default.xml",
         "android.hardware.bluetooth.lmp_event-service.default.xml",
+        "android.hardware.bluetooth.ranging-service.default.xml",
         // init rc
         "com.google.cf.bt.rc",
     ],
