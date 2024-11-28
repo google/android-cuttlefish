@@ -24,8 +24,8 @@ cc_library {
     ],
     shared_libs: [
         "libbase",
-        "libcuttlefish_utils",
         "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "libjsoncpp",
         "liblog",
     ],
@@ -47,8 +47,8 @@ cc_binary {
         "libcuttlefish_allocd_utils",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "liblog",
         "libjsoncpp",
+        "liblog",
     ],
     static_libs: [
         "libcuttlefish_host_config",

@@ -21,7 +21,7 @@ cc_binary {
     name: "adb_connector",
     srcs: [
         "adb_connection_maintainer.cpp",
-        "main.cpp"
+        "main.cpp",
     ],
     static_libs: [
         "libcuttlefish_host_config",

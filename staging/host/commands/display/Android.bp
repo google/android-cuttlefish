@@ -26,8 +26,8 @@ cc_binary_host {
     static_libs: [
         "libbase",
         "libcuttlefish_fs",
-        "libcuttlefish_utils",
         "libcuttlefish_host_config",
+        "libcuttlefish_utils",
         "libgflags",
         "libjsoncpp",
         "liblog",

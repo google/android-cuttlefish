@@ -23,8 +23,8 @@ cc_library {
         "wayland_screen_connector.cpp",
     ],
     shared_libs: [
-        "libcuttlefish_fs",
         "libbase",
+        "libcuttlefish_fs",
         "libfruit",
         "libjsoncpp",
         "liblog",
@@ -33,11 +33,11 @@ cc_library {
         "libcuttlefish_confui_host_headers",
     ],
     static_libs: [
+        "libcuttlefish_confui",
+        "libcuttlefish_confui_host",
         "libcuttlefish_host_config",
         "libcuttlefish_utils",
-        "libcuttlefish_confui",
         "libcuttlefish_wayland_server",
-        "libcuttlefish_confui_host",
         "libffi",
         "libft2.nodep",
         "libteeui",

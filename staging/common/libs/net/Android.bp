@@ -24,8 +24,8 @@ cc_library_shared {
         "network_interface_manager.cpp",
     ],
     shared_libs: [
-        "libcuttlefish_fs",
         "libbase",
+        "libcuttlefish_fs",
     ],
     defaults: ["cuttlefish_host"],
 }
@@ -36,9 +36,9 @@ cc_test {
         "netlink_request_test.cpp",
     ],
     shared_libs: [
-        "libcuttlefish_fs",
         "cuttlefish_net",
         "libbase",
+        "libcuttlefish_fs",
     ],
     static_libs: [
         "libgmock",

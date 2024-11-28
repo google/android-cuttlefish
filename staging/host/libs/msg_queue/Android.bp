@@ -23,9 +23,9 @@ cc_library {
         "msg_queue.cc",
     ],
     shared_libs: [
+        "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libbase",
     ],
     static_libs: [
         "libcuttlefish_host_config",

@@ -24,10 +24,10 @@ cc_library {
         "process_monitor_channel.cc",
     ],
     shared_libs: [
+        "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_run_cvd_proto",
         "libcuttlefish_utils",
-        "libbase",
         "libfruit",
         "libjsoncpp",
         "libprotobuf-cpp-full",

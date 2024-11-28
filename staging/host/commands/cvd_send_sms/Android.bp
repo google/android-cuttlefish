@@ -22,8 +22,8 @@ cc_defaults {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
-        "liblog",
         "libicuuc",
+        "liblog",
     ],
     defaults: ["cuttlefish_buildhost_only"],
 }
@@ -31,8 +31,8 @@ cc_defaults {
 cc_library {
     name: "libcvd_send_sms",
     srcs: [
+        "pdu_format_builder.cc",
         "sms_sender.cc",
-        "pdu_format_builder.cc"
     ],
     defaults: ["cvd_send_sms_defaults"],
 }
@@ -40,7 +40,7 @@ cc_library {
 cc_binary {
     name: "cvd_send_sms",
     srcs: [
-        "main.cc"
+        "main.cc",
     ],
     static_libs: [
         "libcvd_send_sms",
@@ -53,12 +53,12 @@ cc_test_host {
     name: "cvd_send_sms_test",
     srcs: [
         "unittest/main_test.cc",
-        "unittest/sms_sender_test.cc",
         "unittest/pdu_format_builder_test.cc",
+        "unittest/sms_sender_test.cc",
     ],
     static_libs: [
-        "libgmock",
         "libcvd_send_sms",
+        "libgmock",
     ],
     defaults: ["cvd_send_sms_defaults"],
 }

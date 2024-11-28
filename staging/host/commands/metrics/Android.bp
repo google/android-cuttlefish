@@ -44,8 +44,8 @@ cc_binary {
     static_libs: [
         "libcuttlefish_host_config",
         "libcuttlefish_msg_queue",
-        "libgflags",
         "libext2_uuid",
+        "libgflags",
     ],
     defaults: ["cuttlefish_host"],
 }
@@ -65,9 +65,9 @@ cc_test_host {
         "libprotobuf-cpp-full",
     ],
     srcs: [
-        "utils.cc",
         "unittest/main_test.cc",
         "unittest/utils_tests.cpp",
+        "utils.cc",
     ],
     static_libs: [
         "libcuttlefish_host_config",
