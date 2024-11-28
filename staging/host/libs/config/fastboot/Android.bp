@@ -23,7 +23,7 @@ cc_library {
         "config.cpp",
         "data.cpp",
         "flags.cpp",
-        "launch.cpp"
+        "launch.cpp",
     ],
     shared_libs: [
         "libbase",

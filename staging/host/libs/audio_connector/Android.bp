@@ -25,8 +25,8 @@ cc_library {
         "server.cpp",
     ],
     shared_libs: [
-        "libcuttlefish_fs",
         "libbase",
+        "libcuttlefish_fs",
         "libjsoncpp",
         "liblog",
     ],
