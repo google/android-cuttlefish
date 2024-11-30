@@ -29,3 +29,9 @@ service bt_lmp_event /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth.lm
     user bluetooth
     group bluetooth net_admin net_bt_admin
     capabilities NET_ADMIN
+
+service bt_socket /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth.socket-service.default
+    class hal
+    user bluetooth
+    group bluetooth net_admin net_bt_admin
+    capabilities NET_ADMIN
