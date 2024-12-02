@@ -41,7 +41,7 @@
 #include "host/libs/config/openwrt_args.h"
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_server.h"
-#include "host/libs/input_connector/socket_input_connector.h"
+#include "host/libs/input_connector/input_connector.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
 DEFINE_bool(multitouch, true,
@@ -144,7 +144,7 @@ int main(int argc, char** argv) {
   auto cvd_config = cuttlefish::CuttlefishConfig::Get();
   auto instance = cvd_config->ForDefaultInstance();
 
-  cuttlefish::InputSocketsConnectorBuilder inputs_builder(
+  cuttlefish::InputConnectorBuilder inputs_builder(
       FLAGS_write_virtio_input ? cuttlefish::InputEventType::Virtio
                                : cuttlefish::InputEventType::Evdev);
 
