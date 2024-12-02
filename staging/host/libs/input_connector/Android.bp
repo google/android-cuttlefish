@@ -20,7 +20,10 @@ package {
 cc_library {
     name: "libcuttlefish_input_connector",
     srcs: [
-        "socket_input_connector.cpp",
+        "event_buffer.cpp",
+        "input_connector.cpp",
+        "input_devices.cpp",
+        "server_input_connection.cpp",
     ],
     shared_libs: [
         "libbase",
