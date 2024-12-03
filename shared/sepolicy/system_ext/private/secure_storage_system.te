@@ -12,6 +12,20 @@ allow rpmb_dev_system secure_storage_rpmb_system_file:{file sock_file} create_fi
 allow rpmb_dev_system secure_storage_rpmb_system_file:lnk_file read;
 allow rpmb_dev_system rpmb_dev_system_socket:sock_file rw_file_perms;
 
+#============= rpmb_dev_wv_system ==============
+type rpmb_dev_wv_system, domain, coredomain;
+type rpmb_dev_wv_system_exec, exec_type, system_file_type, file_type;
+type rpmb_dev_wv_system_socket, file_type, data_file_type, core_data_file_type;
+init_daemon_domain(rpmb_dev_wv_system)
+allow rpmb_dev_wv_system metadata_file:dir { search add_name write };
+allow rpmb_dev_wv_system metadata_file:file { create open read write };
+allow rpmb_dev_wv_system tmpfs:lnk_file read;
+allow rpmb_dev_wv_system secure_storage_rpmb_system_file:dir rw_dir_perms;
+allow rpmb_dev_wv_system secure_storage_rpmb_system_file:{file sock_file} create_file_perms;
+allow rpmb_dev_wv_system secure_storage_rpmb_system_file:lnk_file read;
+allow rpmb_dev_wv_system rpmb_dev_wv_system_socket:sock_file rw_file_perms;
+allow rpmb_dev_wv_system rpmb_dev_system_socket:sock_file rw_file_perms;
+
 #============= storageproxyd_system ==============
 type storageproxyd_system, domain, coredomain;
 type storageproxyd_system_exec, exec_type, system_file_type, file_type;
@@ -27,6 +41,7 @@ allow storageproxyd_system secure_storage_system_file:file { create open read wr
 allow storageproxyd_system self:vsock_socket { create_socket_perms_no_ioctl };
 
 unix_socket_connect(storageproxyd_system, rpmb_dev_system, rpmb_dev_system)
+unix_socket_connect(storageproxyd_system, rpmb_dev_wv_system, rpmb_dev_wv_system)
 
 # Allow storageproxyd_system access to gsi_public_metadata_file
 read_fstab(storageproxyd_system)
