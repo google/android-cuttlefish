@@ -38,7 +38,7 @@ Result<std::vector<uint8_t>> HexToBytes(const std::string& hex_string) {
             "Failed to parse input. Must be even size");
 
   int len = hex_string.size() / 2;
-  std::vector<uint8_t> out;
+  std::vector<uint8_t> out(len);
   for (int i = 0; i < len; i++) {
     int num_h = ByteNumber(hex_string[i * 2]);
     int num_l = ByteNumber(hex_string[i * 2 + 1]);
