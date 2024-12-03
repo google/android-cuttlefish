@@ -30,10 +30,9 @@ endif
 
 TARGET_KERNEL_ARCH ?= $(TARGET_ARCH)
 
-ifneq (, $(filter $(PRODUCT_NAME),cf_x86_64_desktop))
-# TODO: b/357660371 - cf_arm64_desktop should use the desktop kernel, too
-SYSTEM_DLKM_SRC ?= device/google/cuttlefish_prebuilts/kernel/6.6-x86_64-desktop/system_dlkm
-KERNEL_MODULES_PATH ?= device/google/cuttlefish_prebuilts/kernel/6.6-x86_64-desktop/vendor_dlkm
+ifneq (,$(filter cf_x86_64_desktop cf_arm64_desktop,$(PRODUCT_NAME)))
+SYSTEM_DLKM_SRC ?= device/google/cuttlefish_prebuilts/kernel/6.6-$(TARGET_KERNEL_ARCH)-desktop/system_dlkm
+KERNEL_MODULES_PATH ?= device/google/cuttlefish_prebuilts/kernel/6.6-$(TARGET_KERNEL_ARCH)-desktop/vendor_dlkm
 else
 SYSTEM_DLKM_SRC ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)
 KERNEL_MODULES_PATH ?= \
