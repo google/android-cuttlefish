@@ -158,8 +158,14 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
       CF_EXPECT(Unmute(), "failed to unmute the device");
     }
     // Step 2: Poll
-    sender_id->set_sender_id(CF_EXPECT(
-        device_->Poll(), "Failed to poll and select NFC-A and ISO-DEP"));
+    /* Casimir control server seems to be dropping integer values of zero.
+      This works around that issue by translating the 0-based sender IDs to
+      be 1-based.*/
+    sender_id->set_sender_id(
+
+        CF_EXPECT(device_->Poll(),
+                  "Failed to poll and select NFC-A and ISO-DEP") +
+        1);
     return {};
   }
 
@@ -181,7 +187,10 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
 
     int16_t id;
     if (request->has_sender_id()) {
-      id = request->sender_id();
+      /* Casimir control server seems to be dropping integer values of zero.
+        This works around that issue by translating the 0-based sender IDs to
+        be 1-based.*/
+      id = request->sender_id() - 1;
     } else {
       // Step 2: Poll
       SenderId sender_id;
