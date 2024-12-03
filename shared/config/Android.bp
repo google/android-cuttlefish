@@ -94,26 +94,66 @@ prebuilt_etc {
     name: "fstab.cf.f2fs.hctr2",
     src: ":gen_fstab_cf_f2fs_hctr2",
     vendor: true,
-    vendor_ramdisk_available: true,
+}
+
+prebuilt_etc {
+    name: "fstab.cf.f2fs.hctr2.vendor_ramdisk",
+    srcs: [
+        ":gen_fstab_cf_f2fs_hctr2",
+    ],
+    dsts: [
+        "fstab.cf.f2fs.hctr2",
+    ],
+    vendor_ramdisk: true,
 }
 
 prebuilt_etc {
     name: "fstab.cf.f2fs.cts",
     src: ":gen_fstab_cf_f2fs_cts",
     vendor: true,
-    vendor_ramdisk_available: true,
+}
+
+prebuilt_etc {
+    name: "fstab.cf.f2fs.cts.vendor_ramdisk",
+    srcs: [
+        ":gen_fstab_cf_f2fs_cts",
+    ],
+    dsts: [
+        "fstab.cf.f2fs.cts",
+    ],
+    vendor_ramdisk: true,
 }
 
 prebuilt_etc {
     name: "fstab.cf.ext4.hctr2",
     src: ":gen_fstab_cf_ext4_hctr2",
     vendor: true,
-    vendor_ramdisk_available: true,
+}
+
+prebuilt_etc {
+    name: "fstab.cf.ext4.hctr2.vendor_ramdisk",
+    srcs: [
+        ":gen_fstab_cf_ext4_hctr2",
+    ],
+    dsts: [
+        "fstab.cf.ext4.hctr2",
+    ],
+    vendor_ramdisk: true,
 }
 
 prebuilt_etc {
     name: "fstab.cf.ext4.cts",
     src: ":gen_fstab_cf_ext4_cts",
     vendor: true,
-    vendor_ramdisk_available: true,
+}
+
+prebuilt_etc {
+    name: "fstab.cf.ext4.cts.vendor_ramdisk",
+    srcs: [
+        ":gen_fstab_cf_ext4_cts",
+    ],
+    dsts: [
+        "fstab.cf.ext4.cts",
+    ],
+    vendor_ramdisk: true,
 }
