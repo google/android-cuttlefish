@@ -82,6 +82,11 @@ public class CuttlefishVulkanSnapshotTests extends BaseHostJUnit4Test {
     @Rule
     public TestLogData mLogs = new TestLogData();
 
+    private void unlockDevice() throws Exception {
+        getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        getDevice().executeShellCommand("input keyevent KEYCODE_MENU");
+    }
+
     // TODO: Move this into `device/google/cuttlefish/tests/utils` if it works?
     @Rule
     public final TestRule mUnlockScreenRule = new TestRule() {
@@ -90,9 +95,7 @@ public class CuttlefishVulkanSnapshotTests extends BaseHostJUnit4Test {
             return new Statement() {
                 @Override
                 public void evaluate() throws Throwable {
-                    getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
-                    getDevice().executeShellCommand("input keyevent KEYCODE_MENU");
-
+                    unlockDevice();
                     base.evaluate();
                 }
             };
@@ -224,6 +227,8 @@ public class CuttlefishVulkanSnapshotTests extends BaseHostJUnit4Test {
 
         // Reboot to make sure device isn't dirty from previous tests.
         getDevice().reboot();
+
+        unlockDevice();
 
         getDevice().executeShellCommand(
             String.format("am start -n %s/%s", pkg, VK_SAMPLES_MAIN_ACTIVITY));
