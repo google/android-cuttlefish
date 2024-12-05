@@ -21,6 +21,10 @@ java_library_host {
     srcs: [
         "src/**/*.java",
     ],
+    plugins: [
+        "auto_annotation_plugin",
+        "auto_value_plugin",
+    ],
     libs: [
         "compatibility-host-util",
         "tradefed",

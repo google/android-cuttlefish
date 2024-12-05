@@ -48,6 +48,37 @@ java_test_host {
 }
 
 java_test_host {
+    name: "CuttlefishDisplayTests",
+    srcs: [
+        "src/com/android/cuttlefish/tests/CuttlefishDisplayTests.java",
+    ],
+    data_native_bins: [
+        "cvd_internal_display",
+    ],
+    test_options: {
+        unit_test: false,
+    },
+    test_suites: [
+        "device-tests",
+    ],
+    libs: [
+        "compatibility-host-util",
+        "cts-tradefed",
+        "tradefed",
+    ],
+    static_libs: [
+        "cuttlefish_host_test_utils",
+    ],
+    plugins: [
+        "auto_annotation_plugin",
+        "auto_value_plugin",
+    ],
+    device_common_data: [
+        ":CuttlefishVulkanSamplesFullscreenColor",
+    ],
+}
+
+java_test_host {
     name: "CuttlefishGraphicsConfigurationTest",
     srcs: [
         "src/com/android/cuttlefish/tests/CuttlefishGraphicsConfigurationTest.java",
@@ -73,6 +104,9 @@ java_test_host {
     ],
     libs: [
         "tradefed",
+    ],
+    static_libs: [
+        "cuttlefish_host_test_utils",
     ],
     plugins: [
         "auto_annotation_plugin",

@@ -29,7 +29,9 @@ import com.android.tradefed.util.RunUtil;
 
 import com.google.common.collect.Iterables;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -108,5 +110,11 @@ public class CuttlefishControlRemoteRunner implements CuttlefishControlRunner {
     @Override
     public String getHostRuntimePath(String basename) throws FileNotFoundException {
         return Paths.get(this.basePath, "cuttlefish_runtime", basename).toAbsolutePath().toString();
+    }
+
+    @Override
+    public File getFile(String path) throws IOException {
+        return RemoteFileUtil.fetchRemoteFile(
+            testDeviceAvdInfo, testDeviceOptions, runUtil, DEFAULT_TIMEOUT_MILLIS, path);
     }
 }
