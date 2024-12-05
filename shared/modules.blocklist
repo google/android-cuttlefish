@@ -1,3 +1,13 @@
 # ptp_kvm.ko should only load when the kvm hypervisor is available on the target
 blocklist ptp_kvm.ko
 blocklist vkms.ko
+
+# Cuttlefish assumes /dev/snd/pcmC0D0p, the first ALSA playback device,
+# represents a virtio-snd playback device.
+#
+# When audio loopback device gets loaded earlier, that device becomes a
+# loopback audio device, and no output from audio HAL gets forwarded to the
+# host.
+#
+# Prevent it from loading completely as it's not needed in Cuttlefish.
+blocklist snd-aloop.ko
