@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include <android-base/strings.h>
 #include <fmt/format.h>
@@ -26,6 +27,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/web/android_build_api.h"
+#include "host/libs/web/cas/cas_downloader.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
 
@@ -155,16 +157,20 @@ std::unique_ptr<BuildApi> CreateBuildApi(
     std::unique_ptr<HttpClient> http_client,
     std::unique_ptr<HttpClient> inner_http_client,
     std::unique_ptr<CredentialSource> credential_source, std::string api_key,
-    const std::chrono::seconds retry_period, std::string api_base_url, std::string project_id,
-    const bool enable_caching, const std::string cache_base_path) {
+    const std::chrono::seconds retry_period, std::string api_base_url,
+    std::string project_id, const bool enable_caching,
+    const std::string cache_base_path,
+    std::unique_ptr<CasDownloader> cas_downloader) {
   auto build_api = std::make_unique<AndroidBuildApi>(
       std::move(http_client), std::move(inner_http_client),
       std::move(credential_source), std::move(api_key), retry_period,
-      std::move(api_base_url), std::move(project_id));
+      std::move(api_base_url), std::move(project_id),
+      std::move(cas_downloader));
   if (enable_caching && EnsureCacheDirectory(cache_base_path)) {
     return std::make_unique<CachingBuildApi>(std::move(build_api),
                                              std::move(cache_base_path));
   }
   return std::move(build_api);
 }
+
 }  // namespace cuttlefish
