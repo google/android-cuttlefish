@@ -70,10 +70,20 @@ public class CuttlefishVulkanSnapshotTests extends BaseHostJUnit4Test {
     private static final String VK_SAMPLES_FULLSCREEN_TEXTURE_PKG =
         "com.android.cuttlefish.vulkan_samples.fullscreen_texture";
 
+    private static final String VK_SAMPLES_SECONDARY_COMMAND_BUFFER_APK =
+        "CuttlefishVulkanSamplesSecondaryCommandBuffer.apk";
+    private static final String VK_SAMPLES_SECONDARY_COMMAND_BUFFER_PKG =
+        "com.android.cuttlefish.vulkan_samples.secondary_command_buffer";
+
     private static final List<String> VK_SAMPLE_APKS =
-        Arrays.asList(VK_SAMPLES_FULLSCREEN_COLOR_APK, VK_SAMPLES_FULLSCREEN_TEXTURE_APK);
+        Arrays.asList(VK_SAMPLES_FULLSCREEN_COLOR_APK, //
+            VK_SAMPLES_FULLSCREEN_TEXTURE_APK, //
+            VK_SAMPLES_SECONDARY_COMMAND_BUFFER_APK);
+
     private static final List<String> VK_SAMPLE_PKGS =
-        Arrays.asList(VK_SAMPLES_FULLSCREEN_COLOR_PKG, VK_SAMPLES_FULLSCREEN_TEXTURE_PKG);
+        Arrays.asList(VK_SAMPLES_FULLSCREEN_COLOR_PKG, //
+            VK_SAMPLES_FULLSCREEN_TEXTURE_PKG, //
+            VK_SAMPLES_SECONDARY_COMMAND_BUFFER_PKG);
 
     private static final int SCREENSHOT_CHECK_ATTEMPTS = 5;
 
@@ -273,5 +283,15 @@ public class CuttlefishVulkanSnapshotTests extends BaseHostJUnit4Test {
             // clang-format on
         );
         runOneSnapshotTest(VK_SAMPLES_FULLSCREEN_TEXTURE_PKG, expectedColors);
+    }
+
+    @Test
+    public void testSecondaryCommandBufferSample() throws Exception {
+        final List<ExpectedColor> expectedColors = Arrays.asList(
+            // clang-format off
+                ExpectedColor.create(0.5f, 0.5f, Color.RED)
+            // clang-format on
+        );
+        runOneSnapshotTest(VK_SAMPLES_SECONDARY_COMMAND_BUFFER_PKG, expectedColors);
     }
 }

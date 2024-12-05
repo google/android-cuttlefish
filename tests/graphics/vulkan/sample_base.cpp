@@ -1138,7 +1138,6 @@ Result<Ok> SampleBase::DoCommandsImmediate(
 Result<Ok> SampleBase::SetWindow(ANativeWindow* window) {
   mDevice->waitIdle();
 
-  VK_EXPECT(DestroySwapchainDependents());
   VK_EXPECT(DestroySwapchain());
   VK_EXPECT(DestroySurface());
 
@@ -1153,6 +1152,8 @@ Result<Ok> SampleBase::SetWindow(ANativeWindow* window) {
 }
 
 Result<Ok> SampleBase::RecreateSwapchain() {
+  mDevice->waitIdle();
+
   VK_EXPECT(DestroySwapchain());
   VK_EXPECT(CreateSwapchain());
   return Ok{};
