@@ -2,3 +2,4 @@
 /vendor/bin/hw/android\.hardware\.automotive\.vehicle@V[0-9]+-cf-service    u:object_r:hal_vehicle_default_exec:s0
 # Battery Health HAL
 /vendor/bin/hw/android\.hardware\.health-service\.automotive                u:object_r:hal_health_default_exec:s0
+/dev/block/vda19                                                            u:object_r:swap_block_device:s0

@@ -52,6 +52,10 @@ endif
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.boot.uwbcountrycode=US
 
+PRODUCT_SYSTEM_PROPERTIES += \
+    ro.sys.hibernate_enabled=1 \
+    ro.sys.swap_storage_device=/dev/block/vda19
+
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/car_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/car_core_hardware.xml \
     frameworks/native/data/etc/android.hardware.broadcastradio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.broadcastradio.xml \
@@ -81,6 +85,10 @@ PRODUCT_PACKAGES += \
 # Include display settings for an auto device.
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/auto/display_settings.xml:$(TARGET_COPY_OUT_VENDOR)/etc/display_settings.xml
+
+# Include the fstab needed for suspend to disk
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/auto/hibernation_swap/fstab.hibernationswap:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.hibernationswap
 
 # vehicle HAL
 ifeq ($(LOCAL_VHAL_PRODUCT_PACKAGE),)
