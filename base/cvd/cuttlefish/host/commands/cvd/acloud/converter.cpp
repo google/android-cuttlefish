@@ -145,7 +145,7 @@ namespace acloud_impl {
 
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     const CommandRequest& request) {
-  auto arguments = ParseInvocation(request).arguments;
+  std::vector<std::string> arguments = request.SubcommandArguments();
   CF_EXPECT(!arguments.empty());
   CF_EXPECT(arguments[0] == "create");
   arguments.erase(arguments.begin());

@@ -58,15 +58,15 @@ class AcloudCommand : public CvdServerHandler {
   ~AcloudCommand() = default;
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    auto invocation = ParseInvocation(request);
-    if (invocation.arguments.size() >= 2) {
-      if (invocation.command == "acloud" &&
-          (invocation.arguments[0] == "translator" ||
-           invocation.arguments[0] == "mix-super-image")) {
+    std::vector<std::string> subcmd_args = request.SubcommandArguments();
+    if (subcmd_args.size() >= 2) {
+      if (request.Subcommand() == "acloud" &&
+          (subcmd_args[0] == "translator" ||
+           subcmd_args[0] == "mix-super-image")) {
         return false;
       }
     }
-    return invocation.command == "acloud";
+    return request.Subcommand() == "acloud";
   }
 
   cvd_common::Args CmdList() const override { return {"acloud"}; }
@@ -162,7 +162,7 @@ Result<ConvertedAcloudCreateCommand> AcloudCommand::ValidateLocal(
 }
 
 bool AcloudCommand::ValidateRemoteArgs(const CommandRequest& request) {
-  auto args = ParseInvocation(request).arguments;
+  std::vector<std::string> args = request.SubcommandArguments();
   return acloud_impl::CompileFromAcloudToCvdr(args).ok();
 }
 
@@ -236,7 +236,7 @@ Result<void> AcloudCommand::PrepareForDeleteCommand(
 
 Result<cvd::Response> AcloudCommand::HandleRemote(
     const CommandRequest& request) {
-  auto args = ParseInvocation(request).arguments;
+  std::vector<std::string> args = request.SubcommandArguments();
   args = CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
   Command cmd = Command("cvdr");
   for (auto a : args) {

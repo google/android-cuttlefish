@@ -80,13 +80,13 @@ CvdStopCommandHandler::CvdStopCommandHandler(InstanceManager& instance_manager)
 
 Result<bool> CvdStopCommandHandler::CanHandle(
     const CommandRequest& request) const {
-  auto invocation = ParseInvocation(request);
-  return Contains(CmdList(), invocation.command);
+  return Contains(CmdList(), request.Subcommand());
 }
 
 Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
     const CommandRequest& request) {
-  auto [subcmd, cmd_args] = ParseInvocation(request);
+  std::string subcmd = request.Subcommand();
+  std::vector<std::string> cmd_args = request.SubcommandArguments();
   const cvd_common::Envs& env = request.Env();
 
   const auto [bin, bin_path] = CF_EXPECT(CvdHelpBinPath(subcmd, env));
@@ -109,7 +109,7 @@ Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
 Result<cvd::Response> CvdStopCommandHandler::Handle(
     const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
-  auto [subcmd, cmd_args] = ParseInvocation(request);
+  std::vector<std::string> cmd_args = request.SubcommandArguments();
 
   if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
     return CF_EXPECT(HandleHelpCmd(request));

@@ -158,10 +158,10 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
   ~AcloudMixSuperImageCommand() = default;
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    auto invocation = ParseInvocation(request);
-    if (invocation.arguments.size() >= 2) {
-      if (invocation.command == "acloud" &&
-          invocation.arguments[0] == "mix-super-image") {
+    std::vector<std::string> subcmd_args = request.SubcommandArguments();
+    if (subcmd_args.size() >= 2) {
+      if (request.Subcommand() == "acloud" &&
+          subcmd_args[0] == "mix-super-image") {
         return true;
       }
     }
@@ -179,8 +179,8 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
-    auto invocation = ParseInvocation(request);
-    if (invocation.arguments.empty() || invocation.arguments.size() < 2) {
+    std::vector<std::string> subcmd_args = request.SubcommandArguments();
+    if (subcmd_args.empty() || subcmd_args.size() < 2) {
       return CF_ERR("Acloud mix-super-image command not support");
     }
 
@@ -193,7 +193,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
         GflagsCompatFlag("help", help),
         GflagsCompatFlag("super_image", flag_paths),
     };
-    CF_EXPECT(ConsumeFlags(mixsuperimage_flags, invocation.arguments),
+    CF_EXPECT(ConsumeFlags(mixsuperimage_flags, subcmd_args),
               "Failed to process mix-super-image flag.");
     if (help) {
       std::cout << kMixSuperImageHelpMessage;

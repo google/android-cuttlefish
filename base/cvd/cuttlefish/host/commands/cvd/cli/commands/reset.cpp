@@ -20,11 +20,10 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "host/commands/cvd/utils/common.h"
+#include "host/commands/cvd/cli/commands/server_handler.h"
 #include "host/commands/cvd/instances/instance_manager.h"
 #include "host/commands/cvd/instances/reset_client_utils.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace {
@@ -119,14 +118,13 @@ class CvdResetCommandHandler : public CvdServerHandler {
       : instance_manager_(instance_manager) {}
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    auto invocation = ParseInvocation(request);
-    return invocation.command == kResetSubcmd;
+    return request.Subcommand() == kResetSubcmd;
   }
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
-    auto invocation = ParseInvocation(request);
-    auto options = CF_EXPECT(ParseResetFlags(invocation.arguments));
+    std::vector<std::string> subcmd_args = request.SubcommandArguments();
+    auto options = CF_EXPECT(ParseResetFlags(subcmd_args));
     if (options.log_level) {
       SetMinimumVerbosity(options.log_level.value());
     }

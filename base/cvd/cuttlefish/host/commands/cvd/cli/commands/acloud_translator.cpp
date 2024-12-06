@@ -43,10 +43,9 @@ class AcloudTranslatorCommand : public CvdServerHandler {
   ~AcloudTranslatorCommand() = default;
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    auto invocation = ParseInvocation(request);
-    if (invocation.arguments.size() >= 2) {
-      if (invocation.command == "acloud" &&
-          invocation.arguments[0] == "translator") {
+    std::vector<std::string> subcmd_args = request.SubcommandArguments();
+    if (subcmd_args.size() >= 2) {
+      if (request.Subcommand() == "acloud" && subcmd_args[0] == "translator") {
         return true;
       }
     }
@@ -64,8 +63,8 @@ class AcloudTranslatorCommand : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
-    auto invocation = ParseInvocation(request);
-    if (invocation.arguments.empty() || invocation.arguments.size() < 2) {
+    std::vector<std::string> subcmd_args = request.SubcommandArguments();
+    if (subcmd_args.empty() || subcmd_args.size() < 2) {
       return CF_ERR("Translator command not support");
     }
 
@@ -81,7 +80,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
         GflagsCompatFlag("opt-out", flag_optout),
         GflagsCompatFlag("opt-in", flag_optin),
     };
-    CF_EXPECT(ConsumeFlags(translator_flags, invocation.arguments),
+    CF_EXPECT(ConsumeFlags(translator_flags, subcmd_args),
               "Failed to process translator flag.");
     if (help) {
       std::cout << kTranslatorHelpMessage;

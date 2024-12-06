@@ -23,7 +23,6 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
@@ -63,8 +62,7 @@ class CvdFleetCommandHandler : public CvdServerHandler {
 
 Result<bool> CvdFleetCommandHandler::CanHandle(
     const CommandRequest& request) const {
-  auto invocation = ParseInvocation(request);
-  return invocation.command == kFleetSubcmd;
+  return request.Subcommand() == kFleetSubcmd;
 }
 
 Result<cvd::Response> CvdFleetCommandHandler::Handle(
@@ -76,7 +74,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   auto& status = *ok_response.mutable_status();
   status.set_code(cvd::Status::OK);
 
-  auto [sub_cmd, args] = ParseInvocation(request);
+  std::vector<std::string> args = request.SubcommandArguments();
 
   if (IsHelp(args)) {
     std::cout << kHelpMessage;

@@ -57,15 +57,14 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
         cvd_display_operations_{"display"} {}
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    auto invocation = ParseInvocation(request);
-    return Contains(cvd_display_operations_, invocation.command);
+    return Contains(cvd_display_operations_, request.Subcommand());
   }
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     const cvd_common::Envs& env = request.Env();
 
-    auto [_, subcmd_args] = ParseInvocation(request);
+    std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
     bool is_help = CF_EXPECT(IsHelp(subcmd_args));
     // may modify subcmd_args by consuming in parsing

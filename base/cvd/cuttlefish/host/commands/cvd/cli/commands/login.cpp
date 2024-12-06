@@ -22,10 +22,11 @@
 
 #include <zlib.h>
 
+#include <android-base/strings.h>
+
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/flag_parser.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/libs/web/http_client/curl_global_init.h"
 #include "host/libs/web/http_client/http_client.h"
 #include "host/libs/web/oauth2_consent.h"
@@ -47,8 +48,7 @@ usage: cvd login --client_id=CLIENT_ID --client_secret=SECRET --scopes=SCOPES [-
 class CvdLoginCommand : public CvdServerHandler {
  public:
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    CommandInvocation invocation = ParseInvocation(request);
-    return invocation.command == "login";
+    return request.Subcommand() == "login";
   }
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {

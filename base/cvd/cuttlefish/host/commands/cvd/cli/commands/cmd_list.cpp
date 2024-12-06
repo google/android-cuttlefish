@@ -22,7 +22,6 @@
 #include <json/value.h>
 
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
@@ -32,8 +31,7 @@ class CvdCmdlistHandler : public CvdServerHandler {
   CvdCmdlistHandler(CommandSequenceExecutor& executor) : executor_(executor) {}
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    auto invocation = ParseInvocation(request);
-    return (invocation.command == "cmd-list");
+    return request.Subcommand() == "cmd-list";
   }
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {

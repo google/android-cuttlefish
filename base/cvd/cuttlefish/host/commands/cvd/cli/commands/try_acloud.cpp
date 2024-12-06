@@ -63,8 +63,7 @@ class TryAcloudCommand : public CvdServerHandler {
   ~TryAcloudCommand() = default;
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    auto invocation = ParseInvocation(request);
-    return invocation.command == "try-acloud";
+    return request.Subcommand() == "try-acloud";
   }
 
   cvd_common::Args CmdList() const override { return {"try-acloud"}; }
@@ -113,7 +112,7 @@ Result<cvd::Response> TryAcloudCommand::VerifyWithCvdRemote(
   auto config = CF_EXPECT(LoadAcloudConfig(filename));
   CF_EXPECT(config.use_legacy_acloud == false);
   CF_EXPECT(CheckIfCvdrExist());
-  auto args = ParseInvocation(request).arguments;
+  std::vector<std::string> args = request.SubcommandArguments();
   CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
   std::string cvdr_service_url =
       CF_EXPECT(RunCvdRemoteGetConfig("service_url"));

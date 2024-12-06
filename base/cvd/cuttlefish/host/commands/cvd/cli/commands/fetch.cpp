@@ -46,8 +46,7 @@ class CvdFetchCommandHandler : public CvdServerHandler {
 
 Result<bool> CvdFetchCommandHandler::CanHandle(
     const CommandRequest& request) const {
-  auto invocation = ParseInvocation(request);
-  return Contains(fetch_cmd_list_, invocation.command);
+  return Contains(fetch_cmd_list_, request.Subcommand());
 }
 
 Result<cvd::Response> CvdFetchCommandHandler::Handle(
@@ -57,7 +56,7 @@ Result<cvd::Response> CvdFetchCommandHandler::Handle(
   std::vector<std::string> args;
   args.emplace_back("fetch_cvd");
 
-  for (const auto& argument : ParseInvocation(request).arguments) {
+  for (const auto& argument : request.SubcommandArguments()) {
     args.emplace_back(argument);
   }
 
