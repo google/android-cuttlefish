@@ -6,7 +6,7 @@
 ###############################################################################
 
 bazel_dep(name = "boringssl", version = "0.0.0-20240126-22d349c")
-bazel_dep(name = "curl", version = "8.7.1")
+bazel_dep(name = "curl", version = "8.8.0.bcr.2")
 bazel_dep(name = "fmt", version = "10.2.1")
 bazel_dep(name = "gflags", version = "2.2.2")
 bazel_dep(name = "googletest", version = "1.14.0")
