@@ -22,11 +22,14 @@
 
 #include <android-base/logging.h>
 #include <android-base/no_destructor.h>
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
+#include "device/google/cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
+#include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
 
@@ -59,6 +62,15 @@ Disconnects and removes displays from the given virtual device.
 usage: cvd display remove \\
         --display=<display id> \\
         --display=<display id> ...
+)";
+
+static const char kScreenshotUsage[] =
+    R"(
+Screenshots the contents of a given display.
+
+Currently supported output formats: webp.
+
+usage: cvd display screenshot <display id> <screenshot path>
 )";
 
 Result<int> RunCrosvmDisplayCommand(int instance_num,
@@ -110,6 +122,7 @@ Result<int> DoHelp(std::vector<std::string>& args) {
           {"add", kAddUsage},
           {"list", kListUsage},
           {"remove", kRemoveUsage},
+          {"screenshot", kScreenshotUsage},
       });
 
   const std::string& subcommand_str = args[0];
@@ -201,16 +214,61 @@ Result<int> DoRemove(std::vector<std::string>& args) {
       RunCrosvmDisplayCommand(instance_num, remove_displays_command_args));
 }
 
+Result<int> DoScreenshot(std::vector<std::string>& args) {
+  const int instance_num = CF_EXPECT(GetInstanceNum(args));
+
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  if (!config) {
+    return CF_ERR("Failed to get Cuttlefish config.");
+  }
+
+  int display_number = 0;
+  std::string screenshot_path;
+
+  std::vector<std::string> displays;
+  const std::vector<Flag> screenshot_flags = {
+      GflagsCompatFlag(kDisplayFlag, display_number)
+          .Help("Display id of a display to screenshot."),
+      GflagsCompatFlag("screenshot_path", screenshot_path)
+          .Help("Path for the resulting screenshot file."),
+  };
+  auto parse_res = ConsumeFlags(screenshot_flags, args);
+  if (!parse_res.ok()) {
+    std::cerr << parse_res.error().FormatForEnv() << std::endl;
+    std::cerr << "Failed to parse flags. Usage:" << std::endl;
+    std::cerr << kScreenshotUsage << std::endl;
+    return 1;
+  }
+  CF_EXPECT(!screenshot_path.empty(),
+            "Must provide --screenshot_path. Usage:" << kScreenshotUsage);
+
+  run_cvd::ExtendedLauncherAction extended_action;
+  extended_action.mutable_screenshot_display()->set_display_number(
+      display_number);
+  extended_action.mutable_screenshot_display()->set_screenshot_path(
+      screenshot_path);
+
+  std::cout << "Requesting to save screenshot for display " << display_number
+            << " to " << screenshot_path << "." << std::endl;
+
+  auto socket = CF_EXPECT(
+      GetLauncherMonitor(*config, instance_num, /*timeout_seconds=*/5));
+  CF_EXPECT(RunLauncherAction(socket, extended_action, std::nullopt),
+            "Failed to get success response from launcher.");
+  return 0;
+}
+
 using DisplaySubCommand = Result<int> (*)(std::vector<std::string>&);
 
 int DisplayMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
   const std::unordered_map<std::string, DisplaySubCommand> kSubCommands = {
-      {"add", DoAdd},
-      {"list", DoList},
-      {"help", DoHelp},
-      {"remove", DoRemove},
+      {"add", DoAdd},                //
+      {"list", DoList},              //
+      {"help", DoHelp},              //
+      {"remove", DoRemove},          //
+      {"screenshot", DoScreenshot},  //
   };
 
   auto args = ArgsToVec(argc - 1, argv + 1);

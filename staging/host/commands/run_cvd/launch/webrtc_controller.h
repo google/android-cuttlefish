@@ -22,28 +22,31 @@
 #include "common/libs/utils/result.h"
 #include "host/libs/config/feature.h"
 
+#include "host/frontend/webrtc/webrtc_command_channel.h"
+#include "webrtc_commands.pb.h"
+
 namespace cuttlefish {
 
-class WebRtcRecorder : public SetupFeature {
+class WebRtcController : public SetupFeature {
  public:
-  INJECT(WebRtcRecorder()) {};
-  std::string Name() const override { return "WebRtcRecorder"; }
+  INJECT(WebRtcController()) {};
+  std::string Name() const override { return "WebRtcController"; }
   Result<void> ResultSetup() override;
 
   SharedFD GetClientSocket() const;
-  Result<void> SendStartRecordingCommand() const;
-  Result<void> SendStopRecordingCommand() const;
+  Result<void> SendStartRecordingCommand();
+  Result<void> SendStopRecordingCommand();
+  Result<void> SendScreenshotDisplayCommand(int display_number,
+                                            const std::string& screenshot_path);
 
  protected:
   SharedFD client_socket_;
-  SharedFD host_socket_;
+  std::optional<WebrtcClientCommandChannel> command_channel_;
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-
-  Result<void> SendCommandAndVerifyResponse(std::string message) const;
 };
 
-fruit::Component<WebRtcRecorder> WebRtcRecorderComponent();
+fruit::Component<WebRtcController> WebRtcControllerComponent();
 
 }  // namespace cuttlefish
