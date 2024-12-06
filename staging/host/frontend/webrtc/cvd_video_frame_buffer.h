@@ -49,6 +49,10 @@ class CvdVideoFrameBuffer : public webrtc_streaming::VideoFrameBuffer {
   uint8_t *DataU() { return u_.data(); }
   uint8_t *DataV() { return v_.data(); }
 
+  std::size_t DataSizeY() const override { return y_.size(); }
+  std::size_t DataSizeU() const override { return u_.size(); }
+  std::size_t DataSizeV() const override { return v_.size(); }
+
  private:
   const int width_;
   const int height_;

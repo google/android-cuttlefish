@@ -33,6 +33,9 @@ class VideoFrameBuffer {
   virtual const uint8_t* DataY() const = 0;
   virtual const uint8_t* DataU() const = 0;
   virtual const uint8_t* DataV() const = 0;
+  virtual std::size_t DataSizeY() const = 0;
+  virtual std::size_t DataSizeU() const = 0;
+  virtual std::size_t DataSizeV() const = 0;
 };
 
 }  // namespace webrtc_streaming

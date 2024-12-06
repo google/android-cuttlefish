@@ -17,6 +17,63 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+cc_library {
+    name: "libcuttlefish_webrtc_commands_proto",
+    host_supported: true,
+    proto: {
+        export_proto_headers: true,
+        canonical_path_from_root: false,
+        include_dirs: [
+            "external/googleapis",
+            "external/protobuf/src",
+        ],
+        type: "full",
+    },
+    srcs: [
+        "webrtc_commands.proto",
+    ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
+    shared_libs: [
+        "libgoogleapis-status-proto",
+        "libprotobuf-cpp-full",
+    ],
+    defaults: [
+        "cuttlefish_host",
+        "cvd_cc_defaults",
+    ],
+}
+
+cc_library {
+    name: "libcuttlefish_webrtc_command_channel",
+    srcs: [
+        "webrtc_command_channel.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libgoogleapis-status-proto",
+        "libprotobuf-cpp-full",
+    ],
+    static_libs: [
+        "libcuttlefish_fs",
+        "libcuttlefish_transport",
+        "libcuttlefish_utils",
+        "libcuttlefish_webrtc_commands_proto",
+    ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
+    defaults: [
+        "cuttlefish_host",
+        "cvd_cc_defaults",
+    ],
+}
+
 cc_binary_host {
     name: "webRTC",
     srcs: [
@@ -32,6 +89,7 @@ cc_binary_host {
         "kml_locations_handler.cpp",
         "location_handler.cpp",
         "main.cpp",
+        "screenshot_handler.cpp",
         "sensors_handler.cpp",
         "sensors_simulator.cpp",
     ],
@@ -60,8 +118,11 @@ cc_binary_host {
         "libcuttlefish_input_connector",
         "libcuttlefish_screen_connector",
         "libcuttlefish_security",
+        "libcuttlefish_transport",
         "libcuttlefish_utils",
         "libcuttlefish_wayland_server",
+        "libcuttlefish_webrtc_command_channel",
+        "libcuttlefish_webrtc_commands_proto",
         "libcuttlefish_webrtc_common",
         "libcuttlefish_webrtc_device",
         "libcvd_gnss_grpc_proxy",
@@ -79,6 +140,8 @@ cc_binary_host {
         "libwayland_crosvm_gpu_display_extension_server_protocols",
         "libwayland_extension_server_protocols",
         "libwayland_server",
+        "libwebp-decode",
+        "libwebp-encode",
         "libwebrtc",
         "libwebsockets",
         "libyuv",
@@ -90,6 +153,7 @@ cc_binary_host {
         "libcuttlefish_fs",
         "libcuttlefish_kernel_log_monitor_utils",
         "libfruit",
+        "libgoogleapis-status-proto",
         "libgrpc++_unsecure",
         "libjsoncpp",
         "libopus",

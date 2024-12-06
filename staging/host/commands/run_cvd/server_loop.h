@@ -19,7 +19,7 @@
 #include <fruit/fruit.h>
 
 #include "host/commands/run_cvd/launch/snapshot_control_files.h"
-#include "host/commands/run_cvd/launch/webrtc_recorder.h"
+#include "host/commands/run_cvd/launch/webrtc_controller.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -33,7 +33,7 @@ class ServerLoop {
 fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific,
-                    AutoSnapshotControlFiles::Type, WebRtcRecorder>,
+                    AutoSnapshotControlFiles::Type, WebRtcController>,
     ServerLoop>
 serverLoopComponent();
 }
