@@ -42,6 +42,9 @@ class CommandRequest {
 
   const selector::SelectorOptions& Selectors() const;
 
+  std::string Subcommand() const;
+  std::vector<std::string> SubcommandArguments() const;
+
  private:
   friend class CommandRequestBuilder;
   CommandRequest(cvd_common::Args args, cvd_common::Envs env,

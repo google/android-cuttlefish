@@ -22,6 +22,7 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/selector/selector_common_parser.h"
+#include "host/commands/cvd/cli/utils.h"
 
 namespace cuttlefish {
 
@@ -38,6 +39,14 @@ const selector::SelectorOptions& CommandRequest::Selectors() const {
 }
 
 const cvd_common::Envs& CommandRequest::Env() const { return env_; }
+
+std::string CommandRequest::Subcommand() const {
+  return ParseInvocation(*this).command;
+}
+
+std::vector<std::string> CommandRequest::SubcommandArguments() const {
+  return ParseInvocation(*this).arguments;
+}
 
 CommandRequestBuilder& CommandRequestBuilder::AddArguments(
     std::initializer_list<std::string_view> args) & {
