@@ -24,6 +24,7 @@
 
 #include "host/frontend/webrtc/cvd_video_frame_buffer.h"
 #include "host/frontend/webrtc/libdevice/video_sink.h"
+#include "host/frontend/webrtc/screenshot_handler.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
 namespace cuttlefish {
@@ -60,6 +61,7 @@ class DisplayHandler {
   using WebRtcScProcessedFrame = cuttlefish::WebRtcScProcessedFrame;
 
   DisplayHandler(webrtc_streaming::Streamer& streamer,
+                 ScreenshotHandler& screenshot_handler,
                  ScreenConnector& screen_connector);
   ~DisplayHandler();
 
@@ -88,6 +90,7 @@ class DisplayHandler {
   std::map<uint32_t, std::shared_ptr<webrtc_streaming::VideoSink>>
       display_sinks_;
   webrtc_streaming::Streamer& streamer_;
+  ScreenshotHandler& screenshot_handler_;
   ScreenConnector& screen_connector_;
   std::map<uint32_t, std::shared_ptr<BufferInfo>> display_last_buffers_;
   std::mutex last_buffers_mutex_;
