@@ -28,24 +28,6 @@
 
 namespace cuttlefish {
 
-CommandInvocation ParseInvocation(const CommandRequest& request) {
-  CommandInvocation invocation;
-  invocation.arguments = request.Args();
-  if (invocation.arguments.empty()) {
-    return invocation;
-  }
-  invocation.arguments[0] = cpp_basename(invocation.arguments[0]);
-  if (invocation.arguments[0] == "cvd" && invocation.arguments.size() > 1) {
-    invocation.command = invocation.arguments[1];
-    invocation.arguments.erase(invocation.arguments.begin());
-    invocation.arguments.erase(invocation.arguments.begin());
-  } else {
-    invocation.command = invocation.arguments[0];
-    invocation.arguments.erase(invocation.arguments.begin());
-  }
-  return invocation;
-}
-
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop) {
   cvd::Response response;
   response.mutable_command_response();  // set oneof field

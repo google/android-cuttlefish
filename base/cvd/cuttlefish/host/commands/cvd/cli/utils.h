@@ -32,13 +32,6 @@
 
 namespace cuttlefish {
 
-struct CommandInvocation {
-  std::string command;
-  std::vector<std::string> arguments;
-};
-
-CommandInvocation ParseInvocation(const CommandRequest& request);
-
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
 
 struct ConstructCommandParam {
