@@ -21,11 +21,10 @@
 
 #include "common/libs/utils/proto.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/utils/common.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
-#include "host/commands/cvd/legacy/server_constants.h"
 #include "host/commands/cvd/cli/types.h"
+#include "host/commands/cvd/legacy/server_constants.h"
+#include "host/commands/cvd/utils/common.h"
 #include "host/libs/config/host_tools_version.h"
 
 namespace cuttlefish {
@@ -39,8 +38,7 @@ class CvdVersionHandler : public CvdServerHandler {
   CvdVersionHandler() = default;
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    auto invocation = ParseInvocation(request);
-    return "version" == invocation.command;
+    return request.Subcommand() == "version";
   }
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {

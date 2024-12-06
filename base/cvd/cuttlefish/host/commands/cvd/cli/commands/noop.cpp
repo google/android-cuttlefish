@@ -20,7 +20,6 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/utils.h"
 
 namespace cuttlefish {
 namespace {
@@ -33,14 +32,12 @@ class CvdNoopHandler : public CvdServerHandler {
   CvdNoopHandler() = default;
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    auto invocation = ParseInvocation(request);
-    return Contains(CmdList(), invocation.command);
+    return Contains(CmdList(), request.Subcommand());
   }
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {
-    auto invocation = ParseInvocation(request);
     fmt::print(std::cout, "DEPRECATED: The {} command is a no-op",
-               invocation.command);
+               request.Subcommand());
     cvd::Response response;
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;

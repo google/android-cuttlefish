@@ -267,8 +267,7 @@ void CvdCreateCommandHandler::MarkLockfiles(
 
 Result<bool> CvdCreateCommandHandler::CanHandle(
     const CommandRequest& request) const {
-  auto invocation = ParseInvocation(request);
-  return Contains(CmdList(), invocation.command);
+  return Contains(CmdList(), request.Subcommand());
 }
 
 Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
@@ -360,7 +359,7 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
 Result<cvd::Response> CvdCreateCommandHandler::Handle(
     const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
-  auto [subcmd, subcmd_args] = ParseInvocation(request);
+  std::vector<std::string> subcmd_args = request.SubcommandArguments();
   bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));
   CF_EXPECT(!is_help);
 

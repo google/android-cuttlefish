@@ -135,16 +135,14 @@ CvdStatusCommandHandler::CvdStatusCommandHandler(
 
 Result<bool> CvdStatusCommandHandler::CanHandle(
     const CommandRequest& request) const {
-  auto invocation = ParseInvocation(request);
-  return Contains(supported_subcmds_, invocation.command);
+  return Contains(supported_subcmds_, request.Subcommand());
 }
 
 Result<cvd::Response> CvdStatusCommandHandler::Handle(
     const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
-  auto [subcmd, cmd_args] = ParseInvocation(request);
-  CF_EXPECT(Contains(supported_subcmds_, subcmd));
+  std::vector<std::string> cmd_args = request.SubcommandArguments();
   StatusCommandOptions flags = CF_EXPECT(ParseFlags(cmd_args));
 
   if (flags.help) {

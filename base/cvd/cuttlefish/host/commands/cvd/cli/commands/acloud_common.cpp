@@ -16,16 +16,13 @@
 
 #include "host/commands/cvd/cli/commands/acloud_common.h"
 
-#include "host/commands/cvd/cli/utils.h"
-
 namespace cuttlefish {
 
 bool IsSubOperationSupported(const CommandRequest& request) {
-  auto invocation = ParseInvocation(request);
-  if (invocation.arguments.empty()) {
+  if (request.SubcommandArguments().empty()) {
     return false;
   }
-  return invocation.arguments[0] == "create";
+  return request.Subcommand() == "create";
 }
 
 }  // namespace cuttlefish

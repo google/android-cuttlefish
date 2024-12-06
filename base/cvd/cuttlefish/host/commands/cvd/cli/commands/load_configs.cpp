@@ -53,7 +53,7 @@ The --override flag can be used to give new values for properties in the config 
 )";
 
 Result<CvdFlags> GetCvdFlags(const CommandRequest& request) {
-  auto args = ParseInvocation(request).arguments;
+  std::vector<std::string> args = request.SubcommandArguments();
   auto working_directory = CurrentDirectory();
   const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
   return CF_EXPECT(GetCvdFlags(flags));
@@ -69,8 +69,7 @@ class LoadConfigsCommand : public CvdServerHandler {
   ~LoadConfigsCommand() = default;
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    auto invocation = ParseInvocation(request);
-    return invocation.command == kLoadSubCmd;
+    return request.Subcommand() == kLoadSubCmd;
   }
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {

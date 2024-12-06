@@ -32,7 +32,7 @@
 namespace cuttlefish {
 namespace {
 
-constexpr char clearCmd[] = "clear";
+constexpr char kClearCmd[] = "clear";
 constexpr char kSummaryHelpText[] =
     "Clears the instance databaase, stopping any running instances first.";
 
@@ -57,8 +57,7 @@ CvdClearCommandHandler::CvdClearCommandHandler(
 
 Result<bool> CvdClearCommandHandler::CanHandle(
     const CommandRequest& request) const {
-  auto invocation = ParseInvocation(request);
-  return invocation.command == clearCmd;
+  return request.Subcommand() == kClearCmd;
 }
 
 Result<cvd::Response> CvdClearCommandHandler::Handle(
@@ -68,7 +67,7 @@ Result<cvd::Response> CvdClearCommandHandler::Handle(
   cvd::Response response;
   response.mutable_command_response();
 
-  auto [subcmd, cmd_args] = ParseInvocation(request);
+  std::vector<std::string> cmd_args = request.SubcommandArguments();
 
   if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
     std::cout << kSummaryHelpText << std::endl;
@@ -80,7 +79,7 @@ Result<cvd::Response> CvdClearCommandHandler::Handle(
 }
 
 std::vector<std::string> CvdClearCommandHandler::CmdList() const {
-  return {clearCmd};
+  return {kClearCmd};
 }
 
 Result<std::string> CvdClearCommandHandler::SummaryHelp() const {

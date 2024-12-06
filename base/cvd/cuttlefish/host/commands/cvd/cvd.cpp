@@ -72,7 +72,7 @@ Result<cvd::Response> Cvd::HandleCommand(
   RequestContext context(instance_lockfile_manager_, instance_manager_);
   auto handler = CF_EXPECT(context.Handler(request));
   if (handler->ShouldInterceptHelp()) {
-    auto invocation_args = ParseInvocation(request).arguments;
+    std::vector<std::string> invocation_args = request.SubcommandArguments();
     if (CF_EXPECT(IsHelpSubcmd(invocation_args))) {
       std::cout << CF_EXPECT(handler->DetailedHelp(invocation_args))
                 << std::endl;

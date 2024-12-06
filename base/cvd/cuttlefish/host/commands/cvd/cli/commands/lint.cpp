@@ -22,10 +22,9 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
@@ -48,14 +47,13 @@ class LintCommandHandler : public CvdServerHandler {
   LintCommandHandler() {}
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    auto invocation = ParseInvocation(request);
-    return invocation.command == kLintSubCmd;
+    return request.Subcommand() == kLintSubCmd;
   }
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
-    auto args = ParseInvocation(request).arguments;
+    std::vector<std::string> args = request.SubcommandArguments();
     auto working_directory = CurrentDirectory();
     const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
 
