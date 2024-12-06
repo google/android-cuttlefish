@@ -68,7 +68,7 @@ static const char kScreenshotUsage[] =
     R"(
 Screenshots the contents of a given display.
 
-Currently supported output formats: webp.
+Currently supported output formats: jpg, png, webp.
 
 usage: cvd display screenshot <display id> <screenshot path>
 )";
