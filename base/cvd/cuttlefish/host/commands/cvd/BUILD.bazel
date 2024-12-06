@@ -323,7 +323,6 @@ cc_library(
         "-Werror=sign-compare",
         "-Wno-ctad-maybe-unsupported",
         "-std=c++17",
-        "-lcurl",
     ],
     strip_include_prefix = "//cuttlefish",
     deps = [
@@ -343,6 +342,7 @@ cc_library(
         "//libbase",
         "//libsparse",
         "@boringssl//:crypto",
+        "@curl",
         "@fmt",
         "@gflags",
         "@jsoncpp",
