@@ -28,7 +28,7 @@ namespace run_cvd_impl {
 Result<void> ServerLoopImpl::HandleStartScreenRecording() {
   LOG(INFO) << "Sending the request to start screen recording.";
 
-  CF_EXPECT(webrtc_recorder_.SendStartRecordingCommand(),
+  CF_EXPECT(webrtc_controller_.SendStartRecordingCommand(),
             "Failed to send start recording command.");
   return {};
 }
@@ -36,8 +36,17 @@ Result<void> ServerLoopImpl::HandleStartScreenRecording() {
 Result<void> ServerLoopImpl::HandleStopScreenRecording() {
   LOG(INFO) << "Sending the request to stop screen recording.";
 
-  CF_EXPECT(webrtc_recorder_.SendStopRecordingCommand(),
+  CF_EXPECT(webrtc_controller_.SendStopRecordingCommand(),
             "Failed to send stop recording command.");
+  return {};
+}
+
+Result<void> ServerLoopImpl::HandleScreenshotDisplay(
+    const cuttlefish::run_cvd::ScreenshotDisplay& request) {
+  LOG(INFO) << "Sending the request to screenshot display to webrtc.";
+  CF_EXPECT(webrtc_controller_.SendScreenshotDisplayCommand(
+                request.display_number(), request.screenshot_path()),
+            "Failed to send start screenshot display command to webrtc.");
   return {};
 }
 

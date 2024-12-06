@@ -63,11 +63,11 @@ ServerLoopImpl::ServerLoopImpl(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSnapshotControlFiles::Type& snapshot_control_files,
-    WebRtcRecorder& webrtc_recorder)
+    WebRtcController& webrtc_controller)
     : config_(config),
       instance_(instance),
       snapshot_control_files_(snapshot_control_files),
-      webrtc_recorder_(webrtc_recorder),
+      webrtc_controller_(webrtc_controller),
       vm_name_to_control_sock_{InitializeVmToControlSockPath(instance)},
       device_status_{DeviceStatus::kUnknown} {}
 
@@ -186,6 +186,12 @@ Result<void> ServerLoopImpl::HandleExtended(
     case ActionsCase::kStopScreenRecording: {
       LOG(DEBUG) << "Run_cvd received stop screen recording request.";
       CF_EXPECT(HandleStopScreenRecording());
+      return {};
+    }
+    case ActionsCase::kScreenshotDisplay: {
+      LOG(DEBUG) << "Run_cvd received screenshot display request.";
+      const auto& request = action_info.extended_action.screenshot_display();
+      CF_EXPECT(HandleScreenshotDisplay(request));
       return {};
     }
     default:
