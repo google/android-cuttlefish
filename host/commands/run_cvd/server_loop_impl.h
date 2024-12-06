@@ -27,7 +27,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/launch/webrtc_recorder.h"
+#include "host/commands/run_cvd/launch/webrtc_controller.h"
 #include "host/commands/run_cvd/server_loop.h"
 #include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/util.h"
@@ -47,7 +47,7 @@ class ServerLoopImpl : public ServerLoop,
   INJECT(ServerLoopImpl(const CuttlefishConfig& config,
                         const CuttlefishConfig::InstanceSpecific& instance,
                         AutoSnapshotControlFiles::Type& snapshot_control_files,
-                        WebRtcRecorder& webrtc_recorder));
+                        WebRtcController& webrtc_controller));
 
   Result<void> LateInject(fruit::Injector<>& injector) override;
 
@@ -75,6 +75,8 @@ class ServerLoopImpl : public ServerLoop,
   Result<void> HandleSnapshotTake(const run_cvd::SnapshotTake& snapshot_take);
   Result<void> HandleStartScreenRecording();
   Result<void> HandleStopScreenRecording();
+  Result<void> HandleScreenshotDisplay(
+      const run_cvd::ScreenshotDisplay& request);
 
   void HandleActionWithNoData(const LauncherAction action,
                               const SharedFD& client,
@@ -104,7 +106,7 @@ class ServerLoopImpl : public ServerLoop,
    * secure_env, and get the responses.
    */
   AutoSnapshotControlFiles::Type& snapshot_control_files_;
-  WebRtcRecorder& webrtc_recorder_;
+  WebRtcController& webrtc_controller_;
   std::vector<CommandSource*> command_sources_;
   SharedFD server_;
   // mapping from the name of vm_manager to control_sock path

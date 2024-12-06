@@ -18,7 +18,7 @@
 
 #include <fruit/fruit.h>
 
-#include "host/commands/run_cvd/launch/webrtc_recorder.h"
+#include "host/commands/run_cvd/launch/webrtc_controller.h"
 #include "host/commands/run_cvd/server_loop_impl.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
@@ -31,7 +31,7 @@ ServerLoop::~ServerLoop() = default;
 fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific,
-                    AutoSnapshotControlFiles::Type, WebRtcRecorder>,
+                    AutoSnapshotControlFiles::Type, WebRtcController>,
     ServerLoop>
 serverLoopComponent() {
   using run_cvd_impl::ServerLoopImpl;

@@ -25,12 +25,15 @@ cc_binary_host {
     stl: "libc++_static",
     static_libs: [
         "libbase",
+        "libcuttlefish_command_util",
         "libcuttlefish_fs",
         "libcuttlefish_host_config",
+        "libcuttlefish_run_cvd_proto",
         "libcuttlefish_utils",
         "libgflags",
         "libjsoncpp",
         "liblog",
+        "libprotobuf-cpp-full",
     ],
     defaults: ["cuttlefish_host"],
 }
