@@ -19,12 +19,38 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "host/commands/cvd/cli/utils.h"
 
 namespace cuttlefish {
+namespace {
+
+struct CommandInvocation {
+  std::string command;
+  std::vector<std::string> arguments;
+};
+
+CommandInvocation ParseInvocation(const CommandRequest& request) {
+  CommandInvocation invocation;
+  invocation.arguments = request.Args();
+  if (invocation.arguments.empty()) {
+    return invocation;
+  }
+  invocation.arguments[0] = cpp_basename(invocation.arguments[0]);
+  if (invocation.arguments[0] == "cvd" && invocation.arguments.size() > 1) {
+    invocation.command = invocation.arguments[1];
+    invocation.arguments.erase(invocation.arguments.begin());
+    invocation.arguments.erase(invocation.arguments.begin());
+  } else {
+    invocation.command = invocation.arguments[0];
+    invocation.arguments.erase(invocation.arguments.begin());
+  }
+  return invocation;
+}
+
+}  // namespace
 
 CommandRequest::CommandRequest(cvd_common::Args args, cvd_common::Envs env,
                                selector::SelectorOptions selectors)
