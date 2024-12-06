@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,27 @@
 
 syntax = "proto3";
 
-package cuttlefish.run_cvd;
+import "google/rpc/status.proto";
 
-message ExtendedLauncherAction {
-  oneof actions {
-    Suspend suspend = 5;
-    Resume resume = 6;
-    StartScreenRecording start_screen_recording = 7;
-    StopScreenRecording stop_screen_recording = 8;
-    SnapshotTake snapshot_take = 9;
-    ScreenshotDisplay screenshot_display = 10;
-  }
-  string verbosity = 20;
-}
-message Suspend {}
-message Resume {}
-message StartScreenRecording {}
-message StopScreenRecording {}
-message SnapshotTake {
-  string snapshot_path = 1;
-}
-message ScreenshotDisplay {
+package cuttlefish.webrtc;
+
+message StartRecordingDisplayRequest {}
+
+message StopRecordingDisplayRequest {}
+
+message ScreenshotDisplayRequest {
   int32 display_number = 1;
   string screenshot_path = 2;
+}
+
+message WebrtcCommandRequest {
+  oneof actions {
+    StartRecordingDisplayRequest start_recording_request = 1;
+    StopRecordingDisplayRequest stop_recording_request = 2;
+    ScreenshotDisplayRequest screenshot_display_request = 3;
+  }
+}
+
+message WebrtcCommandResponse {
+  google.rpc.Status status = 1;
 }

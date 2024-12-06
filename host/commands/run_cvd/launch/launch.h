@@ -27,7 +27,7 @@
 #include "host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
 #include "host/commands/run_cvd/launch/snapshot_control_files.h"
-#include "host/commands/run_cvd/launch/webrtc_recorder.h"
+#include "host/commands/run_cvd/launch/webrtc_controller.h"
 #include "host/commands/run_cvd/launch/wmediumd_server.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/custom_actions.h"
@@ -129,10 +129,10 @@ Result<std::optional<MonitorCommand>> ModemSimulator(
 fruit::Component<
     fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
                     const CuttlefishConfig::InstanceSpecific,
-                    const CustomActionConfigProvider, WebRtcRecorder>>
+                    const CustomActionConfigProvider, WebRtcController>>
 launchStreamerComponent();
 
-fruit::Component<WebRtcRecorder> WebRtcRecorderComponent();
+fruit::Component<WebRtcController> WebRtcControllerComponent();
 
 fruit::Component<
     fruit::Required<const CuttlefishConfig,

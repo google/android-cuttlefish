@@ -27,8 +27,10 @@
 namespace cuttlefish {
 
 DisplayHandler::DisplayHandler(webrtc_streaming::Streamer& streamer,
+                               ScreenshotHandler& screenshot_handler,
                                ScreenConnector& screen_connector)
     : streamer_(streamer),
+      screenshot_handler_(screenshot_handler),
       screen_connector_(screen_connector),
       frame_repeater_([this]() { RepeatFramesPeriodically(); }) {
   screen_connector_.SetCallback(GetScreenConnectorCallback());
@@ -183,6 +185,8 @@ void DisplayHandler::SendBuffers(
           .count();
 
   for (const auto& [display_number, buffer_info] : buffers) {
+    screenshot_handler_.OnFrame(display_number, buffer_info->buffer);
+
     auto it = display_sinks_.find(display_number);
     if (it != display_sinks_.end()) {
       it->second->OnFrame(buffer_info->buffer, time_stamp_since_epoch);
