@@ -28,7 +28,6 @@ cc_library(
     copts = [
         "-std=c++17",
     ],
-    linkopts = ["-lcurl"],
     strip_include_prefix = "//cuttlefish",
     visibility = ["//visibility:public"],
     deps = [
@@ -38,6 +37,7 @@ cc_library(
         "//cuttlefish/host/libs/directories",
         "//libbase",
         "@boringssl//:crypto",
+        "@curl",
         "@fmt",
         "@jsoncpp",
         "@zlib",
