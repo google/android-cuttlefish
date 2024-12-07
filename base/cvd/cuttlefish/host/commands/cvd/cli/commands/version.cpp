@@ -37,10 +37,6 @@ class CvdVersionHandler : public CvdServerHandler {
  public:
   CvdVersionHandler() = default;
 
-  Result<bool> CanHandle(const CommandRequest& request) const override {
-    return request.Subcommand() == "version";
-  }
-
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
