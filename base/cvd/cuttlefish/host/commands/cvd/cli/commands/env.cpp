@@ -47,11 +47,7 @@ cvd env type $SERVICE_NAME $REQUEST_MESSAGE_TYPE - outputs the proto the specifi
 class CvdEnvCommandHandler : public CvdServerHandler {
  public:
   CvdEnvCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_{instance_manager}, cvd_env_operations_{"env"} {}
-
-  Result<bool> CanHandle(const CommandRequest& request) const override {
-    return Contains(cvd_env_operations_, request.Subcommand());
-  }
+      : instance_manager_{instance_manager} {}
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
@@ -79,10 +75,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
     return ResponseFromSiginfo(infop);
   }
 
-  cvd_common::Args CmdList() const override {
-    return cvd_common::Args(cvd_env_operations_.begin(),
-                            cvd_env_operations_.end());
-  }
+  cvd_common::Args CmdList() const override { return {"env"}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
 
@@ -129,7 +122,6 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   }
 
   InstanceManager& instance_manager_;
-  std::vector<std::string> cvd_env_operations_;
 
   static constexpr char kCvdEnvBin[] = "cvd_internal_env";
 };
