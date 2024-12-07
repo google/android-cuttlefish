@@ -117,10 +117,6 @@ class CvdResetCommandHandler : public CvdServerHandler {
   CvdResetCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
 
-  Result<bool> CanHandle(const CommandRequest& request) const override {
-    return request.Subcommand() == kResetSubcmd;
-  }
-
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
