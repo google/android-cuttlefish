@@ -18,36 +18,22 @@
 
 #include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/cli/types.h"
+#include "host/commands/cvd/fetch/fetch_cvd.h"
 
 namespace cuttlefish {
 
 class CvdFetchCommandHandler : public CvdServerHandler {
  public:
-  CvdFetchCommandHandler()
-      : fetch_cmd_list_{std::vector<std::string>{"fetch", "fetch_cvd"}} {}
-
-  Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override { return fetch_cmd_list_; }
+  cvd_common::Args CmdList() const override { return {"fetch", "fetch_cvd"}; }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override { return true; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
-
- private:
-  std::vector<std::string> fetch_cmd_list_;
 };
-
-Result<bool> CvdFetchCommandHandler::CanHandle(
-    const CommandRequest& request) const {
-  return Contains(fetch_cmd_list_, request.Subcommand());
-}
 
 Result<cvd::Response> CvdFetchCommandHandler::Handle(
     const CommandRequest& request) {
