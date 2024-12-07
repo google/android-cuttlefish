@@ -25,9 +25,7 @@
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/command_sequence.h"
 #include "host/commands/cvd/cli/parser/load_configs_parser.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
 #include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/instances/instance_manager.h"
 #include "host/commands/cvd/utils/common.h"
@@ -67,10 +65,6 @@ class LoadConfigsCommand : public CvdServerHandler {
                      InstanceManager& instance_manager)
       : executor_(executor), instance_manager_(instance_manager) {}
   ~LoadConfigsCommand() = default;
-
-  Result<bool> CanHandle(const CommandRequest& request) const override {
-    return request.Subcommand() == kLoadSubCmd;
-  }
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     bool can_handle_request = CF_EXPECT(CanHandle(request));
