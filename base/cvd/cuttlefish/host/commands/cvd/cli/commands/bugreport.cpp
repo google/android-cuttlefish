@@ -48,7 +48,6 @@ class CvdBugreportCommandHandler : public CvdServerHandler {
  public:
   CvdBugreportCommandHandler(InstanceManager& instance_manager);
 
-  Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override;
   Result<std::string> SummaryHelp() const override;
@@ -59,7 +58,6 @@ class CvdBugreportCommandHandler : public CvdServerHandler {
   InstanceManager& instance_manager_;
   using BinGeneratorType = std::function<Result<std::string>(
       const std::string& host_artifacts_path)>;
-  std::set<std::string> commands_;
   std::unique_ptr<InterruptibleTerminal> terminal_ = nullptr;
 
   static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
@@ -67,13 +65,7 @@ class CvdBugreportCommandHandler : public CvdServerHandler {
 
 CvdBugreportCommandHandler::CvdBugreportCommandHandler(
     InstanceManager& instance_manager)
-    : instance_manager_(instance_manager),
-      commands_{{"bugreport", "host_bugreport", "cvd_host_bugreport"}} {}
-
-Result<bool> CvdBugreportCommandHandler::CanHandle(
-    const CommandRequest& request) const {
-  return Contains(commands_, request.Subcommand());
-}
+    : instance_manager_(instance_manager) {}
 
 Result<cvd::Response> CvdBugreportCommandHandler::Handle(
     const CommandRequest& request) {
@@ -117,12 +109,7 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
 }
 
 std::vector<std::string> CvdBugreportCommandHandler::CmdList() const {
-  std::vector<std::string> subcmd_list;
-  subcmd_list.reserve(commands_.size());
-  for (const auto& cmd : commands_) {
-    subcmd_list.emplace_back(cmd);
-  }
-  return subcmd_list;
+  return {"bugreport", "host_bugreport", "cvd_host_bugreport"};
 }
 
 Result<std::string> CvdBugreportCommandHandler::SummaryHelp() const {
