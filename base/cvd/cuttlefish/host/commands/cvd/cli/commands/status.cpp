@@ -21,7 +21,6 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
@@ -111,9 +110,8 @@ class CvdStatusCommandHandler : public CvdServerHandler {
  public:
   CvdStatusCommandHandler(InstanceManager& instance_manager);
 
-  Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override;
+  cvd_common::Args CmdList() const override { return {"status", "cvd_status"}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
 
@@ -125,18 +123,11 @@ class CvdStatusCommandHandler : public CvdServerHandler {
 
  private:
   InstanceManager& instance_manager_;
-  std::vector<std::string> supported_subcmds_;
 };
 
 CvdStatusCommandHandler::CvdStatusCommandHandler(
     InstanceManager& instance_manager)
-    : instance_manager_(instance_manager),
-      supported_subcmds_{"status", "cvd_status"} {}
-
-Result<bool> CvdStatusCommandHandler::CanHandle(
-    const CommandRequest& request) const {
-  return Contains(supported_subcmds_, request.Subcommand());
-}
+    : instance_manager_(instance_manager) {}
 
 Result<cvd::Response> CvdStatusCommandHandler::Handle(
     const CommandRequest& request) {
@@ -188,10 +179,6 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
   }
 
   return SuccessResponse();
-}
-
-std::vector<std::string> CvdStatusCommandHandler::CmdList() const {
-  return supported_subcmds_;
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdStatusCommandHandler(
