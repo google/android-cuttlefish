@@ -62,10 +62,6 @@ class TryAcloudCommand : public CvdServerHandler {
  public:
   ~TryAcloudCommand() = default;
 
-  Result<bool> CanHandle(const CommandRequest& request) const override {
-    return request.Subcommand() == "try-acloud";
-  }
-
   cvd_common::Args CmdList() const override { return {"try-acloud"}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
