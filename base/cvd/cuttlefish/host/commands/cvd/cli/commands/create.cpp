@@ -232,9 +232,8 @@ class CvdCreateCommandHandler : public CvdServerHandler {
       : instance_manager_(instance_manager),
         command_executor_(command_executor) {}
 
-  Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
-  std::vector<std::string> CmdList() const override;
+  std::vector<std::string> CmdList() const override { return {"create"}; }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
@@ -263,11 +262,6 @@ void CvdCreateCommandHandler::MarkLockfiles(
       LOG(ERROR) << result.error().FormatForEnv();
     }
   }
-}
-
-Result<bool> CvdCreateCommandHandler::CanHandle(
-    const CommandRequest& request) const {
-  return Contains(CmdList(), request.Subcommand());
 }
 
 Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
@@ -411,10 +405,6 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   *response.mutable_command_response()->mutable_instance_group_info() =
       GroupInfoFromGroup(group);
   return response;
-}
-
-std::vector<std::string> CvdCreateCommandHandler::CmdList() const {
-  return {"create"};
 }
 
 Result<std::string> CvdCreateCommandHandler::SummaryHelp() const {
