@@ -29,7 +29,6 @@
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/request_context.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
@@ -75,10 +74,6 @@ class CvdHelpHandler : public CvdServerHandler {
   CvdHelpHandler(
       const std::vector<std::unique_ptr<CvdServerHandler>>& request_handlers)
       : request_handlers_(request_handlers) {}
-
-  Result<bool> CanHandle(const CommandRequest& request) const override {
-    return request.Subcommand() == "help";
-  }
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
