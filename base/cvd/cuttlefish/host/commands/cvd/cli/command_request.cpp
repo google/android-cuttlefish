@@ -25,53 +25,25 @@
 #include "host/commands/cvd/cli/selector/selector_common_parser.h"
 
 namespace cuttlefish {
-namespace {
-
-struct CommandInvocation {
-  std::string command;
-  std::vector<std::string> arguments;
-};
-
-CommandInvocation ParseInvocation(const CommandRequest& request) {
-  CommandInvocation invocation;
-  invocation.arguments = request.Args();
-  if (invocation.arguments.empty()) {
-    return invocation;
-  }
-  invocation.arguments[0] = cpp_basename(invocation.arguments[0]);
-  if (invocation.arguments[0] == "cvd" && invocation.arguments.size() > 1) {
-    invocation.command = invocation.arguments[1];
-    invocation.arguments.erase(invocation.arguments.begin());
-    invocation.arguments.erase(invocation.arguments.begin());
-  } else {
-    invocation.command = invocation.arguments[0];
-    invocation.arguments.erase(invocation.arguments.begin());
-  }
-  return invocation;
-}
-
-}  // namespace
 
 CommandRequest::CommandRequest(cvd_common::Args args, cvd_common::Envs env,
                                selector::SelectorOptions selectors)
     : args_(std::move(args)),
       env_(std::move(env)),
-      selectors_(std::move(selectors)) {}
-
-const cvd_common::Args& CommandRequest::Args() const { return args_; }
-
-const selector::SelectorOptions& CommandRequest::Selectors() const {
-  return selectors_;
-}
-
-const cvd_common::Envs& CommandRequest::Env() const { return env_; }
-
-std::string CommandRequest::Subcommand() const {
-  return ParseInvocation(*this).command;
-}
-
-std::vector<std::string> CommandRequest::SubcommandArguments() const {
-  return ParseInvocation(*this).arguments;
+      selectors_(std::move(selectors)) {
+  subcommand_arguments_ = args_;
+  if (subcommand_arguments_.empty()) {
+    return;
+  }
+  subcommand_arguments_[0] = cpp_basename(subcommand_arguments_[0]);
+  if (subcommand_arguments_[0] == "cvd" && subcommand_arguments_.size() > 1) {
+    subcommand_ = subcommand_arguments_[1];
+    subcommand_arguments_.erase(subcommand_arguments_.begin());
+    subcommand_arguments_.erase(subcommand_arguments_.begin());
+  } else {
+    subcommand_ = subcommand_arguments_[0];
+    subcommand_arguments_.erase(subcommand_arguments_.begin());
+  }
 }
 
 CommandRequestBuilder& CommandRequestBuilder::AddArguments(

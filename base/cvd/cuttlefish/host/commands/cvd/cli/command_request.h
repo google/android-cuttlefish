@@ -36,14 +36,16 @@ namespace cuttlefish {
 
 class CommandRequest {
  public:
-  const cvd_common::Args& Args() const;
+  const cvd_common::Args& Args() const { return args_; }
 
-  const cvd_common::Envs& Env() const;
+  const cvd_common::Envs& Env() const { return env_; }
 
-  const selector::SelectorOptions& Selectors() const;
+  const selector::SelectorOptions& Selectors() const { return selectors_; }
 
-  std::string Subcommand() const;
-  std::vector<std::string> SubcommandArguments() const;
+  const std::string& Subcommand() const { return subcommand_; }
+  const std::vector<std::string>& SubcommandArguments() const {
+    return subcommand_arguments_;
+  }
 
  private:
   friend class CommandRequestBuilder;
@@ -53,6 +55,9 @@ class CommandRequest {
   cvd_common::Args args_;
   cvd_common::Envs env_;
   selector::SelectorOptions selectors_;
+
+  std::string subcommand_;
+  std::vector<std::string> subcommand_arguments_;
 };
 
 class CommandRequestBuilder {
