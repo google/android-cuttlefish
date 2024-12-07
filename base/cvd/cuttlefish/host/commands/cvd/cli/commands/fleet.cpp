@@ -41,7 +41,6 @@ class CvdFleetCommandHandler : public CvdServerHandler {
   CvdFleetCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
 
-  Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {kFleetSubcmd}; }
 
@@ -59,11 +58,6 @@ class CvdFleetCommandHandler : public CvdServerHandler {
   static constexpr char kFleetSubcmd[] = "fleet";
   bool IsHelp(const cvd_common::Args& cmd_args) const;
 };
-
-Result<bool> CvdFleetCommandHandler::CanHandle(
-    const CommandRequest& request) const {
-  return request.Subcommand() == kFleetSubcmd;
-}
 
 Result<cvd::Response> CvdFleetCommandHandler::Handle(
     const CommandRequest& request) {
