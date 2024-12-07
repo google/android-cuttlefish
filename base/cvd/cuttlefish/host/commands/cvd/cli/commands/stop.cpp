@@ -50,9 +50,8 @@ class CvdStopCommandHandler : public CvdServerHandler {
  public:
   CvdStopCommandHandler(InstanceManager& instance_manager);
 
-  Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override;
+  cvd_common::Args CmdList() const override { return {"stop", "stop_cvd"}; }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
@@ -77,11 +76,6 @@ class CvdStopCommandHandler : public CvdServerHandler {
 
 CvdStopCommandHandler::CvdStopCommandHandler(InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
-
-Result<bool> CvdStopCommandHandler::CanHandle(
-    const CommandRequest& request) const {
-  return Contains(CmdList(), request.Subcommand());
-}
 
 Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
     const CommandRequest& request) {
@@ -144,10 +138,6 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
   }
 
   return response;
-}
-
-std::vector<std::string> CvdStopCommandHandler::CmdList() const {
-  return {"stop", "stop_cvd"};
 }
 
 Result<std::string> CvdStopCommandHandler::SummaryHelp() const {
