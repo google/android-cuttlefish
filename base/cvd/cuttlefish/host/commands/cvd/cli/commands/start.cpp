@@ -229,9 +229,10 @@ class CvdStartCommandHandler : public CvdServerHandler {
   CvdStartCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
 
-  Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
-  std::vector<std::string> CmdList() const override;
+  std::vector<std::string> CmdList() const override {
+    return {"start", "launch_cvd"};
+  }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
@@ -271,7 +272,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
                                    const CommandRequest& request);
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
-  static const std::array<std::string, 2> supported_commands_;
 };
 
 Result<void> CvdStartCommandHandler::AcloudCompatActions(
@@ -349,11 +349,6 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
     }
   }
   return {};
-}
-
-Result<bool> CvdStartCommandHandler::CanHandle(
-    const CommandRequest& request) const {
-  return Contains(supported_commands_, request.Subcommand());
 }
 
 Result<void> CvdStartCommandHandler::UpdateArgs(cvd_common::Args& args,
@@ -521,8 +516,6 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   }
   // update DB if not help
   // collect group creation infos
-  CF_EXPECT(Contains(supported_commands_, subcmd),
-            "subcmd should be start but is " << subcmd);
   const bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));
 
   if (is_help) {
@@ -710,15 +703,6 @@ Result<cvd::Response> CvdStartCommandHandler::FillOutNewInstanceInfo(
   return new_response;
 }
 
-std::vector<std::string> CvdStartCommandHandler::CmdList() const {
-  std::vector<std::string> subcmd_list;
-  subcmd_list.reserve(supported_commands_.size());
-  for (const auto& cmd : supported_commands_) {
-    subcmd_list.emplace_back(cmd);
-  }
-  return subcmd_list;
-}
-
 Result<std::string> CvdStartCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
@@ -731,9 +715,6 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
     std::vector<std::string>&) const {
   return kDetailedHelpText;
 }
-
-const std::array<std::string, 2> CvdStartCommandHandler::supported_commands_{
-    "start", "launch_cvd"};
 
 std::unique_ptr<CvdServerHandler> NewCvdStartCommandHandler(
     InstanceManager& instance_manager) {
