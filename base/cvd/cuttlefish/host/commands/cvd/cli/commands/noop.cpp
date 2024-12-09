@@ -18,7 +18,6 @@
 
 #include <memory>
 
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
@@ -29,12 +28,6 @@ constexpr char kSummaryHelpText[] =
 
 class CvdNoopHandler : public CvdServerHandler {
  public:
-  CvdNoopHandler() = default;
-
-  Result<bool> CanHandle(const CommandRequest& request) const override {
-    return Contains(CmdList(), request.Subcommand());
-  }
-
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     fmt::print(std::cout, "DEPRECATED: The {} command is a no-op",
                request.Subcommand());

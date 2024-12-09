@@ -40,11 +40,10 @@ class CvdClearCommandHandler : public CvdServerHandler {
  public:
   CvdClearCommandHandler(InstanceManager& instance_manager);
 
-  Result<bool> CanHandle(const CommandRequest& request) const override;
   Result<cvd::Response> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override;
-  Result<std::string> SummaryHelp() const override;
-  bool ShouldInterceptHelp() const override;
+  cvd_common::Args CmdList() const override { return {kClearCmd}; }
+  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  bool ShouldInterceptHelp() const override { return false; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
@@ -54,11 +53,6 @@ class CvdClearCommandHandler : public CvdServerHandler {
 CvdClearCommandHandler::CvdClearCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
-
-Result<bool> CvdClearCommandHandler::CanHandle(
-    const CommandRequest& request) const {
-  return request.Subcommand() == kClearCmd;
-}
 
 Result<cvd::Response> CvdClearCommandHandler::Handle(
     const CommandRequest& request) {
@@ -77,16 +71,6 @@ Result<cvd::Response> CvdClearCommandHandler::Handle(
   *response.mutable_status() = instance_manager_.CvdClear(request);
   return response;
 }
-
-std::vector<std::string> CvdClearCommandHandler::CmdList() const {
-  return {kClearCmd};
-}
-
-Result<std::string> CvdClearCommandHandler::SummaryHelp() const {
-  return kSummaryHelpText;
-}
-
-bool CvdClearCommandHandler::ShouldInterceptHelp() const { return false; }
 
 Result<std::string> CvdClearCommandHandler::DetailedHelp(
     std::vector<std::string>& arguments) const {

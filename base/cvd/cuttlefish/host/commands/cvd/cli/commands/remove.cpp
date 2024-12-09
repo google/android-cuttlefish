@@ -62,10 +62,6 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
 
   bool ShouldInterceptHelp() const override { return false; }
 
-  Result<bool> CanHandle(const CommandRequest& request) const override {
-    return Contains(CmdList(), request.Subcommand());
-  }
-
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();

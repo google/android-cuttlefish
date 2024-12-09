@@ -78,6 +78,7 @@ cc_library(
         "cli/commands/power.cpp",
         "cli/commands/remove.cpp",
         "cli/commands/reset.cpp",
+        "cli/commands/server_handler.cpp",
         "cli/commands/snapshot.cpp",
         "cli/commands/start.cpp",
         "cli/commands/status.cpp",

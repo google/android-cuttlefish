@@ -65,12 +65,7 @@ QEMU:
 class CvdSnapshotCommandHandler : public CvdServerHandler {
  public:
   CvdSnapshotCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_{instance_manager},
-        cvd_snapshot_operations_{"suspend", "resume", "snapshot_take"} {}
-
-  Result<bool> CanHandle(const CommandRequest& request) const override {
-    return Contains(cvd_snapshot_operations_, request.Subcommand());
-  }
+      : instance_manager_{instance_manager} {}
 
   Result<cvd::Response> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
@@ -95,8 +90,7 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
   }
 
   cvd_common::Args CmdList() const override {
-    return cvd_common::Args(cvd_snapshot_operations_.begin(),
-                            cvd_snapshot_operations_.end());
+    return {"suspend", "resume", "snapshot_take"};
   }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
