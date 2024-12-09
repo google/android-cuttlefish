@@ -1,4 +1,4 @@
-load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@gazelle//:def.bzl", "gazelle")
 
 # gazelle:proto disable_global
 gazelle(name = "gazelle")
