@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@io_bazel_rules_go//go:def.bzl", "go_test")
+load("@rules_go//go:def.bzl", "go_test")
 
 go_test(
     name = "snapshot_test_test",
@@ -20,12 +20,12 @@ go_test(
     data = [
         "//orchestration/artifacts:cvd_host_package",
         "//orchestration/artifacts:images_zip",
-        "@images//docker:orchestration_image_dev_tar",
+        # "@images//docker:orchestration_image_dev_tar",
     ],
     deps = [
         "//orchestration/common",
+        "@com_github_google_android_cuttlefish_frontend_src_host_orchestrator//api/v1:api",
+        "@com_github_google_android_cuttlefish_frontend_src_libhoclient//:libhoclient",
         "@com_github_google_go_cmp//cmp",
-        "@host_orchestrator//api/v1:api",
-        "@libhoclient",
     ],
 )
