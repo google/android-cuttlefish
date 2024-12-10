@@ -16,6 +16,7 @@
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <chrono>
 #include <future>
@@ -292,6 +293,36 @@ Result<void> EnsureDirectoriesExist(const std::string& target_directory,
   return {};
 }
 
+Result<void> ExtractHostPackageArchiveContents(const std::string& archive_path,
+                                               const std::string& target_dir,
+                                               bool keep_archives) {
+  // b/364058922: The ExtractArchiveContents function uses RunWithManagedStdIO,
+  // which deadlocks in a small percentage of invocations. That small percentage
+  // adds up over millions of daily invocations. This simpler version mitigates
+  // the problem while the underlying root cause is still investigated.
+  std::vector<const char*> cmd;
+  cmd.push_back("/usr/bin/bsdtar");
+  cmd.push_back("-x");
+  cmd.push_back("-C");
+  cmd.push_back(target_dir.c_str());
+  cmd.push_back("-f");
+  cmd.push_back(archive_path.c_str());
+  cmd.push_back("-S");
+  cmd.push_back(NULL);
+  auto pid = fork();
+  if (pid == 0) {
+    auto rval = execvp(cmd[0], const_cast<char* const*>(cmd.data()));
+    exit(rval);
+  }
+  auto res = TEMP_FAILURE_RETRY(waitpid(pid, NULL, 0));
+  CF_EXPECT(res == pid, "Failed to extract host package archive");
+  if (!keep_archives) {
+    CF_EXPECT(RemoveFile(archive_path),
+              "Failed to delete host package archive");
+  }
+  return {};
+}
+
 Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
                               const std::string& target_dir,
                               const bool keep_archives,
@@ -307,8 +338,8 @@ Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
   std::string host_tools_filepath =
       CF_EXPECT(build_api.DownloadFile(build, target_dir, host_tools_name));
   trace.CompletePhase("Download", FileSize(host_tools_filepath));
-  CF_EXPECT(
-      ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
+  CF_EXPECT(ExtractHostPackageArchiveContents(host_tools_filepath, target_dir,
+                                              keep_archives));
   trace.CompletePhase("Extract");
   return {};
 }
