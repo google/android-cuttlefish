@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "orchestrator",
@@ -22,10 +22,10 @@ go_library(
         "//orchestrator/artifacts",
         "//orchestrator/cvd",
         "//orchestrator/debug",
+        "@com_github_google_android_cuttlefish_frontend_src_liboperator//operator",
         "@com_github_google_uuid//:uuid",
         "@com_github_gorilla_mux//:mux",
         "@com_github_hashicorp_go_multierror//:go-multierror",
-        "@liboperator//operator",
     ],
 )
 
@@ -44,8 +44,8 @@ go_test(
         "//api/v1:api",
         "//orchestrator/debug",
         "//orchestrator/testing",
+        "@com_github_google_android_cuttlefish_frontend_src_liboperator//operator",
         "@com_github_google_go_cmp//cmp",
         "@com_github_gorilla_mux//:mux",
-        "@liboperator//operator",
     ],
 )
