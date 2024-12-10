@@ -9,7 +9,6 @@ go_deps.from_file(go_mod = "//:go.mod")
 # All *direct* Go dependencies of the module have to be listed explicitly.
 use_repo(
     go_deps,
-    "com_github_google_android_cuttlefish_frontend_src_liboperator",
     "com_github_google_go_cmp",
     "com_github_google_uuid",
     "com_github_gorilla_mux",
