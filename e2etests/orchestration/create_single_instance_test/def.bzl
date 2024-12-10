@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@io_bazel_rules_go//go:def.bzl", "go_test")
+load("@rules_go//go:def.bzl", "go_test")
 
 def create_single_instance_test(name, build_id, build_target):
     go_test(
         name = name,
         srcs = ["main_test.go"],
         data = [
-            "@images//docker:orchestration_image_dev_tar",
+            # "@images//docker:orchestration_image_dev_tar",
         ],
         env = {
             "BUILD_ID": build_id,
@@ -28,7 +28,7 @@ def create_single_instance_test(name, build_id, build_target):
         deps = [
             "//orchestration/common",
             "@com_github_google_go_cmp//cmp",
-            "@host_orchestrator//api/v1:api",
-            "@libhoclient",
+            "@com_github_google_android_cuttlefish_frontend_src_host_orchestrator//api/v1:api",
+            "@com_github_google_android_cuttlefish_frontend_src_libhoclient//:libhoclient",
         ],
     )
