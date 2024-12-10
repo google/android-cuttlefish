@@ -1,5 +1,5 @@
-load("@bazel_gazelle//:def.bzl", "gazelle")
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@gazelle//:def.bzl", "gazelle")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 # gazelle:resolve_regexp go github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1 @host_orchestrator//api/v1:api
 # gazelle:resolve_regexp go github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1 @liboperator//api/v1:api
