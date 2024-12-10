@@ -1,3 +1,5 @@
+module(name = "com_github_google_android_cuttlefish_frontend_src_host_orchestrator")
+
 bazel_dep(name = "rules_go", version = "0.39.1")
 bazel_dep(name = "gazelle", version = "0.31.0")
 
