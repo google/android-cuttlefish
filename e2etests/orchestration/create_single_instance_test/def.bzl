@@ -19,7 +19,7 @@ def create_single_instance_test(name, build_id, build_target):
         name = name,
         srcs = ["main_test.go"],
         data = [
-            # "@images//docker:orchestration_image_dev_tar",
+            "@images//:orchestration_image_dev_tar",
         ],
         env = {
             "BUILD_ID": build_id,
