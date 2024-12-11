@@ -31,7 +31,7 @@ class Cvd {
       InstanceLockFileManager& instance_lockfile_manager,
       InstanceManager& instance_manager);
 
-  Result<cvd::Response> HandleCommand(
+  Result<void> HandleCommand(
       const std::vector<std::string>& cvd_process_args,
       const std::unordered_map<std::string, std::string>& env,
       const std::vector<std::string>& selector_args);
