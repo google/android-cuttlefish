@@ -81,24 +81,6 @@ void CheckMarked(fd_set* in_out_mask, SharedFDSet* in_out_set) {
   }
 }
 
-/*
- * Android currently has host prebuilts of glibc 2.15 and 2.17, but
- * memfd_create was only added in glibc 2.27. It was defined in Linux 3.17,
- * so we consider it safe to use the low-level arbitrary syscall wrapper.
- */
-#ifndef __NR_memfd_create
-# if defined(__x86_64__)
-#  define __NR_memfd_create 319
-# elif defined(__i386__)
-#  define __NR_memfd_create 356
-# elif defined(__aarch64__)
-#  define __NR_memfd_create 279
-# else
-/* No interest in other architectures. */
-#  error "Unknown architecture."
-# endif
-#endif
-
 int memfd_create_wrapper(const char* name, unsigned int flags) {
 #ifdef __linux__
 #ifdef CUTTLEFISH_HOST
