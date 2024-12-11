@@ -412,6 +412,15 @@ Subprocess Command::Start(SubprocessOptions options) const {
     return Subprocess(-1, {});
   }
 
+  for (auto& prerequisite : prerequisites_) {
+    auto prerequisiteResult = prerequisite();
+
+    if (!prerequisiteResult.ok()) {
+      LOG(ERROR) << "Failed to check prerequisites: "
+                 << prerequisiteResult.error().FormatForEnv();
+    }
+  }
+
   pid_t pid = fork();
   if (!pid) {
 #ifdef __linux__
@@ -421,15 +430,6 @@ Subprocess Command::Start(SubprocessOptions options) const {
 #endif
 
     do_redirects(redirects_);
-
-    for (auto& prerequisite : prerequisites_) {
-      auto prerequisiteResult = prerequisite();
-
-      if (!prerequisiteResult.ok()) {
-        LOG(ERROR) << "Failed to check prerequisites: "
-                   << prerequisiteResult.error().FormatForEnv();
-      }
-    }
 
     if (options.InGroup()) {
       // This call should never fail (see SETPGID(2))
