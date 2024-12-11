@@ -26,4 +26,21 @@ Result<bool> CvdServerHandler::CanHandle(const CommandRequest& request) const {
   return Contains(CmdList(), request.Subcommand());
 }
 
+Result<void> CvdServerHandler::HandleVoid(const CommandRequest& request) {
+  cvd::Response response = CF_EXPECT(Handle(request));
+  CF_EXPECT_EQ(response.status().code(), cvd::Status::OK,
+               response.status().message());
+  return {};
+}
+
+Result<cvd::Response> CvdServerHandler::Handle(const CommandRequest& request) {
+  CF_EXPECT(HandleVoid(request));
+
+  cvd::Response response;
+  response.mutable_command_response();
+  response.mutable_status()->set_code(cvd::Status::OK);
+
+  return response;
+}
+
 }  // namespace cuttlefish
