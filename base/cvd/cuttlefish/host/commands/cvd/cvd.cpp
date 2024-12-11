@@ -59,7 +59,7 @@ Cvd::Cvd(const android::base::LogSeverity verbosity,
       instance_lockfile_manager_(instance_lockfile_manager),
       instance_manager_(instance_manager) {}
 
-Result<cvd::Response> Cvd::HandleCommand(
+Result<void> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
     const std::unordered_map<std::string, std::string>& env,
     const std::vector<std::string>& selector_args) {
@@ -76,10 +76,11 @@ Result<cvd::Response> Cvd::HandleCommand(
     if (CF_EXPECT(IsHelpSubcmd(invocation_args))) {
       std::cout << CF_EXPECT(handler->DetailedHelp(invocation_args))
                 << std::endl;
-      return SuccessResponse();
+      return {};
     }
   }
-  return handler->Handle(request);
+  CF_EXPECT(handler->HandleVoid(request));
+  return {};
 }
 
 Result<void> Cvd::HandleCvdCommand(
@@ -102,7 +103,7 @@ Result<void> Cvd::HandleAcloud(
   std::vector<std::string> args_copy{args};
   args_copy[0] = "try-acloud";
 
-  auto attempt = HandleCommand(args_copy, env, {});
+  Result<void> attempt = HandleCommand(args_copy, env, {});
   if (!attempt.ok()) {
     CallPythonAcloud(args_copy);
     // no return
