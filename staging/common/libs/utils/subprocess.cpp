@@ -423,6 +423,8 @@ Subprocess Command::Start(SubprocessOptions options) const {
 
   pid_t pid = fork();
   if (!pid) {
+    // LOG(...) can't be used in the child process because it may block waiting
+    // for other threads which don't exist in the child process.
 #ifdef __linux__
     if (options.ExitWithParent()) {
       prctl(PR_SET_PDEATHSIG, SIGHUP); // Die when parent dies
@@ -434,19 +436,17 @@ Subprocess Command::Start(SubprocessOptions options) const {
     if (options.InGroup()) {
       // This call should never fail (see SETPGID(2))
       if (setpgid(0, 0) != 0) {
-        auto error = errno;
-        LOG(ERROR) << "setpgid failed (" << strerror(error) << ")";
+        exit(-errno);
       }
     }
     for (const auto& entry : inherited_fds_) {
       if (fcntl(entry.second, F_SETFD, 0)) {
-        int error_num = errno;
-        LOG(ERROR) << "fcntl failed: " << strerror(error_num);
+        exit(-errno);
       }
     }
     if (working_directory_->IsOpen()) {
       if (SharedFD::Fchdir(working_directory_) != 0) {
-        LOG(ERROR) << "Fchdir failed: " << working_directory_->StrError();
+        exit(-errno);
       }
     }
     int rval;
@@ -461,9 +461,7 @@ Subprocess Command::Start(SubprocessOptions options) const {
 #else
 #error "Unsupported architecture"
 #endif
-    // No need for an if: if exec worked it wouldn't have returned
-    LOG(ERROR) << "exec of " << cmd[0] << " with path \"" << executable
-               << "\" failed (" << strerror(errno) << ")";
+    // No need to check for error, execvpe/execve don't return on success.
     exit(rval);
   }
   if (pid == -1) {
