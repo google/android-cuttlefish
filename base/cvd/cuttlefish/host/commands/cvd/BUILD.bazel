@@ -264,6 +264,7 @@ cc_library(
         "@jsoncpp",
         "@protobuf//:protobuf",
         "@protobuf//:protobuf_lite",
+        "@protobuf//:json_util",
         "@tinyxml2",
         "@zlib",
     ],
