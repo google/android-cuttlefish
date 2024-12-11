@@ -421,6 +421,8 @@ Subprocess Command::Start(SubprocessOptions options) const {
     }
   }
 
+  // ToCharPointers allocates memory so it can't be called in the child process.
+  auto envp = ToCharPointers(env_);
   pid_t pid = fork();
   if (!pid) {
     // LOG(...) can't be used in the child process because it may block waiting
@@ -450,7 +452,6 @@ Subprocess Command::Start(SubprocessOptions options) const {
       }
     }
     int rval;
-    auto envp = ToCharPointers(env_);
     const char* executable = executable_ ? executable_->c_str() : cmd[0];
 #ifdef __linux__
     rval = execvpe(executable, const_cast<char* const*>(cmd.data()),
