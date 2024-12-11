@@ -36,5 +36,5 @@ local_path_override(
 bazel_dep(name = "images")
 local_path_override(
     module_name = "images",
-    path = "..",
+    path = "../docker",
 )
