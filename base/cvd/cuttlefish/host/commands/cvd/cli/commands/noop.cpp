@@ -28,12 +28,10 @@ constexpr char kSummaryHelpText[] =
 
 class CvdNoopHandler : public CvdServerHandler {
  public:
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
-    fmt::print(std::cout, "DEPRECATED: The {} command is a no-op",
+  Result<void> HandleVoid(const CommandRequest& request) override {
+    fmt::print(std::cout, "DEPRECATED: The {} command is a no-op\n",
                request.Subcommand());
-    cvd::Response response;
-    response.mutable_status()->set_code(cvd::Status::OK);
-    return response;
+    return {};
   }
 
   cvd_common::Args CmdList() const override {
