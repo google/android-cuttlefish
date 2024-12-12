@@ -501,8 +501,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   CommandRequestBuilder start_request_builder;
   start_request_builder.AddArguments({"cvd", "create", "--daemon", "--undefok",
-                              "report_anonymous_usage_stats",
-                              "--report_anonymous_usage_stats", "y"});
+                                      "report_anonymous_usage_stats",
+                                      "--report_anonymous_usage_stats", "y",
+                                      "--internal_prepare_for_acloud_delete"});
   if (parsed_flags.flavor) {
     start_request_builder.AddArguments({"-config", *parsed_flags.flavor});
   }
