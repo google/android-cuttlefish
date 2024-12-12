@@ -191,21 +191,4 @@ std::string NoGroupMessage(const CommandRequest& request) {
                      colors.BoldRed(), "no device", colors.Reset());
 }
 
-Result<cvd::Response> NoTTYResponse(const CommandRequest& request) {
-  cvd::Response response;
-  response.mutable_command_response();
-  response.mutable_status()->set_code(cvd::Status::OK);
-  const uid_t uid = getuid();
-  TerminalColors colors(isatty(1));
-  auto notice = fmt::format(
-      "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      colors.Red(), fmt::join(request.Args(), " "), colors.Reset(),
-      colors.BoldRed(),
-      "No terminal/tty for selecting one of multiple Cuttlefish groups",
-      colors.Reset(), colors.Cyan(), uid, colors.Reset());
-  std::cout << notice << "\n";
-  response.mutable_status()->set_message(notice);
-  return response;
-}
-
 }  // namespace cuttlefish
