@@ -1,3 +1,8 @@
+cuttlefish-common (1.0.1) stable; urgency=medium
+
+  [ Jorge E. Moreira ]
+  * Fix possible deadlock in Command#Start
+
 cuttlefish-common (1.0.0) stable; urgency=medium
 
   [ Jorge E. Moreira ]
