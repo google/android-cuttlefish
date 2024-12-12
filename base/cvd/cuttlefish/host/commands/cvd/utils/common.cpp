@@ -66,16 +66,6 @@ Result<std::string> AndroidHostPath(const cvd_common::Envs& envs) {
   return current_dir;
 }
 
-cvd::Response CommandResponse(const cvd::Status_Code code,
-                              const std::string& message) {
-  cvd::Response response;
-  response.mutable_command_response();  // set oneof field
-  auto& status = *response.mutable_status();
-  status.set_code(code);
-  status.set_message(message);
-  return response;
-}
-
 template <typename T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& v) {
   if (v.empty()) {

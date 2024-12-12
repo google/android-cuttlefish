@@ -25,6 +25,7 @@
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/unix_sockets.h"
+#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/instances/instance_database.h"
 #include "host/commands/cvd/metrics/metrics_notice.h"
 #include "host/commands/cvd/utils/common.h"
