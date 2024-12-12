@@ -44,7 +44,7 @@ Usage: cvd lint /path/to/input.json
 
 class LintCommandHandler : public CvdServerHandler {
  public:
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     std::vector<std::string> args = request.SubcommandArguments();
@@ -54,10 +54,7 @@ class LintCommandHandler : public CvdServerHandler {
     std::cout << "Lint of flags and config \"" << config_path
                   << "\" succeeded\n";
 
-    cvd::Response response;
-    response.mutable_command_response();
-    response.mutable_status()->set_code(cvd::Status::OK);
-    return response;
+    return {};
   }
 
   cvd_common::Args CmdList() const override { return {kLintSubCmd}; }
