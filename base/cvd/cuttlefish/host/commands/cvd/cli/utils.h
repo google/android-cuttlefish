@@ -80,6 +80,4 @@ class TerminalColors {
   bool is_tty_;
 };
 
-Result<cvd::Response> WriteToFd(SharedFD fd, const std::string& output);
-
 }  // namespace cuttlefish

@@ -102,7 +102,6 @@ Result<CvdServerHandler*> RequestContext::Handler(
 Result<CvdServerHandler*> RequestHandler(
     const CommandRequest& request,
     const std::vector<std::unique_ptr<CvdServerHandler>>& handlers) {
-  Result<cvd::Response> response;
   std::vector<CvdServerHandler*> compatible_handlers;
   for (auto& handler : handlers) {
     if (CF_EXPECT(handler->CanHandle(request))) {
