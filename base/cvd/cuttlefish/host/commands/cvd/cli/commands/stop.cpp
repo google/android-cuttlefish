@@ -44,20 +44,18 @@ namespace {
 constexpr char kSummaryHelpText[] =
     "Run cvd stop --help for command description";
 
-}  // namespace
-
 class CvdStopCommandHandler : public CvdServerHandler {
  public:
   CvdStopCommandHandler(InstanceManager& instance_manager);
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override;
+  Result<void> HandleVoid(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"stop", "stop_cvd"}; }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
-  Result<cvd::Response> HandleHelpCmd(const CommandRequest& request);
+  Result<void> HandleHelpCmd(const CommandRequest& request);
   Result<std::string> GetBin(const std::string& host_artifacts_path) const;
   // whether the "bin" is cvd bins like stop_cvd or not (e.g. ln, ls, mkdir)
   // The information to fire the command might be different. This information
@@ -77,7 +75,7 @@ class CvdStopCommandHandler : public CvdServerHandler {
 CvdStopCommandHandler::CvdStopCommandHandler(InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
-Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
+Result<void> CvdStopCommandHandler::HandleHelpCmd(
     const CommandRequest& request) {
   std::string subcmd = request.Subcommand();
   std::vector<std::string> cmd_args = request.SubcommandArguments();
@@ -97,20 +95,22 @@ Result<cvd::Response> CvdStopCommandHandler::HandleHelpCmd(
   siginfo_t infop;
   command.Start().Wait(&infop, WEXITED);
 
-  return ResponseFromSiginfo(infop);
+  CF_EXPECT(CheckProcessExitedNormally(infop));
+  return {};
 }
 
-Result<cvd::Response> CvdStopCommandHandler::Handle(
+Result<void> CvdStopCommandHandler::HandleVoid(
     const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   std::vector<std::string> cmd_args = request.SubcommandArguments();
 
   if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
-    return CF_EXPECT(HandleHelpCmd(request));
+    CF_EXPECT(HandleHelpCmd(request));
+    return {};
   }
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
-    return NoGroupResponse(request);
+    return CF_ERR(NoGroupMessage(request));
   }
 
   auto group = CF_EXPECT(selector::SelectGroup(instance_manager_, request));
@@ -130,14 +130,15 @@ Result<cvd::Response> CvdStopCommandHandler::Handle(
 
   siginfo_t infop;
   command.Start().Wait(&infop, WEXITED);
-  auto response = ResponseFromSiginfo(infop);
+  Result<void> stop_outcome = CheckProcessExitedNormally(infop);
 
-  if (response.status().code() == cvd::Status::OK) {
+  if (stop_outcome.ok()) {
     group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   }
 
-  return response;
+  CF_EXPECT(std::move(stop_outcome));
+  return {};
 }
 
 Result<std::string> CvdStopCommandHandler::SummaryHelp() const {
@@ -169,6 +170,8 @@ Result<std::string> CvdStopCommandHandler::GetBin(
   return CF_EXPECT(HostToolTarget(host_artifacts_path).GetStopBinName());
 }
 
+}  // namespace
+
 std::unique_ptr<CvdServerHandler> NewCvdStopCommandHandler(
     InstanceManager& instance_manager) {
   return std::unique_ptr<CvdServerHandler>(
@@ -176,4 +179,3 @@ std::unique_ptr<CvdServerHandler> NewCvdStopCommandHandler(
 }
 
 }  // namespace cuttlefish
-
