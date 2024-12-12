@@ -57,8 +57,6 @@ Result<CvdFlags> GetCvdFlags(const CommandRequest& request) {
   return CF_EXPECT(GetCvdFlags(flags));
 }
 
-}  // namespace
-
 class LoadConfigsCommand : public CvdServerHandler {
  public:
   LoadConfigsCommand(CommandSequenceExecutor& executor,
@@ -66,7 +64,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       : executor_(executor), instance_manager_(instance_manager) {}
   ~LoadConfigsCommand() = default;
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
     bool can_handle_request = CF_EXPECT(CanHandle(request));
     CF_EXPECT_EQ(can_handle_request, true);
 
@@ -130,9 +128,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     }
     listener_handle.reset();
 
-    cvd::Response response;
-    response.mutable_command_response();
-    return response;
+    return {};
   }
 
   Result<void> LoadGroup(const CommandRequest& request,
@@ -241,6 +237,8 @@ class LoadConfigsCommand : public CvdServerHandler {
   CommandSequenceExecutor& executor_;
   InstanceManager& instance_manager_;
 };
+
+}  // namespace
 
 std::unique_ptr<CvdServerHandler> NewLoadConfigsCommand(
     CommandSequenceExecutor& executor, InstanceManager& instance_manager) {
