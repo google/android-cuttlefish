@@ -100,8 +100,6 @@ class AcloudCommand : public CvdServerHandler {
   }
 
  private:
-  Result<cvd::InstanceGroupInfo> ParseStartResponse(
-      const cvd::Response& start_response);
   Result<ConvertedAcloudCreateCommand> ValidateLocal(
       const CommandRequest& request);
   bool ValidateRemoteArgs(const CommandRequest& request);
@@ -113,18 +111,6 @@ class AcloudCommand : public CvdServerHandler {
 
   CommandSequenceExecutor& executor_;
 };
-
-Result<cvd::InstanceGroupInfo> AcloudCommand::ParseStartResponse(
-    const cvd::Response& start_response) {
-  CF_EXPECT(start_response.has_command_response(),
-            "cvd start did not return a command response.");
-  const auto& start_command_response = start_response.command_response();
-  CF_EXPECT(start_command_response.has_instance_group_info(),
-            "cvd start command response did not return instance_group_info.");
-  cvd::InstanceGroupInfo group_info =
-      start_command_response.instance_group_info();
-  return group_info;
-}
 
 Result<ConvertedAcloudCreateCommand> AcloudCommand::ValidateLocal(
     const CommandRequest& request) {
@@ -150,12 +136,6 @@ Result<void> AcloudCommand::HandleLocal(
     using android::base::WriteStringToFile;
     CF_EXPECT(WriteStringToFile(command.fetch_command_str,
                                 command.fetch_cvd_args_file));
-  }
-
-  auto group_info_result = ParseStartResponse(start_response);
-  if (!group_info_result.ok()) {
-    LOG(ERROR) << "Failed to analyze the cvd start response.";
-    return {};
   }
   return {};
 }
