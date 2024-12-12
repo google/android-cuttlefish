@@ -65,7 +65,7 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     return Contains(cvd_power_operations_, request.Subcommand());
   }
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     const cvd_common::Envs& env = request.Env();
 
@@ -81,7 +81,8 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
     siginfo_t infop;
     command.Start().Wait(&infop, WEXITED);
 
-    return ResponseFromSiginfo(infop);
+    CF_EXPECT(CheckProcessExitedNormally(infop));
+    return {};
   }
 
   cvd_common::Args CmdList() const override {
