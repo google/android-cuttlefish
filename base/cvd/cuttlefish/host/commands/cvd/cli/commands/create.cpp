@@ -197,20 +197,6 @@ Result<cvd_common::Envs> GetEnvs(const CommandRequest& request) {
   return envs;
 }
 
-cvd::InstanceGroupInfo GroupInfoFromGroup(const LocalInstanceGroup& group) {
-  cvd::InstanceGroupInfo info;
-  info.set_group_name(group.GroupName());
-  for (const auto& instance : group.Instances()) {
-    cvd::InstanceGroupInfo::PerInstanceInfo instance_info;
-    instance_info.set_name(instance.name());
-    instance_info.set_instance_id(instance.id());
-    *info.add_instances() = instance_info;
-  }
-  info.add_home_directories(group.HomeDir());
-  info.set_host_artifacts_path(group.HostArtifactsPath());
-  return info;
-}
-
 // link might be a directory, so we clean that up, and create a link from
 // target to link
 Result<void> EnsureSymlink(const std::string& target, const std::string link) {
@@ -417,8 +403,6 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
     }
   }
 
-  *response.mutable_command_response()->mutable_instance_group_info() =
-      GroupInfoFromGroup(group);
   return response;
 }
 
