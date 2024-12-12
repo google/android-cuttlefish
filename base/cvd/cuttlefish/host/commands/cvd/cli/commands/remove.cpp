@@ -32,16 +32,6 @@
 namespace cuttlefish {
 namespace {
 
-Result<cvd::Response> Success() {
-  cvd::Response ok_response;
-  ok_response.mutable_command_response();
-  auto& status = *ok_response.mutable_status();
-  status.set_code(cvd::Status::OK);
-  return ok_response;
-}
-
-}  // namespace
-
 class RemoveCvdCommandHandler : public CvdServerHandler {
  public:
   RemoveCvdCommandHandler(InstanceManager& instance_manager)
@@ -62,18 +52,18 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
 
   bool ShouldInterceptHelp() const override { return false; }
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
     if (CF_EXPECT(IsHelpSubcmd(subcmd_args))) {
       std::vector<std::string> unused;
       std::cout << CF_EXPECT(DetailedHelp(unused));
-      return Success();
+      return {};
     }
 
     if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
-      return NoGroupResponse(request);
+      return CF_ERR(NoGroupMessage(request));
     }
     auto group = CF_EXPECT(selector::SelectGroup(instance_manager_, request));
 
@@ -86,7 +76,7 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
 
     CF_EXPECT(instance_manager_.RemoveInstanceGroupByHome(group.HomeDir()));
 
-    return Success();
+    return {};
   }
 
  private:
@@ -109,6 +99,8 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
 
   InstanceManager& instance_manager_;
 };
+
+}  // namespace
 
 std::unique_ptr<CvdServerHandler> NewRemoveCvdCommandHandler(
     InstanceManager& instance_manager) {
