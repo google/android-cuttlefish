@@ -229,7 +229,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
   CvdStartCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override;
+  Result<void> HandleVoid(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override {
     return {"start", "launch_cvd"};
   }
@@ -238,13 +238,14 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
-  Result<cvd::Response> LaunchDevice(Command command, LocalInstanceGroup& group,
-                                     const cvd_common::Envs& envs,
-                                     const CommandRequest& request);
+  Result<void> LaunchDevice(Command command, LocalInstanceGroup& group,
+                            const cvd_common::Envs& envs,
+                            const CommandRequest& request);
 
-  Result<cvd::Response> LaunchDeviceInterruptible(
-      Command command, LocalInstanceGroup& group, const cvd_common::Envs& envs,
-      const CommandRequest& request);
+  Result<void> LaunchDeviceInterruptible(Command command,
+                                         LocalInstanceGroup& group,
+                                         const cvd_common::Envs& envs,
+                                         const CommandRequest& request);
 
   Result<Command> ConstructCvdNonHelpCommand(const std::string& bin_file,
                                              const LocalInstanceGroup& group,
@@ -473,8 +474,7 @@ static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
   return {};
 }
 
-Result<cvd::Response> CvdStartCommandHandler::Handle(
-    const CommandRequest& request) {
+Result<void> CvdStartCommandHandler::HandleVoid(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   std::string subcmd = request.Subcommand();
@@ -524,12 +524,13 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     ShowLaunchCommand(command, envs);
 
     CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
-    auto infop = CF_EXPECT(subprocess_waiter_.Wait());
-    return ResponseFromSiginfo(infop);
+    siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
+    CF_EXPECT(CheckProcessExitedNormally(infop));
+    return {};
   }
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
-    return NoGroupResponse(request);
+    return CF_ERR(NoGroupMessage(request));
   }
 
   CF_EXPECT(ConsumeDaemonModeFlag(subcmd_args));
@@ -576,7 +577,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
   group.SetStartTime(CvdServerClock::now());
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
-  auto response = CF_EXPECT(
+  CF_EXPECT(
       LaunchDeviceInterruptible(std::move(command), group, envs, request));
   group.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
@@ -585,7 +586,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   auto group_json = CF_EXPECT(group.FetchStatus());
   std::cout << group_json.toStyledString();
 
-  return response;
+  return {};
 }
 
 static constexpr char kCollectorFailure[] = R"(
@@ -601,25 +602,19 @@ static constexpr char kStopFailure[] = R"(
 
   cvd start failed, and stopping run_cvd processes failed.
 )";
-static Result<cvd::Response> CvdResetGroup(const LocalInstanceGroup& group) {
-  auto run_cvd_process_manager = RunCvdProcessManager::Get();
-  if (!run_cvd_process_manager.ok()) {
-    return CommandResponse(cvd::Status::INTERNAL, kCollectorFailure);
-  }
+
+static Result<void> CvdResetGroup(const LocalInstanceGroup& group) {
+  auto run_cvd_process_manager = CF_EXPECT(RunCvdProcessManager::Get());
   // We can't run stop_cvd here. It may hang forever, and doesn't make sense
   // to interrupt it.
   const auto& instances = group.Instances();
   CF_EXPECT(!instances.empty());
   const auto& first_instance = *instances.begin();
-  auto stop_result =
-      run_cvd_process_manager->ForcefullyStopGroup(first_instance.id());
-  if (!stop_result.ok()) {
-    return CommandResponse(cvd::Status::INTERNAL, kStopFailure);
-  }
-  return CommandResponse(cvd::Status::OK, "");
+  CF_EXPECT(run_cvd_process_manager.ForcefullyStopGroup(first_instance.id()));
+  return {};
 }
 
-Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
+Result<void> CvdStartCommandHandler::LaunchDevice(
     Command launch_command, LocalInstanceGroup& group,
     const cvd_common::Envs& envs, const CommandRequest& request) {
   // Don't destroy the returned object until after the devices have started, it
@@ -644,20 +639,18 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDevice(
                << " but continue as they are minor errors.";
   }
 
-  auto infop = CF_EXPECT(subprocess_waiter_.Wait());
+  siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
     LOG(INFO) << "Device launch failed, cleaning up";
     // run_cvd processes may be still running in background
     // the order of the following operations should be kept
-    auto reset_response = CF_EXPECT(CvdResetGroup(group));
-    if (reset_response.status().code() != cvd::Status::OK) {
-      return reset_response;
-    }
+    CF_EXPECT(CvdResetGroup(group));
   }
-  return ResponseFromSiginfo(infop);
+  CF_EXPECT(CheckProcessExitedNormally(infop));
+  return {};
 }
 
-Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
+Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
     Command command, LocalInstanceGroup& group, const cvd_common::Envs& envs,
     const CommandRequest& request) {
   // cvd_internal_start uses the config from the previous invocation to
@@ -669,19 +662,15 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
     LOG(ERROR) << "Failed to symlink the config file at system wide home: "
                << symlink_config_res.error().FormatForEnv();
   }
-  auto start_res = LaunchDevice(std::move(command), group, envs, request);
-  if (!start_res.ok() || start_res->status().code() != cvd::Status::OK) {
+  Result<void> start_res =
+      LaunchDevice(std::move(command), group, envs, request);
+  if (!start_res.ok()) {
     group.SetAllStates(cvd::INSTANCE_STATE_BOOT_FAILED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
     return start_res;
   }
 
-  auto& response = *start_res;
-  if (!response.has_status() || response.status().code() != cvd::Status::OK) {
-    return response;
-  }
-
-  return response;
+  return {};
 }
 
 Result<std::string> CvdStartCommandHandler::SummaryHelp() const {
