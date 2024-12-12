@@ -69,6 +69,7 @@ Result<bool> IsHelpSubcmd(const std::vector<std::string>& args);
 // Call this when there is no instance group is running
 // The function does not verify that.
 cvd::Response NoGroupResponse(const CommandRequest& request);
+std::string NoGroupMessage(const CommandRequest& request);
 
 // Call this when there is more than one group, which the selector flags are
 // not sufficients to choose one from. The function does not verify that.

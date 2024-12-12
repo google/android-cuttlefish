@@ -209,15 +209,19 @@ cvd::Response NoGroupResponse(const CommandRequest& request) {
   cvd::Response response;
   response.mutable_command_response();
   response.mutable_status()->set_code(cvd::Status::OK);
-  TerminalColors colors(isatty(1));
-  std::string notice =
-      fmt::format("Command `{}{}{}` is not applicable: {}{}{}", colors.Red(),
-                  fmt::join(request.Args(), " "), colors.Reset(),
-                  colors.BoldRed(), "no device", colors.Reset());
+
+  std::string notice = NoGroupMessage(request);
   std::cout << notice << "\n";
 
   response.mutable_status()->set_message(notice);
   return response;
+}
+
+std::string NoGroupMessage(const CommandRequest& request) {
+  TerminalColors colors(isatty(1));
+  return fmt::format("Command `{}{}{}` is not applicable: {}{}{}", colors.Red(),
+                     fmt::join(request.Args(), " "), colors.Reset(),
+                     colors.BoldRed(), "no device", colors.Reset());
 }
 
 Result<cvd::Response> NoTTYResponse(const CommandRequest& request) {
