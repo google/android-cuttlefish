@@ -409,7 +409,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
 
   if (flags.prepare_for_acloud_delete) {
     Result<void> prepare_delete_result =
-        PrepareForAcloudDeleteCommand(GroupInfoFromGroup(group));
+        PrepareForAcloudDeleteCommand(group.HostArtifactsPath());
     if (!prepare_delete_result.ok()) {
       LOG(ERROR) << prepare_delete_result.error().FormatForEnv();
       LOG(WARNING) << "Failed to prepare for execution of `acloud delete`, use "
