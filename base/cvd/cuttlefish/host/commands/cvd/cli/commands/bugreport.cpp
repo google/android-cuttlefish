@@ -48,7 +48,7 @@ class CvdBugreportCommandHandler : public CvdServerHandler {
  public:
   CvdBugreportCommandHandler(InstanceManager& instance_manager);
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override;
+  Result<void> HandleVoid(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override;
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
@@ -67,12 +67,9 @@ CvdBugreportCommandHandler::CvdBugreportCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
-Result<cvd::Response> CvdBugreportCommandHandler::Handle(
+Result<void> CvdBugreportCommandHandler::HandleVoid(
     const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
-
-  cvd::Response response;
-  response.mutable_command_response();
 
   std::vector<std::string> cmd_args = request.SubcommandArguments();
   cvd_common::Envs env = request.Env();
@@ -80,9 +77,9 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
   std::string android_host_out;
   std::string home = CF_EXPECT(SystemWideUserHome());
   if (!CF_EXPECT(IsHelpSubcmd(cmd_args))) {
-    if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
-      return NoGroupResponse(request);
-    }
+    bool has_instance_groups = CF_EXPECT(instance_manager_.HasInstanceGroups());
+    CF_EXPECTF(!!has_instance_groups, "{}", NoGroupMessage(request));
+
     auto instance_group =
         CF_EXPECT(selector::SelectGroup(instance_manager_, request));
     android_host_out = instance_group.HostArtifactsPath();
@@ -105,7 +102,9 @@ Result<cvd::Response> CvdBugreportCommandHandler::Handle(
   siginfo_t infop;
   command.Start().Wait(&infop, WEXITED);
 
-  return ResponseFromSiginfo(infop);
+  CF_EXPECT(CheckProcessExitedNormally(infop));
+
+  return {};
 }
 
 std::vector<std::string> CvdBugreportCommandHandler::CmdList() const {
