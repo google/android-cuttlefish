@@ -69,10 +69,6 @@ Result<bool> IsHelpSubcmd(const std::vector<std::string>& args);
 // The function does not verify that.
 std::string NoGroupMessage(const CommandRequest& request);
 
-// Call this when there is more than one group, which the selector flags are
-// not sufficients to choose one from. The function does not verify that.
-Result<cvd::Response> NoTTYResponse(const CommandRequest& request);
-
 class TerminalColors {
  public:
   TerminalColors(bool is_tty): is_tty_(is_tty){}
