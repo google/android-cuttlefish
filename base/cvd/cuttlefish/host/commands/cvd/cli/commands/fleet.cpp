@@ -41,7 +41,7 @@ class CvdFleetCommandHandler : public CvdServerHandler {
   CvdFleetCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override;
+  Result<void> HandleVoid(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {kFleetSubcmd}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
@@ -59,20 +59,14 @@ class CvdFleetCommandHandler : public CvdServerHandler {
   bool IsHelp(const cvd_common::Args& cmd_args) const;
 };
 
-Result<cvd::Response> CvdFleetCommandHandler::Handle(
-    const CommandRequest& request) {
+Result<void> CvdFleetCommandHandler::HandleVoid(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
-
-  cvd::Response ok_response;
-  ok_response.mutable_command_response();
-  auto& status = *ok_response.mutable_status();
-  status.set_code(cvd::Status::OK);
 
   std::vector<std::string> args = request.SubcommandArguments();
 
   if (IsHelp(args)) {
     std::cout << kHelpMessage;
-    return ok_response;
+    return {};
   }
 
   auto all_groups = CF_EXPECT(instance_manager_.FindGroups({}));
@@ -85,7 +79,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
 
   std::cout << output_json.toStyledString();
 
-  return ok_response;
+  return {};
 }
 
 bool CvdFleetCommandHandler::IsHelp(const cvd_common::Args& args) const {
