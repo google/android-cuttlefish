@@ -177,7 +177,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     return "";
   }
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
     if (subcmd_args.empty() || subcmd_args.size() < 2) {
@@ -185,8 +185,6 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     }
 
     // cvd acloud mix-super-image --super_image path
-    cvd::Response response;
-    response.mutable_command_response();
     bool help = false;
     std::string flag_paths = "";
     std::vector<Flag> mixsuperimage_flags = {
@@ -197,13 +195,14 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
               "Failed to process mix-super-image flag.");
     if (help) {
       std::cout << kMixSuperImageHelpMessage;
-      return response;
+      return {};
     }
 
     CF_EXPECT(MixSuperImage(flag_paths),
               "Build mixed super image failed");
-    return response;
+    return {};
   }
+
  private:
   /*
    * Use build_super_image to create a super image.
