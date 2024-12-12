@@ -55,7 +55,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
   CvdDisplayCommandHandler(InstanceManager& instance_manager)
       : instance_manager_{instance_manager} {}
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     const cvd_common::Envs& env = request.Env();
 
@@ -70,7 +70,8 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
     siginfo_t infop;
     command.Start().Wait(&infop, WEXITED);
 
-    return ResponseFromSiginfo(infop);
+    CF_EXPECT(CheckProcessExitedNormally(infop));
+    return {};
   }
 
   cvd_common::Args CmdList() const override { return {"display"}; }
