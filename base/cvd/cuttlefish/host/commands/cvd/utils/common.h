@@ -23,7 +23,6 @@
 #include <android-base/logging.h>
 
 #include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
@@ -36,9 +35,6 @@ struct Overload : Ts... {
 
 template <typename... Ts>
 Overload(Ts...) -> Overload<Ts...>;
-
-cvd::Response CommandResponse(cvd::Status_Code,
-                              const std::string& message = "");
 
 // name of environment variable to mark the launch_cvd initiated by the cvd
 // server
