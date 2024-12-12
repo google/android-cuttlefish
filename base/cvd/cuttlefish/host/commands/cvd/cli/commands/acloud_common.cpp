@@ -22,7 +22,7 @@ bool IsSubOperationSupported(const CommandRequest& request) {
   if (request.SubcommandArguments().empty()) {
     return false;
   }
-  return request.Subcommand() == "create";
+  return request.SubcommandArguments()[0] == "create";
 }
 
 }  // namespace cuttlefish
