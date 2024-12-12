@@ -110,14 +110,13 @@ static bool GetUserConfirm() {
                  ::tolower);
   return (user_confirm == "y" || user_confirm == "yes");
 }
-}  // namespace
 
 class CvdResetCommandHandler : public CvdServerHandler {
  public:
   CvdResetCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
     auto options = CF_EXPECT(ParseResetFlags(subcmd_args));
@@ -147,10 +146,7 @@ class CvdResetCommandHandler : public CvdServerHandler {
     }
     CF_EXPECT(KillAllCuttlefishInstances(
         /* clear_instance_dirs*/ options.clean_runtime_dir));
-    cvd::Response response;
-    response.mutable_command_response();
-    response.mutable_status()->set_code(cvd::Status::OK);
-    return response;
+    return {};
   }
   cvd_common::Args CmdList() const override { return {kResetSubcmd}; }
 
@@ -166,6 +162,8 @@ class CvdResetCommandHandler : public CvdServerHandler {
   static constexpr char kResetSubcmd[] = "reset";
   InstanceManager& instance_manager_;
 };
+
+}  // namespace
 
 std::unique_ptr<CvdServerHandler> NewCvdResetCommandHandler(
     InstanceManager& instance_manager) {
