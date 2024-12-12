@@ -47,7 +47,7 @@ usage: cvd login --client_id=CLIENT_ID --client_secret=SECRET --scopes=SCOPES [-
 
 class CvdLoginCommand : public CvdServerHandler {
  public:
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     std::vector<std::string> args = request.Args();
