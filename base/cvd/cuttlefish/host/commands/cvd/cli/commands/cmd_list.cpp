@@ -34,11 +34,7 @@ class CvdCmdlistHandler : public CvdServerHandler {
     return request.Subcommand() == "cmd-list";
   }
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
-    cvd::Response response;
-    response.mutable_command_response();  // Sets oneof member
-    response.mutable_status()->set_code(cvd::Status::OK);
-
+  Result<void> HandleVoid(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     const auto subcmds = executor_.CmdList();
@@ -48,7 +44,7 @@ class CvdCmdlistHandler : public CvdServerHandler {
     Json::Value subcmd_info;
     subcmd_info["subcmd"] = subcmds_str;
     std::cout << subcmd_info.toStyledString();
-    return response;
+    return {};
   }
 
   // not intended to be used by the user
