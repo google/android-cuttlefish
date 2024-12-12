@@ -72,21 +72,27 @@ class TryAcloudCommand : public CvdServerHandler {
     return kDetailedHelpText;
   }
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
 #if ENABLE_CVDR_TRANSLATION
-    auto res = VerifyWithCvdRemote(request);
-    return res.ok() ? res : VerifyWithCvd(request);
+    Result<void> res = VerifyWithCvdRemote(request);
+    if (res.ok()) {
+      return {};
+    } else {
+      CF_EXPECT(VerifyWithCvd(request));
+      return {};
+    }
 #endif
-    return VerifyWithCvd(request);
+    CF_EXPECT(VerifyWithCvd(request));
+    return {};
   }
 
  private:
-  Result<cvd::Response> VerifyWithCvd(const CommandRequest& request);
-  Result<cvd::Response> VerifyWithCvdRemote(const CommandRequest& request);
+  Result<void> VerifyWithCvd(const CommandRequest& request);
+  Result<void> VerifyWithCvdRemote(const CommandRequest& request);
   Result<std::string> RunCvdRemoteGetConfig(const std::string& name);
 };
 
-Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
+Result<void> TryAcloudCommand::VerifyWithCvd(
     const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   CF_EXPECT(IsSubOperationSupported(request));
@@ -97,12 +103,10 @@ Result<cvd::Response> TryAcloudCommand::VerifyWithCvd(
   // `cvdr` (if enabled).
   auto optout = true; // CF_EXPECT(instance_manager_.GetAcloudTranslatorOptout());
   CF_EXPECT(!optout);
-  cvd::Response response;
-  response.mutable_command_response();
-  return response;
+  return {};
 }
 
-Result<cvd::Response> TryAcloudCommand::VerifyWithCvdRemote(
+Result<void> TryAcloudCommand::VerifyWithCvdRemote(
     const CommandRequest& request) {
   auto filename = CF_EXPECT(GetDefaultConfigFile());
   auto config = CF_EXPECT(LoadAcloudConfig(filename));
@@ -117,9 +121,7 @@ Result<cvd::Response> TryAcloudCommand::VerifyWithCvdRemote(
                 "http://android-treehugger-developer.googleplex.com");
   std::string cvdr_zone = CF_EXPECT(RunCvdRemoteGetConfig("zone"));
   CF_EXPECT(config.zone == cvdr_zone);
-  cvd::Response response;
-  response.mutable_command_response();
-  return response;
+  return {};
 }
 
 Result<std::string> TryAcloudCommand::RunCvdRemoteGetConfig(
