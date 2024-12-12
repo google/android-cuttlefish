@@ -75,7 +75,7 @@ class CvdHelpHandler : public CvdServerHandler {
       const std::vector<std::unique_ptr<CvdServerHandler>>& request_handlers)
       : request_handlers_(request_handlers) {}
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     std::vector<std::string> args = request.SubcommandArguments();
@@ -85,10 +85,7 @@ class CvdHelpHandler : public CvdServerHandler {
       std::cout << CF_EXPECT(SubCommandHelp(args));
     }
 
-    cvd::Response response;
-    response.mutable_command_response();  // Sets oneof member
-    response.mutable_status()->set_code(cvd::Status::OK);
-    return response;
+    return {};
   }
 
   cvd_common::Args CmdList() const override { return {"help"}; }
