@@ -40,7 +40,7 @@ class CvdClearCommandHandler : public CvdServerHandler {
  public:
   CvdClearCommandHandler(InstanceManager& instance_manager);
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override;
+  Result<void> HandleVoid(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {kClearCmd}; }
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
   bool ShouldInterceptHelp() const override { return false; }
@@ -54,22 +54,18 @@ CvdClearCommandHandler::CvdClearCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
-Result<cvd::Response> CvdClearCommandHandler::Handle(
-    const CommandRequest& request) {
+Result<void> CvdClearCommandHandler::HandleVoid(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
-
-  cvd::Response response;
-  response.mutable_command_response();
 
   std::vector<std::string> cmd_args = request.SubcommandArguments();
 
   if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
     std::cout << kSummaryHelpText << std::endl;
-    response.mutable_status()->set_code(cvd::Status::OK);
-    return response;
+    return {};
   }
-  *response.mutable_status() = instance_manager_.CvdClear(request);
-  return response;
+  CF_EXPECT_EQ(instance_manager_.CvdClear(request).code(), cvd::Status::OK);
+
+  return {};
 }
 
 Result<std::string> CvdClearCommandHandler::DetailedHelp(
