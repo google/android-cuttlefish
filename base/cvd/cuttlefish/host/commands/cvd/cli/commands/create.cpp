@@ -223,7 +223,7 @@ class CvdCreateCommandHandler : public CvdServerHandler {
       : instance_manager_(instance_manager),
         command_executor_(command_executor) {}
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override;
+  Result<void> HandleVoid(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override { return {"create"}; }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
@@ -341,7 +341,7 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
   return {};
 }
 
-Result<cvd::Response> CvdCreateCommandHandler::Handle(
+Result<void> CvdCreateCommandHandler::HandleVoid(
     const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
@@ -354,7 +354,8 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   if (!flags.config_file.empty()) {
     auto subrequest =
         CF_EXPECT(CreateLoadCommand(request, subcmd_args, flags.config_file));
-    return CF_EXPECT(command_executor_.ExecuteOne(subrequest, std::cerr));
+    CF_EXPECT(command_executor_.ExecuteOne(subrequest, std::cerr));
+    return {};
   }
 
   // Validate the host artifacts path before proceeding
@@ -371,13 +372,10 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
   group.SetStartTime(CvdServerClock::now());
   instance_manager_.UpdateInstanceGroup(group);
 
-  cvd::Response response;
-  response.mutable_status()->set_code(cvd::Status::OK);
-
   if (flags.start) {
     auto start_cmd =
         CF_EXPECT(CreateStartCommand(request, group, subcmd_args, envs));
-    response = CF_EXPECT(command_executor_.ExecuteOne(start_cmd, std::cerr));
+    CF_EXPECT(command_executor_.ExecuteOne(start_cmd, std::cerr));
     // For backward compatibility, we add extra symlink in system wide home
     // when HOME is NOT overridden and selector flags are NOT given.
     auto is_default_group =
@@ -403,7 +401,7 @@ Result<cvd::Response> CvdCreateCommandHandler::Handle(
     }
   }
 
-  return response;
+  return {};
 }
 
 Result<std::string> CvdCreateCommandHandler::SummaryHelp() const {
