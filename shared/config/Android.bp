@@ -125,6 +125,17 @@ prebuilt_etc {
 }
 
 prebuilt_etc {
+    name: "fstab.cf.f2fs.cts.recovery",
+    srcs: [
+        ":gen_fstab_cf_f2fs_cts",
+    ],
+    dsts: [
+        "recovery.fstab",
+    ],
+    recovery: true,
+}
+
+prebuilt_etc {
     name: "fstab.cf.ext4.hctr2",
     src: ":gen_fstab_cf_ext4_hctr2",
     vendor: true,
