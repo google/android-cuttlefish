@@ -88,12 +88,14 @@ class AcloudCommand : public CvdServerHandler {
    * 2. Or `cvdr` for remote instance management.
    *
    */
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
     auto result = ValidateLocal(request);
     if (result.ok()) {
-      return CF_EXPECT(HandleLocal(*result, request));
+      CF_EXPECT(HandleLocal(*result, request));
+      return {};
     } else if (ValidateRemoteArgs(request)) {
-      return CF_EXPECT(HandleRemote(request));
+      CF_EXPECT(HandleRemote(request));
+      return {};
     }
     CF_EXPECT(std::move(result));
     return {};
@@ -107,10 +109,10 @@ class AcloudCommand : public CvdServerHandler {
   Result<ConvertedAcloudCreateCommand> ValidateLocal(
       const CommandRequest& request);
   bool ValidateRemoteArgs(const CommandRequest& request);
-  Result<cvd::Response> HandleLocal(const ConvertedAcloudCreateCommand& command,
+  Result<void> HandleLocal(const ConvertedAcloudCreateCommand& command,
                                     const CommandRequest& request);
   Result<void> PrepareForDeleteCommand(const cvd::InstanceGroupInfo&);
-  Result<cvd::Response> HandleRemote(const CommandRequest& request);
+  Result<void> HandleRemote(const CommandRequest& request);
   Result<void> RunAcloudConnect(const CommandRequest& request,
                                 const std::string& hostname);
 
@@ -166,12 +168,11 @@ bool AcloudCommand::ValidateRemoteArgs(const CommandRequest& request) {
   return acloud_impl::CompileFromAcloudToCvdr(args).ok();
 }
 
-Result<cvd::Response> AcloudCommand::HandleLocal(
+Result<void> AcloudCommand::HandleLocal(
     const ConvertedAcloudCreateCommand& command,
     const CommandRequest& request) {
   CF_EXPECT(executor_.Execute(command.prep_requests, std::cerr));
-  auto start_response =
-      CF_EXPECT(executor_.ExecuteOne(command.start_request, std::cerr));
+  CF_EXPECT(executor_.ExecuteOne(command.start_request, std::cerr));
 
   if (!command.fetch_command_str.empty()) {
     // has cvd fetch command, update the fetch cvd command file
@@ -181,12 +182,10 @@ Result<cvd::Response> AcloudCommand::HandleLocal(
               true);
   }
 
-  cvd::Response response;
-  response.mutable_command_response();
   auto group_info_result = ParseStartResponse(start_response);
   if (!group_info_result.ok()) {
     LOG(ERROR) << "Failed to analyze the cvd start response.";
-    return response;
+    return {};
   }
   auto prepare_delete_result = PrepareForDeleteCommand(*group_info_result);
   if (!prepare_delete_result.ok()) {
@@ -199,7 +198,7 @@ Result<cvd::Response> AcloudCommand::HandleLocal(
   if (command.verbose) {
     PrintBriefSummary(*group_info_result, std::cerr);
   }
-  return response;
+  return {};
 }
 
 // Acloud delete is not translated because it needs to handle remote cases.
@@ -234,7 +233,7 @@ Result<void> AcloudCommand::PrepareForDeleteCommand(
   return {};
 }
 
-Result<cvd::Response> AcloudCommand::HandleRemote(
+Result<void> AcloudCommand::HandleRemote(
     const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
   args = CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
@@ -278,9 +277,7 @@ Result<cvd::Response> AcloudCommand::HandleRemote(
     std::string hostname = stdout_.substr(0, stdout_.find(" "));
     CF_EXPECT(RunAcloudConnect(request, hostname));
   }
-  cvd::Response response;
-  response.mutable_command_response();
-  return response;
+  return {};
 }
 
 Result<void> AcloudCommand::RunAcloudConnect(const CommandRequest& request,
