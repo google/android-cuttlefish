@@ -28,15 +28,14 @@ namespace cuttlefish {
 
 class CvdFetchCommandHandler : public CvdServerHandler {
  public:
-  Result<cvd::Response> Handle(const CommandRequest& request) override;
+  Result<void> HandleVoid(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"fetch", "fetch_cvd"}; }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override { return true; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 };
 
-Result<cvd::Response> CvdFetchCommandHandler::Handle(
-    const CommandRequest& request) {
+Result<void> CvdFetchCommandHandler::HandleVoid(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   std::vector<std::string> args;
@@ -53,10 +52,7 @@ Result<cvd::Response> CvdFetchCommandHandler::Handle(
 
   CF_EXPECT(FetchCvdMain(args_data.size(), args_data.data()));
 
-  cvd::Response response;
-  response.mutable_command_response();
-  response.mutable_status()->set_code(cvd::Status::OK);
-  return response;
+  return {};
 }
 
 Result<std::string> CvdFetchCommandHandler::SummaryHelp() const {
