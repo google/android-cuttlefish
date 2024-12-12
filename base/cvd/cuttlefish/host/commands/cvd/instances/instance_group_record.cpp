@@ -188,7 +188,7 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
     CF_EXPECT(instance_json.isMember(kJsonInstanceId));
     const std::string instance_id = instance_json[kJsonInstanceId].asString();
 
-    int id;
+    int id = -1;
     CF_EXPECTF(android::base::ParseInt(instance_id, std::addressof(id)),
                "Invalid instance ID in instance json: {}", instance_id);
     auto instance = group_proto.add_instances();
