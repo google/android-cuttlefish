@@ -32,12 +32,10 @@ bool IsSubOperationSupported(const CommandRequest& request) {
   return request.SubcommandArguments()[0] == "create";
 }
 
-Result<void> PrepareForAcloudDeleteCommand(
-    const cvd::InstanceGroupInfo& group_info) {
-  std::string host_path = group_info.host_artifacts_path();
-  std::string stop_cvd_path = fmt::format("{}/bin/stop_cvd", host_path);
+Result<void> PrepareForAcloudDeleteCommand(const std::string& host_artifacts) {
+  std::string stop_cvd_path = fmt::format("{}/bin/stop_cvd", host_artifacts);
   std::string cvd_internal_stop_path =
-      fmt::format("{}/bin/cvd_internal_stop", host_path);
+      fmt::format("{}/bin/cvd_internal_stop", host_artifacts);
   if (FileExists(cvd_internal_stop_path)) {
     // cvd_internal_stop exists, stop_cvd is just a symlink to it
     CF_EXPECT(RemoveFile(stop_cvd_path), "Failed to remove stop_cvd file");
