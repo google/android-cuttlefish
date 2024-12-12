@@ -92,13 +92,12 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
 
     auto handler = CF_EXPECT(RequestHandler(request, server_handlers_));
     handler_stack_.push_back(handler);
-    auto response = CF_EXPECT(handler->Handle(request));
+    CF_EXPECT(handler->HandleVoid(request));
     handler_stack_.pop_back();
 
-    CF_EXPECT(response.status().code() == cvd::Status::OK,
-              "Reason: \"" << response.status().message() << "\"");
-
-    responses.emplace_back(std::move(response));
+    cvd::Response& response = responses.emplace_back();
+    response.mutable_command_response();
+    response.mutable_status()->set_code(cvd::Status::OK);
   }
   return {responses};
 }
