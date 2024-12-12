@@ -50,8 +50,6 @@ If not supported by cvd, acloud will be used.
 To opt out or opt back in, run this translation toggle.
 )";
 
-}  // namespace
-
 class AcloudCommand : public CvdServerHandler {
  public:
   AcloudCommand(CommandSequenceExecutor& executor) : executor_(executor) {}
@@ -104,8 +102,6 @@ class AcloudCommand : public CvdServerHandler {
  private:
   Result<cvd::InstanceGroupInfo> ParseStartResponse(
       const cvd::Response& start_response);
-  Result<void> PrintBriefSummary(const cvd::InstanceGroupInfo& group_info,
-                                 std::ostream& out) const;
   Result<ConvertedAcloudCreateCommand> ValidateLocal(
       const CommandRequest& request);
   bool ValidateRemoteArgs(const CommandRequest& request);
@@ -131,8 +127,7 @@ Result<cvd::InstanceGroupInfo> AcloudCommand::ParseStartResponse(
   return group_info;
 }
 
-Result<void> AcloudCommand::PrintBriefSummary(
-    const cvd::InstanceGroupInfo& group_info, std::ostream& out) const {
+Result<void> PrintBriefSummary(const cvd::InstanceGroupInfo& group_info) {
   const std::string& group_name = group_info.group_name();
   CF_EXPECT_EQ(group_info.home_directories().size(), 1);
   const std::string home_dir = (group_info.home_directories())[0];
@@ -144,13 +139,13 @@ Result<void> AcloudCommand::PrintBriefSummary(
     instance_names.push_back(instance.name());
     instance_ids.push_back(instance.instance_id());
   }
-  out << std::endl << "Created instance group: " << group_name << std::endl;
+  std::cerr << std::endl << "Created instance group: " << group_name << std::endl;
   for (size_t i = 0; i != instance_ids.size(); i++) {
     std::string device_name = group_name + "-" + instance_names[i];
-    out << "  " << device_name << " (local-instance-" << instance_ids[i] << ")"
+    std::cerr << "  " << device_name << " (local-instance-" << instance_ids[i] << ")"
         << std::endl;
   }
-  out << std::endl
+  std::cerr << std::endl
       << "acloud list or cvd fleet for more information." << std::endl;
   return {};
 }
@@ -178,8 +173,7 @@ Result<void> AcloudCommand::HandleLocal(
     // has cvd fetch command, update the fetch cvd command file
     using android::base::WriteStringToFile;
     CF_EXPECT(WriteStringToFile(command.fetch_command_str,
-                                command.fetch_cvd_args_file),
-              true);
+                                command.fetch_cvd_args_file));
   }
 
   auto group_info_result = ParseStartResponse(start_response);
@@ -196,7 +190,7 @@ Result<void> AcloudCommand::HandleLocal(
   // print
   std::optional<SharedFD> fd_opt;
   if (command.verbose) {
-    PrintBriefSummary(*group_info_result, std::cerr);
+    PrintBriefSummary(*group_info_result);
   }
   return {};
 }
@@ -297,6 +291,8 @@ Result<void> AcloudCommand::RunAcloudConnect(const CommandRequest& request,
 
   return {};
 }
+
+}  // namespace
 
 std::unique_ptr<CvdServerHandler> NewAcloudCommand(
     CommandSequenceExecutor& executor) {
