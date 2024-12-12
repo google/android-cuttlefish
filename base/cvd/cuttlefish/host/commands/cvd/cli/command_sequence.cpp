@@ -86,7 +86,6 @@ CommandSequenceExecutor::CommandSequenceExecutor(
 
 Result<void> CommandSequenceExecutor::Execute(
     const std::vector<CommandRequest>& requests, std::ostream& report) {
-  std::vector<cvd::Response> responses;
   for (const auto& request : requests) {
     report << FormattedCommand(request);
 
