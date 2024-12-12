@@ -169,6 +169,7 @@ static const std::set<std::string> kAutomotiveOnlyAidl = {
      */
     "android.automotive.watchdog",
     "android.frameworks.automotive.display",
+    "android.frameworks.automotive.power",
     "android.frameworks.automotive.powerpolicy",
     "android.frameworks.automotive.powerpolicy.internal",
     "android.frameworks.automotive.telemetry",
