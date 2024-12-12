@@ -61,7 +61,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
     return "";
   }
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override {
+  Result<void> HandleVoid(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
     if (subcmd_args.empty() || subcmd_args.size() < 2) {
@@ -70,8 +70,6 @@ class AcloudTranslatorCommand : public CvdServerHandler {
 
     // cvd acloud translator --opt-out
     // cvd acloud translator --opt-in
-    cvd::Response response;
-    response.mutable_command_response();
     bool help = false;
     bool flag_optout = false;
     bool flag_optin = false;
@@ -84,12 +82,12 @@ class AcloudTranslatorCommand : public CvdServerHandler {
               "Failed to process translator flag.");
     if (help) {
       std::cout << kTranslatorHelpMessage;
-      return response;
+      return {};
     }
     CF_EXPECT(flag_optout != flag_optin,
               "Only one of --opt-out or --opt-in should be given.");
     CF_EXPECT(instance_manager_.SetAcloudTranslatorOptout(flag_optout));
-    return response;
+    return {};
   }
 
  private:
