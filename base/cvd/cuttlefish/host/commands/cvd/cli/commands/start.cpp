@@ -229,7 +229,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
   CvdStartCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
 
-  Result<void> HandleVoid(const CommandRequest& request) override;
+  Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override {
     return {"start", "launch_cvd"};
   }
@@ -474,7 +474,7 @@ static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
   return {};
 }
 
-Result<void> CvdStartCommandHandler::HandleVoid(const CommandRequest& request) {
+Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   std::string subcmd = request.Subcommand();

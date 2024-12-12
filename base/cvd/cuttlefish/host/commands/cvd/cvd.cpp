@@ -79,7 +79,7 @@ Result<void> Cvd::HandleCommand(
       return {};
     }
   }
-  CF_EXPECT(handler->HandleVoid(request));
+  CF_EXPECT(handler->Handle(request));
   return {};
 }
 

@@ -37,7 +37,7 @@ class CvdVersionHandler : public CvdServerHandler {
  public:
   CvdVersionHandler() = default;
 
-  Result<void> HandleVoid(const CommandRequest& request) override {
+  Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     fmt::print(std::cout, "major: {}\n", cvd::kVersionMajor);

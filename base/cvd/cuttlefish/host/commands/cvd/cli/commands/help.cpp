@@ -75,7 +75,7 @@ class CvdHelpHandler : public CvdServerHandler {
       const std::vector<std::unique_ptr<CvdServerHandler>>& request_handlers)
       : request_handlers_(request_handlers) {}
 
-  Result<void> HandleVoid(const CommandRequest& request) override {
+  Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     std::vector<std::string> args = request.SubcommandArguments();

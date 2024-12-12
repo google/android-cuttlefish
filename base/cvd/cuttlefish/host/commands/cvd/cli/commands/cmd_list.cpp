@@ -34,7 +34,7 @@ class CvdCmdlistHandler : public CvdServerHandler {
     return request.Subcommand() == "cmd-list";
   }
 
-  Result<void> HandleVoid(const CommandRequest& request) override {
+  Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     const auto subcmds = executor_.CmdList();

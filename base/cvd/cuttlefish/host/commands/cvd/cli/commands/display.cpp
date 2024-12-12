@@ -55,7 +55,7 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
   CvdDisplayCommandHandler(InstanceManager& instance_manager)
       : instance_manager_{instance_manager} {}
 
-  Result<void> HandleVoid(const CommandRequest& request) override {
+  Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     const cvd_common::Envs& env = request.Env();
 
