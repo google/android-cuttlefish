@@ -22,8 +22,9 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_manager.h"
+#include "host/commands/cvd/utils/common.h"
 #include "host/libs/config/config_constants.h"
 
 namespace cuttlefish {
@@ -47,6 +48,20 @@ cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop) {
     status.set_message("Quit with code " + status_code_str);
   }
   return response;
+}
+
+Result<void> CheckProcessExitedNormally(siginfo_t infop) {
+  if (infop.si_code == CLD_EXITED && infop.si_status == 0) {
+    return {};
+  }
+
+  if (infop.si_code == CLD_EXITED) {
+    return CF_ERRF("Exited with code '{}'", infop.si_status);
+  } else if (infop.si_code == CLD_KILLED) {
+    return CF_ERRF("Exited with signal '{}'", infop.si_status);
+  } else {
+    return CF_ERRF("Quit with code '{}'", infop.si_status);
+  }
 }
 
 Result<Command> ConstructCommand(const ConstructCommandParam& param) {

@@ -32,7 +32,8 @@
 
 namespace cuttlefish {
 
-cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
+cvd::Response ResponseFromSiginfo(siginfo_t infop);
+Result<void> CheckProcessExitedNormally(siginfo_t infop);
 
 struct ConstructCommandParam {
   const std::string& bin_path;
