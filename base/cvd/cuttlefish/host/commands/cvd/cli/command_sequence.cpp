@@ -84,7 +84,7 @@ CommandSequenceExecutor::CommandSequenceExecutor(
     const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers)
     : server_handlers_(server_handlers) {}
 
-Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
+Result<void> CommandSequenceExecutor::Execute(
     const std::vector<CommandRequest>& requests, std::ostream& report) {
   std::vector<cvd::Response> responses;
   for (const auto& request : requests) {
@@ -94,19 +94,14 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
     handler_stack_.push_back(handler);
     CF_EXPECT(handler->Handle(request));
     handler_stack_.pop_back();
-
-    cvd::Response& response = responses.emplace_back();
-    response.mutable_command_response();
-    response.mutable_status()->set_code(cvd::Status::OK);
   }
-  return {responses};
+  return {};
 }
 
-Result<cvd::Response> CommandSequenceExecutor::ExecuteOne(
-    const CommandRequest& request, std::ostream& report) {
-  auto response_in_vector = CF_EXPECT(Execute({request}, report));
-  CF_EXPECT_EQ(response_in_vector.size(), 1ul);
-  return response_in_vector.front();
+Result<void> CommandSequenceExecutor::ExecuteOne(const CommandRequest& request,
+                                                 std::ostream& report) {
+  CF_EXPECT(Execute({request}, report));
+  return {};
 }
 
 std::vector<std::string> CommandSequenceExecutor::CmdList() const {

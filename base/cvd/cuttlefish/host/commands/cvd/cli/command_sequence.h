@@ -19,7 +19,6 @@
 #include <ostream>
 #include <vector>
 
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/commands/server_handler.h"
 
@@ -30,10 +29,9 @@ class CommandSequenceExecutor {
   CommandSequenceExecutor(
       const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers);
 
-  Result<std::vector<cvd::Response>> Execute(
-      const std::vector<CommandRequest>&, std::ostream& report);
-  Result<cvd::Response> ExecuteOne(const CommandRequest&,
-                                   std::ostream& report);
+  Result<void> Execute(const std::vector<CommandRequest>&,
+                       std::ostream& report);
+  Result<void> ExecuteOne(const CommandRequest&, std::ostream& report);
 
   std::vector<std::string> CmdList() const;
   Result<CvdServerHandler*> GetHandler(const CommandRequest& request);
