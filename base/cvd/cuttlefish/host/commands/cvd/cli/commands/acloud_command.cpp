@@ -157,15 +157,6 @@ Result<void> AcloudCommand::HandleLocal(
     LOG(ERROR) << "Failed to analyze the cvd start response.";
     return {};
   }
-  auto prepare_delete_result =
-      PrepareForAcloudDeleteCommand(*group_info_result);
-  if (!prepare_delete_result.ok()) {
-    LOG(ERROR) << prepare_delete_result.error().FormatForEnv();
-    LOG(WARNING) << "Failed to prepare for execution of `acloud delete`, use "
-                    "`cvd rm` instead";
-  }
-  // print
-  std::optional<SharedFD> fd_opt;
   return {};
 }
 
