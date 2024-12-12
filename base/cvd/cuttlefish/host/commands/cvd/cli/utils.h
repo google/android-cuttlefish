@@ -32,7 +32,6 @@
 
 namespace cuttlefish {
 
-cvd::Response ResponseFromSiginfo(siginfo_t infop);
 Result<void> CheckProcessExitedNormally(siginfo_t infop);
 
 struct ConstructCommandParam {
@@ -68,7 +67,6 @@ Result<bool> IsHelpSubcmd(const std::vector<std::string>& args);
 
 // Call this when there is no instance group is running
 // The function does not verify that.
-cvd::Response NoGroupResponse(const CommandRequest& request);
 std::string NoGroupMessage(const CommandRequest& request);
 
 // Call this when there is more than one group, which the selector flags are

@@ -29,27 +29,6 @@
 
 namespace cuttlefish {
 
-cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop) {
-  cvd::Response response;
-  response.mutable_command_response();  // set oneof field
-  auto& status = *response.mutable_status();
-  if (infop.si_code == CLD_EXITED && infop.si_status == 0) {
-    status.set_code(cvd::Status::OK);
-    return response;
-  }
-
-  status.set_code(cvd::Status::INTERNAL);
-  std::string status_code_str = std::to_string(infop.si_status);
-  if (infop.si_code == CLD_EXITED) {
-    status.set_message("Exited with code " + status_code_str);
-  } else if (infop.si_code == CLD_KILLED) {
-    status.set_message("Exited with signal " + status_code_str);
-  } else {
-    status.set_message("Quit with code " + status_code_str);
-  }
-  return response;
-}
-
 Result<void> CheckProcessExitedNormally(siginfo_t infop) {
   if (infop.si_code == CLD_EXITED && infop.si_status == 0) {
     return {};
@@ -203,18 +182,6 @@ std::string_view TerminalColors::Red() const {
 
 std::string_view TerminalColors::Cyan() const {
   return is_tty_ ? kTerminalCyan : "";
-}
-
-cvd::Response NoGroupResponse(const CommandRequest& request) {
-  cvd::Response response;
-  response.mutable_command_response();
-  response.mutable_status()->set_code(cvd::Status::OK);
-
-  std::string notice = NoGroupMessage(request);
-  std::cout << notice << "\n";
-
-  response.mutable_status()->set_message(notice);
-  return response;
 }
 
 std::string NoGroupMessage(const CommandRequest& request) {
