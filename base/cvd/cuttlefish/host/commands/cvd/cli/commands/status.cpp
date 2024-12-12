@@ -110,7 +110,7 @@ class CvdStatusCommandHandler : public CvdServerHandler {
  public:
   CvdStatusCommandHandler(InstanceManager& instance_manager);
 
-  Result<cvd::Response> Handle(const CommandRequest& request) override;
+  Result<void> HandleVoid(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"status", "cvd_status"}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
@@ -129,7 +129,7 @@ CvdStatusCommandHandler::CvdStatusCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
-Result<cvd::Response> CvdStatusCommandHandler::Handle(
+Result<void> CvdStatusCommandHandler::HandleVoid(
     const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
@@ -138,11 +138,11 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
 
   if (flags.help) {
     std::cout << kDetailedHelpText << std::endl;
-    return SuccessResponse();
+    return {};
   }
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
-    return NoGroupResponse(request);
+    return CF_ERR(NoGroupMessage(request));
   }
 
   if (request.Selectors().instance_names && !flags.instance_name.empty()) {
@@ -178,7 +178,7 @@ Result<cvd::Response> CvdStatusCommandHandler::Handle(
     std::cout << status_array.toStyledString();
   }
 
-  return SuccessResponse();
+  return {};
 }
 
 std::unique_ptr<CvdServerHandler> NewCvdStatusCommandHandler(
