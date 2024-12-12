@@ -41,7 +41,7 @@ class CvdFleetCommandHandler : public CvdServerHandler {
   CvdFleetCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
 
-  Result<void> HandleVoid(const CommandRequest& request) override;
+  Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {kFleetSubcmd}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
@@ -59,7 +59,7 @@ class CvdFleetCommandHandler : public CvdServerHandler {
   bool IsHelp(const cvd_common::Args& cmd_args) const;
 };
 
-Result<void> CvdFleetCommandHandler::HandleVoid(const CommandRequest& request) {
+Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   std::vector<std::string> args = request.SubcommandArguments();

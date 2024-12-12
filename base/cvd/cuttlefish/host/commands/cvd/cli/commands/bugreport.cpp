@@ -48,7 +48,7 @@ class CvdBugreportCommandHandler : public CvdServerHandler {
  public:
   CvdBugreportCommandHandler(InstanceManager& instance_manager);
 
-  Result<void> HandleVoid(const CommandRequest& request) override;
+  Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override;
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
@@ -67,8 +67,7 @@ CvdBugreportCommandHandler::CvdBugreportCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
-Result<void> CvdBugreportCommandHandler::HandleVoid(
-    const CommandRequest& request) {
+Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   std::vector<std::string> cmd_args = request.SubcommandArguments();

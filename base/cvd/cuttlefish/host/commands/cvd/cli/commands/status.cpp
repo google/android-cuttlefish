@@ -110,7 +110,7 @@ class CvdStatusCommandHandler : public CvdServerHandler {
  public:
   CvdStatusCommandHandler(InstanceManager& instance_manager);
 
-  Result<void> HandleVoid(const CommandRequest& request) override;
+  Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"status", "cvd_status"}; }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
@@ -129,8 +129,7 @@ CvdStatusCommandHandler::CvdStatusCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
-Result<void> CvdStatusCommandHandler::HandleVoid(
-    const CommandRequest& request) {
+Result<void> CvdStatusCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   std::vector<std::string> cmd_args = request.SubcommandArguments();

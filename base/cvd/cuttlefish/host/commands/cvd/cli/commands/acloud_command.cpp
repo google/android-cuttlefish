@@ -86,7 +86,7 @@ class AcloudCommand : public CvdServerHandler {
    * 2. Or `cvdr` for remote instance management.
    *
    */
-  Result<void> HandleVoid(const CommandRequest& request) override {
+  Result<void> Handle(const CommandRequest& request) override {
     auto result = ValidateLocal(request);
     if (result.ok()) {
       CF_EXPECT(HandleLocal(*result, request));

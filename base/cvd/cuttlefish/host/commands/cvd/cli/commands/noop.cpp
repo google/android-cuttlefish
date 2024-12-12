@@ -28,7 +28,7 @@ constexpr char kSummaryHelpText[] =
 
 class CvdNoopHandler : public CvdServerHandler {
  public:
-  Result<void> HandleVoid(const CommandRequest& request) override {
+  Result<void> Handle(const CommandRequest& request) override {
     fmt::print(std::cout, "DEPRECATED: The {} command is a no-op\n",
                request.Subcommand());
     return {};

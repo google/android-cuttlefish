@@ -30,7 +30,7 @@ class CvdServerHandler {
   virtual ~CvdServerHandler() = default;
 
   virtual Result<bool> CanHandle(const CommandRequest&) const;
-  virtual Result<void> HandleVoid(const CommandRequest&) = 0;
+  virtual Result<void> Handle(const CommandRequest&) = 0;
   // returns the list of subcommand it can handle
   virtual cvd_common::Args CmdList() const = 0;
   // used for command help text

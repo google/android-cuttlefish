@@ -72,7 +72,7 @@ class TryAcloudCommand : public CvdServerHandler {
     return kDetailedHelpText;
   }
 
-  Result<void> HandleVoid(const CommandRequest& request) override {
+  Result<void> Handle(const CommandRequest& request) override {
 #if ENABLE_CVDR_TRANSLATION
     Result<void> res = VerifyWithCvdRemote(request);
     if (res.ok()) {

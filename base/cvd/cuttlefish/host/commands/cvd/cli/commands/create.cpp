@@ -223,7 +223,7 @@ class CvdCreateCommandHandler : public CvdServerHandler {
       : instance_manager_(instance_manager),
         command_executor_(command_executor) {}
 
-  Result<void> HandleVoid(const CommandRequest& request) override;
+  Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override { return {"create"}; }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
@@ -341,8 +341,7 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
   return {};
 }
 
-Result<void> CvdCreateCommandHandler::HandleVoid(
-    const CommandRequest& request) {
+Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
   bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));

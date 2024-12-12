@@ -64,7 +64,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       : executor_(executor), instance_manager_(instance_manager) {}
   ~LoadConfigsCommand() = default;
 
-  Result<void> HandleVoid(const CommandRequest& request) override {
+  Result<void> Handle(const CommandRequest& request) override {
     bool can_handle_request = CF_EXPECT(CanHandle(request));
     CF_EXPECT_EQ(can_handle_request, true);
 

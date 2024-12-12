@@ -92,7 +92,7 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
 
     auto handler = CF_EXPECT(RequestHandler(request, server_handlers_));
     handler_stack_.push_back(handler);
-    CF_EXPECT(handler->HandleVoid(request));
+    CF_EXPECT(handler->Handle(request));
     handler_stack_.pop_back();
 
     cvd::Response& response = responses.emplace_back();

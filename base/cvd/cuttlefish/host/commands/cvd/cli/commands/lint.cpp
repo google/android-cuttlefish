@@ -44,7 +44,7 @@ Usage: cvd lint /path/to/input.json
 
 class LintCommandHandler : public CvdServerHandler {
  public:
-  Result<void> HandleVoid(const CommandRequest& request) override {
+  Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
     std::vector<std::string> args = request.SubcommandArguments();

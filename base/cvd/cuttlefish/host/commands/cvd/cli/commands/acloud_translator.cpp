@@ -61,7 +61,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
     return "";
   }
 
-  Result<void> HandleVoid(const CommandRequest& request) override {
+  Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
     if (subcmd_args.empty() || subcmd_args.size() < 2) {
