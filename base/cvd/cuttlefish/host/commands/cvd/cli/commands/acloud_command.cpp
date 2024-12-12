@@ -127,29 +127,6 @@ Result<cvd::InstanceGroupInfo> AcloudCommand::ParseStartResponse(
   return group_info;
 }
 
-Result<void> PrintBriefSummary(const cvd::InstanceGroupInfo& group_info) {
-  const std::string& group_name = group_info.group_name();
-  CF_EXPECT_EQ(group_info.home_directories().size(), 1);
-  const std::string home_dir = (group_info.home_directories())[0];
-  std::vector<std::string> instance_names;
-  std::vector<unsigned> instance_ids;
-  instance_names.reserve(group_info.instances().size());
-  instance_ids.reserve(group_info.instances().size());
-  for (const auto& instance : group_info.instances()) {
-    instance_names.push_back(instance.name());
-    instance_ids.push_back(instance.instance_id());
-  }
-  std::cerr << std::endl << "Created instance group: " << group_name << std::endl;
-  for (size_t i = 0; i != instance_ids.size(); i++) {
-    std::string device_name = group_name + "-" + instance_names[i];
-    std::cerr << "  " << device_name << " (local-instance-" << instance_ids[i] << ")"
-        << std::endl;
-  }
-  std::cerr << std::endl
-      << "acloud list or cvd fleet for more information." << std::endl;
-  return {};
-}
-
 Result<ConvertedAcloudCreateCommand> AcloudCommand::ValidateLocal(
     const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
@@ -189,9 +166,6 @@ Result<void> AcloudCommand::HandleLocal(
   }
   // print
   std::optional<SharedFD> fd_opt;
-  if (command.verbose) {
-    PrintBriefSummary(*group_info_result);
-  }
   return {};
 }
 
