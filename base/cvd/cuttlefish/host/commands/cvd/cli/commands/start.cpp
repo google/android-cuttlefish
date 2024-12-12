@@ -257,9 +257,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
     std::vector<InstanceLockFile> lock_files;
   };
 
-  Result<cvd::Response> FillOutNewInstanceInfo(cvd::Response&& response,
-                                               const LocalInstanceGroup& group);
-
   Result<void> UpdateArgs(cvd_common::Args& args, LocalInstanceGroup& group);
 
   Result<void> UpdateEnvs(cvd_common::Envs& envs,
@@ -588,7 +585,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   auto group_json = CF_EXPECT(group.FetchStatus());
   std::cout << group_json.toStyledString();
 
-  return FillOutNewInstanceInfo(std::move(response), group);
+  return response;
 }
 
 static constexpr char kCollectorFailure[] = R"(
@@ -685,22 +682,6 @@ Result<cvd::Response> CvdStartCommandHandler::LaunchDeviceInterruptible(
   }
 
   return response;
-}
-
-Result<cvd::Response> CvdStartCommandHandler::FillOutNewInstanceInfo(
-    cvd::Response&& response, const LocalInstanceGroup& group) {
-  auto new_response = std::move(response);
-  auto& command_response = *(new_response.mutable_command_response());
-  auto& instance_group_info =
-      *(CF_EXPECT(command_response.mutable_instance_group_info()));
-  instance_group_info.set_group_name(group.GroupName());
-  instance_group_info.add_home_directories(group.HomeDir());
-  for (const auto& instance : group.Instances()) {
-    auto* new_entry = CF_EXPECT(instance_group_info.add_instances());
-    new_entry->set_name(instance.name());
-    new_entry->set_instance_id(instance.id());
-  }
-  return new_response;
 }
 
 Result<std::string> CvdStartCommandHandler::SummaryHelp() const {
