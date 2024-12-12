@@ -18,10 +18,19 @@
 
 #include "host/commands/cvd/cli/command_request.h"
 
+#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
+
 namespace cuttlefish {
 
 struct AcloudTranslatorOptOut {};
 
 bool IsSubOperationSupported(const CommandRequest& request);
+
+// Acloud delete is not translated because it needs to handle remote cases.
+// Python acloud implements delete by calling stop_cvd
+// This function replaces stop_cvd with a script that calls `cvd rm`, which in
+// turn calls cvd_internal_stop if necessary.
+Result<void> PrepareForAcloudDeleteCommand(
+    const cvd::InstanceGroupInfo& group_info);
 
 }  // namespace cuttlefish

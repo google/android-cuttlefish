@@ -106,8 +106,7 @@ class AcloudCommand : public CvdServerHandler {
       const CommandRequest& request);
   bool ValidateRemoteArgs(const CommandRequest& request);
   Result<void> HandleLocal(const ConvertedAcloudCreateCommand& command,
-                                    const CommandRequest& request);
-  Result<void> PrepareForDeleteCommand(const cvd::InstanceGroupInfo&);
+                           const CommandRequest& request);
   Result<void> HandleRemote(const CommandRequest& request);
   Result<void> RunAcloudConnect(const CommandRequest& request,
                                 const std::string& hostname);
@@ -158,7 +157,8 @@ Result<void> AcloudCommand::HandleLocal(
     LOG(ERROR) << "Failed to analyze the cvd start response.";
     return {};
   }
-  auto prepare_delete_result = PrepareForDeleteCommand(*group_info_result);
+  auto prepare_delete_result =
+      PrepareForAcloudDeleteCommand(*group_info_result);
   if (!prepare_delete_result.ok()) {
     LOG(ERROR) << prepare_delete_result.error().FormatForEnv();
     LOG(WARNING) << "Failed to prepare for execution of `acloud delete`, use "
@@ -166,38 +166,6 @@ Result<void> AcloudCommand::HandleLocal(
   }
   // print
   std::optional<SharedFD> fd_opt;
-  return {};
-}
-
-// Acloud delete is not translated because it needs to handle remote cases.
-// Python acloud implements delete by calling stop_cvd
-// This function replaces stop_cvd with a script that calls `cvd rm`, which in
-// turn calls cvd_internal_stop if necessary.
-Result<void> AcloudCommand::PrepareForDeleteCommand(
-    const cvd::InstanceGroupInfo& group_info) {
-  std::string host_path = group_info.host_artifacts_path();
-  std::string stop_cvd_path = fmt::format("{}/bin/stop_cvd", host_path);
-  std::string cvd_internal_stop_path =
-      fmt::format("{}/bin/cvd_internal_stop", host_path);
-  if (FileExists(cvd_internal_stop_path)) {
-    // cvd_internal_stop exists, stop_cvd is just a symlink to it
-    CF_EXPECT(RemoveFile(stop_cvd_path), "Failed to remove stop_cvd file");
-  } else {
-    // cvd_internal_stop doesn't exist, stop_cvd is the actual executable file
-    CF_EXPECT(RenameFile(stop_cvd_path, cvd_internal_stop_path),
-              "Failed to rename stop_cvd as cvd_internal_stop");
-  }
-  SharedFD stop_cvd_fd = SharedFD::Creat(stop_cvd_path, 0775);
-  CF_EXPECTF(stop_cvd_fd->IsOpen(), "Failed to create stop_cvd executable: {}",
-             stop_cvd_fd->StrError());
-  // Don't include the group name in the rm command, it's not needed for a
-  // single instance group and won't know which group needs to be removed if
-  // multiple groups exist. Acloud delete will set the HOME variable, which
-  // means cvd rm will pick the right group.
-  std::string stop_cvd_content =  "#!/bin/sh\ncvd rm";
-  auto ret = WriteAll(stop_cvd_fd, stop_cvd_content);
-  CF_EXPECT(ret == (ssize_t)stop_cvd_content.size(),
-            "Failed to write to stop_cvd script");
   return {};
 }
 
