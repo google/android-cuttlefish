@@ -97,6 +97,9 @@ ifeq ($(LOCAL_VHAL_PRODUCT_PACKAGE),)
 endif
 PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 
+# Set car power policy daemon connect to VHAL timeout to 60s for emulator (default is 5s).
+PRODUCT_SYSTEM_PROPERTIES += cppd.connectvhal.Timeoutmillis=60000
+
 # Ethernet setup script for vehicle HAL
 ENABLE_AUTO_ETHERNET ?= true
 ifeq ($(ENABLE_AUTO_ETHERNET), true)
