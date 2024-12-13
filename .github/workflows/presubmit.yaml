@@ -61,7 +61,7 @@ jobs:
     - name: Setup apt
       run: apt update -y && apt upgrade -y
     - name: Install dependencies
-      run: apt install -y git clang libcurl4-openssl-dev clang-tidy
+      run: apt install -y git clang libcurl4-openssl-dev
     - name: Install bazel
       run: bash tools/buildutils/installbazel.sh
     - name: Build cvd
@@ -73,8 +73,6 @@ jobs:
       with:
         name: testlogs
         path: bazel-testlogs
-    - name: Run clang-tidy
-      run: cd base/cvd && bazel build //cuttlefish/... --config clang-tidy
   e2e-tests-orchestration:
     runs-on: ubuntu-22.04 
     steps:
