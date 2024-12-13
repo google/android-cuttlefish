@@ -360,7 +360,7 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   // Validate the host artifacts path before proceeding
   (void)CF_EXPECT(HostToolTarget(flags.host_path).GetStartBinName(),
                   "\nMaybe try `cvd fetch` or running `lunch "
-                  "<target>` to enable starting a CF device?");
+                  "<target>; m` to enable starting a CF device?");
   // CreationAnalyzer needs these to be set in the environment
   envs[kAndroidHostOut] = AbsolutePath(flags.host_path);
   envs[kAndroidProductOut] = AbsolutePath(flags.product_path);
