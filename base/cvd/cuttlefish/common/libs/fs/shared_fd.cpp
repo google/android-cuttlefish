@@ -911,8 +911,8 @@ int FileInstance::LinkAtCwd(const std::string& path) {
   std::string name = "/proc/self/fd/";
   name += std::to_string(fd_);
   errno = 0;
-  int rval =
-      linkat(-1, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
+  /* argument 0 is ignored because `name` is absolute */
+  int rval = linkat(0, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
   errno_ = errno;
   return rval;
 }
