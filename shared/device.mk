@@ -216,6 +216,7 @@ PRODUCT_PACKAGES += CFSatelliteService
 #
 # Common manifest for all targets
 #
+
 ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
 PRODUCT_SHIPPING_API_LEVEL := 36
 LOCAL_DEVICE_FCM_MANIFEST_FILE ?= device/google/cuttlefish/shared/config/manifest.xml

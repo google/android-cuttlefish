@@ -92,7 +92,7 @@
 
     <!-- A name of a camera device that provides the rearview through EVS service -->
     <string-array name="config_carEvsService" translatable="false">
-        <item>serviceType=REARVIEW,cameraId=/dev/video10,activityName=com.android.car/com.google.android.car.evs.CarEvsCameraPreviewActivity</item>
+        <item>serviceType=REARVIEW,cameraId=/dev/video10,activityName=com.google.android.car.evs/com.google.android.car.evs.CarEvsCameraPreviewActivity</item>
         <item>serviceType=FRONTVIEW,cameraId=/dev/video11</item>
     </string-array>
 </resources>
