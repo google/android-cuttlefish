@@ -61,7 +61,7 @@ jobs:
     - name: Setup apt
       run: apt update -y && apt upgrade -y
     - name: Install dependencies
-      run: apt install -y git clang libcurl4-openssl-dev clang-tidy
+      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5
     - name: Install bazel
       run: bash tools/buildutils/installbazel.sh
     - name: Build cvd
