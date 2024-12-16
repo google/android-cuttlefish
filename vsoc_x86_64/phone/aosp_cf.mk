@@ -64,8 +64,7 @@ PRODUCT_VENDOR_PROPERTIES += \
 
 # Ignore all Android.mk files
 PRODUCT_IGNORE_ALL_ANDROIDMK := true
-# Allow the following Android.mk files
-PRODUCT_ALLOWED_ANDROIDMK_FILES := bootable/recovery/Android.mk
+# Allow some Android.mk files defined in internal branches
 PRODUCT_ANDROIDMK_ALLOWLIST_FILE := vendor/google/build/androidmk/aosp_cf_allowlist.mk
 
 # Compare target product name directly to avoid this from any product inherits aosp_cf.mk
