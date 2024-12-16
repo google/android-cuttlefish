@@ -22,7 +22,6 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_manager.h"
 #include "host/commands/cvd/utils/common.h"
 #include "host/libs/config/config_constants.h"
