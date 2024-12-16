@@ -30,13 +30,13 @@ import (
 	"github.com/pion/webrtc/v3"
 )
 
-type ApiCallError struct {
+type APICallError struct {
 	Code     int    `json:"code,omitempty"`
 	ErrorMsg string `json:"error,omitempty"`
 	Details  string `json:"details,omitempty"`
 }
 
-func (e *ApiCallError) Error() string {
+func (e *APICallError) Error() string {
 	str := fmt.Sprintf("api call error %d: %s", e.Code, e.ErrorMsg)
 	if e.Details != "" {
 		str += fmt.Sprintf("\n\nDETAILS: %s", e.Details)
@@ -183,14 +183,14 @@ func (c *HostOrchestratorServiceImpl) ConnectADBWebSocket(device string) (*webso
 	if c.ProxyURL != "" {
 		proxyURL, err := url.Parse(c.ProxyURL)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to parse proxy %s: %w", c.ProxyURL, err)
+			return nil, fmt.Errorf("failed to parse proxy %s: %w", c.ProxyURL, err)
 		}
 		dialer.Proxy = http.ProxyURL(proxyURL)
 	}
 
 	url, err := url.Parse(c.HTTPHelper.RootEndpoint)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse URL %s: %w", c.HTTPHelper.RootEndpoint, err)
+		return nil, fmt.Errorf("failed to parse URL %s: %w", c.HTTPHelper.RootEndpoint, err)
 	}
 	switch p := &url.Scheme; *p {
 	case "https":
@@ -198,19 +198,19 @@ func (c *HostOrchestratorServiceImpl) ConnectADBWebSocket(device string) (*webso
 	case "http":
 		*p = "ws"
 	default:
-		return nil, fmt.Errorf("Unknown scheme %s", *p)
+		return nil, fmt.Errorf("unknown scheme %s", *p)
 	}
 	url = url.JoinPath("devices", device, "adb")
 
 	// Get auth header for WebSocket connection
 	rb := c.HTTPHelper.NewGetRequest("")
 	if err := rb.setAuthz(); err != nil {
-		return nil, fmt.Errorf("Failed to set authorization header: %w", err)
+		return nil, fmt.Errorf("failed to set authorization header: %w", err)
 	}
 	// Connect to the WebSocket
 	wsConn, _, err := dialer.Dial(url.String(), rb.request.Header)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to connect WebSocket %s: %w", url.String(), err)
+		return nil, fmt.Errorf("failed to connect WebSocket %s: %w", url.String(), err)
 	}
 	return wsConn, nil
 }
@@ -528,7 +528,7 @@ func (c *HostOrchestratorServiceImpl) CreateBugreport(group string, dst io.Write
 		return err
 	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
-		return &ApiCallError{ErrorMsg: res.Status}
+		return &APICallError{ErrorMsg: res.Status}
 	}
 	return nil
 }

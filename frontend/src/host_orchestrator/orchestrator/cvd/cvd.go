@@ -25,7 +25,7 @@ import (
 	"strings"
 )
 
-type CVDExecContext = func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd
+type ExecContext = func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd
 
 const (
 	CVDBin      = "/usr/bin/cvd"
@@ -43,13 +43,13 @@ type CommandOpts struct {
 }
 
 type Command struct {
-	execContext CVDExecContext
+	execContext ExecContext
 	cvdBin      string
 	args        []string
 	opts        CommandOpts
 }
 
-func NewCommand(execContext CVDExecContext, args []string, opts CommandOpts) *Command {
+func NewCommand(execContext ExecContext, args []string, opts CommandOpts) *Command {
 	return &Command{
 		execContext: execContext,
 		cvdBin:      CVDBin,
@@ -117,7 +117,7 @@ func LogCombinedStdoutStderr(cmd *exec.Cmd, val string) {
 	log.Printf(msg, strings.Join(cmd.Args, " "), OutputLogMessage(val))
 }
 
-func Exec(ctx CVDExecContext, name string, args ...string) (string, error) {
+func Exec(ctx ExecContext, name string, args ...string) (string, error) {
 	cmd := ctx(context.TODO(), nil, name, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

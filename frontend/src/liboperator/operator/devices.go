@@ -45,7 +45,7 @@ type Group struct {
 	deviceIds []string
 }
 
-const DEFAULT_GROUP_ID = "default"
+const DefaultGroupID = "default"
 
 func newDevice(id string, conn *JSONUnix, port int, privateData interface{}) *Device {
 	url, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", port))
@@ -60,14 +60,14 @@ func newDevice(id string, conn *JSONUnix, port int, privateData interface{}) *De
 		w.Header().Add("x-cutf-proxy", "op-device")
 		w.WriteHeader(http.StatusBadGateway)
 	}
-	groupId := groupIdFromPrivateData(privateData)
+	groupID := groupIDFromPrivateData(privateData)
 	return &Device{
 		conn:        conn,
 		Proxy:       proxy,
 		privateData: privateData,
 		Descriptor: apiv1.DeviceDescriptor{
 			DeviceId:  id,
-			GroupName: groupId,
+			GroupName: groupID,
 		},
 		clients:     make(map[int]Client),
 		clientCount: 0,
@@ -82,7 +82,7 @@ func (d *Device) Send(msg interface{}) error {
 func (d *Device) Register(c Client) int {
 	d.clientsMtx.Lock()
 	defer d.clientsMtx.Unlock()
-	d.clientCount += 1
+	d.clientCount++
 	d.clients[d.clientCount] = c
 	return d.clientCount
 }
@@ -140,18 +140,18 @@ func NewDevicePool() *DevicePool {
 	}
 }
 
-func groupIdFromPrivateData(privateData interface{}) string {
+func groupIDFromPrivateData(privateData interface{}) string {
 	deviceInfo, ok := privateData.(map[string]interface{})
 	if !ok {
-		return DEFAULT_GROUP_ID
+		return DefaultGroupID
 	}
 
-	groupId, ok := deviceInfo["group_id"].(string)
-	if !ok || len(groupId) == 0 {
-		return DEFAULT_GROUP_ID
+	groupID, ok := deviceInfo["group_id"].(string)
+	if !ok || len(groupID) == 0 {
+		return DefaultGroupID
 	}
 
-	return groupId
+	return groupID
 }
 
 // PreRegister accepts a channel of boolean which it closes if the pre-registration is cancelled or
@@ -164,11 +164,11 @@ func (p *DevicePool) PreRegister(Descriptor *apiv1.DeviceDescriptor, regCh chan 
 	p.preDevicesMtx.Lock()
 	defer p.preDevicesMtx.Unlock()
 	if _, found := p.preDevices[d.Desc.DeviceId]; found {
-		return fmt.Errorf("Device Id already pre-registered")
+		return fmt.Errorf("device ID already pre-registered")
 	}
 	// This locks devicesMtx after preDevicesMtx, which is the right order
 	if d := p.GetDevice(d.Desc.DeviceId); d != nil {
-		return fmt.Errorf("Device Id already registered")
+		return fmt.Errorf("device ID already registered")
 	}
 	p.preDevices[d.Desc.DeviceId] = d
 	return nil
@@ -254,11 +254,11 @@ func (p *DevicePool) GetDeviceDescList() []*apiv1.DeviceDescriptor {
 	return ret
 }
 
-func (p *DevicePool) GetDeviceDescByGroupId(groupId string) []*apiv1.DeviceDescriptor {
+func (p *DevicePool) GetDeviceDescByGroupID(groupID string) []*apiv1.DeviceDescriptor {
 	ret := make([]*apiv1.DeviceDescriptor, 0)
 	devs := p.GetDeviceDescList()
 	for _, d := range devs {
-		if d.GroupName == groupId {
+		if d.GroupName == groupID {
 			ret = append(ret, d)
 		}
 	}

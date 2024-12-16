@@ -79,7 +79,7 @@ func (s *CVDSelector) ToCVDCLI() []string {
 
 // Creates a CVD execution context from a regular execution context.
 // If a non-nil user is provided the returned execution context executes commands as that user.
-func newCVDExecContext(execContext ExecContext, usr *user.User) cvd.CVDExecContext {
+func newCVDExecContext(execContext ExecContext, usr *user.User) cvd.ExecContext {
 	if usr != nil {
 		return func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd {
 			newArgs := []string{"-u", usr.Username}
@@ -156,7 +156,7 @@ func (i *cvdInstance) toAPIObject(group string) *apiv1.CVD {
 	}
 }
 
-func cvdFleet(ctx cvd.CVDExecContext) (*cvdFleetOutput, error) {
+func cvdFleet(ctx cvd.ExecContext) (*cvdFleetOutput, error) {
 	stdout := &bytes.Buffer{}
 	cvdCmd := cvd.NewCommand(ctx, []string{"fleet"}, cvd.CommandOpts{Stdout: stdout})
 	err := cvdCmd.Run()
@@ -173,7 +173,7 @@ func cvdFleet(ctx cvd.CVDExecContext) (*cvdFleetOutput, error) {
 
 // Helper for listing first group instances only. Legacy flows didn't have a multi-group environment hence using
 // the first group only.
-func cvdFleetFirstGroup(ctx cvd.CVDExecContext) (*cvdGroup, error) {
+func cvdFleetFirstGroup(ctx cvd.ExecContext) (*cvdGroup, error) {
 	fleet, err := cvdFleet(ctx)
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ func cvdFleetFirstGroup(ctx cvd.CVDExecContext) (*cvdGroup, error) {
 	return fleet.Groups[0], nil
 }
 
-func CVDLogsDir(ctx cvd.CVDExecContext, groupName, name string) (string, error) {
+func CVDLogsDir(ctx cvd.ExecContext, groupName, name string) (string, error) {
 	fleet, err := cvdFleet(ctx)
 	if err != nil {
 		return "", err
@@ -200,7 +200,7 @@ func CVDLogsDir(ctx cvd.CVDExecContext, groupName, name string) (string, error) 
 	return ins.InstanceDir + "/logs", nil
 }
 
-func HostBugReport(ctx cvd.CVDExecContext, paths IMPaths, out string) error {
+func HostBugReport(ctx cvd.ExecContext, paths IMPaths, out string) error {
 	group, err := cvdFleetFirstGroup(ctx)
 	if err != nil {
 		return err
@@ -223,11 +223,11 @@ func defaultMainBuild() *apiv1.AndroidCIBuild {
 }
 
 type fetchCVDCommandArtifactsFetcher struct {
-	execContext         cvd.CVDExecContext
+	execContext         cvd.ExecContext
 	buildAPICredentials BuildAPICredentials
 }
 
-func newFetchCVDCommandArtifactsFetcher(execContext cvd.CVDExecContext, buildAPICredentials BuildAPICredentials) *fetchCVDCommandArtifactsFetcher {
+func newFetchCVDCommandArtifactsFetcher(execContext cvd.ExecContext, buildAPICredentials BuildAPICredentials) *fetchCVDCommandArtifactsFetcher {
 	return &fetchCVDCommandArtifactsFetcher{
 		execContext:         execContext,
 		buildAPICredentials: buildAPICredentials,
@@ -287,7 +287,7 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 func createCredentialsFile(content string) (*os.File, error) {
 	p1, p2, err := os.Pipe()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create pipe for credentials: %w", err)
+		return nil, fmt.Errorf("failed to create pipe for credentials: %w", err)
 	}
 	go func(f *os.File) {
 		defer f.Close()
@@ -348,7 +348,7 @@ type startCVDParams struct {
 	BootloaderDir string
 }
 
-func CreateCVD(ctx cvd.CVDExecContext, p startCVDParams) error {
+func CreateCVD(ctx cvd.ExecContext, p startCVDParams) error {
 	args := []string{groupNameArg, "create", daemonArg, reportAnonymousUsageStatsArg}
 	if len(p.InstanceNumbers) > 1 {
 		args = append(args, fmt.Sprintf("--instance_nums=%s", strings.Join(SliceItoa(p.InstanceNumbers), ",")))
@@ -390,11 +390,10 @@ func createNewDir(dir string) error {
 }
 
 func createDir(dir string) error {
-	if err := createNewDir(dir); os.IsExist(err) {
-		return nil
-	} else {
+	if err := createNewDir(dir); !os.IsExist(err) {
 		return err
 	}
+	return nil
 }
 
 func fileExist(name string) (bool, error) {
@@ -492,7 +491,7 @@ func (s cvdInstances) findByName(name string) (bool, *cvdInstance) {
 	return false, &cvdInstance{}
 }
 
-func runAcloudSetup(execContext cvd.CVDExecContext, artifactsRootDir, artifactsDir string) {
+func runAcloudSetup(execContext cvd.ExecContext, artifactsRootDir, artifactsDir string) {
 	run := func(cmd *exec.Cmd) {
 		var b bytes.Buffer
 		cmd.Stdout = &b

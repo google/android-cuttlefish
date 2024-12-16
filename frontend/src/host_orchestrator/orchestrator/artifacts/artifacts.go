@@ -184,9 +184,8 @@ func createNewDir(dir string) error {
 }
 
 func createDir(dir string) error {
-	if err := createNewDir(dir); os.IsExist(err) {
-		return nil
-	} else {
+	if err := createNewDir(dir); !os.IsExist(err) {
 		return err
 	}
+	return nil
 }

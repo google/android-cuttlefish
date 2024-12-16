@@ -31,7 +31,7 @@ import (
 const (
 	DefaultSocketPath        = "/run/cuttlefish/operator"
 	DefaultControlSocketPath = "/run/cuttlefish/operator_control"
-	DefaultHttpPort          = 1080
+	DefaultHTTPPort          = 1080
 	DefaultTLSCertDir        = "/etc/cuttlefish-common/operator/cert"
 	DefaultStaticFilesDir    = "static"    // relative path
 	DefaultInterceptDir      = "intercept" // relative path
@@ -39,14 +39,14 @@ const (
 	DefaultListenAddress     = "127.0.0.1"
 )
 
-func startHttpServer(address string, port int) error {
+func startHTTPServer(address string, port int) error {
 	log.Println(fmt.Sprint("Operator is listening at http://localhost:", port))
 
 	// handler is nil, so DefaultServeMux is used.
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
 }
 
-func startHttpsServer(address string, port int, certPath string, keyPath string) error {
+func startHTTPSServer(address string, port int, certPath string, keyPath string) error {
 	log.Println(fmt.Sprint("Operator is listening at https://localhost:", port))
 	return http.ListenAndServeTLS(fmt.Sprintf("%s:%d", address, port),
 		certPath,
@@ -92,10 +92,10 @@ func start(starters []func() error) {
 func main() {
 	socketPath := flag.String("socket_path", DefaultSocketPath, "Path to the device endpoint unix socket.")
 	controlSocketPath := flag.String("control_socket_path", DefaultControlSocketPath, "Path to the control endpoint unix socket.")
-	httpPort := flag.Int("http_port", DefaultHttpPort, "Port to serve HTTP requests on.")
+	httpPort := flag.Int("http_port", DefaultHTTPPort, "Port to serve HTTP requests on.")
 	httpsPort := flag.Int("https_port", -1, "Port to serve HTTPS requests on.")
 	tlsCertDir := flag.String("tls_cert_dir", DefaultTLSCertDir, "Directory where the TLS certificates are located.")
-	webUiUrlStr := flag.String("webui_url", DefaultWebUIUrl, "WebUI URL.")
+	webUIURLStr := flag.String("webui_url", DefaultWebUIUrl, "WebUI URL.")
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
 
 	flag.Parse()
@@ -112,10 +112,10 @@ func main() {
 		},
 	}
 
-	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
-	if *webUiUrlStr != "" {
-		webUiUrl, _ := url.Parse(*webUiUrlStr)
-		proxy := httputil.NewSingleHostReverseProxy(webUiUrl)
+	r := operator.CreateHTTPHandlers(pool, polledSet, config, maybeIntercept)
+	if *webUIURLStr != "" {
+		webUIURL, _ := url.Parse(*webUIURLStr)
+		proxy := httputil.NewSingleHostReverseProxy(webUIURL)
 		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 			log.Printf("request %q failed: proxy error: %v", r.Method+" "+r.URL.Path, err)
 			w.Header().Add("x-cutf-proxy", "op-webui")
@@ -143,11 +143,11 @@ func main() {
 			}
 			return st()
 		},
-		func() error { return startHttpServer(*address, *httpPort) },
+		func() error { return startHTTPServer(*address, *httpPort) },
 	}
 	if *httpsPort > 0 {
 		starters = append(starters, func() error {
-			return startHttpsServer(*address, *httpsPort, certPath, keyPath)
+			return startHTTPSServer(*address, *httpsPort, certPath, keyPath)
 		})
 	}
 	start(starters)

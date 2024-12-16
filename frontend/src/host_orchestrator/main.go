@@ -47,14 +47,14 @@ func defaultCVDArtifactsDir() string {
 	return fmt.Sprintf("/tmp/cvd/%s/artifacts", u.Uid)
 }
 
-func startHttpServer(addr string, port int) error {
+func startHTTPServer(addr string, port int) error {
 	log.Printf("Host Orchestrator is listening at http://%s:%d", addr, port)
 
 	// handler is nil, so DefaultServeMux is used.
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", addr, port), nil)
 }
 
-func startHttpsServer(addr string, port int, certPath string, keyPath string) error {
+func startHTTPSServer(addr string, port int, certPath string, keyPath string) error {
 	log.Printf("Host Orchestrator is listening at https://%s:%d", addr, port)
 	return http.ListenAndServeTLS(fmt.Sprintf("%s:%d", addr, port),
 		certPath,
@@ -174,7 +174,7 @@ func main() {
 	http.Handle("/", r)
 
 	starters := []func() error{
-		func() error { return startHttpServer(*address, *httpPort) },
+		func() error { return startHTTPServer(*address, *httpPort) },
 	}
 	start(starters)
 }

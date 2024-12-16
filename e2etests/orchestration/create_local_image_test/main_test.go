@@ -50,11 +50,11 @@ func TestInstance(t *testing.T) {
 	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/cvd-host_package.tar.gz"); err != nil {
 		t.Fatal(err)
 	}
-	const group_name = "foo"
+	const groupName = "foo"
 	config := `
   {
     "common": {
-      "group_name": "` + group_name + `",
+      "group_name": "` + groupName + `",
       "host_package": "@user_artifacts/` + uploadDir + `"
     },
     "instances": [
@@ -84,19 +84,19 @@ func TestInstance(t *testing.T) {
 
 	got, createErr := srv.CreateCVD(createReq, &hoclient.AccessTokenBuildAPICreds{})
 
-	if err := common.DownloadHostBugReport(srv, group_name); err != nil {
+	if err := common.DownloadHostBugReport(srv, groupName); err != nil {
 		t.Errorf("failed creating bugreport: %s\n", err)
 	}
 	if createErr != nil {
 		t.Fatal(createErr)
 	}
-	if err := common.VerifyLogsEndpoint(ctx.ServiceURL, group_name, "1"); err != nil {
+	if err := common.VerifyLogsEndpoint(ctx.ServiceURL, groupName, "1"); err != nil {
 		t.Fatalf("failed verifying /logs endpoint: %s", err)
 	}
 	want := &hoapi.CreateCVDResponse{
 		CVDs: []*hoapi.CVD{
 			&hoapi.CVD{
-				Group:          group_name,
+				Group:          groupName,
 				Name:           "1",
 				BuildSource:    &hoapi.BuildSource{},
 				Status:         "Running",

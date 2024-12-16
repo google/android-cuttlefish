@@ -29,7 +29,7 @@ func TestNewPolledConnection(t *testing.T) {
 	if c2 == nil {
 		t.Error("Failed to create polled connection")
 	}
-	if c1.Id() == c2.Id() {
+	if c1.ID() == c2.ID() {
 		t.Error("Polled connections have the same id")
 	}
 }
@@ -37,23 +37,23 @@ func TestNewPolledConnection(t *testing.T) {
 func TestGetConnection(t *testing.T) {
 	ps := NewPolledSet()
 	c1 := ps.NewConnection(newDevice("d1", nil, 0, ""))
-	if ps.GetConnection(c1.Id()) != c1 {
+	if ps.GetConnection(c1.ID()) != c1 {
 		t.Error("Failed to get connection by id")
 	}
-	if ps.GetConnection(c1.Id()+"some suffix") == c1 {
+	if ps.GetConnection(c1.ID()+"some suffix") == c1 {
 		t.Error("Returned connection with wrong id")
 	}
 	c2 := ps.NewConnection(newDevice("d1", nil, 0, ""))
-	if ps.GetConnection(c1.Id()) == c2 || ps.GetConnection(c2.Id()) == c1 {
+	if ps.GetConnection(c1.ID()) == c2 || ps.GetConnection(c2.ID()) == c1 {
 		t.Error("Returned the wrong connection")
 	}
-	ps.Destroy(c2.Id())
-	if ps.GetConnection(c2.Id()) != nil {
+	ps.Destroy(c2.ID())
+	if ps.GetConnection(c2.ID()) != nil {
 		t.Error("Returned unregistered connection")
 	}
 	// should have no effect
-	ps.Destroy(c2.Id())
-	if ps.GetConnection(c1.Id()) != c1 {
+	ps.Destroy(c2.ID())
+	if ps.GetConnection(c1.ID()) != c1 {
 		t.Error("Failed to get connection after destruction of another")
 	}
 }
@@ -82,7 +82,7 @@ func TestDestroy(t *testing.T) {
 	ps := NewPolledSet()
 	c := ps.NewConnection(newDevice("d1", nil, 0, ""))
 	c.OnDeviceDisconnected()
-	if ps.GetConnection(c.Id()) != nil {
+	if ps.GetConnection(c.ID()) != nil {
 		t.Error("connection was not destroyed after device disconnect")
 	}
 }

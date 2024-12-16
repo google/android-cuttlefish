@@ -124,11 +124,11 @@ func uploadArtifacts(srv hoclient.HostOrchestratorService) (string, error) {
 	return uploadDir, nil
 }
 
-func createDevice(srv hoclient.HostOrchestratorService, group_name, artifactsDir string) (*hoapi.CVD, error) {
+func createDevice(srv hoclient.HostOrchestratorService, groupName, artifactsDir string) (*hoapi.CVD, error) {
 	config := `
   {
     "common": {
-      "group_name": "` + group_name + `",
+      "group_name": "` + groupName + `",
       "host_package": "@user_artifacts/` + artifactsDir + `"
     },
     "instances": [
@@ -155,7 +155,7 @@ func createDevice(srv hoclient.HostOrchestratorService, group_name, artifactsDir
 	createReq := &hoapi.CreateCVDRequest{EnvConfig: envConfig}
 	res, createErr := srv.CreateCVD(createReq, &hoclient.AccessTokenBuildAPICreds{})
 	if createErr != nil {
-		if err := common.DownloadHostBugReport(srv, group_name); err != nil {
+		if err := common.DownloadHostBugReport(srv, groupName); err != nil {
 			log.Printf("error downloading cvd bugreport: %v", err)
 		}
 		return nil, createErr

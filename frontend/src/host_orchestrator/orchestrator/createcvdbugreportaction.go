@@ -27,7 +27,7 @@ type CreateCVDBugReportActionOpts struct {
 	Group            string
 	Paths            IMPaths
 	OperationManager OperationManager
-	ExecContext      cvd.CVDExecContext
+	ExecContext      cvd.ExecContext
 	UUIDGen          func() string
 }
 
@@ -35,7 +35,7 @@ type CreateCVDBugReportAction struct {
 	group       string
 	paths       IMPaths
 	om          OperationManager
-	execContext cvd.CVDExecContext
+	execContext cvd.ExecContext
 	uuidgen     func() string
 }
 

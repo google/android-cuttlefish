@@ -128,9 +128,8 @@ func (c *Controller) recvLoop() error {
 		default:
 			if errMsg, errPresent := msg["error"]; errPresent {
 				return fmt.Errorf("received error from signaling server: %v", errMsg)
-			} else {
-				return fmt.Errorf("unknown message type: %v", msg["type"])
 			}
+			return fmt.Errorf("unknown message type: %v", msg["type"])
 		}
 	}
 }

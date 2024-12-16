@@ -36,7 +36,7 @@ type CreateSnapshotAction struct {
 	selector    CVDSelector
 	paths       IMPaths
 	om          OperationManager
-	execContext cvd.CVDExecContext
+	execContext cvd.ExecContext
 }
 
 func NewCreateSnapshotAction(opts CreateSnapshotActionOpts) *CreateSnapshotAction {

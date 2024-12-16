@@ -63,7 +63,7 @@ type CreateCVDAction struct {
 	hostValidator            Validator
 	paths                    IMPaths
 	om                       OperationManager
-	execContext              cvd.CVDExecContext
+	execContext              cvd.ExecContext
 	buildAPI                 artifacts.BuildAPI
 	artifactsFetcher         artifacts.Fetcher
 	cvdBundleFetcher         artifacts.CVDBundleFetcher
@@ -337,7 +337,7 @@ func createTempFile(pattern string, data []byte, mode os.FileMode) (*os.File, er
 }
 
 // Create the credential file so it's owned by the configured `cvd user`, e.g: `_cvd-executor`.
-func createCredsFile(ctx cvd.CVDExecContext) (string, error) {
+func createCredsFile(ctx cvd.ExecContext) (string, error) {
 	name, err := tempFilename("cvdload*.creds")
 	if err != nil {
 		return "", err
@@ -352,7 +352,7 @@ func createCredsFile(ctx cvd.CVDExecContext) (string, error) {
 }
 
 // Write into credential files by granting temporary write permission to `cvdnetwork` group.
-func writeCredsFile(ctx cvd.CVDExecContext, name string, data []byte) error {
+func writeCredsFile(ctx cvd.ExecContext, name string, data []byte) error {
 	info, err := os.Stat(name)
 	if err != nil {
 		return err
@@ -394,7 +394,7 @@ func writeCredsFile(ctx cvd.CVDExecContext, name string, data []byte) error {
 	return nil
 }
 
-func removeCredsFile(ctx cvd.CVDExecContext, name string) error {
+func removeCredsFile(ctx cvd.ExecContext, name string) error {
 	_, err := cvd.Exec(ctx, "rm", name)
 	return err
 }

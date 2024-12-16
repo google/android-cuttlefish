@@ -181,7 +181,7 @@ func (rb *HTTPRequestBuilder) JSONResDoWithRetries(ret any, retryOpts RetryOptio
 		}
 		return nil
 	}
-	apiError := &ApiCallError{}
+	apiError := &APICallError{}
 	if err := decoder.Decode(apiError); err != nil {
 		return fmt.Errorf("failed decoding unsuccessful response(%d), body: %s, error: %w", res.StatusCode, string(b), err)
 	}

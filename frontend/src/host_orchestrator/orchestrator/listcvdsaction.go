@@ -33,7 +33,7 @@ type ListCVDsActionOpts struct {
 type ListCVDsAction struct {
 	group       string
 	paths       IMPaths
-	execContext cvd.CVDExecContext
+	execContext cvd.ExecContext
 }
 
 func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {

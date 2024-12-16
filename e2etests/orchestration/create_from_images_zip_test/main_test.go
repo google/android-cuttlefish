@@ -44,11 +44,11 @@ func TestInstance(t *testing.T) {
 	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/cvd-host_package.tar.gz"); err != nil {
 		t.Fatal(err)
 	}
-	const group_name = "foo"
+	const groupName = "foo"
 	config := `
   {
     "common": {
-      "group_name": "` + group_name + `",
+      "group_name": "` + groupName + `",
       "host_package": "@user_artifacts/` + uploadDir + `"
 
     },
@@ -79,7 +79,7 @@ func TestInstance(t *testing.T) {
 
 	got, createErr := srv.CreateCVD(createReq, &hoclient.AccessTokenBuildAPICreds{})
 
-	if err := common.DownloadHostBugReport(srv, group_name); err != nil {
+	if err := common.DownloadHostBugReport(srv, groupName); err != nil {
 		t.Errorf("failed creating bugreport: %s\n", err)
 	}
 	if createErr != nil {

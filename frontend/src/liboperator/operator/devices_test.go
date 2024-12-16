@@ -199,9 +199,9 @@ func TestListDevices(t *testing.T) {
 	}
 }
 
-func MakeInfo(groupId string) map[string]interface{} {
+func MakeInfo(groupID string) map[string]interface{} {
 	return map[string]interface{}{
-		"group_id": groupId,
+		"group_id": groupID,
 	}
 }
 
@@ -214,11 +214,11 @@ func TestListDevicesByGroup(t *testing.T) {
 	p.Register("4", nil, 0, MakeInfo("bar"))
 	p.Register("5", nil, 0, MakeInfo("bar"))
 
-	if deviceCnt := len(p.GetDeviceDescByGroupId("foo")); deviceCnt != 2 {
+	if deviceCnt := len(p.GetDeviceDescByGroupID("foo")); deviceCnt != 2 {
 		t.Error("List of devices in group foo should have size of 2, but have ", deviceCnt)
 	}
 
-	if deviceCnt := len(p.GetDeviceDescByGroupId("bar")); deviceCnt != 3 {
+	if deviceCnt := len(p.GetDeviceDescByGroupID("bar")); deviceCnt != 3 {
 		t.Error("List of devices in group bar should have size of 3, but have ", deviceCnt)
 	}
 }
@@ -232,16 +232,16 @@ func TestListDevicesEmpty(t *testing.T) {
 		t.Error("List of all devices should have size of 0, but have ", deviceCnt)
 	}
 
-	if deviceCnt := len(p.GetDeviceDescByGroupId("foo")); deviceCnt != 0 {
+	if deviceCnt := len(p.GetDeviceDescByGroupID("foo")); deviceCnt != 0 {
 		t.Error("List of devices in group foo should have size of 0, but have ", deviceCnt)
 	}
 }
 
 func TestGroupIdFromPrivateData(t *testing.T) {
 	info := MakeInfo("foo")
-	groupId := groupIdFromPrivateData(info)
+	groupID := groupIDFromPrivateData(info)
 
-	if groupId != "foo" {
+	if groupID != "foo" {
 		t.Error("info should have group_id as foo")
 	}
 
@@ -288,11 +288,11 @@ func TestDefaultGroup(t *testing.T) {
 		t.Error("Error listing after 4 device registrations - expected 4 but ", len(p.devices))
 	}
 
-	if defaultDeviceCount := len(p.GetDeviceDescByGroupId(DEFAULT_GROUP_ID)); defaultDeviceCount != 3 {
+	if defaultDeviceCount := len(p.GetDeviceDescByGroupID(DefaultGroupID)); defaultDeviceCount != 3 {
 		t.Error("Error after 3 device in default group - expected 3 but ", defaultDeviceCount)
 	}
 
-	if defaultDeviceCount := len(p.GetDeviceDescByGroupId(DEFAULT_GROUP_ID)); defaultDeviceCount != 3 {
+	if defaultDeviceCount := len(p.GetDeviceDescByGroupID(DefaultGroupID)); defaultDeviceCount != 3 {
 		t.Error("Error after 3 device in default group - expected 3 but ", defaultDeviceCount)
 	}
 

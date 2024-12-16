@@ -40,16 +40,16 @@ import (
 
 func createUnixSocketEndpoint(path string) (*net.UnixListener, error) {
 	if err := os.RemoveAll(path); err != nil {
-		return nil, fmt.Errorf("Failed to clean previous socket: %w", err)
+		return nil, fmt.Errorf("failed to clean previous socket: %w", err)
 	}
 	addr, err := net.ResolveUnixAddr("unixpacket", path)
 	if err != nil {
 		// Returns a loop function that will immediately return an error when invoked
-		return nil, fmt.Errorf("Failed to create unix address from path: %w", err)
+		return nil, fmt.Errorf("failed to create unix address from path: %w", err)
 	}
 	sock, err := net.ListenUnix("unixpacket", addr)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create unix socket: %w", err)
+		return nil, fmt.Errorf("failed to create unix socket: %w", err)
 	}
 	// Make sure the socket is only accessible by owner and group
 	if err := os.Chmod(path, 0770); err != nil {
@@ -121,7 +121,7 @@ func SetupControlEndpoint(pool *DevicePool, path string) (func() error, error) {
 // The maybeIntercept parameter is a function that accepts the
 // requested device file and returns a path to a file to be returned instead or
 // nil if the request should be allowed to proceed to the device.
-func CreateHttpHandlers(
+func CreateHTTPHandlers(
 	pool *DevicePool,
 	polledSet *PolledSet,
 	config apiv1.InfraConfig,
@@ -319,8 +319,8 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 			log.Println("Error reading from device: ", err)
 			return
 		}
-		clientId := msg.ClientId
-		if clientId == 0 {
+		clientID := msg.ClientId
+		if clientID == 0 {
 			ReplyError(c, "Device forward message missing client id")
 			return
 		}
@@ -333,9 +333,9 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 			"message_type": "device_msg",
 			"payload":      payload,
 		}
-		if err := device.ToClient(clientId, dMsg); err != nil {
+		if err := device.ToClient(clientID, dMsg); err != nil {
 			log.Println("Device: ", id, " failed to send message to client: ", err)
-			ReplyError(c, fmt.Sprintln("Client disconnected: ", clientId))
+			ReplyError(c, fmt.Sprintln("Client disconnected: ", clientID))
 		}
 	}
 }
@@ -460,15 +460,15 @@ func grpcTypeInformation(w http.ResponseWriter, r *http.Request, pool *DevicePoo
 
 func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	vars := mux.Vars(r)
-	devId := vars["deviceId"]
-	dev := pool.GetDevice(devId)
+	devID := vars["deviceId"]
+	dev := pool.GetDevice(devID)
 	if dev == nil {
 		http.Error(w, "Device not found", http.StatusNotFound)
 		return
 	}
 
 	devInfo := dev.privateData.(map[string]interface{})
-	openwrtDevId, ok := devInfo["openwrt_device_id"].(string)
+	openwrtDevID, ok := devInfo["openwrt_device_id"].(string)
 	if !ok {
 		http.Error(w, "Device obtaining Openwrt not found", http.StatusNotFound)
 		return
@@ -488,15 +488,15 @@ func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		w.Header().Add("x-cutf-proxy", "op-openwrt")
 		w.WriteHeader(http.StatusBadGateway)
 	}
-	r.URL.Path = "/devices/" + openwrtDevId + "/openwrt" + path
+	r.URL.Path = "/devices/" + openwrtDevID + "/openwrt" + path
 	proxy.ServeHTTP(w, r)
 }
 
 // WebSocket endpoint that proxies ADB
 func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	vars := mux.Vars(r)
-	devId := vars["deviceId"]
-	dev := pool.GetDevice(devId)
+	devID := vars["deviceId"]
+	dev := pool.GetDevice(devID)
 
 	if dev == nil {
 		http.Error(w, "Device not found", http.StatusNotFound)
@@ -511,8 +511,8 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		// ADB port might not be set if the device isn't started by cvd,
 		// some newer versions set it in the device info, make one last
 		// ditch attempt at finding it.
-		if adb_port, ok := devInfo["adb_port"]; ok {
-			adbPort = int(adb_port.(float64))
+		if adbPort, ok := devInfo["adb_port"]; ok {
+			adbPort = int(adbPort.(float64))
 		} else {
 			http.Error(w, "Cannot find adb port for the device", http.StatusNotFound)
 			return
@@ -602,16 +602,16 @@ func listGroups(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 }
 
 func listDevices(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
-	groupId := r.URL.Query().Get("groupId")
+	groupID := r.URL.Query().Get("groupID")
 
-	if len(groupId) == 0 {
+	if len(groupID) == 0 {
 		if err := ReplyJSONOK(w, pool.GetDeviceDescList()); err != nil {
 			log.Println(err)
 		}
 		return
 	}
 
-	if err := ReplyJSONOK(w, pool.GetDeviceDescByGroupId(groupId)); err != nil {
+	if err := ReplyJSONOK(w, pool.GetDeviceDescByGroupID(groupID)); err != nil {
 		log.Println(err)
 	}
 }
@@ -620,8 +620,8 @@ func listDevices(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 
 func deviceInfo(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	vars := mux.Vars(r)
-	devId := vars["deviceId"]
-	dev := pool.GetDevice(devId)
+	devID := vars["deviceId"]
+	dev := pool.GetDevice(devID)
 	if dev == nil {
 		http.NotFound(w, r)
 		return
@@ -631,8 +631,8 @@ func deviceInfo(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 
 func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool, maybeIntercept func(string) *string) {
 	vars := mux.Vars(r)
-	devId := vars["deviceId"]
-	dev := pool.GetDevice(devId)
+	devID := vars["deviceId"]
+	dev := pool.GetDevice(devID)
 	if dev == nil {
 		http.NotFound(w, r)
 		return
@@ -663,7 +663,7 @@ func createPolledConnection(w http.ResponseWriter, r *http.Request, pool *Device
 		return
 	}
 	conn := polledSet.NewConnection(device)
-	reply := apiv1.NewConnReply{ConnId: conn.Id(), DeviceInfo: device.privateData}
+	reply := apiv1.NewConnReply{ConnId: conn.ID(), DeviceInfo: device.privateData}
 	ReplyJSONOK(w, reply)
 }
 
@@ -683,7 +683,7 @@ func forward(w http.ResponseWriter, r *http.Request, polledSet *PolledSet) {
 	}
 	cMsg := apiv1.ClientMsg{
 		Type:     "client_msg",
-		ClientId: conn.ClientId(),
+		ClientId: conn.ClientID(),
 		Payload:  msg.Payload,
 	}
 	if err := conn.ToDevice(cMsg); err != nil {

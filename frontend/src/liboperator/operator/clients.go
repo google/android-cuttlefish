@@ -37,7 +37,7 @@ type PolledClient struct {
 	// Synchronizes access to the messages list
 	msgMtx sync.Mutex
 	// The id given to this client by the device
-	clientId int
+	clientID int
 	// A reference to the polled set to clean up when the device disconnects
 	polledSet *PolledSet
 }
@@ -76,12 +76,12 @@ func (c *PolledClient) GetMessages(start int, count int) []interface{} {
 	return ret
 }
 
-func (c *PolledClient) Id() string {
+func (c *PolledClient) ID() string {
 	return c.id
 }
 
-func (c *PolledClient) ClientId() int {
-	return c.clientId
+func (c *PolledClient) ClientID() int {
+	return c.clientID
 }
 
 // Basically a map of polled clients by id.
@@ -104,7 +104,7 @@ func (s *PolledSet) NewConnection(d *Device) *PolledClient {
 				polledSet: s,
 			}
 			s.connections[id] = conn
-			conn.clientId = d.Register(conn)
+			conn.clientID = d.Register(conn)
 			return conn
 		}
 	}

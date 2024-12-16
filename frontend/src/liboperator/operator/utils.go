@@ -62,16 +62,16 @@ func ReplyJSON(w http.ResponseWriter, obj interface{}, statusCode int) error {
 }
 
 // Connect ControlEnvProxyServer
-func ConnectControlEnvProxyServer(devId string, pool *DevicePool) (*grpc.ClientConn, error) {
-	dev := pool.GetDevice(devId)
+func ConnectControlEnvProxyServer(devID string, pool *DevicePool) (*grpc.ClientConn, error) {
+	dev := pool.GetDevice(devID)
 	if dev == nil {
-		return nil, errors.New("Device not found")
+		return nil, errors.New("device not found")
 	}
 
 	devInfo := dev.privateData.(map[string]interface{})
 	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
 	if !ok {
-		return nil, errors.New("ControlEnvProxyServer path not found")
+		return nil, errors.New("path of ControlEnvProxyServer not found")
 	}
 	return grpc.Dial("unix://"+serverPath, grpc.WithInsecure())
 }
