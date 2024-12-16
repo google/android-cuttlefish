@@ -23,6 +23,7 @@ import com.android.tradefed.util.RunUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -75,5 +76,10 @@ public class CuttlefishControlLocalRunner implements CuttlefishControlRunner {
     @Override
     public String getHostRuntimePath(String basename) throws FileNotFoundException {
         return Paths.get(this.runtimeDirectoryPath, basename).toAbsolutePath().toString();
+    }
+
+    @Override
+    public File getFile(String path) throws IOException {
+        return new File(path);
     }
 }

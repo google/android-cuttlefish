@@ -18,7 +18,9 @@ package com.android.cuttlefish.tests.utils;
 
 import com.android.tradefed.util.CommandResult;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public interface CuttlefishControlRunner {
 
@@ -27,5 +29,7 @@ public interface CuttlefishControlRunner {
     public String getHostBinaryPath(String basename) throws FileNotFoundException;
 
     public String getHostRuntimePath(String basename) throws FileNotFoundException;
+
+    public File getFile(String path) throws IOException;
 
 }
