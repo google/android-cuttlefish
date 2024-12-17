@@ -720,6 +720,10 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     guest_config.prefer_drm_virgl_when_supported =
         res_prefer_drm_virgl_when_supported.value_or("") == "true";
 
+    auto res_ti50_emulator =
+        GetAndroidInfoConfig(instance_android_info_txt, "ti50_emulator");
+    guest_config.ti50_emulator = res_ti50_emulator.value_or("");
+
     guest_configs.push_back(guest_config);
   }
   return guest_configs;
@@ -1888,6 +1892,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       auto vcpu_cfg_path = vcpu_config_vec[instance_index];
       CF_EXPECT(FileExists(vcpu_cfg_path), "vCPU config file does not exist");
       instance.set_vcpu_config_path(AbsolutePath(vcpu_cfg_path));
+    }
+
+    if (!guest_configs[instance_index].ti50_emulator.empty()) {
+      auto ti50_emulator =
+          DefaultHostArtifactsPath(guest_configs[instance_index].ti50_emulator);
+      CF_EXPECT(FileExists(ti50_emulator),
+                "ti50 emulator binary does not exist");
+      instance.set_ti50_emulator(ti50_emulator);
     }
 
     instance_index++;

@@ -139,6 +139,7 @@ fruit::Component<> runCvdComponent(
       .install(WmediumdServerComponent)
       .install(launchStreamerComponent)
       .install(AutoCmd<VhalProxyServer>::Component)
+      .install(Ti50EmulatorComponent)
 #endif
       .install(AdbConfigComponent)
       .install(AdbConfigFragmentComponent)
