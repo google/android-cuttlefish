@@ -613,6 +613,15 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     add_hvc_sink();
   }
 
+  // /dev/hvc16 = Ti50 TPM FIFO
+  if (!instance.ti50_emulator().empty()) {
+    // TODO
+    // add_hvc_socket(instance.PerInstancePath("direct_tpm_fifo"));
+    add_hvc_sink();
+  } else {
+    add_hvc_sink();
+  }
+
   auto disk_num = instance.virtual_disk_paths().size();
 
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
