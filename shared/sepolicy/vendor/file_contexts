@@ -43,8 +43,11 @@
 
 # hvc14 for MCU control
 /dev/hvc14  u:object_r:mcu_control_device:s0
-# hvc14 for MCU UART
+# hvc15 for MCU UART
 /dev/hvc15  u:object_r:mcu_uart_device:s0
+
+# hvc16 for Ti50 emulator
+/dev/hvc16  u:object_r:ti50_char_device:s0
 
 # ARM serial console device
 /dev/ttyAMA[0-9]*  u:object_r:serial_device:s0
