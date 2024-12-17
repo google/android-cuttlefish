@@ -39,6 +39,7 @@ struct GuestConfig {
   bool supports_bgra_framebuffers = false;
   bool prefer_drm_virgl_when_supported = false;
   bool mouse_supported = false;
+  std::string ti50_emulator;
 };
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults();

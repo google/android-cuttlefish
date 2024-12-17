@@ -17,6 +17,7 @@
 #include "cuttlefish_config.h"
 #include "host/libs/config/cuttlefish_config.h"
 
+#include <string>
 #include <string_view>
 
 #include <android-base/logging.h>
@@ -1010,6 +1011,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_vhost_user_block(
 }
 bool CuttlefishConfig::InstanceSpecific::vhost_user_block() const {
   return (*Dictionary())[kVhostUserBlock].asBool();
+}
+
+static constexpr char kTi50[] = "ti50";
+void CuttlefishConfig::MutableInstanceSpecific::set_ti50_emulator(
+    const std::string& ti50) {
+  (*Dictionary())[kTi50] = ti50;
+}
+std::string CuttlefishConfig::InstanceSpecific::ti50_emulator() const {
+  return (*Dictionary())[kTi50].asString();
 }
 
 static constexpr char kEnableWebRTC[] = "enable_webrtc";

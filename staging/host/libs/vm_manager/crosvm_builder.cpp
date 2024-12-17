@@ -113,6 +113,11 @@ void CrosvmBuilder::AddHvcReadWrite(const std::string& output,
       "--serial=hardware=legacy-virtio-console,num=", ++hvc_num_,
       ",type=file,path=", output, ",input=", input);
 }
+void CrosvmBuilder::AddHvcSocket(const std::string& socket) {
+  command_.AddParameter(
+      "--serial=hardware=virtio-console,num=", ++hvc_num_,
+      ",type=unix-stream,input-unix-stream=true,path=", socket);
+}
 
 void CrosvmBuilder::AddReadOnlyDisk(const std::string& path) {
   command_.AddParameter("--block=path=", path, ",ro=true");
