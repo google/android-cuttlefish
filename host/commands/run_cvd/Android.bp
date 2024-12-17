@@ -104,6 +104,7 @@ cc_binary_host {
                 "launch/mcu.cpp",
                 "launch/modem.cpp",
                 "launch/open_wrt.cpp",
+                "launch/ti50_emulator.cpp",
                 "launch/tombstone_receiver.cpp",
                 "launch/vhost_device_vsock.cpp",
                 "launch/wmediumd_server.cpp",

@@ -55,5 +55,8 @@
 # MCU UART
 /dev/hvc15 0666 system system
 
+# Ti50 emulator
+/dev/hvc16 0666 hsm hsm
+
 # Factory Reset Protection
 /dev/block/by-name/frp 0660 system system
