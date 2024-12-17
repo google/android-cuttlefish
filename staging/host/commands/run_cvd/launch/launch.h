@@ -141,4 +141,8 @@ McuComponent();
 
 std::optional<MonitorCommand> VhalProxyServer(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
+
+fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
+                                 const CuttlefishConfig::InstanceSpecific>>
+Ti50EmulatorComponent();
 }  // namespace cuttlefish
