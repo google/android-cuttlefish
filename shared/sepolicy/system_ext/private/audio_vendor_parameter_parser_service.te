@@ -10,4 +10,8 @@ add_service(audio_vendor_parameter_parser, audio_vendor_parameter_parser_service
 binder_call(audioserver, audio_vendor_parameter_parser)
 binder_call(audio_vendor_parameter_parser, servicemanager)
 
+# Add permission to access/read and get system properties
+# ro.audio.ihaladaptervendorextension_libname
+get_prop(audio_vendor_parameter_parser, system_audio_config_prop)
+
 allow audioserver audio_vendor_parameter_parser_service:service_manager find;
