@@ -1,7 +1,7 @@
 package com.android.minidroid.testservice;
 
 interface ITestService {
-    const int SERVICE_PORT = 5678;
+    const int PORT = 5678;
 
     /* make server process print 'Hello World' to stdout. */
     void sayHello();
