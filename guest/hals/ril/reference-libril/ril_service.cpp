@@ -25,10 +25,14 @@
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <android/hardware/radio/1.6/IRadio.h>
 #include <android/hardware/radio/1.6/IRadioIndication.h>
 #include <android/hardware/radio/1.6/IRadioResponse.h>
 #include <android/hardware/radio/1.6/types.h>
+#include <android/hardware/radio/deprecated/1.0/IOemHook.h>
 #include <libradiocompat/CallbackManager.h>
 #include <libradiocompat/RadioData.h>
 #include <libradiocompat/RadioIms.h>
@@ -37,8 +41,7 @@
 #include <libradiocompat/RadioModem.h>
 #include <libradiocompat/RadioSim.h>
 #include <libradiocompat/RadioVoice.h>
-
-#include <android/hardware/radio/deprecated/1.0/IOemHook.h>
+#pragma clang diagnostic pop
 
 #include <hwbinder/IPCThreadState.h>
 #include <hwbinder/ProcessState.h>

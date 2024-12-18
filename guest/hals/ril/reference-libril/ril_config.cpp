@@ -22,12 +22,16 @@
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <android/hardware/radio/config/1.1/IRadioConfig.h>
 #include <android/hardware/radio/config/1.2/IRadioConfigIndication.h>
 #include <android/hardware/radio/config/1.2/IRadioConfigResponse.h>
 #include <android/hardware/radio/config/1.3/IRadioConfig.h>
 #include <android/hardware/radio/config/1.3/IRadioConfigResponse.h>
 #include <libradiocompat/RadioConfig.h>
+#pragma clang diagnostic pop
 
 #include <ril.h>
 #include <guest/hals/ril/reference-libril/ril_service.h>
