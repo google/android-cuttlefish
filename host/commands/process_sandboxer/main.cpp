@@ -17,7 +17,9 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/prctl.h>
+#include <unistd.h>
 
+#include <cerrno>
 #include <memory>
 #include <optional>
 #include <string>
@@ -25,6 +27,7 @@
 #include <utility>
 #include <vector>
 
+#include <absl/base/log_severity.h>
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
 #include <absl/log/check.h>
@@ -33,7 +36,6 @@
 #include <absl/log/log.h>
 #include <absl/status/status.h>
 #include <absl/strings/match.h>
-#include <absl/strings/numbers.h>
 #include <absl/strings/str_cat.h>
 
 #include "host/commands/process_sandboxer/filesystem.h"

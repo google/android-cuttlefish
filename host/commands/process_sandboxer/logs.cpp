@@ -18,13 +18,19 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <cerrno>
+#include <cstring>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include <absl/log/log.h>
+#include <absl/log/log_entry.h>
 #include <absl/log/log_sink.h>
 #include <absl/log/log_sink_registry.h>
+#include <absl/status/status.h>
 #include <absl/status/statusor.h>
 
 namespace cuttlefish {

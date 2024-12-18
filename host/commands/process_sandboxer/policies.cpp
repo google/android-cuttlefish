@@ -16,13 +16,20 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <stdlib.h>
+
+#include <cerrno>
 #include <memory>
 #include <ostream>
+#include <set>
+#include <string>
 #include <string_view>
+#include <utility>
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/log/log.h>
 #include <absl/status/status.h>
+#include <sandboxed_api/sandbox2/policy.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
 
 #include "host/commands/process_sandboxer/filesystem.h"
