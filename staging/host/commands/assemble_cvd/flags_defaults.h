@@ -198,7 +198,7 @@
 
 // Modem Simulator default parameters
 #define CF_DEFAULTS_ENABLE_MODEM_SIMULATOR true
-#define CF_DEFAULTS_MODEM_SIMULATOR_SIM_TYPE 2
+#define CF_DEFAULTS_MODEM_SIMULATOR_SIM_TYPE 1
 #define CF_DEFAULTS_MODEM_SIMULATOR_COUNT 1
 
 // Audio default parameters
