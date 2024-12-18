@@ -33,8 +33,7 @@
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
 
-namespace cuttlefish {
-namespace process_sandboxer {
+namespace cuttlefish::process_sandboxer {
 namespace {
 
 // Implementation based on absl::log_internal::StderrLogSink
@@ -92,5 +91,4 @@ absl::Status LogToFiles(const std::vector<std::string>& paths) {
   return absl::OkStatus();
 }
 
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
+}  // namespace cuttlefish::process_sandboxer
