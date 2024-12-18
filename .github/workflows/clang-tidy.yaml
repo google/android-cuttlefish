@@ -1,0 +1,39 @@
+name: Clang-tidy on debian testing
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main  # push events to main branch occur after PRs are merged, when the same checks were run
+
+jobs:
+  cvd-clang-tidy:
+    runs-on: ubuntu-latest
+    container: 
+      image: debian@sha256:e400e96695f74dbad8fd4f30e2e5b7a16e3489638cb640180eac76d14251be67 # debian 13 trixie-20241202
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Setup apt
+      run: apt update -y && apt upgrade -y
+    - name: Install dependencies
+      run: apt install -y git clang libcurl4-openssl-dev clang-tidy
+    - name: Install bazel
+      run: bash tools/buildutils/installbazel.sh
+    - name: Log dependency versions
+      run: |
+        bazel --version
+        clang --version
+        clang-tidy --version
+        g++ --version
+    - name: Build cvd
+      run: cd base/cvd && bazel build ...
+    - name: Test cvd
+      run: cd base/cvd && bazel test --sandbox_writable_path=$HOME --test_output=errors ...
+    - name: Upload test logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: testlogs
+        path: bazel-testlogs
+    - name: Run clang-tidy
+      run: cd base/cvd && bazel build //cuttlefish/... --config clang-tidy --keep_going

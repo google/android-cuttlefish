@@ -484,10 +484,11 @@ Result<std::string> ReadFileContents(const std::string& filepath) {
 }
 
 std::string CurrentDirectory() {
-  std::unique_ptr<char, void (*)(void*)> cwd(getcwd(nullptr, 0), &free);
+  char unused_buffer[2];
+  std::unique_ptr<char, void (*)(void*)> cwd(getcwd(unused_buffer, 0), &free);
   std::string process_cwd(cwd.get());
   if (!cwd) {
-    PLOG(ERROR) << "`getcwd(nullptr, 0)` failed";
+    PLOG(ERROR) << "`getcwd(unused_buffer, 0)` failed";
     return "";
   }
   return process_cwd;
