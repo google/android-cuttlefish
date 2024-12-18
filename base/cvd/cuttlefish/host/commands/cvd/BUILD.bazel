@@ -294,6 +294,8 @@ cc_binary(
 cc_test(
     name = "cvd_test",
     srcs = [
+        "unittests/fetch/fetch_cvd_parser_test.cpp",
+        "unittests/fetch/fetch_cvd_test.cpp",
         "unittests/parser/configs_inheritance_test.cc",
         "unittests/parser/flags_parser_test.cc",
         "unittests/parser/instance/boot_configs_test.cc",
@@ -339,6 +341,7 @@ cc_test(
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/libs/config",
         "//libbase",
+        "@fmt",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@jsoncpp",

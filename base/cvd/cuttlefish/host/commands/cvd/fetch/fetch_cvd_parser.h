@@ -25,6 +25,7 @@
 #include "common/libs/utils/result.h"
 #include "host/libs/web/android_build_api.h"
 #include "host/libs/web/android_build_string.h"
+#include "host/libs/web/cas/cas_downloader.h"
 #include "host/libs/web/chrome_os_build_string.h"
 
 namespace cuttlefish {
@@ -68,6 +69,7 @@ struct BuildApiFlags {
   bool external_dns_resolver = kDefaultExternalDnsResolver;
   std::string api_base_url = kAndroidBuildServiceUrl;
   bool enable_caching = kDefaultEnableCaching;
+  CasDownloaderFlags cas_downloader_flags;
 };
 
 struct VectorFlags {
