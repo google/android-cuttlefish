@@ -19,8 +19,6 @@
 #include <hardware/ril/librilutils/proto/sap-api.pb.h>
 #include <utils/Log.h>
 
-using namespace std;
-
 /**
  * Template queue class to handling requests for a rild socket.
  * <p>
