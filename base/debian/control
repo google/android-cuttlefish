@@ -3,7 +3,6 @@ Maintainer: Cuttlefish Team
 Section: misc
 Priority: optional
 Build-Depends: bazel [amd64],
-               clang,
                config-package-dev,
                debhelper-compat (= 12),
                git,
