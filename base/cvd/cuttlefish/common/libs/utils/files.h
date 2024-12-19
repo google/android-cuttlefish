@@ -78,7 +78,7 @@ std::string cpp_basename(const std::string& str);
 bool FileIsSocket(const std::string& path);
 // Get disk usage of a path. If this path is a directory, disk usage will
 // account for all files under this folder(recursively).
-int GetDiskUsage(const std::string& path);
+Result<int> GetDiskUsage(const std::string& path);
 
 // acloud related API
 std::string FindImage(const std::string& search_path,

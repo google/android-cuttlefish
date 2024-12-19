@@ -57,6 +57,7 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/macros.h>
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 
@@ -607,11 +608,12 @@ bool FileIsSocket(const std::string& path) {
   return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
 }
 
-int GetDiskUsage(const std::string& path) {
+Result<int> GetDiskUsage(const std::string& path) {
   Command du_cmd("du");
-  du_cmd.AddParameter("-b");
-  du_cmd.AddParameter("-k");
-  du_cmd.AddParameter("-s");
+  du_cmd.AddParameter("-s");  // summarize, only output total
+  du_cmd.AddParameter(
+      "--apparent-size");  // apparent size rather than device usage
+  du_cmd.AddParameter("--block-size=1");  // bytes unit
   du_cmd.AddParameter(path);
   SharedFD read_fd;
   SharedFD write_fd;
@@ -620,9 +622,12 @@ int GetDiskUsage(const std::string& path) {
   auto subprocess = du_cmd.Start();
   std::array<char, 1024> text_output{};
   const auto bytes_read = read_fd->Read(text_output.data(), text_output.size());
-  CHECK_GT(bytes_read, 0) << "Failed to read from pipe " << strerror(errno);
+  CF_EXPECTF(bytes_read > 0, "Failed to read from pipe: {}", strerror(errno));
   std::move(subprocess).Wait();
-  return atoi(text_output.data()) * 1024;
+  int result;
+  CF_EXPECTF(android::base::ParseInt(text_output.data(), &result),
+             "Failure parsing \"{}\" to integer.", text_output.data());
+  return result;
 }
 
 /**
