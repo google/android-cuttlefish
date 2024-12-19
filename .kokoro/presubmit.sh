@@ -2,6 +2,9 @@
 
 set -e -x
 
+sudo apt update
+sudo apt upgrade -y
+
 # realpath .kokoro/..
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"
 TOOL_DIR="${REPO_DIR}/tools"
