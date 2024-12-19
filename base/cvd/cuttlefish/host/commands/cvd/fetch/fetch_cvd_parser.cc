@@ -16,6 +16,7 @@
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <optional>
 #include <sstream>
@@ -30,6 +31,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/web/android_build_string.h"
+#include "host/libs/web/cas/cas_downloader.h"
 
 namespace cuttlefish {
 namespace {
@@ -54,6 +56,19 @@ Flag GflagsCompatFlagSeconds(const std::string& name,
         CF_EXPECTF(android::base::ParseInt(match.value, &parsed_int),
                    "Failed to parse \"{}\" as an integer", match.value);
         value = std::chrono::seconds(parsed_int);
+        return {};
+      });
+}
+
+Flag GflagsCompatFlagInt64(const std::string& name, int64_t& value) {
+  return GflagsCompatFlag(name)
+      .Getter([&value]() { return std::to_string(value); })
+      .Setter([&value](const FlagMatch& match) -> Result<void> {
+        int64_t parsed_int;
+        CF_EXPECTF(android::base::ParseInt(match.value, &parsed_int),
+                   "Failed to parse \"{}\" as an integer (int64_t)",
+                   match.value);
+        value = parsed_int;
         return {};
       });
 }
@@ -117,6 +132,76 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                                       credential_flags.service_account_filepath)
                          .Help("Enforce reading service account credentials "
                                "from the given filepath."));
+
+  // Most of these flags are passed to casdownloader (a go binary). A prefix
+  // "cas-" is added to the flag name if it doesn't already have one to minimize
+  // chances of flag name conflicts and "-" is replaced with "_" for consistency
+  // with cvd flags. E.g. the casdownloader flag "cache-dir" becomes cvd flag
+  // "cas_cache_dir".
+  CasDownloaderFlags& cas_downloader_flags =
+      fetch_flags.build_api_flags.cas_downloader_flags;
+  flags.emplace_back(GflagsCompatFlag("cas_config_filepath",
+                                      cas_downloader_flags.cas_config_filepath)
+                         .Help("Path to the CAS downloader config file. Other "
+                               "CAS flags will be ignored if this is set."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_downloader_path",
+                       cas_downloader_flags.downloader_path)
+          .Help("Path to the CAS downloader binary. Enables CAS downloading if "
+                "specified."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_prefer_uncompressed",
+                       cas_downloader_flags.prefer_uncompressed)
+          .Help("Download uncompressed artifacts if available."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_cache_dir", cas_downloader_flags.cache_dir)
+          .Help("Cache directory to store downloaded files (casdownloader "
+                "flag: cache-dir)."));
+  flags.emplace_back(
+      GflagsCompatFlagInt64("cas_cache_max_size",
+                            cas_downloader_flags.cache_max_size)
+          .Help("Cache is trimmed if the cache gets larger than "
+                "this value in bytes (casdownloader flag: cache-max-size)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_cache_lock", cas_downloader_flags.use_hardlink)
+          .Help("Enable cache lock (casdownloader flag: cache-lock)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_use_hardlink", cas_downloader_flags.use_hardlink)
+          .Help("By default local cache will use hardlink when push and pull "
+                "files (casdownloader flag: use-hardlink)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_concurrency", cas_downloader_flags.cas_concurrency)
+          .Help("the maximum number of concurrent download operations "
+                "(casdownloader flag: cas-concurrency)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_memory_limit", cas_downloader_flags.memory_limit)
+          .Help("Memory limit in MiB (casdownloader flag: memory-limit)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_rpc_timeout", cas_downloader_flags.rpc_timeout)
+          .Help("Default RPC timeout in seconds (casdownloader flag: "
+                "rpc-timeout)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_get_capabilities_timeout",
+                       cas_downloader_flags.get_capabilities_timeout)
+          .Help("RPC timeout for GetCapabilities in seconds (casdownloader "
+                "flag: get-capabilities-timeout)."));
+  flags.emplace_back(GflagsCompatFlag("cas_get_tree_timeout",
+                                      cas_downloader_flags.get_tree_timeout)
+                         .Help("RPC timeout for GetTree in seconds "
+                               "(casdownloader flag: get-tree-timeout)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_batch_read_blobs_timeout",
+                       cas_downloader_flags.batch_read_blobs_timeout)
+          .Help("RPC timeout for BatchReadBlobs in seconds (casdownloader "
+                "flag: batch-read-blobs-timeout)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_batch_update_blobs_timeout",
+                       cas_downloader_flags.batch_update_blobs_timeout)
+          .Help("RPC timeout for BatchUpdateBlobs in seconds (casdownloader "
+                "flag: batch-update-blobs-timeout)."));
+  flags.emplace_back(GflagsCompatFlag("version", cas_downloader_flags.version)
+                         .Help("Print CAS downloader version information "
+                               "(casdownloader flag: version)."));
 
   VectorFlags& vector_flags = fetch_flags.vector_flags;
   flags.emplace_back(
