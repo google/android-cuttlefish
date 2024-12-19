@@ -27,6 +27,12 @@ jobs:
       # debian:bullseye
       image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
     steps:
+    - name: Common bazel setup
+      uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 #aka 0.9.1
+      with:
+        bazelisk-cache: true # Avoid downloading Bazel every time.
+        disk-cache: ${{ github.workflow }} # Store build cache per workflow.
+        repository-cache: true # Share repository cache between workflows.
     - name: Check for dockerenv file
       run: (ls /.dockerenv && echo 'Found dockerenv') || (echo 'No dockerenv')
     - name: setup apt
@@ -56,6 +62,12 @@ jobs:
     container: 
       image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
     steps:
+    - name: Common bazel setup
+      uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 #aka 0.9.1
+      with:
+        bazelisk-cache: true # Avoid downloading Bazel every time.
+        disk-cache: ${{ github.workflow }} # Store build cache per workflow.
+        repository-cache: true # Share repository cache between workflows.
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Setup apt
@@ -78,6 +90,12 @@ jobs:
   e2e-tests-orchestration:
     runs-on: ubuntu-22.04 
     steps:
+    - name: Common bazel setup
+      uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 #aka 0.9.1
+      with:
+        bazelisk-cache: true # Avoid downloading Bazel every time.
+        disk-cache: ${{ github.workflow }} # Store build cache per workflow.
+        repository-cache: true # Share repository cache between workflows.
     - name: Free space
       run: |
         echo "disk space before cleanup:"
