@@ -608,12 +608,14 @@ bool FileIsSocket(const std::string& path) {
   return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
 }
 
-Result<int> GetDiskUsage(const std::string& path) {
+// return unit determined by the `--block-size` argument
+Result<long> GetDiskUsage(const std::string& path,
+                          const std::string& size_arg) {
   Command du_cmd("du");
   du_cmd.AddParameter("-s");  // summarize, only output total
   du_cmd.AddParameter(
       "--apparent-size");  // apparent size rather than device usage
-  du_cmd.AddParameter("--block-size=1");  // bytes unit
+  du_cmd.AddParameter("--block-size=" + size_arg);
   du_cmd.AddParameter(path);
   SharedFD read_fd;
   SharedFD write_fd;
@@ -628,6 +630,14 @@ Result<int> GetDiskUsage(const std::string& path) {
   CF_EXPECTF(android::base::ParseInt(text_output.data(), &result),
              "Failure parsing \"{}\" to integer.", text_output.data());
   return result;
+}
+
+Result<long> GetDiskUsageBytes(const std::string& path) {
+  return GetDiskUsage(path, "1");
+}
+
+Result<long> GetDiskUsageGigabytes(const std::string& path) {
+  return GetDiskUsage(path, "1G");
 }
 
 /**
