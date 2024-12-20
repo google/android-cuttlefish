@@ -16,14 +16,17 @@
 
 #include <sys/stat.h>
 
+#include <cerrno>
 #include <deque>
 #include <initializer_list>
 #include <string>
 #include <string_view>
 
+#include <absl/strings/match.h>
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_join.h>
 #include <absl/strings/str_split.h>
+#include <absl/strings/string_view.h>
 #include <absl/strings/strip.h>
 
 namespace cuttlefish::process_sandboxer {
