@@ -21,10 +21,12 @@
   <string name="config_display_features" translatable="false">fold-[884,0,884,2208]</string>
   <!-- Map of System DeviceState supplied by DeviceStateManager to WM Jetpack posture. -->
   <string-array name="config_device_state_postures" translatable="false">
-      <item>0:1</item> <!-- CLOSED : STATE_FLAT -->
-      <item>1:2</item> <!-- HALF_OPENED : STATE_HALF_OPENED -->
-      <item>2:3</item> <!-- OPENED : STATE_FLIPPED -->
-      <item>3:1</item> <!-- REAR_DISPLAY: STATE_FLAT -->
+      <item>0:1</item>    <!-- CLOSED                     : STATE_FLAT -->
+      <item>1:2</item>    <!-- HALF_OPENED                : STATE_HALF_OPENED -->
+      <item>2:3</item>    <!-- OPENED                     : STATE_FLIPPED -->
+      <item>3:1</item>    <!-- REAR_DISPLAY               : STATE_FLAT -->
+      <item>4:1000</item> <!-- CONCURRENT                 : COMMON_STATE_USE_BASE_STATE -->
+      <item>5:1</item>    <!-- REAR_DISPLAY_OUTER_DEFAULT : COMMON_STATE_NO_FOLDING_FEATURES -->
   </string-array>
 
   <!-- Map of DeviceState to rotation lock setting. Each entry must be in the format "key:value",
@@ -62,6 +64,7 @@
        state. Default is empty. -->
   <integer-array name="config_rearDisplayDeviceStates" translatable="false">
     <item>3</item> <!-- REAR_DISPLAY_STATE -->
+    <item>5</item> <!-- REAR_DISPLAY_OUTER_DEFAULT -->
   </integer-array>
 
   <!-- Indicates whether to enable an animation when unfolding a device or not -->

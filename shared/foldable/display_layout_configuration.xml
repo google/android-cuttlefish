@@ -51,4 +51,46 @@
       <address>4619827353912518657</address>
     </display>
   </layout>
+
+  <layout>
+  <!-- CONCURRENT_INNER_DEFAULT -->
+    <state>4</state>
+    <display enabled="true" defaultDisplay="true" refreshRateZoneId="concurrent">
+        <address>4619827353912518656</address>
+        <position>front</position>
+        <brightnessThrottlingMapId>concurrent</brightnessThrottlingMapId>
+        <refreshRateThermalThrottlingMapId>concurrent</refreshRateThermalThrottlingMapId>
+    </display>
+
+    <display enabled="true" refreshRateZoneId="concurrent">
+        <address>4619827353912518657</address>
+        <position>rear</position>
+        <brightnessThrottlingMapId>concurrent</brightnessThrottlingMapId>
+        <leadDisplayAddress>4619827353912518656</leadDisplayAddress>
+    </display>
+  </layout>
+
+  <layout>
+  <!-- REAR_DISPLAY_OUTER_DEFAULT -->
+    <state>5</state>
+    <display enabled="true" defaultDisplay="true" refreshRateZoneId="concurrent">
+      <address>4619827353912518657</address>
+      <!-- Although this is the outer "rear" display, in this mode it is front relative
+           to the user. The inner display which is facing away from the user is the
+           rear display. Configuring it this way also means that DisplayManagerService's
+           mirrororing logic can correctly prevent the outer display's content from
+           being mirrored onto the inner display. -->
+      <position>front</position>
+      <brightnessThrottlingMapId>concurrent</brightnessThrottlingMapId>
+    </display>
+
+    <display enabled="true" refreshRateZoneId="concurrent">
+        <address>4619827353912518656</address>
+        <position>rear</position>
+        <brightnessThrottlingMapId>concurrent</brightnessThrottlingMapId>
+        <refreshRateThermalThrottlingMapId>concurrent</refreshRateThermalThrottlingMapId>
+        <leadDisplayAddress>4619827353912518657</leadDisplayAddress>
+    </display>
+  </layout>
+
 </layouts>
