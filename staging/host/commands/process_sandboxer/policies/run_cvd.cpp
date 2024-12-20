@@ -15,11 +15,18 @@
  */
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <linux/bpf_common.h>
+#include <linux/filter.h>
+#include <linux/prctl.h>
 #include <sys/mman.h>
-#include <sys/prctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <syscall.h>
+#include <unistd.h>
+
+#include <cstdint>
+#include <string>
+#include <vector>
 
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_replace.h>

@@ -16,13 +16,17 @@
 #include "host/commands/process_sandboxer/proxy_common.h"
 
 #include <sys/socket.h>
+#include <sys/uio.h>
 
+#include <cerrno>
 #include <cstdlib>
+#include <cstring>
+#include <optional>
 #include <string>
+#include <string_view>
 
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
-#include <absl/strings/numbers.h>
 
 namespace cuttlefish::process_sandboxer {
 

@@ -16,10 +16,13 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <linux/filter.h>
 #include <netinet/tcp.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <syscall.h>
+
+#include <vector>
 
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>

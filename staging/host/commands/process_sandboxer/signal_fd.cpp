@@ -17,6 +17,13 @@
 
 #include <signal.h>
 #include <sys/signalfd.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <cerrno>
+#include <cstddef>
+#include <string>
+#include <utility>
 
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>

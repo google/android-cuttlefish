@@ -16,7 +16,11 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <linux/filter.h>
+#include <sys/socket.h>
 #include <syscall.h>
+
+#include <vector>
 
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
