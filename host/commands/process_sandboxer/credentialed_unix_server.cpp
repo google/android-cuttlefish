@@ -26,19 +26,20 @@
 
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
-
-#include "host/commands/process_sandboxer/unique_fd.h"
+#include <sandboxed_api/util/fileops.h>
 
 namespace cuttlefish::process_sandboxer {
 
-CredentialedUnixServer::CredentialedUnixServer(UniqueFd fd)
+using sapi::file_util::fileops::FDCloser;
+
+CredentialedUnixServer::CredentialedUnixServer(FDCloser fd)
     : fd_(std::move(fd)) {}
 
 absl::StatusOr<CredentialedUnixServer> CredentialedUnixServer::Open(
     const std::string& path) {
-  UniqueFd fd(socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0));
+  FDCloser fd(socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0));
 
-  if (fd.Get() < 0) {
+  if (fd.get() < 0) {
     return absl::ErrnoToStatus(errno, "`socket` failed");
   }
   sockaddr_un socket_name = {
@@ -47,32 +48,32 @@ absl::StatusOr<CredentialedUnixServer> CredentialedUnixServer::Open(
   std::snprintf(socket_name.sun_path, sizeof(socket_name.sun_path), "%s",
                 path.c_str());
   sockaddr* sockname_ptr = reinterpret_cast<sockaddr*>(&socket_name);
-  if (bind(fd.Get(), sockname_ptr, sizeof(socket_name)) < 0) {
+  if (bind(fd.get(), sockname_ptr, sizeof(socket_name)) < 0) {
     return absl::ErrnoToStatus(errno, "`bind` failed");
   }
 
   int enable_passcred = 1;
-  if (setsockopt(fd.Get(), SOL_SOCKET, SO_PASSCRED, &enable_passcred,
+  if (setsockopt(fd.get(), SOL_SOCKET, SO_PASSCRED, &enable_passcred,
                  sizeof(enable_passcred)) < 0) {
     static constexpr char kErr[] = "`setsockopt(..., SO_PASSCRED, ...)` failed";
     return absl::ErrnoToStatus(errno, kErr);
   }
 
-  if (listen(fd.Get(), 10) < 0) {
+  if (listen(fd.get(), 10) < 0) {
     return absl::ErrnoToStatus(errno, "`listen` failed");
   }
 
   return CredentialedUnixServer(std::move(fd));
 }
 
-absl::StatusOr<UniqueFd> CredentialedUnixServer::AcceptClient() {
-  UniqueFd client(accept4(fd_.Get(), nullptr, nullptr, SOCK_CLOEXEC));
-  if (client.Get() < 0) {
+absl::StatusOr<FDCloser> CredentialedUnixServer::AcceptClient() {
+  FDCloser client(accept4(fd_.get(), nullptr, nullptr, SOCK_CLOEXEC));
+  if (client.get() < 0) {
     return absl::ErrnoToStatus(errno, "`accept` failed");
   }
   return client;
 }
 
-int CredentialedUnixServer::Fd() const { return fd_.Get(); }
+int CredentialedUnixServer::Fd() const { return fd_.get(); }
 
 }  // namespace cuttlefish::process_sandboxer

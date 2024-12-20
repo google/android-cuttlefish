@@ -19,8 +19,7 @@
 #include <sys/signalfd.h>
 
 #include <absl/status/statusor.h>
-
-#include "host/commands/process_sandboxer/unique_fd.h"
+#include <sandboxed_api/util/fileops.h>
 
 namespace cuttlefish::process_sandboxer {
 
@@ -33,9 +32,9 @@ class SignalFd {
   int Fd() const;
 
  private:
-  SignalFd(UniqueFd);
+  SignalFd(sapi::file_util::fileops::FDCloser);
 
-  UniqueFd fd_;
+  sapi::file_util::fileops::FDCloser fd_;
 };
 
 }  // namespace cuttlefish::process_sandboxer
