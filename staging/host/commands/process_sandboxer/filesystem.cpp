@@ -18,7 +18,6 @@
 
 #include <cerrno>
 #include <deque>
-#include <initializer_list>
 #include <string>
 #include <string_view>
 
@@ -30,34 +29,6 @@
 #include <absl/strings/strip.h>
 
 namespace cuttlefish::process_sandboxer {
-
-// Copied from sandboxed_api/util/path.cc
-
-namespace internal {
-
-constexpr char kPathSeparator[] = "/";
-
-std::string JoinPathImpl(std::initializer_list<absl::string_view> paths) {
-  std::string result;
-  for (const auto& path : paths) {
-    if (path.empty()) {
-      continue;
-    }
-    if (result.empty()) {
-      absl::StrAppend(&result, path);
-      continue;
-    }
-    const auto comp = absl::StripPrefix(path, kPathSeparator);
-    if (absl::EndsWith(result, kPathSeparator)) {
-      absl::StrAppend(&result, comp);
-    } else {
-      absl::StrAppend(&result, kPathSeparator, comp);
-    }
-  }
-  return result;
-}
-
-}  // namespace internal
 
 // Copied from sandboxed_api/util/fileops.cc
 
