@@ -16,6 +16,7 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <sys/socket.h>
 #include <sys/syscall.h>
 
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
