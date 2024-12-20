@@ -28,12 +28,13 @@
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
 #include <absl/strings/str_cat.h>
-
-#include "host/commands/process_sandboxer/unique_fd.h"
+#include <sandboxed_api/util/fileops.h>
 
 namespace cuttlefish::process_sandboxer {
 
-SignalFd::SignalFd(UniqueFd fd) : fd_(std::move(fd)) {}
+using sapi::file_util::fileops::FDCloser;
+
+SignalFd::SignalFd(FDCloser fd) : fd_(std::move(fd)) {}
 
 absl::StatusOr<SignalFd> SignalFd::AllExceptSigChld() {
   sigset_t mask;
@@ -48,8 +49,8 @@ absl::StatusOr<SignalFd> SignalFd::AllExceptSigChld() {
     return absl::ErrnoToStatus(errno, "sigprocmask failed");
   }
 
-  UniqueFd fd(signalfd(-1, &mask, SFD_CLOEXEC | SFD_NONBLOCK));
-  if (fd.Get() < 0) {
+  FDCloser fd(signalfd(-1, &mask, SFD_CLOEXEC | SFD_NONBLOCK));
+  if (fd.get() < 0) {
     return absl::ErrnoToStatus(errno, "signalfd failed");
   }
   return SignalFd(std::move(fd));
@@ -57,7 +58,7 @@ absl::StatusOr<SignalFd> SignalFd::AllExceptSigChld() {
 
 absl::StatusOr<signalfd_siginfo> SignalFd::ReadSignal() {
   signalfd_siginfo info;
-  auto read_res = read(fd_.Get(), &info, sizeof(info));
+  auto read_res = read(fd_.get(), &info, sizeof(info));
   if (read_res < 0) {
     return absl::ErrnoToStatus(errno, "`read(signal_fd_, ...)` failed");
   } else if (read_res == 0) {
@@ -69,6 +70,6 @@ absl::StatusOr<signalfd_siginfo> SignalFd::ReadSignal() {
   return info;
 }
 
-int SignalFd::Fd() const { return fd_.Get(); }
+int SignalFd::Fd() const { return fd_.get(); }
 
 }  // namespace cuttlefish::process_sandboxer
