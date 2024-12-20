@@ -46,14 +46,15 @@
 #include <absl/strings/str_join.h>
 #include <absl/strings/str_split.h>
 #include <absl/types/span.h>
-
-#include "host/commands/process_sandboxer/unique_fd.h"
+#include <sandboxed_api/util/fileops.h>
 
 namespace cuttlefish::process_sandboxer {
 
+using sapi::file_util::fileops::FDCloser;
+
 absl::StatusOr<PidFd> PidFd::FromRunningProcess(pid_t pid) {
-  UniqueFd fd(syscall(__NR_pidfd_open, pid, 0));  // Always CLOEXEC
-  if (fd.Get() < 0) {
+  FDCloser fd(syscall(__NR_pidfd_open, pid, 0));  // Always CLOEXEC
+  if (fd.get() < 0) {
     return absl::ErrnoToStatus(errno, "`pidfd_open` failed");
   }
   return PidFd(std::move(fd), pid);
@@ -61,7 +62,7 @@ absl::StatusOr<PidFd> PidFd::FromRunningProcess(pid_t pid) {
 
 absl::StatusOr<PidFd> PidFd::LaunchSubprocess(
     absl::Span<const std::string> argv,
-    std::vector<std::pair<UniqueFd, int>> fds,
+    std::vector<std::pair<FDCloser, int>> fds,
     absl::Span<const std::string> env) {
   int pidfd;
   clone_args args_for_clone = clone_args{
@@ -78,7 +79,7 @@ absl::StatusOr<PidFd> PidFd::LaunchSubprocess(
     std::string argv_str = absl::StrJoin(argv, "','");
     VLOG(1) << res << ": Running w/o sandbox ['" << argv_str << "]";
 
-    UniqueFd fd(pidfd);
+    FDCloser fd(pidfd);
     return PidFd(std::move(fd), res);
   }
 
@@ -93,7 +94,7 @@ absl::StatusOr<PidFd> PidFd::LaunchSubprocess(
 
   std::unordered_map<int, int> backup_mapping;
   for (const auto& [my_fd, target_fd] : fds) {
-    int backup = fcntl(my_fd.Get(), F_DUPFD, minimum_backup_fd);
+    int backup = fcntl(my_fd.get(), F_DUPFD, minimum_backup_fd);
     PCHECK(backup >= 0) << "fcntl(..., F_DUPFD) failed";
     int flags = fcntl(backup, F_GETFD);
     PCHECK(flags >= 0) << "fcntl(..., F_GETFD failed";
@@ -130,12 +131,12 @@ absl::StatusOr<PidFd> PidFd::LaunchSubprocess(
   PLOG(FATAL) << "execv failed";
 }
 
-PidFd::PidFd(UniqueFd fd, pid_t pid) : fd_(std::move(fd)), pid_(pid) {}
+PidFd::PidFd(FDCloser fd, pid_t pid) : fd_(std::move(fd)), pid_(pid) {}
 
-int PidFd::Get() const { return fd_.Get(); }
+int PidFd::Get() const { return fd_.get(); }
 
-absl::StatusOr<std::vector<std::pair<UniqueFd, int>>> PidFd::AllFds() {
-  std::vector<std::pair<UniqueFd, int>> fds;
+absl::StatusOr<std::vector<std::pair<FDCloser, int>>> PidFd::AllFds() {
+  std::vector<std::pair<FDCloser, int>> fds;
 
   std::string dir_name = absl::StrFormat("/proc/%d/fd", pid_);
   std::unique_ptr<DIR, int (*)(DIR*)> dir(opendir(dir_name.c_str()), closedir);
@@ -154,8 +155,8 @@ absl::StatusOr<std::vector<std::pair<UniqueFd, int>>> PidFd::AllFds() {
       return absl::InternalError(error);
     }
     // Always CLOEXEC
-    UniqueFd our_fd(syscall(__NR_pidfd_getfd, fd_.Get(), other_fd, 0));
-    if (our_fd.Get() < 0) {
+    FDCloser our_fd(syscall(__NR_pidfd_getfd, fd_.get(), other_fd, 0));
+    if (our_fd.get() < 0) {
       return absl::ErrnoToStatus(errno, "`pidfd_getfd` failed");
     }
     fds.emplace_back(std::move(our_fd), other_fd);
@@ -269,7 +270,7 @@ absl::Status PidFd::HaltChildHierarchy() {
 }
 
 absl::Status PidFd::SendSignal(int signal) {
-  if (syscall(__NR_pidfd_send_signal, fd_.Get(), signal, nullptr, 0) < 0) {
+  if (syscall(__NR_pidfd_send_signal, fd_.get(), signal, nullptr, 0) < 0) {
     return absl::ErrnoToStatus(errno, "pidfd_send_signal failed");
   }
   return absl::OkStatus();
