@@ -476,13 +476,17 @@ Result<std::string> ReadFileContents(const std::string& filepath) {
 }
 
 std::string CurrentDirectory() {
-  std::unique_ptr<char, void (*)(void*)> cwd(getcwd(nullptr, 0), &free);
-  std::string process_cwd(cwd.get());
-  if (!cwd) {
-    PLOG(ERROR) << "`getcwd(nullptr, 0)` failed";
-    return "";
+  std::vector<char> process_wd(1 << 12, ' ');
+  while (getcwd(process_wd.data(), process_wd.size()) == nullptr) {
+    if (errno == ERANGE) {
+      process_wd.resize(process_wd.size() * 2, ' ');
+    } else {
+      PLOG(ERROR) << "getcwd failed";
+      return "";
+    }
   }
-  return process_cwd;
+  // Will find the null terminator and size the string appropriately.
+  return std::string(process_wd.data());
 }
 
 FileSizes SparseFileSizes(const std::string& path) {

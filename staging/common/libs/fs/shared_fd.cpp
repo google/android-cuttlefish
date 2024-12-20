@@ -885,7 +885,8 @@ int FileInstance::LinkAtCwd(const std::string& path) {
 
   std::string name = "/proc/self/fd/";
   name += std::to_string(fd_);
-  return linkat(-1, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
+  return linkat(AT_FDCWD, name.c_str(), AT_FDCWD, path.c_str(),
+                AT_SYMLINK_FOLLOW);
 }
 
 int FileInstance::Listen(int backlog) {
