@@ -18,6 +18,7 @@
 
 #include <errno.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
 #include <sys/syscall.h>
 
 #include <sandboxed_api/sandbox2/policybuilder.h>

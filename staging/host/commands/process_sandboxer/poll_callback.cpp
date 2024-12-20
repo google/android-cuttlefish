@@ -18,7 +18,10 @@
 
 #include <poll.h>
 
+#include <cerrno>
+#include <cstddef>
 #include <functional>
+#include <utility>
 #include <vector>
 
 #include <absl/log/log.h>

@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include <algorithm>
+#include <cerrno>
+#include <cstddef>
+#include <cstring>
 #include <iostream>
+#include <string>
+#include <string_view>
 
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
 #include <absl/strings/numbers.h>
 
-#include "proxy_common.h"
+#include "host/commands/process_sandboxer/proxy_common.h"
 
 namespace cuttlefish::process_sandboxer {
 namespace {

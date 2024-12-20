@@ -15,13 +15,12 @@
  */
 #include "host/commands/process_sandboxer/policies.h"
 
-#include <sys/prctl.h>
+#include <linux/prctl.h>
 #include <sys/socket.h>
 #include <syscall.h>
 
-#include <absl/log/log.h>
-#include <absl/strings/str_cat.h>
-#include <absl/strings/str_replace.h>
+#include <string>
+
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
