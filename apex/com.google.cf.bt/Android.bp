@@ -23,13 +23,6 @@ prebuilt_etc {
 }
 
 prebuilt_etc {
-    name: "android.hardware.bluetooth-service.default.xml",
-    src: ":manifest_android.hardware.bluetooth-service.default.xml",
-    sub_dir: "vintf",
-    installable: false,
-}
-
-prebuilt_etc {
     name: "android.hardware.bluetooth.finder-service.default.xml",
     src: ":manifest_android.hardware.bluetooth.finder-service.default.xml",
     sub_dir: "vintf",
@@ -67,19 +60,18 @@ apex {
     soc_specific: true,
 
     binaries: [
-        "android.hardware.bluetooth-service.default",
+        "android.hardware.bluetooth-service.cuttlefish",
         "android.hardware.bluetooth.finder-service.default",
         "android.hardware.bluetooth.lmp_event-service.default",
         "android.hardware.bluetooth.ranging-service.default",
         "android.hardware.bluetooth.socket-service.default",
-        "bt_vhci_forwarder",
     ],
     prebuilts: [
         // permissions
         "android.hardware.bluetooth.prebuilt.xml",
         "android.hardware.bluetooth_le.prebuilt.xml",
         // vintf
-        "android.hardware.bluetooth-service.default.xml",
+        "android.hardware.bluetooth-service.cuttlefish.xml",
         "android.hardware.bluetooth.finder-service.default.xml",
         "android.hardware.bluetooth.lmp_event-service.default.xml",
         "android.hardware.bluetooth.ranging-service.default.xml",
