@@ -59,6 +59,7 @@
 #include <sandboxed_api/sandbox2/policy.h>
 #include <sandboxed_api/sandbox2/sandbox2.h>
 #include <sandboxed_api/sandbox2/util.h>
+#include <sandboxed_api/util/path.h>
 #pragma clang diagnostic pop
 
 #include "host/commands/process_sandboxer/credentialed_unix_server.h"
@@ -77,6 +78,7 @@ using sandbox2::Policy;
 using sandbox2::Sandbox2;
 using sandbox2::Syscall;
 using sandbox2::util::GetProgName;
+using sapi::file::JoinPath;
 
 namespace {
 
