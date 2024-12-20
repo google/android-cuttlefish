@@ -31,14 +31,15 @@
 #include <absl/status/status.h>
 #include <sandboxed_api/sandbox2/policy.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
+#include <sandboxed_api/util/fileops.h>
 #include <sandboxed_api/util/path.h>
 
-#include "host/commands/process_sandboxer/filesystem.h"
 #include "host/commands/process_sandboxer/proxy_common.h"
 
 namespace cuttlefish::process_sandboxer {
 
 using sapi::file::JoinPath;
+using sapi::file_util::fileops::CreateDirectoryRecursively;
 
 absl::Status HostInfo::EnsureOutputDirectoriesExist() {
   if (!CreateDirectoryRecursively(assembly_dir, 0700)) {
