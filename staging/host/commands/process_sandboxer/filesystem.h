@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <initializer_list>
 #include <string>
 #include <string_view>
 
@@ -22,20 +21,6 @@ namespace cuttlefish::process_sandboxer {
 
 // Recursively creates a directory, skipping segments that already exist.
 bool CreateDirectoryRecursively(const std::string& path, int mode);
-
-// Copied from sandboxed_api/util/path.h
-
-namespace internal {
-// Not part of the public API.
-std::string JoinPathImpl(std::initializer_list<std::string_view> paths);
-}  // namespace internal
-
-// Joins multiple paths together using the platform-specific path separator.
-// Arguments must be convertible to absl::string_view.
-template <typename... T>
-inline std::string JoinPath(const T&... args) {
-  return internal::JoinPathImpl({args...});
-}
 
 // Collapses duplicate "/"s, resolve ".." and "." path elements, removes
 // trailing "/".
