@@ -15,22 +15,30 @@
  */
 #include "host/commands/process_sandboxer/sandbox_manager.h"
 
-#include <fcntl.h>
-#include <linux/sched.h>
+#include <poll.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <sys/eventfd.h>
-#include <sys/prctl.h>
+#include <sys/resource.h>
 #include <sys/signalfd.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
-#include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <algorithm>
+#include <cerrno>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <sstream>
+#include <string>
+#include <string_view>
 #include <thread>
 #include <utility>
+#include <vector>
 
 #include <absl/functional/bind_front.h>
 #include <absl/log/log.h>
@@ -43,7 +51,7 @@
 #include <absl/strings/numbers.h>
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_format.h>
-#include <absl/strings/str_join.h>
+#include <absl/time/time.h>
 #include <absl/types/span.h>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -59,6 +67,8 @@
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/poll_callback.h"
 #include "host/commands/process_sandboxer/proxy_common.h"
+#include "host/commands/process_sandboxer/signal_fd.h"
+#include "host/commands/process_sandboxer/unique_fd.h"
 
 namespace cuttlefish::process_sandboxer {
 
@@ -476,16 +486,17 @@ bool SandboxManager::Running() const { return running_; }
 absl::Status SandboxManager::Iterate() {
   PollCallback poll_cb;
 
-  poll_cb.Add(signals_.Fd(), bind_front(&SandboxManager::Signalled, this));
-  poll_cb.Add(server_.Fd(), bind_front(&SandboxManager::NewClient, this));
+  poll_cb.Add(signals_.Fd(),
+              absl::bind_front(&SandboxManager::Signalled, this));
+  poll_cb.Add(server_.Fd(), absl::bind_front(&SandboxManager::NewClient, this));
 
   for (auto it = subprocesses_.begin(); it != subprocesses_.end(); it++) {
     int fd = (*it)->PollFd();
-    poll_cb.Add(fd, bind_front(&SandboxManager::ProcessExit, this, it));
+    poll_cb.Add(fd, absl::bind_front(&SandboxManager::ProcessExit, this, it));
   }
   for (auto it = clients_.begin(); it != clients_.end(); it++) {
     int fd = (*it)->ClientFd();
-    poll_cb.Add(fd, bind_front(&SandboxManager::ClientMessage, this, it));
+    poll_cb.Add(fd, absl::bind_front(&SandboxManager::ClientMessage, this, it));
   }
 
   return poll_cb.Poll();
