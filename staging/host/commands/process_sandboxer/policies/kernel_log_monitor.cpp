@@ -16,8 +16,6 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
-#include <sys/prctl.h>
-
 #include <sandboxed_api/sandbox2/policybuilder.h>
 
 namespace cuttlefish::process_sandboxer {

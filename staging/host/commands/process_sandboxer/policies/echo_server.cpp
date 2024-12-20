@@ -20,6 +20,8 @@
 #include <sys/socket.h>
 #include <syscall.h>
 
+#include <cerrno>
+
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
