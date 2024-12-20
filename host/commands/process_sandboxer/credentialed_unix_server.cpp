@@ -18,9 +18,13 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include <cerrno>
+#include <cstdio>
 #include <cstring>
 #include <string>
+#include <utility>
 
+#include <absl/status/status.h>
 #include <absl/status/statusor.h>
 
 #include "host/commands/process_sandboxer/unique_fd.h"
