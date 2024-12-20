@@ -24,12 +24,10 @@
 #include <absl/status/status.h>
 #include <absl/status/statusor.h>
 
-namespace cuttlefish {
-namespace process_sandboxer {
+namespace cuttlefish::process_sandboxer {
 
 absl::Status LogToFiles(const std::vector<std::string>& paths);
 
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
+}  // namespace cuttlefish::process_sandboxer
 
 #endif

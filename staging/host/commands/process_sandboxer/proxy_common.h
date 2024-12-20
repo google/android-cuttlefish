@@ -25,8 +25,7 @@
 
 #include <absl/status/statusor.h>
 
-namespace cuttlefish {
-namespace process_sandboxer {
+namespace cuttlefish::process_sandboxer {
 
 static const constexpr std::string_view kHandshakeBegin = "hello";
 static const constexpr std::string_view kManagerSocketPath = "/manager.sock";
@@ -51,6 +50,5 @@ class Message {
 
 absl::StatusOr<size_t> SendStringMsg(int sock, std::string_view msg);
 
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
+}  // namespace cuttlefish::process_sandboxer
 #endif

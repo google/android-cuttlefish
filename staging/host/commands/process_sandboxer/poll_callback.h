@@ -23,8 +23,7 @@
 
 #include <absl/status/status.h>
 
-namespace cuttlefish {
-namespace process_sandboxer {
+namespace cuttlefish::process_sandboxer {
 
 class PollCallback {
  public:
@@ -37,7 +36,6 @@ class PollCallback {
   std::vector<std::function<absl::Status(short)>> callbacks_;
 };
 
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
+}  // namespace cuttlefish::process_sandboxer
 
 #endif
