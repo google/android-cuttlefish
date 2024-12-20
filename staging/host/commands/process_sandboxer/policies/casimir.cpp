@@ -73,7 +73,8 @@ sandbox2::PolicyBuilder CasimirPolicy(const HostInfo& host) {
       .AllowSyscall(__NR_getrandom)
       .AllowSyscall(__NR_recvfrom)
       .AllowSyscall(__NR_sendto)
-      .AllowSyscall(__NR_shutdown);
+      .AllowSyscall(__NR_shutdown)
+      .AllowSyscall(__NR_statx);  // Not covered by AllowStat
 }
 
 }  // namespace cuttlefish::process_sandboxer
