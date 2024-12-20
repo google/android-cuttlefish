@@ -16,8 +16,13 @@
 
 #include "host/commands/process_sandboxer/policies.h"
 
+#include <stdlib.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <syscall.h>
+#include <unistd.h>
+
+#include <string>
 
 #include <absl/log/check.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
