@@ -36,8 +36,6 @@ namespace cuttlefish {
 
 class CommandRequest {
  public:
-  const cvd_common::Args& Args() const { return args_; }
-
   const cvd_common::Envs& Env() const { return env_; }
 
   const selector::SelectorOptions& Selectors() const { return selectors_; }
