@@ -280,7 +280,6 @@ static const std::vector<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.security.see.storage.", 1, 379940224},
     {"android.hardware.security.see.hwcrypto.", 1, 379940224},
     {"android.hardware.security.see.hdcp.", 1, 379940224},
-    {"android.system.vold.", 1, 362567323},
 };
 
 // android.hardware.foo.IFoo -> android.hardware.foo.
