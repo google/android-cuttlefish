@@ -44,7 +44,6 @@
 #include "host/commands/process_sandboxer/pidfd.h"
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/sandbox_manager.h"
-#include "host/commands/process_sandboxer/unique_fd.h"
 
 inline constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 
@@ -68,6 +67,7 @@ namespace {
 
 using sapi::file::CleanPath;
 using sapi::file::JoinPath;
+using sapi::file_util::fileops::FDCloser;
 
 std::optional<std::string_view> FromEnv(const std::string& name) {
   char* value = getenv(name.c_str());
@@ -208,14 +208,14 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
   }
   std::unique_ptr<SandboxManager> manager = std::move(*sandbox_manager_res);
 
-  std::vector<std::pair<UniqueFd, int>> fds;
+  std::vector<std::pair<FDCloser, int>> fds;
   for (int i = 0; i <= 2; i++) {
     auto duped = fcntl(i, F_DUPFD_CLOEXEC, 0);
     if (duped < 0) {
       static constexpr char kErr[] = "Failed to `dup` stdio file descriptor";
       return absl::ErrnoToStatus(errno, kErr);
     }
-    fds.emplace_back(UniqueFd(duped), i);
+    fds.emplace_back(FDCloser(duped), i);
   }
 
   std::vector<std::string> this_env;
