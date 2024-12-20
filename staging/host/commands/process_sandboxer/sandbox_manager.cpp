@@ -63,7 +63,6 @@
 #pragma clang diagnostic pop
 
 #include "host/commands/process_sandboxer/credentialed_unix_server.h"
-#include "host/commands/process_sandboxer/filesystem.h"
 #include "host/commands/process_sandboxer/pidfd.h"
 #include "host/commands/process_sandboxer/policies.h"
 #include "host/commands/process_sandboxer/poll_callback.h"
@@ -78,6 +77,7 @@ using sandbox2::Policy;
 using sandbox2::Sandbox2;
 using sandbox2::Syscall;
 using sandbox2::util::GetProgName;
+using sapi::file::CleanPath;
 using sapi::file::JoinPath;
 
 namespace {
