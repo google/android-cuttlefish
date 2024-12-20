@@ -30,10 +30,11 @@
 #include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
-
-#include "host/commands/process_sandboxer/filesystem.h"
+#include <sandboxed_api/util/path.h>
 
 namespace cuttlefish::process_sandboxer {
+
+using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("webRTC"))
