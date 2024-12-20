@@ -27,8 +27,7 @@
 #include <absl/log/log.h>
 #include <absl/status/status.h>
 
-namespace cuttlefish {
-namespace process_sandboxer {
+namespace cuttlefish::process_sandboxer {
 
 void PollCallback::Add(int fd, std::function<absl::Status(short)> cb) {
   pollfds_.emplace_back(pollfd{
@@ -59,5 +58,4 @@ absl::Status PollCallback::Poll() {
   return absl::OkStatus();
 }
 
-}  // namespace process_sandboxer
-}  // namespace cuttlefish
+}  // namespace cuttlefish::process_sandboxer
