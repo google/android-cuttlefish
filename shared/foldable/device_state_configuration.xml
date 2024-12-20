@@ -66,6 +66,20 @@
   </device-state>
 
   <device-state>
+    <identifier>4</identifier>
+    <name>CONCURRENT_INNER_DEFAULT</name>
+    <properties>
+        <property>com.android.server.policy.PROPERTY_EMULATED_ONLY</property>
+        <property>com.android.server.policy.PROPERTY_POLICY_CANCEL_WHEN_REQUESTER_NOT_ON_TOP</property>
+        <property>com.android.server.policy.PROPERTY_POLICY_UNSUPPORTED_WHEN_THERMAL_STATUS_CRITICAL</property>
+        <property>com.android.server.policy.PROPERTY_POLICY_UNSUPPORTED_WHEN_POWER_SAVE_MODE</property>
+        <property>com.android.server.policy.PROPERTY_POLICY_AVAILABLE_FOR_APP_REQUEST</property>
+        <property>com.android.server.policy.PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_INNER_PRIMARY</property>
+        <property>com.android.server.policy.PROPERTY_FEATURE_DUAL_DISPLAY_INTERNAL_DEFAULT</property>
+    </properties>
+  </device-state>
+
+  <device-state>
     <identifier>5</identifier>
     <name>REAR_DISPLAY_OUTER_DEFAULT</name>
     <properties>
