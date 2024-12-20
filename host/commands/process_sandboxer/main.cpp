@@ -37,9 +37,9 @@
 #include <absl/status/status.h>
 #include <absl/strings/match.h>
 #include <absl/strings/str_cat.h>
+#include <sandboxed_api/util/fileops.h>
 #include <sandboxed_api/util/path.h>
 
-#include "host/commands/process_sandboxer/filesystem.h"
 #include "host/commands/process_sandboxer/logs.h"
 #include "host/commands/process_sandboxer/pidfd.h"
 #include "host/commands/process_sandboxer/policies.h"
@@ -66,6 +66,7 @@ ABSL_FLAG(std::string, vsock_device_dir, "/tmp/vsock_3_1000",
 namespace cuttlefish::process_sandboxer {
 namespace {
 
+using sapi::file::CleanPath;
 using sapi::file::JoinPath;
 
 std::optional<std::string_view> FromEnv(const std::string& name) {
