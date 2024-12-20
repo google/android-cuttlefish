@@ -19,8 +19,7 @@
 #include <string>
 
 #include <absl/status/statusor.h>
-
-#include "host/commands/process_sandboxer/unique_fd.h"
+#include <sandboxed_api/util/fileops.h>
 
 namespace cuttlefish::process_sandboxer {
 
@@ -28,14 +27,14 @@ class CredentialedUnixServer {
  public:
   static absl::StatusOr<CredentialedUnixServer> Open(const std::string& path);
 
-  absl::StatusOr<UniqueFd> AcceptClient();
+  absl::StatusOr<sapi::file_util::fileops::FDCloser> AcceptClient();
 
   int Fd() const;
 
  private:
-  CredentialedUnixServer(UniqueFd);
+  CredentialedUnixServer(sapi::file_util::fileops::FDCloser);
 
-  UniqueFd fd_;
+  sapi::file_util::fileops::FDCloser fd_;
 };
 
 }  // namespace cuttlefish::process_sandboxer
