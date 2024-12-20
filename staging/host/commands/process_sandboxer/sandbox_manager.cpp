@@ -59,6 +59,7 @@
 #include <sandboxed_api/sandbox2/policy.h>
 #include <sandboxed_api/sandbox2/sandbox2.h>
 #include <sandboxed_api/sandbox2/util.h>
+#include <sandboxed_api/util/fileops.h>
 #include <sandboxed_api/util/path.h>
 #pragma clang diagnostic pop
 
@@ -68,7 +69,6 @@
 #include "host/commands/process_sandboxer/poll_callback.h"
 #include "host/commands/process_sandboxer/proxy_common.h"
 #include "host/commands/process_sandboxer/signal_fd.h"
-#include "host/commands/process_sandboxer/unique_fd.h"
 
 namespace cuttlefish::process_sandboxer {
 
@@ -79,6 +79,7 @@ using sandbox2::Syscall;
 using sandbox2::util::GetProgName;
 using sapi::file::CleanPath;
 using sapi::file::JoinPath;
+using sapi::file_util::fileops::FDCloser;
 
 namespace {
 
@@ -128,7 +129,7 @@ class SandboxManager::ProcessNoSandbox : public SandboxManager::ManagedProcess {
 
 class SandboxManager::SandboxedProcess : public SandboxManager::ManagedProcess {
  public:
-  SandboxedProcess(std::optional<int> client_fd, UniqueFd event_fd,
+  SandboxedProcess(std::optional<int> client_fd, FDCloser event_fd,
                    std::unique_ptr<Sandbox2> sandbox)
       : client_fd_(client_fd),
         event_fd_(std::move(event_fd)),
@@ -145,7 +146,7 @@ class SandboxManager::SandboxedProcess : public SandboxManager::ManagedProcess {
   }
 
   std::optional<int> ClientFd() const override { return client_fd_; }
-  int PollFd() const override { return event_fd_.Get(); }
+  int PollFd() const override { return event_fd_.get(); }
 
   absl::StatusOr<uintptr_t> ExitCode() override {
     return sandbox_->AwaitResult().reason_code();
@@ -155,13 +156,13 @@ class SandboxManager::SandboxedProcess : public SandboxManager::ManagedProcess {
   void WaitForExit() {
     sandbox_->AwaitResult().IgnoreResult();
     uint64_t buf = 1;
-    if (write(event_fd_.Get(), &buf, sizeof(buf)) < 0) {
+    if (write(event_fd_.get(), &buf, sizeof(buf)) < 0) {
       PLOG(ERROR) << "Failed to write to eventfd";
     }
   }
 
   std::optional<int> client_fd_;
-  UniqueFd event_fd_;
+  FDCloser event_fd_;
   std::thread waiter_thread_;
   std::unique_ptr<Sandbox2> sandbox_;
 };
@@ -177,14 +178,14 @@ std::string RandomString(absl::BitGenRef gen, std::size_t size) {
 
 class SandboxManager::SocketClient {
  public:
-  SocketClient(SandboxManager& manager, UniqueFd client_fd)
+  SocketClient(SandboxManager& manager, FDCloser client_fd)
       : manager_(manager), client_fd_(std::move(client_fd)) {}
   SocketClient(SocketClient&) = delete;
 
-  int ClientFd() const { return client_fd_.Get(); }
+  int ClientFd() const { return client_fd_.get(); }
 
   absl::Status HandleMessage() {
-    auto message_status = Message::RecvFrom(client_fd_.Get());
+    auto message_status = Message::RecvFrom(client_fd_.get());
     if (!message_status.ok()) {
       return message_status.status();
     }
@@ -220,7 +221,7 @@ class SandboxManager::SocketClient {
         }
         pingback_ = RandomString(manager_.bit_gen_, 32);
         absl::StatusOr<std::size_t> stat =
-            SendStringMsg(client_fd_.Get(), pingback_);
+            SendStringMsg(client_fd_.get(), pingback_);
         if (stat.ok()) {
           client_state_ = ClientState::kIgnoredFd;
         }
@@ -249,12 +250,12 @@ class SandboxManager::SocketClient {
   }
 
   absl::Status SendExitCode(int code) {
-    auto send_exit_status = SendStringMsg(client_fd_.Get(), "exit");
+    auto send_exit_status = SendStringMsg(client_fd_.get(), "exit");
     if (!send_exit_status.ok()) {
       return send_exit_status.status();
     }
 
-    return SendStringMsg(client_fd_.Get(), std::to_string(code)).status();
+    return SendStringMsg(client_fd_.get(), std::to_string(code)).status();
   }
 
  private:
@@ -296,7 +297,7 @@ class SandboxManager::SocketClient {
     if ((*argv)[0] == "openssl") {
       (*argv)[0] = "/usr/bin/openssl";
     }
-    absl::StatusOr<std::vector<std::pair<UniqueFd, int>>> fds =
+    absl::StatusOr<std::vector<std::pair<FDCloser, int>>> fds =
         pid_fd_->AllFds();
     if (!fds.ok()) {
       return fds.status();
@@ -308,12 +309,12 @@ class SandboxManager::SocketClient {
     fds->erase(std::remove_if(fds->begin(), fds->end(), [this](auto& arg) {
       return arg.second == ignored_fd_;
     }));
-    return manager_.RunProcess(client_fd_.Get(), std::move(*argv),
+    return manager_.RunProcess(client_fd_.get(), std::move(*argv),
                                std::move(*fds), *env);
   }
 
   SandboxManager& manager_;
-  UniqueFd client_fd_;
+  FDCloser client_fd_;
   std::optional<ucred> credentials_;
   std::optional<PidFd> pid_fd_;
 
@@ -368,7 +369,7 @@ SandboxManager::~SandboxManager() {
 
 absl::Status SandboxManager::RunProcess(
     std::optional<int> client_fd, absl::Span<const std::string> argv,
-    std::vector<std::pair<UniqueFd, int>> fds,
+    std::vector<std::pair<FDCloser, int>> fds,
     absl::Span<const std::string> env) {
   if (argv.empty()) {
     return absl::InvalidArgumentError("Not enough arguments");
@@ -386,7 +387,7 @@ absl::Status SandboxManager::RunProcess(
       continue;
     }
     auto& [stdio_dup, stdio] = fds.emplace_back(dup(i), i);
-    if (stdio_dup.Get() < 0) {
+    if (stdio_dup.get() < 0) {
       return absl::ErrnoToStatus(errno, "Failed to `dup` stdio descriptor");
     }
   }
@@ -403,7 +404,7 @@ absl::Status SandboxManager::RunProcess(
 
 absl::Status SandboxManager::RunSandboxedProcess(
     std::optional<int> client_fd, absl::Span<const std::string> argv,
-    std::vector<std::pair<UniqueFd, int>> fds,
+    std::vector<std::pair<FDCloser, int>> fds,
     absl::Span<const std::string> env, std::unique_ptr<Policy> policy) {
   if (VLOG_IS_ON(1)) {
     std::stringstream process_stream;
@@ -413,7 +414,7 @@ absl::Status SandboxManager::RunSandboxedProcess(
     }
     process_stream << "] with FD mapping: [\n";
     for (const auto& [fd_in, fd_out] : fds) {
-      process_stream << '\t' << fd_in.Get() << " -> " << fd_out << ",\n";
+      process_stream << '\t' << fd_in.get() << " -> " << fd_out << ",\n";
     }
     process_stream << "]\n";
     VLOG(1) << process_stream.str();
@@ -434,8 +435,8 @@ absl::Status SandboxManager::RunSandboxedProcess(
     executor->ipc()->MapFd(fd_outer.Release(), fd_inner);
   }
 
-  UniqueFd event_fd(eventfd(0, EFD_CLOEXEC));
-  if (event_fd.Get() < 0) {
+  FDCloser event_fd(eventfd(0, EFD_CLOEXEC));
+  if (event_fd.get() < 0) {
     return absl::ErrnoToStatus(errno, "`eventfd` failed");
   }
 
@@ -468,7 +469,7 @@ absl::Status SandboxManager::RunSandboxedProcess(
 
 absl::Status SandboxManager::RunProcessNoSandbox(
     std::optional<int> client_fd, absl::Span<const std::string> argv,
-    std::vector<std::pair<UniqueFd, int>> fds,
+    std::vector<std::pair<FDCloser, int>> fds,
     absl::Span<const std::string> env) {
   if (!client_fd) {
     return absl::InvalidArgumentError("no client for unsandboxed process");
@@ -534,7 +535,7 @@ absl::Status SandboxManager::NewClient(short revents) {
     running_ = false;
     return absl::InternalError("server socket exited");
   }
-  absl::StatusOr<UniqueFd> client = server_.AcceptClient();
+  absl::StatusOr<FDCloser> client = server_.AcceptClient();
   if (!client.ok()) {
     return client.status();
   }
