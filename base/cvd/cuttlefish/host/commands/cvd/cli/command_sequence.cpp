@@ -59,18 +59,11 @@ std::string FormattedCommand(const CommandRequest& command) {
       effective_command << BashEscape(name) << "=" << BashEscape(val) << " ";
     }
   }
-  auto args = command.Args();
-  auto selector_args = command.Selectors().AsArgs();
-  if (args.empty()) {
-    return effective_command.str();
-  }
-  const auto& cmd = args.front();
-  cvd_common::Args cmd_args{args.begin() + 1, args.end()};
-  effective_command << BashEscape(cmd) << " ";
-  for (const auto& selector_arg : selector_args) {
+  effective_command << "cvd " << BashEscape(command.Subcommand()) << " ";
+  for (const auto& selector_arg : command.Selectors().AsArgs()) {
     effective_command << BashEscape(selector_arg) << " ";
   }
-  for (const auto& cmd_arg : cmd_args) {
+  for (const auto& cmd_arg : command.SubcommandArguments()) {
     effective_command << BashEscape(cmd_arg) << " ";
   }
   effective_command.seekp(-1, effective_command.cur);

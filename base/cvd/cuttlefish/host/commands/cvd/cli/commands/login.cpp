@@ -50,7 +50,7 @@ class CvdLoginCommand : public CvdServerHandler {
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
-    std::vector<std::string> args = request.Args();
+    std::vector<std::string> args = request.SubcommandArguments();
 
     // Imperfect detection: the user may ssh into an existing `screen` or `tmux`
     // session.

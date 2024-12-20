@@ -186,8 +186,9 @@ std::string_view TerminalColors::Cyan() const {
 std::string NoGroupMessage(const CommandRequest& request) {
   TerminalColors colors(isatty(1));
   return fmt::format("Command `{}{}{}` is not applicable: {}{}{}", colors.Red(),
-                     fmt::join(request.Args(), " "), colors.Reset(),
-                     colors.BoldRed(), "no device", colors.Reset());
+                     fmt::join(request.SubcommandArguments(), " "),
+                     colors.Reset(), colors.BoldRed(), "no device",
+                     colors.Reset());
 }
 
 }  // namespace cuttlefish
