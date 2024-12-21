@@ -40,6 +40,7 @@
 #include <array>
 #include <cerrno>
 #include <chrono>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -75,6 +76,8 @@
 #endif
 
 namespace cuttlefish {
+
+static constexpr char kWhitespaceCharacters[] = " \n\t\r\v\f";
 
 bool FileExists(const std::string& path, bool follow_symlinks) {
   struct stat st {};
@@ -613,35 +616,40 @@ bool FileIsSocket(const std::string& path) {
 }
 
 // return unit determined by the `--block-size` argument
-Result<long> GetDiskUsage(const std::string& path,
-                          const std::string& size_arg) {
+Result<std::size_t> GetDiskUsage(const std::string& path,
+                                 const std::string& size_arg) {
   Command du_cmd("du");
   du_cmd.AddParameter("-s");  // summarize, only output total
   du_cmd.AddParameter(
       "--apparent-size");  // apparent size rather than device usage
   du_cmd.AddParameter("--block-size=" + size_arg);
   du_cmd.AddParameter(path);
-  SharedFD read_fd;
-  SharedFD write_fd;
-  SharedFD::Pipe(&read_fd, &write_fd);
-  du_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, write_fd);
-  auto subprocess = du_cmd.Start();
-  std::array<char, 1024> text_output{};
-  const auto bytes_read = read_fd->Read(text_output.data(), text_output.size());
-  CF_EXPECTF(bytes_read > 0, "Failed to read from pipe: {}", strerror(errno));
-  std::move(subprocess).Wait();
-  int result;
-  CF_EXPECTF(android::base::ParseInt(text_output.data(), &result),
-             "Failure parsing \"{}\" to integer.", text_output.data());
+
+  std::string out;
+  std::string err;
+  int return_code = RunWithManagedStdio(std::move(du_cmd), nullptr, &out, &err);
+  CF_EXPECTF(return_code == 0, "Failed to run `du` command.  stderr: {}", err);
+  CF_EXPECTF(!out.empty(), "No output read from `du` command. stderr: {}", err);
+  std::vector<std::string> split_out =
+      android::base::Tokenize(out, kWhitespaceCharacters);
+  CF_EXPECTF(!split_out.empty(),
+             "No valid output read from `du` command in \"{}\"", out);
+  std::string total = split_out.front();
+
+  std::size_t result;
+  CF_EXPECTF(android::base::ParseUint(total, &result),
+             "Failure parsing \"{}\" to integer.", total);
   return result;
 }
 
-Result<long> GetDiskUsageBytes(const std::string& path) {
-  return GetDiskUsage(path, "1");
+Result<std::size_t> GetDiskUsageBytes(const std::string& path) {
+  return CF_EXPECTF(GetDiskUsage(path, "1"),
+                    "Unable to determine disk usage of file \"{}\"", path);
 }
 
-Result<long> GetDiskUsageGigabytes(const std::string& path) {
-  return GetDiskUsage(path, "1G");
+Result<std::size_t> GetDiskUsageGigabytes(const std::string& path) {
+  return CF_EXPECTF(GetDiskUsage(path, "1G"),
+                    "Unable to determine disk usage of file \"{}\"", path);
 }
 
 /**

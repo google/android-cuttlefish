@@ -173,6 +173,7 @@ Flag UnexpectedArgumentGuard();
 Flag GflagsCompatFlag(const std::string& name);
 Flag GflagsCompatFlag(const std::string& name, std::string& value);
 Flag GflagsCompatFlag(const std::string& name, std::int32_t& value);
+Flag GflagsCompatFlag(const std::string& name, std::size_t& value);
 Flag GflagsCompatFlag(const std::string& name, bool& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<std::string>& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
