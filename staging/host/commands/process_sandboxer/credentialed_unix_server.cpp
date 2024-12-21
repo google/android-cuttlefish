@@ -18,6 +18,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include <cerrno>
+#include <cstdio>
 #include <string>
 #include <utility>
 
