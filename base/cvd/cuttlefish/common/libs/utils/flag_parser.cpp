@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
@@ -34,6 +35,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/parsebool.h>
+#include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
@@ -564,6 +566,25 @@ static Flag GflagsCompatNumericFlagGeneric(const std::string& name, T& value) {
 
 Flag GflagsCompatFlag(const std::string& name, int32_t& value) {
   return GflagsCompatNumericFlagGeneric(name, value);
+}
+
+template <typename T>
+static Flag GflagsCompatUnsignedNumericFlagGeneric(const std::string& name,
+                                                   T& value) {
+  return GflagsCompatFlag(name)
+      .Getter([&value]() { return std::to_string(value); })
+      .Setter([&value](const FlagMatch& match) -> Result<void> {
+        T result;
+        CF_EXPECTF(android::base::ParseUint<T>(match.value, &result),
+                   "Failed to parse \"{}\" as an unsigned integer",
+                   match.value);
+        value = result;
+        return {};
+      });
+}
+
+Flag GflagsCompatFlag(const std::string& name, std::size_t& value) {
+  return GflagsCompatUnsignedNumericFlagGeneric(name, value);
 }
 
 Flag GflagsCompatFlag(const std::string& name, bool& value) {
