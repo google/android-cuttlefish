@@ -981,22 +981,10 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   MetadataLevel metadata_level =
       isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
 
-  auto old_logger = android::base::SetLogger(
+  ScopedTeeLogger logger(
       LogToStderrAndFiles({log_file}, "", metadata_level, flags.verbosity));
-  // Set the android logger to full verbosity, the tee logger will choose
-  // whether to write each line.
-  auto old_severity =
-      android::base::SetMinimumLogSeverity(android::base::VERBOSE);
+  CF_EXPECT(Fetch(flags, host_target, targets));
 
-  auto fetch_res = Fetch(flags, host_target, targets);
-
-  // This function is no longer only called direcly from a main function, so the
-  // previous logger must be restored. This also ensures logs from other
-  // components don't land in fetch.log.
-  android::base::SetLogger(std::move(old_logger));
-  android::base::SetMinimumLogSeverity(old_severity);
-
-  CF_EXPECT(std::move(fetch_res));
   return {};
 }
 
