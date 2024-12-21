@@ -58,7 +58,6 @@
 #include <sandboxed_api/sandbox2/executor.h>
 #include <sandboxed_api/sandbox2/policy.h>
 #include <sandboxed_api/sandbox2/sandbox2.h>
-#include <sandboxed_api/sandbox2/util.h>
 #include <sandboxed_api/util/fileops.h>
 #include <sandboxed_api/util/path.h>
 #pragma clang diagnostic pop
