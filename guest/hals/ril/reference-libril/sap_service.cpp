@@ -973,7 +973,8 @@ void sap::registerService(const RIL_RadioFunctions *callbacks) {
         // use a compat shim to convert HIDL interface to AIDL and publish it
         // TODO(bug 220004469): replace with a full AIDL implementation
         static auto aidlHal = ndk::SharedRefBase::make<compat::Sap>(sapService[i]);
-        const auto instance = compat::Sap::descriptor + "/"s + std::string(serviceNames[i]);
+        const auto instance =
+                std::string(compat::Sap::descriptor) + "/" + std::string(serviceNames[i]);
         const auto status = AServiceManager_addService(aidlHal->asBinder().get(), instance.c_str());
         if (status == STATUS_OK) {
             RLOGD("registerService addService: instance %s, status %d", instance.c_str(), status);
