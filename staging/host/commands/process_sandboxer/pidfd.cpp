@@ -110,6 +110,7 @@ absl::StatusOr<PidFd> PidFd::LaunchSubprocess(
 
   std::vector<std::string> argv_clone(argv.begin(), argv.end());
   std::vector<char*> argv_cstr;
+  argv_cstr.reserve(argv_clone.size());
   for (auto& arg : argv_clone) {
     argv_cstr.emplace_back(arg.data());
   }
@@ -117,6 +118,7 @@ absl::StatusOr<PidFd> PidFd::LaunchSubprocess(
 
   std::vector<std::string> env_clone(env.begin(), env.end());
   std::vector<char*> env_cstr;
+  env_cstr.reserve(env_clone.size());
   for (std::string& env_member : env_clone) {
     env_cstr.emplace_back(env_member.data());
   }
@@ -140,7 +142,7 @@ absl::StatusOr<std::vector<std::pair<FDCloser, int>>> PidFd::AllFds() {
 
   std::string dir_name = absl::StrFormat("/proc/%d/fd", pid_);
   std::unique_ptr<DIR, int (*)(DIR*)> dir(opendir(dir_name.c_str()), closedir);
-  if (dir.get() == nullptr) {
+  if (!dir) {
     return absl::ErrnoToStatus(errno, "`opendir` failed");
   }
   for (dirent* ent = readdir(dir.get()); ent; ent = readdir(dir.get())) {
@@ -182,7 +184,7 @@ static absl::StatusOr<std::vector<std::string>> ReadNullSepFile(
   std::vector<std::string> members = absl::StrSplit(buffer.str(), '\0');
   if (members.empty()) {
     return absl::InternalError(absl::StrFormat("'%v' is empty", path));
-  } else if (members.back() == "") {
+  } else if (members.back().empty()) {
     members.pop_back();  // may end in a null terminator
   }
   return members;
@@ -213,7 +215,7 @@ static absl::StatusOr<std::vector<pid_t>> FindChildPids(pid_t pid) {
 
   std::string task_dir = absl::StrFormat("/proc/%d/task", pid);
   std::unique_ptr<DIR, int (*)(DIR*)> dir(opendir(task_dir.c_str()), closedir);
-  if (dir.get() == nullptr) {
+  if (!dir) {
     return absl::ErrnoToStatus(errno, "`opendir` failed");
   }
 
@@ -233,7 +235,7 @@ static absl::StatusOr<std::vector<pid_t>> FindChildPids(pid_t pid) {
 
     std::string children_str;
     std::getline(children_stream, children_str);
-    for (std::string_view child_str : absl::StrSplit(children_str, " ")) {
+    for (std::string_view child_str : absl::StrSplit(children_str, ' ')) {
       if (child_str.empty()) {
         continue;
       }
