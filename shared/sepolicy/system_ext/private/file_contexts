@@ -4,6 +4,7 @@
 is_flag_enabled(RELEASE_AVF_ENABLE_EARLY_VM, `
     /(system_ext|system/system_ext)/bin/trusty_security_vm_launcher u:object_r:trusty_security_vm_launcher_exec:s0
 ')
+/(system_ext|system/system_ext)/bin/hw/android\.hardware\.drm-service\.widevine\.system    u:object_r:hal_drm_widevine_exec:s0
 /(system_ext|system/system_ext)/bin/rpmb_dev\.system   u:object_r:rpmb_dev_system_exec:s0
 /(system_ext|system/system_ext)/bin/rpmb_dev\.test\.system   u:object_r:rpmb_dev_system_exec:s0
 /(system_ext|system/system_ext)/bin/storageproxyd\.system     u:object_r:storageproxyd_system_exec:s0
