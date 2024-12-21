@@ -23,12 +23,11 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/command_sequence.h"
-#include "host/commands/cvd/instances/instance_lock.h"
-#include "host/commands/cvd/instances/instance_manager.h"
 #include "host/commands/cvd/cli/commands/acloud_command.h"
 #include "host/commands/cvd/cli/commands/acloud_mixsuperimage.h"
 #include "host/commands/cvd/cli/commands/acloud_translator.h"
 #include "host/commands/cvd/cli/commands/bugreport.h"
+#include "host/commands/cvd/cli/commands/cache.h"
 #include "host/commands/cvd/cli/commands/clear.h"
 #include "host/commands/cvd/cli/commands/cmd_list.h"
 #include "host/commands/cvd/cli/commands/create.h"
@@ -51,6 +50,8 @@
 #include "host/commands/cvd/cli/commands/stop.h"
 #include "host/commands/cvd/cli/commands/try_acloud.h"
 #include "host/commands/cvd/cli/commands/version.h"
+#include "host/commands/cvd/instances/instance_lock.h"
+#include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 
@@ -63,6 +64,7 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(NewAcloudCommand(command_sequence_executor_));
   request_handlers_.emplace_back(NewAcloudMixSuperImageCommand());
   request_handlers_.emplace_back(NewAcloudTranslatorCommand(instance_manager_));
+  request_handlers_.emplace_back(NewCvdCacheCommandHandler());
   request_handlers_.emplace_back(
       NewCvdCmdlistHandler(command_sequence_executor_));
   request_handlers_.emplace_back(NewCvdCreateCommandHandler(
