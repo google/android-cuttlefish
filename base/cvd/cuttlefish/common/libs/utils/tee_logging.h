@@ -62,6 +62,20 @@ class TeeLogger {
   std::string prefix_;
 };
 
+class ScopedTeeLogger {
+ public:
+  ScopedTeeLogger(TeeLogger tee_logger);
+  ~ScopedTeeLogger();
+
+ private:
+  android::base::LogFunction old_logger_;
+  android::base::ScopedLogSeverity scoped_severity_;
+};
+
+TeeLogger LogToStderr(
+    const std::string& log_prefix = "",
+    MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE,
+    std::optional<android::base::LogSeverity> stderr_severity = std::nullopt);
 TeeLogger LogToFiles(const std::vector<std::string>& files,
                      const std::string& log_prefix = "");
 TeeLogger LogToStderrAndFiles(
