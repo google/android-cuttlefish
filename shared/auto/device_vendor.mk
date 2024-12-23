@@ -20,6 +20,7 @@ SYSTEM_EXT_MANIFEST_FILES += device/google/cuttlefish/shared/config/system_ext_m
 $(call inherit-product, packages/services/Car/car_product/build/car_vendor.mk)
 
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
+$(call inherit-product, device/google/cuttlefish/shared/biometrics_fingerprint/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/bluetooth/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/gnss/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
