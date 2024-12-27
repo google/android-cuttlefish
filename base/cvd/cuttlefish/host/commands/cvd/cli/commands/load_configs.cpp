@@ -57,7 +57,7 @@ Result<CvdFlags> GetCvdFlags(const CommandRequest& request) {
   return CF_EXPECT(GetCvdFlags(flags));
 }
 
-class LoadConfigsCommand : public CvdServerHandler {
+class LoadConfigsCommand : public CvdCommandHandler {
  public:
   LoadConfigsCommand(CommandSequenceExecutor& executor,
                      InstanceManager& instance_manager)
@@ -240,9 +240,9 @@ class LoadConfigsCommand : public CvdServerHandler {
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewLoadConfigsCommand(
+std::unique_ptr<CvdCommandHandler> NewLoadConfigsCommand(
     CommandSequenceExecutor& executor, InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new LoadConfigsCommand(executor, instance_manager));
 }
 

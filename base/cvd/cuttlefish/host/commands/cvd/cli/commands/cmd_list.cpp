@@ -21,12 +21,12 @@
 #include <android-base/strings.h>
 #include <json/value.h>
 
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 
-class CvdCmdlistHandler : public CvdServerHandler {
+class CvdCmdlistHandler : public CvdCommandHandler {
  public:
   CvdCmdlistHandler(CommandSequenceExecutor& executor) : executor_(executor) {}
 
@@ -60,9 +60,9 @@ class CvdCmdlistHandler : public CvdServerHandler {
   CommandSequenceExecutor& executor_;
 };
 
-std::unique_ptr<CvdServerHandler> NewCvdCmdlistHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdCmdlistHandler(
     CommandSequenceExecutor& executor) {
-  return std::unique_ptr<CvdServerHandler>(new CvdCmdlistHandler(executor));
+  return std::unique_ptr<CvdCommandHandler>(new CvdCmdlistHandler(executor));
 }
 
 }  // namespace cuttlefish

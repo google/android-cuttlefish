@@ -20,24 +20,24 @@
 #include <vector>
 
 #include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 
 namespace cuttlefish {
 
 class CommandSequenceExecutor {
  public:
   CommandSequenceExecutor(
-      const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers);
+      const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers);
 
   Result<void> Execute(const std::vector<CommandRequest>&,
                        std::ostream& report);
   Result<void> ExecuteOne(const CommandRequest&, std::ostream& report);
 
   std::vector<std::string> CmdList() const;
-  Result<CvdServerHandler*> GetHandler(const CommandRequest& request);
+  Result<CvdCommandHandler*> GetHandler(const CommandRequest& request);
 
  private:
-  const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers_;
-  std::vector<CvdServerHandler*> handler_stack_;
+  const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers_;
+  std::vector<CvdCommandHandler*> handler_stack_;
 };
 }  // namespace cuttlefish

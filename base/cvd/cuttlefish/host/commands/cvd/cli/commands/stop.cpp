@@ -24,14 +24,12 @@
 #include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
@@ -44,7 +42,7 @@ namespace {
 constexpr char kSummaryHelpText[] =
     "Run cvd stop --help for command description";
 
-class CvdStopCommandHandler : public CvdServerHandler {
+class CvdStopCommandHandler : public CvdCommandHandler {
  public:
   CvdStopCommandHandler(InstanceManager& instance_manager);
 
@@ -171,9 +169,9 @@ Result<std::string> CvdStopCommandHandler::GetBin(
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdStopCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdStopCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdStopCommandHandler(instance_manager));
 }
 

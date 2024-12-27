@@ -26,7 +26,7 @@ namespace {
 constexpr char kSummaryHelpText[] =
     R"(Deprecated commands, kept for backward compatibility)";
 
-class CvdNoopHandler : public CvdServerHandler {
+class CvdNoopHandler : public CvdCommandHandler {
  public:
   Result<void> Handle(const CommandRequest& request) override {
     fmt::print(std::cout, "DEPRECATED: The {} command is a no-op\n",
@@ -49,8 +49,8 @@ class CvdNoopHandler : public CvdServerHandler {
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdNoopHandler() {
-  return std::unique_ptr<CvdServerHandler>(new CvdNoopHandler());
+std::unique_ptr<CvdCommandHandler> NewCvdNoopHandler() {
+  return std::unique_ptr<CvdCommandHandler>(new CvdNoopHandler());
 }
 
 }  // namespace cuttlefish

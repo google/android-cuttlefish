@@ -23,7 +23,7 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/flag.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
@@ -44,7 +44,7 @@ cvd env ls $SERVICE_NAME $METHOD_NAME - list information on input + output messa
 cvd env type $SERVICE_NAME $REQUEST_MESSAGE_TYPE - outputs the proto the specified request message type
 )";
 
-class CvdEnvCommandHandler : public CvdServerHandler {
+class CvdEnvCommandHandler : public CvdCommandHandler {
  public:
   CvdEnvCommandHandler(InstanceManager& instance_manager)
       : instance_manager_{instance_manager} {}
@@ -129,9 +129,9 @@ class CvdEnvCommandHandler : public CvdServerHandler {
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdEnvCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdEnvCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdEnvCommandHandler(instance_manager));
 }
 }  // namespace cuttlefish

@@ -20,13 +20,13 @@
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 
 namespace cuttlefish {
 
-class CvdFetchCommandHandler : public CvdServerHandler {
+class CvdFetchCommandHandler : public CvdCommandHandler {
  public:
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"fetch", "fetch_cvd"}; }
@@ -71,8 +71,8 @@ Result<std::string> CvdFetchCommandHandler::DetailedHelp(
   return output;
 }
 
-std::unique_ptr<CvdServerHandler> NewCvdFetchCommandHandler() {
-  return std::unique_ptr<CvdServerHandler>(new CvdFetchCommandHandler());
+std::unique_ptr<CvdCommandHandler> NewCvdFetchCommandHandler() {
+  return std::unique_ptr<CvdCommandHandler>(new CvdFetchCommandHandler());
 }
 
 }  // namespace cuttlefish

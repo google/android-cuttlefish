@@ -26,14 +26,16 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
 #include "host/commands/cvd/cli/flag.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/instances/instance_manager.h"
 #include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
@@ -43,7 +45,7 @@ constexpr char kSummaryHelpText[] =
     "Trigger power button event on the device, reset device to first boot "
     "state, restart device";
 
-class CvdDevicePowerCommandHandler : public CvdServerHandler {
+class CvdDevicePowerCommandHandler : public CvdCommandHandler {
  public:
   CvdDevicePowerCommandHandler(InstanceManager& instance_manager)
       : instance_manager_{instance_manager} {
@@ -218,9 +220,9 @@ class CvdDevicePowerCommandHandler : public CvdServerHandler {
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdDevicePowerCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdDevicePowerCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdDevicePowerCommandHandler(instance_manager));
 }
 

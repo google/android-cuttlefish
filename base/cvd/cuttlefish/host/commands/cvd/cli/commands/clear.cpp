@@ -24,10 +24,10 @@
 
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
+#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 namespace {
@@ -36,7 +36,7 @@ constexpr char kClearCmd[] = "clear";
 constexpr char kSummaryHelpText[] =
     "Clears the instance databaase, stopping any running instances first.";
 
-class CvdClearCommandHandler : public CvdServerHandler {
+class CvdClearCommandHandler : public CvdCommandHandler {
  public:
   CvdClearCommandHandler(InstanceManager& instance_manager);
 
@@ -75,9 +75,9 @@ Result<std::string> CvdClearCommandHandler::DetailedHelp(
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdClearCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdClearCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdClearCommandHandler(instance_manager));
 }
 

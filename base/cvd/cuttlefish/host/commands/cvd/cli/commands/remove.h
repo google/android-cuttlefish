@@ -19,11 +19,11 @@
 #include <memory>
 
 #include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewRemoveCvdCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewRemoveCvdCommandHandler(
     InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

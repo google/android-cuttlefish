@@ -14,16 +14,29 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#pragma once
 
-#include "common/libs/utils/contains.h"
+#include <string>
+#include <vector>
+
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
+#include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 
-Result<bool> CvdServerHandler::CanHandle(const CommandRequest& request) const {
-  return Contains(CmdList(), request.Subcommand());
-}
+class CvdCommandHandler {
+ public:
+  virtual ~CvdCommandHandler() = default;
+
+  virtual Result<bool> CanHandle(const CommandRequest&) const;
+  virtual Result<void> Handle(const CommandRequest&) = 0;
+  // returns the list of subcommand it can handle
+  virtual cvd_common::Args CmdList() const = 0;
+  // used for command help text
+  virtual Result<std::string> SummaryHelp() const = 0;
+  virtual bool ShouldInterceptHelp() const = 0;
+  virtual Result<std::string> DetailedHelp(std::vector<std::string>&) const = 0;
+};
 
 }  // namespace cuttlefish

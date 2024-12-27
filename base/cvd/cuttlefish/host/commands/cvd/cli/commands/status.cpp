@@ -24,7 +24,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
@@ -106,7 +106,7 @@ Result<StatusCommandOptions> ParseFlags(cvd_common::Args& args) {
 
 }  // namespace
 
-class CvdStatusCommandHandler : public CvdServerHandler {
+class CvdStatusCommandHandler : public CvdCommandHandler {
  public:
   CvdStatusCommandHandler(InstanceManager& instance_manager);
 
@@ -180,9 +180,9 @@ Result<void> CvdStatusCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-std::unique_ptr<CvdServerHandler> NewCvdStatusCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdStatusCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdStatusCommandHandler(instance_manager));
 }
 

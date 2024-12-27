@@ -20,13 +20,12 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/acloud/config.h"
 #include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/acloud/create_converter_parser.h"
 #include "host/commands/cvd/cli/commands/acloud_common.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
 
 #define ENABLE_CVDR_TRANSLATION 1
@@ -58,7 +57,7 @@ bool CheckIfCvdrExist() {
 
 }  // namespace
 
-class TryAcloudCommand : public CvdServerHandler {
+class TryAcloudCommand : public CvdCommandHandler {
  public:
   ~TryAcloudCommand() = default;
 
@@ -92,8 +91,7 @@ class TryAcloudCommand : public CvdServerHandler {
   Result<std::string> RunCvdRemoteGetConfig(const std::string& name);
 };
 
-Result<void> TryAcloudCommand::VerifyWithCvd(
-    const CommandRequest& request) {
+Result<void> TryAcloudCommand::VerifyWithCvd(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   CF_EXPECT(IsSubOperationSupported(request));
   // ConvertAcloudCreate converts acloud to cvd commands.
@@ -101,7 +99,8 @@ Result<void> TryAcloudCommand::VerifyWithCvd(
   // currently, optout/optin feature only works in local instance
   // remote instance would continue to be done either through `python acloud` or
   // `cvdr` (if enabled).
-  auto optout = true; // CF_EXPECT(instance_manager_.GetAcloudTranslatorOptout());
+  auto optout =
+      true;  // CF_EXPECT(instance_manager_.GetAcloudTranslatorOptout());
   CF_EXPECT(!optout);
   return {};
 }
@@ -155,8 +154,8 @@ Result<std::string> TryAcloudCommand::RunCvdRemoteGetConfig(
   return stdout_;
 }
 
-std::unique_ptr<CvdServerHandler> NewTryAcloudCommand() {
-  return std::unique_ptr<CvdServerHandler>(new TryAcloudCommand());
+std::unique_ptr<CvdCommandHandler> NewTryAcloudCommand() {
+  return std::unique_ptr<CvdCommandHandler>(new TryAcloudCommand());
 }
 
 }  // namespace cuttlefish

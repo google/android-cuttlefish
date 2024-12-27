@@ -74,7 +74,7 @@ std::string FormattedCommand(const CommandRequest& command) {
 }  // namespace
 
 CommandSequenceExecutor::CommandSequenceExecutor(
-    const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers)
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers)
     : server_handlers_(server_handlers) {}
 
 Result<void> CommandSequenceExecutor::Execute(
@@ -108,7 +108,7 @@ std::vector<std::string> CommandSequenceExecutor::CmdList() const {
   return std::vector<std::string>{subcmds.begin(), subcmds.end()};
 }
 
-Result<CvdServerHandler*> CommandSequenceExecutor::GetHandler(
+Result<CvdCommandHandler*> CommandSequenceExecutor::GetHandler(
     const CommandRequest& request) {
   return CF_EXPECT(RequestHandler(request, server_handlers_));
 }

@@ -24,15 +24,13 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/acloud/create_converter_parser.h"
 #include "host/commands/cvd/cli/command_sequence.h"
 #include "host/commands/cvd/cli/commands/acloud_common.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
@@ -50,7 +48,7 @@ If not supported by cvd, acloud will be used.
 To opt out or opt back in, run this translation toggle.
 )";
 
-class AcloudCommand : public CvdServerHandler {
+class AcloudCommand : public CvdCommandHandler {
  public:
   AcloudCommand(CommandSequenceExecutor& executor) : executor_(executor) {}
   ~AcloudCommand() = default;
@@ -140,8 +138,7 @@ Result<void> AcloudCommand::HandleLocal(
   return {};
 }
 
-Result<void> AcloudCommand::HandleRemote(
-    const CommandRequest& request) {
+Result<void> AcloudCommand::HandleRemote(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
   args = CF_EXPECT(acloud_impl::CompileFromAcloudToCvdr(args));
   Command cmd = Command("cvdr");
@@ -207,9 +204,9 @@ Result<void> AcloudCommand::RunAcloudConnect(const CommandRequest& request,
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewAcloudCommand(
+std::unique_ptr<CvdCommandHandler> NewAcloudCommand(
     CommandSequenceExecutor& executor) {
-  return std::unique_ptr<CvdServerHandler>(new AcloudCommand(executor));
+  return std::unique_ptr<CvdCommandHandler>(new AcloudCommand(executor));
 }
 
 }  // namespace cuttlefish
