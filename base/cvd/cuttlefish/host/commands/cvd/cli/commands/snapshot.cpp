@@ -23,11 +23,10 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
@@ -62,7 +61,7 @@ QEMU:
 
 )";
 
-class CvdSnapshotCommandHandler : public CvdServerHandler {
+class CvdSnapshotCommandHandler : public CvdCommandHandler {
  public:
   CvdSnapshotCommandHandler(InstanceManager& instance_manager)
       : instance_manager_{instance_manager} {}
@@ -154,9 +153,9 @@ class CvdSnapshotCommandHandler : public CvdServerHandler {
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdSnapshotCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdSnapshotCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdSnapshotCommandHandler(instance_manager));
 }
 

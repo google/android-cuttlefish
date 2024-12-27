@@ -24,13 +24,11 @@
 #include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/interruptible_terminal.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
@@ -44,7 +42,7 @@ namespace {
 constexpr char kSummaryHelpText[] =
     "Run cvd bugreport --help for command description";
 
-class CvdBugreportCommandHandler : public CvdServerHandler {
+class CvdBugreportCommandHandler : public CvdCommandHandler {
  public:
   CvdBugreportCommandHandler(InstanceManager& instance_manager);
 
@@ -129,9 +127,9 @@ Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdBugreportCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdBugreportCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdBugreportCommandHandler(instance_manager));
 }
 

@@ -19,7 +19,6 @@
 #include <sys/types.h>
 
 #include <algorithm>
-#include <array>
 #include <cstdlib>
 #include <memory>
 #include <optional>
@@ -38,9 +37,8 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
@@ -224,7 +222,7 @@ Result<std::unique_ptr<OperatorControlConn>> PreregisterGroup(
 
 }  // namespace
 
-class CvdStartCommandHandler : public CvdServerHandler {
+class CvdStartCommandHandler : public CvdCommandHandler {
  public:
   CvdStartCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
@@ -686,9 +684,9 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
   return kDetailedHelpText;
 }
 
-std::unique_ptr<CvdServerHandler> NewCvdStartCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdStartCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdStartCommandHandler(instance_manager));
 }
 

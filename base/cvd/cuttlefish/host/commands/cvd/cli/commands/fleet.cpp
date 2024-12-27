@@ -22,7 +22,7 @@
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
@@ -36,7 +36,7 @@ usage: cvd fleet [--help]
   cvd fleet will list the active devices with information.
 )";
 
-class CvdFleetCommandHandler : public CvdServerHandler {
+class CvdFleetCommandHandler : public CvdCommandHandler {
  public:
   CvdFleetCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
@@ -91,9 +91,9 @@ bool CvdFleetCommandHandler::IsHelp(const cvd_common::Args& args) const {
   return false;
 }
 
-std::unique_ptr<CvdServerHandler> NewCvdFleetCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdFleetCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdFleetCommandHandler(instance_manager));
 }
 

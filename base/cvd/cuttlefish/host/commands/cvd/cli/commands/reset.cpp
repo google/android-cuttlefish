@@ -20,7 +20,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/instances/instance_manager.h"
 #include "host/commands/cvd/instances/reset_client_utils.h"
 #include "host/commands/cvd/utils/common.h"
@@ -111,7 +111,7 @@ static bool GetUserConfirm() {
   return (user_confirm == "y" || user_confirm == "yes");
 }
 
-class CvdResetCommandHandler : public CvdServerHandler {
+class CvdResetCommandHandler : public CvdCommandHandler {
  public:
   CvdResetCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
@@ -165,9 +165,9 @@ class CvdResetCommandHandler : public CvdServerHandler {
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdResetCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdResetCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdResetCommandHandler(instance_manager));
 }
 

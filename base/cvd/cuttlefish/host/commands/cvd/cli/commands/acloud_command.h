@@ -22,6 +22,6 @@
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewAcloudCommand(
+std::unique_ptr<CvdCommandHandler> NewAcloudCommand(
     CommandSequenceExecutor& executor);
 }

@@ -17,11 +17,10 @@
 #include "host/commands/cvd/cli/commands/version.h"
 
 #include "build/version.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 
 #include "common/libs/utils/proto.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/legacy/server_constants.h"
 #include "host/commands/cvd/utils/common.h"
@@ -33,7 +32,7 @@ namespace {
 constexpr char kSummaryHelpText[] =
     R"(Prints version of cvd client and cvd server)";
 
-class CvdVersionHandler : public CvdServerHandler {
+class CvdVersionHandler : public CvdCommandHandler {
  public:
   CvdVersionHandler() = default;
 
@@ -65,8 +64,8 @@ class CvdVersionHandler : public CvdServerHandler {
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdVersionHandler() {
-  return std::unique_ptr<CvdServerHandler>(new CvdVersionHandler());
+std::unique_ptr<CvdCommandHandler> NewCvdVersionHandler() {
+  return std::unique_ptr<CvdCommandHandler>(new CvdVersionHandler());
 }
 
 }  // namespace cuttlefish

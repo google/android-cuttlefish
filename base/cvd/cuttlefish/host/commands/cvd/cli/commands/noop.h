@@ -18,11 +18,11 @@
 
 #include <memory>
 
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewCvdNoopHandler();
+std::unique_ptr<CvdCommandHandler> NewCvdNoopHandler();
 
 }
 

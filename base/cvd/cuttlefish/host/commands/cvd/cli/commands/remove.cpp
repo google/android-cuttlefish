@@ -20,9 +20,8 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_database_utils.h"
@@ -32,7 +31,7 @@
 namespace cuttlefish {
 namespace {
 
-class RemoveCvdCommandHandler : public CvdServerHandler {
+class RemoveCvdCommandHandler : public CvdCommandHandler {
  public:
   RemoveCvdCommandHandler(InstanceManager& instance_manager)
       : instance_manager_(instance_manager) {}
@@ -102,9 +101,9 @@ class RemoveCvdCommandHandler : public CvdServerHandler {
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewRemoveCvdCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewRemoveCvdCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new RemoveCvdCommandHandler(instance_manager));
 }
 

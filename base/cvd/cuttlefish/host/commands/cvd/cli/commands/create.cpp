@@ -33,11 +33,10 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/command_sequence.h"
 #include "host/commands/cvd/cli/commands/acloud_common.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
 #include "host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
@@ -216,7 +215,7 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
 
 }  // namespace
 
-class CvdCreateCommandHandler : public CvdServerHandler {
+class CvdCreateCommandHandler : public CvdCommandHandler {
  public:
   CvdCreateCommandHandler(InstanceManager& instance_manager,
                           CommandSequenceExecutor& command_executor)
@@ -414,9 +413,9 @@ Result<std::string> CvdCreateCommandHandler::DetailedHelp(
   return kDetailedHelpText;
 }
 
-std::unique_ptr<CvdServerHandler> NewCvdCreateCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
     InstanceManager& instance_manager, CommandSequenceExecutor& executor) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdCreateCommandHandler(instance_manager, executor));
 }
 

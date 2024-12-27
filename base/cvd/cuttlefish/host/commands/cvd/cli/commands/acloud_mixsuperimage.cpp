@@ -17,15 +17,15 @@
 #include <fstream>
 
 #include <android-base/file.h>
+#include <android-base/strings.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/commands/acloud_mixsuperimage.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/libs/config/config_utils.h"
 
@@ -56,28 +56,27 @@ Result<std::string> FindMiscInfo(const std::string& image_dir) {
   if (FileExists(misc_info_path)) {
     return misc_info_path;
   }
-  misc_info_path = image_dir + _TARGET_FILES_META_DIR_NAME +
-                   "/" + _MISC_INFO_FILE_NAME;
+  misc_info_path =
+      image_dir + _TARGET_FILES_META_DIR_NAME + "/" + _MISC_INFO_FILE_NAME;
 
   if (FileExists(misc_info_path)) {
     return misc_info_path;
   }
-  return CF_ERR("Cannot find " << _MISC_INFO_FILE_NAME
-                << " in " << image_dir);
+  return CF_ERR("Cannot find " << _MISC_INFO_FILE_NAME << " in " << image_dir);
 }
 
 /*
  * Find images in build output dir or extracted target files.
  */
 Result<std::string> FindImageDir(const std::string& image_dir) {
-  for (const auto & file: CF_EXPECT(DirectoryContents(image_dir))) {
+  for (const auto& file : CF_EXPECT(DirectoryContents(image_dir))) {
     if (android::base::EndsWith(file, ".img")) {
       return image_dir;
     }
   }
 
   std::string subdir = image_dir + _TARGET_FILES_IMAGES_DIR_NAME;
-  for (const auto & file: CF_EXPECT(DirectoryContents(subdir))) {
+  for (const auto& file : CF_EXPECT(DirectoryContents(subdir))) {
     if (android::base::EndsWith(file, ".img")) {
       return subdir;
     }
@@ -92,7 +91,7 @@ Result<std::string> FindImageDir(const std::string& image_dir) {
  * image_dir and image_paths into the output file.
  */
 Result<std::string> GetImageForPartition(
-    std::string const &partition_name, std::string const &image_dir,
+    std::string const& partition_name, std::string const& image_dir,
     const std::map<std::string, std::string>& image_paths) {
   std::string result_path = "";
   if (auto search = image_paths.find(partition_name);
@@ -125,7 +124,7 @@ Result<void> _RewriteMiscInfo(
   while (getline(input_fs, line)) {
     std::vector<std::string> split_line = android::base::Split(line, "=");
     if (split_line.size() < 2) {
-      split_line = { split_line[0], "" };
+      split_line = {split_line[0], ""};
     }
     if (split_line[0] == "dynamic_partition_list") {
       partition_names = android::base::Tokenize(split_line[1], " ");
@@ -143,16 +142,16 @@ Result<void> _RewriteMiscInfo(
     LOG(INFO) << "No dynamic partition list in misc info.";
   }
 
-  for (const auto & partition_name : partition_names) {
-    output_fs << partition_name << "_image=" <<
-        CF_EXPECT(get_image(partition_name)) << "\n";
+  for (const auto& partition_name : partition_names) {
+    output_fs << partition_name
+              << "_image=" << CF_EXPECT(get_image(partition_name)) << "\n";
   }
 
   output_fs.close();
   return {};
 }
 
-class AcloudMixSuperImageCommand : public CvdServerHandler {
+class AcloudMixSuperImageCommand : public CvdCommandHandler {
  public:
   AcloudMixSuperImageCommand() {}
   ~AcloudMixSuperImageCommand() = default;
@@ -198,8 +197,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
       return {};
     }
 
-    CF_EXPECT(MixSuperImage(flag_paths),
-              "Build mixed super image failed");
+    CF_EXPECT(MixSuperImage(flag_paths), "Build mixed super image failed");
     return {};
   }
 
@@ -213,17 +211,15 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     std::string build_super_image_binary;
     std::string lpmake_binary;
     std::string otatools_path;
-    if (FileExists(DefaultHostArtifactsPath("otatools/bin/build_super_image"))) {
+    if (FileExists(
+            DefaultHostArtifactsPath("otatools/bin/build_super_image"))) {
       build_super_image_binary =
           DefaultHostArtifactsPath("otatools/bin/build_super_image");
-      lpmake_binary =
-          DefaultHostArtifactsPath("otatools/bin/lpmake");
+      lpmake_binary = DefaultHostArtifactsPath("otatools/bin/lpmake");
       otatools_path = DefaultHostArtifactsPath("otatools");
     } else if (FileExists(HostBinaryPath("build_super_image"))) {
-      build_super_image_binary =
-          HostBinaryPath("build_super_image");
-      lpmake_binary =
-          HostBinaryPath("lpmake");
+      build_super_image_binary = HostBinaryPath("build_super_image");
+      lpmake_binary = HostBinaryPath("lpmake");
       otatools_path = DefaultHostArtifactsPath("");
     } else {
       return CF_ERR("Could not find otatools");
@@ -253,7 +249,7 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
 
     int index = 0;
     std::vector<std::string> paths_vec = android::base::Split(paths, ",");
-    for (const auto & each_path :paths_vec) {
+    for (const auto& each_path : paths_vec) {
       if (index == 0) {
         super_image = each_path;
       } else if (index == 1) {
@@ -272,7 +268,8 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
     }
     misc_info = CF_EXPECT(FindMiscInfo(image_dir));
     image_dir = CF_EXPECT(FindImageDir(image_dir));
-    system_image_path = FindImage(local_system_image, {_SYSTEM_IMAGE_NAME_PATTERN});
+    system_image_path =
+        FindImage(local_system_image, {_SYSTEM_IMAGE_NAME_PATTERN});
     CF_EXPECT(!system_image_path.empty(),
               "Cannot find system.img in " << local_system_image);
     std::string system_ext_image_path =
@@ -293,8 +290,8 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
   }
 };
 
-std::unique_ptr<CvdServerHandler> NewAcloudMixSuperImageCommand() {
-  return std::unique_ptr<CvdServerHandler>(new AcloudMixSuperImageCommand());
+std::unique_ptr<CvdCommandHandler> NewAcloudMixSuperImageCommand() {
+  return std::unique_ptr<CvdCommandHandler>(new AcloudMixSuperImageCommand());
 }
 
 }  // namespace cuttlefish

@@ -18,10 +18,8 @@
 
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
-#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
@@ -37,9 +35,10 @@ Args:
 Both -opt-out and --opt-in are mutually exclusive.
 )";
 
-class AcloudTranslatorCommand : public CvdServerHandler {
+class AcloudTranslatorCommand : public CvdCommandHandler {
  public:
-  AcloudTranslatorCommand(InstanceManager& instance_manager) : instance_manager_(instance_manager) {}
+  AcloudTranslatorCommand(InstanceManager& instance_manager)
+      : instance_manager_(instance_manager) {}
   ~AcloudTranslatorCommand() = default;
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
@@ -94,9 +93,10 @@ class AcloudTranslatorCommand : public CvdServerHandler {
   InstanceManager& instance_manager_;
 };
 
-std::unique_ptr<CvdServerHandler> NewAcloudTranslatorCommand(
-InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(new AcloudTranslatorCommand(instance_manager));
+std::unique_ptr<CvdCommandHandler> NewAcloudTranslatorCommand(
+    InstanceManager& instance_manager) {
+  return std::unique_ptr<CvdCommandHandler>(
+      new AcloudTranslatorCommand(instance_manager));
 }
 
 }  // namespace cuttlefish

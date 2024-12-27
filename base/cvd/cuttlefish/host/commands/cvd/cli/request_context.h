@@ -23,7 +23,7 @@
 #include "host/commands/cvd/cli/command_sequence.h"
 #include "host/commands/cvd/instances/instance_lock.h"
 #include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 
 namespace cuttlefish {
 
@@ -32,20 +32,20 @@ class RequestContext {
   RequestContext(InstanceLockFileManager& instance_lockfile_manager,
                  InstanceManager& instance_manager);
 
-  Result<CvdServerHandler*> Handler(const CommandRequest& request);
+  Result<CvdCommandHandler*> Handler(const CommandRequest& request);
 
  private:
   void InstantiateHandlers();
 
-  std::vector<std::unique_ptr<CvdServerHandler>> request_handlers_;
+  std::vector<std::unique_ptr<CvdCommandHandler>> request_handlers_;
   InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
   InstanceLockFileManager lock_file_manager_;
   CommandSequenceExecutor command_sequence_executor_;
 };
 
-Result<CvdServerHandler*> RequestHandler(
+Result<CvdCommandHandler*> RequestHandler(
     const CommandRequest& request,
-    const std::vector<std::unique_ptr<CvdServerHandler>>& handlers);
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers);
 
 }  // namespace cuttlefish

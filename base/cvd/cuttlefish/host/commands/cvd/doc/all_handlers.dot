@@ -8,7 +8,7 @@ digraph {
   subgraph cluster_cvd_server {
     label = "cvd (server)"
     CvdServer
-    CvdServerHandler [style = "dashed"]
+    CvdCommandHandler [style = "dashed"]
     CommandSequenceExecutor
 
     subgraph first_order_handlers {
@@ -30,7 +30,7 @@ digraph {
 
       AcloudCommand
       AcloudTranslatorCommand
-      CvdServerHandlerProxy
+      CvdCommandHandlerProxy
       CvdVmControlCommandHandler
       LoadConfigsCommand
       SerialLaunchCommand
@@ -53,35 +53,35 @@ digraph {
 
   CvdClient -> CvdServer [label = "AF_UNIX"]
   CvdClient -> acloud [label = "fork/exec"]
-  CvdServer -> CvdServerHandler
+  CvdServer -> CvdCommandHandler
 
-  CvdServerHandler -> TryAcloudCommand
-  CvdServerHandler -> AcloudTranslatorCommand
-  CvdServerHandler -> AcloudCommand
-  CvdServerHandler -> AcloudMixSuperImageCommand
-  CvdServerHandler -> CvdVmControlCommandHandler
-  CvdServerHandler -> CvdFetchCommandHandler
-  CvdServerHandler -> CvdFleetCommandHandler
-  CvdServerHandler -> CvdGenericCommandHandler [minlen = 2]
-  CvdServerHandler -> CvdServerHandlerProxy
-  CvdServerHandler -> CvdHelpHandler
-  CvdServerHandler -> LoadConfigsCommand
-  CvdServerHandler -> CvdResetCommandHandler
-  CvdServerHandler -> SerialLaunchCommand
-  CvdServerHandler -> SerialPreset
-  CvdServerHandler -> CvdShutdownHandler
-  CvdServerHandler -> CvdStartCommandHandler
-  CvdServerHandler -> CvdVersionHandler
+  CvdCommandHandler -> TryAcloudCommand
+  CvdCommandHandler -> AcloudTranslatorCommand
+  CvdCommandHandler -> AcloudCommand
+  CvdCommandHandler -> AcloudMixSuperImageCommand
+  CvdCommandHandler -> CvdVmControlCommandHandler
+  CvdCommandHandler -> CvdFetchCommandHandler
+  CvdCommandHandler -> CvdFleetCommandHandler
+  CvdCommandHandler -> CvdGenericCommandHandler [minlen = 2]
+  CvdCommandHandler -> CvdCommandHandlerProxy
+  CvdCommandHandler -> CvdHelpHandler
+  CvdCommandHandler -> LoadConfigsCommand
+  CvdCommandHandler -> CvdResetCommandHandler
+  CvdCommandHandler -> SerialLaunchCommand
+  CvdCommandHandler -> SerialPreset
+  CvdCommandHandler -> CvdShutdownHandler
+  CvdCommandHandler -> CvdStartCommandHandler
+  CvdCommandHandler -> CvdVersionHandler
 
   CommandSequenceExecutor -> AcloudTranslatorCommand [dir = "back"]
   CommandSequenceExecutor -> AcloudCommand [dir = "back"]
-  CommandSequenceExecutor -> CvdServerHandlerProxy [dir = "back"]
+  CommandSequenceExecutor -> CvdCommandHandlerProxy [dir = "back"]
   CommandSequenceExecutor -> LoadConfigsCommand [dir = "back"]
   CommandSequenceExecutor -> SerialPreset [dir = "back"]
   CommandSequenceExecutor -> SerialLaunchCommand [dir = "back"]
   CommandSequenceExecutor -> CvdVmControlCommandHandler [dir = "back"]
 
-  CommandSequenceExecutor -> CvdServerHandler
+  CommandSequenceExecutor -> CvdCommandHandler
 
   CvdStartCommandHandler -> launch_cvd [label = "fork/exec"]
   CvdGenericCommandHandler -> restart_cvd [label = "fork/exec"]

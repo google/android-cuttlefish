@@ -23,7 +23,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "host/commands/cvd/cli/types.h"
 
@@ -42,7 +42,7 @@ Usage: cvd lint /path/to/input.json
 
 }  // namespace
 
-class LintCommandHandler : public CvdServerHandler {
+class LintCommandHandler : public CvdCommandHandler {
  public:
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
@@ -52,7 +52,7 @@ class LintCommandHandler : public CvdServerHandler {
     const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
 
     std::cout << "Lint of flags and config \"" << config_path
-                  << "\" succeeded\n";
+              << "\" succeeded\n";
 
     return {};
   }
@@ -78,8 +78,8 @@ class LintCommandHandler : public CvdServerHandler {
   static constexpr char kLintSubCmd[] = "lint";
 };
 
-std::unique_ptr<CvdServerHandler> NewLintCommand() {
-  return std::unique_ptr<CvdServerHandler>(new LintCommandHandler());
+std::unique_ptr<CvdCommandHandler> NewLintCommand() {
+  return std::unique_ptr<CvdCommandHandler>(new LintCommandHandler());
 }
 
 }  // namespace cuttlefish

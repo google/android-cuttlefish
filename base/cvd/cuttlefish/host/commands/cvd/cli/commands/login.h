@@ -17,11 +17,11 @@
 
 #include <memory>
 
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 
 namespace cuttlefish {
 
 /** Create a credentials file */
-std::unique_ptr<CvdServerHandler> NewLoginCommand();
+std::unique_ptr<CvdCommandHandler> NewLoginCommand();
 
 }  // namespace cuttlefish

@@ -69,10 +69,10 @@ constexpr char kIgnorableHandlerCommand[] = "experimental";
 
 }  // namespace
 
-class CvdHelpHandler : public CvdServerHandler {
+class CvdHelpHandler : public CvdCommandHandler {
  public:
   CvdHelpHandler(
-      const std::vector<std::unique_ptr<CvdServerHandler>>& request_handlers)
+      const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers)
       : request_handlers_(request_handlers) {}
 
   Result<void> Handle(const CommandRequest& request) override {
@@ -134,12 +134,12 @@ class CvdHelpHandler : public CvdServerHandler {
     return help_message.str();
   }
 
-  const std::vector<std::unique_ptr<CvdServerHandler>>& request_handlers_;
+  const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers_;
 };
 
-std::unique_ptr<CvdServerHandler> NewCvdHelpHandler(
-    const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers) {
-  return std::unique_ptr<CvdServerHandler>(new CvdHelpHandler(server_handlers));
+std::unique_ptr<CvdCommandHandler> NewCvdHelpHandler(
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers) {
+  return std::unique_ptr<CvdCommandHandler>(new CvdHelpHandler(server_handlers));
 }
 
 }  // namespace cuttlefish

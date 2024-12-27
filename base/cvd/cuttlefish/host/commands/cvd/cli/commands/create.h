@@ -20,11 +20,11 @@
 
 #include "host/commands/cvd/cli/command_sequence.h"
 #include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewCvdCreateCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
     InstanceManager& instance_manager, CommandSequenceExecutor& executor);
 
 }  // namespace cuttlefish

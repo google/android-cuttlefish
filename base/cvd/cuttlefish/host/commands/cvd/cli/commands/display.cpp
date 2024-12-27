@@ -26,7 +26,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/flag.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
@@ -50,7 +50,7 @@ Commands:
     remove              Removes a display from a given device.
 )";
 
-class CvdDisplayCommandHandler : public CvdServerHandler {
+class CvdDisplayCommandHandler : public CvdCommandHandler {
  public:
   CvdDisplayCommandHandler(InstanceManager& instance_manager)
       : instance_manager_{instance_manager} {}
@@ -164,9 +164,9 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdDisplayCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdDisplayCommandHandler(
     InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
+  return std::unique_ptr<CvdCommandHandler>(
       new CvdDisplayCommandHandler(instance_manager));
 }
 

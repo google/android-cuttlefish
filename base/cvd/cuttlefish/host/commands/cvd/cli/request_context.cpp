@@ -23,14 +23,13 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/command_sequence.h"
-#include "host/commands/cvd/instances/instance_lock.h"
-#include "host/commands/cvd/instances/instance_manager.h"
 #include "host/commands/cvd/cli/commands/acloud_command.h"
 #include "host/commands/cvd/cli/commands/acloud_mixsuperimage.h"
 #include "host/commands/cvd/cli/commands/acloud_translator.h"
 #include "host/commands/cvd/cli/commands/bugreport.h"
 #include "host/commands/cvd/cli/commands/clear.h"
 #include "host/commands/cvd/cli/commands/cmd_list.h"
+#include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/commands/create.h"
 #include "host/commands/cvd/cli/commands/display.h"
 #include "host/commands/cvd/cli/commands/env.h"
@@ -44,13 +43,14 @@
 #include "host/commands/cvd/cli/commands/power.h"
 #include "host/commands/cvd/cli/commands/remove.h"
 #include "host/commands/cvd/cli/commands/reset.h"
-#include "host/commands/cvd/cli/commands/server_handler.h"
 #include "host/commands/cvd/cli/commands/snapshot.h"
 #include "host/commands/cvd/cli/commands/start.h"
 #include "host/commands/cvd/cli/commands/status.h"
 #include "host/commands/cvd/cli/commands/stop.h"
 #include "host/commands/cvd/cli/commands/try_acloud.h"
 #include "host/commands/cvd/cli/commands/version.h"
+#include "host/commands/cvd/instances/instance_lock.h"
+#include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 
@@ -94,15 +94,15 @@ RequestContext::RequestContext(
   request_handlers_.emplace_back(NewCvdNoopHandler());
 }
 
-Result<CvdServerHandler*> RequestContext::Handler(
+Result<CvdCommandHandler*> RequestContext::Handler(
     const CommandRequest& request) {
   return RequestHandler(request, request_handlers_);
 }
 
-Result<CvdServerHandler*> RequestHandler(
+Result<CvdCommandHandler*> RequestHandler(
     const CommandRequest& request,
-    const std::vector<std::unique_ptr<CvdServerHandler>>& handlers) {
-  std::vector<CvdServerHandler*> compatible_handlers;
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers) {
+  std::vector<CvdCommandHandler*> compatible_handlers;
   for (auto& handler : handlers) {
     if (CF_EXPECT(handler->CanHandle(request))) {
       compatible_handlers.push_back(handler.get());
