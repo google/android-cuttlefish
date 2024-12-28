@@ -19,14 +19,24 @@
 #include <android-base/logging.h>
 #include <fmt/format.h>
 
-#include "host/commands/cvd/utils/common.h"
+#include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/cli/commands/host_tool_target.h"
+#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/status_fetcher.h"
+#include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 
 namespace {
 constexpr int BASE_ADB_PORT = 6520;
 constexpr int BASE_INSTANCE_ID = 1;
+
+void AddEnvironmentForInstance(Command& cmd, const LocalInstance& instance) {
+  cmd.AddEnvironmentVariable("HOME", instance.home_directory());
+  cmd.AddEnvironmentVariable(kAndroidHostOut, instance.host_artifacts_path());
+  cmd.AddEnvironmentVariable(kAndroidSoongHostOut, instance.host_artifacts_path());
+}
+
 }  // namespace
 
 LocalInstance::LocalInstance(std::shared_ptr<cvd::InstanceGroup> group_proto,
@@ -81,6 +91,67 @@ bool LocalInstance::IsActive() const {
 
 Result<Json::Value> LocalInstance::FetchStatus(std::chrono::seconds timeout) {
   return CF_EXPECT(FetchInstanceStatus(*this, timeout));
+}
+
+Result<void> LocalInstance::PressPowerBtn() {
+  Command cmd(
+      CF_EXPECT(HostToolTarget(host_artifacts_path()).GetPowerBtnBinPath()));
+
+  cmd.AddParameter("--instance_num=", id());
+  cmd.SetEnvironment({});
+  AddEnvironmentForInstance(cmd, *this);
+
+  LOG(DEBUG) << "Executing: " << cmd.ToString();
+
+  siginfo_t infop;
+  cmd.Start().Wait(&infop, WEXITED);
+  CF_EXPECT(CheckProcessExitedNormally(infop));
+
+  return {};
+}
+
+Result<void> LocalInstance::Restart(std::chrono::seconds launcher_timeout,
+                     std::chrono::seconds boot_timeout) {
+  Command cmd(
+      CF_EXPECT(HostToolTarget(host_artifacts_path()).GetRestartBinPath()));
+
+  cmd.AddParameter("-wait_for_launcher=", launcher_timeout.count());
+  cmd.AddParameter("-boot_timeout=", boot_timeout.count());
+  cmd.AddParameter("--undefok=wait_for_launcher,boot_timeout");
+
+  cmd.AddParameter("--instance_num=", id());
+  cmd.SetEnvironment({});
+  AddEnvironment(cmd, *this);
+
+  LOG(DEBUG) << "Executing: " << cmd.ToString();
+
+  siginfo_t infop;
+  cmd.Start().Wait(&infop, WEXITED);
+  CF_EXPECT(CheckProcessExitedNormally(infop));
+
+  return {};
+}
+
+Result<void> LocalInstance::PowerWash(std::chrono::seconds launcher_timeout,
+                       std::chrono::seconds boot_timeout) {
+  Command cmd(
+      CF_EXPECT(HostToolTarget(host_artifacts_path()).GetPowerwashBinPath()));
+
+  cmd.AddParameter("-wait_for_launcher=", launcher_timeout.count());
+  cmd.AddParameter("-boot_timeout=", boot_timeout.count());
+  cmd.AddParameter("--undefok=wait_for_launcher,boot_timeout");
+
+  cmd.AddParameter("--instance_num=", id());
+  cmd.SetEnvironment({});
+  AddEnvironment(cmd, *this);
+
+  LOG(DEBUG) << "Executing: " << cmd.ToString();
+
+  siginfo_t infop;
+  cmd.Start().Wait(&infop, WEXITED);
+  CF_EXPECT(CheckProcessExitedNormally(infop));
+
+  return {};
 }
 
 }  // namespace cuttlefish

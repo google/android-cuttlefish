@@ -36,9 +36,9 @@ class HostToolTarget {
   Result<std::string> GetStartBinName() const;
   Result<std::string> GetStopBinName() const;
   Result<std::string> GetStatusBinName() const;
-  Result<std::string> GetRestartBinName() const;
-  Result<std::string> GetPowerwashBinName() const;
-  Result<std::string> GetPowerBtnBinName() const;
+  Result<std::string> GetRestartBinPath() const;
+  Result<std::string> GetPowerwashBinPath() const;
+  Result<std::string> GetPowerBtnBinPath() const;
   Result<std::string> GetSnapshotBinName() const;
 
  private:
