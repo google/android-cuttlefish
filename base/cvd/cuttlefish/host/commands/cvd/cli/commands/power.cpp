@@ -16,27 +16,19 @@
 
 #include "host/commands/cvd/cli/commands/power.h"
 
-#include <functional>
-#include <sstream>
 #include <string>
 #include <vector>
 
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "common/libs/utils/users.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/commands/host_tool_target.h"
 #include "host/commands/cvd/cli/flag.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace {
@@ -45,55 +37,103 @@ constexpr char kSummaryHelpText[] =
     "Trigger power button event on the device, reset device to first boot "
     "state, restart device";
 
+constexpr char kRestartCmd[] = "restart";
+constexpr char kPowerBtnCmd[] = "powerbtn";
+constexpr char kPowerwashCmd[] = "powerwash";
+
+struct RestartOptions {
+  int wait_for_launcher_seconds = 30;
+  int boot_timeout_seconds = 500;
+};
+Result<RestartOptions> RestartOptionsFromArgs(cvd_common::Args& args) {
+  RestartOptions ret;
+
+  CvdFlag<std::int32_t> wait_for_launcher_flag("wait_for_launcher");
+  auto wait_for_launcher_opt =
+      CF_EXPECT(wait_for_launcher_flag.FilterFlag(args));
+  if (wait_for_launcher_opt.has_value()) {
+    ret.wait_for_launcher_seconds = wait_for_launcher_opt.value();
+  }
+
+  CvdFlag<std::int32_t> boot_timeout_flag("wait_for_launcher");
+  auto boot_timeout_opt = CF_EXPECT(boot_timeout_flag.FilterFlag(args));
+  if (boot_timeout_opt.has_value()) {
+    ret.boot_timeout_seconds = boot_timeout_opt.value();
+  }
+
+  return ret;
+}
+
 class CvdDevicePowerCommandHandler : public CvdCommandHandler {
  public:
   CvdDevicePowerCommandHandler(InstanceManager& instance_manager)
       : instance_manager_{instance_manager} {
-    cvd_power_operations_["restart"] =
-        [this](const std::string& android_host_out) -> Result<std::string> {
-      return CF_EXPECT(RestartDeviceBin(android_host_out));
-    };
-    cvd_power_operations_["powerwash"] =
-        [this](const std::string& android_host_out) -> Result<std::string> {
-      return CF_EXPECT(PowerwashBin(android_host_out));
-    };
-    cvd_power_operations_["powerbtn"] =
-        [this](const std::string& android_host_out) -> Result<std::string> {
-      return CF_EXPECT(PowerbtnBin(android_host_out));
-    };
+    help_string_by_op_[kRestartCmd] =
+        R"(restart: Reboots the virtual device
+
+Flags:
+    -boot_timeout (How many seconds to wait for the device to reboot.)
+      type: int32 default: 500
+    -wait_for_launcher (How many seconds to wait for the launcher to respond to
+      the status command. A value of zero means wait indefinitely.) type: int32
+      default: 30
+)";
+
+    help_string_by_op_[kPowerwashCmd] =
+        R"(powerwash: Resets device state to first boot. Functionaly equivalent to
+removing the device and creating it again, but more efficient.
+
+Flags:
+    -boot_timeout (How many seconds to wait for the device to reboot.)
+      type: int32 default: 500
+    -wait_for_launcher (How many seconds to wait for the launcher to respond to
+      the status command. A value of zero means wait indefinitely.) type: int32
+      default: 30
+)";
+
+    help_string_by_op_[kPowerBtnCmd] =
+        "powerbtn: Triggers a power button event\n";
   }
 
   Result<bool> CanHandle(const CommandRequest& request) const override {
-    return Contains(cvd_power_operations_, request.Subcommand());
+    auto subcmd = request.Subcommand();
+    return subcmd == kRestartCmd || subcmd == kPowerwashCmd ||
+           subcmd == kPowerBtnCmd;
   }
 
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
+
     const cvd_common::Envs& env = request.Env();
+    std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
     std::string op = request.Subcommand();
-    std::vector<std::string> subcmd_args = request.SubcommandArguments();
-    bool is_help = CF_EXPECT(IsHelp(subcmd_args));
+    if (CF_EXPECT(IsHelp(subcmd_args))) {
+      std::cout << help_string_by_op_[op];
+      return {};
+    }
 
-    // may modify subcmd_args by consuming in parsing
-    Command command =
-        is_help ? CF_EXPECT(HelpCommand(request, op, subcmd_args, env))
-                : CF_EXPECT(NonHelpCommand(request, op, subcmd_args, env));
-
-    siginfo_t infop;
-    command.Start().Wait(&infop, WEXITED);
-
-    CF_EXPECT(CheckProcessExitedNormally(infop));
+    auto [instance, group] = CF_EXPECT(GetInstance(request, subcmd_args, env));
+    if (op == kRestartCmd) {
+      RestartOptions options = CF_EXPECT(RestartOptionsFromArgs(subcmd_args));
+      CF_EXPECT(instance.Restart(
+          std::chrono::seconds(options.wait_for_launcher_seconds),
+          std::chrono::seconds(options.boot_timeout_seconds)));
+    } else if (op == kPowerwashCmd) {
+      RestartOptions options = CF_EXPECT(RestartOptionsFromArgs(subcmd_args));
+      CF_EXPECT(instance.PowerWash(
+          std::chrono::seconds(options.wait_for_launcher_seconds),
+          std::chrono::seconds(options.boot_timeout_seconds)));
+    } else if (op == kPowerBtnCmd) {
+      CF_EXPECT(instance.PressPowerBtn());
+    } else {
+      LOG(FATAL) << "Unsupported subcommand: " << op;
+    }
     return {};
   }
 
   cvd_common::Args CmdList() const override {
-    cvd_common::Args valid_ops;
-    valid_ops.reserve(cvd_power_operations_.size());
-    for (const auto& [op, _] : cvd_power_operations_) {
-      valid_ops.push_back(op);
-    }
-    return valid_ops;
+    return {kRestartCmd, kPowerwashCmd, kPowerBtnCmd};
   }
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
@@ -102,95 +142,27 @@ class CvdDevicePowerCommandHandler : public CvdCommandHandler {
 
   Result<std::string> DetailedHelp(
       std::vector<std::string>& arguments) const override {
-    static constexpr char kDetailedHelpText[] =
-        "Run cvd {} --help for full help text";
-    std::string replacement = "<command>";
-    if (!arguments.empty()) {
-      replacement = arguments.front();
-    }
-    return fmt::format(kDetailedHelpText, replacement);
+    CHECK(!arguments.empty()) << "Missing subcommand";
+    return help_string_by_op_.at(arguments.front());
   }
 
  private:
-  Result<std::string> RestartDeviceBin(
-      const std::string& android_host_out) const {
-    return CF_EXPECT(HostToolTarget(android_host_out).GetRestartBinName());
-  }
-
-  Result<std::string> PowerwashBin(const std::string& android_host_out) const {
-    return CF_EXPECT(HostToolTarget(android_host_out).GetPowerwashBinName());
-  }
-
-  Result<std::string> PowerbtnBin(const std::string& android_host_out) const {
-    return CF_EXPECT(HostToolTarget(android_host_out).GetPowerBtnBinName());
-  }
-
-  Result<Command> HelpCommand(const CommandRequest& request,
-                              const std::string& op,
-                              const cvd_common::Args& subcmd_args,
-                              cvd_common::Envs envs) {
-    auto android_host_out = CF_EXPECT(AndroidHostPath(envs));
-    const auto bin_base = CF_EXPECT(GetBin(op, android_host_out));
-    auto cvd_power_bin_path =
-        ConcatToString(android_host_out, "/bin/", bin_base);
-    std::string home = Contains(envs, "HOME") ? envs.at("HOME")
-                                              : CF_EXPECT(SystemWideUserHome());
-    envs["HOME"] = home;
-    envs[kAndroidHostOut] = android_host_out;
-    envs[kAndroidSoongHostOut] = android_host_out;
-    ConstructCommandParam construct_cmd_param{.bin_path = cvd_power_bin_path,
-                                              .home = home,
-                                              .args = subcmd_args,
-                                              .envs = std::move(envs),
-                                              .working_dir = CurrentDirectory(),
-                                              .command_name = bin_base};
-    Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
-    return command;
-  }
-
-  Result<Command> NonHelpCommand(const CommandRequest& request,
-                                 const std::string& op,
-                                 cvd_common::Args& subcmd_args,
-                                 cvd_common::Envs envs) {
+  Result<std::pair<LocalInstance, LocalInstanceGroup>> GetInstance(
+      const CommandRequest& request, cvd_common::Args& subcmd_args,
+      cvd_common::Envs envs) {
     // test if there is --instance_num flag
     CvdFlag<std::int32_t> instance_num_flag("instance_num");
     auto instance_num_opt =
         CF_EXPECT(instance_num_flag.FilterFlag(subcmd_args));
-    auto [instance, group] =
-        instance_num_opt.has_value()
-            ? CF_EXPECT(instance_manager_.FindInstanceWithGroup(
-                  {.instance_id = *instance_num_opt}))
-            : CF_EXPECT(selector::SelectInstance(instance_manager_, request));
-    const auto& home = group.Proto().home_directory();
-
-    const auto& android_host_out = group.Proto().host_artifacts_path();
-    const auto bin_base = CF_EXPECT(GetBin(op, android_host_out));
-    auto cvd_power_bin_path =
-        ConcatToString(android_host_out, "/bin/", bin_base);
-
-    cvd_common::Args cvd_env_args{subcmd_args};
-    cvd_env_args.push_back(ConcatToString("--instance_num=", instance.id()));
-    envs["HOME"] = home;
-    envs[kAndroidHostOut] = android_host_out;
-    envs[kAndroidSoongHostOut] = android_host_out;
-
-    std::stringstream command_to_issue;
-    command_to_issue << "HOME=" << home << " " << kAndroidHostOut << "="
-                     << android_host_out << " " << kAndroidSoongHostOut << "="
-                     << android_host_out << " " << cvd_power_bin_path << " ";
-    for (const auto& arg : cvd_env_args) {
-      command_to_issue << arg << " ";
+    if (instance_num_opt.has_value()) {
+      return CF_EXPECT(instance_manager_.FindInstanceWithGroup(
+          {.instance_id = *instance_num_opt}));
     }
-    std::cerr << command_to_issue.str();
-
-    ConstructCommandParam construct_cmd_param{.bin_path = cvd_power_bin_path,
-                                              .home = home,
-                                              .args = cvd_env_args,
-                                              .envs = std::move(envs),
-                                              .working_dir = CurrentDirectory(),
-                                              .command_name = bin_base};
-    Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
-    return command;
+    auto select_res = selector::SelectInstance(instance_manager_, request);
+    if (select_res.ok()) {
+      return *select_res;
+    }
+    return CF_EXPECT(std::move(select_res), "Unable to select an instance");
   }
 
   Result<bool> IsHelp(const cvd_common::Args& cmd_args) const {
@@ -206,16 +178,8 @@ class CvdDevicePowerCommandHandler : public CvdCommandHandler {
     return (cmd_args.front() == "help");
   }
 
-  Result<std::string> GetBin(const std::string& subcmd,
-                             const std::string& android_host_out) const {
-    CF_EXPECT(Contains(cvd_power_operations_, subcmd),
-              subcmd << " is not supported.");
-    return CF_EXPECT((cvd_power_operations_.at(subcmd))(android_host_out));
-  }
-
   InstanceManager& instance_manager_;
-  using BinGetter = std::function<Result<std::string>(const std::string&)>;
-  std::unordered_map<std::string, BinGetter> cvd_power_operations_;
+  std::unordered_map<std::string, std::string> help_string_by_op_;
 };
 
 }  // namespace

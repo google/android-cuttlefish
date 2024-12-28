@@ -60,6 +60,12 @@ class LocalInstance {
   Result<Json::Value> FetchStatus(
       std::chrono::seconds timeout = std::chrono::seconds(5));
 
+  Result<void> PressPowerBtn();
+  Result<void> Restart(std::chrono::seconds launcher_timeout,
+                       std::chrono::seconds boot_timeout);
+  Result<void> PowerWash(std::chrono::seconds launcher_timeout,
+                         std::chrono::seconds boot_timeout);
+
  private:
   LocalInstance(std::shared_ptr<cvd::InstanceGroup> group_proto,
                 cvd::Instance* instance_proto);

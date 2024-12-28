@@ -85,16 +85,19 @@ Result<std::string> HostToolTarget::GetStatusBinName() const {
   return CF_EXPECT(GetBinName({"cvd_internal_status", "cvd_status"}));
 }
 
-Result<std::string> HostToolTarget::GetRestartBinName() const {
-  return CF_EXPECT(GetBinName({"restart_cvd"}));
+Result<std::string> HostToolTarget::GetRestartBinPath() const {
+  std::string bin_name = CF_EXPECT(GetBinName({"restart_cvd"}));
+  return fmt::format("{}/bin/{}", artifacts_path_, bin_name);
 }
 
-Result<std::string> HostToolTarget::GetPowerwashBinName() const {
-  return CF_EXPECT(GetBinName({"powerwash_cvd"}));
+Result<std::string> HostToolTarget::GetPowerwashBinPath() const {
+  std::string bin_name = CF_EXPECT(GetBinName({"powerwash_cvd"}));
+  return fmt::format("{}/bin/{}", artifacts_path_, bin_name);
 }
 
-Result<std::string> HostToolTarget::GetPowerBtnBinName() const {
-  return CF_EXPECT(GetBinName({"powerbtn_cvd"}));
+Result<std::string> HostToolTarget::GetPowerBtnBinPath() const {
+  std::string bin_name = CF_EXPECT(GetBinName({"powerbtn_cvd"}));
+  return fmt::format("{}/bin/{}", artifacts_path_, bin_name);
 }
 
 Result<std::string> HostToolTarget::GetSnapshotBinName() const {

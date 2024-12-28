@@ -22,9 +22,6 @@
 #include <string_view>
 #include <vector>
 
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/cli/command_request.h"
