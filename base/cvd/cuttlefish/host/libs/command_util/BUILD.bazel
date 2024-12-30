@@ -1,0 +1,26 @@
+# This is a reduced version of the original library from AOSP, but the
+# interfaces used here are the same so upgrading to the full version
+# won't break its current usage in this project.
+cc_library(
+    name = "command_util",
+    srcs = [
+        "util.cc",
+    ],
+    hdrs = [
+        "runner/defs.h",
+        "util.h",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@protobuf",
+        "@jsoncpp",
+    ],
+)
