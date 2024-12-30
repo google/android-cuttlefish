@@ -104,7 +104,6 @@ Flags:
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
-    const cvd_common::Envs& env = request.Env();
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
     std::string op = request.Subcommand();
@@ -113,7 +112,9 @@ Flags:
       return {};
     }
 
-    auto [instance, group] = CF_EXPECT(GetInstance(request, subcmd_args, env));
+    auto [instance, group] =
+        CF_EXPECT(selector::SelectInstance(instance_manager_, request),
+                  "Unable to select an instance");
     if (op == kRestartCmd) {
       RestartOptions options = CF_EXPECT(RestartOptionsFromArgs(subcmd_args));
       CF_EXPECT(instance.Restart(
@@ -147,24 +148,6 @@ Flags:
   }
 
  private:
-  Result<std::pair<LocalInstance, LocalInstanceGroup>> GetInstance(
-      const CommandRequest& request, cvd_common::Args& subcmd_args,
-      cvd_common::Envs envs) {
-    // test if there is --instance_num flag
-    CvdFlag<std::int32_t> instance_num_flag("instance_num");
-    auto instance_num_opt =
-        CF_EXPECT(instance_num_flag.FilterFlag(subcmd_args));
-    if (instance_num_opt.has_value()) {
-      return CF_EXPECT(instance_manager_.FindInstanceWithGroup(
-          {.instance_id = *instance_num_opt}));
-    }
-    auto select_res = selector::SelectInstance(instance_manager_, request);
-    if (select_res.ok()) {
-      return *select_res;
-    }
-    return CF_EXPECT(std::move(select_res), "Unable to select an instance");
-  }
-
   Result<bool> IsHelp(const cvd_common::Args& cmd_args) const {
     if (cmd_args.empty()) {
       return false;
