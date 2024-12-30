@@ -40,9 +40,11 @@
 #include "host/commands/cvd/cli/commands/load_configs.h"
 #include "host/commands/cvd/cli/commands/login.h"
 #include "host/commands/cvd/cli/commands/noop.h"
-#include "host/commands/cvd/cli/commands/power.h"
+#include "host/commands/cvd/cli/commands/power_btn.h"
+#include "host/commands/cvd/cli/commands/powerwash.h"
 #include "host/commands/cvd/cli/commands/remove.h"
 #include "host/commands/cvd/cli/commands/reset.h"
+#include "host/commands/cvd/cli/commands/restart.h"
 #include "host/commands/cvd/cli/commands/snapshot.h"
 #include "host/commands/cvd/cli/commands/start.h"
 #include "host/commands/cvd/cli/commands/status.h"
@@ -82,7 +84,11 @@ RequestContext::RequestContext(
       NewLoadConfigsCommand(command_sequence_executor_, instance_manager_));
   request_handlers_.emplace_back(NewLoginCommand());
   request_handlers_.emplace_back(
-      NewCvdDevicePowerCommandHandler(instance_manager_));
+      NewCvdDevicePowerBtnCommandHandler(instance_manager_));
+  request_handlers_.emplace_back(
+      NewCvdDevicePowerwashCommandHandler(instance_manager_));
+  request_handlers_.emplace_back(
+      NewCvdDeviceRestartCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewRemoveCvdCommandHandler(instance_manager_));
   request_handlers_.emplace_back(NewCvdResetCommandHandler(instance_manager_));
   request_handlers_.emplace_back(

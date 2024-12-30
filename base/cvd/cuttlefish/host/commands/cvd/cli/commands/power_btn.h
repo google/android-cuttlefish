@@ -18,13 +18,12 @@
 
 #include <memory>
 
-#include "host/commands/cvd/instances/instance_manager.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
+#include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 
-// restart, powerwash, powerbtn
-std::unique_ptr<CvdCommandHandler> NewCvdDevicePowerCommandHandler(
+std::unique_ptr<CvdCommandHandler> NewCvdDevicePowerBtnCommandHandler(
     InstanceManager& instance_manager);
 
 }  // namespace cuttlefish
