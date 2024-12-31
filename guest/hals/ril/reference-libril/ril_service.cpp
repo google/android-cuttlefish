@@ -25,10 +25,14 @@
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <android/hardware/radio/1.6/IRadio.h>
 #include <android/hardware/radio/1.6/IRadioIndication.h>
 #include <android/hardware/radio/1.6/IRadioResponse.h>
 #include <android/hardware/radio/1.6/types.h>
+#include <android/hardware/radio/deprecated/1.0/IOemHook.h>
 #include <libradiocompat/CallbackManager.h>
 #include <libradiocompat/RadioData.h>
 #include <libradiocompat/RadioIms.h>
@@ -37,8 +41,7 @@
 #include <libradiocompat/RadioModem.h>
 #include <libradiocompat/RadioSim.h>
 #include <libradiocompat/RadioVoice.h>
-
-#include <android/hardware/radio/deprecated/1.0/IOemHook.h>
+#pragma clang diagnostic pop
 
 #include <hwbinder/IPCThreadState.h>
 #include <hwbinder/ProcessState.h>
@@ -105,15 +108,15 @@ sp<RadioImpl_1_6> radioService[SIM_COUNT];
 sp<OemHookImpl> oemHookService[SIM_COUNT];
 int64_t nitzTimeReceived[SIM_COUNT];
 // counter used for synchronization. It is incremented every time response callbacks are updated.
-volatile int32_t mCounterRadio[SIM_COUNT];
-volatile int32_t mCounterOemHook[SIM_COUNT];
+std::atomic_int32_t mCounterRadio[SIM_COUNT];
+std::atomic_int32_t mCounterOemHook[SIM_COUNT];
 #else
 sp<RadioImpl_1_6> radioService[1];
 sp<OemHookImpl> oemHookService[1];
 int64_t nitzTimeReceived[1];
 // counter used for synchronization. It is incremented every time response callbacks are updated.
-volatile int32_t mCounterRadio[1];
-volatile int32_t mCounterOemHook[1];
+std::atomic_int32_t mCounterRadio[1];
+std::atomic_int32_t mCounterOemHook[1];
 hidl_vec<uint8_t> osAppIdVec;
 #endif
 
@@ -991,7 +994,8 @@ void checkReturnStatus(int32_t slotId, Return<void>& ret, bool isRadioService) {
         // Caller should already hold rdlock, release that first
         // note the current counter to avoid overwriting updates made by another thread before
         // write lock is acquired.
-        int counter = isRadioService ? mCounterRadio[slotId] : mCounterOemHook[slotId];
+        auto counter =
+                isRadioService ? mCounterRadio[slotId].load() : mCounterOemHook[slotId].load();
         pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(slotId);
         int ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
         CHECK_EQ(ret, 0);

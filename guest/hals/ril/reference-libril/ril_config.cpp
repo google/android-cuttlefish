@@ -22,12 +22,16 @@
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <android/hardware/radio/config/1.1/IRadioConfig.h>
 #include <android/hardware/radio/config/1.2/IRadioConfigIndication.h>
 #include <android/hardware/radio/config/1.2/IRadioConfigResponse.h>
 #include <android/hardware/radio/config/1.3/IRadioConfig.h>
 #include <android/hardware/radio/config/1.3/IRadioConfigResponse.h>
 #include <libradiocompat/RadioConfig.h>
+#pragma clang diagnostic pop
 
 #include <ril.h>
 #include <guest/hals/ril/reference-libril/ril_service.h>
@@ -50,7 +54,7 @@ RIL_RadioFunctions *s_vendorFunctions_config = NULL;
 static CommandInfo *s_configCommands;
 struct RadioConfigImpl;
 sp<RadioConfigImpl> radioConfigService;
-volatile int32_t mCounterRadioConfig;
+std::atomic_int32_t mCounterRadioConfig;
 
 #if defined (ANDROID_MULTI_SIM)
 #define RIL_UNSOL_RESPONSE(a, b, c, d) RIL_onUnsolicitedResponse((a), (b), (c), (d))
@@ -308,7 +312,7 @@ void checkReturnStatus(Return<void>& ret) {
         // Caller should already hold rdlock, release that first
         // note the current counter to avoid overwriting updates made by another thread before
         // write lock is acquired.
-        int counter = mCounterRadioConfig;
+        int32_t counter = mCounterRadioConfig.load();
         pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(0);
         int ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
         CHECK_EQ(ret, 0);

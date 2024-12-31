@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 
   constexpr auto maxConnectWaitTime = std::chrono::seconds(5);
   auto hardware = std::make_unique<GRPCVehicleHardware>(serverAddr);
-  if (const auto connected = hardware->waitForConnected(maxConnectWaitTime)) {
+  if (hardware->waitForConnected(maxConnectWaitTime)) {
     LOG(INFO) << "Connected to GRPC server at " << serverAddr;
   } else {
     LOG(INFO)
