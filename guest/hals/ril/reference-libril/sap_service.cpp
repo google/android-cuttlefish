@@ -18,8 +18,12 @@
 
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <android/hardware/radio/1.1/ISap.h>
 #include <libradiocompat/Sap.h>
+#pragma clang diagnostic pop
 
 #include <sap_service.h>
 #include "pb_decode.h"
