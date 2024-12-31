@@ -458,16 +458,20 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
     if (IsKernelModuleSigned(module_location)) {
       const auto system_dlkm_module_location =
           fmt::format("{}/{}", system_modules_dir, module_path);
-      EnsureDirectoryExists(
+      auto res = EnsureDirectoryExists(
           android::base::Dirname(system_dlkm_module_location));
-      RenameFile(module_location, system_dlkm_module_location);
+      CHECK(res.ok()) << res.error().FormatForEnv();
+      auto ret = RenameFile(module_location, system_dlkm_module_location);
+      CHECK(ret.ok()) << ret.error().FormatForEnv();
       system_dlkm_modules.emplace(module_path);
     } else {
       const auto vendor_dlkm_module_location =
           fmt::format("{}/{}", vendor_modules_dir, module_path);
-      EnsureDirectoryExists(
+      auto res = EnsureDirectoryExists(
           android::base::Dirname(vendor_dlkm_module_location));
-      RenameFile(module_location, vendor_dlkm_module_location);
+      CHECK(res.ok()) << res.error().FormatForEnv();
+      auto ret = RenameFile(module_location, vendor_dlkm_module_location);
+      CHECK(ret.ok()) << ret.error().FormatForEnv();
       vendor_dlkm_modules.emplace(module_path);
     }
   }
@@ -492,7 +496,8 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
   if (FileExists(initramfs_blocklist_path)) {
     const auto vendor_dlkm_blocklist_path =
         fmt::format("{}/{}", vendor_modules_dir, "modules.blocklist");
-    RenameFile(initramfs_blocklist_path, vendor_dlkm_blocklist_path);
+    auto ret = RenameFile(initramfs_blocklist_path, vendor_dlkm_blocklist_path);
+    CHECK(ret.ok()) << ret.error().FormatForEnv();
   }
 
   // Write updated modules.dep and modules.load files
