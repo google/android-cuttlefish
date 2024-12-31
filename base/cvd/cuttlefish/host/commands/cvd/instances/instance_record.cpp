@@ -24,6 +24,8 @@
 #include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/status_fetcher.h"
 #include "host/commands/cvd/utils/common.h"
+#include "host/libs/command_util/runner/defs.h"
+#include "host/libs/command_util/util.h"
 
 namespace cuttlefish {
 
@@ -34,7 +36,8 @@ constexpr int BASE_INSTANCE_ID = 1;
 void AddEnvironmentForInstance(Command& cmd, const LocalInstance& instance) {
   cmd.AddEnvironmentVariable("HOME", instance.home_directory());
   cmd.AddEnvironmentVariable(kAndroidHostOut, instance.host_artifacts_path());
-  cmd.AddEnvironmentVariable(kAndroidSoongHostOut, instance.host_artifacts_path());
+  cmd.AddEnvironmentVariable(kAndroidSoongHostOut,
+                             instance.host_artifacts_path());
 }
 
 }  // namespace
@@ -111,47 +114,76 @@ Result<void> LocalInstance::PressPowerBtn() {
 }
 
 Result<void> LocalInstance::Restart(std::chrono::seconds launcher_timeout,
-                     std::chrono::seconds boot_timeout) {
-  Command cmd(
-      CF_EXPECT(HostToolTarget(host_artifacts_path()).GetRestartBinPath()));
+                                    std::chrono::seconds boot_timeout) {
+  SharedFD monitor_socket = CF_EXPECT(GetLauncherMonitor(launcher_timeout));
 
-  cmd.AddParameter("-wait_for_launcher=", launcher_timeout.count());
-  cmd.AddParameter("-boot_timeout=", boot_timeout.count());
-  cmd.AddParameter("--undefok=wait_for_launcher,boot_timeout");
+  LOG(INFO) << "Requesting restart";
+  CF_EXPECT(RunLauncherAction(monitor_socket, LauncherAction::kRestart,
+                              launcher_timeout.count()));
 
-  cmd.AddParameter("--instance_num=", id());
-  cmd.SetEnvironment({});
-  AddEnvironment(cmd, *this);
+  LOG(INFO) << "Waiting for device to boot up again";
+  CF_EXPECT(WaitForRead(monitor_socket, boot_timeout.count()));
+  RunnerExitCodes boot_exit_code = CF_EXPECT(ReadExitCode(monitor_socket));
+  CF_EXPECT(boot_exit_code != RunnerExitCodes::kVirtualDeviceBootFailed,
+            "Boot failed");
+  CF_EXPECT(boot_exit_code == RunnerExitCodes::kSuccess,
+            "Unknown response" << static_cast<int>(boot_exit_code));
 
-  LOG(DEBUG) << "Executing: " << cmd.ToString();
-
-  siginfo_t infop;
-  cmd.Start().Wait(&infop, WEXITED);
-  CF_EXPECT(CheckProcessExitedNormally(infop));
-
+  LOG(INFO) << "Restart successful";
   return {};
 }
 
 Result<void> LocalInstance::PowerWash(std::chrono::seconds launcher_timeout,
-                       std::chrono::seconds boot_timeout) {
-  Command cmd(
-      CF_EXPECT(HostToolTarget(host_artifacts_path()).GetPowerwashBinPath()));
+                                      std::chrono::seconds boot_timeout) {
+  SharedFD monitor_socket = CF_EXPECT(GetLauncherMonitor(launcher_timeout));
 
-  cmd.AddParameter("-wait_for_launcher=", launcher_timeout.count());
-  cmd.AddParameter("-boot_timeout=", boot_timeout.count());
-  cmd.AddParameter("--undefok=wait_for_launcher,boot_timeout");
+  LOG(INFO) << "Requesting powerwash";
+  CF_EXPECT(RunLauncherAction(monitor_socket, LauncherAction::kPowerwash,
+                              launcher_timeout.count()));
 
-  cmd.AddParameter("--instance_num=", id());
-  cmd.SetEnvironment({});
-  AddEnvironment(cmd, *this);
+  LOG(INFO) << "Waiting for device to boot up again";
+  CF_EXPECT(WaitForRead(monitor_socket, boot_timeout.count()));
+  RunnerExitCodes boot_exit_code = CF_EXPECT(ReadExitCode(monitor_socket));
+  CF_EXPECT(boot_exit_code != RunnerExitCodes::kVirtualDeviceBootFailed,
+            "Boot failed");
+  CF_EXPECT(boot_exit_code == RunnerExitCodes::kSuccess,
+            "Unknown response" << static_cast<int>(boot_exit_code));
 
-  LOG(DEBUG) << "Executing: " << cmd.ToString();
-
-  siginfo_t infop;
-  cmd.Start().Wait(&infop, WEXITED);
-  CF_EXPECT(CheckProcessExitedNormally(infop));
+  LOG(INFO) << "Powerwash successful";
 
   return {};
+}
+
+Result<Json::Value> LocalInstance::ReadJsonConfig() const {
+  Json::CharReaderBuilder builder;
+  std::string config_file = instance_dir() + "/cuttlefish_config.json";
+  std::ifstream ifs(config_file);
+  std::string errorMessage;
+  Json::Value config;
+  bool parsed = Json::parseFromStream(builder, ifs, &config, &errorMessage);
+  CF_EXPECTF(std::move(parsed), "Could not read config file {}: {}",
+             config_file, errorMessage);
+  return config;
+}
+
+Result<SharedFD> LocalInstance::GetLauncherMonitor(
+    std::chrono::seconds timeout) const {
+  // Newer cuttlefish instances put launcher monitor socket in a directory
+  // under /tmp, and store this path in the config. Older instances just put
+  // them in the instance directory.
+  std::string uds_dir = instance_dir();
+  Json::Value config = CF_EXPECT(ReadJsonConfig());
+  if (config.isMember("instances_uds_dir") &&
+      config["instances_uds_dir"].isString()) {
+    uds_dir = fmt::format("{}/cvd-{}", config["instances_uds_dir"].asString(), id());
+  }
+  std::string monitor_path = uds_dir + "/launcher_monitor.sock";
+  SharedFD monitor = SharedFD::SocketLocalClient(monitor_path, false,
+                                                 SOCK_STREAM, timeout.count());
+  CF_EXPECTF(monitor->IsOpen(),
+             "Failed to connect to instance monitor socket ({}): {}",
+             monitor_path, monitor->StrError());
+  return monitor;
 }
 
 }  // namespace cuttlefish

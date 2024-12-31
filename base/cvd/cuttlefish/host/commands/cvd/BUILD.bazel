@@ -256,6 +256,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
         "//cuttlefish/host/commands/metrics:libmetrics",
+        "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/directories",
         "//cuttlefish/host/libs/image_aggregator",

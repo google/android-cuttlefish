@@ -21,6 +21,7 @@
 
 #include <json/json.h>
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 
@@ -69,6 +70,9 @@ class LocalInstance {
  private:
   LocalInstance(std::shared_ptr<cvd::InstanceGroup> group_proto,
                 cvd::Instance* instance_proto);
+
+  Result<SharedFD> GetLauncherMonitor(std::chrono::seconds timeout) const;
+  Result<Json::Value> ReadJsonConfig() const;
 
   // Sharing ownership of the group proto ensures the instance proto reference
   // doesn't invalidate.
