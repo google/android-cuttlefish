@@ -186,7 +186,7 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
   }
   const auto parent_dir = android::base::Dirname(directory_path);
   if (parent_dir.size() > 1) {
-    EnsureDirectoryExists(parent_dir, mode, group_name);
+    CF_EXPECT(EnsureDirectoryExists(parent_dir, mode, group_name));
   }
   LOG(VERBOSE) << "Setting up " << directory_path;
   if (mkdir(directory_path.c_str(), mode) < 0 && errno != EEXIST) {
