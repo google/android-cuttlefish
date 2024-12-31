@@ -20,7 +20,10 @@ package {
 cc_library_static {
     name: "lib_driver_cmd_simulated_cf_bp",
     srcs: ["driver_cmd_nl80211.c"],
-    cflags: ["-DCONFIG_ANDROID_LOG"],
+    cflags: [
+        "-DCONFIG_ANDROID_LOG",
+        "-Wno-unused-parameter",
+    ],
     header_libs: [
         "wpa_supplicant_headers",
     ],
