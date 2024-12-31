@@ -32,8 +32,9 @@ using aidl::android::hardware::sensors::SensorStatus;
 using aidl::android::hardware::sensors::SensorType;
 
 std::shared_ptr<ISensors> startSensorInjection() {
-  auto sensors = ISensors::fromBinder(ndk::SpAIBinder(
-      AServiceManager_getService("android.hardware.sensors.ISensors/default")));
+  auto sensors =
+      ISensors::fromBinder(ndk::SpAIBinder(AServiceManager_checkService(
+          "android.hardware.sensors.ISensors/default")));
   CHECK(sensors != nullptr) << "Unable to get ISensors.";
 
   // Place the ISensors HAL into DATA_INJECTION mode so that we can

@@ -15,8 +15,11 @@
  */
 #pragma once
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <libradiocompat/RadioImsMedia.h>
 #include <libradiocompat/RadioImsMediaSession.h>
+#pragma clang diagnostic pop
 
 namespace cf::ril {
 
