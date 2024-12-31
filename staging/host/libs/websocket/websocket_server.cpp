@@ -148,7 +148,6 @@ void WebSocketServer::InitializeLwsObjects() {
     dyn_mounts_.push_back({
         .mount_next = nullptr,
         .mountpoint = path.c_str(),
-        .mountpoint_len = static_cast<uint8_t>(path.size()),
         .origin = "__http_polling__",
         .def = nullptr,
         .protocol = nullptr,
@@ -162,6 +161,7 @@ void WebSocketServer::InitializeLwsObjects() {
         .cache_revalidate = 0,
         .cache_intermediaries = 0,
         .origin_protocol = LWSMPRO_CALLBACK,  // dynamic
+        .mountpoint_len = static_cast<uint8_t>(path.size()),
         .basic_auth_login_file = nullptr,
     });
   }
@@ -176,7 +176,6 @@ void WebSocketServer::InitializeLwsObjects() {
   static_mount_ = {
       .mount_next = next_mount,
       .mountpoint = "/",
-      .mountpoint_len = 1,
       .origin = assets_dir_.c_str(),
       .def = "index.html",
       .protocol = nullptr,
@@ -190,6 +189,7 @@ void WebSocketServer::InitializeLwsObjects() {
       .cache_revalidate = 0,
       .cache_intermediaries = 0,
       .origin_protocol = LWSMPRO_FILE,  // files in a dir
+      .mountpoint_len = 1,
       .basic_auth_login_file = nullptr,
   };
 
