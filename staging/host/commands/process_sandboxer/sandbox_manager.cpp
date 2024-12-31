@@ -54,6 +54,7 @@
 #include <absl/time/time.h>
 #include <absl/types/span.h>
 #pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #include <sandboxed_api/sandbox2/executor.h>
 #include <sandboxed_api/sandbox2/policy.h>
