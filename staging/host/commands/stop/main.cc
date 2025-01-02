@@ -30,6 +30,7 @@
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"

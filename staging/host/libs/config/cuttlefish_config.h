@@ -28,7 +28,7 @@
 
 #include <fmt/ostream.h>
 
-#include "common/libs/utils/environment.h"
+#include "common/libs/utils/architecture.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_fragment.h"
