@@ -34,7 +34,7 @@
 #include <json/json.h>
 #include <vulkan/vulkan.h>
 
-#include "common/libs/utils/environment.h"
+#include "common/libs/utils/architecture.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/network.h"

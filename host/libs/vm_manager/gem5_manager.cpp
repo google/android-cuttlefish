@@ -33,12 +33,11 @@
 #include <android-base/logging.h>
 #include <vulkan/vulkan.h>
 
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
-
-using cuttlefish::StringFromEnv;
 
 namespace cuttlefish {
 namespace vm_manager {
