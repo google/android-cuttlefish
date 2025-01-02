@@ -20,6 +20,7 @@ package {
 cc_library {
     name: "libcuttlefish_utils",
     srcs: [
+        "architecture.cpp",
         "archive.cpp",
         "base64.cpp",
         "environment.cpp",

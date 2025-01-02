@@ -38,8 +38,10 @@
 #include <json/json.h>
 #include <json/writer.h>
 
+#include "common/libs/utils/architecture.h"
 #include "common/libs/utils/base64.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/in_sandbox.h"
@@ -521,7 +523,7 @@ DEFINE_vec(
 DEFINE_vec(vhost_user_block, CF_DEFAULTS_VHOST_USER_BLOCK ? "true" : "false",
            "(experimental) use crosvm vhost-user block device implementation ");
 
-DEFINE_string(early_tmp_dir, cuttlefish::StringFromEnv("TEMP", "/tmp"),
+DEFINE_string(early_tmp_dir, StringFromEnv("TEMP", "/tmp"),
               "Parent directory to use for temporary files in early startup");
 
 DECLARE_string(assembly_dir);
@@ -2248,9 +2250,8 @@ std::string GetConfigFilePath(const CuttlefishConfig& config) {
 }
 
 std::string GetSeccompPolicyDir() {
-  static const std::string kSeccompDir = std::string("usr/share/crosvm/") +
-                                         cuttlefish::HostArchStr() +
-                                         "-linux-gnu/seccomp";
+  std::string kSeccompDir =
+      "usr/share/crosvm/" + HostArchStr() + "-linux-gnu/seccomp";
   return DefaultHostArtifactsPath(kSeccompDir);
 }
 
