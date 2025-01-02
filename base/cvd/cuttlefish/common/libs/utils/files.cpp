@@ -229,6 +229,15 @@ Result<std::vector<std::string>> DirectoryContents(const std::string& path) {
   return ret;
 }
 
+Result<std::vector<std::string>> DirectoryContentsPaths(
+    const std::string& path) {
+  std::vector<std::string> result = CF_EXPECT(DirectoryContents(path));
+  for (std::string& filename : result) {
+    filename = fmt::format("{}/{}", path, filename);
+  }
+  return result;
+}
+
 bool DirectoryExists(const std::string& path, bool follow_symlinks) {
   struct stat st {};
   if ((follow_symlinks ? stat : lstat)(path.c_str(), &st) == -1) {
@@ -470,12 +479,13 @@ bool MakeFileExecutable(const std::string& path) {
   return chmod(path.c_str(), S_IRWXU) == 0;
 }
 
-// TODO(schuffelen): Use std::filesystem::last_write_time when on C++17
-std::chrono::system_clock::time_point FileModificationTime(const std::string& path) {
-  struct stat st {};
-  if (stat(path.c_str(), &st) == -1) {
-    return std::chrono::system_clock::time_point();
-  }
+Result<std::chrono::system_clock::time_point> FileModificationTime(
+    const std::string& path) {
+  struct stat st;
+  CF_EXPECTF(stat(path.c_str(), &st) == 0,
+             "stat() failed retrieving file modification time on \"{}\" with "
+             "error: {}",
+             path, strerror(errno));
 #ifdef __linux__
   std::chrono::seconds seconds(st.st_mtim.tv_sec);
 #elif defined(__APPLE__)
