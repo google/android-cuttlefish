@@ -369,7 +369,7 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
           : CF_EXPECT(GetCredentialSourceFromFlags(*retrying_http_client, flags,
                                                    oauth_filepath));
 
-  const auto cache_base_path = PerUserDir() + "/cache";
+  const auto cache_base_path = PerUserCacheDir();
 
   std::unique_ptr<CasDownloader> cas_downloader = nullptr;
   Result<std::unique_ptr<CasDownloader>> result =
