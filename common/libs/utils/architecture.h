@@ -19,9 +19,16 @@
 
 namespace cuttlefish {
 
-std::string StringFromEnv(const std::string& varname,
-                          const std::string& defval);
+enum class Arch {
+  Arm,
+  Arm64,
+  RiscV64,
+  X86,
+  X86_64,
+};
 
-bool IsRunningInContainer();
+const std::string& HostArchStr();
+Arch HostArch();
+bool IsHostCompatible(Arch arch);
 
 }  // namespace cuttlefish

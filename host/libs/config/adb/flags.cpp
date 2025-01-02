@@ -17,6 +17,7 @@
 
 #include <android-base/strings.h>
 
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/flag_parser.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/feature.h"

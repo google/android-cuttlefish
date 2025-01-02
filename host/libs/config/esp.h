@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/libs/utils/environment.h"
+#include "common/libs/utils/architecture.h"
 
 namespace cuttlefish {
 
