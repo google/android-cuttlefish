@@ -20,11 +20,15 @@
 
 namespace cuttlefish {
 
-std::string AdbConnectorBinary() {
-  return HostBinaryPath("adb_connector");
+std::string AdbConnectorBinary() { return HostBinaryPath("adb_connector"); }
+
+std::string AutomotiveProxyBinary() {
+  return HostBinaryPath("automotive_vsock_proxy");
 }
 
 std::string AvbToolBinary() { return HostBinaryPath("avbtool"); }
+
+std::string CasimirBinary() { return HostBinaryPath("casimir"); }
 
 std::string CasimirControlServerBinary() {
   return HostBinaryPath("casimir_control_server");
@@ -40,25 +44,17 @@ std::string ControlEnvProxyServerBinary() {
 
 std::string EchoServerBinary() { return HostBinaryPath("echo_server"); }
 
-std::string GnssGrpcProxyBinary() {
-  return HostBinaryPath("gnss_grpc_proxy");
-}
+std::string GnssGrpcProxyBinary() { return HostBinaryPath("gnss_grpc_proxy"); }
 
 std::string KernelLogMonitorBinary() {
   return HostBinaryPath("kernel_log_monitor");
 }
 
-std::string LogcatReceiverBinary() {
-  return HostBinaryPath("logcat_receiver");
-}
+std::string LogcatReceiverBinary() { return HostBinaryPath("logcat_receiver"); }
 
-std::string MetricsBinary() {
-  return HostBinaryPath("metrics");
-}
+std::string MetricsBinary() { return HostBinaryPath("metrics"); }
 
-std::string ModemSimulatorBinary() {
-  return HostBinaryPath("modem_simulator");
-}
+std::string ModemSimulatorBinary() { return HostBinaryPath("modem_simulator"); }
 
 std::string NetsimdBinary() { return HostBinaryPath("netsimd"); }
 
@@ -73,6 +69,20 @@ std::string ProcessRestarterBinary() {
 }
 
 std::string RootCanalBinary() { return HostBinaryPath("root-canal"); }
+
+std::string ScreenRecordingServerBinary() {
+  return HostBinaryPath("screen_recording_server");
+}
+
+std::string SecureEnvBinary() { return HostBinaryPath("secure_env"); }
+
+std::string SocketVsockProxyBinary() {
+  return HostBinaryPath("socket_vsock_proxy");
+}
+
+std::string StopCvdBinary() { return HostBinaryPath("stop_cvd"); }
+
+std::string TcpConnectorBinary() { return HostBinaryPath("tcp_connector"); }
 
 std::string TestKeyRsa2048() {
   return DefaultHostArtifactsPath("etc/cvd_avb_testkey_rsa2048.pem");
@@ -90,29 +100,19 @@ std::string TestPubKeyRsa4096() {
   return DefaultHostArtifactsPath("etc/cvd_rsa4096.avbpubkey");
 }
 
-std::string CasimirBinary() { return HostBinaryPath("casimir"); }
-
-std::string ScreenRecordingServerBinary() {
-  return HostBinaryPath("screen_recording_server");
-}
-
-std::string SecureEnvBinary() { return HostBinaryPath("secure_env"); }
-
-std::string SocketVsockProxyBinary() {
-  return HostBinaryPath("socket_vsock_proxy");
-}
-
-std::string StopCvdBinary() { return HostBinaryPath("stop_cvd"); }
-
-std::string TcpConnectorBinary() { return HostBinaryPath("tcp_connector"); }
-
 std::string TombstoneReceiverBinary() {
   return HostBinaryPath("tombstone_receiver");
 }
 
-std::string WebRtcBinary() {
-  return HostBinaryPath("webRTC");
+std::string VhalProxyServerBinary() {
+  return HostBinaryPath("vhal_proxy_server");
 }
+
+std::string VhalProxyServerConfig() {
+  return DefaultHostArtifactsPath("etc/automotive/vhalconfig");
+}
+
+std::string WebRtcBinary() { return HostBinaryPath("webRTC"); }
 
 std::string WebRtcSigServerBinary() {
   return HostBinaryPath("webrtc_operator");
@@ -126,18 +126,6 @@ std::string WmediumdBinary() { return HostBinaryPath("wmediumd"); }
 
 std::string WmediumdGenConfigBinary() {
   return HostBinaryPath("wmediumd_gen_config");
-}
-
-std::string AutomotiveProxyBinary() {
-  return HostBinaryPath("automotive_vsock_proxy");
-}
-
-std::string VhalProxyServerBinary() {
-  return HostBinaryPath("vhal_proxy_server");
-}
-
-std::string VhalProxyServerConfig() {
-  return DefaultHostArtifactsPath("etc/automotive/vhalconfig");
 }
 
 } // namespace cuttlefish
