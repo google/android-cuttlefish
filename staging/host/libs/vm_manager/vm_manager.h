@@ -22,6 +22,7 @@
 
 #include <fruit/fruit.h>
 
+#include "common/libs/utils/architecture.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"

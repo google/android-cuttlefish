@@ -20,11 +20,12 @@
 #include <utility>
 #include <vector>
 
-#include "host/libs/config/esp.h"
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/architecture.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/esp.h"
 
 namespace cuttlefish {
 
