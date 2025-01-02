@@ -59,7 +59,7 @@ cc_binary {
     defaults: ["android.hardware.health-service.cuttlefish-defaults"],
     recovery: true,
     init_rc: ["android.hardware.health-service.cuttlefish_recovery.rc"],
-    vintf_fragments: ["android.hardware.health-service.cuttlefish.xml"],
+    vintf_fragment_modules: ["android.hardware.health-service.cuttlefish.xml.recovery"],
     overrides: ["charger.recovery"],
 }
 
@@ -69,11 +69,16 @@ prebuilt_etc {
     installable: false,
 }
 
-prebuilt_etc {
+vintf_fragment {
+    name: "android.hardware.health-service.cuttlefish.xml.recovery",
+    src: "android.hardware.health-service.cuttlefish.xml",
+    recovery: true,
+}
+
+vintf_fragment {
     name: "android.hardware.health-service.cuttlefish.xml",
     src: "android.hardware.health-service.cuttlefish.xml",
-    sub_dir: "vintf",
-    installable: false,
+    vendor: true,
 }
 
 apex {
@@ -89,6 +94,8 @@ apex {
     overrides: ["charger"],
     prebuilts: [
         "android.hardware.health-service.cuttlefish.rc",
+    ],
+    vintf_fragment_modules: [
         "android.hardware.health-service.cuttlefish.xml",
     ],
 }
