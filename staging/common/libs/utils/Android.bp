@@ -24,7 +24,6 @@ cc_library {
         "archive.cpp",
         "base64.cpp",
         "container.cpp",
-        "environment.cpp",
         "files.cpp",
         "flag_parser.cpp",
         "flags_validator.cpp",
@@ -70,7 +69,10 @@ cc_library {
             ],
         },
     },
-    whole_static_libs: ["libcuttlefish_utils_result"],
+    whole_static_libs: [
+        "libcuttlefish_utils_environment",
+        "libcuttlefish_utils_result",
+    ],
     defaults: ["cuttlefish_host"],
     product_available: true,
 }
@@ -116,6 +118,21 @@ cc_library {
     defaults: ["cuttlefish_guest_only"],
     include_dirs: ["device/google/cuttlefish"],
     export_include_dirs: ["."],
+}
+
+cc_library {
+    name: "libcuttlefish_utils_environment",
+    srcs: [
+        "environment.cpp",
+        "known_paths.cpp",
+    ],
+    defaults: ["cuttlefish_host"],
+    product_available: true,
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
 
 cc_library {
