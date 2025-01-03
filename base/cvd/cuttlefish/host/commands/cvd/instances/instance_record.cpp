@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/instances/instance_record.h"
 
+#include <fstream>
+
 #include <android-base/logging.h>
 #include <fmt/format.h>
 
