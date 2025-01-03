@@ -37,6 +37,7 @@
 #include "common/libs/utils/architecture.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
+#include "common/libs/utils/known_paths.h"
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -682,9 +683,9 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   if (instance.vsock_guest_cid() >= 2) {
     if (instance.vhost_user_vsock()) {
-      auto param =
-          fmt::format("/tmp/vsock_{}_{}/vhost.socket,max-queue-size=256",
-                      instance.vsock_guest_cid(), std::to_string(getuid()));
+      std::string param = fmt::format(
+          "{}/vsock_{}_{}/vhost.socket,max-queue-size=256", TempDir(),
+          instance.vsock_guest_cid(), std::to_string(getuid()));
       crosvm_cmd.Cmd().AddParameter("--vhost-user=vsock,socket=", param);
     } else {
       crosvm_cmd.Cmd().AddParameter("--cid=", instance.vsock_guest_cid());
