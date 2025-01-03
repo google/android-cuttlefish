@@ -40,6 +40,7 @@
 
 #include "common/libs/utils/architecture.h"
 #include "common/libs/utils/base64.h"
+#include "common/libs/utils/container.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
