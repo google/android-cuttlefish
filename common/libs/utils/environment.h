@@ -22,6 +22,4 @@ namespace cuttlefish {
 std::string StringFromEnv(const std::string& varname,
                           const std::string& defval);
 
-bool IsRunningInContainer();
-
 }  // namespace cuttlefish
