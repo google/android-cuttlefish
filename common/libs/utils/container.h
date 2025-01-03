@@ -13,21 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "common/libs/utils/environment.h"
-
-#include <cstdlib>
-#include <string>
+#pragma once
 
 namespace cuttlefish {
 
-std::string StringFromEnv(const std::string& varname,
-                          const std::string& defval) {
-  const char* const valstr = std::getenv(varname.c_str());
-  if (!valstr) {
-    return defval;
-  }
-  return valstr;
-}
+bool IsRunningInContainer();
 
 }  // namespace cuttlefish
