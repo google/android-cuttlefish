@@ -29,6 +29,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/in_sandbox.h"
+#include "common/libs/utils/known_paths.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/assemble_cvd/clean.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
@@ -454,9 +455,8 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
                                       default_mode, default_group));
       CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceGrpcSocketPath(""),
                                       default_mode, default_group));
-      auto vsock_dir =
-          fmt::format("/tmp/vsock_{0}_{1}", instance.vsock_guest_cid(),
-                      std::to_string(getuid()));
+      std::string vsock_dir = fmt::format("{}/vsock_{}_{}", TempDir(),
+                                          instance.vsock_guest_cid(), getuid());
       if (DirectoryExists(vsock_dir, /* follow_symlinks */ false) &&
           !IsDirectoryEmpty(vsock_dir)) {
         CF_EXPECT(RecursivelyRemoveDirectory(vsock_dir));

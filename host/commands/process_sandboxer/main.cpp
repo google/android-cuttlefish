@@ -92,7 +92,7 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
     return absl::ErrnoToStatus(errno, "prctl(PR_SET_CHILD_SUBREAPER failed");
   }
 
-  std::string early_tmp_dir(FromEnv("TEMP").value_or("/tmp"));
+  std::string early_tmp_dir(FromEnv("TMPDIR").value_or("/tmp"));
   early_tmp_dir += "/XXXXXX";
   if (mkdtemp(early_tmp_dir.data()) == nullptr) {
     return absl::ErrnoToStatus(errno, "mkdtemp failed");

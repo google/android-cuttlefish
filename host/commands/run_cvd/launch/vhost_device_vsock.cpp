@@ -25,6 +25,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/known_paths.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
 #include "host/libs/config/command_source.h"
@@ -61,9 +62,9 @@ Result<std::vector<MonitorCommand>> VhostDeviceVsock::Commands() {
     }
 
     auto param = fmt::format(
-        "guest-cid={0},socket=/tmp/vsock_{0}_{1}/vhost.socket,uds-path=/tmp/"
-        "vsock_{0}_{1}/vm.vsock{2}",
-        i.vsock_guest_cid(), getuid(), isolation_groups);
+        "guest-cid={1},socket={0}/vsock_{1}_{2}/vhost.socket,uds-path={0}/"
+        "vsock_{1}_{2}/vm.vsock{3}",
+        TempDir(), i.vsock_guest_cid(), getuid(), isolation_groups);
     command.AddParameter("--vm");
     command.AddParameter(param);
     LOG(INFO) << "VhostDeviceVsock::vhost param is:" << param;
@@ -83,8 +84,8 @@ bool VhostDeviceVsock::Enabled() const { return instance_.vhost_user_vsock(); }
 Result<void> VhostDeviceVsock::WaitForAvailability() const {
   if (Enabled()) {
     CF_EXPECT(WaitForUnixSocket(
-        fmt::format("/tmp/vsock_{0}_{1}/vm.vsock", instance_.vsock_guest_cid(),
-                    std::to_string(getuid())),
+        fmt::format("{}/vsock_{}_{}/vm.vsock", TempDir(),
+                    instance_.vsock_guest_cid(), std::to_string(getuid())),
         30));
   }
   return {};

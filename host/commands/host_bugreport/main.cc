@@ -27,6 +27,7 @@
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/known_paths.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -57,8 +58,9 @@ void AddNetsimdLogs(ZipWriter& writer) {
   // is defined.
   // https://source.corp.google.com/h/googleplex-android/platform/superproject/main/+/main:tools/netsim/rust/common/src/system/mod.rs;l=37-57;drc=360ddb57df49472a40275b125bb56af2a65395c7
   std::string user = StringFromEnv("USER", "");
-  std::string dir = user.empty() ? "/tmp/android/netsimd"
-                                 : fmt::format("/tmp/android-{}/netsimd", user);
+  std::string dir = user.empty()
+                        ? TempDir() + "/android/netsimd"
+                        : fmt::format("{}/android-{}/netsimd", TempDir(), user);
   if (!DirectoryExists(dir)) {
     LOG(INFO) << "netsimd logs directory: `" << dir << "` does not exist.";
     return;
@@ -114,7 +116,7 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  std::string log_filename = "/tmp/cvd_hbr.log.XXXXXX";
+  std::string log_filename = TempDir() + "/cvd_hbr.log.XXXXXX";
   {
     auto fd = SharedFD::Mkstemp(&log_filename);
     CF_EXPECT(fd->IsOpen(), "Unable to create log file: " << fd->StrError());
@@ -188,7 +190,7 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
 
     {
       // TODO(b/359657254) Create the `adb bugreport` asynchronously.
-      std::string device_br_dir = "/tmp/cvd_dbrXXXXXX";
+      std::string device_br_dir = TempDir() + "/cvd_dbrXXXXXX";
       CF_EXPECTF(mkdtemp(device_br_dir.data()) != nullptr,
                  "mkdtemp failed: '{}'", strerror(errno));
       auto result = CreateDeviceBugreport(instance, device_br_dir);
