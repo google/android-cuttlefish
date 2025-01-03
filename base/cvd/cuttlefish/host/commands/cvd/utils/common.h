@@ -77,6 +77,8 @@ std::string CvdDir();
 
 std::string PerUserDir();
 
+std::string PerUserCacheDir();
+
 std::string InstanceDatabasePath();
 
 std::string DefaultBaseDir();

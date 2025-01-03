@@ -229,6 +229,52 @@ Result<std::vector<std::string>> DirectoryContents(const std::string& path) {
   return ret;
 }
 
+Result<std::vector<std::string>> DirectoryContentsPaths(
+    const std::string& path) {
+  std::vector<std::string> result = CF_EXPECT(DirectoryContents(path));
+  std::for_each(result.begin(), result.end(), [&path](std::string& filename) {
+    filename = fmt::format("{}/{}", path, filename);
+  });
+  return result;
+}
+
+Result<std::vector<std::string>> DirectoryContentsByModTimeDesc(
+    const std::string& path) {
+  std::vector<std::string> contents =
+      CF_EXPECTF(DirectoryContentsPaths(path),
+                 "Failure retrieving contents of directory at \"{}\"", path);
+
+  auto not_self_or_parent_directory = [](std::string filepath) {
+    return !android::base::EndsWith(filepath, ".") &&
+           !android::base::EndsWith(filepath, "..");
+  };
+  std::vector<std::string> filtered;
+  std::copy_if(contents.begin(), contents.end(), std::back_inserter(filtered),
+               not_self_or_parent_directory);
+
+  // std::sort cannot provide a `Result`, but we want to capture the error
+  // message if something goes wrong
+  Result<std::chrono::system_clock::time_point> sort_error;
+  auto greater_mod_time_result = [&sort_error](const std::string a,
+                                               const std::string& b) {
+    auto a_time = FileModificationTime(a);
+    if (!a_time.ok()) {
+      sort_error = a_time;
+      return true;
+    }
+    auto b_time = FileModificationTime(b);
+    if (!b_time.ok()) {
+      sort_error = b_time;
+      return true;
+    }
+    return *a_time > *b_time;
+  };
+  std::sort(filtered.begin(), filtered.end(), greater_mod_time_result);
+  CF_EXPECT(std::move(sort_error),
+            "Failure sorting directory contents, only last error captured");
+  return filtered;
+}
+
 bool DirectoryExists(const std::string& path, bool follow_symlinks) {
   struct stat st {};
   if ((follow_symlinks ? stat : lstat)(path.c_str(), &st) == -1) {
@@ -470,12 +516,13 @@ bool MakeFileExecutable(const std::string& path) {
   return chmod(path.c_str(), S_IRWXU) == 0;
 }
 
-// TODO(schuffelen): Use std::filesystem::last_write_time when on C++17
-std::chrono::system_clock::time_point FileModificationTime(const std::string& path) {
-  struct stat st {};
-  if (stat(path.c_str(), &st) == -1) {
-    return std::chrono::system_clock::time_point();
-  }
+Result<std::chrono::system_clock::time_point> FileModificationTime(
+    const std::string& path) {
+  struct stat st;
+  CF_EXPECTF(stat(path.c_str(), &st) == 0,
+             "stat() failed retrieving file modification time on \"{}\" with "
+             "error: {}",
+             path, strerror(errno));
 #ifdef __linux__
   std::chrono::seconds seconds(st.st_mtim.tv_sec);
 #elif defined(__APPLE__)
