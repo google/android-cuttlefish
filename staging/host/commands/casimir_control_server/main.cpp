@@ -195,7 +195,7 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
       // Step 2: Poll
       SenderId sender_id;
       CF_EXPECT(PollAResult(&sender_id));
-      id = sender_id.sender_id();
+      id = sender_id.sender_id() - 1;
     }
 
     // Step 3: Send APDU bytes
