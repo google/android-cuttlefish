@@ -27,7 +27,7 @@ namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder TcpConnectorPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("tcp_connector"))
-      .AddDirectory(host.environments_uds_dir, /* is_ro= */ false)
+      .AddDirectory(host.EnvironmentsUdsDir(), /* is_ro= */ false)
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
       .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_INET, ALLOW),

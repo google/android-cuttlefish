@@ -48,12 +48,12 @@ absl::Status HostInfo::EnsureOutputDirectoriesExist() {
   if (!CreateDirectoryRecursively(environments_dir, 0700)) {
     return absl::ErrnoToStatus(errno, "Failed to create " + environments_dir);
   }
-  if (!CreateDirectoryRecursively(environments_uds_dir, 0700)) {
+  if (!CreateDirectoryRecursively(EnvironmentsUdsDir(), 0700)) {
     return absl::ErrnoToStatus(errno,
-                               "Failed to create " + environments_uds_dir);
+                               "Failed to create " + EnvironmentsUdsDir());
   }
-  if (!CreateDirectoryRecursively(instance_uds_dir, 0700)) {
-    return absl::ErrnoToStatus(errno, "Failed to create " + instance_uds_dir);
+  if (!CreateDirectoryRecursively(InstanceUdsDir(), 0700)) {
+    return absl::ErrnoToStatus(errno, "Failed to create " + InstanceUdsDir());
   }
   if (!CreateDirectoryRecursively(log_dir, 0700)) {
     return absl::ErrnoToStatus(errno, "Failed to create " + log_dir);
@@ -61,14 +61,26 @@ absl::Status HostInfo::EnsureOutputDirectoriesExist() {
   if (!CreateDirectoryRecursively(runtime_dir, 0700)) {
     return absl::ErrnoToStatus(errno, "Failed to create " + runtime_dir);
   }
-  if (!CreateDirectoryRecursively(vsock_device_dir, 0700)) {
+  if (!CreateDirectoryRecursively(VsockDeviceDir(), 0700)) {
     return absl::ErrnoToStatus(errno, "Failed to create " + runtime_dir);
   }
   return absl::OkStatus();
 }
 
+std::string HostInfo::EnvironmentsUdsDir() const {
+  return JoinPath(tmp_dir, "cf_env_1000");
+}
+
 std::string HostInfo::HostToolExe(std::string_view exe) const {
   return JoinPath(host_artifacts_path, "bin", exe);
+}
+
+std::string HostInfo::InstanceUdsDir() const {
+  return JoinPath(tmp_dir, "cf_avd_1000/cvd-1");
+}
+
+std::string HostInfo::VsockDeviceDir() const {
+  return JoinPath(tmp_dir, "vsock_3_1000");
 }
 
 std::ostream& operator<<(std::ostream& out, const HostInfo& host) {
@@ -76,14 +88,15 @@ std::ostream& operator<<(std::ostream& out, const HostInfo& host) {
   out << "\tassembly_dir: \"" << host.assembly_dir << "\"\n";
   out << "\tcuttlefish_config_path: \"" << host.cuttlefish_config_path
       << "\"\n";
-  out << "\tearly_tmp_dir: \"" << host.early_tmp_dir << "\"\n";
   out << "\tenvironments_dir: \"" << host.environments_dir << "\"\n";
-  out << "\tenvironments_uds_dir: " << host.environments_uds_dir << "\"\n";
+  out << "\tenvironments_uds_dir: " << host.EnvironmentsUdsDir() << "\"\n";
   out << "\tguest_image_path: " << host.guest_image_path << "\t\n";
   out << "\thost_artifacts_path: \"" << host.host_artifacts_path << "\"\n";
-  out << "\tinstance_uds_dir: " << host.instance_uds_dir << "\"\n";
+  out << "\tinstance_uds_dir: " << host.InstanceUdsDir() << "\"\n";
   out << "\tlog_dir: " << host.log_dir << "\"\n";
   out << "\truntime_dir: " << host.runtime_dir << "\"\n";
+  out << "\ttmp_dir: \"" << host.tmp_dir << "\"\n";
+  out << "\tvsock_device_dir: \"" << host.VsockDeviceDir() << "\"\n";
   return out << "}";
 }
 
