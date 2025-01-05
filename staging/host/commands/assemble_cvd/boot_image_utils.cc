@@ -312,7 +312,11 @@ Result<void> RepackBootImage(const Avb& avb,
   int result = repack_cmd.Start().Wait();
   CF_EXPECT(result == 0, "Unable to run mkbootimg. Exited with status " << result);
 
-  CF_EXPECT(avb.AddHashFooter(tmp_boot_image_path, "boot", FileSize(boot_image_path)));
+  if (FileSize(tmp_boot_image_path) <= FileSize(boot_image_path)) {
+    CF_EXPECT(avb.AddHashFooter(tmp_boot_image_path, "boot", FileSize(boot_image_path)));
+  } else {
+    CF_EXPECT(avb.AddHashFooter(tmp_boot_image_path, "boot", 0));
+  }
   CF_EXPECT(DeleteTmpFileIfNotChanged(tmp_boot_image_path, new_boot_image_path));
 
   return {};
