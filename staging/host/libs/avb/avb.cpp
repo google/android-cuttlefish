@@ -68,8 +68,12 @@ Command Avb::GenerateAddHashFooter(const std::string& image_path,
   command.AddParameter(image_path);
   command.AddParameter("--partition_name");
   command.AddParameter(partition_name);
-  command.AddParameter("--partition_size");
-  command.AddParameter(partition_size_bytes);
+  if (partition_size_bytes > 0) {
+    command.AddParameter("--partition_size");
+    command.AddParameter(partition_size_bytes);
+  } else {
+    command.AddParameter("--dynamic_partition_size");
+  }
   return command;
 }
 
