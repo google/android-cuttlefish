@@ -431,7 +431,9 @@ Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
     for (const auto& flag : flags) {
       LOG(INFO) << flag;
     }
-    return CF_ERR("user requested early exit");
+    // return value of 1 matches gflags --help flag behavior
+    std::exit(1);
+    return {};
   };
   return Flag()
       .Alias({FlagAliasMode::kFlagExact, "-help"})
