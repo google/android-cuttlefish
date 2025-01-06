@@ -28,7 +28,7 @@ namespace cuttlefish::process_sandboxer {
 sandbox2::PolicyBuilder SocketVsockProxyPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("socket_vsock_proxy"))
       .AddDirectory(host.log_dir, /* is_ro= */ false)
-      .AddDirectory(host.vsock_device_dir, /* is_ro= */ false)
+      .AddDirectory(host.VsockDeviceDir(), /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
       .AddPolicyOnSyscall(
           __NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW), JEQ32(AF_INET, ALLOW),

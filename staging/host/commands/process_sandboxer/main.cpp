@@ -50,8 +50,6 @@ inline constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 ABSL_FLAG(std::string, assembly_dir, "", "cuttlefish/assembly build dir");
 ABSL_FLAG(std::string, host_artifacts_path, "", "Host exes and libs");
 ABSL_FLAG(std::string, environments_dir, "", "Cross-instance environment dir");
-ABSL_FLAG(std::string, environments_uds_dir, "", "Environment unix sockets");
-ABSL_FLAG(std::string, instance_uds_dir, "", "Instance unix domain sockets");
 ABSL_FLAG(std::string, guest_image_path, "", "Directory with `system.img`");
 ABSL_FLAG(std::string, sandboxer_log_dir, "", "Where to write log files");
 ABSL_FLAG(std::vector<std::string>, log_files, std::vector<std::string>(),
@@ -59,8 +57,6 @@ ABSL_FLAG(std::vector<std::string>, log_files, std::vector<std::string>(),
 ABSL_FLAG(std::string, runtime_dir, "",
           "Working directory of host executables");
 ABSL_FLAG(bool, verbose_stderr, false, "Write debug messages to stderr");
-ABSL_FLAG(std::string, vsock_device_dir, "/tmp/vsock_3_1000",
-          "Directory path for unix sockets representing vsock connections");
 
 namespace cuttlefish::process_sandboxer {
 namespace {
@@ -92,9 +88,9 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
     return absl::ErrnoToStatus(errno, "prctl(PR_SET_CHILD_SUBREAPER failed");
   }
 
-  std::string early_tmp_dir(FromEnv("TMPDIR").value_or("/tmp"));
-  early_tmp_dir += "/XXXXXX";
-  if (mkdtemp(early_tmp_dir.data()) == nullptr) {
+  std::string tmp_dir(FromEnv("TMPDIR").value_or("/tmp"));
+  tmp_dir += "/process_sandboxer.XXXXXX";
+  if (mkdtemp(tmp_dir.data()) == nullptr) {
     return absl::ErrnoToStatus(errno, "mkdtemp failed");
   }
 
@@ -102,17 +98,13 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
       .assembly_dir = CleanPath(absl::GetFlag(FLAGS_assembly_dir)),
       .cuttlefish_config_path =
           CleanPath(FromEnv(kCuttlefishConfigEnvVarName).value_or("")),
-      .early_tmp_dir = early_tmp_dir,
       .environments_dir = CleanPath(absl::GetFlag(FLAGS_environments_dir)),
-      .environments_uds_dir =
-          CleanPath(absl::GetFlag(FLAGS_environments_uds_dir)),
       .guest_image_path = CleanPath(absl::GetFlag(FLAGS_guest_image_path)),
       .host_artifacts_path =
           CleanPath(absl::GetFlag(FLAGS_host_artifacts_path)),
-      .instance_uds_dir = CleanPath(absl::GetFlag(FLAGS_instance_uds_dir)),
       .log_dir = CleanPath(absl::GetFlag(FLAGS_sandboxer_log_dir)),
       .runtime_dir = CleanPath(absl::GetFlag(FLAGS_runtime_dir)),
-      .vsock_device_dir = CleanPath(absl::GetFlag(FLAGS_vsock_device_dir)),
+      .tmp_dir = tmp_dir,
   };
 
   // TODO: schuffelen - try to guess these from the cvd_internal_start arguments
@@ -130,12 +122,6 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
   if (host.environments_dir == "." && home.has_value()) {
     host.environments_dir =
         CleanPath(JoinPath(*home, "cuttlefish", "environments"));
-  }
-  if (host.environments_uds_dir == ".") {
-    host.environments_uds_dir = "/tmp/cf_env_1000";
-  }
-  if (host.instance_uds_dir == ".") {
-    host.instance_uds_dir = "/tmp/cf_avd_1000/cvd-1";
   }
   if (host.log_dir == "." && home.has_value()) {
     host.log_dir =
@@ -199,7 +185,7 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
   std::vector<std::string> exe_argv(++args.begin(), args.end());
 
   if (absl::EndsWith(exe, "cvd_internal_start")) {
-    exe_argv.emplace_back("--early_tmp_dir=" + host.early_tmp_dir);
+    setenv("TMPDIR", host.tmp_dir.c_str(), 1);
   }
 
   auto sandbox_manager_res = SandboxManager::Create(std::move(host));

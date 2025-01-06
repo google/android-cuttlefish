@@ -42,8 +42,8 @@ sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo& host) {
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddDirectory(
           JoinPath(host.host_artifacts_path, "/usr/share/webrtc/assets"))
-      .AddDirectory(host.instance_uds_dir, /* is_ro= */ false)
-      .AddDirectory(host.vsock_device_dir, /* is_ro= */ false)
+      .AddDirectory(host.InstanceUdsDir(), /* is_ro= */ false)
+      .AddDirectory(host.VsockDeviceDir(), /* is_ro= */ false)
       .AddDirectory(JoinPath(host.runtime_dir, "recording"), /* is_ro= */ false)
       .AddFile(host.cuttlefish_config_path)
       .AddFile("/dev/urandom")
