@@ -61,14 +61,16 @@ Result<std::string> CvdFetchCommandHandler::SummaryHelp() const {
 
 Result<std::string> CvdFetchCommandHandler::DetailedHelp(
     std::vector<std::string>&) const {
-  Command fetch_command("/proc/self/exe");
-  fetch_command.SetName("fetch_cvd");
-  fetch_command.SetExecutable("/proc/self/exe");
-  fetch_command.AddParameter("--help");
-
-  std::string output;
-  RunWithManagedStdio(std::move(fetch_command), nullptr, nullptr, &output);
-  return output;
+  std::vector<std::string> args;
+  args.emplace_back("fetch_cvd");
+  args.emplace_back("--help");
+  std::vector<char*> args_data;
+  for (auto& argument : args) {
+    args_data.emplace_back(argument.data());
+  }
+  // TODO: b/389119573 - Should return the help text instead of printing it
+  CF_EXPECT(FetchCvdMain(args_data.size(), args_data.data()));
+  return {};
 }
 
 std::unique_ptr<CvdCommandHandler> NewCvdFetchCommandHandler() {
