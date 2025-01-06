@@ -35,7 +35,7 @@ sandbox2::PolicyBuilder CasimirPolicy(const HostInfo& host) {
       // `librustutils::inherited_fd` scans `/proc/self/fd` for open FDs.
       // Mounting a subset of `/proc/` is invalid.
       .AddDirectory("/proc", /* is_ro = */ false)
-      .AddDirectory(host.environments_uds_dir, /* is_ro= */ false)
+      .AddDirectory(host.EnvironmentsUdsDir(), /* is_ro= */ false)
       .AddPolicyOnMmap([](bpf_labels& labels) -> std::vector<sock_filter> {
         return {
             ARG_32(2),  // prot
