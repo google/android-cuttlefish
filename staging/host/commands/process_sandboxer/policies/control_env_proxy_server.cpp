@@ -30,7 +30,7 @@ namespace cuttlefish::process_sandboxer {
 
 sandbox2::PolicyBuilder ControlEnvProxyServerPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("control_env_proxy_server"))
-      .AddDirectory(host.instance_uds_dir, /* is_ro= */ false)
+      .AddDirectory(host.InstanceUdsDir(), /* is_ro= */ false)
       .AddFile("/dev/urandom")  // For gRPC
       .AddPolicyOnSyscall(__NR_madvise,
                           {ARG_32(2), JEQ32(MADV_DONTNEED, ALLOW)})
