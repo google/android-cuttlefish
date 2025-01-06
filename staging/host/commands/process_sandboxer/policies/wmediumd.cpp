@@ -34,8 +34,8 @@ using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder WmediumdPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("wmediumd"))
-      .AddDirectory(host.environments_uds_dir, /* is_ro= */ false)
-      .AddDirectory(host.instance_uds_dir, /* is_ro= */ false)
+      .AddDirectory(host.EnvironmentsUdsDir(), /* is_ro= */ false)
+      .AddDirectory(host.InstanceUdsDir(), /* is_ro= */ false)
       .AddDirectory(host.log_dir, /* is_ro= */ false)
       .AddFile("/dev/urandom")  // For gRPC
       .AddFile(JoinPath(host.environments_dir, "env-1", "wmediumd.cfg"),
