@@ -27,4 +27,5 @@ android_test {
     ],
     sdk_version: "current",
     certificate: "platform",
+    test_suites: ["device-tests"],
 }
