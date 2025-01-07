@@ -1,0 +1,73 @@
+cc_library(
+    name = "web",
+    srcs = [
+        "android_build_api.cpp",
+        "android_build_string.cpp",
+        "caching_build_api.cpp",
+        "cas/cas_downloader.cpp",
+        "chrome_os_build_string.cpp",
+        "credential_source.cc",
+        "http_client/curl_global_init.cpp",
+        "http_client/http_client.cc",
+        "http_client/http_client_util.cc",
+        "luci_build_api.cpp",
+        "oauth2_consent.cpp",
+    ],
+    hdrs = [
+        "android_build_api.h",
+        "android_build_string.h",
+        "build_api.h",
+        "caching_build_api.h",
+        "cas/cas_downloader.h",
+        "chrome_os_build_string.h",
+        "credential_source.h",
+        "http_client/curl_global_init.h",
+        "http_client/http_client.h",
+        "http_client/http_client_util.h",
+        "luci_build_api.h",
+        "oauth2_consent.h"
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/directories",
+        "//libbase",
+        "@boringssl//:crypto",
+        "@curl",
+        "@fmt",
+        "@jsoncpp",
+        "@zlib",
+    ],
+)
+
+cc_test(
+    name = "web_test",
+    srcs = [
+        "android_build_string_tests.cpp",
+        "cas/cas_downloader_test.cpp",
+        "http_client/unittest/http_client_util_test.cc",
+    ],
+    copts = [
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+    ],
+    includes = [""],
+    deps = [
+        ":web",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//libbase",
+        "//libsparse",
+        "@fmt",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+    ],
+)

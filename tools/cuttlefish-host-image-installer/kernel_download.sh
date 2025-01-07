@@ -18,5 +18,6 @@ cd kernel-build-space/source/kernel
 
 repo init -u ${KERNEL_MANIFEST_URL} -b ${KERNEL_MANIFEST_BRANCH}
 repo sync
+repo info -l
 
 cd -

@@ -21,19 +21,22 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-#include "host/commands/cvd/instance_lock.h"
-#include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/request_context.h"
-#include "host/commands/cvd/server_client.h"
+#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
+#include "host/commands/cvd/cli/command_request.h"
+#include "host/commands/cvd/cli/frontline_parser.h"
+#include "host/commands/cvd/cli/request_context.h"
+#include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/instances/instance_lock.h"
+#include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 
 namespace {
 [[noreturn]] void CallPythonAcloud(std::vector<std::string>& args) {
   auto android_top = StringFromEnv("ANDROID_BUILD_TOP", "");
-  CHECK(android_top != "") << "Could not find android environment. Please run "
-                           << "\"source build/envsetup.sh\".";
+  CHECK(!android_top.empty())
+      << "Could not find android environment. Please run "
+      << "\"source build/envsetup.sh\".";
   // TODO(b/206893146): Detect what the platform actually is.
   auto py_acloud_path =
       android_top + "/prebuilts/asuite/acloud/linux-x86/acloud";
@@ -51,38 +54,46 @@ namespace {
 
 Cvd::Cvd(const android::base::LogSeverity verbosity,
          InstanceLockFileManager& instance_lockfile_manager,
-         InstanceManager& instance_manager,
-         HostToolTargetManager& host_tool_target_manager)
+         InstanceManager& instance_manager)
     : verbosity_(verbosity),
       instance_lockfile_manager_(instance_lockfile_manager),
-      instance_manager_(instance_manager),
-      host_tool_target_manager_(host_tool_target_manager) {}
+      instance_manager_(instance_manager) {}
 
-Result<cvd::Response> Cvd::HandleCommand(
+Result<void> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
     const std::unordered_map<std::string, std::string>& env,
     const std::vector<std::string>& selector_args) {
-  cvd::Request request = MakeRequest({.cmd_args = cvd_process_args,
-                                      .env = env,
-                                      .selector_args = selector_args},
-                                     cvd::WAIT_BEHAVIOR_COMPLETE);
+  CommandRequest request = CF_EXPECT(CommandRequestBuilder()
+                                         .AddArguments(cvd_process_args)
+                                         .SetEnv(env)
+                                         .AddSelectorArguments(selector_args)
+                                         .Build());
 
-  RequestContext context(instance_lockfile_manager_, instance_manager_,
-                         host_tool_target_manager_);
-  RequestWithStdio request_with_stdio(
-      request, {SharedFD::Dup(0), SharedFD::Dup(1), SharedFD::Dup(2)});
-  auto handler = CF_EXPECT(context.Handler(request_with_stdio));
-  return handler->Handle(request_with_stdio);
+  RequestContext context(instance_lockfile_manager_, instance_manager_);
+  auto handler = CF_EXPECT(context.Handler(request));
+  if (handler->ShouldInterceptHelp()) {
+    std::vector<std::string> invocation_args = request.SubcommandArguments();
+    if (CF_EXPECT(IsHelpSubcmd(invocation_args))) {
+      std::cout << CF_EXPECT(handler->DetailedHelp(invocation_args))
+                << std::endl;
+      return {};
+    }
+  }
+  CF_EXPECT(handler->Handle(request));
+  return {};
 }
 
 Result<void> Cvd::HandleCvdCommand(
     const std::vector<std::string>& all_args,
     const std::unordered_map<std::string, std::string>& env) {
-  const cvd_common::Args new_cmd_args{"cvd", "process"};
   CF_EXPECT(!all_args.empty());
-  const cvd_common::Args new_selector_args{all_args.begin(), all_args.end()};
+  std::vector<std::string> args = all_args;
+  if (args.size() == 1ul) {
+    args = cvd_common::Args{"cvd", "help"};
+  }
+  std::vector<std::string> selector_args = CF_EXPECT(ExtractCvdArgs(args));
   // TODO(schuffelen): Deduplicate cvd process split.
-  CF_EXPECT(HandleCommand(new_cmd_args, env, new_selector_args));
+  CF_EXPECT(HandleCommand(args, env, selector_args));
   return {};
 }
 
@@ -92,7 +103,7 @@ Result<void> Cvd::HandleAcloud(
   std::vector<std::string> args_copy{args};
   args_copy[0] = "try-acloud";
 
-  auto attempt = HandleCommand(args_copy, env, {});
+  Result<void> attempt = HandleCommand(args_copy, env, {});
   if (!attempt.ok()) {
     CallPythonAcloud(args_copy);
     // no return

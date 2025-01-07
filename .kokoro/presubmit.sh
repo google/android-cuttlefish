@@ -1,6 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e -x
+
+sudo apt update
+sudo apt upgrade -y
 
 # realpath .kokoro/..
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"

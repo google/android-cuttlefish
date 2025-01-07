@@ -18,9 +18,9 @@
 
 #include <gtest/gtest.h>
 
-#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/selector/instance_group_record.h"
-#include "host/commands/cvd/selector/instance_record.h"
+#include "common/libs/utils/result_matchers.h"
+#include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
+#include "host/commands/cvd/instances/instance_group_record.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -87,17 +87,17 @@ TEST_F(CvdInstanceGroupUnitTest, SearchById) {
 
   // valid search
   for (auto const& valid_id : valid_ids) {
-    auto instances = group_res->FindById(valid_id);
-    ASSERT_EQ(instances.size(), 1);
-    const LocalInstance& instance = *instances.cbegin();
-    ASSERT_EQ(instance.InstanceId(), valid_id);
+    auto instance_res = group_res->FindInstanceById(valid_id);
+    ASSERT_THAT(instance_res, IsOk());
+    auto& instance = *instance_res;
+    ASSERT_EQ(instance.id(), valid_id);
   }
 
   // invalid search
   for (auto const& invalid_id : invalid_ids) {
-    auto instances = group_res->FindById(invalid_id);
+    auto instance_res = group_res->FindInstanceById(invalid_id);
     // it's okay not to be found
-    ASSERT_TRUE(instances.empty());
+    ASSERT_THAT(instance_res, IsError());
   }
 }
 

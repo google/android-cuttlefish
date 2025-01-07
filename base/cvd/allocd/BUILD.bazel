@@ -23,7 +23,8 @@ cc_binary(
     ],
     includes = [""],
     deps = [
-        "//cuttlefish:cuttlefish_common",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/config",
         "//libbase",
         "@gflags",
         "@jsoncpp",

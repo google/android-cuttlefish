@@ -6,6 +6,7 @@ import {GroupService} from '../group.service';
 import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
 
 @Component({
+  standalone: false,
   selector: 'app-device-pane',
   templateUrl: './device-pane.component.html',
   styleUrls: ['./device-pane.component.scss'],

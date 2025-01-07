@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
@@ -34,6 +35,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/parsebool.h>
+#include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
@@ -150,7 +152,7 @@ Result<Flag::FlagProcessResult> Flag::Process(
     const std::string& arg, const std::optional<std::string>& next_arg) const {
   using android::base::StringReplace;
   auto normalized_arg = StringReplace(arg, "-", "_", true);
-  if (!setter_ && aliases_.size() > 0) {
+  if (!setter_ && !aliases_.empty()) {
     return CF_ERRF("No setter for flag with alias {}", aliases_[0].name);
   }
   for (auto& alias : aliases_) {
@@ -423,7 +425,7 @@ Flag VerbosityFlag(android::base::LogSeverity& value) {
 
 Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
   auto setter = [&flags, text](FlagMatch) -> Result<void> {
-    if (text.size() > 0) {
+    if (!text.empty()) {
       LOG(INFO) << text;
     }
     for (const auto& flag : flags) {
@@ -535,7 +537,7 @@ Flag GflagsCompatFlag(const std::string& name, std::string& value) {
 
 template <typename T>
 std::optional<T> ParseInteger(const std::string& value) {
-  if (value.size() == 0) {
+  if (value.empty()) {
     return {};
   }
   const char* base = value.c_str();
@@ -566,6 +568,25 @@ Flag GflagsCompatFlag(const std::string& name, int32_t& value) {
   return GflagsCompatNumericFlagGeneric(name, value);
 }
 
+template <typename T>
+static Flag GflagsCompatUnsignedNumericFlagGeneric(const std::string& name,
+                                                   T& value) {
+  return GflagsCompatFlag(name)
+      .Getter([&value]() { return std::to_string(value); })
+      .Setter([&value](const FlagMatch& match) -> Result<void> {
+        T result;
+        CF_EXPECTF(android::base::ParseUint<T>(match.value, &result),
+                   "Failed to parse \"{}\" as an unsigned integer",
+                   match.value);
+        value = result;
+        return {};
+      });
+}
+
+Flag GflagsCompatFlag(const std::string& name, std::size_t& value) {
+  return GflagsCompatUnsignedNumericFlagGeneric(name, value);
+}
+
 Flag GflagsCompatFlag(const std::string& name, bool& value) {
   return GflagsCompatBoolFlagBase(name)
       .Getter([&value]() { return fmt::format("{}", value); })
@@ -591,10 +612,11 @@ Flag GflagsCompatFlag(const std::string& name,
 }
 
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
-                      const bool def_val) {
+                      const bool default_value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return fmt::format("{}", fmt::join(value, ",")); })
-      .Setter([&name, &value, def_val](const FlagMatch& match) -> Result<void> {
+      .Setter([&name, &value,
+               default_value](const FlagMatch& match) -> Result<void> {
         if (match.value.empty()) {
           value.clear();
           return {};
@@ -606,7 +628,7 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
         output_vals.reserve(str_vals.size());
         for (const auto& str_val : str_vals) {
           if (str_val.empty()) {
-            output_vals.push_back(def_val);
+            output_vals.push_back(default_value);
           } else {
             output_vals.push_back(CF_EXPECT(ParseBool(str_val, name)));
           }

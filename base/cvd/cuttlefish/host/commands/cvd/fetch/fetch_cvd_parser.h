@@ -25,6 +25,7 @@
 #include "common/libs/utils/result.h"
 #include "host/libs/web/android_build_api.h"
 #include "host/libs/web/android_build_string.h"
+#include "host/libs/web/cas/cas_downloader.h"
 #include "host/libs/web/chrome_os_build_string.h"
 
 namespace cuttlefish {
@@ -34,6 +35,7 @@ inline constexpr char kDefaultCredentialFilepath[] = "";
 inline constexpr char kDefaultServiceAccountFilepath[] = "";
 inline constexpr char kDefaultApiKey[] = "";
 inline constexpr char kDefaultCredentialSource[] = "";
+inline constexpr char kDefaultProjectID[] = "";
 inline constexpr std::chrono::seconds kDefaultWaitRetryPeriod =
     std::chrono::seconds(20);
 inline constexpr bool kDefaultExternalDnsResolver =
@@ -62,10 +64,12 @@ struct BuildApiFlags {
   std::string api_key = kDefaultApiKey;
   CredentialFlags credential_flags;
   std::string credential_source = kDefaultCredentialSource;
+  std::string project_id = kDefaultProjectID;
   std::chrono::seconds wait_retry_period = kDefaultWaitRetryPeriod;
   bool external_dns_resolver = kDefaultExternalDnsResolver;
   std::string api_base_url = kAndroidBuildServiceUrl;
   bool enable_caching = kDefaultEnableCaching;
+  CasDownloaderFlags cas_downloader_flags;
 };
 
 struct VectorFlags {

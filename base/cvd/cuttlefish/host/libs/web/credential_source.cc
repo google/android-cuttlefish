@@ -18,9 +18,8 @@
 #include <fcntl.h>
 
 #include <chrono>
-#include <fstream>
-#include <istream>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -28,11 +27,11 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include "json/json.h"
-#include "openssl/bio.h"
-#include "openssl/err.h"
-#include "openssl/evp.h"
-#include "openssl/pem.h"
+#include <json/json.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
 
 #include "common/libs/utils/base64.h"
 #include "common/libs/utils/files.h"
@@ -45,6 +44,107 @@ namespace {
 
 constexpr auto kRefreshWindow = std::chrono::minutes(2);
 
+// Credentials with known expiration times with behavior to load new
+// credentials.
+class RefreshingCredentialSource : public CredentialSource {
+ public:
+  RefreshingCredentialSource()
+      : expiration_(std::chrono::steady_clock::time_point::min()) {}
+
+  virtual Result<std::string> Credential() final override {
+    std::lock_guard lock(latest_credential_mutex_);
+    if (expiration_ + kRefreshWindow < std::chrono::steady_clock::now()) {
+      const auto& [credential, expiration] = CF_EXPECT(Refresh());
+      latest_credential_ = credential;
+      expiration_ = std::chrono::steady_clock::now() + expiration;
+    }
+    return latest_credential_;
+  }
+
+ private:
+  virtual Result<std::pair<std::string, std::chrono::seconds>> Refresh() = 0;
+
+  std::string latest_credential_;
+  std::mutex latest_credential_mutex_;
+  std::chrono::steady_clock::time_point expiration_;
+};
+
+// OAuth2 credentials from the GCE metadata server.
+//
+// -
+// https://cloud.google.com/compute/docs/access/authenticate-workloads#applications
+// - https://cloud.google.com/compute/docs/metadata/overview
+class GceMetadataCredentialSource : public RefreshingCredentialSource {
+ public:
+  GceMetadataCredentialSource(HttpClient&);
+
+  static std::unique_ptr<CredentialSource> Make(HttpClient&);
+
+ private:
+  Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
+
+  HttpClient& http_client_;
+};
+
+// Pass through a string as an authentication token with unknown expiration.
+class FixedCredentialSource : public CredentialSource {
+ public:
+  FixedCredentialSource(const std::string& credential);
+
+  Result<std::string> Credential() override;
+
+  static std::unique_ptr<CredentialSource> Make(const std::string& credential);
+
+ private:
+  std::string credential_;
+};
+
+// OAuth2 tokens from a desktop refresh token.
+//
+// https://developers.google.com/identity/protocols/oauth2/native-app
+class RefreshTokenCredentialSource : public RefreshingCredentialSource {
+ public:
+  static Result<std::unique_ptr<RefreshTokenCredentialSource>>
+  FromOauth2ClientFile(HttpClient& http_client,
+                       const std::string& oauth_contents);
+
+  RefreshTokenCredentialSource(HttpClient& http_client,
+                               const std::string& client_id,
+                               const std::string& client_secret,
+                               const std::string& refresh_token);
+
+ private:
+  static Result<std::unique_ptr<RefreshTokenCredentialSource>> FromJson(
+      HttpClient& http_client, const Json::Value& credential);
+
+  Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
+
+  HttpClient& http_client_;
+  std::string client_id_;
+  std::string client_secret_;
+  std::string refresh_token_;
+};
+
+// OAuth2 tokens from service account files.
+//
+// https://developers.google.com/identity/protocols/oauth2/service-account
+class ServiceAccountOauthCredentialSource : public RefreshingCredentialSource {
+ public:
+  static Result<std::unique_ptr<ServiceAccountOauthCredentialSource>> FromJson(
+      HttpClient& http_client, const Json::Value& service_account_json,
+      const std::string& scope);
+
+ private:
+  ServiceAccountOauthCredentialSource(HttpClient& http_client);
+
+  Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
+
+  HttpClient& http_client_;
+  std::string email_;
+  std::string scope_;
+  std::unique_ptr<EVP_PKEY, void (*)(EVP_PKEY*)> private_key_;
+};
+
 std::unique_ptr<CredentialSource> TryParseServiceAccount(
     HttpClient& http_client, const std::string& file_content) {
   Json::Reader reader;
@@ -56,14 +156,13 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
     return {};
   }
   auto result = ServiceAccountOauthCredentialSource::FromJson(
-      http_client, content, kBuildScope);
+      http_client, content, kAndroidBuildApiScope);
   if (!result.ok()) {
     LOG(DEBUG) << "Failed to load service account json file: \n"
                << result.error().FormatForEnv();
     return {};
   }
-  return std::unique_ptr<CredentialSource>(
-      new ServiceAccountOauthCredentialSource(std::move(*result)));
+  return std::move(*result);
 }
 
 Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
@@ -72,21 +171,22 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
   std::unique_ptr<CredentialSource> result;
   if (credential_source == "gce") {
     result = GceMetadataCredentialSource::Make(http_client);
-  } else if (credential_source == "") {
-    LOG(VERBOSE) << "Probing oauth credentials at " << oauth_filepath;
+  } else if (credential_source.empty()) {
     if (FileExists(oauth_filepath)) {
       std::string oauth_contents = CF_EXPECT(ReadFileContents(oauth_filepath));
-      auto attempt_load = RefreshCredentialSource::FromOauth2ClientFile(
+      auto attempt_load = RefreshTokenCredentialSource::FromOauth2ClientFile(
           http_client, oauth_contents);
       if (attempt_load.ok()) {
-        result.reset(new RefreshCredentialSource(std::move(*attempt_load)));
+        result = std::move(*attempt_load);
+        LOG(DEBUG) << "Loaded credentials from '" << oauth_filepath << "'";
       } else {
-        LOG(ERROR) << "Failed to load oauth2 credentials: "
-                   << attempt_load.error().FormatForEnv();
+        LOG(ERROR) << "Failed to load oauth credentials from \""
+                   << oauth_filepath
+                   << "\":" << attempt_load.error().FormatForEnv();
       }
     } else {
       LOG(INFO) << "\"" << oauth_filepath
-                << "\" missing, running without credentials";
+                << "\" is missing, running without credentials";
     }
   } else if (!FileExists(credential_source)) {
     // If the parameter doesn't point to an existing file it must be the
@@ -109,28 +209,17 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
   return result;
 }
 
-}  // namespace
-
 GceMetadataCredentialSource::GceMetadataCredentialSource(
     HttpClient& http_client)
-    : http_client(http_client) {
-  latest_credential = "";
-  expiration = std::chrono::steady_clock::now();
-}
+    : http_client_(http_client) {}
 
-Result<std::string> GceMetadataCredentialSource::Credential() {
-  if (expiration - std::chrono::steady_clock::now() < kRefreshWindow) {
-    CF_EXPECT(RefreshCredential());
-  }
-  return latest_credential;
-}
-
-Result<void> GceMetadataCredentialSource::RefreshCredential() {
+Result<std::pair<std::string, std::chrono::seconds>>
+GceMetadataCredentialSource::Refresh() {
   static constexpr char kRefreshUrl[] =
       "http://metadata.google.internal/computeMetadata/v1/instance/"
       "service-accounts/default/token";
   auto response = CF_EXPECT(
-      http_client.DownloadToJson(kRefreshUrl, {"Metadata-Flavor: Google"}));
+      http_client_.DownloadToJson(kRefreshUrl, {"Metadata-Flavor: Google"}));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess(),
             "Error fetching credentials. The server response was \""
@@ -143,10 +232,8 @@ Result<void> GceMetadataCredentialSource::RefreshCredential() {
             "GCE credential was missing access_token or expires_in. "
                 << "Full response was " << json << "");
 
-  expiration = std::chrono::steady_clock::now() +
-               std::chrono::seconds(json["expires_in"].asInt());
-  latest_credential = json["access_token"].asString();
-  return {};
+  return {{json["access_token"].asString(),
+           std::chrono::seconds(json["expires_in"].asInt())}};
 }
 
 std::unique_ptr<CredentialSource> GceMetadataCredentialSource::Make(
@@ -156,17 +243,38 @@ std::unique_ptr<CredentialSource> GceMetadataCredentialSource::Make(
 }
 
 FixedCredentialSource::FixedCredentialSource(const std::string& credential) {
-  this->credential = credential;
+  this->credential_ = credential;
 }
 
-Result<std::string> FixedCredentialSource::Credential() { return credential; }
+Result<std::string> FixedCredentialSource::Credential() { return credential_; }
 
 std::unique_ptr<CredentialSource> FixedCredentialSource::Make(
     const std::string& credential) {
   return std::unique_ptr<CredentialSource>(new FixedCredentialSource(credential));
 }
 
-Result<RefreshCredentialSource> RefreshCredentialSource::FromOauth2ClientFile(
+Result<std::unique_ptr<RefreshTokenCredentialSource>>
+RefreshTokenCredentialSource::FromJson(HttpClient& http_client,
+                                       const Json::Value& credential) {
+  CF_EXPECT(credential.isMember("client_id"));
+  auto& client_id = credential["client_id"];
+  CF_EXPECT(client_id.type() == Json::ValueType::stringValue);
+
+  CF_EXPECT(credential.isMember("client_secret"));
+  auto& client_secret = credential["client_secret"];
+  CF_EXPECT(client_secret.type() == Json::ValueType::stringValue);
+
+  CF_EXPECT(credential.isMember("refresh_token"));
+  auto& refresh_token = credential["refresh_token"];
+  CF_EXPECT(refresh_token.type() == Json::ValueType::stringValue);
+
+  return std::make_unique<RefreshTokenCredentialSource>(
+      http_client, client_id.asString(), client_secret.asString(),
+      refresh_token.asString());
+}
+
+Result<std::unique_ptr<RefreshTokenCredentialSource>>
+RefreshTokenCredentialSource::FromOauth2ClientFile(
     HttpClient& http_client, const std::string& oauth_contents) {
   if (android::base::StartsWith(oauth_contents, "[OAuth2]")) {  // .boto file
     std::optional<std::string> client_id;
@@ -192,11 +300,15 @@ Result<RefreshCredentialSource> RefreshCredentialSource::FromOauth2ClientFile(
         continue;
       }
     }
-    return RefreshCredentialSource(http_client, CF_EXPECT(std::move(client_id)),
-                                   CF_EXPECT(std::move(client_secret)),
-                                   CF_EXPECT(std::move(refresh_token)));
+    return std::make_unique<RefreshTokenCredentialSource>(
+        http_client, CF_EXPECT(std::move(client_id)),
+        CF_EXPECT(std::move(client_secret)),
+        CF_EXPECT(std::move(refresh_token)));
   }
   auto json = CF_EXPECT(ParseJson(oauth_contents));
+  if (json.isMember("refresh_token")) {
+    return CF_EXPECT(FromJson(http_client, json));
+  }
   if (json.isMember("data")) {  // acloud style
     auto& data = json["data"];
     CF_EXPECT(data.type() == Json::ValueType::arrayValue);
@@ -209,21 +321,7 @@ Result<RefreshCredentialSource> RefreshCredentialSource::FromOauth2ClientFile(
     auto& credential = data_first["credential"];
     CF_EXPECT(credential.type() == Json::ValueType::objectValue);
 
-    CF_EXPECT(credential.isMember("client_id"));
-    auto& client_id = credential["client_id"];
-    CF_EXPECT(client_id.type() == Json::ValueType::stringValue);
-
-    CF_EXPECT(credential.isMember("client_secret"));
-    auto& client_secret = credential["client_secret"];
-    CF_EXPECT(client_secret.type() == Json::ValueType::stringValue);
-
-    CF_EXPECT(credential.isMember("refresh_token"));
-    auto& refresh_token = credential["refresh_token"];
-    CF_EXPECT(refresh_token.type() == Json::ValueType::stringValue);
-
-    return RefreshCredentialSource(http_client, client_id.asString(),
-                                   client_secret.asString(),
-                                   refresh_token.asString());
+    return CF_EXPECT(FromJson(http_client, credential));
   } else if (json.isMember("cache")) {  // luci/chrome style
     auto& cache = json["cache"];
     CF_EXPECT_EQ(cache.type(), Json::ValueType::arrayValue);
@@ -247,13 +345,13 @@ Result<RefreshCredentialSource> RefreshCredentialSource::FromOauth2ClientFile(
     static constexpr char kClientSecret[] =
         "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";
 
-    return RefreshCredentialSource(http_client, kClientId, kClientSecret,
-                                   refresh_token.asString());
+    return std::make_unique<RefreshTokenCredentialSource>(
+        http_client, kClientId, kClientSecret, refresh_token.asString());
   }
   return CF_ERR("Unknown credential file format");
 }
 
-RefreshCredentialSource::RefreshCredentialSource(
+RefreshTokenCredentialSource::RefreshTokenCredentialSource(
     HttpClient& http_client, const std::string& client_id,
     const std::string& client_secret, const std::string& refresh_token)
     : http_client_(http_client),
@@ -261,14 +359,8 @@ RefreshCredentialSource::RefreshCredentialSource(
       client_secret_(client_secret),
       refresh_token_(refresh_token) {}
 
-Result<std::string> RefreshCredentialSource::Credential() {
-  if (expiration_ - std::chrono::steady_clock::now() < kRefreshWindow) {
-    CF_EXPECT(UpdateLatestCredential());
-  }
-  return latest_credential_;
-}
-
-Result<void> RefreshCredentialSource::UpdateLatestCredential() {
+Result<std::pair<std::string, std::chrono::seconds>>
+RefreshTokenCredentialSource::Refresh() {
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
   std::stringstream data;
@@ -290,10 +382,10 @@ Result<void> RefreshCredentialSource::UpdateLatestCredential() {
             "Refresh credential was missing access_token or expires_in."
                 << " Full response was " << json << "");
 
-  expiration_ = std::chrono::steady_clock::now() +
-                std::chrono::seconds(json["expires_in"].asInt());
-  latest_credential_ = json["access_token"].asString();
-  return {};
+  return {{
+      json["access_token"].asString(),
+      std::chrono::seconds(json["expires_in"].asInt()),
+  }};
 }
 
 static std::string CollectSslErrors() {
@@ -306,16 +398,17 @@ static std::string CollectSslErrors() {
   return errors.str();
 }
 
-Result<ServiceAccountOauthCredentialSource>
+Result<std::unique_ptr<ServiceAccountOauthCredentialSource>>
 ServiceAccountOauthCredentialSource::FromJson(HttpClient& http_client,
                                               const Json::Value& json,
                                               const std::string& scope) {
-  ServiceAccountOauthCredentialSource source(http_client);
-  source.scope_ = scope;
+  std::unique_ptr<ServiceAccountOauthCredentialSource> source(
+      new ServiceAccountOauthCredentialSource(http_client));
+  source->scope_ = scope;
 
   CF_EXPECT(json.isMember("client_email"));
   CF_EXPECT(json["client_email"].type() == Json::ValueType::stringValue);
-  source.email_ = json["client_email"].asString();
+  source->email_ = json["client_email"].asString();
 
   CF_EXPECT(json.isMember("private_key"));
   CF_EXPECT(json["private_key"].type() == Json::ValueType::stringValue);
@@ -328,7 +421,7 @@ ServiceAccountOauthCredentialSource::FromJson(HttpClient& http_client,
 
   auto pkey = CF_EXPECT(PEM_read_bio_PrivateKey(bo.get(), nullptr, 0, 0),
                         CollectSslErrors());
-  source.private_key_.reset(pkey);
+  source->private_key_.reset(pkey);
 
   return source;
 }
@@ -395,7 +488,8 @@ static Result<std::string> CreateJwt(const std::string& email,
   return jwt_to_sign + "." + signature;
 }
 
-Result<void> ServiceAccountOauthCredentialSource::RefreshCredential() {
+Result<std::pair<std::string, std::chrono::seconds>>
+ServiceAccountOauthCredentialSource::Refresh() {
   static constexpr char URL[] = "https://oauth2.googleapis.com/token";
   static constexpr char GRANT[] = "urn:ietf:params:oauth:grant-type:jwt-bearer";
   std::stringstream content;
@@ -419,18 +513,13 @@ Result<void> ServiceAccountOauthCredentialSource::RefreshCredential() {
             "Service account credential was missing access_token or expires_in."
                 << " Full response was " << json << "");
 
-  expiration_ = std::chrono::steady_clock::now() +
-                std::chrono::seconds(json["expires_in"].asInt());
-  latest_credential_ = json["access_token"].asString();
-  return {};
+  return {{
+      json["access_token"].asString(),
+      std::chrono::seconds(json["expires_in"].asInt()),
+  }};
 }
 
-Result<std::string> ServiceAccountOauthCredentialSource::Credential() {
-  if (expiration_ - std::chrono::steady_clock::now() < kRefreshWindow) {
-    CF_EXPECT(RefreshCredential());
-  }
-  return latest_credential_;
-}
+}  // namespace
 
 Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
     HttpClient& http_client, const std::string& credential_source,
@@ -468,10 +557,17 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
     return std::move(service_account_credentials);
   }
   // use the deprecated credential_source or no value
-  // when this helper is removed its `.acloud2_oauth2.dat` processing should be
+  // when this helper is removed its `.acloud_oauth2.dat` processing should be
   // moved here
   return GetCredentialSourceLegacy(http_client, credential_source,
                                    oauth_filepath);
+}
+
+Result<std::unique_ptr<CredentialSource>> CreateRefreshTokenCredentialSource(
+    HttpClient& http_client, const std::string& client_id,
+    const std::string& client_secret, const std::string& refresh_token) {
+  return std::make_unique<RefreshTokenCredentialSource>(
+      http_client, client_id, client_secret, refresh_token);
 }
 
 }  // namespace cuttlefish

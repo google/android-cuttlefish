@@ -29,8 +29,7 @@ int GetDefaultVsockCid();
 
 // Calculates vsock server port number
 // return base + (vsock_guest_cid - 3)
-int GetVsockServerPort(const int base,
-                       const int vsock_guest_cid);
+int GetVsockServerPort(int base, int vsock_guest_cid);
 
 // Returns a path where the launcher puts a link to the config file which makes
 // it easily discoverable regardless of what vm manager is in use
@@ -49,8 +48,8 @@ std::string RandomSerialNumber(const std::string& prefix);
 
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string DefaultQemuBinaryDir();
-std::string HostBinaryPath(const std::string& file);
-std::string HostUsrSharePath(const std::string& file);
+std::string HostBinaryPath(const std::string& binary_name);
+std::string HostUsrSharePath(const std::string& binary_name);
 std::string HostQemuBiosPath();
 std::string DefaultGuestImagePath(const std::string& file);
 std::string DefaultEnvironmentPath(const char* environment_key,

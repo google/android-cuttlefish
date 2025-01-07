@@ -129,20 +129,20 @@ func TestPoolPreRegister(t *testing.T) {
 	p := NewDevicePool()
 	p.CancelPreRegistration("inexistent_device")
 	dd1 := &apiv1.DeviceDescriptor{
-		DeviceId: "d1",
-		GroupId:  "g1",
-		Owner:    "o1",
-		Name:     "n1",
+		DeviceId:  "d1",
+		GroupName: "g1",
+		Owner:     "o1",
+		Name:      "n1",
 	}
 	if err := p.PreRegister(dd1, make(chan bool, 1)); err != nil {
 		t.Fatal("Failed to pre-register: ", err)
 	}
 
 	dd2 := &apiv1.DeviceDescriptor{
-		DeviceId: "d2",
-		GroupId:  "g2",
-		Owner:    "o2",
-		Name:     "n2",
+		DeviceId:  "d2",
+		GroupName: "g2",
+		Owner:     "o2",
+		Name:      "n2",
 	}
 	if err := p.PreRegister(dd2, make(chan bool, 1)); err != nil {
 		t.Fatal("Failed to pre-register: ", err)
@@ -154,7 +154,7 @@ func TestPoolPreRegister(t *testing.T) {
 	if d1 == nil {
 		t.Fatal("Failed to register pre-registered device")
 	}
-	if d1.Descriptor.GroupId != "g1" || d1.Descriptor.Name != "n1" || d1.Descriptor.Owner != "o1" {
+	if d1.Descriptor.GroupName != "g1" || d1.Descriptor.Name != "n1" || d1.Descriptor.Owner != "o1" {
 		t.Fatal("Registered device doesn't match pre-registration: ", d1)
 	}
 
@@ -162,7 +162,7 @@ func TestPoolPreRegister(t *testing.T) {
 	if d2 == nil {
 		t.Fatal("Failed to register un-pre-registered device")
 	}
-	if d2.Descriptor.GroupId == "g2" || d2.Descriptor.Name == "n2" || d2.Descriptor.Owner == "o2" {
+	if d2.Descriptor.GroupName == "g2" || d2.Descriptor.Name == "n2" || d2.Descriptor.Owner == "o2" {
 		t.Fatal("Device with cancelled pre-registration contains pre-registration data: ", d2)
 	}
 }

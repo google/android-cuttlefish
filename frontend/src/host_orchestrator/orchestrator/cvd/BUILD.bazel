@@ -1,0 +1,8 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cvd",
+    srcs = ["cvd.go"],
+    importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd",
+    visibility = ["//visibility:public"],
+)

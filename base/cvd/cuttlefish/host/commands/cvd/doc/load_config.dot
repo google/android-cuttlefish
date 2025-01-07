@@ -9,14 +9,14 @@ digraph {
     label = "cvd (server)"
 
     CvdServer
-    CvdServerHandler [style = "dashed"]
+    CvdCommandHandler [style = "dashed"]
 
-    Request [shape = "record", label = "<proxy> CvdServerHandlerProxy | CommandSequenceExecutor | CvdLoadConfigsCommand | CommandSequenceExecutor | <start> CvdStartCommandHandler"]
+    Request [shape = "record", label = "<proxy> CvdCommandHandlerProxy | CommandSequenceExecutor | CvdLoadConfigsCommand | CommandSequenceExecutor | <start> CvdStartCommandHandler"]
   }
   launch_cvd
 
   CvdClient -> CvdServer [label = "AF_UNIX"]
-  CvdServer -> CvdServerHandler
-  CvdServerHandler -> Request:proxy
+  CvdServer -> CvdCommandHandler
+  CvdCommandHandler -> Request:proxy
   Request:start -> launch_cvd [label = "fork/exec"]
 }

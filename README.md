@@ -45,30 +45,5 @@ to obtain the script.
 
 ## Docker
 
-We also provide the docker image which installed cuttlefish debian packages
-inside; including `cuttlefish-base`, `cuttlefish-user`, and
-`cuttlefish-orchestration`.
-Currently it's available for x86_64 and ARM64 architecture.
-
-### Build docker image manually
-
-Please run below command to build manually.
-
-```bash
-cd /path/to/android-cuttlefish
-cd docker/orchestration
-./build.sh
-```
-
-You can validate if the docker image is successfully built by checking
-`cuttlefish-orchestration` in `docker image list` like below.
-```
-$ docker image list
-REPOSITORY               TAG    IMAGE ID       CREATED          SIZE
-cuttlefish-orchestration latest 0123456789ab   2 minutes ago    690MB
-...
-```
-
-### Download prebuilt image
-
-Sorry for inconvenience, currently it's not supported yet.
+Please read [docker/README.md](docker/README.md) to know how to use docker image
+containing Cuttlefish debian packages.

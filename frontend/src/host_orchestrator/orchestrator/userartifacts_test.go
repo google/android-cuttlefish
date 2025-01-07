@@ -15,61 +15,40 @@
 package orchestrator
 
 import (
-	"fmt"
+	"errors"
 	"io/ioutil"
+	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"testing"
 
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	orchtesting "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/testing"
-	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestNewDir(t *testing.T) {
-	dir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, dir)
-	opts := UserArtifactsManagerOpts{
-		RootDir:     dir,
-		NameFactory: func() string { return "foo" },
-	}
+	root := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, root)
+	opts := UserArtifactsManagerOpts{RootDir: root}
 	am := NewUserArtifactsManagerImpl(opts)
 
-	upDir, _ := am.NewDir()
+	upDir, err := am.NewDir()
 
-	if diff := cmp.Diff("foo", upDir.Name); diff != "" {
-		t.Errorf("name mismatch (-want +got):\n%s", diff)
+	if err != nil {
+		t.Fatal(err)
 	}
-}
-
-func TestNewDirAndDirNameAlreadyExists(t *testing.T) {
-	dir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, dir)
-	testUUID := "foo"
-	opts := UserArtifactsManagerOpts{
-		RootDir:     dir,
-		NameFactory: func() string { return testUUID },
-	}
-	am := NewUserArtifactsManagerImpl(opts)
-	am.NewDir()
-
-	_, err := am.NewDir()
-
-	if err == nil {
-		t.Error("expected error")
+	if _, err := os.Stat(filepath.Join(root, upDir.Name)); errors.Is(err, os.ErrNotExist) {
+		t.Errorf("upload dir %q does not exist", upDir.Name)
 	}
 }
 
 func TestListDirsAndNoDirHasBeenCreated(t *testing.T) {
-	dir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, dir)
-	opts := UserArtifactsManagerOpts{
-		RootDir:     dir,
-		NameFactory: func() string { return "foo" },
-	}
+	root := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, root)
+	opts := UserArtifactsManagerOpts{RootDir: root}
 	am := NewUserArtifactsManagerImpl(opts)
 
 	res, _ := am.ListDirs()
@@ -81,40 +60,35 @@ func TestListDirsAndNoDirHasBeenCreated(t *testing.T) {
 }
 
 func TestListTokens(t *testing.T) {
-	dir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, dir)
-	namesCounter := 0
-	opts := UserArtifactsManagerOpts{
-		RootDir: dir,
-		NameFactory: func() string {
-			namesCounter++
-			return fmt.Sprintf("foo-%d", namesCounter)
-		},
-	}
+	root := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, root)
+	opts := UserArtifactsManagerOpts{RootDir: root}
 	am := NewUserArtifactsManagerImpl(opts)
 	am.NewDir()
 	am.NewDir()
 
-	res, _ := am.ListDirs()
+	res, err := am.ListDirs()
 
-	exp := &apiv1.ListUploadDirectoriesResponse{
-		Items: []*apiv1.UploadDirectory{
-			{Name: "foo-1"},
-			{Name: "foo-2"},
-		},
+	if err != nil {
+		t.Fatal(err)
 	}
-	if diff := cmp.Diff(exp, res); diff != "" {
+	entries, err := ioutil.ReadDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	exp := &apiv1.ListUploadDirectoriesResponse{Items: []*apiv1.UploadDirectory{}}
+	for _, e := range entries {
+		exp.Items = append(exp.Items, &apiv1.UploadDirectory{Name: e.Name()})
+	}
+	if diff := cmp.Diff(2, len(res.Items)); diff != "" {
 		t.Errorf("response mismatch (-want +got):\n%s", diff)
 	}
 }
 
 func TestCreateArtifactDirectoryDoesNotExist(t *testing.T) {
-	dir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, dir)
-	opts := UserArtifactsManagerOpts{
-		RootDir:     dir,
-		NameFactory: func() string { return "foo" },
-	}
+	root := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, root)
+	opts := UserArtifactsManagerOpts{RootDir: root}
 	am := NewUserArtifactsManagerImpl(opts)
 	chunk := UserArtifactChunk{
 		Name:        "xyzz",
@@ -132,14 +106,14 @@ func TestCreateArtifactDirectoryDoesNotExist(t *testing.T) {
 
 func TestCreateArtifactsSucceeds(t *testing.T) {
 	wg := sync.WaitGroup{}
-	dir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, dir)
-	opts := UserArtifactsManagerOpts{
-		RootDir:     dir,
-		NameFactory: func() string { return "foo" },
-	}
+	root := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, root)
+	opts := UserArtifactsManagerOpts{RootDir: root}
 	am := NewUserArtifactsManagerImpl(opts)
-	am.NewDir()
+	upDir, err := am.NewDir()
+	if err != nil {
+		t.Fatal(err)
+	}
 	chunk1 := UserArtifactChunk{
 		Name:           "xyzz",
 		ChunkNumber:    1,
@@ -167,36 +141,14 @@ func TestCreateArtifactsSucceeds(t *testing.T) {
 	for i := 0; i < len(chunks); i++ {
 		go func(i int) {
 			defer wg.Done()
-			am.UpdateArtifact("foo", chunks[i])
+			am.UpdateArtifact(upDir.Name, chunks[i])
 		}(i)
 
 	}
 
 	wg.Wait()
-	b, _ := ioutil.ReadFile(am.GetFilePath("foo", "xyzz"))
+	b, _ := ioutil.ReadFile(am.GetFilePath(upDir.Name, "xyzz"))
 	if diff := cmp.Diff("lorem ipsum", string(b)); diff != "" {
 		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
 	}
-}
-
-func TestUntar(t *testing.T) {
-	dir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, dir)
-
-	Untar(dir, getTestTarFilename())
-
-	b, _ := ioutil.ReadFile(dir + "/foo_dir/foo.txt")
-	if diff := cmp.Diff("foo\n", string(b)); diff != "" {
-		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
-	}
-	b, _ = ioutil.ReadFile(dir + "/foo_dir/link_foo.txt")
-	if diff := cmp.Diff("foo\n", string(b)); diff != "" {
-		t.Errorf("symlink content mismatch (-want +got):\n%s", diff)
-	}
-}
-
-func getTestTarFilename() string {
-	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filename)
-	return dir + "/testdata/foo.tar.gz"
 }

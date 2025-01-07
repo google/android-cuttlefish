@@ -16,9 +16,10 @@ package orchestrator
 
 import (
 	"log"
+	"os/user"
 
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
-	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
@@ -28,7 +29,7 @@ type ExecCVDCommandActionOpts struct {
 	Paths            IMPaths
 	OperationManager OperationManager
 	ExecContext      ExecContext
-	CVDUser          string
+	CVDUser          *user.User
 }
 
 type ExecCVDCommandAction struct {

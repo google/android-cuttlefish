@@ -28,6 +28,7 @@
 #include <ftw.h>
 #include <libgen.h>
 #include <sched.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -36,29 +37,28 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-#include <algorithm>
 #include <array>
 #include <cerrno>
 #include <chrono>
-#include <climits>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <ios>
 #include <iosfwd>
-#include <istream>
 #include <memory>
 #include <numeric>
 #include <ostream>
-#include <ratio>
 #include <regex>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/macros.h>
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 
@@ -76,6 +76,8 @@
 #endif
 
 namespace cuttlefish {
+
+static constexpr char kWhitespaceCharacters[] = " \n\t\r\v\f";
 
 bool FileExists(const std::string& path, bool follow_symlinks) {
   struct stat st {};
@@ -142,8 +144,78 @@ Result<std::string> CreateHardLink(const std::string& target,
   return hardlink;
 }
 
+Result<void> CreateSymLink(const std::string& target, const std::string& link,
+                           const bool overwrite_existing) {
+  if (FileExists(link), /* follow_symlink */ false) {
+    if (!overwrite_existing) {
+      return CF_ERRF(
+          "Cannot symlink from \"{}\" to \"{}\", the second file already "
+          "exists",
+          target, link);
+    }
+    CF_EXPECTF(unlink(link.c_str()) == 0,
+               "Failed to unlink \"{}\" with error: {}", link, strerror(errno));
+  }
+  CF_EXPECTF(symlink(target.c_str(), link.c_str()) == 0,
+             "link() failed trying to create symlink from \"{}\" to \"{}\" "
+             "with error: {}",
+             target, link, strerror(errno));
+  return {};
+}
+
 bool FileHasContent(const std::string& path) {
   return FileSize(path) > 0;
+}
+
+Result<void> HardLinkDirecoryContentsRecursively(
+    const std::string& source, const std::string& destination) {
+  CF_EXPECTF(IsDirectory(source), "Source '{}' is not a directory", source);
+  EnsureDirectoryExists(destination, 0755);
+
+  const std::function<bool(const std::string&)> linker =
+      [&source, &destination](const std::string& filepath) mutable {
+        std::string src_path = filepath;
+        std::string dst_path =
+            destination + "/" + filepath.substr(source.size() + 1);
+        if (IsDirectory(src_path)) {
+          EnsureDirectoryExists(dst_path);
+          return true;
+        }
+        bool overwrite_existing = true;
+        Result<std::string> result =
+            CreateHardLink(src_path, dst_path, overwrite_existing);
+        return result.ok();
+      };
+  CF_EXPECT(WalkDirectory(source, linker));
+
+  return {};
+}
+
+Result<void> MoveDirectoryContents(const std::string& source,
+                                   const std::string& destination) {
+  CF_EXPECTF(IsDirectory(source), "Source '{}' is not a directory", source);
+  CF_EXPECT(EnsureDirectoryExists(destination));
+
+  bool should_rename = CF_EXPECT(CanRename(source, destination));
+  std::vector<std::string> contents = CF_EXPECT(DirectoryContents(source));
+  for (const std::string& filepath : contents) {
+    if (filepath == "." || filepath == "..") {
+      continue;
+    }
+    std::string src_filepath = source + "/" + filepath;
+    std::string dst_filepath = destination + "/" + filepath;
+    if (should_rename) {
+      CF_EXPECT(rename(src_filepath.c_str(), dst_filepath.c_str()) == 0,
+                "rename " << src_filepath << " to " << dst_filepath
+                          << " failed: " << strerror(errno));
+    } else {
+      CF_EXPECT(
+          Copy(src_filepath, dst_filepath),
+          "copy " << src_filepath << " to " << dst_filepath << " failed.");
+    }
+  }
+
+  return {};
 }
 
 Result<std::vector<std::string>> DirectoryContents(const std::string& path) {
@@ -194,7 +266,7 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
              "Failed to set permission on {}: {}", directory_path,
              strerror(errno));
 
-  if (group_name != "") {
+  if (!group_name.empty()) {
     CF_EXPECT(ChangeGroup(directory_path, group_name));
   }
 
@@ -222,16 +294,15 @@ bool CanAccess(const std::string& path, const int mode) {
 }
 
 bool IsDirectoryEmpty(const std::string& path) {
-  auto direc = ::opendir(path.c_str());
+  std::unique_ptr<DIR, int (*)(DIR*)> direc(opendir(path.c_str()), closedir);
   if (!direc) {
     LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
                << " as it failed to be open" << std::endl;
     return false;
   }
 
-  decltype(::readdir(direc)) sub = nullptr;
   int cnt {0};
-  while ( (sub = ::readdir(direc)) ) {
+  while (::readdir(direc.get())) {
     cnt++;
     if (cnt > 2) {
     LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
@@ -468,13 +539,17 @@ Result<std::string> ReadFileContents(const std::string& filepath) {
 }
 
 std::string CurrentDirectory() {
-  std::unique_ptr<char, void (*)(void*)> cwd(getcwd(nullptr, 0), &free);
-  std::string process_cwd(cwd.get());
-  if (!cwd) {
-    PLOG(ERROR) << "`getcwd(nullptr, 0)` failed";
-    return "";
+  std::vector<char> process_wd(1 << 12, ' ');
+  while (getcwd(process_wd.data(), process_wd.size()) == nullptr) {
+    if (errno == ERANGE) {
+      process_wd.resize(process_wd.size() * 2, ' ');
+    } else {
+      PLOG(ERROR) << "getcwd failed";
+      return "";
+    }
   }
-  return process_cwd;
+  // Will find the null terminator and size the string appropriately.
+  return process_wd.data();
 }
 
 FileSizes SparseFileSizes(const std::string& path) {
@@ -540,22 +615,41 @@ bool FileIsSocket(const std::string& path) {
   return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
 }
 
-int GetDiskUsage(const std::string& path) {
+// return unit determined by the `--block-size` argument
+Result<std::size_t> GetDiskUsage(const std::string& path,
+                                 const std::string& size_arg) {
   Command du_cmd("du");
-  du_cmd.AddParameter("-b");
-  du_cmd.AddParameter("-k");
-  du_cmd.AddParameter("-s");
+  du_cmd.AddParameter("-s");  // summarize, only output total
+  du_cmd.AddParameter(
+      "--apparent-size");  // apparent size rather than device usage
+  du_cmd.AddParameter("--block-size=" + size_arg);
   du_cmd.AddParameter(path);
-  SharedFD read_fd;
-  SharedFD write_fd;
-  SharedFD::Pipe(&read_fd, &write_fd);
-  du_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, write_fd);
-  auto subprocess = du_cmd.Start();
-  std::array<char, 1024> text_output{};
-  const auto bytes_read = read_fd->Read(text_output.data(), text_output.size());
-  CHECK_GT(bytes_read, 0) << "Failed to read from pipe " << strerror(errno);
-  std::move(subprocess).Wait();
-  return atoi(text_output.data()) * 1024;
+
+  std::string out;
+  std::string err;
+  int return_code = RunWithManagedStdio(std::move(du_cmd), nullptr, &out, &err);
+  CF_EXPECTF(return_code == 0, "Failed to run `du` command.  stderr: {}", err);
+  CF_EXPECTF(!out.empty(), "No output read from `du` command. stderr: {}", err);
+  std::vector<std::string> split_out =
+      android::base::Tokenize(out, kWhitespaceCharacters);
+  CF_EXPECTF(!split_out.empty(),
+             "No valid output read from `du` command in \"{}\"", out);
+  std::string total = split_out.front();
+
+  std::size_t result;
+  CF_EXPECTF(android::base::ParseUint(total, &result),
+             "Failure parsing \"{}\" to integer.", total);
+  return result;
+}
+
+Result<std::size_t> GetDiskUsageBytes(const std::string& path) {
+  return CF_EXPECTF(GetDiskUsage(path, "1"),
+                    "Unable to determine disk usage of file \"{}\"", path);
+}
+
+Result<std::size_t> GetDiskUsageGigabytes(const std::string& path) {
+  return CF_EXPECTF(GetDiskUsage(path, "1G"),
+                    "Unable to determine disk usage of file \"{}\"", path);
 }
 
 /**
@@ -678,7 +772,7 @@ static Result<void> WaitForFileInternal(const std::string& path, int timeoutSec,
 
     auto names = GetCreatedFileListFromInotifyFd(inotify);
 
-    CF_EXPECT(names.size() > 0,
+    CF_EXPECT(!names.empty(),
               "Failed to get names from inotify " << strerror(errno));
 
     if (Contains(names, filename)) {

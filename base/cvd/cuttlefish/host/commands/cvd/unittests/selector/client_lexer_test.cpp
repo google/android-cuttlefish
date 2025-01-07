@@ -20,7 +20,7 @@
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/result_matchers.h"
-#include "host/commands/cvd/selector/arguments_lexer.h"
+#include "host/commands/cvd/cli/selector/arguments_lexer.h"
 #include "host/commands/cvd/unittests/selector/client_lexer_helper.h"
 
 namespace cuttlefish {

@@ -16,7 +16,6 @@
 --map=common/libs/utils/base64.cpp:base/cvd/cuttlefish/common/libs/utils/base64.cpp
 --map=common/libs/utils/base64.h:base/cvd/cuttlefish/common/libs/utils/base64.h
 --map=common/libs/utils/cf_endian.h:base/cvd/cuttlefish/common/libs/utils/cf_endian.h
---map=common/libs/utils/collect.h:base/cvd/cuttlefish/common/libs/utils/collect.h
 --map=common/libs/utils/contains.h:base/cvd/cuttlefish/common/libs/utils/contains.h
 --map=common/libs/utils/environment.cpp:base/cvd/cuttlefish/common/libs/utils/environment.cpp
 --map=common/libs/utils/environment.h:base/cvd/cuttlefish/common/libs/utils/environment.h
@@ -55,9 +54,6 @@
 --map=common/libs/utils/tcp_socket.h:base/cvd/cuttlefish/common/libs/utils/tcp_socket.h
 --map=common/libs/utils/tee_logging.cpp:base/cvd/cuttlefish/common/libs/utils/tee_logging.cpp
 --map=common/libs/utils/tee_logging.h:base/cvd/cuttlefish/common/libs/utils/tee_logging.h
---map=common/libs/utils/unique_resource_allocator.h:base/cvd/cuttlefish/common/libs/utils/unique_resource_allocator.h
---map=common/libs/utils/unique_resource_allocator_test.cpp:base/cvd/cuttlefish/common/libs/utils/unique_resource_allocator_test.cpp
---map=common/libs/utils/unique_resource_allocator_test.h:base/cvd/cuttlefish/common/libs/utils/unique_resource_allocator_test.h
 --map=common/libs/utils/unix_sockets.cpp:base/cvd/cuttlefish/common/libs/utils/unix_sockets.cpp
 --map=common/libs/utils/unix_sockets.h:base/cvd/cuttlefish/common/libs/utils/unix_sockets.h
 --map=common/libs/utils/unix_sockets_test.cpp:base/cvd/cuttlefish/common/libs/utils/unix_sockets_test.cpp

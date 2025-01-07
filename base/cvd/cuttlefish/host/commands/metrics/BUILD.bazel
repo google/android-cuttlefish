@@ -1,0 +1,13 @@
+cc_library(
+    name = "libmetrics",
+    hdrs = [
+        "metrics_defs.h",
+    ],
+    copts = [
+        "-Werror=sign-compare",
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+)

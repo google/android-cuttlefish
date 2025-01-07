@@ -2,7 +2,7 @@
 
 set -e
 
-UBOOT_GIT_URL_DEFAULT=git://git.denx.de/u-boot.git
+UBOOT_GIT_URL_DEFAULT=https://source.denx.de/u-boot/u-boot.git
 UBOOT_GIT_BRANCH_DEFAULT=master
 
 if [ x"$UBOOT_GIT_URL" = x ]; then

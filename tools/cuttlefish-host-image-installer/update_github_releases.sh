@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
@@ -19,35 +19,16 @@ done
 echo "$changes" > changelog
 
 STABLE_VERSION="v$version"
-RELEASE_TAG_LIST=$(gh release list --json tagName --jq '.[].tagName')
-stringarray=($RELEASE_TAG_LIST)
-index=0
-stable_index=-1
-for i in "${stringarray[@]}"
-do
-  if [[ "$i" == "stable" ]]
-  then
-    stable_index=$index
-  fi
-  let index=index+1
-done
 
-echo "step 2: update the stable tag"
-RELEASE_NAME_LIST=$(gh release list --json name --jq '.[].name')
-stringarray=($RELEASE_NAME_LIST)
-index=0
-for i in "${stringarray[@]}"
-do
-  if [[ "$index" == "$stable_index" ]]
-  then
-    if [[ "$i" != "$STABLE_VERSION" ]]
-    then
-      gh release edit stable --tag "$i"
-      gh release edit "$STABLE_VERSION" --tag stable
-    fi
-  fi
-  let index=index+1
-done
+echo "step 2: move stable release to new commit id"
+commit_id=$(git rev-list -n 1 --tags refs/tags/"$STABLE_VERSION")
+stable_commit_id=$(git rev-list -n 1 --tags refs/tags/stable)
+if [[ "$commit_id" == "$stable_commit_id" ]]; then
+  echo "same commit, no need to change code base"
+else
+  git tag -f stable $commit_id
+  git push -f origin stable
+fi
 
 # update changelog and descriptions
 echo "step 3: update changelog and descriptions in release"
@@ -67,9 +48,8 @@ cp cuttlefish_packages.7z cuttlefish_packages"_${STABLE_VERSION}".7z
 cp u-boot.bin u-boot"_${STABLE_VERSION}".bin
 cp preseed-mini.iso.xz preseed-mini"_${STABLE_VERSION}".iso.xz
 cp meta_gigamp_packages.7z meta_gigamp_packages"_${STABLE_VERSION}".7z
-cp aosp_kernel_aosp14-6.1.7z aosp_kernel_aosp14-6.1"_${STABLE_VERSION}".7z
-cp aosp_kernel_aosp15-6.1.7z aosp_kernel_aosp15-6.1"_${STABLE_VERSION}".7z
-cp aosp_kernel_aosp15-6.6.7z aosp_kernel_aosp15-6.6"_${STABLE_VERSION}".7z
+cp orchestration-image-x86_64.tar orchestration-image-x86_64"_${STABLE_VERSION}".tar
+cp orchestration-image-arm64.tar orchestration-image-arm64"_${STABLE_VERSION}".tar
 
 # upload assets to both latest and stable versions
 echo "step 5: upload assets to both latest and stable versions"
@@ -87,15 +67,13 @@ do
   gh release upload "$version" preseed-mini"_${STABLE_VERSION}".iso.xz
   gh release upload "$version" cuttlefish_packages"_${STABLE_VERSION}".7z
   gh release upload "$version" meta_gigamp_packages"_${STABLE_VERSION}".7z
-  gh release upload "$version" aosp_kernel_aosp14-6.1"_${STABLE_VERSION}".7z
-  gh release upload "$version" aosp_kernel_aosp15-6.1"_${STABLE_VERSION}".7z
-  gh release upload "$version" aosp_kernel_aosp15-6.6"_${STABLE_VERSION}".7z
+  gh release upload "$version" orchestration-image-x86_64"_${STABLE_VERSION}".tar
+  gh release upload "$version" orchestration-image-arm64"_${STABLE_VERSION}".tar
 
   gh release upload "$version" u-boot.bin
   gh release upload "$version" preseed-mini.iso.xz
   gh release upload "$version" cuttlefish_packages.7z
   gh release upload "$version" meta_gigamp_packages.7z
-  gh release upload "$version" aosp_kernel_aosp14-6.1.7z
-  gh release upload "$version" aosp_kernel_aosp15-6.1.7z
-  gh release upload "$version" aosp_kernel_aosp15-6.6.7z  
+  gh release upload "$version" orchestration-image-x86_64.tar
+  gh release upload "$version" orchestration-image-arm64.tar
 done

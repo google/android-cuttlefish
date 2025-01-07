@@ -136,7 +136,7 @@
 
 // Graphics default parameters
 #define CF_DEFAULTS_HWCOMPOSER cuttlefish::kHwComposerAuto
-#define CF_DEFAULTS_GPU_MODE cuttlefish::kGpuModeAuto
+#define CF_DEFAULTS_GPU_MODE "auto"
 #define CF_DEFAULTS_GPU_VHOST_USER_MODE cuttlefish::kGpuVhostUserModeAuto
 #define CF_DEFAULTS_RECORD_SCREEN false
 #define CF_DEFAULTS_GPU_CAPTURE_BINARY CF_DEFAULTS_DYNAMIC_STRING
@@ -206,7 +206,7 @@
 // Streaming default parameters
 #define CF_DEFAULTS_START_WEBRTC false
 #define CF_DEFAULTS_START_WEBRTC_SIG_SERVER true
-#define CF_DEFAULTS_WEBRTC_DEVICE_ID "cvd-{num}"
+#define CF_DEFAULTS_WEBRTC_DEVICE_ID ""
 #define CF_DEFAULTS_VERIFY_SIG_SERVER_CERTIFICATE false
 #define CF_DEFAULTS_WEBRTC_ASSETS_DIR \
   DefaultHostArtifactsPath("usr/share/webrtc/assets")

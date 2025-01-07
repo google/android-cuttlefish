@@ -16,11 +16,12 @@ package orchestrator
 
 import (
 	"errors"
+	"sort"
 	"sync"
 	"testing"
 	"time"
 
-	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -230,4 +231,42 @@ func TestMapOMGetOperationResult(t *testing.T) {
 			t.Errorf("result value (-want +got):\n%s", diff)
 		}
 	})
+}
+
+func TestMapOMListRunningEmpty(t *testing.T) {
+	om := NewMapOM()
+
+	result := om.ListRunning()
+
+	if len(result) != 0 {
+		t.Error("expected empty slice")
+	}
+}
+
+func TestMapOMListRunning(t *testing.T) {
+	om := NewMapOM()
+	op := om.New()
+	om.Complete(op.Name, &OperationResult{})
+	op = om.New()
+	om.Complete(op.Name, &OperationResult{})
+	op1 := om.New()
+	op2 := om.New()
+
+	result := om.ListRunning()
+
+	if len(result) != 2 {
+		t.Error("expected 2 operations")
+	}
+	expected := []string{op1.Name, op2.Name}
+	sort.Strings(expected)
+	names := []string{}
+	for _, s := range result {
+		names = append(names, s.Name)
+	}
+	sort.Strings(names)
+
+	if diff := cmp.Diff(expected, names); diff != "" {
+		t.Errorf("result mismatch (-want +got):\n%s", diff)
+	}
+
 }

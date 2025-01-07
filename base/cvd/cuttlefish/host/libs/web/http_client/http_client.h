@@ -28,16 +28,12 @@
 
 namespace cuttlefish {
 
-static inline bool IsHttpSuccess(int http_code) {
-  return http_code >= 200 && http_code <= 299;
-};
-
 struct HttpVoidResponse {};
 
 template <typename T>
 struct HttpResponse {
   bool HttpInfo() { return http_code >= 100 && http_code <= 199; }
-  bool HttpSuccess() { return IsHttpSuccess(http_code); }
+  bool HttpSuccess() { return http_code >= 200 && http_code <= 299; }
   bool HttpRedirect() { return http_code >= 300 && http_code <= 399; }
   bool HttpClientError() { return http_code >= 400 && http_code <= 499; }
   bool HttpServerError() { return http_code >= 500 && http_code <= 599; }
@@ -57,7 +53,7 @@ class HttpClient {
 
   static std::unique_ptr<HttpClient> CurlClient(
       NameResolver resolver = NameResolver(),
-      const bool use_logging_debug_function = false);
+      bool use_logging_debug_function = false);
   static std::unique_ptr<HttpClient> ServerErrorRetryClient(
       HttpClient&, int retry_attempts, std::chrono::milliseconds retry_delay);
 

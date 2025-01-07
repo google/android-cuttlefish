@@ -21,8 +21,8 @@ import (
 	"strings"
 	"testing"
 
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	orchtesting "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/testing"
-	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -80,17 +80,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 		}
 		return cmd
 	}
-	paths := IMPaths{ArtifactsRootDir: dir + "/artifacts"}
-	opts := ListCVDsActionOpts{
-		Paths:       paths,
-		ExecContext: execContext,
-		CVDUser:     fakeCVDUser,
-	}
-	action := NewListCVDsAction(opts)
-
-	res, _ := action.Run()
-
-	want := &apiv1.ListCVDsResponse{CVDs: []*apiv1.CVD{
+	cvds := []*apiv1.CVD{
 		{
 			Group:          "foo",
 			Name:           "1",
@@ -100,8 +90,40 @@ func TestListCVDsSucceeds(t *testing.T) {
 			WebRTCDeviceID: "cvd-1",
 			ADBSerial:      "0.0.0.0:6520",
 		},
-	}}
-	if diff := cmp.Diff(want, res); diff != "" {
-		t.Errorf("response mismatch (-want +got):\n%s", diff)
+		{
+			Group:          "bar",
+			Name:           "1",
+			BuildSource:    &apiv1.BuildSource{},
+			Status:         "Running",
+			Displays:       []string{"720 x 1280 ( 320 )"},
+			WebRTCDeviceID: "cvd-1",
+			ADBSerial:      "0.0.0.0:6520",
+		},
+	}
+	var tests = []struct {
+		group string
+		want  *apiv1.ListCVDsResponse
+	}{
+		{
+			group: "",
+			want:  &apiv1.ListCVDsResponse{CVDs: cvds},
+		},
+		{
+			group: "foo",
+			want:  &apiv1.ListCVDsResponse{CVDs: []*apiv1.CVD{cvds[0]}},
+		},
+	}
+	for _, test := range tests {
+		opts := ListCVDsActionOpts{
+			Group:       test.group,
+			ExecContext: execContext,
+		}
+		action := NewListCVDsAction(opts)
+
+		res, _ := action.Run()
+
+		if diff := cmp.Diff(test.want, res); diff != "" {
+			t.Errorf("response mismatch (-want +got):\n%s", diff)
+		}
 	}
 }

@@ -18,7 +18,7 @@
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/selector/selector_option_parser_utils.h"
+#include "host/commands/cvd/cli/selector/selector_option_parser_utils.h"
 
 namespace cuttlefish {
 namespace selector {

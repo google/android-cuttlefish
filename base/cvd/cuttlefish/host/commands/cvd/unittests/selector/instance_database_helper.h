@@ -15,18 +15,13 @@
 
 #pragma once
 
-#include <optional>
-#include <set>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include <gtest/gtest.h>
 
-#include "cuttlefish/host/commands/cvd/selector/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/selector/constant_reference.h"
-#include "host/commands/cvd/selector/instance_database.h"
+#include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
+#include "host/commands/cvd/instances/instance_database.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -87,7 +82,7 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
   bool InitWorkspace();
   bool InitMockAndroidHostOut();
   // set error_ when there is an error
-  void SetErrorCode(const ErrorCode error_code, const std::string& msg);
+  void SetErrorCode(ErrorCode error_code, const std::string& msg);
 
   std::string android_artifacts_path_;
   std::string workspace_dir_;

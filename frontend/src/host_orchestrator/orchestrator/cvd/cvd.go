@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -73,25 +74,26 @@ func (e *CommandExecErr) Unwrap() error { return e.err }
 
 func (c *Command) Run() error {
 	cmd := c.execContext(context.TODO(), cvdEnv(c.opts.AndroidHostOut), c.cvdBin, c.args...)
-	stderr := &bytes.Buffer{}
+	stderrBuff := &bytes.Buffer{}
+	stderrMw := io.MultiWriter(stderrBuff, log.Writer())
 	cmd.Stdout = c.opts.Stdout
-	cmd.Stderr = stderr
+	cmd.Stderr = stderrMw
 	if err := cmd.Start(); err != nil {
 		return err
 	}
 	if err := cmd.Wait(); err != nil {
-		LogStderr(cmd, stderr.String())
-		return &CommandExecErr{c.args, stderr.String(), err}
+		return &CommandExecErr{c.args, stderrBuff.String(), err}
 	}
 	return nil
 }
 
 func cvdEnv(androidHostOut string) []string {
-	env := []string{}
-	if androidHostOut != "" {
-		env = append(env, envVarAndroidHostOut+"="+androidHostOut)
+	if androidHostOut == "" {
+		return nil
 	}
-	return env
+	// Make sure the current process' environment is inherited by cvd, some cvd subcommands, like
+	// start, expect the PATH environment variable to be defined.
+	return append(os.Environ(), envVarAndroidHostOut+"="+androidHostOut)
 }
 
 func OutputLogMessage(output string) string {
@@ -115,14 +117,14 @@ func LogCombinedStdoutStderr(cmd *exec.Cmd, val string) {
 	log.Printf(msg, strings.Join(cmd.Args, " "), OutputLogMessage(val))
 }
 
-func Exec(ctx CVDExecContext, name string, args ...string) error {
+func Exec(ctx CVDExecContext, name string, args ...string) (string, error) {
 	cmd := ctx(context.TODO(), nil, name, args...)
-	var b bytes.Buffer
-	cmd.Stdout = nil
-	cmd.Stderr = &b
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		return &CommandExecErr{args, b.String(), err}
+		return "", &CommandExecErr{args, stderr.String(), err}
 	}
-	return nil
+	return stdout.String(), nil
 }

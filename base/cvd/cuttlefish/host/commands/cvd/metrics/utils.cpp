@@ -13,23 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <curl/curl.h>
-#include "gflags/gflags.h"
 #include <net/if.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/utsname.h>
+
 #include <chrono>
 #include <ctime>
 #include <iostream>
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <curl/curl.h>
+#include <gflags/gflags.h>
+
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/cvd/metrics/utils.h"
 #include "host/commands/metrics/metrics_defs.h"
+#include "host/libs/web/http_client/curl_global_init.h"
 
 using cuttlefish::MetricsExitCodes;
 
@@ -160,6 +163,8 @@ std::string ClearcutServerUrl(metrics::ClearcutServer server) {
 
 MetricsExitCodes PostRequest(const std::string& output,
                              metrics::ClearcutServer server) {
+  CurlGlobalInit curl_init;
+
   std::string clearcut_url = ClearcutServerUrl(server);
 
   std::unique_ptr<CURLU, void (*)(CURLU*)> url(curl_url(), curl_url_cleanup);

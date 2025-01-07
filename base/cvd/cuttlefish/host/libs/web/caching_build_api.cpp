@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include <android-base/strings.h>
 #include <fmt/format.h>
@@ -26,6 +27,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/web/android_build_api.h"
+#include "host/libs/web/cas/cas_downloader.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
 
@@ -75,19 +77,20 @@ CachingPaths ConstructCachePaths(const std::string& cache_base,
 
 }  // namespace
 
-CachingBuildApi::CachingBuildApi(
-    std::unique_ptr<HttpClient> http_client,
-    std::unique_ptr<HttpClient> inner_http_client,
-    std::unique_ptr<CredentialSource> credential_source, std::string api_key,
-    const std::chrono::seconds retry_period, std::string api_base_url,
-    const std::string cache_base_path)
-    : BuildApi(std::move(http_client), std::move(inner_http_client),
-               std::move(credential_source), std::move(api_key), retry_period,
-               std::move(api_base_url)),
-      cache_base_path_(std::move(cache_base_path)) {};
+CachingBuildApi::CachingBuildApi(std::unique_ptr<BuildApi> build_api,
+                                 std::string cache_base_path)
+    : build_api_(std::move(build_api)),
+      cache_base_path_(std::move(cache_base_path)) {
+  CHECK(build_api_ != nullptr) << "Underlying build api can't be null";
+};
 
 Result<bool> CachingBuildApi::CanCache(const std::string& target_directory) {
   return CF_EXPECT(CanHardLink(target_directory, cache_base_path_));
+}
+
+Result<Build> CachingBuildApi::GetBuild(const BuildString& build_string,
+                                        const std::string& fallback_target) {
+  return CF_EXPECT(build_api_->GetBuild(build_string, fallback_target));
 }
 
 Result<std::string> CachingBuildApi::DownloadFile(
@@ -99,13 +102,14 @@ Result<std::string> CachingBuildApi::DownloadFile(
         << target_directory << "\" and cache directory \"" << cache_base_path_
         << "\"";
     return CF_EXPECT(
-        BuildApi::DownloadFile(build, target_directory, artifact_name));
+        build_api_->DownloadFile(build, target_directory, artifact_name));
   }
   const auto paths = ConstructCachePaths(cache_base_path_, build,
                                          target_directory, artifact_name);
   CF_EXPECT(EnsureDirectoryExists(paths.build_cache));
   if (!FileExists(paths.cache_artifact)) {
-    CF_EXPECT(BuildApi::DownloadFile(build, paths.build_cache, artifact_name));
+    CF_EXPECT(
+        build_api_->DownloadFile(build, paths.build_cache, artifact_name));
   }
   return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                   kOverwriteExistingFile));
@@ -119,7 +123,7 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
         << "Caching disabled, unable to hard link between fetch directory \""
         << target_directory << "\" and cache directory \"" << cache_base_path_
         << "\"";
-    return CF_EXPECT(BuildApi::DownloadFileWithBackup(
+    return CF_EXPECT(build_api_->DownloadFileWithBackup(
         build, target_directory, artifact_name, backup_artifact_name));
   }
   const auto paths =
@@ -135,7 +139,7 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
                                     paths.target_backup_artifact,
                                     kOverwriteExistingFile));
   }
-  const auto artifact_filepath = CF_EXPECT(BuildApi::DownloadFileWithBackup(
+  const auto artifact_filepath = CF_EXPECT(build_api_->DownloadFileWithBackup(
       build, paths.build_cache, artifact_name, backup_artifact_name));
   if (android::base::EndsWith(artifact_filepath, artifact_name)) {
     return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
@@ -144,23 +148,29 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
   return CF_EXPECT(CreateHardLink(paths.cache_backup_artifact,
                                   paths.target_backup_artifact));
 }
+Result<std::string> CachingBuildApi::GetBuildZipName(const Build& build,
+                                                     const std::string& name) {
+  return CF_EXPECT(build_api_->GetBuildZipName(build, name));
+}
 
 std::unique_ptr<BuildApi> CreateBuildApi(
     std::unique_ptr<HttpClient> http_client,
     std::unique_ptr<HttpClient> inner_http_client,
     std::unique_ptr<CredentialSource> credential_source, std::string api_key,
     const std::chrono::seconds retry_period, std::string api_base_url,
-    const bool enable_caching, const std::string cache_base_path) {
-  if (enable_caching && EnsureCacheDirectory(cache_base_path)) {
-    return std::make_unique<CachingBuildApi>(
-        std::move(http_client), std::move(inner_http_client),
-        std::move(credential_source), std::move(api_key), retry_period,
-        std::move(api_base_url), std::move(cache_base_path));
-  }
-  return std::make_unique<BuildApi>(
+    std::string project_id, const bool enable_caching,
+    const std::string cache_base_path,
+    std::unique_ptr<CasDownloader> cas_downloader) {
+  auto build_api = std::make_unique<AndroidBuildApi>(
       std::move(http_client), std::move(inner_http_client),
       std::move(credential_source), std::move(api_key), retry_period,
-      std::move(api_base_url));
+      std::move(api_base_url), std::move(project_id),
+      std::move(cas_downloader));
+  if (enable_caching && EnsureCacheDirectory(cache_base_path)) {
+    return std::make_unique<CachingBuildApi>(std::move(build_api),
+                                             std::move(cache_base_path));
+  }
+  return std::move(build_api);
 }
 
 }  // namespace cuttlefish

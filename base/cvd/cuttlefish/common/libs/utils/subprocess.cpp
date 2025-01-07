@@ -131,12 +131,12 @@ SubprocessOptions SubprocessOptions::Verbose(bool verbose) && {
 }
 
 #ifdef __linux__
-SubprocessOptions& SubprocessOptions::ExitWithParent(bool v) & {
-  exit_with_parent_ = v;
+SubprocessOptions& SubprocessOptions::ExitWithParent(bool exit_with_parent) & {
+  exit_with_parent_ = exit_with_parent;
   return *this;
 }
-SubprocessOptions SubprocessOptions::ExitWithParent(bool v) && {
-  exit_with_parent_ = v;
+SubprocessOptions SubprocessOptions::ExitWithParent(bool exit_with_parent) && {
+  exit_with_parent_ = exit_with_parent;
   return std::move(*this);
 }
 #endif
@@ -442,8 +442,21 @@ Subprocess Command::Start(SubprocessOptions options) const {
     cmd.insert(cmd.begin(), sbox_ptrs.begin(), sbox_ptrs.end());
   }
 
+  for (auto& prerequisite : prerequisites_) {
+    auto prerequisiteResult = prerequisite();
+
+    if (!prerequisiteResult.ok()) {
+      LOG(ERROR) << "Failed to check prerequisites: "
+                 << prerequisiteResult.error().FormatForEnv();
+    }
+  }
+
+  // ToCharPointers allocates memory so it can't be called in the child process.
+  auto envp = ToCharPointers(env_);
   pid_t pid = fork();
   if (!pid) {
+    // LOG(...) can't be used in the child process because it may block waiting
+    // for other threads which don't exist in the child process.
 #ifdef __linux__
     if (options.ExitWithParent()) {
       prctl(PR_SET_PDEATHSIG, SIGHUP); // Die when parent dies
@@ -452,35 +465,23 @@ Subprocess Command::Start(SubprocessOptions options) const {
 
     do_redirects(redirects_);
 
-    for (auto& prerequisite : prerequisites_) {
-      auto prerequisiteResult = prerequisite();
-
-      if (!prerequisiteResult.ok()) {
-        LOG(ERROR) << "Failed to check prerequisites: "
-                   << prerequisiteResult.error().FormatForEnv();
-      }
-    }
-
     if (options.InGroup()) {
       // This call should never fail (see SETPGID(2))
       if (setpgid(0, 0) != 0) {
-        auto error = errno;
-        LOG(ERROR) << "setpgid failed (" << strerror(error) << ")";
+        exit(-errno);
       }
     }
     for (const auto& entry : inherited_fds_) {
       if (fcntl(entry.second, F_SETFD, 0)) {
-        int error_num = errno;
-        LOG(ERROR) << "fcntl failed: " << strerror(error_num);
+        exit(-errno);
       }
     }
     if (working_directory_->IsOpen()) {
       if (SharedFD::Fchdir(working_directory_) != 0) {
-        LOG(ERROR) << "Fchdir failed: " << working_directory_->StrError();
+        exit(-errno);
       }
     }
     int rval;
-    auto envp = ToCharPointers(env_);
     const char* executable = executable_ ? executable_->c_str() : cmd[0];
 #ifdef __linux__
     rval = execvpe(executable, const_cast<char* const*>(cmd.data()),
@@ -491,9 +492,7 @@ Subprocess Command::Start(SubprocessOptions options) const {
 #else
 #error "Unsupported architecture"
 #endif
-    // No need for an if: if exec worked it wouldn't have returned
-    LOG(ERROR) << "exec of " << cmd[0] << " with path \"" << executable
-               << "\" failed (" << strerror(errno) << ")";
+    // No need to check for error, execvpe/execve don't return on success.
     exit(rval);
   }
   if (pid == -1) {
@@ -513,6 +512,20 @@ Subprocess Command::Start(SubprocessOptions options) const {
   return Subprocess(pid, subprocess_stopper_);
 }
 
+std::ostream& operator<<(std::ostream& out, const Command& command) {
+  return out << android::base::Join(command.command_, " ");
+}
+
+std::string Command::ToString() const {
+  std::stringstream ss;
+  if (!env_.empty()) {
+    ss << android::base::Join(env_, " ");
+    ss << " ";
+  }
+  ss << android::base::Join(command_, " ");
+  return ss.str();
+}
+
 std::string Command::AsBashScript(
     const std::string& redirected_stdio_path) const {
   CHECK(inherited_fds_.empty())
@@ -520,7 +533,7 @@ std::string Command::AsBashScript(
   CHECK(redirects_.empty()) << "Bash wrapper will not have redirected stdio.";
 
   std::string contents =
-      "#!/bin/bash\n\n" + android::base::Join(command_, " \\\n");
+      "#!/usr/bin/env bash\n\n" + android::base::Join(command_, " \\\n");
   if (!redirected_stdio_path.empty()) {
     contents += " &> " + AbsolutePath(redirected_stdio_path);
   }

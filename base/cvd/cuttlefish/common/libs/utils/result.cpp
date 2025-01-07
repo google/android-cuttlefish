@@ -75,11 +75,7 @@ fmt::format_context::iterator StackTraceEntry::format(
     fmt::format_context& ctx, const std::vector<FormatSpecifier>& specifiers,
     std::optional<int> index) const {
   static constexpr char kTerminalBoldRed[] = "\033[0;1;31m";
-  static constexpr char kTerminalCyan[] = "\033[0;36m";
-  static constexpr char kTerminalRed[] = "\033[0;31m";
   static constexpr char kTerminalReset[] = "\033[0m";
-  static constexpr char kTerminalUnderline[] = "\033[0;4m";
-  static constexpr char kTerminalYellow[] = "\033[0;33m";
   auto out = ctx.out();
   std::vector<FormatSpecifier> filtered_specs;
   bool arrow = false;
@@ -118,14 +114,10 @@ fmt::format_context::iterator StackTraceEntry::format(
   for (size_t i = 0; i < filtered_specs.size(); i++) {
     if (index.has_value() && numbers) {
       if (color) {
-        out = fmt::format_to(out, "{}{}{}. ", kTerminalYellow, *index,
-                             kTerminalReset);
+        out = fmt::format_to(out, "{}. ", *index);
       } else {
         out = fmt::format_to(out, "{}. ", *index);
       }
-    }
-    if (color) {
-      out = fmt::format_to(out, "{}", kTerminalRed);
     }
     if (numbers) {
       if (arrow && (int)i < ((int)filtered_specs.size()) - 2) {
@@ -140,26 +132,16 @@ fmt::format_context::iterator StackTraceEntry::format(
         out = fmt::format_to(out, " v ");
       }
     }
-    if (color) {
-      out = fmt::format_to(out, "{}", kTerminalReset);
-    }
     switch (filtered_specs[i]) {
       case FormatSpecifier::kFunction:
-        if (color) {
-          out = fmt::format_to(out, "{}{}{}", kTerminalCyan, function_,
-                               kTerminalReset);
-        } else {
-          out = fmt::format_to(out, "{}", function_);
-        }
+        out = fmt::format_to(out, "{}", function_);
         break;
       case FormatSpecifier::kLongExpression:
         out = fmt::format_to(out, "CF_EXPECT({})", expression_);
         break;
       case FormatSpecifier::kLongLocation:
         if (color) {
-          out = fmt::format_to(out, "{}{}{}:{}{}{}", kTerminalUnderline, file_,
-                               kTerminalReset, kTerminalYellow, line_,
-                               kTerminalYellow);
+          out = fmt::format_to(out, "{}:{}", file_, line_);
         } else {
           out = fmt::format_to(out, "{}:{}", file_, line_);
         }
@@ -173,12 +155,7 @@ fmt::format_context::iterator StackTraceEntry::format(
         }
         break;
       case FormatSpecifier::kPrettyFunction:
-        if (color) {
-          out = fmt::format_to(out, "{}{}{}", kTerminalCyan, pretty_function_,
-                               kTerminalReset);
-        } else {
-          out = fmt::format_to(out, "{}", pretty_function_);
-        }
+        out = fmt::format_to(out, "{}", pretty_function_);
         break;
       case FormatSpecifier::kShort: {
         auto last_slash = file_.rfind("/");
@@ -190,10 +167,8 @@ fmt::format_context::iterator StackTraceEntry::format(
                        : message_.str();
         }
         if (color) {
-          out = fmt::format_to(out, "{}{}{}:{}{}{} | {}{}{} | {}",
-                               kTerminalUnderline, short_file, kTerminalReset,
-                               kTerminalYellow, line_, kTerminalReset,
-                               kTerminalCyan, function_, kTerminalReset, last);
+          out = fmt::format_to(out, "{}:{} | {} | {}", short_file, line_,
+                               function_, last);
         } else {
           out = fmt::format_to(out, "{}:{} | {} | {}", short_file, line_,
                                function_, last);
@@ -208,9 +183,7 @@ fmt::format_context::iterator StackTraceEntry::format(
         auto short_file =
             file_.substr(last_slash == std::string::npos ? 0 : last_slash + 1);
         if (color) {
-          out = fmt::format_to(out, "{}{}{}:{}{}{}", kTerminalUnderline,
-                               short_file, kTerminalReset, kTerminalYellow,
-                               line_, kTerminalReset);
+          out = fmt::format_to(out, "{}:{}", short_file, line_);
         } else {
           out = fmt::format_to(out, "{}:{}", short_file, line_);
         }

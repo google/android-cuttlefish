@@ -24,13 +24,14 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
-	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 
 	"github.com/hashicorp/go-multierror"
@@ -56,6 +57,8 @@ type AndroidBuild struct {
 type IMPaths struct {
 	RootDir          string
 	ArtifactsRootDir string
+	CVDBugReportsDir string
+	SnapshotsRootDir string
 }
 
 type CVDSelector struct {
@@ -75,11 +78,11 @@ func (s *CVDSelector) ToCVDCLI() []string {
 }
 
 // Creates a CVD execution context from a regular execution context.
-// If a non-empty user name is provided the returned execution context executes commands as that user.
-func newCVDExecContext(execContext ExecContext, user string) cvd.CVDExecContext {
-	if user != "" {
+// If a non-nil user is provided the returned execution context executes commands as that user.
+func newCVDExecContext(execContext ExecContext, usr *user.User) cvd.CVDExecContext {
+	if usr != nil {
 		return func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd {
-			newArgs := []string{"-u", user}
+			newArgs := []string{"-u", usr.Username}
 			if env != nil {
 				newArgs = append(newArgs, env...)
 			}
@@ -107,6 +110,15 @@ func createRuntimesRootDir(name string) error {
 
 type cvdFleetOutput struct {
 	Groups []*cvdGroup `json:"groups"`
+}
+
+func (o *cvdFleetOutput) findGroup(name string) (bool, *cvdGroup) {
+	for _, e := range o.Groups {
+		if e.Name == name {
+			return true, e
+		}
+	}
+	return false, nil
 }
 
 type cvdGroup struct {
@@ -172,10 +184,14 @@ func cvdFleetFirstGroup(ctx cvd.CVDExecContext) (*cvdGroup, error) {
 	return fleet.Groups[0], nil
 }
 
-func CVDLogsDir(ctx cvd.CVDExecContext, name string) (string, error) {
-	group, err := cvdFleetFirstGroup(ctx)
+func CVDLogsDir(ctx cvd.CVDExecContext, groupName, name string) (string, error) {
+	fleet, err := cvdFleet(ctx)
 	if err != nil {
 		return "", err
+	}
+	ok, group := fleet.findGroup(groupName)
+	if !ok {
+		return "", operator.NewNotFoundError(fmt.Sprintf("Group %q not found", groupName), nil)
 	}
 	ok, ins := cvdInstances(group.Instances).findByName(name)
 	if !ok {
@@ -207,14 +223,14 @@ func defaultMainBuild() *apiv1.AndroidCIBuild {
 }
 
 type fetchCVDCommandArtifactsFetcher struct {
-	execContext cvd.CVDExecContext
-	credentials string
+	execContext         cvd.CVDExecContext
+	buildAPICredentials BuildAPICredentials
 }
 
-func newFetchCVDCommandArtifactsFetcher(execContext cvd.CVDExecContext, credentials string) *fetchCVDCommandArtifactsFetcher {
+func newFetchCVDCommandArtifactsFetcher(execContext cvd.CVDExecContext, buildAPICredentials BuildAPICredentials) *fetchCVDCommandArtifactsFetcher {
 	return &fetchCVDCommandArtifactsFetcher{
-		execContext: execContext,
-		credentials: credentials,
+		execContext:         execContext,
+		buildAPICredentials: buildAPICredentials,
 	}
 }
 
@@ -232,8 +248,8 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 	var file *os.File
 	var err error
 	fetchCmd := f.execContext(context.TODO(), []string{}, cvd.FetchCVDBin, args...)
-	if f.credentials != "" {
-		if file, err = createCredentialsFile(f.credentials); err != nil {
+	if f.buildAPICredentials.AccessToken != "" {
+		if file, err = createCredentialsFile(f.buildAPICredentials.AccessToken); err != nil {
 			return err
 		}
 		defer file.Close()
@@ -242,6 +258,10 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 		// The actual fd number is not retained, the lowest available number is used instead.
 		fd := 3 + len(fetchCmd.ExtraFiles) - 1
 		fetchCmd.Args = append(fetchCmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
+
+		if f.buildAPICredentials.UserProjectID != "" {
+			fetchCmd.Args = append(fetchCmd.Args, "--project_id="+f.buildAPICredentials.UserProjectID)
+		}
 	} else if isRunningOnGCE() {
 		if ok, err := hasServiceAccountAccessToken(); err != nil {
 			log.Printf("service account token check failed: %s", err)
@@ -318,10 +338,6 @@ const (
 	groupNameArg                 = "--group_name=cvd"
 )
 
-type startCVDHandler struct {
-	ExecContext cvd.CVDExecContext
-}
-
 type startCVDParams struct {
 	InstanceNumbers  []uint32
 	MainArtifactsDir string
@@ -332,12 +348,9 @@ type startCVDParams struct {
 	BootloaderDir string
 }
 
-func (h *startCVDHandler) Start(p startCVDParams) error {
-	args := []string{groupNameArg, "start", daemonArg, reportAnonymousUsageStatsArg}
-	if len(p.InstanceNumbers) == 1 {
-		// Use legacy `--base_instance_num` when multi-vd is not requested.
-		args = append(args, fmt.Sprintf("--base_instance_num=%d", p.InstanceNumbers[0]))
-	} else {
+func CreateCVD(ctx cvd.CVDExecContext, p startCVDParams) error {
+	args := []string{groupNameArg, "create", daemonArg, reportAnonymousUsageStatsArg}
+	if len(p.InstanceNumbers) > 1 {
 		args = append(args, fmt.Sprintf("--instance_nums=%s", strings.Join(SliceItoa(p.InstanceNumbers), ",")))
 	}
 	args = append(args, fmt.Sprintf("--system_image_dir=%s", p.MainArtifactsDir))
@@ -358,7 +371,7 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 		AndroidHostOut: p.MainArtifactsDir,
 		Home:           p.RuntimeDir,
 	}
-	cvdCmd := cvd.NewCommand(h.ExecContext, args, opts)
+	cvdCmd := cvd.NewCommand(ctx, args, opts)
 	err := cvdCmd.Run()
 	if err != nil {
 		return fmt.Errorf("launch cvd stage failed: %w", err)

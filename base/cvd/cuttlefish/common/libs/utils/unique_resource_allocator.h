@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <type_traits>
 #include <unordered_set>
 #include <utility>
@@ -281,13 +282,13 @@ class UniqueResourceAllocator {
    *
    * The itr must belong to available_resources_.
    */
-  const T* RemoveFromPool(const typename std::unordered_set<T>::iterator itr) {
+  const T* RemoveFromPool(const typename std::set<T>::iterator itr) {
     T tmp = std::move(*itr);
     available_resources_.erase(itr);
     const auto [new_itr, _] = allocated_resources_.insert(std::move(tmp));
     return std::addressof(*new_itr);
   }
-  std::unordered_set<T> available_resources_;
+  std::set<T> available_resources_;
   std::unordered_set<T> allocated_resources_;
   std::mutex mutex_;
 };

@@ -4,13 +4,24 @@ set -e
 
 case "$1" in
   configure)
+    group="cvdartifacts"
+
+    if ! getent group ${group} > /dev/null 2>&1
+    then
+        addgroup --system ${group}
+    fi
+
     if ! getent passwd _cvd-executor > /dev/null 2>&1
     then
+        gid=$(getent group ${group} | cut -d: -f3)
+
         adduser --system --disabled-password --disabled-login --home /var/empty \
-                --no-create-home --quiet --force-badname --group _cvd-executor
+                --no-create-home --quiet --force-badname --gid ${gid} _cvd-executor
         # The cvdnetwork group is created by cuttlefish-base
         usermod -a -G cvdnetwork,kvm _cvd-executor
     fi
+
+    usermod -a -G ${group} _cutf-operator
 
     # Reload nginx having the orchestration configuration
     service nginx reload

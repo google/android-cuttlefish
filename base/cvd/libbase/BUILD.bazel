@@ -19,8 +19,8 @@ cc_library(
     name = "libbase",
     srcs = [
         "file.cpp",
-        "logging.cpp",
         "include/logging_splitters.h",
+        "logging.cpp",
         "mapped_file.cpp",
         "parsebool.cpp",
         "stringprintf.cpp",

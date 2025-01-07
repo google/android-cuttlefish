@@ -30,11 +30,16 @@
 #include <cstddef>
 
 #include <algorithm>
+#include <cstdlib>
 #include <sstream>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <fmt/format.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
@@ -182,13 +187,13 @@ void FileInstance::Close() {
     errno_ = EBADF;
   } else if (close(fd_) == -1) {
     errno_ = errno;
-    if (identity_.size()) {
+    if (!identity_.empty()) {
       message << __FUNCTION__ << ": " << identity_ << " failed (" << StrError() << ")";
       std::string message_str = message.str();
       Log(message_str.c_str());
     }
   } else {
-    if (identity_.size()) {
+    if (!identity_.empty()) {
       message << __FUNCTION__ << ": " << identity_ << "succeeded";
       std::string message_str = message.str();
       Log(message_str.c_str());
@@ -522,6 +527,18 @@ SharedFD SharedFD::Mkstemp(std::string* path) {
   } else {
     return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
   }
+}
+
+Result<std::pair<SharedFD, std::string>> SharedFD::Mkostemp(
+    const std::string_view path, const int flags) {
+  // mkostemp replaces the Xs with random selections to make a unique filename
+  auto temp_path = fmt::format("{}XXXXXX", path);
+  const int fd = mkostemp(temp_path.data(), flags);
+  CF_EXPECTF(fd != -1, "Error creating temporary file: {}", strerror(errno));
+  auto shared_fd =
+      SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
+  return std::make_pair<SharedFD, std::string>(std::move(shared_fd),
+                                               std::move(temp_path));
 }
 
 SharedFD SharedFD::ErrorFD(int error) {
@@ -895,7 +912,7 @@ int FileInstance::LinkAtCwd(const std::string& path) {
   name += std::to_string(fd_);
   errno = 0;
   int rval =
-      linkat(-1, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
+      linkat(AT_FDCWD, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
   errno_ = errno;
   return rval;
 }

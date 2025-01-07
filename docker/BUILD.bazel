@@ -13,16 +13,15 @@
 # limitations under the License.
 
 genrule(
-    name = "orchestration_image_tar",
+    name = "orchestration_image_dev_tar",
+    outs = ["orchestration-image-dev.tar"],
+    cmd = "$(location :orchestration_image_dev_builder) -o $@",
+    tools = [":orchestration_image_dev_builder"],
     visibility = ["//visibility:public"],
-    outs = ["orchestration-image.tar"],
-    cmd = "$(location :orchestration_image_builder) -o $@",
-    tools = [":orchestration_image_builder"],
 )
 
 sh_binary(
-    name = "orchestration_image_builder",
-    srcs = ["orchestration-image-builder.sh"],
-    data = ["//docker/debs-builder-docker:debs_tar"],
-    deps = [ "@bazel_tools//tools/bash/runfiles"],
+    name = "orchestration_image_dev_builder",
+    srcs = ["image-build-bazel-wrapper.sh"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )

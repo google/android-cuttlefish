@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -25,7 +26,7 @@
 
 namespace cuttlefish {
 
-std::string FromSeverity(const android::base::LogSeverity severity);
+std::string FromSeverity(android::base::LogSeverity severity);
 Result<android::base::LogSeverity> ToSeverity(const std::string& value);
 
 std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
@@ -36,11 +37,7 @@ std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
 android::base::LogSeverity ConsoleSeverity();
 android::base::LogSeverity LogFileSeverity();
 
-enum class MetadataLevel {
-  FULL,
-  ONLY_MESSAGE,
-  TAG_AND_MESSAGE
-};
+enum class MetadataLevel { FULL, ONLY_MESSAGE, TAG_AND_MESSAGE };
 
 struct SeverityTarget {
   android::base::LogSeverity severity;
@@ -49,27 +46,43 @@ struct SeverityTarget {
 };
 
 class TeeLogger {
-private:
+ private:
   std::vector<SeverityTarget> destinations_;
-public:
- TeeLogger(const std::vector<SeverityTarget>& destinations,
-           const std::string& log_prefix = "");
- ~TeeLogger() = default;
 
- void operator()(android::base::LogId log_id,
-                 android::base::LogSeverity severity, const char* tag,
-                 const char* file, unsigned int line, const char* message);
+ public:
+  TeeLogger(const std::vector<SeverityTarget>& destinations,
+            const std::string& log_prefix = "");
+  ~TeeLogger() = default;
 
-private:
- std::string prefix_;
+  void operator()(android::base::LogId log_id,
+                  android::base::LogSeverity severity, const char* tag,
+                  const char* file, unsigned int line, const char* message);
+
+ private:
+  std::string prefix_;
 };
 
+class ScopedTeeLogger {
+ public:
+  ScopedTeeLogger(TeeLogger tee_logger);
+  ~ScopedTeeLogger();
+
+ private:
+  android::base::LogFunction old_logger_;
+  android::base::ScopedLogSeverity scoped_severity_;
+};
+
+TeeLogger LogToStderr(
+    const std::string& log_prefix = "",
+    MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE,
+    std::optional<android::base::LogSeverity> stderr_severity = std::nullopt);
 TeeLogger LogToFiles(const std::vector<std::string>& files,
                      const std::string& log_prefix = "");
-TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files,
-                              const std::string& log_prefix = "",
-                              MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE);
+TeeLogger LogToStderrAndFiles(
+    const std::vector<std::string>& files, const std::string& log_prefix = "",
+    MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE,
+    std::optional<android::base::LogSeverity> stderr_severity = std::nullopt);
 
 std::string StripColorCodes(const std::string& str);
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

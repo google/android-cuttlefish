@@ -2,26 +2,26 @@ Source: cuttlefish-common
 Maintainer: Cuttlefish Team
 Section: misc
 Priority: optional
-Build-Depends: config-package-dev,
+Build-Depends: bazel [amd64],
+               config-package-dev,
                debhelper-compat (= 12),
-               clang,
-               pkg-config,
+               git,
+               libcurl4-openssl-dev,
                libfmt-dev,
                libgflags-dev,
-               libjsoncpp-dev,
-               libcurl4-openssl-dev,
                libgoogle-glog-dev,
                libgtest-dev,
+               libjsoncpp-dev,
+               libtinfo5,
+               libprotobuf-c-dev,
+               libprotobuf-dev,
                libssl-dev,
                libxml2-dev,
-               uuid-dev,
-               libprotobuf-dev,
-               libprotobuf-c-dev,
-               protobuf-compiler,
                libz3-dev,
+               pkg-config,
+               protobuf-compiler,
                sed,
-               git,
-               bazel [amd64]
+               uuid-dev
 Standards-Version: 4.5.0
 
 Package: cuttlefish-base
@@ -61,6 +61,7 @@ Depends: adduser,
          python3,
          qemu-user-static [arm64],
          util-linux,
+         xdg-utils,
          ${misc:Depends},
          ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}

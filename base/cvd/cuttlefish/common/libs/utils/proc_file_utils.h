@@ -42,10 +42,10 @@ struct ProcInfo {
   std::unordered_map<std::string, std::string> envs_;
   std::vector<std::string> args_;
 };
-Result<ProcInfo> ExtractProcInfo(const pid_t pid);
+Result<ProcInfo> ExtractProcInfo(pid_t pid);
 
 // collects all pids whose owner is uid
-Result<std::vector<pid_t>> CollectPids(const uid_t uid = getuid());
+Result<std::vector<pid_t>> CollectPids(uid_t uid = getuid());
 
 /* collects all pids that meet the following:
  *
@@ -54,7 +54,7 @@ Result<std::vector<pid_t>> CollectPids(const uid_t uid = getuid());
  *
  */
 Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
-                                                 const uid_t uid = getuid());
+                                                 uid_t uid = getuid());
 
 /* collects all pids that meet the following:
  *
@@ -63,27 +63,27 @@ Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
  *
  */
 Result<std::vector<pid_t>> CollectPidsByExecPath(const std::string& exec_path,
-                                                 const uid_t uid = getuid());
+                                                 uid_t uid = getuid());
 
 /**
  * When argv[0] != exec_path, collects PIDs based on argv[0]
  *
  */
 Result<std::vector<pid_t>> CollectPidsByArgv0(const std::string& expected_argv0,
-                                              const uid_t uid = getuid());
+                                              uid_t uid = getuid());
 
-Result<uid_t> OwnerUid(const pid_t pid);
+Result<uid_t> OwnerUid(pid_t pid);
 
 // retrieves command line args for the pid
-Result<std::vector<std::string>> GetCmdArgs(const pid_t pid);
+Result<std::vector<std::string>> GetCmdArgs(pid_t pid);
 
 // retrieves the path to the executable file used for the pid
 // this does not work for the defunct processes
-Result<std::string> GetExecutablePath(const pid_t pid);
+Result<std::string> GetExecutablePath(pid_t pid);
 
 // retrieves the environment variables of the process, pid
-Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid);
+Result<std::unordered_map<std::string, std::string>> GetEnvs(pid_t pid);
 
-Result<pid_t> Ppid(const pid_t pid);
+Result<pid_t> Ppid(pid_t pid);
 
 }  // namespace cuttlefish

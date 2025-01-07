@@ -1,0 +1,53 @@
+Source: cuttlefish-common
+Version: 0.9.29
+Distribution: stable
+Urgency: medium
+Maintainer: Chad Reynolds <chadreynolds@google.com>
+Timestamp: 1717717122
+Date: Thu, 06 Jun 2024 16:38:42 -0700
+Changes:
+ cuttlefish-common (0.9.29) stable; urgency=medium
+ .
+   [ A. Cody Schuffelen ]
+   * Add capability to `cvd fetch` to download ChromeOS builds
+ .
+   [ Chad Reynolds ]
+   * Always attempt to fetch full set of system images
+   * Add `cvd fetch` temporary caching for downloaded artifacts
+ .
+   [ Jorge E. Moreira ]
+   * Execute cvd commands in-process, without a cvd server
+   * Build cvd with bazel
+   * Return group information from cvd start
+
+Source: cuttlefish-frontend
+Version: 0.9.28
+Distribution: stable
+Urgency: medium
+Maintainer: Jorge Moreira <jemoreira@google.com>
+Timestamp: 1697159555
+Date: Thu, 12 Oct 2023 18:12:35 -0700
+Changes:
+ cuttlefish-frontend (0.9.28) stable; urgency=medium
+ .
+   * Replace operator functionality with reverse proxy in host operator
+ .
+   * Make operator and host_orchestrator configurable via CLI flags
+ .
+   * Make the host_orchestrator available as a command in cuttlefish-user
+
+Source: metapackage-google
+Version: 1
+Distribution: unstable
+Urgency: low
+Maintainer: Ying-Chun Liu (PaulLiu) <paulliu@debian.org>
+Timestamp: 1706588045
+Date: Tue, 30 Jan 2024 12:14:05 +0800
+Changes:
+ metapackage-google (1) unstable; urgency=low
+ .
+   * Initial release.
+
+Stable host image changes:
+Cuttlefish version .
+Delete cvd bug reports.. Artifacts created at 2024-07-17T19:09:11Z. Run ID 9980060609

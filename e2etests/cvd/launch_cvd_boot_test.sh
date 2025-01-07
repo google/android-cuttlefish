@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e -x
 
@@ -44,15 +44,14 @@ function collect_logs_and_cleanup() {
     cp "${workdir}"/cuttlefish_runtime/cuttlefish_config.json "${TEST_UNDECLARED_OUTPUTS_DIR}"
   fi
   rm -rf "${workdir}"
-  # Be nice, don't leave a server or devices behind.
+  # Be nice, don't leave devices behind.
   cvd reset -y
 }
 
 # Regardless of whether and when a failure occurs logs must collected
 trap collect_logs_and_cleanup EXIT
 
-# Make sure the server isn't running. Bazel tries to sandbox tests, but the cvd
-# client can still connect to the server outside the sandbox and cause issues.
+# Make sure to run in a clean environment, without any devices running
 cvd reset -y
 
 cvd fetch \

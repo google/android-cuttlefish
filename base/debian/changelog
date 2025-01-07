@@ -1,4 +1,55 @@
-cuttlefish-common (0.9.29) unstable; urgency=medium
+cuttlefish-common (1.1.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 01 Nov 2024 16:02:12 -0700
+
+cuttlefish-common (1.0.0) stable; urgency=medium
+
+  [ Jorge E. Moreira ]
+  * Delete unused experimental commands
+
+  [ A. Cody Schuffelen]
+  * Reduce logging verbosity
+
+  [ Andrew Wheeler ]
+  * Facilitate using 3rd-party build APIs
+
+  [ Wei-chung Hsu ]
+  * Disable acloud translator
+
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 05 Sep 2024 11:05:25 -0700
+
+cuttlefish-common (0.9.31) stable; urgency=medium
+
+  [ Chad Reynolds ]
+  * Help command improvements
+
+  [ Jorge E. Moreira ]
+  * cvd continues to track instances after stop or failure
+  * Split cvd start into create and start
+  * Introduce cvd remove command
+  * cvd start and remove use group selection menu
+  * cvd pre-registers devices with operator
+
+ -- Jorge Moreira <jemoreira@google.com>  Mon, 12 Aug 2024 16:47:44 -0700
+
+cuttlefish-common (0.9.30) stable; urgency=medium
+
+  [ Chad Reynolds ]
+  [Jorge E. Moreira]
+  * Use iptables when iptables-legacy is not available
+  * Cvd instances stored in databasse during preparation stage
+
+  [A. Cody Schuffelen]
+  * Improvements to fetch_cvd
+
+  [Chad Reynolds]
+  * Download artifacts to temporary file first
+
+ -- Jorge Moreira <jemoreira@google.com>  Mon, 29 Jul 2024 15:44:02 -0700
+
+cuttlefish-common (0.9.29) stable; urgency=medium
 
   [ A. Cody Schuffelen ]
   * Add capability to `cvd fetch` to download ChromeOS builds

@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 
 	"github.com/google/uuid"
 )
@@ -49,6 +49,8 @@ type OperationManager interface {
 	New() apiv1.Operation
 
 	Get(name string) (apiv1.Operation, error)
+
+	ListRunning() []apiv1.Operation
 
 	GetResult(name string) (*OperationResult, error)
 
@@ -105,6 +107,18 @@ func (m *MapOM) New() apiv1.Operation {
 	}
 	m.operations[name] = entry
 	return entry.op
+}
+
+func (m *MapOM) ListRunning() []apiv1.Operation {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+	result := []apiv1.Operation{}
+	for _, v := range m.operations {
+		if !v.op.Done {
+			result = append(result, v.op)
+		}
+	}
+	return result
 }
 
 func (m *MapOM) Get(name string) (apiv1.Operation, error) {

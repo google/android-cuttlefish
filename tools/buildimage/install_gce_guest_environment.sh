@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Copyright (C) 2024 The Android Open Source Project
 #
@@ -56,7 +56,7 @@ sudo chroot /mnt/image mkdir /run/resolvconf
 sudo cp /etc/resolv.conf /mnt/image/run/resolvconf/resolv.conf
 
 cat <<'EOF' >${mount_point}/tmp/install.sh
-#!/bin/bash
+#!/usr/bin/env bash
 echo "== Installing Google guest environment for Debian =="
 export DEBIAN_FRONTEND=noninteractive
 echo "Determining Debian version..."

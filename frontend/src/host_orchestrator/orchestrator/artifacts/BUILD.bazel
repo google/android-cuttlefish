@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "artifacts",
+    srcs = [
+        "artifacts.go",
+        "buildapi.go",
+    ],
+    importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "artifacts_test",
+    srcs = ["buildapi_test.go"],
+    embed = [":artifacts"],
+    deps = ["@com_github_google_go_cmp//cmp"],
+)

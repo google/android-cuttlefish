@@ -1,2 +1,7 @@
 limits.d/95-google-nofile.conf etc/security/limits.d
 usr/share/linaro-gigamp-use-google-ntp usr/share/metapackage-google
+usr/lib/modules-load.d/metapackage-google.conf usr/lib/modules-load.d
+usr/lib/NetworkManager/conf.d/metapackage-google.conf usr/lib/NetworkManager/conf.d
+
+usr/share/cf_docker_co_run.sh usr/share/metapackage-google
+usr/share/version_info usr/share/metapackage-google

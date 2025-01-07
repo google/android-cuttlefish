@@ -22,8 +22,8 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
-#include "host/commands/cvd/server_command/flags_collector.h"
-#include "host/commands/cvd/types.h"
+#include "host/commands/cvd/utils/flags_collector.h"
+#include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/unittests/server/cmd_runner.h"
 
 namespace cuttlefish {

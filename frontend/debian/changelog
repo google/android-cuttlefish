@@ -1,9 +1,57 @@
-cuttlefish-frontend (0.9.29) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.1.0) UNRELEASED; urgency=medium
 
-  * Make cuttlefish-orchestration depend on cuttlefish-user
-  * Make host orchestrator users configurable
+  * 
 
- -- Jorge Moreira <jemoreira@google.com>  Thu, 12 Oct 2023 18:12:35 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 01 Nov 2024 16:02:34 -0700
+
+cuttlefish-frontend (1.0.0) stable; urgency=medium
+
+  [ Sergio A. Rodriguez ]
+  * Send build api credentials through the host orchestrator client
+  * Host Orchestrator support for snapshots.
+
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 05 Sep 2024 11:06:56 -0700
+
+cuttlefish-frontend (0.9.31) unstable; urgency=medium
+
+  [ Sergio A. Rodriguez ]
+  * Fix /logs endpoint permissions
+  * Return all devices on /cvds endpoint
+
+  [ Jorge E. Moreira ]
+  * Host Orchestrator uses the new cvd commands create and remove
+  * New Host Orchestrator endpoints for cvd start and stop
+
+ -- Jorge Moreira <jemoreira@google.com>  Mon, 12 Aug 2024 16:53:19 -0700
+
+cuttlefish-frontend (0.9.30) stable; urgency=medium
+
+  [ Sergio A. Rodriguez - cuttlefish-orchestration ]
+  * cvd bug reports endpoint
+
+  [Jaeman Park - cuttlefish-user]
+  * Websocket endpoint for ADB
+
+ -- Jorge Moreira <jemoreira@google.com>  Mon, 29 Jul 2024 15:43:17 -0700
+
+cuttlefish-frontend (0.9.29) stable; urgency=medium
+
+  [ Jorge E. Moreira ]
+  * Make cuttlefish-orchestration depend on cuttlefish-user.
+  * Make host orchestrator users configurable.
+
+  [ Sergio A. Rodriguez - cuttlefish-user]
+  * Support for `cvd stop`.
+  * User service account credentials if running on GCE.
+  * Use upstream `cvd`. 
+  * Extract ".zip" and ".tar.gz" user artifacts.
+  * Support `cvd powerwash`.
+
+  [ Sergio A. Rodriguez - cuttlefish-orchestration]
+  * Start using nginx as a reverse proxy.
+  * Start using `systemd-journal-gatewayd` to expose host logs.
+
+ -- Sergio Rodriguez <sorama@google.com>  Thu, 27 Jun 2024 18:12:31 -0400
 
 cuttlefish-frontend (0.9.28) stable; urgency=medium
 

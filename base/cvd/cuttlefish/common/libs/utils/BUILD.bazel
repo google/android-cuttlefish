@@ -1,0 +1,144 @@
+cc_library(
+    name = "result",
+    srcs = [
+        "result.cpp",
+    ],
+    hdrs = [
+        "result.h",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+cc_library(
+    name = "result_matchers",
+    testonly = 1,
+    hdrs = [
+        "result_matchers.h",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":result",
+        "//libbase",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "utils",
+    srcs = [
+        "archive.cpp",
+        "base64.cpp",
+        "environment.cpp",
+        "files.cpp",
+        "flag_parser.cpp",
+        "flags_validator.cpp",
+        "inotify.cpp",
+        "json.cpp",
+        "proc_file_utils.cpp",
+        "shared_fd_flag.cpp",
+        "signals.cpp",
+        "subprocess.cpp",
+        "tee_logging.cpp",
+        "unix_sockets.cpp",
+        "users.cpp",
+    ],
+    hdrs = [
+        "archive.h",
+        "base64.h",
+        "contains.h",
+        "environment.h",
+        "files.h",
+        "flag_parser.h",
+        "flags_validator.h",
+        "inotify.h",
+        "json.h",
+        "network.h",
+        "proc_file_utils.h",
+        "proto.h",
+        "shared_fd_flag.h",
+        "signals.h",
+        "size_utils.h",
+        "subprocess.h",
+        "tcp_socket.h",
+        "tee_logging.h",
+        "unique_resource_allocator.h",
+        "unix_sockets.h",
+        "users.h",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":result",
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@boringssl//:crypto",
+        "@fmt",
+        "@gflags",
+        "@jsoncpp",
+        "@protobuf",
+        "@protobuf//:json_util",
+    ],
+)
+
+cc_test(
+    name = "result_test",
+    srcs = [
+        "result_test.cpp",
+    ],
+    copts = [
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+        "-Icuttlefish",
+    ],
+    deps = [
+        ":result",
+        ":result_matchers",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "utils_test",
+    srcs = [
+        "files_test.cpp",
+        "files_test_helper.cpp",
+        "files_test_helper.h",
+        #"flag_parser_test.cpp",
+        "proc_file_utils_test.cpp",
+        "result_test.cpp",
+        "unique_resource_allocator_test.cpp",
+        "unique_resource_allocator_test.h",
+        "unix_sockets_test.cpp",
+    ],
+    copts = [
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+        "-Icuttlefish",
+    ],
+    deps = [
+        ":result",
+        ":result_matchers",
+        ":utils",
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
