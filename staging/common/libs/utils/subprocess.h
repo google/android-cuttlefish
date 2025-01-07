@@ -304,6 +304,8 @@ class Command {
     return command_[0];
   }
 
+  std::string ToString() const;
+
   // Generates the contents for a bash script that can be used to run this
   // command. Note that this command must not require any file descriptors
   // or stdio redirects as those would not be available when the bash script

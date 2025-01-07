@@ -482,6 +482,16 @@ Subprocess Command::Start(SubprocessOptions options) const {
   return Subprocess(pid, subprocess_stopper_);
 }
 
+std::string Command::ToString() const {
+  std::stringstream ss;
+  if (!env_.empty()) {
+    ss << android::base::Join(env_, " ");
+    ss << " ";
+  }
+  ss << android::base::Join(command_, " ");
+  return ss.str();
+}
+
 std::string Command::AsBashScript(
     const std::string& redirected_stdio_path) const {
   CHECK(inherited_fds_.empty())
