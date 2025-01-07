@@ -1874,11 +1874,11 @@ std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::mouse_socket_path() const {
-  return PerInstanceInternalPath("mouse.sock");
+  return PerInstanceInternalUdsPath("mouse.sock");
 }
 
 std::string CuttlefishConfig::InstanceSpecific::rotary_socket_path() const {
-  return PerInstanceInternalPath("rotary.sock");
+  return PerInstanceInternalUdsPath("rotary.sock");
 }
 
 std::string CuttlefishConfig::InstanceSpecific::keyboard_socket_path() const {
