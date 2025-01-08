@@ -17,13 +17,22 @@
 -keepattributes SourceFile,LineNumberTable,RuntimeVisible*Annotations,AnnotationDefault
 
 # Keep classes and methods that have the guava @VisibleForTesting annotation
--keep @com.google.common.annotations.VisibleForTesting class *
+# TODO(b/373579455): Evaluate if <init> needs to be kept.
+-keep @com.google.common.annotations.VisibleForTesting class * {
+  void <init>();
+}
 -keepclassmembers class * {
   @com.google.common.annotations.VisibleForTesting *;
 }
 
--keep public class * extends android.app.Service
--keep public class * extends android.content.BroadcastReceiver
+# TODO(b/373579455): Evaluate if <init> needs to be kept.
+-keep public class * extends android.app.Service {
+  void <init>();
+}
+# TODO(b/373579455): Evaluate if <init> needs to be kept.
+-keep public class * extends android.content.BroadcastReceiver {
+  void <init>();
+}
 
 # -dontobfuscate
 -keep,allowshrinking class * { *; }
