@@ -24,12 +24,8 @@ ifeq (true,$(CLOCKWORK_EMULATOR_PRODUCT))
 TARGET_KERNEL_USE ?= 6.1
 else ifneq (,$(findstring x86_tv,$(PRODUCT_NAME)))
 TARGET_KERNEL_USE ?= 6.1
-else ifneq (, $(filter $(PRODUCT_NAME),cf_x86_64_al cf_x86_64_desktop))
-TARGET_KERNEL_USE ?= 6.6
-else ifeq (true,$(call math_lt,$(PRODUCT_SHIPPING_API_LEVEL),36))
-TARGET_KERNEL_USE ?= 6.6
 else
-TARGET_KERNEL_USE ?= 6.12
+TARGET_KERNEL_USE ?= 6.6
 endif
 
 TARGET_KERNEL_ARCH ?= $(TARGET_ARCH)
