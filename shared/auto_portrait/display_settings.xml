@@ -22,4 +22,8 @@
   <!-- Use physical port number instead of local id -->
   <config identifier="1" />
 
+  <!-- Display settings for the driver display -->
+  <display name="port:0"
+      ignoreOrientationRequest="true" />
+
 </display-settings>

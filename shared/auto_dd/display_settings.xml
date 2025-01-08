@@ -22,11 +22,16 @@
   <!-- Use physical port number instead of local id -->
   <config identifier="1" />
 
+  <!-- Display settings for the driver display -->
+  <display name="port:0"
+        ignoreOrientationRequest="true" />
+
   <!-- Display settings for the distant display-->
   <display
         name="port:1"
         forcedWidth="4000"
         forcedHeight="800"
+        ignoreOrientationRequest="true"
         dontMoveToTop="true"/>
 
 </display-settings>
