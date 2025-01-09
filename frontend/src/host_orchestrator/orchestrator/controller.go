@@ -117,7 +117,9 @@ type handler interface {
 
 func httpHandler(h handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("request:", r.Method, r.URL.Path)
+		log.Printf("handling request(%p) started %s %s", r, r.Method, r.URL.Path)
+		defer log.Printf("handling request(%p) ended", r)
+
 		res, err := h.Handle(r)
 		if err != nil {
 			log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
@@ -473,7 +475,9 @@ type downloadCVDBugReportHandler struct {
 }
 
 func (h *downloadCVDBugReportHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("request:", r.Method, r.URL.Path)
+	log.Printf("handling request(%p) started %s %s", r, r.Method, r.URL.Path)
+	defer log.Printf("handling request(%p) ended", r)
+
 	vars := mux.Vars(r)
 	uuid := vars["uuid"]
 	filename := filepath.Join(h.Config.Paths.CVDBugReportsDir, uuid, BugReportZipFileName)
