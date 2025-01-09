@@ -57,6 +57,7 @@ rust_ffi_host {
         "liblibc",
         "liblog_rust",
     ],
+    prefer_rlib: true,
     defaults: ["cuttlefish_buildhost_only"],
 }
 
