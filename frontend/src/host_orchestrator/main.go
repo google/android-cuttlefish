@@ -54,25 +54,6 @@ func startHttpServer(addr string, port int) error {
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", addr, port), nil)
 }
 
-func startHttpsServer(addr string, port int, certPath string, keyPath string) error {
-	log.Printf("Host Orchestrator is listening at https://%s:%d", addr, port)
-	return http.ListenAndServeTLS(fmt.Sprintf("%s:%d", addr, port),
-		certPath,
-		keyPath,
-		// handler is nil, so DefaultServeMux is used.
-		//
-		// Using DefaultServerMux in both servers (http and https) is not a problem
-		// as http.ServeMux instances are thread safe.
-		nil)
-}
-
-func fromEnvOrDefault(key string, def string) string {
-	if val, ok := os.LookupEnv(key); ok {
-		return val
-	}
-	return def
-}
-
 func start(starters []func() error) {
 	wg := new(sync.WaitGroup)
 	wg.Add(len(starters))

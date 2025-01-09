@@ -100,14 +100,6 @@ func newCVDExecContext(execContext ExecContext, usr *user.User) cvd.CVDExecConte
 	}
 }
 
-// Makes runtime artifacts owned by `cvdnetwork` group.
-func createRuntimesRootDir(name string) error {
-	if err := createDir(name); err != nil {
-		return err
-	}
-	return os.Chmod(name, 0774|os.ModeSetgid)
-}
-
 type cvdFleetOutput struct {
 	Groups []*cvdGroup `json:"groups"`
 }
