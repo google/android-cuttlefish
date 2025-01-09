@@ -77,10 +77,10 @@ func (s *AndroidCIBuildAPI) GetLatestGreenBuildID(branch, target string) (string
 	url := fmt.Sprintf(format, s.BaseURL, url.PathEscape(branch), url.PathEscape(target))
 	res := listBuildResponse{}
 	if err := s.doGETToJSON(url, &res); err != nil {
-		return "", fmt.Errorf("Failed to get the latest green build id for `%s/%s`: %w", branch, target, err)
+		return "", fmt.Errorf("failed to get the latest green build id for `%s/%s`: %w", branch, target, err)
 	}
 	if len(res.Builds) != 1 {
-		return "", fmt.Errorf("Unexpected number of build: expected 1 and got %d", len(res.Builds))
+		return "", fmt.Errorf("unexpected number of build: expected 1 and got %d", len(res.Builds))
 	}
 	return res.Builds[0].BuildID, nil
 }
@@ -99,7 +99,7 @@ func (s *AndroidCIBuildAPI) getSignedURL(name, buildID, target string) (string, 
 		SignedURL string `json:"signedUrl"`
 	}{}
 	if err := s.doGETToJSON(url, &res); err != nil {
-		return "", fmt.Errorf("Failed to get the download artifact signed url for %q (%s/%s): %w", name, buildID, target, err)
+		return "", fmt.Errorf("failed to get the download artifact signed url for %q (%s/%s): %w", name, buildID, target, err)
 	}
 	return res.SignedURL, nil
 }
