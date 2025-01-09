@@ -16,12 +16,8 @@ package orchestrator
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"os/exec"
-	"path"
 	"testing"
-	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 
@@ -33,28 +29,6 @@ type AlwaysSucceedsValidator struct{}
 func (AlwaysSucceedsValidator) Validate() error {
 	return nil
 }
-
-const fakeLatesGreenBuildID = "9551522"
-
-type fakeBuildAPI struct{}
-
-func (fakeBuildAPI) GetLatestGreenBuildID(string, string) (string, error) {
-	return fakeLatesGreenBuildID, nil
-}
-
-func (fakeBuildAPI) DownloadArtifact(string, string, string, io.Writer) error {
-	return nil
-}
-
-const fakeProductName = "aosp_foo_x86_64"
-
-func (fakeBuildAPI) ProductName(buildID, target string) (string, error) {
-	return fakeProductName, nil
-}
-
-const fakeUUID = "123e4567-"
-
-var fakeUUIDGen = func() string { return fakeUUID }
 
 func TestSliceItoa(t *testing.T) {
 	tests := []struct {
@@ -83,43 +57,6 @@ func TestSliceItoa(t *testing.T) {
 
 func execCtxAlwaysSucceeds(ctx context.Context, name string, args ...string) *exec.Cmd {
 	return exec.Command("true")
-}
-
-func isCvdSubCommand(name string, args ...string) bool {
-	// All cvd executions are run through `sudo`.
-	if name != "sudo" {
-		return false
-	}
-	// cvd alone not a cvd subcommand
-	if path.Base(args[len(args)-1]) == "cvd" {
-		return false
-	}
-	return true
-}
-
-func execCtxCvdSubcmdFails(ctx context.Context, name string, args ...string) *exec.Cmd {
-	if isCvdSubCommand(name, args...) {
-		return exec.Command("false")
-	}
-	return exec.Command("true")
-}
-
-const testFakeBinaryDelayMs = 100 * time.Millisecond
-
-func execCtxCvdSubcmdDelays(ctx context.Context, name string, args ...string) *exec.Cmd {
-	if isCvdSubCommand(name, args...) {
-		return exec.Command(fmt.Sprintf("sleep %f", float64(testFakeBinaryDelayMs)/1000_000_000))
-	}
-	return exec.Command("true")
-}
-
-func containsStr(values []string, t string) bool {
-	for _, v := range values {
-		if v == t {
-			return true
-		}
-	}
-	return false
 }
 
 func androidCISource(buildID, target string) *apiv1.BuildSource {
