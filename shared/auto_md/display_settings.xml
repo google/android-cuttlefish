@@ -22,21 +22,28 @@
   <!-- Use physical port number instead of local id -->
   <config identifier="1" />
 
+  <!-- Display settings for the driver display -->
+  <display name="port:0"
+      ignoreOrientationRequest="true" />
+
   <!-- Display settings for cluster -->
   <display name="port:1"
       forcedDensity="120"
+      ignoreOrientationRequest="true"
       dontMoveToTop="true"/>
 
   <!-- Display settings for 1st passenger display / 2nd Home -->
   <display name="port:2"
       shouldShowSystemDecors="true"
       shouldShowIme="true"
+      ignoreOrientationRequest="true"
       forcedDensity="120" />
 
   <!-- Display settings for 2nd passenger display / 3rd Home -->
   <display name="port:3"
       shouldShowSystemDecors="true"
       shouldShowIme="true"
+      ignoreOrientationRequest="true"
       forcedDensity="120" />
 
 </display-settings>
