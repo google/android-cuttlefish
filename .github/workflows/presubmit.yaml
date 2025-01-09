@@ -7,6 +7,25 @@ on:
       - main  # push events to main branch occur after PRs are merged, when the same checks were run
 
 jobs:
+  staticcheck:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: ["frontend/src/operator"]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install dependencies
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.23.1'
+    - run: go version
+    - name: Staticcheck
+      uses: dominikh/staticcheck-action@v1.3.1
+      with:
+        version: "latest"
+        install-go: false
+        working-directory: ${{ matrix.dir }}
   build-orchestrator:
     runs-on: ubuntu-latest
     steps:
