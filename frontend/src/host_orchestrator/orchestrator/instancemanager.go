@@ -287,7 +287,7 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 func createCredentialsFile(content string) (*os.File, error) {
 	p1, p2, err := os.Pipe()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create pipe for credentials: %w", err)
+		return nil, fmt.Errorf("failed to create pipe for credentials: %w", err)
 	}
 	go func(f *os.File) {
 		defer f.Close()
