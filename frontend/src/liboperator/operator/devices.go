@@ -41,10 +41,6 @@ type Device struct {
 	clientCount int
 }
 
-type Group struct {
-	deviceIds []string
-}
-
 const DEFAULT_GROUP_ID = "default"
 
 func newDevice(id string, conn *JSONUnix, port int, privateData interface{}) *Device {
