@@ -40,16 +40,16 @@ import (
 
 func createUnixSocketEndpoint(path string) (*net.UnixListener, error) {
 	if err := os.RemoveAll(path); err != nil {
-		return nil, fmt.Errorf("Failed to clean previous socket: %w", err)
+		return nil, fmt.Errorf("failed to clean previous socket: %w", err)
 	}
 	addr, err := net.ResolveUnixAddr("unixpacket", path)
 	if err != nil {
 		// Returns a loop function that will immediately return an error when invoked
-		return nil, fmt.Errorf("Failed to create unix address from path: %w", err)
+		return nil, fmt.Errorf("failed to create unix address from path: %w", err)
 	}
 	sock, err := net.ListenUnix("unixpacket", addr)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create unix socket: %w", err)
+		return nil, fmt.Errorf("failed to create unix socket: %w", err)
 	}
 	// Make sure the socket is only accessible by owner and group
 	if err := os.Chmod(path, 0770); err != nil {
