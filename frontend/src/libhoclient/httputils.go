@@ -378,7 +378,6 @@ type uploadChunkWorker struct {
 	uploadDir  string
 	dumpOut    io.Writer
 	jobsChan   <-chan uploadChunkJob
-	uploadOpts UploadOptions
 }
 
 func newUploadChunkWorker(
