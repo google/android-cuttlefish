@@ -1,0 +1,99 @@
+// Copyright (C) 2025 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_binary {
+    name: "simply_red",
+    srcs: [
+        "./src/simply_red.cpp",
+    ],
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "android.hardware.graphics.common-ndk_static",
+        "android.hardware.graphics.composer3-ndk_static",
+        "librenderengine_deps",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    shared_libs: [
+        "libandroid",
+        "libbinder",
+        "libbinder_ndk",
+        "libc++",
+        "liblog",
+        "libnativehelper",
+        "libui",
+    ],
+    static_libs: [
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
+        "android.hardware.graphics.common@1.2",
+        "libaidlcommonsupport",
+        "libarect",
+        "libbase",
+        "libbase_ndk",
+        "libfmq",
+        "libgtest",
+        "libgtest_main",
+        "libhwc_aidl_test",
+        "librenderengine",
+        "libsync",
+    ],
+    header_libs: [
+        "android.hardware.graphics.composer3-command-buffer",
+    ],
+    compile_multilib: "both",
+    multilib: {
+        lib32: {
+            suffix: "32",
+        },
+        lib64: {
+            suffix: "",
+        },
+    },
+}
+
+java_test_host {
+    name: "CuttlefishHwcTests",
+    srcs: [
+        "CuttlefishHwcTests.java",
+    ],
+    data_device_bins_both: [
+        "simply_red",
+    ],
+    data_native_bins: [
+        "cvd_internal_display",
+    ],
+    test_options: {
+        unit_test: false,
+    },
+    test_suites: [
+        "device-tests",
+    ],
+    libs: [
+        "compatibility-host-util",
+        "cts-tradefed",
+        "tradefed",
+    ],
+    static_libs: [
+        "cuttlefish_host_test_utils",
+    ],
+    plugins: [
+        "auto_annotation_plugin",
+        "auto_value_plugin",
+    ],
+    test_config_template: "display_config_template.xml",
+}
