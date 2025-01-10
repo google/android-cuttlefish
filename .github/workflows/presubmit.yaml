@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        dir: ["frontend/src/host_orchestrator", "frontend/src/operator"]
+        dir: ["frontend/src/host_orchestrator", "frontend/src/libhoclient", "frontend/src/operator"]
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
