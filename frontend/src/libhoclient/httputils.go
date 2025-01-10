@@ -215,7 +215,7 @@ func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Respo
 		return nil, fmt.Errorf("error sending request: %w", err)
 	}
 	start := time.Now()
-	for elapsed := 0 * time.Second; elapsed < retryOpts.MaxWait && isIn(res.StatusCode, retryOpts.StatusCodes); elapsed = time.Now().Sub(start) {
+	for elapsed := 0 * time.Second; elapsed < retryOpts.MaxWait && isIn(res.StatusCode, retryOpts.StatusCodes); elapsed = time.Since(start) {
 		err = rb.helper.dumpResponse(res)
 		res.Body.Close()
 		if err != nil {
