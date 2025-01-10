@@ -55,13 +55,13 @@ func Setup(port int) (*TestContext, error) {
 // There's a delay after the container is running and when
 // the host orchestrator service is up and running.
 func waitUntilServiceIsUp(url string) error {
-	waitSecs := 4 * time.Second
+	waitingTime := 4 * time.Second
 	for tries := 0; tries < 3; tries++ {
-		time.Sleep(waitSecs)
+		time.Sleep(waitingTime)
 		if res, err := http.Get(url + "/_debug/statusz"); err == nil && res.StatusCode == http.StatusOK {
 			return nil
 		}
-		waitSecs *= 2
+		waitingTime *= 2
 	}
 	return errors.New("timeout waiting for service to start")
 }
