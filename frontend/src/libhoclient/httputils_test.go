@@ -35,7 +35,6 @@ func TestRetryLogic(t *testing.T) {
 			return
 		}
 		writeOK(w, &apiv1.CVD{Name: "foo"})
-		return
 	}))
 	defer ts.Close()
 	helper := HTTPHelper{
