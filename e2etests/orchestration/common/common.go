@@ -125,7 +125,7 @@ func (h *DockerHelper) RunContainer(img string, hostPort int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if err := h.client.ContainerStart(ctx, createRes.ID, types.ContainerStartOptions{}); err != nil {
+	if err := h.client.ContainerStart(ctx, createRes.ID, container.StartOptions{}); err != nil {
 		return "", err
 	}
 	return createRes.ID, nil
@@ -146,8 +146,7 @@ func (h *DockerHelper) PullLogs(id string) error {
 	defer f.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	opts := types.ContainerLogsOptions{ShowStdout: true}
-	reader, err := h.client.ContainerLogs(ctx, id, opts)
+	reader, err := h.client.ContainerLogs(ctx, id, container.LogsOptions{ShowStdout: true})
 	if err != nil {
 		return err
 	}
@@ -159,7 +158,7 @@ func (h *DockerHelper) PullLogs(id string) error {
 }
 
 func (h *DockerHelper) RemoveContainer(id string) error {
-	if err := h.client.ContainerRemove(context.TODO(), id, types.ContainerRemoveOptions{Force: true}); err != nil {
+	if err := h.client.ContainerRemove(context.TODO(), id, container.RemoveOptions{Force: true}); err != nil {
 		return err
 	}
 	return nil
