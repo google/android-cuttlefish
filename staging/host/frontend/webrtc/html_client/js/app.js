@@ -489,7 +489,7 @@ class DeviceControlApp {
     let values = document.getElementsByClassName('rotation-slider-value');
     let xyz = [];
     for (var i = 0; i < values.length; i++) {
-      xyz[i] = values[i].innerHTML;
+      xyz[i] = values[i].textContent;
     }
     deviceConnection.sendSensorsMessage(`${xyz[0]} ${xyz[1]} ${xyz[2]}`);
   }
