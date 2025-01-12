@@ -74,8 +74,8 @@ bool WriteLinesToFile(const Container& lines, const char* path) {
 }
 
 // Generate a filesystem_config.txt for all files in |fs_root|
-bool WriteFsConfig(const char* output_path, const std::string& fs_root,
-                   const std::string& mount_point) {
+Result<bool> WriteFsConfig(const char* output_path, const std::string& fs_root,
+                           const std::string& mount_point) {
   android::base::unique_fd fd(
       open(output_path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
   if (!fd.ok()) {
@@ -87,8 +87,8 @@ bool WriteFsConfig(const char* output_path, const std::string& fs_root,
     PLOG(ERROR) << "Failed to write to " << output_path;
     return false;
   }
-  WalkDirectory(fs_root, [&fd, &output_path, &mount_point,
-                          &fs_root](const std::string& file_path) {
+  auto res = WalkDirectory(fs_root, [&fd, &output_path, &mount_point,
+                                     &fs_root](const std::string& file_path) {
     const auto filename = file_path.substr(
         fs_root.back() == '/' ? fs_root.size() : fs_root.size() + 1);
     std::string fs_context = " 0 0 644 capabilities=0x0\n";
@@ -102,6 +102,9 @@ bool WriteFsConfig(const char* output_path, const std::string& fs_root,
     }
     return true;
   });
+  if (!res.ok()) {
+    return false;
+  }
   return true;
 }
 
@@ -427,8 +430,13 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
   CHECK(ret.ok()) << ret.error().FormatForEnv();
   ret = EnsureDirectoryExists(system_modules_dir);
   UnpackRamdisk(ramdisk_path, ramdisk_stage_dir);
-  const auto module_load_file =
-      android::base::Trim(FindFile(ramdisk_stage_dir.c_str(), "modules.load"));
+  auto res = FindFile(ramdisk_stage_dir.c_str(), "modules.load");
+  if (!res) {
+    LOG(ERROR) << "Failed to find modules.dep file in input ramdisk "
+               << ramdisk_path;
+    return false;
+  }
+  const auto module_load_file = android::base::Trim(res.value());
   if (module_load_file.empty()) {
     LOG(ERROR) << "Failed to find modules.dep file in input ramdisk "
                << ramdisk_path;
