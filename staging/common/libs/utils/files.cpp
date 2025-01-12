@@ -577,15 +577,19 @@ std::string FindImage(const std::string& search_path,
   return "";
 }
 
-std::string FindFile(const std::string& path, const std::string& target_name) {
+Result<std::string> FindFile(const std::string& path,
+                             const std::string& target_name) {
   std::string ret;
-  WalkDirectory(path,
-                [&ret, &target_name](const std::string& filename) mutable {
-                  if (android::base::Basename(filename) == target_name) {
-                    ret = filename;
-                  }
-                  return true;
-                });
+  auto res = WalkDirectory(
+      path, [&ret, &target_name](const std::string& filename) mutable {
+        if (android::base::Basename(filename) == target_name) {
+          ret = filename;
+        }
+        return true;
+      });
+  if (!res.ok()) {
+    return "";
+  }
   return ret;
 }
 
@@ -600,7 +604,10 @@ Result<void> WalkDirectory(
     file_path.append(filename);
     callback(file_path);
     if (DirectoryExists(file_path)) {
-      WalkDirectory(file_path, callback);
+      auto res = WalkDirectory(file_path, callback);
+      if (!res.ok()) {
+        return res;
+      }
     }
   }
   return {};
