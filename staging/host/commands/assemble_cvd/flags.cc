@@ -1685,10 +1685,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     if (hwcomposer_vec[instance_index] == kHwComposerAuto) {
-      if (gpu_mode == kGpuModeNone) {
+      if (gpu_mode == kGpuModeDrmVirgl) {
+        instance.set_hwcomposer(kHwComposerDrm);
+      } else if (gpu_mode == kGpuModeNone) {
         instance.set_hwcomposer(kHwComposerNone);
       } else {
-        instance.set_hwcomposer(kHwComposerDrm);
+        instance.set_hwcomposer(kHwComposerRanchu);
       }
     }
 
