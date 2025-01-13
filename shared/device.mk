@@ -75,7 +75,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 # partition, instead of the vendor partition, and do not need vendor
 # sepolicy
 PRODUCT_PRODUCT_PROPERTIES += \
-    remote_provisioning.hostname=staging-remoteprovisioning.sandbox.googleapis.com \
+    remote_provisioning.hostname=preprod-remoteprovisioning.googleapis.com \
     persist.adb.tcp.port=5555 \
     ro.com.google.locationfeatures=1 \
     persist.sys.fuse.passthrough.enable=true \
