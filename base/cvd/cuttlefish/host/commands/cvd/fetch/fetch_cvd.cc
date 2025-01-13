@@ -968,9 +968,9 @@ std::string GetFetchLogsFileName(const std::string& target_directory) {
   return target_directory + "/fetch.log";
 }
 
-Result<void> FetchCvdMain(int argc, char** argv) {
-  android::base::InitLogging(argv, android::base::StderrLogger);
-  const FetchFlags flags = CF_EXPECT(GetFlagValues(argc, argv));
+Result<void> FetchCvdMain(std::vector<std::string>& args) {
+  android::base::InitLogging(nullptr, android::base::StderrLogger);
+  const FetchFlags flags = CF_EXPECT(GetFlagValues(args));
   const bool append_subdirectory = ShouldAppendSubdirectory(flags);
   std::vector<Target> targets = GetFetchTargets(flags, append_subdirectory);
   HostToolsTarget host_target = GetHostToolsTarget(flags, append_subdirectory);

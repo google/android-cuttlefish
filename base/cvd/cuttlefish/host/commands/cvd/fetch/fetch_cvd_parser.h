@@ -98,6 +98,6 @@ struct FetchFlags {
   int number_of_builds = 0;
 };
 
-Result<FetchFlags> GetFlagValues(int argc, char** argv);
+Result<FetchFlags> GetFlagValues(std::vector<std::string>& args);
 
 }  // namespace cuttlefish
