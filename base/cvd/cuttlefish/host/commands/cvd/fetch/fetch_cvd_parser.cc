@@ -278,11 +278,10 @@ Result<int> GetNumberOfBuilds(
 
 }  // namespace
 
-Result<FetchFlags> GetFlagValues(int argc, char** argv) {
+Result<FetchFlags> GetFlagValues(std::vector<std::string>& args) {
   FetchFlags fetch_flags;
   std::string directory;
   std::vector<Flag> flags = GetFlagsVector(fetch_flags, directory);
-  std::vector<std::string> args = ArgsToVec(argc - 1, argv + 1);
   CF_EXPECT(ConsumeFlags(flags, args), "Could not process command line flags.");
 
   if (!directory.empty()) {
