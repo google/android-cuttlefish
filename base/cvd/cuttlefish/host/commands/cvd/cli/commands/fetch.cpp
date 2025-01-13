@@ -16,6 +16,10 @@
 
 #include "host/commands/cvd/cli/commands/fetch.h"
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <android-base/strings.h>
 
 #include "common/libs/utils/result.h"
@@ -37,21 +41,8 @@ class CvdFetchCommandHandler : public CvdCommandHandler {
 
 Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
-
-  std::vector<std::string> args;
-  args.emplace_back("fetch_cvd");
-
-  for (const auto& argument : request.SubcommandArguments()) {
-    args.emplace_back(argument);
-  }
-
-  std::vector<char*> args_data;
-  for (auto& argument : args) {
-    args_data.emplace_back(argument.data());
-  }
-
-  CF_EXPECT(FetchCvdMain(args_data.size(), args_data.data()));
-
+  std::vector<std::string> args = request.SubcommandArguments();
+  CF_EXPECT(FetchCvdMain(args));
   return {};
 }
 
@@ -61,15 +52,9 @@ Result<std::string> CvdFetchCommandHandler::SummaryHelp() const {
 
 Result<std::string> CvdFetchCommandHandler::DetailedHelp(
     std::vector<std::string>&) const {
-  std::vector<std::string> args;
-  args.emplace_back("fetch_cvd");
-  args.emplace_back("--help");
-  std::vector<char*> args_data;
-  for (auto& argument : args) {
-    args_data.emplace_back(argument.data());
-  }
+  std::vector<std::string> args = {"--help"};
   // TODO: b/389119573 - Should return the help text instead of printing it
-  CF_EXPECT(FetchCvdMain(args_data.size(), args_data.data()));
+  CF_EXPECT(FetchCvdMain(args));
   return {};
 }
 
