@@ -52,11 +52,9 @@ namespace {
 
 }  // namespace
 
-Cvd::Cvd(const android::base::LogSeverity verbosity,
-         InstanceLockFileManager& instance_lockfile_manager,
+Cvd::Cvd(InstanceLockFileManager& instance_lockfile_manager,
          InstanceManager& instance_manager)
-    : verbosity_(verbosity),
-      instance_lockfile_manager_(instance_lockfile_manager),
+    : instance_lockfile_manager_(instance_lockfile_manager),
       instance_manager_(instance_manager) {}
 
 Result<void> Cvd::HandleCommand(

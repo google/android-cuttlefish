@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include <android-base/logging.h>
-
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/instances/instance_lock.h"
@@ -27,8 +25,7 @@ namespace cuttlefish {
 
 class Cvd {
  public:
-  Cvd(android::base::LogSeverity verbosity,
-      InstanceLockFileManager& instance_lockfile_manager,
+  Cvd(InstanceLockFileManager& instance_lockfile_manager,
       InstanceManager& instance_manager);
 
   Result<void> HandleCommand(
@@ -45,7 +42,6 @@ class Cvd {
     const std::unordered_map<std::string, std::string>& env);
 
  private:
-  android::base::LogSeverity verbosity_;
   InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
 };

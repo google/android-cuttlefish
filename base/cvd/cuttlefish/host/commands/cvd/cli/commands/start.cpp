@@ -587,20 +587,6 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-static constexpr char kCollectorFailure[] = R"(
-  Consider running:
-     cvd reset -y
-
-  cvd start failed. While we should collect run_cvd processes to manually
-  clean them up, collecting run_cvd failed.
-)";
-static constexpr char kStopFailure[] = R"(
-  Consider running:
-     cvd reset -y
-
-  cvd start failed, and stopping run_cvd processes failed.
-)";
-
 static Result<void> CvdResetGroup(const LocalInstanceGroup& group) {
   auto run_cvd_process_manager = CF_EXPECT(RunCvdProcessManager::Get());
   // We can't run stop_cvd here. It may hang forever, and doesn't make sense
