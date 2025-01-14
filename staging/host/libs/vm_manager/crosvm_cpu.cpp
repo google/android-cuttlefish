@@ -53,6 +53,7 @@ Result<std::vector<std::string>> CrosvmCpuArguments(
   std::map<std::string, std::vector<int>> freq_domains;
   std::string affinity_arg = "--cpu-affinity=";
   std::string capacity_arg = "--cpu-capacity=";
+  std::string ipc_ratio_arg = "--cpu-ipc-ratio=";
   std::string frequencies_arg = "--cpu-frequencies-khz=";
   std::string cgroup_path_arg = "--vcpu-cgroup-path=";
   std::string freq_domain_arg;
@@ -71,6 +72,7 @@ Result<std::vector<std::string>> CrosvmCpuArguments(
   for (size_t i = 0; i < cpus; i++) {
     if (i != 0) {
       capacity_arg += ",";
+      ipc_ratio_arg += ",";
       affinity_arg += ":";
       frequencies_arg += ";";
     }
@@ -94,6 +96,10 @@ Result<std::vector<std::string>> CrosvmCpuArguments(
         CF_EXPECT(GetValue<std::string>(cpu_json, {"capacity"}));
     std::string cap_arg = fmt::format("{}={}", i, capacity);
 
+    const std::string cpu_ipc_ratio =
+        CF_EXPECT(GetValue<std::string>(cpu_json, {"ipc_ratio"}));
+    std::string ipc_arg = fmt::format("{}={}", i, cpu_ipc_ratio);
+
     const std::string domain =
         CF_EXPECT(GetValue<std::string>(cpu_json, {"freq_domain"}));
 
@@ -104,12 +110,14 @@ Result<std::vector<std::string>> CrosvmCpuArguments(
     capacity_arg += cap_arg;
     affinity_arg += affine_arg;
     frequencies_arg += freq_arg;
+    ipc_ratio_arg += ipc_arg;
 
     cpu_arguments.emplace_back(std::move(cpu_cluster));
   }
 
   cpu_arguments.emplace_back(std::move(affinity_arg));
   cpu_arguments.emplace_back(std::move(capacity_arg));
+  cpu_arguments.emplace_back(std::move(ipc_ratio_arg));
   cpu_arguments.emplace_back(std::move(frequencies_arg));
   cpu_arguments.emplace_back(std::move(cgroup_path_arg));
   cpu_arguments.emplace_back("--virt-cpufreq-upstream");
