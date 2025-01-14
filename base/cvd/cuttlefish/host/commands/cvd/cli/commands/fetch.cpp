@@ -16,19 +16,27 @@
 
 #include "host/commands/cvd/cli/commands/fetch.h"
 
+#include <unistd.h>
+
 #include <memory>
 #include <string>
 #include <vector>
 
+#include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/tee_logging.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
+#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 namespace cuttlefish {
+
+namespace {
 
 class CvdFetchCommandHandler : public CvdCommandHandler {
  public:
@@ -41,8 +49,18 @@ class CvdFetchCommandHandler : public CvdCommandHandler {
 
 Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
+
   std::vector<std::string> args = request.SubcommandArguments();
-  CF_EXPECT(FetchCvdMain(args));
+  const FetchFlags flags = CF_EXPECT(FetchFlags::Parse(args));
+  CF_EXPECT(EnsureDirectoryExists(flags.target_directory));
+
+  std::string log_file = GetFetchLogsFileName(flags.target_directory);
+  MetadataLevel metadata_level =
+      isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
+  ScopedTeeLogger logger(
+      LogToStderrAndFiles({log_file}, "", metadata_level, flags.verbosity));
+
+  CF_EXPECT(FetchCvdMain(flags));
   return {};
 }
 
@@ -54,9 +72,11 @@ Result<std::string> CvdFetchCommandHandler::DetailedHelp(
     std::vector<std::string>&) const {
   std::vector<std::string> args = {"--help"};
   // TODO: b/389119573 - Should return the help text instead of printing it
-  CF_EXPECT(FetchCvdMain(args));
+  CF_EXPECT(FetchFlags::Parse(args));
   return {};
 }
+
+}  // namespace
 
 std::unique_ptr<CvdCommandHandler> NewCvdFetchCommandHandler() {
   return std::unique_ptr<CvdCommandHandler>(new CvdFetchCommandHandler());

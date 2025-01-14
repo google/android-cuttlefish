@@ -278,7 +278,7 @@ Result<int> GetNumberOfBuilds(
 
 }  // namespace
 
-Result<FetchFlags> GetFlagValues(std::vector<std::string>& args) {
+Result<FetchFlags> FetchFlags::Parse(std::vector<std::string>& args) {
   FetchFlags fetch_flags;
   std::string directory;
   std::vector<Flag> flags = GetFlagsVector(fetch_flags, directory);
