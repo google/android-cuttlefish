@@ -25,33 +25,6 @@
 namespace cuttlefish {
 namespace selector {
 
-Result<std::unique_ptr<ArgumentsSeparator>> ArgumentsSeparator::Parse(
-    const std::vector<std::string>& input_args) {
-  auto lexer = CF_EXPECT(ArgumentsLexerBuilder::Build());
-  CF_EXPECT(lexer != nullptr);
-  ArgumentsSeparator* new_arg_separator =
-      new ArgumentsSeparator(std::move(lexer), input_args);
-  CF_EXPECT(new_arg_separator != nullptr,
-            "Memory allocation failed for ArgumentSeparator");
-  std::unique_ptr<ArgumentsSeparator> arg_separator{new_arg_separator};
-  CF_EXPECT(arg_separator->Parse());
-  return std::move(arg_separator);
-}
-
-ArgumentsSeparator::ArgumentsSeparator(
-    std::unique_ptr<ArgumentsLexer>&& lexer,
-    const std::vector<std::string>& input_args)
-    : lexer_(std::move(lexer)), input_args_(input_args) {}
-
-Result<void> ArgumentsSeparator::Parse() {
-  auto output = CF_EXPECT(ParseInternal());
-  prog_path_ = std::move(output.prog_path);
-  cvd_args_ = std::move(output.cvd_args);
-  sub_cmd_ = std::move(output.sub_cmd);
-  sub_cmd_args_ = std::move(output.sub_cmd_args);
-  return {};
-}
-
 /*
  * prog_name, <optional cvd flags>, sub_cmd, <optional sub_cmd flags>
  *
@@ -64,17 +37,21 @@ Result<void> ArgumentsSeparator::Parse() {
  * alternative: cvd --some_flag="--this-is-value" start --subcmd_args
  *
  */
-Result<ArgumentsSeparator::Output> ArgumentsSeparator::ParseInternal() {
-  CF_EXPECT(lexer_ != nullptr);
-  CF_EXPECT(!input_args_.empty());
-  Output output;
+Result<SeparatedArguments> SeparateArguments(
+    const std::vector<std::string>& input_args) {
+  CF_EXPECT(!input_args.empty());
 
-  auto tokenized = CF_EXPECT(lexer_->Tokenize(input_args_));
+  auto lexer = CF_EXPECT(ArgumentsLexerBuilder::Build());
+  CF_EXPECT(lexer != nullptr);
+
+  auto tokenized = CF_EXPECT(lexer->Tokenize(input_args));
   std::deque<ArgToken> tokens_queue{tokenized.begin(), tokenized.end()};
 
   // take program path/name
   CF_EXPECT(!tokens_queue.empty() &&
             tokens_queue.front().Type() == ArgType::kPositional);
+
+  SeparatedArguments output;
   output.prog_path = std::move(tokens_queue.front().Token());
   tokens_queue.pop_front();
 

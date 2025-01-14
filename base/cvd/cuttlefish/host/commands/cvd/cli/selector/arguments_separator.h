@@ -30,6 +30,13 @@
 namespace cuttlefish {
 namespace selector {
 
+struct SeparatedArguments {
+  std::string prog_path;
+  std::vector<std::string> cvd_args;
+  std::optional<std::string> sub_cmd;
+  std::vector<std::string> sub_cmd_args;
+};
+
 /**
  * The very first parser for cmdline that separates:
  *
@@ -65,42 +72,8 @@ namespace selector {
  *  subcommands arguments, we simply forward it to the subtool as is.
  *
  */
-class ArgumentsSeparator {
- public:
-  static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
-      const std::vector<std::string>& input_args);
-
-  const std::string& ProgPath() const { return prog_path_; }
-  const std::vector<std::string>& CvdArgs() const { return cvd_args_; }
-  std::optional<std::string> SubCmd() const { return sub_cmd_; }
-  const std::vector<std::string>& SubCmdArgs() const { return sub_cmd_args_; }
-
- private:
-  ArgumentsSeparator(std::unique_ptr<ArgumentsLexer>&& lexer,
-                     const std::vector<std::string>& input_args);
-
-  bool IsFlag(ArgType arg_type) const;
-  struct Output {
-    std::string prog_path;
-    std::vector<std::string> cvd_args;
-    std::optional<std::string> sub_cmd;
-    std::vector<std::string> sub_cmd_args;
-  };
-  Result<void> Parse();
-  Result<Output> ParseInternal();
-
-  // internals
-  std::unique_ptr<ArgumentsLexer> lexer_;
-
-  // inputs
-  std::vector<std::string> input_args_;
-
-  // outputs
-  std::string prog_path_;
-  std::vector<std::string> cvd_args_;
-  std::optional<std::string> sub_cmd_;
-  std::vector<std::string> sub_cmd_args_;
-};
+Result<SeparatedArguments> SeparateArguments(
+    const std::vector<std::string>& input_args);
 
 }  // namespace selector
 }  // namespace cuttlefish
