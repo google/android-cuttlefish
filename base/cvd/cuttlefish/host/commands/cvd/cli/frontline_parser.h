@@ -47,12 +47,9 @@ class FrontlineParser {
   using ArgumentsSeparator = selector::ArgumentsSeparator;
 
  public:
-  struct ParserParam {
-    cvd_common::Args all_args;
-  };
-
   // This call must guarantee all public methods will be valid
-  static Result<std::unique_ptr<FrontlineParser>> Parse(ParserParam param);
+  static Result<std::unique_ptr<FrontlineParser>> Parse(
+      const cvd_common::Args& all_args);
 
   const std::string& ProgPath() const;
   std::optional<std::string> SubCmd() const;
@@ -60,7 +57,7 @@ class FrontlineParser {
   const cvd_common::Args& CvdArgs() const;
 
  private:
-  FrontlineParser(const ParserParam& parser_param);
+  FrontlineParser(const cvd_common::Args& all_args);
 
   // internal workers in order
   Result<void> Separate();

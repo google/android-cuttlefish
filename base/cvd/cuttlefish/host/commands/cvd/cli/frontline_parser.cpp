@@ -29,8 +29,7 @@
 namespace cuttlefish {
 
 Result<cvd_common::Args> ExtractCvdArgs(cvd_common::Args& args) {
-  FrontlineParser::ParserParam server_param{.all_args = args};
-  auto frontline_parser = CF_EXPECT(FrontlineParser::Parse(server_param));
+  auto frontline_parser = CF_EXPECT(FrontlineParser::Parse(args));
   CF_EXPECT(frontline_parser != nullptr);
 
   const auto prog_path = frontline_parser->ProgPath();
@@ -47,17 +46,18 @@ Result<cvd_common::Args> ExtractCvdArgs(cvd_common::Args& args) {
 }
 
 Result<std::unique_ptr<FrontlineParser>> FrontlineParser::Parse(
-    ParserParam param) {
-  CF_EXPECT(!param.all_args.empty());
-  std::unique_ptr<FrontlineParser> frontline_parser(new FrontlineParser(param));
+    const cvd_common::Args& all_args) {
+  CF_EXPECT(!all_args.empty());
+  std::unique_ptr<FrontlineParser> frontline_parser(
+      new FrontlineParser(all_args));
   CF_EXPECT(frontline_parser != nullptr,
             "Memory allocation for FrontlineParser failed.");
   CF_EXPECT(frontline_parser->Separate());
   return frontline_parser;
 }
 
-FrontlineParser::FrontlineParser(const ParserParam& parser_param)
-    : all_args_(parser_param.all_args) {}
+FrontlineParser::FrontlineParser(const cvd_common::Args& all_args)
+    : all_args_(all_args) {}
 
 Result<void> FrontlineParser::Separate() {
   arguments_separator_ = CF_EXPECT(CallSeparator());

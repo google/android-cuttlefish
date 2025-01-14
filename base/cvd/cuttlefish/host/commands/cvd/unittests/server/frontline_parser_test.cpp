@@ -47,9 +47,8 @@ namespace cuttlefish {
 
 TEST(FrontlineParserTest, CvdOnly) {
   cvd_common::Args input{"cvd"};
-  FrontlineParser::ParserParam parser_param{.all_args = input};
 
-  auto result = FrontlineParser::Parse(parser_param);
+  auto result = FrontlineParser::Parse(input);
 
   ASSERT_TRUE(result.ok()) << result.error().Trace();
   auto& parser_ptr = *result;
