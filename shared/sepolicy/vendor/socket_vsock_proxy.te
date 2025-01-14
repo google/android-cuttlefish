@@ -6,6 +6,9 @@ init_daemon_domain(socket_vsock_proxy)
 allow socket_vsock_proxy self:global_capability_class_set { net_admin net_raw };
 allow socket_vsock_proxy self:{ socket vsock_socket } { create getopt read write getattr listen accept bind shutdown };
 
+starting_at_board_api(202504, `
+typeattribute socket_vsock_proxy unconstrained_vsock_violators;
+')
 # TODO: socket returned by accept() has unlabeled context on it. Give it a
 # specific label.
 allow socket_vsock_proxy unlabeled:{ socket vsock_socket } { getopt read write shutdown };

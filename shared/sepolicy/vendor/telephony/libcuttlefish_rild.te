@@ -10,5 +10,8 @@ net_domain(libcuttlefish_rild)
 
 get_prop(libcuttlefish_rild, vendor_modem_simulator_ports_prop)
 
+starting_at_board_api(202504, `
+typeattribute libcuttlefish_rild unconstrained_vsock_violators;
+')
 allow libcuttlefish_rild self:{ socket vsock_socket } { create_socket_perms_no_ioctl getattr };
 allow libcuttlefish_rild su:{ socket udp_socket } { create_socket_perms_no_ioctl getattr };

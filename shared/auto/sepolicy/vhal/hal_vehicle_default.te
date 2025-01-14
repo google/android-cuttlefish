@@ -2,4 +2,7 @@
 carwatchdog_client_domain(hal_vehicle_default)
 binder_use(hal_vehicle_default)
 
+starting_at_board_api(202504, `
+typeattribute hal_vehicle_default unconstrained_vsock_violators;
+')
 allow hal_vehicle_default self:vsock_socket { create connect getopt getattr read write shutdown };
