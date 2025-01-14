@@ -45,7 +45,7 @@ TEST(FetchCvdParserTests, CreatesCasDownloaderFlags) {
                                    cas_downloader_path, cas_cache_dir,
                                    cas_cache_max_size};
 
-  Result<FetchFlags> flagsRes = GetFlagValues(args);
+  Result<FetchFlags> flagsRes = FetchFlags::Parse(args);
 
   EXPECT_THAT(flagsRes, IsOk());
   FetchFlags flags = flagsRes.value();
