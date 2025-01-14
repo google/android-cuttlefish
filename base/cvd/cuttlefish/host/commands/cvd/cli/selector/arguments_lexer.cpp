@@ -22,6 +22,7 @@
 
 #include <android-base/strings.h>
 
+#include "host/commands/cvd/cli/selector/selector_constants.h"
 #include "host/commands/cvd/instances/instance_database_utils.h"
 
 namespace cuttlefish {
@@ -79,8 +80,14 @@ ArgumentsLexerBuilder::GenerateFlagPatterns(
   return flag_patterns;
 }
 
-Result<std::unique_ptr<ArgumentsLexer>> ArgumentsLexerBuilder::Build(
-    const LexerFlagsSpecification& known_flags) {
+Result<std::unique_ptr<ArgumentsLexer>> ArgumentsLexerBuilder::Build() {
+  // Change together: ParseCommonSelectorArguments in selector_common_parser.cpp
+  LexerFlagsSpecification known_flags{
+      .known_boolean_flags = {},
+      .known_value_flags = {SelectorFlags::kGroupName,
+                            SelectorFlags::kInstanceName,
+                            SelectorFlags::kVerbosity},
+  };
   auto flag_patterns = CF_EXPECT(GenerateFlagPatterns(known_flags));
   ArgumentsLexer* new_lexer = new ArgumentsLexer(std::move(flag_patterns));
   CF_EXPECT(new_lexer != nullptr,

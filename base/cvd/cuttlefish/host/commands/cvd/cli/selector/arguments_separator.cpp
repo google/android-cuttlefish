@@ -21,20 +21,13 @@
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
 
 namespace cuttlefish {
 namespace selector {
 
 Result<std::unique_ptr<ArgumentsSeparator>> ArgumentsSeparator::Parse(
     const std::vector<std::string>& input_args) {
-  LexerFlagsSpecification lexer_flag_spec{
-      .known_boolean_flags = {},
-      .known_value_flags = {SelectorFlags::kGroupName,
-                            SelectorFlags::kInstanceName,
-                            SelectorFlags::kVerbosity},
-  };
-  auto lexer = CF_EXPECT(ArgumentsLexerBuilder::Build(lexer_flag_spec));
+  auto lexer = CF_EXPECT(ArgumentsLexerBuilder::Build());
   CF_EXPECT(lexer != nullptr);
   ArgumentsSeparator* new_arg_separator =
       new ArgumentsSeparator(std::move(lexer), input_args);
