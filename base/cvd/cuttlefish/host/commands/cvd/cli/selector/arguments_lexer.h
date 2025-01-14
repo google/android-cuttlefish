@@ -182,8 +182,7 @@ class ArgumentsLexerBuilder {
   using FlagPatterns = ArgumentsLexer::FlagPatterns;
 
  public:
-  static Result<std::unique_ptr<ArgumentsLexer>> Build(
-      const LexerFlagsSpecification& known_flags);
+  static Result<std::unique_ptr<ArgumentsLexer>> Build();
 
  private:
   static Result<FlagPatterns> GenerateFlagPatterns(

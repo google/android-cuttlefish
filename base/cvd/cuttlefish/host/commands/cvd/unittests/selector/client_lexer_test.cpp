@@ -29,11 +29,11 @@ namespace {
 
 const LexerFlagsSpecification empty_known_flags;
 const LexerFlagsSpecification boolean_known_flags{
-    .known_boolean_flags = {"clean"}};
+    .known_boolean_flags = {"verbosity"}};
 const LexerFlagsSpecification non_boolean_known_flags{
     .known_value_flags = {"group_name"}};
 const LexerFlagsSpecification both_known_flags{
-    .known_boolean_flags = {"clean"}, .known_value_flags = {"group_name"}};
+    .known_boolean_flags = {"verbosity"}, .known_value_flags = {"group_name"}};
 
 Result<std::vector<ArgToken>> Tokenize(const ArgumentsLexer& lexer,
                                        const std::string& args) {
@@ -44,7 +44,7 @@ Result<std::vector<ArgToken>> Tokenize(const ArgumentsLexer& lexer,
 }  // namespace
 
 TEST_P(EmptyArgsLexTest, SuccessExpectedTest) {
-  auto lexer_gen_result = ArgumentsLexerBuilder::Build(known_flags_);
+  auto lexer_gen_result = ArgumentsLexerBuilder::Build();
   std::unique_ptr<ArgumentsLexer> lexer =
       lexer_gen_result.ok() ? std::move(*lexer_gen_result) : nullptr;
   if (!lexer) {
@@ -69,7 +69,7 @@ INSTANTIATE_TEST_SUITE_P(
                                      .expected_tokens_ = Tokens{}}));
 
 TEST_P(NonBooleanArgsTest, SuccessExpectedTest) {
-  auto lexer_gen_result = ArgumentsLexerBuilder::Build(known_flags_);
+  auto lexer_gen_result = ArgumentsLexerBuilder::Build();
   std::unique_ptr<ArgumentsLexer> lexer =
       lexer_gen_result.ok() ? std::move(*lexer_gen_result) : nullptr;
   if (!lexer) {
@@ -103,82 +103,8 @@ INSTANTIATE_TEST_SUITE_P(
                              ArgToken{ArgType::kPositional, "start"},
                              ArgToken{ArgType::kUnknownFlag, "--daemon"}}}));
 
-TEST_P(BooleanArgsTest, SuccessExpectedTest) {
-  auto lexer_gen_result = ArgumentsLexerBuilder::Build(known_flags_);
-  std::unique_ptr<ArgumentsLexer> lexer =
-      lexer_gen_result.ok() ? std::move(*lexer_gen_result) : nullptr;
-  if (!lexer) {
-    GTEST_SKIP() << "Memory allocation failed but it is not in the test scope.";
-  }
-  EXPECT_THAT(Tokenize(*lexer, lex_input_), IsOkAndValue(*expected_tokens_));
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    ClientSpecificOptionParser, BooleanArgsTest,
-    testing::Values(
-        LexerInputOutput{
-            .known_flags_ = boolean_known_flags,
-            .lex_input_ = "cvd --clean",
-            .expected_tokens_ = Tokens{ArgToken{ArgType::kPositional, "cvd"},
-                                       ArgToken{ArgType::kKnownBoolFlag,
-                                                "--clean"}}},
-        LexerInputOutput{
-            .known_flags_ = boolean_known_flags,
-            .lex_input_ = "cvd --clean=TrUe",
-            .expected_tokens_ = Tokens{ArgToken{ArgType::kPositional, "cvd"},
-                                       ArgToken{ArgType::kKnownBoolFlag,
-                                                "--clean"}}},
-        LexerInputOutput{
-            .known_flags_ = boolean_known_flags,
-            .lex_input_ = "cvd --noclean",
-            .expected_tokens_ = Tokens{ArgToken{ArgType::kPositional, "cvd"},
-                                       ArgToken{ArgType::kKnownBoolNoFlag,
-                                                "--noclean"}}},
-        LexerInputOutput{
-            .known_flags_ = boolean_known_flags,
-            .lex_input_ = "cvd --noclean=redundant",
-            .expected_tokens_ = Tokens{ArgToken{ArgType::kPositional, "cvd"},
-                                       ArgToken{ArgType::kKnownBoolNoFlag,
-                                                "--noclean"}}},
-        LexerInputOutput{
-            .known_flags_ = boolean_known_flags,
-            .lex_input_ = "cvd --clean=no --norandom=y",
-            .expected_tokens_ = Tokens{
-                ArgToken{ArgType::kPositional, "cvd"},
-                ArgToken{ArgType::kKnownBoolNoFlag, "--noclean"},
-                ArgToken{ArgType::kUnknownFlag, "--norandom=y"}}}));
-
-TEST_P(BothArgsTest, SuccessExpectedTest) {
-  auto lexer_gen_result = ArgumentsLexerBuilder::Build(known_flags_);
-  std::unique_ptr<ArgumentsLexer> lexer =
-      lexer_gen_result.ok() ? std::move(*lexer_gen_result) : nullptr;
-  if (!lexer) {
-    GTEST_SKIP() << "Memory allocation failed but it is not in the test scope.";
-  }
-  EXPECT_THAT(Tokenize(*lexer, lex_input_), IsOkAndValue(*expected_tokens_));
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    ClientSpecificOptionParser, BothArgsTest,
-    testing::Values(
-        LexerInputOutput{
-            .known_flags_ = both_known_flags,
-            .lex_input_ = "cvd --clean -group_name=yumi",
-            .expected_tokens_ = Tokens{ArgToken{ArgType::kPositional, "cvd"},
-                                       ArgToken{ArgType::kKnownBoolFlag,
-                                                "--clean"},
-                                       ArgToken{ArgType::kKnownFlagAndValue,
-                                                "-group_name=yumi"}}},
-        LexerInputOutput{
-            .known_flags_ = both_known_flags,
-            .lex_input_ = "cvd --group_name -noclean",
-            .expected_tokens_ = Tokens{
-                ArgToken{ArgType::kPositional, "cvd"},
-                ArgToken{ArgType::kKnownValueFlag, "--group_name"},
-                ArgToken{ArgType::kKnownBoolNoFlag, "-noclean"}}}));
-
 TEST_P(BooleanBadArgsTest, FailureExpectedTest) {
-  auto lexer_gen_result = ArgumentsLexerBuilder::Build(known_flags_);
+  auto lexer_gen_result = ArgumentsLexerBuilder::Build();
   std::unique_ptr<ArgumentsLexer> lexer =
       lexer_gen_result.ok() ? std::move(*lexer_gen_result) : nullptr;
   if (!lexer) {
@@ -203,14 +129,17 @@ INSTANTIATE_TEST_SUITE_P(
             .expected_tokens_ = Tokens{ArgToken{ArgType::kPositional, "cvd"},
                                        ArgToken{ArgType::kUnknownFlag,
                                                 "--yesclean"}}},
-        LexerInputOutput{.known_flags_ = boolean_known_flags,
-                         .lex_input_ = "cvd --clean=Hello",
-                         .expected_tokens_ = std::nullopt},
+        LexerInputOutput{
+            .known_flags_ = boolean_known_flags,
+            .lex_input_ = "cvd --clean",
+            .expected_tokens_ = Tokens{ArgToken{ArgType::kPositional, "cvd"},
+                                       ArgToken{ArgType::kUnknownFlag,
+                                                "--clean"}}},
         LexerInputOutput{.known_flags_ = boolean_known_flags,
                          .lex_input_ = "cvd --clean false",
                          .expected_tokens_ = Tokens{
                              ArgToken{ArgType::kPositional, "cvd"},
-                             ArgToken{ArgType::kKnownBoolFlag, "--clean"},
+                             ArgToken{ArgType::kUnknownFlag, "--clean"},
                              ArgToken{ArgType::kPositional, "false"}}}));
 
 }  // namespace selector

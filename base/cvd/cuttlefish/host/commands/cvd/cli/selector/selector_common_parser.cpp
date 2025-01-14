@@ -81,6 +81,7 @@ Result<SelectorOptions> HandleNameOpts(
 
 Result<SelectorOptions> ParseCommonSelectorArguments(
     cvd_common::Args& args) {
+  // Change together: ArgumentsLexerBuilder::Build in arguments_lexer.cpp
   // Handling name-related options
   auto group_name_flag =
       CF_EXPECT(SelectorFlags::Get().GetFlag(SelectorFlags::kGroupName));
