@@ -31,7 +31,8 @@
 
 namespace cuttlefish {
 
-using selector::ArgumentsSeparator;
+using selector::SeparateArguments;
+using selector::SeparatedArguments;
 
 /* the very first command line parser
  *
@@ -48,21 +49,21 @@ using selector::ArgumentsSeparator;
 Result<cvd_common::Args> ExtractCvdArgs(cvd_common::Args& args) {
   CF_EXPECT(!args.empty());
 
-  auto arguments_separator = CF_EXPECT(ArgumentsSeparator::Parse(args));
-  CF_EXPECT(arguments_separator != nullptr);
+  SeparatedArguments separated_arguments = CF_EXPECT(SeparateArguments(args));
 
-  cvd_common::Args new_exec_args{arguments_separator->ProgPath()};
+  cvd_common::Args new_exec_args{separated_arguments.prog_path};
 
-  const auto new_sub_cmd = arguments_separator->SubCmd();
-  if (new_sub_cmd) {
-    new_exec_args.push_back(*new_sub_cmd);
+  const std::optional<std::string>& sub_cmd = separated_arguments.sub_cmd;
+  if (sub_cmd) {
+    new_exec_args.push_back(*sub_cmd);
   }
 
-  cvd_common::Args cmd_args{arguments_separator->SubCmdArgs()};
-  new_exec_args.insert(new_exec_args.end(), cmd_args.begin(), cmd_args.end());
+  const cvd_common::Args& sub_cmd_args{separated_arguments.sub_cmd_args};
+  new_exec_args.insert(new_exec_args.end(), sub_cmd_args.begin(),
+                       sub_cmd_args.end());
 
   args = new_exec_args;
-  return arguments_separator->CvdArgs();
+  return separated_arguments.cvd_args;
 }
 
 }  // namespace cuttlefish
