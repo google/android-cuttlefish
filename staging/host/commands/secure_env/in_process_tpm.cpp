@@ -30,7 +30,10 @@ typedef int SOCKET;
 #endif
 #include "TpmBuildSwitches.h"
 #include "TpmTcpProtocol.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmain"  // tolerate extern "C" int main()
 #include "Simulator_fp.h"
+#pragma clang diagnostic pop
 #include "Manufacture_fp.h"
 #define delete delete_
 #include "Platform_fp.h"
