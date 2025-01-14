@@ -22,7 +22,6 @@ LexerTestBase::LexerTestBase() { Init(); }
 
 void LexerTestBase::Init() {
   auto param = GetParam();
-  known_flags_ = param.known_flags_;
   lex_input_ = param.lex_input_;
   expected_tokens_ = param.expected_tokens_;
 }

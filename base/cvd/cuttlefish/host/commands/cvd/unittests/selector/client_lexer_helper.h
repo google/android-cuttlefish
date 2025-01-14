@@ -29,7 +29,6 @@ namespace selector {
 using Tokens = std::vector<ArgToken>;
 
 struct LexerInputOutput {
-  LexerFlagsSpecification known_flags_;
   std::string lex_input_;
   std::optional<Tokens> expected_tokens_;
 };
@@ -39,7 +38,6 @@ class LexerTestBase : public testing::TestWithParam<LexerInputOutput> {
   LexerTestBase();
   void Init();
 
-  LexerFlagsSpecification known_flags_;
   std::string lex_input_;
   std::optional<Tokens> expected_tokens_;
 };

@@ -34,6 +34,86 @@ bool Included(const std::string& item, Sets&&... containers) {
   return ((Contains(std::forward<Sets>(containers), item)) || ... || false);
 }
 
+class ArgumentsLexer {
+  friend class ArgumentsLexerBuilder;
+
+ public:
+  Result<std::vector<ArgToken>> Tokenize(
+      const std::vector<std::string>& args) const;
+
+ private:
+  // Lexer factory function will internally generate this,
+  // and give it to ArgumentsLexer.
+  struct FlagPatterns {
+    /* represents flags that takes values
+     * e.g. -group_name, --group_name (which may take an additional
+     * positional arg, or use its default value.)
+     *
+     * With the given example, this set shall be:
+     *  {"-group_name", "--group_name"}
+     */
+    std::unordered_set<std::string> value_patterns;
+    /* boolean flags
+     * e.g. --daemon, --nodaemon
+     *
+     * With the given example, this set shall be:
+     *  {"-daemon", "--daemon"}
+     */
+    std::unordered_set<std::string> bool_patterns;
+    // e.g. {"-nodaemon", "--nodaemon"}
+    std::unordered_set<std::string> bool_no_patterns;
+  };
+  ArgumentsLexer(FlagPatterns&& flag_patterns);
+
+  // preprocess boolean flags:
+  //  e.g. --help=yes --> --help
+  //       --help=faLSe --> --nohelp
+  Result<std::vector<std::string>> Preprocess(
+      const std::vector<std::string>& args) const;
+  Result<ArgToken> Process(const std::string& token) const;
+
+  struct FlagValuePair {
+    std::string flag_string;
+    std::string value;
+  };
+  Result<FlagValuePair> Separate(
+      const std::string& equal_included_string) const;
+  // flag_string starts with "-" or "--"
+  static bool Registered(const std::string& flag_string,
+                         const FlagPatterns& flag_patterns);
+  bool Registered(const std::string& flag_string) const {
+    return Registered(flag_string, flag_patterns_);
+  }
+  std::unordered_set<std::string> valid_bool_values_in_lower_cases_;
+  FlagPatterns flag_patterns_;
+};
+
+// input to the lexer factory function
+struct LexerFlagsSpecification {
+  std::unordered_set<std::string> known_boolean_flags;
+  std::unordered_set<std::string> known_value_flags;
+};
+
+/*
+ * At the top level, there are only two tokens: flag and positional tokens.
+ *
+ * A flag token starts with "-" or "--" followed by one or more non "-" letters.
+ * A positional token starts with any character other than "-".
+ *
+ * Between flag tokens, there are "known" and "unknown" flag tokens.
+ *
+ */
+class ArgumentsLexerBuilder {
+  using FlagPatterns = ArgumentsLexer::FlagPatterns;
+
+ public:
+  static Result<std::unique_ptr<ArgumentsLexer>> Build();
+
+ private:
+  static Result<FlagPatterns> GenerateFlagPatterns(
+      const LexerFlagsSpecification& known_flags);
+};
+
 }  // namespace
 
 /*
@@ -211,6 +291,16 @@ Result<std::vector<std::string>> ArgumentsLexer::Preprocess(
     new_args.emplace_back(arg);
   }
   return new_args;
+}
+
+Result<std::vector<ArgToken>> TokenizeArguments(
+    const std::vector<std::string>& args) {
+  ArgumentsLexerBuilder builder;
+
+  std::unique_ptr<ArgumentsLexer> lexer = CF_EXPECT(builder.Build());
+  CF_EXPECT(lexer.get());
+
+  return CF_EXPECT(lexer->Tokenize(args));
 }
 
 }  // namespace selector

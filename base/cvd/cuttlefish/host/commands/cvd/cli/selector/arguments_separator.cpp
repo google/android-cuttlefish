@@ -41,11 +41,8 @@ Result<SeparatedArguments> SeparateArguments(
     const std::vector<std::string>& input_args) {
   CF_EXPECT(!input_args.empty());
 
-  auto lexer = CF_EXPECT(ArgumentsLexerBuilder::Build());
-  CF_EXPECT(lexer != nullptr);
-
-  auto tokenized = CF_EXPECT(lexer->Tokenize(input_args));
-  std::deque<ArgToken> tokens_queue{tokenized.begin(), tokenized.end()};
+  std::vector<ArgToken> tokens_vec = CF_EXPECT(TokenizeArguments(input_args));
+  std::deque<ArgToken> tokens_queue(tokens_vec.begin(), tokens_vec.end());
 
   // take program path/name
   CF_EXPECT(!tokens_queue.empty() &&
@@ -89,8 +86,7 @@ Result<SeparatedArguments> SeparateArguments(
         cvd_flags_mode = false;
       } break;
       case ArgType::kDoubleDash: {
-        return CF_ERR("--"
-                      << " is not allowed within cvd specific flags.");
+        return CF_ERR("`--` is not allowed within cvd specific flags.");
       }
       case ArgType::kUnknownFlag:
       case ArgType::kError: {
