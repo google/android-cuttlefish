@@ -66,8 +66,6 @@ namespace selector {
  *
  */
 class ArgumentsSeparator {
-  using CvdProtobufArg = google::protobuf::RepeatedPtrField<std::string>;
-
  public:
   struct FlagsRegistration {
     std::unordered_set<std::string> known_boolean_flags;
@@ -77,9 +75,6 @@ class ArgumentsSeparator {
   static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
       const FlagsRegistration& flag_registration,
       const std::vector<std::string>& input_args);
-  static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
-      const FlagsRegistration& flag_registration,
-      const CvdProtobufArg& input_args);
   static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
       const FlagsRegistration& flag_registration, const std::string& input_args,
       const std::string& delim = " ");
