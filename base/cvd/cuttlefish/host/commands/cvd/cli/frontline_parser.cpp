@@ -73,43 +73,19 @@ Result<cvd_common::Args> FrontlineParser::ValidSubcmdsList() {
   return valid_subcmds;
 }
 
-static Result<std::unordered_set<std::string>> BoolFlagNames(
-    const std::vector<CvdFlagProxy>& flags) {
-  std::unordered_set<std::string> output;
-  for (const auto& flag : flags) {
-    if (flag.GetType() == CvdFlagProxy::FlagType::kBool) {
-      output.insert(CF_EXPECT(flag.Name()));
-    }
-  }
-  return output;
-}
-
-static Result<std::unordered_set<std::string>> ValueFlagNames(
-    const std::vector<CvdFlagProxy>& flags) {
-  std::unordered_set<std::string> output;
-  for (const auto& flag : flags) {
-    if (flag.GetType() == CvdFlagProxy::FlagType::kInt32 ||
-        flag.GetType() == CvdFlagProxy::FlagType::kString) {
-      output.insert(CF_EXPECT(flag.Name()));
-    }
-  }
-  return output;
-}
-
 Result<std::unique_ptr<selector::ArgumentsSeparator>>
 FrontlineParser::CallSeparator() {
   auto valid_subcmds_vector = CF_EXPECT(ValidSubcmdsList());
   std::unordered_set<std::string> valid_subcmds{valid_subcmds_vector.begin(),
                                                 valid_subcmds_vector.end()};
-  auto cvd_flags = CF_EXPECT(selector::SelectorFlags::New()).Flags();
-
-  auto known_bool_flags = CF_EXPECT(BoolFlagNames(cvd_flags));
-  auto known_value_flags = CF_EXPECT(ValueFlagNames(cvd_flags));
 
   ArgumentsSeparator::FlagsRegistration flag_registration{
-      .known_boolean_flags = known_bool_flags,
-      .known_value_flags = known_value_flags,
-      .valid_subcommands = valid_subcmds};
+      .known_boolean_flags = {},
+      .known_value_flags = {selector::SelectorFlags::kGroupName,
+                            selector::SelectorFlags::kInstanceName,
+                            selector::SelectorFlags::kVerbosity},
+      .valid_subcommands = valid_subcmds,
+  };
   auto arguments_separator =
       CF_EXPECT(ArgumentsSeparator::Parse(flag_registration, all_args_));
   CF_EXPECT(arguments_separator != nullptr);
