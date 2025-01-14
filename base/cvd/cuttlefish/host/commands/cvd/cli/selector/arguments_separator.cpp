@@ -21,21 +21,23 @@
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
+#include "host/commands/cvd/cli/selector/selector_constants.h"
 
 namespace cuttlefish {
 namespace selector {
 
 Result<std::unique_ptr<ArgumentsSeparator>> ArgumentsSeparator::Parse(
-    const FlagsRegistration& flag_registration,
     const std::vector<std::string>& input_args) {
   LexerFlagsSpecification lexer_flag_spec{
-      .known_boolean_flags = flag_registration.known_boolean_flags,
-      .known_value_flags = flag_registration.known_value_flags,
+      .known_boolean_flags = {},
+      .known_value_flags = {SelectorFlags::kGroupName,
+                            SelectorFlags::kInstanceName,
+                            SelectorFlags::kVerbosity},
   };
   auto lexer = CF_EXPECT(ArgumentsLexerBuilder::Build(lexer_flag_spec));
   CF_EXPECT(lexer != nullptr);
   ArgumentsSeparator* new_arg_separator =
-      new ArgumentsSeparator(std::move(lexer), input_args, flag_registration);
+      new ArgumentsSeparator(std::move(lexer), input_args);
   CF_EXPECT(new_arg_separator != nullptr,
             "Memory allocation failed for ArgumentSeparator");
   std::unique_ptr<ArgumentsSeparator> arg_separator{new_arg_separator};
@@ -45,12 +47,8 @@ Result<std::unique_ptr<ArgumentsSeparator>> ArgumentsSeparator::Parse(
 
 ArgumentsSeparator::ArgumentsSeparator(
     std::unique_ptr<ArgumentsLexer>&& lexer,
-    const std::vector<std::string>& input_args,
-    const FlagsRegistration& flag_registration)
-    : lexer_(std::move(lexer)),
-      input_args_(input_args),
-      known_boolean_flags_(flag_registration.known_boolean_flags),
-      known_value_flags_(flag_registration.known_value_flags) {}
+    const std::vector<std::string>& input_args)
+    : lexer_(std::move(lexer)), input_args_(input_args) {}
 
 Result<void> ArgumentsSeparator::Parse() {
   auto output = CF_EXPECT(ParseInternal());

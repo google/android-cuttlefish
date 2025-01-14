@@ -67,12 +67,7 @@ namespace selector {
  */
 class ArgumentsSeparator {
  public:
-  struct FlagsRegistration {
-    std::unordered_set<std::string> known_boolean_flags;
-    std::unordered_set<std::string> known_value_flags;
-  };
   static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
-      const FlagsRegistration& flag_registration,
       const std::vector<std::string>& input_args);
 
   const std::string& ProgPath() const { return prog_path_; }
@@ -82,8 +77,7 @@ class ArgumentsSeparator {
 
  private:
   ArgumentsSeparator(std::unique_ptr<ArgumentsLexer>&& lexer,
-                     const std::vector<std::string>& input_args,
-                     const FlagsRegistration& flag_registration);
+                     const std::vector<std::string>& input_args);
 
   bool IsFlag(ArgType arg_type) const;
   struct Output {
@@ -100,8 +94,6 @@ class ArgumentsSeparator {
 
   // inputs
   std::vector<std::string> input_args_;
-  std::unordered_set<std::string> known_boolean_flags_;
-  std::unordered_set<std::string> known_value_flags_;
 
   // outputs
   std::string prog_path_;
