@@ -43,15 +43,6 @@ Result<std::unique_ptr<ArgumentsSeparator>> ArgumentsSeparator::Parse(
   return std::move(arg_separator);
 }
 
-Result<std::unique_ptr<ArgumentsSeparator>> ArgumentsSeparator::Parse(
-    const FlagsRegistration& flag_registration, const std::string& input_args,
-    const std::string& delim) {
-  std::vector<std::string> input_args_vec =
-      android::base::Tokenize(input_args, delim);
-  auto arg_separator = CF_EXPECT(Parse(flag_registration, input_args_vec));
-  return std::move(arg_separator);
-}
-
 ArgumentsSeparator::ArgumentsSeparator(
     std::unique_ptr<ArgumentsLexer>&& lexer,
     const std::vector<std::string>& input_args,
