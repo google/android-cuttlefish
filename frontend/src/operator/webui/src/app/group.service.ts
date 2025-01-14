@@ -9,22 +9,24 @@ import {DomSanitizer} from '@angular/platform-browser';
 })
 export class GroupService {
   private refreshSubject = new Subject<void>();
-  private groupsFromServer = this.httpClient
-    .get<string[]>('./groups')
-    .pipe(
-      map((deviceIds: string[]) =>
-        deviceIds.sort((a, b) => a.localeCompare(b, undefined, {numeric: true}))
-      )
-    );
-
-  private groups = merge(
-    this.groupsFromServer,
-    this.refreshSubject.pipe(mergeMap(() => this.groupsFromServer))
-  ).pipe(shareReplay(1));
+  private groupsFromServer;
+  private groups;
 
   constructor(
     private readonly httpClient: HttpClient,
-  ) {}
+  ) {
+    this.groupsFromServer = this.httpClient
+    .get<string[]>('./groups')
+    .pipe(
+      map((deviceIds: string[]) =>
+          deviceIds.sort((a, b) => a.localeCompare(b, undefined, {numeric: true}))
+         )
+    );
+    this.groups = merge(
+      this.groupsFromServer,
+      this.refreshSubject.pipe(mergeMap(() => this.groupsFromServer))
+    ).pipe(shareReplay(1));
+  }
 
   refresh(): void {
     this.refreshSubject.next();

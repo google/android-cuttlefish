@@ -25,9 +25,7 @@ export class DeviceService {
     shareReplay(1)
   );
 
-  private allDeviceFromServer = this.httpClient
-    .get<DeviceItem[]>('./devices')
-    .pipe(map(this.sortDevices));
+  private allDeviceFromServer;
 
   private getDevicesByGroupIdFromServer(groupId: string) {
     return this.httpClient
@@ -38,7 +36,11 @@ export class DeviceService {
   constructor(
     private readonly httpClient: HttpClient,
     private sanitizer: DomSanitizer
-  ) {}
+  ) {
+    this.allDeviceFromServer = this.httpClient
+      .get<DeviceItem[]>('./devices')
+      .pipe(map(this.sortDevices));
+  }
 
   private sortDevices(devices: DeviceItem[]) {
     return devices.sort((a: DeviceItem, b: DeviceItem) =>
