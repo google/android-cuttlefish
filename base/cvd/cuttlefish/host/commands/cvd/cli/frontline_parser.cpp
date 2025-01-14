@@ -29,10 +29,7 @@
 namespace cuttlefish {
 
 Result<cvd_common::Args> ExtractCvdArgs(cvd_common::Args& args) {
-  FrontlineParser::ParserParam server_param{
-      .server_supported_subcmds = {"*"},
-      .all_args = args
-  };
+  FrontlineParser::ParserParam server_param{.all_args = args};
   auto frontline_parser = CF_EXPECT(FrontlineParser::Parse(server_param));
   CF_EXPECT(frontline_parser != nullptr);
 
@@ -60,31 +57,20 @@ Result<std::unique_ptr<FrontlineParser>> FrontlineParser::Parse(
 }
 
 FrontlineParser::FrontlineParser(const ParserParam& parser_param)
-    : server_supported_subcmds_{parser_param.server_supported_subcmds},
-      all_args_(parser_param.all_args) {}
+    : all_args_(parser_param.all_args) {}
 
 Result<void> FrontlineParser::Separate() {
   arguments_separator_ = CF_EXPECT(CallSeparator());
   return {};
 }
 
-Result<cvd_common::Args> FrontlineParser::ValidSubcmdsList() {
-  cvd_common::Args valid_subcmds(server_supported_subcmds_);
-  return valid_subcmds;
-}
-
 Result<std::unique_ptr<selector::ArgumentsSeparator>>
 FrontlineParser::CallSeparator() {
-  auto valid_subcmds_vector = CF_EXPECT(ValidSubcmdsList());
-  std::unordered_set<std::string> valid_subcmds{valid_subcmds_vector.begin(),
-                                                valid_subcmds_vector.end()};
-
   ArgumentsSeparator::FlagsRegistration flag_registration{
       .known_boolean_flags = {},
       .known_value_flags = {selector::SelectorFlags::kGroupName,
                             selector::SelectorFlags::kInstanceName,
                             selector::SelectorFlags::kVerbosity},
-      .valid_subcommands = valid_subcmds,
   };
   auto arguments_separator =
       CF_EXPECT(ArgumentsSeparator::Parse(flag_registration, all_args_));

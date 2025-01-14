@@ -47,8 +47,7 @@ namespace cuttlefish {
 
 TEST(FrontlineParserTest, CvdOnly) {
   cvd_common::Args input{"cvd"};
-  FrontlineParser::ParserParam parser_param{.server_supported_subcmds = {},
-                                            .all_args = {"cvd"}};
+  FrontlineParser::ParserParam parser_param{.all_args = input};
 
   auto result = FrontlineParser::Parse(parser_param);
 
