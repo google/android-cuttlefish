@@ -68,11 +68,6 @@ class ArgumentsLexer {
   FlagPatterns flag_patterns_;
 };
 
-// input to the lexer factory function
-struct LexerFlagsSpecification {
-  std::unordered_set<std::string> known_value_flags;
-};
-
 /*
  * At the top level, there are only two tokens: flag and positional tokens.
  *
@@ -90,7 +85,7 @@ class ArgumentsLexerBuilder {
 
  private:
   static Result<FlagPatterns> GenerateFlagPatterns(
-      const LexerFlagsSpecification& known_flags);
+      const std::unordered_set<std::string>& known_flags);
 };
 
 }  // namespace
@@ -109,9 +104,9 @@ class ArgumentsLexerBuilder {
  */
 Result<ArgumentsLexerBuilder::FlagPatterns>
 ArgumentsLexerBuilder::GenerateFlagPatterns(
-    const LexerFlagsSpecification& known_flags) {
+    const std::unordered_set<std::string>& known_flags) {
   FlagPatterns flag_patterns;
-  for (const auto& non_bool_flag : known_flags.known_value_flags) {
+  for (const auto& non_bool_flag : known_flags) {
     const auto one_dash = "-" + non_bool_flag;
     const auto two_dashes = "--" + non_bool_flag;
     CF_EXPECT(!ArgumentsLexer::Registered(one_dash, flag_patterns));
@@ -124,11 +119,9 @@ ArgumentsLexerBuilder::GenerateFlagPatterns(
 
 Result<std::unique_ptr<ArgumentsLexer>> ArgumentsLexerBuilder::Build() {
   // Change together: ParseCommonSelectorArguments in selector_common_parser.cpp
-  LexerFlagsSpecification known_flags{
-      .known_value_flags = {SelectorFlags::kGroupName,
-                            SelectorFlags::kInstanceName,
-                            SelectorFlags::kVerbosity},
-  };
+  std::unordered_set<std::string> known_flags{SelectorFlags::kGroupName,
+                                              SelectorFlags::kInstanceName,
+                                              SelectorFlags::kVerbosity};
   auto flag_patterns = CF_EXPECT(GenerateFlagPatterns(known_flags));
   ArgumentsLexer* new_lexer = new ArgumentsLexer(std::move(flag_patterns));
   CF_EXPECT(new_lexer != nullptr,
