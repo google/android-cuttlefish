@@ -12,8 +12,8 @@ import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
   styleUrls: ['./device-pane.component.scss'],
 })
 export class DevicePaneComponent {
-  groups = this.groupService.getGroups();
-  devices = this.deviceService.getDevices();
+  groups;
+  devices;
 
   constructor(
     private deviceService: DeviceService,
@@ -21,7 +21,10 @@ export class DevicePaneComponent {
     private groupService: GroupService,
     private activatedRoute: ActivatedRoute,
     private router: Router
-  ) {}
+  ) {
+    this.groups = this.groupService.getGroups();
+    this.devices = this.deviceService.getDevices();
+  }
 
   ngOnInit(): void {
     this.router.events

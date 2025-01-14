@@ -105,52 +105,22 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     public displaysService: DisplaysService,
     @Inject(DOCUMENT) public document: Document
-  ) {}
-
-  ngOnInit(): void {
-    this.resizeObserver = new ResizeObserver(entries => {
-      this.cols$.next(entries[0].contentRect.width);
-    });
-    this.resizeObserver.observe(this.viewPane.nativeElement);
-    this.cols$.subscribe(cols => {
-      this.cols = cols;
-    });
-  }
-
-  ngAfterViewInit(): void {
-    this.resizeSubscription = merge(
-      fromEvent(window, 'resize'),
-      fromEvent(window, 'orientationchange')
-    )
-      .pipe(debounceTime(50))
-      .subscribe(() => {
-        this.grid.resize();
-      });
-  }
-
-  ngOnDestroy(): void {
-    this.resizeSubscription.unsubscribe();
-    this.resizeObserver.unobserve(this.viewPane.nativeElement);
-  }
-
-  private visibleDevicesChanged: Observable<DeviceGridItemUpdate[]> =
-    this.displaysService.getDeviceVisibilities().pipe(
+  ) {
+    this.visibleDevicesChanged = this.displaysService.getDeviceVisibilities().pipe(
       map(deviceVisibilityInfos =>
-        deviceVisibilityInfos.map(info => {
-          return {
-            values: {
-              ...this.createDeviceGridItem(info.id),
-              visible: info.visible,
-            },
-            overwrites: ['visible'],
-            source: this.visibleDeviceSource,
-          };
-        })
-      )
+          deviceVisibilityInfos.map(info => {
+            return {
+              values: {
+                ...this.createDeviceGridItem(info.id),
+                visible: info.visible,
+              },
+              overwrites: ['visible'],
+              source: this.visibleDeviceSource,
+            };
+          })
+         )
     );
-
-  private displayInfoChanged: Observable<DeviceGridItemUpdate[]> =
-    this.displaysService.getDisplayInfoChanged().pipe(
+    this.displayInfoChanged = this.displaysService.getDisplayInfoChanged().pipe(
       map(displayInfo => {
         const updateValues = this.createDeviceGridItem(displayInfo.device_id);
         const overwrites = [];
@@ -185,9 +155,7 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
         ];
       })
     );
-
-  private layoutUpdated: Observable<DeviceGridItemUpdate[]> =
-    this.layoutUpdated$.pipe(
+    this.layoutUpdated = this.layoutUpdated$.pipe(
       map(newLayout => {
         return newLayout.map(layoutItem => {
           const updateValues = this.createDeviceGridItem(layoutItem.id);
@@ -206,6 +174,95 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
         });
       })
     );
+    this.resultLayout = merge(
+      this.visibleDevicesChanged,
+      this.displayInfoChanged,
+      this.layoutUpdated
+    ).pipe(
+    scan(
+      (
+        currentLayout: DeviceGridItem[],
+        updateInfos: DeviceGridItemUpdate[]
+      ) => {
+        const layoutById = new Map(currentLayout.map(item => [item.id, item]));
+
+        updateInfos.forEach(updateItem => {
+          const id = updateItem.values.id;
+          let item = layoutById.has(id)
+            ? layoutById.get(id)!
+            : updateItem.values;
+
+            updateItem.overwrites.forEach(prop => {
+              // Ignore force show display message when display size is already set
+              if ((prop === 'display_width' || prop === 'display_height')
+                  && item[prop] !== null && item[prop] !== this.freeScale
+                && updateItem.values[prop] === this.freeScale) {
+                  return;
+                }
+
+                item[prop] = updateItem.values[prop]!;
+            });
+
+            switch (updateItem.source) {
+              case this.visibleDeviceSource: {
+                if (!item.placed && item.visible) {
+                  // When a new item is set visible
+                  item = this.placeNewItem(item, currentLayout);
+                }
+                break;
+              }
+              case this.layoutUpdateSource: {
+                // When layout is changed
+                item = this.adjustNewLayout(item);
+                break;
+              }
+              case this.displayInfoSource: {
+                // When device display info is changed
+                item = this.adjustDisplayInfo(item);
+                break;
+              }
+            }
+
+            layoutById.set(id, item);
+        });
+
+        return Array.from(layoutById, ([, value]) => value);
+      },
+      []
+    ),
+    map(items => items.filter(item => item.visible))
+    );
+  }
+
+  ngOnInit(): void {
+    this.resizeObserver = new ResizeObserver(entries => {
+      this.cols$.next(entries[0].contentRect.width);
+    });
+    this.resizeObserver.observe(this.viewPane.nativeElement);
+    this.cols$.subscribe(cols => {
+      this.cols = cols;
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.resizeSubscription = merge(
+      fromEvent(window, 'resize'),
+      fromEvent(window, 'orientationchange')
+    )
+      .pipe(debounceTime(50))
+      .subscribe(() => {
+        this.grid.resize();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.resizeSubscription.unsubscribe();
+    this.resizeObserver.unobserve(this.viewPane.nativeElement);
+  }
+
+  private visibleDevicesChanged: Observable<DeviceGridItemUpdate[]>;
+  private displayInfoChanged: Observable<DeviceGridItemUpdate[]>;
+  private layoutUpdated: Observable<DeviceGridItemUpdate[]>;
 
   private adjustNewLayout(item: DeviceGridItem): DeviceGridItem {
     if (item.display_width === null || item.display_height === null)
@@ -285,64 +342,7 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
     return item;
   }
 
-  resultLayout: Observable<DeviceGridItem[]> = merge(
-    this.visibleDevicesChanged,
-    this.displayInfoChanged,
-    this.layoutUpdated
-  ).pipe(
-    scan(
-      (
-        currentLayout: DeviceGridItem[],
-        updateInfos: DeviceGridItemUpdate[]
-      ) => {
-        const layoutById = new Map(currentLayout.map(item => [item.id, item]));
-
-        updateInfos.forEach(updateItem => {
-          const id = updateItem.values.id;
-          let item = layoutById.has(id)
-            ? layoutById.get(id)!
-            : updateItem.values;
-
-          updateItem.overwrites.forEach(prop => {
-            // Ignore force show display message when display size is already set
-            if ((prop === 'display_width' || prop === 'display_height')
-               && item[prop] !== null && item[prop] !== this.freeScale
-               && updateItem.values[prop] === this.freeScale) {
-                 return;
-            }
-
-            item[prop] = updateItem.values[prop]!;
-          });
-
-          switch (updateItem.source) {
-            case this.visibleDeviceSource: {
-              if (!item.placed && item.visible) {
-                // When a new item is set visible
-                item = this.placeNewItem(item, currentLayout);
-              }
-              break;
-            }
-            case this.layoutUpdateSource: {
-              // When layout is changed
-              item = this.adjustNewLayout(item);
-              break;
-            }
-            case this.displayInfoSource: {
-              // When device display info is changed
-              item = this.adjustDisplayInfo(item);
-              break;
-            }
-          }
-
-          layoutById.set(id, item);
-        });
-
-        return Array.from(layoutById, ([, value]) => value);
-      },
-      []
-    ),
-    map(items => items.filter(item => item.visible))
-  );
+  resultLayout: Observable<DeviceGridItem[]>;
 
   forceShowDevice(deviceId: string) {
     this.displaysService.onDeviceDisplayInfo({
