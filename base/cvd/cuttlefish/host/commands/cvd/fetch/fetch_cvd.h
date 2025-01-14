@@ -16,10 +16,9 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
 #include "common/libs/utils/result.h"
-#include "host/libs/image_aggregator/sparse_image_utils.h"
+#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 namespace cuttlefish {
 
@@ -27,6 +26,6 @@ inline constexpr char kHostToolsSubdirectory[] = "host_tools";
 
 std::string GetFetchLogsFileName(const std::string& target_directory);
 
-Result<void> FetchCvdMain(std::vector<std::string>& args);
+Result<void> FetchCvdMain(const FetchFlags& flags);
 
 }  // namespace cuttlefish
