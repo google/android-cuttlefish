@@ -48,14 +48,7 @@ using selector::ArgumentsSeparator;
 Result<cvd_common::Args> ExtractCvdArgs(cvd_common::Args& args) {
   CF_EXPECT(!args.empty());
 
-  ArgumentsSeparator::FlagsRegistration flag_registration{
-      .known_boolean_flags = {},
-      .known_value_flags = {selector::SelectorFlags::kGroupName,
-                            selector::SelectorFlags::kInstanceName,
-                            selector::SelectorFlags::kVerbosity},
-  };
-  auto arguments_separator =
-      CF_EXPECT(ArgumentsSeparator::Parse(flag_registration, args));
+  auto arguments_separator = CF_EXPECT(ArgumentsSeparator::Parse(args));
   CF_EXPECT(arguments_separator != nullptr);
 
   cvd_common::Args new_exec_args{arguments_separator->ProgPath()};
