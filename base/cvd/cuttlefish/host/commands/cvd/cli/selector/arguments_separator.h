@@ -70,7 +70,6 @@ class ArgumentsSeparator {
   struct FlagsRegistration {
     std::unordered_set<std::string> known_boolean_flags;
     std::unordered_set<std::string> known_value_flags;
-    std::unordered_set<std::string> valid_subcommands;
   };
   static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
       const FlagsRegistration& flag_registration,
@@ -103,8 +102,6 @@ class ArgumentsSeparator {
   std::vector<std::string> input_args_;
   std::unordered_set<std::string> known_boolean_flags_;
   std::unordered_set<std::string> known_value_flags_;
-  std::unordered_set<std::string> valid_subcmds_;
-  bool match_any_subcmd_;
 
   // outputs
   std::string prog_path_;

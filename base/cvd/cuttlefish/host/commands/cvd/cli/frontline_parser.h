@@ -48,8 +48,6 @@ class FrontlineParser {
 
  public:
   struct ParserParam {
-    // commands supported by the server
-    std::vector<std::string> server_supported_subcmds;
     cvd_common::Args all_args;
   };
 
@@ -66,7 +64,6 @@ class FrontlineParser {
 
   // internal workers in order
   Result<void> Separate();
-  Result<cvd_common::Args> ValidSubcmdsList();
   Result<std::unique_ptr<ArgumentsSeparator>> CallSeparator();
   struct FilterOutput {
     bool clean;
@@ -75,7 +72,6 @@ class FrontlineParser {
   };
   Result<FilterOutput> FilterNonSelectorArgs();
 
-  cvd_common::Args server_supported_subcmds_;
   const cvd_common::Args all_args_;
   const std::vector<std::string> internal_cmds_;
   std::unique_ptr<ArgumentsSeparator> arguments_separator_;
