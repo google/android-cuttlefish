@@ -27,75 +27,44 @@ namespace cuttlefish {
 namespace selector {
 namespace {
 
-const LexerFlagsSpecification empty_known_flags;
-const LexerFlagsSpecification boolean_known_flags{
-    .known_boolean_flags = {"verbosity"}};
-const LexerFlagsSpecification non_boolean_known_flags{
-    .known_value_flags = {"group_name"}};
-const LexerFlagsSpecification both_known_flags{
-    .known_boolean_flags = {"verbosity"}, .known_value_flags = {"group_name"}};
-
-Result<std::vector<ArgToken>> Tokenize(const ArgumentsLexer& lexer,
-                                       const std::string& args) {
+Result<std::vector<ArgToken>> Tokenize(const std::string& args) {
   auto args_vec = android::base::Tokenize(args, " ");
-  return CF_EXPECT(lexer.Tokenize(args_vec));
+  return CF_EXPECT(TokenizeArguments(args_vec));
 }
 
 }  // namespace
 
 TEST_P(EmptyArgsLexTest, SuccessExpectedTest) {
-  auto lexer_gen_result = ArgumentsLexerBuilder::Build();
-  std::unique_ptr<ArgumentsLexer> lexer =
-      lexer_gen_result.ok() ? std::move(*lexer_gen_result) : nullptr;
-  if (!lexer) {
-    GTEST_SKIP() << "Memory allocation failed but it is not in the test scope.";
-  }
-  EXPECT_THAT(Tokenize(*lexer, lex_input_), IsOkAndValue(*expected_tokens_));
+  EXPECT_THAT(Tokenize(lex_input_), IsOkAndValue(*expected_tokens_));
 }
 
 INSTANTIATE_TEST_SUITE_P(
     ClientSpecificOptionParser, EmptyArgsLexTest,
-    testing::Values(LexerInputOutput{.known_flags_ = empty_known_flags,
-                                     .lex_input_ = "",
-                                     .expected_tokens_ = Tokens{}},
-                    LexerInputOutput{.known_flags_ = boolean_known_flags,
-                                     .lex_input_ = "",
-                                     .expected_tokens_ = Tokens{}},
-                    LexerInputOutput{.known_flags_ = non_boolean_known_flags,
-                                     .lex_input_ = "",
-                                     .expected_tokens_ = Tokens{}},
-                    LexerInputOutput{.known_flags_ = both_known_flags,
-                                     .lex_input_ = "",
-                                     .expected_tokens_ = Tokens{}}));
+    testing::Values(
+        LexerInputOutput{.lex_input_ = "", .expected_tokens_ = Tokens{}},
+        LexerInputOutput{.lex_input_ = "", .expected_tokens_ = Tokens{}},
+        LexerInputOutput{.lex_input_ = "", .expected_tokens_ = Tokens{}},
+        LexerInputOutput{.lex_input_ = "", .expected_tokens_ = Tokens{}}));
 
 TEST_P(NonBooleanArgsTest, SuccessExpectedTest) {
-  auto lexer_gen_result = ArgumentsLexerBuilder::Build();
-  std::unique_ptr<ArgumentsLexer> lexer =
-      lexer_gen_result.ok() ? std::move(*lexer_gen_result) : nullptr;
-  if (!lexer) {
-    GTEST_SKIP() << "Memory allocation failed but it is not in the test scope.";
-  }
-  EXPECT_THAT(Tokenize(*lexer, lex_input_), IsOkAndValue(*expected_tokens_));
+  EXPECT_THAT(Tokenize(lex_input_), IsOkAndValue(*expected_tokens_));
 }
 
 INSTANTIATE_TEST_SUITE_P(
     ClientSpecificOptionParser, NonBooleanArgsTest,
     testing::Values(
         LexerInputOutput{
-            .known_flags_ = non_boolean_known_flags,
             .lex_input_ = "cvd --group_name=yumi",
             .expected_tokens_ = Tokens{ArgToken{ArgType::kPositional, "cvd"},
                                        ArgToken{ArgType::kKnownFlagAndValue,
                                                 "--group_name=yumi"}}},
         LexerInputOutput{
-            .known_flags_ = non_boolean_known_flags,
             .lex_input_ = "cvd --group_name yumi",
             .expected_tokens_ = Tokens{ArgToken{ArgType::kPositional, "cvd"},
                                        ArgToken{ArgType::kKnownValueFlag,
                                                 "--group_name"},
                                        ArgToken{ArgType::kPositional, "yumi"}}},
-        LexerInputOutput{.known_flags_ = non_boolean_known_flags,
-                         .lex_input_ = "cvd --group_name yumi start --daemon",
+        LexerInputOutput{.lex_input_ = "cvd --group_name yumi start --daemon",
                          .expected_tokens_ = Tokens{
                              ArgToken{ArgType::kPositional, "cvd"},
                              ArgToken{ArgType::kKnownValueFlag, "--group_name"},
@@ -104,13 +73,7 @@ INSTANTIATE_TEST_SUITE_P(
                              ArgToken{ArgType::kUnknownFlag, "--daemon"}}}));
 
 TEST_P(BooleanBadArgsTest, FailureExpectedTest) {
-  auto lexer_gen_result = ArgumentsLexerBuilder::Build();
-  std::unique_ptr<ArgumentsLexer> lexer =
-      lexer_gen_result.ok() ? std::move(*lexer_gen_result) : nullptr;
-  if (!lexer) {
-    GTEST_SKIP() << "Memory allocation failed but it is not in the test scope.";
-  }
-  auto tokenized_result = Tokenize(*lexer, lex_input_);
+  auto tokenized_result = Tokenize(lex_input_);
 
   if (!expected_tokens_) {
     ASSERT_FALSE(tokenized_result.ok())
@@ -124,19 +87,16 @@ INSTANTIATE_TEST_SUITE_P(
     ClientSpecificOptionParser, BooleanBadArgsTest,
     testing::Values(
         LexerInputOutput{
-            .known_flags_ = boolean_known_flags,
             .lex_input_ = "cvd --yesclean",
             .expected_tokens_ = Tokens{ArgToken{ArgType::kPositional, "cvd"},
                                        ArgToken{ArgType::kUnknownFlag,
                                                 "--yesclean"}}},
         LexerInputOutput{
-            .known_flags_ = boolean_known_flags,
             .lex_input_ = "cvd --clean",
             .expected_tokens_ = Tokens{ArgToken{ArgType::kPositional, "cvd"},
                                        ArgToken{ArgType::kUnknownFlag,
                                                 "--clean"}}},
-        LexerInputOutput{.known_flags_ = boolean_known_flags,
-                         .lex_input_ = "cvd --clean false",
+        LexerInputOutput{.lex_input_ = "cvd --clean false",
                          .expected_tokens_ = Tokens{
                              ArgToken{ArgType::kPositional, "cvd"},
                              ArgToken{ArgType::kUnknownFlag, "--clean"},
