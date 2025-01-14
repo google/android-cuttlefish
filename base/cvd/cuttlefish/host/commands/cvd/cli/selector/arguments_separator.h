@@ -75,9 +75,6 @@ class ArgumentsSeparator {
   static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
       const FlagsRegistration& flag_registration,
       const std::vector<std::string>& input_args);
-  static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
-      const FlagsRegistration& flag_registration, const std::string& input_args,
-      const std::string& delim = " ");
 
   const std::string& ProgPath() const { return prog_path_; }
   const std::vector<std::string>& CvdArgs() const { return cvd_args_; }
