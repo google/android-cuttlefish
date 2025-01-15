@@ -21,25 +21,13 @@
 namespace cuttlefish {
 
 Result<std::string> CvdFlagProxy::Name() const {
-  CF_EXPECT(GetType() != FlagType::kUnknown, "Unsupported flag type");
   auto decode_name = Overload{
       [](auto&& param) -> std::string { return param.Name(); },
   };
   return std::visit(decode_name, flag_);
 }
 
-CvdFlagProxy::FlagType CvdFlagProxy::GetType() const {
-  auto decode_type = Overload{
-      [](const CvdFlag<bool>&) -> FlagType { return FlagType::kBool; },
-      [](const CvdFlag<std::int32_t>&) -> FlagType { return FlagType::kInt32; },
-      [](const CvdFlag<std::string>&) -> FlagType { return FlagType::kString; },
-      [](auto) -> FlagType { return FlagType::kUnknown; },
-  };
-  return std::visit(decode_type, flag_);
-}
-
 Result<bool> CvdFlagProxy::HasDefaultValue() const {
-  CF_EXPECT(GetType() != FlagType::kUnknown, "Unsupported flag type of typeid");
   auto decode_default_value = Overload{
       [](auto&& flag) -> bool { return flag.HasDefaultValue(); },
   };
@@ -68,7 +56,6 @@ static Result<std::optional<CvdFlagProxy::ValueVariant>> FilterKnownTypeFlag(
 
 Result<std::optional<CvdFlagProxy::ValueVariant>> CvdFlagProxy::FilterFlag(
     cvd_common::Args& args) const {
-  CF_EXPECT(GetType() != FlagType::kUnknown, "Unsupported flag type of typeid");
   std::optional<CvdFlagProxy::ValueVariant> output;
   auto filter_flag = Overload{
       [&args](const CvdFlag<std::int32_t>& int32_t_flag)
@@ -101,44 +88,6 @@ FlagCollection::FilterFlags(cvd_common::Args& args) const {
     }
     output.emplace(name,
                    FlagValuePair{.flag = flag_proxy, .value = *value_opt});
-  }
-  return output;
-}
-
-Result<std::unordered_map<std::string, FlagCollection::FlagValuePair>>
-FlagCollection::CalculateFlags(cvd_common::Args& args) const {
-  auto output = CF_EXPECT(FilterFlags(args));
-  for (const auto& [name, flag_proxy] : name_flag_map_) {
-    if (Contains(output, name)) {
-      // the flag was given with a value, there is no need for update it
-      continue;
-    }
-    if (!CF_EXPECT(flag_proxy.HasDefaultValue())) {
-      continue;
-    }
-    switch (flag_proxy.GetType()) {
-      case CvdFlagProxy::FlagType::kBool:
-        output.emplace(
-            name,
-            FlagValuePair{.flag = flag_proxy,
-                          .value = CF_EXPECT(flag_proxy.DefaultValue<bool>())});
-        break;
-      case CvdFlagProxy::FlagType::kInt32:
-        output.emplace(
-            name, FlagValuePair{.flag = flag_proxy,
-                                .value = CF_EXPECT(
-                                    flag_proxy.DefaultValue<std::int32_t>())});
-        break;
-      case CvdFlagProxy::FlagType::kString:
-        output.emplace(
-            name, FlagValuePair{.flag = flag_proxy,
-                                .value = CF_EXPECT(
-                                    flag_proxy.DefaultValue<std::string>())});
-        break;
-      default:
-        return CF_ERR("Unsupported FlagType in "
-                      << "--" << name);
-    }
   }
   return output;
 }
