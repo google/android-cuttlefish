@@ -43,52 +43,6 @@ TEST_F(CvdFlagCollectionTest, AllGivenFlagsListed) {
   ASSERT_FALSE(Contains(output, "not-consumed"));
 }
 
-TEST_F(CvdFlagCollectionTest, DefaultValueFlagsAlsoListed) {
-  auto output_result = flag_collection_.CalculateFlags(input_);
-  ASSERT_TRUE(output_result.ok()) << output_result.error().Trace();
-  ASSERT_EQ(input_, cvd_common::Args{"--not_consumed"});
-  auto output = std::move(*output_result);
-
-  ASSERT_TRUE(Contains(output, "help"));
-  ASSERT_TRUE(Contains(output, "name"));
-  ASSERT_TRUE(Contains(output, "enable_vnc"));
-  ASSERT_TRUE(Contains(output, "id"));
-  ASSERT_FALSE(Contains(output, "not-given"));
-  ASSERT_FALSE(Contains(output, "not-consumed"));
-}
-
-TEST_F(CvdFlagCollectionTest, ValueTest) {
-  auto output_result = flag_collection_.CalculateFlags(input_);
-  ASSERT_TRUE(output_result.ok()) << output_result.error().Trace();
-  auto output = std::move(*output_result);
-  // without these verified, the code below will crash
-  ASSERT_TRUE(Contains(output, "help"));
-  ASSERT_TRUE(Contains(output, "name"));
-  ASSERT_TRUE(Contains(output, "enable_vnc"));
-  ASSERT_TRUE(Contains(output, "id"));
-  const auto help_output = output.at("help");
-  const auto name_output = output.at("name");
-  const auto enable_vnc_output = output.at("enable_vnc");
-  const auto id_output = output.at("id");
-
-  auto help_value_result = FlagCollection::GetValue<bool>(help_output.value);
-  auto name_value_result =
-      FlagCollection::GetValue<std::string>(name_output.value);
-  auto enable_vnc_value_result =
-      FlagCollection::GetValue<bool>(enable_vnc_output.value);
-  auto id_value_result =
-      FlagCollection::GetValue<std::int32_t>(id_output.value);
-
-  ASSERT_TRUE(help_value_result.ok());
-  ASSERT_TRUE(name_value_result.ok());
-  ASSERT_TRUE(enable_vnc_value_result.ok());
-  ASSERT_TRUE(id_value_result.ok());
-  ASSERT_EQ(*help_value_result, false);
-  ASSERT_EQ(*name_value_result, "foo");
-  ASSERT_EQ(*enable_vnc_value_result, true);
-  ASSERT_EQ(*id_value_result, 9);
-}
-
 TEST(CvdFlagTest, FlagProxyFilter) {
   CvdFlag<std::string> no_default("no_default");
   cvd_common::Args has_flag_args{"--no_default=Hello"};

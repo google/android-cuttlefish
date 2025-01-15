@@ -126,13 +126,6 @@ class CvdFlagProxy {
   friend class FlagCollection;
 
  public:
-  enum class FlagType : std::uint32_t {
-    kUnknown = 0,
-    kBool,
-    kInt32,
-    kString,
-  };
-
   template <typename T>
   CvdFlagProxy(CvdFlag<T>&& flag) : flag_{std::move(flag)} {}
 
@@ -153,8 +146,6 @@ class CvdFlagProxy {
    */
   Result<std::string> Name() const;
   Result<bool> HasDefaultValue() const;
-
-  FlagType GetType() const;
 
   template <typename T>
   Result<T> DefaultValue() const {
@@ -238,14 +229,6 @@ class FlagCollection {
    * in the returned map
    */
   Result<std::unordered_map<std::string, FlagValuePair>> FilterFlags(
-      cvd_common::Args& args) const;
-
-  /* considers default values
-   * so, if the flag wasn't given, the default value will be used to fill
-   * out the returned map. If a default value isn't available and the flag
-   * isn't given either, the entry won't be in the returned map
-   */
-  Result<std::unordered_map<std::string, FlagValuePair>> CalculateFlags(
       cvd_common::Args& args) const;
 
   template <typename T>
