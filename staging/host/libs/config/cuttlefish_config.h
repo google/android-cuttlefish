@@ -566,6 +566,8 @@ class CuttlefishConfig {
     bool run_as_daemon() const;
     bool enable_audio() const;
     bool enable_mouse() const;
+    std::optional<std::string> custom_keyboard_config() const;
+    const Json::Value& domkey_mapping_config() const;
     bool enable_gnss_grpc_proxy() const;
     bool enable_bootanimation() const;
     bool enable_usb() const;
@@ -790,6 +792,10 @@ class CuttlefishConfig {
     void set_run_as_daemon(bool run_as_daemon);
     void set_enable_audio(bool enable);
     void set_enable_mouse(bool enable);
+    void set_custom_keyboard_config(
+        const std::string& custom_keyboard_config_json_path);
+    void set_domkey_mapping_config(
+        const std::string& domkey_mapping_config_json_path);
     void set_enable_usb(bool enable);
     void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
     void set_enable_bootanimation(const bool enable_bootanimation);

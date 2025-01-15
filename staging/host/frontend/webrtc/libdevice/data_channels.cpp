@@ -20,6 +20,7 @@
 
 #include "host/frontend/webrtc/libcommon/utils.h"
 #include "host/frontend/webrtc/libdevice/keyboard.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -142,8 +143,17 @@ class InputChannelHandler : public DataChannelHandler {
           ValidateJsonObject(evt, "keyboard",
                              {{"event_type", Json::ValueType::stringValue},
                               {"keycode", Json::ValueType::stringValue}}));
+      auto cvd_config =
+          CF_EXPECT(CuttlefishConfig::Get(), "CuttlefishConfig is null!");
+      auto instance = cvd_config->ForDefaultInstance();
+      Json::Value domkey_mapping_config_json = instance.domkey_mapping_config();
       auto down = evt["event_type"].asString() == std::string("keydown");
-      auto code = DomKeyCodeToLinux(evt["keycode"].asString());
+      auto keycode = evt["keycode"].asString();
+      uint16_t code = DomKeyCodeToLinux(keycode);
+      if (domkey_mapping_config_json.isMember("mappings") &&
+          domkey_mapping_config_json["mappings"].isMember(keycode)) {
+        code = domkey_mapping_config_json["mappings"][keycode].asUInt();
+      }
       CF_EXPECT(observer()->OnKeyboardEvent(code, down));
     } else if (event_type == "wheel") {
       CF_EXPECT(ValidateJsonObject(evt, "wheel",
