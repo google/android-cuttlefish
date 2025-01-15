@@ -133,19 +133,6 @@ class CvdFlagProxy {
     kString,
   };
 
-  static std::string ToString(const FlagType flag_type) {
-    switch (flag_type) {
-      case FlagType::kUnknown:
-        return "kUnknown";
-      case FlagType::kBool:
-        return "bool";
-      case FlagType::kInt32:
-        return "std::int32_t";
-      case FlagType::kString:
-        return "std::string";
-    }
-  }
-
   template <typename T>
   CvdFlagProxy(CvdFlag<T>&& flag) : flag_{std::move(flag)} {}
 
@@ -271,11 +258,8 @@ class FlagCollection {
 
   template <typename T>
   static Result<T> GetValue(const FlagValuePair& flag_and_value) {
-    std::string flag_type_string =
-        CvdFlagProxy::ToString(flag_and_value.flag.GetType());
     auto* value_ptr = std::get_if<T>(std::addressof(flag_and_value.value));
-    CF_EXPECT(value_ptr != nullptr,
-              "The actual flag type is " << flag_type_string);
+    CF_EXPECT(value_ptr != nullptr, "Incorrect flag type");
     return *value_ptr;
   }
 
