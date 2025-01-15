@@ -30,9 +30,9 @@ namespace selector {
 namespace {
 
 class ArgumentsLexer {
-  friend class ArgumentsLexerBuilder;
-
  public:
+  static Result<std::unique_ptr<ArgumentsLexer>> Build();
+
   Result<std::vector<ArgToken>> Tokenize(
       const std::vector<std::string>& args) const;
 
@@ -76,21 +76,6 @@ class ArgumentsLexer {
  *
  * Between flag tokens, there are "known" and "unknown" flag tokens.
  *
- */
-class ArgumentsLexerBuilder {
-  using FlagPatterns = ArgumentsLexer::FlagPatterns;
-
- public:
-  static Result<std::unique_ptr<ArgumentsLexer>> Build();
-
- private:
-  static Result<FlagPatterns> GenerateFlagPatterns(
-      const std::unordered_set<std::string>& known_flags);
-};
-
-}  // namespace
-
-/*
  * Eventually, we get two sets, each include strings start with "-" or "--".
  *
  * Say, the two sets are BaseSet and NoPrependedSet.
@@ -102,9 +87,12 @@ class ArgumentsLexerBuilder {
  * two sets to see if the token that is supposedly a flag is a known
  * flag.
  */
-Result<ArgumentsLexerBuilder::FlagPatterns>
-ArgumentsLexerBuilder::GenerateFlagPatterns(
-    const std::unordered_set<std::string>& known_flags) {
+Result<std::unique_ptr<ArgumentsLexer>> ArgumentsLexer::Build() {
+  // Change together: ParseCommonSelectorArguments in selector_common_parser.cpp
+  std::unordered_set<std::string> known_flags{SelectorFlags::kGroupName,
+                                              SelectorFlags::kInstanceName,
+                                              SelectorFlags::kVerbosity};
+
   FlagPatterns flag_patterns;
   for (const auto& non_bool_flag : known_flags) {
     const auto one_dash = "-" + non_bool_flag;
@@ -114,15 +102,7 @@ ArgumentsLexerBuilder::GenerateFlagPatterns(
     flag_patterns.value_patterns.insert(one_dash);
     flag_patterns.value_patterns.insert(two_dashes);
   }
-  return flag_patterns;
-}
 
-Result<std::unique_ptr<ArgumentsLexer>> ArgumentsLexerBuilder::Build() {
-  // Change together: ParseCommonSelectorArguments in selector_common_parser.cpp
-  std::unordered_set<std::string> known_flags{SelectorFlags::kGroupName,
-                                              SelectorFlags::kInstanceName,
-                                              SelectorFlags::kVerbosity};
-  auto flag_patterns = CF_EXPECT(GenerateFlagPatterns(known_flags));
   ArgumentsLexer* new_lexer = new ArgumentsLexer(std::move(flag_patterns));
   CF_EXPECT(new_lexer != nullptr,
             "Memory allocation for ArgumentsLexer failed.");
@@ -184,11 +164,11 @@ Result<ArgumentsLexer::FlagValuePair> ArgumentsLexer::Separate(
   return FlagValuePair{.flag_string = first_token, .value = second_token};
 }
 
+}  // namespace
+
 Result<std::vector<ArgToken>> TokenizeArguments(
     const std::vector<std::string>& args) {
-  ArgumentsLexerBuilder builder;
-
-  std::unique_ptr<ArgumentsLexer> lexer = CF_EXPECT(builder.Build());
+  std::unique_ptr<ArgumentsLexer> lexer = CF_EXPECT(ArgumentsLexer::Build());
   CF_EXPECT(lexer.get());
 
   return CF_EXPECT(lexer->Tokenize(args));
