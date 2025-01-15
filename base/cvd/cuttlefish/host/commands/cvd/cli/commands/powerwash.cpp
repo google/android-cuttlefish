@@ -22,9 +22,9 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/flag.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
@@ -51,25 +51,14 @@ constexpr char kPowerwashCmd[] = "powerwash";
 struct PowerwashOptions {
   int wait_for_launcher_seconds = 30;
   int boot_timeout_seconds = 500;
+
+  std::vector<Flag> Flags() {
+    return {
+        GflagsCompatFlag("wait_for_launcher", wait_for_launcher_seconds),
+        GflagsCompatFlag("boot_timeout", boot_timeout_seconds),
+    };
+  }
 };
-Result<PowerwashOptions> OptionsFromArgs(cvd_common::Args& args) {
-  PowerwashOptions ret;
-
-  CvdFlag<std::int32_t> wait_for_launcher_flag("wait_for_launcher");
-  auto wait_for_launcher_opt =
-      CF_EXPECT(wait_for_launcher_flag.FilterFlag(args));
-  if (wait_for_launcher_opt.has_value()) {
-    ret.wait_for_launcher_seconds = wait_for_launcher_opt.value();
-  }
-
-  CvdFlag<std::int32_t> boot_timeout_flag("wait_for_launcher");
-  auto boot_timeout_opt = CF_EXPECT(boot_timeout_flag.FilterFlag(args));
-  if (boot_timeout_opt.has_value()) {
-    ret.boot_timeout_seconds = boot_timeout_opt.value();
-  }
-
-  return ret;
-}
 
 class CvdDevicePowerwashCommandHandler : public CvdCommandHandler {
  public:
@@ -86,10 +75,13 @@ class CvdDevicePowerwashCommandHandler : public CvdCommandHandler {
       return {};
     }
 
-    auto [instance, _] =
+    auto [instance, unused] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                   "Unable to select an instance");
-    PowerwashOptions options = CF_EXPECT(OptionsFromArgs(subcmd_args));
+
+    PowerwashOptions options;
+    CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args));
+
     CF_EXPECT(instance.PowerWash(
         std::chrono::seconds(options.wait_for_launcher_seconds),
         std::chrono::seconds(options.boot_timeout_seconds)));
