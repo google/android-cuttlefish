@@ -119,6 +119,11 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(
       GflagsCompatFlag("enable_caching", build_api_flags.enable_caching)
           .Help("Whether to enable local fetch file caching or not"));
+  flags.emplace_back(
+      GflagsCompatFlag("max_cache_size_gb", build_api_flags.max_cache_size_gb)
+          .Help("Max allowed size(in gigabytes) of the local fetch file cache. "
+                " If the cache grows beyond this size it will be pruned after "
+                "the fetches complete."));
 
   CredentialFlags& credential_flags = build_api_flags.credential_flags;
   flags.emplace_back(
