@@ -628,8 +628,14 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     }
     crosvm_cmd.Cmd().AddParameter("--input=rotary[path=",
                                   instance.rotary_socket_path(), "]");
-    crosvm_cmd.Cmd().AddParameter("--input=keyboard[path=",
-                                  instance.keyboard_socket_path(), "]");
+    if (instance.custom_keyboard_config().has_value()) {
+      crosvm_cmd.Cmd().AddParameter(
+          "--input=custom[path=", instance.keyboard_socket_path(),
+          ",config-path=", instance.custom_keyboard_config().value(), "]");
+    } else {
+      crosvm_cmd.Cmd().AddParameter(
+          "--input=keyboard[path=", instance.keyboard_socket_path(), "]");
+    }
     crosvm_cmd.Cmd().AddParameter("--input=switches[path=",
                                   instance.switches_socket_path(), "]");
   }
