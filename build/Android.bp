@@ -358,6 +358,11 @@ cvd_host_ti50_emulator = [
     "ti50_emulator_x86_64_lib",
 ]
 
+cvd_host_keyboard_config = [
+    "desktop_keyboard.json",
+    "domkey_mapping.json",
+]
+
 prebuilt_etc_host {
     name: "cvd_avb_testkey_rsa2048",
     filename: "cvd_avb_testkey_rsa2048.pem",
@@ -455,6 +460,7 @@ cvd_host_package_customization {
                 cvd_host_acloud_data +
                 cvd_host_bootloader +
                 cvd_host_ti50_emulator +
+                cvd_host_keyboard_config +
                 cvd_host_swiftshader_files +
                 cvd_openwrt_images +
                 cvd_host_netsim_gui_assets +
