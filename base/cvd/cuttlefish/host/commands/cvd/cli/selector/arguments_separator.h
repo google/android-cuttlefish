@@ -49,23 +49,8 @@ struct SeparatedArguments {
  *  $ program_path/name <optional cvd-specific flags> \
  *                      subcmd <optional subcmd arguments>
  *
- * For the parser's sake, there are a few more rules.
+ * For the parser's sake, there are is another rule.
  *
- * 1. All the optional cvd-specific flags should be pre-registered. Usually,
- * the subcmd arguments do not have to be registered. However, cvd-specific
- * flags must be.
- *
- *  E.g. "--clean" is the only registered cvd-specific flag, which happened
- *      to be bool.
- *       These are okay:
- *         cvd --clean start --never-exist-flag
- *         cvd --noclean stop
- *         cvd start
- *
- *       However, this is not okay:
- *        cvd --daemon start
- *
- *  2. --
  *  E.g. cvd --clean start --have --some --args -- a b c d e
  *  -- is basically for subcommands. cvd itself does not use it.
  *  If -- is within cvd arguments, it is ill-formatted. If it is within

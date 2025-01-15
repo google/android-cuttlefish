@@ -34,18 +34,6 @@ namespace cuttlefish {
 using selector::SeparateArguments;
 using selector::SeparatedArguments;
 
-/* the very first command line parser
- *
- * Being aware of valid subcommands and cvd-specific commands, it will
- * separate the command line arguments into:
- *
- *  1. program path/name
- *  2. cvd-specific arguments
- *     a) selector flags
- *     b) non-selector flags
- *  3. subcommand
- *  4. subcommand arguments
- */
 Result<cvd_common::Args> ExtractCvdArgs(cvd_common::Args& args) {
   CF_EXPECT(!args.empty());
 
