@@ -31,7 +31,7 @@ namespace {
 
 class ArgumentsLexer {
  public:
-  static Result<std::unique_ptr<ArgumentsLexer>> Build();
+  static Result<ArgumentsLexer> Build();
 
   Result<std::vector<ArgToken>> Tokenize(
       const std::vector<std::string>& args) const;
@@ -87,7 +87,7 @@ class ArgumentsLexer {
  * two sets to see if the token that is supposedly a flag is a known
  * flag.
  */
-Result<std::unique_ptr<ArgumentsLexer>> ArgumentsLexer::Build() {
+Result<ArgumentsLexer> ArgumentsLexer::Build() {
   // Change together: ParseCommonSelectorArguments in selector_common_parser.cpp
   std::unordered_set<std::string> known_flags{SelectorFlags::kGroupName,
                                               SelectorFlags::kInstanceName,
@@ -103,10 +103,7 @@ Result<std::unique_ptr<ArgumentsLexer>> ArgumentsLexer::Build() {
     flag_patterns.value_patterns.insert(two_dashes);
   }
 
-  ArgumentsLexer* new_lexer = new ArgumentsLexer(std::move(flag_patterns));
-  CF_EXPECT(new_lexer != nullptr,
-            "Memory allocation for ArgumentsLexer failed.");
-  return std::unique_ptr<ArgumentsLexer>{new_lexer};
+  return ArgumentsLexer(std::move(flag_patterns));
 }
 
 ArgumentsLexer::ArgumentsLexer(FlagPatterns&& flag_patterns)
@@ -168,10 +165,9 @@ Result<ArgumentsLexer::FlagValuePair> ArgumentsLexer::Separate(
 
 Result<std::vector<ArgToken>> TokenizeArguments(
     const std::vector<std::string>& args) {
-  std::unique_ptr<ArgumentsLexer> lexer = CF_EXPECT(ArgumentsLexer::Build());
-  CF_EXPECT(lexer.get());
+  ArgumentsLexer lexer = CF_EXPECT(ArgumentsLexer::Build());
 
-  return CF_EXPECT(lexer->Tokenize(args));
+  return CF_EXPECT(lexer.Tokenize(args));
 }
 
 }  // namespace selector
