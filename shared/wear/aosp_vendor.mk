@@ -27,7 +27,6 @@ PRODUCT_PACKAGES += \
     CellBroadcastAppPlatform \
     CellBroadcastServiceModulePlatform \
     com.android.tethering \
-    InProcessNetworkStack \
 
 PRODUCT_MINIMIZE_JAVA_DEBUG_INFO := true
 
