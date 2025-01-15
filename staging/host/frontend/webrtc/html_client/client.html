@@ -42,6 +42,7 @@
             <button id='home_btn' title='Home' disabled='true' class='material-icons'>home</button>
             <button id='menu_btn' title='Menu' disabled='true' class='material-icons'>menu</button>
             <button id='mouse_btn' title='Mouse' disabled='true' style="display:none" class='material-icons'>mouse</button>
+            <button id='keyboard-modal-button' title='keyboard console' class='material-icons'>keyboard</button>
             <button id='touchpad-modal-button' title='Touchpads' class='material-icons'>touch_app</button>
             <button id='rotate_left_btn' title='Rotate left' disabled='true' class='material-icons' data-adb="true">rotate_90_degrees_ccw</button>
             <button id='rotate_right_btn' title='Rotate right' disabled='true' class='material-icons' data-adb="true">rotate_90_degrees_cw</button>
@@ -201,6 +202,29 @@
               </div>
 
       </div>
+      <div id='keyboard-modal' class='modal-wrapper'>
+
+        <!-- keyboard-prompt-modal modal -->
+        <div id='keyboard-prompt-modal' class='modal'>
+          <div id='keyboard-prompt-modal-header' class='modal-header'>
+            <h2>Keyboard</h2>
+            <button id='keyboard-prompt-modal-close' title='Close' class='material-icons modal-close'>close</button>
+          </div>
+          <div>
+            <div id='keyboard-prompt-text' class='keyboard-text'>
+              <div class='function-key-button'>
+                <button id='shift-button' title='Shift' class='modal-button-highlight'>Shift</button>
+                <button id='alt-button' title='Alt' class='modal-button-highlight'>Alt</button>
+                <button id='ctrl-button' title='Ctrl' class='modal-button-highlight'>Ctrl</button>
+              </div>
+              <hr>
+              <div class='keyboard-button'>
+                <button id='tab-button' title='Tab' class='modal-button-highlight'>Tab</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div id='rotation-modal' class='modal'>
         <div id='rotation-modal-header' class='modal-header'>
             <h2>Rotation sensors</h2>
@@ -258,6 +282,7 @@
       </div>
       <script src="js/adb.js"></script>
       <script src="js/location.js"></script>
+      <script src="js/keyboard.js"></script>
       <script src="js/rootcanal.js"></script>
       <script src="js/cf_webrtc.js" type="module"></script>
       <script src="js/controls.js"></script>
