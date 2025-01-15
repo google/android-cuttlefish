@@ -61,6 +61,16 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   void OnDataRegisterStateChanged();
   void OnSignalStrengthChanged();
 
+  enum ModemTechnology {
+    M_MODEM_TECH_GSM = 1 << 0,
+    M_MODEM_TECH_WCDMA = 1 << 1,
+    M_MODEM_TECH_CDMA = 1 << 2,
+    M_MODEM_TECH_EVDO = 1 << 3,
+    M_MODEM_TECH_TDSCDMA = 1 << 4,
+    M_MODEM_TECH_LTE = 1 << 5,
+    M_MODEM_TECH_NR = 1 << 6,
+  };
+
   enum RegistrationState {
     NET_REGISTRATION_UNREGISTERED = 0,
     NET_REGISTRATION_HOME         = 1,
@@ -274,15 +284,6 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   NetworkRegistrationStatus voice_registration_status_;
   NetworkRegistrationStatus data_registration_status_;
 
-  enum ModemTechnology {
-    M_MODEM_TECH_GSM    = 1 << 0,
-    M_MODEM_TECH_WCDMA  = 1 << 1,
-    M_MODEM_TECH_CDMA   = 1 << 2,
-    M_MODEM_TECH_EVDO   = 1 << 3,
-    M_MODEM_TECH_TDSCDMA= 1 << 4,
-    M_MODEM_TECH_LTE    = 1 << 5,
-    M_MODEM_TECH_NR     = 1 << 6,
-  };
   ModemTechnology current_network_mode_;
   int preferred_network_mode_;
   int modem_radio_capability_;
