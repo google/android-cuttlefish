@@ -16,6 +16,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>
@@ -23,6 +24,7 @@
 #include <android-base/logging.h>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/cache/cache.h"
 #include "host/libs/web/android_build_api.h"
 #include "host/libs/web/android_build_string.h"
 #include "host/libs/web/cas/cas_downloader.h"
@@ -69,6 +71,7 @@ struct BuildApiFlags {
   bool external_dns_resolver = kDefaultExternalDnsResolver;
   std::string api_base_url = kAndroidBuildServiceUrl;
   bool enable_caching = kDefaultEnableCaching;
+  std::size_t max_cache_size_gb = kDefaultCacheSizeGb;
   CasDownloaderFlags cas_downloader_flags;
 };
 

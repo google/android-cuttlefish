@@ -23,6 +23,8 @@
 
 namespace cuttlefish {
 
+inline constexpr std::size_t kDefaultCacheSizeGb = 25;
+
 Result<std::string> EmptyCache(const std::string& cache_directory);
 Result<std::string> GetCacheInfo(const std::string& cache_directory,
                                  bool json_formatted);

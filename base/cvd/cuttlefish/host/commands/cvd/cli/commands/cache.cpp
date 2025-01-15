@@ -39,8 +39,6 @@ namespace cuttlefish {
 
 namespace {
 
-constexpr int kDefaultCacheSizeGB = 25;
-
 constexpr char kSummaryHelpText[] = "Manage the files cached by cvd";
 
 enum class Action {
@@ -51,7 +49,7 @@ enum class Action {
 
 struct CacheArguments {
   Action action = Action::Info;
-  std::size_t allowed_size_GB = kDefaultCacheSizeGB;
+  std::size_t allowed_size_gb = kDefaultCacheSizeGb;
   bool json_formatted = false;
 };
 
@@ -82,7 +80,7 @@ Result<CacheArguments> ProcessArguments(
   };
 
   std::vector<Flag> flags;
-  flags.emplace_back(GflagsCompatFlag("allowed_size_GB", result.allowed_size_GB)
+  flags.emplace_back(GflagsCompatFlag("allowed_size_gb", result.allowed_size_gb)
                          .Help("Allowed size of the cache during prune "
                                "operation, in gigabytes."));
   flags.emplace_back(GflagsCompatFlag("json", result.json_formatted)
@@ -122,9 +120,9 @@ Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
       break;
     case Action::Prune:
       std::cout << CF_EXPECTF(
-          PruneCache(cache_directory, arguments.allowed_size_GB),
+          PruneCache(cache_directory, arguments.allowed_size_gb),
           "Error pruning cache at {} to {}GB", cache_directory,
-          arguments.allowed_size_GB);
+          arguments.allowed_size_gb);
       break;
   }
 
@@ -146,13 +144,13 @@ Example usage:
     cvd cache info --json - the same as above, but in JSON format
 
     cvd cache prune - caps the cache at the default size ({}GB)
-    cvd cache prune --allowed_size_GB=<n> - caps the cache at the given size
+    cvd cache prune --allowed_size_gb=<n> - caps the cache at the given size
 
 **Notes**:
     - info and prune round the cache size up to the nearest gigabyte
     - prune uses last modification time to remove oldest files first
 )",
-                     kDefaultCacheSizeGB);
+                     kDefaultCacheSizeGb);
 }
 
 }  // namespace

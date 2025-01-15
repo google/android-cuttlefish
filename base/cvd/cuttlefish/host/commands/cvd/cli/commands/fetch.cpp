@@ -29,10 +29,12 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/tee_logging.h"
+#include "host/commands/cvd/cache/cache.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 
@@ -60,7 +62,15 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   ScopedTeeLogger logger(
       LogToStderrAndFiles({log_file}, "", metadata_level, flags.verbosity));
 
-  CF_EXPECT(FetchCvdMain(flags));
+  Result<void> result = FetchCvdMain(flags);
+  if (flags.build_api_flags.enable_caching) {
+    const std::string cache_directory = PerUserCacheDir();
+    LOG(INFO) << CF_EXPECTF(
+        PruneCache(cache_directory, flags.build_api_flags.max_cache_size_gb),
+        "Error pruning cache at {} to {}GB", cache_directory,
+        flags.build_api_flags.max_cache_size_gb);
+  }
+  CF_EXPECT(std::move(result));
   return {};
 }
 
