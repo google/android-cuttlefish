@@ -267,6 +267,33 @@ body {
 .location-button {
   text-align: center;
 }
+#shift-button {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+#shift-button.active {
+  background-color: #0000ff;
+  color: white;
+}
+#ctrl-button {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+#ctrl-button.active {
+  background-color: #0000ff;
+  color: white;
+}
+#alt-button {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+#alt-button.active {
+  background-color: #0000ff;
+  color: white;
+}
 .sensors{
   position: sticky;
   right: 0;
