@@ -100,3 +100,10 @@ prebuilt_usr_share_host {
     filename: "mouse.js",
     sub_dir: "webrtc/assets/js",
 }
+
+prebuilt_usr_share_host {
+    name: "webrtc_keyboard.js",
+    src: "js/keyboard.js",
+    filename: "keyboard.js",
+    sub_dir: "webrtc/assets/js",
+}
