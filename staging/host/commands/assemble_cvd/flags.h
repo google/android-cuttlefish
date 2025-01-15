@@ -40,6 +40,8 @@ struct GuestConfig {
   bool prefer_drm_virgl_when_supported = false;
   bool mouse_supported = false;
   std::string ti50_emulator;
+  std::optional<std::string> custom_keyboard_config;
+  std::optional<std::string> domkey_mapping_config;
 };
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults();

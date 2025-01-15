@@ -710,6 +710,20 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     guest_config.mouse_supported =
         res_mouse_support.ok() && res_mouse_support.value() == "supported";
 
+    auto res_custom_keyboard_config = GetAndroidInfoConfig(
+        instance_android_info_txt, "custom_keyboard_config");
+    if (res_custom_keyboard_config.ok()) {
+      guest_config.custom_keyboard_config =
+          DefaultHostArtifactsPath(res_custom_keyboard_config.value());
+    }
+
+    auto res_domkey_mapping_config = GetAndroidInfoConfig(
+        instance_android_info_txt, "domkey_mapping_config");
+    if (res_domkey_mapping_config.ok()) {
+      guest_config.domkey_mapping_config =
+          DefaultHostArtifactsPath(res_domkey_mapping_config.value());
+    }
+
     auto res_bgra_support = GetAndroidInfoConfig(instance_android_info_txt,
                                                  "supports_bgra_framebuffers");
     guest_config.supports_bgra_framebuffers =
@@ -1433,6 +1447,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_use_pmem(use_pmem_vec[instance_index]);
     instance.set_bootconfig_supported(guest_configs[instance_index].bootconfig_supported);
     instance.set_enable_mouse(guest_configs[instance_index].mouse_supported);
+    if (guest_configs[instance_index].custom_keyboard_config.has_value()) {
+      instance.set_custom_keyboard_config(
+          guest_configs[instance_index].custom_keyboard_config.value());
+    }
+    if (guest_configs[instance_index].domkey_mapping_config.has_value()) {
+      instance.set_domkey_mapping_config(
+          guest_configs[instance_index].domkey_mapping_config.value());
+    }
     instance.set_filename_encryption_mode(
       guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
     instance.set_use_allocd(use_allocd_vec[instance_index]);
