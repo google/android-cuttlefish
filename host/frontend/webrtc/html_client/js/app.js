@@ -255,6 +255,8 @@ class DeviceControlApp {
     createModalButton(
         'location-set-cancel', 'location-prompt-modal', 'location-set-modal-close',
         'location-set-modal');
+    createModalButton('keyboard-modal-button', 'keyboard-prompt-modal',
+        'keyboard-prompt-modal-close');
     positionModal('rotation-modal-button', 'rotation-modal');
     positionModal('device-details-button', 'bluetooth-modal');
     positionModal('device-details-button', 'bluetooth-prompt');
@@ -267,6 +269,8 @@ class DeviceControlApp {
     positionModal('device-details-button', 'location-prompt-modal');
     positionModal('device-details-button', 'location-set-modal');
     positionModal('device-details-button', 'locations-import-modal');
+
+    positionModal('device-details-button', 'keyboard-prompt-modal');
 
     createButtonListener('bluetooth-prompt-list', null, this.#deviceConnection,
       evt => this.#onRootCanalCommand(this.#deviceConnection, "list", evt));
@@ -338,6 +342,8 @@ class DeviceControlApp {
       // Enable mouse button conditionally.
       enableMouseButton(this.#deviceConnection);
     }
+
+    enableKeyboardRewriteButton(this.#deviceConnection);
 
     // Set up displays
     this.#updateDeviceDisplays();
