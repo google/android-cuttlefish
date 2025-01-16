@@ -16,16 +16,11 @@
 
 #pragma once
 
-#include <memory>
 #include <optional>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/selector/arguments_lexer.h"
 
 namespace cuttlefish {
 namespace selector {
