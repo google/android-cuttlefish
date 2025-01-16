@@ -16,31 +16,26 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/command_sequence.h"
-#include "host/commands/cvd/instances/instance_lock.h"
-#include "host/commands/cvd/instances/instance_manager.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
+#include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 
 class RequestContext {
  public:
-  RequestContext(InstanceLockFileManager& instance_lockfile_manager,
-                 InstanceManager& instance_manager);
+  RequestContext(InstanceManager& instance_manager);
 
   Result<CvdCommandHandler*> Handler(const CommandRequest& request);
 
  private:
-  void InstantiateHandlers();
-
   std::vector<std::unique_ptr<CvdCommandHandler>> request_handlers_;
-  InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
-  InstanceLockFileManager lock_file_manager_;
   CommandSequenceExecutor command_sequence_executor_;
 };
 

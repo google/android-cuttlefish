@@ -16,17 +16,19 @@
 
 #pragma once
 
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/instances/instance_lock.h"
 #include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 
 class Cvd {
  public:
-  Cvd(InstanceLockFileManager& instance_lockfile_manager,
-      InstanceManager& instance_manager);
+  Cvd(InstanceManager& instance_manager);
 
   Result<void> HandleCommand(
       const std::vector<std::string>& cvd_process_args,
@@ -42,7 +44,6 @@ class Cvd {
     const std::unordered_map<std::string, std::string>& env);
 
  private:
-  InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
 };
 
