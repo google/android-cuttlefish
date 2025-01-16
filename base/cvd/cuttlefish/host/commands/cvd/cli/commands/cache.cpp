@@ -18,6 +18,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -25,6 +26,7 @@
 
 #include <android-base/logging.h>
 #include <fmt/format.h>
+#include <json/json.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
@@ -109,21 +111,39 @@ Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
       CF_EXPECT(ProcessArguments(request.SubcommandArguments()));
   std::string cache_directory = PerUserCacheDir();
   switch (arguments.action) {
-    case Action::Empty:
-      std::cout << CF_EXPECTF(EmptyCache(cache_directory),
-                              "Error emptying cache at {}", cache_directory);
+    case Action::Empty: {
+      CF_EXPECTF(EmptyCache(cache_directory), "Error emptying cache at {}",
+                 cache_directory);
+      fmt::print("Cache at \"{}\" has been emptied\n", cache_directory);
       break;
-    case Action::Info:
-      std::cout << CF_EXPECTF(
-          GetCacheInfo(cache_directory, arguments.json_formatted),
-          "Error retrieving info of cache at {}", cache_directory);
+    }
+    case Action::Info: {
+      const std::size_t cache_size =
+          CF_EXPECTF(GetCacheSize(cache_directory),
+                     "Error retrieving size of cache at {}", cache_directory);
+      if (arguments.json_formatted) {
+        Json::Value json_output(Json::objectValue);
+        json_output["path"] = cache_directory;
+        json_output["size_in_GB"] = std::to_string(cache_size);
+        fmt::print("{}", json_output.toStyledString());
+      } else {
+        fmt::print("path:{}\nsize in GB:{}\n", cache_directory, cache_size);
+      }
       break;
-    case Action::Prune:
-      std::cout << CF_EXPECTF(
-          PruneCache(cache_directory, arguments.allowed_size_gb),
-          "Error pruning cache at {} to {}GB", cache_directory,
-          arguments.allowed_size_gb);
+    }
+    case Action::Prune: {
+      const PruneResult result =
+          CF_EXPECTF(PruneCache(cache_directory, arguments.allowed_size_gb),
+                     "Error pruning cache at {} to {}GB", cache_directory,
+                     arguments.allowed_size_gb);
+      if (result.before > result.after) {
+        fmt::print("Cache pruned from {}GB down to {}GB\n", result.before,
+                   result.after);
+      }
+      fmt::print("Cache at \"{}\": ~{}GB of {}GB max\n", cache_directory,
+                 result.after, arguments.allowed_size_gb);
       break;
+    }
   }
 
   return {};

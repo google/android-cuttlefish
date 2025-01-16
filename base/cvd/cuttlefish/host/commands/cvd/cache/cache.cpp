@@ -26,7 +26,6 @@
 
 #include <android-base/strings.h>
 #include <fmt/format.h>
-#include <json/json.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
@@ -70,37 +69,32 @@ Result<std::vector<std::string>> CacheFilesDesc(
 
 }  // namespace
 
-Result<std::string> EmptyCache(const std::string& cache_directory) {
+Result<void> EmptyCache(const std::string& cache_directory) {
   CF_EXPECT(EnsureDirectoryExists(cache_directory));
   CF_EXPECT(RecursivelyRemoveDirectory(cache_directory));
   CF_EXPECT(EnsureDirectoryExists(cache_directory));
-  return fmt::format("Cache at \"{}\" has been emptied\n", cache_directory);
+  return {};
 }
 
-Result<std::string> GetCacheInfo(const std::string& cache_directory,
-                                 const bool json_formatted) {
+Result<std::size_t> GetCacheSize(const std::string& cache_directory) {
   CF_EXPECT(EnsureDirectoryExists(cache_directory));
-  std::size_t cache_size = CF_EXPECT(GetDiskUsageGigabytes(cache_directory));
-  if (json_formatted) {
-    Json::Value json_output(Json::objectValue);
-    json_output["path"] = cache_directory;
-    json_output["size_in_GB"] = std::to_string(cache_size);
-    return json_output.toStyledString();
-  }
-  return fmt::format("path:{}\nsize in GB:{}\n", cache_directory, cache_size);
+  return CF_EXPECT(GetDiskUsageGigabytes(cache_directory));
 }
 
-Result<std::string> PruneCache(const std::string& cache_directory,
-                               const std::size_t allowed_size_GB) {
+Result<PruneResult> PruneCache(const std::string& cache_directory,
+                               const std::size_t allowed_size_gb) {
   CF_EXPECT(EnsureDirectoryExists(cache_directory));
   std::size_t cache_size = CF_EXPECT(GetDiskUsageGigabytes(cache_directory));
+  PruneResult result{
+      .before = cache_size,
+  };
   // Descending because elements are removed from the back
   std::vector<std::string> cache_files =
       CF_EXPECT(CacheFilesDesc(cache_directory));
-  while (cache_size > allowed_size_GB) {
+  while (cache_size > allowed_size_gb) {
     CHECK(!cache_files.empty()) << fmt::format(
         "Cache size is {} of {}, but there are no more files for pruning.",
-        cache_size, allowed_size_GB);
+        cache_size, allowed_size_gb);
 
     std::string next = cache_files.back();
     cache_files.pop_back();
@@ -109,8 +103,8 @@ Result<std::string> PruneCache(const std::string& cache_directory,
     CF_EXPECT(RecursivelyRemoveDirectory(next));
     cache_size = CF_EXPECT(GetDiskUsageGigabytes(cache_directory));
   }
-  return fmt::format("Cache at \"{}\": ~{}GB of {}GB max\n", cache_directory,
-                     cache_size, allowed_size_GB);
+  result.after = cache_size;
+  return result;
 }
 
 }  // namespace cuttlefish
