@@ -115,7 +115,6 @@ cc_library(
         "cli/selector/device_selector_utils.cpp",
         "cli/selector/selector.cpp",
         "cli/selector/selector_common_parser.cpp",
-        "cli/selector/selector_constants.cpp",
         "cli/selector/start_selector_parser.cpp",
         "cli/utils.cpp",
         "cvd.cpp",
