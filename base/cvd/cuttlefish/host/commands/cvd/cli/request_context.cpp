@@ -113,9 +113,14 @@ Result<CvdCommandHandler*> RequestHandler(
       compatible_handlers.push_back(handler.get());
     }
   }
-  CF_EXPECT(compatible_handlers.size() == 1,
-            "Expected exactly one handler for message, found "
-                << compatible_handlers.size());
+  CF_EXPECT(compatible_handlers.size() < 2,
+            "The command matched multiple handlers which should not happen.  "
+            "Please open a bug with the cvd/Cuttlefish team and include the "
+            "exact command that raised the error so it can be fixed.");
+  CF_EXPECTF(compatible_handlers.size() == 1,
+             "Unable to find a matching command for \"cvd {}\".  Maybe there "
+             "is a typo?\nRun `cvd help` for a list of commands.",
+             request.Subcommand());
   return compatible_handlers[0];
 }
 
