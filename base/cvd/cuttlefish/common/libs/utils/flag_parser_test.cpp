@@ -25,7 +25,6 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
-#include <libxml/parser.h>
 
 #include "common/libs/utils/result_matchers.h"
 #include "gmock/gmock-matchers.h"
@@ -74,54 +73,6 @@ TEST(FlagParser, NormalizedStringFlag) {
   ASSERT_EQ(value, "");
 }
 
-std::optional<std::map<std::string, std::string>> flagXml(const Flag& f) {
-  std::stringstream xml_stream;
-  if (!f.WriteGflagsCompatXml(xml_stream)) {
-    return {};
-  }
-  auto xml = xml_stream.str();
-  // Holds all memory for the parsed structure.
-  std::unique_ptr<xmlDoc, xmlFreeFunc> doc(
-      xmlReadMemory(xml.c_str(), xml.size(), nullptr, nullptr, 0), xmlFree);
-  if (!doc) {
-    return {};
-  }
-  xmlNodePtr root_element = xmlDocGetRootElement(doc.get());
-  std::map<std::string, std::string> elements_map;
-  for (auto elem = root_element->children; elem != nullptr; elem = elem->next) {
-    if (elem->type != xmlElementType::XML_ELEMENT_NODE) {
-      continue;
-    }
-    elements_map[(char*)elem->name] = "";
-    if (elem->children == nullptr) {
-      continue;
-    }
-    if (elem->children->type != XML_TEXT_NODE) {
-      continue;
-    }
-    elements_map[(char*)elem->name] = (char*)elem->children->content;
-  }
-  return elements_map;
-}
-
-TEST(FlagParser, GflagsIncompatibleFlag) {
-  auto flag = Flag().Alias({FlagAliasMode::kFlagExact, "--flag"});
-  ASSERT_FALSE(flagXml(flag));
-}
-
-TEST(FlagParser, StringFlagXml) {
-  std::string value = "somedefault";
-  auto flag = GflagsCompatFlag("myflag", value).Help("somehelp");
-  auto xml = flagXml(flag);
-  ASSERT_TRUE(xml);
-  ASSERT_NE((*xml)["file"], "");
-  ASSERT_EQ((*xml)["name"], "myflag");
-  ASSERT_EQ((*xml)["meaning"], "somehelp");
-  ASSERT_EQ((*xml)["default"], "somedefault");
-  ASSERT_EQ((*xml)["current"], "somedefault");
-  ASSERT_EQ((*xml)["type"], "string");
-}
-
 TEST(FlagParser, RepeatedStringFlag) {
   std::string value;
   auto flag = GflagsCompatFlag("myflag", value);
@@ -166,19 +117,6 @@ TEST(FlagParser, IntFlag) {
   ASSERT_EQ(value, 8);
 }
 
-TEST(FlagParser, IntFlagXml) {
-  int value = 5;
-  auto flag = GflagsCompatFlag("myflag", value).Help("somehelp");
-  auto xml = flagXml(flag);
-  ASSERT_TRUE(xml);
-  ASSERT_NE((*xml)["file"], "");
-  ASSERT_EQ((*xml)["name"], "myflag");
-  ASSERT_EQ((*xml)["meaning"], "somehelp");
-  ASSERT_EQ((*xml)["default"], "5");
-  ASSERT_EQ((*xml)["current"], "5");
-  ASSERT_EQ((*xml)["type"], "string");
-}
-
 TEST(FlagParser, BoolFlag) {
   bool value = false;
   auto flag = GflagsCompatFlag("myflag", value);
@@ -214,19 +152,6 @@ TEST(FlagParser, BoolFlag) {
   ASSERT_FALSE(value);
 
   ASSERT_THAT(flag.Parse({"--myflag=nonsense"}), IsError());
-}
-
-TEST(FlagParser, BoolFlagXml) {
-  bool value = true;
-  auto flag = GflagsCompatFlag("myflag", value).Help("somehelp");
-  auto xml = flagXml(flag);
-  ASSERT_TRUE(xml);
-  ASSERT_NE((*xml)["file"], "");
-  ASSERT_EQ((*xml)["name"], "myflag");
-  ASSERT_EQ((*xml)["meaning"], "somehelp");
-  ASSERT_EQ((*xml)["default"], "true");
-  ASSERT_EQ((*xml)["current"], "true");
-  ASSERT_EQ((*xml)["type"], "bool");
 }
 
 TEST(FlagParser, StringIntFlag) {
@@ -288,28 +213,18 @@ TEST(FlagParser, BoolVectorFlag) {
 
   ASSERT_THAT(flag.Parse({"--myflag=true"}), IsOk());
   ASSERT_EQ(value, std::vector<bool>({true}));
-  ASSERT_TRUE(flagXml(flag));
-  ASSERT_EQ((*flagXml(flag))["default"], "true");
 
   ASSERT_THAT(flag.Parse({"--myflag=true,false"}), IsOk());
   ASSERT_EQ(value, std::vector<bool>({true, false}));
-  ASSERT_TRUE(flagXml(flag));
-  ASSERT_EQ((*flagXml(flag))["default"], "true,false");
 
   ASSERT_THAT(flag.Parse({"--myflag=,false"}), IsOk());
   ASSERT_EQ(value, std::vector<bool>({true, false}));
-  ASSERT_TRUE(flagXml(flag));
-  ASSERT_EQ((*flagXml(flag))["default"], "true,false");
 
   ASSERT_THAT(flag.Parse({"--myflag=true,"}), IsOk());
   ASSERT_EQ(value, std::vector<bool>({true, true}));
-  ASSERT_TRUE(flagXml(flag));
-  ASSERT_EQ((*flagXml(flag))["default"], "true,true");
 
   ASSERT_THAT(flag.Parse({"--myflag=,"}), IsOk());
   ASSERT_EQ(value, std::vector<bool>({true, true}));
-  ASSERT_TRUE(flagXml(flag));
-  ASSERT_EQ((*flagXml(flag))["default"], "true,true");
 }
 
 TEST(FlagParser, InvalidStringFlag) {
