@@ -65,10 +65,16 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   Result<void> result = FetchCvdMain(flags);
   if (flags.build_api_flags.enable_caching) {
     const std::string cache_directory = PerUserCacheDir();
-    LOG(INFO) << CF_EXPECTF(
+    const PruneResult prune_result = CF_EXPECTF(
         PruneCache(cache_directory, flags.build_api_flags.max_cache_size_gb),
         "Error pruning cache at {} to {}GB", cache_directory,
         flags.build_api_flags.max_cache_size_gb);
+    if (prune_result.before > prune_result.after) {
+      LOG(INFO) << fmt::format(
+          "Cache at \"{}\" pruned from ~{}GB to ~{}GB of {}GB max size",
+          cache_directory, prune_result.before, prune_result.after,
+          flags.build_api_flags.max_cache_size_gb);
+    }
   }
   CF_EXPECT(std::move(result));
   return {};

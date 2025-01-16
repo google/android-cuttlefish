@@ -25,10 +25,14 @@ namespace cuttlefish {
 
 inline constexpr std::size_t kDefaultCacheSizeGb = 25;
 
-Result<std::string> EmptyCache(const std::string& cache_directory);
-Result<std::string> GetCacheInfo(const std::string& cache_directory,
-                                 bool json_formatted);
-Result<std::string> PruneCache(const std::string& cache_directory,
+struct PruneResult {
+  std::size_t before;
+  std::size_t after;
+};
+
+Result<void> EmptyCache(const std::string& cache_directory);
+Result<std::size_t> GetCacheSize(const std::string& cache_directory);
+Result<PruneResult> PruneCache(const std::string& cache_directory,
                                std::size_t allowed_size_GB);
 
 }  // namespace cuttlefish
