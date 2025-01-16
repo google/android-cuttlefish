@@ -60,7 +60,7 @@ impl TpmHmac {
 
     fn hkdf_expand(&self, info: &[u8], out_len: usize) -> Result<Vec<u8>, Error> {
         // HKDF expand: feed the derivation info into HMAC (using the TPM key) repeatedly.
-        let n = (out_len + SHA256_DIGEST_LEN - 1) / SHA256_DIGEST_LEN;
+        let n = out_len.div_ceil(SHA256_DIGEST_LEN);
         if n > 256 {
             return Err(km_err!(UnknownError, "overflow in hkdf"));
         }
