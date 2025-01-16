@@ -192,18 +192,6 @@ func CVDLogsDir(ctx cvd.CVDExecContext, groupName, name string) (string, error) 
 	return ins.InstanceDir + "/logs", nil
 }
 
-func HostBugReport(ctx cvd.CVDExecContext, paths IMPaths, out string) error {
-	group, err := cvdFleetFirstGroup(ctx)
-	if err != nil {
-		return err
-	}
-	if len(group.Instances) == 0 {
-		return operator.NewNotFoundError("no artifacts found", nil)
-	}
-	cmd := cvd.NewCommand(ctx, []string{"host_bugreport", "--output=" + out}, cvd.CommandOpts{})
-	return cmd.Run()
-}
-
 const (
 	// TODO(b/267525748): Make these values configurable.
 	mainBuildDefaultBranch = "aosp-main"

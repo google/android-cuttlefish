@@ -101,7 +101,6 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
 	router.Handle("/userartifacts/{dir}/{name}/:extract",
 		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
-	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{Config: c.Config}).Methods("POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -565,26 +564,6 @@ func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error
 		}
 	}()
 	return op, nil
-}
-
-type pullRuntimeArtifactsHandler struct {
-	Config Config
-}
-
-func (h *pullRuntimeArtifactsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("request:", r.Method, r.URL.Path)
-	filename := filepath.Join("/tmp/", "hostbugreport"+uuid.New().String())
-	defer func() {
-		if err := os.Remove(filename); err != nil {
-			log.Printf("error removing host bug report file %q: %v\n", filename, err)
-		}
-	}()
-	ctx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
-	if err := HostBugReport(ctx, h.Config.Paths, filename); err != nil {
-		replyJSONErr(w, err)
-		return
-	}
-	http.ServeFile(w, r, filename)
 }
 
 type getDebugVariablesHandler struct {
