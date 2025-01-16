@@ -120,7 +120,7 @@ cc_test(
         "files_test.cpp",
         "files_test_helper.cpp",
         "files_test_helper.h",
-        #"flag_parser_test.cpp",
+        "flag_parser_test.cpp",
         "proc_file_utils_test.cpp",
         "result_test.cpp",
         "unique_resource_allocator_test.cpp",
