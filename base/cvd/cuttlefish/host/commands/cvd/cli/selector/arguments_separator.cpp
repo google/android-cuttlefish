@@ -16,11 +16,9 @@
 
 #include "host/commands/cvd/cli/selector/arguments_separator.h"
 
-#include <deque>
-
 #include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
+#include "host/commands/cvd/cli/selector/selector_common_parser.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -41,65 +39,24 @@ Result<SeparatedArguments> SeparateArguments(
     const std::vector<std::string>& input_args) {
   CF_EXPECT(!input_args.empty());
 
-  std::vector<ArgToken> tokens_vec = CF_EXPECT(TokenizeArguments(input_args));
-  std::deque<ArgToken> tokens_queue(tokens_vec.begin(), tokens_vec.end());
-
-  // take program path/name
-  CF_EXPECT(!tokens_queue.empty() &&
-            tokens_queue.front().Type() == ArgType::kPositional);
-
   SeparatedArguments output;
-  output.prog_path = std::move(tokens_queue.front().Token());
-  tokens_queue.pop_front();
 
-  // break loop either if there is no token or
-  // the subcommand token is consumed
-  bool cvd_flags_mode = true;
-  while (!tokens_queue.empty() && cvd_flags_mode) {
-    const auto current = std::move(tokens_queue.front());
-    const auto current_type = current.Type();
-    const auto& current_token = current.Token();
-    tokens_queue.pop_front();
+  std::vector<std::string> args = input_args;
 
-    // look up next if any
-    std::optional<ArgToken> next;
-    if (!tokens_queue.empty()) {
-      next = tokens_queue.front();
-    }
+  output.prog_path = args[0];
+  args.erase(args.begin());
 
-    switch (current_type) {
-      case ArgType::kKnownValueFlag: {
-        output.cvd_args.emplace_back(current_token);
-        if (next && next->Type() == ArgType::kPositional) {
-          output.cvd_args.emplace_back(next->Token());
-          tokens_queue.pop_front();
-        }
-      } break;
-      case ArgType::kKnownFlagAndValue:
-      case ArgType::kKnownBoolFlag:
-      case ArgType::kKnownBoolNoFlag: {
-        output.cvd_args.emplace_back(current_token);
-      } break;
-      case ArgType::kPositional: {
-        output.sub_cmd = current.Token();
-        CF_EXPECT(output.sub_cmd != std::nullopt);
-        cvd_flags_mode = false;
-      } break;
-      case ArgType::kDoubleDash: {
-        return CF_ERR("`--` is not allowed within cvd specific flags.");
-      }
-      case ArgType::kUnknownFlag:
-      case ArgType::kError: {
-        return CF_ERR(current.Token()
-                      << " in cvd-specific flags is disallowed.");
-      }
-    }
+  // Mutates `args` to remove selector arguments
+  SelectorOptions selectors = CF_EXPECT(ParseCommonSelectorArguments(args));
+  output.cvd_args = selectors.AsArgs();
+
+  if (!args.empty()) {
+    output.sub_cmd = args[0];
+    args.erase(args.begin());
   }
-  while (!tokens_queue.empty()) {
-    auto token = std::move(tokens_queue.front().Token());
-    output.sub_cmd_args.emplace_back(std::move(token));
-    tokens_queue.pop_front();
-  }
+
+  output.sub_cmd_args = args;
+
   return output;
 }
 

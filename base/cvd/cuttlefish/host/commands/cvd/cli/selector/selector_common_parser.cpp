@@ -82,7 +82,6 @@ Result<SelectorOptions> HandleNameOpts(
 
 Result<SelectorOptions> ParseCommonSelectorArguments(
     cvd_common::Args& args) {
-  // Change together: ArgumentsLexerBuilder::Build in arguments_lexer.cpp
   // Handling name-related options
   std::optional<std::string> group_name_opt;
   Flag group_name_flag =
@@ -100,7 +99,8 @@ Result<SelectorOptions> ParseCommonSelectorArguments(
             return {};
           });
 
-  CF_EXPECT(ConsumeFlags({group_name_flag, instance_name_flag}, args));
+  CF_EXPECT(
+      ConsumeFlagsConstrained({group_name_flag, instance_name_flag}, args));
 
   return CF_EXPECT(HandleNameOpts(group_name_opt, instance_name_opt));
 }
