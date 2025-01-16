@@ -16,7 +16,6 @@
 
 #include "host/commands/cvd/cli/frontline_parser.h"
 
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -24,9 +23,7 @@
 #include <android-base/file.h>
 #include <android-base/strings.h>
 
-#include "host/commands/cvd/cli/flag.h"
 #include "host/commands/cvd/cli/selector/arguments_separator.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
 #include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
