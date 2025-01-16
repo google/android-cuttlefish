@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/cli/request_context.h"
 
+#include <memory>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -52,16 +53,12 @@
 #include "host/commands/cvd/cli/commands/stop.h"
 #include "host/commands/cvd/cli/commands/try_acloud.h"
 #include "host/commands/cvd/cli/commands/version.h"
-#include "host/commands/cvd/instances/instance_lock.h"
 #include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 
-RequestContext::RequestContext(
-    InstanceLockFileManager& instance_lockfile_manager,
-    InstanceManager& instance_manager)
-    : instance_lockfile_manager_(instance_lockfile_manager),
-      instance_manager_(instance_manager),
+RequestContext::RequestContext(InstanceManager& instance_manager)
+    : instance_manager_(instance_manager),
       command_sequence_executor_(this->request_handlers_) {
   request_handlers_.emplace_back(NewAcloudCommand(command_sequence_executor_));
   request_handlers_.emplace_back(NewAcloudMixSuperImageCommand());
@@ -104,7 +101,7 @@ RequestContext::RequestContext(
 
 Result<CvdCommandHandler*> RequestContext::Handler(
     const CommandRequest& request) {
-  return RequestHandler(request, request_handlers_);
+  return CF_EXPECT(RequestHandler(request, request_handlers_));
 }
 
 Result<CvdCommandHandler*> RequestHandler(
