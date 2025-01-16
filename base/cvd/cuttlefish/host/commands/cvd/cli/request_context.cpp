@@ -17,9 +17,11 @@
 #include "host/commands/cvd/cli/request_context.h"
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
@@ -56,6 +58,30 @@
 #include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
+
+namespace {
+
+std::vector<std::string> GetPossibleCommands(
+    const CommandRequest& request,
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers) {
+  std::vector<std::string> possibilities;
+  if (request.Subcommand().empty()) {
+    return possibilities;
+  }
+
+  for (auto& handler : handlers) {
+    for (const std::string& command : handler->CmdList()) {
+      if (!command.empty() &&
+          android::base::StartsWith(command, request.Subcommand().front())) {
+        possibilities.push_back(command);
+        break;
+      }
+    }
+  }
+  return possibilities;
+}
+
+}  //  namespace
 
 RequestContext::RequestContext(InstanceManager& instance_manager)
     : instance_manager_(instance_manager),
@@ -113,14 +139,25 @@ Result<CvdCommandHandler*> RequestHandler(
       compatible_handlers.push_back(handler.get());
     }
   }
+
   CF_EXPECT(compatible_handlers.size() < 2,
             "The command matched multiple handlers which should not happen.  "
             "Please open a bug with the cvd/Cuttlefish team and include the "
             "exact command that raised the error so it can be fixed.");
-  CF_EXPECTF(compatible_handlers.size() == 1,
-             "Unable to find a matching command for \"cvd {}\".  Maybe there "
-             "is a typo?\nRun `cvd help` for a list of commands.",
-             request.Subcommand());
+
+  if (compatible_handlers.size() != 1) {
+    const std::vector<std::string> possible_commands =
+        GetPossibleCommands(request, handlers);
+    std::string addendum;
+    if (!possible_commands.empty()) {
+      addendum = fmt::format("\n\nDid you mean one of:\n\t{}",
+                             fmt::join(possible_commands, "\n\t"));
+    }
+    return CF_ERRF(
+        "Unable to find a matching command for \"cvd {}\".\nMaybe there "
+        "is a typo?  Run `cvd help` for a list of commands.{}",
+        request.Subcommand(), addendum);
+  }
   return compatible_handlers[0];
 }
 
