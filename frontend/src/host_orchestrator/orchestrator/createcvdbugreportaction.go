@@ -49,6 +49,8 @@ func NewCreateCVDBugReportAction(opts CreateCVDBugReportActionOpts) *CreateCVDBu
 	}
 }
 
+const BugReportZipFileName = "cvd_bugreport.zip"
+
 func (a *CreateCVDBugReportAction) Run() (apiv1.Operation, error) {
 	if a.group == "" {
 		return apiv1.Operation{}, operator.NewBadRequestError("empty group", nil)
@@ -61,25 +63,25 @@ func (a *CreateCVDBugReportAction) Run() (apiv1.Operation, error) {
 		return apiv1.Operation{}, err
 	}
 	op := a.om.New()
-	go a.createBugReport(uuid, a.group, op)
+	go func(uuid string, op apiv1.Operation) {
+		dst := filepath.Join(a.paths.CVDBugReportsDir, uuid, BugReportZipFileName)
+		result := &OperationResult{}
+		if err := execBugReportCommand(a.execContext, a.group, dst); err != nil {
+			result.Error = operator.NewInternalError("`cvd host_bugreport` failed: ", err)
+		} else {
+			result.Value = uuid
+		}
+		if err := a.om.Complete(op.Name, result); err != nil {
+			log.Printf("error completing operation %q: %v", op.Name, err)
+		}
+	}(uuid, op)
 	return op, nil
 }
 
-const BugReportZipFileName = "cvd_bugreport.zip"
-
-func (a *CreateCVDBugReportAction) createBugReport(uuid, group string, op apiv1.Operation) {
-	result := &OperationResult{}
-	filename := filepath.Join(a.paths.CVDBugReportsDir, uuid, "cvd_bugreport.zip")
+func execBugReportCommand(exec cvd.CVDExecContext, group, dst string) error {
 	sel := &CVDSelector{Group: group}
 	args := sel.ToCVDCLI()
-	args = append(args, []string{"host_bugreport", "--output=" + filename}...)
-	cmd := cvd.NewCommand(a.execContext, args, cvd.CommandOpts{})
-	if err := cmd.Run(); err != nil {
-		result.Error = operator.NewInternalError("`cvd host_bugreport` failed: ", err)
-	} else {
-		result.Value = uuid
-	}
-	if err := a.om.Complete(op.Name, result); err != nil {
-		log.Printf("error completing operation %q: %v", op.Name, err)
-	}
+	args = append(args, []string{"host_bugreport", "--output=" + dst}...)
+	cmd := cvd.NewCommand(exec, args, cvd.CommandOpts{})
+	return cmd.Run()
 }
