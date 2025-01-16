@@ -34,6 +34,7 @@
 #include "ziparchive/zip_writer.h"
 
 DEFINE_string(output, "host_bugreport.zip", "Where to write the output");
+DEFINE_bool(include_adb_bugreport, false, "Includes device's `adb bugreport`.");
 
 namespace cuttlefish {
 namespace {
@@ -188,7 +189,7 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
       }
     }
 
-    {
+    if (FLAGS_include_adb_bugreport) {
       // TODO(b/359657254) Create the `adb bugreport` asynchronously.
       std::string device_br_dir = TempDir() + "/cvd_dbrXXXXXX";
       CF_EXPECTF(mkdtemp(device_br_dir.data()) != nullptr,
