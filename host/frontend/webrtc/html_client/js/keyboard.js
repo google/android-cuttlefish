@@ -25,7 +25,6 @@ function processButton(buttonName, keyCode, dc) {
     dc.sendKeyEvent(keyCode, "keyup");
   }
   let button = document.getElementById(buttonName);
-  button.disabled = false;
   button.addEventListener('mousedown', onMouseDown);
   button.addEventListener('mouseup', onMouseUp);
 }
@@ -33,18 +32,21 @@ function processButton(buttonName, keyCode, dc) {
 function processToggleButton(buttonName, keyCode, dc) {
   let toggle = false;
   function onMouseDown(evt) {
+    const kPrimaryButton = 1;
+    if ((evt.buttons & kPrimaryButton) == 0) {
+      return;
+    }
     toggle = !toggle;
-    if (toggle) dc.sendKeyEvent(keyCode, "keydown");
-    else dc.sendKeyEvent(keyCode, "keyup");
+    if (toggle) {
+      dc.sendKeyEvent(keyCode, "keydown");
+    } else {
+      dc.sendKeyEvent(keyCode, "keyup");
+    }
     this.classList.toggle('active');
   }
 
-  function onMouseUp(evt) {
-  }
   let button = document.getElementById(buttonName);
-  button.disabled = false;
   button.addEventListener('mousedown', onMouseDown);
-  button.addEventListener('mouseup', onMouseUp);
 }
 
 function enableKeyboardRewriteButton(dc) {
