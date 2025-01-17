@@ -19,6 +19,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	clientpkg "github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 )
 
@@ -258,7 +259,7 @@ func DownloadHostBugReport(srv hoclient.HostOrchestratorService, group string) e
 	if err != nil {
 		return err
 	}
-	if err := srv.CreateBugreport(group, f); err != nil {
+	if err := srv.CreateBugReport(group, hoclient.CreateBugReportOpts{}, f); err != nil {
 		return err
 	}
 	if err := f.Close(); err != nil {
@@ -323,4 +324,39 @@ func VerifyLogsEndpoint(srvURL, group, name string) error {
 		}
 	}
 	return nil
+}
+
+func CreateCVDFromUserArtifactsDir(srv hoclient.HostOrchestratorService, dir string) (*hoapi.CVD, error) {
+	config := `
+  {
+    "common": {
+      "host_package": "@user_artifacts/` + dir + `"
+    },
+    "instances": [
+      {
+        "vm": {
+          "memory_mb": 8192,
+          "setupwizard_mode": "OPTIONAL",
+          "cpus": 8
+        },
+        "disk": {
+          "default_build": "@user_artifacts/` + dir + `"
+        },
+        "streaming": {
+          "device_id": "cvd-1"
+        }
+      }
+    ]
+  }
+  `
+	envConfig := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(config), &envConfig); err != nil {
+		return nil, err
+	}
+	createReq := &hoapi.CreateCVDRequest{EnvConfig: envConfig}
+	res, err := srv.CreateCVD(createReq, &hoclient.AccessTokenBuildAPICreds{})
+	if err != nil {
+		return nil, fmt.Errorf("failed creating instance: %w", err)
+	}
+	return res.CVDs[0], nil
 }

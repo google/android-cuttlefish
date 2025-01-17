@@ -39,6 +39,10 @@ import (
 const HeaderBuildAPICreds = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
 const HeaderUserProject = "X-Cutf-Host-Orchestrator-BuildAPI-Creds-User-Project-ID"
 
+const (
+	URLQueryKeyIncludeAdbBugReport = "include_adb_bugreport"
+)
+
 type Config struct {
 	Paths                  IMPaths
 	AndroidBuildServiceURL string
@@ -67,6 +71,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("POST")
 	router.Handle("/cvds/{group}",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "remove"))).Methods("DELETE")
+	// Append `include_adb_bugreport=true` query parameter to include a device `adb bugreport` in the cvd bugreport.
 	router.Handle("/cvds/{group}/:bugreport",
 		httpHandler(newCreateCVDBugReportHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}",
@@ -448,12 +453,17 @@ func newCreateCVDBugReportHandler(c Config, om OperationManager) *createCVDBugRe
 
 func (h *createCVDBugReportHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
+	includeADBBugreport := false
+	if _, ok := r.URL.Query()[URLQueryKeyIncludeAdbBugReport]; ok {
+		includeADBBugreport = r.URL.Query().Get(URLQueryKeyIncludeAdbBugReport) != "false"
+	}
 	opts := CreateCVDBugReportActionOpts{
-		Group:            vars["group"],
-		Paths:            h.Config.Paths,
-		OperationManager: h.OM,
-		ExecContext:      newCVDExecContext(exec.CommandContext, h.Config.CVDUser),
-		UUIDGen:          func() string { return uuid.New().String() },
+		Group:               vars["group"],
+		IncludeADBBugreport: includeADBBugreport,
+		Paths:               h.Config.Paths,
+		OperationManager:    h.OM,
+		ExecContext:         newCVDExecContext(exec.CommandContext, h.Config.CVDUser),
+		UUIDGen:             func() string { return uuid.New().String() },
 	}
 	return NewCreateCVDBugReportAction(opts).Run()
 }
