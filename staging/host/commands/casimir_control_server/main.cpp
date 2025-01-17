@@ -35,7 +35,10 @@ using casimircontrolserver::PowerLevel;
 using casimircontrolserver::RadioState;
 using casimircontrolserver::SendApduReply;
 using casimircontrolserver::SendApduRequest;
+using casimircontrolserver::SendBroadcastRequest;
+using casimircontrolserver::SendBroadcastResponse;
 using casimircontrolserver::SenderId;
+using casimircontrolserver::TransceiveConfiguration;
 using casimircontrolserver::Void;
 
 using cuttlefish::CasimirController;
@@ -216,6 +219,69 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
   Status SendApdu(ServerContext*, const SendApduRequest* request,
                   SendApduReply* response) override {
     return ResultToStatus(SendApduResult(request, response));
+  }
+
+  Result<void> SendBroadcastResult(const SendBroadcastRequest* request,
+                                   SendBroadcastResponse* response) {
+    // Default configuration values
+    TransceiveConfiguration requestConfig;
+    // Type A
+    requestConfig.set_type("A");
+    // CRC present
+    requestConfig.set_crc(true);
+    // 8 bits in last byte
+    requestConfig.set_bits(8);
+    // 106kbps
+    requestConfig.set_bitrate(106);
+    // No timeout, timeout immediately
+    requestConfig.clear_timeout();
+    // 100% output power
+    requestConfig.set_power(100);
+
+    // Overwrite defaults with provided configuration, if present
+    if (request->has_configuration()) {
+      auto config = request->configuration();
+      if (config.has_type()) {
+        requestConfig.set_type(config.type());
+      }
+      if (config.has_crc()) {
+        requestConfig.set_crc(config.crc());
+      }
+      if (config.has_bits()) {
+        requestConfig.set_bits(config.bits());
+      }
+      if (config.has_bitrate()) {
+        requestConfig.set_bitrate(config.bitrate());
+      }
+      if (config.has_timeout()) {
+        requestConfig.set_timeout(config.timeout());
+      }
+      if (config.has_power()) {
+        requestConfig.set_power(config.power());
+      }
+    }
+
+    if (!device_.has_value()) {
+      device_ = CF_EXPECT(ConnectToCasimir(), "Failed to connect with casimir");
+      CF_EXPECT(Unmute(), "failed to unmute the device");
+    }
+
+    std::vector<uint8_t> requestData =
+        CF_EXPECT(HexToBytes(request->data()),
+                  "Failed to parse input. Must only contain [0-9a-fA-F]");
+
+    CF_EXPECT(device_->SendBroadcast(
+                  requestData, requestConfig.type(), requestConfig.crc(),
+                  requestConfig.bits(), requestConfig.bitrate(),
+                  requestConfig.timeout(), requestConfig.power()),
+              "Failed to send broadcast data");
+
+    return {};  // Success
+  }
+
+  Status SendBroadcast(ServerContext*, const SendBroadcastRequest* request,
+                       SendBroadcastResponse* response) override {
+    return ResultToStatus(SendBroadcastResult(request, response));
   }
 
   std::optional<CasimirController> device_;

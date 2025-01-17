@@ -68,6 +68,7 @@ cc_binary_host {
     srcs: [
         "casimir_controller.cpp",
         "hex.cpp",
+        "crc.cpp",
         "main.cpp",
     ],
     cflags: [
