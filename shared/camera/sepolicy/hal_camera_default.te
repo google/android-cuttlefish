@@ -10,6 +10,9 @@ binder_call(sensor_service_server, hal_camera_default)
 hal_client_domain(hal_camera_default, hal_thermal)
 
 # Vsocket camera
+starting_at_board_api(202504, `
+typeattribute hal_camera_default unconstrained_vsock_violators;
+')
 allow hal_camera_default self:vsock_socket { accept bind create getopt listen read write };
 
 set_prop(hal_camera_default, vendor_camera_prop)
