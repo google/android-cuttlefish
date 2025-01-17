@@ -18,6 +18,9 @@
 #include <chrono>
 #include <cstdint>
 
+#include "host/commands/casimir_control_server/crc.h"
+
+#include "casimir_control.grpc.pb.h"
 #include "casimir_controller.h"
 
 namespace cuttlefish {
@@ -87,7 +90,11 @@ Result<void> CasimirController::SetPowerLevel(uint32_t power_level) {
 Result<uint16_t> CasimirController::SelectNfcA() {
   PollCommandBuilder poll_command;
   poll_command.technology_ = Technology::NFC_A;
+  poll_command.format_ = PollingFrameFormat::SHORT;
+  poll_command.bitrate_ = BitRate::BIT_RATE_106_KBIT_S;
   poll_command.power_level_ = power_level;
+  // WUPA
+  poll_command.payload_ = std::vector<uint8_t>{0x52};
   CF_EXPECT(Write(poll_command), "Failed to send NFC-A poll command");
 
   auto res = CF_EXPECT(ReadRfPacket(10s), "Failed to get NFC-A poll response");
@@ -106,6 +113,7 @@ Result<void> CasimirController::SelectT4AT(uint16_t sender_id) {
   T4ATSelectCommandBuilder t4at_select_command;
   t4at_select_command.sender_ = sender_id;
   t4at_select_command.param_ = 0;
+  t4at_select_command.bitrate_ = BitRate::BIT_RATE_106_KBIT_S;
   CF_EXPECT(Write(t4at_select_command), "Failed to send T4AT select command");
 
   auto res = CF_EXPECT(ReadRfPacket(1s), "Failed to get T4AT response");
@@ -138,6 +146,7 @@ Result<std::vector<uint8_t>> CasimirController::SendApdu(
   data_builder.receiver_ = receiver_id;
   data_builder.technology_ = Technology::NFC_A;
   data_builder.protocol_ = Protocol::ISO_DEP;
+  data_builder.bitrate_ = BitRate::BIT_RATE_106_KBIT_S;
 
   CF_EXPECT(Write(data_builder), "Failed to send APDU bytes");
 
@@ -150,6 +159,83 @@ Result<std::vector<uint8_t>> CasimirController::SendApdu(
     }
   }
   return CF_ERR("Invalid APDU response");
+}
+
+Result<std::tuple<std::vector<uint8_t>, std::string, bool, uint32_t, uint32_t,
+                  uint32_t, double>>
+CasimirController::SendBroadcast(std::vector<uint8_t> data, std::string type,
+                                 bool crc, uint8_t bits, uint32_t bitrate,
+                                 uint32_t timeout, double power) {
+  PollCommandBuilder poll_command;
+
+  if (type == "A") {
+    poll_command.technology_ = Technology::NFC_A;
+    if (crc) {
+      data = CF_EXPECT(WithCrc16A(data), "Could not append CRC16A");
+    }
+  } else if (type == "B") {
+    poll_command.technology_ = Technology::NFC_B;
+    if (crc) {
+      data = CF_EXPECT(WithCrc16B(data), "Could not append CRC16B");
+    }
+    if (bits != 8) {
+      return CF_ERR(
+          "Sending NFC-B data with != 8 bits in the last byte is unsupported");
+    }
+  } else if (type == "F") {
+    poll_command.technology_ = Technology::NFC_F;
+    if (!crc) {
+      // For NFC-F, CRC also assumes preamble
+      return CF_ERR("Sending NFC-F data without CRC is unsupported");
+    }
+    if (bits != 8) {
+      return CF_ERR(
+          "Sending NFC-F data with != 8 bits in the last byte is unsupported");
+    }
+  } else if (type == "V") {
+    poll_command.technology_ = Technology::NFC_V;
+  } else {
+    poll_command.technology_ = Technology::RAW;
+  }
+
+  if (bitrate == 106) {
+    poll_command.bitrate_ = BitRate::BIT_RATE_106_KBIT_S;
+  } else if (bitrate == 212) {
+    poll_command.bitrate_ = BitRate::BIT_RATE_212_KBIT_S;
+  } else if (bitrate == 424) {
+    poll_command.bitrate_ = BitRate::BIT_RATE_424_KBIT_S;
+  } else if (bitrate == 848) {
+    poll_command.bitrate_ = BitRate::BIT_RATE_848_KBIT_S;
+  } else if (bitrate == 1695) {
+    poll_command.bitrate_ = BitRate::BIT_RATE_1695_KBIT_S;
+  } else if (bitrate == 3390) {
+    poll_command.bitrate_ = BitRate::BIT_RATE_3390_KBIT_S;
+  } else if (bitrate == 6780) {
+    poll_command.bitrate_ = BitRate::BIT_RATE_6780_KBIT_S;
+  } else if (bitrate == 26) {
+    poll_command.bitrate_ = BitRate::BIT_RATE_26_KBIT_S;
+  } else {
+    return CF_ERR("Proper bitrate was not provided: " << bitrate);
+  }
+
+  poll_command.payload_ = std::move(data);
+
+  if (bits > 8) {
+    return CF_ERR("There can not be more than 8 bits in last byte: " << bits);
+  }
+  poll_command.format_ =
+      bits != 8 ? PollingFrameFormat::SHORT : PollingFrameFormat::LONG;
+
+  // Adjust range of values from 0-100 to 0-12
+  poll_command.power_level_ = static_cast<int>(std::round(power * 12 / 100));
+
+  CF_EXPECT(Write(poll_command), "Failed to send broadcast frame");
+
+  if (timeout != 0) {
+    ReadRfPacket(std::chrono::microseconds(timeout));
+  }
+
+  return std::make_tuple(data, type, crc, bits, bitrate, timeout, power);
 }
 
 Result<void> CasimirController::Write(const RfPacketBuilder& rf_packet) {
@@ -171,17 +257,21 @@ Result<void> CasimirController::Write(const RfPacketBuilder& rf_packet) {
 }
 
 Result<std::shared_ptr<std::vector<uint8_t>>> CasimirController::ReadExact(
-    size_t size, std::chrono::milliseconds timeout) {
+    size_t size, std::chrono::microseconds timeout) {
   size_t total_read = 0;
   auto out = std::make_shared<std::vector<uint8_t>>(size);
   auto prev_time = std::chrono::steady_clock::now();
-  while (timeout.count() > 0) {
+  while (
+      std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count() >
+      0) {
     PollSharedFd poll_fd = {
         .fd = sock_,
         .events = EPOLLIN,
         .revents = 0,
     };
-    int res = sock_.Poll(&poll_fd, 1, timeout.count());
+    int res = sock_.Poll(
+        &poll_fd, 1,
+        std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
     CF_EXPECT_GE(res, 0, "Failed to poll on the casimir socket");
     CF_EXPECT_EQ(poll_fd.revents, EPOLLIN,
                  "Unexpected poll result for reading");
@@ -199,7 +289,7 @@ Result<std::shared_ptr<std::vector<uint8_t>>> CasimirController::ReadExact(
     }
 
     auto current_time = std::chrono::steady_clock::now();
-    timeout -= std::chrono::duration_cast<std::chrono::milliseconds>(
+    timeout -= std::chrono::duration_cast<std::chrono::microseconds>(
         current_time - prev_time);
   }
 
@@ -209,7 +299,7 @@ Result<std::shared_ptr<std::vector<uint8_t>>> CasimirController::ReadExact(
 // Note: Although rf_packets.h doesn't document nor include packet header,
 // the header is necessary to know total packet size.
 Result<std::shared_ptr<std::vector<uint8_t>>> CasimirController::ReadRfPacket(
-    std::chrono::milliseconds timeout) {
+    std::chrono::microseconds timeout) {
   auto start_time = std::chrono::steady_clock::now();
 
   auto res = CF_EXPECT(ReadExact(sizeof(uint16_t), timeout),
@@ -218,7 +308,7 @@ Result<std::shared_ptr<std::vector<uint8_t>>> CasimirController::ReadRfPacket(
   int16_t packet_size = packet_size_slice.read_le<uint16_t>();
 
   auto current_time = std::chrono::steady_clock::now();
-  timeout -= std::chrono::duration_cast<std::chrono::milliseconds>(
+  timeout -= std::chrono::duration_cast<std::chrono::microseconds>(
       current_time - start_time);
   return CF_EXPECT(ReadExact(packet_size, timeout),
                    "Failed to read RF packet payload");

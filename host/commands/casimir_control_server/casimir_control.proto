@@ -23,6 +23,7 @@ service CasimirControlService {
   rpc PollA (Void) returns (SenderId) {}
   rpc SetRadioState(RadioState) returns (Void) {}
   rpc SetPowerLevel(PowerLevel) returns (Void) {}
+  rpc SendBroadcast (SendBroadcastRequest) returns (SendBroadcastResponse) {}
   rpc Init(Void) returns (Void) {}
   rpc Close(Void) returns (Void) {}
 }
@@ -49,4 +50,26 @@ message RadioState {
 
 message PowerLevel {
   uint32 power_level = 1;
+}
+
+message TransceiveConfiguration {
+    // A, B, F, V
+    optional string type = 1;
+    optional bool crc = 2;
+    // 0 to 8
+    optional uint32 bits = 3;
+    // 106, 212, 424, 848, 53, 26
+    optional uint32 bitrate = 4;
+    // value in microseconds
+    optional uint32 timeout = 5;
+    // 0 to 100
+    optional double power = 6;
+}
+
+message SendBroadcastRequest {
+    string data = 1;
+    optional TransceiveConfiguration configuration = 2;
+}
+
+message SendBroadcastResponse {
 }
