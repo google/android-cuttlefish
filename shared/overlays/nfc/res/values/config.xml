@@ -15,4 +15,5 @@
 -->
 <resources>
   <bool name="nfc_observe_mode_supported">true</bool>
+  <bool name="nfc_proprietary_getcaps_supported">true</bool>
 </resources>
