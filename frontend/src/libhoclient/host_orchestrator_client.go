@@ -68,6 +68,10 @@ func (c *AccessTokenBuildAPICreds) ApplyToHTTPRequest(rb *HTTPRequestBuilder) {
 	}
 }
 
+type CreateBugReportOpts struct {
+	IncludeADBBugReport bool
+}
+
 // A client to the host orchestrator service running in a remote host.
 type HostOrchestratorService interface {
 	// Lists currently running devices.
@@ -105,7 +109,7 @@ type HostOrchestratorService interface {
 	WaitForOperation(name string, result any) error
 
 	// Create cvd bugreport.
-	CreateBugreport(group string, dst io.Writer) error
+	CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error
 
 	// Powerwash the device.
 	Powerwash(groupName, instanceName string) error
@@ -500,9 +504,13 @@ func (c *HostOrchestratorServiceImpl) ExtractFile(uploadDir string, filename str
 	return result, nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateBugreport(group string, dst io.Writer) error {
+func (c *HostOrchestratorServiceImpl) CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error {
 	op := &hoapi.Operation{}
-	rb := c.HTTPHelper.NewPostRequest("/cvds/"+group+"/:bugreport", nil)
+	path := "/cvds/" + group + "/:bugreport"
+	if opts.IncludeADBBugReport {
+		path = path + "?include_adb_bugreport=true"
+	}
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
 	if err := rb.JSONResDo(op); err != nil {
 		return err
 	}

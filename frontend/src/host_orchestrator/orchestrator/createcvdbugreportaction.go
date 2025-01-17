@@ -24,28 +24,31 @@ import (
 )
 
 type CreateCVDBugReportActionOpts struct {
-	Group            string
-	Paths            IMPaths
-	OperationManager OperationManager
-	ExecContext      cvd.CVDExecContext
-	UUIDGen          func() string
+	Group               string
+	IncludeADBBugreport bool
+	Paths               IMPaths
+	OperationManager    OperationManager
+	ExecContext         cvd.CVDExecContext
+	UUIDGen             func() string
 }
 
 type CreateCVDBugReportAction struct {
-	group       string
-	paths       IMPaths
-	om          OperationManager
-	execContext cvd.CVDExecContext
-	uuidgen     func() string
+	group               string
+	includeADBBugreport bool
+	paths               IMPaths
+	om                  OperationManager
+	execContext         cvd.CVDExecContext
+	uuidgen             func() string
 }
 
 func NewCreateCVDBugReportAction(opts CreateCVDBugReportActionOpts) *CreateCVDBugReportAction {
 	return &CreateCVDBugReportAction{
-		group:       opts.Group,
-		paths:       opts.Paths,
-		om:          opts.OperationManager,
-		execContext: opts.ExecContext,
-		uuidgen:     opts.UUIDGen,
+		group:               opts.Group,
+		includeADBBugreport: opts.IncludeADBBugreport,
+		paths:               opts.Paths,
+		om:                  opts.OperationManager,
+		execContext:         opts.ExecContext,
+		uuidgen:             opts.UUIDGen,
 	}
 }
 
@@ -66,7 +69,7 @@ func (a *CreateCVDBugReportAction) Run() (apiv1.Operation, error) {
 	go func(uuid string, op apiv1.Operation) {
 		dst := filepath.Join(a.paths.CVDBugReportsDir, uuid, BugReportZipFileName)
 		result := &OperationResult{}
-		if err := execBugReportCommand(a.execContext, a.group, dst); err != nil {
+		if err := execBugReportCommand(a.execContext, a.group, a.includeADBBugreport, dst); err != nil {
 			result.Error = operator.NewInternalError("`cvd host_bugreport` failed: ", err)
 		} else {
 			result.Value = uuid
@@ -78,10 +81,13 @@ func (a *CreateCVDBugReportAction) Run() (apiv1.Operation, error) {
 	return op, nil
 }
 
-func execBugReportCommand(exec cvd.CVDExecContext, group, dst string) error {
+func execBugReportCommand(exec cvd.CVDExecContext, group string, includeADBBugReport bool, dst string) error {
 	sel := &CVDSelector{Group: group}
 	args := sel.ToCVDCLI()
 	args = append(args, []string{"host_bugreport", "--output=" + dst}...)
+	if includeADBBugReport {
+		args = append(args, []string{"--include_adb_bugreport=true"}...)
+	}
 	cmd := cvd.NewCommand(exec, args, cvd.CommandOpts{})
 	return cmd.Run()
 }

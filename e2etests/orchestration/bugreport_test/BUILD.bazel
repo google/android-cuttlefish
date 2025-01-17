@@ -1,4 +1,4 @@
-# Copyright (C) 2024 The Android Open Source Project
+# Copyright (C) 2025 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_test")
 
-go_library(
-    name = "common",
-    srcs = ["common.go"],
-    importpath = "github.com/google/android-cuttlefish/e2etests/orchestration/common",
-    visibility = ["//visibility:public"],
+go_test(
+    name = "bugreport_test_test",
+    srcs = ["main_test.go"],
+    data = [
+        "//orchestration/artifacts:cvd_host_package",
+        "//orchestration/artifacts:images_zip",
+        "@images//:orchestration_image_dev_tar",
+    ],
     deps = [
-        "@com_github_docker_docker//api/types",
-        "@com_github_docker_docker//api/types/container",
-        "@com_github_docker_docker//client",
-        "@com_github_docker_go_connections//nat",
-        "@com_github_google_android_cuttlefish_frontend_src_host_orchestrator//api/v1:api",
+        "//orchestration/common",
         "@com_github_google_android_cuttlefish_frontend_src_libhoclient//:libhoclient",
+        "@com_github_google_go_cmp//cmp",
     ],
 )
