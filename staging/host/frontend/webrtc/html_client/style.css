@@ -28,6 +28,8 @@ body, body.dark-theme {
   --modal-button-border: black;
   --modal-button-invalid-border: red;
   --modal-button-highlight-bg: #f4cccc; /* light red */
+  --modal-button-toggled-bg: #d9ead3ff; /* light green */
+  --modal-button-toggled-color: #274e13; /* dark green */
   --modal-padding: 20px;
   --bt-label-fg: green;
   --bt-label-invalid-fg: red;
@@ -56,6 +58,8 @@ body.light-theme {
   --modal-button-border: #c4c4c4; /* Google grey 300 */
   --modal-button-invalid-border: #c3413d; /*light red */
   --modal-button-highlight-bg: #a05555; /* dark red-ish */
+  --modal-button-toggled-bg: #d9ead3ff; /* light green */
+  --modal-button-toggled-color: #274e13; /* dark green */
   --bt-label-fg: green;
   --bt-label-invalid-fg: #c3413d; /* light red */
   --bt-action-bg: transparent;
@@ -182,7 +186,6 @@ body {
   background-color: transparent;
 }
 .modal-button, .modal-button-highlight {
-  background:    var(--modal-button-bg);
   border-radius: 10px;
   box-shadow:    1px 1px var(--modal-button-shadow);
   padding:       10px 20px;
@@ -190,6 +193,17 @@ body {
   display:       inline-block;
   font:          normal bold 14px/1 "Open Sans", sans-serif;
   text-align:    center;
+  cursor:        pointer;
+}
+.modal-button {
+  background: var(--modal-button-bg);
+}
+.modal-button-highlight {
+  background: var(--modal-button-highlight-bg);
+}
+.modal-button.active, .modal-button-highlight.active {
+  background-color: var(--modal-button-toggled-bg);
+  color:            var(--modal-button-toggled-color);
 }
 #bluetooth-wizard-mac:valid {
   border: 2px solid var(--modal-button-border);
@@ -206,12 +220,6 @@ body {
   font-weight: bold;
   content: 'OK';
   color: var(--bt-label-fg);
-}
-.modal-button {
-  background: var(--modal-button-bg);
-}
-.modal-button-highlight {
-  background: var(--modal-button-highlight-bg);
 }
 #device-details-modal span {
   white-space: pre;
@@ -266,33 +274,6 @@ body {
 }
 .location-button {
   text-align: center;
-}
-#shift-button {
-  padding: 10px 20px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-}
-#shift-button.active {
-  background-color: #0000ff;
-  color: white;
-}
-#ctrl-button {
-  padding: 10px 20px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-}
-#ctrl-button.active {
-  background-color: #0000ff;
-  color: white;
-}
-#alt-button {
-  padding: 10px 20px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-}
-#alt-button.active {
-  background-color: #0000ff;
-  color: white;
 }
 .sensors{
   position: sticky;
