@@ -38,6 +38,11 @@ class CasimirController {
 
   Result<void> SetPowerLevel(uint32_t power_level);
 
+  Result<std::tuple<std::vector<uint8_t>, std::string, bool, uint32_t, uint32_t,
+                    uint32_t, double>>
+  SendBroadcast(std::vector<uint8_t> data, std::string type, bool crc,
+                uint8_t bits, uint32_t bitrate, uint32_t timeout, double power);
+
   /*
    * Poll for NFC-A + ISO-DEP
    */
@@ -61,9 +66,9 @@ class CasimirController {
 
   Result<void> Write(const RfPacketBuilder& rf_packet);
   Result<std::shared_ptr<std::vector<uint8_t>>> ReadExact(
-      size_t size, std::chrono::milliseconds timeout);
+      size_t size, std::chrono::microseconds timeout);
   Result<std::shared_ptr<std::vector<uint8_t>>> ReadRfPacket(
-      std::chrono::milliseconds timeout);
+      std::chrono::microseconds timeout);
 
   SharedFD sock_;
   uint8_t power_level;
