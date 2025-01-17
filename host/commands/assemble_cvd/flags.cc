@@ -1992,7 +1992,12 @@ Result<void> SetDefaultFlagsForQemu(
       default_start_webrtc += ",";
     }
 
-    default_android_efi_loader += curr_android_efi_loader;
+    // EFI loader isn't presented in the output folder by default and can be
+    // only fetched by --uefi_app_build in fetch_cvd, so pick it only in case
+    // it's presented.
+    if (FileExists(curr_android_efi_loader)) {
+      default_android_efi_loader += curr_android_efi_loader;
+    }
     if (gpu_mode_vec[instance_index] == kGpuModeGuestSwiftshader &&
         !start_webrtc_vec[instance_index]) {
       // This makes WebRTC the default streamer unless the user requests
@@ -2024,14 +2029,9 @@ Result<void> SetDefaultFlagsForQemu(
   default_bootloader += "/bootloader.qemu";
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
                                SET_FLAGS_DEFAULT);
-  // EFI loader isn't presented in the output folder by default and can be only
-  // fetched by --uefi_app_build in fetch_cvd, so pick it only in case it's
-  // presented.
-  if (FileExists(default_android_efi_loader)) {
-    SetCommandLineOptionWithMode("android_efi_loader",
-                                 default_android_efi_loader.c_str(),
-                                 SET_FLAGS_DEFAULT);
-  }
+  SetCommandLineOptionWithMode("android_efi_loader",
+                               default_android_efi_loader.c_str(),
+                               SET_FLAGS_DEFAULT);
   return {};
 }
 
@@ -2090,7 +2090,13 @@ Result<void> SetDefaultFlagsForCrosvm(
       default_start_webrtc += ",";
     }
     default_bootloader += cur_bootloader;
-    default_android_efi_loader += curr_android_efi_loader;
+
+    // EFI loader isn't presented in the output folder by default and can be
+    // only fetched by --uefi_app_build in fetch_cvd, so pick it only in case
+    // it's presented.
+    if (FileExists(curr_android_efi_loader)) {
+      default_android_efi_loader += curr_android_efi_loader;
+    }
     default_enable_sandbox_str += fmt::format("{}", default_enable_sandbox);
     if (!start_webrtc_vec[instance_index]) {
       // This makes WebRTC the default streamer unless the user requests
@@ -2104,14 +2110,9 @@ Result<void> SetDefaultFlagsForCrosvm(
   }
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
                                SET_FLAGS_DEFAULT);
-  // EFI loader isn't presented in the output folder by default and can be only
-  // fetched by --uefi_app_build in fetch_cvd, so pick it only in case it's
-  // presented.
-  if (FileExists(default_android_efi_loader)) {
-    SetCommandLineOptionWithMode("android_efi_loader",
-                                 default_android_efi_loader.c_str(),
-                                 SET_FLAGS_DEFAULT);
-  }
+  SetCommandLineOptionWithMode("android_efi_loader",
+                               default_android_efi_loader.c_str(),
+                               SET_FLAGS_DEFAULT);
   // This is the 1st place to set "start_webrtc" flag value
   SetCommandLineOptionWithMode("start_webrtc", default_start_webrtc.c_str(),
                                SET_FLAGS_DEFAULT);
