@@ -1963,7 +1963,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 }
 
 Result<void> SetDefaultFlagsForQemu(
-    Arch target_arch,
+    const std::vector<GuestConfig>& guest_configs,
     std::map<std::string, std::string>& name_to_default_value) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
@@ -1974,24 +1974,45 @@ Result<void> SetDefaultFlagsForQemu(
       CF_EXPECT(GET_FLAG_BOOL_VALUE(start_webrtc));
   std::vector<std::string> system_image_dir =
       CF_EXPECT(GET_FLAG_STR_VALUE(system_image_dir));
+  std::string curr_bootloader = "";
   std::string curr_android_efi_loader = "";
+  std::string default_bootloader = "";
   std::string default_android_efi_loader = "";
   std::string default_start_webrtc = "";
 
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {
     if (instance_index >= system_image_dir.size()) {
+      curr_bootloader = system_image_dir[0];
       curr_android_efi_loader = system_image_dir[0];
     } else {
+      curr_bootloader = system_image_dir[instance_index];
       curr_android_efi_loader = system_image_dir[instance_index];
     }
+    curr_bootloader += "/bootloader";
     curr_android_efi_loader += "/android_efi_loader.efi";
 
+    // /bootloader isn't presented in the output folder by default and can be
+    // only fetched by --bootloader in fetch_cvd, so pick it only in case
+    // it's presented.
+    if (!FileExists(curr_bootloader)) {
+      // Fallback to default bootloader
+      curr_bootloader = DefaultHostArtifactsPath("etc/bootloader_");
+      if (guest_configs[instance_index].target_arch == Arch::Arm64) {
+        curr_bootloader += "aarch64";
+      } else {
+        curr_bootloader += "x86_64";
+      }
+      curr_bootloader += "/bootloader.qemu";
+    }
+
     if (instance_index > 0) {
+      default_bootloader += ",";
       default_android_efi_loader += ",";
       default_start_webrtc += ",";
     }
 
+    default_bootloader += curr_bootloader;
     // EFI loader isn't presented in the output folder by default and can be
     // only fetched by --uefi_app_build in fetch_cvd, so pick it only in case
     // it's presented.
@@ -2014,19 +2035,6 @@ Result<void> SetDefaultFlagsForQemu(
   SetCommandLineOptionWithMode("start_webrtc", default_start_webrtc.c_str(),
                                SET_FLAGS_DEFAULT);
 
-  std::string default_bootloader = DefaultHostArtifactsPath("etc/bootloader_");
-  if (target_arch == Arch::Arm) {
-    // Bootloader is unstable >512MB RAM on 32-bit ARM
-    SetCommandLineOptionWithMode("memory_mb", "512", SET_FLAGS_VALUE);
-    default_bootloader += "arm";
-  } else if (target_arch == Arch::Arm64) {
-    default_bootloader += "aarch64";
-  } else if (target_arch == Arch::RiscV64) {
-    default_bootloader += "riscv64";
-  } else {
-    default_bootloader += "x86_64";
-  }
-  default_bootloader += "/bootloader.qemu";
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
                                SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("android_efi_loader",
@@ -2054,34 +2062,35 @@ Result<void> SetDefaultFlagsForCrosvm(
   std::vector<std::string> system_image_dir =
       CF_EXPECT(GET_FLAG_STR_VALUE(system_image_dir));
   std::string curr_android_efi_loader = "";
-  std::string cur_bootloader = "";
+  std::string curr_bootloader = "";
   std::string default_android_efi_loader = "";
   std::string default_bootloader = "";
   std::string default_enable_sandbox_str = "";
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {
-    if (guest_configs[instance_index].android_version_number == "11.0.0") {
-      cur_bootloader = DefaultHostArtifactsPath("etc/bootloader_");
-      if (guest_configs[instance_index].target_arch == Arch::Arm64) {
-        cur_bootloader += "aarch64";
-      } else {
-        cur_bootloader += "x86_64";
-      }
-      cur_bootloader += "/bootloader.crosvm";
-    } else {
-      if (instance_index >= system_image_dir.size()) {
-        cur_bootloader = system_image_dir[0];
-      } else {
-        cur_bootloader = system_image_dir[instance_index];
-      }
-      cur_bootloader += "/bootloader";
-    }
     if (instance_index >= system_image_dir.size()) {
+      curr_bootloader = system_image_dir[0];
       curr_android_efi_loader = system_image_dir[0];
     } else {
+      curr_bootloader = system_image_dir[instance_index];
       curr_android_efi_loader = system_image_dir[instance_index];
     }
+    curr_bootloader += "/bootloader";
     curr_android_efi_loader += "/android_efi_loader.efi";
+
+    // /bootloader isn't presented in the output folder by default and can be
+    // only fetched by --bootloader in fetch_cvd, so pick it only in case
+    // it's presented.
+    if (!FileExists(curr_bootloader)) {
+      // Fallback to default bootloader
+      curr_bootloader = DefaultHostArtifactsPath("etc/bootloader_");
+      if (guest_configs[instance_index].target_arch == Arch::Arm64) {
+        curr_bootloader += "aarch64";
+      } else {
+        curr_bootloader += "x86_64";
+      }
+      curr_bootloader += "/bootloader.crosvm";
+    }
 
     if (instance_index > 0) {
       default_bootloader += ",";
@@ -2089,8 +2098,8 @@ Result<void> SetDefaultFlagsForCrosvm(
       default_enable_sandbox_str += ",";
       default_start_webrtc += ",";
     }
-    default_bootloader += cur_bootloader;
 
+    default_bootloader += curr_bootloader;
     // EFI loader isn't presented in the output folder by default and can be
     // only fetched by --uefi_app_build in fetch_cvd, so pick it only in case
     // it's presented.
@@ -2203,7 +2212,7 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
   auto name_to_default_value = CurrentFlagsToDefaultValue();
 
   if (vmm == VmmMode::kQemu) {
-    CF_EXPECT(SetDefaultFlagsForQemu(guest_configs[0].target_arch, name_to_default_value));
+    CF_EXPECT(SetDefaultFlagsForQemu(guest_configs, name_to_default_value));
   } else if (vmm == VmmMode::kCrosvm) {
     CF_EXPECT(SetDefaultFlagsForCrosvm(guest_configs, name_to_default_value));
   } else if (vmm == VmmMode::kGem5) {

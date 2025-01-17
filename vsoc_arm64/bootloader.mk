@@ -14,7 +14,5 @@
 # limitations under the License.
 #
 
-TARGET_NO_BOOTLOADER := false
-# FIXME: Copying the QEMU bootloader for now, but this should be updated..
-BOARD_PREBUILT_BOOTLOADER := \
-    device/google/cuttlefish_prebuilts/bootloader/crosvm_aarch64/u-boot.bin
+# May be booted using different bootloaders, so don't have the single one.
+TARGET_NO_BOOTLOADER := true
