@@ -22,9 +22,9 @@ body, body.dark-theme {
   --alert-bg: #927836; /* dark yellow */
   --info-bg: #007000; /* dark green */
   --modal-bg: #5f6368ea; /* Semi-transparent Google grey 500 */
-  --modal-button-bg: #e8eaed; /* Google grey 200 */
+  --modal-button-bg: #efefef; /* Google grey 200 */
   --modal-button-shadow: #444444;
-  --modal-button-fg: black;
+  --modal-button-fg: #434343;
   --modal-button-border: black;
   --modal-button-invalid-border: red;
   --modal-button-highlight-bg: #f4cccc; /* light red */
@@ -52,9 +52,9 @@ body.light-theme {
   --alert-bg: #f3ef9e; /* light yellow */
   --info-bg: #a5d5a5; /* light green */
   --modal-bg: #d9d9d9ea; /* Semi-transparent Google grey 200 */
-  --modal-button-bg: #7b7b7b; /* Google grey 500 */
+  --modal-button-bg: #666666; /* Google grey 500 */
   --modal-button-shadow: #666666;
-  --modal-button-fg: #fafafa;
+  --modal-button-fg: #efefef;
   --modal-button-border: #c4c4c4; /* Google grey 300 */
   --modal-button-invalid-border: #c3413d; /*light red */
   --modal-button-highlight-bg: #a05555; /* dark red-ish */
