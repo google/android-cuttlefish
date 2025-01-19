@@ -116,10 +116,7 @@ BOARD_KERNEL_MODULES_16K += $(wildcard kernel/prebuilts/common-modules/virtual-d
 endif
 endif
 
-# TODO(b/170639028): Back up TARGET_NO_BOOTLOADER
-__TARGET_NO_BOOTLOADER := $(TARGET_NO_BOOTLOADER)
 include build/make/target/board/BoardConfigMainlineCommon.mk
-TARGET_NO_BOOTLOADER := $(__TARGET_NO_BOOTLOADER)
 
 # For now modules are only blocked in second stage init.
 # If a module ever needs to blocked in first stage init - add a new blocklist to

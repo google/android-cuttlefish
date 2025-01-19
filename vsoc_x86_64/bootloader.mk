@@ -14,6 +14,5 @@
 # limitations under the License.
 #
 
-TARGET_NO_BOOTLOADER := false
-BOARD_PREBUILT_BOOTLOADER := \
-    device/google/cuttlefish_prebuilts/bootloader/crosvm_x86_64/u-boot.rom
+# May be booted using different bootloaders, so don't have the single one.
+TARGET_NO_BOOTLOADER := true
