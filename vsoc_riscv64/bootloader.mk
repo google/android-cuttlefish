@@ -14,7 +14,5 @@
 # limitations under the License.
 #
 
-TARGET_NO_BOOTLOADER := false
-# Only QEMU is supported for now
-BOARD_PREBUILT_BOOTLOADER := \
-    device/google/cuttlefish_prebuilts/bootloader/qemu_riscv64/u-boot.bin
+# May be booted using different bootloaders, so don't have the single one.
+TARGET_NO_BOOTLOADER := true
