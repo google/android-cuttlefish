@@ -710,15 +710,15 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     guest_config.mouse_supported =
         res_mouse_support.ok() && res_mouse_support.value() == "supported";
 
-    auto res_custom_keyboard_config = GetAndroidInfoConfig(
-        instance_android_info_txt, "custom_keyboard_config");
+    auto res_custom_keyboard_config =
+        GetAndroidInfoConfig(instance_android_info_txt, "custom_keyboard");
     if (res_custom_keyboard_config.ok()) {
       guest_config.custom_keyboard_config =
           DefaultHostArtifactsPath(res_custom_keyboard_config.value());
     }
 
-    auto res_domkey_mapping_config = GetAndroidInfoConfig(
-        instance_android_info_txt, "domkey_mapping_config");
+    auto res_domkey_mapping_config =
+        GetAndroidInfoConfig(instance_android_info_txt, "domkey_mapping");
     if (res_domkey_mapping_config.ok()) {
       guest_config.domkey_mapping_config =
           DefaultHostArtifactsPath(res_domkey_mapping_config.value());
