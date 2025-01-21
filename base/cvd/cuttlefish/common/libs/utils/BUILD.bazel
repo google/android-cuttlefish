@@ -140,5 +140,9 @@ cc_test(
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
+        "@libxml2//:libxml2",
     ],
+    # `layering_check` conflicts with the combination of the clang prebuilt and
+    # the cmake build rules used for @libxml2.
+    features = ["-layering_check"],
 )
