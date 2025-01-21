@@ -402,6 +402,49 @@ Result<void> ConsumeFlags(const std::vector<Flag>& flags,
   return {};
 }
 
+Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                     std::vector<std::string>& args) {
+  while (!args.empty()) {
+    const std::string& first_arg = args[0];
+    std::optional<std::string> next_arg;
+    if (args.size() > 1) {
+      next_arg = args[1];
+    }
+    Flag::FlagProcessResult outcome = Flag::FlagProcessResult::kFlagSkip;
+    for (const Flag& flag : flags) {
+      Flag::FlagProcessResult flag_outcome =
+          CF_EXPECT(flag.Process(first_arg, next_arg));
+      if (flag_outcome == Flag::FlagProcessResult::kFlagSkip) {
+        continue;
+      }
+      CF_EXPECTF(outcome == Flag::FlagProcessResult::kFlagSkip,
+                 "Multiple '{}' handlers", first_arg);
+      outcome = flag_outcome;
+    }
+    switch (outcome) {
+      case Flag::FlagProcessResult::kFlagSkip:
+        return {};
+      case Flag::FlagProcessResult::kFlagConsumed:
+        args.erase(args.begin());
+        break;
+      case Flag::FlagProcessResult::kFlagConsumedWithFollowing:
+        args.erase(args.begin(), args.begin() + 2);
+        break;
+      case Flag::FlagProcessResult::kFlagConsumedOnlyFollowing:
+        args.erase(args.begin() + 1, args.begin() + 2);
+        break;
+    }
+  }
+  return {};
+}
+
+Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                     std::vector<std::string>&& args) {
+  std::vector<std::string>& args_ref = args;
+  CF_EXPECT(ConsumeFlagsConstrained(flags, args_ref));
+  return {};
+}
+
 bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
   for (const auto& flag : flags) {
     if (!flag.WriteGflagsCompatXml(out)) {
