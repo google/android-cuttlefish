@@ -109,12 +109,11 @@ jobs:
   e2e-tests-orchestration:
     runs-on: ubuntu-22.04 
     steps:
-    - name: Common bazel setup
-      uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 #aka 0.9.1
-      with:
-        bazelisk-cache: true # Avoid downloading Bazel every time.
-        disk-cache: ${{ github.workflow }} # Store build cache per workflow.
-        repository-cache: true # Share repository cache between workflows.
+      # Do not reuse bazel cache among `e2e-tests-orchestration` runs.
+      #
+      # Current docker image bazel target: "@images//:orchestration_image_dev_tar" is based
+      # on an umbrella bash script and does not depend on smaller bazel targets, hence changes
+      # in cvd or host orchestrator code won't trigger building a new image.
     - name: Free space
       run: |
         echo "disk space before cleanup:"
