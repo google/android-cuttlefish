@@ -2,9 +2,13 @@ cc_library(
     name = "config",
     srcs = [
         "config_utils.cpp",
+        "cuttlefish_config.cpp",
+        "cuttlefish_config_environment.cpp",
+        "cuttlefish_config_instance.cpp",
         "fetcher_config.cpp",
         "host_tools_version.cpp",
         "instance_nums.cpp",
+        "logging.cpp",
     ],
     hdrs = [
         "config_constants.h",

@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+// TODO: chadreynolds - Remove once AOSP <=> Github file syncing is enabled.
+// avoiding fixing lint errors until fixing it once fixes for all copies
+// NOLINTBEGIN
+
 #include "host/libs/config/cuttlefish_config.h"
 
 #include <algorithm>
@@ -34,9 +38,6 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/gem5_manager.h"
-#include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
 namespace {
@@ -808,3 +809,5 @@ std::vector<std::string> CuttlefishConfig::environment_dirs() const {
 }
 
 }  // namespace cuttlefish
+
+// NOLINTEND
