@@ -1,1 +1,33 @@
-exports_files(glob(["*"]), visibility = ["//visibility:public"])
+cc_test(
+    name = "parser",
+    srcs = [
+        "configs_inheritance_test.cc",
+        "flags_parser_test.cc",
+        "instance/boot_configs_test.cc",
+        "instance/disk_configs_test.cc",
+        "instance/graphics_configs_test.cc",
+        "instance/vm_configs_test.cc",
+        "metrics_configs_test.cc",
+        "test_common.cc",
+        "test_common.h",
+    ],
+    copts = [
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+        "-Icuttlefish",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/cli/parser/instance:launch_cvd_cc_proto",
+        "//cuttlefish/host/commands/cvd:libcvd",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+        "@protobuf",
+        "@protobuf//:differencer",
+    ],
+)
