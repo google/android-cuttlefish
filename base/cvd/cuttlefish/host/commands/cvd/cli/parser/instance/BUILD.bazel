@@ -1,0 +1,12 @@
+exports_files(glob(["*"]), visibility = ["//visibility:public"])
+
+proto_library(
+    name = "launch_cvd_proto",
+    srcs = ["launch_cvd.proto"],
+)
+
+cc_proto_library(
+    name = "launch_cvd_cc_proto",
+    deps = [":launch_cvd_proto"],
+    visibility = ["//visibility:public"],
+)
