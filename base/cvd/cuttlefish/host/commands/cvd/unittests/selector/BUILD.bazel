@@ -1,1 +1,33 @@
-exports_files(glob(["*"]), visibility = ["//visibility:public"])
+cc_test(
+    name = "selector",
+    srcs = [
+        "group_record_test.cpp",
+        "host_tool_target_test.cpp",
+        "instance_database_helper.cpp",
+        "instance_database_helper.h",
+        "instance_database_test.cpp",
+        "instance_record_test.cpp",
+        "parser_ids_helper.cpp",
+        "parser_ids_helper.h",
+        "parser_ids_test.cpp",
+        "parser_names_helper.cpp",
+        "parser_names_helper.h",
+        "parser_names_test.cpp",
+    ],
+    copts = [
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+        "-Icuttlefish",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd:libcvd",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
