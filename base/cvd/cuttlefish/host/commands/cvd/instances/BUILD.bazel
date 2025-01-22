@@ -1,0 +1,12 @@
+exports_files(glob(["*"]), visibility = ["//visibility:public"])
+
+proto_library(
+    name = "cvd_persistent_data_proto",
+    srcs = ["cvd_persistent_data.proto"],
+)
+
+cc_proto_library(
+    name = "cvd_persistent_data",
+    deps = [":cvd_persistent_data_proto"],
+    visibility = ["//visibility:public"],
+)

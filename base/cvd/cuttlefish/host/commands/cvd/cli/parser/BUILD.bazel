@@ -1,0 +1,12 @@
+exports_files(glob(["*"]), visibility = ["//visibility:public"])
+
+proto_library(
+    name = "load_config_proto",
+    srcs = ["load_config.proto"],
+)
+
+cc_proto_library(
+    name = "load_config_cc_proto",
+    deps = [":load_config_proto"],
+    visibility = ["//visibility:public"],
+)
