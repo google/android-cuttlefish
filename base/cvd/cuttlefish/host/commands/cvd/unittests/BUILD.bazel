@@ -22,8 +22,6 @@ cc_test(
         "//cuttlefish/host/commands/cvd/unittests/selector:parser_names_helper.cpp",
         "//cuttlefish/host/commands/cvd/unittests/selector:parser_names_helper.h",
         "//cuttlefish/host/commands/cvd/unittests/selector:parser_names_test.cpp",
-        "//cuttlefish/host/commands/cvd/unittests/server:frontline_parser_test.cpp",
-        "//cuttlefish/host/commands/cvd/unittests/server:utils.h",
     ],
     copts = [
         "-Wno-ctad-maybe-unsupported",
