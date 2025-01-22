@@ -1,8 +1,6 @@
 cc_test(
     name = "cvd_test",
     srcs = [
-        "//cuttlefish/host/commands/cvd/unittests/fetch:fetch_cvd_parser_test.cpp",
-        "//cuttlefish/host/commands/cvd/unittests/fetch:fetch_cvd_test.cpp",
         "//cuttlefish/host/commands/cvd/unittests/parser:configs_inheritance_test.cc",
         "//cuttlefish/host/commands/cvd/unittests/parser:flags_parser_test.cc",
         "//cuttlefish/host/commands/cvd/unittests/parser/instance:boot_configs_test.cc",

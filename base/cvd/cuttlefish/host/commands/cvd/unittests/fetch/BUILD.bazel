@@ -1,1 +1,22 @@
-exports_files(glob(["*"]), visibility = ["//visibility:public"])
+cc_test(
+    name = "fetch",
+    srcs = [
+        "fetch_cvd_parser_test.cpp",
+        "fetch_cvd_test.cpp",
+    ],
+    copts = [
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+        "-Icuttlefish",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd:libcvd",
+        "//libbase",
+        "@fmt",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
