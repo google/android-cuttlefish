@@ -1,1 +1,18 @@
-exports_files(glob(["*"]), visibility = ["//visibility:public"])
+cc_test(
+    name = "server",
+    srcs = [
+        "frontline_parser_test.cpp",
+        "utils.h",
+    ],
+    copts = [
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+        "-Icuttlefish",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd:libcvd",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
