@@ -81,8 +81,8 @@ std::optional<std::map<std::string, std::string>> flagXml(const Flag& f) {
   }
   auto xml = xml_stream.str();
   // Holds all memory for the parsed structure.
-  std::unique_ptr<xmlDoc, xmlFreeFunc> doc(
-      xmlReadMemory(xml.c_str(), xml.size(), nullptr, nullptr, 0), xmlFree);
+  std::unique_ptr<xmlDoc, void(*)(xmlDocPtr)> doc(
+      xmlReadMemory(xml.c_str(), xml.size(), nullptr, nullptr, 0), xmlFreeDoc);
   if (!doc) {
     return {};
   }
