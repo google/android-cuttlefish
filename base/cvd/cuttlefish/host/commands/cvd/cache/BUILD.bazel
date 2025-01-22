@@ -1,1 +1,19 @@
-exports_files(glob(["*"]), visibility = ["//visibility:public"])
+cc_library(
+    name = "cache",
+    srcs = ["cache.cpp"],
+    hdrs = ["cache.h"],
+    copts = [
+        "-Werror=sign-compare",
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils",
+        "//libbase",
+        "@fmt",
+        "@jsoncpp",
+    ],
+    visibility = ["//visibility:public"],
+)
