@@ -1,1 +1,29 @@
-exports_files(glob(["*"]), visibility = ["//visibility:public"])
+cc_library(
+    name = "utils",
+    srcs = [
+        "common.cpp",
+        "flags_collector.cpp",
+        "interrupt_listener.cpp",
+        "subprocess_waiter.cpp",
+    ],
+    hdrs = [
+        "common.h",
+        "flags_collector.h",
+        "interrupt_listener.h",
+        "subprocess_waiter.h",
+    ],
+    copts = [
+        "-Werror=sign-compare",
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//libbase",
+        "@tinyxml2",
+    ],
+    visibility = ["//visibility:public"],
+)
