@@ -51,7 +51,6 @@ class InstanceManager {
   Result<bool> RemoveInstanceGroupByHome(const std::string&);
 
   cvd::Status CvdClear(const CommandRequest&);
-  static Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
   Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
 

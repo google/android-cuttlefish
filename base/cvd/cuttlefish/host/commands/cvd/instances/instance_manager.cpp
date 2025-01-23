@@ -66,11 +66,6 @@ Result<void> RemoveGroupDirectory(const LocalInstanceGroup& group) {
 
 }  // namespace
 
-Result<std::string> InstanceManager::GetCuttlefishConfigPath(
-    const std::string& home) {
-  return CF_EXPECT(cuttlefish::GetCuttlefishConfigPath(home));
-}
-
 InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager,
                                  InstanceDatabase& instance_db)
     : lock_manager_(lock_manager), instance_db_(instance_db) {}
