@@ -1,1 +1,35 @@
-exports_files(glob(["*"]), visibility = ["//visibility:public"])
+exports_files(["selector.cpp", "selector.h"], visibility = ["//visibility:public"])
+
+cc_library(
+    name = "parser",
+    srcs = [
+        "arguments_separator.cpp",
+        "creation_analyzer.cpp",
+        "device_selector_utils.cpp",
+        "selector_common_parser.cpp",
+        "selector_option_parser_utils.cpp",
+        "start_selector_parser.cpp",
+    ],
+    hdrs = [
+        "arguments_separator.h",
+        "creation_analyzer.h",
+        "device_selector_utils.h",
+        "selector_common_parser.h",
+        "selector_constants.h",
+        "selector_option_parser_utils.h",
+        "start_selector_parser.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
+        "//cuttlefish/host/commands/cvd/instances:lock",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+)
