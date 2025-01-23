@@ -13,7 +13,6 @@ cc_test(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
-        "//cuttlefish/host/commands/cvd:libcvd",
         "//cuttlefish/host/commands/cvd/fetch",
         "//libbase",
         "@fmt",

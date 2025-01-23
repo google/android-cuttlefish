@@ -28,7 +28,6 @@ cc_test(
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
-        "//cuttlefish/host/commands/cvd:libcvd",
         "//cuttlefish/host/libs/config",
         "//libbase",
         "@googletest//:gtest",
