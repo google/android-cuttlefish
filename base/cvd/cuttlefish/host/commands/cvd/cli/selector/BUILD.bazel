@@ -1,5 +1,3 @@
-exports_files(["selector.cpp", "selector.h"], visibility = ["//visibility:public"])
-
 cc_library(
     name = "parser",
     srcs = [
@@ -27,6 +25,25 @@ cc_library(
         "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
         "//cuttlefish/host/commands/cvd/instances:lock",
         "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "selector",
+    srcs = ["selector.cpp"],
+    hdrs = ["selector.h"],
+    deps = [
+        ":parser",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/libs/config",
         "//libbase",
     ],
