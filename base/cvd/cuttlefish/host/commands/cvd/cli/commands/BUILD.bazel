@@ -1,4 +1,15 @@
-exports_files(glob(["*"]), visibility = ["//visibility:public"])
+exports_files([
+    "acloud_command.cpp",
+    "acloud_command.h",
+    "cmd_list.cpp",
+    "cmd_list.h",
+    "create.cpp",
+    "create.h",
+    "help.cpp",
+    "help.h",
+    "load_configs.cpp",
+    "load_configs.h",
+], visibility = ["//visibility:public"])
 
 cc_library(
     name = "command_handler",
