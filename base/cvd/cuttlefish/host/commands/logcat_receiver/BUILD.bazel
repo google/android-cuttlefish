@@ -1,0 +1,18 @@
+cc_binary(
+    name = "logcat_receiver",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@gflags",
+    ],
+    srcs = [
+        "main.cpp",
+    ],
+    cxxopts = [
+        "-std=c++17",
+    ],
+    visibility = [
+        "//visibility:public"
+    ],
+)
