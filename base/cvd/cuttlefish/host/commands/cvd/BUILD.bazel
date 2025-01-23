@@ -37,9 +37,6 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli:request_context.cpp",
         "//cuttlefish/host/commands/cvd:cvd.cpp",
         "//cuttlefish/host/commands/cvd/instances:reset_client_utils.cpp",
-        "//cuttlefish/host/commands/cvd/legacy:client.cpp",
-        "//cuttlefish/host/commands/cvd/legacy:run_server.cpp",
-        "//cuttlefish/host/commands/cvd/legacy:server_constants.cpp",
     ],
     hdrs = [
         "//cuttlefish/host/commands/cvd/cli:command_sequence.h",
@@ -78,9 +75,6 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli:request_context.h",
         "//cuttlefish/host/commands/cvd:cvd.h",
         "//cuttlefish/host/commands/cvd/instances:reset_client_utils.h",
-        "//cuttlefish/host/commands/cvd/legacy:client.h",
-        "//cuttlefish/host/commands/cvd/legacy:run_server.h",
-        "//cuttlefish/host/commands/cvd/legacy:server_constants.h",
     ],
     copts = [
         "-Werror=sign-compare",
@@ -113,6 +107,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/instances:lock",
         "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
         "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/legacy",
         "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
         "//cuttlefish/host/commands/cvd/metrics",
         "//cuttlefish/host/commands/cvd/utils",
@@ -151,6 +146,7 @@ cc_binary(
     deps = [
         ":libcvd",
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/commands/cvd/legacy",
         "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
         "//libsparse",
