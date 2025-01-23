@@ -96,3 +96,20 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "reset_client_utils",
+    srcs = ["reset_client_utils.cpp"],
+    hdrs = ["reset_client_utils.h"],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        ":instances",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/legacy",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+        "@fmt",
+    ],
+    visibility = ["//visibility:public"],
+)
