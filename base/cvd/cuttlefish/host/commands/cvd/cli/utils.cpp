@@ -22,7 +22,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "host/commands/cvd/instances/instance_manager.h"
+#include "host/commands/cvd/instances/instance_database_utils.h"
 #include "host/commands/cvd/utils/common.h"
 #include "host/libs/config/config_constants.h"
 
@@ -51,7 +51,7 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
   // Set CuttlefishConfig path based on assembly dir,
   // used by subcommands when locating the CuttlefishConfig.
   if (param.envs.count(cuttlefish::kCuttlefishConfigEnvVarName) == 0) {
-    auto config_path = InstanceManager::GetCuttlefishConfigPath(param.home);
+    auto config_path = GetCuttlefishConfigPath(param.home);
     if (config_path.ok()) {
       command.AddEnvironmentVariable(cuttlefish::kCuttlefishConfigEnvVarName,
                                      *config_path);
