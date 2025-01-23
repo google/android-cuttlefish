@@ -1,11 +1,9 @@
 cc_library(
     name = "libcvd",
     srcs = [
-        "//cuttlefish/host/commands/cvd/cli:frontline_parser.cpp",
         "//cuttlefish/host/commands/cvd:cvd.cpp",
     ],
     hdrs = [
-        "//cuttlefish/host/commands/cvd/cli:frontline_parser.h",
         "//cuttlefish/host/commands/cvd:cvd.h",
     ],
     copts = [
@@ -34,6 +32,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
         "//cuttlefish/host/commands/cvd/cli/parser",
         "//cuttlefish/host/commands/cvd/cli/parser/instance",
+        "//cuttlefish/host/commands/cvd/cli:frontline_parser",
         "//cuttlefish/host/commands/cvd/cli:nesting_commands",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",

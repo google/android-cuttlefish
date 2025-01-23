@@ -15,6 +15,20 @@ cc_library(
 )
 
 cc_library(
+    name = "frontline_parser",
+    srcs = ["frontline_parser.cpp"],
+    hdrs = ["frontline_parser.h"],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        ":types",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/selector:parser",
+        "//libbase",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "interruptible_terminal",
     srcs = ["interruptible_terminal.cpp"],
     hdrs = ["interruptible_terminal.h"],
