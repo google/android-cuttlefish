@@ -2,9 +2,6 @@ cc_library(
     name = "libcvd",
     srcs = [
         "//:build_version_header",
-        "//cuttlefish/host/commands/cvd/acloud:config.cpp",
-        "//cuttlefish/host/commands/cvd/acloud:converter.cpp",
-        "//cuttlefish/host/commands/cvd/acloud:create_converter_parser.cpp",
         "//cuttlefish/host/commands/cvd/cli:command_sequence.cpp",
         "//cuttlefish/host/commands/cvd/cli/commands:acloud_command.cpp",
         "//cuttlefish/host/commands/cvd/cli/commands:acloud_common.cpp",
@@ -49,9 +46,6 @@ cc_library(
         # "//cuttlefish/host/commands/cvd/metrics:utils.cpp",
     ],
     hdrs = [
-        "//cuttlefish/host/commands/cvd/acloud:config.h",
-        "//cuttlefish/host/commands/cvd/acloud:converter.h",
-        "//cuttlefish/host/commands/cvd/acloud:create_converter_parser.h",
         "//cuttlefish/host/commands/cvd/cli:command_sequence.h",
         "//cuttlefish/host/commands/cvd/cli/commands:acloud_command.h",
         "//cuttlefish/host/commands/cvd/cli/commands:acloud_common.h",
@@ -104,6 +98,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/commands/cvd/acloud",
         "//cuttlefish/host/commands/cvd/acloud:user_config_cc_proto",
         "//cuttlefish/host/commands/cvd/cache",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
