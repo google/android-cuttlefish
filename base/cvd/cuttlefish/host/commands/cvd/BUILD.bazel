@@ -40,10 +40,6 @@ cc_library(
         "//cuttlefish/host/commands/cvd/legacy:client.cpp",
         "//cuttlefish/host/commands/cvd/legacy:run_server.cpp",
         "//cuttlefish/host/commands/cvd/legacy:server_constants.cpp",
-        # TODO: b/315772518 - cvd metrics are currently disabled
-        # "//cuttlefish/host/commands/cvd/metrics:cvd_metrics_api.cpp",
-        "//cuttlefish/host/commands/cvd/metrics:metrics_notice.cpp",
-        # "//cuttlefish/host/commands/cvd/metrics:utils.cpp",
     ],
     hdrs = [
         "//cuttlefish/host/commands/cvd/cli:command_sequence.h",
@@ -85,7 +81,6 @@ cc_library(
         "//cuttlefish/host/commands/cvd/legacy:client.h",
         "//cuttlefish/host/commands/cvd/legacy:run_server.h",
         "//cuttlefish/host/commands/cvd/legacy:server_constants.h",
-        "//cuttlefish/host/commands/cvd/metrics:metrics_notice.h",
     ],
     copts = [
         "-Werror=sign-compare",
@@ -119,6 +114,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
+        "//cuttlefish/host/commands/cvd/metrics",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/commands/metrics:libmetrics",
         "//cuttlefish/host/libs/command_util",
