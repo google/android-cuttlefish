@@ -10,3 +10,28 @@ cc_proto_library(
     deps = [":cvd_persistent_data_proto"],
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "lock",
+    srcs = [
+        "instance_lock.cpp",
+        "lock_file.cpp",
+    ],
+    hdrs = [
+        "instance_lock.h",
+        "lock_file.h",
+    ],
+    copts = [
+        "-Werror=sign-compare",
+        "-Wno-ctad-maybe-unsupported",
+        "-std=c++17",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+    visibility = ["//visibility:public"],
+)
