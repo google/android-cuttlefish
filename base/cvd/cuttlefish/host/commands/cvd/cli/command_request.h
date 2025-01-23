@@ -19,15 +19,11 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include <iostream>  // TODO: schuffelen - replace many transitive dependencies
 #include <initializer_list>
 #include <string>
 #include <string_view>
 
-#include <google/protobuf/map.h>
-
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "host/commands/cvd/cli/types.h"
