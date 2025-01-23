@@ -1,25 +1,11 @@
 cc_library(
     name = "libcvd",
     srcs = [
-        "//cuttlefish/host/commands/cvd/cli:command_sequence.cpp",
-        "//cuttlefish/host/commands/cvd/cli/commands:acloud_command.cpp",
-        "//cuttlefish/host/commands/cvd/cli/commands:cmd_list.cpp",
-        "//cuttlefish/host/commands/cvd/cli/commands:create.cpp",
-        "//cuttlefish/host/commands/cvd/cli/commands:help.cpp",
-        "//cuttlefish/host/commands/cvd/cli/commands:load_configs.cpp",
         "//cuttlefish/host/commands/cvd/cli:frontline_parser.cpp",
-        "//cuttlefish/host/commands/cvd/cli:request_context.cpp",
         "//cuttlefish/host/commands/cvd:cvd.cpp",
     ],
     hdrs = [
-        "//cuttlefish/host/commands/cvd/cli:command_sequence.h",
-        "//cuttlefish/host/commands/cvd/cli/commands:acloud_command.h",
-        "//cuttlefish/host/commands/cvd/cli/commands:cmd_list.h",
-        "//cuttlefish/host/commands/cvd/cli/commands:create.h",
-        "//cuttlefish/host/commands/cvd/cli/commands:help.h",
-        "//cuttlefish/host/commands/cvd/cli/commands:load_configs.h",
         "//cuttlefish/host/commands/cvd/cli:frontline_parser.h",
-        "//cuttlefish/host/commands/cvd/cli:request_context.h",
         "//cuttlefish/host/commands/cvd:cvd.h",
     ],
     copts = [
@@ -48,6 +34,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
         "//cuttlefish/host/commands/cvd/cli/parser",
         "//cuttlefish/host/commands/cvd/cli/parser/instance",
+        "//cuttlefish/host/commands/cvd/cli:nesting_commands",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/fetch",
