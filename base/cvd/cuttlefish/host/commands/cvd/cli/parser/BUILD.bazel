@@ -10,3 +10,19 @@ cc_proto_library(
     deps = [":load_config_proto"],
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "configs_common",
+    srcs = ["cf_configs_common.cpp"],
+    hdrs = ["cf_configs_common.h"],
+    deps = [
+        ":load_config_cc_proto",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@fmt",
+        "@jsoncpp",
+        "@protobuf",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+)
