@@ -26,3 +26,43 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "parser",
+    srcs = [
+        "cf_configs_instances.cpp",
+        "cf_flags_validator.cpp",
+        "cf_metrics_configs.cpp",
+        "fetch_config_parser.cpp",
+        "launch_cvd_parser.cpp",
+        "launch_cvd_templates.cpp",
+        "load_configs_parser.cpp",
+        "selector_parser.cpp",
+    ],
+    hdrs = [
+        "cf_configs_instances.h",
+        "cf_flags_validator.h",
+        "cf_metrics_configs.h",
+        "fetch_config_parser.h",
+        "launch_cvd_parser.h",
+        "launch_cvd_templates.h",
+        "load_configs_parser.h",
+        "selector_parser.h",
+    ],
+    deps = [
+        ":configs_common",
+        ":load_config_cc_proto",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/commands/cvd/fetch",
+        "//cuttlefish/host/commands/cvd/cli/parser/instance",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+        "@fmt",
+        "@jsoncpp",
+        "@protobuf//:json_util",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+)
