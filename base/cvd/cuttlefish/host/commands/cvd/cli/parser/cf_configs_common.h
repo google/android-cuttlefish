@@ -22,7 +22,7 @@
 
 #include <fmt/format.h>
 #include <google/protobuf/message.h>
-#include "json/json.h"
+#include <json/json.h>
 
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"

@@ -21,6 +21,7 @@ cc_test(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/cli/parser/instance:launch_cvd_cc_proto",
+        "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
         "//cuttlefish/host/commands/cvd:libcvd",
         "//cuttlefish/host/libs/config",
         "//libbase",
