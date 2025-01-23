@@ -1,6 +1,20 @@
 exports_files(glob(["*"]), visibility = ["//visibility:public"])
 
 cc_library(
+    name = "command_request",
+    srcs = ["command_request.cpp"],
+    hdrs = ["command_request.h"],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        ":types",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/selector:parser",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "types",
     hdrs = ["types.h"],
     strip_include_prefix = "//cuttlefish",
