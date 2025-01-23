@@ -88,10 +88,6 @@ cc_library(
         # "//cuttlefish/host/commands/cvd/metrics:cvd_metrics_api.cpp",
         "//cuttlefish/host/commands/cvd/metrics:metrics_notice.cpp",
         # "//cuttlefish/host/commands/cvd/metrics:utils.cpp",
-        "//cuttlefish/host/commands/cvd/utils:common.cpp",
-        "//cuttlefish/host/commands/cvd/utils:flags_collector.cpp",
-        "//cuttlefish/host/commands/cvd/utils:interrupt_listener.cpp",
-        "//cuttlefish/host/commands/cvd/utils:subprocess_waiter.cpp",
     ],
     hdrs = [
         "//cuttlefish/host/commands/cvd/acloud:config.h",
@@ -180,10 +176,6 @@ cc_library(
         "//cuttlefish/host/commands/cvd/legacy:run_server.h",
         "//cuttlefish/host/commands/cvd/legacy:server_constants.h",
         "//cuttlefish/host/commands/cvd/metrics:metrics_notice.h",
-        "//cuttlefish/host/commands/cvd/utils:common.h",
-        "//cuttlefish/host/commands/cvd/utils:flags_collector.h",
-        "//cuttlefish/host/commands/cvd/utils:interrupt_listener.h",
-        "//cuttlefish/host/commands/cvd/utils:subprocess_waiter.h",
     ],
     copts = [
         "-Werror=sign-compare",
@@ -203,6 +195,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
+        "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/commands/metrics:libmetrics",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config",
@@ -238,6 +231,7 @@ cc_binary(
     deps = [
         ":libcvd",
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
         "//libsparse",
         "@fmt",

@@ -26,7 +26,6 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/command_request.h"
 
 namespace cuttlefish {
 
