@@ -35,3 +35,16 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "instance_database_utils",
+    srcs = ["instance_database_utils.cpp"],
+    hdrs = ["instance_database_utils.h"],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+    visibility = ["//visibility:public"],
+)
