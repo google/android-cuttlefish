@@ -1,1 +1,14 @@
-exports_files(glob(["*"]), visibility = ["//visibility:public"])
+cc_library(
+    name = "metrics",
+    srcs = [
+        # TODO: b/315772518 - cvd metrics are currently disabled
+        # "cvd_metrics_api.cpp",
+        "metrics_notice.cpp",
+        # "utils.cpp",
+    ],
+    hdrs = [
+        "metrics_notice.h",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:public"],
+)
