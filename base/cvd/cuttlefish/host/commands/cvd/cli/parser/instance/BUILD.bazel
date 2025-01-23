@@ -1,5 +1,3 @@
-exports_files(glob(["*"]), visibility = ["//visibility:public"])
-
 proto_library(
     name = "launch_cvd_proto",
     srcs = ["launch_cvd.proto"],
@@ -8,5 +6,41 @@ proto_library(
 cc_proto_library(
     name = "launch_cvd_cc_proto",
     deps = [":launch_cvd_proto"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "instance",
+    srcs = [
+        "cf_boot_configs.cpp",
+        "cf_connectivity_configs.cpp",
+        "cf_disk_configs.cpp",
+        "cf_graphics_configs.cpp",
+        "cf_security_configs.cpp",
+        "cf_streaming_configs.cpp",
+        "cf_vm_configs.cpp",
+    ],
+    hdrs = [
+        "cf_boot_configs.h",
+        "cf_connectivity_configs.h",
+        "cf_disk_configs.h",
+        "cf_graphics_configs.h",
+        "cf_security_configs.h",
+        "cf_streaming_configs.h",
+        "cf_vm_configs.h",
+    ],
+    deps = [
+        ":launch_cvd_cc_proto",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "//libbase",
+        "@jsoncpp",
+        "@protobuf",
+        "@protobuf//:json_util",
+    ],
+    strip_include_prefix = "//cuttlefish",
     visibility = ["//visibility:public"],
 )
