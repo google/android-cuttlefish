@@ -79,3 +79,9 @@ PRODUCT_SOONG_DEFINED_SYSTEM_IMAGE := aosp_shared_system_image
 endif # NATIVE_COVERAGE
 endif # CLANG_COVERAGE
 endif # aosp_cf_x86_64_phone aosp_cf_x86_64_foldable
+
+# For a gradual rollout, we're starting with just enabling this for aosp_cf_x86_64_phone and
+# not any of the other products that inherit from it.
+ifeq ($(TARGET_PRODUCT),aosp_cf_x86_64_phone)
+PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
+endif
