@@ -1,5 +1,5 @@
 package(
-    default_visibility = ["//visibility:public"],
+    default_visibility = ["//:android_cuttlefish"],
 )
 
 # This file needs to change the signature of strerror_r exposed

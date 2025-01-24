@@ -1,3 +1,7 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
 cc_library(
     name = "result",
     srcs = [
@@ -10,7 +14,6 @@ cc_library(
         "-std=c++17",
     ],
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
     deps = [
         "//libbase",
         "@fmt",
@@ -27,7 +30,6 @@ cc_library(
         "-std=c++17",
     ],
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
     deps = [
         ":result",
         "//libbase",
@@ -81,7 +83,6 @@ cc_library(
         "-std=c++17",
     ],
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
     deps = [
         ":result",
         "//cuttlefish/common/libs/fs",

@@ -1,5 +1,12 @@
+package_group(
+    name = "android_cuttlefish",
+    packages = [
+        "//...",
+    ],
+)
+
 package(
-    default_visibility = ["//visibility:public"],
+    default_visibility = ["//:android_cuttlefish"],
 )
 
 genrule(
@@ -12,5 +19,4 @@ genrule(
 filegroup(
    name = "clang_tidy_config",
    srcs = [".clang-tidy"],
-   visibility = ["//visibility:public"],
 )

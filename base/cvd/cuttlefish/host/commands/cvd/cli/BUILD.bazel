@@ -1,3 +1,7 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
 cc_library(
     name = "command_request",
     srcs = ["command_request.cpp"],
@@ -9,7 +13,6 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -23,7 +26,6 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
         "//libbase",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -36,7 +38,6 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
     ],
-    visibility = ["//visibility:public"],
 )
 
 # Commands that may invoke other commands
@@ -82,14 +83,12 @@ cc_library(
         "//libbase",
         "@jsoncpp",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
     name = "types",
     hdrs = ["types.h"],
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -108,5 +107,4 @@ cc_library(
         "//cuttlefish/host/libs/config",
         "@fmt",
     ],
-    visibility = ["//visibility:public"],
 )
