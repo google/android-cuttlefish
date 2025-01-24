@@ -1,3 +1,7 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
 proto_library(
     name = "launch_cvd_proto",
     srcs = ["launch_cvd.proto"],
@@ -6,7 +10,6 @@ proto_library(
 cc_proto_library(
     name = "launch_cvd_cc_proto",
     deps = [":launch_cvd_proto"],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -42,5 +45,4 @@ cc_library(
         "@protobuf//:json_util",
     ],
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
 )

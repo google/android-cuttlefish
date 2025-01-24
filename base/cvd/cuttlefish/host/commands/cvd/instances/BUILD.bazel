@@ -1,3 +1,7 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
 proto_library(
     name = "cvd_persistent_data_proto",
     srcs = ["cvd_persistent_data.proto"],
@@ -6,7 +10,6 @@ proto_library(
 cc_proto_library(
     name = "cvd_persistent_data",
     deps = [":cvd_persistent_data_proto"],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -31,7 +34,6 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -79,7 +81,6 @@ cc_library(
         "@fmt",
         "@jsoncpp",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -92,7 +93,6 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -109,5 +109,4 @@ cc_library(
         "//libbase",
         "@fmt",
     ],
-    visibility = ["//visibility:public"],
 )

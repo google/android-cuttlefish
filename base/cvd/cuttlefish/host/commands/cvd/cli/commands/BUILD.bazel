@@ -1,3 +1,7 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
 exports_files([
     "acloud_command.cpp",
     "acloud_command.h",
@@ -9,7 +13,7 @@ exports_files([
     "help.h",
     "load_configs.cpp",
     "load_configs.h",
-], visibility = ["//visibility:public"])
+])
 
 cc_library(
     name = "command_handler",
@@ -22,7 +26,6 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -37,7 +40,6 @@ cc_library(
         "//libbase",
         "@fmt",
     ],
-    visibility = ["//visibility:public"],
 )
 
 # Commands that don't execute other commands
@@ -129,6 +131,5 @@ cc_library(
         "@fmt",
         "@zlib",
     ],
-    visibility = ["//visibility:public"],
 )
 
