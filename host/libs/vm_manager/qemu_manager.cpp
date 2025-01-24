@@ -375,7 +375,16 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   if (instance.mte()) {
     machine += ",mte=on";
   }
-  qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off");
+  qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off,memory-backend=vm_ram");
+
+  // Memory must be backed by a file for vhost-user to work correctly, otherwise
+  // qemu doesn't send the memory mappings necessary for the backend to access
+  // the virtqueues.
+  qemu_cmd.AddParameter("-object");
+  qemu_cmd.AddParameter("memory-backend-file,size=", instance.memory_mb(), "M",
+                        ",prealloc=on,share=on,mem-path=",
+                        instance.PerInstanceInternalPath("qemu.mem"),
+                        ",id=vm_ram");
 
   qemu_cmd.AddParameter("-m");
   auto maxmem = instance.memory_mb() +
@@ -733,6 +742,11 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   // device padding for unsupported "switches" input
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-keyboard-pci,disable-legacy=on");
+
+  qemu_cmd.AddParameter("-chardev");
+  qemu_cmd.AddParameter("socket,path=", instance.rotary_socket_path(), ",id=rotary0");
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("vhost-user-input-pci,chardev=rotary0");
 
   auto vhost_net = instance.vhost_net() ? ",vhost=on" : "";
 
