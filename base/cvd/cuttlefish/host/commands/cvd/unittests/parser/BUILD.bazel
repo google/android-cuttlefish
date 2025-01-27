@@ -16,7 +16,6 @@ cc_test(
         "test_common.h",
     ],
     copts = [
-        "-Wno-ctad-maybe-unsupported",
         "-std=c++17",
         "-Icuttlefish",
     ],

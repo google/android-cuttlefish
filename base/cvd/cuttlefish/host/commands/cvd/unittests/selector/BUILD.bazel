@@ -19,7 +19,6 @@ cc_test(
         "parser_names_test.cpp",
     ],
     copts = [
-        "-Wno-ctad-maybe-unsupported",
         "-std=c++17",
         "-Icuttlefish",
     ],

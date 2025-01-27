@@ -8,7 +8,6 @@ cc_library(
     hdrs = ["cvd.h"],
     copts = [
         "-Werror=sign-compare",
-        "-Wno-ctad-maybe-unsupported",
         "-std=c++17",
     ],
     strip_include_prefix = "//cuttlefish",
@@ -30,7 +29,6 @@ cc_binary(
     name = "cvd",
     srcs = ["main.cc" ],
     copts = [
-        "-Wno-ctad-maybe-unsupported",
         "-std=c++17",
     ],
     deps = [

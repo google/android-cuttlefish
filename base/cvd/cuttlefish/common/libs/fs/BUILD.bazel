@@ -34,7 +34,6 @@ cc_test(
         "shared_fd_test.cpp",
     ],
     copts = [
-        "-Wno-ctad-maybe-unsupported",
         "-std=c++17",
     ],
     includes = [""],
