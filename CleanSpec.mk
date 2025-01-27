@@ -76,3 +76,5 @@ $(call add-clean-step, find $(PRODUCT_OUT)/system -type f -name "*charger*" -pri
 $(call add-clean-step, find $(PRODUCT_OUT)/vendor -type f -name "*health@*" -print0 | xargs -0 rm -f)
 $(call add-clean-step, find $(PRODUCT_OUT)/recovery/root -type f -name "*charger*" -print0 | xargs -0 rm -f)
 $(call add-clean-step, find $(PRODUCT_OUT)/recovery/root -type f -name "*health@*" -print0 | xargs -0 rm -f)
+
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/bootloader)
