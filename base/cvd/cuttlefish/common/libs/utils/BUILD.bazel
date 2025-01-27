@@ -102,7 +102,6 @@ cc_test(
         "result_test.cpp",
     ],
     copts = [
-        "-Wno-ctad-maybe-unsupported",
         "-std=c++17",
         "-Icuttlefish",
     ],

@@ -8,7 +8,6 @@ cc_library(
     hdrs = ["cache.h"],
     copts = [
         "-Werror=sign-compare",
-        "-Wno-ctad-maybe-unsupported",
         "-std=c++17",
     ],
     strip_include_prefix = "//cuttlefish",
