@@ -29,8 +29,8 @@
 #include "host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "host/commands/cvd/instances/instance_database.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/commands/cvd/instances/instance_lock.h"
 #include "host/commands/cvd/instances/instance_record.h"
+#include "host/commands/cvd/instances/lock/instance_lock.h"
 
 namespace cuttlefish {
 
