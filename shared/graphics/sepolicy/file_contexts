@@ -2,6 +2,7 @@
 
 /dev/dri u:object_r:gpu_device:s0
 /dev/dri/card0  u:object_r:graphics_device:s0
+/dev/dri/card1  u:object_r:graphics_device:s0
 /dev/dri/renderD128  u:object_r:gpu_device:s0
 
 /vendor/bin/hw/android\.hardware\.graphics\.allocator-service\.minigbm   u:object_r:hal_graphics_allocator_default_exec:s0
