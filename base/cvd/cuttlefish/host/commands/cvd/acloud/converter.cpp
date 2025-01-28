@@ -36,7 +36,7 @@
 #include "host/commands/cvd/acloud/config.h"
 #include "host/commands/cvd/acloud/create_converter_parser.h"
 #include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/instances/lock_file.h"
+#include "host/commands/cvd/instances/lock/lock_file.h"
 #include "host/commands/cvd/instances/instance_database_utils.h"
 #include "host/commands/cvd/cli/selector/selector_constants.h"
 #include "host/commands/cvd/cli/command_request.h"

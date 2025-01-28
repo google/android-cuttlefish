@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/instance_lock.h"
+#include "host/commands/cvd/instances/lock/instance_lock.h"
 
 #include <sys/file.h>
 
