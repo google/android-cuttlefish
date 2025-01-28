@@ -64,35 +64,6 @@ prebuilt_etc {
     src: "android.hardware.security.secureclock-service.rust.xml",
 }
 
-prebuilt_etc {
-    name: "android.hardware.security.keymint-service.trusty.system.xml",
-    sub_dir: "vintf",
-    vendor: true,
-    src: "android.hardware.security.keymint-service.trusty.system.xml",
-}
-
-prebuilt_etc {
-    name: "android.hardware.security.sharedsecret-service.trusty.system.xml",
-    sub_dir: "vintf",
-    vendor: true,
-    src: "android.hardware.security.sharedsecret-service.trusty.system.xml",
-}
-
-prebuilt_etc {
-    name: "android.hardware.security.secureclock-service.trusty.system.xml",
-    sub_dir: "vintf",
-    vendor: true,
-    src: "android.hardware.security.secureclock-service.trusty.system.xml",
-}
-
-// permissions
-prebuilt_etc {
-    name: "android.hardware.hardware_keystore.rust-keymint.xml",
-    sub_dir: "permissions",
-    vendor: true,
-    src: "android.hardware.hardware_keystore.rust-keymint.xml",
-}
-
 apex_defaults {
     name: "com.android.hardware.keymint.rust_defaults",
     manifest: "manifest.json",
@@ -102,7 +73,7 @@ apex_defaults {
     updatable: false,
     prebuilts: [
         // permissions
-        "android.hardware.hardware_keystore.rust-keymint.xml",
+        "android.hardware.hardware_keystore.xml",
     ],
 }
 
@@ -129,8 +100,6 @@ apex {
     file_contexts: "file_contexts_trusty",
     prebuilts: [
         // vintf_fragments
-        "android.hardware.security.keymint-service.trusty.system.xml",
-        "android.hardware.security.secureclock-service.trusty.system.xml",
-        "android.hardware.security.sharedsecret-service.trusty.system.xml",
+        "android.hardware.security.keymint-service.trusty_system_vm.xml",
     ],
 }
