@@ -19,13 +19,15 @@
 #
 
 # Some targets still require 32 bit, and 6.6 kernels don't support
-# 32 bit devices (Wear, Go, Auto)
+# 32 bit devices
 ifeq (true,$(CLOCKWORK_EMULATOR_PRODUCT))
 TARGET_KERNEL_USE ?= 6.1
 else ifneq (,$(findstring x86_tv,$(PRODUCT_NAME)))
 TARGET_KERNEL_USE ?= 6.1
-else
+else ifneq (,$(findstring _desktop,$(PRODUCT_NAME)))
 TARGET_KERNEL_USE ?= 6.6
+else
+TARGET_KERNEL_USE ?= 6.12
 endif
 
 TARGET_KERNEL_ARCH ?= $(TARGET_ARCH)
