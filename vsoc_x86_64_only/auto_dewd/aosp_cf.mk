@@ -1,0 +1,44 @@
+#
+# Copyright (C) 2025 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# AOSP Car Cuttlefish Target with Declarative windowing definition language
+
+TARGET_BOARD_INFO_FILE := device/google/cuttlefish/shared/auto_dewd/android-info.txt
+
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/auto_dewd/display_settings.xml:$(TARGET_COPY_OUT_VENDOR)/etc/display_settings.xml
+
+# Exclude GAS Car Launcher
+DO_NOT_INCLUDE_GAS_CAR_LAUNCHER := true
+
+# Exclude Car UI Reference Design
+DO_NOT_INCLUDE_CAR_UI_REFERENCE_DESIGN := true
+
+# Exclude Car Visual Overlay
+DISABLE_CAR_PRODUCT_VISUAL_OVERLAY := true
+
+# Disable shared system image checking
+PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false
+$(call inherit-product, packages/services/Car/car_product/dewd/car_dewd_common.mk)
+$(call inherit-product, device/google/cuttlefish/vsoc_x86_64_only/auto/aosp_cf.mk)
+
+PRODUCT_NAME := aosp_cf_x86_64_auto_dewd
+PRODUCT_DEVICE := vsoc_x86_64_only
+PRODUCT_MANUFACTURER := Google
+PRODUCT_MODEL := AOSP Cuttlefish x86_64 auto 64-bit only with Declarative windowing definition language
+
+# Include the`launch_cvd --config auto_dewd` option.
+$(call soong_config_append,cvd,launch_configs,cvd_config_auto_dewd.json)
