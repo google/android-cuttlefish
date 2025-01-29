@@ -1,3 +1,5 @@
+load("//:build_variables.bzl", "COPTS")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -15,10 +17,7 @@ cc_test(
         "test_common.cc",
         "test_common.h",
     ],
-    copts = [
-        "-std=c++17",
-        "-Icuttlefish",
-    ],
+    copts = COPTS + [ "-Icuttlefish" ],
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",

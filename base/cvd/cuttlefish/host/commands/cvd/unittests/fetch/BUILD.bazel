@@ -1,3 +1,5 @@
+load("//:build_variables.bzl", "COPTS")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -8,10 +10,7 @@ cc_test(
         "fetch_cvd_parser_test.cpp",
         "fetch_cvd_test.cpp",
     ],
-    copts = [
-        "-std=c++17",
-        "-Icuttlefish",
-    ],
+    copts = COPTS + [ "-Icuttlefish" ],
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",

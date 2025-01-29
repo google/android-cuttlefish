@@ -1,3 +1,5 @@
+load("//:build_variables.bzl", "COPTS")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -8,10 +10,7 @@ cc_test(
         "frontline_parser_test.cpp",
         "utils.h",
     ],
-    copts = [
-        "-std=c++17",
-        "-Icuttlefish",
-    ],
+    copts = COPTS + [ "-Icuttlefish" ],
     deps = [
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/cli:frontline_parser",

@@ -1,3 +1,5 @@
+load("//:build_variables.bzl", "COPTS")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -10,9 +12,7 @@ cc_library(
     hdrs = [
         "sparse_image_utils.h",
     ],
-    copts = [
-        "-std=c++17",
-    ],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
