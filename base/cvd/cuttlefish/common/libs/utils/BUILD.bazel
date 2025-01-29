@@ -1,3 +1,5 @@
+load("//:build_variables.bzl", "COPTS")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -10,9 +12,7 @@ cc_library(
     hdrs = [
         "result.h",
     ],
-    copts = [
-        "-std=c++17",
-    ],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//libbase",
@@ -26,9 +26,7 @@ cc_library(
     hdrs = [
         "result_matchers.h",
     ],
-    copts = [
-        "-std=c++17",
-    ],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
         ":result",
@@ -79,9 +77,7 @@ cc_library(
         "unix_sockets.h",
         "users.h",
     ],
-    copts = [
-        "-std=c++17",
-    ],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
         ":result",
@@ -101,10 +97,7 @@ cc_test(
     srcs = [
         "result_test.cpp",
     ],
-    copts = [
-        "-std=c++17",
-        "-Icuttlefish",
-    ],
+    copts = COPTS + [ "-Icuttlefish" ],
     deps = [
         ":result",
         ":result_matchers",
@@ -127,9 +120,8 @@ cc_test(
         "unique_resource_allocator_test.h",
         "unix_sockets_test.cpp",
     ],
-    copts = [
+    copts = COPTS + [
         "-Wno-ctad-maybe-unsupported",
-        "-std=c++17",
         "-Icuttlefish",
     ],
     deps = [

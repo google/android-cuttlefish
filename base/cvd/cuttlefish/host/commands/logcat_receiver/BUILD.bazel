@@ -1,3 +1,5 @@
+load("//:build_variables.bzl", "COPTS")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -13,7 +15,5 @@ cc_binary(
     srcs = [
         "main.cpp",
     ],
-    cxxopts = [
-        "-std=c++17",
-    ],
+    copts = COPTS,
 )
