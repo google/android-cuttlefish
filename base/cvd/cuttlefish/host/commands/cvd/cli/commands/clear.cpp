@@ -22,7 +22,6 @@
 #include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 
-#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
@@ -43,7 +42,7 @@ class CvdClearCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {kClearCmd}; }
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
-  bool ShouldInterceptHelp() const override { return false; }
+  bool ShouldInterceptHelp() const override { return true; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
@@ -56,16 +55,7 @@ CvdClearCommandHandler::CvdClearCommandHandler(
 
 Result<void> CvdClearCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
-
-  std::vector<std::string> cmd_args = request.SubcommandArguments();
-
-  // TODO: chadreynolds - check if this can be removed
-  if (CF_EXPECT(HasHelpFlag(cmd_args))) {
-    std::cout << kSummaryHelpText << std::endl;
-    return {};
-  }
   CF_EXPECT_EQ(instance_manager_.CvdClear(request).code(), cvd::Status::OK);
-
   return {};
 }
 

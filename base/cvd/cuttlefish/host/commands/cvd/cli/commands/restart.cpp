@@ -66,20 +66,13 @@ class CvdDeviceRestartCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
+    RestartOptions options;
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
-
-    // TODO: chadreynolds - check if this can be removed
-    if (CF_EXPECT(HasHelpFlag(subcmd_args))) {
-      std::cout << kDetailedHelpText << std::endl;
-      return {};
-    }
+    CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args));
 
     auto [instance, unused] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                   "Unable to select an instance");
-
-    RestartOptions options;
-    CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args));
 
     CF_EXPECT(instance.Restart(
         std::chrono::seconds(options.wait_for_launcher_seconds),
