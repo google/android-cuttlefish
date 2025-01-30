@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/selector/selector_common_parser.h"
@@ -43,6 +44,12 @@ CommandRequest::CommandRequest(cvd_common::Args args, cvd_common::Envs env,
   } else {
     subcommand_ = subcommand_arguments_[0];
     subcommand_arguments_.erase(subcommand_arguments_.begin());
+  }
+
+  //  transform `cvd -h` or `cvd --help` requests into `cvd help`
+  Result<bool> is_top_level_help_flag = HasHelpFlag({subcommand_});
+  if (is_top_level_help_flag.ok() && *is_top_level_help_flag) {
+    subcommand_ = "help";
   }
 }
 
