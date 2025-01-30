@@ -79,11 +79,6 @@ Result<bool> InstanceManager::GetAcloudTranslatorOptout() const {
   return CF_EXPECT(instance_db_.GetAcloudTranslatorOptout());
 }
 
-Result<selector::CreationAnalyzer> InstanceManager::CreationAnalyzer(
-    const selector::CreationAnalyzer::CreationAnalyzerParam& param) {
-  return selector::CreationAnalyzer::Create(param, lock_manager_);
-}
-
 Result<std::pair<LocalInstance, LocalInstanceGroup>>
 InstanceManager::FindInstanceWithGroup(
     const InstanceDatabase::Filter& filter) const {

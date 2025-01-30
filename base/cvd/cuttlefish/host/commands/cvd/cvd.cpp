@@ -32,6 +32,7 @@
 #include "host/commands/cvd/cli/frontline_parser.h"
 #include "host/commands/cvd/cli/request_context.h"
 #include "host/commands/cvd/instances/instance_manager.h"
+#include "host/commands/cvd/instances/lock/instance_lock.h"
 
 namespace cuttlefish {
 
@@ -56,8 +57,10 @@ namespace {
 
 }  // namespace
 
-Cvd::Cvd(InstanceManager& instance_manager)
-    : instance_manager_(instance_manager) {}
+Cvd::Cvd(InstanceManager& instance_manager,
+         InstanceLockFileManager& lock_file_manager)
+    : instance_manager_(instance_manager),
+      lock_file_manager_(lock_file_manager) {}
 
 Result<void> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
@@ -69,7 +72,7 @@ Result<void> Cvd::HandleCommand(
                                          .AddSelectorArguments(selector_args)
                                          .Build());
 
-  RequestContext context(instance_manager_);
+  RequestContext context(instance_manager_, lock_file_manager_);
   auto handler = CF_EXPECT(context.Handler(request));
   if (handler->ShouldInterceptHelp()) {
     std::vector<std::string> invocation_args = request.SubcommandArguments();

@@ -41,6 +41,7 @@
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/instances/instance_database_types.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
+#include "host/commands/cvd/instances/lock/instance_lock.h"
 #include "host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
@@ -217,9 +218,11 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
 class CvdCreateCommandHandler : public CvdCommandHandler {
  public:
   CvdCreateCommandHandler(InstanceManager& instance_manager,
-                          CommandSequenceExecutor& command_executor)
+                          CommandSequenceExecutor& command_executor,
+                          InstanceLockFileManager& lock_manager)
       : instance_manager_(instance_manager),
-        command_executor_(command_executor) {}
+        command_executor_(command_executor),
+        lock_manager_(lock_manager) {}
 
   Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override { return {"create"}; }
@@ -241,6 +244,7 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
 
   InstanceManager& instance_manager_;
   CommandSequenceExecutor& command_executor_;
+  InstanceLockFileManager& lock_manager_;
 };
 
 void CvdCreateCommandHandler::MarkLockfiles(
@@ -261,7 +265,8 @@ Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
   CreationAnalyzerParam analyzer_param{
       .cmd_args = subcmd_args, .envs = envs, .selectors = request.Selectors()};
 
-  auto analyzer = CF_EXPECT(instance_manager_.CreationAnalyzer(analyzer_param));
+  auto analyzer = CF_EXPECT(
+      selector::CreationAnalyzer::Create(analyzer_param, lock_manager_));
   auto group_creation_info =
       CF_EXPECT(analyzer.ExtractGroupInfo(acquire_file_locks));
 
@@ -413,9 +418,10 @@ Result<std::string> CvdCreateCommandHandler::DetailedHelp(
 }
 
 std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
-    InstanceManager& instance_manager, CommandSequenceExecutor& executor) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdCreateCommandHandler(instance_manager, executor));
+    InstanceManager& instance_manager, CommandSequenceExecutor& executor,
+    InstanceLockFileManager& lock_manager) {
+  return std::make_unique<CvdCreateCommandHandler>(instance_manager, executor,
+                                                   lock_manager);
 }
 
 }  // namespace cuttlefish

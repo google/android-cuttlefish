@@ -196,7 +196,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   InstanceLockFileManager instance_lockfile_manager;
   InstanceDatabase instance_db(InstanceDatabasePath());
   InstanceManager instance_manager(instance_lockfile_manager, instance_db);
-  Cvd cvd(instance_manager);
+  Cvd cvd(instance_manager, instance_lockfile_manager);
 
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {

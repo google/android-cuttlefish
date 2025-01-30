@@ -40,10 +40,6 @@ class InstanceManager {
 
   InstanceManager(InstanceLockFileManager&, InstanceDatabase& instance_db);
 
-  // For cvd start
-  Result<selector::CreationAnalyzer> CreationAnalyzer(
-      const selector::CreationAnalyzer::CreationAnalyzerParam& param);
-
   Result<bool> HasInstanceGroups() const;
   Result<LocalInstanceGroup> CreateInstanceGroup(
       const selector::GroupCreationInfo& group_info);
