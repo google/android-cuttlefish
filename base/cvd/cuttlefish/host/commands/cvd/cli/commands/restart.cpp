@@ -27,7 +27,6 @@
 #include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
@@ -69,7 +68,8 @@ class CvdDeviceRestartCommandHandler : public CvdCommandHandler {
 
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
-    if (CF_EXPECT(IsHelpSubcmd(subcmd_args))) {
+    // TODO: chadreynolds - check if this can be removed
+    if (CF_EXPECT(HasHelpFlag(subcmd_args))) {
       std::cout << kDetailedHelpText << std::endl;
       return {};
     }

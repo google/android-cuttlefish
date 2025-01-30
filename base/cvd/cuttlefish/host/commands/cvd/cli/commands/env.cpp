@@ -57,7 +57,7 @@ class CvdEnvCommandHandler : public CvdCommandHandler {
     /*
      * cvd_env --help only. Not --helpxml, etc.
      *
-     * Otherwise, IsHelpSubcmd() should be used here instead.
+     * Otherwise, HasHelpFlag() should be used here instead.
      */
     bool help = false;
     Flag help_flag = GflagsCompatFlag("help", help);

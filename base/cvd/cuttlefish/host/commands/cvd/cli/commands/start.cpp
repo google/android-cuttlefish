@@ -511,7 +511,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   }
   // update DB if not help
   // collect group creation infos
-  const bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));
+  const bool is_help = CF_EXPECT(HasHelpFlag(subcmd_args));
 
   if (is_help) {
     auto android_host_out = CF_EXPECT(AndroidHostPath(envs));

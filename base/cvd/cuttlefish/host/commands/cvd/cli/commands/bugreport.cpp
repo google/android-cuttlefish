@@ -25,6 +25,7 @@
 #include <android-base/scopeguard.h>
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
@@ -73,7 +74,7 @@ Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
 
   std::string android_host_out;
   std::string home = CF_EXPECT(SystemWideUserHome());
-  if (!CF_EXPECT(IsHelpSubcmd(cmd_args))) {
+  if (!CF_EXPECT(HasHelpFlag(cmd_args))) {
     bool has_instance_groups = CF_EXPECT(instance_manager_.HasInstanceGroups());
     CF_EXPECTF(!!has_instance_groups, "{}", NoGroupMessage(request));
 

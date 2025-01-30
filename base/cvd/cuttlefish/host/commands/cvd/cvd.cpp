@@ -25,12 +25,12 @@
 #include <android-base/logging.h>
 
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/frontline_parser.h"
 #include "host/commands/cvd/cli/request_context.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
@@ -73,7 +73,7 @@ Result<void> Cvd::HandleCommand(
   auto handler = CF_EXPECT(context.Handler(request));
   if (handler->ShouldInterceptHelp()) {
     std::vector<std::string> invocation_args = request.SubcommandArguments();
-    if (CF_EXPECT(IsHelpSubcmd(invocation_args))) {
+    if (CF_EXPECT(HasHelpFlag(invocation_args))) {
       std::cout << CF_EXPECT(handler->DetailedHelp(invocation_args))
                 << std::endl;
       return {};

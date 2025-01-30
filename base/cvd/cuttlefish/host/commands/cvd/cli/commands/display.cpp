@@ -152,7 +152,7 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
 
   Result<bool> IsHelp(const cvd_common::Args& cmd_args) const {
     // cvd display --help, --helpxml, etc or simply cvd display
-    if (cmd_args.empty() || CF_EXPECT(IsHelpSubcmd(cmd_args))) {
+    if (cmd_args.empty() || CF_EXPECT(HasHelpFlag(cmd_args))) {
       return true;
     }
     // cvd display help <subcommand> format

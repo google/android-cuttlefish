@@ -190,4 +190,7 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<std::string>& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
                       bool default_value);
 
+// e.g. cvd start --help, cvd stop -help, cvd fleet -h
+Result<bool> HasHelpFlag(const std::vector<std::string>& args);
+
 }  // namespace cuttlefish
