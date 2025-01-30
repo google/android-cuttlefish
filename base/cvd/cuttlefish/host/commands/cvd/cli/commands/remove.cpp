@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/selector/selector.h"
@@ -55,7 +56,8 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
     CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
-    if (CF_EXPECT(IsHelpSubcmd(subcmd_args))) {
+    // TODO: chadreynolds - check if this can be removed
+    if (CF_EXPECT(HasHelpFlag(subcmd_args))) {
       std::vector<std::string> unused;
       std::cout << CF_EXPECT(DetailedHelp(unused));
       return {};

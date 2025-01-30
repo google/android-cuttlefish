@@ -39,7 +39,6 @@
 #include "host/commands/cvd/cli/commands/host_tool_target.h"
 #include "host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_database_types.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
 #include "host/commands/cvd/utils/common.h"
@@ -343,7 +342,7 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
 Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
-  bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));
+  bool is_help = CF_EXPECT(HasHelpFlag(subcmd_args));
   CF_EXPECT(!is_help);
 
   cvd_common::Envs envs = CF_EXPECT(GetEnvs(request));

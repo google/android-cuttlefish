@@ -59,9 +59,6 @@ struct ConstructNonHelpForm {
 Result<Command> ConstructCvdGenericNonHelpCommand(
     const ConstructNonHelpForm& request_form, const CommandRequest& request);
 
-// e.g. cvd start --help, cvd stop --help
-Result<bool> IsHelpSubcmd(const std::vector<std::string>& args);
-
 // Call this when there is no instance group is running
 // The function does not verify that.
 std::string NoGroupMessage(const CommandRequest& request);

@@ -22,11 +22,11 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
@@ -44,7 +44,8 @@ class CvdDevicePowerBtnCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
-    if (CF_EXPECT(IsHelpSubcmd(request.SubcommandArguments()))) {
+    // TODO: chadreynolds - check if this can be removed
+    if (CF_EXPECT(HasHelpFlag(request.SubcommandArguments()))) {
       std::cout << kSummaryHelpText << std::endl;
       return {};
     }

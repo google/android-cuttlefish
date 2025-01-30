@@ -22,11 +22,11 @@
 #include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
@@ -59,7 +59,8 @@ Result<void> CvdClearCommandHandler::Handle(const CommandRequest& request) {
 
   std::vector<std::string> cmd_args = request.SubcommandArguments();
 
-  if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
+  // TODO: chadreynolds - check if this can be removed
+  if (CF_EXPECT(HasHelpFlag(cmd_args))) {
     std::cout << kSummaryHelpText << std::endl;
     return {};
   }

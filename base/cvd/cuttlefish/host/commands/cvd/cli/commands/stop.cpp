@@ -25,6 +25,7 @@
 #include <android-base/scopeguard.h>
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
@@ -101,7 +102,7 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   std::vector<std::string> cmd_args = request.SubcommandArguments();
 
-  if (CF_EXPECT(IsHelpSubcmd(cmd_args))) {
+  if (CF_EXPECT(HasHelpFlag(cmd_args))) {
     CF_EXPECT(HandleHelpCmd(request));
     return {};
   }
