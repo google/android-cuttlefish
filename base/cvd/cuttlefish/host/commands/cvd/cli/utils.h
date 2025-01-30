@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <sys/types.h>
+#include <signal.h>
 
 #include <string>
 #include <string_view>
