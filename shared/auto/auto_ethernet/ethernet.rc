@@ -15,6 +15,11 @@
 # Initialize network configuration before init so that routes are configured
 # before services are started
 
+# Hardcode the network interface for threadnetwork HAL to prevent it from trying
+# to use eth1, which is not available in the root network namespace in auto.
+on init
+    setprop persist.vendor.otsim.local_interface 127.0.0.1
+
 on post-fs
     exec_start auto-ethernet-setup
     exec_start auto-ethernet-namespace-setup
