@@ -32,6 +32,68 @@
 
 namespace cuttlefish {
 namespace selector {
+namespace {
+
+class CreationAnalyzer {
+ public:
+  struct GroupInfo {
+    std::string group_name;
+    const bool default_group;
+  };
+
+  static Result<CreationAnalyzer> Create(const CreationAnalyzerParam& param,
+                                         InstanceLockFileManager&);
+
+  Result<GroupCreationInfo> ExtractGroupInfo(bool acquire_file_locks);
+
+ private:
+  using IdAllocator = UniqueResourceAllocator<unsigned>;
+
+  CreationAnalyzer(const CreationAnalyzerParam& param,
+                   StartSelectorParser&& selector_options_parser,
+                   InstanceLockFileManager& instance_lock_file_manager);
+
+  /**
+   * calculate n_instances_ and instance_ids_
+   */
+  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIds(
+      bool acquire_file_locks);
+
+  /*
+   * When group name is nil, it is auto-generated using instance ids
+   *
+   * If the instanc group is the default one, the group name is cvd. Otherwise,
+   * for given instance ids, {i}, the group name will be cvd_i.
+   */
+  Result<GroupInfo> ExtractGroup(const std::vector<PerInstanceInfo>&) const;
+
+  /**
+   * Figures out the HOME directory
+   *
+   * The issue is that many times, HOME is anyway implicitly given. Thus, only
+   * if the HOME value is not equal to the HOME directory recognized by the
+   * system, it can be safely regarded as overridden by the user.
+   *
+   * If that is not the case, we use a automatically generated value as HOME.
+   * If the group instance is the default one, we still use the user's system-
+   * widely recognized home. If not, we populate them user /tmp/.cf/<uid>/
+   *
+   */
+  Result<std::string> AnalyzeHome() const;
+
+  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal(
+      bool acquire_file_locks);
+  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal(
+      const std::vector<unsigned>& requested_instance_ids,
+      bool acquire_file_locks);
+
+  // inputs
+  std::unordered_map<std::string, std::string> envs_;
+
+  // internal, temporary
+  StartSelectorParser selector_options_parser_;
+  InstanceLockFileManager& instance_lock_file_manager_;
+};
 
 Result<CreationAnalyzer> CreationAnalyzer::Create(
     const CreationAnalyzerParam& param,
@@ -216,6 +278,16 @@ Result<std::string> CreationAnalyzer::AnalyzeHome() const {
   std::string auto_generated_home = DefaultBaseDir() + "/home";
   CF_EXPECT(EnsureDirectoryExists(auto_generated_home));
   return auto_generated_home;
+}
+
+}  // namespace
+
+Result<GroupCreationInfo> AnalyzeCreation(
+    const CreationAnalyzerParam& params,
+    InstanceLockFileManager& lock_file_manager) {
+  CreationAnalyzer analyzer =
+      CF_EXPECT(CreationAnalyzer::Create(params, lock_file_manager));
+  return CF_EXPECT(analyzer.ExtractGroupInfo(params.acquire_file_locks));
 }
 
 }  // namespace selector
