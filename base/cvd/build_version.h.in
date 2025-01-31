@@ -17,14 +17,13 @@
 #ifndef BUILD_VERSION_H
 #define BUILD_VERSION_H
 
-#include <string_view>
+#include <string>
 
 namespace android {
 namespace build {
 
-inline std::string_view GetBuildNumber() {
-  static constexpr char kBuildNumber[] = "@VCS_TAG@";
-  return kBuildNumber;
+std::string GetBuildNumber() {
+  return "@VCS_TAG@";
 }
 
 } // namespace build

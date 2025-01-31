@@ -48,7 +48,7 @@ class CvdVersionHandler : public CvdCommandHandler {
     fmt::print(std::cout, "major: {}\n", cvd::kVersionMajor);
     fmt::print(std::cout, "minor: {}\n", cvd::kVersionMinor);
 
-    std::string_view build = android::build::GetBuildNumber();
+    const std::string build = android::build::GetBuildNumber();
     if (!build.empty()) {
       fmt::print(std::cout, "build: {}\n", build);
     }
