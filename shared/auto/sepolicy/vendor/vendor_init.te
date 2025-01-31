@@ -1,1 +1,2 @@
 get_prop(vendor_init, auto_eth_namespace_setup_complete_prop)
+set_prop(vendor_init, vendor_otsim_local_interface_prop)
