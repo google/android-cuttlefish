@@ -39,14 +39,10 @@
 namespace cuttlefish {
 
 Result<RunCvdProcessManager> RunCvdProcessManager::Get() {
-  RunCvdProcessCollector run_cvd_collector =
-      CF_EXPECT(RunCvdProcessCollector::Get());
-  RunCvdProcessManager run_cvd_processes_manager(std::move(run_cvd_collector));
-  return run_cvd_processes_manager;
+  return RunCvdProcessManager();
 }
 
-RunCvdProcessManager::RunCvdProcessManager(RunCvdProcessCollector&& collector)
-    : run_cvd_process_collector_(std::move(collector)) {}
+RunCvdProcessManager::RunCvdProcessManager() {}
 
 static Command CreateStopCvdCommand(const std::string& stopper_path,
                                     const cvd_common::Envs& envs,
@@ -122,7 +118,7 @@ Result<void> RunCvdProcessManager::RunStopCvd(const GroupProcInfo& group_info,
 }
 
 Result<void> RunCvdProcessManager::RunStopCvdAll(bool clear_runtime_dirs) {
-  for (const auto& group_info : run_cvd_process_collector_.CfGroups()) {
+  for (const GroupProcInfo& group_info : CF_EXPECT(CollectRunCvdGroups())) {
     auto stop_cvd_result = RunStopCvd(group_info, clear_runtime_dirs);
     if (!stop_cvd_result.ok()) {
       LOG(ERROR) << stop_cvd_result.error().FormatForEnv();
@@ -260,7 +256,7 @@ Result<void> RunCvdProcessManager::KillAllCuttlefishInstances(
   if (!stop_cvd_result.ok()) {
     LOG(ERROR) << stop_cvd_result.error().FormatForEnv();
   }
-  for (const auto& group_info : run_cvd_process_collector_.CfGroups()) {
+  for (const GroupProcInfo& group_info : CF_EXPECT(CollectRunCvdGroups())) {
     auto result = ForcefullyStopGroup(group_info);
     if (!result.ok()) {
       LOG(ERROR) << result.error().FormatForEnv();
@@ -271,8 +267,7 @@ Result<void> RunCvdProcessManager::KillAllCuttlefishInstances(
 
 Result<void> RunCvdProcessManager::ForcefullyStopGroup(
     const uid_t any_id_in_group) {
-  auto groups_info = run_cvd_process_collector_.CfGroups();
-  for (const auto& group_info : groups_info) {
+  for (const GroupProcInfo& group_info : CF_EXPECT(CollectRunCvdGroups())) {
     if (!Contains(group_info.instances_,
                   static_cast<unsigned>(any_id_in_group))) {
       continue;

@@ -25,8 +25,6 @@ namespace cuttlefish {
 
 class RunCvdProcessManager {
  public:
-  using GroupProcInfo = RunCvdProcessCollector::GroupProcInfo;
-
   static Result<RunCvdProcessManager> Get();
   // called by cvd reset handler
   Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs);
@@ -34,16 +32,13 @@ class RunCvdProcessManager {
   Result<void> ForcefullyStopGroup(uid_t any_id_in_group);
 
  private:
-  RunCvdProcessManager() = delete;
-  RunCvdProcessManager(RunCvdProcessCollector&&);
+  RunCvdProcessManager();
   static Result<void> RunStopCvd(const GroupProcInfo& group_info,
                                  bool clear_runtime_dirs);
   Result<void> RunStopCvdAll(bool clear_runtime_dirs);
   Result<void> SendSignal(const GroupProcInfo&);
   Result<void> DeleteLockFile(const GroupProcInfo&);
   Result<void> ForcefullyStopGroup(const GroupProcInfo& group);
-
-  RunCvdProcessCollector run_cvd_process_collector_;
 };
 
 /*
