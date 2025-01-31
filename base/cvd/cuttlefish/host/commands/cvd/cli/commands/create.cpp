@@ -47,6 +47,10 @@
 namespace cuttlefish {
 namespace {
 
+using selector::AnalyzeCreation;
+using selector::CreationAnalyzerParam;
+using selector::GroupCreationInfo;
+
 constexpr char kSummaryHelpText[] =
     "Create a Cuttlefish virtual device or environment";
 
@@ -260,15 +264,14 @@ void CvdCreateCommandHandler::MarkLockfiles(
 Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
     const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
     const CommandRequest& request, bool acquire_file_locks) {
-  using CreationAnalyzerParam =
-      selector::CreationAnalyzer::CreationAnalyzerParam;
-  CreationAnalyzerParam analyzer_param{
-      .cmd_args = subcmd_args, .envs = envs, .selectors = request.Selectors()};
-
-  auto analyzer = CF_EXPECT(
-      selector::CreationAnalyzer::Create(analyzer_param, lock_manager_));
-  auto group_creation_info =
-      CF_EXPECT(analyzer.ExtractGroupInfo(acquire_file_locks));
+  GroupCreationInfo group_creation_info = CF_EXPECT(AnalyzeCreation(
+      {
+          .cmd_args = subcmd_args,
+          .envs = envs,
+          .selectors = request.Selectors(),
+          .acquire_file_locks = acquire_file_locks,
+      },
+      lock_manager_));
 
   std::vector<InstanceLockFile> lock_files;
   for (auto& instance : group_creation_info.instances) {
