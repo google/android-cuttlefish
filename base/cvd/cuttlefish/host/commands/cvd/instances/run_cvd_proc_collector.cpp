@@ -144,7 +144,19 @@ Result<std::vector<RunCvdProcInfo>> ExtractAllRunCvdInfo(
   return run_cvd_procs_of_uid;
 }
 
-}  // namespace
+class RunCvdProcessCollector {
+ public:
+  const std::vector<GroupProcInfo>& CfGroups() const { return cf_groups_; }
+
+  static Result<RunCvdProcessCollector> Get();
+  RunCvdProcessCollector(const RunCvdProcessCollector&) = delete;
+  RunCvdProcessCollector(RunCvdProcessCollector&&) = default;
+
+ private:
+  RunCvdProcessCollector() = default;
+  static Result<std::vector<GroupProcInfo>> CollectInfo();
+  std::vector<GroupProcInfo> cf_groups_;
+};
 
 Result<RunCvdProcessCollector> RunCvdProcessCollector::Get() {
   RunCvdProcessCollector run_cvd_processes_collector;
@@ -153,9 +165,7 @@ Result<RunCvdProcessCollector> RunCvdProcessCollector::Get() {
   return run_cvd_processes_collector;
 }
 
-Result<std::vector<RunCvdProcessCollector::GroupProcInfo>>
-
-RunCvdProcessCollector::CollectInfo() {
+Result<std::vector<GroupProcInfo>> RunCvdProcessCollector::CollectInfo() {
   auto run_cvd_pids = CF_EXPECT(CollectPidsByExecName("run_cvd"));
   std::vector<RunCvdProcInfo> run_cvd_infos =
       CF_EXPECT(ExtractAllRunCvdInfo(getuid()));
@@ -212,6 +222,13 @@ RunCvdProcessCollector::CollectInfo() {
   }
 
   return output;
+}
+
+}  // namespace
+
+Result<std::vector<GroupProcInfo>> CollectRunCvdGroups() {
+  RunCvdProcessCollector collector = CF_EXPECT(RunCvdProcessCollector::Get());
+  return collector.CfGroups();
 }
 
 }  // namespace cuttlefish
