@@ -18,12 +18,12 @@
 
 namespace cuttlefish {
 
-Result<void> SubprocessWaiter::Setup(Subprocess subprocess) {
+Result<void> SubprocessWaiter::Setup(Command& command) {
   std::unique_lock interrupt_lock(interruptible_);
   CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(!subprocess_, "Already running");
 
-  subprocess_ = std::move(subprocess);
+  subprocess_ = command.Start();
   return {};
 }
 
@@ -68,6 +68,7 @@ Result<void> SubprocessWaiter::Interrupt() {
         return CF_ERR("Unknown stop result: " << (uint64_t)stop_result);
     }
   }
+  interrupted_ = true;
   return {};
 }
 
