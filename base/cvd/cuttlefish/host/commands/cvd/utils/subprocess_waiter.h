@@ -28,7 +28,7 @@ class SubprocessWaiter {
  public:
   SubprocessWaiter() {}
 
-  Result<void> Setup(Subprocess subprocess);
+  Result<void> Setup(Command&);
   Result<siginfo_t> Wait();
   Result<void> Interrupt();
 

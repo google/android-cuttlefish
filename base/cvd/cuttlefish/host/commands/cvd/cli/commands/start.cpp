@@ -521,7 +521,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
         CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));
     ShowLaunchCommand(command, envs);
 
-    CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
+    CF_EXPECT(subprocess_waiter_.Setup(command));
     siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
     CF_EXPECT(CheckProcessExitedNormally(infop));
     return {};
@@ -614,7 +614,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
   }
   ShowLaunchCommand(launch_command, envs);
 
-  CF_EXPECT(subprocess_waiter_.Setup(launch_command.Start()));
+  CF_EXPECT(subprocess_waiter_.Setup(launch_command));
 
   auto acloud_compat_action_result = AcloudCompatActions(group, envs, request);
   if (!acloud_compat_action_result.ok()) {
