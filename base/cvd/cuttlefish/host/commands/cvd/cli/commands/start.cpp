@@ -588,13 +588,12 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
 }
 
 static Result<void> CvdResetGroup(const LocalInstanceGroup& group) {
-  auto run_cvd_process_manager = CF_EXPECT(RunCvdProcessManager::Get());
   // We can't run stop_cvd here. It may hang forever, and doesn't make sense
   // to interrupt it.
   const auto& instances = group.Instances();
   CF_EXPECT(!instances.empty());
   const auto& first_instance = *instances.begin();
-  CF_EXPECT(run_cvd_process_manager.ForcefullyStopGroup(first_instance.id()));
+  CF_EXPECT(ForcefullyStopGroup(first_instance.id()));
   return {};
 }
 
