@@ -521,8 +521,8 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
         CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));
     ShowLaunchCommand(command, envs);
 
-    CF_EXPECT(subprocess_waiter_.Setup(command));
-    siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
+    siginfo_t infop;
+    command.Start().Wait(&infop, WEXITED);
     CF_EXPECT(CheckProcessExitedNormally(infop));
     return {};
   }
