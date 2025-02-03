@@ -1014,6 +1014,20 @@ std::optional<std::string> InstancesUdsDir() {
   return instances_uds_dir;
 }
 
+std::string DefaultBootloaderArchDir(Arch arch) {
+  switch (arch) {
+    case Arch::Arm64:
+      return "aarch64";
+    case Arch::Arm:
+      return "arm";
+    case Arch::RiscV64:
+      return "riscv64";
+    case Arch::X86:
+    case Arch::X86_64:
+      return "x86_64";
+  }
+}
+
 } // namespace
 
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
@@ -2019,13 +2033,9 @@ Result<void> SetDefaultFlagsForQemu(
     // it's presented.
     if (!FileExists(curr_bootloader)) {
       // Fallback to default bootloader
-      curr_bootloader = DefaultHostArtifactsPath("etc/bootloader_");
-      if (guest_configs[instance_index].target_arch == Arch::Arm64) {
-        curr_bootloader += "aarch64";
-      } else {
-        curr_bootloader += "x86_64";
-      }
-      curr_bootloader += "/bootloader.qemu";
+      curr_bootloader = DefaultHostArtifactsPath(std::format(
+          "etc/bootloader_{}/bootloader.qemu",
+          DefaultBootloaderArchDir(guest_configs[instance_index].target_arch)));
     }
 
     if (instance_index > 0) {
@@ -2105,13 +2115,9 @@ Result<void> SetDefaultFlagsForCrosvm(
     // it's presented.
     if (!FileExists(curr_bootloader)) {
       // Fallback to default bootloader
-      curr_bootloader = DefaultHostArtifactsPath("etc/bootloader_");
-      if (guest_configs[instance_index].target_arch == Arch::Arm64) {
-        curr_bootloader += "aarch64";
-      } else {
-        curr_bootloader += "x86_64";
-      }
-      curr_bootloader += "/bootloader.crosvm";
+      curr_bootloader = DefaultHostArtifactsPath(std::format(
+          "etc/bootloader_{}/bootloader.crosvm",
+          DefaultBootloaderArchDir(guest_configs[instance_index].target_arch)));
     }
 
     if (instance_index > 0) {
