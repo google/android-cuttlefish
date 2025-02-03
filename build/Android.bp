@@ -108,6 +108,7 @@ cvd_host_tools = [
     "build_super_image",
     "casimir",
     "casimir_control_server",
+    "cf_vhost_user_input",
     "common_crosvm",
     "config_server",
     "console_forwarder",
