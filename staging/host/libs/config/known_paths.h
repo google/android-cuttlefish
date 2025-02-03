@@ -49,10 +49,11 @@ std::string TestPubKeyRsa4096();
 std::string TombstoneReceiverBinary();
 std::string VhalProxyServerBinary();
 std::string VhalProxyServerConfig();
+std::string VhostUserInputBinary();
 std::string WebRtcBinary();
 std::string WebRtcSigServerBinary();
 std::string WebRtcSigServerProxyBinary();
 std::string WmediumdBinary();
 std::string WmediumdGenConfigBinary();
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
