@@ -47,6 +47,10 @@ struct EventBufferImpl : public EventBuffer {
 
 }  // namespace
 
+std::unique_ptr<EventBuffer> CreateBuffer(size_t num_events) {
+  return CreateBuffer(InputEventType::Virtio, num_events);
+}
+
 std::unique_ptr<EventBuffer> CreateBuffer(InputEventType event_type,
                                           size_t num_events) {
   switch (event_type) {

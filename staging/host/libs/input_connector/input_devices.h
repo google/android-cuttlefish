@@ -113,8 +113,8 @@ class KeyboardDevice : public InputDevice {
 
 class RotaryDevice : public InputDevice {
  public:
-  RotaryDevice(std::unique_ptr<InputConnection> conn, InputEventType event_type)
-      : InputDevice(std::move(conn), event_type) {}
+  RotaryDevice(std::unique_ptr<InputConnection> conn)
+      : InputDevice(std::move(conn), InputEventType::Virtio) {}
 
   Result<void> SendEvent(int pixels);
 };
