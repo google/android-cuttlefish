@@ -42,6 +42,11 @@ std::string ControlEnvProxyServerBinary() {
   return HostBinaryPath("control_env_proxy_server");
 }
 
+std::string DefaultRotaryDeviceSpec() {
+  return DefaultHostArtifactsPath(
+      "etc/default_input_devices/rotary_wheel.json");
+}
+
 std::string EchoServerBinary() { return HostBinaryPath("echo_server"); }
 
 std::string GnssGrpcProxyBinary() { return HostBinaryPath("gnss_grpc_proxy"); }
@@ -132,4 +137,4 @@ std::string VhostUserInputBinary() {
   return HostBinaryPath("cf_vhost_user_input");
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
