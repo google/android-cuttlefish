@@ -23,32 +23,25 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <assert.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 
 #include <algorithm>
 #include <atomic>
-#include <cstdint>
 #include <future>
 #include <memory>
 #include <string>
-#include <thread>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include "android-base/strings.h"
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/util.h"
-#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/process_monitor/process_monitor_channel.h"
 
@@ -205,6 +198,11 @@ Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
     }
     if (prog_name == "secure_env") {
       // secure_env was handled above in a customized way
+      continue;
+    }
+    if (android::base::StartsWith(prog_name, "cf_vhost_user_")) {
+      // vhost user backend processes need to continue handling requests from
+      // the VMM, which should send them the suspend signal.
       continue;
     }
 
