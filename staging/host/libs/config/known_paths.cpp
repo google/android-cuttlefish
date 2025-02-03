@@ -128,4 +128,8 @@ std::string WmediumdGenConfigBinary() {
   return HostBinaryPath("wmediumd_gen_config");
 }
 
+std::string VhostUserInputBinary() {
+  return HostBinaryPath("cf_vhost_user_input");
+}
+
 } // namespace cuttlefish
