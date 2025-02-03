@@ -73,7 +73,7 @@ class InputConnectorBuilder {
   void WithTouchDevice(const std::string& device_label, SharedFD server);
   void WithKeyboard(SharedFD server);
   void WithSwitches(SharedFD server);
-  void WithRotary(SharedFD server);
+  void WithRotary(SharedFD conn);
   void WithMouse(SharedFD server);
   // This object becomes invalid after calling Build(), the rvalue reference
   // makes it explicit that it shouldn't be used after.
