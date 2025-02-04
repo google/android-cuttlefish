@@ -626,7 +626,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       crosvm_cmd.Cmd().AddParameter(
           "--input=mouse[path=", instance.mouse_socket_path(), "]");
     }
-    crosvm_cmd.AddVhostUser("input", instance.rotary_socket_path(), 256);
+    crosvm_cmd.Cmd().AddParameter("--input=rotary[path=",
+                                  instance.rotary_socket_path(), "]");
     if (instance.custom_keyboard_config().has_value()) {
       crosvm_cmd.Cmd().AddParameter(
           "--input=custom[path=", instance.keyboard_socket_path(),
@@ -635,8 +636,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       crosvm_cmd.Cmd().AddParameter(
           "--input=keyboard[path=", instance.keyboard_socket_path(), "]");
     }
-    crosvm_cmd.Cmd().AddParameter(
-        "--input=switches[path=", instance.switches_socket_path(), "]");
+    crosvm_cmd.Cmd().AddParameter("--input=switches[path=",
+                                  instance.switches_socket_path(), "]");
   }
 
   // GPU capture can only support named files and not file descriptors due to

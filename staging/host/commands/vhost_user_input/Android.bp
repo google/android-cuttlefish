@@ -46,10 +46,3 @@ rust_binary_host {
         "cuttlefish_buildhost_only",
     ],
 }
-
-prebuilt_etc_host {
-    name: "default_rotary_wheel_spec",
-    src: "device_specs/rotary_wheel.json",
-    filename: "rotary_wheel.json",
-    sub_dir: "default_input_devices",
-}

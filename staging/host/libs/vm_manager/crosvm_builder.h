@@ -59,8 +59,6 @@ class CrosvmBuilder {
               std::optional<std::string_view> mac = std::nullopt,
               const std::optional<pci::Address>& pci = std::nullopt);
 #endif
-  void AddVhostUser(const std::string& type, const std::string& socket_path,
-                    int max_queue_size);
 
   int HvcNum();
 
