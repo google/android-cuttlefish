@@ -21,10 +21,8 @@
 
 #include <fruit/fruit.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/run_cvd/launch/auto_cmd.h"
 #include "host/commands/run_cvd/launch/grpc_socket_creator.h"
+#include "host/commands/run_cvd/launch/input_connections_provider.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
 #include "host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "host/commands/run_cvd/launch/webrtc_controller.h"
@@ -34,7 +32,6 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
 #include "host/libs/config/kernel_log_pipe_provider.h"
-#include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 
@@ -126,10 +123,10 @@ WmediumdServerComponent();
 Result<std::optional<MonitorCommand>> ModemSimulator(
     const CuttlefishConfig::InstanceSpecific&);
 
-fruit::Component<
-    fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
-                    const CuttlefishConfig::InstanceSpecific,
-                    const CustomActionConfigProvider, WebRtcController>>
+fruit::Component<fruit::Required<
+    const CuttlefishConfig, KernelLogPipeProvider, InputConnectionsProvider,
+    const CuttlefishConfig::InstanceSpecific, const CustomActionConfigProvider,
+    WebRtcController>>
 launchStreamerComponent();
 
 fruit::Component<WebRtcController> WebRtcControllerComponent();
@@ -138,6 +135,10 @@ fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 McuComponent();
+
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
+                 InputConnectionsProvider>
+VhostInputDevicesComponent();
 
 std::optional<MonitorCommand> VhalProxyServer(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
