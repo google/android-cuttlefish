@@ -25,10 +25,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGE_OVERLAYS += \
     device/google/cuttlefish/shared/auto_md/overlay
 
-# HSUM is currently incompatible with telephony.
-# TODO(b/283853205): Properly disable telephony using per-partition makefile.
-TARGET_NO_TELEPHONY := true
-
 ENABLE_CLUSTER_OS_DOUBLE:=true
 
 PRODUCT_PACKAGES += \
