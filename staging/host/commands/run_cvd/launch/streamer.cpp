@@ -59,9 +59,9 @@ std::vector<Command> LaunchCustomActionServers(
     // WebRTC and the action server.
     SharedFD webrtc_socket, action_server_socket;
     if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &webrtc_socket,
-                              &action_server_socket)) {
+          &action_server_socket)) {
       LOG(ERROR) << "Unable to create custom action server socket pair: "
-                 << strerror(errno);
+        << strerror(errno);
       continue;
     }
 
@@ -76,10 +76,10 @@ std::vector<Command> LaunchCustomActionServers(
     if (first) {
       first = false;
       webrtc_cmd.AddParameter("-action_servers=", custom_action.server, ":",
-                              webrtc_socket);
+          webrtc_socket);
     } else {
       webrtc_cmd.AppendToLastParameter(",", custom_action.server, ":",
-                                       webrtc_socket);
+          webrtc_socket);
     }
   }
   return commands;
@@ -90,11 +90,8 @@ std::vector<Command> LaunchCustomActionServers(
 class StreamerSockets : public virtual SetupFeature {
  public:
   INJECT(StreamerSockets(const CuttlefishConfig& config,
-                         InputConnectionsProvider& input_connections_provider,
                          const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config),
-        instance_(instance),
-        input_connections_provider_(input_connections_provider) {}
+      : config_(config), instance_(instance) {}
 
   void AppendCommandArguments(Command& cmd) {
     if (config_.vm_manager() == VmmMode::kQemu) {
@@ -117,8 +114,7 @@ class StreamerSockets : public virtual SetupFeature {
     if (instance_.enable_mouse()) {
       cmd.AddParameter("-mouse_fd=", mouse_server_);
     }
-    cmd.AddParameter("-rotary_fd=",
-                     input_connections_provider_.RotaryDeviceConnection());
+    cmd.AddParameter("-rotary_fd=", rotary_server_);
     cmd.AddParameter("-keyboard_fd=", keyboard_server_);
     cmd.AddParameter("-frame_server_fd=", frames_server_);
     if (instance_.enable_audio()) {
@@ -139,9 +135,7 @@ class StreamerSockets : public virtual SetupFeature {
   }
 
  private:
-  std::unordered_set<SetupFeature*> Dependencies() const override {
-    return {&input_connections_provider_};
-  }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
 
   Result<void> ResultSetup() override {
     int display_cnt = instance_.display_configs().size();
@@ -156,7 +150,10 @@ class StreamerSockets : public virtual SetupFeature {
       mouse_server_ = CreateUnixInputServer(instance_.mouse_socket_path());
       CF_EXPECT(mouse_server_->IsOpen(), mouse_server_->StrError());
     }
+    rotary_server_ =
+        CreateUnixInputServer(instance_.rotary_socket_path());
 
+    CF_EXPECT(rotary_server_->IsOpen(), rotary_server_->StrError());
     keyboard_server_ = CreateUnixInputServer(instance_.keyboard_socket_path());
     CF_EXPECT(keyboard_server_->IsOpen(), keyboard_server_->StrError());
 
@@ -196,9 +193,9 @@ class StreamerSockets : public virtual SetupFeature {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
-  InputConnectionsProvider& input_connections_provider_;
   std::vector<SharedFD> touch_servers_;
   SharedFD mouse_server_;
+  SharedFD rotary_server_;
   SharedFD keyboard_server_;
   SharedFD frames_server_;
   SharedFD audio_server_;
@@ -334,10 +331,10 @@ class WebRtcServer : public virtual CommandSource,
 
 }  // namespace
 
-fruit::Component<fruit::Required<
-    const CuttlefishConfig, KernelLogPipeProvider, InputConnectionsProvider,
-    const CuttlefishConfig::InstanceSpecific, const CustomActionConfigProvider,
-    WebRtcController>>
+fruit::Component<
+    fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
+                    const CuttlefishConfig::InstanceSpecific,
+                    const CustomActionConfigProvider, WebRtcController>>
 launchStreamerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, WebRtcServer>()
