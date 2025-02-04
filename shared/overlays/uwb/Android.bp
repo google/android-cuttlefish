@@ -7,3 +7,10 @@ runtime_resource_overlay {
     sdk_version: "current",
     product_specific: true,
 }
+
+// GSI replaces product_specific overlay, keep a separte config for GSI with vendor: true
+runtime_resource_overlay {
+    name: "cuttlefish_overlay_uwb_gsi",
+    sdk_version: "current",
+    vendor: true,
+}
