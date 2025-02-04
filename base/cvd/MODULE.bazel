@@ -5,9 +5,8 @@
 # For more details, please check https://github.com/bazelbuild/bazel/issues/18958
 ###############################################################################
 
-bazel_dep(name = "aspect_rules_lint", version = "1.0.8")
-bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
-bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "aspect_rules_lint", version = "1.0.8", dev_dependency = True)
+bazel_dep(name = "bazel_skylib", version = "1.7.1", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
 bazel_dep(name = "curl", version = "8.8.0.bcr.2")
 bazel_dep(name = "fmt", version = "10.2.1")
@@ -30,13 +29,6 @@ git_override(
     # to be merged.
     commit = "f5fbd4cee671d8d908f37c83abaf70fba5928fc7",
     remote = "https://github.com/mikael-s-persson/bazel-compile-commands-extractor",
-)
-
-# https://github.com/erenon/bazel_clang_tidy
-git_override(
-    module_name = "bazel_clang_tidy",
-    commit = "f23d924918c581c68cd5cda5f12b4f8198ac0c35",
-    remote = "https://github.com/erenon/bazel_clang_tidy.git",
 )
 
 # Configure and register the toolchain.

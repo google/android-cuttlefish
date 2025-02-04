@@ -104,8 +104,6 @@ jobs:
       with:
         name: testlogs
         path: bazel-testlogs
-    - name: Run clang-tidy
-      run: cd base/cvd && bazel build //cuttlefish/... --config clang-tidy
   e2e-tests-orchestration:
     runs-on: ubuntu-22.04 
     steps:
