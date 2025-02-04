@@ -1,4 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -37,4 +38,9 @@ cc_library(
         "@jsoncpp",
         "@zlib",
     ],
+)
+
+clang_tidy_test(
+    name = "config_clang_tidy",
+    srcs = [":config"],
 )

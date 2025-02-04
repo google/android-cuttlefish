@@ -1,3 +1,5 @@
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -15,6 +17,11 @@ cc_library(
     ],
 )
 
+clang_tidy_test(
+    name = "command_request_clang_tidy",
+    srcs = [":command_request"],
+)
+
 cc_library(
     name = "frontline_parser",
     srcs = ["frontline_parser.cpp"],
@@ -28,6 +35,11 @@ cc_library(
     ],
 )
 
+clang_tidy_test(
+    name = "frontline_parser_clang_tidy",
+    srcs = [":frontline_parser"],
+)
+
 cc_library(
     name = "interruptible_terminal",
     srcs = ["interruptible_terminal.cpp"],
@@ -38,6 +50,11 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
     ],
+)
+
+clang_tidy_test(
+    name = "interruptible_terminal_clang_tidy",
+    srcs = [":interruptible_terminal"],
 )
 
 # Commands that may invoke other commands
@@ -85,10 +102,20 @@ cc_library(
     ],
 )
 
+clang_tidy_test(
+    name = "nesting_commands_clang_tidy",
+    srcs = [":nesting_commands"],
+)
+
 cc_library(
     name = "types",
     hdrs = ["types.h"],
     strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "types_clang_tidy",
+    srcs = [":types"],
 )
 
 cc_library(
@@ -107,4 +134,9 @@ cc_library(
         "//cuttlefish/host/libs/config",
         "@fmt",
     ],
+)
+
+clang_tidy_test(
+    name = "utils_clang_tidy",
+    srcs = [":utils"],
 )

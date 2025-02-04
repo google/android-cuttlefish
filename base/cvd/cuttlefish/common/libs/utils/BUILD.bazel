@@ -1,4 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -20,6 +21,11 @@ cc_library(
     ],
 )
 
+clang_tidy_test(
+    name = "result_clang_tidy",
+    srcs = [":result"],
+)
+
 cc_library(
     name = "result_matchers",
     testonly = 1,
@@ -33,6 +39,11 @@ cc_library(
         "//libbase",
         "@googletest//:gtest",
     ],
+)
+
+clang_tidy_test(
+    name = "result_matchers_clang_tidy",
+    srcs = [":result_matchers"],
 )
 
 cc_library(
@@ -92,6 +103,11 @@ cc_library(
     ],
 )
 
+clang_tidy_test(
+    name = "utils_clang_tidy",
+    srcs = [":utils"],
+)
+
 cc_test(
     name = "result_test",
     srcs = [
@@ -105,6 +121,11 @@ cc_test(
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
+)
+
+clang_tidy_test(
+    name = "result_test_clang_tidy",
+    srcs = [":result_test"],
 )
 
 cc_test(
@@ -137,4 +158,9 @@ cc_test(
     # `layering_check` conflicts with the combination of the clang prebuilt and
     # the cmake build rules used for @libxml2.
     features = ["-layering_check"],
+)
+
+clang_tidy_test(
+    name = "utils_test_clang_tidy",
+    srcs = [":utils_test"],
 )

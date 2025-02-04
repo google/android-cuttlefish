@@ -1,3 +1,5 @@
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -28,6 +30,11 @@ cc_library(
     ],
 )
 
+clang_tidy_test(
+    name = "command_handler_clang_tidy",
+    srcs = [":command_handler"],
+)
+
 cc_library(
     name = "host_tool_target",
     srcs = ["host_tool_target.cpp"],
@@ -40,6 +47,11 @@ cc_library(
         "//libbase",
         "@fmt",
     ],
+)
+
+clang_tidy_test(
+    name = "host_tool_target_clang_tidy",
+    srcs = [":host_tool_target"],
 )
 
 # Commands that don't execute other commands
@@ -132,5 +144,10 @@ cc_library(
         "@fmt",
         "@zlib",
     ],
+)
+
+clang_tidy_test(
+    name = "leaf_commands_clang_tidy",
+    srcs = [":leaf_commands"],
 )
 

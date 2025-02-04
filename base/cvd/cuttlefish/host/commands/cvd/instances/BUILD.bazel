@@ -1,3 +1,5 @@
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -59,6 +61,11 @@ cc_library(
     ],
 )
 
+clang_tidy_test(
+    name = "instances_clang_tidy",
+    srcs = [":instances"],
+)
+
 cc_library(
     name = "instance_database_utils",
     srcs = ["instance_database_utils.cpp"],
@@ -69,6 +76,11 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
     ],
+)
+
+clang_tidy_test(
+    name = "instance_database_utils_clang_tidy",
+    srcs = [":instance_database_utils"],
 )
 
 cc_library(
@@ -85,4 +97,9 @@ cc_library(
         "//libbase",
         "@fmt",
     ],
+)
+
+clang_tidy_test(
+    name = "reset_client_utils_clang_tidy",
+    srcs = [":reset_client_utils"],
 )

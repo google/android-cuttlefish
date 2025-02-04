@@ -1,3 +1,5 @@
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -14,4 +16,9 @@ cc_library(
         "metrics_notice.h",
     ],
     strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "metrics_clang_tidy",
+    srcs = [":metrics"],
 )

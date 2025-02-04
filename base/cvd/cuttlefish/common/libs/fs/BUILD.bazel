@@ -1,4 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -28,6 +29,11 @@ cc_library(
     ],
 )
 
+clang_tidy_test(
+    name = "fs_clang_tidy",
+    srcs = [":fs"],
+)
+
 cc_test(
     name = "fs_test",
     srcs = [
@@ -41,4 +47,9 @@ cc_test(
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
+)
+
+clang_tidy_test(
+    name = "fs_test_clang_tidy",
+    srcs = [":fs_test"],
 )

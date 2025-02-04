@@ -1,4 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -11,4 +12,9 @@ cc_library(
     ],
     copts = COPTS + [ "-Werror=sign-compare" ],
     strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "libmetrics_clang_tidy",
+    srcs = [":libmetrics"],
 )

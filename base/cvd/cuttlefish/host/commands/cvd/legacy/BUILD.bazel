@@ -1,3 +1,5 @@
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -36,4 +38,9 @@ cc_library(
         "//libbase",
         "@protobuf",
     ],
+)
+
+clang_tidy_test(
+    name = "legacy_clang_tidy",
+    srcs = [":legacy"],
 )

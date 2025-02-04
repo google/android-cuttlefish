@@ -1,4 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -16,4 +17,9 @@ cc_binary(
         "main.cpp",
     ],
     copts = COPTS,
+)
+
+clang_tidy_test(
+    name = "logcat_receiver_clang_tidy",
+    srcs = [":logcat_receiver"],
 )

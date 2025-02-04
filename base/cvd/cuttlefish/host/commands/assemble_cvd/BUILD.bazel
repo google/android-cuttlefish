@@ -1,4 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -14,4 +15,9 @@ cc_library(
     deps = [
         "//cuttlefish/host/libs/config",
     ],
+)
+
+clang_tidy_test(
+    name = "libassemble_cvd_clang_tidy",
+    srcs = [":libassemble_cvd"],
 )

@@ -1,3 +1,5 @@
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -25,6 +27,11 @@ cc_library(
         "@protobuf",
     ],
     strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "configs_common_clang_tidy",
+    srcs = [":configs_common"],
 )
 
 cc_library(
@@ -64,4 +71,9 @@ cc_library(
         "@protobuf//:json_util",
     ],
     strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "parser_clang_tidy",
+    srcs = [":parser"],
 )
