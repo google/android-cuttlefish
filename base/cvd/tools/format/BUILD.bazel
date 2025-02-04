@@ -1,0 +1,17 @@
+load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+format_multirun(
+    name = "format",
+    cc = ":clang_format",
+)
+
+native_binary(
+    name = "clang_format",
+    src = "@llvm_toolchain//:clang-format",
+    out = "clang_format",
+)

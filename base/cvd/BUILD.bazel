@@ -23,3 +23,8 @@ filegroup(
    name = "clang_tidy_config",
    srcs = [".clang-tidy"],
 )
+
+alias(
+    name = "format",
+    actual = "//tools/format",
+)

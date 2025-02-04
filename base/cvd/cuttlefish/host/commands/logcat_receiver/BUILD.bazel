@@ -1,3 +1,4 @@
+load("@aspect_rules_lint//format:defs.bzl", "format_test")
 load("//:build_variables.bzl", "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
 
@@ -17,6 +18,12 @@ cc_binary(
         "main.cpp",
     ],
     copts = COPTS,
+)
+
+format_test(
+    name = "format_test",
+    cc = "//tools/format:clang_format",
+    srcs = glob(["*.cpp", "*.c", "*.h"], allow_empty = True),
 )
 
 clang_tidy_test(
