@@ -35,9 +35,6 @@ class EventBuffer {
   virtual const void* data() const = 0;
 };
 
-std::unique_ptr<EventBuffer> CreateBuffer(size_t num_events);
-
-// TODO(jemoreira): Delete this overload once all devices switch to vhost user
 std::unique_ptr<EventBuffer> CreateBuffer(InputEventType event_type,
                                           size_t num_events);
 

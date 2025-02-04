@@ -14,54 +14,68 @@
  * limitations under the License.
  */
 
-#include "host/libs/input_connector/server_input_connection.h"
+#include "host/libs/input_connector/input_connection.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 
-#include "host/libs/input_connector/input_connection.h"
-#include "host/libs/input_connector/full_duplex_fd_input_connection.h"
-
 namespace cuttlefish {
+namespace {
+class ServerInputConnection : public InputConnection {
+ public:
+  ServerInputConnection(SharedFD server);
+
+  Result<void> WriteEvents(const void* data, size_t len) override;
+
+ private:
+  SharedFD server_;
+  SharedFD client_;
+  std::mutex client_mtx_;
+  std::thread monitor_;
+
+  void MonitorLoop();
+};
+
 ServerInputConnection::ServerInputConnection(SharedFD server)
     : server_(server), monitor_(std::thread([this]() { MonitorLoop(); })) {}
 
 void ServerInputConnection::MonitorLoop() {
   for (;;) {
-    SharedFD client = SharedFD::Accept(*server_);
-    if (!client->IsOpen()) {
-      LOG(ERROR) << "Failed to accept on input socket: " << client->StrError();
+    client_ = SharedFD::Accept(*server_);
+    if (!client_->IsOpen()) {
+      LOG(ERROR) << "Failed to accept on input socket: " << client_->StrError();
       continue;
     }
-    {
-      std::lock_guard lock(client_mtx_);
-      client_ = std::make_unique<FullDuplexFdInputConnection>(client);
-    }
     do {
-      // Keep reading from the client fd to detect when it closes.
+      // Keep reading from the fd to detect when it closes.
       char buf[128];
-      auto res = client->Read(buf, sizeof(buf));
+      auto res = client_->Read(buf, sizeof(buf));
       if (res < 0) {
         LOG(ERROR) << "Failed to read from input client: "
-                   << client->StrError();
+                   << client_->StrError();
       } else if (res > 0) {
         LOG(VERBOSE) << "Received " << res << " bytes on input socket";
       } else {
-        // The other side of the connection was closed.
         std::lock_guard<std::mutex> lock(client_mtx_);
-        client_.reset();
+        client_->Close();
       }
-      // No need to lock the mutex here, we're only reading the value of the
-      // pointer which is only ever set in this thread.
-    } while (client_);
+    } while (client_->IsOpen());
   }
 }
 
 Result<void> ServerInputConnection::WriteEvents(const void* data, size_t len) {
   std::lock_guard<std::mutex> lock(client_mtx_);
-  CF_EXPECT(client_ != nullptr, "No input client connected");
-  CF_EXPECT(client_->WriteEvents(data, len));
+  CF_EXPECT(client_->IsOpen(), "No input client connected");
+  auto res = WriteAll(client_, reinterpret_cast<const char*>(data), len);
+  CF_EXPECT(res == len, "Failed to write entire event buffer: wrote "
+                            << res << " of " << len << "bytes");
   return {};
+}
+
+}  // namespace
+
+std::unique_ptr<InputConnection> NewServerInputConnection(SharedFD server_fd) {
+  return std::unique_ptr<InputConnection>(new ServerInputConnection(server_fd));
 }
 
 }  // namespace cuttlefish
