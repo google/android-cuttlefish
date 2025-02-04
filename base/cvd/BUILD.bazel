@@ -9,6 +9,8 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+exports_files([".clang-tidy"])
+
 genrule(
     name = "build_version_header",
     srcs = ["build_version.h.in"],

@@ -5,7 +5,9 @@
 # For more details, please check https://github.com/bazelbuild/bazel/issues/18958
 ###############################################################################
 
+bazel_dep(name = "aspect_rules_lint", version = "1.0.8")
 bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "boringssl", version = "0.20241024.0")
 bazel_dep(name = "curl", version = "8.8.0.bcr.2")
 bazel_dep(name = "fmt", version = "10.2.1")
@@ -46,3 +48,11 @@ llvm.toolchain(
 use_repo(llvm, "llvm_toolchain")
 
 register_toolchains("@llvm_toolchain//:all")
+
+git_override(
+    module_name = "aspect_rules_lint",
+    # While waiting for https://github.com/aspect-build/rules_lint/pull/472 to
+    # be merged.
+    commit = "62e8aa0e9935bb7db76ead9cc2c1804e4dd740b9",
+    remote = "https://github.com/Databean/rules_lint.git",
+)
