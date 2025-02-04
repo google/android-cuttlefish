@@ -22,13 +22,15 @@
 
 namespace cuttlefish {
 
-// A connection to an input device implementation, allowing to inject events to
-// the device.
 class InputConnection {
  public:
   virtual ~InputConnection() = default;
 
   virtual Result<void> WriteEvents(const void* data, size_t len) = 0;
 };
+
+// Create an input device that accepts connection on a socket (TCP or UNIX) and
+// writes input events to its client (typically crosvm).
+std::unique_ptr<InputConnection> NewServerInputConnection(SharedFD server_fd);
 
 }  // namespace cuttlefish
