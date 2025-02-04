@@ -27,4 +27,5 @@ cc_test(
 clang_tidy_test(
     name = "fetch_clang_tidy",
     srcs = [":fetch"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

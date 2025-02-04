@@ -24,6 +24,7 @@ cc_library(
 clang_tidy_test(
     name = "result_clang_tidy",
     srcs = [":result"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
@@ -44,6 +45,7 @@ cc_library(
 clang_tidy_test(
     name = "result_matchers_clang_tidy",
     srcs = [":result_matchers"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
@@ -106,6 +108,7 @@ cc_library(
 clang_tidy_test(
     name = "utils_clang_tidy",
     srcs = [":utils"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_test(
@@ -126,6 +129,7 @@ cc_test(
 clang_tidy_test(
     name = "result_test_clang_tidy",
     srcs = [":result_test"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_test(
@@ -163,4 +167,5 @@ cc_test(
 clang_tidy_test(
     name = "utils_test_clang_tidy",
     srcs = [":utils_test"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

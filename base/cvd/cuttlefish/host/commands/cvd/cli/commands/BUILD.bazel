@@ -33,6 +33,7 @@ cc_library(
 clang_tidy_test(
     name = "command_handler_clang_tidy",
     srcs = [":command_handler"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
@@ -52,6 +53,7 @@ cc_library(
 clang_tidy_test(
     name = "host_tool_target_clang_tidy",
     srcs = [":host_tool_target"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 # Commands that don't execute other commands
@@ -149,5 +151,6 @@ cc_library(
 clang_tidy_test(
     name = "leaf_commands_clang_tidy",
     srcs = [":leaf_commands"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 

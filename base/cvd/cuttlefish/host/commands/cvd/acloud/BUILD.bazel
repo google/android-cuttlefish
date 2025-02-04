@@ -50,4 +50,5 @@ cc_library(
 clang_tidy_test(
     name = "acloud_clang_tidy",
     srcs = [":acloud"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

@@ -32,6 +32,7 @@ cc_library(
 clang_tidy_test(
     name = "configs_common_clang_tidy",
     srcs = [":configs_common"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
@@ -76,4 +77,5 @@ cc_library(
 clang_tidy_test(
     name = "parser_clang_tidy",
     srcs = [":parser"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

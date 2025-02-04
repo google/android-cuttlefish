@@ -22,4 +22,5 @@ cc_binary(
 clang_tidy_test(
     name = "logcat_receiver_clang_tidy",
     srcs = [":logcat_receiver"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

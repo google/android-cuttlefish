@@ -17,4 +17,5 @@ cc_library(
 clang_tidy_test(
     name = "libmetrics_clang_tidy",
     srcs = [":libmetrics"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

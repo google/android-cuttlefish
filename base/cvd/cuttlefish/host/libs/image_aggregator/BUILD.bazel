@@ -26,4 +26,5 @@ cc_library(
 clang_tidy_test(
     name = "image_aggregator_clang_tidy",
     srcs = [":image_aggregator"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

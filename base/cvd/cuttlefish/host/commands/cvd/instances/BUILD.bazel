@@ -64,6 +64,7 @@ cc_library(
 clang_tidy_test(
     name = "instances_clang_tidy",
     srcs = [":instances"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
@@ -81,6 +82,7 @@ cc_library(
 clang_tidy_test(
     name = "instance_database_utils_clang_tidy",
     srcs = [":instance_database_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
@@ -102,4 +104,5 @@ cc_library(
 clang_tidy_test(
     name = "reset_client_utils_clang_tidy",
     srcs = [":reset_client_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

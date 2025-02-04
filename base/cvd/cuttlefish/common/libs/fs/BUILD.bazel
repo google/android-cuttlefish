@@ -32,6 +32,7 @@ cc_library(
 clang_tidy_test(
     name = "fs_clang_tidy",
     srcs = [":fs"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_test(
@@ -52,4 +53,5 @@ cc_test(
 clang_tidy_test(
     name = "fs_test_clang_tidy",
     srcs = [":fs_test"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

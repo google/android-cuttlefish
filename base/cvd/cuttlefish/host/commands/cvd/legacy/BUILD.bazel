@@ -43,4 +43,5 @@ cc_library(
 clang_tidy_test(
     name = "legacy_clang_tidy",
     srcs = [":legacy"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

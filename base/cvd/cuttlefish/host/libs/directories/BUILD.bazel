@@ -26,4 +26,5 @@ cc_library(
 clang_tidy_test(
     name = "directories_clang_tidy",
     srcs = [":directories"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

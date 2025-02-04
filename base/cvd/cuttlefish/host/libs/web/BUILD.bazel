@@ -53,6 +53,7 @@ cc_library(
 clang_tidy_test(
     name = "web_clang_tidy",
     srcs = [":web"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_test(
@@ -81,4 +82,5 @@ cc_test(
 clang_tidy_test(
     name = "web_test_clang_tidy",
     srcs = [":web_test"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

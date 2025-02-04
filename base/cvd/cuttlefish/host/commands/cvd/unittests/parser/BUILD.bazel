@@ -39,4 +39,5 @@ cc_test(
 clang_tidy_test(
     name = "parser_clang_tidy",
     srcs = [":parser"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

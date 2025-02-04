@@ -28,6 +28,7 @@ cc_library(
 clang_tidy_test(
     name = "libcvd_clang_tidy",
     srcs = [":libcvd"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_binary(
@@ -49,4 +50,5 @@ cc_binary(
 clang_tidy_test(
     name = "cvd_clang_tidy",
     srcs = [":cvd"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

@@ -40,6 +40,7 @@ cc_library(
 clang_tidy_test(
     name = "parser_clang_tidy",
     srcs = [":parser"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
@@ -63,4 +64,5 @@ cc_library(
 clang_tidy_test(
     name = "selector_clang_tidy",
     srcs = [":selector"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

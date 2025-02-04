@@ -20,6 +20,7 @@ cc_library(
 clang_tidy_test(
     name = "command_request_clang_tidy",
     srcs = [":command_request"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
@@ -38,6 +39,7 @@ cc_library(
 clang_tidy_test(
     name = "frontline_parser_clang_tidy",
     srcs = [":frontline_parser"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
@@ -55,6 +57,7 @@ cc_library(
 clang_tidy_test(
     name = "interruptible_terminal_clang_tidy",
     srcs = [":interruptible_terminal"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 # Commands that may invoke other commands
@@ -105,6 +108,7 @@ cc_library(
 clang_tidy_test(
     name = "nesting_commands_clang_tidy",
     srcs = [":nesting_commands"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
@@ -116,6 +120,7 @@ cc_library(
 clang_tidy_test(
     name = "types_clang_tidy",
     srcs = [":types"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
@@ -139,4 +144,5 @@ cc_library(
 clang_tidy_test(
     name = "utils_clang_tidy",
     srcs = [":utils"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

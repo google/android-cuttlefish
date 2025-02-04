@@ -41,4 +41,5 @@ cc_test(
 clang_tidy_test(
     name = "selector_clang_tidy",
     srcs = [":selector"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

@@ -23,4 +23,5 @@ cc_library(
 clang_tidy_test(
     name = "cache_clang_tidy",
     srcs = [":cache"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

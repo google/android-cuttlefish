@@ -32,4 +32,5 @@ cc_library(
 clang_tidy_test(
     name = "command_util_clang_tidy",
     srcs = [":command_util"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

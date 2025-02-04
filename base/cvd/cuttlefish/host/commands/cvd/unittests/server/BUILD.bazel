@@ -23,4 +23,5 @@ cc_test(
 clang_tidy_test(
     name = "server_clang_tidy",
     srcs = [":server"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

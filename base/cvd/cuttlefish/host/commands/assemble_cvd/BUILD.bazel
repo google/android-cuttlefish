@@ -20,4 +20,5 @@ cc_library(
 clang_tidy_test(
     name = "libassemble_cvd_clang_tidy",
     srcs = [":libassemble_cvd"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
