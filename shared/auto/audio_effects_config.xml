@@ -46,7 +46,6 @@
         <library name="visualizer" path="libvisualizeraidl.so"/>
         <library name="volumesw" path="libvolumesw.so"/>
         <library name="extensioneffect" path="libextensioneffect.so"/>
-        <library name="spatializersw" path="libspatializersw.so"/>
     </libraries>
 
     <!-- list of effects to load.
@@ -87,7 +86,6 @@
         <effect name="volume" library="bundle" uuid="119341a0-8469-11df-81f9-0002a5d5c51b"/>
         <effect name="equalizer" library="bundle" uuid="ce772f20-847d-11df-bb17-0002a5d5c51b"/>
         <effect name="extension_effect" library="extensioneffect" uuid="fa81dd00-588b-11ed-9b6a-0242ac120002" type="fa81de0e-588b-11ed-9b6a-0242ac120002"/>
-        <effect name="spatializer" library="spatializersw" uuid="fa81a880-588b-11ed-9b6a-0242ac120002"/>
     </effects>
 
     <!-- Audio pre processor configurations.
