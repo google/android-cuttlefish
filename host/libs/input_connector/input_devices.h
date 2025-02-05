@@ -121,9 +121,8 @@ class RotaryDevice : public InputDevice {
 
 class SwitchesDevice : public InputDevice {
  public:
-  SwitchesDevice(std::unique_ptr<InputConnection> conn,
-                 InputEventType event_type)
-      : InputDevice(std::move(conn), event_type) {}
+  SwitchesDevice(std::unique_ptr<InputConnection> conn)
+      : InputDevice(std::move(conn), InputEventType::Virtio) {}
 
   Result<void> SendEvent(uint16_t code, bool state);
 };

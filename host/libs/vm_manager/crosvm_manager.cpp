@@ -634,8 +634,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       crosvm_cmd.Cmd().AddParameter(
           "--input=keyboard[path=", instance.keyboard_socket_path(), "]");
     }
-    crosvm_cmd.Cmd().AddParameter(
-        "--input=switches[path=", instance.switches_socket_path(), "]");
+    crosvm_cmd.AddVhostUser("input", instance.switches_socket_path(), 256);
   }
 
   // GPU capture can only support named files and not file descriptors due to

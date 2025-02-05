@@ -129,6 +129,8 @@ class StreamerSockets : public virtual SetupFeature {
     cmd.AddParameter("--confui_out_fd=", confui_out_fd_);
     cmd.AddParameter("--sensors_in_fd=", sensors_host_to_guest_fd_);
     cmd.AddParameter("--sensors_out_fd=", sensors_guest_to_host_fd_);
+    cmd.AddParameter("-switches_fd=",
+                     input_connections_provider_.SwitchesConnection());
   }
 
   // SetupFeature
@@ -268,9 +270,6 @@ class WebRtcServer : public virtual CommandSource,
 
     webrtc.UnsetFromEnvironment("http_proxy");
     sockets_.AppendCommandArguments(webrtc);
-    if (config_.vm_manager() == VmmMode::kCrosvm) {
-      webrtc.AddParameter("-switches_fd=", switches_server_);
-    }
     // Currently there is no way to ensure the signaling server will already
     // have bound the socket to the port by the time the webrtc process runs
     // (the common technique of doing it from the launcher is not possible here
@@ -307,11 +306,6 @@ class WebRtcServer : public virtual CommandSource,
   }
 
   Result<void> ResultSetup() override {
-    if (config_.vm_manager() == VmmMode::kCrosvm) {
-      switches_server_ =
-          CreateUnixInputServer(instance_.switches_socket_path());
-      CF_EXPECT(switches_server_->IsOpen(), switches_server_->StrError());
-    }
     kernel_log_events_pipe_ = log_pipe_provider_.KernelLogPipe();
     CF_EXPECT(kernel_log_events_pipe_->IsOpen(),
               kernel_log_events_pipe_->StrError());
@@ -325,7 +319,6 @@ class WebRtcServer : public virtual CommandSource,
   const CustomActionConfigProvider& custom_action_config_;
   WebRtcController& webrtc_controller_;
   SharedFD kernel_log_events_pipe_;
-  SharedFD switches_server_;
 };
 
 }  // namespace

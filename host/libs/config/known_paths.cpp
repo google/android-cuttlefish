@@ -52,6 +52,11 @@ std::string DefaultRotaryDeviceSpec() {
       "etc/default_input_devices/rotary_wheel.json");
 }
 
+std::string DefaultSwitchesSpec() {
+  return DefaultHostArtifactsPath(
+      "etc/default_input_devices/switches.json");
+}
+
 std::string EchoServerBinary() { return HostBinaryPath("echo_server"); }
 
 std::string GnssGrpcProxyBinary() { return HostBinaryPath("gnss_grpc_proxy"); }

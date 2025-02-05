@@ -28,6 +28,7 @@ std::string ConsoleForwarderBinary();
 std::string ControlEnvProxyServerBinary();
 std::string DefaultMouseSpec();
 std::string DefaultRotaryDeviceSpec();
+std::string DefaultSwitchesSpec();
 std::string EchoServerBinary();
 std::string GnssGrpcProxyBinary();
 std::string KernelLogMonitorBinary();

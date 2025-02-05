@@ -453,6 +453,7 @@ cvd_host_swiftshader_files = [
 cvd_default_input_device_specs = [
     "default_mouse_spec",
     "default_rotary_wheel_spec",
+    "default_switches_spec",
 ]
 
 cvd_host_package_customization {

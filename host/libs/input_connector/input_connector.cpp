@@ -198,10 +198,10 @@ void InputConnectorBuilder::WithKeyboard(SharedFD server) {
       std::make_unique<ServerInputConnection>(server), event_type_);
 }
 
-void InputConnectorBuilder::WithSwitches(SharedFD server) {
+void InputConnectorBuilder::WithSwitches(SharedFD conn) {
   CHECK(!connector_->devices_.switches) << "Switches already specified";
   connector_->devices_.switches.emplace(
-      std::make_unique<ServerInputConnection>(server), event_type_);
+      std::make_unique<FullDuplexFdInputConnection>(conn));
 }
 
 void InputConnectorBuilder::WithRotary(SharedFD conn) {

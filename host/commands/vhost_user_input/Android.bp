@@ -60,3 +60,10 @@ prebuilt_etc_host {
     filename: "mouse.json",
     sub_dir: "default_input_devices",
 }
+
+prebuilt_etc_host {
+    name: "default_switches_spec",
+    src: "device_specs/switches.json",
+    filename: "switches.json",
+    sub_dir: "default_input_devices",
+}

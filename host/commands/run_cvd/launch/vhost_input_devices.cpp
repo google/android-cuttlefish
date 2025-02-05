@@ -99,6 +99,8 @@ class VhostInputDevices : public CommandSource,
       commands.emplace_back(
           NewVhostUserInputCommand(mouse_sockets_, DefaultMouseSpec()));
     }
+    commands.emplace_back(
+        NewVhostUserInputCommand(switches_sockets_, DefaultSwitchesSpec()));
 
     return commands;
   }
@@ -110,6 +112,10 @@ class VhostInputDevices : public CommandSource,
 
   SharedFD MouseConnection() const override {
     return mouse_sockets_.streamer_end;
+  }
+
+  SharedFD SwitchesConnection() const override {
+    return switches_sockets_.streamer_end;
   }
 
  private:
@@ -125,12 +131,16 @@ class VhostInputDevices : public CommandSource,
           CF_EXPECT(NewDeviceSockets(instance_.mouse_socket_path()),
                     "Failed to setup sockets for mouse device");
     }
+    switches_sockets_ =
+        CF_EXPECT(NewDeviceSockets(instance_.switches_socket_path()),
+                  "Failed to setup sockets for switches device");
     return {};
   }
 
   const CuttlefishConfig::InstanceSpecific& instance_;
   DeviceSockets rotary_sockets_;
   DeviceSockets mouse_sockets_;
+  DeviceSockets switches_sockets_;
 };
 
 }  // namespace
