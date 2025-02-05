@@ -153,6 +153,7 @@ struct VersionedAidlPackage {
   std::string name;
   size_t version;
   int bugNum;
+  std::string instance;
   bool operator<(const VersionedAidlPackage& rhs) const {
     return (name < rhs.name || (name == rhs.name && version < rhs.version));
   }
@@ -389,7 +390,8 @@ static std::vector<VersionedAidlPackage> allAidlManifestInterfaces() {
     if (i.format() != vintf::HalFormat::AIDL) {
       return true;  // continue
     }
-    ret.push_back({i.package() + "." + i.interface(), i.version().minorVer, 0});
+    ret.push_back({i.package() + "." + i.interface(), i.version().minorVer, 0,
+                   i.instance()});
     return true;  // continue
   };
   vintf::VintfObject::GetDeviceHalManifest()->forEachInstance(setInserter);
@@ -408,6 +410,34 @@ TEST(Hal, AllAidlInterfacesAreInAosp) {
     EXPECT_TRUE(isAospAidlInterface(package.name))
         << "This device should only have AOSP interfaces, not: "
         << package.name;
+  }
+}
+
+TEST(Hal, NoExtensionsOnAospInterfaces) {
+  if (!kAidlUseUnfrozen) {
+    GTEST_SKIP() << "Not valid in 'next' configuration";
+  }
+  if (getDeviceType() != DeviceType::PHONE) {
+    GTEST_SKIP() << "Test only supports phones right now";
+  }
+  for (const auto& package : allAidlManifestInterfaces()) {
+    if (isAospAidlInterface(package.name)) {
+      std::string instance = package.name + "/" + package.instance;
+      sp<IBinder> binder =
+          defaultServiceManager()->waitForService(String16(instance.c_str()));
+      EXPECT_NE(binder, nullptr)
+          << "Failed to find " << instance << " even though it is declared. "
+          << "Check for crashes or misconficuration of the service";
+      if (binder) {
+        sp<IBinder> extension = nullptr;
+        auto status = binder->getExtension(&extension);
+        EXPECT_EQ(status, OK) << "Failed to getExtension on " << instance
+                              << " status: " << statusToString(status);
+        EXPECT_EQ(extension, nullptr)
+            << "Found an extension interface on " << instance
+            << ". This is not allowed on Cuttlefish";
+      }
+    }
   }
 }
 
