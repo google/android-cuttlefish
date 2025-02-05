@@ -91,7 +91,6 @@ cc_binary_host {
         "main.cpp",
         "screenshot_handler.cpp",
         "sensors_handler.cpp",
-        "sensors_simulator.cpp",
     ],
     cflags: [
         // libwebrtc headers need this
@@ -103,7 +102,6 @@ cc_binary_host {
     header_libs: [
         "libcuttlefish_confui_host_headers",
         "libdrm_headers",
-        "libeigen",
         "webrtc_signaling_headers",
     ],
     static_libs: [

@@ -178,6 +178,7 @@ cvd_host_tools = [
     "screen_recording_server",
     "secure_env",
     "sefcontext_compile",
+    "sensors_simulator",
     "simg2img",
     "snapshot_util_cvd",
     "socket_vsock_proxy",
@@ -451,14 +452,14 @@ cvd_host_swiftshader_files = [
 ]
 
 cvd_default_input_device_specs = [
-    "default_mouse_spec",
-    "default_rotary_wheel_spec",
-    "default_switches_spec",
     "default_keyboard_spec",
-    "default_single_touchpad_spec_template",
+    "default_mouse_spec",
     "default_multi_touchpad_spec_template",
-    "default_single_touchscreen_spec_template",
     "default_multi_touchscreen_spec_template",
+    "default_rotary_wheel_spec",
+    "default_single_touchpad_spec_template",
+    "default_single_touchscreen_spec_template",
+    "default_switches_spec",
 ]
 
 cvd_host_package_customization {
