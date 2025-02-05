@@ -20,13 +20,6 @@ ifneq ($(TARGET_NO_TELEPHONY), true)
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_vendor.mk)
 
-PRODUCT_VENDOR_PROPERTIES += \
-    keyguard.no_require_sim=true \
-    ro.cdma.home.operator.alpha=Android \
-    ro.cdma.home.operator.numeric=302780 \
-    ro.com.android.dataroaming=true \
-    ro.telephony.default_network=9 \
-
 # If downstream target provides its own RILD, set TARGET_USES_CF_RILD := false
 TARGET_USES_CF_RILD ?= true
 ifeq ($(TARGET_USES_CF_RILD),true)
