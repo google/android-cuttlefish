@@ -25,6 +25,7 @@ cc_test {
         "libhidl-gen-utils",
         "libhidlmetadata",
     ],
+    require_root: true,
     shared_libs: [
         "libbase",
         "libbinder",
