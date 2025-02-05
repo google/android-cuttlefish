@@ -210,10 +210,10 @@ void InputConnectorBuilder::WithRotary(SharedFD conn) {
       std::make_unique<FullDuplexFdInputConnection>(conn));
 }
 
-void InputConnectorBuilder::WithMouse(SharedFD server) {
+void InputConnectorBuilder::WithMouse(SharedFD conn) {
   CHECK(!connector_->devices_.mouse) << "Mouse already specified";
   connector_->devices_.mouse.emplace(
-      std::make_unique<ServerInputConnection>(server), event_type_);
+      std::make_unique<FullDuplexFdInputConnection>(conn));
 }
 
 std::unique_ptr<InputConnector> InputConnectorBuilder::Build() && {

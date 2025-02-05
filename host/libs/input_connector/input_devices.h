@@ -94,8 +94,8 @@ class TouchDevice : public InputDevice {
 
 class MouseDevice : public InputDevice {
  public:
-  MouseDevice(std::unique_ptr<InputConnection> conn, InputEventType event_type)
-      : InputDevice(std::move(conn), event_type) {}
+  MouseDevice(std::unique_ptr<InputConnection> conn)
+      : InputDevice(std::move(conn), InputEventType::Virtio) {}
 
   Result<void> SendMoveEvent(int x, int y);
   Result<void> SendButtonEvent(int button, bool down);

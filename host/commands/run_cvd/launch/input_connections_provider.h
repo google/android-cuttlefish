@@ -28,6 +28,7 @@ class InputConnectionsProvider : public virtual SetupFeature {
   virtual ~InputConnectionsProvider() = default;
 
   virtual SharedFD RotaryDeviceConnection() const = 0;
+  virtual SharedFD MouseConnection() const = 0;
 };
 
 }  // namespace cuttlefish

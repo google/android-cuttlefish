@@ -115,7 +115,8 @@ class StreamerSockets : public virtual SetupFeature {
       }
     }
     if (instance_.enable_mouse()) {
-      cmd.AddParameter("-mouse_fd=", mouse_server_);
+      cmd.AddParameter("-mouse_fd=",
+                       input_connections_provider_.MouseConnection());
     }
     cmd.AddParameter("-rotary_fd=",
                      input_connections_provider_.RotaryDeviceConnection());
@@ -151,10 +152,6 @@ class StreamerSockets : public virtual SetupFeature {
           CreateUnixInputServer(instance_.touch_socket_path(i));
       CF_EXPECT(touch_socket->IsOpen(), touch_socket->StrError());
       touch_servers_.emplace_back(std::move(touch_socket));
-    }
-    if (instance_.enable_mouse()) {
-      mouse_server_ = CreateUnixInputServer(instance_.mouse_socket_path());
-      CF_EXPECT(mouse_server_->IsOpen(), mouse_server_->StrError());
     }
 
     keyboard_server_ = CreateUnixInputServer(instance_.keyboard_socket_path());
@@ -198,7 +195,6 @@ class StreamerSockets : public virtual SetupFeature {
   const CuttlefishConfig::InstanceSpecific& instance_;
   InputConnectionsProvider& input_connections_provider_;
   std::vector<SharedFD> touch_servers_;
-  SharedFD mouse_server_;
   SharedFD keyboard_server_;
   SharedFD frames_server_;
   SharedFD audio_server_;

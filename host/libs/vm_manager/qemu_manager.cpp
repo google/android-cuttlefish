@@ -733,6 +733,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("virtio-rng-pci-non-transitional,rng=objrng0,id=rng0,",
                         "max-bytes=1024,period=2000");
 
+  // TODO: Use the vhost-user devices instead if/when qemu is accessed via
+  // webRTC instead of VNC.
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-mouse-pci,disable-legacy=on");
 

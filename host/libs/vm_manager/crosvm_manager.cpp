@@ -623,8 +623,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
           ",name=", kTouchpadDefaultPrefix, i, "]");
     }
     if (instance.enable_mouse()) {
-      crosvm_cmd.Cmd().AddParameter(
-          "--input=mouse[path=", instance.mouse_socket_path(), "]");
+      crosvm_cmd.AddVhostUser("input", instance.mouse_socket_path(), 256);
     }
     crosvm_cmd.AddVhostUser("input", instance.rotary_socket_path(), 256);
     if (instance.custom_keyboard_config().has_value()) {

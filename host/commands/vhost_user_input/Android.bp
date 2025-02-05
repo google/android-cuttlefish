@@ -53,3 +53,10 @@ prebuilt_etc_host {
     filename: "rotary_wheel.json",
     sub_dir: "default_input_devices",
 }
+
+prebuilt_etc_host {
+    name: "default_mouse_spec",
+    src: "device_specs/mouse.json",
+    filename: "mouse.json",
+    sub_dir: "default_input_devices",
+}

@@ -70,6 +70,19 @@ Result<DeviceSockets> NewDeviceSockets(const std::string& vhu_server_path) {
   return ret;
 }
 
+Command NewVhostUserInputCommand(const DeviceSockets& device_sockets,
+                            const std::string& spec) {
+  Command cmd(VhostUserInputBinary());
+  cmd.AddParameter("--verbosity=DEBUG");
+  cmd.AddParameter("--socket-fd=", device_sockets.vhu_server);
+  cmd.AddParameter("--device-config=", spec);
+  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn,
+                    device_sockets.device_end);
+  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+                    SharedFD::Open("/dev/null", O_WRONLY));
+  return cmd;
+}
+
 // Creates the commands for the vhost user input devices.
 class VhostInputDevices : public CommandSource,
                           public InputConnectionsProvider {
@@ -79,17 +92,13 @@ class VhostInputDevices : public CommandSource,
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
-    Command rotary_cmd(VhostUserInputBinary());
-    rotary_cmd.AddParameter("--verbosity=DEBUG");
-    rotary_cmd.AddParameter("--socket-fd=", rotary_sockets_.vhu_server);
-    rotary_cmd.AddParameter("--device-config=", DefaultRotaryDeviceSpec());
-    rotary_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn,
-                             rotary_sockets_.device_end);
-    rotary_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
-                             SharedFD::Open("/dev/null", O_WRONLY));
-
     std::vector<MonitorCommand> commands;
-    commands.emplace_back(std::move(rotary_cmd));
+    commands.emplace_back(
+        NewVhostUserInputCommand(rotary_sockets_, DefaultRotaryDeviceSpec()));
+    if (instance_.enable_mouse()) {
+      commands.emplace_back(
+          NewVhostUserInputCommand(mouse_sockets_, DefaultMouseSpec()));
+    }
 
     return commands;
   }
@@ -97,6 +106,10 @@ class VhostInputDevices : public CommandSource,
   // InputConnectionsProvider
   SharedFD RotaryDeviceConnection() const override {
     return rotary_sockets_.streamer_end;
+  }
+
+  SharedFD MouseConnection() const override {
+    return mouse_sockets_.streamer_end;
   }
 
  private:
@@ -107,11 +120,17 @@ class VhostInputDevices : public CommandSource,
     rotary_sockets_ =
         CF_EXPECT(NewDeviceSockets(instance_.rotary_socket_path()),
                   "Failed to setup sockets for rotary device");
+    if (instance_.enable_mouse()) {
+      mouse_sockets_ =
+          CF_EXPECT(NewDeviceSockets(instance_.mouse_socket_path()),
+                    "Failed to setup sockets for mouse device");
+    }
     return {};
   }
 
   const CuttlefishConfig::InstanceSpecific& instance_;
   DeviceSockets rotary_sockets_;
+  DeviceSockets mouse_sockets_;
 };
 
 }  // namespace
