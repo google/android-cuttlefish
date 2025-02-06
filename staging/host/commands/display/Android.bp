@@ -30,6 +30,7 @@ cc_binary_host {
         "libcuttlefish_host_config",
         "libcuttlefish_run_cvd_proto",
         "libcuttlefish_utils",
+        "libcuttlefish_vm_manager",
         "libgflags",
         "libjsoncpp",
         "liblog",
