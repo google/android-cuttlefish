@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, inject} from '@angular/core';
 import {Subject, merge} from 'rxjs';
 import {map, mergeMap} from 'rxjs/operators';
 import {DeviceService} from './device.service';
@@ -7,29 +7,17 @@ import {DeviceService} from './device.service';
   providedIn: 'root',
 })
 export class DisplaysService {
-  private devices;
+  private deviceService = inject(DeviceService);
+
+  private devices = this.deviceService.getDevices();
 
   private visibleDeviceIds: string[] = [];
-  private visibleDevicesChanged;
+  private visibleDevicesChanged = new Subject<void>();
 
-  private deviceVisibilityInfos;
-  private displayInfoChanged;
-
-  constructor(private deviceService: DeviceService) {
-    this.devices = this.deviceService.getDevices();
-    this.visibleDevicesChanged = new Subject<void>();
-    this.deviceVisibilityInfos = merge(
-      this.devices,
-      this.visibleDevicesChanged.pipe(mergeMap(() => this.devices))
-    ).pipe(
-    map(devices =>
-        devices.map(({device_id: deviceId}) => {
-          return {id: deviceId, visible: this.isVisibleDevice(deviceId)};
-        })
-       )
-    );
-    this.displayInfoChanged = new Subject<any>();
-  }
+  private deviceVisibilityInfos = merge(this.devices, this.visibleDevicesChanged.pipe(mergeMap(() => this.devices))).pipe(map(devices => devices.map(({ device_id: deviceId }) => {
+    return { id: deviceId, visible: this.isVisibleDevice(deviceId) };
+  })));
+  private displayInfoChanged = new Subject<any>();
 
   toggleVisibility(deviceId: string): void {
     if (this.isVisibleDevice(deviceId)) {

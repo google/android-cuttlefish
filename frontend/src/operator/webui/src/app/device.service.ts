@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, inject} from '@angular/core';
 import {combineLatestWith, map, mergeMap, shareReplay} from 'rxjs/operators';
 import {Observable, Subject, BehaviorSubject} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
@@ -10,6 +10,9 @@ import {DeviceItem} from './device-item.interface';
   providedIn: 'root',
 })
 export class DeviceService {
+  private readonly httpClient = inject(HttpClient);
+  private sanitizer = inject(DomSanitizer);
+
   private refreshSubject = new BehaviorSubject<void>(undefined);
 
   private groupIdSubject = new Subject<string | null>();
@@ -25,20 +28,13 @@ export class DeviceService {
     shareReplay(1)
   );
 
-  private allDeviceFromServer;
+  private allDeviceFromServer = this.httpClient
+    .get<DeviceItem[]>('./devices')
+    .pipe(map(this.sortDevices));
 
   private getDevicesByGroupIdFromServer(groupId: string) {
     return this.httpClient
       .get<DeviceItem[]>(`./devices?groupId=${groupId}`)
-      .pipe(map(this.sortDevices));
-  }
-
-  constructor(
-    private readonly httpClient: HttpClient,
-    private sanitizer: DomSanitizer
-  ) {
-    this.allDeviceFromServer = this.httpClient
-      .get<DeviceItem[]>('./devices')
       .pipe(map(this.sortDevices));
   }
 
