@@ -120,7 +120,8 @@ class StreamerSockets : public virtual SetupFeature {
     }
     cmd.AddParameter("-rotary_fd=",
                      input_connections_provider_.RotaryDeviceConnection());
-    cmd.AddParameter("-keyboard_fd=", keyboard_server_);
+    cmd.AddParameter("-keyboard_fd=",
+                     input_connections_provider_.KeyboardConnection());
     cmd.AddParameter("-frame_server_fd=", frames_server_);
     if (instance_.enable_audio()) {
       cmd.AddParameter("--audio_server_fd=", audio_server_);
@@ -155,9 +156,6 @@ class StreamerSockets : public virtual SetupFeature {
       CF_EXPECT(touch_socket->IsOpen(), touch_socket->StrError());
       touch_servers_.emplace_back(std::move(touch_socket));
     }
-
-    keyboard_server_ = CreateUnixInputServer(instance_.keyboard_socket_path());
-    CF_EXPECT(keyboard_server_->IsOpen(), keyboard_server_->StrError());
 
     frames_server_ = CreateUnixInputServer(instance_.frames_socket_path());
     CF_EXPECT(frames_server_->IsOpen(), frames_server_->StrError());
@@ -197,7 +195,6 @@ class StreamerSockets : public virtual SetupFeature {
   const CuttlefishConfig::InstanceSpecific& instance_;
   InputConnectionsProvider& input_connections_provider_;
   std::vector<SharedFD> touch_servers_;
-  SharedFD keyboard_server_;
   SharedFD frames_server_;
   SharedFD audio_server_;
   SharedFD confui_in_fd_;   // host -> guest

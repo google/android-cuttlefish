@@ -626,14 +626,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       crosvm_cmd.AddVhostUser("input", instance.mouse_socket_path(), 256);
     }
     crosvm_cmd.AddVhostUser("input", instance.rotary_socket_path(), 256);
-    if (instance.custom_keyboard_config().has_value()) {
-      crosvm_cmd.Cmd().AddParameter(
-          "--input=custom[path=", instance.keyboard_socket_path(),
-          ",config-path=", instance.custom_keyboard_config().value(), "]");
-    } else {
-      crosvm_cmd.Cmd().AddParameter(
-          "--input=keyboard[path=", instance.keyboard_socket_path(), "]");
-    }
+    crosvm_cmd.AddVhostUser("input", instance.keyboard_socket_path(), 256);
     crosvm_cmd.AddVhostUser("input", instance.switches_socket_path(), 256);
   }
 

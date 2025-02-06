@@ -104,9 +104,8 @@ class MouseDevice : public InputDevice {
 
 class KeyboardDevice : public InputDevice {
  public:
-  KeyboardDevice(std::unique_ptr<InputConnection> conn,
-                 InputEventType event_type)
-      : InputDevice(std::move(conn), event_type) {}
+  KeyboardDevice(std::unique_ptr<InputConnection> conn)
+      : InputDevice(std::move(conn), InputEventType::Virtio) {}
 
   Result<void> SendEvent(uint16_t code, bool down);
 };

@@ -192,10 +192,10 @@ void InputConnectorBuilder::WithTouchDevice(const std::string& device_label,
                             event_type_));
 }
 
-void InputConnectorBuilder::WithKeyboard(SharedFD server) {
+void InputConnectorBuilder::WithKeyboard(SharedFD conn) {
   CHECK(!connector_->devices_.keyboard) << "Keyboard already specified";
   connector_->devices_.keyboard.emplace(
-      std::make_unique<ServerInputConnection>(server), event_type_);
+      std::make_unique<FullDuplexFdInputConnection>(conn));
 }
 
 void InputConnectorBuilder::WithSwitches(SharedFD conn) {

@@ -42,6 +42,11 @@ std::string ControlEnvProxyServerBinary() {
   return HostBinaryPath("control_env_proxy_server");
 }
 
+std::string DefaultKeyboardSpec() {
+  return DefaultHostArtifactsPath(
+      "etc/default_input_devices/keyboard.json");
+}
+
 std::string DefaultMouseSpec() {
   return DefaultHostArtifactsPath(
       "etc/default_input_devices/mouse.json");

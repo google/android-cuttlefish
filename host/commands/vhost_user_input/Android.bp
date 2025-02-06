@@ -62,6 +62,13 @@ prebuilt_etc_host {
 }
 
 prebuilt_etc_host {
+    name: "default_keyboard_spec",
+    src: "device_specs/keyboard.json",
+    filename: "keyboard.json",
+    sub_dir: "default_input_devices",
+}
+
+prebuilt_etc_host {
     name: "default_switches_spec",
     src: "device_specs/switches.json",
     filename: "switches.json",

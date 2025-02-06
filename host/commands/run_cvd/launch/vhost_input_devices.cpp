@@ -71,7 +71,7 @@ Result<DeviceSockets> NewDeviceSockets(const std::string& vhu_server_path) {
 }
 
 Command NewVhostUserInputCommand(const DeviceSockets& device_sockets,
-                            const std::string& spec) {
+                                 const std::string& spec) {
   Command cmd(VhostUserInputBinary());
   cmd.AddParameter("--verbosity=DEBUG");
   cmd.AddParameter("--socket-fd=", device_sockets.vhu_server);
@@ -99,6 +99,10 @@ class VhostInputDevices : public CommandSource,
       commands.emplace_back(
           NewVhostUserInputCommand(mouse_sockets_, DefaultMouseSpec()));
     }
+    std::string keyboard_spec =
+        instance_.custom_keyboard_config().value_or(DefaultKeyboardSpec());
+    commands.emplace_back(
+        NewVhostUserInputCommand(keyboard_sockets_, keyboard_spec));
     commands.emplace_back(
         NewVhostUserInputCommand(switches_sockets_, DefaultSwitchesSpec()));
 
@@ -112,6 +116,10 @@ class VhostInputDevices : public CommandSource,
 
   SharedFD MouseConnection() const override {
     return mouse_sockets_.streamer_end;
+  }
+
+  SharedFD KeyboardConnection() const override {
+    return keyboard_sockets_.streamer_end;
   }
 
   SharedFD SwitchesConnection() const override {
@@ -131,6 +139,9 @@ class VhostInputDevices : public CommandSource,
           CF_EXPECT(NewDeviceSockets(instance_.mouse_socket_path()),
                     "Failed to setup sockets for mouse device");
     }
+    keyboard_sockets_ =
+        CF_EXPECT(NewDeviceSockets(instance_.keyboard_socket_path()),
+                  "Failed to setup sockets for keyboard device");
     switches_sockets_ =
         CF_EXPECT(NewDeviceSockets(instance_.switches_socket_path()),
                   "Failed to setup sockets for switches device");
@@ -140,6 +151,7 @@ class VhostInputDevices : public CommandSource,
   const CuttlefishConfig::InstanceSpecific& instance_;
   DeviceSockets rotary_sockets_;
   DeviceSockets mouse_sockets_;
+  DeviceSockets keyboard_sockets_;
   DeviceSockets switches_sockets_;
 };
 
