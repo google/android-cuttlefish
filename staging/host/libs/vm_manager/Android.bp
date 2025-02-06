@@ -22,6 +22,7 @@ cc_library {
     srcs: [
         "crosvm_builder.cpp",
         "crosvm_cpu.cpp",
+        "crosvm_display_controller.cpp",
         "crosvm_manager.cpp",
         "gem5_manager.cpp",
         "host_configuration.cpp",
