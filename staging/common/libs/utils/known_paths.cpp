@@ -22,6 +22,6 @@
 
 namespace cuttlefish {
 
-std::string TempDir() { return StringFromEnv("TMPDIR", "/tmp/"); }
+std::string TempDir() { return StringFromEnv("TMPDIR", "/tmp"); }
 
 }  // namespace cuttlefish
