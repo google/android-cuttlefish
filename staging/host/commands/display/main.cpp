@@ -26,12 +26,12 @@
 #include <android-base/strings.h>
 
 #include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/result.h"
 #include "device/google/cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
+#include "host/libs/vm_manager/crosvm_display_controller.h"
 
 namespace cuttlefish {
 namespace {
@@ -73,41 +73,6 @@ Currently supported output formats: jpg, png, webp.
 usage: cvd display screenshot <display id> <screenshot path>
 )";
 
-Result<int> RunCrosvmDisplayCommand(int instance_num,
-                                    const std::vector<std::string>& args) {
-  auto config = cuttlefish::CuttlefishConfig::Get();
-  if (!config) {
-    return CF_ERR("Failed to get Cuttlefish config.");
-  }
-  // TODO(b/260649774): Consistent executable API for selecting an instance
-  auto instance = config->ForInstance(instance_num);
-
-  const std::string crosvm_binary_path = instance.crosvm_binary();
-  const std::string crosvm_control_path = instance.CrosvmSocketPath();
-
-  cuttlefish::Command command(crosvm_binary_path);
-  command.AddParameter("gpu");
-  for (const std::string& arg : args) {
-    command.AddParameter(arg);
-  }
-  command.AddParameter(crosvm_control_path);
-
-  std::string out;
-  std::string err;
-  auto ret = RunWithManagedStdio(std::move(command), NULL, &out, &err);
-  if (ret != 0) {
-    std::cerr << "Failed to run crosvm display command: ret code: " << ret
-              << "\n"
-              << out << "\n"
-              << err;
-    return ret;
-  }
-
-  std::cerr << err << std::endl;
-  std::cout << out << std::endl;
-  return 0;
-}
-
 Result<int> GetInstanceNum(std::vector<std::string>& args) {
   int instance_num = 1;
   CF_EXPECT(
@@ -147,34 +112,18 @@ Result<int> DoAdd(std::vector<std::string>& args) {
     return 1;
   }
 
-  std::vector<std::string> add_displays_command_args;
-  add_displays_command_args.push_back("add-displays");
-
-  for (const auto& display_config : display_configs) {
-    const std::string w = std::to_string(display_config.width);
-    const std::string h = std::to_string(display_config.height);
-    const std::string dpi = std::to_string(display_config.dpi);
-    const std::string rr = std::to_string(display_config.refresh_rate_hz);
-
-    const std::string add_display_flag =
-        "--gpu-display=" + android::base::Join(
-                               std::vector<std::string>{
-                                   "mode=windowed[" + w + "," + h + "]",
-                                   "dpi=[" + dpi + "," + dpi + "]",
-                                   "refresh-rate=" + rr,
-                               },
-                               ",");
-
-    add_displays_command_args.push_back(add_display_flag);
-  }
-
-  return CF_EXPECT(
-      RunCrosvmDisplayCommand(instance_num, add_displays_command_args));
+  auto crosvm_display = CF_EXPECT(vm_manager::GetCrosvmDisplayController());
+  return CF_EXPECT(crosvm_display.Add(instance_num, display_configs));
 }
 
 Result<int> DoList(std::vector<std::string>& args) {
   const int instance_num = CF_EXPECT(GetInstanceNum(args));
-  return CF_EXPECT(RunCrosvmDisplayCommand(instance_num, {"list-displays"}));
+  auto crosvm_display = CF_EXPECT(vm_manager::GetCrosvmDisplayController());
+
+  auto out = CF_EXPECT(crosvm_display.List(instance_num));
+  std::cout << out << std::endl;
+
+  return 0;
 }
 
 Result<int> DoRemove(std::vector<std::string>& args) {
@@ -204,14 +153,8 @@ Result<int> DoRemove(std::vector<std::string>& args) {
     return 1;
   }
 
-  std::vector<std::string> remove_displays_command_args;
-  remove_displays_command_args.push_back("remove-displays");
-  for (const auto& display : displays) {
-    remove_displays_command_args.push_back("--display-id=" + display);
-  }
-
-  return CF_EXPECT(
-      RunCrosvmDisplayCommand(instance_num, remove_displays_command_args));
+  auto crosvm_display = CF_EXPECT(vm_manager::GetCrosvmDisplayController());
+  return CF_EXPECT(crosvm_display.Remove(instance_num, displays));
 }
 
 Result<int> DoScreenshot(std::vector<std::string>& args) {
