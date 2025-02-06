@@ -42,6 +42,10 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vhost_user.h"
 
+// This is the QEMU default, but set it explicitly just in case it
+// changes upstream
+static const int kMaxSerialPorts = 31;
+
 namespace cuttlefish {
 namespace vm_manager {
 namespace {
@@ -488,7 +492,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter(
-      "virtio-serial-pci-non-transitional,max_ports=31,id=virtio-serial");
+      "virtio-serial-pci-non-transitional,max_ports=", kMaxSerialPorts,
+      ",id=virtio-serial");
 
   // /dev/hvc0 = kernel console
   // If kernel log is enabled, the virtio-console port will be specified as
@@ -844,6 +849,14 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-S");
     qemu_cmd.AddParameter("-gdb");
     qemu_cmd.AddParameter("tcp::", instance.gdb_port());
+  }
+
+  // After all other devices are added, add some more console sinks
+  // so it doesn't upset any sepolicy, but works around a QEMU warning
+  // when U-Boot probes the ports between kDefaultNumHvcs and
+  // kMaxSerialPorts
+  while (hvc_num < kMaxSerialPorts) {
+    add_hvc_sink();
   }
 
   commands.emplace_back(std::move(qemu_cmd), true);
