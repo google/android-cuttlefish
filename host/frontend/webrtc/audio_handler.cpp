@@ -255,17 +255,16 @@ int SampleRate(uint8_t virtio_rate) {
 
 AudioHandler::AudioHandler(
     std::unique_ptr<AudioServer> audio_server,
-    std::shared_ptr<webrtc_streaming::AudioSink> audio_sink,
-    std::shared_ptr<webrtc_streaming::AudioSource> audio_source,
-    int output_streams_count)
-    : audio_sink_(audio_sink),
+    std::vector<std::shared_ptr<webrtc_streaming::AudioSink>> audio_sinks,
+    std::shared_ptr<webrtc_streaming::AudioSource> audio_source)
+    : audio_sinks_(std::move(audio_sinks)),
       audio_server_(std::move(audio_server)),
-      stream_descs_(output_streams_count + NUM_INPUT_STREAMS),
+      stream_descs_(audio_sinks_.size() + NUM_INPUT_STREAMS),
       audio_source_(audio_source) {
   streams_ = std::vector<virtio_snd_pcm_info>(stream_descs_.size());
   streams_[0] =
       GetVirtioSndPcmInfo(AudioStreamDirection::VIRTIO_SND_D_INPUT, 0);
-  for (int i = 0; i < output_streams_count; i++) {
+  for (int i = 0; i < audio_sinks_.size(); i++) {
     int stream_id = NUM_INPUT_STREAMS + i;
     streams_[stream_id] =
         GetVirtioSndPcmInfo(AudioStreamDirection::VIRTIO_SND_D_OUTPUT, i);
@@ -410,6 +409,14 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
       buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
       return;
     }
+    auto sink_id = stream_id - NUM_INPUT_STREAMS;
+    if (sink_id >= audio_sinks_.size()) {
+      LOG(ERROR) << "Audio sink for stream id " << stream_id
+                 << " does not exist";
+      buffer.SendStatus(AudioStatus::VIRTIO_SND_S_BAD_MSG, 0, 0);
+      return;
+    }
+    auto audio_sink = audio_sinks_[sink_id];
     // Webrtc will silently ignore any buffer with a length different than 10ms,
     // so we must split any buffer bigger than that and temporarily store any
     // remaining frames that are less than that size.
@@ -433,9 +440,8 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
             const_cast<const uint8_t*>(&buffer.get()[pos]),
             stream_desc.bits_per_sample, stream_desc.sample_rate,
             stream_desc.channels, frames);
-        // TODO(b/377752500): implement mixer support for multiple output stream
-        // support.
-        audio_sink_->OnFrame(audio_frame_buffer, base_time);
+        // Multiple output streams are mixed on the client side.
+        audio_sink->OnFrame(audio_frame_buffer, base_time);
         pos += holding_buffer.buffer.size();
       } else {
         pos += holding_buffer.Add(buffer.get() + pos, buffer.len() - pos);
@@ -444,7 +450,7 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
           CvdAudioFrameBuffer audio_frame_buffer(
               buffer_ptr, stream_desc.bits_per_sample, stream_desc.sample_rate,
               stream_desc.channels, frames);
-          audio_sink_->OnFrame(audio_frame_buffer, base_time);
+          audio_sink->OnFrame(audio_frame_buffer, base_time);
           holding_buffer.count = 0;
         }
       }

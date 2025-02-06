@@ -52,10 +52,10 @@ class AudioHandler : public AudioServerExecutor {
   };
 
  public:
-  AudioHandler(std::unique_ptr<AudioServer> audio_server,
-               std::shared_ptr<webrtc_streaming::AudioSink> audio_sink,
-               std::shared_ptr<webrtc_streaming::AudioSource> audio_source,
-               int output_streams_count);
+  AudioHandler(
+      std::unique_ptr<AudioServer> audio_server,
+      std::vector<std::shared_ptr<webrtc_streaming::AudioSink>> audio_sinks,
+      std::shared_ptr<webrtc_streaming::AudioSource> audio_source);
   ~AudioHandler() override = default;
 
   void Start();
@@ -77,7 +77,7 @@ class AudioHandler : public AudioServerExecutor {
   [[noreturn]] void Loop();
   bool IsCapture(uint32_t stream_id) const;
 
-  std::shared_ptr<webrtc_streaming::AudioSink> audio_sink_;
+  std::vector<std::shared_ptr<webrtc_streaming::AudioSink>> audio_sinks_;
   std::unique_ptr<AudioServer> audio_server_;
   std::thread server_thread_;
   std::vector<StreamDesc> stream_descs_ = {};
