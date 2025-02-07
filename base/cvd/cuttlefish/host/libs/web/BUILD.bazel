@@ -1,3 +1,10 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
 cc_library(
     name = "web",
     srcs = [
@@ -27,11 +34,8 @@ cc_library(
         "luci_build_api.h",
         "oauth2_consent.h"
     ],
-    copts = [
-        "-std=c++17",
-    ],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
@@ -46,6 +50,12 @@ cc_library(
     ],
 )
 
+clang_tidy_test(
+    name = "web_clang_tidy",
+    srcs = [":web"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_test(
     name = "web_test",
     srcs = [
@@ -53,10 +63,7 @@ cc_test(
         "cas/cas_downloader_test.cpp",
         "http_client/unittest/http_client_util_test.cc",
     ],
-    copts = [
-        "-Wno-ctad-maybe-unsupported",
-        "-std=c++17",
-    ],
+    copts = COPTS,
     includes = [""],
     deps = [
         ":web",
@@ -70,4 +77,10 @@ cc_test(
         "@googletest//:gtest_main",
         "@jsoncpp",
     ],
+)
+
+clang_tidy_test(
+    name = "web_test_clang_tidy",
+    srcs = [":web_test"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

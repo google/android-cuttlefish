@@ -45,6 +45,22 @@
 
 namespace cuttlefish {
 
+namespace {
+
+/*
+ * From external/gflags/src, commit:
+ *  061f68cd158fa658ec0b9b2b989ed55764870047
+ *
+ */
+constexpr std::array help_bool_opts{
+    "help", "helpfull", "helpshort", "helppackage", "helpxml", "version", "h"};
+constexpr std::array help_str_opts{
+    "helpon",
+    "helpmatch",
+};
+
+}  // namespace
+
 std::ostream& operator<<(std::ostream& out, const FlagAlias& alias) {
   switch (alias.mode) {
     case FlagAliasMode::kFlagExact:
@@ -404,6 +420,48 @@ Result<void> ConsumeFlags(const std::vector<Flag>& flags,
   return {};
 }
 
+Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                     std::vector<std::string>& args) {
+  while (!args.empty()) {
+    const std::string& first_arg = args[0];
+    std::optional<std::string> next_arg;
+    if (args.size() > 1) {
+      next_arg = args[1];
+    }
+    Flag::FlagProcessResult outcome = Flag::FlagProcessResult::kFlagSkip;
+    for (const Flag& flag : flags) {
+      Flag::FlagProcessResult flag_outcome = CF_EXPECT(flag.Process(first_arg, next_arg));
+      if (flag_outcome == Flag::FlagProcessResult::kFlagSkip) {
+        continue;
+      }
+      CF_EXPECTF(outcome == Flag::FlagProcessResult::kFlagSkip,
+                 "Multiple '{}' handlers", first_arg);
+      outcome = flag_outcome;
+    }
+    switch (outcome) {
+      case Flag::FlagProcessResult::kFlagSkip:
+        return {};
+      case Flag::FlagProcessResult::kFlagConsumed:
+        args.erase(args.begin());
+        break;
+      case Flag::FlagProcessResult::kFlagConsumedWithFollowing:
+        args.erase(args.begin(), args.begin() + 2);
+        break;
+      case Flag::FlagProcessResult::kFlagConsumedOnlyFollowing:
+        args.erase(args.begin() + 1, args.begin() + 2);
+        break;
+    }
+  }
+  return {};
+}
+
+Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                     std::vector<std::string>&& args) {
+  std::vector<std::string>& args_ref = args;
+  CF_EXPECT(ConsumeFlagsConstrained(flags, args_ref));
+  return {};
+}
+
 bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
   for (const auto& flag : flags) {
     if (!flag.WriteGflagsCompatXml(out)) {
@@ -431,7 +489,9 @@ Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
     for (const auto& flag : flags) {
       LOG(INFO) << flag;
     }
-    return CF_ERR("user requested early exit");
+    // return value of 1 matches gflags --help flag behavior
+    std::exit(1);
+    return {};
   };
   return Flag()
       .Alias({FlagAliasMode::kFlagExact, "-help"})
@@ -636,6 +696,23 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
         value = output_vals;
         return {};
       });
+}
+
+Result<bool> HasHelpFlag(const std::vector<std::string>& args) {
+  std::vector<std::string> copied_args(args);
+  std::vector<Flag> flags;
+  flags.reserve(help_bool_opts.size() + help_str_opts.size());
+  bool bool_value_placeholder = false;
+  std::string str_value_placeholder;
+  for (const auto bool_opt : help_bool_opts) {
+    flags.emplace_back(GflagsCompatFlag(bool_opt, bool_value_placeholder));
+  }
+  for (const auto str_opt : help_str_opts) {
+    flags.emplace_back(GflagsCompatFlag(str_opt, str_value_placeholder));
+  }
+  CF_EXPECT(ConsumeFlags(flags, copied_args));
+  // if there was any match, some in copied_args were consumed.
+  return (args.size() != copied_args.size());
 }
 
 }  // namespace cuttlefish

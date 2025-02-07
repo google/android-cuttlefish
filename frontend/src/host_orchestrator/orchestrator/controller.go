@@ -39,6 +39,10 @@ import (
 const HeaderBuildAPICreds = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
 const HeaderUserProject = "X-Cutf-Host-Orchestrator-BuildAPI-Creds-User-Project-ID"
 
+const (
+	URLQueryKeyIncludeAdbBugReport = "include_adb_bugreport"
+)
+
 type Config struct {
 	Paths                  IMPaths
 	AndroidBuildServiceURL string
@@ -67,6 +71,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("POST")
 	router.Handle("/cvds/{group}",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "remove"))).Methods("DELETE")
+	// Append `include_adb_bugreport=true` query parameter to include a device `adb bugreport` in the cvd bugreport.
 	router.Handle("/cvds/{group}/:bugreport",
 		httpHandler(newCreateCVDBugReportHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}",
@@ -101,7 +106,6 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
 	router.Handle("/userartifacts/{dir}/{name}/:extract",
 		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
-	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{Config: c.Config}).Methods("POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -113,7 +117,9 @@ type handler interface {
 
 func httpHandler(h handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("request:", r.Method, r.URL.Path)
+		log.Printf("handling request(%p) started %s %s", r, r.Method, r.URL.Path)
+		defer log.Printf("handling request(%p) ended", r)
+
 		res, err := h.Handle(r)
 		if err != nil {
 			log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
@@ -449,12 +455,17 @@ func newCreateCVDBugReportHandler(c Config, om OperationManager) *createCVDBugRe
 
 func (h *createCVDBugReportHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
+	includeADBBugreport := false
+	if _, ok := r.URL.Query()[URLQueryKeyIncludeAdbBugReport]; ok {
+		includeADBBugreport = r.URL.Query().Get(URLQueryKeyIncludeAdbBugReport) != "false"
+	}
 	opts := CreateCVDBugReportActionOpts{
-		Group:            vars["group"],
-		Paths:            h.Config.Paths,
-		OperationManager: h.OM,
-		ExecContext:      newCVDExecContext(exec.CommandContext, h.Config.CVDUser),
-		UUIDGen:          func() string { return uuid.New().String() },
+		Group:               vars["group"],
+		IncludeADBBugreport: includeADBBugreport,
+		Paths:               h.Config.Paths,
+		OperationManager:    h.OM,
+		ExecContext:         newCVDExecContext(exec.CommandContext, h.Config.CVDUser),
+		UUIDGen:             func() string { return uuid.New().String() },
 	}
 	return NewCreateCVDBugReportAction(opts).Run()
 }
@@ -464,7 +475,9 @@ type downloadCVDBugReportHandler struct {
 }
 
 func (h *downloadCVDBugReportHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("request:", r.Method, r.URL.Path)
+	log.Printf("handling request(%p) started %s %s", r, r.Method, r.URL.Path)
+	defer log.Printf("handling request(%p) ended", r)
+
 	vars := mux.Vars(r)
 	uuid := vars["uuid"]
 	filename := filepath.Join(h.Config.Paths.CVDBugReportsDir, uuid, BugReportZipFileName)
@@ -565,26 +578,6 @@ func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error
 		}
 	}()
 	return op, nil
-}
-
-type pullRuntimeArtifactsHandler struct {
-	Config Config
-}
-
-func (h *pullRuntimeArtifactsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("request:", r.Method, r.URL.Path)
-	filename := filepath.Join("/tmp/", "hostbugreport"+uuid.New().String())
-	defer func() {
-		if err := os.Remove(filename); err != nil {
-			log.Printf("error removing host bug report file %q: %v\n", filename, err)
-		}
-	}()
-	ctx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
-	if err := HostBugReport(ctx, h.Config.Paths, filename); err != nil {
-		replyJSONErr(w, err)
-		return
-	}
-	http.ServeFile(w, r, filename)
 }
 
 type getDebugVariablesHandler struct {

@@ -16,69 +16,12 @@
 
 #pragma once
 
-#include <memory>
-#include <optional>
-#include <string>
-
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/selector/arguments_separator.h"
 #include "host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 
+/* Returns `cvd` arguments before the subcommand, removing them from `args`. */
 Result<cvd_common::Args> ExtractCvdArgs(cvd_common::Args& args);
-
-/* the very first command line parser
- *
- * Being aware of valid subcommands and cvd-specific commands, it will
- * separate the command line arguments into:
- *
- *  1. program path/name
- *  2. cvd-specific arguments
- *     a) selector flags
- *     b) non-selector flags
- *  3. subcommand
- *  4. subcommand arguments
- *
- * This is currently on the client side but will be moved to the server
- * side.
- */
-class FrontlineParser {
-  using ArgumentsSeparator = selector::ArgumentsSeparator;
-
- public:
-  struct ParserParam {
-    // commands supported by the server
-    std::vector<std::string> server_supported_subcmds;
-    cvd_common::Args all_args;
-  };
-
-  // This call must guarantee all public methods will be valid
-  static Result<std::unique_ptr<FrontlineParser>> Parse(ParserParam param);
-
-  const std::string& ProgPath() const;
-  std::optional<std::string> SubCmd() const;
-  const cvd_common::Args& SubCmdArgs() const;
-  const cvd_common::Args& CvdArgs() const;
-
- private:
-  FrontlineParser(const ParserParam& parser_param);
-
-  // internal workers in order
-  Result<void> Separate();
-  Result<cvd_common::Args> ValidSubcmdsList();
-  Result<std::unique_ptr<ArgumentsSeparator>> CallSeparator();
-  struct FilterOutput {
-    bool clean;
-    bool help;
-    cvd_common::Args selector_args;
-  };
-  Result<FilterOutput> FilterNonSelectorArgs();
-
-  cvd_common::Args server_supported_subcmds_;
-  const cvd_common::Args all_args_;
-  const std::vector<std::string> internal_cmds_;
-  std::unique_ptr<ArgumentsSeparator> arguments_separator_;
-};
 
 }  // namespace cuttlefish

@@ -1,0 +1,47 @@
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+proto_library(
+    name = "cvd_server_proto",
+    srcs = ["cvd_server.proto"],
+)
+
+cc_proto_library(
+    name = "cvd_server_cc_proto",
+    deps = [":cvd_server_proto"],
+)
+
+cc_library(
+    name = "legacy",
+    srcs = [
+        "client.cpp",
+        "run_server.cpp",
+        "server_constants.cpp",
+    ],
+    hdrs = [
+        "client.h",
+        "run_server.h",
+        "server_constants.h",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        ":cvd_server_cc_proto",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/metrics",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+        "@protobuf",
+    ],
+)
+
+clang_tidy_test(
+    name = "legacy_clang_tidy",
+    srcs = [":legacy"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

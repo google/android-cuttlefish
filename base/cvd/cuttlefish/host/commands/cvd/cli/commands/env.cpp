@@ -21,10 +21,9 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/contains.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/flag.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
@@ -58,12 +57,13 @@ class CvdEnvCommandHandler : public CvdCommandHandler {
     /*
      * cvd_env --help only. Not --helpxml, etc.
      *
-     * Otherwise, IsHelpSubcmd() should be used here instead.
+     * Otherwise, HasHelpFlag() should be used here instead.
      */
-    auto help_flag = CvdFlag("help", false);
+    bool help = false;
+    Flag help_flag = GflagsCompatFlag("help", help);
     cvd_common::Args subcmd_args_copy{subcmd_args};
-    auto help_parse_result = help_flag.CalculateFlag(subcmd_args_copy);
-    bool is_help = help_parse_result.ok() && (*help_parse_result);
+    auto help_parse_result = ConsumeFlags({help_flag}, subcmd_args_copy);
+    bool is_help = help_parse_result.ok() && help;
 
     Command command =
         is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, env))

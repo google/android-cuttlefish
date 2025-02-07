@@ -16,6 +16,7 @@
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 #include <string>
+#include <vector>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -26,7 +27,6 @@ namespace cuttlefish {
 
 using testing::Eq;
 
-inline constexpr char kFetchCvd[] = "fetch_cvd";
 inline constexpr char kTargetDirectory[] = "--target_directory=/tmp/fetch_test";
 inline constexpr char kDefaultBuild[] =
     "--default_build=aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug";
@@ -36,22 +36,16 @@ inline constexpr char kCasCacheDir[] = "--cas_cache_dir=/tmp/cas_cache";
 inline constexpr char kCasCacheMaxSize[] = "--cas_cache_max_size=10000000000";
 
 TEST(FetchCvdParserTests, CreatesCasDownloaderFlags) {
-  std::string fetch_cvd = std::string(kFetchCvd);
   std::string target_directory = std::string(kTargetDirectory);
   std::string default_build = std::string(kDefaultBuild);
   std::string cas_downloader_path = std::string(kCasDownloaderPath);
   std::string cas_cache_dir = std::string(kCasCacheDir);
   std::string cas_cache_max_size = std::string(kCasCacheMaxSize);
-  char* argv[] = {fetch_cvd.data(),
-                  target_directory.data(),
-                  default_build.data(),
-                  cas_downloader_path.data(),
-                  cas_cache_dir.data(),
-                  cas_cache_max_size.data(),
-                  nullptr};
-  int argc = sizeof(argv) / sizeof(char*) - 1;
+  std::vector<std::string> args = {target_directory, default_build,
+                                   cas_downloader_path, cas_cache_dir,
+                                   cas_cache_max_size};
 
-  Result<FetchFlags> flagsRes = GetFlagValues(argc, argv);
+  Result<FetchFlags> flagsRes = FetchFlags::Parse(args);
 
   EXPECT_THAT(flagsRes, IsOk());
   FetchFlags flags = flagsRes.value();

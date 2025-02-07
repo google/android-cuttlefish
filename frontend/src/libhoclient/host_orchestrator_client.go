@@ -68,6 +68,10 @@ func (c *AccessTokenBuildAPICreds) ApplyToHTTPRequest(rb *HTTPRequestBuilder) {
 	}
 }
 
+type CreateBugReportOpts struct {
+	IncludeADBBugReport bool
+}
+
 // A client to the host orchestrator service running in a remote host.
 type HostOrchestratorService interface {
 	// Lists currently running devices.
@@ -105,7 +109,7 @@ type HostOrchestratorService interface {
 	WaitForOperation(name string, result any) error
 
 	// Create cvd bugreport.
-	CreateBugreport(group string, dst io.Writer) error
+	CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error
 
 	// Powerwash the device.
 	Powerwash(groupName, instanceName string) error
@@ -183,14 +187,14 @@ func (c *HostOrchestratorServiceImpl) ConnectADBWebSocket(device string) (*webso
 	if c.ProxyURL != "" {
 		proxyURL, err := url.Parse(c.ProxyURL)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to parse proxy %s: %w", c.ProxyURL, err)
+			return nil, fmt.Errorf("failed to parse proxy %s: %w", c.ProxyURL, err)
 		}
 		dialer.Proxy = http.ProxyURL(proxyURL)
 	}
 
 	url, err := url.Parse(c.HTTPHelper.RootEndpoint)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse URL %s: %w", c.HTTPHelper.RootEndpoint, err)
+		return nil, fmt.Errorf("failed to parse URL %s: %w", c.HTTPHelper.RootEndpoint, err)
 	}
 	switch p := &url.Scheme; *p {
 	case "https":
@@ -198,19 +202,19 @@ func (c *HostOrchestratorServiceImpl) ConnectADBWebSocket(device string) (*webso
 	case "http":
 		*p = "ws"
 	default:
-		return nil, fmt.Errorf("Unknown scheme %s", *p)
+		return nil, fmt.Errorf("unknown scheme %s", *p)
 	}
 	url = url.JoinPath("devices", device, "adb")
 
 	// Get auth header for WebSocket connection
 	rb := c.HTTPHelper.NewGetRequest("")
 	if err := rb.setAuthz(); err != nil {
-		return nil, fmt.Errorf("Failed to set authorization header: %w", err)
+		return nil, fmt.Errorf("failed to set authorization header: %w", err)
 	}
 	// Connect to the WebSocket
 	wsConn, _, err := dialer.Dial(url.String(), rb.request.Header)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to connect WebSocket %s: %w", url.String(), err)
+		return nil, fmt.Errorf("failed to connect WebSocket %s: %w", url.String(), err)
 	}
 	return wsConn, nil
 }
@@ -500,9 +504,13 @@ func (c *HostOrchestratorServiceImpl) ExtractFile(uploadDir string, filename str
 	return result, nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateBugreport(group string, dst io.Writer) error {
+func (c *HostOrchestratorServiceImpl) CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error {
 	op := &hoapi.Operation{}
-	rb := c.HTTPHelper.NewPostRequest("/cvds/"+group+"/:bugreport", nil)
+	path := "/cvds/" + group + "/:bugreport"
+	if opts.IncludeADBBugReport {
+		path = path + "?include_adb_bugreport=true"
+	}
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
 	if err := rb.JSONResDo(op); err != nil {
 		return err
 	}

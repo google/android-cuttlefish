@@ -19,38 +19,16 @@
 #include <sys/types.h>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/instances/run_cvd_proc_collector.h"
 
 namespace cuttlefish {
-
-class RunCvdProcessManager {
- public:
-  using GroupProcInfo = RunCvdProcessCollector::GroupProcInfo;
-
-  static Result<RunCvdProcessManager> Get();
-  // called by cvd reset handler
-  Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs);
-  // called by cvd start
-  Result<void> ForcefullyStopGroup(uid_t any_id_in_group);
-
- private:
-  RunCvdProcessManager() = delete;
-  RunCvdProcessManager(RunCvdProcessCollector&&);
-  static Result<void> RunStopCvd(const GroupProcInfo& group_info,
-                                 bool clear_runtime_dirs);
-  Result<void> RunStopCvdAll(bool clear_runtime_dirs);
-  Result<void> SendSignal(const GroupProcInfo&);
-  Result<void> DeleteLockFile(const GroupProcInfo&);
-  Result<void> ForcefullyStopGroup(const GroupProcInfo& group);
-
-  RunCvdProcessCollector run_cvd_process_collector_;
-};
 
 /*
  * Runs stop_cvd for all cuttlefish instances found based on run_cvd processes,
  * and send SIGKILL to the run_cvd processes.
  */
 Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs);
+
+Result<void> ForcefullyStopGroup(uid_t any_id_in_group);
 
 Result<void> KillCvdServerProcess();
 

@@ -1,0 +1,68 @@
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "parser",
+    srcs = [
+        "arguments_separator.cpp",
+        "creation_analyzer.cpp",
+        "device_selector_utils.cpp",
+        "selector_common_parser.cpp",
+        "selector_option_parser_utils.cpp",
+        "start_selector_parser.cpp",
+    ],
+    hdrs = [
+        "arguments_separator.h",
+        "creation_analyzer.h",
+        "device_selector_utils.h",
+        "selector_common_parser.h",
+        "selector_constants.h",
+        "selector_option_parser_utils.h",
+        "start_selector_parser.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances/lock",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+    ],
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "parser_clang_tidy",
+    srcs = [":parser"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "selector",
+    srcs = ["selector.cpp"],
+    hdrs = ["selector.h"],
+    deps = [
+        ":parser",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+    ],
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "selector_clang_tidy",
+    srcs = [":selector"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

@@ -49,17 +49,11 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
            "cvd itself)";
   }
 
-  bool ShouldInterceptHelp() const override { return false; }
+  bool ShouldInterceptHelp() const override { return true; }
 
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
-
-    if (CF_EXPECT(IsHelpSubcmd(subcmd_args))) {
-      std::vector<std::string> unused;
-      std::cout << CF_EXPECT(DetailedHelp(unused));
-      return {};
-    }
 
     if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
       return CF_ERR(NoGroupMessage(request));

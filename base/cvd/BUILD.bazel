@@ -1,16 +1,25 @@
-package(
-    default_visibility = ["//visibility:public"],
+package_group(
+    name = "android_cuttlefish",
+    packages = [
+        "//...",
+    ],
 )
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+exports_files([".clang-tidy"])
 
 genrule(
     name = "build_version_header",
     srcs = ["build_version.h.in"],
     outs = ["build/version.h"],
-    cmd = "sed -e \"s|@VCS_TAG@|`git describe`|\" $< > $@",
+    cmd = "sed -e \"s|@VCS_TAG@|`cat bazel-out/*-status.txt | grep \"STABLE_HEAD_COMMIT\" | cut -f 2 -d ' '`|\" $< > $@",
+    stamp = 1,
 )
 
 filegroup(
    name = "clang_tidy_config",
    srcs = [".clang-tidy"],
-   visibility = ["//visibility:public"],
 )

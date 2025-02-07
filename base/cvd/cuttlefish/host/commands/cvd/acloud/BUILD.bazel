@@ -1,0 +1,54 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+proto_library(
+    name = "user_config_proto",
+    srcs = ["user_config.proto"],
+)
+
+cc_proto_library(
+    name = "user_config_cc_proto",
+    deps = [":user_config_proto"],
+)
+
+cc_library(
+    name = "acloud",
+    srcs = [
+        "config.cpp",
+        "converter.cpp",
+        "create_converter_parser.cpp",
+    ],
+    hdrs = [
+        "config.h",
+        "converter.h",
+        "create_converter_parser.h",
+    ],
+    copts = COPTS + [ "-Werror=sign-compare" ],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        ":user_config_cc_proto",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli/selector:parser",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances/lock",
+        "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@protobuf",
+    ],
+)
+
+clang_tidy_test(
+    name = "acloud_clang_tidy",
+    srcs = [":acloud"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

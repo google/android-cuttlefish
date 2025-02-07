@@ -1,6 +1,17 @@
-cuttlefish-common (1.1.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.2.0) UNRELEASED; urgency=medium
 
   * 
+
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 24 Jan 2025 11:23:42 -0800
+
+cuttlefish-common (1.1.0) unstable; urgency=medium
+
+  * add cvd cache
+  * automatic cache pruning when fetching
+  * add cvd login
+  * certain `cvd` commands now directly communicate with a running device instead of executing a separate binary (restart, powerwash, powerbtn)
+  * fix cvd help fetch
+  * casdownloader support added when fetching
 
  -- Jorge Moreira <jemoreira@google.com>  Fri, 01 Nov 2024 16:02:12 -0700
 

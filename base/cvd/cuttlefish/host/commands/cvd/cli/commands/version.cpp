@@ -16,7 +16,13 @@
 
 #include "host/commands/cvd/cli/commands/version.h"
 
+#include <iostream>
+#include <memory>
+#include <string>
+#include <string_view>
+
 #include "build/version.h"
+#include "fmt/format.h"
 
 #include "common/libs/utils/proto.h"
 #include "common/libs/utils/result.h"
@@ -42,7 +48,7 @@ class CvdVersionHandler : public CvdCommandHandler {
     fmt::print(std::cout, "major: {}\n", cvd::kVersionMajor);
     fmt::print(std::cout, "minor: {}\n", cvd::kVersionMinor);
 
-    std::string build = android::build::GetBuildNumber();
+    const std::string build = android::build::GetBuildNumber();
     if (!build.empty()) {
       fmt::print(std::cout, "build: {}\n", build);
     }

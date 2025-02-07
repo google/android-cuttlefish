@@ -26,7 +26,7 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unique_resource_allocator.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/instances/instance_lock.h"
+#include "host/commands/cvd/instances/lock/instance_lock.h"
 #include "host/commands/cvd/cli/selector/start_selector_parser.h"
 
 namespace cuttlefish {
@@ -68,6 +68,13 @@ struct GroupCreationInfo {
   std::vector<PerInstanceInfo> instances;
 };
 
+struct CreationAnalyzerParam {
+  const std::vector<std::string>& cmd_args;
+  const std::unordered_map<std::string, std::string>& envs;
+  const SelectorOptions& selectors;
+  bool acquire_file_locks;
+};
+
 /**
  * Instance IDs:
  *  Use the InstanceNumCalculator's logic
@@ -96,73 +103,8 @@ struct GroupCreationInfo {
  *    instance ids --> per_instance_name
  *
  */
-class CreationAnalyzer {
- public:
-  struct CreationAnalyzerParam {
-    const std::vector<std::string>& cmd_args;
-    const std::unordered_map<std::string, std::string>& envs;
-    const SelectorOptions& selectors;
-  };
-
-  struct GroupInfo {
-    std::string group_name;
-    const bool default_group;
-  };
-
-  static Result<CreationAnalyzer> Create(
-      const CreationAnalyzerParam& param,
-      InstanceLockFileManager& instance_lock_file_manager);
-
-  Result<GroupCreationInfo> ExtractGroupInfo(bool acquire_file_locks);
-
- private:
-  using IdAllocator = UniqueResourceAllocator<unsigned>;
-
-  CreationAnalyzer(const CreationAnalyzerParam& param,
-                   StartSelectorParser&& selector_options_parser,
-                   InstanceLockFileManager& instance_lock_file_manager);
-
-  /**
-   * calculate n_instances_ and instance_ids_
-   */
-  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIds(
-      bool acquire_file_locks);
-
-  /*
-   * When group name is nil, it is auto-generated using instance ids
-   *
-   * If the instanc group is the default one, the group name is cvd. Otherwise,
-   * for given instance ids, {i}, the group name will be cvd_i.
-   */
-  Result<GroupInfo> ExtractGroup(const std::vector<PerInstanceInfo>&) const;
-
-  /**
-   * Figures out the HOME directory
-   *
-   * The issue is that many times, HOME is anyway implicitly given. Thus, only
-   * if the HOME value is not equal to the HOME directory recognized by the
-   * system, it can be safely regarded as overridden by the user.
-   *
-   * If that is not the case, we use a automatically generated value as HOME.
-   * If the group instance is the default one, we still use the user's system-
-   * widely recognized home. If not, we populate them user /tmp/.cf/<uid>/
-   *
-   */
-  Result<std::string> AnalyzeHome() const;
-
-  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal(
-      bool acquire_file_locks);
-  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal(
-      const std::vector<unsigned>& requested_instance_ids,
-      bool acquire_file_locks);
-
-  // inputs
-  std::unordered_map<std::string, std::string> envs_;
-
-  // internal, temporary
-  StartSelectorParser selector_options_parser_;
-  InstanceLockFileManager& instance_lock_file_manager_;
-};
+Result<GroupCreationInfo> AnalyzeCreation(const CreationAnalyzerParam&,
+                                          InstanceLockFileManager&);
 
 }  // namespace selector
 }  // namespace cuttlefish

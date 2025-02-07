@@ -16,13 +16,22 @@
 
 #include "host/commands/cvd/cli/utils.h"
 
-#include <fmt/core.h>
+#include <signal.h>
+
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include <fmt/format.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "host/commands/cvd/instances/instance_manager.h"
+#include "common/libs/utils/result.h"
+#include "host/commands/cvd/instances/instance_database_utils.h"
 #include "host/commands/cvd/utils/common.h"
 #include "host/libs/config/config_constants.h"
 
@@ -51,7 +60,7 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
   // Set CuttlefishConfig path based on assembly dir,
   // used by subcommands when locating the CuttlefishConfig.
   if (param.envs.count(cuttlefish::kCuttlefishConfigEnvVarName) == 0) {
-    auto config_path = InstanceManager::GetCuttlefishConfigPath(param.home);
+    auto config_path = GetCuttlefishConfigPath(param.home);
     if (config_path.ok()) {
       command.AddEnvironmentVariable(cuttlefish::kCuttlefishConfigEnvVarName,
                                      *config_path);
@@ -131,35 +140,6 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
       .command_name = request_form.bin_file
   };
   return CF_EXPECT(ConstructCommand(construct_cmd_param));
-}
-
-/*
- * From external/gflags/src, commit:
- *  061f68cd158fa658ec0b9b2b989ed55764870047
- *
- */
-constexpr static std::array help_bool_opts{
-    "help", "helpfull", "helpshort", "helppackage", "helpxml", "version", "h"};
-constexpr static std::array help_str_opts{
-    "helpon",
-    "helpmatch",
-};
-
-Result<bool> IsHelpSubcmd(const std::vector<std::string>& args) {
-  std::vector<std::string> copied_args(args);
-  std::vector<Flag> flags;
-  flags.reserve(help_bool_opts.size() + help_str_opts.size());
-  bool bool_value_placeholder = false;
-  std::string str_value_placeholder;
-  for (const auto bool_opt : help_bool_opts) {
-    flags.emplace_back(GflagsCompatFlag(bool_opt, bool_value_placeholder));
-  }
-  for (const auto str_opt : help_str_opts) {
-    flags.emplace_back(GflagsCompatFlag(str_opt, str_value_placeholder));
-  }
-  CF_EXPECT(ConsumeFlags(flags, copied_args));
-  // if there was any match, some in copied_args were consumed.
-  return (args.size() != copied_args.size());
 }
 
 static constexpr char kTerminalBoldRed[] = "\033[0;1;31m";

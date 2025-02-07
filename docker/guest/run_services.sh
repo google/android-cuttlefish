@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 apt update
-apt --only-upgrade install \
+apt --only-upgrade -y --no-install-recommends install \
   cuttlefish-base \
   cuttlefish-user \
   cuttlefish-orchestration

@@ -1,0 +1,25 @@
+load("//:build_variables.bzl", "COPTS")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "lock",
+    srcs = [
+        "instance_lock.cpp",
+        "lock_file.cpp",
+    ],
+    hdrs = [
+        "instance_lock.h",
+        "lock_file.h",
+    ],
+    copts = COPTS + [ "-Werror=sign-compare" ],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+)

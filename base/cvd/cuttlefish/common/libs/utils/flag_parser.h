@@ -120,6 +120,9 @@ class Flag {
   friend Flag InvalidFlagGuard();
   friend Flag UnexpectedArgumentGuard();
 
+  friend Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                              std::vector<std::string>&);
+
   std::vector<FlagAlias> aliases_;
   std::optional<std::string> help_;
   std::optional<std::function<std::string()>> getter_;
@@ -141,6 +144,14 @@ Result<void> ConsumeFlags(const std::vector<Flag>& flags,
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
                           std::vector<std::string>&&,
                           bool recognize_end_of_option_mark = false);
+
+/* Handles a list of flags. Arguments are handled from the beginning. When an
+ * unrecognized argument is encountered, parsing stops. At most one flag matcher
+ * can handle a particular argument. */
+Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                     std::vector<std::string>&);
+Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                     std::vector<std::string>&&);
 
 bool WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
 
@@ -178,5 +189,8 @@ Flag GflagsCompatFlag(const std::string& name, bool& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<std::string>& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
                       bool default_value);
+
+// e.g. cvd start --help, cvd stop -help, cvd fleet -h
+Result<bool> HasHelpFlag(const std::vector<std::string>& args);
 
 }  // namespace cuttlefish

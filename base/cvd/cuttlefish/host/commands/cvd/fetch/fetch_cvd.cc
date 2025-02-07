@@ -26,7 +26,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <curl/curl.h>
 #include <sparse/sparse.h>
@@ -36,7 +35,6 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/tee_logging.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "host/commands/cvd/fetch/fetch_tracer.h"
 #include "host/commands/cvd/utils/common.h"
@@ -277,10 +275,8 @@ HostToolsTarget GetHostToolsTarget(const FetchFlags& flags,
   };
 }
 
-Result<void> EnsureDirectoriesExist(const std::string& target_directory,
-                                    const std::string& host_tools_directory,
+Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
                                     const std::vector<Target>& targets) {
-  CF_EXPECT(EnsureDirectoryExists(target_directory));
   CF_EXPECT(EnsureDirectoryExists(host_tools_directory));
   for (const auto& target : targets) {
     CF_EXPECT(EnsureDirectoryExists(target.directories.root, kRwxAllMode));
@@ -369,7 +365,7 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
           : CF_EXPECT(GetCredentialSourceFromFlags(*retrying_http_client, flags,
                                                    oauth_filepath));
 
-  const auto cache_base_path = PerUserDir() + "/cache";
+  const auto cache_base_path = PerUserCacheDir();
 
   std::unique_ptr<CasDownloader> cas_downloader = nullptr;
   Result<std::unique_ptr<CasDownloader>> result =
@@ -968,23 +964,12 @@ std::string GetFetchLogsFileName(const std::string& target_directory) {
   return target_directory + "/fetch.log";
 }
 
-Result<void> FetchCvdMain(int argc, char** argv) {
-  android::base::InitLogging(argv, android::base::StderrLogger);
-  const FetchFlags flags = CF_EXPECT(GetFlagValues(argc, argv));
+Result<void> FetchCvdMain(const FetchFlags& flags) {
   const bool append_subdirectory = ShouldAppendSubdirectory(flags);
   std::vector<Target> targets = GetFetchTargets(flags, append_subdirectory);
   HostToolsTarget host_target = GetHostToolsTarget(flags, append_subdirectory);
-  CF_EXPECT(EnsureDirectoriesExist(flags.target_directory,
-                                   host_target.host_tools_directory, targets));
-  std::string log_file = GetFetchLogsFileName(flags.target_directory);
-
-  MetadataLevel metadata_level =
-      isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
-
-  ScopedTeeLogger logger(
-      LogToStderrAndFiles({log_file}, "", metadata_level, flags.verbosity));
+  CF_EXPECT(EnsureDirectoriesExist(host_target.host_tools_directory, targets));
   CF_EXPECT(Fetch(flags, host_target, targets));
-
   return {};
 }
 

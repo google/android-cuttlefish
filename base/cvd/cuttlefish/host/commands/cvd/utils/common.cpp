@@ -26,7 +26,6 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/command_request.h"
 
 namespace cuttlefish {
 
@@ -141,8 +140,10 @@ std::string CvdDir() {
   return "/tmp/cvd";
 }
 
-std::string PerUserDir() {
-  return fmt::format("/tmp/cvd/{}", getuid());
+std::string PerUserDir() { return fmt::format("{}/{}", CvdDir(), getuid()); }
+
+std::string PerUserCacheDir() {
+  return fmt::format("{}/{}/cache", CvdDir(), getuid());
 }
 
 std::string InstanceDatabasePath() {

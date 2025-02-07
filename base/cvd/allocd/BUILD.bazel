@@ -1,3 +1,9 @@
+load("//:build_variables.bzl", "COPTS")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
 cc_binary(
     name = "allocd",
     srcs = [
@@ -12,14 +18,13 @@ cc_binary(
         "utils.cpp",
         "utils.h",
     ],
-    copts = [
+    copts = COPTS + [
         "-Wno-reorder",
         "-Wno-unknown-pragmas",
         "-Wno-attributes",
         "-Wno-sign-compare",
         "-Wno-write-strings",
         "-DNODISCARD_EXPECTED=true",
-        "-std=c++17",
     ],
     includes = [""],
     deps = [

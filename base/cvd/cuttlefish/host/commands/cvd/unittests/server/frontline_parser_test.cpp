@@ -19,48 +19,19 @@
 
 #include <gtest/gtest.h>
 
+#include "common/libs/utils/result_matchers.h"
 #include "host/commands/cvd/cli/frontline_parser.h"
-
-namespace std {
-
-template <typename T>
-static std::ostream& operator<<(std::ostream& out, const std::vector<T>& v) {
-  if (v.empty()) {
-    out << "{}";
-    return out;
-  }
-  if (v.size() == 1) {
-    out << "{" << v.front() << "}";
-    return out;
-  }
-  out << "{";
-  for (size_t i = 0; i != v.size() - 1; i++) {
-    out << v.at(i) << ", ";
-  }
-  out << v.back() << "}";
-  return out;
-}
-
-}  // namespace std
 
 namespace cuttlefish {
 
-TEST(FrontlineParserTest, CvdOnly) {
-  cvd_common::Args input{"cvd"};
-  FrontlineParser::ParserParam parser_param{.server_supported_subcmds = {},
-                                            .all_args = {"cvd"}};
+TEST(FrontlineParserTest, SelectorArgs) {
+  cvd_common::Args input{"cvd", "--instance_name=1", "status"};
 
-  auto result = FrontlineParser::Parse(parser_param);
+  auto result = ExtractCvdArgs(input);
 
-  ASSERT_TRUE(result.ok()) << result.error().Trace();
-  auto& parser_ptr = *result;
-  ASSERT_TRUE(parser_ptr);
-  ASSERT_EQ("cvd", parser_ptr->ProgPath());
-  ASSERT_EQ(std::nullopt, parser_ptr->SubCmd())
-      << (parser_ptr->SubCmd() ? std::string("nullopt")
-                               : *parser_ptr->SubCmd());
-  ASSERT_EQ(cvd_common::Args{}, parser_ptr->SubCmdArgs());
-  ASSERT_EQ(cvd_common::Args{}, parser_ptr->CvdArgs());
+  EXPECT_THAT(result, IsOk());
+  ASSERT_EQ(*result, std::vector<std::string>{"--instance_name=1"});
+  ASSERT_EQ(input, (std::vector<std::string>{"cvd", "status"}));
 }
 
 }  // namespace cuttlefish

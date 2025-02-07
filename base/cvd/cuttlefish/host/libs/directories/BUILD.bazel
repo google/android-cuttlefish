@@ -1,3 +1,10 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
 cc_library(
     name = "directories",
     srcs = [
@@ -6,15 +13,18 @@ cc_library(
     hdrs = [
         "xdg.h",
     ],
-    copts = [
-        "-std=c++17",
-    ],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
     ],
+)
+
+clang_tidy_test(
+    name = "directories_clang_tidy",
+    srcs = [":directories"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

@@ -16,19 +16,21 @@
 
 #pragma once
 
-#include <memory>
 #include <optional>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/selector/arguments_lexer.h"
 
 namespace cuttlefish {
 namespace selector {
+
+struct SeparatedArguments {
+  std::string prog_path;
+  std::vector<std::string> cvd_args;
+  std::optional<std::string> sub_cmd;
+  std::vector<std::string> sub_cmd_args;
+};
 
 /**
  * The very first parser for cmdline that separates:
@@ -42,84 +44,16 @@ namespace selector {
  *  $ program_path/name <optional cvd-specific flags> \
  *                      subcmd <optional subcmd arguments>
  *
- * For the parser's sake, there are a few more rules.
+ * For the parser's sake, there are is another rule.
  *
- * 1. All the optional cvd-specific flags should be pre-registered. Usually,
- * the subcmd arguments do not have to be registered. However, cvd-specific
- * flags must be.
- *
- *  E.g. "--clean" is the only registered cvd-specific flag, which happened
- *      to be bool.
- *       These are okay:
- *         cvd --clean start --never-exist-flag
- *         cvd --noclean stop
- *         cvd start
- *
- *       However, this is not okay:
- *        cvd --daemon start
- *
- *  2. --
  *  E.g. cvd --clean start --have --some --args -- a b c d e
  *  -- is basically for subcommands. cvd itself does not use it.
  *  If -- is within cvd arguments, it is ill-formatted. If it is within
  *  subcommands arguments, we simply forward it to the subtool as is.
  *
  */
-class ArgumentsSeparator {
-  using CvdProtobufArg = google::protobuf::RepeatedPtrField<std::string>;
-
- public:
-  struct FlagsRegistration {
-    std::unordered_set<std::string> known_boolean_flags;
-    std::unordered_set<std::string> known_value_flags;
-    std::unordered_set<std::string> valid_subcommands;
-  };
-  static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
-      const FlagsRegistration& flag_registration,
-      const std::vector<std::string>& input_args);
-  static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
-      const FlagsRegistration& flag_registration,
-      const CvdProtobufArg& input_args);
-  static Result<std::unique_ptr<ArgumentsSeparator>> Parse(
-      const FlagsRegistration& flag_registration, const std::string& input_args,
-      const std::string& delim = " ");
-
-  const std::string& ProgPath() const { return prog_path_; }
-  const std::vector<std::string>& CvdArgs() const { return cvd_args_; }
-  std::optional<std::string> SubCmd() const { return sub_cmd_; }
-  const std::vector<std::string>& SubCmdArgs() const { return sub_cmd_args_; }
-
- private:
-  ArgumentsSeparator(std::unique_ptr<ArgumentsLexer>&& lexer,
-                     const std::vector<std::string>& input_args,
-                     const FlagsRegistration& flag_registration);
-
-  bool IsFlag(ArgType arg_type) const;
-  struct Output {
-    std::string prog_path;
-    std::vector<std::string> cvd_args;
-    std::optional<std::string> sub_cmd;
-    std::vector<std::string> sub_cmd_args;
-  };
-  Result<void> Parse();
-  Result<Output> ParseInternal();
-
-  // internals
-  std::unique_ptr<ArgumentsLexer> lexer_;
-
-  // inputs
-  std::vector<std::string> input_args_;
-  std::unordered_set<std::string> known_boolean_flags_;
-  std::unordered_set<std::string> known_value_flags_;
-  std::unordered_set<std::string> valid_subcmds_;
-  bool match_any_subcmd_;
-
-  // outputs
-  std::string prog_path_;
-  std::vector<std::string> cvd_args_;
-  std::optional<std::string> sub_cmd_;
-  std::vector<std::string> sub_cmd_args_;
-};
+Result<SeparatedArguments> SeparateArguments(
+    const std::vector<std::string>& input_args);
 
 }  // namespace selector
 }  // namespace cuttlefish

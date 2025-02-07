@@ -29,8 +29,8 @@
 #include "host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "host/commands/cvd/instances/instance_database.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/commands/cvd/instances/instance_lock.h"
 #include "host/commands/cvd/instances/instance_record.h"
+#include "host/commands/cvd/instances/lock/instance_lock.h"
 
 namespace cuttlefish {
 
@@ -40,10 +40,6 @@ class InstanceManager {
 
   InstanceManager(InstanceLockFileManager&, InstanceDatabase& instance_db);
 
-  // For cvd start
-  Result<selector::CreationAnalyzer> CreationAnalyzer(
-      const selector::CreationAnalyzer::CreationAnalyzerParam& param);
-
   Result<bool> HasInstanceGroups() const;
   Result<LocalInstanceGroup> CreateInstanceGroup(
       const selector::GroupCreationInfo& group_info);
@@ -51,7 +47,6 @@ class InstanceManager {
   Result<bool> RemoveInstanceGroupByHome(const std::string&);
 
   cvd::Status CvdClear(const CommandRequest&);
-  static Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
   Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
 

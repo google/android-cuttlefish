@@ -51,6 +51,8 @@ Result<void> MoveDirectoryContents(const std::string& source,
                                    const std::string& destination);
 bool FileHasContent(const std::string& path);
 Result<std::vector<std::string>> DirectoryContents(const std::string& path);
+Result<std::vector<std::string>> DirectoryContentsPaths(
+    const std::string& path);
 bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
 inline bool IsDirectory(const std::string& path) {
   return DirectoryExists(path);
@@ -72,7 +74,8 @@ Result<std::string> RenameFile(const std::string& current_filepath,
 std::string ReadFile(const std::string& file);
 Result<std::string> ReadFileContents(const std::string& filepath);
 bool MakeFileExecutable(const std::string& path);
-std::chrono::system_clock::time_point FileModificationTime(const std::string& path);
+Result<std::chrono::system_clock::time_point> FileModificationTime(
+    const std::string& path);
 std::string cpp_dirname(const std::string& str);
 std::string cpp_basename(const std::string& str);
 // Whether a file exists and is a unix socket

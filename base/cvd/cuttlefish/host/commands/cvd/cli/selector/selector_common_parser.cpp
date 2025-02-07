@@ -25,8 +25,9 @@
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
-#include "host/commands/cvd/instances/instance_database_utils.h"
+#include "common/libs/utils/flag_parser.h"
 #include "host/commands/cvd/cli/selector/selector_constants.h"
+#include "host/commands/cvd/instances/instance_database_utils.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -82,14 +83,24 @@ Result<SelectorOptions> HandleNameOpts(
 Result<SelectorOptions> ParseCommonSelectorArguments(
     cvd_common::Args& args) {
   // Handling name-related options
-  auto group_name_flag =
-      CF_EXPECT(SelectorFlags::Get().GetFlag(SelectorFlags::kGroupName));
-  auto instance_name_flag =
-      CF_EXPECT(SelectorFlags::Get().GetFlag(SelectorFlags::kInstanceName));
-  std::optional<std::string> group_name_opt =
-      CF_EXPECT(group_name_flag.FilterFlag<std::string>(args));
-  std::optional<std::string> instance_name_opt =
-      CF_EXPECT(instance_name_flag.FilterFlag<std::string>(args));
+  std::optional<std::string> group_name_opt;
+  Flag group_name_flag =
+      GflagsCompatFlag(SelectorFlags::kGroupName)
+          .Setter([&group_name_opt](const FlagMatch& match) -> Result<void> {
+            group_name_opt = match.value;
+            return {};
+          });
+
+  std::optional<std::string> instance_name_opt;
+  Flag instance_name_flag =
+      GflagsCompatFlag(SelectorFlags::kInstanceName)
+          .Setter([&instance_name_opt](const FlagMatch& match) -> Result<void> {
+            instance_name_opt = match.value;
+            return {};
+          });
+
+  CF_EXPECT(
+      ConsumeFlagsConstrained({group_name_flag, instance_name_flag}, args));
 
   return CF_EXPECT(HandleNameOpts(group_name_opt, instance_name_opt));
 }

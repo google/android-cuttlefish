@@ -100,14 +100,6 @@ func newCVDExecContext(execContext ExecContext, usr *user.User) cvd.CVDExecConte
 	}
 }
 
-// Makes runtime artifacts owned by `cvdnetwork` group.
-func createRuntimesRootDir(name string) error {
-	if err := createDir(name); err != nil {
-		return err
-	}
-	return os.Chmod(name, 0774|os.ModeSetgid)
-}
-
 type cvdFleetOutput struct {
 	Groups []*cvdGroup `json:"groups"`
 }
@@ -200,18 +192,6 @@ func CVDLogsDir(ctx cvd.CVDExecContext, groupName, name string) (string, error) 
 	return ins.InstanceDir + "/logs", nil
 }
 
-func HostBugReport(ctx cvd.CVDExecContext, paths IMPaths, out string) error {
-	group, err := cvdFleetFirstGroup(ctx)
-	if err != nil {
-		return err
-	}
-	if len(group.Instances) == 0 {
-		return operator.NewNotFoundError("no artifacts found", nil)
-	}
-	cmd := cvd.NewCommand(ctx, []string{"host_bugreport", "--output=" + out}, cvd.CommandOpts{})
-	return cmd.Run()
-}
-
 const (
 	// TODO(b/267525748): Make these values configurable.
 	mainBuildDefaultBranch = "aosp-main"
@@ -287,7 +267,7 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 func createCredentialsFile(content string) (*os.File, error) {
 	p1, p2, err := os.Pipe()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create pipe for credentials: %w", err)
+		return nil, fmt.Errorf("failed to create pipe for credentials: %w", err)
 	}
 	go func(f *os.File) {
 		defer f.Close()

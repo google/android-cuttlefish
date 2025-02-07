@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <android-base/file.h>
@@ -156,8 +157,7 @@ void IncreaseFileLimit() {
   }
 }
 
-Result<void> CvdMain(int argc, char** argv, char** envp,
-                     const android::base::LogSeverity verbosity) {
+Result<void> CvdMain(int argc, char** argv, char** envp) {
   CF_EXPECT(EnsureCvdDirectoriesExist());
 
   CF_EXPECT(KillOldServer());
@@ -196,7 +196,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   InstanceLockFileManager instance_lockfile_manager;
   InstanceDatabase instance_db(InstanceDatabasePath());
   InstanceManager instance_manager(instance_lockfile_manager, instance_db);
-  Cvd cvd(verbosity, instance_lockfile_manager, instance_manager);
+  Cvd cvd(instance_manager, instance_lockfile_manager);
 
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {
@@ -265,7 +265,7 @@ int main(int argc, char** argv, char** envp) {
   // set verbosity for this process
   cuttlefish::SetMinimumVerbosity(verbosity);
 
-  auto result = cuttlefish::CvdMain(argc, argv, envp, verbosity);
+  auto result = cuttlefish::CvdMain(argc, argv, envp);
   if (result.ok()) {
     return 0;
   } else {

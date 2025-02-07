@@ -7,6 +7,25 @@ on:
       - main  # push events to main branch occur after PRs are merged, when the same checks were run
 
 jobs:
+  staticcheck:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: ["e2etests", "frontend/src/host_orchestrator", "frontend/src/libhoclient", "frontend/src/liboperator", "frontend/src/operator"]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install dependencies
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.23.1'
+    - run: go version
+    - name: Staticcheck
+      uses: dominikh/staticcheck-action@v1.3.1
+      with:
+        version: "latest"
+        install-go: false
+        working-directory: ${{ matrix.dir }}
   build-orchestrator:
     runs-on: ubuntu-latest
     steps:
@@ -85,17 +104,14 @@ jobs:
       with:
         name: testlogs
         path: bazel-testlogs
-    - name: Run clang-tidy
-      run: cd base/cvd && bazel build //cuttlefish/... --config clang-tidy
   e2e-tests-orchestration:
     runs-on: ubuntu-22.04 
     steps:
-    - name: Common bazel setup
-      uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 #aka 0.9.1
-      with:
-        bazelisk-cache: true # Avoid downloading Bazel every time.
-        disk-cache: ${{ github.workflow }} # Store build cache per workflow.
-        repository-cache: true # Share repository cache between workflows.
+      # Do not reuse bazel cache among `e2e-tests-orchestration` runs.
+      #
+      # Current docker image bazel target: "@images//:orchestration_image_dev_tar" is based
+      # on an umbrella bash script and does not depend on smaller bazel targets, hence changes
+      # in cvd or host orchestrator code won't trigger building a new image.
     - name: Free space
       run: |
         echo "disk space before cleanup:"

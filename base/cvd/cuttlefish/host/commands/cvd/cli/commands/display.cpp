@@ -24,10 +24,10 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/flag.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
@@ -110,14 +110,15 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
                                  cvd_common::Args& subcmd_args,
                                  cvd_common::Envs envs) {
     // test if there is --instance_num flag
-    CvdFlag<std::int32_t> instance_num_flag("instance_num");
-    auto instance_num_opt =
-        CF_EXPECT(instance_num_flag.FilterFlag(subcmd_args));
+    int instance_num = -1;
+    Flag instance_num_flag = GflagsCompatFlag("instance_num", instance_num);
+
+    CF_EXPECT(ConsumeFlags({instance_num_flag}, subcmd_args));
 
     auto [instance, group] =
-        instance_num_opt.has_value()
+        instance_num >= 0
             ? CF_EXPECT(instance_manager_.FindInstanceWithGroup(
-                  {.instance_id = *instance_num_opt}))
+                  {.instance_id = instance_num}))
             : CF_EXPECT(selector::SelectInstance(instance_manager_, request));
     const auto& home = group.Proto().home_directory();
 
@@ -151,7 +152,7 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
 
   Result<bool> IsHelp(const cvd_common::Args& cmd_args) const {
     // cvd display --help, --helpxml, etc or simply cvd display
-    if (cmd_args.empty() || CF_EXPECT(IsHelpSubcmd(cmd_args))) {
+    if (cmd_args.empty() || CF_EXPECT(HasHelpFlag(cmd_args))) {
       return true;
     }
     // cvd display help <subcommand> format

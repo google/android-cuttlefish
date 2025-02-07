@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+// TODO: chadreynolds - Remove once AOSP <=> Github file syncing is enabled.
+// avoiding fixing lint errors until fixing it once fixes for all copies
+// NOLINTBEGIN
+
 #include "cuttlefish_config.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -25,8 +29,6 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flags_validator.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/gem5_manager.h"
 
 namespace cuttlefish {
 namespace {
@@ -1894,3 +1896,5 @@ std::string CuttlefishConfig::InstanceSpecific::instance_name() const {
 std::string CuttlefishConfig::InstanceSpecific::id() const { return id_; }
 
 }  // namespace cuttlefish
+
+// NOLINTEND

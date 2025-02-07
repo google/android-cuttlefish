@@ -66,11 +66,6 @@ Result<void> RemoveGroupDirectory(const LocalInstanceGroup& group) {
 
 }  // namespace
 
-Result<std::string> InstanceManager::GetCuttlefishConfigPath(
-    const std::string& home) {
-  return CF_EXPECT(cuttlefish::GetCuttlefishConfigPath(home));
-}
-
 InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager,
                                  InstanceDatabase& instance_db)
     : lock_manager_(lock_manager), instance_db_(instance_db) {}
@@ -82,11 +77,6 @@ Result<void> InstanceManager::SetAcloudTranslatorOptout(bool optout) {
 
 Result<bool> InstanceManager::GetAcloudTranslatorOptout() const {
   return CF_EXPECT(instance_db_.GetAcloudTranslatorOptout());
-}
-
-Result<selector::CreationAnalyzer> InstanceManager::CreationAnalyzer(
-    const selector::CreationAnalyzer::CreationAnalyzerParam& param) {
-  return selector::CreationAnalyzer::Create(param, lock_manager_);
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>>

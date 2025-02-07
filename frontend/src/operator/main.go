@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
 	"sync"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
@@ -56,14 +55,6 @@ func startHttpsServer(address string, port int, certPath string, keyPath string)
 		// Using DefaultServerMux in both servers (http and https) is not a problem
 		// as http.ServeMux instances are thread safe.
 		nil)
-}
-
-func fromEnvOrDefault(key string, def string) string {
-	val := os.Getenv(key)
-	if val == "" {
-		return def
-	}
-	return val
 }
 
 // Whether a device file request should be intercepted and served from the signaling server instead

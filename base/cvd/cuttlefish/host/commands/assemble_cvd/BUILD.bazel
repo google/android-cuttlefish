@@ -1,16 +1,24 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
 cc_library(
     name = "libassemble_cvd",
     hdrs = [
         "flags_defaults.h",
     ],
-    copts = [
-        "-Werror=sign-compare",
-        "-Wno-ctad-maybe-unsupported",
-        "-std=c++17",
-    ],
+    copts = COPTS + [ "-Werror=sign-compare" ],
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
     deps = [
         "//cuttlefish/host/libs/config",
     ],
+)
+
+clang_tidy_test(
+    name = "libassemble_cvd_clang_tidy",
+    srcs = [":libassemble_cvd"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

@@ -26,7 +26,6 @@
 #include "host/commands/cvd/cli/commands/command_handler.h"
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/cli/utils.h"
 #include "host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
@@ -43,12 +42,6 @@ class CvdDevicePowerBtnCommandHandler : public CvdCommandHandler {
 
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
-
-    if (CF_EXPECT(IsHelpSubcmd(request.SubcommandArguments()))) {
-      std::cout << kSummaryHelpText << std::endl;
-      return {};
-    }
-
     auto [instance, _] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                   "Unable to select an instance");

@@ -1,0 +1,156 @@
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+exports_files([
+    "acloud_command.cpp",
+    "acloud_command.h",
+    "cmd_list.cpp",
+    "cmd_list.h",
+    "create.cpp",
+    "create.h",
+    "help.cpp",
+    "help.h",
+    "load_configs.cpp",
+    "load_configs.h",
+])
+
+cc_library(
+    name = "command_handler",
+    srcs = ["command_handler.cpp"],
+    hdrs = ["command_handler.h"],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+    ],
+)
+
+clang_tidy_test(
+    name = "command_handler_clang_tidy",
+    srcs = [":command_handler"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "host_tool_target",
+    srcs = ["host_tool_target.cpp"],
+    hdrs = ["host_tool_target.h"],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "host_tool_target_clang_tidy",
+    srcs = [":host_tool_target"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+# Commands that don't execute other commands
+cc_library(
+    name = "leaf_commands",
+    srcs = [
+        "//:build_version_header",
+        "acloud_common.cpp",
+        "acloud_mixsuperimage.cpp",
+        "acloud_translator.cpp",
+        "bugreport.cpp",
+        "cache.cpp",
+        "clear.cpp",
+        "command_handler.cpp",
+        "display.cpp",
+        "env.cpp",
+        "fetch.cpp",
+        "fleet.cpp",
+        "lint.cpp",
+        "login.cpp",
+        "noop.cpp",
+        "power_btn.cpp",
+        "powerwash.cpp",
+        "remove.cpp",
+        "reset.cpp",
+        "restart.cpp",
+        "snapshot.cpp",
+        "start.cpp",
+        "start_impl.cpp",
+        "status.cpp",
+        "stop.cpp",
+        "try_acloud.cpp",
+        "version.cpp",
+    ],
+    hdrs = [
+        "acloud_common.h",
+        "acloud_mixsuperimage.h",
+        "acloud_translator.h",
+        "bugreport.h",
+        "cache.h",
+        "clear.h",
+        "command_handler.h",
+        "display.h",
+        "env.h",
+        "fetch.h",
+        "fleet.h",
+        "lint.h",
+        "login.h",
+        "noop.h",
+        "power_btn.h",
+        "powerwash.h",
+        "remove.h",
+        "reset.h",
+        "restart.h",
+        "snapshot.h",
+        "start.h",
+        "start_impl.h",
+        "status.h",
+        "stop.h",
+        "try_acloud.h",
+        "version.h",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        ":host_tool_target",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/acloud",
+        "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/commands/cvd/cli/parser",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/fetch",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances/lock",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
+        "//cuttlefish/host/commands/cvd/instances:reset_client_utils",
+        "//cuttlefish/host/commands/cvd/legacy",
+        "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/web",
+        "//libbase",
+        "@jsoncpp",
+        "@fmt",
+        "@zlib",
+    ],
+)
+
+clang_tidy_test(
+    name = "leaf_commands_clang_tidy",
+    srcs = [":leaf_commands"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+

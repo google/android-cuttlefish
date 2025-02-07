@@ -511,7 +511,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   }
   // update DB if not help
   // collect group creation infos
-  const bool is_help = CF_EXPECT(IsHelpSubcmd(subcmd_args));
+  const bool is_help = CF_EXPECT(HasHelpFlag(subcmd_args));
 
   if (is_help) {
     auto android_host_out = CF_EXPECT(AndroidHostPath(envs));
@@ -521,8 +521,8 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
         CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));
     ShowLaunchCommand(command, envs);
 
-    CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
-    siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
+    siginfo_t infop;
+    command.Start().Wait(&infop, WEXITED);
     CF_EXPECT(CheckProcessExitedNormally(infop));
     return {};
   }
@@ -587,28 +587,13 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-static constexpr char kCollectorFailure[] = R"(
-  Consider running:
-     cvd reset -y
-
-  cvd start failed. While we should collect run_cvd processes to manually
-  clean them up, collecting run_cvd failed.
-)";
-static constexpr char kStopFailure[] = R"(
-  Consider running:
-     cvd reset -y
-
-  cvd start failed, and stopping run_cvd processes failed.
-)";
-
 static Result<void> CvdResetGroup(const LocalInstanceGroup& group) {
-  auto run_cvd_process_manager = CF_EXPECT(RunCvdProcessManager::Get());
   // We can't run stop_cvd here. It may hang forever, and doesn't make sense
   // to interrupt it.
   const auto& instances = group.Instances();
   CF_EXPECT(!instances.empty());
   const auto& first_instance = *instances.begin();
-  CF_EXPECT(run_cvd_process_manager.ForcefullyStopGroup(first_instance.id()));
+  CF_EXPECT(ForcefullyStopGroup(first_instance.id()));
   return {};
 }
 
@@ -628,7 +613,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
   }
   ShowLaunchCommand(launch_command, envs);
 
-  CF_EXPECT(subprocess_waiter_.Setup(launch_command.Start()));
+  CF_EXPECT(subprocess_waiter_.Setup(launch_command));
 
   auto acloud_compat_action_result = AcloudCompatActions(group, envs, request);
   if (!acloud_compat_action_result.ok()) {

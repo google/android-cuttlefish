@@ -16,18 +16,23 @@
 
 #include "host/commands/cvd/cvd.h"
 
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "host/commands/cvd/cli/command_request.h"
 #include "host/commands/cvd/cli/frontline_parser.h"
 #include "host/commands/cvd/cli/request_context.h"
-#include "host/commands/cvd/cli/utils.h"
-#include "host/commands/cvd/instances/instance_lock.h"
 #include "host/commands/cvd/instances/instance_manager.h"
+#include "host/commands/cvd/instances/lock/instance_lock.h"
 
 namespace cuttlefish {
 
@@ -52,12 +57,10 @@ namespace {
 
 }  // namespace
 
-Cvd::Cvd(const android::base::LogSeverity verbosity,
-         InstanceLockFileManager& instance_lockfile_manager,
-         InstanceManager& instance_manager)
-    : verbosity_(verbosity),
-      instance_lockfile_manager_(instance_lockfile_manager),
-      instance_manager_(instance_manager) {}
+Cvd::Cvd(InstanceManager& instance_manager,
+         InstanceLockFileManager& lock_file_manager)
+    : instance_manager_(instance_manager),
+      lock_file_manager_(lock_file_manager) {}
 
 Result<void> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
@@ -69,11 +72,11 @@ Result<void> Cvd::HandleCommand(
                                          .AddSelectorArguments(selector_args)
                                          .Build());
 
-  RequestContext context(instance_lockfile_manager_, instance_manager_);
+  RequestContext context(instance_manager_, lock_file_manager_);
   auto handler = CF_EXPECT(context.Handler(request));
   if (handler->ShouldInterceptHelp()) {
     std::vector<std::string> invocation_args = request.SubcommandArguments();
-    if (CF_EXPECT(IsHelpSubcmd(invocation_args))) {
+    if (CF_EXPECT(HasHelpFlag(invocation_args))) {
       std::cout << CF_EXPECT(handler->DetailedHelp(invocation_args))
                 << std::endl;
       return {};

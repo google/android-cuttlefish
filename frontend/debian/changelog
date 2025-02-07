@@ -1,6 +1,13 @@
-cuttlefish-frontend (1.1.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.2.0) UNRELEASED; urgency=medium
 
   * 
+
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 24 Jan 2025 11:24:30 -0800
+
+cuttlefish-frontend (1.1.0) unstable; urgency=medium
+
+  * the adb bugreport can now be included in the cvd bugreport
+  * add --log_file flag
 
  -- Jorge Moreira <jemoreira@google.com>  Fri, 01 Nov 2024 16:02:34 -0700
 

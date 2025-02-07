@@ -1,10 +1,21 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
 cc_library(
     name = "config",
     srcs = [
         "config_utils.cpp",
+        "cuttlefish_config.cpp",
+        "cuttlefish_config_environment.cpp",
+        "cuttlefish_config_instance.cpp",
         "fetcher_config.cpp",
         "host_tools_version.cpp",
         "instance_nums.cpp",
+        "logging.cpp",
     ],
     hdrs = [
         "config_constants.h",
@@ -16,11 +27,8 @@ cc_library(
         "instance_nums.h",
         "logging.h",
     ],
-    copts = [
-        "-std=c++17",
-    ],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
@@ -30,4 +38,10 @@ cc_library(
         "@jsoncpp",
         "@zlib",
     ],
+)
+
+clang_tidy_test(
+    name = "config_clang_tidy",
+    srcs = [":config"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

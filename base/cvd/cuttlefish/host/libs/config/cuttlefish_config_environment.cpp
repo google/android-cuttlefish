@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+// TODO: chadreynolds - Remove once AOSP <=> Github file syncing is enabled.
+// avoiding fixing lint errors until fixing it once fixes for all copies
+// NOLINTBEGIN
+
 #include "host/libs/config/cuttlefish_config.h"
 
 #include "common/libs/utils/files.h"
@@ -141,3 +145,5 @@ int CuttlefishConfig::EnvironmentSpecific::wmediumd_mac_prefix() const {
 }
 
 }  // namespace cuttlefish
+
+// NOLINTEND

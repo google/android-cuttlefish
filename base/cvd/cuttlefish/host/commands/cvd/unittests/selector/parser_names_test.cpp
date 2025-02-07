@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "common/libs/utils/result_matchers.h"
 #include "host/commands/cvd/unittests/selector/parser_names_helper.h"
 
 namespace cuttlefish {
@@ -23,11 +24,12 @@ namespace selector {
 
 TEST_P(ValidNamesTest, ValidInputs) {
   auto selector_options_res = ParseCommonSelectorArguments(selector_args_);
-  ASSERT_TRUE(selector_options_res.ok());
+  ASSERT_THAT(selector_options_res, IsOk());
+
   auto parser = StartSelectorParser::ConductSelectFlagsParser(
       *selector_options_res, cvd_common::Args{}, cvd_common::Envs{});
 
-  ASSERT_TRUE(parser.ok());
+  ASSERT_THAT(parser, IsOk());
 }
 
 /**
@@ -35,11 +37,12 @@ TEST_P(ValidNamesTest, ValidInputs) {
  */
 TEST_P(ValidNamesTest, FieldsNoSubstring) {
   auto selector_options_res = ParseCommonSelectorArguments(selector_args_);
-  ASSERT_TRUE(selector_options_res.ok());
+  ASSERT_THAT(selector_options_res, IsOk());
+
   auto parser = StartSelectorParser::ConductSelectFlagsParser(
       *selector_options_res, cvd_common::Args{}, cvd_common::Envs{});
 
-  ASSERT_TRUE(parser.ok());
+  ASSERT_THAT(parser, IsOk());
   ASSERT_EQ(parser->GroupName(), expected_output_.group_name);
   ASSERT_EQ(parser->PerInstanceNames(), expected_output_.per_instance_names);
 }
