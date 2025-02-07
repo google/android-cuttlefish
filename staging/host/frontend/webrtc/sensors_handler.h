@@ -23,6 +23,8 @@
 #include <thread>
 #include <unordered_map>
 
+#include "common/libs/sensors/sensors.h"
+
 namespace cuttlefish {
 namespace webrtc_streaming {
 
@@ -34,11 +36,12 @@ struct SensorsHandler {
   void UnSubscribe(int subscriber_id);
 
  private:
-  void UpdateSensors();
+  void UpdateSensorsUi();
   SensorsSimulator* sensors_simulator_ = new SensorsSimulator();
   std::unordered_map<int, std::function<void(const uint8_t*, size_t)>> client_channels_;
   int last_client_channel_id_ = -1;
   std::mutex subscribers_mtx_;
 };
+
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish

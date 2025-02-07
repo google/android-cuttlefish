@@ -16,10 +16,12 @@
 
 #pragma once
 
-#include <Eigen/Dense>
-
 #include <chrono>
 #include <string>
+
+#include <Eigen/Dense>
+
+#include "common/libs/sensors/sensors.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -29,13 +31,22 @@ class SensorsSimulator {
   SensorsSimulator();
   // Update sensor values based on new rotation status.
   void RefreshSensors(double x, double y, double z);
-  // Get sensors data in string format to be passed as a message.
-  std::string GetSensorsData();
+
+  // Return a string with serialized sensors data in ascending order of
+  // sensor id. A bitmask is used to specify which sensors to include.
+  // Each bit maps to a sensor type, and a set bit indicates that the
+  // corresponding sensor should be included in the returned data. Assuming
+  // accelerometer and gyroscope are specified, the returned string would be
+  // formatted as "<acc.x>:<acc.y>:<acc.z> <gyro.x>:<gyro.y>:<gyro.z>".
+  std::string GetSensorsData(const sensors::SensorsMask mask);
 
  private:
-  Eigen::Vector3d xyz_ {0, 0, 0}, acc_xyz_{0, 0, 0}, mgn_xyz_{0, 0, 0}, gyro_xyz_{0, 0, 0};
+  std::mutex sensors_data_mtx_;
+  Eigen::Vector3d sensors_data_[sensors::kMaxSensorId + 1];
   Eigen::Matrix3d prior_rotation_matrix_, current_rotation_matrix_;
-  std::chrono::time_point<std::chrono::high_resolution_clock> last_event_timestamp_;
+  std::chrono::time_point<std::chrono::high_resolution_clock>
+      last_event_timestamp_;
 };
+
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish

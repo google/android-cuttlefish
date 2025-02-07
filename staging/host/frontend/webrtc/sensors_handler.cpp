@@ -24,6 +24,12 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
+namespace {
+static constexpr int kUiSupportedSensorsMask =
+    (1 << sensors::kAccelerationId) | (1 << sensors::kGyroscopeId) |
+    (1 << sensors::kMagneticId) | (1 << sensors::kRotationVecId);
+}
+
 SensorsHandler::SensorsHandler() {}
 
 SensorsHandler::~SensorsHandler() {}
@@ -31,7 +37,7 @@ SensorsHandler::~SensorsHandler() {}
 // Get new sensor values and send them to client.
 void SensorsHandler::HandleMessage(const double x, const double y, const double z) {
   sensors_simulator_->RefreshSensors(x, y, z);
-  UpdateSensors();
+  UpdateSensorsUi();
 }
 
 int SensorsHandler::Subscribe(std::function<void(const uint8_t*, size_t)> send_to_client) {
@@ -42,7 +48,8 @@ int SensorsHandler::Subscribe(std::function<void(const uint8_t*, size_t)> send_t
   }
 
   // Send device's initial state to the new client.
-  std::string new_sensors_data = sensors_simulator_->GetSensorsData();
+  std::string new_sensors_data =
+      sensors_simulator_->GetSensorsData(kUiSupportedSensorsMask);
   const uint8_t* message =
       reinterpret_cast<const uint8_t*>(new_sensors_data.c_str());
   send_to_client(message, new_sensors_data.size());
@@ -55,8 +62,9 @@ void SensorsHandler::UnSubscribe(int subscriber_id) {
   client_channels_.erase(subscriber_id);
 }
 
-void SensorsHandler::UpdateSensors() {
-  std::string new_sensors_data = sensors_simulator_->GetSensorsData();
+void SensorsHandler::UpdateSensorsUi() {
+  std::string new_sensors_data =
+      sensors_simulator_->GetSensorsData(kUiSupportedSensorsMask);
   const uint8_t* message =
       reinterpret_cast<const uint8_t*>(new_sensors_data.c_str());
   std::lock_guard<std::mutex> lock(subscribers_mtx_);
