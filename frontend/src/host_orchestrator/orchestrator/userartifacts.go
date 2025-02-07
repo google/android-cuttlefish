@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"archive/zip"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,7 +26,9 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/gofrs/flock"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -49,7 +52,7 @@ type UserArtifactChunk struct {
 type UserArtifactsManager interface {
 	UserArtifactsDirResolver
 	// Creates a new directory for uploading user artifacts in the future.
-	NewDir() (*apiv1.UploadDirectory, error)
+	NewDir(dir string) (*apiv1.UploadDirectory, error)
 	// List existing directories
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
 	// Update artifact with the passed chunk.
@@ -78,11 +81,11 @@ func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) *UserArtifactsMa
 	}
 }
 
-func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
+func (m *UserArtifactsManagerImpl) NewDir(dir string) (*apiv1.UploadDirectory, error) {
 	if err := createDir(m.RootDir); err != nil {
 		return nil, err
 	}
-	dir, err := createNewUADir(m.RootDir, m.Owner)
+	dir, err := createNewUADir(m.RootDir, dir, m.Owner)
 	if err != nil {
 		return nil, err
 	}
@@ -225,13 +228,33 @@ func Unzip(dstDir string, src string, owner *user.User) error {
 	return nil
 }
 
-func createNewUADir(parent string, owner *user.User) (string, error) {
-	ctx := newCVDExecContext(exec.CommandContext, owner)
-	stdout, err := cvd.Exec(ctx, "mktemp", "--directory", "-p", parent)
+func createNewUADir(parent string, dir string, owner *user.User) (string, error) {
+	flockCtx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	lock := flock.New(filepath.Join(parent, "create_ua_dir.lock"))
+	defer lock.Unlock()
+	locked, err := lock.TryLockContext(flockCtx, time.Second)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed acquiring create_ua_dir lock at %q: %w", parent, err)
 	}
-	name := strings.TrimRight(stdout, "\n")
+	if !locked {
+		return "", fmt.Errorf("failed acquiring create_ua_dir lock at %q", parent)
+	}
+
+	ctx := newCVDExecContext(exec.CommandContext, owner)
+	var name string
+	if dir == "" {
+		stdout, err := cvd.Exec(ctx, "mktemp", "--directory", "-p", parent)
+		if err != nil {
+			return "", err
+		}
+		name = strings.TrimRight(stdout, "\n")
+	} else {
+		name = filepath.Join(parent, dir)
+		if _, err := cvd.Exec(ctx, "mkdir", "-p", name); err != nil {
+			return "", err
+		}
+	}
 	// Sets permission regardless of umask.
 	if _, err := cvd.Exec(ctx, "chmod", "u=rwx,g=rwx,o=r", name); err != nil {
 		return "", err
