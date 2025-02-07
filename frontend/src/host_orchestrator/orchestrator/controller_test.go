@@ -193,6 +193,14 @@ func (testUAM) NewDir(dir string) (*apiv1.UploadDirectory, error) {
 	return &apiv1.UploadDirectory{Name: dir}, nil
 }
 
+func (testUAM) LockDir(dir string) (*apiv1.LockUploadDirectoryResponse, error) {
+	return &apiv1.LockUploadDirectoryResponse{UploadCompleted: false}, nil
+}
+
+func (testUAM) UnlockDir(dir string) error {
+	return nil
+}
+
 func (testUAM) ListDirs() (*apiv1.ListUploadDirectoriesResponse, error) {
 	return &apiv1.ListUploadDirectoriesResponse{}, nil
 }

@@ -81,6 +81,9 @@ type HostOrchestratorService interface {
 	CreateUploadDir() (string, error)
 	CreateUploadDirWithName(uploadDir string) (string, error)
 
+	LockUploadDir(uploadDir string) (bool, error)
+	UnlockUploadDir(uploadDir string) error
+
 	// Uploads file into the given directory.
 	UploadFile(uploadDir string, filename string) error
 	UploadFileWithOptions(uploadDir string, filename string, options UploadOptions) error
@@ -466,6 +469,21 @@ func (c *HostOrchestratorServiceImpl) CreateUploadDirWithName(dir string) (strin
 		return "", err
 	}
 	return uploadDir.Name, nil
+}
+
+func (c *HostOrchestratorServiceImpl) LockUploadDir(dir string) (bool, error) {
+	res := &hoapi.LockUploadDirectoryResponse{}
+	if err := c.HTTPHelper.NewPostRequest("/userartifacts/" + dir + "/:lock", nil).JSONResDo(res); err != nil {
+		return false, err
+	}
+	return res.UploadCompleted, nil
+}
+
+func (c *HostOrchestratorServiceImpl) UnlockUploadDir(dir string) error {
+	if _, err := c.HTTPHelper.NewPostRequest("/userartifacts/" + dir + "/:unlock", nil).Do(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *HostOrchestratorServiceImpl) UploadFile(uploadDir string, filename string) error {
