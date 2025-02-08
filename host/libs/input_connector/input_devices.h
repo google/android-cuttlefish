@@ -49,8 +49,8 @@ class InputDevice {
 
 class TouchDevice : public InputDevice {
  public:
-  TouchDevice(std::unique_ptr<InputConnection> conn, InputEventType event_type)
-      : InputDevice(std::move(conn), event_type) {}
+  TouchDevice(std::unique_ptr<InputConnection> conn)
+      : InputDevice(std::move(conn), InputEventType::Virtio) {}
 
   Result<void> SendTouchEvent(int x, int y, bool down);
 

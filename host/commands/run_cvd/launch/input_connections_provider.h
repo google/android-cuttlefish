@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "common/libs/fs/shared_fd.h"
 #include "host/libs/config/feature.h"
 
@@ -31,6 +33,8 @@ class InputConnectionsProvider : public virtual SetupFeature {
   virtual SharedFD MouseConnection() const = 0;
   virtual SharedFD KeyboardConnection() const = 0;
   virtual SharedFD SwitchesConnection() const = 0;
+  virtual std::vector<SharedFD> TouchscreenConnections() const = 0;
+  virtual std::vector<SharedFD> TouchpadConnections() const = 0;
 };
 
 }  // namespace cuttlefish

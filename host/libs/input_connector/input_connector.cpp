@@ -165,31 +165,29 @@ std::unique_ptr<InputConnector::EventSink> InputConnectorImpl::CreateSink() {
       new EventSinkImpl(devices_, sinks_count_));
 }
 
-InputConnectorBuilder::InputConnectorBuilder(InputEventType type)
-    : connector_(new InputConnectorImpl()), event_type_(type) {}
+InputConnectorBuilder::InputConnectorBuilder()
+    : connector_(new InputConnectorImpl()) {}
 
 InputConnectorBuilder::~InputConnectorBuilder() = default;
 
 void InputConnectorBuilder::WithMultitouchDevice(
-    const std::string& device_label, SharedFD server) {
+    const std::string& device_label, SharedFD conn) {
   CHECK(connector_->devices_.multitouch_devices.find(device_label) ==
         connector_->devices_.multitouch_devices.end())
       << "Multiple touch devices with same label: " << device_label;
   connector_->devices_.multitouch_devices.emplace(
       std::piecewise_construct, std::forward_as_tuple(device_label),
-      std::forward_as_tuple(std::make_unique<ServerInputConnection>(server),
-                            event_type_));
+      std::forward_as_tuple(std::make_unique<FullDuplexFdInputConnection>(conn)));
 }
 
 void InputConnectorBuilder::WithTouchDevice(const std::string& device_label,
-                                            SharedFD server) {
+                                            SharedFD conn) {
   CHECK(connector_->devices_.touch_devices.find(device_label) ==
         connector_->devices_.touch_devices.end())
       << "Multiple touch devices with same label: " << device_label;
   connector_->devices_.touch_devices.emplace(
       std::piecewise_construct, std::forward_as_tuple(device_label),
-      std::forward_as_tuple(std::make_unique<ServerInputConnection>(server),
-                            event_type_));
+      std::forward_as_tuple(std::make_unique<FullDuplexFdInputConnection>(conn)));
 }
 
 void InputConnectorBuilder::WithKeyboard(SharedFD conn) {

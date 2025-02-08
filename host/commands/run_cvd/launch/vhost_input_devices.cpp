@@ -17,8 +17,11 @@
 
 #include <sys/socket.h>
 
+#include <regex>
+#include <utility>
 #include <vector>
 
+#include <android-base/file.h>
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
@@ -83,6 +86,24 @@ Command NewVhostUserInputCommand(const DeviceSockets& device_sockets,
   return cmd;
 }
 
+struct TemplateVars {
+  int index;
+  int width;
+  int height;
+};
+
+std::string BuildTouchSpec(const std::string& spec_template,
+                           TemplateVars vars) {
+  std::pair<std::string, int> replacements[] = {{"%INDEX%", vars.index},
+                                                {"%WIDTH%", vars.width},
+                                                {"%HEIGHT%", vars.height}};
+  std::string spec = spec_template;
+  for (const auto& [key, value] : replacements) {
+    spec = std::regex_replace(spec, std::regex(key), std::to_string(value));
+  }
+  return spec;
+}
+
 // Creates the commands for the vhost user input devices.
 class VhostInputDevices : public CommandSource,
                           public InputConnectionsProvider {
@@ -106,6 +127,47 @@ class VhostInputDevices : public CommandSource,
     commands.emplace_back(
         NewVhostUserInputCommand(switches_sockets_, DefaultSwitchesSpec()));
 
+    const bool use_multi_touch =
+        instance_.guest_os() !=
+        CuttlefishConfig::InstanceSpecific::GuestOs::ChromeOs;
+
+    std::string touchscreen_template_path =
+        use_multi_touch ? DefaultMultiTouchscreenSpecTemplate()
+                        : DefaultSingleTouchscreenSpecTemplate();
+    const std::string touchscreen_template = CF_EXPECTF(
+        ReadFileContents(touchscreen_template_path),
+        "Failed to load touchscreen template: {}", touchscreen_template_path);
+    for (int i = 0; i < instance_.display_configs().size(); ++i) {
+      const int width = instance_.display_configs()[i].width;
+      const int height = instance_.display_configs()[i].height;
+      const std::string spec = BuildTouchSpec(
+          touchscreen_template, {.index = i, .width = width, .height = height});
+      const std::string spec_path = instance_.PerInstanceInternalPath(
+          fmt::format("touchscreen_spec_{}", i));
+      CF_EXPECTF(android::base::WriteStringToFile(spec, spec_path,
+                                                  true /*follow symlinks*/),
+                 "Failed to write touchscreen spec to file: {}", spec_path);
+      commands.emplace_back(NewVhostUserInputCommand(touchscreen_sockets_[i], spec_path));
+    }
+
+    std::string touchpad_template_path =
+        use_multi_touch ? DefaultMultiTouchpadSpecTemplate()
+                        : DefaultSingleTouchpadSpecTemplate();
+    const std::string touchpad_template = CF_EXPECTF(
+        ReadFileContents(touchpad_template_path),
+        "Failed to load touchpad template: {}", touchpad_template_path);
+    for (int i = 0; i < instance_.touchpad_configs().size(); ++i) {
+      const int width = instance_.touchpad_configs()[i].width;
+      const int height = instance_.touchpad_configs()[i].height;
+      const std::string spec = BuildTouchSpec(
+          touchpad_template, {.index = i, .width = width, .height = height});
+      const std::string spec_path =
+          instance_.PerInstanceInternalPath(fmt::format("touchpad_spec_{}", i));
+      CF_EXPECTF(android::base::WriteStringToFile(spec, spec_path,
+                                                  true /*follow symlinks*/),
+                 "Failed to write touchpad spec to file: {}", spec_path);
+      commands.emplace_back(NewVhostUserInputCommand(touchpad_sockets_[i], spec_path));
+    }
     return commands;
   }
 
@@ -124,6 +186,24 @@ class VhostInputDevices : public CommandSource,
 
   SharedFD SwitchesConnection() const override {
     return switches_sockets_.streamer_end;
+  }
+
+  std::vector<SharedFD> TouchscreenConnections() const override {
+    std::vector<SharedFD> conns;
+    conns.reserve(touchscreen_sockets_.size());
+    for (const DeviceSockets& sockets : touchscreen_sockets_) {
+      conns.emplace_back(sockets.streamer_end);
+    }
+    return conns;
+  }
+
+  std::vector<SharedFD> TouchpadConnections() const override {
+    std::vector<SharedFD> conns;
+    conns.reserve(touchpad_sockets_.size());
+    for (const DeviceSockets& sockets : touchpad_sockets_) {
+      conns.emplace_back(sockets.streamer_end);
+    }
+    return conns;
   }
 
  private:
@@ -145,6 +225,19 @@ class VhostInputDevices : public CommandSource,
     switches_sockets_ =
         CF_EXPECT(NewDeviceSockets(instance_.switches_socket_path()),
                   "Failed to setup sockets for switches device");
+    touchscreen_sockets_.reserve(instance_.display_configs().size());
+    for (int i = 0; i < instance_.display_configs().size(); ++i) {
+      touchscreen_sockets_.emplace_back(
+          CF_EXPECTF(NewDeviceSockets(instance_.touch_socket_path(i)),
+                     "Failed to setup sockets for touchscreen {}", i));
+    }
+    touchpad_sockets_.reserve(instance_.touchpad_configs().size());
+    for (int i = 0; i < instance_.touchpad_configs().size(); ++i) {
+      int idx = touchscreen_sockets_.size() + i;
+      touchpad_sockets_.emplace_back(
+          CF_EXPECTF(NewDeviceSockets(instance_.touch_socket_path(idx)),
+                     "Failed to setup sockets for touchpad {}", i));
+    }
     return {};
   }
 
@@ -153,6 +246,8 @@ class VhostInputDevices : public CommandSource,
   DeviceSockets mouse_sockets_;
   DeviceSockets keyboard_sockets_;
   DeviceSockets switches_sockets_;
+  std::vector<DeviceSockets> touchscreen_sockets_;
+  std::vector<DeviceSockets> touchpad_sockets_;
 };
 
 }  // namespace

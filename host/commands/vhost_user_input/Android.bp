@@ -74,3 +74,31 @@ prebuilt_etc_host {
     filename: "switches.json",
     sub_dir: "default_input_devices",
 }
+
+prebuilt_etc_host {
+    name: "default_single_touchscreen_spec_template",
+    src: "device_specs/single_touchscreen_template.json",
+    filename: "single_touchscreen_template.json",
+    sub_dir: "default_input_devices",
+}
+
+prebuilt_etc_host {
+    name: "default_multi_touchscreen_spec_template",
+    src: "device_specs/multi_touchscreen_template.json",
+    filename: "multi_touchscreen_template.json",
+    sub_dir: "default_input_devices",
+}
+
+prebuilt_etc_host {
+    name: "default_single_touchpad_spec_template",
+    src: "device_specs/single_touchpad_template.json",
+    filename: "single_touchpad_template.json",
+    sub_dir: "default_input_devices",
+}
+
+prebuilt_etc_host {
+    name: "default_multi_touchpad_spec_template",
+    src: "device_specs/multi_touchpad_template.json",
+    filename: "multi_touchpad_template.json",
+    sub_dir: "default_input_devices",
+}

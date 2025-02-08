@@ -24,16 +24,12 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/reporting.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
 
@@ -97,18 +93,22 @@ class StreamerSockets : public virtual SetupFeature {
         input_connections_provider_(input_connections_provider) {}
 
   void AppendCommandArguments(Command& cmd) {
-    if (config_.vm_manager() == VmmMode::kQemu) {
-      cmd.AddParameter("-write_virtio_input");
-    }
-    if (!touch_servers_.empty()) {
-      bool is_chromeos = instance_.guest_os() ==
-                         CuttlefishConfig::InstanceSpecific::GuestOs::ChromeOs;
-      if (is_chromeos) {
+    const int touch_count = instance_.display_configs().size() +
+                            instance_.touchpad_configs().size();
+    if (touch_count > 0) {
+      if (instance_.guest_os() ==
+          CuttlefishConfig::InstanceSpecific::GuestOs::ChromeOs) {
         cmd.AddParameter("--multitouch=false");
       }
-      cmd.AddParameter("-touch_fds=", touch_servers_[0]);
-      for (int i = 1; i < touch_servers_.size(); ++i) {
-        cmd.AppendToLastParameter(",", touch_servers_[i]);
+      std::vector<SharedFD> touch_connections =
+          input_connections_provider_.TouchscreenConnections();
+      for (const SharedFD& touchpad_connection :
+           input_connections_provider_.TouchpadConnections()) {
+        touch_connections.push_back(touchpad_connection);
+      }
+      cmd.AddParameter("-touch_fds=", touch_connections[0]);
+      for (int i = 1; i < touch_connections.size(); ++i) {
+        cmd.AppendToLastParameter(",", touch_connections[i]);
       }
     }
     if (instance_.enable_mouse()) {
@@ -145,15 +145,6 @@ class StreamerSockets : public virtual SetupFeature {
   }
 
   Result<void> ResultSetup() override {
-    int display_cnt = instance_.display_configs().size();
-    int touchpad_cnt = instance_.touchpad_configs().size();
-    for (int i = 0; i < display_cnt + touchpad_cnt; ++i) {
-      SharedFD touch_socket =
-          CreateUnixInputServer(instance_.touch_socket_path(i));
-      CF_EXPECT(touch_socket->IsOpen(), touch_socket->StrError());
-      touch_servers_.emplace_back(std::move(touch_socket));
-    }
-
     frames_server_ = CreateUnixInputServer(instance_.frames_socket_path());
     CF_EXPECT(frames_server_->IsOpen(), frames_server_->StrError());
     // TODO(schuffelen): Make this a separate optional feature?
@@ -191,7 +182,6 @@ class StreamerSockets : public virtual SetupFeature {
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   InputConnectionsProvider& input_connections_provider_;
-  std::vector<SharedFD> touch_servers_;
   SharedFD frames_server_;
   SharedFD audio_server_;
   SharedFD confui_in_fd_;   // host -> guest

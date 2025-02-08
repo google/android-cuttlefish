@@ -413,8 +413,9 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
           },
           ","));
     }
-    gpu_displays_string =
-        "displays=[[" + android::base::Join(gpu_displays_strings, "],[") + "]],";
+    gpu_displays_string = "displays=[[" +
+                          android::base::Join(gpu_displays_strings, "],[") +
+                          "]],";
 
     crosvm_cmd->AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
@@ -593,31 +594,15 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   if (instance.enable_webrtc()) {
-    bool is_chromeos = instance.guest_os() ==
-                       CuttlefishConfig::InstanceSpecific::GuestOs::ChromeOs;
-    auto touch_type_parameter =
-        is_chromeos ? "single-touch" : "multi-touch";
-
     auto display_configs = instance.display_configs();
     CF_EXPECT(display_configs.size() >= 1);
 
-    int touch_idx = 0;
-    for (auto& display_config : display_configs) {
-      crosvm_cmd.Cmd().AddParameter(
-          "--input=", touch_type_parameter, "[path=",
-          instance.touch_socket_path(touch_idx++),
-          ",width=", display_config.width,
-          ",height=", display_config.height, "]");
-    }
-    auto touchpad_configs = instance.touchpad_configs();
-    for (int i = 0; i < touchpad_configs.size(); ++i) {
-      auto touchpad_config = touchpad_configs[i];
-      crosvm_cmd.Cmd().AddParameter(
-          "--input=", touch_type_parameter, "[path=",
-          instance.touch_socket_path(touch_idx++),
-          ",width=", touchpad_config.width,
-          ",height=", touchpad_config.height,
-          ",name=", kTouchpadDefaultPrefix, i, "]");
+    const int display_cnt = instance.display_configs().size();
+    const int touchpad_cnt = instance.touchpad_configs().size();
+    const int total_touch_cnt = display_cnt + touchpad_cnt;
+    for (int touch_idx = 0; touch_idx < total_touch_cnt; ++touch_idx) {
+      crosvm_cmd.AddVhostUser("input", instance.touch_socket_path(touch_idx),
+                              256);
     }
     if (instance.enable_mouse()) {
       crosvm_cmd.AddVhostUser("input", instance.mouse_socket_path(), 256);
@@ -633,14 +618,18 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   if (!gpu_capture_enabled) {
     // The PCI ordering of tap devices is important. Make sure any change here
     // is reflected in ethprime u-boot variable.
-    // TODO(b/218364216, b/322862402): Crosvm occupies 32 PCI devices first and only then uses PCI
-    // functions which may break order. The final solution is going to be a PCI allocation strategy
-    // that will guarantee the ordering. For now, hardcode PCI network devices to unoccupied
-    // functions.
-    const pci::Address mobile_pci = pci::Address(0, VmManager::kNetPciDeviceNum, 1);
-    const pci::Address ethernet_pci = pci::Address(0, VmManager::kNetPciDeviceNum, 2);
-    crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac(), mobile_pci);
-    crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac(), ethernet_pci);
+    // TODO(b/218364216, b/322862402): Crosvm occupies 32 PCI devices first and
+    // only then uses PCI functions which may break order. The final solution is
+    // going to be a PCI allocation strategy that will guarantee the ordering.
+    // For now, hardcode PCI network devices to unoccupied functions.
+    const pci::Address mobile_pci =
+        pci::Address(0, VmManager::kNetPciDeviceNum, 1);
+    const pci::Address ethernet_pci =
+        pci::Address(0, VmManager::kNetPciDeviceNum, 2);
+    crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac(),
+                      mobile_pci);
+    crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac(),
+                      ethernet_pci);
 
     if (!config.virtio_mac80211_hwsim() && environment.enable_wifi()) {
       crosvm_cmd.AddTap(instance.wifi_tap_name());
@@ -815,7 +804,6 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   } else {
     crosvm_cmd.AddHvcSink();
   }
-
 
   // /dev/hvc13 = sensors
   crosvm_cmd.AddHvcReadWrite(
