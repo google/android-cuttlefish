@@ -593,11 +593,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   if (instance.enable_webrtc()) {
-    bool is_chromeos =
-        instance.boot_flow() ==
-            CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs ||
-        instance.boot_flow() ==
-            CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOsDisk;
+    bool is_chromeos = instance.guest_os() ==
+                       CuttlefishConfig::InstanceSpecific::GuestOs::ChromeOs;
     auto touch_type_parameter =
         is_chromeos ? "single-touch" : "multi-touch";
 
