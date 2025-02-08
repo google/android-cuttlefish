@@ -34,23 +34,20 @@ namespace cuttlefish {
 
 class InputDevice {
  public:
-  InputDevice(std::unique_ptr<InputConnection> conn, InputEventType event_type)
-      : conn_(std::move(conn)), event_type_(event_type) {}
+  InputDevice(std::unique_ptr<InputConnection> conn) : conn_(std::move(conn)) {}
   virtual ~InputDevice() = default;
 
  protected:
-  InputConnection& conn() { return *conn_; }
-  InputEventType event_type() const { return event_type_; }
+  Result<void> WriteEvents(const EventBuffer& buffer);
 
  private:
   std::unique_ptr<InputConnection> conn_;
-  InputEventType event_type_;
 };
 
 class TouchDevice : public InputDevice {
  public:
   TouchDevice(std::unique_ptr<InputConnection> conn)
-      : InputDevice(std::move(conn), InputEventType::Virtio) {}
+      : InputDevice(std::move(conn)) {}
 
   Result<void> SendTouchEvent(int x, int y, bool down);
 
@@ -66,11 +63,6 @@ class TouchDevice : public InputDevice {
   void OnDisconnectedSource(void* source);
 
  private:
-  Result<void> WriteEvents(const EventBuffer& buffer) {
-    CF_EXPECT(conn().WriteEvents(buffer.data(), buffer.size()));
-    return {};
-  }
-
   bool HasSlot(void* source, int32_t id);
 
   int32_t GetOrAcquireSlot(void* source, int32_t id);
@@ -95,7 +87,7 @@ class TouchDevice : public InputDevice {
 class MouseDevice : public InputDevice {
  public:
   MouseDevice(std::unique_ptr<InputConnection> conn)
-      : InputDevice(std::move(conn), InputEventType::Virtio) {}
+      : InputDevice(std::move(conn)) {}
 
   Result<void> SendMoveEvent(int x, int y);
   Result<void> SendButtonEvent(int button, bool down);
@@ -105,7 +97,7 @@ class MouseDevice : public InputDevice {
 class KeyboardDevice : public InputDevice {
  public:
   KeyboardDevice(std::unique_ptr<InputConnection> conn)
-      : InputDevice(std::move(conn), InputEventType::Virtio) {}
+      : InputDevice(std::move(conn)) {}
 
   Result<void> SendEvent(uint16_t code, bool down);
 };
@@ -113,7 +105,7 @@ class KeyboardDevice : public InputDevice {
 class RotaryDevice : public InputDevice {
  public:
   RotaryDevice(std::unique_ptr<InputConnection> conn)
-      : InputDevice(std::move(conn), InputEventType::Virtio) {}
+      : InputDevice(std::move(conn)) {}
 
   Result<void> SendEvent(int pixels);
 };
@@ -121,7 +113,7 @@ class RotaryDevice : public InputDevice {
 class SwitchesDevice : public InputDevice {
  public:
   SwitchesDevice(std::unique_ptr<InputConnection> conn)
-      : InputDevice(std::move(conn), InputEventType::Virtio) {}
+      : InputDevice(std::move(conn)) {}
 
   Result<void> SendEvent(uint16_t code, bool state);
 };
