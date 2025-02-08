@@ -23,7 +23,7 @@
 namespace cuttlefish {
 
 Result<void> InputDevice::WriteEvents(const EventBuffer& buffer) {
-  CF_EXPECT(conn_->WriteEvents(buffer.data(), buffer.size()));
+  CF_EXPECT(conn_.WriteEvents(buffer.data(), buffer.size()));
   return {};
 }
 

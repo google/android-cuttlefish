@@ -20,7 +20,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <map>
-#include <memory>
 #include <mutex>
 #include <utility>
 #include <vector>
@@ -34,20 +33,20 @@ namespace cuttlefish {
 
 class InputDevice {
  public:
-  InputDevice(std::unique_ptr<InputConnection> conn) : conn_(std::move(conn)) {}
+  InputDevice(InputConnection conn) : conn_(conn) {}
   virtual ~InputDevice() = default;
 
  protected:
   Result<void> WriteEvents(const EventBuffer& buffer);
 
  private:
-  std::unique_ptr<InputConnection> conn_;
+  InputConnection conn_;
 };
 
 class TouchDevice : public InputDevice {
  public:
-  TouchDevice(std::unique_ptr<InputConnection> conn)
-      : InputDevice(std::move(conn)) {}
+  TouchDevice(InputConnection conn)
+      : InputDevice(conn) {}
 
   Result<void> SendTouchEvent(int x, int y, bool down);
 
@@ -86,8 +85,8 @@ class TouchDevice : public InputDevice {
 
 class MouseDevice : public InputDevice {
  public:
-  MouseDevice(std::unique_ptr<InputConnection> conn)
-      : InputDevice(std::move(conn)) {}
+  MouseDevice(InputConnection conn)
+      : InputDevice(conn) {}
 
   Result<void> SendMoveEvent(int x, int y);
   Result<void> SendButtonEvent(int button, bool down);
@@ -96,24 +95,24 @@ class MouseDevice : public InputDevice {
 
 class KeyboardDevice : public InputDevice {
  public:
-  KeyboardDevice(std::unique_ptr<InputConnection> conn)
-      : InputDevice(std::move(conn)) {}
+  KeyboardDevice(InputConnection conn)
+      : InputDevice(conn) {}
 
   Result<void> SendEvent(uint16_t code, bool down);
 };
 
 class RotaryDevice : public InputDevice {
  public:
-  RotaryDevice(std::unique_ptr<InputConnection> conn)
-      : InputDevice(std::move(conn)) {}
+  RotaryDevice(InputConnection conn)
+      : InputDevice(conn) {}
 
   Result<void> SendEvent(int pixels);
 };
 
 class SwitchesDevice : public InputDevice {
  public:
-  SwitchesDevice(std::unique_ptr<InputConnection> conn)
-      : InputDevice(std::move(conn)) {}
+  SwitchesDevice(InputConnection conn)
+      : InputDevice(conn) {}
 
   Result<void> SendEvent(uint16_t code, bool state);
 };

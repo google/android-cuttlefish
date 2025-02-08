@@ -24,9 +24,8 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/input_connector/event_buffer.h"
-#include "host/libs/input_connector/full_duplex_fd_input_connection.h"
+#include "host/libs/input_connector/input_connection.h"
 #include "host/libs/input_connector/input_devices.h"
-#include "host/libs/input_connector/server_input_connection.h"
 
 namespace cuttlefish {
 
@@ -177,7 +176,7 @@ void InputConnectorBuilder::WithMultitouchDevice(
       << "Multiple touch devices with same label: " << device_label;
   connector_->devices_.multitouch_devices.emplace(
       std::piecewise_construct, std::forward_as_tuple(device_label),
-      std::forward_as_tuple(std::make_unique<FullDuplexFdInputConnection>(conn)));
+      std::forward_as_tuple(InputConnection(conn)));
 }
 
 void InputConnectorBuilder::WithTouchDevice(const std::string& device_label,
@@ -187,31 +186,27 @@ void InputConnectorBuilder::WithTouchDevice(const std::string& device_label,
       << "Multiple touch devices with same label: " << device_label;
   connector_->devices_.touch_devices.emplace(
       std::piecewise_construct, std::forward_as_tuple(device_label),
-      std::forward_as_tuple(std::make_unique<FullDuplexFdInputConnection>(conn)));
+      std::forward_as_tuple(InputConnection(conn)));
 }
 
 void InputConnectorBuilder::WithKeyboard(SharedFD conn) {
   CHECK(!connector_->devices_.keyboard) << "Keyboard already specified";
-  connector_->devices_.keyboard.emplace(
-      std::make_unique<FullDuplexFdInputConnection>(conn));
+  connector_->devices_.keyboard.emplace(InputConnection(conn));
 }
 
 void InputConnectorBuilder::WithSwitches(SharedFD conn) {
   CHECK(!connector_->devices_.switches) << "Switches already specified";
-  connector_->devices_.switches.emplace(
-      std::make_unique<FullDuplexFdInputConnection>(conn));
+  connector_->devices_.switches.emplace(InputConnection(conn));
 }
 
 void InputConnectorBuilder::WithRotary(SharedFD conn) {
   CHECK(!connector_->devices_.rotary) << "Rotary already specified";
-  connector_->devices_.rotary.emplace(
-      std::make_unique<FullDuplexFdInputConnection>(conn));
+  connector_->devices_.rotary.emplace(InputConnection(conn));
 }
 
 void InputConnectorBuilder::WithMouse(SharedFD conn) {
   CHECK(!connector_->devices_.mouse) << "Mouse already specified";
-  connector_->devices_.mouse.emplace(
-      std::make_unique<FullDuplexFdInputConnection>(conn));
+  connector_->devices_.mouse.emplace(InputConnection(conn));
 }
 
 std::unique_ptr<InputConnector> InputConnectorBuilder::Build() && {
