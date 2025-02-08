@@ -59,5 +59,39 @@ TEST(Base64Test, DecodeNonMult3) {
   ASSERT_EQ(out, expected);
 }
 
+TEST(Base64Test, EncodeOneZero) {
+  std::vector<uint8_t> in = {0};
+  std::string string_encoding;
 
+  ASSERT_TRUE(EncodeBase64(in.data(), in.size(), &string_encoding));
+
+  std::vector<uint8_t> out;
+  ASSERT_TRUE(DecodeBase64(string_encoding, &out));
+
+  ASSERT_EQ(in, out);
+}
+
+TEST(Base64Test, EncodeTwoZeroes) {
+  std::vector<uint8_t> in = {0, 0};
+  std::string string_encoding;
+
+  ASSERT_TRUE(EncodeBase64(in.data(), in.size(), &string_encoding));
+
+  std::vector<uint8_t> out;
+  ASSERT_TRUE(DecodeBase64(string_encoding, &out));
+
+  ASSERT_EQ(in, out);
+}
+
+TEST(Base64Test, EncodeThreeZeroes) {
+  std::vector<uint8_t> in = {0, 0, 0};
+  std::string string_encoding;
+
+  ASSERT_TRUE(EncodeBase64(in.data(), in.size(), &string_encoding));
+
+  std::vector<uint8_t> out;
+  ASSERT_TRUE(DecodeBase64(string_encoding, &out));
+
+  ASSERT_EQ(in, out);
+}
 }
