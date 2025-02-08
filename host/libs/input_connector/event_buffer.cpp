@@ -27,10 +27,9 @@ namespace cuttlefish {
 
 EventBuffer::EventBuffer(size_t num_events) { buffer_.reserve(num_events); }
 
-void EventBuffer::AddEvent(uint16_t type, uint16_t code,
-                           int32_t value) {
-  buffer_.push_back({.type = type, .code = code, .value = value});
+void EventBuffer::AddEvent(uint16_t type, uint16_t code, int32_t value) {
+  buffer_.push_back(
+      {.type = Le16(type), .code = Le16(code), .value = Le32(value)});
 }
-
 
 }  // namespace cuttlefish

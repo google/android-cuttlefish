@@ -19,8 +19,9 @@
 #include <cstdint>
 #include <cstdlib>
 
-#include <memory>
 #include <vector>
+
+#include "common/libs/utils/cf_endian.h"
 
 namespace cuttlefish {
 
@@ -30,19 +31,15 @@ class EventBuffer {
 
   void AddEvent(uint16_t type, uint16_t code, int32_t value);
 
-  size_t size() const {
-    return buffer_.size() * sizeof(virtio_input_event);
-  }
+  size_t size() const { return buffer_.size() * sizeof(virtio_input_event); }
 
-  const void* data() const {
-    return buffer_.data();
-  }
+  const void* data() const { return buffer_.data(); }
 
  private:
   struct virtio_input_event {
-    uint16_t type;
-    uint16_t code;
-    int32_t value;
+    Le16 type;
+    Le16 code;
+    Le32 value;
   };
 
   std::vector<virtio_input_event> buffer_;
