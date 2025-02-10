@@ -18,56 +18,20 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <vector>
 
-#include <openssl/evp.h>
+#include <openssl/base64.h>
 
 namespace cuttlefish {
 
-namespace {
-
-// EVP_EncodedLength is boringssl specific so it can't be used outside of
-// android.
-std::optional<size_t> EncodedLength(size_t len) {
-  if (len + 2 < len) {
-    return std::nullopt;
-  }
-  len += 2;
-  len /= 3;
-
-  if (((len << 2) >> 2) != len) {
-    return std::nullopt;
-  }
-  len <<= 2;
-
-  if (len + 1 < len) {
-    return std::nullopt;
-  }
-  len++;
-
-  return {len};
-}
-
-// EVP_DecodedLength is boringssl specific so it can't be used outside of
-// android.
-std::optional<size_t> DecodedLength(size_t len) {
-  if (len % 4 != 0) {
-    return std::nullopt;
-  }
-
-  return {(len / 4) * 3};
-}
-
-}  // namespace
-
 bool EncodeBase64(const void *data, std::size_t size, std::string *out) {
-  auto len_res = EncodedLength(size);
-  if (!len_res) {
+  std::size_t max_length = 0;
+  if (EVP_EncodedLength(&max_length, size) == 0) {
     return false;
   }
-  out->resize(*len_res);
+
+  out->resize(max_length);
   auto enc_res =
       EVP_EncodeBlock(reinterpret_cast<std::uint8_t *>(out->data()),
                       reinterpret_cast<const std::uint8_t *>(data), size);
@@ -79,24 +43,15 @@ bool EncodeBase64(const void *data, std::size_t size, std::string *out) {
 }
 
 bool DecodeBase64(const std::string &data, std::vector<std::uint8_t> *buffer) {
-  auto len_res = DecodedLength(data.size());
-  if (!len_res) {
+  buffer->resize(data.size());
+  std::size_t actual_len = 0;
+  int success = EVP_DecodeBase64(buffer->data(), &actual_len, buffer->size(),
+                                 reinterpret_cast<const uint8_t *>(data.data()),
+                                 data.size());
+  if (success != 1) {
     return false;
   }
-  auto out_len = *len_res;
-  buffer->resize(out_len);
-  auto actual_len = EVP_DecodeBlock(buffer->data(),
-                                reinterpret_cast<const uint8_t *>(data.data()),
-                                data.size());
-  if (actual_len < 0) {
-    return false;
-  }
-
-  // DecodeBlock leaves null characters at the end of the buffer when the
-  // decoded message is not a multiple of 3.
-  while (!buffer->empty() && buffer->back() == '\0') {
-    buffer->pop_back();
-  }
+  buffer->resize(actual_len);
 
   return true;
 }
