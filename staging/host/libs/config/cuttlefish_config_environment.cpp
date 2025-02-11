@@ -150,4 +150,13 @@ int CuttlefishConfig::EnvironmentSpecific::wmediumd_mac_prefix() const {
   return (*Dictionary())[kWmediumdMacPrefix].asInt();
 }
 
+static constexpr char kGroupUuid[] = "group_uuid";
+void CuttlefishConfig::MutableEnvironmentSpecific::set_group_uuid(
+    int group_uuid) {
+  (*Dictionary())[kGroupUuid] = group_uuid;
+}
+int CuttlefishConfig::EnvironmentSpecific::group_uuid() const {
+  return (*Dictionary())[kGroupUuid].asInt();
+}
+
 }  // namespace cuttlefish
