@@ -408,6 +408,16 @@ SharedFD SharedFD::Event(int initval, int flags) {
   int fd = eventfd(initval, flags);
   return std::shared_ptr<FileInstance>(new FileInstance(fd, errno));
 }
+
+#ifdef CUTTLEFISH_HOST
+SharedFD SharedFD::ShmOpen(const std::string& name, int oflag, int mode) {
+  errno = 0;
+  int fd = shm_open(name.c_str(), oflag, mode);
+  int error_num = errno;
+  return std::shared_ptr<FileInstance>(new FileInstance(fd, error_num));
+}
+#endif
+
 #endif
 
 SharedFD SharedFD::MemfdCreate(const std::string& name, unsigned int flags) {
