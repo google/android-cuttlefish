@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,9 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+#include <gtest/gtest.h>
 
-package cuttlefish;
-
-message InstanceDisplay {
-  int32 width = 1;
-  int32 height = 2;
-  int32 dpi = 3;
-  int32 refresh_rate_hertz = 4;
-  repeated DisplayOverlay overlays = 5;
-}
-message InstanceDisplays {
-  repeated InstanceDisplay displays = 1;
-}
-message InstancesDisplays {
-  repeated InstanceDisplays instances = 1;
-}
-message DisplayOverlay {
-  int32 vm_index = 1;
-  int32 display_index = 2;
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
