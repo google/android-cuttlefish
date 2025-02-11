@@ -45,6 +45,16 @@ $(call inherit-product, packages/services/Car/car_product/build/car_product.mk)
 #
 $(call inherit-product, device/google/cuttlefish/shared/auto/device_vendor.mk)
 
+
+LOCAL_USE_VENDOR_AUDIO_CONFIGURATION?= false
+ifeq ($(LOCAL_USE_VENDOR_AUDIO_CONFIGURATION),false)
+# Auto CF target is configured to use Configurable Audio Policy Engine if vendor audio configuration
+# flag is not set.
+# However, to prevent fallback on common cuttlefish audio configuration files, make use
+# of the vendor flag even for default cuttlefish auto config.
+LOCAL_USE_VENDOR_AUDIO_CONFIGURATION := true
+$(call inherit-product, device/google/cuttlefish/shared/auto/audio_policy_engine.mk)
+endif
 #
 # Special settings for the target
 #

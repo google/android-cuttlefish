@@ -23,6 +23,17 @@
 -->
 <resources>
     <bool name="audioUseDynamicRouting">true</bool>
+    <!-- use Core Routing, when enabled, leads to depend on audio policy to perform the routing.
+         Hence, it depends on vendor configuration. Any missalignmnet between RRO (product) and
+         vendor configuration may lead to unexpected behavior.
+         Use car_audio_configuration.xml tag instead is highly recommended. -->
+    <bool name="audioUseCoreVolume">true</bool>
+    <!-- use Core Volume, when enabled, leads to depend on audio policy to managge the volumes.
+         Hence, it depends on vendor configuration. Any missalignmnet between RRO (product) and
+         vendor configuration may lead to unexpected behavior.
+         Use car_audio_configuration.xml tag instead is highly recommended. -->
+    <bool name="audioUseCoreRouting">true</bool>
+    <bool name="audioUseCarVolumeGroupEvent">true</bool>
     <!--  Configuration to enable muting of individual volume groups. If this is set to
           false, muting of individual volume groups is disabled, instead muting will toggle master
           mute. If this is set to true, car volume group muting is enabled and each individual

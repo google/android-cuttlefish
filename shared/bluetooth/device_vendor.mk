@@ -27,8 +27,10 @@ LOCAL_BT_PROPERTIES ?= \
 PRODUCT_VENDOR_PROPERTIES += \
     ${LOCAL_BT_PROPERTIES} \
 
+ifneq ($(LOCAL_USE_VENDOR_AUDIO_CONFIGURATION),true)
 PRODUCT_COPY_FILES += \
-    frameworks/av/services/audiopolicy/config/bluetooth_audio_policy_configuration_7_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/bluetooth_audio_policy_configuration_7_0.xml \
+    frameworks/av/services/audiopolicy/config/bluetooth_audio_policy_configuration_7_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/bluetooth_audio_policy_configuration_7_0.xml
+endif
 
 PRODUCT_PACKAGES += com.google.cf.bt
 

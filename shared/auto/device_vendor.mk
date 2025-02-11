@@ -67,16 +67,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/auto/preinstalled-packages-product-car-cuttlefish.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/sysconfig/preinstalled-packages-product-car-cuttlefish.xml
 
-ifndef LOCAL_AUDIO_PRODUCT_COPY_FILES
-LOCAL_AUDIO_PRODUCT_COPY_FILES := \
-    device/google/cuttlefish/shared/auto/car_audio_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/car_audio_configuration.xml \
-    device/google/cuttlefish/shared/auto/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
-    frameworks/av/services/audiopolicy/config/a2dp_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/a2dp_audio_policy_configuration.xml \
-    frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml
-LOCAL_AUDIO_PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/auto/audio_effects_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects_config.xml
-endif
-
 # Install automotive specific battery health HAL
 PRODUCT_PACKAGES += \
     android.hardware.health-service.automotive \
@@ -117,6 +107,7 @@ PRODUCT_PACKAGES += android.hardware.broadcastradio-service.default
 PRODUCT_PACKAGES += android.hardware.automotive.ivn@V1-default-service
 
 # AudioControl HAL
+# OEM may override the default service of the virtual device.
 ifeq ($(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE),)
     LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE := android.hardware.automotive.audiocontrol-service.example
     BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/audio
