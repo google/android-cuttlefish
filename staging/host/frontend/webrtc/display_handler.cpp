@@ -23,16 +23,13 @@
 #include <libyuv.h>
 
 #include "host/frontend/webrtc/libdevice/streamer.h"
-#include "host/libs/screen_connector/composition_manager.h"
 
 namespace cuttlefish {
 
-DisplayHandler::DisplayHandler(
-    webrtc_streaming::Streamer& streamer, ScreenshotHandler& screenshot_handler,
-    ScreenConnector& screen_connector,
-    std::optional<std::unique_ptr<CompositionManager>> composition_manager)
-    : composition_manager_(std::move(composition_manager)),
-      streamer_(streamer),
+DisplayHandler::DisplayHandler(webrtc_streaming::Streamer& streamer,
+                               ScreenshotHandler& screenshot_handler,
+                               ScreenConnector& screen_connector)
+    : streamer_(streamer),
       screenshot_handler_(screenshot_handler),
       screen_connector_(screen_connector),
       frame_repeater_([this]() { RepeatFramesPeriodically(); }) {
@@ -58,9 +55,6 @@ DisplayHandler::DisplayHandler(
 
             std::lock_guard<std::mutex> lock(send_mutex_);
             display_sinks_[display_number] = display;
-            if (composition_manager_.has_value()) {
-              composition_manager_.value()->OnDisplayCreated(e);
-            }
           } else if constexpr (std::is_same_v<DisplayDestroyedEvent, T>) {
             LOG(VERBOSE) << "Display:" << e.display_number << " destroyed.";
 
@@ -91,21 +85,14 @@ DisplayHandler::GenerateProcessedFrameCallback
 DisplayHandler::GetScreenConnectorCallback() {
   // only to tell the producer how to create a ProcessedFrame to cache into the
   // queue
-  auto& composition_manager = composition_manager_;
   DisplayHandler::GenerateProcessedFrameCallback callback =
-      [&composition_manager](
-          std::uint32_t display_number, std::uint32_t frame_width,
-          std::uint32_t frame_height, std::uint32_t frame_fourcc_format,
-          std::uint32_t frame_stride_bytes, std::uint8_t* frame_pixels,
-          WebRtcScProcessedFrame& processed_frame) {
+      [](std::uint32_t display_number, std::uint32_t frame_width,
+         std::uint32_t frame_height, std::uint32_t frame_fourcc_format,
+         std::uint32_t frame_stride_bytes, std::uint8_t* frame_pixels,
+         WebRtcScProcessedFrame& processed_frame) {
         processed_frame.display_number_ = display_number;
         processed_frame.buf_ =
             std::make_unique<CvdVideoFrameBuffer>(frame_width, frame_height);
-        if (composition_manager.has_value()) {
-          composition_manager.value()->OnFrame(
-              display_number, frame_width, frame_height, frame_fourcc_format,
-              frame_stride_bytes, frame_pixels);
-        }
         if (frame_fourcc_format == DRM_FORMAT_ARGB8888 ||
             frame_fourcc_format == DRM_FORMAT_XRGB8888) {
           libyuv::ARGBToI420(
@@ -250,11 +237,6 @@ void DisplayHandler::RepeatFramesPeriodically() {
       for (auto& [display_number, buffer_info] : display_last_buffers_) {
         if (time_stamp >
             buffer_info->last_sent_time_stamp + kRepeatingInterval) {
-          if (composition_manager_.has_value()) {
-            composition_manager_.value()->ComposeFrame(
-                display_number, std::static_pointer_cast<CvdVideoFrameBuffer>(
-                                    buffer_info->buffer));
-          }
           buffers[display_number] = buffer_info;
         }
       }
