@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Copyright (C) 2025 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<!-- Default Volume Tables included by Audio Policy Configuration file -->
+<!-- Full Default Volume table for all device category -->
+<volumes>
+    <reference name="DEFAULT_VOLUME_STEPS_CURVE">
+    <!-- Default Volume Steps Curve -->
+        <point>0,-8400</point>
+        <point>1,-7827</point>
+        <point>2,-7225</point>
+        <point>3,-6429</point>
+        <point>4,-5827</point>
+        <point>5,-5366</point>
+        <point>6,-5103</point>
+        <point>7,-4844</point>
+        <point>8,-4645</point>
+        <point>9,-4446</point>
+        <point>10,-4242</point>
+        <point>11,-4088</point>
+        <point>12,-3871</point>
+        <point>13,-3683</point>
+        <point>14,-3592</point>
+        <point>15,-3397</point>
+        <point>16,-3297</point>
+        <point>17,-3195</point>
+        <point>18,-3100</point>
+        <point>19,-2902</point>
+        <point>20,-2800</point>
+        <point>21,-2707</point>
+        <point>22,-2505</point>
+        <point>23,-2405</point>
+        <point>24,-2307</point>
+        <point>25,-2106</point>
+        <point>26,-1991</point>
+        <point>27,-1892</point>
+        <point>28,-1704</point>
+        <point>29,-1598</point>
+        <point>30,-1505</point>
+        <point>31,-1396</point>
+        <point>32,-1203</point>
+        <point>33,-1096</point>
+        <point>34,-1010</point>
+        <point>35,-811</point>
+        <point>36,-702</point>
+        <point>37,-605</point>
+        <point>38,-405</point>
+        <point>39,-301</point>
+        <point>40,-211</point>
+    </reference>
+    <reference name="NOT_MUTABLE_VOLUME_STEPS_CURVE_5TO40">
+    <!-- Base on DEFAULT_VOLUME_STEPS_CURVE : Volume 36 Steps Curve -->
+        <point>0,-5366</point>
+        <point>1,-5103</point>
+        <point>2,-4844</point>
+        <point>3,-4645</point>
+        <point>4,-4446</point>
+        <point>5,-4242</point>
+        <point>6,-4088</point>
+        <point>7,-3871</point>
+        <point>8,-3683</point>
+        <point>9,-3592</point>
+        <point>10,-3397</point>
+        <point>11,-3297</point>
+        <point>12,-3195</point>
+        <point>13,-3100</point>
+        <point>14,-2902</point>
+        <point>15,-2800</point>
+        <point>16,-2707</point>
+        <point>17,-2505</point>
+        <point>18,-2405</point>
+        <point>19,-2307</point>
+        <point>20,-2106</point>
+        <point>21,-1991</point>
+        <point>22,-1892</point>
+        <point>23,-1704</point>
+        <point>24,-1598</point>
+        <point>25,-1505</point>
+        <point>26,-1396</point>
+        <point>27,-1203</point>
+        <point>28,-1096</point>
+        <point>29,-1010</point>
+        <point>30,-811</point>
+        <point>31,-702</point>
+        <point>32,-605</point>
+        <point>33,-405</point>
+        <point>34,-301</point>
+        <point>35,-211</point>
+    </reference>
+</volumes>

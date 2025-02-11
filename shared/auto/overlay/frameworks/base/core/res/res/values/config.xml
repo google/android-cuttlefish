@@ -28,8 +28,10 @@
     <bool name="config_guestUserEphemeral" translatable="false">true</bool>
     <!--  Maximum number of users allowed on the device. -->
     <integer name="config_multiuserMaximumUsers" translatable="false">4</integer>
-    <!-- Car uses hardware amplifier for volume. -->
-    <bool name="config_useFixedVolume">true</bool>
+    <!-- When car uses core volume, even if using hardware amplifier for volume, it relies on
+         AudioService / AudioPolicyManager to manage cache and volume application based
+         on activities on the outputs. -->
+    <bool name="config_useFixedVolume">false</bool>
     <!--
       Handle volume keys directly in CarAudioService without passing them to the foreground app
     -->
@@ -44,4 +46,23 @@
     <integer-array translatable="false" name="config_localPrivateDisplayPorts">
         <item>1</item> <!-- ClusterDisplay -->
     </integer-array>
+
+    <!-- Disable hard coded aliased stream table in AudioService.
+         When defining volume groups, we do expect group to be independent in term of volume
+         management, whatever regarding index in UI / Volume seekbars and volume curves. -->
+    <bool name="config_handleVolumeAliasesUsingVolumeGroups">true</bool>
+
+    <bool name="config_useAssistantVolume">true</bool>
+
+    <!-- The number of volume steps for the notification stream -->
+    <integer name="config_audio_notif_vol_steps">40</integer>
+
+    <!-- The default volume for the notification stream -->
+    <integer name="config_audio_notif_vol_default">5</integer>
+
+    <!-- The number of volume steps for the ring stream -->
+    <integer name="config_audio_ring_vol_steps">40</integer>
+
+    <!-- The default volume for the ring stream -->
+    <integer name="config_audio_ring_vol_default">5</integer>
 </resources>

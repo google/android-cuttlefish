@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Copyright (C) 2025 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<ProductStrategies>
+    <ProductStrategy name="oem_traffic_anouncement" id="1000">
+        <AttributesGroup volumeGroup="navvol">
+            <Attributes>
+                <Usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE"/>
+                <Bundle key="VX_OEM" value="TA"/>
+            </Attributes>
+            <Attributes>
+                <Usage value="AUDIO_USAGE_ANNOUNCEMENT"/>
+            </Attributes>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="oem_ipa" id="1001">
+        <AttributesGroup volumeGroup="navvol">
+            <Attributes>
+                <Usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE"/>
+                <Bundle key="VX_OEM" value="IPA"/>
+            </Attributes>
+            <Attributes>
+                <Usage value="AUDIO_USAGE_SAFETY"/>
+            </Attributes>
+            <Attributes>
+                <Usage value="AUDIO_USAGE_VEHICLE_STATUS"/>
+            </Attributes>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="oem_xcall" id="1002">
+        <AttributesGroup volumeGroup="telringvol">
+            <Attributes>
+                <Usage value="AUDIO_USAGE_VOICE_COMMUNICATION"/>
+                <Bundle key="VX_OEM" value="XCALL"/>
+            </Attributes>
+            <Attributes> <Usage value="AUDIO_USAGE_EMERGENCY"/> </Attributes>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="third_party_alternate" id="1003">
+        <AttributesGroup volumeGroup="navvol">
+            <Usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE"/>
+            <Bundle key="VX_OEM" value="ALTERNATE"/>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="third_party_auxiliary" id="1004">
+        <AttributesGroup volumeGroup="sdsvol">
+            <Attributes>
+                <Usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE"/>
+                <Bundle key="VX_OEM" value="AUXILIARY"/>
+            </Attributes>
+            <Attributes>
+                <Usage value="AUDIO_USAGE_ASSISTANT"/>
+                <Bundle key="VX_OEM" value="AUXILIARY"/>
+            </Attributes>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="third_party_alert" id="1005">
+        <AttributesGroup volumeGroup="telringvol">
+            <Attributes>
+                <Usage value="AUDIO_USAGE_ALARM"/>
+                <Bundle key="VX_OEM" value="ALERT"/>
+            </Attributes>
+            <Attributes>
+                <Usage value="AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE"/>
+                <Bundle key="VX_OEM" value="ALERT"/>
+            </Attributes>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="voice_command" id="1006">
+        <AttributesGroup streamType="AUDIO_STREAM_ASSISTANT" volumeGroup="sdsvol">
+            <Attributes> <Usage value="AUDIO_USAGE_ASSISTANT"/> </Attributes>
+            <Attributes> <Usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY"/> </Attributes>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="voice_call" id="1007">
+        <AttributesGroup streamType="AUDIO_STREAM_VOICE_CALL" volumeGroup="telringvol">
+            <Attributes> <Usage value="AUDIO_USAGE_VOICE_COMMUNICATION"/> </Attributes>
+            <Attributes> <Usage value="AUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING"/> </Attributes>
+            <Attributes> <Usage value="AUDIO_USAGE_CALL_ASSISTANT"/> </Attributes>
+        </AttributesGroup>
+        <AttributesGroup streamType="AUDIO_STREAM_BLUETOOTH_SCO" volumeGroup="telringvol">
+            <Attributes> <Flags value="AUDIO_FLAG_SCO"/> </Attributes>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="music" id="1008">
+        <AttributesGroup streamType="AUDIO_STREAM_MUSIC" volumeGroup="entertainment">
+            <Attributes> <Usage value="AUDIO_USAGE_MEDIA"/> </Attributes>
+            <Attributes> <Usage value="AUDIO_USAGE_GAME"/> </Attributes>
+            <!-- Default product strategy has empty attributes -->
+            <Attributes></Attributes>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="nav_guidance" id="1009">
+        <AttributesGroup volumeGroup="navvol">
+            <Usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE"/>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="alarm" id="1010">
+        <AttributesGroup streamType="AUDIO_STREAM_ALARM" volumeGroup="telringvol">
+            <Usage value="AUDIO_USAGE_ALARM"/>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="ring" id="1011">
+        <AttributesGroup streamType="AUDIO_STREAM_RING" volumeGroup="telringvol">
+            <Usage value="AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE"/>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="notification" id="1012">
+        <AttributesGroup streamType="AUDIO_STREAM_NOTIFICATION" volumeGroup="system">
+            <Attributes> <Usage value="AUDIO_USAGE_NOTIFICATION"/> </Attributes>
+            <Attributes> <Usage value="AUDIO_USAGE_NOTIFICATION_EVENT"/> </Attributes>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="system" id="1013">
+        <AttributesGroup streamType="AUDIO_STREAM_SYSTEM" volumeGroup="system">
+            <Usage value="AUDIO_USAGE_ASSISTANCE_SONIFICATION"/>
+        </AttributesGroup>
+    </ProductStrategy>
+
+    <ProductStrategy name="tts" id="1014">
+        <!-- TTS stream MUST BE MANAGED OUTSIDE default product strategy if NO DEDICATED OUTPUT
+             for TTS, otherwise when beacon happens, default strategy is ... muted.
+             If it is media, it is annoying... -->
+        <AttributesGroup streamType="AUDIO_STREAM_TTS" volumeGroup="tts">
+            <Attributes> <Flags value="AUDIO_FLAG_BEACON"/> </Attributes>
+        </AttributesGroup>
+        <AttributesGroup streamType="AUDIO_STREAM_ACCESSIBILITY" volumeGroup="tts">
+            <Attributes> <Usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY"/> </Attributes>
+        </AttributesGroup>
+    </ProductStrategy>
+
+</ProductStrategies>

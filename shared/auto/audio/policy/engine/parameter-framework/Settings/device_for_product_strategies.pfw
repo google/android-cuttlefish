@@ -1,0 +1,276 @@
+supDomain: DeviceForProductStrategies
+	supDomain: OemTrafficAnouncement
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				/Policy/policy/product_strategies/vx_1000/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				component: /Policy/policy/product_strategies/vx_1000/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				/Policy/policy/product_strategies/vx_1000/device_address =
+				component: /Policy/policy/product_strategies/vx_1000/selected_output_devices/mask
+					bus = 0
+
+	supDomain: OemIpa
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1001/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1001/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1001/selected_output_devices/mask
+					bus = 0
+
+	supDomain: OemXCall
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1002/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1002/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1002/selected_output_devices/mask
+					bus = 0
+
+	supDomain: 3rdPartyAlternate
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1003/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1003/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1003/selected_output_devices/mask
+					bus = 0
+
+	supDomain: 3rdPartyAuxiliary
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1004/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1004/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1004/selected_output_devices/mask
+					bus = 0
+
+	supDomain: 3rdPartyAlert
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1005/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1005/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1005/selected_output_devices/mask
+					bus = 0
+
+	supDomain: VoiceCommand
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1006/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1006/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1006/selected_output_devices/mask
+					bus = 0
+
+
+	supDomain: Music
+		domain: SelectedDevice
+			conf: RemoteSubmix
+				AvailableOutputDevices Includes REMOTE_SUBMIX
+				AvailableOutputDevicesAddresses Includes 0
+
+				component: /Policy/policy/product_strategies/vx_1008/selected_output_devices/mask
+					bus = 0
+					stub = 0
+					remote_submix = 1
+				/Policy/policy/product_strategies/vx_1008/device_address =
+
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1008/selected_output_devices/mask
+					bus = 1
+					stub = 0
+					remote_submix = 0
+				/Policy/policy/product_strategies/vx_1008/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1008/selected_output_devices/mask
+					bus = 0
+					stub = 1
+					remote_submix = 0
+				/Policy/policy/product_strategies/vx_1008/device_address =
+
+	supDomain: NavGuidance
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1009/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1009/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1009/selected_output_devices/mask
+					bus = 0
+
+
+	supDomain: VoiceCall
+		domain: SelectedDevice
+			conf: BtSco
+				AvailableOutputDevices Includes BLUETOOTH_SCO
+
+				/Policy/policy/product_strategies/vx_1007/device_address =
+				component: /Policy/policy/product_strategies/vx_1007/selected_output_devices/mask
+					bus = 0
+					bluetooth_sco = 1
+
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				/Policy/policy/product_strategies/vx_1007/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				component: /Policy/policy/product_strategies/vx_1007/selected_output_devices/mask
+					bus = 1
+					bluetooth_sco = 0
+
+			conf: Default
+				/Policy/policy/product_strategies/vx_1007/device_address =
+				component: /Policy/policy/product_strategies/vx_1007/selected_output_devices/mask
+					bus = 0
+					bluetooth_sco = 0
+	supDomain: Alarm
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1010/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1010/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1010/selected_output_devices/mask
+					bus = 0
+
+
+	supDomain: Ring
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1011/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1011/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1011/selected_output_devices/mask
+					bus = 0
+
+
+	supDomain: Notification
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1012/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1012/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1012/selected_output_devices/mask
+					bus = 0
+
+	supDomain: System
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1013/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1013/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1013/selected_output_devices/mask
+					bus = 0
+
+	supDomain: Tts
+		domain: Calibration
+			conf: calibration
+				/Policy/policy/product_strategies/vx_1014/device_address = BUS00_MEDIA_CARD_0_DEV_0
+
+		domain: SelectedDevice
+			conf: Bus
+				AvailableOutputDevices Includes BUS
+				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+
+				component: /Policy/policy/product_strategies/vx_1014/selected_output_devices/mask
+					bus = 1
+
+			conf: Default
+				component: /Policy/policy/product_strategies/vx_1014/selected_output_devices/mask
+					bus = 0
