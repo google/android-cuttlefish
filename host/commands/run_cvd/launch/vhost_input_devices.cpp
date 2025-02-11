@@ -33,6 +33,8 @@
 namespace cuttlefish {
 namespace {
 
+using Subprocess::StdIOChannel::kStdErr;
+
 // Holds all sockets related to a single vhost user input device process.
 struct DeviceSockets {
   // Device end of the connection between device and streamer.
@@ -108,24 +110,48 @@ std::string BuildTouchSpec(const std::string& spec_template,
 class VhostInputDevices : public CommandSource,
                           public InputConnectionsProvider {
  public:
-  INJECT(VhostInputDevices(const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
+  INJECT(VhostInputDevices(const CuttlefishConfig::InstanceSpecific& instance,
+                           LogTeeCreator& log_tee))
+      : instance_(instance), log_tee_(log_tee) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
     std::vector<MonitorCommand> commands;
-    commands.emplace_back(
-        NewVhostUserInputCommand(rotary_sockets_, DefaultRotaryDeviceSpec()));
+    Command rotary_cmd =
+        NewVhostUserInputCommand(rotary_sockets_, DefaultRotaryDeviceSpec());
+    Command rotary_log_tee = CF_EXPECT(
+        log_tee_.CreateLogTee(rotary_cmd, "vhost_user_rotary", kStdErr),
+        "Failed to create log tee command for rotary device");
+    commands.emplace_back(std::move(rotary_cmd));
+    commands.emplace_back(std::move(rotary_log_tee));
+
     if (instance_.enable_mouse()) {
-      commands.emplace_back(
-          NewVhostUserInputCommand(mouse_sockets_, DefaultMouseSpec()));
+      Command mouse_cmd =
+          NewVhostUserInputCommand(mouse_sockets_, DefaultMouseSpec());
+      Command mouse_log_tee = CF_EXPECT(
+          log_tee_.CreateLogTee(mouse_cmd, "vhost_user_mouse", kStdErr),
+          "Failed to create log tee command for mouse device");
+      commands.emplace_back(std::move(mouse_cmd));
+      commands.emplace_back(std::move(mouse_log_tee));
     }
+
     std::string keyboard_spec =
         instance_.custom_keyboard_config().value_or(DefaultKeyboardSpec());
-    commands.emplace_back(
-        NewVhostUserInputCommand(keyboard_sockets_, keyboard_spec));
-    commands.emplace_back(
-        NewVhostUserInputCommand(switches_sockets_, DefaultSwitchesSpec()));
+    Command keyboard_cmd =
+        NewVhostUserInputCommand(keyboard_sockets_, keyboard_spec);
+    Command keyboard_log_tee = CF_EXPECT(
+        log_tee_.CreateLogTee(keyboard_cmd, "vhost_user_keyboard", kStdErr),
+        "Failed to create log tee command for keyboard device");
+    commands.emplace_back(std::move(keyboard_cmd));
+    commands.emplace_back(std::move(keyboard_log_tee));
+
+    Command switches_cmd =
+        NewVhostUserInputCommand(switches_sockets_, DefaultSwitchesSpec());
+    Command switches_log_tee = CF_EXPECT(
+        log_tee_.CreateLogTee(switches_cmd, "vhost_user_switches", kStdErr),
+        "Failed to create log tee command for switches device");
+    commands.emplace_back(std::move(switches_cmd));
+    commands.emplace_back(std::move(switches_log_tee));
 
     const bool use_multi_touch =
         instance_.guest_os() !=
@@ -147,7 +173,15 @@ class VhostInputDevices : public CommandSource,
       CF_EXPECTF(android::base::WriteStringToFile(spec, spec_path,
                                                   true /*follow symlinks*/),
                  "Failed to write touchscreen spec to file: {}", spec_path);
-      commands.emplace_back(NewVhostUserInputCommand(touchscreen_sockets_[i], spec_path));
+      Command touchscreen_cmd =
+          NewVhostUserInputCommand(touchscreen_sockets_[i], spec_path);
+      Command touchscreen_log_tee =
+          CF_EXPECTF(log_tee_.CreateLogTee(
+                         touchscreen_cmd,
+                         fmt::format("vhost_user_touchscreen_{}", i), kStdErr),
+                     "Failed to create log tee for touchscreen device", i);
+      commands.emplace_back(std::move(touchscreen_cmd));
+      commands.emplace_back(std::move(touchscreen_log_tee));
     }
 
     std::string touchpad_template_path =
@@ -166,7 +200,14 @@ class VhostInputDevices : public CommandSource,
       CF_EXPECTF(android::base::WriteStringToFile(spec, spec_path,
                                                   true /*follow symlinks*/),
                  "Failed to write touchpad spec to file: {}", spec_path);
-      commands.emplace_back(NewVhostUserInputCommand(touchpad_sockets_[i], spec_path));
+      Command touchpad_cmd =
+          NewVhostUserInputCommand(touchpad_sockets_[i], spec_path);
+      Command touchpad_log_tee = CF_EXPECTF(
+          log_tee_.CreateLogTee(
+              touchpad_cmd, fmt::format("vhost_user_touchpad_{}", i), kStdErr),
+          "Failed to create log tee for touchpad {}", i);
+      commands.emplace_back(std::move(touchpad_cmd));
+      commands.emplace_back(std::move(touchpad_log_tee));
     }
     return commands;
   }
@@ -242,6 +283,7 @@ class VhostInputDevices : public CommandSource,
   }
 
   const CuttlefishConfig::InstanceSpecific& instance_;
+  LogTeeCreator& log_tee_;
   DeviceSockets rotary_sockets_;
   DeviceSockets mouse_sockets_;
   DeviceSockets keyboard_sockets_;
@@ -252,7 +294,7 @@ class VhostInputDevices : public CommandSource,
 
 }  // namespace
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
-                 InputConnectionsProvider>
+                 InputConnectionsProvider, LogTeeCreator>
 VhostInputDevicesComponent() {
   return fruit::createComponent()
       .bind<InputConnectionsProvider, VhostInputDevices>()
