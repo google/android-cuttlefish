@@ -4,4 +4,5 @@ prebuilt_etc {
     filename: "trusty_security_vm_launcher.rc",
     relative_install_path: "init",
     system_ext_specific: true,
+    enabled: false,
 }
