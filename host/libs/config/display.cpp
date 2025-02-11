@@ -84,11 +84,18 @@ Result<std::optional<CuttlefishConfig::DisplayConfig>> ParseDisplayConfig(
                                                                       << "\"");
   }
 
+  std::string display_overlays = "";
+  auto overlays_it = props.find("overlays");
+  if (overlays_it != props.end()) {
+    display_overlays = overlays_it->second;
+  }
+
   return CuttlefishConfig::DisplayConfig{
       .width = display_width,
       .height = display_height,
       .dpi = display_dpi,
       .refresh_rate_hz = display_refresh_rate_hz,
+      .overlays = display_overlays,
   };
 }
 
