@@ -41,5 +41,4 @@ apex {
     prebuilts: [
         "com.android.hardware.automotive.vehicle.cf.rc",
     ],
-    vintf_fragment_modules: ["android.hardware.automotive.vehicle@V3-cf-service.xml"],
 }
