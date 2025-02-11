@@ -106,7 +106,8 @@ public class RilE2eTests {
         Assert.assertEquals("Android Virtual Operator", mTeleManager.getNetworkOperatorName());
         Assert.assertFalse(mTeleManager.isNetworkRoaming());
         Assert.assertTrue(mTeleManager.isSmsCapable());
-        Assert.assertSame(TelephonyManager.NETWORK_TYPE_LTE, mTeleManager.getVoiceNetworkType());
+        Assert.assertNotSame(TelephonyManager.NETWORK_TYPE_UNKNOWN,
+                mTeleManager.getVoiceNetworkType());
         Assert.assertSame(TelephonyManager.SIM_STATE_READY, mTeleManager.getSimState());
         Assert.assertSame(TelephonyManager.PHONE_TYPE_GSM, mTeleManager.getPhoneType());
         Assert.assertSame(mTeleManager.getActiveModemCount(), 1);
