@@ -424,14 +424,14 @@ ifeq ($(RELEASE_AVF_ENABLE_EARLY_VM),true)
   TRUSTY_SYSTEM_VM ?= enabled_with_placeholder_trusted_hal
 endif
 ifeq ($(TRUSTY_SYSTEM_VM), enabled_with_placeholder_trusted_hal)
+    $(call soong_config_set_bool, trusty_system_vm, enabled, true)
+    $(call soong_config_set_bool, trusty_system_vm, placeholder_trusted_hal, true)
+    $(call soong_config_set, trusty_system_vm, buildtype, $(TARGET_BUILD_VARIANT))
     $(call inherit-product, system/core/trusty/keymint/trusty-keymint-apex.mk)
     $(call inherit-product, system/core/trusty/trusty-storage-cf.mk)
+    $(call inherit-product, packages/modules/Virtualization/guest/trusty/security_vm/security_vm.mk)
+
     PRODUCT_PACKAGES += \
-        lk_trusty.elf \
-        trusty_security_vm_launcher \
-        early_vms.xml \
-        cf-trusty_security_vm_launcher.rc \
-        lk_trusty.elf \
         trusty-ut-ctrl.system \
 
 endif
