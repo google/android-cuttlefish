@@ -22,4 +22,7 @@
     <item target="array/config_occupant_display_mapping" value="@array/config_occupant_display_mapping" />
     <item target="array/config_carEvsService" value="@array/config_carEvsService" />
     <item target="bool/audioUseMinMaxActivationVolume" value="@bool/audioUseMinMaxActivationVolume" />
+    <item target="bool/audioUseCoreVolume" value="@bool/audioUseCoreVolume" />
+    <item target="bool/audioUseCoreRouting" value="@bool/audioUseCoreRouting" />
+    <item target="bool/audioUseCarVolumeGroupEvent" value="@bool/audioUseCarVolumeGroupEvent" />
 </overlay>
