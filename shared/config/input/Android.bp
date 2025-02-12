@@ -34,7 +34,7 @@ apex {
         "Crosvm_Virtio_Multitouch_Touchscreen_1.idc",
         "Crosvm_Virtio_Multitouch_Touchscreen_2.idc",
         "Crosvm_Virtio_Multitouch_Touchscreen_3.idc",
-        "Crosvm_Virtio_Rotary_0.idc",
+        "Cuttlefish_Vhost_User_Rotary_0.idc",
     ],
 }
 
@@ -82,7 +82,7 @@ prebuilt_etc {
 }
 
 prebuilt_etc {
-    name: "Crosvm_Virtio_Rotary_0.idc",
-    src: "Crosvm_Virtio_Rotary_0.idc",
+    name: "Cuttlefish_Vhost_User_Rotary_0.idc",
+    src: "Cuttlefish_Vhost_User_Rotary_0.idc",
     defaults: ["crosvm_idc_defaults"],
 }
