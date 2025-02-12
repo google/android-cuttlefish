@@ -62,6 +62,10 @@ PRODUCT_VENDOR_PROPERTIES += \
 # does not emulate "real display timing".
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.hwc.drm.present_fence_not_reliable=true
 
+# drm_hwcomposer uses all display cards available by default.
+# Force using virtio_gpu (card0) exclusively.
+PRODUCT_VENDOR_PROPERTIES += vendor.hwc.drm.device=/dev/dri/card0
+
 PRODUCT_SYSTEM_PROPERTIES += \
     service.sf.prime_shader_cache=0
 
