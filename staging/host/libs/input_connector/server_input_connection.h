@@ -16,29 +16,27 @@
 
 #pragma once
 
-#include <cstdint>
-#include <cstdlib>
+#include "host/libs/input_connector/input_connection.h"
 
-#include <memory>
+#include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
-enum class InputEventType {
-  Virtio,
-  Evdev,
-};
 
-class EventBuffer {
+// Connection to an input device that accepts connections on a socket
+// (TCP or UNIX) and writes input events to its client (typically crosvm).
+class ServerInputConnection : public InputConnection {
  public:
-  virtual ~EventBuffer() = default;
-  virtual void AddEvent(uint16_t type, uint16_t code, int32_t value) = 0;
-  virtual size_t size() const = 0;
-  virtual const void* data() const = 0;
+  ServerInputConnection(SharedFD server);
+
+  Result<void> WriteEvents(const void* data, size_t len) override;
+
+ private:
+  SharedFD server_;
+  std::unique_ptr<InputConnection> client_;
+  std::mutex client_mtx_;
+  std::thread monitor_;
+
+  void MonitorLoop();
 };
 
-std::unique_ptr<EventBuffer> CreateBuffer(size_t num_events);
-
-// TODO(jemoreira): Delete this overload once all devices switch to vhost user
-std::unique_ptr<EventBuffer> CreateBuffer(InputEventType event_type,
-                                          size_t num_events);
-
-}  // namespace cuttlefish
+}
