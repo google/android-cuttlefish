@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2025 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,23 @@
 
 #pragma once
 
-#include <cstdint>
-#include <cstdlib>
+#include "host/libs/input_connector/input_connection.h"
 
-#include <memory>
+#include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
-enum class InputEventType {
-  Virtio,
-  Evdev,
-};
 
-class EventBuffer {
+// Connection to an input device over a full duplex file descriptor
+// (socket pair, connection accepted on a socket, etc).
+class FullDuplexFdInputConnection : public InputConnection {
  public:
-  virtual ~EventBuffer() = default;
-  virtual void AddEvent(uint16_t type, uint16_t code, int32_t value) = 0;
-  virtual size_t size() const = 0;
-  virtual const void* data() const = 0;
+  FullDuplexFdInputConnection(SharedFD conn);
+
+  Result<void> WriteEvents(const void* data, size_t len) override;
+
+ private:
+  SharedFD conn_;
 };
-
-std::unique_ptr<EventBuffer> CreateBuffer(size_t num_events);
-
-// TODO(jemoreira): Delete this overload once all devices switch to vhost user
-std::unique_ptr<EventBuffer> CreateBuffer(InputEventType event_type,
-                                          size_t num_events);
 
 }  // namespace cuttlefish
+

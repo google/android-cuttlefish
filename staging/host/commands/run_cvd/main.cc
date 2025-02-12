@@ -35,6 +35,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/run_cvd/boot_state_machine.h"
+#include "host/commands/run_cvd/launch/auto_cmd.h"
 #include "host/commands/run_cvd/launch/launch.h"
 #include "host/commands/run_cvd/reporting.h"
 #include "host/commands/run_cvd/server_loop.h"
@@ -68,8 +69,9 @@ class CuttlefishEnvironment : public DiagnosticInformation {
         "Launcher log: " + instance_.launcher_log_path(),
         "Instance configuration: " + config_path,
         // TODO(rammuthiah)  replace this with a more thorough cvd host package
-        // version scheme. Currently this only reports the Build NUmber of run_cvd
-        // and it is possible for other host binaries to be from different versions.
+        // version scheme. Currently this only reports the Build Number of
+        // run_cvd and it is possible for other host binaries to be from
+        // different versions.
         "Launcher Build ID: " + android::build::GetBuildNumber(),
     };
   }
@@ -136,6 +138,7 @@ fruit::Component<> runCvdComponent(
       .install(AutoCmd<TombstoneReceiver>::Component)
       .install(McuComponent)
       .install(VhostDeviceVsockComponent)
+      .install(VhostInputDevicesComponent)
       .install(WmediumdServerComponent)
       .install(launchStreamerComponent)
       .install(AutoCmd<VhalProxyServer>::Component)
@@ -244,7 +247,7 @@ Result<void> RunCvdMain(int argc, char** argv) {
   return CF_ERR("The server loop returned, it should never happen!!");
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
 
 int main(int argc, char** argv) {
   auto result = cuttlefish::RunCvdMain(argc, argv);
