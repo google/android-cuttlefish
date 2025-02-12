@@ -17,12 +17,12 @@
 
 #include <chrono>
 #include <functional>
-#include <mutex>
 #include <string>
 #include <type_traits>
 #include <vector>
 
 #include <json/json.h>
+#include <fmt/format.h>
 
 #include "common/libs/utils/result.h"
 
@@ -32,11 +32,27 @@ struct HttpVoidResponse {};
 
 template <typename T>
 struct HttpResponse {
-  bool HttpInfo() { return http_code >= 100 && http_code <= 199; }
-  bool HttpSuccess() { return http_code >= 200 && http_code <= 299; }
-  bool HttpRedirect() { return http_code >= 300 && http_code <= 399; }
-  bool HttpClientError() { return http_code >= 400 && http_code <= 499; }
-  bool HttpServerError() { return http_code >= 500 && http_code <= 599; }
+  bool HttpInfo() const { return http_code >= 100 && http_code <= 199; }
+  bool HttpSuccess() const { return http_code >= 200 && http_code <= 299; }
+  bool HttpRedirect() const { return http_code >= 300 && http_code <= 399; }
+  bool HttpClientError() const { return http_code >= 400 && http_code <= 499; }
+  bool HttpServerError() const { return http_code >= 500 && http_code <= 599; }
+
+  std::string StatusDescription() const {
+    switch (http_code) {
+        case 200: return "OK";
+        case 201: return "Created";
+        case 204: return "No Content";
+        case 400: return "Bad Request";
+        case 401: return "Unauthorized";
+        case 403: return "Forbidden";
+        case 404: return "File Not Found";
+        case 500: return "Internal Server Error";
+        case 502: return "Bad Gateway";
+        case 503: return "Service Unavailable";
+        default: return fmt::format("Status Code: {}", http_code);
+    }
+  }
 
   typename std::conditional<std::is_void_v<T>, HttpVoidResponse, T>::type data;
   long http_code;
