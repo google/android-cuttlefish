@@ -2,5 +2,16 @@
 binder_call(dumpstate, automotive_display_service_server)
 
 # Allow dumpstate to signal processes to dump.
-allow dumpstate hal_can_socketcan:process signal;
-allow dumpstate hal_occupant_awareness_default:process signal;
+allow dumpstate {
+  hal_vehicle_default
+  hal_audiocontrol_default
+  hal_ivn
+  hal_remoteaccess_default
+  hal_can_socketcan
+  hal_occupant_awareness_default
+}:process signal;
+
+dump_hal(hal_vehicle)
+dump_hal(hal_audiocontrol)
+dump_hal(hal_ivn)
+dump_hal(hal_remoteaccess)
