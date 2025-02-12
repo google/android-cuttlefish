@@ -22,21 +22,24 @@
 
 namespace cuttlefish {
 
+Result<void> InputDevice::WriteEvents(const EventBuffer& buffer) {
+  CF_EXPECT(conn_.WriteEvents(buffer.data(), buffer.size()));
+  return {};
+}
+
 Result<void> TouchDevice::SendTouchEvent(int x, int y, bool down) {
-  auto buffer = CreateBuffer(event_type(), 4);
-  CF_EXPECT(buffer != nullptr, "Failed to allocate input events buffer");
-  buffer->AddEvent(EV_ABS, ABS_X, x);
-  buffer->AddEvent(EV_ABS, ABS_Y, y);
-  buffer->AddEvent(EV_KEY, BTN_TOUCH, down);
-  buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
-  CF_EXPECT(WriteEvents(*buffer));
+  EventBuffer buffer(4);
+  buffer.AddEvent(EV_ABS, ABS_X, x);
+  buffer.AddEvent(EV_ABS, ABS_Y, y);
+  buffer.AddEvent(EV_KEY, BTN_TOUCH, down);
+  buffer.AddEvent(EV_SYN, SYN_REPORT, 0);
+  CF_EXPECT(WriteEvents(buffer));
   return {};
 }
 
 Result<void> TouchDevice::SendMultiTouchEvent(
     const std::vector<MultitouchSlot>& slots, bool down) {
-  auto buffer = CreateBuffer(event_type(), 1 + 7 * slots.size());
-  CF_EXPECT(buffer != nullptr, "Failed to allocate input events buffer");
+  EventBuffer buffer(1 + 7 * slots.size());
 
   for (auto& f : slots) {
     auto this_id = f.id;
@@ -50,28 +53,28 @@ Result<void> TouchDevice::SendMultiTouchEvent(
 
     // BTN_TOUCH DOWN must be the first event in a series
     if (down && is_new_contact) {
-      buffer->AddEvent(EV_KEY, BTN_TOUCH, 1);
+      buffer.AddEvent(EV_KEY, BTN_TOUCH, 1);
     }
 
-    buffer->AddEvent(EV_ABS, ABS_MT_SLOT, this_slot);
+    buffer.AddEvent(EV_ABS, ABS_MT_SLOT, this_slot);
     if (down) {
       if (is_new_contact) {
         // We already assigned this slot to this source and id combination, we
         // could use any tracking id for the slot as long as it's greater than 0
-        buffer->AddEvent(EV_ABS, ABS_MT_TRACKING_ID, NewTrackingId());
+        buffer.AddEvent(EV_ABS, ABS_MT_TRACKING_ID, NewTrackingId());
       }
-      buffer->AddEvent(EV_ABS, ABS_MT_POSITION_X, this_x);
-      buffer->AddEvent(EV_ABS, ABS_MT_POSITION_Y, this_y);
+      buffer.AddEvent(EV_ABS, ABS_MT_POSITION_X, this_x);
+      buffer.AddEvent(EV_ABS, ABS_MT_POSITION_Y, this_y);
     } else {
       // released touch
-      buffer->AddEvent(EV_ABS, ABS_MT_TRACKING_ID, -1);
+      buffer.AddEvent(EV_ABS, ABS_MT_TRACKING_ID, -1);
       ReleaseSlot(this, this_id);
-      buffer->AddEvent(EV_KEY, BTN_TOUCH, 0);
+      buffer.AddEvent(EV_KEY, BTN_TOUCH, 0);
     }
   }
 
-  buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
-  CF_EXPECT(WriteEvents(*buffer));
+  buffer.AddEvent(EV_SYN, SYN_REPORT, 0);
+  CF_EXPECT(WriteEvents(buffer));
   return {};
 }
 
@@ -129,62 +132,54 @@ int32_t TouchDevice::UseNewSlot() {
 }
 
 Result<void> MouseDevice::SendMoveEvent(int x, int y) {
-  auto buffer = CreateBuffer(event_type(), 2);
-  CF_EXPECT(buffer != nullptr,
-            "Failed to allocate input events buffer for mouse move event !");
-  buffer->AddEvent(EV_REL, REL_X, x);
-  buffer->AddEvent(EV_REL, REL_Y, y);
-  CF_EXPECT(conn().WriteEvents(buffer->data(), buffer->size()));
+  EventBuffer buffer(2);
+  buffer.AddEvent(EV_REL, REL_X, x);
+  buffer.AddEvent(EV_REL, REL_Y, y);
+  CF_EXPECT(WriteEvents(buffer));
   return {};
 }
 
 Result<void> MouseDevice::SendButtonEvent(int button, bool down) {
-  auto buffer = CreateBuffer(event_type(), 2);
-  CF_EXPECT(buffer != nullptr,
-            "Failed to allocate input events buffer for mouse button event !");
+  EventBuffer buffer(2);
   std::vector<int> buttons = {BTN_LEFT, BTN_MIDDLE, BTN_RIGHT, BTN_BACK,
                               BTN_FORWARD};
   CF_EXPECT(button < (int)buttons.size(),
             "Unknown mouse event button: " << button);
-  buffer->AddEvent(EV_KEY, buttons[button], down);
-  buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
-  CF_EXPECT(conn().WriteEvents(buffer->data(), buffer->size()));
+  buffer.AddEvent(EV_KEY, buttons[button], down);
+  buffer.AddEvent(EV_SYN, SYN_REPORT, 0);
+  CF_EXPECT(WriteEvents(buffer));
   return {};
 }
 
 Result<void> MouseDevice::SendWheelEvent(int pixels) {
-  auto buffer = CreateBuffer(event_type(), 2);
-  CF_EXPECT(buffer != nullptr, "Failed to allocate input events buffer");
-  buffer->AddEvent(EV_REL, REL_WHEEL, pixels);
-  buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
-  CF_EXPECT(conn().WriteEvents(buffer->data(), buffer->size()));
+  EventBuffer buffer(2);
+  buffer.AddEvent(EV_REL, REL_WHEEL, pixels);
+  buffer.AddEvent(EV_SYN, SYN_REPORT, 0);
+  CF_EXPECT(WriteEvents(buffer));
   return {};
 }
 
 Result<void> KeyboardDevice::SendEvent(uint16_t code, bool down) {
-  auto buffer = CreateBuffer(event_type(), 2);
-  CF_EXPECT(buffer != nullptr, "Failed to allocate input events buffer");
-  buffer->AddEvent(EV_KEY, code, down);
-  buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
-  CF_EXPECT(conn().WriteEvents(buffer->data(), buffer->size()));
+  EventBuffer buffer(2);
+  buffer.AddEvent(EV_KEY, code, down);
+  buffer.AddEvent(EV_SYN, SYN_REPORT, 0);
+  CF_EXPECT(WriteEvents(buffer));
   return {};
 }
 
 Result<void> RotaryDevice::SendEvent(int pixels) {
-  auto buffer = CreateBuffer(event_type(), 2);
-  CF_EXPECT(buffer != nullptr, "Failed to allocate input events buffer");
-  buffer->AddEvent(EV_REL, REL_WHEEL, pixels);
-  buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
-  CF_EXPECT(conn().WriteEvents(buffer->data(), buffer->size()));
+  EventBuffer buffer(2);
+  buffer.AddEvent(EV_REL, REL_WHEEL, pixels);
+  buffer.AddEvent(EV_SYN, SYN_REPORT, 0);
+  CF_EXPECT(WriteEvents(buffer));
   return {};
 }
 
 Result<void> SwitchesDevice::SendEvent(uint16_t code, bool state) {
-  auto buffer = CreateBuffer(event_type(), 2);
-  CF_EXPECT(buffer != nullptr, "Failed to allocate input events buffer");
-  buffer->AddEvent(EV_SW, code, state);
-  buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
-  CF_EXPECT(conn().WriteEvents(buffer->data(), buffer->size()));
+  EventBuffer buffer(2);
+  buffer.AddEvent(EV_SW, code, state);
+  buffer.AddEvent(EV_SYN, SYN_REPORT, 0);
+  CF_EXPECT(WriteEvents(buffer));
   return {};
 }
 

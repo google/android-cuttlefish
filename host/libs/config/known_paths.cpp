@@ -42,9 +42,41 @@ std::string ControlEnvProxyServerBinary() {
   return HostBinaryPath("control_env_proxy_server");
 }
 
+std::string DefaultKeyboardSpec() {
+  return DefaultHostArtifactsPath("etc/default_input_devices/keyboard.json");
+}
+
+std::string DefaultMouseSpec() {
+  return DefaultHostArtifactsPath("etc/default_input_devices/mouse.json");
+}
+
+std::string DefaultMultiTouchpadSpecTemplate() {
+  return DefaultHostArtifactsPath(
+      "etc/default_input_devices/multi_touchpad_template.json");
+}
+
+std::string DefaultMultiTouchscreenSpecTemplate() {
+  return DefaultHostArtifactsPath(
+      "etc/default_input_devices/multi_touchscreen_template.json");
+}
+
 std::string DefaultRotaryDeviceSpec() {
   return DefaultHostArtifactsPath(
       "etc/default_input_devices/rotary_wheel.json");
+}
+
+std::string DefaultSingleTouchpadSpecTemplate() {
+  return DefaultHostArtifactsPath(
+      "etc/default_input_devices/single_touchpad_template.json");
+}
+
+std::string DefaultSingleTouchscreenSpecTemplate() {
+  return DefaultHostArtifactsPath(
+      "etc/default_input_devices/single_touchscreen_template.json");
+}
+
+std::string DefaultSwitchesSpec() {
+  return DefaultHostArtifactsPath("etc/default_input_devices/switches.json");
 }
 
 std::string EchoServerBinary() { return HostBinaryPath("echo_server"); }

@@ -21,10 +21,9 @@ cc_library {
     name: "libcuttlefish_input_connector",
     srcs: [
         "event_buffer.cpp",
-        "full_duplex_fd_input_connection.cpp",
+        "input_connection.cpp",
         "input_connector.cpp",
         "input_devices.cpp",
-        "server_input_connection.cpp",
     ],
     shared_libs: [
         "libbase",
