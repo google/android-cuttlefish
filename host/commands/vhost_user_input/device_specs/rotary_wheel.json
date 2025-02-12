@@ -1,0 +1,13 @@
+{
+  "name": "Cuttlefish Vhost User Rotary 0",
+  "serial_name": "virtio-rotary-0",
+  "events": [
+    {
+      "event_type": "EV_REL",
+      "event_type_code": 2,
+      "supported_events": {
+        "REL_WHEEL": 8
+      }
+    }
+  ]
+}
