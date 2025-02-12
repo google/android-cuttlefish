@@ -119,6 +119,7 @@ std::vector<std::string> GetRamdiskModules(
       "virtio_dma_buf.ko",
       "virtio-gpu.ko",
       "virtio_input.ko",
+      "virtio_mmio.ko",
       "virtio_net.ko",
       "virtio_pci.ko",
       "virtio_pci_legacy_dev.ko",
