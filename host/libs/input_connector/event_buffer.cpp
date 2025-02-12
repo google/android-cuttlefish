@@ -24,43 +24,12 @@
 #include <linux/input.h>
 
 namespace cuttlefish {
-namespace {
 
-struct virtio_input_event {
-  uint16_t type;
-  uint16_t code;
-  int32_t value;
-};
+EventBuffer::EventBuffer(size_t num_events) { buffer_.reserve(num_events); }
 
-template <typename T>
-struct EventBufferImpl : public EventBuffer {
-  EventBufferImpl(size_t num_events) { buffer_.reserve(num_events); }
-  void AddEvent(uint16_t type, uint16_t code, int32_t value) override {
-    buffer_.push_back({.type = type, .code = code, .value = value});
-  }
-  const void* data() const override { return buffer_.data(); }
-  std::size_t size() const override { return buffer_.size() * sizeof(T); }
-
- private:
-  std::vector<T> buffer_;
-};
-
-}  // namespace
-
-std::unique_ptr<EventBuffer> CreateBuffer(size_t num_events) {
-  return CreateBuffer(InputEventType::Virtio, num_events);
-}
-
-std::unique_ptr<EventBuffer> CreateBuffer(InputEventType event_type,
-                                          size_t num_events) {
-  switch (event_type) {
-    case InputEventType::Virtio:
-      return std::unique_ptr<EventBuffer>(
-          new EventBufferImpl<virtio_input_event>(num_events));
-    case InputEventType::Evdev:
-      return std::unique_ptr<EventBuffer>(
-          new EventBufferImpl<input_event>(num_events));
-  }
+void EventBuffer::AddEvent(uint16_t type, uint16_t code, int32_t value) {
+  buffer_.push_back(
+      {.type = Le16(type), .code = Le16(code), .value = Le32(value)});
 }
 
 }  // namespace cuttlefish

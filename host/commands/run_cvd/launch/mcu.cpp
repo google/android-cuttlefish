@@ -74,7 +74,7 @@ class Mcu : public vm_manager::VmmDependencyCommand {
     }
 
     std::vector<MonitorCommand> commands;
-    commands.emplace_back(CF_EXPECT(log_tee_.CreateLogTee(command, "mcu")));
+    commands.emplace_back(CF_EXPECT(log_tee_.CreateFullLogTee(command, "mcu")));
     commands.emplace_back(std::move(command));
     return commands;
   }
