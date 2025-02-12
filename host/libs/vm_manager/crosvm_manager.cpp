@@ -601,15 +601,14 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     const int touchpad_cnt = instance.touchpad_configs().size();
     const int total_touch_cnt = display_cnt + touchpad_cnt;
     for (int touch_idx = 0; touch_idx < total_touch_cnt; ++touch_idx) {
-      crosvm_cmd.AddVhostUser("input", instance.touch_socket_path(touch_idx),
-                              256);
+      crosvm_cmd.AddVhostUser("input", instance.touch_socket_path(touch_idx));
     }
     if (instance.enable_mouse()) {
-      crosvm_cmd.AddVhostUser("input", instance.mouse_socket_path(), 256);
+      crosvm_cmd.AddVhostUser("input", instance.mouse_socket_path());
     }
-    crosvm_cmd.AddVhostUser("input", instance.rotary_socket_path(), 256);
-    crosvm_cmd.AddVhostUser("input", instance.keyboard_socket_path(), 256);
-    crosvm_cmd.AddVhostUser("input", instance.switches_socket_path(), 256);
+    crosvm_cmd.AddVhostUser("input", instance.rotary_socket_path());
+    crosvm_cmd.AddVhostUser("input", instance.keyboard_socket_path());
+    crosvm_cmd.AddVhostUser("input", instance.switches_socket_path());
   }
 
   // GPU capture can only support named files and not file descriptors due to
@@ -665,10 +664,9 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   if (instance.vsock_guest_cid() >= 2) {
     if (instance.vhost_user_vsock()) {
-      std::string param = fmt::format(
-          "{}/vsock_{}_{}/vhost.socket,max-queue-size=256", TempDir(),
-          instance.vsock_guest_cid(), std::to_string(getuid()));
-      crosvm_cmd.Cmd().AddParameter("--vhost-user=vsock,socket=", param);
+      crosvm_cmd.AddVhostUser(
+          "vsock", fmt::format("{}/vsock_{}_{}/vhost.socket", TempDir(),
+                               instance.vsock_guest_cid(), getuid()));
     } else {
       crosvm_cmd.Cmd().AddParameter("--cid=", instance.vsock_guest_cid());
     }
