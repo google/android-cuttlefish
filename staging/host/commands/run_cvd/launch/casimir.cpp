@@ -63,7 +63,8 @@ Result<std::vector<MonitorCommand>> Casimir(
   }
 
   std::vector<MonitorCommand> commands;
-  commands.emplace_back(CF_EXPECT(log_tee.CreateLogTee(casimir, "casimir")));
+  commands.emplace_back(
+      CF_EXPECT(log_tee.CreateFullLogTee(casimir, "casimir")));
   commands.emplace_back(std::move(casimir));
   return commands;
 }
