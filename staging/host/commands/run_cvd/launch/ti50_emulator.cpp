@@ -58,7 +58,8 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
     command.AddParameter("-p=", instance_.instance_dir());
 
     std::vector<MonitorCommand> commands;
-    commands.emplace_back(CF_EXPECT(log_tee_.CreateLogTee(command, "ti50")));
+    commands.emplace_back(
+        CF_EXPECT(log_tee_.CreateFullLogTee(command, "ti50")));
     commands.emplace_back(std::move(command));
     return commands;
   }

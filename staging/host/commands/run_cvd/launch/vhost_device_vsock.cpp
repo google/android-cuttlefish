@@ -72,7 +72,7 @@ Result<std::vector<MonitorCommand>> VhostDeviceVsock::Commands() {
 
   std::vector<MonitorCommand> commands;
   commands.emplace_back(
-      CF_EXPECT(log_tee_.CreateLogTee(command, "vhost_device_vsock")));
+      CF_EXPECT(log_tee_.CreateFullLogTee(command, "vhost_device_vsock")));
   commands.emplace_back(std::move(command));
   return commands;
 }

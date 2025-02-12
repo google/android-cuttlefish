@@ -63,7 +63,7 @@ class InputConnectorImpl;
 
 class InputConnectorBuilder {
  public:
-  explicit InputConnectorBuilder(InputEventType type);
+  explicit InputConnectorBuilder();
   ~InputConnectorBuilder();
   InputConnectorBuilder(const InputConnectorBuilder&) = delete;
   InputConnectorBuilder(InputConnectorBuilder&&) = delete;
@@ -81,7 +81,6 @@ class InputConnectorBuilder {
 
  private:
   std::unique_ptr<InputConnectorImpl> connector_;
-  InputEventType event_type_;
 };
 
 }  // namespace cuttlefish
