@@ -450,13 +450,18 @@ cvd_host_swiftshader_files = [
     "vk_swiftshader_icd_json_prebuilt",
 ]
 
+cvd_default_input_device_specs = [
+    "default_rotary_wheel_spec",
+]
+
 cvd_host_package_customization {
     name: "cvd-host_package",
     deps: cvd_host_tools +
         cvd_host_tests,
     multilib: {
         common: {
-            deps: cvd_host_webrtc_assets +
+            deps: cvd_default_input_device_specs +
+                cvd_host_webrtc_assets +
                 cvd_host_avb_testkey +
                 cvd_host_model_simulator_files +
                 cvd_host_acloud_data +
