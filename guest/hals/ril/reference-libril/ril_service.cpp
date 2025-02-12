@@ -1039,6 +1039,64 @@ void checkReturnStatus(int32_t slotId, Return<void>& ret, bool isRadioService) {
     }
 }
 
+// Function to verify if the channels are valid for any of the given bands
+bool areEutranChannelsInsideBands(const RIL_EutranBands bands[], const uint32_t bands_length,
+                                  const uint32_t channels[], const uint32_t channels_length) {
+    // Map values:{band,{ndl_min, ndl_max}}
+    // Values from ETSI TS 136 101 V17.6.0 Table 5.7.3-1
+    std::unordered_map<int, std::pair<uint32_t, uint32_t>> band_info = {
+            {1, {0, 599}},        {2, {600, 1199}},     {3, {1200, 1949}},    {4, {1950, 2399}},
+            {5, {2400, 2649}},    {6, {2650, 2749}},    {7, {2750, 3449}},    {8, {3450, 3799}},
+            {9, {3800, 4149}},    {10, {4150, 4749}},   {11, {4750, 4949}},   {12, {5010, 5179}},
+            {13, {5180, 5279}},   {14, {5280, 5379}},   {17, {5730, 5849}},   {18, {5850, 5999}},
+            {19, {6000, 6149}},   {20, {6150, 6449}},   {21, {6450, 6599}},   {22, {6600, 7399}},
+            {23, {7500, 7699}},   {24, {7700, 8039}},   {25, {8040, 8689}},   {26, {8690, 9039}},
+            {27, {9040, 9209}},   {28, {9210, 9659}},   {29, {9660, 9769}},   {30, {9770, 9869}},
+            {31, {9870, 9919}},   {32, {9920, 10359}},  {33, {36000, 36199}}, {34, {36200, 36349}},
+            {35, {36350, 36949}}, {36, {36950, 37549}}, {37, {37550, 37749}}, {38, {37750, 38249}},
+            {39, {38250, 38649}}, {40, {38650, 39649}}, {41, {39650, 41589}}, {42, {41590, 43589}},
+            {43, {43590, 45589}}, {44, {45590, 46589}}, {45, {46590, 46789}}, {46, {46790, 54539}},
+            {47, {54540, 55239}}, {48, {55240, 56739}}, {49, {56740, 58239}}, {50, {58240, 59089}},
+            {51, {59090, 59139}}, {52, {59140, 60139}}, {53, {60140, 60254}}, {65, {65536, 66435}},
+            {66, {66436, 67335}}, {67, {67336, 67535}}, {68, {67536, 67835}}, {69, {67836, 68335}},
+            {70, {68336, 68585}}, {71, {68586, 68935}}, {72, {68936, 68985}}, {73, {68986, 69035}},
+            {74, {69036, 69465}}, {75, {69466, 70315}}, {76, {70316, 70365}}, {85, {70366, 70545}},
+            {87, {70546, 70595}}, {88, {70596, 70645}}, {103, {70646, 70655}}};
+
+    bool invalidValueFound = false;
+    // Check if every provided band is a valid band.
+    for (uint32_t j = 0; j < bands_length; ++j) {
+        if (band_info.find(static_cast<int>(bands[j])) == band_info.end()) {
+            RLOGE("areEutranChannelsInsideBands: band '%d' is not a valid band.", bands[j]);
+            invalidValueFound = true;
+        }
+    }
+
+    // Iterate through the channels and check if they belong to any bands.
+    for (uint32_t i = 0; i < channels_length; ++i) {
+        bool found = false;
+        for (uint32_t j = 0; j < bands_length; ++j) {
+            auto band_it = band_info.find(static_cast<int>(bands[j]));
+            if (band_info.find(static_cast<int>(bands[j])) != band_info.end() &&
+                channels[i] >= band_it->second.first && channels[i] <= band_it->second.second) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            std::stringstream bands_str;
+            for (uint32_t k = 0; k < bands_length; ++k) {
+                bands_str << bands[k] << " ";
+            }
+            RLOGE("areEutranChannelsInsideBands: channel '%d' doesn't belong to any bands: '%s'",
+                  channels[i], bands_str.str().c_str());
+            invalidValueFound = true;
+        }
+    }
+
+    return !invalidValueFound;
+}
+
 void RadioImpl_1_6::checkReturnStatus(Return<void>& ret) {
     ::checkReturnStatus(mSlotId, ret, true);
 }
@@ -4328,6 +4386,7 @@ int prepareNetworkScanRequest_1_5(RIL_NetworkScanRequest_v1_5 &scan_request,
                     ras_to.bands.geran_bands[idx] =
                             static_cast<RIL_GeranBands>(geranBands[idx]);
                 }
+                // TODO(b/400453288): check that channels correspond to bands
                 break;
             }
             case V1_5::RadioAccessNetworks::UTRAN: {
@@ -4338,6 +4397,7 @@ int prepareNetworkScanRequest_1_5(RIL_NetworkScanRequest_v1_5 &scan_request,
                     ras_to.bands.utran_bands[idx] =
                             static_cast<RIL_UtranBands>(utranBands[idx]);
                 }
+                // TODO(b/400453288): check that channels correspond to bands
                 break;
             }
             case V1_5::RadioAccessNetworks::EUTRAN: {
@@ -4348,6 +4408,12 @@ int prepareNetworkScanRequest_1_5(RIL_NetworkScanRequest_v1_5 &scan_request,
                     ras_to.bands.eutran_bands[idx] =
                             static_cast<RIL_EutranBands>(eutranBands[idx]);
                 }
+                if (!areEutranChannelsInsideBands(ras_to.bands.eutran_bands, ras_to.bands_length,
+                                                  ras_to.channels, ras_to.channels_length)) {
+                    sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
+                    return -1;
+                }
+
                 break;
             }
             case V1_5::RadioAccessNetworks::NGRAN: {
@@ -4358,6 +4424,7 @@ int prepareNetworkScanRequest_1_5(RIL_NetworkScanRequest_v1_5 &scan_request,
                     ras_to.bands.ngran_bands[idx] =
                             static_cast<RIL_NgranBands>(ngranBands[idx]);
                 }
+                // TODO(b/400453288): check that channels correspond to bands
                 break;
             }
             default:
@@ -4390,7 +4457,7 @@ int prepareNetworkScanRequest_1_5(RIL_NetworkScanRequest_v1_5 &scan_request,
 Return<void> RadioImpl_1_6::startNetworkScan_1_5(int32_t serial,
         const ::android::hardware::radio::V1_5::NetworkScanRequest& request) {
 #if VDBG
-    RLOGD("startNetworkScan_1_6: serial %d", serial);
+    RLOGD("startNetworkScan_1_5: serial %d", serial);
 #endif
 
     RequestInfo *pRI = android::addRequestToList(serial, mSlotId, RIL_REQUEST_START_NETWORK_SCAN);
