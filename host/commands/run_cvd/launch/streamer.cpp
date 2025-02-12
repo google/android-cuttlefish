@@ -24,16 +24,12 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/reporting.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
 
@@ -97,29 +93,32 @@ class StreamerSockets : public virtual SetupFeature {
         input_connections_provider_(input_connections_provider) {}
 
   void AppendCommandArguments(Command& cmd) {
-    if (config_.vm_manager() == VmmMode::kQemu) {
-      cmd.AddParameter("-write_virtio_input");
-    }
-    if (!touch_servers_.empty()) {
-      bool is_chromeos =
-          instance_.boot_flow() ==
-              CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs ||
-          instance_.boot_flow() ==
-              CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOsDisk;
-      if (is_chromeos) {
+    const int touch_count = instance_.display_configs().size() +
+                            instance_.touchpad_configs().size();
+    if (touch_count > 0) {
+      if (instance_.guest_os() ==
+          CuttlefishConfig::InstanceSpecific::GuestOs::ChromeOs) {
         cmd.AddParameter("--multitouch=false");
       }
-      cmd.AddParameter("-touch_fds=", touch_servers_[0]);
-      for (int i = 1; i < touch_servers_.size(); ++i) {
-        cmd.AppendToLastParameter(",", touch_servers_[i]);
+      std::vector<SharedFD> touch_connections =
+          input_connections_provider_.TouchscreenConnections();
+      for (const SharedFD& touchpad_connection :
+           input_connections_provider_.TouchpadConnections()) {
+        touch_connections.push_back(touchpad_connection);
+      }
+      cmd.AddParameter("-touch_fds=", touch_connections[0]);
+      for (int i = 1; i < touch_connections.size(); ++i) {
+        cmd.AppendToLastParameter(",", touch_connections[i]);
       }
     }
     if (instance_.enable_mouse()) {
-      cmd.AddParameter("-mouse_fd=", mouse_server_);
+      cmd.AddParameter("-mouse_fd=",
+                       input_connections_provider_.MouseConnection());
     }
     cmd.AddParameter("-rotary_fd=",
                      input_connections_provider_.RotaryDeviceConnection());
-    cmd.AddParameter("-keyboard_fd=", keyboard_server_);
+    cmd.AddParameter("-keyboard_fd=",
+                     input_connections_provider_.KeyboardConnection());
     cmd.AddParameter("-frame_server_fd=", frames_server_);
     if (instance_.enable_audio()) {
       cmd.AddParameter("--audio_server_fd=", audio_server_);
@@ -128,6 +127,8 @@ class StreamerSockets : public virtual SetupFeature {
     cmd.AddParameter("--confui_out_fd=", confui_out_fd_);
     cmd.AddParameter("--sensors_in_fd=", sensors_host_to_guest_fd_);
     cmd.AddParameter("--sensors_out_fd=", sensors_guest_to_host_fd_);
+    cmd.AddParameter("-switches_fd=",
+                     input_connections_provider_.SwitchesConnection());
   }
 
   // SetupFeature
@@ -144,22 +145,6 @@ class StreamerSockets : public virtual SetupFeature {
   }
 
   Result<void> ResultSetup() override {
-    int display_cnt = instance_.display_configs().size();
-    int touchpad_cnt = instance_.touchpad_configs().size();
-    for (int i = 0; i < display_cnt + touchpad_cnt; ++i) {
-      SharedFD touch_socket =
-          CreateUnixInputServer(instance_.touch_socket_path(i));
-      CF_EXPECT(touch_socket->IsOpen(), touch_socket->StrError());
-      touch_servers_.emplace_back(std::move(touch_socket));
-    }
-    if (instance_.enable_mouse()) {
-      mouse_server_ = CreateUnixInputServer(instance_.mouse_socket_path());
-      CF_EXPECT(mouse_server_->IsOpen(), mouse_server_->StrError());
-    }
-
-    keyboard_server_ = CreateUnixInputServer(instance_.keyboard_socket_path());
-    CF_EXPECT(keyboard_server_->IsOpen(), keyboard_server_->StrError());
-
     frames_server_ = CreateUnixInputServer(instance_.frames_socket_path());
     CF_EXPECT(frames_server_->IsOpen(), frames_server_->StrError());
     // TODO(schuffelen): Make this a separate optional feature?
@@ -197,9 +182,6 @@ class StreamerSockets : public virtual SetupFeature {
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   InputConnectionsProvider& input_connections_provider_;
-  std::vector<SharedFD> touch_servers_;
-  SharedFD mouse_server_;
-  SharedFD keyboard_server_;
   SharedFD frames_server_;
   SharedFD audio_server_;
   SharedFD confui_in_fd_;   // host -> guest
@@ -272,9 +254,6 @@ class WebRtcServer : public virtual CommandSource,
 
     webrtc.UnsetFromEnvironment("http_proxy");
     sockets_.AppendCommandArguments(webrtc);
-    if (config_.vm_manager() == VmmMode::kCrosvm) {
-      webrtc.AddParameter("-switches_fd=", switches_server_);
-    }
     // Currently there is no way to ensure the signaling server will already
     // have bound the socket to the port by the time the webrtc process runs
     // (the common technique of doing it from the launcher is not possible here
@@ -311,11 +290,6 @@ class WebRtcServer : public virtual CommandSource,
   }
 
   Result<void> ResultSetup() override {
-    if (config_.vm_manager() == VmmMode::kCrosvm) {
-      switches_server_ =
-          CreateUnixInputServer(instance_.switches_socket_path());
-      CF_EXPECT(switches_server_->IsOpen(), switches_server_->StrError());
-    }
     kernel_log_events_pipe_ = log_pipe_provider_.KernelLogPipe();
     CF_EXPECT(kernel_log_events_pipe_->IsOpen(),
               kernel_log_events_pipe_->StrError());
@@ -329,7 +303,6 @@ class WebRtcServer : public virtual CommandSource,
   const CustomActionConfigProvider& custom_action_config_;
   WebRtcController& webrtc_controller_;
   SharedFD kernel_log_events_pipe_;
-  SharedFD switches_server_;
 };
 
 }  // namespace
