@@ -450,6 +450,25 @@ class CuttlefishConfig {
 
     BootFlow boot_flow() const;
 
+    enum class GuestOs { Android, ChromeOs, Linux, Fuchsia };
+
+    GuestOs guest_os() const {
+      switch (boot_flow()) {
+        case BootFlow::Android:
+        case BootFlow::AndroidEfiLoader:
+          return GuestOs::Android;
+        case BootFlow::ChromeOs:
+        case BootFlow::ChromeOsDisk:
+          return GuestOs::ChromeOs;
+        case BootFlow::Linux:
+          return GuestOs::Linux;
+        case BootFlow::Fuchsia:
+          return GuestOs::Fuchsia;
+          // Don't include a default case, this needs to fail when not all cases
+          // are covered.
+      }
+    }
+
     // modem simulator related
     std::string modem_simulator_ports() const;
 

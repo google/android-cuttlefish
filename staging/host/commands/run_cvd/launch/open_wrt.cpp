@@ -157,7 +157,7 @@ class OpenWrt : public CommandSource {
 
     std::vector<MonitorCommand> commands;
     commands.emplace_back(
-        CF_EXPECT(log_tee_.CreateLogTee(ap_cmd.Cmd(), "openwrt")));
+        CF_EXPECT(log_tee_.CreateFullLogTee(ap_cmd.Cmd(), "openwrt")));
     commands.emplace_back(std::move(ap_cmd.Cmd()));
     return commands;
   }

@@ -137,7 +137,7 @@ fruit::Component<
 McuComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
-                 InputConnectionsProvider>
+                 InputConnectionsProvider, LogTeeCreator>
 VhostInputDevicesComponent();
 
 std::optional<MonitorCommand> VhalProxyServer(

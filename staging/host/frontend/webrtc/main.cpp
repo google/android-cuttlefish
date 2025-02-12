@@ -69,8 +69,6 @@ DEFINE_int32(sensors_out_fd, -1, "Sensors virtio-console from guest to host");
 DEFINE_string(action_servers, "",
               "A comma-separated list of server_name:fd pairs, "
               "where each entry corresponds to one custom action server.");
-DEFINE_bool(write_virtio_input, true,
-            "Whether to send input events in virtio format.");
 DEFINE_int32(audio_server_fd, -1, "An fd to listen on for audio frames");
 DEFINE_int32(camera_streamer_fd, -1, "An fd to send client camera frames");
 DEFINE_string(client_dir, "webrtc", "Location of the client files");
@@ -188,9 +186,7 @@ int CuttlefishMain() {
   auto cvd_config = CuttlefishConfig::Get();
   auto instance = cvd_config->ForDefaultInstance();
 
-  cuttlefish::InputConnectorBuilder inputs_builder(
-      FLAGS_write_virtio_input ? cuttlefish::InputEventType::Virtio
-                               : cuttlefish::InputEventType::Evdev);
+  cuttlefish::InputConnectorBuilder inputs_builder;
 
   const auto display_count = instance.display_configs().size();
   const auto touch_fds = android::base::Split(FLAGS_touch_fds, ",");
@@ -330,7 +326,8 @@ int CuttlefishMain() {
   }
 
   streamer->SetHardwareSpec("CPUs", instance.cpus());
-  streamer->SetHardwareSpec("RAM", std::to_string(instance.memory_mb()) + " mb");
+  streamer->SetHardwareSpec("RAM",
+                            std::to_string(instance.memory_mb()) + " mb");
 
   std::string user_friendly_gpu_mode;
   if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {

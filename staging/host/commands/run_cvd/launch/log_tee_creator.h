@@ -15,8 +15,11 @@
 
 #pragma once
 
+#include <string>
+
 #include <fruit/fruit.h>
 
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -26,7 +29,13 @@ class LogTeeCreator {
  public:
   INJECT(LogTeeCreator(const CuttlefishConfig::InstanceSpecific& instance));
 
-  Result<Command> CreateLogTee(Command& cmd, const std::string& process_name);
+  // Creates a log tee command for the stdout and stderr channels of the given
+  // command.
+  Result<Command> CreateFullLogTee(Command& cmd, std::string process_name);
+
+  // Creates a log tee command for specified channel of the given command.
+  Result<Command> CreateLogTee(Command& cmd, std::string process_name,
+                               Subprocess::StdIOChannel log_channel);
 
  private:
   const CuttlefishConfig::InstanceSpecific& instance_;

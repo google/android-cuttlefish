@@ -1,0 +1,29 @@
+{
+  "name": "Cuttlefish Vhost User Switches 0",
+  "serial_name": "virtio-switches-0",
+  "events": [
+    {
+      "event_type": "EV_SW",
+      "event_type_code": 5,
+      "supported_events": {
+        "SW_LID": 0,
+        "SW_TABLET_MODE": 1,
+        "SW_HEADPHONE_INSERT": 2,
+        "SW_RFKILL_ALL": 3,
+        "SW_MICROPHONE_INSERT": 4,
+        "SW_DOCK": 5,
+        "SW_LINEOUT_INSERT": 6,
+        "SW_JACK_PHYSICAL_INS": 7,
+        "SW_VIDEOOUT_INSERT": 8,
+        "SW_CAMERA_LENS_COVER": 9,
+        "SW_KEYPAD_SLIDE": 10,
+        "SW_FRONT_PROXIMITY": 11,
+        "SW_ROTATE_LOCK": 12,
+        "SW_LINEIN_INSERT": 13,
+        "SW_MUTE_DEVICE": 14,
+        "SW_PEN_INSERTED": 15,
+        "SW_MACHINE_COVER": 16
+      }
+    }
+  ]
+}

@@ -15,23 +15,50 @@
 
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
 
+#include <vector>
+
+#include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
+#include "host/libs/config/cuttlefish_config.h"
+
 namespace cuttlefish {
 
-LogTeeCreator::LogTeeCreator(const CuttlefishConfig::InstanceSpecific& instance)
-    : instance_(instance) {}
-
-Result<Command> LogTeeCreator::CreateLogTee(Command& cmd,
-                                            const std::string& process_name) {
+namespace {
+Result<Command> CreateLogTeeImpl(
+    Command& cmd, const CuttlefishConfig::InstanceSpecific& instance,
+    std::string process_name,
+    const std::vector<Subprocess::StdIOChannel>& log_channels) {
   auto name_with_ext = process_name + "_logs.fifo";
-  auto logs_path = instance_.PerInstanceInternalPath(name_with_ext.c_str());
+  auto logs_path = instance.PerInstanceInternalPath(name_with_ext.c_str());
   auto logs = CF_EXPECT(SharedFD::Fifo(logs_path, 0666));
 
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, logs);
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);
+  for (const auto& channel : log_channels) {
+    cmd.RedirectStdIO(channel, logs);
+  }
 
   return Command(HostBinaryPath("log_tee"))
       .AddParameter("--process_name=", process_name)
       .AddParameter("--log_fd_in=", logs);
+}
+}  // namespace
+
+LogTeeCreator::LogTeeCreator(const CuttlefishConfig::InstanceSpecific& instance)
+    : instance_(instance) {}
+
+Result<Command> LogTeeCreator::CreateFullLogTee(Command& cmd,
+                                                std::string process_name) {
+  return CF_EXPECT(CreateLogTeeImpl(
+      cmd, instance_, std::move(process_name),
+      {Subprocess::StdIOChannel::kStdOut, Subprocess::StdIOChannel::kStdErr}));
+}
+
+Result<Command> LogTeeCreator::CreateLogTee(
+    Command& cmd, std::string process_name,
+    Subprocess::StdIOChannel log_channel) {
+  CF_EXPECT(log_channel != Subprocess::StdIOChannel::kStdIn,
+            "Invalid channel for log tee: stdin");
+  return CF_EXPECT(
+      CreateLogTeeImpl(cmd, instance_, std::move(process_name), {log_channel}));
 }
 
 }  // namespace cuttlefish

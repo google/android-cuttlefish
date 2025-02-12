@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-#include "host/libs/input_connector/full_duplex_fd_input_connection.h"
+#include "host/libs/input_connector/input_connection.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
-
-#include "host/libs/input_connector/input_connection.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
-FullDuplexFdInputConnection::FullDuplexFdInputConnection(SharedFD conn)
-    : conn_(conn) {}
+InputConnection::InputConnection(SharedFD conn) : conn_(conn) {}
 
-Result<void> FullDuplexFdInputConnection::WriteEvents(const void* data,
-                                                      size_t len) {
+Result<void> InputConnection::WriteEvents(const void* data, size_t len) {
   auto res = WriteAll(conn_, reinterpret_cast<const char*>(data), len);
-  CF_EXPECT(res == len, "Failed to write entire event buffer: wrote "
-                            << res << " of " << len << "bytes");
+  CF_EXPECTF(res == len,
+             "Failed to write entire event buffer: wrote {} of {} bytes", res,
+             len);
   return {};
 }
 
