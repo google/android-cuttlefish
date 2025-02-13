@@ -2,5 +2,6 @@
 	"x_res" : 1920,
 	"y_res" : 1080,
 	"dpi" : 213,
-	"memory_mb" : 2048
+	"memory_mb" : 2048,
+	"ranchu_composer_package" : "com.android.hardware.graphics.composer.tv.ranchu"
 }

@@ -1,0 +1,7 @@
+vndbinder_use(hal_mediaquality_default)
+
+allow hal_mediaquality_default self:netlink_kobject_uevent_socket { bind create read };
+
+allow hal_mediaquality_default kmsg_device:chr_file w_file_perms;
+
+dontaudit hal_mediaquality_default default_prop:file read;

@@ -1,0 +1,7 @@
+service vendor.hwcomposer-3 /vendor/bin/hw/android.hardware.graphics.composer3-service.tv.ranchu
+    class hal animation
+    user system
+    group graphics drmrpc
+    capabilities SYS_NICE
+    onrestart restart surfaceflinger
+    task_profiles ServiceCapacityLow
