@@ -42,6 +42,7 @@ struct GuestConfig {
   std::string ti50_emulator;
   std::optional<std::string> custom_keyboard_config;
   std::optional<std::string> domkey_mapping_config;
+  int output_audio_streams_count = 1;
 };
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults();
