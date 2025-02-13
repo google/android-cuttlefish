@@ -29,11 +29,11 @@ apex {
         // Set input_device.config_file.apex={apexname} sysprop
         "com.google.cf.input.config.rc",
         // Configs
-        "Crosvm_Virtio_Multitouch_Touchpad_0.idc",
-        "Crosvm_Virtio_Multitouch_Touchscreen_0.idc",
-        "Crosvm_Virtio_Multitouch_Touchscreen_1.idc",
-        "Crosvm_Virtio_Multitouch_Touchscreen_2.idc",
-        "Crosvm_Virtio_Multitouch_Touchscreen_3.idc",
+        "Cuttlefish_Vhost_User_Multitouch_Touchpad_0.idc",
+        "Cuttlefish_Vhost_User_Multitouch_Touchscreen_0.idc",
+        "Cuttlefish_Vhost_User_Multitouch_Touchscreen_1.idc",
+        "Cuttlefish_Vhost_User_Multitouch_Touchscreen_2.idc",
+        "Cuttlefish_Vhost_User_Multitouch_Touchscreen_3.idc",
         "Cuttlefish_Vhost_User_Rotary_0.idc",
     ],
 }
@@ -52,32 +52,32 @@ prebuilt_defaults {
 }
 
 prebuilt_etc {
-    name: "Crosvm_Virtio_Multitouch_Touchpad_0.idc",
-    src: "Crosvm_Virtio_Multitouch_Touchpad_0.idc",
+    name: "Cuttlefish_Vhost_User_Multitouch_Touchpad_0.idc",
+    src: "Cuttlefish_Vhost_User_Multitouch_Touchpad_0.idc",
     defaults: ["crosvm_idc_defaults"],
 }
 
 prebuilt_etc {
-    name: "Crosvm_Virtio_Multitouch_Touchscreen_0.idc",
-    src: "Crosvm_Virtio_Multitouch_Touchscreen_0.idc",
+    name: "Cuttlefish_Vhost_User_Multitouch_Touchscreen_0.idc",
+    src: "Cuttlefish_Vhost_User_Multitouch_Touchscreen_0.idc",
     defaults: ["crosvm_idc_defaults"],
 }
 
 prebuilt_etc {
-    name: "Crosvm_Virtio_Multitouch_Touchscreen_1.idc",
-    src: "Crosvm_Virtio_Multitouch_Touchscreen_1.idc",
+    name: "Cuttlefish_Vhost_User_Multitouch_Touchscreen_1.idc",
+    src: "Cuttlefish_Vhost_User_Multitouch_Touchscreen_1.idc",
     defaults: ["crosvm_idc_defaults"],
 }
 
 prebuilt_etc {
-    name: "Crosvm_Virtio_Multitouch_Touchscreen_2.idc",
-    src: "Crosvm_Virtio_Multitouch_Touchscreen_2.idc",
+    name: "Cuttlefish_Vhost_User_Multitouch_Touchscreen_2.idc",
+    src: "Cuttlefish_Vhost_User_Multitouch_Touchscreen_2.idc",
     defaults: ["crosvm_idc_defaults"],
 }
 
 prebuilt_etc {
-    name: "Crosvm_Virtio_Multitouch_Touchscreen_3.idc",
-    src: "Crosvm_Virtio_Multitouch_Touchscreen_3.idc",
+    name: "Cuttlefish_Vhost_User_Multitouch_Touchscreen_3.idc",
+    src: "Cuttlefish_Vhost_User_Multitouch_Touchscreen_3.idc",
     defaults: ["crosvm_idc_defaults"],
 }
 
