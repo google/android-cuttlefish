@@ -23,9 +23,6 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_vendor.mk)
 # If downstream target provides its own RILD, set TARGET_USES_CF_RILD := false
 TARGET_USES_CF_RILD ?= true
 ifeq ($(TARGET_USES_CF_RILD),true)
-    PRODUCT_VENDOR_PROPERTIES += \
-        ro.telephony.default_network=9
-
     PRODUCT_PACKAGES += com.google.cf.rild
 endif
 
