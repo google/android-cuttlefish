@@ -741,6 +741,17 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     auto res_ti50_emulator =
         GetAndroidInfoConfig(instance_android_info_txt, "ti50_emulator");
     guest_config.ti50_emulator = res_ti50_emulator.value_or("");
+    auto res_output_audio_streams_count = GetAndroidInfoConfig(
+        instance_android_info_txt, "output_audio_streams_count");
+    if (res_output_audio_streams_count.ok()) {
+      std::string output_audio_streams_count_str =
+          res_output_audio_streams_count.value();
+      CF_EXPECT(
+          android::base::ParseInt(output_audio_streams_count_str.c_str(),
+                                  &guest_config.output_audio_streams_count),
+          "Failed to parse value \"" << output_audio_streams_count_str
+                                     << "\" for output audio stream count");
+    }
 
     guest_configs.push_back(guest_config);
   }
@@ -1505,6 +1516,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_openthread_node_id(num);
 
     // end of wifi, bluetooth, Thread, connectivity setup
+
+    instance.set_audio_output_streams_count(
+        guest_configs[instance_index].output_audio_streams_count);
 
     if (vhost_user_vsock_vec[instance_index] == kVhostUserVsockModeAuto) {
       std::set<Arch> default_on_arch = {Arch::Arm64};
