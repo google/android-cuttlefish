@@ -4,6 +4,12 @@
       "name": "AndroidCarApiTest"
     },
     {
+      "name": "CarHiddenApiTest"
+    },
+    {
+      "name": "CarExtendedApiTest"
+    },
+    {
       "name": "CarSecurityPermissionTest"
     },
     {
