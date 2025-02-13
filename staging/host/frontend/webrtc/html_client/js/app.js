@@ -164,15 +164,6 @@ class DeviceControlApp {
     createToggleControl(
         document.getElementById('record_video_btn'),
         enabled => this.#onVideoCaptureToggle(enabled));
-    const audioElm = document.getElementById('device-audio');
-
-    let audioPlaybackCtrl = createToggleControl(
-        document.getElementById('volume_off_btn'),
-        enabled => this.#onAudioPlaybackToggle(enabled), !audioElm.paused);
-    // The audio element may start or stop playing at any time, this ensures the
-    // audio control always show the right state.
-    audioElm.onplay = () => audioPlaybackCtrl.Set(true);
-    audioElm.onpause = () => audioPlaybackCtrl.Set(false);
 
     // Enable non-ADB buttons, these buttons use data channels to communicate
     // with the host, so they're ready to go as soon as the webrtc connection is
@@ -182,6 +173,25 @@ class DeviceControlApp {
         .forEach(b => b.disabled = false);
 
     this.#showDeviceUI();
+  }
+
+  #addAudioStream(stream_id, audioPlaybackCtrl) {
+    const audioId = `device-${stream_id}`;
+    if (document.getElementById(audioId)) {
+      console.warning(`Audio element with ID ${audioId} exists`);
+      return;
+    }
+    const deviceConnection = document.getElementById('device-connection');
+    const audioElm = document.createElement('audio');
+    audioElm.id = audioId;
+    audioElm.classList.add('device-audio');
+    deviceConnection.appendChild(audioElm);
+
+    // The audio element may start or stop playing at any time, this ensures the
+    // audio control always show the right state.
+    audioElm.onplay = () => audioPlaybackCtrl.Set(true);
+    audioElm.onpause = () => audioPlaybackCtrl.Set(false);
+    deviceConnection.appendChild(audioElm);
   }
 
   #showDeviceUI() {
@@ -350,11 +360,18 @@ class DeviceControlApp {
     this.#deviceConnection.onStreamChange(stream => this.#onStreamChange(stream));
 
     // Set up audio
-    const deviceAudio = document.getElementById('device-audio');
+    let audioPlaybackCtrl = createToggleControl(
+        document.getElementById('volume_off_btn'),
+        enabled => this.#onAudioPlaybackToggle(enabled));
     for (const audio_desc of this.#deviceConnection.description.audio_streams) {
       let stream_id = audio_desc.stream_id;
+      this.#addAudioStream(stream_id, audioPlaybackCtrl);
       this.#deviceConnection.onStream(stream_id)
           .then(stream => {
+            const deviceAudio = document.getElementById(`device-${stream_id}`);
+            if (!deviceAudio) {
+              throw `Element with id device-${stream_id} not found`;
+            }
             deviceAudio.srcObject = stream;
             deviceAudio.play();
           })
@@ -1127,11 +1144,14 @@ class DeviceControlApp {
   }
 
   #onAudioPlaybackToggle(enabled) {
-    const audioElem = document.getElementById('device-audio');
-    if (enabled) {
-      audioElem.play();
-    } else {
-      audioElem.pause();
+    const audioElements = document.getElementsByClassName('device-audio');
+    for (let i = 0; i < audioElements.length; i++) {
+      const audioElem = audioElements[i];
+      if (enabled) {
+        audioElem.play();
+      } else {
+        audioElem.pause();
+      }
     }
   }
 

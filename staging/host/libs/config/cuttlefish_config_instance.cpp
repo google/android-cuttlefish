@@ -1950,6 +1950,15 @@ bool CuttlefishConfig::InstanceSpecific::start_vhal_proxy_server() const {
   return (*Dictionary())[kStartVhalProxyServer].asBool();
 }
 
+static constexpr char kAudioOutputStreamsCount[] = "audio_output_streams_count";
+void CuttlefishConfig::MutableInstanceSpecific::set_audio_output_streams_count(
+    int count) {
+  (*Dictionary())[kAudioOutputStreamsCount] = count;
+}
+int CuttlefishConfig::InstanceSpecific::audio_output_streams_count() const {
+  return (*Dictionary())[kAudioOutputStreamsCount].asInt();
+}
+
 std::string CuttlefishConfig::InstanceSpecific::factory_reset_protected_path() const {
   return PerInstanceInternalPath("factory_reset_protected.img");
 }
