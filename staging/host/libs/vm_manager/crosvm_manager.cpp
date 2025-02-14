@@ -143,6 +143,11 @@ CrosvmManager::ConfigureGraphics(
     return CF_ERR("Unknown GPU mode " << instance.gpu_mode());
   }
 
+  if (auto r = instance.guest_hwui_renderer();
+      r != GuestHwuiRenderer::kUnknown) {
+    bootconfig_args["androidboot.hardware.guest_hwui_renderer"] = ToString(r);
+  }
+
   if (!instance.gpu_angle_feature_overrides_enabled().empty()) {
     bootconfig_args["androidboot.hardware.angle_feature_overrides_enabled"] =
         instance.gpu_angle_feature_overrides_enabled();
