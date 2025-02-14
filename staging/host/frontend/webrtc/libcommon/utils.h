@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <map>
 #include <memory>
 #include <vector>
 
@@ -28,13 +27,6 @@
 
 namespace cuttlefish {
 namespace webrtc_streaming {
-
-// Helper method to ensure a json object has the required fields convertible
-// to the appropriate types.
-Result<void> ValidateJsonObject(
-    const Json::Value& obj, const std::string& type,
-    const std::map<std::string, Json::ValueType>& required_fields,
-    const std::map<std::string, Json::ValueType>& optional_fields = {});
 
 // Parses a session description object from a JSON message.
 Result<std::unique_ptr<webrtc::SessionDescriptionInterface>>
