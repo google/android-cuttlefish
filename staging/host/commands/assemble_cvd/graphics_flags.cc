@@ -559,7 +559,8 @@ Result<std::string> ConfigureGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
     const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
     const std::string& gpu_renderer_features_arg,
-    std::string& gpu_context_types_arg, VmmMode vmm,
+    std::string& gpu_context_types_arg,
+    const std::string& guest_hwui_renderer_arg, VmmMode vmm,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
 #ifdef __APPLE__
@@ -614,6 +615,15 @@ Result<std::string> ConfigureGpuSettings(
   } else {
     instance.set_enable_gpu_external_blob(false);
     instance.set_enable_gpu_system_blob(false);
+  }
+
+  if (!guest_hwui_renderer_arg.empty()) {
+    const GuestHwuiRenderer hwui_renderer = CF_EXPECT(
+        ParseGuestHwuiRenderer(guest_hwui_renderer_arg),
+        "Failed to parse HWUI renderer flag: " << guest_hwui_renderer_arg);
+    if (hwui_renderer != GuestHwuiRenderer::kUnknown) {
+      instance.set_guest_hwui_renderer(hwui_renderer);
+    }
   }
 
   instance.set_gpu_mode(gpu_mode);

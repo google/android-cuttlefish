@@ -143,6 +143,7 @@
 #define CF_DEFAULTS_GPU_RENDERER_FEATURES ""
 #define CF_DEFAULTS_GPU_CONTEXT_TYPES \
   "gfxstream-vulkan:cross-domain:gfxstream-composer"
+#define CF_DEFAULTS_GUEST_HWUI_RENDERER ""
 #define CF_DEFAULTS_GUEST_VULKAN_DRIVER "ranchu"
 #define CF_DEFAULTS_FRAME_SOCKET_PATH ""
 #define CF_DEFAULTS_ENABLE_GPU_UDMABUF false
