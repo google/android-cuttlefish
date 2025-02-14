@@ -1,11 +1,11 @@
 supDomain: DeviceForProductStrategies
-	supDomain: OemTrafficAnouncement
+	supDomain: OemTrafficAnnouncement
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS01_NAV_GUIDANCE_CARD_0_DEV_1
 
-				/Policy/policy/product_strategies/vx_1000/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1000/device_address = BUS01_NAV_GUIDANCE_CARD_0_DEV_1
 				component: /Policy/policy/product_strategies/vx_1000/selected_output_devices/mask
 					bus = 1
 
@@ -17,12 +17,12 @@ supDomain: DeviceForProductStrategies
 	supDomain: OemIpa
 		domain: Calibration
 			conf: calibration
-				/Policy/policy/product_strategies/vx_1001/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1001/device_address = BUS01_NAV_GUIDANCE_CARD_0_DEV_1
 
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS01_NAV_GUIDANCE_CARD_0_DEV_1
 
 				component: /Policy/policy/product_strategies/vx_1001/selected_output_devices/mask
 					bus = 1
@@ -34,12 +34,12 @@ supDomain: DeviceForProductStrategies
 	supDomain: OemXCall
 		domain: Calibration
 			conf: calibration
-				/Policy/policy/product_strategies/vx_1002/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1002/device_address = BUS03_PHONE_CARD_0_DEV_3
 
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS03_PHONE_CARD_0_DEV_3
 
 				component: /Policy/policy/product_strategies/vx_1002/selected_output_devices/mask
 					bus = 1
@@ -51,12 +51,12 @@ supDomain: DeviceForProductStrategies
 	supDomain: 3rdPartyAlternate
 		domain: Calibration
 			conf: calibration
-				/Policy/policy/product_strategies/vx_1003/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1003/device_address = BUS02_NOTIFICATION_CARD_0_DEV_2
 
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS02_NOTIFICATION_CARD_0_DEV_2
 
 				component: /Policy/policy/product_strategies/vx_1003/selected_output_devices/mask
 					bus = 1
@@ -68,12 +68,12 @@ supDomain: DeviceForProductStrategies
 	supDomain: 3rdPartyAuxiliary
 		domain: Calibration
 			conf: calibration
-				/Policy/policy/product_strategies/vx_1004/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1004/device_address = BUS04_ASSISTANT_CARD_0_DEV_4
 
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS04_ASSISTANT_CARD_0_DEV_4
 
 				component: /Policy/policy/product_strategies/vx_1004/selected_output_devices/mask
 					bus = 1
@@ -85,12 +85,12 @@ supDomain: DeviceForProductStrategies
 	supDomain: 3rdPartyAlert
 		domain: Calibration
 			conf: calibration
-				/Policy/policy/product_strategies/vx_1005/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1005/device_address = BUS03_PHONE_CARD_0_DEV_3
 
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS03_PHONE_CARD_0_DEV_3
 
 				component: /Policy/policy/product_strategies/vx_1005/selected_output_devices/mask
 					bus = 1
@@ -102,12 +102,12 @@ supDomain: DeviceForProductStrategies
 	supDomain: VoiceCommand
 		domain: Calibration
 			conf: calibration
-				/Policy/policy/product_strategies/vx_1006/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1006/device_address = BUS04_ASSISTANT_CARD_0_DEV_4
 
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS04_ASSISTANT_CARD_0_DEV_4
 
 				component: /Policy/policy/product_strategies/vx_1006/selected_output_devices/mask
 					bus = 1
@@ -149,12 +149,12 @@ supDomain: DeviceForProductStrategies
 	supDomain: NavGuidance
 		domain: Calibration
 			conf: calibration
-				/Policy/policy/product_strategies/vx_1009/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1009/device_address = BUS01_NAV_GUIDANCE_CARD_0_DEV_1
 
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS01_NAV_GUIDANCE_CARD_0_DEV_1
 
 				component: /Policy/policy/product_strategies/vx_1009/selected_output_devices/mask
 					bus = 1
@@ -176,9 +176,9 @@ supDomain: DeviceForProductStrategies
 
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS03_PHONE_CARD_0_DEV_3
 
-				/Policy/policy/product_strategies/vx_1007/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1007/device_address = BUS03_PHONE_CARD_0_DEV_3
 				component: /Policy/policy/product_strategies/vx_1007/selected_output_devices/mask
 					bus = 1
 					bluetooth_sco = 0
@@ -191,12 +191,12 @@ supDomain: DeviceForProductStrategies
 	supDomain: Alarm
 		domain: Calibration
 			conf: calibration
-				/Policy/policy/product_strategies/vx_1010/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1010/device_address = BUS03_PHONE_CARD_0_DEV_3
 
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS03_PHONE_CARD_0_DEV_3
 
 				component: /Policy/policy/product_strategies/vx_1010/selected_output_devices/mask
 					bus = 1
@@ -209,12 +209,12 @@ supDomain: DeviceForProductStrategies
 	supDomain: Ring
 		domain: Calibration
 			conf: calibration
-				/Policy/policy/product_strategies/vx_1011/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1011/device_address = BUS03_PHONE_CARD_0_DEV_3
 
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS03_PHONE_CARD_0_DEV_3
 
 				component: /Policy/policy/product_strategies/vx_1011/selected_output_devices/mask
 					bus = 1
@@ -227,12 +227,12 @@ supDomain: DeviceForProductStrategies
 	supDomain: Notification
 		domain: Calibration
 			conf: calibration
-				/Policy/policy/product_strategies/vx_1012/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1012/device_address = BUS05_SYSTEM_CARD_0_DEV_5
 
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS05_SYSTEM_CARD_0_DEV_5
 
 				component: /Policy/policy/product_strategies/vx_1012/selected_output_devices/mask
 					bus = 1
@@ -244,12 +244,12 @@ supDomain: DeviceForProductStrategies
 	supDomain: System
 		domain: Calibration
 			conf: calibration
-				/Policy/policy/product_strategies/vx_1013/device_address = BUS00_MEDIA_CARD_0_DEV_0
+				/Policy/policy/product_strategies/vx_1013/device_address = BUS05_SYSTEM_CARD_0_DEV_5
 
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS
-				AvailableOutputDevicesAddresses Includes BUS00_MEDIA_CARD_0_DEV_0
+				AvailableOutputDevicesAddresses Includes BUS05_SYSTEM_CARD_0_DEV_5
 
 				component: /Policy/policy/product_strategies/vx_1013/selected_output_devices/mask
 					bus = 1

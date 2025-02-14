@@ -34,9 +34,17 @@
             <activationVolumeConfigEntry minActivationVolumePercentage="20"
                 maxActivationVolumePercentage="90" invocationType="onPlaybackChanged" />
         </activationVolumeConfig>
+        <activationVolumeConfig name="activation_volume_on_source_changed_config">
+            <activationVolumeConfigEntry minActivationVolumePercentage="20"
+                maxActivationVolumePercentage="80" invocationType="onSourceChanged" />
+        </activationVolumeConfig>
+        <activationVolumeConfig name="activation_volume_on_playback_changed_config">
+            <activationVolumeConfigEntry minActivationVolumePercentage="20"
+                maxActivationVolumePercentage="80" />
+        </activationVolumeConfig>
     </activationVolumeConfigs>
     <oemContexts>
-        <oemContext name="oem_traffic_anouncement">
+        <oemContext name="oem_traffic_announcement">
             <audioAttributes>
                 <usage value="AUDIO_USAGE_ANNOUNCEMENT" />
                 <audioAttribute usage="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE"
@@ -135,14 +143,32 @@
                         <group name="entertainment" activationConfig="activation_volume_on_boot_config">
                             <device address="BUS00_MEDIA_CARD_0_DEV_0">
                                 <context context="music"/>
+                            </device>
+                        </group>
+                        <group name="navvol" activationConfig="activation_volume_on_source_changed_config">
+                            <device address="BUS01_NAV_GUIDANCE_CARD_0_DEV_1">
                                 <context context="nav_guidance"/>
                                 <context context="oem_ipa"/>
-                                <context context="oem_traffic_anouncement"/>
+                                <context context="oem_traffic_announcement"/>
+                            </device>
+                            <device address="BUS02_NOTIFICATION_CARD_0_DEV_2">
                                 <context context="third_party_alternate"/>
+                            </device>
+                        </group>
+                        <group name="sdsvol" activationConfig="activation_volume_on_playback_changed_config">
+                            <device address="BUS04_ASSISTANT_CARD_0_DEV_4">
                                 <context context="voice_command"/>
                                 <context context="third_party_auxiliary"/>
+                            </device>
+                        </group>
+                        <group name="system" activationConfig="activation_volume_on_source_changed_config">
+                            <device address="BUS05_SYSTEM_CARD_0_DEV_5">
                                 <context context="system"/>
                                 <context context="notification"/>
+                            </device>
+                        </group>
+                        <group name="telringvol" activationConfig="activation_volume_on_playback_changed_config">
+                            <device address="BUS03_PHONE_CARD_0_DEV_3">
                                 <context context="voice_call"/>
                                 <context context="oem_xcall"/>
                                 <context context="ring"/>
