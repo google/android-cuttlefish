@@ -1,5 +1,5 @@
 supDomain: DeviceForProductStrategies
-	supDomain: OemTrafficAnouncement
+	supDomain: OemTrafficAnnouncement
 		domain: SelectedDevice
 			conf: Bus
 				AvailableOutputDevices Includes BUS

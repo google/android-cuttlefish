@@ -15,7 +15,7 @@
 -->
 
 <ProductStrategies>
-    <ProductStrategy name="oem_traffic_anouncement" id="1000">
+    <ProductStrategy name="oem_traffic_announcement" id="1000">
         <AttributesGroup volumeGroup="navvol">
             <Attributes>
                 <Usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE"/>
