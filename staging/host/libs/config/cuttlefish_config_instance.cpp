@@ -94,6 +94,33 @@ Result<VmmMode> ParseVmm(std::string_view str) {
   }
 }
 
+std::ostream& operator<<(std::ostream& out, GuestHwuiRenderer renderer) {
+  return out << ToString(renderer);
+}
+
+std::string ToString(GuestHwuiRenderer renderer) {
+  switch (renderer) {
+    case GuestHwuiRenderer::kUnknown:
+      return "unknown";
+    case GuestHwuiRenderer::kSkiaGl:
+      return "skiagl";
+    case GuestHwuiRenderer::kSkiaVk:
+      return "skiavk";
+  }
+}
+
+Result<GuestHwuiRenderer> ParseGuestHwuiRenderer(std::string_view str) {
+  if (android::base::EqualsIgnoreCase(str, "unknown")) {
+    return GuestHwuiRenderer::kUnknown;
+  } else if (android::base::EqualsIgnoreCase(str, "skiagl")) {
+    return GuestHwuiRenderer::kSkiaGl;
+  } else if (android::base::EqualsIgnoreCase(str, "skiavk")) {
+    return GuestHwuiRenderer::kSkiaVk;
+  } else {
+    return CF_ERRF("\"{}\" is not a valid HWUI renderer.", str);
+  }
+}
+
 static constexpr char kInstanceDir[] = "instance_dir";
 CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
     CuttlefishConfig* config, const std::string& id)
@@ -814,6 +841,17 @@ std::string CuttlefishConfig::InstanceSpecific::gpu_context_types() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_gpu_context_types(
     const std::string& context_types) {
   (*Dictionary())[kGpuContextTypes] = context_types;
+}
+
+static constexpr char kGuestHwuiRenderer[] = "guest_hwui_renderer";
+GuestHwuiRenderer CuttlefishConfig::InstanceSpecific::guest_hwui_renderer()
+    const {
+  auto str = (*Dictionary())[kGuestHwuiRenderer].asString();
+  return ParseGuestHwuiRenderer(str).value_or(GuestHwuiRenderer::kUnknown);
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_guest_hwui_renderer(
+    GuestHwuiRenderer renderer) {
+  (*Dictionary())[kGuestHwuiRenderer] = ToString(renderer);
 }
 
 static constexpr char kVulkanDriver[] = "guest_vulkan_driver";
