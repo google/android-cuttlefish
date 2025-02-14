@@ -36,7 +36,7 @@
         </activationVolumeConfig>
     </activationVolumeConfigs>
     <oemContexts>
-        <oemContext name="oem_traffic_anouncement">
+        <oemContext name="oem_traffic_announcement">
             <audioAttributes>
                 <usage value="AUDIO_USAGE_ANNOUNCEMENT" />
                 <audioAttribute usage="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE"
@@ -137,7 +137,7 @@
                                 <context context="music"/>
                                 <context context="nav_guidance"/>
                                 <context context="oem_ipa"/>
-                                <context context="oem_traffic_anouncement"/>
+                                <context context="oem_traffic_announcement"/>
                                 <context context="third_party_alternate"/>
                                 <context context="voice_command"/>
                                 <context context="third_party_auxiliary"/>
