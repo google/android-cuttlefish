@@ -50,9 +50,9 @@ class ConnectionObserver {
   virtual Result<void> OnTouchEvent(const std::string& device_label, int x,
                                     int y, bool down) = 0;
   virtual Result<void> OnMultiTouchEvent(const std::string& label,
-                                         Json::Value id, Json::Value slot,
-                                         Json::Value x, Json::Value y,
-                                         bool down, int size) = 0;
+                                         Json::Value id, Json::Value x,
+                                         Json::Value y, bool down,
+                                         int size) = 0;
 
   virtual Result<void> OnKeyboardEvent(uint16_t keycode, bool down) = 0;
 

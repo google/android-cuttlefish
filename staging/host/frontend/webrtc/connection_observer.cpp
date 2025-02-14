@@ -107,9 +107,8 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   }
 
   Result<void> OnMultiTouchEvent(const std::string &device_label,
-                                 Json::Value id, Json::Value slot,
-                                 Json::Value x, Json::Value y, bool down,
-                                 int size) {
+                                 Json::Value id, Json::Value x, Json::Value y,
+                                 bool down, int size) {
     std::vector<MultitouchSlot> slots(size);
     for (int i = 0; i < size; i++) {
       slots[i].id = id[i].asInt();
@@ -222,7 +221,8 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnSensorsChannelOpen(std::function<bool(const uint8_t *, size_t)>
                                 sensors_message_sender) override {
-    sensors_subscription_id = sensors_handler_->Subscribe(sensors_message_sender);
+    sensors_subscription_id =
+        sensors_handler_->Subscribe(sensors_message_sender);
     LOG(VERBOSE) << "Sensors channel open";
   }
 
@@ -235,7 +235,8 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     std::vector<std::string> xyz = android::base::Split(msgstr, " ");
 
     if (xyz.size() != 3) {
-      LOG(WARNING) << "Invalid rotation angles: Expected 3, received " << xyz.size();
+      LOG(WARNING) << "Invalid rotation angles: Expected 3, received "
+                   << xyz.size();
       return;
     }
 
