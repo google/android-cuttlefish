@@ -117,6 +117,9 @@ type HostOrchestratorService interface {
 	// Stop the device.
 	Stop(groupName, instanceName string) error
 
+	// Press power button.
+	Powerbtn(groupName, instanceName string) error
+
 	// Start the device.
 	Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error
 
@@ -404,6 +407,12 @@ func (c *HostOrchestratorServiceImpl) ListCVDs() ([]*hoapi.CVD, error) {
 
 func (c *HostOrchestratorServiceImpl) Powerwash(groupName, instanceName string) error {
 	path := fmt.Sprintf("/cvds/%s/%s/:powerwash", groupName, instanceName)
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
+	return c.doEmptyResponseRequest(rb)
+}
+
+func (c *HostOrchestratorServiceImpl) Powerbtn(groupName, instanceName string) error {
+	path := fmt.Sprintf("/cvds/%s/%s/:powerbtn", groupName, instanceName)
 	rb := c.HTTPHelper.NewPostRequest(path, nil)
 	return c.doEmptyResponseRequest(rb)
 }
