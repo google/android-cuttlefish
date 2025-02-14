@@ -14,3 +14,4 @@ on early-init
     setprop ro.opengles.version ${ro.boot.opengles.version}
     setprop debug.angle.feature_overrides_enabled ${ro.boot.hardware.angle_feature_overrides_enabled}
     setprop debug.angle.feature_overrides_disabled ${ro.boot.hardware.angle_feature_overrides_disabled}
+    setprop debug.hwui.renderer ${ro.boot.hardware.guest_hwui_renderer}
