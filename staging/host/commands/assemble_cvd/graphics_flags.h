@@ -34,7 +34,8 @@ Result<std::string> ConfigureGpuSettings(
     const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
     const std::string& gpu_renderer_features_arg,
     std::string& gpu_context_types_arg,
-    const std::string& gpu_hwui_renderer_arg, VmmMode vmm,
+    const std::string& gpu_hwui_renderer_arg,
+    const std::string& guest_renderer_preload_arg, VmmMode vmm,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance);
 
