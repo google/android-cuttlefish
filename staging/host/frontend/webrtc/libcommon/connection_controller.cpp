@@ -16,12 +16,11 @@
 
 #include "host/frontend/webrtc/libcommon/connection_controller.h"
 
-#include <algorithm>
 #include <vector>
 
 #include <android-base/logging.h>
 
-#include "host/frontend/webrtc/libcommon/audio_device.h"
+#include "common/libs/utils/json.h"
 #include "host/frontend/webrtc/libcommon/utils.h"
 
 namespace cuttlefish {
@@ -225,7 +224,8 @@ void ConnectionController::OnSetRemoteDescriptionComplete(
     const webrtc::RTCError& error) {
   if (!error.ok()) {
     // The remote description was rejected, can't connect to device.
-    FailConnection(ToString(error.type()) + std::string(": ") + error.message());
+    FailConnection(ToString(error.type()) + std::string(": ") +
+                   error.message());
     return;
   }
   AddPendingIceCandidates();
@@ -268,9 +268,8 @@ void ConnectionController::HandleSignalingMessage(const Json::Value& msg) {
 
 Result<void> ConnectionController::HandleSignalingMessageInner(
     const Json::Value& message) {
-  CF_EXPECT(ValidateJsonObject(message, "",
-                               {{"type", Json::ValueType::stringValue}}));
-  auto type = message["type"].asString();
+  auto type = CF_EXPECT(GetValue<std::string>(message, {"type"}),
+                        "Failed to get signaling message type");
 
   if (type == "request-offer") {
     auto ice_servers = CF_EXPECT(ParseIceServersMessage(message),
@@ -452,4 +451,3 @@ void ConnectionController::OnRemoveTrack(
 
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish
-

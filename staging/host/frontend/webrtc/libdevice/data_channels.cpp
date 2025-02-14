@@ -18,6 +18,7 @@
 
 #include <android-base/logging.h>
 
+#include "common/libs/utils/json.h"
 #include "host/frontend/webrtc/libcommon/utils.h"
 #include "host/frontend/webrtc/libdevice/keyboard.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -56,6 +57,7 @@ class DataChannelHandler : public webrtc::DataChannelObserver {
   std::function<bool(const Json::Value &)> GetJSONSender() {
     return [this](const Json::Value &msg) { return Send(msg); };
   }
+
  private:
   bool first_msg_received_ = false;
 };
@@ -93,72 +95,69 @@ class InputChannelHandler : public DataChannelHandler {
                "Received invalid JSON object over control channel: '{}'",
                error_message);
 
-    CF_EXPECTF(evt.isMember("type") && evt["type"].isString(),
-               "Input event doesn't have a valid 'type' field: ",
-               evt.toStyledString());
-    auto event_type = evt["type"].asString();
+    auto event_type = CF_EXPECT(GetValue<std::string>(evt, {"type"}),
+                                "Failed to get property 'type' from message");
+    auto get_or_err = [&event_type,
+                       &evt]<typename T>(const std::string &prop) -> Result<T> {
+      return CF_EXPECTF(GetValue<T>(evt, {prop}),
+                        "Failed to get property '{}' from '{}' message", prop,
+                        event_type);
+    };
+    auto get_int = [get_or_err](auto prop) -> Result<int> {
+      return get_or_err.operator()<int>(prop);
+    };
+    auto get_str = [get_or_err](auto prop) -> Result<std::string> {
+      return get_or_err.operator()<std::string>(prop);
+    };
+    auto get_arr = [get_or_err, &event_type](
+                              const std::string &prop) -> Result<Json::Value> {
+      Json::Value arr = CF_EXPECT(get_or_err.operator()<Json::Value>(prop));
+      CF_EXPECTF(arr.isArray(), "Property '{}' of '{}' message is not an array",
+                 prop, event_type);
+      return arr;
+    };
 
     if (event_type == "mouseMove") {
-      CF_EXPECT(ValidateJsonObject(evt, "mouseMove",
-                                   {{"x", Json::ValueType::intValue},
-                                    {"y", Json::ValueType::intValue}}));
-      int32_t x = evt["x"].asInt();
-      int32_t y = evt["y"].asInt();
+      int32_t x = CF_EXPECT(get_int("x"));
+      int32_t y = CF_EXPECT(get_int("y"));
 
       CF_EXPECT(observer()->OnMouseMoveEvent(x, y));
     } else if (event_type == "mouseButton") {
-      CF_EXPECT(ValidateJsonObject(evt, "mouseButton",
-                                   {{"button", Json::ValueType::intValue},
-                                    {"down", Json::ValueType::intValue}}));
-      int32_t button = evt["button"].asInt();
-      int32_t down = evt["down"].asInt();
+      int32_t button = CF_EXPECT(get_int("button"));
+      int32_t down = CF_EXPECT(get_int("down"));
 
       CF_EXPECT(observer()->OnMouseButtonEvent(button, down));
     } else if (event_type == "mouseWheel") {
-      CF_EXPECT(ValidateJsonObject(evt, "mouseWheel",
-                                   {{"pixels", Json::ValueType::intValue}}));
-      auto pixels = evt["pixels"].asInt();
+      int pixels = CF_EXPECT(get_int("pixels"));
+
       CF_EXPECT(observer()->OnMouseWheelEvent(pixels));
     } else if (event_type == "multi-touch") {
+      std::string label = CF_EXPECT(get_str("device_label"));
+      auto idArr = CF_EXPECT(get_arr("id"));
+      int32_t down = CF_EXPECT(get_int("down"));
+      auto xArr = CF_EXPECT(get_arr("x"));
+      auto yArr = CF_EXPECT(get_arr("y"));
+      int size = idArr.size();
+
       CF_EXPECT(
-          ValidateJsonObject(evt, "multi-touch",
-                             {{"id", Json::ValueType::arrayValue},
-                              {"down", Json::ValueType::intValue},
-                              {"x", Json::ValueType::arrayValue},
-                              {"y", Json::ValueType::arrayValue},
-                              {"device_label", Json::ValueType::stringValue}}));
-
-      auto label = evt["device_label"].asString();
-      auto idArr = evt["id"];
-      int32_t down = evt["down"].asInt();
-      auto xArr = evt["x"];
-      auto yArr = evt["y"];
-      auto slotArr = evt["slot"];
-      int size = evt["id"].size();
-
-      CF_EXPECT(observer()->OnMultiTouchEvent(label, idArr, slotArr, xArr, yArr,
-                                              down, size));
+          observer()->OnMultiTouchEvent(label, idArr, xArr, yArr, down, size));
     } else if (event_type == "keyboard") {
-      CF_EXPECT(
-          ValidateJsonObject(evt, "keyboard",
-                             {{"event_type", Json::ValueType::stringValue},
-                              {"keycode", Json::ValueType::stringValue}}));
       auto cvd_config =
           CF_EXPECT(CuttlefishConfig::Get(), "CuttlefishConfig is null!");
       auto instance = cvd_config->ForDefaultInstance();
       Json::Value domkey_mapping_config_json = instance.domkey_mapping_config();
-      auto down = evt["event_type"].asString() == std::string("keydown");
-      auto keycode = evt["keycode"].asString();
+      bool down = CF_EXPECT(get_str("event_type")) == std::string("keydown");
+      std::string keycode = CF_EXPECT(get_str("keycode"));
       uint16_t code = DomKeyCodeToLinux(keycode);
       if (domkey_mapping_config_json.isMember("mappings") &&
           domkey_mapping_config_json["mappings"].isMember(keycode)) {
         code = domkey_mapping_config_json["mappings"][keycode].asUInt();
       }
+
       CF_EXPECT(observer()->OnKeyboardEvent(code, down));
     } else if (event_type == "wheel") {
-      CF_EXPECT(ValidateJsonObject(evt, "wheel",
-                                   {{"pixels", Json::ValueType::intValue}}));
-      auto pixels = evt["pixels"].asInt();
+      int pixels = CF_EXPECT(get_int("pixels"));
+
       CF_EXPECT(observer()->OnRotaryWheelEvent(pixels));
     } else {
       return CF_ERRF("Unrecognized event type: '{}'", event_type);
@@ -187,24 +186,18 @@ class ControlChannelHandler : public DataChannelHandler {
         "Received invalid JSON object over control channel: '{}'",
         error_message);
 
-    CF_EXPECT(ValidateJsonObject(
-        evt, "command",
-        /*required_fields=*/{{"command", Json::ValueType::stringValue}},
-        /*optional_fields=*/
-        {
-            {"button_state", Json::ValueType::stringValue},
-            {"lid_switch_open", Json::ValueType::booleanValue},
-            {"hinge_angle_value", Json::ValueType::intValue},
-        }));
-    auto command = evt["command"].asString();
+    auto command =
+        CF_EXPECT(GetValue<std::string>(evt, {"command"}),
+                  "Failed to access 'command' property on control message");
 
     if (command == "device_state") {
       if (evt.isMember("lid_switch_open")) {
-        CF_EXPECT(
-            observer()->OnLidStateChange(evt["lid_switch_open"].asBool()));
+        CF_EXPECT(observer()->OnLidStateChange(
+            CF_EXPECT(GetValue<bool>(evt, {"lid_switch_open"}))));
       }
       if (evt.isMember("hinge_angle_value")) {
-        observer()->OnHingeAngleChange(evt["hinge_angle_value"].asInt());
+        observer()->OnHingeAngleChange(
+            CF_EXPECT(GetValue<int>(evt, {"hinge_angle_value"})));
       }
       return {};
     } else if (command.rfind("camera_", 0) == 0) {
@@ -215,9 +208,12 @@ class ControlChannelHandler : public DataChannelHandler {
       return {};
     }
 
-    auto button_state = evt["button_state"].asString();
+    auto button_state =
+        CF_EXPECT(GetValue<std::string>(evt, {"button_state"}),
+                  "Failed to get 'button_state' property of control message");
     LOG(VERBOSE) << "Control command: " << command << " (" << button_state
                  << ")";
+
     if (command == "power") {
       CF_EXPECT(observer()->OnPowerButton(button_state == "down"));
     } else if (command == "back") {
@@ -289,7 +285,9 @@ class CameraChannelHandler : public DataChannelHandler {
 // TODO(b/297361564)
 class SensorsChannelHandler : public DataChannelHandler {
  public:
-  void OnFirstMessage() override { observer()->OnSensorsChannelOpen(GetBinarySender()); }
+  void OnFirstMessage() override {
+    observer()->OnSensorsChannelOpen(GetBinarySender());
+  }
   Result<void> OnMessageInner(const webrtc::DataBuffer &msg) override {
     if (!first_msg_received_) {
       first_msg_received_ = true;
@@ -299,7 +297,8 @@ class SensorsChannelHandler : public DataChannelHandler {
     return {};
   }
 
-  void OnStateChangeInner(webrtc::DataChannelInterface::DataState state) override {
+  void OnStateChangeInner(
+      webrtc::DataChannelInterface::DataState state) override {
     if (state == webrtc::DataChannelInterface::kClosed) {
       observer()->OnSensorsChannelClosed();
     }
@@ -474,8 +473,8 @@ void DataChannelHandlers::OnDataChannelOpen(
     gpx_location_.reset(new DataChannelHandlerImpl<GpxLocationChannelHandler>(
         channel, observer_));
   } else if (label == kSensorsDataChannelLabel) {
-    sensors_.reset(new DataChannelHandlerImpl<SensorsChannelHandler>(
-        channel, observer_));
+    sensors_.reset(
+        new DataChannelHandlerImpl<SensorsChannelHandler>(channel, observer_));
   } else {
     unknown_channels_.emplace_back(
         new DataChannelHandlerImpl<UnknownChannelHandler>(channel, observer_));

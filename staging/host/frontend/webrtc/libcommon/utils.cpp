@@ -17,36 +17,15 @@
 #include "host/frontend/webrtc/libcommon/utils.h"
 
 #include <functional>
-#include <map>
 
 #include <json/json.h>
+
+#include "common/libs/utils/json.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
 
 namespace {
-
-Result<void> ValidateField(const Json::Value& obj, const std::string& type,
-                           const std::string& field_name,
-                           const Json::ValueType& field_type, bool required) {
-  CF_EXPECT(obj.isObject(), "Expected object with name-value pairs");
-  if (!obj.isMember(field_name) && !required) {
-    return {};
-  }
-  if (!(obj.isMember(field_name) &&
-        obj[field_name].isConvertibleTo(field_type))) {
-    std::string error_msg = "Expected a field named '";
-    error_msg += field_name + "' of type '";
-    error_msg += std::to_string(field_type);
-    error_msg += "'";
-    if (!type.empty()) {
-      error_msg += " in message of type '" + type + "'";
-    }
-    error_msg += ".";
-    return CF_ERR(error_msg);
-  }
-  return {};
-}
 
 template <typename T>
 Json::Value ToArray(const std::vector<T>& vec,
@@ -60,27 +39,11 @@ Json::Value ToArray(const std::vector<T>& vec,
 
 }  // namespace
 
-Result<void> ValidateJsonObject(
-    const Json::Value& obj, const std::string& type,
-    const std::map<std::string, Json::ValueType>& required_fields,
-    const std::map<std::string, Json::ValueType>& optional_fields) {
-  for (const auto& field_spec : required_fields) {
-    CF_EXPECT(
-        ValidateField(obj, type, field_spec.first, field_spec.second, true));
-  }
-  for (const auto& field_spec : optional_fields) {
-    CF_EXPECT(
-        ValidateField(obj, type, field_spec.first, field_spec.second, false));
-  }
-  return {};
-}
-
 Result<std::unique_ptr<webrtc::SessionDescriptionInterface>>
 ParseSessionDescription(const std::string& type, const Json::Value& message,
                         webrtc::SdpType sdp_type) {
-  CF_EXPECT(ValidateJsonObject(message, type,
-                               {{"sdp", Json::ValueType::stringValue}}));
-  auto remote_desc_str = message["sdp"].asString();
+  auto remote_desc_str = CF_EXPECT(GetValue<std::string>(message, {"sdp"}),
+                                   "Failed to get 'sdp' property");
   auto remote_desc =
       webrtc::CreateSessionDescription(sdp_type, remote_desc_str);
   CF_EXPECT(remote_desc.get(), "Failed to parse sdp.");
@@ -89,18 +52,11 @@ ParseSessionDescription(const std::string& type, const Json::Value& message,
 
 Result<std::unique_ptr<webrtc::IceCandidateInterface>> ParseIceCandidate(
     const std::string& type, const Json::Value& message) {
-  CF_EXPECT(ValidateJsonObject(message, type,
-                               {{"candidate", Json::ValueType::objectValue}}));
-  auto candidate_json = message["candidate"];
-  CF_EXPECT(ValidateJsonObject(candidate_json, "ice-candidate/candidate",
-                               {
-                                   {"sdpMid", Json::ValueType::stringValue},
-                                   {"candidate", Json::ValueType::stringValue},
-                                   {"sdpMLineIndex", Json::ValueType::intValue},
-                               }));
-  auto mid = candidate_json["sdpMid"].asString();
-  auto candidate_sdp = candidate_json["candidate"].asString();
-  auto line_index = candidate_json["sdpMLineIndex"].asInt();
+  auto mid = CF_EXPECT(GetValue<std::string>(message, {"candidate", "sdpMid"}));
+  auto candidate_sdp =
+      CF_EXPECT(GetValue<std::string>(message, {"candidate", "candidate"}));
+  auto line_index =
+      CF_EXPECT(GetValue<int>(message, {"candidate", "sdpMLineIndex"}));
 
   auto candidate =
       std::unique_ptr<webrtc::IceCandidateInterface>(webrtc::CreateIceCandidate(
@@ -111,9 +67,7 @@ Result<std::unique_ptr<webrtc::IceCandidateInterface>> ParseIceCandidate(
 
 Result<std::string> ParseError(const std::string& type,
                                const Json::Value& message) {
-  CF_EXPECT(ValidateJsonObject(message, type,
-                               {{"error", Json::ValueType::stringValue}}));
-  return message["error"].asString();
+  return CF_EXPECT(GetValue<std::string>(message, {"error"}));
 }
 
 Result<std::vector<webrtc::PeerConnectionInterface::IceServer>>
