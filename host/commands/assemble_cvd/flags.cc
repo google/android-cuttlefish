@@ -172,6 +172,11 @@ DEFINE_vec(
     guest_hwui_renderer, CF_DEFAULTS_GUEST_HWUI_RENDERER,
     "The default renderer that HWUI should use, one of {skiagl, skiavk}.");
 
+DEFINE_vec(guest_renderer_preload, CF_DEFAULTS_GUEST_RENDERER_PRELOAD,
+           "Whether or not Zygote renderer preload is disabled, one of {auto, "
+           "enabled, disabled}. Auto will choose whether or not to disable "
+           "based on the gpu mode and guest hwui renderer.");
+
 DEFINE_vec(
     guest_vulkan_driver, CF_DEFAULTS_GUEST_VULKAN_DRIVER,
     "Vulkan driver to use with Cuttlefish.  Android VMs require specifying "
@@ -1271,6 +1276,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_context_types));
   std::vector<std::string> guest_hwui_renderer_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(guest_hwui_renderer));
+  std::vector<std::string> guest_renderer_preload_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(guest_renderer_preload));
   std::vector<std::string> guest_vulkan_driver_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(guest_vulkan_driver));
   std::vector<std::string> frames_socket_path_vec =
@@ -1702,7 +1709,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         gpu_vhost_user_mode_vec[instance_index],
         gpu_renderer_features_vec[instance_index],
         gpu_context_types_vec[instance_index],
-        guest_hwui_renderer_vec[instance_index], vmm_mode,
+        guest_hwui_renderer_vec[instance_index],
+        guest_renderer_preload_vec[instance_index], vmm_mode,
         guest_configs[instance_index], instance));
     calculated_gpu_mode_vec[instance_index] = gpu_mode_vec[instance_index];
 
