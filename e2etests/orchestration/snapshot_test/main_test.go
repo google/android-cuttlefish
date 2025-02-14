@@ -62,7 +62,7 @@ func TestSnapshot(t *testing.T) {
 	}
 	const tmpFile = "/data/local/tmp/foo"
 	// Create temporary file
-	if err := dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"touch", tmpFile}); err != nil {
+	if _, err := dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"touch", tmpFile}); err != nil {
 		t.Fatal(err)
 	}
 	// Create a snapshot containing the temporary file.
@@ -75,7 +75,7 @@ func TestSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Verifies temporary file does not exist.
-	err = dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"stat", tmpFile})
+	_, err = dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"stat", tmpFile})
 	var exitCodeErr *common.DockerExecExitCodeError
 	if !errors.As(err, &exitCodeErr) {
 		t.Fatal(err)
@@ -105,7 +105,7 @@ func TestSnapshot(t *testing.T) {
 	if err := dh.ConnectADB(cID, adbBin, cvd.ADBSerial); err != nil {
 		t.Fatal(err)
 	}
-	if err := dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"stat", tmpFile}); err != nil {
+	if _, err := dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"stat", tmpFile}); err != nil {
 		t.Fatal(err)
 	}
 }
