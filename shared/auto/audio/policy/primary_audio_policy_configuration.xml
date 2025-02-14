@@ -16,22 +16,19 @@
 
 <module name="primary" halVersion="7.0">
   <attachedDevices>
-    <item>bus0_usage_main</item>
-    <!-- todo: b/377752500 enable complex topoloby once multi audio backend supported on virtual target -->
-    <!--item>bus1_usage_nav_guidance</item>
-    <item>bus2_usage_notification</item>
-    <item>bus3_usage_voice</item>
-    <item>bus4_usage_assistant</item>
-    <item>bus5_usage_system</item>
-    <item>speaker</item>
-    <item>3rdPartyVr</item-->
+    <item>BUS00_MEDIA_CARD_0_DEV_0</item>
+    <item>BUS01_NAV_GUIDANCE_CARD_0_DEV_1</item>
+    <item>BUS02_NOTIFICATION_CARD_0_DEV_2</item>
+    <item>BUS03_PHONE_CARD_0_DEV_3</item>
+    <item>BUS04_ASSISTANT_CARD_0_DEV_4</item>
+    <item>BUS05_SYSTEM_CARD_0_DEV_5</item>
     <item>builtin_mic</item>
     <item>fm_tuner</item>
     <item>telephony_tx</item>
     <item>telephony_rx</item>
   </attachedDevices>
 
-    <defaultOutputDevice>bus0_usage_main</defaultOutputDevice>
+    <defaultOutputDevice>BUS00_MEDIA_CARD_0_DEV_0</defaultOutputDevice>
     <mixPorts>
         <mixPort name="primary_input" role="sink">
             <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="8000 11025 16000 44100 48000"
@@ -41,6 +38,21 @@
            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO" />
         </mixPort>
         <mixPort name="mixport_bus0_usage_main_output" role="source" flags="AUDIO_OUTPUT_FLAG_PRIMARY">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+        </mixPort>
+        <mixPort name="mixport_bus1_usage_nav_guidance_output" role="source">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+        </mixPort>
+        <mixPort name="mixport_bus2_usage_notification_output" role="source">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+        </mixPort>
+        <mixPort name="mixport_bus3_usage_voice_output" role="source">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+        </mixPort>
+        <mixPort name="mixport_bus4_usage_assistant_output" role="source">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+        </mixPort>
+        <mixPort name="mixport_bus5_usage_system_output" role="source">
             <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
         </mixPort>
         <mixPort name="hfp_tx_mix" role="source">
@@ -61,10 +73,45 @@
                 <gain name="" mode="AUDIO_GAIN_MODE_JOINT" minValueMB="-3200" maxValueMB="600" defaultValueMB="0" stepValueMB="100" />
             </gains>
         </devicePort>
-        <devicePort tagName="bus0_usage_main" type="AUDIO_DEVICE_OUT_BUS" role="sink" address="BUS00_MEDIA_CARD_0_DEV_0">
+        <devicePort tagName="BUS00_MEDIA_CARD_0_DEV_0" type="AUDIO_DEVICE_OUT_BUS" role="sink" address="BUS00_MEDIA_CARD_0_DEV_0">
             <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
             <gains>
                 <gain useForVolume="true" name="volume_bus0_usage_main" mode="AUDIO_GAIN_MODE_JOINT" minValueMB="-8800" maxValueMB="1200" defaultValueMB="-4550" stepValueMB="250" />
+            </gains>
+        </devicePort>
+        <devicePort tagName="BUS01_NAV_GUIDANCE_CARD_0_DEV_1" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+            address="BUS01_NAV_GUIDANCE_CARD_0_DEV_1">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+            <gains>
+                <gain useForVolume="true" name="volume_bus1_usage_nav_guidance" mode="AUDIO_GAIN_MODE_JOINT" minValueMB="-8800" maxValueMB="1200" defaultValueMB="-4550" stepValueMB="250" />
+            </gains>
+        </devicePort>
+        <devicePort tagName="BUS02_NOTIFICATION_CARD_0_DEV_2" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+            address="BUS02_NOTIFICATION_CARD_0_DEV_2">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+            <gains>
+                <gain useForVolume="true" name="volume_bus2_usage_notification" mode="AUDIO_GAIN_MODE_JOINT" minValueMB="-8800" maxValueMB="1200" defaultValueMB="-4550" stepValueMB="250" />
+            </gains>
+        </devicePort>
+        <devicePort tagName="BUS03_PHONE_CARD_0_DEV_3" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+            address="BUS03_PHONE_CARD_0_DEV_3">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+            <gains>
+                <gain useForVolume="true" name="volume_bus3_usage_voice" mode="AUDIO_GAIN_MODE_JOINT" minValueMB="-8800" maxValueMB="1200" defaultValueMB="-4550" stepValueMB="250" />
+            </gains>
+        </devicePort>
+        <devicePort tagName="BUS04_ASSISTANT_CARD_0_DEV_4" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+            address="BUS04_ASSISTANT_CARD_0_DEV_4">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+            <gains>
+                <gain useForVolume="true" name="volume_bus4_usage_assistant" mode="AUDIO_GAIN_MODE_JOINT" minValueMB="-8800" maxValueMB="1200" defaultValueMB="-4550" stepValueMB="250" />
+            </gains>
+        </devicePort>
+        <devicePort tagName="BUS05_SYSTEM_CARD_0_DEV_5" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+            address="BUS05_SYSTEM_CARD_0_DEV_5">
+            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO" />
+            <gains>
+                <gain useForVolume="true" name="volume_bus5_usage_system" mode="AUDIO_GAIN_MODE_JOINT" minValueMB="-8800" maxValueMB="1200" defaultValueMB="-4550" stepValueMB="250" />
             </gains>
         </devicePort>
         <devicePort tagName="telephony_tx" type="AUDIO_DEVICE_OUT_TELEPHONY_TX" role="sink" address="hfp_client_out">
@@ -84,7 +131,12 @@
     <routes>
         <route type="mix" sink="primary_input" sources="builtin_mic" />
         <route type="mix" sink="radio_input" sources="fm_tuner" />
-        <route type="mix" sink="bus0_usage_main" sources="mixport_bus0_usage_main_output" />
+        <route type="mix" sink="BUS00_MEDIA_CARD_0_DEV_0" sources="mixport_bus0_usage_main_output"/>
+        <route type="mix" sink="BUS01_NAV_GUIDANCE_CARD_0_DEV_1" sources="mixport_bus1_usage_nav_guidance_output"/>
+        <route type="mix" sink="BUS02_NOTIFICATION_CARD_0_DEV_2" sources="mixport_bus2_usage_notification_output"/>
+        <route type="mix" sink="BUS03_PHONE_CARD_0_DEV_3" sources="mixport_bus3_usage_voice_output"/>
+        <route type="mix" sink="BUS04_ASSISTANT_CARD_0_DEV_4" sources="mixport_bus4_usage_assistant_output"/>
+        <route type="mix" sink="BUS05_SYSTEM_CARD_0_DEV_5" sources="mixport_bus5_usage_system_output"/>
         <route type="mix" sink="telephony_tx" sources="builtin_mic,hfp_tx_mix" />
         <route type="mix" sink="hfp_rx_mix" sources="telephony_rx" />
     </routes>
