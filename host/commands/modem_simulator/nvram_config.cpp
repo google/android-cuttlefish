@@ -36,7 +36,9 @@ static constexpr char kEmergencyMode[] = "emergency_mode";
 
 static constexpr int kDefaultNetworkSelectionMode = 0;     // AUTOMATIC
 static constexpr int kDefaultModemTechnoloy = NetworkService::M_MODEM_TECH_LTE;
-static constexpr int kDefaultPreferredNetworkMode = 0x13;  // LTE | WCDMA | GSM
+static constexpr int kDefaultPreferredNetworkMode =
+    NetworkService::M_MODEM_TECH_LTE | NetworkService::M_MODEM_TECH_WCDMA |
+    NetworkService::M_MODEM_TECH_GSM;
 static constexpr bool kDefaultEmergencyMode = false;
 
 /**
