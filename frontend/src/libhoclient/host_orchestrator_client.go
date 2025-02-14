@@ -74,6 +74,8 @@ type CreateBugReportOpts struct {
 
 // A client to the host orchestrator service running in a remote host.
 type HostOrchestratorService interface {
+	RunningDeviceManager
+
 	// Lists currently running devices.
 	ListCVDs() ([]*hoapi.CVD, error)
 
@@ -111,10 +113,10 @@ type HostOrchestratorService interface {
 	// Create cvd bugreport.
 	CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error
 
-	// Powerwash the device.
+	// [DEPRECATED] Use `ExecCommandWithNoOutput`
 	Powerwash(groupName, instanceName string) error
 
-	// Stop the device.
+	// [DEPRECATED] Use `ExecCommandWithNoOutput`
 	Stop(groupName, instanceName string) error
 
 	// Start the device.
@@ -122,6 +124,11 @@ type HostOrchestratorService interface {
 
 	// Create device snapshot.
 	CreateSnapshot(groupName, instanceName string) (*hoapi.CreateSnapshotResponse, error)
+}
+
+type RunningDeviceManager interface {
+	// Execute device commands that do not produce any standard output, e.g: `stop`, `powerwash`.
+	ExecCommandWithNoOutput(groupName, instanceName, commandName string) error
 }
 
 const (
@@ -403,13 +410,15 @@ func (c *HostOrchestratorServiceImpl) ListCVDs() ([]*hoapi.CVD, error) {
 }
 
 func (c *HostOrchestratorServiceImpl) Powerwash(groupName, instanceName string) error {
-	path := fmt.Sprintf("/cvds/%s/%s/:powerwash", groupName, instanceName)
-	rb := c.HTTPHelper.NewPostRequest(path, nil)
-	return c.doEmptyResponseRequest(rb)
+	return c.ExecCommandWithNoOutput(groupName, instanceName, "powerwash")
 }
 
 func (c *HostOrchestratorServiceImpl) Stop(groupName, instanceName string) error {
-	path := fmt.Sprintf("/cvds/%s/%s/:stop", groupName, instanceName)
+	return c.ExecCommandWithNoOutput(groupName, instanceName, "stop")
+}
+
+func (c *HostOrchestratorServiceImpl) ExecCommandWithNoOutput(groupName, instanceName, commandName string) error {
+	path := fmt.Sprintf("/cvds/%s/%s/:%s", groupName, instanceName, commandName)
 	rb := c.HTTPHelper.NewPostRequest(path, nil)
 	return c.doEmptyResponseRequest(rb)
 }

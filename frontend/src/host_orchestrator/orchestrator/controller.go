@@ -82,6 +82,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "powerwash"))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/:powerbtn",
+		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "powerbtn"))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/snapshots",
 		httpHandler(newCreateSnapshotHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/operations", httpHandler(&listOperationsHandler{om: c.OperationManager})).Methods("GET")
