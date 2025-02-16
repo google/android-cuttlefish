@@ -21,7 +21,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_system.mk)
 
 #
-# All components inherited here go to system_ext image (same as GSI system_ext)a
+# All components inherited here go to system_ext image (same as GSI system_ext)
 #
 $(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_system_ext.mk)
 # $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_system_ext.mk)
