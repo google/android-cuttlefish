@@ -369,6 +369,25 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     return {};
   }
 
+  void OnDisplayRemoveMsg(const Json::Value &msg) override {
+    auto result = HandleDisplayRemoveMessage(msg);
+    if (!result.ok()) {
+      LOG(ERROR) << result.error().FormatForEnv();
+    }
+  }
+
+  Result<void> HandleDisplayRemoveMessage(const Json::Value &msg) {
+    auto display_id = CF_EXPECT(GetValue<std::string>(msg, {"display_id"}));
+
+    auto crosvm_display_conroller =
+        CF_EXPECT(vm_manager::GetCrosvmDisplayController());
+
+    int const instance_num = cuttlefish::GetInstance();
+    CF_EXPECT(crosvm_display_conroller.Remove(instance_num, {display_id}));
+
+    return {};
+  }
+
   void OnCameraData(const std::vector<char> &data) override {
     if (camera_controller_) {
       camera_controller_->HandleMessage(data);

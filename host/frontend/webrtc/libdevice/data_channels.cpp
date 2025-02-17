@@ -209,6 +209,9 @@ class ControlChannelHandler : public DataChannelHandler {
     } else if (command == "add-display") {
       observer()->OnDisplayAddMsg(evt);
       return {};
+    } else if (command == "remove-display") {
+      observer()->OnDisplayRemoveMsg(evt);
+      return {};
     }
 
     auto button_state =
