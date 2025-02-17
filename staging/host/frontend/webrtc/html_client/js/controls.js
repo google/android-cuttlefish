@@ -101,6 +101,11 @@ function createInputListener(input_id, func, listener) {
   input.addEventListener('input', listener);
 }
 
+function createSelectListener(select_id, listener) {
+  select = document.getElementById(select_id);
+  select.addEventListener('change', listener);
+}
+
 function validateMacAddress(val) {
   var regex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
   return (regex.test(val));
