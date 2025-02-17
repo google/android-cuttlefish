@@ -77,6 +77,7 @@ class ConnectionObserver {
 
   virtual void OnCameraControlMsg(const Json::Value& msg) = 0;
   virtual void OnDisplayControlMsg(const Json::Value& msg) = 0;
+  virtual void OnDisplayAddMsg(const Json::Value& msg) = 0;
 
   virtual void OnBluetoothChannelOpen(
       std::function<bool(const uint8_t*, size_t)> bluetooth_message_sender) = 0;

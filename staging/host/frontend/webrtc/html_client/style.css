@@ -275,6 +275,32 @@ body {
 .location-button {
   text-align: center;
 }
+#display-add-modal-button {
+  margin-top: 10px;
+  margin-right: 10px;
+  height: 40px;
+  font-size: 32px;
+  color: var(--button-fg);
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  background-color: var(--button-bg);
+}
+#display-add-modal-button.modal-button-opened {
+  background-color: var(--modal-bg);
+}
+.display-spec-form {
+  margin: 16px 0px;
+  display: flex;
+  gap: 8px;
+}
+.display-spec-label {
+  display: flex;
+  flex-direction: column;
+}
+.display-spec-label input {
+  width: 120px;
+}
 .sensors{
   position: sticky;
   right: 0;
