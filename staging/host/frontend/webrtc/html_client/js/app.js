@@ -676,6 +676,14 @@ class DeviceControlApp {
     this.#deviceConnection.sendControlMessage(JSON.stringify(message));
   }
 
+  #removeDisplay(displayId) {
+    const message = {
+      command: 'remove-display',
+      display_id: displayId
+    };
+    this.#deviceConnection.sendControlMessage(JSON.stringify(message));
+  }
+
   #showWebrtcError() {
     showError(
         'No connection to the guest device.  Please ensure the WebRTC' +
@@ -833,7 +841,8 @@ class DeviceControlApp {
         text += ` (Rotated ${this.#currentRotation}deg)`
       }
 
-      l.textContent = text;
+      const textElement = l.querySelector('.device-display-info-text');
+      textElement.textContent = text;
     });
 
     deviceDisplaysMessage.send();
@@ -908,7 +917,8 @@ class DeviceControlApp {
 
     const MAX_DISPLAYS = 16;
     for (let i = 0; i < MAX_DISPLAYS; i++) {
-      const stream_id = 'display_' + i.toString();
+      const display_id = i.toString();
+      const stream_id = 'display_' + display_id;
       const stream = this.#deviceConnection.getStream(stream_id);
 
       let deviceDisplayVideo = document.querySelector('#' + stream_id);
@@ -927,6 +937,13 @@ class DeviceControlApp {
         let deviceDisplayInfo =
             displayFragment.querySelector('.device-display-info');
         deviceDisplayInfo.id = stream_id + '_info';
+
+        let deviceDisplayRemoveButton =
+          displayFragment.querySelector('.device-display-remove-button');
+        deviceDisplayRemoveButton.id = stream_id + '_remove_button';
+        deviceDisplayRemoveButton.addEventListener('mousedown', () => {
+          this.#removeDisplay(display_id);
+        });
 
         deviceDisplayVideo = displayFragment.querySelector('video');
         deviceDisplayVideo.id = stream_id;
