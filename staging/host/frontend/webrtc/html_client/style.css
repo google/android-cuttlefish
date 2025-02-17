@@ -405,6 +405,18 @@ body {
   margin-bottom: 10px;
   flex-grow: 0;
   flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.device-display-remove-button {
+  color: var(--main-fg);
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 /* The actual <video> element for each display. */
