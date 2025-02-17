@@ -120,6 +120,7 @@ cc_binary_host {
         "libcuttlefish_security",
         "libcuttlefish_transport",
         "libcuttlefish_utils",
+        "libcuttlefish_vm_manager",
         "libcuttlefish_wayland_server",
         "libcuttlefish_webrtc_command_channel",
         "libcuttlefish_webrtc_commands_proto",

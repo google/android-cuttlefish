@@ -61,6 +61,7 @@
             <div id='device-displays' tabindex="-1">
             </div>
           </div>
+          <button id='display-add-modal-button' title='Add display' class='material-icons'>add_to_queue</button>
         </div>
         <!-- Audio tags of id with a prefix of "device-audio" will be inserted here dynamically
         based on the number of audio streams.-->
@@ -271,6 +272,24 @@
           <div class='selectors'></div>
           <div class='touchpads'></div>
         </span>
+      </div>
+      <div id='display-add-modal' class='modal'>
+        <div id='display-add-modal-header' class='modal-header'>
+          <h2>Add display</h2>
+          <button id='display-add-modal-close' title='Close' class='material-icons modal-close'>close</button>
+        </div>
+        <div>
+          <select id='display-spec-preset-select'>
+            <!-- setupDisplaySpecPresetSelector adds its options -->
+          </select>
+          <div class='display-spec-form'>
+            <label class='display-spec-label'>width<input type=number min=1 id='display-spec-width' required/></label>
+            <label class='display-spec-label'>height<input type=number min=1 id='display-spec-height' required/></label>
+            <label class='display-spec-label'>dpi<input type=number min=1 id='display-spec-dpi' required/></label>
+            <label class='display-spec-label'>refresh_rate_hz<input type=number min=1 id='display-spec-refresh-rate-hz' required/></label>
+          </div>
+          <button id='display-add-confirm' title='Add a new display' class='modal-button'>Add</button>
+        </div>
       </div>
       <script src="js/adb.js"></script>
       <script src="js/location.js"></script>
