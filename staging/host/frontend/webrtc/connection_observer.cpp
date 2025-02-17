@@ -22,6 +22,7 @@
 
 #include <chrono>
 #include <map>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -31,8 +32,9 @@
 #include <android-base/parsedouble.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/json.h"
+#include "common/libs/utils/result.h"
 #include "host/frontend/webrtc/adb_handler.h"
 #include "host/frontend/webrtc/bluetooth_handler.h"
 #include "host/frontend/webrtc/gpx_locations_handler.h"
@@ -40,8 +42,10 @@
 #include "host/frontend/webrtc/libdevice/camera_controller.h"
 #include "host/frontend/webrtc/libdevice/lights_observer.h"
 #include "host/frontend/webrtc/location_handler.h"
+#include "host/libs/config/config_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/input_connector/input_connector.h"
+#include "host/libs/vm_manager/crosvm_display_controller.h"
 
 namespace cuttlefish {
 
@@ -334,6 +338,35 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
         static_cast<uint32_t>(display_number_json.asInt());
     LOG(VERBOSE) << "Refresh display " << display_number;
     SendLastFrameAsync(display_number);
+  }
+
+  void OnDisplayAddMsg(const Json::Value &msg) override {
+    auto result = HandleDisplayAddMessage(msg);
+    if (!result.ok()) {
+      LOG(ERROR) << result.error().FormatForEnv();
+    }
+  }
+
+  Result<void> HandleDisplayAddMessage(const Json::Value &msg) {
+    auto width = CF_EXPECT(GetValue<int>(msg, {"width"}));
+    auto height = CF_EXPECT(GetValue<int>(msg, {"height"}));
+    auto dpi = CF_EXPECT(GetValue<int>(msg, {"dpi"}));
+    auto refresh_rate_hz = CF_EXPECT(GetValue<int>(msg, {"refresh_rate_hz"}));
+
+    auto display_config = CuttlefishConfig::DisplayConfig{
+        .width = width,
+        .height = height,
+        .dpi = dpi,
+        .refresh_rate_hz = refresh_rate_hz,
+    };
+
+    auto crosvm_display_conroller =
+        CF_EXPECT(vm_manager::GetCrosvmDisplayController());
+
+    int const instance_num = cuttlefish::GetInstance();
+    CF_EXPECT(crosvm_display_conroller.Add(instance_num, {display_config}));
+
+    return {};
   }
 
   void OnCameraData(const std::vector<char> &data) override {
