@@ -181,9 +181,7 @@ func (p *cvdHostPackageSingleton) GenerateBuildActions(ctx android.SingletonCont
 		ctx.Phony("hosttar", cvdHostPackageTarball...)
 		ctx.Phony("droidcore", cvdHostPackageStamp...)
 	}
-}
 
-func (p *cvdHostPackageSingleton) MakeVars(ctx android.MakeVarsContext) {
 	if p.tarballPaths != nil {
 		for _, path := range p.tarballPaths {
 			// The riscv64 cuttlefish builds can be run on qemu on an x86_64 or arm64 host. Dist both sets of host packages.
