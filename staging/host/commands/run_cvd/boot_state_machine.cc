@@ -459,6 +459,60 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
         }
       }
     }
+
+    // On a successful boot, keep draining events. If boot was unsuccessful,
+    // then run_cvd will get shut down anyway.
+    if (state_ &= kGuestBootCompleted) {
+      DrainBootEventPipe(boot_events_pipe);
+    }
+  }
+
+  // Continue consuming events from boot_events_pipe, until an interrupt is sent
+  // via interrupt_fd_read_.
+  //
+  // This is required as events are forwarded to run_cvd from
+  // kernel_log_monitor, which is listening to the FIFO from the virtual
+  // machine. If we don't keep consuming events from this pipe, then we can
+  // cause a full kernel lockup as all of the FIFOs between the VM and ourselves
+  // get filled up, eventually causing the virtio driver to fail to write to the
+  // VMM.
+  void DrainBootEventPipe(SharedFD boot_events_pipe) {
+    while (true) {
+      std::vector<PollSharedFd> poll_shared_fd = {
+          {
+              .fd = boot_events_pipe,
+              .events = POLLIN | POLLHUP,
+          },
+          {
+              .fd = interrupt_fd_read_,
+              .events = POLLIN | POLLHUP,
+          },
+      };
+      int result = SharedFD::Poll(poll_shared_fd, -1);
+
+      // interrupt_fd_read_
+      if (poll_shared_fd[1].revents & POLLIN) {
+        return;
+      }
+      if (result < 0) {
+        PLOG(FATAL) << "Failed to call Select";
+        return;
+      }
+
+      // boot_events_pipe
+      if (poll_shared_fd[0].revents & POLLHUP) {
+        LOG(ERROR) << "Failed to read a complete kernel event.";
+        return;
+      }
+      if (poll_shared_fd[0].revents & POLLIN) {
+        // Fully parse the message and throw it away.
+        Result<std::optional<monitor::ReadEventResult>> read_result =
+            monitor::ReadEvent(boot_events_pipe);
+        if (!read_result) {
+          return;
+        }
+      }
+    }
   }
 
   // Returns true if the machine is left in a final state
