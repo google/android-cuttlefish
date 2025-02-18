@@ -52,6 +52,7 @@ cc_binary {
     stl: "c++_static",
     proprietary: true,
     installable: false, // installed in APEX
+    vintf_fragment_modules: ["android.hardware.health-service.cuttlefish.xml"],
 }
 
 cc_binary {
@@ -94,9 +95,6 @@ apex {
     overrides: ["charger"],
     prebuilts: [
         "android.hardware.health-service.cuttlefish.rc",
-    ],
-    vintf_fragment_modules: [
-        "android.hardware.health-service.cuttlefish.xml",
     ],
 }
 
