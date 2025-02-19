@@ -24,6 +24,7 @@
 #include "host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "host/commands/run_cvd/launch/input_connections_provider.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
+#include "host/commands/run_cvd/launch/sensors_socket_pair.h"
 #include "host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "host/commands/run_cvd/launch/webrtc_controller.h"
 #include "host/commands/run_cvd/launch/wmediumd_server.h"
@@ -146,4 +147,8 @@ std::optional<MonitorCommand> VhalProxyServer(
 fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 Ti50EmulatorComponent();
+
+Result<MonitorCommand> SensorsSimulator(
+    const CuttlefishConfig::InstanceSpecific&,
+    AutoSensorsSocketPair::Type& sensors_socket_pair);
 }  // namespace cuttlefish
