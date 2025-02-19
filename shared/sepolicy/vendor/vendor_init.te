@@ -2,6 +2,7 @@ vendor_internal_prop(vendor_graphics_config_prop)
 
 allow vendor_init {
   audio_device
+  graphics_device
 }:chr_file { getattr };
 
 set_prop(vendor_init, vendor_hwcomposer_prop)
