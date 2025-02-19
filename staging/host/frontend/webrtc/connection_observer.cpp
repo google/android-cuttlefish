@@ -62,7 +62,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
       std::map<std::string, SharedFD> commands_to_custom_action_servers,
       std::weak_ptr<DisplayHandler> display_handler,
       CameraController *camera_controller,
-      std::shared_ptr<webrtc_streaming::SensorsHandler> sensors_handler,
+      webrtc_streaming::SensorsHandler *sensors_handler,
       std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer)
       : input_events_sink_(std::move(input_events_sink)),
         kernel_log_events_handler_(kernel_log_events_handler),
@@ -441,9 +441,11 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 CfConnectionObserverFactory::CfConnectionObserverFactory(
     InputConnector &input_connector,
     KernelLogEventsHandler *kernel_log_events_handler,
+    webrtc_streaming::SensorsHandler *sensors_handler,
     std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer)
     : input_connector_(input_connector),
       kernel_log_events_handler_(kernel_log_events_handler),
+      sensors_handler_(sensors_handler),
       lights_observer_(lights_observer) {}
 
 std::shared_ptr<webrtc_streaming::ConnectionObserver>
@@ -452,7 +454,7 @@ CfConnectionObserverFactory::CreateObserver() {
       new ConnectionObserverImpl(
           input_connector_.CreateSink(), kernel_log_events_handler_,
           commands_to_custom_action_servers_, weak_display_handler_,
-          camera_controller_, shared_sensors_handler_, lights_observer_));
+          camera_controller_, sensors_handler_, lights_observer_));
 }
 
 void CfConnectionObserverFactory::AddCustomActionServer(

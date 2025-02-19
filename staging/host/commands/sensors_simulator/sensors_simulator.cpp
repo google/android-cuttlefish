@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/sensors_simulator.h"
+#include "host/commands/sensors_simulator/sensors_simulator.h"
 
 #include <cmath>
 
 #include <android-base/logging.h>
 
 namespace cuttlefish {
-namespace webrtc_streaming {
+namespace sensors {
 
 namespace {
 
@@ -101,30 +101,29 @@ void SensorsSimulator::RefreshSensors(double x, double y, double z) {
 
   current_rotation_matrix_ = rotation_matrix_update;
 
-  sensors_data_[sensors::kRotationVecId] << x, y, z;
-  sensors_data_[sensors::kAccelerationId] = acc_update;
-  sensors_data_[sensors::kGyroscopeId] = gyro_update;
-  sensors_data_[sensors::kMagneticId] = mgn_update;
+  sensors_data_[kRotationVecId] << x, y, z;
+  sensors_data_[kAccelerationId] = acc_update;
+  sensors_data_[kGyroscopeId] = gyro_update;
+  sensors_data_[kMagneticId] = mgn_update;
 
   // Copy the calibrated sensor data over for uncalibrated sensor support
-  sensors_data_[sensors::kUncalibAccelerationId] = acc_update;
-  sensors_data_[sensors::kUncalibGyroscopeId] = gyro_update;
-  sensors_data_[sensors::kUncalibMagneticId] = mgn_update;
+  sensors_data_[kUncalibAccelerationId] = acc_update;
+  sensors_data_[kUncalibGyroscopeId] = gyro_update;
+  sensors_data_[kUncalibMagneticId] = mgn_update;
 }
 
-std::string SensorsSimulator::GetSensorsData(const sensors::SensorsMask mask) {
+std::string SensorsSimulator::GetSensorsData(const SensorsMask mask) {
   std::stringstream sensors_msg;
   std::lock_guard<std::mutex> lock(sensors_data_mtx_);
-  for (int id = 0; id <= sensors::kMaxSensorId; id++) {
+  for (int id = 0; id <= kMaxSensorId; id++) {
     if (mask & (1 << id)) {
       auto v = sensors_data_[id];
-      sensors_msg << std::to_string(v(0)) << sensors::INNER_DELIM
-                  << std::to_string(v(1)) << sensors::INNER_DELIM
-                  << std::to_string(v(2)) << sensors::OUTER_DELIM;
+      sensors_msg << v(0) << INNER_DELIM << v(1) << INNER_DELIM << v(2)
+                  << OUTER_DELIM;
     }
   }
   return sensors_msg.str();
 }
 
-}  // namespace webrtc_streaming
+}  // namespace sensors
 }  // namespace cuttlefish

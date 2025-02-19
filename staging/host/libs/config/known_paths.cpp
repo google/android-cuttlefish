@@ -113,6 +113,10 @@ std::string ScreenRecordingServerBinary() {
 
 std::string SecureEnvBinary() { return HostBinaryPath("secure_env"); }
 
+std::string SensorsSimulatorBinary() {
+  return HostBinaryPath("sensors_simulator");
+}
+
 std::string SocketVsockProxyBinary() {
   return HostBinaryPath("socket_vsock_proxy");
 }

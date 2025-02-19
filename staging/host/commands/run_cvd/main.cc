@@ -174,6 +174,8 @@ fruit::Component<> runCvdComponent(
       .install(NetsimServerComponent)
       .install(AutoSnapshotControlFiles::Component)
       .install(AutoCmd<SecureEnv>::Component)
+      .install(AutoSensorsSocketPair::Component)
+      .install(AutoCmd<SensorsSimulator>::Component)
       .install(serverLoopComponent)
       .install(WebRtcControllerComponent)
       .install(AutoSetup<ValidateTapDevices>::Component)

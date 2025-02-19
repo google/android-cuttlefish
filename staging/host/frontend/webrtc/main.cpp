@@ -64,13 +64,12 @@ DEFINE_int32(confui_in_fd, -1,
              "Confirmation UI virtio-console from host to guest");
 DEFINE_int32(confui_out_fd, -1,
              "Confirmation UI virtio-console from guest to host");
-DEFINE_int32(sensors_in_fd, -1, "Sensors virtio-console from host to guest");
-DEFINE_int32(sensors_out_fd, -1, "Sensors virtio-console from guest to host");
 DEFINE_string(action_servers, "",
               "A comma-separated list of server_name:fd pairs, "
               "where each entry corresponds to one custom action server.");
 DEFINE_int32(audio_server_fd, -1, "An fd to listen on for audio frames");
 DEFINE_int32(camera_streamer_fd, -1, "An fd to send client camera frames");
+DEFINE_int32(sensors_fd, -1, "An fd to communicate with sensors_simulator.");
 DEFINE_string(client_dir, "webrtc", "Location of the client files");
 DEFINE_string(group_id, "", "The group id of device");
 
@@ -232,6 +231,9 @@ int CuttlefishMain() {
   auto kernel_log_events_client = SharedFD::Dup(FLAGS_kernel_log_events_fd);
   close(FLAGS_kernel_log_events_fd);
 
+  auto sensors_fd = cuttlefish::SharedFD::Dup(FLAGS_sensors_fd);
+  close(FLAGS_sensors_fd);
+
   confui::PipeConnectionPair conf_ui_comm_fd_pair{
       .from_guest_ = SharedFD::Dup(FLAGS_confui_out_fd),
       .to_guest_ = SharedFD::Dup(FLAGS_confui_in_fd)};
@@ -294,8 +296,11 @@ int CuttlefishMain() {
     lights_observer->Start();
   }
 
+  webrtc_streaming::SensorsHandler sensors_handler(sensors_fd);
+
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      confui_virtual_input, &kernel_logs_event_handler, lights_observer);
+      confui_virtual_input, &kernel_logs_event_handler, &sensors_handler,
+      lights_observer);
 
   RecordingManager recording_manager;
 
