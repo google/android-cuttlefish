@@ -49,5 +49,11 @@ using SensorsMask = int;
 inline constexpr char INNER_DELIM = ':';
 inline constexpr char OUTER_DELIM = ' ';
 
+/* Sensors Commands */
+inline constexpr int kUpdateRotationVec = 0;
+inline constexpr int kGetSensorsData = 1;
+
+using SensorsCmd = int;
+
 }  // namespace sensors
 }  // namespace cuttlefish

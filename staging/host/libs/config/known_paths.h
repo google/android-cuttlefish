@@ -47,6 +47,7 @@ std::string ProcessRestarterBinary();
 std::string RootCanalBinary();
 std::string ScreenRecordingServerBinary();
 std::string SecureEnvBinary();
+std::string SensorsSimulatorBinary();
 std::string SocketVsockProxyBinary();
 std::string StopCvdBinary();
 std::string TcpConnectorBinary();

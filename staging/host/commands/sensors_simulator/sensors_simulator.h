@@ -24,7 +24,7 @@
 #include "common/libs/sensors/sensors.h"
 
 namespace cuttlefish {
-namespace webrtc_streaming {
+namespace sensors {
 
 class SensorsSimulator {
  public:
@@ -38,15 +38,15 @@ class SensorsSimulator {
   // corresponding sensor should be included in the returned data. Assuming
   // accelerometer and gyroscope are specified, the returned string would be
   // formatted as "<acc.x>:<acc.y>:<acc.z> <gyro.x>:<gyro.y>:<gyro.z>".
-  std::string GetSensorsData(const sensors::SensorsMask mask);
+  std::string GetSensorsData(const SensorsMask mask);
 
  private:
   std::mutex sensors_data_mtx_;
-  Eigen::Vector3d sensors_data_[sensors::kMaxSensorId + 1];
+  Eigen::Vector3d sensors_data_[kMaxSensorId + 1];
   Eigen::Matrix3d prior_rotation_matrix_, current_rotation_matrix_;
   std::chrono::time_point<std::chrono::high_resolution_clock>
       last_event_timestamp_;
 };
 
-}  // namespace webrtc_streaming
+}  // namespace sensors
 }  // namespace cuttlefish

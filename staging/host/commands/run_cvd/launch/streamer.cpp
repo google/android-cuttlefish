@@ -125,8 +125,6 @@ class StreamerSockets : public virtual SetupFeature {
     }
     cmd.AddParameter("--confui_in_fd=", confui_in_fd_);
     cmd.AddParameter("--confui_out_fd=", confui_out_fd_);
-    cmd.AddParameter("--sensors_in_fd=", sensors_host_to_guest_fd_);
-    cmd.AddParameter("--sensors_out_fd=", sensors_guest_to_host_fd_);
     cmd.AddParameter("-switches_fd=",
                      input_connections_provider_.SwitchesConnection());
   }
@@ -162,8 +160,6 @@ class StreamerSockets : public virtual SetupFeature {
     std::vector<std::string> fifo_files = {
         instance_.PerInstanceInternalPath("confui_fifo_vm.in"),
         instance_.PerInstanceInternalPath("confui_fifo_vm.out"),
-        instance_.PerInstanceInternalPath("sensors_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("sensors_fifo_vm.out"),
     };
     for (const auto& path : fifo_files) {
       unlink(path.c_str());
@@ -174,8 +170,6 @@ class StreamerSockets : public virtual SetupFeature {
     }
     confui_in_fd_ = fds[0];
     confui_out_fd_ = fds[1];
-    sensors_host_to_guest_fd_ = fds[2];
-    sensors_guest_to_host_fd_ = fds[3];
     return {};
   }
 
@@ -186,8 +180,6 @@ class StreamerSockets : public virtual SetupFeature {
   SharedFD audio_server_;
   SharedFD confui_in_fd_;   // host -> guest
   SharedFD confui_out_fd_;  // guest -> host
-  SharedFD sensors_host_to_guest_fd_;
-  SharedFD sensors_guest_to_host_fd_;
 };
 
 class WebRtcServer : public virtual CommandSource,
@@ -199,13 +191,15 @@ class WebRtcServer : public virtual CommandSource,
                       StreamerSockets& sockets,
                       KernelLogPipeProvider& log_pipe_provider,
                       const CustomActionConfigProvider& custom_action_config,
-                      WebRtcController& webrtc_controller))
+                      WebRtcController& webrtc_controller,
+                      AutoSensorsSocketPair::Type& sensors_socket_pair))
       : config_(config),
         instance_(instance),
         sockets_(sockets),
         log_pipe_provider_(log_pipe_provider),
         custom_action_config_(custom_action_config),
-        webrtc_controller_(webrtc_controller) {}
+        webrtc_controller_(webrtc_controller),
+        sensors_socket_pair_(sensors_socket_pair) {}
   // DiagnosticInformation
   std::vector<std::string> Diagnostics() const override {
     if (!Enabled() ||
@@ -272,6 +266,10 @@ class WebRtcServer : public virtual CommandSource,
     for (auto& action : LaunchCustomActionServers(webrtc, actions)) {
       commands.emplace_back(std::move(action));
     }
+
+    webrtc.AddParameter("-sensors_fd=",
+                        sensors_socket_pair_->sensors_simulator_socket);
+
     commands.emplace_back(std::move(webrtc));
     return commands;
   }
@@ -286,7 +284,8 @@ class WebRtcServer : public virtual CommandSource,
   std::unordered_set<SetupFeature*> Dependencies() const override {
     return {static_cast<SetupFeature*>(&sockets_),
             static_cast<SetupFeature*>(&log_pipe_provider_),
-            static_cast<SetupFeature*>(&webrtc_controller_)};
+            static_cast<SetupFeature*>(&webrtc_controller_),
+            static_cast<SetupFeature*>(&sensors_socket_pair_)};
   }
 
   Result<void> ResultSetup() override {
@@ -303,6 +302,8 @@ class WebRtcServer : public virtual CommandSource,
   const CustomActionConfigProvider& custom_action_config_;
   WebRtcController& webrtc_controller_;
   SharedFD kernel_log_events_pipe_;
+  SharedFD switches_server_;
+  AutoSensorsSocketPair::Type& sensors_socket_pair_;
 };
 
 }  // namespace
