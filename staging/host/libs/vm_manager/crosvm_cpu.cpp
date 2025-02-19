@@ -28,11 +28,11 @@ namespace cuttlefish {
 namespace {
 
 std::string SerializeFreqDomains(
-    const std::map<std::string, std::vector<int>>& freq_domains) {
+    const std::map<int, std::vector<int>>& freq_domains) {
   std::stringstream freq_domain_arg;
   bool first_vector = true;
 
-  for (const std::pair<std::string, std::vector<int>>& pair : freq_domains) {
+  for (const std::pair<int, std::vector<int>>& pair : freq_domains) {
     if (!first_vector) {
       freq_domain_arg << ",";
     }
@@ -50,7 +50,7 @@ Result<std::vector<std::string>> CrosvmCpuArguments(
     const Json::Value& vcpu_config_json) {
   std::vector<std::string> cpu_arguments;
 
-  std::map<std::string, std::vector<int>> freq_domains;
+  std::map<int, std::vector<int>> freq_domains;
   std::string affinity_arg = "--cpu-affinity=";
   std::string capacity_arg = "--cpu-capacity=";
   std::string ipc_ratio_arg = "--cpu-ipc-ratio=";
@@ -84,24 +84,20 @@ Result<std::vector<std::string>> CrosvmCpuArguments(
     const Json::Value cpu_json = CF_EXPECT(
         GetValue<Json::Value>(cpus_json, {cpu}), "Missing vCPU config!");
 
-    const std::string affinity =
-        CF_EXPECT(GetValue<std::string>(cpu_json, {"affinity"}));
+    const int affinity = CF_EXPECT(GetValue<int>(cpu_json, {"affinity"}));
     std::string affine_arg = fmt::format("{}={}", i, affinity);
 
     const std::string freqs =
         CF_EXPECT(GetValue<std::string>(cpu_json, {"frequencies"}));
     std::string freq_arg = fmt::format("{}={}", i, freqs);
 
-    const std::string capacity =
-        CF_EXPECT(GetValue<std::string>(cpu_json, {"capacity"}));
+    const int capacity = CF_EXPECT(GetValue<int>(cpu_json, {"capacity"}));
     std::string cap_arg = fmt::format("{}={}", i, capacity);
 
-    const std::string cpu_ipc_ratio =
-        CF_EXPECT(GetValue<std::string>(cpu_json, {"ipc_ratio"}));
+    const int cpu_ipc_ratio = CF_EXPECT(GetValue<int>(cpu_json, {"ipc_ratio"}));
     std::string ipc_arg = fmt::format("{}={}", i, cpu_ipc_ratio);
 
-    const std::string domain =
-        CF_EXPECT(GetValue<std::string>(cpu_json, {"freq_domain"}));
+    const int domain = CF_EXPECT(GetValue<int>(cpu_json, {"freq_domain"}));
 
     freq_domains[domain].push_back(i);
 
