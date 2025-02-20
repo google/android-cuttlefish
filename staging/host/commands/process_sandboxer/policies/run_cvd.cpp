@@ -32,16 +32,23 @@
 #include <absl/strings/str_replace.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
+#include <sandboxed_api/util/path.h>
 
 namespace cuttlefish::process_sandboxer {
+
+using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo& host) {
   std::string sandboxer_proxy = host.HostToolExe("sandboxer_proxy");
   return BaselinePolicy(host, host.HostToolExe("run_cvd"))
       .AddDirectory(host.runtime_dir, /* is_ro= */ false)
+      .AddDirectory(
+          JoinPath(host.host_artifacts_path, "etc", "default_input_devices"))
       .AddFile(host.cuttlefish_config_path)
+      .AddFile("/dev/null", /* is_ro= */ false)
       .AddFileAt(sandboxer_proxy, host.HostToolExe("adb_connector"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("casimir_control_server"))
+      .AddFileAt(sandboxer_proxy, host.HostToolExe("cf_vhost_user_input"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("control_env_proxy_server"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("crosvm"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("echo_server"))
@@ -136,6 +143,7 @@ sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo& host) {
       .AllowSyscall(__NR_recvmsg)
       .AllowSyscall(__NR_sendmsg)
       .AllowSyscall(__NR_setpgid)
+      .AllowSyscall(__NR_shutdown)
       .AllowSyscall(__NR_socketpair)
       .AllowSyscall(__NR_waitid)  // Not covered by `AllowWait()`
       .AllowTCGETS()

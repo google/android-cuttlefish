@@ -53,6 +53,7 @@ sandbox2::PolicyBuilder AdbConnectorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo&);
 sandbox2::PolicyBuilder AvbToolPolicy(const HostInfo&);
 sandbox2::PolicyBuilder CasimirPolicy(const HostInfo&);
+sandbox2::PolicyBuilder CfVhostUserInput(const HostInfo&);
 sandbox2::PolicyBuilder CasimirControlServerPolicy(const HostInfo&);
 sandbox2::PolicyBuilder ControlEnvProxyServerPolicy(const HostInfo&);
 sandbox2::PolicyBuilder CvdInternalStartPolicy(const HostInfo&);
