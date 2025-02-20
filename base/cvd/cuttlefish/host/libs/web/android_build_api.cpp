@@ -398,9 +398,9 @@ Result<void> AndroidBuildApi::ArtifactToFile(const DeviceBuild& build,
                                              const std::string& artifact,
                                              const std::string& path) {
   const auto url = CF_EXPECT(GetArtifactDownloadUrl(build, artifact));
-  bool is_successful_download =
-      CF_EXPECT(http_client->DownloadToFile(url, path)).HttpSuccess();
-  CF_EXPECT_EQ(is_successful_download, true);
+  auto response = CF_EXPECT(http_client->DownloadToFile(url, path));
+  CF_EXPECTF(response.HttpSuccess(), "Failed to download file: {}",
+             response.StatusDescription());
   return {};
 }
 

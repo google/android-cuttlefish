@@ -191,12 +191,16 @@ class CurlClient : public HttpClient {
       stream.write(data, size);
       return !stream.fail();
     };
-    auto http_response = CF_EXPECT(DownloadToCallback(callback, url, headers));
+    HttpResponse<void> http_response = CF_EXPECT(DownloadToCallback(callback, url, headers));
 
     LOG(DEBUG) << "Downloaded '" << total_dl << "' total bytes from '" << url
                << "' to '" << path << "'.";
 
-    CF_EXPECT(RenameFile(temp_path, path));
+    if (http_response.HttpSuccess()) {
+      CF_EXPECT(RenameFile(temp_path, path));
+    } else {
+      CF_EXPECTF(RemoveFile(temp_path), "Unable to remove temporary file \"{}\"\nMay require manual removal", temp_path);
+    }
     return HttpResponse<std::string>{path, http_response.http_code};
   }
 
