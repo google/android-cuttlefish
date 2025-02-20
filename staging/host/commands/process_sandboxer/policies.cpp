@@ -110,6 +110,7 @@ std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
   builders[host.HostToolExe("assemble_cvd")] = AssembleCvdPolicy;
   builders[host.HostToolExe("avbtool")] = AvbToolPolicy;
   builders[host.HostToolExe("casimir")] = CasimirPolicy;
+  builders[host.HostToolExe("cf_vhost_user_input")] = CfVhostUserInput;
   builders[host.HostToolExe("casimir_control_server")] =
       CasimirControlServerPolicy;
   builders[host.HostToolExe("control_env_proxy_server")] =

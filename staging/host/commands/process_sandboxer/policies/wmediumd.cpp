@@ -45,10 +45,10 @@ sandbox2::PolicyBuilder WmediumdPolicy(const HostInfo& host) {
       .AddPolicyOnMmap([](bpf_labels& labels) -> std::vector<sock_filter> {
         return {
             ARG_32(2),  // prot
-            JNE32(PROT_READ | PROT_WRITE, JUMP(&labels, cf_webrtc_mmap_end)),
+            JNE32(PROT_READ | PROT_WRITE, JUMP(&labels, cf_wmediumd_mmap_end)),
             ARG_32(3),  // flags
             JEQ32(MAP_SHARED, ALLOW),
-            LABEL(&labels, cf_webrtc_mmap_end),
+            LABEL(&labels, cf_wmediumd_mmap_end),
         };
       })
       .AddPolicyOnSyscalls(
@@ -56,11 +56,10 @@ sandbox2::PolicyBuilder WmediumdPolicy(const HostInfo& host) {
           [](bpf_labels& labels) -> std::vector<sock_filter> {
             return {
                 ARG_32(1),  // level
-                JNE32(SOL_SOCKET,
-                      JUMP(&labels, cf_screen_recording_server_getsockopt_end)),
+                JNE32(SOL_SOCKET, JUMP(&labels, cf_wmediumd_getsockopt_end)),
                 ARG_32(2),  // optname
                 JEQ32(SO_REUSEPORT, ALLOW),
-                LABEL(&labels, cf_screen_recording_server_getsockopt_end),
+                LABEL(&labels, cf_wmediumd_getsockopt_end),
             };
           })
       .AddPolicyOnSyscall(__NR_madvise,

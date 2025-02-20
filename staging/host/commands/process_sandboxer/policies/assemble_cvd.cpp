@@ -37,6 +37,8 @@ sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo& host) {
       .AddDirectory(host.assembly_dir, /* is_ro= */ false)
       // TODO(schuffelen): Don't resize vbmeta in-place
       .AddDirectory(host.guest_image_path, /* is_ro= */ false)
+      .AddDirectory(
+          JoinPath(host.host_artifacts_path, "etc", "bootloader_x86_64"))
       .AddDirectory(JoinPath(host.host_artifacts_path, "etc", "cvd_config"))
       // TODO(schuffelen): Copy these files before modifying them
       .AddDirectory(JoinPath(host.host_artifacts_path, "etc", "openwrt"),

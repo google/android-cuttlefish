@@ -35,6 +35,7 @@ cc_binary_host {
         "policies/baseline.cpp",
         "policies/casimir.cpp",
         "policies/casimir_control_server.cpp",
+        "policies/cf_vhost_user_input.cpp",
         "policies/control_env_proxy_server.cpp",
         "policies/cvd_internal_start.cpp",
         "policies/echo_server.cpp",
