@@ -90,6 +90,7 @@ sandbox2::PolicyBuilder AvbToolPolicy(const HostInfo& host) {
       .AllowPipe()
       .AllowSafeFcntl()
       .AllowSyscall(__NR_connect)
+      .AllowSyscall(__NR_mremap)
       .AllowSyscall(__NR_execve)
       .AllowSyscall(__NR_ftruncate)
       .AllowSyscall(__NR_recvmsg)
