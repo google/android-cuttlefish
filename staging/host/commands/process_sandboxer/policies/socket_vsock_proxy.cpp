@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 #include <syscall.h>
 
-#include <sandboxed_api/sandbox2/allow_unrestricted_networking.h>
+#include <sandboxed_api/sandbox2/allowlists/unrestricted_networking.h>
 #include <sandboxed_api/sandbox2/policybuilder.h>
 #include <sandboxed_api/sandbox2/util/bpf_helper.h>
 
