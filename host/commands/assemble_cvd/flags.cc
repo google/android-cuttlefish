@@ -528,9 +528,6 @@ DEFINE_vec(vhost_user_block, CF_DEFAULTS_VHOST_USER_BLOCK ? "true" : "false",
 DEFINE_string(early_tmp_dir, TempDir(),
               "Parent directory to use for temporary files in early startup");
 
-DEFINE_vec(ranchu_composer_package, CF_DEFAULTS_RANCHU_COMPOSER_PACKAGE,
-           "Apex package name for ranchu composer type");
-
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
@@ -1263,8 +1260,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(vhost_user_vsock));
   std::vector<std::string> ril_dns_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(ril_dns));
-  std::vector<std::string> ranchu_composer_package_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(ranchu_composer_package));
 
   // At this time, FLAGS_enable_sandbox comes from SetDefaultFlagsForCrosvm
   std::vector<bool> enable_sandbox_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
@@ -1748,9 +1743,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         instance.set_hwcomposer(kHwComposerRanchu);
       }
     }
-
-    instance.set_ranchu_composer_package(
-        ranchu_composer_package_vec[instance_index]);
 
     instance.set_enable_gpu_udmabuf(enable_gpu_udmabuf_vec[instance_index]);
 

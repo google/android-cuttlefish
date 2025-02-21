@@ -652,7 +652,6 @@ class CuttlefishConfig {
     bool enable_gpu_system_blob() const;
 
     std::string hwcomposer() const;
-    std::string ranchu_composer_package() const;
 
     bool restart_subprocesses() const;
 
@@ -884,7 +883,6 @@ class CuttlefishConfig {
     void set_enable_gpu_system_blob(const bool enable_gpu_system_blob);
 
     void set_hwcomposer(const std::string&);
-    void set_ranchu_composer_package(const std::string&);
 
     void set_restart_subprocesses(bool restart_subprocesses);
 
