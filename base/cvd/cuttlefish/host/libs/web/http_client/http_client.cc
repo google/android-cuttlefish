@@ -33,6 +33,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_fd_stream.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/subprocess.h"
@@ -296,8 +297,9 @@ class CurlClient : public HttpClient {
     if (method == HttpMethod::kDelete) {
       curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
     }
-    curl_easy_setopt(curl_, CURLOPT_CAINFO,
-                     "/etc/ssl/certs/ca-certificates.crt");
+    std::string ca_info = StringFromEnv("SSL_CAINFO",
+                                        "/etc/ssl/certs/ca-certificates.crt");
+    curl_easy_setopt(curl_, CURLOPT_CAINFO, ca_info.c_str());
     curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
     curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
     if (method == HttpMethod::kPost) {
