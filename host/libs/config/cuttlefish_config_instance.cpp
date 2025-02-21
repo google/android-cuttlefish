@@ -935,6 +935,16 @@ void CuttlefishConfig::MutableInstanceSpecific::set_hwcomposer(const std::string
   (*Dictionary())[kHWComposer] = name;
 }
 
+static constexpr char kRanchuComposerPackage[] = "ranchu_composer_package";
+std::string CuttlefishConfig::InstanceSpecific::ranchu_composer_package()
+    const {
+  return (*Dictionary())[kRanchuComposerPackage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_ranchu_composer_package(
+    const std::string& name) {
+  (*Dictionary())[kRanchuComposerPackage] = name;
+}
+
 static constexpr char kEnableGpuUdmabuf[] = "enable_gpu_udmabuf";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf) {
   (*Dictionary())[kEnableGpuUdmabuf] = enable_gpu_udmabuf;

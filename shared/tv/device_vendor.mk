@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+COMPOSER_PACKAGE ?= com.android.hardware.graphics.composer.tv.ranchu
+
 PRODUCT_MANIFEST_FILES += device/google/cuttlefish/shared/config/product_manifest.xml
 SYSTEM_EXT_MANIFEST_FILES += device/google/cuttlefish/shared/config/system_ext_manifest.xml
 
@@ -32,6 +34,7 @@ $(call inherit-product, device/google/cuttlefish/shared/camera/config/external.m
 
 # Extend cuttlefish common sepolicy with tv-specific functionality
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/tv/sepolicy/vendor
+BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/tv/mediaquality/sepolicy
 
 PRODUCT_PACKAGES += tv_excluded_hardware.prebuilt.xml
 
@@ -70,7 +73,7 @@ PRODUCT_PACKAGES += android.hardware.tv.tuner-service.example-lazy
 PRODUCT_VENDOR_PROPERTIES += ro.tuner.lazyhal=true
 
 # Media Quality HAL
-PRODUCT_PACKAGES += android.hardware.tv.mediaquality-service.example
+PRODUCT_PACKAGES += android.hardware.tv.mediaquality-service.ranchu
 
 # TV Input HAL
 PRODUCT_PACKAGES += android.hardware.tv.input-service.example

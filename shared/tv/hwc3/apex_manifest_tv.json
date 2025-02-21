@@ -1,0 +1,5 @@
+{
+    "name": "com.android.hardware.graphics.composer",
+    "version": 1,
+    "vendorBootstrap": true
+}

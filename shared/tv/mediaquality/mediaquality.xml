@@ -1,0 +1,10 @@
+<manifest version="1.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.tv.mediaquality</name>
+        <version>1</version>
+        <interface>
+            <name>IMediaQuality</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+</manifest>

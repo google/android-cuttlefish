@@ -1,0 +1,7 @@
+service vendor.mediaquality /vendor/bin/hw/android.hardware.tv.mediaquality-service.ranchu
+    class hal animation
+    user system
+    group graphics drmrpc
+    capabilities SYS_NICE
+    onrestart restart surfaceflinger
+    task_profiles ServiceCapacityLow

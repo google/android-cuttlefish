@@ -17,6 +17,8 @@
 # If a downstream target does not want any graphics support, do not
 # include this file!
 
+COMPOSER_PACKAGE ?= com.android.hardware.graphics.composer.ranchu
+
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/graphics/init_graphics.vendor.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init_graphics.vendor.rc \
 
@@ -52,7 +54,7 @@ endif
 #
 PRODUCT_PACKAGES += \
     com.android.hardware.graphics.composer.drm_hwcomposer \
-    com.android.hardware.graphics.composer.ranchu \
+    $(COMPOSER_PACKAGE) \
 
 PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.hwcomposer.pmem=/dev/block/pmem1
