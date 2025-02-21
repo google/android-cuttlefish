@@ -213,7 +213,7 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
       ["androidboot.vendor.apex.com.android.hardware.graphics.composer"] =
           instance.hwcomposer() == kHwComposerDrm
               ? "com.android.hardware.graphics.composer.drm_hwcomposer"
-              : instance.ranchu_composer_package();
+              : "com.android.hardware.graphics.composer.ranchu";
 
   if (config.vhal_proxy_server_port()) {
     bootconfig_args["androidboot.vhal_proxy_server_port"] =
