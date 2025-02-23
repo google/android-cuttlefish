@@ -119,6 +119,9 @@ DEFINE_string(x_res, "0", "Width of the screen in pixels");
 DEFINE_string(y_res, "0", "Height of the screen in pixels");
 DEFINE_string(dpi, "0", "Pixels per inch for the screen");
 DEFINE_string(refresh_rate_hz, "60", "Screen refresh rate in Hertz");
+DEFINE_string(overlays, "",
+              "List of displays to overlay. Format is: 'vm_index:display_index "
+              "vm_index2:display_index2 [...]'");
 DEFINE_bool(use_16k, false, "Launch using 16k kernel");
 DEFINE_vec(kernel_path, CF_DEFAULTS_KERNEL_PATH,
               "Path to the kernel. Overrides the one from the boot image");
@@ -786,9 +789,10 @@ Result<ProtoType> ParseBinProtoFlagHelper(const std::string& flag_value,
   std::vector<uint8_t> output;
   CF_EXPECT(DecodeBase64(flag_value, &output));
   std::string serialized = std::string(output.begin(), output.end());
-
+  bool result = proto_result.ParseFromString(serialized);
   CF_EXPECT(proto_result.ParseFromString(serialized),
-            "Failed to parse binary proto, flag: "<< flag_name << ", value: " << flag_value);
+            "Failed to parse binary proto, flag: " << flag_name << ", value: "
+                                                   << flag_value);
   return proto_result;
 }
 
@@ -798,10 +802,12 @@ Result<std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>
   ParseBinProtoFlagHelper<InstancesDisplays>(FLAGS_displays_binproto, "displays_binproto") : \
   ParseTextProtoFlagHelper<InstancesDisplays>(FLAGS_displays_textproto, "displays_textproto");
 
+  InstancesDisplays display_proto = CF_EXPECT(std::move(proto_result));
+
   std::vector<std::vector<CuttlefishConfig::DisplayConfig>> result;
-  for (int i=0; i<proto_result->instances_size(); i++) {
+  for (int i = 0; i < display_proto.instances_size(); i++) {
     std::vector<CuttlefishConfig::DisplayConfig> display_configs;
-    const InstanceDisplays& launch_cvd_instance = proto_result->instances(i);
+    const InstanceDisplays& launch_cvd_instance = display_proto.instances(i);
     for (int display_num=0; display_num<launch_cvd_instance.displays_size(); display_num++) {
       const InstanceDisplay& display = launch_cvd_instance.displays(display_num);
 
@@ -816,15 +822,26 @@ Result<std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>
         display_refresh_rate_hz = display.refresh_rate_hertz();
       }
 
-      display_configs.push_back(CuttlefishConfig::DisplayConfig{
-        .width = display.width(),
-        .height = display.height(),
-        .dpi = display_dpi,
-        .refresh_rate_hz = display_refresh_rate_hz,
-        });
+      std::string overlays = "";
+
+      for (const auto& overlay : display.overlays()) {
+        overlays +=
+            fmt::format("{}:{} ", overlay.vm_index(), overlay.display_index());
+      }
+
+      auto dc = CuttlefishConfig::DisplayConfig{
+          .width = display.width(),
+          .height = display.height(),
+          .dpi = display_dpi,
+          .refresh_rate_hz = display_refresh_rate_hz,
+          .overlays = overlays,
+      };
+
+      display_configs.push_back(dc);
     }
     result.push_back(display_configs);
   }
+
   return result;
 }
 
@@ -1200,6 +1217,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<int> dpi_vec = CF_EXPECT(GET_FLAG_INT_VALUE(dpi));
   std::vector<int> refresh_rate_hz_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
       refresh_rate_hz));
+  std::vector<std::string> overlays_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(overlays));
   std::vector<int> memory_mb_vec = CF_EXPECT(GET_FLAG_INT_VALUE(memory_mb));
   std::vector<int> camera_server_port_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
       camera_server_port));
@@ -1426,6 +1445,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   auto env_config = const_cast<const CuttlefishConfig&>(tmp_config_obj)
                         .ForEnvironment(environment_name);
 
+  mutable_env_config.set_group_uuid(std::time(0));
+
   mutable_env_config.set_enable_wifi(FLAGS_enable_wifi);
 
   mutable_env_config.set_vhost_user_mac80211_hwsim(
@@ -1634,7 +1655,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
             .height = y_res_vec[instance_index],
             .dpi = dpi_vec[instance_index],
             .refresh_rate_hz = refresh_rate_hz_vec[instance_index],
-          });
+            .overlays = overlays_vec[instance_index],
+        });
       } else {
         LOG(WARNING)
             << "Ignoring --x_res and --y_res when --display specified.";
