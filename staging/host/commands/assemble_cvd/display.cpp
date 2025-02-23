@@ -104,6 +104,7 @@ class DisplaysConfigsFragmentImpl : public DisplaysConfigsFragment {
       display_config_json[kYRes] = display_configs.height;
       display_config_json[kDpi] = display_configs.dpi;
       display_config_json[kRefreshRateHz] = display_configs.refresh_rate_hz;
+      display_config_json[kOverlays] = display_configs.overlays;
       display_configs_json.append(display_config_json);
     }
     return display_configs_json;
@@ -125,6 +126,7 @@ class DisplaysConfigsFragmentImpl : public DisplaysConfigsFragment {
       display_config.dpi = display_config_json[kDpi].asInt();
       display_config.refresh_rate_hz =
           display_config_json[kRefreshRateHz].asInt();
+      display_config.overlays = display_config_json[kOverlays].asString();
       displays_configs.emplace_back(display_config);
     }
 
@@ -138,7 +140,7 @@ class DisplaysConfigsFragmentImpl : public DisplaysConfigsFragment {
   static constexpr char kYRes[] = "y_res";
   static constexpr char kDpi[] = "dpi";
   static constexpr char kRefreshRateHz[] = "refresh_rate_hz";
-
+  static constexpr char kOverlays[] = "overlays";
   DisplaysConfigs& displays_configs_;
 };
 

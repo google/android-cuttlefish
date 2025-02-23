@@ -25,9 +25,11 @@
 #include "host/frontend/webrtc/cvd_video_frame_buffer.h"
 #include "host/frontend/webrtc/libdevice/video_sink.h"
 #include "host/frontend/webrtc/screenshot_handler.h"
+#include "host/libs/screen_connector/ring_buffer_manager.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
 namespace cuttlefish {
+class CompositionManager;
 /**
  * ScreenConnectorImpl will generate this, and enqueue
  *
@@ -60,13 +62,13 @@ class DisplayHandler {
       ScreenConnector::GenerateProcessedFrameCallback;
   using WebRtcScProcessedFrame = cuttlefish::WebRtcScProcessedFrame;
 
-  DisplayHandler(webrtc_streaming::Streamer& streamer,
-                 ScreenshotHandler& screenshot_handler,
-                 ScreenConnector& screen_connector);
+  DisplayHandler(
+      webrtc_streaming::Streamer& streamer,
+      ScreenshotHandler& screenshot_handler, ScreenConnector& screen_connector,
+      std::optional<std::unique_ptr<CompositionManager>> composition_manager);
   ~DisplayHandler();
 
   [[noreturn]] void Loop();
-
   // If std::nullopt, send last frame for all displays.
   void SendLastFrame(std::optional<uint32_t> display_number);
 
@@ -82,11 +84,11 @@ class DisplayHandler {
     RUNNING,
     STOPPED,
   };
-
   GenerateProcessedFrameCallback GetScreenConnectorCallback();
   void SendBuffers(std::map<uint32_t, std::shared_ptr<BufferInfo>> buffers);
   void RepeatFramesPeriodically();
 
+  std::optional<std::unique_ptr<CompositionManager>> composition_manager_;
   std::map<uint32_t, std::shared_ptr<webrtc_streaming::VideoSink>>
       display_sinks_;
   webrtc_streaming::Streamer& streamer_;

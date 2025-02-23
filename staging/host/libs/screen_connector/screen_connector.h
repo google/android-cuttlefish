@@ -111,22 +111,30 @@ class ScreenConnector : public ScreenConnectorInfo,
         [this](std::uint32_t display_number, std::uint32_t frame_w,
                std::uint32_t frame_h, std::uint32_t frame_fourcc_format,
                std::uint32_t frame_stride_bytes, std::uint8_t* frame_bytes) {
-          const bool is_confui_mode = host_mode_ctrl_.IsConfirmatioUiMode();
-          if (is_confui_mode) {
-            return;
-          }
-
-          ProcessedFrameType processed_frame;
-
-          {
-            std::lock_guard<std::mutex> lock(streamer_callback_mutex_);
-            callback_from_streamer_(display_number, frame_w, frame_h,
-                                    frame_fourcc_format, frame_stride_bytes,
-                                    frame_bytes, processed_frame);
-          }
-
-          sc_frame_multiplexer_.PushToAndroidQueue(std::move(processed_frame));
+          InjectFrame(display_number, frame_w, frame_h, frame_fourcc_format,
+                      frame_stride_bytes, frame_bytes);
         });
+  }
+
+  void InjectFrame(std::uint32_t display_number, std::uint32_t frame_w,
+                   std::uint32_t frame_h, std::uint32_t frame_fourcc_format,
+                   std::uint32_t frame_stride_bytes,
+                   std::uint8_t* frame_bytes) {
+    const bool is_confui_mode = host_mode_ctrl_.IsConfirmatioUiMode();
+    if (is_confui_mode) {
+      return;
+    }
+
+    ProcessedFrameType processed_frame;
+
+    {
+      std::lock_guard<std::mutex> lock(streamer_callback_mutex_);
+      callback_from_streamer_(display_number, frame_w, frame_h,
+                              frame_fourcc_format, frame_stride_bytes,
+                              frame_bytes, processed_frame);
+    }
+
+    sc_frame_multiplexer_.PushToAndroidQueue(std::move(processed_frame));
   }
 
   bool IsCallbackSet() const override {

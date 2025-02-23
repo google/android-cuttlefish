@@ -45,6 +45,7 @@
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_server.h"
 #include "host/libs/input_connector/input_connector.h"
+#include "host/libs/screen_connector/composition_manager.h"
 #include "host/libs/screen_connector/screen_connector.h"
 #include "webrtc_commands.pb.h"
 
@@ -310,8 +311,22 @@ int CuttlefishMain() {
       Streamer::Create(streamer_config, recording_manager, observer_factory);
   CHECK(streamer) << "Could not create streamer";
 
+  // Determine whether to enable Display Composition feature.
+  // It's enabled via the multi-vd config file entry 'overlays'
+  std::optional<std::unique_ptr<CompositionManager>> composition_manager;
+
+  if (cvd_config->OverlaysEnabled()) {
+    Result<std::unique_ptr<CompositionManager>> composition_manager_result =
+        CompositionManager::Create();
+    if (composition_manager_result.ok() && *composition_manager_result) {
+      composition_manager = std::optional<std::unique_ptr<CompositionManager>>(
+          std::move(*composition_manager_result));
+    }
+  }
+
   auto display_handler = std::make_shared<DisplayHandler>(
-      *streamer, screenshot_handler, screen_connector);
+      *streamer, screenshot_handler, screen_connector,
+      std::move(composition_manager));
 
   if (instance.camera_server_port()) {
     auto camera_controller = streamer->AddCamera(instance.camera_server_port(),
