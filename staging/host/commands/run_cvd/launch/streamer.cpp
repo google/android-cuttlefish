@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <fmt/ranges.h>
 #include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
