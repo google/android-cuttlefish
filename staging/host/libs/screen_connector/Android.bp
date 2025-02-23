@@ -20,6 +20,8 @@ package {
 cc_library {
     name: "libcuttlefish_screen_connector",
     srcs: [
+        "composition_manager.cpp",
+        "ring_buffer_manager.cpp",
         "wayland_screen_connector.cpp",
     ],
     shared_libs: [
@@ -28,6 +30,7 @@ cc_library {
         "libfruit",
         "libjsoncpp",
         "liblog",
+        "libyuv",
     ],
     header_libs: [
         "libcuttlefish_confui_host_headers",

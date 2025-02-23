@@ -522,6 +522,17 @@ void CuttlefishConfig::MutableInstanceSpecific::set_serial_number(
   (*Dictionary())[kSerialNumber] = serial_number;
 }
 
+int CuttlefishConfig::InstanceSpecific::index() const {
+  int instance_index = 0;
+  for (const auto& i : config_->Instances()) {
+    if (i.serial_number() == serial_number()) {
+      break;
+    }
+    instance_index++;
+  }
+  return instance_index;
+}
+
 static constexpr char kVirtualDiskPaths[] = "virtual_disk_paths";
 std::vector<std::string> CuttlefishConfig::InstanceSpecific::virtual_disk_paths() const {
   std::vector<std::string> virtual_disks;
@@ -1315,6 +1326,7 @@ static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
 static constexpr char kDpi[] = "dpi";
 static constexpr char kRefreshRateHz[] = "refresh_rate_hz";
+static constexpr char kOverlays[] = "overlays";
 std::vector<CuttlefishConfig::DisplayConfig>
 CuttlefishConfig::InstanceSpecific::display_configs() const {
   std::vector<DisplayConfig> display_configs;
@@ -1325,6 +1337,7 @@ CuttlefishConfig::InstanceSpecific::display_configs() const {
     display_config.dpi = display_config_json[kDpi].asInt();
     display_config.refresh_rate_hz =
         display_config_json[kRefreshRateHz].asInt();
+    display_config.overlays = display_config_json[kOverlays].asString();
     display_configs.emplace_back(display_config);
   }
   return display_configs;
@@ -1339,6 +1352,7 @@ void CuttlefishConfig::MutableInstanceSpecific::set_display_configs(
     display_config_json[kYRes] = display_configs.height;
     display_config_json[kDpi] = display_configs.dpi;
     display_config_json[kRefreshRateHz] = display_configs.refresh_rate_hz;
+    display_config_json[kOverlays] = display_configs.overlays;
     display_configs_json.append(display_config_json);
   }
 

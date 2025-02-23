@@ -151,6 +151,9 @@ class SharedFD {
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
 #ifdef __linux__
   static SharedFD Event(int initval = 0, int flags = 0);
+#ifdef CUTTLEFISH_HOST
+  static SharedFD ShmOpen(const std::string& name, int oflag, int mode);
+#endif
 #endif
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
   static SharedFD MemfdCreateWithData(const std::string& name, const std::string& data, unsigned int flags = 0);
