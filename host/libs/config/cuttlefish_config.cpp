@@ -212,6 +212,19 @@ bool CuttlefishConfig::sig_server_strict() const {
   return (*dictionary_)[kSigServerStrict].asBool();
 }
 
+bool CuttlefishConfig::OverlaysEnabled() const {
+  for (const auto& curinstance : Instances()) {
+    if (curinstance.display_configs().size() > 0) {
+      for (const auto& curdisplay : curinstance.display_configs()) {
+        if (curdisplay.overlays.length() > 0) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 static constexpr char kHostToolsVersion[] = "host_tools_version";
 void CuttlefishConfig::set_host_tools_version(
     const std::map<std::string, uint32_t>& versions) {
