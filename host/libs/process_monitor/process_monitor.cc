@@ -38,6 +38,8 @@
 #include <android-base/logging.h>
 #include "android-base/strings.h"
 
+#include "common/libs/transport/channel.h"
+#include "common/libs/transport/channel_sharedfd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -48,10 +50,23 @@
 namespace cuttlefish {
 namespace {
 
-using process_monitor_impl::ChildToParentResponse;
 using process_monitor_impl::ChildToParentResponseType;
-using process_monitor_impl::ParentToChildMessage;
 using process_monitor_impl::ParentToChildMessageType;
+using transport::Channel;
+using transport::CreateMessage;
+using transport::ManagedMessage;
+
+Result<void> SendEmptyRequest(Channel& channel, uint32_t type) {
+  ManagedMessage message = CF_EXPECT(CreateMessage(type, false, 0));
+  CF_EXPECT(channel.SendRequest(*message));
+  return {};
+}
+
+Result<void> SendEmptyResponse(Channel& channel, uint32_t type) {
+  ManagedMessage message = CF_EXPECT(CreateMessage(type, true, 0));
+  CF_EXPECT(channel.SendResponse(*message));
+  return {};
+}
 
 void LogSubprocessExit(const std::string& name, pid_t pid, int wstatus) {
   LOG(INFO) << "Detected unexpected exit of monitored subprocess " << name;
@@ -158,7 +173,7 @@ Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
                                std::mutex& properties_mutex,
                                const SharedFD& channel_to_secure_env,
                                const bool is_suspend,
-                               SharedFD child_monitor_socket) {
+                               transport::SharedFdChannel& socket) {
   std::lock_guard lock(properties_mutex);
   auto secure_env_itr = std::find_if(
       monitor_entries.begin(), monitor_entries.end(), [](MonitorEntry& entry) {
@@ -224,8 +239,7 @@ Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
       CF_EXPECT(entry.proc->SendSignalToGroup(SIGCONT));
     }
   }
-  ChildToParentResponse response(ChildToParentResponseType::kSuccess);
-  CF_EXPECT(response.Write(child_monitor_socket));
+  CF_EXPECT(SendEmptyResponse(socket, ChildToParentResponseType::kSuccess));
   return {};
 }
 
@@ -255,8 +269,8 @@ Result<void> ProcessMonitor::StartSubprocesses(
 Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
   LOG(DEBUG) << "Waiting for a `stop` message from the parent";
   while (running.load()) {
-    auto message = CF_EXPECT(ParentToChildMessage::Read(child_monitor_socket_));
-    if (message.Stop()) {
+    ManagedMessage message = CF_EXPECT(child_channel_->ReceiveMessage());
+    if (message->command == ParentToChildMessageType::kStop) {
       running.store(false);
       // Wake up the wait() loop by giving it an exited child process
       if (fork() == 0) {
@@ -265,11 +279,11 @@ Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
       // will break the for-loop as running is now false
       continue;
     }
-    if (message.Type() == ParentToChildMessageType::kHostSuspend) {
+    if (message->command == ParentToChildMessageType::kHostSuspend) {
       CF_EXPECT(SuspendHostProcessesImpl());
       continue;
     }
-    if (message.Type() == ParentToChildMessageType::kHostResume) {
+    if (message->command == ParentToChildMessageType::kHostResume) {
       CF_EXPECT(ResumeHostProcessesImpl());
       continue;
     }
@@ -278,17 +292,19 @@ Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
 }
 
 Result<void> ProcessMonitor::SuspendHostProcessesImpl() {
+  CF_EXPECT(child_channel_.has_value());
   CF_EXPECT(SuspendResumeImpl(properties_.entries_, properties_mutex_,
                               channel_to_secure_env_, /* is_suspend */ true,
-                              child_monitor_socket_),
+                              *child_channel_),
             "Failed suspend");
   return {};
 }
 
 Result<void> ProcessMonitor::ResumeHostProcessesImpl() {
+  CF_EXPECT(child_channel_.has_value());
   CF_EXPECT(SuspendResumeImpl(properties_.entries_, properties_mutex_,
                               channel_to_secure_env_, /* is_suspend */ false,
-                              child_monitor_socket_),
+                              *child_channel_),
             "Failed resume");
   return {};
 }
@@ -325,14 +341,14 @@ ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties,
 
 Result<void> ProcessMonitor::StopMonitoredProcesses() {
   CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
-  CF_EXPECT(parent_monitor_socket_->IsOpen(),
+  CF_EXPECT(parent_channel_.has_value(),
             "The monitor socket is already closed");
-  ParentToChildMessage message(ParentToChildMessageType::kStop);
-  CF_EXPECT(message.Write(parent_monitor_socket_));
+  CF_EXPECT(
+      SendEmptyRequest(*parent_channel_, ParentToChildMessageType::kStop));
 
   pid_t last_monitor = monitor_;
   monitor_ = -1;
-  parent_monitor_socket_->Close();
+  parent_channel_.reset();
   int wstatus;
   CF_EXPECT(waitpid(last_monitor, &wstatus, 0) == last_monitor,
             "Failed to wait for monitor process");
@@ -345,50 +361,46 @@ Result<void> ProcessMonitor::StopMonitoredProcesses() {
 
 Result<void> ProcessMonitor::SuspendMonitoredProcesses() {
   CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
-  CF_EXPECT(parent_monitor_socket_->IsOpen(),
-            "The monitor socket is already closed");
-  ParentToChildMessage message(ParentToChildMessageType::kHostSuspend);
-  CF_EXPECT(message.Write(parent_monitor_socket_));
-  auto response =
-      CF_EXPECT(ChildToParentResponse::Read(parent_monitor_socket_));
-  CF_EXPECT(response.Success(),
+  CF_EXPECT(parent_channel_.has_value());
+  CF_EXPECT(SendEmptyRequest(*parent_channel_,
+                             ParentToChildMessageType::kHostSuspend));
+
+  ManagedMessage response = CF_EXPECT(parent_channel_->ReceiveMessage());
+  CF_EXPECT(response->command == ChildToParentResponseType::kSuccess,
             "On kHostSuspend, the child run_cvd returned kFailure.");
   return {};
 }
 
 Result<void> ProcessMonitor::ResumeMonitoredProcesses() {
   CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
-  CF_EXPECT(parent_monitor_socket_->IsOpen(),
-            "The monitor socket is already closed");
-  ParentToChildMessage message(ParentToChildMessageType::kHostResume);
-  CF_EXPECT(message.Write(parent_monitor_socket_));
-  auto response =
-      CF_EXPECT(ChildToParentResponse::Read(parent_monitor_socket_));
-  CF_EXPECT(response.Success(),
+  CF_EXPECT(parent_channel_.has_value());
+  CF_EXPECT(SendEmptyRequest(*parent_channel_,
+                             ParentToChildMessageType::kHostResume));
+
+  ManagedMessage response = CF_EXPECT(parent_channel_->ReceiveMessage());
+  CF_EXPECT(response->command == ChildToParentResponseType::kSuccess,
             "On kHostResume, the child run_cvd returned kFailure.");
   return {};
 }
 
 Result<void> ProcessMonitor::StartAndMonitorProcesses() {
   CF_EXPECT(monitor_ == -1, "The monitor process was already started");
-  CF_EXPECT(!parent_monitor_socket_->IsOpen(),
+  CF_EXPECT(!parent_channel_.has_value(),
             "Parent monitor socket was already opened");
   SharedFD parent_sock;
   SharedFD child_sock;
   SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0, &parent_sock, &child_sock);
   monitor_ = fork();
   if (monitor_ == 0) {
-    child_monitor_socket_ = std::move(child_sock);
-    parent_sock->Close();
-    auto monitor_result = MonitorRoutine();
+    child_channel_ = transport::SharedFdChannel(child_sock, child_sock);
+    Result<void> monitor_result = MonitorRoutine();
     if (!monitor_result.ok()) {
       LOG(ERROR) << "Monitoring processes failed:\n"
                  << monitor_result.error().FormatForEnv();
     }
     std::exit(monitor_result.ok() ? 0 : 1);
   } else {
-    parent_monitor_socket_ = std::move(parent_sock);
-    child_sock->Close();
+    parent_channel_ = transport::SharedFdChannel(parent_sock, parent_sock);
     return {};
   }
 }
