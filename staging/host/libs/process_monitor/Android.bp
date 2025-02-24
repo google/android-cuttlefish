@@ -35,6 +35,7 @@ cc_library {
     static_libs: [
         "libcuttlefish_command_util",
         "libcuttlefish_host_config",
+        "libcuttlefish_transport",
         "libgflags",
     ],
     target: {
