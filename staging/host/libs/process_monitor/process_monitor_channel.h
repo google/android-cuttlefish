@@ -24,14 +24,14 @@
 namespace cuttlefish {
 namespace process_monitor_impl {
 
-enum class ParentToChildMessageType : std::uint8_t {
+enum ParentToChildMessageType : std::uint8_t {
   kStop = 1,
   kHostResume = 2,
   kHostSuspend = 3,
   kError = 4,
 };
 
-enum class ChildToParentResponseType : std::uint8_t {
+enum ChildToParentResponseType : std::uint8_t {
   kSuccess = 0,
   kFailure = 1,
 };
