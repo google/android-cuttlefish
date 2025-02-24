@@ -45,16 +45,25 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/known_paths.h"
-#include "host/libs/process_monitor/process_monitor_channel.h"
 
 namespace cuttlefish {
 namespace {
 
-using process_monitor_impl::ChildToParentResponseType;
-using process_monitor_impl::ParentToChildMessageType;
 using transport::Channel;
 using transport::CreateMessage;
 using transport::ManagedMessage;
+
+enum ParentToChildMessageType : std::uint8_t {
+  kStop = 1,
+  kHostResume = 2,
+  kHostSuspend = 3,
+  kError = 4,
+};
+
+enum ChildToParentResponseType : std::uint8_t {
+  kSuccess = 0,
+  kFailure = 1,
+};
 
 Result<void> SendEmptyRequest(Channel& channel, uint32_t type) {
   ManagedMessage message = CF_EXPECT(CreateMessage(type, false, 0));

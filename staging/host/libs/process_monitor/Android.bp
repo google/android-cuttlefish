@@ -21,7 +21,6 @@ cc_library {
     name: "libcuttlefish_process_monitor",
     srcs: [
         "process_monitor.cc",
-        "process_monitor_channel.cc",
     ],
     shared_libs: [
         "libbase",
