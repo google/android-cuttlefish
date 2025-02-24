@@ -46,8 +46,12 @@
 #include "host/libs/process_monitor/process_monitor_channel.h"
 
 namespace cuttlefish {
-
 namespace {
+
+using process_monitor_impl::ChildToParentResponse;
+using process_monitor_impl::ChildToParentResponseType;
+using process_monitor_impl::ParentToChildMessage;
+using process_monitor_impl::ParentToChildMessageType;
 
 void LogSubprocessExit(const std::string& name, pid_t pid, int wstatus) {
   LOG(INFO) << "Detected unexpected exit of monitored subprocess " << name;
@@ -220,8 +224,6 @@ Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
       CF_EXPECT(entry.proc->SendSignalToGroup(SIGCONT));
     }
   }
-  using process_monitor_impl::ChildToParentResponse;
-  using process_monitor_impl::ChildToParentResponseType;
   ChildToParentResponse response(ChildToParentResponseType::kSuccess);
   CF_EXPECT(response.Write(child_monitor_socket));
   return {};
@@ -253,7 +255,6 @@ Result<void> ProcessMonitor::StartSubprocesses(
 Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
   LOG(DEBUG) << "Waiting for a `stop` message from the parent";
   while (running.load()) {
-    using process_monitor_impl::ParentToChildMessage;
     auto message = CF_EXPECT(ParentToChildMessage::Read(child_monitor_socket_));
     if (message.Stop()) {
       running.store(false);
@@ -264,7 +265,6 @@ Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
       // will break the for-loop as running is now false
       continue;
     }
-    using process_monitor_impl::ParentToChildMessageType;
     if (message.Type() == ParentToChildMessageType::kHostSuspend) {
       CF_EXPECT(SuspendHostProcessesImpl());
       continue;
@@ -327,8 +327,6 @@ Result<void> ProcessMonitor::StopMonitoredProcesses() {
   CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
   CF_EXPECT(parent_monitor_socket_->IsOpen(),
             "The monitor socket is already closed");
-  using process_monitor_impl::ParentToChildMessage;
-  using process_monitor_impl::ParentToChildMessageType;
   ParentToChildMessage message(ParentToChildMessageType::kStop);
   CF_EXPECT(message.Write(parent_monitor_socket_));
 
@@ -349,11 +347,8 @@ Result<void> ProcessMonitor::SuspendMonitoredProcesses() {
   CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
   CF_EXPECT(parent_monitor_socket_->IsOpen(),
             "The monitor socket is already closed");
-  using process_monitor_impl::ParentToChildMessage;
-  using process_monitor_impl::ParentToChildMessageType;
   ParentToChildMessage message(ParentToChildMessageType::kHostSuspend);
   CF_EXPECT(message.Write(parent_monitor_socket_));
-  using process_monitor_impl::ChildToParentResponse;
   auto response =
       CF_EXPECT(ChildToParentResponse::Read(parent_monitor_socket_));
   CF_EXPECT(response.Success(),
@@ -365,11 +360,8 @@ Result<void> ProcessMonitor::ResumeMonitoredProcesses() {
   CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
   CF_EXPECT(parent_monitor_socket_->IsOpen(),
             "The monitor socket is already closed");
-  using process_monitor_impl::ParentToChildMessage;
-  using process_monitor_impl::ParentToChildMessageType;
   ParentToChildMessage message(ParentToChildMessageType::kHostResume);
   CF_EXPECT(message.Write(parent_monitor_socket_));
-  using process_monitor_impl::ChildToParentResponse;
   auto response =
       CF_EXPECT(ChildToParentResponse::Read(parent_monitor_socket_));
   CF_EXPECT(response.Success(),
