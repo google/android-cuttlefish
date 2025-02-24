@@ -20,7 +20,7 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_fd.h"
+#include "common/libs/transport/channel_sharedfd.h"
 #include "host/commands/sensors_simulator/sensors_simulator.h"
 #include "host/libs/config/logging.h"
 
