@@ -25,7 +25,7 @@
         <xi:include href="r_submix_audio_policy_configuration.xml"/>
 
         <!-- Bluetooth Audio HAL -->
-        <xi:include href="bluetooth_audio_policy_configuration_7_0.xml"/>
+        <xi:include href="bluetooth_with_le_audio_policy_configuration_7_0.xml"/>
     </modules>
     <!-- End of Modules section -->
 
