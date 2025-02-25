@@ -68,14 +68,14 @@ cc_binary {
 
 java_test_host {
     name: "CuttlefishHwcTests",
+    defaults: [
+        "cuttlefish_host_test_utils_defaults",
+    ],
     srcs: [
         "CuttlefishHwcTests.java",
     ],
     data_device_bins_both: [
         "simply_red",
-    ],
-    data_native_bins: [
-        "cvd_internal_display",
     ],
     test_options: {
         unit_test: false,
@@ -87,9 +87,6 @@ java_test_host {
         "compatibility-host-util",
         "cts-tradefed",
         "tradefed",
-    ],
-    static_libs: [
-        "cuttlefish_host_test_utils",
     ],
     plugins: [
         "auto_annotation_plugin",
