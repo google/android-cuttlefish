@@ -17,7 +17,7 @@ package {
 }
 
 java_library_host {
-    name: "cuttlefish_host_test_utils",
+    name: "cuttlefish_host_test_utils_impl",
     srcs: [
         "src/**/*.java",
     ],
@@ -28,5 +28,15 @@ java_library_host {
     libs: [
         "compatibility-host-util",
         "tradefed",
+    ],
+}
+
+java_defaults {
+    name: "cuttlefish_host_test_utils_defaults",
+    data_native_bins: [
+        "cvd_internal_display",
+    ],
+    static_libs: [
+        "cuttlefish_host_test_utils_impl",
     ],
 }

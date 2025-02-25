@@ -18,6 +18,9 @@ package {
 
 java_test_host {
     name: "CuttlefishWmediumdControlTest",
+    defaults: [
+        "cuttlefish_host_test_utils_defaults",
+    ],
     srcs: [
         "src/**/*.java",
     ],
@@ -33,7 +36,6 @@ java_test_host {
     ],
     static_libs: [
         "WmediumdServerProto_java",
-        "cuttlefish_host_test_utils",
         "libprotobuf-java-util-full",
         "platform-test-annotations",
     ],

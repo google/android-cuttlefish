@@ -18,11 +18,11 @@ package {
 
 java_test_host {
     name: "CuttlefishDisplayHotplugTest",
+    defaults: [
+        "cuttlefish_host_test_utils_defaults",
+    ],
     srcs: [
         "src/com/android/cuttlefish/tests/CuttlefishDisplayHotplugTest.java",
-    ],
-    data_native_bins: [
-        "cvd_internal_display",
     ],
     test_options: {
         unit_test: false,
@@ -34,9 +34,6 @@ java_test_host {
         "compatibility-host-util",
         "cts-tradefed",
         "tradefed",
-    ],
-    static_libs: [
-        "cuttlefish_host_test_utils",
     ],
     plugins: [
         "auto_annotation_plugin",
@@ -49,11 +46,11 @@ java_test_host {
 
 java_test_host {
     name: "CuttlefishDisplayTests",
+    defaults: [
+        "cuttlefish_host_test_utils_defaults",
+    ],
     srcs: [
         "src/com/android/cuttlefish/tests/CuttlefishDisplayTests.java",
-    ],
-    data_native_bins: [
-        "cvd_internal_display",
     ],
     test_options: {
         unit_test: false,
@@ -65,9 +62,6 @@ java_test_host {
         "compatibility-host-util",
         "cts-tradefed",
         "tradefed",
-    ],
-    static_libs: [
-        "cuttlefish_host_test_utils",
     ],
     plugins: [
         "auto_annotation_plugin",
@@ -96,6 +90,9 @@ java_test_host {
 
 java_test_host {
     name: "CuttlefishVulkanSnapshotTests",
+    defaults: [
+        "cuttlefish_host_test_utils_defaults",
+    ],
     srcs: [
         "src/com/android/cuttlefish/tests/CuttlefishVulkanSnapshotTests.java",
     ],
@@ -104,9 +101,6 @@ java_test_host {
     ],
     libs: [
         "tradefed",
-    ],
-    static_libs: [
-        "cuttlefish_host_test_utils",
     ],
     plugins: [
         "auto_annotation_plugin",
