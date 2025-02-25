@@ -158,10 +158,12 @@ QemuManager::ConfigureGraphics(
     };
   } else if (gpu_mode == kGpuModeGfxstream ||
              gpu_mode == kGpuModeGfxstreamGuestAngle ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+             gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
+             gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
     const bool uses_angle =
         gpu_mode == kGpuModeGfxstreamGuestAngle ||
-        gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader;
+        gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
+        gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe;
     const std::string gles_impl = uses_angle ? "angle" : "emulation";
     const std::string gltransport =
         (instance.guest_android_version() == "11.0.0") ? "virtio-gpu-pipe"
@@ -441,7 +443,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   } else if (gpu_mode == kGpuModeGuestSwiftshader ||
              gpu_mode == kGpuModeGfxstream ||
              gpu_mode == kGpuModeGfxstreamGuestAngle ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+             gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
+             gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
   } else {
@@ -466,7 +469,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
           "virtio-gpu-rutabaga,x-gfxstream-gles=on,gfxstream-vulkan=on,"
           "x-gfxstream-composer=on,hostmem=256M";
     } else if (gpu_mode == kGpuModeGfxstreamGuestAngle ||
-               gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+               gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
+               gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
       gpu_device =
           "virtio-gpu-rutabaga,gfxstream-vulkan=on,"
           "x-gfxstream-composer=on,hostmem=256M";
@@ -479,6 +483,12 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
                                         swiftshader_icd_json);
         qemu_cmd.AddEnvironmentVariable("VK_ICD_FILENAMES",
                                         swiftshader_icd_json);
+      } else if (gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
+        // See https://github.com/KhronosGroup/Vulkan-Loader.
+        const std::string lavapipe_icd_json =
+            HostUsrSharePath("vulkan/icd.d/vk_lavapipe_icd.cf.json");
+        qemu_cmd.AddEnvironmentVariable("VK_DRIVER_FILES", lavapipe_icd_json);
+        qemu_cmd.AddEnvironmentVariable("VK_ICD_FILENAMES", lavapipe_icd_json);
       }
     }
 

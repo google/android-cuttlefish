@@ -1091,6 +1091,7 @@ extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxstream;
 extern const char* const kGpuModeGfxstreamGuestAngle;
 extern const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader;
+extern const char* const kGpuModeGfxstreamGuestAngleHostLavapipe;
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeNone;
 
