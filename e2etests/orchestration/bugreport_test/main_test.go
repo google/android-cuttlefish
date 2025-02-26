@@ -29,7 +29,7 @@ import (
 )
 
 func TestBugReport(t *testing.T) {
-	ctx, err := common.Setup(61002)
+	ctx, err := common.Setup()
 	if err != nil {
 		t.Fatal(err)
 	}

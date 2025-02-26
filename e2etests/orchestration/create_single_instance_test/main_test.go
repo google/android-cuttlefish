@@ -26,7 +26,7 @@ import (
 )
 
 func TestCreateSingleInstance(t *testing.T) {
-	ctx, err := common.Setup(61000)
+	ctx, err := common.Setup()
 	if err != nil {
 		t.Fatal(err)
 	}

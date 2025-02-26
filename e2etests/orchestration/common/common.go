@@ -13,16 +13,17 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	clientpkg "github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 )
+
+// Port where the HO service is listening to.
+const HOPort = 2080
 
 type TestContext struct {
 	ServiceURL        string
@@ -31,7 +32,7 @@ type TestContext struct {
 }
 
 // Starts the HO service within a docker container.
-func Setup(port int) (*TestContext, error) {
+func Setup() (*TestContext, error) {
 	result := &TestContext{}
 	dockerHelper, err := NewDockerHelper()
 	if err != nil {
@@ -42,12 +43,16 @@ func Setup(port int) (*TestContext, error) {
 		return nil, err
 	}
 	result.DockerImageName = img
-	id, err := dockerHelper.RunContainer(img, port)
+	id, err := dockerHelper.RunContainer(img)
+	if err != nil {
+		return nil, err
+	}
+	ipAddr, err := dockerHelper.getIpAddr(id)
 	if err != nil {
 		return nil, err
 	}
 	result.DockerContainerID = id
-	result.ServiceURL = fmt.Sprintf("http://0.0.0.0:%d", port)
+	result.ServiceURL = fmt.Sprintf("http://%s:%d", ipAddr, HOPort)
 	if err := waitUntilServiceIsUp(result.ServiceURL); err != nil {
 		return nil, err
 	}
@@ -112,7 +117,7 @@ func (h *DockerHelper) RemoveImage(name string) error {
 	return nil
 }
 
-func (h *DockerHelper) RunContainer(img string, hostPort int) (string, error) {
+func (h *DockerHelper) RunContainer(img string) (string, error) {
 	ctx := context.TODO()
 	config := &container.Config{
 		AttachStdin: true,
@@ -120,8 +125,7 @@ func (h *DockerHelper) RunContainer(img string, hostPort int) (string, error) {
 		Tty:         true,
 	}
 	hostConfig := &container.HostConfig{
-		PortBindings: nat.PortMap{"2080/tcp": []nat.PortBinding{{HostPort: strconv.Itoa(hostPort)}}},
-		Privileged:   true,
+		Privileged: true,
 	}
 	createRes, err := h.client.ContainerCreate(ctx, config, hostConfig, nil, nil, "")
 	if err != nil {
@@ -131,6 +135,19 @@ func (h *DockerHelper) RunContainer(img string, hostPort int) (string, error) {
 		return "", err
 	}
 	return createRes.ID, nil
+}
+
+func (h *DockerHelper) getIpAddr(id string) (string, error) {
+	ctx := context.TODO()
+	c, err := h.client.ContainerInspect(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	bridgeNetwork := c.NetworkSettings.Networks["bridge"]
+	if bridgeNetwork == nil {
+		return "", fmt.Errorf("bridge network not found in container: %q", id)
+	}
+	return bridgeNetwork.IPAddress, nil
 }
 
 func (h *DockerHelper) PullLogs(id string) error {
