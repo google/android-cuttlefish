@@ -30,7 +30,7 @@ import (
 )
 
 func TestSnapshot(t *testing.T) {
-	ctx, err := common.Setup(61003)
+	ctx, err := common.Setup()
 	if err != nil {
 		t.Fatal(err)
 	}
