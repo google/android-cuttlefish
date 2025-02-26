@@ -1167,27 +1167,30 @@ NetworkService::SignalStrength NetworkService::GetCurrentSignalStrength() {
   if (!IsHasNetwork()) {
     return result;
   }
+
   int percent = signal_strength_percent_;
   switch (current_network_mode_) {
     case M_MODEM_TECH_GSM:
       result.gsm_rssi = GetValueInRange(kRssiRange, percent);
+      result.gsm_ber = kBerUnknownValue;
       break;
     case M_MODEM_TECH_CDMA:
       result.cdma_dbm = GetValueInRange(kDbmRange, percent) * -1;
+      result.cdma_ecio = kEcioUnknownValue;
       break;
     case M_MODEM_TECH_EVDO:
       result.evdo_dbm = GetValueInRange(kDbmRange, percent) * -1;
+      result.evdo_ecio = kEcioUnknownValue;
+      result.evdo_snr = kSnrUnknownValue;
       break;
     case M_MODEM_TECH_LTE:
       result.lte_rsrp = GetValueInRange(kRsrpRange, percent) * -1;
+      result.lte_rssi = kRssiUnknownValue;
       break;
     case M_MODEM_TECH_WCDMA:
       result.wcdma_rssi = GetValueInRange(kRssiRange, percent);
       break;
     case M_MODEM_TECH_NR:
-      // special for NR: it uses LTE as primary, so LTE signal strength is
-      // needed as well
-      result.lte_rsrp = GetValueInRange(kRsrpRange, percent) * -1;
       result.nr_ss_rsrp = GetValueInRange(kRsrpRange, percent) * -1;
       break;
     default:
