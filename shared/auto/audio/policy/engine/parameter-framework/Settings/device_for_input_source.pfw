@@ -183,6 +183,11 @@ supDomain: DeviceForInputSource
 					usb_device = 0
 					builtin_mic = 0
 					stub = 0
+				component: voice_performance/applicable_input_device/mask
+					wired_headset = 0
+					usb_device = 0
+					builtin_mic = 0
+					stub = 0
 
 		conf: UsbDevice
 			AvailableInputDevices Includes USB_DEVICE
@@ -203,6 +208,12 @@ supDomain: DeviceForInputSource
 					usb_device = 1
 					builtin_mic = 0
 					stub = 0
+				component: voice_performance/applicable_input_device/mask
+					wired_headset = 0
+					usb_device = 0
+					builtin_mic = 0
+					stub = 0
+
 
 		conf: BuiltinMic
 			AvailableInputDevices Includes BUILTIN_MIC
@@ -223,6 +234,12 @@ supDomain: DeviceForInputSource
 					usb_device = 0
 					builtin_mic = 1
 					stub = 0
+				component: voice_performance/applicable_input_device/mask
+					wired_headset = 0
+					usb_device = 0
+					builtin_mic = 1
+					stub = 0
+
 
 		conf: Stub
 			AvailableInputDevices Includes DEFAULT
@@ -243,6 +260,12 @@ supDomain: DeviceForInputSource
 					usb_device = 0
 					builtin_mic = 0
 					stub = 1
+				component: voice_performance/applicable_input_device/mask
+					wired_headset = 0
+					usb_device = 0
+					builtin_mic = 0
+					stub = 1
+
 		conf: Default
 			component: /Policy/policy/input_sources
 				component: voice_recognition/applicable_input_device/mask
@@ -260,6 +283,12 @@ supDomain: DeviceForInputSource
 					usb_device = 0
 					builtin_mic = 0
 					stub = 0
+				component: voice_performance/applicable_input_device/mask
+					wired_headset = 0
+					usb_device = 0
+					builtin_mic = 0
+					stub = 0
+
 
 	domain: VoiceCommunication
 		conf: WiredHeadset
@@ -366,10 +395,8 @@ supDomain: DeviceForInputSource
 			AvailableInputDevices Includes DEFAULT
 
 			/Policy/policy/input_sources/echo_reference/applicable_input_device/mask/stub = 1
-			/Policy/policy/input_sources/voice_performance/applicable_input_device/mask/stub = 1
 
 		conf: Default
 			/Policy/policy/input_sources/echo_reference/applicable_input_device/mask/stub = 0
-			/Policy/policy/input_sources/voice_performance/applicable_input_device/mask/stub = 0
 
 
