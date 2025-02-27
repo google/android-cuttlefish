@@ -1,4 +1,5 @@
 <device-state-config>
+
   <device-state>
     <identifier>0</identifier>
     <name>CLOSED</name>
@@ -14,6 +15,7 @@
       </lid-switch>
     </conditions>
   </device-state>
+
   <device-state>
     <identifier>1</identifier>
     <name>HALF_OPENED</name>
@@ -36,6 +38,7 @@
       </sensor>
     </conditions>
   </device-state>
+
   <device-state>
     <identifier>2</identifier>
     <name>OPENED</name>
@@ -50,6 +53,7 @@
       </lid-switch>
     </conditions>
   </device-state>
+
   <device-state>
     <identifier>3</identifier>
     <name>REAR_DISPLAY_MODE</name>
@@ -60,4 +64,17 @@
       <property>com.android.server.policy.PROPERTY_FEATURE_REAR_DISPLAY</property>
     </properties>
   </device-state>
+
+  <device-state>
+    <identifier>5</identifier>
+    <name>REAR_DISPLAY_OUTER_DEFAULT</name>
+    <properties>
+      <property>com.android.server.policy.PROPERTY_EMULATED_ONLY</property>
+      <property>com.android.server.policy.PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_OUTER_PRIMARY</property>
+      <property>com.android.server.policy.PROPERTY_POLICY_AVAILABLE_FOR_APP_REQUEST</property>
+      <property>com.android.server.policy.PROPERTY_FEATURE_REAR_DISPLAY</property>
+      <property>com.android.server.policy.PROPERTY_FEATURE_REAR_DISPLAY_OUTER_DEFAULT</property>
+    </properties>
+  </device-state>
+
 </device-state-config>
