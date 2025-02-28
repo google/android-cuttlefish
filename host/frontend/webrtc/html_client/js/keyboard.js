@@ -53,5 +53,6 @@ function enableKeyboardRewriteButton(dc) {
   processToggleButton("shift-button", "ShiftLeft", dc);
   processToggleButton("ctrl-button", "CtrlLeft", dc);
   processToggleButton("alt-button", "AltLeft", dc);
+  processToggleButton("super-button", "MetaLeft", dc);
   processButton("tab-button", "Tab", dc);
 }
