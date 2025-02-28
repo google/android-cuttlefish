@@ -20,6 +20,7 @@
         <indexMin>0</indexMin>
         <indexMax>40</indexMax>
         <volume deviceCategory="DEVICE_CATEGORY_SPEAKER" ref="DEFAULT_VOLUME_STEPS_CURVE"/>
+        <volume deviceCategory="DEVICE_CATEGORY_HEADSET" ref="DEFAULT_VOLUME_STEPS_CURVE"/>
     </volumeGroup>
 
     <volumeGroup>
