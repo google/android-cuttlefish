@@ -44,6 +44,11 @@
 namespace cuttlefish {
 namespace {
 
+// Historically, stop_cvd returned an error code everytime it had to fallback to
+// killing the instance process groups. If sending the kill signal failed the
+// returned exit code would have the third bit set.
+constexpr int kFallbackErrorBit = 1 << 2;
+
 std::set<std::string> FallbackDirs() {
   std::set<std::string> paths;
   std::string parent_path = StringFromEnv("HOME", ".");
@@ -100,7 +105,7 @@ std::set<pid_t> GetCandidateProcessGroups(const std::set<std::string>& dirs) {
 }
 
 int FallBackStop(const std::set<std::string>& dirs) {
-  auto exit_code = 1; // Having to fallback is an error
+  auto exit_code = 0;
 
   auto process_groups = GetCandidateProcessGroups(dirs);
   for (auto pgid: process_groups) {
@@ -109,7 +114,7 @@ int FallBackStop(const std::set<std::string>& dirs) {
     if (retval < 0) {
       LOG(ERROR) << "Failed to kill process group " << pgid << ": "
                  << strerror(errno);
-      exit_code |= 4;
+      exit_code |= kFallbackErrorBit;
     }
   }
 
