@@ -15,8 +15,8 @@
  */
 
 #include <log/log.h>
-#include <multihal_sensors_transport.h>
 #include <multihal_sensors.h>
+#include <multihal_sensors_transport.h>
 
 #include "common/libs/transport/channel_sharedfd.h"
 
@@ -26,8 +26,8 @@ namespace {
 
 class VconsoleSensorsTransport : public goldfish::SensorsTransport {
  public:
-  VconsoleSensorsTransport(const char* path)
-      : console_sensors_fd_(cuttlefish::SharedFD::Open(path, O_RDWR)),
+  VconsoleSensorsTransport(cuttlefish::SharedFD fd)
+      : console_sensors_fd_(std::move(fd)),
         pure_sensors_fd_(console_sensors_fd_->UNMANAGED_Dup()),
         sensors_channel_(console_sensors_fd_, console_sensors_fd_) {}
 
@@ -36,7 +36,8 @@ class VconsoleSensorsTransport : public goldfish::SensorsTransport {
   int Send(const void* msg, int size) override {
     auto message_result = cuttlefish::transport::CreateMessage(0, size);
     if (!message_result.ok()) {
-      LOG(ERROR) << "Failed to allocate sensors message with size: " << size << " bytes. "
+      LOG(ERROR) << "Failed to allocate sensors message with size: " << size
+                 << " bytes. "
                  << "Error message: " << message_result.error().Message();
       return -1;
     }
@@ -46,7 +47,8 @@ class VconsoleSensorsTransport : public goldfish::SensorsTransport {
 
     auto send_result = sensors_channel_.SendRequest(*message);
     if (!send_result.ok()) {
-      LOG(ERROR) << "Failed to send sensors message with size: " << size << " bytes. "
+      LOG(ERROR) << "Failed to send sensors message with size: " << size
+                 << " bytes. "
                  << "Error message: " << send_result.error().Message();
       return -1;
     }
@@ -91,13 +93,23 @@ class VconsoleSensorsTransport : public goldfish::SensorsTransport {
 
 }  // namespace
 
+inline constexpr const char kSensorsConsolePath[] = "/dev/hvc13";
+
 extern "C" ISensorsSubHal* sensorsHalGetSubHal_2_1(uint32_t* version) {
   // Leaking the memory intentionally to make sure this object is available
   // for other threads after main thread is terminated:
   // https://google.github.io/styleguide/cppguide.html#Static_and_Global_Variables
   // go/totw/110#destruction
   static goldfish::MultihalSensors* impl = new goldfish::MultihalSensors([]() {
-    return std::make_unique<VconsoleSensorsTransport>("/dev/hvc13");
+    const auto fd = cuttlefish::SharedFD::Open(kSensorsConsolePath, O_RDWR);
+    if (!fd->IsOpen()) {
+      LOG(FATAL) << "Could not connect to sensors: " << fd->StrError();
+    }
+    if (fd->SetTerminalRaw() < 0) {
+      LOG(FATAL) << "Could not make " << kSensorsConsolePath
+                 << " a raw terminal: " << fd->StrError();
+    }
+    return std::make_unique<VconsoleSensorsTransport>(fd);
   });
 
   *version = SUB_HAL_2_1_VERSION;
