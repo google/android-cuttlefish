@@ -28,6 +28,7 @@
 #include "host/commands/cvd/utils/common.h"
 #include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/util.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
@@ -99,6 +100,31 @@ Result<Json::Value> LocalInstance::FetchStatus(std::chrono::seconds timeout) {
 }
 
 Result<void> LocalInstance::PressPowerBtn() {
+  auto bin_check = 
+      HostToolTarget(host_artifacts_path()).GetPowerBtnBinPath();
+  if (bin_check.ok()) {
+    return PressPowerBtnLegacy();
+  }
+
+  std::unique_ptr<const CuttlefishConfig> config = CuttlefishConfig::GetFromFile(instance_dir() + "/cuttlefish_config.json");
+  auto instance = config->ForInstance(id());
+
+  Command command(instance.crosvm_binary());
+  command.AddParameter("powerbtn");
+  command.AddParameter(instance.CrosvmSocketPath());
+
+  LOG(INFO) << "Pressing power button";
+  std::string output;
+  std::string error;
+  auto ret = RunWithManagedStdio(std::move(command), NULL, &output, &error);
+  CF_EXPECT_EQ(ret, 0,
+               "crosvm powerbtn returned: " << ret << "\n"
+                                            << output << "\n"
+                                            << error);
+  return {};
+}
+
+Result<void> LocalInstance::PressPowerBtnLegacy() {
   Command cmd(
       CF_EXPECT(HostToolTarget(host_artifacts_path()).GetPowerBtnBinPath()));
 
