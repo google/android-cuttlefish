@@ -534,8 +534,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
                               instance.crosvm_binary());
 
   if (!config.kvm_path().empty()) {
-    crosvm_cmd.Cmd().AddParameter("--hypervisor=kvm[device=", config.kvm_path(),
-                                  "]");
+    crosvm_cmd.AddKvmPath(config.kvm_path());
   }
 
   if (!instance.smt()) {
