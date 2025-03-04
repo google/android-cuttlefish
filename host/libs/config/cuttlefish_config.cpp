@@ -554,6 +554,14 @@ void CuttlefishConfig::set_snapshot_path(const std::string& snapshot_path) {
   (*dictionary_)[kSnapshotPath] = snapshot_path;
 }
 
+static constexpr char kKvmPath[] = "kvm_path";
+std::string CuttlefishConfig::kvm_path() const {
+  return (*dictionary_)[kKvmPath].asString();
+}
+void CuttlefishConfig::set_kvm_path(const std::string& kvm_path) {
+  (*dictionary_)[kKvmPath] = kvm_path;
+}
+
 static constexpr char kStracedExecutables[] = "straced_host_executables";
 void CuttlefishConfig::set_straced_host_executables(
     const std::set<std::string>& straced_host_executables) {
