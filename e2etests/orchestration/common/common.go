@@ -216,7 +216,7 @@ func (h *DockerHelper) runExec(id string, cmd []string) (*bufio.Reader, error) {
 	// ContainerExecStart does not block, short poll process status for 60 seconds to
 	// check when it has been completed. return a time out error otherwise.
 	cExecStatus := types.ContainerExecInspect{}
-	for i := 0; i < 30; i++ {
+	for i := 0; i < 120; i++ {
 		time.Sleep(500 * time.Millisecond)
 		cExecStatus, err = h.client.ContainerExecInspect(ctx, cExec.ID)
 		if err != nil {
