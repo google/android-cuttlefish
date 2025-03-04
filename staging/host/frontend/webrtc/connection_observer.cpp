@@ -58,11 +58,11 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
  public:
   ConnectionObserverImpl(
       std::unique_ptr<InputConnector::EventSink> input_events_sink,
-      KernelLogEventsHandler *kernel_log_events_handler,
+      KernelLogEventsHandler &kernel_log_events_handler,
       std::map<std::string, SharedFD> commands_to_custom_action_servers,
       std::weak_ptr<DisplayHandler> display_handler,
       CameraController *camera_controller,
-      webrtc_streaming::SensorsHandler *sensors_handler,
+      webrtc_streaming::SensorsHandler &sensors_handler,
       std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer)
       : input_events_sink_(std::move(input_events_sink)),
         kernel_log_events_handler_(kernel_log_events_handler),
@@ -77,7 +77,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
       display_handler->RemoveDisplayClient();
     }
     if (kernel_log_subscription_id_ != -1) {
-      kernel_log_events_handler_->Unsubscribe(kernel_log_subscription_id_);
+      kernel_log_events_handler_.Unsubscribe(kernel_log_subscription_id_);
     }
   }
 
@@ -156,7 +156,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
       camera_controller_->SetMessageSender(control_message_sender);
     }
     kernel_log_subscription_id_ =
-        kernel_log_events_handler_->AddSubscriber(control_message_sender);
+        kernel_log_events_handler_.AddSubscriber(control_message_sender);
   }
 
   Result<void> OnLidStateChange(bool lid_open) override {
@@ -226,12 +226,12 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   void OnSensorsChannelOpen(std::function<bool(const uint8_t *, size_t)>
                                 sensors_message_sender) override {
     sensors_subscription_id =
-        sensors_handler_->Subscribe(sensors_message_sender);
+        sensors_handler_.Subscribe(sensors_message_sender);
     LOG(VERBOSE) << "Sensors channel open";
   }
 
   void OnSensorsChannelClosed() override {
-    sensors_handler_->UnSubscribe(sensors_subscription_id);
+    sensors_handler_.UnSubscribe(sensors_subscription_id);
   }
 
   void OnSensorsMessage(const uint8_t *msg, size_t size) override {
@@ -251,7 +251,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
         << "Y rotation value must be a double";
     CHECK(android::base::ParseDouble(xyz.at(2), &z))
         << "Z rotation value must be a double";
-    sensors_handler_->HandleMessage(x, y, z);
+    sensors_handler_.HandleMessage(x, y, z);
   }
 
   void OnLightsChannelOpen(
@@ -422,7 +422,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   }
 
   std::unique_ptr<InputConnector::EventSink> input_events_sink_;
-  KernelLogEventsHandler *kernel_log_events_handler_;
+  KernelLogEventsHandler &kernel_log_events_handler_;
   int kernel_log_subscription_id_ = -1;
   std::shared_ptr<webrtc_streaming::AdbHandler> adb_handler_;
   std::shared_ptr<webrtc_streaming::BluetoothHandler> bluetooth_handler_;
@@ -432,7 +432,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   std::map<std::string, SharedFD> commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
   CameraController *camera_controller_;
-  std::shared_ptr<webrtc_streaming::SensorsHandler> sensors_handler_;
+  webrtc_streaming::SensorsHandler& sensors_handler_;
   std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer_;
   int sensors_subscription_id = -1;
   int lights_subscription_id_ = -1;
@@ -440,8 +440,8 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
 CfConnectionObserverFactory::CfConnectionObserverFactory(
     InputConnector &input_connector,
-    KernelLogEventsHandler *kernel_log_events_handler,
-    webrtc_streaming::SensorsHandler *sensors_handler,
+    KernelLogEventsHandler &kernel_log_events_handler,
+    webrtc_streaming::SensorsHandler &sensors_handler,
     std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer)
     : input_connector_(input_connector),
       kernel_log_events_handler_(kernel_log_events_handler),
