@@ -1998,6 +1998,15 @@ bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
   return (*Dictionary())[kCrosvmUsePmem].asBool();
 }
 
+static constexpr char kEnableTapDevices[] = "enable_tap_devices";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_tap_devices(
+    const bool enable_tap_devices) {
+  (*Dictionary())[kEnableTapDevices] = enable_tap_devices;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_tap_devices() const {
+  return (*Dictionary())[kEnableTapDevices].asBool();
+}
+
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
     int touch_dev_idx) const {
   return PerInstanceInternalUdsPath(
