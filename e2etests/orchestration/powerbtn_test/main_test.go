@@ -24,6 +24,7 @@ import (
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
 
+	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 	"github.com/google/go-cmp/cmp"
 )
@@ -41,15 +42,9 @@ func TestPowerBtn(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/images.zip"); err != nil {
-		t.Fatal(err)
-	}
-	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/cvd-host_package.tar.gz"); err != nil {
-		t.Fatal(err)
-	}
-	cvd, err := common.CreateCVDFromUserArtifactsDir(srv, uploadDir)
+	cvd, err := createDevice(srv, uploadDir)
 	if err != nil {
-		t.Fatalf("failed creating instance: %s", err)
+		t.Fatal(err)
 	}
 	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
 	line, err := readScreenStateLine(ctx.DockerContainerID, adbBin, cvd.ADBSerial)
@@ -71,6 +66,63 @@ func TestPowerBtn(t *testing.T) {
 	if diff := cmp.Diff("mScreenState=OFF", line); diff != "" {
 		t.Errorf("response mismatch (-want +got):\n%s", diff)
 	}
+}
+
+func TestPowerBtnNoHostTool(t *testing.T) {
+	ctx, err := common.Setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		common.Cleanup(ctx)
+	})
+	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
+	uploadDir, err := srv.CreateUploadDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cvd, err := createDevice(srv, uploadDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dh, err := common.NewDockerHelper()
+	if err != nil {
+		t.Fatal(err)
+	}
+	toolBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/powerbtn_cvd", uploadDir)
+	if err := dh.RemoveHostTool(ctx.DockerContainerID, toolBin); err != nil {
+		t.Fatal(err)
+	}
+	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
+	line, err := readScreenStateLine(ctx.DockerContainerID, adbBin, cvd.ADBSerial)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff("mScreenState=ON", line); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+
+	if err := srv.Powerbtn(cvd.Group, cvd.Name); err != nil {
+		t.Fatal(err)
+	}
+
+	line, err = readScreenStateLine(ctx.DockerContainerID, adbBin, cvd.ADBSerial)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff("mScreenState=OFF", line); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func createDevice(srv hoclient.HostOrchestratorService, dir string) (*hoapi.CVD, error) {
+	if err := common.UploadAndExtract(srv, dir, "../artifacts/images.zip"); err != nil {
+		return nil, err
+	}
+	if err := common.UploadAndExtract(srv, dir, "../artifacts/cvd-host_package.tar.gz"); err != nil {
+		return nil, err
+	}
+	return common.CreateCVDFromUserArtifactsDir(srv, dir)
 }
 
 func readScreenStateLine(cID, adbBin, serial string) (string, error) {
