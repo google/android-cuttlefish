@@ -44,6 +44,8 @@ class CrosvmBuilder {
   void AddHvcReadWrite(const std::string& output, const std::string& input);
   void AddHvcSocket(const std::string& socket);
 
+  void AddKvmPath(const std::string& path);
+
   void AddReadOnlyDisk(const std::string& path);
   void AddReadWriteDisk(const std::string& path);
 

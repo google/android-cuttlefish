@@ -91,6 +91,10 @@ class OpenWrt : public CommandSource {
         instance_.PerInstanceInternalUdsPath(crosvm_for_ap_socket),
         instance_.crosvm_binary());
 
+    if (!config_.kvm_path().empty()) {
+      ap_cmd.AddKvmPath(config_.kvm_path());
+    }
+
     ap_cmd.Cmd().AddParameter("--no-usb");
     ap_cmd.Cmd().AddParameter("--core-scheduling=false");
 
