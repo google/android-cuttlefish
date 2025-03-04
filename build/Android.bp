@@ -191,6 +191,7 @@ cvd_host_tools = [
     "vhal_proxy_server",
     "vhost_device_vsock",
     "vulkan.pastel",
+    "vulkan.lvp",
     "webRTC",
     "webrtc_operator",
     "wmediumd",
@@ -418,6 +419,20 @@ cvd_host_netsim_gui_assets = [
     "netsim_ui_tslib",
 ]
 
+// From Vulkan Loader documentation:
+//
+//   If "library_path" specifies a relative pathname, it is relative
+//   to the path of the JSON manifest file.
+//
+// Our host package looks like:
+//
+//   <host package>/lib64/vulkan.pastel
+//   <host package>/usr/share/vulkan/icd.d/vk_swiftshader_icd.json
+//   <host package>/lib64/vulkan.lvp
+//   <host package>/usr/share/vulkan/icd.d/vk_lavapipe_icd.cf.json
+//
+// so need "../../../../lib64/vulkan.pastel" and "../../../../lib64/vulkan.lvp".
+
 genrule {
     name: "vk_swiftshader_icd.json",
     srcs: [
@@ -426,17 +441,6 @@ genrule {
     out: [
         "vk_swiftshader_icd.json",
     ],
-    // From Vulkan Loader documentation:
-    //
-    //   If "library_path" specifies a relative pathname, it is relative
-    //   to the path of the JSON manifest file.
-    //
-    // Our host package looks like:
-    //
-    //   <host package>/lib64/vulkan.pastel
-    //   <host package>/usr/share/vulkan/icd.d/vk_swiftshader_icd.json
-    //
-    // so need "../../../../lib64/vulkan.pastel".
     cmd: "sed -e 's|$${ICD_LIBRARY_PATH}|../../../../lib64/vulkan.pastel.so|g' $(in) > $(out)",
 }
 
@@ -449,6 +453,32 @@ prebuilt_usr_share_host {
 
 cvd_host_swiftshader_files = [
     "vk_swiftshader_icd_json_prebuilt",
+]
+
+genrule {
+    name: "vk_lavapipe_icd.cf.json",
+    srcs: [
+        ":mesa_vulkan_xml",
+    ],
+    out: [
+        "vk_lavapipe_icd.cf.json",
+    ],
+    tools: [
+        "vk_icd_gen",
+    ],
+    cmd: "python3 $(location vk_icd_gen) --api-version 1.4 --xml $(location :mesa_vulkan_xml) " +
+        "--lib-path ../../../../lib64/vulkan.lvp.so --out $(location vk_lavapipe_icd.cf.json)",
+}
+
+prebuilt_usr_share_host {
+    name: "vk_lavapipe_icd_json_prebuilt",
+    filename: "vk_lavapipe_icd.cf.json",
+    relative_install_path: "vulkan/icd.d",
+    src: ":vk_lavapipe_icd.cf.json",
+}
+
+cvd_host_lavapipe_files = [
+    "vk_lavapipe_icd_json_prebuilt",
 ]
 
 cvd_default_input_device_specs = [
@@ -477,6 +507,7 @@ cvd_host_package_customization {
                 cvd_host_ti50_emulator +
                 cvd_host_keyboard_config +
                 cvd_host_swiftshader_files +
+                cvd_host_lavapipe_files +
                 cvd_openwrt_images +
                 cvd_host_netsim_gui_assets +
                 automotive_proxy_config +
