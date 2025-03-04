@@ -508,6 +508,11 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   crosvm_cmd.AddControlSocket(instance.CrosvmSocketPath(),
                               instance.crosvm_binary());
 
+  if (!config.kvm_path().empty()) {
+    crosvm_cmd.Cmd().AddParameter("--hypervisor=kvm[device=", config.kvm_path(),
+                                  "]");
+  }
+
   if (!instance.smt()) {
     crosvm_cmd.Cmd().AddParameter("--no-smt");
   }
