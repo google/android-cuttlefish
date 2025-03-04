@@ -28,6 +28,10 @@
 DEFINE_int32(sensors_in_fd, -1, "Sensors virtio-console from host to guest");
 DEFINE_int32(sensors_out_fd, -1, "Sensors virtio-console from guest to host");
 DEFINE_int32(webrtc_fd, -1, "A file descriptor to communicate with webrtc");
+DEFINE_int32(kernel_events_fd, -1,
+             "A pipe for monitoring events based on messages "
+             "written to the kernel log. This is used by "
+             "SensorsHalProxy to monitor for device reboots.");
 
 namespace cuttlefish {
 namespace sensors {
@@ -96,11 +100,16 @@ int SensorsSimulatorMain(int argc, char** argv) {
   if (!sensors_out_fd->IsOpen()) {
     LOG(FATAL) << kFdNotOpen << sensors_out_fd->StrError();
   }
+  SharedFD kernel_events_fd = SharedFD::Dup(FLAGS_kernel_events_fd);
+  close(FLAGS_kernel_events_fd);
+  if (!kernel_events_fd->IsOpen()) {
+    LOG(FATAL) << kFdNotOpen << kernel_events_fd->StrError();
+  }
 
   transport::SharedFdChannel channel(webrtc_fd, webrtc_fd);
   SensorsSimulator sensors_simulator;
   SensorsHalProxy sensors_hal_proxy(sensors_in_fd, sensors_out_fd,
-                                    sensors_simulator);
+                                    kernel_events_fd, sensors_simulator);
   while (true) {
     auto result = ProcessWebrtcRequest(channel, sensors_simulator);
     if (!result.ok()) {
