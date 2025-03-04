@@ -300,7 +300,7 @@ int CuttlefishMain() {
   webrtc_streaming::SensorsHandler sensors_handler(sensors_fd);
 
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      confui_virtual_input, &kernel_logs_event_handler, &sensors_handler,
+      confui_virtual_input, kernel_logs_event_handler, sensors_handler,
       lights_observer);
 
   RecordingManager recording_manager;

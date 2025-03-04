@@ -36,8 +36,8 @@ class CfConnectionObserverFactory
  public:
   CfConnectionObserverFactory(
       InputConnector& input_connector,
-      KernelLogEventsHandler* kernel_log_events_handler,
-      webrtc_streaming::SensorsHandler* sensors_handler,
+      KernelLogEventsHandler& kernel_log_events_handler,
+      webrtc_streaming::SensorsHandler& sensors_handler,
       std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer);
   ~CfConnectionObserverFactory() override = default;
 
@@ -53,12 +53,12 @@ class CfConnectionObserverFactory
 
  private:
   InputConnector& input_connector_;
-  KernelLogEventsHandler* kernel_log_events_handler_;
+  KernelLogEventsHandler& kernel_log_events_handler_;
   std::map<std::string, SharedFD>
       commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
   cuttlefish::CameraController* camera_controller_ = nullptr;
-  webrtc_streaming::SensorsHandler* sensors_handler_;
+  webrtc_streaming::SensorsHandler& sensors_handler_;
   std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer_;
 };
 
