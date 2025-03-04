@@ -118,6 +118,10 @@ void CrosvmBuilder::AddHvcSocket(const std::string& socket) {
       ",type=unix-stream,input-unix-stream=true,path=", socket);
 }
 
+void CrosvmBuilder::AddKvmPath(const std::string& path) {
+  command_.AddParameter("--hypervisor=kvm[device=", path, "]");
+}
+
 void CrosvmBuilder::AddReadOnlyDisk(const std::string& path) {
   command_.AddParameter("--block=path=", path, ",ro=true");
 }
