@@ -298,6 +298,9 @@ class CuttlefishConfig {
   std::set<std::string> straced_host_executables() const;
   void set_straced_host_executables(const std::set<std::string>& executables);
 
+  std::string kvm_path() const;
+  void set_kvm_path(const std::string&);
+
   bool IsCrosvm() const;
 
   class InstanceSpecific;

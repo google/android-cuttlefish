@@ -35,6 +35,7 @@
 #include <android-base/logging.h>
 #include <vulkan/vulkan.h>
 
+#include "common/libs/utils/architecture.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -354,28 +355,37 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-name");
   qemu_cmd.AddParameter("guest=", instance.instance_name(), ",debug-threads=on");
 
-  qemu_cmd.AddParameter("-machine");
   std::string machine = is_x86 ? "pc,nvdimm=on" : "virt";
-  if (IsHostCompatible(arch_)) {
-#ifdef __linux__
-    machine += ",accel=kvm";
-#elif defined(__APPLE__)
-    machine += ",accel=hvf";
-#else
-#error "Unknown OS"
-#endif
-    if (is_arm) {
+  if (is_arm) {
+    if (IsHostCompatible(arch_)) {
       machine += ",gic-version=3";
+    } else {
+      // QEMU doesn't support GICv3 with TCG yet
+      machine += ",gic-version=2";
+      CF_EXPECT(instance.cpus() <= 8, "CPUs must be no more than 8 with GICv2");
     }
-  } else if (is_arm) {
-    // QEMU doesn't support GICv3 with TCG yet
-    machine += ",gic-version=2";
-    CF_EXPECT(instance.cpus() <= 8, "CPUs must be no more than 8 with GICv2");
   }
   if (instance.mte()) {
     machine += ",mte=on";
   }
+  qemu_cmd.AddParameter("-machine");
   qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off,memory-backend=vm_ram");
+
+  if (IsHostCompatible(arch_)) {
+    qemu_cmd.AddParameter("-accel");
+    std::string accel;
+#ifdef __linux__
+    accel = "kvm";
+    if (!config.kvm_path().empty()) {
+      accel += ",device=" + config.kvm_path();
+    }
+#elif defined(__APPLE__)
+    accel = "hvf";
+#else
+#error "Unknown OS"
+#endif
+    qemu_cmd.AddParameter(accel);
+  }
 
   // Memory must be backed by a file for vhost-user to work correctly, otherwise
   // qemu doesn't send the memory mappings necessary for the backend to access
