@@ -183,6 +183,11 @@ func (h *DockerHelper) RemoveContainer(id string) error {
 	return nil
 }
 
+func (h *DockerHelper) RemoveHostTool(id, filename string) error {
+	_, err := h.exec(id, []string{"rm", filename})
+	return err
+}
+
 func (h *DockerHelper) StartADBServer(id, adbBin string) error {
 	_, err := h.exec(id, []string{adbBin, "start-server"})
 	return err
