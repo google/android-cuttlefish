@@ -45,6 +45,7 @@ enum class RenderingMode {
   kGfxstream,
   kGfxstreamGuestAngle,
   kGfxstreamGuestAngleHostSwiftshader,
+  kGfxstreamGuestAngleHostLavapipe,
   kVirglRenderer,
 };
 
@@ -61,6 +62,9 @@ Result<RenderingMode> GetRenderingMode(const std::string& mode) {
   }
   if (mode == std::string(kGpuModeGfxstreamGuestAngleHostSwiftShader)) {
     return RenderingMode::kGfxstreamGuestAngleHostSwiftshader;
+  }
+  if (mode == std::string(kGpuModeGfxstreamGuestAngleHostLavapipe)) {
+    return RenderingMode::kGfxstreamGuestAngleHostLavapipe;
   }
   if (mode == std::string(kGpuModeGuestSwiftshader)) {
     return RenderingMode::kGuestSwiftShader;
@@ -261,6 +265,7 @@ Result<std::string> SelectGpuMode(
       gpu_mode_arg != kGpuModeCustom && gpu_mode_arg != kGpuModeGfxstream &&
       gpu_mode_arg != kGpuModeGfxstreamGuestAngle &&
       gpu_mode_arg != kGpuModeGfxstreamGuestAngleHostSwiftShader &&
+      gpu_mode_arg != kGpuModeGfxstreamGuestAngleHostLavapipe &&
       gpu_mode_arg != kGpuModeGuestSwiftshader &&
       gpu_mode_arg != kGpuModeNone) {
     return CF_ERR("Invalid gpu_mode: " << gpu_mode_arg);
@@ -610,7 +615,8 @@ Result<std::string> ConfigureGpuSettings(
 
   if (gpu_mode == kGpuModeGfxstream ||
       gpu_mode == kGpuModeGfxstreamGuestAngle ||
-      gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+      gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
+      gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
     CF_EXPECT(SetGfxstreamFlags(gpu_mode, gpu_renderer_features_arg,
                                 guest_config, graphics_availability, instance));
   }

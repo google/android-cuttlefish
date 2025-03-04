@@ -147,7 +147,8 @@ DEFINE_vec(vm_manager, CF_DEFAULTS_VM_MANAGER,
 DEFINE_vec(gpu_mode, CF_DEFAULTS_GPU_MODE,
            "What gpu configuration to use, one of {auto, custom, drm_virgl, "
            "gfxstream, gfxstream_guest_angle, "
-           "gfxstream_guest_angle_host_swiftshader, guest_swiftshader}");
+           "gfxstream_guest_angle_host_swiftshader, "
+           "gfxstream_guest_angle_host_lavapipe, guest_swiftshader}");
 DEFINE_vec(gpu_vhost_user_mode,
            fmt::format("{}", CF_DEFAULTS_GPU_VHOST_USER_MODE),
            "Whether or not to run the Virtio GPU worker in a separate"
