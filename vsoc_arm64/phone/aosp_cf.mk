@@ -57,3 +57,7 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.model=$(PRODUCT_DEVICE)
 
 PRODUCT_16K_DEVELOPER_OPTION := true
+
+# Ignore all Android.mk files
+PRODUCT_IGNORE_ALL_ANDROIDMK := true
+PRODUCT_ALLOWED_ANDROIDMK_FILES := art/Android.mk

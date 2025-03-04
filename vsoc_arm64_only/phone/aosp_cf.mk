@@ -59,3 +59,7 @@ PRODUCT_MAX_PAGE_SIZE_SUPPORTED := 16384
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
     ro.soc.model=$(PRODUCT_DEVICE)
+
+# Ignore all Android.mk files
+PRODUCT_IGNORE_ALL_ANDROIDMK := true
+PRODUCT_ALLOWED_ANDROIDMK_FILES := art/Android.mk
