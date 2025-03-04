@@ -73,3 +73,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
     ro.soc.model=$(PRODUCT_DEVICE)
+
+# Ignore all Android.mk files
+PRODUCT_IGNORE_ALL_ANDROIDMK := true
+PRODUCT_ALLOWED_ANDROIDMK_FILES := art/Android.mk
