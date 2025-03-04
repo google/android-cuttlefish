@@ -56,6 +56,8 @@ const char* const kGpuModeGfxstream = "gfxstream";
 const char* const kGpuModeGfxstreamGuestAngle = "gfxstream_guest_angle";
 const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader =
     "gfxstream_guest_angle_host_swiftshader";
+const char* const kGpuModeGfxstreamGuestAngleHostLavapipe =
+    "gfxstream_guest_angle_host_lavapipe";
 const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
 const char* const kGpuModeNone = "none";
 
