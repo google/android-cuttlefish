@@ -564,6 +564,14 @@ void CuttlefishConfig::set_kvm_path(const std::string& kvm_path) {
   (*dictionary_)[kKvmPath] = kvm_path;
 }
 
+static constexpr char kVhostVsockPath[] = "vhost_vsock_path";
+std::string CuttlefishConfig::vhost_vsock_path() const {
+  return (*dictionary_)[kVhostVsockPath].asString();
+}
+void CuttlefishConfig::set_vhost_vsock_path(const std::string& path) {
+  (*dictionary_)[kVhostVsockPath] = path;
+}
+
 static constexpr char kStracedExecutables[] = "straced_host_executables";
 void CuttlefishConfig::set_straced_host_executables(
     const std::set<std::string>& straced_host_executables) {
