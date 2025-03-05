@@ -1998,6 +1998,15 @@ bool CuttlefishConfig::InstanceSpecific::crosvm_simple_media_device() const {
   return (*Dictionary())[kCrosvmSimpleMediaDevice].asBool();
 }
 
+static constexpr char kCrosvmV4l2Proxy[] = "crosvm_v4l2_proxy";
+void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_v4l2_proxy(
+    const std::string v4l2_proxy) {
+  (*Dictionary())[kCrosvmV4l2Proxy] = v4l2_proxy;
+}
+std::string CuttlefishConfig::InstanceSpecific::crosvm_v4l2_proxy() const {
+  return (*Dictionary())[kCrosvmV4l2Proxy].asString();
+}
+
 static constexpr char kCrosvmUsePmem[] = "use_pmem";
 void CuttlefishConfig::MutableInstanceSpecific::set_use_pmem(
     const bool use_pmem) {

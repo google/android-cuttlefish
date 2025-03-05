@@ -552,6 +552,7 @@ class CuttlefishConfig {
     bool crosvm_use_balloon() const;
     bool crosvm_use_rng() const;
     bool crosvm_simple_media_device() const;
+    std::string crosvm_v4l2_proxy() const;
     bool use_pmem() const;
 
     // Wifi MAC address inside the guest
@@ -809,6 +810,7 @@ class CuttlefishConfig {
     void set_crosvm_use_balloon(const bool use_balloon);
     void set_crosvm_use_rng(const bool use_rng);
     void set_crosvm_simple_media_device(const bool simple_media_device);
+    void set_crosvm_v4l2_proxy(const std::string v4l2_proxy);
     void set_use_pmem(const bool use_pmem);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
