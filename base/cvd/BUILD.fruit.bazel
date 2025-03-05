@@ -1,0 +1,14 @@
+cc_library(
+    name = "fruit",
+    srcs = glob([
+        "src/*.cpp",
+        "include/fruit/impl/**/*.h",
+    ]),
+    hdrs = glob(["include/fruit/*.h"]),
+    includes = ["include", "configuration/bazel"],
+    linkopts = ["-lm"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@//:fruit-headers",
+    ],
+)

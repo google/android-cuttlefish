@@ -48,3 +48,11 @@ git_override(
     commit = "62e8aa0e9935bb7db76ead9cc2c1804e4dd740b9",
     remote = "https://github.com/Databean/rules_lint.git",
 )
+
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+git_repository(
+    name = "fruit",
+    build_file = "@//:BUILD.fruit.bazel",
+    commit = "0af6ffd113ad963dbd2a23e8cbabba13493c015f", # 2025-02-02
+    remote = "https://github.com/google/fruit.git",
+)
