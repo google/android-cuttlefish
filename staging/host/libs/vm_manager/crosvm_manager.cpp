@@ -710,8 +710,11 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       crosvm_cmd.AddVhostUser(
           "vsock", fmt::format("{}/vsock_{}_{}/vhost.socket", TempDir(),
                                instance.vsock_guest_cid(), getuid()));
+    } else if (config.vhost_vsock_path().empty()) {
+      crosvm_cmd.Cmd().AddParameter("--vsock=cid=", instance.vsock_guest_cid());
     } else {
-      crosvm_cmd.Cmd().AddParameter("--cid=", instance.vsock_guest_cid());
+      crosvm_cmd.Cmd().AddParameter("--vsock=cid=", instance.vsock_guest_cid(),
+                                    ",device=", config.vhost_vsock_path());
     }
   }
 
