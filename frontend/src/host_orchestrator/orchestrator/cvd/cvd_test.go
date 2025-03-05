@@ -12,32 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package orchestrator
+package cvd
 
 import (
-	"context"
-	"os/exec"
+	"testing"
 
-	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
+	"github.com/google/go-cmp/cmp"
 )
 
-type AlwaysSucceedsValidator struct{}
-
-func (AlwaysSucceedsValidator) Validate() error {
-	return nil
-}
-
-func execCtxAlwaysSucceeds(ctx context.Context, name string, args ...string) *exec.Cmd {
-	return exec.Command("true")
-}
-
-func androidCISource(buildID, target string) *apiv1.BuildSource {
-	return &apiv1.BuildSource{
-		AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
-			MainBuild: &apiv1.AndroidCIBuild{
-				BuildID: buildID,
-				Target:  target,
-			},
+func TestSliceItoa(t *testing.T) {
+	tests := []struct {
+		in  []uint32
+		out []string
+	}{
+		{
+			in:  []uint32{},
+			out: []string{},
+		},
+		{
+			in:  []uint32{79, 83, 89, 97},
+			out: []string{"79", "83", "89", "97"},
 		},
 	}
+	for _, tc := range tests {
+
+		res := sliceItoa(tc.in)
+
+		if diff := cmp.Diff(tc.out, res); diff != "" {
+			t.Errorf("result mismatch (-want +got):\n%s", diff)
+		}
+	}
+
 }
