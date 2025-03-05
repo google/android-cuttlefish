@@ -510,6 +510,10 @@ DEFINE_vec(crosvm_use_rng, "true",
            "Controls the crosvm --no-rng flag"
            "The flag is given if crosvm_use_rng is false");
 
+DEFINE_vec(crosvm_simple_media_device, "false",
+           "Controls the crosvm --simple-media-device flag"
+           "The flag is given if crosvm_simple_media_device is true.");
+
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
 
@@ -1347,6 +1351,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_balloon));
   std::vector<bool> use_rng_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_rng));
+  std::vector<bool> simple_media_device_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_simple_media_device));
   std::vector<bool> use_pmem_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_pmem));
   const bool restore_from_snapshot = !std::string(FLAGS_snapshot_path).empty();
   std::vector<std::string> device_external_network_vec =
@@ -1503,6 +1509,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_crosvm_use_balloon(use_balloon_vec[instance_index]);
     instance.set_crosvm_use_rng(use_rng_vec[instance_index]);
+    instance.set_crosvm_simple_media_device(simple_media_device_vec[instance_index]);
     instance.set_use_pmem(use_pmem_vec[instance_index]);
     instance.set_bootconfig_supported(guest_configs[instance_index].bootconfig_supported);
     instance.set_enable_mouse(guest_configs[instance_index].mouse_supported);

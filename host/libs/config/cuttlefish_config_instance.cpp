@@ -1989,6 +1989,15 @@ bool CuttlefishConfig::InstanceSpecific::crosvm_use_rng() const {
   return (*Dictionary())[kCrosvmUseRng].asBool();
 }
 
+static constexpr char kCrosvmSimpleMediaDevice[] = "crosvm_simple_media_device";
+void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_simple_media_device(
+    const bool use_media) {
+  (*Dictionary())[kCrosvmSimpleMediaDevice] = use_media;
+}
+bool CuttlefishConfig::InstanceSpecific::crosvm_simple_media_device() const {
+  return (*Dictionary())[kCrosvmSimpleMediaDevice].asBool();
+}
+
 static constexpr char kCrosvmUsePmem[] = "use_pmem";
 void CuttlefishConfig::MutableInstanceSpecific::set_use_pmem(
     const bool use_pmem) {

@@ -545,6 +545,10 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--no-rng");
   }
 
+  if (instance.crosvm_simple_media_device()) {
+    crosvm_cmd.Cmd().AddParameter("--simple-media-device");
+  }
+
   if (instance.gdb_port() > 0) {
     CF_EXPECT(instance.cpus() == 1, "CPUs must be 1 for crosvm gdb mode");
     crosvm_cmd.Cmd().AddParameter("--gdb=", instance.gdb_port());
