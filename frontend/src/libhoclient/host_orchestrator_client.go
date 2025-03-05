@@ -554,7 +554,9 @@ func asWebRTCICEServers(in []opapi.IceServer) []webrtc.ICEServer {
 	out := []webrtc.ICEServer{}
 	for _, s := range in {
 		out = append(out, webrtc.ICEServer{
-			URLs: s.URLs,
+			URLs:       s.URLs,
+			Username:   s.Username,
+			Credential: s.Credential,
 		})
 	}
 	return out
