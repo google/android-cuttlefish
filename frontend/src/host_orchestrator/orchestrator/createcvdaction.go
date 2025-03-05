@@ -64,6 +64,7 @@ type CreateCVDAction struct {
 	paths                    IMPaths
 	om                       OperationManager
 	execContext              cvd.CVDExecContext
+	cvdTool                  *cvd.Cvd
 	buildAPI                 artifacts.BuildAPI
 	artifactsFetcher         artifacts.Fetcher
 	cvdBundleFetcher         artifacts.CVDBundleFetcher
@@ -76,6 +77,7 @@ type CreateCVDAction struct {
 }
 
 func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
+	execCtx := newCVDExecContext(opts.ExecContext, opts.CVDUser)
 	return &CreateCVDAction{
 		req:                      opts.Request,
 		hostValidator:            opts.HostValidator,
@@ -92,7 +94,8 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 			opts.Paths.ArtifactsRootDir,
 			opts.UUIDGen,
 		),
-		execContext: newCVDExecContext(opts.ExecContext, opts.CVDUser),
+		execContext: execCtx,
+		cvdTool:     cvd.NewCvd(execCtx),
 	}
 }
 
@@ -135,50 +138,34 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	if err != nil {
 		return nil, err
 	}
-	args := []string{"load", configFile.Name()}
-	if a.buildAPICredentials.AccessToken != "" {
-		filename, err := createCredsFile(a.execContext)
-		if err != nil {
-			return nil, err
-		}
-		if err := writeCredsFile(a.execContext, filename, []byte(a.buildAPICredentials.AccessToken)); err != nil {
-			return nil, err
-		}
-		defer func() {
-			if err := removeCredsFile(a.execContext, filename); err != nil {
-				log.Println("failed to remove credentials file: ", err)
-			}
-		}()
-		args = append(args, "--credential_source="+filename)
 
-		if a.buildAPICredentials.UserProjectID != "" {
-			args = append(args, "--project_id="+a.buildAPICredentials.UserProjectID)
+	var creds cvd.FetchCredentials
+	if a.buildAPICredentials.AccessToken != "" {
+		creds = &cvd.FetchTokenFileCredentials{
+			AccessToken: a.buildAPICredentials.AccessToken,
+			ProjectId:   a.buildAPICredentials.UserProjectID,
 		}
 	} else if isRunningOnGCE() {
 		if ok, err := hasServiceAccountAccessToken(); err != nil {
 			log.Printf("service account token check failed: %s", err)
 		} else if ok {
-			args = append(args, "--credential_source=gce")
+			creds = &cvd.FetchGceCredentials{}
 		}
 	}
-	cmd := cvd.NewCommand(a.execContext, args, cvd.CommandOpts{})
-	if err := cmd.Run(); err != nil {
+	group, err := a.cvdTool.Load(configFile.Name(), creds)
+	if err != nil {
 		return nil, operator.NewInternalError(ErrMsgLaunchCVDFailed, err)
 	}
-	group, err := cvdFleetFirstGroup(a.execContext)
-	if err != nil {
-		return nil, err
-	}
-	return &apiv1.CreateCVDResponse{CVDs: group.toAPIObject()}, nil
+	return &apiv1.CreateCVDResponse{CVDs: CvdGroupToAPIObject(group)}, nil
 }
 
 func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 	instancesCount := 1 + a.req.AdditionalInstancesNum
-	var instanceNumbers []uint32
+	var group *cvd.Group
 	var err error
 	switch {
 	case a.req.CVD.BuildSource.AndroidCIBuildSource != nil:
-		instanceNumbers, err = a.launchFromAndroidCI(a.req.CVD.BuildSource.AndroidCIBuildSource, instancesCount, op)
+		group, err = a.launchFromAndroidCI(a.req.CVD.BuildSource.AndroidCIBuildSource, instancesCount, op)
 	default:
 		return &OperationResult{
 			Error: operator.NewBadRequestError(
@@ -188,29 +175,14 @@ func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
 	if err != nil {
 		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
-	group, err := cvdFleetFirstGroup(a.execContext)
-	if err != nil {
-		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
-	}
-	relevant := []*cvdInstance{}
-	for _, item := range group.Instances {
-		n, err := strconv.Atoi(item.InstanceName)
-		if err != nil {
-			return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
-		}
-		if contains(instanceNumbers, uint32(n)) {
-			relevant = append(relevant, item)
-		}
-	}
-	group.Instances = relevant
-	res := &apiv1.CreateCVDResponse{CVDs: group.toAPIObject()}
+	res := &apiv1.CreateCVDResponse{CVDs: CvdGroupToAPIObject(group)}
 	return &OperationResult{Value: res}
 }
 
 const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 
 func (a *CreateCVDAction) launchFromAndroidCI(
-	buildSource *apiv1.AndroidCIBuildSource, instancesCount uint32, op apiv1.Operation) ([]uint32, error) {
+	buildSource *apiv1.AndroidCIBuildSource, instancesCount uint32, op apiv1.Operation) (*cvd.Group, error) {
 	var mainBuild *apiv1.AndroidCIBuild = defaultMainBuild()
 	var kernelBuild *apiv1.AndroidCIBuild
 	var bootloaderBuild *apiv1.AndroidCIBuild
@@ -282,14 +254,15 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 		KernelDir:        kernelBuildDir,
 		BootloaderDir:    bootloaderBuildDir,
 	}
-	if err := CreateCVD(a.execContext, startParams); err != nil {
+	group, err := CreateCVD(a.execContext, startParams)
+	if err != nil {
 		return nil, err
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
 	if contains(startParams.InstanceNumbers, 1) {
 		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, mainBuildDir)
 	}
-	return startParams.InstanceNumbers, nil
+	return group, nil
 }
 
 func (a *CreateCVDAction) newInstanceNumbers(n uint32) []uint32 {

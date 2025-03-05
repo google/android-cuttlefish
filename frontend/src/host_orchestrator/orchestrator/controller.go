@@ -29,6 +29,7 @@ import (
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 
@@ -66,24 +67,24 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds/{group}", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
 	router.PathPrefix("/cvds/{group}/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
 	router.Handle("/cvds/{group}/:start",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "start"))).Methods("POST")
+		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &startCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/:stop",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("POST")
+		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &stopCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "remove"))).Methods("DELETE")
+		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &removeCvdCommand{}))).Methods("DELETE")
 	// Append `include_adb_bugreport=true` query parameter to include a device `adb bugreport` in the cvd bugreport.
 	router.Handle("/cvds/{group}/:bugreport",
 		httpHandler(newCreateCVDBugReportHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "remove"))).Methods("DELETE")
+		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &removeCvdCommand{}))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}/:start",
 		httpHandler(newStartCVDHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:stop",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "stop"))).Methods("POST")
+		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &stopCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "powerwash"))).Methods("POST")
+		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &powerwashCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerbtn",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, "powerbtn"))).Methods("POST")
+		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &powerbtnCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/snapshots",
 		httpHandler(newCreateSnapshotHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/operations", httpHandler(&listOperationsHandler{om: c.OperationManager})).Methods("GET")
@@ -256,10 +257,10 @@ func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
 type execCVDCommandHandler struct {
 	Config  Config
 	OM      OperationManager
-	Command string
+	Command execCvdCommand
 }
 
-func newExecCVDCommandHandler(c Config, om OperationManager, command string) *execCVDCommandHandler {
+func newExecCVDCommandHandler(c Config, om OperationManager, command execCvdCommand) *execCVDCommandHandler {
 	return &execCVDCommandHandler{
 		Config:  c,
 		OM:      om,
@@ -273,7 +274,7 @@ func (h *execCVDCommandHandler) Handle(r *http.Request) (interface{}, error) {
 	name := vars["name"]
 	opts := ExecCVDCommandActionOpts{
 		Command:          h.Command,
-		Selector:         CVDSelector{Group: group, Name: name},
+		Selector:         cvd.Selector{Group: group, Instance: name},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
@@ -296,7 +297,7 @@ func (h *createSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
 	group := vars["group"]
 	name := vars["name"]
 	opts := CreateSnapshotActionOpts{
-		Selector:         CVDSelector{Group: group, Name: name},
+		Selector:         cvd.Selector{Group: group, Instance: name},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
@@ -325,7 +326,7 @@ func (h *startCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	name := vars["name"]
 	opts := StartCVDActionOpts{
 		Request:          req,
-		Selector:         CVDSelector{Group: group, Name: name},
+		Selector:         cvd.Selector{Group: group, Instance: name},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
