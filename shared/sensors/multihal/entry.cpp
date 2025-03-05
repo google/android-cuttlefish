@@ -18,6 +18,7 @@
 #include <multihal_sensors.h>
 #include <multihal_sensors_transport.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/transport/channel_sharedfd.h"
 
 using ::android::hardware::sensors::V2_1::implementation::ISensorsSubHal;
@@ -29,7 +30,16 @@ class VconsoleSensorsTransport : public goldfish::SensorsTransport {
   VconsoleSensorsTransport(cuttlefish::SharedFD fd)
       : console_sensors_fd_(std::move(fd)),
         pure_sensors_fd_(console_sensors_fd_->UNMANAGED_Dup()),
-        sensors_channel_(console_sensors_fd_, console_sensors_fd_) {}
+        sensors_channel_(console_sensors_fd_, console_sensors_fd_) {
+    // When the guest reboots, sensors_simulator on the host would continue
+    // writing sensor data to FIFO till BootloaderLoaded kernel event fires. The
+    // residual sensor data in sensor FIFO could interfere with sensor HAL init
+    // process. Hence, to be safe, let's clean up the FIFO when instantiating
+    // the transport.
+    if (Drain() < 0) {
+      LOG(FATAL) << "Failed to drain FIFO: " << console_sensors_fd_->StrError();
+    }
+  }
 
   ~VconsoleSensorsTransport() override { close(pure_sensors_fd_); }
 
@@ -74,6 +84,34 @@ class VconsoleSensorsTransport : public goldfish::SensorsTransport {
     std::memcpy(msg, message->payload, message->payload_size);
 
     return message->payload_size;
+  }
+
+  int Drain() {
+    int original_flags = console_sensors_fd_->Fcntl(F_GETFL, 0);
+    if (original_flags == -1) {
+      LOG(ERROR) << "Failed to get current file descriptor flags.";
+      return -1;
+    }
+
+    if (console_sensors_fd_->Fcntl(F_SETFL, original_flags | O_NONBLOCK) ==
+        -1) {
+      LOG(ERROR) << "Failed to set O_NONBLOCK.";
+      return -1;
+    }
+
+    std::string data;
+    if (ReadAll(console_sensors_fd_, &data) < 0 &&
+        console_sensors_fd_->GetErrno() != EAGAIN) {
+      LOG(ERROR) << "Failed to read the file.";
+      return -1;
+    }
+
+    if (console_sensors_fd_->Fcntl(F_SETFL, original_flags) == -1) {
+      LOG(ERROR) << "Failed to restore to original file descriptor flags.";
+      return -1;
+    }
+
+    return 0;
   }
 
   bool Ok() const override { return console_sensors_fd_->IsOpen(); }
