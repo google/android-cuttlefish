@@ -65,6 +65,7 @@
 #define CF_DEFAULTS_SECCOMP_POLICY_DIR cuttlefish::GetSeccompPolicyDir()
 #define CF_DEFAULTS_ENABLE_SANDBOX false
 #define CF_DEFAULTS_ENABLE_VIRTIOFS false
+#define CF_DEFAULTS_CROSVM_V4L2_PROXY ""
 
 // Qemu default parameters
 #define CF_DEFAULTS_QEMU_BINARY_DIR cuttlefish::DefaultQemuBinaryDir()
