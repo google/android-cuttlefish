@@ -60,3 +60,6 @@
 
 # Factory Reset Protection
 /dev/block/by-name/frp 0660 system system
+
+# v4l2loopback and virtio-media devices
+/dev/video*   0660 system    camera
