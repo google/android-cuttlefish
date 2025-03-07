@@ -65,3 +65,4 @@ require (
 )
 
 replace github.com/google/android-cuttlefish/frontend/src/libhoclient => ../frontend/src/libhoclient
+replace github.com/google/android-cuttlefish/frontend/src/liboperator => ../frontend/src/liboperator

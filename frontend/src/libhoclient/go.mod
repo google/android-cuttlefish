@@ -45,3 +45,5 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/google/android-cuttlefish/frontend/src/liboperator => ../liboperator
