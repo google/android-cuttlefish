@@ -44,7 +44,6 @@ cc_library {
         "sign.cc",
     ],
     shared_libs: [
-        "android.hardware.keymaster@4.0",
         "libbase",
         "libcn-cbor",
         "libcrypto",
