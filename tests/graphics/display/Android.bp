@@ -16,11 +16,8 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "simply_red",
-    srcs: [
-        "./src/simply_red.cpp",
-    ],
+cc_defaults {
+    name: "hwc_deps",
     defaults: [
         "VtsHalTargetTestDefaults",
         "android.hardware.graphics.common-ndk_static",
@@ -55,6 +52,28 @@ cc_binary {
     header_libs: [
         "android.hardware.graphics.composer3-command-buffer",
     ],
+}
+
+cc_library_static {
+    name: "hwc_tester",
+    defaults: ["hwc_deps"],
+    srcs: [
+        "./src/utils/hwc_tester.cpp",
+    ],
+    export_include_dirs: [
+        "./src/utils",
+    ],
+}
+
+cc_binary {
+    name: "simply_red",
+    defaults: ["hwc_deps"],
+    srcs: [
+        "./src/apps/simply_red.cpp",
+    ],
+    static_libs: [
+        "hwc_tester",
+    ],
     compile_multilib: "both",
     multilib: {
         lib32: {
@@ -67,12 +86,12 @@ cc_binary {
 }
 
 java_test_host {
-    name: "CuttlefishHwcTests",
+    name: "CuttlefishHwcRedSmokeTest",
     defaults: [
         "cuttlefish_host_test_utils_defaults",
     ],
     srcs: [
-        "CuttlefishHwcTests.java",
+        "CuttlefishHwcRedSmokeTest.java",
     ],
     data_device_bins_both: [
         "simply_red",

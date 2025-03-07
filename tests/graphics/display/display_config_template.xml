@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <configuration description="Config for Cuttlefish HWC test cases">
-    <option name="test-suite-tag" value="CuttlefishHwcTests" />
+    <option name="test-suite-tag" value="CfHwcTests" />
     <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer"/>
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
@@ -26,7 +26,7 @@
         <option name="teardown-command" value="start" />
     </target_preparer>
 
-    <test class="com.android.tradefed.testtype.HostTest" >
-        <option name="class" value="com.android.cuttlefish.tests.CuttlefishHwcTests" />
+    <test class="com.android.tradefed.testtype.HostTest">
+        <option name="class" value="com.android.cuttlefish.tests.{MODULE}" />
     </test>
 </configuration>
