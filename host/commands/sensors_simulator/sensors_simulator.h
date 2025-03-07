@@ -35,7 +35,7 @@ struct SensorsData {
 
 class SensorsSimulator {
  public:
-  SensorsSimulator();
+  SensorsSimulator(bool is_auto);
   // Update sensor values based on new rotation status.
   void RefreshSensors(double x, double y, double z);
 
@@ -53,6 +53,7 @@ class SensorsSimulator {
   Eigen::Matrix3d prior_rotation_matrix_, current_rotation_matrix_;
   std::chrono::time_point<std::chrono::high_resolution_clock>
       last_event_timestamp_;
+  bool is_auto_;
 };
 
 }  // namespace sensors

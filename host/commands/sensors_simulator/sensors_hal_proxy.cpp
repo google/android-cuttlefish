@@ -111,11 +111,21 @@ SensorsHalProxy::SensorsHalProxy(SharedFD sensors_in_fd,
     : channel_(std::move(sensors_in_fd), std::move(sensors_out_fd)),
       kernel_events_fd_(std::move(kernel_events_fd)),
       sensors_simulator_(sensors_simulator) {
-  SensorsMask host_enabled_sensors = (1 << kAccelerationId) |
-                                     (1 << kGyroscopeId) | (1 << kMagneticId) |
-                                     (1 << kPressureId);
-  if (device_type == DeviceType::Foldable) {
-    host_enabled_sensors |= (1 << kHingeAngle0Id);
+  SensorsMask host_enabled_sensors;
+  switch (device_type) {
+    case DeviceType::Foldable:
+      host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
+                             (1 << kMagneticId) | (1 << kPressureId) |
+                             (1 << kHingeAngle0Id);
+      break;
+    case DeviceType::Auto:
+      host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
+                             (1 << kUncalibGyroscopeId) |
+                             (1 << kUncalibAccelerationId);
+      break;
+    default:
+      host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
+                             (1 << kMagneticId) | (1 << kPressureId);
   }
 
   req_responder_thread_ = std::thread([this, host_enabled_sensors] {
