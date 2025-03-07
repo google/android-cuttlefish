@@ -25,6 +25,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
@@ -56,7 +57,8 @@ Result<std::vector<std::string>> ExtractHelper(
 Result<std::vector<std::string>> ExtractFiles(
     const std::string& archive, const std::vector<std::string>& to_extract,
     const std::string& target_directory) {
-  Command bsdtar_cmd = Command("/usr/bin/bsdtar")
+  std::string env_path = StringFromEnv("BSDTAR_PATH", "/usr/bin/bsdtar");
+  Command bsdtar_cmd = Command(env_path)
                            .AddParameter("-x")
                            .AddParameter("-v")
                            .AddParameter("-C")
