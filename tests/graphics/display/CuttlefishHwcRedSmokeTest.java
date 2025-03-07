@@ -40,12 +40,12 @@ import org.junit.runner.RunWith;
  * red color on the screen by taking a screenshot through Cuttlefish to verify the HWC output.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CuttlefishHwcTests extends CuttlefishHostTest {
+public class CuttlefishHwcRedSmokeTest extends CuttlefishHostTest {
     @Rule public TestLogData mLogs = new TestLogData();
 
     private static final String HWC_TEST_BINARY = "simply_red";
     private static final String DEVICE_TEST_DIR =
-        "/data/cf_display_tests/" + CuttlefishHwcTests.class.getSimpleName();
+        "/data/cf_display_tests/" + CuttlefishHwcRedSmokeTest.class.getSimpleName();
     private Thread binaryRunThread;
 
     @Before
