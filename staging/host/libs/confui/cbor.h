@@ -21,8 +21,6 @@
 #include <string>
 #include <vector>
 
-#include <android/hardware/keymaster/4.0/types.h>
-
 #include <cn-cbor/cn-cbor.h>
 
 namespace cuttlefish {
