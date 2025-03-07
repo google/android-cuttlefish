@@ -89,6 +89,10 @@ on boot
     symlink /dev/hvc6 /dev/gnss0
     symlink /dev/hvc7 /dev/gnss1
 
+    # enable f2fs sanity check to dump more metadata info to kmsg
+    # once it detects inode corruption
+    write /dev/sys/fs/by-name/userdata/sanity_check 1
+
 on property:sys.boot_completed=1
     trigger sys-boot-completed-set
     mkdir /mnt/vendor/custom 0755 root root
