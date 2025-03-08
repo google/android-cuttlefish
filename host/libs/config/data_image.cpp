@@ -18,8 +18,6 @@
 #include <android-base/logging.h>
 #include <android-base/result.h>
 
-#include "blkid.h"
-
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
@@ -92,29 +90,37 @@ Result<void> ResizeImage(const std::string& data_image, int data_image_mb,
 }
 
 std::string GetFsType(const std::string& path) {
-  std::string fs_type;
-  blkid_cache cache;
-  if (blkid_get_cache(&cache, NULL) < 0) {
-    LOG(INFO) << "blkid_get_cache failed";
-    return fs_type;
-  }
-  blkid_dev dev = blkid_get_dev(cache, path.c_str(), BLKID_DEV_NORMAL);
-  if (!dev) {
-    LOG(INFO) << "blkid_get_dev failed";
-    blkid_put_cache(cache);
-    return fs_type;
+  Command command("/usr/sbin/blkid");
+  command.AddParameter(path);
+
+  std::string blkid_out;
+  std::string blkid_err;
+  int code =
+      RunWithManagedStdio(std::move(command), nullptr, &blkid_out, &blkid_err);
+  if (code != 0) {
+    LOG(ERROR) << "blkid failed with code " << code << ". stdout='" << blkid_out
+               << "', stderr='" << blkid_err << "'";
+    return "";
   }
 
-  const char *type, *value;
-  blkid_tag_iterate iter = blkid_tag_iterate_begin(dev);
-  while (blkid_tag_next(iter, &type, &value) == 0) {
-    if (!strcmp(type, "TYPE")) {
-      fs_type = value;
-    }
+  static constexpr std::string_view kTypePrefix = "TYPE=\"";
+
+  std::size_t type_begin = blkid_out.find(kTypePrefix);
+  if (type_begin == std::string::npos) {
+    LOG(ERROR) << "blkid did not report a TYPE. stdout='" << blkid_out
+               << "', stderr='" << blkid_err << "'";
+    return "";
   }
-  blkid_tag_iterate_end(iter);
-  blkid_put_cache(cache);
-  return fs_type;
+  type_begin += kTypePrefix.size();
+
+  std::size_t type_end = blkid_out.find('"', type_begin);
+  if (type_end == std::string::npos) {
+    LOG(ERROR) << "unable to find the end of the blkid TYPE. stdout='"
+               << blkid_out << "', stderr='" << blkid_err << "'";
+    return "";
+  }
+
+  return blkid_out.substr(type_begin, type_end - type_begin);
 }
 
 enum class DataImageAction { kNoAction, kCreateImage, kResizeImage };

@@ -54,7 +54,6 @@ cc_binary_host {
         "libcuttlefish_command_util",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libext2_blkid",
         "libfruit",
         "libjsoncpp",
         "libprotobuf-cpp-full",
