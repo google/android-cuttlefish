@@ -25,40 +25,14 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-)
 
-type CVDExecContext = func(ctx context.Context, name string, arg ...string) *exec.Cmd
+	hoexec "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
+)
 
 const (
 	CVDBin      = "/usr/bin/cvd"
 	FetchCVDBin = "/usr/bin/fetch_cvd"
 )
-
-type commandExecErr struct {
-	args   []string
-	stderr string
-	err    error
-}
-
-func (e *commandExecErr) Error() string {
-	return fmt.Sprintf("cvd execution with args %q failed with stderr:\n%s",
-		strings.Join(e.args, " "),
-		e.stderr)
-}
-
-func (e *commandExecErr) Unwrap() error { return e.err }
-
-func Exec(ctx CVDExecContext, name string, args ...string) (string, error) {
-	cmd := ctx(context.TODO(), name, args...)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	if err != nil {
-		return "", &commandExecErr{args, stderr.String(), err}
-	}
-	return stdout.String(), nil
-}
 
 // A CVD instance group
 type Group struct {
@@ -139,10 +113,10 @@ func (s *Selector) asArgs() []string {
 
 // Wrapper around the cvd command, exposing the tool's subcommands as functions
 type CLI struct {
-	execContext CVDExecContext
+	execContext hoexec.ExecContext
 }
 
-func NewCLI(execCtx CVDExecContext) *CLI {
+func NewCLI(execCtx hoexec.ExecContext) *CLI {
 	return &CLI{execCtx}
 }
 
@@ -161,7 +135,10 @@ func (cli *CLI) runCmd(cmd *exec.Cmd) ([]byte, error) {
 		return stdoutBuff.Bytes(), err
 	}
 	if err := cmd.Wait(); err != nil {
-		return stdoutBuff.Bytes(), &commandExecErr{cmd.Args, stderrBuff.String(), err}
+		return stdoutBuff.Bytes(),
+			fmt.Errorf(
+				"execution of %q command with args %q failed: %w\n Stderr: \n%s",
+				cmd.Path, cmd.Args, err, stderrBuff.String())
 	}
 	return stdoutBuff.Bytes(), nil
 }

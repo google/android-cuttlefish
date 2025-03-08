@@ -23,18 +23,16 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	hoexec "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 
 	"github.com/hashicorp/go-multierror"
 )
-
-type ExecContext = func(ctx context.Context, name string, arg ...string) *exec.Cmd
 
 type Validator interface {
 	Validate() error
@@ -56,23 +54,6 @@ type IMPaths struct {
 	ArtifactsRootDir string
 	CVDBugReportsDir string
 	SnapshotsRootDir string
-}
-
-// Creates a CVD execution context from a regular execution context.
-// If a non-nil user is provided the returned execution context executes commands as that user.
-func newCVDExecContext(execContext ExecContext, usr *user.User) cvd.CVDExecContext {
-	if usr != nil {
-		return func(ctx context.Context, name string, arg ...string) *exec.Cmd {
-			newArgs := []string{"-u", usr.Username}
-			newArgs = append(newArgs, name)
-			newArgs = append(newArgs, arg...)
-			return execContext(ctx, "sudo", newArgs...)
-		}
-	}
-	return func(ctx context.Context, name string, arg ...string) *exec.Cmd {
-		cmd := execContext(ctx, name, arg...)
-		return cmd
-	}
 }
 
 func CvdGroupToAPIObject(group *cvd.Group) []*apiv1.CVD {
@@ -114,7 +95,7 @@ func findInstance(group *cvd.Group, name string) (bool, *cvd.Instance) {
 	return false, &cvd.Instance{}
 }
 
-func CVDLogsDir(ctx cvd.CVDExecContext, groupName, name string) (string, error) {
+func CVDLogsDir(ctx hoexec.ExecContext, groupName, name string) (string, error) {
 	cvdCLI := cvd.NewCLI(ctx)
 	fleet, err := cvdCLI.Fleet()
 	if err != nil {
@@ -142,11 +123,11 @@ func defaultMainBuild() *apiv1.AndroidCIBuild {
 }
 
 type fetchCVDCommandArtifactsFetcher struct {
-	execContext         cvd.CVDExecContext
+	execContext         hoexec.ExecContext
 	buildAPICredentials BuildAPICredentials
 }
 
-func newFetchCVDCommandArtifactsFetcher(execContext cvd.CVDExecContext, buildAPICredentials BuildAPICredentials) *fetchCVDCommandArtifactsFetcher {
+func newFetchCVDCommandArtifactsFetcher(execContext hoexec.ExecContext, buildAPICredentials BuildAPICredentials) *fetchCVDCommandArtifactsFetcher {
 	return &fetchCVDCommandArtifactsFetcher{
 		execContext:         execContext,
 		buildAPICredentials: buildAPICredentials,
@@ -230,7 +211,7 @@ type startCVDParams struct {
 	BootloaderDir string
 }
 
-func CreateCVD(ctx cvd.CVDExecContext, p startCVDParams) (*cvd.Group, error) {
+func CreateCVD(ctx hoexec.ExecContext, p startCVDParams) (*cvd.Group, error) {
 	createOpts := cvd.CreateOptions{
 		HostPath:    p.MainArtifactsDir,
 		ProductPath: p.MainArtifactsDir,
@@ -291,7 +272,7 @@ func fileExist(name string) (bool, error) {
 
 // Validates whether the current host is valid to run CVDs.
 type HostValidator struct {
-	ExecContext ExecContext
+	ExecContext hoexec.ExecContext
 }
 
 func (v *HostValidator) Validate() error {
@@ -363,7 +344,7 @@ func downloadArtifactToFile(buildAPI artifacts.BuildAPI, filename, artifactName,
 	return downloadErr
 }
 
-func runAcloudSetup(execContext cvd.CVDExecContext, artifactsRootDir, artifactsDir string) {
+func runAcloudSetup(execContext hoexec.ExecContext, artifactsRootDir, artifactsDir string) {
 	run := func(cmd *exec.Cmd) {
 		var b bytes.Buffer
 		cmd.Stdout = &b

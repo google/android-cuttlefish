@@ -20,6 +20,7 @@ import (
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 )
 
 type execCvdCommand interface {
@@ -61,7 +62,7 @@ type ExecCVDCommandActionOpts struct {
 	Selector         cvd.Selector
 	Paths            IMPaths
 	OperationManager OperationManager
-	ExecContext      ExecContext
+	ExecContext      exec.ExecContext
 	CVDUser          *user.User
 }
 
@@ -79,7 +80,7 @@ func NewExecCVDCommandAction(opts ExecCVDCommandActionOpts) *ExecCVDCommandActio
 		selector: opts.Selector,
 		paths:    opts.Paths,
 		om:       opts.OperationManager,
-		cvdCLI:   cvd.NewCLI(newCVDExecContext(opts.ExecContext, opts.CVDUser)),
+		cvdCLI:   cvd.NewCLI(exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)),
 	}
 }
 

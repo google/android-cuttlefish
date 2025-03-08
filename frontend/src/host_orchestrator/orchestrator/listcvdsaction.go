@@ -20,13 +20,14 @@ import (
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 type ListCVDsActionOpts struct {
 	Group       string
 	Paths       IMPaths
-	ExecContext ExecContext
+	ExecContext exec.ExecContext
 	CVDUser     *user.User
 }
 
@@ -40,7 +41,7 @@ func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {
 	return &ListCVDsAction{
 		group:  opts.Group,
 		paths:  opts.Paths,
-		cvdCLI: cvd.NewCLI(newCVDExecContext(opts.ExecContext, opts.CVDUser)),
+		cvdCLI: cvd.NewCLI(exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)),
 	}
 }
 
