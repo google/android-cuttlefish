@@ -434,9 +434,6 @@ ifeq ($(TRUSTY_SYSTEM_VM), enabled_with_placeholder_trusted_hal)
     $(call inherit-product, system/core/trusty/trusty-storage-cf.mk)
     $(call inherit-product, packages/modules/Virtualization/guest/trusty/security_vm/security_vm.mk)
 
-    PRODUCT_PACKAGES += \
-        trusty-ut-ctrl.system \
-
 endif
 
 #
