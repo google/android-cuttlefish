@@ -27,6 +27,7 @@ import (
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 
 	"github.com/hashicorp/go-multierror"
@@ -46,7 +47,7 @@ type CreateCVDActionOpts struct {
 	HostValidator            Validator
 	Paths                    IMPaths
 	OperationManager         OperationManager
-	ExecContext              ExecContext
+	ExecContext              exec.ExecContext
 	BuildAPI                 artifacts.BuildAPI
 	ArtifactsFetcher         artifacts.Fetcher
 	CVDBundleFetcher         artifacts.CVDBundleFetcher
@@ -61,7 +62,7 @@ type CreateCVDAction struct {
 	hostValidator            Validator
 	paths                    IMPaths
 	om                       OperationManager
-	execContext              cvd.CVDExecContext
+	execContext              exec.ExecContext
 	cvdCLI                   *cvd.CLI
 	buildAPI                 artifacts.BuildAPI
 	artifactsFetcher         artifacts.Fetcher
@@ -75,7 +76,7 @@ type CreateCVDAction struct {
 }
 
 func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
-	execCtx := newCVDExecContext(opts.ExecContext, opts.CVDUser)
+	execCtx := exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)
 	return &CreateCVDAction{
 		req:                      opts.Request,
 		hostValidator:            opts.HostValidator,
