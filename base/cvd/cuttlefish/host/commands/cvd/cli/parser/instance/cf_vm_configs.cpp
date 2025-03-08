@@ -100,6 +100,18 @@ static bool EnableSandbox(const Instance& instance) {
   return crosvm.has_enable_sandbox() ? crosvm.enable_sandbox() : default_val;
 }
 
+static bool SimpleMediaDevice(const Instance& instance) {
+  const auto& crosvm = instance.vm().crosvm();
+  const auto& default_val = CF_DEFAULTS_CROSVM_SIMPLE_MEDIA_DEVICE;
+  return crosvm.has_simple_media_device() ? crosvm.simple_media_device() : default_val;
+}
+
+static std::string V4l2Proxy(const Instance& instance) {
+  const auto& crosvm = instance.vm().crosvm();
+  const auto& default_val = CF_DEFAULTS_CROSVM_V4L2_PROXY;
+  return crosvm.has_v4l2_proxy() ? crosvm.v4l2_proxy() : default_val;
+}
+
 static Result<std::string> CustomConfigsFlagValue(const Instance& instance) {
   if (instance.vm().custom_actions().empty()) {
     return "unset";
@@ -136,6 +148,8 @@ Result<std::vector<std::string>> GenerateVmFlags(
       CF_EXPECT(ResultInstanceFlag("setupwizard_mode", cfg, SetupWizardMode)),
       GenerateInstanceFlag("uuid", cfg, Uuid),
       GenerateInstanceFlag("enable_sandbox", cfg, EnableSandbox),
+      GenerateInstanceFlag("crosvm_simple_media_device", cfg, SimpleMediaDevice),
+      GenerateInstanceFlag("crosvm_v4l2_proxy", cfg, V4l2Proxy),
   };
   return MergeResults(std::move(flags), CF_EXPECT(CustomConfigsFlags(cfg)));
 }
