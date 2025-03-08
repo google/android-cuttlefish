@@ -22,6 +22,7 @@ go_library(
         "//orchestrator/artifacts",
         "//orchestrator/cvd",
         "//orchestrator/debug",
+        "//orchestrator/exec",
         "@com_github_google_android_cuttlefish_frontend_src_liboperator//operator",
         "@com_github_google_uuid//:uuid",
         "@com_github_gorilla_mux//:mux",
@@ -43,6 +44,7 @@ go_test(
     deps = [
         "//api/v1:api",
         "//orchestrator/debug",
+        "//orchestrator/exec",
         "//orchestrator/testing",
         "@com_github_google_android_cuttlefish_frontend_src_liboperator//operator",
         "@com_github_google_go_cmp//cmp",

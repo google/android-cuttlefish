@@ -29,6 +29,7 @@ import (
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 
 	"github.com/hashicorp/go-multierror"
@@ -48,7 +49,7 @@ type CreateCVDActionOpts struct {
 	HostValidator            Validator
 	Paths                    IMPaths
 	OperationManager         OperationManager
-	ExecContext              ExecContext
+	ExecContext              exec.ExecContext
 	BuildAPI                 artifacts.BuildAPI
 	ArtifactsFetcher         artifacts.Fetcher
 	CVDBundleFetcher         artifacts.CVDBundleFetcher
@@ -63,7 +64,7 @@ type CreateCVDAction struct {
 	hostValidator            Validator
 	paths                    IMPaths
 	om                       OperationManager
-	execContext              cvd.CVDExecContext
+	execContext              exec.ExecContext
 	cvdTool                  *cvd.Cvd
 	buildAPI                 artifacts.BuildAPI
 	artifactsFetcher         artifacts.Fetcher
@@ -77,7 +78,7 @@ type CreateCVDAction struct {
 }
 
 func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
-	execCtx := newCVDExecContext(opts.ExecContext, opts.CVDUser)
+	execCtx := exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)
 	return &CreateCVDAction{
 		req:                      opts.Request,
 		hostValidator:            opts.HostValidator,
@@ -310,22 +311,22 @@ func createTempFile(pattern string, data []byte, mode os.FileMode) (*os.File, er
 }
 
 // Create the credential file so it's owned by the configured `cvd user`, e.g: `_cvd-executor`.
-func createCredsFile(ctx cvd.CVDExecContext) (string, error) {
+func createCredsFile(ctx exec.ExecContext) (string, error) {
 	name, err := tempFilename("cvdload*.creds")
 	if err != nil {
 		return "", err
 	}
-	if _, err := cvd.Exec(ctx, "touch", name); err != nil {
+	if _, err := exec.Exec(ctx, "touch", name); err != nil {
 		return "", err
 	}
-	if _, err := cvd.Exec(ctx, "chmod", "0600", name); err != nil {
+	if _, err := exec.Exec(ctx, "chmod", "0600", name); err != nil {
 		return "", err
 	}
 	return name, nil
 }
 
 // Write into credential files by granting temporary write permission to `cvdnetwork` group.
-func writeCredsFile(ctx cvd.CVDExecContext, name string, data []byte) error {
+func writeCredsFile(ctx exec.ExecContext, name string, data []byte) error {
 	info, err := os.Stat(name)
 	if err != nil {
 		return err
@@ -339,18 +340,18 @@ func writeCredsFile(ctx cvd.CVDExecContext, name string, data []byte) error {
 	}
 	defer func() {
 		// Reverts the write permission.
-		if _, err := cvd.Exec(ctx, "chgrp", strconv.Itoa(int(gid)), name); err != nil {
+		if _, err := exec.Exec(ctx, "chgrp", strconv.Itoa(int(gid)), name); err != nil {
 			log.Println(err)
 		}
-		if _, err := cvd.Exec(ctx, "chmod", "0600", name); err != nil {
+		if _, err := exec.Exec(ctx, "chmod", "0600", name); err != nil {
 			log.Println(err)
 		}
 	}()
 	// Grants temporal write permission to `cvdnetwork`, so this process can write the file.
-	if _, err := cvd.Exec(ctx, "chgrp", "cvdnetwork", name); err != nil {
+	if _, err := exec.Exec(ctx, "chgrp", "cvdnetwork", name); err != nil {
 		return err
 	}
-	if _, err := cvd.Exec(ctx, "chmod", "0620", name); err != nil {
+	if _, err := exec.Exec(ctx, "chmod", "0620", name); err != nil {
 		return err
 	}
 	file, err := os.OpenFile(name, os.O_WRONLY, 0)
@@ -367,8 +368,8 @@ func writeCredsFile(ctx cvd.CVDExecContext, name string, data []byte) error {
 	return nil
 }
 
-func removeCredsFile(ctx cvd.CVDExecContext, name string) error {
-	_, err := cvd.Exec(ctx, "rm", name)
+func removeCredsFile(ctx exec.ExecContext, name string) error {
+	_, err := exec.Exec(ctx, "rm", name)
 	return err
 }
 

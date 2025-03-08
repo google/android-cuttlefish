@@ -31,6 +31,7 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
+	hoexec "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 
 	"github.com/google/uuid"
@@ -177,7 +178,7 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	execCtx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
+	execCtx := hoexec.NewAsUserExecContext(exec.CommandContext, h.Config.CVDUser)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, buildAPICredentials)
 	opts := FetchArtifactsActionOpts{
 		Request:          &req,
@@ -220,7 +221,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
 		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
 	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
-	execCtx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
+	execCtx := hoexec.NewAsUserExecContext(exec.CommandContext, h.Config.CVDUser)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, buildAPICredentials)
 	opts := CreateCVDActionOpts{
 		Request:                  req,
@@ -344,7 +345,7 @@ func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	group := vars["group"]
 	name := vars["name"]
-	ctx := newCVDExecContext(exec.CommandContext, h.Config.CVDUser)
+	ctx := hoexec.NewAsUserExecContext(exec.CommandContext, h.Config.CVDUser)
 	logsDir, err := CVDLogsDir(ctx, group, name)
 	if err != nil {
 		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
@@ -467,7 +468,7 @@ func (h *createCVDBugReportHandler) Handle(r *http.Request) (interface{}, error)
 		IncludeADBBugreport: includeADBBugreport,
 		Paths:               h.Config.Paths,
 		OperationManager:    h.OM,
-		ExecContext:         newCVDExecContext(exec.CommandContext, h.Config.CVDUser),
+		ExecContext:         hoexec.NewAsUserExecContext(exec.CommandContext, h.Config.CVDUser),
 		UUIDGen:             func() string { return uuid.New().String() },
 	}
 	return NewCreateCVDBugReportAction(opts).Run()

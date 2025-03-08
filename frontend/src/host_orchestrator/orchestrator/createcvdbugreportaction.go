@@ -20,6 +20,7 @@ import (
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
@@ -28,7 +29,7 @@ type CreateCVDBugReportActionOpts struct {
 	IncludeADBBugreport bool
 	Paths               IMPaths
 	OperationManager    OperationManager
-	ExecContext         cvd.CVDExecContext
+	ExecContext         exec.ExecContext
 	UUIDGen             func() string
 }
 

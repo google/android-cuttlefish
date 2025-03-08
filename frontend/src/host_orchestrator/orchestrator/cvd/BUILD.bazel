@@ -5,6 +5,9 @@ go_library(
     srcs = ["cvd.go"],
     importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd",
     visibility = ["//visibility:public"],
+    deps = [
+        "//orchestrator/exec",
+    ]
 )
 
 go_test(
@@ -15,5 +18,6 @@ go_test(
     embed = [":cvd"],
     deps = [
         "@com_github_google_go_cmp//cmp",
+        "//orchestrator/exec",
     ],
 )
