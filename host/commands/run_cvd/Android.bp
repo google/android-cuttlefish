@@ -112,9 +112,6 @@ cc_binary_host {
                 "launch/vhost_input_devices.cpp",
                 "launch/wmediumd_server.cpp",
             ],
-            shared_libs: [
-                "libnl",
-            ],
         },
     },
     defaults: [

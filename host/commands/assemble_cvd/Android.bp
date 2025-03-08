@@ -97,9 +97,6 @@ cc_binary_host {
             enabled: true,
         },
         linux: {
-            shared_libs: [
-                "libnl",
-            ],
             required: [
                 "mkuserimg_mke2fs",
             ],
