@@ -107,6 +107,8 @@ Result<void> LocalInstance::PressPowerBtn() {
   }
 
   std::unique_ptr<const CuttlefishConfig> config = CuttlefishConfig::GetFromFile(instance_dir() + "/cuttlefish_config.json");
+  CF_EXPECT_EQ(config->vm_manager(), VmmMode::kCrosvm,
+               "powerbtn not supported in vm manager " << config->vm_manager());
   auto instance = config->ForInstance(id());
 
   Command command(instance.crosvm_binary());
