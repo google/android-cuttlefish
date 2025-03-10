@@ -136,20 +136,18 @@ func (c *cvdHostPackage) GenerateAndroidBuildActions(ctx android.ModuleContext) 
 	tarballBuilder.Build("cvd_host_tarball", fmt.Sprintf("Creating tarball for %s", c.BaseModuleName()))
 	ctx.InstallFile(android.PathForModuleInstall(ctx), c.BaseModuleName()+".tar.gz", tarball)
 	c.tarballFile = android.PathForModuleInstall(ctx, c.BaseModuleName()+".tar.gz")
+
+	android.SetProvider(ctx, CvdHostPackageMetadataInfoProvider, CvdHostPackageMetadataInfo{
+		TarballMetadata: c.tarballFile,
+		StampMetadata:   c.stampFile,
+	})
 }
 
-type cvdHostPackageMetadataProvider interface {
-	tarballMetadata() android.Path
-	stampMetadata() android.Path
+type CvdHostPackageMetadataInfo struct {
+	TarballMetadata android.Path
+	StampMetadata   android.Path
 }
-
-func (p *cvdHostPackage) tarballMetadata() android.Path {
-	return p.tarballFile
-}
-
-func (p *cvdHostPackage) stampMetadata() android.Path {
-	return p.stampFile
-}
+var CvdHostPackageMetadataInfoProvider = blueprint.NewProvider[CvdHostPackageMetadataInfo]()
 
 // Create "hosttar" phony target with "cvd-host_package.tar.gz" path.
 // Add stamp files into "droidcore" dependency.
@@ -157,16 +155,16 @@ func (p *cvdHostPackageSingleton) GenerateBuildActions(ctx android.SingletonCont
 	var cvdHostPackageTarball android.Paths
 	var cvdHostPackageStamp android.Paths
 
-	ctx.VisitAllModules(func(module android.Module) {
-		if !module.Enabled(ctx) {
+	ctx.VisitAllModuleProxies(func(module android.ModuleProxy) {
+		if !android.OtherModuleProviderOrDefault(ctx, module, android.CommonModuleInfoKey).Enabled {
 			return
 		}
-		if c, ok := module.(cvdHostPackageMetadataProvider); ok {
-			if !android.IsModulePreferred(module) {
+		if c, ok := android.OtherModuleProvider(ctx, module, CvdHostPackageMetadataInfoProvider); ok {
+			if !android.IsModulePreferredProxy(ctx, module) {
 				return
 			}
-			cvdHostPackageTarball = append(cvdHostPackageTarball, c.tarballMetadata())
-			cvdHostPackageStamp = append(cvdHostPackageStamp, c.stampMetadata())
+			cvdHostPackageTarball = append(cvdHostPackageTarball, c.TarballMetadata)
+			cvdHostPackageStamp = append(cvdHostPackageStamp, c.StampMetadata)
 		}
 	})
 
