@@ -55,7 +55,6 @@ cc_library {
     static_libs: [
         "libcdisk_spec",
         "libcuttlefish_host_config",
-        "libext2_uuid",
         "libsparse",
     ],
     defaults: ["cuttlefish_host"],
