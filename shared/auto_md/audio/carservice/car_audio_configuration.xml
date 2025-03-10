@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2025 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<!--
+  Defines the audio configuration in a car, including
+    - Audio zones
+    - Zone configurations (in each audio zone)
+    - Volume groups (in each zone configuration)
+    - Context to audio bus mappings (in each volume group)
+  in the car environment.
+-->
+<carAudioConfiguration version="4">
+    <deviceConfigurations>
+        <deviceConfiguration name="useHalDuckingSignals" value="true" />
+        <deviceConfiguration name="useCoreAudioRouting" value="false" />
+        <deviceConfiguration name="useCoreAudioVolume" value="false" />
+        <deviceConfiguration name="useCarVolumeGroupMuting" value="true" />
+    </deviceConfigurations>
+    <activationVolumeConfigs>
+        <activationVolumeConfig name="activation_volume_on_boot_config">
+            <activationVolumeConfigEntry minActivationVolumePercentage="20"
+                maxActivationVolumePercentage="90" invocationType="onPlaybackChanged" />
+        </activationVolumeConfig>
+        <activationVolumeConfig name="activation_volume_on_source_changed_config">
+            <activationVolumeConfigEntry minActivationVolumePercentage="20"
+                maxActivationVolumePercentage="80" invocationType="onSourceChanged" />
+        </activationVolumeConfig>
+        <activationVolumeConfig name="activation_volume_on_playback_changed_config">
+            <activationVolumeConfigEntry minActivationVolumePercentage="20"
+                maxActivationVolumePercentage="80" />
+        </activationVolumeConfig>
+    </activationVolumeConfigs>
+    <mirroringDevices>
+        <mirroringDevice address="BUS1000_MIRROR_CARD_0_DEV_12"/>
+    </mirroringDevices>
+    <zones>
+        <zone isPrimary="true" name="primary zone" audioZoneId="0" occupantZoneId="0">
+            <zoneConfigs>
+                <zoneConfig  name="primary zone config 1" isDefault="true">
+                    <volumeGroups>
+                        <group name="entertainment" activationConfig="activation_volume_on_boot_config">
+                            <device address="BUS00_MEDIA_CARD_0_DEV_0">
+                                <context context="music"/>
+                                <context context="announcement"/>
+                            </device>
+                        </group>
+                        <group name="navvol" activationConfig="activation_volume_on_source_changed_config">
+                            <device address="BUS01_NAV_GUIDANCE_CARD_0_DEV_1">
+                                <context context="navigation"/>
+                            </device>
+                            <device address="BUS02_NOTIFICATION_CARD_0_DEV_2">
+                                <context context="notification"/>
+                            </device>
+                        </group>
+                        <group name="sdsvol" activationConfig="activation_volume_on_playback_changed_config">
+                            <device address="BUS04_ASSISTANT_CARD_0_DEV_4">
+                                <context context="voice_command"/>
+                            </device>
+                        </group>
+                        <group name="system" activationConfig="activation_volume_on_source_changed_config">
+                            <device address="BUS05_SYSTEM_CARD_0_DEV_5">
+                                <context context="system_sound"/>
+                                <context context="emergency"/>
+                                <context context="safety"/>
+                                <context context="vehicle_status"/>
+                            </device>
+                        </group>
+                        <group name="telringvol" activationConfig="activation_volume_on_playback_changed_config">
+                            <device address="BUS03_PHONE_CARD_0_DEV_3">
+                                <context context="call"/>
+                                <context context="call_ring"/>
+                                <context context="alarm"/>
+                            </device>
+                        </group>
+                    </volumeGroups>
+                </zoneConfig>
+            </zoneConfigs>
+        </zone>
+        <zone name="rear seat zone 1" audioZoneId="1" occupantZoneId="1">
+            <zoneConfigs>
+                <zoneConfig name="rear seat zone 1 config 0" isDefault="true">
+                    <volumeGroups>
+                        <group>
+                            <device address="BUS100_ZONE_1_CARD_0_DEV_6">
+                                <context context="music"/>
+                            </device>
+                        </group>
+                        <group>
+                            <device address="BUS101_ZONE_1_CARD_0_DEV_7">
+                                <context context="navigation"/>
+                                <context context="voice_command"/>
+                                <context context="call_ring"/>
+                                <context context="call"/>
+                                <context context="alarm"/>
+                                <context context="notification"/>
+                                <context context="system_sound"/>
+                                <context context="emergency"/>
+                                <context context="safety"/>
+                                <context context="vehicle_status"/>
+                                <context context="announcement"/>
+                            </device>
+                        </group>
+                    </volumeGroups>
+                </zoneConfig>
+                <zoneConfig name="rear seat zone 1 config 1">
+                    <volumeGroups>
+                        <group>
+                            <device address="BUS110_ZONE_1_CARD_0_DEV_8">
+                                <context context="music"/>
+                                <context context="navigation"/>
+                                <context context="voice_command"/>
+                                <context context="call_ring"/>
+                                <context context="call"/>
+                                <context context="alarm"/>
+                                <context context="notification"/>
+                                <context context="system_sound"/>
+                                <context context="emergency"/>
+                                <context context="safety"/>
+                                <context context="vehicle_status"/>
+                                <context context="announcement"/>
+                            </device>
+                        </group>
+                    </volumeGroups>
+                </zoneConfig>
+            </zoneConfigs>
+        </zone>
+        <zone name="rear seat zone 2" audioZoneId="2"  occupantZoneId="2">
+            <zoneConfigs>
+                <zoneConfig name="rear seat zone 2 config 0" isDefault="true">
+                    <volumeGroups>
+                        <group>
+                            <device address="BUS200_ZONE_2_CARD_0_DEV_9">
+                                <context context="music"/>
+                            </device>
+                        </group>
+                        <group>
+                            <device address="BUS201_ZONE_2_CARD_0_DEV_10">
+                                <context context="navigation"/>
+                                <context context="voice_command"/>
+                                <context context="call_ring"/>
+                                <context context="call"/>
+                                <context context="alarm"/>
+                                <context context="notification"/>
+                                <context context="system_sound"/>
+                                <context context="emergency"/>
+                                <context context="safety"/>
+                                <context context="vehicle_status"/>
+                                <context context="announcement"/>
+                            </device>
+                        </group>
+                    </volumeGroups>
+                </zoneConfig>
+                <zoneConfig name="rear seat zone 2 config 1">
+                    <volumeGroups>
+                        <group>
+                            <device address="BUS210_ZONE_2_CARD_0_DEV_11">
+                                <context context="music"/>
+                                <context context="navigation"/>
+                                <context context="voice_command"/>
+                                <context context="call_ring"/>
+                                <context context="call"/>
+                                <context context="alarm"/>
+                                <context context="notification"/>
+                                <context context="system_sound"/>
+                                <context context="emergency"/>
+                                <context context="safety"/>
+                                <context context="vehicle_status"/>
+                                <context context="announcement"/>
+                            </device>
+                        </group>
+                    </volumeGroups>
+                </zoneConfig>
+            </zoneConfigs>
+        </zone>
+    </zones>
+</carAudioConfiguration>

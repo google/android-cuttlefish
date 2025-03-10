@@ -37,8 +37,6 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     com.android.car.internal.debug.num_auto_populated_users=1 # 1 passenger only (so 2nd display shows user picker)
-# TODO(b/233370174): add audio multi-zone
-#   ro.vendor.simulateMultiZoneAudio=true \
 
 # enables the rro package for passenger(secondary) user.
 ENABLE_PASSENGER_SYSTEMUI_RRO := true
@@ -52,6 +50,14 @@ $(call inherit-product, device/generic/car/emulator/cluster/cluster-hwserviceman
 
 # Disable shared system image checking
 PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false
+
+# Prevent the base aosp_cf.mk from including its audio configuration
+LOCAL_USE_VENDOR_AUDIO_CONFIGURATION?= false
+ifeq ($(LOCAL_USE_VENDOR_AUDIO_CONFIGURATION),false)
+LOCAL_USE_VENDOR_AUDIO_CONFIGURATION := true
+# Audio configuration for multi-display
+$(call inherit-product, device/google/cuttlefish/shared/auto_md/audio_policy_engine.mk)
+endif
 
 # Add the regular stuff.
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64_only/auto/aosp_cf.mk)
