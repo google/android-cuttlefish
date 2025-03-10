@@ -1,0 +1,13 @@
+digraph {
+  assemble_cvd [URL = "https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/assemble_cvd/"]
+  cvd [URL = "https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/"]
+  cvd_internal_start [label = "launch_cvd / cvd_internal_start", URL = "https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/start/"]
+  run_cvd [URL = "https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/run_cvd/"]
+  user [label = "User CLI"]
+
+  user -> cvd
+  cvd -> cvd_internal_start
+  user -> cvd_internal_start
+  cvd_internal_start -> assemble_cvd
+  cvd_internal_start -> run_cvd
+}

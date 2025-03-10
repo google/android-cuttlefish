@@ -1,0 +1,492 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Dark theme, the default if none specified */
+body, body.dark-theme {
+  --main-bg: black;
+  --main-fg: white;
+  --error-bg: #900000; /* dark red */
+  --alert-bg: #927836; /* dark yellow */
+  --info-bg: #007000; /* dark green */
+  --modal-bg: #5f6368ea; /* Semi-transparent Google grey 500 */
+  --modal-button-bg: #efefef; /* Google grey 200 */
+  --modal-button-shadow: #444444;
+  --modal-button-fg: #434343;
+  --modal-button-border: black;
+  --modal-button-invalid-border: red;
+  --modal-button-highlight-bg: #f4cccc; /* light red */
+  --modal-button-toggled-bg: #d9ead3ff; /* light green */
+  --modal-button-toggled-color: #274e13; /* dark green */
+  --modal-padding: 20px;
+  --bt-label-fg: green;
+  --bt-label-invalid-fg: red;
+  --bt-action-bg: transparent;
+  --custom-button-bg: #1c4587ff; /* blue */
+  --button-fg: #e8eaed; /* Google grey 200 */
+  --button-bg: transparent;
+  --button-disabled-fg: #9aa0a6; /* Google grey 500 */
+  --button-pressed-border: #505050;
+  --button-pressed-bg: #303030;
+  --display-border: solid #202020 1px;
+}
+/* End of dark theme */
+
+/* Light theme */
+body.light-theme {
+  --main-bg: #fafafa;
+  --main-fg: black;
+  --error-bg: #ea9da0; /* light red */
+  --alert-bg: #f3ef9e; /* light yellow */
+  --info-bg: #a5d5a5; /* light green */
+  --modal-bg: #d9d9d9ea; /* Semi-transparent Google grey 200 */
+  --modal-button-bg: #666666; /* Google grey 500 */
+  --modal-button-shadow: #666666;
+  --modal-button-fg: #efefef;
+  --modal-button-border: #c4c4c4; /* Google grey 300 */
+  --modal-button-invalid-border: #c3413d; /*light red */
+  --modal-button-highlight-bg: #a05555; /* dark red-ish */
+  --modal-button-toggled-bg: #d9ead3ff; /* light green */
+  --modal-button-toggled-color: #274e13; /* dark green */
+  --bt-label-fg: green;
+  --bt-label-invalid-fg: #c3413d; /* light red */
+  --bt-action-bg: transparent;
+  --custom-button-bg: #8fc3ea; /* light blue */
+  --button-fg: #555555; /* Google grey 600 */
+  --button-bg: transparent;
+  --button-disabled-fg: #c4c4c4; /* Google grey 300 */
+  --button-pressed-border: #c4c4c4; /* Google grey 300 */
+  --button-pressed-bg: #d9d9d9; /* Google grey 200 */
+  --display-border: solid #f0f0f0 1px;
+}
+/* End of light theme */
+
+body {
+  background-color: var(--main-bg);
+  margin: 0;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+#device-connection {
+  display: none;
+  max-height: 100vh;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#loader {
+  border-left: 12px solid #4285F4;
+  border-top: 12px solid #34A853;
+  border-right: 12px solid #FBBC05;
+  border-bottom: 12px solid #EA4335;
+  border-radius: 50%;
+  width: 70px;
+  height: 70px;
+  animation: spin 1.2s linear infinite;
+  margin: 100px;
+}
+
+/* Top header row. */
+
+#header {
+  height: 64px;
+  /* Items inside this use a row Flexbox.*/
+  display: flex;
+  align-items: center;
+}
+
+#record_video_btn {
+  display: none !important;
+}
+
+#error-message-div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 999;
+  opacity: 0.97;
+}
+#error-message {
+  color: var(--main-fg);
+  font-family: 'Open Sans', sans-serif;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 10px;
+}
+#error-message .close-btn {
+  float: right;
+  cursor: pointer;
+}
+#error-message.hidden {
+  display: none;
+}
+#error-message.info {
+  background-color: var(--info-bg);
+}
+#error-message.warning {
+  background-color: var(--alert-bg);
+}
+#error-message.error {
+  background-color: var(--error-bg);
+}
+/* Control panel buttons and device screen(s). */
+
+#controls-and-displays {
+  height: 100%;
+
+  /* Items inside this use a row Flexbox.*/
+  display: flex;
+}
+
+#controls-and-displays > div {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.modal {
+  /* Start out hidden, and use absolute positioning. */
+  display: none;
+  position: absolute;
+
+  border-radius: 10px;
+  padding: var(--modal-padding);
+  padding-top: 1px;
+
+  background-color: var(--modal-bg);
+  color: var(--main-fg);
+  font-family: 'Open Sans', sans-serif;
+}
+.modal-header {
+  cursor: move;
+  /* Items inside this use a row Flexbox.*/
+  display: flex;
+  justify-content: space-between;
+}
+.modal-close {
+  color: var(--main-fg);
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+.modal-button, .modal-button-highlight {
+  border-radius: 10px;
+  box-shadow:    1px 1px var(--modal-button-shadow);
+  padding:       10px 20px;
+  color:         var(--modal-button-fg);
+  display:       inline-block;
+  font:          normal bold 14px/1 "Open Sans", sans-serif;
+  text-align:    center;
+  cursor:        pointer;
+}
+.modal-button {
+  background: var(--modal-button-bg);
+}
+.modal-button-highlight {
+  background: var(--modal-button-highlight-bg);
+}
+.modal-button.active, .modal-button-highlight.active {
+  background-color: var(--modal-button-toggled-bg);
+  color:            var(--modal-button-toggled-color);
+}
+#bluetooth-wizard-mac:valid {
+  border: 2px solid var(--modal-button-border);
+}
+#bluetooth-wizard-mac:invalid {
+  border: 2px solid var(--modal-button-invalid-border);
+}
+#bluetooth-wizard-mac:invalid + span::before {
+  font-weight: bold;
+  content: 'X';
+  color: var(--bt-label-invalid-fg);
+}
+#bluetooth-wizard-mac:valid + span::before {
+  font-weight: bold;
+  content: 'OK';
+  color: var(--bt-label-fg);
+}
+#device-details-modal span {
+  white-space: pre;
+}
+#bluetooth-console-input {
+  width: 100%;
+}
+#bluetooth-console-cmd-label {
+  color: var(--main-fg);
+}
+.bluetooth-text, .bluetooth-text-bold, .bluetooth-text-field input {
+  font: normal 18px/1 "Open Sans", sans-serif;
+}
+.bluetooth-text, .bluetooth-text-bold {
+  color: var(--main-fg);
+}
+.bluetooth-text-bold {
+  font: bold;
+}
+.bluetooth-button {
+  text-align: center;
+}
+.bluetooth-drop-down select {
+  font: normal 18px/1 "Open Sans", sans-serif;
+  color: var(--modal-button-fg);
+  width: 500px;
+  margin: 5px;
+  rows: 10;
+  columns: 60;
+}
+.bluetooth-text-field input {
+  color: var(--modal-button-fg);
+  width: 500px;
+  margin: 5px;
+  rows: 10;
+  columns: 60;
+}
+.bluetooth-list-trash {
+  background:    var(--bt-action-bg);
+  border:        0px;
+  color:         var(--main-fg);
+}
+
+.location-text, .location-text-bold, .location-text-field input {
+  font: normal 18px/1 "Open Sans", sans-serif;
+}
+.location-text, .location-text-bold {
+  color: var(--main-fg);
+}
+.location-text-bold {
+  font: bold;
+}
+.location-button {
+  text-align: center;
+}
+#display-add-modal-button {
+  margin-top: 10px;
+  margin-right: 10px;
+  height: 40px;
+  font-size: 32px;
+  color: var(--button-fg);
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  background-color: var(--button-bg);
+}
+#display-add-modal-button.modal-button-opened {
+  background-color: var(--modal-bg);
+}
+.display-spec-form {
+  margin: 16px 0px;
+  display: flex;
+  gap: 8px;
+}
+.display-spec-label {
+  display: flex;
+  flex-direction: column;
+}
+.display-spec-label input {
+  width: 120px;
+}
+.sensors{
+  position: sticky;
+  right: 0;
+  top: 0;
+  text-align: right;
+}
+.fixed-orientation{
+  position: sticky;
+  right: 0;
+  top: 0;
+  text-align: right;
+}
+.control-panel-column {
+  width: 50px;
+  /* Items inside this use a column Flexbox.*/
+  display: flex;
+  flex-direction: column;
+  padding: 1px;
+}
+#control-panel-custom-buttons {
+  display: none;
+  /* Give the custom buttons column a blue background. */
+  background-color: var(--custom-button-bg);
+  height: fit-content;
+  border-radius: 10px;
+  top: 10px;
+  position: sticky;
+}
+
+.control-panel-column button {
+  margin: 0px 1px 5px 1px;
+  height: 50px;
+  font-size: 32px;
+
+  color: var(--button-fg);
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  background-color: var(--button-bg);
+}
+
+.control-panel-column button.modal-button-opened {
+  background-color: var(--modal-bg);
+}
+
+.control-panel-column button:disabled {
+  color: var(--button-disabled-fg);
+  cursor: not-allowed;
+}
+
+.control-panel-column button:enabled {
+  cursor: pointer;
+}
+
+.control-panel-column button:active {
+  margin: 0px 0px 5px 0px;
+  border: solid 1px var(--button-pressed-border);
+  background-color: var(--button-pressed-bg);
+}
+
+#device-displays {
+  /* Take up the remaining width of the window.*/
+  flex-grow: 1;
+  /* Don't grow taller than the window.*/
+  max-height: 100vh;
+  /* Allows child elements to be positioned relative to this element. */
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  /* Don't show an outline when using the keyboard */
+  outline: 0px solid transparent;
+}
+
+/*
+ * Container <div> used to wrap each display's <video> element which is used for
+ * maintaining each display's width and height while the display is potentially
+ * rotating.
+ */
+.device-display {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  margin: 10px;
+  visibility: hidden;
+}
+
+.device-video-container {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+/* Container <div> to show info about the individual display. */
+.device-display-info {
+  color: var(--main-fg);
+  /* dark green */
+  background-color: var(--info-bg);
+  font-family: 'Open Sans', sans-serif;
+  text-indent: 0px;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+  flex-grow: 0;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.device-display-remove-button {
+  color: var(--main-fg);
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* The actual <video> element for each display. */
+.device-display-video {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  touch-action: none;
+  border: var(--display-border);
+}
+
+#touchpad-modal {
+  /* Disable select to avoid weird behavior when dragging mouse while
+  interacting with touchpads */
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  width: 200px;
+}
+
+#touchpad-modal-header {
+  justify-content: right;
+  margin-right: calc(-1 * var(--modal-padding));
+}
+
+#touchpad-modal-button {
+  display: none;
+}
+
+#touchpad-controls {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  outline: 0px solid transparent;
+}
+
+.touchpad {
+  background-color: var(--button-fg);
+  touch-action: none;
+  position: relative;
+  flex-direction: column;
+  display: none;
+}
+
+.touchpad.selected {
+  display: block;
+}
+
+.touchpad:active {
+  background-color: var(--button-pressed-bg);
+}
+
+#touchpad-list .selectors {
+  margin-bottom: 10px;
+}
+
+#touchpad-list .selectors button {
+  color: var(--main-fg);
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+#touchpad-list .selectors button:hover {
+  color: var(--main-bg);
+  background-color: var(--main-fg);
+}
+
+#touchpad-list .selectors button.selected {
+  color: var(--main-bg);
+  background-color: var(--button-fg);
+}

@@ -1,0 +1,24 @@
+digraph {
+  console_forwarder [label = < <B>console_forwarder</B> >, penwidth = 2]
+  host_console_in [label = "internal/console.in", shape = "rectangle"]
+  host_console_out [label = "internal/console.out", shape = "rectangle"]
+  host_pty [label = "/dev/pty/###", shape = "rectangle"]
+  run_cvd
+  screen
+  user [label = "User CLI"]
+  vmm [label = "crosvm / qemu"]
+  subgraph cluster_android {
+    label = "Android VM"
+    vm_console [label = "/dev/ttyS0", shape = "rectangle"]
+    shell [label = "toybox / sh"]
+  }
+
+  run_cvd -> console_forwarder
+  user -> screen
+  screen -> host_pty -> console_forwarder [dir = "both"]
+
+  console_forwarder -> host_console_out -> vmm [dir = "back"]
+  console_forwarder -> host_console_in -> vmm
+
+  vmm -> vm_console -> shell [dir = "both"]
+}

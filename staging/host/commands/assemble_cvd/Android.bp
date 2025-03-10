@@ -1,0 +1,137 @@
+//
+// Copyright (C) 2019 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_binary_host {
+    name: "assemble_cvd",
+    srcs: [
+        "alloc.cc",
+        "assemble_cvd.cc",
+        "boot_config.cc",
+        "boot_image_utils.cc",
+        "bootconfig_args.cpp",
+        "clean.cc",
+        "disk/factory_reset_protected.cc",
+        "disk/gem5_image_unpacker.cpp",
+        "disk/generate_persistent_bootconfig.cpp",
+        "disk/generate_persistent_vbmeta.cpp",
+        "disk/initialize_instance_composite_disk.cc",
+        "disk/kernel_ramdisk_repacker.cpp",
+        "disk_builder.cpp",
+        "disk_flags.cc",
+        "display.cpp",
+        "flag_feature.cpp",
+        "flags.cc",
+        "graphics_flags.cc",
+        "kernel_module_parser.cc",
+        "misc_info.cc",
+        "network_flags.cpp",
+        "super_image_mixer.cc",
+        "touchpad.cpp",
+        "vendor_dlkm_utils.cc",
+    ],
+    header_libs: [
+        "bootimg_headers",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_allocd_utils",
+        "libcuttlefish_command_util",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libext2_blkid",
+        "libfruit",
+        "libjsoncpp",
+        "libprotobuf-cpp-full",
+        "libz",
+        "libziparchive",
+    ],
+    static_libs: [
+        "libcdisk_spec",
+        "libcuttlefish_avb",
+        "libcuttlefish_host_config",
+        "libcuttlefish_host_config_adb",
+        "libcuttlefish_host_config_fastboot",
+        "libcuttlefish_launch_cvd_proto",
+        "libcuttlefish_vm_manager",
+        "libext2_uuid",
+        "libgflags",
+        "libgfxstream_graphics_detector_proto",
+        "libimage_aggregator",
+        "libsparse",
+    ],
+    required: [
+        "avbtool",
+        "bootloader_crosvm_aarch64",
+        "bootloader_crosvm_x86_64",
+        "bootloader_qemu_aarch64",
+        "bootloader_qemu_x86_64",
+        "cvd_avb_pubkey_rsa2048",
+        "cvd_avb_pubkey_rsa4096",
+        "cvd_avb_testkey_rsa2048",
+        "cvd_avb_testkey_rsa4096",
+        "cvd_config_phone.json",
+        "extract-ikconfig",
+        "lz4",
+        "mkenvimage_slim",
+        "simg2img",
+        "unpack_bootimg",
+    ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+        linux: {
+            shared_libs: [
+                "libnl",
+            ],
+            required: [
+                "mkuserimg_mke2fs",
+            ],
+        },
+    },
+    defaults: ["cuttlefish_host"],
+}
+
+cc_test_host {
+    name: "cf_assemble_tests",
+    shared_libs: [
+        "libbase",
+        "libcurl",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libfruit",
+        "liblog",
+        "libprotobuf-cpp-full",
+    ],
+    srcs: [
+        "unittest/main_test.cc",
+        "unittest/utils_tests.cpp",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libcuttlefish_launch_cvd_proto",
+        "libcuttlefish_msg_queue",
+        "libgflags",
+        "libgmock",
+    ],
+    test_options: {
+        unit_test: true,
+    },
+    defaults: ["cuttlefish_host"],
+}

@@ -1,0 +1,93 @@
+//
+// Copyright (C) 2020 The Android Open-Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_library {
+    name: "libcuttlefish_security",
+    defaults: [
+        "cuttlefish_host",
+        "hidl_defaults",
+    ],
+    srcs: [
+        "keymaster_channel.cpp",
+    ],
+    header_libs: [
+        "libhardware_headers",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_transport",
+        "libcuttlefish_utils_result",
+        "libgatekeeper",
+        "libkeymaster_messages",
+        "liblog",
+    ],
+    target: {
+        android: {
+            shared_libs: ["libcuttlefish_fs"],
+            srcs: [
+                "confui_sign.cpp",
+                "gatekeeper_channel_sharedfd.cpp",
+                "keymaster_channel_sharedfd.cpp",
+            ],
+        },
+        darwin: {
+            enabled: true,
+        },
+        not_windows: { // Actually means "not-windows host code"
+            shared_libs: ["libcuttlefish_fs"],
+            srcs: [
+                "confui_sign.cpp",
+                "gatekeeper_channel_sharedfd.cpp",
+                "keymaster_channel_sharedfd.cpp",
+            ],
+        },
+        windows: {
+            enabled: true,
+            srcs: [
+                "gatekeeper_channel_windows.cpp",
+                "keymaster_channel_windows.cpp",
+            ],
+        },
+    },
+}
+
+cc_test {
+    name: "libcuttlefish_security_tests",
+    srcs: [
+        "keymaster_channel_test.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_security",
+        "libcuttlefish_utils_result",
+        "libgatekeeper",
+        "libkeymaster_messages",
+        "liblog",
+    ],
+    static_libs: [
+        "libgmock",
+        "libgtest",
+    ],
+    defaults: ["cuttlefish_buildhost_only"],
+    test_suites: ["general-tests"],
+    test_options: {
+        unit_test: true,
+    },
+}

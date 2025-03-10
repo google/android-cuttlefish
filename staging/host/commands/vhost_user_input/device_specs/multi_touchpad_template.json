@@ -1,0 +1,107 @@
+{
+  "name": "Cuttlefish Vhost User Multitouch_Touchpad %INDEX%",
+  "serial_name": "virtio-multi-touch-touchpad-%INDEX%",
+  "properties": {
+    "INPUT_PROP_POINTER": 0,
+    "INPUT_PROP_BUTTONPAD": 2
+  },
+  "events": [
+    {
+      "event_type": "EV_KEY",
+      "event_type_code": 1,
+      "supported_events": {
+        "BTN_TOUCH": 330,
+        "BTN_LEFT": 272,
+        "BTN_TOOL_FINGER": 325,
+        "BTN_TOOL_DOUBLETAP": 333,
+        "BTN_TOOL_TRIPLETAP": 334,
+        "BTN_TOOL_QUADTAP": 335
+      }
+    },
+    {
+      "event_type": "EV_ABS",
+      "event_type_code": 3,
+      "supported_events": {
+        "ABS_X": 0,
+        "ABS_Y": 1,
+        "ABS_MT_SLOT": 47,
+        "ABS_MT_POSITION_X": 53,
+        "ABS_MT_POSITION_Y": 54,
+        "ABS_MT_TRACKING_ID": 57,
+        "ABS_MT_TOOL_TYPE": 55,
+        "ABS_MT_PRESSURE": 58,
+        "ABS_MT_TOUCH_MAJOR": 48,
+        "ABS_MT_TOUCH_MINOR": 49,
+        "ABS_PRESSURE": 24
+      }
+    }
+  ],
+  "axis_info": [
+    {
+      "axis": "ABS_X",
+      "axis_code": 0,
+      "min": 0,
+      "max": %WIDTH%
+    },
+    {
+      "axis": "ABS_Y",
+      "axis_code": 1,
+      "min": 0,
+      "max": %HEIGHT%
+    },
+    {
+      "axis": "ABS_MT_POSITION_X",
+      "axis_code": 53,
+      "min": 0,
+      "max": %WIDTH%
+    },
+    {
+      "axis": "ABS_MT_POSITION_Y",
+      "axis_code": 54,
+      "min": 0,
+      "max": %HEIGHT%
+    },
+    {
+      "axis": "ABS_MT_SLOT",
+      "axis_code": 47,
+      "min": 0,
+      "max": 10
+    },
+    {
+      "axis": "ABS_MT_TRACKING_ID",
+      "axis_code": 57,
+      "min": 0,
+      "max": 65536
+    },
+    {
+      "axis": "ABS_MT_TOOL_TYPE",
+      "axis_code": 55,
+      "min": 0,
+      "max": 2
+    },
+    {
+      "axis": "ABS_MT_PRESSURE",
+      "axis_code": 58,
+      "min": 0,
+      "max": 255
+    },
+    {
+      "axis": "ABS_MT_TOUCH_MAJOR",
+      "axis_code": 48,
+      "min": 0,
+      "max": 4095
+    },
+    {
+      "axis": "ABS_MT_TOUCH_MINOR",
+      "axis_code": 49,
+      "min": 0,
+      "max": 4095
+    },
+    {
+      "axis": "ABS_PRESSURE",
+      "axis_code": 24,
+      "min": 0,
+      "max": 255
+    }
+  ]
+}
