@@ -1,2 +1,3 @@
 config=auto_dd
 gfxstream=supported
+output_audio_streams_count=6
