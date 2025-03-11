@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <sys/utsname.h>
+#include <uuid.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
