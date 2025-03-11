@@ -251,6 +251,32 @@ Result<void> MaybeConfigureVulkanIcd(const CuttlefishConfig& config,
   return {};
 }
 
+// b/277618912: glibc's aarch64 memcpy uses unaligned accesses which seems to
+// cause SIGBUS errors on some Nvidia GPUs.
+Result<void> MaybeConfigureMemOverridesLibrary(const CuttlefishConfig& config,
+                                               Command* command) {
+  const auto& gpu_mode = config.ForDefaultInstance().gpu_mode();
+  const bool is_gpu_mode_accelerated =
+      (gpu_mode == kGpuModeDrmVirgl || gpu_mode == kGpuModeGfxstream ||
+       gpu_mode == kGpuModeGfxstreamGuestAngle);
+
+  const bool is_arm64 = HostArch() == Arch::Arm64;
+
+  if (is_gpu_mode_accelerated && is_arm64) {
+    LOG(INFO)
+        << "Enabling libmem_overrides.so preload to work around b/277618912.";
+
+    const std::string mem_override_lib_path =
+        HostBinaryPath("aarch64-linux-gnu/libmem_overrides.so");
+    CF_EXPECT(FileExists(mem_override_lib_path),
+              "Failed to find " << mem_override_lib_path);
+
+    command->AddEnvironmentVariable("LD_PRELOAD", mem_override_lib_path);
+  }
+
+  return {};
+}
+
 Result<std::string> CrosvmPathForVhostUserGpu(const CuttlefishConfig& config) {
   const auto& instance = config.ForDefaultInstance();
   switch (HostArch()) {
@@ -387,6 +413,8 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
 
   gpu_device_cmd.Cmd().AddParameter("--params");
   gpu_device_cmd.Cmd().AddParameter(ToSingleLineString(gpu_params_json));
+
+  CF_EXPECT(MaybeConfigureMemOverridesLibrary(config, &gpu_device_cmd.Cmd()));
 
   CF_EXPECT(MaybeConfigureVulkanIcd(config, &gpu_device_cmd.Cmd()));
 

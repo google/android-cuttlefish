@@ -280,6 +280,7 @@ cvd_host_aarch64_crosvm = [
     "aarch64_linux_gnu_libffi.so.7_for_crosvm",
     "aarch64_linux_gnu_libgbm.so.1_for_crosvm",
     "aarch64_linux_gnu_libgfxstream_backend.so_for_crosvm",
+    "aarch64_linux_gnu_libmem_overrides.so_for_crosvm",
     "aarch64_linux_gnu_libminijail.so_for_crosvm",
     "aarch64_linux_gnu_libvirglrenderer.so.1_for_crosvm",
     "aarch64_linux_gnu_libwayland_client.so.0_for_crosvm",
