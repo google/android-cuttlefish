@@ -21,13 +21,18 @@
 
 namespace cuttlefish {
 
-std::string StringFromEnv(const std::string& varname,
-                          const std::string& defval) {
-  const char* const valstr = std::getenv(varname.c_str());
+std::optional<std::string> StringFromEnv(const std::string& varname) {
+
+  const char* const valstr = getenv(varname.c_str());
   if (!valstr) {
-    return defval;
+    return std::nullopt;
   }
   return valstr;
+}
+
+std::string StringFromEnv(const std::string& varname,
+                          const std::string& defval) {
+  return StringFromEnv(varname).value_or(defval);
 }
 
 }  // namespace cuttlefish

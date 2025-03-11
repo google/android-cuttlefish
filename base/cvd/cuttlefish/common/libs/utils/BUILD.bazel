@@ -51,6 +51,7 @@ clang_tidy_test(
 cc_library(
     name = "utils",
     srcs = [
+        "architecture.cpp",
         "archive.cpp",
         "base64.cpp",
         "environment.cpp",
@@ -59,6 +60,7 @@ cc_library(
         "flags_validator.cpp",
         "inotify.cpp",
         "json.cpp",
+        "known_paths.cpp",
         "proc_file_utils.cpp",
         "shared_fd_flag.cpp",
         "signals.cpp",
@@ -68,6 +70,7 @@ cc_library(
         "users.cpp",
     ],
     hdrs = [
+        "architecture.h",
         "archive.h",
         "base64.h",
         "contains.h",
@@ -77,6 +80,7 @@ cc_library(
         "flags_validator.h",
         "inotify.h",
         "json.h",
+        "known_paths.h",
         "network.h",
         "proc_file_utils.h",
         "proto.h",
