@@ -56,3 +56,24 @@ git_repository(
     commit = "0af6ffd113ad963dbd2a23e8cbabba13493c015f", # 2025-02-02
     remote = "https://github.com/google/fruit.git",
 )
+
+git_repository(
+    name = "egl_headers",
+    build_file = "@//:BUILD.egl_headers.bazel",
+    commit = "29c4314e0ef04c730992d295f91b76635019fbba",
+    remote = "https://github.com/KhronosGroup/EGL-Registry.git",
+)
+
+git_repository(
+    name = "opengl_headers",
+    build_file = "@//:BUILD.opengl_headers.bazel",
+    commit = "b53ca669bea4715b6d5fa53c459f47a1fecd7944",
+    remote = "https://github.com/KhronosGroup/OpenGL-Registry.git",
+)
+
+git_repository(
+    name = "vulkan_headers",
+    build_file = "@//:BUILD.vulkan_headers.bazel",
+    commit = "952f776f6573aafbb62ea717d871cd1d6816c387", # v1.4.309
+    remote = "https://github.com/KhronosGroup/Vulkan-Headers.git",
+)
