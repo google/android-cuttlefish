@@ -64,6 +64,11 @@ func TestPowerwash(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Make sure `powerwash_cvd` is not being used.
+	toolBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/powerwash_cvd", uploadDir)
+	if err := dh.RemoveHostTool(cID, toolBin); err != nil {
+		t.Fatal(err)
+	}
 
 	if err := srv.Powerwash(cvd.Group, cvd.Name); err != nil {
 		t.Fatal(err)
