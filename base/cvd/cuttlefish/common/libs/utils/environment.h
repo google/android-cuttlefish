@@ -19,6 +19,8 @@
 
 namespace cuttlefish {
 
+std::optional<std::string> StringFromEnv(const std::string& varname);
+
 std::string StringFromEnv(const std::string& varname,
                           const std::string& defval);
 
