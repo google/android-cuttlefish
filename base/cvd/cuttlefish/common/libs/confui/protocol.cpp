@@ -226,7 +226,7 @@ std::unique_ptr<ConfUiMessage> ToConfUiMessage<ConfUiCmd::kStart>(
 template <>
 std::unique_ptr<ConfUiMessage> ToConfUiMessage<ConfUiCmd::kUserInputEvent>(
     const packet::ParsedPacket& message) {
-  if (message.additional_info_.size() < 1) {
+  if (message.additional_info_.empty()) {
     ConfUiLog(ERROR)
         << "kUserInputEvent message should have at least one additional_info_";
     return {nullptr};
