@@ -51,12 +51,10 @@ clang_tidy_test(
 cc_library(
     name = "environment",
     srcs = [
-        "architecture.cpp",
         "environment.cpp",
         "known_paths.cpp",
     ],
     hdrs = [
-        "architecture.h",
         "environment.h",
         "known_paths.h",
     ],
@@ -76,6 +74,7 @@ clang_tidy_test(
 cc_library(
     name = "utils",
     srcs = [
+        "architecture.cpp",
         "archive.cpp",
         "base64.cpp",
         "files.cpp",
@@ -92,6 +91,7 @@ cc_library(
         "users.cpp",
     ],
     hdrs = [
+        "architecture.h",
         "archive.h",
         "base64.h",
         "contains.h",
