@@ -1,3 +1,4 @@
 config=auto_md
 gfxstream=supported
 gfxstream_gl_program_binary_link_status=supported
+output_audio_streams_count=6
