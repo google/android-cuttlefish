@@ -82,7 +82,7 @@ Result<void> ResizeImage(const std::string& data_image, int data_image_mb,
   } else if (instance.userdata_format() == "ext4") {
     resize_path = "/sbin/resize2fs";
   }
-  if (resize_path != "") {
+  if (!resize_path.empty()) {
     CF_EXPECT_EQ(Execute({resize_path, data_image}), 0,
                  "`" << resize_path << " " << data_image << "` failed");
     CF_EXPECT(ForceFsckImage(data_image, instance));

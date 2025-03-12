@@ -263,10 +263,10 @@ class CuttlefishConfig {
   void set_virtio_mac80211_hwsim(bool virtio_mac80211_hwsim);
   bool virtio_mac80211_hwsim() const;
 
-  void set_ap_rootfs_image(const std::string& path);
+  void set_ap_rootfs_image(const std::string& ap_rootfs_image);
   std::string ap_rootfs_image() const;
 
-  void set_ap_kernel_image(const std::string& path);
+  void set_ap_kernel_image(const std::string& ap_kernel_image);
   std::string ap_kernel_image() const;
 
   void set_pica_uci_port(int pica_uci_port);
@@ -813,7 +813,7 @@ class CuttlefishConfig {
     void set_start_netsim(bool start);
     // TODO(b/288987294) Remove this when separating environment is done
     void set_start_wmediumd_instance(bool start);
-    void set_mcu(const Json::Value &v);
+    void set_mcu(const Json::Value &cfg);
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
     void set_crosvm_use_balloon(const bool use_balloon);
     void set_crosvm_use_rng(const bool use_rng);
@@ -846,7 +846,7 @@ class CuttlefishConfig {
         const std::vector<TouchpadConfig>& touchpad_configs);
     void set_memory_mb(int memory_mb);
     void set_ddr_mem_mb(int ddr_mem_mb);
-    Result<void> set_setupwizard_mode(const std::string& title);
+    Result<void> set_setupwizard_mode(const std::string& mode);
     void set_userdata_format(const std::string& userdata_format);
     void set_guest_enforce_security(bool guest_enforce_security);
     void set_use_sdcard(bool use_sdcard);
@@ -867,7 +867,7 @@ class CuttlefishConfig {
     void set_protected_vm(bool protected_vm);
     void set_mte(bool mte);
     void set_boot_slot(const std::string& boot_slot);
-    void set_grpc_socket_path(const std::string& sockets);
+    void set_grpc_socket_path(const std::string& socket_path);
     void set_fail_fast(bool fail_fast);
     void set_vhost_user_block(bool qemu_vhost_user_block);
     void set_ti50_emulator(const std::string& ti50_emulator);
@@ -918,7 +918,7 @@ class CuttlefishConfig {
     void set_guest_renderer_preload(GuestRendererPreload preload);
     void set_guest_vulkan_driver(const std::string& driver);
     void set_guest_uses_bgra_framebuffers(bool uses_bgra);
-    void set_frames_socket_path(const std::string& driver);
+    void set_frames_socket_path(const std::string& frame_socket_path);
 
     void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
     void set_enable_gpu_vhost_user(const bool enable_gpu_vhost_user);
@@ -937,7 +937,7 @@ class CuttlefishConfig {
     void set_new_data_image(const std::string& new_data_image);
     void set_super_image(const std::string& super_image);
     void set_new_super_image(const std::string& super_image);
-    void set_misc_info_txt(const std::string& misc_image);
+    void set_misc_info_txt(const std::string& misc_info);
     void set_vendor_boot_image(const std::string& vendor_boot_image);
     void set_new_vendor_boot_image(const std::string& new_vendor_boot_image);
     void set_vbmeta_image(const std::string& vbmeta_image);
@@ -957,8 +957,8 @@ class CuttlefishConfig {
     void set_otheros_esp_image(const std::string& otheros_esp_image);
     void set_android_efi_loader(const std::string& android_efi_loader);
     void set_chromeos_disk(const std::string& chromeos_disk);
-    void set_chromeos_kernel_path(const std::string& linux_kernel_path);
-    void set_chromeos_root_image(const std::string& linux_root_image);
+    void set_chromeos_kernel_path(const std::string& chromeos_kernel_path);
+    void set_chromeos_root_image(const std::string& chromeos_root_image);
     void set_linux_kernel_path(const std::string& linux_kernel_path);
     void set_linux_initramfs_path(const std::string& linux_initramfs_path);
     void set_linux_root_image(const std::string& linux_root_image);
@@ -973,14 +973,14 @@ class CuttlefishConfig {
     void set_kernel_path(const std::string& kernel_path);
     void set_guest_android_version(const std::string& guest_android_version);
     void set_bootconfig_supported(bool bootconfig_supported);
-    void set_filename_encryption_mode(const std::string& userdata_format);
+    void set_filename_encryption_mode(const std::string& filename_encryption_mode);
     void set_external_network_mode(ExternalNetworkMode network_mode);
     void set_hibernation_partition_image(
         const std::string& hibernation_partition_image);
 
     // Whether we should start vhal_proxy_server for the guest-side VHAL to
     // connect to.
-    void set_start_vhal_proxy_server(bool enable_vhal_proxy_server);
+    void set_start_vhal_proxy_server(bool start_vhal_proxy_server);
 
     void set_audio_output_streams_count(int count);
 
@@ -1066,7 +1066,7 @@ class CuttlefishConfig {
     void set_start_wmediumd(bool start);
     void set_vhost_user_mac80211_hwsim(const std::string& path);
     void set_wmediumd_api_server_socket(const std::string& path);
-    void set_wmediumd_config(const std::string& path);
+    void set_wmediumd_config(const std::string& config_path);
     void set_wmediumd_mac_prefix(int mac_prefix);
 
     void set_group_uuid(const int group_uuid);

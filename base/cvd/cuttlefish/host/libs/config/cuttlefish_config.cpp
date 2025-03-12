@@ -213,9 +213,9 @@ bool CuttlefishConfig::sig_server_strict() const {
 
 bool CuttlefishConfig::OverlaysEnabled() const {
   for (const auto& curinstance : Instances()) {
-    if (curinstance.display_configs().size() > 0) {
+    if (!curinstance.display_configs().empty()) {
       for (const auto& curdisplay : curinstance.display_configs()) {
-        if (curdisplay.overlays.length() > 0) {
+        if (!curdisplay.overlays.empty()) {
           return true;
         }
       }

@@ -333,7 +333,7 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
       custom_action_config_.push_back(DefaultCustomActionConfig());
     }
     for (const auto& config : custom_action_config_) {
-      if (config != "") {
+      if (!config.empty()) {
         std::string config_contents;
         CF_EXPECT(android::base::ReadFileToString(config, &config_contents));
         auto custom_action_array = CF_EXPECT(ParseJson(config_contents));

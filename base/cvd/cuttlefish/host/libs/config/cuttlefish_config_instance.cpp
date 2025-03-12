@@ -874,8 +874,8 @@ std::string CuttlefishConfig::InstanceSpecific::gpu_renderer_features() const {
   return (*Dictionary())[kGpuRendererFeatures].asString();
 }
 void CuttlefishConfig::MutableInstanceSpecific::set_gpu_renderer_features(
-    const std::string& transport) {
-  (*Dictionary())[kGpuRendererFeatures] = transport;
+    const std::string& features) {
+  (*Dictionary())[kGpuRendererFeatures] = features;
 }
 
 static constexpr char kGpuContextTypes[] = "gpu_context_types";
@@ -1069,8 +1069,8 @@ CuttlefishConfig::InstanceSpecific::extra_bootconfig_args() const {
 }
 
 void CuttlefishConfig::MutableInstanceSpecific::set_extra_bootconfig_args(
-    const std::string& transport) {
-  (*Dictionary())[kExtraBootconfigArgsInstanced] = transport;
+    const std::string& extra_bootconfig_args) {
+  (*Dictionary())[kExtraBootconfigArgsInstanced] = extra_bootconfig_args;
 }
 
 static constexpr char kRecordScreen[] = "record_screen";
@@ -1769,8 +1769,8 @@ std::string CuttlefishConfig::InstanceSpecific::environment_name() const {
   return (*Dictionary())[kEnvironmentName].asString();
 }
 void CuttlefishConfig::MutableInstanceSpecific::set_environment_name(
-    const std::string& environment_name) {
-  (*Dictionary())[kEnvironmentName] = environment_name;
+    const std::string& env_name) {
+  (*Dictionary())[kEnvironmentName] = env_name;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::CrosvmSocketPath() const {
@@ -1817,7 +1817,7 @@ void CuttlefishConfig::MutableInstanceSpecific::set_adb_ip_and_port(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::adb_device_name() const {
-  if (adb_ip_and_port() != "") {
+  if (!adb_ip_and_port().empty()) {
     return adb_ip_and_port();
   }
   LOG(ERROR) << "no adb_mode found, returning bad device name";
@@ -1989,8 +1989,8 @@ bool CuttlefishConfig::InstanceSpecific::crosvm_use_rng() const {
 
 static constexpr char kCrosvmSimpleMediaDevice[] = "crosvm_simple_media_device";
 void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_simple_media_device(
-    const bool use_media) {
-  (*Dictionary())[kCrosvmSimpleMediaDevice] = use_media;
+    const bool simple_media_device) {
+  (*Dictionary())[kCrosvmSimpleMediaDevice] = simple_media_device;
 }
 bool CuttlefishConfig::InstanceSpecific::crosvm_simple_media_device() const {
   return (*Dictionary())[kCrosvmSimpleMediaDevice].asBool();
@@ -2123,7 +2123,7 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalUdsPath(
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceGrpcSocketPath(
     const std::string& socket_name) const {
-  if (socket_name.size() == 0) {
+  if (socket_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerInstanceUdsPath(kGrpcSocketDirName);
   }
@@ -2133,7 +2133,7 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceGrpcSocketPath(
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceLogPath(
     const std::string& file_name) const {
-  if (file_name.size() == 0) {
+  if (file_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerInstancePath(kLogDirName);
   }

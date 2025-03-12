@@ -137,8 +137,8 @@ std::string HostBinaryPath(const std::string& binary_name) {
 #endif
 }
 
-std::string HostUsrSharePath(const std::string& binary_name) {
-  return DefaultHostArtifactsPath("usr/share/" + binary_name);
+std::string HostUsrSharePath(const std::string& file) {
+  return DefaultHostArtifactsPath("usr/share/" + file);
 }
 
 std::string HostQemuBiosPath() {
