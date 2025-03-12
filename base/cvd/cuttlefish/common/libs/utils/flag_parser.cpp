@@ -430,7 +430,8 @@ Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
     }
     Flag::FlagProcessResult outcome = Flag::FlagProcessResult::kFlagSkip;
     for (const Flag& flag : flags) {
-      Flag::FlagProcessResult flag_outcome = CF_EXPECT(flag.Process(first_arg, next_arg));
+      Flag::FlagProcessResult flag_outcome = 
+          CF_EXPECT(flag.Process(first_arg, next_arg));
       if (flag_outcome == Flag::FlagProcessResult::kFlagSkip) {
         continue;
       }

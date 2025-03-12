@@ -65,6 +65,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/in_sandbox.h"
 #include "common/libs/utils/inotify.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -199,9 +200,6 @@ Result<void> MoveDirectoryContents(const std::string& source,
   bool should_rename = CF_EXPECT(CanRename(source, destination));
   std::vector<std::string> contents = CF_EXPECT(DirectoryContents(source));
   for (const std::string& filepath : contents) {
-    if (filepath == "." || filepath == "..") {
-      continue;
-    }
     std::string src_filepath = source + "/" + filepath;
     std::string dst_filepath = destination + "/" + filepath;
     if (should_rename) {
@@ -224,6 +222,9 @@ Result<std::vector<std::string>> DirectoryContents(const std::string& path) {
   CF_EXPECTF(dir != nullptr, "Could not read from dir \"{}\"", path);
   struct dirent* ent{};
   while ((ent = readdir(dir.get()))) {
+    if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+      continue;
+    }
     ret.emplace_back(ent->d_name);
   }
   return ret;
@@ -263,12 +264,16 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
   }
   const auto parent_dir = android::base::Dirname(directory_path);
   if (parent_dir.size() > 1) {
-    EnsureDirectoryExists(parent_dir, mode, group_name);
+    CF_EXPECT(EnsureDirectoryExists(parent_dir, mode, group_name));
   }
   LOG(VERBOSE) << "Setting up " << directory_path;
   if (mkdir(directory_path.c_str(), mode) < 0 && errno != EEXIST) {
     return CF_ERRNO("Failed to create directory: \"" << directory_path << "\""
                                                      << strerror(errno));
+  }
+  // TODO(schuffelen): Find an alternative for host-sandboxing mode
+  if (InSandbox()) {
+    return {};
   }
 
   CF_EXPECTF(chmod(directory_path.c_str(), mode) == 0,
@@ -291,7 +296,7 @@ Result<void> ChangeGroup(const std::string& path,
   }
 
   if (chown(path.c_str(), -1, groupId) != 0) {
-    return CF_ERRNO("Feailed to set group for path: "
+    return CF_ERRNO("Failed to set group for path: "
                     << path << ", " << group_name << ", " << strerror(errno));
   }
 
@@ -559,7 +564,7 @@ std::string CurrentDirectory() {
     }
   }
   // Will find the null terminator and size the string appropriately.
-  return process_wd.data();
+  return std::string(process_wd.data());
 }
 
 FileSizes SparseFileSizes(const std::string& path) {
@@ -607,17 +612,6 @@ FileSizes SparseFileSizes(const std::string& path) {
     }
   }
   return (FileSizes) { .sparse_size = farthest_seek, .disk_size = data_bytes };
-}
-
-std::string cpp_basename(const std::string& str) {
-  char* copy = strdup(str.c_str()); // basename may modify its argument
-  std::string ret(basename(copy));
-  free(copy);
-  return ret;
-}
-
-std::string cpp_dirname(const std::string& str) {
-  return android::base::Dirname(str);
 }
 
 bool FileIsSocket(const std::string& path) {
@@ -680,15 +674,19 @@ std::string FindImage(const std::string& search_path,
   return "";
 }
 
-std::string FindFile(const std::string& path, const std::string& target_name) {
+Result<std::string> FindFile(const std::string& path,
+                             const std::string& target_name) {
   std::string ret;
-  WalkDirectory(path,
-                [&ret, &target_name](const std::string& filename) mutable {
-                  if (cpp_basename(filename) == target_name) {
-                    ret = filename;
-                  }
-                  return true;
-                });
+  auto res = WalkDirectory(
+      path, [&ret, &target_name](const std::string& filename) mutable {
+        if (android::base::Basename(filename) == target_name) {
+          ret = filename;
+        }
+        return true;
+      });
+  if (!res.ok()) {
+    return "";
+  }
   return ret;
 }
 
@@ -699,14 +697,14 @@ Result<void> WalkDirectory(
     const std::function<bool(const std::string&)>& callback) {
   const auto files = CF_EXPECT(DirectoryContents(dir));
   for (const auto& filename : files) {
-    if (filename == "." || filename == "..") {
-      continue;
-    }
     auto file_path = dir + "/";
     file_path.append(filename);
     callback(file_path);
     if (DirectoryExists(file_path)) {
-      WalkDirectory(file_path, callback);
+      auto res = WalkDirectory(file_path, callback);
+      if (!res.ok()) {
+        return res;
+      }
     }
   }
   return {};
@@ -737,8 +735,8 @@ static Result<void> WaitForFileInternal(const std::string& path, int timeoutSec,
   const auto targetTime =
       std::chrono::system_clock::now() + std::chrono::seconds(timeoutSec);
 
-  const auto parentPath = cpp_dirname(path);
-  const auto filename = cpp_basename(path);
+  const std::string parentPath = android::base::Dirname(path);
+  const std::string filename = android::base::Basename(path);
 
   CF_EXPECT(WaitForFile(parentPath, timeoutSec),
             "Error while waiting for parent directory creation");
@@ -851,7 +849,7 @@ Result<void> WaitForUnixSocketListeningWithoutConnect(const std::string& path,
       return CF_ERR("Timed out");
     }
 
-    Command lsof("lsof");
+    Command lsof("/usr/bin/lsof");
     lsof.AddParameter(/*"format"*/ "-F", /*"connection state"*/ "TST");
     lsof.AddParameter(path);
     std::string lsof_out;

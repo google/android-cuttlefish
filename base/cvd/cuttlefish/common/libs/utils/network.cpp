@@ -33,22 +33,17 @@
 
 #include <cstdint>
 #include <cstring>
-#include <functional>
-#include <iomanip>
-#include <ios>
-#include <memory>
 #include <ostream>
 #include <set>
-#include <sstream>
-#include <streambuf>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <fmt/format.h>
+#include <fmt/ranges.h>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
@@ -105,46 +100,52 @@ bool NetworkInterfaceExists(const std::string& interface_name) {
 }
 
 #ifdef __linux__
-SharedFD OpenTapInterface(const std::string& interface_name) {
-  constexpr auto TUNTAP_DEV = "/dev/net/tun";
-
-  auto tap_fd = SharedFD::Open(TUNTAP_DEV, O_RDWR | O_NONBLOCK);
-  if (!tap_fd->IsOpen()) {
-    LOG(ERROR) << "Unable to open tun device: " << tap_fd->StrError();
-    return tap_fd;
+static std::optional<Command> GrepCommand() {
+  if (FileExists("/usr/bin/grep")) {
+    return Command("/usr/bin/grep");
+  } else if (FileExists("/bin/grep")) {
+    return Command("/bin/grep");
+  } else {
+    return {};
   }
-
-  struct ifreq ifr;
-  memset(&ifr, 0, sizeof(ifr));
-  ifr.ifr_flags = IFF_TAP | IFF_NO_PI | IFF_VNET_HDR;
-  strncpy(ifr.ifr_name, interface_name.c_str(), IFNAMSIZ);
-
-  int err = tap_fd->Ioctl(TUNSETIFF, &ifr);
-  if (err < 0) {
-    LOG(ERROR) << "Unable to connect to " << interface_name
-               << " tap interface: " << tap_fd->StrError();
-    tap_fd->Close();
-    return SharedFD();
-  }
-
-  // The interface's configuration may have been modified or just not set
-  // correctly on creation. While qemu checks this and enforces the right
-  // configuration, crosvm does not, so it needs to be set before it's passed to
-  // it.
-  tap_fd->Ioctl(TUNSETOFFLOAD,
-                reinterpret_cast<void*>(TUN_F_CSUM | TUN_F_UFO | TUN_F_TSO4 |
-                                        TUN_F_TSO6));
-  int len = SIZE_OF_VIRTIO_NET_HDR_V1;
-  tap_fd->Ioctl(TUNSETVNETHDRSZ, &len);
-  return tap_fd;
 }
 
 std::set<std::string> TapInterfacesInUse() {
-  Command cmd("/bin/bash");
-  cmd.AddParameter("-c");
-  cmd.AddParameter("grep -E -h -e \"^iff:.*\" /proc/*/fdinfo/*");
-  std::string stdin_str, stdout_str, stderr_str;
-  RunWithManagedStdio(std::move(cmd), &stdin_str, &stdout_str, &stderr_str);
+  std::vector<std::string> fdinfo_list;
+
+  Result<std::vector<std::string>> processes = DirectoryContents("/proc");
+  if (!processes.ok()) {
+    LOG(ERROR) << "Failed to get contents of `/proc/`";
+    return {};
+  }
+  for (const std::string& process : *processes) {
+    std::string fdinfo_path = fmt::format("/proc/{}/fdinfo", process);
+    Result<std::vector<std::string>> fdinfos = DirectoryContents(fdinfo_path);
+    if (!fdinfos.ok()) {
+      LOG(VERBOSE) << "Failed to get contents of '" << fdinfo_path << "'";
+      continue;
+    }
+    for (const std::string& fdinfo : *fdinfos) {
+      std::string path = fmt::format("/proc/{}/fdinfo/{}", process, fdinfo);
+      fdinfo_list.emplace_back(std::move(path));
+    }
+  }
+
+  std::optional<Command> cmd = GrepCommand();
+  if (!cmd) {
+    LOG(WARNING) << "Unable to test TAP interface usage";
+    return {};
+  }
+  cmd->AddParameter("-E").AddParameter("-h").AddParameter("-e").AddParameter(
+      "^iff:.*");
+
+  for (const std::string& fdinfo : fdinfo_list) {
+    cmd->AddParameter(fdinfo);
+  }
+
+  std::string stdout_str, stderr_str;
+  RunWithManagedStdio(std::move(*cmd), nullptr, &stdout_str, &stderr_str);
+
   auto lines = android::base::Split(stdout_str, "\n");
   std::set<std::string> tap_interfaces;
   for (const auto& line : lines) {
