@@ -52,7 +52,7 @@ static Result<std::optional<std::int32_t>> ParseNumInstancesFlag(
 // Set with members: The flag was specified with a valid value
 static Result<std::vector<std::int32_t>> ParseInstanceNums(
     const std::string& instance_nums_str) {
-  if (instance_nums_str == "") {
+  if (instance_nums_str.empty()) {
     return {};
   }
   std::vector<std::int32_t> instance_nums;
@@ -226,7 +226,7 @@ Result<std::vector<std::int32_t>> InstanceNumsCalculator::CalculateFromFlags() {
     if (num_instances_) {
       CF_EXPECT(instance_nums_.size() == *num_instances_);
     }
-    CF_EXPECT(instance_nums_.size() > 0, "no instance nums");
+    CF_EXPECT(!instance_nums_.empty(), "no instance nums");
     return instance_nums_;
   }
 
@@ -248,7 +248,7 @@ Result<std::vector<std::int32_t>> InstanceNumsCalculator::Calculate() {
   for (int i = 0; i < num_instances_.value_or(1); i++) {
     instance_nums.push_back(i + GetInstance());
   }
-  CF_EXPECT(instance_nums.size() > 0, "no instance nums");
+  CF_EXPECT(!instance_nums.empty(), "no instance nums");
   return instance_nums;
 }
 

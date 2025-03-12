@@ -58,7 +58,7 @@ std::string CuttlefishConfig::EnvironmentSpecific::PerEnvironmentPath(
 
 std::string CuttlefishConfig::EnvironmentSpecific::PerEnvironmentLogPath(
     const std::string& file_name) const {
-  if (file_name.size() == 0) {
+  if (file_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerEnvironmentPath(kLogDirName);
   }
@@ -68,7 +68,7 @@ std::string CuttlefishConfig::EnvironmentSpecific::PerEnvironmentLogPath(
 
 std::string CuttlefishConfig::EnvironmentSpecific::PerEnvironmentGrpcSocketPath(
     const std::string& file_name) const {
-  if (file_name.size() == 0) {
+  if (file_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerEnvironmentPath(kGrpcSocketDirName);
   }
@@ -134,8 +134,8 @@ std::string CuttlefishConfig::EnvironmentSpecific::wmediumd_api_server_socket()
 
 static constexpr char kWmediumdConfig[] = "wmediumd_config";
 void CuttlefishConfig::MutableEnvironmentSpecific::set_wmediumd_config(
-    const std::string& config) {
-  (*Dictionary())[kWmediumdConfig] = config;
+    const std::string& config_path) {
+  (*Dictionary())[kWmediumdConfig] = config_path;
 }
 std::string CuttlefishConfig::EnvironmentSpecific::wmediumd_config() const {
   return (*Dictionary())[kWmediumdConfig].asString();
