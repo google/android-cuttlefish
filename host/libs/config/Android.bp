@@ -44,7 +44,6 @@ cc_library {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libext2_blkid",
         "libfruit",
         "libgflags",
         "libjsoncpp",
