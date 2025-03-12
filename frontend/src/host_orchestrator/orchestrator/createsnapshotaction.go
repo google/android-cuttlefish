@@ -21,30 +21,31 @@ import (
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 type CreateSnapshotActionOpts struct {
-	Selector         CVDSelector
+	Selector         cvd.Selector
 	Paths            IMPaths
 	OperationManager OperationManager
-	ExecContext      ExecContext
+	ExecContext      exec.ExecContext
 	CVDUser          *user.User
 }
 
 type CreateSnapshotAction struct {
-	selector    CVDSelector
-	paths       IMPaths
-	om          OperationManager
-	execContext cvd.CVDExecContext
+	selector cvd.Selector
+	paths    IMPaths
+	om       OperationManager
+	cvdCLI   *cvd.CLI
 }
 
 func NewCreateSnapshotAction(opts CreateSnapshotActionOpts) *CreateSnapshotAction {
 	return &CreateSnapshotAction{
-		selector:    opts.Selector,
-		paths:       opts.Paths,
-		om:          opts.OperationManager,
-		execContext: newCVDExecContext(opts.ExecContext, opts.CVDUser),
+		selector: opts.Selector,
+		paths:    opts.Paths,
+		om:       opts.OperationManager,
+		cvdCLI:   cvd.NewCLI(exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)),
 	}
 }
 
@@ -64,37 +65,16 @@ func (a *CreateSnapshotAction) Run() (apiv1.Operation, error) {
 }
 
 func (a *CreateSnapshotAction) createSnapshot(op apiv1.Operation) (*apiv1.CreateSnapshotResponse, error) {
-	if err := a.suspend(); err != nil {
+	if err := a.cvdCLI.Suspend(a.selector); err != nil {
 		return nil, operator.NewInternalError("cvd suspend failed", err)
 	}
 	snapshotID := op.Name
 	dir := filepath.Join(a.paths.SnapshotsRootDir, snapshotID)
-	if err := a.takeSnapshot(dir); err != nil {
+	if err := a.cvdCLI.TakeSnapshot(a.selector, dir); err != nil {
 		return nil, operator.NewInternalError("cvd snapshot_take failed", err)
 	}
-	if err := a.resume(); err != nil {
+	if err := a.cvdCLI.Resume(a.selector); err != nil {
 		return nil, operator.NewInternalError("cvd resume failed", err)
 	}
 	return &apiv1.CreateSnapshotResponse{SnapshotID: snapshotID}, nil
-}
-
-func (a *CreateSnapshotAction) suspend() error {
-	args := a.selector.ToCVDCLI()
-	args = append(args, "suspend")
-	cmd := cvd.NewCommand(a.execContext, args, cvd.CommandOpts{})
-	return cmd.Run()
-}
-
-func (a *CreateSnapshotAction) resume() error {
-	args := a.selector.ToCVDCLI()
-	args = append(args, "resume")
-	cmd := cvd.NewCommand(a.execContext, args, cvd.CommandOpts{})
-	return cmd.Run()
-}
-
-func (a *CreateSnapshotAction) takeSnapshot(dir string) error {
-	args := a.selector.ToCVDCLI()
-	args = append(args, "snapshot_take", "--snapshot_path", dir)
-	cmd := cvd.NewCommand(a.execContext, args, cvd.CommandOpts{})
-	return cmd.Run()
 }

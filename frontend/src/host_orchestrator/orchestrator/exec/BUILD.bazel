@@ -1,0 +1,9 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "exec",
+    srcs = ["exec.go"],
+    importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec",
+    visibility = ["//visibility:public"],
+)
+

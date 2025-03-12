@@ -16,6 +16,7 @@
 
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -88,7 +89,7 @@ ssize_t ReadExact(SharedFD fd, std::vector<char>* buf) {
   return ReadExact(fd, buf->data(), buf->size());
 }
 
-ssize_t WriteAll(SharedFD fd, const std::string& buf) {
+ssize_t WriteAll(SharedFD fd, std::string_view buf) {
   return WriteAll(fd, buf.data(), buf.size());
 }
 
@@ -96,13 +97,13 @@ ssize_t WriteAll(SharedFD fd, const std::vector<char>& buf) {
   return WriteAll(fd, buf.data(), buf.size());
 }
 
-bool SendAll(SharedFD sock, const std::string& msg) {
+bool SendAll(SharedFD sock, std::string_view msg) {
   ssize_t total_written{};
   if (!sock->IsOpen()) {
     return false;
   }
   while (total_written < static_cast<ssize_t>(msg.size())) {
-    auto just_written = sock->Send(msg.c_str() + total_written,
+    auto just_written = sock->Send(msg.data() + total_written,
                                    msg.size() - total_written, MSG_NOSIGNAL);
     if (just_written <= 0) {
       return false;

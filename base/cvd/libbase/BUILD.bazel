@@ -38,6 +38,7 @@ cc_library(
         "include/android-base/logging.h",
         "include/android-base/macros.h",
         "include/android-base/mapped_file.h",
+        "include/android-base/no_destructor.h",
         "include/android-base/off64_t.h",
         "include/android-base/parsebool.h",
         "include/android-base/parseint.h",

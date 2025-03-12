@@ -152,6 +152,9 @@ class SharedFD {
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
 #ifdef __linux__
   static SharedFD Event(int initval = 0, int flags = 0);
+#ifdef CUTTLEFISH_HOST
+  static SharedFD ShmOpen(const std::string& name, int oflag, int mode);
+#endif
 #endif
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
   static SharedFD MemfdCreateWithData(const std::string& name, const std::string& data, unsigned int flags = 0);
@@ -200,6 +203,9 @@ class SharedFD {
       int type, std::optional<int> vhost_user_vsock_listening_cid);
   static SharedFD VsockClient(unsigned int cid, unsigned int port, int type,
                               bool vhost_user);
+  static std::string GetVhostUserVsockServerAddr(
+      unsigned int port, int vhost_user_vsock_listening_cid);
+  static std::string GetVhostUserVsockClientAddr(int cid);
 #endif
 
   bool operator==(const SharedFD& rhs) const { return value_ == rhs.value_; }

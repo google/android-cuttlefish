@@ -49,11 +49,35 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "environment",
+    srcs = [
+        "architecture.cpp",
+        "environment.cpp",
+        "known_paths.cpp",
+    ],
+    hdrs = [
+        "architecture.h",
+        "environment.h",
+        "known_paths.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "environment_clang_tidy",
+    srcs = [":environment"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "utils",
     srcs = [
         "archive.cpp",
         "base64.cpp",
-        "environment.cpp",
         "files.cpp",
         "flag_parser.cpp",
         "flags_validator.cpp",
@@ -71,7 +95,6 @@ cc_library(
         "archive.h",
         "base64.h",
         "contains.h",
-        "environment.h",
         "files.h",
         "flag_parser.h",
         "flags_validator.h",
@@ -93,6 +116,7 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
+        ":environment",
         ":result",
         "//cuttlefish/common/libs/fs",
         "//libbase",
