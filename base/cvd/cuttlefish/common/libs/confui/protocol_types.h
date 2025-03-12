@@ -47,7 +47,7 @@ enum class ConfUiCmd : std::uint32_t {
 constexpr const ssize_t kMaxMessageLength = packet::kMaxPayloadLength;
 
 std::string ToString(const ConfUiCmd& cmd);
-std::string ToDebugString(const ConfUiCmd& cmd, const bool is_debug);
+std::string ToDebugString(const ConfUiCmd& cmd, const bool is_verbose);
 ConfUiCmd ToCmd(const std::string& cmd_str);
 ConfUiCmd ToCmd(std::uint32_t i);
 
