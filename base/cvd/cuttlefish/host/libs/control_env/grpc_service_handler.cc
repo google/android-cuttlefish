@@ -124,8 +124,8 @@ Result<std::vector<std::string>> GetServiceList(
 
   std::string service_name;
   while (std::getline(output_stream, service_name)) {
-    if (service_name.compare(kServiceServerReflection) == 0 ||
-        service_name.compare(kServiceHealth) == 0) {
+    if (service_name == kServiceServerReflection ||
+        service_name == kServiceHealth) {
       continue;
     }
     service_list.emplace_back(service_name);
@@ -148,7 +148,7 @@ Result<std::string> GetServerAddress(
     }
   }
 
-  CF_EXPECT(candidates.size() > 0, service_name + " is not found.");
+  CF_EXPECT(!candidates.empty(), service_name + " is not found.");
   CF_EXPECT(candidates.size() < 2, service_name + " is ambiguous.");
 
   return candidates[0];
@@ -164,7 +164,7 @@ Result<std::string> GetFullServiceName(const std::string& server_address,
     }
   }
 
-  CF_EXPECT(candidates.size() > 0, service_name + " is not found.");
+  CF_EXPECT(!candidates.empty(), service_name + " is not found.");
   CF_EXPECT(candidates.size() < 2, service_name + " is ambiguous.");
 
   return candidates[0];
@@ -194,9 +194,9 @@ Result<std::string> HandleLsCmd(
       Json::Value json;
       json["services"] = Json::Value(Json::arrayValue);
       for (auto& full_service_name : Split(Trim(command_output), "\n")) {
-        if (full_service_name.compare(kServiceServerReflection) == 0 ||
-            full_service_name.compare(kServiceHealth) == 0 ||
-            full_service_name.compare(kServiceControlEnvProxyFull) == 0) {
+        if (full_service_name == kServiceServerReflection ||
+            full_service_name == kServiceHealth ||
+            full_service_name == kServiceControlEnvProxyFull) {
           continue;
         }
         json["services"].append(Split(full_service_name, ".").back());
@@ -207,7 +207,7 @@ Result<std::string> HandleLsCmd(
     case 1: {
       // ls subcommand with 1 argument; service_name
       const auto& service_name = args[0];
-      CF_EXPECT(service_name.compare(kServiceControlEnvProxy) != 0,
+      CF_EXPECT(service_name != kServiceControlEnvProxy,
                 "Prohibited service name");
       const auto& server_address =
           CF_EXPECT(GetServerAddress(server_address_list, service_name));
@@ -228,7 +228,7 @@ Result<std::string> HandleLsCmd(
     case 2: {
       // ls subcommand with 2 arguments; service_name and method_name
       const auto& service_name = args[0];
-      CF_EXPECT(service_name.compare(kServiceControlEnvProxy) != 0,
+      CF_EXPECT(service_name != kServiceControlEnvProxy,
                 "Prohibited service name");
       const auto& server_address =
           CF_EXPECT(GetServerAddress(server_address_list, service_name));
@@ -267,7 +267,7 @@ Result<std::string> HandleTypeCmd(
 
   std::vector<std::string> grpc_arguments{"grpc_cli", "type"};
   const auto& service_name = args[0];
-  CF_EXPECT(service_name.compare(kServiceControlEnvProxy) != 0,
+  CF_EXPECT(service_name != kServiceControlEnvProxy,
             "Prohibited service name");
   const auto& type_name = args[1];
 
