@@ -17,14 +17,14 @@
 #include "host/libs/config/fetcher_config.h"
 
 #include <fstream>
+#include <map>
 #include <string>
 #include <vector>
 
-#include <android-base/file.h>
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <gflags/gflags.h>
-#include <json/json.h>
+#include "android-base/logging.h"
+#include "android-base/strings.h"
+#include "gflags/gflags.h"
+#include "json/json.h"
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
@@ -61,6 +61,8 @@ FileSource SourceStringToEnum(std::string source) {
     return FileSource::BOOT_BUILD;
   } else if (source == "host_package_build") {
     return FileSource::HOST_PACKAGE_BUILD;
+  } else if (source == "chrome_os_build") {
+    return FileSource::CHROME_OS_BUILD;
   } else {
     return FileSource::UNKNOWN_PURPOSE;
   }
@@ -85,6 +87,8 @@ std::string SourceEnumToString(const FileSource& source) {
     return "boot_build";
   } else if (source == FileSource::HOST_PACKAGE_BUILD) {
     return "host_package_build";
+  } else if (source == FileSource::CHROME_OS_BUILD) {
+    return "chrome_os_build";
   } else {
     return "unknown";
   }
@@ -141,7 +145,7 @@ bool FetcherConfig::LoadFromFile(const std::string& file) {
     return false;
   }
 
-  std::string base_dir = android::base::Dirname(file);
+  auto base_dir = cpp_dirname(file);
   if (base_dir != "." && dictionary_->isMember(kCvdFiles)) {
     LOG(INFO) << "Adjusting cvd_file paths to directory: " << base_dir;
     for (const auto& member_name : (*dictionary_)[kCvdFiles].getMemberNames()) {
