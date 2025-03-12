@@ -64,7 +64,6 @@ cc_binary_host {
         "libcuttlefish_utils",
         "libcuttlefish_webrtc_command_channel",
         "libcuttlefish_webrtc_commands_proto",
-        "libext2_blkid",
         "libfruit",
         "libgoogleapis-status-proto",
         "libgrpc++_unsecure",
