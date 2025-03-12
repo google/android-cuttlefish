@@ -26,7 +26,9 @@
 #include "host/libs/config/esp.h"
 #include "host/libs/config/mbr.h"
 #include "host/libs/config/openwrt_args.h"
-#include "host/libs/vm_manager/gem5_manager.h"
+
+// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/Android.bp;l=127;drc=6f7d6a4db58efcc2ddd09eda07e009c6329414cd
+#define F2FS_BLOCKSIZE "4096"
 
 namespace cuttlefish {
 

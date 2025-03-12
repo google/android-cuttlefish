@@ -111,6 +111,7 @@ cc_library(
         "subprocess.h",
         "tcp_socket.h",
         "tee_logging.h",
+        "type_name.h",
         "unique_resource_allocator.h",
         "unix_sockets.h",
         "users.h",
