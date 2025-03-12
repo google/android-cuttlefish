@@ -5,16 +5,21 @@
 # For more details, please check https://github.com/bazelbuild/bazel/issues/18958
 ###############################################################################
 
+bazel_dep(name = "abseil-cpp", version = "20250127.0")
 bazel_dep(name = "aspect_rules_lint", version = "1.0.8", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.7.1", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
 bazel_dep(name = "curl", version = "8.8.0.bcr.2")
+bazel_dep(name = "freetype", version = "2.13.3")
 bazel_dep(name = "fmt", version = "10.2.1")
 bazel_dep(name = "gflags", version = "2.2.2")
+bazel_dep(name = "grpc", version = "1.71.0")
+bazel_dep(name = "grpc-proto", version = "0.0.0-20240627-ec30f58")
 bazel_dep(name = "googletest", version = "1.15.2")
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 bazel_dep(name = "jsoncpp", version = "1.9.5")
 bazel_dep(name = "libxml2", version = "2.13.5")
+bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
 bazel_dep(name = "protobuf", version = "29.1")
 bazel_dep(name = "tinyxml2", version = "10.0.0")
 bazel_dep(name = "toolchains_llvm", version = "1.2.0")
