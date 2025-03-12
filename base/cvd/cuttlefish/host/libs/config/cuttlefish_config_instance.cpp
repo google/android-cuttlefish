@@ -26,8 +26,6 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flags_validator.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/gem5_manager.h"
 
 namespace cuttlefish {
 namespace {

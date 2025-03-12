@@ -23,12 +23,8 @@
 
 #include "common/libs/utils/environment.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
-
-using vm_manager::QemuManager;
-
 namespace {
 
 template<typename T>

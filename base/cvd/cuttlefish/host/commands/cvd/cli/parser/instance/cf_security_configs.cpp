@@ -21,6 +21,8 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/cli/parser/cf_configs_common.h"
+// Needed by preprocessor constants in flags_defaults.h
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
