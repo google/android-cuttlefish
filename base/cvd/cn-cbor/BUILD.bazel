@@ -1,0 +1,34 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "libcn-cbor",
+    srcs = [
+        "src/cbor.h",
+        "src/cn-cbor.c",
+        "src/cn-create.c",
+        "src/cn-encoder.c",
+        "src/cn-error.c",
+        "src/cn-get.c",
+    ],
+    hdrs = [
+        "include/cn-cbor/cn-cbor.h",
+    ],
+    copts = [
+        "-Wno-vla-cxx-extension",
+        "-Wno-c99-designator",
+    ],
+    includes = ["include"],
+)
+
+cc_test(
+    name = "cn-cbor_test",
+    srcs = [
+        "test/cbor_test.c",
+        "test/ctest.h",
+    ],
+    deps = [
+        ":libcn-cbor",
+    ],
+)
