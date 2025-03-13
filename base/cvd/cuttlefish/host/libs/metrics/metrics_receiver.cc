@@ -15,23 +15,25 @@
 
 #include "metrics_receiver.h"
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <gflags/gflags.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+
 #include <fstream>
 #include <iostream>
 #include <memory>
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <gflags/gflags.h>
+
 #include "common/libs/utils/tee_logging.h"
-#include "host/commands/metrics/metrics_configs.h"
-#include "host/commands/metrics/metrics_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/metrics/metrics_configs.h"
+#include "host/libs/metrics/metrics_defs.h"
 #include "host/libs/msg_queue/msg_queue.h"
 
 using cuttlefish::MetricsExitCodes;
@@ -46,7 +48,7 @@ void SendHelper(const std::string &queue_name, const std::string &message) {
 
   struct msg_buffer msg;
   msg.mesg_type = 1;
-  strcpy(msg.mesg_text, message.c_str());
+  strncpy(msg.mesg_text, message.c_str(), message.size());
   int rc = msg_queue->Send(&msg, message.length() + 1, true);
   if (rc == -1) {
     LOG(FATAL) << "Send: failed to send message to msg_queue";
