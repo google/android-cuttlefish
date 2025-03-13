@@ -1,0 +1,25 @@
+cc_library(
+    name = "libyuv",
+    srcs = glob(
+        ["source/*.cc"],
+        exclude = [
+            "source/*neon*.cc",
+            "source/*sve*.cc",
+            "source/*sme*.cc",
+        ],
+    ),
+    hdrs = glob(["include/libyuv/*.h"]),
+    includes = ["include"],
+)
+
+cc_test(
+    name = "libyuv_test",
+    srcs = glob([
+        "unit_test/*.cc",
+        "unit_test/*.h",
+    ]),
+    deps = [
+        ":libyuv",
+        "@googletest//:gtest_main",
+    ],
+)
