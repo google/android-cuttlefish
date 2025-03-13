@@ -89,3 +89,10 @@ git_repository(
     commit = "af6ac8265bbd07bcf977526458b60305c4304288",
     remote = "https://chromium.googlesource.com/libyuv/libyuv.git",
 )
+
+git_repository(
+    name = "libcn-cbor",
+    build_file = "@//:BUILD.libcn_cbor.bazel",
+    commit = "c2e53733a895587c2910d2b2a1312d4224e5a474",
+    remote = "https://github.com/cabo/cn-cbor.git",
+)
