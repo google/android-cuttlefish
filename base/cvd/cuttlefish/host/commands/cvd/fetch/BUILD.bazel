@@ -30,10 +30,13 @@ cc_library(
         "//cuttlefish/host/libs/web",
         "//libbase",
         "//libsparse",
+        # The next line is a hack to get BAZEL_CURRENT_REPOSITORY working.
+        "@bazel_tools//tools/cpp/runfiles",
         "@curl",
         "@fmt",
         "@gflags",
         "@jsoncpp",
+        "@rules_cc//cc/runfiles",
     ],
 )
 
