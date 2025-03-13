@@ -319,7 +319,7 @@ Result<std::vector<MonitorCommand>> Gem5Manager::StartCommands(
                         "/configs/example/arm/starter_fs.py");
 
   // restore checkpoint case
-  if (instance.gem5_checkpoint_dir() != "") {
+  if (!instance.gem5_checkpoint_dir().empty()) {
     gem5_cmd.AddParameter("--restore=",
                           instance.gem5_checkpoint_dir());
   }

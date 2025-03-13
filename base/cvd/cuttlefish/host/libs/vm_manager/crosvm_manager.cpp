@@ -646,7 +646,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   if (instance.enable_webrtc()) {
     auto display_configs = instance.display_configs();
-    CF_EXPECT(display_configs.size() >= 1);
+    CF_EXPECT(!display_configs.empty());
 
     const int display_cnt = instance.display_configs().size();
     const int touchpad_cnt = instance.touchpad_configs().size();

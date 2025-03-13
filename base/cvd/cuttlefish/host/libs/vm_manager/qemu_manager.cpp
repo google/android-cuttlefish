@@ -464,7 +464,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   if (instance.hwcomposer() != kHwComposerNone) {
     auto display_configs = instance.display_configs();
-    CF_EXPECT(display_configs.size() >= 1);
+    CF_EXPECT(!display_configs.empty());
     auto display_config = display_configs[0];
 
     qemu_cmd.AddParameter("-device");

@@ -35,7 +35,7 @@ class CrosvmBuilder {
                              int exit_code);
   void AddControlSocket(const std::string&, const std::string&);
 
-  Result<void> AddCpus(size_t cpus, const std::string& freq_domain_file);
+  Result<void> AddCpus(size_t cpus, const std::string& vcpu_config_path);
   Result<void> AddCpus(const Json::Value&);
   void AddCpus(size_t cpus);
 
