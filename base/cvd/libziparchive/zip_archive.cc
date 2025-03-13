@@ -1476,7 +1476,7 @@ static int32_t inflateImpl(const zip_archive::Reader& reader,
 
       remaining_bytes -= read_size;
 
-      zstream.next_in = buf;
+      zstream.next_in = const_cast<uint8_t*>(buf);
       zstream.avail_in = read_size;
     }
 

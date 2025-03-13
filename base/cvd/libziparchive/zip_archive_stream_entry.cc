@@ -236,7 +236,7 @@ const std::vector<uint8_t>* ZipArchiveStreamEntryCompressed::Read() {
 
       compressed_length_ -= bytes;
       offset_ += bytes;
-      z_stream_.next_in = res;
+      z_stream_.next_in = const_cast<uint8_t*>(res);
       z_stream_.avail_in = bytes;
     }
 

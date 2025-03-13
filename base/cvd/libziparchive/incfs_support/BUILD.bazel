@@ -1,0 +1,27 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "incfs_support",
+    srcs = [
+        "signal_handling.cpp",
+    ],
+    hdrs = [
+        "include/incfs_support/access.h",
+        "include/incfs_support/signal_handling.h",
+        "include/incfs_support/util.h",
+    ],
+    copts = [
+        "-Wno-vla-cxx-extension",
+        "-Wno-c99-designator",
+        "-std=c++17",
+        "-DINCFS_SUPPORT_DISABLED=1",
+    ],
+    includes = ["include"],
+    deps = [
+        "//android:log_header",
+        "//libbase",
+    ],
+    strip_include_prefix = "include",
+)
