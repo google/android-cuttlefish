@@ -15,9 +15,6 @@ cc_proto_library(
     deps = [":run_cvd_proto"],
 )
 
-# This is a reduced version of the original library from AOSP, but the
-# interfaces used here are the same so upgrading to the full version
-# won't break its current usage in this project.
 cc_library(
     name = "command_util",
     srcs = [
