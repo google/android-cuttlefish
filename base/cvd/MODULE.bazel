@@ -82,3 +82,10 @@ git_repository(
     commit = "952f776f6573aafbb62ea717d871cd1d6816c387", # v1.4.309
     remote = "https://github.com/KhronosGroup/Vulkan-Headers.git",
 )
+
+git_repository(
+    name = "libyuv",
+    build_file = "@//:BUILD.libyuv.bazel",
+    commit = "af6ac8265bbd07bcf977526458b60305c4304288",
+    remote = "https://chromium.googlesource.com/libyuv/libyuv.git",
+)
