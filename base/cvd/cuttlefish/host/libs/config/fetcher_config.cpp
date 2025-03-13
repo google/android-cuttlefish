@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "android-base/file.h"
 #include "android-base/logging.h"
 #include "android-base/strings.h"
 #include "gflags/gflags.h"
@@ -145,7 +146,7 @@ bool FetcherConfig::LoadFromFile(const std::string& file) {
     return false;
   }
 
-  auto base_dir = cpp_dirname(file);
+  auto base_dir = android::base::Dirname(file);
   if (base_dir != "." && dictionary_->isMember(kCvdFiles)) {
     LOG(INFO) << "Adjusting cvd_file paths to directory: " << base_dir;
     for (const auto& member_name : (*dictionary_)[kCvdFiles].getMemberNames()) {
