@@ -46,7 +46,7 @@ class QemuManager : public VmManager {
 
   Result<std::vector<MonitorCommand>> StartCommands(
       const CuttlefishConfig& config,
-      std::vector<VmmDependencyCommand*>& dependencyCommands) override;
+      std::vector<VmmDependencyCommand*>& dependency_commands) override;
 
  private:
   Arch arch_;
