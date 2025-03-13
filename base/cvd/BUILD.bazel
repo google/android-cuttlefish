@@ -20,15 +20,32 @@ genrule(
 )
 
 filegroup(
-   name = "clang_tidy_config",
-   srcs = [".clang-tidy"],
+    name = "clang_tidy_config",
+    srcs = [".clang-tidy"],
 )
 
 cc_library(
     name = "fruit-headers",
     hdrs = ["fruit-config-base.h"],
-    visibility = ["//visibility:public"],
     # Load-bearing so that angle bracket includes work. See
     # https://stackoverflow.com/a/51441444
     include_prefix = "fruit/impl",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "libffi_linux_x86",
+    hdrs = [
+        "libffi/linux-x86/ffi.h",
+        "libffi/linux-x86/fficonfig.h",
+        "libffi/linux-x86/ffitarget.h",
+    ],
+    includes = ["libffi/linux-x86"],
+    visibility = ["//visibility:public"],
+)
+
+sh_binary(
+    name = "gen_ffi_header",
+    srcs = ["gen_ffi_header.sh"],
+    visibility = ["//visibility:public"],
 )

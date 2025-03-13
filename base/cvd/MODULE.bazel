@@ -22,6 +22,7 @@ bazel_dep(name = "jsoncpp", version = "1.9.5")
 bazel_dep(name = "libxml2", version = "2.13.5")
 bazel_dep(name = "rules_cc", version = "0.1.1")
 bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
+bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "protobuf", version = "29.1")
 bazel_dep(name = "tinyxml2", version = "10.0.0")
 bazel_dep(name = "toolchains_llvm", version = "1.2.0")
@@ -97,4 +98,11 @@ git_repository(
     build_file = "@//:BUILD.libcn_cbor.bazel",
     commit = "c2e53733a895587c2910d2b2a1312d4224e5a474",
     remote = "https://github.com/cabo/cn-cbor.git",
+)
+
+git_repository(
+    name = "libffi",
+    build_file = "@//:BUILD.libffi.bazel",
+    commit = "5dcb741f1544c5e18c9dbf96aeb8b61cc556a616", # v3.3
+    remote = "https://github.com/libffi/libffi.git",
 )
