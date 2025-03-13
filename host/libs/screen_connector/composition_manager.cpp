@@ -262,16 +262,22 @@ void CompositionManager::ComposeFrame(
   std::uint8_t* shmem_local_display = display_ring_buffer_manager_.ReadFrame(
       cluster_index_, display, width, height);
 
-  AlphaBlendLayers(shmem_local_display, display, width, height);
+  if (!frame_work_buffer_.contains(display)) {
+    frame_work_buffer_[display] = std::vector<std::uint8_t>(width * height * 4);
+  }
+  std::uint8_t* tmp_buffer = frame_work_buffer_[display].data();
+  memcpy(tmp_buffer, shmem_local_display, width * height * 4);
+
+  AlphaBlendLayers(tmp_buffer, display, width, height);
 
   if (frame_fourcc_format == DRM_FORMAT_ARGB8888 ||
       frame_fourcc_format == DRM_FORMAT_XRGB8888) {
-    libyuv::ARGBToI420(shmem_local_display, frame_stride_bytes, buffer->DataY(),
+    libyuv::ARGBToI420(tmp_buffer, frame_stride_bytes, buffer->DataY(),
                        buffer->StrideY(), buffer->DataU(), buffer->StrideU(),
                        buffer->DataV(), buffer->StrideV(), width, height);
   } else if (frame_fourcc_format == DRM_FORMAT_ABGR8888 ||
              frame_fourcc_format == DRM_FORMAT_XBGR8888) {
-    libyuv::ABGRToI420(shmem_local_display, frame_stride_bytes, buffer->DataY(),
+    libyuv::ABGRToI420(tmp_buffer, frame_stride_bytes, buffer->DataY(),
                        buffer->StrideY(), buffer->DataU(), buffer->StrideU(),
                        buffer->DataV(), buffer->StrideV(), width, height);
   }
