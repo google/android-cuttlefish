@@ -82,6 +82,7 @@ class CompositionManager {
   std::string group_uuid_;
   std::map<int, std::vector<DisplayOverlay>> cfg_overlays_;
   std::map<int, LastFrameInfo> last_frame_info_map_;
+  std::map<int, std::vector<std::uint8_t>> frame_work_buffer_;
 };
 
 }  // namespace cuttlefish
