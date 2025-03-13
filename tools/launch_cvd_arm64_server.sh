@@ -62,7 +62,7 @@ rsync -avch $img_dir/android-info.txt $server:~/$cvd_home_dir --info=progress2
 if [ -f $img_dir/required_images ]; then
   rsync -aSvch --recursive $img_dir --files-from=$img_dir/required_images $server:~/$cvd_home_dir --info=progress2
 else
-  rsync -aSvch --recursive $img_dir/bootloader $img_dir/*.img $server:~/$cvd_home_dir --info=progress2
+  rsync -aSvch --recursive $img_dir/*.img $server:~/$cvd_home_dir --info=progress2
 fi
 if [ ! -z "$vendor_boot_debug_image" ]; then
   echo "use the debug ramdisk image: $vendor_boot_debug_image"
