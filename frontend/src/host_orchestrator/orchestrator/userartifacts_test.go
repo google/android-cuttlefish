@@ -35,7 +35,7 @@ func TestNewDir(t *testing.T) {
 	opts := UserArtifactsManagerOpts{RootDir: root}
 	am := NewUserArtifactsManagerImpl(opts)
 
-	upDir, err := am.NewDir()
+	upDir, err := am.NewDir("foo")
 
 	if err != nil {
 		t.Fatal(err)
@@ -64,8 +64,8 @@ func TestListTokens(t *testing.T) {
 	defer orchtesting.RemoveDir(t, root)
 	opts := UserArtifactsManagerOpts{RootDir: root}
 	am := NewUserArtifactsManagerImpl(opts)
-	am.NewDir()
-	am.NewDir()
+	am.NewDir("foo")
+	am.NewDir("bar")
 
 	res, err := am.ListDirs()
 
@@ -110,7 +110,7 @@ func TestCreateArtifactsSucceeds(t *testing.T) {
 	defer orchtesting.RemoveDir(t, root)
 	opts := UserArtifactsManagerOpts{RootDir: root}
 	am := NewUserArtifactsManagerImpl(opts)
-	upDir, err := am.NewDir()
+	upDir, err := am.NewDir("")
 	if err != nil {
 		t.Fatal(err)
 	}

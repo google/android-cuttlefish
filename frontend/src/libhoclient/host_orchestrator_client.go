@@ -79,6 +79,7 @@ type HostOrchestratorService interface {
 
 	// Creates a directory in the host where user artifacts can be uploaded to.
 	CreateUploadDir() (string, error)
+	CreateUploadDirWithName(uploadDir string) (string, error)
 
 	// Uploads file into the given directory.
 	UploadFile(uploadDir string, filename string) error
@@ -463,6 +464,14 @@ func (c *HostOrchestratorServiceImpl) doEmptyResponseRequest(rb *HTTPRequestBuil
 func (c *HostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
 	uploadDir := &hoapi.UploadDirectory{}
 	if err := c.HTTPHelper.NewPostRequest("/userartifacts", nil).JSONResDo(uploadDir); err != nil {
+		return "", err
+	}
+	return uploadDir.Name, nil
+}
+
+func (c *HostOrchestratorServiceImpl) CreateUploadDirWithName(dir string) (string, error) {
+	uploadDir := &hoapi.UploadDirectory{}
+	if err := c.HTTPHelper.NewPostRequest("/userartifacts/" + dir, nil).JSONResDo(uploadDir); err != nil {
 		return "", err
 	}
 	return uploadDir.Name, nil

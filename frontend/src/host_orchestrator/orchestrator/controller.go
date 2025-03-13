@@ -104,6 +104,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvdbugreports/{uuid}", httpHandler(&deleteCVDBugReportHandler{c.Config})).Methods("DELETE")
 	router.Handle("/userartifacts",
 		httpHandler(&createUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
+	router.Handle("/userartifacts/{dir}",
+		httpHandler(&createUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/userartifacts",
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/userartifacts/{name}",
@@ -505,7 +507,8 @@ type createUploadDirectoryHandler struct {
 }
 
 func (h *createUploadDirectoryHandler) Handle(r *http.Request) (interface{}, error) {
-	return h.m.NewDir()
+	vars := mux.Vars(r)
+	return h.m.NewDir(vars["dir"])
 }
 
 type listUploadDirectoriesHandler struct {

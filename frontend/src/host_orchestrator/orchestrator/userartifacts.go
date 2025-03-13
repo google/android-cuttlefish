@@ -49,7 +49,7 @@ type UserArtifactChunk struct {
 type UserArtifactsManager interface {
 	UserArtifactsDirResolver
 	// Creates a new directory for uploading user artifacts in the future.
-	NewDir() (*apiv1.UploadDirectory, error)
+	NewDir(dir string) (*apiv1.UploadDirectory, error)
 	// List existing directories
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
 	// Update artifact with the passed chunk.
@@ -78,11 +78,11 @@ func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) *UserArtifactsMa
 	}
 }
 
-func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
+func (m *UserArtifactsManagerImpl) NewDir(dir string) (*apiv1.UploadDirectory, error) {
 	if err := createDir(m.RootDir); err != nil {
 		return nil, err
 	}
-	dir, err := createNewUADir(m.RootDir, m.Owner)
+	dir, err := createNewUADir(m.RootDir, dir, m.Owner)
 	if err != nil {
 		return nil, err
 	}
@@ -225,13 +225,21 @@ func Unzip(dstDir string, src string, owner *user.User) error {
 	return nil
 }
 
-func createNewUADir(parent string, owner *user.User) (string, error) {
+func createNewUADir(parent string, dir string, owner *user.User) (string, error) {
 	ctx := hoexec.NewAsUserExecContext(exec.CommandContext, owner)
-	stdout, err := hoexec.Exec(ctx, "mktemp", "--directory", "-p", parent)
-	if err != nil {
-		return "", err
+	var name string
+	if dir == "" {
+		stdout, err := hoexec.Exec(ctx, "mktemp", "--directory", "-p", parent)
+		if err != nil {
+			return "", err
+		}
+		name = strings.TrimRight(stdout, "\n")
+	} else {
+		name = filepath.Join(parent, dir)
+		if _, err := hoexec.Exec(ctx, "mkdir", "-p", name); err != nil {
+			return "", err
+		}
 	}
-	name := strings.TrimRight(stdout, "\n")
 	// Sets permission regardless of umask.
 	if _, err := hoexec.Exec(ctx, "chmod", "u=rwx,g=rwx,o=r", name); err != nil {
 		return "", err
