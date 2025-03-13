@@ -29,7 +29,7 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/server_posix.h>
 
-#include "gnss_grpc_proxy.grpc.pb.h"
+#include "cuttlefish/host/commands/gnss_grpc_proxy/gnss_grpc_proxy.grpc.pb.h"
 
 #include <signal.h>
 
