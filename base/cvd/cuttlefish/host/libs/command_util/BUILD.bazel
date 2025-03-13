@@ -5,6 +5,16 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+proto_library(
+    name = "run_cvd_proto",
+    srcs = ["runner/run_cvd.proto"],
+)
+
+cc_proto_library(
+    name = "libcuttlefish_run_cvd_proto",
+    deps = [":run_cvd_proto"],
+)
+
 # This is a reduced version of the original library from AOSP, but the
 # interfaces used here are the same so upgrading to the full version
 # won't break its current usage in this project.
