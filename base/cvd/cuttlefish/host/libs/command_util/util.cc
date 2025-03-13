@@ -16,15 +16,19 @@
 
 #include "host/libs/command_util/util.h"
 
+#include "sys/time.h"
 #include "sys/types.h"
 
 #include <optional>
+#include <string>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "host/libs/command_util/runner/defs.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace {
@@ -72,6 +76,65 @@ Result<RunnerExitCodes> ReadExitCode(SharedFD monitor_socket) {
   return exit_codes;
 }
 
+Result<SharedFD> GetLauncherMonitorFromInstance(
+    const CuttlefishConfig::InstanceSpecific& instance_config,
+    const int timeout_seconds) {
+  std::string monitor_path = instance_config.launcher_monitor_socket_path();
+  CF_EXPECT(!monitor_path.empty(), "No path to launcher monitor found");
+
+  SharedFD monitor_socket = SharedFD::SocketLocalClient(
+      monitor_path.c_str(), false, SOCK_STREAM, timeout_seconds);
+  CF_EXPECT(monitor_socket->IsOpen(),
+            "Unable to connect to launcher monitor at "
+                << monitor_path << ":" << monitor_socket->StrError());
+  return monitor_socket;
+}
+
+Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
+                                    const int instance_num,
+                                    const int timeout_seconds) {
+  auto instance_config = config.ForInstance(instance_num);
+  return GetLauncherMonitorFromInstance(instance_config, timeout_seconds);
+}
+
+Result<std::optional<LauncherActionInfo>> ReadLauncherActionFromFd(SharedFD monitor_socket) {
+  LauncherAction action;
+  auto read_something = CF_EXPECT(ReadExactBinaryResult(monitor_socket, &action),
+            "Error reading LauncherAction");
+  if (!read_something) {
+    return std::nullopt;
+  }
+  if (IsShortAction(action)) {
+    return LauncherActionInfo{
+        .action = action,
+        .extended_action = {},
+    };
+  }
+  std::uint32_t length = 0;
+  CF_EXPECT(ReadExactBinaryResult(monitor_socket, &length),
+            "Error reading proto length");
+  if (length == 0) {
+    return LauncherActionInfo{
+        .action = action,
+        .extended_action = {},
+    };
+  }
+  std::string serialized_data(length, 0);
+  ssize_t n =
+      ReadExact(monitor_socket, serialized_data.data(), serialized_data.size());
+  CF_EXPECTF(n > 0, "Read error: {}", monitor_socket->StrError());
+  CF_EXPECT(n == serialized_data.size(), "Unexpected EOF on read");
+
+  run_cvd::ExtendedLauncherAction extended_action;
+  CF_EXPECT(extended_action.ParseFromString(serialized_data),
+            "Failed to parse ExtendedLauncherAction proto");
+
+  return LauncherActionInfo{
+      .action = action,
+      .extended_action = std::move(extended_action),
+  };
+}
+
 Result<void> WaitForRead(SharedFD monitor_socket, const int timeout_seconds) {
   // Perform a select with a timeout to guard against launcher hanging
   SharedFDSet read_set;
@@ -94,6 +157,36 @@ Result<void> RunLauncherAction(SharedFD monitor_socket, LauncherAction action,
              static_cast<const char>(action));
   CF_EXPECT(WriteAllBinaryResult(monitor_socket, &action),
             "Error writing LauncherAction");
+
+  if (timeout_seconds.has_value()) {
+    CF_EXPECT(WaitForRead(monitor_socket, timeout_seconds.value()));
+  }
+  LauncherResponse response;
+  CF_EXPECT(ReadExactBinaryResult(monitor_socket, &response),
+            "Error reading LauncherResponse");
+  CF_EXPECT_EQ((int)response, (int)LauncherResponse::kSuccess);
+  return {};
+}
+
+Result<void> RunLauncherAction(
+    SharedFD monitor_socket,
+    const run_cvd::ExtendedLauncherAction& extended_action,
+    std::optional<int> timeout_seconds) {
+  const std::string serialized_data = extended_action.SerializeAsString();
+  CF_EXPECT(!serialized_data.empty(), "failed to serialize proto");
+
+  const LauncherAction action = LauncherAction::kExtended;
+  CF_EXPECT(WriteAllBinaryResult(monitor_socket, &action),
+            "Error writing LauncherAction");
+  const std::uint32_t length = serialized_data.size();
+  CF_EXPECT(WriteAllBinaryResult(monitor_socket, &length),
+            "Error writing proto length");
+  if (!serialized_data.empty()) {
+    ssize_t n = WriteAll(monitor_socket, serialized_data.data(),
+                         serialized_data.size());
+    CF_EXPECTF(n > 0, "Write error: {}", monitor_socket->StrError());
+    CF_EXPECT(n == serialized_data.size(), "Unexpected EOF on write");
+  }
 
   if (timeout_seconds.has_value()) {
     CF_EXPECT(WaitForRead(monitor_socket, timeout_seconds.value()));
