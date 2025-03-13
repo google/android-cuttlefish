@@ -83,8 +83,8 @@ if [ -f $img_dir/required_images ]; then
   rsync -aSvch --recursive $img_dir --files-from=$img_dir/required_images $server:~/$cvd_home_dir --info=progress2
   cvd_home_files=($(rsync -rzan --recursive $img_dir --out-format="%n" --files-from=$img_dir/required_images $server:~/$cvd_home_dir --info=name2 | awk '{print $1}'))
 else
-  rsync -aSvch --recursive $img_dir/bootloader $img_dir/*.img $server:~/$cvd_home_dir --info=progress2
-  cvd_home_files=($(rsync -rzan --recursive $img_dir/bootloader --out-format="%n" $img_dir/*.img $server:~/$cvd_home_dir --info=name2 | awk '{print $1}'))
+  rsync -aSvch --recursive $img_dir/*.img $server:~/$cvd_home_dir --info=progress2
+  cvd_home_files=($(rsync -rzan --recursive --out-format="%n" $img_dir/*.img $server:~/$cvd_home_dir --info=name2 | awk '{print $1}'))
 fi
 
 if [[ $vendor_boot_image != "" ]]; then
