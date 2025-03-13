@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include <android-base/file.h>
+
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
@@ -36,7 +38,7 @@ CommandRequest::CommandRequest(cvd_common::Args args, cvd_common::Envs env,
   if (subcommand_arguments_.empty()) {
     return;
   }
-  subcommand_arguments_[0] = cpp_basename(subcommand_arguments_[0]);
+  subcommand_arguments_[0] = android::base::Basename(subcommand_arguments_[0]);
   if (subcommand_arguments_[0] == "cvd" && subcommand_arguments_.size() > 1) {
     subcommand_ = subcommand_arguments_[1];
     subcommand_arguments_.erase(subcommand_arguments_.begin());
