@@ -5,6 +5,30 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cc_binary(
+    name = "kernel_log_monitor",
+    srcs = [
+        "main.cc",
+    ],
+    copts = COPTS,
+    deps = [
+        ":kernel_log_monitor_utils",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@gflags",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "kernel_log_monitor_clang_tidy",
+    srcs = [":kernel_log_monitor"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_library(
     name = "kernel_log_monitor_utils",
     hdrs = [
