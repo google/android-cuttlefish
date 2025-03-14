@@ -16,10 +16,10 @@
 #include <gflags/gflags.h>
 
 #include "common/libs/utils/tee_logging.h"
-#include "host/commands/metrics/host_receiver.h"
-#include "host/commands/metrics/metrics_configs.h"
-#include "host/commands/metrics/metrics_defs.h"
+#include "cuttlefish/host/commands/metrics/host_receiver.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/metrics/metrics_configs.h"
+#include "host/libs/metrics/metrics_defs.h"
 
 namespace cuttlefish {
 namespace {
