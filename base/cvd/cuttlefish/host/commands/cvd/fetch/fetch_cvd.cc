@@ -235,9 +235,9 @@ bool ConvertToRawImageNoBinary(const std::string& image_path) {
  * crosvm has read-only support for Android-Sparse files, but QEMU does not
  * support them.
  */
-void DeAndroidSparse(const std::vector<std::string>& image_files) {
+Result<void> DeAndroidSparse(const std::vector<std::string>& image_files) {
   for (const auto& file : image_files) {
-    if (!IsSparseImage(file)) {
+    if (!CF_EXPECT(IsSparseImage(file))) {
       continue;
     }
     if (ConvertToRawImageNoBinary(file)) {
@@ -246,6 +246,7 @@ void DeAndroidSparse(const std::vector<std::string>& image_files) {
       LOG(ERROR) << "Failed to de-sparse '" << file << "'";
     }
   }
+  return {};
 }
 
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
@@ -558,7 +559,7 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
     CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
                                       default_build_id, default_build_target,
                                       image_files, target_directories.root));
-    DeAndroidSparse(image_files);
+    CF_EXPECT(DeAndroidSparse(image_files));
     trace.CompletePhase("Desparse image files");
   }
 

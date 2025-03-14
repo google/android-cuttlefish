@@ -21,5 +21,6 @@
 namespace cuttlefish {
 
 Result<void> ForceRawImage(const std::string& image_path);
+Result<bool> IsSparseImage(const std::string& image_path);
 
 }  // namespace cuttlefish
