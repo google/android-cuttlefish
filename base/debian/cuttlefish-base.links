@@ -1,1 +1,2 @@
 /usr/lib/cuttlefish-common/bin/cvd /usr/bin/cvd
+/usr/lib/cuttlefish-common/bin/extract-ikconfig.sh /usr/lib/cuttlefish-common/bin/extract-ikconfig
