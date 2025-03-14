@@ -36,3 +36,24 @@ clang_tidy_test(
     srcs = [":adb"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_test(
+    name = "adb_test",
+    srcs = [
+        "test.cpp",
+    ],
+    copts = COPTS,
+    deps = [
+        ":adb",
+        "//cuttlefish/host/libs/config",
+        "@fruit",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "adb_test_clang_tidy",
+    srcs = [":adb_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
