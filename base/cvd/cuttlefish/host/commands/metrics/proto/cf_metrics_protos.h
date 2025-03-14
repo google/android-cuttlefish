@@ -22,7 +22,7 @@
 
 #pragma GCC system_header
 
-#include <cf_log.pb.h>
-#include <cf_metrics_event.pb.h>
-#include <clientanalytics.pb.h>
-#include <common.pb.h>
+#include "cuttlefish/host/commands/metrics/proto/cf_log.pb.h"
+#include "cuttlefish/host/commands/metrics/proto/cf_metrics_event.pb.h"
+#include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"
+#include "cuttlefish/host/commands/metrics/proto/common.pb.h"

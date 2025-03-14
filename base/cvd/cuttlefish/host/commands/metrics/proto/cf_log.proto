@@ -17,8 +17,8 @@ syntax = "proto2";
 
 package cuttlefish;
 
-import "common.proto";
-import "cf_metrics_event.proto";
+import "cuttlefish/host/commands/metrics/proto/common.proto";
+import "cuttlefish/host/commands/metrics/proto/cf_metrics_event.proto";
 
 // Wrapper for Cuttlefish log events
 // Next index: 7
