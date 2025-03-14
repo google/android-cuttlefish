@@ -65,7 +65,7 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
 
     auto adb_modes_check = config_.Modes();
     adb_modes_check.erase(AdbMode::Unknown);
-    if (adb_modes_check.size() < 1) {
+    if (adb_modes_check.empty()) {
       LOG(INFO) << "ADB not enabled";
     }
 
