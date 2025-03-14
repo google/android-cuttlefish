@@ -30,7 +30,7 @@ constexpr char kCvdBinaryPath[] = "/usr/bin/cvd";
 
 int FallbackToPythonAcloud(char** argv) {
   auto android_top = StringFromEnv("ANDROID_BUILD_TOP", "");
-  if (android_top == "") {
+  if (android_top.empty()) {
     LOG(FATAL) << "Could not find android environment. Please run "
                << "\"source build/envsetup.sh\".";
     abort();
