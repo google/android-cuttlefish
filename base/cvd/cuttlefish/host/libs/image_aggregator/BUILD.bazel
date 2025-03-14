@@ -5,6 +5,17 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+proto_library(
+    name = "cdisk_spec_proto",
+    srcs = ["cdisk_spec.proto"],
+)
+
+cc_proto_library(
+    name = "cdisk_spec_cc_proto",
+    deps = [":cdisk_spec_proto"],
+)
+
+
 cc_library(
     name = "image_aggregator",
     srcs = [
