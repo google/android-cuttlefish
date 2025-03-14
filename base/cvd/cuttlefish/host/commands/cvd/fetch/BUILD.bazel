@@ -38,6 +38,9 @@ cc_library(
         "@jsoncpp",
         "@rules_cc//cc/runfiles",
     ],
+    data = [
+        "//cuttlefish/host/commands/logcat_receiver",
+    ],
 )
 
 clang_tidy_test(
