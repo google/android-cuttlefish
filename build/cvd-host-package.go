@@ -156,7 +156,7 @@ func (p *cvdHostPackageSingleton) GenerateBuildActions(ctx android.SingletonCont
 	var cvdHostPackageStamp android.Paths
 
 	ctx.VisitAllModuleProxies(func(module android.ModuleProxy) {
-		if !android.OtherModuleProviderOrDefault(ctx, module, android.CommonModuleInfoProvider).Enabled {
+		if !android.OtherModulePointerProviderOrDefault(ctx, module, android.CommonModuleInfoProvider).Enabled {
 			return
 		}
 		if c, ok := android.OtherModuleProvider(ctx, module, CvdHostPackageMetadataInfoProvider); ok {
