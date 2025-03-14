@@ -47,6 +47,8 @@ Result<SharedFD> AcquireLock(const std::string& tmp_lock_image_path) {
   return fd;
 }
 
+}  // namespace
+
 Result<bool> IsSparseImage(const std::string& image_path) {
   std::ifstream file(image_path, std::ios::binary);
   CF_EXPECTF(file.good(), "Could not open '{}'", image_path);
@@ -56,8 +58,6 @@ Result<bool> IsSparseImage(const std::string& image_path) {
 
   return buffer == kAndroidSparseImageMagic;
 }
-
-}  // namespace
 
 Result<void> ForceRawImage(const std::string& image_path) {
   std::string tmp_lock_image_path = image_path + ".lock";
