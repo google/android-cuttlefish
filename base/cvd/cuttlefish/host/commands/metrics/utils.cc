@@ -13,23 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <curl/curl.h>
-#include <gflags/gflags.h>
+#include "cuttlefish/host/commands/metrics/utils.h"
+
 #include <net/if.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/utsname.h>
+
 #include <chrono>
+#include <cstring>
 #include <ctime>
 #include <iostream>
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <curl/curl.h>
+#include <gflags/gflags.h>
+
 #include "common/libs/utils/tee_logging.h"
-#include "host/commands/metrics/metrics_defs.h"
-#include "host/commands/metrics/utils.h"
+#include "host/libs/metrics/metrics_defs.h"
 
 namespace cuttlefish::metrics {
 
@@ -88,7 +92,7 @@ std::string GetMacAddress() {
   unsigned char mac_address[6] = {0};
   struct ifreq ifr;
   for (; it != end; ++it) {
-    strcpy(ifr.ifr_name, it->ifr_name);
+    strncpy(ifr.ifr_name, it->ifr_name, strlen(it->ifr_name));
     if (ioctl(sock, SIOCGIFFLAGS, &ifr) != 0) {
       LOG(ERROR) << "couldn't connect to socket";
       return "";

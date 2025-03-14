@@ -13,22 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/host/commands/metrics/events.h"
+
 #include <sys/utsname.h>
-#include <uuid.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "host/commands/metrics/events.h"
-#include "host/commands/metrics/metrics_defs.h"
-#include "host/commands/metrics/proto/cf_metrics_protos.h"
-#include "host/commands/metrics/utils.h"
+#include "cuttlefish/host/commands/metrics/proto/cf_metrics_protos.h"
+#include "cuttlefish/host/commands/metrics/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/qemu_manager.h"
+#include "host/libs/metrics/metrics_defs.h"
 
 namespace cuttlefish {
 
 namespace {
+
+// TODO: 403646742 - this value previously came from the build, need to revisit
+constexpr int PRODUCT_SHIPPING_API_LEVEL = 37;
 
 constexpr int kLogSourceId = 1753;
 
