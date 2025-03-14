@@ -26,6 +26,7 @@
 #include <stdio.h>
 
 #include <fstream>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -35,7 +36,6 @@
 #include <cdisk_spec.pb.h>
 #include <google/protobuf/text_format.h>
 #include <sparse/sparse.h>
-#include <uuid.h>
 #include <zlib.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -242,6 +242,20 @@ MultipleImagePartition ToMultipleImagePartition(ImagePartition source) {
   };
 }
 
+void SetRandomUuid(std::uint8_t uuid[16]) {
+  // https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
+  std::random_device dev;
+  std::mt19937 rng(dev());
+  std::uniform_int_distribution<std::mt19937::result_type> dist(0, 0xff);
+
+  for (int i = 0; i < 16; i++) {
+    uuid[i] = dist(rng);
+  }
+  // https://www.rfc-editor.org/rfc/rfc4122#section-4.4
+  uuid[7] = (uuid[7] & 0x0F) | 0x40;  // UUID v4
+  uuid[9] = (uuid[9] & 0x3F) | 0x80;
+}
+
 /**
  * Incremental builder class for producing partition tables. Add partitions
  * one-by-one, then produce specification files
@@ -251,16 +265,21 @@ private:
   std::vector<PartitionInfo> partitions_;
   std::uint64_t next_disk_offset_;
 
-  static const char* GetPartitionGUID(MultipleImagePartition source) {
+  static const std::uint8_t* GetPartitionGUID(MultipleImagePartition source) {
     // Due to some endianness mismatch in e2fsprogs GUID vs GPT, the GUIDs are
     // rearranged to make the right GUIDs appear in gdisk
     switch (source.type) {
-      case kLinuxFilesystem:
-        // Technically 0FC63DAF-8483-4772-8E79-3D69D8477DE4
-        return "AF3DC60F-8384-7247-8E79-3D69D8477DE4";
+      case kLinuxFilesystem: {
+        static constexpr std::uint8_t kLinuxFileSystemGuid[] = {
+            0xaf, 0x3d, 0xc6, 0xf,  0x83, 0x84, 0x72, 0x47,
+            0x8e, 0x79, 0x3d, 0x69, 0xd8, 0x47, 0x7d, 0xe4};
+        return kLinuxFileSystemGuid;
+      }
       case kEfiSystemPartition:
-        // Technically C12A7328-F81F-11D2-BA4B-00A0C93EC93B
-        return "28732AC1-1FF8-D211-BA4B-00A0C93EC93B";
+        static constexpr std::uint8_t kEfiSystemPartitionGuid[] = {
+            0x28, 0x73, 0x2a, 0xc1, 0x1f, 0xf8, 0xd2, 0x11,
+            0xba, 0x4b, 0x0,  0xa0, 0xc9, 0x3e, 0xc9, 0x3b};
+        return kEfiSystemPartitionGuid;
       default:
         LOG(FATAL) << "Unknown partition type: " << (int) source.type;
     }
@@ -370,7 +389,7 @@ public:
                 .partition_entry_size = sizeof(GptPartitionEntry),
             },
     };
-    uuid_generate(gpt.header.disk_guid);
+    SetRandomUuid(gpt.header.disk_guid);
     for (std::size_t i = 0; i < partitions_.size(); i++) {
       const auto& partition = partitions_[i];
       gpt.entries[i] = GptPartitionEntry{
@@ -378,11 +397,12 @@ public:
           .last_lba =
               (partition.offset + partition.AlignedSize()) / kSectorSize - 1,
       };
-      uuid_generate(gpt.entries[i].unique_partition_guid);
-      if (uuid_parse(GetPartitionGUID(partition.source),
-                     gpt.entries[i].partition_type_guid)) {
-        LOG(FATAL) << "Could not parse partition guid";
+      SetRandomUuid(gpt.entries[i].unique_partition_guid);
+      const std::uint8_t* const type_guid = GetPartitionGUID(partition.source);
+      if (type_guid == nullptr) {
+        LOG(FATAL) << "Could not recognize partition guid";
       }
+      memcpy(gpt.entries[i].partition_type_guid, type_guid, 16);
       std::u16string wide_name(partitions_[i].source.label.begin(),
                               partitions_[i].source.label.end());
       u16cpy((std::uint16_t*) gpt.entries[i].partition_name,
