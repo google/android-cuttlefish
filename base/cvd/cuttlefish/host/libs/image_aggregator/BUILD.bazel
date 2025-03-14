@@ -19,19 +19,25 @@ cc_proto_library(
 cc_library(
     name = "image_aggregator",
     srcs = [
+        "image_aggregator.cc",
         "sparse_image_utils.cc",
     ],
     hdrs = [
+        "image_aggregator.h",
         "sparse_image_utils.h",
     ],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
+        ":cdisk_spec_cc_proto",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
         "//libbase",
+        "//libsparse",
+        "@protobuf",
+        "@zlib",
     ],
 )
 
