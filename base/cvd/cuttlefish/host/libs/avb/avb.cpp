@@ -89,12 +89,12 @@ Result<void> Avb::AddHashFooter(const std::string& image_path,
 }
 
 Command Avb::GenerateInfoImage(const std::string& image_path,
-                               const SharedFD& output_file) const {
+                               const SharedFD& output_path) const {
   Command command(avbtool_path_);
   command.AddParameter(kInfoImage);
   command.AddParameter("--image");
   command.AddParameter(image_path);
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_path);
   return command;
 }
 
