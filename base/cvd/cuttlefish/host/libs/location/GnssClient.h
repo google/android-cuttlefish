@@ -22,7 +22,7 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
-#include "gnss_grpc_proxy.grpc.pb.h"
+#include "cuttlefish/host/commands/gnss_grpc_proxy/gnss_grpc_proxy.grpc.pb.h"
 
 #include "common/libs/utils/result.h"
 #include "host/libs/location/GpsFix.h"
