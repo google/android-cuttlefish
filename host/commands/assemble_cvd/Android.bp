@@ -68,7 +68,6 @@ cc_binary_host {
         "libcuttlefish_host_config_fastboot",
         "libcuttlefish_launch_cvd_proto",
         "libcuttlefish_vm_manager",
-        "libext2_uuid",
         "libgflags",
         "libgfxstream_graphics_detector_proto",
         "libimage_aggregator",
