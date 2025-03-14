@@ -17,6 +17,10 @@
 PRODUCT_MANIFEST_FILES += device/google/cuttlefish/shared/config/product_manifest.xml
 SYSTEM_EXT_MANIFEST_FILES += device/google/cuttlefish/shared/config/system_ext_manifest.xml
 
+# Extend cuttlefish common sepolicy with desktop-specific functionality.
+BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/desktop/sepolicy
+SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += device/google/cuttlefish/shared/desktop/sepolicy/system_ext/private
+
 $(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_vendor.mk)
 
 $(call inherit-product, frameworks/native/build/tablet-7in-xhdpi-2048-dalvik-heap.mk)
