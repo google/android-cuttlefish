@@ -33,7 +33,6 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <cdisk_spec.pb.h>
 #include <google/protobuf/text_format.h>
 #include <sparse/sparse.h>
 #include <zlib.h>
@@ -44,6 +43,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "host/libs/config/mbr.h"
 #include "host/libs/image_aggregator/sparse_image_utils.h"
 
