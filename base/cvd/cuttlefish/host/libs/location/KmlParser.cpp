@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-#include "KmlParser.h"
-#include <libxml/parser.h>
+#include "host/libs/location/KmlParser.h"
+
 #include <string.h>
 #include <unistd.h>
+
 #include <string>
 #include <utility>
-#include "StringParse.h"
-using std::string;
+
+#include <libxml/parser.h>
+
+#include "host/libs/location/StringParse.h"
 
 // Coordinates can be nested arbitrarily deep within a Placemark, depending
 // on the type of object (Point, LineString, Polygon) the Placemark contains
@@ -92,9 +95,9 @@ static bool parseGxTrack(xmlNode* children, GpsFixArray* fixes) {
 }
 
 static bool parsePlacemark(xmlNode* current, GpsFixArray* fixes) {
-  string description;
-  string name;
-  size_t ind = string::npos;
+  std::string description;
+  std::string name;
+  size_t ind = std::string::npos;
   // not worried about case-sensitivity since .kml files
   // are expected to be machine-generated
   for (; current != nullptr; current = current->next) {
@@ -108,21 +111,21 @@ static bool parsePlacemark(xmlNode* current, GpsFixArray* fixes) {
     } else if (!strcmp((const char*)current->name, "Point") ||
                !strcmp((const char*)current->name, "LineString") ||
                !strcmp((const char*)current->name, "Polygon")) {
-      ind = (ind != string::npos ? ind : fixes->size());
+      ind = (ind != std::string::npos ? ind : fixes->size());
       if (!parseCoordinates(current->xmlChildrenNode, fixes)) {
         return false;
       }
     } else if (current->ns && current->ns->prefix &&
                !strcmp((const char*)current->ns->prefix, "gx") &&
                !strcmp((const char*)current->name, "Track")) {
-      ind = (ind != string::npos ? ind : fixes->size());
+      ind = (ind != std::string::npos ? ind : fixes->size());
       if (!parseGxTrack(current->xmlChildrenNode, fixes)) {
         return false;
       }
     }
   }
 
-  if (ind == string::npos || ind >= fixes->size()) {
+  if (ind == std::string::npos || ind >= fixes->size()) {
     return false;
   }
 
@@ -136,7 +139,7 @@ static bool parsePlacemark(xmlNode* current, GpsFixArray* fixes) {
 
 // Placemarks (aka locations) can be nested arbitrarily deep
 static bool traverseSubtree(xmlNode* current, GpsFixArray* fixes,
-                            string* error) {
+                            std::string* error) {
   for (; current; current = current->next) {
     if (current->name != nullptr &&
         !strcmp((const char*)current->name, "Placemark")) {
@@ -157,7 +160,7 @@ static bool traverseSubtree(xmlNode* current, GpsFixArray* fixes,
 }
 
 bool KmlParser::parseFile(const char* filePath, GpsFixArray* fixes,
-                          string* error) {
+                          std::string* error) {
   // This initializes the library and checks potential ABI mismatches between
   // the version it was compiled for and the actual shared library used.
   LIBXML_TEST_VERSION
@@ -185,7 +188,7 @@ bool KmlParser::parseFile(const char* filePath, GpsFixArray* fixes,
 }
 
 bool KmlParser::parseString(const char* str, int len, GpsFixArray* fixes,
-                            string* error) {
+                            std::string* error) {
   // This initializes the library and checks potential ABI mismatches between
   // the version it was compiled for and the actual shared library used.
   LIBXML_TEST_VERSION

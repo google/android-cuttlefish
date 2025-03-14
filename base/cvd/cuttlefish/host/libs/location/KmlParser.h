@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "GpsFix.h"
-
 #include <string>
+
+#include "host/libs/location/GpsFix.h"
 
 class KmlParser {
  public:
