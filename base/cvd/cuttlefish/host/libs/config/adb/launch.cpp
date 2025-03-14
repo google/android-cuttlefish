@@ -90,7 +90,7 @@ class AdbConnector : public CommandSource {
       addresses.insert(helper_.ConnectorVsockArg());
     }
 
-    if (addresses.size() == 0) {
+    if (addresses.empty()) {
       return {};
     }
     std::string address_arg = "--addresses=";
