@@ -1,0 +1,4 @@
+# Cuttlefish-specific policy for the GSC daemon (gscd)
+
+# Allow gscd to communicate with the Ti50 host_emulation daemon via virtio-console
+allow gscd ti50_char_device:chr_file rw_file_perms;
