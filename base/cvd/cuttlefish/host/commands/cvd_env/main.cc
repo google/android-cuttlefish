@@ -15,6 +15,8 @@
  */
 
 #include <iostream>
+#include <vector>
+#include <string>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -90,8 +92,8 @@ Result<void> CvdEnvMain(int argc, char** argv) {
       args.push_back(argv[i]);
     }
   }
-  if (args.size() > 0) {
-    CF_EXPECT(args[0].compare(kServiceControlEnvProxy) != 0,
+  if (!args.empty()) {
+    CF_EXPECT(args[0] == kServiceControlEnvProxy,
               "Prohibited service name");
   }
 
