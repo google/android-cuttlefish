@@ -24,6 +24,7 @@ cc_library {
         "archive.cpp",
         "base64.cpp",
         "container.cpp",
+        "device_type.cpp",
         "files.cpp",
         "flag_parser.cpp",
         "flags_validator.cpp",
