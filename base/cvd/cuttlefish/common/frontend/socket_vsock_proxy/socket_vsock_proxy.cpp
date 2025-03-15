@@ -15,15 +15,16 @@
  */
 
 #include <signal.h>
-#include <android-base/logging.h>
-#include <gflags/gflags.h>
 
 #include <chrono>
 #include <memory>
 #include <sstream>
 
-#include "common/frontend/socket_vsock_proxy/client.h"
-#include "common/frontend/socket_vsock_proxy/server.h"
+#include <android-base/logging.h>
+#include <gflags/gflags.h>
+
+#include "cuttlefish/common/frontend/socket_vsock_proxy/client.h"
+#include "cuttlefish/common/frontend/socket_vsock_proxy/server.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/socket2socket_proxy.h"
@@ -193,7 +194,7 @@ static Result<void> ListenEventsAndProxy(int events_fd,
     // TODO(schuffelen): Investigate if any errors here are recoverable, and
     // remove the distinction between EOF and other errors if none are
     // recoverable.
-    if (!received_event) {
+    if (!received_event.ok()) {
       LOG(ERROR) << "Failed reading kernel log event: "
                  << received_event.error().FormatForEnv();
       continue;
