@@ -29,6 +29,7 @@
 #include <fmt/ostream.h>
 
 #include "common/libs/utils/architecture.h"
+#include "common/libs/utils/device_type.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_fragment.h"
@@ -332,7 +333,7 @@ class CuttlefishConfig {
 
     Json::Value* Dictionary();
     const Json::Value* Dictionary() const;
-  public:
+   public:
     std::string serial_number() const;
 
     // Index of this instance within current configured group of VMs
@@ -594,6 +595,8 @@ class CuttlefishConfig {
     // forces.
     bool use_bootloader() const;
 
+    DeviceType device_type() const;
+
     Arch target_arch() const;
 
     int cpus() const;
@@ -766,7 +769,7 @@ class CuttlefishConfig {
     MutableInstanceSpecific(CuttlefishConfig* config, const std::string& id);
 
     Json::Value* Dictionary();
-  public:
+   public:
     void set_serial_number(const std::string& serial_number);
     void set_qemu_vnc_server_port(int qemu_vnc_server_port);
     void set_tombstone_receiver_port(int tombstone_receiver_port);
@@ -835,6 +838,7 @@ class CuttlefishConfig {
     void set_enable_sandbox(const bool enable_sandbox);
     void set_enable_virtiofs(const bool enable_virtiofs);
     void set_kgdb(bool kgdb);
+    void set_device_type(DeviceType type);
     void set_target_arch(Arch target_arch);
     void set_cpus(int cpus);
     void set_vcpu_config_path(const std::string& vcpu_config_path);
