@@ -51,7 +51,7 @@ Result<int> MkenvimageSlimMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   gflags::SetUsageMessage(kUsageMessage);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  CF_EXPECT(FLAGS_output_path != "", "Output env path isn't defined.");
+  CF_EXPECT(!FLAGS_output_path.empty(), "Output env path isn't defined.");
   CF_EXPECT(FLAGS_env_size != 0, "env size can't be 0.");
   CF_EXPECT(!(FLAGS_env_size % 512), "env size must be multiple of 512.");
 
