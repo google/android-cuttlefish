@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#include <fmt/format.h>
+#include "host/commands/cvd_send_id_disclosure/cellular_identifier_disclosure_command_builder.h"
+
 #include <string>
 
-#include "host/commands/cvd_send_id_disclosure/cellular_identifier_disclosure_command_builder.h"
+#include <fmt/format.h>
+
 
 namespace cuttlefish {
 
