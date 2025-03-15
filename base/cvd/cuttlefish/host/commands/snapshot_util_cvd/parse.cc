@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/snapshot_util_cvd/parse.h"
+#include "cuttlefish/host/commands/snapshot_util_cvd/parse.h"
 
 #include <cstdlib>
 #include <iostream>

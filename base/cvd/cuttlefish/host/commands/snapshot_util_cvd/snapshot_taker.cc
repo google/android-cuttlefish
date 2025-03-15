@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/snapshot_util_cvd/snapshot_taker.h"
+#include "cuttlefish/host/commands/snapshot_util_cvd/snapshot_taker.h"
 
 #include <cstdlib>
 #include <string>
