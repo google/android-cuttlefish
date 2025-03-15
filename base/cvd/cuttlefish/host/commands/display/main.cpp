@@ -27,7 +27,7 @@
 
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "device/google/cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
+#include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
