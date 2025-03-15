@@ -15,6 +15,9 @@
  */
 
 #pragma once
+
+#include <stdint.h>
+
 namespace cuttlefish {
 
 // TODO(moelsherif) :review this value once we have a better idea of the size of
