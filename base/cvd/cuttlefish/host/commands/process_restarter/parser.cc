@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/process_restarter/parser.h"
+#include "cuttlefish/host/commands/process_restarter/parser.h"
 
 #include <iostream>
 #include <string>
