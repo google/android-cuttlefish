@@ -35,4 +35,9 @@ Result<std::vector<std::string>> ExtractArchiveContents(
     const std::string& archive_filepath, const std::string& target_directory,
     bool keep_archive);
 
+std::string ExtractArchiveToMemory(const std::string& archive_filepath,
+                                   const std::string& archive_member);
+
+std::vector<std::string> ArchiveContents(const std::string& archive);
+
 } // namespace cuttlefish
