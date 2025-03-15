@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "filesystem_explorer.h"
+#include "cuttlefish/host/commands/start/filesystem_explorer.h"
 
 #include <set>
 #include <string>
