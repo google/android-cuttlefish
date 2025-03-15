@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include <android-base/logging.h>
-#include <fmt/format.h>
 
 #include <chrono>
 #include <fstream>
+
+#include <android-base/logging.h>
+#include <fmt/format.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
