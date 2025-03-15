@@ -15,8 +15,6 @@
  */
 #pragma once
 
-#include "host/libs/config/cuttlefish_config.h"
-
 #define CF_DEFAULTS_DYNAMIC_STRING ""
 #define CF_DEFAULTS_DYNAMIC_INT 0
 

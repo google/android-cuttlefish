@@ -126,4 +126,36 @@ Result<std::vector<std::string>> ExtractArchiveContents(
   return ExtractHelper(files, archive_filepath, target_directory, keep_archive);
 }
 
+std::string ExtractArchiveToMemory(const std::string& archive_filepath,
+                                   const std::string& archive_member) {
+  Command bsdtar_cmd("/usr/bin/bsdtar");
+  bsdtar_cmd.AddParameter("-xf");
+  bsdtar_cmd.AddParameter(archive_filepath);
+  bsdtar_cmd.AddParameter("-O");
+  bsdtar_cmd.AddParameter(archive_member);
+  std::string stdout_str;
+  auto ret =
+      RunWithManagedStdio(std::move(bsdtar_cmd), nullptr, &stdout_str, nullptr);
+  if (ret != 0) {
+    LOG(ERROR) << "Could not extract \"" << archive_member << "\" from \""
+               << archive_filepath << "\" to memory.";
+    return "";
+  }
+  return stdout_str;
+}
+
+std::vector<std::string> ArchiveContents(const std::string& archive) {
+  Command bsdtar_cmd("/usr/bin/bsdtar");
+  bsdtar_cmd.AddParameter("-tf");
+  bsdtar_cmd.AddParameter(archive);
+  std::string bsdtar_input, bsdtar_output;
+  auto bsdtar_ret = RunWithManagedStdio(std::move(bsdtar_cmd), &bsdtar_input,
+                                        &bsdtar_output, nullptr);
+  if (bsdtar_ret != 0) {
+    LOG(ERROR) << "`bsdtar -tf \"" << archive << "\"` returned " << bsdtar_ret;
+  }
+  return bsdtar_ret == 0 ? android::base::Split(bsdtar_output, "\n")
+                         : std::vector<std::string>();
+}
+
 } // namespace cuttlefish

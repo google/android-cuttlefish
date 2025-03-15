@@ -356,7 +356,8 @@ Result<void> BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
 
   // We are using directory size as an estimate of final image size. To avoid
   // any rounding errors, add 16M of head room.
-  const auto fs_size = RoundUp(GetDiskUsage(src_dir) + 16 * 1024 * 1024, 4096);
+  const auto fs_size =
+      RoundUp(CF_EXPECT(GetDiskUsageBytes(src_dir)) + 16 * 1024 * 1024, 4096);
   LOG(INFO) << mount_point << " src dir " << src_dir << " has size "
             << fs_size / 1024 << " KB";
 
@@ -432,7 +433,7 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
   ret = EnsureDirectoryExists(system_modules_dir);
   UnpackRamdisk(ramdisk_path, ramdisk_stage_dir);
   auto res = FindFile(ramdisk_stage_dir.c_str(), "modules.load");
-  if (!res) {
+  if (!res.ok()) {
     LOG(ERROR) << "Failed to find modules.dep file in input ramdisk "
                << ramdisk_path;
     return false;

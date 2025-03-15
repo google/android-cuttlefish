@@ -17,9 +17,8 @@
 
 #include <string>
 
-#include <GraphicsDetector.pb.h>
-
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "host/commands/assemble_cvd/flags.h"
 #include "host/libs/config/config_utils.h"
 #include "host/libs/config/cuttlefish_config.h"

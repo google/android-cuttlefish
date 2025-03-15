@@ -72,8 +72,8 @@ struct RebuildPaths {
 };
 
 struct TargetFiles {
-  Archive vendor_zip;
-  Archive system_zip;
+  std::string vendor_zip;
+  std::string system_zip;
   std::vector<std::string> vendor_contents;
   std::vector<std::string> system_contents;
 };
@@ -83,8 +83,9 @@ struct Extracted {
   std::vector<std::string> system_partitions;
 };
 
-void FindImports(Archive* archive, const std::string& build_prop_file) {
-  auto contents = archive->ExtractToMemory(build_prop_file);
+void FindImports(const std::string& archive,
+                 const std::string& build_prop_file) {
+  auto contents = ExtractArchiveToMemory(archive, build_prop_file);
   auto lines = android::base::Split(contents, "\n");
   for (const auto& line : lines) {
     auto parts = android::base::Split(line, " ");
@@ -117,11 +118,11 @@ Result<std::string> GetPartitionNameFromPath(const std::string& path) {
 Result<TargetFiles> GetTargetFiles(const std::string& vendor_zip_path,
                                    const std::string& system_zip_path) {
   auto result = TargetFiles{
-      .vendor_zip = Archive(vendor_zip_path),
-      .system_zip = Archive(system_zip_path),
+      .vendor_zip = vendor_zip_path,
+      .system_zip = system_zip_path,
   };
-  result.vendor_contents = result.vendor_zip.Contents();
-  result.system_contents = result.system_zip.Contents();
+  result.vendor_contents = ArchiveContents(result.vendor_zip);
+  result.system_contents = ArchiveContents(result.system_zip);
   CF_EXPECTF(!result.vendor_contents.empty(), "Could not open {}",
              vendor_zip_path);
   CF_EXPECTF(!result.system_contents.empty(), "Could not open {}",
@@ -139,9 +140,9 @@ Result<MiscInfo> CombineDynamicPartitionsInfo(
              kDynamicPartitionsPath);
 
   const MiscInfo vendor_dp_info = CF_EXPECT(ParseMiscInfo(
-      target_files.vendor_zip.ExtractToMemory(kDynamicPartitionsPath)));
+      ExtractArchiveToMemory(target_files.vendor_zip, kDynamicPartitionsPath)));
   const MiscInfo system_dp_info = CF_EXPECT(ParseMiscInfo(
-      target_files.system_zip.ExtractToMemory(kDynamicPartitionsPath)));
+      ExtractArchiveToMemory(target_files.system_zip, kDynamicPartitionsPath)));
 
   return CF_EXPECT(GetCombinedDynamicPartitions(vendor_dp_info, system_dp_info,
                                                 extracted_images));
@@ -156,10 +157,10 @@ Result<MiscInfo> CombineMiscInfo(
   CF_EXPECTF(Contains(target_files.system_contents, kMiscInfoPath),
              "System target files zip does not contain {}", kMiscInfoPath);
 
-  const MiscInfo vendor_misc = CF_EXPECT(
-      ParseMiscInfo(target_files.vendor_zip.ExtractToMemory(kMiscInfoPath)));
-  const MiscInfo system_misc = CF_EXPECT(
-      ParseMiscInfo(target_files.system_zip.ExtractToMemory(kMiscInfoPath)));
+  const MiscInfo vendor_misc = CF_EXPECT(ParseMiscInfo(
+      ExtractArchiveToMemory(target_files.vendor_zip, kMiscInfoPath)));
+  const MiscInfo system_misc = CF_EXPECT(ParseMiscInfo(
+      ExtractArchiveToMemory(target_files.system_zip, kMiscInfoPath)));
 
   const auto combined_dp_info =
       CF_EXPECT(CombineDynamicPartitionsInfo(target_files, extracted_images));
@@ -180,9 +181,8 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
       continue;
     }
     LOG(DEBUG) << "Writing " << name << " from vendor target";
-    CF_EXPECT(
-        target_files.vendor_zip.ExtractFiles({name}, combined_output_path),
-        "Failed to extract " << name << " from the vendor target zip");
+    CF_EXPECT(ExtractImage(target_files.vendor_zip, combined_output_path, name),
+              "Failed to extract " << name << " from the vendor target zip");
     extracted.images.emplace(CF_EXPECT(GetPartitionNameFromPath(name)));
   }
   for (const auto& name : target_files.vendor_contents) {
@@ -191,11 +191,10 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
     } else if (!Contains(kVendorTargetBuildProps, name)) {
       continue;
     }
-    FindImports(&target_files.vendor_zip, name);
+    FindImports(target_files.vendor_zip, name);
     LOG(DEBUG) << "Writing " << name << " from vendor target";
-    CF_EXPECT(
-        target_files.vendor_zip.ExtractFiles({name}, combined_output_path),
-        "Failed to extract " << name << " from the vendor target zip");
+    CF_EXPECT(ExtractImage(target_files.vendor_zip, combined_output_path, name),
+              "Failed to extract " << name << " from the vendor target zip");
   }
   LOG(INFO) << "Completed extracting images from vendor.";
 
@@ -206,9 +205,8 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
       continue;
     }
     LOG(DEBUG) << "Writing " << name << " from system target";
-    CF_EXPECT(
-        target_files.system_zip.ExtractFiles({name}, combined_output_path),
-        "Failed to extract " << name << " from the system target zip");
+    CF_EXPECT(ExtractImage(target_files.system_zip, combined_output_path, name),
+              "Failed to extract " << name << " from the system target zip");
     const auto partition = CF_EXPECT(GetPartitionNameFromPath(name));
     extracted.images.emplace(partition);
     extracted.system_partitions.emplace_back(partition);
@@ -219,11 +217,10 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
     } else if (Contains(kVendorTargetBuildProps, name)) {
       continue;
     }
-    FindImports(&target_files.system_zip, name);
+    FindImports(target_files.system_zip, name);
     LOG(DEBUG) << "Writing " << name << " from system target";
-    CF_EXPECT(
-        target_files.system_zip.ExtractFiles({name}, combined_output_path),
-        "Failed to extract " << name << " from the system target zip");
+    CF_EXPECT(ExtractImage(target_files.system_zip, combined_output_path, name),
+              "Failed to extract " << name << " from the system target zip");
   }
   LOG(INFO) << "Completed extracting images from system.";
   return extracted;

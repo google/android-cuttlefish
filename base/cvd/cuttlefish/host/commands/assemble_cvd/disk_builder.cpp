@@ -38,7 +38,9 @@ static std::chrono::system_clock::time_point LastUpdatedInputDisk(
       continue;
     }
 
-    auto partition_mod_time = FileModificationTime(partition.image_file_path);
+    auto partition_mod_time =
+        FileModificationTime(partition.image_file_path)
+            .value_or(std::chrono::system_clock::time_point());
     if (partition_mod_time > ret) {
       ret = partition_mod_time;
     }
@@ -173,7 +175,9 @@ Result<bool> DiskBuilder::WillRebuildCompositeDisk() {
   auto last_component_mod_time = LastUpdatedInputDisk(partitions_);
 
   CF_EXPECT(!composite_disk_path_.empty(), "No composite disk path");
-  auto composite_mod_time = FileModificationTime(composite_disk_path_);
+  auto composite_mod_time =
+      FileModificationTime(composite_disk_path_)
+          .value_or(std::chrono::system_clock::time_point());
 
   if (composite_mod_time == decltype(composite_mod_time)()) {
     LOG(DEBUG) << "No prior composite disk";
@@ -222,10 +226,14 @@ Result<bool> DiskBuilder::BuildOverlayIfNecessary() {
   bool can_reuse_overlay = resume_if_possible_;
 
   CF_EXPECT(!overlay_path_.empty(), "Overlay path missing");
-  auto overlay_mod_time = FileModificationTime(overlay_path_);
+  auto overlay_mod_time =
+      FileModificationTime(overlay_path_)
+          .value_or(std::chrono::system_clock::time_point());
 
   CF_EXPECT(!composite_disk_path_.empty(), "Composite disk path missing");
-  auto composite_disk_mod_time = FileModificationTime(composite_disk_path_);
+  auto composite_disk_mod_time =
+      FileModificationTime(composite_disk_path_)
+          .value_or(std::chrono::system_clock::time_point());
   if (overlay_mod_time == decltype(overlay_mod_time)()) {
     LOG(DEBUG) << "No prior overlay";
     can_reuse_overlay = false;

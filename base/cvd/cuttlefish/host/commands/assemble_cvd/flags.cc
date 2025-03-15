@@ -49,6 +49,7 @@
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/known_paths.h"
 #include "common/libs/utils/network.h"
+#include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
 #include "host/commands/assemble_cvd/alloc.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
@@ -72,7 +73,6 @@
 #include "host/libs/vm_manager/gem5_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
-#include "launch_cvd.pb.h"
 
 using cuttlefish::DefaultHostArtifactsPath;
 using cuttlefish::HostBinaryPath;
@@ -80,6 +80,9 @@ using cuttlefish::TempDir;
 using cuttlefish::vm_manager::CrosvmManager;
 using google::FlagSettingMode::SET_FLAGS_DEFAULT;
 using google::FlagSettingMode::SET_FLAGS_VALUE;
+
+// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/Android.bp;l=122;drc=6f7d6a4db58efcc2ddd09eda07e009c6329414cd
+#define USERDATA_FILE_SYSTEM_TYPE "f2fs"
 
 #define DEFINE_vec DEFINE_string
 #define DEFINE_proto DEFINE_string
@@ -1843,10 +1846,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       default_enable_sandbox += "false";
       default_enable_virtiofs += "false";
     } else {
-      default_enable_sandbox +=
-          fmt::format("{}", enable_sandbox_vec[instance_index]);
-      default_enable_virtiofs +=
-          fmt::format("{}", enable_virtiofs_vec[instance_index]);
+      default_enable_sandbox += fmt::format(
+          "{}", static_cast<bool>(enable_sandbox_vec[instance_index]));
+      default_enable_virtiofs += fmt::format(
+          "{}", static_cast<bool>(enable_virtiofs_vec[instance_index]));
     }
     comma_str = ",";
 
@@ -2144,8 +2147,8 @@ Result<void> SetDefaultFlagsForQemu(
       // possible to run without any streamer by setting --start_webrtc=false.
       default_start_webrtc += "true";
     } else {
-      default_start_webrtc +=
-          fmt::format("{}", start_webrtc_vec[instance_index]);
+      default_start_webrtc += fmt::format(
+          "{}", static_cast<bool>(start_webrtc_vec[instance_index]));
     }
   }
   // This is the 1st place to set "start_webrtc" flag value
@@ -2227,8 +2230,8 @@ Result<void> SetDefaultFlagsForCrosvm(
       // possible to run without any streamer by setting --start_webrtc=false.
       default_start_webrtc += "true";
     } else {
-      default_start_webrtc +=
-          fmt::format("{}", start_webrtc_vec[instance_index]);
+      default_start_webrtc += fmt::format(
+          "{}", static_cast<bool>(start_webrtc_vec[instance_index]));
     }
   }
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),

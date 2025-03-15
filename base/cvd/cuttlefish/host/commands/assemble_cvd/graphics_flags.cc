@@ -18,7 +18,6 @@
 
 #include <ostream>
 
-#include <GraphicsDetector.pb.h>
 #include <android-base/file.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
@@ -27,6 +26,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
+#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 #ifdef __APPLE__
