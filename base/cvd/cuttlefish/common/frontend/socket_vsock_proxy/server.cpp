@@ -13,12 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/common/frontend/socket_vsock_proxy/server.h"
+
 #include <chrono>
 #include <set>
 #include <thread>
 
-#include "common/frontend/socket_vsock_proxy/server.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 namespace socket_proxy {
