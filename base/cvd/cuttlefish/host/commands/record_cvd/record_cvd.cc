@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <string>
 
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
@@ -25,7 +26,7 @@
 #include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "run_cvd.pb.h"
+#include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 
 DEFINE_int32(instance_num, cuttlefish::GetInstance(),
              "Which instance to screen record.");
