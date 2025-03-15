@@ -1408,6 +1408,15 @@ Arch CuttlefishConfig::InstanceSpecific::target_arch() const {
   return static_cast<Arch>((*Dictionary())[kTargetArch].asInt());
 }
 
+static constexpr char kDeviceType[] = "device_type";
+void CuttlefishConfig::MutableInstanceSpecific::set_device_type(
+    DeviceType type) {
+  (*Dictionary())[kDeviceType] = static_cast<int>(type);
+}
+DeviceType CuttlefishConfig::InstanceSpecific::device_type() const {
+  return static_cast<DeviceType>((*Dictionary())[kDeviceType].asInt());
+}
+
 static constexpr char kEnableSandbox[] = "enable_sandbox";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_sandbox(const bool enable_sandbox) {
   (*Dictionary())[kEnableSandbox] = enable_sandbox;

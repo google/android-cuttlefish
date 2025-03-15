@@ -729,7 +729,10 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
           system_image_dir[instance_index] + "/android-info.txt";
     }
 
-    auto res = GetAndroidInfoConfig(instance_android_info_txt, "gfxstream");
+    auto res = GetAndroidInfoConfig(instance_android_info_txt, "config");
+    guest_config.device_type = ParseDeviceType(res.value_or(""));
+
+    res = GetAndroidInfoConfig(instance_android_info_txt, "gfxstream");
     guest_config.gfxstream_supported =
         res.ok() && res.value() == "supported";
 
@@ -1647,6 +1650,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
               "instance_index " << instance_index << " out of boundary "
                                 << guest_configs.size());
     instance.set_target_arch(guest_configs[instance_index].target_arch);
+    instance.set_device_type(guest_configs[instance_index].device_type);
     instance.set_guest_android_version(
         guest_configs[instance_index].android_version_number);
     instance.set_console(console_vec[instance_index]);
