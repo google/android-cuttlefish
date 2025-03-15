@@ -12,7 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "host/commands/start/validate_metrics_confirmation.h"
+
+#include "cuttlefish/host/commands/start/validate_metrics_confirmation.h"
 
 #include <iostream>
 #include <string>
@@ -22,7 +23,7 @@
 namespace cuttlefish {
 
 std::string ValidateMetricsConfirmation(std::string use_metrics) {
-  if (use_metrics == "") {
+  if (use_metrics.empty()) {
     if (CuttlefishConfig::ConfigExists()) {
       auto config = CuttlefishConfig::Get();
       if (config) {

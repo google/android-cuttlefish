@@ -12,7 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "host/commands/start/override_bool_arg.h"
+
+#include "cuttlefish/host/commands/start/override_bool_arg.h"
 
 #include <string>
 #include <unordered_set>
@@ -48,7 +49,7 @@ BooleanFlag IsBoolArg(const std::string& argument,
   // Validate it is part of the set
   std::string result_name(name);
   std::string_view new_name = result_name;
-  if (result_name.length() == 0) {
+  if (result_name.empty()) {
     return {false, false, ""};
   }
   if (flag_set.find(result_name) != flag_set.end()) {
