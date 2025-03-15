@@ -29,7 +29,7 @@
 #include <host/commands/kernel_log_monitor/utils.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/frontend/adb_connector/adb_connection_maintainer.h"
+#include "cuttlefish/host/frontend/adb_connector/adb_connection_maintainer.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
 
