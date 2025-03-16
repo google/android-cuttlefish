@@ -109,6 +109,6 @@ fi
 
 
 %changelog
-* Thu Jul 11 2024 Martin Zeitler <?>
+* Thu Jul 11 2024 Martin Zeitler <syslogic@users.noreply.github.com>
 - Initial version.
 
