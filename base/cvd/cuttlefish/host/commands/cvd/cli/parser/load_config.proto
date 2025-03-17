@@ -127,6 +127,8 @@ message Vm {
 
 message Crosvm {
   optional bool enable_sandbox = 1;
+  optional bool simple_media_device = 2;
+  optional string v4l2_proxy = 3;
 }
 
 message Gem5 {}

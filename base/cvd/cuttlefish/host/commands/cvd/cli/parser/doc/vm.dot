@@ -25,6 +25,8 @@ graph {
             crosvm--crosvm_binary_dir
             crosvm--seccomp_policy_dir
             crosvm--enable_sandbox
+            crosvm--simple_media_device
+            crosvm--v4l2_proxy
         vm_manager--qemu
             qemu--qemu_binary_dir
         vm_manager--gem5
