@@ -18,5 +18,5 @@ set -x
 set -o errexit
 
 sudo apt update
-sudo apt install -t bookworm-security -y linux-image-cloud-amd64
+sudo apt install -t bookworm -y linux-image-cloud-amd64
 sudo reboot
