@@ -51,7 +51,6 @@ cc_library {
         "libcuttlefish_wayland_server",
         "libcuttlefish_webrtc_common",
         "libcvd_gnss_grpc_proxy",
-        "libdrm",
         "libevent",
         "libffi",
         "libgflags",

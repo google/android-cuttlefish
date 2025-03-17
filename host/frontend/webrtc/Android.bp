@@ -125,7 +125,6 @@ cc_binary_host {
         "libcuttlefish_webrtc_common",
         "libcuttlefish_webrtc_device",
         "libcvd_gnss_grpc_proxy",
-        "libdrm",
         "libevent",
         "libffi",
         "libft2.nodep",
