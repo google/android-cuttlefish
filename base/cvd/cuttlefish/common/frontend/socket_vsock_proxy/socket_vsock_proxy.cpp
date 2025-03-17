@@ -47,22 +47,22 @@ DEFINE_string(label, "socket_vsock_proxy", "Label which is used only for logging
                                            "Log messages will look like [label] message");
 DEFINE_string(server_type, "", "The type of server to host, `vsock` or `tcp`.");
 DEFINE_string(client_type, "", "The type of server to host, `vsock` or `tcp`.");
-DEFINE_uint32(server_tcp_port, 0, "Server TCP port");
+DEFINE_int32(server_tcp_port, 0, "Server TCP port");
 DEFINE_string(client_tcp_host, "localhost", "Client TCP host (default localhost)");
-DEFINE_uint32(client_tcp_port, 0, "Client TCP port");
-DEFINE_uint32(server_vsock_port, 0, "vsock port");
-DEFINE_uint32(server_vsock_id, 0, "Vsock cid which server listens to");
-DEFINE_uint32(client_vsock_id, 0, "Vsock cid to initiate connections to");
-DEFINE_uint32(client_vsock_port, 0, "Vsock port to initiate connections to");
+DEFINE_int32(client_tcp_port, 0, "Client TCP port");
+DEFINE_int32(server_vsock_port, 0, "vsock port");
+DEFINE_int32(server_vsock_id, 0, "Vsock cid which server listens to");
+DEFINE_int32(client_vsock_id, 0, "Vsock cid to initiate connections to");
+DEFINE_int32(client_vsock_port, 0, "Vsock port to initiate connections to");
 DEFINE_int32(server_fd, -1, "A file descriptor. If set the passed file descriptor will be used as "
                             "the server and the corresponding port flag will be ignored");
 
-DEFINE_uint32(events_fd, -1, "A file descriptor. If set it will listen for the events "
+DEFINE_int32(events_fd, -1, "A file descriptor. If set it will listen for the events "
                              "to start / stop proxying. This option can be used only "
                              "if start_event_id is provided (stop_event_id is optional)");
-DEFINE_uint32(start_event_id, -1, "Kernel event id (cuttlefish::monitor::Event from "
+DEFINE_int32(start_event_id, -1, "Kernel event id (cuttlefish::monitor::Event from "
                                   "kernel_log_server.h) that we will listen to start proxy");
-DEFINE_uint32(stop_event_id, -1, "Kernel event id (cuttlefish::monitor::Event from "
+DEFINE_int32(stop_event_id, -1, "Kernel event id (cuttlefish::monitor::Event from "
                                   "kernel_log_server.h) that we will listen to stop proxy");
 #ifdef CUTTLEFISH_HOST
 DEFINE_bool(restore, false,

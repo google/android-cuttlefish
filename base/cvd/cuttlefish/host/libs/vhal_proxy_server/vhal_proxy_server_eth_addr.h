@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <string_view>
+
 namespace cuttlefish::vhal_proxy_server {
 
 // Host-side VHAL GRPC server ethernet address.

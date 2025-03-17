@@ -118,15 +118,15 @@ int TcpConnectorMain(int argc, char** argv) {
 
   auto guest_to_host = std::thread([&]() {
     while (true) {
-      char buf[FLAGS_buffer_size];
-      auto read = fifo_in->Read(buf, sizeof(buf));
+      std::vector<char> buf(FLAGS_buffer_size, 0);
+      auto read = fifo_in->Read(buf.data(), buf.size());
       if (read < 0) {
         LOG(WARNING) << "Error reading from guest: " << fifo_in->StrError();
         sleep(1);
         continue;
       }
-      DumpPackets("Read from FIFO", buf, read);
-      while (WriteAll(sock, buf, read) == -1) {
+      DumpPackets("Read from FIFO", buf.data(), read);
+      while (WriteAll(sock, buf.data(), read) == -1) {
         LOG(WARNING) << "Failed to write to host socket (will retry): "
                      << sock->StrError();
         // Wait for the host process to be ready
@@ -138,9 +138,9 @@ int TcpConnectorMain(int argc, char** argv) {
 
   auto host_to_guest = std::thread([&]() {
     while (true) {
-      char buf[FLAGS_buffer_size];
-      auto read = sock->Read(buf, sizeof(buf));
-      DumpPackets("Read from socket", buf, read);
+      std::vector<char> buf(FLAGS_buffer_size, 0);
+      auto read = sock->Read(buf.data(), buf.size());
+      DumpPackets("Read from socket", buf.data(), read);
       if (read == -1) {
         LOG(WARNING) << "Failed to read from host socket (will retry): "
                      << sock->StrError();
@@ -149,7 +149,7 @@ int TcpConnectorMain(int argc, char** argv) {
         sock = OpenSocket(FLAGS_data_port);
         continue;
       }
-      auto wrote = WriteAll(fifo_out, buf, read);
+      auto wrote = WriteAll(fifo_out, buf.data(), read);
       if (wrote < 0) {
         LOG(WARNING) << "Failed to write to guest: " << fifo_out->StrError();
         sleep(1);
