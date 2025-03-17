@@ -306,7 +306,7 @@ static constexpr std::string_view kInstallDir = "/usr/lib/cuttlefish-common/bin"
 Result<void> FetchHostPackage(
     BuildApi& build_api, const Build& build, const std::string& target_dir,
     const bool keep_archives,
-    const std::vector<std::string>& debian_package_executables,
+    std::vector<std::string> debian_package_executables,
     FetchTracer::Trace trace) {
   LOG(INFO) << "Preparing host package for " << build;
   // This function is called asynchronously, so it may take a while to start.
@@ -327,6 +327,15 @@ Result<void> FetchHostPackage(
   std::string self_path;
   CF_EXPECT(android::base::Readlink("/proc/self/exe", &self_path));
   bool is_installed_cvd = self_path == fmt::format("{}/cvd", kInstallDir);
+
+  std::string sub_file = target_dir + "/etc/debian_substitution_marker";
+  if (debian_package_executables.empty() && FileExists(sub_file)) {
+    std::string sub_file_contents;
+    CF_EXPECTF(android::base::ReadFileToString(sub_file, &sub_file_contents),
+               "failed to read '{}'", sub_file);
+    sub_file_contents = android::base::Trim(sub_file_contents);
+    debian_package_executables = android::base::Tokenize(sub_file_contents, "\n");
+  }
 
   std::string runfiles_error;
   std::unique_ptr<Runfiles> runfiles;
