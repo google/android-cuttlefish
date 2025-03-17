@@ -172,7 +172,7 @@ class NetsimServer : public CommandSource {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
 
-  Result<void> ResultSetup() {
+  Result<void> ResultSetup() override {
     auto netsimd = HostBinaryPath("netsimd");
     CF_EXPECT(FileExists(netsimd),
               "Failed to find netsimd binary: " << netsimd);

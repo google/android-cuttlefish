@@ -42,6 +42,7 @@ cc_library(
     hdrs = ["host_tool_target.h"],
     strip_include_prefix = "//cuttlefish",
     deps = [
+        "//:libbuildversion",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/utils",
@@ -60,7 +61,6 @@ clang_tidy_test(
 cc_library(
     name = "leaf_commands",
     srcs = [
-        #"//:build_version_header",
         "acloud_common.cpp",
         "acloud_mixsuperimage.cpp",
         "acloud_translator.cpp",

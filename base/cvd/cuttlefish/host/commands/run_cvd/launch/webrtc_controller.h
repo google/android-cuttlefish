@@ -22,8 +22,8 @@
 #include "common/libs/utils/result.h"
 #include "host/libs/config/feature.h"
 
-#include "host/frontend/webrtc/webrtc_command_channel.h"
-#include "webrtc_commands.pb.h"
+#include "cuttlefish/host/frontend/webrtc/webrtc_command_channel.h"
+#include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
 
 namespace cuttlefish {
 

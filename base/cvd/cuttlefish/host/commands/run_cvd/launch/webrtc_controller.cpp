@@ -24,7 +24,7 @@
 #include "common/libs/utils/result.h"
 #include "google/rpc/code.pb.h"
 #include "host/commands/run_cvd/launch/launch.h"
-#include "webrtc_commands.pb.h"
+#include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
 
 namespace cuttlefish {
 namespace {

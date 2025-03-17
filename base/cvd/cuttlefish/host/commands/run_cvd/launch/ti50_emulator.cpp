@@ -69,7 +69,7 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
   bool Enabled() const override { return !instance_.ti50_emulator().empty(); }
 
   // StatusCheckCommandSource
-  Result<void> WaitForAvailability() const {
+  Result<void> WaitForAvailability() const override {
     if (!Enabled()) {
       return {};
     }
