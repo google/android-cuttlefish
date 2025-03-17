@@ -34,7 +34,7 @@
 // One NULL needed at the end of the env.
 #define NULL_PAD_LENGTH (1)
 
-DEFINE_uint32(env_size, 4096, "file size of resulting env");
+DEFINE_int32(env_size, 4096, "file size of resulting env");
 DEFINE_string(output_path, "", "output file path");
 DEFINE_string(input_path, "", "input file path");
 namespace cuttlefish {

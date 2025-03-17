@@ -5,5 +5,5 @@ host/packages/cuttlefish-base/* /
 cvd/bazel-bin/cuttlefish/host/commands/assemble_cvd/assemble_cvd /usr/lib/cuttlefish-common/bin/
 cvd/bazel-bin/cuttlefish/host/commands/cvd/cvd /usr/lib/cuttlefish-common/bin/
 cvd/bazel-bin/cuttlefish/host/commands/logcat_receiver/logcat_receiver /usr/lib/cuttlefish-common/bin/logcat_receiver
-cvd/cuttlefish/host/commands/extract-ikconfig/extract-ikconfig.sh /usr/lib/cuttlefish-common/bin/
-cvd/cuttlefish/host/commands/extract-vmlinux/extract-vmlinux.sh /usr/lib/cuttlefish-common/bin/
+cvd/cuttlefish/host/commands/extract_ikconfig/extract-ikconfig.sh /usr/lib/cuttlefish-common/bin/
+cvd/cuttlefish/host/commands/extract_vmlinux/extract-vmlinux.sh /usr/lib/cuttlefish-common/bin/

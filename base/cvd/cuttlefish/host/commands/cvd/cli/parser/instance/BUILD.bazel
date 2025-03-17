@@ -2,16 +2,6 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-proto_library(
-    name = "launch_cvd_proto",
-    srcs = ["launch_cvd.proto"],
-)
-
-cc_proto_library(
-    name = "launch_cvd_cc_proto",
-    deps = [":launch_cvd_proto"],
-)
-
 cc_library(
     name = "instance",
     srcs = [
@@ -33,9 +23,9 @@ cc_library(
         "cf_vm_configs.h",
     ],
     deps = [
-        ":launch_cvd_cc_proto",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
         "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
