@@ -184,3 +184,9 @@ java_test_host {
 
     test_suites: ["general-tests"],
 }
+
+prebuilt_etc_host {
+    name: "debian_substitution_marker",
+    filename: "debian_substitution_marker",
+    src: "debian_substitution_marker",
+}
