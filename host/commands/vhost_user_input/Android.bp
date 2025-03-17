@@ -26,8 +26,8 @@ rust_binary_host {
         "libanyhow",
         "libclap",
         "libclap_builder",
-        "liblog_rust",
         "libenv_logger",
+        "liblog_rust",
         "librustutils",
         "libserde",
         "libserde_json",
@@ -58,6 +58,13 @@ prebuilt_etc_host {
     name: "default_mouse_spec",
     src: "device_specs/mouse.json",
     filename: "mouse.json",
+    sub_dir: "default_input_devices",
+}
+
+prebuilt_etc_host {
+    name: "default_gamepad_spec",
+    src: "device_specs/gamepad.json",
+    filename: "gamepad.json",
     sub_dir: "default_input_devices",
 }
 

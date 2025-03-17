@@ -750,6 +750,11 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     guest_config.mouse_supported =
         res_mouse_support.ok() && res_mouse_support.value() == "supported";
 
+    auto res_gamepad_support =
+        GetAndroidInfoConfig(instance_android_info_txt, "gamepad");
+    guest_config.gamepad_supported =
+        res_gamepad_support.ok() && res_gamepad_support.value() == "supported";
+
     auto res_custom_keyboard_config =
         GetAndroidInfoConfig(instance_android_info_txt, "custom_keyboard");
     if (res_custom_keyboard_config.ok()) {
@@ -1546,6 +1551,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_use_pmem(use_pmem_vec[instance_index]);
     instance.set_bootconfig_supported(guest_configs[instance_index].bootconfig_supported);
     instance.set_enable_mouse(guest_configs[instance_index].mouse_supported);
+    instance.set_enable_gamepad(
+        guest_configs[instance_index].gamepad_supported);
     if (guest_configs[instance_index].custom_keyboard_config.has_value()) {
       instance.set_custom_keyboard_config(
           guest_configs[instance_index].custom_keyboard_config.value());

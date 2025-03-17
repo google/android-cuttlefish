@@ -216,6 +216,7 @@ cvd_host_webrtc_assets = [
     "webrtc_client.html",
     "webrtc_controls.css",
     "webrtc_controls.js",
+    "webrtc_gamepad.js",
     "webrtc_index.css",
     "webrtc_index.html",
     "webrtc_index.js",
@@ -482,6 +483,7 @@ cvd_host_lavapipe_files = [
 ]
 
 cvd_default_input_device_specs = [
+    "default_gamepad_spec",
     "default_keyboard_spec",
     "default_mouse_spec",
     "default_multi_touchpad_spec_template",

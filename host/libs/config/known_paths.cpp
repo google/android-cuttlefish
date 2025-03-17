@@ -50,6 +50,10 @@ std::string DefaultMouseSpec() {
   return DefaultHostArtifactsPath("etc/default_input_devices/mouse.json");
 }
 
+std::string DefaultGamepadSpec() {
+  return DefaultHostArtifactsPath("etc/default_input_devices/gamepad.json");
+}
+
 std::string DefaultMultiTouchpadSpecTemplate() {
   return DefaultHostArtifactsPath(
       "etc/default_input_devices/multi_touchpad_template.json");

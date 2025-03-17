@@ -28,6 +28,7 @@ std::string ConsoleForwarderBinary();
 std::string ControlEnvProxyServerBinary();
 std::string DefaultKeyboardSpec();
 std::string DefaultMouseSpec();
+std::string DefaultGamepadSpec();
 std::string DefaultMultiTouchpadSpecTemplate();
 std::string DefaultMultiTouchscreenSpecTemplate();
 std::string DefaultRotaryDeviceSpec();

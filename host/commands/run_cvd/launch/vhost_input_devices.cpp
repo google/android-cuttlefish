@@ -135,6 +135,16 @@ class VhostInputDevices : public CommandSource,
       commands.emplace_back(std::move(mouse_log_tee));
     }
 
+    if (instance_.enable_gamepad()) {
+      Command gamepad_cmd =
+          NewVhostUserInputCommand(gamepad_sockets_, DefaultGamepadSpec());
+      Command gamepad_log_tee = CF_EXPECT(
+          log_tee_.CreateLogTee(gamepad_cmd, "vhost_user_gamepad", kStdErr),
+          "Failed to create log tee command for gamepad device");
+      commands.emplace_back(std::move(gamepad_cmd));
+      commands.emplace_back(std::move(gamepad_log_tee));
+    }
+
     std::string keyboard_spec =
         instance_.custom_keyboard_config().value_or(DefaultKeyboardSpec());
     Command keyboard_cmd =
@@ -221,6 +231,10 @@ class VhostInputDevices : public CommandSource,
     return mouse_sockets_.streamer_end;
   }
 
+  SharedFD GamepadConnection() const override {
+    return gamepad_sockets_.streamer_end;
+  }
+
   SharedFD KeyboardConnection() const override {
     return keyboard_sockets_.streamer_end;
   }
@@ -260,6 +274,11 @@ class VhostInputDevices : public CommandSource,
           CF_EXPECT(NewDeviceSockets(instance_.mouse_socket_path()),
                     "Failed to setup sockets for mouse device");
     }
+    if (instance_.enable_gamepad()) {
+      gamepad_sockets_ =
+          CF_EXPECT(NewDeviceSockets(instance_.gamepad_socket_path()),
+                    "Failed to setup sockets for gamepad device");
+    }
     keyboard_sockets_ =
         CF_EXPECT(NewDeviceSockets(instance_.keyboard_socket_path()),
                   "Failed to setup sockets for keyboard device");
@@ -286,6 +305,7 @@ class VhostInputDevices : public CommandSource,
   LogTeeCreator& log_tee_;
   DeviceSockets rotary_sockets_;
   DeviceSockets mouse_sockets_;
+  DeviceSockets gamepad_sockets_;
   DeviceSockets keyboard_sockets_;
   DeviceSockets switches_sockets_;
   std::vector<DeviceSockets> touchscreen_sockets_;
