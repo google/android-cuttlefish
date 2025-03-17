@@ -32,7 +32,7 @@
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/web/http_client/http_client.h"
-#include "openwrt_control.grpc.pb.h"
+#include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.grpc.pb.h"
 
 using android::base::StartsWith;
 using google::protobuf::Empty;
