@@ -17,7 +17,7 @@
 #pragma once
 
 #include "common/libs/transport/channel_sharedfd.h"
-#include "webrtc_commands.pb.h"
+#include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
 
 namespace cuttlefish {
 
