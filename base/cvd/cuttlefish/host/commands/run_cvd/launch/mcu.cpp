@@ -61,7 +61,7 @@ class Mcu : public vm_manager::VmmDependencyCommand {
     auto start = instance_.mcu()["start-cmd"];
     CF_EXPECT(start.type() == Json::arrayValue,
               "mcu: config: start-cmd: array expected");
-    CF_EXPECT(start.size() > 0, "mcu: config: empty start-cmd");
+    CF_EXPECT(!start.empty(), "mcu: config: empty start-cmd");
     Command command(android::base::StringReplace(start[0].asString(), "${bin}",
                                                  HostBinaryPath(""), true));
 
@@ -86,7 +86,7 @@ class Mcu : public vm_manager::VmmDependencyCommand {
   }
 
   // StatusCheckCommandSource
-  Result<void> WaitForAvailability() const {
+  Result<void> WaitForAvailability() const override {
     if (!Enabled()) {
       return {};
     }

@@ -57,7 +57,7 @@ Result<std::vector<MonitorCommand>> VhostDeviceVsock::Commands() {
 
   for (auto i : instances) {
     std::string isolation_groups = "";
-    if (i.vsock_guest_group().length()) {
+    if (!i.vsock_guest_group().empty()) {
       isolation_groups = ",groups=" + i.vsock_guest_group();
     }
 

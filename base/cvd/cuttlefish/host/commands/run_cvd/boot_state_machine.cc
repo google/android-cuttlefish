@@ -34,6 +34,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.grpc.pb.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/commands/kernel_log_monitor/utils.h"
@@ -41,7 +42,6 @@
 #include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/feature.h"
-#include "openwrt_control.grpc.pb.h"
 
 using grpc::ClientContext;
 using openwrtcontrolserver::LuciRpcReply;
@@ -266,7 +266,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
   std::string Name() const override { return "CvdBootStateMachine"; }
 
  private:
-  std::unordered_set<SetupFeature*> Dependencies() const {
+  std::unordered_set<SetupFeature*> Dependencies() const override {
     return {
         static_cast<SetupFeature*>(&process_leader_),
         static_cast<SetupFeature*>(&kernel_log_pipe_provider_),
@@ -508,7 +508,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
         // Fully parse the message and throw it away.
         Result<std::optional<monitor::ReadEventResult>> read_result =
             monitor::ReadEvent(boot_events_pipe);
-        if (!read_result) {
+        if (!read_result.ok()) {
           return;
         }
       }
@@ -519,7 +519,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
   bool OnBootEvtReceived(SharedFD boot_events_pipe) {
     Result<std::optional<monitor::ReadEventResult>> read_result =
         monitor::ReadEvent(boot_events_pipe);
-    if (!read_result) {
+    if (!read_result.ok()) {
       LOG(ERROR) << "Failed to read a complete kernel log boot event: "
                  << read_result.error().FormatForEnv();
       state_ |= kGuestBootFailed;

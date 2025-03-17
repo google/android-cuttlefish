@@ -32,7 +32,7 @@
 #include "host/libs/command_util/util.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
-#include "run_cvd.pb.h"
+#include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {
@@ -99,7 +99,7 @@ Result<void> ServerLoopImpl::SuspendGuest() {
       ap_vm_name == cuttlefish::kApName) {
     const auto openwrt_sock =
         GetSocketPath(ap_vm_name, vm_name_to_control_sock_);
-    if (openwrt_sock == "") {
+    if (openwrt_sock.empty()) {
       return CF_ERR("The vm_manager " + ap_vm_name + " is not supported yet");
     }
     CF_EXPECT(SuspendCrosvm(openwrt_sock),
@@ -109,7 +109,7 @@ Result<void> ServerLoopImpl::SuspendGuest() {
   if (main_vmm == VmmMode::kCrosvm) {
     const auto& vm_sock =
         GetSocketPath(ToString(main_vmm), vm_name_to_control_sock_);
-    if (vm_sock == "") {
+    if (vm_sock.empty()) {
       return CF_ERR("The vm_manager " << main_vmm << " is not supported yet");
     }
     return SuspendCrosvm(vm_sock);
@@ -125,7 +125,7 @@ Result<void> ServerLoopImpl::ResumeGuest() {
       ap_vm_name == cuttlefish::kApName) {
     const auto& openwrt_sock =
         GetSocketPath(ap_vm_name, vm_name_to_control_sock_);
-    if (openwrt_sock == "") {
+    if (openwrt_sock.empty()) {
       return CF_ERR("The vm_manager " + ap_vm_name + " is not supported yet");
     }
     CF_EXPECT(ResumeCrosvm(openwrt_sock),
@@ -135,7 +135,7 @@ Result<void> ServerLoopImpl::ResumeGuest() {
   if (main_vmm == VmmMode::kCrosvm) {
     const auto& vm_sock =
         GetSocketPath(ToString(main_vmm), vm_name_to_control_sock_);
-    if (vm_sock == "") {
+    if (vm_sock.empty()) {
       return CF_ERR("The vm_manager " << main_vmm << " is not supported yet");
     }
     return ResumeCrosvm(vm_sock);
@@ -207,7 +207,7 @@ Result<void> ServerLoopImpl::TakeCrosvmGuestSnapshot(
       ap_vm_name == cuttlefish::kApName) {
     const auto& openwrt_sock =
         GetSocketPath(ap_vm_name, vm_name_to_control_sock_);
-    if (openwrt_sock == "") {
+    if (openwrt_sock.empty()) {
       return CF_ERR("The vm_manager " + ap_vm_name + " is not supported yet");
     }
     std::vector<std::string> openwrt_crosvm_command_args{

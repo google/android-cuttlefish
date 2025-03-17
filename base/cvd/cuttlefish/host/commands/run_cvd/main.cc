@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <build/version.h>
-#include <fruit/fruit.h>
-#include <gflags/gflags.h>
 #include <unistd.h>
 
 #include <fstream>
@@ -27,6 +22,12 @@
 #include <utility>
 #include <vector>
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <fruit/fruit.h>
+#include <gflags/gflags.h>
+
+#include "build/version.h"
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
