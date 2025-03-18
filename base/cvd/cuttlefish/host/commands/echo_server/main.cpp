@@ -26,7 +26,7 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
-#include "echo.grpc.pb.h"
+#include "cuttlefish/host/commands/echo_server/echo.grpc.pb.h"
 
 using echoserver::EchoReply;
 using echoserver::EchoRequest;
