@@ -16,7 +16,7 @@
 
 #include <log/log.h>
 #include "Readback.h"
-#include "src/utils/hwc_tester.h"
+#include "hwc_tester.h"
 
 /*
  * A simple binary that takes over the HWC through its AIDL Client Wrappers and
@@ -27,7 +27,7 @@ static volatile bool keep_running = true;
 void signal_handler(int) { keep_running = false; }
 
 int main() {
-  cuttlefish::HwcTester tester;
+  hcct::HwcTester tester;
 
   // Get all available displays
   auto display_ids = tester.GetAllDisplayIds();

@@ -16,63 +16,17 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_defaults {
-    name: "hwc_deps",
-    defaults: [
-        "VtsHalTargetTestDefaults",
-        "android.hardware.graphics.common-ndk_static",
-        "android.hardware.graphics.composer3-ndk_static",
-        "librenderengine_deps",
-        "use_libaidlvintf_gtest_helper_static",
-    ],
-    shared_libs: [
-        "libandroid",
-        "libbinder",
-        "libbinder_ndk",
-        "libc++",
-        "liblog",
-        "libnativehelper",
-        "libui",
-    ],
-    static_libs: [
-        "android.hardware.common-V2-ndk",
-        "android.hardware.common.fmq-V1-ndk",
-        "android.hardware.graphics.common@1.2",
-        "libaidlcommonsupport",
-        "libarect",
-        "libbase",
-        "libbase_ndk",
-        "libfmq",
-        "libgtest",
-        "libgtest_main",
-        "libhwc_aidl_test",
-        "librenderengine",
-        "libsync",
-    ],
-    header_libs: [
-        "android.hardware.graphics.composer3-command-buffer",
-    ],
-}
-
-cc_library_static {
-    name: "hwc_tester",
-    defaults: ["hwc_deps"],
-    srcs: [
-        "./src/utils/hwc_tester.cpp",
-    ],
-    export_include_dirs: [
-        "./src/utils",
-    ],
-}
-
 cc_binary {
     name: "simply_red",
     defaults: ["hwc_deps"],
     srcs: [
-        "./src/apps/simply_red.cpp",
+        "./src/simply_red.cpp",
     ],
     static_libs: [
         "hwc_tester",
+    ],
+    include_dirs: [
+        "platform_testing/tests/display/hcct/utils",
     ],
     compile_multilib: "both",
     multilib: {
