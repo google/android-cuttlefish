@@ -27,13 +27,8 @@
    sudo apt install -y git devscripts config-package-dev debhelper-compat golang curl
    git clone https://github.com/google/android-cuttlefish
    cd android-cuttlefish
-   sudo apt install devscripts equivs
-   for dir in base frontend; do
-     pushd $dir
-     sudo mk-build-deps -i
-     dpkg-buildpackage -uc -us
-     popd
-   done
+   # Install build dependencies and build debian packages
+   ./tools/buildutils/build_packages.sh
    sudo dpkg -i ./cuttlefish-base_*_*64.deb || sudo apt-get install -f
    sudo dpkg -i ./cuttlefish-user_*_*64.deb || sudo apt-get install -f
    sudo usermod -aG kvm,cvdnetwork,render $USER
