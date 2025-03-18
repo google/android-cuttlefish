@@ -1,6 +1,10 @@
 load("//:build_variables.bzl", "COPTS")
 # load("//tools/lint:linters.bzl", "clang_tidy_test")
 
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
 proto_library(
     name = "webrtc_commands_proto",
     srcs = ["webrtc_commands.proto"],
