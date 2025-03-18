@@ -1,0 +1,77 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+proto_library(
+    name = "casimir_control_server_proto",
+    srcs = ["casimir_control.proto"],
+    deps = ["@protobuf//:empty_proto"],
+)
+
+cc_proto_library(
+    name = "casimir_control_server_cc_proto",
+    deps = [":casimir_control_server_proto"],
+)
+
+cc_grpc_library(
+    name = "libcasimir_control_server",
+    srcs = [":casimir_control_server_proto"],
+    deps = [
+        ":casimir_control_server_cc_proto",
+        "@grpc//:grpc++",
+    ],
+    grpc_only = True,
+)
+
+cc_library(
+    name = "libcasimir",
+    srcs = [
+        "casimir_controller.cpp",
+        "crc.cpp",
+        "hex.cpp",
+    ],
+    hdrs = [
+        "casimir_controller.h",
+        "crc.h",
+        "hex.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        ":libcasimir_control_server",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+    ],
+)
+
+cc_binary(
+    name = "casimir_control_server",
+    srcs = [
+        "main.cpp",
+    ],
+    copts = COPTS,
+    deps = [
+        ":libcasimir",
+        ":libcasimir_control_server",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@gflags",
+        "@grpc//:grpc",
+        "@grpc//:grpc++",
+        "@grpc//:grpc++_reflection",
+    ],
+)
+
+clang_tidy_test(
+    name = "casimir_control_server_clang_tidy",
+    srcs = [":casimir_control_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

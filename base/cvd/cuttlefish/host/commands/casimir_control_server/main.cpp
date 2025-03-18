@@ -24,7 +24,7 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
-#include "casimir_control.grpc.pb.h"
+#include "cuttlefish/host/commands/casimir_control_server/casimir_control.grpc.pb.h"
 
 #include "common/libs/utils/result.h"
 #include "host/commands/casimir_control_server/casimir_controller.h"
