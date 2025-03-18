@@ -492,6 +492,10 @@ cvd_default_input_device_specs = [
     "default_switches_spec",
 ]
 
+cvd_debian_marker = [
+    "debian_substitution_marker",
+]
+
 cvd_host_package_customization {
     name: "cvd-host_package",
     deps: cvd_host_tools +
@@ -510,6 +514,7 @@ cvd_host_package_customization {
                 cvd_host_lavapipe_files +
                 cvd_openwrt_images +
                 cvd_host_netsim_gui_assets +
+                cvd_debian_marker +
                 automotive_proxy_config +
                 automotive_vhal_prop_configs,
         },
