@@ -39,7 +39,6 @@ cc_library {
         "liblog",
     ],
     static_libs: [
-        "libdrm",
         "libffi",
         "libwayland_crosvm_gpu_display_extension_server_protocols",
         "libwayland_extension_server_protocols",
