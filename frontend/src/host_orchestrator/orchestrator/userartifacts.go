@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"archive/zip"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,7 +26,9 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/gofrs/flock"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	hoexec "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -50,6 +53,10 @@ type UserArtifactsManager interface {
 	UserArtifactsDirResolver
 	// Creates a new directory for uploading user artifacts in the future.
 	NewDir(dir string) (*apiv1.UploadDirectory, error)
+	// Acquire lock on the directory for preventing races.
+	LockFile(dir, name string) (*apiv1.LockFileResponse, error)
+	// Release lock on the directory locked for preventing races.
+	UnlockFile(dir, name string) (*apiv1.LockFileResponse, error)
 	// List existing directories
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
 	// Update artifact with the passed chunk.
@@ -69,17 +76,30 @@ type UserArtifactsManagerOpts struct {
 // An implementation of the UserArtifactsManager interface.
 type UserArtifactsManagerImpl struct {
 	UserArtifactsManagerOpts
+
+	locks map[string]*flock.Flock
 }
 
 // Creates a new instance of UserArtifactsManagerImpl.
 func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) *UserArtifactsManagerImpl {
 	return &UserArtifactsManagerImpl{
 		UserArtifactsManagerOpts: opts,
+		locks: make(map[string]*flock.Flock),
 	}
 }
 
+const (
+	lockDir = ".lock"
+)
+
 func (m *UserArtifactsManagerImpl) NewDir(dir string) (*apiv1.UploadDirectory, error) {
+	if dir == lockDir {
+		return nil, fmt.Errorf("invalid dir name %q", dir)
+	}
 	if err := createDir(m.RootDir); err != nil {
+		return nil, err
+	}
+	if err := createDir(filepath.Join(m.RootDir, lockDir)); err != nil {
 		return nil, err
 	}
 	dir, err := createNewUADir(m.RootDir, dir, m.Owner)
@@ -88,6 +108,64 @@ func (m *UserArtifactsManagerImpl) NewDir(dir string) (*apiv1.UploadDirectory, e
 	}
 	log.Println("created new user artifact directory", dir)
 	return &apiv1.UploadDirectory{Name: filepath.Base(dir)}, nil
+}
+
+func (m *UserArtifactsManagerImpl) lock(dir, name, task string) (bool, error) {
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	lockDirPath := filepath.Join(m.RootDir, lockDir)
+	lockPath := filepath.Join(lockDirPath, fmt.Sprintf("%s-%s-%s.lock", dir, name, task))
+	m.locks[lockPath] = flock.New(lockPath)
+	locked, err := m.locks[lockPath].TryLockContext(ctx, time.Second)
+	if err != nil {
+		return false, fmt.Errorf("failed acquiring lock at %q: %w", lockPath, err)
+	}
+	if !locked {
+		return false, fmt.Errorf("failed acquiring lock at %q", lockPath)
+	}
+
+	completedPath := filepath.Join(lockDirPath, fmt.Sprintf("%s-%s-%s.completed", dir, name, task))
+	exists, err := fileExist(completedPath)
+	if err != nil {
+		return false, fmt.Errorf("failed to check existence of file at %q: %w", completedPath, err)
+	}
+	return exists, nil
+}
+
+func (m *UserArtifactsManagerImpl) unlock(dir, name, task string) error {
+	lockDirPath := filepath.Join(m.RootDir, lockDir)
+	lockPath := filepath.Join(lockDirPath, fmt.Sprintf("%s-%s-%s.lock", dir, name, task))
+	if m.locks[lockPath] == nil {
+		return fmt.Errorf("lock at %q wasn't defined", lockPath)
+	}
+	if !m.locks[lockPath].Locked() {
+		return fmt.Errorf("lock at %q was already released", lockPath)
+	}
+	completedPath := filepath.Join(lockDirPath, fmt.Sprintf("%s-%s-%s.completed", dir, name, task))
+	file, err := os.Create(completedPath)
+	if err != nil {
+		return fmt.Errorf("failed to create file at %q: %w", completedPath, err)
+	}
+	defer file.Close()
+	m.locks[lockPath].Unlock()
+	m.locks[lockPath] = nil
+	return nil
+}
+
+func (m *UserArtifactsManagerImpl) LockFile(dir, name string) (*apiv1.LockFileResponse, error) {
+	completed, err := m.lock(dir, name, "upload")
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.LockFileResponse{UploadCompleted: completed}, nil
+}
+
+func (m *UserArtifactsManagerImpl) UnlockFile(dir, name string) (*apiv1.LockFileResponse, error) {
+	err := m.unlock(dir, name, "upload")
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.LockFileResponse{UploadCompleted: true}, nil
 }
 
 func (m *UserArtifactsManagerImpl) ListDirs() (*apiv1.ListUploadDirectoriesResponse, error) {
@@ -104,7 +182,7 @@ func (m *UserArtifactsManagerImpl) ListDirs() (*apiv1.ListUploadDirectoriesRespo
 	}
 	dirs := make([]*apiv1.UploadDirectory, 0)
 	for _, entry := range entries {
-		if entry.IsDir() {
+		if entry.IsDir() && entry.Name() != lockDir {
 			dirs = append(dirs, &apiv1.UploadDirectory{Name: entry.Name()})
 		}
 	}
@@ -152,30 +230,36 @@ func writeChunk(filename string, chunk UserArtifactChunk) error {
 }
 
 func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
-	dir = filepath.Join(m.RootDir, dir)
-	if ok, err := fileExist(dir); err != nil {
+	dirPath := filepath.Join(m.RootDir, dir)
+	if ok, err := fileExist(dirPath); err != nil {
 		return err
 	} else if !ok {
-		return operator.NewBadRequestError(fmt.Sprintf("directory %q does not exist", dir), nil)
+		return operator.NewBadRequestError(fmt.Sprintf("directory %q does not exist", dirPath), nil)
 	}
-	filename := filepath.Join(dir, name)
+	filename := filepath.Join(dirPath, name)
 	if ok, err := fileExist(filename); err != nil {
 		return err
 	} else if !ok {
 		return operator.NewBadRequestError(fmt.Sprintf("artifact %q does not exist", name), nil)
 	}
-	if strings.HasSuffix(filename, ".tar.gz") {
-		if err := Untar(dir, filename, m.Owner); err != nil {
-			return fmt.Errorf("failed extracting %q: %w", name, err)
-		}
-	} else if strings.HasSuffix(filename, ".zip") {
-		if err := Unzip(dir, filename, m.Owner); err != nil {
-			return fmt.Errorf("failed extracting %q: %w", name, err)
-		}
-	} else {
-		return operator.NewBadRequestError(fmt.Sprintf("unsupported extension: %q", name), nil)
+	completed, err := m.lock(dir, name, "extract")
+	if err != nil {
+		return err
 	}
-	return nil
+	if !completed {
+		if strings.HasSuffix(filename, ".tar.gz") {
+			if err := Untar(dirPath, filename, m.Owner); err != nil {
+				return fmt.Errorf("failed extracting %q: %w", name, err)
+			}
+		} else if strings.HasSuffix(filename, ".zip") {
+			if err := Unzip(dirPath, filename, m.Owner); err != nil {
+				return fmt.Errorf("failed extracting %q: %w", name, err)
+			}
+		} else {
+			return operator.NewBadRequestError(fmt.Sprintf("unsupported extension: %q", name), nil)
+		}
+	}
+	return m.unlock(dir, name, "extract")
 }
 
 func Untar(dst string, src string, owner *user.User) error {

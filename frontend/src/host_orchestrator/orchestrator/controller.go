@@ -106,6 +106,10 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&createUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/userartifacts/{dir}",
 		httpHandler(&createUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
+	router.Handle("/userartifacts/{dir}/{name}/:lock",
+		httpHandler(&lockUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
+	router.Handle("/userartifacts/{dir}/{name}/:unlock",
+		httpHandler(&unlockUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/userartifacts",
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/userartifacts/{name}",
@@ -509,6 +513,24 @@ type createUploadDirectoryHandler struct {
 func (h *createUploadDirectoryHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	return h.m.NewDir(vars["dir"])
+}
+
+type lockUploadDirectoryHandler struct {
+	m UserArtifactsManager
+}
+
+func (h *lockUploadDirectoryHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	return h.m.LockFile(vars["dir"], vars["name"])
+}
+
+type unlockUploadDirectoryHandler struct {
+	m UserArtifactsManager
+}
+
+func (h *unlockUploadDirectoryHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	return h.m.UnlockFile(vars["dir"], vars["name"])
 }
 
 type listUploadDirectoriesHandler struct {

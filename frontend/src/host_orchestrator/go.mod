@@ -11,6 +11,7 @@ require (
 )
 
 require (
+	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect

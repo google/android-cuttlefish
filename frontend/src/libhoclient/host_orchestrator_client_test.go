@@ -22,6 +22,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sync"
 	"testing"
 	"time"
@@ -63,16 +64,26 @@ func TestUploadFileSucceeds(t *testing.T) {
 		"xyzzy 2 of 3": {Content: []byte("ra")},
 		"xyzzy 3 of 3": {Content: []byte("ca")},
 	}
+	lockops := map[string]string{
+		"qux": "lock",
+		"waldo": "lock",
+		"xyzzy": "lock",
+	}
+	regex := regexp.MustCompile(fmt.Sprintf("^POST /userartifacts/%s/([^/]+)/:(lock|unlock)$", uploadDir))
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		defer mu.Unlock()
-		switch ep := r.Method + " " + r.URL.Path; ep {
-		case "PUT /userartifacts/" + uploadDir:
+		ep := r.Method + " " + r.URL.Path;
+		switch {
+		case ep == "PUT /userartifacts/" + uploadDir:
 			chunkNumber := r.PostFormValue("chunk_number")
 			chunkTotal := r.PostFormValue("chunk_total")
 			f, fheader, err := r.FormFile("file")
 			if err != nil {
 				t.Fatal(err)
+			}
+			if lockops[fheader.Filename] != "unlock" {
+				t.Fatalf("upload %q without lock", fheader.Filename)
 			}
 			expectedUploadKey := fmt.Sprintf("%s %s of %s", fheader.Filename, chunkNumber, chunkTotal)
 			val, ok := uploads[expectedUploadKey]
@@ -87,6 +98,19 @@ func TestUploadFileSucceeds(t *testing.T) {
 			}
 			if diff := cmp.Diff(val.Content, b); diff != "" {
 				t.Fatalf("chunk content mismatch %q (-want +got):\n%s", fheader.Filename, diff)
+			}
+			writeOK(w, struct{}{})
+		case regex.MatchString(ep):
+			matches := regex.FindStringSubmatch(ep)
+			name, task := matches[1], matches[2]
+			if lockops[name] != task {
+				t.Fatalf("unexpected operation %q with filename: %q", task, name)
+			}
+			switch task {
+			case "lock":
+				lockops[name] = "unlock"
+			case "unlock":
+				delete(lockops, name)
 			}
 			writeOK(w, struct{}{})
 		default:
@@ -116,6 +140,9 @@ func TestUploadFileSucceeds(t *testing.T) {
 	if len(uploads) != 0 {
 		t.Errorf("missing chunk uploads:  %v", uploads)
 	}
+	if len(lockops) != 0 {
+		t.Errorf("missing lock operations:  %v", lockops)
+	}
 }
 
 func TestUploadFileExponentialBackoff(t *testing.T) {
@@ -124,6 +151,10 @@ func TestUploadFileExponentialBackoff(t *testing.T) {
 	waldoFile := createTempFile(t, tempDir, "waldo", []byte("l"))
 	timestamps := make([]time.Time, 0)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "PUT" {
+			writeOK(w, struct{}{})
+			return
+		}
 		timestamps = append(timestamps, time.Now())
 		if len(timestamps) < 3 {
 			writeErr(w, 500)
@@ -162,6 +193,10 @@ func TestUploadFileExponentialBackoffReachedElapsedTime(t *testing.T) {
 	waldoFile := createTempFile(t, tempDir, "waldo", []byte("l"))
 	attempts := 0
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "PUT" {
+			writeOK(w, struct{}{})
+			return
+		}
 		attempts = attempts + 1
 		writeErr(w, 500)
 	}))

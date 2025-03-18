@@ -20,6 +20,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"time"
 
 	wclient "github.com/google/android-cuttlefish/frontend/src/libhoclient/webrtcclient"
@@ -504,13 +505,23 @@ func (c *HostOrchestratorServiceImpl) UploadFileWithOptions(uploadDir string, fi
 	if uploadOpts.BackOffOpts.MaxElapsedTime == 0 {
 		panic("MaxElapsedTime value cannot be zero")
 	}
-	uploader := &FilesUploader{
-		HTTPHelper:    c.HTTPHelper,
-		DumpOut:       c.HTTPHelper.Dumpster,
-		UploadDir:     uploadDir,
-		UploadOptions: uploadOpts,
+	lockRes := &hoapi.LockFileResponse{}
+	if err := c.HTTPHelper.NewPostRequest(fmt.Sprintf("/userartifacts/%s/%s/:lock", uploadDir, filepath.Base(filename)), nil).JSONResDo(lockRes); err != nil {
+		return err
 	}
-	return uploader.Upload([]string{filename})
+	if !lockRes.UploadCompleted {
+		uploader := &FilesUploader{
+			HTTPHelper:    c.HTTPHelper,
+			DumpOut:       c.HTTPHelper.Dumpster,
+			UploadDir:     uploadDir,
+			UploadOptions: uploadOpts,
+		}
+		if err := uploader.Upload([]string{filename}); err != nil {
+			return err
+		}
+	}
+	unlockRes := &hoapi.LockFileResponse{}
+	return c.HTTPHelper.NewPostRequest(fmt.Sprintf("/userartifacts/%s/%s/:unlock", uploadDir, filepath.Base(filename)), nil).JSONResDo(unlockRes)
 }
 
 func (c *HostOrchestratorServiceImpl) ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error) {
