@@ -27,8 +27,7 @@
 #include <json/json.h>
 
 #include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "control_env_proxy.grpc.pb.h"
+#include "cuttlefish/host/commands/control_env_proxy_server/control_env_proxy.grpc.pb.h"
 #include "host/libs/control_env/grpc_service_handler.h"
 
 using controlenvproxyserver::CallUnaryMethodReply;
