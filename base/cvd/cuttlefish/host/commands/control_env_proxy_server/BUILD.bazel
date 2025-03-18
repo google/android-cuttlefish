@@ -1,0 +1,52 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+proto_library(
+    name = "control_env_proxy_server_proto",
+    srcs = ["control_env_proxy.proto"],
+    deps = ["@protobuf//:empty_proto"],
+)
+
+cc_proto_library(
+    name = "control_env_proxy_server_cc_proto",
+    deps = [":control_env_proxy_server_proto"],
+)
+
+cc_grpc_library(
+    name = "libcontrol_env_proxy_server",
+    srcs = [":control_env_proxy_server_proto"],
+    deps = [
+        ":control_env_proxy_server_cc_proto",
+        "@grpc//:grpc++",
+    ],
+    grpc_only = True,
+)
+
+cc_binary(
+    name = "control_env_proxy_server",
+    srcs = [
+        "main.cpp",
+    ],
+    copts = COPTS,
+    deps = [
+        ":libcontrol_env_proxy_server",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/control_env",
+        "@gflags",
+        "@jsoncpp",
+        "@grpc//:grpc",
+        "@grpc//:grpc++",
+        "@grpc//:grpc++_reflection",
+    ],
+)
+
+clang_tidy_test(
+    name = "control_env_proxy_server_clang_tidy",
+    srcs = [":control_env_proxy_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
