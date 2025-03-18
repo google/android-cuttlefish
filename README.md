@@ -28,11 +28,17 @@ tools/buildutils/build_packages.sh
 
 Cuttlefish requires only `cuttlefish-base` to be installed, but `cuttlefish-user`
 is recommended to enjoy a better user experience. These can be installed after
-building with the following command:
+building with the following commands:
 
 ```bash
 sudo apt install ./cuttlefish-base_*.deb ./cuttlefish-user_*.deb
+sudo usermod -aG kvm,cvdnetwork,render $USER
+sudo reboot
 ```
+
+The last two commands above add the user to the groups necessary to run the Cuttlefish 
+Virtual Device and reboot the machine to trigger the installation of additional
+kernel modules and apply udev rules.
 
 ## Google Compute Engine
 
