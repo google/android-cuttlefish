@@ -23,8 +23,8 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
-#include "run_cvd.pb.h"
-#include "screen_recording.grpc.pb.h"
+#include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
+#include "cuttlefish/host/commands/screen_recording_server/screen_recording.grpc.pb.h"
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
