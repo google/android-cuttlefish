@@ -1,0 +1,11 @@
+{
+  "instances":
+      [
+        {
+          "@import": "phone",
+          "vm": {
+            "memory_mb": 4096
+          }
+        }
+      ]
+}

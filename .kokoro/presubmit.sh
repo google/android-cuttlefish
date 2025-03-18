@@ -3,7 +3,8 @@
 set -e -x
 
 sudo apt update
-sudo apt upgrade -y
+# environment variable and options to force answer prompts
+sudo DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -y
 
 # realpath .kokoro/..
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"

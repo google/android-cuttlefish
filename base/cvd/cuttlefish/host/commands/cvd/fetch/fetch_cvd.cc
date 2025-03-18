@@ -15,6 +15,7 @@
 
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 
+#include <android-base/file.h>
 #include <sys/stat.h>
 
 #include <chrono>
@@ -23,12 +24,15 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include <android-base/strings.h>
 #include <curl/curl.h>
 #include <sparse/sparse.h>
+
+#include "rules_cc/cc/runfiles/runfiles.h"
 
 #include "common/libs/utils/archive.h"
 #include "common/libs/utils/contains.h"
@@ -51,8 +55,14 @@
 #include "host/libs/web/luci_build_api.h"
 #include "host/libs/web/oauth2_consent.h"
 
+#ifndef BAZEL_CURRENT_REPOSITORY
+#define BAZEL_CURRENT_REPOSITORY ""
+#endif
+
 namespace cuttlefish {
 namespace {
+
+using rules_cc::cc::runfiles::Runfiles;
 
 constexpr mode_t kRwxAllMode = S_IRWXU | S_IRWXG | S_IRWXO;
 constexpr bool kOverrideEntries = true;
@@ -235,9 +245,9 @@ bool ConvertToRawImageNoBinary(const std::string& image_path) {
  * crosvm has read-only support for Android-Sparse files, but QEMU does not
  * support them.
  */
-void DeAndroidSparse(const std::vector<std::string>& image_files) {
+Result<void> DeAndroidSparse(const std::vector<std::string>& image_files) {
   for (const auto& file : image_files) {
-    if (!IsSparseImage(file)) {
+    if (!CF_EXPECT(IsSparseImage(file))) {
       continue;
     }
     if (ConvertToRawImageNoBinary(file)) {
@@ -246,6 +256,7 @@ void DeAndroidSparse(const std::vector<std::string>& image_files) {
       LOG(ERROR) << "Failed to de-sparse '" << file << "'";
     }
   }
+  return {};
 }
 
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
@@ -290,10 +301,13 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
   return {};
 }
 
-Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
-                              const std::string& target_dir,
-                              const bool keep_archives,
-                              FetchTracer::Trace trace) {
+static constexpr std::string_view kInstallDir = "/usr/lib/cuttlefish-common/bin";
+
+Result<void> FetchHostPackage(
+    BuildApi& build_api, const Build& build, const std::string& target_dir,
+    const bool keep_archives,
+    const std::vector<std::string>& debian_package_executables,
+    FetchTracer::Trace trace) {
   LOG(INFO) << "Preparing host package for " << build;
   // This function is called asynchronously, so it may take a while to start.
   // Complete a phase here to ensure that delay is not counted in the download
@@ -305,9 +319,54 @@ Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
   std::string host_tools_filepath =
       CF_EXPECT(build_api.DownloadFile(build, target_dir, host_tools_name));
   trace.CompletePhase("Download", FileSize(host_tools_filepath));
+
   CF_EXPECT(
       ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
   trace.CompletePhase("Extract");
+
+  std::string self_path;
+  CF_EXPECT(android::base::Readlink("/proc/self/exe", &self_path));
+  bool is_installed_cvd = self_path == fmt::format("{}/cvd", kInstallDir);
+
+  std::string runfiles_error;
+  std::unique_ptr<Runfiles> runfiles;
+  if (!debian_package_executables.empty() && !is_installed_cvd) {
+    runfiles.reset(
+        Runfiles::Create(self_path, BAZEL_CURRENT_REPOSITORY, &runfiles_error));
+    CF_EXPECTF(runfiles.get(), "Could not load runfiles: '{}'", runfiles_error);
+  }
+  for (const std::string& executable : debian_package_executables) {
+    std::size_t last_slash = executable.rfind("/");
+    std::string_view short_name = executable;
+    if (last_slash != std::string::npos) {
+      short_name = short_name.substr(last_slash + 1);
+    }
+    CF_EXPECT(!short_name.empty());
+    if (short_name[0] == ':') {
+      short_name = short_name.substr(1);
+    }
+
+    std::string source;
+    if (is_installed_cvd) {
+      source = fmt::format("{}/{}", kInstallDir, short_name);
+      CF_EXPECTF(FileExists(source), "Could not find installed binary '{}'",
+                 source);
+    } else {
+      source = runfiles->Rlocation(executable);
+      CF_EXPECTF(!source.empty() && FileExists(source),
+                 "Could not find runfiles file '{}' for '{}'", source,
+                 short_name);
+    }
+
+    std::string to_substitute =
+        fmt::format("{}/bin/{}", target_dir, short_name);
+    // TODO: schuffelen - relax this check after migration completes
+    CF_EXPECTF(FileExists(to_substitute),
+               "Cannot substitute '{}', does not exist", to_substitute);
+    CF_EXPECTF(unlink(to_substitute.c_str()) == 0, "{}", strerror(errno));
+    CF_EXPECT(CreateSymLink(source, to_substitute));
+  }
+  trace.CompletePhase("Substitute");
   return {};
 }
 
@@ -558,7 +617,7 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
     CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
                                       default_build_id, default_build_target,
                                       image_files, target_directories.root));
-    DeAndroidSparse(image_files);
+    CF_EXPECT(DeAndroidSparse(image_files));
     trace.CompletePhase("Desparse image files");
   }
 
@@ -937,6 +996,7 @@ Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
       std::launch::async, FetchHostPackage, std::ref(*build_api),
       std::cref(host_target_build), std::cref(host_target.host_tools_directory),
       std::cref(flags.keep_downloaded_archives),
+      std::cref(flags.debian_package_executables),
       tracer.NewTrace("Host Package"));
   size_t count = 1;
   for (const auto& target : targets) {

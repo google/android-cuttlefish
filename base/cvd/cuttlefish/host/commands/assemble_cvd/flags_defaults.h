@@ -15,8 +15,6 @@
  */
 #pragma once
 
-#include "host/libs/config/cuttlefish_config.h"
-
 #define CF_DEFAULTS_DYNAMIC_STRING ""
 #define CF_DEFAULTS_DYNAMIC_INT 0
 
@@ -54,9 +52,7 @@
   cuttlefish::ForCurrentInstance(cuttlefish::kDefaultUuidPrefix)
 #define CF_DEFAULTS_FILE_VERBOSITY "DEBUG"
 #define CF_DEFAULTS_VERBOSITY "INFO"
-#define CF_DEFAULTS_RUN_FILE_DISCOVERY true
 #define CF_DEFAULTS_MEMORY_MB CF_DEFAULTS_DYNAMIC_INT
-#define CF_DEFAULTS_SHARE_SCHED_CORE false
 #define CF_DEFAULTS_TRACK_HOST_TOOLS_CRC false
 // TODO: defined twice, please remove redundant definitions
 #define CF_DEFAULTS_USE_OVERLAY true
@@ -67,6 +63,7 @@
 #define CF_DEFAULTS_SECCOMP_POLICY_DIR cuttlefish::GetSeccompPolicyDir()
 #define CF_DEFAULTS_ENABLE_SANDBOX false
 #define CF_DEFAULTS_ENABLE_VIRTIOFS false
+#define CF_DEFAULTS_CROSVM_V4L2_PROXY ""
 
 // Qemu default parameters
 #define CF_DEFAULTS_QEMU_BINARY_DIR cuttlefish::DefaultQemuBinaryDir()
@@ -120,12 +117,14 @@
 #define CF_DEFAULTS_FUCHSIA_MULTIBOOT_BIN_PATH CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_FUCHSIA_ROOT_IMAGE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_CUSTOM_PARTITION_PATH CF_DEFAULTS_DYNAMIC_STRING
+#define CF_DEFAULTS_HIBERNATION_IMAGE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_SUPER_IMAGE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_VBMETA_IMAGE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_VBMETA_SYSTEM_IMAGE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_VBMETA_VENDOR_DLKM_IMAGE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_VBMETA_SYSTEM_DLKM_IMAGE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_VENDOR_BOOT_IMAGE CF_DEFAULTS_DYNAMIC_STRING
+#define CF_DEFAULTS_VVMTRUSTSTORE_PATH CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_DEFAULT_TARGET_ZIP CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_SYSTEM_TARGET_ZIP CF_DEFAULTS_DYNAMIC_STRING
 
@@ -136,13 +135,15 @@
 
 // Graphics default parameters
 #define CF_DEFAULTS_HWCOMPOSER cuttlefish::kHwComposerAuto
-#define CF_DEFAULTS_GPU_MODE "auto"
+#define CF_DEFAULTS_GPU_MODE cuttlefish::kGpuModeAuto
 #define CF_DEFAULTS_GPU_VHOST_USER_MODE cuttlefish::kGpuVhostUserModeAuto
 #define CF_DEFAULTS_RECORD_SCREEN false
 #define CF_DEFAULTS_GPU_CAPTURE_BINARY CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_GPU_RENDERER_FEATURES ""
 #define CF_DEFAULTS_GPU_CONTEXT_TYPES \
   "gfxstream-vulkan:cross-domain:gfxstream-composer"
+#define CF_DEFAULTS_GUEST_HWUI_RENDERER ""
+#define CF_DEFAULTS_GUEST_RENDERER_PRELOAD "auto"
 #define CF_DEFAULTS_GUEST_VULKAN_DRIVER "ranchu"
 #define CF_DEFAULTS_FRAME_SOCKET_PATH ""
 #define CF_DEFAULTS_ENABLE_GPU_UDMABUF false
@@ -182,6 +183,10 @@
 // Automotive Proxy default parameter
 #define CF_DEFAULTS_ENABLE_AUTOMOTIVE_PROXY false
 
+// Vhal Proxy Server default parameter
+#define CF_DEFAULTS_ENABLE_VHAL_PROXY_SERVER false
+#define CF_DEFAULTS_VHAL_PROXY_SERVER_INSTANCE_NUM 0
+
 // Bluetooth default parameters
 #define CF_DEFAULTS_ENABLE_HOST_BLUETOOTH true
 #define CF_DEFAULTS_ROOTCANAL_INSTANCE_NUM 0
@@ -206,7 +211,7 @@
 // Streaming default parameters
 #define CF_DEFAULTS_START_WEBRTC false
 #define CF_DEFAULTS_START_WEBRTC_SIG_SERVER true
-#define CF_DEFAULTS_WEBRTC_DEVICE_ID ""
+#define CF_DEFAULTS_WEBRTC_DEVICE_ID "cvd-{num}"
 #define CF_DEFAULTS_VERIFY_SIG_SERVER_CERTIFICATE false
 #define CF_DEFAULTS_WEBRTC_ASSETS_DIR \
   DefaultHostArtifactsPath("usr/share/webrtc/assets")
@@ -245,3 +250,10 @@
 
 // Whether to exit when heuristics predict the boot will not complete
 #define CF_DEFAULTS_FAIL_FAST true
+
+// Whether to use the crosvm vhost-user block device implementation with QEMU
+// TODO: b/346855591 - default to `true`
+#define CF_DEFAULTS_VHOST_USER_BLOCK false
+
+// Virtual Cpufreq default configuration path
+#define CF_DEFAULTS_VCPU_CONFIG_PATH ""

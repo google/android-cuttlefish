@@ -1,0 +1,24 @@
+{
+  "name": "Cuttlefish Vhost User Mouse 0",
+  "serial_name": "virtio-mouse-0",
+  "events": [
+    {
+      "event_type": "EV_KEY",
+      "event_type_code": 1,
+      "supported_events": {
+        "BTN_LEFT": 272,
+        "BTN_RIGHT": 273,
+        "BTN_MIDDLE": 274
+      }
+    },
+    {
+      "event_type": "EV_REL",
+      "event_type_code": 2,
+      "supported_events": {
+        "REL_X": 0,
+        "REL_Y": 1,
+        "REL_WHEEL": 8
+      }
+    }
+  ]
+}

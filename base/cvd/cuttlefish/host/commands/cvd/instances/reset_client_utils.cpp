@@ -42,7 +42,7 @@ namespace {
 static Command CreateStopCvdCommand(const std::string& stopper_path,
                                     const cvd_common::Envs& envs,
                                     const cvd_common::Args& args) {
-  Command command(cpp_basename(stopper_path));
+  Command command(android::base::Basename(stopper_path));
   command.SetExecutable(stopper_path);
   for (const auto& arg : args) {
     command.AddParameter(arg);
@@ -136,7 +136,7 @@ static bool IsStillRunCvd(const pid_t pid) {
   if (!extract_proc_info_result.ok()) {
     return false;
   }
-  return (cpp_basename(extract_proc_info_result->actual_exec_path_) ==
+  return (android::base::Basename(extract_proc_info_result->actual_exec_path_) ==
           "run_cvd");
 }
 

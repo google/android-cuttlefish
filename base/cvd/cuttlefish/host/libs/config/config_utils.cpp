@@ -24,10 +24,12 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "common/libs/utils/architecture.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/in_sandbox.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/libs/config/config_constants.h"
-#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
@@ -92,7 +94,6 @@ std::string ForCurrentInstance(const char* prefix) {
   stream << prefix << std::setfill('0') << std::setw(2) << GetInstance();
   return stream.str();
 }
-int ForCurrentInstance(int base) { return base + GetInstance() - 1; }
 
 std::string RandomSerialNumber(const std::string& prefix) {
   const char hex_characters[] = "0123456789ABCDEF";
@@ -136,8 +137,8 @@ std::string HostBinaryPath(const std::string& binary_name) {
 #endif
 }
 
-std::string HostUsrSharePath(const std::string& binary_name) {
-  return DefaultHostArtifactsPath("usr/share/" + binary_name);
+std::string HostUsrSharePath(const std::string& file) {
+  return DefaultHostArtifactsPath("usr/share/" + file);
 }
 
 std::string HostQemuBiosPath() {
@@ -153,11 +154,17 @@ std::string DefaultGuestImagePath(const std::string& file_name) {
          file_name;
 }
 
+// In practice this is mostly validating that the `cuttlefish-base` debian
+// package is installed, which implies that more things are present like the
+// predefined network setup.
 bool HostSupportsQemuCli() {
   static bool supported =
 #ifdef __linux__
-      std::system(
-          "/usr/lib/cuttlefish-common/bin/capability_query.py qemu_cli") == 0;
+      InSandbox() ||
+      RunWithManagedStdio(
+          Command("/usr/lib/cuttlefish-common/bin/capability_query.py")
+              .AddParameter("qemu_cli"),
+          nullptr, nullptr, nullptr) == 0;
 #else
       true;
 #endif

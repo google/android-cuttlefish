@@ -20,46 +20,47 @@ import (
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 type ListCVDsActionOpts struct {
 	Group       string
 	Paths       IMPaths
-	ExecContext ExecContext
+	ExecContext exec.ExecContext
 	CVDUser     *user.User
 }
 
 type ListCVDsAction struct {
-	group       string
-	paths       IMPaths
-	execContext cvd.CVDExecContext
+	group  string
+	paths  IMPaths
+	cvdCLI *cvd.CLI
 }
 
 func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {
 	return &ListCVDsAction{
-		group:       opts.Group,
-		paths:       opts.Paths,
-		execContext: newCVDExecContext(opts.ExecContext, opts.CVDUser),
+		group:  opts.Group,
+		paths:  opts.Paths,
+		cvdCLI: cvd.NewCLI(exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)),
 	}
 }
 
 func (a *ListCVDsAction) Run() (*apiv1.ListCVDsResponse, error) {
-	fleet, err := cvdFleet(a.execContext)
+	fleet, err := a.cvdCLI.Fleet()
 	if err != nil {
 		return nil, err
 	}
 	groups := fleet.Groups
 	if a.group != "" {
-		ok, g := fleet.findGroup(a.group)
+		ok, g := findGroup(fleet, a.group)
 		if !ok {
 			return nil, operator.NewNotFoundError(fmt.Sprintf("Group %q not found", a.group), nil)
 		}
-		groups = []*cvdGroup{g}
+		groups = []*cvd.Group{g}
 	}
 	cvds := []*apiv1.CVD{}
 	for _, g := range groups {
-		cvds = append(cvds, g.toAPIObject()...)
+		cvds = append(cvds, CvdGroupToAPIObject(g)...)
 	}
 	return &apiv1.ListCVDsResponse{CVDs: cvds}, nil
 }

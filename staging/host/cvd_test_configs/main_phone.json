@@ -1,0 +1,18 @@
+{
+  "common": {
+    "host_package": "@ab/aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+  },
+  "instances": [
+    {
+      "@import": "phone",
+      "vm": {
+        "memory_mb": 8192,
+        "setupwizard_mode": "OPTIONAL",
+        "cpus": 4
+      },
+      "disk": {
+        "default_build": "@ab/git_main/cf_x86_64_phone-trunk_staging-userdebug"
+      }
+    }
+  ]
+}

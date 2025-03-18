@@ -1,0 +1,56 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "vm_manager",
+    srcs = [
+        "crosvm_builder.cpp",
+        "crosvm_cpu.cpp",
+        "crosvm_display_controller.cpp",
+        "crosvm_manager.cpp",
+        "gem5_manager.cpp",
+        "host_configuration.cpp",
+        "pci.cpp",
+        "qemu_manager.cpp",
+        "vhost_user_block.cpp",
+        "vm_manager.cpp",
+    ],
+    hdrs = [
+        "crosvm_builder.h",
+        "crosvm_cpu.h",
+        "crosvm_display_controller.h",
+        "crosvm_manager.h",
+        "gem5_manager.h",
+        "host_configuration.h",
+        "pci.h",
+        "qemu_manager.h",
+        "vhost_user.h",
+        "vm_manager.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/command_util",
+        "//libbase",
+        "@fmt",
+        "@fruit",
+        "@jsoncpp",
+        "@vulkan_headers//:vulkan_headers",
+        "@vulkan_headers//:vulkan_hpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "vm_manager_clang_tidy",
+    srcs = [":vm_manager"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

@@ -1,0 +1,21 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+cc_binary(
+    name = "operator_proxy",
+    srcs = ["main.cpp"],
+    copts = COPTS,
+    deps = [
+      "//cuttlefish/common/libs/fs",
+      "//cuttlefish/common/libs/utils",
+      "//cuttlefish/host/libs/config",
+      "//libbase",
+      "@gflags",
+    ],
+)
+
+clang_tidy_test(
+    name = "operator_proxy_clang_tidy",
+    srcs = [":operator_proxy"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

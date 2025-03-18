@@ -1,0 +1,8 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+sh_binary(
+    name = "extract-vmlinux",
+    srcs = ["extract-vmlinux.sh"],
+)

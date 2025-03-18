@@ -1,0 +1,40 @@
+load("//:build_variables.bzl", "COPTS")
+# load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+proto_library(
+    name = "webrtc_commands_proto",
+    srcs = ["webrtc_commands.proto"],
+    deps = ["@googleapis//google/rpc:status_proto"],
+)
+
+cc_proto_library(
+    name = "libcuttlefish_webrtc_commands_proto",
+    deps = [":webrtc_commands_proto"],
+)
+
+cc_library(
+    name = "libcuttlefish_webrtc_command_channel",
+    srcs = ["webrtc_command_channel.cpp"],
+    hdrs = ["webrtc_command_channel.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        ":libcuttlefish_webrtc_commands_proto",
+        "//cuttlefish/common/libs/transport",
+        "//libbase",
+    ],
+)
+
+# cc_binary(
+# name = "webrtc",
+# srcs = ["main.cpp"],
+# copts = COPTS,
+# deps = [
+# ],
+# )
+
+# clang_tidy_test(
+# name = "webrtc_clang_tidy",
+# srcs = [":webrtc"],
+# tags = ["clang_tidy", "clang-tidy"],
+# )

@@ -2,6 +2,7 @@ package common
 
 import (
 	"archive/zip"
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -12,16 +13,17 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	clientpkg "github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 )
+
+// Port where the HO service is listening to.
+const HOPort = 2080
 
 type TestContext struct {
 	ServiceURL        string
@@ -30,7 +32,7 @@ type TestContext struct {
 }
 
 // Starts the HO service within a docker container.
-func Setup(port int) (*TestContext, error) {
+func Setup() (*TestContext, error) {
 	result := &TestContext{}
 	dockerHelper, err := NewDockerHelper()
 	if err != nil {
@@ -41,12 +43,16 @@ func Setup(port int) (*TestContext, error) {
 		return nil, err
 	}
 	result.DockerImageName = img
-	id, err := dockerHelper.RunContainer(img, port)
+	id, err := dockerHelper.RunContainer(img)
+	if err != nil {
+		return nil, err
+	}
+	ipAddr, err := dockerHelper.getIpAddr(id)
 	if err != nil {
 		return nil, err
 	}
 	result.DockerContainerID = id
-	result.ServiceURL = fmt.Sprintf("http://0.0.0.0:%d", port)
+	result.ServiceURL = fmt.Sprintf("http://%s:%d", ipAddr, HOPort)
 	if err := waitUntilServiceIsUp(result.ServiceURL); err != nil {
 		return nil, err
 	}
@@ -111,7 +117,7 @@ func (h *DockerHelper) RemoveImage(name string) error {
 	return nil
 }
 
-func (h *DockerHelper) RunContainer(img string, hostPort int) (string, error) {
+func (h *DockerHelper) RunContainer(img string) (string, error) {
 	ctx := context.TODO()
 	config := &container.Config{
 		AttachStdin: true,
@@ -119,8 +125,7 @@ func (h *DockerHelper) RunContainer(img string, hostPort int) (string, error) {
 		Tty:         true,
 	}
 	hostConfig := &container.HostConfig{
-		PortBindings: nat.PortMap{"2080/tcp": []nat.PortBinding{{HostPort: strconv.Itoa(hostPort)}}},
-		Privileged:   true,
+		Privileged: true,
 	}
 	createRes, err := h.client.ContainerCreate(ctx, config, hostConfig, nil, nil, "")
 	if err != nil {
@@ -130,6 +135,19 @@ func (h *DockerHelper) RunContainer(img string, hostPort int) (string, error) {
 		return "", err
 	}
 	return createRes.ID, nil
+}
+
+func (h *DockerHelper) getIpAddr(id string) (string, error) {
+	ctx := context.TODO()
+	c, err := h.client.ContainerInspect(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	bridgeNetwork := c.NetworkSettings.Networks["bridge"]
+	if bridgeNetwork == nil {
+		return "", fmt.Errorf("bridge network not found in container: %q", id)
+	}
+	return bridgeNetwork.IPAddress, nil
 }
 
 func (h *DockerHelper) PullLogs(id string) error {
@@ -165,15 +183,23 @@ func (h *DockerHelper) RemoveContainer(id string) error {
 	return nil
 }
 
+func (h *DockerHelper) RemoveHostTool(id, filename string) error {
+	_, err := h.exec(id, []string{"rm", filename})
+	return err
+}
+
 func (h *DockerHelper) StartADBServer(id, adbBin string) error {
-	return h.exec(id, []string{adbBin, "start-server"})
+	_, err := h.exec(id, []string{adbBin, "start-server"})
+	return err
 }
 
 func (h *DockerHelper) ConnectADB(id, adbBin, serial string) error {
-	return h.exec(id, []string{adbBin, "connect", serial})
+	_, err := h.exec(id, []string{adbBin, "connect", serial})
+	return err
 }
 
-func (h *DockerHelper) ExecADBShellCommand(id, adbBin, serial string, cmd []string) error {
+// Returns a standard output reader.
+func (h *DockerHelper) ExecADBShellCommand(id, adbBin, serial string, cmd []string) (*bufio.Reader, error) {
 	return h.exec(id, append([]string{adbBin, "-s", serial, "shell"}, cmd...))
 }
 
@@ -185,47 +211,50 @@ func (e DockerExecExitCodeError) Error() string {
 	return fmt.Sprintf("exit code: %d", e.ExitCode)
 }
 
-func (h *DockerHelper) exec(id string, cmd []string) error {
-	if err := h.runExec(id, cmd); err != nil {
-		return fmt.Errorf("docker exec %v failed: %w", cmd, err)
+func (h *DockerHelper) exec(id string, cmd []string) (*bufio.Reader, error) {
+	r, err := h.runExec(id, cmd)
+	if err != nil {
+		return nil, fmt.Errorf("docker exec %v failed: %w", cmd, err)
 	}
-	return nil
+	return r, nil
 }
 
-func (h *DockerHelper) runExec(id string, cmd []string) error {
+func (h *DockerHelper) runExec(id string, cmd []string) (*bufio.Reader, error) {
 	ctx := context.TODO()
 	config := types.ExecConfig{
-		User:       "root",
-		Privileged: true,
-		Cmd:        cmd,
+		User:         "root",
+		Privileged:   true,
+		Cmd:          cmd,
+		AttachStdout: true,
 	}
 	cExec, err := h.client.ContainerExecCreate(ctx, id, config)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err = h.client.ContainerExecStart(ctx, cExec.ID, types.ExecStartCheck{}); err != nil {
-		return err
+	res, err := h.client.ContainerExecAttach(ctx, cExec.ID, types.ExecStartCheck{})
+	if err != nil {
+		return nil, err
 	}
 	// ContainerExecStart does not block, short poll process status for 60 seconds to
 	// check when it has been completed. return a time out error otherwise.
 	cExecStatus := types.ContainerExecInspect{}
-	for i := 0; i < 30; i++ {
+	for i := 0; i < 120; i++ {
 		time.Sleep(500 * time.Millisecond)
 		cExecStatus, err = h.client.ContainerExecInspect(ctx, cExec.ID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if !cExecStatus.Running {
 			break
 		}
 	}
 	if cExecStatus.Running {
-		return fmt.Errorf("command %v timed out", cmd)
+		return nil, fmt.Errorf("command %v timed out", cmd)
 	}
 	if cExecStatus.ExitCode != 0 {
-		return &DockerExecExitCodeError{ExitCode: cExecStatus.ExitCode}
+		return nil, &DockerExecExitCodeError{ExitCode: cExecStatus.ExitCode}
 	}
-	return nil
+	return res.Reader, nil
 }
 
 func Cleanup(ctx *TestContext) {

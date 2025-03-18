@@ -117,6 +117,9 @@ type HostOrchestratorService interface {
 	// Stop the device.
 	Stop(groupName, instanceName string) error
 
+	// Press power button.
+	Powerbtn(groupName, instanceName string) error
+
 	// Start the device.
 	Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error
 
@@ -408,6 +411,12 @@ func (c *HostOrchestratorServiceImpl) Powerwash(groupName, instanceName string) 
 	return c.doEmptyResponseRequest(rb)
 }
 
+func (c *HostOrchestratorServiceImpl) Powerbtn(groupName, instanceName string) error {
+	path := fmt.Sprintf("/cvds/%s/%s/:powerbtn", groupName, instanceName)
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
+	return c.doEmptyResponseRequest(rb)
+}
+
 func (c *HostOrchestratorServiceImpl) Stop(groupName, instanceName string) error {
 	path := fmt.Sprintf("/cvds/%s/%s/:stop", groupName, instanceName)
 	rb := c.HTTPHelper.NewPostRequest(path, nil)
@@ -545,7 +554,9 @@ func asWebRTCICEServers(in []opapi.IceServer) []webrtc.ICEServer {
 	out := []webrtc.ICEServer{}
 	for _, s := range in {
 		out = append(out, webrtc.ICEServer{
-			URLs: s.URLs,
+			URLs:       s.URLs,
+			Username:   s.Username,
+			Credential: s.Credential,
 		})
 	}
 	return out

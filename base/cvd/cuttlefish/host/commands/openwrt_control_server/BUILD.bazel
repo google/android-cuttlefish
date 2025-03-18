@@ -1,0 +1,53 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+proto_library(
+    name = "openwrt_control_proto",
+    srcs = ["openwrt_control.proto"],
+    deps = ["@protobuf//:empty_proto"]
+)
+
+cc_proto_library(
+    name = "openwrt_control_server_cc_proto",
+    deps = [":openwrt_control_proto"],
+)
+
+cc_grpc_library(
+    name = "libopenwrt_control_server",
+    srcs = [":openwrt_control_proto"],
+    deps = [
+        ":openwrt_control_server_cc_proto",
+        "@grpc//:grpc++",
+    ],
+    grpc_only = True,
+)
+
+cc_binary(
+    name = "openwrt_control_server",
+    srcs = [
+        "main.cpp",
+    ],
+    copts = COPTS,
+    deps = [
+        ":libopenwrt_control_server",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web",
+        "//libbase",
+        "@gflags",
+        "@grpc//:grpc",
+        "@grpc//:grpc++",
+        "@grpc//:grpc++_reflection",
+    ],
+)
+
+clang_tidy_test(
+    name = "openwrt_control_server_clang_tidy",
+    srcs = [":openwrt_control_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

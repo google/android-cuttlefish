@@ -17,42 +17,14 @@ package orchestrator
 import (
 	"context"
 	"os/exec"
-	"testing"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 type AlwaysSucceedsValidator struct{}
 
 func (AlwaysSucceedsValidator) Validate() error {
 	return nil
-}
-
-func TestSliceItoa(t *testing.T) {
-	tests := []struct {
-		in  []uint32
-		out []string
-	}{
-		{
-			in:  []uint32{},
-			out: []string{},
-		},
-		{
-			in:  []uint32{79, 83, 89, 97},
-			out: []string{"79", "83", "89", "97"},
-		},
-	}
-	for _, tc := range tests {
-
-		res := SliceItoa(tc.in)
-
-		if diff := cmp.Diff(tc.out, res); diff != "" {
-			t.Errorf("result mismatch (-want +got):\n%s", diff)
-		}
-	}
-
 }
 
 func execCtxAlwaysSucceeds(ctx context.Context, name string, args ...string) *exec.Cmd {

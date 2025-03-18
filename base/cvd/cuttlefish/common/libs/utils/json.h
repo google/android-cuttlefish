@@ -32,25 +32,28 @@ Result<Json::Value> LoadFromFile(SharedFD json_fd);
 Result<Json::Value> LoadFromFile(const std::string& path_to_file);
 
 template <typename T>
-T As(const Json::Value& v);
+Result<T> As(const Json::Value& v);
 
 template <>
-inline int As(const Json::Value& v) {
+inline Result<int> As(const Json::Value& v) {
+  CF_EXPECT(v.isInt());
   return v.asInt();
 }
 
 template <>
-inline std::string As(const Json::Value& v) {
+inline Result<std::string> As(const Json::Value& v) {
+  CF_EXPECT(v.isString());
   return v.asString();
 }
 
 template <>
-inline bool As(const Json::Value& v) {
+inline Result<bool> As(const Json::Value& v) {
+  CF_EXPECT(v.isBool());
   return v.asBool();
 }
 
 template <>
-inline Json::Value As(const Json::Value& v) {
+inline Result<Json::Value> As(const Json::Value& v) {
   return v;
 }
 
@@ -63,7 +66,7 @@ Result<T> GetValue(const Json::Value& root,
                "JSON selector \"{}\" does not exist", selector);
     traversal = &(*traversal)[selector];
   }
-  return As<T>(*traversal);
+  return CF_EXPECT(As<T>(*traversal));
 }
 
 template <typename T>

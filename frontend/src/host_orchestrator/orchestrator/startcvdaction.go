@@ -21,33 +21,34 @@ import (
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 type StartCVDActionOpts struct {
 	Request          *apiv1.StartCVDRequest
-	Selector         CVDSelector
+	Selector         cvd.Selector
 	Paths            IMPaths
 	OperationManager OperationManager
-	ExecContext      ExecContext
+	ExecContext      exec.ExecContext
 	CVDUser          *user.User
 }
 
 type StartCVDAction struct {
-	req         *apiv1.StartCVDRequest
-	selector    CVDSelector
-	paths       IMPaths
-	om          OperationManager
-	execContext cvd.CVDExecContext
+	req      *apiv1.StartCVDRequest
+	selector cvd.Selector
+	paths    IMPaths
+	om       OperationManager
+	cvdCLI   *cvd.CLI
 }
 
 func NewStartCVDAction(opts StartCVDActionOpts) *StartCVDAction {
 	return &StartCVDAction{
-		req:         opts.Request,
-		selector:    opts.Selector,
-		paths:       opts.Paths,
-		om:          opts.OperationManager,
-		execContext: newCVDExecContext(opts.ExecContext, opts.CVDUser),
+		req:      opts.Request,
+		selector: opts.Selector,
+		paths:    opts.Paths,
+		om:       opts.OperationManager,
+		cvdCLI:   cvd.NewCLI(exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)),
 	}
 }
 
@@ -64,14 +65,12 @@ func (a *StartCVDAction) Run() (apiv1.Operation, error) {
 }
 
 func (a *StartCVDAction) exec(op apiv1.Operation) (*apiv1.EmptyResponse, error) {
-	args := a.selector.ToCVDCLI()
-	args = append(args, "start")
+	startOpts := cvd.StartOptions{}
 	if a.req.SnapshotID != "" {
 		dir := filepath.Join(a.paths.SnapshotsRootDir, a.req.SnapshotID)
-		args = append(args, "--snapshot_path", dir)
+		startOpts.SnapshotPath = dir
 	}
-	cmd := cvd.NewCommand(a.execContext, args, cvd.CommandOpts{})
-	if err := cmd.Run(); err != nil {
+	if err := a.cvdCLI.Start(a.selector, startOpts); err != nil {
 		return nil, operator.NewInternalError("cvd start failed", err)
 	}
 	return &apiv1.EmptyResponse{}, nil

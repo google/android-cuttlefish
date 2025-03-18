@@ -5,16 +5,23 @@
 # For more details, please check https://github.com/bazelbuild/bazel/issues/18958
 ###############################################################################
 
+bazel_dep(name = "abseil-cpp", version = "20250127.0")
 bazel_dep(name = "aspect_rules_lint", version = "1.0.8", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.7.1", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
 bazel_dep(name = "curl", version = "8.8.0.bcr.2")
 bazel_dep(name = "fmt", version = "10.2.1")
+bazel_dep(name = "freetype", version = "2.13.3")
 bazel_dep(name = "gflags", version = "2.2.2")
+bazel_dep(name = "googleapis", version = "0.0.0-20241220-5e258e33.bcr.1")
+bazel_dep(name = "grpc", version = "1.71.0")
+bazel_dep(name = "grpc-proto", version = "0.0.0-20240627-ec30f58")
 bazel_dep(name = "googletest", version = "1.15.2")
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 bazel_dep(name = "jsoncpp", version = "1.9.5")
 bazel_dep(name = "libxml2", version = "2.13.5")
+bazel_dep(name = "rules_cc", version = "0.1.1")
+bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
 bazel_dep(name = "protobuf", version = "29.1")
 bazel_dep(name = "tinyxml2", version = "10.0.0")
 bazel_dep(name = "toolchains_llvm", version = "1.2.0")
@@ -47,4 +54,47 @@ git_override(
     # be merged.
     commit = "62e8aa0e9935bb7db76ead9cc2c1804e4dd740b9",
     remote = "https://github.com/Databean/rules_lint.git",
+)
+
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+git_repository(
+    name = "fruit",
+    build_file = "@//:BUILD.fruit.bazel",
+    commit = "0af6ffd113ad963dbd2a23e8cbabba13493c015f", # 2025-02-02
+    remote = "https://github.com/google/fruit.git",
+)
+
+git_repository(
+    name = "egl_headers",
+    build_file = "@//:BUILD.egl_headers.bazel",
+    commit = "29c4314e0ef04c730992d295f91b76635019fbba",
+    remote = "https://github.com/KhronosGroup/EGL-Registry.git",
+)
+
+git_repository(
+    name = "opengl_headers",
+    build_file = "@//:BUILD.opengl_headers.bazel",
+    commit = "b53ca669bea4715b6d5fa53c459f47a1fecd7944",
+    remote = "https://github.com/KhronosGroup/OpenGL-Registry.git",
+)
+
+git_repository(
+    name = "vulkan_headers",
+    build_file = "@//:BUILD.vulkan_headers.bazel",
+    commit = "952f776f6573aafbb62ea717d871cd1d6816c387", # v1.4.309
+    remote = "https://github.com/KhronosGroup/Vulkan-Headers.git",
+)
+
+git_repository(
+    name = "libyuv",
+    build_file = "@//:BUILD.libyuv.bazel",
+    commit = "af6ac8265bbd07bcf977526458b60305c4304288",
+    remote = "https://chromium.googlesource.com/libyuv/libyuv.git",
+)
+
+git_repository(
+    name = "libcn-cbor",
+    build_file = "@//:BUILD.libcn_cbor.bazel",
+    commit = "c2e53733a895587c2910d2b2a1312d4224e5a474",
+    remote = "https://github.com/cabo/cn-cbor.git",
 )

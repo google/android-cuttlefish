@@ -179,7 +179,7 @@ Result<void> InstanceManager::IssueStopCommand(
 
 cvd::Status InstanceManager::CvdClear(const CommandRequest& request) {
   cvd::Status status;
-  const std::string config_json_name = cpp_basename(GetGlobalConfigFileLink());
+  const std::string config_json_name = android::base::Basename(GetGlobalConfigFileLink());
   auto instance_groups_res = instance_db_.Clear();
   if (!instance_groups_res.ok()) {
     fmt::print(std::cerr, "Failed to clear instance database: {}",

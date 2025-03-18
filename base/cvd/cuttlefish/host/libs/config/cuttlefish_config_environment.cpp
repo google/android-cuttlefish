@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-// TODO: chadreynolds - Remove once AOSP <=> Github file syncing is enabled.
-// avoiding fixing lint errors until fixing it once fixes for all copies
-// NOLINTBEGIN
-
 #include "host/libs/config/cuttlefish_config.h"
 
 #include "common/libs/utils/files.h"
@@ -62,7 +58,7 @@ std::string CuttlefishConfig::EnvironmentSpecific::PerEnvironmentPath(
 
 std::string CuttlefishConfig::EnvironmentSpecific::PerEnvironmentLogPath(
     const std::string& file_name) const {
-  if (file_name.size() == 0) {
+  if (file_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerEnvironmentPath(kLogDirName);
   }
@@ -72,7 +68,7 @@ std::string CuttlefishConfig::EnvironmentSpecific::PerEnvironmentLogPath(
 
 std::string CuttlefishConfig::EnvironmentSpecific::PerEnvironmentGrpcSocketPath(
     const std::string& file_name) const {
-  if (file_name.size() == 0) {
+  if (file_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerEnvironmentPath(kGrpcSocketDirName);
   }
@@ -86,6 +82,16 @@ std::string CuttlefishConfig::EnvironmentSpecific::control_socket_path() const {
 
 std::string CuttlefishConfig::EnvironmentSpecific::launcher_log_path() const {
   return AbsolutePath(PerEnvironmentLogPath("launcher.log"));
+}
+
+std::string CuttlefishConfig::EnvironmentSpecific::casimir_nci_socket_path()
+    const {
+  return PerEnvironmentUdsPath("casimir_nci.sock");
+}
+
+std::string CuttlefishConfig::EnvironmentSpecific::casimir_rf_socket_path()
+    const {
+  return PerEnvironmentUdsPath("casimir_rf.sock");
 }
 
 static constexpr char kEnableWifi[] = "enable_wifi";
@@ -128,8 +134,8 @@ std::string CuttlefishConfig::EnvironmentSpecific::wmediumd_api_server_socket()
 
 static constexpr char kWmediumdConfig[] = "wmediumd_config";
 void CuttlefishConfig::MutableEnvironmentSpecific::set_wmediumd_config(
-    const std::string& config) {
-  (*Dictionary())[kWmediumdConfig] = config;
+    const std::string& config_path) {
+  (*Dictionary())[kWmediumdConfig] = config_path;
 }
 std::string CuttlefishConfig::EnvironmentSpecific::wmediumd_config() const {
   return (*Dictionary())[kWmediumdConfig].asString();
@@ -144,6 +150,13 @@ int CuttlefishConfig::EnvironmentSpecific::wmediumd_mac_prefix() const {
   return (*Dictionary())[kWmediumdMacPrefix].asInt();
 }
 
-}  // namespace cuttlefish
+static constexpr char kGroupUuid[] = "group_uuid";
+void CuttlefishConfig::MutableEnvironmentSpecific::set_group_uuid(
+    int group_uuid) {
+  (*Dictionary())[kGroupUuid] = group_uuid;
+}
+int CuttlefishConfig::EnvironmentSpecific::group_uuid() const {
+  return (*Dictionary())[kGroupUuid].asInt();
+}
 
-// NOLINTEND
+}  // namespace cuttlefish

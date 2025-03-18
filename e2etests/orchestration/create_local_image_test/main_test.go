@@ -32,7 +32,7 @@ import (
 )
 
 func TestInstance(t *testing.T) {
-	ctx, err := common.Setup(61001)
+	ctx, err := common.Setup()
 	if err != nil {
 		t.Fatal(err)
 	}

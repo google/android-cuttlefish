@@ -1,0 +1,33 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "libteeui",
+    srcs = [
+        "src/button.cpp",
+        "src/font_rendering.cpp",
+        "src/label.cpp",
+        "src/utils.cpp",
+    ],
+    hdrs = [
+        "include/teeui/button.h",
+        "include/teeui/common_message_types.h",
+        "include/teeui/error.h",
+        "include/teeui/font_rendering.h",
+        "include/teeui/label.h",
+        "include/teeui/log.h",
+        "include/teeui/msg_formatting.h",
+        "include/teeui/static_vec.h",
+        "include/teeui/utils.h",
+        "include/teeui/utf8range.h",
+    ],
+    copts = COPTS,
+    deps = [
+        "@freetype",
+    ],
+    strip_include_prefix = "include",
+)

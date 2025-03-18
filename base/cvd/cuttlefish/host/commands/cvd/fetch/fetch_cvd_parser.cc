@@ -95,6 +95,10 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(
       GflagsCompatFlag("host_package_build", fetch_flags.host_package_build)
           .Help("source for the host cvd tools"));
+  flags.emplace_back(
+      GflagsCompatFlag("debian_package_executables",
+                       fetch_flags.debian_package_executables)
+          .Help("list of executables to override with packaged versions."));
 
   BuildApiFlags& build_api_flags = fetch_flags.build_api_flags;
   flags.emplace_back(GflagsCompatFlag("api_key", build_api_flags.api_key)

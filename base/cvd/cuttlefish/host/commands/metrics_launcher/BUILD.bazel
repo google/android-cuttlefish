@@ -1,0 +1,28 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_binary(
+    name = "metrics_launcher",
+    srcs = [
+        "metrics_launcher.cpp",
+    ],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/metrics",
+        "//cuttlefish/host/libs/msg_queue",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+clang_tidy_test(
+    name = "metrics_launcher_clang_tidy",
+    srcs = [":metrics_launcher"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

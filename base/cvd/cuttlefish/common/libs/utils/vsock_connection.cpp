@@ -67,6 +67,10 @@ void VsockConnection::SetDisconnectCallback(std::function<void()> callback) {
   disconnect_callback_ = callback;
 }
 
+// This method created due to a race condition in IsConnected().
+// TODO(b/345285391): remove this method once a fix found
+bool VsockConnection::IsConnected_Unguarded() { return fd_->IsOpen(); }
+
 bool VsockConnection::IsConnected() {
   // We need to serialize all accesses to the SharedFD.
   std::lock_guard<std::recursive_mutex> read_lock(read_mutex_);

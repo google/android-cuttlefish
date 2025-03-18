@@ -20,16 +20,41 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "host/libs/command_util/runner/defs.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
 Result<RunnerExitCodes> ReadExitCode(SharedFD monitor_socket);
+
+Result<SharedFD> GetLauncherMonitorFromInstance(
+    const CuttlefishConfig::InstanceSpecific& instance_config,
+    const int timeout_seconds);
+
+Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
+                                    int instance_num,
+                                    int timeout_seconds);
+
+struct LauncherActionInfo {
+  LauncherAction action;
+  run_cvd::ExtendedLauncherAction extended_action;
+};
+Result<std::optional<LauncherActionInfo>> ReadLauncherActionFromFd(
+    SharedFD monitor_socket);
+
 Result<void> WaitForRead(SharedFD monitor_socket, int timeout_seconds);
 
 // Writes the `action` request to `monitor_socket`, then waits for the response
 // and checks for errors.
 Result<void> RunLauncherAction(SharedFD monitor_socket, LauncherAction action,
                                std::optional<int> timeout_seconds);
+
+// Writes the `action` request to `monitor_socket`, then waits for the response
+// and checks for errors.
+Result<void> RunLauncherAction(
+    SharedFD monitor_socket,
+    const run_cvd::ExtendedLauncherAction& extended_action,
+    std::optional<int> timeout_seconds);
 
 }  // namespace cuttlefish

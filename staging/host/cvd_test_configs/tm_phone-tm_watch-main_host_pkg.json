@@ -1,0 +1,29 @@
+{
+  "common": {
+    "host_package": "@ab/aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+  },
+  "instances": [
+    {
+      "@import": "phone",
+      "vm": {
+        "memory_mb": 8192,
+        "setupwizard_mode": "OPTIONAL",
+        "cpus": 4
+      },
+      "disk": {
+        "default_build": "@ab/git_tm-qpr-dev/cf_x86_64_phone-userdebug"
+      }
+    },
+    {
+      "@import": "wearable",
+      "vm": {
+        "memory_mb": 8192,
+        "setupwizard_mode": "REQUIRED",
+        "cpus": 4
+      },
+      "disk": {
+        "default_build": "@ab/git_tm-wear-dev/cf_gwear_x86-userdebug"
+      }
+    }
+  ]
+}

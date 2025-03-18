@@ -1,0 +1,32 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "process_monitor",
+    srcs = [
+        "process_monitor.cc",
+    ],
+    hdrs = [
+        "process_monitor.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/transport",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "process_monitor_clang_tidy",
+    srcs = [":process_monitor"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

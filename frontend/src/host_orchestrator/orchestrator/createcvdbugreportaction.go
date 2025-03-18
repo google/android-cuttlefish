@@ -20,6 +20,7 @@ import (
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
@@ -28,7 +29,7 @@ type CreateCVDBugReportActionOpts struct {
 	IncludeADBBugreport bool
 	Paths               IMPaths
 	OperationManager    OperationManager
-	ExecContext         cvd.CVDExecContext
+	ExecContext         exec.ExecContext
 	UUIDGen             func() string
 }
 
@@ -37,7 +38,7 @@ type CreateCVDBugReportAction struct {
 	includeADBBugreport bool
 	paths               IMPaths
 	om                  OperationManager
-	execContext         cvd.CVDExecContext
+	cvdCLI              *cvd.CLI
 	uuidgen             func() string
 }
 
@@ -47,7 +48,7 @@ func NewCreateCVDBugReportAction(opts CreateCVDBugReportActionOpts) *CreateCVDBu
 		includeADBBugreport: opts.IncludeADBBugreport,
 		paths:               opts.Paths,
 		om:                  opts.OperationManager,
-		execContext:         opts.ExecContext,
+		cvdCLI:              cvd.NewCLI(opts.ExecContext),
 		uuidgen:             opts.UUIDGen,
 	}
 }
@@ -69,7 +70,7 @@ func (a *CreateCVDBugReportAction) Run() (apiv1.Operation, error) {
 	go func(uuid string, op apiv1.Operation) {
 		dst := filepath.Join(a.paths.CVDBugReportsDir, uuid, BugReportZipFileName)
 		result := &OperationResult{}
-		if err := execBugReportCommand(a.execContext, a.group, a.includeADBBugreport, dst); err != nil {
+		if err := a.cvdCLI.BugReport(cvd.Selector{Group: a.group}, a.includeADBBugreport, dst); err != nil {
 			result.Error = operator.NewInternalError("`cvd host_bugreport` failed: ", err)
 		} else {
 			result.Value = uuid
@@ -79,15 +80,4 @@ func (a *CreateCVDBugReportAction) Run() (apiv1.Operation, error) {
 		}
 	}(uuid, op)
 	return op, nil
-}
-
-func execBugReportCommand(exec cvd.CVDExecContext, group string, includeADBBugReport bool, dst string) error {
-	sel := &CVDSelector{Group: group}
-	args := sel.ToCVDCLI()
-	args = append(args, []string{"host_bugreport", "--output=" + dst}...)
-	if includeADBBugReport {
-		args = append(args, []string{"--include_adb_bugreport=true"}...)
-	}
-	cmd := cvd.NewCommand(exec, args, cvd.CommandOpts{})
-	return cmd.Run()
 }
