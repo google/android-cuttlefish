@@ -10,6 +10,7 @@ cvd/bazel-bin/cuttlefish/host/commands/display/cvd_internal_display /usr/lib/cut
 cvd/bazel-bin/cuttlefish/host/commands/health/health /usr/lib/cuttlefish-common/bin/
 cvd/bazel-bin/cuttlefish/host/commands/logcat_receiver/logcat_receiver /usr/lib/cuttlefish-common/bin/
 cvd/bazel-bin/cuttlefish/host/commands/mkenvimage_slim/mkenvimage_slim /usr/lib/cuttlefish-common/bin/
+cvd/bazel-bin/cuttlefish/host/commands/modem_simulator/modem_simulator /usr/lib/cuttlefish-common/bin/
 cvd/bazel-bin/cuttlefish/host/commands/process_restarter/process_restarter /usr/lib/cuttlefish-common/bin/
 cvd/bazel-bin/cuttlefish/host/commands/record_cvd/record_cvd /usr/lib/cuttlefish-common/bin/
 cvd/bazel-bin/cuttlefish/host/commands/restart_cvd/restart_cvd /usr/lib/cuttlefish-common/bin/
@@ -28,3 +29,4 @@ host/deploy/capability_query.py /usr/lib/cuttlefish-common/bin/
 host/deploy/install_zip.sh /usr/bin/
 host/deploy/unpack_boot_image.py /usr/lib/cuttlefish-common/bin/
 host/packages/cuttlefish-base/* /
+cvd/cuttlefish/host/commands/modem_simulator/files/* /usr/lib/cuttlefish-common/modem_simulator/files/

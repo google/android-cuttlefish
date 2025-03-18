@@ -1,0 +1,126 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "modem_simulator_lib",
+    srcs = [
+        "call_service.cpp",
+        "cf_device_config.cpp",
+        "channel_monitor.cpp",
+        "command_parser.cpp",
+        "data_service.cpp",
+        "misc_service.cpp",
+        "modem_service.cpp",
+        "modem_simulator.cpp",
+        "network_service.cpp",
+        "nvram_config.cpp",
+        "pdu_parser.cpp",
+        "sim_service.cpp",
+        "sms_service.cpp",
+        "stk_service.cpp",
+        "sup_service.cpp",
+        "thread_looper.cpp",
+    ],
+    hdrs = [
+        "call_service.h",
+        "channel_monitor.h",
+        "command_parser.h",
+        "data_service.h",
+        "device_config.h",
+        "misc_service.h",
+        "modem_service.h",
+        "modem_simulator.h",
+        "network_service.h",
+        "network_service_constants.h",
+        "nvram_config.h",
+        "pdu_parser.h",
+        "sim_service.h",
+        "sms_service.h",
+        "stk_service.h",
+        "sup_service.h",
+        "thread_looper.h",
+    ],
+    copts = [
+        "-Wall",
+        "-Werror",
+        "-fexceptions",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@jsoncpp",
+        "@tinyxml2",
+    ],
+)
+
+cc_binary(
+    name = "modem_simulator",
+    srcs = [
+        "main.cpp",
+    ],
+    copts = COPTS,
+    deps = [
+        ":modem_simulator_lib",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@fmt",
+        "@gflags",
+    ],
+)
+
+cc_library(
+    name = "modem_simulator_test_lib",
+    hdrs = [
+        "unittest/iccfile.txt",
+    ],
+)
+
+cc_test(
+    name = "modem_simulator_test",
+    srcs = [
+        "unittest/command_parser_test.cpp",
+        "unittest/main_test.cpp",
+        "unittest/pdu_parser_test.cpp",
+        "unittest/service_test.cpp",
+    ],
+    deps = [
+        ":modem_simulator_lib",
+        ":modem_simulator_test_lib",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@gflags",
+        "@googletest//:gtest",
+    ],
+)
+
+clang_tidy_test(
+    name = "modem_simulator_clang_tidy",
+    srcs = [":modem_simulator"],
+    tags = ["clang-tidy"],
+)
+
+# TODO(b/405163202): Enable back once migration is completed.
+#
+# clang_tidy_test(
+#     name = "modem_simulator_lib_clang_tidy",
+#     srcs = [":modem_simulator_lib"],
+#     tags = [ "clang-tidy"],
+# )
+
+clang_tidy_test(
+    name = "modem_simulator_test_clang_tidy",
+    srcs = [":modem_simulator_test"],
+    tags = [ "clang-tidy"],
+)
