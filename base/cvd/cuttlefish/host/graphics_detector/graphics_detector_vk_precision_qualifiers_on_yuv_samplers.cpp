@@ -298,8 +298,11 @@ gfxstream::expected<bool, vk::Result> CanHandlePrecisionQualifierWithYuvSampler(
       .basePipelineHandle = VK_NULL_HANDLE,
       .basePipelineIndex = 0,
   };
-  auto pipeline = VK_EXPECT_RV(
-      vk.device().createGraphicsPipelineUnique({}, pipelineCreateInfo));
+  auto pipeline_rv = vk.device().createGraphicsPipelineUnique({}, pipelineCreateInfo);
+  if (pipeline_rv.result != vk::Result::eSuccess) {
+    return false;
+  }
+  auto pipeline = std::move(pipeline_rv.value);
 
   VK_EXPECT_RESULT(vk.DoCommandsImmediate([&](vk::UniqueCommandBuffer& cmd) {
     const std::vector<vk::ClearValue> renderPassBeginClearValues = {
