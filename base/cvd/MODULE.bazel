@@ -106,3 +106,22 @@ git_repository(
     commit = "5dcb741f1544c5e18c9dbf96aeb8b61cc556a616", # v3.3
     remote = "https://github.com/libffi/libffi.git",
 )
+
+git_repository(
+    name = "spirv_headers",
+    commit = "4f7b471f1a66b6d06462cd4ba57628cc0cd087d7",
+    remote = "https://github.com/KhronosGroup/SPIRV-Headers.git",
+)
+
+git_repository(
+    name = "spirv_tools",
+    commit = "dd4b663e13c07fea4fbb3f70c1c91c86731099f7", # v2024.2
+    remote = "https://github.com/KhronosGroup/SPIRV-Tools.git",
+)
+
+git_repository(
+    name = "swiftshader",
+    build_file = "@//:BUILD.swiftshader.bazel",
+    commit = "4c3426403b9c89253322265323ca658a2476faca",
+    remote = "https://swiftshader.googlesource.com/SwiftShader.git",
+)
