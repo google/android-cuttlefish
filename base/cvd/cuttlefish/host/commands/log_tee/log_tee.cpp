@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
   CHECK(log_fd->IsOpen()) << "Failed to dup log_fd_in: " <<  log_fd->StrError();
   close(FLAGS_log_fd_in);
 
-  if (FLAGS_process_name.size() > 0) {
+  if (!FLAGS_process_name.empty()) {
     android::base::SetDefaultTag(FLAGS_process_name);
   }
 
