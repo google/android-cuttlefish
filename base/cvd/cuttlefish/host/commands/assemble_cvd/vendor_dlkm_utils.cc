@@ -16,6 +16,7 @@
 #include <fcntl.h>
 
 #include <algorithm>
+#include <deque>
 #include <map>
 #include <set>
 #include <sstream>
