@@ -1,6 +1,7 @@
 package(
     default_visibility = [
         "@//:android_cuttlefish",
+        "@mesa//:__subpackages__",
     ],
 )
 
@@ -15,5 +16,53 @@ cc_library(
     ],
     includes = [
         "include",
+    ],
+)
+
+py_binary(
+    name = "gen_table_fourcc_py",
+    srcs = ["gen_table_fourcc.py"],
+    main = "gen_table_fourcc.py",
+)
+
+genrule(
+    name = "gen_generated_static_table_fourcc_h",
+    srcs = ["include/drm/drm_fourcc.h"],
+    outs = ["generated_static_table_fourcc.h"],
+    cmd = "python3 $(location :gen_table_fourcc_py) $(location include/drm/drm_fourcc.h) $@",
+    tools = [":gen_table_fourcc_py"],
+)
+
+cc_library(
+    name = "libdrm",
+    srcs = [
+        "generated_static_table_fourcc.h",
+        "libdrm_macros.h",
+        "util_math.h",
+        "xf86drm.c",
+        "xf86drmHash.c",
+        "xf86drmMode.c",
+        "xf86drmRandom.c",
+        "xf86drmSL.c",
+    ],
+    hdrs = [
+        "include/drm/drm.h",
+        "include/drm/drm_fourcc.h",
+        "include/drm/drm_mode.h",
+        "xf86drm.h",
+        "xf86drmHash.h",
+        "xf86drmMode.h",
+        "xf86drmRandom.h",
+    ],
+    copts = [
+        "-D_GNU_SOURCE",
+        "-DHAVE_LIBDRM_ATOMIC_PRIMITIVES=1",
+        "-DHAVE_VISIBILITY=1",
+        "-DMAJOR_IN_SYSMACROS",
+    ],
+    includes = [
+        ".",
+        "include",
+        "include/drm",
     ],
 )

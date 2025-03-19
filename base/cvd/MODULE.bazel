@@ -256,3 +256,31 @@ git_repository(
     build_file = "@//:BUILD.libeigen.bazel",
     remote = "https://gitlab.com/libeigen/eigen",
 )
+
+git_repository(
+    name = "mesa",
+    build_file = "@//:BUILD.mesa.bazel",
+    commit = "224e91e39836d3ca31f80df2e0379e55c70574f8",
+    remote = "https://android.googlesource.com/platform/external/mesa3d",
+)
+
+git_repository(
+    name = "mako",
+    build_file = "@//:BUILD.mako.bazel",
+    commit = "51505647100b7cf20a79b496bc12dec379ac9cdc", # 1.3.0
+    remote = "https://github.com/sqlalchemy/mako",
+)
+
+git_repository(
+    name = "markupsafe",
+    build_file = "@//:BUILD.markupsafe.bazel",
+    commit = "63efa5521c5c75d40cfed0b6b8f6528ecce9bc6a", # 2.0.1
+    remote = "https://github.com/pallets/markupsafe",
+)
+
+git_repository(
+    name = "pyyaml",
+    build_file = "@//:BUILD.pyyaml.bazel",
+    commit = "41309b0bcb4559edb1d691d47199035ef539d785", # 6.0.2
+    remote = "https://github.com/yaml/pyyaml.git",
+)
