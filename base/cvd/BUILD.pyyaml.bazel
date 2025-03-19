@@ -1,0 +1,16 @@
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+        "@mesa//:__subpackages__",
+    ],
+)
+
+py_library(
+    name = "yaml",
+    srcs = glob([
+        "lib/yaml/*.py",
+    ]),
+    imports = [
+        "lib",
+    ],
+)
