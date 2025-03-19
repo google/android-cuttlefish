@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Wed, 19 Mar 2025 15:00:33 -0700
+Subject: fix config path
+
+
+diff --git a/src/wayland-os.c b/src/wayland-os.c
+index f00ead4..0869415 100644
+--- a/src/wayland-os.c
++++ b/src/wayland-os.c
+@@ -25,7 +25,7 @@
+
+ #define _GNU_SOURCE
+
+-#include "../config.h"
++#include "config.h"
+
+ #include <sys/types.h>
+ #include <sys/socket.h>
+--
+1.22.0
+
