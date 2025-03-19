@@ -39,7 +39,6 @@ PRODUCT_PACKAGES += \
     $(RELEASE_PACKAGE_NFC_STACK) \
     netutils-wrapper-1.0 \
     screenrecord \
-    StatementService \
     TelephonyProvider \
     TeleService \
     UserDictionaryProvider \
