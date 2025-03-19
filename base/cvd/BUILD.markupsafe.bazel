@@ -1,0 +1,17 @@
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+        "@mako//:__subpackages__",
+    ],
+)
+
+py_library(
+    name = "markupsafe",
+    srcs = [
+        "src/markupsafe/__init__.py",
+        "src/markupsafe/_native.py",
+    ],
+    imports = [
+        "src",
+    ],
+)

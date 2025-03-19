@@ -50,5 +50,7 @@ package_files(
         "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim0.xml": "cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0.xml",
         "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml": "cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
         "//cuttlefish/host/commands/modem_simulator:etc/files/numeric_operator.xml": "cuttlefish-common/etc/modem_simulator/files/numeric_operator.xml",
+        "@mesa//:vk_lavapipe": "cuttlefish-common/bin/libvk_lavapipe.so",
+        "//cuttlefish/host/graphics/vulkan:vk_lavapipe_icd": "cuttlefish-common/bin/vk_lavapipe_icd.json",
     },
 )
