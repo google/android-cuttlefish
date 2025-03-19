@@ -62,3 +62,8 @@ sh_binary(
     srcs = ["gen_ffi_header.sh"],
     visibility = ["//visibility:public"],
 )
+
+alias(
+    name = "format",
+    actual = "//tools/format",
+)
