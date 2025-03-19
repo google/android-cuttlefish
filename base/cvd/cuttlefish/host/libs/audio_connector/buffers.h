@@ -15,7 +15,6 @@
 #pragma once
 
 #include <atomic>
-#include <cinttypes>
 #include <functional>
 
 #include "host/libs/audio_connector/shm_layout.h"

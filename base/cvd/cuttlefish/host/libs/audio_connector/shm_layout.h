@@ -15,9 +15,6 @@
 
 #pragma once
 
-#include <atomic>
-#include <type_traits>
-
 #include "common/libs/utils/cf_endian.h"
 
 namespace cuttlefish {

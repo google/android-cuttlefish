@@ -15,7 +15,6 @@
 
 #include "host/libs/audio_connector/server.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <strings.h>
 #include <unistd.h>
@@ -24,8 +23,6 @@
 #include <vector>
 
 #include <android-base/logging.h>
-
-#include "common/libs/fs/shared_select.h"
 
 namespace cuttlefish {
 
