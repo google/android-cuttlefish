@@ -55,6 +55,7 @@ cc_library(
         "//cuttlefish/host/commands/process_restarter",
         "//cuttlefish/host/commands/record_cvd",
         "//cuttlefish/host/commands/restart_cvd",
+        "//cuttlefish/host/commands/run_cvd",
         "//cuttlefish/host/commands/snapshot_util_cvd",
         "//cuttlefish/host/commands/start:cvd_internal_start",
         "//cuttlefish/host/commands/status:cvd_internal_status",

@@ -77,8 +77,8 @@ class CrosvmBuilder {
 
  private:
   Command command_;
-  int hvc_num_;
-  int serial_num_;
+  int hvc_num_ = 0;
+  int serial_num_ = 0;
 };
 
 }  // namespace cuttlefish
