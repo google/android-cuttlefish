@@ -69,12 +69,12 @@ class InputConnectorBuilder {
   InputConnectorBuilder(InputConnectorBuilder&&) = delete;
   InputConnectorBuilder& operator=(const InputConnectorBuilder&) = delete;
 
-  void WithMultitouchDevice(const std::string& device_label, SharedFD server);
-  void WithTouchDevice(const std::string& device_label, SharedFD server);
-  void WithKeyboard(SharedFD server);
-  void WithSwitches(SharedFD server);
+  void WithMultitouchDevice(const std::string& device_label, SharedFD conn);
+  void WithTouchDevice(const std::string& device_label, SharedFD conn);
+  void WithKeyboard(SharedFD conn);
+  void WithSwitches(SharedFD conn);
   void WithRotary(SharedFD conn);
-  void WithMouse(SharedFD server);
+  void WithMouse(SharedFD conn);
   // This object becomes invalid after calling Build(), the rvalue reference
   // makes it explicit that it shouldn't be used after.
   std::unique_ptr<InputConnector> Build() &&;
