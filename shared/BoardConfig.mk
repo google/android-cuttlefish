@@ -24,8 +24,12 @@ ifeq (true,$(CLOCKWORK_EMULATOR_PRODUCT))
 TARGET_KERNEL_USE ?= 6.1
 else ifneq (,$(findstring x86_tv,$(PRODUCT_NAME)))
 TARGET_KERNEL_USE ?= 6.1
-else ifneq (,$(findstring _desktop,$(PRODUCT_NAME)))
-TARGET_KERNEL_USE ?= 6.6
+else ifneq (,$(findstring cf_x86_64_desktop,$(PRODUCT_NAME)))
+TARGET_KERNEL_USE ?= $(RELEASE_KERNEL_CUTTLEFISH_X86_64_VERSION)
+TARGET_KERNEL_DIR ?= $(RELEASE_KERNEL_CUTTLEFISH_X86_64_DIR)
+else ifneq (,$(findstring cf_arm64_desktop,$(PRODUCT_NAME)))
+TARGET_KERNEL_USE ?= $(RELEASE_KERNEL_CUTTLEFISH_ARM64_VERSION)
+TARGET_KERNEL_DIR ?= $(RELEASE_KERNEL_CUTTLEFISH_ARM64_DIR)
 else
 TARGET_KERNEL_USE ?= 6.12
 endif
@@ -33,8 +37,8 @@ endif
 TARGET_KERNEL_ARCH ?= $(TARGET_ARCH)
 
 ifneq (,$(filter cf_x86_64_desktop cf_arm64_desktop,$(PRODUCT_NAME)))
-SYSTEM_DLKM_SRC ?= device/google/cuttlefish_prebuilts/kernel/6.6-$(TARGET_KERNEL_ARCH)-desktop/system_dlkm
-KERNEL_MODULES_PATH ?= device/google/cuttlefish_prebuilts/kernel/6.6-$(TARGET_KERNEL_ARCH)-desktop/vendor_dlkm
+SYSTEM_DLKM_SRC ?= device/google/cuttlefish_prebuilts/kernel/$(TARGET_KERNEL_USE)-$(TARGET_KERNEL_ARCH)-desktop/$(TARGET_KERNEL_DIR)/system_dlkm
+KERNEL_MODULES_PATH ?= device/google/cuttlefish_prebuilts/kernel/$(TARGET_KERNEL_USE)-$(TARGET_KERNEL_ARCH)-desktop/$(TARGET_KERNEL_DIR)/vendor_dlkm
 else
 SYSTEM_DLKM_SRC ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)
 KERNEL_MODULES_PATH ?= \
