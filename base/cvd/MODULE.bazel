@@ -133,3 +133,28 @@ git_repository(
     commit = "998d2a2e81e11043781672494dc3d294c1ecfce0",
     remote = "https://gitlab.freedesktop.org/mesa/drm.git",
 )
+
+git_repository(
+    name = "crosvm",
+    build_file = "@//:BUILD.crosvm.bazel",
+    commit = "dee7838993bae90cad49d5595b958cfe4c28b58d",
+    remote = "https://chromium.googlesource.com/crosvm/crosvm",
+)
+
+git_repository(
+    name = "expat",
+    build_file = "@//:BUILD.expat.bazel",
+    commit = "2691aff4304a6d7e053199c205620136481b9dd1", # 2.6.4
+    remote = "https://github.com/libexpat/libexpat/",
+)
+
+git_repository(
+    name = "wayland",
+    build_file = "@//external/wayland:BUILD.wayland.bazel",
+    commit = "b2649cb3ee6bd70828a17e50beb16591e6066288", # 1.22.0
+    remote = "https://gitlab.freedesktop.org/wayland/wayland.git",
+    patch_strip = 1,
+    patches = [
+        "@//external/wayland:PATCH.wayland.wayland_config.patch",
+    ],
+)

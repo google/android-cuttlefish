@@ -18,7 +18,7 @@
 
 #include <android-base/logging.h>
 
-#include <virtio-gpu-metadata-v1.h>
+#include <virtio-gpu-metadata-v1-server-protocol.h>
 #include <wayland-server-core.h>
 #include <wayland-server-protocol.h>
 

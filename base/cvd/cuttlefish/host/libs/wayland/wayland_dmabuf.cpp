@@ -18,7 +18,7 @@
 
 #include <android-base/logging.h>
 
-#include <drm_fourcc.h>
+#include <drm/drm_fourcc.h>
 
 #include <linux-dmabuf-unstable-v1-server-protocol.h>
 #include <wayland-server-core.h>
