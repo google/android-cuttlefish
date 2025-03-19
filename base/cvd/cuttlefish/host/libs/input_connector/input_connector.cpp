@@ -23,7 +23,6 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "host/libs/input_connector/event_buffer.h"
 #include "host/libs/input_connector/input_connection.h"
 #include "host/libs/input_connector/input_devices.h"
 
