@@ -31,6 +31,7 @@
 
 #include "common/libs/concurrency/multiplexer.h"
 #include "common/libs/concurrency/semaphore.h"
+#include "common/libs/concurrency/thread_safe_queue.h"
 #include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_fd.h"
 #include "host/commands/kernel_log_monitor/utils.h"

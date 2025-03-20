@@ -45,7 +45,6 @@ void ThreadTracer::Set(const std::string& name, const std::thread::id tid) {
   }
   id2name_[tid] = name;
   name2id_[name] = tid;
-  return;
 }
 
 std::optional<std::thread::id> ThreadTracer::Get(const std::string& name) {

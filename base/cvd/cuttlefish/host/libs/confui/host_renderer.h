@@ -32,7 +32,7 @@
 #include "common/libs/utils/result.h"
 #include "host/libs/confui/layouts/layout.h"
 #include "host/libs/confui/server_common.h"
-#include "host/libs/screen_connector/screen_connector.h"
+#include "host/libs/screen_connector/screen_connector_common.h"
 
 namespace cuttlefish {
 namespace confui {

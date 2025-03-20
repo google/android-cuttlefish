@@ -16,15 +16,13 @@
 
 #pragma once
 
-#include <teeui/incfont.h>
+// These are defined in files generated from the .ttf files with xdd.
+extern unsigned char RobotoMedium[];
+extern unsigned int RobotoMedium_length;
 
-/*
- * Each entry TEEUI_INCFONT(<name>) declares:
- *    extern unsigned char <name>[];
- *    extern unsigned int <name>_length;
- * The first one pointing to a raw ttf font file in the .rodata section, and the
- * second being the size of the buffer.
- */
-TEEUI_INCFONT(RobotoMedium);
-TEEUI_INCFONT(RobotoRegular);
-TEEUI_INCFONT(Shield);
+extern unsigned char RobotoRegular[];
+extern unsigned int RobotoRegular_length;
+
+extern unsigned char Shield[];
+extern unsigned int Shield_length;
+

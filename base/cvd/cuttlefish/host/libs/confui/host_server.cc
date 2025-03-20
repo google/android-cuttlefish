@@ -24,6 +24,7 @@
 #include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_buf.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "common/libs/concurrency/thread_safe_queue.h"
 #include "host/libs/confui/host_utils.h"
 #include "host/libs/confui/secure_input.h"
 
@@ -104,7 +105,6 @@ void HostServer::Start() {
       thread::RunThread("HalInputLoop", hal_cmd_fetching);
   main_loop_thread_ = thread::RunThread("MainLoop", main);
   ConfUiLog(DEBUG) << "host service started.";
-  return;
 }
 
 void HostServer::HalCmdFetcherLoop() {
