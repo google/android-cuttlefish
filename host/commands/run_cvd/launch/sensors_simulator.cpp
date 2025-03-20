@@ -20,7 +20,8 @@ namespace cuttlefish {
 
 Result<MonitorCommand> SensorsSimulator(
     const CuttlefishConfig::InstanceSpecific& instance,
-    AutoSensorsSocketPair::Type& sensors_socket_pair) {
+    AutoSensorsSocketPair::Type& sensors_socket_pair,
+    KernelLogPipeProvider& kernel_log_pipe_provider) {
   std::string to_guest_pipe_path =
       instance.PerInstanceInternalPath("sensors_fifo_vm.in");
   std::string from_guest_pipe_path =
@@ -32,7 +33,10 @@ Result<MonitorCommand> SensorsSimulator(
   Command command(SensorsSimulatorBinary());
   command.AddParameter("--sensors_in_fd=", from_guest_fd)
       .AddParameter("--sensors_out_fd=", to_guest_fd)
-      .AddParameter("--webrtc_fd=", sensors_socket_pair->webrtc_socket);
+      .AddParameter("--webrtc_fd=", sensors_socket_pair->webrtc_socket)
+      .AddParameter("-kernel_events_fd=",
+                    kernel_log_pipe_provider.KernelLogPipe())
+      .AddParameter("--device_type=", static_cast<int>(instance.device_type()));
   return command;
 }
 
