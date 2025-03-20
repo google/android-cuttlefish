@@ -144,7 +144,6 @@ cc_binary_host {
         "libyuv",
     ],
     shared_libs: [
-        "android.hardware.keymaster@4.0",
         "libbase",
         "libcrypto",
         "libcuttlefish_fs",
