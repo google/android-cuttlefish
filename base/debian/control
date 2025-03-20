@@ -21,7 +21,8 @@ Build-Depends: bazel [amd64],
                pkg-config,
                protobuf-compiler,
                sed,
-               uuid-dev
+               uuid-dev,
+               xxd
 Standards-Version: 4.5.0
 
 Package: cuttlefish-base
