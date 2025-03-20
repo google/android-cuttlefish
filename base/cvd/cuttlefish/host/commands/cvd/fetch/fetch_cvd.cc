@@ -39,6 +39,7 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/fetch/host_pkg_migration.pb.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "host/commands/cvd/fetch/fetch_tracer.h"
 #include "host/commands/cvd/utils/common.h"
@@ -54,6 +55,8 @@
 #include "host/libs/web/http_client/http_client.h"
 #include "host/libs/web/luci_build_api.h"
 #include "host/libs/web/oauth2_consent.h"
+
+#include <google/protobuf/text_format.h>
 
 #ifndef BAZEL_CURRENT_REPOSITORY
 #define BAZEL_CURRENT_REPOSITORY ""
@@ -303,40 +306,10 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
 
 static constexpr std::string_view kInstallDir = "/usr/lib/cuttlefish-common/bin";
 
-Result<void> FetchHostPackage(
-    BuildApi& build_api, const Build& build, const std::string& target_dir,
-    const bool keep_archives,
-    std::vector<std::string> debian_package_executables,
-    FetchTracer::Trace trace) {
-  LOG(INFO) << "Preparing host package for " << build;
-  // This function is called asynchronously, so it may take a while to start.
-  // Complete a phase here to ensure that delay is not counted in the download
-  // time.
-  // The download time will still include time spent waiting for the mutex in
-  // the build_api though.
-  trace.CompletePhase("Async start delay");
-  auto host_tools_name = GetFilepath(build).value_or("cvd-host_package.tar.gz");
-  std::string host_tools_filepath =
-      CF_EXPECT(build_api.DownloadFile(build, target_dir, host_tools_name));
-  trace.CompletePhase("Download", FileSize(host_tools_filepath));
-
-  CF_EXPECT(
-      ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
-  trace.CompletePhase("Extract");
-
+Result<void> SubstituteWithFlag(const std::string& target_dir, const std::vector<std::string>& debian_package_executables) {
   std::string self_path;
   CF_EXPECT(android::base::Readlink("/proc/self/exe", &self_path));
   bool is_installed_cvd = self_path == fmt::format("{}/cvd", kInstallDir);
-
-  std::string sub_file = target_dir + "/etc/debian_substitution_marker";
-  if (debian_package_executables.empty() && FileExists(sub_file)) {
-    std::string sub_file_contents;
-    CF_EXPECTF(android::base::ReadFileToString(sub_file, &sub_file_contents),
-               "failed to read '{}'", sub_file);
-    sub_file_contents = android::base::Trim(sub_file_contents);
-    debian_package_executables = android::base::Tokenize(sub_file_contents, "\n");
-  }
-
   std::string runfiles_error;
   std::unique_ptr<Runfiles> runfiles;
   if (!debian_package_executables.empty() && !is_installed_cvd) {
@@ -374,6 +347,63 @@ Result<void> FetchHostPackage(
                "Cannot substitute '{}', does not exist", to_substitute);
     CF_EXPECTF(unlink(to_substitute.c_str()) == 0, "{}", strerror(errno));
     CF_EXPECT(CreateSymLink(source, to_substitute));
+  }
+  return {};
+}
+
+Result<void> SubstituteWithMarker(const std::string& target_dir, const std::string& marker_file) {
+  std::string content;
+  CF_EXPECTF(android::base::ReadFileToString(marker_file, &content),
+             "failed to read '{}'", marker_file);
+  fetch::HostPkgMigrationConfig config;
+  CF_EXPECT(google::protobuf::TextFormat::ParseFromString(content, &config), "failed parsing debian_substitution_marker file");
+  for (int j = 0; j < config.symlinks_size(); j++) {
+    const fetch::Symlink& symlink = config.symlinks(j);
+    std::string full_link_name =
+        fmt::format("{}/{}", target_dir, symlink.link_name());
+    // TODO: schuffelen - relax this check after migration completes
+    CF_EXPECTF(FileExists(full_link_name),
+               "Cannot substitute '{}', does not exist", full_link_name);
+    CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
+    CF_EXPECT(CreateSymLink(symlink.target(), full_link_name));
+  }
+  return {};
+}
+
+Result<void> FetchHostPackage(
+    BuildApi& build_api, const Build& build, const std::string& target_dir,
+    const bool keep_archives,
+    std::vector<std::string> debian_package_executables,
+    FetchTracer::Trace trace) {
+  LOG(INFO) << "Preparing host package for " << build;
+  // This function is called asynchronously, so it may take a while to start.
+  // Complete a phase here to ensure that delay is not counted in the download
+  // time.
+  // The download time will still include time spent waiting for the mutex in
+  // the build_api though.
+  trace.CompletePhase("Async start delay");
+  auto host_tools_name = GetFilepath(build).value_or("cvd-host_package.tar.gz");
+  std::string host_tools_filepath =
+      CF_EXPECT(build_api.DownloadFile(build, target_dir, host_tools_name));
+  trace.CompletePhase("Download", FileSize(host_tools_filepath));
+
+  CF_EXPECT(
+      ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
+  trace.CompletePhase("Extract");
+
+  std::string marker_file = target_dir + "/etc/debian_substitution_marker";
+  // Use a local debian_substitution_marker file for development purposes.
+  std::optional<std::string> local_marker_file = StringFromEnv("LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE");
+  if (local_marker_file.has_value()) {
+    marker_file = local_marker_file.value();
+    CF_EXPECTF(FileExists(marker_file), "local debian substitution marker file does not exist: {}", marker_file);
+    LOG(INFO) << "using local debian substitution marker file: " << marker_file;
+  }
+
+  if (debian_package_executables.empty() && FileExists(marker_file)) {
+    CF_EXPECT(SubstituteWithMarker(target_dir, marker_file));
+  } else {
+    CF_EXPECT(SubstituteWithFlag(target_dir, debian_package_executables));
   }
   trace.CompletePhase("Substitute");
   return {};
@@ -1034,6 +1064,7 @@ std::string GetFetchLogsFileName(const std::string& target_directory) {
 }
 
 Result<void> FetchCvdMain(const FetchFlags& flags) {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
   const bool append_subdirectory = ShouldAppendSubdirectory(flags);
   std::vector<Target> targets = GetFetchTargets(flags, append_subdirectory);
   HostToolsTarget host_target = GetHostToolsTarget(flags, append_subdirectory);
