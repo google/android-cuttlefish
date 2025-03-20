@@ -22,12 +22,12 @@ cc_library(
         "include/teeui/log.h",
         "include/teeui/msg_formatting.h",
         "include/teeui/static_vec.h",
-        "include/teeui/utils.h",
         "include/teeui/utf8range.h",
+        "include/teeui/utils.h",
     ],
     copts = COPTS,
+    strip_include_prefix = "include",
     deps = [
         "@freetype",
     ],
-    strip_include_prefix = "include",
 )
