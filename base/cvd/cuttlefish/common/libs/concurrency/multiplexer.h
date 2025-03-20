@@ -16,13 +16,11 @@
 
 #pragma once
 
-#include <condition_variable>
 #include <functional>
 #include <memory>
 #include <vector>
 
 #include "common/libs/concurrency/semaphore.h"
-#include "common/libs/concurrency/thread_safe_queue.h"
 
 namespace cuttlefish {
 template <typename T, typename Queue>

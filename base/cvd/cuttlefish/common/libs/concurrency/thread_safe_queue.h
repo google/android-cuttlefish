@@ -18,7 +18,7 @@
 
 #include <condition_variable>
 #include <deque>
-#include <iterator>
+#include <functional>
 #include <mutex>
 #include <type_traits>
 #include <utility>
