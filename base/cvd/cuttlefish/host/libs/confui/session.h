@@ -99,7 +99,7 @@ class Session {
   // when false is returned, the FSM must terminate
   // and, no need to let the guest know
   bool HandleInit(SharedFD hal_cli, const FsmInput fsm_input,
-                  const ConfUiMessage& conf_ui_msg);
+                  const ConfUiMessage& conf_ui_message);
 
   bool HandleWaitStop(SharedFD hal_cli, const FsmInput fsm_input);
 

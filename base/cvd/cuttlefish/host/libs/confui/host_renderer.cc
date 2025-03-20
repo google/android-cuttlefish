@@ -19,6 +19,7 @@
 #include <drm/drm_fourcc.h>
 
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/confui/host_utils.h"
 
 namespace cuttlefish {
 namespace confui {
@@ -53,8 +54,8 @@ class ConfUiRendererImpl {
 
  private:
   static Result<std::unique_ptr<ConfUiRendererImpl>> GenerateRenderer(
-      const std::uint32_t display, const std::string& confirmation_msg,
-      const std::string& locale, const bool inverted, const bool magnified);
+      std::uint32_t display, const std::string& confirmation_msg,
+      const std::string& locale, bool inverted, bool magnified);
 
   /**
    * this does not repaint from the scratch all the time
@@ -66,18 +67,17 @@ class ConfUiRendererImpl {
 
   bool IsFrameReady() const { return raw_frame_ && !raw_frame_->IsEmpty(); }
 
-  bool IsInConfirm(const std::uint32_t x, const std::uint32_t y) {
+  bool IsInConfirm(std::uint32_t x, std::uint32_t y) {
     return IsInside<teeui::LabelOK>(x, y);
   }
-  bool IsInCancel(const std::uint32_t x, const std::uint32_t y) {
+  bool IsInCancel(std::uint32_t x, std::uint32_t y) {
     return IsInside<teeui::LabelCancel>(x, y);
   }
 
   bool IsSetUpSuccessful() const { return is_setup_well_; }
-  ConfUiRendererImpl(const std::uint32_t display,
-                     const std::string& confirmation_msg,
-                     const std::string& locale, const bool inverted,
-                     const bool magnified);
+  ConfUiRendererImpl(std::uint32_t display, const std::string& confirmation_msg,
+                     const std::string& locale, bool inverted,
+                     bool magnified);
 
   struct Boundary {            // inclusive but.. LayoutElement's size is float
     std::uint32_t x, y, w, h;  // (x, y) is the top left
@@ -98,7 +98,7 @@ class ConfUiRendererImpl {
   }
 
   template <typename Element>
-  bool IsInside(const std::uint32_t x, const std::uint32_t y) const {
+  bool IsInside(std::uint32_t x, std::uint32_t y) const {
     auto box = GetBoundary(std::get<Element>(layout_));
     if (x >= box.x && x <= box.x + box.w && y >= box.y && y <= box.y + box.h) {
       return true;
@@ -107,16 +107,16 @@ class ConfUiRendererImpl {
   }
   // essentially, to repaint from the scratch, so returns new frame
   // when successful. Or, nullopt
-  std::unique_ptr<TeeUiFrameWrapper> RepaintRawFrame(const int w, const int h);
+  std::unique_ptr<TeeUiFrameWrapper> RepaintRawFrame(int w, int h);
 
   bool InitLayout(const std::string& lang_id);
   teeui::Error UpdateTranslations();
   teeui::Error UpdateLocale();
-  void SetDeviceContext(const unsigned long long w, const unsigned long long h,
+  void SetDeviceContext(unsigned long long w, unsigned long long h,
                         bool is_inverted, bool is_magnified);
 
   // a callback function to be effectively sent to TeeUI library
-  teeui::Error UpdatePixels(TeeUiFrameWrapper& buffer, std::uint32_t x,
+  teeui::Error UpdatePixels(TeeUiFrameWrapper& raw_frame, std::uint32_t x,
                             std::uint32_t y, teeui::Color color);
 
   // second param is for type deduction
@@ -128,7 +128,7 @@ class ConfUiRendererImpl {
     // draw the remaining elements in the order they appear in the layout tuple.
     return (std::get<Elements>(layout).draw(drawPixel) || ...);
   }
-  void UpdateColorScheme(const bool is_inverted);
+  void UpdateColorScheme(bool is_inverted);
   template <typename Label>
   auto SetText(const std::string& text) {
     return std::get<Label>(layout_).setText(
@@ -174,11 +174,11 @@ class ConfUiRendererImpl {
 };
 
 Result<std::unique_ptr<ConfUiRendererImpl>>
-ConfUiRendererImpl::GenerateRenderer(const std::uint32_t display,
+ConfUiRendererImpl::GenerateRenderer(std::uint32_t display,
                                      const std::string& confirmation_msg,
                                      const std::string& locale,
-                                     const bool inverted,
-                                     const bool magnified) {
+                                     bool inverted,
+                                     bool magnified) {
   ConfUiRendererImpl* raw_ptr = new ConfUiRendererImpl(
       display, confirmation_msg, locale, inverted, magnified);
   CF_EXPECT(raw_ptr && raw_ptr->IsSetUpSuccessful(),
@@ -186,7 +186,7 @@ ConfUiRendererImpl::GenerateRenderer(const std::uint32_t display,
   return std::unique_ptr<ConfUiRendererImpl>(raw_ptr);
 }
 
-static int GetDpi(const int display_num = 0) {
+static int GetDpi(int display_num = 0) {
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Config is Missing";
   auto instance = config->ForDefaultInstance();
@@ -211,11 +211,11 @@ static int GetDpi(const int display_num = 0) {
  * proportionally
  *
  */
-ConfUiRendererImpl::ConfUiRendererImpl(const std::uint32_t display,
+ConfUiRendererImpl::ConfUiRendererImpl(std::uint32_t display,
                                        const std::string& confirmation_msg,
                                        const std::string& locale,
-                                       const bool inverted,
-                                       const bool magnified)
+                                       bool inverted,
+                                       bool magnified)
     : display_num_{display},
       lang_id_{locale},
       prompt_text_{confirmation_msg},
@@ -279,10 +279,10 @@ teeui::Error ConfUiRendererImpl::UpdateTranslations() {
   return Error::OK;
 }
 
-void ConfUiRendererImpl::SetDeviceContext(const unsigned long long w,
+void ConfUiRendererImpl::SetDeviceContext(unsigned long long w,
                                           const unsigned long long h,
-                                          const bool is_inverted,
-                                          const bool is_magnified) {
+                                          bool is_inverted,
+                                          bool is_magnified) {
   using namespace teeui;
   const auto screen_width = operator""_px(w);
   const auto screen_height = operator""_px(h);
@@ -327,7 +327,7 @@ teeui::Error ConfUiRendererImpl::UpdatePixels(TeeUiFrameWrapper& raw_frame,
   return teeui::Error::OK;
 }
 
-void ConfUiRendererImpl::UpdateColorScheme(const bool is_inverted) {
+void ConfUiRendererImpl::UpdateColorScheme(bool is_inverted) {
   using namespace teeui;
   color_text_ = is_inverted ? kColorDisabledInv : kColorDisabled;
   shield_color_ = is_inverted ? kColorShieldInv : kColorShield;
@@ -336,7 +336,6 @@ void ConfUiRendererImpl::UpdateColorScheme(const bool is_inverted) {
   ctx_.setParam<ShieldColor>(shield_color_);
   ctx_.setParam<ColorText>(color_text_);
   ctx_.setParam<ColorBG>(color_bg_);
-  return;
 }
 
 std::unique_ptr<TeeUiFrameWrapper>& ConfUiRendererImpl::RenderRawFrame() {
@@ -364,7 +363,7 @@ std::unique_ptr<TeeUiFrameWrapper>& ConfUiRendererImpl::RenderRawFrame() {
 }
 
 std::unique_ptr<TeeUiFrameWrapper> ConfUiRendererImpl::RepaintRawFrame(
-    const int w, const int h) {
+    int w, int h) {
   std::get<teeui::LabelOK>(layout_).setTextColor(kColorEnabled);
   std::get<teeui::LabelCancel>(layout_).setTextColor(kColorEnabled);
 
@@ -398,7 +397,7 @@ ConfUiRenderer::ConfUiRenderer(ScreenConnectorFrameRenderer& screen_connector)
 ConfUiRenderer::~ConfUiRenderer() {}
 
 Result<void> ConfUiRenderer::RenderDialog(
-    const std::uint32_t display_num, const std::string& prompt_text,
+    std::uint32_t display_num, const std::string& prompt_text,
     const std::string& locale, const std::vector<teeui::UIOption>& ui_options) {
   renderer_impl_ = CF_EXPECT(ConfUiRendererImpl::GenerateRenderer(
       display_num, prompt_text, locale, IsInverted(ui_options),
@@ -427,13 +426,13 @@ bool ConfUiRenderer::IsMagnified(
   return Contains(ui_options, teeui::UIOption::AccessibilityMagnified);
 }
 
-bool ConfUiRenderer::IsInConfirm(const std::uint32_t x, const std::uint32_t y) {
+bool ConfUiRenderer::IsInConfirm(std::uint32_t x, std::uint32_t y) {
   if (!renderer_impl_) {
     ConfUiLog(INFO) << "renderer_impl_ is nullptr";
   }
   return renderer_impl_ && renderer_impl_->IsInConfirm(x, y);
 }
-bool ConfUiRenderer::IsInCancel(const std::uint32_t x, const std::uint32_t y) {
+bool ConfUiRenderer::IsInCancel(std::uint32_t x, std::uint32_t y) {
   if (!renderer_impl_) {
     ConfUiLog(INFO) << "renderer_impl_ is nullptr";
   }

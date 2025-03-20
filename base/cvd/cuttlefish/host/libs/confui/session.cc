@@ -16,9 +16,6 @@
 
 #include "host/libs/confui/session.h"
 
-#include <algorithm>
-
-#include "common/libs/utils/contains.h"
 #include "host/libs/confui/secure_input.h"
 
 namespace cuttlefish {
@@ -43,7 +40,7 @@ Session::Session(const std::string& session_name,
  * Session requests the Renderer to render the dialog,
  * but it might not be immediate. So, add alpha to 1s
  */
-static const std::chrono::milliseconds GetGracePeriod() {
+static std::chrono::milliseconds GetGracePeriod() {
   using std::literals::chrono_literals::operator""ms;
   return 1000ms + 100ms;
 }
@@ -126,7 +123,6 @@ bool Session::ReportErrorToHal(SharedFD hal_cli, const std::string& msg) {
 void Session::Abort() {
   ConfUiLog(VERBOSE) << "Abort is called";
   ScheduleToTerminate();
-  return;
 }
 
 void Session::UserAbort(SharedFD hal_cli) {
