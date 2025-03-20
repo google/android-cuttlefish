@@ -135,7 +135,7 @@ class ModemServiceTest : public ::testing::Test {
         r_pos = commands.find('\r', pos);
         if (r_pos != std::string::npos) {
           auto command = commands.substr(pos, r_pos - pos);
-          if (command.size() > 0) {  // "\r\r" ?
+          if (!command.empty()) {  // "\r\r" ?
             LOG(DEBUG) << "AT< " << command;
             if (IsFinalResponseSuccess(command) || IsFinalResponseError(command)) {
               response.push_back(command);
