@@ -1,0 +1,29 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "screen_connector_common",
+    hdrs = [
+        "screen_connector_common.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "screen_connector_common_clang_tidy",
+    srcs = [":screen_connector_common"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
+)
