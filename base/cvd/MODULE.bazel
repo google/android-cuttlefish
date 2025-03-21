@@ -126,3 +126,10 @@ git_repository(
     commit = "4c3426403b9c89253322265323ca658a2476faca",
     remote = "https://swiftshader.googlesource.com/SwiftShader.git",
 )
+
+git_repository(
+    name = "libdrm",
+    build_file = "@//:BUILD.libdrm.bazel",
+    commit = "998d2a2e81e11043781672494dc3d294c1ecfce0",
+    remote = "https://gitlab.freedesktop.org/mesa/drm.git",
+)
