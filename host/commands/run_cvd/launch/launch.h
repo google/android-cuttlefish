@@ -150,5 +150,5 @@ Ti50EmulatorComponent();
 
 Result<MonitorCommand> SensorsSimulator(
     const CuttlefishConfig::InstanceSpecific&,
-    AutoSensorsSocketPair::Type& sensors_socket_pair, KernelLogPipeProvider&);
+    AutoSensorsSocketPair::Type& sensors_socket_pair);
 }  // namespace cuttlefish

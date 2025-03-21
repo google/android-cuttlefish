@@ -25,9 +25,6 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/foldable/display_layout_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/displayconfig/display_layout_configuration.xml \
     device/google/cuttlefish/shared/foldable/display_settings.xml:$(TARGET_COPY_OUT_VENDOR)/etc/display_settings.xml \
 
-# Include hinge sensor feature
-PRODUCT_COPY_FILES += frameworks/native/data/etc/android.hardware.sensor.hinge_angle.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.hinge_angle.xml
-
 # Include RRO settings that specify the fold states and screen information.
 PRODUCT_PACKAGES += \
     aosp_cuttlefish_foldable_overlay_frameworks_base
