@@ -1,6 +1,7 @@
-cuttlefish-frontend (1.2.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.2.0) stable; urgency=medium
 
-  * 
+  * allow usage of protected TURN servers
+  * minor refactors and fixes
 
  -- Chad Reynolds <chadreynolds@google.com>  Fri, 24 Jan 2025 11:24:30 -0800
 
