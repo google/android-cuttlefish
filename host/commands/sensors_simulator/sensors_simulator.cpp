@@ -27,7 +27,8 @@ namespace {
 constexpr float kPressure = 1013.25f;
 constexpr float kHingeAngle0 = 180.0f;
 constexpr double kG = 9.80665;  // meter per second^2
-const Eigen::Vector3d kMagneticField{0, 5.9, -48.4};
+const Eigen::Vector3d kGravityVec{0, kG, 0}, kMagneticField{0, 5.9, -48.4};
+
 inline double ToRadians(double x) { return x * M_PI / 180; }
 
 // Check if a given sensor id provides scalar data
@@ -53,12 +54,8 @@ static Eigen::Matrix3d GetRotationMatrix(double x, double y, double z) {
 
 // Calculate new Accelerometer values of the new rotation degrees.
 static inline Eigen::Vector3d CalculateAcceleration(
-    Eigen::Matrix3d current_rotation_matrix, bool is_auto) {
-  // For automotive devices, the Z-axis of the reference frame is aligned to
-  // gravity. See
-  // https://source.android.com/docs/core/interaction/sensors/sensor-types#auto_axes
-  return current_rotation_matrix *
-         (is_auto ? Eigen::Vector3d(0, 0, kG) : Eigen::Vector3d(0, kG, 0));
+    Eigen::Matrix3d current_rotation_matrix) {
+  return current_rotation_matrix * kGravityVec;
 }
 
 // Calculate new Magnetometer values of the new rotation degrees.
@@ -88,10 +85,9 @@ static Eigen::Vector3d CalculateGyroscope(
 }
 }  // namespace
 
-SensorsSimulator::SensorsSimulator(bool is_auto)
+SensorsSimulator::SensorsSimulator()
     : current_rotation_matrix_(GetRotationMatrix(0, 0, 0)),
-      last_event_timestamp_(std::chrono::high_resolution_clock::now()),
-      is_auto_(is_auto) {
+      last_event_timestamp_(std::chrono::high_resolution_clock::now()) {
   // Initialize sensors_data_ based on rotation vector = (0, 0, 0)
   RefreshSensors(0, 0, 0);
   // Set constant values for the sensors that are independent of rotation vector
@@ -101,7 +97,7 @@ SensorsSimulator::SensorsSimulator(bool is_auto)
 
 void SensorsSimulator::RefreshSensors(double x, double y, double z) {
   auto rotation_matrix_update = GetRotationMatrix(x, y, z);
-  auto acc_update = CalculateAcceleration(rotation_matrix_update, is_auto_);
+  auto acc_update = CalculateAcceleration(rotation_matrix_update);
   auto mgn_update = CalculateMagnetometer(rotation_matrix_update);
 
   std::lock_guard<std::mutex> lock(sensors_data_mtx_);

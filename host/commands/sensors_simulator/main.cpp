@@ -108,12 +108,10 @@ int SensorsSimulatorMain(int argc, char** argv) {
   }
 
   transport::SharedFdChannel channel(webrtc_fd, webrtc_fd);
-
-  auto device_type = static_cast<DeviceType>(FLAGS_device_type);
-  SensorsSimulator sensors_simulator(device_type == DeviceType::Auto);
+  SensorsSimulator sensors_simulator;
   SensorsHalProxy sensors_hal_proxy(sensors_in_fd, sensors_out_fd,
                                     kernel_events_fd, sensors_simulator,
-                                    device_type);
+                                    static_cast<DeviceType>(FLAGS_device_type));
   while (true) {
     auto result = ProcessWebrtcRequest(channel, sensors_simulator);
     if (!result.ok()) {
