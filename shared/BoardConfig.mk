@@ -48,7 +48,24 @@ endif
 TARGET_KERNEL_PATH ?= $(SYSTEM_DLKM_SRC)/kernel-$(TARGET_KERNEL_USE)
 PRODUCT_COPY_FILES += $(TARGET_KERNEL_PATH):kernel
 
+# This check prevents the $(shell grep ...) subexpression below from printing
+# "grep: ... No such file or directory" to stdout. Explanation:
+#
+# - For some reason BOARD_KERNEL_VERSION seems to be evaluated twice, once
+#   before the RELEASE_KERNEL_CUTTLEFISH_* variables are loaded, and again
+#   after they are loaded. The first evaluation results in KERNEL_MODULES_PATH
+#   having an invalid path, causing grep to fail with the above message.
+#
+# - The build still works without this workaround (e.g. "m" and "m dist"
+#   complete successfully). The goal of the workaround is just to prevent the
+#   spurious grep error message.
+#
+# - The check uses the RELEASE_KERNEL_CUTTLEFISH_X86_64_VERSION variable, which
+#   was chosen arbirarily. Any other RELEASE_KERNEL_CUTTLEFISH_* flag works,
+#   even when building for Arm64.
+ifneq (,$(RELEASE_KERNEL_CUTTLEFISH_X86_64_VERSION))
 BOARD_KERNEL_VERSION := $(word 1,$(subst vermagic=,,$(shell grep -E -h -ao -m 1 'vermagic=.*' $(KERNEL_MODULES_PATH)/nd_virtio.ko)))
+endif
 
 ifneq (,$(findstring auto, $(PRODUCT_NAME)))
 HIB_SWAP_IMAGE_SIZE_GB ?= 4
