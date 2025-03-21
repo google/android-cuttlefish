@@ -102,10 +102,8 @@ Result<void> UpdateSensorsHal(const std::string& sensors_data,
 
 SensorsHalProxy::SensorsHalProxy(SharedFD sensors_in_fd,
                                  SharedFD sensors_out_fd,
-                                 SharedFD kernel_events_fd,
                                  SensorsSimulator& sensors_simulator)
     : channel_(std::move(sensors_in_fd), std::move(sensors_out_fd)),
-      kernel_events_fd_(std::move(kernel_events_fd)),
       sensors_simulator_(sensors_simulator) {
   req_responder_thread_ = std::thread([this] {
     while (running_) {
@@ -128,16 +126,6 @@ SensorsHalProxy::SensorsHalProxy(SharedFD sensors_in_fd,
         }
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(kIntervalMs));
-    }
-  });
-  reboot_monitor_thread_ = std::thread([this] {
-    while (kernel_events_fd_->IsOpen()) {
-      auto read_result = monitor::ReadEvent(kernel_events_fd_);
-      CHECK(read_result.ok()) << read_result.error().FormatForEnv();
-      CHECK(read_result->has_value()) << "EOF in kernel log monitor";
-      if ((*read_result)->event == monitor::Event::BootloaderLoaded) {
-        hal_activated_ = false;
-      }
     }
   });
 }
