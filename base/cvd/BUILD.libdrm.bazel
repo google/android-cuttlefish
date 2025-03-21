@@ -1,0 +1,19 @@
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+    ],
+)
+
+# We don't want the entire libdrm library because that's platform specific. At
+# the moment we only need the fourcc utilities.
+cc_library(
+    name = "libdrm_fourcc",
+    hdrs = [
+        "include/drm/drm.h",
+        "include/drm/drm_fourcc.h",
+        "include/drm/drm_mode.h",
+    ],
+    includes = [
+        "include",
+    ],
+)
