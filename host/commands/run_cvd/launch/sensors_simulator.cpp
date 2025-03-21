@@ -35,8 +35,7 @@ Result<MonitorCommand> SensorsSimulator(
       .AddParameter("--sensors_out_fd=", to_guest_fd)
       .AddParameter("--webrtc_fd=", sensors_socket_pair->webrtc_socket)
       .AddParameter("-kernel_events_fd=",
-                    kernel_log_pipe_provider.KernelLogPipe())
-      .AddParameter("--device_type=", static_cast<int>(instance.device_type()));
+                    kernel_log_pipe_provider.KernelLogPipe());
   return command;
 }
 

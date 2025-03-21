@@ -32,7 +32,6 @@ DEFINE_int32(kernel_events_fd, -1,
              "A pipe for monitoring events based on messages "
              "written to the kernel log. This is used by "
              "SensorsHalProxy to monitor for device reboots.");
-DEFINE_int32(device_type, 0, "The form factor of the Cuttlefish instance.");
 
 namespace cuttlefish {
 namespace sensors {
@@ -110,8 +109,7 @@ int SensorsSimulatorMain(int argc, char** argv) {
   transport::SharedFdChannel channel(webrtc_fd, webrtc_fd);
   SensorsSimulator sensors_simulator;
   SensorsHalProxy sensors_hal_proxy(sensors_in_fd, sensors_out_fd,
-                                    kernel_events_fd, sensors_simulator,
-                                    static_cast<DeviceType>(FLAGS_device_type));
+                                    kernel_events_fd, sensors_simulator);
   while (true) {
     auto result = ProcessWebrtcRequest(channel, sensors_simulator);
     if (!result.ok()) {

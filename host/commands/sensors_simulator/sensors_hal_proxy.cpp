@@ -23,6 +23,8 @@ namespace sensors {
 
 namespace {
 static constexpr char END_OF_MSG = '\n';
+static constexpr SensorsMask kHostEnabledSensors =
+    (1 << kAccelerationId) | (1 << kGyroscopeId) | (1 << kMagneticId);
 static constexpr uint32_t kIntervalMs = 1000;
 
 Result<std::string> SensorIdToName(int id) {
@@ -33,14 +35,10 @@ Result<std::string> SensorIdToName(int id) {
       return "gyroscope";
     case kMagneticId:
       return "magnetic";
-    case kPressureId:
-      return "pressure";
     case kUncalibMagneticId:
       return "magnetic-uncalibrated";
     case kUncalibGyroscopeId:
       return "gyroscope-uncalibrated";
-    case kHingeAngle0Id:
-      return "hinge-angle0";
     case kUncalibAccelerationId:
       return "acceleration-uncalibrated";
     case kRotationVecId:
@@ -62,14 +60,13 @@ Result<void> SendResponseHelper(transport::SharedFdChannel& channel,
 }
 
 Result<void> ProcessHalRequest(transport::SharedFdChannel& channel,
-                               std::atomic<bool>& hal_activated,
-                               uint32_t mask) {
+                               std::atomic<bool>& hal_activated) {
   auto request =
       CF_EXPECT(channel.ReceiveMessage(), "Couldn't receive message.");
   std::string payload(reinterpret_cast<const char*>(request->payload),
                       request->payload_size);
   if (payload.starts_with("list-sensors")) {
-    auto msg = std::to_string(mask) + END_OF_MSG;
+    auto msg = std::to_string(kHostEnabledSensors) + END_OF_MSG;
     CF_EXPECT(SendResponseHelper(channel, msg));
     hal_activated = true;
   }
@@ -77,11 +74,11 @@ Result<void> ProcessHalRequest(transport::SharedFdChannel& channel,
 }
 
 Result<void> UpdateSensorsHal(const std::string& sensors_data,
-                              transport::SharedFdChannel& channel,
-                              uint32_t mask) {
+                              transport::SharedFdChannel& channel) {
   std::vector<std::string> reports;
   std::string report;
   std::stringstream sensors_data_stream(sensors_data);
+  uint32_t mask = kHostEnabledSensors;
   int id = 0;
 
   while (mask) {
@@ -106,35 +103,25 @@ Result<void> UpdateSensorsHal(const std::string& sensors_data,
 SensorsHalProxy::SensorsHalProxy(SharedFD sensors_in_fd,
                                  SharedFD sensors_out_fd,
                                  SharedFD kernel_events_fd,
-                                 SensorsSimulator& sensors_simulator,
-                                 DeviceType device_type)
+                                 SensorsSimulator& sensors_simulator)
     : channel_(std::move(sensors_in_fd), std::move(sensors_out_fd)),
       kernel_events_fd_(std::move(kernel_events_fd)),
       sensors_simulator_(sensors_simulator) {
-  SensorsMask host_enabled_sensors = (1 << kAccelerationId) |
-                                     (1 << kGyroscopeId) | (1 << kMagneticId) |
-                                     (1 << kPressureId);
-  if (device_type == DeviceType::Foldable) {
-    host_enabled_sensors |= (1 << kHingeAngle0Id);
-  }
-
-  req_responder_thread_ = std::thread([this, host_enabled_sensors] {
+  req_responder_thread_ = std::thread([this] {
     while (running_) {
-      auto result =
-          ProcessHalRequest(channel_, hal_activated_, host_enabled_sensors);
+      auto result = ProcessHalRequest(channel_, hal_activated_);
       if (!result.ok()) {
         running_ = false;
         LOG(ERROR) << result.error().FormatForEnv();
       }
     }
   });
-  data_reporter_thread_ = std::thread([this, host_enabled_sensors] {
+  data_reporter_thread_ = std::thread([this] {
     while (running_) {
       if (hal_activated_) {
         auto sensors_data =
-            sensors_simulator_.GetSensorsData(host_enabled_sensors);
-        auto result =
-            UpdateSensorsHal(sensors_data, channel_, host_enabled_sensors);
+            sensors_simulator_.GetSensorsData(kHostEnabledSensors);
+        auto result = UpdateSensorsHal(sensors_data, channel_);
         if (!result.ok()) {
           running_ = false;
           LOG(ERROR) << result.error().FormatForEnv();
