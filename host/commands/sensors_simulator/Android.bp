@@ -21,7 +21,6 @@ cc_binary_host {
     name: "sensors_simulator",
     srcs: [
         "main.cpp",
-        "sensors_hal_proxy.cpp",
         "sensors_simulator.cpp",
     ],
     header_libs: [
@@ -30,7 +29,6 @@ cc_binary_host {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
-        "libcuttlefish_kernel_log_monitor_utils",
         "libcuttlefish_transport",
         "libcuttlefish_utils",
         "libjsoncpp",
