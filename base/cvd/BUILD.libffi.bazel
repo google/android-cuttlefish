@@ -1,3 +1,10 @@
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+        "@wayland//:__subpackages__",
+    ],
+)
+
 COMMON_SRCS = [
     "src/closures.c",
     "src/debug.c",

@@ -1,0 +1,13 @@
+package(
+    default_visibility = [
+        "@expat//:__subpackages__",
+    ],
+)
+
+cc_library(
+    name = "expat_config",
+    hdrs = [
+        "expat_config.h",
+    ],
+    strip_include_prefix = "//external/expat",
+)
