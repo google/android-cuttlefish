@@ -35,7 +35,7 @@ func TestNewDir(t *testing.T) {
 	opts := UserArtifactsManagerOpts{RootDir: root}
 	am := NewUserArtifactsManagerImpl(opts)
 
-	upDir, err := am.NewDir()
+	upDir, err := am.NewDir("foo")
 
 	if err != nil {
 		t.Fatal(err)
@@ -64,8 +64,8 @@ func TestListTokens(t *testing.T) {
 	defer orchtesting.RemoveDir(t, root)
 	opts := UserArtifactsManagerOpts{RootDir: root}
 	am := NewUserArtifactsManagerImpl(opts)
-	am.NewDir()
-	am.NewDir()
+	am.NewDir("foo")
+	am.NewDir("bar")
 
 	res, err := am.ListDirs()
 
@@ -110,7 +110,7 @@ func TestCreateArtifactsSucceeds(t *testing.T) {
 	defer orchtesting.RemoveDir(t, root)
 	opts := UserArtifactsManagerOpts{RootDir: root}
 	am := NewUserArtifactsManagerImpl(opts)
-	upDir, err := am.NewDir()
+	upDir, err := am.NewDir("")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,5 +150,59 @@ func TestCreateArtifactsSucceeds(t *testing.T) {
 	b, _ := ioutil.ReadFile(am.GetFilePath(upDir.Name, "xyzz"))
 	if diff := cmp.Diff("lorem ipsum", string(b)); diff != "" {
 		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestLockAndUnlockFileSucceeds(t *testing.T) {
+	root := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, root)
+	opts := UserArtifactsManagerOpts{RootDir: root}
+	am := NewUserArtifactsManagerImpl(opts)
+	upDir, err := am.NewDir("foo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := am.LockFile("foo", "bar")
+	if err != nil {
+		t.Errorf("Failed to lock file %q", upDir.Name)
+	}
+	if res.UploadCompleted {
+		t.Errorf("Task shouldn't be completed")
+	}
+	res, err = am.UnlockFile("foo", "bar")
+	if err != nil {
+		t.Errorf("Failed to unlock file %q", upDir.Name)
+	}
+	if !res.UploadCompleted {
+		t.Errorf("Task should be completed")
+	}
+	res, err = am.LockFile("foo", "bar")
+	if err != nil {
+		t.Errorf("Failed to lock file %q", upDir.Name)
+	}
+	if !res.UploadCompleted {
+		t.Errorf("Task should be completed")
+	}
+	res, err = am.UnlockFile("foo", "bar")
+	if err != nil {
+		t.Errorf("Failed to unlock file %q", upDir.Name)
+	}
+	if !res.UploadCompleted {
+		t.Errorf("Task should be completed")
+	}
+}
+
+func TestLockAndUnlockFileRequiresDirectoryCreation(t *testing.T) {
+	root := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, root)
+	opts := UserArtifactsManagerOpts{RootDir: root}
+	am := NewUserArtifactsManagerImpl(opts)
+	_, err := am.LockFile("foo", "bar")
+	if err == nil {
+		t.Fatal(err)
+	}
+	_, err = am.UnlockFile("foo", "bar")
+	if err == nil {
+		t.Fatal(err)
 	}
 }

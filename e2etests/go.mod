@@ -64,5 +64,6 @@ require (
 	gotest.tools/v3 v3.5.1 // indirect
 )
 
+replace github.com/google/android-cuttlefish/frontend/src/host_orchestrator => ../frontend/src/host_orchestrator
 replace github.com/google/android-cuttlefish/frontend/src/libhoclient => ../frontend/src/libhoclient
 replace github.com/google/android-cuttlefish/frontend/src/liboperator => ../frontend/src/liboperator

@@ -130,6 +130,10 @@ type UploadDirectory struct {
 	Name string `json:"name"`
 }
 
+type LockFileResponse struct {
+	UploadCompleted bool `json:"upload_completed"`
+}
+
 type ListUploadDirectoriesResponse struct {
 	Items []*UploadDirectory `json:"items"`
 }
