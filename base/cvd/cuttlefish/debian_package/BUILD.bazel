@@ -1,0 +1,148 @@
+genrule(
+    name = "install_dir",
+    srcs = [
+        "//cuttlefish/common/frontend/socket_vsock_proxy",
+        "//cuttlefish/host/commands/acloud_translator",
+        "//cuttlefish/host/commands/assemble_cvd",
+        "//cuttlefish/host/commands/console_forwarder",
+        "//cuttlefish/host/commands/control_env_proxy_server",
+        "//cuttlefish/host/commands/cvd",
+        "//cuttlefish/host/commands/cvd_env:cvd_internal_env",
+        "//cuttlefish/host/commands/cvd_import_locations",
+        "//cuttlefish/host/commands/cvd_send_id_disclosure",
+        "//cuttlefish/host/commands/cvd_update_security_algorithm",
+        "//cuttlefish/host/commands/display:cvd_internal_display",
+        "//cuttlefish/host/commands/echo_server",
+        "//cuttlefish/host/commands/extract_ikconfig:extract-ikconfig.sh",
+        "//cuttlefish/host/commands/extract_vmlinux:extract-vmlinux.sh",
+        "//cuttlefish/host/commands/gnss_grpc_proxy",
+        "//cuttlefish/host/commands/health",
+        "//cuttlefish/host/commands/kernel_log_monitor",
+        "//cuttlefish/host/commands/logcat_receiver",
+        "//cuttlefish/host/commands/log_tee",
+        "//cuttlefish/host/commands/metrics_launcher",
+        "//cuttlefish/host/commands/metrics",
+        "//cuttlefish/host/commands/mkenvimage_slim",
+        "//cuttlefish/host/commands/modem_simulator",
+        "//cuttlefish/host/commands/openwrt_control_server",
+        "//cuttlefish/host/commands/powerbtn_cvd",
+        "//cuttlefish/host/commands/powerwash_cvd",
+        "//cuttlefish/host/commands/process_restarter",
+        "//cuttlefish/host/commands/record_cvd",
+        "//cuttlefish/host/commands/restart_cvd",
+        "//cuttlefish/host/commands/run_cvd",
+        "//cuttlefish/host/commands/screen_recording_server",
+        "//cuttlefish/host/commands/snapshot_util_cvd",
+        "//cuttlefish/host/commands/start:cvd_internal_start",
+        "//cuttlefish/host/commands/status:cvd_internal_status",
+        "//cuttlefish/host/commands/stop:cvd_internal_stop",
+        "//cuttlefish/host/commands/tcp_connector",
+        "//cuttlefish/host/commands/tombstone_receiver",
+        "//cuttlefish/host/frontend/adb_connector",
+        "//cuttlefish/host/frontend/operator_proxy",
+        "//cuttlefish/host/graphics_detector",
+        "//cuttlefish/host/graphics_detector/shaders:generate_shader_embed",
+        "//cuttlefish/host/libs/allocd:allocd_client",
+        "//cuttlefish/host/commands/modem_simulator:files/iccprofile_for_sim0.xml",
+        "//cuttlefish/host/commands/modem_simulator:files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
+        "//cuttlefish/host/commands/modem_simulator:files/numeric_operator.xml",
+    ],
+    outs = [
+        "cuttlefish-common/bin/socket_vsock_proxy",
+        "cuttlefish-common/bin/acloud_translator",
+        "cuttlefish-common/bin/assemble_cvd",
+        "cuttlefish-common/bin/console_forwarder",
+        "cuttlefish-common/bin/control_env_proxy_server",
+        "cuttlefish-common/bin/cvd_send_id_disclosure",
+        "cuttlefish-common/bin/cvd",
+        "cuttlefish-common/bin/cvd_internal_env",
+        "cuttlefish-common/bin/cvd_import_locations",
+        "cuttlefish-common/bin/cvd_internal_display",
+        "cuttlefish-common/bin/echo_server",
+        "cuttlefish-common/bin/extract-ikconfig",
+        "cuttlefish-common/bin/extract-vmlinux",
+        "cuttlefish-common/bin/gnss_grpc_proxy",
+        "cuttlefish-common/bin/health",
+        "cuttlefish-common/bin/kernel_log_monitor",
+        "cuttlefish-common/bin/logcat_receiver",
+        "cuttlefish-common/bin/log_tee",
+        "cuttlefish-common/bin/metrics_launcher",
+        "cuttlefish-common/bin/metrics",
+        "cuttlefish-common/bin/mkenvimage_slim",
+        "cuttlefish-common/bin/modem_simulator",
+        "cuttlefish-common/bin/openwrt_control_server",
+        "cuttlefish-common/bin/powerbtn_cvd",
+        "cuttlefish-common/bin/powerwash_cvd",
+        "cuttlefish-common/bin/record_cvd",
+        "cuttlefish-common/bin/restart_cvd",
+        "cuttlefish-common/bin/run_cvd",
+        "cuttlefish-common/bin/screen_recording_server",
+        "cuttlefish-common/bin/snapshot_util_cvd",
+        "cuttlefish-common/bin/cvd_internal_start",
+        "cuttlefish-common/bin/cvd_internal_status",
+        "cuttlefish-common/bin/cvd_internal_stop",
+        "cuttlefish-common/bin/tcp_connector",
+        "cuttlefish-common/bin/tombstone_receiver",
+        "cuttlefish-common/bin/adb_connector",
+        "cuttlefish-common/bin/operator_proxy",
+        "cuttlefish-common/bin/graphics_detector",
+        "cuttlefish-common/bin/generate_shader_embed",
+        "cuttlefish-common/bin/allocd_client",
+        "cuttlefish-common/modem_simulator/files/iccprofile_for_sim0.xml",
+        "cuttlefish-common/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
+        "cuttlefish-common/modem_simulator/files/numeric_operator.xml",
+    ],
+    cmd = "mkdir -p $(RULEDIR)/cuttlefish-common/bin && " +
+        "cp $(location //cuttlefish/common/frontend/socket_vsock_proxy) $(RULEDIR)/cuttlefish-common/bin/socket_vsock_proxy && " +
+        "cp $(location //cuttlefish/host/commands/acloud_translator) $(RULEDIR)/cuttlefish-common/bin/acloud_translator && " +
+        "cp $(location //cuttlefish/host/commands/assemble_cvd) $(RULEDIR)/cuttlefish-common/bin/assemble_cvd && " +
+        "cp $(location //cuttlefish/host/commands/console_forwarder) $(RULEDIR)/cuttlefish-common/bin/console_forwarder && " +
+        "cp $(location //cuttlefish/host/commands/control_env_proxy_server) $(RULEDIR)/cuttlefish-common/bin/control_env_proxy_server && " +
+        "cp $(location //cuttlefish/host/commands/cvd) $(RULEDIR)/cuttlefish-common/bin/cvd && " +
+        "cp $(location //cuttlefish/host/commands/cvd_env:cvd_internal_env) $(RULEDIR)/cuttlefish-common/bin/cvd_internal_env && " +
+        "cp $(location //cuttlefish/host/commands/cvd_import_locations) $(RULEDIR)/cuttlefish-common/bin/cvd_import_locations && " +
+        "cp $(location //cuttlefish/host/commands/cvd_send_id_disclosure) $(RULEDIR)/cuttlefish-common/bin/cvd_send_id_disclosure && " +
+        "cp $(location //cuttlefish/host/commands/cvd_update_security_algorithm) $(RULEDIR)/cuttlefish-common/bin/cvd_update_security_algorithm && " +
+        "cp $(location //cuttlefish/host/commands/display:cvd_internal_display) $(RULEDIR)/cuttlefish-common/bin/cvd_internal_display && " +
+        "cp $(location //cuttlefish/host/commands/echo_server) $(RULEDIR)/cuttlefish-common/bin/echo_server && " +
+        "cp $(location //cuttlefish/host/commands/extract_ikconfig:extract-ikconfig.sh) $(RULEDIR)/cuttlefish-common/bin/extract-ikconfig && " +
+        "cp $(location //cuttlefish/host/commands/extract_vmlinux:extract-vmlinux.sh) $(RULEDIR)/cuttlefish-common/bin/extract-vmlinux && " +
+        "cp $(location //cuttlefish/host/commands/gnss_grpc_proxy) $(RULEDIR)/cuttlefish-common/bin/gnss_grpc_proxy && " +
+        "cp $(location //cuttlefish/host/commands/health) $(RULEDIR)/cuttlefish-common/bin/health && " +
+        "cp $(location //cuttlefish/host/commands/kernel_log_monitor) $(RULEDIR)/cuttlefish-common/bin/kernel_log_monitor && " +
+        "cp $(location //cuttlefish/host/commands/logcat_receiver) $(RULEDIR)/cuttlefish-common/bin/logcat_receiver && " +
+        "cp $(location //cuttlefish/host/commands/log_tee) $(RULEDIR)/cuttlefish-common/bin/log_tee && " +
+        "cp $(location //cuttlefish/host/commands/metrics_launcher) $(RULEDIR)/cuttlefish-common/bin/metrics_launcher && " +
+        "cp $(location //cuttlefish/host/commands/metrics) $(RULEDIR)/cuttlefish-common/bin/metrics && " +
+        "cp $(location //cuttlefish/host/commands/mkenvimage_slim) $(RULEDIR)/cuttlefish-common/bin/mkenvimage_slim && " +
+        "cp $(location //cuttlefish/host/commands/modem_simulator) $(RULEDIR)/cuttlefish-common/bin/modem_simulator && " +
+        "cp $(location //cuttlefish/host/commands/openwrt_control_server) $(RULEDIR)/cuttlefish-common/bin/openwrt_control_server && " +
+        "cp $(location //cuttlefish/host/commands/powerbtn_cvd) $(RULEDIR)/cuttlefish-common/bin/powerbtn_cvd && " +
+        "cp $(location //cuttlefish/host/commands/powerwash_cvd) $(RULEDIR)/cuttlefish-common/bin/powerwash_cvd && " +
+        "cp $(location //cuttlefish/host/commands/process_restarter) $(RULEDIR)/cuttlefish-common/bin/process_restarter && " +
+        "cp $(location //cuttlefish/host/commands/record_cvd) $(RULEDIR)/cuttlefish-common/bin/record_cvd && " +
+        "cp $(location //cuttlefish/host/commands/restart_cvd) $(RULEDIR)/cuttlefish-common/bin/restart_cvd && " +
+        "cp $(location //cuttlefish/host/commands/run_cvd) $(RULEDIR)/cuttlefish-common/bin/run_cvd && " +
+        "cp $(location //cuttlefish/host/commands/screen_recording_server) $(RULEDIR)/cuttlefish-common/bin/screen_recording_server && " +
+        "cp $(location //cuttlefish/host/commands/snapshot_util_cvd) $(RULEDIR)/cuttlefish-common/bin/snapshot_util_cvd && " +
+        "cp $(location //cuttlefish/host/commands/start:cvd_internal_start) $(RULEDIR)/cuttlefish-common/bin/cvd_internal_start && " + 
+        "cp $(location //cuttlefish/host/commands/status:cvd_internal_status) $(RULEDIR)/cuttlefish-common/bin/cvd_internal_status && " +
+        "cp $(location //cuttlefish/host/commands/stop:cvd_internal_stop) $(RULEDIR)/cuttlefish-common/bin/cvd_internal_stop && " +
+        "cp $(location //cuttlefish/host/commands/tcp_connector) $(RULEDIR)/cuttlefish-common/bin/tcp_connector && " +
+        "cp $(location //cuttlefish/host/commands/tombstone_receiver) $(RULEDIR)/cuttlefish-common/bin/tombstone_receiver && " +
+        "cp $(location //cuttlefish/host/frontend/adb_connector) $(RULEDIR)/cuttlefish-common/bin/adb_connector && " +
+        "cp $(location //cuttlefish/host/frontend/operator_proxy) $(RULEDIR)/cuttlefish-common/bin/operator_proxy && " +
+        "cp $(location //cuttlefish/host/graphics_detector) $(RULEDIR)/cuttlefish-common/bin/graphics_detector && " +
+        "cp $(location //cuttlefish/host/graphics_detector/shaders:generate_shader_embed) $(RULEDIR)/cuttlefish-common/bin/generate_shader_embed && " +
+        "cp $(location //cuttlefish/host/libs/allocd:allocd_client) $(RULEDIR)/cuttlefish-common/bin/allocd_client && " +
+        "mkdir -p $(RULEDIR)/cuttlefish-common/modem_simulator/files && " +
+        "cp $(location //cuttlefish/host/commands/modem_simulator:files/iccprofile_for_sim0.xml) $(RULEDIR)/cuttlefish-common/modem_simulator/files/iccprofile_for_sim0.xml && " +
+        "cp $(location //cuttlefish/host/commands/modem_simulator:files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml) $(RULEDIR)/cuttlefish-common/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml && " +
+        "cp $(location //cuttlefish/host/commands/modem_simulator:files/numeric_operator.xml) $(RULEDIR)/cuttlefish-common/modem_simulator/files/numeric_operator.xml && " +
+        "true"
+)
+
+sh_binary(
+    name = "cvd",
+    srcs = ["cuttlefish-common/bin/cvd"],
+)
