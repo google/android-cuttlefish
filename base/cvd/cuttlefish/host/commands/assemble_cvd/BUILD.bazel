@@ -38,6 +38,7 @@ cc_binary(
         "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
         "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:clean",
         "//cuttlefish/host/commands/assemble_cvd:disk_flags",
         "//cuttlefish/host/commands/assemble_cvd:display",
@@ -195,6 +196,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd/disk:access_kregistry",
         "//cuttlefish/host/commands/assemble_cvd/disk:ap_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:bootloader_present",
@@ -305,6 +307,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/commands/assemble_cvd:alloc",
+        "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd:disk_flags",
         "//cuttlefish/host/commands/assemble_cvd:display",
@@ -547,5 +550,33 @@ cc_library(
 clang_tidy_test(
     name = "vendor_dlkm_utils_clang_tidy",
     srcs = [":vendor_dlkm_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "assemble_cvd_flags",
+    srcs = [
+        "assemble_cvd_flags.cpp",
+    ],
+    hdrs = [
+        "assemble_cvd_flags.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:display",
+        "@gflags",
+        "@fmt",
+    ],
+    # required for the gflags `DEFINE`s when included in other targets
+    alwayslink = 1,
+)
+
+clang_tidy_test(
+    name = "assemble_cvd_flags_clang_tidy",
+    srcs = [":assemble_cvd_flags"],
     tags = ["clang_tidy", "clang-tidy"],
 )
