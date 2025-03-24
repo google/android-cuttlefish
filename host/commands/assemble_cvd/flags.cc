@@ -729,7 +729,11 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
           system_image_dir[instance_index] + "/android-info.txt";
     }
 
-    auto res = GetAndroidInfoConfig(instance_android_info_txt, "config");
+    auto res = GetAndroidInfoConfig(instance_android_info_txt, "device_type");
+    // If that "device_type" is not explicitly set, fall back to parse "config".
+    if (!res.ok()) {
+      res = GetAndroidInfoConfig(instance_android_info_txt, "config");
+    }
     guest_config.device_type = ParseDeviceType(res.value_or(""));
 
     res = GetAndroidInfoConfig(instance_android_info_txt, "gfxstream");
