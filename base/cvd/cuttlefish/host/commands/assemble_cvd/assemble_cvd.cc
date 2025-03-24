@@ -31,6 +31,7 @@
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/clean.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
@@ -48,26 +49,6 @@
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/feature/inject.h"
-
-using cuttlefish::StringFromEnv;
-
-DEFINE_string(assembly_dir, CF_DEFAULTS_ASSEMBLY_DIR,
-              "A directory to put generated files common between instances");
-DEFINE_string(instance_dir, CF_DEFAULTS_INSTANCE_DIR,
-              "This is a directory that will hold the cuttlefish generated"
-              "files, including both instance-specific and common files");
-DEFINE_string(snapshot_path, "",
-              "Path to snapshot. Must not be empty if the device is to be "
-              "restored from a snapshot");
-DEFINE_bool(resume, CF_DEFAULTS_RESUME,
-            "Resume using the disk from the last session, if "
-            "possible. i.e., if --noresume is passed, the disk "
-            "will be reset to the state it was initially launched "
-            "in. This flag is ignored if the underlying partition "
-            "images have been updated since the first launch."
-            "If the device starts from a snapshot, this will be always true.");
-
-DECLARE_bool(use_overlay);
 
 namespace cuttlefish {
 namespace {

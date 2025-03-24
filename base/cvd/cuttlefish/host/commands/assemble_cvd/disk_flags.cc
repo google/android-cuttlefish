@@ -30,6 +30,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/access_kregistry.h"
@@ -64,107 +65,6 @@
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
-
-DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
-              "Location of cuttlefish boot image. If empty it is assumed to be "
-              "boot.img in the directory specified by -system_image_dir.");
-DEFINE_string(
-    init_boot_image, CF_DEFAULTS_INIT_BOOT_IMAGE,
-    "Location of cuttlefish init boot image. If empty it is assumed to "
-    "be init_boot.img in the directory specified by -system_image_dir.");
-DEFINE_string(data_image, CF_DEFAULTS_DATA_IMAGE,
-              "Location of the data partition image.");
-DEFINE_string(super_image, CF_DEFAULTS_SUPER_IMAGE,
-              "Location of the super partition image.");
-DEFINE_string(misc_info_txt, "", "Location of the misc_info.txt file.");
-DEFINE_string(
-    vendor_boot_image, CF_DEFAULTS_VENDOR_BOOT_IMAGE,
-    "Location of cuttlefish vendor boot image. If empty it is assumed to "
-    "be vendor_boot.img in the directory specified by -system_image_dir.");
-DEFINE_string(vbmeta_image, CF_DEFAULTS_VBMETA_IMAGE,
-              "Location of cuttlefish vbmeta image. If empty it is assumed to "
-              "be vbmeta.img in the directory specified by -system_image_dir.");
-DEFINE_string(
-    vbmeta_system_image, CF_DEFAULTS_VBMETA_SYSTEM_IMAGE,
-    "Location of cuttlefish vbmeta_system image. If empty it is assumed to "
-    "be vbmeta_system.img in the directory specified by -system_image_dir.");
-DEFINE_string(
-    vbmeta_vendor_dlkm_image, CF_DEFAULTS_VBMETA_VENDOR_DLKM_IMAGE,
-    "Location of cuttlefish vbmeta_vendor_dlkm image. If empty it is assumed "
-    "to "
-    "be vbmeta_vendor_dlkm.img in the directory specified by "
-    "-system_image_dir.");
-DEFINE_string(
-    vbmeta_system_dlkm_image, CF_DEFAULTS_VBMETA_SYSTEM_DLKM_IMAGE,
-    "Location of cuttlefish vbmeta_system_dlkm image. If empty it is assumed "
-    "to "
-    "be vbmeta_system_dlkm.img in the directory specified by "
-    "-system_image_dir.");
-DEFINE_string(default_vvmtruststore_file_name,
-              CF_DEFAULTS_DEFAULT_VVMTRUSTSTORE_FILE_NAME,
-              "If the vvmtruststore_path parameter is empty then the default "
-              "file name of the vvmtruststore image in the directory specified"
-              " by -system_image_dir. If empty then there's no vvmtruststore "
-              "image assumed by default.");
-DEFINE_string(vvmtruststore_path, CF_DEFAULTS_VVMTRUSTSTORE_PATH,
-              "Location of the vvmtruststore image. If empty and the "
-              "default_vvmtruststore_file_name parameter is not empty then the "
-              "image file is assumed to be the default_vvmtruststore_file_name "
-              "file in the directory specified by -system_image_dir.");
-
-DEFINE_string(
-    default_target_zip, CF_DEFAULTS_DEFAULT_TARGET_ZIP,
-    "Location of default target zip file.");
-DEFINE_string(
-    system_target_zip, CF_DEFAULTS_SYSTEM_TARGET_ZIP,
-    "Location of system target zip file.");
-
-DEFINE_string(android_efi_loader, CF_DEFAULTS_ANDROID_EFI_LOADER,
-              "Location of android EFI loader for android efi load flow.");
-
-DEFINE_string(linux_kernel_path, CF_DEFAULTS_LINUX_KERNEL_PATH,
-              "Location of linux kernel for cuttlefish otheros flow.");
-DEFINE_string(linux_initramfs_path, CF_DEFAULTS_LINUX_INITRAMFS_PATH,
-              "Location of linux initramfs.img for cuttlefish otheros flow.");
-DEFINE_string(linux_root_image, CF_DEFAULTS_LINUX_ROOT_IMAGE,
-              "Location of linux root filesystem image for cuttlefish otheros flow.");
-
-DEFINE_string(chromeos_disk, CF_DEFAULTS_CHROMEOS_DISK,
-              "Location of a complete ChromeOS GPT disk");
-DEFINE_string(chromeos_kernel_path, CF_DEFAULTS_CHROMEOS_KERNEL_PATH,
-              "Location of the chromeos kernel for the chromeos flow.");
-DEFINE_string(chromeos_root_image, CF_DEFAULTS_CHROMEOS_ROOT_IMAGE,
-              "Location of chromeos root filesystem image for chromeos flow.");
-
-DEFINE_string(fuchsia_zedboot_path, CF_DEFAULTS_FUCHSIA_ZEDBOOT_PATH,
-              "Location of fuchsia zedboot path for cuttlefish otheros flow.");
-DEFINE_string(fuchsia_multiboot_bin_path, CF_DEFAULTS_FUCHSIA_MULTIBOOT_BIN_PATH,
-              "Location of fuchsia multiboot bin path for cuttlefish otheros flow.");
-DEFINE_string(fuchsia_root_image, CF_DEFAULTS_FUCHSIA_ROOT_IMAGE,
-              "Location of fuchsia root filesystem image for cuttlefish otheros flow.");
-
-DEFINE_string(
-    custom_partition_path, CF_DEFAULTS_CUSTOM_PARTITION_PATH,
-    "Location of custom image that will be passed as a \"custom\" partition"
-    "to rootfs and can be used by /dev/block/by-name/custom. Multiple images "
-    "can be passed, separated by semicolons and can be used as "
-    "/dev/block/by-name/custom_1, /dev/block/by-name/custom_2, etc. Example: "
-    "--custom_partition_path=\"/path/to/custom.img;/path/to/other.img\"");
-
-DEFINE_string(
-    hibernation_image, CF_DEFAULTS_HIBERNATION_IMAGE,
-    "Location of the hibernation path that will be used when hibernating.");
-
-DEFINE_string(
-    blank_sdcard_image_mb, CF_DEFAULTS_BLANK_SDCARD_IMAGE_MB,
-    "If enabled, the size of the blank sdcard image to generate, MB.");
-
-DECLARE_string(ap_rootfs_image);
-DECLARE_string(bootloader);
-DECLARE_string(initramfs_path);
-DECLARE_string(kernel_path);
-DECLARE_bool(resume);
-DECLARE_bool(use_overlay);
 
 namespace cuttlefish {
 
