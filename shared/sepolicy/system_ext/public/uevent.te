@@ -1,0 +1,1 @@
+allow ueventd ti50_char_device:chr_file { rw_file_perms create setattr };
