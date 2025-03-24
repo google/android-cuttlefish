@@ -22,7 +22,8 @@ cc_binary(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/host/commands/start:start_flags",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/config:instance_nums",
@@ -43,4 +44,26 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "start_flags",
+    srcs = [
+        "start_flags.cpp",
+    ],
+    hdrs = [
+        "start_flags.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "@gflags",
+    ],
+    # required for the gflags `DEFINE`s when included in other targets
+    alwayslink = 1,
+)
 
+clang_tidy_test(
+    name = "start_flags_clang_tidy",
+    srcs = [":start_flags"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
