@@ -21,6 +21,7 @@
 
 #include "common/libs/sensors/sensors.h"
 #include "common/libs/transport/channel_sharedfd.h"
+#include "common/libs/utils/device_type.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/commands/sensors_simulator/sensors_simulator.h"
@@ -32,7 +33,7 @@ class SensorsHalProxy {
  public:
   SensorsHalProxy(SharedFD sensors_in_fd, SharedFD sensors_out_fd,
                   SharedFD kernel_events_fd,
-                  SensorsSimulator& sensors_simulator);
+                  SensorsSimulator& sensors_simulator, DeviceType device_type);
 
  private:
   std::thread req_responder_thread_;

@@ -24,11 +24,17 @@ namespace cuttlefish {
 namespace sensors {
 
 namespace {
-
+constexpr float kPressure = 1013.25f;
+constexpr float kHingeAngle0 = 180.0f;
 constexpr double kG = 9.80665;  // meter per second^2
 const Eigen::Vector3d kGravityVec{0, kG, 0}, kMagneticField{0, 5.9, -48.4};
 
 inline double ToRadians(double x) { return x * M_PI / 180; }
+
+// Check if a given sensor id provides scalar data
+static bool IsScalarSensor(int id) {
+  return (id == kPressureId) || (id == kHingeAngle0Id);
+}
 
 // Calculate the rotation matrix of the pitch, roll, and yaw angles.
 static Eigen::Matrix3d GetRotationMatrix(double x, double y, double z) {
@@ -84,6 +90,9 @@ SensorsSimulator::SensorsSimulator()
       last_event_timestamp_(std::chrono::high_resolution_clock::now()) {
   // Initialize sensors_data_ based on rotation vector = (0, 0, 0)
   RefreshSensors(0, 0, 0);
+  // Set constant values for the sensors that are independent of rotation vector
+  sensors_data_[kPressureId].f = kPressure;
+  sensors_data_[kHingeAngle0Id].f = kHingeAngle0;
 }
 
 void SensorsSimulator::RefreshSensors(double x, double y, double z) {
@@ -101,15 +110,15 @@ void SensorsSimulator::RefreshSensors(double x, double y, double z) {
 
   current_rotation_matrix_ = rotation_matrix_update;
 
-  sensors_data_[kRotationVecId] << x, y, z;
-  sensors_data_[kAccelerationId] = acc_update;
-  sensors_data_[kGyroscopeId] = gyro_update;
-  sensors_data_[kMagneticId] = mgn_update;
+  sensors_data_[kRotationVecId].v << x, y, z;
+  sensors_data_[kAccelerationId].v = acc_update;
+  sensors_data_[kGyroscopeId].v = gyro_update;
+  sensors_data_[kMagneticId].v = mgn_update;
 
   // Copy the calibrated sensor data over for uncalibrated sensor support
-  sensors_data_[kUncalibAccelerationId] = acc_update;
-  sensors_data_[kUncalibGyroscopeId] = gyro_update;
-  sensors_data_[kUncalibMagneticId] = mgn_update;
+  sensors_data_[kUncalibAccelerationId].v = acc_update;
+  sensors_data_[kUncalibGyroscopeId].v = gyro_update;
+  sensors_data_[kUncalibMagneticId].v = mgn_update;
 }
 
 std::string SensorsSimulator::GetSensorsData(const SensorsMask mask) {
@@ -117,9 +126,14 @@ std::string SensorsSimulator::GetSensorsData(const SensorsMask mask) {
   std::lock_guard<std::mutex> lock(sensors_data_mtx_);
   for (int id = 0; id <= kMaxSensorId; id++) {
     if (mask & (1 << id)) {
-      auto v = sensors_data_[id];
-      sensors_msg << v(0) << INNER_DELIM << v(1) << INNER_DELIM << v(2)
-                  << OUTER_DELIM;
+      if (IsScalarSensor(id)) {
+        float f = sensors_data_[id].f;
+        sensors_msg << f << OUTER_DELIM;
+      } else {
+        Eigen::Vector3d v = sensors_data_[id].v;
+        sensors_msg << v(0) << INNER_DELIM << v(1) << INNER_DELIM << v(2)
+                    << OUTER_DELIM;
+      }
     }
   }
   return sensors_msg.str();
