@@ -46,8 +46,8 @@ package_files(
         "//cuttlefish/host/graphics_detector": "cuttlefish-common/bin/graphics_detector",
         "//cuttlefish/host/graphics_detector/shaders:generate_shader_embed": "cuttlefish-common/bin/generate_shader_embed",
         "//cuttlefish/host/libs/allocd:allocd_client": "cuttlefish-common/bin/allocd_client",
-        "//cuttlefish/host/commands/modem_simulator:files/iccprofile_for_sim0.xml": "cuttlefish-common/modem_simulator/files/iccprofile_for_sim0.xml",
-        "//cuttlefish/host/commands/modem_simulator:files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml": "cuttlefish-common/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
-        "//cuttlefish/host/commands/modem_simulator:files/numeric_operator.xml": "cuttlefish-common/modem_simulator/files/numeric_operator.xml",
+        "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim0.xml": "cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0.xml",
+        "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml": "cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
+        "//cuttlefish/host/commands/modem_simulator:etc/files/numeric_operator.xml": "cuttlefish-common/etc/modem_simulator/files/numeric_operator.xml",
     },
 )
