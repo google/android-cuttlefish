@@ -304,50 +304,26 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
   return {};
 }
 
-static constexpr std::string_view kInstallDir = "/usr/lib/cuttlefish-common/bin";
-
-Result<void> SubstituteWithFlag(const std::string& target_dir, const std::vector<std::string>& debian_package_executables) {
+Result<void> SubstituteWithFlag(
+    const std::string& target_dir,
+    const std::vector<std::string>& debian_substitutions) {
   std::string self_path;
   CF_EXPECT(android::base::Readlink("/proc/self/exe", &self_path));
-  bool is_installed_cvd = self_path == fmt::format("{}/cvd", kInstallDir);
-  std::string runfiles_error;
-  std::unique_ptr<Runfiles> runfiles;
-  if (!debian_package_executables.empty() && !is_installed_cvd) {
-    runfiles.reset(
-        Runfiles::Create(self_path, BAZEL_CURRENT_REPOSITORY, &runfiles_error));
-    CF_EXPECTF(runfiles.get(), "Could not load runfiles: '{}'", runfiles_error);
-  }
-  for (const std::string& executable : debian_package_executables) {
-    std::size_t last_slash = executable.rfind("/");
-    std::string_view short_name = executable;
-    if (last_slash != std::string::npos) {
-      short_name = short_name.substr(last_slash + 1);
-    }
-    CF_EXPECT(!short_name.empty());
-    if (short_name[0] == ':') {
-      short_name = short_name.substr(1);
-    }
+  std::string cuttlefish_common =
+      android::base::Dirname(android::base::Dirname(self_path));
+  CF_EXPECTF(android::base::EndsWith(cuttlefish_common, "cuttlefish-common"),
+             "{}", cuttlefish_common);
 
-    std::string source;
-    if (is_installed_cvd) {
-      source = fmt::format("{}/{}", kInstallDir, short_name);
-      CF_EXPECTF(FileExists(source), "Could not find installed binary '{}'",
-                 source);
-    } else {
-      source = runfiles->Rlocation(executable);
-      CF_EXPECTF(!source.empty() && FileExists(source),
-                 "Could not find runfiles file '{}' for '{}'", source,
-                 short_name);
-    }
-
-    std::string to_substitute =
-        fmt::format("{}/bin/{}", target_dir, short_name);
+  for (const std::string& substitution : debian_substitutions) {
+    std::string source = fmt::format("{}/{}", cuttlefish_common, substitution);
+    std::string to_substitute = fmt::format("{}/{}", target_dir, substitution);
     // TODO: schuffelen - relax this check after migration completes
     CF_EXPECTF(FileExists(to_substitute),
                "Cannot substitute '{}', does not exist", to_substitute);
     CF_EXPECTF(unlink(to_substitute.c_str()) == 0, "{}", strerror(errno));
     CF_EXPECT(CreateSymLink(source, to_substitute));
   }
+
   return {};
 }
 
@@ -373,7 +349,7 @@ Result<void> SubstituteWithMarker(const std::string& target_dir, const std::stri
 Result<void> FetchHostPackage(
     BuildApi& build_api, const Build& build, const std::string& target_dir,
     const bool keep_archives,
-    std::vector<std::string> debian_package_executables,
+    const std::vector<std::string>& debian_substitutions,
     FetchTracer::Trace trace) {
   LOG(INFO) << "Preparing host package for " << build;
   // This function is called asynchronously, so it may take a while to start.
@@ -400,10 +376,10 @@ Result<void> FetchHostPackage(
     LOG(INFO) << "using local debian substitution marker file: " << marker_file;
   }
 
-  if (debian_package_executables.empty() && FileExists(marker_file)) {
+  if (debian_substitutions.empty() && FileExists(marker_file)) {
     CF_EXPECT(SubstituteWithMarker(target_dir, marker_file));
   } else {
-    CF_EXPECT(SubstituteWithFlag(target_dir, debian_package_executables));
+    CF_EXPECT(SubstituteWithFlag(target_dir, debian_substitutions));
   }
   trace.CompletePhase("Substitute");
   return {};
@@ -1035,8 +1011,7 @@ Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
       std::launch::async, FetchHostPackage, std::ref(*build_api),
       std::cref(host_target_build), std::cref(host_target.host_tools_directory),
       std::cref(flags.keep_downloaded_archives),
-      std::cref(flags.debian_package_executables),
-      tracer.NewTrace("Host Package"));
+      std::cref(flags.debian_substitutions), tracer.NewTrace("Host Package"));
   size_t count = 1;
   for (const auto& target : targets) {
     LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
