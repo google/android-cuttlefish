@@ -96,8 +96,7 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
       GflagsCompatFlag("host_package_build", fetch_flags.host_package_build)
           .Help("source for the host cvd tools"));
   flags.emplace_back(
-      GflagsCompatFlag("debian_package_executables",
-                       fetch_flags.debian_package_executables)
+      GflagsCompatFlag("debian_substitutions", fetch_flags.debian_substitutions)
           .Help("list of executables to override with packaged versions."));
 
   BuildApiFlags& build_api_flags = fetch_flags.build_api_flags;
@@ -334,34 +333,6 @@ Result<FetchFlags> FetchFlags::Parse(std::vector<std::string>& args) {
 
   fetch_flags.number_of_builds = CF_EXPECT(GetNumberOfBuilds(
       fetch_flags.vector_flags, fetch_flags.target_subdirectory));
-
-  if (fetch_flags.debian_package_executables == std::vector<std::string>{"all_migrated"}) {
-    fetch_flags.debian_package_executables = {
-        "_main/cuttlefish/common/frontend/socket_vsock_proxy/socket_vsock_proxy",
-        "_main/cuttlefish/host/commands/acloud_translator/acloud_translator",
-        "_main/cuttlefish/host/commands/assemble_cvd/assemble_cvd",
-        "_main/cuttlefish/host/commands/console_forwarder/console_forwarder",
-        "_main/cuttlefish/host/commands/cvd_env/cvd_internal_env",
-        "_main/cuttlefish/host/commands/cvd_send_id_disclosure/cvd_send_id_disclosure",
-        "_main/cuttlefish/host/commands/cvd_update_security_algorithm/cvd_update_security_algorithm",
-        "_main/cuttlefish/host/commands/display/cvd_internal_display",
-        "_main/cuttlefish/host/commands/extract-ikconfig/extract-ikconfig",
-        "_main/cuttlefish/host/commands/extract-vmlinux/extract-vmlinux",
-        "_main/cuttlefish/host/commands/health/health",
-        "_main/cuttlefish/host/commands/logcat_receiver/logcat_receiver",
-        "_main/cuttlefish/host/commands/mkenvimage_slim/mkenvimage_slim",
-        "_main/cuttlefish/host/commands/process_restarter/process_restarter",
-        "_main/cuttlefish/host/commands/record_cvd/record_cvd",
-        "_main/cuttlefish/host/commands/restart_cvd/restart_cvd",
-        "_main/cuttlefish/host/commands/snapshot_util_cvd/snapshot_util_cvd",
-        "_main/cuttlefish/host/commands/start/cvd_internal_start",
-        "_main/cuttlefish/host/commands/status/cvd_internal_status",
-        "_main/cuttlefish/host/commands/tcp_connector/tcp_connector",
-        "_main/cuttlefish/host/commands/tombstone_receiver/tombstone_receiver",
-        "_main/cuttlefish/host/frontend/adb_connector/adb_connector",
-        "_main/cuttlefish/host/libs/allocd/allocd_client",
-    };
-  }
 
   return {fetch_flags};
 }
