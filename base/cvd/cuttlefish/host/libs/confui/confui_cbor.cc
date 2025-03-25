@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-#include "host/libs/confui/cbor.h"
+#include "host/libs/confui/confui_cbor.h"
+
+#include "cbor.h"
 
 #include "common/libs/confui/confui.h"
 
@@ -26,34 +28,44 @@ namespace confui {
  *  "extra"  : extra_data_in_bytes}
  */
 void Cbor::Init() {
-  cn_cbor_errback err;
-  cb_map_ = std::unique_ptr<cn_cbor, CborDeleter>(cn_cbor_map_create(&err));
+  cb_map_.reset(cbor_new_definite_map(2));
 
   buffer_status_ = CheckUTF8Copy(prompt_text_);
   if (!IsOk()) {
     return;
   }
 
-  auto cb_prompt_as_value = cn_cbor_string_create(prompt_text_.data(), &err);
-  auto cb_extra_data_as_value =
-      cn_cbor_data_create(extra_data_.data(), extra_data_.size(), &err);
-  cn_cbor_mapput_string(cb_map_.get(), "prompt", cb_prompt_as_value, &err);
-  cn_cbor_mapput_string(cb_map_.get(), "extra", cb_extra_data_as_value, &err);
-
-  // cn_cbor_encoder_write wants buffer_ to have a trailing 0 at the end
-  auto n_chars =
-      cn_cbor_encoder_write(buffer_.data(), 0, buffer_.size(), cb_map_.get());
-  ConfUiLog(ERROR) << "Cn-cbor encoder wrote " << n_chars << " while "
-                   << "kMax is " << kMax;
-  if (n_chars < 0) {
-    // it's either message being too long, or a potential cn_cbor bug
-    ConfUiLog(ERROR) << "Cn-cbor returns -1 which is likely message too long.";
+  cbor_item_t* cb_prompt = cbor_build_string(prompt_text_.c_str());
+  if (cb_prompt == nullptr) {
     buffer_status_ = Error::OUT_OF_DATA;
-  }
-  if (!IsOk()) {
     return;
   }
-  buffer_.resize(n_chars);
+  auto success = cbor_map_add(
+      cb_map_.get(), (struct cbor_pair){.key = cbor_move(cbor_build_string("prompt")),
+                                  .value = cbor_move(cb_prompt)});
+  if (!success) {
+    // Shouldn't happen, the map has capacity for 2.
+    buffer_status_ = Error::OUT_OF_DATA;
+    return;
+  }
+  cbor_item_t* cb_extra_data =
+      cbor_build_bytestring(extra_data_.data(), extra_data_.size());
+  if (cb_extra_data == nullptr) {
+    buffer_status_ = Error::OUT_OF_DATA;
+    return;
+  }
+  success = cbor_map_add(
+      cb_map_.get(), (struct cbor_pair){.key = cbor_move(cbor_build_string("extra")),
+                                  .value = cbor_move(cb_extra_data)});
+  if (!success) {
+    // Shouldn't happen, the map has capacity for 2.
+    buffer_status_ = Error::MALFORMED;
+    return;
+  }
+
+  buffer_.resize(cbor_serialized_size(cb_map_.get()));
+  // Safe to ignore return value because the buffer was properly resized
+  (void)cbor_serialize_map(cb_map_.get(), buffer_.data(), buffer_.size());
 }
 
 std::vector<std::uint8_t>&& Cbor::GetMessage() { return std::move(buffer_); }

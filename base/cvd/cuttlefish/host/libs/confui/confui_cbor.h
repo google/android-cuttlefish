@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include <cn-cbor/cn-cbor.h>
+#include "cbor.h"
 
 namespace cuttlefish {
 namespace confui {
@@ -82,10 +82,10 @@ class Cbor {
  private:
   class CborDeleter {
    public:
-    void operator()(cn_cbor* ptr) { cn_cbor_free(ptr); }
+    void operator()(cbor_item_t* ptr) { cbor_decref(&ptr); }
   };
 
-  std::unique_ptr<cn_cbor, CborDeleter> cb_map_;
+  std::unique_ptr<cbor_item_t, CborDeleter> cb_map_;
   std::string prompt_text_;
   std::vector<std::uint8_t> extra_data_;
   Error buffer_status_;
