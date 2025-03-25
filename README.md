@@ -1,3 +1,8 @@
+**Note**
+
+For all host tools development please refer to
+https://github.com/google/android-cuttlefish/blob/main/docs/HostToolsMigration.md for more information.
+
 # Cuttlefish Getting Started
 
 ## Try Cuttlefish
