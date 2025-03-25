@@ -5,7 +5,7 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-exports_files(glob(["files/*"]))
+exports_files(glob(["etc/**"]))
 
 cc_library(
     name = "modem_simulator_lib",

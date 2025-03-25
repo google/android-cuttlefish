@@ -32,8 +32,6 @@
 #include <curl/curl.h>
 #include <sparse/sparse.h>
 
-#include "rules_cc/cc/runfiles/runfiles.h"
-
 #include "common/libs/utils/archive.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
@@ -58,14 +56,8 @@
 
 #include <google/protobuf/text_format.h>
 
-#ifndef BAZEL_CURRENT_REPOSITORY
-#define BAZEL_CURRENT_REPOSITORY ""
-#endif
-
 namespace cuttlefish {
 namespace {
-
-using rules_cc::cc::runfiles::Runfiles;
 
 constexpr mode_t kRwxAllMode = S_IRWXU | S_IRWXG | S_IRWXO;
 constexpr bool kOverrideEntries = true;
@@ -327,21 +319,36 @@ Result<void> SubstituteWithFlag(
   return {};
 }
 
-Result<void> SubstituteWithMarker(const std::string& target_dir, const std::string& marker_file) {
+Result<void> SubstituteWithMarker(const std::string& target_dir,
+                                  const std::string& marker_file) {
   std::string content;
   CF_EXPECTF(android::base::ReadFileToString(marker_file, &content),
              "failed to read '{}'", marker_file);
   fetch::HostPkgMigrationConfig config;
-  CF_EXPECT(google::protobuf::TextFormat::ParseFromString(content, &config), "failed parsing debian_substitution_marker file");
+  CF_EXPECT(google::protobuf::TextFormat::ParseFromString(content, &config),
+            "failed parsing debian_substitution_marker file");
   for (int j = 0; j < config.symlinks_size(); j++) {
     const fetch::Symlink& symlink = config.symlinks(j);
     std::string full_link_name =
         fmt::format("{}/{}", target_dir, symlink.link_name());
+
+    std::string target = symlink.target();
+    static constexpr std::string_view kV1_2ModemSimulatorFiles =
+        "/usr/lib/cuttlefish-common/modem_simulator/files/";
+    static constexpr std::string_view kV1_3ModemSimulatorFiles =
+        "/usr/lib/cuttlefish-common/etc/modem_simulator/files/";
+
+    if (!FileExists(target) &&
+        android::base::StartsWith(target, kV1_2ModemSimulatorFiles)) {
+      target = std::string(kV1_3ModemSimulatorFiles) +
+               target.substr(kV1_2ModemSimulatorFiles.size());
+    }
+    CF_EXPECTF(FileExists(target), "{}", target);
     // TODO: schuffelen - relax this check after migration completes
     CF_EXPECTF(FileExists(full_link_name),
                "Cannot substitute '{}', does not exist", full_link_name);
     CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
-    CF_EXPECT(CreateSymLink(symlink.target(), full_link_name));
+    CF_EXPECT(CreateSymLink(target, full_link_name));
   }
   return {};
 }
