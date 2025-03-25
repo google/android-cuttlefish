@@ -95,13 +95,6 @@ git_repository(
 )
 
 git_repository(
-    name = "libcn-cbor",
-    build_file = "@//:BUILD.libcn_cbor.bazel",
-    commit = "c2e53733a895587c2910d2b2a1312d4224e5a474",
-    remote = "https://github.com/cabo/cn-cbor.git",
-)
-
-git_repository(
     name = "libffi",
     build_file = "@//:BUILD.libffi.bazel",
     commit = "5dcb741f1544c5e18c9dbf96aeb8b61cc556a616", # v3.3
