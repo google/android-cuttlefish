@@ -20,10 +20,12 @@
 #include <android-base/strings.h>
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_pkg_migration.pb.h"
@@ -31,6 +33,7 @@
 #include <google/protobuf/text_format.h>
 
 namespace cuttlefish {
+namespace {
 
 Result<void> SubstituteWithFlag(
     const std::string& target_dir,
@@ -115,6 +118,32 @@ Result<void> SubstituteWithMarker(const std::string& target_dir,
     CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
     CF_EXPECT(CreateSymLink(target, full_link_name));
   }
+  return {};
+}
+
+}  // namespace
+
+Result<void> HostPackageSubstitution(
+    const std::string& target_dir,
+    const std::vector<std::string>& debian_substitutions) {
+  std::string marker_file = target_dir + "/etc/debian_substitution_marker";
+  // Use a local debian_substitution_marker file for development purposes.
+  std::optional<std::string> local_marker_file =
+      StringFromEnv("LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE");
+  if (local_marker_file.has_value()) {
+    marker_file = local_marker_file.value();
+    CF_EXPECTF(FileExists(marker_file),
+               "local debian substitution marker file does not exist: {}",
+               marker_file);
+    LOG(INFO) << "using local debian substitution marker file: " << marker_file;
+  }
+
+  if (debian_substitutions.empty() && FileExists(marker_file)) {
+    CF_EXPECT(SubstituteWithMarker(target_dir, marker_file));
+  } else {
+    CF_EXPECT(SubstituteWithFlag(target_dir, debian_substitutions));
+  }
+
   return {};
 }
 

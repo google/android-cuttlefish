@@ -22,11 +22,8 @@
 
 namespace cuttlefish {
 
-Result<void> SubstituteWithFlag(
+Result<void> HostPackageSubstitution(
     const std::string& target_dir,
     const std::vector<std::string>& debian_substitutions);
-
-Result<void> SubstituteWithMarker(const std::string& target_dir,
-                                  const std::string& marker_file);
 
 }  // namespace cuttlefish
