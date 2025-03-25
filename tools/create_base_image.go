@@ -141,8 +141,7 @@ func init() {
 	flag.IntVar(&image_disk_size_gb, "image_disk_size_gb", 10, "Image disk size in GB")
 	flag.Var(&ssh_flags, "ssh_flag",
 		"Values for --ssh-flag and --scp_flag for gcloud compute ssh/scp respectively. This flag may be repeated")
-	flag.BoolVar(&host_orchestration_flag, "host_orchestration", false,
-		"assembles image with host orchestration capabilities")
+	flag.BoolVar(&host_orchestration_flag, "host_orchestration", false, "DEPRECATED")
 	flag.Parse()
 }
 
@@ -370,12 +369,8 @@ func main() {
 	gce(ExitOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` "`+build_instance+
 		`"`+` -- `+ssh_flags.AsArgs()+` ./remove_old_gce_kernel.sh`)
 
-	ho_arg := ""
-	if host_orchestration_flag {
-		ho_arg = "-o"
-	}
 	gce(ExitOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` "`+build_instance+
-		`"`+` -- `+ssh_flags.AsArgs()+` ./create_base_image_gce.sh `+ho_arg)
+		`"`+` -- `+ssh_flags.AsArgs()+` ./create_base_image_gce.sh`)
 
 	// Reboot the instance to force a clean umount of the disk's file system.
 	gce(WarnOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` "`+build_instance+
