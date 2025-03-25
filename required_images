@@ -1,6 +1,5 @@
 android-info.txt
 boot.img
-bootloader
 init_boot.img
 super.img
 userdata.img
