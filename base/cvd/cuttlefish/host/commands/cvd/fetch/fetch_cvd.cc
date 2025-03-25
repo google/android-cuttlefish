@@ -315,20 +315,8 @@ Result<void> FetchHostPackage(
       ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
   trace.CompletePhase("Extract");
 
-  std::string marker_file = target_dir + "/etc/debian_substitution_marker";
-  // Use a local debian_substitution_marker file for development purposes.
-  std::optional<std::string> local_marker_file = StringFromEnv("LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE");
-  if (local_marker_file.has_value()) {
-    marker_file = local_marker_file.value();
-    CF_EXPECTF(FileExists(marker_file), "local debian substitution marker file does not exist: {}", marker_file);
-    LOG(INFO) << "using local debian substitution marker file: " << marker_file;
-  }
+  CF_EXPECT(HostPackageSubstitution(target_dir, debian_substitutions));
 
-  if (debian_substitutions.empty() && FileExists(marker_file)) {
-    CF_EXPECT(SubstituteWithMarker(target_dir, marker_file));
-  } else {
-    CF_EXPECT(SubstituteWithFlag(target_dir, debian_substitutions));
-  }
   trace.CompletePhase("Substitute");
   return {};
 }
