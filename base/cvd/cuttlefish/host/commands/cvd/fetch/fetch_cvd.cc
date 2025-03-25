@@ -297,7 +297,7 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
 Result<void> FetchHostPackage(
     BuildApi& build_api, const Build& build, const std::string& target_dir,
     const bool keep_archives,
-    const std::vector<std::string>& debian_substitutions,
+    const std::vector<std::string>& host_substitutions,
     FetchTracer::Trace trace) {
   LOG(INFO) << "Preparing host package for " << build;
   // This function is called asynchronously, so it may take a while to start.
@@ -315,7 +315,7 @@ Result<void> FetchHostPackage(
       ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
   trace.CompletePhase("Extract");
 
-  CF_EXPECT(HostPackageSubstitution(target_dir, debian_substitutions));
+  CF_EXPECT(HostPackageSubstitution(target_dir, host_substitutions));
 
   trace.CompletePhase("Substitute");
   return {};
@@ -947,7 +947,7 @@ Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
       std::launch::async, FetchHostPackage, std::ref(*build_api),
       std::cref(host_target_build), std::cref(host_target.host_tools_directory),
       std::cref(flags.keep_downloaded_archives),
-      std::cref(flags.debian_substitutions), tracer.NewTrace("Host Package"));
+      std::cref(flags.host_substitutions), tracer.NewTrace("Host Package"));
   size_t count = 1;
   for (const auto& target : targets) {
     LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
