@@ -16,8 +16,10 @@
 #include "host/commands/cvd/fetch/substitute.h"
 
 #include <android-base/file.h>
+#include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include <functional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -40,14 +42,43 @@ Result<void> SubstituteWithFlag(
   CF_EXPECTF(android::base::EndsWith(cuttlefish_common, "cuttlefish-common"),
              "{}", cuttlefish_common);
 
-  for (const std::string& substitution : debian_substitutions) {
-    std::string source = fmt::format("{}/{}", cuttlefish_common, substitution);
-    std::string to_substitute = fmt::format("{}/{}", target_dir, substitution);
-    // TODO: schuffelen - relax this check after migration completes
-    CF_EXPECTF(FileExists(to_substitute),
-               "Cannot substitute '{}', does not exist", to_substitute);
-    CF_EXPECTF(unlink(to_substitute.c_str()) == 0, "{}", strerror(errno));
-    CF_EXPECT(CreateSymLink(source, to_substitute));
+  if (debian_substitutions == std::vector<std::string>{"all"}) {
+    bool substitution_error = false;
+    std::function<bool(const std::string& path)> callback = [&cuttlefish_common, &target_dir, &substitution_error](const std::string& path) -> bool {
+      std::string_view local_path(path);
+      if (!android::base::ConsumePrefix(&local_path, cuttlefish_common)) {
+        LOG(ERROR) << "Unexpected prefix in : '" << local_path << "'";
+        substitution_error = true;
+        return false;
+      }
+      std::string to_substitute = target_dir + std::string(local_path);
+      if (FileExists(to_substitute) && !IsDirectory(to_substitute)) {
+        if (unlink(to_substitute.c_str()) != 0) {
+          PLOG(ERROR) << "Failed to unlink '" << to_substitute << "'";
+          substitution_error = true;
+          return false;
+        }
+        Result<void> symlink_res = CreateSymLink(path, to_substitute);
+        if (!symlink_res.ok()) {
+          LOG(ERROR) << symlink_res.error().FormatForEnv();
+          substitution_error = true;
+          return false;
+        }
+      }
+      return true;
+    };
+    CF_EXPECT(WalkDirectory(cuttlefish_common, callback));
+    CF_EXPECT(!substitution_error);
+  } else {
+    for (const std::string& substitution : debian_substitutions) {
+      std::string source = fmt::format("{}/{}", cuttlefish_common, substitution);
+      std::string to_substitute = fmt::format("{}/{}", target_dir, substitution);
+      // TODO: schuffelen - relax this check after migration completes
+      CF_EXPECTF(FileExists(to_substitute),
+                 "Cannot substitute '{}', does not exist", to_substitute);
+      CF_EXPECTF(unlink(to_substitute.c_str()) == 0, "{}", strerror(errno));
+      CF_EXPECT(CreateSymLink(source, to_substitute));
+    }
   }
 
   return {};
