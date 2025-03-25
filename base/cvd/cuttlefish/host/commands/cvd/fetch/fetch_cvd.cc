@@ -351,12 +351,31 @@ Result<void> SubstituteWithFlag(const std::string& target_dir, const std::vector
   return {};
 }
 
+static constexpr std::string_view kRunfilePrefix = "runfile:";
+
 Result<void> SubstituteWithMarker(const std::string& target_dir, const std::string& marker_file) {
   std::string content;
   CF_EXPECTF(android::base::ReadFileToString(marker_file, &content),
              "failed to read '{}'", marker_file);
   fetch::HostPkgMigrationConfig config;
   CF_EXPECT(google::protobuf::TextFormat::ParseFromString(content, &config), "failed parsing debian_substitution_marker file");
+  std::unique_ptr<Runfiles> runfiles = NULL;
+  auto resolve_runfile  = [&runfiles](const std::string& src) -> Result<std::string> {
+    if (src.rfind(kRunfilePrefix, 0) != 0) {
+      return src;
+    }
+    std::string self_path;
+    CF_EXPECT(android::base::Readlink("/proc/self/exe", &self_path));
+    CF_EXPECTF(self_path != fmt::format("{}/cvd", kInstallDir),
+              "runfiles cannot be resolved when executing installed cvd: '{}'", src);
+    if (runfiles == NULL) {
+       std::string runfiles_error;
+       runfiles.reset(
+          Runfiles::Create(self_path, BAZEL_CURRENT_REPOSITORY, &runfiles_error));
+       CF_EXPECTF(runfiles.get(), "Could not load runfiles: '{}'", runfiles_error);
+    }
+    return runfiles->Rlocation(src.substr(kRunfilePrefix.length()));
+  };
   for (int j = 0; j < config.symlinks_size(); j++) {
     const fetch::Symlink& symlink = config.symlinks(j);
     std::string full_link_name =
@@ -365,7 +384,8 @@ Result<void> SubstituteWithMarker(const std::string& target_dir, const std::stri
     CF_EXPECTF(FileExists(full_link_name),
                "Cannot substitute '{}', does not exist", full_link_name);
     CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
-    CF_EXPECT(CreateSymLink(symlink.target(), full_link_name));
+    std::string target = CF_EXPECT(resolve_runfile(symlink.target()));
+    CF_EXPECT(CreateSymLink(target, full_link_name));
   }
   return {};
 }
