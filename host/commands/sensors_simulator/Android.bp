@@ -21,6 +21,7 @@ cc_binary_host {
     name: "sensors_simulator",
     srcs: [
         "main.cpp",
+        "sensors_hal_proxy.cpp",
         "sensors_simulator.cpp",
     ],
     header_libs: [
