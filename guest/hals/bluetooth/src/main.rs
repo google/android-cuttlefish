@@ -19,6 +19,8 @@
 
 use android_hardware_bluetooth::aidl::android::hardware::bluetooth::IBluetoothHci::BnBluetoothHci;
 use binder::{self, BinderFeatures, ProcessState};
+use bluetooth_offload_hal::HciProxy;
+use bluetooth_offload_leaudio_hci::LeAudioModuleBuilder;
 use log::{error, info};
 
 mod hci;
@@ -51,8 +53,10 @@ fn main() {
     ProcessState::set_thread_pool_max_thread_count(0);
     ProcessState::start_thread_pool();
 
-    let hci_binder =
-        BnBluetoothHci::new_binder(hci::BluetoothHci::new(&opt.serial), BinderFeatures::default());
+    let hci_binder = BnBluetoothHci::new_binder(
+        HciProxy::new(vec![Box::new(LeAudioModuleBuilder {})], hci::BluetoothHci::new(&opt.serial)),
+        binder::BinderFeatures::default(),
+    );
 
     info!("Starting ..IBluetoothHci/default");
     binder::add_service("android.hardware.bluetooth.IBluetoothHci/default", hci_binder.as_binder())

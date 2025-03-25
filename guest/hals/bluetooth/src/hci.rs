@@ -19,6 +19,7 @@ use android_hardware_bluetooth::aidl::android::hardware::bluetooth::{
 };
 
 use binder::{DeathRecipient, IBinder, Interface, Strong};
+use bluetooth_offload_hal::{HciHal, HciHalStatus, HciProxyCallbacks};
 use log::{error, info, trace, warn};
 use std::fs;
 use std::io::{Read, Write};
@@ -45,11 +46,7 @@ impl Idc {
 
 enum ClientState {
     Closed,
-    Opened {
-        initialized: bool,
-        callbacks: Strong<dyn IBluetoothHciCallbacks>,
-        _death_recipient: DeathRecipient,
-    },
+    Opened { initialized: bool, callbacks: HciProxyCallbacks },
 }
 
 struct ServiceState {
@@ -173,18 +170,17 @@ impl BluetoothHci {
                             ) {
                                 // The initialization of the controller is now complete,
                                 // report the status to the Host stack.
-                                callbacks.initializationComplete(Status::SUCCESS).unwrap();
+                                callbacks.initialization_complete(HciHalStatus::Success);
                                 *initialized = true;
                             }
                         }
                         ClientState::Opened { ref callbacks, .. } => match idc {
-                            Idc::ACL_DATA => callbacks.aclDataReceived(&data[1..packet_size]),
-                            Idc::SCO_DATA => callbacks.scoDataReceived(&data[1..packet_size]),
-                            Idc::ISO_DATA => callbacks.isoDataReceived(&data[1..packet_size]),
-                            Idc::EVENT => callbacks.hciEventReceived(&data[1..packet_size]),
+                            Idc::ACL_DATA => callbacks.acl_received(&data[1..packet_size]),
+                            Idc::SCO_DATA => callbacks.sco_received(&data[1..packet_size]),
+                            Idc::ISO_DATA => callbacks.iso_received(&data[1..packet_size]),
+                            Idc::EVENT => callbacks.event_received(&data[1..packet_size]),
                             _ => unreachable!(),
-                        }
-                        .expect("failed to send HCI packet to host"),
+                        },
                         ClientState::Closed => (),
                     }
                 }
@@ -194,51 +190,32 @@ impl BluetoothHci {
         BluetoothHci { _handle: handle, service_state }
     }
 
-    fn send(&self, idc: Idc, data: &[u8]) -> binder::Result<()> {
+    fn send(&self, idc: Idc, data: &[u8]) {
         let mut service_state = self.service_state.lock().unwrap();
 
         if !matches!(service_state.client_state, ClientState::Opened { .. }) {
             error!("IBluetoothHci::sendXX: not initialized");
-            return Err(binder::ExceptionCode::ILLEGAL_STATE.into());
+            return;
         }
 
         service_state.writer.write_all(&[idc as u8]).unwrap();
         service_state.writer.write_all(data).unwrap();
-
-        Ok(())
     }
 }
 
-impl Interface for BluetoothHci {}
-
-impl IBluetoothHci for BluetoothHci {
-    fn initialize(&self, callbacks: &Strong<dyn IBluetoothHciCallbacks>) -> binder::Result<()> {
+impl HciHal for BluetoothHci {
+    fn initialize(&self, callbacks: HciProxyCallbacks) {
         info!("IBluetoothHci::initialize");
 
         let mut service_state = self.service_state.lock().unwrap();
 
         if matches!(service_state.client_state, ClientState::Opened { .. }) {
             error!("IBluetoothHci::initialize: already initialized");
-            callbacks.initializationComplete(Status::ALREADY_INITIALIZED)?;
-            return Ok(());
+            callbacks.initialization_complete(HciHalStatus::AlreadyInitialized);
+            return;
         }
 
-        let mut death_recipient = {
-            let service_state = self.service_state.clone();
-            DeathRecipient::new(move || {
-                warn!("IBluetoothHci service has died");
-                let mut service_state = service_state.lock().unwrap();
-                service_state.client_state = ClientState::Closed;
-            })
-        };
-
-        callbacks.as_binder().link_to_death(&mut death_recipient)?;
-
-        service_state.client_state = ClientState::Opened {
-            initialized: false,
-            callbacks: callbacks.clone(),
-            _death_recipient: death_recipient,
-        };
+        service_state.client_state = ClientState::Opened { initialized: false, callbacks };
 
         // In order to emulate hardware reset of the controller,
         // the HCI Reset command is sent from the HAL directly to clear
@@ -246,38 +223,40 @@ impl IBluetoothHci for BluetoothHci {
         // IBluetoothHciCallback.initializationComplete will be invoked
         // the HCI Reset complete event is received.
         service_state.writer.write_all(&[0x01, 0x03, 0x0c, 0x00]).unwrap();
-
-        Ok(())
     }
 
-    fn close(&self) -> binder::Result<()> {
+    fn client_died(&self) {
+        warn!("IBluetoothHci service has died");
+        let mut service_state = self.service_state.lock().unwrap();
+        service_state.client_state = ClientState::Closed;
+    }
+
+    fn close(&self) {
         info!("IBluetoothHci::close");
 
         let mut service_state = self.service_state.lock().unwrap();
         service_state.client_state = ClientState::Closed;
-
-        Ok(())
     }
 
-    fn sendAclData(&self, data: &[u8]) -> binder::Result<()> {
+    fn send_acl(&self, data: &[u8]) {
         info!("IBluetoothHci::sendAclData");
 
         self.send(Idc::AclData, data)
     }
 
-    fn sendHciCommand(&self, data: &[u8]) -> binder::Result<()> {
+    fn send_command(&self, data: &[u8]) {
         info!("IBluetoothHci::sendHciCommand");
 
         self.send(Idc::Command, data)
     }
 
-    fn sendIsoData(&self, data: &[u8]) -> binder::Result<()> {
+    fn send_iso(&self, data: &[u8]) {
         info!("IBluetoothHci::sendIsoData");
 
         self.send(Idc::IsoData, data)
     }
 
-    fn sendScoData(&self, data: &[u8]) -> binder::Result<()> {
+    fn send_sco(&self, data: &[u8]) {
         info!("IBluetoothHci::sendScoData");
 
         self.send(Idc::ScoData, data)
