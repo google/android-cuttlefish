@@ -37,15 +37,17 @@ namespace {
 
 Result<void> SubstituteWithFlag(
     const std::string& target_dir,
-    const std::vector<std::string>& debian_substitutions) {
+    const std::vector<std::string>& host_substitutions) {
   std::string self_path;
   CF_EXPECT(android::base::Readlink("/proc/self/exe", &self_path));
+  // One dirname is "cvd" -> "bin", second dirname is "bin" ->
+  // "cuttlefish-common"
   std::string cuttlefish_common =
       android::base::Dirname(android::base::Dirname(self_path));
   CF_EXPECTF(android::base::EndsWith(cuttlefish_common, "cuttlefish-common"),
              "{}", cuttlefish_common);
 
-  if (debian_substitutions == std::vector<std::string>{"all"}) {
+  if (host_substitutions == std::vector<std::string>{"all"}) {
     bool substitution_error = false;
     std::function<bool(const std::string& path)> callback = [&cuttlefish_common, &target_dir, &substitution_error](const std::string& path) -> bool {
       std::string_view local_path(path);
@@ -73,7 +75,7 @@ Result<void> SubstituteWithFlag(
     CF_EXPECT(WalkDirectory(cuttlefish_common, callback));
     CF_EXPECT(!substitution_error);
   } else {
-    for (const std::string& substitution : debian_substitutions) {
+    for (const std::string& substitution : host_substitutions) {
       std::string source = fmt::format("{}/{}", cuttlefish_common, substitution);
       std::string to_substitute = fmt::format("{}/{}", target_dir, substitution);
       // TODO: schuffelen - relax this check after migration completes
@@ -125,7 +127,7 @@ Result<void> SubstituteWithMarker(const std::string& target_dir,
 
 Result<void> HostPackageSubstitution(
     const std::string& target_dir,
-    const std::vector<std::string>& debian_substitutions) {
+    const std::vector<std::string>& host_substitutions) {
   std::string marker_file = target_dir + "/etc/debian_substitution_marker";
   // Use a local debian_substitution_marker file for development purposes.
   std::optional<std::string> local_marker_file =
@@ -138,10 +140,10 @@ Result<void> HostPackageSubstitution(
     LOG(INFO) << "using local debian substitution marker file: " << marker_file;
   }
 
-  if (debian_substitutions.empty() && FileExists(marker_file)) {
+  if (host_substitutions.empty() && FileExists(marker_file)) {
     CF_EXPECT(SubstituteWithMarker(target_dir, marker_file));
   } else {
-    CF_EXPECT(SubstituteWithFlag(target_dir, debian_substitutions));
+    CF_EXPECT(SubstituteWithFlag(target_dir, host_substitutions));
   }
 
   return {};

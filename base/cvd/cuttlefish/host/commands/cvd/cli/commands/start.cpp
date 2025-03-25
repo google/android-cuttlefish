@@ -547,15 +547,15 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(UpdateEnvs(envs, group));
   const auto bin = CF_EXPECT(FindStartBin(group.HostArtifactsPath()));
 
-  std::vector<std::string> debian_substitutions;
-  Flag debian_substitutions_flag =
-      GflagsCompatFlag("debian_substitutions", debian_substitutions);
+  std::vector<std::string> host_substitutions;
+  Flag host_substitutions_flag =
+      GflagsCompatFlag("host_substitutions", host_substitutions);
 
   CF_EXPECT(
-      ConsumeFlags(std::vector<Flag>{debian_substitutions_flag}, subcmd_args));
+      ConsumeFlags(std::vector<Flag>{host_substitutions_flag}, subcmd_args));
 
   CF_EXPECT(
-      HostPackageSubstitution(group.HostArtifactsPath(), debian_substitutions));
+      HostPackageSubstitution(group.HostArtifactsPath(), host_substitutions));
 
   Command command = CF_EXPECT(
       ConstructCvdNonHelpCommand(bin, group, subcmd_args, envs, request));
