@@ -44,7 +44,7 @@ genrule(
 cc_library(
     name = "host_confui",
     srcs = [
-        "cbor.cc",
+        "confui_cbor.cc",
         "host_renderer.cc",
         "host_server.cc",
         "host_utils.cc",
@@ -58,7 +58,7 @@ cc_library(
         ":shield_font",
     ],
     hdrs = [
-        "cbor.h",
+        "confui_cbor.h",
         "host_mode_ctrl.h",
         "host_renderer.h",
         "host_server.h",
@@ -91,7 +91,7 @@ cc_library(
         "@boringssl//:crypto",
         "@freetype",
         "@fruit",
-        "@libcn-cbor",
+        "@libcbor//:cbor",
         "@libdrm//:libdrm_fourcc",
     ],
 )
