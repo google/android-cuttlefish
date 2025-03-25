@@ -1,0 +1,90 @@
+//
+// Copyright (C) 2019 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "host/commands/cvd/fetch/substitute.h"
+
+#include <android-base/file.h>
+#include <android-base/strings.h>
+
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/fetch/host_pkg_migration.pb.h"
+
+#include <google/protobuf/text_format.h>
+
+namespace cuttlefish {
+
+Result<void> SubstituteWithFlag(
+    const std::string& target_dir,
+    const std::vector<std::string>& debian_substitutions) {
+  std::string self_path;
+  CF_EXPECT(android::base::Readlink("/proc/self/exe", &self_path));
+  std::string cuttlefish_common =
+      android::base::Dirname(android::base::Dirname(self_path));
+  CF_EXPECTF(android::base::EndsWith(cuttlefish_common, "cuttlefish-common"),
+             "{}", cuttlefish_common);
+
+  for (const std::string& substitution : debian_substitutions) {
+    std::string source = fmt::format("{}/{}", cuttlefish_common, substitution);
+    std::string to_substitute = fmt::format("{}/{}", target_dir, substitution);
+    // TODO: schuffelen - relax this check after migration completes
+    CF_EXPECTF(FileExists(to_substitute),
+               "Cannot substitute '{}', does not exist", to_substitute);
+    CF_EXPECTF(unlink(to_substitute.c_str()) == 0, "{}", strerror(errno));
+    CF_EXPECT(CreateSymLink(source, to_substitute));
+  }
+
+  return {};
+}
+
+Result<void> SubstituteWithMarker(const std::string& target_dir,
+                                  const std::string& marker_file) {
+  std::string content;
+  CF_EXPECTF(android::base::ReadFileToString(marker_file, &content),
+             "failed to read '{}'", marker_file);
+  fetch::HostPkgMigrationConfig config;
+  CF_EXPECT(google::protobuf::TextFormat::ParseFromString(content, &config),
+            "failed parsing debian_substitution_marker file");
+  for (int j = 0; j < config.symlinks_size(); j++) {
+    const fetch::Symlink& symlink = config.symlinks(j);
+    std::string full_link_name =
+        fmt::format("{}/{}", target_dir, symlink.link_name());
+
+    std::string target = symlink.target();
+    static constexpr std::string_view kV1_2ModemSimulatorFiles =
+        "/usr/lib/cuttlefish-common/modem_simulator/files/";
+    static constexpr std::string_view kV1_3ModemSimulatorFiles =
+        "/usr/lib/cuttlefish-common/etc/modem_simulator/files/";
+
+    if (!FileExists(target) &&
+        android::base::StartsWith(target, kV1_2ModemSimulatorFiles)) {
+      target = std::string(kV1_3ModemSimulatorFiles) +
+               target.substr(kV1_2ModemSimulatorFiles.size());
+    }
+    CF_EXPECTF(FileExists(target), "{}", target);
+    // TODO: schuffelen - relax this check after migration completes
+    CF_EXPECTF(FileExists(full_link_name),
+               "Cannot substitute '{}', does not exist", full_link_name);
+    CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
+    CF_EXPECT(CreateSymLink(target, full_link_name));
+  }
+  return {};
+}
+
+}  // namespace cuttlefish
