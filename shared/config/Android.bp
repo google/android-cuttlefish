@@ -17,10 +17,16 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-filegroup {
+prebuilt_root {
     name: "device_google_cuttlefish_shared_config_pci_ids",
-    srcs: ["pci.ids"],
+    src: "pci.ids",
+    vendor: true,
+    filename_from_src: true,
     licenses: ["device_google_cuttlefish_shared_config_pci_ids_license"],
+    enabled: select(soong_config_variable("cuttlefish_config", "use_pci_ids"), {
+        true: true,
+        default: false,
+    }),
 }
 
 license {
