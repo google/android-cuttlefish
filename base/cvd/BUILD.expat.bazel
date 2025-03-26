@@ -36,7 +36,7 @@ cc_library(
         "-DXML_POOR_ENTROPY",
     ],
     deps = [
-        "@//external/expat:expat_config",
+        "@//build_external/expat:expat_config",
     ],
     cxxopts = COPTS,
     includes = [

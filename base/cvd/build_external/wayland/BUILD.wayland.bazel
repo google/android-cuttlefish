@@ -19,7 +19,7 @@ cc_binary(
     cxxopts = COPTS,
     deps = [
         "@expat",
-        "@//external/wayland:wayland_overlay",
+        "@//build_external/wayland:wayland_overlay",
     ],
 )
 
@@ -71,6 +71,6 @@ cc_library(
     ],
     deps = [
         "@libffi",
-        "@//external/wayland:wayland_overlay",
+        "@//build_external/wayland:wayland_overlay",
     ],
 )

@@ -150,11 +150,11 @@ git_repository(
 
 git_repository(
     name = "wayland",
-    build_file = "@//external/wayland:BUILD.wayland.bazel",
+    build_file = "@//build_external/wayland:BUILD.wayland.bazel",
     commit = "b2649cb3ee6bd70828a17e50beb16591e6066288", # 1.22.0
     remote = "https://gitlab.freedesktop.org/wayland/wayland.git",
     patch_strip = 1,
     patches = [
-        "@//external/wayland:PATCH.wayland.wayland_config.patch",
+        "@//build_external/wayland:PATCH.wayland.wayland_config.patch",
     ],
 )
