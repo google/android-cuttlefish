@@ -596,8 +596,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     com.android.hardware.cas
 
-PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/pci.ids:$(TARGET_COPY_OUT_VENDOR)/pci.ids
+PRODUCT_PACKAGES += \
+    device_google_cuttlefish_shared_config_pci_ids
+$(call soong_config_set_bool,cuttlefish_config,use_pci_ids,true)
 
 # Thread Network AIDL HAL and Demo App
 PRODUCT_PACKAGES += \
