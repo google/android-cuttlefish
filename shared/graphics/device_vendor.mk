@@ -17,8 +17,8 @@
 # If a downstream target does not want any graphics support, do not
 # include this file!
 
-PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/graphics/init_graphics.vendor.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init_graphics.vendor.rc \
+PRODUCT_PACKAGES += device_google_cuttlefish_shared_config_init_graphics_vendor_rc
+$(call soong_config_set_bool,cuttlefish_config,use_init_graphics_vendor_rc,true)
 
 # Gfxstream common libraries:
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish-opengl
