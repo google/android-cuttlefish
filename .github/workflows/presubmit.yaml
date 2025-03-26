@@ -8,7 +8,7 @@ on:
 
 jobs:
   staticcheck:
-    runs-on: ubuntu-latest
+    runs-on: 'ubuntu-24.04'
     strategy:
       matrix:
         dir: ["e2etests", "frontend/src/host_orchestrator", "frontend/src/libhoclient", "frontend/src/liboperator", "frontend/src/operator"]
@@ -27,7 +27,7 @@ jobs:
         install-go: false
         working-directory: ${{ matrix.dir }}
   build-orchestrator:
-    runs-on: ubuntu-latest
+    runs-on: 'ubuntu-24.04'
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
@@ -77,7 +77,7 @@ jobs:
     - name: install user debian package
       run: dpkg -i android-cuttlefish/cuttlefish-user_*_*64.deb || apt-get install -f -y
   build-cvd:
-    runs-on: ubuntu-latest
+    runs-on: 'ubuntu-24.04'
     container: 
       image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
     steps:
