@@ -6,6 +6,7 @@ Checks: &checks >-
   clang-diagnostic-*,
   -clang-diagnostic-pragma-once-outside-header,
   misc-definitions-in-headers,
+  misc-include-cleaner,
   misc-unused-alias-decls,
   readability-avoid-const-params-in-decls,
   readability-const-return-type,

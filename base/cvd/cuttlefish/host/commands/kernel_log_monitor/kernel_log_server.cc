@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 
-#include "host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 
+#include <fcntl.h>
+#include <sys/types.h>
+
+#include <cstddef>
 #include <string>
-#include <tuple>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <netinet/in.h>
-#include "common/libs/fs/shared_select.h"
-#include "host/libs/config/cuttlefish_config.h"
+
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish::monitor {
 namespace {
