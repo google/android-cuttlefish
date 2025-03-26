@@ -86,6 +86,7 @@ message Display {
   optional uint32 height = 2;
   optional uint32 dpi = 3;
   optional uint32 refresh_rate_hertz = 4;
+  repeated DisplayOverlay overlays = 5;
 }
 
 message Disk {
@@ -154,4 +155,9 @@ message DeviceState {
 
 message Metrics {
   optional bool enable = 1;
+}
+
+message DisplayOverlay {
+  int32 vm_index = 1;
+  int32 display_index = 2;
 }
