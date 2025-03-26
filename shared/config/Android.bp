@@ -168,3 +168,16 @@ prebuilt_etc {
     ],
     vendor_ramdisk: true,
 }
+
+prebuilt_etc {
+    name: "device_google_cuttlefish_shared_config_audio_policy",
+    srcs: [
+        "audio/policy/audio_policy_configuration.xml",
+        "audio/policy/primary_audio_policy_configuration.xml",
+    ],
+    vendor: true,
+    enabled: select(soong_config_variable("cuttlefish_config", "use_audio_policy"), {
+        true: true,
+        default: false,
+    }),
+}
