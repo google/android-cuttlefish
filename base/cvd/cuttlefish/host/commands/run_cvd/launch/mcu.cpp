@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
+
 #include <unordered_set>
 #include <vector>
 
@@ -20,14 +22,12 @@
 #include <fruit/fruit.h>
 #include <json/json.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/launch/launch.h"
-#include "host/commands/run_cvd/launch/log_tee_creator.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/known_paths.h"
-
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 // timeout for the MCU channels to be created after the start command is issued
 #define MCU_START_TIMEOUT 30

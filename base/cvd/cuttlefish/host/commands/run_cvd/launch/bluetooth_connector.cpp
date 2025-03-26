@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
 
 #include <string>
 #include <vector>
 
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/result.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 // Copied from net/bluetooth/hci.h
 #define HCI_MAX_ACL_SIZE 1024

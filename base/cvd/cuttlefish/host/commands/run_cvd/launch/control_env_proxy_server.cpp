@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
 
 #include <string>
 #include <unordered_set>
@@ -22,10 +22,10 @@
 
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/launch/grpc_socket_creator.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {

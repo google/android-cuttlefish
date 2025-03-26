@@ -21,18 +21,18 @@
 
 #include <fruit/fruit.h>
 
-#include "host/commands/run_cvd/launch/grpc_socket_creator.h"
-#include "host/commands/run_cvd/launch/input_connections_provider.h"
-#include "host/commands/run_cvd/launch/log_tee_creator.h"
-#include "host/commands/run_cvd/launch/sensors_socket_pair.h"
-#include "host/commands/run_cvd/launch/snapshot_control_files.h"
-#include "host/commands/run_cvd/launch/webrtc_controller.h"
-#include "host/commands/run_cvd/launch/wmediumd_server.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/custom_actions.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/feature.h"
-#include "host/libs/config/kernel_log_pipe_provider.h"
+#include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
+#include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
+#include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
+#include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
+#include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
+#include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
+#include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/custom_actions.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
 
