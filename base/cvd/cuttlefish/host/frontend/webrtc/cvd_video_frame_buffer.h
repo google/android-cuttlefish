@@ -18,11 +18,11 @@
 
 #include <vector>
 
-#include "host/frontend/webrtc/libdevice/video_frame_buffer.h"
+#include "host/libs/screen_connector/video_frame_buffer.h"
 
 namespace cuttlefish {
 
-class CvdVideoFrameBuffer : public webrtc_streaming::VideoFrameBuffer {
+class CvdVideoFrameBuffer : public VideoFrameBuffer {
  public:
   CvdVideoFrameBuffer(int width, int height);
   CvdVideoFrameBuffer(CvdVideoFrameBuffer&& cvd_frame_buf) = default;
@@ -41,13 +41,9 @@ class CvdVideoFrameBuffer : public webrtc_streaming::VideoFrameBuffer {
   int StrideU() const override;
   int StrideV() const override;
 
-  const uint8_t *DataY() const override;
-  const uint8_t *DataU() const override;
-  const uint8_t *DataV() const override;
-
-  uint8_t *DataY() { return y_.data(); }
-  uint8_t *DataU() { return u_.data(); }
-  uint8_t *DataV() { return v_.data(); }
+  uint8_t *DataY() override { return y_.data(); }
+  uint8_t *DataU() override { return u_.data(); }
+  uint8_t *DataV() override { return v_.data(); }
 
   std::size_t DataSizeY() const override { return y_.size(); }
   std::size_t DataSizeU() const override { return u_.size(); }

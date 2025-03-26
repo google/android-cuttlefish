@@ -79,8 +79,4 @@ int CvdVideoFrameBuffer::StrideV() const {
   return AlignStride((width_ + 1) / 2);
 }
 
-const uint8_t *CvdVideoFrameBuffer::DataY() const { return y_.data(); }
-const uint8_t *CvdVideoFrameBuffer::DataU() const { return u_.data(); }
-const uint8_t *CvdVideoFrameBuffer::DataV() const { return v_.data(); }
-
 }  // namespace cuttlefish

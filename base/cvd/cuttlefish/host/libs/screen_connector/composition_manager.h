@@ -17,10 +17,9 @@
 
 #include <android-base/logging.h>
 #include "common/libs/utils/result.h"
-#include "host/frontend/webrtc/cvd_video_frame_buffer.h"
-#include "host/frontend/webrtc/display_handler.h"
-#include "host/frontend/webrtc/libdevice/video_sink.h"
+#include "host/libs/screen_connector/ring_buffer_manager.h"
 #include "host/libs/screen_connector/screen_connector.h"
+#include "host/libs/screen_connector/video_frame_buffer.h"
 
 namespace cuttlefish {
 class DisplayHandler;
@@ -41,7 +40,7 @@ class CompositionManager {
                std::uint32_t frame_stride_bytes, std::uint8_t* frame_pixels);
 
   void ComposeFrame(int display_index,
-                    std::shared_ptr<CvdVideoFrameBuffer> buffer);
+                    std::shared_ptr<VideoFrameBuffer> buffer);
 
  private:
   explicit CompositionManager(
@@ -76,7 +75,7 @@ class CompositionManager {
   void ComposeFrame(int display, int width, int height,
                     std::uint32_t frame_fourcc_format,
                     std::uint32_t frame_stride_bytes,
-                    std::shared_ptr<CvdVideoFrameBuffer> buffer);
+                    std::shared_ptr<VideoFrameBuffer> buffer);
   DisplayRingBufferManager display_ring_buffer_manager_;
   int cluster_index_;
   std::string group_uuid_;
