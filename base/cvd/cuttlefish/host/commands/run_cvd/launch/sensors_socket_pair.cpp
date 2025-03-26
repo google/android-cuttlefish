@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/run_cvd/launch/sensors_socket_pair.h"
+#include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
 
 namespace cuttlefish {
 

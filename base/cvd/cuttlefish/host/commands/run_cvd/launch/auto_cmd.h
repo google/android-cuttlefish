@@ -25,11 +25,11 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/type_name.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/feature.h"
-#include "host/libs/config/kernel_log_pipe_provider.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/type_name.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
 

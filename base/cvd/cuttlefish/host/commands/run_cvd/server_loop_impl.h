@@ -24,18 +24,18 @@
 
 #include <fruit/fruit.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/launch/webrtc_controller.h"
-#include "host/commands/run_cvd/server_loop.h"
-#include "host/libs/command_util/runner/defs.h"
-#include "host/libs/command_util/util.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/feature.h"
-#include "host/libs/config/inject.h"
-#include "host/libs/process_monitor/process_monitor.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
+#include "cuttlefish/host/commands/run_cvd/server_loop.h"
+#include "cuttlefish/host/libs/command_util/runner/defs.h"
+#include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/config/inject.h"
+#include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {

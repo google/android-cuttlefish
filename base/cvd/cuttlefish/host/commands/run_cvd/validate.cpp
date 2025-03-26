@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#include "host/commands/run_cvd/validate.h"
+#include "cuttlefish/host/commands/run_cvd/validate.h"
 
 #include <sys/utsname.h>
 
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/in_sandbox.h"
-#include "common/libs/utils/network.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/host_configuration.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/network.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 
 namespace cuttlefish {
 

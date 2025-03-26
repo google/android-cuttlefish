@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
+
 #include <iterator>
 #include <memory>
 #include <unordered_set>
@@ -24,15 +26,14 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/socket2socket_proxy.h"
-#include "host/commands/run_cvd/launch/launch.h"
-#include "host/commands/run_cvd/launch/log_tee_creator.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
+#include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace {

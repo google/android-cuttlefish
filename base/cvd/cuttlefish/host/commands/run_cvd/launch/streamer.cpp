@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
 
 #include <sstream>
 #include <string>
@@ -25,12 +25,12 @@
 #include <fmt/ranges.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/reporting.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/run_cvd/reporting.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 

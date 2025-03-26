@@ -18,9 +18,9 @@
 
 #include <fruit/fruit.h>
 
-#include "host/commands/run_cvd/launch/snapshot_control_files.h"
-#include "host/commands/run_cvd/launch/webrtc_controller.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
+#include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 

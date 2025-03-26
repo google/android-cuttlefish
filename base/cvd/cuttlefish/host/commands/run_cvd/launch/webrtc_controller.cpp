@@ -13,17 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/run_cvd/launch/webrtc_controller.h"
+#include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/transport/channel_sharedfd.h"
-#include "common/libs/utils/result.h"
 #include "google/rpc/code.pb.h"
-#include "host/commands/run_cvd/launch/launch.h"
+
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/transport/channel_sharedfd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
 
 namespace cuttlefish {

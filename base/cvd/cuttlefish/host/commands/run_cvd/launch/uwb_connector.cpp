@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
 
 #define UCI_HEADER_SIZE 4
 #define UCI_MAX_PAYLOAD_SIZE 255

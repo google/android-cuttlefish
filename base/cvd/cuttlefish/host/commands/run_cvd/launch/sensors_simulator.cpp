@@ -13,8 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/run_cvd/launch/launch.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
+
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
