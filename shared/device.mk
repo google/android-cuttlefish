@@ -313,6 +313,10 @@ LOCAL_AUDIO_PRODUCT_PACKAGE += \
     com.android.hardware.audio
 PRODUCT_SYSTEM_EXT_PROPERTIES += \
     ro.audio.ihaladaptervendorextension_enabled=true
+PRODUCT_PRODUCT_PROPERTIES += \
+    aaudio.mmap_policy=2 \
+    aaudio.mmap_exclusive_policy=2 \
+    aaudio.hw_burst_min_usec=2000
 endif
 
 ifneq ($(LOCAL_USE_VENDOR_AUDIO_CONFIGURATION),true)
