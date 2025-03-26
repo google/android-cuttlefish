@@ -68,16 +68,10 @@ Result<std::string> GenerateDisplayFlag(const EnvironmentSpecification& cfg) {
       } else {
         out_display.set_refresh_rate_hertz(CF_DEFAULTS_DISPLAY_REFRESH_RATE);
       }
-      if (in_display.has_overlays()) {
-        std::vector<std::string> overlay_tuple_list = android::base::Split(in_display.overlays(), " ");
-        for (std::string& overlay_tuple_str : overlay_tuple_list) {
-          std::vector<std::string> overlay_tuple = android::base::Split(overlay_tuple_str, ":");
-          int vm_index = std::stoi(overlay_tuple[0]);
-          int display_index = std::stoi(overlay_tuple[1]);
-          DisplayOverlay* overlay_proto = out_display.add_overlays();
-          overlay_proto->set_vm_index(vm_index);
-          overlay_proto->set_display_index(display_index);
-        }
+      for (const auto& overlay_entry : in_display.overlays()) {
+        DisplayOverlay* overlay_proto = out_display.add_overlays();
+        overlay_proto->set_vm_index(overlay_entry.vm_index());
+        overlay_proto->set_display_index(overlay_entry.display_index());
       }
     }
   }
