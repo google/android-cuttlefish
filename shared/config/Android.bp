@@ -181,3 +181,38 @@ prebuilt_etc {
         default: false,
     }),
 }
+
+prebuilt_etc {
+    name: "device_google_cuttlefish_shared_config_init_graphics_vendor_rc",
+    srcs: ["graphics/init_graphics.vendor.rc"],
+    vendor: true,
+    relative_install_path: "init",
+    enabled: select(soong_config_variable("cuttlefish_config", "use_init_graphics_vendor_rc"), {
+        true: true,
+        default: false,
+    }),
+}
+
+prebuilt_etc {
+    name: "device_google_cuttlefish_shared_config_init_vendor_rc",
+    srcs: ["init.vendor.rc"],
+    dsts: ["init.cutf_cvm.rc"],
+    vendor: true,
+    relative_install_path: "init",
+    enabled: select(soong_config_variable("cuttlefish_config", "use_general_files"), {
+        true: true,
+        default: false,
+    }),
+}
+
+prebuilt_etc {
+    name: "device_google_cuttlefish_shared_config_init_product_rc",
+    srcs: ["init.product.rc"],
+    dsts: ["init.rc"],
+    product_specific: true,
+    relative_install_path: "init",
+    enabled: select(soong_config_variable("cuttlefish_config", "use_general_files"), {
+        true: true,
+        default: false,
+    }),
+}

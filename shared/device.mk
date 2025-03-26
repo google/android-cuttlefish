@@ -233,9 +233,12 @@ PRODUCT_CHECK_PREBUILT_MAX_PAGE_SIZE := true
 # General files
 #
 
+$(call soong_config_set_bool,cuttlefish_config,use_general_files,true)
+PRODUCT_PACKAGES += \
+    device_google_cuttlefish_shared_config_init_vendor_rc \
+    device_google_cuttlefish_shared_config_init_product_rc
+
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/init.product.rc:$(TARGET_COPY_OUT_PRODUCT)/etc/init/init.rc \
-    device/google/cuttlefish/shared/config/init.vendor.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.cutf_cvm.rc \
     device/google/cuttlefish/shared/config/media_codecs_google_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video.xml \
     device/google/cuttlefish/shared/config/media_codecs_performance.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance.xml \
     device/google/cuttlefish/shared/config/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
