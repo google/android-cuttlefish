@@ -32,7 +32,6 @@
 #include <libyuv.h>
 
 #include <drm/drm_fourcc.h>
-#include "host/frontend/webrtc/display_handler.h"
 #include "host/libs/screen_connector/ring_buffer_manager.h"
 
 static const int kRedIdx = 0;
@@ -209,7 +208,7 @@ void CompositionManager::OnFrame(std::uint32_t display_number,
 // triggered by a thread to force displays to constantly update so that when
 // layers are updated, the user will see the blended result.
 void CompositionManager::ComposeFrame(
-    int display_index, std::shared_ptr<CvdVideoFrameBuffer> buffer) {
+    int display_index, std::shared_ptr<VideoFrameBuffer> buffer) {
   if (!last_frame_info_map_.contains(display_index)) {
     return;
   }
@@ -258,7 +257,7 @@ std::uint8_t* CompositionManager::AlphaBlendLayers(std::uint8_t* frame_pixels,
 void CompositionManager::ComposeFrame(
     int display, int width, int height, std::uint32_t frame_fourcc_format,
     std::uint32_t frame_stride_bytes,
-    std::shared_ptr<CvdVideoFrameBuffer> buffer) {
+    std::shared_ptr<VideoFrameBuffer> buffer) {
   std::uint8_t* shmem_local_display = display_ring_buffer_manager_.ReadFrame(
       cluster_index_, display, width, height);
 

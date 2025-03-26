@@ -18,12 +18,11 @@
 
 #include <future>
 #include <mutex>
-#include <unordered_set>
 
 #include <fmt/format.h>
 
 #include "common/libs/utils/result.h"
-#include "host/frontend/webrtc/libdevice/video_frame_buffer.h"
+#include "host/libs/screen_connector/video_frame_buffer.h"
 
 namespace cuttlefish {
 
@@ -32,7 +31,7 @@ class ScreenshotHandler {
   ScreenshotHandler() = default;
   ~ScreenshotHandler() = default;
 
-  using SharedFrame = std::shared_ptr<webrtc_streaming::VideoFrameBuffer>;
+  using SharedFrame = std::shared_ptr<VideoFrameBuffer>;
   using SharedFrameFuture = std::shared_future<SharedFrame>;
   using SharedFramePromise = std::promise<SharedFrame>;
 

@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <cinttypes>
+#include <cstddef>
+#include <stdint.h>
 
 namespace cuttlefish {
-namespace webrtc_streaming {
 
 class VideoFrameBuffer {
  public:
@@ -30,13 +30,12 @@ class VideoFrameBuffer {
   virtual int StrideY() const = 0;
   virtual int StrideU() const = 0;
   virtual int StrideV() const = 0;
-  virtual const uint8_t* DataY() const = 0;
-  virtual const uint8_t* DataU() const = 0;
-  virtual const uint8_t* DataV() const = 0;
+  virtual uint8_t* DataY() = 0;
+  virtual uint8_t* DataU() = 0;
+  virtual uint8_t* DataV() = 0;
   virtual std::size_t DataSizeY() const = 0;
   virtual std::size_t DataSizeU() const = 0;
   virtual std::size_t DataSizeV() const = 0;
 };
 
-}  // namespace webrtc_streaming
 }  // namespace cuttlefish
