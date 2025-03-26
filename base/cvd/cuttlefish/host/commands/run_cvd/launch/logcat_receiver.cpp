@@ -15,11 +15,6 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#if defined(CUTTLEFISH_HOST) && defined(__linux__)
-#include <sys/prctl.h>
-#include <sys/syscall.h>
-#endif
-
 #include <string>
 
 #include "common/libs/utils/result.h"

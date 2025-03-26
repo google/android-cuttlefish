@@ -152,7 +152,7 @@ class SharedFD {
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
 #ifdef __linux__
   static SharedFD Event(int initval = 0, int flags = 0);
-#ifdef CUTTLEFISH_HOST
+#if 0  // TODO: schuffelen - Figure out how to apply `-lrt` throughout bazel.
   static SharedFD ShmOpen(const std::string& name, int oflag, int mode);
 #endif
 #endif

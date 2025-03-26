@@ -89,12 +89,7 @@ void CheckMarked(fd_set* in_out_mask, SharedFDSet* in_out_set) {
 
 int memfd_create_wrapper(const char* name, unsigned int flags) {
 #ifdef __linux__
-#ifdef CUTTLEFISH_HOST
-  // TODO(schuffelen): Use memfd_create with a newer host libc.
-  return syscall(__NR_memfd_create, name, flags);
-#else
   return memfd_create(name, flags);
-#endif
 #else
   (void)flags;
   return shm_open(name, O_RDWR);
@@ -414,7 +409,7 @@ SharedFD SharedFD::Event(int initval, int flags) {
   return std::shared_ptr<FileInstance>(new FileInstance(fd, errno));
 }
 
-#ifdef CUTTLEFISH_HOST
+#if 0  // TODO: schuffelen - Figure out how to apply `-lrt` throughout bazel.
 SharedFD SharedFD::ShmOpen(const std::string& name, int oflag, int mode) {
   errno = 0;
   int fd = shm_open(name.c_str(), oflag, mode);
@@ -422,7 +417,6 @@ SharedFD SharedFD::ShmOpen(const std::string& name, int oflag, int mode) {
   return std::shared_ptr<FileInstance>(new FileInstance(fd, error_num));
 }
 #endif
-
 #endif
 
 SharedFD SharedFD::MemfdCreate(const std::string& name, unsigned int flags) {
