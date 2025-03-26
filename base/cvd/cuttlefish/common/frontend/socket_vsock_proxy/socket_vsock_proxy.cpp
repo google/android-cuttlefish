@@ -31,10 +31,8 @@
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 
-#ifdef CUTTLEFISH_HOST
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
-#endif // CUTTLEFISH_HOST
 
 constexpr int TCP_SERVER_START_RETRIES_COUNT = 10;
 constexpr std::chrono::milliseconds TCP_SERVER_RETRIES_DELAY(1250);
@@ -62,24 +60,17 @@ DEFINE_int32(events_fd, -1, "A file descriptor. If set it will listen for the ev
                              "if start_event_id is provided (stop_event_id is optional)");
 DEFINE_int32(start_event_id, -1, "Kernel event id (cuttlefish::monitor::Event from "
                                   "kernel_log_server.h) that we will listen to start proxy");
-DEFINE_int32(stop_event_id, -1, "Kernel event id (cuttlefish::monitor::Event from "
-                                  "kernel_log_server.h) that we will listen to stop proxy");
-#ifdef CUTTLEFISH_HOST
+DEFINE_int32(stop_event_id, -1,
+             "Kernel event id (cuttlefish::monitor::Event from "
+             "kernel_log_server.h) that we will listen to stop proxy");
 DEFINE_bool(restore, false,
             "Wait on the restore_adbd_pipe instead of the initial start event");
-#endif
 DEFINE_bool(vhost_user_vsock, false, "A flag to user vhost_user_vsock");
 
 namespace cuttlefish {
 namespace socket_proxy {
 namespace {
-static bool use_vhost_vsock() {
-#ifdef CUTTLEFISH_HOST
-  return FLAGS_vhost_user_vsock;
-#else
-  return false;
-#endif
-}
+static bool use_vhost_vsock() { return FLAGS_vhost_user_vsock; }
 static std::unique_ptr<Server> BuildServer() {
   if (FLAGS_server_fd >= 0) {
     return std::make_unique<DupServer>(FLAGS_server_fd);
@@ -160,7 +151,6 @@ static Result<void> ListenEventsAndProxy(int events_fd,
 
   std::unique_ptr<ProxyServer> proxy;
 
-#ifdef CUTTLEFISH_HOST
   if (FLAGS_restore) {
     LOG(INFO) << "restoring proxy on CUTTLEFISH_HOST - wait for adbd to come "
                  "online before starting proxy";
@@ -184,7 +174,6 @@ static Result<void> ListenEventsAndProxy(int events_fd,
     LOG(INFO) << "restoring proxy on CUTTLEFISH_HOST - success";
     proxy = CF_EXPECT(StartProxyAsync(server, client));
   }
-#endif
 
   LOG(DEBUG) << "Start reading events to start/stop proxying";
   while (events->IsOpen()) {
@@ -249,11 +238,8 @@ Result<void> Main() {
 int main(int argc, char* argv[]) {
   signal(SIGPIPE, SIG_IGN);
 
-#ifdef CUTTLEFISH_HOST
-  cuttlefish::DefaultSubprocessLogging(argv, cuttlefish::MetadataLevel::TAG_AND_MESSAGE);
-#else
-  ::android::base::InitLogging(argv, android::base::LogdLogger(android::base::SYSTEM));
-#endif
+  cuttlefish::DefaultSubprocessLogging(
+      argv, cuttlefish::MetadataLevel::TAG_AND_MESSAGE);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   if (!FLAGS_label.empty()) {
