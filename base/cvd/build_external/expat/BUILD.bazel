@@ -9,5 +9,5 @@ cc_library(
     hdrs = [
         "expat_config.h",
     ],
-    strip_include_prefix = "//external/expat",
+    strip_include_prefix = "//build_external/expat",
 )

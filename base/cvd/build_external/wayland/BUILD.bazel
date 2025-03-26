@@ -13,5 +13,5 @@ cc_library(
     includes = [
         ".",
     ],
-    strip_include_prefix = "//external/wayland",
+    strip_include_prefix = "//build_external/wayland",
 )
