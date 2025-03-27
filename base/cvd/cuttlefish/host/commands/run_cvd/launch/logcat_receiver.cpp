@@ -13,14 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
 
 #include <string>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 

@@ -13,8 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/run_cvd/launch/launch.h"
-#include "host/commands/run_cvd/launch/wmediumd_server.h"
+#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
 
 #include <string>
 #include <unordered_set>
@@ -24,16 +23,17 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/network.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/command_util/snapshot_utils.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/known_paths.h"
-#include "host/libs/config/openwrt_args.h"
-#include "host/libs/vm_manager/crosvm_builder.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/network.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
+#include "cuttlefish/host/libs/command_util/snapshot_utils.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/config/openwrt_args.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
 
 namespace cuttlefish {
 namespace {

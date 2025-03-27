@@ -24,7 +24,7 @@
 #include <teeui/msg_formatting.h>
 
 #include "common/libs/confui/confui.h"
-#include "host/libs/confui/cbor.h"
+#include "host/libs/confui/confui_cbor.h"
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_renderer.h"
 #include "host/libs/confui/server_common.h"

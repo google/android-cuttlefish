@@ -23,8 +23,8 @@
 
 #include <json/json.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
 
 namespace cuttlefish::monitor {
 

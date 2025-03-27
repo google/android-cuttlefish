@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-#include "host/commands/run_cvd/server_loop_impl.h"
+#include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 
 #include <sstream>
 #include <string>
 
 #include <android-base/file.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/command_util/runner/defs.h"
-#include "host/libs/command_util/snapshot_utils.h"
-#include "host/libs/command_util/util.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/qemu_manager.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
+#include "cuttlefish/host/libs/command_util/snapshot_utils.h"
+#include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
+#include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {

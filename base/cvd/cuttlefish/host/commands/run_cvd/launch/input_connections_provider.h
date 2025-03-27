@@ -17,8 +17,8 @@
 
 #include <vector>
 
-#include "common/libs/fs/shared_fd.h"
-#include "host/libs/config/feature.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/config/feature.h"
 
 namespace cuttlefish {
 

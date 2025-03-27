@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
 
+#include <cstdlib>
 #include <string>
 #include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
-#include <json/json.h>
+#include <json/value.h>
 
-#include <common/libs/fs/shared_fd.h>
-#include <common/libs/fs/shared_select.h>
-#include <host/libs/config/cuttlefish_config.h>
-#include <host/libs/config/logging.h>
-#include "host/commands/kernel_log_monitor/kernel_log_server.h"
-#include "host/commands/kernel_log_monitor/utils.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/logging.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 
 DEFINE_int32(log_pipe_fd, -1,
              "A file descriptor representing a (UNIX) socket from which to "

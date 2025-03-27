@@ -18,12 +18,11 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/config/feature.h"
-
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_command_channel.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
+#include "cuttlefish/host/libs/config/feature.h"
 
 namespace cuttlefish {
 

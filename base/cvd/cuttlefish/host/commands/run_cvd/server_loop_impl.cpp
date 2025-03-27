@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/run_cvd/server_loop_impl.h"
+#include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 
 #include <unistd.h>
 
@@ -26,18 +26,18 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/command_util/runner/defs.h"
-#include "host/libs/command_util/util.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/data_image.h"
-#include "host/libs/config/inject.h"
-#include "host/libs/process_monitor/process_monitor.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/command_util/runner/defs.h"
+#include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/data_image.h"
+#include "cuttlefish/host/libs/config/inject.h"
+#include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {

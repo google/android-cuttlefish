@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/run_cvd/reporting.h"
+#include "cuttlefish/host/commands/run_cvd/reporting.h"
 
 #include <android-base/logging.h>
 #include <fruit/fruit.h>

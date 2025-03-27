@@ -34,7 +34,10 @@ cc_library(
 
 filegroup(
     name = "clang_tidy_config",
-    srcs = [".clang-tidy"],
+    srcs = [
+        ".clang-tidy",
+        "//cuttlefish/host/commands/kernel_log_monitor:.clang-tidy",
+    ],
 )
 
 cc_library(

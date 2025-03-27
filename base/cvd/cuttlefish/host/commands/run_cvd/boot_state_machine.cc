@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/run_cvd/boot_state_machine.h"
+#include "cuttlefish/host/commands/run_cvd/boot_state_machine.h"
 
 #include <poll.h>
 
@@ -28,20 +28,20 @@
 #include <grpcpp/channel.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
-#include "common/libs/utils/result.h"
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/tee_logging.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 #include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.grpc.pb.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/commands/kernel_log_monitor/kernel_log_server.h"
-#include "host/commands/kernel_log_monitor/utils.h"
-#include "host/commands/run_cvd/validate.h"
-#include "host/libs/command_util/runner/defs.h"
-#include "host/libs/command_util/util.h"
-#include "host/libs/config/feature.h"
+#include "cuttlefish/host/commands/run_cvd/validate.h"
+#include "cuttlefish/host/libs/command_util/runner/defs.h"
+#include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/feature.h"
 
 using grpc::ClientContext;
 using openwrtcontrolserver::LuciRpcReply;

@@ -22,13 +22,13 @@
 
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/launch/grpc_socket_creator.h"
-#include "host/commands/run_cvd/launch/log_tee_creator.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
+#include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "host/commands/run_cvd/server_loop_impl.h"
+#include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/command_util/runner/defs.h"
-#include "host/libs/command_util/util.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/command_util/runner/defs.h"
+#include "cuttlefish/host/libs/command_util/util.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {

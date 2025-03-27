@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "host/commands/run_cvd/server_loop.h"
+#include "cuttlefish/host/commands/run_cvd/server_loop.h"
 
 #include <fruit/fruit.h>
 
-#include "host/commands/run_cvd/launch/webrtc_controller.h"
-#include "host/commands/run_cvd/server_loop_impl.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/feature.h"
-#include "host/libs/config/inject.h"
+#include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
+#include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/config/inject.h"
 
 namespace cuttlefish {
 

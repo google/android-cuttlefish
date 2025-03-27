@@ -19,9 +19,9 @@
 
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
