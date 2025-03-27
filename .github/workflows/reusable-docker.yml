@@ -28,7 +28,7 @@ jobs:
   docker-run:
     runs-on: ubuntu-latest
     container:
-      image: ${{ INPUTS.DOCKER_IMAGE }}
+      image: ${{ INPUTS.DOCKER-IMAGE }}
       options: '--cpus 1'
       credentials:
         username: ${{ GITHUB.ACTOR }}
@@ -55,7 +55,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
-        if: ${{ contains(INPUTS.ENTRY_POINT, 'build') }}
+        if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         uses: 'actions/upload-artifact@v4'
         id: retain-rpm
         with:
@@ -66,7 +66,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.srpm)
-        if: ${{ contains(INPUTS.ENTRY_POINT, 'build') }}
+        if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         uses: 'actions/upload-artifact@v4'
         id: retain-srpm
         with:
@@ -77,7 +77,7 @@ jobs:
 
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Copy from container to file-system /tmp
-        if: ${{ contains(INPUTS.ENTRY_POINT, 'test') }}
+        if: ${{ contains(INPUTS.ENTRY-POINT, 'test') }}
         id: test-rpm-packages
         run: |
           ${{ INPUTS.ENTRY_POINT }}
