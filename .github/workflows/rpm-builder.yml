@@ -109,9 +109,7 @@ jobs:
 
     steps:
       - name: Run build script
-        run: |
-          ls -la /home/runner
-          /home/runner/buildscript.sh
+        run: /home/runner/buildscript.sh
 
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Copy from container to file-system /tmp
