@@ -1,6 +1,5 @@
 # Dockerfile for building RPM packages.
 # https://hub.docker.com/_/rockylinux
-# source ~/.bash_profile
 FROM rockylinux/rockylinux:9.5 AS builder
 ARG BAZEL_VERSION=7.6.0
 EXPOSE 80/tcp 8443/tcp
@@ -32,7 +31,6 @@ source ~/.bashrc && go install github.com/bazelbuild/bazelisk@latest
 
 RUN adduser runner
 
-# Entrypoint Script.
+# Copy entrypoint scripts.
 COPY ./docker/rpm-builder/buildscript.sh /home/runner/buildscript.sh
-# ENTRYPOINT [ "/buildscript.sh" ]
-
+COPY ./docker/rpm-builder/testscript.sh /home/runner/testscript.sh
