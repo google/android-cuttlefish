@@ -33,6 +33,7 @@ jobs:
       - name: Copy from container to file-system /tmp
         if: ${{ INPUTS.ENTRY_POINT == '/root/buildscript.sh' }}
         run: |
+          ${{ INPUTS.ENTRY_POINT }}
           export CID=`docker ps --format '{{.ID}}'`
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
@@ -58,3 +59,9 @@ jobs:
           path: |
             ${{ GITHUB.WORKSPACE }}/*.srpm
           retention-days: 14
+
+      # https://docs.docker.com/reference/cli/docker/container/cp/
+      - name: Copy from container to file-system /tmp
+        if: ${{ INPUTS.ENTRY_POINT == '/root/testscript.sh' }}
+        run: |
+          ${{ INPUTS.ENTRY_POINT }}
