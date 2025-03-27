@@ -270,22 +270,22 @@ static bool EspRequiredForAPBootFlow(APBootFlow ap_boot_flow) {
   return ap_boot_flow == APBootFlow::Grub;
 }
 
-static void InitLinuxArgs(Arch target_arch, LinuxEspBuilder& linux) {
-  linux.Root("/dev/vda2");
+static void InitLinuxArgs(Arch target_arch, LinuxEspBuilder& linux_esp_builder) {
+  linux_esp_builder.Root("/dev/vda2");
 
-  linux.Argument("console", "hvc0").Argument("panic", "-1").Argument("noefi");
+  linux_esp_builder.Argument("console", "hvc0").Argument("panic", "-1").Argument("noefi");
 
   switch (target_arch) {
     case Arch::Arm:
     case Arch::Arm64:
-      linux.Argument("console", "ttyAMA0");
+      linux_esp_builder.Argument("console", "ttyAMA0");
       break;
     case Arch::RiscV64:
-      linux.Argument("console", "ttyS0");
+      linux_esp_builder.Argument("console", "ttyS0");
       break;
     case Arch::X86:
     case Arch::X86_64:
-      linux.Argument("console", "ttyS0")
+      linux_esp_builder.Argument("console", "ttyS0")
           .Argument("pnpacpi", "off")
           .Argument("acpi", "noirq")
           .Argument("reboot", "k")
@@ -294,8 +294,8 @@ static void InitLinuxArgs(Arch target_arch, LinuxEspBuilder& linux) {
   }
 }
 
-static void InitChromeOsArgs(LinuxEspBuilder& linux) {
-  linux.Root("/dev/vda2")
+static void InitChromeOsArgs(LinuxEspBuilder& linux_esp_builder) {
+  linux_esp_builder.Root("/dev/vda2")
       .Argument("console", "ttyS0")
       .Argument("panic", "-1")
       .Argument("noefi")
@@ -318,19 +318,19 @@ static void InitChromeOsArgs(LinuxEspBuilder& linux) {
 
 static bool BuildAPImage(const CuttlefishConfig& config,
                          const CuttlefishConfig::InstanceSpecific& instance) {
-  auto linux = LinuxEspBuilder(instance.ap_esp_image_path());
-  InitLinuxArgs(instance.target_arch(), linux);
+  auto linux_esp_builder = LinuxEspBuilder(instance.ap_esp_image_path());
+  InitLinuxArgs(instance.target_arch(), linux_esp_builder);
 
   auto openwrt_args = OpenwrtArgsFromConfig(instance);
   for (auto& openwrt_arg : openwrt_args) {
-    linux.Argument(openwrt_arg.first, openwrt_arg.second);
+    linux_esp_builder.Argument(openwrt_arg.first, openwrt_arg.second);
   }
 
-  linux.Root("/dev/vda2")
+  linux_esp_builder.Root("/dev/vda2")
       .Architecture(instance.target_arch())
       .Kernel(config.ap_kernel_image());
 
-  return linux.Build();
+  return linux_esp_builder.Build();
 }
 
 static bool BuildOSImage(const CuttlefishConfig::InstanceSpecific& instance) {
@@ -343,28 +343,28 @@ static bool BuildOSImage(const CuttlefishConfig::InstanceSpecific& instance) {
       return android_efi_loader.Build();
     }
     case BootFlow::ChromeOs: {
-      auto linux = LinuxEspBuilder(instance.esp_image_path());
-      InitChromeOsArgs(linux);
+      auto linux_esp_builder = LinuxEspBuilder(instance.esp_image_path());
+      InitChromeOsArgs(linux_esp_builder);
 
-      linux.Root("/dev/vda3")
+      linux_esp_builder.Root("/dev/vda3")
           .Architecture(instance.target_arch())
           .Kernel(instance.chromeos_kernel_path());
 
-      return linux.Build();
+      return linux_esp_builder.Build();
     }
     case BootFlow::Linux: {
-      auto linux = LinuxEspBuilder(instance.esp_image_path());
-      InitLinuxArgs(instance.target_arch(), linux);
+      auto linux_esp_builder = LinuxEspBuilder(instance.esp_image_path());
+      InitLinuxArgs(instance.target_arch(), linux_esp_builder);
 
-      linux.Root("/dev/vda2")
+      linux_esp_builder.Root("/dev/vda2")
           .Architecture(instance.target_arch())
           .Kernel(instance.linux_kernel_path());
 
       if (!instance.linux_initramfs_path().empty()) {
-        linux.Initrd(instance.linux_initramfs_path());
+        linux_esp_builder.Initrd(instance.linux_initramfs_path());
       }
 
-      return linux.Build();
+      return linux_esp_builder.Build();
     }
     case BootFlow::Fuchsia: {
       auto fuchsia = FuchsiaEspBuilder(instance.esp_image_path());

@@ -42,6 +42,7 @@
 #include "host/commands/cvd/cli/selector/selector.h"
 #include "host/commands/cvd/cli/types.h"
 #include "host/commands/cvd/cli/utils.h"
+#include "host/commands/cvd/fetch/substitute.h"
 #include "host/commands/cvd/instances/instance_group_record.h"
 #include "host/commands/cvd/instances/operator_client.h"
 #include "host/commands/cvd/instances/reset_client_utils.h"
@@ -545,6 +546,17 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(UpdateArgs(subcmd_args, group));
   CF_EXPECT(UpdateEnvs(envs, group));
   const auto bin = CF_EXPECT(FindStartBin(group.HostArtifactsPath()));
+
+  std::vector<std::string> host_substitutions;
+  Flag host_substitutions_flag =
+      GflagsCompatFlag("host_substitutions", host_substitutions);
+
+  CF_EXPECT(
+      ConsumeFlags(std::vector<Flag>{host_substitutions_flag}, subcmd_args));
+
+  CF_EXPECT(
+      HostPackageSubstitution(group.HostArtifactsPath(), host_substitutions));
+
   Command command = CF_EXPECT(
       ConstructCvdNonHelpCommand(bin, group, subcmd_args, envs, request));
 

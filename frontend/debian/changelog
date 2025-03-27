@@ -1,6 +1,13 @@
-cuttlefish-frontend (1.2.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.3.0) UNRELEASED; urgency=medium
 
   * 
+
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 21 Mar 2025 14:52:51 -0700
+
+cuttlefish-frontend (1.2.0) stable; urgency=medium
+
+  * allow usage of protected TURN servers
+  * minor refactors and fixes
 
  -- Chad Reynolds <chadreynolds@google.com>  Fri, 24 Jan 2025 11:24:30 -0800
 

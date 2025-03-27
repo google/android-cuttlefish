@@ -20,3 +20,8 @@
 
 # AOSP migration
 /staging @Databean @cjreynol @google/android-cuttlefish
+
+# debian package updates
+
+/base/debian/ @cjreynol @Databean @jemoreira @ser-io
+/frontend/debian/ @cjreynol @Databean @jemoreira @ser-io

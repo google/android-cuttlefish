@@ -17,6 +17,7 @@
 #include "cuttlefish_config.h"
 #include "host/libs/config/cuttlefish_config.h"
 
+#include <fstream>
 #include <string>
 #include <string_view>
 

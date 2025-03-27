@@ -3,6 +3,7 @@ Maintainer: Cuttlefish Team
 Section: misc
 Priority: optional
 Build-Depends: bazel [amd64],
+               cmake,
                config-package-dev,
                debhelper-compat (= 12),
                git,
@@ -21,7 +22,8 @@ Build-Depends: bazel [amd64],
                pkg-config,
                protobuf-compiler,
                sed,
-               uuid-dev
+               uuid-dev,
+               xxd
 Standards-Version: 4.5.0
 
 Package: cuttlefish-base

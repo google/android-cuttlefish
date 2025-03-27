@@ -22,7 +22,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result_matchers.h"
-#include "cuttlefish/host/commands/cvd/cli/parser/instance/launch_cvd.pb.h"
+#include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
 #include "host/commands/cvd/cli/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 

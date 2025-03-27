@@ -1,0 +1,76 @@
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+    ],
+)
+
+genrule(
+    name = "crosvm_gpu_display_wayland_protocol_linux_dmabuf_unstable_v1_impl",
+    srcs = ["gpu_display/protocol/linux-dmabuf-unstable-v1.xml"],
+    outs = ["linux-dmabuf-unstable-v1.c"],
+    cmd = "$(location @wayland//:wayland_scanner) -s server-header < $(SRCS) > $(OUTS)",
+    tools = ["@wayland//:wayland_scanner"],
+)
+
+genrule(
+    name = "crosvm_gpu_display_wayland_protocol_linux_dmabuf_unstable_server_header",
+    srcs = ["gpu_display/protocol/linux-dmabuf-unstable-v1.xml"],
+    outs = ["linux-dmabuf-unstable-v1-server-protocol.h"],
+    cmd = "$(location @wayland//:wayland_scanner) -s server-header < $(SRCS) > $(OUTS)",
+    tools = ["@wayland//:wayland_scanner"],
+)
+
+genrule(
+    name = "crosvm_gpu_display_wayland_protocol_virtio_gpu_metadata_impl",
+    srcs = ["gpu_display/protocol/virtio-gpu-metadata-v1.xml"],
+    outs = ["virtio-gpu-metadata-v1.c"],
+    cmd = "$(location @wayland//:wayland_scanner) -s server-header < $(SRCS) > $(OUTS)",
+    tools = ["@wayland//:wayland_scanner"],
+)
+
+genrule(
+    name = "crosvm_gpu_display_wayland_protocol_virtio_gpu_metadata_server_header",
+    srcs = ["gpu_display/protocol/virtio-gpu-metadata-v1.xml"],
+    outs = ["virtio-gpu-metadata-v1-server-protocol.h"],
+    cmd = "$(location @wayland//:wayland_scanner) -s server-header < $(SRCS) > $(OUTS)",
+    tools = ["@wayland//:wayland_scanner"],
+)
+
+genrule(
+    name = "crosvm_gpu_display_wayland_protocol_xdg_shell_impl",
+    srcs = ["gpu_display/protocol/xdg-shell.xml"],
+    outs = ["xdg-shell.c"],
+    cmd = "$(location @wayland//:wayland_scanner) -s server-header < $(SRCS) > $(OUTS)",
+    tools = ["@wayland//:wayland_scanner"],
+)
+
+genrule(
+    name = "crosvm_gpu_display_wayland_protocol_xdg_shell_server_header",
+    srcs = ["gpu_display/protocol/xdg-shell.xml"],
+    outs = ["xdg-shell-server-protocol.h"],
+    cmd = "$(location @wayland//:wayland_scanner) -s server-header < $(SRCS) > $(OUTS)",
+    tools = ["@wayland//:wayland_scanner"],
+)
+
+cc_library(
+    name = "crosvm_gpu_display_wayland_protocols",
+    srcs = [
+        ":crosvm_gpu_display_wayland_protocol_linux_dmabuf_unstable_v1_impl",
+        ":crosvm_gpu_display_wayland_protocol_virtio_gpu_metadata_impl",
+        ":crosvm_gpu_display_wayland_protocol_xdg_shell_impl",
+    ],
+    hdrs = [
+        ":crosvm_gpu_display_wayland_protocol_linux_dmabuf_unstable_server_header",
+        ":crosvm_gpu_display_wayland_protocol_virtio_gpu_metadata_server_header",
+        ":crosvm_gpu_display_wayland_protocol_xdg_shell_server_header",
+    ],
+    includes = [
+        ".",
+    ],
+    deps = [
+        "@wayland//:wayland_server",
+    ],
+    copts = [
+        "-Wno-unused-function",
+    ],
+)

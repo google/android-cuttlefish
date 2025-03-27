@@ -99,6 +99,7 @@ struct FetchFlags {
   BuildApiFlags build_api_flags;
   VectorFlags vector_flags;
   int number_of_builds = 0;
+  std::vector<std::string> host_substitutions;
 
   static Result<FetchFlags> Parse(std::vector<std::string>& args);
 };

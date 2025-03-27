@@ -15,6 +15,7 @@
 
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 
+#include <android-base/file.h>
 #include <sys/stat.h>
 
 #include <chrono>
@@ -23,6 +24,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -37,6 +39,7 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "host/commands/cvd/fetch/fetch_tracer.h"
+#include "host/commands/cvd/fetch/substitute.h"
 #include "host/commands/cvd/utils/common.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/image_aggregator/sparse_image_utils.h"
@@ -235,9 +238,9 @@ bool ConvertToRawImageNoBinary(const std::string& image_path) {
  * crosvm has read-only support for Android-Sparse files, but QEMU does not
  * support them.
  */
-void DeAndroidSparse(const std::vector<std::string>& image_files) {
+Result<void> DeAndroidSparse(const std::vector<std::string>& image_files) {
   for (const auto& file : image_files) {
-    if (!IsSparseImage(file)) {
+    if (!CF_EXPECT(IsSparseImage(file))) {
       continue;
     }
     if (ConvertToRawImageNoBinary(file)) {
@@ -246,6 +249,7 @@ void DeAndroidSparse(const std::vector<std::string>& image_files) {
       LOG(ERROR) << "Failed to de-sparse '" << file << "'";
     }
   }
+  return {};
 }
 
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
@@ -290,10 +294,11 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
   return {};
 }
 
-Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
-                              const std::string& target_dir,
-                              const bool keep_archives,
-                              FetchTracer::Trace trace) {
+Result<void> FetchHostPackage(
+    BuildApi& build_api, const Build& build, const std::string& target_dir,
+    const bool keep_archives,
+    const std::vector<std::string>& host_substitutions,
+    FetchTracer::Trace trace) {
   LOG(INFO) << "Preparing host package for " << build;
   // This function is called asynchronously, so it may take a while to start.
   // Complete a phase here to ensure that delay is not counted in the download
@@ -305,9 +310,14 @@ Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
   std::string host_tools_filepath =
       CF_EXPECT(build_api.DownloadFile(build, target_dir, host_tools_name));
   trace.CompletePhase("Download", FileSize(host_tools_filepath));
+
   CF_EXPECT(
       ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
   trace.CompletePhase("Extract");
+
+  CF_EXPECT(HostPackageSubstitution(target_dir, host_substitutions));
+
+  trace.CompletePhase("Substitute");
   return {};
 }
 
@@ -558,7 +568,7 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
     CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
                                       default_build_id, default_build_target,
                                       image_files, target_directories.root));
-    DeAndroidSparse(image_files);
+    CF_EXPECT(DeAndroidSparse(image_files));
     trace.CompletePhase("Desparse image files");
   }
 
@@ -937,7 +947,7 @@ Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
       std::launch::async, FetchHostPackage, std::ref(*build_api),
       std::cref(host_target_build), std::cref(host_target.host_tools_directory),
       std::cref(flags.keep_downloaded_archives),
-      tracer.NewTrace("Host Package"));
+      std::cref(flags.host_substitutions), tracer.NewTrace("Host Package"));
   size_t count = 1;
   for (const auto& target : targets) {
     LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";

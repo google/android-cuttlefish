@@ -15,8 +15,6 @@ Checks: &checks >-
   readability-redundant-control-flow,
   readability-string-compare,
 
-UseColor: true
-
 # Using the bazel clang-tidy helper, warnings are not shown from files that
 # don't have any errors.  "*" here treats everything from `Checks` as an error,
 # and from there some exclusions are added.

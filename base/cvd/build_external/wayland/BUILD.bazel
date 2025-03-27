@@ -1,0 +1,17 @@
+package(
+    default_visibility = [
+        "@wayland//:__subpackages__",
+    ],
+)
+
+cc_library(
+    name = "wayland_overlay",
+    hdrs = [
+        "config.h",
+        "wayland-version.h",
+    ],
+    includes = [
+        ".",
+    ],
+    strip_include_prefix = "//build_external/wayland",
+)

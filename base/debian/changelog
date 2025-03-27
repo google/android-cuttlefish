@@ -1,6 +1,12 @@
-cuttlefish-common (1.2.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.3.0) UNRELEASED; urgency=medium
 
   * 
+
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 21 Mar 2025 14:52:16 -0700
+
+cuttlefish-common (1.2.0) stable; urgency=medium
+
+  * migrate many of the Cuttlefish host tools from AOSP
 
  -- Chad Reynolds <chadreynolds@google.com>  Fri, 24 Jan 2025 11:23:42 -0800
 

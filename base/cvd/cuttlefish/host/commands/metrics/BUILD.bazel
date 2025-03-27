@@ -5,17 +5,37 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
-    name = "libmetrics",
-    hdrs = [
-        "metrics_defs.h",
+cc_binary(
+    name = "metrics",
+    srcs = [
+        "events.cc",
+        "events.h",
+        "host_receiver.cc",
+        "host_receiver.h",
+        "metrics.cc",
+        "utils.cc",
+        "utils.h",
     ],
-    copts = COPTS + [ "-Werror=sign-compare" ],
-    strip_include_prefix = "//cuttlefish",
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/commands/metrics/proto:metrics_protos",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/metrics",
+        "//cuttlefish/host/libs/metrics:metrics_headers",
+        "//cuttlefish/host/libs/msg_queue",
+        "//libbase",
+        "@curl",
+        "@fruit",
+        "@gflags",
+        "@jsoncpp",
+        "@protobuf",
+    ],
 )
 
 clang_tidy_test(
-    name = "libmetrics_clang_tidy",
-    srcs = [":libmetrics"],
+    name = "metrics_clang_tidy",
+    srcs = [":metrics"],
     tags = ["clang_tidy", "clang-tidy"],
 )

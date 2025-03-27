@@ -1,0 +1,76 @@
+load("@//:build_variables.bzl", "COPTS")
+
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+        "@crosvm//:__subpackages__",
+        "@wayland_protocols_freedesktop//:__subpackages__",
+    ],
+)
+
+cc_binary(
+    name = "wayland_scanner",
+    srcs = [
+        "src/scanner.c",
+        "src/wayland-util.c",
+    ] + glob([
+        "src/*.h",
+    ]),
+    cxxopts = COPTS,
+    deps = [
+        "@expat",
+        "@//build_external/wayland:wayland_overlay",
+    ],
+)
+
+filegroup(
+    name = "wayland_core_protocol",
+    srcs = [
+        "protocol/wayland.xml",
+    ],
+)
+
+genrule(
+    name = "wayland_core_protocol_sources_static",
+    srcs = [":wayland_core_protocol"],
+    outs = ["wayland-protocol-private.c"],
+    cmd = "$(location :wayland_scanner) -s private-code < $(location :wayland_core_protocol) > $(location wayland-protocol-private.c)",
+    tools = [":wayland_scanner"],
+)
+
+genrule(
+    name = "wayland_core_server_protocol_headers",
+    srcs = [":wayland_core_protocol"],
+    outs = ["wayland-server-protocol.h"],
+    cmd = "$(location :wayland_scanner) -s server-header < $(location :wayland_core_protocol) > $(location wayland-server-protocol.h)",
+    tools = [":wayland_scanner"],
+)
+
+cc_library(
+    name = "wayland_server",
+    srcs = [
+        "src/connection.c",
+        "src/event-loop.c",
+        "src/wayland-os.c",
+        "src/wayland-server.c",
+        "src/wayland-shm.c",
+        "src/wayland-util.c",
+        ":wayland_core_protocol_sources_static",
+    ],
+    hdrs = [
+        ":wayland_core_server_protocol_headers",
+    ] + glob([
+        "src/*.h",
+    ]),
+    cxxopts = COPTS + [
+        "-Wno-unused-variable",
+    ],
+    includes = [
+        ".",
+        "src",
+    ],
+    deps = [
+        "@libffi",
+        "@//build_external/wayland:wayland_overlay",
+    ],
+)
