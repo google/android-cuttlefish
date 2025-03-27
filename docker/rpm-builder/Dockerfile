@@ -1,9 +1,10 @@
 # Dockerfile based on Rocky Linux
 # https://hub.docker.com/_/rockylinux
-FROM rockylinux/rockylinux:9.5 AS builder
+ARG ROCKY_LINUX_VERSION=9.5
 ARG BAZEL_VERSION=7.6.0
 ARG USERNAME="runner"
 
+FROM rockylinux/rockylinux:$ROCKY_LINUX_VERSION AS builder
 LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler" \
 org.opencontainers.image.source="https://github.com/google/android-cuttlefish/blob/main/docker/rpm-builder/Dockerfile" \
 org.opencontainers.image.title="RPM Builder" \
@@ -15,9 +16,12 @@ org.opencontainers.image.licenses="MIT"
 
 # Volume, ports and user.
 EXPOSE 80/tcp 8443/tcp
-VOLUME [ "/home/$USERNAME" ]
-RUN adduser $USERNAME
+RUN IF [[ $USERNAME !eq "root" ]]; THEN adduser $USERNAME; ELSE echo "" > /dev/null; FI
 USER $USERNAME
+VOLUME [ "$HOME" ]
+
+ENTRYPOINT ["python", "/app/my_script.py"]
+CMD ["--default-arg"]
 
 # Add entrypoint scripts.
 ADD ./docker/rpm-builder/buildscript.sh /home/$USERNAME/buildscript.sh
@@ -28,19 +32,14 @@ ADD ./docker/rpm-builder/testscript.sh /home/$USERNAME/testscript.sh
 # RUN dnf -y swap coreutils-single coreutils
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
 # RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
-RUN dnf -y upgrade && dnf -y install dnf-plugins-core sudo rpm-build git nginx golang-bin curl-devel qemu-kvm systemd-journal-remote
-RUN dnf -y install protobuf-devel protobuf-compiler --enablerepo crb && dnf list installed && dnf clean all
+RUN dnf -y upgrade && \
+dnf -y install dnf-plugins-core sudo rpm-build git nginx golang-bin curl-devel qemu-kvm systemd-journal-remote && \
+dnf -y install protobuf-devel protobuf-compiler --enablerepo crb && \
+dnf list installed && dnf clean all
 
-
-
-# Install `bazelisk`.
+# Set up user profile and install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc && \
 echo "export GOPATH=${HOME}/go" >> ~/.bash_profile && echo "export PATH=${PATH}:${GOPATH}/bin" >> ~/.bash_profile && \
-source ~/.bash_profile && go install github.com/bazelbuild/bazelisk@latest
+source ~/.bash_profile && chown $USERNAME:$USERNAME /home/$USERNAME/*.sh && chmod +x /home/$USERNAME/*.sh && \
+go install github.com/bazelbuild/bazelisk@latest
 # RUN $GOPATH/bin/bazelisk version
-
-# Add entrypoint scripts.
-USER root
-ADD ./docker/rpm-builder/buildscript.sh /home/$USERNAME/buildscript.sh
-ADD ./docker/rpm-builder/testscript.sh /home/$USERNAME/testscript.sh
-RUN chown $USERNAME:$USERNAME /home/$USERNAME/*.sh && chmod +x /home/$USERNAME/*.sh
