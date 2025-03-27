@@ -25,7 +25,7 @@ on:
         description: "Test output"
 
 jobs:
-  docker-build:
+  docker-run:
     runs-on: ubuntu-latest
     if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
 
