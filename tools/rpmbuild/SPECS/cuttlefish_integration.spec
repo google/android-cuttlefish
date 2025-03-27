@@ -1,5 +1,5 @@
 Name:           cuttlefish-integration
-Version:        0.9.29
+Version:        1.2.0
 Release:        1%{?dist}
 Summary:        Contains the host signaling server supporting multi-device flows over WebRTC.
 
@@ -10,7 +10,7 @@ BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 #BuildRequires:  
-Requires:       qemu-kvm, cuttlefish-base
+Requires:       cuttlefish-base, qemu-kvm
 
 %description
 Cuttlefish Android Virtual Device companion package
@@ -48,6 +48,7 @@ install -m 655 %{srcpath}/cuttlefish-integration.udev %{buildroot}/lib/udev/rule
 /lib/udev/rules.d/60-cuttlefish-integration.rules
 
 #%%license add-license-file-here
+
 #%%doc add-docs-here
 
 %post
@@ -62,6 +63,6 @@ systemctl restart systemd-modules-load.service
 systemctl reload rsyslog.service
 
 %changelog
-* Thu Jul 11 2024 Martin Zeitler <?>
+* Thu Jul 11 2024 Martin Zeitler <syslogic@users.noreply.github.com>
 - Initial version.
 

@@ -20,14 +20,20 @@ org.opencontainers.image.licenses="MIT"
 # RUN dnf -y swap coreutils-single coreutils
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
 # RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
 
-RUN dnf -y upgrade
-RUN dnf -y install sudo git dnf-plugins-core rpm-build golang-bin qemu-kvm nginx curl-devel systemd-journal-remote
+# Install the EPEL repository.
+RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && dnf -y upgrade
+
+# Provide build dependencies.
+# RUN dnf -y install dnf-plugins-core
+RUN dnf -y install git rpm-build golang-bin ncurses-compat-libs curl-devel
 RUN dnf -y install protobuf-devel protobuf-compiler --enablerepo crb
-RUN dnf -y install ncurses-compat-libs --enablerepo epel
 
-RUN dnf list installed && dnf clean all
+# Provide integration and orchestration dependencies.
+RUN dnf -y install qemu-kvm nginx systemd-journal-remote
+
+# RUN dnf list installed
+RUN dnf clean all
 
 # Add entrypoint scripts.
 ADD ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
@@ -36,7 +42,7 @@ RUN chmod +x /root/*.sh
 # ENTRYPOINT [ "/root/buildscript.sh" ]
 # ENTRYPOINT [ "/root/testscript.sh" ]
 
-# Set up user profile and install `bazelisk`.
+# Modify file `~/.bash_profile` and install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc && \
 echo "export GOPATH=${HOME}/go" >> ~/.bash_profile && echo "export PATH=${PATH}:${GOPATH}/bin" >> ~/.bash_profile && \
 source ~/.bash_profile && go install github.com/bazelbuild/bazelisk@latest

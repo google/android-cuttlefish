@@ -1,5 +1,5 @@
 Name:           cuttlefish-base
-Version:        0.9.29
+Version:        1.2.0
 Release:        1%{?dist}
 Summary:        Cuttlefish Android Virtual Device
 
@@ -8,7 +8,9 @@ URL:            https://github.com/google/android-cuttlefish
 
 BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  curl-devel, openssl-devel, protobuf-devel, protobuf-compiler
+
+# Note: `ncurses-compat-libs` require EPEL repository and `protobuf` requires CRB repository.
+BuildRequires:  curl-devel, openssl-devel, ncurses-compat-libs, protobuf-devel, protobuf-compiler
 
 Requires:       shadow-utils, redhat-lsb-core, ebtables-legacy, iproute
 Requires:       iptables-legacy, bridge-utils, dnsmasq, libfdt, e2fsprogs, ebtables, iptables, bsdtar
@@ -106,10 +108,10 @@ fi
 /lib/udev/rules.d/60-cuttlefish-integration.rules
 
 #%%license add-license-file-here
+
 #%%doc add-docs-here
 
-
 %changelog
-* Thu Jul 11 2024 Martin Zeitler <?>
+* Thu Jul 11 2024 Martin Zeitler <syslogic@users.noreply.github.com>
 - Initial version.
 

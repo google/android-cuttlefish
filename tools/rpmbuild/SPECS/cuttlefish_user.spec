@@ -1,5 +1,5 @@
 Name:           cuttlefish-user
-Version:        0.9.29
+Version:        1.2.0
 Release:        1%{?dist}
 Summary:        Contains the host signaling server supporting multi-device flows over WebRTC.
 
@@ -10,7 +10,7 @@ BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  golang-bin
-Requires:       cuttlefish-base, openssl, shadow-utils
+Requires:       cuttlefish-base, shadow-utils, openssl
 
 %description
 Cuttlefish Android Virtual Device companion package
@@ -88,6 +88,6 @@ fi
 
 
 %changelog
-* Thu Jul 11 2024 Martin Zeitler <?>
+* Thu Jul 11 2024 Martin Zeitler <syslogic@users.noreply.github.com>
 - Initial version.
 
