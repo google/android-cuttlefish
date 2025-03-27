@@ -45,7 +45,7 @@ jobs:
     steps:
 
       # https://docs.docker.com/reference/cli/docker/container/cp/
-      - name: Copy from container to file-system /tmp
+      - name: Run the build script and copy packages to workspace
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         id: copy-rpm-packages
         run: |
@@ -78,33 +78,8 @@ jobs:
           retention-days: 14
 
       # https://docs.docker.com/reference/cli/docker/container/cp/
-      - name: Copy from container to file-system /tmp
+      - name: Run the test script
         if: ${{ contains(INPUTS.ENTRY-POINT, 'test') }}
-        id: test-rpm-packages
-        run: |
-          sudo ${{ INPUTS.ENTRY-POINT }}
-          echo "result=ok" >> $GITHUB_OUTPUT
-
-  docker-test:
-    if: ${{ contains(INPUTS.ENTRY-POINT, 'test') }}
-    runs-on: ubuntu-latest
-    needs: docker-build
-    container:
-      image: ${{ INPUTS.DOCKER-IMAGE }}
-      options: '--cpus 1'
-      credentials:
-        username: ${{ GITHUB.ACTOR }}
-        password: ${{ SECRETS.TOKEN }}
-      volumes:
-        - /home/runner
-
-    outputs:
-      test: ${{ steps.test-rpm-packages.outputs.result }}
-
-    steps:
-
-      # https://docs.docker.com/reference/cli/docker/container/cp/
-      - name: Copy from container to file-system /tmp
         id: test-rpm-packages
         run: |
           CID='' && echo `docker ps --format '{{.ID}}'` >> $CID
