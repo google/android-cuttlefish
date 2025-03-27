@@ -98,7 +98,7 @@ jobs:
     needs: build-docker-image
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      docker-image: ${{ inputs.docker-image }}
+      docker-image: ${{ INPUTS.DOCKER-IMAGE }}
       entry-point: '/root/buildscript.sh'
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
@@ -107,7 +107,7 @@ jobs:
     needs: build-rpm-specs
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      docker-image: ${{ inputs.docker-image }}
+      docker-image: ${{ INPUTS.DOCKER-IMAGE }}
       entry-point: '/root/testscript.sh'
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
