@@ -28,6 +28,16 @@
 # Make sure calls to this script get redirected to systemctl when
 # using systemd
 
+### BEGIN INIT INFO
+# Provides:          cuttlefish-host-resources
+# Required-Start:    $syslog
+# Required-Stop:     $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start daemon at boot time
+# Description:       Enable service provided by daemon.
+### END INIT INFO
+
 # some system may not support bridge type by default
 modprobe bridge
 
@@ -359,7 +369,12 @@ case "$1" in
         # Nothing to do; we reread configuration on each invocation
         ;;
     status)
-        rh_status
+        # command `rh_status` may not be available.
+        if command -v rh_status > /dev/null ; then
+            rh_status
+        else
+            systemctl status cuttlefish.service
+        fi
         ;;
     shutdown)
         stop
