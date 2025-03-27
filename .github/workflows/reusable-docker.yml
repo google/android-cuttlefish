@@ -35,6 +35,11 @@ jobs:
       credentials:
         username: ${{ GITHUB.ACTOR }}
         password: ${{ SECRETS.TOKEN }}
+      ports:
+        - 1080 1443
+        - 2080 2443
+        - 8443 15550-15560
+        - 6520-6620
       volumes:
         - /root
 
