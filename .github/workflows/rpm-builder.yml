@@ -1,0 +1,136 @@
+name: RPM Builder
+
+on:
+  push:
+    enable_docker_cache:
+      required: true
+      type: boolean
+      default: true
+  workflow_call:
+    inputs:
+      enable_docker_cache:
+        required: false
+        type: boolean
+        default: false
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  DOCKER_IMAGE: ${{ GITHUB.ACTOR }}/rpm-builder
+
+jobs:
+  # /root/.cache/bazel
+  build-docker-image:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+
+      # https://github.com/actions/checkout
+      - name: Get latest code
+        uses: actions/checkout@v4
+
+      - name: Setup Buildx
+        id: buildx
+        if: ${{ inputs.enable_docker_cache }}
+        uses: 'docker/setup-buildx-action@v3'
+        with:
+          driver: 'docker-container'
+          driver-opts: 'image=moby/buildkit:master,network=host'
+
+      # https://github.com/docker/login-action
+      - name: Log in to the Container registry
+        uses: 'docker/login-action@v3'
+        with:
+          registry: ${{ ENV.DOCKER_REGISTRY }}
+          username: ${{ GITHUB.ACTOR }}
+          password: ${{ SECRETS.GITHUB_TOKEN }}
+
+      # https://github.com/docker/metadata-action
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: 'docker/metadata-action@v5'
+        with:
+          images: ${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}
+          tags: '${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}:latest'
+
+      # https://github.com/marketplace/actions/build-and-push-docker-images
+      - name: Build and push Docker image
+        if: ${{ !inputs.enable_docker_cache }}
+        id: push-image
+        uses: 'docker/build-push-action@v6'
+        with:
+          context: .
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
+          file: docker/rpm-builder/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+
+      - name: Build and push Docker images with cache
+        if: ${{ inputs.enable_docker_cache }}
+        id: push-image-cached
+        uses: 'docker/build-push-action@v6'
+        with:
+          context: .
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          file: docker/rpm-builder/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+
+      # https://github.com/actions/attest-build-provenance
+      - name: Generate artifact attestation
+        uses: 'actions/attest-build-provenance@v2'
+        with:
+          subject-name: ${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  build-rpm-specs:
+    needs: build-docker-image
+    runs-on: ubuntu-latest
+
+    # https://docs.github.com/en/actions/writing-workflows/choosing-where-your-workflow-runs/running-jobs-in-a-container#example-defining-credentials-for-a-container-registry
+    container:
+      image: 'docker://ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder:latest'
+      ports: [80, 8443]
+      credentials:
+        username: ${{ GITHUB.ACTOR }}
+        password: ${{ SECRETS.GITHUB_TOKEN }}
+
+    steps:
+
+      - name: Check for dockerenv file
+        run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
+
+      - name: Check for dockerenv file
+        run: /home/runner/buildscript.sh
+
+      # https://github.com/actions/upload-artifact
+      - name: Retain Artifacts (*.rpm)
+        id: retain-rpm
+        uses: 'actions/upload-artifact@v4'
+        with:
+          name: android-cuttlefish-rpm
+          path: |
+            ./tools/rpmbuild/RPMS/*.rpm
+          retention-days: 14
+
+      # https://github.com/actions/upload-artifact
+      - name: Retain Artifacts (*.srpm)
+        id: retain-srpm
+        uses: 'actions/upload-artifact@v4'
+        with:
+          name: android-cuttlefish-srpm
+          path: |
+            ./tools/rpmbuild/SRPMS/*.srpm
+          retention-days: 14
