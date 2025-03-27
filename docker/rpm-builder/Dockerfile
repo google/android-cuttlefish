@@ -47,6 +47,8 @@ RUN dnf clean all
 ADD ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
 ADD ./docker/rpm-builder/testscript.sh /root/testscript.sh
 RUN chmod +x /root/*.sh
+
+# ENTRYPOINT [ "/root/buildscript.sh", "/root/testscript.sh" ]
 # ENTRYPOINT [ "/root/buildscript.sh" ]
 # ENTRYPOINT [ "/root/testscript.sh" ]
 
