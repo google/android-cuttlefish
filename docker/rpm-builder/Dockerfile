@@ -16,13 +16,13 @@ org.opencontainers.image.licenses="MIT"
 
 # Volume, ports and user.
 USER $USERNAME
+VOLUME [ "/home/${USERNAME}" ]
 RUN adduser $USERNAME
-VOLUME [ "/home/$USERNAME" ]
-EXPOSE 80/tcp 8443/tcp
 
 # Add entrypoint scripts.
 ADD ./docker/rpm-builder/buildscript.sh /home/$USERNAME/buildscript.sh
 ADD ./docker/rpm-builder/testscript.sh /home/$USERNAME/testscript.sh
+EXPOSE 80/tcp 8443/tcp
 # ENTRYPOINT [ "/home/$USERNAME/testscript.sh" ]
 ENTRYPOINT [ "/home/$USERNAME/buildscript.sh" ]
 CMD [ "--rpm-build" ]
@@ -33,7 +33,7 @@ CMD [ "--rpm-build" ]
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
 # RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
 RUN dnf -y upgrade && \
-dnf -y install dnf-plugins-core sudo rpm-build git nginx golang-bin curl-devel qemu-kvm systemd-journal-remote && \
+dnf -y install sudo git dnf-plugins-core rpm-build golang-bin qemu-kvm nginx curl-devel systemd-journal-remote && \
 dnf -y install protobuf-devel protobuf-compiler --enablerepo crb && \
 dnf list installed && dnf clean all
 
