@@ -31,6 +31,7 @@ jobs:
 
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Copy from container to file-system /tmp
+        if: ${{ INPUTS.ENTRY_POINT == '/root/buildscript.sh' }}
         run: |
           export CID=`docker ps --format '{{.ID}}'`
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
