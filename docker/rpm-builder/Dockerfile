@@ -3,7 +3,6 @@
 ARG ROCKY_LINUX_VERSION=9.5
 FROM rockylinux/rockylinux:$ROCKY_LINUX_VERSION AS builder
 ARG BAZEL_VERSION=7.6.0
-VOLUME [ "/home/runner" ]
 
 LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler" \
 org.opencontainers.image.source="https://github.com/google/android-cuttlefish/blob/main/docker/rpm-builder/Dockerfile" \
@@ -44,6 +43,7 @@ RUN dnf clean all
 
 # Add entrypoint scripts.
 USER runner
+VOLUME [ "/home/runner" ]
 RUN adduser runner
 ADD ./docker/rpm-builder/buildscript.sh /home/runner/buildscript.sh
 ADD ./docker/rpm-builder/testscript.sh /home/runner/testscript.sh
