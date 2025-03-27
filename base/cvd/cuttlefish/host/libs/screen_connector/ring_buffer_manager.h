@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <map>
 
 #include "common/libs/fs/shared_fd.h"
