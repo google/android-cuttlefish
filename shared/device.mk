@@ -236,17 +236,14 @@ PRODUCT_CHECK_PREBUILT_MAX_PAGE_SIZE := true
 $(call soong_config_set_bool,cuttlefish_config,use_general_files,true)
 PRODUCT_PACKAGES += \
     device_google_cuttlefish_shared_config_init_vendor_rc \
-    device_google_cuttlefish_shared_config_init_product_rc
+    device_google_cuttlefish_shared_config_init_product_rc \
+    device_google_cuttlefish_shared_config_media_files \
+    device_google_cuttlefish_shared_config_media_profiles_vendor \
+    device_google_cuttlefish_shared_config_seriallogging_rc \
+    device_google_cuttlefish_shared_config_ueventd_rc \
+    device_google_cuttlefish_shared_privapp_permissions_cuttlefish
 
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/media_codecs_google_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video.xml \
-    device/google/cuttlefish/shared/config/media_codecs_performance.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance.xml \
-    device/google/cuttlefish/shared/config/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
-    device/google/cuttlefish/shared/config/media_profiles.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_V1_0.xml \
-    device/google/cuttlefish/shared/config/media_profiles.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_vendor.xml \
-    device/google/cuttlefish/shared/config/seriallogging.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/seriallogging.rc \
-    device/google/cuttlefish/shared/config/ueventd.rc:$(TARGET_COPY_OUT_VENDOR)/etc/ueventd.rc \
-    device/google/cuttlefish/shared/permissions/privapp-permissions-cuttlefish.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/privapp-permissions-cuttlefish.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_telephony.xml \
     frameworks/native/data/etc/android.hardware.ethernet.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.ethernet.xml \

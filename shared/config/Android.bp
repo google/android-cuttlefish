@@ -199,12 +199,8 @@ prebuilt_etc {
     }),
 }
 
-prebuilt_etc {
-    name: "device_google_cuttlefish_shared_config_init_vendor_rc",
-    srcs: ["init.vendor.rc"],
-    dsts: ["init.cutf_cvm.rc"],
-    vendor: true,
-    relative_install_path: "init",
+prebuilt_defaults {
+    name: "cuttlefish_config_general_files_defaults",
     enabled: select(soong_config_variable("cuttlefish_config", "use_general_files"), {
         true: true,
         default: false,
@@ -212,13 +208,68 @@ prebuilt_etc {
 }
 
 prebuilt_etc {
+    name: "device_google_cuttlefish_shared_config_init_vendor_rc",
+    defaults: ["cuttlefish_config_general_files_defaults"],
+    srcs: ["init.vendor.rc"],
+    dsts: ["init.cutf_cvm.rc"],
+    vendor: true,
+    relative_install_path: "init",
+}
+
+prebuilt_etc {
     name: "device_google_cuttlefish_shared_config_init_product_rc",
+    defaults: ["cuttlefish_config_general_files_defaults"],
     srcs: ["init.product.rc"],
     dsts: ["init.rc"],
     product_specific: true,
     relative_install_path: "init",
-    enabled: select(soong_config_variable("cuttlefish_config", "use_general_files"), {
-        true: true,
-        default: false,
-    }),
+}
+
+prebuilt_etc {
+    name: "device_google_cuttlefish_shared_config_media_files",
+    defaults: ["cuttlefish_config_general_files_defaults"],
+    srcs: [
+        "media_codecs.xml",
+        "media_codecs_google_video.xml",
+        "media_codecs_performance.xml",
+        "media_profiles.xml",
+    ],
+    dsts: [
+        "media_codecs.xml",
+        "media_codecs_google_video.xml",
+        "media_codecs_performance.xml",
+        "media_profiles_V1_0.xml",
+    ],
+    vendor: true,
+}
+
+prebuilt_etc {
+    name: "device_google_cuttlefish_shared_config_media_profiles_vendor",
+    defaults: ["cuttlefish_config_general_files_defaults"],
+    srcs: [
+        "media_profiles.xml",
+    ],
+    dsts: [
+        "media_profiles_vendor.xml",
+    ],
+    vendor: true,
+}
+
+prebuilt_etc {
+    name: "device_google_cuttlefish_shared_config_seriallogging_rc",
+    defaults: ["cuttlefish_config_general_files_defaults"],
+    srcs: [
+        "seriallogging.rc",
+    ],
+    relative_install_path: "init",
+    vendor: true,
+}
+
+prebuilt_etc {
+    name: "device_google_cuttlefish_shared_config_ueventd_rc",
+    defaults: ["cuttlefish_config_general_files_defaults"],
+    srcs: [
+        "ueventd.rc",
+    ],
+    vendor: true,
 }
