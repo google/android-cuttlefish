@@ -47,7 +47,7 @@ jobs:
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         id: copy-rpm-packages
         run: |
-          ${{ INPUTS.ENTRY-POINT }}
+          sudo ${{ INPUTS.ENTRY-POINT }}
           CID='' && echo `docker ps --format '{{.ID}}'` >> $CID
           docker cp $CID:/root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
           docker cp $CID:/root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
@@ -80,5 +80,5 @@ jobs:
         if: ${{ contains(INPUTS.ENTRY-POINT, 'test') }}
         id: test-rpm-packages
         run: |
-          ${{ INPUTS.ENTRY-POINT }}
+          sudo ${{ INPUTS.ENTRY-POINT }}
           echo "result=ok" >> $GITHUB_OUTPUT
