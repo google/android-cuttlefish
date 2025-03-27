@@ -112,7 +112,7 @@ jobs:
       - name: Check for dockerenv file
         run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
 
-      - name: Check for dockerenv file
+      - name: Run build script
         run: /home/runner/buildscript.sh
 
       # https://github.com/actions/upload-artifact
