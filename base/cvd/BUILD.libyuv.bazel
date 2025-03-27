@@ -8,8 +8,12 @@ cc_library(
             "source/*sme*.cc",
         ],
     ),
-    hdrs = glob(["include/libyuv/*.h"]),
+    hdrs = glob([
+        "include/libyuv/*.h",
+        "include/libyuv.h",
+    ]),
     includes = ["include"],
+    visibility = ["//visibility:public"],
 )
 
 cc_test(
