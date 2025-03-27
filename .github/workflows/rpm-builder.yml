@@ -104,10 +104,6 @@ jobs:
         password: ${{ SECRETS.GITHUB_TOKEN }}
 
     steps:
-      - name: Run build script
-        run: |
-          whoami
-          ~/buildscript.sh
 
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Copy from container to file-system /tmp
