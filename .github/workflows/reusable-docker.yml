@@ -14,9 +14,15 @@ on:
         type: string
         default: '/root/buildscript.sh'
     outputs:
-      container: ${{ jobs.docker-run.outputs.container }}
-      build: ${{ jobs.docker-run.outputs.build }}
-      test: ${{ jobs.docker-run.outputs.test }}
+      container:
+        value: ${{ jobs.docker-run.outputs.container }}
+        description: "Container output"
+      build:
+        value: ${{ jobs.docker-run.outputs.build }}
+        description: "Build output"
+      test:
+        value: ${{ jobs.docker-run.outputs.test }}
+        description: "Test output"
 
 jobs:
   docker-run:
