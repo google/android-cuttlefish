@@ -117,6 +117,13 @@ jobs:
       - name: Run build script
         run: /home/runner/buildscript.sh
 
+      # docker container cp [OPTIONS] CONTAINER:SRC_PATH DEST_PATH|- docker cp [OPTIONS] SRC_PATH|- CONTAINER:DEST_PATH
+      # https://docs.docker.com/reference/cli/docker/container/cp/
+      - name: Copy to runner file-system
+        run: |
+          cd /home/runner/android-cuttlefish/tools/rpmbuild/RPMS
+          docker cp . /home/runner/outputs/
+
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
         id: retain-rpm
