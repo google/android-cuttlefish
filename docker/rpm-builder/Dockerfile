@@ -23,8 +23,8 @@ VOLUME [ "/home/$USERNAME" ]
 # Add entrypoint scripts.
 ADD ./docker/rpm-builder/buildscript.sh /home/$USERNAME/buildscript.sh
 ADD ./docker/rpm-builder/testscript.sh /home/$USERNAME/testscript.sh
-# ENTRYPOINT [ "/bin/bash", "-c", "/home/$USERNAME/testscript.sh" ]
-ENTRYPOINT [ "/bin/bash", "-c", "/home/$USERNAME/buildscript.sh" ]
+# ENTRYPOINT [ "/home/$USERNAME/testscript.sh" ]
+ENTRYPOINT [ "/home/$USERNAME/buildscript.sh" ]
 CMD [ "--rpm-build" ]
 
 # Install build and runtime dependencies.
