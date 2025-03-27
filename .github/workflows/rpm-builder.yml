@@ -3,9 +3,9 @@ name: RPM Builder
 on:
   push:
     enable_docker_cache:
-      required: true
+      required: false
       type: boolean
-      default: true
+      default: false
   workflow_call:
     inputs:
       enable_docker_cache:
@@ -111,18 +111,18 @@ jobs:
 
     steps:
 
-      - name: Check for dockerenv file
-        run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
+ #    - name: Check for dockerenv file
+ #      run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
 
       - name: Run build script
         run: /home/runner/buildscript.sh
 
       # docker container cp [OPTIONS] CONTAINER:SRC_PATH DEST_PATH|- docker cp [OPTIONS] SRC_PATH|- CONTAINER:DEST_PATH
       # https://docs.docker.com/reference/cli/docker/container/cp/
-      - name: Copy to runner file-system
+      - name: Copy from container to file-system /tmp
         run: |
-          cd /home/runner/android-cuttlefish/tools/rpmbuild/RPMS
-          docker cp . /home/runner/outputs/
+          docker cp CONTAINER:/home/runner/android-cuttlefish/tools/rpmbuild/RPMS/* /tmp
+          docker cp CONTAINER:/home/runner/android-cuttlefish/tools/rpmbuild/SRPMS/* /tmp
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
@@ -131,7 +131,7 @@ jobs:
         with:
           name: android-cuttlefish-rpm
           path: |
-            ./tools/rpmbuild/RPMS/*.rpm
+            /tmp/*.rpm
           retention-days: 14
 
       # https://github.com/actions/upload-artifact
@@ -141,5 +141,5 @@ jobs:
         with:
           name: android-cuttlefish-srpm
           path: |
-            ./tools/rpmbuild/SRPMS/*.srpm
+            /tmp/*.srpm
           retention-days: 14
