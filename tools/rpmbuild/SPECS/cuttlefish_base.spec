@@ -31,7 +31,8 @@ Cuttlefish Android Virtual Device that are used in all deployments.
 
 %build
 cd ../../../base/cvd
-bazel build cuttlefish:cvd --spawn_strategy=local
+# $HOME/go/bin/bazelisk build cuttlefish:cvd --spawn_strategy=local
+$HOME/go/bin/bazelisk build //cuttlefish/package:cvd --spawn_strategy=local
 
 
 %install
