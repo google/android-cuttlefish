@@ -40,7 +40,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
-        if: ${{ INPUTS.ENTRY_POINT == '/root/buildscript.sh' }}
+        if: ${{ endsWith(INPUTS.ENTRY_POINT, 'buildscript.sh') }}
         id: retain-rpm
         uses: 'actions/upload-artifact@v4'
         with:
@@ -51,7 +51,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.srpm)
-        if: ${{ INPUTS.ENTRY_POINT == '/root/buildscript.sh' }}
+        if: ${{ endsWith(INPUTS.ENTRY_POINT, 'buildscript.sh') }}
         id: retain-srpm
         uses: 'actions/upload-artifact@v4'
         with:
@@ -62,6 +62,6 @@ jobs:
 
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Copy from container to file-system /tmp
-        if: ${{ INPUTS.ENTRY_POINT == '/root/testscript.sh' }}
+        if: ${{ ! endsWith(INPUTS.ENTRY_POINT, 'buildscript.sh') }}
         run: |
           ${{ INPUTS.ENTRY_POINT }}
