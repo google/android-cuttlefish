@@ -1,7 +1,6 @@
 # Dockerfile based on Rocky Linux
 # https://hub.docker.com/_/rockylinux
 FROM rockylinux/rockylinux:9.5 AS builder
-SHELL ["/bin/bash", "--login", "-c"]
 ARG BAZEL_VERSION=7.6.0
 ARG USERNAME="runner"
 
@@ -30,12 +29,12 @@ USER $USERNAME
 
 # Install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc && \
-echo "export GOPATH=${HOME}/go" >> ~/.bashrc && echo "export PATH=${PATH}:${GOPATH}/bin" >> ~/.bashrc && \
-source ~/.bashrc && go install github.com/bazelbuild/bazelisk@latest
+echo "export GOPATH=${HOME}/go" >> ~/.bash_profile && echo "export PATH=${PATH}:${GOPATH}/bin" >> ~/.bash_profile && \
+source ~/.bash_profile && go install github.com/bazelbuild/bazelisk@latest
 # RUN $GOPATH/bin/bazelisk version
 
 # Install entrypoint scripts.
 USER root
-COPY ./docker/rpm-builder/buildscript.sh /home/$USERNAME/buildscript.sh
-COPY ./docker/rpm-builder/testscript.sh /home/$USERNAME/testscript.sh
+ADD ./docker/rpm-builder/buildscript.sh /home/$USERNAME/buildscript.sh
+ADD ./docker/rpm-builder/testscript.sh /home/$USERNAME/testscript.sh
 RUN chown $USERNAME:$USERNAME /home/$USERNAME/*.sh && chmod +x /home/$USERNAME/*.sh
