@@ -36,7 +36,7 @@ jobs:
         username: ${{ GITHUB.ACTOR }}
         password: ${{ SECRETS.TOKEN }}
       volumes:
-        - /home/runner
+        - /root
 
     outputs:
       build: ${{ steps.copy-rpm-packages.outputs.result }}
