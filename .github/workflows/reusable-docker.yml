@@ -54,7 +54,8 @@ jobs:
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         id: copy-rpm-packages
         run: |
-          CID=`cat /etc/hostname`
+          docker ps
+          CID=`docker ps --format '{{.ID}}`
           echo "CID: ${CID}"
           docker exec $CID ${{ INPUTS.ENTRY-POINT }}
           docker cp $CID:/root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
