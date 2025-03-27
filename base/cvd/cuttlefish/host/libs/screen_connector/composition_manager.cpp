@@ -29,7 +29,7 @@
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
-#include <libyuv.h>
+#include "libyuv.h"
 
 #include <drm/drm_fourcc.h>
 #include "host/libs/screen_connector/ring_buffer_manager.h"
@@ -70,7 +70,7 @@ CompositionManager::ParseOverlays(std::vector<std::string> overlay_items) {
        display_index++) {
     auto overlay_item = android::base::Trim(overlay_items[display_index]);
 
-    if (overlay_item == "" || overlay_item == "_") {
+    if (overlay_item.empty() || overlay_item == "_") {
       continue;
     }
 
@@ -158,7 +158,7 @@ Result<std::unique_ptr<CompositionManager>> CompositionManager::Create() {
   std::string group_uuid =
       fmt::format("{}", cvd_config->ForDefaultEnvironment().group_uuid());
 
-  CF_EXPECT(group_uuid.length() > 0, "Invalid group UUID");
+  CF_EXPECT(!group_uuid.empty(), "Invalid group UUID");
 
   std::unique_ptr<CompositionManager> mgr(
       new CompositionManager(instance_index + 1, group_uuid, domap));
