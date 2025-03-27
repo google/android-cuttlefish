@@ -15,9 +15,9 @@ org.opencontainers.image.version="latest" \
 org.opencontainers.image.licenses="MIT"
 
 # Volume, ports and user.
+RUN adduser $USERNAME
 USER $USERNAME
 VOLUME [ "/home/${USERNAME}" ]
-RUN adduser $USERNAME
 
 # Add entrypoint scripts.
 ADD ./docker/rpm-builder/buildscript.sh /home/$USERNAME/buildscript.sh
