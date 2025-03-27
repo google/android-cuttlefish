@@ -20,7 +20,7 @@ jobs:
     container:
       image: ${{ INPUTS.DOCKER_IMAGE }}
       # https://docs.github.com/en/actions/writing-workflows/choosing-where-your-workflow-runs/running-jobs-in-a-container#setting-container-resource-options
-      options: '--entrypoint ${{ INPUTS.ENTRY_POINT }}'
+      options: '--cpus 1 --entrypoint ${{ INPUTS.ENTRY_POINT }}'
       volumes:
         - /home/runner
       credentials:
