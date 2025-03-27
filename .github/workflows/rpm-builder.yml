@@ -93,59 +93,14 @@ jobs:
 
   build-rpm-specs:
     needs: build-docker-image
-    runs-on: ubuntu-latest
-
-    container:
-      image: 'docker://ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder:latest'
-      volumes:
-        - /home/runner
-      credentials:
-        username: ${{ GITHUB.ACTOR }}
-        password: ${{ SECRETS.GITHUB_TOKEN }}
-
-    steps:
-
-      # https://docs.docker.com/reference/cli/docker/container/cp/
-      - name: Copy from container to file-system /tmp
-        run: |
-          docker cp CONTAINER:/home/runner/android-cuttlefish/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
-          docker cp CONTAINER:/home/runner/android-cuttlefish/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
-
-      # https://github.com/actions/upload-artifact
-      - name: Retain Artifacts (*.rpm)
-        id: retain-rpm
-        uses: 'actions/upload-artifact@v4'
-        with:
-          name: android-cuttlefish-rpm
-          path: |
-            ${{ GITHUB.WORKSPACE }}/*.rpm
-          retention-days: 14
-
-      # https://github.com/actions/upload-artifact
-      - name: Retain Artifacts (*.srpm)
-        id: retain-srpm
-        uses: 'actions/upload-artifact@v4'
-        with:
-          name: android-cuttlefish-srpm
-          path: |
-            ${{ GITHUB.WORKSPACE }}/*.srpm
-          retention-days: 14
+    uses: ./.github/workflows/reusable-docker.yml
+    with:
+      docker-image: '${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}:latest'
+      entry-point: '/root/buildscript.sh'
 
   test-rpm-packages:
     needs: build-rpm-specs
-    runs-on: ubuntu-latest
-
-    container:
-      image: 'docker://ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder:latest'
-      volumes:
-        - /home/runner
-      ports: [80, 8443]
-      credentials:
-        username: ${{ GITHUB.ACTOR }}
-        password: ${{ SECRETS.GITHUB_TOKEN }}
-
-    steps:
-      - name: Run test script
-        run: |
-          whoami
-          ~/testscript.sh
+    uses: ./.github/workflows/reusable-docker.yml
+    with:
+      docker-image: '${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}:latest'
+      entry-point: '/root/testscript.sh'
