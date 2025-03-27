@@ -13,6 +13,16 @@ org.opencontainers.image.vendor="Google" \
 org.opencontainers.image.version="latest" \
 org.opencontainers.image.licenses="MIT"
 
+# Volume, ports and user.
+EXPOSE 80/tcp 8443/tcp
+VOLUME [ "/home/$USERNAME" ]
+RUN adduser $USERNAME
+USER $USERNAME
+
+# Add entrypoint scripts.
+ADD ./docker/rpm-builder/buildscript.sh /home/$USERNAME/buildscript.sh
+ADD ./docker/rpm-builder/testscript.sh /home/$USERNAME/testscript.sh
+
 # Build and runtime dependencies.
 # RUN dnf -y swap curl-minimal curl-full
 # RUN dnf -y swap coreutils-single coreutils
@@ -21,11 +31,7 @@ org.opencontainers.image.licenses="MIT"
 RUN dnf -y upgrade && dnf -y install dnf-plugins-core sudo rpm-build git nginx golang-bin curl-devel qemu-kvm systemd-journal-remote
 RUN dnf -y install protobuf-devel protobuf-compiler --enablerepo crb && dnf list installed && dnf clean all
 
-# Volume, ports and user.
-EXPOSE 80/tcp 8443/tcp
-VOLUME /home/$USERNAME
-RUN adduser $USERNAME
-USER $USERNAME
+
 
 # Install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc && \
@@ -33,7 +39,7 @@ echo "export GOPATH=${HOME}/go" >> ~/.bash_profile && echo "export PATH=${PATH}:
 source ~/.bash_profile && go install github.com/bazelbuild/bazelisk@latest
 # RUN $GOPATH/bin/bazelisk version
 
-# Install entrypoint scripts.
+# Add entrypoint scripts.
 USER root
 ADD ./docker/rpm-builder/buildscript.sh /home/$USERNAME/buildscript.sh
 ADD ./docker/rpm-builder/testscript.sh /home/$USERNAME/testscript.sh
