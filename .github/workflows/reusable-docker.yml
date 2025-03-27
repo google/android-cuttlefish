@@ -2,6 +2,9 @@ name: Docker Container
 
 on:
   workflow_call:
+    secrets:
+      token:
+        required: true
     inputs:
       docker-image:
         required: true
@@ -10,42 +13,37 @@ on:
         required: false
         type: string
         default: '/root/buildscript.sh'
-    secrets:
-      token:
-        required: true
     outputs:
-      build:
-        description: "The first output string"
-        value: ${{ jobs.docker-run.outputs.build }}
+      container: ${{ jobs.docker-run.outputs.container }}
+      build: ${{ jobs.docker-run.outputs.build }}
+      test: ${{ jobs.docker-run.outputs.test }}
 
 jobs:
   docker-run:
     runs-on: ubuntu-latest
     container:
       image: ${{ INPUTS.DOCKER_IMAGE }}
-      # https://docs.github.com/en/actions/writing-workflows/choosing-where-your-workflow-runs/running-jobs-in-a-container#setting-container-resource-options
       options: '--cpus 1'
-      volumes:
-        - /home/runner
       credentials:
         username: ${{ GITHUB.ACTOR }}
         password: ${{ SECRETS.TOKEN }}
-
+      volumes:
+        - /home/runner
     outputs:
+      container: ${{ steps.container-id.outputs.result }}
       build: ${{ steps.copy-rpm-packages.outputs.result }}
       test: ${{ steps.test-rpm-packages.outputs.result }}
-
     steps:
-      - id: step1
-        run: echo "firstword=hello" >> $GITHUB_OUTPUT
+      - name: Container ID
+        id: container-id
+        run: echo "result=`docker ps --format '{{.ID}}'`" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Copy from container to file-system /tmp
-        id: copy-rpm-packages
         if: ${{ contains(INPUTS.ENTRY_POINT, 'build') }}
+        id: copy-rpm-packages
         run: |
           ${{ INPUTS.ENTRY_POINT }}
-          export CID=`docker ps --format '{{.ID}}'`
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
           echo "result=ok" >> $GITHUB_OUTPUT
@@ -53,8 +51,8 @@ jobs:
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
         if: ${{ contains(INPUTS.ENTRY_POINT, 'build') }}
-        id: retain-rpm
         uses: 'actions/upload-artifact@v4'
+        id: retain-rpm
         with:
           name: android-cuttlefish-rpm
           path: |
@@ -64,8 +62,8 @@ jobs:
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.srpm)
         if: ${{ contains(INPUTS.ENTRY_POINT, 'build') }}
-        id: retain-srpm
         uses: 'actions/upload-artifact@v4'
+        id: retain-srpm
         with:
           name: android-cuttlefish-srpm
           path: |
@@ -74,8 +72,8 @@ jobs:
 
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Copy from container to file-system /tmp
-        id: test-rpm-packages
         if: ${{ contains(INPUTS.ENTRY_POINT, 'test') }}
+        id: test-rpm-packages
         run: |
           ${{ INPUTS.ENTRY_POINT }}
           echo "result=ok" >> $GITHUB_OUTPUT
