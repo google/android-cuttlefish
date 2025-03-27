@@ -10,9 +10,6 @@ on:
         required: false
         type: string
         default: '/root/buildscript.sh'
-    secrets:
-      token:
-        required: true
 
 jobs:
   docker-run:
@@ -23,7 +20,7 @@ jobs:
         - /home/runner
       credentials:
         username: ${{ GITHUB.ACTOR }}
-        password: ${{ SECRETS.TOKEN }}
+        password: ${{ SECRETS.GITHUB_TOKEN }}
 
     steps:
 
