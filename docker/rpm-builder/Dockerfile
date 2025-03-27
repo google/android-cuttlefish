@@ -26,7 +26,7 @@ RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.n
 
 # Provide build dependencies.
 # RUN dnf -y install dnf-plugins-core
-RUN dnf -y install git rpm-build golang-bin ncurses-compat-libs curl-devel
+RUN dnf -y install git sudo rpm-build golang-bin ncurses-compat-libs curl-devel
 RUN dnf -y install protobuf-devel protobuf-compiler --enablerepo crb
 
 # Provide integration and orchestration dependencies.
