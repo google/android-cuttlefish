@@ -3,8 +3,16 @@
 ARG ROCKY_LINUX_VERSION=9.5
 FROM rockylinux/rockylinux:$ROCKY_LINUX_VERSION AS builder
 ARG BAZEL_VERSION=7.6.0
-EXPOSE 80/tcp 8443/tcp
 VOLUME [ "/root" ]
+
+# Expose Operator Port (HTTP:1080, HTTPS:1443)
+EXPOSE 1080 1443
+# Expose HO(Host Orchestrator) Port (HTTP:2080, HTTPS:2443)
+EXPOSE 2080 2443
+# Expose WebRTC
+EXPOSE 8443/tcp 15550-15560
+# Expose ADB
+EXPOSE 6520-6620
 
 LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler" \
 org.opencontainers.image.source="https://github.com/google/android-cuttlefish/blob/main/docker/rpm-builder/Dockerfile" \
