@@ -18,7 +18,7 @@ org.opencontainers.image.licenses="MIT"
 EXPOSE 80/tcp 8443/tcp
 RUN IF [[ $USERNAME !eq "root" ]]; THEN adduser $USERNAME; ELSE echo "" > /dev/null; FI
 USER $USERNAME
-VOLUME [ "$HOME" ]
+VOLUME [ "/home/$USERNAME" ]
 
 ENTRYPOINT ["python", "/app/my_script.py"]
 CMD ["--default-arg"]
