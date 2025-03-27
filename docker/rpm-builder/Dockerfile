@@ -32,7 +32,8 @@ USER $USERNAME
 # Install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc && \
 echo "export GOPATH=${HOME}/go" >> ~/.bashrc && echo "export PATH=${PATH}:${GOPATH}/bin" >> ~/.bashrc && \
-source ~/.bashrc && go install github.com/bazelbuild/bazelisk@latest && $GOPATH/bin/bazelisk version
+source ~/.bashrc && go install github.com/bazelbuild/bazelisk@latest
+# RUN $GOPATH/bin/bazelisk version
 
 # Install entrypoint scripts.
 USER root
