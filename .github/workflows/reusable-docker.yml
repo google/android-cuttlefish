@@ -54,6 +54,9 @@ jobs:
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         id: build-rpm-packages
         run: |
+          CID=$(basename $(cat /proc/1/cpuset))
+          echo "Container ID: $CID"
+          ls -la
           ${{ INPUTS.ENTRY-POINT }}
           cp /root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
           cp /root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
