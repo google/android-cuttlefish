@@ -16,7 +16,7 @@ org.opencontainers.image.licenses="MIT"
 
 # Volume, ports and user.
 EXPOSE 80/tcp 8443/tcp
-RUN IF [[ $USERNAME !eq "root" ]]; THEN adduser $USERNAME; ELSE echo "" > /dev/null; FI
+RUN IF [ "$USERNAME" = "root" ]; THEN echo "" > /dev/null; ELSE adduser $USERNAME; FI
 USER $USERNAME
 VOLUME [ "/home/$USERNAME" ]
 
