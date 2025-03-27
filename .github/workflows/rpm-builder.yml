@@ -97,14 +97,10 @@ jobs:
     with:
       docker-image: 'ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder:latest'
       entry-point: '/root/buildscript.sh'
-    secrets:
-      token: ${{ SECRETS.GITHUB_TOKEN }}
-
+      
   test-rpm-packages:
     needs: build-rpm-specs
     uses: ./.github/workflows/reusable-docker.yml
     with:
       docker-image: 'ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder:latest'
       entry-point: '/root/testscript.sh'
-    secrets:
-      token: ${{ SECRETS.GITHUB_TOKEN }}
