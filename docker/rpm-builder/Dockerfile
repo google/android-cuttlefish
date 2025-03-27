@@ -20,14 +20,14 @@ RUN IF [[ $USERNAME !eq "root" ]]; THEN adduser $USERNAME; ELSE echo "" > /dev/n
 USER $USERNAME
 VOLUME [ "/home/$USERNAME" ]
 
-ENTRYPOINT ["python", "/app/my_script.py"]
-CMD ["--default-arg"]
-
 # Add entrypoint scripts.
 ADD ./docker/rpm-builder/buildscript.sh /home/$USERNAME/buildscript.sh
 ADD ./docker/rpm-builder/testscript.sh /home/$USERNAME/testscript.sh
+# ENTRYPOINT [ "/bin/bash", "-c", "/home/$USERNAME/testscript.sh" ]
+ENTRYPOINT [ "/bin/bash", "-c", "/home/$USERNAME/buildscript.sh" ]
+CMD [ "--rpm-build" ]
 
-# Build and runtime dependencies.
+# Install build and runtime dependencies.
 # RUN dnf -y swap curl-minimal curl-full
 # RUN dnf -y swap coreutils-single coreutils
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
