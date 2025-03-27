@@ -32,7 +32,7 @@ jobs:
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Copy from container to file-system /tmp
         run: |
-          CID=$(docker ps --format '{{.Names}}')
+          CID=$(docker ps --format '{{.ID}}')
           docker cp CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
           docker cp CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
 
