@@ -19,9 +19,8 @@ org.opencontainers.image.licenses="MIT"
 # RUN dnf -y swap coreutils-single coreutils
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
 # RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
-RUN dnf -y upgrade && dnf -y install sudo rpm-build git nginx golang-bin curl-devel qemu-kvm systemd-journal-remote
-RUN dnf -y install protobuf-devel protobuf-compiler --enablerepo crb
-RUN dnf -y install 'dnf-command(builddep)' && dnf list installed && dnf clean all
+RUN dnf -y upgrade && dnf -y install dnf-plugins-core sudo rpm-build git nginx golang-bin curl-devel qemu-kvm systemd-journal-remote
+RUN dnf -y install protobuf-devel protobuf-compiler --enablerepo crb && dnf list installed && dnf clean all
 
 # Volume, ports and user.
 EXPOSE 80/tcp 8443/tcp
