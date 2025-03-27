@@ -18,12 +18,9 @@
 
 #include <cstdint>
 #include <functional>
-#include <memory>
 #include <mutex>
-#include <optional>
 #include <string>
 #include <string_view>
-#include <thread>
 #include <type_traits>
 #include <unordered_set>
 
@@ -31,7 +28,6 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/confui/confui.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/size_utils.h"
 #include "host/libs/config/config_constants.h"
