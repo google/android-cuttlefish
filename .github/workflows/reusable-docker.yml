@@ -52,21 +52,18 @@ jobs:
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Run the build script and copy packages to workspace
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
-        id: copy-rpm-packages
+        id: build-rpm-packages
         run: |
-          docker ps
-          CID=`docker ps --format '{{.ID}}`
-          echo "CID: ${CID}"
-          docker exec $CID ${{ INPUTS.ENTRY-POINT }}
-          docker cp $CID:/root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
-          docker cp $CID:/root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
+          ${{ INPUTS.ENTRY-POINT }}
+          cp /root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
+          cp /root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         uses: 'actions/upload-artifact@v4'
-        id: retain-rpm
+        id: retain-rpm-packages
         with:
           name: ${{ GITHUB.REPOSITORY }}-rpm
           path: |
@@ -77,7 +74,7 @@ jobs:
       - name: Retain Artifacts (*.srpm)
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         uses: 'actions/upload-artifact@v4'
-        id: retain-srpm
+        id: retain-srpm-packages
         with:
           name: ${{ ENV.REPO_NAME }}-srpm
           path: |
@@ -89,6 +86,5 @@ jobs:
         if: ${{ contains(INPUTS.ENTRY-POINT, 'test') }}
         id: test-rpm-packages
         run: |
-          CID=`cat /etc/hostname`
-          docker exec $CID ${{ INPUTS.ENTRY-POINT }}
+          ${{ INPUTS.ENTRY-POINT }}
           echo "result=ok" >> $GITHUB_OUTPUT
