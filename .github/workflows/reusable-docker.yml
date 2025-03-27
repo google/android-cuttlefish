@@ -15,7 +15,7 @@ jobs:
   docker-run:
     runs-on: ubuntu-latest
     container:
-      image: 'docker://ghcr.io/${{ GITHUB.ACTOR }}/${{ INPUTS.DOCKER_IMAGE }}:latest'
+      image: ${{ INPUTS.DOCKER_IMAGE }}
       volumes:
         - /home/runner
       credentials:

@@ -95,12 +95,12 @@ jobs:
     needs: build-docker-image
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      docker-image: 'rpm-builder'
+      docker-image: 'docker://ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder:latest'
       entry-point: '/root/buildscript.sh'
 
   test-rpm-packages:
     needs: build-rpm-specs
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      docker-image: 'rpm-builder'
+      docker-image: 'docker://ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder:latest'
       entry-point: '/root/testscript.sh'
