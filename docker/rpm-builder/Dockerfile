@@ -1,6 +1,7 @@
 # Dockerfile based on Rocky Linux
 # https://hub.docker.com/_/rockylinux
 FROM rockylinux/rockylinux:9.5 AS builder
+SHELL ["/bin/bash", "--login", "-c"]
 ARG BAZEL_VERSION=7.6.0
 ARG USERNAME="runner"
 
