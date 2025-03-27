@@ -24,6 +24,9 @@ on:
         value: ${{ jobs.docker-run.outputs.test }}
         description: "Test output"
 
+env:
+  REPO_NAME: ${{ github.event.repository.name }}
+
 jobs:
   docker-run:
     runs-on: ubuntu-latest
@@ -49,8 +52,8 @@ jobs:
         run: |
           ${{ INPUTS.ENTRY_POINT }}
           CID='' && echo `docker ps --format '{{.ID}}'` >> $CID
-          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
-          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
+          docker cp $CID:/root/${{ ENV.REPO_NAME }}/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
+          docker cp $CID:/root/${{ ENV.REPO_NAME }}/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://github.com/actions/upload-artifact
@@ -59,7 +62,7 @@ jobs:
         uses: 'actions/upload-artifact@v4'
         id: retain-rpm
         with:
-          name: android-cuttlefish-rpm
+          name: ${{ ENV.REPO_NAME }}-rpm
           path: |
             ${{ GITHUB.WORKSPACE }}/*.rpm
           retention-days: 14
@@ -70,7 +73,7 @@ jobs:
         uses: 'actions/upload-artifact@v4'
         id: retain-srpm
         with:
-          name: android-cuttlefish-srpm
+          name: ${{ ENV.REPO_NAME }}-srpm
           path: |
             ${{ GITHUB.WORKSPACE }}/*.srpm
           retention-days: 14
