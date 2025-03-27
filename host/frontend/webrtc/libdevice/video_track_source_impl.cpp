@@ -26,7 +26,7 @@ namespace {
 class VideoFrameWrapper : public webrtc::I420BufferInterface {
  public:
   VideoFrameWrapper(
-      std::shared_ptr<::cuttlefish::webrtc_streaming::VideoFrameBuffer>
+      std::shared_ptr<::cuttlefish::VideoFrameBuffer>
           frame_buffer)
       : frame_buffer_(frame_buffer) {}
   ~VideoFrameWrapper() override = default;
@@ -45,8 +45,7 @@ class VideoFrameWrapper : public webrtc::I420BufferInterface {
   const uint8_t *DataV() const override { return frame_buffer_->DataV(); }
 
  private:
-  std::shared_ptr<::cuttlefish::webrtc_streaming::VideoFrameBuffer>
-      frame_buffer_;
+  std::shared_ptr<::cuttlefish::VideoFrameBuffer> frame_buffer_;
 };
 
 }  // namespace
