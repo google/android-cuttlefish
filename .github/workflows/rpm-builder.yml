@@ -9,17 +9,17 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        platform: [ 'linux/amd64' ]
-        target: [ 'rpm-builder', 'rpm-testing', 'rhel-integration', 'rhel-orchestration' ]
+        platform: [ linux/amd64 ]
+        target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
         include:
-          - target: 'rpm-builder'
-            target_stage: 'builder'
-          - target: 'rpm-testing'
-            target_stage: 'testing'
-          - target: 'rhel-integration'
-            target_stage: 'integration'
-          - target: 'rhel-orchestration'
-            target_stage: 'orchestration'
+          - target: rpm-builder
+            stage: builder
+          - target: rpm-testing
+            stage: testing
+          - target: rhel-integration
+            stage: integration
+          - target: rhel-orchestration
+            stage: orchestration
 
     permissions:
       contents: read
@@ -28,13 +28,8 @@ jobs:
       id-token: write
 
     steps:
-      - name: Run matrix for ${{ MATRIX.TARGET }}-${{ MATRIX.PLATFORM }}
-        run: echo "" > /dev/null
-
-      # https://github.com/actions/checkout
       - uses: 'actions/checkout@v4'
-
-      # https://github.com/docker/login-action
+      - uses: 'docker/setup-buildx-action@v3'
       - uses: 'docker/login-action@v3'
         id: container-registry
         with:
@@ -47,10 +42,11 @@ jobs:
         uses: 'docker/metadata-action@v5'
         id: metadata
         with:
-          images: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
-          tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
+          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          flavor: latest=true
 
-      # https://github.com/marketplace/actions/build-and-push-docker-images
+        # https://github.com/marketplace/actions/build-and-push-docker-images
       - name: Build and push Docker image
         uses: 'docker/build-push-action@v6'
         id: build
@@ -60,6 +56,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           platforms: ${{ MATRIX.PLATFORM }}
           target: ${{ MATRIX.TARGET_STAGE }}
+          builder: ${{ steps.buildx.outputs.name }}
           labels: ${{ steps.metadata.outputs.labels }}
           tags: ${{ steps.metadata.outputs.tags }}
 
