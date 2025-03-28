@@ -5,10 +5,10 @@ FROM rockylinux/rockylinux:$ROCKY_LINUX_VERSION AS builder
 ARG BAZEL_VERSION=7.6.0
 
 LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler" \
-org.opencontainers.image.source="https://github.com/google/android-cuttlefish/blob/main/docker/rpm-builder/Dockerfile" \
-org.opencontainers.image.vendor="Rocky Enterprise Software Foundation" \
 org.opencontainers.image.title="RPM Builder" \
+org.opencontainers.image.source="https://github.com/google/android-cuttlefish/blob/main/docker/rpm-builder/Dockerfile" \
 org.opencontainers.image.description="RPM package builder image based on Rocky Linux" \
+org.opencontainers.image.vendor="Rocky Enterprise Software Foundation" \
 org.opencontainers.image.authors="Martin Zeitler" \
 org.opencontainers.image.version="latest"
 
