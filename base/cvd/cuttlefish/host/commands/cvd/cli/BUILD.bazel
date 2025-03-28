@@ -102,6 +102,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:lint",
         "//cuttlefish/host/commands/cvd/cli/commands:login",
         "//cuttlefish/host/commands/cvd/cli/commands:noop",
+        "//cuttlefish/host/commands/cvd/cli/commands:power_btn",
         "//cuttlefish/host/commands/cvd/cli/parser",
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
         "//cuttlefish/host/commands/cvd/cli:types",

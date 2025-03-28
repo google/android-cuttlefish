@@ -322,11 +322,31 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "power_btn",
+    srcs = ["power_btn.cpp"],
+    hdrs = ["power_btn.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "power_btn_clang_tidy",
+    srcs = [":power_btn"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 # Leaf commands: commands that don't execute other commands
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "power_btn.cpp",
         "powerwash.cpp",
         "remove.cpp",
         "reset.cpp",
@@ -340,7 +360,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "power_btn.h",
         "powerwash.h",
         "remove.h",
         "reset.h",
