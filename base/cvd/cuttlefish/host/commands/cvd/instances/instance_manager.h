@@ -23,14 +23,14 @@
 #include <utility>
 #include <vector>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_record.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/cli/selector/creation_analyzer.h"
-#include "host/commands/cvd/instances/instance_database.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/commands/cvd/instances/instance_record.h"
-#include "host/commands/cvd/instances/lock/instance_lock.h"
 
 namespace cuttlefish {
 

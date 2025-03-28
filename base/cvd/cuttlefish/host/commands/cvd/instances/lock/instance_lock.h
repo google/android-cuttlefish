@@ -18,7 +18,7 @@
 #include <set>
 #include <string>
 
-#include "host/commands/cvd/instances/lock/lock_file.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 
 namespace cuttlefish {
 

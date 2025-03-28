@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/run_cvd_proc_collector.h"
+#include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
 
 #include <cctype>
 #include <unordered_set>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/proc_file_utils.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/libs/config/config_constants.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/proc_file_utils.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace {

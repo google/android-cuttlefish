@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/cli/parser/instance/cf_boot_configs.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_boot_configs.h"
 
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/base64.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/base64.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/commands/cvd/cli/parser/cf_configs_common.h"
 
 namespace cuttlefish {
 

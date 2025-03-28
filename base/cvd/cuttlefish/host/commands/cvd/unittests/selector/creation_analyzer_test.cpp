@@ -16,13 +16,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "host/commands/cvd/unittests/selector/creation_analyzer_helper.h"
-
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/users.h"
-#include "host/commands/cvd/instances/instance_database_utils.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
-#include "host/commands/cvd/cli/types.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
+#include "cuttlefish/host/commands/cvd/unittests/selector/creation_analyzer_helper.h"
 
 namespace cuttlefish {
 namespace selector {

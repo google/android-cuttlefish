@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/cli/commands/login.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/login.h"
 
 #include <unistd.h>
 
@@ -24,12 +24,12 @@
 
 #include <android-base/strings.h>
 
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/flag_parser.h"
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/libs/web/http_client/curl_global_init.h"
-#include "host/libs/web/http_client/http_client.h"
-#include "host/libs/web/oauth2_consent.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/oauth2_consent.h"
 
 namespace cuttlefish {
 namespace {

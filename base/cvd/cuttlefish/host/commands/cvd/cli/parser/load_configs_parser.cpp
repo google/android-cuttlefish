@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/parser/load_configs_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
 
 #include <unistd.h>
 
@@ -30,17 +30,17 @@
 #include <fmt/format.h>
 #include "json/json.h"
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/fetch/fetch_cvd.h"
-#include "host/commands/cvd/cli/parser/cf_configs_common.h"
-#include "host/commands/cvd/cli/parser/cf_flags_validator.h"
-#include "host/commands/cvd/cli/parser/fetch_config_parser.h"
-#include "host/commands/cvd/cli/parser/launch_cvd_parser.h"
-#include "host/commands/cvd/cli/parser/selector_parser.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/cf_flags_validator.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/fetch_config_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/launch_cvd_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/selector_parser.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 

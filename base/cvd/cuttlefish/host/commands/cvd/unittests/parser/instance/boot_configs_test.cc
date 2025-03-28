@@ -15,8 +15,8 @@
  */
 
 #include <gtest/gtest.h>
-#include "host/commands/cvd/cli/parser/launch_cvd_parser.h"
-#include "host/commands/cvd/unittests/parser/test_common.h"
+
+#include "cuttlefish/host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
 

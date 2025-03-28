@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/status_fetcher.h"
+#include "cuttlefish/host/commands/cvd/instances/status_fetcher.h"
 
 #include <cctype>
 #include <string>
@@ -25,13 +25,12 @@
 #include <fmt/core.h>
 #include <json/json.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
+#include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/cli/utils.h"
-#include "host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace {

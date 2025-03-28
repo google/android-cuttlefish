@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/fetch.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/fetch.h"
 
 #include <unistd.h>
 
@@ -25,16 +25,15 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "common/libs/utils/tee_logging.h"
-#include "host/commands/cvd/cache/cache.h"
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/fetch/fetch_cvd.h"
-#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
-#include "host/commands/cvd/utils/common.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/cvd/cache/cache.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 

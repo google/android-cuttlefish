@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_connectivity_configs.h"
 
 #include <string>
 #include <vector>
 
-#include "host/commands/cvd/cli/parser/cf_configs_common.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 
 namespace cuttlefish {

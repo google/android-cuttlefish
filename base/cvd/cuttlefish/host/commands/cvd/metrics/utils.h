@@ -18,7 +18,8 @@
 #include <string.h>
 
 #include <clientanalytics.pb.h>
-#include "host/commands/metrics/metrics_defs.h"
+
+#include "cuttlefish/host/commands/metrics/metrics_defs.h"
 
 namespace metrics {
 enum ClearcutServer : int {

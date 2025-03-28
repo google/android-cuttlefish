@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/instance_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 
 #include <fstream>
 
 #include <android-base/logging.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/cli/utils.h"
-#include "host/commands/cvd/instances/status_fetcher.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/libs/command_util/runner/defs.h"
-#include "host/libs/command_util/util.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
+#include "cuttlefish/host/commands/cvd/cli/utils.h"
+#include "cuttlefish/host/commands/cvd/instances/status_fetcher.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/command_util/runner/defs.h"
+#include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 

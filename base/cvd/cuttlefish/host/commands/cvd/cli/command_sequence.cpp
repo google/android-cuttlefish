@@ -13,16 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/cli/command_sequence.h"
+#include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 
 #include <memory>
 
 #include <android-base/strings.h>
 
-#include "common/libs/utils/environment.h"
-#include "host/commands/cvd/cli/request_context.h"
-#include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/cli/types.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/request_context.h"
 
 namespace cuttlefish {
 namespace {

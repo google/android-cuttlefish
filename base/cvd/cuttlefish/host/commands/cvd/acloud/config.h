@@ -18,7 +18,7 @@
 
 #include "cuttlefish/host/commands/cvd/acloud/user_config.pb.h"
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

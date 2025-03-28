@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/cli/parser/instance/cf_vm_configs.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_vm_configs.h"
 
 #include <cstdint>
 #include <string>
@@ -23,13 +23,13 @@
 #include <google/protobuf/util/json_util.h>
 #include "json/json.h"
 
-#include "common/libs/utils/flags_validator.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/commands/cvd/cli/parser/cf_configs_common.h"
+#include "cuttlefish/common/libs/utils/flags_validator.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 // for a function in a flags_defaults.h preprocessor constant
-#include "host/libs/config/cuttlefish_config.h" 
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 #define UI_DEFAULTS_MEMORY_MB 2048
 

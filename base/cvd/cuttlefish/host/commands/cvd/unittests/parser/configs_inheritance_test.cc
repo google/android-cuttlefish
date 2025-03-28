@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-
 #include <android-base/file.h>
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/cli/parser/cf_configs_common.h"
-#include "host/commands/cvd/unittests/parser/test_common.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
+#include "cuttlefish/host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
 

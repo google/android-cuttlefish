@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/host_tool_target.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 
 #include <sys/stat.h>
 
@@ -24,11 +24,11 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/utils/flags_collector.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/commands/cvd/utils/flags_collector.h"
 
 namespace cuttlefish {
 namespace {

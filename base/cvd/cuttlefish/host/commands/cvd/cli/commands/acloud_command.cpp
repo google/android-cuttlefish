@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/acloud_command.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/acloud_command.h"
 
 #include <thread>
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/acloud/converter.h"
-#include "host/commands/cvd/acloud/create_converter_parser.h"
-#include "host/commands/cvd/cli/command_sequence.h"
-#include "host/commands/cvd/cli/commands/acloud_common.h"
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/types.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/cvd/acloud/converter.h"
+#include "cuttlefish/host/commands/cvd/acloud/create_converter_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/acloud_common.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 namespace {

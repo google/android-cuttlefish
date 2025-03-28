@@ -20,8 +20,8 @@
 #include <set>
 #include <string>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

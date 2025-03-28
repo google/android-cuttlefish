@@ -18,9 +18,9 @@
 
 #include <gtest/gtest.h>
 
-#include "common/libs/utils/contains.h"
-#include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/unittests/server/cmd_runner.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/unittests/server/cmd_runner.h"
 
 namespace cuttlefish {
 namespace {

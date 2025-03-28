@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/acloud/converter.h"
+#include "cuttlefish/host/commands/cvd/acloud/converter.h"
 
 #include <sys/stat.h>
 
@@ -27,21 +27,20 @@
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/acloud/config.h"
-#include "host/commands/cvd/acloud/create_converter_parser.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/instances/lock/lock_file.h"
-#include "host/commands/cvd/instances/instance_database_utils.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
-#include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/cli/utils.h"
-#include "host/libs/config/config_constants.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/cvd/acloud/config.h"
+#include "cuttlefish/host/commands/cvd/acloud/create_converter_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace {

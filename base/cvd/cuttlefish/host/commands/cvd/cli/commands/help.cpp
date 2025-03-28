@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/help.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/help.h"
 
 #include <fcntl.h>
 
@@ -26,10 +26,9 @@
 
 #include <android-base/strings.h>
 
-#include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/cli/request_context.h"
-#include "host/commands/cvd/cli/types.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/request_context.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 namespace {

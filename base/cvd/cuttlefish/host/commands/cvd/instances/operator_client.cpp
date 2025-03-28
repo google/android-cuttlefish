@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/operator_client.h"
+#include "cuttlefish/host/commands/cvd/instances/operator_client.h"
 
 #include <sys/socket.h>
 
@@ -26,12 +26,12 @@
 #include <fmt/format.h>
 #include <json/json.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/users.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 
 namespace cuttlefish {
 

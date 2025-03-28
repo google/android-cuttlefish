@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/data_viewer.h"
+#include "cuttlefish/host/commands/cvd/instances/data_viewer.h"
 
-#include "common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
 
 namespace cuttlefish {
 

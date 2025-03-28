@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cache/cache.h"
+#include "cuttlefish/host/commands/cvd/cache/cache.h"
 
 #include <algorithm>
 #include <chrono>
@@ -27,8 +27,8 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

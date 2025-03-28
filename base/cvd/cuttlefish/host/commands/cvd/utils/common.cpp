@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 #include <mutex>
 #include <ostream>
@@ -23,9 +23,9 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 
