@@ -84,17 +84,17 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        platform: [ 'linux/amd64' ]
-        target: [ 'rpm-builder', 'rpm-testing', 'rhel-integration', 'rhel-orchestration' ]
+        platform: [ linux/amd64 ]
+        target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
         include:
-          - target: 'rpm-builder'
-            stage: 'builder'
-          - target: 'rpm-testing'
-            stage: 'testing'
-          - target: 'rhel-integration'
-            stage: 'integration'
-          - target: 'rhel-orchestration'
-            stage: 'orchestration'
+          - target: rpm-builder
+            stage: builder
+          - target: rpm-testing
+            stage: testing
+          - target: rhel-integration
+            stage: integration
+          - target: rhel-orchestration
+            stage: orchestration
     uses: ./.github/workflows/reusable-docker.yml
     with:
       docker-image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
