@@ -41,14 +41,14 @@ RUN dnf -y install qemu-kvm nginx systemd-journal-remote
 # RUN dnf list installed
 RUN dnf clean all
 
-# Add entrypoint scripts.
-# VOLUME "/home/runner"
-ENTRYPOINT [ "/bin/bash" ]
+# VOLUME "/root"
+# ENTRYPOINT [ "/bin/bash" ]
 # RUN groupadd docker && adduser runner && usermod -a -G docker runner
 # USER runner
+
+# Add entrypoint scripts.
 COPY ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
 COPY ./docker/rpm-builder/testscript.sh /root/testscript.sh
-RUN chmod +x /root/*.sh
 
 # Modify file `~/.bash_profile` and install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc && \
