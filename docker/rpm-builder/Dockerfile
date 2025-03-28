@@ -45,10 +45,8 @@ RUN dnf clean all
 VOLUME "/home/runner"
 RUN adduser runner
 USER runner
-ADD ./docker/rpm-builder/buildscript.sh ~/buildscript.sh
-ADD ./docker/rpm-builder/testscript.sh ~/testscript.sh
-RUN chmod +x ~/*.sh
-
+ADD ./docker/rpm-builder/buildscript.sh /home/runner/buildscript.sh
+ADD ./docker/rpm-builder/testscript.sh ~/home/runner/testscript.sh
 # ENTRYPOINT [ "/home/runner/buildscript.sh", "/home/runner/testscript.sh" ]
 # ENTRYPOINT [ "/home/runner/buildscript.sh" ]
 # ENTRYPOINT [ "/home/runner/testscript.sh" ]
@@ -58,3 +56,6 @@ RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc && \
 echo "export GOPATH=${HOME}/go" >> ~/.bash_profile && echo "export PATH=${PATH}:${GOPATH}/bin" >> ~/.bash_profile && \
 source ~/.bash_profile && go install github.com/bazelbuild/bazelisk@latest
 # RUN $GOPATH/bin/bazelisk version
+
+USER root
+RUN chmod +x /home/runner/*.sh
