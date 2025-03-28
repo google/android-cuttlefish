@@ -14,9 +14,6 @@ on:
         type: string
         default: '/root/buildscript.sh'
     outputs:
-      container:
-        value: ${{ jobs.docker-run.outputs.container }}
-        description: "Container ID"
       build:
         value: ${{ jobs.docker-run.outputs.build }}
         description: "Build output"
@@ -25,23 +22,24 @@ on:
         description: "Test output"
 
 jobs:
+
   docker-run:
     runs-on: ubuntu-latest
     if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
 
-    container:
-      image: ${{ INPUTS.DOCKER-IMAGE }}
-      options: '--cpus 1'
-      credentials:
-        username: ${{ GITHUB.ACTOR }}
-        password: ${{ SECRETS.TOKEN }}
-      volumes:
-        - /home/runner
-      ports:
-        - 1080 1443
-        - 2080 2443
-        - 8443 15550-15560
-        - 6520-6620
+#   container:
+#     image: ${{ INPUTS.DOCKER-IMAGE }}
+#     options: '--cpus 1'
+#     credentials:
+#       username: ${{ GITHUB.ACTOR }}
+#       password: ${{ SECRETS.TOKEN }}
+#     volumes:
+#       - /home/runner
+#     ports:
+#       - 1080 1443
+#       - 2080 2443
+#       - 8443 15550-15560
+#       - 6520-6620
 
     outputs:
       build: ${{ steps.copy-rpm-packages.outputs.result }}
@@ -49,16 +47,21 @@ jobs:
 
     steps:
 
+      # https://github.com/docker/login-action
+      - name: Log in to the Container registry
+        id: container-registry
+        uses: 'docker/login-action@v3'
+        with:
+          registry: ghcr.io
+          username: ${{ GITHUB.ACTOR }}
+          password: ${{ SECRETS.TOKEN }}
+
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Run the build script and copy packages to workspace
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         id: build-rpm-packages
         run: |
-          CID=`hostname`
-          echo "Container ID: $CID"
-          pwd
-          ls -la
-          ${{ INPUTS.ENTRY-POINT }}
+          docker run --entrypoint ${{ INPUTS.ENTRY-POINT }} --name build --attach -d ${{ INPUTS.DOCKER-IMAGE }}
           cp /root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
           cp /root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
           echo "result=ok" >> $GITHUB_OUTPUT
@@ -90,5 +93,5 @@ jobs:
         if: ${{ contains(INPUTS.ENTRY-POINT, 'test') }}
         id: test-rpm-packages
         run: |
-          ${{ INPUTS.ENTRY-POINT }}
+          docker run --entrypoint ${{ INPUTS.ENTRY-POINT }} --name test --attach -d ${{ INPUTS.DOCKER-IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
