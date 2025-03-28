@@ -16,21 +16,29 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/snapshot.h"
 
-#include <android-base/file.h>
-#include <android-base/strings.h>
+#include <signal.h>  // IWYU pragma: keep
+#include <stdlib.h>
 
+#include <android-base/file.h>
+#include <android-base/logging.h>
+
+#include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
@@ -82,7 +90,7 @@ class CvdSnapshotCommandHandler : public CvdCommandHandler {
     Command command =
         CF_EXPECT(GenerateCommand(request, subcmd, subcmd_args, request.Env()));
 
-    siginfo_t infop;
+    siginfo_t infop;  // NOLINT(misc-include-cleaner)
     command.Start().Wait(&infop, WEXITED);
 
     CF_EXPECT(CheckProcessExitedNormally(infop));

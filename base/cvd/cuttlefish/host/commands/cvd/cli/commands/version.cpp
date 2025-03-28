@@ -19,11 +19,14 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
+
+#include <fmt/ostream.h>
 
 #include "build/version.h"
-
 #include "cuttlefish/common/libs/utils/proto.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/legacy/server_constants.h"

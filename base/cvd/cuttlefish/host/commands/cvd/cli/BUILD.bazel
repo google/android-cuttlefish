@@ -122,6 +122,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
         "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
+        "@fmt",
         "@jsoncpp",
     ],
 )

@@ -14,9 +14,18 @@
  * limitations under the License.
  */
 
+#include "cuttlefish/host/commands/cvd/cli/commands/acloud_mixsuperimage.h"
+
 #include <fstream>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include <android-base/file.h>
+#include <android-base/logging.h>
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -24,7 +33,6 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/acloud_mixsuperimage.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
