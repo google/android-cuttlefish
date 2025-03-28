@@ -12,7 +12,7 @@ on:
       entry-point:
         required: false
         type: string
-        default: '/root/buildscript.sh'
+        default: '/home/runner/buildscript.sh'
     outputs:
       build:
         value: ${{ jobs.docker-run.outputs.build }}

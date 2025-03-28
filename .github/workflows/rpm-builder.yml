@@ -4,7 +4,7 @@ on:
   push:
   workflow_call:
     inputs:
-      enable_docker_cache:
+      enable-docker-cache:
         required: false
         type: boolean
         default: false
@@ -14,7 +14,8 @@ env:
   DOCKER_IMAGE: ${{ GITHUB.ACTOR }}/rpm-builder
 
 jobs:
-  # /root/.cache/bazel
+
+  # /home/runner/.cache/bazel
   build-docker-image:
     runs-on: ubuntu-latest
 
@@ -32,7 +33,7 @@ jobs:
 
       - name: Setup Buildx
         id: buildx-setup
-        if: ${{ inputs.enable_docker_cache }}
+        if: ${{ inputs.enable-docker-cache }}
         uses: 'docker/setup-buildx-action@v3'
         with:
           driver: 'docker-container'
@@ -57,7 +58,7 @@ jobs:
 
       # https://github.com/marketplace/actions/build-and-push-docker-images
       - name: Build and push Docker image
-        if: ${{ !inputs.enable_docker_cache }}
+        if: ${{ !inputs.enable-docker-cache }}
         id: push
         uses: 'docker/build-push-action@v6'
         with:
@@ -71,7 +72,7 @@ jobs:
           platforms: linux/amd64
 
       - name: Build and push Docker images with cache
-        if: ${{ inputs.enable_docker_cache }}
+        if: ${{ inputs.enable-docker-cache }}
         id: push-image-cached
         uses: 'docker/build-push-action@v6'
         with:
@@ -91,7 +92,6 @@ jobs:
           subject-name: ${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
-
     outputs:
       docker-image: 'docker://${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}:latest'
 
@@ -99,7 +99,7 @@ jobs:
     needs: build-docker-image
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      docker-image: ${{ INPUTS.DOCKER-IMAGE }}
+      docker-image: ${{ jobs.build-docker-image.outputs.docker-image }}
       entry-point: '/home/runner/buildscript.sh'
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
@@ -108,7 +108,7 @@ jobs:
     needs: build-rpm-specs
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      docker-image: ${{ INPUTS.DOCKER-IMAGE }}
+      docker-image: ${{ jobs.build-docker-image.outputs.docker-image }}
       entry-point: '/home/runner/testscript.sh'
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
