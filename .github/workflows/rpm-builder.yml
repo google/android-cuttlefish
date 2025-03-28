@@ -9,8 +9,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        platform:
-          - name: 'linux/amd64'
+        platform: [ 'linux/amd64' ]
         target: [ 'rpm-builder', 'rpm-testing', 'rhel-integration', 'rhel-orchestration' ]
         include:
           - target: 'rpm-builder'
@@ -81,8 +80,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        platform:
-          - name: 'linux/amd64'
+        platform: [ 'linux/amd64' ]
         target: [ 'rpm-builder', 'rpm-testing', 'rhel-integration', 'rhel-orchestration' ]
         include:
           - target: 'rpm-builder'
