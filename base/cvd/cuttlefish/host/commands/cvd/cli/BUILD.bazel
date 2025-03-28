@@ -86,6 +86,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/acloud",
+        "//cuttlefish/host/commands/cvd/cli/commands:acloud_common",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/commands:leaf_commands",
