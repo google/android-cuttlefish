@@ -99,7 +99,7 @@ jobs:
     needs: build-docker-image
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      docker-image: ${{ jobs.build-docker-image.outputs.docker-image }}
+      docker-image: ${{ needs.build-docker-image.outputs.docker-image }}
       entry-point: '/home/runner/buildscript.sh'
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
@@ -108,7 +108,7 @@ jobs:
     needs: build-rpm-specs
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      docker-image: ${{ jobs.build-docker-image.outputs.docker-image }}
+      docker-image: ${{ needs.build-docker-image.outputs.docker-image }}
       entry-point: '/home/runner/testscript.sh'
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
