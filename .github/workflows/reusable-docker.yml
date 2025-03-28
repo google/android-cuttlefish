@@ -26,21 +26,6 @@ jobs:
   docker-run:
     runs-on: ubuntu-latest
     if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
-
-#   container:
-#     image: ${{ INPUTS.DOCKER-IMAGE }}
-#     options: '--cpus 1'
-#     credentials:
-#       username: ${{ GITHUB.ACTOR }}
-#       password: ${{ SECRETS.TOKEN }}
-#     volumes:
-#       - /home/runner
-#     ports:
-#       - 1080 1443
-#       - 2080 2443
-#       - 8443 15550-15560
-#       - 6520-6620
-
     outputs:
       build: ${{ steps.copy-rpm-packages.outputs.result }}
       test: ${{ steps.test-rpm-packages.outputs.result }}
@@ -93,12 +78,6 @@ jobs:
           path: |
             ${{ RUNNER.TEMP }}/*.src.rpm
           retention-days: 14
-
-#      - name: Download artifact
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: rpm-builder
-#          path: ${{ runner.temp }}
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       - name: Run the test script
