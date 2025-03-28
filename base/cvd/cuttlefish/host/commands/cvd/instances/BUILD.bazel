@@ -38,7 +38,6 @@ cc_library(
         "run_cvd_proc_collector.h",
         "status_fetcher.h",
     ],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":cvd_persistent_data",
         ":instance_database_utils",
@@ -71,7 +70,6 @@ cc_library(
     name = "instance_database_utils",
     srcs = ["instance_database_utils.cpp"],
     hdrs = ["instance_database_utils.h"],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
@@ -89,7 +87,6 @@ cc_library(
     name = "reset_client_utils",
     srcs = ["reset_client_utils.cpp"],
     hdrs = ["reset_client_utils.h"],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":instances",
         "//cuttlefish/common/libs/utils",
