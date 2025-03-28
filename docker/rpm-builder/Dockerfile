@@ -26,7 +26,7 @@ ENTRYPOINT [ "/bin/bash", "-c", "/root/entrypoint.sh" ]
 # RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
 RUN dnf -y install git sudo rpm-build golang-bin curl-devel wayland-devel ncurses-compat-libs \
 # Package `protobuf` comes from CRB repository
-dnf -y install protobuf protobuf-devel protobuf-compiler --enablerepo crb && dnf clean all
+protobuf protobuf-devel protobuf-compiler --enablerepo crb && dnf clean all
 
 # Modify file `~/.bash_profile`,
 RUN echo "export GOPATH=${HOME}/go" >> ~/.bash_profile
