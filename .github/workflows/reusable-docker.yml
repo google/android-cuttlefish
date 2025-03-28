@@ -10,27 +10,34 @@ on:
         required: true
         type: string
     outputs:
-      build:
-        value: ${{ jobs.docker-run.outputs.build }}
+      builder:
+        value: ${{ jobs.docker-run.outputs.builder }}
         description: "Build output"
-      test:
-        value: ${{ jobs.docker-run.outputs.test }}
+      testing:
+        value: ${{ jobs.docker-run.outputs.testing }}
         description: "Test output"
-
+      integration:
+        value: ${{ jobs.docker-run.outputs.integration }}
+        description: "Test output"
+      orchestration:
+        value: ${{ jobs.docker-run.outputs.orchestration }}
+        description: "Test output"
 jobs:
 
   docker-run:
     runs-on: ubuntu-latest
     outputs:
-      build: ${{ steps.copy-rpm-packages.outputs.result }}
-      test: ${{ steps.test-rpm-packages.outputs.result }}
+      builder: ${{ steps.build-rpm-packages.outputs.result }}
+      testing: ${{ steps.test-rpm-packages.outputs.result }}
+      integration: ${{ steps.test-integration.outputs.result }}
+      orchestration: ${{ steps.test-orchestration.outputs.result }}
 
     steps:
 
       # https://github.com/docker/login-action
       - name: Log in to the Container registry
-        id: container-registry
         uses: 'docker/login-action@v3'
+        id: container-registry
         with:
           registry: ghcr.io
           username: ${{ GITHUB.ACTOR }}
@@ -39,7 +46,7 @@ jobs:
       # https://docs.docker.com/reference/cli/docker/container/run/
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Build RPM packages and copy these to RUNNER.TEMP
-        if: ${{ ! contains(INPUTS.DOCKER-IMAGE, 'test') }}
+        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'builder') }}
         id: build-rpm-packages
         # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
@@ -48,8 +55,7 @@ jobs:
           docker inspect -f {{.Mounts}} $CID
           ls ${{ RUNNER.TEMP }}:/root
           CID=`docker ps -aqf "name=^rpm-build$"`
-          echo "CID: ${CID}"
-          
+          echo "CID: ${CID}"          
           docker cp $CID:/root/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
           docker cp $CID:/root/android-cuttlefish-src-rpm.tar.gz ${{ RUNNER.TEMP }}
           docker rm rpm-build
@@ -57,18 +63,17 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
-        if: ${{ ! contains(INPUTS.DOCKER-IMAGE, 'test') }}
+        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'builder') }}
         uses: 'actions/upload-artifact@v4'
         id: retain-rpm-packages
         with:
+          path: ${{ RUNNER.TEMP }}/*.tar.gz
           name: android-cuttlefish-rpm
-          path: |
-            ${{ RUNNER.TEMP }}/*.tar.gz
           retention-days: 14
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       - name: Run package tests
-        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'test') }}
+        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'testing') }}
         id: test-rpm-packages
         run: |
           docker run --name rpm-testing --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
@@ -88,5 +93,5 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
         id: test-orchestration
         run: |
-          docker run --name rhel-integration --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rhel-orchestration --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
