@@ -52,4 +52,4 @@ RUN go install github.com/bazelbuild/bazelisk@latest
 
 # The default entrypoint.
 ENTRYPOINT [ "/bin/bash", "-c", "/root/buildscript.sh" ]
-VOLUME [ "/root" ]
+VOLUME "/root"
