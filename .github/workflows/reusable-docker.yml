@@ -50,12 +50,12 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'builder') }}
         id: build-rpm-packages
         run: |
-          mkdir ${{ RUNNER.TEMP }}/root_volume
-          docker run --name rpm-builder --quiet --volume ${{ RUNNER.TEMP }}/root_volume:/root ${{ INPUTS.DOCKER-IMAGE }}
+          mkdir ${{ RUNNER.TEMP }}/home_volume
+          docker run --name rpm-builder --quiet --volume ${{ RUNNER.TEMP }}/home_volume:/home ${{ INPUTS.DOCKER-IMAGE }}
 
           CID=`docker ps -aqf "name=^rpm-builder$"`
           docker inspect -f {{.Mounts}} $CID
-          ls -la ${{ RUNNER.TEMP }}/root_volume
+          ls -la ${{ RUNNER.TEMP }}/home_volume
           
           docker cp $CID:/root/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
           
