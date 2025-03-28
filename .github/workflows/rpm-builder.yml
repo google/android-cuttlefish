@@ -65,7 +65,9 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
           build-args: |
-            --target builder
+            ROCKY_LINUX_VERSION=9.5
+            BAZEL_VERSION=7.6.0
+          target: builder
 
       # https://github.com/actions/attest-build-provenance
       - name: Generate artifact attestation
