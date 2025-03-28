@@ -51,8 +51,8 @@ jobs:
         id: build-rpm-packages
         run: |
           mkdir ${{ RUNNER.TEMP }}/home_volume
+          docker volume create --opt type=none --opt o=bind --opt device=${{ RUNNER.TEMP }}/home_volume home_volume
           docker run --name rpm-builder --quiet --volume ${{ RUNNER.TEMP }}/home_volume:/home ${{ INPUTS.DOCKER-IMAGE }}
-
           CID=`docker ps -aqf "name=^rpm-builder$"`
           docker inspect -f {{.Mounts}} $CID
           ls -la ${{ RUNNER.TEMP }}/home_volume
