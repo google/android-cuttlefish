@@ -161,6 +161,28 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "display",
+    srcs = ["display.cpp"],
+    hdrs = ["display.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "display_clang_tidy",
+    srcs = [":display"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "host_tool_target",
     srcs = ["host_tool_target.cpp"],
     hdrs = ["host_tool_target.h"],
@@ -184,7 +206,6 @@ clang_tidy_test(
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "display.cpp",
         "env.cpp",
         "fetch.cpp",
         "fleet.cpp",
@@ -205,7 +226,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "display.h",
         "env.h",
         "fetch.h",
         "fleet.h",
