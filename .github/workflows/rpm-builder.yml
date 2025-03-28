@@ -65,7 +65,8 @@ jobs:
         uses: 'actions/attest-build-provenance@v2'
         # One of subject-path, subject-digest, or subject-checksums must be provided
         with:
-          subject-name: ${{ ENV.REGISTRY }}/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          # subject-name: ${{ ENV.REGISTRY }}/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          subject-name: ${{ steps.image_metadata.outputs.name }}
           subject-digest: ${{ steps.metadata.outputs.digest }}
           push-to-registry: true
 
