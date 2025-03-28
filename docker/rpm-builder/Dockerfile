@@ -43,7 +43,7 @@ RUN dnf clean all
 
 # Add entrypoint scripts.
 # VOLUME "/home/runner"
-#RUN groupadd docker && adduser runner && usermod -a -G docker runner
+RUN groupadd docker && adduser runner && usermod -a -G docker runner
 USER runner
 ADD ./docker/rpm-builder/buildscript.sh /home/runner/buildscript.sh
 ADD ./docker/rpm-builder/testscript.sh ~/home/runner/testscript.sh
