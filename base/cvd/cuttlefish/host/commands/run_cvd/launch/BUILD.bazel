@@ -6,6 +6,25 @@ package(
 )
 
 cc_library(
+    name = "auto_cmd",
+    hdrs = ["auto_cmd.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "auto_cmd_clang_tidy",
+    srcs = [":auto_cmd"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "launch",
     srcs = [
         "automotive_proxy.cpp",
@@ -52,7 +71,6 @@ cc_library(
         "wmediumd_server.h",
     ],
     hdrs = [
-        "auto_cmd.h",
         "launch.h",
         "snapshot_control_files.h",
         "webrtc_controller.h",
@@ -65,6 +83,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd:reporting",
+        "//cuttlefish/host/commands/run_cvd/launch:auto_cmd",
         "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_command_channel",
         "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_commands_proto",
         "//cuttlefish/host/libs/command_util",
