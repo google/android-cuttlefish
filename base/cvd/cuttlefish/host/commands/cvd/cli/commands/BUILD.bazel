@@ -306,11 +306,26 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "noop",
+    srcs = ["noop.cpp"],
+    hdrs = ["noop.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/common/libs/utils:result",
+    ],
+)
+
+clang_tidy_test(
+    name = "noop_clang_tidy",
+    srcs = [":noop"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 # Leaf commands: commands that don't execute other commands
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "noop.cpp",
         "power_btn.cpp",
         "powerwash.cpp",
         "remove.cpp",
@@ -325,7 +340,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "noop.h",
         "power_btn.h",
         "powerwash.h",
         "remove.h",
