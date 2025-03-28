@@ -63,7 +63,6 @@ jobs:
         id: build-rpm-packages
         # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
-          mkdir ${{ GITHUB.WORKSPACE }}/packages
           docker run --name rpm-build --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
           CID=`docker ps -aqf "name=^rpm-build$"`
           echo "CID: ${CID}"
@@ -72,8 +71,8 @@ jobs:
           docker exec rpm-build ls -la /root/android-cuttlefish/tools/rpmbuild/RPMS
           docker stop rpm-test
           
-          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS ${{ GITHUB.WORKSPACE }}/packages
-          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS ${{ GITHUB.WORKSPACE }}/packages
+          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/ ${{ RUNNER.TEMP }}/
+          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS/ ${{ RUNNER.TEMP }}/
           docker stop rpm-build && docker rm rpm-build
           echo "result=ok" >> $GITHUB_OUTPUT
 

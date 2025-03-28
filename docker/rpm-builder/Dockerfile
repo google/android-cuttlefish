@@ -1,14 +1,40 @@
 # Dockerfile based on Rocky Linux
 # https://hub.docker.com/_/rockylinux
+LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler"
 ARG ROCKY_LINUX_VERSION=9.5
-FROM rockylinux/rockylinux:$ROCKY_LINUX_VERSION
+FROM rockylinux/rockylinux:$ROCKY_LINUX_VERSION AS rockylinux
+ENTRYPOINT [ "/bin/bash" ]
+VOLUME [ "/root" ]
+
+# Install build and runtime dependencies.
+# RUN dnf -y swap curl-minimal curl-full
+# RUN dnf -y swap coreutils-single coreutils
+# RUN dnf -y install dpkg-dev devscripts vim-enhanced
+# RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
+FROM rockylinux AS builder
 ARG BAZEL_VERSION=7.6.0
 
-LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler" \
-org.opencontainers.image.title="RPM Builder" \
-org.opencontainers.image.source="https://github.com/google/android-cuttlefish/blob/main/docker/rpm-builder/Dockerfile" \
-org.opencontainers.image.description="RPM package builder image based on Rocky Linux" \
-org.opencontainers.image.authors="Martin Zeitler"
+# EPEL repository provides `ncurses-compat-libs` and installs `dnf-core-plugin`, which has `dnf builddeps`.
+RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && dnf -y upgrade
+# Provide build dependencies.
+RUN dnf -y install git sudo rpm-build golang-bin curl-devel wayland-devel ncurses-compat-libs
+# Package `protobuf` comes from CRB repository
+RUN dnf -y install protobuf protobuf-devel protobuf-compiler --enablerepo crb
+RUN dnf clean all
+
+# Add entrypoint scripts.
+ADD ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
+ADD ./docker/rpm-builder/testscript.sh /root/testscript.sh
+ENTRYPOINT [ "/bin/bash", "-c", "/root/buildscript.sh" ]
+
+# Modify file `~/.bash_profile` and install `bazelisk`.
+RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc
+RUN echo "export PATH=${PATH}:${HOME}/go/bin" >> ~/.bash_profile
+RUN echo "export GOPATH=${HOME}/go" >> ~/.bash_profile
+RUN source ~/.bash_profile
+RUN go install github.com/bazelbuild/bazelisk@latest
+
+FROM rockylinux AS portconfig
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443
@@ -19,37 +45,16 @@ EXPOSE 8443/tcp 15550-15560
 # Expose ADB
 EXPOSE 6520-6620
 
-# Install build and runtime dependencies.
-# RUN dnf -y swap curl-minimal curl-full
-# RUN dnf -y swap coreutils-single coreutils
-# RUN dnf -y install dpkg-dev devscripts vim-enhanced
-# RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
-
-# EPEL repository provides `ncurses-compat-libs` and installs `dnf-core-plugin`, which has `dnf builddeps`.
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && dnf -y upgrade
-# Provide build dependencies.
-RUN dnf -y install git sudo rpm-build golang-bin curl-devel wayland-devel ncurses-compat-libs
-# Package `protobuf` comes from CRB repository
-RUN dnf -y install protobuf protobuf-devel protobuf-compiler --enablerepo crb
-# Integration and orchestration dependencies.
-RUN dnf -y install qemu-kvm nginx systemd-journal-remote
-RUN dnf list installed
+# Integration dependencies.
+FROM portconfig AS integration
+RUN dnf -y install qemu-kvm
 RUN dnf clean all
 
-# Add entrypoint scripts, to be used by container instrumentation.
-ADD ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
-# RUN sed -i 's/\r//' /root/buildscript.sh
+# Orchestration dependencies.
+FROM portconfig AS orchestration
+RUN dnf -y install nginx systemd-journal-remote
+RUN dnf clean all
 
-ADD ./docker/rpm-builder/testscript.sh /root/testscript.sh
-# RUN sed -i 's/\r//' /root/testscript.sh
-
-# Modify file `~/.bash_profile` and install `bazelisk`.
-RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc
-RUN echo "export PATH=${PATH}:${HOME}/go/bin" >> ~/.bash_profile
-RUN echo "export GOPATH=${HOME}/go" >> ~/.bash_profile
-RUN source ~/.bash_profile
-RUN go install github.com/bazelbuild/bazelisk@latest
-
-# The default entrypoint.
-ENTRYPOINT [ "/bin/bash", "-c", "/root/buildscript.sh" ]
-VOLUME "/root"
+# docker build --target builder -t syslogic/rpm-builder:latest .
+# docker build --target integration -t syslogic/rpm-integration:latest .
+# docker build --target orchestration -t syslogic/rpm-orchestration:latest .
