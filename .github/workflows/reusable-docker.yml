@@ -64,8 +64,8 @@ jobs:
         # --entrypoint ${{ INPUTS.ENTRY-POINT }}
         run: |
           docker run --name rpm-build --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
-          cp /root/android-cuttlefish/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
-          cp /root/android-cuttlefish/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
+          docker cp rpm-build:/root/android-cuttlefish/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
+          docker cp rpm-build:/root/android-cuttlefish/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://github.com/actions/upload-artifact
