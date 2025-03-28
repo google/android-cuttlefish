@@ -68,6 +68,7 @@ jobs:
           CID=`docker ps -aqf "name=^rpm-build$"`
           echo "CID: ${CID}"
           # docker inspect -f {{.Mounts}} $CID
+          docker exec rpm-build ls -la /root/android-cuttlefish/tools/rpmbuild/RPMS
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS ${{ GITHUB.WORKSPACE }}/packages
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS ${{ GITHUB.WORKSPACE }}/packages
           docker stop rpm-build && docker rm rpm-build
