@@ -79,18 +79,18 @@ jobs:
         with:
           name: ${{ GITHUB.REPOSITORY }}-rpm
           path: |
-            ${{ GITHUB.WORKSPACE }}/*.rpm
+            {{ GITHUB.WORKSPACE }}/packages/*.rpm
           retention-days: 14
 
       # https://github.com/actions/upload-artifact
-      - name: Retain Artifacts (*.srpm)
+      - name: Retain Artifacts (*.src.rpm)
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         uses: 'actions/upload-artifact@v4'
         id: retain-srpm-packages
         with:
           name: ${{ ENV.REPO_NAME }}-srpm
           path: |
-            ${{ GITHUB.REPOSITORY }}/*.srpm
+            ${{ GITHUB.WORKSPACE }}/packages/*.src.rpm
           retention-days: 14
 
       # https://docs.docker.com/reference/cli/docker/container/run/
