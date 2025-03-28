@@ -40,10 +40,10 @@ RUN dnf clean all
 
 # Add entrypoint scripts, to be used by container instrumentation.
 ADD ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
-RUN sed -i 's/\r//' /root/buildscript.sh
+# RUN sed -i 's/\r//' /root/buildscript.sh
 
 ADD ./docker/rpm-builder/testscript.sh /root/testscript.sh
-RUN sed -i 's/\r//' /root/testscript.sh
+# RUN sed -i 's/\r//' /root/testscript.sh
 
 # Modify file `~/.bash_profile` and install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc
