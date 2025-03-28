@@ -39,7 +39,7 @@ RUN dnf list installed
 RUN dnf clean all
 
 # The default entrypoint and volume.
-ENTRYPOINT [ "/bin/bash", "-c" ]
+ENTRYPOINT [ "/bin/bash" ]
 VOLUME [ "/root" ]
 
 # Add entrypoint scripts, to be used by container instrumentation.
