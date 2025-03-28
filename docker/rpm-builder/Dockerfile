@@ -53,4 +53,5 @@ RUN source ~/.bash_profile
 RUN go install github.com/bazelbuild/bazelisk@latest
 
 # The default entrypoint.
-ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "/bin/bash", "-c", "/root/buildscript.sh" ]
+# ENTRYPOINT [ "/bin/bash" ]
