@@ -59,12 +59,12 @@ jobs:
         id: build
         with:
           context: .
-          target: ${{ MATRIX.STAGE }}
-          platforms: ${{ MATRIX.PLATFORM }}
           file: docker/rpm-builder/Dockerfile
           push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
+          platforms: ${{ MATRIX.PLATFORM }}
+          target: ${{ MATRIX.STAGE }}
 
       # https://github.com/actions/attest-build-provenance
       - name: Generate artifact attestation
