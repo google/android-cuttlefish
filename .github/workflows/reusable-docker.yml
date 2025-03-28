@@ -61,9 +61,9 @@ jobs:
       - name: Run the build script and copy packages to workspace
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         id: build-rpm-packages
-        # --quiet --entrypoint ${{ INPUTS.ENTRY-POINT }}
+        # --entrypoint ${{ INPUTS.ENTRY-POINT }}
         run: |
-          docker run --name rpm-build --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-build --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
           CID=`docker ps -aqf "name=^rpm-build$"`
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/.gitkeep ${{ GITHUB.WORKSPACE }}
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS/.gitkeep ${{ GITHUB.WORKSPACE }}
@@ -98,6 +98,6 @@ jobs:
         id: test-rpm-packages
         # --quiet --entrypoint ${{ INPUTS.ENTRY-POINT }}
         run: |
-          docker run --name rpm-test --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-test --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
           docker stop rpm-test && docker rm rpm-test
           echo "result=ok" >> $GITHUB_OUTPUT
