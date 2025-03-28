@@ -72,7 +72,8 @@ jobs:
       - name: Generate artifact attestation
         uses: 'actions/attest-build-provenance@v2'
         with:
-          subject-name: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          # One of subject-path, subject-digest, or subject-checksums must be provided
+          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           subject-digest: ${{ steps.metadata.outputs.digest }}
           push-to-registry: true
 
