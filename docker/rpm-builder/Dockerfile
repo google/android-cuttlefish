@@ -1,7 +1,7 @@
 # Dockerfile based on Rocky Linux
 # https://hub.docker.com/_/rockylinux
 ARG ROCKY_LINUX_VERSION=9.5
-FROM rockylinux/rockylinux:$ROCKY_LINUX_VERSION AS builder
+FROM rockylinux/rockylinux:$ROCKY_LINUX_VERSION
 ARG BAZEL_VERSION=7.6.0
 
 LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler" \
