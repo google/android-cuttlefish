@@ -51,8 +51,8 @@ jobs:
         id: build-rpm-packages
         run: |
           mkdir ${{ RUNNER.TEMP }}/root_volume
-          docker run --name rpm-builder --tty --quiet --volume ${{ RUNNER.TEMP }}/root_volume:/root ${{ INPUTS.DOCKER-IMAGE }}
-               
+          docker run --name rpm-builder --quiet --volume ${{ RUNNER.TEMP }}/root_volume:/root ${{ INPUTS.DOCKER-IMAGE }}
+          docker attach --name rpm-builder
           CID=`docker ps -aqf "name=^rpm-builder$"`
           docker inspect -f {{.Mounts}} $CID
           ls -la ${{ RUNNER.TEMP }}/root_volume
@@ -77,7 +77,7 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'testing') }}
         id: test-rpm-packages
         run: |
-          docker run --name rpm-testing --tty --quiet ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-testing --quiet ${{ INPUTS.DOCKER-IMAGE }}
           docker rm rpm-testing
           echo "result=ok" >> $GITHUB_OUTPUT
 
@@ -86,7 +86,7 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'integration') }}
         id: test-integration
         run: |
-          docker run --name rhel-integration --tty --quiet ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rhel-integration --quiet ${{ INPUTS.DOCKER-IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
@@ -94,5 +94,5 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
         id: test-orchestration
         run: |
-          docker run --name rhel-orchestration --tty --quiet ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rhel-orchestration --quiet ${{ INPUTS.DOCKER-IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
