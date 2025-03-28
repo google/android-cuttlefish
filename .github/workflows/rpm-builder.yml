@@ -62,9 +62,9 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           tags: ${{ steps.metadata.outputs.tags }}
 
+      # Do not touch. The digest comes from buildx, not the metadata.
       # https://github.com/actions/attest-build-provenance
       # One of subject-path, subject-digest, or subject-checksums must be provided
-      # subject-name: ${{ ENV.REGISTRY }}/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
       - name: Generate artifact attestation
         uses: 'actions/attest-build-provenance@v2'
         with:
