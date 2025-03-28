@@ -2,12 +2,6 @@ name: RPM Builder
 
 on:
   push:
-  workflow_call:
-    inputs:
-      enable-docker-cache:
-        required: false
-        type: boolean
-        default: false
 
 env:
   DOCKER_REGISTRY: ghcr.io
@@ -32,11 +26,10 @@ jobs:
 
       - name: Setup Buildx
         id: buildx-setup
-        if: ${{ inputs.enable-docker-cache }}
         uses: 'docker/setup-buildx-action@v3'
-        with:
-          driver: 'docker-container'
-          driver-opts: 'image=moby/buildkit:master,network=host'
+        # with:
+        #   driver: 'docker-container'
+        #   driver-opts: 'image=moby/buildkit:master,network=host'
 
       # https://github.com/docker/login-action
       - name: Log in to the Container registry
@@ -60,7 +53,6 @@ jobs:
       # docker build --target integration -t syslogic/rpm-integration:latest .
       # docker build --target orchestration -t syslogic/rpm-orchestration:latest .
       - name: Build and push Docker image
-        if: ${{ !inputs.enable-docker-cache }}
         id: push
         uses: 'docker/build-push-action@v6'
         with:
@@ -74,20 +66,6 @@ jobs:
           platforms: linux/amd64
           build-args: |
             --target builder
-
-      - name: Build and push Docker images with cache
-        if: ${{ inputs.enable-docker-cache }}
-        id: push-image-cached
-        uses: 'docker/build-push-action@v6'
-        with:
-          context: .
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          file: docker/rpm-builder/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64
 
       # https://github.com/actions/attest-build-provenance
       - name: Generate artifact attestation
