@@ -327,11 +327,11 @@ cc_library(
     srcs = ["power_btn.cpp"],
     hdrs = ["power_btn.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
-        "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances",
         "//libbase",
         "@fmt",
     ],
@@ -343,11 +343,32 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "powerwash",
+    srcs = ["powerwash.cpp"],
+    hdrs = ["powerwash.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "powerwash_clang_tidy",
+    srcs = [":powerwash"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 # Leaf commands: commands that don't execute other commands
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "powerwash.cpp",
         "remove.cpp",
         "reset.cpp",
         "restart.cpp",
@@ -360,7 +381,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "powerwash.h",
         "remove.h",
         "reset.h",
         "restart.h",
