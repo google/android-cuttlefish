@@ -92,7 +92,7 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
     outputs:
-      docker-image: '${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}:latest'
+      docker-image: "${{ ENV.DOCKER_REGISTRY }}/${{ GITHUB.ACTOR }}/${{ ENV.DOCKER_IMAGE }}:latest"
 
   build-rpm-specs:
     needs: build-docker-image
