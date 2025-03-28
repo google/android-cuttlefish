@@ -66,11 +66,7 @@ jobs:
           docker run --name rpm-build --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
           CID=`docker ps -aqf "name=^rpm-build$"`
           echo "CID: ${CID}"
-          # docker inspect -f {{.Mounts}} $CID
-          docker start rpm-build
-          docker exec rpm-build ls -la /root/android-cuttlefish/tools/rpmbuild/RPMS
-          docker stop rpm-test
-          
+          # docker inspect -f {{.Mounts}} $CID         
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/ ${{ RUNNER.TEMP }}/
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS/ ${{ RUNNER.TEMP }}/
           docker stop rpm-build && docker rm rpm-build
