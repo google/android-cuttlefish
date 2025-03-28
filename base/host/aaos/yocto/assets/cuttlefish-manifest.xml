@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <remote fetch="https://github.com/quic-yocto" name="github" review="github.com"/>
+  <remote fetch="https://git.yoctoproject.org" name="yocto" review="git.yoctoproject.org"/>
+  <remote fetch="https://github.com/openembedded" name="oe" review="github.com"/>
+  <remote fetch="https://github.com/meta-rust" name="meta-rust" review="github.com"/>
+  <remote fetch="https://github.com/Linaro" name="Linaro" review="github.com"/>
+  <remote fetch="https://github.com/uptane" name="updater" review="github.com"/>
+  <default remote="github" revision="refs/heads/scarthgap" sync-j="8"/>
+
+  <project name="meta-qcom" path="layers/meta-qcom" remote="Linaro" revision="ec80a36bce11d8182b4bb2a6fa0359adfeccde0a" upstream="refs/heads/scarthgap"/>
+  <project name="meta-openembedded" path="layers/meta-openembedded" remote="oe" revision="c04b722e9b38631e78dc6ca0e03d571e23ed28a2" upstream="refs/heads/scarthgap"/>
+  <project name="meta-rust" path="layers/meta-rust" remote="meta-rust" revision="scarthgap"/>
+  <project name="poky" path="layers/poky" remote="yocto" revision="2541a8171f91812a4b16e7dc4da0d77d2318a256" upstream="refs/heads/scarthgap"/>
+  <project name="meta-security" path="layers/meta-security" remote="yocto" revision="bc865c5276c2ab4031229916e8d7c20148dfbac3" upstream="refs/heads/scarthgap"/>
+  <project name="meta-virtualization" path="layers/meta-virtualization" remote="yocto" revision="450941a1b6df96285691e8c23d4f332d3c88a994" upstream="refs/heads/scarthgap"/>
+  <project name="meta-selinux" path="layers/meta-selinux" remote="yocto" revision="3aff015697fa056b4af83b1c9ba44eca346a8a37" upstream="refs/heads/scarthgap"/>
+  <project name="meta-updater" path="layers/meta-updater" remote="updater" revision="fa550d14caebb16fede2a428ac0db66f2d0f893b" upstream="refs/heads/scarthgap"/>
+  <project name="meta-tensorflow" path="layers/meta-tensorflow" remote="yocto" revision="29f2042fb04f42eb1b56564965fb4460c8b7ffc7" upstream="refs/heads/master"/>
+
+  <project name="meta-qcom-hwe" path="layers/meta-qcom-hwe" revision="1e5468f1a6da6838a8a625e592e4821d531e6c69" upstream="refs/heads/scarthgap"/>
+  <project name="meta-qcom-distro" path="layers/meta-qcom-distro" revision="6e7a8af902712a075465a5065f8fd9e788e92b2e" upstream="refs/heads/scarthgap">
+    <linkfile dest="setup-environment" src="set_bb_env.sh"/>
+  </project>
+</manifest>

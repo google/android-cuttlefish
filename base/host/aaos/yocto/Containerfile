@@ -1,0 +1,44 @@
+# Copyright 2025 Android Open Source Project
+# SPDX-License-Identifier: MIT
+FROM debian:latest
+MAINTAINER AAOS-SYSENG aaos-syseng@google.com
+USER root
+
+RUN apt-get update
+
+# Set the locale
+RUN apt-get install -y locales
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    locale-gen
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+RUN ln -sf /bin/bash /bin/sh
+ENV SHELL /bin/bash
+
+# A combination of:
+#    - https://docs.yoctoproject.org/ref-manual/system-requirements.html#ubuntu-and-debian
+#    - https://github.com/qualcomm-linux/qcom-manifest?tab=readme-ov-file#install-below-packages-to-prepare-your-host-environment-for-yocto-build
+RUN apt-get install -y --no-install-recommends build-essential chrpath curl cpio \
+                    debianutils diffstat dirmngr file gawk gcc gpg gpg-agent git \
+                    iputils-ping mesa-common-dev libacl1 libegl1-mesa libsdl1.2-dev \
+                    libxml-opml-perl locales lz4 pylint python3 python3-git \
+                    python3-jinja2 python3-pexpect python3-pip python3-subunit \
+                    python-is-python3 python3-venv socat ssh tar texinfo unzip \
+                    vim whiptail wget xterm xz-utils zstd
+
+# https://source.android.com/docs/setup/start#repo
+RUN touch /tmp/repo_tmp
+RUN curl -o /tmp/repo_tmp https://storage.googleapis.com/git-repo-downloads/repo
+RUN gpg --recv-keys 8BB9AD793E8E6153AF0F9A4416530D5E920F5C65
+RUN curl -s https://storage.googleapis.com/git-repo-downloads/repo.asc | gpg --verify - /tmp/repo_tmp && install -m 755 /tmp/repo_tmp /usr/bin/repo
+
+RUN useradd -ms /bin/bash newuser
+WORKDIR /home/newuser
+COPY assets assets
+RUN chmod -R 777 assets/*
+
+USER newuser
+RUN git config --global user.name "New User"
+RUN git config --global user.email "new.user@gmail.com"
+RUN git config --global color.ui false
