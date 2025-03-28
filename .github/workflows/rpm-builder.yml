@@ -6,6 +6,13 @@ jobs:
 
   build-docker-images:
     runs-on: ubuntu-latest
+    env:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
     strategy:
       max-parallel: 1
       matrix:
@@ -21,12 +28,6 @@ jobs:
           - target: rhel-orchestration
             stage: orchestration
 
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-
     steps:
       - uses: 'actions/checkout@v4'
       - uses: 'docker/setup-buildx-action@v3'
@@ -35,7 +36,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ GITHUB.ACTOR }}
-          password: ${{ SECRETS.TOKEN }}
+          password: ${{ ENV.TOKEN }}
 
       # https://github.com/docker/metadata-action
       - name: Extract metadata (tags, labels)
