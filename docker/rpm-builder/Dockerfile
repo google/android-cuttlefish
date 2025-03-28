@@ -6,10 +6,23 @@
 ARG ROCKY_LINUX_VERSION=9.5
 FROM rockylinux/rockylinux:$ROCKY_LINUX_VERSION AS rockylinux
 LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler"
-ENTRYPOINT [ "/bin/bash" ]
 VOLUME [ "/root/android-cuttlefish" ]
+ENTRYPOINT [ "/bin/bash" ]
 
-FROM rockylinux AS builder
+# Base Image
+FROM rockylinux AS base
+
+# EPEL repository provides `ncurses-compat-libs` and installs `dnf-core-plugin`, which has `dnf builddeps`.
+RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && dnf -y upgrade
+RUN dnf clean all
+
+# Modify file `~/.bash_profile`,
+RUN echo "export PATH=${PATH}:${HOME}/go/bin" >> ~/.bash_profile
+RUN echo "export GOPATH=${HOME}/go" >> ~/.bash_profile
+RUN source ~/.bash_profile
+
+# RPM Builder
+FROM base AS builder
 ARG BAZEL_VERSION=7.6.0
 
 # Install build dependencies.
@@ -18,8 +31,6 @@ ARG BAZEL_VERSION=7.6.0
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
 # RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
 
-# EPEL repository provides `ncurses-compat-libs` and installs `dnf-core-plugin`, which has `dnf builddeps`.
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && dnf -y upgrade
 # Provide build dependencies.
 RUN dnf -y install git sudo rpm-build golang-bin curl-devel wayland-devel ncurses-compat-libs
 # Package `protobuf` comes from CRB repository
@@ -28,19 +39,24 @@ RUN dnf clean all
 
 # Add entrypoint scripts.
 ADD ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
-ADD ./docker/rpm-builder/testscript.sh /root/testscript.sh
 ENTRYPOINT [ "/bin/bash", "-c", "/root/buildscript.sh" ]
 
-# Modify file `~/.bash_profile` and install `bazelisk`.
+# Install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc
-RUN echo "export PATH=${PATH}:${HOME}/go/bin" >> ~/.bash_profile
-RUN echo "export GOPATH=${HOME}/go" >> ~/.bash_profile
-RUN source ~/.bash_profile
 RUN go install github.com/bazelbuild/bazelisk@latest
 
 
-# Integration dependencies.
-FROM builder AS integration
+# RPM Builder Testing
+# Use `FROM base` to install with `dnf builddeps`.
+FROM builder AS testing
+ADD ./docker/rpm-builder/testscript.sh /root/testscript.sh
+ENTRYPOINT [ "/bin/bash", "-c", "/root/testscript.sh" ]
+
+
+# RHEL Integration
+FROM base AS integration
+ENTRYPOINT [ "/bin/bash" ]
+
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443
 # Expose HO(Host Orchestrator) Port (HTTP:2080, HTTPS:2443)
@@ -53,8 +69,11 @@ EXPOSE 6520-6620
 RUN dnf -y install qemu-kvm
 RUN dnf clean all
 
-# Orchestration dependencies.
-FROM builder AS orchestration
+
+# RHEL Orchestration
+FROM base AS orchestration
+ENTRYPOINT [ "/bin/bash" ]
+
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443
 # Expose HO(Host Orchestrator) Port (HTTP:2080, HTTPS:2443)
