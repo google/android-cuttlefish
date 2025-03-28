@@ -42,7 +42,7 @@ RUN dnf -y install qemu-kvm nginx systemd-journal-remote
 RUN dnf clean all
 
 # Add entrypoint scripts.
-VOLUME "/home/runner"
+# VOLUME "/home/runner"
 RUN adduser runner
 USER runner
 ADD ./docker/rpm-builder/buildscript.sh /home/runner/buildscript.sh
