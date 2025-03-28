@@ -16,9 +16,17 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/noop.h"
 
+#include <iostream>
 #include <memory>
+#include <string>
+#include <vector>
+
+#include <fmt/ostream.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 namespace {

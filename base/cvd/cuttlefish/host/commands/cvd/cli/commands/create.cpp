@@ -16,15 +16,26 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/create.h"
 
-#include <sys/types.h>
+#include <errno.h>
+#include <stdint.h>
+#include <unistd.h>
 
+#include <algorithm>
+#include <cctype>
 #include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <limits>
+#include <memory>
 #include <optional>
 #include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include <fmt/core.h>
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -32,6 +43,7 @@
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/acloud_common.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -41,7 +53,9 @@
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {

@@ -16,13 +16,13 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 
-#include <sys/stat.h>
-
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <android-base/strings.h>
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"

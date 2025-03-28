@@ -16,11 +16,23 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/reset.h"
 
+#include <ctype.h>
+
+#include <algorithm>
 #include <iostream>
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
+
+#include <android-base/logging.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
