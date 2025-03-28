@@ -66,7 +66,7 @@ jobs:
           context: .
           file: docker/rpm-builder/Dockerfile
           platforms: ${{ MATRIX.PLATFORM }}
-          target: ${{ MATRIX.STAGE }}
+          target: ${{ MATRIX.TARGET }}
           push: ${{ github.event_name != 'pull_request' }}
           labels: ${{ steps.metadata.outputs.labels }}
           tags: ${{ steps.metadata.outputs.tags }}
