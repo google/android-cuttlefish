@@ -61,7 +61,7 @@ jobs:
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         id: build-rpm-packages
         run: |
-          docker run --entrypoint ${{ INPUTS.ENTRY-POINT }} --name build --attach -d ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-build --attach STDOUT --entrypoint ${{ INPUTS.ENTRY-POINT }} -d ${{ INPUTS.DOCKER-IMAGE }}
           cp /root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
           cp /root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
           echo "result=ok" >> $GITHUB_OUTPUT
@@ -93,5 +93,5 @@ jobs:
         if: ${{ contains(INPUTS.ENTRY-POINT, 'test') }}
         id: test-rpm-packages
         run: |
-          docker run --entrypoint ${{ INPUTS.ENTRY-POINT }} --name test --attach -d ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-test --attach STDOUT --entrypoint ${{ INPUTS.ENTRY-POINT }} -d ${{ INPUTS.DOCKER-IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
