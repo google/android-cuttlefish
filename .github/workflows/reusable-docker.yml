@@ -45,9 +45,11 @@ jobs:
         run: |
           mkdir ${{ RUNNER.TEMP }}:/root
           docker run --name rpm-build --quiet --attach STDOUT --attach STDERR --volume ${{ RUNNER.TEMP }}:/root ${{ INPUTS.DOCKER-IMAGE }}
-          # docker inspect -f {{.Mounts}} $CID
+          docker inspect -f {{.Mounts}} $CID
+          ls ${{ RUNNER.TEMP }}:/root
           CID=`docker ps -aqf "name=^rpm-build$"`
           echo "CID: ${CID}"
+          
           docker cp $CID:/root/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
           docker cp $CID:/root/android-cuttlefish-src-rpm.tar.gz ${{ RUNNER.TEMP }}
           docker rm rpm-build
