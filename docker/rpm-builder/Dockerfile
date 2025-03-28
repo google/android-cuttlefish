@@ -42,7 +42,7 @@ RUN dnf -y install qemu-kvm nginx systemd-journal-remote
 RUN dnf clean all
 
 # VOLUME "/root"
-# ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "/bin/bash", "-c" ]
 # RUN groupadd docker && adduser runner && usermod -a -G docker runner
 # USER runner
 
