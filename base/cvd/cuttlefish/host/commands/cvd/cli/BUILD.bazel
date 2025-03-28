@@ -107,6 +107,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:remove",
         "//cuttlefish/host/commands/cvd/cli/commands:reset",
         "//cuttlefish/host/commands/cvd/cli/commands:restart",
+        "//cuttlefish/host/commands/cvd/cli/commands:snapshot",
         "//cuttlefish/host/commands/cvd/cli/parser",
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
         "//cuttlefish/host/commands/cvd/cli:types",
