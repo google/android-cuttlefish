@@ -546,54 +546,25 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
-# Leaf commands: commands that don't execute other commands
 cc_library(
-    name = "leaf_commands",
-    srcs = [
-        "version.cpp",
-    ],
-    hdrs = [
-        "version.h",
-    ],
+    name = "version",
+    srcs = ["version.cpp"],
+    hdrs = ["version.h"],
     deps = [
-        ":acloud_common",
-        ":command_handler",
-        ":host_tool_target",
         "//:libbuildversion",
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
-        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/cvd/acloud",
-        "//cuttlefish/host/commands/cvd/cache",
-        "//cuttlefish/host/commands/cvd/cli/parser",
-        "//cuttlefish/host/commands/cvd/cli/selector",
-        "//cuttlefish/host/commands/cvd/cli:command_request",
-        "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli:types",
-        "//cuttlefish/host/commands/cvd/cli:utils",
-        "//cuttlefish/host/commands/cvd/fetch",
-        "//cuttlefish/host/commands/cvd/fetch:substitute",
-        "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/commands/cvd/instances/lock",
-        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
-        "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
-        "//cuttlefish/host/commands/cvd/instances:reset_client_utils",
         "//cuttlefish/host/commands/cvd/legacy",
-        "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/config",
-        "//cuttlefish/host/libs/web",
-        "//libbase",
-        "@jsoncpp",
-        "@fmt",
-        "@zlib",
     ],
 )
 
 clang_tidy_test(
-    name = "leaf_commands_clang_tidy",
-    srcs = [":leaf_commands"],
+    name = "version_clang_tidy",
+    srcs = [":version"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
