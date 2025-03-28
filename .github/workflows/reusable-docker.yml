@@ -75,7 +75,7 @@ jobs:
       # https://docs.docker.com/reference/cli/docker/container/run/
       - name: Run integration tests
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'integration') }}
-        id: test-rpm-packages
+        id: test-integration
         run: |
           docker run --name rhel-integration --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
@@ -83,7 +83,7 @@ jobs:
       # https://docs.docker.com/reference/cli/docker/container/run/
       - name: Run orchestration test
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
-        id: test-rpm-packages
+        id: test-orchestration
         run: |
           docker run --name rhel-integration --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
