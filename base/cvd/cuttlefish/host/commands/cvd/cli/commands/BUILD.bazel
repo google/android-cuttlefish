@@ -18,6 +18,23 @@ exports_files([
 ])
 
 cc_library(
+    name = "acloud_common",
+    srcs = ["acloud_common.cpp"],
+    hdrs = ["acloud_common.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+    ],
+)
+
+clang_tidy_test(
+    name = "acloud_common_clang_tidy",
+    srcs = [":acloud_common"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "command_handler",
     srcs = ["command_handler.cpp"],
     hdrs = ["command_handler.h"],
@@ -55,11 +72,10 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
-# Commands that don't execute other commands
+# Leaf commands: commands that don't execute other commands
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "acloud_common.cpp",
         "acloud_mixsuperimage.cpp",
         "acloud_translator.cpp",
         "bugreport.cpp",
@@ -87,7 +103,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "acloud_common.h",
         "acloud_mixsuperimage.h",
         "acloud_translator.h",
         "bugreport.h",
@@ -115,6 +130,7 @@ cc_library(
         "version.h",
     ],
     deps = [
+        ":acloud_common",
         ":host_tool_target",
         "//:libbuildversion",
         "//cuttlefish/common/libs/fs",
