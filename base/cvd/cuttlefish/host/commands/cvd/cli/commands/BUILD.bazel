@@ -385,11 +385,29 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "reset",
+    srcs = ["reset.cpp"],
+    hdrs = ["reset.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:reset_client_utils",
+        "//cuttlefish/host/commands/cvd/utils",
+    ],
+)
+
+clang_tidy_test(
+    name = "reset_clang_tidy",
+    srcs = [":reset"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 # Leaf commands: commands that don't execute other commands
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "reset.cpp",
         "restart.cpp",
         "snapshot.cpp",
         "start.cpp",
@@ -400,7 +418,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "reset.h",
         "restart.h",
         "snapshot.h",
         "start.h",
