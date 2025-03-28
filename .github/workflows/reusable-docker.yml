@@ -55,7 +55,7 @@ jobs:
           docker volume create --opt type=none --opt o=bind --opt device=${{ RUNNER.TEMP }}/home_volume home_volume
           
           # Running the container with that volume
-          docker run --name rpm-builder --quiet --volume ${{ RUNNER.TEMP }}/home_volume:/home ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-builder --quiet --entrypoint /root/entrypoint.sh --volume ${{ RUNNER.TEMP }}/home_volume:/home ${{ INPUTS.DOCKER-IMAGE }}
           CID=`docker ps -aqf "name=^rpm-builder$"`
           
           # Debug Output
