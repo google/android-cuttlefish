@@ -365,11 +365,30 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "remove",
+    srcs = ["remove.cpp"],
+    hdrs = ["remove.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
+    ],
+)
+
+clang_tidy_test(
+    name = "remove_clang_tidy",
+    srcs = [":remove"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 # Leaf commands: commands that don't execute other commands
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "remove.cpp",
         "reset.cpp",
         "restart.cpp",
         "snapshot.cpp",
@@ -381,7 +400,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "remove.h",
         "reset.h",
         "restart.h",
         "snapshot.h",
