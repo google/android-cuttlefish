@@ -61,7 +61,7 @@ jobs:
           # Debug Output
           docker inspect -f {{.Mounts}} $CID
           MOUNTPOINT=`docker volume inspect --format '{{ .Mountpoint }}' home_volume`
-          ls -la $MOUNTPOINT
+          sudo ls -la $MOUNTPOINT
           
           ls -la ${{ RUNNER.TEMP }}/home_volume
           docker cp $CID:/home/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
