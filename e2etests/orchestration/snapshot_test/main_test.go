@@ -30,6 +30,8 @@ import (
 )
 
 func TestSnapshot(t *testing.T) {
+	t.Skip("b/403233780: Skipping snapshot tests due to out of disk issues on standard runners.")
+	
 	ctx, err := common.Setup()
 	if err != nil {
 		t.Fatal(err)
