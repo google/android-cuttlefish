@@ -123,6 +123,26 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "clear",
+    srcs = ["clear.cpp"],
+    hdrs = ["clear.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "clear_clang_tidy",
+    srcs = [":clear"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "command_handler",
     srcs = ["command_handler.cpp"],
     hdrs = ["command_handler.h"],
@@ -164,7 +184,6 @@ clang_tidy_test(
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "clear.cpp",
         "command_handler.cpp",
         "display.cpp",
         "env.cpp",
@@ -187,7 +206,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "clear.h",
         "command_handler.h",
         "display.h",
         "env.h",
