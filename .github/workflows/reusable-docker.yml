@@ -43,7 +43,8 @@ jobs:
         id: build-rpm-packages
         # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
-          docker run --name rpm-build --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
+          mkdir ${{ RUNNER.TEMP }}:/root
+          docker run --name rpm-build --quiet --attach STDOUT --attach STDERR --volume ${{ RUNNER.TEMP }}:/root ${{ INPUTS.DOCKER-IMAGE }}
           # docker inspect -f {{.Mounts}} $CID
           CID=`docker ps -aqf "name=^rpm-build$"`
           echo "CID: ${CID}"
