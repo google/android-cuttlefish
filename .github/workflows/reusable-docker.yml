@@ -34,6 +34,9 @@ jobs:
 
     steps:
 
+      - name: Check for dockerenv file
+        run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
+
       # https://github.com/docker/login-action
       - name: Log in to the Container registry
         uses: 'docker/login-action@v3'
@@ -50,24 +53,18 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'builder') }}
         id: build-rpm-packages
         run: |
-          # Mounting file-system to docker volume
-          mkdir ${{ RUNNER.TEMP }}/home_volume
-          # docker volume create --opt type=none --opt o=bind --opt device=${{ RUNNER.TEMP }}/home_volume home_volume
-          # --volume ${{ RUNNER.TEMP }}/home_volume:/home
-          
-          # Running the container with that volume
-          docker run --name rpm-builder --quiet --entrypoint /root/entrypoint.sh  ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-builder --quiet  ${{ INPUTS.DOCKER-IMAGE }}
+          VOLUME_HASH=$(docker volume ls --filter driver="local" --format '{{.Name}}')
+          DIRECTORY=/var/lib/docker/volumes/$VOLUME_HASH/_data
           CID=`docker ps -aqf "name=^rpm-builder$"`
+          echo Listing container $CID with attached volume: /var/lib/docker/volumes/$VOLUME/_data
+
+          # TODO: Finds nothing, because the entrypoint.sh does not seem to execute.
+          # docker cp $CID:/root/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
+          # docker cp rpm-builder:/root/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
+          sudo ls -la $DIRECTORY
+          cp $DIRECTORY/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
           
-          # Debug Output
-          docker inspect -f {{.Mounts}} $CID
-          MOUNTPOINT=`docker volume inspect --format '{{ .Mountpoint }}' home_volume`
-          sudo ls -la $MOUNTPOINT
-          
-          ls -la ${{ RUNNER.TEMP }}/home_volume
-          # docker cp $CID:/home/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
-          docker cp rpm-builder:/home/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
-  
           # Cleanup
           docker rm rpm-builder
           echo "result=ok" >> $GITHUB_OUTPUT
