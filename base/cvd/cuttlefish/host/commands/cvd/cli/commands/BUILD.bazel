@@ -184,7 +184,6 @@ clang_tidy_test(
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "command_handler.cpp",
         "display.cpp",
         "env.cpp",
         "fetch.cpp",
@@ -206,7 +205,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "command_handler.h",
         "display.h",
         "env.h",
         "fetch.h",
@@ -229,6 +227,7 @@ cc_library(
     ],
     deps = [
         ":acloud_common",
+        ":command_handler",
         ":host_tool_target",
         "//:libbuildversion",
         "//cuttlefish/common/libs/fs",
