@@ -44,11 +44,11 @@ RUN dnf clean all
 # Add entrypoint scripts.
 # VOLUME "/home/runner"
 ENTRYPOINT [ "/bin/bash" ]
-RUN groupadd docker && adduser runner && usermod -a -G docker runner
-USER runner
-COPY ./docker/rpm-builder/buildscript.sh /home/runner/buildscript.sh
-COPY ./docker/rpm-builder/testscript.sh /home/runner/testscript.sh
-# RUN chmod +x /home/runner/*.sh
+# RUN groupadd docker && adduser runner && usermod -a -G docker runner
+# USER runner
+COPY ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
+COPY ./docker/rpm-builder/testscript.sh /root/testscript.sh
+RUN chmod +x /root/*.sh
 
 # Modify file `~/.bash_profile` and install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc && \
@@ -56,6 +56,6 @@ echo "export GOPATH=${HOME}/go" >> ~/.bash_profile && echo "export PATH=${PATH}:
 source ~/.bash_profile && go install github.com/bazelbuild/bazelisk@latest
 
 # Not required for testing ...
-# This produces /home/runner/.cache/bazel
+# This produces /root/.cache/bazel
 # RUN $GOPATH/bin/bazelisk version
 
