@@ -13,19 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/unittests/selector/instance_database_helper.h"
+#include "cuttlefish/host/commands/cvd/unittests/selector/instance_database_helper.h"
 
-#include <algorithm>
-#include <cstdio>
 #include <cstdlib>
 
 #include <android-base/file.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
 
 namespace cuttlefish {
 namespace selector {

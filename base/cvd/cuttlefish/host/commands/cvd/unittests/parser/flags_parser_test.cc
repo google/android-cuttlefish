@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-
 #include <android-base/file.h>
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/cli/parser/launch_cvd_parser.h"
-#include "host/commands/cvd/unittests/parser/test_common.h"
+#include "cuttlefish/host/commands/cvd/unittests/parser/test_common.h"
+
 namespace cuttlefish {
+
 TEST(FlagsParserTest, ParseInvalidJson) {
   const char* test_string = R""""(
     instances=50;

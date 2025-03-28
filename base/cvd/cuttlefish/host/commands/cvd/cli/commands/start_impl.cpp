@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/start_impl.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/start_impl.h"
 
 #include <fstream>
 #include <regex>
 
 #include <android-base/strings.h>
 
-#include "common/libs/utils/files.h"
-#include "host/commands/cvd/utils/common.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace cvd_start_impl {

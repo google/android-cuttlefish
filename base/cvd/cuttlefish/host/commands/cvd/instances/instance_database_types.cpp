@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/instance_database_types.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 
 #include <ctime>
 #include <iomanip>

@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 
 #include <string>
 #include <vector>
 
 #include <android-base/file.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/cli/selector/selector_common_parser.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 
 namespace cuttlefish {
 

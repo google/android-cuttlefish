@@ -13,11 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/fetch/substitute.h"
-
-#include <android-base/file.h>
-#include <android-base/logging.h>
-#include <android-base/strings.h>
+#include "cuttlefish/host/commands/cvd/fetch/substitute.h"
 
 #include <functional>
 #include <optional>
@@ -25,12 +21,15 @@
 #include <string_view>
 #include <vector>
 
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/fetch/host_pkg_migration.pb.h"
-
+#include <android-base/file.h>
+#include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
+
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/fetch/host_pkg_migration.pb.h"
 
 namespace cuttlefish {
 namespace {

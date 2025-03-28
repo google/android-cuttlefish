@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/legacy/client.h"
+#include "cuttlefish/host/commands/cvd/legacy/client.h"
 
 #include <unistd.h>
 
 #include <android-base/file.h>
 #include <google/protobuf/text_format.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/proto.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/utils/common.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/proto.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 

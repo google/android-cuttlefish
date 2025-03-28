@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 
 namespace cuttlefish {
 

@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/instance_manager.h"
-
-#include <signal.h>
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 #include <sstream>
 
@@ -25,16 +23,16 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/instances/instance_database_utils.h"
-#include "host/commands/cvd/instances/instance_record.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/config_utils.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 
 namespace cuttlefish {
 namespace {

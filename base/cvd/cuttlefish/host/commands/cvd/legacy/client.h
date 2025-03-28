@@ -21,11 +21,11 @@
 
 #include <android-base/logging.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/unix_sockets.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/unix_sockets.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/legacy/server_constants.h"
+#include "cuttlefish/host/commands/cvd/legacy/server_constants.h"
 
 namespace cuttlefish {
 

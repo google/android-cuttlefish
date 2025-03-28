@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "host/commands/cvd/cli/command_sequence.h"
+#include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 
 namespace cuttlefish {
 

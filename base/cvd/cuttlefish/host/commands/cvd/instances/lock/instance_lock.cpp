@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/lock/instance_lock.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 
 #include <sys/file.h>
 
@@ -29,9 +29,9 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/selector/arguments_separator.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/arguments_separator.h"
 
 #include <android-base/strings.h>
 
-#include "host/commands/cvd/cli/selector/selector_common_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 
 namespace cuttlefish {
 namespace selector {

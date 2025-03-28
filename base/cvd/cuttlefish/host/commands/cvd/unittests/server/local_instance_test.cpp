@@ -15,13 +15,12 @@
 
 #include <random>
 #include <string>
-#include <vector>
 
 #include <gtest/gtest.h>
 
-#include "common/libs/utils/contains.h"
-#include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/unittests/server/local_instance_helper.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/unittests/server/local_instance_helper.h"
 
 namespace cuttlefish {
 namespace acloud {

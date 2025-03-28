@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/instance_database.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 
 #include <optional>
 #include <utility>
@@ -25,12 +25,12 @@
 #include <android-base/scopeguard.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/instances/instance_database_utils.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/commands/cvd/instances/instance_record.h"
-#include "host/libs/config/config_constants.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_record.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 

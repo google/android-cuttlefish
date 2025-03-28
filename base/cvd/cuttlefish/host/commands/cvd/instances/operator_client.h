@@ -19,9 +19,9 @@
 #include <memory>
 #include <string>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 
 namespace cuttlefish {
 

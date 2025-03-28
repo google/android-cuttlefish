@@ -13,15 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 #include <string>
 #include <vector>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/result_matchers.h"
+
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result_matchers.h"
 
 namespace cuttlefish {
 

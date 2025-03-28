@@ -18,13 +18,12 @@
 #include <google/protobuf/util/message_differencer.h>
 #include <gtest/gtest.h>
 
-#include "common/libs/utils/base64.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result_matchers.h"
+#include "cuttlefish/common/libs/utils/base64.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result_matchers.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
-#include "host/commands/cvd/cli/parser/launch_cvd_parser.h"
-#include "host/commands/cvd/unittests/parser/test_common.h"
+#include "cuttlefish/host/commands/cvd/unittests/parser/test_common.h"
 
 using google::protobuf::Message;
 using google::protobuf::util::MessageDifferencer;

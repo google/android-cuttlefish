@@ -13,12 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/unittests/selector/parser_names_helper.h"
+#include "cuttlefish/host/commands/cvd/unittests/selector/parser_names_helper.h"
 
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
-
-#include "host/commands/cvd/cli/selector/selector_option_parser_utils.h"
 
 namespace cuttlefish {
 namespace selector {

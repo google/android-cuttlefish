@@ -22,9 +22,9 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
-#include "host/commands/cvd/utils/flags_collector.h"
-#include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/unittests/server/cmd_runner.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/unittests/server/cmd_runner.h"
+#include "cuttlefish/host/commands/cvd/utils/flags_collector.h"
 
 namespace cuttlefish {
 

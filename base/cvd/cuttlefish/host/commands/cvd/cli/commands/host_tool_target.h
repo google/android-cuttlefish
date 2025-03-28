@@ -20,8 +20,8 @@
 
 #include <string>
 
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/utils/flags_collector.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/utils/flags_collector.h"
 
 namespace cuttlefish {
 

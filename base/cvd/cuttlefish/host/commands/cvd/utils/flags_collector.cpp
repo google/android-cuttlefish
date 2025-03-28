@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/utils/flags_collector.h"
+#include "cuttlefish/host/commands/cvd/utils/flags_collector.h"
 
 #include <memory>
 
 #include <android-base/logging.h>
 #include "tinyxml2.h"
 
-#include "common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/contains.h"
 
 using tinyxml2::XMLDocument;
 using tinyxml2::XMLElement;

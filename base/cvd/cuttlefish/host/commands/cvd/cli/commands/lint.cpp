@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/lint.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/lint.h"
 
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/parser/load_configs_parser.h"
-#include "host/commands/cvd/cli/types.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 namespace {

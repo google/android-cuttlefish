@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/reset_client_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
 
 #include <signal.h>
 
@@ -26,15 +26,15 @@
 #include <android-base/strings.h>
 #include <fmt/core.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/proc_file_utils.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/instances/reset_client_utils.h"
-#include "host/commands/cvd/instances/run_cvd_proc_collector.h"
-#include "host/commands/cvd/legacy/run_server.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/proc_file_utils.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
+#include "cuttlefish/host/commands/cvd/legacy/run_server.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace {

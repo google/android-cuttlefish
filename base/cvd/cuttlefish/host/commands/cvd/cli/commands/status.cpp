@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/status.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/status.h"
 
 #include <sys/types.h>
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/selector/selector.h"
-#include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/cli/utils.h"
-#include "host/commands/cvd/instances/instance_manager.h"
-#include "host/libs/config/config_constants.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/cli/utils.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace {

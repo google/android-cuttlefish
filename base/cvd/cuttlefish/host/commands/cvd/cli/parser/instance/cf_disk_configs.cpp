@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/cli/parser/instance/cf_disk_configs.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_disk_configs.h"
 
 #include <string>
 #include <vector>
 
+#include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
-#include "host/commands/cvd/cli/parser/cf_configs_common.h"
 
 #define DEFAULT_BLANK_DATA_IMAGE_SIZE "unset"
 

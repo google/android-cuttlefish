@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instances/instance_database_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
 
 #include <regex>
 #include <sstream>
@@ -22,7 +22,7 @@
 #include <android-base/file.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/files.h"
 
 namespace cuttlefish {
 
