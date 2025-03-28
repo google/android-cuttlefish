@@ -35,6 +35,27 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "acloud_mixsuperimage",
+    srcs = ["acloud_mixsuperimage.cpp"],
+    hdrs = ["acloud_mixsuperimage.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "acloud_mixsuperimage_clang_tidy",
+    srcs = [":acloud_mixsuperimage"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "command_handler",
     srcs = ["command_handler.cpp"],
     hdrs = ["command_handler.h"],
@@ -76,7 +97,6 @@ clang_tidy_test(
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "acloud_mixsuperimage.cpp",
         "acloud_translator.cpp",
         "bugreport.cpp",
         "cache.cpp",
@@ -103,7 +123,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "acloud_mixsuperimage.h",
         "acloud_translator.h",
         "bugreport.h",
         "cache.h",
