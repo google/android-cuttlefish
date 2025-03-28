@@ -48,7 +48,7 @@ RUN groupadd docker && adduser runner && usermod -a -G docker runner
 USER runner
 COPY ./docker/rpm-builder/buildscript.sh /home/runner/buildscript.sh
 COPY ./docker/rpm-builder/testscript.sh /home/runner/testscript.sh
-RUN chmod +x /home/runner/*.sh
+# RUN chmod +x /home/runner/*.sh
 
 # Modify file `~/.bash_profile` and install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc && \
