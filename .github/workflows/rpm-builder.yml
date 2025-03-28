@@ -9,8 +9,17 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        platform: [linux/amd64]
-        target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
+        platform:
+          - name: linux/amd64
+        target:
+          - name: rpm-builder
+            stage: builder
+          - name: rpm-testing
+            stage: testing
+          - name: rhel-integration
+            stage: integration
+          - name: rhel-orchestration
+            stage: orchestration
 
     permissions:
       contents: read
@@ -40,8 +49,8 @@ jobs:
           #  ghcr.io/syslogic/rpm-builder:syslogic-rpm-builder-latest
           # > pushing syslogic/builder:syslogic-builder-latest with docker:
           # ERROR: unauthorized: access token has insufficient scopes
-          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
-          tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
+          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET.NAME }}
+          tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET.NAME }}:latest
 
       # https://github.com/marketplace/actions/build-and-push-docker-images
       - name: Build and push Docker image
@@ -49,7 +58,7 @@ jobs:
         id: build
         with:
           context: .
-          target: ${{ MATRIX.TARGET }}
+          target: ${{ MATRIX.TARGET.STAGE }}
           platforms: ${{ MATRIX.PLATFORM }}
           file: docker/rpm-builder/Dockerfile
           push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
@@ -60,7 +69,7 @@ jobs:
       - name: Generate artifact attestation
         uses: 'actions/attest-build-provenance@v2'
         with:
-          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET.NAME }}
           subject-digest: ${{ steps.metadata.outputs.digest }}
           push-to-registry: true
 
@@ -74,4 +83,4 @@ jobs:
         target: [ builder, testing, integration, orchestration ]
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      docker-image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
+      docker-image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET.NAME }}:latest
