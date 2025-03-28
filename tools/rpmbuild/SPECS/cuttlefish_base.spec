@@ -61,8 +61,21 @@ install -m 655 %{srcpath}/cuttlefish-base.cuttlefish-host-resources.init %{build
 %define srcpath ../../../base/rhel
 install -m 655 %{srcpath}/cuttlefish.service %{buildroot}/lib/systemd/system/cuttlefish.service
 
-%define srcpath ../../../base/cvd/bazel-bin
-install -m 755 %{srcpath}/cuttlefish/cvd %{buildroot}/usr/lib/cuttlefish-common/bin/cvd
+# TODO: there are more commands there now.
+%define srcpath ../../../base/cvd/bazel-bin/cuttlefish/package
+# acloud_translator         cvd_internal_env               health                  process_restarter
+# adb_connector             cvd_internal_start             kernel_log_monitor      record_cvd
+# allocd_client             cvd_internal_status            log_tee                 restart_cvd
+# assemble_cvd              cvd_internal_stop              logcat_receiver         run_cvd
+# console_forwarder         cvd_send_id_disclosure         metrics                 screen_recording_server
+# control_env_proxy_server  cvd_update_security_algorithm  metrics_launcher        snapshot_util_cvd
+# cvd                       echo_server                    mkenvimage_slim         socket_vsock_proxy
+# cvd.repo_mapping          extract-ikconfig               modem_simulator         tcp_connector
+# cvd.runfiles              extract-vmlinux                openwrt_control_server  tombstone_receiver
+# cvd.runfiles_manifest     generate_shader_embed          operator_proxy
+# cvd_import_locations      gnss_grpc_proxy                powerbtn_cvd
+# cvd_internal_display      graphics_detector              powerwash_cvd
+install -m 755 %{srcpath}/cuttlefish-common/bin/cvd %{buildroot}/usr/lib/cuttlefish-common/bin/cvd
 
 %define srcpath ../../../base/host/deploy
 install -m 655 %{srcpath}/install_zip.sh %{buildroot}/usr/bin/install_zip.sh
