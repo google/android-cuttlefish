@@ -62,7 +62,7 @@ jobs:
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         id: build-rpm-packages
         run: |
-          docker run --name rpm-build --attach STDOUT --attach STDERR --quiet --entrypoint ${{ INPUTS.ENTRY-POINT }} ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-build --attach STDOUT --attach STDERR --quiet --entrypoint "${{ INPUTS.ENTRY-POINT }}" ${{ INPUTS.DOCKER-IMAGE }}
           cp /root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/RPMS/* ${{ GITHUB.WORKSPACE }}
           cp /root/${{ GITHUB.REPOSITORY }}/tools/rpmbuild/SRPMS/* ${{ GITHUB.WORKSPACE }}
           echo "result=ok" >> $GITHUB_OUTPUT
