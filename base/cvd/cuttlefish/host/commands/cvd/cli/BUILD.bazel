@@ -8,7 +8,6 @@ cc_library(
     name = "command_request",
     srcs = ["command_request.cpp"],
     hdrs = ["command_request.h"],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":types",
         "//cuttlefish/common/libs/utils",
@@ -28,7 +27,6 @@ cc_library(
     name = "frontline_parser",
     srcs = ["frontline_parser.cpp"],
     hdrs = ["frontline_parser.h"],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":types",
         "//cuttlefish/common/libs/utils:result",
@@ -47,7 +45,6 @@ cc_library(
     name = "interruptible_terminal",
     srcs = ["interruptible_terminal.cpp"],
     hdrs = ["interruptible_terminal.h"],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -82,7 +79,6 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:help.h",
         "//cuttlefish/host/commands/cvd/cli/commands:load_configs.h",
     ],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":command_request",
         "//cuttlefish/common/libs/fs",
@@ -116,7 +112,6 @@ clang_tidy_test(
 cc_library(
     name = "types",
     hdrs = ["types.h"],
-    strip_include_prefix = "//cuttlefish",
 )
 
 clang_tidy_test(
@@ -129,7 +124,6 @@ cc_library(
     name = "utils",
     srcs = ["utils.cpp"],
     hdrs = ["utils.h"],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":command_request",
         ":types",

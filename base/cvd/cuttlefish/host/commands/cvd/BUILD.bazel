@@ -10,7 +10,6 @@ cc_library(
     srcs = ["cvd.cpp" ],
     hdrs = ["cvd.h"],
     copts = COPTS + [ "-Werror=sign-compare" ],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",

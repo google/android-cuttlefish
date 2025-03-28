@@ -20,7 +20,6 @@ cc_library(
     srcs = ["substitute.cc"],
     hdrs = ["substitute.h"],
     copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":host_pkg_migration_cc_proto",
         "//cuttlefish/common/libs/utils",
@@ -51,7 +50,6 @@ cc_library(
         "fetch_tracer.h",
     ],
     copts = COPTS + [ "-Werror=sign-compare" ],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":substitute",
         "//cuttlefish/common/libs/utils",

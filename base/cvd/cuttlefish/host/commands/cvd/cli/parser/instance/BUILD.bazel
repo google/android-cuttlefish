@@ -35,5 +35,4 @@ cc_library(
         "@protobuf",
         "@protobuf//:json_util",
     ],
-    strip_include_prefix = "//cuttlefish",
 )

@@ -26,7 +26,6 @@ cc_library(
         "run_server.h",
         "server_constants.h",
     ],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":cvd_server_cc_proto",
         "//cuttlefish/common/libs/fs",
