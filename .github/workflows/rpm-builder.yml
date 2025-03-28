@@ -40,7 +40,7 @@ jobs:
           #  ghcr.io/syslogic/rpm-builder:syslogic-rpm-builder-latest
           # > pushing syslogic/builder:syslogic-builder-latest with docker:
           # ERROR: unauthorized: access token has insufficient scopes
-          images: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
 
       # https://github.com/marketplace/actions/build-and-push-docker-images
@@ -60,8 +60,7 @@ jobs:
       - name: Generate artifact attestation
         uses: 'actions/attest-build-provenance@v2'
         with:
-          subject-name: ghcr.io/${{ steps.metadata.outputs.tags }}
-          # subject-path: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           subject-digest: ${{ steps.metadata.outputs.digest }}
           push-to-registry: true
 
