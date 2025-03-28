@@ -27,26 +27,20 @@ EXPOSE 6520-6620
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
 # RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
 
-# Install the EPEL repository.
+# EPEL repository provides `ncurses-compat-libs` and installs `dnf-core-plugin`, which has `dnf builddeps`.
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && dnf -y upgrade
-
 # Provide build dependencies.
-# RUN dnf -y install dnf-plugins-core
-RUN dnf -y install git nano sudo rpm-build golang-bin curl-devel wayland-devel ncurses-compat-libs
-RUN dnf -y install protobuf-devel protobuf-compiler --enablerepo crb
-
-# Provide integration and orchestration dependencies.
+RUN dnf -y install git sudo rpm-build golang-bin curl-devel wayland-devel ncurses-compat-libs
+# Package `protobuf` comes from CRB repository
+RUN dnf -y install protobuf protobuf-devel protobuf-compiler --enablerepo crb
+# Integration and orchestration dependencies.
 RUN dnf -y install qemu-kvm nginx systemd-journal-remote
-
-# RUN dnf list installed
+RUN dnf list installed
 RUN dnf clean all
 
-# VOLUME "/root"
-ENTRYPOINT [ "/bin/bash", "-c" ]
-# RUN groupadd docker && adduser runner && usermod -a -G docker runner
-# USER runner
-
 # Add entrypoint scripts.
+VOLUME [ "/root" ]
+ENTRYPOINT [ "/bin/bash", "-c" ]
 COPY ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
 COPY ./docker/rpm-builder/testscript.sh /root/testscript.sh
 
