@@ -36,7 +36,7 @@ jobs:
         with:
           registry: "ghcr.io"
           username: ${{ GITHUB.ACTOR }}
-          password: ${{ SECRETS.GITHUB_TOKEN }}
+          password: ${{ SECRETS.TOKEN }}
 
       # https://github.com/actions/checkout
       - uses: 'actions/checkout@v4'
