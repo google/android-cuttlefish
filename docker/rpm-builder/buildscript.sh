@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
+REPO_OWNER=syslogic
+REPO_NAME=android-cuttlefish
 
-# cd /root || exit
-# git clone https://github.com/google/android-cuttlefish.git
-git clone https://github.com/syslogic/android-cuttlefish.git
-cd android-cuttlefish || exit
+git clone https://github.com/${REPO_OWNER}/${REPO_NAME}.git
+cd $REPO_NAME || exit
 git switch rpm-build
 
 ./tools/buildutils/build_packages.sh
 
-cd tools/rpmbuild/RPMS || exit
-tar zcvf /root/android-cuttlefish-rpm.tar.gz /*
-
-cd ../SRPMS || exit
-tar zcvf /root/android-cuttlefish-src-rpm.tar.gz /*
+tar zcvf /root/android-cuttlefish-src-rpm.tar.gz /root/${REPO_NAME}/tools/rpmbuild/*/*.rpm
