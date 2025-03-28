@@ -21,24 +21,19 @@ ARG BAZEL_VERSION=7.6.0
 ADD ./docker/rpm-builder/buildscript.sh /root/entrypoint.sh
 ENTRYPOINT [ "/bin/bash", "-c", "/root/entrypoint.sh" ]
 
-# Install build dependencies.
-# RUN dnf -y swap curl-minimal curl-full
-# RUN dnf -y swap coreutils-single coreutils
+# Build dependencies.
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
 # RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
-
-# Provide build dependencies.
-RUN dnf -y install git sudo rpm-build golang-bin curl-devel wayland-devel ncurses-compat-libs
+RUN dnf -y install git sudo rpm-build golang-bin curl-devel wayland-devel ncurses-compat-libs \
 # Package `protobuf` comes from CRB repository
-RUN dnf -y install protobuf protobuf-devel protobuf-compiler --enablerepo crb
-RUN dnf clean all
+dnf -y install protobuf protobuf-devel protobuf-compiler --enablerepo crb && dnf clean all
 
 # Modify file `~/.bash_profile`,
-RUN echo "export PATH=${PATH}:${HOME}/go/bin" >> ~/.bash_profile
 RUN echo "export GOPATH=${HOME}/go" >> ~/.bash_profile
+RUN echo "export PATH=${PATH}:${HOME}/go/bin" >> ~/.bash_profile
 RUN source ~/.bash_profile
 
-# Install `bazelisk`.
+# Go install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc
 RUN go install github.com/bazelbuild/bazelisk@latest
 
@@ -87,4 +82,3 @@ EXPOSE 2080 2443
 EXPOSE 8443/tcp 15550-15560
 # Expose ADB
 EXPOSE 6520-6620
-
