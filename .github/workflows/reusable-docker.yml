@@ -67,7 +67,8 @@ jobs:
           docker run --name rpm-build --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
           CID=`docker ps -aqf "name=^rpm-build$"`
           echo "CID: ${CID}"
-          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS ${{ GITHUB.WORKSPACE }}/packages
+          docker cp $CID:/root/${{ ENV.REPO_NAME }}/tools/rpmbuild/RPMS ${{ GITHUB.WORKSPACE }}/packages
+          docker cp $CID:/root/${{ ENV.REPO_NAME }}/tools/rpmbuild/SRPMS ${{ GITHUB.WORKSPACE }}/packages
           docker stop rpm-build && docker rm rpm-build
           echo "result=ok" >> $GITHUB_OUTPUT
 
@@ -88,7 +89,7 @@ jobs:
         uses: 'actions/upload-artifact@v4'
         id: retain-srpm-packages
         with:
-          name: ${{ ENV.REPO_NAME }}-srpm
+          name: ${{ ENV.REPO_NAME }}-src-rpm
           path: |
             ${{ GITHUB.WORKSPACE }}/packages/*.src.rpm
           retention-days: 14
