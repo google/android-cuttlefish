@@ -53,7 +53,7 @@ jobs:
           mkdir ${{ RUNNER.TEMP }}/root_volume
           docker run --name rpm-builder --quiet --attach STDOUT --attach STDERR --volume ${{ RUNNER.TEMP }}/root_volume:/root ${{ INPUTS.DOCKER-IMAGE }}
           CID=`docker ps -aqf "name=^rpm-builder$"`
-          echo "CID: ${CID}"          
+          echo "CID: ${CID}"
           docker inspect -f {{.Mounts}} $CID
           ls -la ${{ RUNNER.TEMP }}/root_volume
           
@@ -69,7 +69,7 @@ jobs:
         id: retain-rpm-packages
         with:
           path: ${{ RUNNER.TEMP }}/*.tar.gz
-          name: android-cuttlefish-rpm
+          name: android-cuttlefish-rhel
           retention-days: 14
 
       # https://docs.docker.com/reference/cli/docker/container/run/
