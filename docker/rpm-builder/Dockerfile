@@ -43,8 +43,8 @@ RUN dnf clean all
 
 # Add entrypoint scripts.
 # VOLUME "/home/runner"
-RUN addgroup docker && adduser runner && usermod -a -G docker runner
-USER runner:docker
+#RUN groupadd docker && adduser runner && usermod -a -G docker runner
+USER runner
 ADD ./docker/rpm-builder/buildscript.sh /home/runner/buildscript.sh
 ADD ./docker/rpm-builder/testscript.sh ~/home/runner/testscript.sh
 # ENTRYPOINT [ "/home/runner/buildscript.sh", "/home/runner/testscript.sh" ]
@@ -58,4 +58,5 @@ source ~/.bash_profile && go install github.com/bazelbuild/bazelisk@latest
 # RUN $GOPATH/bin/bazelisk version
 
 USER root
-RUN chown runner:docker /home/runner/*.sh && chmod +x /home/runner/*.sh
+# RUN chown runner:docker /home/runner/*.sh && chmod +x /home/runner/*.sh
+RUN chmod +x /home/runner/*.sh
