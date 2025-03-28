@@ -24,18 +24,16 @@ ENTRYPOINT [ "/bin/bash", "-c", "/root/entrypoint.sh" ]
 # Build dependencies.
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
 # RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
-RUN dnf -y install git sudo rpm-build golang-bin curl-devel wayland-devel ncurses-compat-libs \
+RUN dnf -y install git sudo nano rpm-build golang-bin curl-devel wayland-devel ncurses-compat-libs \
 # Package `protobuf` comes from CRB repository
 protobuf protobuf-devel protobuf-compiler --enablerepo crb && dnf clean all
 
-# Modify file `~/.bash_profile`,
-RUN echo "export GOPATH=${HOME}/go" >> ~/.bash_profile
-RUN echo "export PATH=${PATH}:${HOME}/go/bin" >> ~/.bash_profile
-RUN source ~/.bash_profile
-
-# Go install `bazelisk`.
-RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc
-RUN go install github.com/bazelbuild/bazelisk@latest
+# Modify file `~/.bash_profile` and go install `bazelisk`.
+RUN echo "export GOPATH=${HOME}/go" >> ~/.bash_profile \
+echo "export PATH=${PATH}:${HOME}/go/bin" >> ~/.bash_profile \
+echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc \
+source ~/.bash_profile \
+go install github.com/bazelbuild/bazelisk@latest
 
 
 # RPM Testing
