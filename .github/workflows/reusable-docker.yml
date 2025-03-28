@@ -64,7 +64,7 @@ jobs:
         # --quiet --entrypoint ${{ INPUTS.ENTRY-POINT }}
         run: |
           docker run --name rpm-build --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
-          ls /var/lib/docker/devicemapper/mnt/rpm-build/rootfs/
+          # sudo ls /var/lib/docker/devicemapper/mnt/rpm-build/rootfs/
           docker cp rpm-build:/root/android-cuttlefish/tools/rpmbuild/RPMS/.gitkeep ${{ GITHUB.WORKSPACE }}
           docker cp rpm-build:/root/android-cuttlefish/tools/rpmbuild/SRPMS/.gitkeep ${{ GITHUB.WORKSPACE }}
           docker stop rpm-build && docker rm rpm-build
