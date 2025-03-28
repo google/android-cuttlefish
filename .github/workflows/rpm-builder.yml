@@ -54,7 +54,8 @@ jobs:
           #  ghcr.io/syslogic/rpm-builder:syslogic-rpm-builder-latest
           # > pushing syslogic/builder:syslogic-builder-latest with docker:
           # ERROR: unauthorized: access token has insufficient scopes
-          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          # images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          images: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
 
       # https://github.com/marketplace/actions/build-and-push-docker-images
