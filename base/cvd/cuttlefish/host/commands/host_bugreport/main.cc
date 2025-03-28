@@ -15,6 +15,7 @@
  */
 
 #include <stdio.h>
+
 #include <fstream>
 #include <string>
 
@@ -24,7 +25,6 @@
 #include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/known_paths.h"
