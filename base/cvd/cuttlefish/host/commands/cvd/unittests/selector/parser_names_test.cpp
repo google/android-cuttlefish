@@ -16,8 +16,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "common/libs/utils/result_matchers.h"
-#include "host/commands/cvd/unittests/selector/parser_names_helper.h"
+#include "cuttlefish/common/libs/utils/result_matchers.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
+#include "cuttlefish/host/commands/cvd/unittests/selector/parser_names_helper.h"
 
 namespace cuttlefish {
 namespace selector {

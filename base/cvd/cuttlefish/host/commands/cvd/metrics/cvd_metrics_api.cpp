@@ -17,11 +17,11 @@
 
 #include <internal_user_log.pb.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "host/commands/cvd/metrics/cvd_metrics_api.h"
-#include "host/commands/cvd/metrics/utils.h"
-#include "host/commands/metrics/metrics_defs.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/host/commands/cvd/metrics/cvd_metrics_api.h"
+#include "cuttlefish/host/commands/cvd/metrics/utils.h"
+#include "cuttlefish/host/commands/metrics/metrics_defs.h"
 
 namespace cuttlefish {
 

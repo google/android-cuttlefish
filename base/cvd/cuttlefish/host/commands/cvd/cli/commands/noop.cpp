@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/noop.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/noop.h"
 
 #include <memory>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 namespace {

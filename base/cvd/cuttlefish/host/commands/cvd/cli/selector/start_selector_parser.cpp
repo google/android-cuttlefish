@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/selector/start_selector_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
 
 #include <unistd.h>
 
@@ -24,14 +24,14 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/users.h"
-#include "host/commands/cvd/cli/selector/device_selector_utils.h"
-#include "host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "host/commands/cvd/cli/selector/selector_option_parser_utils.h"
-#include "host/commands/cvd/cli/types.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/instance_nums.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/device_selector_utils.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_option_parser_utils.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/instance_nums.h"
 
 namespace cuttlefish {
 namespace selector {

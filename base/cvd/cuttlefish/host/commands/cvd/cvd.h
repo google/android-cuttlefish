@@ -20,10 +20,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/instances/lock/instance_lock.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 
 namespace cuttlefish {
 

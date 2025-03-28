@@ -21,6 +21,7 @@ cc_library(
         "shared_select.h",
     ],
     copts = COPTS,
+    linkopts = ["-lrt"],
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:environment",
@@ -33,7 +34,10 @@ cc_library(
 clang_tidy_test(
     name = "fs_clang_tidy",
     srcs = [":fs"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_test(
@@ -54,5 +58,8 @@ cc_test(
 clang_tidy_test(
     name = "fs_test_clang_tidy",
     srcs = [":fs_test"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

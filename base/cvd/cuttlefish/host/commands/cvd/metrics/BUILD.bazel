@@ -15,7 +15,6 @@ cc_library(
     hdrs = [
         "metrics_notice.h",
     ],
-    strip_include_prefix = "//cuttlefish",
 )
 
 clang_tidy_test(

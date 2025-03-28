@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/legacy/run_server.h"
+#include "cuttlefish/host/commands/cvd/legacy/run_server.h"
 
 #include <signal.h>
 #include <sys/resource.h>
 #include <unistd.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/shared_fd_flag.h"
-#include "common/libs/utils/unix_sockets.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/shared_fd_flag.h"
+#include "cuttlefish/common/libs/utils/unix_sockets.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/instances/instance_database.h"
-#include "host/commands/cvd/metrics/metrics_notice.h"
-#include "host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/commands/cvd/metrics/metrics_notice.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/display.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/display.h"
 
 #include <android-base/strings.h>
 
@@ -22,16 +22,16 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/subprocess.h"
-#include "common/libs/utils/users.h"
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/selector/selector.h"
-#include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/cli/utils.h"
-#include "host/commands/cvd/utils/common.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/cli/utils.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace {

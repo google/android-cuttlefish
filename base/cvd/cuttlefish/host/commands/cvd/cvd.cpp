@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cvd.h"
+#include "cuttlefish/host/commands/cvd/cvd.h"
 
 #include <iostream>
 #include <string>
@@ -24,15 +24,14 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/cli/frontline_parser.h"
-#include "host/commands/cvd/cli/request_context.h"
-#include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/instances/lock/instance_lock.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/frontline_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/request_context.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 
 namespace cuttlefish {
 

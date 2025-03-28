@@ -18,14 +18,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/cli/selector/creation_analyzer.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 
 namespace cuttlefish {
 namespace selector {

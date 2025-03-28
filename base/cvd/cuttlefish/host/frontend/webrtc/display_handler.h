@@ -27,6 +27,7 @@
 #include "host/frontend/webrtc/screenshot_handler.h"
 #include "host/libs/screen_connector/ring_buffer_manager.h"
 #include "host/libs/screen_connector/screen_connector.h"
+#include "host/libs/screen_connector/video_frame_buffer.h"
 
 namespace cuttlefish {
 class CompositionManager;
@@ -78,7 +79,7 @@ class DisplayHandler {
  private:
   struct BufferInfo {
     std::chrono::system_clock::time_point last_sent_time_stamp;
-    std::shared_ptr<webrtc_streaming::VideoFrameBuffer> buffer;
+    std::shared_ptr<VideoFrameBuffer> buffer;
   };
   enum class RepeaterState {
     RUNNING,

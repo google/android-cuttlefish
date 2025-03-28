@@ -21,8 +21,7 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/cli/selector/start_selector_parser.h"
-#include "host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 namespace selector {

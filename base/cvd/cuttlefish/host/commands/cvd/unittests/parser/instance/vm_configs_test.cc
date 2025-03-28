@@ -17,12 +17,11 @@
 #include <algorithm>
 
 #include <android-base/file.h>
-
 #include <gtest/gtest.h>
 
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result_matchers.h"
-#include "host/commands/cvd/unittests/parser/test_common.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result_matchers.h"
+#include "cuttlefish/host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
 

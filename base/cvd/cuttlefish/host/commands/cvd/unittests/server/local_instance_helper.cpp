@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/unittests/server/local_instance_helper.h"
+#include "cuttlefish/host/commands/cvd/unittests/server/local_instance_helper.h"
 
-#include "host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 namespace acloud {

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/interruptible_terminal.h"
+#include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 
 #include <errno.h>
 
 #include <android-base/scopeguard.h>
 
-#include "common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
 
 namespace cuttlefish {
 

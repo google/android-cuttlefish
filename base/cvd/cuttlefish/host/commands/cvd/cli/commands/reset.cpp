@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/reset.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/reset.h"
 
 #include <iostream>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/instances/reset_client_utils.h"
-#include "host/commands/cvd/utils/common.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace {

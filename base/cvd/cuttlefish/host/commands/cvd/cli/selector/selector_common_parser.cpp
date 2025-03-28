@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/selector/selector_common_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 
 #include <unistd.h>
 
@@ -24,10 +24,10 @@
 
 #include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/flag_parser.h"
-#include "host/commands/cvd/cli/selector/selector_constants.h"
-#include "host/commands/cvd/instances/instance_database_utils.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
 
 namespace cuttlefish {
 namespace selector {

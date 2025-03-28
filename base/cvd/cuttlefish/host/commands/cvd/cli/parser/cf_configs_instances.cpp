@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/parser/cf_configs_instances.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_instances.h"
 
 #include <string>
 #include <vector>
 
 #include <android-base/logging.h>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_boot_configs.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_connectivity_configs.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_disk_configs.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_graphics_configs.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_security_configs.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_streaming_configs.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_vm_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
-#include "host/commands/cvd/cli/parser/cf_configs_common.h"
-#include "host/commands/cvd/cli/parser/instance/cf_boot_configs.h"
-#include "host/commands/cvd/cli/parser/instance/cf_connectivity_configs.h"
-#include "host/commands/cvd/cli/parser/instance/cf_disk_configs.h"
-#include "host/commands/cvd/cli/parser/instance/cf_graphics_configs.h"
-#include "host/commands/cvd/cli/parser/instance/cf_security_configs.h"
-#include "host/commands/cvd/cli/parser/instance/cf_streaming_configs.h"
-#include "host/commands/cvd/cli/parser/instance/cf_vm_configs.h"
 
 namespace cuttlefish {
 

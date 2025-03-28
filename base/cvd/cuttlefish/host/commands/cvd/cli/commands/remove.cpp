@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/remove.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/remove.h"
 
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/selector/selector.h"
-#include "host/commands/cvd/cli/utils.h"
-#include "host/commands/cvd/instances/instance_database_utils.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
+#include "cuttlefish/host/commands/cvd/cli/utils.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 namespace {

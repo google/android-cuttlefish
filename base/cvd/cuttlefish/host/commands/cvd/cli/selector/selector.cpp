@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/selector/selector.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 
 #include <sstream>
 #include <string>
 
 #include <android-base/parseint.h>
 
-#include "common/libs/utils/users.h"
-#include "host/commands/cvd/cli/interruptible_terminal.h"
-#include "host/commands/cvd/cli/selector/device_selector_utils.h"
-#include "host/commands/cvd/cli/utils.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/libs/config/config_constants.h"
+#include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/device_selector_utils.h"
+#include "cuttlefish/host/commands/cvd/cli/utils.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace selector {

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/fetch/fetch_cvd.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 
 #include <android-base/file.h>
 #include <sys/stat.h>
@@ -24,7 +24,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -32,27 +31,27 @@
 #include <curl/curl.h>
 #include <sparse/sparse.h>
 
-#include "common/libs/utils/archive.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
-#include "host/commands/cvd/fetch/fetch_tracer.h"
-#include "host/commands/cvd/fetch/substitute.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/libs/config/fetcher_config.h"
-#include "host/libs/image_aggregator/sparse_image_utils.h"
-#include "host/libs/web/android_build_api.h"
-#include "host/libs/web/android_build_string.h"
-#include "host/libs/web/caching_build_api.h"
-#include "host/libs/web/cas/cas_downloader.h"
-#include "host/libs/web/chrome_os_build_string.h"
-#include "host/libs/web/credential_source.h"
-#include "host/libs/web/http_client/curl_global_init.h"
-#include "host/libs/web/http_client/http_client.h"
-#include "host/libs/web/luci_build_api.h"
-#include "host/libs/web/oauth2_consent.h"
+#include "cuttlefish/common/libs/utils/archive.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
+#include "cuttlefish/host/commands/cvd/fetch/substitute.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
+#include "cuttlefish/host/libs/web/android_build_api.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/caching_build_api.h"
+#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
+#include "cuttlefish/host/libs/web/chrome_os_build_string.h"
+#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/luci_build_api.h"
+#include "cuttlefish/host/libs/web/oauth2_consent.h"
 
 namespace cuttlefish {
 namespace {

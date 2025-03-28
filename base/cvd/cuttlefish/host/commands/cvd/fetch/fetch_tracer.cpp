@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/fetch/fetch_tracer.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 
 #include <chrono>
 #include <iomanip>

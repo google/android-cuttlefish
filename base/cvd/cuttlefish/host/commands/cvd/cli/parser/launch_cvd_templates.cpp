@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/cli/parser/launch_cvd_templates.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/launch_cvd_templates.h"
 
 #include <string>
 #include <string_view>
@@ -21,10 +21,10 @@
 #include <google/protobuf/util/json_util.h>
 #include "json/json.h"
 
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
-#include "host/commands/cvd/cli/parser/cf_configs_common.h"
 
 using google::protobuf::util::JsonStringToMessage;
 using google::protobuf::util::MessageToJsonString;

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/selector/device_selector_utils.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/device_selector_utils.h"
 
 #include <android-base/parseint.h>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/users.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/users.h"
 
 namespace cuttlefish {
 namespace selector {

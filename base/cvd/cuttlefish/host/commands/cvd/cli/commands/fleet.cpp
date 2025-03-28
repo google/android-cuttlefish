@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/fleet.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/fleet.h"
 
 #include <sys/types.h>
 
 #include <android-base/file.h>
 
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/types.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 

@@ -18,11 +18,11 @@
 
 #include <utility>
 
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/cli/command_request.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/commands/cvd/instances/instance_manager.h"
-#include "host/commands/cvd/instances/instance_record.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 
 namespace cuttlefish {
 namespace selector {

@@ -18,10 +18,9 @@
 #include <gtest/gtest.h>
 #include "json/json.h"
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/result_matchers.h"
-#include "host/commands/cvd/cli/parser/launch_cvd_parser.h"
-#include "host/commands/cvd/unittests/parser/test_common.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result_matchers.h"
+#include "cuttlefish/host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
 

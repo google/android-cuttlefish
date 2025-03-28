@@ -19,8 +19,8 @@
 #include <mutex>
 #include <optional>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 

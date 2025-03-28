@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 #include <chrono>
 #include <cstdint>
@@ -25,13 +25,12 @@
 
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
-#include "gflags/gflags.h"
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/web/android_build_string.h"
-#include "host/libs/web/cas/cas_downloader.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 
 namespace cuttlefish {
 namespace {

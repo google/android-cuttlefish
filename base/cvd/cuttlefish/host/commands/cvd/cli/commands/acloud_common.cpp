@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/acloud_common.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/acloud_common.h"
 
 #include <string>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
 
 namespace cuttlefish {
 

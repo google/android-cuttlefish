@@ -21,7 +21,6 @@ cc_library(
     name = "command_handler",
     srcs = ["command_handler.cpp"],
     hdrs = ["command_handler.h"],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
@@ -40,7 +39,6 @@ cc_library(
     name = "host_tool_target",
     srcs = ["host_tool_target.cpp"],
     hdrs = ["host_tool_target.h"],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//:libbuildversion",
         "//cuttlefish/common/libs/utils",
@@ -116,7 +114,6 @@ cc_library(
         "try_acloud.h",
         "version.h",
     ],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":host_tool_target",
         "//:libbuildversion",

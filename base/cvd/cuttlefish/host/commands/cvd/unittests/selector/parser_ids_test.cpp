@@ -16,8 +16,8 @@
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/cli/selector/start_selector_parser.h"
-#include "host/commands/cvd/unittests/selector/parser_ids_helper.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
+#include "cuttlefish/host/commands/cvd/unittests/selector/parser_ids_helper.h"
 
 namespace cuttlefish {
 namespace selector {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/utils/interrupt_listener.h"
+#include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -28,8 +28,8 @@
 
 #include <android-base/logging.h>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/signals.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/signals.h"
 
 namespace cuttlefish {
 namespace {

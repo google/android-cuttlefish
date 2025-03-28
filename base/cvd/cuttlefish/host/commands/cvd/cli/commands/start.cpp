@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/start.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 
 #include <sys/types.h>
 
@@ -30,27 +30,27 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/users.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/cli/utils.h"
+#include "cuttlefish/host/commands/cvd/fetch/substitute.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/cli/selector/selector.h"
-#include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/cli/utils.h"
-#include "host/commands/cvd/fetch/substitute.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/commands/cvd/instances/operator_client.h"
-#include "host/commands/cvd/instances/reset_client_utils.h"
-#include "host/commands/cvd/utils/common.h"
-#include "host/commands/cvd/utils/interrupt_listener.h"
-#include "host/commands/cvd/utils/subprocess_waiter.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/operator_client.h"
+#include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
+#include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace {

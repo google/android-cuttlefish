@@ -29,10 +29,10 @@
 #include <curl/curl.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/utils/tee_logging.h"
-#include "host/commands/cvd/metrics/utils.h"
-#include "host/commands/metrics/metrics_defs.h"
-#include "host/libs/web/http_client/curl_global_init.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/cvd/metrics/utils.h"
+#include "cuttlefish/host/commands/metrics/metrics_defs.h"
+#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 
 using cuttlefish::MetricsExitCodes;
 

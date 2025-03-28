@@ -165,3 +165,10 @@ git_repository(
     build_file = "@//:BUILD.libcbor.bazel",
     remote = "https://github.com/PJK/libcbor",
 )
+
+git_repository(
+    name = "libwebm",
+    commit = "6745fd29e0245fc584b0bb9f65018ea2366fe7fb", # libwebm-1.0.0.31
+    build_file = "@//:BUILD.libwebm.bazel",
+    remote = "https://github.com/webmproject/libwebm",
+)

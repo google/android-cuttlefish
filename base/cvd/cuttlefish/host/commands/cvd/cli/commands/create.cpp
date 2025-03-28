@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/create.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/create.h"
 
 #include <sys/types.h>
 
@@ -26,23 +26,23 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/users.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/acloud_common.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/cli/command_sequence.h"
-#include "host/commands/cvd/cli/commands/acloud_common.h"
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/commands/host_tool_target.h"
-#include "host/commands/cvd/cli/selector/creation_analyzer.h"
-#include "host/commands/cvd/cli/types.h"
-#include "host/commands/cvd/instances/instance_database_types.h"
-#include "host/commands/cvd/instances/instance_group_record.h"
-#include "host/commands/cvd/instances/lock/instance_lock.h"
-#include "host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace {

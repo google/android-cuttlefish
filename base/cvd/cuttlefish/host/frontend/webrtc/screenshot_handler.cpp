@@ -16,9 +16,6 @@
 
 #include "host/frontend/webrtc/screenshot_handler.h"
 
-#include <filesystem>
-#include <fstream>
-
 #include <SkData.h>
 #include <SkImage.h>
 #include <SkJpegEncoder.h>
@@ -31,8 +28,7 @@
 namespace cuttlefish {
 namespace {
 
-Result<sk_sp<SkImage>> GetSkImage(
-    const webrtc_streaming::VideoFrameBuffer& frame) {
+Result<sk_sp<SkImage>> GetSkImage(const VideoFrameBuffer& frame) {
   const int w = frame.width();
   const int h = frame.height();
 

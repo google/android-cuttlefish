@@ -23,11 +23,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/unique_resource_allocator.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "host/commands/cvd/instances/lock/instance_lock.h"
-#include "host/commands/cvd/cli/selector/start_selector_parser.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 
 namespace cuttlefish {
 namespace selector {

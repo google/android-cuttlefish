@@ -17,8 +17,8 @@
 
 #include <string>
 
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 namespace cuttlefish {
 

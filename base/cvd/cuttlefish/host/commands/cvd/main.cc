@@ -30,16 +30,16 @@
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/cvd.h"
-#include "host/commands/cvd/legacy/client.h"
-#include "host/commands/cvd/utils/common.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/cvd/cvd.h"
+#include "cuttlefish/host/commands/cvd/legacy/client.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "host/commands/cvd/metrics/cvd_metrics_api.h"
-#include "host/commands/cvd/legacy/run_server.h"
+#include "cuttlefish/host/commands/cvd/legacy/run_server.h"
 
 namespace cuttlefish {
 namespace {

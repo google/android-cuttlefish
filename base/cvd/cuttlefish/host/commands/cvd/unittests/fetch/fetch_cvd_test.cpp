@@ -20,12 +20,12 @@
 #include <android-base/file.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/result_matchers.h"
 #include "fmt/core.h"
-#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
+
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result_matchers.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 namespace cuttlefish {
 

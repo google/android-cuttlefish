@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cli/commands/cmd_list.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/cmd_list.h"
 
 #include <vector>
 
 #include <android-base/strings.h>
 #include <json/value.h>
 
-#include "host/commands/cvd/cli/commands/command_handler.h"
-#include "host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 
