@@ -57,7 +57,7 @@ jobs:
           docker inspect -f {{.Mounts}} $CID
           ls -la ${{ RUNNER.TEMP }}/home_volume
           
-          docker cp $CID:/root/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
+          docker cp $CID:/home/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
           
           docker rm rpm-builder
           echo "result=ok" >> $GITHUB_OUTPUT
