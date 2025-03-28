@@ -227,6 +227,26 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "fleet",
+    srcs = ["fleet.cpp"],
+    hdrs = ["fleet.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "fleet_clang_tidy",
+    srcs = [":fleet"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "host_tool_target",
     srcs = ["host_tool_target.cpp"],
     hdrs = ["host_tool_target.h"],
@@ -250,7 +270,6 @@ clang_tidy_test(
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "fleet.cpp",
         "lint.cpp",
         "login.cpp",
         "noop.cpp",
@@ -268,7 +287,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "fleet.h",
         "lint.h",
         "login.h",
         "noop.h",
