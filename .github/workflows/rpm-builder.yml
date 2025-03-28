@@ -49,7 +49,7 @@ jobs:
         id: metadata
         with:
           images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
-          tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
 
       # https://github.com/marketplace/actions/build-and-push-docker-images
       - name: Build and push Docker image
