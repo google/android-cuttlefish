@@ -42,7 +42,7 @@ jobs:
         uses: 'docker/metadata-action@v5'
         id: metadata
         with:
-          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          images: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           flavor: latest=true
 
