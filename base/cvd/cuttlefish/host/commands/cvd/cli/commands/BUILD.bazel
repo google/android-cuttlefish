@@ -205,6 +205,28 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "fetch",
+    srcs = ["fetch.cpp"],
+    hdrs = ["fetch.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/commands/cvd/fetch",
+        "//libbase",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/utils",
+    ],
+)
+
+clang_tidy_test(
+    name = "fetch_clang_tidy",
+    srcs = [":fetch"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "host_tool_target",
     srcs = ["host_tool_target.cpp"],
     hdrs = ["host_tool_target.h"],
@@ -228,7 +250,6 @@ clang_tidy_test(
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "fetch.cpp",
         "fleet.cpp",
         "lint.cpp",
         "login.cpp",
@@ -247,7 +268,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "fetch.h",
         "fleet.h",
         "lint.h",
         "login.h",
