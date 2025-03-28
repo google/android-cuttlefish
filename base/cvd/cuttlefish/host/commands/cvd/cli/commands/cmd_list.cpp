@@ -16,11 +16,17 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/cmd_list.h"
 
+#include <iostream>
+#include <memory>
+#include <string>
 #include <vector>
 
 #include <android-base/strings.h>
 #include <json/value.h>
 
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 

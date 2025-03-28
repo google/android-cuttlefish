@@ -5,6 +5,7 @@ package(
 )
 
 exports_files([
+    ".clang-tidy",
     "acloud_command.cpp",
     "acloud_command.h",
     "cmd_list.cpp",
@@ -24,7 +25,9 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli:command_request",
+        "@fmt",
     ],
 )
 
@@ -84,12 +87,13 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/utils",
-        "//libbase",
+        "@fmt",
     ],
 )
 
@@ -108,6 +112,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cache",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
@@ -129,10 +134,10 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
-        "//libbase",
     ],
 )
 
@@ -166,13 +171,14 @@ cc_library(
     hdrs = ["display.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
-        "//cuttlefish/host/commands/cvd/cli/selector",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/utils",
-        "//libbase",
     ],
 )
 
@@ -188,13 +194,16 @@ cc_library(
     hdrs = ["env.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
+        "@fmt",
     ],
 )
 
@@ -209,14 +218,16 @@ cc_library(
     srcs = ["fetch.cpp"],
     hdrs = ["fetch.h"],
     deps = [
-        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
-        "//cuttlefish/host/commands/cvd/cache",
-        "//cuttlefish/host/commands/cvd/fetch",
-        "//libbase",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/fetch",
         "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+        "@fmt",
     ],
 )
 
@@ -237,6 +248,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances",
         "//libbase",
+        "@jsoncpp",
     ],
 )
 
@@ -291,9 +303,12 @@ cc_library(
     srcs = ["login.cpp"],
     hdrs = ["login.h"],
     deps = [
-        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/libs/web",
         "//libbase",
         "@zlib",
@@ -312,7 +327,10 @@ cc_library(
     hdrs = ["noop.h"],
     deps = [
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/common/libs/utils:result",
+        "@fmt",
     ],
 )
 
@@ -330,6 +348,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances",
         "//libbase",
@@ -352,6 +371,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances",
         "//libbase",
@@ -373,9 +393,12 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
+        "//libbase",
     ],
 )
 
@@ -391,10 +414,14 @@ cc_library(
     hdrs = ["reset.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:reset_client_utils",
         "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
     ],
 )
 
@@ -413,6 +440,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances",
         "//libbase",
@@ -432,9 +460,11 @@ cc_library(
     hdrs = ["snapshot.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/instances",
@@ -459,12 +489,14 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/host/commands/cvd/instances:reset_client_utils",
+        "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/config",
         "//libbase",
@@ -489,9 +521,12 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli/selector",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/libs/config",
         "//libbase",
+        "@fmt",
+        "@jsoncpp",
     ],
 )
 
@@ -506,14 +541,16 @@ cc_library(
     srcs = ["stop.cpp"],
     hdrs = ["stop.h"],
     deps = [
-        "//cuttlefish/host/commands/cvd/cli/selector",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
-        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
     ],
@@ -536,7 +573,9 @@ cc_library(
         "//cuttlefish/host/commands/cvd/acloud",
         "//cuttlefish/host/commands/cvd/cli/commands:acloud_common",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
+        "//libbase",
     ],
 )
 
@@ -555,10 +594,12 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/legacy",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/config",
+        "@fmt",
     ],
 )
 

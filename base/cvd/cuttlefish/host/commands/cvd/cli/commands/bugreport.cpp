@@ -16,19 +16,22 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/bugreport.h"
 
-#include <sys/types.h>
+#include <signal.h>  // IWYU pragma: keep
+#include <stdlib.h>
 
 #include <functional>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include <android-base/file.h>
-#include <android-base/parseint.h>
-#include <android-base/scopeguard.h>
+#include <fmt/core.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
@@ -97,7 +100,7 @@ Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
                                             .command_name = kHostBugreportBin};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
-  siginfo_t infop;
+  siginfo_t infop;  // NOLINT(misc-include-cleaner)
   command.Start().Wait(&infop, WEXITED);
 
   CF_EXPECT(CheckProcessExitedNormally(infop));

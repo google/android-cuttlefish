@@ -15,18 +15,19 @@
  */
 #include "cuttlefish/host/commands/cvd/cli/commands/login.h"
 
-#include <unistd.h>
-
+#include <iostream>
 #include <memory>
 #include <string>
-
-#include <zlib.h>
+#include <vector>
 
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/oauth2_consent.h"
