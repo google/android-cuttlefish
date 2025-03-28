@@ -50,15 +50,21 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'builder') }}
         id: build-rpm-packages
         run: |
+          # Mounting file-system to docker volume
           mkdir ${{ RUNNER.TEMP }}/home_volume
           docker volume create --opt type=none --opt o=bind --opt device=${{ RUNNER.TEMP }}/home_volume home_volume
+          
+          # Running the container with that volume
           docker run --name rpm-builder --quiet --volume ${{ RUNNER.TEMP }}/home_volume:/home ${{ INPUTS.DOCKER-IMAGE }}
           CID=`docker ps -aqf "name=^rpm-builder$"`
+          
+          # Debug Output
+          docker volume inspect --format '{{ .Mountpoint }}' home_volume
           docker inspect -f {{.Mounts}} $CID
           ls -la ${{ RUNNER.TEMP }}/home_volume
-          
           docker cp $CID:/home/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
-          
+
+          # Cleanup
           docker rm rpm-builder
           echo "result=ok" >> $GITHUB_OUTPUT
 
