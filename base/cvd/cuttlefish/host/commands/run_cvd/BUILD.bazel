@@ -52,6 +52,7 @@ cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch",
         "//cuttlefish/host/commands/run_cvd/launch:auto_cmd",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
+        "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
         "//cuttlefish/host/libs/config",
