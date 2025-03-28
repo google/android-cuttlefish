@@ -80,7 +80,17 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        target: [ builder, testing, integration, orchestration ]
+        platform:
+          - name: linux/amd64
+        target:
+          - name: rpm-builder
+            stage: builder
+          - name: rpm-testing
+            stage: testing
+          - name: rhel-integration
+            stage: integration
+          - name: rhel-orchestration
+            stage: orchestration
     uses: ./.github/workflows/reusable-docker.yml
     with:
       docker-image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET.NAME }}:latest
