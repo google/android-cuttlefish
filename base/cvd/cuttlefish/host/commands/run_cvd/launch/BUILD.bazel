@@ -44,6 +44,29 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "webrtc_controller",
+    srcs = ["webrtc_controller.cpp"],
+    hdrs = ["webrtc_controller.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_command_channel",
+        "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_commands_proto",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@fruit",
+        "@googleapis//google/rpc:code_cc_proto",
+    ],
+)
+
+clang_tidy_test(
+    name = "webrtc_controller_clang_tidy",
+    srcs = [":webrtc_controller"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "launch",
     srcs = [
         "automotive_proxy.cpp",
@@ -84,13 +107,11 @@ cc_library(
         "vhost_device_vsock.cpp",
         "vhost_device_vsock.h",
         "vhost_input_devices.cpp",
-        "webrtc_controller.cpp",
         "wmediumd_server.cpp",
         "wmediumd_server.h",
     ],
     hdrs = [
         "launch.h",
-        "webrtc_controller.h",
     ],
     copts = COPTS,
     deps = [
@@ -102,6 +123,7 @@ cc_library(
         "//cuttlefish/host/commands/run_cvd:reporting",
         "//cuttlefish/host/commands/run_cvd/launch:auto_cmd",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
+        "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_command_channel",
         "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_commands_proto",
         "//cuttlefish/host/libs/command_util",
