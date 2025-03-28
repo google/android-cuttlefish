@@ -38,18 +38,15 @@ RUN dnf -y install qemu-kvm nginx systemd-journal-remote
 RUN dnf list installed
 RUN dnf clean all
 
-# Add entrypoint scripts.
-VOLUME [ "/root" ]
+# The default entrypoint and volume.
 ENTRYPOINT [ "/bin/bash", "-c" ]
-COPY ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
-COPY ./docker/rpm-builder/testscript.sh /root/testscript.sh
+VOLUME [ "/root" ]
+
+# Add entrypoint scripts, to be used by container instrumentation.
+ADD ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
+ADD ./docker/rpm-builder/testscript.sh /root/testscript.sh
 
 # Modify file `~/.bash_profile` and install `bazelisk`.
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc && \
 echo "export GOPATH=${HOME}/go" >> ~/.bash_profile && echo "export PATH=${PATH}:${GOPATH}/bin" >> ~/.bash_profile && \
 source ~/.bash_profile && go install github.com/bazelbuild/bazelisk@latest
-
-# Not required for testing ...
-# This produces /root/.cache/bazel
-# RUN $GOPATH/bin/bazelisk version
-
