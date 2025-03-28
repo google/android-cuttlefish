@@ -76,6 +76,30 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "bugreport",
+    srcs = ["bugreport.cpp"],
+    hdrs = ["bugreport.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "bugreport_clang_tidy",
+    srcs = [":bugreport"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "command_handler",
     srcs = ["command_handler.cpp"],
     hdrs = ["command_handler.h"],
@@ -117,7 +141,6 @@ clang_tidy_test(
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "bugreport.cpp",
         "cache.cpp",
         "clear.cpp",
         "command_handler.cpp",
@@ -142,7 +165,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "bugreport.h",
         "cache.h",
         "clear.h",
         "command_handler.h",
