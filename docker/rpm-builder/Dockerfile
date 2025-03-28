@@ -47,7 +47,7 @@ ADD ./docker/rpm-builder/testscript.sh /root/entrypoint.sh
 ENTRYPOINT [ "/bin/bash", "-c", "/root/entrypoint.sh" ]
 
 # Runtime Dependencies
-RUN dnf -y install wayland && dnf clean all
+RUN dnf -y install libwayland-* && dnf clean all
 
 
 # RHEL Integration
