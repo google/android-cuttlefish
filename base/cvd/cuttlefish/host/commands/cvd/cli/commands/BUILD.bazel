@@ -525,15 +525,34 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "try_acloud",
+    srcs = ["try_acloud.cpp"],
+    hdrs = ["try_acloud.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/acloud",
+        "//cuttlefish/host/commands/cvd/cli/commands:acloud_common",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:types",
+    ],
+)
+
+clang_tidy_test(
+    name = "try_acloud_clang_tidy",
+    srcs = [":try_acloud"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 # Leaf commands: commands that don't execute other commands
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "try_acloud.cpp",
         "version.cpp",
     ],
     hdrs = [
-        "try_acloud.h",
         "version.h",
     ],
     deps = [
