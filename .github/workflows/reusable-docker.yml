@@ -45,13 +45,14 @@ jobs:
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       # https://docs.docker.com/reference/cli/docker/container/cp/
+      # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
       - name: Build RPM packages and copy these to RUNNER.TEMP
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'builder') }}
         id: build-rpm-packages
-        # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
           mkdir ${{ RUNNER.TEMP }}/root_volume
-          docker run --name rpm-builder --quiet --attach STDOUT --attach STDERR --volume ${{ RUNNER.TEMP }}/root_volume:/root ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-builder --quiet --tty --volume ${{ RUNNER.TEMP }}/root_volume:/root ${{ INPUTS.DOCKER-IMAGE }}
+               
           CID=`docker ps -aqf "name=^rpm-builder$"`
           echo "CID: ${CID}"
           docker inspect -f {{.Mounts}} $CID
@@ -77,7 +78,7 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'testing') }}
         id: test-rpm-packages
         run: |
-          docker run --name rpm-testing --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-testing --quiet --tty ${{ INPUTS.DOCKER-IMAGE }}
           docker rm rpm-testing
           echo "result=ok" >> $GITHUB_OUTPUT
 
@@ -86,7 +87,7 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'integration') }}
         id: test-integration
         run: |
-          docker run --name rhel-integration --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rhel-integration --quiet --tty ${{ INPUTS.DOCKER-IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
@@ -94,5 +95,5 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
         id: test-orchestration
         run: |
-          docker run --name rhel-orchestration --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rhel-orchestration --quiet --tty ${{ INPUTS.DOCKER-IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
