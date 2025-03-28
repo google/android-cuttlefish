@@ -482,14 +482,12 @@ clang_tidy_test(
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "start_impl.cpp",
         "status.cpp",
         "stop.cpp",
         "try_acloud.cpp",
         "version.cpp",
     ],
     hdrs = [
-        "start_impl.h",
         "status.h",
         "stop.h",
         "try_acloud.h",
