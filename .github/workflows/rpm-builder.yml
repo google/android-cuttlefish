@@ -73,10 +73,9 @@ jobs:
         uses: 'docker/metadata-action@v5'
         id: metadata
         with:
-          images: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
-          flavor: latest=true
+          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           tags: |
-            ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+            ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
             type=sha
 
         # https://github.com/marketplace/actions/build-and-push-docker-images
@@ -99,8 +98,8 @@ jobs:
       - name: Generate artifact attestation
         uses: 'actions/attest-build-provenance@v2'
         with:
-          subject-name:   ${{ needs.metadata_builder.outputs.name }}
-          subject-digest: ${{ needs.metadata_builder.outputs.digest }}
+          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
   run-docker-image:
