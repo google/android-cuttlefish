@@ -5,11 +5,10 @@ on:
 
 env:
   DOCKER_REGISTRY: ghcr.io
-  DOCKER_IMAGE: ${{ GITHUB.ACTOR }}/rpm-builder
 
 jobs:
 
-  build-docker-image:
+  build-docker-images:
     runs-on: ubuntu-latest
 
     permissions:
@@ -35,18 +34,18 @@ jobs:
 
       # https://github.com/docker/metadata-action
       - name: Extract metadata (tags, labels) for Docker
-        id: meta
+        id: meta-builder
         uses: 'docker/metadata-action@v5'
         with:
-          images: ${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}
-          tags: ${{ ENV.DOCKER_IMAGE }}:latest
+          images: ${{ ENV.DOCKER_REGISTRY }}/${{ GITHUB.ACTOR }}/rpm-builder
+          tags: ${{ GITHUB.ACTOR }}/rpm-builder:latest
 
       # https://github.com/marketplace/actions/build-and-push-docker-images
       # docker build --target builder -t syslogic/rpm-builder:latest .
-      # docker build --target integration -t syslogic/rpm-integration:latest .
-      # docker build --target orchestration -t syslogic/rpm-orchestration:latest .
+      # docker build --target integration -t syslogic/rhel-integration:latest .
+      # docker build --target orchestration -t syslogic/rhel-orchestration:latest .
       - name: Build and push Docker image
-        id: push
+        id: push-builder
         uses: 'docker/build-push-action@v6'
         with:
           context: .
@@ -54,8 +53,8 @@ jobs:
           # cache-to: type=gha,mode=max
           file: docker/rpm-builder/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-builder.outputs.tags }}
+          labels: ${{ steps.meta-builder.outputs.labels }}
           platforms: linux/amd64
           target: builder
           build-args: |
@@ -66,18 +65,20 @@ jobs:
       - name: Generate artifact attestation
         uses: 'actions/attest-build-provenance@v2'
         with:
-          subject-name: ${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}
-          subject-digest: ${{ steps.push.outputs.digest }}
+          subject-name: ${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}-builder
+          subject-digest: ${{ steps.push-builder.outputs.digest }}
           push-to-registry: true
     outputs:
-      docker-image: "${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}:latest"
+      rpm-builder: "${{ ENV.DOCKER_REGISTRY }}/${{ GITHUB.ACTOR }}/rpm-builder:latest"
+      rpm-builder-test: "${{ ENV.DOCKER_REGISTRY }}/${{ GITHUB.ACTOR }}/rpm-builder-test:latest"
+      rhel-integration: "${{ ENV.DOCKER_REGISTRY }}/${{ GITHUB.ACTOR }}/rhel-integration:latest"
+      rhel-orchestration: "${{ ENV.DOCKER_REGISTRY }}/${{ GITHUB.ACTOR }}/rhel-orchestration:latest"
 
   build-rpm-specs:
-    needs: build-docker-image
+    needs: build-docker-images
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      docker-image: ${{ needs.build-docker-image.outputs.docker-image }}
-      entry-point: "/root/buildscript.sh"
+      docker-image: ${{ needs.build-docker-images.outputs.rpm-builder }}
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
 
@@ -85,7 +86,20 @@ jobs:
     needs: build-rpm-specs
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      docker-image: ${{ needs.build-docker-image.outputs.docker-image }}
-      entry-point: "/root/testscript.sh"
+      docker-image: ${{ needs.build-docker-images.outputs.rpm-builder-test }}
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
+
+  rhel-integration:
+    needs: test-rpm-packages
+    uses: ./.github/workflows/reusable-docker.yml
+    with:
+      docker-image: ${{ needs.build-docker-images.outputs.rhel-integration }}
+
+  rhel-orchestration:
+    needs: test-rpm-packages
+    uses: ./.github/workflows/reusable-docker.yml
+    with:
+      docker-image: ${{ needs.build-docker-images.outputs.rhel-integration }}
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}

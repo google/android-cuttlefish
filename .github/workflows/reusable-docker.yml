@@ -9,10 +9,6 @@ on:
       docker-image:
         required: true
         type: string
-      entry-point:
-        required: false
-        type: string
-        default: '/home/runner/buildscript.sh'
     outputs:
       build:
         value: ${{ jobs.docker-run.outputs.build }}
@@ -25,7 +21,6 @@ jobs:
 
   docker-run:
     runs-on: ubuntu-latest
-    if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
     outputs:
       build: ${{ steps.copy-rpm-packages.outputs.result }}
       test: ${{ steps.test-rpm-packages.outputs.result }}
@@ -44,7 +39,7 @@ jobs:
       # https://docs.docker.com/reference/cli/docker/container/run/
       # https://docs.docker.com/reference/cli/docker/container/cp/
       - name: Run the build script and copy packages to workspace
-        if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
+        if: ${{ ! contains(INPUTS.DOCKER-IMAGE, 'test') }}
         id: build-rpm-packages
         # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
@@ -59,7 +54,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
-        if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
+        if: ${{ ! contains(INPUTS.DOCKER-IMAGE, 'test') }}
         uses: 'actions/upload-artifact@v4'
         id: retain-rpm-packages
         with:
@@ -70,7 +65,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.src.rpm)
-        if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
+        if: ${{ ! contains(INPUTS.DOCKER-IMAGE, 'test') }}
         uses: 'actions/upload-artifact@v4'
         id: retain-srpm-packages
         with:
@@ -81,7 +76,7 @@ jobs:
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       - name: Run the test script
-        if: ${{ contains(INPUTS.ENTRY-POINT, 'test') }}
+        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'test') }}
         id: test-rpm-packages
         # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
