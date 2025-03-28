@@ -59,8 +59,10 @@ jobs:
           CID=`docker ps -aqf "name=^rpm-builder$"`
           
           # Debug Output
-          docker volume inspect --format '{{ .Mountpoint }}' home_volume
           docker inspect -f {{.Mounts}} $CID
+          MOUNTPOINT=`docker volume inspect --format '{{ .Mountpoint }}' home_volume`
+          ls -la $MOUNTPOINT
+          
           ls -la ${{ RUNNER.TEMP }}/home_volume
           docker cp $CID:/home/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
 
