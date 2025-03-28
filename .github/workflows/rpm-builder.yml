@@ -7,7 +7,7 @@ jobs:
   build-docker-images:
     runs-on: ubuntu-latest
     env:
-      token: ${{ SECRETS.GITHUB_TOKEN }}
+      registry: "ghcr.io"
     permissions:
       contents: read
       packages: write
@@ -34,16 +34,16 @@ jobs:
       - uses: 'docker/login-action@v3'
         id: container-registry
         with:
-          registry: ghcr.io
+          registry: ${{ ENV.REGISTRY }}
           username: ${{ GITHUB.ACTOR }}
-          password: ${{ ENV.TOKEN }}
+          password: ${{ SECRETS.GITHUB_TOKEN }}
 
       # https://github.com/docker/metadata-action
       - name: Extract metadata (tags, labels)
         uses: 'docker/metadata-action@v5'
         id: metadata
         with:
-          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          images: ${{ ENV.REGISTRY }}/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           flavor: latest=true
 
@@ -66,7 +66,7 @@ jobs:
         uses: 'actions/attest-build-provenance@v2'
         # One of subject-path, subject-digest, or subject-checksums must be provided
         with:
-          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          subject-name: ${{ ENV.REGISTRY }}/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           subject-digest: ${{ steps.metadata.outputs.digest }}
           push-to-registry: true
 
