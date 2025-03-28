@@ -10,7 +10,7 @@ jobs:
       max-parallel: 1
       matrix:
         platform: [linux/amd64]
-        target: [ builder, testing, integration, orchestration ]
+        target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
 
     permissions:
       contents: read
