@@ -7,16 +7,20 @@ LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/g
 
 # Base Image
 FROM rockylinux AS base
-# No entrypoint script.
 WORKDIR "/root"
 VOLUME "/root"
-# USER 0[0]
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm sudo git nano dos2unix && dnf -y upgrade
 
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories
 RUN dnf config-manager --set-enabled crb && dnf config-manager --set-disabled extras && dnf clean all
+
+# Modify file `~/.bash_profile`.
+RUN echo "export GOPATH=${HOME}/go" >> ~/.bash_profile \
+echo "export PATH=${PATH}:${HOME}/go/bin" >> ~/.bash_profile \
+echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc \
+source ~/.bash_profile
 
 # RPM Builder
 FROM base AS builder
@@ -34,13 +38,8 @@ COPY ./docker/rpm-builder/buildscript.sh /root/entrypoint.sh
 RUN dos2unix /root/entrypoint.sh && chmod +x /root/entrypoint.sh
 ENTRYPOINT [ "/bin/bash", "-c", "./entrypoint.sh" ]
 
-# Modify file `~/.bash_profile` and go install `bazelisk`.
-RUN echo "export GOPATH=${HOME}/go" >> ~/.bash_profile \
-echo "export PATH=${PATH}:${HOME}/go/bin" >> ~/.bash_profile \
-echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc \
-source ~/.bash_profile \
-go install github.com/bazelbuild/bazelisk@latest
-
+# Run go install `bazelisk`.
+RUN go install github.com/bazelbuild/bazelisk@latest
 
 # # RPM Testing
 # FROM base AS testing
