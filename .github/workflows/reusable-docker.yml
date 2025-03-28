@@ -61,9 +61,10 @@ jobs:
       - name: Run the build script and copy packages to workspace
         if: ${{ contains(INPUTS.ENTRY-POINT, 'build') }}
         id: build-rpm-packages
+        # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
           mkdir ${{ GITHUB.WORKSPACE }}/packages
-          docker run --name rpm-build --attach STDOUT --attach STDERR --quiet --entrypoint ${{ INPUTS.ENTRY-POINT }} ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-build --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
           CID=`docker ps -aqf "name=^rpm-build$"`
           echo "CID: ${CID}"
           # docker inspect -f {{.Mounts}} $CID
@@ -102,7 +103,8 @@ jobs:
       - name: Run the test script
         if: ${{ contains(INPUTS.ENTRY-POINT, 'test') }}
         id: test-rpm-packages
+        # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
-          docker run --name rpm-test --attach STDOUT --attach STDERR --quiet --entrypoint ${{ INPUTS.ENTRY-POINT }} ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-test --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
           docker stop rpm-test && docker rm rpm-test
           echo "result=ok" >> $GITHUB_OUTPUT
