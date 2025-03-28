@@ -62,7 +62,7 @@ jobs:
           target: ${{ MATRIX.TARGET_STAGE }}
           push: ${{ github.event_name != 'pull_request' }}
           labels: ${{ steps.metadata.outputs.labels }}
-          tags: ${{ steps.metadata.outputs.tags }}
+          tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
 
       # https://github.com/actions/attest-build-provenance
       - name: Generate artifact attestation
