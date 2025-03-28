@@ -501,16 +501,38 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "stop",
+    srcs = ["stop.cpp"],
+    hdrs = ["stop.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "stop_clang_tidy",
+    srcs = [":stop"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 # Leaf commands: commands that don't execute other commands
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "stop.cpp",
         "try_acloud.cpp",
         "version.cpp",
     ],
     hdrs = [
-        "stop.h",
         "try_acloud.h",
         "version.h",
     ],
