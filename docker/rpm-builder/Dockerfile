@@ -6,13 +6,17 @@ LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/g
 ENTRYPOINT [ "/bin/bash" ]
 VOLUME [ "/root" ]
 
-# Install build and runtime dependencies.
+# docker build --target builder -t syslogic/rpm-builder:latest .
+# docker build --target integration -t syslogic/rpm-integration:latest .
+# docker build --target orchestration -t syslogic/rpm-orchestration:latest .
+FROM rockylinux AS builder
+ARG BAZEL_VERSION=7.6.0
+
+# Install build dependencies.
 # RUN dnf -y swap curl-minimal curl-full
 # RUN dnf -y swap coreutils-single coreutils
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
 # RUN dnf -y install rpm-devel rpmdevtools rpmlint gcc make python diffutils patch
-FROM rockylinux AS builder
-ARG BAZEL_VERSION=7.6.0
 
 # EPEL repository provides `ncurses-compat-libs` and installs `dnf-core-plugin`, which has `dnf builddeps`.
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && dnf -y upgrade
@@ -54,7 +58,3 @@ RUN dnf clean all
 FROM portconfig AS orchestration
 RUN dnf -y install nginx systemd-journal-remote
 RUN dnf clean all
-
-# docker build --target builder -t syslogic/rpm-builder:latest .
-# docker build --target integration -t syslogic/rpm-integration:latest .
-# docker build --target orchestration -t syslogic/rpm-orchestration:latest .
