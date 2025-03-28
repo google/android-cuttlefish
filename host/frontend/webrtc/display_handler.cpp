@@ -142,9 +142,7 @@ DisplayHandler::GetScreenConnectorCallback() {
       display_last_buffers_[display_number] =
           std::make_shared<BufferInfo>(BufferInfo{
               .last_sent_time_stamp = std::chrono::system_clock::now(),
-              .buffer =
-                  std::static_pointer_cast<webrtc_streaming::VideoFrameBuffer>(
-                      buffer),
+              .buffer = std::static_pointer_cast<VideoFrameBuffer>(buffer),
           });
     }
     if (processed_frame.is_success_) {
