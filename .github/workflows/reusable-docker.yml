@@ -64,12 +64,12 @@ jobs:
         # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
           docker run --name rpm-build --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
+          # docker inspect -f {{.Mounts}} $CID 
           CID=`docker ps -aqf "name=^rpm-build$"`
           echo "CID: ${CID}"
-          # docker inspect -f {{.Mounts}} $CID         
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/ ${{ RUNNER.TEMP }}/
           docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS/ ${{ RUNNER.TEMP }}/
-          docker stop rpm-build && docker rm rpm-build
+          docker rm rpm-build
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://github.com/actions/upload-artifact
@@ -91,8 +91,14 @@ jobs:
         with:
           name: ${{ ENV.REPO_NAME }}-src-rpm
           path: |
-            ${{ GITHUB.WORKSPACE }}/packages/*.src.rpm
+            ${{ RUNNER.TEMP }}/*.src.rpm
           retention-days: 14
+
+#      - name: Download artifact
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: rpm-builder
+#          path: ${{ runner.temp }}
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       - name: Run the test script
@@ -101,5 +107,7 @@ jobs:
         # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
           docker run --name rpm-test --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
-          docker stop rpm-test && docker rm rpm-test
+          CID=`docker ps -aqf "name=^rpm-test"`
+          echo "CID: ${CID}"
+          docker rm rpm-test
           echo "result=ok" >> $GITHUB_OUTPUT

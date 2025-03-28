@@ -72,13 +72,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
-          outputs: type=docker,dest=${{ RUNNER.TEMP }}/rpm-builder.tar
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: rpm-builder
-          path: ${{ runner.temp }}/rpm-builder.tar
 
       - name: Build and push Docker images with cache
         if: ${{ inputs.enable-docker-cache }}
@@ -101,17 +94,6 @@ jobs:
           subject-name: ${{ ENV.DOCKER_REGISTRY }}/${{ ENV.DOCKER_IMAGE }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: rpm-builder
-          path: ${{ runner.temp }}
-
-      - name: Load image
-        run: |
-          docker load --input ${{ runner.temp }}/rpm-builder.tar
-          docker image ls -a
 
   build-rpm-specs:
     needs: build-docker-image
