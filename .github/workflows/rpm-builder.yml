@@ -126,7 +126,6 @@ jobs:
           push-to-registry: true
 
 
-
       # https://github.com/docker/metadata-action
       - name: Extract metadata (tags, labels) for rhel-integration
         uses: 'docker/metadata-action@v5'

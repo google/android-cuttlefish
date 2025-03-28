@@ -6,7 +6,7 @@
 ARG ROCKY_LINUX_VERSION=9.5
 FROM rockylinux/rockylinux:$ROCKY_LINUX_VERSION AS rockylinux
 LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler"
-VOLUME [ "/root/android-cuttlefish" ]
+VOLUME [ "/root" ]
 ENTRYPOINT [ "/bin/bash" ]
 
 # Base Image

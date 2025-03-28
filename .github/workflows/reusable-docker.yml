@@ -38,17 +38,17 @@ jobs:
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       # https://docs.docker.com/reference/cli/docker/container/cp/
-      - name: Run the build script and copy packages to workspace
+      - name: Build RPM packages and copy these to RUNNER.TEMP
         if: ${{ ! contains(INPUTS.DOCKER-IMAGE, 'test') }}
         id: build-rpm-packages
         # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
-          docker run --name rpm-build --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
-          # docker inspect -f {{.Mounts}} $CID 
+          docker run --name rpm-build --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
+          # docker inspect -f {{.Mounts}} $CID
           CID=`docker ps -aqf "name=^rpm-build$"`
           echo "CID: ${CID}"
-          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/ ${{ RUNNER.TEMP }}/
-          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS/ ${{ RUNNER.TEMP }}/
+          docker cp $CID:/root/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
+          docker cp $CID:/root/android-cuttlefish-src-rpm.tar.gz ${{ RUNNER.TEMP }}
           docker rm rpm-build
           echo "result=ok" >> $GITHUB_OUTPUT
 
@@ -58,30 +58,32 @@ jobs:
         uses: 'actions/upload-artifact@v4'
         id: retain-rpm-packages
         with:
-          name: ${{ GITHUB.REPOSITORY }}-rpm
+          name: android-cuttlefish-rpm
           path: |
-            {{ GITHUB.WORKSPACE }}/packages/*.rpm
-          retention-days: 14
-
-      # https://github.com/actions/upload-artifact
-      - name: Retain Artifacts (*.src.rpm)
-        if: ${{ ! contains(INPUTS.DOCKER-IMAGE, 'test') }}
-        uses: 'actions/upload-artifact@v4'
-        id: retain-srpm-packages
-        with:
-          name: ${{ ENV.REPO_NAME }}-src-rpm
-          path: |
-            ${{ RUNNER.TEMP }}/*.src.rpm
+            ${{ RUNNER.TEMP }}/*.tar.gz
           retention-days: 14
 
       # https://docs.docker.com/reference/cli/docker/container/run/
-      - name: Run the test script
+      - name: Run package tests
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'test') }}
         id: test-rpm-packages
-        # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
-          docker run --name rpm-test --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
-          CID=`docker ps -aqf "name=^rpm-test"`
-          echo "CID: ${CID}"
-          docker rm rpm-test
+          docker run --name rpm-testing --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
+          docker rm rpm-testing
+          echo "result=ok" >> $GITHUB_OUTPUT
+
+      # https://docs.docker.com/reference/cli/docker/container/run/
+      - name: Run integration tests
+        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'integration') }}
+        id: test-rpm-packages
+        run: |
+          docker run --name rhel-integration --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
+          echo "result=ok" >> $GITHUB_OUTPUT
+
+      # https://docs.docker.com/reference/cli/docker/container/run/
+      - name: Run orchestration test
+        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
+        id: test-rpm-packages
+        run: |
+          docker run --name rhel-integration --quiet --attach STDOUT --attach STDERR ${{ INPUTS.DOCKER-IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
