@@ -53,8 +53,10 @@ ENTRYPOINT [ "/home/runner/buildscript.sh", "/home/runner/testscript.sh" ]
 RUN echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc && \
 echo "export GOPATH=${HOME}/go" >> ~/.bash_profile && echo "export PATH=${PATH}:${GOPATH}/bin" >> ~/.bash_profile && \
 source ~/.bash_profile && go install github.com/bazelbuild/bazelisk@latest
+
+# Not required for testing ...
+# This produces /home/runner/.cache/bazel
 # RUN $GOPATH/bin/bazelisk version
 
 USER root
-# RUN chown runner:docker /home/runner/*.sh && chmod +x /home/runner/*.sh
 RUN chmod +x /home/runner/*.sh

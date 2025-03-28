@@ -15,7 +15,6 @@ env:
 
 jobs:
 
-  # /home/runner/.cache/bazel
   build-docker-image:
     runs-on: ubuntu-latest
 
