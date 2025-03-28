@@ -4,6 +4,36 @@ on: [ push ]
 
 jobs:
 
+  metaddata:
+    runs-on: ubuntu-latest
+    outputs:
+      metadata: ''
+    steps:
+      - uses: 'actions/checkout@v4'
+      - uses: 'docker/setup-buildx-action@v3'
+      - uses: 'docker/login-action@v3'
+        id: container-registry
+        with:
+          registry: ghcr.io
+          username: ${{ GITHUB.ACTOR }}
+          password: ${{ SECRETS.GITHUB_TOKEN }}
+
+      # https://github.com/docker/metadata-action
+      - name: Extract metadata (tags, labels)
+        uses: 'docker/metadata-action@v5'
+        id: metadata
+        with:
+          images: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          flavor: latest=true
+          tags: |
+             ${{ GITHUB.ACTOR }}/rpm-builder
+             type=sha
+
+      - name: Compute outputs
+        run: |
+          echo "metadata=${{ steps.metadata.outputs }}" >> $GITHUB_OUTPUT
+
+
   build-docker-images:
     runs-on: ubuntu-latest
     permissions:
@@ -37,14 +67,18 @@ jobs:
           username: ${{ GITHUB.ACTOR }}
           password: ${{ SECRETS.GITHUB_TOKEN }}
 
+
       # https://github.com/docker/metadata-action
       - name: Extract metadata (tags, labels)
         uses: 'docker/metadata-action@v5'
         id: metadata
         with:
           images: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
-          tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           flavor: latest=true
+          tags: |
+            ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+            type=sha
+
 
         # https://github.com/marketplace/actions/build-and-push-docker-images
       - name: Build and push Docker image
@@ -61,13 +95,13 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
 
       # https://github.com/actions/attest-build-provenance
+      # One of subject-path, subject-digest, or subject-checksums must be provided
+      # subject-name: ${{ ENV.REGISTRY }}/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
       - name: Generate artifact attestation
         uses: 'actions/attest-build-provenance@v2'
-        # One of subject-path, subject-digest, or subject-checksums must be provided
         with:
-          # subject-name: ${{ ENV.REGISTRY }}/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
-          subject-name: ${{ steps.image_metadata.outputs.name }}
-          subject-digest: ${{ steps.metadata.outputs.digest }}
+          subject-name:   ${{ needs.metadata.outputs.name }}
+          subject-digest: ${{ needs.metadata.outputs.digest }}
           push-to-registry: true
 
   run-docker-image:
